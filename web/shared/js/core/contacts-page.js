@@ -98,7 +98,7 @@ export async function initContactsPage(pageId) {
       }
       const data = await call(friends ? `friends_${kind}` : kind === "resend" ? "polls_hub_subscriber_resend" : "polls_hub_subscriber_remove", { p_id: row.id });
       if (kind === "resend" && data.to && data.link) {
-        await sendInviteMail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token, kind: friends ? "friend" : "subscriber", actionKey: friends ? "friend:resend" : "poll:resend" });
+        await sendInviteMail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token, kind: friends ? "friend" : "subscriber", reminder: true, actionKey: friends ? "friend:resend" : "poll:resend" });
         toast(t("contacts.sent"));
       }
       await refresh();

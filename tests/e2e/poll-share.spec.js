@@ -1,3 +1,4 @@
+const { expectMailDocument } = require("./helpers/mail-document");
 const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { loginAsTestUser, loginAsPooledTestUser, testAccountUsername } = require("./helpers/login");
@@ -114,6 +115,8 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
       waitForEmail({ recipient: testAccountUsername(8), after: emailAfter, subject: /Zaproszenie do ankiety/i, timeout: 150_000 }),
       waitForEmail({ recipient: subscriberEmail, after: emailAfter, subject: /Zaproszenie do ankiety/i, timeout: 150_000 }),
     ]);
+    expectMailDocument(mails[0], { accountFooter: true });
+    expectMailDocument(mails[1], { globalUnsub: true });
     const links = mails.map(email => extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("t")));
     expect(links.every(Boolean)).toBe(true);
     for (const link of links) expect(new URL(link).searchParams.get("lang")).toBe("pl");

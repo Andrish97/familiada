@@ -4,6 +4,8 @@ import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { getEmailCopy, type CopyBlock, type EmailLang, type EmailType } from "./email-templates.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+import { renderMailDocument } from "../_shared/mail-document.js";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
@@ -191,8 +193,10 @@ async function getSendpulseToken(): Promise<string> {
   if (!authRes.ok) throw new Error(`sendpulse_auth_failed:${await authRes.text().catch(() => "")}`);
   
   const authData = await authRes.json();
-  sendpulseToken = authData.access_token;
-  return sendpulseToken;
+  const token = authData.access_token;
+  if (typeof token !== "string" || !token.trim()) throw new Error("sendpulse_auth_missing_token");
+  sendpulseToken = token;
+  return token;
 }
 
 async function sendViaSendpulse(to: string, subject: string, html: string) {
@@ -268,6 +272,7 @@ async function loadUserEmailFallbacks(userId: string): Promise<{
 }
 
 async function loadProviderLimits(): Promise<Map<string, { name: string; rem_worker: number; rem_immediate: number; is_active: boolean }>> {
+  if (!sbAdmin) throw new Error("missing_supabase_service_credentials");
   const { data, error } = await sbAdmin
     .from("email_providers")
     .select("name,rem_worker,rem_immediate,is_active")
@@ -284,6 +289,7 @@ async function loadProviderLimits(): Promise<Map<string, { name: string; rem_wor
 }
 
 async function decrementImmediateLimit(provider: string, limits: Map<string, { name: string; rem_worker: number; rem_immediate: number; is_active: boolean }>): Promise<void> {
+  if (!sbAdmin) throw new Error("missing_supabase_service_credentials");
   const limit = limits.get(provider);
   if (!limit) return;
   const { data } = await sbAdmin.from("email_providers").select("id").eq("name", provider).single();
@@ -294,6 +300,7 @@ async function decrementImmediateLimit(provider: string, limits: Map<string, { n
 }
 
 async function insertToQueue(to: string, subject: string, html: string, actorUserId: string | null) {
+  if (!sbAdmin) throw new Error("missing_supabase_service_credentials");
   const { error } = await sbAdmin.from("mail_queue").insert({
     created_by: actorUserId,
     to_email: to,
@@ -616,12 +623,12 @@ serve(async (req) => {
         `${baseOrigin}/login/confirm/?token_hash=${encodeURIComponent(thNew)}&type=email_change&lang=${lang}`;
 
       if (currentEmail && thCurrent) {
-        const htmlCurrent = renderEmail(copy, linkCurrent, emailTemplate === "email_change");
+        const htmlCurrent = renderEmail(copy, linkCurrent, lang);
         await sendEmail(currentEmail, copy.subject, htmlCurrent, { requestId, actorUserId });
       }
 
       if (targetEmail && thNew && targetEmailNormalized !== currentEmailNormalized) {
-        const htmlTarget = renderEmail(copy, linkTarget, emailTemplate === "email_change");
+        const htmlTarget = renderEmail(copy, linkTarget, lang);
         await sendEmail(targetEmail, copy.subject, htmlTarget, { requestId, actorUserId });
       }
 
@@ -640,7 +647,7 @@ serve(async (req) => {
     const template = templateFor(type);
     const copy = await getEmailCopy(template, lang);
     const subject = copy.subject;
-    const html = renderEmail(copy, actionLink, template === "email_change");
+    const html = renderEmail(copy, actionLink, lang);
 
     const to =
       type === "email_change_new"
@@ -673,7 +680,7 @@ serve(async (req) => {
   }
 });
 
-function pickLang(payload: HookPayload, redirectUrl?: URL): EmailLang {
+function pickLang(payload: HookPayload, redirectUrl?: URL | null): EmailLang {
   const url = redirectUrl || (() => {
     return getRedirectUrl(payload);
   })();
@@ -716,54 +723,8 @@ function templateFor(type: string): EmailType {
   return "signup";
 }
 
-function wrapEmailDoc(innerHtml: string, i18nSource = ""): string {
-  const sourceMeta = i18nSource ? `\n  <meta name="familiada-i18n" content="${i18nSource}">` : "";
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">${sourceMeta}
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <meta name="supported-color-schemes" content="dark">
-  <style>:root{color-scheme:dark}</style>
-</head>
-<body style="margin:0;padding:0;background:#050914;color:#ffffff;">
-${innerHtml}
-</body>
-</html>`;
-}
-
-
-
-// Jeden szablon dla wszystkich typów; mail zmiany e-maila ma lekko inny styl
-// (font, brak blur w nagłówku, przycisk wersalikami) — zachowane jak wcześniej.
-function renderEmail(t: CopyBlock, link: string, emailChangeStyle = false): string {
-  const font = emailChangeStyle
-    ? "system-ui,-apple-system,Segoe UI,Roboto,Arial"
-    : "system-ui,-apple-system,Segoe UI,sans-serif";
-  const headerBlur = emailChangeStyle ? "" : "backdrop-filter:blur(10px);";
-  const btnCase = emailChangeStyle ? "text-transform:uppercase;" : "";
-  return wrapEmailDoc(`
-<div style="margin:0;padding:0;background:#050914;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:${font};color:#ffffff;">
-    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;${headerBlur}">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${t.subtitle}</div>
-    </div>
-    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:#111827;background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${t.title}</div>
-      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${t.desc}</div>
-      <div style="margin:16px 0;">
-        <a href="${link}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;${btnCase}">${t.btn}</a>
-      </div>
-      <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t.ignore}</div>
-      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-        ${t.linkLabel ?? t.copyHint}
-        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">${link}</div>
-      </div>
-    </div>
-    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t.footer}</div>
-  </div>
-</div>
-`, t.source);
+function renderEmail(t: CopyBlock, link: string, lang: EmailLang): string {
+  return renderMailDocument({ lang, title: t.title, subtitle: t.subtitle, body: t.desc,
+    actionLabel: t.btn, actionUrl: link, ignoreNote: t.ignore,
+    linkHint: t.linkLabel ?? t.copyHint, autoNote: t.footer, source: t.source });
 }

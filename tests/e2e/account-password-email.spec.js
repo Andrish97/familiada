@@ -1,3 +1,4 @@
+const { expectMailDocument } = require("./helpers/mail-document");
 const { test, expect } = require("@playwright/test");
 const path = require("node:path");
 const fs = require("node:fs");
@@ -43,6 +44,7 @@ async function waitForAuthMailSlot(account, testInfo) {
 }
 
 function expectMailInLanguage(email, copy, lang, label, typeKey) {
+  expectMailDocument(email, { lang });
   const html = (email.body_html || "").replace(/&amp;/g, "&");
   // Znacznik wstawiany tylko przez send-email czytający tłumaczenia strony —
   // stara wersja z tekstami w kodzie (identycznymi) go nie ma. "@lang" wyklucza

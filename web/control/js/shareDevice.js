@@ -2,11 +2,12 @@
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T18000";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-11T18000";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-11T18000";
 import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-11T18000";
 import { createCooldownTicker, formatCooldownRemaining, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-11T18000";
 import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T18000";
 
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-11T18000";
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 function deviceTypeLabel(type) {
@@ -25,56 +26,42 @@ async function resolveToUserId(login) {
   return data || null;
 }
 
-function escapeMail(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function buildMailHtml({ title, body, actionLabel, actionUrl, isRegistered }) {
+  const accountUrl = new URL("/account/", location.origin);
+  accountUrl.searchParams.set("lang", getUiLang());
+  return renderMailDocument({ lang: getUiLang(), title, body, actionLabel, actionUrl,
+    subtitle: t("sharingMail.deviceSubtitle"),
+    linkHint: t("pollsHubSubscriptions.mail.linkHint"), autoNote: t("pollsHubSubscriptions.mail.autoNote"),
+    footerText: isRegistered ? t("pollGo.mailAccountSettings") : "",
+    footerLinks: isRegistered ? [{ url: accountUrl.href, label: t("pollGo.mailAccountSettingsLink") }] : [] });
 }
 
-function buildMailHtml({ title, body, actionLabel, actionUrl }) {
-  const inner = `
-<div style="margin:0;padding:0;background:#050914;color:#ffffff;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;background:#050914;">
-    <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-    </div>
-    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${escapeMail(title)}</div>
-      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${escapeMail(body)}</div>
-      <div style="margin:16px 0;">
-        <a href="${escapeMail(actionUrl)}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;text-transform:uppercase;">
-          ${escapeMail(actionLabel)}
-        </a>
-      </div>
-      <div style="margin-top:10px;font-size:12px;opacity:.75;word-break:break-all;">${escapeMail(actionUrl)}</div>
-    </div>
-  </div>
-</div>`.trim();
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><style>:root{color-scheme:dark;}</style></head><body style="margin:0;padding:0;background:#050914;color:#fff;">${inner}</body></html>`;
-}
-
-async function sendShareEmail({ to, ownerLabel, deviceType, gameId, gameName, shareKey, cooldownTargetKey }) {
+async function sendShareEmail({ to, ownerLabel, deviceType, gameId, gameName, shareKey, cooldownTargetKey, isRegistered }) {
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
-  if (!token) return;
+  if (!token) throw new Error(t("pollsHubSubscriptions.errors.mailSession"));
   const typeLabel = deviceTypeLabel(deviceType);
   const subject = t("control.shareDeviceModal.mailSubject", { type: typeLabel }) || `Udostępniono urządzenie: ${typeLabel}`;
   const body = t("control.shareDeviceModal.mailBody", { owner: ownerLabel, type: typeLabel, game: gameName || "—" }) ||
     `${ownerLabel} udostępnił(a) Ci urządzenie: ${typeLabel}${gameName ? ` (gra: ${gameName})` : ""}.`;
 
-  const actionUrl = new URL(`/go/?d=${deviceType}&id=${gameId}&key=${shareKey}`, location.origin).href;
+  const link = new URL(`/go/?d=${deviceType}&id=${gameId}&key=${shareKey}`, location.origin);
+  link.searchParams.set("lang", getUiLang());
+  const actionUrl = link.href;
 
   const html = buildMailHtml({
     title: subject,
     body,
     actionLabel: t("control.shareDeviceModal.openDevice") || `Otwórz: ${typeLabel}`,
-    actionUrl,
+    actionUrl, isRegistered,
   });
   // Serwerowy RPC udostępnienia zarezerwował cooldown przed kolejką.
-  await fetch(MAIL_FUNCTION_URL, {
+  const response = await fetch(MAIL_FUNCTION_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ to, subject, html, cooldownActionKey: "device:share", cooldownTargetKey }),
-  }).catch(() => {});
+  });
+  if (!response.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
 }
 
 export function createShareDevice({ currentUser, game, onBadgesChanged }) {
@@ -305,6 +292,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       gameName: game.name,
       shareKey: res.token,
       cooldownTargetKey: res.cooldown_target_key,
+      isRegistered: !!userId,
     });
     return true;
   }

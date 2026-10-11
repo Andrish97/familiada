@@ -1,3 +1,4 @@
+const { expectMailDocument } = require("./helpers/mail-document");
 const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { loginAsPooledTestUser } = require("./helpers/login");
@@ -40,6 +41,7 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
     await expect(page.locator('.rowsSection--pending .shareRow').filter({ hasText: email })).toHaveCount(1);
     await page.screenshot({ path: testInfo.outputPath("shot-subscribers-layout.png"), fullPage: true });
     const delivered = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscript|підпис/i, timeout: 150000 });
+    expectMailDocument(delivered, { globalUnsub: true });
     const link = extractHttpLinks(delivered).find(url => new URL(url).searchParams.has("s"));
     expect(link).toBeTruthy();
     expect(new URL(link).pathname).toMatch(/^\/go\/?$/);
@@ -120,6 +122,7 @@ test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ p
     await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
     await invite(page, email);
     const delivered = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscript|підпис/i, timeout: 150000 });
+    expectMailDocument(delivered, { globalUnsub: true });
     const link = extractHttpLinks(delivered).find(url => new URL(url).searchParams.has("s"));
     expect(link).toBeTruthy();
     const token = new URL(link).searchParams.get("s");

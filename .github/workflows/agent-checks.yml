@@ -100,6 +100,11 @@ on:
 permissions:
   contents: read
 
+      verify_e19_mail:
+        description: 'Verify shared browser/Edge mail renderer and auth function types'
+        type: boolean
+        default: false
+
 jobs:
   unit:
     runs-on: ubuntu-latest
@@ -990,3 +995,18 @@ jobs:
         with:
           name: e19-340-sql-restore
           path: /tmp/fam-restore.log
+
+  verify-e19-mail:
+    if: ${{ inputs.verify_e19_mail }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify generated browser renderer
+        run: |
+          node scripts/sync-mail-document.cjs
+          git diff --exit-code -- web/shared/js/core/mail-document.js
+      - name: Check authentication Edge function
+        run: npx --yes deno check supabase/functions/send-email/index.ts

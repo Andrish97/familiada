@@ -16,17 +16,19 @@ trwały3/24h także po dostarczeniu i usunięciu taska/gry; wyścigi i atomowy
 complete ostatniej paczki tekst/punkty. Odmowa usuwa niepełne głosy.
 Głosowania anonymous bez taska nie zmieniono; limit urządzenia nadal pkt7.
 
-Front nadal branch: wspólne sekcje/checkboxy/zegary i małe akcje nad kartami,
-dziewięć zrzutów docs/img/e19-polls. Go konta→Tasks ma właściwą copyPL/EN/UK;
-mailowe linki Ankiet dostają lang. Unit414/414 ✓ po nowej regresji języków.
-Branch: siedem Go passed38166322418; pierwsze dwa poll-share passed38166803982
-(realne maile8/14, pełny tekst/odmowa/cofnięcie/same-run). Pozostałe trzy
-38167196365 ✓ bez retry: mail-off/partial→decline, wspólny UI390/1400,
-trzy rzeczywiście dostarczone maile14 i czwarty zablokowany mimo usunięcia
-kolejki/taska/gry. Łącznie wszystkie12 punktowych scenariuszy na aktualnym
-backendzie344. Następnie Pages i pełny punktowy komplet12 na main;
-dopiero po jego wyniku zamknąć pkt5. Zrzuty E2E mają prefiks shot-,
-żeby workflow zachował je także przy sukcesie.
+Front Ankiet opublikowany Pages38167986176 ✓. Main38168027593: siedemGo ✓,
+pierwszy poll-share miał błąd gotowości helpera (pole widoczne przed init
+pytań), pozostałe cztery serial pominięte. Helper czeka Pytanie1 i sprawdza
+postęp1–10. Świeże pięć poll-share38168458967 na main w toku (e55d51d24d),
+unit publikacji414/414. Dopiero zielony wynik zamyka pkt5.
+
+Maile pkt6 są draftem brancha: kanoniczny renderer Edge + generowana
+identyczna kopia front, sześć wejść, odrębne reminders/rola Bazy/langstopki,
+16 zrzutów docs/img/e19-mails. Lokalnie unit424/424 i Deno check ✓.
+Nowe helpery E2E weryfikują HTML faktycznie dostarczonego maila; izolowany
+verify_e19_mail i realne branch/main + auth języki jeszcze wymagane.
+Nie publikować draftu przed zamknięciem Ankiet. Kod Deno typuje się po
+jawnych guardach usuwających sześć odtworzonych błędów starego HEAD.
 
 Dalej pkt6 maile (audyt wejść w maile-granice.md), pkt7 graf/kaskady/Go/
 lekki anonimowy token, UI/E20 i landscape; manual ostatni. Wypisanie=odmowa

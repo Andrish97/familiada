@@ -1,3 +1,4 @@
+const { expectMailDocument } = require("./helpers/mail-document");
 // tests/e2e/control.spec.js
 //
 // Wszystkie testy E2E dla Control v2 w jednym pliku (na wyraźną prośbę —
@@ -2663,6 +2664,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // wiadomość nadal była pending po 90 s, a dotarła po ok. 122 s;
     // używamy 150 s, żeby pokryć pełny interwał i czas dostawcy.
     const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/, timeout: 150_000 });
+    expectMailDocument(email, { accountFooter: true });
     const links = extractHttpLinks(email).filter((u) => u.includes("/go/") && u.includes("d=host"));
     expect(links.length, "mail musi zawierać działający link do /go/?d=host").toBeGreaterThan(0);
 
