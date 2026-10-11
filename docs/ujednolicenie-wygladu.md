@@ -314,10 +314,22 @@ lokalnych wariantów CSS, które rozjeżdżają wygląd sekcji.
 **Globalne przyciski akcji Ankiet:** poprawa dotyczy przycisków na pasku akcji
 nad kartami (np. Uruchom, Zamknij, Przerwij, Podlicz głosy, Uruchom ponownie),
 których dostępność zależy od stanu ankiety. Poprawić ich hierarchię, rozmiar,
-odstępy, wyrównanie oraz stany hover/disabled. Nie zmieniać przycisków
+odstępy, wyrównanie oraz stany hover/disabled, zachowując wygląd zbliżony do
+przycisków na stronie Gier. Na telefonie mają być kompaktowe, nie duże.
+Nie zmieniać przycisków
 wewnątrz kart „Wyniki” ani „Udostępnianie” i nie obejmować globalnych akcji
 nawigacji lub zamykania okien/dialogów. Zachować opisane płynne przejścia
 stanów karty wyników i istniejący układ karty udostępniania.
+
+### Aktualne doprecyzowanie przycisków Ankiet (2026-10-11)
+
+To doprecyzowanie rozstrzyga wcześniejsze nieporozumienie dotyczące zakresu:
+zmieniamy wyłącznie **globalny pasek akcji nad kartami**, nie przyciski
+wewnątrz kart. Wygląd przycisków akcji ma być zbliżony do przycisków na
+stronie Gier; na mobile mają pozostać małe/kompaktowe, a nie rozciągnięte ani
+duże. Obejmuje to akcje zależne od stanu ankiety (w tym „Zamknij”), nie
+przyciski zamykania nawigacji, okien ani dialogów. Wykonane zmiany starszych
+etapów pozostają bez zmian; ten zapis określa wymagania dla dalszej poprawki.
 
 Wspólne dla wszystkich ekranów: przypomnienie nie tworzy rekordu dostępu ani
 nowego tokenu. Flaga `user_flags.email_notifications` jest sprawdzana przed
