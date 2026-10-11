@@ -13,12 +13,11 @@ Szczegółowe granice pokrycia w maile-granice.md; nie nazywać samych
 szablonów pełnym testem publicznego kontaktu/admina/signup/guest migration.
 
 Teraz pkt7: graf/locks/kaskady/Go/anon, zgodnie z E19 §7 i blokady-zasobow.md.
-Wypisanie=odmowa wszędzie zapisane, starsze friends_remove nadal DELETE
-aktywnej relacji; dopiąć aktora decyzji, oba kierunki, undo→pending→accept,
-niezresetowany zegar po ukryciu/cofnięciu i wygaśnięcie. friends_cancel
-kasuje declined i blokuje tylko stary kierunek cooldown — wykryty zakres
-audytu, nie oznaczać jako wdrożonej reguły. _friend_drop_pair_tasks usuwa
-pending/opened taski pary; zbadać też częściowe głosy i oczekujące maile.
+Wypisanie=odmowa wszędzie zapisane. Audyt sprzed346 wykazał DELETE aktywnej
+relacji i jednostronny cooldown po cancel;346 zachowuje odmowę, aktora,
+budżet oraz zegary w obu kierunkach. _friend_drop_pair_tasks usuwa
+pending/opened taski pary; częściowe głosy i oczekujące maile to dalsza
+krawędź grafu (lokalny draft347, bez wdrożenia produkcyjnego).
 Kaskada345 wdrożona: FK base_share_tasks→question_bases ON DELETE CASCADE,
 DB38173636101/log OK20:48:43 UTC i rollbackowy smoke ✓; punktowy rzeczywisty
 Base mail/Go/odmowy/role main38173864796 ✓ bez retry. Wypisanie Znajomych346

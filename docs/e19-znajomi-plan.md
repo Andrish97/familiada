@@ -11,10 +11,12 @@ sprzed E12).
 
 ## 1. Model danych
 
-> **Aktualizacja E19 kroku 7:** opis 320 poniżej dokumentuje wykonany etap.
-> Zachowanie odmowy znajomości jako `declined` zamiast DELETE jest kolejną
-> zmianą kontraktu (§5, pkt 3), jeszcze nie wdrożoną. Metadata maila i
-> cooldownów już wdrożono w 327 (`contacts_list`).
+> **Stan aktualny:** opis320 poniżej jest historycznym modelem wykonanego
+> etapu, nie aktualną specyfikacją odmów. Odmowy Znajomych329,
+> Subskrybentów333–336 oraz Baz337–339 i Ankiet340–344 wdrożone
+> i sprawdzone produkcyjnie. Wypisanie Znajomych346 również zastosowane
+> w SQL; branch/main interfejsu jeszcze wymagane do zamknięcia paczki.
+> Aktualne zasady są w §7 i końcowych podsekcjach pkt7.
 
 - **`friendships`** (320): `id`, `requester_id`, `addressee_id` (FK `profiles`,
   ON DELETE CASCADE), `status` ∈ `pending|active`, `token` (link `go?f=`),
