@@ -60,8 +60,11 @@ Najnowsze doprecyzowanie: odbiorca ma zachować własne odmowy do wygaśnięcia,
 w zwiniętej sekcji „Odrzucone przeze mnie”. „Cofnij odmowę” przywraca
 oczekujące; osobne Akceptuj dopiero tworzy relację/dostęp. Bez nowego
 maila/tokenu i resetowania limitów. Znajomi przy Propozycjach, bazy
-i subskrypcje konta przy Zadaniach, bez konta przez /go/. Ukrywanie po
-5 dniach dotyczy tylko nadawcy. Cofnięty/wygasły/usunięty zasób blokuje akcję.
+w Bazy → Udostępnione, subskrypcje konta przy Zadaniach. Subskrypcja
+bez konta: brak undo aż do wygaśnięcia 30 dni, potem nowe zaproszenie. Ukrywanie po
+5 dniach dotyczy tylko nadawcy. Akceptacja bazy obecnie istnieje zarówno
+w Bazach, jak i Zadaniach (ten sam rekord/RPC); poprzedni opis tylko
+Zadań był niepełny. Pełna tabela obu stron wszystkich odmów w E19 §7. Cofnięty/wygasły/usunięty zasób blokuje akcję.
 Plan E19 §7 zawiera tabelę osobnych komunikatów dla znajomego, własnej
 prośby i prośby przychodzącej. Docelowo prośba krzyżowa wskazuje
 Propozycje, bez automatycznej akceptacji. To korekta do wdrożenia;

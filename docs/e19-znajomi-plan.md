@@ -286,8 +286,9 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
   wysyłek i zużyte limity pozostają. Samo cofnięcie nie wysyła przypomnienia.
   Przywrócony wiersz przechodzi do zwykłych oczekujących.
 - Dostępność tej sekcji: Znajomi — przy Propozycjach; zaproszenia do baz
-  i subskrypcji na konto — przy zadaniach odbiorcy. U subskrybenta bez
-  konta tę samą akcję udostępnia istniejący link /go/. Nie dodajemy
+  — w Bazy → Udostępnione; subskrypcje na konto — przy zadaniach odbiorcy.
+  **Subskrypcja bez konta: odmowa nieprzywracalna przez 30 dni**, bez
+  akcji undo w /go/. Nie dodajemy
   propozycji przychodzących na jednostronnej stronie Subskrybenci nadawcy.
 - **Wygląd cofnięcia (doprecyzowanie 2026-10-11):** użyć istniejącej
   ikony `undo` (zawinięta strzałka w lewo), bez napisu w przycisku;
@@ -298,17 +299,19 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
 - Nagłówek zwijanej sekcji: chevron + „Odrzucone przeze mnie” + liczba
   wpisów. Ukryć sekcję, gdy jest pusta; po otwarciu własne przewijanie
   zgodnie ze wspólnym komponentem. Znajomi: ostatnia sekcja prawej karty,
-  pod Propozycjami; Zadania: ostatnia sekcja istniejącej karty, pod Zrobione,
-  z istniejącymi filtrami rodzajów. Bez nowej karty i bez zakładki w Bazach.
-- **Bazy — rozdzielenie stron relacji:** zaproszenia odbiorca rozpatruje
-  w Zadaniach; tam zachowuje odrzucone z nazwą bazy, nadawcą i oferowaną
-  rolą. Cofnięcie odmowy przenosi wpis do Do zrobienia; Akceptuj dopiero
-  udostępnia bazę na stronie Bazy → Udostępnione. Właściciel widzi odmowę
-  tylko w istniejącym oknie udostępniania swojej bazy i nie może jej cofnąć
-  za odbiorcę. Przed przywróceniem sprawdzić aktualną ważność zaproszenia,
-  bazę i aktualną oferowaną rolę; nie odtwarzać danych z kafelka.
-- Cofnąć odmowę może wyłącznie właściwy odbiorca (konto albo ważny token
-  dla obsługi bez konta). Serwer sprawdza ważność i stan nadrzędnego zasobu.
+  pod Propozycjami; subskrypcje na konto: ostatnia sekcja karty Zadań, pod
+  Zrobione; bazy: pod listą w istniejącej zakładce Bazy → Udostępnione.
+  Bez nowej karty lub zakładki. Zadania mogą wskazywać odmowę bazy i
+  prowadzić do tej sekcji, bez odrębnej kopii stanu.
+- **Bazy — korekta opisu miejsca:** obecnie Akceptuj/Odrzuć istnieją
+  zarówno w Bazy → Udostępnione, jak i w Zadaniach; oba ekrany używają
+  tego samego task_id i RPC. Nie usuwać wykonanych akcji w Zadaniach
+  przez samo doprecyzowanie planu. Docelowa sekcja cofnięcia odmowy bazy
+  jest w Bazy → Udostępnione. Cofnięcie przywraca propozycję bazy; Akceptuj
+  dopiero nadaje dostęp. Właściciel widzi odmowę w oknie udostępniania,
+  bez prawa cofnięcia za odbiorcę. Przed przywróceniem sprawdzić aktualną
+  ważność zaproszenia, bazę i oferowaną rolę; nie odtwarzać danych z kafelka.
+- Cofnąć odmowę może wyłącznie właściwy odbiorca (konto; subskrypcja bez konta nie ma tej akcji). Serwer sprawdza ważność i stan nadrzędnego zasobu.
   Jeśli nadawca cofnął zaproszenie, usunął zasób/konto lub odmowa wygasła,
   akcja nie przywraca niczego; UI/Go pokazują powód niedostępności.
   Po wygaśnięciu/cofnięciu starego wpisu potrzebne jest nowe zaproszenie.
@@ -343,6 +346,40 @@ nowe zaproszenie po wygaśnięciu, nieważny stary token, brak automatycznej
 kolejki, wyłączone maile, bezpośredni RPC, wyścigi nowych zaproszeń,
 cofnięcie/usunięcie konta/rodzica, osobno rezygnacja z subskrypcji,
 niezmienione limity po cofnięciu odmowy, cudze RPC/tokeny, konto/bez konta.
+
+### Odmowy — oba kierunki i czas życia (doprecyzowanie 2026-10-11)
+
+**Parametry planu:** 30 dni od odmowy dla znajomości/subskrypcji/bazy
+(założenie realizacji); ukrywanie u nadawcy po 5 dniach nadal propozycją,
+nie liczbą wybraną przez użytkownika. U odbiorcy z kontem własna odmowa
+pozostaje do wygaśnięcia. Nie odnawiać okresu przez powtórne Odrzuć.
+
+| Przypadek | Nadawca po odmowie | Odbiorca po odmowie | Cofnięcie i koniec ważności |
+|---|---|---|---|
+| Znajomość | Wychodzące: Odrzucono, bez Ponów; ukrycie po proponowanych 5 dniach. Nowe dodanie zablokowane do 30 dni niezależnie od maila/nazwy lub usunięcia kafelka. | Zwinięte „Odrzucone przeze mnie” pod Propozycjami w prawej karcie Znajomych, do 30 dni. | Odbiorca: undo → oczekująca propozycja → osobne Akceptuj. Po 30 dniach odmowa wygasa, oba wpisy znikają, stary token nieważny. Nowa prośba możliwa w dowolnym kierunku. |
+| Subskrypcja — odbiorca z kontem | Wychodzące w Subskrybentach: Odrzucono, bez Ponów; ukrycie po proponowanych 5 dniach. Nowe zaproszenie zablokowane do 30 dni. | Zwinięte „Odrzucone przeze mnie” w Zadaniach, do 30 dni; bez nowej sekcji przychodzących na jednostronnej stronie nadawcy. | Odbiorca: undo → oczekujące → osobne Akceptuj. Po 30 dniach stary token nieważny i można utworzyć nowe zaproszenie. Nie dotyczy wypisania z aktywnej subskrypcji. |
+| Subskrypcja — odbiorca bez konta | Tak samo: bez Ponów, ukrycie po proponowanych 5 dniach, nowe zaproszenie dopiero po 30 dniach. | Brak listy własnych odmów. Go pokazuje Odrzucono, **bez cofnięcia i bez Akceptuj**. | **Decyzja użytkownika: odmowa nieprzywracalna aż do wygaśnięcia 30 dni.** Potem nowe jawne zaproszenie z nowym linkiem; starego nie reaktywujemy. Założenie konta w międzyczasie nie omija tej blokady (zachować tryb odmowy). |
+| Baza | Właściciel: Odrzucono w oknie udostępniania danej bazy, bez Ponów; ukrycie po proponowanych 5 dniach. Kolejne udostępnienie tej samej bazy temu odbiorcy zablokowane przez 30 dni, również po zmianie roli/cofnięciu. Inna baza jest osobnym zaproszeniem. | Zwinięte „Odrzucone przeze mnie” w Bazy → Udostępnione, pod listą baz, do 30 dni. Nazwa bazy, nadawca, rola, Odrzucono, undo; bez dostępu do zawartości. | Undo → oczekująca propozycja; Akceptuj w Bazach nadaje dostęp. Zadania mogą prowadzić do propozycji; obecne Akceptuj/Odrzuć także tam istnieją i operują na tym samym rekordzie. Po 30 dniach stary token nieważny i możliwe nowe udostępnienie. |
+| Ankieta — zadanie w konkretnym uruchomieniu | Lista odbiorców: Odrzucono, bez Ponów w całym tym uruchomieniu; kafelek można ukryć po proponowanych 5 dniach lub wcześniej przy końcu nadrzędnego przebiegu. Ukrycie nie umożliwia kolejnego zaproszenia w tym samym przebiegu. | Zadanie znika z Do zrobienia natychmiast po odmowie; nie trafia do Zrobione ani Odrzucone przeze mnie. | Zgodnie z wcześniejszym ustaleniem brak cofnięcia odmowy ankiety. Brak reguły 30 dni; decyzja związana z uruchomieniem. Nowe uruchomienie czyści poprzednie udostępnienia i może tworzyć nowe. |
+
+**Reguły krzyżowe i nadrzędne:**
+- Cofnięcie przez nadawcę, usunięcie bazy/konta lub wygaśnięcie nadrzędnego
+  zasobu usuwa możliwość undo. Ukrycie kafelka nie jest cofnięciem.
+- Wcześniejsze anulowanie/usunięcie zaproszenia nie skraca karencji odmowy.
+  Zachować minimalny zegar odmowy niezależny od widocznego rekordu.
+- Undo zmienia tylko decyzję właściwego odbiorcy i nie wysyła maila.
+  Nie resetuje tokenu, liczby wysyłek ani dat limitów. Ponów pozostaje
+  oddzielną akcją oczekującego zaproszenia, według flagi i zachowanych limitów.
+- Odmowy anonimowej subskrypcji nie przenosić automatycznie do aktywnej
+  subskrypcji ani nie umożliwiać undo przez claim po założeniu konta.
+- Porządkowanie baz musi uwzględnić nowe 30 dni odmowy: obecny komentarz
+  w handleShareLink opisuje usuwanie tasków po 5 dniach; zbadać i zmienić
+  cleanup tak, by nie usuwał przedwcześnie przywracalnej odmowy.
+- Kontrakty list, RPC, Go, cleanup i limity korzystają z tego samego terminu.
+  Przy wyścigu wygaśnięcia/undo/nowego zaproszenia decyduje stan serwera.
+
+Tabela jest docelowym kontraktem; nie opisuje jeszcze wdrożonego zachowania.
+Zrzuty każdego przypadku dopiero po realizacji na rzeczywistych komponentach.
 
 ### Zasady per funkcja
 

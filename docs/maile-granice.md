@@ -49,7 +49,9 @@ sprawdzane w bazie (nie w przeglądarce).
   wysyła maila i nie znosi wypisania/globalnej flagi. Szczegóły w E19 §7.
 - Cofnięcie własnej odmowy przez odbiorcę przywraca oczekujące, nie wysyła
   maila i nie resetuje dotychczasowych limitów. Akceptacja pozostaje
-  osobną akcją. Dostępność i ważność odmowy opisuje E19 §7.
+  osobną akcją. Wyjątek ustalony przez użytkownika: odmowa subskrypcji
+  bez konta nie ma cofnięcia przez 30 dni; potem możliwe nowe zaproszenie.
+  Dostępność i ważność odmowy opisuje E19 §7.
 - Cooldown ogranicza wysłanie maila. UI pokazuje pozostały czas, backend
   autorytatywnie rozstrzyga możliwość wysłania; cooldown nie opóźnia
   przyznania ani cofnięcia dostępu.

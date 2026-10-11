@@ -353,8 +353,9 @@ etykieta kanału, miejsce akcji, widoczny cooldown oraz reguła maila z
 przez cały okres ich ważności w kompaktowej, zwiniętej sekcji
 „Odrzucone przeze mnie”. Wspólne wiersze/CSS i akcja „Cofnij odmowę”
 przywracają oczekujące, bez automatycznej akceptacji lub maila. Znajomi:
-przy Propozycjach; bazy/subskrypcje konta: przy Zadaniach; subskrypcja
-bez konta: istniejący link /go/. Ukrywanie wpisu wcześniej dotyczy tylko
+przy Propozycjach; bazy: Bazy → Udostępnione pod listą; subskrypcje
+konta: przy Zadaniach. Subskrypcja bez konta: brak cofnięcia aż do
+wygaśnięcia 30 dni, także w /go/. Ukrywanie wpisu wcześniej dotyczy tylko
 nadawcy. To nowy zakres do realizacji, nie zmiana historii wykonanej
 listy Zrobione. Szczegółowy kontrakt w E19 §7.
 
