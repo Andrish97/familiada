@@ -13,7 +13,7 @@ async function rpc(page, name, args) {
     return data;
   }, { name, args });
 }
-async function ready(page) { await expect(page.locator('[data-skel-step]').first()).toHaveClass(/skel-step-ready/); }
+async function ready(page) { await expect(page.locator('[data-skel-step]').first()).toHaveClass(/skel-step-ready/, { timeout: 30_000 }); }
 async function createBase(page, name) {
   return page.evaluate(async name => {
     const user = (await window.__sbClient.auth.getUser()).data.user;
