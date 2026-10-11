@@ -24,15 +24,14 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
   const recipient = await recipientContext.newPage();
   const anonymous = await anonymousContext.newPage();
   const games = [];
-  const email = testAccountUsername(8);
+  const email = "test12@familiada.online";
   let oldRecipientId = null;
   try {
-    await restoreTestAccount("test8");
+    await restoreTestAccount("test12");
     await loginAsTestUser(owner, ownerContext, { username: testAccountUsername(7) });
     await loginAsTestUser(recipient, recipientContext, { username: email });
     oldRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
-    await rpc(owner, "e2e_poll_mail_budget_cleanup", { p_recipient_email: email });
-    await rpc(owner, "e2e_friendships_cleanup", { p_other_user_id: oldRecipientId });
+    expect((await rpc(owner, "e2e_friendships_cleanup", { p_other_user_id: oldRecipientId })).ok).toBe(true);
     await owner.evaluate(async () => {
       const sb = window.__sbClient;
       const uid = (await sb.auth.getUser()).data.user.id;
@@ -115,7 +114,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(0);
     for (const fixture of games) expect((await rpc(owner, "poll_share_panel", { p_game_id: fixture.id })).tasks).toHaveLength(0);
-    await restoreTestAccount("test8");
+    await restoreTestAccount("test12");
     await loginAsTestUser(recipient, recipientContext, { username: email });
     const newRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
     expect(newRecipientId).not.toBe(oldRecipientId);
@@ -131,7 +130,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     throw error;
   } finally {
     const cleanup = await Promise.allSettled([
-      restoreTestAccount("test8"),
+      restoreTestAccount("test12"),
       games.length ? owner.evaluate(async ids => {
         const { error } = await window.__sbClient.from("games").delete().in("id", ids);
         if (error) throw error;

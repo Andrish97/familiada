@@ -155,12 +155,10 @@ export async function restoreE2EAccount(request, env) {
   const account = String(body?.account || "").toLowerCase();
   const password = String(body?.password || "");
   const config = account === "test11"
-    ? { targetEmail: "test11@familiada.online", candidates: ["test11@familiada.online"], username: null }
+    ? { targetEmail: "test11@familiada.online", candidates: ["test11@familiada.online"], username: null, allowCreate: true }
     : account === "test12"
-      ? { targetEmail: "test12@familiada.online", candidates: ["test12@familiada.online", "test13@familiada.online"], username: "test12" }
-      : account === "test8"
-        ? { targetEmail: "test8@familiada.online", candidates: ["test8@familiada.online"], username: "test8", allowCreate: true }
-        : null;
+      ? { targetEmail: "test12@familiada.online", candidates: ["test12@familiada.online", "test13@familiada.online"], username: "test12", allowCreate: true }
+      : null;
   if (!config || password.length < 8 || password.length > 200) {
     return json({ ok: false, error: "invalid_restore_request" }, 400);
   }
@@ -174,7 +172,7 @@ export async function restoreE2EAccount(request, env) {
   if (matches.length === 0 && config.allowCreate) {
     const createRes = await supabaseRequest(env, "/auth/v1/admin/users", {
       method: "POST",
-      body: { email: config.targetEmail, password, email_confirm: true, user_metadata: { username: config.username, is_guest: false } },
+      body: { email: config.targetEmail, password, email_confirm: true, user_metadata: { username: config.username || account, is_guest: false } },
     });
     if (!createRes.ok) return json({ ok: false, error: "account_create_failed" }, createRes.status || 500);
     user = createRes.data?.user || createRes.data;

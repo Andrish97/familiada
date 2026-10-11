@@ -43,9 +43,11 @@ schema d2ab891270. Finalny isolated38180667222 success przed SQL.
 Branch38181499992 failure PRZED usuwaniem konta8: stary klucz ankiety
 sprzed poll_open i nieobsługiwany restore8. Konta7/8 nie usunięte.
 Poprawiono pobranie bieżącego klucza, cleanup/log pierwotnego błędu.
-Pomocnik Worker restore rozszerzony wyłącznie o test8 (tworzenie tylko
-gdy nie istnieje); sześć nowych kontraktów, unit453/453. Worker wymaga
-publikacji, potem świeży real-mail/account deletion branch i main.
+Doprecyzowanie użytkownika: odtworzyć dedykowane konta11/12, nie8.
+Worker tworzy brakujące11/12, potwierdza adres i ustawia standardowe hasło;
+nie tworzy kont8/9/10/14. Test348 przeniesiony na12; restore także w finally.
+Nowy punktowy test odtworzenia obu kont i logowania. Publikacja Workera
+oraz rzeczywista kontrola w toku; potem test usuwania branch/main.
 Nie zamykać348 przed tymi kontrolami; test14 nadal bez konta.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
