@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict G1a1Vz4CzfS9D3cUNsbTiikcAk1BpT4GPoMrP2ogg6YxGTSGpzHBl4Q3ueBogCg
+\restrict WoyZMceamPwAlGTO3ri9FBsDzq30g9eQuSJhAgxwZEoRpK8stw3hLG0xuhGuL0N
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3497,7 +3497,7 @@ DECLARE uid uuid:=auth.uid(); caller text; recipient text:=public._norm_email(p_
 BEGIN
  SELECT public._norm_email(email) INTO caller FROM auth.users WHERE id=uid;
  IF uid IS NULL OR caller IS NULL OR caller !~ '^test[1-8]@familiada[.]online$'
- OR recipient IS NULL OR recipient !~ '^test([1-8]|14)@familiada[.]online$' THEN
+ OR recipient IS NULL OR recipient !~ '^test([1-8]|11|12|14)@familiada[.]online$' THEN
   RETURN jsonb_build_object('ok',false,'err','test_accounts_required'); END IF;
  DELETE FROM public.poll_mail_budget_events WHERE owner_id=uid AND recipient_key=md5(recipient);
  GET DIAGNOSTICS n=ROW_COUNT; RETURN jsonb_build_object('ok',true,'deleted',n);
@@ -19687,5 +19687,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict G1a1Vz4CzfS9D3cUNsbTiikcAk1BpT4GPoMrP2ogg6YxGTSGpzHBl4Q3ueBogCg
+\unrestrict WoyZMceamPwAlGTO3ri9FBsDzq30g9eQuSJhAgxwZEoRpK8stw3hLG0xuhGuL0N
 
