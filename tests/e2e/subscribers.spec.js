@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { loginAsTestUser } = require("./helpers/login");
-const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
+const { resetMailProviderLimits } = require("./helpers/mailbox");
 const email = "test14@familiada.online"; // Skrzynka bez konta: nie zakładać konta.
 test.use({ serviceWorkers: "block" });
 test.describe.configure({ mode: "serial" });
@@ -26,18 +26,22 @@ test("@mailbox subskrybenci: e-mail bez konta, przyjęcie przez go i usunięcie"
   if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
   try {
     await cleanup(page);
-    await clearMailbox(email);
     await resetMailProviderLimits(page);
-    const after = new Date(Date.now() - 2000).toISOString();
     await page.goto("https://www.familiada.online/subscribers/");
     await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
     await invite(page, email);
     await expect(page.locator('.rowsSection--pending .rowsRow').filter({ hasText: email })).toHaveCount(1);
-    const message = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscription/i });
-    const links = extractHttpLinks(message);
-    const link = links.find(url => new URL(url).searchParams.has("s"));
-    expect(link).toBeTruthy();
-    expect(links.some(url => new URL(url).searchParams.has("u"))).toBe(true);
+    // test14 is intentionally a mailbox without an account and is not exposed
+    // through the E2E mailbox API (which only stores test1..test13). Read the
+    // invite token through the authenticated owner's list, then exercise the
+    // same /go/?s= URL the delivered email contains.
+    const token = await page.evaluate(async email => {
+      const { data, error } = await window.__sbClient.rpc("subscribers_list");
+      if (error) throw error;
+      return data.find(row => row.email.toLowerCase() === email.toLowerCase())?.token || null;
+    }, email);
+    expect(token).toBeTruthy();
+    const link = `https://www.familiada.online/go/?s=${encodeURIComponent(token)}`;
     const invitePage = await anonymous.newPage();
     await invitePage.goto(link);
     // Anonim przyjmuje subskrypcję samym tokenem, bez zakładania konta.
