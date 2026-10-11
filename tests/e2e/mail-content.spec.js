@@ -46,6 +46,14 @@ test('mail content: contact/manual PL/EN/UK and marketing templates delivered', 
   test.setTimeout(240000);
   await loginAsPooledTestUser(page, context, 0);
   const items = await templates();
+  const invitation = items.find(item => item.subject.endsWith('marketing-invitation'));
+  const images = [...invitation.html.matchAll(/<img src="([^"]+)"/g)].map(match => match[1]);
+  expect(images.length).toBe(4);
+  for (const url of images) {
+    const response = await context.request.get(url.replace(/&amp;/g, '&'));
+    expect(response.status(), `marketing image ${url}`).toBe(200);
+    expect(response.headers()['content-type']).toContain('image/webp');
+  }
   await clearMailbox(EMAIL); await resetMailProviderLimits(page);
   const after = new Date().toISOString();
   try {

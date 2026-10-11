@@ -256,3 +256,9 @@ Zrzuty [marketing390](img/e19-mails/marketing-invitation-390.png),
 [marketing1400](img/e19-mails/marketing-invitation-1400.png),
 [newsletter390](img/e19-mails/marketing-newsletter-390.png),
 [własny390](img/e19-mails/marketing-custom-390.png), wszystkie bez overflow.
+
+Przegląd screenshotów marketingu wykrył legacy /img/pl/ zwracające404.
+Aktualne /assets/img/pl/ zwraca200 image/webp. Zrzuty odświeżone z czterema
+ilustracjami; unit weryfikuje lokalne pliki i ścieżki, E2E sprawdza HTTP
+każdego obrazka przed SMTP. Izolowana bramka buduje też Worker przez
+Wrangler --dry-run, bez wdrożenia.

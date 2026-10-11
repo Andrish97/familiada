@@ -1010,3 +1010,8 @@ jobs:
           git diff --exit-code -- web/shared/js/core/mail-document.js cloudflare/maintenance-worker/src/lib/email/mail-document.js
       - name: Check authentication Edge function
         run: npx --yes deno check supabase/functions/send-email/index.ts supabase/functions/send-mail/index.ts
+      - name: Build mail Worker without deployment
+        working-directory: cloudflare/maintenance-worker
+        run: |
+          npm ci
+          npx wrangler deploy --dry-run --outdir /tmp/mail-worker-build
