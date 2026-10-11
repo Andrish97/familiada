@@ -71,7 +71,7 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
       unsub.searchParams.set("action", "unsub");
       await invitePage.goto(unsub.toString());
       await invitePage.locator(".poll-go-actions button").click();
-      await expect(invitePage.locator("#message")).toContainText(/wypis|subskryb/i);
+      await expect(invitePage.locator("#message")).toContainText("Subskrypcja anulowana");
       await page.reload();
       removalRow = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
       await expect(removalRow).toContainText("Odrzucono");

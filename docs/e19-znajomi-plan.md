@@ -962,3 +962,15 @@ Zrzuty wykonanego renderera z przykładowymi danymi:
 [telefon — odmowa i mail-off](img/e19-subscribers/refusal-invite-390.png),
 [komputer](img/e19-subscribers/refusal-invite-1400.png),
 [telefon — aktywni](img/e19-subscribers/refusal-active-390.png).
+
+### Doprecyzowanie przekrojowe po wykonanych odmowach Znajomych
+
+Zasada „wypisanie = odmowa” obejmuje jawną rezygnację odbiorcy z już
+przyjętej relacji lub dostępu. Dopięcie starszych wykonanych funkcji jest
+nową pracą; ich dotychczasowych kontroli nie oznaczać jako pokrycia tej
+zmiany. W pkt 4 Baz uwzględnić `leave_shared_base`: odebranie własnego
+dostępu, odmowa 5/30 i późniejsze undo → pending → osobne przyjęcie.
+W audycie grafu uwzględnić dobrowolne zakończenie znajomości i pozostałe
+wejścia rezygnacji, z zapisaniem osoby podejmującej decyzję. Zwykłe
+rozłączenie urządzenia lub wygaśnięcie sesji zachowuje swój cykl techniczny.
+Cofnięcie dostępu przez właściciela pozostaje jego operacją cofnięcia.
