@@ -349,6 +349,13 @@ niezmienione limity po cofnięciu odmowy, cudze RPC/tokeny, konto/bez konta.
 
 ### Odmowy — oba kierunki i czas życia (doprecyzowanie 2026-10-11)
 
+> **Zatwierdzenie użytkownika:** „Wszystkie propozycje są rozpisane dobrze”.
+> Parametry tabeli są przyjęte: ukrycie u nadawcy po 5 dniach, wygaśnięcie
+> odmowy znajomości/subskrypcji/bazy po 30 dniach, zachowanie własnej odmowy
+> odbiorcy z kontem do wygaśnięcia, brak undo subskrypcji bez konta.
+> Wcześniejsze oznaczenia tych liczb jako propozycji opisują etap ustaleń.
+
+
 **Parametry planu:** 30 dni od odmowy dla znajomości/subskrypcji/bazy
 (założenie realizacji); ukrywanie u nadawcy po 5 dniach nadal propozycją,
 nie liczbą wybraną przez użytkownika. U odbiorcy z kontem własna odmowa
@@ -639,3 +646,27 @@ i akceptacji oraz drugi przypadek cofania, tworzony fixture RPC bez maila.
 Okna czasu ponowienia testowane w izolowanym SQL, bez udawania, że
 upłynęło pięć dni na produkcji. Trwały limit po usunięciu relacji oraz
 kontrakt odmów Subskrybentów nadal w kolejnych paczkach.
+
+### Propozycja organizacji Zadań — do wyboru, nie zatwierdzona decyzja
+
+Użytkownik rozważa Zadania tylko dla ankiet lub wspólną skrzynkę z dostępem
+także na właściwych stronach; wymaga uniknięcia powielania. Rekomendacja:
+Zadania obejmują ankiety, znajomości, subskrypcje, bazy i dotychczasowe
+urządzenia. Właściwe strony nadal udostępniają kontekstowe akcje na tych
+samych zaproszeniach. Jeden rekord/identyfikator, jedna funkcja mutacji
+i wspólny komponent wiersza dla danego rodzaju; nie synchronizujemy kopii.
+Decyzja z dowolnego ekranu aktualizuje drugi widok i liczniki.
+
+Oczekujące znajomości/subskrypcje/bazy: Akceptuj/Odrzuć w Zadaniach
+i właściwym miejscu kontekstowym; ankiety: Głosuj/Odrzuć. Odrzucone
+przez odbiorcę z kontem: wspólna zwinięta sekcja w Zadaniach oraz
+kontekstowe miejsce na stronie danego zasobu, ten sam undo i termin.
+Ankiety nie trafiają do tej sekcji. Zaakceptowane kontakty/bazy znikają
+z oczekujących i pozostają na właściwej stronie; Zrobione nadal obejmuje
+głosy ankiet przez 5 dni. Reguła już podłączonych urządzeń pozostaje
+jak w wykonanym etapie, bez zmian wynikających z tej propozycji.
+Powiadomienie nadal oznacza mail; Zadania są listą działań niezależną
+od flagi mailowej. Liczniki liczą unikalne zaproszenia, nie sumę widoków.
+
+Ta propozycja nie usuwa istniejących akcji i nie rozpoczyna zmiany
+architektury bez rozstrzygnięcia użytkownika.

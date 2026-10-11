@@ -53,7 +53,8 @@ podłączone pozostają do cofnięcia/wygaśnięcia. Nie zmieniano tych zasad.
 Użytkownik potwierdził: brak przypomnień po odmowie. Odrzucone znikają
 z list i sama odmowa wygasa po czasie, umożliwiając nowe dodanie osoby
 (Znajomi/Subskrybenci/Bazy). Założenie realizacji: 30 dni od odmowy;
-znikanie z list wcześniej: propozycja 5 dni. Stary token unieważniony,
+znikanie z list nadawcy po 5 dniach. Użytkownik zatwierdził rozpisane
+propozycje i terminy; 5/30 dni nie są już otwartymi parametrami. Stary token unieważniony,
 nowe zaproszenie wymaga ponownej akceptacji; bez automatycznej wysyłki.
 Nie mylić odmowy zaproszenia z wypisaniem się z aktywnej subskrypcji.
 Najnowsze doprecyzowanie: odbiorca ma zachować własne odmowy do wygaśnięcia,
