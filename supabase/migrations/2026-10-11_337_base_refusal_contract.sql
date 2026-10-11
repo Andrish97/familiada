@@ -394,7 +394,7 @@ CREATE OR REPLACE FUNCTION public.base_share_accept(p_task_id uuid)
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 DECLARE uid uuid:=auth.uid(); t public.base_share_tasks%rowtype;
 BEGIN
- IF uid IS NULL THEN RETURN false; END IF;
+ IF uid IS NULL OR NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=uid AND NOT is_guest) THEN RETURN false; END IF;
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=uid;
  IF NOT FOUND THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(t.base_id,uid);

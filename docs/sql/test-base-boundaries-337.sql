@@ -62,5 +62,24 @@ BEGIN
  PERFORM set_config('request.jwt.claim.sub',u::text,true);
  IF NOT public.base_share_accept(t) THEN RAISE EXCEPTION 'flag-off hides access acceptance'; END IF;
  IF public.base_share_panel(b)->>'ok'<>'false' THEN RAISE EXCEPTION 'recipient reads owner panel'; END IF;
+ PERFORM set_config('request.jwt.claim.sub',o::text,true);
+ SELECT * INTO r FROM public.base_share_by_user(b,u,NULL);
+ IF r.err<>'invalid_role' THEN RAISE EXCEPTION 'NULL role'; END IF;
+ SELECT * INTO r FROM public.base_share_by_user(b,NULL,'viewer');
+ IF r.err<>'unknown_user' THEN RAISE EXCEPTION 'NULL recipient'; END IF;
+ SELECT * INTO r FROM public.base_share_by_user(b,o,'viewer');
+ IF r.err<>'owner' THEN RAISE EXCEPTION 'self share'; END IF;
+ UPDATE public.profiles SET is_guest=true WHERE id=u;
+ SELECT * INTO r FROM public.base_share_by_user(b,u,'viewer');
+ IF r.err<>'unknown_user' THEN RAISE EXCEPTION 'guest invite'; END IF;
+ INSERT INTO public.base_share_tasks(owner_id,base_id,recipient_user_id,recipient_email,role,status)
+ VALUES(o,b,u,'recipient337b@example.net','viewer','pending') RETURNING id INTO t;
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ IF public.base_share_accept(t) THEN RAISE EXCEPTION 'legacy guest acceptance'; END IF;
+ UPDATE public.profiles SET is_guest=false WHERE id=u;
+ PERFORM set_config('request.jwt.claim.sub',o::text,true);
+ DELETE FROM public.question_bases WHERE id=b;
+ PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ IF public.base_share_accept(t) OR public.base_share_decline(t) OR public.base_share_undo_decline(t)->>'ok'<>'false' OR jsonb_array_length(public.base_declines_list_mine())<>0 THEN RAISE EXCEPTION 'parent deletion leaves actions'; END IF;
 END $$;
 ROLLBACK;
