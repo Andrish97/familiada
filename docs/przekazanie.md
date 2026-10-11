@@ -428,3 +428,15 @@ Zakładki z wypustkami nadal otwarte, nie zrealizowane przy tej korekcie.
 konto→Znajomi, zgodnie z obecnym subscribers_invite. Nie pytać ponownie,
 nie tworzyć osobnej obsługi subskrypcji kont ani jej plakietki. Otwarte
 kontrakty E19/UI skorygowane; historia wcześniejszego pytania zachowana.
+
+Statusy active: Pages 38147497547 ✓, kontrola main 38147553964 w toku.
+Branch 38147347570 ✓, lokalne cztery zrzuty active-* bez overflow.
+Plan subskrypcji bez konta i braku akceptacji w panelu zapisany; nie
+wracać do pytania o subskrypcje kont. Wypustki mobilne jeszcze do wdrożenia.
+
+**Korekta active zakończona:** main 38147553964 ✓ (oba panele, 1400/390),
+unit 410/410, Pages 38147497547 ✓. Nie powtarzać zakończonych kontroli.
+Następne otwarte zakresy: zakładki z wypustkami/plakietki/puste listy
+kontaktów, odmowy Baz i wspólny wygląd udostępniania, odmowy anonimowych
+Subskrybentów 5/30 dni bez undo/akceptacji w panelu; model kont rozstrzygnięty.
+Manual ostatni. Lokalny draft 331 nadal wymaga testów i frontu.

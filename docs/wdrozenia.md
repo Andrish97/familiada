@@ -393,3 +393,7 @@ Stan szczegółowy:
 | 2026-10-11 | Subskrybenci / bez akceptacji w panelu | Użytkownik doprecyzował: panel Subskrybentów nie obsługuje akceptacji. Nadawca zaprasza/przypomina/cofa; odbiorca bez konta decyduje w Go z maila. Zapisano w E19/UI. | Zachować jednostronny panel i regułę odmowy bez undo przez 30 dni. |
 
 | 2026-10-11 | Kontakty / active branch zielony | 38147347570 ✓: oba panele 1400/390, aktywny kafelek bez tagu/rzędu statusu, usuwanie działa, pending/declined nadal oznaczone. Unit 410/410 i cztery zrzuty ✓. | Promocja main, Pages i ten sam punktowy test produkcyjny. |
+
+| 2026-10-11 | Kontakty / status active opublikowany | Pages 38147497547 ✓, main 38147553964 w toku (ten sam kontrolowany test obu stron/obu szerokości, konto 7). Scalono main a30a5c8f75 z wersjami CI bez konfliktów. | Zapisać wynik kontroli przed zamknięciem. Model subskrypcji bez konta rozstrzygnięty, panel bez akceptacji. |
+
+| 2026-10-11 | Kontakty / status active zamknięty produkcyjnie | Main 38147553964 ✓: kontrolowany przegląd Znajomych/Subskrybentów 1400/390, bez etykiety/rzędu active, przycisk usuwania obecny, oczekujące/odrzucone oznaczone. Unit 410/410; branch 38147347570 ✓, Pages 38147497547 ✓. | Gotowe. Cztery zrzuty active-*; zakładki z wypustkami i wspólne puste listy pozostają otwarte, tak samo paczki Baz/Subskrybentów. |
