@@ -125,10 +125,13 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     await expect(taskRow).toHaveClass(/rowsFocus/, { timeout: 30_000 });
     expect(await rpc(friendPage, "poll_task_done", { p_token: taskToken })).toBe("votes_incomplete");
     await taskRow.locator('[data-act="vote"]').click();
-    await expect(friendPage.locator("#answerInput")).toBeVisible({ timeout: 30_000 });
+    await expect(friendPage.locator("#qtext")).toHaveText("Pytanie 1", { timeout: 30_000 });
+    await expect(friendPage.locator("#answerInput")).toBeEnabled();
     for (let n = 0; n < 10; n++) {
+      await expect(friendPage.locator("#qtext")).toHaveText(`Pytanie ${n + 1}`);
       await friendPage.locator("#answerInput").fill("Kot");
       await friendPage.locator("#btnSend").click();
+      if (n < 9) await expect(friendPage.locator("#qtext")).toHaveText(`Pytanie ${n + 2}`);
     }
     await expect.poll(async () => (await rpc(ownerPage, "poll_share_panel", { p_game_id: gameId })).tasks.find(t => t.recipient_user_id === friendId)?.status, { timeout: 30_000 }).toBe("done");
     await anonymousPage.goto(links[1]);
