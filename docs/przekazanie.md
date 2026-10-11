@@ -35,10 +35,13 @@ zachowuje guard. Manual zawsze na końcu.
 
 ## Zadania — poprawka odstępów i przegląd kafelków
 
-Poprawka CSS `e4ea8cd53` wdrożona: Pages 38139190584 ✓.
+Odstępy, ikony pochodzenia i lekkie kolory rodzajów wdrożone. Kompaktowy
+mobile `c9c25f2ef`: Pages 38140156595 ✓, kontrola 38140200630 ✓ (3/3
+bez retry, unit 408/408). Na telefonie opis bez dat, do dwóch linii tytułu
+i opisu, mała ikona; E20 rozszerzy zasadę na resztę systemu.
 Branch 38139084807 ✓: 3/3 bez retry (rzeczywista baza oraz kontrolowany
 przegląd wszystkich 10 wariantów, filtry, zwijanie, pusty stan, odstępy
-na 1400/390 px), unit 408/408. Produkcyjna kontrola 38139233191 ✓ (3/3 bez retry);
+na 1400/390 px), unit 408/408. Kontrole produkcyjne 38139233191, 38139841640 i 38140200630 ✓;
 na main spec używa opublikowanych plików Pages, nie podmiany kodu.
 Sześć zrzutów w `docs/img/e19-tasks/`, tabela stanów i linki w planie E19.
 Ankiety z głosem: Zrobione 5 dni; bazy po decyzji znikają; urządzenia
