@@ -5,8 +5,8 @@
 // tekst + przyciski. „Wróć” prowadzi na adres z mapy nawigacji (backHref),
 // nigdy przez history.back() ani referrer. i18n: pageGuard.*.
 
-import { applyTranslations, t } from "../../translation/translation.js?v=v2026-10-11T18000";
-import { icon } from "./icons.js?v=v2026-10-11T18000";
+import { applyTranslations, t } from "../../translation/translation.js?v=v2026-10-11T19260";
+import { icon } from "./icons.js?v=v2026-10-11T19260";
 
 export const PAGE_GUARD_ID = "pageGuard";
 
