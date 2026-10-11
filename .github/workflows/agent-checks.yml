@@ -1063,6 +1063,7 @@ jobs:
           SQL
       - name: Verify cascade, old base contracts and concurrent deletion
         run: |
+          psql -v ON_ERROR_STOP=1 -c "INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce) VALUES('base:share_after_reject','pair',2592000,true) ON CONFLICT DO NOTHING"
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-task-cascade-345.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-refusal-337.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-boundaries-337.sql
