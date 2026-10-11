@@ -298,8 +298,8 @@ etykieta kanału, miejsce akcji, widoczny cooldown oraz reguła maila z
 |---|---|---|---|
 | Control — urządzenie | „Mail lub nazwa użytkownika” z polem i przyciskiem; nad polem znika komunikat o cooldownie lub wcześniejszym udostępnieniu w bieżącej sesji. Osobna lista znajomych z checkboxami i jednym przyciskiem na dole. | Sekcja „Udostępnione”: odbiorcy dla konkretnego urządzenia i sesji gry. Pokazać nazwę i typ: znajomy, konto albo mail. Udostępniony znajomy znika z listy wyboru. | Cooldown widoczny przy polu i znajomym. Cofnięcie przez X/kosz natychmiast unieważnia link. Ponowienie nie występuje; wysyłka ponowna wymaga cofnięcia i nowego udostępnienia. |
 | Baza | Dwie drogi: mail/nazwa konta albo znajomi. Obie mają wybór Edytor/Przeglądający; znajomi używają checkboxów i wspólnego przycisku. | Jedna lista ze statusem (oczekuje, zaakceptowano, odrzucono), etykietą kanału i aktualną rolą. | Rola zmieniana bezpośrednio w wierszu. Cofnięcie unieważnia dostęp. Odrzucone: ponowienie przypominającego maila z cooldownem; wyłączone powiadomienia ukrywają przycisk. |
-| Ankieta — „Anonimowo” | Pierwsza z dwóch równych połówek karty na komputerze; na telefonie układ responsywny. Link wizualnie poprawiony. | Link anonimowy; jeden token głosu na pytanie w danym przebiegu. Token przeglądarki i limit tempa są oddzielne od zaproszeń kontowych. | Bez IP. Propozycja: łagodne tempo per pseudolosowy token przeglądarki i przebieg, bez limitu łącznej liczby głosów; domyślnie 30 s między pełnymi wysłaniami. Szczegóły w `e19-znajomi-plan.md` §7. |
-| Ankieta — „Udostępnij” | Druga równa połowa karty. Wybór checkboxami z list Znajomych i Subskrybentów, bez ręcznego pola e-mail. | Pokazać oczekuje/otworzył, zagłosował albo odrzucił. Lista dotyczy wyłącznie bieżącego uruchomienia ankiety. | Oczekującym bez głosu i odrzuconym można wysłać przypominający e-mail z cooldownem (przycisk ukryty przy wyłączonych powiadomieniach). |
+| Ankieta — karta „Głosy” | Osobna karta strony ankiety. Jej wygląd pozostaje zgodny z projektem rozpisanym przez użytkownika. | Poza zakresem tej tabeli E19. | Nie zmieniać podczas poprawy karty Udostępnianie. |
+| Ankieta — karta „Udostępnianie” | Dwie sekcje: „Anonimowo” (link anonimowy i QR) oraz „Znajomi i subskrybenci” (wybór checkboxami, bez ręcznego pola e-mail). | Sekcja anonimowa opisuje otwarty link; sekcja odbiorców pokazuje oczekuje/otworzył, zagłosował albo odrzucił, tylko dla bieżącego uruchomienia. | Przyciski tej karty wymagają poprawy wizualnej. Oczekującym bez głosu i odrzuconym można wysłać przypominający e-mail z cooldownem (przycisk ukryty przy wyłączonych powiadomieniach). |
 | Znajomi | Komputer: lewa kolumna dodawania (e-mail/nazwa, zaproszenia wychodzące); prawa: znajomi i zaproszenia przychodzące. Telefon: cztery sekcje albo dwie karty. | Wiersze z etykietą stanu: oczekuje, odrzucono, znajomy, zaproszenie przychodzące. | X cofa oczekujące zaproszenie; usuń kasuje relację znajomości. Oczekujące i odrzucone zaproszenie można przypomnieć mailem po cooldownie; przy wyłączonych powiadomieniach brak przycisku. |
 | Subskrybenci | Analogiczna lista jednostronna bez zaproszeń przychodzących/propozycji. | Wiersze oczekujące i aktywne, z etykietą e-mail. | Ponów = przypominający e-mail do istniejącego zaproszenia; cooldown i ukrywanie przycisku takie jak wyżej. Usunięcie kończy subskrypcję. |
 
@@ -310,11 +310,9 @@ etykiety kanału i stanu, puste stany, akcje oraz zachowanie responsywne. Per
 strona zmienia się tylko zawartość i zestaw dozwolonych akcji; nie dodajemy
 lokalnych wariantów CSS, które rozjeżdżają wygląd sekcji.
 
-**Przyciski ankiety:** przyciski akcji w widoku Ankiet wyglądają źle i wymagają
-osobnej poprawki wizualnej. Opis użytkownika dla karty 1 („Anonimowo”)
-pozostaje obowiązujący i nie zastępujemy go tym punktem. W karcie 2
-(„Udostępnij”) również trzeba poprawić przyciski — w szczególności wybór
-odbiorców oraz akcję udostępnienia/wysłania. Ujednolicić rozmiar, hierarchię,
+**Przyciski Ankiet:** poprawka dotyczy przycisków karty „Udostępnianie” —
+w szczególności kontrolek wyboru odbiorców oraz akcji udostępnienia/wysłania.
+Karty „Głosy” nie zmieniamy w ramach tej poprawki. Ujednolicić rozmiar, hierarchię,
 odstępy, wyrównanie oraz stany hover/disabled ze wspólnym wzorcem przycisków.
 Zachować odrębne przeznaczenie i układ obu kart; nie tworzyć osobnych styli
 dla każdego przycisku.
