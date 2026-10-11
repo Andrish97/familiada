@@ -1,10 +1,10 @@
 // web/go/js/go.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T14504";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-11T14504";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T14504";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-11T14504";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T17095";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-11T17095";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T17095";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-11T17095";
 
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-11T14504";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-11T17095";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
