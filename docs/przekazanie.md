@@ -2,6 +2,8 @@
 
 ## Najnowszy stan: E19 krok 7 w realizacji
 
+Decyzja użytkownika 2026-10-11: **kontynuować zawsze bez pytania**, również po zamknięciu kolejnej paczki. Cykl testów i kontroli produkcji pozostaje obowiązkowy; zrzuty po wykonaniu, manual na końcu.
+
 E19 kroki 1–6 zamknięte produkcyjnie. Poprawiony wygląd Urządzeń i modal
 Control: `44063a604`, Pages 38133157139 ✓, kontrola 38133215588 ✓
 (2/2 + unit 401/401). Układ kontaktów (dwie karty, formularz po lewej,

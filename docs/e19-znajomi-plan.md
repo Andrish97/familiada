@@ -396,3 +396,19 @@ To ogranicza przypadkowe wielokrotne/dwukrotne wysłanie i prosty automat, nie
 jest dowodem unikalnej osoby ani ochroną przed celowym obejściem (token można
 skasować lub podmienić). 30 s to propozycja do wdrożenia; zachowuje
 nieograniczoną łączną liczbę głosów i nie karze osób we wspólnej sieci.
+
+### Krok 7 — paczka metadanych kontaktów (2026-10-11)
+
+- `contacts_list(p_kind)` dodaje metadane do obecnych kontaktów: `email_enabled`
+  i `resend_available_at`. Czas z tych samych rezerwacji i limitów co RPC
+  ponowienia; stare `friends_list`/`subscribers_list` dla udostępnień zachowane.
+- Pierwsze przypomnienie znajomości czeka także na wygaśnięcie rezerwacji
+  pierwszego zaproszenia (5 dni), zamiast korzystać z pustego drugiego zegara.
+- Flaga mailowa wyłącza przycisk przypomnienia i bezskutkowo kończy wywołanie
+  `friends_resend`: bez zwiększenia licznika/rezerwacji, dostęp nadal istnieje.
+- Wspólny kafel: strzałka i licznik pod nią, wyszarzenie podczas zwłoki,
+  cofnięcie nadal dostępne. Licznik wygasa na żywo bez przeładowania strony.
+- Ta paczka nie zmienia stanu odmowy. Zachowanie odrzuconych i trwały limit
+  maili po usunięciu relacji pozostają następną częścią kontraktów.
+- Polecenie użytkownika: kontynuować zawsze bez pytania, po paczce przechodzić
+  dalej; zrzuty po wykonaniu i obowiązkowy cykl kontroli produkcji pozostają.

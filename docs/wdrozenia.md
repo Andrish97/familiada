@@ -42,6 +42,8 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
    W raporcie wskazywać, co rzeczywiście sprawdzono; wysyłka do kolejki
    nie jest dowodem dostarczenia. Punktowe przebiegi pozostają zasadą.
 
+8. **Kontynuacja bez pytań (2026-10-11):** użytkownik polecił „Kontynuuj zawsze bez pytania”. Po zakończeniu paczki przechodzić samodzielnie do kolejnej zgodnie z planem, z testami i kontrolą produkcji. Nie czekać na zatwierdzenie wyglądu; pokazywać zrzuty po wykonaniu. Zatrzymać się wyłącznie przy kluczowej decyzji architektonicznej, której nie da się rozstrzygnąć z ustaleń.
+
 ## Przekazanie (2026-10-10)
 
 Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
@@ -279,3 +281,5 @@ Stan szczegółowy:
 | 2026-10-11 | Test14 / realny mail i go — branch zielony | Worker 38135085016 ✓; `3d2878a77`, branch E2E 38135140865 ✓: Subskrybenci oraz dwa scenariusze go 4/4, unit 404/404. Realny mail do test14 odebrany po 76 s; jego link użyty w UI, potwierdzono duplikat/cooldown, przyjęcie i utrzymanie stanu po reloadzie, usunięcie oraz brak ponownego aktywowania starego linku. Odrzucenie również zachowuje stan po reloadzie w teście go. | Promocja frontu go na main, Pages, taka sama kontrola produkcji. |
 
 | 2026-10-11 | Test14 / odbiór maila i stany go — zrobione | Migracja 326: DB 38134943769 ✓; Worker 38135085016 ✓; front go Pages 38135350253 ✓, assets `d4d082f9a`. Branch 38135140865 ✓ i kontrola produkcji 38135404218 ✓: po 4/4, unit 404/404. Produkcyjny mail test14 odebrany po 65 s. Sprawdzono mail → go → akceptację w UI, duplikat, cooldown, ponowne otwarcie aktywnej/odrzuconej subskrypcji i brak aktywowania po usunięciu. Test14 pozostaje bez konta. | Dalej E19 krok 7: zachowanie odmów, metadata flagi i cooldownów dla list kontaktów, następnie Bazy/Ankiety; treści maili jako osobny punkt, manual na końcu. |
+
+| 2026-10-11 | E19 krok 7 / metadata kontaktów — SQL lokalnie | Migracja 327 dodaje contacts_list z flagą mailową i czasem ponowienia; nie zmienia starych list używanych w Control/Bazach/Ankietach. friends_resend uwzględnia zegar pierwszego zaproszenia i nie zużywa limitu przy wyłączonych mailach. SQL w rollbacku ✓: ACL/auth/izolacja, kierunki, pierwszy cooldown, wygaśnięcie, flaga bez skutków ubocznych, stały token, limity 2/30 dni, aktywne i kaskada konta. Unit 404/404 ✓. Decyzja: kontynuować zawsze bez pytania. | Runner SQL 327, migracja na main, następnie liczniki na branchu i punktowe E2E. Odrzucone oraz trwałość limitu po cofnięciu pozostają osobną paczką. |
