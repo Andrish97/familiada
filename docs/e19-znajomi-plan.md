@@ -854,3 +854,8 @@ Subskrybenci [zaproszenia telefon](img/e19-subscribers/tabs-invite-phone.png),
 [listy telefon](img/e19-subscribers/tabs-received-phone.png),
 [komputer](img/e19-subscribers/tabs-desktop.png). Zrzuty faktycznego renderera
 z danymi przykładowymi; etap dopiero po kontrolach branch/main.
+
+**Wspólna wysokość/przewijanie:** użytkownik rozszerzył zasadę pełnej
+wysokości kart i scrolla wewnętrznego na pozostałe strony, stosownie do
+ich funkcji. Kontrakt w ujednolicenie-wygladu.md. Realizować przy
+właściwych punktach kolejki, bez ponownego przestawiania planu.

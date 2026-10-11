@@ -304,6 +304,7 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
       });
       expect(scrolling).toEqual({ independent:true, equal:true, full:true, pageOverflow:false });
       await owner.page.reload();
+      await expect(received).toHaveAttribute("aria-selected", "true");
       await owner.page.setViewportSize({ width: 390, height: 844 });
       await received.focus(); await received.press("ArrowLeft");
       await expect(invite).toHaveAttribute("aria-selected", "true");

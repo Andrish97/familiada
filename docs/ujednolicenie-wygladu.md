@@ -685,3 +685,20 @@ dostępną wysokość obszaru pracy; na telefonie pod wypustkami, na komputerze
 obie kolumny równej wysokości. Nagłówki/formularz zostają widoczne,
 przewijają się niezależnie listy wewnątrz. Strona nie rośnie z liczbą
 kafelków; footer poza obszarem przewijania.
+
+### Wysokość obszaru pracy i przewijanie — wspólna zasada (2026-10-11)
+
+Decyzja użytkownika: także na pozostałych stronach ma obowiązywać
+w przybliżeniu układ wdrażany dla kontaktów. Karty/listy wykorzystują
+dostępną wysokość pod nagłówkiem/akcjami/wypustkami, a długa zawartość
+przewija się wewnątrz obszaru pracy. Kafelki/wiersze nie rozciągają się
+proporcjonalnie do wysokości karty. Nagłówki, zakładki i istotne akcje
+zostają widoczne, oddzielne listy zachowują osobne przewijanie.
+
+Weryfikować przy odpowiednich etapach planu: Gry/Bazy/Logo/Zadania,
+Znajomi/Subskrybenci, karty Ankiet i edytory; dostosować do funkcji strony.
+Nie zmieniać kolejności E19 przez osobne doraźne przebudowy. Zachować
+potrzebne wyjątki małej wysokości/landscape i czytelność formularzy;
+sprawdzić telefon, komputer, przełączenie zakładki, rozwiniętą sekcję,
+pustą/długą listę, brak uciętych akcji i niezamierzonego scrolla strony.
+Zrzuty po wykonaniu; przegląd reszty w E20/UI, manual zawsze ostatni.

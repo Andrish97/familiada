@@ -405,3 +405,7 @@ Stan szczegółowy:
 | 2026-10-11 | Kontakty / pełna wysokość i scroll wewnętrzny | Użytkownik doprecyzował pełną wysokość kart oraz przewijanie wewnątrz. Dodano flex/ograniczenie obszaru pracy i niezależny scroll list. | Odświeżyć zrzuty i powtórzyć branch z wysokością 36 px oraz pomiarem wewnętrznego przewijania przed Pages. |
 
 | 2026-10-11 | Kontakty / pełna wysokość lokalnie | 38148199774 ✓ sprawdził 36 px przed doprecyzowaniem wysokości. Nowy układ: karty desktop 682/682 px w viewport 900, telefon 605 px w viewport 844; brak scrolla strony, dwa niezależne scrolle 70/120 px, kafle zwarte. Unit 411/411 ✓, zrzuty odświeżone. | Nowy branch musi objąć także pełną wysokość i scrolle; poprzedni zielony nie jest pokryciem tej zmiany. |
+
+| 2026-10-11 | UI / wspólna wysokość kart i scroll | Użytkownik rozszerzył zasadę także na inne strony. Zapisano obszar pracy w dostępnej wysokości, scroll zawartości, zwarte kafle, widoczne akcje i właściwe wyjątki. | Uwzględniać przy kolejnych punktach E19/UI/E20; kolejność planu zachowana. |
+
+| 2026-10-11 | Kontakty / poprawka synchronizacji pomiaru | 38148462503: active i odmowy ✓; zakładki przeszły 36 px/pełną wysokość/niezależne scrolle, ale test wysłał ArrowLeft po drugim reload przed inicjalizacją JS. Dodano oczekiwanie aria-selected po reload, tak jak przy pierwszym odświeżeniu. | Ponowić trzy punktowe testy; aplikacja nie wymagała zmiany dla tego błędu pomiaru. |
