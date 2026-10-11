@@ -43,7 +43,9 @@ test("@mailbox subskrybenci: e-mail bez konta, przyjęcie przez go i usunięcie"
     expect(token).toBeTruthy();
     const link = `https://www.familiada.online/go/?s=${encodeURIComponent(token)}`;
     const invitePage = await anonymous.newPage();
-    await invitePage.goto(link);
+    await invitePage.goto(link, { waitUntil: "domcontentloaded" });
+    await invitePage.waitForLoadState("networkidle");
+    await expect(invitePage.locator(".poll-go-title")).toContainText(/Zaproszenie|Subscription|Запрошення/);
     // Anonim przyjmuje subskrypcję samym tokenem, bez zakładania konta.
     await invitePage.getByRole("button", { name: /Akcept|Przyjm/i }).click();
     await page.reload();
