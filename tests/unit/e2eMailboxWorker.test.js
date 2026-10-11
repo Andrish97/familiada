@@ -46,10 +46,10 @@ test("E2E mailbox odrzuca brak podpisanego tokenu", async () => {
   assert.equal(response.status, 401);
 });
 
-test("E2E mailbox dopuszcza tylko test1..test13 i ograniczone okno czasu", async () => {
+test("E2E mailbox dopuszcza tylko test1..test14 i ograniczone okno czasu", async () => {
   const headers = { "X-E2E-Token": token() };
   const badRecipient = await worker.fetch(
-    new Request(`https://www.familiada.online/_e2e_api/emails?recipient=test14%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`, { headers }),
+    new Request(`https://www.familiada.online/_e2e_api/emails?recipient=test15%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`, { headers }),
     env(),
     {}
   );
@@ -64,7 +64,8 @@ test("E2E mailbox dopuszcza tylko test1..test13 i ograniczone okno czasu", async
   assert.equal(oldWindow.status, 400);
 });
 
-test("mail do test1 zapisuje sie w e2e_emails i nie jest forwardowany", async (t) => {
+for (const recipient of ["test1@familiada.online", "test14@familiada.online"]) {
+test(`mail do ${recipient} zapisuje sie w e2e_emails i nie jest forwardowany`, async (t) => {
   const calls = [];
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, options = {}) => {
@@ -74,10 +75,10 @@ test("mail do test1 zapisuje sie w e2e_emails i nie jest forwardowany", async (t
   t.after(() => { globalThis.fetch = originalFetch; });
 
   let forwarded = false;
-  const raw = "From: sender@example.com\r\nTo: test1@familiada.online\r\nSubject: Zaproszenie\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nKliknij https://familiada.online/poll-go?token=abc";
+  const raw = `From: sender@example.com\r\nTo: ${recipient}\r\nSubject: Zaproszenie\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nKliknij https://familiada.online/go/?s=abc`;
   await worker.email({
     from: "sender@example.com",
-    to: "test1@familiada.online",
+    to: recipient,
     headers: new Headers({ subject: "Zaproszenie" }),
     raw: new Blob([raw]).stream(),
     async forward() { forwarded = true; },
@@ -87,9 +88,11 @@ test("mail do test1 zapisuje sie w e2e_emails i nie jest forwardowany", async (t
   assert.equal(calls.length, 1);
   assert.match(calls[0].url, /\/rest\/v1\/e2e_emails$/);
   const saved = JSON.parse(calls[0].options.body);
-  assert.equal(saved.recipient, "test1@familiada.online");
-  assert.match(saved.body, /poll-go/);
+  assert.equal(saved.recipient, recipient);
+  assert.match(saved.body, /go\/\?s=/);
 });
+
+}
 
 test("restore konta jest ograniczony do test11 i test12", async () => {
   const response = await worker.fetch(
@@ -103,4 +106,27 @@ test("restore konta jest ograniczony do test11 i test12", async () => {
   );
   assert.equal(response.status, 400);
   assert.deepEqual(await response.json(), { ok: false, error: "invalid_restore_request" });
+});
+
+const { normalizeE2ERecipient } = await import("../../cloudflare/maintenance-worker/src/lib/e2e/e2e-api.js");
+test("allowlista adresów obejmuje 1..14 i odrzuca adresy spoza puli", () => {
+  for (let n=1;n<=14;n++) assert.equal(normalizeE2ERecipient(` TEST${n}@FAMILIADA.ONLINE `), `test${n}@familiada.online`);
+  for (const value of ["test0@familiada.online","test15@familiada.online","test014@familiada.online","test14@example.com","real@familiada.online","test14@familiada.online.attacker.net",null]) {
+    assert.equal(normalizeE2ERecipient(value),null);
+  }
+});
+test("test14 może odczytać i wyczyścić skrzynkę oraz diagnostykę wyłącznie z tokenem E2E", async (t) => {
+  const originalFetch=globalThis.fetch;
+  const calls=[];
+  globalThis.fetch=async (url,options={})=>{calls.push({url:String(url),method:options.method});return new Response(JSON.stringify([]),{status:200,headers:{"Content-Type":"application/json"}});};
+  t.after(()=>{globalThis.fetch=originalFetch;});
+  for(const [endpoint,method] of [["emails","GET"],["emails","DELETE"],["mail-delivery","GET"]]) {
+    const url=`https://www.familiada.online/_e2e_api/${endpoint}?recipient=test14%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`;
+    const blocked=await worker.fetch(new Request(url,{method}),env(),{});
+    assert.equal(blocked.status,401);
+    const response=await worker.fetch(new Request(url,{method,headers:{"X-E2E-Token":token()}}),env(),{});
+    assert.equal(response.status,200);
+  }
+  assert.equal(calls.length,4);
+  assert.ok(calls.every(call=>call.url.includes('test14%40familiada.online')));
 });

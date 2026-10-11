@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { loginAsTestUser } = require("./helpers/login");
-const { resetMailProviderLimits } = require("./helpers/mailbox");
+const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 const email = "test14@familiada.online"; // Skrzynka bez konta: nie zakładać konta.
 test.use({ serviceWorkers: "block" });
 test.describe.configure({ mode: "serial" });
@@ -19,12 +19,16 @@ async function invite(page, recipient) {
   await page.locator("#btnInvite").click();
 }
 test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie", async ({ page, context, browser }, testInfo) => {
-  test.setTimeout(150000);
+  test.setTimeout(240000);
   await loginAsTestUser(page, context);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
+  await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
   try {
     await cleanup(page);
+    await clearMailbox(email);
     await resetMailProviderLimits(page);
+    const after = new Date(Date.now()-2000).toISOString();
     await page.goto("https://www.familiada.online/subscribers/");
     await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
     await expect(page.locator("#inviteForm")).toBeVisible();
@@ -32,29 +36,24 @@ test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie
     await invite(page, email);
     await expect(page.locator('.rowsSection--pending .shareRow').filter({ hasText: email })).toHaveCount(1);
     await page.screenshot({ path: testInfo.outputPath("shot-subscribers-layout.png"), fullPage: true });
-    // test14 is intentionally a mailbox without an account and is not exposed
-    // through the E2E mailbox API (which only stores test1..test13). Read the
-    // invite token through the authenticated owner's list, then exercise the
-    // same /go/?s= URL the delivered email contains.
-    const token = await page.evaluate(async email => {
-      const { data, error } = await window.__sbClient.rpc("subscribers_list");
-      if (error) throw error;
-      return data.find(row => row.email.toLowerCase() === email.toLowerCase())?.token || null;
-    }, email);
-    expect(token).toBeTruthy();
+    const delivered = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscript|підпис/i, timeout: 150000 });
+    const link = extractHttpLinks(delivered).find(url => new URL(url).searchParams.has("s"));
+    expect(link).toBeTruthy();
+    expect(new URL(link).pathname).toMatch(/^\/go\/?$/);
+    // Duplikat nie tworzy kolejnego wpisu. Ponowienie respektuje cooldown.
+    await invite(page, email);
+    await expect(page.locator("#appToast")).toContainText("Ta osoba jest już na liście");
+    const pending = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
+    await expect(pending).toHaveCount(1);
+    await pending.locator('[data-act="resend"]').click();
+    await expect(page.locator("#appToast")).toContainText("Kolejne zaproszenie można wysłać po");
     const invitePage = await anonymous.newPage();
-    await invitePage.goto("https://www.familiada.online/", { waitUntil: "domcontentloaded" });
-    // Anonim przyjmuje zaproszenie samym tokenem, bez zakładania konta.
-    // Widok /go/?s= jest sprawdzany osobno w go.spec.js.
-    const accepted = await invitePage.evaluate(async ({ token, email }) => {
-      const { data, error } = await window.__sbClient.rpc("poll_sub_accept_email", {
-        p_token: token,
-        p_email: email,
-      });
-      if (error) throw error;
-      return data;
-    }, { token, email });
-    expect(accepted?.ok).toBe(true);
+    await invitePage.goto(link);
+    await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toBeVisible();
+    await invitePage.getByRole("button", { name: "Akceptuj", exact: true }).click();
+    await expect(invitePage.locator(".poll-go-title")).toContainText(/aktywna/i);
+    await invitePage.reload();
+    await expect(invitePage.locator(".poll-go-title")).toContainText(/aktywna/i);
     await page.reload();
     const active = page.locator('.rowsSection--active .shareRow').filter({ hasText: email });
     await expect(active).toHaveCount(1);

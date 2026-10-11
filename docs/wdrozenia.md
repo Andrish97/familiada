@@ -35,6 +35,13 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 6. Statusy: `do zrobienia` · `w toku` · `na branchu (e2e ok)` · `zrobione` ·
    `czeka na decyzję`.
 
+7. **Pokrycie scenariuszy (2026-10-11):** dla każdej zmienianej funkcji
+   rozpisywać i testować wszystkie scenariusze wynikające z jej kontraktu,
+   stanów i uprawnień: pełny przepływ, odmowy, duplikaty, cooldowny,
+   wyłączone powiadomienia, cofnięcie, wygaśnięcie i usuwanie rodziców.
+   W raporcie wskazywać, co rzeczywiście sprawdzono; wysyłka do kolejki
+   nie jest dowodem dostarczenia. Punktowe przebiegi pozostają zasadą.
+
 ## Przekazanie (2026-10-10)
 
 Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
@@ -262,3 +269,7 @@ Stan szczegółowy:
 | 2026-10-11 | E19 krok 7 / pierwsza kontrola brancha | Run 38134046099: unit 401/401 ✓; Subskrybenci 2/2 ✓; test Znajomych wykrył brak tłumaczonej aria-label w nowych ikonach (`resend` zamiast etykiety). Poprawiono przekazanie title do wspólnego wiersza. Audyt schema potwierdził: friends_reject usuwa rekord; zachowanie odrzuconych wymaga migracji. | Powtórzyć punktowo friends.spec.js po poprawce; dopiero potem publikować paczkę układu. |
 
 | 2026-10-11 | E19 krok 7 / układ kontaktów — branch zielony | `4bddca4af`, `e85be48d3`: Subskrybenci 2/2 w 38134046099 ✓, Znajomi po poprawce aria-label 38134204745 ✓ (2/2, bez retry); unit 401/401. Podglądy obu stron: 1400 i 390 px, brak poziomego overflow, osobne przewijanie list potwierdzone (70/120 px). | Promocja paczki układu na main, Pages i te same spece kontrolne produkcji; etap 7 nadal otwarty. |
+
+| 2026-10-11 | E19 krok 7 / układ kontaktów — produkcja zielona | Pages 38134388964 ✓, assets `d8e0c4954`; kontrola produkcji 38134439124 ✓: Znajomi i Subskrybenci 4/4, unit 401/401. Paczka układu zamknięta; stan odmowy, cooldowny i pozostałe sekcje E19 nadal otwarte. | Na polecenie użytkownika podłączyć test14 do E2E mailbox i dodać realny odbiór maila do testu Subskrybentów. Zapisano wymóg pokrycia scenariuszy oraz osobny przegląd treści/wyglądu maili w maile-granice.md. |
+
+| 2026-10-11 | Test14 / pełny odbiór maila — przygotowanie | Na żądanie użytkownika rozszerzono allowlistę Workera i constraint skrzynki do test1–test14 (migracja 326). Unit: 404/404 ✓; pokrycie adresów granicznych, autoryzacji GET/DELETE/diagnostyki i zapisu przychodzącego test14. SQL lokalny wymaga odtworzenia grantów z 284, bo schema.sql nie zawiera ACL; nie zmieniać przez to uprawnień produkcji. Test Subskrybentów przechodzi na realny mail → /go/ → przyjęcie przez UI, z duplikatem i cooldownem. | Izolowany SQL/unit, migracja na main, Worker, E2E brancha i produkcji. Wcześniejsze obejście tokenem z bazy staje się historyczne po zielonej kontroli. |

@@ -147,7 +147,9 @@ pula test1–test8; test9/test10 zarezerwowane.
 5. Ankiety: wspólne sekcje odbiorców, stan głosu/odmowy i odliczanie;
    przypomnienie dla niegłosujących/odrzuconych. Zachować dwie karty oraz
    przejścia Głosów, globalne akcje umieścić nad nimi zgodnie z planem.
-6. Domknąć graf zależności, blokady, kaskady, routing `/go/` i łagodny
+6. Ujednolicić treści i wygląd wszystkich maili (zaproszenia, przypomnienia
+   i uwierzytelnianie), PL/EN/UK; zakres w `maile-granice.md`.
+7. Domknąć graf zależności, blokady, kaskady, routing `/go/` i łagodny
    limit anonimowych głosów. Manual aktualizować dopiero na końcu.
 
 Każda paczka wyglądu kończy się zrzutami z przykładowymi danymi; nie czekać

@@ -51,7 +51,7 @@ export async function handleInboundEmail(message, env) {
   body = body.slice(0, 5000).trim();
   if (bodyHtml) bodyHtml = bodyHtml.slice(0, 200000);
 
-  // Dokladne reguly Cloudflare kieruja test1..test13 tutaj. Te wiadomosci
+  // Dokladne reguly Cloudflare kieruja test1..test14 tutaj. Te wiadomosci
   // sa test fixtures: nie trafiaja do skrzynki admina, Telegrama ani na
   // prywatny forwarding. Pozostale maile zachowuja dotychczasowy przebieg.
   if (recipient) {

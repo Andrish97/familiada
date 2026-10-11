@@ -8,7 +8,7 @@ import { fetchFromOrigin } from "../origin/origin.js";
 export const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
 const E2E_NONCE_TTL_SECONDS = 10 * 60; // 10 minut w KV, żeby pokryć zegar-skew
-const E2E_EMAIL_RE = /^test([1-9]|1[0-3])@familiada\.online$/;
+const E2E_EMAIL_RE = /^test([1-9]|1[0-4])@familiada\.online$/;
 
 export function normalizeE2ERecipient(value) {
   const recipient = String(value || "").trim().toLowerCase();

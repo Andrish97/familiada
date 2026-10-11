@@ -144,7 +144,7 @@ plik, to inaczej". Lokalnie to samo bez żadnego dodatkowego ustawienia:
 
 ## Pula kont testX (`test1@familiada.online` … `test10@…`)
 
-> **test14@familiada.online** — skrzynka pocztowa **bez konta** (Worker przekazuje maile jak dla innych kont), do scenariuszy „odbiorca bez konta” (subskrybent tylko e-mail, urządzenie na e-mail); nie zakładać na nim konta.
+> **test14@familiada.online** — skrzynka pocztowa **bez konta** (Worker zapisuje maile w prywatnej skrzynce `e2e_emails`, dostępnej przez podpisane API testowe tak jak test1–test13), do scenariuszy „odbiorca bez konta” (subskrybent tylko e-mail, urządzenie na e-mail); nie zakładać na nim konta.
 >
 > **Zwykła pula pomija** test9 i test10 (druga sesja — całkowicie wykluczone). test4/test5 wróciły do puli 2026-10-10.
 >

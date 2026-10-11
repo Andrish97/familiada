@@ -107,3 +107,20 @@ przed rezerwacją cooldownu; adres bez konta pozostaje dozwolony. Pełny restore
 PG16, lokalny test oraz izolowany job SQL `38126186374` potwierdziły trzy
 przypadki; produkcyjny log `38126386184` potwierdza zastosowanie migracji.
 Transakcyjny smoke test produkcyjny przeszedł w runie `38126593098`.
+
+## Ujednolicenie treści i wyglądu maili — doprecyzowanie 2026-10-11
+
+Osobny punkt E19, przed końcową aktualizacją manuala. Nie oznaczać go jako
+wykonanego na podstawie samego wspólnego szablonu zaproszeń.
+
+| Obszar | Zakres przeglądu |
+|---|---|
+| Zaproszenia: znajomi, subskrypcje, ankiety, bazy, urządzenia | Jednoznaczny temat, nadawca, zasób/rola, cel przycisku; osobne warianty dla konta i adresu bez konta. |
+| Przypomnienia | Wyraźna treść przypominająca, link do tego samego dostępu/zadania; bez sugerowania utworzenia nowego udostępnienia. Control nie ma przypomnień. |
+| Konto i uwierzytelnianie | Przejrzeć również potwierdzenie konta/e-maila, zmianę adresu i reset hasła; dostosować treść do rzeczywistego przepływu. |
+| Wygląd i języki | Wspólna typografia, odstępy, przycisk i link tekstowy, tematy i treści PL/EN/UK, czytelność na telefonie. |
+| Ważność i stopki | Opis wygaśnięcia zgodny z faktycznym TTL; ustawienia powiadomień dla konta, właściwa rezygnacja dla adresu bez konta; brak nieprawdziwych obietnic. |
+| Kontrola | Faktyczny odbiór maila, temat/treść/język, link i jego działanie dla uprawnionego oraz stan po cofnięciu/wygaśnięciu; flaga mailowa i cooldown. |
+
+Routing linków pozostaje zgodny z mapą: linki udostępnień przez `/go/`,
+linki uwierzytelniania według własnego przepływu logowania.
