@@ -236,7 +236,7 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await refusal.locator('[data-act="undo_reject"]').click();
     await expect(incoming.locator('[data-act="accept"]')).toBeEnabled();
     await incoming.locator('[data-act="accept"]').click();
-    await expect(recipient.page.locator(`[data-id="${id}"]`)).toContainText("Zaakceptowano");
+    await expect(recipient.page.locator(`.rowsSection--friend [data-id="${id}"]`)).toBeVisible();
     await recipient.page.goto(link);
     await expect(recipient.page.locator("#title")).toHaveText("Zaakceptowano");
     // Drugi przypadek bez wysyłki: fixture RPC dla sprawdzenia cofania odmowy.
@@ -257,6 +257,90 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
   } finally {
     await cleanup(owner.page, recipient.id).catch(() => {});
     await owner.context.close(); await recipient.context.close();
+  }
+});
+
+test("@mailbox znajomi346: wypisanie obu stron, własna odmowa, undo i unieważnienie", async ({ browser }, testInfo) => {
+  test.setTimeout(240000);
+  const owner = await user(browser, 7);
+  const recipient = await user(browser, 8);
+  const rpc = async (page, name, args) => page.evaluate(async ({ name, args }) => {
+    const { data, error } = await window.__sbClient.rpc(name, args);
+    if (error) throw error;
+    return data;
+  }, { name, args });
+  try {
+    await cleanup(owner.page, recipient.id);
+    const initialBadges = new Map([
+      [owner.id, (await rpc(owner.page, "badges_get", {})).friends_pending],
+      [recipient.id, (await rpc(recipient.page, "badges_get", {})).friends_pending],
+    ]);
+    await clearMailbox(testAccountUsername(8));
+    await resetMailProviderLimits(owner.page);
+    const after = new Date(Date.now() - 2000).toISOString();
+    await open(owner.page);
+    await invite(owner.page, testAccountUsername(8));
+    const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i, timeout: 150000 });
+    expectMailDocument(email, { accountFooter: true });
+    const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
+    expect(link).toBeTruthy();
+    const token = new URL(link).searchParams.get("f");
+    await recipient.page.goto(link);
+    await recipient.page.getByRole("button", { name: "Otwórz Znajomych" }).click();
+    const proposal = recipient.page.locator('.rowsSection--incoming .shareRow').filter({ hasText: /test7/i });
+    const id = await proposal.getAttribute("data-id");
+    await proposal.locator('[data-act="accept"]').click();
+    for (const [actor, peer, number] of [[owner, recipient, 7], [recipient, owner, 8]]) {
+      await actor.page.goto("https://www.familiada.online/friends/?tab=received");
+      const active = actor.page.locator(`.rowsSection--friend [data-id="${id}"]`);
+      await expect(active).toBeVisible();
+      await active.locator('[data-act="remove"]').click();
+      await actor.page.locator(".uni-foot .btn.gold").click();
+      await expect(active).toHaveCount(0);
+      const section = actor.page.locator('.rowsSection--declined');
+      const toggle = section.locator('button.rowsSectionHead');
+      const ownRefusal = section.locator(`[data-id="${id}"]`);
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      for (const width of [390, 1400]) {
+        await actor.page.setViewportSize({ width, height: 900 });
+        await actor.page.screenshot({ path: testInfo.outputPath(`friend346-actor${number}-collapsed-${width}.png`), fullPage: true });
+        await toggle.click();
+        await expect(ownRefusal).toBeVisible();
+        await expect(ownRefusal.locator('[data-act="undo_reject"]')).toBeEnabled();
+        await expect(ownRefusal.locator('[data-act="resend"]')).toHaveCount(0);
+        await actor.page.screenshot({ path: testInfo.outputPath(`friend346-actor${number}-expanded-${width}.png`), fullPage: true });
+        await toggle.click();
+      }
+      const ownInfo = await rpc(actor.page, "friends_token_info", { p_token: token });
+      expect(ownInfo).toMatchObject({ ok: true, status: "declined", addressee_matches_me: true });
+      const peerInfo = await rpc(peer.page, "friends_token_info", { p_token: token });
+      expect(peerInfo.addressee_matches_me).toBe(false);
+      expect(await rpc(actor.page, "poll_go_resolve", { p_token: token })).toMatchObject({ ok: true, recipient_matches_me: true });
+      expect((await rpc(peer.page, "friends_undo_reject", { p_id: id })).ok).toBe(false);
+      expect((await rpc(peer.page, "friends_resend", { p_id: id })).err).toBe("declined");
+      await peer.page.reload();
+      await expect(peer.page.locator(`.rowsSection--outgoing [data-id="${id}"]`)).toContainText("Odrzucono");
+      await toggle.click();
+      await ownRefusal.locator('[data-act="undo_reject"]').click();
+      await expect(section).toBeHidden();
+      const restored = actor.page.locator(`.rowsSection--incoming [data-id="${id}"]`);
+      await expect(restored).toBeVisible();
+      expect((await rpc(actor.page, "badges_get", {})).friends_pending).toBe(initialBadges.get(actor.id) + 1);
+      expect((await rpc(peer.page, "friends_resend", { p_id: id })).err).toBe("cooldown");
+      await restored.locator('[data-act="accept"]').click();
+      await expect(active).toBeVisible();
+    }
+    expect((await rpc(recipient.page, "friends_remove", { p_id: id })).ok).toBe(true);
+    expect((await rpc(owner.page, "friends_cancel", { p_id: id })).ok).toBe(true);
+    expect((await rpc(recipient.page, "friends_undo_reject", { p_id: id })).ok).toBe(false);
+    expect((await rpc(owner.page, "friends_token_info", { p_token: token })).ok).toBe(false);
+    for (const [actor, handle] of [[owner, testAccountUsername(8)], [recipient, testAccountUsername(7)]]) {
+      expect(await rpc(actor.page, "friends_invite", { p_handle: handle })).toMatchObject({ ok: false, reason: "after_reject" });
+    }
+  } finally {
+    await cleanup(owner.page, recipient.id).catch(() => {});
+    await owner.context.close();
+    await recipient.context.close();
   }
 });
 

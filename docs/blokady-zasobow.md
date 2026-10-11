@@ -438,3 +438,22 @@ po usunięciu. Konto właściciela kaskaduje przez bazę do taska. Inne bazy
 pozostają niezależne. PG16/rollback/regresje i wyścigi lokalnie ✓;
 bramki wdrożenia jeszcze wymagane. To tylko krawędź zasobowa, nie rozwiązanie
 oczekujących maili ani trwającej zewnętrznej wysyłki SMTP.
+
+### Aktualizacja pkt7 — Bazy345 zamknięte, Znajomi346 po isolated
+
+Kaskada345 zastosowana na produkcji: DB38173636101/log20:48:43 UTC,
+rollbackowy smoke i rzeczywisty Base mail/Go main38173864796 ✓.
+Wcześniejsze akapity o braku FK opisują stan sprzed345.
+
+Znajomi346: lokalne i isolated38174631322 ✓. Aktor własnej odmowy
+nie zależy od pierwotnego kierunku zaproszenia. Jeden lock nieuporządkowanej
+pary poprzedza świeży odczyt/lock relacji; remove/reject/undo/accept/cancel
+i resend używają tego samego helpera. Cancel zachowuje rekord, oba zegary
+odmowy oraz budżet mailowy; nieważny token nie pozwala undo.
+Przeniesienie ważnego budżetu do nowego tokenu odbywa się pod lockiem pary.
+SQL346 i rzeczywista kontrola interfejsu jeszcze wymagane do zamknięcia.
+
+Dalsza krawędź grafu: _friend_drop_pair_tasks nie usuwa głosów task:<id>,
+a poll_share_send blokuje grę i czyta are_friends bez blokady pary.
+W kolejnej paczce objąć tworzenie/czyszczenie tasków wspólną kolejnością
+blokad oraz głosami i oczekującymi mailami; nie uznawać346 za jej wykonanie.

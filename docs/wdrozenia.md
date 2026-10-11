@@ -93,6 +93,14 @@ Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control.
 w tym końcowe poprawki wyglądu i porządki po E19, muszą być zakończone przed
 aktualizacją Instrukcji. Nie przesuwać E13 wyżej przy dopisywaniu etapów.
 
+**Zasady treści manuala (decyzja 2026-10-11):** zero technicznego
+słownictwa; spójne nazwy tych samych funkcji, stanów i czynności w całej
+instrukcji oraz zgodność z nazwami w aplikacji; zero informacji, które
+nie wpływają na użytkownika. Opisywać tylko co zrobić, widoczny rezultat
+i skutki decyzji potrzebne użytkownikowi. Nie opisywać implementacji,
+wewnętrznych mechanizmów ani historii wdrożeń. Obowiązuje PL/EN/UK.
+Przegląd treści dopiero na końcu, po ustaleniu ostatecznego działania UI.
+
 **Kolejność = kolumna # — zatwierdzona 2026-10-07. Użytkownik wznowił pracę i 2026-10-11 polecił zawsze kontynuować bez pytania.** Uzasadnienie: E0 daje wiarygodne testy; E3 to
 drobiazg; E10 pierwszy z dużych (decyzja); E11 wcześnie, bo zamyka lukę
 bezpieczeństwa na produkcji (korzysta z obecnej blokady `game:G`, nie
@@ -572,3 +580,13 @@ Stan szczegółowy:
 | 2026-10-11 | Baz345 / pełne odtworzenie kontraktów isolated | Agent38173322072:unit447/kaskada/cleanup/cykl337 ✓; boundaries337 zatrzymany na ACL. apply-migrations.sh robi pg_dump --no-acl, więc sam schema nie odtwarza uprawnień. Runner odtwarza teraz337→338→339, tak jak wcześniejsze bramki Baz, obejmując polityki i ACL zamiast samego seed danych. Kod345 bez zmiany. | Świeży isolated345, dopiero pełny green daje promocję. Nie traktować braku ACL w isolated jako błędu produkcji. |
 
 | 2026-10-11 | Baz345 / pełny isolated zielony, promocja SQL | Agent38173528352 ✓:unit447, stary orphan odtworzony i usunięty, validated FK, wszystkie5 stany/tokeny/grant, konto→baza→task, niezależna baza, regresje337/ACL i wyścigi delete vs accept/leave/expired pair. Restore337→338→339 odtwarza dane i ACL pominięte w dump. | SQL/main/log oraz nowy rollbackowy smoke345, potem pojedynczy Base real-mail/Go/odmowa/role na opublikowanym froncie. Packet345 jeszcze nie zamknięty. |
+
+| 2026-10-11 | Bazy345 / fizyczna kaskada zamknięta produkcyjnie | DB38173636101 ✓, log OK34520:48:43 UTC; rollbackowy smoke kaskady konto→baza→task/token na produkcji ✓. Main38173864796 ✓ bez retry: rzeczywisty mail Baz/Go/odmowa/undo/leave/role/revoke; unit447. | Paczka345 wykonana, pkt7 nadal otwarty. Draft346 aktora wypisania Znajomych lokalnie; dalszy audyt zależnych głosów/kolejki. |
+
+| 2026-10-11 | Własne odmowy / puste sekcje i położenie | Doprecyzowanie użytkownika zapisane E19/UI: sekcja całkowicie ukryta, gdy pusta; Bazy na dole Udostępnionych nad paskiem narzędzi, osobny scroll odmów i kafelków. Kod portrait/desktop już to realizuje. | Istniejący wyjątek landscape przewija stronę: poprawić w E20 razem z przeglądem wszystkich stron. Bez zmiany wyglądu w tej paczce dokumentacyjnej. |
+
+| 2026-10-11 | E13 / zasady języka manuala | Decyzja użytkownika: bez technicznego słownictwa, spójne nazewnictwo i tylko informacje wpływające na użytkownika. Zapisano w zasadach ostatniego etapu E13; dotyczy PL/EN/UK. | Manual nadal ostatni; teraz kontynuacja pkt7. |
+
+| 2026-10-11 | Znajomi346 / wypisanie obu stron lokalnie | Draft346 zachowuje pierwotny kierunek i dodaje aktora decyzji; remove→declined, undo→pending→jawne accept. Cancel zachowuje odmowę/budżet, unieważnia token i undo. Oba kierunki 5/30 i2/30, mail-off bez naliczenia, role prywatnych helperów, Go/badge/listy właściwej osoby. PG16 backfill starych odmów, kontrakt obu aktorów, regresje Znajomych/Sub333/Sub335 oraz wyścigi remove/remove i undo/cancel ✓. | Isolated346 i unit, potem migracja/main/log i punktowe Friends z rzeczywistym mailem na branchu oraz opublikowanych Pages. Zależne partialvotes/pendingqueue jeszcze poza tą paczką, pkt7 otwarty. |
+
+| 2026-10-11 | Znajomi346 / isolated zielony, promocja SQL | Agent38174631322 ✓:unit447, restore ACL/polityk329→330→333→335, backfill dawnej odmowy/zegara, oba aktory/Go/badges/budżet/expiry/flag, regresje i wyścigi. Front obecny już obsługuje sekcję własnych odmów; brak zmiany CSS. | Promocja346 na main/log, następnie punktowe trzy Friends real-mail branch/main --retries=0/pula7–8. Zrzuty zwinięte/rozwinięte dla obu aktorów w nowym E2E; pkt7 nadal otwarty. |

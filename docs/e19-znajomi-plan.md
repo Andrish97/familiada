@@ -303,6 +303,12 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
   wpisów. Ukryć sekcję, gdy jest pusta; po otwarciu własne przewijanie
   zgodnie ze wspólnym komponentem. Znajomi: ostatnia sekcja prawej karty,
   pod Propozycjami; bazy: pod listą w istniejącej zakładce Bazy → Udostępnione.
+- **Doprecyzowanie 2026-10-11:** każda sekcja „Odrzucone przeze mnie”
+  jest całkowicie ukryta, gdy nie ma wpisów (bez nagłówka ani pustego stanu).
+  W Bazach pozostaje na dole zakładki Udostępnione, nad paskiem narzędzi;
+  kafelki baz i rozwinięta lista odmów przewijają się niezależnie.
+  Dotyczy również docelowego landscape; istniejący wyjątek przewijania
+  całej strony wymaga poprawy w przeglądzie E20, nie jest docelową regułą.
   Bez nowej karty lub zakładki w Bazach. Zadania nie pokazują odmów baz.
 - **Bazy — korekta opisu miejsca:** obecnie Akceptuj/Odrzuć istnieją
   zarówno w Bazy → Udostępnione, jak i w Zadaniach; oba ekrany używają
@@ -1192,3 +1198,21 @@ regresje337 oraz wyścigi delete/accept/leave i expired pair ✓.
 Wymagane isolated345, SQL/log, rollbackowa kontrola produkcyjna i punktowy
 E2E Baz na istniejącym froncie. Pending mail/cancel sending oraz wypisanie
 Znajomych to dalsze zakresy pkt7; nie dopisywać ich do pokrycia345.
+
+### Pkt7 — wypisanie Znajomych346 (paczka w realizacji)
+
+Pierwotny nadawca/odbiorca zaproszenia zostają; osobne pole aktora decyzji
+wskazuje osobę wypisującą się z aktywnej znajomości. Jej własna odmowa
+trafia do zwiniętej sekcji, drugiej stronie do wychodzących. Cofnięcie
+odmowy przywraca pending, wymaga osobnej akceptacji i nie wysyła maila.
+Cofnięcie przez drugą stronę unieważnia token/undo, zachowuje niejawne30dni
+oraz budżet mailowy2/30 w obu kierunkach. Powtórna odmowa po undo nie
+przesuwa terminu; Go i plakietki uwzględniają rzeczywistego aktora.
+
+Lokalny PG16: backfill historycznej odmowy i naprawa wydłużonego zegara,
+obaj aktorzy, pending/active/declined/cancelled, uprawnienia, 5/30,
+wygaśnięcie i nowy token bez resetu budżetu, flagi mailowe,
+regresje wcześniejszych odmów/Sub333/335 i wyścigi ✓.
+Produkcja jeszcze niezmieniona — wymagane isolated346, SQL/log i real-mail
+E2E branch/main. Usunięcie zależnych częściowych głosów i anulowanie
+oczekujących maili pozostają następną paczką grafu, nie są rozwiązane346.

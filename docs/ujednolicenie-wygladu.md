@@ -782,3 +782,11 @@ ograniczenia. Bramka zakończenia: dostęp w poziomie bez blokady urządzenia,
 wszystkie istotne akcje osiągalne, brak uciętej zawartości bez scrolla,
 brak utraty danych/sesji/blokady po obrocie. Uprawnienia konta i zasobów
 obowiązują również w tej orientacji.
+
+### Sekcje własnych odmów — doprecyzowanie 2026-10-11
+
+Pusta sekcja „Odrzucone przeze mnie” jest całkowicie ukryta na każdej stronie.
+W Bazach sekcja kończy zakładkę Udostępnione (nad paskiem narzędzi),
+a rozwinięte odmowy mają własne przewijanie niezależne od kafelków baz.
+Utrzymać tę zasadę również w landscape; obecny wyjątek CSS z przewijaniem
+całej strony jest do poprawy w zaplanowanym przeglądzie.
