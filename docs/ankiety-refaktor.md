@@ -111,7 +111,39 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
     plakietka — OTWARTA: liczba głosów („12 głosów”); ZATRZYMANA
     (niepodliczona): wyróżniona „do podliczenia”; po podliczeniu GOTOWA.
 
+### Aktualizacja E19 — aktualny podział i wygląd (2026-10-11)
+
+Ta podsekcja doprecyzowuje starsze nazwy i wymagania wizualne; nie cofa
+wykonanych zmian ani istniejącego zachowania stanów:
+
+- Strona ankiety ma dwie karty: **Udostępnianie** i **Głosy**. Starszy opis
+  nazywa kartę Głosy „Wyniki”; jej dotychczasowy projekt pozostaje w mocy:
+  widok zależny od stanu, aktualizacja wyników na żywo bez przeskakiwania
+  listy i płynne przejście animacją do trybu podliczania.
+- Karta **Udostępnianie** ma dwie sekcje: **Anonimowo** (otwarty link/QR)
+  i **Odbiorcy** (znajomi oraz subskrybenci). Ich współdzielone odpowiedniki
+  w innych stronach używają tych samych komponentów i dokładnie tego samego
+  CSS; sekcja odbiorców ankiety zachowuje checkboxy i przypisanie do bieżącego
+  uruchomienia.
+- Każdy link udostępniany zewnętrznej osobie ma najpierw wejść przez `/go/`,
+  gdzie waliduje się zasób i pokazuje stan, a potem prowadzi do właściwej
+  strony. Obecne bezpośrednie linki anonimowe/QR i przekierowanie urządzeń
+  opisano jako stan istniejący oraz zadanie do ujednolicenia w
+  `e19-znajomi-plan.md` → „Routing linków”.
+- Poprawka wyglądu dotyczy globalnego paska akcji nad kartami (akcje ankiety
+  zależne od stanu, np. „Zamknij” i „Podlicz głosy”). Przyciski mają wyglądać
+  podobnie do tych na stronie Gier i pozostać kompaktowe na telefonie. Nie
+  obejmuje przycisków wewnątrz kart, nawigacji ani zamykania dialogów/okien.
+
 ## 2. Co gdzie po zmianie
+
+**Status tej tabeli i sekcji 3:** to historyczny zapis pytań/alternatyw z
+wcześniejszego etapu planowania. Decyzje, które później rozstrzygnięto, nie
+są już otwarte: obowiązuje sekcja 1 (wraz z aktualizacją E19) i aktualna
+macierz w `docs/e19-znajomi-plan.md` §7. W szczególności karta z wynikami na
+stronie ankiety zostaje, status głosu odbiorcy jest widoczny, a odebranie
+udostępnienia usuwa też głos tego odbiorcy. Nie zmienia to opisów wykonanych
+wdrożeń w sekcji 7.
 
 | Funkcja | Dziś | Po zmianie |
 |---|---|---|

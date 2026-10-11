@@ -20,6 +20,20 @@ uruchomienie, bez limitu IP; wyczyszczenie storage pozwala uzyskać nowy token.
 Łagodny limit 30 s między pełnymi wysłaniami z jednego pseudolosowego tokenu
 przeglądarki jest propozycją w planie, nie wdrożonym wymogiem.
 
+Aktualne doprecyzowanie UI ankiety (źródło: `docs/ankiety-refaktor.md`, nowa
+podsekcja E19; tabela w `docs/ujednolicenie-wygladu.md`): dwie karty to
+„Udostępnianie” i „Głosy” (starsza nazwa w planie: „Wyniki”). Karta
+Udostępnianie ma sekcje „Anonimowo” i „Odbiorcy” (znajomi/subskrybenci).
+Wspólne sekcje mają ten sam komponent i CSS. Płynne przejścia stanów karty
+Głosy pozostają jak w dotychczasowym planie. Nowa poprawka wizualna obejmuje
+wyłącznie globalne akcje nad kartami: styl zbliżony do przycisków Gier,
+rozmiar `.btn.sm`, kompaktowe na telefonie. Hierarchia zostaje jak w planie
+ankiet (główna akcja `.btn.gold`, „Przerwij” — czerwony obrys `.pollAbort`).
+Nie obejmuje przycisków wewnątrz kart ani zamykania dialogów/nawigacji; nie
+cofa wykonanych zmian. Wcześniejsze pytania otwarte/tabele w
+`ankiety-refaktor.md` §2–3 są historyczne, jeśli rozwiązano je w §1 i
+aktualizacji E19.
+
 Użytkownik wznowił pracę i zezwolił uruchamiać cięższe zadania lokalnie na serwerze Codexa. Repo po scaleniu E19 kroku 3 jest na `main` (`f280941fd`); branch `codex/e19-3` ma ten sam stan. Poprawiono test SQL 321
 (commit `6a8753616`): fixture pobiera token jako administrator ze względu na
 `FORCE ROW LEVEL SECURITY`, po czym resolver jest nadal wywoływany w roli
