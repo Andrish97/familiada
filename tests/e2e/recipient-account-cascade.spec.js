@@ -31,6 +31,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     await loginAsTestUser(owner, ownerContext, { username: testAccountUsername(7) });
     await loginAsTestUser(recipient, recipientContext, { username: email });
     oldRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+    expect((await rpc(owner, "e2e_poll_mail_budget_cleanup", { p_recipient_email: email })).ok).toBe(true);
     expect((await rpc(owner, "e2e_friendships_cleanup", { p_other_user_id: oldRecipientId })).ok).toBe(true);
     await owner.evaluate(async () => {
       const sb = window.__sbClient;
@@ -130,7 +131,15 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     throw error;
   } finally {
     const cleanup = await Promise.allSettled([
-      restoreTestAccount("test12"),
+      (async () => {
+        await restoreTestAccount("test12");
+        const recoveryContext = await browser.newContext();
+        try {
+          const recoveryPage = await recoveryContext.newPage();
+          await loginAsTestUser(recoveryPage, recoveryContext, { username: email });
+          expect(await recoveryPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.email)).toBe(email);
+        } finally { await recoveryContext.close(); }
+      })(),
       games.length ? owner.evaluate(async ids => {
         const { error } = await window.__sbClient.from("games").delete().in("id", ids);
         if (error) throw error;
