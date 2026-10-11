@@ -69,6 +69,7 @@ test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie
     await page.locator(".uni-foot .btn.gold").click();
     await expect(active).toHaveCount(0);
     await invitePage.reload();
+    await expect(invitePage.locator(".poll-go-title")).toContainText("To zaproszenie wygasło");
     await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toHaveCount(0);
     await expect(invitePage.locator("#emailInput")).toBeHidden();
     const closed = await invitePage.evaluate(async ({ token, email }) => ({
@@ -107,8 +108,10 @@ test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ p
     const invitePage = await anonymous.newPage();
     await invitePage.goto(link);
     await invitePage.getByRole("button", { name: "Odrzuć", exact: true }).click();
+    await expect(invitePage.locator(".poll-go-title")).toContainText("Odrzucono");
     await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toHaveCount(0);
     await invitePage.reload();
+    await expect(invitePage.locator(".poll-go-title")).toContainText("Odrzucono");
     await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toHaveCount(0);
     const closed = await invitePage.evaluate(async ({ token, email }) => ({
       legacy: await window.__sbClient.rpc("poll_go_subscribe_email", { p_token: token, p_email: email }),

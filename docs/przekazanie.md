@@ -468,3 +468,7 @@ Migracja i rollback SQL/wyścigi lokalnie ✓, unit 411/411. Runner 331
 do uruchomienia; następnie SQL main/log i punktowe Subscribers z dwoma
 rzeczywistymi mailami na test14. Kontrakt odmów 5/30 i flag/claim pozostaje
 następną paczką 332; nie oznaczać pkt 3 zakończonego.
+
+331: runner 38150342363 ✓, SQL main ca1a635ab1; czeka na log zastosowania
+i punktowe branch/main Subscribers. E2E po reload czeka na komunikat Go,
+żeby asercja braku Akceptuj nie przeszła przed inicjalizacją strony.
