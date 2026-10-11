@@ -93,6 +93,14 @@ Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control.
 w tym końcowe poprawki wyglądu i porządki po E19, muszą być zakończone przed
 aktualizacją Instrukcji. Nie przesuwać E13 wyżej przy dopisywaniu etapów.
 
+**Zasady treści manuala (decyzja 2026-10-11):** zero technicznego
+słownictwa; spójne nazwy tych samych funkcji, stanów i czynności w całej
+instrukcji oraz zgodność z nazwami w aplikacji; zero informacji, które
+nie wpływają na użytkownika. Opisywać tylko co zrobić, widoczny rezultat
+i skutki decyzji potrzebne użytkownikowi. Nie opisywać implementacji,
+wewnętrznych mechanizmów ani historii wdrożeń. Obowiązuje PL/EN/UK.
+Przegląd treści dopiero na końcu, po ustaleniu ostatecznego działania UI.
+
 **Kolejność = kolumna # — zatwierdzona 2026-10-07. Użytkownik wznowił pracę i 2026-10-11 polecił zawsze kontynuować bez pytania.** Uzasadnienie: E0 daje wiarygodne testy; E3 to
 drobiazg; E10 pierwszy z dużych (decyzja); E11 wcześnie, bo zamyka lukę
 bezpieczeństwa na produkcji (korzysta z obecnej blokady `game:G`, nie
@@ -576,3 +584,5 @@ Stan szczegółowy:
 | 2026-10-11 | Bazy345 / fizyczna kaskada zamknięta produkcyjnie | DB38173636101 ✓, log OK34520:48:43 UTC; rollbackowy smoke kaskady konto→baza→task/token na produkcji ✓. Main38173864796 ✓ bez retry: rzeczywisty mail Baz/Go/odmowa/undo/leave/role/revoke; unit447. | Paczka345 wykonana, pkt7 nadal otwarty. Draft346 aktora wypisania Znajomych lokalnie; dalszy audyt zależnych głosów/kolejki. |
 
 | 2026-10-11 | Własne odmowy / puste sekcje i położenie | Doprecyzowanie użytkownika zapisane E19/UI: sekcja całkowicie ukryta, gdy pusta; Bazy na dole Udostępnionych nad paskiem narzędzi, osobny scroll odmów i kafelków. Kod portrait/desktop już to realizuje. | Istniejący wyjątek landscape przewija stronę: poprawić w E20 razem z przeglądem wszystkich stron. Bez zmiany wyglądu w tej paczce dokumentacyjnej. |
+
+| 2026-10-11 | E13 / zasady języka manuala | Decyzja użytkownika: bez technicznego słownictwa, spójne nazewnictwo i tylko informacje wpływające na użytkownika. Zapisano w zasadach ostatniego etapu E13; dotyczy PL/EN/UK. | Manual nadal ostatni; teraz kontynuacja pkt7. |
