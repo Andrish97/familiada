@@ -42,24 +42,23 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   i zachowują się tak samo na wszystkich stronach. Źródło wzorców:
   [`docs/wzorce-ui.md`](docs/wzorce-ui.md) (etap ujednolicenia E18; reszta
   poprawek wstrzymana — lista w `docs/przekazanie.md`).
-- **Konsultacja z użytkownikiem hurtowo**: zmiany wyglądu zbierać w paczki
-  (wg wzorca, nie strona po stronie), pokazać zrzuty przed/po (telefon 390 px
-  i komputer 1400 px) i pytać raz o całą paczkę — nie o każdy drobiazg.
-  Funkcje i poprawki błędów — bez pytania.
+- **Zrzuty po wykonaniu (decyzja użytkownika 2026-10-11):** zmiany wyglądu
+  dokumentować zrzutami z przykładowymi danymi (telefon 390 px i komputer
+  1400 px). Kontynuować bez czekania na ocenę lub zatwierdzenie użytkownika.
 
 ## Tok pracy
 
-- **Ograniczenie obciążenia lokalnego (decyzja 2026-10-11):** w tym
-  środowisku ograniczać ciężkie zadania i testy symulacyjne — powodują lagi
-  i awarie. Nie uruchamiać lokalnie przeglądarek e2e, rozbudowanych
-  symulacji ani wielu ciężkich procesów naraz. E2E wykonywać punktowo
-  w GitHub Actions; wymagane unit i testy SQL wykonywać pojedynczo,
-  z ograniczoną współbieżnością, a cięższe sprawdzenia przenosić
-  do odizolowanego runnera. Zachować wymagane bramki przed wdrożeniem.
+- **Środowisko Codexa (decyzja użytkownika 2026-10-11):** można wykonywać
+  cięższe zadania lokalne, w tym przeglądarkowe podglądy, SQL i testy.
+  Nie obowiązuje wcześniejsze ograniczenie dla Termuxa. Zachować punktowe
+  E2E i wymagane bramki wdrożenia; nie mnożyć ciężkich procesów bez potrzeby.
 
 - Zasady działania i kolejka: `docs/wdrozenia.md` (sekcje „Kolejka”,
   „Zasady działania”). Praca w tle bez pytania o zgodę.
 
+- **Kontynuacja (decyzja użytkownika 2026-10-11):** zawsze kontynuować bez
+  pytania, także po zakończeniu paczki. Zatrzymać się tylko przy kluczowej
+  decyzji architektonicznej, której brak w ustaleniach. Manual zawsze na końcu.
 - Najpierw branch roboczy, testy, potem push na `main`.
 - Unit: `cd tests && node --test unit/*.test.js`.
 - E2E: workflow `e2e-tests.yml` (workflow_dispatch) z niepustym

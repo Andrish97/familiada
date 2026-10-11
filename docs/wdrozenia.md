@@ -91,7 +91,7 @@ Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control.
 w tym końcowe poprawki wyglądu i porządki po E19, muszą być zakończone przed
 aktualizacją Instrukcji. Nie przesuwać E13 wyżej przy dopisywaniu etapów.
 
-**Kolejność = kolumna # — zatwierdzona 2026-10-07. Start pracy dopiero po osobnym „możesz zaczynać” od użytkownika.** Uzasadnienie: E0 daje wiarygodne testy; E3 to
+**Kolejność = kolumna # — zatwierdzona 2026-10-07. Użytkownik wznowił pracę i 2026-10-11 polecił zawsze kontynuować bez pytania.** Uzasadnienie: E0 daje wiarygodne testy; E3 to
 drobiazg; E10 pierwszy z dużych (decyzja); E11 wcześnie, bo zamyka lukę
 bezpieczeństwa na produkcji (korzysta z obecnej blokady `game:G`, nie
 potrzebuje E2); E12 po E11 (te same tabele ankiet); E2 przed nawigacją,
@@ -99,10 +99,10 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Zasady działania (decyzja 2026-10-07)
 
-0. **Obciążenie lokalne (2026-10-11):** ograniczać ciężkie zadania i testy
-   symulacyjne; punktowe e2e w GitHub Actions, wymagane unit/SQL pojedynczo
-   z ograniczoną współbieżnością lub na odizolowanym runnerze. Decyzja:
-   `nawigacja-mapa-plan.md`, sekcja 7; reguła w AGENTS.md/CLAUDE.md.
+0. **Środowisko Codexa (aktualizacja użytkownika 2026-10-11):** cięższe
+   zadania lokalne są dozwolone; ograniczenie dla Termuxa jest historyczne.
+   Zachować punktowe E2E i bramki przed wdrożeniem.
+
 1. Praca w tle, bez pytania o zgodę na kolejne kroki; pytam tylko, gdy
    brakuje decyzji, której nie ma w dokumentach.
 2. Kod: branch → testy (unit + e2e z filtrem) → `main` → e2e na `main`.
@@ -285,3 +285,5 @@ Stan szczegółowy:
 | 2026-10-11 | E19 krok 7 / metadata kontaktów — SQL lokalnie | Migracja 327 dodaje contacts_list z flagą mailową i czasem ponowienia; nie zmienia starych list używanych w Control/Bazach/Ankietach. friends_resend uwzględnia zegar pierwszego zaproszenia i nie zużywa limitu przy wyłączonych mailach. SQL w rollbacku ✓: ACL/auth/izolacja, kierunki, pierwszy cooldown, wygaśnięcie, flaga bez skutków ubocznych, stały token, limity 2/30 dni, aktywne i kaskada konta. Unit 404/404 ✓. Decyzja: kontynuować zawsze bez pytania. | Runner SQL 327, migracja na main, następnie liczniki na branchu i punktowe E2E. Odrzucone oraz trwałość limitu po cofnięciu pozostają osobną paczką. |
 
 | 2026-10-11 | E19 krok 7 / metadata — runner zielony | Commit SQL `e01f01966`; Agent Checks 38136776298 ✓ (SQL 327 + unit 404/404). Migracja wysłana na main, DB 38136828855 w toku. Front: wspólny licznik pod strzałką, wyszarzenie, cofnięcie nadal aktywne; odświeżanie bez wycieku bindings i zatrzymanie tickera poza widoczną stroną. Podgląd 390/1400 px, niezależne scroll 70/120 px ✓. | Punktowe E2E po potwierdzeniu migracji. Dodatkowy test UI z kontrolowanymi metadanymi sprawdza wygaśnięcie licznika, flagę mailową i równość rozmiarów obu przycisków na obu stronach. |
+
+| 2026-10-11 | E19 krok 7 / migracja metadata na produkcji | DB 38136828855 ✓, log `OK 327` o 11:48:57 UTC; schema bot `16968f4bb`, merge `236b7692b`. Branch E2E 38136989575 w toku (Znajomi/Subskrybenci, 5 scenariuszy). Uzgodniono AGENTS/CLAUDE z decyzjami użytkownika: cięższe zadania na Codexie dozwolone, zrzuty po wykonaniu, bez oczekiwania na zatwierdzenie; manual ostatni. | Po branch E2E promocja frontu i kontrola produkcyjna; w międzyczasie lokalnie przygotowywany kontrakt zachowania odmowy znajomości (bez wdrożenia tej kolejnej paczki). |
