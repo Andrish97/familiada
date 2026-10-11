@@ -97,13 +97,13 @@ on:
         type: boolean
         default: false
 
-permissions:
-  contents: read
-
       verify_e19_mail:
         description: 'Verify shared browser/Edge mail renderer and auth function types'
         type: boolean
         default: false
+
+permissions:
+  contents: read
 
 jobs:
   unit:
