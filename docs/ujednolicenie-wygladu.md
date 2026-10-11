@@ -524,6 +524,15 @@ funkcjonalności, nawet osobne strony**. Propozycja układu (do potwierdzenia):
 
 **Wariant użytkownika 2026-10-09: trzy osobne strony** (propozycja układu):
 
+> **Aktualizacja 2026-10-11:** układ Znajomych/Subskrybentów doprecyzowano
+> do dwóch kart, bez wyszukiwania/dolnego paska; aktualna tabela w E19 §7.
+> Zadania zachowują Do zrobienia / zwijane Zrobione i filtr. Nowe zmiany:
+> ikony pochodzenia, lekkie kolory rodzajów, odstępy i krótsze kafelki mobile
+> (bez dat, limit dwóch linii). Zrzuty i macierz stanów w planie E19,
+> „Zadania — odstępy i pełny przegląd kafelków”. Przegląd nieobowiązkowych
+> informacji na wszystkich stronach telefonu jest osobnym **E20** poniżej.
+> Starsze opisy układu tutaj pozostają zapisem wykonanych/proponowanych etapów.
+
 - `/friends/` — **Znajomi**: bez kart, sekcje wg stanu: Zaproszenia do mnie
   (Akceptuj, Odrzuć) · Wysłane (Ponów, Cofnij) · Znajomi (Usuń); „+ Zaproś”.
 - `/subscribers/` — **Subskrybenci** (tylko e-mail): sekcje Oczekujący ·

@@ -147,6 +147,14 @@ zamiast kolorów, E17c pkt 5; dziś wyjątek `.card.proposed`, A9).
 Kafel subskrybenta: inicjał w kółku + nazwa / e-mail, `.cardTags` ze stanem,
 dzwonek i kosz jako `.x` (E17c pkt 4; do oceny po wdrożeniu).
 
+**Aktualizacja Zadania / mobile (2026-10-11):** Zadania używają wierszy
+`rowEl`, z ikoną rodzaju zasobu po lewej (`avatarIcon`) i delikatnym akcentem
+koloru (ankieta złoto, baza niebieski, urządzenie zielonkawy). Na telefonie
+krótszy opis bez dat, tytuł/opis do dwóch linii i mała ikona, desktop pełny.
+Pełne warianty i zrzuty w `e19-znajomi-plan.md`, sekcja Zadania. Ogólna
+zasada ukrywania zbędnych metadanych na telefonie: **E20** w
+`ujednolicenie-wygladu.md`; przegląd całego systemu jeszcze do wykonania.
+
 ## A6. Sekcje udostępniania — jeden komponent [WZÓR: E17c pkt 5]
 
 Ten sam zestaw i kolejność wszędzie, gdzie udostępniamy zasób; puste sekcje

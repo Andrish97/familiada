@@ -11,6 +11,11 @@ sprzed E12).
 
 ## 1. Model danych
 
+> **Aktualizacja E19 kroku 7:** opis 320 poniżej dokumentuje wykonany etap.
+> Zachowanie odmowy znajomości jako `declined` zamiast DELETE jest kolejną
+> zmianą kontraktu (§5, pkt 3), jeszcze nie wdrożoną. Metadata maila i
+> cooldownów już wdrożono w 327 (`contacts_list`).
+
 - **`friendships`** (320): `id`, `requester_id`, `addressee_id` (FK `profiles`,
   ON DELETE CASCADE), `status` ∈ `pending|active`, `token` (link `go?f=`),
   `created_at`, `accepted_at`, `email_sent_at`, `email_send_count`. CHECK
@@ -58,6 +63,11 @@ sprzed E12).
 - `/friends/`: Zaproszenia do mnie · Wysłane · Znajomi, „+ Zaproś” (konto).
 - `/subscribers/`: Oczekujące · Aktywni, „+ Zaproś” (e-mail).
 - `/tasks/`: Do zrobienia · Zrobione (zwinięte), filtr rodzaju.
+  **Aktualizacja 2026-10-11:** ikony pochodzenia po lewej zamiast inicjału;
+  delikatne kolory ankiet/baz/urządzeń. Telefon: krótszy opis bez dat,
+  maksymalnie dwie linie tytułu/opisu, mniejsza ikona. Desktop: pełne opisy.
+  Szczegóły i zrzuty: „Zadania — odstępy i pełny przegląd kafelków” niżej;
+  ogólny przegląd ograniczenia informacji na telefonie należy do E20.
 - `/go/`: `?t=` → `/tasks/`, nowe `?b=` (baza) i `?f=` (znajomi), `?s=` tylko
   subskrybenci e-mail.
 - Cel: każdy link przeznaczony do udostępnienia innej osobie najpierw trafia
@@ -71,7 +81,8 @@ sprzed E12).
   Wewnętrzne podglądy Control nie są linkami do udostępniania i mogą omijać
   `/go/`.
 - Wspólny komponent: `share-sections.js` — sekcje jako parametr, wiersz z
-  inicjałem, szarą linijką i kanałem (`friend|subscriber|mail`), akcje w
+  inicjałem (w Zadaniach ikoną pochodzenia `avatarIcon`), szarą linijką
+  (opcjonalny skrót mobilny `noteMobile`) i kanałem (`friend|subscriber|mail`), akcje w
   wierszu (tekst / ikona), usuwanie ikoną; `renderShareSources` (mail/nazwa +
   znajomi [+ subskrybenci w ankiecie]). Jeden moduł maili zaproszeń
   (`invite-mail.js`), bez trzeciej kopii szablonu.
@@ -123,7 +134,7 @@ pula test1–test8; test9/test10 zarezerwowane.
 | Krok | Stan |
 |---|---|
 | 1. Migracja 320 (`friendships`, `friends_*`, `tasks_list`, `badges_get`, kopia subskrypcji kont) | **zrobione** — na produkcji (`d38e829`), test SQL `docs/sql/test-friendships-320.sql` 60/60 |
-| 2. Komponent wierszy (`renderRowSections`/`rowEl` w `share-sections.js`) + `/tasks/` | **zrobione** — e2e `tasks`, `frontend-navigation`, `go` zielone |
+| 2. Komponent wierszy (`renderRowSections`/`rowEl` w `share-sections.js`) + `/tasks/` | **zrobione** — e2e `tasks`, `frontend-navigation`, `go` zielone; późniejsze ikony/kolory produkcja 38139841640 ✓, kompaktowy mobile branch 38140029908 ✓ (kontrola produkcji w toku), zrzuty i tabela stanów niżej |
 | 3. `/friends/`, `/subscribers/` + migracja 321 (przełączenie), usunięcie `/subscriptions/` | **zrobione** — migracja 321, front, Pages i Worker wdrożone; runner SQL/unit 38096872246 ✓; kontrole produkcji: friends 38099344264 (2/2), subscribers 38099196468 (2/2), go 38099459575 (2/2), frontend-navigation 38099534030 (11/11), account-deletion 38099771245 (1/1), regresja dźwięku 38099849073 (2/2); unit 401/401 w każdym przebiegu |
 | 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | **zrobione** — branch po synchronizacji 38100967351 ✓; Pages 38101052370 ✓; produkcja 38101089865 ✓, unit 401/401. Test zaliczył retry: pierwsza próba nie doczekała maila, który nadal był w kolejce; retry zakończył się pomyślnie |
 | 5. Bazy: jedno okno (udostępnieni + dodawanie), `go?b=`, akceptacja w `/tasks/` | **zrobione** — migracja 322 i front na produkcji; runner SQL 38101686798 ✓; Pages 38102630814 ✓; branch E2E 38102541764 ✓; produkcyjne E2E 38103300067 ✓, 2/2, unit 401/401. Cron `*/2` aktywny; po wydłużeniu timeoutu mail test8 dotarł po 33 s; oba scenariusze bazy zaliczone |
