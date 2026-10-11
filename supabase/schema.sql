@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict UC6SkV5x2XYzn4yp0vfxoqhdY5u4ruxkc3P9bQUieNSYH1O9A08FosxdLzhV5De
+\restrict fZxHIMQenkSaPysQn1YdBdEAe8P7pdu3BcI02sEGKNW3PdDm6zORbHfVXdg8v5E
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -199,9 +199,12 @@ CREATE FUNCTION "public"."_contact_mail_enabled"("p_email" "text") RETURNS boole
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-  SELECT coalesce((SELECT f.email_notifications FROM auth.users u
-    JOIN public.user_flags f ON f.user_id=u.id
-    WHERE lower(trim(u.email))=lower(trim(p_email)) LIMIT 1),true);
+ SELECT public._norm_email(p_email) IS NOT NULL
+   AND NOT EXISTS(SELECT 1 FROM public.email_unsub_tokens
+     WHERE lower(trim(email))=public._norm_email(p_email) AND suppressed_at IS NOT NULL)
+   AND coalesce((SELECT f.email_notifications FROM auth.users u
+     JOIN public.user_flags f ON f.user_id=u.id
+     WHERE lower(trim(u.email))=public._norm_email(p_email) LIMIT 1),true);
 $$;
 
 
@@ -815,6 +818,66 @@ begin
          ('user-logos',  old.id::text, true, 'user', old.id);
   return old;
 end;
+$$;
+
+
+--
+-- Name: _subscriber_close("uuid", boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_subscriber_close"("p_token" "uuid", "p_allow_active" boolean) RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE s public.poll_subscriptions%rowtype; e text;
+BEGIN
+ SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token;
+ IF NOT FOUND THEN RETURN false; END IF;
+ SELECT public._norm_email(coalesce(s.subscriber_email,p.email)) INTO e
+ FROM (SELECT 1) x LEFT JOIN public.profiles p ON p.id=s.subscriber_user_id;
+ IF e IS NULL THEN RETURN false; END IF;
+ PERFORM public._subscriber_pair_lock(s.owner_id,e);
+ SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token FOR UPDATE;
+ IF NOT FOUND OR s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL
+ OR NOT (s.status='pending' OR (p_allow_active AND s.status='active')) THEN RETURN false; END IF;
+ UPDATE public.poll_subscriptions SET status='declined',declined_at=now(),opened_at=coalesce(opened_at,now()) WHERE id=s.id;
+ PERFORM public.mail_cooldown_reserve('poll:invite_after_reject','pair:'||s.owner_id::text||':email:'||md5(e));
+ UPDATE public.poll_tasks SET status='cancelled',cancelled_at=now()
+ WHERE owner_id=s.owner_id AND status IN ('pending','opened')
+ AND ((s.subscriber_user_id IS NOT NULL AND recipient_user_id=s.subscriber_user_id)
+ OR public._norm_email(recipient_email)=e);
+ RETURN true;
+END; $$;
+
+
+--
+-- Name: _subscriber_pair_lock("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_subscriber_pair_lock"("p_owner" "uuid", "p_email" "text") RETURNS "void"
+    LANGUAGE "sql"
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT pg_advisory_xact_lock(hashtextextended(p_owner::text||':email:'||public._norm_email(p_email),333));
+$$;
+
+
+--
+-- Name: _subscriber_refusal_until("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_subscriber_refusal_until"("p_owner" "uuid", "p_email" "text") RETURNS timestamp with time zone
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT greatest(max(s.declined_at)+interval '30 days',
+   (SELECT max(next_allowed_at) FROM public.mail_cooldowns
+    WHERE action_key='poll:invite_after_reject'
+    AND target_key='pair:'||p_owner::text||':email:'||md5(public._norm_email(p_email))
+    AND next_allowed_at>now())) FROM public.poll_subscriptions s
+ LEFT JOIN public.profiles p ON p.id=s.subscriber_user_id
+ WHERE s.owner_id=p_owner AND public._norm_email(coalesce(s.subscriber_email,p.email))=public._norm_email(p_email)
+ AND s.declined_at>now()-interval '30 days';
 $$;
 
 
@@ -1979,8 +2042,11 @@ BEGIN
     v_until:=NULL; v_declined_at:=NULL;
     IF p_kind='friends' THEN
       SELECT declined_at INTO v_declined_at FROM public.friendships WHERE id=(v_row->>'id')::uuid;
+    ELSE
+      SELECT declined_at INTO v_declined_at FROM public.poll_subscriptions WHERE id=(v_row->>'id')::uuid;
     END IF;
-    v_enabled:=public._contact_mail_enabled(v_row->>'email');
+    v_enabled:=public._contact_mail_enabled(v_row->>'email')
+      AND (p_kind<>'subscribers' OR v_row->>'friend_user_id' IS NULL);
     IF v_row->>'status'='pending' AND (p_kind='subscribers' OR v_row->>'direction'='outgoing') THEN
       IF p_kind='friends' THEN
         v_target:='pair:'||v_uid::text||':'||(v_row->>'user_id');
@@ -1991,7 +2057,7 @@ BEGIN
         v_target:='pair:'||v_uid::text||':email:'||md5(lower(trim(v_row->>'email')));
         SELECT greatest(max(next_allowed_at),public._poll_sub_mail_limit_until(v_uid,NULL,v_row->>'email'))
           INTO v_until FROM public.mail_cooldowns
-          WHERE target_key=v_target AND action_key='poll:resend';
+          WHERE target_key=v_target AND action_key IN ('poll:invite','poll:resend');
       END IF;
       IF v_until<=now() THEN v_until:=NULL; END IF;
     END IF;
@@ -3560,6 +3626,9 @@ BEGIN
         OR (v_email IS NOT NULL AND v_email <> ''
             AND lower(trim(s.subscriber_email)) = v_email))
   LOOP
+    PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(r.owner_id,v_uid)::text||':'||GREATEST(r.owner_id,v_uid)::text,329));
+    PERFORM public._subscriber_pair_lock(r.owner_id,v_email);
+    IF public._subscriber_refusal_until(r.owner_id,v_email) IS NOT NULL THEN CONTINUE; END IF;
     IF EXISTS (
       SELECT 1 FROM public.friendships f
       WHERE LEAST(f.requester_id, f.addressee_id) = LEAST(r.owner_id, v_uid)
@@ -3596,10 +3665,18 @@ CREATE FUNCTION "public"."friends_accept"("p_id" "uuid") RETURNS "jsonb"
     AS $$
 DECLARE
   v_uid uuid := auth.uid();
+  f public.friendships%rowtype; e text; deadline timestamptz;
 BEGIN
   IF v_uid IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
   END IF;
+  SELECT * INTO f FROM public.friendships WHERE id=p_id AND addressee_id=v_uid AND status='pending';
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(f.requester_id,v_uid)::text||':'||GREATEST(f.requester_id,v_uid)::text,329));
+  SELECT email INTO e FROM public.profiles WHERE id=v_uid;
+  PERFORM public._subscriber_pair_lock(f.requester_id,e);
+  deadline:=public._subscriber_refusal_until(f.requester_id,e);
+  IF deadline IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',deadline,'reason','after_reject'); END IF;
   UPDATE public.friendships
      SET status = 'active', accepted_at = now(), declined_at = NULL
    WHERE id = p_id AND addressee_id = v_uid AND status='pending';
@@ -3682,6 +3759,11 @@ BEGIN
   END IF;
 
   PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(v_uid,v_prof.id)::text||':'||GREATEST(v_uid,v_prof.id)::text,329));
+  PERFORM public._subscriber_pair_lock(v_uid,v_prof.email);
+  v_cd_until:=public._subscriber_refusal_until(v_uid,v_prof.email);
+  IF v_cd_until IS NOT NULL THEN
+    RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_cd_until,'reason','after_reject');
+  END IF;
   SELECT * INTO v_ex
   FROM public.friendships f
   WHERE LEAST(f.requester_id, f.addressee_id) = LEAST(v_uid, v_prof.id)
@@ -9549,37 +9631,19 @@ CREATE FUNCTION "public"."poll_go_global_unsubscribe"("p_token" "uuid") RETURNS 
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  v_email text;
+DECLARE e text; r record;
 BEGIN
-  SELECT email INTO v_email
-  FROM public.email_unsub_tokens
-  WHERE token = p_token LIMIT 1;
-
-  IF NOT found THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
-  END IF;
-
-  -- Oznacz jako suppressed
-  UPDATE public.email_unsub_tokens
-  SET suppressed_at = now()
-  WHERE token = p_token AND suppressed_at IS NULL;
-
-  -- Anuluj wszystkie aktywne subskrypcje dla tego emaila
-  UPDATE public.poll_subscriptions
-  SET status = 'declined', declined_at = now()
-  WHERE lower(subscriber_email) = lower(v_email)
-    AND status IN ('pending', 'active');
-
-  -- Anuluj wszystkie aktywne taski dla tego emaila
-  UPDATE public.poll_tasks
-  SET status = 'cancelled', cancelled_at = now()
-  WHERE lower(recipient_email) = lower(v_email)
-    AND status IN ('pending', 'opened');
-
-  RETURN jsonb_build_object('ok', true);
-END;
-$$;
+ SELECT public._norm_email(email) INTO e FROM public.email_unsub_tokens WHERE token=p_token;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
+ UPDATE public.email_unsub_tokens SET suppressed_at=coalesce(suppressed_at,now()) WHERE token=p_token;
+ FOR r IN SELECT token FROM public.poll_subscriptions
+ WHERE public._norm_email(subscriber_email)=e AND status IN ('pending','active') ORDER BY owner_id,id LOOP
+   PERFORM public._subscriber_close(r.token,true);
+ END LOOP;
+ UPDATE public.poll_tasks SET status='cancelled',cancelled_at=now()
+ WHERE public._norm_email(recipient_email)=e AND status IN ('pending','opened');
+ RETURN jsonb_build_object('ok',true);
+END; $$;
 
 
 --
@@ -9613,7 +9677,7 @@ BEGIN
   INTO s
   FROM public.poll_subscriptions ps
   LEFT JOIN public.profiles p ON p.id = ps.owner_id
-  WHERE ps.token = p_token LIMIT 1;
+  WHERE ps.token = p_token AND (ps.declined_at IS NULL OR ps.declined_at>now()-interval '30 days') LIMIT 1;
 
   IF found THEN
     IF s.opened_at IS NULL THEN
@@ -9624,7 +9688,8 @@ BEGIN
       'sub_id', s.id, 'status', s.status,
       'owner_id', s.owner_id, 'owner_label', s.owner_label,
       'subscriber_user_id', s.subscriber_user_id,
-      'subscriber_email', s.subscriber_email
+      'subscriber_email', s.subscriber_email,
+      'friend_conversion_required', s.subscriber_user_id IS NOT NULL OR EXISTS(SELECT 1 FROM public.profiles WHERE public._norm_email(email)=public._norm_email(s.subscriber_email) AND NOT is_guest)
     );
   END IF;
 
@@ -9710,20 +9775,10 @@ $$;
 --
 
 CREATE FUNCTION "public"."poll_go_sub_decline"("p_token" "uuid") RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-begin
-  update public.poll_subscriptions s
-     set status = 'declined',
-         opened_at = coalesce(s.opened_at, now()),
-         declined_at = now()
-   where s.token = p_token
-     and s.status = 'pending'
-     and s.cancelled_at is null
-     and s.declined_at is null;
-
-  return found;
-end;
+ SELECT public._subscriber_close(p_token,false);
 $$;
 
 
@@ -10345,72 +10400,21 @@ END $$;
 
 CREATE FUNCTION "public"."poll_sub_accept"("p_token" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
-  my_uid uuid := auth.uid();
-  my_email text;
-  s record;
-begin
-  if my_uid is null then
-    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
-  end if;
-
-  select p.email into my_email
-  from public.profiles p
-  where p.id = my_uid;
-
-  my_email := public._norm_email(my_email);
-
-  select *
-  into s
-  from public.poll_subscriptions
-  where token = p_token
-  limit 1;
-
-  if s is null then
-    return jsonb_build_object('ok', false, 'error', 'invalid_token');
-  end if;
-
-  -- nie pozwalamy wskrzeszać
-  if s.cancelled_at is not null or s.declined_at is not null then
-    return jsonb_build_object('ok', false, 'error', 'already_closed');
-  end if;
-
-  if s.accepted_at is not null or s.status = 'active' then
-    return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'accept', 'note', 'already_active');
-  end if;
-
-  -- sprawdzamy, czy to mój token
-  if s.subscriber_user_id is not null then
-    if s.subscriber_user_id <> my_uid then
-      return jsonb_build_object('ok', false, 'error', 'not_your_invite');
-    end if;
-  else
-    -- invite emailowy: musi pasować do mojego maila
-    if public._norm_email(s.subscriber_email) is null or public._norm_email(s.subscriber_email) <> my_email then
-      return jsonb_build_object('ok', false, 'error', 'email_mismatch');
-    end if;
-
-    -- opcjonalnie: po zalogowaniu podpinamy do user_id
-    update public.poll_subscriptions
-      set subscriber_user_id = my_uid,
-          subscriber_email = null
-    where id = s.id
-      and subscriber_user_id is null;
-  end if;
-
-  update public.poll_subscriptions
-    set status = 'active',
-        accepted_at = coalesce(accepted_at, now()),
-        opened_at   = coalesce(opened_at, now()),
-        declined_at = null,
-        cancelled_at = null
-  where token = p_token;
-
-  return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'accept');
-end;
-$$;
+DECLARE s public.poll_subscriptions%rowtype; uid uuid:=auth.uid(); e text;
+BEGIN
+ IF uid IS NULL THEN RETURN jsonb_build_object('ok',false,'error','not_authenticated'); END IF;
+ SELECT public._norm_email(email) INTO e FROM public.profiles WHERE id=uid;
+ SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token FOR UPDATE;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
+ IF (s.subscriber_user_id IS NOT NULL AND s.subscriber_user_id<>uid)
+ OR (s.subscriber_user_id IS NULL AND public._norm_email(s.subscriber_email) IS DISTINCT FROM e) THEN
+   RETURN jsonb_build_object('ok',false,'error','not_your_invite'); END IF;
+ IF s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL OR s.status NOT IN ('pending','active') THEN
+   RETURN jsonb_build_object('ok',false,'error','already_closed'); END IF;
+ RETURN jsonb_build_object('ok',false,'error','has_account');
+END; $$;
 
 
 --
@@ -10424,10 +10428,13 @@ CREATE FUNCTION "public"."poll_sub_accept_email"("p_token" "uuid", "p_email" "te
 DECLARE
   e text := public._norm_email(p_email);
   s public.poll_subscriptions%rowtype;
+  deadline timestamptz;
 BEGIN
   IF e IS NULL THEN
     RETURN jsonb_build_object('ok',false,'error','missing_email');
   END IF;
+  SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token;
+  IF FOUND THEN PERFORM public._subscriber_pair_lock(s.owner_id,s.subscriber_email); END IF;
   SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token FOR UPDATE;
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok',false,'error','invalid_token');
@@ -10442,6 +10449,11 @@ BEGIN
   IF public._norm_email(s.subscriber_email) IS DISTINCT FROM e THEN
     RETURN jsonb_build_object('ok',false,'error','email_mismatch');
   END IF;
+  IF EXISTS(SELECT 1 FROM public.profiles WHERE public._norm_email(email)=e AND NOT is_guest) THEN
+    RETURN jsonb_build_object('ok',false,'error','has_account');
+  END IF;
+  deadline:=public._subscriber_refusal_until(s.owner_id,e);
+  IF deadline IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'error','cooldown','cooldown_until',deadline); END IF;
   IF s.status='active' THEN
     RETURN jsonb_build_object('ok',true,'kind','sub','action','accept','note','already_active');
   END IF;
@@ -10484,45 +10496,14 @@ CREATE FUNCTION "public"."poll_sub_unsubscribe"("p_token" "uuid") RETURNS "jsonb
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  v_sub        public.poll_subscriptions%rowtype;
-  v_owner_label text;
+DECLARE s public.poll_subscriptions%rowtype; label text;
 BEGIN
-  SELECT ps.*, p.username AS _label INTO v_sub
-  FROM public.poll_subscriptions ps
-  LEFT JOIN public.profiles p ON p.id = ps.owner_id
-  WHERE ps.token = p_token
-  LIMIT 1;
-
-  IF NOT found THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'not_found');
-  END IF;
-
-  IF v_sub.status NOT IN ('pending', 'active') THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'already_inactive');
-  END IF;
-
-  SELECT p.username INTO v_owner_label
-  FROM public.profiles p WHERE p.id = v_sub.owner_id LIMIT 1;
-
-  -- Decline subskrypcji (ten sam efekt co decline → 5-dniowy cooldown)
-  UPDATE public.poll_subscriptions
-  SET status = 'declined', declined_at = now()
-  WHERE id = v_sub.id;
-
-  -- Anuluj wszystkie aktywne taski tego subskrybenta u tego właściciela
-  UPDATE public.poll_tasks
-  SET status = 'cancelled', cancelled_at = now()
-  WHERE owner_id = v_sub.owner_id
-    AND status IN ('pending', 'opened')
-    AND (
-      (v_sub.subscriber_user_id IS NOT NULL AND recipient_user_id = v_sub.subscriber_user_id)
-      OR (v_sub.subscriber_email IS NOT NULL AND lower(recipient_email) = lower(v_sub.subscriber_email))
-    );
-
-  RETURN jsonb_build_object('ok', true, 'owner_label', coalesce(v_owner_label, ''));
-END;
-$$;
+ SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not_found'); END IF;
+ IF NOT public._subscriber_close(p_token,true) THEN RETURN jsonb_build_object('ok',false,'error','already_inactive'); END IF;
+ SELECT username INTO label FROM public.profiles WHERE id=s.owner_id;
+ RETURN jsonb_build_object('ok',true,'owner_label',coalesce(label,''));
+END; $$;
 
 
 --
@@ -12181,80 +12162,51 @@ CREATE FUNCTION "public"."polls_hub_subscriber_resend"("p_id" "uuid") RETURNS "j
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  v_uid         uuid := auth.uid();
-  v_sub         public.poll_subscriptions%rowtype;
-  v_to          text;
-  v_link        text;
-  v_target      text;
-  v_cd_ok       boolean;
-  v_cd_until    timestamptz;
-  v_unsub_token uuid;
-  v_lim_until   timestamptz; -- E11b
+DECLARE v_uid uuid:=auth.uid(); s public.poll_subscriptions%rowtype;
+ v_to text; v_target text; v_ok boolean; v_until timestamptz; v_unsub uuid;
 BEGIN
-  IF v_uid IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
-  END IF;
-
-  SELECT * INTO v_sub
-  FROM public.poll_subscriptions
-  WHERE id = p_id AND owner_id = v_uid
-  LIMIT 1;
-
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'not found');
-  END IF;
-
-  IF v_sub.status <> 'pending' THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'only pending can be resent');
-  END IF;
-
-  -- E11b: najwyżej 2 maile z zaproszeniem do subskrypcji na parę (okno 30 dni; pierwszy mail też idzie tą drogą)
-  v_lim_until := public._poll_sub_mail_limit_until(v_uid, v_sub.subscriber_user_id, v_sub.subscriber_email);
-  IF v_lim_until IS NOT NULL THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_lim_until, 'reason', 'mail_limit');
-  END IF;
-
-  v_target := 'pair:' || v_uid::text || ':' ||
-    coalesce(v_sub.subscriber_user_id::text, 'email:' || md5(lower(coalesce(v_sub.subscriber_email, ''))));
-  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('poll:resend', v_target);
-  IF NOT v_cd_ok THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until);
-  END IF;
-
-  IF v_sub.subscriber_email IS NOT NULL THEN
-    v_to := lower(v_sub.subscriber_email);
-  ELSIF v_sub.subscriber_user_id IS NOT NULL THEN
-    SELECT lower(p.email) INTO v_to FROM public.profiles p WHERE p.id = v_sub.subscriber_user_id LIMIT 1;
-  END IF;
-
-  IF public._norm_email(v_to) IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'no email for this subscriber');
-  END IF;
-
-  v_link := ('go?s=' || v_sub.token::text)::text;
-
-  UPDATE public.poll_subscriptions
-  SET email_sent_at = now(), email_send_count = email_send_count + 1
-  WHERE id = p_id;
-
-  PERFORM public.mail_cooldown_reserve('poll:resend', v_target);
-
-  IF v_sub.subscriber_email IS NOT NULL THEN
-    v_unsub_token := public._ensure_unsub_token(v_to);
-  END IF;
-
-  RETURN jsonb_build_object(
-    'ok', true,
-    'to', v_to,
-    'kind', 'sub_invite',
-    'link', v_link,
-    'token', v_sub.token,
-    'registered', (v_sub.subscriber_user_id IS NOT NULL),
-    'unsub_token', v_unsub_token
-  );
-END;
-$$;
+ IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
+ SELECT * INTO s FROM public.poll_subscriptions WHERE id=p_id AND owner_id=v_uid;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not found'); END IF;
+ v_to:=public._norm_email(s.subscriber_email);
+ IF v_to IS NULL AND s.subscriber_user_id IS NOT NULL THEN
+   SELECT public._norm_email(email) INTO v_to FROM public.profiles WHERE id=s.subscriber_user_id;
+ END IF;
+ IF v_to IS NULL THEN RETURN jsonb_build_object('ok',false,'err','no email for this subscriber'); END IF;
+ -- Serialize the budget across separate historical rows for this same pair.
+ PERFORM public._subscriber_pair_lock(v_uid,v_to);
+ SELECT * INTO s FROM public.poll_subscriptions WHERE id=p_id AND owner_id=v_uid FOR UPDATE;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not found'); END IF;
+ IF s.status<>'pending' OR s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL THEN
+   RETURN jsonb_build_object('ok',false,'err','only pending can be resent');
+ END IF;
+ IF s.subscriber_user_id IS NOT NULL OR EXISTS(SELECT 1 FROM public.profiles
+     WHERE lower(trim(email))=v_to AND NOT is_guest) THEN
+   RETURN jsonb_build_object('ok',false,'err','has_account');
+ END IF;
+ v_until:=public._subscriber_refusal_until(v_uid,v_to);
+ IF v_until IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until,'reason','after_reject'); END IF;
+ IF NOT public._contact_mail_enabled(v_to) THEN
+   RETURN jsonb_build_object('ok',true,'mail_allowed',false);
+ END IF;
+ v_target:='pair:'||v_uid::text||':email:'||md5(v_to);
+ v_until:=public._poll_sub_mail_limit_until(v_uid,NULL,v_to);
+ IF v_until IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until,'reason','mail_limit'); END IF;
+ -- The first delivery follows the initial invitation reservation. Later ones
+ -- must honor that reservation as well as the reminder reservation.
+ IF s.email_send_count>0 THEN
+   SELECT ok,next_allowed_at INTO v_ok,v_until FROM public.mail_cooldown_check('poll:invite',v_target);
+   IF NOT v_ok THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
+ END IF;
+ SELECT ok,next_allowed_at INTO v_ok,v_until FROM public.mail_cooldown_check('poll:resend',v_target);
+ IF NOT v_ok THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
+ SELECT ok,next_allowed_at INTO v_ok,v_until FROM public.mail_cooldown_reserve('poll:resend',v_target);
+ IF NOT v_ok THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
+ UPDATE public.poll_subscriptions SET email_sent_at=now(),email_send_count=email_send_count+1 WHERE id=s.id;
+ v_unsub:=public._ensure_unsub_token(v_to);
+ RETURN jsonb_build_object('ok',true,'mail_allowed',true,'to',v_to,'kind','sub_invite',
+   'link','/go/?s='||s.token,'token',s.token,'registered',false,'unsub_token',v_unsub);
+END; $$;
 
 
 --
@@ -12265,24 +12217,13 @@ CREATE FUNCTION "public"."polls_hub_subscription_accept"("p_id" "uuid") RETURNS 
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare v_uid uuid := auth.uid();
-begin
-  if v_uid is null then return jsonb_build_object('ok', false, 'error', 'auth required'); end if;
-
-  update public.poll_subscriptions
-  set status = 'active',
-      accepted_at = now()
-  where id = p_id
-    and subscriber_user_id = v_uid
-    and status = 'pending';
-
-  if not found then
-    return jsonb_build_object('ok', false, 'error', 'not found or not pending');
-  end if;
-
-  return jsonb_build_object('ok', true, 'action', 'accepted', 'id', p_id);
-end;
-$$;
+DECLARE tok uuid;
+BEGIN
+ IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
+ SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not found or not pending'); END IF;
+ RETURN public.poll_sub_accept(tok);
+END; $$;
 
 
 --
@@ -12293,30 +12234,14 @@ CREATE FUNCTION "public"."polls_hub_subscription_cancel"("p_id" "uuid") RETURNS 
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare v_uid uuid := auth.uid();
-  v_owner uuid; -- E11b
-begin
-  if v_uid is null then return jsonb_build_object('ok', false, 'error', 'auth required'); end if;
-
-  update public.poll_subscriptions
-  set status = 'cancelled',
-      cancelled_at = now()
-  where id = p_id
-    and subscriber_user_id = v_uid
-    and status in ('active','pending')
-  returning owner_id into v_owner; -- E11b
-
-  if not found then
-    return jsonb_build_object('ok', false, 'error', 'not found or not active/pending');
-  end if;
-
-  -- E11b: wypisanie się wycofuje czekające zaproszenia do ankiet tego nadawcy
-  delete from public.poll_tasks pt
-  where pt.owner_id = v_owner and pt.recipient_user_id = v_uid and pt.status in ('pending', 'opened');
-
-  return jsonb_build_object('ok', true, 'action', 'cancelled', 'id', p_id);
-end;
-$$;
+DECLARE tok uuid;
+BEGIN
+ IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
+ SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
+ IF NOT FOUND OR NOT public._subscriber_close(tok,true) THEN
+ RETURN jsonb_build_object('ok',false,'error','not found or not pending/active'); END IF;
+ RETURN jsonb_build_object('ok',true,'action','declined','id',p_id);
+END; $$;
 
 
 --
@@ -12324,77 +12249,10 @@ $$;
 --
 
 CREATE FUNCTION "public"."polls_hub_subscription_invite"("p_recipient" "text") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
+    LANGUAGE "sql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  v_rec      text := lower(trim(coalesce(p_recipient, '')));
-  v_user_id  uuid;
-  v_email    text;
-  v_id       uuid;
-  v_token    uuid;
-  v_target   text;
-  v_cd_ok    boolean;
-  v_cd_until timestamptz;
-  v_lim_until timestamptz; -- E11b
-BEGIN
-  IF v_rec = '' THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'empty recipient');
-  END IF;
-
-  SELECT id, email INTO v_user_id, v_email FROM public.profiles WHERE lower(username) = v_rec LIMIT 1;
-  IF v_user_id IS NULL THEN
-    SELECT id, email INTO v_user_id, v_email FROM public.profiles WHERE lower(email) = v_rec LIMIT 1;
-  END IF;
-  IF v_email IS NULL THEN
-    v_email := v_rec;
-  END IF;
-
-  SELECT ps.id, ps.token INTO v_id, v_token
-  FROM public.poll_subscriptions ps
-  WHERE ps.owner_id = auth.uid()
-    AND ((v_user_id IS NOT NULL AND ps.subscriber_user_id = v_user_id)
-      OR (ps.subscriber_email IS NOT NULL AND lower(ps.subscriber_email) = v_email))
-    AND ps.status IN ('pending', 'active')
-  LIMIT 1;
-
-  IF v_id IS NOT NULL THEN
-    RETURN jsonb_build_object(
-      'ok', true, 'already', true, 'id', v_id, 'token', v_token,
-      'channel', CASE WHEN v_user_id IS NOT NULL THEN 'onsite' ELSE 'email' END
-    );
-  END IF;
-
-  v_target := 'pair:' || auth.uid()::text || ':' || coalesce(v_user_id::text, 'email:' || md5(v_email));
-  -- E11b: po odrzuceniu zaproszenia przez odbiorcę — 30 dni bez nowego zaproszenia
-  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('poll:invite_after_reject', v_target);
-  IF NOT v_cd_ok THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until, 'reason', 'after_reject');
-  END IF;
-
-  -- E11b: najwyżej 2 maile z zaproszeniem do subskrypcji na parę (okno 30 dni)
-  v_lim_until := public._poll_sub_mail_limit_until(auth.uid(), v_user_id, v_email);
-  IF v_lim_until IS NOT NULL THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_lim_until, 'reason', 'mail_limit');
-  END IF;
-
-  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('poll:invite', v_target);
-  IF NOT v_cd_ok THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until);
-  END IF;
-
-  INSERT INTO public.poll_subscriptions (owner_id, subscriber_user_id, subscriber_email, status)
-  VALUES (auth.uid(), v_user_id, CASE WHEN v_user_id IS NULL THEN v_email ELSE NULL END, 'pending')
-  RETURNING id, token INTO v_id, v_token;
-
-  PERFORM public.mail_cooldown_reserve('poll:invite', v_target);
-
-  RETURN jsonb_build_object(
-    'ok', true, 'already', false, 'id', v_id, 'token', v_token,
-    'channel', CASE WHEN v_user_id IS NOT NULL THEN 'onsite' ELSE 'email' END,
-    'email', CASE WHEN v_user_id IS NULL THEN v_email ELSE NULL END
-  );
-END;
+ SELECT public.subscribers_invite(p_recipient);
 $$;
 
 
@@ -12403,102 +12261,10 @@ $$;
 --
 
 CREATE FUNCTION "public"."polls_hub_subscription_invite_a"("p_handle" "text") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
+    LANGUAGE "sql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  v_uid        uuid := auth.uid();
-  v_h          text := trim(coalesce(p_handle,''));
-  v_is_email   boolean := position('@' in v_h) > 1;
-  v_profile    public.profiles%rowtype;
-  v_existing   public.poll_subscriptions%rowtype;
-  v_sub_id     uuid;
-  v_token      uuid;
-  v_to         text;
-  v_go         text;
-  v_until      timestamptz;
-  v_block_ts   timestamptz;
-  v_unsub_token uuid;
-BEGIN
-  IF v_uid IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'auth required');
-  END IF;
-  IF v_h = '' THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'empty handle');
-  END IF;
-
-  SELECT * INTO v_profile
-  FROM public.profiles p
-  WHERE lower(p.username) = lower(v_h)
-     OR lower(p.email)    = lower(v_h)
-  LIMIT 1;
-
-  IF found THEN
-    SELECT * INTO v_existing
-    FROM public.poll_subscriptions s
-    WHERE s.owner_id = v_uid AND s.subscriber_user_id = v_profile.id
-    ORDER BY s.created_at DESC LIMIT 1;
-  ELSE
-    IF NOT v_is_email THEN
-      RETURN jsonb_build_object('ok', false, 'error', 'unknown username (not registered)');
-    END IF;
-    SELECT * INTO v_existing
-    FROM public.poll_subscriptions s
-    WHERE s.owner_id = v_uid AND lower(s.subscriber_email) = lower(v_h)
-    ORDER BY s.created_at DESC LIMIT 1;
-  END IF;
-
-  IF v_existing.id IS NOT NULL AND v_existing.status IN ('pending','active') THEN
-    v_token := v_existing.token;
-    v_go    := ('go?s=' || v_token::text)::text;
-    v_to    := coalesce(v_profile.email, v_existing.subscriber_email);
-    -- unsub token tylko dla email-only (niezarejestrowanych)
-    IF v_profile.id IS NULL AND public._norm_email(v_to) IS NOT NULL THEN
-      v_unsub_token := public._ensure_unsub_token(v_to);
-    END IF;
-    RETURN jsonb_build_object(
-      'ok', true, 'already', true,
-      'sub_id', v_existing.id, 'status', v_existing.status,
-      'token', v_token, 'go_url', v_go, 'to', v_to,
-      'registered', (v_profile.id IS NOT NULL),
-      'unsub_token', v_unsub_token
-    );
-  END IF;
-
-  IF v_existing.id IS NOT NULL AND v_existing.status IN ('cancelled','declined') THEN
-    v_block_ts := coalesce(v_existing.cancelled_at, v_existing.declined_at, v_existing.created_at);
-    v_until    := v_block_ts + interval '5 days';
-    IF now() < v_until THEN
-      RETURN jsonb_build_object('ok', false, 'error', 'cooldown', 'cooldown_until', v_until);
-    END IF;
-  END IF;
-
-  v_token := gen_random_uuid();
-
-  IF v_profile.id IS NOT NULL THEN
-    INSERT INTO public.poll_subscriptions(owner_id, subscriber_user_id, subscriber_email, token, status, created_at)
-    VALUES (v_uid, v_profile.id, null, v_token, 'pending', now())
-    RETURNING id INTO v_sub_id;
-    v_to := v_profile.email;
-  ELSE
-    INSERT INTO public.poll_subscriptions(owner_id, subscriber_user_id, subscriber_email, token, status, created_at)
-    VALUES (v_uid, null, lower(v_h), v_token, 'pending', now())
-    RETURNING id INTO v_sub_id;
-    v_to := lower(v_h);
-    -- generuj unsub token przy tworzeniu subskrypcji email-only
-    v_unsub_token := public._ensure_unsub_token(v_to);
-  END IF;
-
-  v_go := ('go?s=' || v_token::text)::text;
-
-  RETURN jsonb_build_object(
-    'ok', true, 'already', false,
-    'sub_id', v_sub_id, 'status', 'pending',
-    'token', v_token, 'go_url', v_go, 'to', v_to,
-    'registered', (v_profile.id IS NOT NULL),
-    'unsub_token', v_unsub_token
-  );
-END;
+ SELECT public.subscribers_invite(p_handle);
 $$;
 
 
@@ -12510,33 +12276,14 @@ CREATE FUNCTION "public"."polls_hub_subscription_reject"("p_id" "uuid") RETURNS 
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare v_uid uuid := auth.uid();
-  v_owner uuid; -- E11b
-begin
-  if v_uid is null then return jsonb_build_object('ok', false, 'error', 'auth required'); end if;
-
-  update public.poll_subscriptions
-  set status = 'declined',
-      declined_at = now()
-  where id = p_id
-    and subscriber_user_id = v_uid
-    and status = 'pending'
-  returning owner_id into v_owner; -- E11b
-
-  if not found then
-    return jsonb_build_object('ok', false, 'error', 'not found or not pending');
-  end if;
-
-  -- E11b: odrzucenie wycofuje czekające zaproszenia do ankiet tego nadawcy
-  delete from public.poll_tasks pt
-  where pt.owner_id = v_owner and pt.recipient_user_id = v_uid and pt.status in ('pending', 'opened');
-
-  -- E11b: blokada ponownego zaproszenia do subskrypcji na 30 dni (egzekwuje polls_hub_subscription_invite)
-  PERFORM public.mail_cooldown_reserve('poll:invite_after_reject', 'pair:' || v_owner::text || ':' || v_uid::text);
-
-  return jsonb_build_object('ok', true, 'action', 'declined', 'id', p_id);
-end;
-$$;
+DECLARE tok uuid;
+BEGIN
+ IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
+ SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
+ IF NOT FOUND OR NOT public._subscriber_close(tok,false) THEN
+ RETURN jsonb_build_object('ok',false,'error','not found or not pending/active'); END IF;
+ RETURN jsonb_build_object('ok',true,'action','declined','id',p_id);
+END; $$;
 
 
 --
@@ -13864,29 +13611,38 @@ CREATE FUNCTION "public"."subscribers_invite"("p_email" "text") RETURNS "jsonb"
     SET "search_path" TO 'public', 'pg_temp'
     AS $_$
 DECLARE
-  v_uid uuid := auth.uid(); v_email text := public._norm_email(p_email);
-  v_id uuid; v_token uuid; v_ok boolean; v_until timestamptz; v_target text;
+ v_uid uuid:=auth.uid(); v_email text:=public._norm_email(p_email);
+ v_id uuid; v_token uuid; v_ok boolean; v_until timestamptz; v_target text; v_enabled boolean;
 BEGIN
-  IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
-  IF v_email IS NULL OR v_email !~ '^[^[:space:]@<>]+@[^[:space:]@<>]+[.][^[:space:]@<>]+$' THEN
-    RETURN jsonb_build_object('ok',false,'err','invalid_email');
-  END IF;
-  IF EXISTS(SELECT 1 FROM public.profiles WHERE lower(trim(email))=v_email AND NOT is_guest) THEN
-    RETURN jsonb_build_object('ok',false,'err','has_account');
-  END IF;
-  SELECT id,token INTO v_id,v_token FROM public.poll_subscriptions
-    WHERE owner_id=v_uid AND subscriber_user_id IS NULL AND lower(trim(subscriber_email))=v_email AND status IN ('pending','active') LIMIT 1;
-  IF FOUND THEN RETURN jsonb_build_object('ok',true,'already',true,'id',v_id,'token',v_token); END IF;
-  v_target := 'pair:'||v_uid::text||':email:'||md5(v_email);
-  SELECT ok,next_allowed_at INTO v_ok,v_until FROM public.mail_cooldown_check('poll:invite_after_reject',v_target);
-  IF NOT v_ok THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
-  v_until := public._poll_sub_mail_limit_until(v_uid,NULL,v_email);
-  IF v_until IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
-  SELECT ok,next_allowed_at INTO v_ok,v_until FROM public.mail_cooldown_check('poll:invite',v_target);
-  IF NOT v_ok THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
-  INSERT INTO public.poll_subscriptions(owner_id,subscriber_email,status) VALUES(v_uid,v_email,'pending') RETURNING id,token INTO v_id,v_token;
-  PERFORM public.mail_cooldown_reserve('poll:invite',v_target);
-  RETURN jsonb_build_object('ok',true,'already',false,'id',v_id,'token',v_token);
+ IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
+ IF v_email IS NULL OR v_email !~ '^[^[:space:]@<>]+@[^[:space:]@<>]+[.][^[:space:]@<>]+$' THEN
+   RETURN jsonb_build_object('ok',false,'err','invalid_email');
+ END IF;
+ IF EXISTS(SELECT 1 FROM public.profiles WHERE lower(trim(email))=v_email AND NOT is_guest) THEN
+   RETURN jsonb_build_object('ok',false,'err','has_account');
+ END IF;
+ PERFORM public._subscriber_pair_lock(v_uid,v_email);
+ SELECT id,token INTO v_id,v_token FROM public.poll_subscriptions
+   WHERE owner_id=v_uid AND subscriber_user_id IS NULL AND lower(trim(subscriber_email))=v_email
+     AND status IN ('pending','active') LIMIT 1;
+ IF FOUND THEN RETURN jsonb_build_object('ok',true,'already',true,'id',v_id,'token',v_token); END IF;
+ v_until:=public._subscriber_refusal_until(v_uid,v_email);
+ IF v_until IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until,'reason','after_reject'); END IF;
+ v_target:='pair:'||v_uid::text||':email:'||md5(v_email);
+ -- The refusal window is relational and applies also when mail is disabled.
+ SELECT ok,next_allowed_at INTO v_ok,v_until FROM public.mail_cooldown_check('poll:invite_after_reject',v_target);
+ IF NOT v_ok THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
+ v_enabled:=public._contact_mail_enabled(v_email);
+ IF v_enabled THEN
+   v_until:=public._poll_sub_mail_limit_until(v_uid,NULL,v_email);
+   IF v_until IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
+   SELECT ok,next_allowed_at INTO v_ok,v_until FROM public.mail_cooldown_check('poll:invite',v_target);
+   IF NOT v_ok THEN RETURN jsonb_build_object('ok',false,'err','cooldown','cooldown_until',v_until); END IF;
+ END IF;
+ INSERT INTO public.poll_subscriptions(owner_id,subscriber_email,status)
+   VALUES(v_uid,v_email,'pending') RETURNING id,token INTO v_id,v_token;
+ IF v_enabled THEN PERFORM public.mail_cooldown_reserve('poll:invite',v_target); END IF;
+ RETURN jsonb_build_object('ok',true,'already',false,'id',v_id,'token',v_token,'mail_allowed',v_enabled);
 END; $_$;
 
 
@@ -13901,7 +13657,7 @@ CREATE FUNCTION "public"."subscribers_list"() RETURNS TABLE("id" "uuid", "email"
   SELECT s.id,s.subscriber_email,s.status,s.created_at,s.token,s.email_sent_at,s.email_send_count,
     (SELECT p.id FROM public.profiles p WHERE lower(trim(p.email))=lower(trim(s.subscriber_email)) AND NOT p.is_guest LIMIT 1)
   FROM public.poll_subscriptions s
-  WHERE s.owner_id=auth.uid() AND s.subscriber_user_id IS NULL AND s.status IN ('pending','active')
+  WHERE s.owner_id=auth.uid() AND s.subscriber_user_id IS NULL AND (s.status IN ('pending','active') OR (s.status='declined' AND s.declined_at>now()-interval '5 days'))
   ORDER BY s.created_at DESC;
 $$;
 
@@ -19609,5 +19365,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UC6SkV5x2XYzn4yp0vfxoqhdY5u4ruxkc3P9bQUieNSYH1O9A08FosxdLzhV5De
+\unrestrict fZxHIMQenkSaPysQn1YdBdEAe8P7pdu3BcI02sEGKNW3PdDm6zORbHfVXdg8v5E
 
