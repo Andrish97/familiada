@@ -9,14 +9,27 @@ Zrzuty390/1400 i zwijane odmowy w docs/img/e19-bases. Kontrola wcześniejsza
 poprawiono30s, świeży komplet zaliczony. Parent guards oraz wyścigi337–338
 zrobione; fizyczna kaskada base_share_tasks bez FK do bazy nadal pkt7.
 
-Ankiety340–341 są wyłącznie na branchu: flagi przed mailowym budżetem,
-metadata, odmowa current-run ukrywana5d, zachowana po owner remove,
-parent/actor guards i zamknięte stare writes. Lokalny SQL oraz wyścigi ✓,
-izolowany38162672508 w toku. Front/fixture Go/pełne E2E jeszcze przed
-wdrożeniem. Audyt limitu3mail/24h ujawnił, że _poll_daily_cap_until liczy
-kolejkę usuwaną po dostarczeniu; dopiąć trwały budżet zanim pkt5 zostanie
-opublikowany. Dalej maile, graf/kaskady/Go/anonimowy token, UI/E20 i
-landscape, manual ostatni. Kontynuować bez kończenia tury po paczce.
+Backend Ankiet340–344 zastosowany na main: DB38165033358 ✓,
+340/34118:45:40UTC,342/34318:45:41UTC; DB38165841575 ✓,34418:57:12UTC.
+Izolowane38164791524 i38165592194 ✓: kontrakty/ACL/flag/refusal/current-run,
+trwały3/24h także po dostarczeniu i usunięciu taska/gry; wyścigi i atomowy
+complete ostatniej paczki tekst/punkty. Odmowa usuwa niepełne głosy.
+Głosowania anonymous bez taska nie zmieniono; limit urządzenia nadal pkt7.
+
+Front nadal branch: wspólne sekcje/checkboxy/zegary i małe akcje nad kartami,
+dziewięć zrzutów docs/img/e19-polls. Go konta→Tasks ma właściwą copyPL/EN/UK;
+mailowe linki Ankiet dostają lang. Unit414/414 ✓ po nowej regresji języków.
+Go siedem passed38166322418, w tym rzeczywisty complete points; pełny tekst
+Go→Tasks→10q→done też przeszedł do momentu anonimowej części testu.
+Pierwszy poll-share nie domknięty: brak lang dawał anonimowi angielski Go;
+poprawiono. 38166803982 w toku: pięć poll-share, --retries=0, worker1/pula7–8.
+Sprawdzić wynik/poprawić problemy, Pages dopiero po zielonej bramce; te same
+kontrole main zamykają pkt5. Anulowane38166057247/38166706928 nie są bramką.
+
+Dalej pkt6 maile (audyt wejść w maile-granice.md), pkt7 graf/kaskady/Go/
+lekki anonimowy token, UI/E20 i landscape; manual ostatni. Wypisanie=odmowa
+w każdym miejscu jest zapisane; starsze usuwanie Znajomych nadal do dopięcia
+w audycie grafu. Kontynuować bez kończenia tury po paczce.
 
 
 ## Najnowszy stan: E19 krok 7 w realizacji

@@ -394,3 +394,17 @@ oraz jednoznaczny stan Go po usunięciu; obecnych kontroli guarded
 RPC nie traktować jako wykonanej fizycznej kaskady. Lock pary
 poprzedza blokadę rodzica, potem rekordów task/share; cleanup zaproszeń
 w invite dotyczy własnej pary po locku, bez globalnego DELETE przed nim.
+
+### Węzły Ankiet340–344 — dopięcie grafu (2026-10-11)
+
+| Ścieżka | Cykl i granica |
+|---|---|
+| Konto właściciela → gra → bieżący klucz ankiety → task → głosy taska | SHARE rodzica → UPDATE własnego taska przy głosowaniu, UPDATE rodzica → task przy decyzjach. Odmowa usuwa niepełne głosy; ostatni batch zapisuje komplet i done atomowo; późniejsza odmowa zablokowana. Owner remove kasuje głosy i zamyka task, zachowuje odmowę bieżącego runu. |
+| Konto właściciela → poll_mail_budget_events (hash e-maila, czas zakolejkowania) | Jest dzieckiem konta, bez FK do gry/taska/kolejki. Dostarczenie/usunięcie kolejki, gry, taska lub subskrypcji nie zeruje limitu3/24h. Konto właściciela usuwa zdarzenia przez auth.users FK CASCADE; logiczny limit24h, fizyczne sprzątanie własnej pary przy insercie i godzinowe cron. Prywatna tabela, bez treści i surowego adresu. |
+
+Nie mieszać blokad wierszy tej transakcji z heartbeat edit_locks: dwóch
+odbiorców może głosować równolegle. Aktualizacja344 nie bierze wyłącznej
+blokady rodzica po wcześniejszym SHARE, co zapobiega upgrade deadlock.
+Usunięcie konta odbiorcy zachowuje swój obecny cleanup także po e-mailu
+w delete_user_everything; pkt7 ma przetestować całą macierz, w tym dawne
+email-taski i ponowne założenie konta. Fizyczna kaskada Baz pozostaje otwarta.
