@@ -990,3 +990,9 @@ akceptacją Friendship. Paczka 335 domyka kwalifikację: znane konto
 korzysta wyłącznie ze Znajomych, także przy dawnym aktywnym wpisie
 subskrypcji. To dopięcie modelu pkt 3; pełny wygląd Ankiet pozostaje
 pkt 5. Draft Baz otrzyma 336, z zachowaniem zmian Go 333.
+
+Fixture E2E dawnego wpisu aktywnej subskrypcji konta nie może używać
+normalnego INSERT (prawidłowo zabroniony). Helper 336 ograniczony do
+własnej pary test1–7→test8, bez maili i zmiany relacji. Draft Baz
+otrzymuje 337. Sześć Subscribers w 38156858860 przeszło bez retry;
+test kwalifikacji ankiety wymaga świeżej kontroli po wdrożeniu helpera.

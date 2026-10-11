@@ -124,9 +124,8 @@ test("ankieta: odbiorca z kontem nie przechodzi starym kanałem Subskrybentów",
       const ownerId = (await sb.auth.getUser()).data.user.id;
       const { data: areFriends, error: friendError } = await sb.rpc("are_friends", { a: ownerId, b: recipientId });
       if (friendError || areFriends) throw friendError || new Error("fixture must have no accepted Friendship");
-      const { data, error } = await sb.from("poll_subscriptions")
-        .insert({ owner_id: ownerId, subscriber_email: email, status: "active" }).select("id").single();
-      if (error) throw error;
+      const { data, error } = await sb.rpc("e2e_registered_subscriber_fixture", { p_remove: false });
+      if (error || !data?.ok) throw new Error(error?.message || data?.err || "registered subscriber fixture failed");
       return data;
     }, { recipientId, email: testAccountUsername(8) });
     subId = ids.id;
@@ -148,7 +147,7 @@ test("ankieta: odbiorca z kontem nie przechodzi starym kanałem Subskrybentów",
     await expect(page.locator("#pollRecipientsOverlay")).toBeVisible();
     await expect(page.locator("#pollRecipientsSubs .shareRow").filter({ hasText: testAccountUsername(8) })).toHaveCount(0);
   } finally {
-    if (subId) await page.evaluate(async id => { await window.__sbClient.from("poll_subscriptions").delete().eq("id", id); }, subId);
+    if (subId) await rpc(page, "e2e_registered_subscriber_fixture", { p_remove: true });
     if (gameId) await page.evaluate(async id => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
     if (recipientId) await cleanup(page, recipientId);
     await recipientContext.close();
