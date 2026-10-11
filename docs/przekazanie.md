@@ -25,12 +25,15 @@ pełny zakres poll-share przeszedł. Nie powtarzać pkt5 bez nowej zmiany.
 
 Maile pkt6 są draftem brancha: kanoniczny renderer Edge + generowana
 identyczna kopia front, sześć wejść, odrębne reminders/rola Bazy/langstopki,
-16 zrzutów docs/img/e19-mails. Lokalnie unit428/428 i Deno check auth/send-mail ✓.
+16 zrzutów docs/img/e19-mails. Lokalnie unit431/431 i Deno check auth/send-mail ✓.
 Nowe helpery E2E weryfikują HTML faktycznie dostarczonego maila; izolowany
 38168702507 ✓ dla renderer/auth. Kolejny draft raportuje prawdziwy queue
 wynik per adres (NULL z triggera to skipped, nie success); frontend nie
-oznacza pominiętego taska jako emailed. Świeży runner auth+send-mail oraz
-realne branch/main + auth języki/flag-at-insert jeszcze wymagane.
+oznacza pominiętego taska jako emailed. Izolowany38169686125 ✓ (431unit/Deno auth+send-mail/copy). Branch
+38169157737 ✓ pięćUI/sześć realnych maili. Promocja Edge/Pages teraz,
+potem te same main + authPL/EN/UK/queued0; dopiero po kontroli zaznaczyć
+pierwszą paczkę maili jako wdrożoną. Kontakt/Settings i audyt reszty
+pozostają otwarte.
 Pkt5 już zamknięty; przed promocją maili wymagany świeży branch z ich kodem.
 Kod Deno typuje się po
 jawnych guardach usuwających sześć odtworzonych błędów starego HEAD.

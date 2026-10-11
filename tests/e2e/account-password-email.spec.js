@@ -1,4 +1,4 @@
-const { expectMailDocument } = require("./helpers/mail-document");
+const { expectMailDocument, escapeMailText } = require("./helpers/mail-document");
 const { test, expect } = require("@playwright/test");
 const path = require("node:path");
 const fs = require("node:fs");
@@ -45,7 +45,7 @@ async function waitForAuthMailSlot(account, testInfo) {
 
 function expectMailInLanguage(email, copy, lang, label, typeKey) {
   expectMailDocument(email, { lang });
-  const html = (email.body_html || "").replace(/&amp;/g, "&");
+  const html = email.body_html || "";
   // Znacznik wstawiany tylko przez send-email czytający tłumaczenia strony —
   // stara wersja z tekstami w kodzie (identycznymi) go nie ma. "@lang" wyklucza
   // też ciche przejście na polski przy brakującym tłumaczeniu.
@@ -53,7 +53,7 @@ function expectMailInLanguage(email, copy, lang, label, typeKey) {
     .toContain(`<meta name="familiada-i18n" content="authEmail.${typeKey}@${lang}">`);
   expect(email.subject, `${label}: temat`).toBe(copy.subject);
   for (const field of ["subtitle", "title", "desc", "btn", "ignore", "footer"]) {
-    expect(html, `${label}: brak pola ${field}`).toContain(copy[field]);
+    expect(html, `${label}: brak pola ${field}`).toContain(escapeMailText(copy[field]));
   }
   const action = extractHttpLinks(email).find((link) => /token_hash=/.test(link));
   expect(action, `${label}: brak linku akcji`).toBeTruthy();

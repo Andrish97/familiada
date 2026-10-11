@@ -45,8 +45,10 @@ sprawdzane w bazie (nie w przeglądarce).
   RPC. Ponów dotyczy wyłącznie oczekujących bez odmowy. Zniknięcie odmowy
   z listy nie resetuje limitów przed końcem karencji. Odmowy znajomości,
   zaproszenia do subskrypcji i bazy wygasają po czasie (założenie 30 dni);
-  dopiero jawne nowe dodanie może wysłać nowy mail. Wygaśnięcie nie
-  wysyła maila i nie znosi wypisania/globalnej flagi. Szczegóły w E19 §7.
+  dopiero jawne nowe dodanie może wysłać nowy mail. Wygaśnięcie odmowy nie
+  wysyła maila ani automatycznie nie przywraca relacji/dostępu. Po30 dniach
+  także wypisanie odbiorcy pozwala na nowe zaproszenie; globalna flaga
+  wyłączenia maili pozostaje osobna i trwała. Szczegóły w E19 §7.
 - Cofnięcie własnej odmowy przez odbiorcę przywraca oczekujące, nie wysyła
   maila i nie resetuje dotychczasowych limitów. Akceptacja pozostaje
   osobną akcją. Wyjątek ustalony przez użytkownika: odmowa subskrypcji
@@ -57,6 +59,12 @@ sprawdzane w bazie (nie w przeglądarce).
   przyznania ani cofnięcia dostępu.
 
 ## 2. Tabela granic (decyzja 2026-10-07)
+
+**Tabela historyczna z 2026-10-07.** Jej dawne „wypisał się → nigdy”
+zastępuje zatwierdzone E19: wypisanie odbiorcy = odmowa5/30 dni
+(Znajomi/Subskrybenci/Bazy), bez przypomnień. Ankieta: koniec możliwości
+w bieżącym uruchomieniu, bez undo. Globalne wyłączenie maili jest niezależne.
+Aktualne kontrakty/wyjątki i obie strony są w E19 §7, limity w §5 poniżej.
 
 | Mail | Kiedy wolno | Limit | Po odmowie / braku odpowiedzi |
 |---|---|---|---|

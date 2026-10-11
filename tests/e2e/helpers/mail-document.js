@@ -20,4 +20,7 @@ function expectMailDocument(email, { lang = 'pl', accountFooter = false, globalU
     expect(unsubscribe.searchParams.get('lang')).toBe(lang);
   }
 }
-module.exports = { expectMailDocument };
+function escapeMailText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+module.exports = { expectMailDocument, escapeMailText };

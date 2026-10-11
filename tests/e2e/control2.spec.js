@@ -2534,10 +2534,12 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
 // przeglądarki otwiera go i dostaje działającą stronę Prowadzącego, bez
 // żadnego logowania (token jednego odbiorcy w URL-u wystarcza).
 test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -- link z maila faktycznie łączy", async ({ page, context, browser }, testInfo) => {
+  test.setTimeout(300000); // setup + pełny interwał mail-worker + otwarcie linku
   const recipient = testAccountUsername(7);
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
   const game = await makeGame(page, `E2E-CONTROL2-SHAREMAIL-${Date.now()}`);
   const contexts = [];
+  let recipientSetupPage = null, recipientUid = null, recipientOriginalFlag = null;
   try {
     await resetMailProviderLimits(page);
     await clearMailbox(recipient);
@@ -2564,21 +2566,23 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
       const { data } = await window.__sbClient.auth.getUser();
       return data?.user?.id || null;
     });
-    const recipientSetupContext = await controlContext(browser, );
-    const recipientSetupPage = await recipientSetupContext.newPage();
-    let recipientUid = null;
-    try {
-      await loginAsTestUser(recipientSetupPage, recipientSetupContext, { username: recipient });
-      recipientUid = await recipientSetupPage.evaluate(async (ownerId) => {
-        const sb = window.__sbClient;
-        const { data: userData } = await sb.auth.getUser();
-        await sb.from("user_flags").upsert({ user_id: userData.user.id, email_notifications: true }, { onConflict: "user_id" });
-        if (ownerId) await sb.rpc("e2e_shared_devices_cleanup", { p_other_user_id: ownerId });
-        return userData.user.id;
-      }, ownerUid);
-    } finally {
-      await recipientSetupContext.close().catch(() => {});
-    }
+    const recipientSetupContext = await controlContext(browser);
+    contexts.push(recipientSetupContext);
+    recipientSetupPage = await recipientSetupContext.newPage();
+    await loginAsTestUser(recipientSetupPage, recipientSetupContext, { username: recipient });
+    const identity = await recipientSetupPage.evaluate(async () => {
+      const client = window.__sbClient, user = (await client.auth.getUser()).data.user;
+      const { data, error } = await client.from("user_flags").select("email_notifications").eq("user_id", user.id).maybeSingle();
+      if (error) throw new Error(error.message);
+      return { id: user.id, flag: data?.email_notifications ?? true };
+    });
+    recipientUid = identity.id; recipientOriginalFlag = identity.flag;
+    await recipientSetupPage.evaluate(async ({ ownerId, recipientId }) => {
+      const client = window.__sbClient;
+      const { error } = await client.from("user_flags").upsert({ user_id: recipientId, email_notifications: true }, { onConflict: "user_id" });
+      if (error) throw new Error(error.message);
+      if (ownerId) await client.rpc("e2e_shared_devices_cleanup", { p_other_user_id: ownerId });
+    }, { ownerId: ownerUid, recipientId: recipientUid });
 
     // ZNALEZIONA REALNA PRZYCZYNA (run #333): list_my_device_shares() (RPC
     // za #shareDeviceCurrentContent) zwraca WSZYSTKIE udostępnienia danego
@@ -2688,9 +2692,16 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // testu musiał paść.
     await expect(recipientPage.locator("#paper")).toBeVisible({ timeout: 15000 });
   } finally {
+    try {
+      if (recipientUid && recipientOriginalFlag !== null) await recipientSetupPage.evaluate(async ({ id, value }) => {
+        const { error } = await window.__sbClient.from("user_flags").upsert({ user_id: id, email_notifications: value }, { onConflict: "user_id" });
+        if (error) throw new Error(error.message);
+      }, { id: recipientUid, value: recipientOriginalFlag });
+    } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await clearMailbox(recipient).catch(() => {});
     await deleteGame(page, game.id);
+    }
   }
 });
 
