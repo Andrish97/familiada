@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OK4UGzUGtQH7t7Fu6ZycfQfsmttGrdpKczUrGDgkaonAQU9S9l6Eghh3ZeqTxm6
+\restrict 6WnKTUB5uQFeu73I4BJmDjSaTuXxI45ew7Ff9cfw2R6ndXTIaQ4F96FeKlOCcqg
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2204,7 +2204,7 @@ BEGIN
   END IF;
   RETURN QUERY
   SELECT sh.id, sh.recipient_id, p.username,
-    CASE WHEN sh.recipient_id IS NULL THEN sh.recipient_email ELSE u.email END,
+    (CASE WHEN sh.recipient_id IS NULL THEN sh.recipient_email ELSE u.email END)::text,
     CASE WHEN sh.recipient_id IS NULL THEN 'mail'
       WHEN public.are_friends(v_uid,sh.recipient_id) THEN 'friend' ELSE 'account' END,
     sh.token,sh.created_at,
@@ -19618,5 +19618,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OK4UGzUGtQH7t7Fu6ZycfQfsmttGrdpKczUrGDgkaonAQU9S9l6Eghh3ZeqTxm6
+\unrestrict 6WnKTUB5uQFeu73I4BJmDjSaTuXxI45ew7Ff9cfw2R6ndXTIaQ4F96FeKlOCcqg
 
