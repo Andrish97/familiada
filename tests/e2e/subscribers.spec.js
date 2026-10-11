@@ -2,6 +2,7 @@ const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { loginAsPooledTestUser } = require("./helpers/login");
 const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks, readMailDelivery } = require("./helpers/mailbox");
+const { generateE2EToken } = require("./helpers/e2e-token");
 const email = "test14@familiada.online"; // Skrzynka bez konta: nie zakładać konta.
 test.use({ serviceWorkers: "block" });
 test.describe.configure({ mode: "serial" });
@@ -23,7 +24,7 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
   await loginAsPooledTestUser(page, context, 0);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
-  await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+  await anonymous.addInitScript(() => { localStorage.setItem("uiLang", "pl"); localStorage.setItem("fam:app_rating_suppressed", "true"); });
   try {
     await cleanup(page);
     await clearMailbox(email);
@@ -107,7 +108,7 @@ test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ p
   await loginAsPooledTestUser(page, context, 0);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
-  await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+  await anonymous.addInitScript(() => { localStorage.setItem("uiLang", "pl"); localStorage.setItem("fam:app_rating_suppressed", "true"); });
   try {
     await cleanup(page);
     await clearMailbox(email);
@@ -168,8 +169,10 @@ test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany",
   const recipientEmail = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.email);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
-  await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+  await anonymous.addInitScript(() => { localStorage.setItem("uiLang", "pl"); localStorage.setItem("fam:app_rating_suppressed", "true"); });
   const anonPage = await anonymous.newPage();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await anonPage.setViewportSize({ width: 390, height: 844 });
   let status = "pending";
   const resolver = route => route.fulfill({ contentType: "application/json", body: JSON.stringify({
     ok: true, kind: "sub", sub_id: "333-preview", status, owner_label: "Agnieszka",
@@ -186,14 +189,25 @@ test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany",
       await page.getByRole("button", { name: "Przejdź do Znajomych", exact: true }).click();
       await expect(page).toHaveURL(/\/friends\/(?:\?|$)/);
       expect(new URL(page.url()).searchParams.has("s")).toBe(false);
+      expect(new URL(page.url()).searchParams.get("tab")).toBe("received");
+      await expect(page.locator('[data-contact-panel="received"]')).toBeVisible();
     }
     status = "pending";
     await anonPage.goto(url);
     await expect(anonPage.locator("#message")).toContainText("Odbiorca ma konto");
+    await anonymous.setExtraHTTPHeaders({ "X-E2E-Token": generateE2EToken(process.env.E2E_BYPASS_SECRET) });
     await anonPage.getByRole("button", { name: "Zaloguj", exact: true }).click();
     await expect(anonPage).toHaveURL(/\/login\//);
     expect(new URL(anonPage.url()).searchParams.get("next")).toBe("friends");
     expect(new URL(anonPage.url()).searchParams.has("s")).toBe(false);
+    expect(new URL(anonPage.url()).searchParams.get("tab")).toBe("received");
+    await anonPage.waitForLoadState("networkidle");
+    await anonPage.locator("#email").fill(recipientEmail);
+    await anonPage.locator("#pass").fill(process.env.TEST_PASSWORD);
+    await anonPage.locator("#btnPrimary").click();
+    await expect(anonPage).toHaveURL(/\/friends\//);
+    expect(new URL(anonPage.url()).searchParams.get("tab")).toBe("received");
+    await expect(anonPage.locator('[data-contact-panel="received"]')).toBeVisible();
     for (status of ["declined", "cancelled"]) {
       await page.goto(url);
       await expect(page.locator(".poll-go-title")).toContainText(status === "declined" ? "Odrzucono" : "To zaproszenie wygasło");
@@ -212,7 +226,7 @@ test("@mailbox subskrybenci: globalne wypisanie, mail-off bez kolejki i nalicze�
   expect(flag).toMatchObject({ ok: true, suppressed_at: null });
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
-  await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+  await anonymous.addInitScript(() => { localStorage.setItem("uiLang", "pl"); localStorage.setItem("fam:app_rating_suppressed", "true"); });
   try {
     await cleanup(page);
     await clearMailbox(email);

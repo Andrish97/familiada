@@ -16,7 +16,7 @@ const path = require("path");
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "web");
 const PROD_ORIGIN = "https://www.familiada.online";
 // base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
-const CODE_DIRS = ["shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "manual/", "privacy/", "go/"];
+const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "manual/", "privacy/", "go/"];
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -29,6 +29,8 @@ function localFileFor(pathname, pages) {
   // Strona główna jest serwowana pod "/", a nie "/index". Bez tego
   // pages:["index"] cicho testowało produkcyjny HTML zamiast pliku z brancha.
   if (!rel && pages.includes("index")) return path.join(REPO_ROOT, "index.html");
+  // Login HTML stays with Worker Turnstile; its JS/CSS can come from branch.
+  if (rel.startsWith("login/") && !/\.(js|css)$/.test(rel)) return null;
   const page = rel.replace(/\.html$/, "").replace(/\/$/, "");
   if (pages.includes(page)) return path.join(REPO_ROOT, `${page}/index.html`);
   // Trasy typu /marketplace/game/<slug> są obsługiwane przez tę samą stronę

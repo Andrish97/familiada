@@ -974,3 +974,12 @@ W audycie grafu uwzględnić dobrowolne zakończenie znajomości i pozostałe
 wejścia rezygnacji, z zapisaniem osoby podejmującej decyzję. Zwykłe
 rozłączenie urządzenia lub wygaśnięcie sesji zachowuje swój cykl techniczny.
 Cofnięcie dostępu przez właściciela pozostaje jego operacją cofnięcia.
+
+Go dla odbiorcy, który założył konto, otwiera Znajomi → Propozycje
+(`tab=received`) także po logowaniu. Login przepuszcza wyłącznie karty
+zadeklarowane w PAGES celu. Test brancha podmienia JS/CSS login, ale HTML
+z sitekey Turnstile pozostaje z Workera; unit tego rozdzielenia ✓.
+Zrzuty Go z przykładowymi danymi:
+[konto, telefon](img/e19-subscribers/go-account-390.png),
+[konto, komputer](img/e19-subscribers/go-account-1400.png),
+[globalne wypisanie, telefon](img/e19-subscribers/go-global-390.png).

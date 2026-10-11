@@ -4,6 +4,8 @@ import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-11T14504";
 import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T14504";
 import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-11T14504";
 
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-11T14504";
+
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
@@ -428,8 +430,8 @@ async function handleSubInvite(data, user) {
     clearActions();
     showEmailInput(false);
     addAction(user ? t("contacts.goFriends") : MSG.loginLabel(), "gold", () => {
-      const url = new URL(user ? "/friends/" : "/login/", location.href);
-      if (!user) { url.searchParams.set("from", "poll-go"); url.searchParams.set("next", "friends"); }
+      const url = new URL(user ? linkTo("friends", { tab: "received" }) : linkTo("login"), location.href);
+      if (!user) { url.searchParams.set("from", "poll-go"); url.searchParams.set("next", "friends"); url.searchParams.set("tab", "received"); }
       location.href = url.toString();
     });
     return;

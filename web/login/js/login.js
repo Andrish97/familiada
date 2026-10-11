@@ -22,6 +22,7 @@ import {
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T14504";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T14504";
 
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T14504";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T14504";
 import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-11T14504";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-11T14504";
@@ -536,6 +537,7 @@ const nextTarget = params.get("next");
 const nextTask = params.get("t");
 const nextBase = params.get("b");
 const nextFriend = params.get("f");
+const nextTab = params.get("tab");
 const guestUsername = params.get("guest_username") === "1";
 const setupUsername = params.get("setup") === "username";
 const guestExpired = params.get("guest_expired") === "1";
@@ -560,6 +562,7 @@ function buildNextUrl() {
   if (nextTarget === "friends" && nextFriend) url.searchParams.set("f", nextFriend);
   if (nextTarget === "tasks" && nextTask) url.searchParams.set("t", nextTask);
   if (nextTarget === "bases" && nextBase) url.searchParams.set("b", nextBase);
+  if (PAGES[nextTarget]?.tabs?.includes(nextTab)) url.searchParams.set("tab", nextTab);
 
   url.searchParams.set("lang", getUiLang());
   return url.toString();
