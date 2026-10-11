@@ -1,16 +1,34 @@
 # Wznowienie pracy — 2026-10-11
 
-## Najnowszy stan: Control na main, krok 7 następny
+## Najnowszy stan: E19 krok 7 w realizacji
 
 E19 kroki 1–6 zamknięte produkcyjnie. Poprawiony wygląd Urządzeń i modal
-Control: `44063a604`, Pages 38133157139 ✓, kontrola produkcji 38133215588 ✓
-(2/2 + unit 401/401); zrzuty w artefakcie `e2e-shots`. Branch
-`codex/e19-3` kontynuuje pracę nad krokiem 7 — audyt i lista dalszych prac
-w `e19-znajomi-plan.md` §5. Starsze informacje o pauzie/drugiej sesji
-i otwartym kroku 6 niżej są historyczne. Użytkownik wznowił pracę,
-zezwolił na cięższe lokalne zadania i push na main po wymaganych kontrolach.
-Zmiany wizualne dokumentować zrzutami po wykonaniu, bez czekania na decyzję;
-Control na telefonie zachowuje guard. Manual zawsze na końcu.
+Control: `44063a604`, Pages 38133157139 ✓, kontrola 38133215588 ✓
+(2/2 + unit 401/401). Układ kontaktów (dwie karty, formularz po lewej,
+bez dolnego paska, wspólne sekcje i wiersze): `4bddca4af`, `e85be48d3`,
+Pages 38134388964 ✓; produkcja 38134439124 ✓ (4/4).
+
+Test14 podłączony do prywatnego API skrzynki: migracja 326, DB
+38134943769 ✓, Worker 38135085016 ✓. Test Subskrybentów odbiera teraz
+rzeczywistego maila i używa jego linku zamiast tokenu z bazy. Poprawiono
+stany go po ponownym otwarciu aktywnej/odrzuconej subskrypcji; po cofnięciu
+link nie staje się formularzem nowej subskrypcji. Pages 38135350253 ✓;
+branch 38135140865 ✓, produkcja 38135404218 ✓ (4/4 + unit 404/404),
+mail test14 odebrany produkcyjnie po 65 s. **Test14 nadal bez konta.**
+
+Branch `codex/e19-3` kontynuuje krok 7. Następne: zachowanie odmów w
+kontraktach kontaktów (friends_reject obecnie kasuje rekord), metadata
+flagi mailowej i cooldownów, wspólne sekcje Baz/Ankiet. Lista w
+`e19-znajomi-plan.md` §5. Przegląd treści i wyglądu wszystkich maili jest
+osobnym punktem w `maile-granice.md`. Dla zmian rozpisywać pełne pokrycie
+stanów/uprawnień i przypadków krzyżowych, bez zastępowania testu odbioru
+maila odczytem tokenu. Wskazywać rzeczywisty zakres sprawdzeń.
+
+Starsze informacje o pauzie/drugiej sesji i otwartym kroku 6 niżej są
+historyczne. Użytkownik wznowił pracę, zezwolił na cięższe lokalne zadania
+i push na main po wymaganych kontrolach. Zmiany wizualne dokumentować
+zrzutami po wykonaniu, bez czekania na decyzję; Control na telefonie
+zachowuje guard. Manual zawsze na końcu.
 
 ## Doprecyzowanie E19: hierarchia i routing linków
 
