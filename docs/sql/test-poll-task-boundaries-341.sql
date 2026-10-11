@@ -57,6 +57,10 @@ BEGIN
  IF public.poll_go_resolve(tok)->>'recipient_user_id' IS DISTINCT FROM u::text THEN RAISE EXCEPTION 'Go registered email'; END IF;
  IF public.poll_task_decline(tok) IS DISTINCT FROM 'not_your_task' THEN RAISE EXCEPTION 'registered email anonymous decline'; END IF;
  PERFORM set_config('request.jwt.claim.sub',u::text,true);
+ IF public.poll_task_done(tok) IS DISTINCT FROM 'votes_incomplete' THEN RAISE EXCEPTION 'completion without votes'; END IF;
+ INSERT INTO public.poll_sessions(game_id,question_id,question_ord) SELECT g,id,ord FROM public.questions WHERE game_id=g;
+ PERFORM public.poll_text_submit_batch(g,'run341',public.poll_task_voter_token(tid),
+  (SELECT jsonb_agg(jsonb_build_object('question_id',id,'answer_raw','Kot','answer_norm','kot')) FROM public.questions WHERE game_id=g));
  IF public.poll_task_done(tok) IS DISTINCT FROM 'ok' THEN RAISE EXCEPTION 'registered email completion'; END IF;
  IF public.poll_task_resolve(tok)->>'error' IS DISTINCT FROM 'already_done' THEN RAISE EXCEPTION 'done resolve'; END IF;
 

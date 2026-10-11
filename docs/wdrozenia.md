@@ -514,3 +514,5 @@ Stan szczegółowy:
 
 
 | 2026-10-11 | Ankiety340–343 / zastosowanie SQL potwierdzone | DB38165033358 ✓, log OK340/34118:45:40UTC i342/34318:45:41UTC, schema08ef8c5204. Punktowy branch38165210319 w toku: pięć poll-share i siedem task Go, jeden worker/pula7–8/--retries=0. | Ocenić wyniki i poprawić znalezione problemy, Pages dopiero po zielonym; ta sama kontrola main zamyka pkt5. |
+
+| 2026-10-11 | Ankiety344 / atomowe completion lokalnie | Po343 audyt wykrył szczelinę batch→oddzielny done: komplet mógł pozostać przy odmowie, samo done nie wymagało głosów.344: ostatnia paczka oznacza done atomowo; odmowa usuwa niepełne głosy; done tylko z kompletem i idempotentny. SQL tekst/punkty/granice/ACL i wyścig dwóch odbiorców bez upgrade/deadlock oraz complete→decline ✓. Stary341 odtwarza fake done, rollback przywraca344. | Świeży izolowany runner340 z344, same SQL/log, następnie świeży pełny branch. Trwający38165210319 ocenia340–343, nie liczyć go jako dowodu344. |

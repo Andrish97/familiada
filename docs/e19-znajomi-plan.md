@@ -1093,3 +1093,18 @@ bieżący run, brak odmowy/cofnięcia/done. KluczNULL odrzucany. Zwykłe głosy
 anonimowe zachowują obecny kontrakt; lekki limit urządzenia pozostaje pkt7.
 Lokalne rollback granic i wyścigi odmowa/stop/usunięcie rodzica ✓; świeży
 izolowany runner obejmie także dopięty Tasks decline wrapper341.
+
+### Pkt 5 / atomowe zakończenie głosowania — dopięcie344
+
+Status „zagłosowano” wymaga odpowiedzi na wszystkie pytania bieżącej sesji.
+Ostatnia paczka głosów i status done zapisują się w jednej transakcji;
+wcześniejsze paczki pozostawiają zadanie aktywne. Odmowa przed kompletem
+usuwa jego częściowe głosy; po pełnym wykonaniu odmowa jest zablokowana.
+RPC done po wykonaniu jest idempotentny i nie odnawia czasu. Batches
+zachowują SHARE rodzica → UPDATE własnego taska, bez upgrade rodzica;
+dwaj niezależni odbiorcy mogą kończyć równolegle. Zwykłe anonimy nie mają
+zadań, więc zachowują swój dotychczasowy cykl. Draft344 jeszcze nieprod.
+Lokalnie tekst/punkty, fake done/partial/decline/complete/repeat/ACL oraz
+wyścigi dwóch głosujących i complete→decline ✓; stary341 odtwarza fake done.
+341–343 nie oznaczać pokryciem tej nowej atomowości; świeży runner i
+kontrola branch/main wymagane po344.
