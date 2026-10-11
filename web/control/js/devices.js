@@ -12,8 +12,8 @@
 // 2026-05-30_203) — to czysty lookup "kod -> share_key", niezwiązany z
 // komendami, nie wymaga żadnej zmiany dla v2.
 
-import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-11T01405";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T01405";
+import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-11T09355";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T09355";
 
 // Linki urządzeń wychodzą z aplikacji (mail, QR, zakładki), więc zawsze przez /go/.
 function makeUrl(device, gameId, key, { lang } = {}) {
@@ -26,20 +26,31 @@ function makeUrl(device, gameId, key, { lang } = {}) {
 }
 
 export function createDevices({ game }) {
-  function buildUrls(lang) {
+  const keyByType = new Map();
+  async function sessionKey(deviceType) {
+    if (keyByType.has(deviceType)) return keyByType.get(deviceType);
+    const { data, error } = await sb().rpc("control_runtime_device_link", {
+      p_game_id: game.id, p_device_type: deviceType,
+    });
+    if (error || !data?.ok || !data?.token) throw new Error(data?.error || "Nie udało się utworzyć linku urządzenia.");
+    keyByType.set(deviceType, data.token);
+    return data.token;
+  }
+
+  async function buildUrls(lang) {
     const targetLang = lang || getUiLang();
+    const [displayKey, hostKey, buzzerKey] = await Promise.all([
+      sessionKey("display"), sessionKey("host"), sessionKey("buzzer"),
+    ]);
     return {
-      displayUrl: makeUrl("display", game.id, game.share_key_display, { lang: targetLang }),
-      hostUrl: makeUrl("host", game.id, game.share_key_host, { lang: targetLang }),
-      buzzerUrl: makeUrl("buzzer", game.id, game.share_key_buzzer || "", { lang: targetLang }),
+      displayUrl: makeUrl("display", game.id, displayKey, { lang: targetLang }),
+      hostUrl: makeUrl("host", game.id, hostKey, { lang: targetLang }),
+      buzzerUrl: makeUrl("buzzer", game.id, buzzerKey, { lang: targetLang }),
     };
   }
 
   async function generateConnectCode(deviceType) {
-    const shareKey =
-      deviceType === "host" ? game.share_key_host :
-      deviceType === "buzzer" ? (game.share_key_buzzer || game.share_key_host) :
-      game.share_key_display;
+    const shareKey = await sessionKey(deviceType);
     const { data, error } = await sb().rpc("generate_device_connect_code", {
       p_game_id: game.id,
       p_device_type: deviceType,

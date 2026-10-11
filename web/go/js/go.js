@@ -1,8 +1,8 @@
 // web/go/js/go.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T01405";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-11T01405";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T01405";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-11T01405";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T09355";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-11T09355";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T09355";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-11T09355";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -94,6 +94,43 @@ const emailRow = $("emailRow");
 const emailInput = $("emailInput");
 
 let resolvedInviteData = null;
+
+async function handleControlDeviceGateway() {
+  await i18nReady;
+  clearActions();
+  showEmailInput(false);
+  const type = qs.get("d");
+  const gameId = qs.get("id");
+  const token = qs.get("key");
+  const paths = { display: "/control/display/", host: "/control/host/", buzzer: "/control/buzzer/" };
+  if (!paths[type] || !gameId || !token) {
+    setView({ head: MSG.invalidLinkTitle(), text: MSG.invalidLinkText() });
+    return;
+  }
+  setView({ head: t("pollGo.deviceLinkTitle"), text: t("pollGo.deviceLinkChecking") });
+  try {
+    const { data, error } = await sb().rpc("control_device_share_resolve", { p_token: token });
+    if (error) throw error;
+    if (data?.state !== "active" || data?.game_id !== gameId || data?.device_type !== type) {
+      const expired = data?.state === "expired";
+      const revoked = data?.state === "revoked";
+      setView({
+        head: expired ? MSG.inviteExpired() : revoked ? t("pollGo.deviceLinkTitle") : MSG.invalidLinkTitle(),
+        text: expired ? t("pollGo.deviceLinkExpired") :
+          revoked ? t("pollGo.deviceLinkRevoked") : MSG.invalidLinkText(),
+      });
+      return;
+    }
+    const target = new URL(paths[type], location.origin);
+    const params = new URLSearchParams(location.search);
+    params.delete("d");
+    target.search = params.toString();
+    location.replace(target.toString());
+  } catch (error) {
+    console.warn("[go device gateway]", error?.message || error);
+    setView({ head: MSG.error(), text: "Nie udało się sprawdzić linku. Spróbuj ponownie później." });
+  }
+}
 
 function setView({ head, text, hintText }) {
   if (title) title.textContent = head;
@@ -600,9 +637,16 @@ function handleBaseInvite(data, user) {
 }
 
 async function init() {
-  // ?d=<urządzenie> obsługuje inline-moduł w index.html (przekierowanie przed
-  // ciężkimi importami) — tu nic do roboty.
-  if (qs.has("d")) return;
+  if (qs.has("d")) {
+    if (qs.get("d") === "qr") {
+      const params = new URLSearchParams(location.search);
+      params.delete("d");
+      location.replace("/polls/vote/qr/" + (params.size ? `?${params}` : ""));
+      return;
+    }
+    await handleControlDeviceGateway();
+    return;
+  }
   // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
   // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
   // zwracając surowy klucz zamiast tłumaczenia (patrz t() w translation.js).

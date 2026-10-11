@@ -127,7 +127,7 @@ pula test1–test8; test9/test10 zarezerwowane.
 | 3. `/friends/`, `/subscribers/` + migracja 321 (przełączenie), usunięcie `/subscriptions/` | **zrobione** — migracja 321, front, Pages i Worker wdrożone; runner SQL/unit 38096872246 ✓; kontrole produkcji: friends 38099344264 (2/2), subscribers 38099196468 (2/2), go 38099459575 (2/2), frontend-navigation 38099534030 (11/11), account-deletion 38099771245 (1/1), regresja dźwięku 38099849073 (2/2); unit 401/401 w każdym przebiegu |
 | 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | **zrobione** — branch po synchronizacji 38100967351 ✓; Pages 38101052370 ✓; produkcja 38101089865 ✓, unit 401/401. Test zaliczył retry: pierwsza próba nie doczekała maila, który nadal był w kolejce; retry zakończył się pomyślnie |
 | 5. Bazy: jedno okno (udostępnieni + dodawanie), `go?b=`, akceptacja w `/tasks/` | **zrobione** — migracja 322 i front na produkcji; runner SQL 38101686798 ✓; Pages 38102630814 ✓; branch E2E 38102541764 ✓; produkcyjne E2E 38103300067 ✓, 2/2, unit 401/401. Cron `*/2` aktywny; po wydłużeniu timeoutu mail test8 dotarł po 33 s; oba scenariusze bazy zaliczone |
-| 6. Urządzenia: jedno okno, odbiorca bez konta, token unieważniany per osoba i sesję Control | do zrobienia — wymagania doprecyzowane 2026-10-11 |
+| 6. Urządzenia: jedno okno, odbiorca bez konta, token unieważniany per osoba i sesję Control | **w toku — lokalna implementacja i SQL zaliczone; przed produkcją zostały kontrole branch E2E, poprawa pełnych stanów UI/odbiorców, push i kontrola produkcyjna** |
 | 7. Ujednolicenie Znajomych, Subskrybentów i udostępnień wg tabeli zachowań | do zrobienia — wymagania doprecyzowane 2026-10-11 |
 
 ## 6. Decyzje użytkownika (do 2026-10-10)
@@ -231,6 +231,18 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
 | Subskrybenci | Lista jednostronna dodawana e-mailem; podobny układ do Znajomych, bez propozycji przychodzących i bez sekcji znajomych. | Oczekujący i aktywni subskrybenci w wierszach ze stanem. | Ponowienie oczekującego/odrzuconego zaproszenia to e-mail przypominający z cooldownem; brak przycisku przy wyłączonych powiadomieniach. Usunięcie subskrybenta kończy subskrypcję. |
 
 ### Sesje, cofanie i czyszczenie zależności
+
+**Stan implementacji kroku 6 (2026-10-11):** migracja `2026-10-11_324` dodaje
+TTL sesji Control (60 minut), osobne tokeny linków parowania i odbiorców,
+atomowe cofnięcie tokenu, gateway `/go/`, listę odbiorcy w
+`list_shared_devices_for_me()` dla strony „Podłącz urządzenie” oraz reset stanu,
+telemetrii, presence, kodów i odblokowania audio. Każde urządzenie waliduje
+token przy ping/read/write/logo/audio. Stare globalne udostępnienia są
+unieważniane, bo nie mają informacji o sesji. Lokalny restore PG16 + test SQL
+324 zaliczył 21 asercji, w tym aktywne/odrzucone tokeny, wyłączone powiadomienia
+i odkrywanie grantu bez maila. Unit: 401/401. Nie wdrożono jeszcze na produkcję;
+pozostaje dostosowanie testów i UI, workflow CI, branch E2E, wdrożenie i testy
+kontrolne.
 
 | Zdarzenie nadrzędne | Skutek dla udostępnień i odbiorców |
 |---|---|

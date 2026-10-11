@@ -1921,6 +1921,10 @@
   opacity: .6;
 }
 
+.shareDeviceFriendRow input[type="checkbox"] { flex: 0 0 auto; width: 18px; height: 18px; accent-color: var(--gold); }
+.shareRowLabel { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-weight: 750; }
+.shareRowMeta { color: var(--muted, rgba(255,255,255,.65)); font-size: .72rem; white-space: nowrap; }
+
 /* =========================================================
    DEVICE ROWS (nowy układ 3 rzędów)
 ========================================================= */
