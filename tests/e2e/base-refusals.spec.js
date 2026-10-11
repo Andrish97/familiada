@@ -126,3 +126,65 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await recipientContext.close();
   }
 });
+
+test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1400", async ({ page, context }) => {
+  test.setTimeout(120_000);
+  await loginAsPooledTestUser(page, context, 0);
+  const baseId = await createBase(page, `E2E-B337-UI-${Date.now()}`);
+  const future = days => new Date(Date.now() + days * 86400000).toISOString();
+  const panel = {
+    ok: true,
+    friends: Array.from({ length: 20 }, (_, n) => ({ user_id: `f${n}`, label: `Znajomy ${n + 1}`, email: `friend${n}@example.net`, cooldown_until: n === 0 ? future(1) : null })),
+    outgoing: [
+      { task_id: "pending", recipient_user_id: "r1", label: "Alicja", email: "alicja@example.net", role: "viewer", status: "pending", is_friend: true, email_enabled: true, cooldown_until: future(.5) },
+      { task_id: "muted", recipient_user_id: "r2", label: "Piotr", email: "piotr@example.net", role: "editor", status: "opened", is_friend: false, email_enabled: false },
+      { task_id: "declined", recipient_user_id: "r3", label: "Tomasz", email: "tomasz@example.net", role: "viewer", status: "declined", is_friend: false, email_enabled: true, cooldown_until: future(29) },
+    ],
+    active: Array.from({ length: 20 }, (_, n) => ({ user_id: `a${n}`, label: `Odbiorca ${n + 1}`, email: `active${n}@example.net`, role: n % 2 ? "viewer" : "editor", status: "done", is_friend: n % 2 === 0 })),
+  };
+  const refusals = [{ id: "own-refusal", base_id: "refused", name: "Quiz sportowy", owner_label: "Maja", role: "editor", expires_at: future(29) }];
+  await page.route("**/rest/v1/rpc/base_share_panel", route => route.fulfill({ json: panel }));
+  await page.route("**/rest/v1/rpc/base_declines_list_mine", route => route.fulfill({ json: refusals }));
+  await page.route("**/rest/v1/rpc/base_share_by_user", route => route.fulfill({ json: [{ ok: false, err: "already_pending" }] }));
+  try {
+    for (const width of [1400, 390]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await openShare(page, baseId);
+      await expect(page.locator('#shareOverlay .shareSection')).toHaveCount(3);
+      await expect(page.locator('#baseShareFriends [data-id="f0"] input')).toBeDisabled();
+      await expect(page.locator('#baseShareFriends [data-id="f0"]')).toHaveClass(/is-cooling-down/);
+      await expect(page.locator('#shareSectionsHost [data-id="pending"] [data-act="resend"]')).toBeDisabled();
+      await expect(page.locator('#shareSectionsHost [data-id="muted"] [data-act="resend"]')).toHaveCount(0);
+      await expect(page.locator('#shareSectionsHost [data-id="declined"] [data-act="resend"]')).toHaveCount(0);
+      await expect(page.locator('#shareSectionsHost [data-id="declined"] .shareCountdown')).toBeVisible();
+      await page.locator('#baseShareFriends [data-id="f1"] input').check();
+      await expect(page.locator('#btnBaseShareFriends')).toBeEnabled();
+      const geometry = await page.evaluate(() => {
+        const left = document.querySelector('#baseShareFriends'); const right = document.querySelector('#shareSectionsHost');
+        left.scrollTop = 70; right.scrollTop = 120;
+        const row = document.querySelector('#shareSectionsHost [data-id="pending"]');
+        const buttons = [...row.querySelectorAll('.shareRowActions button')].map(button => ({ width: Math.round(button.getBoundingClientRect().width), height: Math.round(button.getBoundingClientRect().height) }));
+        return { scroll: [left.scrollTop, right.scrollTop], overflow: document.documentElement.scrollWidth > innerWidth, buttons };
+      });
+      expect(geometry.scroll).toEqual([70, 120]); expect(geometry.overflow).toBe(false);
+      expect(new Set(geometry.buttons.map(button => button.width)).size).toBe(1);
+      expect(new Set(geometry.buttons.map(button => button.height)).size).toBe(1);
+      await page.locator('#shareEmail').fill('alicja@example.net'); await page.locator('#btnShareAdd').click();
+      await expect(page.locator('#shareMsg')).toHaveClass(/app-toast--inline/);
+      await expect(page.locator('#shareMsg')).toBeVisible(); await expect(page.locator('#shareMsg')).toBeHidden({ timeout: 6000 });
+      await page.locator(width === 390 ? '#btnBack' : '#btnShareClose').click();
+      await page.locator('#tabBasesShared').click();
+      const head = page.locator('#baseDeclinesHost .rowsSectionHead');
+      await expect(head).toHaveAttribute('aria-expanded', 'false'); await head.click();
+      await expect(page.locator('#baseDeclinesHost [data-act="undo"]')).toBeVisible();
+      await page.screenshot({ path: test.info().outputPath(`base-refusals-${width}.png`), fullPage: true });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await head.click();
+    }
+  } finally {
+    await page.unroute("**/rest/v1/rpc/base_share_panel");
+    await page.unroute("**/rest/v1/rpc/base_declines_list_mine");
+    await page.unroute("**/rest/v1/rpc/base_share_by_user");
+    await page.evaluate(async id => { const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id); if (error) throw error; }, baseId);
+  }
+});
