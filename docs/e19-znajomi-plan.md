@@ -251,8 +251,11 @@ runem `38129693122`. W E2E `38129826723` RPC listy i utworzenie grantu
 przeszły, mail dotarł i link zadziałał przy ponowieniu; pierwsza próba
 przekroczyła domyślne 90 s, bo kolejka była nadal pending. Limit testu
 wydłużono do 150 s; przebieg `38130087825` przeszedł czysto (1/1), mail
-dotarł w 104 s i link otworzył urządzenie bez logowania. Pozostaje punktowo
-sprawdzić wygasanie sesji i domknąć status wdrożenia.
+dotarł w 104 s i link otworzył urządzenie bez logowania. Produkcyjny
+rollbackowy expiry smoke w DB workflow `38130590463` przeszedł: potwierdził
+minutowy cron, wygaśnięcie po 60 minutach, reset Control do podłączenia
+urządzeń, zakończenie telemetrii, unieważnienie tokenów oraz usunięcie kodów,
+presence i odblokowania audio. Krok 6 — Control — wdrożony i sprawdzony.
 
 | Zdarzenie nadrzędne | Skutek dla udostępnień i odbiorców |
 |---|---|
