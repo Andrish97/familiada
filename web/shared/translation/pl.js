@@ -4918,11 +4918,13 @@ const pl = {
   },
   contacts: {
     "friends": {
+        "add": "Dodaj znajomego",
         "title": "Znajomi",
         "hint": "Zaproszenia i osoby, z którymi masz dwustronną znajomość.",
         "empty": "Nie masz jeszcze znajomych ani zaproszeń."
     },
     "subscribers": {
+        "add": "Dodaj subskrybenta",
         "title": "Subskrybenci",
         "hint": "Osoby bez konta, które chcą otrzymywać Twoje ankiety.",
         "empty": "Nie masz jeszcze subskrybentów."
@@ -4934,13 +4936,9 @@ const pl = {
     "sent": "Zaproszenie zapisane.",
     "mailFailed": "Zaproszenie zapisane, ale nie udało się wysłać maila. Możesz ponowić wysyłkę.",
     "accountCreated": "Założono konto — zaproszenie do znajomych czeka na przyjęcie.",
-    "sections": {
-        "incoming": "Zaproszenia do mnie",
-        "outgoing": "Wysłane",
-        "friend": "Znajomi",
-        "pending": "Oczekujące",
-        "active": "Aktywni"
-    },
+    "sections": {"incoming": "Propozycje", "outgoing": "Oczekujące i odrzucone", "friend": "Znajomi", "pending": "Oczekujące", "active": "Subskrybenci"},
+    "status": {"pending": "Oczekuje", "active": "Zaakceptowano", "declined": "Odrzucono"},
+    "empty": {"incoming": "Nie masz nowych propozycji.", "outgoing": "Nie masz wysłanych zaproszeń.", "friend": "Nie masz jeszcze znajomych.", "pending": "Nie masz oczekujących zaproszeń.", "active": "Nie masz jeszcze subskrybentów."},
     "actions": {
         "accept": "Przyjmij",
         "reject": "Odrzuć",

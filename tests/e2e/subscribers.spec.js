@@ -15,11 +15,10 @@ async function cleanup(page) {
   }, email);
 }
 async function invite(page, recipient) {
-  await page.locator("#btnInvite").click();
   await page.locator("#inviteInput").fill(recipient);
-  await page.locator("#btnInviteOk").click();
+  await page.locator("#btnInvite").click();
 }
-test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie", async ({ page, context, browser }) => {
+test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie", async ({ page, context, browser }, testInfo) => {
   test.setTimeout(150000);
   await loginAsTestUser(page, context);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
@@ -28,8 +27,11 @@ test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie
     await resetMailProviderLimits(page);
     await page.goto("https://www.familiada.online/subscribers/");
     await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
+    await expect(page.locator("#inviteForm")).toBeVisible();
+    await expect(page.locator(".games-bottom")).toHaveCount(0);
     await invite(page, email);
-    await expect(page.locator('.rowsSection--pending .rowsRow').filter({ hasText: email })).toHaveCount(1);
+    await expect(page.locator('.rowsSection--pending .shareRow').filter({ hasText: email })).toHaveCount(1);
+    await page.screenshot({ path: testInfo.outputPath("shot-subscribers-layout.png"), fullPage: true });
     // test14 is intentionally a mailbox without an account and is not exposed
     // through the E2E mailbox API (which only stores test1..test13). Read the
     // invite token through the authenticated owner's list, then exercise the
@@ -54,7 +56,7 @@ test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie
     }, { token, email });
     expect(accepted?.ok).toBe(true);
     await page.reload();
-    const active = page.locator('.rowsSection--active .rowsRow').filter({ hasText: email });
+    const active = page.locator('.rowsSection--active .shareRow').filter({ hasText: email });
     await expect(active).toHaveCount(1);
     await active.locator('[data-act="remove"]').click();
     await page.locator(".uni-foot .btn.gold").click();

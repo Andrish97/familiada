@@ -42,7 +42,7 @@ export function shareCooldownEl() {
  */
 export function shareRowEl(row) {
   const el = document.createElement("div");
-  el.className = "shareRow";
+  el.className = "shareRow" + (row.compact ? " shareRow--compact" : "");
   if (row.id != null) el.dataset.id = String(row.id);
   if (row.selected) el.classList.add("selected");
   if (row.disabled) el.classList.add("blocked");
@@ -70,7 +70,7 @@ export function shareRowEl(row) {
     b.setAttribute("aria-label", a.title || a.key);
     if (a.disabled) b.disabled = true;
     b.innerHTML = a.icon ? icon(a.icon) : esc(a.text || "");
-    b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e); });
+    b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e, b); });
     acts.append(b);
   }
   if (row.onClick && !row.disabled) {
@@ -82,6 +82,27 @@ export function shareRowEl(row) {
     });
   }
   return el;
+}
+
+/** Wspólna sekcja także dla pustej listy i formularza dodawania odbiorcy. */
+export function shareSectionEl({ key, title, rows = [], emptyText = "" }) {
+  const section = document.createElement("section");
+  section.className = "shareSection";
+  if (key) section.dataset.section = key;
+  const heading = document.createElement("h2");
+  heading.className = "shareSectionTitle";
+  heading.textContent = title;
+  const list = document.createElement("div");
+  list.className = "shareList shareList--scroll";
+  for (const row of rows) list.append(shareRowEl(row));
+  if (!rows.length && emptyText) {
+    const empty = document.createElement("div");
+    empty.className = "shareEmpty";
+    empty.textContent = emptyText;
+    list.append(empty);
+  }
+  section.append(heading, list);
+  return section;
 }
 
 /**

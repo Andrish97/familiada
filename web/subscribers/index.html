@@ -16,8 +16,7 @@
 
   <link rel="icon" href="/favicon.ico?v=v2026-10-11T10464"/>
   <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T10464"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-11T10464"/>
-  <link rel="stylesheet" href="/tasks/css/tasks.css?v=v2026-10-11T10464"/>
+  <link rel="stylesheet" href="/shared/css/contacts.css?v=v2026-10-11T10464"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -36,7 +35,7 @@
   <script src="/shared/js/core/security-warning.js?v=v2026-10-11T10464" defer></script>
 </head>
 
-<body class="games-body skel-body">
+<body class="contacts-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
@@ -60,17 +59,22 @@
       </div>
     </div>
 
-    <section class="games-shell">
-      <div class="card games-card tasks-card">
-        <div class="tasks-scroll" data-skel-step>
-          <div class="rowsPage" id="contactsHost"></div>
-        </div>
-        <div class="games-bottom">
-          <div class="games-bottom-left"></div>
-          <div class="games-bottom-right"><button class="btn sm gold" id="btnInvite" type="button" data-i18n="contacts.invite">+ Zaproś</button></div>
-        </div>
+    <div class="contacts-layout" id="contactsHost" data-skel-step>
+      <div class="card contacts-card">
+        <section class="shareSection contacts-add">
+          <h2 class="shareSectionTitle" data-i18n="contacts.subscribers.add"></h2>
+          <form id="inviteForm" class="contacts-invite">
+            <label class="shareSectionSub" for="inviteInput" data-i18n="contacts.email"></label>
+            <div class="contacts-invite-row">
+              <input class="inp" id="inviteInput" type="email" required autocomplete="off" data-i18n-placeholder="contacts.email"/>
+              <button class="btn sm gold" id="btnInvite" type="submit" data-i18n="contacts.invite">+ Zaproś</button>
+            </div>
+          </form>
+        </section>
+        <div id="contactsOutgoing"></div>
       </div>
-    </section>
+      <div class="card contacts-card" id="contactsReceived"></div>
+    </div>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>

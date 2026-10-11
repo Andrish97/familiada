@@ -5009,11 +5009,13 @@ const en = {
   },
   contacts: {
     "friends": {
+        "add": "Add a friend",
         "title": "Friends",
         "hint": "Invitations and people you are friends with.",
         "empty": "No friends or invitations yet."
     },
     "subscribers": {
+        "add": "Add a subscriber",
         "title": "Subscribers",
         "hint": "People without an account who want to receive your polls.",
         "empty": "No subscribers yet."
@@ -5025,13 +5027,9 @@ const en = {
     "sent": "Invitation saved.",
     "mailFailed": "Invitation saved, but the email could not be sent. You can resend it.",
     "accountCreated": "An account was created — the friend invitation is waiting for acceptance.",
-    "sections": {
-        "incoming": "Received invitations",
-        "outgoing": "Sent",
-        "friend": "Friends",
-        "pending": "Pending",
-        "active": "Active"
-    },
+    "sections": {"incoming": "Suggestions", "outgoing": "Pending and declined", "friend": "Friends", "pending": "Pending", "active": "Subscribers"},
+    "status": {"pending": "Pending", "active": "Accepted", "declined": "Declined"},
+    "empty": {"incoming": "No new suggestions.", "outgoing": "No sent invitations.", "friend": "No friends yet.", "pending": "No pending invitations.", "active": "No subscribers yet."},
     "actions": {
         "accept": "Accept",
         "reject": "Decline",

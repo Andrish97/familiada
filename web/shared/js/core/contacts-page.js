@@ -4,8 +4,7 @@ import { initPage } from "./page-init.js?v=v2026-10-11T10464";
 import { linkTo } from "./nav-map.js?v=v2026-10-11T10464";
 import { toast } from "./toast.js?v=v2026-10-11T10464";
 import { confirmModal, alertModal } from "./modal.js?v=v2026-10-11T10464";
-import { renderRowSections } from "./share-sections.js?v=v2026-10-11T10464";
-import { initListSearch } from "./list-search.js?v=v2026-10-11T10464";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-11T10464";
 import { sendInviteMail } from "./invite-mail.js?v=v2026-10-11T10464";
 import { initI18n, t } from "../../translation/translation.js?v=v2026-10-11T10464";
 import "./contact-modal.js?v=v2026-10-11T10464";
@@ -61,16 +60,25 @@ export async function initContactsPage(pageId) {
     const add = (kind, icon, gold = false, iconOnly = false) => actions.push({ key: kind, icon, gold, iconOnly,
       text: t(`contacts.actions.${kind}`), onClick: (_, button) => action(row, kind, button) });
     if (friends && row.direction === "incoming") { add("accept", "check", true); add("reject", "cancel"); }
-    else if (row.status === "pending") { add("resend", "mail"); add(friends ? "cancel" : "remove", "trash", false, true); }
+    else if (row.status === "pending") { add("resend", "refresh"); add(friends ? "cancel" : "remove", "trash", false, true); }
     else add("remove", "trash", false, true);
-    return { id: row.id, title: friends ? row.label : row.email, avatar: friends ? row.label : row.email,
-      channel: friends ? "friend" : "subscriber", note: friends ? row.email : row.friend_user_id ? t("contacts.accountCreated") : "",
-      data: { direction: row.direction || row.status }, actions };
+    const state = friends && row.direction === "friend" ? "active" : row.status;
+    return { id: row.id, label: friends ? row.label : row.email, compact: true,
+      tags: [{ text: t(`contacts.status.${state}`) }],
+      note: friends ? row.email : row.friend_user_id ? t("contacts.accountCreated") : "",
+      actions };
   }
   function render() {
-    const sections = friends ? ["incoming", "outgoing", "friend"] : ["pending", "active"];
-    renderRowSections(host, sections.map(key => ({ key, title: t(`contacts.sections.${key}`),
-      rows: rows.filter(row => (friends ? row.direction : row.status) === key).map(rowOf) })), { emptyText: t(`contacts.${pageId}.empty`) });
+    const make = (key) => {
+      const section = shareSectionEl({ key, title: t(`contacts.sections.${key}`),
+        rows: rows.filter(row => (friends ? row.direction : row.status) === key).map(rowOf),
+        emptyText: t(`contacts.empty.${key}`) });
+      // Zachowane znaczniki dla wskazania zaproszenia i testów przepływu.
+      section.classList.add("rowsSection--" + key);
+      return section;
+    };
+    document.getElementById("contactsOutgoing").replaceChildren(make(friends ? "outgoing" : "pending"));
+    document.getElementById("contactsReceived").replaceChildren(...(friends ? ["friend", "incoming"] : ["active"]).map(make));
   }
   async function refresh() {
     if (inFlight) return inFlight;
@@ -84,16 +92,11 @@ export async function initContactsPage(pageId) {
     })();
     try { await inFlight; } finally { inFlight = null; }
   }
-  document.getElementById("btnInvite").addEventListener("click", async () => {
-    const input = document.createElement("input");
-    input.id = "inviteInput";
-    input.className = "inp";
-    input.type = friends ? "text" : "email";
-    input.placeholder = t(friends ? "contacts.handle" : "contacts.email");
-    input.setAttribute("aria-label", input.placeholder);
-    const confirmed = await confirmModal({ text: t(friends ? "contacts.handle" : "contacts.email"), body: input,
-      initialFocus: input, onReady: ({ okBtn }) => { okBtn.id = "btnInviteOk"; input.addEventListener("keydown", e => { if (e.key === "Enter") okBtn.click(); }); } });
-    if (!confirmed || !input.value.trim()) return;
+  document.getElementById("inviteForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (document.getElementById("btnInvite").disabled) return;
+    const input = document.getElementById("inviteInput");
+    if (!input.value.trim()) return;
     const button = document.getElementById("btnInvite");
     button.disabled = true;
     try {
@@ -106,11 +109,11 @@ export async function initContactsPage(pageId) {
         try { await sendInviteMail({ ...mail, ownerLabel, unsubToken: mail.unsub_token, kind: friends ? "friend" : "subscriber" }); }
         catch (error) { console.warn("[contacts] mail:", error); toast(t("contacts.mailFailed"), { kind: "error" }); return; }
       }
+      input.value = "";
       toast(t(data.already ? "contacts.errors.already" : "contacts.sent"));
     } catch (error) { await report(error); }
     finally { button.disabled = false; }
   });
-  initListSearch({ grids: "#contactsHost", tile: ".rowsRow", name: ".rowsTitle" });
   window.addEventListener("i18n:lang", render);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) void refresh(); });
   const timer = setInterval(() => { if (!document.hidden) void refresh(); }, 20000);
@@ -120,7 +123,7 @@ export async function initContactsPage(pageId) {
   if (friends && token) {
     try {
       const resolved = await call("poll_go_resolve", { p_token: token });
-      host.querySelector(`.rowsRow[data-id="${CSS.escape(resolved.id)}"]`)?.classList.add("rowsFocus");
+      host.querySelector(`.shareRow[data-id="${CSS.escape(resolved.id)}"]`)?.classList.add("rowsFocus");
     } catch (error) { await report(error); }
   }
   document.querySelectorAll("[data-skel-step]").forEach(el => el.classList.add("skel-step-ready"));

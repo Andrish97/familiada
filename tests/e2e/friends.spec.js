@@ -23,11 +23,10 @@ async function open(page) {
   await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
 }
 async function invite(page, handle) {
-  await page.locator("#btnInvite").click();
   await page.locator("#inviteInput").fill(handle);
-  await page.locator("#btnInviteOk").click();
+  await page.locator("#btnInvite").click();
 }
-test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", async ({ browser }) => {
+test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", async ({ browser }, testInfo) => {
   test.setTimeout(150000);
   const owner = await user(browser, 7);
   const recipient = await user(browser, 8);
@@ -37,21 +36,25 @@ test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", as
     await resetMailProviderLimits(owner.page);
     const after = new Date(Date.now() - 2000).toISOString();
     await open(owner.page);
+    await expect(owner.page.locator("#inviteForm")).toBeVisible();
+    await expect(owner.page.locator(".games-bottom")).toHaveCount(0);
     await invite(owner.page, testAccountUsername(8));
-    const outgoing = owner.page.locator('.rowsSection--outgoing .rowsRow').filter({ hasText: /test8/i });
+    const outgoing = owner.page.locator('.rowsSection--outgoing .shareRow').filter({ hasText: /test8/i });
     await expect(outgoing).toHaveCount(1);
+    await expect(outgoing.locator("[data-act=resend]")).toHaveAttribute("aria-label", "Wyślij ponownie");
+    await owner.page.screenshot({ path: testInfo.outputPath("shot-friends-layout.png"), fullPage: true });
     const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i });
     const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
     expect(link).toBeTruthy();
     await recipient.page.goto(link);
     await recipient.page.getByRole("button", { name: "Otwórz Znajomych" }).click();
-    const incoming = recipient.page.locator('.rowsSection--incoming .rowsRow').filter({ hasText: /test7/i });
+    const incoming = recipient.page.locator('.rowsSection--incoming .shareRow').filter({ hasText: /test7/i });
     await expect(incoming).toHaveCount(1);
     await incoming.locator('[data-act="accept"]').click();
-    const active = recipient.page.locator('.rowsSection--friend .rowsRow').filter({ hasText: /test7/i });
+    const active = recipient.page.locator('.rowsSection--friend .shareRow').filter({ hasText: /test7/i });
     await expect(active).toHaveCount(1);
     await owner.page.reload();
-    await expect(owner.page.locator('.rowsSection--friend .rowsRow').filter({ hasText: /test8/i })).toHaveCount(1);
+    await expect(owner.page.locator('.rowsSection--friend .shareRow').filter({ hasText: /test8/i })).toHaveCount(1);
     await active.locator('[data-act="remove"]').click();
     await expect(recipient.page.locator(".uni-modal")).toContainText("Przyjęte bazy i urządzenia zostają");
     await recipient.page.locator(".uni-foot .btn.gold").click();
