@@ -488,3 +488,7 @@ Następna właściwa paczka odmów/flag/claim otrzymuje 333 (332 zajęta).
 332 runner 38151596399 ✓ (SQL zakres/ACL + unit 412/412), SQL main
 41b0313828. Czeka log DB; potem trzy Subscribers branch/main jeszcze raz,
 bez retry, z rzeczywistymi mailami. 331 nie jest zamknięta do tej kontroli.
+
+332 SQL OK 15:33:35 UTC, DB 38151652553 ✓, schema 714682fa74;
+unit 412/412 po merge. Branch 38151820876 trwa; czekać, nie uruchamiać
+równolegle kolejnych maili. Po czystym wyniku ta sama kontrola main.
