@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict DxRIbPTURgQbljh4UgD4x7mfV2fPtdfFUmk86apDl7TxUk98Oz7zGyZq5QNL7jw
+\restrict 9h93dfwCyi9jigLdPNAiAJnL9nidbCWtULjEP4q5k5xJsU97ziBz53gWhfkEDkz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -16449,6 +16449,13 @@ CREATE INDEX "answers_q_idx" ON "public"."answers" USING "btree" ("question_id")
 
 
 --
+-- Name: base_share_tasks_base_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "base_share_tasks_base_id_idx" ON "public"."base_share_tasks" USING "btree" ("base_id");
+
+
+--
 -- Name: base_share_tasks_owner_base_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -17561,6 +17568,21 @@ ALTER TABLE ONLY "public"."answers"
 
 ALTER TABLE ONLY "public"."app_ratings"
     ADD CONSTRAINT "app_ratings_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: base_share_tasks base_share_tasks_base_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."base_share_tasks"
+    ADD CONSTRAINT "base_share_tasks_base_id_fkey" FOREIGN KEY ("base_id") REFERENCES "public"."question_bases"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT "base_share_tasks_base_id_fkey" ON "base_share_tasks"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "base_share_tasks_base_id_fkey" ON "public"."base_share_tasks" IS 'E19: usunięcie bazy lub jej właściciela usuwa wszystkie zadania i tokeny akceptacji/odmowy tej bazy.';
 
 
 --
@@ -19561,5 +19583,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DxRIbPTURgQbljh4UgD4x7mfV2fPtdfFUmk86apDl7TxUk98Oz7zGyZq5QNL7jw
+\unrestrict 9h93dfwCyi9jigLdPNAiAJnL9nidbCWtULjEP4q5k5xJsU97ziBz53gWhfkEDkz
 
