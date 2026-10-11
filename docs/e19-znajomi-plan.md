@@ -147,7 +147,9 @@ pula test1–test8; test9/test10 zarezerwowane.
    wspólnego komponentu i CSS. Zachować gotowy wygląd Control jako wzorzec.
 2. Znajomi/Subskrybenci: formularz w karcie, bez wyszukiwania i dolnego
    paska; oczekujące/odrzucone obok formularza, znajomi i propozycje po
-   prawej (Subskrybenci bez propozycji); dwie karty na telefonie.
+   prawej (Subskrybenci bez propozycji); na telefonie dwie zakładki
+   z wypustkami jak w Grach. Formularz/sekcje/statusy gotowe; zakładki
+   w paczce kończącej pkt 2 (branch, potem produkcja).
 3. Uzupełnić kontrakty RPC o odrzucone wpisy, flagę dostępności maila
    i dane do odliczania. Paczka 328 zachowuje odmowę znajomości, ale pozwala
    przypomnieć odrzucone — nowa decyzja wymaga zablokowania tego w RPC i UI.
@@ -828,3 +830,27 @@ pozwala zaprosić, przypomnieć oczekującym według flagi/limitu i usunąć/cof
 Odbiorca bez konta akceptuje/odrzuca przez dostarczony link Go z maila.
 Przy odmowie przypomnienia zabronione; po 30 dniach dopiero nowe
 zaproszenie. Liczba sekcji/zakładki nie jest plakietką przychodzących spraw.
+
+### Domknięcie §5 pkt 2 — zakładki mobilne (2026-10-11)
+
+Wznowienie według kolejności planu: najpierw kończymy pkt 2; potem pkt 3
+(odmowy/cooldowny Subskrybentów; Znajomi 329 już zamknięci), następnie
+pkt 4 Bazy i pkt 5 Ankiety. Ostatnie doprecyzowania należą do tych punktów.
+
+Zakładki używają CSS Gier (wypustki) i tabs.js; stan invite/received
+w PAGES i URL. Komputer dwie kolumny, telefon jeden panel; zmiana
+szerokości nie niszczy formularza/sekcji. Go f wskazuje właściwy panel.
+Znajomi: prawa plakietka tylko przychodzące pending, lewa liczba wysłanych
+pending. Subskrybenci: liczniki oczekujących i aktywnych, bez przychodzących
+propozycji/akceptacji w panelu. Zero ukrywa licznik. Odmowy/znajomi aktywni
+nie zwiększają plakietki przychodzących spraw.
+
+Zrzuty: Znajomi [zaproszenia telefon](img/e19-friends/tabs-invite-phone.png),
+[listy telefon](img/e19-friends/tabs-received-phone.png),
+[odmowy rozwinięte telefon](img/e19-friends/tabs-refusal-expanded-phone.png),
+[komputer](img/e19-friends/tabs-desktop.png),
+[odmowy rozwinięte komputer](img/e19-friends/tabs-refusal-expanded-desktop.png).
+Subskrybenci [zaproszenia telefon](img/e19-subscribers/tabs-invite-phone.png),
+[listy telefon](img/e19-subscribers/tabs-received-phone.png),
+[komputer](img/e19-subscribers/tabs-desktop.png). Zrzuty faktycznego renderera
+z danymi przykładowymi; etap dopiero po kontrolach branch/main.

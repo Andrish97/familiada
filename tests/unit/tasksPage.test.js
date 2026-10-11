@@ -54,3 +54,14 @@ test("tasks: bez wyszukiwania, dolnego paska i tekstowej etykiety typu", () => {
   assert.doesNotMatch(read("web/tasks/index.html"), /games-bottom/);
   assert.match(src, /noteMobile: owner/);
 });
+
+test("kontakty: wspólne karty, stan w mapie i wypustki CSS Gier", () => {
+  for (const id of ["friends", "subscribers"]) {
+    assert.deepEqual(PAGES[id].tabs, ["invite", "received"]);
+    assert.ok(PAGES[id].state.includes("tab"));
+    assert.match(read(`web/${id}/index.html`), /games\/css\/games.css/);
+    assert.match(read(`web/${id}/index.html`), /tab-corner-left/);
+  }
+  const src = read("web/shared/js/core/contacts-page.js");
+  assert.match(src, /tabFromUrl\(/); assert.match(src, /setTab\(/);
+});

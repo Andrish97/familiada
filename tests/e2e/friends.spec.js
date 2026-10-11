@@ -138,6 +138,9 @@ test("kontakty: aktywni bez zbędnego statusu desktop/mobile", async ({ browser 
     for (const width of [1400, 390]) for (const kind of ["friends", "subscribers"]) {
       await owner.page.setViewportSize({ width, height: 900 });
       await owner.page.goto(`https://www.familiada.online/${kind}/`);
+      await expect(owner.page.locator('[data-id="pending-preview"]')).toContainText("Oczekuje");
+      if (kind === "friends") await expect(owner.page.locator('[data-id="declined-preview"]')).toContainText("Odrzucono");
+      if (width === 390) await owner.page.locator('[data-contact-tab="received"]').click();
       const row = owner.page.locator('[data-id="active-preview"]');
       await expect(row).toBeVisible();
       await expect(row.locator(".shareTags")).toHaveCount(0);
@@ -171,6 +174,7 @@ test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ 
       await expect(outgoing.locator('[data-act="cancel"]')).toBeEnabled();
       await expect(outgoing.locator('[data-act="remove"]')).toHaveCount(0);
       await expect(owner.page.locator('[data-id="declined-off"] [data-act="resend"]')).toHaveCount(0);
+      if (width === 390) await owner.page.locator('[data-contact-tab="received"]').click();
       const incoming = owner.page.locator('[data-id="declined-in"]');
       const toggle = owner.page.locator('.rowsSection--declined button.rowsSectionHead');
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -251,4 +255,55 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await cleanup(owner.page, recipient.id).catch(() => {});
     await owner.context.close(); await recipient.context.close();
   }
+});
+
+test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }) => {
+  const owner = await user(browser, 7);
+  try {
+    let empty = false;
+    await owner.context.route("**/rest/v1/rpc/contacts_list", route => route.fulfill({ json: empty ? [] : [
+      { id: "incoming", label: "Maja", email: "maja@example.net", status: "pending", direction: "incoming", email_enabled: false },
+      { id: "outgoing", label: "Ola", email: "ola@example.net", status: "pending", direction: "outgoing", email_enabled: false },
+      { id: "active", label: "Piotr", email: "piotr@example.net", status: "active", direction: "friend" },
+      { id: "refusal", label: "Ala", email: "ala@example.net", status: "declined", direction: "incoming" },
+    ] }));
+    for (const kind of ["friends", "subscribers"]) {
+      await owner.page.setViewportSize({ width: 390, height: 844 });
+      await owner.page.goto(`https://www.familiada.online/${kind}/`);
+      const invite = owner.page.locator('[data-contact-tab="invite"]');
+      const received = owner.page.locator('[data-contact-tab="received"]');
+      await expect(invite).toHaveAttribute("aria-selected", "true");
+      await expect(owner.page.locator("#contactsInvite")).toBeVisible();
+      await expect(owner.page.locator("#contactsReceived")).toBeHidden();
+      await expect(received.locator(".badge")).toHaveText("1");
+      await expect(invite.locator(".badge")).toHaveText(kind === "friends" ? "1" : "2");
+      await owner.page.locator("#inviteInput").fill("saved@example.net");
+      await received.click();
+      await expect(owner.page).toHaveURL(/tab=received/);
+      await expect(owner.page.locator("#contactsInvite")).toBeHidden();
+      await expect(owner.page.locator("#contactsReceived")).toBeVisible();
+      await owner.page.reload();
+      await expect(received).toHaveAttribute("aria-selected", "true");
+      await owner.page.setViewportSize({ width: 1400, height: 900 });
+      await expect(owner.page.locator("#contactsTabs")).toBeHidden();
+      await expect(owner.page.locator("#contactsInvite")).toBeVisible();
+      await expect(owner.page.locator("#contactsReceived")).toBeVisible();
+      await owner.page.setViewportSize({ width: 390, height: 844 });
+      await received.focus(); await received.press("ArrowLeft");
+      await expect(invite).toHaveAttribute("aria-selected", "true");
+      expect(new URL(owner.page.url()).searchParams.has("tab")).toBe(false);
+      await owner.page.locator("#inviteInput").fill("saved@example.net");
+      await received.click(); await invite.click();
+      await expect(owner.page.locator("#inviteInput")).toHaveValue("saved@example.net");
+      empty = true; await owner.page.reload();
+      await expect(received.locator(".badge")).toBeHidden();
+      await expect(invite.locator(".badge")).toBeHidden();
+      await expect(owner.page.locator(".shareEmpty").first()).toBeVisible();
+      empty = false;
+    }
+    await owner.context.route("**/rest/v1/rpc/poll_go_resolve", route => route.fulfill({ json: {ok:true,id:"incoming",kind:"friend"} }));
+    await owner.page.goto("https://www.familiada.online/friends/?f=preview");
+    await expect(owner.page.locator('[data-contact-tab="received"]')).toHaveAttribute("aria-selected", "true");
+    await expect(owner.page.locator('[data-id="incoming"]')).toHaveClass(/rowsFocus/);
+  } finally { await owner.context.close(); }
 });

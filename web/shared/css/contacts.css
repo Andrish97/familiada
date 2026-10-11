@@ -20,3 +20,17 @@
   .contacts-card{ padding: 10px; }
   .contacts-invite-row{ gap: 8px; }
 }
+
+/* Wypustki korzystają wprost z games.css; na komputerze obie kolumny. */
+.contacts-tabs{ margin: 0; }
+.contacts-tabs > .tabs-strip{ display: none; }
+.contacts-card[hidden]{ display: none; }
+@media (max-width: 720px){
+  .contacts-tabs > .tabs-strip{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .contacts-tabs .tab-slot{ width: 100%; }
+  .contacts-tabs .tab-label{ z-index: 3; }
+  .contacts-tabs .tab-slot:first-child .tab-corner-left,
+  .contacts-tabs .tab-slot:last-child .tab-corner-right{ display: none; }
+  .contacts-tabs:has([data-contact-tab="invite"].active) #contactsInvite{ border-top-left-radius: 0; }
+  .contacts-tabs:has([data-contact-tab="received"].active) #contactsReceived{ border-top-right-radius: 0; }
+}

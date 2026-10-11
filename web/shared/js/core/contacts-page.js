@@ -1,7 +1,8 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
 import { sb } from "./supabase.js?v=v2026-10-11T14311";
 import { initPage } from "./page-init.js?v=v2026-10-11T14311";
-import { linkTo } from "./nav-map.js?v=v2026-10-11T14311";
+import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-11T14311";
+import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-11T14300";
 import { toast } from "./toast.js?v=v2026-10-11T14311";
 import { confirmModal, alertModal } from "./modal.js?v=v2026-10-11T14311";
 import { shareSectionEl } from "./share-sections.js?v=v2026-10-11T14311";
@@ -20,6 +21,41 @@ export async function initContactsPage(pageId) {
   let rows = [];
   let inFlight = null;
   let declinedCollapsed = true;
+  const mobile = matchMedia("(max-width: 720px)");
+  const allowedTabs = PAGES[pageId].tabs;
+  let activeTab = tabFromUrl(allowedTabs, allowedTabs[0]);
+  const tabButtons = [...document.querySelectorAll("[data-contact-tab]")];
+  const panels = [...document.querySelectorAll("[data-contact-panel]")];
+  function applyTab() {
+    for (const button of tabButtons) {
+      const active = button.dataset.contactTab === activeTab;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+      button.tabIndex = active ? 0 : -1;
+    }
+    for (const panel of panels) {
+      panel.hidden = mobile.matches && panel.dataset.contactPanel !== activeTab;
+      if (mobile.matches) {
+        panel.setAttribute("role", "tabpanel");
+        panel.setAttribute("aria-labelledby", panel.dataset.contactPanel === "invite" ? "contactsTabInvite" : "contactsTabReceived");
+      } else {
+        panel.removeAttribute("role");
+        panel.removeAttribute("aria-labelledby");
+      }
+    }
+  }
+  function selectTab(name) { activeTab = name; setTab(name, allowedTabs[0]); applyTab(); }
+  for (const button of tabButtons) {
+    button.addEventListener("click", () => selectTab(button.dataset.contactTab));
+    button.addEventListener("keydown", event => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      const index = event.key === "Home" ? 0 : event.key === "End" ? 1 : 1 - allowedTabs.indexOf(activeTab);
+      selectTab(allowedTabs[index]); tabButtons[index].focus();
+    });
+  }
+  mobile.addEventListener("change", applyTab);
+  applyTab();
   const ownerLabel = user.user_metadata?.username || user.email || "Familiada";
 
   async function call(name, args) {
@@ -112,9 +148,18 @@ export async function initContactsPage(pageId) {
     };
     document.getElementById("contactsOutgoing").replaceChildren(make(friends ? "outgoing" : "pending"));
     document.getElementById("contactsReceived").replaceChildren(...(friends ? ["friend", "incoming", "declined"] : ["active"]).map(make));
+    const counts = {
+      invite: rows.filter(row => friends ? row.direction === "outgoing" && row.status === "pending" : row.status === "pending").length,
+      received: rows.filter(row => friends ? row.direction === "incoming" && row.status === "pending" : row.status === "active").length,
+    };
+    for (const badge of document.querySelectorAll("[data-contact-count]")) {
+      badge.textContent = counts[badge.dataset.contactCount] || "";
+    }
+    applyTab();
   }
   function focusRow(id) {
     const row = host.querySelector(`.shareRow[data-id="${CSS.escape(String(id))}"]`);
+    if (row) selectTab(row.closest("[data-contact-panel]").dataset.contactPanel);
     row?.classList.add("rowsFocus");
     row?.scrollIntoView({ block: "nearest" });
   }

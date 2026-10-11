@@ -5008,6 +5008,7 @@ const en = {
     selfXssWarning: "Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS. Do not enter or paste code that you do not understand.",
   },
   contacts: {
+    tabs: { invite: "Invitations" },
     "friends": {
         "add": "Add a friend",
         "title": "Friends",

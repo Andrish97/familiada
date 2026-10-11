@@ -440,3 +440,11 @@ Następne otwarte zakresy: zakładki z wypustkami/plakietki/puste listy
 kontaktów, odmowy Baz i wspólny wygląd udostępniania, odmowy anonimowych
 Subskrybentów 5/30 dni bez undo/akceptacji w panelu; model kont rozstrzygnięty.
 Manual ostatni. Lokalny draft 331 nadal wymaga testów i frontu.
+
+**Aktualna kolejność po poleceniu użytkownika „wróć do planu”:** E19 §5
+pkt 2 domknąć zakładki mobilne; potem pkt 3 odmowy/cooldowny Subskrybentów
+(Znajomi 329 gotowi), pkt 4 Bazy, pkt 5 Ankiety, pkt 6 maile, pkt 7 graf.
+Nie przestawiać kolejki na podstawie samego ostatniego doprecyzowania.
+Zakładki teraz na branchu: unit 411/411, zrzuty tabs-*; brak kontroli
+branch/main przed oznaczeniem wykonania. Draft Baz /tmp/base331-draft.sql
+nie wyprzedza pkt 3 i przed użyciem musi dostać właściwy kolejny numer.

@@ -16,6 +16,7 @@
 
   <link rel="icon" href="/favicon.ico?v=v2026-10-11T14311"/>
   <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T14311"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-11T14300"/>
   <link rel="stylesheet" href="/shared/css/contacts.css?v=v2026-10-11T14311"/>
   <script>
     document.documentElement.classList.add('page-loading');
@@ -61,8 +62,19 @@
       </div>
     </div>
 
-    <div class="contacts-layout" id="contactsHost" data-skel-step>
-      <div class="card contacts-card">
+    <div class="tabs-card contacts-tabs">
+      <div class="tabs-strip" id="contactsTabs" role="tablist">
+        <div class="tab-slot">
+          <button class="tab-label" id="contactsTabInvite" type="button" role="tab" data-contact-tab="invite" aria-controls="contactsInvite"><span data-i18n="contacts.tabs.invite"></span><span class="badge" data-contact-count="invite"></span></button>
+          <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+        </div>
+        <div class="tab-slot">
+          <button class="tab-label" id="contactsTabReceived" type="button" role="tab" data-contact-tab="received" aria-controls="contactsReceived"><span data-i18n="contacts.friends.title"></span><span class="badge" data-contact-count="received"></span></button>
+          <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+        </div>
+      </div>
+      <div class="contacts-layout" id="contactsHost" data-skel-step>
+      <div class="card contacts-card" id="contactsInvite" data-contact-panel="invite">
         <section class="shareSection contacts-add">
           <h2 class="shareSectionTitle" data-i18n="contacts.friends.add"></h2>
           <form id="inviteForm" class="contacts-invite">
@@ -75,7 +87,9 @@
         </section>
         <div id="contactsOutgoing"></div>
       </div>
-      <div class="card contacts-card" id="contactsReceived"></div>
+      <div class="card contacts-card" id="contactsReceived" data-contact-panel="received"></div>
+    </div>
+
     </div>
 
     <div class="footer">

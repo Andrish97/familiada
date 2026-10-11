@@ -4917,6 +4917,7 @@ const pl = {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
   },
   contacts: {
+    tabs: { invite: "Zaproszenia" },
     "friends": {
         "add": "Dodaj znajomego",
         "title": "Znajomi",

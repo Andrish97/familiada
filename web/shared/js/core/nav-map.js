@@ -73,10 +73,10 @@ export const PAGES = {
     btnFriends: { to: "friends", roles: ["user"] },
     btnSubscribers: { to: "subscribers", roles: ["user"] },
   }, locks: [{ type: "game", id: "id" }] },
-  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "subscribers", "bases", "polls", "control"], manual: "polls", state: ["f"], buttons: {
+  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "subscribers", "bases", "polls", "control"], manual: "polls", tabs: ["invite", "received"], state: ["f", "tab"], buttons: {
     btnSubscribers: { to: "subscribers", roles: ["user"] },
   } },
-  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "friends", "polls", "bases"], manual: "polls", state: [], buttons: {
+  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "friends", "polls", "bases"], manual: "polls", tabs: ["invite", "received"], state: ["tab"], buttons: {
     btnFriends: { to: "friends", roles: ["user"] },
   } },
   tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "polls", state: ["t"] },
