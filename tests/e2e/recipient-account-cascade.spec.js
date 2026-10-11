@@ -24,10 +24,10 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
   const recipient = await recipientContext.newPage();
   const anonymous = await anonymousContext.newPage();
   const games = [];
-  const email = "test12@familiada.online";
+  const email = "test15@familiada.online";
   let oldRecipientId = null;
   try {
-    await restoreTestAccount("test12");
+    await restoreTestAccount("test15");
     await loginAsTestUser(owner, ownerContext, { username: testAccountUsername(7) });
     await loginAsTestUser(recipient, recipientContext, { username: email });
     oldRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
@@ -44,7 +44,10 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     const invite = await rpc(owner, "friends_invite", { p_handle: email });
     expect(invite.ok).toBe(true);
     expect((await rpc(recipient, "friends_accept", { p_id: invite.id })).ok).toBe(true);
+    let previousMailAt = 0;
     for (const type of ["poll_text", "poll_points"]) {
+      const wait = previousMailAt + 62000 - Date.now();
+      if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
       const game = await owner.evaluate(async type => {
         const sb = window.__sbClient;
         const user = (await sb.auth.getUser()).data.user;
@@ -78,6 +81,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
         return sendPollInviteMails({ mailItems, pollName: name, currentUser });
       }, { mailItems: sharing.mail, name: game.name });
       expect(sent).toMatchObject({ sent: 1, failed: 0 });
+      previousMailAt = Date.now();
       const mail = await waitForEmail({ recipient: email, after, subject: new RegExp(game.name), timeout: 150000 });
       expectMailDocument(mail, { accountFooter: true });
       fixture.link = extractHttpLinks(mail).find(link => new URL(link).pathname === "/go/" && new URL(link).searchParams.has("t"));
@@ -115,7 +119,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(0);
     for (const fixture of games) expect((await rpc(owner, "poll_share_panel", { p_game_id: fixture.id })).tasks).toHaveLength(0);
-    await restoreTestAccount("test12");
+    await restoreTestAccount("test15");
     await loginAsTestUser(recipient, recipientContext, { username: email });
     const newRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
     expect(newRecipientId).not.toBe(oldRecipientId);
@@ -132,7 +136,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
   } finally {
     const cleanup = await Promise.allSettled([
       (async () => {
-        await restoreTestAccount("test12");
+        await restoreTestAccount("test15");
         const recoveryContext = await browser.newContext();
         try {
           const recoveryPage = await recoveryContext.newPage();

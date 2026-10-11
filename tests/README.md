@@ -343,15 +343,15 @@ Pliki aplikacji są w `web/`: strona `<nazwa>/index.html`, jej skrypty w
 odpowiadają ścieżkom względem `web/`. Skrypt wersjonowania obejmuje tylko
 frontend. Scenariusze E2E pozostają testami produkcyjnymi.
 
-### Usuwanie dedykowanych kont11/12
+### Usuwanie dedykowanego konta15
 
-Nie usuwać kont ze zwykłej puli do testowania kaskad konta. Używać11/12;
-13 jest alternatywnym adresem12,14 skrzynką bez konta,9/10 wyłączone.
-`restoreTestAccount("test11"|"test12")` odtwarza brakujące konto,
-potwierdza adres i ustawia `TEST_PASSWORD`; istniejące konto zachowuje ID.
-Odtwarzać przed testem i w `finally`, potem sprawdzać logowanie w świeżym
-kontekście. Nowe konto nie odzyskuje usuniętych danych ani dawnych dostępów.
-Nie logować hasła ani tokenów. `test-account-restore.spec.js` sprawdza oba
-logowania; `recipient-account-cascade.spec.js` sprawdza usunięcie12 przez UI,
-realne maile, oba typy głosów i nieważność starych linków po odtworzeniu.
-Punktowo, jeden przebieg naraz, bez retry.
+Do usuwania używać15, poza zwykłą pulą.11 testuje hasło,12 profil i zmianę
+adresu na13;14 pozostaje skrzynką bez konta,9/10 wyłączone.
+`restoreTestAccount("test15")` tworzy brakujące konto z potwierdzonym
+adresem i `TEST_PASSWORD`; istniejące konto zachowuje ID. Sprawdza też
+automatyczny wyjątek admina. Odtwarzać przed testem i w `finally`, potem
+sprawdzać logowanie w świeżym kontekście. Dane i dawne dostępy nie wracają.
+`test-account-restore.spec.js` sprawdza11/12/15; `recipient-account-cascade.spec.js`
+usunięcie15 przez UI, rzeczywiste maile, oba typy głosów i stare linki.
+Skrzynka15 wymaga reguły Cloudflare kierującej ją do Workera `familiada`.
+Punktowo, jeden przebieg naraz, bez retry. Nie logować haseł ani tokenów.

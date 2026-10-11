@@ -72,6 +72,7 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   (wejście workflow `test_accounts`, np. `1,2,3` i `4,5,6`) i spece logują się
   tylko przez pulę. Spece z kontami na stałe albo `@mailbox` — pojedynczo
   (szczegóły: `tests/README.md`, „Pula kont”).
+- **test15@familiada.online — dedykowane usuwanie konta**, poza zwykłą pulą. Odtwarzać przed testem i w `finally`, sprawdzać logowanie oraz automatyczny wyjątek admina. Konta11/12 (adres13 dla12) zostają do testów hasła/profilu/e-maila.
 - **test14@familiada.online — skrzynka BEZ konta** (podpięta pod Worker jak
   inne, do testów „bez konta”: subskrybent tylko e-mail, urządzenie na e-mail
   bez konta). Nie zakładać na nim konta.

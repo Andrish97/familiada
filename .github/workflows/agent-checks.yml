@@ -1214,6 +1214,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-recipient-account-cascade-348.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_349_dedicated_account_mail_test_cleanup.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-dedicated-account-mail-cleanup-349.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_350_dedicated_deletion_account15.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-dedicated-account-mail-cleanup-350.sql
           bash docs/sql/test-recipient-cascade-348-ddl-concurrency.sh
           bash docs/sql/test-recipient-account-cascade-348-concurrency.sh
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-task-cascade-345.sql
