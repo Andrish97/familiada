@@ -139,6 +139,7 @@ pula test1–test8; test9/test10 zarezerwowane.
    prawej (Subskrybenci bez propozycji); dwie karty na telefonie.
 3. Uzupełnić kontrakty RPC o odrzucone wpisy, flagę dostępności maila
    i dane do odliczania. Obecnie `friends_resend` przyjmuje tylko pending,
+   `friends_reject` usuwa rekord zamiast zachować declined,
    a `subscribers_list` nie zwraca declined. Ponowienie przypomina mailem,
    nie tworzy nowego dostępu ani nie resetuje decyzji odbiorcy.
 4. Bazy: mail/nazwa i lista znajomych z checkboxami oraz rolą w obu sekcjach;

@@ -58,7 +58,7 @@ export async function initContactsPage(pageId) {
   function rowOf(row) {
     const actions = [];
     const add = (kind, icon, gold = false, iconOnly = false) => actions.push({ key: kind, icon, gold, iconOnly,
-      text: t(`contacts.actions.${kind}`), onClick: (_, button) => action(row, kind, button) });
+      title: t(`contacts.actions.${kind}`), onClick: (_, button) => action(row, kind, button) });
     if (friends && row.direction === "incoming") { add("accept", "check", true); add("reject", "cancel"); }
     else if (row.status === "pending") { add("resend", "refresh"); add(friends ? "cancel" : "remove", "trash", false, true); }
     else add("remove", "trash", false, true);
