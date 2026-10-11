@@ -47,7 +47,7 @@ test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", as
     await expect(outgoing).toHaveClass(/blocked/);
     await expect(outgoing.locator("[data-act=cancel]")).toBeEnabled();
     const blocked = await owner.page.evaluate(async id => (await window.__sbClient.rpc("friends_resend", { p_id: id })).data, await outgoing.getAttribute("data-id"));
-    expect(blocked.err).toBe("declined");
+    expect(blocked.err).toBe("cooldown");
     await owner.page.screenshot({ path: testInfo.outputPath("shot-friends-layout.png"), fullPage: true });
     const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i, timeout: 150000 });
     const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
@@ -194,7 +194,7 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await expect(outgoing).toContainText("Odrzucono");
     await expect(outgoing.locator('[data-act="resend"]')).toHaveCount(0);
     const blocked = await owner.page.evaluate(async id => (await window.__sbClient.rpc("friends_resend", { p_id: id })).data, id);
-    expect(blocked.err).toBe("cooldown");
+    expect(blocked.err).toBe("declined");
     const info = await owner.page.evaluate(async token => (await window.__sbClient.rpc("friends_token_info", { p_token: token })).data, token);
     expect(info.status).toBe("declined");
     await recipient.page.goto(link);
