@@ -32,9 +32,9 @@ konektor GitHub przy wznowieniu); HEAD eaa40581ee. Lokalne regresje
 i wyścigi ✓; ponowny kontrakt347 obu typów ankiet też ✓. Jeszcze bez produkcji.
 Test real-mail obu typów/obu kontaktów jest przygotowany na branchu347;
 po wdrożeniu SQL uruchomić punktowo razem z dotychczasowym testem tekstu.
-CLI GitHub przy wznowieniu zwraca401 Bad credentials; bez tokena nie jest
-zalogowane. Wymaga przywrócenia uwierzytelnienia do push/workflow przed
-promocją i obowiązkową kontrolą produkcji. Nie pomijać bramek wdrożenia.
+Przejściowy błąd401 CLI GitHub ustąpił po ponownej próbie na prośbę
+użytkownika: gh api user i odczyt38177985246 działają. Wznowić promocję
+i obowiązkową kontrolę produkcji; nie pomijać bramek wdrożenia.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego
