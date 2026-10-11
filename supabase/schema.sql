@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WoyZMceamPwAlGTO3ri9FBsDzq30g9eQuSJhAgxwZEoRpK8stw3hLG0xuhGuL0N
+\restrict aNaASEeIG910awbs2XwclJ9hxTIM8ePvVxHjtjmy5zYu2S3rkdObYowcK9FWN7W
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3413,7 +3413,7 @@ BEGIN
 
   IF v_uid IS NULL
      OR v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
-     OR v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' THEN
+     OR v_other_email !~ '^test([1-9]|1[0-3]|15)@familiada[.]online$' THEN
     RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
   END IF;
 
@@ -3497,7 +3497,7 @@ DECLARE uid uuid:=auth.uid(); caller text; recipient text:=public._norm_email(p_
 BEGIN
  SELECT public._norm_email(email) INTO caller FROM auth.users WHERE id=uid;
  IF uid IS NULL OR caller IS NULL OR caller !~ '^test[1-8]@familiada[.]online$'
- OR recipient IS NULL OR recipient !~ '^test([1-8]|11|12|14)@familiada[.]online$' THEN
+ OR recipient IS NULL OR recipient !~ '^test([1-8]|11|12|14|15)@familiada[.]online$' THEN
   RETURN jsonb_build_object('ok',false,'err','test_accounts_required'); END IF;
  DELETE FROM public.poll_mail_budget_events WHERE owner_id=uid AND recipient_key=md5(recipient);
  GET DIAGNOSTICS n=ROW_COUNT; RETURN jsonb_build_object('ok',true,'deleted',n);
@@ -14755,7 +14755,7 @@ CREATE TABLE "public"."e2e_emails" (
     "body_html" "text",
     "received_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "expires_at" timestamp with time zone DEFAULT ("now"() + '24:00:00'::interval) NOT NULL,
-    CONSTRAINT "e2e_emails_recipient_check" CHECK (("recipient" ~ '^test([1-9]|1[0-4])@familiada\.online$'::"text"))
+    CONSTRAINT "e2e_emails_recipient_check" CHECK (("recipient" ~ '^test([1-9]|1[0-5])@familiada\.online$'::"text"))
 );
 
 
@@ -19687,5 +19687,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WoyZMceamPwAlGTO3ri9FBsDzq30g9eQuSJhAgxwZEoRpK8stw3hLG0xuhGuL0N
+\unrestrict aNaASEeIG910awbs2XwclJ9hxTIM8ePvVxHjtjmy5zYu2S3rkdObYowcK9FWN7W
 
