@@ -679,3 +679,9 @@ zaproszenie. Liczba sekcji/zakładki nie jest plakietką przychodzących spraw.
 wzorzec Gier; nie dziedziczyć starego mobilnego nadpisania games.css
 do 56 px. Kontakty używają tych samych kącików i CSS wypustek, z lokalnym
 ustawieniem wspólnego wymiaru 36/1 px. E2E sprawdza wysokość 36 px.
+
+**Kontakty — wysokość kart (doprecyzowanie):** karty wypełniają całą
+dostępną wysokość obszaru pracy; na telefonie pod wypustkami, na komputerze
+obie kolumny równej wysokości. Nagłówki/formularz zostają widoczne,
+przewijają się niezależnie listy wewnątrz. Strona nie rośnie z liczbą
+kafelków; footer poza obszarem przewijania.

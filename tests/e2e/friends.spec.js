@@ -289,6 +289,21 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
       await expect(owner.page.locator("#contactsTabs")).toBeHidden();
       await expect(owner.page.locator("#contactsInvite")).toBeVisible();
       await expect(owner.page.locator("#contactsReceived")).toBeVisible();
+      const scrolling = await owner.page.evaluate(() => {
+        const cards = [...document.querySelectorAll(".contacts-card")].map(el => el.getBoundingClientRect());
+        const lists = [...document.querySelectorAll(".shareList")].filter(el => !el.hidden && el.querySelector(".shareRow"));
+        for (const list of lists) {
+          const row = list.querySelector(".shareRow");
+          for (let i=0;i<30;i++) list.append(row.cloneNode(true));
+        }
+        lists[0].scrollTop=70; lists[1].scrollTop=120;
+        return { independent: lists[0].scrollTop===70 && lists[1].scrollTop===120,
+          equal: Math.abs(cards[0].height-cards[1].height)<1,
+          full: cards.every(card => Math.abs(card.bottom-document.querySelector(".contacts-layout").getBoundingClientRect().bottom)<1),
+          pageOverflow: document.documentElement.scrollHeight>innerHeight };
+      });
+      expect(scrolling).toEqual({ independent:true, equal:true, full:true, pageOverflow:false });
+      await owner.page.reload();
       await owner.page.setViewportSize({ width: 390, height: 844 });
       await received.focus(); await received.press("ArrowLeft");
       await expect(invite).toHaveAttribute("aria-selected", "true");
