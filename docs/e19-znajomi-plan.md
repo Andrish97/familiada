@@ -1177,3 +1177,18 @@ Następny pkt7: pełny graf, starsze wypisanie Znajomych, kaskady, locks,
 Go dla wszystkich linków oraz łagodny limit przeglądarki. Kolejka i historia
 admina są nadal osobnymi zapisami; spójność po awarii zapisu historii do
 audytu grafu. Manual ostatni.
+
+### Pkt7 — pierwsza paczka fizycznej kaskady Baz345 (draft)
+
+FK base_share_tasks.base_id → question_bases.id ON DELETE CASCADE
+usuwa wszystkie stany tasków wraz z rodzicem. Indeks base_id wspiera
+kaskadę; istniejące rekordy bez rodzica są usuwane po zablokowaniu tabel
+rodzic→dzieci. Kontrakty338 już odmawiały im dostępu, więc porządkowanie
+nie odbiera ważnego uprawnienia. Graficzny wygląd Baz bez zmiany.
+
+Lokalny klon PG16: orphan przed migracją odtworzony i posprzątany,
+5stanów tasks/token/grant, niezależna baza, account→base→task,
+regresje337 oraz wyścigi delete/accept/leave i expired pair ✓.
+Wymagane isolated345, SQL/log, rollbackowa kontrola produkcyjna i punktowy
+E2E Baz na istniejącym froncie. Pending mail/cancel sending oraz wypisanie
+Znajomych to dalsze zakresy pkt7; nie dopisywać ich do pokrycia345.

@@ -548,3 +548,10 @@ branch38172035648 ✓15 SMTP i4 HTTP200 ilustracje. Zapisane podglądy Settings
 dopięte przez stored-mail; potrzebne unit447/isolated i punktowy browser
 preview, potem Worker/Pages oraz main15mail+preview. Producentów maili
 na branchu nie zmieniono po zielonym SMTP.
+
+Pkt7 bieżący draft345: base_share_tasks FK→question_bases CASCADE + indeks,
+cleanup orphanów, rollback SQL i nowe wyścigi. Lokalne klony fam345graph/
+fam345orphan PG16 ✓, regresje337 ✓. Agent input verify_e19_345 oraz
+produkcyjny rollbackowy smoke w db-migrate przygotowane. Najpierw isolated,
+SQL/main/log/smoke, potem punktowy istniejący E2E Baz. Front bez zmiany;
+queue, wypisanie Znajomych i pozostały graf nadal otwarte.

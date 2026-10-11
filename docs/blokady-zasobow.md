@@ -428,3 +428,13 @@ email-taski i ponowne założenie konta. Fizyczna kaskada Baz pozostaje otwarta.
 
 To wyniki przeglądu kodu, nie wykonane poprawki. Bazy bez FK, routing Go,
 blokady rodziców i anonimowy token pozostają pozostałą częścią pkt7.
+
+### Baza → zadanie: fizyczna kaskada345 przygotowana
+
+FK i indeks base_id; cleanup starych orphanów w migracji po locku
+question_bases→base_share_tasks. Taski pending/opened/accepted/declined/
+cancelled kasują się z bazą, więc token/undo/accept nie może być reaktywowany
+po usunięciu. Konto właściciela kaskaduje przez bazę do taska. Inne bazy
+pozostają niezależne. PG16/rollback/regresje i wyścigi lokalnie ✓;
+bramki wdrożenia jeszcze wymagane. To tylko krawędź zasobowa, nie rozwiązanie
+oczekujących maili ani trwającej zewnętrznej wysyłki SMTP.
