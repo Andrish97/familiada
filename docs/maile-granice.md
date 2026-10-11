@@ -101,8 +101,9 @@ limitu.
 Cooldowny cofnięcia i zmiany roli nie są tu ustalonymi wartościami. Szczegółowa tabela zachowań jest w
 `e19-znajomi-plan.md`, sekcja 7.
 
-**Stan E19 (2026-10-11):** migracja `2026-10-11_323` dodaje wspólny
+**Stan E19 (2026-10-11):** migracja `2026-10-11_323` wdrożyła wspólny
 `BEFORE INSERT` trigger na `mail_queue`. Wyłączona flaga pomija wstawienie
-przed rezerwacją cooldownu; adres bez konta pozostaje dozwolony. Lokalny
-test PG16 potwierdził wszystkie trzy przypadki. Pozostało uruchomić punktowy
-job SQL, wdrożyć migrację i sprawdzić ją po wdrożeniu.
+przed rezerwacją cooldownu; adres bez konta pozostaje dozwolony. Pełny restore
+PG16, lokalny test oraz izolowany job SQL `38126186374` potwierdziły trzy
+przypadki; produkcyjny log `38126386184` potwierdza zastosowanie migracji.
+Dodano transakcyjny smoke test produkcyjny do kolejnego przebiegu migracyjnego.

@@ -143,6 +143,12 @@ jobs:
             "export GITHUB_SHA='${{ github.sha }}'; \
              bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
 
+      - name: Verify global mail preference before queue insert (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < tests/sql/mail-preference-queue-323.sql
+
       - name: Verify DRAW Host PNG references and Storage objects are removed
         run: |
           for attempt in $(seq 1 30); do
