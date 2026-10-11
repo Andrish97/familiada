@@ -1406,9 +1406,10 @@ $$;
 -- Name: base_share_by_email("uuid", "text", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."base_share_by_email"("p_base_id" "uuid", "p_email" "text", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
+CREATE OR REPLACE FUNCTION public.base_share_by_email(p_base_id uuid, p_email text, p_role public.base_share_role)
+RETURNS TABLE(ok boolean, err text, mail_to text, mail_link text, base_name text, owner_label text, cooldown_until timestamptz, recipient_id uuid)
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
 DECLARE
   v_owner uuid;
   v_recipient uuid;
@@ -1476,7 +1477,7 @@ BEGIN
   PERFORM public.mail_cooldown_reserve('base:share', v_target);
 
   RETURN QUERY
-  SELECT true, NULL::text, v_norm_email, ('/bases?share=' || v_task.token::text), v_base_name, v_owner_label, NULL::timestamptz, v_recipient;
+  SELECT true, NULL::text, v_norm_email, ('/go/?b=' || v_task.token::text), v_base_name, v_owner_label, NULL::timestamptz, v_recipient;
 END;
 $$;
 
@@ -1485,9 +1486,10 @@ $$;
 -- Name: base_share_by_user("uuid", "uuid", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."base_share_by_user"("p_base_id" "uuid", "p_recipient_user_id" "uuid", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
+CREATE OR REPLACE FUNCTION public.base_share_by_user(p_base_id uuid, p_recipient_user_id uuid, p_role public.base_share_role)
+RETURNS TABLE(ok boolean, err text, mail_to text, mail_link text, base_name text, owner_label text, cooldown_until timestamptz, recipient_id uuid)
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
 DECLARE
   v_owner uuid;
   v_recipient uuid;
@@ -1521,6 +1523,10 @@ BEGIN
   END IF;
 
   SELECT nullif(lower(trim(pr.email)), '') INTO v_norm_email FROM public.profiles pr WHERE pr.id = v_recipient;
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, 'unknown_user', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
 
   IF EXISTS (SELECT 1 FROM public.question_base_shares s WHERE s.base_id = p_base_id AND s.user_id = v_recipient) THEN
     UPDATE public.question_base_shares SET role = p_role WHERE base_id = p_base_id AND user_id = v_recipient;
@@ -1553,7 +1559,7 @@ BEGIN
   PERFORM public.mail_cooldown_reserve('base:share', v_target);
 
   RETURN QUERY
-  SELECT true, NULL::text, v_norm_email, ('/bases?share=' || v_task.token::text), v_base_name, v_owner_label, NULL::timestamptz, v_recipient;
+  SELECT true, NULL::text, v_norm_email, ('/go/?b=' || v_task.token::text), v_base_name, v_owner_label, NULL::timestamptz, v_recipient;
 END;
 $$;
 
@@ -9139,7 +9145,7 @@ $$;
 -- Name: poll_go_resolve("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."poll_go_resolve"("p_token" "uuid") RETURNS "jsonb"
+CREATE OR REPLACE FUNCTION "public"."poll_go_resolve"("p_token" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -9148,6 +9154,7 @@ DECLARE
   t record;
   u record;
   f record;
+  b record;
 BEGIN
   -- Znajomość przed subskrypcją: stare tokeny z maili kont skopiowano w 320.
   SELECT fs.id,fs.status,fs.requester_id,fs.addressee_id,p.username AS owner_label
@@ -9218,6 +9225,25 @@ BEGIN
       'recipient_email', t.recipient_email,
       'game_id', t.game_id, 'game_name', t.game_name,
       'poll_type', t.poll_type, 'share_key_poll', t.share_key_poll
+    );
+  END IF;
+
+  -- Base shares: token is only a pointer to the logged-in recipient's task.
+  SELECT bt.id, bt.status, bt.base_id, bt.recipient_user_id, bt.recipient_email,
+         bt.owner_id, p.username AS owner_label
+  INTO b
+  FROM public.base_share_tasks bt
+  LEFT JOIN public.profiles p ON p.id = bt.owner_id
+  WHERE bt.token = p_token
+  LIMIT 1;
+
+  IF FOUND THEN
+    RETURN jsonb_build_object(
+      'ok', true, 'kind', 'base', 'task_id', b.id, 'status', b.status,
+      'base_id', b.base_id, 'recipient_user_id', b.recipient_user_id,
+      'recipient_email', b.recipient_email, 'owner_id', b.owner_id,
+      'owner_label', b.owner_label,
+      'recipient_matches_me', auth.uid() = b.recipient_user_id
     );
   END IF;
 
@@ -19015,6 +19041,39 @@ CREATE POLICY "user_logos_update_own" ON "public"."user_logos" FOR UPDATE USING 
 ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Wyszukiwanie konta po nazwie lub e-mailu. Znajomość nie jest warunkiem
+-- udostępnienia; to samo API obsługuje skrót znajomych po UUID.
+CREATE OR REPLACE FUNCTION public.base_share_by_user(p_base_id uuid, p_user_lookup text, p_role public.base_share_role)
+RETURNS TABLE(ok boolean, err text, mail_to text, mail_link text, base_name text, owner_label text, cooldown_until timestamptz, recipient_id uuid)
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_lookup text := lower(trim(p_user_lookup));
+  v_recipient uuid;
+BEGIN
+  IF auth.uid() IS NULL OR NOT EXISTS (
+    SELECT 1 FROM public.question_bases qb WHERE qb.id = p_base_id AND qb.owner_id = auth.uid()
+  ) THEN
+    RETURN QUERY SELECT false, 'not_owner', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
+
+  SELECT pr.id INTO v_recipient
+  FROM public.profiles pr
+  WHERE lower(trim(pr.email)) = v_lookup OR lower(trim(pr.username)) = v_lookup
+  ORDER BY CASE WHEN lower(trim(pr.email)) = v_lookup THEN 0 ELSE 1 END
+  LIMIT 1;
+
+  IF v_recipient IS NULL THEN
+    RETURN QUERY SELECT false, 'unknown_user', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
+
+  RETURN QUERY SELECT * FROM public.base_share_by_user(p_base_id, v_recipient, p_role);
+END;
+$$;
+
 -- PostgreSQL database dump complete
 --
 

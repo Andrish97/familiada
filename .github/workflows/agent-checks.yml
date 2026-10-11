@@ -7,6 +7,10 @@ on:
         description: 'Verify migration 321 in isolated Postgres'
         type: boolean
         default: false
+      verify_e19_322:
+        description: 'Verify migration 322 in isolated Postgres'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -63,4 +67,45 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e19-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-322:
+    if: ${{ inputs.verify_e19_322 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify E19 behavior
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_322_bases_go_links.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-bases-go-322.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-322-sql-restore
           path: /tmp/fam-restore.log
