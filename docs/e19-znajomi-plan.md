@@ -735,3 +735,37 @@ retry + unit 408/408; dwa rzeczywiste maile test8 i wszystkie opisane
 przepływy odmowy/undo/akceptacji/cofnięcia oraz tablet. DB/Pages ✓.
 To zamyka paczkę Znajomych, nie całe E19. Okna 5/30 dni sprawdzone
 w izolowanym SQL, nie przez zmianę czasu produkcji.
+
+### Doprecyzowanie telefonu i pustych list — decyzja 2026-10-11
+
+Znajomi i Subskrybenci: na komputerze dwie kolumny, na telefonie **dwie
+przełączane karty**, ze wspólnego wzorca kart systemu (nie dwie długie
+kolumny ustawione jedna pod drugą). Zachować sekcje i formularz dodawania.
+
+| Strona | Karta 1 | Karta 2 | Plakietka wymagająca działania |
+|---|---|---|---|
+| Znajomi | Dodaj znajomego + Wysłane | Znajomi + Propozycje + Odrzucone przeze mnie | Na karcie 2: przychodzące pending; nie liczyć znajomych, wysłanych i odmów |
+| Subskrybenci | Dodaj subskrybenta + Oczekujące | Subskrybenci | Liczba sekcji może być zwykłym licznikiem; plakietka spraw do obsługi tylko jeśli istnieją przychodzące zaproszenia zgodnie z rozstrzygniętym modelem kont |
+
+Plakietka na karcie korzysta z tego samego źródła i klasy `.badge` co
+skrót strony; nie sumować jej ponownie w Zadaniach. Zero ukrywa plakietkę.
+Go wskazujące zaproszenie wybiera właściwą kartę; stan karty w mapie
+nawigacji i adresie zgodnie z istniejącym modułem tabs.js. Przejście do
+komputera pokazuje obie kolumny bez utraty stanu formularza/sekcji.
+
+**Puste listy:** wspólny komponent, CSS, odstępy i sposób wyświetlania
+krótkiego komunikatu „Brak …”. Treść dopasowana do listy, bez atrap kafli,
+przypadkowych dodatkowych ikon/przycisków i różnych ramek. Rozróżniać
+pustą listę od ładowania, błędu oraz braku wyników filtrowania. Opcjonalne
+puste sekcje odmów nadal ukryte. Przegląd obejmuje Znajomych,
+Subskrybentów, udostępnianie Control/Baz/Ankiet i Zadania; języki PL/EN/UK.
+
+**Bazy:** nowy wygląd udostępniania jest nadal wymagany, nie kończy się
+na przeniesieniu akceptacji z Zadań. Te same shareSection/shareRow, listy
+z checkboxami, odstępy, osobne przewijanie, wyszarzenie i zegary cooldownu,
+krótkie statusy, przyciski po prawej. Zmiana roli obok cofnięcia, podobna
+wielkość; powiadomienia/ponowienie zgodnie z aktualnym kontraktem odmów.
+Zrzuty po wdrożeniu: 1400/390, dane przykładowe i odmowy zwinięte/rozwinięte.
+
+To aktualizacja otwartego zakresu; wykonana wcześniej wersja mobilna
+z dwiema kartami ułożonymi pionowo nie realizuje przełączanych kart.

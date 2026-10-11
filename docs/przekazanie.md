@@ -389,3 +389,9 @@ subscribers_invite odmawia kontom i kieruje do Friends, a nowe tabele
 odmów rozważają subskrypcję na konto. Czy ma być niezależna subskrypcja
 konta, czy zostaje model konto→znajomy / subskrypcja tylko bez konta?
 Nie zmieniać tego modelu bez odpowiedzi; kontynuować niezależnie Tasks/Bases.
+
+330 branch 38145406627 ✓ 7/7, gotowy do promocji frontu. Nowe decyzje
+telefon/puste listy zapisane na końcu E19 i ujednolicenie-wygladu: dwie
+przełączane karty z plakietką, wspólny pusty stan. Nowy wygląd udostępniania
+Baz nadal do wykonania; SQL odmów 331 to tylko lokalny draft /tmp, nie etap
+wdrożony.
