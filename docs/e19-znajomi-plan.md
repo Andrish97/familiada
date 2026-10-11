@@ -246,7 +246,11 @@ wdrożone (`main` `e9bf7c7ba`, Pages `38129037981` ✓, DB `38129037842` ✓).
 Branch E2E parowania `38129156808` przeszedł. Kontrola mailowa
 `38129255218` wykryła różnicę typów: produkcyjne `auth.users.email` jest
 `varchar`, lokalny stub `text`; migracja 325 rzutuje wynik listy na `text`.
-Po wdrożeniu 325 ponowić mailowe E2E, a następnie sprawdzić wygasanie sesji.
+Migracja 325 przeszła Agent checks `38129652050` i wdrożyła się produkcyjnie
+runem `38129693122`. W E2E `38129826723` RPC listy i utworzenie grantu
+przeszły, mail dotarł i link zadziałał przy ponowieniu; pierwsza próba
+przekroczyła domyślne 90 s, bo kolejka była nadal pending. Limit tego testu
+wydłużono do 150 s; powtórzyć go bez flake, następnie sprawdzić wygaśnięcie.
 
 | Zdarzenie nadrzędne | Skutek dla udostępnień i odbiorców |
 |---|---|
