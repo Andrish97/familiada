@@ -1049,7 +1049,9 @@ Podjęte (2026-10-07):
 Przyciski „Znajomi” i „Subskrybenci” mają ikony `people` i `envelope` ze
 wspólnego zestawu (Znajomi: dwa ludziki z kafelka bazy). Zadania mają ikonę
 `bell` zgodnie z doprecyzowaniem użytkownika. Skróty do obu stron są w Grach, Bazach i Ankietach;
-Znajomi/Subskrybenci mają wzajemny skrót. Control ma skrót „Znajomi”. Wyjście używa dotychczasowej ochrony rozpoczętej
+Znajomi/Subskrybenci mają wzajemny skrót. **Control ma na razie widoczny, zablokowany skrót „Znajomi”** (doprecyzowanie
+użytkownika). Odblokować dopiero przy wskazanym etapie usuwania stron
+modalnych. Przygotowane wyjście używa dotychczasowej ochrony rozpoczętej
 rozgrywki i jawnego zwolnienia blokad; nie wygasza sesji ani udostępnień.
 Przyciski tylko dla konta, wg `PAGES`; powrót zachowuje źródło i parametry,
 również z Control. Na telefonie skróty działają w istniejącym menu topbara;

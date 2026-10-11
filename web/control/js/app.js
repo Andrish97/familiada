@@ -197,7 +197,8 @@ async function main() {
 
   const user = await userP;
   if (!user) return; // initPage przekierował na logowanie
-  document.getElementById("btnFriends")?.addEventListener("click", async () => {
+  document.getElementById("btnFriends")?.addEventListener("click", async (event) => {
+    if (event.currentTarget.disabled) return;
     if (!(await beforeLeave())) return;
     await leaveTo(linkTo("friends"));
   });

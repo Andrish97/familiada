@@ -32,6 +32,13 @@ i push na main po wymaganych kontrolach. Zmiany wizualne dokumentować
 zrzutami po wykonaniu, bez czekania na decyzję; Control na telefonie
 zachowuje guard. Manual zawsze na końcu.
 
+## Tymczasowa blokada skrótu Control (2026-10-11)
+
+Przycisk „Znajomi” w Control ma być widoczny z ikoną `people`, ale zablokowany.
+Odblokować dopiero przy wskazanym przez użytkownika etapie usuwania stron
+modalnych. Pozostałe skróty kontaktów działają normalnie. Nie zdejmować tej
+blokady przy kolejnych zmianach wyglądu/kontraktów; mobilny guard też pozostaje.
+
 ## Doprecyzowanie E19: hierarchia i routing linków
 
 Wspólne drzewo rodziców/potomków, wpływ na blokady oraz propagację usuwania

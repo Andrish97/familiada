@@ -180,6 +180,10 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
       const subscribers = id === "btnSubscribers";
       await expect(button.locator(`svg.ico-${subscribers ? "envelope" : "people"}`)).toHaveCount(1);
       expect(await button.evaluate(el => el.dataset.navHidden)).not.toBe("true");
+      if (source === "/control/") {
+        await expect(button).toBeDisabled();
+        continue;
+      }
       await clickEl(button);
       await expect.poll(() => new URL(page.url()).pathname).toBe(subscribers ? "/subscribers/" : "/friends/");
       expect(new URL(page.url()).searchParams.get("ret")).toBe(source);

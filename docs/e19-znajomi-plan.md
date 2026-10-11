@@ -418,3 +418,6 @@ nieograniczoną łączną liczbę głosów i nie karze osób we wspólnej sieci.
 Dodać ikony na przyciskach Znajomych/Subskrybentów, konsekwentne skróty
 na stronach, gdzie były Subskrypcje, i „Znajomi” w Control. Szczegóły
 routingów i powrotów: `nawigacja-mapa-plan.md`, „Skróty kontaktów”.
+Doprecyzowanie: przycisk „Znajomi” w Control **tymczasowo zablokowany**;
+odblokować przy wskazanym przez użytkownika etapie usuwania stron modalnych,
+nie wcześniej. Pozostałe skróty aktywne.

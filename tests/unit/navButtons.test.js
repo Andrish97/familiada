@@ -171,4 +171,5 @@ test("skróty kontaktów: wspólne ikony, tylko konto i powrót do Control", () 
     assert.equal(buttonVisible(id, spec, "user", false), true);
   }
   assert.match(readFileSync(htmlOf("games"), "utf8"), /data-i18n="games.nav.tasks" data-i18n-icon-after="bell"/);
+  assert.match(readFileSync(htmlOf("control"), "utf8"), /id="btnFriends"[^>]*disabled/);
 });
