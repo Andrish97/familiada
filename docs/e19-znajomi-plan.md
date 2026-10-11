@@ -286,7 +286,8 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
   wysyłek i zużyte limity pozostają. Samo cofnięcie nie wysyła przypomnienia.
   Przywrócony wiersz przechodzi do zwykłych oczekujących.
 - Dostępność tej sekcji: Znajomi — przy Propozycjach; zaproszenia do baz
-  — w Bazy → Udostępnione; subskrypcje na konto — przy zadaniach odbiorcy.
+  — w Bazy → Udostępnione; subskrypcje na konto — w ich właściwym miejscu
+  obsługi (lokalizacja do dopięcia), **poza Zadaniami**.
   **Subskrypcja bez konta: odmowa nieprzywracalna przez 30 dni**, bez
   akcji undo w /go/. Nie dodajemy
   propozycji przychodzących na jednostronnej stronie Subskrybenci nadawcy.
@@ -299,14 +300,12 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
 - Nagłówek zwijanej sekcji: chevron + „Odrzucone przeze mnie” + liczba
   wpisów. Ukryć sekcję, gdy jest pusta; po otwarciu własne przewijanie
   zgodnie ze wspólnym komponentem. Znajomi: ostatnia sekcja prawej karty,
-  pod Propozycjami; subskrypcje na konto: ostatnia sekcja karty Zadań, pod
-  Zrobione; bazy: pod listą w istniejącej zakładce Bazy → Udostępnione.
-  Bez nowej karty lub zakładki. Zadania mogą wskazywać odmowę bazy i
-  prowadzić do tej sekcji, bez odrębnej kopii stanu.
+  pod Propozycjami; subskrypcje na konto: przy ich właściwej liście; bazy: pod listą w istniejącej zakładce Bazy → Udostępnione.
+  Bez nowej karty lub zakładki w Bazach. Zadania nie pokazują odmów baz.
 - **Bazy — korekta opisu miejsca:** obecnie Akceptuj/Odrzuć istnieją
   zarówno w Bazy → Udostępnione, jak i w Zadaniach; oba ekrany używają
-  tego samego task_id i RPC. Nie usuwać wykonanych akcji w Zadaniach
-  przez samo doprecyzowanie planu. Docelowa sekcja cofnięcia odmowy bazy
+  tego samego task_id i RPC. **Nowsza decyzja: usunąć bazy z Zadań**
+  w kolejnej paczce i zostawić obsługę w Bazach. Sekcja cofnięcia odmowy bazy
   jest w Bazy → Udostępnione. Cofnięcie przywraca propozycję bazy; Akceptuj
   dopiero nadaje dostęp. Właściciel widzi odmowę w oknie udostępniania,
   bez prawa cofnięcia za odbiorcę. Przed przywróceniem sprawdzić aktualną
@@ -364,9 +363,9 @@ pozostaje do wygaśnięcia. Nie odnawiać okresu przez powtórne Odrzuć.
 | Przypadek | Nadawca po odmowie | Odbiorca po odmowie | Cofnięcie i koniec ważności |
 |---|---|---|---|
 | Znajomość | Wychodzące: Odrzucono, bez Ponów; ukrycie po proponowanych 5 dniach. Nowe dodanie zablokowane do 30 dni niezależnie od maila/nazwy lub usunięcia kafelka. | Zwinięte „Odrzucone przeze mnie” pod Propozycjami w prawej karcie Znajomych, do 30 dni. | Odbiorca: undo → oczekująca propozycja → osobne Akceptuj. Po 30 dniach odmowa wygasa, oba wpisy znikają, stary token nieważny. Nowa prośba możliwa w dowolnym kierunku. |
-| Subskrypcja — odbiorca z kontem | Wychodzące w Subskrybentach: Odrzucono, bez Ponów; ukrycie po proponowanych 5 dniach. Nowe zaproszenie zablokowane do 30 dni. | Zwinięte „Odrzucone przeze mnie” w Zadaniach, do 30 dni; bez nowej sekcji przychodzących na jednostronnej stronie nadawcy. | Odbiorca: undo → oczekujące → osobne Akceptuj. Po 30 dniach stary token nieważny i można utworzyć nowe zaproszenie. Nie dotyczy wypisania z aktywnej subskrypcji. |
+| Subskrypcja — odbiorca z kontem | Wychodzące w Subskrybentach: Odrzucono, bez Ponów; ukrycie po proponowanych 5 dniach. Nowe zaproszenie zablokowane do 30 dni. | Zwinięte „Odrzucone przeze mnie” przy właściwej liście subskrypcji odbiorcy, do 30 dni; poza Zadaniami, lokalizacja do dopięcia. | Odbiorca: undo → oczekujące → osobne Akceptuj. Po 30 dniach stary token nieważny i można utworzyć nowe zaproszenie. Nie dotyczy wypisania z aktywnej subskrypcji. |
 | Subskrypcja — odbiorca bez konta | Tak samo: bez Ponów, ukrycie po proponowanych 5 dniach, nowe zaproszenie dopiero po 30 dniach. | Brak listy własnych odmów. Go pokazuje Odrzucono, **bez cofnięcia i bez Akceptuj**. | **Decyzja użytkownika: odmowa nieprzywracalna aż do wygaśnięcia 30 dni.** Potem nowe jawne zaproszenie z nowym linkiem; starego nie reaktywujemy. Założenie konta w międzyczasie nie omija tej blokady (zachować tryb odmowy). |
-| Baza | Właściciel: Odrzucono w oknie udostępniania danej bazy, bez Ponów; ukrycie po proponowanych 5 dniach. Kolejne udostępnienie tej samej bazy temu odbiorcy zablokowane przez 30 dni, również po zmianie roli/cofnięciu. Inna baza jest osobnym zaproszeniem. | Zwinięte „Odrzucone przeze mnie” w Bazy → Udostępnione, pod listą baz, do 30 dni. Nazwa bazy, nadawca, rola, Odrzucono, undo; bez dostępu do zawartości. | Undo → oczekująca propozycja; Akceptuj w Bazach nadaje dostęp. Zadania mogą prowadzić do propozycji; obecne Akceptuj/Odrzuć także tam istnieją i operują na tym samym rekordzie. Po 30 dniach stary token nieważny i możliwe nowe udostępnienie. |
+| Baza | Właściciel: Odrzucono w oknie udostępniania danej bazy, bez Ponów; ukrycie po proponowanych 5 dniach. Kolejne udostępnienie tej samej bazy temu odbiorcy zablokowane przez 30 dni, również po zmianie roli/cofnięciu. Inna baza jest osobnym zaproszeniem. | Zwinięte „Odrzucone przeze mnie” w Bazy → Udostępnione, pod listą baz, do 30 dni. Nazwa bazy, nadawca, rola, Odrzucono, undo; bez dostępu do zawartości. | Undo → oczekująca propozycja; Akceptuj w Bazach nadaje dostęp. Obecne Akceptuj/Odrzuć w Zadaniach usuwamy w kolejnej paczce; docelowo obsługa tylko w Bazach. Po 30 dniach stary token nieważny i możliwe nowe udostępnienie. |
 | Ankieta — zadanie w konkretnym uruchomieniu | Lista odbiorców: Odrzucono, bez Ponów w całym tym uruchomieniu; kafelek można ukryć po proponowanych 5 dniach lub wcześniej przy końcu nadrzędnego przebiegu. Ukrycie nie umożliwia kolejnego zaproszenia w tym samym przebiegu. | Zadanie znika z Do zrobienia natychmiast po odmowie; nie trafia do Zrobione ani Odrzucone przeze mnie. | Zgodnie z wcześniejszym ustaleniem brak cofnięcia odmowy ankiety. Brak reguły 30 dni; decyzja związana z uruchomieniem. Nowe uruchomienie czyści poprzednie udostępnienia i może tworzyć nowe. |
 
 **Reguły krzyżowe i nadrzędne:**
@@ -577,6 +576,11 @@ wznowienia Control. Historyczny E7 jest wykonany; nowa zależność
 
 ### Zadania — odstępy i pełny przegląd kafelków (2026-10-11)
 
+> **Nowsza decyzja:** Zadania tylko dla ankiet. Poniższy przegląd wszystkich
+> rodzajów dokumentuje wykonany etap; w kolejnej paczce usuwamy z Tasks
+> bazy i urządzenia, zachowując obsługę na ich właściwych stronach.
+
+
 Zgłoszenie użytkownika: poprawić odstępy i pokazać każdy rodzaj oraz stan
 zadania. Przegląd wykorzystuje prawdziwy renderer strony z przykładowymi
 danymi, na komputerze 1400 px i telefonie 390 px. Plansze pełnej listy
@@ -647,26 +651,36 @@ Okna czasu ponowienia testowane w izolowanym SQL, bez udawania, że
 upłynęło pięć dni na produkcji. Trwały limit po usunięciu relacji oraz
 kontrakt odmów Subskrybentów nadal w kolejnych paczkach.
 
-### Propozycja organizacji Zadań — do wyboru, nie zatwierdzona decyzja
+### Zakres Zadań i plakietek — decyzja użytkownika 2026-10-11
 
-Użytkownik rozważa Zadania tylko dla ankiet lub wspólną skrzynkę z dostępem
-także na właściwych stronach; wymaga uniknięcia powielania. Rekomendacja:
-Zadania obejmują ankiety, znajomości, subskrypcje, bazy i dotychczasowe
-urządzenia. Właściwe strony nadal udostępniają kontekstowe akcje na tych
-samych zaproszeniach. Jeden rekord/identyfikator, jedna funkcja mutacji
-i wspólny komponent wiersza dla danego rodzaju; nie synchronizujemy kopii.
-Decyzja z dowolnego ekranu aktualizuje drugi widok i liczniki.
+**Zadania pokazują wyłącznie ankiety.** Użytkownik odrzucił zbiorczą
+skrzynkę i sumowanie liczników: każde zaproszenie ma jedno miejsce
+obsługi i jedną plakietkę. Wcześniejsza propozycja wspólnej skrzynki
+oraz obecność baz/urządzeń w wykonanym etapie nie są docelowym kontraktem.
+Historyczne wyniki wdrożeń pozostają zachowane; zakres aktualizujemy
+nową paczką, nie oznaczamy dotychczasowych testów jako pokrycia nowej decyzji.
 
-Oczekujące znajomości/subskrypcje/bazy: Akceptuj/Odrzuć w Zadaniach
-i właściwym miejscu kontekstowym; ankiety: Głosuj/Odrzuć. Odrzucone
-przez odbiorcę z kontem: wspólna zwinięta sekcja w Zadaniach oraz
-kontekstowe miejsce na stronie danego zasobu, ten sam undo i termin.
-Ankiety nie trafiają do tej sekcji. Zaakceptowane kontakty/bazy znikają
-z oczekujących i pozostają na właściwej stronie; Zrobione nadal obejmuje
-głosy ankiet przez 5 dni. Reguła już podłączonych urządzeń pozostaje
-jak w wykonanym etapie, bez zmian wynikających z tej propozycji.
-Powiadomienie nadal oznacza mail; Zadania są listą działań niezależną
-od flagi mailowej. Liczniki liczą unikalne zaproszenia, nie sumę widoków.
+| Rodzaj | Miejsce obsługi | Plakietka |
+|---|---|---|
+| Ankieta | Zadania: Do zrobienia / Zrobione | Oczekujące ankiety, bez głosów wykonanych i odmów |
+| Znajomość | Znajomi: Propozycje / Odrzucone przeze mnie | Przychodzące oczekujące prośby |
+| Subskrypcja | Właściwe miejsce obsługi subskrypcji na konto; jego lokalizację dopiąć bez przywracania usuniętego /subscriptions/ | Przychodzące oczekujące zaproszenia, bez sumowania z Zadaniami |
+| Baza | Bazy → Udostępnione: propozycje / Odrzucone przeze mnie | Oczekujące propozycje baz |
+| Urządzenie | Podłącz urządzenie: Udostępnione dla mnie | Licznik według kontraktu tego ekranu; bez kopii w Zadaniach |
 
-Ta propozycja nie usuwa istniejących akcji i nie rozpoczyna zmiany
-architektury bez rozstrzygnięcia użytkownika.
+Zakres realizacji:
+- tasks_list i plakietka Tasks tylko ankiety; usunąć z Tasks wiersze,
+  akcje i filtrowanie baz/urządzeń. Zachować poll_text/poll_points,
+  wygląd kompaktowy i Zrobione z głosami przez 5 dni.
+- Undo znajomości/bazy/subskrypcji poza Zadaniami. Odmowy ankiet nadal
+  nie mają undo i znikają z Do zrobienia od razu.
+- Go i linki z maili kierują bazy do Bases, urządzenia do Connect,
+  znajomości do Friends, ankiety do Tasks/głosowania. Przejrzeć także
+  logowanie/powroty, wyróżnienie wiersza i nieaktywne/wygasłe tokeny.
+- badges_get, badges klienta i odświeżanie stron nie liczą tego samego
+  zaproszenia na więcej niż jednej ikonie. Brak maili nie ukrywa zaproszeń.
+- Nowe testy lokalne/SQL i punktowe E2E obejmują izolację liczników,
+  dostarczone linki, akcje po właściwej stronie, stare/nowe tokeny,
+  odmowy/cofnięcia, telefon/komputer; nowe zrzuty po realizacji.
+
+Decyzja zapisana; migracje i frontend tej zmiany jeszcze do wdrożenia.

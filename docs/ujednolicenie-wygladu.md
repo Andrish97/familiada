@@ -354,7 +354,7 @@ przez cały okres ich ważności w kompaktowej, zwiniętej sekcji
 „Odrzucone przeze mnie”. Wspólne wiersze/CSS i akcja „Cofnij odmowę”
 przywracają oczekujące, bez automatycznej akceptacji lub maila. Znajomi:
 przy Propozycjach; bazy: Bazy → Udostępnione pod listą; subskrypcje
-konta: przy Zadaniach. Subskrypcja bez konta: brak cofnięcia aż do
+konta: przy właściwej liście subskrypcji, poza Zadaniami. Subskrypcja bez konta: brak cofnięcia aż do
 wygaśnięcia 30 dni, także w /go/. Ukrywanie wpisu wcześniej dotyczy tylko
 nadawcy. To nowy zakres do realizacji, nie zmiana historii wykonanej
 listy Zrobione. Szczegółowy kontrakt w E19 §7.
@@ -589,3 +589,11 @@ komponenty; stosować zasadę konsekwentnie, nie tylko w Zadaniach.
 
 **Stan:** do wykonania jako przegląd całego systemu. Zadania są pierwszym
 wdrożeniem tej zasady, nie oznaczają zamknięcia E20. **Manual nadal ostatni.**
+
+### Aktualizacja zakresu Zadań — decyzja 2026-10-11
+
+Zadania tylko dla ankiet, także ich plakietka. Znajomi/Bazy/Podłącz
+urządzenie obsługują własne zaproszenia i liczniki; subskrypcje poza
+Zadaniami, lokalizacja do dopięcia. Wykonany wygląd kafelków wszystkich
+rodzajów pozostaje historią; kompaktowe kafelki ankiet i Zrobione zachować.
+Nie dodawać do Tasks sekcji undo baz/znajomości/subskrypcji.

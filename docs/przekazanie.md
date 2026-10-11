@@ -74,6 +74,17 @@ a odrzucony rekord sam nie wygasa.
 DB 38140986647 ✓ (`OK 328`), Pages 38140986635 ✓; kontrola produkcyjna
 328 jeszcze niewykonana. Kolejna migracja tylko do przodu, nie edytować 328.
 
+## Najnowsza decyzja: Zadania tylko dla ankiet
+
+Zadania i ich plakietka mają obsługiwać wyłącznie ankiety. Bez zbiorczej
+skrzynki i sumowania liczników innych ikon. Znajomości obsługuje Friends,
+bazy Bases → Udostępnione, urządzenia Connect → Udostępnione dla mnie;
+subskrypcje na konto poza Tasks, właściwą lokalizację dopiąć bez starego
+/subscriptions/. Nowa sekcja undo subskrypcji nie powstaje w Zadaniach.
+Istniejące bazy/urządzenia w Tasks oraz Go prowadzące bazę do Tasks są
+starszym wykonanym etapem; teraz zmienić RPC, plakietki, UI, routing i testy
+spójnie. Rozpiska w końcowej sekcji E19. To decyzja, jeszcze nie wdrożenie.
+
 ## E20 — kompaktowe informacje na telefonie
 
 Nowa decyzja użytkownika: ukrywać na telefonie nieobowiązkowe informacje
