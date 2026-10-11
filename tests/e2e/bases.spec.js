@@ -536,14 +536,11 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     await page.locator("#mineGrid .card", { hasText: name }).click();
     await page.locator("#btnShare").click();
     await expect(page.locator("#shareOverlay")).toBeVisible();
-    await page.locator("#shareRecipientType .ui-select-btn").click();
-    await page.locator("#shareRecipientType .ui-select-item").filter({ hasText: "znajomego" }).click();
-    await page.locator("#shareFriendSelect .ui-select-btn").click();
-    await page.locator("#shareFriendSelect .ui-select-item").filter({ hasText: "test2" }).click();
+    await page.locator(`#baseShareFriends [data-id="${recipientId}"] input`).check();
     const shareResponsePromise = page.waitForResponse((response) =>
       response.url().includes("/rpc/base_share_by_user") && response.request().method() === "POST"
     );
-    await page.locator("#btnShareAdd").click();
+    await page.locator("#btnBaseShareFriends").click();
     const shareResponse = await shareResponsePromise;
     expect(shareResponse.ok(), "RPC udostępnienia bazy").toBeTruthy();
     const shareData = await shareResponse.json();
