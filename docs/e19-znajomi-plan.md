@@ -884,3 +884,20 @@ zgodnie z kontraktem §7 przed wdrożeniem cleanupu.
 38148894724 (3/3 bez retry, unit 411/411). Następny pkt 3 zgodnie
 z powyższym audytem. Globalny landscape ma macierz i kryteria w
 ujednolicenie-wygladu.md; nie jest jeszcze wdrożony.
+
+#### Pkt 3 — pierwsza paczka 331: zamknięte tokeny
+
+Przed terminami odmów zabezpieczyć istniejące obejście:
+poll_go_subscribe_email po zamknięciu zaproszenia tworzył nowy aktywny
+wpis, także dla innego adresu. W 331 oba RPC akceptacji używają
+poll_sub_accept_email, blokują wskazany wiersz i nie tworzą nowych wpisów.
+Adres musi pasować również przy już aktywnym zaproszeniu. Cofnięcie,
+odmowa i usunięcie blokują oba RPC; powtórna poprawna akceptacja jest
+idempotentna. To pierwsza paczka pkt 3, nie realizacja całego kontraktu
+5/30 dni, flag mailowych ani zabezpieczenia rejestracji/claim.
+
+Testy: rollback SQL wszystkich statusów/adresów i ACL anon, wyścigi
+akceptacji z odmową/cofnięciem, punktowe E2E na rzeczywistych mailach
+test14: akceptacja/usunięcie i odmowa przez Go, bez zakładania konta.
+Następna migracja odmów Subskrybentów otrzyma 332; draft Baz trzeba
+przenumerować dopiero przy właściwym pkt 4.

@@ -461,3 +461,10 @@ PAGES plus wszystkie strony HTML, w tym Go/głosowanie/urządzenia i strony
 techniczne. Przegląd UI/E20 przed manualem; manual sprawdzić w jego
 ostatnim etapie. Nie oznaczać landscape jako wdrożonego: guard nadal
 blokuje telefon po obrocie. Kryteria/testy i macierz grup stron zapisane.
+
+**W toku pkt 3 / 331:** pierwsza paczka zabezpiecza zamknięte tokeny
+Subskrybentów (legacy RPC tworzył aktywny wpis po odmowie/cofnięciu).
+Migracja i rollback SQL/wyścigi lokalnie ✓, unit 411/411. Runner 331
+do uruchomienia; następnie SQL main/log i punktowe Subscribers z dwoma
+rzeczywistymi mailami na test14. Kontrakt odmów 5/30 i flag/claim pozostaje
+następną paczką 332; nie oznaczać pkt 3 zakończonego.

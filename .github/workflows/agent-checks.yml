@@ -47,6 +47,11 @@ on:
         type: boolean
         default: false
 
+      verify_e19_331:
+        description: 'Verify subscriber token acceptance and closed-token protection'
+        type: boolean
+        default: false
+
 permissions:
   contents: read
 
@@ -487,4 +492,47 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e19-330-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-331:
+    if: ${{ inputs.verify_e19_331 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify anonymous subscriber token acceptance
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_331_subscriber_token_acceptance.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-token-331.sql
+          bash docs/sql/test-subscriber-token-331-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-331-sql-restore
           path: /tmp/fam-restore.log
