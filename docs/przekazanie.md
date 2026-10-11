@@ -407,3 +407,10 @@ rzeczywisty mail test8 67 s. Pages 38146034897 ✓; SQL 330 OK. Następna
 paczka: odmowy Baz i wspólny wygląd udostępniania; potem przełączane
 karty mobilne kontaktów/plakietki/puste listy. Nie powtarzać zakończonej
 kontroli 330. Brak odpowiedzi o modelu subskrypcji nie blokuje Baz/UI.
+
+Bieżąca korekta Zadań (po decyzji o zbędnym wyszukiwaniu/typie zasobu):
+cc4d4953a usuwa initListSearch/dolny pasek/etykiety typu, zachowuje
+poll_type do routingu głosowania. Unit 410/410; nowe zrzuty simple-*.
+Branch UI 38147051449 w toku (dwa kontrolowane widoki 1400/390).
+Doprecyzowanie kontaktów: na telefonie zakładki **z wypustkami jak w Grach**,
+nie pionowe panele; zapisane w E19/UI, jeszcze do wdrożenia.

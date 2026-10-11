@@ -641,3 +641,8 @@ nadawca, istotny stan i akcje, wspólna ikona ankiety oraz Do zrobienia /
 Zrobione. Typ ankiety nadal określa właściwą stronę głosowania wewnętrznie.
 Zastępuje zapis paczki 330 o zachowaniu wyszukiwarki; historyczne wyniki
 330 pozostają bez zmian. Nowe zrzuty i punktowe testy po implementacji.
+
+**Doprecyzowanie użytkownika:** dwie karty na telefonie oznaczają dokładnie
+**dwie zakładki z wypustkami, jak w Grach**, przełączające zawartość.
+Użyć tego samego wzorca wyglądu wypustek i wspólnego tabs.js; plakietka
+na wypustce właściwej zakładki. Na komputerze dwie kolumny.

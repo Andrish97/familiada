@@ -377,3 +377,7 @@ Stan szczegółowy:
 | 2026-10-11 | E19 / synchronizacja po zamknięciu 330 | Dziennik kontroli produkcyjnej zapisany ca3aa958e; scalono main 91fec46d1 (wyłącznie wersje zasobów CI), bez konfliktów i bez zmian zachowania. | Unit po synchronizacji, push dokumentacji/brancha; dalszy zakres według przekazania. |
 
 | 2026-10-11 | Zadania / bez wyszukiwania i etykiet typu | Decyzja użytkownika zapisana w E19/UI. Usunięto initListSearch, pusty dolny pasek i typ ankiety z opisów; wybór strony głosowania nadal zależny od poll_type. Testy wymagają braku wyszukiwarki/etykiet, właściwych ikon i akcji 1400/390. | Unit, zrzuty, punktowy branch UI, Pages i identyczna kontrola main. |
+
+| 2026-10-11 | Kontakty / wypustki na telefonie | Użytkownik potwierdził: dwie karty oznaczają dwie zakładki z wypustkami, jak w Grach, z plakietką na wypustce. Dopisano wprost do E19/UI. | Zakres do wdrożenia; bieżąca paczka uproszczenia Zadań kontynuowana. |
+
+| 2026-10-11 | Zadania / uproszczenie branch zielony | 38147051449 ✓: 2/2, unit 410/410. Cztery warianty ankiet, brak wyszukiwarki/dolnego paska/etykiet typu, ikony/nadawca/akcje, zwijanie, odstępy, pusty stan i brak overflow 1400/390. Zrzuty simple-*. | Promocja Pages i te same dwa testy na main. |

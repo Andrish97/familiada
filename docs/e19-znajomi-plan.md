@@ -790,3 +790,8 @@ Zastępuje zapis paczki 330 o zachowaniu wyszukiwarki; historyczne wyniki
 Zrzuty uproszczonych Zadań: [telefon](img/e19-tasks/simple-all-phone.png),
 [komputer](img/e19-tasks/simple-all-desktop.png); Do zrobienia i Zrobione
 z przykładowymi danymi. Widok domyślny: simple-default-*.png.
+
+**Doprecyzowanie użytkownika:** dwie karty na telefonie oznaczają dokładnie
+**dwie zakładki z wypustkami, jak w Grach**, przełączające zawartość.
+Użyć tego samego wzorca wyglądu wypustek i wspólnego tabs.js; plakietka
+na wypustce właściwej zakładki. Na komputerze dwie kolumny.
