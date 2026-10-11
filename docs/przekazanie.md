@@ -22,7 +22,9 @@ pending/opened taski pary; zbadać też częściowe głosy i oczekujące maile.
 Kaskada345 wdrożona: FK base_share_tasks→question_bases ON DELETE CASCADE,
 DB38173636101/log OK20:48:43 UTC i rollbackowy smoke ✓; punktowy rzeczywisty
 Base mail/Go/odmowy/role main38173864796 ✓ bez retry. Wypisanie Znajomych346
-nadal w lokalnym draftcie; nie jest wdrożone. Queue/historia admina mają osobne zapisy.
+lokalnie przetestowane (oba aktory, zegary, tokeny, budżet, regresje Sub333/335
+i wyścigi). Migracja346 oraz punktowy E2E gotowe na branchu; isolated/log/
+produkcyjna kontrola jeszcze przed nami, nie oznaczać wdrożone. Queue/historia admina mają osobne zapisy.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego
 słownictwa, z jednolitymi nazwami i tylko informacjami potrzebnymi użytkownikowi. Kontynuować bez
