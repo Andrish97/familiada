@@ -1241,3 +1241,19 @@ na390/1400, odrzucający ma własną sekcję niezależnie od kierunku zaproszeni
 
 346 zamknięte; pkt7 pozostaje otwarty. Draft347: cleanup niepełnych głosów
 oraz blokady kontaktów przed grą, isolated38175603877 ✓; jeszcze bez SQL/main.
+
+### Pkt7 — task ankiety → niepełne głosy347 (przygotowanie)
+
+Kontakty blokowane przed grą przy tworzeniu zaproszeń, pary znajomości329
+i subskrypcji333 w ustalonej kolejności; po uzyskaniu blokad ponowna
+weryfikacja aktualnej relacji. Usunięcie nieukończonego taska lub
+przestawienie go na cancelled sprząta jego tekst/punkty, również przy
+wypisaniu z kontaktów. Done i jego komplet pozostają; usunięcie konta
+może zachować ukończony anonimowy agregat bez taska. Nie kasować historycznych
+orphans na podstawie samego braku taska, bo nie wiadomo, czy był ukończony.
+
+Lokalnie wszystkie typy/ścieżki i wcześniejsze kontrakty głosów/kontaktów ✓;
+cztery deterministyczne wyścigi wysyłanie×wypisanie friend/subscriber oraz
+równoległe ukończenia344 ✓. Brancha pomocniczy codex/e19-347 służy tylko
+bramce isolated; SQL347 nie zastosowany na produkcji. Anulowanie kolejki
+mailowej i trwała proweniencja maili są kolejną krawędzią grafu.
