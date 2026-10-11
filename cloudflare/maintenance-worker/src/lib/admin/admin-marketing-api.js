@@ -38,9 +38,9 @@ export async function handleAdminMarketingApi(request, env, url) {
       cooldown_target_key: `email:${email}`,
     }));
 
-    const qRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
+    const qRes = await supabaseRequest(env, "/rest/v1/mail_queue?select=to_email", {
       method: "POST",
-      headers: { Prefer: "return=minimal" },
+      headers: { Prefer: "return=representation" },
       body: queueRows,
     });
 
@@ -48,8 +48,12 @@ export async function handleAdminMarketingApi(request, env, url) {
       return json({ ok: false, error: "queue_insert_failed", details: summarizeSupabaseError(qRes) }, qRes.status || 500);
     }
 
-    // Save message record for ALL emails in batch (so they appear in "Sent" / "Marketing")
-    const messageRows = validEmails.map(email => ({
+    // The flag guard can omit recipients. Only actual queue rows are sent history.
+    const queuedEmails = (Array.isArray(qRes.data) ? qRes.data : []).map(row => row.to_email);
+    const queued = queuedEmails.length;
+    const skipped = validEmails.length - queued;
+    if (!queued) return json({ ok: true, queued, skipped, total: validEmails.length });
+    const messageRows = queuedEmails.map(email => ({
       to_email: email,
       subject: String(mktSubject),
       body: emailText,
@@ -70,7 +74,7 @@ export async function handleAdminMarketingApi(request, env, url) {
       console.error("[marketing/send] Failed to save message history records", summarizeSupabaseError(mRes));
     }
 
-    return json({ ok: true, queued: validEmails.length, total: validEmails.length });
+    return json({ ok: true, queued, skipped, total: validEmails.length });
   }
 
   return new Response("Not Found", { status: 404 });

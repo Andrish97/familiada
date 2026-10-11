@@ -23,20 +23,19 @@ oraz trzy dostarczone maile i trwały limit czwartego. Błąd gotowości helpera
 pierwszego main naprawiony (Pytanie1 oraz każde przejście1–10), świeży
 pełny zakres poll-share przeszedł. Nie powtarzać pkt5 bez nowej zmiany.
 
-Maile pkt6 są draftem brancha: kanoniczny renderer Edge + generowana
-identyczna kopia front, sześć wejść, odrębne reminders/rola Bazy/langstopki,
-16 zrzutów docs/img/e19-mails. Lokalnie unit431/431 i Deno check auth/send-mail ✓.
-Nowe helpery E2E weryfikują HTML faktycznie dostarczonego maila; izolowany
-38168702507 ✓ dla renderer/auth. Kolejny draft raportuje prawdziwy queue
-wynik per adres (NULL z triggera to skipped, nie success); frontend nie
-oznacza pominiętego taska jako emailed. Izolowany38169686125 ✓ (431unit/Deno auth+send-mail/copy). Branch
-38169157737 ✓ pięćUI/sześć realnych maili. Promocja Edge/Pages teraz,
-potem te same main + authPL/EN/UK/queued0; dopiero po kontroli zaznaczyć
-pierwszą paczkę maili jako wdrożoną. Kontakt/Settings i audyt reszty
-pozostają otwarte.
-Pkt5 już zamknięty; przed promocją maili wymagany świeży branch z ich kodem.
-Kod Deno typuje się po
-jawnych guardach usuwających sześć odtworzonych błędów starego HEAD.
+Pierwsza paczka maili pkt6 wdrożona: Pages38170086375 i Edge38170086411 ✓.
+Main38170191574:13/14 bez retry/unit431, realne sharing maile, queued0/noqueue,
+reset11 i zmiana12→13 z przywróceniem oraz treści authPL/EN/UK. Subskrybenci
+wymagają świeżego testu: stara asercja wygasło poprawiona na odmowę po
+wypisaniu/ukryciu; aplikacja prawidłowo pokazała Odrzucono.
+
+Druga paczka kontakt/Settings lokalnie: wspólny renderer z kopią Worker,
+rich HTML i opcjonalną akcją. Kontakt3typy×3lang; ręczne podgląd/wysyłka ten
+sam helper. Admin compose/marketing raportują rzeczywistą kolejkę i nie
+zapisują historii pominiętych adresów. Unit440/440 ✓; zrzuty390/1400.
+mail-content.spec.js sprawdza12 szablonów i SMTP do test14 bez publicznego
+formularza (Telegram admina). Następnie izolowane → branch12mail →
+Worker/Pages → identyczny main. Wygląd marketingu i audyt reszty otwarte.
 
 Dalej pkt6 maile (audyt wejść w maile-granice.md), pkt7 graf/kaskady/Go/
 lekki anonimowy token, UI/E20 i landscape; manual ostatni. Wypisanie=odmowa

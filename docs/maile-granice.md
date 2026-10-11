@@ -206,3 +206,34 @@ maili systemowych, wszystkie języki dostarczania i granice pozostają w zakresi
   pomijać wiersz, a wynik nadal sugeruje zakolejkowanie. Domknąć prawdziwy
   wynik i zachowanie per adres/flag race w pkt6, z testem faktycznej kolejki;
   nie oznaczać pierwszej paczki rendererów jako rozwiązania tej granicy.
+
+### Druga paczka pkt6 — kontakt i Settings (draft)
+
+Kontakt confirmation/reply/compose używa wspólnego dokumentu z jawnym
+lang PL/EN/UK. Renderer ma identyczne generowane kopie frontu oraz Workera.
+Jawne wejście rich HTML zachowuje formatowanie TinyMCE; nagłówki, cytaty
+i podpisy nadal są escapowane. Przycisk akcji jest opcjonalny.
+Settings podgląd i wysyłka ręcznej wiadomości używają tej samej funkcji.
+
+Admin compose sprawdza błąd INSERT i rzeczywisty id kolejki. Pominięty mail
+nie zapisuje wysłanej historii ani załączników; edytor pozostaje otwarty.
+Marketing liczy tylko rzeczywiste INSERT RETURNING i tylko dla nich zapisuje
+historię. Wynik queued/skipped jest widoczny również przy całym batch mail-off.
+Odrębne zapisy kolejki i historii nie są jeszcze jedną transakcją: błąd
+historii po zakolejkowaniu wymaga audytu spójności w pkt7. Szablony wizualne
+marketingu pozostają dalszą pracą pkt6.
+
+Unit całych handlerów sprawdza queued0/mixed/full, normalizację/dedup,
+brak historii dla mail-off, błędy kolejki/historii, id i załączniki oraz limit500.
+Punktowy E2E mail-content uruchamia kod12 szablonów (3 kontaktowe + ręczny
+×3lang) i wysyła przez send-mail do test14. Nie wywołuje publicznego formularza
+kontaktu, który powiadamia też administratora przez Telegram. Ten E2E nie
+jest kontrolą publicznego formularza ani autoryzowanego interfejsu admina.
+
+Zrzuty po wykonaniu, bez overflow390/1400:
+[kontakt390](img/e19-mails/contact-confirmation-pl-390.png),
+[kontakt1400](img/e19-mails/contact-confirmation-pl-1400.png),
+[odpowiedźUK1400](img/e19-mails/contact-reply-uk-1400.png),
+[ręczny390](img/e19-mails/contact-manual-pl-390.png),
+[długa nazwa390](img/e19-mails/long-resource-390.png).
+Dostarczenie i kontrola branch/main wymagane przed zamknięciem paczki.

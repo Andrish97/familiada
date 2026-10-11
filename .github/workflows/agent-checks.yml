@@ -1007,6 +1007,6 @@ jobs:
       - name: Verify generated browser renderer
         run: |
           node scripts/sync-mail-document.cjs
-          git diff --exit-code -- web/shared/js/core/mail-document.js
+          git diff --exit-code -- web/shared/js/core/mail-document.js cloudflare/maintenance-worker/src/lib/email/mail-document.js
       - name: Check authentication Edge function
         run: npx --yes deno check supabase/functions/send-email/index.ts supabase/functions/send-mail/index.ts

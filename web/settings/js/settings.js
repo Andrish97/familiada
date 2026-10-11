@@ -32,6 +32,8 @@ btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
 import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-11T19561";
 
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-11T19561";
+
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-11T19561";
 const POLL_MS = 15000;
@@ -4386,48 +4388,8 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
     lang: composeLang,
   });
 
-  // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
-  let bodyContent = body;
-
-  // Replace #quote placeholder with actual quote HTML (only when replying with quote)
-  if (quote) {
-    const quoteHtml = `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>`;
-    if (bodyContent.includes("#quote")) {
-      bodyContent = bodyContent.replace(/#quote/g, quoteHtml);
-    }
-  }
-
-  // Build full HTML email with Familiada branding
-  const htmlBody = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <style>:root{color-scheme:dark}</style>
-</head>
-<body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;">
-    <!-- Header -->
-    <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-      <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>
-    </div>
-    
-    <!-- Content -->
-    <div style="padding:16px;">
-      ${greetingText ? `<p style="margin:0 0 20px">${greetingText.replace(/\n/g, "<br>")}${greetingText.trim().endsWith(',') ? '' : ','}</p>` : ""}
-      <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyContent}</div>
-      ${farewellText ? `<p style="margin:20px 0 0">${farewellText.replace(/\n/g, "<br>")}</p>` : ""}
-    </div>
-    
-    <!-- Footer -->
-    <div style="margin-top:26px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;opacity:.5;text-align:center;">
-      Ta wiadomość została wysłana przez system Familiada.
-    </div>
-  </div>
-</body>
-</html>`;
+  const htmlBody = buildComposeMailHtml({ lang: composeLang, subject, bodyHtml: body,
+    quote, greeting: greetingText, farewell: farewellText });
 
   // Upload attachments
   const uploadedAttachments = [];
@@ -4462,7 +4424,12 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    showToast("Wysłano.", "success");
+    if (json.queued === 0) {
+      if (status) status.textContent = "";
+      showToast(t("pollSharePanel.mailDisabled"));
+      return;
+    }
+    showToast("Dodano do kolejki.", "success");
     closeCompose();
     await loadMailFolder({ silent: true });
   } catch (err) {
@@ -4499,9 +4466,6 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     lang: composeLang,
   });
 
-  // Add comma after greeting if present (but not if it already ends with comma)
-  const greetingWithComma = greetingText ? `${greetingText}${greetingText.trim().endsWith(',') ? '' : ','}` : "";
-
   const farewellText = buildEmailSignature({
     greeting: "none",
     farewell: farewellValue,
@@ -4512,55 +4476,9 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     lang: composeLang,
   });
 
-  // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
-  let bodyHtml = body;
+  const emailHtml = buildComposeMailHtml({ lang: composeLang, subject, bodyHtml: body,
+    quote, greeting: greetingText, farewell: farewellText });
 
-  // Replace #quote placeholder with actual quote HTML
-  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>` : "";
-  if (bodyHtml.includes("#quote")) {
-    bodyHtml = bodyHtml.replace(/#quote/g, quoteHtml);
-  }
-
-  // Structure: Greeting → Body (with #quote replaced) → Farewell
-  const finalBody = `
-    ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.4;font-size:14px">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
-    <div style="line-height:1.4;color:#fff;margin-bottom:20px;font-size:14px">${bodyHtml}</div>
-    ${farewellText ? `<div style="margin-top:20px;line-height:1.4;font-size:14px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
-  `;
-
-  // Generate full HTML email (dark theme like system emails)
-  const emailHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; line-height: 1.4; }
-        .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
-        .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-        .email-body { padding: 0 5px; }
-        .email-quote { margin: 25px 0; padding: 20px; background: rgba(255,255,255,.05); border-left: 4px solid #ffeaa6; border-radius: 4px; font-size: 13px; line-height: 1.4; color: #ccc; }
-        .email-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.1); font-size: 12px; color: #888; }
-      </style>
-    </head>
-    <body>
-      <div class="email-container">
-        <div class="email-header">
-          <h1 class="email-subject">${escSetting(subject || "(brak tematu)")}</h1>
-        </div>
-        <div class="email-body">
-          ${finalBody}
-        </div>
-        <div class="email-footer">
-          <p style="margin:0;color:#888;font-size:12px">Ta wiadomość została wysłana przez system Familiada.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-  
   // Create iframe for preview (renders HTML exactly like system emails)
   const frame = document.createElement("iframe");
   frame.style.cssText = "width:100%;height:500px;border:none;display:block";
@@ -6049,8 +5967,9 @@ async function sendMarketing() {
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    showToast(`Dodano do kolejki: ${json.queued}/${json.total}`, "success");
+    showToast(`Dodano do kolejki: ${json.queued}/${json.total}${json.skipped ? `; pominięto ${json.skipped} — powiadomienia wyłączone.` : ""}`, json.queued ? "success" : "info");
     if (statusEl) statusEl.textContent = "";
+    if (!json.queued) return;
     
     // Clear email list after successful send
     const emailInput = document.getElementById("mktEmailInput");

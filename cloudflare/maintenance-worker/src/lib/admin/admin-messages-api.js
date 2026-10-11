@@ -137,8 +137,14 @@ export async function handleAdminMessagesApi(request, env, url) {
         cooldown_target_key: `email:${toEmailNorm}`,
       },
     });
+    if (!queueRes.ok) {
+      return json({ ok: false, error: "queue_insert_failed", details: summarizeSupabaseError(queueRes) }, queueRes.status || 500);
+    }
     const queueRow = Array.isArray(queueRes.data) && queueRes.data.length ? queueRes.data[0] : null;
     const queueId = queueRow?.id || null;
+    if (!queueId) {
+      return json({ ok: true, queued: 0, skipped: true, reason: "notifications_disabled" });
+    }
 
     const saveRes = await supabaseRpc(env, "save_outbound_message", {
       p_to_email:  String(to_email).trim().toLowerCase(),
@@ -170,7 +176,7 @@ export async function handleAdminMessagesApi(request, env, url) {
       }
     }
 
-    return json({ ok: true, id: messageId });
+    return json({ ok: true, queued: 1, id: messageId });
   }
 
   // POST /_admin_api/messages/read  { id } or ?id=xxx — mark message as read
