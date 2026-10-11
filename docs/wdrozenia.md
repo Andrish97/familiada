@@ -521,3 +521,5 @@ Stan szczegółowy:
 
 | 2026-10-11 | Ankiety344 / świeży izolowany runner zielony, promocja SQL | 38165592194 ✓: unit413/413, regresje340–343/335 oraz SQL tekst/punkty/partial/refusal/complete/idempotence/ACL344. Dwaj odbiorcy kończą równolegle bez upgrade rodzica, complete wygrywa późniejszą odmowę. Stary341 odtwarza fake done. | SQL344/log, po zakończeniu38165210319 świeży pełny branch pięciu poll-share i siedmiu task Go --retries=0, następnie Pages/main. |
 
+
+| 2026-10-11 | Ankiety344 / zastosowanie potwierdzone, świeży branch | DB38165841575 ✓, log OK34418:57:12UTC, schema0f5adaa872. Izolowany38165592194 ✓; branch38166057247 w toku,12 scenariuszy --retries=0/pula7–8: tekst i punkty complete, partial→decline, rzeczywiste maile, trwały limit i wspólne UI. Go konto poprawione copy Zadania; zrzuty390/1400 po wykonaniu. | Pages dopiero po pełnym zielonym branch, potem identyczny main. |

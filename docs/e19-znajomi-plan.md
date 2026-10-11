@@ -1108,3 +1108,9 @@ Lokalnie tekst/punkty, fake done/partial/decline/complete/repeat/ACL oraz
 wyścigi dwóch głosujących i complete→decline ✓; stary341 odtwarza fake done.
 341–343 nie oznaczać pokryciem tej nowej atomowości; świeży runner i
 kontrola branch/main wymagane po344.
+
+Konto z zaproszeniem do ankiety: Go prowadzi do Zadania, podświetla jego
+kafelek, dopiero tam Głosuj/Odrzuć. Komunikat i przycisk Go poprawione
+PL/EN/UK; anonimowy subskrybent głosuje/odrzuca bez konta bezpośrednio z Go.
+Zrzuty po wykonaniu: [Go konto390](img/e19-polls/go-account-390.png),
+[Go konto1400](img/e19-polls/go-account-1400.png).
