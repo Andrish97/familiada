@@ -107,6 +107,7 @@
 
             <div class="bases-section bases-section-shared" id="basesSectionShared" role="tabpanel" data-skel-step>
               <div class="grid bases-grid-shared" id="sharedGrid"></div>
+              <div id="baseDeclinesHost"></div>
             </div>
           </div>
 
@@ -151,60 +152,26 @@
           <button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
-        <!-- SEKCJA 1: Udostępnij -->
-        <div class="shareSection shareSection-share">
-          <div class="shareSectionTitle" data-i18n="bases.shareModal.shareSection">Udostępnij</div>
-
-          <!-- Tryb udostępnienia -->
-          <div class="share-mode-select" style="margin-top:10px">
-            <label class="share-mode-label" data-i18n="bases.shareModal.shareModeLabel">Tryb:</label>
-            <div class="ui-select" id="shareRole">
-              <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-              </button>
-              <div class="ui-select-menu" role="listbox"></div>
+        <div class="baseShareSections">
+          <section class="shareSection" data-section="lookup">
+            <h2 class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</h2>
+            <div id="shareMsg" class="app-toast app-toast--inline" role="status" aria-live="polite" hidden></div>
+            <div class="baseShareLookup">
+              <input id="shareEmail" class="inp" type="text" data-i18n-placeholder="bases.shareModal.placeholder" autocomplete="off"/>
+              <div id="shareRole"></div>
+              <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n="baseSharePanel.share">Udostępnij</button>
             </div>
-          </div>
-
-          <!-- Wybór znajomego albo wyszukanie konta -->
-          <div class="share-recipient-select" style="margin-top:10px">
-            <div class="ui-select" id="shareRecipientType">
-              <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-              </button>
-              <div class="ui-select-menu" role="listbox"></div>
-            </div>
-          </div>
-
-          <!-- Pole email/nazwa (pokazuje się gdy wybrano "wpisz email") -->
-          <div class="share-email-input" id="shareEmailWrap" style="display:none;margin-top:10px">
-            <input id="shareEmail" class="inp" type="text"
-                   placeholder="Nazwa użytkownika lub e-mail..."
-                   data-i18n-placeholder="bases.shareModal.placeholder"/>
-            <div class="share-email-error" id="shareEmailError" style="display:none;color:#f87171;font-size:12px;margin-top:4px"></div>
-          </div>
-
-          <!-- Lista znajomych jako skrót do udostępniania kontu -->
-          <div class="share-subs-input" id="shareFriendsWrap" style="display:none;margin-top:10px">
-            <div class="ui-select" id="shareFriendSelect">
-              <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-              </button>
-              <div class="ui-select-menu" role="listbox"></div>
-            </div>
-          </div>
-
-          <!-- Przycisk udostępnij -->
-          <button class="btn gold share-submit-btn" id="btnShareAdd" type="button" data-i18n="bases.shareModal.add" style="margin-top:12px;width:100%">Dodaj</button>
-          <div class="importMsg" id="shareMsg"></div>
+          </section>
+          <section class="shareSection" data-section="friends">
+            <h2 class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</h2>
+            <div id="baseShareFriends" class="shareList shareList--scroll"></div>
+            <div class="baseShareFooter"><div id="baseShareFriendsRole"></div><button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n="control.shareDeviceModal.shareSelected" disabled>Udostępnij zaznaczonym</button></div>
+          </section>
+          <section class="shareSection" data-section="shared">
+            <h2 class="shareSectionTitle" data-i18n="bases.sections.shared">Udostępnione</h2>
+            <div id="shareSectionsHost" class="shareList shareList--scroll"></div>
+          </section>
         </div>
-
-        <!-- SEKCJE 2-3: Oczekujące · Aktywni (wspólny komponent share-sections.js) -->
-        <div id="shareSectionsHost"></div>
-
       </div>
     </div>
 

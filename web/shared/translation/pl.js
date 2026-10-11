@@ -79,6 +79,7 @@ const pl = {
       contactBtn: "Kontakt",
     },
   },
+  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij"},
   shareSections: {
     subscribers: "Subskrybenci",
     subscribersSub: "Jeszcze bez zaproszenia — zaznacz, kogo zaprosić.",

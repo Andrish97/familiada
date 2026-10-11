@@ -1,3 +1,4 @@
+const { acceptBaseShare } = require("./helpers/base-sharing");
 // tests/e2e/base-explorer.spec.js
 // Weryfikuje base-explorer (js/pages/base-explorer -> base-explorer/js/*.js),
 // menadżer "baz pytań" (drzewo folderów + pytania + tagi + eksport do gry).
@@ -129,23 +130,11 @@ async function getUserId(page) {
   });
 }
 
-// Udostępnia bazę drugiemu użytkownikowi z daną rolą. `page` musi być
-// zalogowane jako WŁAŚCICIEL bazy (question_base_shares INSERT/UPDATE
-// wymaga tego po stronie RLS -- patrz qb_shares_write w schema.sql).
-async function shareBaseWith(page, baseId, userId, role) {
-  await page.evaluate(async ({ baseId, userId, role }) => {
-    const { error } = await window.__sbClient
-      .from("question_base_shares")
-      .upsert({ base_id: baseId, user_id: userId, role }, { onConflict: "base_id,user_id" });
-    if (error) throw new Error(error.message);
-  }, { baseId, userId, role });
-}
 
 async function revokeShare(page, baseId, userId) {
   await page.evaluate(async ({ baseId, userId }) => {
-    const { error } = await window.__sbClient
-      .from("question_base_shares").delete().eq("base_id", baseId).eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    const { data, error } = await window.__sbClient.rpc("revoke_base_share", { p_base_id: baseId, p_user_id: userId });
+    if (error || data !== true) throw new Error(error?.message || "base revocation failed");
   }, { baseId, userId });
 }
 
@@ -1221,11 +1210,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         return data.user.id;
       });
 
-      await page.evaluate(async ({ baseId, userId }) => {
-        const { error } = await window.__sbClient
-          .from("question_base_shares").insert({ base_id: baseId, user_id: userId, role: "editor" });
-        if (error) throw new Error(error.message);
-      }, { baseId, userId: user2Id });
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
@@ -1257,11 +1242,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         return data.user.id;
       });
 
-      await page.evaluate(async ({ baseId, userId }) => {
-        const { error } = await window.__sbClient
-          .from("question_base_shares").insert({ base_id: baseId, user_id: userId, role: "viewer" });
-        if (error) throw new Error(error.message);
-      }, { baseId, userId: user2Id });
+      await acceptBaseShare(page, page2, baseId, user2Id, "viewer");
 
       await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
@@ -2326,7 +2307,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
 
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       const qid = await createQuestion(page, {
         baseId, ord: 1,
@@ -2388,7 +2369,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do usunięcia gdzie indziej", answers: [] } });
 
@@ -2435,7 +2416,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
@@ -2472,14 +2453,14 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
       await expect(page2.locator('#toolbar button[data-act="newFolder"]')).toBeEnabled({ timeout: 15000 });
 
       // Właściciel obniża rolę do viewer, bez żadnego sygnału do otwartej karty
-      await shareBaseWith(page, baseId, user2Id, "viewer");
+      await acceptBaseShare(page, page2, baseId, user2Id, "viewer");
 
       const insertError = await page2.evaluate(async (baseId) => {
         const { error } = await window.__sbClient
@@ -2505,7 +2486,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "viewer");
+      await acceptBaseShare(page, page2, baseId, user2Id, "viewer");
 
       await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
@@ -2542,7 +2523,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
@@ -2578,7 +2559,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Zablokowane pytanie", answers: [] } });
 
@@ -2622,7 +2603,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       const catId = await createCategory(page, { baseId, name: "Folder z blokadą w środku", ord: 1 });
       const qid = await createQuestion(page, { baseId, categoryId: catId, ord: 1, payload: { text: "Pytanie w folderze", answers: [] } });
@@ -2669,7 +2650,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie do otagowania", answers: [] } });
       const lockedTagId = await createTag(page, { baseId, name: "e2e-locked" });

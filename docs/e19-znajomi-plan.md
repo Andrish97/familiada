@@ -1008,3 +1008,18 @@ omijają akceptację: zamknąć uprawnienia starego RPC i politykę zapisu,
 zachować odczyt oraz kanoniczne RPC. Fixture E2E Baz/Explorera muszą
 przechodzić przez zaproszenie i akceptację, bez przywracania obejścia.
 SQL 337 przygotowany lokalnie, jeszcze niewdrożony produkcyjnie.
+
+### Aktualny stan kolejki §5 — 2026-10-11
+
+Pkt 3 zamknięty: SQL333–336, Pages38158473415, kontrola
+main38158524056: 7/7 bez retry i unit413/413. Realne maile test14,
+pełna odmowa/wypisanie/globalny mail-off oraz zarejestrowany dawny
+Subskrybent w obu kanałach ankiet. Następny pkt4 Bazy.
+
+Wykonany podgląd Baz, jeszcze przed produkcją:
+[udostępnianie telefon](img/e19-bases/share-390.png),
+[komputer](img/e19-bases/share-1400.png),
+[odmowy zwinięte telefon](img/e19-bases/refusal-collapsed-390.png),
+[rozwinięte telefon](img/e19-bases/refusal-expanded-390.png),
+[zwinięte komputer](img/e19-bases/refusal-collapsed-1400.png),
+[rozwinięte komputer](img/e19-bases/refusal-expanded-1400.png).

@@ -1,3 +1,4 @@
+const { acceptBaseShare } = require("./helpers/base-sharing");
 // tests/e2e/bases.spec.js
 // Weryfikuje bases.js (js/pages/bases.js) -- hub z listą baz pytań
 // ("Moje" + "Udostępnione"), zanim jeszcze wchodzi się do base-explorera.
@@ -92,15 +93,6 @@ async function getUserId(page) {
   });
 }
 
-// `page` musi być zalogowane jako WŁAŚCICIEL bazy (RLS qb_shares_write).
-async function shareBaseWith(page, baseId, userId, role) {
-  await page.evaluate(async ({ baseId, userId, role }) => {
-    const { error } = await window.__sbClient
-      .from("question_base_shares")
-      .upsert({ base_id: baseId, user_id: userId, role }, { onConflict: "base_id,user_id" });
-    if (error) throw new Error(error.message);
-  }, { baseId, userId, role });
-}
 
 // Symuluje "ktoś inny właśnie edytuje coś w środku tej bazy" -- to samo RPC
 // co acquireResourceLock()/acquireResourceLocks() w przeglądarce
@@ -284,7 +276,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
       let page2;
       ({ ctx: context2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       await page2.goto(BASE_URL, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
@@ -316,7 +308,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
       let page2;
       ({ ctx: context2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
 
       const qid = await createQuestionDirect(page, baseId, { text: "Zablokowane pytanie", answers: [] });
       const lock = await acquireLockDirect(page2, "base_question", qid, "e2e-test:question-modal");
@@ -360,7 +352,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
       let page2;
       ({ ctx: context2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
       const user2Id = await getUserId(page2);
-      await shareBaseWith(page, baseId, user2Id, "editor");
+      await acceptBaseShare(page, page2, baseId, user2Id, "editor");
       await createQuestionDirect(page, baseId, { text: "Wolne pytanie", answers: [] });
 
       await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });

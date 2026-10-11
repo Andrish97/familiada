@@ -79,6 +79,7 @@ const uk = {
       contactBtn: "Контакт",
     },
   },
+  baseSharePanel: {"empty": "Немає одержувачів.", "alreadyActive": "Ця особа вже має доступ до бази.", "cooldown": "Повторне поширення через {time}.", "lookup": "Електронна пошта або ім’я користувача", "share": "Поширити"},
   shareSections: {
     subscribers: "Підписники",
     subscribersSub: "Ще без запрошення — оберіть, кого запросити.",

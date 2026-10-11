@@ -1,5 +1,16 @@
 # Wznowienie pracy — 2026-10-11
 
+## Bieżąca kontynuacja: kolejka §5 pkt 4 Bazy
+
+Pkt 3 Subskrybenci333–336 zamknięty produkcyjnie: Pages38158473415 ✓,
+main38158524056 ✓ 7/7 bez retry, unit413/413, cztery prawdziwe maile
+test14. Wypisanie=odmowa w każdym miejscu; flagę globalnego mail-off
+zachować niezależnie. Bazy337 na branchu, izolowany runner38158617062 ✓,
+front z sześcioma zrzutami; wymaga E2E i cyklu SQL/log→branch→Pages→main.
+Dalej Ankiety, maile, graf/kaskady/Go/anonimowy token, UI/E20 i landscape,
+manual ostatni. Kontynuować bez kończenia tury po paczce.
+
+
 ## Najnowszy stan: E19 krok 7 w realizacji
 
 Decyzja użytkownika 2026-10-11: **kontynuować zawsze bez pytania**, również po zamknięciu kolejnej paczki. Cykl testów i kontroli produkcji pozostaje obowiązkowy; zrzuty po wykonaniu, manual na końcu.

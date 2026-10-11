@@ -13,46 +13,25 @@
    SHARE MODAL + tile badges
 ========================================================= */
 
-.shareList{
-  display: grid;
-  gap: 8px;
-  margin: 10px 0 14px;
-}
-
-.modal.shareModal{ width: min(820px, 94vw); }
-
-.shareAddTop{ margin-top: 10px; display: grid; gap: 8px; }
-.share-add-row{ display: flex; gap: 8px; align-items: stretch; width: 100%; }
-.share-add-row .inp{ flex: 1 1 auto; min-width: 0; }
-.share-add-row .ui-select{ flex: 1 1 auto; min-width: 0; }
-.share-add-row .btn{ flex: 0 0 auto; white-space: nowrap; }
+.modal.shareModal{ width: min(820px, 94vw); max-height: 90dvh; overflow-y: auto; }
+.baseShareSections{ display: grid; gap: 16px; min-width: 0; }
+.baseShareSections .shareSection{ margin-top: 0; }
+.baseShareLookup{ display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin-top: 10px; }
+.baseShareLookup .inp{ flex: 1 1 220px; min-width: 0; }
+.baseShareLookup .btn{ height: 40px; }
+.baseShareRole{ width: 40px; min-width: 40px; height: 40px; padding: 6px; }
+.shareRowActions .baseShareRole{ height: auto; }
+.baseShareFooter{ display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
+#baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
+#baseDeclinesHost .shareSection{ margin-top: 8px; }
+#baseDeclinesHost .shareList--scroll{ max-height: min(240px, 32dvh); }
+#baseDeclinesHost .shareNote{ flex-basis: 100%; margin: 0; }
 @media (max-width: 600px){
-  .share-add-row{ flex-direction: column; }
-  .share-add-row .btn{ width: 100%; }
+  .modal.shareModal{ max-height: none; }
+  .baseShareLookup .inp{ flex-basis: calc(100% - 56px); }
+  #btnShareAdd{ margin-left: auto; }
+  .baseShareSections .shareList--scroll{ max-height: 180px; }
 }
-
-/* Nowa sekcja share - tryb i recipient */
-.share-mode-select{ display: flex; align-items: center; gap: 10px; }
-.share-mode-label{ font-size: 13px; font-weight: 700; opacity: .85; white-space: nowrap; }
-.share-mode-select .ui-select{ flex: 1; min-width: 0; }
-
-.share-recipient-select .ui-select{ width: 100%; }
-.share-email-input .inp{ width: 100%; }
-.share-email-error{ color: #f87171; font-size: 12px; margin-top: 4px; }
-.share-subs-input .ui-select{ width: 100%; }
-.share-submit-btn{ width: 100%; }
-
-.share-role-select{
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-size: 11px;
-  color: #fff;
-  cursor: pointer;
-}
-.share-role-select option{ background: #111; color: #fff; }
-.share-role-select:disabled{ opacity: .5; cursor: not-allowed; }
 
 /* .btn.xsm przeniesione do css/base.css (ładowanego wszędzie) -- control.html/
    control2.html używają tej klasy w modalu udostępniania urządzenia, ale nie
