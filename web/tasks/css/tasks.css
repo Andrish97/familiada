@@ -11,3 +11,44 @@
   .games-shell{ overflow: visible; }
   .tasks-card, .tasks-card .tasks-scroll{ flex: 0 0 auto; min-height: auto; overflow: visible; }
 }
+
+/* Oddech między tytułem, kartą, sekcjami i wierszami. */
+body.games-body > main.wrap > .bar{
+  margin-bottom: 14px;
+}
+.tasks-card .tasks-scroll{
+  padding: 2px 2px 12px;
+}
+.tasks-card .rowsSection + .rowsSection{
+  margin-top: 24px;
+}
+.tasks-card .rowsList{
+  gap: 12px;
+  margin-top: 10px;
+}
+.tasks-card .rowsTitle,
+.tasks-card .rowsNote{
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.tasks-card .rowsNote{
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.tasks-card .rowsActions{
+  gap: 8px;
+}
+.tasks-card .rowsAct{
+  min-height: 36px;
+}
+@media (max-width: 640px){
+  .tasks-card .rowsAct{
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

@@ -8,6 +8,9 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 
+const { serveBranchCode } = require("./helpers/branch-code");
+const { tasksPreview } = require("./fixtures/tasks-preview");
+
 const TASKS_URL = "https://www.familiada.online/tasks/";
 
 test.use({ serviceWorkers: "block" });
@@ -16,6 +19,7 @@ async function newUserContext(browser, username) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
   await loginAsTestUser(page, ctx, { username });
+  await serveBranchCode(ctx, { pages: ["tasks"] });
   return { ctx, page };
 }
 
@@ -75,3 +79,54 @@ test.describe("tasks: baza udostępniona drugiemu kontu", () => {
     }
   });
 });
+
+// Kontrolowane dane RPC; prawdziwy HTML, moduły, CSS i logowanie.
+for (const width of [1400, 390]) {
+  test(`tasks: wszystkie kafelki i odstępy — ${width}`, async ({ browser }) => {
+    const { ctx, page } = await newUserContext(browser, testAccountUsername(2));
+    try {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 1100 });
+      let fixture = tasksPreview;
+      await page.route("**/rest/v1/rpc/tasks_list", (route) => route.fulfill({ json: fixture }));
+      await page.goto(TASKS_URL);
+      await expect(page.locator(".rowsRow")).toHaveCount(10);
+      await expect(page.locator(".rowsSection--todo .rowsRow")).toHaveCount(8);
+      await expect(page.locator(".rowsSection--done .rowsList")).toBeHidden();
+      await page.locator(".rowsSection--done .rowsSectionHead").click();
+      await expect(page.locator(".rowsSection--done .rowsRow")).toHaveCount(2);
+      await expect(page.locator(".rowsSection--done .rowsAct")).toHaveCount(0);
+      for (const task of tasksPreview) {
+        const row = page.locator(`.rowsRow[data-id="${task.id}"]`);
+        await expect(row).toBeVisible();
+        await expect(row.locator(".rowsTitle")).toHaveText(task.title);
+        const actions = task.state === "done" ? [] : task.kind === "poll" ? ["vote", "decline"] : task.kind === "base" ? ["accept", "decline"] : ["connect"];
+        await expect(row.locator(".rowsAct")).toHaveCount(actions.length);
+        for (const action of actions) await expect(row.locator(`[data-act="${action}"]`)).toHaveAttribute("aria-label", /.+/);
+      }
+      const metrics = await page.evaluate(() => {
+        const rect = (s) => document.querySelector(s).getBoundingClientRect();
+        const first = rect(".rowsSection--todo .rowsRow");
+        const second = document.querySelectorAll(".rowsSection--todo .rowsRow")[1].getBoundingClientRect();
+        return {
+          pageGap: rect(".tasks-card").top - rect(".bar").bottom,
+          rowGap: second.top - first.bottom,
+          overflow: document.documentElement.scrollWidth > innerWidth,
+          noteWrap: getComputedStyle(document.querySelector(".rowsNote")).whiteSpace,
+        };
+      });
+      expect(metrics.pageGap).toBeGreaterThanOrEqual(14);
+      expect(metrics.rowGap).toBeGreaterThanOrEqual(12);
+      expect(metrics.overflow).toBe(false);
+      expect(metrics.noteWrap).toBe("normal");
+      await page.screenshot({ path: test.info().outputPath(`tasks-${width}.png`), fullPage: true });
+      for (const [kind, count] of [["poll", 4], ["base", 2], ["device", 4]]) {
+        await page.goto(`${TASKS_URL}?kind=${kind}`);
+        await expect(page.locator(".rowsRow:not([hidden])")).toHaveCount(count);
+      }
+      fixture = [];
+      await page.goto(TASKS_URL);
+      await expect(page.locator(".rowsEmpty")).toBeVisible();
+      await expect(page.locator(".rowsRow")).toHaveCount(0);
+    } finally { await ctx.close(); }
+  });
+}

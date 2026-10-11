@@ -430,3 +430,29 @@ przegląd starych przejść po usuwaniu stron modalnych”. Obejmuje mapę PAGES
 wszystkie stare wejścia, powroty/parametry/język, zapis i blokady oraz testy
 wznowienia Control. Historyczny E7 jest wykonany; nowa zależność
 `modalPagesReview` pozostaje otwarta i nie wynika z samego statusu E7.
+
+### Zadania — odstępy i pełny przegląd kafelków (2026-10-11)
+
+Zgłoszenie użytkownika: poprawić odstępy i pokazać każdy rodzaj oraz stan
+zadania. Przegląd wykorzystuje prawdziwy renderer strony z przykładowymi
+danymi, na komputerze 1400 px i telefonie 390 px. Plansze pełnej listy
+rozwijają Zrobione i zdejmują tylko ograniczenie wysokości przewijania,
+aby wszystkie kafelki dało się obejrzeć na jednym obrazie. W aplikacji
+Zrobione pozostaje domyślnie zwinięte i lista przewija się w karcie.
+
+| Rodzaj | Stan | Co widać w Zadaniach | Akcje |
+|---|---|---|---|
+| Ankieta tekstowa/punktowa | Oczekuje, także po otwarciu bez oddania głosu | Do zrobienia; otwarcie nie tworzy osobnego wyglądu kafelka | Głosuj, Odrzuć |
+| Ankieta tekstowa/punktowa | Oddano głos | Zrobione przez 5 dni od głosu; sekcja domyślnie zwinięta | Brak |
+| Ankieta | Odrzucono / cofnięto | Brak kafelka | Brak |
+| Baza — przeglądający/edytor | Oczekuje lub otwarto | Do zrobienia; informacja o roli | Akceptuj, Odrzuć |
+| Baza | Zaakceptowano | Znika z Zadań; dostępna w Bazach | Brak w Zadaniach |
+| Baza | Odrzucono / cofnięto | Brak kafelka | Brak |
+| Prowadzący / Przycisk do pojedynku / Wyświetlacz / Wyświetlacz QR | Aktywne, także po podłączeniu | Do zrobienia, nazwa urządzenia i ważność | Podłącz |
+| Urządzenie | Cofnięto / wygasło | Brak kafelka | Brak |
+| Cała lista | Pusta | Nic do zrobienia | Brak |
+
+To opis aktualnego zachowania, nie nowa zmiana okresu przechowywania.
+Poprawka wyglądu: 14 px między nagłówkiem a kartą, 12 px między wierszami,
+24 px między sekcjami, opisy i tytuły bez ucinania na telefonie, jednakowe
+przyciski mobilne 40 px. Wspólna logika wierszy i akcji pozostaje źródłem.
