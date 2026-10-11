@@ -1,15 +1,22 @@
 # Wznowienie pracy — 2026-10-11
 
-Użytkownik wznowił pracę. Repo jest na `codex/e19-3`; poprawiono test SQL 321
+Użytkownik wznowił pracę i zezwolił uruchamiać cięższe zadania lokalnie na serwerze Codexa. Repo po scaleniu E19 kroku 3 jest na `main` (`f280941fd`); branch `codex/e19-3` ma ten sam stan. Poprawiono test SQL 321
 (commit `6a8753616`): fixture pobiera token jako administrator ze względu na
 `FORCE ROW LEVEL SECURITY`, po czym resolver jest nadal wywoływany w roli
 `authenticated`. Walidacja runnera 38096872246: unit i SQL ✓. Punktowe e2e
 brancha 38096917201: dźwięk własny bez pliku i dźwięk Storage ✓ (2/2).
 
-Następny krok zgodnie z planem: wdrożyć migrację 321 razem z frontem na `main`,
-sprawdzić log migracji, Pages i Worker, a potem wykonać punktowe testy
-kontrolne produkcji: `friends`, `subscribers`, `go`,
-`frontend-navigation`, `account-deletion` i regresję dźwięku. E19 krok 3 pozostaje otwarty do zielonej kontroli produkcji. Produkcyjne e2e
+Migracja 321 została wdrożona razem z frontem na `main`; log migracji, Pages,
+Worker i wszystkie kontrole produkcyjne są zielone. E19 krok 3 zamknięty.
+Wyniki produkcyjne: `friends` 38099344264 (2/2), `subscribers` 38099196468
+(2/2), `go --grep 'subscription invite'` 38099459575 (2/2),
+`frontend-navigation` 38099534030 (11/11), `account-deletion` 38099771245
+(1/1), regresja dźwięku 38099849073 (2/2); unit 401/401 w każdym przebiegu.
+Następny krok zgodnie z planem: E19 krok 4 — okno udostępniania ankiety
+(Znajomi · Subskrybenci), RPC `poll_share_send`, specyfikacja i punktowe testy.
+Przed krokiem 6 skoordynować obszar Control z drugą sesją.
+
+Produkcyjne e2e
 Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po
 retry), ale test e-maila bez konta ujawnił, że `alertModal` odrzuca opcję `body`
 i przez to nie renderuje linku do Subskrybentów. Poprawiono `alertModal`, aby przekazywał `body` do wspólnego okna (commit
