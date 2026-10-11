@@ -456,3 +456,11 @@ To opis aktualnego zachowania, nie nowa zmiana okresu przechowywania.
 Poprawka wyglądu: 14 px między nagłówkiem a kartą, 12 px między wierszami,
 24 px między sekcjami, opisy i tytuły bez ucinania na telefonie, jednakowe
 przyciski mobilne 40 px. Wspólna logika wierszy i akcji pozostaje źródłem.
+
+Zrzuty po poprawce:
+
+| Widok | Komputer | Telefon |
+|---|---|---|
+| Wszystkie 10 wariantów, Zrobione rozwinięte | [zrzut](img/e19-tasks/all-desktop.png) | [zrzut](img/e19-tasks/all-phone.png) |
+| Normalna wysokość strony, Zrobione zwinięte | [zrzut](img/e19-tasks/default-desktop.png) | [zrzut](img/e19-tasks/default-phone.png) |
+| Pusta lista | [zrzut](img/e19-tasks/empty-desktop.png) | [zrzut](img/e19-tasks/empty-phone.png) |
