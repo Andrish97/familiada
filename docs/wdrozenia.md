@@ -41,6 +41,13 @@ Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
 [`przekazanie.md`](przekazanie.md). Zasady dla agenta: `AGENTS.md`
 (= `CLAUDE.md`).
 
+**Aktualizacja 2026-10-11:** E19 kroki 1–5 są zrobione na produkcji.
+Następny jest krok 6 (Control/urządzenia), którego zachowanie doprecyzowano
+w [`e19-znajomi-plan.md`](e19-znajomi-plan.md), sekcja 7. Krok obejmuje też
+wspólną regułę kolejki e-maili i spójność stron Znajomych/Subskrybentów/
+Ankiet/Baz; tabela UI jest w [`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md).
+Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control.
+
 ## Kolejka
 
 | # | ID | Etap | Źródło | Status |
@@ -64,7 +71,7 @@ Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
 | 12c | E17 | **Poprawki 2026-10-09:** powrót bez „Wróć do:”; ankieta na telefonie (mniejsze przyciski dolnego paska, równe marginesy, ładniejsza sekcja QR z dużym kodem); filtry typ/stan przy wyszukiwaniu na listach gier, logo, baz | ujednolicenie-wygladu.md „Poprawki zgłoszone 2026-10-09” | zrobione (e2e main 2026-10-09) |
 | 12d | E17c | Przyciski akcji bez przedwczesnego zawijania; filtry gier i baz rozszerzone; wspólny styl kafli gier/baz/subskrybentów | ujednolicenie-wygladu.md „cz. 2” | zrobione (e2e main 2026-10-09) |
 | 12e | E18 | **Ujednolicenie wyglądu (decyzja 2026-10-09):** `docs/wzorce-ui.md` — wzorce (rodzaje stron, topbar, karty, paski akcji, kafel, sekcje udostępniania, oznaczenia, wyszukiwanie/filtry, dymki, okna) + przegląd wszystkich stron (tabela zgodności, zrzuty telefon/komputer) → akceptacja użytkownika → poprawki wzorcami, nie stronami | wzorce-ui.md | częściowo: poprawki #1, #5, #6, #8, #9 (bazy), #11, #12 (okno QR), #14, #15 + sekcja QR ankiety — na `main`; **reszta wstrzymana** (decyzja 2026-10-09: „bez dopieszczania wyglądu” — #2 kafle logo, #3, #4, #7, #10, #12 reszta, #13) |
-| 12f | E19 | **Udostępnianie — wiersze, role, sekcje wg stanu** (decyzja 2026-10-09): Subskrypcje, subskrybenci w ankiecie, udostępnianie bazy, urządzenia — jeden komponent; po E6–E9 | ujednolicenie-wygladu.md „Udostępnianie — wiersze, role…”, plan: [`e19-znajomi-plan.md`](e19-znajomi-plan.md) | w toku: krok 1 (migracja 320) i krok 2 (`/tasks/`) zrobione; **następny krok 3** — plan [`e19-znajomi-plan.md`](e19-znajomi-plan.md) |
+| 12f | E19 | **Udostępnianie — wiersze, role, sekcje i cykle życia**: Ankiety, Bazy, Control/urządzenia, Znajomi, Subskrybenci; wspólna bramka flagi mailowej i przypomnienia | [`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md), [`e19-znajomi-plan.md`](e19-znajomi-plan.md) §7, [`maile-granice.md`](maile-granice.md) | kroki 1–5 zrobione; krok 6 i ujednolicenie wg wymagań 2026-10-11 — do zrobienia |
 | 12a | E14 | **Sprzątanie po potwierdzeniu** (migracje usuwające): martwe RPC ankiet i hubu (E11h); `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` / `guest_discard_current`; kasowanie plików w `delete-account` (zastąpione przez E12b) | ankiety-refaktor.md, usuwanie-danych.md | po E19 (lista uzupełniona o RPC zastępowane w E19 — `e19-znajomi-plan.md` sekcja 2) |
 | 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
@@ -205,4 +212,6 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 | 2026-10-11 | E19 krok 5 / migracja — wdrożona | Commit `e732e616c`: migracja 322 (`base_share_by_user` po nazwie/e-mailu lub UUID, link `/go/?b=`; resolver zwraca zaproszenie do Zadania). Workflow produkcyjny 38101647703 ✓; izolowany Postgres/SQL runner 38101686798 ✓; lokalny Postgres 16 pełny restore + migracja + `test-bases-go-322.sql` ✓ | Branch UI `bdbd03568`; E2E 38102345561 potwierdziło poprawkę `pending`, ujawniło ścieżkę względną `mail_link` i wpis kolejki mailowej bez prób dostawy. Test parsowania linku poprawiony; ponowić punktowe E2E przed promocją |
 
-| 2026-10-11 | E19 krok 5 / front produkcyjny — zrobione | Front `53c316fb7` na `main`; Pages 38102630814 ✓, hash assets `0c2784d84`; branch E2E 38102541764 ✓. Produkcyjne E2E `bases.spec.js` 38103300067 ✓, 2/2; unit 401/401. Cron `*/2 * * * *` aktywny; po wydłużeniu limitu testu do 150 s mail test8 dotarł po 33 s. Krok 5 zamknięty | E19 krok 6 — skoordynować obszar Control z drugą sesją przed rozpoczęciem |
+| 2026-10-11 | E19 krok 5 / front produkcyjny — zrobione | Front `53c316fb7` na `main`; Pages 38102630814 ✓, hash assets `0c2784d84`; branch E2E 38102541764 ✓. Produkcyjne E2E `bases.spec.js` 38103300067 ✓, 2/2; unit 401/401. Cron `*/2 * * * *` aktywny; po wydłużeniu limitu testu do 150 s mail test8 dotarł po 33 s. Krok 5 zamknięty | E19 krok 6 — wymagania Control doprecyzowane przez użytkownika |
+
+| 2026-10-11 | E19 — doprecyzowanie wspólnego modelu | Zapisano macierz zachowań dla urządzeń, baz, ankiet, Znajomych i Subskrybentów; dodano propagację zależności i skutki cofania/usuwania do planu. Zweryfikowano cykl ankiety: open tworzy przebieg, close usuwa oczekujące i zostawia wykonane/odrzucone do następnego open. Friend cooldown: invite/resend 5 dni, maks. 2 maile/30 dni, po odmowie 30 dni przed nowym zaproszeniem. Worker sprawdza flagę mailową przed wysyłką, bramka przed insertem do kolejki pozostaje do wdrożenia. Dokumenty sprawdzone przez `git diff --check` | Implementacja E19 krok 6; dopiąć signal/Storage TTL Control i ponowienie odrzuconego zaproszenia znajomości |

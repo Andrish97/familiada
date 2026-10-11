@@ -280,6 +280,30 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
   (`?sort=created|name`, domyślnie ostatnio zmienione); ankieta bez dolnego paska.
   Liczba pytań w bazie: brak w danych listy — bez sortowania po niej.
 
+## Ujednolicenie E19 — układ i zachowanie (decyzje 2026-10-11)
+
+Ta tabela doprecyzowuje i w przypadkach różnic zastępuje wcześniejszy ogólny
+wzorzec „Subskrybenci · Oczekujące · Aktywni”. To samo udostępnienie może mieć
+inne stany i akcje w zależności od zasobu; wspólne pozostają czytelne wiersze,
+etykieta kanału, miejsce akcji, widoczny cooldown oraz reguła maila z
+[`maile-granice.md`](maile-granice.md). Szczegóły cyklu życia i zależności:
+[`e19-znajomi-plan.md`](e19-znajomi-plan.md), sekcja 7.
+
+| Ekran/sekcja | Układ i wybór odbiorców | Wiersz udostępniony | Akcje i odliczanie |
+|---|---|---|---|
+| Control — urządzenie | „Mail lub nazwa użytkownika” z polem i przyciskiem; nad polem znika komunikat o cooldownie lub wcześniejszym udostępnieniu w bieżącej sesji. Osobna lista znajomych z checkboxami i jednym przyciskiem na dole. | Sekcja „Udostępnione”: odbiorcy dla konkretnego urządzenia i sesji gry. Pokazać nazwę i typ: znajomy, konto albo mail. Udostępniony znajomy znika z listy wyboru. | Cooldown widoczny przy polu i znajomym. Cofnięcie przez X/kosz natychmiast unieważnia link. Ponowienie nie występuje; wysyłka ponowna wymaga cofnięcia i nowego udostępnienia. |
+| Baza | Dwie drogi: mail/nazwa konta albo znajomi. Obie mają wybór Edytor/Przeglądający; znajomi używają checkboxów i wspólnego przycisku. | Jedna lista ze statusem (oczekuje, zaakceptowano, odrzucono), etykietą kanału i aktualną rolą. | Rola zmieniana bezpośrednio w wierszu. Cofnięcie unieważnia dostęp. Odrzucone: ponowienie przypominającego maila z cooldownem; wyłączone powiadomienia ukrywają przycisk. |
+| Ankieta — „Anonimowo” | Pierwsza z dwóch równych połówek karty na komputerze; na telefonie układ responsywny. Link wizualnie poprawiony. | Link może być użyty wielokrotnie przez każdego, kto go ma. Ta lista jest niezależna od odbiorców kontowych. | Przegląd klienta i migracji nie wykazał IP-limit; sprawdzić jeszcze Edge/Worker, a ewentualną ochronę IP uzgodnić przed wdrożeniem. |
+| Ankieta — „Udostępnij” | Druga równa połowa karty. Wybór checkboxami z list Znajomych i Subskrybentów, bez ręcznego pola e-mail. | Pokazać oczekuje/otworzył, zagłosował albo odrzucił. Lista dotyczy wyłącznie bieżącego uruchomienia ankiety. | Oczekującym bez głosu i odrzuconym można wysłać przypominający e-mail z cooldownem (przycisk ukryty przy wyłączonych powiadomieniach). |
+| Znajomi | Komputer: lewa kolumna dodawania (e-mail/nazwa, zaproszenia wychodzące); prawa: znajomi i zaproszenia przychodzące. Telefon: cztery sekcje albo dwie karty. | Wiersze z etykietą stanu: oczekuje, odrzucono, znajomy, zaproszenie przychodzące. | X cofa oczekujące zaproszenie; usuń kasuje relację znajomości. Oczekujące i odrzucone zaproszenie można przypomnieć mailem po cooldownie; przy wyłączonych powiadomieniach brak przycisku. |
+| Subskrybenci | Analogiczna lista jednostronna bez zaproszeń przychodzących/propozycji. | Wiersze oczekujące i aktywne, z etykietą e-mail. | Ponów = przypominający e-mail do istniejącego zaproszenia; cooldown i ukrywanie przycisku takie jak wyżej. Usunięcie kończy subskrypcję. |
+
+Wspólne dla wszystkich ekranów: przypomnienie nie tworzy rekordu dostępu ani
+nowego tokenu. Flaga `user_flags.email_notifications` jest sprawdzana przed
+dodaniem maila do kolejki. Samo udostępnienie kontu pozostaje dostępne w
+Zadaniach przy wyłączonych powiadomieniach. Cofnięcie i usunięcie zasobu
+nadrzędnego unieważnia zależne uprawnienia zgodnie z cyklem życia w planie E19.
+
 ## Decyzje do raportu wzorców (E18, 2026-10-09)
 
 Odpowiedzi na sekcję D w [`wzorce-ui.md`](wzorce-ui.md):

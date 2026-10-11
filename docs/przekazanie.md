@@ -52,6 +52,22 @@ dźwięku. Krok 3 nadal otwarty do zielonych kontroli produkcyjnych.
 
 # Przekazanie pracy — pauza 2026-10-11 (Codex)
 
+## Aktualizacja po wznowieniu — 2026-10-11
+
+Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control, i
+doprecyzował docelowe zachowanie udostępnień. E19 kroki 1–5 pozostają
+zamknięte; następny jest krok 6. Szczegółowe wymagania zapisano w
+[`e19-znajomi-plan.md`](e19-znajomi-plan.md), sekcja 7, z tabelą ekranów w
+[`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md) i regułą kolejki w
+[`maile-granice.md`](maile-granice.md). Aktualizacja dotyczy planu; nie
+rozpoczyna jeszcze implementacji.
+
+Ważne uzgodnienia: powiadomienie to e-mail; przed zakolejkowaniem sprawdzana
+jest flaga `user_flags.email_notifications`; ponowienie wysyła wyłącznie
+przypominający mail. Udostępnienia ankiety są przypięte do pojedynczego
+uruchomienia. Sesja Control ma wygasać po godzinie bezczynności, czyścić
+powiązane rekordy Storage i unieważniać udostępnienia urządzeń.
+
 **Praca zatrzymana na prośbę użytkownika. Nie uruchamiać testów ani dalszych
 wdrożeń bez wyraźnego wznowienia w nowej sesji.** Wszystkie zmiany kodu
 zapisane i wypchnięte na **`codex/e19-3`** w repo `Andrish97/familiada`.

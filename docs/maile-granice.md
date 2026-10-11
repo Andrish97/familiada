@@ -26,6 +26,24 @@ sprawdzane w bazie (nie w przeglądarce).
 6. **Podłoga techniczna** zostaje: najwyżej 1 mail na minutę od tego
    samego nadawcy do tego samego odbiorcy, cokolwiek to jest.
 
+### Reguła kolejki — decyzja 2026-10-11
+
+- W całym systemie „powiadomienie” oznacza e-mail.
+- Przed wstawieniem powiadomienia do `mail_queue` sprawdź flagę odbiorcy
+  `user_flags.email_notifications`. Flaga wyłączona oznacza, że mail nie jest
+  dodawany do kolejki. Kontrola ma być wspólna na granicy kolejki, a nie
+  zależna od konkretnego ekranu.
+- Dla odbiorcy z kontem wyłączenie maili nie odbiera zadania ani uprawnienia
+  widocznego po zalogowaniu. Adres bez konta nie ma skrzynki z zadaniami;
+  link może być przekazany poza kolejką tylko przez jawne skopiowanie przez
+  właściciela, jeśli dana funkcja udostępnia taką możliwość.
+- Ponowienie wysyła wyłącznie mail przypominający do istniejącego
+  zaproszenia/udostępnienia. Nie tworzy nowego uprawnienia, rekordu ani tokenu.
+  Przycisk ponowienia ukrywamy, jeśli odbiorca wyłączył powiadomienia.
+- Cooldown ogranicza wysłanie maila. UI pokazuje pozostały czas, backend
+  autorytatywnie rozstrzyga możliwość wysłania; cooldown nie opóźnia
+  przyznania ani cofnięcia dostępu.
+
 ## 2. Tabela granic (decyzja 2026-10-07)
 
 | Mail | Kiedy wolno | Limit | Po odmowie / braku odpowiedzi |
@@ -59,3 +77,33 @@ nowe zaproszenie, ale nie więcej niż 3 maile ode mnie na dobę łącznie.
 - Zasady i liczby z sekcji 1–2 zatwierdzone.
 - Osoby z kontem dostają zaproszenia do ankiet jak dziś: w karcie
   Zadania **i** mailem (z limitami jak wyżej).
+
+## 5. Wartości obecnych polityk i zakres
+
+Wartości w bazie po migracji 288 i późniejszych korektach. Przed nową
+implementacją weryfikować `mail_cooldown_policies` i RPC — UI nie jest źródłem
+limitu.
+
+| Klucz / akcja | Obecny limit | Zastosowanie i uwagi |
+|---|---:|---|
+| `base:share` | 24 h | Ta sama para nadawca/odbiorca i baza. |
+| `device:share` | 1 h | Ta sama para oraz typ urządzenia w grze; dawniej opisany jako limit samego maila. Nowy model Control przypina dostęp do konkretnego rekordu i sesji. |
+| `poll:invite` | 5 dni | Zaproszenie do subskrypcji; polityka po odmowie jest osobna. |
+| `poll:resend` | 5 dni | Ponowienie zaproszenia subskrypcyjnego; tylko przypominający e-mail. |
+| `poll:share` | 24 h | Mail o udostępnieniu ankiety tej samej osobie i grze. |
+| `poll:invite_after_reject` | 30 dni | Ponowne zaproszenie do subskrypcji po odmowie. |
+| `friend:invite` | 5 dni | Nowe zaproszenie na tę samą parę. |
+| `friend:resend` | 5 dni | Przypomnienie; maks. dwa maile na parę w 30 dni. |
+| `friend:invite_after_reject` | 30 dni | Odstęp przed nowym zaproszeniem po odmowie. |
+| Maile ankietowe nadawca → odbiorca | 3 / 24 h | Łącznie między grami; maks. dwa przypomnienia na uruchomienie. |
+| Ogólny nadawca → odbiorca | 1 / min | Techniczny limit wspólny dla maili. |
+
+Cooldowny cofnięcia i zmiany roli nie są tu ustalonymi wartościami. Szczegółowa tabela zachowań jest w
+`e19-znajomi-plan.md`, sekcja 7.
+
+**Różnica do wdrożenia:** `mail-worker` już sprawdza `user_flags.email_notifications`
+przed wysyłką z kolejki. Trigger `mail_queue_cooldown_guard` egzekwuje obecnie
+klucz/cooldown, ale nie tę flagę przed insertem. Wymaganie 2026-10-11 przenosi
+lub uzupełnia kontrolę tak, by mail w ogóle nie trafiał do kolejki, gdy odbiorca
+ma wyłączone powiadomienia. Audyt musi też uwzględnić maile bez `user_id`
+(odbiorcę wskazuje sam adres) oraz wyścig między sprawdzeniem i insertem.
