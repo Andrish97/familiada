@@ -919,3 +919,10 @@ flagę konta, globalną rezygnację adresu bez konta i wypisanie z konkretnej
 aktywnej subskrypcji. Brak naliczenia maila przy rezygnacji należy sprawdzić
 w RPC i kolejce; nie zakładać, że odrzucenie maila przez Worker oznacza
 poprawny licznik/cooldown po stronie RPC.
+
+**331/332 zakończone:** main 38152153539 ✓ 3/3 przy --retries=0,
+unit 412/412, dwa dostarczone maile 22/102 s. Świeży branch 38151820876
+✓ bez retry, SQL i izolowane testy obu migracji ✓. 332 usuwa tylko
+pozostawiony baseline własnej pary konta testowego→test14 między
+scenariuszami; limit kolejki dla normalnych użytkowników nie zmieniony.
+Cały pkt 3 pozostaje otwarty: kolejna paczka 333 według audytu powyżej.

@@ -496,3 +496,17 @@ równolegle kolejnych maili. Po czystym wyniku ta sama kontrola main.
 331–332 branch 38151820876 ✓ 3/3 bez retry, unit 412/412, dostarczone
 maile 57/107 s. Następnie main ten sam spec, --retries=0; nie zamykać
 przed jego wynikiem. Pozostały pkt 3 odmów/flag/claim to paczka 333.
+
+**Aktualny stan — 331/332 zakończone:** main 38152153539 ✓ 3/3,
+--retries=0, unit 412/412. Dwa rzeczywiste maile test14 w 22/102 s,
+akceptacja/usunięcie i odmowa Go, oba RPC blokują zamknięte tokeny,
+active wymaga właściwego adresu; konto→Znajomi. Branch 38151820876 ✓,
+SQL/runner 331 i 332 ✓. Nie ponawiać tych kontroli. Front/CSS bez zmian.
+
+**Następna praca:** E19 §5 pkt 3, paczka 333 — pełny kontrakt odmów
+Subskrybentów: rozróżnienie odmowy/wypisania/globalnego mail-off,
+5 dni widoczności / 30 dni karencji, zachowanie karencji po cofnięciu,
+stare tokeny/nowe jawne zaproszenie, flagi przed licznikiem/kolejką,
+resend pending z blokadą/metadata, konto→Znajomi we wszystkich starych
+RPC i rejestracji/claim. Audyt na końcu E19. Dopiero potem pkt 4 Bazy
+(draft /tmp wymaga kolejnego numeru i pełnych testów), pkt 5 Ankiety itd.
