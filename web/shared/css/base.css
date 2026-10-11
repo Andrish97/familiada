@@ -2314,6 +2314,7 @@ body{
 .shareSection:first-child{ margin-top: 0; }
 .shareSectionTitle{ margin: 0; font-size: inherit; font-weight: 800; letter-spacing: .2px; }
 .shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
+.shareList[hidden]{ display: none; }
 .shareList{ display: grid; gap: 8px; margin-top: 8px; }
 .shareHost{ grid-column: 1 / -1; }
 .shareList--grid{ grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
@@ -2414,3 +2415,9 @@ button.rowsSectionHead{ cursor: pointer; }
 .shareEmpty{ padding: 12px 4px; font-size: 13px; color: var(--muted); }
 .shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
 .shareRow--compact .shareNote{ flex-basis: 100%; margin-top: 0; }
+
+/* Touch menus: avoid hover/pressed compositing while navigating on tablets. */
+@media (hover: none) and (pointer: coarse) {
+  .topbar-mobile-panel .btn:hover { filter: none; }
+  .topbar-mobile-panel .btn:active { transform: none; }
+}

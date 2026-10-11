@@ -5027,10 +5027,11 @@ const en = {
     "sent": "Invitation saved.",
     "mailFailed": "Invitation saved, but the email could not be sent. You can resend it.",
     "accountCreated": "An account was created — the friend invitation is waiting for acceptance.",
-    "sections": {"incoming": "Suggestions", "outgoing": "Pending and declined", "friend": "Friends", "pending": "Pending", "active": "Subscribers"},
+    "sections": {"declined": "Declined by me", "incoming": "Suggestions", "outgoing": "Pending and declined", "friend": "Friends", "pending": "Pending", "active": "Subscribers"},
     "status": {"pending": "Pending", "active": "Accepted", "declined": "Declined"},
     "empty": {"incoming": "No new suggestions.", "outgoing": "No sent invitations.", "friend": "No friends yet.", "pending": "No pending invitations.", "active": "No subscribers yet."},
     "actions": {
+        "undo_reject": "Undo decline",
         "accept": "Accept",
         "reject": "Decline",
         "cancel": "Withdraw",
@@ -5043,6 +5044,12 @@ const en = {
         "remove": "Remove this person? Pending invitations and tasks will be deleted. Accepted bases and devices remain — you can revoke them separately."
     },
     "errors": {
+        "alreadyFriend": "This person is already your friend.",
+        "incomingPending": "You have a pending request from this person. Check Suggestions.",
+        "outgoingPending": "Your invitation to this person is already awaiting a response.",
+        "ownDeclined": "You declined this request. You can undo it in Declined by me.",
+        "declined": "This person declined the invitation. You cannot send another one yet.",
+
         "hasAccount": "This email belongs to a Familiada account — you can invite this person as a friend.",
         "emailOnly": "This email has no Familiada account — you can add this person as a subscriber.",
         "cooldown": "You can send another invitation after: {date}.",

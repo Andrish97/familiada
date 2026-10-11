@@ -94,7 +94,7 @@ export function shareRowEl(row) {
 }
 
 /** Wspólna sekcja także dla pustej listy i formularza dodawania odbiorcy. */
-export function shareSectionEl({ key, title, rows = [], emptyText = "" }) {
+export function shareSectionEl({ key, title, rows = [], emptyText = "", collapsed, onToggle }) {
   const section = document.createElement("section");
   section.className = "shareSection";
   if (key) section.dataset.section = key;
@@ -109,6 +109,21 @@ export function shareSectionEl({ key, title, rows = [], emptyText = "" }) {
     empty.className = "shareEmpty";
     empty.textContent = emptyText;
     list.append(empty);
+  }
+  if (typeof collapsed === "boolean") {
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "rowsSectionHead";
+    list.id = `share-list-${key}`;
+    const update = () => {
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.setAttribute("aria-controls", list.id);
+      toggle.innerHTML = `<span class="rowsSectionTitle">${esc(title)}</span><span class="rowsSectionCount">${rows.length}</span><span class="rowsSectionCaret" aria-hidden="true">${icon(collapsed ? "caret-down" : "caret-up")}</span>`;
+      list.hidden = collapsed;
+    };
+    toggle.addEventListener("click", () => { collapsed = !collapsed; update(); onToggle?.(collapsed); });
+    heading.replaceChildren(toggle);
+    update();
   }
   section.append(heading, list);
   return section;

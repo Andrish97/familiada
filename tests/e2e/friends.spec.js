@@ -47,7 +47,7 @@ test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", as
     await expect(outgoing).toHaveClass(/blocked/);
     await expect(outgoing.locator("[data-act=cancel]")).toBeEnabled();
     const blocked = await owner.page.evaluate(async id => (await window.__sbClient.rpc("friends_resend", { p_id: id })).data, await outgoing.getAttribute("data-id"));
-    expect(blocked.err).toBe("cooldown");
+    expect(blocked.err).toBe("declined");
     await owner.page.screenshot({ path: testInfo.outputPath("shot-friends-layout.png"), fullPage: true });
     const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i, timeout: 150000 });
     const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
@@ -127,26 +127,38 @@ test("kontakty: wspólny licznik wygasa na żywo, flaga mailowa ukrywa ponowieni
 test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ browser }, testInfo) => {
   const owner = await user(browser, 7);
   try {
+    let incomingStatus = "declined";
+    await owner.context.route("**/rest/v1/rpc/friends_undo_reject", route => { incomingStatus = "pending"; return route.fulfill({ json: { ok: true } }); });
     await owner.context.route("**/rest/v1/rpc/contacts_list", route => route.fulfill({ json: [
       { id: "declined-out", label: "Alicja", email: "alicja@example.net", status: "declined", direction: "outgoing", email_enabled: true, resend_available_at: new Date(Date.now()+86400000).toISOString() },
       { id: "declined-off", label: "Piotr", email: "piotr@example.net", status: "declined", direction: "outgoing", email_enabled: false },
-      { id: "declined-in", label: "Maja", email: "maja@example.net", status: "declined", direction: "incoming", email_enabled: true },
+      { id: "declined-in", label: "Maja", email: "maja@example.net", status: incomingStatus, direction: "incoming", email_enabled: true },
     ] }));
     for (const width of [1400, 390]) {
       await owner.page.setViewportSize({ width, height: 900 });
+      incomingStatus = "declined";
       await open(owner.page);
       const outgoing = owner.page.locator('[data-id="declined-out"]');
       await expect(outgoing).toContainText("Odrzucono");
-      await expect(outgoing.locator('[data-act="resend"]')).toBeDisabled();
-      await expect(outgoing.locator(".shareCountdown")).toBeVisible();
+      await expect(outgoing.locator('[data-act="resend"]')).toHaveCount(0);
+      await expect(outgoing.locator(".shareCountdown")).toHaveCount(0);
       await expect(outgoing.locator('[data-act="cancel"]')).toBeEnabled();
       await expect(outgoing.locator('[data-act="remove"]')).toHaveCount(0);
       await expect(owner.page.locator('[data-id="declined-off"] [data-act="resend"]')).toHaveCount(0);
       const incoming = owner.page.locator('[data-id="declined-in"]');
+      const toggle = owner.page.locator('.rowsSection--declined button.rowsSectionHead');
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await expect(incoming).toBeHidden();
+      await owner.page.screenshot({ path: testInfo.outputPath(`shot-friends-declined-collapsed-${width}.png`), fullPage: true });
+      await toggle.click();
       await expect(incoming).toContainText("Odrzucono");
-      await expect(incoming.locator('[data-act="accept"]')).toBeEnabled();
+      await expect(incoming.locator('[data-act="accept"]')).toHaveCount(0);
+      await expect(incoming.locator('[data-act="undo_reject"]')).toBeEnabled();
       await expect(incoming.locator('[data-act="reject"]')).toHaveCount(0);
-      await owner.page.screenshot({ path: testInfo.outputPath(`shot-friends-declined-${width}.png`), fullPage: true });
+      await owner.page.screenshot({ path: testInfo.outputPath(`shot-friends-declined-expanded-${width}.png`), fullPage: true });
+      await incoming.locator('[data-act="undo_reject"]').click();
+      await expect(owner.page.locator('.rowsSection--incoming [data-id="declined-in"] [data-act="accept"]')).toBeEnabled();
+      await expect(owner.page.locator('.rowsSection--declined')).toBeHidden();
     }
   } finally { await owner.context.close(); }
 });
@@ -172,12 +184,15 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     const id = await incoming.getAttribute("data-id");
     await incoming.locator('[data-act="reject"]').click();
     await recipient.page.locator(".uni-foot .btn.gold").click();
-    await expect(incoming).toContainText("Odrzucono");
-    await expect(incoming.locator('[data-act="reject"]')).toHaveCount(0);
+    await expect(incoming).toHaveCount(0);
+    await recipient.page.locator('.rowsSection--declined button.rowsSectionHead').click();
+    const refusal = recipient.page.locator(`.rowsSection--declined [data-id="${id}"]`);
+    await expect(refusal).toContainText("Odrzucono");
+    await expect(refusal.locator('[data-act="undo_reject"]')).toBeEnabled();
     await owner.page.reload();
     const outgoing = owner.page.locator(`[data-id="${id}"]`);
     await expect(outgoing).toContainText("Odrzucono");
-    await expect(outgoing.locator('[data-act="resend"]')).toBeDisabled();
+    await expect(outgoing.locator('[data-act="resend"]')).toHaveCount(0);
     const blocked = await owner.page.evaluate(async id => (await window.__sbClient.rpc("friends_resend", { p_id: id })).data, id);
     expect(blocked.err).toBe("cooldown");
     const info = await owner.page.evaluate(async token => (await window.__sbClient.rpc("friends_token_info", { p_token: token })).data, token);
@@ -185,6 +200,8 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await recipient.page.goto(link);
     await expect(recipient.page.locator("#title")).toHaveText("Odrzucono");
     await recipient.page.getByRole("button", { name: "Otwórz Znajomych" }).click();
+    await refusal.locator('[data-act="undo_reject"]').click();
+    await expect(incoming.locator('[data-act="accept"]')).toBeEnabled();
     await incoming.locator('[data-act="accept"]').click();
     await expect(recipient.page.locator(`[data-id="${id}"]`)).toContainText("Zaakceptowano");
     await recipient.page.goto(link);

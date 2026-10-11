@@ -684,3 +684,30 @@ Zakres realizacji:
   odmowy/cofnięcia, telefon/komputer; nowe zrzuty po realizacji.
 
 Decyzja zapisana; migracje i frontend tej zmiany jeszcze do wdrożenia.
+
+### Paczka 329 — realizacja odmów Znajomych
+
+Kod na branchu: friends_undo_reject przywraca pending, Akceptuj tylko pending;
+resend odrzuconych blokowany; friends_list widoczność nadawcy 5 dni / odbiorcy
+30 dni. Resolver i token_info nie uznają wygasłego tokenu; nowe jawne invite
+usuwa wygasły rekord i tworzy nowy token. To logiczne wygaśnięcie na odczycie,
+rekord fizycznie usuwany przy nowym invite (okresowy cleanup w grafie E19
+pozostaje do spięcia). Prośba krzyżowa wymaga jawnej decyzji; osobne
+komunikaty dla kierunków/statusów. Flaga wyłączona nie zużywa pierwszego maila.
+Pary invite serializowane blokadą advisory, resend/undo blokują wiersz.
+
+Własne odmowy w ostatniej, domyślnie zwiniętej sekcji prawej karty.
+Wspólne shareSectionEl z opcjonalnym collapsed/onToggle i ikoną undo;
+pusta sekcja ukryta. To wzorzec dla kolejnych odmów Baz/Subskrypcji.
+
+**Wymaganie zrzutów użytkownika:** przy wdrożeniu każdego rodzaju
+pokazać sekcję zwiniętą i rozwiniętą z przykładowymi danymi na 1400/390 px;
+szczególnie Bazy → Udostępnione. Zrzuty po implementacji, bez pauzy na ocenę.
+Znajomi: [zwinięta komputer](img/e19-friends/refusal-collapsed-desktop.png),
+[rozwinięta komputer](img/e19-friends/refusal-expanded-desktop.png),
+[zwinięta telefon](img/e19-friends/refusal-collapsed-phone.png),
+[rozwinięta telefon](img/e19-friends/refusal-expanded-phone.png).
+
+Lokalny SQL 329 + dwa wyścigi (resend i zaproszenia przeciwne) ✓, unit
+408/408 ✓. Pełny cykl runner/Pages/DB/E2E jeszcze do wykonania; nie
+traktować tej paczki jako zamkniętej produkcyjnie.

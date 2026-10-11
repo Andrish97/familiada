@@ -546,6 +546,14 @@ function initTopbarController() {
     toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 
+    // Hide the old panel before a navigation handler starts loading a page.
+    panel.addEventListener('click', (event) => {
+      const action = event.target.closest('[data-nav-href],a[href]');
+      if (!action || action.disabled || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      if (action.tagName === 'A' && (action.target === '_blank' || action.hasAttribute('download'))) return;
+      action.blur();
+      close();
+    }, true);
     toggleBtn.addEventListener('pointerdown', open);
     closeBtn.addEventListener('pointerdown', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });

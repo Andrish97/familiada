@@ -6,7 +6,7 @@ const { loginAsPooledTestUser, loginAsGuest } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "control", "polls", "friends", "subscribers", "tasks", "manual", "connect", "logo", "marketplace", "account"] });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "control", "polls", "friends", "subscribers", "tasks", "manual", "connect", "logo", "marketplace", "account"] });
 });
 for (const path of ["/connect", "/connect/"]) {
   test(`anonim: powrót z ${path} ma strzałkę i prowadzi na stronę główną`, async ({ page }) => {
@@ -197,3 +197,32 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
     await page.screenshot({path:testInfo.outputPath(`shot-contact-navigation-${device}.png`),fullPage:true});
   });
 }
+
+// Freeze navigation after the tap so the previous page's final frame can be inspected.
+test("tablet: hamburger closes before navigating without touch filter layers", async ({ browser }, testInfo) => {
+  const context = await browser.newContext({ viewport: { width: 800, height: 1280 }, isMobile: true, hasTouch: true });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "friends"] });
+  const page = await context.newPage();
+  try {
+    await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+    await page.goto("/games/", { waitUntil: "networkidle" });
+    await page.locator('.topbar-menu-toggle').tap();
+    const panel = page.locator('.topbar-mobile-overlay');
+    await expect(panel).toBeVisible();
+    const button = panel.locator('#btnFriends');
+    await expect(button).toHaveAttribute('data-nav-href', /friends/);
+    await expect.poll(() => button.evaluate(el => getComputedStyle(el).filter)).toBe('none');
+    await page.screenshot({ path: testInfo.outputPath('shot-tablet-menu-open.png'), fullPage: true });
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    await context.route('**/friends/**', async route => { if (route.request().isNavigationRequest()) await gate; await route.continue(); });
+    const tap = button.tap({ noWaitAfter: true });
+    try {
+      await expect(panel).not.toHaveClass(/is-open/);
+      await expect(page.locator('body')).not.toHaveClass(/topbar-mobile-lock/);
+      await page.screenshot({ path: testInfo.outputPath('shot-tablet-menu-navigating.png'), fullPage: true });
+    } finally { release(); }
+    await tap;
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/friends/');
+  } finally { await context.close(); }
+});

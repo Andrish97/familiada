@@ -116,6 +116,7 @@ function wireButtons(id, user, d) {
       delete btn.dataset.navBlockedUntil;
     }
     if (spec.custom) continue;
+    btn.dataset.navHref = buttonHref(spec);
     if (btn.tagName === "A") { btn.setAttribute("href", buttonHref(spec)); continue; }
     btn.addEventListener("click", () => { location.href = buttonHref(spec); });
   }

@@ -19,6 +19,7 @@ export async function initContactsPage(pageId) {
   const cooldowns = createCooldownTicker();
   let rows = [];
   let inFlight = null;
+  let declinedCollapsed = true;
   const ownerLabel = user.user_metadata?.username || user.email || "Familiada";
 
   async function call(name, args) {
@@ -37,6 +38,16 @@ export async function initContactsPage(pageId) {
       link.textContent = t("contacts.go");
       await alertModal({ text: t(`contacts.errors.${other === "friends" ? "hasAccount" : "emailOnly"}`), body: link });
     } else {
+      if (friends && result?.err === "already") {
+        await refresh();
+        const key = result.status === "active" ? "alreadyFriend"
+          : result.status === "declined" ? (result.direction === "incoming" ? "ownDeclined" : "declined")
+          : result.direction === "incoming" ? "incomingPending" : "outgoingPending";
+        toast(t(`contacts.errors.${key}`));
+        if (result.direction === "incoming" && result.status === "declined") { declinedCollapsed = false; render(); }
+        focusRow(result.id);
+        return;
+      }
       toast(result?.err === "cooldown" ? t("contacts.errors.cooldown", { date: new Date(result.cooldown_until).toLocaleString() })
         : result?.err === "already" ? t("contacts.errors.already") : t("contacts.errors.action"), { kind: "error" });
       console.warn("[contacts] action:", error);
@@ -69,9 +80,12 @@ export async function initContactsPage(pageId) {
           onTick: (_, active) => { rowEl.classList.toggle("blocked", active); rowEl.classList.toggle("is-cooling-down", active); } });
         cooldowns.setEndMs(key, Date.parse(row.resend_available_at) || 0);
       } : undefined });
-    if (friends && row.direction === "incoming") { add("accept", "check", true); if (row.status === "pending") add("reject", "cancel"); }
+    if (friends && row.direction === "incoming") {
+      if (row.status === "declined") add("undo_reject", "undo", false, true);
+      else { add("accept", "check", true); add("reject", "cancel"); }
+    }
     else if (["pending", "declined"].includes(row.status)) {
-      if (row.email_enabled !== false) add("resend", "refresh");
+      if (row.status === "pending" && row.email_enabled !== false) add("resend", "refresh");
       add(friends ? "cancel" : "remove", "trash", false, true);
     }
     else add("remove", "trash", false, true);
@@ -84,15 +98,25 @@ export async function initContactsPage(pageId) {
   function render() {
     cooldowns.resetBindings();
     const make = (key) => {
+      const selected = rows.filter(row => key === "declined" && friends
+        ? row.direction === "incoming" && row.status === "declined"
+        : (friends ? row.direction : row.status) === key && !(friends && key === "incoming" && row.status === "declined"));
       const section = shareSectionEl({ key, title: t(`contacts.sections.${key}`),
-        rows: rows.filter(row => (friends ? row.direction : row.status) === key).map(rowOf),
+        rows: selected.map(rowOf),
+        ...(key === "declined" && friends ? { collapsed: declinedCollapsed, onToggle: value => { declinedCollapsed = value; } } : {}),
         emptyText: t(`contacts.empty.${key}`) });
       // Zachowane znaczniki dla wskazania zaproszenia i testów przepływu.
       section.classList.add("rowsSection--" + key);
+      if (key === "declined" && !selected.length) section.hidden = true;
       return section;
     };
     document.getElementById("contactsOutgoing").replaceChildren(make(friends ? "outgoing" : "pending"));
-    document.getElementById("contactsReceived").replaceChildren(...(friends ? ["friend", "incoming"] : ["active"]).map(make));
+    document.getElementById("contactsReceived").replaceChildren(...(friends ? ["friend", "incoming", "declined"] : ["active"]).map(make));
+  }
+  function focusRow(id) {
+    const row = host.querySelector(`.shareRow[data-id="${CSS.escape(String(id))}"]`);
+    row?.classList.add("rowsFocus");
+    row?.scrollIntoView({ block: "nearest" });
   }
   async function refresh() {
     if (inFlight) return inFlight;
@@ -141,7 +165,10 @@ export async function initContactsPage(pageId) {
   if (friends && token) {
     try {
       const resolved = await call("poll_go_resolve", { p_token: token });
-      host.querySelector(`.shareRow[data-id="${CSS.escape(resolved.id)}"]`)?.classList.add("rowsFocus");
+      if (rows.some(row => row.id === resolved.id && row.direction === "incoming" && row.status === "declined")) {
+        declinedCollapsed = false; render();
+      }
+      focusRow(resolved.id);
     } catch (error) { await report(error); }
   }
   document.querySelectorAll("[data-skel-step]").forEach(el => el.classList.add("skel-step-ready"));
