@@ -60,12 +60,20 @@ export const PAGES = {
     btnPoll:             { to: "polls", custom: true },
   } },
   editor:        { path: "/games/editor/",     access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"], locks: [{ type: "game", id: "id" }] },
-  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "friends", "subscribers", "tasks"], manual: "polls", tabs: ["share", "results"], state: ["id", "tab"], locks: [{ type: "game", id: "id" }] },
-  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "subscribers", "bases", "polls"], manual: "polls", state: ["f"] },
-  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "friends", "polls"], manual: "polls", state: [] },
+  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "friends", "subscribers", "tasks"], manual: "polls", tabs: ["share", "results"], state: ["id", "tab"], buttons: {
+    btnFriends: { to: "friends", roles: ["user"] },
+    btnSubscribers: { to: "subscribers", roles: ["user"] },
+  }, locks: [{ type: "game", id: "id" }] },
+  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "subscribers", "bases", "polls", "control"], manual: "polls", state: ["f"], buttons: {
+    btnSubscribers: { to: "subscribers", roles: ["user"] },
+  } },
+  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "friends", "polls", "bases"], manual: "polls", state: [], buttons: {
+    btnFriends: { to: "friends", roles: ["user"] },
+  } },
   tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "polls", state: ["kind"] },
   bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "tasks", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab"], buttons: {
     btnGoAlt:  { to: "friends", roles: ["user"] },
+    btnSubscribers: { to: "subscribers", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
   baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder"], locks: [{ type: "base", id: "id", mode: "shared" }] },
@@ -73,7 +81,9 @@ export const PAGES = {
   logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
   logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
   logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
-  control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"], locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
+  control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"], buttons: {
+    btnFriends: { to: "friends", roles: ["user"] },
+  }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
   gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"], buttons: {
     btnPlay: { to: "control", custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },

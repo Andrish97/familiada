@@ -6,7 +6,7 @@ const { loginAsPooledTestUser, loginAsGuest } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "friends", "subscribers", "tasks", "manual", "connect", "logo", "marketplace", "account"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "control", "polls", "friends", "subscribers", "tasks", "manual", "connect", "logo", "marketplace", "account"] });
 });
 for (const path of ["/connect", "/connect/"]) {
   test(`anonim: powrót z ${path} ma strzałkę i prowadzi na stronę główną`, async ({ page }) => {
@@ -157,5 +157,38 @@ for (const map of MAP_LIST) {
       }
     }
     expect(clicked).toBeGreaterThan(0);
+  });
+}
+
+for (const [device, viewport] of Object.entries(VIEWPORTS)) {
+  test(`kontakty: skróty i ikony na stronach — ${device}`, async ({page}, testInfo) => {
+    test.setTimeout(120000);
+    await page.setViewportSize(viewport);
+    await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+    const origins = [
+      ["/games/", ["btnFriends", "btnSubscribers"]],
+      ["/bases/", ["btnGoAlt", "btnSubscribers"]],
+      ["/polls/", ["btnFriends", "btnSubscribers"]],
+      ["/friends/", ["btnSubscribers"]],
+      ["/subscribers/", ["btnFriends"]],
+      ...device === "desktop" ? [["/control/", ["btnFriends"]]] : [],
+    ];
+    for (const [source, ids] of origins) for (const id of ids) {
+      await page.goto(source, {waitUntil:"domcontentloaded"});
+      await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+      const button = page.locator(`#${id}`);
+      const subscribers = id === "btnSubscribers";
+      await expect(button.locator(`svg.ico-${subscribers ? "envelope" : "people"}`)).toHaveCount(1);
+      expect(await button.evaluate(el => el.dataset.navHidden)).not.toBe("true");
+      await clickEl(button);
+      await expect.poll(() => new URL(page.url()).pathname).toBe(subscribers ? "/subscribers/" : "/friends/");
+      expect(new URL(page.url()).searchParams.get("ret")).toBe(source);
+      await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+      await page.locator("#btnBack").click();
+      await expect.poll(() => new URL(page.url()).pathname).toBe(source);
+    }
+    await page.goto("/games/");
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+    await page.screenshot({path:testInfo.outputPath(`shot-contact-navigation-${device}.png`),fullPage:true});
   });
 }

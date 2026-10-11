@@ -159,3 +159,16 @@ test("docs/nawigacja-mapa-plan.md: diagramy zgodne z PAGES (node scripts/nav-map
   const doc = readFileSync(DOC, "utf8");
   assert.equal(applyToDoc(doc), doc, "diagramy nieaktualne — uruchom: node scripts/nav-maps.mjs");
 });
+
+test("skróty kontaktów: wspólne ikony, tylko konto i powrót do Control", () => {
+  for (const [id, p] of withButtons) for (const [bid, spec] of Object.entries(p.buttons)) {
+    if (!["friends", "subscribers"].includes(spec.to)) continue;
+    const html = readFileSync(htmlOf(id), "utf8");
+    const button = html.match(new RegExp(`<button[^>]*id="${bid}"[^>]*>[\\s\\S]*?</button>`))?.[0];
+    assert.ok(button, `${id}.${bid}`);
+    assert.match(button, new RegExp(`data-i18n-icon-after="${spec.to === "friends" ? "people" : "envelope"}"`));
+    assert.equal(buttonVisible(id, spec, "guest", false), false);
+    assert.equal(buttonVisible(id, spec, "user", false), true);
+  }
+  assert.match(readFileSync(htmlOf("games"), "utf8"), /data-i18n="games.nav.tasks" data-i18n-icon-after="bell"/);
+});

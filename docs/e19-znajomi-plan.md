@@ -412,3 +412,9 @@ nieograniczoną łączną liczbę głosów i nie karze osób we wspólnej sieci.
   maili po usunięciu relacji pozostają następną częścią kontraktów.
 - Polecenie użytkownika: kontynuować zawsze bez pytania, po paczce przechodzić
   dalej; zrzuty po wykonaniu i obowiązkowy cykl kontroli produkcji pozostają.
+
+### Skróty kontaktów (decyzja użytkownika 2026-10-11)
+
+Dodać ikony na przyciskach Znajomych/Subskrybentów, konsekwentne skróty
+na stronach, gdzie były Subskrypcje, i „Znajomi” w Control. Szczegóły
+routingów i powrotów: `nawigacja-mapa-plan.md`, „Skróty kontaktów”.

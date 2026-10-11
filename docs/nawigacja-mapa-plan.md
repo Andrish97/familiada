@@ -731,8 +731,14 @@ flowchart LR
   games -->|btnSettings*| gameSettings
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
+  polls -->|btnFriends| friends
+  polls -->|btnSubscribers| subscribers
+  friends -->|btnSubscribers| subscribers
+  subscribers -->|btnFriends| friends
   bases -->|btnGoAlt| friends
+  bases -->|btnSubscribers| subscribers
   bases -->|btnBrowse*| baseExplorer
+  control -->|btnFriends| friends
   gameSettings -->|btnPlay*| control
   manual -->|btnLegal| privacy
   login -.->|↩| home
@@ -785,7 +791,12 @@ flowchart LR
   games -->|btnBases| bases
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
+  polls -->|btnFriends| friends
+  polls -->|btnSubscribers| subscribers
+  friends -->|btnSubscribers| subscribers
+  subscribers -->|btnFriends| friends
   bases -->|btnGoAlt| friends
+  bases -->|btnSubscribers| subscribers
   bases -->|btnBrowse*| baseExplorer
   manual -->|btnLegal| privacy
   login -.->|↩| home
@@ -1032,3 +1043,13 @@ Podjęte (2026-10-07):
   bazę współdzielenie (zmiana nazwy / udostępnianie / usunięcie całej
   bazy zablokowane), elementy jak dziś; opis według „kto trzyma — kto
   rozpoznaje”, nie według czasu trzymania.
+
+### Skróty kontaktów — decyzja 2026-10-11
+
+Przyciski „Znajomi” i „Subskrybenci” mają ikony `people` i `envelope` ze
+wspólnego zestawu (Znajomi: dwa ludziki z kafelka bazy). Zadania mają ikonę
+`bell` zgodnie z doprecyzowaniem użytkownika. Skróty do obu stron są w Grach, Bazach i Ankietach;
+Znajomi/Subskrybenci mają wzajemny skrót. Control ma skrót „Znajomi”.
+Przyciski tylko dla konta, wg `PAGES`; powrót zachowuje źródło i parametry,
+również z Control. Na telefonie skróty działają w istniejącym menu topbara;
+Control zachowuje guard. Bez starych adresów Subskrypcji ani aliasów.
