@@ -19,8 +19,9 @@ branch 38135140865 ✓, produkcja 38135404218 ✓ (4/4 + unit 404/404),
 mail test14 odebrany produkcyjnie po 65 s. **Test14 nadal bez konta.**
 
 Branch `codex/e19-3` kontynuuje krok 7. Następne: zachowanie odmów w
-kontraktach kontaktów (friends_reject obecnie kasuje rekord), metadata
-flagi mailowej i cooldownów, wspólne sekcje Baz/Ankiet. Lista w
+kontraktach kontaktów (friends_reject obecnie kasuje rekord) i wspólne
+sekcje Baz/Ankiet. Metadata flagi mailowej i cooldownów (327), liczniki
+oraz ikony/skróty kontaktów wdrożone: kontrola 38138576962 ✓. Lista w
 `e19-znajomi-plan.md` §5. Przegląd treści i wyglądu wszystkich maili jest
 osobnym punktem w `maile-granice.md`. Dla zmian rozpisywać pełne pokrycie
 stanów/uprawnień i przypadków krzyżowych, bez zastępowania testu odbioru
@@ -31,6 +32,17 @@ historyczne. Użytkownik wznowił pracę, zezwolił na cięższe lokalne zadania
 i push na main po wymaganych kontrolach. Zmiany wizualne dokumentować
 zrzutami po wykonaniu, bez czekania na decyzję; Control na telefonie
 zachowuje guard. Manual zawsze na końcu.
+
+## Zadania — poprawka odstępów i przegląd kafelków
+
+Poprawka CSS `e4ea8cd53` wdrożona: Pages 38139190584 ✓.
+Branch 38139084807 ✓: 3/3 bez retry (rzeczywista baza oraz kontrolowany
+przegląd wszystkich 10 wariantów, filtry, zwijanie, pusty stan, odstępy
+na 1400/390 px), unit 408/408. Produkcyjna kontrola 38139233191 w toku;
+na main spec używa opublikowanych plików Pages, nie podmiany kodu.
+Sześć zrzutów w `docs/img/e19-tasks/`, tabela stanów i linki w planie E19.
+Ankiety z głosem: Zrobione 5 dni; bazy po decyzji znikają; urządzenia
+podłączone pozostają do cofnięcia/wygaśnięcia. Nie zmieniano tych zasad.
 
 ## Tymczasowa blokada skrótu Control (2026-10-11)
 

@@ -305,3 +305,5 @@ Stan szczegółowy:
 | 2026-10-11 | Zadania / odstępy i warianty — branch | Zgłoszenie użytkownika: odstępy i zrzuty każdego rodzaju/stanu. Poprawiono odstęp nagłówka/karty, wierszy i sekcji; teksty zawijają się zamiast ucinać, przyciski mobilne 40 px. Fixture obejmuje obie ankiety todo/done, dwie role bazy i cztery urządzenia. Tabela w planie rozróżnia kafelki widoczne i stany usuwające je z listy. Unit 408/408 ✓; lokalny renderer 1400/390 bez poziomego overflow. | Punktowe E2E tasks: rzeczywista akceptacja bazy + kontrolowany przegląd wariantów, odstępy, filtry, zwijanie i stan pusty. |
 
 | 2026-10-11 | Zadania / branch zielony | 38139084807 ✓: rzeczywiste udostępnienie/filtr/akceptacja bazy oraz dwa kontrolowane przeglądy wszystkich wariantów 1400/390 px. Unit 408/408 ✓. Sześć zrzutów zapisano w docs/img/e19-tasks, odnośniki w planie E19. | Promocja na main i taka sama kontrola produkcyjna. |
+
+| 2026-10-11 | Zadania / Pages | Pages 38139190584 ✓; test na main sprawdza opublikowany HTML/CSS/JS (bez serveBranchCode), z rzeczywistą bazą i kontrolowanymi danymi wszystkich kafelków. | Produkcyjny run 38139233191 w toku. |
