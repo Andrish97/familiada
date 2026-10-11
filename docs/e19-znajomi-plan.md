@@ -481,3 +481,27 @@ Zrzuty po poprawce:
 **Doprecyzowanie kolorów Zadania (2026-10-11):** delikatne oznaczenie rodzaju zasobu: ankiety złote, bazy niebieskie, urządzenia zielonkawe. Kolor ikony, jej subtelne tło i lewa krawędź kafelka; teksty/akcje nadal wspólne. Kolor nie zastępuje ikony ani nazwy rodzaju. To samo oznaczenie ankiety w Do zrobienia i Zrobione.
 
 **Korekta mobilnych kafelków Zadania (2026-10-11):** użytkownik zgłosił zbyt dużo informacji i nadmierną wysokość. Na telefonie skrócony opis bez dat otrzymania, głosowania i ważności; pozostaje rodzaj/rola oraz nadawca. Tytuł i opis maksymalnie po dwie linie, ikona pochodzenia 30 px. Pełny opis nadal na komputerze. Zastępuje wcześniejsze doprecyzowanie pełnego zawijania tekstów na mobile; wykonana poprawka odstępów zostaje.
+
+### Trwała odmowa znajomości — paczka 328
+
+Odrzucony wpis pozostaje z tym samym tokenem i cooldownem. Wysłane:
+Ponów (tylko mail, ukryty bez powiadomień) oraz Cofnij; odbiorca może
+świadomie przyjąć odrzucone zaproszenie, ale nie odrzuca go drugi raz.
+Krzyżowe zaproszenie od odbiorcy również jest świadomą akceptacją.
+Cofnięcie usuwa wpis i unieważnia token, 30-dniowa blokada nowego
+zaproszenia po odmowie nie znika. Przyjęte zasoby pozostają osobną gałęzią.
+
+Podgląd renderera z danymi przykładowymi:
+[komputer](img/e19-friends/declined-desktop.png) ·
+[telefon](img/e19-friends/declined-phone.png).
+
+Testy SQL obejmują ACL, kierunki/uprawnienia, odmowę, niezmienność tokenu
+i decyzji przy ponowieniu, flagę mailową, cooldown, świadomą akceptację,
+cofnięcie i usunięcie rodzica. Osobny test równoczesnych przypomnień
+sprawdza, że tylko jedno dostaje zgodę i zwiększa licznik. Test UI z
+kontrolowanymi danymi sprawdza oba kierunki i akcje na desktop/mobile;
+prawdziwy mail E2E sprawdza zachowanie dostarczonego linku po odmowie
+i akceptacji oraz drugi przypadek cofania, tworzony fixture RPC bez maila.
+Okna czasu ponowienia testowane w izolowanym SQL, bez udawania, że
+upłynęło pięć dni na produkcji. Trwały limit po usunięciu relacji oraz
+kontrakt odmów Subskrybentów nadal w kolejnych paczkach.
