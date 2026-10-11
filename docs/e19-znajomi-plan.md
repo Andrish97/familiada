@@ -1279,3 +1279,8 @@ Przed testem odtworzyć brakujące konto z potwierdzonym adresem; po usunięciu
 odtworzyć i sprawdzić logowanie oraz brak dostępu do dawnych udostępnień.
 Odtworzenie również przy błędzie (finally). Konta9/10 wyłączone,14 bez konta.
 Odtworzenie dotyczy konta, nie usuniętych zasobów i relacji.
+
+Doprecyzowanie:11 pozostaje kontem testów hasła;12 z alternatywnym adresem13
+pozostaje do testów profilu i zmiany e-maila.13 nie jest osobnym kontem.
+Test usuwania12 kończy się przywróceniem adresu12 i standardowego hasła,
+aby kolejne testy zmiany adresu mogły zaczynać od znanego stanu.
