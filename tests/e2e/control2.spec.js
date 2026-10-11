@@ -2627,12 +2627,16 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await expect(page.locator("#shareDeviceOverlay .shareSection")).toHaveCount(3);
     await page.locator("#shareDeviceEmail").fill(recipient);
     await expect(page.locator("#shareDeviceMsg")).toContainText("już udostępniono", { timeout: 10000 });
-    await testInfo.attach("control-share-message", { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
+    const messageShot = testInfo.outputPath("shot-control-share-message.png");
+    await page.screenshot({ path: messageShot, fullPage: true });
+    await testInfo.attach("control-share-message", { path: messageShot, contentType: "image/png" });
     await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
     await expect(page.locator("#shareDeviceMsg")).toBeHidden({ timeout: 5000 });
     // Zniknięcie komunikatu nie odblokowuje duplikatu udostępnienia.
     await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
-    await testInfo.attach("control-share-ready", { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
+    const readyShot = testInfo.outputPath("shot-control-share-ready.png");
+    await page.screenshot({ path: readyShot, fullPage: true });
+    await testInfo.attach("control-share-ready", { path: readyShot, contentType: "image/png" });
 
     // Zgłoszony realny bug naprawiony migracją 287: share_device() robiło
     // ON CONFLICT DO UPDATE bez sygnalizowania wywołującemu, czy to nowy
