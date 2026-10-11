@@ -48,6 +48,7 @@ serve(async (req) => {
 
     let body: any;
     try { body = JSON.parse(raw); } catch { return json({ ok: false, error: "Invalid JSON" }, 400); }
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ ok: false, error: "Invalid body" }, 400);
 
     // Ujednolicenie cooldownów maili: KAŻDY wiersz mail_queue musi nieść
     // cooldown_action_key/cooldown_target_key -- to jest to, co BEFORE
