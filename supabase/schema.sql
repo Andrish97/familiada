@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fpBfcpu5a3OaPd7LdD5HYpAuEda3QOsH1llP0h2K769WlRradDs0mgo7ZlDtkCv
+\restrict TkKASf4shh9fSAnisMwIA7DX4tlgF7R7hZAMN0nraFEgdIaESTOGbIklfwdtmTS
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9730,65 +9730,10 @@ $$;
 --
 
 CREATE FUNCTION "public"."poll_go_subscribe_email"("p_token" "uuid", "p_email" "text") RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
-  v_email text;
-  v_sub public.poll_subscriptions%rowtype;
-begin
-  v_email := lower(trim(coalesce(p_email,'')));
-
-  if v_email = '' or position('@' in v_email) = 0 then
-    return false;
-  end if;
-
-  select * into v_sub
-  from public.poll_subscriptions s
-  where s.token = p_token
-  limit 1;
-
-  if not found then
-    return false;
-  end if;
-
-  if v_sub.status = 'pending'
-     and v_sub.subscriber_user_id is null
-     and v_sub.cancelled_at is null
-     and v_sub.declined_at is null then
-    if v_sub.subscriber_email is not null
-       and public._norm_email(v_sub.subscriber_email) <> public._norm_email(v_email) then
-      return false;
-    end if;
-
-    update public.poll_subscriptions s
-       set subscriber_email = coalesce(s.subscriber_email, v_email),
-           status = 'active',
-           opened_at = coalesce(s.opened_at, now()),
-           accepted_at = now()
-     where s.id = v_sub.id;
-
-    return found;
-  end if;
-
-  insert into public.poll_subscriptions (
-    owner_id,
-    subscriber_email,
-    status,
-    created_at,
-    opened_at,
-    accepted_at
-  )
-  values (
-    v_sub.owner_id,
-    v_email,
-    'active',
-    now(),
-    now(),
-    now()
-  );
-
-  return true;
-end;
+  SELECT coalesce((public.poll_sub_accept_email(p_token,p_email)->>'ok')::boolean,false);
 $$;
 
 
@@ -10472,52 +10417,37 @@ $$;
 
 CREATE FUNCTION "public"."poll_sub_accept_email"("p_token" "uuid", "p_email" "text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
+DECLARE
   e text := public._norm_email(p_email);
-  s record;
-begin
-  if e is null then
-    return jsonb_build_object('ok', false, 'error', 'missing_email');
-  end if;
-
-  select *
-  into s
-  from public.poll_subscriptions
-  where token = p_token
-  limit 1;
-
-  if s is null then
-    return jsonb_build_object('ok', false, 'error', 'invalid_token');
-  end if;
-
-  if s.subscriber_user_id is not null then
-    return jsonb_build_object('ok', false, 'error', 'registered_invite_requires_login');
-  end if;
-
-  if s.cancelled_at is not null or s.declined_at is not null then
-    return jsonb_build_object('ok', false, 'error', 'already_closed');
-  end if;
-
-  if s.accepted_at is not null or s.status = 'active' then
-    return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'accept', 'note', 'already_active');
-  end if;
-
-  if public._norm_email(s.subscriber_email) <> e then
-    return jsonb_build_object('ok', false, 'error', 'email_mismatch');
-  end if;
-
-  update public.poll_subscriptions
-    set status = 'active',
-        accepted_at = coalesce(accepted_at, now()),
-        opened_at   = coalesce(opened_at, now()),
-        declined_at = null,
-        cancelled_at = null
-  where token = p_token;
-
-  return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'accept');
-end;
+  s public.poll_subscriptions%rowtype;
+BEGIN
+  IF e IS NULL THEN
+    RETURN jsonb_build_object('ok',false,'error','missing_email');
+  END IF;
+  SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok',false,'error','invalid_token');
+  END IF;
+  IF s.subscriber_user_id IS NOT NULL THEN
+    RETURN jsonb_build_object('ok',false,'error','registered_invite_requires_login');
+  END IF;
+  IF s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL OR s.status NOT IN ('pending','active') THEN
+    RETURN jsonb_build_object('ok',false,'error','already_closed');
+  END IF;
+  -- Match the address also on idempotent acceptance of an active invitation.
+  IF public._norm_email(s.subscriber_email) IS DISTINCT FROM e THEN
+    RETURN jsonb_build_object('ok',false,'error','email_mismatch');
+  END IF;
+  IF s.status='active' THEN
+    RETURN jsonb_build_object('ok',true,'kind','sub','action','accept','note','already_active');
+  END IF;
+  UPDATE public.poll_subscriptions SET status='active',
+    accepted_at=coalesce(accepted_at,now()), opened_at=coalesce(opened_at,now())
+    WHERE id=s.id;
+  RETURN jsonb_build_object('ok',true,'kind','sub','action','accept');
+END;
 $$;
 
 
@@ -19677,5 +19607,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fpBfcpu5a3OaPd7LdD5HYpAuEda3QOsH1llP0h2K769WlRradDs0mgo7ZlDtkCv
+\unrestrict TkKASf4shh9fSAnisMwIA7DX4tlgF7R7hZAMN0nraFEgdIaESTOGbIklfwdtmTS
 
