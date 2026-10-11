@@ -52,3 +52,16 @@ body.games-body > main.wrap > .bar{
     justify-content: center;
   }
 }
+
+/* Dyskretny kolor pochodzenia; rodzaj pozostaje czytelny także z ikony i opisu. */
+.tasks-card .rowsRow[data-kind="poll"]{ --task-accent: 255, 218, 128; }
+.tasks-card .rowsRow[data-kind="base"]{ --task-accent: 137, 185, 255; }
+.tasks-card .rowsRow[data-kind="device"]{ --task-accent: 115, 210, 183; }
+.tasks-card .rowsRow[data-kind]{
+  border-left: 2px solid rgba(var(--task-accent), .4);
+}
+.tasks-card .rowsRow[data-kind] .rowsAvatar{
+  color: rgb(var(--task-accent));
+  background: rgba(var(--task-accent), .10);
+  border-color: rgba(var(--task-accent), .28);
+}

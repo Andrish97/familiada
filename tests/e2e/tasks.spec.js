@@ -107,6 +107,12 @@ for (const width of [1400, 390]) {
         await expect(row.locator(".rowsAct")).toHaveCount(actions.length);
         for (const action of actions) await expect(row.locator(`[data-act="${action}"]`)).toHaveAttribute("aria-label", /.+/);
       }
+      const colors = await page.evaluate(() => Object.fromEntries(["poll", "base", "device"].map((kind) => {
+        const row = document.querySelector(`.rowsRow[data-kind="${kind}"]`);
+        return [kind, { accent: getComputedStyle(row).borderLeftColor, icon: getComputedStyle(row.querySelector(".rowsAvatar")).color }];
+      })));
+      expect(new Set(Object.values(colors).map((x) => x.accent)).size).toBe(3);
+      expect(new Set(Object.values(colors).map((x) => x.icon)).size).toBe(3);
       const metrics = await page.evaluate(() => {
         const rect = (s) => document.querySelector(s).getBoundingClientRect();
         const first = rect(".rowsSection--todo .rowsRow");

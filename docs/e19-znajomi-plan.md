@@ -466,3 +466,5 @@ Zrzuty po poprawce:
 | Pusta lista | [zrzut](img/e19-tasks/empty-desktop.png) | [zrzut](img/e19-tasks/empty-phone.png) |
 
 **Decyzja użytkownika — ikony pochodzenia Zadania (2026-10-11):** po lewej zamiast inicjału nadawcy ikona rodzaju zasobu: ankieta `polls`, baza `drawer`, urządzenia `host` / `buzzer` / `display` (również wyświetlacz QR). Nazwa nadawcy pozostaje w opisie. Ikona jest taka sama przed i po wykonaniu ankiety. Wspólny renderer wierszy obsługuje opcjonalne `avatarIcon`; korzysta ze wspólnego silnika ikon.
+
+**Doprecyzowanie kolorów Zadania (2026-10-11):** delikatne oznaczenie rodzaju zasobu: ankiety złote, bazy niebieskie, urządzenia zielonkawe. Kolor ikony, jej subtelne tło i lewa krawędź kafelka; teksty/akcje nadal wspólne. Kolor nie zastępuje ikony ani nazwy rodzaju. To samo oznaczenie ankiety w Do zrobienia i Zrobione.
