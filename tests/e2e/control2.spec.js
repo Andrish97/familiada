@@ -2639,17 +2639,10 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     expect(repeatResult.data?.ok).toBe(true);
     expect(repeatResult.data?.created, "duplikat grantu dla aktywnej sesji nie tworzy nowego tokenu ani ponownego maila").toBe(false);
 
-    // BEZ `timeout` -- domyślne 90s z helpers/mailbox.js, tak jak WSZYSTKIE
-    // inne testy mailowe w repo (bases.spec.js/
-    // subscriptions.spec.js/account-password-email.spec.js). Zgłoszone:
-    // poprzednia wersja jawnie skracała do 60_000 -- ale docs/email-system-
-    // description.md's mail-worker przetwarza kolejkę `mail_queue` co 60s
-    // (pg_cron), więc worst-case opóźnienie samo w sobie zbliża się do 60s
-    // (mail wstawiony tuż PO tiku czeka na kolejny), zanim doliczyć jeszcze
-    // czas wysyłki przez łańcuch dostawców -- 60_000 nie był bezpiecznym
-    // marginesem ponad to, tylko dokładnie na jego granicy (realny powód
-    // sporadycznych "Nie otrzymano maila... w 60000 ms" w CI, nie infra flake).
-    const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/ });
+    // Mail-worker działa co 2 minuty. W produkcyjnym przebiegu 38129826723
+    // wiadomość nadal była pending po 90 s, a dotarła po ok. 122 s;
+    // używamy 150 s, żeby pokryć pełny interwał i czas dostawcy.
+    const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/, timeout: 150_000 });
     const links = extractHttpLinks(email).filter((u) => u.includes("/go/") && u.includes("d=host"));
     expect(links.length, "mail musi zawierać działający link do /go/?d=host").toBeGreaterThan(0);
 
