@@ -1,11 +1,11 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T12350";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-11T12350";
-import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-11T12350";
-import { createCooldownTicker, formatCooldownRemaining, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-11T12350";
-import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T12350";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T12404";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-11T12404";
+import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-11T12404";
+import { createCooldownTicker, formatCooldownRemaining, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-11T12404";
+import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T12404";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 

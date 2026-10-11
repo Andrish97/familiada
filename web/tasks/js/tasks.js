@@ -5,15 +5,15 @@
 // fokus z adresu: ?t=<token ankiety> / ?b=<token bazy>.
 // Dane: RPC tasks_list (migracja 320). Wiersze: share-sections.js.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T12350";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-11T12350";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T12350";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T12350";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-11T12350";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T12350";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-11T12350";
-import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-11T12350";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T12350";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T12404";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-11T12404";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T12404";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T12404";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-11T12404";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T12404";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-11T12404";
+import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-11T12404";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T12404";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[tasks] i18n nieaktywny:", err);
