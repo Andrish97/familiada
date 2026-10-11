@@ -253,7 +253,12 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
 5. **Jeden podział na sekcje wszędzie, gdzie udostępniamy zasób (2026-10-09,
    doprecyzowanie użytkownika).** Wzorem jest okno udostępniania bazy
    (Subskrybenci · Oczekujące · Aktywni). Ten sam zestaw i kolejność sekcji,
-   te same nagłówki z podpisem, ten sam kafel — wspólny komponent:
+   te same nagłówki z podpisem, ten sam kafel — wspólny komponent. Sekcje
+   odpowiadające sobie na różnych stronach mają używać dokładnie tych samych
+   komponentów i reguł CSS, bez lokalnych kopii klas ani odchyleń per strona:
+   wspólne są nagłówki i podpisy, odstępy, listy, wiersze osób, stany, etykiety
+   kanału, akcje i puste stany. Zmienia się tylko zawartość i akcje właściwe
+   zasobowi; breakpointy również definiuje współdzielony CSS.
    - **Subskrybenci** (do zaproszenia — jeszcze bez zaproszenia),
    - **Oczekujące** (zaproszenie wysłane, bez odpowiedzi),
    - **Aktywni** (przyjęte; w ankiecie: zagłosowali),
@@ -297,6 +302,19 @@ etykieta kanału, miejsce akcji, widoczny cooldown oraz reguła maila z
 | Ankieta — „Udostępnij” | Druga równa połowa karty. Wybór checkboxami z list Znajomych i Subskrybentów, bez ręcznego pola e-mail. | Pokazać oczekuje/otworzył, zagłosował albo odrzucił. Lista dotyczy wyłącznie bieżącego uruchomienia ankiety. | Oczekującym bez głosu i odrzuconym można wysłać przypominający e-mail z cooldownem (przycisk ukryty przy wyłączonych powiadomieniach). |
 | Znajomi | Komputer: lewa kolumna dodawania (e-mail/nazwa, zaproszenia wychodzące); prawa: znajomi i zaproszenia przychodzące. Telefon: cztery sekcje albo dwie karty. | Wiersze z etykietą stanu: oczekuje, odrzucono, znajomy, zaproszenie przychodzące. | X cofa oczekujące zaproszenie; usuń kasuje relację znajomości. Oczekujące i odrzucone zaproszenie można przypomnieć mailem po cooldownie; przy wyłączonych powiadomieniach brak przycisku. |
 | Subskrybenci | Analogiczna lista jednostronna bez zaproszeń przychodzących/propozycji. | Wiersze oczekujące i aktywne, z etykietą e-mail. | Ponów = przypominający e-mail do istniejącego zaproszenia; cooldown i ukrywanie przycisku takie jak wyżej. Usunięcie kończy subskrypcję. |
+
+**CSS sekcji:** wszystkie odpowiadające sobie sekcje udostępniania na tych
+stronach mają wyglądać identycznie i korzystać z tego samego markup/componentu
+oraz tych samych reguł CSS. Wspólne są nagłówek, podpis, odstępy, lista, wiersz,
+etykiety kanału i stanu, puste stany, akcje oraz zachowanie responsywne. Per
+strona zmienia się tylko zawartość i zestaw dozwolonych akcji; nie dodajemy
+lokalnych wariantów CSS, które rozjeżdżają wygląd sekcji.
+
+**Przyciski ankiety:** przyciski akcji w widoku Ankiet wyglądają źle i wymagają
+osobnej poprawki wizualnej. Ujednolicić rozmiar, hierarchię, odstępy,
+wyrównanie oraz stany hover/disabled ze wspólnym wzorcem przycisków. Dotyczy
+paska akcji stanu ankiety i pozostałych akcji ankiet; nie tworzyć osobnych
+stylów dla każdego przycisku.
 
 Wspólne dla wszystkich ekranów: przypomnienie nie tworzy rekordu dostępu ani
 nowego tokenu. Flaga `user_flags.email_notifications` jest sprawdzana przed
@@ -348,7 +366,8 @@ urządzenia.
    e-mail) dopiero przy dłuższej liście; „Pokaż zakończone” zamiast osobnego
    przełącznika archiwum.
 5. Jeden wspólny komponent (rozwinięcie `share-sections.js`) dla wszystkich
-   miejsc udostępniania. Realizacja po etapach nawigacji (E6–E9).
+   miejsc udostępniania. Ma renderować te sekcje przez ten sam CSS, nie tylko
+   podobny markup. Realizacja po etapach nawigacji (E6–E9).
 6. **Kanały udostępniania** (uzupełnienie 2026-10-09): bazy i urządzenia
    udostępnia się na dwa sposoby — **mailem / nazwą użytkownika bez
    subskrypcji** (`base_share_by_email`, `base_share_by_user`,
