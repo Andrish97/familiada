@@ -113,8 +113,13 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(1);
     await recipient.goto("https://www.familiada.online/account/");
+    await recipient.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20000 });
     await recipient.locator("#deletePassword").fill(process.env.TEST_PASSWORD);
+    const deletionResponse = recipient.waitForResponse(response => response.url().includes("/functions/v1/delete-account") && response.request().method() === "POST", { timeout: 30000 });
     await recipient.locator("#deleteAccount").click();
+    const deletion = await deletionResponse;
+    expect(deletion.status()).toBe(200);
+    expect(await deletion.json()).toMatchObject({ ok: true });
     await recipient.waitForURL(/login/, { timeout: 30000 });
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(0);
