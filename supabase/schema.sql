@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict uyIGSPzEr32tgy4alNK96wqEQddgB7h941m8IbGeF2jJaX7M2IuXuQmOK7RF7BE
+\restrict 5pvYi10PBEyxOyJ9TX3RhbywTwfEzj29SAvIg4OhraIubSDUehcD9DzY8g86sI1
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1972,7 +1972,7 @@ CREATE FUNCTION "public"."contacts_list"("p_kind" "text") RETURNS "jsonb"
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 DECLARE v_uid uuid:=auth.uid(); v_row jsonb; v_rows jsonb; v_result jsonb:='[]';
-  v_target text; v_until timestamptz; v_enabled boolean;
+  v_target text; v_until timestamptz; v_enabled boolean; v_declined_at timestamptz;
 BEGIN
   IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
   IF p_kind='friends' THEN
@@ -1981,9 +1981,12 @@ BEGIN
     SELECT coalesce(jsonb_agg(to_jsonb(s)),'[]') INTO v_rows FROM public.subscribers_list() s;
   ELSE RETURN jsonb_build_object('ok',false,'err','invalid_kind'); END IF;
   FOR v_row IN SELECT value FROM jsonb_array_elements(v_rows) LOOP
-    v_until:=NULL;
+    v_until:=NULL; v_declined_at:=NULL;
+    IF p_kind='friends' THEN
+      SELECT declined_at INTO v_declined_at FROM public.friendships WHERE id=(v_row->>'id')::uuid;
+    END IF;
     v_enabled:=public._contact_mail_enabled(v_row->>'email');
-    IF v_row->>'status' IN ('pending','declined') AND (p_kind='subscribers' OR v_row->>'direction'='outgoing') THEN
+    IF v_row->>'status'='pending' AND (p_kind='subscribers' OR v_row->>'direction'='outgoing') THEN
       IF p_kind='friends' THEN
         v_target:='pair:'||v_uid::text||':'||(v_row->>'user_id');
         SELECT greatest(max(next_allowed_at),public._friend_mail_limit_until(v_uid,(v_row->>'user_id')::uuid))
@@ -1998,7 +2001,8 @@ BEGIN
       IF v_until<=now() THEN v_until:=NULL; END IF;
     END IF;
     v_result:=v_result||jsonb_build_array(v_row||jsonb_build_object(
-      'email_enabled',v_enabled,'resend_available_at',v_until));
+      'email_enabled',v_enabled,'resend_available_at',v_until,
+      'declined_at',v_declined_at,'decline_expires_at',v_declined_at+interval '30 days'));
   END LOOP;
   RETURN v_result;
 END; $$;
@@ -3601,7 +3605,7 @@ BEGIN
   END IF;
   UPDATE public.friendships
      SET status = 'active', accepted_at = now(), declined_at = NULL
-   WHERE id = p_id AND addressee_id = v_uid AND status IN ('pending','declined');
+   WHERE id = p_id AND addressee_id = v_uid AND status='pending';
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'err', 'not_found');
   END IF;
@@ -3656,6 +3660,7 @@ DECLARE
   v_cd_until timestamptz;
   v_id       uuid;
   v_token    uuid;
+  v_enabled boolean;
 BEGIN
   IF v_uid IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
@@ -3679,22 +3684,21 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'self');
   END IF;
 
+  PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(v_uid,v_prof.id)::text||':'||GREATEST(v_uid,v_prof.id)::text,329));
   SELECT * INTO v_ex
   FROM public.friendships f
   WHERE LEAST(f.requester_id, f.addressee_id) = LEAST(v_uid, v_prof.id)
     AND GREATEST(f.requester_id, f.addressee_id) = GREATEST(v_uid, v_prof.id);
 
+  -- Serialize both spellings/directions of an unordered account pair.
   IF FOUND THEN
-    IF v_ex.status IN ('pending','declined') AND v_ex.addressee_id = v_uid THEN
-      -- Zaproszenie krzyżowe: druga strona już zaprosiła mnie — od razu aktywne, bez maila.
-      UPDATE public.friendships
-         SET status = 'active', accepted_at = now(), declined_at = NULL
-       WHERE id = v_ex.id;
-      RETURN jsonb_build_object('ok', true, 'id', v_ex.id, 'token', v_ex.token,
-                                'to', v_prof.email, 'mail_allowed', false,
-                                'accepted', true, 'status', 'active');
+    IF v_ex.status='declined' AND v_ex.declined_at<=now()-interval '30 days' THEN
+      DELETE FROM public.friendships WHERE id=v_ex.id;
+    ELSE
+      RETURN jsonb_build_object('ok',false,'err','already','id',v_ex.id,
+        'status',v_ex.status,'direction',CASE WHEN v_ex.status='active' THEN 'friend'
+          WHEN v_ex.addressee_id=v_uid THEN 'incoming' ELSE 'outgoing' END);
     END IF;
-    RETURN jsonb_build_object('ok', false, 'err', 'already', 'id', v_ex.id, 'status', v_ex.status);
   END IF;
 
   v_target := 'pair:' || v_uid::text || ':' || v_prof.id::text;
@@ -3711,18 +3715,19 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until, 'reason', 'invite');
   END IF;
 
+  v_enabled:=public._contact_mail_enabled(v_prof.email);
   BEGIN
     INSERT INTO public.friendships (requester_id, addressee_id, status, email_sent_at, email_send_count)
-    VALUES (v_uid, v_prof.id, 'pending', now(), 1)
+    VALUES (v_uid,v_prof.id,'pending',CASE WHEN v_enabled THEN now() END,CASE WHEN v_enabled THEN 1 ELSE 0 END)
     RETURNING id, token INTO v_id, v_token;
   EXCEPTION WHEN unique_violation THEN
     RETURN jsonb_build_object('ok', false, 'err', 'already');
   END;
 
-  PERFORM public.mail_cooldown_reserve('friend:invite', v_target);
+  IF v_enabled THEN PERFORM public.mail_cooldown_reserve('friend:invite',v_target); END IF;
 
   RETURN jsonb_build_object('ok', true, 'id', v_id, 'token', v_token,
-                            'to', v_prof.email, 'mail_allowed', true,
+                            'to', v_prof.email, 'mail_allowed', v_enabled,
                             'accepted', false, 'status', 'pending');
 END;
 $$;
@@ -3756,7 +3761,9 @@ BEGIN
   FROM public.friendships f
   JOIN public.profiles p
     ON p.id = CASE WHEN f.requester_id = v_uid THEN f.addressee_id ELSE f.requester_id END
-  WHERE f.requester_id = v_uid OR f.addressee_id = v_uid
+  WHERE (f.requester_id=v_uid OR f.addressee_id=v_uid)
+    AND (f.status<>'declined' OR (f.declined_at>now()-interval '30 days'
+      AND (f.addressee_id=v_uid OR f.declined_at>now()-interval '5 days')))
   ORDER BY f.created_at DESC;
 END;
 $$;
@@ -3777,7 +3784,7 @@ BEGIN
   IF v_uid IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
   END IF;
-  UPDATE public.friendships SET status='declined',declined_at=now()
+  UPDATE public.friendships SET status='declined',declined_at=coalesce(declined_at,now())
    WHERE id = p_id AND addressee_id = v_uid AND status = 'pending'
   RETURNING requester_id INTO v_req;
   IF NOT FOUND THEN
@@ -3845,8 +3852,8 @@ BEGIN
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'err', 'not_found');
   END IF;
-  IF v_f.status NOT IN ('pending','declined') THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'only pending or declined can be reminded');
+  IF v_f.status<>'pending' THEN
+    RETURN jsonb_build_object('ok',false,'err',CASE WHEN v_f.status='declined' THEN 'declined' ELSE 'not_pending' END);
   END IF;
 
   SELECT lower(p.email) INTO v_to FROM public.profiles p WHERE p.id = v_f.addressee_id;
@@ -3901,7 +3908,8 @@ DECLARE
   v_f     public.friendships%rowtype;
   v_label text;
 BEGIN
-  SELECT * INTO v_f FROM public.friendships WHERE token = p_token;
+  SELECT * INTO v_f FROM public.friendships WHERE token=p_token
+    AND (status<>'declined' OR declined_at>now()-interval '30 days');
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'err', 'not_found');
   END IF;
@@ -3915,6 +3923,27 @@ BEGIN
   );
 END;
 $$;
+
+
+--
+-- Name: friends_undo_reject("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_undo_reject"("p_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE v_uid uuid:=auth.uid(); v_f public.friendships%rowtype;
+BEGIN
+  IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
+  SELECT * INTO v_f FROM public.friendships WHERE id=p_id AND addressee_id=v_uid FOR UPDATE;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
+  IF v_f.status<>'declined' THEN RETURN jsonb_build_object('ok',false,'err','not_declined'); END IF;
+  IF v_f.declined_at<=now()-interval '30 days' THEN RETURN jsonb_build_object('ok',false,'err','expired'); END IF;
+  -- Keep the original refusal timestamp, token and mail counters.
+  UPDATE public.friendships SET status='pending' WHERE id=p_id;
+  RETURN jsonb_build_object('ok',true,'id',p_id,'status','pending');
+END; $$;
 
 
 --
@@ -9574,7 +9603,7 @@ BEGIN
   -- Znajomość przed subskrypcją: stare tokeny z maili kont skopiowano w 320.
   SELECT fs.id,fs.status,fs.requester_id,fs.addressee_id,p.username AS owner_label
   INTO f FROM public.friendships fs JOIN public.profiles p ON p.id=fs.requester_id
-  WHERE fs.token=p_token LIMIT 1;
+  WHERE fs.token=p_token AND (fs.status<>'declined' OR fs.declined_at>now()-interval '30 days') LIMIT 1;
   IF FOUND THEN
     RETURN jsonb_build_object('ok',true,'kind','friend','id',f.id,'status',f.status,
       'owner_label',f.owner_label,'recipient_matches_me',auth.uid()=f.addressee_id);
@@ -19685,5 +19714,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict uyIGSPzEr32tgy4alNK96wqEQddgB7h941m8IbGeF2jJaX7M2IuXuQmOK7RF7BE
+\unrestrict 5pvYi10PBEyxOyJ9TX3RhbywTwfEzj29SAvIg4OhraIubSDUehcD9DzY8g86sI1
 
