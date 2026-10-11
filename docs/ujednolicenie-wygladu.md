@@ -312,10 +312,12 @@ lokalnych wariantów CSS, które rozjeżdżają wygląd sekcji.
 
 **Przyciski Ankiet:** poprawka dotyczy przycisków karty „Udostępnianie” —
 w szczególności kontrolek wyboru odbiorców oraz akcji udostępnienia/wysłania.
-Karty „Głosy” nie zmieniamy w ramach tej poprawki. Ujednolicić rozmiar, hierarchię,
-odstępy, wyrównanie oraz stany hover/disabled ze wspólnym wzorcem przycisków.
-Zachować odrębne przeznaczenie i układ obu kart; nie tworzyć osobnych styli
-dla każdego przycisku.
+Karty „Głosy” nie zmieniamy w ramach tej poprawki. Zakres nie obejmuje
+globalnych przycisków interfejsu, np. „Zamknij”, nawigacji ani zamykania
+okna/karty. Poprawić rozmiar, hierarchię, odstępy, wyrównanie oraz stany
+hover/disabled tylko przycisków wewnątrz karty Udostępnianie. Zachować odrębne
+przeznaczenie i układ obu kart; nie tworzyć osobnych styli dla każdego
+przycisku.
 
 Wspólne dla wszystkich ekranów: przypomnienie nie tworzy rekordu dostępu ani
 nowego tokenu. Flaga `user_flags.email_notifications` jest sprawdzana przed
