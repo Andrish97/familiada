@@ -311,10 +311,13 @@ strona zmienia się tylko zawartość i zestaw dozwolonych akcji; nie dodajemy
 lokalnych wariantów CSS, które rozjeżdżają wygląd sekcji.
 
 **Przyciski ankiety:** przyciski akcji w widoku Ankiet wyglądają źle i wymagają
-osobnej poprawki wizualnej. Ujednolicić rozmiar, hierarchię, odstępy,
-wyrównanie oraz stany hover/disabled ze wspólnym wzorcem przycisków. Dotyczy
-paska akcji stanu ankiety i pozostałych akcji ankiet; nie tworzyć osobnych
-stylów dla każdego przycisku.
+osobnej poprawki wizualnej. Opis użytkownika dla karty 1 („Anonimowo”)
+pozostaje obowiązujący i nie zastępujemy go tym punktem. W karcie 2
+(„Udostępnij”) również trzeba poprawić przyciski — w szczególności wybór
+odbiorców oraz akcję udostępnienia/wysłania. Ujednolicić rozmiar, hierarchię,
+odstępy, wyrównanie oraz stany hover/disabled ze wspólnym wzorcem przycisków.
+Zachować odrębne przeznaczenie i układ obu kart; nie tworzyć osobnych styli
+dla każdego przycisku.
 
 Wspólne dla wszystkich ekranów: przypomnienie nie tworzy rekordu dostępu ani
 nowego tokenu. Flaga `user_flags.email_notifications` jest sprawdzana przed
