@@ -1272,10 +1272,14 @@ Trzy FK CASCADE, completed aggregate chroniony347. Draft na osobnym
 branchu codex/e19-348, finalny isolated38180137558 success; nie produkcja.
 Dalej punktowy real-mail/account deletion, SQL/log i kontrola branch/main.
 
-### Konta testowe — bezpieczne usuwanie (doprecyzowanie 2026-10-11)
+### Konta testowe — bezpieczne usuwanie (decyzja 2026-10-11)
 
-Do testów usuwania kont używać dedykowanych11/12, ze standardowym hasłem.
-Przed testem odtworzyć brakujące konto z potwierdzonym adresem; po usunięciu
-odtworzyć i sprawdzić logowanie oraz brak dostępu do dawnych udostępnień.
-Odtworzenie również przy błędzie (finally). Konta9/10 wyłączone,14 bez konta.
-Odtworzenie dotyczy konta, nie usuniętych zasobów i relacji.
+Do usuwania rezerwujemy **test15@familiada.online**, poza zwykłą pulą.
+11 pozostaje do testów hasła;12 profilu i zmiany e-maila;13 alternatywnym
+adresem12, bez osobnego konta.14 bez konta,9/10 wyłączone.
+Przed testem odtworzyć15 z potwierdzonym adresem i standardowym hasłem;
+po usunięciu oraz w `finally` odtworzyć i sprawdzić logowanie oraz brak
+starych dostępów. Dane i relacje nie wracają. Automatyczny wyjątek admina
+rozpoznaje zaufany adres auth, więc pozostaje skuteczny po zmianie ID.
+Użytkownik dodaje regułę Cloudflare15 → Worker; testuje ją rzeczywisty mail.
+Wcześniejszy wybór12 do usuwania zastąpiony tą decyzją przed testem kasowania.

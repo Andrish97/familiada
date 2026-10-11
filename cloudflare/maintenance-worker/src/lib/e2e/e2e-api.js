@@ -8,7 +8,7 @@ import { fetchFromOrigin } from "../origin/origin.js";
 export const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
 const E2E_NONCE_TTL_SECONDS = 10 * 60; // 10 minut w KV, żeby pokryć zegar-skew
-const E2E_EMAIL_RE = /^test([1-9]|1[0-4])@familiada\.online$/;
+const E2E_EMAIL_RE = /^test([1-9]|1[0-5])@familiada\.online$/;
 
 export function normalizeE2ERecipient(value) {
   const recipient = String(value || "").trim().toLowerCase();
@@ -158,7 +158,9 @@ export async function restoreE2EAccount(request, env) {
     ? { targetEmail: "test11@familiada.online", candidates: ["test11@familiada.online"], username: null, allowCreate: true }
     : account === "test12"
       ? { targetEmail: "test12@familiada.online", candidates: ["test12@familiada.online", "test13@familiada.online"], username: "test12", allowCreate: true }
-      : null;
+      : account === "test15"
+        ? { targetEmail: "test15@familiada.online", candidates: ["test15@familiada.online"], username: "test15", allowCreate: true }
+        : null;
   if (!config || password.length < 8 || password.length > 200) {
     return json({ ok: false, error: "invalid_restore_request" }, 400);
   }
@@ -252,7 +254,13 @@ export async function restoreE2EAccount(request, env) {
     }
   }
 
-  return json({ ok: true, account, user_id: user.id, email: config.targetEmail, ...(config.allowCreate ? { created } : {}) });
+  let adminExcluded;
+  if (account === "test15") {
+    const excluded = await supabaseRequest(env, `/rest/v1/stats_exclusions_effective?user_id=eq.${encodeURIComponent(user.id)}&select=reason`);
+    adminExcluded = excluded.ok && Array.isArray(excluded.data) && excluded.data.some(row => row.reason === "test_account" || row.reason === "manual");
+    if (!adminExcluded) return json({ ok: false, error: "admin_exclusion_missing" }, 502);
+  }
+  return json({ ok: true, account, user_id: user.id, email: config.targetEmail, ...(config.allowCreate ? { created } : {}), ...(account === "test15" ? { admin_excluded: adminExcluded } : {}) });
 }
 
 export async function handleE2ELoginBypass(request, env, url, originBase, originHost, resolveOverride) {

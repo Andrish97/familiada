@@ -43,13 +43,13 @@ schema d2ab891270. Finalny isolated38180667222 success przed SQL.
 Branch38181499992 failure PRZED usuwaniem konta8: stary klucz ankiety
 sprzed poll_open i nieobsługiwany restore8. Konta7/8 nie usunięte.
 Poprawiono pobranie bieżącego klucza, cleanup/log pierwotnego błędu.
-Doprecyzowanie użytkownika: odtworzyć dedykowane konta11/12, nie8.
-Worker tworzy brakujące11/12, potwierdza adres i ustawia standardowe hasło;
-nie tworzy kont8/9/10/14. Test348 przeniesiony na12; restore także w finally.
-Nowy punktowy test odtworzenia obu kont i logowania. Publikacja Workera
-oraz rzeczywista kontrola zakończone: Worker38183104197 success,
-branch38183147636 success1/1. Oba konta istniały; przywrócono stan
-i potwierdzono oba logowania. Następnie test usuwania branch/main.
+Konta11/12 przywrócone: Worker38183104197 success, branch38183147636
+oraz main38183277062 success1/1, oba logowania potwierdzone. Oba istniały.
+Nowa decyzja:15 dedykowane usuwaniu,11 hasło,12 profil/mail i adres13.
+Test kasowania12 NIE URUCHOMIONY; przeniesiony na15.349 DB38183364423
+success.350 rozszerza skrzynkę/helpery o15, Worker restore15 weryfikuje
+automatyczny wyjątek admina. Użytkownik dodaje routing15 w Cloudflare.
+Dokończyć isolated350 → DB/main/Worker → restore15 → mail/deletion branch/main.
 Nie zamykać348 przed tymi kontrolami; test14 nadal bez konta.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
