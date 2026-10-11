@@ -35,17 +35,18 @@ wypisanie usuwa partial, stary token bez dostępu; regresja pełnego
 tekstu w UI też success. Pierwszy38179100034 failure dotyczył tylko
 błędnej nazwy RPC w teście; poprawiono na poll_task_opened.
 
-Teraz348: /tmp/familiada-348-isolated, branch codex/e19-348,
-HEAD f4d3595b3a, jeszcze bez produkcji. Finalny isolated38180137558
-success (wstępny38179824305 też). Trzy FK odbiorcy CASCADE;
-lokalnie wszystkie stany/oba typy/Bazy/legacy subskrypcje, niezależni
-i anonimowi odbiorcy oraz owner cascade success. Osiem wyścigów
-partial/complete × vote-first/delete-first × tekst/punkty success.
-Stary blokujący DDL odtwarza deadlock z child-first account cleanup;
-finalny NOWAIT/retry zwalnia wszystkie locki nieudanej podtransakcji,
-test psql -1 wdrożenia success. Dalej przygotować punktowy rzeczywisty
-mail + usuwanie/odtworzenie konta odbiorcy i stare Go, potem promocja,
-SQL/log oraz branch/main. Test14 nadal bez konta.
+348 SQL zastosowany22:34:52 UTC. Pierwszy DB38180862825 zatrzymał
+się na fixture: auth trigger tworzy powitalną grę. Seed/pętlę/asercję
+zawężono do dwóch własnych ID; lokalnie również z dodatkową grą powitalną
+success. DB38181241843 success, rollbackowy smoke wszystkich stanów/typów,
+schema d2ab891270. Finalny isolated38180667222 success przed SQL.
+Branch38181499992 failure PRZED usuwaniem konta8: stary klucz ankiety
+sprzed poll_open i nieobsługiwany restore8. Konta7/8 nie usunięte.
+Poprawiono pobranie bieżącego klucza, cleanup/log pierwotnego błędu.
+Pomocnik Worker restore rozszerzony wyłącznie o test8 (tworzenie tylko
+gdy nie istnieje); sześć nowych kontraktów, unit453/453. Worker wymaga
+publikacji, potem świeży real-mail/account deletion branch i main.
+Nie zamykać348 przed tymi kontrolami; test14 nadal bez konta.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego

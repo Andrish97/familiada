@@ -158,7 +158,9 @@ export async function restoreE2EAccount(request, env) {
     ? { targetEmail: "test11@familiada.online", candidates: ["test11@familiada.online"], username: null }
     : account === "test12"
       ? { targetEmail: "test12@familiada.online", candidates: ["test12@familiada.online", "test13@familiada.online"], username: "test12" }
-      : null;
+      : account === "test8"
+        ? { targetEmail: "test8@familiada.online", candidates: ["test8@familiada.online"], username: "test8", allowCreate: true }
+        : null;
   if (!config || password.length < 8 || password.length > 200) {
     return json({ ok: false, error: "invalid_restore_request" }, 400);
   }
@@ -167,11 +169,23 @@ export async function restoreE2EAccount(request, env) {
   if (!usersRes.ok) return json({ ok: false, error: "users_read_failed" }, usersRes.status || 500);
   const users = Array.isArray(usersRes.data?.users) ? usersRes.data.users : [];
   const matches = users.filter((user) => config.candidates.includes(String(user?.email || "").toLowerCase()));
-  if (matches.length !== 1) {
+  let user = matches[0];
+  let created = false;
+  if (matches.length === 0 && config.allowCreate) {
+    const createRes = await supabaseRequest(env, "/auth/v1/admin/users", {
+      method: "POST",
+      body: { email: config.targetEmail, password, email_confirm: true, user_metadata: { username: config.username, is_guest: false } },
+    });
+    if (!createRes.ok) return json({ ok: false, error: "account_create_failed" }, createRes.status || 500);
+    user = createRes.data?.user || createRes.data;
+    if (!user?.id || String(user.email || "").toLowerCase() !== config.targetEmail) {
+      return json({ ok: false, error: "created_account_invalid" }, 502);
+    }
+    created = true;
+  } else if (matches.length !== 1) {
     return json({ ok: false, error: "test_account_not_unique", matches: matches.length }, 409);
   }
 
-  const user = matches[0];
   // Admin updateUser nie zawsze zeruje pola secure email change w auth.users.
   // Uzywamy tej samej funkcji, ktora zasila przycisk "Anuluj zmiane" w UI,
   // zanim ustawimy bazowy adres i metadane konta testowego.
@@ -240,7 +254,7 @@ export async function restoreE2EAccount(request, env) {
     }
   }
 
-  return json({ ok: true, account, user_id: user.id, email: config.targetEmail });
+  return json({ ok: true, account, user_id: user.id, email: config.targetEmail, ...(config.allowCreate ? { created } : {}) });
 }
 
 export async function handleE2ELoginBypass(request, env, url, originBase, originHost, resolveOverride) {

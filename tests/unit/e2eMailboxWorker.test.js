@@ -94,7 +94,7 @@ test(`mail do ${recipient} zapisuje sie w e2e_emails i nie jest forwardowany`, a
 
 }
 
-test("restore konta jest ograniczony do test11 i test12", async () => {
+test("restore konta jest ograniczony do test8, test11 i test12", async () => {
   const response = await worker.fetch(
     new Request("https://www.familiada.online/_e2e_api/accounts/restore", {
       method: "POST",
@@ -129,4 +129,79 @@ test("test14 może odczytać i wyczyścić skrzynkę oraz diagnostykę wyłączn
   }
   assert.equal(calls.length,4);
   assert.ok(calls.every(call=>call.url.includes('test14%40familiada.online')));
+});
+
+async function restoreFixture(account, users, { createStatus = 200, createdEmail = "test8@familiada.online" } = {}) {
+  const calls = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, options = {}) => {
+    const url = new URL(String(input));
+    const method = options.method || "GET";
+    const body = options.body ? JSON.parse(options.body) : null;
+    calls.push({ path: url.pathname, method, body });
+    if (url.pathname === "/auth/v1/admin/users" && method === "GET") return Response.json({ users });
+    if (url.pathname === "/auth/v1/admin/users" && method === "POST") {
+      if (createStatus !== 200) return Response.json({ message: "create failed" }, { status: createStatus });
+      return Response.json({ id: "created8", email: createdEmail, user_metadata: body.user_metadata });
+    }
+    return Response.json({});
+  };
+  try {
+    const response = await worker.fetch(new Request("https://www.familiada.online/_e2e_api/accounts/restore", {
+      method: "POST", headers: { "Content-Type": "application/json", "X-E2E-Token": token() },
+      body: JSON.stringify({ account, password: "ValidPassword123!" }),
+    }), env(), {});
+    return { status: response.status, data: await response.json(), calls };
+  } finally { globalThis.fetch = originalFetch; }
+}
+
+test("restore8 tworzy tylko brakujące konto8 z potwierdzonym adresem i nazwą", async () => {
+  const result = await restoreFixture("test8", []);
+  assert.equal(result.status, 200);
+  assert.equal(result.data.created, true);
+  assert.equal(result.data.user_id, "created8");
+  const create = result.calls.find(call => call.path === "/auth/v1/admin/users" && call.method === "POST");
+  assert.deepEqual(create.body, { email: "test8@familiada.online", password: "ValidPassword123!", email_confirm: true, user_metadata: { username: "test8", is_guest: false } });
+});
+
+test("restore8 zachowuje tożsamość istniejącego konta bez tworzenia kolejnego", async () => {
+  const result = await restoreFixture("test8", [{ id: "existing8", email: "test8@familiada.online" }]);
+  assert.equal(result.status, 200);
+  assert.equal(result.data.created, false);
+  assert.equal(result.data.user_id, "existing8");
+  assert.equal(result.calls.filter(call => call.path === "/auth/v1/admin/users" && call.method === "POST").length, 0);
+});
+
+test("restore nie tworzy brakujących11/12 ani nie wybiera spośród dwóch kont8", async () => {
+  for (const [account, users] of [["test11", []], ["test12", []], ["test8", [{ id: "one", email: "test8@familiada.online" }, { id: "two", email: "test8@familiada.online" }]]]) {
+    const result = await restoreFixture(account, users);
+    assert.equal(result.status, 409);
+    assert.equal(result.data.error, "test_account_not_unique");
+    assert.equal(result.calls.length, 1);
+  }
+});
+
+test("restore nadal odrzuca9/10/14 i adres zamiast nazwy przed zapytaniem do auth", async () => {
+  for (const account of ["test9", "test10", "test14", "test8@familiada.online", "test7"]) {
+    const result = await restoreFixture(account, []);
+    assert.equal(result.status, 400);
+    assert.equal(result.calls.length, 0);
+  }
+});
+
+test("restore8 nie kontynuuje po błędzie tworzenia lub odpowiedzi innego konta", async () => {
+  for (const options of [{ createStatus: 503 }, { createdEmail: "other@example.invalid" }]) {
+    const result = await restoreFixture("test8", [], options);
+    assert.equal(result.status, options.createStatus || 502);
+    assert.equal(result.calls.length, 2);
+  }
+});
+
+test("restore11/12 zachowuje stary kontrakt i nie tworzy kont", async () => {
+  for (const account of ["test11", "test12"]) {
+    const result = await restoreFixture(account, [{ id: account, email: account + "@familiada.online" }]);
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.data, { ok: true, account, user_id: account, email: account + "@familiada.online" });
+    assert.equal(result.calls.filter(call => call.path === "/auth/v1/admin/users" && call.method === "POST").length, 0);
+  }
 });
