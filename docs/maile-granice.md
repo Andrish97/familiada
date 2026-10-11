@@ -262,3 +262,16 @@ Aktualne /assets/img/pl/ zwraca200 image/webp. Zrzuty odświeżone z czterema
 ilustracjami; unit weryfikuje lokalne pliki i ścieżki, E2E sprawdza HTTP
 każdego obrazka przed SMTP. Izolowana bramka buduje też Worker przez
 Wrangler --dry-run, bez wdrożenia.
+
+### Zapisane podglądy Settings — uzupełnienie audytu
+
+Pięć miejsc pokazywania wiadomości/wątku/dwukliku używa jednego helpera
+stored-mail. Pełny body_html wyświetla się dokładnie jak zapisano, bez
+dokładania drugiego nagłówka/dokumentu oraz nadpisywania CSS. Fragmenty
+body_html zachowują formatowanie we wspólnej ramce; body bez HTML jest
+wyświetlany jako zwykły tekst, również gdy zawiera znaki przypominające tagi.
+Unit sprawdza dokument/fragment/tekst i wszystkie pięć wywołań; punktowy
+E2E importuje rzeczywiste moduły przeglądarki. To nie jest pełna kontrola
+autoryzowanego panelu administracyjnego. SMTP15 i ilustracje potwierdzone
+branch38172035648; po tej zmianie niezmienieni producenci nie wymagają
+powtórzenia SMTP na branchu, main obejmie15mail+preview.

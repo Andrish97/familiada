@@ -80,3 +80,26 @@ test('mail content: contact/manual PL/EN/UK and marketing templates delivered', 
     }
   } finally { await clearMailbox(EMAIL); }
 });
+
+test('mail preview: stored full document, rich fragment and plain text use browser modules', async ({ page, context }) => {
+  test.setTimeout(90000);
+  if (process.env.GITHUB_REF_NAME !== 'main' && process.env.TEST_BRANCH_CODE !== '0') {
+    const { serveBranchCode } = require('./helpers/branch-code');
+    await serveBranchCode(context, { pages: ['settings'] });
+  }
+  await loginAsPooledTestUser(page, context, 0);
+  const result = await page.evaluate(async () => {
+    const { buildStoredMailHtml } = await import('/shared/js/core/stored-mail.js');
+    const { renderMailDocument } = await import('/shared/js/core/mail-document.js');
+    const full = renderMailDocument({lang:'pl',title:'Wiadomość testowa',body:'Przykładowa treść'});
+    const saved = buildStoredMailHtml({subject:'Nie dokładaj nagłówka',body_html:full});
+    const fragment = buildStoredMailHtml({subject:'Fragment',body_html:'<p><strong>Treść</strong></p>',lang:'uk'});
+    const plain = buildStoredMailHtml({subject:'Tekst',body:'<img src=x> & tekst',lang:'en'});
+    return {full,saved,fragment,plain};
+  });
+  expect(result.saved).toBe(result.full);
+  expect(result.fragment).toContain('<html lang="uk">');
+  expect(result.fragment).toContain('<strong>Treść</strong>');
+  expect(result.plain).toContain('&lt;img src=x&gt; &amp; tekst');
+  expect(result.plain).not.toContain('<img');
+});

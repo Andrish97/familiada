@@ -33,7 +33,7 @@ rich HTML i opcjonalną akcją. Kontakt3typy×3lang; ręczne podgląd/wysyłka t
 sam helper. Admin compose/marketing raportują rzeczywistą kolejkę i nie
 zapisują historii pominiętych adresów. Unit440/440 ✓; zrzuty390/1400.
 mail-content.spec.js sprawdza15 szablonów i SMTP do test14 bez publicznego
-formularza (Telegram admina). Następnie izolowane → branch12mail →
+formularza (Telegram admina). Następnie izolowane → branch15mail →
 Worker/Pages → identyczny main. Marketing invitation/newsletter/custom ma jeden wspólny builder preview/send
 i zachowaną treść/ilustracje. Unit443 lokalnie; świeże bramki nadal wymagane.
 Audyt reszty pkt6 otwarty.
@@ -560,3 +560,9 @@ zasobu), dla Subskrybentów wspólne 5/30 także stare RPC; globalny mail-off
 trwały. SQL/wyścigi lokalne ✓, unit 412/412. Front pokazuje odmowy nadawcy
 bez ponowienia; Go konta→Znajomi. Runner/produkcja jeszcze do sprawdzenia;
 nie oznaczać pkt 3 zamkniętego. Zrzuty refusal-* w e19-subscribers.
+
+Bieżąca druga bramka: Agent38172033341 ✓ unit444/Deno/kopie/Worker build;
+branch38172035648 ✓15 SMTP i4 HTTP200 ilustracje. Zapisane podglądy Settings
+dopięte przez stored-mail; potrzebne unit447/isolated i punktowy browser
+preview, potem Worker/Pages oraz main15mail+preview. Producentów maili
+na branchu nie zmieniono po zielonym SMTP.

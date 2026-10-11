@@ -34,6 +34,7 @@ import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10
 
 import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-11T19561";
 import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-11T19561";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-11T19561";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-11T19561";
@@ -2997,13 +2998,13 @@ function showAttachmentPreview(url, filename) {
 
 function renderSimpleMessageContent(bubble, msg) {
   const bodyEl = document.createElement("div");
-  const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
+  const htmlSrc = msg.body_html;
   if (htmlSrc) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
     frame.sandbox = "allow-scripts allow-popups";
-    const wrappedHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:8px;background:#050914;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.4;}a{color:#ffeaa6;}</style></head><body>${htmlSrc}</body></html>`;
+    const wrappedHtml = buildStoredMailHtml(msg);
     frame.srcdoc = wrappedHtml;
     bodyEl.appendChild(frame);
   } else {
@@ -3073,28 +3074,13 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   bubble.style.cssText = "border:1px solid rgba(255,234,166,.4);box-shadow:0 0 15px rgba(255,234,166,.15);";
 
   const bodyEl = document.createElement("div");
-  const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
+  const htmlSrc = msg.body_html;
   if (htmlSrc) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
     frame.sandbox = "allow-scripts allow-popups";
-    // Wrap content in dark theme - ALWAYS force dark theme
-    const wrappedHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        * { background: #050914 !important; color: #ffffff !important; }
-        body { margin:0; padding:10px; background: #050914 !important; color: #ffffff !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; line-height:1.4; }
-        p, div, span, h1, h2, h3, h4, h5, h6 { background: transparent !important; color: #ffffff !important; }
-        a { color: #ffeaa6 !important; }
-        strong, b { color: #ffffff !important; }
-      </style>
-      </head>
-      <body>${htmlSrc}</body>
-      </html>
-    `;
+    const wrappedHtml = buildStoredMailHtml(msg);
     frame.srcdoc = wrappedHtml;
     bodyEl.appendChild(frame);
   } else {
@@ -3109,33 +3095,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     const htmlSrc = msg.body_html || msg.body;
     const subject = msg.subject || "(brak tematu)";
 
-    // Generate full HTML email for preview (dark theme)
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; }
-          .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
-          .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-          .email-body { padding: 24px; background: transparent; line-height: 1.4; }
-        </style>
-      </head>
-      <body>
-        <div class="email-container">
-          <div class="email-header">
-            <h1 class="email-subject">${escSetting(subject)}</h1>
-          </div>
-          <div class="email-body">
-            ${htmlSrc || ""}
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // Preview the saved document without nesting or overriding its theme.
+    const emailHtml = buildStoredMailHtml(msg);
 
     const frame = document.createElement("iframe");
     frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
@@ -3417,28 +3378,13 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     el.appendChild(metaEl);
 
     const bodyEl = document.createElement("div");
-    const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
+    const htmlSrc = msg.body_html;
     if (htmlSrc) {
       bodyEl.className = "mail-msg-body-html";
       const frame = document.createElement("iframe");
       frame.className = "mail-msg-html-frame";
       frame.sandbox = "allow-scripts allow-popups";
-      // Wrap content in dark theme - ALWAYS force dark theme
-      const wrappedHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          * { background: #050914 !important; color: #ffffff !important; }
-          body { margin:0; padding:10px; background: #050914 !important; color: #ffffff !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; line-height:1.4; }
-          p, div, span, h1, h2, h3, h4, h5, h6 { background: transparent !important; color: #ffffff !important; }
-          a { color: #ffeaa6 !important; }
-          strong, b { color: #ffffff !important; }
-        </style>
-        </head>
-        <body>${htmlSrc}</body>
-        </html>
-      `;
+        const wrappedHtml = buildStoredMailHtml(msg);
       frame.srcdoc = wrappedHtml;
       bodyEl.appendChild(frame);
     } else {
@@ -3453,33 +3399,8 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       const htmlSrc = msg.body_html || msg.body;
       const subject = msg.subject || "(brak tematu)";
 
-      // Generate full HTML email for preview (dark theme)
-      const emailHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; }
-            .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
-            .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-            .email-body { padding: 24px; background: transparent; line-height: 1.4; }
-          </style>
-        </head>
-        <body>
-          <div class="email-container">
-            <div class="email-header">
-              <h1 class="email-subject">${escSetting(subject)}</h1>
-            </div>
-            <div class="email-body">
-              ${htmlSrc || ""}
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
+      // Preview the saved document without nesting or overriding its theme.
+      const emailHtml = buildStoredMailHtml(msg);
 
       const frame = document.createElement("iframe");
       frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
