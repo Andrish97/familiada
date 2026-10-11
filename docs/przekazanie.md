@@ -448,3 +448,16 @@ Nie przestawiać kolejki na podstawie samego ostatniego doprecyzowania.
 Zakładki teraz na branchu: unit 411/411, zrzuty tabs-*; brak kontroli
 branch/main przed oznaczeniem wykonania. Draft Baz /tmp/base331-draft.sql
 nie wyprzedza pkt 3 i przed użyciem musi dostać właściwy kolejny numer.
+
+**Pkt 2 kontaktów zamknięty produkcyjnie:** branch 38148641622 ✓,
+Pages 38148810039 ✓, main 38148894724 ✓ 3/3 bez retry, unit 411/411.
+Obejmuje wypustki 36 px, pełną wysokość kart, wewnętrzne niezależne
+przewijanie, stan zakładek/URL/Go/keyboard oraz regresje active/odmowy.
+Następny krok §5 pkt 3: Subskrybenci — audyt kontraktów zapisany na końcu
+E19. Nie powtarzać zakończonej kontroli kontaktów.
+
+Mobile landscape: zakres doprecyzowany w ujednolicenie-wygladu.md —
+PAGES plus wszystkie strony HTML, w tym Go/głosowanie/urządzenia i strony
+techniczne. Przegląd UI/E20 przed manualem; manual sprawdzić w jego
+ostatnim etapie. Nie oznaczać landscape jako wdrożonego: guard nadal
+blokuje telefon po obrocie. Kryteria/testy i macierz grup stron zapisane.

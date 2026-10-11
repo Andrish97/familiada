@@ -744,3 +744,41 @@ przejrzeć mapę dostępności i guardy razem z CSS, nie tylko szerokość
 układu. Nie odblokowywać całej mapy przed tym przeglądem. Ta decyzja
 wyznacza docelową dostępność landscape i rozszerza wcześniejszy zakres
 ujednolicenia; bieżąca kolejność E19 pozostaje zachowana.
+
+#### Zakres i kryteria zakończenia przeglądu landscape
+
+Lista kontrolna obejmuje PAGES **oraz wszystkie rzeczywiste strony HTML**
+w `web/` (także podstrony i strony techniczne poza mapą). Na początku
+wdrożenia porównać obie listy ponownie, żeby uwzględnić nowe strony.
+
+| Grupa stron | Szczególna kontrola w poziomie |
+| --- | --- |
+| Gry, Bazy, Logo, Zadania, Znajomi, Subskrybenci, Marketplace | Wypustki, paski narzędzi, krótkie karty, puste/długie listy, rozwinięte odmowy i niezależne przewijanie. |
+| Ankiety, edytor gry, przeglądarka bazy | Dostępne akcje nad kartami, formularze/klawiatura, wyniki, edycja i zachowanie blokady zasobu po obrocie. |
+| Control, ustawienia gry, trzy edytory logo | Dopuszczenie telefonu w poziomie: guard strony, wczesny guard w HTML i przyciski wejścia muszą stosować tę samą regułę. Sprawdzić obsługę dotykiem i dostęp do wszystkich narzędzi. |
+| Connect, Connect TV, Host, Buzzer, Display | Łączenie, ponowne połączenie, nakładki, podział ekranu i gesty po zmianie orientacji; obrót nie rozpoczyna nowej sesji. |
+| Go, trzy strony głosowania, logowanie/confirm/reset, konto | Wszystkie komunikaty tokenów i stanów, formularze, klawiatura, powroty i przyciski potwierdzenia. |
+| Strona główna, prywatność, 404, maintenance, settings i narzędzia settings (również pliki HTML bez index.html) | Czytelność, nawigacja, komunikaty i osiągalne akcje również przy małej wysokości. |
+| Manual | Układ poziomy sprawdzić podczas ostatniego etapu aktualizacji manuala, po zakończeniu zmian produktu. |
+
+Stan zastany: `device-guard.js` rozpoznaje telefon po krótszym boku
+ekranu <700 px; `deviceGuardState()` zwraca phone przed sprawdzeniem
+szerokości. Dlatego obrót obecnie nie odblokowuje Control/ustawień gry,
+a `blockPhone()` blokuje edytory logo w obu orientacjach. Przegląd musi
+objąć również `buttonVisible()` i reguły device w mapie, żeby dostępna
+strona nie miała ukrytego przycisku wejścia. Nie oznaczać tych stron jako
+obsługujących landscape na podstawie samej istniejącej reguły CSS.
+
+Minimum pomiarów: dotykowe 844×390 i 667×375 px, pary pionowe
+390×844 i 375×667 px oraz obrót w obu kierunkach. Rozmiar screen
+w emulacji musi odpowiadać telefonowi, żeby test rzeczywiście obejmował
+guard; samo poszerzenie okna desktopowego nie wystarcza. Sprawdzić też
+klawiaturę i zmniejszony obszar widoczny, safe-area oraz długie teksty
+PL/EN/UK. Zrzuty po wykonaniu z przykładowymi danymi, także przy otwartym
+modalu/rozwiniętej sekcji, jeżeli występują na danej stronie.
+
+Dla każdej strony zapisać wynik, przebieg punktowego testu i pozostałe
+ograniczenia. Bramka zakończenia: dostęp w poziomie bez blokady urządzenia,
+wszystkie istotne akcje osiągalne, brak uciętej zawartości bez scrolla,
+brak utraty danych/sesji/blokady po obrocie. Uprawnienia konta i zasobów
+obowiązują również w tej orientacji.

@@ -879,3 +879,8 @@ osobno wypisanie z aktywnej subskrypcji i globalna rezygnacja z maili.
 Wypisanie nie może zostać przypadkowo uznane za wygasającą odmowę
 zaproszenia; obecny status declined jest wspólny — rozróżnić przyczynę
 zgodnie z kontraktem §7 przed wdrożeniem cleanupu.
+
+**Stan pkt 2:** zakończony po Pages 38148810039 i kontroli main
+38148894724 (3/3 bez retry, unit 411/411). Następny pkt 3 zgodnie
+z powyższym audytem. Globalny landscape ma macierz i kryteria w
+ujednolicenie-wygladu.md; nie jest jeszcze wdrożony.
