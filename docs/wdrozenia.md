@@ -512,3 +512,5 @@ Stan szczegółowy:
 
 | 2026-10-11 | Ankiety340–343 / promocja samego SQL | Izolowany38164791524 ✓: unit413/413, lokalny i runner SQL kontraktów/ACL/flag/refusal/current-run, trwałego3/24h oraz wyścigi invite/refusal/parent delete/mail cap/vote stop. Migracje zgodne z obecnym frontem: normalne wejścia RPC, zamknięte stare obejścia/direct task writes. | Odczytać log340–343, punktowe Ankiety i task Go na branchu/pula7–8 bez retry. Front pozostaje branch do zielonej bramki. |
 
+
+| 2026-10-11 | Ankiety340–343 / zastosowanie SQL potwierdzone | DB38165033358 ✓, log OK340/34118:45:40UTC i342/34318:45:41UTC, schema08ef8c5204. Punktowy branch38165210319 w toku: pięć poll-share i siedem task Go, jeden worker/pula7–8/--retries=0. | Ocenić wyniki i poprawić znalezione problemy, Pages dopiero po zielonym; ta sama kontrola main zamyka pkt5. |
