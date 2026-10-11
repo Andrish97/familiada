@@ -1799,7 +1799,7 @@
 .finalRevealActions {
     display: flex;
     gap: 14px;
-
+}
 
 .finalRevealBtn {
     height: 40px;
@@ -1889,11 +1889,32 @@
   max-width: 520px;
   width: calc(100% - 32px);
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
+.shareModal > .mHead { margin-bottom: 0; }
+.shareModal > .shareSection { margin: 0; padding: 12px; flex: 0 0 auto; }
+.shareModal .shareSectionTitle { line-height: 1.3; }
+.shareModal .importRow { margin-top: 10px; gap: 10px; }
+.shareModal .shareList { display: grid; gap: 8px; margin-top: 9px; }
+.shareModal .shareRow { gap: 10px; padding: 9px 10px; }
+.shareModal .shareMain { min-width: 0; }
+.shareModal .shareEmail { overflow-wrap: anywhere; white-space: normal; }
+.shareModal .shareDeviceFriendRow { cursor: pointer; }
+.shareModal .shareDeviceFriendRow input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--gold);
+}
+.shareModal .shareCooldownHint { color: var(--gold); }
 .shareModal .shareList {
   max-height: 240px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding-right: 4px;
 }
 .shareList::-webkit-scrollbar { width: 4px; }
@@ -1924,6 +1945,14 @@
 .shareDeviceFriendRow input[type="checkbox"] { flex: 0 0 auto; width: 18px; height: 18px; accent-color: var(--gold); }
 .shareRowLabel { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-weight: 750; }
 .shareRowMeta { color: var(--muted, rgba(255,255,255,.65)); font-size: .72rem; white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .shareModal { width: calc(100% - 24px); padding: 15px; gap: 10px; max-height: 90dvh; }
+  .shareModal > .shareSection { padding: 10px; }
+  .shareModal .shareList { gap: 8px; }
+  .shareModal .shareRow { gap: 8px; padding: 9px; }
+  .shareModal .shareRowActions { flex: 0 0 auto; }
+}
 
 /* =========================================================
    DEVICE ROWS (nowy układ 3 rzędów)
@@ -2021,13 +2050,6 @@
   font-weight: 400;
   opacity: .45;
   letter-spacing: .03em;
-}
-
-/* =========================================================
-   SHARE MODAL (Udostępnianie urządzeń)
-========================================================= */
-  color: var(--gold);
-  margin-bottom: 6px;
 }
 
 .shareBottom {

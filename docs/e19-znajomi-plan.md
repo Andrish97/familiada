@@ -301,6 +301,25 @@ każdego poziomu oraz stan tokenu, zadania, Storage i kolejki.
 
 ### Cooldowny do zachowania i kwestia weryfikacji
 
+**Doprecyzowanie wyglądu:** wspólny wzorzec kompaktowych akcji i liczników
+opisuje `ujednolicenie-wygladu.md`, podsekcja „Kompaktowe akcje i liczniki”.
+Wszystkie ostatnie doprecyzowania obowiązują wspólnie w modalu Control,
+modalu Baz i sekcjach udostępniania Ankiet: układ nazwy/statusów i akcji,
+rozmiary przycisków, małe liczniki, wyszarzenie przy cooldownie, przycisk
+udostępniania po prawej, etykieta „ma konto”, osobne przewijanie list
+oraz wspólny dymek nad polem znikający po 3 s. Realizować przez wspólne
+komponenty i CSS, a nie osobne wersje wyglądu na poszczególnych stronach.
+Ponowienie ma ikonę okrężnej strzałki i mały licznik pod przyciskiem;
+strzałka i kosz/X mają takie same wymiary, stoją obok siebie po prawej
+i zajmują wysokość wiersza. Nazwa/mail są po lewej; statusy obok, jeśli
+mieszczą się w jednej linii, w przeciwnym razie pod nimi.
+Przełącznik roli w Bazach należy do tej samej grupy akcji obok kosza/X,
+ma podobną wielkość i taką samą wysokość.
+Dostępność pokazuje odliczanie do zera bez powtarzanych zdań. Format czasu
+dobierany jest do jego skali. Nie zmienia to polityk cooldownu ani braku
+ponowienia w Control. Karta Urządzeń Control zachowuje poprzedni wygląd
+i dotychczasowy guard na telefonach.
+
 Obecne wartości polityk są zapisane w [`maile-granice.md`](maile-granice.md):
 udostępnienie bazy 24 h, urządzenia 1 h, ankieta 24 h na parę/ankietę,
 zaproszenie subskrypcyjne 5 dni, jego ponowienie 5 dni; zaproszenie do

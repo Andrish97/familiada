@@ -2159,6 +2159,13 @@ body{
 @media (max-width: 600px) {
   .app-toast { width: calc(100vw - 30px); max-width: none; }
 }
+.app-toast.app-toast--inline{
+  position: relative; left: auto; bottom: auto; z-index: auto;
+  width: auto; max-width: none; margin-top: 10px;
+  text-align: left; cursor: default; transform: translateY(3px);
+}
+.app-toast.app-toast--inline.show{ transform: translateY(0); }
+.app-toast.app-toast--inline[hidden]{ display: none; }
 
 /* =========================================================
    Wspólny kafel zasobu (gry, bazy, rynek): nazwa, linia opisu (.meta),
@@ -2331,6 +2338,18 @@ body{
 .shareNote{ margin-top: 4px; font-size: 11px; line-height: 1.3; color: rgba(255,234,166,.65); }
 .shareRowActions{ display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
 .shareRowActions .btn:disabled{ opacity: .4; cursor: not-allowed; }
+.shareRow--compact{ min-height: 64px; box-sizing: border-box; }
+.shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.shareRow--compact .shareTags{ margin-top: 0; }
+.shareRow--compact .shareRowActions{ align-self: stretch; align-items: stretch; flex-wrap: nowrap; }
+.shareRow--compact .shareRowActions .btn{ width: 40px; min-width: 40px; min-height: 44px; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
+.shareActionTimer{ width: 40px; min-width: 40px; min-height: 44px; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.shareActionTimer .ico{ width: 18px; height: 18px; }
+.shareActionTimer[hidden]{ display: none; }
+.shareRow.is-cooling-down{ opacity: .5; filter: grayscale(1); }
+.shareSectionActions{ display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.shareCountdown{ flex: 0 0 auto; min-width: 38px; font-size: 11px; line-height: 1.3; font-variant-numeric: tabular-nums; text-align: center; color: var(--gold); }
+.shareCountdown[hidden]{ display: none; }
 .grid .tile .tileMiniActions{ display: flex; gap: 6px; padding-top: 8px; }
 
 

@@ -13,6 +13,18 @@ export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "decline
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/** Wskaźnik dostępności: ikona z małym licznikiem pod spodem. */
+export function shareCooldownEl() {
+  const element = document.createElement("div");
+  element.className = "shareActionTimer";
+  element.hidden = true;
+  element.innerHTML = icon("hourglass");
+  const labelEl = document.createElement("span");
+  labelEl.className = "shareCountdown";
+  element.append(labelEl);
+  return { element, labelEl };
+}
+
 /**
  * Pojedynczy wiersz (kafel) sekcji.
  * @param {object} row

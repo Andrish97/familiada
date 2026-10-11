@@ -287,6 +287,51 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
 
 ## Ujednolicenie E19 — układ i zachowanie (decyzje 2026-10-11)
 
+### Doprecyzowanie: kompaktowe akcje i liczniki
+
+**Wspólny zakres wszystkich poniższych reguł:** modal udostępniania
+Control, modal udostępniania Baz oraz sekcje udostępniania Ankiet.
+Używać tego samego komponentu wiersza, grupy akcji, licznika i dymka
+oraz wspólnego CSS; nie traktować ostatnich doprecyzowań jako wariantu
+wyłącznie dla Control. Te same wzorce stosować do odpowiadających im
+sekcji Znajomych/Subskrybentów zgodnie z macierzą E19.
+
+- Przywrócić dotychczasowy wygląd karty Urządzeń Control. Control nadal
+  korzysta z guard overlay na telefonie; zrzuty jego wnętrza wykonywać
+  na obsługiwanym ekranie komputera/tabletu.
+- Wiersze udostępniania: po lewej nazwa lub mail i krótkie etykiety
+  typu/statusu. Jeśli mieszczą się razem, pozostają w jednej linii;
+  przy braku miejsca statusy zawijają się do drugiego rzędu.
+  Nie dodawać zdań opisujących cooldown przy każdej osobie.
+  Etykieta odbiorcy będącego kontem: „ma konto” (zamiast „konto”).
+- Każda lista odbiorców ma osobne przewijanie, niezależne od sąsiednich
+  list. Nagłówek sekcji i przycisk pod listą pozostają poza jej przewijaniem.
+- Komunikat nad polem mail/nazwa jest wariantem wspólnego dymka systemowego
+  (`app-toast--inline`): ten sam wygląd i domyślny czas 3 s, następnie znika.
+  Nowy komunikat zastępuje poprzedni; brak osobnego stylu tylko dla Control.
+- Po prawej grupa akcji rozciąga się na całą wysokość wiersza. Przycisk
+  z okrężną strzałką i kosz/X stoją obok siebie i mają identyczne wymiary.
+  Mały licznik znajduje się pod ikoną ponowienia. W Bazach przełącznik
+  Edytor/Przeglądający jest w tej samej grupie obok X/kosza, o podobnej
+  wielkości i tej samej wysokości; nie umieszczać go przy nazwie/statusach.
+- Ponowienie: przycisk z ikoną okrężnej strzałki (`refresh`), a pod nim mały
+  licznik czasu do kolejnej dozwolonej wysyłki. Opis akcji w tooltipie i nazwie
+  dostępności; po zakończeniu odliczania przycisk staje się dostępny.
+- Dostępność: ten sam kompaktowy układ z odliczaniem do zera, bez zdania
+  „dostępne za …”. Skala licznika odpowiada długości okresu: sekundy/minuty,
+  godziny/minuty lub dni/godziny. Źródłem czasu pozostaje backend.
+- Wiersz z licznikiem ograniczającym dostępność jest wyszarzony przez czas
+  odliczania; po upływie czasu automatycznie odzyskuje zwykły wygląd.
+  Przycisk „Udostępnij zaznaczonym” jest pod listą przy jej prawej krawędzi.
+  Sam wygląd nie zmienia polityki: cooldown maila nadal ogranicza mail,
+  zgodnie z zasadami dostępu opisanymi w E19.
+- Zasada obejmuje całe ujednolicenie: Znajomych, Subskrybentów, Bazy,
+  Ankiety i Control. Control zachowuje brak ponowienia; pokazuje wyłącznie
+  licznik dostępności kolejnej wysyłki, cofnięcie i nową wysyłkę.
+- Zrzuty z przykładowymi danymi dołączać po wykonaniu zmian wyglądu.
+  Kontynuować bez oczekiwania na akceptację wyglądu; pytanie jest potrzebne
+  wyłącznie przy brakującej kluczowej decyzji architektonicznej.
+
 Ta tabela doprecyzowuje i w przypadkach różnic zastępuje wcześniejszy ogólny
 wzorzec „Subskrybenci · Oczekujące · Aktywni”. To samo udostępnienie może mieć
 inne stany i akcje w zależności od zasobu; wspólne pozostają czytelne wiersze,

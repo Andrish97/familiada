@@ -3,9 +3,9 @@
 
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T09374";
 import { t } from "../../shared/translation/translation.js?v=v2026-10-11T09374";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-11T09374";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-11T09374";
-import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-11T09374";
+import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-11T09374";
+import { createCooldownTicker, formatCooldownRemaining, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-11T09374";
+import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T09374";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
@@ -99,9 +99,43 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   let _deviceType = null;
   let renderVersion = 0;
   let preflightVersion = 0;
-  let emailCountdownTimer = null;
+  let messageTimer = null;
+  let messageVersion = 0;
   const cooldownTicker = createCooldownTicker();
   cooldownTicker.start();
+
+  function clearMessage() {
+    messageVersion++;
+    if (messageTimer) clearTimeout(messageTimer);
+    messageTimer = null;
+    if (msgEl) {
+      msgEl.classList.remove("show");
+      msgEl.hidden = true;
+      msgEl.textContent = "";
+    }
+  }
+
+  function showMessage(message, { duration = TOAST_DEFAULT_MS, state = "info" } = {}) {
+    clearMessage();
+    if (!msgEl || !message) return;
+    const version = messageVersion;
+    msgEl.classList.toggle("error", state === "error");
+    msgEl.textContent = message;
+    msgEl.hidden = false;
+    requestAnimationFrame(() => { if (version === messageVersion) msgEl.classList.add("show"); });
+    if (duration > 0) {
+      messageTimer = setTimeout(() => {
+        if (version !== messageVersion) return;
+        msgEl.classList.remove("show");
+        messageTimer = setTimeout(() => {
+          if (version !== messageVersion) return;
+          msgEl.hidden = true;
+          msgEl.textContent = "";
+          messageTimer = null;
+        }, 220);
+      }, duration);
+    }
+  }
 
   // Target cooldownu ma taką samą granularność jak RPC serwerowy:
   // nadawca, odbiorca, typ urządzenia i gra.
@@ -111,9 +145,9 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
 
   function closeModal() {
     overlay.style.display = "none";
+    renderVersion++;
     preflightVersion++;
-    if (emailCountdownTimer) clearInterval(emailCountdownTimer);
-    emailCountdownTimer = null;
+    clearMessage();
   }
   btnClose?.addEventListener("click", closeModal);
   overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
@@ -122,19 +156,21 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     const version = ++renderVersion;
     preflightVersion++;
     const deviceType = _deviceType;
-    if (msgEl) msgEl.textContent = "";
-    if (emailCountdownTimer) clearInterval(emailCountdownTimer);
-    emailCountdownTimer = null;
+    clearMessage();
     cooldownTicker.resetBindings();
 
-    const { data: shares } = await sb().rpc("control_device_shares_list", {
+    const { data: shares, error: sharesError } = await sb().rpc("control_device_shares_list", {
       p_game_id: game.id, p_device_type: deviceType,
     });
     if (version !== renderVersion) return;
+    if (sharesError) {
+      showMessage(t("control.shareDeviceModal.failed"), { state: "error" });
+      return;
+    }
     const current = shares || [];
 
     if (currentWrap && currentCont) {
-      currentWrap.style.display = "";
+      currentWrap.hidden = false;
       currentCont.replaceChildren();
       if (!current.length) {
         const empty = document.createElement("div");
@@ -143,48 +179,46 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
         currentCont.appendChild(empty);
       }
       for (const share of current) {
-        const row = document.createElement("div");
-        row.className = "shareRow";
-        const who = document.createElement("span");
-        who.className = "shareRowLabel";
-        who.textContent = share.recipient_username || share.recipient_email || "—";
-        const kind = document.createElement("small");
-        kind.className = "shareRowMeta";
-        kind.textContent = share.recipient_kind === "friend" ? "znajomy" : share.recipient_kind === "account" ? "konto" : "mail";
-        const cooldown = document.createElement("small");
-        cooldown.className = "shareCooldownHint";
-        cooldown.hidden = true;
-        if (share.cooldown_until && Date.parse(share.cooldown_until) > Date.now()) {
-          cooldownTicker.bind({ key: `shared:${share.share_id}`, labelEl: cooldown, disableEls: [] });
-          cooldownTicker.setEndMs(`shared:${share.share_id}`, Date.parse(share.cooldown_until));
-        }
-        const revoke = document.createElement("button");
-        revoke.type = "button";
-        revoke.className = "btn sm danger";
-        revoke.title = t("bases.share.remove") || "Cofnij udostępnienie";
-        revoke.setAttribute("aria-label", revoke.title);
-        revoke.innerHTML = icon("trash");
-        revoke.addEventListener("click", async () => {
+        const revoke = async () => {
           const { data, error } = await sb().rpc("control_device_share_revoke", { p_share_id: share.share_id });
-          if (error || !data?.ok) { if (msgEl) msgEl.textContent = error?.message || data?.error || "Błąd."; return; }
+          if (error || !data?.ok) { showMessage(error?.message || data?.error || "Błąd.", { state: "error" }); return; }
           await renderModal();
           await refreshBadges();
+        };
+        const recipientKind = share.recipient_kind === "friend" ? "friend" : share.recipient_kind === "account" ? "account" : "mail";
+        const kind = t(`control.shareDeviceModal.recipientKind.${recipientKind}`);
+        const row = shareRowEl({
+          label: share.recipient_username || share.recipient_email || "—",
+          tags: [{ text: kind, cls: "tag--muted" }],
+          actions: [{ key: "revoke", icon: "trash", title: t("bases.share.remove") || "Cofnij udostępnienie", onClick: revoke }],
         });
-        row.append(who, kind, cooldown, revoke);
+        row.classList.add("shareDeviceRecipientRow", "shareRow--compact");
+        const { element: cooldown, labelEl: countdown } = shareCooldownEl();
+        row.querySelector(".shareRowActions")?.prepend(cooldown);
+        if (share.cooldown_until && Date.parse(share.cooldown_until) > Date.now()) {
+          cooldownTicker.bind({ key: `shared:${share.share_id}`, labelEl: countdown, disableEls: [], onTick: (_, active) => { cooldown.hidden = !active; } });
+          cooldownTicker.setEndMs(`shared:${share.share_id}`, Date.parse(share.cooldown_until));
+        }
         currentCont.appendChild(row);
       }
     }
 
     if (!subsList) return;
-    const { data: friends } = await sb().rpc("friends_list");
+    const { data: friends, error: friendsError } = await sb().rpc("friends_list");
     if (version !== renderVersion) return;
+    if (friendsError) {
+      subsList.replaceChildren();
+      if (btnShareFriends) btnShareFriends.disabled = true;
+      showMessage(t("control.shareDeviceModal.failed"), { state: "error" });
+      return;
+    }
     const already = new Set(current.filter((s) => s.recipient_id).map((s) => s.recipient_id));
     const activeFriends = (friends || []).filter((f) => f.status === "active" && f.direction === "friend" && !already.has(f.user_id));
     subsList.replaceChildren();
     if (!activeFriends.length) {
       const empty = document.createElement("div");
       empty.className = "share-empty-state";
-      empty.textContent = "Nie ma znajomych do udostępnienia.";
+      empty.textContent = t("control.shareDeviceModal.noFriends") || "Nie ma znajomych do udostępnienia.";
       subsList.appendChild(empty);
     }
     for (const friend of activeFriends) {
@@ -194,22 +228,28 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       checkbox.type = "checkbox";
       checkbox.value = friend.user_id;
       checkbox.dataset.email = friend.email || "";
+      checkbox.addEventListener("change", updateSelection);
       const name = document.createElement("span");
-      name.className = "shareRowLabel";
+      name.className = "shareEmail";
       name.textContent = friend.label || friend.email || "—";
-      const cooldown = document.createElement("span");
-      cooldown.className = "shareCooldownHint";
-      cooldown.hidden = true;
-      row.append(checkbox, name, cooldown);
+      const { element: cooldown, labelEl: countdown } = shareCooldownEl();
+      const main = document.createElement("div");
+      main.className = "shareMain";
+      main.append(name);
+      row.append(checkbox, main, cooldown);
       subsList.appendChild(row);
       const { ok, nextAllowedAtMs } = await mailCooldownCheck("device:share", deviceCooldownTarget(friend.user_id)).catch(() => ({ ok: true }));
+      if (version !== renderVersion) return;
       if (!ok && nextAllowedAtMs) {
-        cooldownTicker.bind({ key: `device:${friend.user_id}`, labelEl: cooldown, disableEls: [] });
+        cooldownTicker.bind({ key: `device:${friend.user_id}`, labelEl: countdown, disableEls: [], onTick: (_, active) => {
+          cooldown.hidden = !active;
+          row.classList.toggle("is-cooling-down", active);
+        } });
         cooldownTicker.setEndMs(`device:${friend.user_id}`, nextAllowedAtMs);
       }
     }
     if (btnShareFriends) {
-      btnShareFriends.disabled = !activeFriends.length;
+      updateSelection();
       btnShareFriends.onclick = async () => {
         const selected = [...subsList.querySelectorAll('input[type="checkbox"]:checked')];
         if (!selected.length) return;
@@ -224,14 +264,18 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
           }
           await renderModal();
           await refreshBadges();
-          if (msgEl) msgEl.textContent = cooldown ? "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu." :
-            disabled ? "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail." : "Udostępniono znajomym.";
+          showMessage(cooldown ? (t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.") :
+            disabled ? (t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.") : t("control.shareDeviceModal.mailSent"));
         } catch (error) {
-          if (msgEl) msgEl.textContent = error?.message || "Błąd.";
-          btnShareFriends.disabled = false;
+          showMessage(error?.message || "Błąd.", { state: "error" });
+          updateSelection();
         }
       };
     }
+  }
+
+  function updateSelection() {
+    if (btnShareFriends) btnShareFriends.disabled = !subsList?.querySelector('input[type="checkbox"]:checked');
   }
 
   // Dostęp powstaje niezależnie od e-maila; stan zwrotny rozróżnia wysłanie,
@@ -266,33 +310,31 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   }
 
   btnAdd?.addEventListener("click", async () => {
-    if (msgEl) msgEl.textContent = "";
+    clearMessage();
     const raw = String(emailInp?.value || "").trim();
     if (!raw) return;
     const profile = await resolveToUserId(raw);
     const email = profile?.email || (raw.includes("@") ? raw.toLowerCase() : null);
-    if (!profile && !email) { if (msgEl) msgEl.textContent = t("bases.share.userNotFound") || "Nie znaleziono użytkownika."; return; }
+    if (!profile && !email) { showMessage(t("bases.share.userNotFound") || "Nie znaleziono użytkownika.", { state: "error" }); return; }
     try {
       const mailSent = await doShare(profile?.id || null, email);
       if (emailInp) emailInp.value = "";
       await renderModal();
       await refreshBadges();
       if (mailSent === false) {
-        msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
+        showMessage(t("control.shareDeviceModal.friendMailCooldown") || "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.");
       }
-      if (mailSent === "already") msgEl && (msgEl.textContent = "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
-      if (mailSent === "disabled") msgEl && (msgEl.textContent = "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
+      if (mailSent === "already") showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
+      if (mailSent === "disabled") showMessage(t("control.shareDeviceModal.friendMailDisabled") || "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.");
       else if (mailSent !== false && mailSent !== "already") toast(t("control.shareDeviceModal.mailSent"));
     } catch (e) {
-      if (msgEl) msgEl.textContent = e?.message || "Błąd.";
+      showMessage(e?.message || "Błąd.", { state: "error" });
     }
   });
   emailInp?.addEventListener("input", () => {
     const version = ++preflightVersion;
     const raw = String(emailInp.value || "").trim();
-    if (emailCountdownTimer) clearInterval(emailCountdownTimer);
-    emailCountdownTimer = null;
-    if (msgEl) msgEl.textContent = "";
+    clearMessage();
     if (btnAdd) btnAdd.disabled = false;
     if (!raw) return;
     setTimeout(async () => {
@@ -307,24 +349,15 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       });
       if (version !== preflightVersion || error || !data?.ok) return;
       if (data.already_shared) {
-        if (msgEl) msgEl.textContent = "Tej osobie już udostępniono to urządzenie w tej sesji gry.";
+        showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
         if (btnAdd) btnAdd.disabled = true;
       } else if (data.mail_disabled) {
-        if (msgEl) msgEl.textContent = "Udostępnienie będzie widoczne na koncie, ale powiadomienia e-mail są wyłączone.";
+        showMessage(t("control.shareDeviceModal.recipientDisabled") || "Udostępnienie będzie widoczne na koncie, ale powiadomienia e-mail są wyłączone.");
       } else if (data.mail_allowed === false && data.cooldown_until) {
         const until = Date.parse(data.cooldown_until) || 0;
-        const updateCountdown = () => {
-          const remaining = Math.max(0, until - Date.now());
-          if (!remaining) {
-            if (emailCountdownTimer) clearInterval(emailCountdownTimer);
-            emailCountdownTimer = null;
-            if (msgEl) msgEl.textContent = "";
-            return;
-          }
-          if (msgEl) msgEl.textContent = `E-mail będzie można wysłać za ${Math.ceil(remaining / 60000)} min.`;
-        };
-        updateCountdown();
-        emailCountdownTimer = setInterval(updateCountdown, 1000);
+        const remaining = Math.max(0, until - Date.now());
+        const time = formatCooldownRemaining(remaining);
+        showMessage(t("control.shareDeviceModal.mailCooldownRemaining", { time }) || `E-mail będzie można wysłać za ${time}.`);
       }
     }, 300);
   });
@@ -338,7 +371,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     if (titleEl) titleEl.textContent = `${t("control.shareDeviceModal.title") || "Udostępnij"} — ${deviceTypeLabel(kind)}`;
     if (emailInp) emailInp.value = "";
     if (btnAdd) btnAdd.disabled = false;
-    overlay.style.display = "";
+    overlay.style.display = "grid";
     await renderModal();
   }
 

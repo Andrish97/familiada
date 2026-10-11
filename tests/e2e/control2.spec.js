@@ -2608,8 +2608,13 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 
     await page.locator('[data-device="host"]').getByRole("button", { name: "Udostępnij" }).click();
     await expect(page.locator("#shareDeviceOverlay")).toBeVisible({ timeout: 10000 });
+    // Regresja CSS: brak klamry wcześniej zagnieżdżał te reguły pod finałem.
+    await expect(page.locator('[data-device="host"]')).toHaveCSS("border-top-style", "solid");
+    await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "520px");
+    await expect(page.locator("#shareDeviceSubsList")).toHaveCSS("overflow-y", "auto");
+    await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
     await page.locator("#shareDeviceEmail").fill(recipient);
-    await page.getByRole("button", { name: "Dodaj" }).click();
+    await page.locator("#btnShareDeviceAdd").click();
     // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
     // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
     // username || current.recipient_email` -- skoro test7 ma ustawiony
@@ -2617,6 +2622,17 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // e-mail -- real finding z pierwszego przebiegu CI, nie zgadywane.
     const recipientUsername = recipient.split("@")[0];
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
+
+    // Jedno okno: trzy sekcje i znikający wspólny komunikat nad polem.
+    await expect(page.locator("#shareDeviceOverlay .shareSection")).toHaveCount(3);
+    await page.locator("#shareDeviceEmail").fill(recipient);
+    await expect(page.locator("#shareDeviceMsg")).toContainText("już udostępniono", { timeout: 10000 });
+    await testInfo.attach("control-share-message", { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
+    await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
+    await expect(page.locator("#shareDeviceMsg")).toBeHidden({ timeout: 5000 });
+    // Zniknięcie komunikatu nie odblokowuje duplikatu udostępnienia.
+    await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
+    await testInfo.attach("control-share-ready", { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
 
     // Zgłoszony realny bug naprawiony migracją 287: share_device() robiło
     // ON CONFLICT DO UPDATE bez sygnalizowania wywołującemu, czy to nowy
