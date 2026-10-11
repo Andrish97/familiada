@@ -912,3 +912,10 @@ poll_sub_accept, konwersję friend_invites_from_subscriptions i istniejące
 rekordy historyczne. poll_claim_email_records obecnie przepisuje odbiorcę
 zadań ankietowych i wywołuje konwersję znajomości; nie podpina już sam
 anonimowego wpisu subskrypcji do konta.
+
+Flagi: aktualny _contact_mail_enabled sprawdza user_flags konta,
+ale nie email_unsub_tokens.suppressed_at. Testy 332 muszą rozdzielać
+flagę konta, globalną rezygnację adresu bez konta i wypisanie z konkretnej
+aktywnej subskrypcji. Brak naliczenia maila przy rezygnacji należy sprawdzić
+w RPC i kolejce; nie zakładać, że odrzucenie maila przez Worker oznacza
+poprawny licznik/cooldown po stronie RPC.

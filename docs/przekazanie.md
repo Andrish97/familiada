@@ -472,3 +472,7 @@ następną paczką 332; nie oznaczać pkt 3 zakończonego.
 331: runner 38150342363 ✓, SQL main ca1a635ab1; czeka na log zastosowania
 i punktowe branch/main Subscribers. E2E po reload czeka na komunikat Go,
 żeby asercja braku Akceptuj nie przeszła przed inicjalizacją strony.
+
+331 branch 38150591218 ✓ 3/3 bez retry, unit 411/411; dwa rzeczywiste
+maile test14 w 48/104 s. SQL OK 15:15:33 UTC, DB 38150405080 ✓.
+Do domknięcia ta sama kontrola main; frontend/CSS w 331 nie zmieniony.
