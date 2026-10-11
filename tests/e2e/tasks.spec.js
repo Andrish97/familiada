@@ -19,7 +19,8 @@ async function newUserContext(browser, username) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
   await loginAsTestUser(page, ctx, { username });
-  await serveBranchCode(ctx, { pages: ["tasks"] });
+  // Na main sprawdzamy opublikowane pliki Pages; na branchu kandydat do wdrożenia.
+  if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(ctx, { pages: ["tasks"] });
   return { ctx, page };
 }
 
