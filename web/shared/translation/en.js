@@ -5027,7 +5027,7 @@ const en = {
     "go": "Go →",
     "sent": "Invitation saved.",
     "mailFailed": "Invitation saved, but the email could not be sent. You can resend it.",
-    "accountCreated": "An account was created — the friend invitation is waiting for acceptance.",
+    "accountCreated": "Has an account — go to Friends.",
     "sections": {"declined": "Declined by me", "incoming": "Suggestions", "outgoing": "Pending and declined", "friend": "Friends", "pending": "Pending", "active": "Subscribers"},
     "status": {"pending": "Pending", "active": "Accepted", "declined": "Declined"},
     "empty": {"incoming": "No new suggestions.", "outgoing": "No sent invitations.", "friend": "No friends yet.", "pending": "No pending invitations.", "active": "No subscribers yet."},
@@ -5062,6 +5062,8 @@ const en = {
         "friendBody": "{owner} wants to add you as a friend. Accept the invitation on Familiada.",
         "friendAction": "Open invitation"
     },
+    "goFriends": "Go to Friends",
+    "goAccountBody": "The recipient has a Familiada account. Account invitations are managed in Friends.",
     "goTitle": "Friend invitation",
     "goBody": "{owner} invites you to be friends.",
     "open": "Open Friends"

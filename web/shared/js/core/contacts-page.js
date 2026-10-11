@@ -136,8 +136,8 @@ export async function initContactsPage(pageId) {
     const make = (key) => {
       const selected = rows.filter(row => key === "declined" && friends
         ? row.direction === "incoming" && row.status === "declined"
-        : (friends ? row.direction : row.status) === key && !(friends && key === "incoming" && row.status === "declined"));
-      const section = shareSectionEl({ key, title: t(`contacts.sections.${key}`),
+        : (!friends && key === "pending" ? ["pending", "declined"].includes(row.status) : (friends ? row.direction : row.status) === key) && !(friends && key === "incoming" && row.status === "declined"));
+      const section = shareSectionEl({ key, title: t(`contacts.sections.${!friends && key === "pending" ? "outgoing" : key}`),
         rows: selected.map(rowOf),
         ...(key === "declined" && friends ? { collapsed: declinedCollapsed, onToggle: value => { declinedCollapsed = value; } } : {}),
         emptyText: t(`contacts.empty.${key}`) });

@@ -4936,7 +4936,7 @@ const pl = {
     "go": "Przejdź →",
     "sent": "Zaproszenie zapisane.",
     "mailFailed": "Zaproszenie zapisane, ale nie udało się wysłać maila. Możesz ponowić wysyłkę.",
-    "accountCreated": "Założono konto — zaproszenie do znajomych czeka na przyjęcie.",
+    "accountCreated": "Ma konto — przejdź do Znajomych.",
     "sections": {"declined": "Odrzucone przeze mnie", "incoming": "Propozycje", "outgoing": "Oczekujące i odrzucone", "friend": "Znajomi", "pending": "Oczekujące", "active": "Subskrybenci"},
     "status": {"pending": "Oczekuje", "active": "Zaakceptowano", "declined": "Odrzucono"},
     "empty": {"incoming": "Nie masz nowych propozycji.", "outgoing": "Nie masz wysłanych zaproszeń.", "friend": "Nie masz jeszcze znajomych.", "pending": "Nie masz oczekujących zaproszeń.", "active": "Nie masz jeszcze subskrybentów."},
@@ -4971,6 +4971,8 @@ const pl = {
         "friendBody": "{owner} chce dodać Cię do znajomych. Przyjmij zaproszenie w Familiadzie.",
         "friendAction": "Otwórz zaproszenie"
     },
+    "goFriends": "Przejdź do Znajomych",
+    "goAccountBody": "Odbiorca ma konto w Familiadzie. Zaproszenia dla kont obsługujesz w Znajomych.",
     "goTitle": "Zaproszenie do znajomych",
     "goBody": "{owner} zaprasza Cię do znajomych.",
     "open": "Otwórz Znajomych"

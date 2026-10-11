@@ -318,10 +318,12 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
   Po wygaśnięciu/cofnięciu starego wpisu potrzebne jest nowe zaproszenie.
 - Ankiety nie potrzebują takiej ścieżki zmiany decyzji; zaproszenie pozostaje
   przypisane do uruchomienia. Odmowa nie pozwala przypominać w tym przebiegu.
-- **Odrzucenie zaproszenia to inny stan niż wypisanie się z aktywnej
-  subskrypcji lub globalne wyłączenie powiadomień.** Automatyczne wygaśnięcie
-  odmowy nie znosi tych ustawień ani blokad rezygnacji. Jeśli baza dziś
-  przechowuje oba przypadki jako declined, rozróżnić przyczynę przed migracją.
+- **Aktualna decyzja 2026-10-11: wypisanie = odmowa.** Wypisanie z aktywnej
+  subskrypcji podlega tym samym terminom 5/30 dni i blokuje stary token;
+  po karencji możliwe nowe jawne zaproszenie. Nie dodajemy trwałej blokady
+  konkretnego nadawcy ani osobnego mechanizmu przywracania wypisania.
+  Globalne wyłączenie maili pozostaje osobną flagą; upływ karencji jej
+  nie resetuje, nie reaktywuje subskrypcji i nie wysyła maila.
 - Wpisanie e-maila lub nazwy tej samej osoby rozstrzygamy po identyfikatorze
   konta, nie po tekście pola; duplikat nie tworzy rekordu ani maila.
 
@@ -876,9 +878,9 @@ w Go, granice 5/30 dni, nieważny stary token/nowe jawne zaproszenie,
 ponów tylko pending, flag-mailowa przed limitem/kolejką, wyścigi,
 cofnięcie bez skrócenia karencji, rejestracja/claim bez obejścia odmowy,
 osobno wypisanie z aktywnej subskrypcji i globalna rezygnacja z maili.
-Wypisanie nie może zostać przypadkowo uznane za wygasającą odmowę
-zaproszenia; obecny status declined jest wspólny — rozróżnić przyczynę
-zgodnie z kontraktem §7 przed wdrożeniem cleanupu.
+Aktualna decyzja użytkownika: **wypisanie = odmowa**, więc dla obu działa
+wspólny status declined i karencja 30 dni. Globalna rezygnacja z maili
+pozostaje flagą niezależną od czasu życia odmowy.
 
 **Stan pkt 2:** zakończony po Pages 38148810039 i kontroli main
 38148894724 (3/3 bez retry, unit 411/411). Następny pkt 3 zgodnie
@@ -926,3 +928,37 @@ unit 412/412, dwa dostarczone maile 22/102 s. Świeży branch 38151820876
 pozostawiony baseline własnej pary konta testowego→test14 między
 scenariuszami; limit kolejki dla normalnych użytkowników nie zmieniony.
 Cały pkt 3 pozostaje otwarty: kolejna paczka 333 według audytu powyżej.
+
+**Praca ciągła:** zamknięcie paczki oznacza zapis wyników i natychmiastowe
+przejście do następnego zakresu w tej samej pracy. Nie kończyć tury tylko
+dlatego, że dana paczka ma zieloną kontrolę; nie czekać na „kontynuuj”.
+Zatrzymanie wyłącznie na polecenie użytkownika lub przy brakującej
+kluczowej decyzji architektonicznej. Pytanie o wypisanie rozstrzygnięte:
+użytkownik wskazał „Wypisanie = odmowa”; nie pytać ponownie.
+
+**Zakres tej decyzji: w każdym miejscu systemu.** Rezygnacja odbiorcy
+z przyjętej relacji/udostępnienia stosuje kontrakt odmowy właściwy dla
+zasobu, również w Go i starszych RPC. To wspólna reguła grafu i kaskad,
+nie wyjątek Subskrybentów. Karencja 30 dni obowiązuje tam, gdzie odmowa
+ma 30 dni; dla ankiety odmowa dotyczy uruchomienia. Globalne wyłączenie
+maili zachowuje flagę; wygaśnięcie odmów jej nie zeruje. Uwzględnić
+przy kolejnych punktach Baz/Ankiet/grafu, bez zmiany ich kolejności.
+
+### Pkt 3 / 333 — lokalna implementacja wspólnej odmowy
+
+Wypisanie = odmowa również w starych RPC. Subskrybenci: 5 dni widoczności
+nadawcy, 30 dni karencji, bez anonimowego undo i bez ponowienia odmowy.
+Cofnięcie przez nadawcę zachowuje karencję. Rejestracja odbiorcy nie
+omija odmowy przez automatyczne/manualne zaproszenie lub przyjęcie
+Znajomych. Globalna flaga mailowa jest trwała, niezależna od karencji.
+Odbiorcy z kontem w Go przechodzą do Znajomych zamiast akceptować
+subskrypcję konta; komunikat nie obiecuje utworzenia propozycji w karencji.
+
+Lokalny rollback SQL: granice 5/30, stare/nowe tokeny, flagi, brak liczników
+przy mail-off, budżet 2/30, stare RPC, rejestracja oraz zakres prywatnych
+helperów ✓. Wyścigi invite/resend/refusal oraz regresja 331/329 ✓.
+Przed zamknięciem pozostają izolowany runner i cykl wdrożenia branch/main.
+Zrzuty wykonanego renderera z przykładowymi danymi:
+[telefon — odmowa i mail-off](img/e19-subscribers/refusal-invite-390.png),
+[komputer](img/e19-subscribers/refusal-invite-1400.png),
+[telefon — aktywni](img/e19-subscribers/refusal-active-390.png).

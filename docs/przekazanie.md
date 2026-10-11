@@ -56,7 +56,7 @@ z list i sama odmowa wygasa po czasie, umożliwiając nowe dodanie osoby
 znikanie z list nadawcy po 5 dniach. Użytkownik zatwierdził rozpisane
 propozycje i terminy; 5/30 dni nie są już otwartymi parametrami. Stary token unieważniony,
 nowe zaproszenie wymaga ponownej akceptacji; bez automatycznej wysyłki.
-Nie mylić odmowy zaproszenia z wypisaniem się z aktywnej subskrypcji.
+Aktualna decyzja: wypisanie z aktywnej subskrypcji = odmowa (ten sam cykl 5/30). Globalna flaga wyłączenia maili jest osobna i trwała.
 Najnowsze doprecyzowanie: odbiorca ma zachować własne odmowy do wygaśnięcia,
 w zwiniętej sekcji „Odrzucone przeze mnie”. „Cofnij odmowę” przywraca
 oczekujące; osobne Akceptuj dopiero tworzy relację/dostęp. Bez nowego
@@ -504,9 +504,15 @@ active wymaga właściwego adresu; konto→Znajomi. Branch 38151820876 ✓,
 SQL/runner 331 i 332 ✓. Nie ponawiać tych kontroli. Front/CSS bez zmian.
 
 **Następna praca:** E19 §5 pkt 3, paczka 333 — pełny kontrakt odmów
-Subskrybentów: rozróżnienie odmowy/wypisania/globalnego mail-off,
+Subskrybentów: wypisanie = odmowa, niezależny trwały globalny mail-off,
 5 dni widoczności / 30 dni karencji, zachowanie karencji po cofnięciu,
 stare tokeny/nowe jawne zaproszenie, flagi przed licznikiem/kolejką,
 resend pending z blokadą/metadata, konto→Znajomi we wszystkich starych
 RPC i rejestracji/claim. Audyt na końcu E19. Dopiero potem pkt 4 Bazy
 (draft /tmp wymaga kolejnego numeru i pełnych testów), pkt 5 Ankiety itd.
+
+**333 lokalnie:** wypisanie = odmowa w każdym miejscu (czasy właściwe dla
+zasobu), dla Subskrybentów wspólne 5/30 także stare RPC; globalny mail-off
+trwały. SQL/wyścigi lokalne ✓, unit 412/412. Front pokazuje odmowy nadawcy
+bez ponowienia; Go konta→Znajomi. Runner/produkcja jeszcze do sprawdzenia;
+nie oznaczać pkt 3 zamkniętego. Zrzuty refusal-* w e19-subscribers.

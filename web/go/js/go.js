@@ -417,6 +417,24 @@ async function handleSubInvite(data, user) {
   const hasAccountInvite = Boolean(data.subscriber_user_id);
   const userEmail = normalizeEmail(user?.email);
 
+  // Konto korzysta ze Znajomych; token nie aktywuje subskrypcji konta.
+  // Odmowa pozostaje odmową także po rejestracji.
+  if (data.friend_conversion_required && ["pending", "active"].includes(data.status)) {
+    if (user && !matchesInviteTarget({ user, expectedUserId: data.subscriber_user_id, expectedEmail })) {
+      showMismatch(head, expectedEmail);
+      return;
+    }
+    setView({ head, text: t("contacts.goAccountBody") });
+    clearActions();
+    showEmailInput(false);
+    addAction(user ? t("contacts.goFriends") : MSG.loginLabel(), "gold", () => {
+      const url = new URL(user ? "/friends/" : "/login/", location.href);
+      if (!user) { url.searchParams.set("from", "poll-go"); url.searchParams.set("next", "friends"); }
+      location.href = url.toString();
+    });
+    return;
+  }
+
   // Nieaktywne zaproszenie pokazuje rzeczywisty stan, także po odświeżeniu.
   // Link konkretnej osoby nie staje się formularzem nowej subskrypcji.
   if (data.status !== "pending") {

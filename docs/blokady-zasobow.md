@@ -372,3 +372,14 @@ wobec usunięcia rodzica.
 Plan nie zmienia jeszcze istniejących zachowań runtime; E19 ma wdrożyć tę
 macierz w sposób zgodny z decyzjami o współpracy w bazach i bez blokowania
 głosujących.
+# Decyzja wspólna 2026-10-11 — wypisanie = odmowa
+
+Użytkownik rozszerzył zasadę na każde miejsce systemu. Rezygnacja
+odbiorcy z przyjętej relacji/udostępnienia stosuje stan odmowy i jego
+czas życia dla danego zasobu, niezależnie od strony/Go/starego RPC.
+Uwzględnić przy przeglądzie grafu zależności i kaskad w E19: brak
+reaktywacji starego tokenu, brak resetu karencji przez cofnięcie/usunięcie,
+brak automatycznej akceptacji lub maila po wygaśnięciu. Flaga globalnego
+wyłączenia maili pozostaje trwała i niezależna od wygaśnięcia relacji.
+Szczegóły i bieżąca kolejność w e19-znajomi-plan.md; zapis decyzji nie
+oznacza jeszcze wdrożenia wszystkich rodzajów zasobów.

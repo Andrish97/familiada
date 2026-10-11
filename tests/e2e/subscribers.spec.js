@@ -18,7 +18,7 @@ async function invite(page, recipient) {
   await page.locator("#inviteInput").fill(recipient);
   await page.locator("#btnInvite").click();
 }
-test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie", async ({ page, context, browser }, testInfo) => {
+for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i ${withdrawal ? "wypisanie jako odmowa" : "usunięcie"}`, async ({ page, context, browser }, testInfo) => {
   test.setTimeout(240000);
   await loginAsTestUser(page, context);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
@@ -65,7 +65,22 @@ test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie
     await page.reload();
     const active = page.locator('.rowsSection--active .shareRow').filter({ hasText: email });
     await expect(active).toHaveCount(1);
-    await active.locator('[data-act="remove"]').click();
+    let removalRow = active;
+    if (withdrawal) {
+      const unsub = new URL(link);
+      unsub.searchParams.set("action", "unsub");
+      await invitePage.goto(unsub.toString());
+      await invitePage.locator(".poll-go-actions button").click();
+      await expect(invitePage.locator(".poll-go-text")).toContainText(/wypis|subskryb/i);
+      await page.reload();
+      removalRow = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
+      await expect(removalRow).toContainText("Odrzucono");
+      await expect(removalRow.locator('[data-act="resend"]')).toHaveCount(0);
+      const blockedInvite = await page.evaluate(async email =>
+        (await window.__sbClient.rpc("subscribers_invite", { p_email: email })).data, email);
+      expect(blockedInvite).toMatchObject({ ok: false, err: "cooldown" });
+    }
+    await removalRow.locator('[data-act="remove"]').click();
     await page.locator(".uni-foot .btn.gold").click();
     await expect(active).toHaveCount(0);
     await invitePage.reload();
@@ -126,6 +141,14 @@ test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ p
       return data;
     }, email);
     expect(records).toEqual([{ status: "declined" }]);
+    await page.reload();
+    const refused = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
+    await expect(refused).toContainText("Odrzucono");
+    await expect(refused.locator('[data-act="resend"]')).toHaveCount(0);
+    await refused.locator('[data-act="remove"]').click();
+    await page.locator(".uni-foot .btn.gold").click();
+    await invite(page, email);
+    await expect(page.locator("#appToast")).toContainText("Kolejne zaproszenie można wysłać po");
   } finally {
     await cleanup(page).catch(() => {});
     await anonymous.close();
@@ -138,4 +161,46 @@ test("subskrybenci: konto pokazuje przejście do Znajomych", async ({ page, cont
   await invite(page, "test8@familiada.online");
   await expect(page.locator(".uni-modal")).toContainText("możesz zaprosić tę osobę do znajomych");
   await expect(page.getByRole("link", { name: "Przejdź →" })).toHaveAttribute("href", /\/friends\//);
+});
+
+test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany", async ({ page, context, browser }) => {
+  await loginAsTestUser(page, context);
+  const recipientEmail = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.email);
+  const anonymous = await browser.newContext({ serviceWorkers: "block" });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
+  await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+  const anonPage = await anonymous.newPage();
+  let status = "pending";
+  const resolver = route => route.fulfill({ contentType: "application/json", body: JSON.stringify({
+    ok: true, kind: "sub", sub_id: "333-preview", status, owner_label: "Agnieszka",
+    subscriber_user_id: null, subscriber_email: recipientEmail, friend_conversion_required: true,
+  }) });
+  await context.route("**/rest/v1/rpc/poll_go_resolve", resolver);
+  await anonymous.route("**/rest/v1/rpc/poll_go_resolve", resolver);
+  const url = "https://www.familiada.online/go/?s=cccccccc-3330-0000-0000-000000000003";
+  try {
+    for (status of ["pending", "active"]) {
+      await page.goto(url);
+      await expect(page.getByRole("button", { name: "Przejdź do Znajomych", exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Akceptuj", exact: true })).toHaveCount(0);
+      await page.getByRole("button", { name: "Przejdź do Znajomych", exact: true }).click();
+      await expect(page).toHaveURL(/\/friends\/(?:\?|$)/);
+      expect(new URL(page.url()).searchParams.has("s")).toBe(false);
+    }
+    status = "pending";
+    await anonPage.goto(url);
+    await expect(anonPage.locator(".poll-go-text")).toContainText("Odbiorca ma konto");
+    await anonPage.getByRole("button", { name: "Zaloguj", exact: true }).click();
+    await expect(anonPage).toHaveURL(/\/login\//);
+    expect(new URL(anonPage.url()).searchParams.get("next")).toBe("friends");
+    expect(new URL(anonPage.url()).searchParams.has("s")).toBe(false);
+    for (status of ["declined", "cancelled"]) {
+      await page.goto(url);
+      await expect(page.locator(".poll-go-title")).toContainText(status === "declined" ? "Odrzucono" : "To zaproszenie wygasło");
+      await expect(page.locator(".poll-go-actions button")).toHaveCount(0);
+    }
+  } finally {
+    await context.unroute("**/rest/v1/rpc/poll_go_resolve", resolver);
+    await anonymous.close();
+  }
 });
