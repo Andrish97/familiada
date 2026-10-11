@@ -122,7 +122,7 @@ async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-
 
 test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context }) => {
   test.setTimeout(120_000);
-  const recipient = testAccountUsername(7); // test6 nie dostaje maili (brak reguły w Email Routing?) — test7 sprawdzony w control2
+  const recipient = testAccountUsername(8); // skrzynka test8 jest używana w kontrolach dostarczania maili
   const name = `E2E-MAIL-BASE-${Date.now()}`;
   let baseId;
 
@@ -503,8 +503,8 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Zadaniach", async ({ 
     recipientId = await getUserId(page2);
     await page.evaluate(async (id) => { await window.__sbClient.rpc("e2e_friendships_cleanup", { p_other_user_id: id }); }, recipientId);
     await clearMailbox(testAccountUsername(2));
-    const invite = await page.evaluate(async () => window.__sbClient.rpc("friends_invite", { p_handle: "test2" }));
-    if (invite.error || !invite.data?.ok) throw new Error("friends_invite failed");
+    const invite = await page.evaluate(async (handle) => window.__sbClient.rpc("friends_invite", { p_handle: handle }), testAccountUsername(2));
+    if (invite.error || !invite.data?.ok) throw new Error("friends_invite failed: " + JSON.stringify({ error: invite.error?.message, data: invite.data }));
     const accepted = await page2.evaluate(async (id) => window.__sbClient.rpc("friends_accept", { p_id: id }), invite.data.id);
     if (accepted.error || !accepted.data?.ok) throw new Error("friends_accept failed");
     await clearMailbox(testAccountUsername(2));
