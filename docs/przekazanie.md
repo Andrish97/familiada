@@ -17,7 +17,7 @@ Wypisanie=odmowa wszędzie zapisane. Audyt sprzed346 wykazał DELETE aktywnej
 relacji i jednostronny cooldown po cancel;346 zachowuje odmowę, aktora,
 budżet oraz zegary w obu kierunkach. _friend_drop_pair_tasks usuwa
 pending/opened taski pary; częściowe głosy i oczekujące maile to dalsza
-krawędź grafu.347 zastosowany produkcyjnie; testy rzeczywistych maili w toku.
+krawędź grafu.347 zamknięty produkcyjnie, z testami rzeczywistych maili.
 Kaskada345 wdrożona: FK base_share_tasks→question_bases ON DELETE CASCADE,
 DB38173636101/log OK20:48:43 UTC i rollbackowy smoke ✓; punktowy rzeczywisty
 Base mail/Go/odmowy/role main38173864796 ✓ bez retry. Wypisanie Znajomych346
@@ -51,11 +51,24 @@ success.350 rozszerza skrzynkę/helpery o15, Worker restore15 weryfikuje
 automatyczny wyjątek admina. Użytkownik dodaje routing15 w Cloudflare.
 350 isolated38183690135 success/unit455, DB38183762947 success/log23:19:59,
 schema a817702091, Worker38183764142 success. Routing15 potwierdzony mailem.
-Branch38183939578: restore11/12/15 success, realne maile15 w7.4/61.7s;
-kasowanie nie wywołane: klik przed async gotowością Account. Dodano
-oczekiwanie skel-step-ready i asercję odpowiedzi Edge.15 ma konto,
-logowanie i automatyczny wyjątek admina; kasowanie wymaga świeżego branch/main.
-Nie zamykać348 przed tymi kontrolami; test14 nadal bez konta.
+Pierwszy branch38183939578: restore11/12/15 success, maile15 w7.4/61.7s,
+klik przed gotowością Account, BEZ kasowania. Oczekiwanie skel-step-ready
+oraz odpowiedź Edge poprawione. Świeży branch38184283428 success2/2,
+main38184602498 success2/2 bez retry/unit455. Mail15 w43.6/93.8s na branchu,
+92.3/107.1s na main. Kasowanie przez UI rzeczywiście wykonane, nowy ID
+po odtworzeniu, ukończony tekst zachowany/partial punkty usunięte,
+stare linki/RPC niedostępne nowemu kontu i anonimowo. Finally odtwarza15
+i sprawdza logowanie w świeżym kontekście; oba konta11/12 też logują się.
+Automatyczny wyjątek admina15 sprawdzony również po odtworzeniu.
+**348–350 zamknięte produkcyjnie; graf pkt7 nadal otwarty.**
+
+Następne: trwałe wiązanie dawnych tasków e-mail z kontem. Lokalna próba
+/tmp/poll-legacy-identity-audit.sql odtworzyła brak: zalogowany odbiorca
+otwiera legacy task, recipient_user_id pozostaje NULL, potem zmiana
+adresu pozwala anonimowemu _poll_assert_voter przejść. Istnieje
+poll_claim_email_records/poll_on_login, ale frontend ich nie wywołuje.
+To audit, jeszcze bez351; uwzględnić rejestrację, zmianę maila, kasowanie,
+ponowne konto, wszystkie stany i wyścigi/locks, zanim powstanie migracja.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
 UI/E20: dopisany audyt stopniowego ładowania (body→topbar→sekcje).
