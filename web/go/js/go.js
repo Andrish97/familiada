@@ -581,6 +581,13 @@ async function handleUnsubOwner() {
       setView({ head: MSG.error(), text: MSG.invalidLinkText() });
       return;
     }
+    if (!["pending", "active"].includes(data.status)) {
+      setView({ head: data.status === "declined" ? MSG.declined() : MSG.inviteExpired(),
+        text: data.status === "declined" ? MSG.inviteDeclined() : "" });
+      clearActions();
+      showEmailInput(false);
+      return;
+    }
     const ownerLabel = data.owner_label || "";
     setView({ head: MSG.unsubOwnerHeading(ownerLabel), text: MSG.unsubOwnerText() });
     clearActions();

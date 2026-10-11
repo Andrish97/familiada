@@ -71,7 +71,7 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
       unsub.searchParams.set("action", "unsub");
       await invitePage.goto(unsub.toString());
       await invitePage.locator(".poll-go-actions button").click();
-      await expect(invitePage.locator(".poll-go-text")).toContainText(/wypis|subskryb/i);
+      await expect(invitePage.locator("#message")).toContainText(/wypis|subskryb/i);
       await page.reload();
       removalRow = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
       await expect(removalRow).toContainText("Odrzucono");
@@ -189,7 +189,7 @@ test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany",
     }
     status = "pending";
     await anonPage.goto(url);
-    await expect(anonPage.locator(".poll-go-text")).toContainText("Odbiorca ma konto");
+    await expect(anonPage.locator("#message")).toContainText("Odbiorca ma konto");
     await anonPage.getByRole("button", { name: "Zaloguj", exact: true }).click();
     await expect(anonPage).toHaveURL(/\/login\//);
     expect(new URL(anonPage.url()).searchParams.get("next")).toBe("friends");
