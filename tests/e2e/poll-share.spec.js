@@ -50,9 +50,9 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
   const friendContext = await browser.newContext({ serviceWorkers: "block" });
   const anonymousContext = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") {
-    await serveBranchCode(ownerContext, { pages: ["polls", "go"] });
-    await serveBranchCode(friendContext, { pages: ["polls", "go"] });
-    await serveBranchCode(anonymousContext, { pages: ["polls", "go"] });
+    await serveBranchCode(ownerContext, { pages: ["polls", "go", "tasks"] });
+    await serveBranchCode(friendContext, { pages: ["polls", "go", "tasks"] });
+    await serveBranchCode(anonymousContext, { pages: ["polls", "go", "tasks"] });
   }
   const ownerPage = await ownerContext.newPage();
   const friendPage = await friendContext.newPage();
@@ -117,8 +117,13 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     const links = mails.map(email => extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("t")));
     expect(links.every(Boolean)).toBe(true);
     await friendPage.goto(links[0]);
-    await expect(friendPage.locator("#message")).toContainText(/ankiet/);
-    await friendPage.getByRole("button", { name: "Głosuj", exact: true }).click();
+    await expect(friendPage.locator("#title")).toContainText(/ankiet/);
+    await friendPage.getByRole("button", { name: "Otwórz Zadania", exact: true }).click({ timeout: 30_000 });
+    const taskToken = new URL(links[0]).searchParams.get("t");
+    const taskRow = friendPage.locator(`#tasksHost .rowsRow[data-token="${taskToken}"]`);
+    await expect(taskRow).toHaveClass(/rowsFocus/, { timeout: 30_000 });
+    expect(await rpc(friendPage, "poll_task_done", { p_token: taskToken })).toBe("votes_incomplete");
+    await taskRow.locator('[data-act="vote"]').click();
     await expect(friendPage.locator("#answerInput")).toBeVisible({ timeout: 30_000 });
     for (let n = 0; n < 10; n++) {
       await friendPage.locator("#answerInput").fill("Kot");
@@ -145,7 +150,7 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     await rpc(ownerPage, "poll_resume", { p_game_id: gameId });
     expect((await rpc(ownerPage, "poll_share_panel", { p_game_id: gameId })).tasks.find(t => t.id === declined.id)).toMatchObject({ hidden: true, status: "cancelled" });
     await anonymousPage.goto(links[1]);
-    await expect(anonymousPage.locator("#message")).toContainText(/cofnięt|anulowan|nieważn|niedostępn/i);
+    await expect(anonymousPage.locator("#title")).toContainText(/cofnięt|anulowan|nieważn|niedostępn|wygasło/i);
     const voted = panel.tasks.find(t => t.recipient_user_id === friendId);
     expect((await rpc(ownerPage, "poll_share_remove", { p_game_id: gameId, p_task_id: voted.id })).ok).toBe(true);
     const rows = await ownerPage.evaluate(async id => {
@@ -252,7 +257,19 @@ test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", as
       if (error) throw error; return data;
     }, gameId);
     expect(task).toMatchObject({ last_sent_at: null, reminder_count: 0 });
+    const qid = await page.evaluate(async id => {
+      const { data, error } = await window.__sbClient.from("questions").select("id").eq("game_id", id).eq("ord", 1).single();
+      if (error) throw error; return data.id;
+    }, gameId);
+    await rpc(recipient, "poll_text_submit_batch", { p_game_id: gameId, p_key: game.share_key_poll,
+      p_voter_token: `task:${panel.tasks[0].id}`, p_items: [{ question_id: qid, answer_raw: "Kot", answer_norm: "kot" }] });
+    expect(await rpc(recipient, "poll_task_done", { p_token: task.token })).toBe("votes_incomplete");
     expect(await rpc(recipient, "poll_task_decline", { p_token: task.token })).toBe("ok");
+    const entries = await page.evaluate(async id => {
+      const { data, error } = await window.__sbClient.from("poll_text_entries").select("id").eq("game_id", id);
+      if (error) throw error; return data;
+    }, gameId);
+    expect(entries).toEqual([]);
     const kept = await rpc(page, "poll_share_send", { p_game_id: gameId, p_friend_ids: [user.id], p_subscriber_ids: [] });
     expect(kept).toMatchObject({ ok: true, created: 0, kept: 1, mail: [] });
   } finally {

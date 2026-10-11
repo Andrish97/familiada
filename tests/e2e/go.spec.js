@@ -146,7 +146,7 @@ test.describe("go.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
   test("task invite: zalogowany user bez account invite → głos", async ({ page, context }, testInfo) => {
-
+    test.setTimeout(120_000);
     try {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
@@ -172,7 +172,13 @@ test.describe("go.js audyt", () => {
 
       // Sprawdź że URL zmienił się na poll-points
       expect(page.url()).toContain("polls/vote/points");
-
+      for (let n = 0; n < 10; n++) await page.locator("#alist button").first().click({ timeout: 30_000 });
+      await page.waitForURL(/\/tasks\//, { timeout: 30_000 });
+      await page.waitForFunction(() => Boolean(window.__sbClient));
+      await expect.poll(async () => page.evaluate(async id => {
+        const { data, error } = await window.__sbClient.from("poll_tasks").select("status").eq("game_id", id).single();
+        if (error) throw error; return data.status;
+      }, gameId), { timeout: 30_000 }).toBe("done");
       await deleteGame(page, gameId);
     } finally {
       await page.close();

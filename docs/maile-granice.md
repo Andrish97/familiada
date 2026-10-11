@@ -136,3 +136,17 @@ wykonanego na podstawie samego wspólnego szablonu zaproszeń.
 
 Routing linków pozostaje zgodny z mapą: linki udostępnień przez `/go/`,
 linki uwierzytelniania według własnego przepływu logowania.
+
+### Audyt wejść przed pkt6 — 2026-10-11 (do wdrożenia)
+
+| Wejście | Obecny stan | Praca pkt6 |
+|---|---|---|
+| Znajomi/Subskrybenci — invite-mail.js | Wspólny dokument i transport, lecz ponowienie korzysta z tematu/treści pierwszego zaproszenia; ustawienia konta mają starszą ścieżkę account bez końcowego slash. | Osobna przypominająca treść/temat, ten sam token; kanoniczne account i lang. |
+| Ankiety — poll-mail.js | Osobny renderer, przypomnienie ma inny temat i tytuł, ale tę samą treść; parametr nazwy zasobu trafia do HTML. | Wspólny renderer z escapingiem parametrów, własny body reminder, konto versus adres i właściwe stopki. |
+| Bazy — bases.js | Własny renderer; initial/reminder wspólny temat/body, bez informacji o roli. | Wspólny renderer, rola i informacja o oczekującej zgodzie, wariant przypomnienia. |
+| Control — shareDevice.js | Własny renderer; brak przypomnień zgodny z decyzją, typ i nazwa gry w treści; sendShareEmail ignoruje odpowiedź błędu. | Ten sam renderer, stan wyniku transportu i stopka odpowiednia dla odbiorcy; zachować brak ponowienia. |
+| Uwierzytelnianie — send-email/index.ts i email-templates.ts | Treści authEmail PL/EN/UK z tłumaczeń strony; osobny renderer, zmiana adresu ma osobną typografię/wersaliki. | Wspólne zasady wyglądu, czytelność i prawdziwe przepływy signup/guest_migrate/recovery/email_change, zachować metadane źródła języka. |
+
+To jest wynik przeglądu źródeł, nie oznaczenie wdrożenia ani dostarczenia.
+Pkt5 Ankiet nadal wymaga końcowej bramki branch/Pages/main; nie promować
+kolejnego frontu mailowego razem z niedomkniętymi Ankietami.

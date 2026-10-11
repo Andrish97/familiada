@@ -3002,6 +3002,8 @@ const pl = {
     loginToAccept: "Żeby zaakceptować musisz się zalogować.",
     loginLabel: "Zaloguj",
     loginToVote: "Żeby zagłosować musisz się zalogować.",
+    taskInTasks: "Żeby zagłosować lub odrzucić zaproszenie, otwórz Zadania.",
+    taskTasksAction: "Otwórz Zadania",
     taskInviteActive: "Zaproszenie do ankiety jest aktywne.",
     baseInviteTitle: "Zaproszenie do udostępnionej bazy",
     baseInviteLogin: "Zaloguj się na konto, na które wysłano zaproszenie. Akceptacja odbywa się w Zadaniach.",

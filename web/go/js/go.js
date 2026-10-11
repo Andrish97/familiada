@@ -503,11 +503,11 @@ async function handleSubInvite(data, user) {
 function showTaskInviteAccountMatch(head, expectedEmail) {
   setView({
     head,
-    text: MSG.acceptInHub(),
+    text: t("pollGo.taskInTasks"),
     hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
   });
   clearActions();
-  addAction(MSG.hubLabel(), "gold", redirectToHub);
+  addAction(t("pollGo.taskTasksAction"), "gold", redirectToHub);
   showEmailInput(false);
 }
 

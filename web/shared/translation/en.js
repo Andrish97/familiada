@@ -3101,6 +3101,8 @@ const en = {
     loginToAccept: "Log in to accept.",
     loginLabel: "Log in",
     loginToVote: "Log in to vote.",
+    taskInTasks: "Open Tasks to vote or decline this invitation.",
+    taskTasksAction: "Open Tasks",
     taskInviteActive: "Voting invitation is active.",
     baseInviteTitle: "Shared question base invitation",
     baseInviteLogin: "Sign in to the account that received the invitation. Accept it in Tasks.",
