@@ -132,9 +132,12 @@ Test 324 przeszedł w lokalnym Postgresie 16 i GitHub Actions
 `38128975422` (21 asercji); unit 401/401 w runnerze i lokalnie;
 `node --check` i `git diff --check` zielone. Stare globalne
 udostępnienia urządzeń są czyszczone, gdyż nie są przypięte do sesji ani osoby.
-Brak wdrożenia produkcyjnego. Następnie: E2E CI punktowo (parowanie, udostępnienie
-mailowe i wygaśnięcie), poprawić błędy, dopiero potem migracja i front razem na
-`main`, a po nich punktowe kontrole produkcyjne. Stan szczegółowy:
+Migracja 324 wdrożona runem `38129037842`; Pages `38129037981` ✓.
+Branch E2E parowania `38129156808` ✓. Próba mailowa `38129255218` wykazała
+produkcyjny błąd zgodności typu `auth.users.email` (`varchar` zamiast
+`text`), poprawiany migracją 325. Po jej wdrożeniu powtórzyć test mailowy i
+sprawdzić wygaśnięcie sesji; krok pozostaje otwarty do zielonych kontroli.
+Stan szczegółowy:
 [`e19-znajomi-plan.md`](e19-znajomi-plan.md) §7.
 
 | Data | Etap | Commity (`main`) | e2e |
@@ -239,3 +242,4 @@ mailowe i wygaśnięcie), poprawić błędy, dopiero potem migracja i front raze
 | 2026-10-11 | E19 / wspólna bramka mailowa — implementacja rozpoczęta | Migracja 323 sprawdza `email_notifications` przed insercją do `mail_queue`; adres bez konta pozostaje dozwolony. Lokalny pełny restore PG16 + migracja + test SQL 323 ✓ (konto wyłączone pominięte, włączone i adres bez konta zakolejkowane). Dodano punktowy job `verify_e19_323` do `agent-checks.yml`. Jeszcze bez wdrożenia produkcyjnego. | Runner SQL, następnie promocja migracji zgodnie z cyklem; równolegle implementacja E19 krok 6 / Control |
 | 2026-10-11 | E19 / wspólna bramka mailowa — migracja produkcyjna | Branch `bc125698d`; izolowany Agent checks `38126186374` ✓ (unit 401/401, SQL 323); migracyjny workflow `38126386184` ✓; `latest.log` potwierdza `APPLY` i `OK` dla 323, a `schema.sql` odświeżono. Rollbackowy test produkcyjny `tests/sql/mail-preference-queue-323.sql` zaliczył run `38126593098` ✓. | Przejść do rejestru TTL Control i sesyjnych tokenów urządzeń |
 | 2026-10-11 | E19 krok 6 / audyt Control | Potwierdzono bieżące mapowanie: `game_state` trzyma stan do resetu; `game_sessions`/`game_session_active` są telemetrią; kody są w `device_connect_codes`, granty w `shared_devices`, a bucket Storage przechowuje zasoby gry i ma przetrwać TTL Control. Wygaśnięcie wymaga nowego rejestru runtime, zakończenia telemetrii, resetu game_state i usunięcia kodów/grantów/tokenów tej sesji. Globalne `share_key_*` nie umożliwia cofnięcia pojedynczego odbiorcy — token osobisty musi być sprawdzany przez endpointy urządzeń, nie tylko przed redirectem `/go/`. Zapisano w planie i mapie blokad. | Implementować sesję runtime i ścieżkę tokenu do endpointów; smoke migracji 323 w toku |
+| 2026-10-11 | E19 krok 6 / Control wdrożenie — poprawka typu listy | Migracja 324 (`e9bf7c7ba`, DB run `38129037842`) i Pages (`38129037981`) wdrożone. Branch E2E parowania `38129156808` ✓; mail `38129255218` wykrył HTTP 400: funkcja listy zwracała `varchar` z `auth.users.email` w kolumnie `text` (lokalne stuby miały `text`). Dodano migrację 325 z jawnym rzutowaniem oraz izolowany job `verify_e19_325`; test 324 przechodzi lokalnie po 325. | Agent checks 325 → migracja 325 na main → powtórzyć mail i wykonać expiry smoke; krok 6 niezamknięty |

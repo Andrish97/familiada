@@ -241,9 +241,12 @@ token przy ping/read/write/logo/audio. Stare globalne udostępnienia są
 unieważniane, bo nie mają informacji o sesji. Lokalny restore PG16 + test SQL
 324 zaliczył 21 asercji lokalnie i w izolowanym GitHub Actions
 (`38128975422`), w tym aktywne/odrzucone tokeny, wyłączone powiadomienia
-i odkrywanie grantu bez maila. Unit: 401/401. Nie wdrożono jeszcze na produkcję;
-pozostaje dostosowanie testów i UI, workflow CI, branch E2E, wdrożenie i testy
-kontrolne.
+i odkrywanie grantu bez maila. Unit: 401/401. Migracja 324 oraz front są już
+wdrożone (`main` `e9bf7c7ba`, Pages `38129037981` ✓, DB `38129037842` ✓).
+Branch E2E parowania `38129156808` przeszedł. Kontrola mailowa
+`38129255218` wykryła różnicę typów: produkcyjne `auth.users.email` jest
+`varchar`, lokalny stub `text`; migracja 325 rzutuje wynik listy na `text`.
+Po wdrożeniu 325 ponowić mailowe E2E, a następnie sprawdzić wygasanie sesji.
 
 | Zdarzenie nadrzędne | Skutek dla udostępnień i odbiorców |
 |---|---|
