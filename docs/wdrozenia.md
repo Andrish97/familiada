@@ -101,6 +101,12 @@ i skutki decyzji potrzebne użytkownikowi. Nie opisywać implementacji,
 wewnętrznych mechanizmów ani historii wdrożeń. Obowiązuje PL/EN/UK.
 Przegląd treści dopiero na końcu, po ustaleniu ostatecznego działania UI.
 
+**Puste listy w UI/E20 (doprecyzowanie 2026-10-11):** komunikaty
+„Nie masz jeszcze …” i „Brak …” w kafelku z przerywaną obwódką i tekstem
+na środku, jak przy braku gier. Wspólny wygląd w całym systemie;
+puste sekcje własnych odmów pozostają ukryte. Szczegóły w
+`ujednolicenie-wygladu.md`, „Doprecyzowanie telefonu i pustych list”.
+
 **Kolejność = kolumna # — zatwierdzona 2026-10-07. Użytkownik wznowił pracę i 2026-10-11 polecił zawsze kontynuować bez pytania.** Uzasadnienie: E0 daje wiarygodne testy; E3 to
 drobiazg; E10 pierwszy z dużych (decyzja); E11 wcześnie, bo zamyka lukę
 bezpieczeństwa na produkcji (korzysta z obecnej blokady `game:G`, nie
@@ -598,3 +604,5 @@ Stan szczegółowy:
 | 2026-10-11 | Znajomi346 / zachowanie zrzutów po sukcesie | Nazwy nowych screenshotów obu aktorów dopasowano do jawnego uploadu shot-*.png; dotychczasowy przebieg38174928575 używa wcześniejszej nazwy. Zakres i asercje bez zmian. | Wynik bieżącego branch; świeży punktowy nowy scenariusz dla trwałego artefaktu, bez retry. |
 
 | 2026-10-11 | Znajomi346 / zamknięte produkcyjnie | DB38174746414/log21:04:59 ✓; branch38174928575 ✓3/3 i38175511620 ✓1/1 (artefakt shots11715797067); main38175836595 ✓3/3 bez retry/unit447. Realne Pages + trzy dostarczone maile8, oba aktory/Go/badge/undo/accept/cancel/stary token, pusta sekcja ukryta. Podglądy fake-data390/1400 withdraw-* obejrzane po pełnym zakończeniu animacji, overflow=false. | 346 wykonane.347 isolated38175603877 ✓, dopiąć real-mail E2E i świeży isolated po fixture historii; potem SQL/log/branch/main. API artefaktu403, nie ponawiać podpisanych URL. Manual ostatni i zgodnie z nowymi zasadami języka. |
+| 2026-10-11 | UI/E20 / puste listy | Decyzja użytkownika: „Nie masz jeszcze …” i pozostałe braki jako kafelek z przerywaną obwódką i tekstem na środku, według pustej listy Gier. Ujednolicono zapis wspólnego wzorca w planie; sekcje własnych odmów nadal ukryte, gdy puste. | Do wdrożenia w UI/E20; zrzuty po wykonaniu, manual ostatni. |
+| 2026-10-11 | 347 / wznowienie i dostęp GitHub | Przez konektor potwierdzono isolated38177985246: unit i verify-e19-347 success. Lokalny unit447/447. CLI GitHub zwraca401 Bad credentials; bez tokena brak logowania, środowisko nie ma dodatkowej skonfigurowanej tożsamości. | 347 nadal bez produkcji; nie promować bez możliwości weryfikacji SQL/log i punktowych testów rzeczywistych maili. |
