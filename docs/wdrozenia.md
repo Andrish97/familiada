@@ -77,6 +77,10 @@ Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control.
 | 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
 
+**Manual (E13) zawsze pozostaje ostatnim etapem** — wszystkie pozostałe prace,
+w tym końcowe poprawki wyglądu i porządki po E19, muszą być zakończone przed
+aktualizacją Instrukcji. Nie przesuwać E13 wyżej przy dopisywaniu etapów.
+
 **Kolejność = kolumna # — zatwierdzona 2026-10-07. Start pracy dopiero po osobnym „możesz zaczynać” od użytkownika.** Uzasadnienie: E0 daje wiarygodne testy; E3 to
 drobiazg; E10 pierwszy z dużych (decyzja); E11 wcześnie, bo zamyka lukę
 bezpieczeństwa na produkcji (korzysta z obecnej blokady `game:G`, nie
