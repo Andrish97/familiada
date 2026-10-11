@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict b5HclncweAwslSdMOlcad6HPyOgwVst2wJSsesdbOwFdFWXGSakzmUcYlSa5wl8
+\restrict QS2SpLpt0kJdFORxq2TwcF6HBcqfxsXk9vesm7TAfa3SGx2eBlDw93zlIog4Jkf
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7442,6 +7442,42 @@ begin
   end if;
 end;
 $$;
+
+
+--
+-- Name: mail_queue_notification_preference_guard(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."mail_queue_notification_preference_guard"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+DECLARE
+  v_notifications_enabled boolean;
+BEGIN
+  SELECT COALESCE(uf.email_notifications, true)
+    INTO v_notifications_enabled
+  FROM auth.users u
+  LEFT JOIN public.user_flags uf ON uf.user_id = u.id
+  WHERE lower(trim(u.email)) = lower(trim(NEW.to_email))
+  LIMIT 1;
+
+  IF FOUND AND NOT v_notifications_enabled THEN
+    -- Pominięcie insercji jest celowe: wyłączona preferencja nie tworzy
+    -- oczekującego maila, ale też nie blokuje nadania samego dostępu.
+    RETURN NULL;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION "mail_queue_notification_preference_guard"(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."mail_queue_notification_preference_guard"() IS 'Omija powiadomienia mailowe dla kont z email_notifications=false przed insercją do kolejki; adresy bez konta nie są blokowane.';
 
 
 --
@@ -17020,6 +17056,13 @@ CREATE TRIGGER "trg_guard_game_poll_close" BEFORE UPDATE OF "status" ON "public"
 
 
 --
+-- Name: mail_queue trg_mail_queue_000_notification_preference_guard; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_mail_queue_000_notification_preference_guard" BEFORE INSERT ON "public"."mail_queue" FOR EACH ROW EXECUTE FUNCTION "public"."mail_queue_notification_preference_guard"();
+
+
+--
 -- Name: mail_queue trg_mail_queue_cooldown_guard; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -19077,5 +19120,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict b5HclncweAwslSdMOlcad6HPyOgwVst2wJSsesdbOwFdFWXGSakzmUcYlSa5wl8
+\unrestrict QS2SpLpt0kJdFORxq2TwcF6HBcqfxsXk9vesm7TAfa3SGx2eBlDw93zlIog4Jkf
 
