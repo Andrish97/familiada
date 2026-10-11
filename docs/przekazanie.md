@@ -38,7 +38,7 @@ zachowuje guard. Manual zawsze na końcu.
 Poprawka CSS `e4ea8cd53` wdrożona: Pages 38139190584 ✓.
 Branch 38139084807 ✓: 3/3 bez retry (rzeczywista baza oraz kontrolowany
 przegląd wszystkich 10 wariantów, filtry, zwijanie, pusty stan, odstępy
-na 1400/390 px), unit 408/408. Produkcyjna kontrola 38139233191 w toku;
+na 1400/390 px), unit 408/408. Produkcyjna kontrola 38139233191 ✓ (3/3 bez retry);
 na main spec używa opublikowanych plików Pages, nie podmiany kodu.
 Sześć zrzutów w `docs/img/e19-tasks/`, tabela stanów i linki w planie E19.
 Ankiety z głosem: Zrobione 5 dni; bazy po decyzji znikają; urządzenia
