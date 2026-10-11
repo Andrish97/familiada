@@ -1271,3 +1271,11 @@ Następne348: konto odbiorcy → taski Baz/Ankiet i legacy subskrypcje.
 Trzy FK CASCADE, completed aggregate chroniony347. Draft na osobnym
 branchu codex/e19-348, finalny isolated38180137558 success; nie produkcja.
 Dalej punktowy real-mail/account deletion, SQL/log i kontrola branch/main.
+
+### Konta testowe — bezpieczne usuwanie (doprecyzowanie 2026-10-11)
+
+Do testów usuwania kont używać dedykowanych11/12, ze standardowym hasłem.
+Przed testem odtworzyć brakujące konto z potwierdzonym adresem; po usunięciu
+odtworzyć i sprawdzić logowanie oraz brak dostępu do dawnych udostępnień.
+Odtworzenie również przy błędzie (finally). Konta9/10 wyłączone,14 bez konta.
+Odtworzenie dotyczy konta, nie usuniętych zasobów i relacji.

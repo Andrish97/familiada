@@ -24,14 +24,20 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
   const recipient = await recipientContext.newPage();
   const anonymous = await anonymousContext.newPage();
   const games = [];
-  const email = testAccountUsername(8);
+  const email = "test12@familiada.online";
   let oldRecipientId = null;
   try {
+    await restoreTestAccount("test12");
     await loginAsTestUser(owner, ownerContext, { username: testAccountUsername(7) });
     await loginAsTestUser(recipient, recipientContext, { username: email });
     oldRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
-    await rpc(owner, "e2e_poll_mail_budget_cleanup", { p_recipient_email: email });
-    await rpc(owner, "e2e_friendships_cleanup", { p_other_user_id: oldRecipientId });
+    expect((await rpc(owner, "e2e_friendships_cleanup", { p_other_user_id: oldRecipientId })).ok).toBe(true);
+    await owner.evaluate(async () => {
+      const sb = window.__sbClient;
+      const uid = (await sb.auth.getUser()).data.user.id;
+      const { error } = await sb.from("games").delete().eq("owner_id", uid).like("name", "E2E-348-%");
+      if (error) throw error;
+    });
     await clearMailbox(email);
     await resetMailProviderLimits(owner);
     const invite = await rpc(owner, "friends_invite", { p_handle: email });
@@ -56,7 +62,12 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
       const fixture = { ...game, type };
       games.push(fixture);
       await rpc(owner, "poll_open", { p_game_id: game.id, p_key: game.share_key_poll });
-      const sharing = await rpc(owner, "poll_share_send", { p_game_id: game.id, p_friend_ids: [oldRecipientId], p_subscriber_ids: [] });
+      fixture.share_key_poll = await owner.evaluate(async id => {
+        const { data, error } = await window.__sbClient.from("games").select("share_key_poll").eq("id", id).single();
+        if (error) throw error;
+        return data.share_key_poll;
+      }, game.id);
+      const sharing = await rpc(owner, "poll_share_send" , { p_game_id: game.id, p_friend_ids: [oldRecipientId], p_subscriber_ids: [] });
       expect(sharing).toMatchObject({ ok: true, created: 1 });
       fixture.taskId = sharing.mail[0].task_id;
       const after = new Date(Date.now() - 2000).toISOString();
@@ -86,7 +97,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
         }
         return items;
       }, { id: game.id, type });
-      await rpc(recipient, type === "poll_text" ? "poll_text_submit_batch" : "poll_points_vote_batch", { p_game_id: game.id, p_key: game.share_key_poll, p_voter_token: "task:" + fixture.taskId, p_items: items });
+      await rpc(recipient, type === "poll_text" ? "poll_text_submit_batch" : "poll_points_vote_batch", { p_game_id: game.id, p_key: fixture.share_key_poll, p_voter_token: "task:" + fixture.taskId, p_items: items });
       expect(await rpc(recipient, "poll_task_done", { p_token: fixture.token })).toBe(type === "poll_text" ? "ok" : "votes_incomplete");
     }
     const count = async fixture => owner.evaluate(async fixture => {
@@ -103,7 +114,7 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(0);
     for (const fixture of games) expect((await rpc(owner, "poll_share_panel", { p_game_id: fixture.id })).tasks).toHaveLength(0);
-    await restoreTestAccount(email);
+    await restoreTestAccount("test12");
     await loginAsTestUser(recipient, recipientContext, { username: email });
     const newRecipientId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
     expect(newRecipientId).not.toBe(oldRecipientId);
@@ -114,12 +125,18 @@ test("@mailbox konto348: usunięcie odbiorcy zachowuje komplet, usuwa partial i 
         await expect(page.locator("#title")).toContainText(/wygas|nieważn|nieprawidł|niedostępn/i);
       }
     }
+  } catch (error) {
+    console.error("[e2e348] scenario failed:", error.message);
+    throw error;
   } finally {
-    await restoreTestAccount(email);
-    if (games.length) await owner.evaluate(async ids => {
-      const { error } = await window.__sbClient.from("games").delete().in("id", ids);
-      if (error) throw error;
-    }, games.map(game => game.id));
+    const cleanup = await Promise.allSettled([
+      restoreTestAccount("test12"),
+      games.length ? owner.evaluate(async ids => {
+        const { error } = await window.__sbClient.from("games").delete().in("id", ids);
+        if (error) throw error;
+      }, games.map(game => game.id)) : Promise.resolve(),
+    ]);
     await Promise.all([ownerContext.close(), recipientContext.close(), anonymousContext.close()]);
+    for (const result of cleanup) if (result.status === "rejected") throw result.reason;
   }
 });
