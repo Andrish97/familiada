@@ -471,3 +471,5 @@ Stan szczegółowy:
 | 2026-10-11 | Bazy / SQL338 zastosowany | DB38160264106 ✓, log OK338 17:36:53 UTC, schema5708183676. Runner38160112397 ✓, lokalnie odtworzony deadlock337 i identyczny zielony test338. | Punktowy branch bazy337: dwa testy bez retry, jeden worker/pula7–8; potem Pages i te same main. |
 
 | 2026-10-11 | Bazy / synchronizacja gotowości testu | Branch38160452889 anulowany po wykryciu błędu helpera przed oceną wyniku: ready sprawdzał widoczność pierwszego panelu Moje, który jest ukryty przy tab=shared. Helper czeka na klasę skel-step-ready, niezależnie od aktywnej karty. Kod aplikacji bez zmiany. | Świeży branch obu testów po zakończeniu anulowanego przebiegu; anulowania nie liczyć jako kontroli. |
+
+| 2026-10-11 | Bazy / konfiguracja podmiany brancha | 38160523734 zatrzymany przed scenariuszami: beforeEach nie przekazał wymaganego {pages} do serveBranchCode. Oba testy nie wykonały danych ani maila; unit413/413. Dodano jawne bases/go dla obu kontekstów. | Świeży punktowy branch dwóch testów; błędu konfiguracji nie traktować jako wyniku aplikacji. |

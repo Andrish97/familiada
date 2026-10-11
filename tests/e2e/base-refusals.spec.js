@@ -5,7 +5,7 @@ const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } 
 const SITE = "https://www.familiada.online";
 const branch = process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0";
 test.use({ serviceWorkers: "block" });
-test.beforeEach(async ({ context }) => { if (branch) await serveBranchCode(context); });
+test.beforeEach(async ({ context }) => { if (branch) await serveBranchCode(context, { pages: ["bases", "go"] }); });
 async function rpc(page, name, args) {
   return page.evaluate(async ({ name, args }) => {
     const { data, error } = await window.__sbClient.rpc(name, args);
@@ -37,7 +37,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
   test.setTimeout(300_000);
   await loginAsPooledTestUser(page, context, 0);
   const recipientContext = await browser.newContext({ serviceWorkers: "block", viewport: { width: 390, height: 844 } });
-  if (branch) await serveBranchCode(recipientContext);
+  if (branch) await serveBranchCode(recipientContext, { pages: ["bases", "go"] });
   const recipient = await recipientContext.newPage();
   let baseId = null, recipientId = null, recipientEmail = null;
   const name = `E2E-B337-${Date.now()}`;
