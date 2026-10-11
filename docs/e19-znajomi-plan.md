@@ -215,8 +215,8 @@ od niej.
 **Postęp implementacji:** wspólna bramka przed kolejką jest wdrożona na
 produkcję w migracji `2026-10-11_323`. Pełny restore PG16, test lokalny i
 izolowany job SQL `38126186374` są zielone; log migracji `38126386184`
-potwierdza zastosowanie. Do uruchomienia pozostał dodany transakcyjny smoke
-test produkcyjny. Pozostałe zachowania tabeli nadal są planem do wykonania.
+potwierdza zastosowanie, a rollbackowy smoke test produkcyjny `38126593098`
+przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
 
 ### Zasady per funkcja
 
@@ -241,6 +241,18 @@ test produkcyjny. Pozostałe zachowania tabeli nadal są planem do wykonania.
 | Udostępnienie bazy lub urządzenia cofnięto | Unieważnia się konkretny rekord/token; nie wolno pozostawiać działającego linku. Usunięcie znajomości nie cofa odrębnych przyjętych uprawnień do zasobów. |
 | Gra/ankieta, baza lub konto nadrzędne usunięte | Kaskadowo unieważnić udostępnienia, tokeny i oczekujące maile/zadania zależne od zasobu. Usunięcie konta odbiorcy usuwa jego relacje/udostępnienia i nie pozwala nowemu kontu odzyskać starych. |
 | Sesja Control bezczynna przez godzinę | Wygasić sesję Control, usunąć jej rekordy Storage i unieważnić udostępnienia urządzeń tej sesji. Po wygaśnięciu ekran zaczyna proces od początku i ponownie pokazuje podłączanie urządzeń. Aktywność odnawia termin; dokładny sygnał aktywności i zakres kluczy Storage należy dopiąć w implementacji. |
+
+**Mapowanie Control (2026-10-11):** aktualny stan do wyzerowania jest w
+`game_state` (domyślna para to `devices` / `devices_display`); telemetria
+przebiegów (`game_sessions`, `game_session_active`) nie jest sesją runtime.
+Kody parowania są w `device_connect_codes`, obecne granty w `shared_devices`,
+a `device_presence` wygasa operacyjnie po 6,5 s. Control nie trzyma stanu
+rozgrywki w `localStorage`; `sessionStorage` zawiera tylko początek animacji
+ekranu końcowego. Logo i pliki dźwiękowe w Storage należą do gry i mają
+przetrwać wygaśnięcie Control. Potrzebny jest osobny rejestr sesji runtime,
+do którego będą przypięte kody oraz share tokeny. Zasada per odbiorca wymaga,
+by link zaproszenia niósł ten token przez `/go/` aż do endpointów urządzenia;
+redirect do globalnego `share_key_*` nie zapewnia selektywnego cofnięcia.
 
 ### Zasada hierarchii zasobów i propagacji usuwania
 

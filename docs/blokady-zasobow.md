@@ -337,13 +337,23 @@ wobec usunięcia rodzica.
 
 ### Plan ujednolicenia z mapą stron
 
-1. Najpierw zmapować bieżące rekordy i klucze: `game_sessions` jest tabelą
-   telemetrii przebiegów gry (status „abandoned” wyliczany po godzinie),
-   `game_session_active` wskaźnikiem aktywnego przebiegu Control 2,
-   `game_state` stanem gry, a `device_presence` krótką obecnością urządzeń.
-   Żaden z tych wpisów sam z siebie nie jest jeszcze potwierdzonym rejestrem
-   sesji Control o wymaganym TTL i sprzątaniu. Ustalić, który obiekt/klucz
-   przechowuje „zacznij od nowa” i powiązać z nim share tokeny oraz Storage.
+1. **Mapowanie istniejących danych — zweryfikowane 2026-10-11.**
+   `game_sessions` to telemetria ukończonych/porzuconych przebiegów; `game_session_active`
+   jest tylko prywatnym wskaźnikiem do wiersza telemetrii. `game_state` jest
+   jedynym trwałym bieżącym stanem Control 2; wartość startowa ma
+   `top_card='devices'`, `step='devices_display'`, `detail={}`. `device_presence`
+   to heartbeat urządzeń (online liczone przez UI przez 6,5 s). `device_connect_codes`
+   przechowuje tymczasowe kody parowania, ale obecnie ich rozwiązywanie zwraca
+   globalny `games.share_key_*`. `shared_devices` jest starym grantem per
+   właściciel/odbiorca/typ (unikat nie obejmuje gry), bez tokenu per odbiorca.
+   Control nie zapisuje stanu gry do `localStorage`; jedyny jego wpis
+   `sessionStorage` to znacznik animacji ekranu końcowego. Zasoby w bucketach
+   Storage (logo/dźwięki) są zasobami gry, nie sesji Control i nie wolno ich
+   usuwać przy jej wygaśnięciu. Brakuje osobnego rejestru runtime z TTL 1 h.
+   Należy go dodać, a z nim wiązać udostępnienia i kody parowania. Wygaśnięcie
+   ma zresetować `game_state` do ekranu podłączania urządzeń, zakończyć aktywny
+   wpis telemetrii jako porzucony, usunąć wskaźnik przebiegu, kody parowania
+   i granty/tokeny sesji oraz wyczyścić klucz animacji w `sessionStorage`.
 2. Uzupełnić grafem `PAGES.locks` rodziców i dzieci oraz macierz operacji:
    wejście, edycja, zmiana stanu, share/grant, revoke, delete, expiry.
 3. W `edit_lock_blockers()` / rodzinie RPC `*_checked` zapewnić wspólną

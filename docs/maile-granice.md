@@ -106,4 +106,4 @@ Cooldowny cofnięcia i zmiany roli nie są tu ustalonymi wartościami. Szczegó�
 przed rezerwacją cooldownu; adres bez konta pozostaje dozwolony. Pełny restore
 PG16, lokalny test oraz izolowany job SQL `38126186374` potwierdziły trzy
 przypadki; produkcyjny log `38126386184` potwierdza zastosowanie migracji.
-Dodano transakcyjny smoke test produkcyjny do kolejnego przebiegu migracyjnego.
+Transakcyjny smoke test produkcyjny przeszedł w runie `38126593098`.
