@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fOHhdN3QIdYDJMMcZqFcyKzAqgDZPlFDacPLFmNJWJFz7fPbPFOPjxhcMdub5Ho
+\restrict 9WkALSQdzYCWKcnx59mzRfHtUYwdxXzYl9U78niXNiFdV3LykpH1UikoVgePUJI
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -10327,7 +10327,7 @@ BEGIN
     SELECT NULL::uuid,lower(trim(s.subscriber_email)) FROM public.poll_subscriptions s
       WHERE s.id=ANY(coalesce(p_subscriber_ids,'{}'::uuid[])) AND s.owner_id=v_uid
         AND s.subscriber_user_id IS NULL AND s.status='active'
-        AND NOT EXISTS(SELECT 1 FROM public.profiles p WHERE lower(trim(p.email))=lower(trim(s.subscriber_email)) AND public.are_friends(v_uid,p.id))
+        AND NOT EXISTS(SELECT 1 FROM public.profiles p WHERE lower(trim(p.email))=lower(trim(s.subscriber_email)) AND NOT p.is_guest)
   LOOP
     IF EXISTS(SELECT 1 FROM public.poll_tasks t WHERE t.owner_id=v_uid AND t.game_id=p_game_id
       AND t.share_key_poll=v_game.share_key_poll AND (t.recipient_user_id=r.user_id OR lower(trim(t.recipient_email))=r.email)) THEN
@@ -12057,6 +12057,9 @@ BEGIN
     FROM public.poll_subscriptions s
     LEFT JOIN public.profiles p ON p.id = s.subscriber_user_id
     WHERE s.owner_id = v_uid AND s.status = 'active' AND s.id = ANY(coalesce(p_sub_ids, array[]::uuid[]))
+      AND s.subscriber_user_id IS NULL
+      AND NOT EXISTS(SELECT 1 FROM public.profiles registered
+        WHERE public._norm_email(registered.email)=public._norm_email(s.subscriber_email) AND NOT registered.is_guest)
   ),
   cooldown AS (
     -- E11b: blokada = cooldown poll:share (24 h na parę+grę) LUB dobowy limit 3 maili ankietowych nadawca→odbiorca
@@ -19390,5 +19393,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fOHhdN3QIdYDJMMcZqFcyKzAqgDZPlFDacPLFmNJWJFz7fPbPFOPjxhcMdub5Ho
+\unrestrict 9WkALSQdzYCWKcnx59mzRfHtUYwdxXzYl9U78niXNiFdV3LykpH1UikoVgePUJI
 
