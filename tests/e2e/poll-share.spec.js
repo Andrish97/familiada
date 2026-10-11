@@ -125,7 +125,7 @@ test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty",
         const task = tasks.find(task => task.id === resolved.task_id);
         expect(task).toBeTruthy();
         expect(task.recipient_user_id || null).toBe(index === 0 ? friendId : null);
-        expect(await rpc(page, "poll_task_open", { p_token: token })).toBe("ok");
+        expect(await rpc(page, "poll_task_opened", { p_token: token })).toBe("ok");
         await rpc(page, type === "poll_text" ? "poll_text_submit_batch" : "poll_points_vote_batch", {
           p_game_id: gameId, p_key: task.share_key_poll, p_voter_token: `task:${task.id}`, p_items: [item],
         });
@@ -136,7 +136,7 @@ test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty",
           : await rpc(page, "poll_sub_unsubscribe", { p_token: subscription.token });
         expect(withdrawn.ok).toBe(true);
         expect(await count(task.id)).toBe(0);
-        expect(await rpc(page, "poll_task_open", { p_token: token })).toBe(index === 0 ? "not_found" : "already_used");
+        expect(await rpc(page, "poll_task_opened", { p_token: token })).toBe(index === 0 ? "not_found" : "already_used");
         await page.goto(links[index]);
         await expect(page.locator("#title")).toContainText(/cofnięt|anulowan|nieważn|niedostępn|wygas|nieprawidł/i);
       }

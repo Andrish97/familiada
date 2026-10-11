@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5uvx9mikfJdEoJuXM6bSQcKfQglwubUub2XChdg6haC954KOheFvefri1dv3lcY
+\restrict NO3XF0Qa1TRSvGMvqgznABXMoegtaZHhcYrR74Qn5E1KT3TdmeSkNYbKZQOwF4t
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -748,6 +748,30 @@ $$;
 
 
 --
+-- Name: _poll_share_contact_locks("uuid", "uuid"[], "uuid"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_share_contact_locks"("p_owner" "uuid", "p_friend_ids" "uuid"[], "p_subscriber_ids" "uuid"[]) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE recipient uuid; recipient_email text;
+BEGIN
+ -- Contacts precede the game. Ordered pairs match the friends RPCs.
+ FOR recipient IN SELECT p.id FROM public.profiles p
+ WHERE p.id=ANY(coalesce(p_friend_ids,'{}'::uuid[])) AND p.id<>p_owner ORDER BY p.id LOOP
+  PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(p_owner,recipient)::text||':'||GREATEST(p_owner,recipient)::text,329));
+ END LOOP;
+ FOR recipient_email IN SELECT DISTINCT public._norm_email(s.subscriber_email)
+ FROM public.poll_subscriptions s WHERE s.id=ANY(coalesce(p_subscriber_ids,'{}'::uuid[]))
+ AND s.owner_id=p_owner AND public._norm_email(s.subscriber_email) IS NOT NULL
+ ORDER BY public._norm_email(s.subscriber_email) LOOP
+  PERFORM public._subscriber_pair_lock(p_owner,recipient_email);
+ END LOOP;
+END $$;
+
+
+--
 -- Name: _poll_sub_mail_limit_until("uuid", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -809,6 +833,25 @@ BEGIN
  WHERE id=t.id;
  RETURN 'ok';
 END; $$;
+
+
+--
+-- Name: _poll_task_cleanup_partial_votes(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_task_cleanup_partial_votes"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF OLD.done_at IS NULL AND OLD.status<>'done'
+ AND (TG_OP='DELETE' OR NEW.status IN ('declined','cancelled')) THEN
+  DELETE FROM public.poll_votes WHERE game_id=OLD.game_id AND voter_token=public.poll_task_voter_token(OLD.id);
+  DELETE FROM public.poll_text_entries WHERE game_id=OLD.game_id AND voter_token=public.poll_task_voter_token(OLD.id);
+ END IF;
+ IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+ RETURN NEW;
+END $$;
 
 
 --
@@ -4000,6 +4043,7 @@ BEGIN
       AND (s.subscriber_user_id = v_uid
         OR (v_email IS NOT NULL AND v_email <> ''
             AND lower(trim(s.subscriber_email)) = v_email))
+    ORDER BY s.owner_id
   LOOP
     PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(r.owner_id,v_uid)::text||':'||GREATEST(r.owner_id,v_uid)::text,329));
     PERFORM public._subscriber_pair_lock(r.owner_id,v_email);
@@ -10733,6 +10777,7 @@ DECLARE
   v_created int:=0; v_kept int:=0; v_blocked int:=0; v_mail jsonb:='[]';
 BEGIN
   IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
+  PERFORM public._poll_share_contact_locks(v_uid,p_friend_ids,p_subscriber_ids);
   SELECT * INTO v_game FROM public.games WHERE id=p_game_id AND owner_id=v_uid FOR UPDATE;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','game not found'); END IF;
   IF v_game.type::text NOT IN ('poll_text','poll_points') OR v_game.status::text<>'poll_open' THEN
@@ -17299,6 +17344,13 @@ CREATE TRIGGER "guard_final_display_completion" BEFORE UPDATE ON "public"."game_
 
 
 --
+-- Name: poll_tasks poll_tasks_cleanup_partial_votes; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "poll_tasks_cleanup_partial_votes" BEFORE DELETE OR UPDATE OF "status" ON "public"."poll_tasks" FOR EACH ROW EXECUTE FUNCTION "public"."_poll_task_cleanup_partial_votes"();
+
+
+--
 -- Name: profiles profiles_reserve_test_username; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -19635,5 +19687,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5uvx9mikfJdEoJuXM6bSQcKfQglwubUub2XChdg6haC954KOheFvefri1dv3lcY
+\unrestrict NO3XF0Qa1TRSvGMvqgznABXMoegtaZHhcYrR74Qn5E1KT3TdmeSkNYbKZQOwF4t
 

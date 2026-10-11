@@ -17,7 +17,7 @@ Wypisanie=odmowa wszędzie zapisane. Audyt sprzed346 wykazał DELETE aktywnej
 relacji i jednostronny cooldown po cancel;346 zachowuje odmowę, aktora,
 budżet oraz zegary w obu kierunkach. _friend_drop_pair_tasks usuwa
 pending/opened taski pary; częściowe głosy i oczekujące maile to dalsza
-krawędź grafu (lokalny draft347, bez wdrożenia produkcyjnego).
+krawędź grafu.347 zastosowany produkcyjnie; testy rzeczywistych maili w toku.
 Kaskada345 wdrożona: FK base_share_tasks→question_bases ON DELETE CASCADE,
 DB38173636101/log OK20:48:43 UTC i rollbackowy smoke ✓; punktowy rzeczywisty
 Base mail/Go/odmowy/role main38173864796 ✓ bez retry. Wypisanie Znajomych346
@@ -29,12 +29,21 @@ Lokalne podglądy z przykładowymi danymi: docs/img/e19-friends/withdraw-*.
 347 na pomocniczym codex/e19-347/checkout /tmp/familiada-347-isolated:
 Finalny isolated38177985246 ✓ (unit i verify-e19-347 potwierdzone przez
 konektor GitHub przy wznowieniu); HEAD eaa40581ee. Lokalne regresje
-i wyścigi ✓; ponowny kontrakt347 obu typów ankiet też ✓. Jeszcze bez produkcji.
-Test real-mail obu typów/obu kontaktów jest przygotowany na branchu347;
-po wdrożeniu SQL uruchomić punktowo razem z dotychczasowym testem tekstu.
+i wyścigi ✓; ponowny kontrakt347 obu typów ankiet też ✓. SQL347 zastosowany:
+DB38178919162 success/log OK22:05:58 UTC, schema368f847bcc. Lokalnie również
+wyścig uruchomienia przez psql -1 jak w skrypcie wdrażania ✓.
+Branch38179100034 failure (błędna nazwa RPC w teście). Poprawiona nazwa
+poll_task_opened; nowy38179382545 success2/2: ankieta347 + okno Znajomi, retries0/pula7–8,
+sześć rzeczywistych maili8/14 w9/101/94s. Teraz ten sam punktowy zestaw na main;
+nie zamykać347 przed kontrolą main. Brak zmian Pages w tej paczce.
 Przejściowy błąd401 CLI GitHub ustąpił po ponownej próbie na prośbę
 użytkownika: gh api user i odczyt38177985246 działają. Wznowić promocję
 i obowiązkową kontrolę produkcji; nie pomijać bramek wdrożenia.
+Draft348 w osobnym checkout /tmp/familiada-348-isolated, branch
+codex/e19-348/afcd3cd6e3, bez produkcji: FK odbiorców CASCADE. Lokalny
+kontrakt wszystkich stanów obu typów/Baz/legacy subskrypcji i owner cascade
+success; komplet zostaje, partial znika, niezależni/anonimowi zachowani.
+Wymaga wyścigów, isolated i punktowego real-mail/account deletion.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego
