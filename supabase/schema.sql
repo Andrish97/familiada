@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gnsGdL9sWHXhaJOraSXzr7ouml1sDArjoHgctGeRq7gjlrjDGzhedZYiRUUnwMi
+\restrict b5HclncweAwslSdMOlcad6HPyOgwVst2wJSsesdbOwFdFWXGSakzmUcYlSa5wl8
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1406,10 +1406,9 @@ $$;
 -- Name: base_share_by_email("uuid", "text", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE OR REPLACE FUNCTION public.base_share_by_email(p_base_id uuid, p_email text, p_role public.base_share_role)
-RETURNS TABLE(ok boolean, err text, mail_to text, mail_link text, base_name text, owner_label text, cooldown_until timestamptz, recipient_id uuid)
-LANGUAGE plpgsql SECURITY DEFINER
-AS $$
+CREATE FUNCTION "public"."base_share_by_email"("p_base_id" "uuid", "p_email" "text", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
 DECLARE
   v_owner uuid;
   v_recipient uuid;
@@ -1483,13 +1482,47 @@ $$;
 
 
 --
+-- Name: base_share_by_user("uuid", "text", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."base_share_by_user"("p_base_id" "uuid", "p_user_lookup" "text", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_lookup text := lower(trim(p_user_lookup));
+  v_recipient uuid;
+BEGIN
+  IF auth.uid() IS NULL OR NOT EXISTS (
+    SELECT 1 FROM public.question_bases qb WHERE qb.id = p_base_id AND qb.owner_id = auth.uid()
+  ) THEN
+    RETURN QUERY SELECT false, 'not_owner', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
+
+  SELECT pr.id INTO v_recipient
+  FROM public.profiles pr
+  WHERE lower(trim(pr.email)) = v_lookup OR lower(trim(pr.username)) = v_lookup
+  ORDER BY CASE WHEN lower(trim(pr.email)) = v_lookup THEN 0 ELSE 1 END
+  LIMIT 1;
+
+  IF v_recipient IS NULL THEN
+    RETURN QUERY SELECT false, 'unknown_user', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
+
+  RETURN QUERY SELECT * FROM public.base_share_by_user(p_base_id, v_recipient, p_role);
+END;
+$$;
+
+
+--
 -- Name: base_share_by_user("uuid", "uuid", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE OR REPLACE FUNCTION public.base_share_by_user(p_base_id uuid, p_recipient_user_id uuid, p_role public.base_share_role)
-RETURNS TABLE(ok boolean, err text, mail_to text, mail_link text, base_name text, owner_label text, cooldown_until timestamptz, recipient_id uuid)
-LANGUAGE plpgsql SECURITY DEFINER
-AS $$
+CREATE FUNCTION "public"."base_share_by_user"("p_base_id" "uuid", "p_recipient_user_id" "uuid", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
 DECLARE
   v_owner uuid;
   v_recipient uuid;
@@ -9145,7 +9178,7 @@ $$;
 -- Name: poll_go_resolve("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE OR REPLACE FUNCTION "public"."poll_go_resolve"("p_token" "uuid") RETURNS "jsonb"
+CREATE FUNCTION "public"."poll_go_resolve"("p_token" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -19041,41 +19074,8 @@ CREATE POLICY "user_logos_update_own" ON "public"."user_logos" FOR UPDATE USING 
 ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 
 --
--- Wyszukiwanie konta po nazwie lub e-mailu. Znajomość nie jest warunkiem
--- udostępnienia; to samo API obsługuje skrót znajomych po UUID.
-CREATE OR REPLACE FUNCTION public.base_share_by_user(p_base_id uuid, p_user_lookup text, p_role public.base_share_role)
-RETURNS TABLE(ok boolean, err text, mail_to text, mail_link text, base_name text, owner_label text, cooldown_until timestamptz, recipient_id uuid)
-LANGUAGE plpgsql SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-  v_lookup text := lower(trim(p_user_lookup));
-  v_recipient uuid;
-BEGIN
-  IF auth.uid() IS NULL OR NOT EXISTS (
-    SELECT 1 FROM public.question_bases qb WHERE qb.id = p_base_id AND qb.owner_id = auth.uid()
-  ) THEN
-    RETURN QUERY SELECT false, 'not_owner', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
-    RETURN;
-  END IF;
-
-  SELECT pr.id INTO v_recipient
-  FROM public.profiles pr
-  WHERE lower(trim(pr.email)) = v_lookup OR lower(trim(pr.username)) = v_lookup
-  ORDER BY CASE WHEN lower(trim(pr.email)) = v_lookup THEN 0 ELSE 1 END
-  LIMIT 1;
-
-  IF v_recipient IS NULL THEN
-    RETURN QUERY SELECT false, 'unknown_user', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
-    RETURN;
-  END IF;
-
-  RETURN QUERY SELECT * FROM public.base_share_by_user(p_base_id, v_recipient, p_role);
-END;
-$$;
-
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gnsGdL9sWHXhaJOraSXzr7ouml1sDArjoHgctGeRq7gjlrjDGzhedZYiRUUnwMi
+\unrestrict b5HclncweAwslSdMOlcad6HPyOgwVst2wJSsesdbOwFdFWXGSakzmUcYlSa5wl8
 
