@@ -23,10 +23,11 @@ wdrożona na produkcji w runie 38101647703; izolowany Postgres/SQL runner
 nazwie/e-mailu, link `/go/?b=`, prowadzenie do `/tasks/` (zachowuje `b`
 przez logowanie). Punktowe E2E brancha `bases.spec.js` run 38102116117
 wykryło pozostawione zaproszenie znajomości `pending` z poprzedniego runu;
-test jest poprawiony, by akceptować taki stan i pobierać token z odpowiedzi
-RPC (mail sprawdza osobny test). Test maila potwierdził opóźnioną dostawę po
-retry. Ponowić punktowe E2E, potem promować front na `main`, Pages i kontrola
-produkcji. Przed krokiem 6 skoordynować obszar Control z drugą sesją.
+run 38102345561 potwierdził obsługę tego stanu, ale wskazał względny
+`mail_link` (test poprawiono, by rozwiązywał go względem domeny) oraz mail
+test8 pozostający `pending` bez prób dostawy. Ponowić punktowe E2E, potem
+promować front na `main`, Pages i kontrola produkcji. Przed krokiem 6
+skoordynować obszar Control z drugą sesją.
 
 Produkcyjne e2e
 Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po

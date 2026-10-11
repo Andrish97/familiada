@@ -535,7 +535,7 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Zadaniach", async ({ 
     const inviteLink = shareRow?.mail_link;
     expect(inviteLink).toBeTruthy();
     await expect(page.locator("#shareSectionsHost .shareRow").filter({ hasText: "test2" })).toHaveCount(1, { timeout: 20_000 });
-    const token = new URL(inviteLink).searchParams.get("b");
+    const token = new URL(inviteLink, BASE_URL).searchParams.get("b");
     expect(token).toBeTruthy();
     await page2.goto("/go/?b=" + token, { waitUntil: "domcontentloaded" });
     await expect(page2.locator("#message")).toContainText("udostępnia Ci bazę", { timeout: 15_000 });
