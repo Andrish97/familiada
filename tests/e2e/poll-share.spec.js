@@ -334,9 +334,9 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
         return lists.map(e => e.scrollTop);
       });
       expect(scroll).toEqual([70, 120]);
-      await page.screenshot({ path: test.info().outputPath(`poll-recipients-${width}.png`), fullPage: true });
+      await page.screenshot({ path: test.info().outputPath(`shot-poll-recipients-${width}.png`), fullPage: true });
       await page.locator('#pollRecipientsCancel').click();
-      await page.screenshot({ path: test.info().outputPath(`poll-sharing-${width}.png`), fullPage: true });
+      await page.screenshot({ path: test.info().outputPath(`shot-poll-sharing-${width}.png`), fullPage: true });
     }
     await rpc(page, "poll_stop", { p_game_id: game.id });
     await page.reload(); await expect(page.locator('#btnAddRecipients')).toBeDisabled();

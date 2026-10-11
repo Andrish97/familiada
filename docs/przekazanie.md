@@ -19,12 +19,14 @@ Głosowania anonymous bez taska nie zmieniono; limit urządzenia nadal pkt7.
 Front nadal branch: wspólne sekcje/checkboxy/zegary i małe akcje nad kartami,
 dziewięć zrzutów docs/img/e19-polls. Go konta→Tasks ma właściwą copyPL/EN/UK;
 mailowe linki Ankiet dostają lang. Unit414/414 ✓ po nowej regresji języków.
-Go siedem passed38166322418, w tym rzeczywisty complete points; pełny tekst
-Go→Tasks→10q→done też przeszedł do momentu anonimowej części testu.
-Pierwszy poll-share nie domknięty: brak lang dawał anonimowi angielski Go;
-poprawiono. 38166803982 w toku: pięć poll-share, --retries=0, worker1/pula7–8.
-Sprawdzić wynik/poprawić problemy, Pages dopiero po zielonej bramce; te same
-kontrole main zamykają pkt5. Anulowane38166057247/38166706928 nie są bramką.
+Branch: siedem Go passed38166322418; pierwsze dwa poll-share passed38166803982
+(realne maile8/14, pełny tekst/odmowa/cofnięcie/same-run). Pozostałe trzy
+38167196365 ✓ bez retry: mail-off/partial→decline, wspólny UI390/1400,
+trzy rzeczywiście dostarczone maile14 i czwarty zablokowany mimo usunięcia
+kolejki/taska/gry. Łącznie wszystkie12 punktowych scenariuszy na aktualnym
+backendzie344. Następnie Pages i pełny punktowy komplet12 na main;
+dopiero po jego wyniku zamknąć pkt5. Zrzuty E2E mają prefiks shot-,
+żeby workflow zachował je także przy sukcesie.
 
 Dalej pkt6 maile (audyt wejść w maile-granice.md), pkt7 graf/kaskady/Go/
 lekki anonimowy token, UI/E20 i landscape; manual ostatni. Wypisanie=odmowa

@@ -1114,3 +1114,14 @@ kafelek, dopiero tam Głosuj/Odrzuć. Komunikat i przycisk Go poprawione
 PL/EN/UK; anonimowy subskrybent głosuje/odrzuca bez konta bezpośrednio z Go.
 Zrzuty po wykonaniu: [Go konto390](img/e19-polls/go-account-390.png),
 [Go konto1400](img/e19-polls/go-account-1400.png).
+
+### Pkt5 / bramka brancha kompletna — 2026-10-11
+
+Backend340–344 zastosowany (DB38165033358 i38165841575 ✓, logi w Dzienniku).
+Bramka wybranych12 scenariuszy: siedem Go38166322418 ✓, dwa poll-share38166803982 ✓,
+pozostałe trzy38167196365 ✓, wszystkie bez retry. Realne maile8/14,
+tekst/punkty complete, odmowa/częściowe głosy, mail-off, legacykonto,
+UI390/1400 i trzy dostarczone maile14 z trwałym limitem czwartego.
+Unit414/414 ✓. Front gotowy do Pages, pkt5 nadal wymaga tych samych12
+na rzeczywistej publikacji main. Starsze określenia draft/status wyżej
+opisują stan w chwili zapisu; migracje są już wykonane i nie są edytowane.
