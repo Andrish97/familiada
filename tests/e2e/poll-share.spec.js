@@ -116,6 +116,7 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     ]);
     const links = mails.map(email => extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("t")));
     expect(links.every(Boolean)).toBe(true);
+    for (const link of links) expect(new URL(link).searchParams.get("lang")).toBe("pl");
     await friendPage.goto(links[0]);
     await expect(friendPage.locator("#title")).toContainText(/ankiet/);
     await friendPage.getByRole("button", { name: "Otwórz Zadania", exact: true }).click({ timeout: 30_000 });

@@ -2,13 +2,15 @@
 // (i, do czasu usunięcia, Centrum ankiet). Baza rezerwuje cooldown "poll:share"
 // przed wysyłką; tu budujemy treść, wysyłamy i oznaczamy zaproszenia jako wysłane.
 import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-11T18000";
-import { t } from "../../translation/translation.js?v=v2026-10-11T18000";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-11T18000";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 export function mailLink(path) {
   try {
-    return new URL(path, location.origin).href;
+    const url = new URL(path, location.origin);
+    url.searchParams.set("lang", getUiLang() || "pl");
+    return url.href;
   } catch {
     return path;
   }
