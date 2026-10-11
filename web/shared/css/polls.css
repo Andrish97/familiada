@@ -97,28 +97,19 @@
 .pollBarActions .btn{ white-space: nowrap; flex: 0 0 auto; }
 /* Przerwij: .btn.danger (czerwony obrys, base.css), zawsze ostatni */
 
-/* Telefon: bez dolnego paska — stan w pierwszym wierszu, przyciski pod nim
-   (równej szerokości, zawijają się dopiero gdy nie mieszczą się w rzędzie). */
+/* Stan i akcje stanowią osobną sekcję nad kartami; rozmiar przycisków z Gier. */
+.pollBar{ padding: 12px; border: 1px solid var(--line2); border-radius: 14px; background: var(--card); }
+.pollBarState{ flex: 1 1 240px; }
+.pollBarActions{ flex: 1 1 240px; }
+.pollBarActions .btn{ flex: 0 0 auto; }
+.pollBar .subsSummary{ flex-basis: 100%; }
+.pollAbort{ --btn-tint: rgba(180,50,50,.08); color: #dca4a4; border-color: rgba(180,80,80,.35); }
 @media (max-width: 980px){
-  .pollBarState{ flex: 1 1 100%; }
-  .pollBarHint{ flex: 1 1 100%; max-width: none; }
-  .pollBarActions{
-    flex: 1 1 100%;
-    justify-content: stretch;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .pollBarActions .btn:not([hidden]){
-    flex: 1 1 0;
-    min-width: max-content;
-    white-space: nowrap;
-    padding: 7px 10px;
-    min-height: 0;
-    border-radius: 12px;
-    font-size: 13px;
-    letter-spacing: .04em;
-    line-height: 1.15;
-  }
+  .pollBar{ gap: 10px; padding: 10px; }
+  .pollBarState{ flex-basis: 100%; }
+  .pollBarActions{ flex-basis: 100%; gap: 6px; justify-content: flex-end; }
+  .pollBarActions .btn{ flex: 0 0 auto; }
+  .pollBarHint{ flex-basis: 100%; max-width: none; }
 }
 
 /* B. Karta z wypustkami (2 × 50%), wzór: bases.css */
@@ -151,9 +142,6 @@
 }
 .polls-tabs-card:has(.slot-share.active) .polls-card{ border-top-left-radius: 0; }
 .polls-tabs-card:has(.slot-results.active) .polls-card{ border-top-right-radius: 0; }
-@media (max-width: 980px){
-  .tabs-card.hub-tabs.polls-tabs-card{ --tab-height: 44px; }
-}
 
 .polls-section{ display: none; }
 .polls-section.active{
@@ -177,7 +165,7 @@
 /* Udostępnianie: dwie kolumny wyrównane do góry — Link (lewa), Subskrybenci (prawa) */
 .shareCols{
   display: grid;
-  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   align-items: start;
 }
@@ -324,10 +312,12 @@
   padding: 2px;
 }
 .pollRecipientGroup:empty{ display:none; }
-.pollRecipientsModal .uni-body{ min-height: 140px; }
-.pollRecipientsModal .shareSection{ margin-top: 0; }
-.pollRecipientsModal .shareSection + .shareSection{ margin-top: 12px; }
-.pollRecipientsModal .uni-foot{ align-items: center; }
+.pollRecipientsModal .uni-body{ min-height: 140px; display: grid; gap: 16px; }
+.pollRecipientsModal .shareSection{ margin: 0; }
+.pollRecipientsModal .shareList{ max-height: min(240px, 25dvh); }
+.pollRecipientsModal .uni-foot{ align-items: center; justify-content: flex-end; }
+.pollRecipientsModal #pollRecipientsCount{ margin-right: auto; }
+.pollSubsSec .shareList{ max-height: min(360px, 45dvh); }
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
 #resultsList{ display: grid; gap: 12px; }

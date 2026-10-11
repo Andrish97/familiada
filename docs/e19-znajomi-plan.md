@@ -1065,3 +1065,31 @@ bez zapisywania treści, hash normalizowanego emaila. Flaga przed kolejką,
 atomowa kontrola wyścigów przy insercie; historia wygasa po24h, konto
 usuwa własne zdarzenia kaskadowo. Przypomnienie nadal dwa na uruchomienie
 oraz24h dla tej gry. Sprawdzić obie niezależne bramki i granice czasowe.
+
+### Pkt 5 / wspólny wygląd oraz zapisy głosów — 2026-10-11
+
+W toku, jeszcze bez publikacji. Karty pozostają „Udostępnianie” i „Głosy”.
+Udostępnianie ma równe sekcje „Anonimowo” i „Odbiorcy”; zachowany wykonany
+selektor Znajomi/Subskrybenci. Status, podsumowanie i małe akcje jak w Games
+są nad kartami; wypustki36px. Listy używają wspólnego shareSection/shareRow,
+checkboxów, wyszarzenia blokady, osobnych scrolli i przycisków refresh/kosz
+po prawej. Odmowy/done/mail-off bez ponowienia; ukryta odmowa bieżącego runu
+nadal wyklucza z selektora. Metadata i zegary pochodzą z jednej odpowiedzi
+poll_share_panel; znikający blob jest wspólnym toastem.
+
+Podgląd z przykładowymi danymi po wykonaniu:
+[Udostępnianie1400](img/e19-polls/sharing-1400.png),
+[Udostępnianie390](img/e19-polls/sharing-390.png),
+[lista odbiorców390](img/e19-polls/sharing-recipients-390.png),
+[selektor1400](img/e19-polls/recipients-1400.png),
+[selektor390](img/e19-polls/recipients-390.png),
+[Głosy1400](img/e19-polls/votes-1400.png),
+[Głosy390](img/e19-polls/votes-390.png).
+Podgląd nie zastępuje kontroli rzeczywistych Pages i dostarczania maili.
+
+343 domyka zapisy z zastrzeżonym tokenem task:id we wszystkich RPC oraz
+bezpośrednich zapisach właściciela: rodzic → task, właściwy odbiorca,
+bieżący run, brak odmowy/cofnięcia/done. KluczNULL odrzucany. Zwykłe głosy
+anonimowe zachowują obecny kontrakt; lekki limit urządzenia pozostaje pkt7.
+Lokalne rollback granic i wyścigi odmowa/stop/usunięcie rodzica ✓; świeży
+izolowany runner obejmie także dopięty Tasks decline wrapper341.

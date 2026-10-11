@@ -269,7 +269,14 @@ function openVote(type) {
 
 async function declineTask() {
   try {
-    await sb().rpc("poll_task_decline", { p_token: goToken });
+    const { data, error } = await sb().rpc("poll_task_decline", { p_token: goToken });
+    if (error) throw error;
+    if (data !== "ok") {
+      const byState = { poll_stopped: MSG.pollStopped(), poll_closed: MSG.pollEnded(), expired: MSG.inviteExpired(), not_found: MSG.inviteExpired() };
+      clearActions();
+      setView({ head: byState[data] || MSG.error(), text: byState[data] ? "" : MSG.declineTaskFailed() });
+      return;
+    }
     setView({ head: MSG.declined(), text: MSG.taskDeclined() });
     clearActions();
   } catch (e) {

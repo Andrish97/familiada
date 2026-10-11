@@ -6,7 +6,7 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-11T18000";
+import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T18000";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T18000";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T18000";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T18000";
@@ -23,6 +23,8 @@ import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-shee
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T18000";
 import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-11T18000";
 import { createTally } from "./poll-tally.js?v=v2026-10-11T18000";
+
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-11T18000";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -554,8 +556,12 @@ let friendsAll = [];         // zaakceptowani znajomi właściciela
 let tasks = [];              // zaproszenia tego uruchomienia
 const selectedSubIds = new Set();
 const selectedFriendIds = new Set();
-const cooldownBySub = new Map(); // odbiorca -> do kiedy nie wyślemy kolejnego przypomnienia
+const recipientTicker = createCooldownTicker();
+const pickerTicker = createCooldownTicker();
+recipientTicker.start();
+pickerTicker.start();
 let recipientPickerSnapshot = null;
+let recipientPickerLoading = false;
 let subsSig = "";
 
 function emailKey(s) {
@@ -570,11 +576,6 @@ function subLabel(sub) {
   return sub.subscriber_label || sub.subscriber_email || "—";
 }
 
-function cooldownActive(subId) {
-  const until = cooldownBySub.get(String(subId)) || 0;
-  return until > Date.now() ? until : 0;
-}
-
 // Karta Udostępnianie działa w szkicu (przygotowanie listy), przy otwartej
 // i zatrzymanej ankiecie. Po podliczeniu linki wygasają.
 function sharingAvailable(st = game?.status) {
@@ -583,29 +584,18 @@ function sharingAvailable(st = game?.status) {
 
 async function loadTasks() {
   if (!game || !currentUser) { tasks = []; return; }
-  const { data, error } = await sb()
-    .from("poll_tasks")
-    .select("id,recipient_user_id,recipient_email,status,share_key_poll,reminder_count")
-    .eq("game_id", gameId)
-    .eq("owner_id", currentUser.id);
-  if (error) throw error;
-  // zaproszenia z wcześniejszych uruchomień wygasły
-  tasks = (data || []).filter((tk) => tk.share_key_poll === game.share_key_poll);
+  const { data, error } = await sb().rpc("poll_share_panel", { p_game_id: gameId });
+  if (error || !data?.ok) throw new Error(error?.message || data?.err || "poll_share_panel");
+  friendsAll = data.friends || [];
+  subsAll = data.subscribers || [];
+  tasks = data.tasks || [];
 }
 
 async function loadSubsData() {
   if (!game || !currentUser || !sharingAvailable()) return;
-  const [subsRes, friendsRes] = await Promise.all([
-    sb().rpc("subscribers_list"),
-    sb().rpc("friends_list"),
-  ]);
-  if (subsRes.error) throw subsRes.error;
-  if (friendsRes.error) throw friendsRes.error;
-  subsAll = (subsRes.data || []).filter((s) => s.status === "active" && !s.friend_user_id);
-  friendsAll = (friendsRes.data || []).filter((f) => f.status === "active" && f.user_id);
   await loadTasks();
-
   renderSubs(true);
+  if (pollRecipientsOverlay && !pollRecipientsOverlay.classList.contains("hidden") && pollRecipientsOverlay.style.display !== "none") renderRecipientPicker();
 }
 
 async function refreshTasksOnly() {
@@ -622,10 +612,10 @@ function taskForRecipient(recipient) {
 
 function availableRecipients() {
   const friendRows = friendsAll
-    .map((f) => ({ kind: "friend", id: String(f.user_id), user_id: f.user_id, email: f.email, label: f.label || f.email }))
+    .map((f) => ({ kind: "friend", id: String(f.user_id), user_id: f.user_id, email: f.email, label: f.label || f.email, cooldown_until: f.cooldown_until, email_enabled: f.email_enabled }))
     .filter((r) => !taskForRecipient(r));
   const subscriberRows = subsAll
-    .map((s) => ({ kind: "subscriber", id: String(s.id), sub_id: s.id, email: s.email, label: s.email }))
+    .map((s) => ({ kind: "subscriber", id: String(s.id), sub_id: s.id, email: s.email, label: s.email, cooldown_until: s.cooldown_until, email_enabled: s.email_enabled }))
     .filter((r) => !taskForRecipient(r) && !friendsAll.some((f) => emailKey(f.email) === emailKey(r.email)));
   return { friendRows, subscriberRows };
 }
@@ -639,15 +629,15 @@ function renderSubs(force = false) {
 
   // zaznaczenia zostają tylko dla wciąż niezaproszonych
   const available = availableRecipients();
-  for (const id of [...selectedSubIds]) if (!available.subscriberRows.some((r) => r.id === id)) selectedSubIds.delete(id);
-  for (const id of [...selectedFriendIds]) if (!available.friendRows.some((r) => r.id === id)) selectedFriendIds.delete(id);
+  for (const id of [...selectedSubIds]) if (!available.subscriberRows.some((r) => r.id === id && !(Date.parse(r.cooldown_until) > Date.now()))) selectedSubIds.delete(id);
+  for (const id of [...selectedFriendIds]) if (!available.friendRows.some((r) => r.id === id && !(Date.parse(r.cooldown_until) > Date.now()))) selectedFriendIds.delete(id);
 
   const stopped = game?.status === STATUS.POLL_STOPPED;
   const sig = JSON.stringify([
     game?.status,
-    friendsAll.map((f) => [f.user_id, f.label]),
-    subsAll.map((s) => [s.id, s.email]),
-    tasks.map((tk) => [tk.id, tk.status, tk.reminder_count]),
+    friendsAll,
+    subsAll,
+    tasks, busy,
     [...selectedSubIds].sort(),
     [...selectedFriendIds].sort(),
     getUiLang(),
@@ -658,7 +648,7 @@ function renderSubs(force = false) {
   // podsumowanie w nagłówku
   if (subsSummary) {
     subsSummary.textContent = t("polls.share.summary", {
-      invited: tasks.length,
+      invited: tasks.filter(tk => !tk.hidden).length,
       voted: tasks.filter((tk) => tk.status === "done").length,
       declined: tasks.filter((tk) => tk.status === "declined").length,
     });
@@ -672,43 +662,41 @@ function renderSubs(force = false) {
   }
   renderBar();
 
-  const sharedRecipients = tasks.map((tk) => {
+  recipientTicker.resetBindings();
+  const sharedRecipients = tasks.filter(tk => !tk.hidden).map((tk) => {
     const friend = friendsAll.find((f) => String(f.user_id) === String(tk.recipient_user_id));
     const sub = subsAll.find((s) => !tk.recipient_user_id && emailKey(s.email) === emailKey(tk.recipient_email));
-    return { tk, kind: friend ? "friend" : "subscriber", label: friend?.label || sub?.email || tk.recipient_email || "—" };
+    return { tk, kind: tk.recipient_user_id ? "friend" : "subscriber", label: tk.label || friend?.label || sub?.email || tk.recipient_email || "—" };
   });
-  if (!sharedRecipients.length) {
-    subsGrid.innerHTML = "";
-    if (subsEmpty) {
-      subsEmpty.style.display = "";
-      subsEmpty.textContent = t("polls.share.noSharedRecipients");
-    }
-    return;
-  }
   if (subsEmpty) subsEmpty.style.display = "none";
-
   const rows = sharedRecipients.map(({ tk, kind, label }) => {
     const waiting = taskIsWaiting(tk);
     const limit = (tk.reminder_count || 0) >= 2;
-    const until = cooldownActive(tk.recipient_user_id || tk.recipient_email);
-    const bellOff = limit || !!until || stopped;
-    const bellTitle = stopped ? t("polls.share.sendDisabledStopped")
-      : limit ? t("polls.share.reminderLimit")
-      : until ? t("polls.share.canResend", { when: formatUntil(until) })
-      : t("polls.share.remind");
+    const locked = limit || stopped || busy;
+    const until = Date.parse(tk.cooldown_until) || 0;
+    const title = stopped ? t("polls.share.sendDisabledStopped")
+      : limit ? t("polls.share.reminderLimit") : t("polls.share.remind");
     const actions = [];
-    if (waiting) actions.push({ key: "remind", icon: "bell", title: bellTitle, disabled: bellOff, onClick: () => void remindShare(tk, { sub_id: tk.recipient_user_id || tk.recipient_email }) });
-    actions.push({ key: "remove", icon: "trash", title: t("polls.share.remove"), onClick: () => void removeShare(tk, { sub_id: tk.recipient_user_id || tk.recipient_email, subscriber_label: label }) });
+    if (waiting && tk.email_enabled) actions.push({
+      key: "remind", icon: "refresh", title, countdown: true, disabled: locked || until > Date.now(),
+      onClick: () => void remindShare(tk, { sub_id: tk.recipient_user_id || tk.recipient_email }),
+      onMount: ({ button, labelEl }) => {
+        if (locked) button.dataset.locked = "1";
+        const key = `task:${tk.id}`;
+        recipientTicker.bind({ key, labelEl, disableEls: [button] });
+        recipientTicker.setEndMs(key, until);
+      },
+    });
+    actions.push({ key: "remove", icon: "trash", title: t("polls.share.remove"), disabled: busy,
+      onClick: () => void removeShare(tk, { sub_id: tk.recipient_user_id || tk.recipient_email, subscriber_label: label }) });
     return {
-      id: tk.id,
-      label,
-      tags: [{ text: t(`shareSections.channel.${kind}`), cls: "tag--muted" }],
-      actions,
-      note: waiting ? t("polls.share.state.waiting") : tk.status === "done" ? t("polls.share.state.done") : t("polls.share.state.declined"),
+      id: tk.id, label, compact: true,
+      tags: [{ text: t(`shareSections.channel.${kind}`), cls: "tag--muted" }], actions,
+      note: waiting ? (tk.status === "opened" ? t("pollSharePanel.opened") : t("polls.share.state.waiting"))
+        : tk.status === "done" ? t("polls.share.state.done") : t("polls.share.state.declined"),
     };
   });
-
-  renderShareSections(subsGrid, { active: { rows, title: t("polls.share.recipientsTitle"), subtitle: "" } });
+  subsGrid.replaceChildren(shareSectionEl({ key: "poll-shared", title: t("polls.share.recipientsTitle"), rows, emptyText: t("pollSharePanel.empty") }));
 }
 
 // Wysyłka zaproszeń do zaznaczonych; wywołujący pilnuje `busy`.
@@ -750,49 +738,66 @@ function recipientSelectionChanged() {
   const n = selectedSubIds.size + selectedFriendIds.size;
   if (pollRecipientsCount) pollRecipientsCount.textContent = n ? t("polls.share.selectedCount", { n }) : "";
   if (pollRecipientsAdd) {
-    pollRecipientsAdd.disabled = n === 0;
+    pollRecipientsAdd.disabled = n === 0 || busy || (!canSendInvites() && game?.status !== STATUS.DRAFT);
     pollRecipientsAdd.textContent = game?.status === STATUS.DRAFT
       ? t("polls.share.addSelectedN", { n })
       : t("polls.share.sendInvitesN", { n });
   }
 }
 
-function recipientRows(rows, kind) {
-  return rows.map((r) => {
-    const selected = kind === "friend" ? selectedFriendIds.has(r.id) : selectedSubIds.has(r.id);
-    return {
-      id: r.id,
-      label: r.label,
-      title: r.email || r.label,
-      selected,
-      role: "checkbox",
-      onClick: () => {
-        const set = kind === "friend" ? selectedFriendIds : selectedSubIds;
-        if (set.has(r.id)) set.delete(r.id); else set.add(r.id);
-        renderRecipientPicker();
-      },
-    };
-  });
+function renderRecipientGroup(host, rows, kind, title) {
+  const section = shareSectionEl({ key: `poll-${kind}`, title, emptyText: rows.length ? "" : t("pollSharePanel.empty") });
+  const list = section.querySelector(".shareList");
+  const selectedIds = kind === "friend" ? selectedFriendIds : selectedSubIds;
+  for (const recipient of rows) {
+    const row = shareRowEl({ id: recipient.id, label: recipient.label, title: recipient.email, compact: true });
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox"; checkbox.value = recipient.id; checkbox.checked = selectedIds.has(recipient.id);
+    if (busy || (!canSendInvites() && game?.status !== STATUS.DRAFT)) { checkbox.disabled = true; checkbox.dataset.locked = "1"; }
+    checkbox.setAttribute("aria-label", recipient.label);
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) selectedIds.add(recipient.id); else selectedIds.delete(recipient.id);
+      recipientSelectionChanged();
+    });
+    row.prepend(checkbox);
+    row.addEventListener("click", event => {
+      if (checkbox.disabled || event.target.closest("input,button")) return;
+      checkbox.checked = !checkbox.checked; checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const { element, labelEl } = shareCooldownEl(); row.querySelector(".shareRowActions").append(element);
+    const key = `${kind}:${recipient.id}`;
+    pickerTicker.bind({ key, labelEl, disableEls: [checkbox], onTick: (_, cooling) => {
+      element.hidden = !cooling; row.classList.toggle("is-cooling-down", cooling); row.classList.toggle("pick", !cooling);
+      if (cooling) { checkbox.checked = false; selectedIds.delete(recipient.id); }
+      recipientSelectionChanged();
+    }});
+    pickerTicker.setEndMs(key, Date.parse(recipient.cooldown_until) || 0);
+    list.append(row);
+  }
+  host.replaceChildren(section);
 }
 
 function renderRecipientPicker() {
   if (!pollRecipientsFriends || !pollRecipientsSubs) return;
+  pickerTicker.resetBindings();
   const { friendRows, subscriberRows } = availableRecipients();
-  if (pollRecipientsEmpty) {
-    pollRecipientsEmpty.hidden = friendRows.length + subscriberRows.length > 0;
-    pollRecipientsEmpty.textContent = t("polls.share.noRecipientsToAdd");
-  }
-  renderShareSections(pollRecipientsFriends, {
-    subscribers: { rows: recipientRows(friendRows, "friend"), title: t("polls.share.friendsTitle"), subtitle: "" },
-  });
-  renderShareSections(pollRecipientsSubs, {
-    subscribers: { rows: recipientRows(subscriberRows, "subscriber"), title: t("polls.share.subsTitle"), subtitle: "" },
-  });
+  if (pollRecipientsEmpty) pollRecipientsEmpty.hidden = true;
+  renderRecipientGroup(pollRecipientsFriends, friendRows, "friend", t("polls.share.friendsTitle"));
+  renderRecipientGroup(pollRecipientsSubs, subscriberRows, "subscriber", t("polls.share.subsTitle"));
   recipientSelectionChanged();
 }
 
 async function openRecipientPicker() {
-  if (!game || !sharingAvailable() || game.status === STATUS.POLL_STOPPED || game.status === STATUS.READY) return;
+  if (!game || busy || recipientPickerLoading || !sharingAvailable() || game.status === STATUS.POLL_STOPPED || game.status === STATUS.READY) return;
+  recipientPickerLoading = true;
+  if (btnAddRecipients) btnAddRecipients.disabled = true;
+  try { await loadTasks(); }
+  catch (error) { console.warn("[polls] recipient picker", error); setMsg(t("common.genericError"), "error"); return; }
+  finally {
+    recipientPickerLoading = false;
+    if (btnAddRecipients) btnAddRecipients.disabled = busy || (!canSendInvites() && game?.status !== STATUS.DRAFT);
+  }
+  renderSubs(true);
   recipientPickerSnapshot = {
     subscriberIds: [...selectedSubIds],
     friendIds: [...selectedFriendIds],
@@ -804,6 +809,7 @@ async function openRecipientPicker() {
 }
 
 function closeRecipientPicker() {
+  pickerTicker.resetBindings();
   if (!pollRecipientsOverlay) return;
   if (recipientPickerSnapshot) {
     selectedSubIds.clear();
@@ -838,21 +844,19 @@ async function remindShare(tk, sub) {
     if (error) throw error;
     if (!data?.ok) {
       if (data?.err === "cooldown" && data.cooldown_until) {
-        const until = Date.parse(data.cooldown_until);
-        if (Number.isFinite(until)) cooldownBySub.set(String(sub.sub_id), until);
-        await alertModal({ text: t("polls.share.canResend", { when: formatUntil(until) }) });
+        setMsg(t("polls.share.canResend", { when: formatUntil(Date.parse(data.cooldown_until)) }));
       } else if (data?.err === "reminder limit") {
-        await alertModal({ text: t("polls.share.reminderLimit") });
+        setMsg(t("polls.share.reminderLimit"));
       } else {
         await alertModal({ text: `${t("polls.share.remindFailed")}\n\n${rpcErrText(null, data)}` });
       }
       return;
     }
+    if (data.mail_allowed === false) { setMsg(t("pollSharePanel.mailDisabled")); return; }
     const res = await sendPollInviteMails({ mailItems: data.mail, pollName: game.name, currentUser, reminder: true });
     if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
     else setMsg(t("polls.share.reminded"));
-    // po wysłaniu: kolejny mail dopiero za 24 h
-    cooldownBySub.set(String(sub.sub_id), Date.now() + 24 * 3600 * 1000);
+    // Po akcji ponownie pobieramy rzeczywiste zegary i flagi z bazy.
   } catch (e) {
     console.error("[polls] remind", e);
     await alertModal({ text: `${t("polls.share.remindFailed")}\n\n${e?.message || e}` });
@@ -910,6 +914,7 @@ function renderBar() {
   if (!pollBar || !game) return;
   const st = game.status || STATUS.DRAFT;
   const prepared = game.type === TYPES.PREPARED;
+  if (subsSummary) subsSummary.hidden = prepared || !sharingAvailable(st);
   const tallying = tallyActive && st === STATUS.POLL_STOPPED;
 
   pollBar.dataset.state = tallying ? "tally" : st;

@@ -1,4 +1,11 @@
 const pl = {
+  pollSharePanel: {
+    "anonymous": "Anonimowo",
+    "recipients": "Odbiorcy",
+    "opened": "Otwarto",
+    "empty": "Brak osób na liście",
+    "mailDisabled": "Powiadomienia mailowe są wyłączone"
+  },
   meta: {
     lang: "pl",
     label: "Polski",
@@ -810,7 +817,7 @@ const pl = {
     pageSubtitle: "{type} · {name}",
     tabs: {
       share: "Udostępnianie",
-      results: "Wyniki",
+      results: "Głosy",
     },
     bar: {
       votes: ({ n }) => {

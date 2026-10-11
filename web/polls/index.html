@@ -66,6 +66,7 @@
       <div class="pollBarState">
         <span class="pollStateWord" id="pollStateWord"></span>
         <span class="pollStateInfo" id="pollStateInfo"></span>
+        <span class="subsSummary" id="subsSummary"></span>
         <span class="pollBarHint" id="hintTop"></span>
       </div>
       <div class="pollBarActions" id="pollActions">
@@ -76,7 +77,7 @@
         <button class="btn sm gold" id="btnTallyPoll" type="button" hidden data-i18n="polls.actions.tallyPoll">Podlicz głosy</button>
         <button class="btn sm gold" id="btnApproveTally" type="button" hidden data-i18n="polls.actions.approve">Zatwierdź</button>
         <button class="btn sm gold" id="btnReopenPoll" type="button" hidden data-i18n="polls.actions.reopenPoll">Uruchom ponownie</button>
-        <button class="btn sm danger" id="btnAbort" type="button" hidden data-i18n="polls.actions.abort">Przerwij</button>
+        <button class="btn sm pollAbort" id="btnAbort" type="button" hidden data-i18n="polls.actions.abort">Przerwij</button>
       </div>
     </div>
 
@@ -97,7 +98,7 @@
 
           <div class="tab-slot slot-results">
             <button class="tab-label" id="tabResults" type="button" role="tab" aria-controls="secResults" aria-selected="false">
-              <span data-i18n="polls.tabs.results">Wyniki</span>
+              <span data-i18n="polls.tabs.results">Głosy</span>
             </button>
             <div class="tab-wrapper" aria-hidden="true">
               <div class="tab-active"></div>
@@ -113,7 +114,7 @@
             <div class="pollsEmpty" id="shareEmpty"></div>
             <div class="shareCols" id="shareBody" style="display:none;">
               <section class="pollSec pollLinkSec">
-                <h3 class="pollSecTitle" data-i18n="polls.share.linkTitle">Link</h3>
+                <h3 class="pollSecTitle" data-i18n="pollSharePanel.anonymous">Anonimowo</h3>
                 <div class="pollLinkPlaceholder" id="linkPlaceholder" data-i18n="polls.share.linkAfterStart" hidden>Link pojawi się po uruchomieniu</div>
                 <div class="pollLinkLive" id="linkLive">
                   <div class="pollQrStage">
@@ -133,8 +134,7 @@
 
               <section class="pollSec pollSubsSec">
                 <div class="pollSecHead">
-                  <h3 class="pollSecTitle" data-i18n="polls.share.recipientsTitle">Udostępniono</h3>
-                  <span class="subsSummary" id="subsSummary"></span>
+                  <h3 class="pollSecTitle" data-i18n="pollSharePanel.recipients">Odbiorcy</h3>
                 </div>
                 <div class="subsTools" id="subsTools">
                   <button class="btn sm gold" id="btnAddRecipients" type="button" data-i18n="polls.share.addRecipients">Dodaj odbiorców</button>

@@ -341,4 +341,13 @@ BEGIN
   RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
 END;
 $$;
+
+CREATE OR REPLACE FUNCTION public.polls_hub_task_decline(p_task_id uuid)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE tok uuid;
+BEGIN
+ SELECT token INTO tok FROM public.poll_tasks WHERE id=p_task_id AND recipient_user_id=auth.uid();
+ IF NOT FOUND THEN RETURN false; END IF;
+ RETURN public._poll_task_change(tok,'decline')='ok';
+END; $$;
 COMMIT;

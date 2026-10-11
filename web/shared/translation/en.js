@@ -1,4 +1,11 @@
 const en = {
+  pollSharePanel: {
+    "anonymous": "Anonymous",
+    "recipients": "Recipients",
+    "opened": "Opened",
+    "empty": "No people on this list",
+    "mailDisabled": "Email notifications are disabled"
+  },
   meta: {
     lang: "en",
     label: "English",
@@ -802,7 +809,7 @@ const en = {
     pageSubtitle: "{type} · {name}",
     tabs: {
       share: "Sharing",
-      results: "Results",
+      results: "Votes",
     },
     bar: {
       votes: ({ n }) => (Math.abs(Number(n) || 0) === 1 ? "1 vote" : `${Math.abs(Number(n) || 0)} votes`),

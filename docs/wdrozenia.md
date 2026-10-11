@@ -503,3 +503,5 @@ Stan szczegółowy:
 
 
 | 2026-10-11 | Ankiety340–342 / świeży izolowany runner zielony | 38163144729 ✓: unit413/413; SQL340/341/335, trwały budżet342 po dostarczeniu/granice/flag-off/prywatność/cleanup/owner cascade i cztery równoległe inserty dokładnie3. Front/fixture Go oraz E2E jeszcze do wykonania; migracje pozostają na branchu. | Dopięcie wspólnych sekcji/Odbiorców, kompaktowego paska nad kartami i zrzutów390/1400, potem cykl produkcyjny. |
+
+| 2026-10-11 | Ankiety / wspólny UI i guard głosów343 lokalnie | Dwie równe sekcje Anonimowo/Odbiorcy, nad kartami kompaktowe akcje/status/podsumowanie, checkboxy i wspólne kafle/refresh/kosz/zegary/mail-off; siedem zrzutów390/1400. Tasks decline i Go wynik decyzji domknięte.343 blokuje obejście odmowy przez task:voter w RPC oraz direct owner writes, NULLkey/wrongactor/oldrun/closedtask; SQL granic i wyścigi odmowa/stop/delete ✓. | Świeży izolowany runner340–343, pełne punktowe E2E z rzeczywistym mailem przed zamknięciem pkt5. Wszystkie migracje nadal wyłącznie branch. |

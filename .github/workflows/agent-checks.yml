@@ -972,6 +972,9 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_340_poll_share_contract.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_341_poll_task_decision_guards.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_342_poll_mail_budget_events.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_343_poll_task_vote_guards.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-votes-343.sql
+          bash docs/sql/test-poll-task-votes-343-concurrency.sh
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-mail-budget-342.sql
           bash docs/sql/test-poll-mail-budget-342-concurrency.sh
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-share-contract-340.sql

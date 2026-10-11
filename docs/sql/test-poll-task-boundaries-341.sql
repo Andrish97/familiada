@@ -27,6 +27,7 @@ BEGIN
  END LOOP;
  PERFORM set_config('request.jwt.claim.sub',x::text,true);
  IF public.poll_task_resolve(tok)->>'ok' IS DISTINCT FROM 'false' THEN RAISE EXCEPTION 'foreign resolve'; END IF;
+ IF public.polls_hub_task_decline(tid) THEN RAISE EXCEPTION 'foreign Tasks decline'; END IF;
  IF public.poll_task_decline(tok) IS DISTINCT FROM 'not_your_task' OR public.poll_go_task_action(tok,'decline','recipient341@example.net') THEN RAISE EXCEPTION 'foreign decline'; END IF;
  PERFORM set_config('request.jwt.claim.sub',o::text,true);
  IF public.poll_task_done(tok) IS DISTINCT FROM 'not_your_task' THEN RAISE EXCEPTION 'owner cannot vote recipient'; END IF;
@@ -65,6 +66,7 @@ BEGIN
  FOREACH mode IN ARRAY ARRAY['open','decline','done'] LOOP
   IF public._poll_task_change(tok,mode) IS DISTINCT FROM 'poll_stopped' THEN RAISE EXCEPTION 'stopped mutation %',mode; END IF;
  END LOOP;
+ IF public.polls_hub_task_decline(tid) THEN RAISE EXCEPTION 'Tasks bypass stopped guard'; END IF;
  UPDATE public.games SET status='ready' WHERE id=g;
  IF public.poll_task_decline(tok) IS DISTINCT FROM 'poll_closed' THEN RAISE EXCEPTION 'closed mutation'; END IF;
  UPDATE public.games SET status='poll_open',share_key_poll='new341' WHERE id=g;

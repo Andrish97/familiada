@@ -1,4 +1,11 @@
 const uk = {
+  pollSharePanel: {
+    "anonymous": "Анонімно",
+    "recipients": "Одержувачі",
+    "opened": "Відкрито",
+    "empty": "У списку немає людей",
+    "mailDisabled": "Сповіщення електронною поштою вимкнено"
+  },
   meta: {
     lang: "uk",
     label: "Українська",
@@ -797,7 +804,7 @@ const uk = {
     pageSubtitle: "{type} · {name}",
     tabs: {
       share: "Поширення",
-      results: "Результати",
+      results: "Голоси",
     },
     bar: {
       votes: ({ n }) => {
