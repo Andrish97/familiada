@@ -61,18 +61,21 @@ Najnowsze doprecyzowanie: odbiorca ma zachować własne odmowy do wygaśnięcia,
 w zwiniętej sekcji „Odrzucone przeze mnie”. „Cofnij odmowę” przywraca
 oczekujące; osobne Akceptuj dopiero tworzy relację/dostęp. Bez nowego
 maila/tokenu i resetowania limitów. Znajomi przy Propozycjach, bazy
-w Bazy → Udostępnione, subskrypcje konta przy Zadaniach. Subskrypcja
+w Bazy → Udostępnione, subskrypcje konta poza Zadaniami (model/lokalizacja
+jeszcze do rozstrzygnięcia). Subskrypcja
 bez konta: brak undo aż do wygaśnięcia 30 dni, potem nowe zaproszenie. Ukrywanie po
 5 dniach dotyczy tylko nadawcy. Akceptacja bazy obecnie istnieje zarówno
 w Bazach, jak i Zadaniach (ten sam rekord/RPC); poprzedni opis tylko
 Zadań był niepełny. Pełna tabela obu stron wszystkich odmów w E19 §7. Cofnięty/wygasły/usunięty zasób blokuje akcję.
-Plan E19 §7 zawiera tabelę osobnych komunikatów dla znajomego, własnej
-prośby i prośby przychodzącej. Docelowo prośba krzyżowa wskazuje
-Propozycje, bez automatycznej akceptacji. To korekta do wdrożenia;
-obecna 328 nadal autoakceptuje, dopuszcza przypomnienia po odmowie,
-a odrzucony rekord sam nie wygasa.
-DB 38140986647 ✓ (`OK 328`), Pages 38140986635 ✓; kontrola produkcyjna
-328 jeszcze niewykonana. Kolejna migracja tylko do przodu, nie edytować 328.
+Paczka Znajomi 329 zakończona produkcyjnie: DB 38144511047 ✓, Pages
+38144511009 ✓, main 38144971546 ✓ 8/8 bez retry + unit 408/408. Wdrożone
+undo → pending, osobna akceptacja, terminy 5/30, bez przypominania odmów,
+osobne komunikaty duplikatów i brak automatycznej akceptacji krzyżowej.
+Dwa rzeczywiste maile odebrane test8. Stary token po 30 dniach nie działa;
+rekord fizycznie usuwany przy nowym invite, okresowy cleanup jeszcze w grafie.
+Zrzuty zwiniętej/rozwiniętej sekcji desktop/mobile docs/img/e19-friends/refusal-*.
+Menu zamyka się przed nawigacją, dotykowe hover/active bez filter/transform;
+test tabletowy ✓, fizyczny kolorowy szum Lenovo wymaga obserwacji użytkownika.
 
 ## Najnowsza decyzja: Zadania tylko dla ankiet
 
@@ -373,3 +376,16 @@ planie E19 sekcja 2) i na końcu **E13** (instrukcja).
   → unit. Nigdy `git checkout --ours -- web`.
 - Podgląd stron bez bazy: `scripts/agent-tools/` (atrapa Supabase, README).
 - Wynik każdego kroku w „Dzienniku” w `wdrozenia.md`.
+
+## Trwająca paczka 330 i pytanie o model subskrypcji
+
+SQL 330 na main: DB 38144761004 ✓, log OK 330 13:52:06 UTC; runner
+38144647258 ✓. Front na branchu a41f447ee, unit 409/409 ✓, zrzuty
+poll-only-* w docs/img/e19-tasks. Branch punktowy Tasks/Bases uruchomiony
+po zakończeniu kontroli 329. Dopiero po zielonym promować front i kontrola main.
+
+Pytanie kluczowe o subskrypcje wysłano asynchronicznie: obecny model
+subscribers_invite odmawia kontom i kieruje do Friends, a nowe tabele
+odmów rozważają subskrypcję na konto. Czy ma być niezależna subskrypcja
+konta, czy zostaje model konto→znajomy / subskrypcja tylko bez konta?
+Nie zmieniać tego modelu bez odpowiedzi; kontynuować niezależnie Tasks/Bases.

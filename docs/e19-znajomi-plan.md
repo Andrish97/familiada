@@ -729,3 +729,9 @@ Zrzuty renderera: [domyślnie komputer](img/e19-tasks/poll-only-default-desktop.
 [Zrobione rozwinięte telefon](img/e19-tasks/poll-only-all-phone.png).
 Kontrolowany test dostaje też stare rodzaje, żeby sprawdzić, że frontend
 nie pokazuje baz/urządzeń; widoczne tylko cztery warianty ankiet.
+
+**329 — kontrola produkcyjna zakończona:** main 38144971546 ✓ 8/8 bez
+retry + unit 408/408; dwa rzeczywiste maile test8 i wszystkie opisane
+przepływy odmowy/undo/akceptacji/cofnięcia oraz tablet. DB/Pages ✓.
+To zamyka paczkę Znajomych, nie całe E19. Okna 5/30 dni sprawdzone
+w izolowanym SQL, nie przez zmianę czasu produkcji.

@@ -364,3 +364,5 @@ Stan szczegółowy:
 
 
 | 2026-10-11 | E19 / synchronizacja main przed E2E 330 | Scalono main z SQL 330/schema i poprawką testu 329. Konflikty wersji rozwiązane skryptem, dziennik zachowuje oba wpisy bez duplikatów, wersje przepisane spójnie. Unit 409/409 ✓ po scaleniu. | Kontrola 329 38144971546 trwa; dopiero po jej zakończeniu uruchomić pojedynczy branch Tasks/Bases. |
+
+| 2026-10-11 | E19 / 329 zamknięta produkcyjnie | Main 38144971546 ✓: 8/8 bez retry, unit 408/408; dwa dostarczone maile test8 (97 s i 57 s), UI zaproszenie/Go/akceptacja/usunięcie, odmowa/undo/osobna akceptacja i cofnięcie z nieważnym tokenem, kontrolowane zegary/flag-mailowa/sekcja odmów desktop/mobile, skróty i tablet. DB 38144511047 ✓, Pages 38144511009 ✓. Cztery zrzuty sekcji zwiniętej/rozwiniętej udostępnione użytkownikowi. | Paczka Znajomi + zamykanie menu gotowa. Fizycznego szumu Lenovo nie da się potwierdzić emulacją. Branch 330 Tasks/Bases uruchomiony; odmowy Baz/Subskrybentów nadal do wdrożenia. Pytanie o model subskrypcji konta pozostaje bez odpowiedzi. |
