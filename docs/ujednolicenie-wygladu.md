@@ -797,3 +797,40 @@ W Bazach sekcja kończy zakładkę Udostępnione (nad paskiem narzędzi),
 a rozwinięte odmowy mają własne przewijanie niezależne od kafelków baz.
 Utrzymać tę zasadę również w landscape; obecny wyjątek CSS z przewijaniem
 całej strony jest do poprawy w zaplanowanym przeglądzie.
+
+### E20 — stopniowe ładowanie stron (decyzja i audyt 2026-10-11)
+
+Utrzymać wspólny sposób stopniowego odsłaniania strony ze starszych ekranów:
+układ po tłumaczeniach → elementy topbara po ustaleniu dostępu → sekcje po
+pobraniu ich danych i podpięciu obsługi. Stałe miejsce sekcji zapobiega
+przesuwaniu zawartości. Korzystać ze wspólnego CSS, bez osobnych animacji
+na każdej stronie i bez sztucznych opóźnień pobierania danych.
+
+Audyt kodu (nie jest to jeszcze wdrożenie ani pomiar wizualny):
+
+| Strona | Obecne podpięcie | Zakres ujednolicenia |
+|---|---|---|
+| Konto, Bazy, edytor gry, ustawienia gry | Wspólne `skel-body`, topbar i `data-skel-step`; odsłonięcie po danych. | Zachować wzorzec i sprawdzić gotowość akcji; Konto podpina kliknięcia dopiero po `loadProfile`. |
+| Znajomi i Subskrybenci | Topbar ma wspólny wzorzec; cały `contactsHost` odsłaniany jednocześnie po odczytach. | Osobno odsłaniać gotowe sekcje/karty, zgodnie z ich zależnościami, także zakładki telefonu. |
+| Zadania | Topbar i zbiorcze odsłonięcie `tasks-scroll` po `refresh`; reszta karty nie ma własnych etapów. | Spójnie odsłonić stan, kartę i listę; nie pokazywać pustego stanu przed wynikiem odczytu. |
+| Ankiety | `skel-body` i topbar; w głównym HTML brak etapów `data-skel-step` dla kart. | Etapy dla nazwy/statusu/akcji oraz kart Udostępnianie i Głosy; karty zależne od faktycznego stanu ankiety. |
+| Gry | Wspólne odsłonięcie body/topbara; główna lista bez `data-skel-step`. | Przejrzeć także ten ekran; nie traktować częściowego podpięcia jako wzorca kompletnej gotowości. |
+
+Źródło: `shared/css/base.css` (body, topbar, etapy sekcji),
+`shared/js/core/page-init.js` (`topbar-ready`), bootstrapping poszczególnych
+stron. Stary mechanizm ma etapy wynikające z gotowości; nie ma wspólnej
+kolejki wymuszającej opóźnienie każdej karty.
+
+Przy wdrożeniu:
+- Przejrzeć całą mapę stron, a także wspólne modale i sekcje udostępniania.
+- Każda sekcja ma widoczny stan ładowania, wyniku lub błędu; błąd nie może
+  pozostawić na stałe niewidocznej zawartości. Pusty kafelek dopiero po odczycie.
+- Widoczne akcje odblokować po podpięciu obsługi i ustaleniu uprawnień;
+  dotyczy także szybkiego kliknięcia podczas startu strony.
+- Zmiana zakładki, odświeżenie listy i powrót do strony nie odtwarzają
+  całego startu ani nie powodują migania i skoków układu.
+- Sprawdzić wolną sieć, błąd odczytu, brak danych i długie listy na komputerze,
+  telefonie oraz w landscape. Po zmianach zrzuty z przykładowymi danymi;
+  przejście między etapami również udokumentować.
+
+Realizacja w UI/E20 po bieżącym grafie zależności; manual nadal ostatni.

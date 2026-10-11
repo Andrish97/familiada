@@ -49,9 +49,18 @@ Nowa decyzja:15 dedykowane usuwaniu,11 hasło,12 profil/mail i adres13.
 Test kasowania12 NIE URUCHOMIONY; przeniesiony na15.349 DB38183364423
 success.350 rozszerza skrzynkę/helpery o15, Worker restore15 weryfikuje
 automatyczny wyjątek admina. Użytkownik dodaje routing15 w Cloudflare.
-Dokończyć isolated350 → DB/main/Worker → restore15 → mail/deletion branch/main.
+350 isolated38183690135 success/unit455, DB38183762947 success/log23:19:59,
+schema a817702091, Worker38183764142 success. Routing15 potwierdzony mailem.
+Branch38183939578: restore11/12/15 success, realne maile15 w7.4/61.7s;
+kasowanie nie wywołane: klik przed async gotowością Account. Dodano
+oczekiwanie skel-step-ready i asercję odpowiedzi Edge.15 ma konto,
+logowanie i automatyczny wyjątek admina; kasowanie wymaga świeżego branch/main.
 Nie zamykać348 przed tymi kontrolami; test14 nadal bez konta.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
+
+UI/E20: dopisany audyt stopniowego ładowania (body→topbar→sekcje).
+Kontakty/Zadania odsłaniają zbiorczo; Ankiety nie mają etapów kart;
+Gry też wymagają przeglądu. Szczegóły i bramki w planie wyglądu, nie wdrożone.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego
 słownictwa, z jednolitymi nazwami i tylko informacjami potrzebnymi użytkownikowi. Kontynuować bez
