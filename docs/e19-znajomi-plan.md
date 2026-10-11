@@ -60,6 +60,16 @@ sprzed E12).
 - `/tasks/`: Do zrobienia · Zrobione (zwinięte), filtr rodzaju.
 - `/go/`: `?t=` → `/tasks/`, nowe `?b=` (baza) i `?f=` (znajomi), `?s=` tylko
   subskrybenci e-mail.
+- Cel: każdy link przeznaczony do udostępnienia innej osobie najpierw trafia
+  na `/go/`, gdzie waliduje się stan i pokazuje spójny, estetyczny komunikat
+  (aktywne, użyte, odrzucone, cofnięte/wygasłe, zamknięta ankieta lub błąd),
+  a dopiero potem przechodzi do docelowej strony. Dziś zaproszenia
+  (`t/s/f/b`) są rozwiązywane przez wspólny resolver, linki urządzeń (`d`)
+  tylko przekierowuje `go/index.html`, a anonimowy link i QR ankiety omijają
+  `/go/` — to niespójności do usunięcia. Rezygnacje mailowe (`u` lub
+  `s&action=unsub`) używają `/go/`, ale są osobnym typem komunikatu.
+  Wewnętrzne podglądy Control nie są linkami do udostępniania i mogą omijać
+  `/go/`.
 - Wspólny komponent: `share-sections.js` — sekcje jako parametr, wiersz z
   inicjałem, szarą linijką i kanałem (`friend|subscriber|mail`), akcje w
   wierszu (tekst / ikona), usuwanie ikoną; `renderShareSources` (mail/nazwa +
@@ -75,14 +85,33 @@ sprzed E12).
 4. Ankieta (`poll_share_send`).
 5. Bazy (migracja 322: `base_share_by_user` + `go?b=`), akceptacja w `/tasks/`.
 6. Urządzenia (`shareDevice.js`: znajomi + dowolny e-mail).
-7. Ujednolicenie udostępniania, Znajomych i Subskrybentów według tabel
-   w `ujednolicenie-wygladu.md`; sprawdzenie widoków telefonu i komputera.
+7. Ujednolicić hierarchię zależności zasobów, blokad, uprawnień i kaskadowego
+   usuwania w `blokady-zasobow.md`; wdrożyć macierz cyklu życia i weryfikację
+   potomków. Dokończyć UI według tabel w `ujednolicenie-wygladu.md`.
 
 Ryzyka do obsłużenia: okno 320→321 (powtórka kopii); dwa źródła tokenu `go?s=`;
 unieważnienie linku urządzenia musi być związane z konkretnym udostępnieniem i
 sesją Control; duplikaty znajomy+subskrybent; stare linki `/bases?share=` martwe
 po kroku 5 (≤ 5 dni). Zasady cofania i czyszczenia zasobów nadrzędnych opisuje
 tabela cyklu życia w sekcji 7.
+
+### Routing linków (weryfikacja 2026-10-11)
+
+| Rodzaj linku | Stan obecny (2026-10-11) | Wymaganie docelowe |
+|---|---|---|
+| Zaproszenie do zadania ankiety | `/go/?t=<token>` → `/tasks/` albo głosowanie | Pozostaje przez `/go/`; pokaż elegancko stany zaproszenia i ankiety, potem akcję/wejście. Token jest przypisany do odbiorcy i bieżącego uruchomienia. |
+| Zaproszenie subskrybenta / znajomości / bazy | `/go/?s=…`, `?f=…`, `?b=…` | Pozostaje przez wspólny `/go/` resolver; jeden spójny układ dla typów i stanów. |
+| Link anonimowego głosowania | Dziś wprost `/polls/vote/text|points/?id=…&key=…` | Zmienić URL udostępniany/QR na `/go/?p=<klucz>` (lub równoważny typ jawnie obsługiwany przez resolver); sprawdzić ważność, otwartość i typ ankiety, czytelnie pokazać stan, a dla aktywnej przejść do głosowania. Zachować anonimowość: bez tokenu odbiorcy/konta i bez ujawniania właścicielowi tożsamości. |
+| Link urządzenia | `/go/?d=display|host|buzzer|qr&id=…&key=…` → natychmiastowy redirect | Zostawić wspólny adres wejściowy, dodać walidację i czytelne stany dla poprawnego, cofniętego/wygasłego/niepoprawnego linku; dopiero aktywny kierować do urządzenia. Ujednolicić stan wizualny z pozostałymi wejściami. |
+| Rezygnacja z maili | `/go/?u=…` albo `/go/?s=…&action=unsub` | Pozostaje przez `/go/`, z własnymi czytelnymi stanami (wykonano, już wyłączone, niepoprawny link, błąd). |
+| Wewnętrzny podgląd Control | Bezpośrednio `/control/<device>/…` | Nie jest linkiem udostępniania, więc może omijać `/go/`. |
+
+Wspólny `/go/` ma prezentować właściwy, jednoznaczny komunikat dla każdego
+rodzaju linku i stanu; nie może merytorycznie mieszać „link błędny”, „dostęp
+cofnięty”, „zaproszenie odrzucone”, „ankieta zamknięta” ani chwilowego błędu
+sieci. Aktywne linki prowadzą dalej do właściwej strony, a terminalne stany
+nie wykonują automatycznego przekierowania. Stare `/poll-go/` oraz
+`/bases?share=` nie są aktywnymi aliasami; nie dodawać fallbacków.
 
 Specy: przepisanie `subscriptions.spec.js` na `friends.spec.js` /
 `subscribers.spec.js`, nowe `tasks.spec.js`, zmiany `go`, `bases`, `control2`
@@ -131,10 +160,11 @@ Odpowiedzi na pytania planu:
    bazy i urządzenia **zostają**; okno potwierdzenia o tym mówi (można je
    cofnąć osobno).
 4. Link urządzenia → **osobny klucz na udostępnienie, przypięty do sesji
-   Control/rozgrywki** (`game_sessions`). Sesja Control wygasa po godzinie
-   bezczynności; jej wygaśnięcie czyści rekordy Storage i unieważnia linki,
-   po czym Control zaczyna ponownie od podłączania urządzeń (doprecyzowanie
-   2026-10-11). Otwarty wygasły link: „Zaproszenie wygasło —
+   rozgrywki**; dodatkowo sesja Control wygasa po godzinie bezczynności.
+   Jej wygaśnięcie czyści rekordy Storage i unieważnia linki, po czym Control
+   zaczyna ponownie od podłączania urządzeń (doprecyzowanie 2026-10-11).
+   Nie zakładać, że `game_sessions` jest rejestrem sesji Control: aktualnie
+   jest to tabela telemetrii przebiegów gry. Otwarty wygasły link: „Zaproszenie wygasło —
    poproś o nowy link”; w Zadaniach i na liście urządzeń wygasłe **nie są
    widoczne**. **Link do skopiowania z panelu Control działa tak samo.**
 5. Plakietka Zadań → ankiety + bazy do zaakceptowania (urządzenia mają własną
@@ -188,7 +218,7 @@ od niej.
 |---|---|---|---|
 | Urządzenie w Control | Sekcje: „Mail lub nazwa użytkownika” (pole + Udostępnij) oraz „Znajomi, którym możesz udostępnić” (checkboxy, jeden przycisk Udostępnij). | Trzecia sekcja „Udostępnione” obejmuje odbiorców bieżącego urządzenia i sesji gry: znajomy z nazwą i etykietą „znajomy”; konto wyszukane nazwą/e-mailem z etykietą „konto”; adres bez konta z etykietą „mail”. Udostępniony znajomy znika z wyboru. Każdy wiersz ma X/kosz i widoczny cooldown. | Ponowienia maila nie ma. Aby wysłać ponownie, właściciel cofa konkretne udostępnienie i tworzy je ponownie. Dymek przy polu maila/nazwy pokazuje cooldown lub komunikat, że osobie już udostępniono urządzenie w tej sesji. Dostęp/token unieważniają się po cofnięciu. |
 | Baza | Sekcje mail/nazwa użytkownika i znajomi; w obu wybór roli Edytor/Przeglądający. Znajomi wybierani checkboxami i wspólnym przyciskiem. Odbiorca musi mieć konto. | Wspólna lista udostępnionych pokazuje kanał/tożsamość, status (oczekuje, zaakceptowano, odrzucono), rolę i cooldown. | Rola zmieniana przy wierszu; cofnięcie unieważnia dostęp. Dla odrzuconego można ponowić zaproszenie zgodnie z cooldownem; to tylko przypominający e-mail do istniejącego zaproszenia. |
-| Ankieta — Anonimowo | Osobna, równa połowa karty na komputerze. Dotychczasowy anonimowy link, poprawiony wizualnie. Każdy posiadacz linku może głosować wielokrotnie. | Stan anonimowego głosowania i udostępnianie kontowe pozostają odrębnymi trybami. | W przeglądzie klienta i migracji nie znaleziono IP-limit; przed zmianą sprawdzić Edge/Worker i potwierdzić, czy dodawać ochronę IP. |
+| Ankieta — Anonimowo | Osobna, równa połowa karty na komputerze. Link anonimowy; ten sam człowiek może oddać wiele głosów. | Stan anonimowego głosowania i udostępnianie kontowe pozostają odrębnymi trybami. Dziś przeglądarka tworzy losowy `voter_token` w `localStorage` per gra i klucz uruchomienia; DB dopuszcza jeden wpis na pytanie/token. Token można odtworzyć przez wyczyszczenie danych strony albo nowy profil. | Nie stosować IP jako tożsamości ani blokady (wspólne sieci). Wdrożyć łagodne ograniczenie częstotliwości per anonimowy token przeglądarki i przebieg ankiety, bez limitu łącznej liczby głosów. Parametr czasu ustalić w implementacji i pokazać przy odmowie „spróbuj za chwilę”. |
 | Ankieta — Udostępnij | Druga równa połowa karty; znajomi i subskrybenci jako analogiczne listy checkboxów, bez pola mailowego. | Lista odbiorców pokazuje: oczekuje/otworzył, zagłosował lub odrzucił. Każdy wpis należy do konkretnego uruchomienia ankiety. | Dla oczekujących bez głosu i odrzuconych można ponowić przypominający e-mail z cooldownem (ukryty przy wyłączonych powiadomieniach). Usunięcie udostępnienia cofa zadanie i związane z nim głosy. |
 | Znajomi | Po lewej dodawanie przez e-mail/nazwę; poniżej zaproszenia wychodzące oczekujące lub odrzucone. Po prawej znajomi oraz zaproszenia przychodzące z Akceptuj/Odrzuć. | Wiersze ze stanem; układ na komputerze: lewa/prawa kolumna. Telefon: cztery sekcje albo dwie karty. | Oczekujące i odrzucone zaproszenie wychodzące można ponowić jako mail przypominający do tego samego zaproszenia; nie tworzy nowego rekordu. X cofa oczekujące zaproszenie. Znajomego można usunąć. Usunięcie znajomości nie usuwa już przyjętych baz/urządzeń — są osobnymi uprawnieniami. Backend ma dziś friend invite/resend 5 dni, limit dwóch maili/30 dni i 30 dni po odmowie dla nowego zaproszenia. Zgodność ponowienia odrzuconego wpisu z jego stanem/tokenem wymaga dopięcia w implementacji. |
 | Subskrybenci | Lista jednostronna dodawana e-mailem; podobny układ do Znajomych, bez propozycji przychodzących i bez sekcji znajomych. | Oczekujący i aktywni subskrybenci w wierszach ze stanem. | Ponowienie oczekującego/odrzuconego zaproszenia to e-mail przypominający z cooldownem; brak przycisku przy wyłączonych powiadomieniach. Usunięcie subskrybenta kończy subskrypcję. |
@@ -236,10 +266,44 @@ nadawcę i odbiorcę oraz maksymalnie dwa przypomnienia na przebieg. Dla zmiany
 roli/cofnięcia należy zinwentaryzować backend; cofnięcie jest natychmiastowe,
 a cooldown może ograniczać tylko ponowną wysyłkę maila, nigdy utrzymać dostęp.
 
-Weryfikacja kodu 2026-10-11: w klientach głosowania i migracjach ankiet nie
-znalazłem ograniczenia anonimowych głosów po IP; zapis głosu opiera się na
-`voter_token`. Zweryfikować ścieżki Edge/Worker i potwierdzić z użytkownikiem,
-czy wprowadzać IP-limit, zanim wpiszemy go jako wymóg. Ustalić niezarejestrowany
-adres urządzenia z wyłączonymi powiadomieniami (konto zachowuje ścieżkę Zadania, adres bez konta może dostać
+Weryfikacja kodu 2026-10-11: brak IP-limit w kliencie/migracjach; anonimowe
+głosy zapisują się pod losowym `voter_token` z `localStorage`, per gra i klucz
+uruchomienia. Przed głosem klient sprawdza też lokalny znacznik „już głosował”.
+DB ma unikalność per sesja pytania i `voter_token`; klient może ominąć tę
+tożsamość przez wyczyszczenie danych. Plan łagodnego limitu częstotliwości
+opisano wyżej. Ustalić niezarejestrowany adres urządzenia z wyłączonymi
+powiadomieniami (konto zachowuje ścieżkę Zadania, adres bez konta może dostać
 link poza kolejką tylko przez jawne skopiowanie przez właściciela); ustalić
 czy cooldown cofnięcia/zmiany roli ma już politykę backendową.
+
+### Powiązanie z blokadami zasobów
+
+Hierarchia zasobów i dziedziczenie blokad są wspólnym modelem dla E19 i
+[`blokady-zasobow.md`](blokady-zasobow.md). Udostępnienie jest operacją
+potomną: nie blokuje edycji treści, ale musi atomowo sprawdzić rodzica, jego
+stan, uprawnienia właściciela i blokadę operacji destrukcyjnej. Mapa locków i
+zasady dziedziczenia są opisane w planie blokad; nie powstaje drugie, odrębne
+drzewo.
+
+### Anonimowy token przeglądarki — propozycja do implementacji
+
+1. Zostawić losowy identyfikator wyłącznie dla danej gry i uruchomienia; bez
+   IP, fingerprintingu ani wspólnego identyfikatora między grami.
+2. Rozdzielić go od `voter_token` pojedynczego głosu. Stały token przeglądarki
+   służy wyłącznie do limitu tempa; nowy token głosu pozwala oddać kolejny
+   anonimowy głos bez nadpisywania poprzedniego.
+3. Rezerwować tempo atomowo w RPC/bazie dla `(game_id, share_key_poll,
+   hash(browser_token))`. Proponowane minimum: odstęp **30 sekund między
+   pełnymi wysłaniami ankiety** z tej samej przeglądarki; bez dziennego ani
+   łącznego limitu. Odrzucenie zwraca `retry_after`, UI pokazuje krótki
+   komunikat.
+4. Rezerwację wykonać raz na kompletny formularz, nie raz na pytanie ani chunk
+   (klient może dzielić duże ankiety na kilka RPC). Odróżnić anonimowy link od
+   zaproszenia zadaniowego; zadania nie zużywają anon limitu.
+5. Rotacja `share_key_poll`, zamknięcie/przerwanie i usunięcie gry porządkują
+   liczniki razem z przebiegiem. Brak śledzenia między przebiegami lub grami.
+
+To ogranicza przypadkowe wielokrotne/dwukrotne wysłanie i prosty automat, nie
+jest dowodem unikalnej osoby ani ochroną przed celowym obejściem (token można
+skasować lub podmienić). 30 s to propozycja do wdrożenia; zachowuje
+nieograniczoną łączną liczbę głosów i nie karze osób we wspólnej sieci.

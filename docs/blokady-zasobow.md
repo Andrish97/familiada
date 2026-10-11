@@ -291,7 +291,9 @@ nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
    edytora / właściciela; czytelnik nic nie trzyma); wyłączne `base:B` →
    pełna blokada „Trwa zmiana całej bazy”; `forbidden` → „Odebrano Ci dostęp do
    tej bazy”. Lista baz: okno zmiany nazwy trzyma `base:B` wyłącznie, usunięcie
-   — na czas akcji. Udostępnianie bez blokad.
+   — na czas akcji. Udostępnianie nie trzyma długiej blokady zawartości; jego
+   RPC musi jednak atomowo sprawdzić, że baza nadal istnieje i nie jest w trakcie
+   destrukcyjnego usuwania (szczegóły w sekcji 7).
 6. **Wdrożone.** Okna zmiany nazwy na liście gier, logo i baz trzymają zasób
    wyłącznie do zamknięcia okna (zajęty → alert, okno się nie otwiera).
 7. Pola `locks` w mapie stron; test porównujący mapę z wywołaniami
@@ -301,3 +303,62 @@ nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
    `control2.spec.js` dopasowane do nowych komunikatów (bez uruchomienia);
    brakuje nowych scenariuszy bazy (eksplorator ↔ zmiana nazwy / usunięcie
    bazy) i mapy `PAGES`.
+
+## 7. Jedno drzewo zależności dla blokad, uprawnień i usuwania — E19
+
+Decyzja/doprecyzowanie 2026-10-11. Zasób, jego blokady i jego potomne dane
+mają jedną hierarchię. Kanoniczna tabela poniżej jest współdzielona z
+[`e19-znajomi-plan.md`](e19-znajomi-plan.md), sekcja 7. Każdy nowy RPC
+zmieniający potomka musi znać rodzica i sprawdzić jego stan w tej samej
+transakcji.
+
+| Korzeń / rodzic | Dzieci zasobowe | Kto trzyma blokadę dziś / docelowo | Propagacja do potomków |
+|---|---|---|---|
+| Konto właściciela | Gra | `game:G` wyłącznie w edytorze, ustawieniach, Control i stronie ankiety. | Usunięcie konta zamyka całe poddrzewo; otwarte karty dostają `gone`. |
+| Gra | Przebieg ankiety, sesje pytań, głosy, zadania/udostępnienia | Obecne `game:G` obejmuje operacje stanu i edycji ankiety. Głosujący wielu równolegle nie trzymają blokady edycji. | Open/close/abort i usunięcie gry kończą albo usuwają właściwy przebieg oraz jego potomków; odrębne zadanie może dostać `forbidden` po odebraniu uprawnienia. |
+| Gra → sesja runtime Control (dokładny rekord/klucz do zmapowania) | Stan podłączonych urządzeń, rekordy tymczasowe, udostępnienia i tokeny urządzeń | `game:G` wyłącznie w aktywnym Control; osobny TTL sesji runtime Control = 1 h bezczynności (nie mylić z heartbeat TTL blokady `edit_locks`). | Wygaśnięcie sesji kasuje powiązany Storage i unieważnia wszystkie tokeny udostępnień urządzeń z tej sesji; Control wraca do podłączania urządzeń. |
+| Konto właściciela → baza | Elementy bazy i udostępnienia/role | `base:B` współdzielone w eksploratorze; akcje zawartości blokują konkretne elementy, akcje całej bazy — `base:B` wyłącznie. | Usunięcie bazy usuwa elementy, role, zadania i linki; odebranie roli blokuje dalsze odnowienie blokady (`forbidden`). |
+| Konto | Znajomości, zaproszenia, subskrypcje | Relacje kontaktów są odrębnymi węzłami. Nie blokują automatycznie zasobu, do którego niezależne uprawnienie już nadano. | Usunięcie kontaktu usuwa zadania/wysłane zaproszenia zgodnie z typem relacji. Usunięcie konta zamyka jego relacje i zasoby. |
+
+### Jedna reguła konfliktu, zależna od rodzaju operacji
+
+| Operacja | Blokada / kontrola |
+|---|---|
+| Edycja treści lub zmiana stanu potomka | Deklaruje blokadę węzła, który zmienia, i sprawdza wymagane blokady przodków wg `edit_lock_blockers()`. Nie można zmodyfikować potomka, jeśli jego nadrzędny zasób jest w trakcie destrukcyjnej operacji. |
+| Udostępnienie, zmiana roli, cofnięcie | Nie bierze długiej blokady całej zawartości. RPC w transakcji blokuje/odczytuje rodzica tak, by współbieżne usuwanie nie zostawiło osieroconego tokenu; sprawdza właściciela, stan/uruchomienie i uprawnienia. Cofnięcie natychmiast unieważnia liść. |
+| Usunięcie albo wygaśnięcie rodzica | Zamyka tworzenie/zmiany potomków, przechodzi całe poddrzewo, unieważnia tokeny i zadania, anuluje jeszcze niewysłane maile przypisane do potomków, sprząta Storage. Usunięcie konta pozostaje nadrzędnym wyjątkiem: nie czeka na blokady. |
+| Utrata dostępu przez współpracownika | Na najbliższym heartbeat albo akcji dostaje `forbidden`; usunięty zasób daje `gone`. Żaden potomny token nie powinien nadal zapewniać dostępu. |
+
+Drzewo opisuje **zależność i propagację**, nie oznacza, że każda operacja
+potomna ma blokować całą gałąź. Baza zachowuje współpracę: `base:B` shared
+działa równolegle, a edycja elementu blokuje tylko ten element. Zmiana
+udostępnienia nie wyklucza edycji treści, ale musi być atomowo bezpieczna
+wobec usunięcia rodzica.
+
+### Plan ujednolicenia z mapą stron
+
+1. Najpierw zmapować bieżące rekordy i klucze: `game_sessions` jest tabelą
+   telemetrii przebiegów gry (status „abandoned” wyliczany po godzinie),
+   `game_session_active` wskaźnikiem aktywnego przebiegu Control 2,
+   `game_state` stanem gry, a `device_presence` krótką obecnością urządzeń.
+   Żaden z tych wpisów sam z siebie nie jest jeszcze potwierdzonym rejestrem
+   sesji Control o wymaganym TTL i sprzątaniu. Ustalić, który obiekt/klucz
+   przechowuje „zacznij od nowa” i powiązać z nim share tokeny oraz Storage.
+2. Uzupełnić grafem `PAGES.locks` rodziców i dzieci oraz macierz operacji:
+   wejście, edycja, zmiana stanu, share/grant, revoke, delete, expiry.
+3. W `edit_lock_blockers()` / rodzinie RPC `*_checked` zapewnić wspólną
+   walidację przodków, włączając gry, biegi ankiet i sesje Control, bazy i
+   elementy. Nie zastępować locków stanem HTTP/klientowym.
+4. Dodać blokadę wyścigu: równoległe tworzenie potomka i usuwanie rodzica
+   muszą kończyć się albo kompletnym potomkiem, albo czystym usunięciem — nigdy
+   osieroconym rekordem, aktywnym linkiem lub mailem do nieistniejącego zasobu.
+5. Osobno wdrożyć TTL 1 h dla sesji Control; nie zmieniać TTL `edit_locks`
+   (120 s / heartbeat) przez pomyłkę. Expiry powinno unieważnić share tokens,
+   wyczyścić session Storage i zwolnić potomne blokady.
+6. Testy macierzy: dla każdego poziomu gałęzi sprawdzić blokadę konkurencyjnej
+   operacji, `forbidden`/`gone`, cofnięcie tokenu, usunięcie zadań i maili oraz
+   cleanup Storage. Zaktualizować `PAGES.locks` i `cross-resource-locks.spec.js`.
+
+Plan nie zmienia jeszcze istniejących zachowań runtime; E19 ma wdrożyć tę
+macierz w sposób zgodny z decyzjami o współpracy w bazach i bez blokowania
+głosujących.

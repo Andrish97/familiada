@@ -1,5 +1,25 @@
 # Wznowienie pracy — 2026-10-11
 
+## Doprecyzowanie E19: hierarchia i routing linków
+
+Wspólne drzewo rodziców/potomków, wpływ na blokady oraz propagację usuwania
+opisują teraz `docs/blokady-zasobow.md` §7 i `docs/e19-znajomi-plan.md` §7.
+Wymaga ono jeszcze implementacji; nie traktować planu jako wdrożonej kaskady.
+Przegląd linków potwierdził, że tokenowe zaproszenia (`t/s/f/b`) używają
+resolvera `/go/`, linki urządzeń mają prefiks `/go/`, ale obecnie są tam tylko
+przekierowywane, a anonimowe głosowanie/QR idą wprost do `/polls/vote/...`.
+Wymaganie użytkownika: konsekwentnie wprowadzić każdy udostępniany link przez
+`/go/` i spójnie pokazywać tam wszystkie stany przed przejściem dalej; także
+anonimowy link ankiety trzeba objąć walidacją w `/go/`, zachowując anonimowość.
+Rezygnacja z maili już używa `/go/?u=` lub `/go/?s=…&action=unsub`; podglądy
+Control są wewnętrzne i mogą omijać `/go/`. Szczegóły w
+`docs/e19-znajomi-plan.md` sekcja „Routing linków”.
+
+Anonimowe głosy mają dziś losowy `voter_token` w `localStorage` per gra i
+uruchomienie, bez limitu IP; wyczyszczenie storage pozwala uzyskać nowy token.
+Łagodny limit 30 s między pełnymi wysłaniami z jednego pseudolosowego tokenu
+przeglądarki jest propozycją w planie, nie wdrożonym wymogiem.
+
 Użytkownik wznowił pracę i zezwolił uruchamiać cięższe zadania lokalnie na serwerze Codexa. Repo po scaleniu E19 kroku 3 jest na `main` (`f280941fd`); branch `codex/e19-3` ma ten sam stan. Poprawiono test SQL 321
 (commit `6a8753616`): fixture pobiera token jako administrator ze względu na
 `FORCE ROW LEVEL SECURITY`, po czym resolver jest nadal wywoływany w roli
