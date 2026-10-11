@@ -28,7 +28,7 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonVisible, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-11T11231";
+import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-11T11231";
 import { isGuestUser } from "./guest-mode.js?v=v2026-10-11T11231";
 import { showPageGuard } from "./page-overlay.js?v=v2026-10-11T11231";
 
@@ -107,6 +107,14 @@ function wireButtons(id, user, d) {
     if (!buttonVisible(id, spec, role, phone)) { hideButton(btn); continue; }
     // HTML startuje z ukrytym przyciskiem, gdy dostępność zależy od roli.
     if (btn.dataset.navHidden === "true") { delete btn.dataset.navHidden; btn.hidden = false; btn.style.display = ""; }
+    if (spec.blockedUntil) {
+      btn.disabled = buttonBlocked(spec);
+      if (btn.disabled) {
+        btn.dataset.navBlockedUntil = spec.blockedUntil;
+        continue;
+      }
+      delete btn.dataset.navBlockedUntil;
+    }
     if (spec.custom) continue;
     if (btn.tagName === "A") { btn.setAttribute("href", buttonHref(spec)); continue; }
     btn.addEventListener("click", () => { location.href = buttonHref(spec); });

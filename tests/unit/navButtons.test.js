@@ -8,7 +8,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import {
-  PAGES, ROLES, buttonHref, buttonRoles, buttonVisible, pageRoles, roleOf,
+  PAGES, NAV_DEPENDENCIES, ROLES, buttonBlocked, buttonHref, buttonRoles, buttonVisible, pageRoles, roleOf,
 } from "../../web/shared/js/core/nav-map.js";
 import { applyToDoc, mapGraph, MAPS } from "../../scripts/nav-maps.mjs";
 
@@ -172,4 +172,16 @@ test("skróty kontaktów: wspólne ikony, tylko konto i powrót do Control", () 
   }
   assert.match(readFileSync(htmlOf("games"), "utf8"), /data-i18n="games.nav.tasks" data-i18n-icon-after="bell"/);
   assert.match(readFileSync(htmlOf("control"), "utf8"), /id="btnFriends"[^>]*disabled/);
+});
+
+test("zależność Control jest w mapie: widoczny zablokowany skrót, bez aktywnej strzałki", () => {
+  const spec = PAGES.control.buttons.btnFriends;
+  assert.equal(spec.blockedUntil, "modalPagesReview");
+  assert.equal(NAV_DEPENDENCIES.modalPagesReview.completed, false);
+  assert.equal(buttonBlocked(spec), true);
+  const graph = mapGraph({role:"user",phone:false});
+  assert.ok(graph.blocked.some(edge => edge.from === "control" && edge.to === "friends" && edge.dependency === spec.blockedUntil));
+  assert.ok(!graph.buttons.some(edge => edge.from === "control" && edge.to === "friends"));
+  assert.ok(!mapGraph({role:"user",phone:true}).blocked.some(edge => edge.from === "control"));
+  assert.equal(buttonBlocked(PAGES.games.buttons.btnFriends), false);
 });

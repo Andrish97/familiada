@@ -421,3 +421,12 @@ routingów i powrotów: `nawigacja-mapa-plan.md`, „Skróty kontaktów”.
 Doprecyzowanie: przycisk „Znajomi” w Control **tymczasowo zablokowany**;
 odblokować przy wskazanym przez użytkownika etapie usuwania stron modalnych,
 nie wcześniej. Pozostałe skróty aktywne.
+
+### Zależność: przegląd stron modalnych i starych funkcjonalności
+
+Przed odblokowaniem Control → Znajomi wykonać dodatkowy przegląd istniejących
+funkcji i pełnej mapy przejść, opisany w `nawigacja-mapa-plan.md`, „E19 —
+przegląd starych przejść po usuwaniu stron modalnych”. Obejmuje mapę PAGES,
+wszystkie stare wejścia, powroty/parametry/język, zapis i blokady oraz testy
+wznowienia Control. Historyczny E7 jest wykonany; nowa zależność
+`modalPagesReview` pozostaje otwarta i nie wynika z samego statusu E7.

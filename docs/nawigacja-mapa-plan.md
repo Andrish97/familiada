@@ -577,6 +577,7 @@ Strzałka ciągła: przycisk z `PAGES[...].buttons` (nazwa = id elementu;
 ↩ „Wstecz” bez `?ret=` (rodzic z mapy). `?` (instrukcja) prowadzi z każdej
 strony z topbarem i nie jest tu rysowane. Przejścia z elementów list
 (kafelki gier, baz, logo) nie są przyciskami mapy.
+Linia bez strzałki: widoczny, zablokowany przycisk; podpis wskazuje zależność z mapy.
 
 #### Diagram A1 — Niezalogowany, komputer
 
@@ -738,9 +739,9 @@ flowchart LR
   bases -->|btnGoAlt| friends
   bases -->|btnSubscribers| subscribers
   bases -->|btnBrowse*| baseExplorer
-  control -->|btnFriends*| friends
   gameSettings -->|btnPlay*| control
   manual -->|btnLegal| privacy
+  control ---|"btnFriends*: zablokowany — przegląd przejść po usunięciu stron modalnych"| friends
   login -.->|↩| home
   editor -.->|↩| games
   polls -.->|↩| games
@@ -1056,3 +1057,25 @@ rozgrywki i jawnego zwolnienia blokad; nie wygasza sesji ani udostępnień.
 Przyciski tylko dla konta, wg `PAGES`; powrót zachowuje źródło i parametry,
 również z Control. Na telefonie skróty działają w istniejącym menu topbara;
 Control zachowuje guard. Bez starych adresów Subskrypcji ani aliasów.
+
+### E19 — przegląd starych przejść po usuwaniu stron modalnych
+
+Pierwotny E7 jest zamknięty produkcyjnie (2026-10-10); jego wykonanych prac
+nie cofamy. Aktualne doprecyzowanie użytkownika tworzy osobny przegląd
+starych funkcjonalności i przejść przed aktywacją nowych skrótów Control.
+
+Zależność w źródle mapy: `NAV_DEPENDENCIES.modalPagesReview.completed=false`,
+`PAGES.control.buttons.btnFriends.blockedUntil=modalPagesReview`.
+`initPage` wymusza blokadę, diagramy pokazują połączenie bez aktywnej strzałki.
+Odblokowanie to zamknięcie tej zależności po realizacji poniższej listy,
+nie usunięcie samego `disabled` w HTML.
+
+| Sprawdzany obszar | Wymagany wynik |
+|---|---|
+| Stare wejścia: instrukcja, prywatność, ustawienia, kontakty i miejsca po Subskrypcjach | Pełny audyt przycisków/list/maili; zwykłe strony używają PAGES/linkTo. Brak nowych iframe/trybu modalnego strony i brak aliasów adresów. Dialogi udostępniania/potwierdzenia pozostają dialogami. |
+| Mapa przekierowań i powrotów | Każdy zmieniony cel, roles/device, from/parent, parametry zasobów, ret, język i zależności aktualizowane w PAGES; diagramy regenerowane z tego samego źródła. |
+| Zachowanie starych funkcji przy wyjściu/powrocie | Autozapis i flush, zwolnienie/odzyskanie blokad, aktualne dane kontaktów, wznowienie Control z tym samym stanem i sesją; TTL/cofnięcie nadal egzekwowane. |
+| Regresje i aktywacja Control → Znajomi | Unit mapy + punktowe E2E starych i nowych przejść dla konta/gościa, telefonu/komputera; powrót do konkretnej gry bez utraty stanu. Dopiero po zielonych kontrolach zamknąć zależność i odblokować przycisk. |
+
+Ten przegląd jest częścią domknięcia E19, przed porządkami E14 i manualem E13.
+Nie uznawać go za wykonany tylko dlatego, że wcześniejszy E7 jest zamknięty.

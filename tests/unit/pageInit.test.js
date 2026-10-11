@@ -301,3 +301,13 @@ test("przyciski: odnośnik <a> dostaje href zamiast nasłuchu", async () => {
   assert.equal(els.btnLegal.attrs.href, "/privacy/?ret=%2Fmanual%2F");
   assert.equal(els.btnLegal.listeners.click, undefined);
 });
+
+test("Control: initPage wymusza blokadę z PAGES niezależnie od początkowego HTML", async () => {
+  els.btnFriends = fakeEl();
+  els.btnFriends.disabled = false;
+  loc.pathname = "/control/";
+  await initPage("control", {deps:makeDeps().deps});
+  assert.equal(els.btnFriends.disabled, true);
+  assert.equal(els.btnFriends.dataset.navBlockedUntil, "modalPagesReview");
+  assert.equal(els.btnFriends.listeners.click, undefined);
+});

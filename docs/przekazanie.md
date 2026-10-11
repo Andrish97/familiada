@@ -35,8 +35,11 @@ zachowuje guard. Manual zawsze na końcu.
 ## Tymczasowa blokada skrótu Control (2026-10-11)
 
 Przycisk „Znajomi” w Control ma być widoczny z ikoną `people`, ale zablokowany.
-Odblokować dopiero przy wskazanym przez użytkownika etapie usuwania stron
-modalnych. Pozostałe skróty kontaktów działają normalnie. Nie zdejmować tej
+Zależność jest w PAGES: `blockedUntil=modalPagesReview`, centralnie
+`completed=false`; initPage i generowane diagramy korzystają z tej samej
+blokady. Odblokować dopiero po przeglądzie E19N (stare funkcje, mapa, zapis,
+blokady i wznowienie Control), zgodnie z tabelą w nawigacja-mapa-plan.md.
+Historyczne E7 nie zamyka nowej zależności. Pozostałe skróty kontaktów działają normalnie. Nie zdejmować tej
 blokady przy kolejnych zmianach wyglądu/kontraktów; mobilny guard też pozostaje.
 
 ## Doprecyzowanie E19: hierarchia i routing linków

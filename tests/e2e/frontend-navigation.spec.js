@@ -182,6 +182,7 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
       expect(await button.evaluate(el => el.dataset.navHidden)).not.toBe("true");
       if (source === "/control/") {
         await expect(button).toBeDisabled();
+        await expect(button).toHaveAttribute("data-nav-blocked-until", "modalPagesReview");
         continue;
       }
       await clickEl(button);
