@@ -1,24 +1,24 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-11T14504";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-11T17203";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T14504";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-11T14504";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-11T14504";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T14504";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T14504";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-11T14504";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T14504";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-11T14504";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T14504";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-11T14504";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-11T14504";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T14504";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-11T14504";
-import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T14504";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T14504";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-11T14504";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T17203";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-11T17203";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-11T17203";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T17203";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T17203";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-11T17203";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T17203";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-11T17203";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T17203";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-11T17203";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-11T17203";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T17203";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-11T17203";
+import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T17203";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T17203";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-11T17203";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -328,9 +328,9 @@ async function listSharedBases() {
     ownerEmail: r.owner_email,
     created_at: r.created_at,
     updated_at: r.updated_at,
-  
+
     sharedRole: r.shared_role,
-  
+
     proposed: !!r.proposed,
     taskId: r.task_id || null,
     taskStatus: r.task_status || null,
@@ -935,7 +935,7 @@ async function renderShareModal() {
         : { p_task_id: recipient.task_id, p_role: role });
       const response = Array.isArray(result) ? result[0] : result;
       if (error || !response?.ok) { showShareMessage(t("bases.share.failed")); return false; }
-      
+
       return true;
     });
     const actions = [];
@@ -1090,7 +1090,7 @@ function render() {
         kind: "proposed",
       });
     }
-    
+
     // Udostępniona (albo dopiero proponowana) -- ta sama informacja "od kogo"
     // i z jakim dostępem; dla zaproszenia rola pochodzi z proposed_role.
     const shareRole = b.sharedRole || (b.proposed ? b.proposedRole : null);
@@ -1128,7 +1128,7 @@ function render() {
           canDeleteOwned ? t("bases.actions.remove") : t("bases.actions.leaveShared")
         )}">${icon("trash")}</button>`
       : ``;
-      
+
     const proposedBtns = b.proposed
       ? `
         <div class="tileMiniActions">
@@ -1155,7 +1155,7 @@ function render() {
         <div class="tileTags">${badgesHtml}</div>
         ${proposedBtns}
       `;
-    
+
     if (b.proposed) {
       const respond = (rpcName) => async (e) => {
         e.stopPropagation();
