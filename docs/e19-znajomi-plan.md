@@ -484,6 +484,14 @@ Zrzuty po poprawce:
 
 ### Trwała odmowa znajomości — paczka 328
 
+> **Pytanie użytkownika 2026-10-11 o sens ponawiania odrzuconych:**
+> rekomendacja: przypomnienia tylko dla oczekujących, po wyraźnej odmowie
+> bez ponownego maila we wszystkich obszarach. Decyzja jeszcze oczekuje
+> na odpowiedź; wstrzymano dalsze wdrażanie ponowień odrzuconych. Opis
+> poniżej jest kontraktem przygotowanej paczki, nie zatwierdzeniem
+> tej nowej rekomendacji. Zachowanie rekordu i świadoma zmiana decyzji
+> odbiorcy to odrębne kwestie od wysłania przypomnienia.
+
 Odrzucony wpis pozostaje z tym samym tokenem i cooldownem. Wysłane:
 Ponów (tylko mail, ukryty bez powiadomień) oraz Cofnij; odbiorca może
 świadomie przyjąć odrzucone zaproszenie, ale nie odrzuca go drugi raz.
