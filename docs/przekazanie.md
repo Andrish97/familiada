@@ -47,7 +47,9 @@ Doprecyzowanie użytkownika: odtworzyć dedykowane konta11/12, nie8.
 Worker tworzy brakujące11/12, potwierdza adres i ustawia standardowe hasło;
 nie tworzy kont8/9/10/14. Test348 przeniesiony na12; restore także w finally.
 Nowy punktowy test odtworzenia obu kont i logowania. Publikacja Workera
-oraz rzeczywista kontrola w toku; potem test usuwania branch/main.
+oraz rzeczywista kontrola zakończone: Worker38183104197 success,
+branch38183147636 success1/1. Oba konta istniały; przywrócono stan
+i potwierdzono oba logowania. Następnie test usuwania branch/main.
 Nie zamykać348 przed tymi kontrolami; test14 nadal bez konta.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
