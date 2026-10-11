@@ -1023,3 +1023,26 @@ Wykonany podgląd Baz, jeszcze przed produkcją:
 [rozwinięte telefon](img/e19-bases/refusal-expanded-390.png),
 [zwinięte komputer](img/e19-bases/refusal-collapsed-1400.png),
 [rozwinięte komputer](img/e19-bases/refusal-expanded-1400.png).
+
+
+### Pkt 5 / Ankiety — audyt kontraktów po Bazach (340)
+
+Zwykły cooldown mailowy nie blokuje utworzenia zadania przy mail-off;
+sprawdzać flagę przed limitami i rezerwacją, także w przypomnieniu.
+Odmowa zostaje związana z bieżącym kluczem uruchomienia. Po pięciu dniach
+kafelek ukryty, lecz rekord odmowy pozostaje do końca uruchomienia.
+Usunięcie udostępnienia przez właściciela zamyka token i usuwa głos,
+nie kasuje historii odmowy. Zwykłe cofnięcie pending bez odmowy pozwala
+na nowe udostępnienie po istniejącym cooldownie; nowe zadanie/nowy token.
+Wznowienie zatrzymanej ankiety zachowuje decyzje, nowe uruchomienie ma
+nowy klucz. `poll_share_panel` dostarcza flagi/zegary/stany z jednego RPC.
+
+Audyt ujawnił dalsze obejścia do zamknięcia w tej paczce przed produkcją:
+bezpośredni INSERT/UPDATE/DELETE właściciela w poll_tasks, stare
+poll_task_send oraz polls_hub_share_poll, zmiana odmowy przez
+poll_admin_delete_vote i mutacje tokenu bez kontroli rodzica/odbiorcy.
+Fixture Go muszą tworzyć zaproszenie kanonicznie. Lokalny draft340
+sprawdza mail-off/dedup/5d/refusal po usunięciu, same-run resume kontra
+new-run, reminder2/same token, role i metadata ACL. Front/izolowany
+runner oraz komplet granic jeszcze do wykonania; nie oznaczać pkt5
+jako gotowego i nie publikować draftu na podstawie samego SQL lokalnego.
