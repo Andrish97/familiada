@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zh6i4tZ1ZHmuejYNmdhRsFPbCTpafSyCOmpc7vrQLn6yVhTSM87Urx2wdiBgMwL
+\restrict DxRIbPTURgQbljh4UgD4x7mfV2fPtdfFUmk86apDl7TxUk98Oz7zGyZq5QNL7jw
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -706,7 +706,13 @@ BEGIN
    AND public._norm_email(email)=public._norm_email(t.recipient_email);
   IF registered IS NOT NULL AND uid IS DISTINCT FROM registered THEN RETURN 'not_your_task'; END IF;
  END IF;
+ IF p_action='done' AND t.status='done' AND t.done_at IS NOT NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL THEN RETURN 'ok'; END IF;
  IF t.status NOT IN ('pending','opened') OR t.declined_at IS NOT NULL OR t.cancelled_at IS NOT NULL OR t.done_at IS NOT NULL THEN RETURN 'already_used'; END IF;
+ IF p_action='done' AND NOT public._poll_task_has_all_votes(t.id) THEN RETURN 'votes_incomplete'; END IF;
+ IF p_action='decline' THEN
+  DELETE FROM public.poll_votes WHERE game_id=t.game_id AND voter_token=public.poll_task_voter_token(t.id);
+  DELETE FROM public.poll_text_entries WHERE game_id=t.game_id AND voter_token=public.poll_task_voter_token(t.id);
+ END IF;
  UPDATE public.poll_tasks SET
   status=CASE p_action WHEN 'decline' THEN 'declined' WHEN 'done' THEN 'done' ELSE 'opened' END,
   opened_at=coalesce(opened_at,now()),
@@ -715,6 +721,49 @@ BEGIN
  WHERE id=t.id;
  RETURN 'ok';
 END; $$;
+
+
+--
+-- Name: _poll_task_finish_batch("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_task_finish_batch"("p_game_id" "uuid", "p_key" "text", "p_voter_token" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE tid uuid;
+BEGIN
+ IF left(p_voter_token,5)<>'task:' THEN RETURN; END IF;
+ -- Zachowujemy SHARE rodzica → UPDATE potomka, bez upgrade rodzica do UPDATE.
+ PERFORM public._poll_assert_voter(p_game_id,p_key,p_voter_token);
+ tid:=substring(p_voter_token FROM 6)::uuid;
+ IF public._poll_task_has_all_votes(tid) THEN
+  UPDATE public.poll_tasks SET status='done',done_at=now(),opened_at=coalesce(opened_at,now()) WHERE id=tid;
+ END IF;
+END; $$;
+
+
+--
+-- Name: _poll_task_has_all_votes("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_task_has_all_votes"("p_task_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT EXISTS(SELECT 1 FROM public.questions WHERE game_id=t.game_id)
+ AND NOT EXISTS(SELECT 1 FROM public.questions q WHERE q.game_id=t.game_id AND NOT (
+  CASE t.poll_type WHEN 'poll_text' THEN EXISTS(
+   SELECT 1 FROM public.poll_text_entries v JOIN public.poll_sessions s ON s.id=v.poll_session_id
+   WHERE v.game_id=t.game_id AND v.question_id=q.id AND v.voter_token=public.poll_task_voter_token(t.id)
+    AND s.game_id=t.game_id AND s.question_id=q.id AND s.is_open)
+  WHEN 'poll_points' THEN EXISTS(
+   SELECT 1 FROM public.poll_votes v JOIN public.poll_sessions s ON s.id=v.poll_session_id
+   WHERE v.game_id=t.game_id AND v.question_id=q.id AND v.voter_token=public.poll_task_voter_token(t.id)
+    AND s.game_id=t.game_id AND s.question_id=q.id AND s.is_open)
+  ELSE false END))
+ FROM public.poll_tasks t WHERE t.id=p_task_id
+$$;
 
 
 --
@@ -10315,6 +10364,8 @@ begin
       p_voter_token  => p_voter_token
     );
   end loop;
+  perform public._poll_task_finish_batch(p_game_id,p_key,p_voter_token);
+
 end;
 $$;
 
@@ -10368,6 +10419,7 @@ begin
     coalesce((x->>'answer_ord')::int, 1)
   from jsonb_array_elements(coalesce(p_items, '[]'::jsonb)) x;
 
+  perform public._poll_task_finish_batch(p_game_id,(select share_key_poll from public.games where id=p_game_id),p_voter_token);
   return true;
 end;
 $$;
@@ -11233,6 +11285,8 @@ begin
       p_answer_norm  => it->>'answer_norm'
     );
   end loop;
+  perform public._poll_task_finish_batch(p_game_id,p_key,p_voter_token);
+
 end;
 $$;
 
@@ -11284,6 +11338,7 @@ begin
     coalesce(x->>'answer_norm','')
   from jsonb_array_elements(coalesce(p_items, '[]'::jsonb)) x;
 
+  perform public._poll_task_finish_batch(p_game_id,(select share_key_poll from public.games where id=p_game_id),p_voter_token);
   return true;
 end;
 $$;
@@ -19506,5 +19561,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zh6i4tZ1ZHmuejYNmdhRsFPbCTpafSyCOmpc7vrQLn6yVhTSM87Urx2wdiBgMwL
+\unrestrict DxRIbPTURgQbljh4UgD4x7mfV2fPtdfFUmk86apDl7TxUk98Oz7zGyZq5QNL7jw
 
