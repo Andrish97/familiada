@@ -9,8 +9,12 @@ brancha 38096917201: dźwięk własny bez pliku i dźwięk Storage ✓ (2/2).
 Następny krok zgodnie z planem: wdrożyć migrację 321 razem z frontem na `main`,
 sprawdzić log migracji, Pages i Worker, a potem wykonać punktowe testy
 kontrolne produkcji: `friends`, `subscribers`, `go`,
-`frontend-navigation`, `account-deletion` i regresję dźwięku. E19 krok 3
-pozostaje otwarty do zielonej kontroli produkcji.
+`frontend-navigation`, `account-deletion` i regresję dźwięku. E19 krok 3 pozostaje otwarty do zielonej kontroli produkcji. Produkcyjne e2e
+Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po
+retry), ale test e-maila bez konta ujawnił, że `alertModal` odrzuca opcję `body`
+i przez to nie renderuje linku do Subskrybentów. Poprawka jest przygotowana
+lokalnie w `web/shared/js/core/modal.js`; po branch e2e należy ją wdrożyć
+ponownie na Pages, po czym wznowić pozostałe testy kontrolne.
 
 ---
 
