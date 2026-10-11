@@ -111,6 +111,11 @@ on:
         type: boolean
         default: false
 
+      verify_e19_347:
+        description: 'Verify poll contact locks, partial vote cleanup and completed aggregate retention'
+        type: boolean
+        default: false
+
 permissions:
   contents: read
 
@@ -1137,4 +1142,69 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e19-346-sql-restore
+          path: /tmp/fam-restore.log
+
+  verify-e19-347:
+    if: ${{ inputs.verify_e19_347 }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Restore current contact and poll policies and ACL
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_329_friend_refusal_expiry.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_330_poll_only_tasks.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_333_subscriber_refusal_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_335_subscriber_registered_sharing.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_340_poll_share_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_341_poll_task_decision_guards.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_342_poll_mail_budget_events.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_343_poll_task_vote_guards.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_344_poll_task_atomic_completion.sql
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS friendships_initial_decision_user ON public.friendships; ALTER TABLE public.friendships DROP COLUMN IF EXISTS decision_user_id; ALTER TABLE public.friendships DROP COLUMN IF EXISTS cancelled_at'
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_346_friend_withdrawal_actor.sql
+      - name: Verify contact locks, partial cleanup and old vote contracts
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS poll_tasks_cleanup_partial_votes ON public.poll_tasks'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-poll-contact-cleanup-347.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_347_poll_contact_locks_and_partial_cleanup.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-cleanup-backfill-347.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-completion-344.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-share-contract-340.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-boundaries-341.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          bash docs/sql/test-poll-cleanup-347-ddl-concurrency.sh
+          bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
+          bash docs/sql/test-poll-task-completion-344-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-347-sql-restore
           path: /tmp/fam-restore.log

@@ -615,12 +615,19 @@ Go wskazujące zaproszenie wybiera właściwą kartę; stan karty w mapie
 nawigacji i adresie zgodnie z istniejącym modułem tabs.js. Przejście do
 komputera pokazuje obie kolumny bez utraty stanu formularza/sekcji.
 
-**Puste listy:** wspólny komponent, CSS, odstępy i sposób wyświetlania
-krótkiego komunikatu „Brak …”. Treść dopasowana do listy, bez atrap kafli,
-przypadkowych dodatkowych ikon/przycisków i różnych ramek. Rozróżniać
+**Puste listy (doprecyzowanie 2026-10-11):** wspólny komponent i CSS:
+kafelek z przerywaną obwódką i krótkim tekstem wyśrodkowanym w środku,
+jak przy braku gier. Dotyczy także komunikatów „Nie masz jeszcze …”.
+Treść dopasowana do listy; bez przypadkowych dodatkowych ikon/przycisków
+i różnych ramek. Rozróżniać
 pustą listę od ładowania, błędu oraz braku wyników filtrowania. Opcjonalne
 puste sekcje odmów nadal ukryte. Przegląd obejmuje Znajomych,
 Subskrybentów, udostępnianie Control/Baz/Ankiet i Zadania; języki PL/EN/UK.
+
+To wspólny wygląd pustych list w całym systemie, na komputerze i telefonie.
+Nie zmienia zasady ukrywania pustych sekcji „Odrzucone przeze mnie”.
+Wdrożyć w przeglądzie UI/E20 i pokazać zrzuty 390/1400 px po wykonaniu;
+sam zapis w planie nie oznacza wdrożenia.
 
 **Bazy:** nowy wygląd udostępniania jest nadal wymagany, nie kończy się
 na przeniesieniu akceptacji z Zadań. Te same shareSection/shareRow, listy

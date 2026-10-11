@@ -14,8 +14,9 @@ sprzed E12).
 > **Stan aktualny:** opis320 poniżej jest historycznym modelem wykonanego
 > etapu, nie aktualną specyfikacją odmów. Odmowy Znajomych329,
 > Subskrybentów333–336 oraz Baz337–339 i Ankiet340–344 wdrożone
-> i sprawdzone produkcyjnie. Wypisanie Znajomych346 również zastosowane
-> w SQL; branch/main interfejsu jeszcze wymagane do zamknięcia paczki.
+> i sprawdzone produkcyjnie. Wypisanie Znajomych346 także zamknięte:
+> DB38174746414/log21:04:59, branch38174928575/38175511620 oraz
+> main38175836595 ✓3/3 bez retry/unit447.
 > Aktualne zasady są w §7 i końcowych podsekcjach pkt7.
 
 - **`friendships`** (320): `id`, `requester_id`, `addressee_id` (FK `profiles`,
@@ -1218,3 +1219,41 @@ regresje wcześniejszych odmów/Sub333/335 i wyścigi ✓.
 Produkcja jeszcze niezmieniona — wymagane isolated346, SQL/log i real-mail
 E2E branch/main. Usunięcie zależnych częściowych głosów i anulowanie
 oczekujących maili pozostają następną paczką grafu, nie są rozwiązane346.
+
+### Znajomi346 — zamknięcie produkcyjne i podgląd obu stron
+
+Main38175836595 ✓3/3 bez retry, realne Pages bez podmiany kodu, trzy
+rzeczywiste maile test8; oba kierunki wypisania, własna odmowa, ukrycie
+pustej sekcji po undo, badge/pending/accept, Go/duplikaty/cancel i stary
+nieważny token. Branch38174928575 ✓3/3 oraz38175511620 ✓1/1 ze zrzutami
+shot-*.png (artefakt e2e-shots11715797067); SQL/log wcześniej potwierdzone.
+Brak zmiany CSS/frontu, więc Pages38172431095 pozostaje aktualną publikacją.
+
+Poniżej **lokalne podglądy z przykładowymi danymi**, nie zdjęcia produkcji.
+Rzeczywiste screenshoty E2E zapisane w artefakcie; pobieranie przez API403.
+Podgląd korzysta z obecnego wspólnego renderera/CSS; brak poziomego overflow
+na390/1400, odrzucający ma własną sekcję niezależnie od kierunku zaproszenia.
+
+| Wypisująca się osoba | Telefon zwinięte / rozwinięte | Komputer zwinięte / rozwinięte |
+|---|---|---|
+| Pierwotny nadawca | [zwinięte](img/e19-friends/withdraw-sender-collapsed-390.png) · [rozwinięte](img/e19-friends/withdraw-sender-expanded-390.png) | [zwinięte](img/e19-friends/withdraw-sender-collapsed-1400.png) · [rozwinięte](img/e19-friends/withdraw-sender-expanded-1400.png) |
+| Pierwotny odbiorca | [zwinięte](img/e19-friends/withdraw-recipient-collapsed-390.png) · [rozwinięte](img/e19-friends/withdraw-recipient-expanded-390.png) | [zwinięte](img/e19-friends/withdraw-recipient-collapsed-1400.png) · [rozwinięte](img/e19-friends/withdraw-recipient-expanded-1400.png) |
+
+346 zamknięte; pkt7 pozostaje otwarty. Draft347: cleanup niepełnych głosów
+oraz blokady kontaktów przed grą, isolated38175603877 ✓; jeszcze bez SQL/main.
+
+### Pkt7 — task ankiety → niepełne głosy347 (przygotowanie)
+
+Kontakty blokowane przed grą przy tworzeniu zaproszeń, pary znajomości329
+i subskrypcji333 w ustalonej kolejności; po uzyskaniu blokad ponowna
+weryfikacja aktualnej relacji. Usunięcie nieukończonego taska lub
+przestawienie go na cancelled sprząta jego tekst/punkty, również przy
+wypisaniu z kontaktów. Done i jego komplet pozostają; usunięcie konta
+może zachować ukończony anonimowy agregat bez taska. Nie kasować historycznych
+orphans na podstawie samego braku taska, bo nie wiadomo, czy był ukończony.
+
+Lokalnie wszystkie typy/ścieżki i wcześniejsze kontrakty głosów/kontaktów ✓;
+cztery deterministyczne wyścigi wysyłanie×wypisanie friend/subscriber oraz
+równoległe ukończenia344 ✓. Brancha pomocniczy codex/e19-347 służy tylko
+bramce isolated; SQL347 nie zastosowany na produkcji. Anulowanie kolejki
+mailowej i trwała proweniencja maili są kolejną krawędzią grafu.

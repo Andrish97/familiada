@@ -22,14 +22,28 @@ Kaskada345 wdrożona: FK base_share_tasks→question_bases ON DELETE CASCADE,
 DB38173636101/log OK20:48:43 UTC i rollbackowy smoke ✓; punktowy rzeczywisty
 Base mail/Go/odmowy/role main38173864796 ✓ bez retry. Wypisanie Znajomych346
 isolated38174631322 ✓ i DB38174746414 ✓/log21:04:59 UTC.
-Branch38174928575 trzy real-mail Friends w toku, oba aktory/Go/undo/badge/
-cancel/zrzuty390/1400. Main jeszcze wymagany do zamknięcia; front/CSS
-niezmienione. Draft347 tylko /tmp/local: partial-vote cleanup task delete/
-cancel i contact locks przed game; kompletne agregaty zachować. Queue/historia admina mają osobne zapisy.
+Branch38174928575 ✓3/3,38175511620 ✓1/1 (artefakt screenshotów),
+main38175836595 ✓3/3 bez retry/unit447: trzy realne maile, oba aktory,
+Go/undo/badge/cancel i ukrycie pustej sekcji.346 zamknięte produkcyjnie.
+Lokalne podglądy z przykładowymi danymi: docs/img/e19-friends/withdraw-*.
+347 na pomocniczym codex/e19-347/checkout /tmp/familiada-347-isolated:
+Finalny isolated38177985246 ✓ (unit i verify-e19-347 potwierdzone przez
+konektor GitHub przy wznowieniu); HEAD eaa40581ee. Lokalne regresje
+i wyścigi ✓; ponowny kontrakt347 obu typów ankiet też ✓. Jeszcze bez produkcji.
+Test real-mail obu typów/obu kontaktów jest przygotowany na branchu347;
+po wdrożeniu SQL uruchomić punktowo razem z dotychczasowym testem tekstu.
+Przejściowy błąd401 CLI GitHub ustąpił po ponownej próbie na prośbę
+użytkownika: gh api user i odczyt38177985246 działają. Wznowić promocję
+i obowiązkową kontrolę produkcji; nie pomijać bramek wdrożenia.
+Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego
 słownictwa, z jednolitymi nazwami i tylko informacjami potrzebnymi użytkownikowi. Kontynuować bez
 kończenia tury po paczce, screeny po wykonaniu bez czekania na ocenę.
+
+Puste listy UI/E20: wspólny kafelek z przerywaną obwódką i tekstem
+na środku, jak brak gier, także dla „Nie masz jeszcze …”. Dopisane do
+planu wyglądu; nie wdrożone. Puste sekcje własnych odmów nadal ukryte.
 
 
 ## Najnowszy stan: E19 krok 7 w realizacji
