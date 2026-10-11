@@ -40,6 +40,13 @@ sprawdzane w bazie (nie w przeglądarce).
 - Ponowienie wysyła wyłącznie mail przypominający do istniejącego
   zaproszenia/udostępnienia. Nie tworzy nowego uprawnienia, rekordu ani tokenu.
   Przycisk ponowienia ukrywamy, jeśli odbiorca wyłączył powiadomienia.
+- **Aktualizacja 2026-10-11:** po wyraźnej odmowie nie wysyłamy
+  przypomnień (Znajomi/Subskrybenci/Bazy/Ankiety), także przez bezpośrednie
+  RPC. Ponów dotyczy wyłącznie oczekujących bez odmowy. Zniknięcie odmowy
+  z listy nie resetuje limitów przed końcem karencji. Odmowy znajomości,
+  zaproszenia do subskrypcji i bazy wygasają po czasie (założenie 30 dni);
+  dopiero jawne nowe dodanie może wysłać nowy mail. Wygaśnięcie nie
+  wysyła maila i nie znosi wypisania/globalnej flagi. Szczegóły w E19 §7.
 - Cooldown ogranicza wysłanie maila. UI pokazuje pozostały czas, backend
   autorytatywnie rozstrzyga możliwość wysłania; cooldown nie opóźnia
   przyznania ani cofnięcia dostępu.

@@ -149,14 +149,14 @@ pula test1–test8; test9/test10 zarezerwowane.
    paska; oczekujące/odrzucone obok formularza, znajomi i propozycje po
    prawej (Subskrybenci bez propozycji); dwie karty na telefonie.
 3. Uzupełnić kontrakty RPC o odrzucone wpisy, flagę dostępności maila
-   i dane do odliczania. Obecnie `friends_resend` przyjmuje tylko pending,
-   `friends_reject` usuwa rekord zamiast zachować declined,
-   a `subscribers_list` nie zwraca declined. Ponowienie przypomina mailem,
-   nie tworzy nowego dostępu ani nie resetuje decyzji odbiorcy.
+   i dane do odliczania. Paczka 328 zachowuje odmowę znajomości, ale pozwala
+   przypomnieć odrzucone — nowa decyzja wymaga zablokowania tego w RPC i UI.
+   `subscribers_list` nadal nie zwraca declined. Ukrywanie po czasie nie
+   kasuje decyzji ani limitów; szczegóły w §7 „Odmowy i duplikaty”.
 4. Bazy: mail/nazwa i lista znajomych z checkboxami oraz rolą w obu sekcjach;
    jedna lista udostępnionych, role i kompaktowe akcje po prawej.
 5. Ankiety: wspólne sekcje odbiorców, stan głosu/odmowy i odliczanie;
-   przypomnienie dla niegłosujących/odrzuconych. Zachować dwie karty oraz
+   przypomnienie tylko dla niegłosujących, którzy nie odrzucili. Zachować dwie karty oraz
    przejścia Głosów, globalne akcje umieścić nad nimi zgodnie z planem.
 6. Ujednolicić treści i wygląd wszystkich maili (zaproszenia, przypomnienia
    i uwierzytelnianie), PL/EN/UK; zakres w `maile-granice.md`.
@@ -255,17 +255,71 @@ izolowany job SQL `38126186374` są zielone; log migracji `38126386184`
 potwierdza zastosowanie, a rollbackowy smoke test produkcyjny `38126593098`
 przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
 
+### Odmowy i duplikaty — aktualizacja 2026-10-11
+
+- **Potwierdzone:** Znajomi/Subskrybenci/Bazy/Ankiety — po wyraźnej odmowie
+  nie wysyłamy przypomnień. Ukryty przycisk i odmowa RPC; samo ukrycie
+  przycisku nie wystarcza. Oczekujące bez decyzji zachowują Ponów z limitami.
+- **Najnowsza decyzja:** odmowa zaproszenia do znajomości, subskrypcji lub
+  bazy nie może trwale uniemożliwiać ponownego dodania osoby. Odrzucone
+  wpisy znikają z list, a następnie sama odmowa i stary token tracą ważność.
+  Działa to jako niejawny cooldown, bez licznika przy odrzuconym kafelku.
+- Przyjęty parametr realizacji: **30 dni od pierwszej odmowy** do jej
+  wygaśnięcia (zgodnie z dotychczasową karencją znajomości/subskrypcji).
+  Użytkownik nie wskazał liczby dni; to założenie realizacji. Dla znikania
+  kafelka z list pozostaje **propozycja 5 dni**, nie ustalony osobno wymóg.
+  Ponowne kliknięcie Odrzuć nie przesuwa terminu. Ukrycie przed upływem
+  30 dni nie pozwala obejść blokady przez mail/nazwę, cofnięcie lub usunięcie.
+- Wygaśnięcie nie uruchamia żadnego maila, nie akceptuje zaproszenia ani
+  nie nadaje dostępu. Dopiero jawne dodanie po karencji tworzy nowe pending
+  z nowym tokenem i wymaga nowej decyzji odbiorcy. Stary token pozostaje
+  nieważny i nie może przyjąć nowego zaproszenia.
+- Zmiana decyzji przed wygaśnięciem: odbiorca musi mieć jawną akcję
+  przyjęcia starego zaproszenia przez jego link lub właściwy ekran.
+  Akcja jest świadoma, autoryzowana i nie wysyła przypominającego maila.
+  Dziś nie wszystkie funkcje to umożliwiają — trzeba je ujednolicić.
+  Po wygaśnięciu/cofnięciu starego wpisu potrzebne jest nowe zaproszenie.
+- Ankiety nie potrzebują takiej ścieżki zmiany decyzji; zaproszenie pozostaje
+  przypisane do uruchomienia. Odmowa nie pozwala przypominać w tym przebiegu.
+- **Odrzucenie zaproszenia to inny stan niż wypisanie się z aktywnej
+  subskrypcji lub globalne wyłączenie powiadomień.** Automatyczne wygaśnięcie
+  odmowy nie znosi tych ustawień ani blokad rezygnacji. Jeśli baza dziś
+  przechowuje oba przypadki jako declined, rozróżnić przyczynę przed migracją.
+- Wpisanie e-maila lub nazwy tej samej osoby rozstrzygamy po identyfikatorze
+  konta, nie po tekście pola; duplikat nie tworzy rekordu ani maila.
+
+| Stan relacji | Docelowe zachowanie dodawania |
+|---|---|
+| Ta osoba już jest znajomym | „Ta osoba jest już Twoim znajomym.” |
+| Ta osoba wysłała nam oczekującą prośbę | „Masz oczekującą prośbę od tej osoby. Sprawdź Propozycje.”; wskazać właściwy wpis, bez automatycznej akceptacji. |
+| My już wysłaliśmy oczekującą prośbę | „Zaproszenie do tej osoby już oczekuje na odpowiedź.”; wskazać wpis, bez ponownej wysyłki. |
+| My odrzuciliśmy jej prośbę, odmowa jeszcze ważna | Możliwość jawnego przyjęcia przez odbiorcę; bez automatycznego maila. |
+| Ta osoba odrzuciła naszą prośbę, odmowa jeszcze ważna | Informacja o odmowie, bez Ponów i bez nowego zaproszenia, również po ukryciu kafelka. |
+| Odmowa wygasła | Można jawnie utworzyć nowe zaproszenie z nowym tokenem, z normalną kontrolą flagi mailowej i limitów. |
+
+**Obecna implementacja 328:** prośba krzyżowa automatycznie przyjmuje
+istniejącą prośbę (pending lub declined); duplikat aktywnego znajomego
+zwraca `already`, a UI pokazuje ogólne „Ta osoba jest już na liście”.
+Odrzucony rekord sam nie wygasa i blokuje nowe dodanie przez `already`.
+Powyższy kontrakt jest korektą do wdrożenia, nie opisem działającej wersji.
+
+Pokrycie korekty: oba kierunki, pending/active/declined, e-mail/nazwa,
+zmiana decyzji przed wygaśnięciem, ukryta odmowa, granica 30 dni,
+nowe zaproszenie po wygaśnięciu, nieważny stary token, brak automatycznej
+kolejki, wyłączone maile, bezpośredni RPC, wyścigi nowych zaproszeń,
+cofnięcie/usunięcie konta/rodzica, osobno rezygnacja z subskrypcji.
+
 ### Zasady per funkcja
 
 | Obszar | Kto może być odbiorcą i jak dodać | Lista udostępnionych / stany | Ponowienie, cooldown i cofnięcie |
 |---|---|---|---|
 | Urządzenie w Control | Sekcje: „Mail lub nazwa użytkownika” (pole + Udostępnij) oraz „Znajomi, którym możesz udostępnić” (checkboxy, jeden przycisk Udostępnij). | Trzecia sekcja „Udostępnione” obejmuje odbiorców bieżącego urządzenia i sesji gry: znajomy z nazwą i etykietą „znajomy”; konto wyszukane nazwą/e-mailem z etykietą „konto”; adres bez konta z etykietą „mail”. Udostępniony znajomy znika z wyboru. Każdy wiersz ma X/kosz i widoczny cooldown. | Ponowienia maila nie ma. Aby wysłać ponownie, właściciel cofa konkretne udostępnienie i tworzy je ponownie. Dymek przy polu maila/nazwy pokazuje cooldown lub komunikat, że osobie już udostępniono urządzenie w tej sesji. Dostęp/token unieważniają się po cofnięciu. |
-| Baza | Sekcje mail/nazwa użytkownika i znajomi; w obu wybór roli Edytor/Przeglądający. Znajomi wybierani checkboxami i wspólnym przyciskiem. Odbiorca musi mieć konto. | Wspólna lista udostępnionych pokazuje kanał/tożsamość, status (oczekuje, zaakceptowano, odrzucono), rolę i cooldown. | Rola zmieniana przy wierszu; cofnięcie unieważnia dostęp. Dla odrzuconego można ponowić zaproszenie zgodnie z cooldownem; to tylko przypominający e-mail do istniejącego zaproszenia. |
+| Baza | Sekcje mail/nazwa użytkownika i znajomi; w obu wybór roli Edytor/Przeglądający. Znajomi wybierani checkboxami i wspólnym przyciskiem. Odbiorca musi mieć konto. | Wspólna lista udostępnionych pokazuje kanał/tożsamość, status (oczekuje, zaakceptowano, odrzucono), rolę i cooldown. | Rola zmieniana przy wierszu; cofnięcie unieważnia dostęp. Przypomnienie tylko dla oczekujących, z cooldownem i flagą mailową. Po odmowie brak Ponów; wpis znika z listy po okresie widoczności (§7 „Odmowy i duplikaty”). |
 | Ankieta — karta „Głosy” (starsza nazwa planu: „Wyniki”) | Karta zachowuje wcześniej rozpisane zachowanie zależne od stanu: wyniki na żywo, surowe wyniki po zatrzymaniu, płynne przejście animacją do trybu podliczania i widok końcowy. | Na żywo odświeżają się liczby i paski bez przebudowy/przeskakiwania listy. Pełny opis przejść, stanów i animacji pozostaje w `ankiety-refaktor.md` §1 i §6.1–6.2. | Bez zmian w ramach poprawy wyglądu globalnego paska akcji. |
-| Ankieta — karta „Udostępnianie” | Karta ma dwie sekcje: „Anonimowo” (link/QR dla każdego, kto go ma) oraz „Odbiorcy” (znajomi i subskrybenci, wybierani checkboxami, bez pola mailowego). | W sekcji Odbiorcy lista pokazuje: oczekuje/otworzył, zagłosował lub odrzucił. Każde udostępnienie jest przypisane do konkretnego uruchomienia ankiety. | Przyciski wewnątrz karty pozostają bez zmian. Dla oczekujących bez głosu i odrzuconych można ponowić przypominający e-mail z cooldownem (ukryty przy wyłączonych powiadomieniach). Usunięcie udostępnienia cofa zadanie i związane z nim głosy. |
+| Ankieta — karta „Udostępnianie” | Karta ma dwie sekcje: „Anonimowo” (link/QR dla każdego, kto go ma) oraz „Odbiorcy” (znajomi i subskrybenci, wybierani checkboxami, bez pola mailowego). | W sekcji Odbiorcy lista pokazuje: oczekuje/otworzył, zagłosował lub odrzucił. Każde udostępnienie jest przypisane do konkretnego uruchomienia ankiety. | Przyciski wewnątrz karty pozostają bez zmian. Dla oczekujących bez głosu, którzy nie odrzucili, można ponowić przypominający e-mail z cooldownem (ukryty przy wyłączonych powiadomieniach). Usunięcie udostępnienia cofa zadanie i związane z nim głosy. |
 | Ankieta — globalny pasek akcji | Akcje nad kartami zależą od stanu ankiety, zgodnie z `ankiety-refaktor.md` §1 i §6.1–6.2 (np. Uruchom, Zamknij, Przerwij, Podlicz głosy, Uruchom ponownie). | Zachować istniejące stany i przejścia karty Głosy; poprawa jest wizualna. | Użyć rozmiaru `.btn.sm` jak na stronie Gier; zachować główną akcję `.btn.gold` i „Przerwij” jako stonowany czerwony obrys `.pollAbort`. Na mobile przyciski mają być kompaktowe. Nie dotyczy przycisków wewnątrz kart, nawigacji ani zamykania dialogów/okien. |
-| Znajomi | Po lewej dodawanie przez e-mail/nazwę; poniżej zaproszenia wychodzące oczekujące lub odrzucone. Po prawej znajomi oraz zaproszenia przychodzące z Akceptuj/Odrzuć. Bez wyszukiwarki list i bez dolnego paska narzędziowego. | Wiersze ze stanem; układ na komputerze: lewa/prawa kolumna. Telefon: cztery sekcje albo dwie karty, w układzie zgodnym z planem Znajomych. | Oczekujące i odrzucone zaproszenie wychodzące można ponowić jako mail przypominający do tego samego zaproszenia; nie tworzy nowego rekordu. X cofa oczekujące zaproszenie. Znajomego można usunąć. Usunięcie znajomości nie usuwa już przyjętych baz/urządzeń — są osobnymi uprawnieniami. Backend ma dziś friend invite/resend 5 dni, limit dwóch maili/30 dni i 30 dni po odmowie dla nowego zaproszenia. Zgodność ponowienia odrzuconego wpisu z jego stanem/tokenem wymaga dopięcia w implementacji. |
-| Subskrybenci | Lista jednostronna dodawana e-mailem; układ bliski Znajomym, lecz bez propozycji przychodzących i bez sekcji znajomych. Bez wyszukiwarki list i bez dolnego paska narzędziowego. | Oczekujący i aktywni subskrybenci w wierszach ze stanem; wspólny CSS sekcji z odpowiednimi sekcjami Znajomych. | Ponowienie oczekującego/odrzuconego zaproszenia to e-mail przypominający z cooldownem; brak przycisku przy wyłączonych powiadomieniach. Usunięcie subskrybenta kończy subskrypcję. |
+| Znajomi | Po lewej dodawanie przez e-mail/nazwę; poniżej zaproszenia wychodzące oczekujące lub odrzucone. Po prawej znajomi oraz zaproszenia przychodzące z Akceptuj/Odrzuć. Bez wyszukiwarki list i bez dolnego paska narzędziowego. | Wiersze ze stanem; układ na komputerze: lewa/prawa kolumna. Telefon: cztery sekcje albo dwie karty, w układzie zgodnym z planem Znajomych. | Tylko oczekujące zaproszenie wychodzące można ponowić jako mail przypominający do tego samego zaproszenia; nie tworzy nowego rekordu. X cofa oczekujące zaproszenie. Znajomego można usunąć. Usunięcie znajomości nie usuwa już przyjętych baz/urządzeń — są osobnymi uprawnieniami. Backend ma dziś friend invite/resend 5 dni, limit dwóch maili/30 dni i 30 dni po odmowie dla nowego zaproszenia. Po odmowie bez ponowienia; widoczność i zmiana decyzji zgodnie z §7 „Odmowy i duplikaty”. |
+| Subskrybenci | Lista jednostronna dodawana e-mailem; układ bliski Znajomym, lecz bez propozycji przychodzących i bez sekcji znajomych. Bez wyszukiwarki list i bez dolnego paska narzędziowego. | Oczekujący i aktywni subskrybenci w wierszach ze stanem; wspólny CSS sekcji z odpowiednimi sekcjami Znajomych. | Ponowienie wyłącznie oczekującego zaproszenia to e-mail przypominający z cooldownem; brak przycisku przy wyłączonych powiadomieniach. Usunięcie subskrybenta kończy subskrypcję. |
 
 ### Sesje, cofanie i czyszczenie zależności
 
@@ -484,13 +538,13 @@ Zrzuty po poprawce:
 
 ### Trwała odmowa znajomości — paczka 328
 
-> **Pytanie użytkownika 2026-10-11 o sens ponawiania odrzuconych:**
-> rekomendacja: przypomnienia tylko dla oczekujących, po wyraźnej odmowie
-> bez ponownego maila we wszystkich obszarach. Decyzja jeszcze oczekuje
-> na odpowiedź; wstrzymano dalsze wdrażanie ponowień odrzuconych. Opis
-> poniżej jest kontraktem przygotowanej paczki, nie zatwierdzeniem
-> tej nowej rekomendacji. Zachowanie rekordu i świadoma zmiana decyzji
-> odbiorcy to odrębne kwestie od wysłania przypomnienia.
+> **Aktualizacja decyzji 2026-10-11:** użytkownik potwierdził brak
+> przypomnień po odmowie i znikanie odrzuconych z list po czasie.
+> Poniżej pozostaje historyczny opis wdrożonej paczki 328; ponawianie
+> odrzuconych i automatyczna akceptacja prośby krzyżowej wymagają korekty
+> w kolejnej migracji. Aktualny kontrakt jest w §7 „Odmowy i duplikaty”.
+> DB 38140986647 ✓ (`OK 328` 12:55:03 UTC), Pages 38140986635 ✓;
+> kontrola produkcyjna tej paczki nie została wykonana przed zmianą decyzji.
 
 Odrzucony wpis pozostaje z tym samym tokenem i cooldownem. Wysłane:
 Ponów (tylko mail, ukryty bez powiadomień) oraz Cofnij; odbiorca może

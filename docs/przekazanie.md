@@ -19,7 +19,8 @@ branch 38135140865 ✓, produkcja 38135404218 ✓ (4/4 + unit 404/404),
 mail test14 odebrany produkcyjnie po 65 s. **Test14 nadal bez konta.**
 
 Branch `codex/e19-3` kontynuuje krok 7. Następne: zachowanie odmów w
-kontraktach kontaktów (friends_reject obecnie kasuje rekord) i wspólne
+kontraktach kontaktów (328 zachowuje rekord odmowy; nowa decyzja wyłącza
+ponowienia odrzuconych i wymaga korekty RPC/UI) i wspólne
 sekcje Baz/Ankiet. Metadata flagi mailowej i cooldownów (327), liczniki
 oraz ikony/skróty kontaktów wdrożone: kontrola 38138576962 ✓. Lista w
 `e19-znajomi-plan.md` §5. Przegląd treści i wyglądu wszystkich maili jest
@@ -46,6 +47,23 @@ na main spec używa opublikowanych plików Pages, nie podmiany kodu.
 Sześć zrzutów w `docs/img/e19-tasks/`, tabela stanów i linki w planie E19.
 Ankiety z głosem: Zrobione 5 dni; bazy po decyzji znikają; urządzenia
 podłączone pozostają do cofnięcia/wygaśnięcia. Nie zmieniano tych zasad.
+
+## Odmowy i duplikaty — najnowsze doprecyzowanie
+
+Użytkownik potwierdził: brak przypomnień po odmowie. Odrzucone znikają
+z list i sama odmowa wygasa po czasie, umożliwiając nowe dodanie osoby
+(Znajomi/Subskrybenci/Bazy). Założenie realizacji: 30 dni od odmowy;
+znikanie z list wcześniej: propozycja 5 dni. Stary token unieważniony,
+nowe zaproszenie wymaga ponownej akceptacji; bez automatycznej wysyłki.
+Nie mylić odmowy zaproszenia z wypisaniem się z aktywnej subskrypcji.
+Przed wygaśnięciem odbiorca powinien móc świadomie przyjąć przez link/ekran.
+Plan E19 §7 zawiera tabelę osobnych komunikatów dla znajomego, własnej
+prośby i prośby przychodzącej. Docelowo prośba krzyżowa wskazuje
+Propozycje, bez automatycznej akceptacji. To korekta do wdrożenia;
+obecna 328 nadal autoakceptuje, dopuszcza przypomnienia po odmowie,
+a odrzucony rekord sam nie wygasa.
+DB 38140986647 ✓ (`OK 328`), Pages 38140986635 ✓; kontrola produkcyjna
+328 jeszcze niewykonana. Kolejna migracja tylko do przodu, nie edytować 328.
 
 ## E20 — kompaktowe informacje na telefonie
 
