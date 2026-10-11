@@ -29,11 +29,11 @@ na `main`, Pages 38102630814 ✓. Produkcyjne E2E 38102671588: flow znajomego,
 link `/go/?b=` i akceptacja w `/tasks/` ✓; test maila do test8 nie dostał
 wiadomości także po retry. Diagnostyka obu wpisów: `status=pending`,
 `attempts=0`, `last_attempt_at=null`, `last_error=null` — wygląda na nieuruchomiony
-run 38103011217 potwierdził aktywny cron `*/2 * * * *` i dostarczenie
-poprzedniego maila przez ZeptoMail. Przyczyną był timeout testu 90 s, krótszy
-niż okres crona; podniesiono oczekiwanie do 150 s (limit testu 180 s). Krok 5
-pozostaje otwarty do zielonej produkcyjnej kontroli maila. Przed krokiem 6
-skoordynować obszar Control z drugą sesją.
+run 38103011217 potwierdził aktywny cron `*/2 * * * *`; test maila oczekiwał
+90 s, czyli mniej niż okres crona. Po zwiększeniu limitu oczekiwania do 150 s
+produkcyjne E2E `bases.spec.js` run 38103300067 przeszło 2/2, unit 401/401;
+mail dotarł po 33 s. Krok 5 zamknięty. Przed krokiem 6 skoordynować obszar
+Control z drugą sesją.
 
 Produkcyjne e2e
 Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po
