@@ -1,5 +1,17 @@
 # Wznowienie pracy — 2026-10-11
 
+## Najnowszy stan: Control na main, krok 7 następny
+
+E19 kroki 1–6 zamknięte produkcyjnie. Poprawiony wygląd Urządzeń i modal
+Control: `44063a604`, Pages 38133157139 ✓, kontrola produkcji 38133215588 ✓
+(2/2 + unit 401/401); zrzuty w artefakcie `e2e-shots`. Branch
+`codex/e19-3` kontynuuje pracę nad krokiem 7 — audyt i lista dalszych prac
+w `e19-znajomi-plan.md` §5. Starsze informacje o pauzie/drugiej sesji
+i otwartym kroku 6 niżej są historyczne. Użytkownik wznowił pracę,
+zezwolił na cięższe lokalne zadania i push na main po wymaganych kontrolach.
+Zmiany wizualne dokumentować zrzutami po wykonaniu, bez czekania na decyzję;
+Control na telefonie zachowuje guard. Manual zawsze na końcu.
+
 ## Doprecyzowanie E19: hierarchia i routing linków
 
 Wspólne drzewo rodziców/potomków, wpływ na blokady oraz propagację usuwania

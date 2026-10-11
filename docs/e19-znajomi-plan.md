@@ -118,7 +118,7 @@ Specy: przepisanie `subscriptions.spec.js` na `friends.spec.js` /
 (urządzenia), `frontend-navigation`, `account-deletion`. Konta tylko z puli —
 pula test1–test8; test9/test10 zarezerwowane.
 
-## 5. Stan kroków (2026-10-10)
+## 5. Stan kroków (aktualizacja 2026-10-11)
 
 | Krok | Stan |
 |---|---|
@@ -127,8 +127,31 @@ pula test1–test8; test9/test10 zarezerwowane.
 | 3. `/friends/`, `/subscribers/` + migracja 321 (przełączenie), usunięcie `/subscriptions/` | **zrobione** — migracja 321, front, Pages i Worker wdrożone; runner SQL/unit 38096872246 ✓; kontrole produkcji: friends 38099344264 (2/2), subscribers 38099196468 (2/2), go 38099459575 (2/2), frontend-navigation 38099534030 (11/11), account-deletion 38099771245 (1/1), regresja dźwięku 38099849073 (2/2); unit 401/401 w każdym przebiegu |
 | 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | **zrobione** — branch po synchronizacji 38100967351 ✓; Pages 38101052370 ✓; produkcja 38101089865 ✓, unit 401/401. Test zaliczył retry: pierwsza próba nie doczekała maila, który nadal był w kolejce; retry zakończył się pomyślnie |
 | 5. Bazy: jedno okno (udostępnieni + dodawanie), `go?b=`, akceptacja w `/tasks/` | **zrobione** — migracja 322 i front na produkcji; runner SQL 38101686798 ✓; Pages 38102630814 ✓; branch E2E 38102541764 ✓; produkcyjne E2E 38103300067 ✓, 2/2, unit 401/401. Cron `*/2` aktywny; po wydłużeniu timeoutu mail test8 dotarł po 33 s; oba scenariusze bazy zaliczone |
-| 6. Urządzenia: jedno okno, odbiorca bez konta, token unieważniany per osoba i sesję Control | **zrobione — backend i TTL sprawdzone produkcyjnie (38130087825, 38130327633, 38130590463); dopracowany modal i przywrócony styl Urządzeń na main `44063a604`, Pages 38133157139 ✓, branch 38132982841: 2/2 + unit 401/401; kontrola produkcyjna nowego UI w toku** |
-| 7. Ujednolicenie Znajomych, Subskrybentów i udostępnień wg tabeli zachowań | do zrobienia — wymagania doprecyzowane 2026-10-11 |
+| 6. Urządzenia: jedno okno, odbiorca bez konta, token unieważniany per osoba i sesję Control | **zrobione — backend i TTL sprawdzone produkcyjnie (38130087825, 38130327633, 38130590463); dopracowany modal i przywrócony styl Urządzeń na main `44063a604`, Pages 38133157139 ✓, branch 38132982841: 2/2 + unit 401/401; kontrola produkcyjna nowego UI 38133215588 ✓: 2/2 + unit 401/401** |
+| 7. Ujednolicenie Znajomych, Subskrybentów i udostępnień wg tabeli zachowań | **w toku — audyt**; wzorzec Control gotowy produkcyjnie, pozostałe strony i kontrakty RPC do wdrożenia |
+
+### Dalsza realizacja kroku 7 po zamknięciu Control
+
+1. Przenieść wspólne reguły sekcji/list/checkboxów z modala Control do
+   wspólnego komponentu i CSS. Zachować gotowy wygląd Control jako wzorzec.
+2. Znajomi/Subskrybenci: formularz w karcie, bez wyszukiwania i dolnego
+   paska; oczekujące/odrzucone obok formularza, znajomi i propozycje po
+   prawej (Subskrybenci bez propozycji); dwie karty na telefonie.
+3. Uzupełnić kontrakty RPC o odrzucone wpisy, flagę dostępności maila
+   i dane do odliczania. Obecnie `friends_resend` przyjmuje tylko pending,
+   a `subscribers_list` nie zwraca declined. Ponowienie przypomina mailem,
+   nie tworzy nowego dostępu ani nie resetuje decyzji odbiorcy.
+4. Bazy: mail/nazwa i lista znajomych z checkboxami oraz rolą w obu sekcjach;
+   jedna lista udostępnionych, role i kompaktowe akcje po prawej.
+5. Ankiety: wspólne sekcje odbiorców, stan głosu/odmowy i odliczanie;
+   przypomnienie dla niegłosujących/odrzuconych. Zachować dwie karty oraz
+   przejścia Głosów, globalne akcje umieścić nad nimi zgodnie z planem.
+6. Domknąć graf zależności, blokady, kaskady, routing `/go/` i łagodny
+   limit anonimowych głosów. Manual aktualizować dopiero na końcu.
+
+Każda paczka wyglądu kończy się zrzutami z przykładowymi danymi; nie czekać
+na osobną akceptację wyglądu przed dalszą pracą. Wykonane etapy powyżej
+pozostają zamknięte; ta lista opisuje nowe doprecyzowania.
 
 ## 6. Decyzje użytkownika (do 2026-10-10)
 
