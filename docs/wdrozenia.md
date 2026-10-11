@@ -381,3 +381,5 @@ Stan szczegółowy:
 | 2026-10-11 | Kontakty / wypustki na telefonie | Użytkownik potwierdził: dwie karty oznaczają dwie zakładki z wypustkami, jak w Grach, z plakietką na wypustce. Dopisano wprost do E19/UI. | Zakres do wdrożenia; bieżąca paczka uproszczenia Zadań kontynuowana. |
 
 | 2026-10-11 | Zadania / uproszczenie branch zielony | 38147051449 ✓: 2/2, unit 410/410. Cztery warianty ankiet, brak wyszukiwarki/dolnego paska/etykiet typu, ikony/nadawca/akcje, zwijanie, odstępy, pusty stan i brak overflow 1400/390. Zrzuty simple-*. | Promocja Pages i te same dwa testy na main. |
+
+| 2026-10-11 | Zadania / uproszczenie opublikowane | Promocja b5adc26be; Pages 38147149505 ✓. Punktowa kontrola main 38147198385 na rzeczywistych plikach Pages, dwa widoki i konto 2. Scalono aktualizację wersji CI b590bc8ef bez konfliktów. | Wynik kontroli i unit po synchronizacji przed zamknięciem. |

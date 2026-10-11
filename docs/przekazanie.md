@@ -414,3 +414,7 @@ poll_type do routingu głosowania. Unit 410/410; nowe zrzuty simple-*.
 Branch UI 38147051449 w toku (dwa kontrolowane widoki 1400/390).
 Doprecyzowanie kontaktów: na telefonie zakładki **z wypustkami jak w Grach**,
 nie pionowe panele; zapisane w E19/UI, jeszcze do wdrożenia.
+
+Korekta Zadań: branch 38147051449 ✓ 2/2, Pages 38147149505 ✓,
+kontrola main 38147198385 w toku. Następnie zapisać wynik; nie uruchamiać
+równolegle drugiej kontroli. Pozostałe otwarte paczki zachowane.
