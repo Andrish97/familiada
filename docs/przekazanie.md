@@ -14,8 +14,13 @@ Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia 
 retry), ale test e-maila bez konta ujawnił, że `alertModal` odrzuca opcję `body`
 i przez to nie renderuje linku do Subskrybentów. Poprawiono `alertModal`, aby przekazywał `body` do wspólnego okna (commit
 `9e94f2258`). Branch e2e `friends.spec.js --grep 'e-mail bez konta'`
-38097620398 ✓ (1/1), unit 401/401 ✓. Następnie wdrożyć poprawkę na Pages,
-ponowić friends na produkcji i kontynuować pozostałe testy kontrolne.
+38097620398 ✓ (1/1), unit 401/401 ✓. Pages z poprawką wdrożono w 38097702888; e2e produkcyjne `friends`
+38097736761 przechodzi test brakującego linku. Test `subscribers.spec.js`
+dostosowano do kontraktu E2E skrzynki test14 (worker mailbox API obsługuje
+test1–test13); branch `subscribers.spec.js` 38098985469 ✓ (2/2, unit
+401/401). W dalszej kolejności testy kontrolne produkcji: pełne friends,
+subscribers, punktowe go, frontend-navigation, account-deletion i regresja
+dźwięku. Krok 3 nadal otwarty do zielonych kontroli produkcyjnych.
 
 ---
 
