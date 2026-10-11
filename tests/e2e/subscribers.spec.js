@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { loginAsTestUser } = require("./helpers/login");
-const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
+const { loginAsPooledTestUser } = require("./helpers/login");
+const { clearMailbox, resetMailProviderLimits, waitForEmail, extractHttpLinks, readMailDelivery } = require("./helpers/mailbox");
 const email = "test14@familiada.online"; // Skrzynka bez konta: nie zakładać konta.
 test.use({ serviceWorkers: "block" });
 test.describe.configure({ mode: "serial" });
@@ -20,7 +20,7 @@ async function invite(page, recipient) {
 }
 for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i ${withdrawal ? "wypisanie jako odmowa" : "usunięcie"}`, async ({ page, context, browser }, testInfo) => {
   test.setTimeout(240000);
-  await loginAsTestUser(page, context);
+  await loginAsPooledTestUser(page, context, 0);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
   await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
@@ -104,7 +104,7 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
 });
 test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ page, context, browser }) => {
   test.setTimeout(240000);
-  await loginAsTestUser(page, context);
+  await loginAsPooledTestUser(page, context, 0);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
   await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
@@ -155,7 +155,7 @@ test("@mailbox subskrybenci: odmowa w Go blokuje oba RPC akceptacji", async ({ p
   }
 });
 test("subskrybenci: konto pokazuje przejście do Znajomych", async ({ page, context }) => {
-  await loginAsTestUser(page, context);
+  await loginAsPooledTestUser(page, context, 0);
   await page.goto("https://www.familiada.online/subscribers/");
   await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
   await invite(page, "test8@familiada.online");
@@ -164,7 +164,7 @@ test("subskrybenci: konto pokazuje przejście do Znajomych", async ({ page, cont
 });
 
 test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany", async ({ page, context, browser }) => {
-  await loginAsTestUser(page, context);
+  await loginAsPooledTestUser(page, context, 0);
   const recipientEmail = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.email);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
@@ -201,6 +201,66 @@ test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany",
     }
   } finally {
     await context.unroute("**/rest/v1/rpc/poll_go_resolve", resolver);
+    await anonymous.close();
+  }
+});
+
+test("@mailbox subskrybenci: globalne wypisanie, mail-off bez kolejki i naliczeń", async ({ page, context, browser }) => {
+  test.setTimeout(240000);
+  await loginAsPooledTestUser(page, context, 0);
+  const flag = await page.evaluate(async () => (await window.__sbClient.rpc("e2e_subscriber_mail_flag", { p_reset: false })).data);
+  expect(flag).toMatchObject({ ok: true, suppressed_at: null });
+  const anonymous = await browser.newContext({ serviceWorkers: "block" });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
+  await anonymous.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+  try {
+    await cleanup(page);
+    await clearMailbox(email);
+    await resetMailProviderLimits(page);
+    const after = new Date(Date.now()-2000).toISOString();
+    await page.goto("https://www.familiada.online/subscribers/");
+    await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
+    await invite(page, email);
+    const delivered = await waitForEmail({ recipient: email, after, subject: /subskrypc|subscript|підпис/i, timeout: 150000 });
+    const unsub = extractHttpLinks(delivered).find(url => new URL(url).searchParams.has("u"));
+    expect(unsub).toBeTruthy();
+    expect(new URL(unsub).pathname).toMatch(/^\/go\/?$/);
+    const invitePage = await anonymous.newPage();
+    await invitePage.goto(unsub);
+    await invitePage.locator("#actions button").click();
+    await expect(invitePage.locator("#message")).toContainText("Nie będziesz już otrzymywać żadnych maili");
+    await invitePage.reload();
+    await expect(invitePage.locator("#message")).toContainText("Już jesteś wypisany");
+    await page.reload();
+    const refused = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
+    await expect(refused).toContainText("Odrzucono");
+    await expect(refused.locator('[data-act="resend"]')).toHaveCount(0);
+    const blockedInvite = await page.evaluate(async email =>
+      (await window.__sbClient.rpc("subscribers_invite", { p_email: email })).data, email);
+    expect(blockedInvite).toMatchObject({ ok: false, err: "cooldown" });
+    // Fixture removes only this test sender's history/clocks. Suppression stays.
+    await cleanup(page);
+    const mutedAfter = new Date().toISOString();
+    await page.reload();
+    await invite(page, email);
+    const muted = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
+    await expect(muted).toHaveCount(1);
+    await expect(muted.locator('[data-act="resend"]')).toHaveCount(0);
+    const actual = await page.evaluate(async id => ({
+      resend: (await window.__sbClient.rpc("polls_hub_subscriber_resend", { p_id: id })).data,
+      row: (await window.__sbClient.from("poll_subscriptions").select("email_sent_at,email_send_count").eq("id", id).single()).data,
+      flag: (await window.__sbClient.rpc("e2e_subscriber_mail_flag", { p_reset: false })).data,
+    }), await muted.getAttribute("data-id"));
+    expect(actual.resend).toEqual({ ok: true, mail_allowed: false });
+    expect(actual.row).toEqual({ email_sent_at: null, email_send_count: 0 });
+    expect(actual.flag.suppressed_at).toBeTruthy();
+    const delivery = await readMailDelivery({ recipient: email, after: mutedAfter });
+    expect(delivery.queue).toEqual([]);
+    expect(delivery.events).toEqual([]);
+  } finally {
+    const restored = await page.evaluate(async () => (await window.__sbClient.rpc("e2e_subscriber_mail_flag", { p_reset: true })).data);
+    expect(restored).toMatchObject({ ok: true, suppressed_at: null });
+    await cleanup(page);
     await anonymous.close();
   }
 });
