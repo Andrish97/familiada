@@ -1,9 +1,8 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
-const source = fs.readFileSync(path.join(__dirname, '../../web/shared/js/core/poll-mail.js'), 'utf8');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const source = fs.readFileSync(new URL('../../web/shared/js/core/poll-mail.js', import.meta.url), 'utf8');
 const helper = source.match(/export function mailLink\(path\) \{[\s\S]*?\n\}/)?.[0].replace('export ', '');
 test('poll mail links preserve invitation, withdrawal and account targets with PL/EN/UK language', () => {
   assert.ok(helper);
