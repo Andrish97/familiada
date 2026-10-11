@@ -383,3 +383,14 @@ brak automatycznej akceptacji lub maila po wygaśnięciu. Flaga globalnego
 wyłączenia maili pozostaje trwała i niezależna od wygaśnięcia relacji.
 Szczegóły i bieżąca kolejność w e19-znajomi-plan.md; zapis decyzji nie
 oznacza jeszcze wdrożenia wszystkich rodzajów zasobów.
+
+### Uzupełnienie audytu Baz337/338 — 2026-10-11
+
+`base_share_tasks.base_id` obecnie nie ma klucza obcego do
+`question_bases`; usunięcie bazy nie usuwa fizycznie tych tasków.
+Guards338 blokują decyzje po braku rodzica, listy odmów używają JOIN
+do żyjącej bazy. W pkt7 grafu dopiąć fizyczne sprzątanie/kaskadę
+oraz jednoznaczny stan Go po usunięciu; obecnych kontroli guarded
+RPC nie traktować jako wykonanej fizycznej kaskady. Lock pary
+poprzedza blokadę rodzica, potem rekordów task/share; cleanup zaproszeń
+w invite dotyczy własnej pary po locku, bez globalnego DELETE przed nim.

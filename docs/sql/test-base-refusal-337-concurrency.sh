@@ -20,7 +20,7 @@ SQL
 psql -qAt -v ON_ERROR_STOP=1 > "$BASE337_TMP/first" <<SQL &
 BEGIN;
 SELECT set_config('request.jwt.claim.sub','aaaaaaaa-3378-0000-0000-000000000001',true);
-SELECT * FROM public.base_share_by_user('cccccccc-3378-0000-0000-000000000003','bbbbbbbb-3378-0000-0000-000000000002','viewer');
+SELECT * FROM public.base_share_by_user('cccccccc-3378-0000-0000-000000000003','bbbbbbbb-3378-0000-0000-000000000002'::uuid,'viewer');
 \! touch '$BASE337_TMP/locked'
 SELECT pg_sleep(2);
 COMMIT;
@@ -33,7 +33,7 @@ BEGIN;
 SELECT set_config('request.jwt.claim.sub','aaaaaaaa-3378-0000-0000-000000000001',true);
 DO $$ DECLARE r record; BEGIN
  SELECT * INTO r FROM public.base_share_by_email('cccccccc-3378-0000-0000-000000000003',' RACERECIPIENT337@EXAMPLE.NET ','editor');
- IF r.err<>'already_pending' OR (SELECT count(*) FROM public.base_share_tasks WHERE base_id='cccccccc-3378-0000-0000-000000000003')<>1 THEN RAISE EXCEPTION 'concurrent duplicate %',to_jsonb(r); END IF;
+ IF r.err IS DISTINCT FROM 'already_pending' OR (SELECT count(*) FROM public.base_share_tasks WHERE base_id='cccccccc-3378-0000-0000-000000000003')<>1 THEN RAISE EXCEPTION 'concurrent duplicate %',to_jsonb(r); END IF;
 END $$;
 COMMIT;
 SQL
