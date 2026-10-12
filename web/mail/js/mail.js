@@ -6,7 +6,8 @@ import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-12T14530'
 const $ = id => document.getElementById(id);
 const text = (key, vars) => t(`mailCenter.${key}`, vars);
 let model = { state: 'entry' }, selectedTab = 'subscriptions', csrf = '', busy = false;
-let requestUntil = 0, cooldownTimer = null;
+let requestUntil = 0, cooldownTimer = null, pendingAccess = '';
+async function exchangeAccess() { model = stateFrom(await api('exchange', { token: pendingAccess })); pendingAccess = ''; }
 
 async function api(path, body) {
   const response = await fetch(`/_api/mail/${path}`, {
@@ -111,6 +112,7 @@ function render() {
     }
   } else {
     $('mailTitle').textContent = text(`${model.state}Title`); $('mailMessage').textContent = text(`${model.state}Text`, { email: model.email || '' });
+    if (model.state === 'confirm') $('mailActions').append(button('openCenter',exchangeAccess,'btn gold sm'));
     if (model.state === 'registered') {
       const login = document.createElement('a'); login.className = 'btn gold sm'; login.href = '/login/?next=account'; login.textContent = text('login'); $('mailActions').append(login);
     }
@@ -133,9 +135,10 @@ function updateCooldown() {
 $('mailForm').addEventListener('submit', event => {
   event.preventDefault(); if (!$('mailForm').reportValidity() || Date.now() < requestUntil) return;
   perform(async () => {
-    const email = $('mailInput').value.trim(); const result = await api('request', { email });
+    const email = $('mailInput').value.trim(); const result = await api('request', { email, lang: document.documentElement.lang });
     if (result.error === 'requires_login') model = { state: 'registered', email };
     else if (result.ok) { requestUntil = Date.now() + (result.cooldown_seconds || 60) * 1000; model = { state: 'sent', email }; }
+    else if (result.error === 'cooldown') { requestUntil = Date.now() + result.cooldown_seconds * 1000; toast(text('cooldownMessage'), { kind: 'info' }); }
     else toast(text('requestFailed'), { kind: 'error' });
   });
 });
@@ -153,9 +156,15 @@ await initI18n({ withSwitcher: true });
 document.querySelector('.topbar').classList.add('topbar-ready');
 try {
   const url = new URL(location.href), access = url.searchParams.get('m');
+  // Session bootstrap issues the nonce; peeking never consumes a one-time proof.
+  const current = await api('session');
   if (access) {
     url.searchParams.delete('m'); history.replaceState(null, '', url.pathname + url.search);
-    model = stateFrom(await api('exchange', { token: access }));
-  } else model = stateFrom(await api('session'));
+    pendingAccess = access;
+    const result = await api('peek', { token: access });
+    if (!result.ok) model = stateFrom(result);
+    else if (result.purpose === 'verification') model = { state: 'confirm' };
+    else await exchangeAccess();
+  } else model = stateFrom(current);
 } catch { model = { state: 'entry' }; toast(text('requestFailed'), { kind: 'error' }); }
 render();

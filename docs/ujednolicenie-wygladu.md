@@ -1011,3 +1011,13 @@ zasobu, relacji lub cofnięcia/anulowania własnego udostępnienia przez
 nadawcę. Samo zamknięcie okna nadal X. Wspólny sharingActionIcon oraz
 renderery udostępnień pilnują tej semantyki; podpis opisuje akcję.
 Zastępuje przejściową interpretację „śmietnik przy każdej rezygnacji”.
+
+### Kontakt w stopce — decyzja użytkownika 2026-10-12
+
+Formularz Kontakt jest dostępny na każdej stronie, również bez logowania.
+W `/mail/` wspólny przycisk data-contact-modal i istniejący formularz,
+bez drugiej implementacji. „Poznaj system” prowadzi do `/` (strona główna),
+„Logowanie i rejestracja” do `/login/`. Audyt pozostałych stron obejmuje
+obecność przycisku, otwarcie anonimowe i zachowanie pełnego ekranu/landscape.
+Nie wysyłać prawdziwego zgłoszenia podczas podglądu/testów — wywołuje
+powiadomienie admina; transport zastąpić kontrolowanym testowym odbiorem.

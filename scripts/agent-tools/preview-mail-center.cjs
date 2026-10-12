@@ -1,4 +1,4 @@
-const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
+const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'../../web'),out=path.resolve(__dirname,'../../docs/img/mail-center');
 fs.mkdirSync(out,{recursive:true});
@@ -10,8 +10,9 @@ const active={ok:true,email:'anna@example.net',notifications_enabled:true,subscr
 (async()=>{await new Promise(ok=>server.listen(0,'127.0.0.1',ok));const port=server.address().port;const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 try{
  for(const size of [{name:'desktop',width:1400,height:900},{name:'mobile',width:390,height:844}]){
-  for(const state of ['entry','sent','active','disabled','expired','registered','empty']){
+  for(const state of ['entry','sent','confirm','active','disabled','expired','registered','empty']){
    const page=await browser.newPage({viewport:{width:size.width,height:size.height}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   let exchanges=0;
    await page.route('**/_api/mail/**',async route=>{const endpoint=new URL(route.request().url()).pathname.split('/').pop();let data={ok:false,error:'no_session',csrf:'fixture-csrf'};
     if(state==='active')data={...active,csrf:'fixture-csrf'};
     if(state==='empty')data={...active,subscriptions:[],items:[],csrf:'fixture-csrf'};
@@ -19,14 +20,32 @@ try{
     if(state==='expired')data={ok:false,error:'expired_token',csrf:'fixture-csrf'};
     if(state==='registered')data={ok:false,error:'requires_login',email:active.email,csrf:'fixture-csrf'};
     if(endpoint==='request')data={ok:true,cooldown_seconds:60,csrf:'fixture-csrf'};
+    if(endpoint==='peek')data={ok:true,purpose:'verification'};
+    if(endpoint==='exchange'){exchanges++;data={...active,csrf:'fixture-csrf'};}
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
    });
-   await page.goto(`http://127.0.0.1:${port}/mail/?lang=pl`);await page.waitForFunction(()=>document.getElementById('mailTitle').textContent!=='Ładuję…');await page.evaluate(()=>document.fonts.ready);
+   await page.goto(`http://127.0.0.1:${port}/mail/?lang=pl${state==='confirm'?'&m='+ 'c'.repeat(64):''}`);await page.waitForFunction(()=>document.getElementById('mailTitle').textContent!=='Ładuję…');await page.evaluate(()=>document.fonts.ready);
    if(state==='sent'){await page.locator('#mailInput').fill(active.email);await page.locator('#mailForm button').click();await page.getByRole('heading',{name:'Sprawdź swoją skrzynkę'}).waitFor();}
    if(state==='entry'||state==='expired')await page.locator('#mailInput').fill(state==='entry'?'':'anna@example.net');
    await page.screenshot({path:`${out}/${state}-${size.name}.png`});
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
    if(overflow||errors.length)throw new Error(`${state}/${size.name}: overflow=${overflow}, ${errors.join(',')}`);
+   if(state==='confirm'){
+    assert.equal(exchanges,0,'opening verification must not consume the proof');
+    assert.ok(!new URL(page.url()).searchParams.has('m'),'proof must be cleared from address bar');
+    assert.deepEqual(await page.evaluate(()=>Object.keys(localStorage).filter(k=>localStorage.getItem(k).includes('c'.repeat(64)))),[],'proof must not be stored in browser storage');
+    await page.locator('#mailActions button').click();await page.getByRole('heading',{name:'Moje powiadomienia'}).waitFor();assert.equal(exchanges,1);
+   }
+   if(state==='entry'){
+    assert.equal(await page.locator('.mail-discover a').first().getAttribute('href'),'/');
+    assert.equal(await page.locator('.mail-discover a').nth(1).getAttribute('href'),'/login/');
+    let submissions=0;
+    await page.route('**/_api/contact',async route=>{submissions++;const body=route.request().postDataJSON();assert.equal(body.email,'anonymous@example.invalid');assert.equal(body.subject,'Podgląd kontaktu');await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,ticket_number:'DEMO-0001'})});});
+    await page.locator('[data-contact-modal]').click();await page.locator('#cModalEmail').fill('anonymous@example.invalid');await page.locator('#cModalSubject').fill('Podgląd kontaktu');await page.locator('#cModalMessage').fill('Przykładowa wiadomość bez rzeczywistej wysyłki.');
+    await page.screenshot({path:`${out}/contact-${size.name}.png`});
+    await page.locator('#cModalSubmit').click();await page.locator('#cModalSuccess').waitFor({state:'visible'});assert.equal(submissions,1);await page.locator('#cModalDone').click();
+    assert.equal(errors.length,0,'anonymous contact must open and finish without JS errors');
+   }
    if(state==='active'){await page.locator('[data-tab="items"]').click();await page.screenshot({path:`${out}/active-tasks-${size.name}.png`});}
    await page.close();console.log(state,size.name,'OK');
   }

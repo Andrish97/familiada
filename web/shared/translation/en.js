@@ -5296,6 +5296,11 @@ en.sharingMail = {
 };
 
 en.mailCenter = {
+  "confirmTitle": "Open the email center",
+  "confirmText": "Click to open your notifications.",
+  "openCenter": "Open my notifications",
+  "cooldownMessage": "A link was sent recently. Try again after the countdown.",
+
   "tasksTab": "Tasks",
   "pageTitle": "Familiada — email center",
   "loading": "Loading…",

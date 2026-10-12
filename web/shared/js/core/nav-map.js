@@ -102,12 +102,13 @@ export const PAGES = {
   manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
     btnLegal: { to: "privacy" },
   } },
+  mailCenter:    { path: "/mail/", access: "public", parent: "home", from: ["home"], tabs: ["subscriptions","items"], state: ["tab","m"] },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
 };
 
 // Z instrukcji i prywatności wracamy na każdą stronę z topbarem; do samej
 // instrukcji, prywatności, landingu i logowania nie.
-const MANUAL_EXCLUDED = new Set(["manual", "privacy", "home", "login"]);
+const MANUAL_EXCLUDED = new Set(["manual", "privacy", "home", "login", "mailCenter"]);
 PAGES.manual.from = Object.keys(PAGES).filter((id) => !MANUAL_EXCLUDED.has(id));
 
 export const ROLES = ["anon", "guest", "user"];

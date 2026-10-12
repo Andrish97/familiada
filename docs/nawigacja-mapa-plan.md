@@ -587,10 +587,12 @@ flowchart LR
   login["/login/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
+  mailCenter["/mail/"]
   privacy["/privacy/"]
   login -.->|↩| home
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
+  mailCenter -.->|↩| home
   privacy -.->|↩| home
 ```
 
@@ -602,10 +604,12 @@ flowchart LR
   login["/login/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
+  mailCenter["/mail/"]
   privacy["/privacy/"]
   login -.->|↩| home
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
+  mailCenter -.->|↩| home
   privacy -.->|↩| home
 ```
 
@@ -630,6 +634,7 @@ flowchart LR
   connectDevice["/connect/"]
   account["/account/"]
   manual["/manual/"]
+  mailCenter["/mail/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -656,6 +661,7 @@ flowchart LR
   connectDevice -.->|↩| games
   account -.->|↩| games
   manual -.->|↩| games
+  mailCenter -.->|↩| home
   privacy -.->|↩| manual
 ```
 
@@ -675,6 +681,7 @@ flowchart LR
   connectDevice["/connect/"]
   account["/account/"]
   manual["/manual/"]
+  mailCenter["/mail/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -693,6 +700,7 @@ flowchart LR
   connectDevice -.->|↩| games
   account -.->|↩| games
   manual -.->|↩| games
+  mailCenter -.->|↩| home
   privacy -.->|↩| manual
 ```
 
@@ -720,6 +728,7 @@ flowchart LR
   connectDevice["/connect/"]
   account["/account/"]
   manual["/manual/"]
+  mailCenter["/mail/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -760,6 +769,7 @@ flowchart LR
   connectDevice -.->|↩| games
   account -.->|↩| games
   manual -.->|↩| games
+  mailCenter -.->|↩| home
   privacy -.->|↩| manual
 ```
 
@@ -782,6 +792,7 @@ flowchart LR
   connectDevice["/connect/"]
   account["/account/"]
   manual["/manual/"]
+  mailCenter["/mail/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -813,6 +824,7 @@ flowchart LR
   connectDevice -.->|↩| games
   account -.->|↩| games
   manual -.->|↩| games
+  mailCenter -.->|↩| home
   privacy -.->|↩| manual
 ```
 

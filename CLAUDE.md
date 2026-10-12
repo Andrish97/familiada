@@ -49,6 +49,11 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 
 ## Tok pracy
 
+- **Aktualizacje postępu (decyzja użytkownika 2026-10-12):** podczas pracy
+  częściej przekazywać krótkie, konkretne aktualizacje (około30–60 sekund):
+  bieżąca zmiana/sprawdzenie, wynik i następny krok. Aktualizacja nie kończy
+  pracy i nie zastępuje wykonania planu.
+
 - **Nadrzędna zasada ciągłości (decyzja użytkownika 2026-10-12):** realizować
   uzgodniony plan do końca bez oczekiwania na kolejne „kontynuuj”. Pytanie
   o postęp, odpowiedź ze statusem, zakończenie paczki ani skrócenie kontekstu

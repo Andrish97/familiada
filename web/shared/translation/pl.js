@@ -5206,6 +5206,11 @@ pl.sharingMail = {
 };
 
 pl.mailCenter = {
+  "confirmTitle": "Otwórz centrum maili",
+  "confirmText": "Kliknij, aby otworzyć swoje powiadomienia.",
+  "openCenter": "Otwórz moje powiadomienia",
+  "cooldownMessage": "Link został niedawno wysłany. Spróbuj ponownie po odliczeniu.",
+
   "tasksTab": "Zadania",
   "pageTitle": "Familiada — centrum maili",
   "loading": "Ładuję…",

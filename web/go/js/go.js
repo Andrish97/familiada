@@ -79,6 +79,14 @@ const subToken = qs.get("s");
 const friendToken = qs.get("f");
 const baseToken = qs.get("b");
 const unsubToken = qs.get("u");
+const mailCenterToken = qs.get("m");
+if (mailCenterToken) {
+  const center = new URL(linkTo("mailCenter"), location.origin);
+  center.searchParams.set("m", mailCenterToken);
+  const lang=qs.get("lang"); if (["pl","en","uk"].includes(lang)) center.searchParams.set("lang",lang);
+  location.replace(center.href);
+}
+
 const actionParam = qs.get("action");
 const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
 const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);

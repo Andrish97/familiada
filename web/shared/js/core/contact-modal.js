@@ -334,7 +334,27 @@ async function submitContact() {
   }
 }
 
+function ensureContactEntryPoint() {
+  if (document.querySelector('[data-contact-modal], .btn-contact-footer')) return;
+  let footer = document.querySelector('.footer');
+  if (!footer) {
+    footer = document.createElement('footer');
+    footer.className = 'footer contact-footer-entry';
+    const host = document.querySelector('main.wrap');
+    if (host) host.append(footer);
+    else { footer.classList.add('contact-footer-entry--floating'); document.body.append(footer); }
+  }
+  const button = document.createElement('button');
+  button.type = 'button'; button.className = 'btn-contact-footer';
+  button.setAttribute('data-contact-modal',''); button.setAttribute('data-i18n','common.contactBtn');
+  const label = t('common.contactBtn');
+  button.textContent = label === 'common.contactBtn' ? 'Kontakt' : label;
+  footer.append(button);
+}
+
 if (typeof document !== "undefined") {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureContactEntryPoint, { once: true });
+  else ensureContactEntryPoint();
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-contact-modal], .btn-contact-footer")) openContactModal();
   });

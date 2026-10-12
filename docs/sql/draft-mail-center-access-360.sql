@@ -138,3 +138,19 @@ CREATE TRIGGER zz_mail_center_profile_invalidate_prototype AFTER UPDATE OF is_gu
  FOR EACH ROW EXECUTE FUNCTION public._mail_center_identity_invalidate_prototype();
 REVOKE ALL ON FUNCTION public._mail_center_identity_lock_prototype(text),public.mail_center_issue_link_prototype(text,text),public.mail_center_exchange_link_prototype(text),public._mail_center_scope_prototype(text,boolean),public._mail_center_identity_invalidate_prototype() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.mail_center_issue_link_prototype(text,text),public.mail_center_exchange_link_prototype(text),public._mail_center_scope_prototype(text,boolean) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.mail_center_peek_link_prototype(p_token text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,auth,pg_temp AS $$
+DECLARE link public.mail_center_links_prototype;
+BEGIN
+ IF p_token IS NULL OR p_token !~ '^[a-f0-9]{64}$' THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
+ SELECT * INTO link FROM public.mail_center_links_prototype WHERE token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
+ PERFORM public._mail_center_identity_lock_prototype(link.email);
+ SELECT * INTO link FROM public.mail_center_links_prototype WHERE id=link.id FOR SHARE;
+ IF NOT FOUND OR link.revoked_at IS NOT NULL OR link.expires_at<=clock_timestamp() OR (link.purpose='verification' AND link.consumed_at IS NOT NULL) THEN RETURN jsonb_build_object('ok',false,'error','expired_token'); END IF;
+ IF public._poll_registered_uid(link.email) IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'error','requires_login'); END IF;
+ RETURN jsonb_build_object('ok',true,'purpose',link.purpose);
+END $$;
+REVOKE ALL ON FUNCTION public.mail_center_peek_link_prototype(text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.mail_center_peek_link_prototype(text) TO service_role;

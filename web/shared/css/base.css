@@ -2421,3 +2421,9 @@ button.rowsSectionHead{ cursor: pointer; }
   .topbar-mobile-panel .btn:hover { filter: none; }
   .topbar-mobile-panel .btn:active { transform: none; }
 }
+
+/* Contact remains reachable on pages without a traditional footer, including
+   device screens, without changing their canvas/scene dimensions. */
+.contact-footer-entry{ flex:0 0 auto; justify-content:flex-end; }
+.contact-footer-entry--floating{ position:fixed; right:calc(10px + env(safe-area-inset-right,0px)); bottom:calc(8px + env(safe-area-inset-bottom,0px)); width:auto; margin:0; padding:5px 9px; border:1px solid var(--line); border-radius:8px; background:var(--card); z-index:100; }
+.contact-footer-entry--floating .btn-contact-footer{ font-size:11px; }

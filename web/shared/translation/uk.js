@@ -5296,6 +5296,11 @@ uk.sharingMail = {
 };
 
 uk.mailCenter = {
+  "confirmTitle": "Відкрити центр пошти",
+  "confirmText": "Натисніть, щоб відкрити свої сповіщення.",
+  "openCenter": "Відкрити мої сповіщення",
+  "cooldownMessage": "Посилання нещодавно надіслано. Спробуйте знову після відліку.",
+
   "tasksTab": "Завдання",
   "pageTitle": "Familiada — центр пошти",
   "loading": "Завантаження…",
