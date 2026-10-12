@@ -654,3 +654,14 @@ Nie powtarzać tej paczki. **Dalej353:** /tmp/e19-353/source-draft.sql,
 fam353draft; public share/macierz dwóch typów/pięciu stanów i sześć
 regresji SQL success. Nadal lokalne, bez353 w repo/produkcji. Dalsze
 wejścia i wyścigi oraz rzeczywiste maile wymagane. Manual na końcu.
+
+**353 przygotowane w osobnym checkout:** /tmp/familiada-353-isolated,
+branch codex/e19-353. Migracja źródeł/markerów/karencji; pięć rollbackowych
+kontraktów, seed historii bez zgadywania,24 wyścigi i DDL. Lokalnie wszystkie
+przeszły na fam353draft/fam353final. W macierzy rejestracji powtórna kontrola
+właściciela po locku jest konieczna — stara kontrola negatywna cofała źródło
+anonimowo już po przypisaniu konta. Nowe czasy nazw procesów krótkie, bo
+application_name w PostgreSQL obcina dłuższe nazwy. Reset shape353 wyłącznie
+na izolowanej bazie przed powtórnym testem historycznych migracji; nigdy
+produkcja. Najpierw unit/isolated353, potem SQL/log/smokes, real-mail branch
+oraz main.352 zakończone; nie oznaczać353 wdrożonym przed tymi bramkami.

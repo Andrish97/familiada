@@ -1179,6 +1179,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
           sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
           psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Restore pre353 contact shape for historical migration fixtures
+        run: psql -v ON_ERROR_STOP=1 -f docs/sql/reset-contact-source-test-schema-353.sql
       - name: Restore current contact and poll policies and ACL
         run: |
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_329_friend_refusal_expiry.sql
@@ -1246,6 +1248,27 @@ jobs:
           bash docs/sql/test-poll-task-completion-344-concurrency.sh
           bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
           bash docs/sql/test-recipient-account-cascade-348-concurrency.sh
+      - name: Verify contact source graph, historical boundaries and registration races
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-contact-source-history-353.sql
+          bash docs/sql/test-contact-source-353-ddl-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-contact-source-history-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-sources-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-contact-identity-entrypoints-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-identity-cooldowns-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-independent-contact-grants-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-closed-contact-source-353.sql
+          python3 docs/sql/test-poll-contact-source-353-concurrency.py
+          python3 docs/sql/test-subscriber-registration-close-353-concurrency.py
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-registered-sharing-335.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-recipient-account-cascade-348.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-conversion-identity-352.sql
+          bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
       - name: Upload schema restore diagnostics
         if: always()
         uses: actions/upload-artifact@v4

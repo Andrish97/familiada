@@ -1371,3 +1371,27 @@ migracji zachowują pending/cancel. To nie zamyka innych krawędzi konta.
 353 lokalny draft przeniesiony do /tmp/e19-353, sześć regresji i nowa
 macierz obu typów/pięciu stanów success; źródło podczas transferu na
 Znajomych aktualizuje się razem z ID relacji. Nadal bez wdrożenia353.
+
+###353 — szczegóły źródeł kontaktów i granice historii
+
+| Element | Wspólna zasada |
+|---|---|
+| Odbiorca taska | Trwałe ID konta z351; adres nie zastępuje tej tożsamości po zmianie właściciela skrzynki |
+| Źródło nowego udostępnienia | ID wybranego Subskrybenta lub konkretnej Znajomości, zapisane przy wysyłaniu; osobne od odbiorcy |
+| Rejestracja subskrybenta | Zapamiętać ID; przyszłe udostępnienia przez Znajomych. Dawne źródło nie zmienia właściciela razem z adresem |
+| Przyjęcie znajomości | Przenieść źródło istniejącego taska, zachować ID/token/partial; usunąć poprzedni kontakt dopiero po przeniesieniu |
+| Cofnięcie kontaktu | Sprzątać jego aktywne taski i partial; nie niszczyć taska z innym zapisanym źródłem; pełny anonimowy wynik pozostaje |
+| Ważność źródła | Go, otwarcie i oba RPC głosów sprawdzają bieżącą relację, stan gry/klucz i odbiorcę |
+| Odmowa → rejestracja → zmiana adresu | Zachować pierwotny termin30 dni przy ID; kolejny właściciel starego adresu nie dziedziczy odmowy |
+| Usunięcie konta | Kaskada usuwa jego źródło i taski; sprząta pochodny licznik odmowy; niezależne konta i liczniki pozostają |
+| Dawne rekordy bez zapisanej tożsamości/źródła | Nie przypisywać do obecnego właściciela podobnego adresu. Zachować historyczny dostęp do gry i dotychczasowe procedury cofania; żadnej nowej automatycznej znajomości z samego starego adresu |
+| Nowa świadoma decyzja właściciela | Nowy kontakt lub jawnie wybrany kontakt podczas nowego udostępnienia zapisuje udowodnione źródło; stare nieznane relacje właściciel zastępuje zaproszeniem w Znajomych |
+
+Lokalnie22 funkcje, pięć kontraktów, historia,24 deterministyczne wyścigi
+(16 tożsamość×głosy i8 rejestracja×cofnięcie), DDL oraz regresje wcześniejszych
+paczek. Negatywne kontrole: znikający niezależny task przy cofnięciu propozycji,
+osierocony licznik po kasowaniu i anonimowa odmowa po przypisaniu konta.
+Kod tylko w osobnym `codex/e19-353`, do isolated i rzeczywistych maili.
+Nie zamyka Baz bez zapisanego źródła, kolejki/globalnych tokenów maila ani
+pozostałego grafu tym etapem. Profil nie jest podstawą wyszukania odbiorcy
+po adresie ani wyboru adresu maila dla zaproszenia do Znajomych.
