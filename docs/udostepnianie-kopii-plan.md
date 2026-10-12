@@ -74,3 +74,22 @@ paczki osobnego formatu obejmującego ustawienia czy logo gry. Pliki logo
 rozpatrywać również dla source/fabricData, aby kopia nie odwoływała się do
 Storage nadawcy. Oryginał i jego historia wysyłek pozostają gałęzią nadawcy;
 pakiet, oferta i przyjęty zasób — gałęzią stałego ID odbiorcy.
+
+## Powiadomienia o kopiach — doprecyzowanie użytkownika 2026-10-12
+
+Wysłana Gra i Logo są również źródłami powiadomień. Powiadomienie mailowe
+powstaje we wspólnej kolejce, z flagą odbiorcy sprawdzoną przed insercją
+oraz kontrolą aktualnej oferty przed dostarczeniem. Nowe rodzaje obejmuje
+ten sam graf źródło→alokacja→kolejka→dostarczenie i katalog treści PL/EN/UK.
+Link maila prowadzi przez Go do strony Gier albo Logo i właściwej zakładki.
+
+| Sytuacja | Zachowanie |
+|---|---|
+| Oczekująca kopia, mail włączony | Oferta w zakładce odbiorcy, plakietka zakładki i przycisku strony, mail powiadomienia z Go |
+| Oczekująca kopia, mail wyłączony | Ta sama oferta i plakietki; flaga blokuje utworzenie maila |
+| Przyjęcie/odmowa/usunięcie oferty lub konta odbiorcy | Przeliczenie plakietek; jeszcze niewysłany mail traci ważne źródło i jest anulowany |
+| Usunięcie oryginału, znajomości lub konta nadawcy po wysłaniu | Pakiet pozostaje w gałęzi odbiorcy; jego ważność i powiadomienie nie mogą zależeć od dalszego istnienia oryginału/nadawcy |
+| Przypisanie dawnego adresu do innego konta | Nowe konto nie przejmuje oferty ani powiadomienia; tożsamość odbiorcy jest stałym ID Auth |
+
+Decyzje i odbiór kopii pozostają na stronach Gier i Logo, zgodnie
+z dotychczasowym planem plakietek i zakresu Zadań (ankiety).

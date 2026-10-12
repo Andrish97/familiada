@@ -447,3 +447,14 @@ zwraca błąd wysyłki. Treści i kolejność bezpośrednich dostawców pozostaj
 bez zmian. Cztery testy funkcji obejmują sukces, awarię dostawcy, limit0
 i brak dostawców. Punktowy SMTP test11 obejmuje flagę false, odbiór maila
 resetu i odtworzenie wcześniejszej preferencji w finally.
+
+### E19C — Gra i Logo jako źródła powiadomień (2026-10-12)
+
+Doprecyzowanie użytkownika: wysłane kopie Gier i Logo również tworzą
+powiadomienia. Mail PL/EN/UK we wspólnej kolejce, flaga przed insercją,
+kanoniczny odbiorca Auth i Go do właściwej strony/zakładki. Oferta i jej
+plakietka istnieją niezależnie od flagi mailowej. Źródłem maila jest
+niezależna oferta w poddrzewie odbiorcy; przyjęcie/odmowa/usunięcie oferty
+blokuje jej jeszcze niewysłany mail. Samo późniejsze usunięcie oryginału,
+nadawcy lub znajomości nie cofa przekazanego pakietu. Szczegóły i macierz
+w udostepnianie-kopii-plan.md, „Powiadomienia o kopiach”.
