@@ -2873,7 +2873,9 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     const outageEvents = reconnectSessions[0].stats_detail.events || [];
     const outage = outageEvents.find(event => event.kind === "diagnostic" && event.category === "connectivity");
     expect(outage.devices).toEqual(expect.arrayContaining(["display", "host", "buzzer"]));
-    expect(outage.metrics.blocked_duration_ms).toBeGreaterThan(6_500);
+    // Blokada zaczyna się przy wykryciu utraty urządzeń, po TTL obecności
+    // 6,5 s. Ten pomiar obejmuje sam widoczny okres blokady, nie TTL.
+    expect(outage.metrics.blocked_duration_ms).toBeGreaterThan(5_000);
     expect(outageEvents.filter(event => ["disconnect", "reconnect"].includes(event.kind))).toHaveLength(0);
     expect(reconnectSessions).toHaveLength(1);
     expect(reconnectSessions[0].rounds_played).toBe(1);
