@@ -502,3 +502,9 @@ usunięcie oryginału/konta nadawcy/znajomości nie cofa przekazanej kopii.
 To przeniesienie danych do samodzielnego zasobu, z własnymi identyfikatorami
 i plikami. Usunięcie konta odbiorcy sprząta jego propozycje i kopie.
 Blokady i walidacja snapshotu zgodnie ze wspólnym eksportem/importem.
+
+### Graf centrum adresu i nadrzędnej rezygnacji (decyzja2026-10-12)
+
+Adres bez konta → globalna rezygnacja → subskrypcje/propozycje + bieżące zadania ankiet + granty mailowe urządzeń. Rezygnacja zamyka dzieci, brak widocznych list i brak nowych aktywnych dzieci podczas blokady; włączenie flagi nie przywraca zamkniętych źródeł ani budżetów. Root(mail) i wszystkie rodzice kontaktów/gier/sesji przed dziećmi i kolejką; uwzględnić dawne cleanup child-first, registration/email change oraz wyścig tworzenia z rezygnacją. Zakończone agregaty mają dotychczasowy wyjątek retencji.
+
+Token stopki → czasowa sesja centrum → uprawnienie do konkretnego aktualnego źródła. Token pełnego centrum tylko w dostarczonym mailu, nigdy zwracany nadawcy. Historyczny token samego wypisania nie uzyskuje nowych uprawnień do cudzych danych. Pojawienie się konta na adresie kończy anonimowe zarządzanie i wymaga loginu. Zakres anulowania dla zarejestrowanych jest pytaniem otwartym; nie stosować go do zaakceptowanych ról Baz ani kopii bez odpowiedzi.
