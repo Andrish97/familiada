@@ -1015,3 +1015,7 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: korekta układu i domyślnych nazw zamknięta produkcyjnie: main821be8dc6f, Pages38307255666 success, punktowa kontrola38307396879 success2/2 (tryb testowy i pełna runda przez cztery urządzenia).
 
 - 2026-10-12: na wyraźne polecenie użytkownika bezpośrednia poprawka main BEZ uruchamiania testów: nazwy drużyn Display odświeżane po wczytaniu języka, przed przygotowaniem dźwięku i poza kolejką animacji; kolejka korzysta z najnowszych nazw. Własne nazwy bez zmian, bez migracji. Wersje zasobów odświeżone.
+
+- 2026-10-12: natychmiastowe nazwy Display main7863b0b61a, Pages38308192870 success; zgodnie z poleceniem bez testów. Kolejne zgłoszenie: mute ma wyciszać bez zatrzymywania także na Display, a domyślny Buzzer jest za cichy; decyzje w control-tryb-testowy-plan.md.
+
+- 2026-10-12: użytkownik polecił również mute i Buzzer wdrożyć od razu na main do własnego sprawdzenia. Mute ustawia Audio.muted, bez cancel/stop i bez pomijania nowych dźwięków; oba źródła zachowują synchronizację także w ciszy. Display odbiera mute przed kolejką i przygotowaniem audio. Domyślny Buzzer: pomiar -16,05 LUFS, normalizacja do -13 LUFS z limitem true peak -1 dB; własne pliki/głośności bez zmian. Manual PL/EN/UK uzupełniony jednym zdaniem przy M. Bez migracji, bez uruchamiania testów.

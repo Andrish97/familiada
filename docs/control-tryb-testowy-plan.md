@@ -175,3 +175,8 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
   dostępne sekcje podsumowania oraz wąskie okna zwykłego Control. To testy
   wybranych rozmiarów i przykładowych danych, nie deklaracja pomiaru
   każdego możliwego ekranu. Guard blokuje okna poniżej czytelnej skali.
+
+## Decyzje — dźwięk i mute, 2026-10-12
+
+- Mute wycisza globalnie bieżące i kolejne dźwięki, także gdy źródłem jest Wyświetlacz. Odtwarzanie i synchronizacja trwają w ciszy; odciszenie odsłania aktualny moment utworu, bez restartu.
+- Dźwięk naciśnięcia Buzzera ma mieć poziom porównywalny z pozostałymi domyślnymi plikami. Zachować własne ustawienia głośności i własne pliki użytkowników.

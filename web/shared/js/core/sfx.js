@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T21033";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T21084";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -45,6 +45,13 @@ function getCategoryMeta(key) {
 /* ========= CACHE AUDIO ========= */
 
 const cache = new Map();     // key → Audio
+let globalMuted = false;
+
+// Wyciszenie nie zmienia zegara audio, głośności ani zaplanowanych dźwięków.
+export function setSfxMuted(muted) {
+  globalMuted = !!muted;
+  for (const audio of cache.values()) audio.muted = globalMuted;
+}
 const _fadeRafs = new Map(); // key → rafId (zdefiniowane tu, używane w loadIntoCache i fade)
 const playbackObservers = new Set();
 
@@ -80,6 +87,7 @@ function loadIntoCache(key, url) {
   durationPromises.delete(key);
   const a = new Audio(url);
   a.preload = "auto";
+  a.muted = globalMuted;
   cache.set(key, a);
   return a;
 }
@@ -473,7 +481,7 @@ export async function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T21033";
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T21084";
     // Call play() synchronously in the gesture handler, then trust its
     // promise. Previously a rejected autoplay attempt still returned true,
     // allowing Display to report an unlock the browser had refused.
@@ -514,7 +522,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T21033" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T21084" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   for (const [key, pct] of Object.entries(volumes)) {

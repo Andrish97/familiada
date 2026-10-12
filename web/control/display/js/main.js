@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-12T21033";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-12T21084";
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,19 +7,19 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-12T21033";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-12T21033";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-12T21033";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-12T21033";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T21033";
-import { createScene } from "./scene.js?v=v2026-10-12T21033";
-import { createQRController } from "./qr.js?v=v2026-10-12T21033";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-12T21033";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-12T21033";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T21033";
-import { createRenderer } from "./render.js?v=v2026-10-12T21033";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-12T21033";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback } from "../../../shared/js/core/sfx.js?v=v2026-10-12T21033";
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-12T21084";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-12T21084";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-12T21084";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-12T21084";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T21084";
+import { createScene } from "./scene.js?v=v2026-10-12T21084";
+import { createQRController } from "./qr.js?v=v2026-10-12T21084";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-12T21084";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-12T21084";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T21084";
+import { createRenderer } from "./render.js?v=v2026-10-12T21084";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-12T21084";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-12T21084";
 
 startKeepAlive();
 
@@ -482,6 +482,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         },
       },
       onRow: async (row) => {
+        setSfxMuted(row.detail?.settings?.soundMuted);
         // Język idzie za operatorem w Control (control/js/app.js's
         // LANG-push, dawniej osobna komenda `LANG <code>` — dziś zwykłe
         // pole w game_state, patrz web/js/gameplay/gameStateShape.js).
@@ -513,8 +514,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           applySfxGameSettings(row.detail.settings.sound);
         }
         const prev = prevRow;
-        const displayOwnsSound = row.detail?.settings?.soundSource === "display"
-          && !row.detail?.settings?.soundMuted;
+        const displayOwnsSound = row.detail?.settings?.soundSource === "display";
         const cueTimingReady = warmCueTiming(row, prev);
         if (displayOwnsSound) await cueTimingReady;
         else void cueTimingReady;
@@ -551,8 +551,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           await cueTimingReady;
           if (token !== renderGeneration) return;
           if (prev && row.sound_cue_seq !== prev.sound_cue_seq
-            && row.detail?.settings?.soundSource === "control"
-            && !row.detail?.settings?.soundMuted) {
+            && row.detail?.settings?.soundSource === "control") {
             rt(doorbellTopic(game.id)).sendBroadcast("display_transition_started", {
               sound_cue_seq: row.sound_cue_seq,
             }, { mode: "http" }).catch(() => {});

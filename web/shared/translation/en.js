@@ -2037,7 +2037,7 @@ const en = {
 <h4 class="m-h3">Sound</h4>
 <p class="m-p">Choose <span class="m-strong">Control panel</span> or <span class="m-strong">Display</span> as the sound source; only that device plays game audio. For Display audio, press its sound-unlock button; TV OK or Enter also works. Browsers may require a click before permitting playback. Check the TV/speaker volume too.</p>
 <div class="m-warn"><b>Warning:</b><br/>Choose Display when audio should play on a separate TV or other device running the Display page. With HDMI, keeping Control panel as the source and selecting the TV as the computer&#39;s audio output is usually easier; the system often does this automatically. AirPlay sends video and sound from a Mac, iPhone or iPad to Apple TV.</div>
-<p class="m-p"><span class="m-strong">Shortcut:</span> M mutes or restores sound immediately, without Enter.</p>
+<p class="m-p"><span class="m-strong">Shortcut:</span> M mutes or restores sound immediately, without Enter. Muting also applies to the Display; playback continues silently.</p>
 <h3 class="m-h2">2) Settings</h3>
 <div class="m-host"><strong class="m-host-title">Host:</strong> The tablet shows the logo selected in game settings. If that logo is being edited earlier, it shows the default Familiada logo. When the operator opens the settings Summary, the tablet reloads the selected logo and replaces the temporary default.</div>
 <p class="m-p">After connecting devices, check the settings Summary. Colours, sounds and game parameters can be configured beforehand in <span class="m-strong">Game settings</span> and are loaded automatically.</p>
