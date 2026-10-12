@@ -989,3 +989,20 @@ potem standardowa kolejka. Go + jeden licznik opublikowane main9d533fa094,
 Pages38316775614 success; main38316869123 jest w toku3 scenariusze/14 screenów.
 Branch pojedynczego licznika38316440463 success2/2,520 unit, screenyff3532d235.
 Nie wracać do zamkniętych SQL/SMTP362/360/361/Contact3.
+
+**Statystyki Control: diagnoza potwierdzona i branch zielony**38317373527
+success1/1 bez retry/521 unit. Pełna runda90 + zapisany roundNo2/Alfa90,
+statystyki1/90 oraz ta sama sesja/1 runda po odświeżeniu. Problem był
+w czytaniu przed potwierdzeniem transakcji optymistycznej akcji w teście;
+zapis backendu z poprawnym stanem działa. Bez zmiany SQL/engine ani
+osłabienia asercji statystyk. Użytkownik zlecił naprawę i powrót do planu.
+Dalej publikacja testu i dokładnie ten sam main Control, po nim kolejka.
+
+Go branch38317376700 success1/1 (521unit),10 screenów ae24a08c7d;
+setView usuwa data-i18n, żeby późniejszy init nie przywracał loadingTitle
+po błędnym linku. Następna main kontrola Go. Jeden licznik już przeszedł
+oba pełne main formularze w38316869123 (przebieg miał failure wyłącznie
+Go). Krótki poll-anonymous-layout.spec.js daje4 aktualne screeny native
+cooldown bez powtarzania30-sekundowych backendowych kontraktów. Zwykły
+pierwszy pełny głos i druga próba z tej samej przeglądarki, bez resetu
+zegara; przyjazna nazwa Rodzinna ankieta — wakacje. Publisher dzieli2galerie.
