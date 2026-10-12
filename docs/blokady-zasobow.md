@@ -469,3 +469,25 @@ Niezależne zadanie udostępnione przez Znajomych nie jest potomkiem starej
 subskrypcji. Lokalne reprodukcje na351 wskazały brak tej referencji oraz
 przypisanie dawnej relacji nowemu właścicielowi adresu. Szczegóły i
 macierz do wdrożenia w E19, podsekcja352; brak wdrożenia tej krawędzi.
+
+### Stan wykonania wspólnego grafu — 2026-10-12
+
+Mapa w §7 jest wspólnym kontraktem. Wykonanie opiera się na FK, triggerach,
+transakcyjnych RPC oraz wspólnych edit_locks; nie ma osobnego, ukończonego
+silnika, który automatycznie obsługuje dowolny nowy rodzaj zasobu.
+Każda nowa krawędź wymaga jawnej referencji rodzica, kontroli tworzenia,
+blokad i sprawdzonej propagacji cofnięcia/usunięcia.
+
+| Krawędź / mechanizm | Stan rzeczywisty |
+|---|---|
+| Blokady edycji oraz kontrole przodków | E2 wdrożone; dalszy przegląd spójności nowych krawędzi w E19 |
+| Baza → zadanie udostępnienia | Fizyczny FK/kaskada345 wdrożona |
+| Konto odbiorcy → udostępnienia i niepełne głosy |348/351 wdrożone; pełne anonimowe agregaty zachowane |
+| Kontakt → zadanie ankiety |353 wdrożone: jawne źródło, cofnięcie, transfer w znajomość, Go/open/vote |
+| Auth gościa → profil/klasyfikacja |354 po izolacji, wdrożenie i kontrola produkcji w toku |
+| Subskrypcja → pochodna propozycja znajomości | Otwarte; lokalny test po cofnięciu źródła pozostawia1 pending proposal |
+| Znajomość lub ręczne nadanie → zaproszenie bazy | Pochodzenie do dopięcia; przyjęte niezależne role mają zachować własny cykl |
+| Zasób/konto → tokeny, cooldowny i oczekujące maile | Pozostały audyt i implementacja wspólnej ważności przed kolejką/dostarczeniem |
+
+Całego grafu nie oznaczać jako zakończonego na podstawie jednej zielonej
+paczki. Etapy353 i354 nie zastępują domknięcia pozostałych krawędzi.

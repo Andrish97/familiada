@@ -31,7 +31,11 @@ test("edytowalne oznaczenie gościa nie zmienia roli ani ważności konta", asyn
       const before = await read();
       const { data, error } = await sb.auth.updateUser({ data: { is_guest: false } });
       if (error) throw error;
-      return { before, after: await read(), metadataGuest: data.user.user_metadata.is_guest, anonymous: data.user.is_anonymous };
+      // GoTrue's update response may reflect its in-memory input. Read the
+      // persisted identity independently instead of trusting that response.
+      const { data: persisted, error: readError } = await sb.auth.getUser();
+      if (readError) throw readError;
+      return { before, after: await read(), metadataGuest: persisted.user.user_metadata.is_guest, anonymous: data.user.is_anonymous };
     });
     expect(result.before.is_guest).toBe(true);
     expect(Date.parse(result.before.guest_expires_at)).toBeGreaterThan(Date.now());
