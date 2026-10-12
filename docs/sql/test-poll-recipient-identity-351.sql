@@ -56,7 +56,7 @@ DO $$ DECLARE t record; BEGIN
  END LOOP;
 END $$;
 -- Genuine guest conversion; the profile is authoritative for app guest status.
-INSERT INTO auth.users(id,email,is_anonymous,raw_user_meta_data) VALUES('ffffffff-3510-0000-0000-000000000006','guest351@example.invalid',true,'{"is_guest":true}');
+INSERT INTO auth.users(id,email,email_confirmed_at,is_anonymous,raw_user_meta_data) VALUES('ffffffff-3510-0000-0000-000000000006','guest351@example.invalid',now(),true,'{"is_guest":true}');
 INSERT INTO public.profiles(id,email,username,is_guest) VALUES('ffffffff-3510-0000-0000-000000000006','guest351@example.invalid','guest351',true) ON CONFLICT(id) DO NOTHING;
 INSERT INTO public.poll_tasks(owner_id,recipient_email,game_id,poll_type,share_key_poll) VALUES('aaaaaaaa-3510-0000-0000-000000000001','guest351@example.invalid','dddddddd-3510-0000-0000-000000000004','poll_text','key351-text');
 DO $$ BEGIN

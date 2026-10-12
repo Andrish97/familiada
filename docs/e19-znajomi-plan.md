@@ -1347,3 +1347,19 @@ Dwa realne maile, przypisanie po rejestracji, anon odmowa/Go logowanie,
 full tekst/partial punkty, kasowanie i nowy ID, stare linki niedostępne,
 recovery15 i logowania11/12 potwierdzone.352 źródła kontaktów oraz kolejka
 maili pozostają otwarte; to nie jest zamknięcie całego pkt7.
+
+### Pkt7 — doprecyzowanie kolejności po audycie tożsamości
+
+352 obejmuje najpierw ochronę dawnego `guest_convert_account`: tylko
+potwierdzony adres tego samego konta w Auth, blokada rodzica przed zmianą
+profilu. Lokalny test z rolą authenticated odtworzył przypisanie nieznanego
+adresu przez gościa i skierowanie zaproszenia do jego ID. Poprawka nie
+zmienia prawidłowej konwersji ani modelu Subskrybentów. Wcześniejszy draft
+źródeł kontaktów /tmp/e19-352 otrzyma numer353 przed publikacją; opis wymagań
+źródeł powyżej pozostaje aktualny. Brak wdrożenia352/353 na tym etapie.
+
+Audyt38192919036: jedyne aktywne zadanie bez obecnego kontaktu jest
+bieżącym zadaniem między kontami testowymi; jedyna odmowa powiązana z
+obecnym kontem jest starsza niż30 dni. To nie dowodzi pierwotnego źródła.
+Historyczne referencje wolno uzupełniać wyłącznie z zapisanej tożsamości;
+nie tworzyć znajomości na podstawie samego odzyskanego adresu.

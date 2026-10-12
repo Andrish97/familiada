@@ -636,3 +636,12 @@ fam345orphan PG16 ✓, regresje337 ✓. Agent input verify_e19_345 oraz
 produkcyjny rollbackowy smoke w db-migrate przygotowane. Najpierw isolated,
 SQL/main/log/smoke, potem punktowy istniejący E2E Baz. Front bez zmiany;
 queue, wypisanie Znajomych i pozostały graf nadal otwarte.
+
+**Aktualnie pkt7 /352:** lokalnie odtworzono publiczne legacy RPC
+konwersji gościa z niepotwierdzonym cudzym adresem; zaproszenie Znajomych
+mogło trafić do jego ID. Migracja352 wymaga potwierdzonego własnego adresu
+Auth, kontrakt SQL z rolą authenticated i regresja351 success. Do wykonania
+isolated, SQL/main/log i punktowy guest-conversion-identity.spec.js na
+branch/main. Draft źródeł /tmp/e19-352 to przyszły353, nadal niewdrożony.
+Audyt38192919036: task bez kontaktu jest testowy/current, odmowa znanego
+konta poza30 dniami. Nie zgadywać historycznych powiązań.
