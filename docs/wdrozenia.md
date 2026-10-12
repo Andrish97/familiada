@@ -788,3 +788,5 @@ control-identity-checks38256954899 success: pełne odtworzenie schema/hooków, k
 ### 2026-10-12 — Control358 SQL gate green
 
 DB38257393434 success; log OK13:42:37Z, schema2adf7d98cf. Rollbackowe kontrakty identity/preferences green na produkcji. Branch E2E38257851591 uruchomiony2 tests/1 worker/pula1,2,7/retries0; front jeszcze nie na main. Aktualizacja fixture tokenu globalnej flagi z istniejącego subscribers_invite (Control nie ma teraz stopki wypisania dla adresów bez konta; nie zakładać jej w teście).
+
+Branch38258380406: konto/SMTP/Go ponownie green1, nowy test zatrzymał się w setup: subscribers_invite zwraca id, dopiero polls_hub_subscriber_resend zwraca unsub_token (tak jak istniejący poll-contact-source). Poprawiona wyłącznie konfiguracja testu; powtórzyć tylko control358, bez ponownego powielania zielonego testu konta. Root mail-off nadal odtwarzany w finally.

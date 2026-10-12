@@ -3229,7 +3229,11 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
   let game = null, peer = null, oldFlag = null;
   try {
     await loginAsPooledTestUser(recipient, recipientContext, 1);
-    peer = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
+    peer = await recipient.evaluate(async () => {
+      const user = (await window.__sbClient.auth.getUser()).data.user;
+      const {data,error}=await window.__sbClient.from("profiles").select("username").eq("id",user.id).single();
+      if(error)throw error; return {...user,username:data.username};
+    });
     oldFlag = await recipient.evaluate(async id => {
       const { data, error } = await window.__sbClient.from("user_flags").select("email_notifications").eq("user_id",id).single();
       if (error) throw error; return data.email_notifications;
@@ -3239,7 +3243,9 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     expect((await rpc(page,"e2e_subscriber_email_cleanup",{p_email:email})).ok).toBe(true);
     // The existing subscriber API issues the address-wide preference token.
     // Control does not currently include that footer; do not invent one in the test.
-    const addressPreference = await rpc(page,"subscribers_invite",{p_email:email});
+    const addressInvite = await rpc(page,"subscribers_invite",{p_email:email});
+    expect(addressInvite.ok).toBe(true);
+    const addressPreference = await rpc(page,"polls_hub_subscriber_resend",{p_id:addressInvite.id});
     expect(addressPreference.ok).toBe(true); expect(addressPreference.unsub_token).toBeTruthy();
     expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
     const invited = await rpc(page,"friends_invite",{p_handle:peer.email});
@@ -3301,7 +3307,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const choice = page.locator(`#shareDeviceSubsList input[value="${peer.id}"]`);
     await choice.check();
     await page.locator("#btnShareDeviceFriends").click();
-    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(peer.user_metadata.username);
+    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(peer.username);
     const display = (await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"display"})).find(row=>row.recipient_id===peer.id);
     expect(display.cooldown_until).toBeNull();
     expect((await rpc(page,"friends_remove",{p_id:invited.id})).ok).toBe(true);
