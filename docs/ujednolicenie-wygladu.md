@@ -1046,3 +1046,12 @@ i Kontakt; bez dodatkowych zachęt w stopce. „Poznaj system” oraz logowanie
 pozostają małą sekcją treści centrum, niewidoczną podczas Kontakt.
 Wspólne Wstecz topbara: ikona i napis wyśrodkowane pionowo, jawny odstęp6px,
 równy padding boków i wysokość zgodna z przyciskiem języka.
+
+### Kontakt — wyjątki ekranów urządzeń (korekta użytkownika 2026-10-12)
+
+„Kontakt na każdej stronie” dotyczy zwykłych stron systemu, również
+niezalogowanych. **Host, Display i Buzzer nie mają kontaktu ani jego
+stopki/pływającego przycisku.** Nie wczytują modułu kontaktu; oznaczenie
+ekranu urządzenia blokuje jego automatyczne dodanie lub otwarcie przez
+wspólny moduł. Ta korekta zastępuje wcześniejszą interpretację obejmującą
+te trzy ekrany. Control jako panel zarządzania pozostaje zwykłą stroną.

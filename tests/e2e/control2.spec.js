@@ -887,6 +887,11 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 
     const buzzerPage = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
     await expect(buzzerPage.locator("#offScreen")).toBeVisible({ timeout: 10000 });
+    for (const device of [displayPage, hostPage, buzzerPage]) {
+      await expect(device.locator('[data-contact-modal], .btn-contact-footer, .contact-footer-entry')).toHaveCount(0);
+      await expect(device.locator('body')).toHaveAttribute('data-device-screen', '');
+    }
+
 
     // Wszystkie 3 urządzenia na JEDNYM ekranie (dokładnie jak stary
     // control.html: "Step 2 (host+buzzer) – usunięty, scalony z step 1") —

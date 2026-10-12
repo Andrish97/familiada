@@ -231,6 +231,7 @@ async function prefillEmail() {
 }
 
 export async function openContactModal(opts = {}) {
+  if (document.body?.hasAttribute("data-device-screen")) return;
   ensureModal();
   applyLabels();
 
@@ -379,6 +380,7 @@ async function submitContact() {
 }
 
 function ensureContactEntryPoint() {
+  if (document.body?.hasAttribute("data-device-screen")) return;
   if (document.querySelector('[data-contact-modal], .btn-contact-footer')) return;
   let footer = document.querySelector('.footer');
   if (!footer) {

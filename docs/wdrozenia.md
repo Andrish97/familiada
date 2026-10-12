@@ -1031,3 +1031,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: korekta układu i domyślnych nazw zamknięta produkcyjnie: main821be8dc6f, Pages38307255666 success, punktowa kontrola38307396879 success2/2 (tryb testowy i pełna runda przez cztery urządzenia).
 
 - 2026-10-12: na wyraźne polecenie użytkownika bezpośrednia poprawka main BEZ uruchamiania testów: nazwy drużyn Display odświeżane po wczytaniu języka, przed przygotowaniem dźwięku i poza kolejką animacji; kolejka korzysta z najnowszych nazw. Własne nazwy bez zmian, bez migracji. Wersje zasobów odświeżone.
+
+| 2026-10-12 | Pilna korekta / Kontakt na ekranach urządzeń | Użytkownik: Host, Display i Buzzer nie mogą mieć kontaktu. Usunięte importy z trzech HTML, jawne data-device-screen i blokada w module; test statyczny sprawdza wyjątki i obecność na zwykłych stronach. | Punktowy parowanie trzech rzeczywistych urządzeń sprawdza brak przycisku/stopki. Nie dotyka źródeł maili ani grafu; centrum7main38308851386 w toku. |
