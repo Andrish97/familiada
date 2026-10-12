@@ -10,8 +10,8 @@ const layoutCss = fs.readFileSync(path.join(root, "web/control/css/test-mode.css
 const ui = fs.readFileSync(path.join(root, "web/control/js/ui.js"), "utf8");
 
 test("sekcja dźwięku w podsumowaniu dostaje pełną szerokość i nie ucina etykiety", () => {
-  assert.match(layoutCss, /\.c2-summary-pages\s*\{[^}]*display:flex;[^}]*flex-direction:column/);
-  assert.match(ui, /pagedSummary\(\[displaySummarySection, \.\.\.settingSummarySections, \.\.\.questionSummarySections\]/);
+  assert.match(layoutCss, /\.c2-summary-grid\s*\{[^}]*overflow-y:auto/);
+  assert.match(ui, /class: "c2-summary-columns".*settingSummarySections/);
   const variant = css.match(/\.summarySoundVariant\s*\{([^}]+)\}/)?.[1] || "";
   assert.match(variant, /white-space:\s*normal/);
   assert.match(variant, /overflow-wrap:\s*anywhere/);

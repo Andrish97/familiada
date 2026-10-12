@@ -41,8 +41,6 @@ function h(tag, attrs = {}, children = []) {
 }
 
 export function createUI({ root, emit }) {
-  let summaryTab = 1;
-  const summaryPages = new Map();
   function clear() { root.innerHTML = ""; }
   function setTopbarProgress(label) {
     const el = document.getElementById("c2TopbarProgress");
@@ -472,47 +470,6 @@ export function createUI({ root, emit }) {
   }
 
   let setupFinishFingerprint = null;
-  function pagedSummary(sections) {
-    const panels = h("div", { class: "c2-summary-pages" }, sections);
-    const tabs = h("div", { class: "c2-summary-tabs", role: "tablist" });
-    const pagers = [];
-    for (let index = 0; index < sections.length; index++) {
-      const section = sections[index];
-      const title = section.querySelector(".summarySectionTitle").textContent;
-      const button = h("button", { class: "btn sm", type: "button", role: "tab", text: title });
-      on(button, "click", () => { stopSummarySoundPreview(); summaryTab = index; select(); });
-      tabs.append(button);
-      const items = [...section.querySelectorAll(".c2-qpreview-item,.summarySoundRow")];
-      if (items.length > 5) {
-        const pages = Math.ceil(items.length / 5);
-        const label = h("span");
-        const previous = h("button", { class: "btn sm", type: "button", text: t("common.back") });
-        const next = h("button", { class: "btn sm", type: "button", text: t("common.next") });
-        const apply = () => {
-          const page = Math.min(summaryPages.get(index) || 0, pages - 1);
-          items.forEach((item, i) => { item.hidden = Math.floor(i / 5) !== page; });
-          previous.disabled = page === 0;
-          next.disabled = page === pages - 1;
-          label.textContent = `${page + 1} / ${pages}`;
-        };
-        on(previous, "click", () => { summaryPages.set(index, Math.max(0, (summaryPages.get(index) || 0) - 1)); apply(); });
-        on(next, "click", () => { summaryPages.set(index, Math.min(pages - 1, (summaryPages.get(index) || 0) + 1)); apply(); });
-        const pager = h("div", { class: "c2-summary-pagination" }, [previous, label, next]);
-        panels.append(pager);
-        pagers.push({ index, pager });
-        apply();
-      }
-    }
-    function select() {
-      summaryTab = Math.min(summaryTab, sections.length - 1);
-      sections.forEach((section, index) => { section.hidden = index !== summaryTab; });
-      [...tabs.children].forEach((button, index) => { button.setAttribute("aria-selected", String(index === summaryTab)); button.classList.toggle("gold", index === summaryTab); });
-      pagers.forEach(({ index, pager }) => { pager.hidden = index !== summaryTab; });
-    }
-    select();
-    return [tabs, panels];
-  }
-
   function renderSetupFinish(state, ctx = {}) {
     const s = state.settings;
     const d = state.display;
@@ -715,7 +672,11 @@ export function createUI({ root, emit }) {
       // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
       // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
-      ...pagedSummary([displaySummarySection, ...settingSummarySections, ...questionSummarySections].filter(Boolean)),
+      h("div", { class: "c2-scroll-area c2-summary-grid" }, [
+        displaySummarySection,
+        h("div", { class: "c2-summary-columns" }, settingSummarySections),
+        h("div", { class: `c2-summary-question-grid${hasFinal ? " has-final" : ""}` }, questionSummarySections),
+      ]),
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
         finalIncomplete ? h("div", { class: "msg msg-pill", text: t("control.finalPickIncompleteWarning") }) : null,

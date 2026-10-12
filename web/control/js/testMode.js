@@ -4,7 +4,7 @@ import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-12T19544';
 import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-12T19544';
 
 export function currentControlGeometry(testMode = false) {
-  const topbarHeight = document.querySelector('.topbar')?.getBoundingClientRect().height || 68;
+  const topbarHeight = document.querySelector('.topbar')?.offsetHeight || 68;
   return controlLayoutGeometry({ width: innerWidth, height: innerHeight, topbarHeight, testMode });
 }
 
@@ -19,7 +19,10 @@ export function createControlTestMode({ urls, onActivity, onResize }) {
   sidebar.hidden = true;
   wrap.before(stage);
   stage.append(panel, sidebar);
-  panel.append(wrap);
+  const surface = document.createElement('div');
+  surface.id = 'controlSurface';
+  panel.append(surface);
+  surface.append(document.querySelector('.topbar'), wrap);
   let enabled = false;
   let ownsGuard = false;
   function mountDevices() {
@@ -53,12 +56,11 @@ export function createControlTestMode({ urls, onActivity, onResize }) {
   function resize() {
     const g = currentControlGeometry(enabled);
     stage.dataset.testMode = String(enabled);
-    for (const [name, value] of Object.entries({ 'sidebar-width':g.sidebarWidth, 'panel-width':g.virtualWidth, 'panel-height':g.virtualHeight })) {
+    for (const [name, value] of Object.entries({ 'sidebar-width':g.sidebarWidth, 'panel-width':g.virtualWidth, 'panel-height':g.virtualHeight, 'surface-width':g.virtualSurfaceWidth, 'surface-height':g.virtualSurfaceHeight })) {
       stage.style.setProperty(`--control-${name}`, `${value}px`);
     }
     stage.style.setProperty('--control-scale', String(g.scale));
     stage.style.setProperty('--control-device-scale', String(g.deviceScale));
-    stage.style.top = `${(document.querySelector('.topbar')?.getBoundingClientRect().height || 68) + 16}px`;
     if (enabled && !g.fits && document.documentElement.dataset.deviceGuard === 'ok') {
       showPageGuard({ kind:'device', state:'test-narrow', iconName:'fullscreen-enter', titleKey:'pageGuard.narrowTitle', messageKey:'control.testModeTooSmall', backHref:backHref('control') });
       ownsGuard = true;

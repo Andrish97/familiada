@@ -3377,6 +3377,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
       const elements = [...document.querySelectorAll('#app *')].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
       return elements.filter(el => {
         const box = el.getBoundingClientRect();
+        if (el.closest('.c2-summary-grid')) return false;
         return box.width > 0 && box.height > 0 && (box.left < area.left - 2 || box.right > area.right + 2 || box.bottom > area.bottom + 2);
       }).map(el => el.className);
     });
@@ -3405,6 +3406,25 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     }
     await expect(page.getByRole('button', { name:'Dalej', exact:true })).toBeEnabled({ timeout:30000 });
     await assertFits();
+    const chromeLayout = await page.evaluate(() => {
+      const bar = document.querySelector('#controlSurface > .topbar').getBoundingClientRect();
+      const side = document.querySelector('#controlTestDevices').getBoundingClientRect();
+      const friends = document.querySelector('#btnFriends').getBoundingClientRect();
+      const device = document.querySelector('#dotDisplayRow').getBoundingClientRect();
+      return {barRight:bar.right, sideLeft:side.left, sideTop:side.top, sideBottom:side.bottom, height:innerHeight,
+        radius:getComputedStyle(document.querySelector('#controlTestDevices')).borderRadius,
+        friendsGap:device.left-friends.right};
+    });
+    expect(Math.abs(chromeLayout.barRight-chromeLayout.sideLeft)).toBeLessThan(2);
+    expect(chromeLayout.sideTop).toBe(0);
+    expect(chromeLayout.sideBottom).toBe(chromeLayout.height);
+    expect(chromeLayout.radius).toBe('0px');
+    expect(chromeLayout.friendsGap).toBeGreaterThanOrEqual(0);
+    expect(chromeLayout.friendsGap).toBeLessThan(12);
+    await page.setViewportSize({width:1280,height:650});
+    await expect(page.locator('#pageGuard')).toBeHidden();
+    await assertFits();
+    await page.setViewportSize({width:1400,height:900});
     await page.screenshot({ path:testInfo.outputPath('shot-test-mode-devices.png') });
     await page.reload({ waitUntil:'domcontentloaded' });
     await expect(page.locator('#controlTestToggle')).toBeChecked({ timeout:20000 });
@@ -3426,11 +3446,8 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await display.locator('#btnAudioUnlock').click();
     await page.getByRole('button', { name:'Dalej', exact:true }).click({ timeout:30000 });
     await expect(page.locator('.stepTitle')).toHaveText('Podsumowanie');
-    for (const tab of await page.locator('.c2-summary-tabs button').all()) {
-      await tab.click();
-      await assertFits();
-    }
-    await page.getByRole('tab', { name:'Wygląd', exact:true }).click();
+    await expect(page.locator('.c2-summary-columns')).toBeVisible();
+    await expect(page.locator('.c2-summary-tabs')).toHaveCount(0);
     const previewCenters = await page.locator('.c2-device-preview-card').evaluateAll(cards => cards.map(card => {
       const box = card.getBoundingClientRect();
       const preview = card.querySelector('#c2DisplayPreview,#c2HostPreview').getBoundingClientRect();

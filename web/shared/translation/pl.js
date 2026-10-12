@@ -2062,7 +2062,6 @@ const pl = {
 <div class="m-warn"><b>Uwaga:</b><br/>Źródło „Wyświetlacz” wybierz, gdy dźwięk ma odtwarzać osobny telewizor lub inne osobne urządzenie na którym będzie otwarta karta urządzenia „Wyświetlacz”. Przy HDMI zwykle wygodniej pozostawić „Panel sterowania” i wybrać telewizor jako wyjście dźwięku w ustawieniach komputera. Po podłączeniu HDMI system często robi to automatycznie. Przy AirPlay przesyłasz obraz i dźwięk z Maca, iPhone’a lub iPada na Apple TV.</div>
 <p class="m-p"><span class="m-strong">Skrót:</span> M wycisza lub przywraca dźwięk od razu, bez Entera.</p>
 <h3 class="m-h2">2) Ustawienia</h3>
-<p class="m-p">W Podsumowaniu wybierz sekcję przyciskami u góry. Długie listy pytań i dźwięków są podzielone na strony; przechodź między nimi przyciskami Wstecz i Dalej pod listą.</p>
 <div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Tablet pokazuje logo wybrane w ustawieniach gry. Gdy wcześniej trwa edycja tego logo, pokazuje domyślne logo Familiady. Przy wejściu operatora w Podsumowanie ustawień pobiera wybrane logo ponownie; wcześniej pokazane logo domyślne zostaje wtedy zastąpione właściwym.</div>
 <p class="m-p">Gdy urządzenia są połączone, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie <span class="m-strong">Ustawień rozgrywki</span> — Panel sterowania wczyta je automatycznie.</p>
 <p class="m-p"><span class="m-strong">Skróty:</span> W Podsumowaniu E zaznacza zmianę ustawień, a Enter ją otwiera. B i Enter wracają, gdy powrót jest dostępny.</p>
@@ -4287,8 +4286,8 @@ const pl = {
     qrModalCodeHint: "familiada.online → Podłącz urządzenie → wprowadź kod",
     testModeLabel: "Tryb testowy",
     testModeHint: "Wyświetlacz, prowadzący i przycisk w tym oknie.",
-    testModeTooSmall: "Powiększ okno, aby zmieścić panel i trzy urządzenia bez przewijania.",
-    panelTooSmall: "Powiększ okno, aby zmieścić cały panel bez przewijania.",
+    testModeTooSmall: "Powiększ okno, aby zmieścić panel i trzy urządzenia.",
+    panelTooSmall: "Powiększ okno, aby zmieścić cały panel.",
     deviceCodeHint: "Wejdź na familiada.online, kliknij \"Podłącz urządzenie\" i wprowadź kod urządzenia.",
     qrCodeBtn: "Kod QR",
     qrOnDisplayToggle: "QR na wyświetlaczu",

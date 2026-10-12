@@ -10,7 +10,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 Osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md) —
 **zrobione**, Pages38300728957 success, main38301293181 success3/3.
 Guard zwykłego Control i dodatkowy próg trybu testowego są osobnymi
-regułami; podsumowanie bez przewijania, trzy urządzenia w pasku, zapis flagi
+regułami; trzy urządzenia w pasku, zapis flagi
 w istniejącym JSON-ie i etykieta w statystykach. Bez migracji.
 
 1. **Źródła prawdy** (decyzje, mapy, stan docelowy):
@@ -921,3 +921,7 @@ w planie. Dalsza niezależna kolejka E19 bez zmian.
 Doprecyzowanie raportu Control: liczba lokalnych próbek obejmuje również
 powtórzenia widoków; punktowy E2E iteruje rzeczywiście dostępne sekcje
 Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
+
+- 2026-10-12: korekta Control na `codex/control-test-layout`: cały panel z topbarem po lewej, urządzenia na pełną wysokość okna bez zaokrągleń, Znajomi przy ikonach; przywrócenie poprzedniego podsumowania (jedyny krok z przewijaniem), łagodniejszy guard bez wzmianki o przewijaniu. Decyzje w control-tryb-testowy-plan.md.
+
+- 2026-10-12: korekta układu — rzeczywisty renderer 16 stanów przy1280×650/1400×900: przewijanie wyłącznie podsumowania, brak obcięć pozostałych kroków, w tym gracza2. Punktowe unit6/6. Pełne lokalne unit468/472: cztery testy Auth zatrzymane przez brak TypeScript w lokalnym Node (ERR_NO_TYPESCRIPT); wymagana kontrola kompletnego unit w Actions.
