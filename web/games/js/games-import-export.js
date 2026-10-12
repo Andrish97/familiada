@@ -1,6 +1,7 @@
 // js/pages/games-import-export.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T23105";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-12T23105";
+import { gameExportSnapshot, gameTransferType as safeType } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-12T23345";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T23345";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-12T23345";
 
 /* =========================================================
 	 Helpers (bezpieczne skracanie / typy)
@@ -8,12 +9,6 @@ import { t } from "../../shared/translation/translation.js?v=v2026-10-12T23105";
 const safeName = (s) =>
 	(String(s ?? t("gamesImportExport.defaults.gameName")).trim() ||
 		t("gamesImportExport.defaults.gameName")).slice(0, 80);
-
-const safeType = (k) => {
-	const v = String(k || "");
-	if (v === "poll_text" || v === "poll_points" || v === "prepared") return v;
-	return "poll_text";
-};
 
 const safeQText = (s, i) =>
 	(String(s ?? t("gamesImportExport.defaults.question", { ord: i + 1 })).trim() ||
@@ -40,21 +35,6 @@ export async function exportGame(gameId, onProgress) {
 		.eq("id", gameId)
 		.single();
 	if (gErr) throw gErr;
-	
-	// Reguły eksportu:
-	// - zamknięte sondaze (u nas: status="ready") eksportujemy zawsze jako "prepared"
-	// - draft poll_points: fixed_points zawsze = 0
-	// - draft poll_text: answers zawsze = []
-	const dbType = safeType(game?.type);
-	const dbStatus = String(game?.status || "").toLowerCase().trim();
-	
-	const isDraft = dbStatus === "draft";
-	const isClosedPoll = dbStatus === "ready"; // zamknięte => ready (u Ciebie tak ustawiasz po imporcie) :contentReference[oaicite:3]{index=3}
-	
-	const exportType =
-	  (isClosedPoll && (dbType === "poll_text" || dbType === "poll_points"))
-	    ? "prepared"
-	    : dbType;
 
 	const { data: questions, error: qErr } = await sb()
 		.from("questions")
@@ -64,50 +44,12 @@ export async function exportGame(gameId, onProgress) {
 	if (qErr) throw qErr;
 
 	const qs = questions || [];
-
-	const out = {
-	  game: { name: game?.name ?? t("gamesImportExport.defaults.gameName"), type: exportType },
-	  questions: [],
-	};
-
-	const n = qs.length;
+	const out = gameExportSnapshot(game, qs, t("gamesImportExport.defaults.gameName"));
 	if (typeof onProgress === "function") {
-		onProgress({ step: t("gamesImportExport.export.step"), i: 0, n, msg: "" });
-	}
-
-	for (let idx = 0; idx < qs.length; idx++) {
-		const q = qs[idx];
-		const answers = q.answers || [];
-
-		let outAnswers = [];
-
-		if (exportType === "prepared") {
-			outAnswers = answers.map((a) => ({
-				text: a.text,
-				fixed_points: Number(a.fixed_points) || 0,
-			}));
-		} else if (exportType === "poll_points") {
-			outAnswers = answers.map((a) => ({
-				text: a.text,
-				fixed_points: isDraft ? 0 : (Number(a.fixed_points) || 0),
-			}));
-		} else {
-			// poll_text: w trybie draft nie eksportujemy odpowiedzi/punktów
-			outAnswers = [];
-		}
-
-		out.questions.push({
-			text: q.text,
-			answers: outAnswers,
-		});
-
-		if (typeof onProgress === "function") {
-			onProgress({
-				step: t("gamesImportExport.export.step"),
-				i: idx + 1,
-				n,
-				msg: q?.text ? String(q.text).slice(0, 60) : "",
-			});
+		onProgress({ step: t("gamesImportExport.export.step"), i: 0, n: qs.length, msg: "" });
+		for (let idx = 0; idx < qs.length; idx++) {
+			onProgress({ step: t("gamesImportExport.export.step"), i: idx + 1, n: qs.length,
+				msg: qs[idx]?.text ? String(qs[idx].text).slice(0, 60) : "" });
 		}
 	}
 

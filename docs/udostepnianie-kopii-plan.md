@@ -1,6 +1,6 @@
 # Gry i Logo — wysyłanie kopii znajomym
 
-Stan: **do zrobienia**, etap E19C. Decyzja użytkownika 2026-10-12.
+Stan: **w przygotowaniu**, etap E19C. Wspólny pakiet Gier na branchu; samo wysyłanie/oferty/powiadomienia jeszcze nie wdrożone. Decyzja użytkownika 2026-10-12.
 Realizacja po bieżącym E19, przed E19N/E14/E20; manual pozostaje ostatni.
 
 ## Zasady i wygląd
@@ -93,3 +93,16 @@ Link maila prowadzi przez Go do strony Gier albo Logo i właściwej zakładki.
 
 Decyzje i odbiór kopii pozostają na stronach Gier i Logo, zgodnie
 z dotychczasowym planem plakietek i zakresu Zadań (ankiety).
+
+### Pierwsza paczka E19C — wspólny pakiet Gry
+
+Istniejący eksport korzysta z game-transfer-format.js. To ten sam format
+.famgame i te same reguły dla Preparowanej/tekstowej/punktowej oraz ready
+→Preparowana; bez ID, ustawień, cudzych plików, głosów i runtime. Zachowany
+postęp eksportu. Nie wdraża jeszcze wysyłania ani propozycji.
+
+Unit sprawdza trzy typy×cztery stany, brak cudzych pól/ID, niezmienność
+wejścia i wartości domyślne. Punktowy game-transfer-format.spec.js ma
+sprawdzić rzeczywisty eksport→istniejący import wszystkich trzech typów,
+nowe ID, zgodność całej definicji i cleanup wyłącznie własnych gier.
+Akceptacja oferty dokładnie raz będzie odrębną transakcyjną paczką.
