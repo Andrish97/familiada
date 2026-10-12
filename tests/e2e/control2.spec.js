@@ -1025,12 +1025,13 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
         progressCenter: progress.top + progress.height / 2,
         displayCenter: display.top + display.height / 2,
         progressHeight: progress.height,
+        scale: Number(document.querySelector("#controlStage").style.getPropertyValue("--control-scale")),
         deviceIconCount: document.querySelectorAll("#dotDisplayRow svg, #dotHostRow svg, #dotBuzzerRow svg").length,
       };
     });
     expect(topbarLayout.progressRight).toBeLessThan(topbarLayout.displayLeft);
     expect(Math.abs(topbarLayout.progressCenter - topbarLayout.displayCenter)).toBeLessThan(2);
-    expect(topbarLayout.progressHeight).toBeGreaterThanOrEqual(36);
+    expect(topbarLayout.progressHeight / topbarLayout.scale).toBeGreaterThanOrEqual(36);
     expect(topbarLayout.deviceIconCount).toBe(3);
 
     // Regresja: Prowadzący musi widzieć PEŁNĄ treść i punkty KAŻDEJ
@@ -3363,17 +3364,17 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
   test.setTimeout(240000);
   await page.setViewportSize({ width: 1400, height: 900 });
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const game = await makeGame(page, `E2E-CONTROL-TESTMODE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
+  const game = await makeGame(page, `E2E-CONTROL-TESTMODE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS, settings:{teams:{teamA:"",teamB:""}} });
   const assertFits = async () => {
-    const result = await page.evaluate(() => {
+    await expect.poll(() => page.evaluate(() => {
       const area = document.querySelector('#controlStagePanel').getBoundingClientRect();
       const elements = [...document.querySelectorAll('#app *')].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
       return elements.filter(el => {
         const box = el.getBoundingClientRect();
+        if (el.closest('.c2-summary-grid')) return false;
         return box.width > 0 && box.height > 0 && (box.left < area.left - 2 || box.right > area.right + 2 || box.bottom > area.bottom + 2);
       }).map(el => el.className);
-    });
-    expect(result).toEqual([]);
+    })).toEqual([]);
   };
   try {
     await page.goto(`/control?id=${game.id}`, { waitUntil: 'domcontentloaded' });
@@ -3385,6 +3386,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await expect(page.locator('#controlTestToggle')).toBeDisabled();
     await expect(page.locator('#pageGuard')).toBeHidden();
     await page.setViewportSize({ width: 1400, height: 900 });
+    await expect(page.locator('#btnFriends')).toBeVisible();
     await page.locator('#controlTestToggle').check();
     await expect(page.locator('#controlTestDevices iframe')).toHaveCount(3);
     await expect(page.getByLabel('Nie używaj tabletu prowadzącego')).toBeDisabled();
@@ -3398,6 +3400,25 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     }
     await expect(page.getByRole('button', { name:'Dalej', exact:true })).toBeEnabled({ timeout:30000 });
     await assertFits();
+    const chromeLayout = await page.evaluate(() => {
+      const bar = document.querySelector('#controlSurface > .topbar').getBoundingClientRect();
+      const side = document.querySelector('#controlTestDevices').getBoundingClientRect();
+      const friends = document.querySelector('#btnFriends').getBoundingClientRect();
+      const device = document.querySelector('#dotDisplayRow').getBoundingClientRect();
+      return {barRight:bar.right, sideLeft:side.left, sideTop:side.top, sideBottom:side.bottom, height:innerHeight,
+        radius:getComputedStyle(document.querySelector('#controlTestDevices')).borderRadius,
+        friendsGap:device.left-friends.right};
+    });
+    expect(Math.abs(chromeLayout.barRight-chromeLayout.sideLeft)).toBeLessThan(2);
+    expect(chromeLayout.sideTop).toBe(0);
+    expect(chromeLayout.sideBottom).toBe(chromeLayout.height);
+    expect(chromeLayout.radius).toBe('0px');
+    expect(chromeLayout.friendsGap).toBeGreaterThanOrEqual(0);
+    expect(chromeLayout.friendsGap).toBeLessThan(12);
+    await page.setViewportSize({width:1280,height:650});
+    await expect(page.locator('#pageGuard')).toBeHidden();
+    await assertFits();
+    await page.setViewportSize({width:1400,height:900});
     await page.screenshot({ path:testInfo.outputPath('shot-test-mode-devices.png') });
     await page.reload({ waitUntil:'domcontentloaded' });
     await expect(page.locator('#controlTestToggle')).toBeChecked({ timeout:20000 });
@@ -3410,6 +3431,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await expect(page.locator('#controlTestDevices iframe')).toHaveCount(0);
     await expect(page.getByLabel('Nie używaj tabletu prowadzącego')).toBeEnabled();
     await expect(page.getByLabel('Przycisk fizyczny')).toBeEnabled();
+    await expect(page.locator('#btnFriends')).toBeVisible();
     await page.locator('#controlTestToggle').check();
     await expect(page.locator('#controlTestDevices iframe')).toHaveCount(3);
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
@@ -3419,11 +3441,20 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await display.locator('#btnAudioUnlock').click();
     await page.getByRole('button', { name:'Dalej', exact:true }).click({ timeout:30000 });
     await expect(page.locator('.stepTitle')).toHaveText('Podsumowanie');
-    for (const tab of await page.locator('.c2-summary-tabs button').all()) {
-      await tab.click();
-      await assertFits();
-    }
-    await page.getByRole('tab', { name:'Wygląd', exact:true }).click();
+    await expect(page.locator('#btnFriends')).toBeHidden();
+    const summaryScroll = await page.evaluate(() => {
+      const list = document.querySelector('.c2-summary-grid');
+      const footer = document.querySelector('.stepFoot');
+      const before = footer.getBoundingClientRect().bottom;
+      list.scrollTop = list.scrollHeight;
+      const result = {scrolled:list.scrollTop>0, footerMovement:Math.abs(footer.getBoundingClientRect().bottom-before)};
+      list.scrollTop=0;
+      return result;
+    });
+    expect(summaryScroll.scrolled).toBe(true);
+    expect(summaryScroll.footerMovement).toBeLessThan(1);
+    await expect(page.locator('.c2-summary-columns')).toBeVisible();
+    await expect(page.locator('.c2-summary-tabs')).toHaveCount(0);
     const previewCenters = await page.locator('.c2-device-preview-card').evaluateAll(cards => cards.map(card => {
       const box = card.getBoundingClientRect();
       const preview = card.querySelector('#c2DisplayPreview,#c2HostPreview').getBoundingClientRect();
@@ -3434,6 +3465,17 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await assertFits();
     await page.screenshot({ path:testInfo.outputPath('shot-test-mode-summary.png') });
     await page.getByRole('button', { name:'Gotowe — przejdź do rozgrywki' }).click();
+    for (const [call, expected] of [['api.small.long1','Drużyna A'],['api.small.long2','Drużyna B'],['api.small.leftDigits',''],['api.small.rightDigits','']]) {
+      await expect.poll(() => display.locator('body').evaluate((_body, call) => (window.__displayLog || []).filter(item => item.call === call).at(-1)?.args[0], call)).toBe(expected);
+    }
+    for (const [lang, nameA, nameB] of [['en','Team A','Team B'],['uk','Команда A','Команда B'],['pl','Drużyna A','Drużyna B']]) {
+      await page.locator('.lang-btn').click();
+      await page.locator(`.lang-option[data-lang="${lang}"]`).click();
+      for (const [call, expected] of [['api.small.long1',nameA],['api.small.long2',nameB]]) {
+        await expect.poll(() => display.locator('body').evaluate((_body, call) => (window.__displayLog || []).filter(item => item.call === call).at(-1)?.args[0], call)).toBe(expected);
+      }
+    }
+    await page.screenshot({path:testInfo.outputPath('shot-test-mode-default-team-names.png')});
     await page.getByRole('button', { name:'Rozpocznij grę', exact:true }).click();
     await expect.poll(async () => (await readControl2Sessions(page, game.id))[0]?.stats_detail?.settings?.testMode).toBe(true);
     await page.getByRole('button', { name:'Rozpocznij rundę', exact:true }).click({ timeout:60000 });
@@ -3441,6 +3483,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await expect(buzzer.locator('#btnA')).toBeEnabled({ timeout:30000 });
     await buzzer.locator('#btnA').click();
     await expect(page.getByRole('button', { name:/Zatwierdź/ })).toBeEnabled({ timeout:15000 });
+    await expect(page.locator('#btnFriends')).toBeHidden();
     await assertFits();
     await attachStatistics(testInfo, 'test-mode', await readControl2Sessions(page, game.id));
   } finally { await deleteGame(page, game.id); }

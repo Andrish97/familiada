@@ -1,4 +1,4 @@
-import { t } from "../../translation/translation.js?v=v2026-10-12T20282";
+import { t } from "../../translation/translation.js?v=v2026-10-12T21034";
 // web/js/gameplay/hints.js
 // Blok podpowiedzi nad siatką (control/js/ui.js) — odpowiednik starego
 // control/js/gameRounds.js's/gameFinal.js's setDuelMsg/setPlayMsg/
@@ -18,8 +18,8 @@ import { t } from "../../translation/translation.js?v=v2026-10-12T20282";
 // control/js/ui.js (pasek statusu, ekran pojedynku), żeby te same litery
 // nie były tłumaczone w dwóch miejscach dwoma różnymi kawałkami kodu.
 export function teamName(state, code) {
-  if (code === "A") return state.teams?.teamA || "Drużyna A";
-  if (code === "B") return state.teams?.teamB || "Drużyna B";
+  if (code === "A") return state.teams?.defaultA === true ? t("control.teamADefault") : state.teams?.teamA || "Drużyna A";
+  if (code === "B") return state.teams?.defaultB === true ? t("control.teamBDefault") : state.teams?.teamB || "Drużyna B";
   return code || "—";
 }
 

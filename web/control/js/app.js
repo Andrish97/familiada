@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-12T20282";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-12T21034";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,19 +7,19 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T20282";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-12T20282";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T20282";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T20282";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T20282";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-12T20282";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-12T20282";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-12T20282";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-12T20282";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T20282";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-12T20282";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-12T20282";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T20282";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T21034";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-12T21034";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T21034";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T21034";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T21034";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-12T21034";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-12T21034";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-12T21034";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-12T21034";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T21034";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-12T21034";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-12T21034";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T21034";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -37,14 +37,23 @@ const ADVANCED_SETTINGS_KEYS = ["roundMultipliers", "finalMinPoints", "finalTarg
 // wyłącznie PODSUMOWANIE tych już zapisanych ustawień (plan, tabela D3),
 // nie formularz do wypełnienia — więc to musi się wykonać, zanim operator
 // tam dotrze, nie jako efekt kliknięcia "Rozpocznij".
+function applyTeamNamesToState(teams, state) {
+  const nameA = String(teams?.teamA ?? "").trim();
+  const nameB = String(teams?.teamB ?? "").trim();
+  const defaultA = teams?.defaultA === true || !nameA;
+  const defaultB = teams?.defaultB === true || !nameB;
+  state.teams = {
+    teamA: defaultA ? t("control.teamADefault") : nameA,
+    teamB: defaultB ? t("control.teamBDefault") : nameB,
+    defaultA, defaultB,
+  };
+}
+
 function applyGameSettingsToState(settings, state) {
   if (!settings || typeof settings !== "object") return;
   const { teams, display, game, questions } = settings;
 
-  if (teams?.teamA || teams?.teamB) {
-    state.teams.teamA = teams.teamA || "";
-    state.teams.teamB = teams.teamB || "";
-  }
+  applyTeamNamesToState(teams, state);
 
   if (display) {
     if (display.colors) state.display.colors = { ...state.display.colors, ...display.colors };
@@ -99,22 +108,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-12T20282";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-12T20282";
-import { createEngine } from "./engine.js?v=v2026-10-12T20282";
-import { createActionGate } from "./actionGate.js?v=v2026-10-12T20282";
-import { createDevices } from "./devices.js?v=v2026-10-12T20282";
-import { createPresence } from "./presence.js?v=v2026-10-12T20282";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-12T20282";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-12T20282";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-12T20282";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-12T20282";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-12T20282";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-12T20282";
-import { createUI } from "./ui.js?v=v2026-10-12T20282";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-12T20282";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-12T20282";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T20282";
+import { createStore } from "./store.js?v=v2026-10-12T21034";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-12T21034";
+import { createEngine } from "./engine.js?v=v2026-10-12T21034";
+import { createActionGate } from "./actionGate.js?v=v2026-10-12T21034";
+import { createDevices } from "./devices.js?v=v2026-10-12T21034";
+import { createPresence } from "./presence.js?v=v2026-10-12T21034";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-12T21034";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-12T21034";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-12T21034";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-12T21034";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-12T21034";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-12T21034";
+import { createUI } from "./ui.js?v=v2026-10-12T21034";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-12T21034";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-12T21034";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T21034";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -188,7 +197,7 @@ async function main() {
   // jest w bazie, więc po powrocie store.hydrate() wznawia rozgrywkę.
   const userP = initPage("control", {
     ready: i18nP,
-    deviceGuard: { fits: () => currentControlGeometry().fits, messageKey: "control.panelTooSmall" },
+    deviceGuard: { fits: () => currentControlGeometry().fits, messageKey: "control.panelTooSmall", phoneRequiresTouch: true },
     onBack: async (href) => {
       if (!(await beforeLeave())) return;
       location.href = href;
@@ -299,6 +308,11 @@ async function main() {
   // wznowieniu Control w trakcie rozgrywki (patrz komentarz przy funkcji).
   if (!store.state.locks.gameStarted) {
     applyGameSettingsToState(game.settings, store.state);
+    applyTeamNamesToState(store.state.teams, store.state);
+    await store.commit();
+  } else if (!store.state.teams.teamA?.trim() || !store.state.teams.teamB?.trim()) {
+    // Wznowienie rozpoczętej gry z pustymi domyślnymi nazwami.
+    applyTeamNamesToState(store.state.teams, store.state);
     await store.commit();
   }
 
@@ -993,6 +1007,7 @@ async function main() {
   }
 
   function renderCurrent() {
+    document.body.dataset.controlStep = store.state.step;
     if (store.state.locks.gameEnded) connectivityTracker.flush();
     noteDisplayRequest();
     scheduleFinalTimerWatch();

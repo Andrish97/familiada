@@ -16,7 +16,7 @@
 //             (znika sam po obrocie),
 //   narrow -- komputer z za wąskim oknem: „poszerz okno”.
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-12T20282";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-12T21034";
 
 export const PHONE_MAX_SHORT_SIDE = 700;
 export const MIN_WORK_WIDTH = 980;
@@ -35,8 +35,8 @@ export function isPhoneScreen() {
 }
 
 /** "ok" | "phone" | "rotate" | "narrow" -- patrz opis na górze pliku. */
-export function deviceGuardState(minWidth = MIN_WORK_WIDTH) {
-  if (isPhoneScreen()) return "phone";
+export function deviceGuardState(minWidth = MIN_WORK_WIDTH, phoneRequiresTouch = false) {
+  if (isPhoneScreen() && (!phoneRequiresTouch || isTouch())) return "phone";
   if (window.innerWidth >= minWidth) return "ok";
   const portrait = window.innerHeight > window.innerWidth;
   if (isTouch() && portrait && screenSides().long >= minWidth) return "rotate";
@@ -74,9 +74,9 @@ export function blockPhone({ backHref = null } = {}) {
 }
 
 /** Strona potrzebuje szerokiego okna: blokada na żywo (resize / obrót). */
-export function guardDesktopOnly({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null } = {}) {
+export function guardDesktopOnly({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null, phoneRequiresTouch = false } = {}) {
   const currentState = () => {
-    const state = deviceGuardState(minWidth);
+    const state = deviceGuardState(minWidth, phoneRequiresTouch);
     return state === "ok" && fits && !fits() ? "narrow" : state;
   };
   function apply() {

@@ -1,3 +1,4 @@
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T21034";
 // control/display/js/render.js
 //
 // Tłumaczy wiersz public.game_state (a dokładniej: różnicę między
@@ -23,9 +24,9 @@
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-12T20282";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-12T20282";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-12T20282";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-12T21034";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-12T21034";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-12T21034";
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -34,7 +35,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-12T20282";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-12T21034";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
@@ -287,7 +288,11 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   // przez całą właściwą rozgrywkę (rundy+finał), tak jak w oryginale.
   let lastTeamNames = null;
   function paintTeamNames(row, force = false) {
-    const teams = row.detail?.teams || {};
+    const raw = row.detail?.teams || {};
+    const teams = {
+      teamA: raw.defaultA === true || !raw.teamA ? t("control.teamADefault") : raw.teamA,
+      teamB: raw.defaultB === true || !raw.teamB ? t("control.teamBDefault") : raw.teamB,
+    };
     if (force || lastTeamNames?.teamA !== teams.teamA) api.small.long1(teams.teamA || "");
     if (force || lastTeamNames?.teamB !== teams.teamB) api.small.long2(teams.teamB || "");
     lastTeamNames = { ...teams };
@@ -391,6 +396,11 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     const transitionStartedAt = Date.now();
     if (["devices_display", "setup_finish"].includes(nextRow.step) && nextRow.detail?.display?.mode !== "QR") {
       await applyDisplayMode(nextRow); return;
+    }
+    if (prevRow.step === nextRow.step && nextRow.detail?.display?.mode === "GAME") {
+      const before = prevRow.detail?.teams || {};
+      const after = nextRow.detail?.teams || {};
+      if (before.teamA !== after.teamA || before.teamB !== after.teamB || prevRow.detail?.settings?.uiLang !== nextRow.detail?.settings?.uiLang) paintTeamNames(nextRow);
     }
     const events = deriveEvents(prevRow, nextRow);
     // Jeden dispatch = jeden potwierdzony sound_cue_key dla CAŁEGO wiersza —

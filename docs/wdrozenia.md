@@ -10,7 +10,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 Osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md) —
 **zrobione**, Pages38300728957 success, main38301293181 success3/3.
 Guard zwykłego Control i dodatkowy próg trybu testowego są osobnymi
-regułami; podsumowanie bez przewijania, trzy urządzenia w pasku, zapis flagi
+regułami; trzy urządzenia w pasku, zapis flagi
 w istniejącym JSON-ie i etykieta w statystykach. Bez migracji.
 
 1. **Źródła prawdy** (decyzje, mapy, stan docelowy):
@@ -974,6 +974,28 @@ Doprecyzowanie raportu Control: liczba lokalnych próbek obejmuje również
 powtórzenia widoków; punktowy E2E iteruje rzeczywiście dostępne sekcje
 Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 
+- 2026-10-12: korekta Control na `codex/control-test-layout`: cały panel z topbarem po lewej, urządzenia na pełną wysokość okna bez zaokrągleń, Znajomi przy ikonach; przywrócenie poprzedniego podsumowania (jedyny krok z przewijaniem), łagodniejszy guard bez wzmianki o przewijaniu. Decyzje w control-tryb-testowy-plan.md.
+
+- 2026-10-12: korekta układu — rzeczywisty renderer 16 stanów przy1280×650/1400×900: przewijanie wyłącznie podsumowania, brak obcięć pozostałych kroków, w tym gracza2. Punktowe unit6/6. Pełne lokalne unit468/472: cztery testy Auth zatrzymane przez brak TypeScript w lokalnym Node (ERR_NO_TYPESCRIPT); wymagana kontrola kompletnego unit w Actions.
+
+- 2026-10-12: commit09cfcb0692 na branchu, Actions38303593794 w toku — wybrane testy Control: tryb testowy oraz pełna runda przez cztery urządzenia, pool4,5, retries0. Bez wdrożenia Pages do zielonego wyniku.
+
+- 2026-10-12: branch38303593794 failure2: stara asercja37px nie uwzględniała skalowania topbara (35.95px przy skali0.97); guard klasyfikował komputer1280×650 jako telefon tylko według krótszego boku. Dla Control dodano wymaganie dotyku do klasyfikacji telefonu (inne strony bez zmiany), test rozmiaru postępu znormalizowany do skali. Doprecyzowanie użytkownika: Znajomi tylko w Urządzeniach; test obejmuje ukrycie później i stałą stopkę przewijanego podsumowania.
+
+- 2026-10-12: commit89dc980a0f, branch38304058278 w toku (wybrane2 E2E,4/5,retries0). Punktowe lokalne unit34/34; pełne unit Actions success. Pomiary16 stanów zapisane w docs/img/control-test-mode/measurements-correction.json.
+
+- 2026-10-12: branch38304058278: pełna runda przez4 urządzenia success; tryb testowy zatrzymany przy natychmiastowym pomiarze po zmianie rozmiaru (przed zdarzeniem resize). Zrzut końcowy potwierdza poprawne dopasowanie1280×650. Asercja teraz oczekuje na dopasowanie układu przez expect.poll; ponawiany wyłącznie ten test. Unit Actions475/475 success.
+
+- 2026-10-12: branch38304477272 success1/1 bez retry (tryb testowy), wcześniejszy38304058278 potwierdził pełną rundę. Nowe zgłoszenie: domyślne nazwy widoczne tylko jako zastępczy tekst Control, w game_state były puste. Normalizacja nazw przed startem oraz wznowieniem z pustymi nazwami; test trybu rozszerzony o rzeczywiste rysowanie nazw i brak zer przy Rozpocznij grę. Kolejna punktowa bramka przed main.
+
+- 2026-10-12: commit1e8e9eea1c normalizuje nazwy, d11c145cac odświeża je na Display bez zmiany kroku. Unit13/13, w tym nazwy PL/EN/UK.38304950158 anulowany przed zamknięciem, żeby objąć ostatnią poprawkę; nowa bramka38305149894 na test5 (bez równoległego użycia4), tryb + domyślne nazwy + brak zer + statystyki.
+
+- 2026-10-12:38305149894 failure wyłącznie obserwacji testowej: Locator.evaluate podaje element jako pierwszy argument, test omyłkowo traktował go jako nazwę wywołania. Zrzut potwierdził obie domyślne nazwy na Display przy Rozpocznij grę, bez zer. Poprawiono argument testu; unit Actions success479/479. Ponawiany tylko tryb testowy.
+
+- 2026-10-12: decyzja: domyślne nazwy podążają za językiem, własne pozostają bez zmiany. Dodano znaczniki defaultA/B do istniejącego JSON-ie teams, Display czeka na słownik przed rysowaniem nazw; podgląd zachowuje znaczniki i język. Test trybu obejmuje PL→EN→UK→PL przed rozpoczęciem gry. Bez migracji.
+
+- 2026-10-12:38305452341 success1/1 z domyślnymi nazwami, bez retry. Następnie decyzja o zmianie języka:66af33afdf i3ebd2f12c9, unit14/14 oraz13/13.38306092005 anulowany, aby finalny kod etykiet objąć jedną bramką38306246176: test5, tryb testowy + PL/EN/UK + statystyki. Nazwy własne nie są rozpoznawane po treści, lecz domyślność oznaczona w stanie; bez migracji.
+
 | 2026-10-12 |360 / końcowy gate success i przygotowanie publikacji | Isolated38303218296 success: prototypowe24+60 wyścigów, świeży final restore, pełne DDL i10 kontraktów finalnych API; local494/494 przed scalenieniem bieżącego Control test-mode z main ce81a3a9af. Finalna migracja360 wygenerowana z tych samych modułów. | Publikacja SQL+Edge+Worker+Pages razem: wyjątek AGENTS dla migracji zmieniającej zachowanie; nowe źródła/API i linki stopki nie działają na starej bazie/bez nowej strony. Po lokalnych bramkach natychmiast rzeczywisty SMTP/UI branch/main. Poprzedni opis „backend, potem Pages” uzupełniony o sprzężoną stronę /mail. |
 
 | 2026-10-12 | E19N / „Graj” w ustawieniach z Control | Decyzja użytkownika: Ustawienia rozgrywki otwarte z panelu sterowania ukrywają „Graj”; wracamy do bieżącej rozgrywki wyłącznie przez „Wstecz”. Reguła kontekstu w mapie, wszystkie widoki/menu i urządzenia, back/forward bez nowej sesji/resetu urządzeń. | Zapisane w nawigacja-mapa-plan.md, do wdrożenia w E19N; pozostałe wejścia zachowują dotychczasowe reguły. |
@@ -990,6 +1012,10 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 
 | 2026-10-12 |361 / poprawka linków urządzeń w centrum | Lokalne finalne API i kontrakt list/globalnej odmowy success;360 pozostaje bez zmian. Link urządzenia w /mail/ ma kanoniczne Go d=typ&id=gra&key=token, tak jak rzeczywisty mail. | Baza najpierw: dodająca poprawka listy zgodna z aktualnym frontendem; historyczny smoke358 uwzględnia odmowę anonimową360. Potem nowy punktowy mail-center oraz rodziny SMTP, nadal bez zamknięcia grafu. |
 
+- 2026-10-12: finalny branch38306246176 success1/1 bez retry: układ, guard, odblokowanie audio, nazwy PL→EN→UK→PL, Buzzer i statystyki; unit479/479. Scalenie origin/main c5c265ffae: konflikty wersji rozwiązane dedykowanym skryptem, oba wpisy Dziennika zachowane. Po integracji krótka bramka na branchu przed Pages.
+
+- 2026-10-12: integracja main c5c265ffae na branchu4dfa7e9ace: unit26/26 lokalnie, Actions38306861683 success1/1 bez retry, pełne unit506/506. Cały Control z topbarem po lewej, urządzenia na pełną wysokość, Znajomi tylko w Urządzeniach, stare podsumowanie z przewijaną treścią, łagodniejszy guard, nazwy domyślne PL/EN/UK i własne. Gotowe do publikacji Pages i punktowej kontroli produkcji.
+
 | 2026-10-12 | SMTP / prywatny trigger kolejki testowej | Endpoint mail-trigger uruchamia istniejący invoke_mail_worker_ids tylko dla świeżych, gotowych pending skrzynek testowych; wyklucza9/10, nie modyfikuje źródeł, flag, limitów i czasu opóźnienia. | Unit500/500, podpis/zakres/pusta kolejka/awanse/błędy backendu sprawdzone. Publikacja Workera przed nowym punktowym SMTP; bez zmian w produkcyjnej ścieżce dostarczania. |
 
 | 2026-10-12 |361 / bramka produkcyjna i integracja | DB38306068075 success; latest.log APPLY/OK361 i aktualny dump z main. Worker38306587855 success, prywatny trigger gotowy. SMTP/UI38306663799 uruchomiony na branchu,1 worker, pula6/7, bez retry. | Przy scaleniu schematu/logu użyto aktualnego dumpu produkcji361; oba dzienniki zachowane. Nazwy nowych screenów mają wymagany prefiks shot-, aby artefakt był publikowany także po sukcesie. Dalsza kontrola main i pięć rodzin maili przed zamknięciem. |
@@ -999,3 +1025,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 | 2026-10-12 |360 / pięć rodzin — branch4/5, punktowa poprawka testu |38306917576: Bazy2 rzeczywiste maile, Znajomi, Subskrybenci, Control success; Ankieta dostarczyła regularny i anonimowy mail oraz wykonała cleanup partial, ale oczekiwała starego already_used po cofniętym źródle;360 zwraca expired. | Aktualizowano oczekiwanie, bez zmiany API; ponowić tylko Ankietę. Helper trigger czeka na rzeczywistą insercję zamiast jednorazowego wywołania przy pustej jeszcze kolejce; unit sprawdza tę kolejność i trigger:false. Macierz używa puli6/7 oraz stałych7/8 starych speców;9/10 nie dotyka. |
 
 | 2026-10-12 |360 / macierz brancha kompletna |38306917576:4 rodziny success, ankieta38307788495 success po aktualizacji stanu expired, oba typy ankiet/regularny+anonimowy SMTP, Go i czyszczenie partial. Centrum38306663799 success. | Backend/Worker już potwierdzone; końcowy front Control i helpery do publikacji, następnie main2scenariusze centrum + pięć wybranych rodzin. Jawnie włączane publikowanie screenshotów do docs omija niedostępny transport artefaktów i daje zwykłe linki GitHub; nie zmienia UI/danych systemu. |
+
+- 2026-10-12: podczas publikacji main przesunął się do6a89e78fae: wyłącznie schema/log, testowy endpoint kolejki i Dziennik, bez zmian web. Zachowano te commity; przetestowane źródła Control nie zmieniły się.

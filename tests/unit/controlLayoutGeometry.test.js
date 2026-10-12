@@ -23,7 +23,7 @@ test('Control: trzy równe urządzenia 4:3 i lekkie skalowanie czytelnego panelu
     const layout = controlLayoutGeometry({ width, height, testMode: true });
     assert.equal(layout.fits, true);
     assert.ok(layout.scale >= MIN_CONTROL_SCALE && layout.scale <= 1);
-    assert.ok(Math.abs(layout.deviceHeight * 3 - layout.availableHeight) < 1e-8);
+    assert.ok(Math.abs(layout.deviceHeight * 3 - height) < 1e-8);
     assert.ok(Math.abs(layout.sidebarWidth / layout.deviceHeight - 4 / 3) < 1e-8);
     assert.ok(Math.abs(DEVICE_VIEWPORT.height * layout.deviceScale - layout.deviceHeight) < 1e-8);
     assert.ok(Math.abs(layout.virtualWidth * layout.scale - layout.panelWidth) < 1e-8);
@@ -38,4 +38,11 @@ test('Control: brak miejsca nie daje ujemnych wymiarów lub nieskończoności', 
   for (const value of Object.values(layout)) {
     if (typeof value === 'number') assert.ok(Number.isFinite(value) && value >= 0);
   }
+});
+
+test('Control: guard dopuszcza niższe okno komputera, ale nie ukrywa braku miejsca', async () => {
+  const { controlLayoutGeometry } = await modulePromise;
+  assert.equal(controlLayoutGeometry({width:1280,height:650}).fits, true);
+  assert.equal(controlLayoutGeometry({width:1280,height:650,testMode:true}).fits, true);
+  assert.equal(controlLayoutGeometry({width:1100,height:650,testMode:true}).fits, false);
 });
