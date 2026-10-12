@@ -3072,6 +3072,12 @@ const uk = {
     answerFallback: "ВІДП {ord}",
   },
   pollGo: {
+    anonymousLinkTitle: "Опитування",
+    anonymousLinkChecking: "Перевіряю, чи ще можна проголосувати…",
+    anonymousLinkExpired: "Це посилання втратило чинність",
+    anonymousLinkMissing: "Такого опитування немає",
+    linkCheckFailed: "Не вдалося перевірити посилання. Спробуйте пізніше.",
+
     title: "Familiada — запрошення до опитування",
     loadingTitle: "Завантажую запрошення…",
     loadingText: "Будь ласка, зачекай.",

@@ -926,3 +926,22 @@ obu typów w e2e/poll-anonymous.spec.js. Na main spec NIE podmienia Pages
 branch-code, żeby potwierdzić faktycznie opublikowany front. Manual dalej
 ostatni. Merge zachował nowe sekwencje Control/audio; stary unit renderu
 zaktualizowany do już opublikowanego setText→setPts+bank,514 green.
+
+**362 kontrola main:**38315259508 failure z powodu uiLang drugiej
+przeglądarki (zapisy/idempotencja/cooldown/drugi niezależny głos działały).
+Poprawka3070ea5120 ustawia jej polski język i retries:0 w specu. Main
+kontrola38315815400 właśnie ruszyła,2 scenariusze z naturalnym30s,
+rzetelne Pages (bez branch interception), jawne publikowanie screenów.
+Nie zamykać362 przed wynikiem.
+
+Następna paczka Go lokalnie: poll-links.js+4 unit, karta Anonimowo i
+rzeczywisty ekran QR generują `/go/?p=anon&id=...&key=...&lang=...`.
+Go sprawdza istniejący poll_state, prowadzi tylko open do właściwego
+formularza, pokazuje closed/stopped/ended/expired/not_found, odrzuca
+braki/mieszane/duplikaty, ma powtórne sprawdzenie po błędzie sieci.
+Otwórz ekran QR przestał zagnieżdżać URL ekranu jako treść kodu.
+Punktowy poll-go.spec.js i pomocniczy poll-game.js przygotowane (rzeczywista
+finalizacja obu typów po trzech pełnych głosach). Jeszcze bez bramki
+branch/produkcji. Publisher rozdziela galerę cooldown/live i go-live,
+żeby nie nadpisywać poprzednich screenów. Nie uruchamiać na koncie1
+równolegle z38315815400.

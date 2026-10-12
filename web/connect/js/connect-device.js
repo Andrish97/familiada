@@ -1,13 +1,13 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T22081";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-12T22081";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-12T22081";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T22081";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T22081";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-12T22081";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-12T22081";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T22081";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T22181";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-12T22181";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-12T22181";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T22181";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T22181";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-12T22181";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-12T22181";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T22181";
 
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");

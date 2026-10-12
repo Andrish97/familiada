@@ -1503,3 +1503,24 @@ ze starym Game-first oraz514 unit success. Podgląd Chromium390/1400 z30
 pytaniami, lokalne zrzuty docs/img/poll-anonymous. Workflow isolated i
 punktowy e2e/poll-anonymous.spec.js przygotowane. SQL/frontend362 jeszcze
 nie wdrożone; wymagają sprzężonego wdrożenia zgodnie z wyjątkiem AGENTS.
+
+### Pkt7 /Go — anonimowy link i ekran QR, paczka po362
+
+Kanoniczny link z sekcji Anonimowo oraz z kodu QR:
+`/go/?p=anon&id=<gra>&key=<bieżący-klucz>&lang=<język>`. Nie zawiera tokenu
+odbiorcy, wymogu logowania ani tożsamości. Go używa istniejącego `poll_state`:
+otwarta ankieta przechodzi do właściwego typu formularza; zatrzymana,
+zakończona, zamknięta, wygasły klucz i usunięta ankieta zostają w Go
+z czytelnym komunikatem. Brak parametrów, mieszane typy zaproszeń oraz
+duplikaty pól są odrzucane. Błąd sieci pozwala powtórzyć sprawdzenie.
+
+Wspólny generator linku dla karty Ankiet oraz ekranu QR. Naprawa wykrytego
+zagnieżdżania: przycisk Otwórz otwiera ekran QR z jego id/key; nie przekazuje
+adresu ekranu jako treści kolejnego kodu. Sam ekran koduje link do Go.
+Podgląd ekranu właściciela pozostaje wejściem wewnętrznym.
+
+Stan: przygotowane lokalnie; nowa ścieżka nie wymaga migracji. Punktowy
+`poll-go.spec.js`: rzeczywiste oba typy, generator/QR, stop, abort/draft,
+ponowne otwarcie, finalizacja po trzech głosach, usunięcie i błąd sieci.
+Publikacja dopiero po zamknięciu362 i zielonym branch E2E. Dalsze stany Go
+innych rodzin oraz końcowy audyt grafu pozostają otwarte.

@@ -2975,6 +2975,12 @@ const pl = {
     answerFallback: "ODP {ord}",
   },
   pollGo: {
+    anonymousLinkTitle: "Ankieta",
+    anonymousLinkChecking: "Sprawdzam, czy można jeszcze zagłosować…",
+    anonymousLinkExpired: "Ten link wygasł",
+    anonymousLinkMissing: "Nie ma takiej ankiety",
+    linkCheckFailed: "Nie udało się sprawdzić linku. Spróbuj ponownie później.",
+
     title: "Familiada — zaproszenie do ankiety",
     loadingTitle: "Ładuję zaproszenie…",
     loadingText: "Proszę czekać.",

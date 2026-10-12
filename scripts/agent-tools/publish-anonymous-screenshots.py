@@ -6,7 +6,8 @@ root=Path(__file__).resolve().parents[2]
 images=sorted((root/'tests/test-results').glob('**/shot-anon362-*.png'))
 if not images:
     raise SystemExit('No anonymous poll screenshots were produced')
-target=root/'docs/img/poll-anonymous/live'
+gallery='go-live' if all(image.name.startswith('shot-anon362-go-') for image in images) else 'live'
+target=root/'docs/img/poll-anonymous'/gallery
 target.mkdir(parents=True,exist_ok=True)
 for old in target.glob('shot-anon362-*.png'):
     old.unlink()
@@ -14,7 +15,7 @@ for image in images:
     shutil.copy2(image,target/image.name)
 run_id=os.environ['EVIDENCE_RUN_ID']
 sha=os.environ['EVIDENCE_SHA']
-lines=['# Anonimowe ankiety — rzeczywiste odliczanie','',
+lines=['# Anonimowe ankiety — głosowanie i stany linków','',
        f'Przebieg [{run_id}](https://github.com/Andrish97/familiada/actions/runs/{run_id}), kod `{sha}`.',
        '', 'Rzeczywista baza i ankiety kont testowych. Odliczanie z serwera, zachowane odpowiedzi; telefon i komputer.', '']
 for image in images:

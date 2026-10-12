@@ -6,25 +6,26 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-12T22081";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T22081";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T22081";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T22081";
+import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-12T22181";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-12T22181";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T22181";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T22181";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T22181";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T22081";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-12T22081";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-12T22081";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T22081";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-12T22081";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-12T22081";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-12T22081";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-12T22081";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-12T22081";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T22081";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-12T22081";
-import { createTally } from "./poll-tally.js?v=v2026-10-12T22081";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T22181";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-12T22181";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-12T22181";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T22181";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-12T22181";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-12T22181";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-12T22181";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-12T22181";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-12T22181";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T22181";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-12T22181";
+import { createTally } from "./poll-tally.js?v=v2026-10-12T22181";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-12T22081";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-12T22181";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -255,9 +256,7 @@ pollQrModalCopy?.addEventListener("click", async () => {
 });
 pollQrModalOpen?.addEventListener("click", () => {
   if (!_pollQrOpenUrl) return;
-  const u = new URL(withLangParam("/polls/vote/qr/"), location.href);
-  u.searchParams.set("url", _pollQrOpenUrl);
-  window.open(u.toString(), "_blank", "noopener,noreferrer");
+  window.open(_pollQrOpenUrl, "_blank", "noopener,noreferrer");
 });
 
 // --- Język QR-a w ankietach (games.poll_qr_lang, migracja 269) ---
@@ -323,19 +322,8 @@ async function renderQr(url) {
 }
 
 function pollLink(g) {
-  if (!g) return "";
-  const base =
-    g.type === TYPES.POLL_TEXT
-      ? "/polls/vote/text/"
-      : g.type === TYPES.POLL_POINTS
-      ? "/polls/vote/points/"
-      : "";
-  if (!base) return "";
-
-  const u = new URL(withLangParam(base), location.href);
-  u.searchParams.set("id", g.id);
-  u.searchParams.set("key", g.share_key_poll);
-  return u.toString();
+  if (!g || ![TYPES.POLL_TEXT,TYPES.POLL_POINTS].includes(g.type)) return "";
+  return anonymousPollLink({ gameId:g.id, key:g.share_key_poll, lang:getUiLang() },location.href);
 }
 
 /* =======================
