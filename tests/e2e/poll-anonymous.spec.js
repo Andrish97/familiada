@@ -5,6 +5,7 @@ const { loginAsPooledTestUser, instrumentPage } = require('./helpers/login');
 const origin='https://www.familiada.online';
 const useBranchCode=process.env.GITHUB_REF_NAME!=='main';
 test.use({serviceWorkers:'block'});
+test.describe.configure({retries:0});
 async function rpc(page,name,args){return page.evaluate(async({name,args})=>{const {data,error}=await window.__sbClient.rpc(name,args);if(error)throw new Error(error.message);return data;},{name,args});}
 async function seed(page,type){return page.evaluate(async type=>{
  const db=window.__sbClient;const {data:user,error:authError}=await db.auth.getUser();if(authError)throw authError;
@@ -58,6 +59,7 @@ for(const type of ['poll_text','poll_points'])test(`anonymous362 ${type}: preser
   }
   // Same network, independent browser: no IP throttle.
   const other=await browser.newContext({serviceWorkers:'block'});anonymousContexts.push(other);
+  await other.addInitScript(()=>localStorage.setItem('uiLang','pl'));
   if(useBranchCode)await serveBranchCode(other,{pages:['polls/vote/text','polls/vote/points']});
   const independent=await other.newPage();await independent.goto(url,{waitUntil:'domcontentloaded'});await complete(independent,type);
   await expect(independent.locator('.sub')).toContainText('Dziękujemy');expect(await count(page,game.id,type)).toBe(20);
