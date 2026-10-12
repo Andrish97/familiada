@@ -1225,6 +1225,7 @@ jobs:
         if: ${{ inputs.verify_e19_348 }}
         run: |
           psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS poll_identity_auth_insert ON auth.users; DROP TRIGGER IF EXISTS poll_identity_auth_change ON auth.users; DROP TRIGGER IF EXISTS poll_identity_profile ON public.profiles; DROP TRIGGER IF EXISTS poll_identity_task_insert ON public.poll_tasks'
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS identity351_test_new_user ON auth.users; CREATE TRIGGER identity351_test_new_user AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user()'
           psql -v ON_ERROR_STOP=1 -f docs/sql/seed-poll-recipient-identity-351.sql
           bash docs/sql/test-poll-recipient-351-ddl-concurrency.sh
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-backfill-351.sql

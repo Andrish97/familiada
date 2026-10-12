@@ -71,8 +71,10 @@ adresu profilu nie pozwala przejąć cudzych tasków. Prywatne blokady
 adresów i referencje kont porządkują równoczesną rejestrację/udostępnienie.
 Lokalnie351: kontrakt all-state, backfill, siedem regresji SQL,16 wyścigów
 głosowania oraz4 wyścigi tworzenia tasków success. DDL vs stary child-first
-cleanup success; unit455/455. Jeszcze bez wdrożenia351 i bez testu mail/Go
-na produkcji. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
+cleanup success; unit455/455. 351 zastosowane00:46:56 UTC w38189206623; dalszy smoke zatrzymał się
+na nazwie testowego profilu po ponownym użyciu adresu. Metadata nowego
+konta poprawione; lokalnie z prawdziwym handle_new_user kontrakt success.
+Jeszcze bez zielonego końcowego DB i bez testu mail/Go na produkcji. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
 legacy Subskrypcji. Pending kolejka/proweniencja maili, Go/anon i dalsze
 krawędzie pozostają otwarte.
 
