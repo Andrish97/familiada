@@ -201,7 +201,7 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
   }
 });
 const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, getTestAccountPool, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
-const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, readMailDelivery } = require("./helpers/mailbox");
 
 test.setTimeout(150_000);
 
