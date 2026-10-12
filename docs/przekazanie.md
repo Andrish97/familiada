@@ -816,3 +816,11 @@ Nie ogłaszać zamkniętego grafu ani produkcji `/mail/`. Sześć etapów głów
 w kolejce wdrożeń, manual ostatni. Aktualizacje około30–60s, po statusie
 pracować dalej bez następnego „kontynuuj”. Konta9/10 nie używać,14 bez
 konta,15 tylko bezpieczne usuwanie z odtworzeniem,11/12 nie kasować.
+
+**361 lokalny prototyp:** trwałe źródła pięciu rodzin + jednorazowa zgoda
+na kolejkowanie z istniejących budżetujących RPC. Audyt bezpośredniego INSERT
+odtworzył obejście limitu relacji; kontrakt alokacji zamyka replay, również
+po skasowaniu kolejki. Szkice docs/sql/*mail-notification*361.sql; DB
+fam360clean. Nie wdrożono. Dalsze: unieważnianie po zamknięciu/flagach,
+claim/requeue/fresh delivery, pięć rodzin i wyścigi, isolated i produkcyjne
+bramki. Auth/send-email nie zmieniać: bez kolejki, flag i stopki centrum.

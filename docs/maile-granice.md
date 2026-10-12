@@ -425,3 +425,13 @@ zasobu, relacji lub cofnięcia/anulowania własnego udostępnienia przez
 nadawcę. Samo zamknięcie okna nadal X. Wspólny sharingActionIcon oraz
 renderery udostępnień pilnują tej semantyki; podpis opisuje akcję.
 Zastępuje przejściową interpretację „śmietnik przy każdej rezygnacji”.
+
+### Korekta awarii wysyłki Auth — 2026-10-12
+
+Maile rejestracji, resetu hasła, zmiany adresu i konwersji gościa nigdy nie
+wchodzą do kolejki powiadomień ani nie podlegają jej blokadom. Audyt kodu
+wykrył dawny awaryjny INSERT do tej kolejki po wyczerpaniu dostawców;
+usuwamy go. Bez dostępnego dostawcy funkcja Auth zwraca błąd wysyłki,
+nie pozorny sukces kolejkowania. Treści nadal podstawia Edge; brak stopki
+centrum i odczytu flag konta/globalnej rezygnacji. Testy obejmują sukces,
+błąd dostawcy, brak limitu i brak dostawców.
