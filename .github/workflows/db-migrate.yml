@@ -205,6 +205,12 @@ jobs:
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
             < docs/sql/test-poll-recipient-test-cleanup-351.sql
 
+      - name: Verify guest conversion requires confirmed canonical email (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-guest-conversion-identity-352.sql
+
       - name: Audit legacy subscriber identities and expired task scopes (read-only)
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
