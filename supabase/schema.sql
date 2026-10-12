@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aNaASEeIG910awbs2XwclJ9hxTIM8ePvVxHjtjmy5zYu2S3rkdObYowcK9FWN7W
+\restrict ZPBDtkTMnnldGhs70qr5JbvS8oxxggT6SSGVbw1OUjnRZLrIkKgldpq1KZWyC4M
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -471,6 +471,7 @@ CREATE FUNCTION "public"."_poll_assert_voter"("p_game_id" "uuid", "p_key" "text"
     AS $$
 DECLARE g public.games%rowtype; t public.poll_tasks%rowtype; task_id uuid; registered uuid;
 BEGIN
+ PERFORM public._poll_identity_refs(ARRAY[auth.uid()]);
  SELECT * INTO g FROM public.games WHERE id=p_game_id FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Game not found'; END IF;
  IF g.share_key_poll IS NULL OR g.share_key_poll IS DISTINCT FROM p_key THEN RAISE EXCEPTION 'Invalid poll key'; END IF;
@@ -487,11 +488,30 @@ BEGIN
  IF t.recipient_user_id IS NOT NULL THEN
   IF auth.uid() IS DISTINCT FROM t.recipient_user_id THEN RAISE EXCEPTION 'Not your task'; END IF;
  ELSE
-  SELECT id INTO registered FROM public.profiles WHERE NOT is_guest
-   AND public._norm_email(email)=public._norm_email(t.recipient_email);
+  registered:=public._poll_registered_uid(t.recipient_email);
   IF registered IS NOT NULL AND auth.uid() IS DISTINCT FROM registered THEN RAISE EXCEPTION 'Not your task'; END IF;
+  IF registered IS NOT NULL THEN UPDATE public.poll_tasks SET recipient_user_id=registered,recipient_email=NULL WHERE id=t.id; END IF;
  END IF;
 END; $$;
+
+
+--
+-- Name: _poll_bind_identity("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_bind_identity"("p_uid" "uuid", "p_email" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE r record;
+BEGIN
+ IF public._norm_email(p_email) IS NULL THEN RETURN; END IF;
+ IF EXISTS(SELECT 1 FROM auth.users WHERE id<>p_uid AND public._norm_email(email)=public._norm_email(p_email)) THEN RETURN; END IF;
+ FOR r IN SELECT id FROM public.poll_tasks WHERE recipient_user_id IS NULL
+  AND public._norm_email(recipient_email)=public._norm_email(p_email) ORDER BY game_id,id FOR UPDATE LOOP
+  UPDATE public.poll_tasks SET recipient_user_id=p_uid,recipient_email=NULL WHERE id=r.id AND recipient_user_id IS NULL;
+ END LOOP;
+END $$;
 
 
 --
@@ -535,6 +555,143 @@ BEGIN
          share_key_poll = public.gen_share_key(18),
          updated_at = now()
    WHERE id = p_game_id;
+END $$;
+
+
+--
+-- Name: _poll_identity_auth_trigger(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_identity_auth_trigger"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF TG_OP='UPDATE' AND NEW.email IS DISTINCT FROM OLD.email AND EXISTS(SELECT 1 FROM auth.users WHERE id<>NEW.id AND public._norm_email(email)=public._norm_email(NEW.email)) THEN RAISE EXCEPTION 'Email already registered' USING ERRCODE='23505'; END IF;
+ IF TG_OP='DELETE' THEN PERFORM public._poll_identity_mail_locks(ARRAY[OLD.email]);
+ ELSIF TG_OP='INSERT' THEN PERFORM public._poll_identity_mail_locks(ARRAY[NEW.email]);
+ ELSE PERFORM public._poll_identity_mail_locks(ARRAY[OLD.email,NEW.email]); END IF;
+ IF TG_OP IN('UPDATE','DELETE') AND public._poll_identity_regular(OLD.id,to_jsonb(OLD)) THEN
+  PERFORM public._poll_bind_identity(OLD.id,OLD.email);
+ END IF;
+ IF TG_OP IN('UPDATE','INSERT') AND public._poll_identity_regular(NEW.id,to_jsonb(NEW)) THEN
+  PERFORM public._poll_bind_identity(NEW.id,NEW.email);
+ END IF;
+ IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+ RETURN NEW;
+END $$;
+
+
+--
+-- Name: _poll_identity_email_refs("text"[], "uuid"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_identity_email_refs"("p_emails" "text"[], "p_ids" "uuid"[]) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE before_ids uuid[]; after_ids uuid[];
+BEGIN
+ FOR attempt IN 1..100 LOOP
+  BEGIN
+   SELECT coalesce(array_agg(DISTINCT id ORDER BY id),'{}'::uuid[]) INTO before_ids FROM (SELECT public._poll_registered_uid(x) AS id FROM unnest(coalesce(p_emails,'{}'::text[])) x) r WHERE id IS NOT NULL;
+   PERFORM public._poll_identity_refs(coalesce(p_ids,'{}'::uuid[])||before_ids);
+   PERFORM public._poll_identity_mail_locks(p_emails);
+   SELECT coalesce(array_agg(DISTINCT id ORDER BY id),'{}'::uuid[]) INTO after_ids FROM (SELECT public._poll_registered_uid(x) AS id FROM unnest(coalesce(p_emails,'{}'::text[])) x) r WHERE id IS NOT NULL;
+   IF before_ids IS DISTINCT FROM after_ids THEN RAISE EXCEPTION 'identity changed while acquiring email locks' USING ERRCODE='55P03'; END IF;
+   RETURN;
+  EXCEPTION WHEN lock_not_available THEN
+   IF attempt=100 THEN RAISE; END IF;
+  END;
+  PERFORM pg_sleep(.01);
+ END LOOP;
+END $$;
+
+
+--
+-- Name: _poll_identity_mail_locks("text"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_identity_mail_locks"("p_emails" "text"[]) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE e text;
+BEGIN
+ FOR e IN SELECT DISTINCT public._norm_email(x) FROM unnest(coalesce(p_emails,'{}'::text[])) x WHERE public._norm_email(x) IS NOT NULL ORDER BY 1 LOOP
+  PERFORM pg_advisory_xact_lock(hashtextextended('poll-email-identity:'||e,351));
+ END LOOP;
+END $$;
+
+
+--
+-- Name: _poll_identity_profile_trigger(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_identity_profile_trigger"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE ident jsonb;
+BEGIN
+ IF NEW.is_guest THEN RETURN NEW; END IF;
+ IF TG_OP='UPDATE' AND NEW.email IS NOT DISTINCT FROM OLD.email AND NEW.is_guest IS NOT DISTINCT FROM OLD.is_guest THEN RETURN NEW; END IF;
+ -- Take the auth lock before binding tasks; conversion may update auth later.
+ SELECT to_jsonb(u) INTO ident FROM auth.users u WHERE u.id=NEW.id FOR UPDATE;
+ IF FOUND AND public._norm_email(ident->>'email')=public._norm_email(NEW.email)
+  AND public._poll_identity_regular(NEW.id,ident) THEN
+  PERFORM public._poll_identity_mail_locks(ARRAY[NEW.email]);
+  PERFORM public._poll_bind_identity(NEW.id,NEW.email);
+ END IF;
+ RETURN NEW;
+END $$;
+
+
+--
+-- Name: _poll_identity_refs("uuid"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_identity_refs"("p_ids" "uuid"[]) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ PERFORM 1 FROM auth.users WHERE id=ANY(coalesce(p_ids,'{}'::uuid[])) ORDER BY id FOR KEY SHARE;
+ IF auth.uid() IS NOT NULL AND NOT EXISTS(SELECT 1 FROM auth.users WHERE id=auth.uid()) THEN RAISE EXCEPTION 'Not your task'; END IF;
+END $$;
+
+
+--
+-- Name: _poll_identity_regular("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_identity_regular"("p_uid" "uuid", "p_identity" "jsonb") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT NOT coalesce((SELECT p.is_guest FROM public.profiles p WHERE p.id=p_uid),
+   coalesce(p_identity->>'is_anonymous','false')='true' OR coalesce(p_identity->'raw_user_meta_data'->>'is_guest','false')='true');
+$$;
+
+
+--
+-- Name: _poll_identity_task_insert(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_identity_task_insert"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE uid uuid;
+BEGIN
+ PERFORM public._poll_identity_email_refs(ARRAY[NEW.recipient_email],ARRAY[NEW.owner_id,NEW.recipient_user_id,auth.uid()]);
+ IF NEW.recipient_user_id IS NULL AND NEW.recipient_email IS NOT NULL THEN
+  uid:=public._poll_registered_uid(NEW.recipient_email);
+  IF uid IS NOT NULL THEN
+   NEW.recipient_user_id:=uid; NEW.recipient_email:=NULL;
+  END IF;
+ END IF;
+ RETURN NEW;
 END $$;
 
 
@@ -748,6 +905,23 @@ $$;
 
 
 --
+-- Name: _poll_registered_uid("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_registered_uid"("p_email" "text") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE ids uuid[];
+BEGIN
+ SELECT array_agg(u.id ORDER BY u.id) INTO ids FROM auth.users u
+ WHERE public._norm_email(u.email)=public._norm_email(p_email) AND public._poll_identity_regular(u.id,to_jsonb(u));
+ IF coalesce(cardinality(ids),0)>1 THEN RAISE EXCEPTION 'Ambiguous task recipient'; END IF;
+ RETURN ids[1];
+END $$;
+
+
+--
 -- Name: _poll_share_contact_locks("uuid", "uuid"[], "uuid"[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -757,6 +931,7 @@ CREATE FUNCTION "public"."_poll_share_contact_locks"("p_owner" "uuid", "p_friend
     AS $$
 DECLARE recipient uuid; recipient_email text;
 BEGIN
+ PERFORM public._poll_identity_email_refs((SELECT array_agg(subscriber_email) FROM public.poll_subscriptions WHERE owner_id=p_owner AND id=ANY(coalesce(p_subscriber_ids,'{}'::uuid[]))),ARRAY[p_owner]||coalesce(p_friend_ids,'{}'::uuid[]));
  -- Contacts precede the game. Ordered pairs match the friends RPCs.
  FOR recipient IN SELECT p.id FROM public.profiles p
  WHERE p.id=ANY(coalesce(p_friend_ids,'{}'::uuid[])) AND p.id<>p_owner ORDER BY p.id LOOP
@@ -799,6 +974,7 @@ CREATE FUNCTION "public"."_poll_task_change"("p_token" "uuid", "p_action" "text"
     AS $$
 DECLARE t public.poll_tasks%rowtype; g public.games%rowtype; uid uuid:=auth.uid(); registered uuid;
 BEGIN
+ PERFORM public._poll_identity_refs(ARRAY[auth.uid()]);
  IF p_action NOT IN ('open','decline','done') OR p_action IS NULL THEN RETURN 'invalid_action'; END IF;
  SELECT * INTO t FROM public.poll_tasks WHERE token=p_token;
  IF NOT FOUND THEN RETURN 'not_found'; END IF;
@@ -814,9 +990,9 @@ BEGIN
  IF t.recipient_user_id IS NOT NULL THEN
   IF uid IS DISTINCT FROM t.recipient_user_id THEN RETURN 'not_your_task'; END IF;
  ELSE
-  SELECT id INTO registered FROM public.profiles WHERE NOT is_guest
-   AND public._norm_email(email)=public._norm_email(t.recipient_email);
+  registered:=public._poll_registered_uid(t.recipient_email);
   IF registered IS NOT NULL AND uid IS DISTINCT FROM registered THEN RETURN 'not_your_task'; END IF;
+  IF registered IS NOT NULL THEN UPDATE public.poll_tasks SET recipient_user_id=registered,recipient_email=NULL WHERE id=t.id; END IF;
  END IF;
  IF p_action='done' AND t.status='done' AND t.done_at IS NOT NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL THEN RETURN 'ok'; END IF;
  IF t.status NOT IN ('pending','opened') OR t.declined_at IS NOT NULL OR t.cancelled_at IS NOT NULL OR t.done_at IS NOT NULL THEN RETURN 'already_used'; END IF;
@@ -3668,7 +3844,7 @@ DECLARE v_uid uuid:=auth.uid(); v_caller text; v_email text:=lower(trim(p_email)
 BEGIN
   SELECT lower(email) INTO v_caller FROM auth.users WHERE id=v_uid;
   IF v_caller IS NULL OR v_caller !~ '^test[1-8]@familiada[.]online$'
-    OR v_email IS DISTINCT FROM 'test14@familiada.online' THEN
+    OR v_email NOT IN ('test14@familiada.online','test15@familiada.online') OR v_email IS NULL THEN
     RETURN jsonb_build_object('ok',false,'err','test accounts required');
   END IF;
   DELETE FROM public.poll_tasks WHERE owner_id=v_uid AND lower(recipient_email)=v_email;
@@ -9766,14 +9942,16 @@ CREATE FUNCTION "public"."poll_claim_email_records"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE v_email text := public.poll_my_email();
+DECLARE e text;
 BEGIN
-  IF auth.uid() IS NULL OR v_email IS NULL OR v_email='' THEN RETURN; END IF;
-  UPDATE public.poll_tasks SET recipient_user_id=auth.uid(),recipient_email=NULL
-  WHERE recipient_user_id IS NULL AND lower(trim(recipient_email))=v_email
-    AND done_at IS NULL AND declined_at IS NULL AND cancelled_at IS NULL;
-  PERFORM public.friend_invites_from_subscriptions();
-END; $$;
+ PERFORM public._poll_identity_refs(ARRAY[auth.uid()]);
+ SELECT u.email INTO e FROM auth.users u JOIN public.profiles p ON p.id=u.id
+ WHERE u.id=auth.uid() AND public._norm_email(u.email)=public._norm_email(p.email) AND public._poll_identity_regular(u.id,to_jsonb(u));
+ IF e IS NULL THEN RETURN; END IF;
+ -- Contact locks precede task rows, consistent with sharing.
+ PERFORM public.friend_invites_from_subscriptions();
+ PERFORM public._poll_bind_identity(auth.uid(),e);
+END $$;
 
 
 --
@@ -10290,11 +10468,9 @@ END; $$;
 
 CREATE FUNCTION "public"."poll_my_email"() RETURNS "text"
     LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-  select lower(trim(p.email))
-  from public.profiles p
-  where p.id = auth.uid()
-  limit 1
+ SELECT public._norm_email(u.email) FROM auth.users u WHERE u.id=auth.uid() AND public._poll_identity_regular(u.id,to_jsonb(u));
 $$;
 
 
@@ -11105,8 +11281,7 @@ BEGIN
   END IF;
 
   IF t.recipient_user_id IS NULL THEN
-    SELECT id INTO registered FROM public.profiles WHERE NOT is_guest
-      AND public._norm_email(email)=public._norm_email(t.recipient_email);
+    registered:=public._poll_registered_uid(t.recipient_email);
     IF registered IS NOT NULL THEN
       IF u IS NULL THEN requires_auth := true;
       ELSIF u <> registered THEN RETURN jsonb_build_object('ok',false,'error','invalid_or_unavailable_token'); END IF;
@@ -17344,6 +17519,20 @@ CREATE TRIGGER "guard_final_display_completion" BEFORE UPDATE ON "public"."game_
 
 
 --
+-- Name: profiles poll_identity_profile; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "poll_identity_profile" AFTER INSERT OR UPDATE OF "email", "is_guest" ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."_poll_identity_profile_trigger"();
+
+
+--
+-- Name: poll_tasks poll_identity_task_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "poll_identity_task_insert" BEFORE INSERT ON "public"."poll_tasks" FOR EACH ROW EXECUTE FUNCTION "public"."_poll_identity_task_insert"();
+
+
+--
 -- Name: poll_tasks poll_tasks_cleanup_partial_votes; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -19687,5 +19876,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aNaASEeIG910awbs2XwclJ9hxTIM8ePvVxHjtjmy5zYu2S3rkdObYowcK9FWN7W
+\unrestrict ZPBDtkTMnnldGhs70qr5JbvS8oxxggT6SSGVbw1OUjnRZLrIkKgldpq1KZWyC4M
 
