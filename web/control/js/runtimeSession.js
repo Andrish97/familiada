@@ -63,5 +63,5 @@ export function createRuntimeSession({ gameId, onExpired }) {
     document.removeEventListener("change", onActivity, true);
   }
 
-  return { start, stop, get sessionId() { return sessionId; } };
+  return { start, stop, noteActivity: onActivity, get sessionId() { return sessionId; } };
 }

@@ -834,3 +834,13 @@ Najnowsza zmiana centrum mail-only: globalna rezygnacja nadrzędna, anuluje wszy
 - Lokalnie: 463/463 unit; SQL na pełnym izolowanym schemacie: czyszczenie, załączniki, niezmienione inne źródła/kierunki, powtórne wykonanie migracji, odmowa technicznego nadawcy i akceptacja zwykłych nadawców. Kontrakt produkcyjny wyłącznie z wycofywanymi danymi testowymi, bez wysyłania kontaktu/Telegrama.
 - Scalono bieżący `main` (5d41924dcb), zachowując zmiany drugiej sesji w statystykach Control. Paczka `aea5f23a74` wdrożona: Worker **38267398689 success**, baza **38267398627 success**, migracja OK **15:05:09Z**. Usunięto **13** technicznych kopii, zero z załącznikami; schema/log wróciły w **19983eef0c**.
 - Kontrola produkcyjna **38267524680 success**, punktowy test udostępniania Control 1/1, retries0, konta1/7; rzeczywisty SMTP odebrany przez test7 po **26,9 s**. Test zakończony15:06:15Z; kontrola SQL pustej listy technicznych kopii i ochrony RPC przeszła **15:06:21Z**, po dostarczeniu maila. Unit463/463. Incydent zamknięty; dalsza kolejka grafu/centrum `/mail/` pozostaje aktualna.
+
+### 2026-10-12 — Control: osobny guard i tryb testowy, pierwsza implementacja
+
+Branch `codex/control-test-mode`: flaga w istniejących ustawieniach,
+trzy aktywne iframe, geometria panelu i osobny próg dostępności, podsumowanie
+z sekcjami i stronicowaniem, oznaczenie statystyk. Point unit29/29;
+pomiary renderera64 przypadki bez przewijania/wyjścia poza obszar.
+To nie zamyka etapu: następne punktowe E2E brancha z produkcyjną bazą,
+zapisem statystyk, odświeżeniem i rzeczywistymi urządzeniami. Dopiero green
+pozwala wdrożyć Pages, potem kontrola main. Nie zmieniano schematu bazy.

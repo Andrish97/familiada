@@ -5297,6 +5297,7 @@ function buildSessionRunDetails(r) {
     p.className = "stats-session-run-line";
     details.appendChild(p);
   }
+  if (info.settings?.testMode === true) line("Tryb testowy");
   const teams = info.teams || {};
   const gameTitle = document.createElement("strong");
   gameTitle.className = "stats-session-run-teams";

@@ -98,3 +98,19 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
 - 2026-10-12: rozdzielono regułę guarda zwykłego Control od dodatkowego
   progu trybu testowego; zero przewijania jest zasadą nadrzędną w obu
   układach. Zgoda na wdrożenie po testach brancha i potwierdzeniu statystyk.
+
+### Pierwsza implementacja brancha
+
+- Dwie niezależne reguły geometrii. Robocza minimalna skala panelu 85%;
+  punkt odniesienia 1100×680 obszaru panelu. Próg wyliczany z obu wymiarów
+  okna i rzeczywistej wysokości topbara, nie ze stałej szerokości ekranu.
+- Wspólny device guard przyjmuje dodatkowy warunek dopasowania Control.
+  Próg testowy blokuje opcję osobno; przy zwężeniu aktywnego trybu nakładka
+  wstrzymuje korzystanie bez usuwania zapisanej flagi.
+- Podsumowanie ma sekcje wybierane przyciskami i strony po pięć pozycji
+  dla długich list pytań i dźwięków. Wszystkie pozycje pozostają dostępne;
+  nie są ukrywane przez obcięcie kontenera.
+- Testy jednostkowe geometrii i page-init: 29/29. Wstępne ponowne pomiary
+  64 przypadków renderera (osiem kroków, cztery rozmiary, dwa warianty):
+  brak przewijania/wyjścia poza panel. Nadal wymagane sprawdzenie wszystkich
+  sekcji podsumowania oraz rzeczywistego iframe/przepływu/statystyk w E2E.

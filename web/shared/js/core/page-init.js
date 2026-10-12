@@ -151,7 +151,7 @@ export async function initPage(id, opts = {}) {
   // Urządzenie: guard stoi przed wszystkim, co strona zrobi dalej.
   let blockedByDevice = false;
   if (p.device === "wide") {
-    d.guardDesktopOnly({ backHref: backHref(id, { anon: !user }) });
+    d.guardDesktopOnly({ backHref: backHref(id, { anon: !user }), ...opts.deviceGuard });
   } else if (p.device === "noPhone") {
     blockedByDevice = d.blockPhone({ backHref: backHref(id, { anon: !user }) });
   }

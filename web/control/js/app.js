@@ -110,6 +110,7 @@ import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-12T1629
 import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-12T16294";
 import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-12T16294";
 import { createSoundReactor } from "./soundReactor.js?v=v2026-10-12T16294";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-12T16294";
 import { createUI } from "./ui.js?v=v2026-10-12T16294";
 import { createShareDevice } from "./shareDevice.js?v=v2026-10-12T16294";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-12T16294";
@@ -172,6 +173,7 @@ async function main() {
   // utworzeniu store (do tego czasu wyjście jest swobodne).
   let beforeLeave = async () => true;
   let runtimeSession = null;
+  let testModePanel = null;
   const i18nP = initI18n({ withSwitcher: true });
   // Blokady strony (guardResourceLocks): zwalniane przed przejściem do
   // instrukcji / ustawień gry, żeby tamta strona mogła je od razu zająć.
@@ -185,6 +187,7 @@ async function main() {
   // jest w bazie, więc po powrocie store.hydrate() wznawia rozgrywkę.
   const userP = initPage("control", {
     ready: i18nP,
+    deviceGuard: { fits: () => currentControlGeometry().fits, messageKey: "control.panelTooSmall" },
     onBack: async (href) => {
       if (!(await beforeLeave())) return;
       location.href = href;
@@ -548,7 +551,7 @@ async function main() {
   // gry. Nie może blokować przejścia do rozgrywki; UI zatrzymuje go przy
   // wyjściu z Podsumowania. Poza tym krokiem aktywne SFX nadal blokują akcje.
   function presenceReadBlocksGame() { return presenceUnavailable && store.state.locks.gameStarted && !store.state.locks.gameEnded; }
-  function busy() { return controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  function busy() { return testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
@@ -602,6 +605,7 @@ async function main() {
   // dostawać DOKŁADNIE tę samą blokadę, inaczej auto-pudło z 3s zegarka
   // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
   async function dispatchGatedNow(action) {
+    if (testModePanel?.blocked() && !action.type.startsWith("EXPIRE_")) return null;
     if (controlOffline || waitingForDisplayAudioUnlock()) return null;
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
@@ -742,6 +746,7 @@ async function main() {
 
   const devices = createDevices({ game });
   const urls = await devices.buildUrls(getUiLang());
+  testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
   const connectCodes = {};
   for (const kind of ["display", "host", "buzzer"]) {
     connectCodes[kind] = await devices.generateConnectCode(kind).catch(() => null);
@@ -983,7 +988,7 @@ async function main() {
     if (ended && !outroReturnReady && !outroUnlockTimer) {
       outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
     }
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -997,7 +1002,8 @@ async function main() {
     // przez kolejkę dispatchGated()), a operator z trwale zablokowanym UI
     // bez żadnego śladu w konsoli, dlaczego.
     try {
-      ui.render(store.state, renderCtx());
+      testModePanel.update(store.state.settings.testMode);
+      ui.render(store.state, { ...renderCtx(), testModeAvailable: testModePanel.canEnable() });
     } catch (e) {
       console.error("[control2] render() rzucił -- UI może zostać nieaktualne:", e);
     }
@@ -1052,6 +1058,7 @@ async function main() {
     return t("control.qrModalTitle");
   }
   function showQrModal(kind) {
+    if (store.state.settings.testMode) return;
     const url = getDeviceUrl(kind);
     if (!url) return;
     const overlay = document.getElementById("qrModalOverlay");
@@ -1223,6 +1230,22 @@ async function main() {
 
   async function handle(action, payload) {
     try {
+      if (testModePanel.blocked() && action !== "devices.testMode") return;
+      if (store.state.settings.testMode && ["devices.noHostTablet", "devices.physicalBuzzer", "devices.copyCode", "devices.shareOpen", "qr.modal.show", "qr.host.toggle", "qr.buzzer.toggle"].includes(action)) return;
+      if (action === "devices.testMode") {
+        if (store.state.step !== "devices_display" || (payload && !testModePanel.canEnable())) return;
+        store.state.settings.testMode = !!payload;
+        if (payload) {
+          store.state.settings.noHostTablet = false;
+          store.state.settings.physicalBuzzer = false;
+          store.state.display.qr.host.show = false;
+          store.state.display.qr.buzzer.show = false;
+          store.state.display.mode = "BLACK";
+        }
+        await store.commit();
+        renderCurrent();
+        return;
+      }
       const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
       if (gameAction && restarting) return;
       if (gameAction && missingDevices(store.state, presenceFlags).length) noteConnectivityBlockedAction(payload?.type || action);
@@ -1476,7 +1499,7 @@ async function main() {
     for (const key of ADVANCED_SETTINGS_KEYS) keptAdvanced[key] = store.state.settings[key];
     store.state.locks = { gameStarted: false, finalActive: false, gameEnded: false };
     store.state.teams = { teamA: "", teamB: "" };
-    store.state.settings = { ...DEFAULT_SETTINGS, ...keptAdvanced };
+    store.state.settings = { ...DEFAULT_SETTINGS, ...keptAdvanced, testMode: store.state.settings.testMode === true };
     store.state.rounds = {
       roundNo: 1, bankPts: 0, xA: 0, xB: 0, totals: { A: 0, B: 0 },
       passUsed: false, allowPass: false, canEndRound: false, lockPlayControls: false,

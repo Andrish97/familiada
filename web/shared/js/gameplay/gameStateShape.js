@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS = {
   roundsQuestionsMode: "random",
   finalQuestionsMode: "random",
   roundsPicked: [],
+  testMode: false,
   physicalBuzzer: false,
   noHostTablet: false,
   roundMultipliers: [1, 1, 1, 2, 3],
