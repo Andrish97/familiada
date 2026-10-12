@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zF4hbXbdNqxaYRm8NqQrl0k4MEBgLX4ef0pPZiM6EPFjpY5S0z1iKomlCdMge2Y
+\restrict byQDM9zS2uPn71ZcKGMaw1NQc5Erich7yH1P4JiBOZ5I4WkQyFZd1GJFslUlx6O
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -12248,7 +12248,7 @@ BEGIN
   SELECT
     ps.id, ps.status, ps.owner_id,
     p.username AS owner_label,
-    ps.subscriber_user_id, ps.subscriber_email, ps.opened_at,ps.registered_user_id
+    ps.subscriber_user_id, ps.subscriber_email, ps.opened_at,ps.registered_user_id,ps.cancelled_at,ps.declined_at
   INTO s
   FROM public.poll_subscriptions ps
   LEFT JOIN public.profiles p ON p.id = ps.owner_id
@@ -12264,6 +12264,8 @@ BEGIN
       'sub_id', s.id, 'status', s.status,
       'owner_id', s.owner_id, 'owner_label', s.owner_label,
       'subscriber_user_id', s.subscriber_user_id,
+      'registered_user_id', s.registered_user_id,
+      'cancelled_at', s.cancelled_at, 'declined_at', s.declined_at,
       'subscriber_email', s.subscriber_email,
       'friend_conversion_required', s.registered_user_id IS NOT NULL OR s.subscriber_user_id IS NOT NULL OR public._poll_registered_uid(s.subscriber_email) IS NOT NULL
     );
@@ -22405,5 +22407,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zF4hbXbdNqxaYRm8NqQrl0k4MEBgLX4ef0pPZiM6EPFjpY5S0z1iKomlCdMge2Y
+\unrestrict byQDM9zS2uPn71ZcKGMaw1NQc5Erich7yH1P4JiBOZ5I4WkQyFZd1GJFslUlx6O
 
