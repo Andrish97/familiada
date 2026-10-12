@@ -755,3 +755,5 @@ Stan szczegółowy:
 | 2026-10-12 |357 / branch E2E fixture |38243758561:3 stare testy success, nowy zatrzymany na bezpośrednim SELECT prywatnych źródeł (RLS deny all,406 single). Test źródła pozostaje w SQL, E2E kontroluje publiczne skutki; mail wybierany po unikatowej nazwie bazy, żeby wykluczyć resztkową kolejkę wcześniejszego testu. | Ponowne4 testy bez retry; front nadal poza main. |
 
 | 2026-10-12 | Następny audyt kolejki / lokalny dowód | /tmp/e19-358/queue-source-audit.sql na fam357ddl, rollback: pending mail do syntetycznego odbiorcy z linkiem bazy, potem cofnięcie taska; mail_queue_pick_selected nadal wybiera1 zamknięte zaproszenie do wysyłki. Bez SMTP i bez danych produkcyjnych. | Po zamknięciu357 wspólna ważność przed queue/claim/delivery; nie ma358 w repo/produkcji. |
+
+| 2026-10-12 | E19C/E20 / plakietki Logo i Baz | Przed akceptacją: Bazy na wypustce Udostępnione, Logo na wypustkach typów i suma na przycisku strony Logo. Otwarcie bez decyzji zachowuje licznik; po decyzji/zamknięciu aktualizacja, zero ukryte, mail-off bez wpływu, Zadania bez powielenia. | Dopisano do E19, kopii i źródła wyglądu. |

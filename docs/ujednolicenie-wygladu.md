@@ -960,3 +960,20 @@ i kompaktowe menu w E20. Ukrycie filtra usuwa także jego aktywny warunek
 z listy i zapisu stanu; wyszukiwanie/sortowanie mają własną dostępność.
 Wcześniejszą ogólną sugestię filtra rynku zastępuje jawna decyzja
 „Gry społeczności bez filtra”; wykonanych etapów nie otwierać ponownie.
+
+### E19C/E20 — plakietki oczekujących Logo i Baz (2026-10-12)
+
+| Miejsce | Co zlicza plakietka przed akceptacją |
+|---|---|
+| Bazy → wypustka Udostępnione | Dostępne propozycje baz oczekujące na decyzję odbiorcy. |
+| Logo → wypustki typów | Oczekujące kopie danego typu logo; dotyczy każdej odpowiedniej wypustki. |
+| Przycisk strony Logo | Suma oczekujących propozycji ze wszystkich typów Logo, w miejscach gdzie ten skrót występuje. |
+
+Wspólna `.badge`, te same rozmiary i zasady co pozostałe plakietki. Otwarcie
+propozycji bez decyzji nie usuwa plakietki. Akceptacja/odrzucenie, cofnięcie
+dostępu do bazy, usunięcie albo wygaśnięcie propozycji aktualizują liczniki;
+cofnięcie własnej odmowy przywraca licznik, jeśli propozycja znów oczekuje.
+Zero ukrywa plakietkę. Przyjęty własny zasób/zaakceptowany dostęp oraz
+odmowy nie są zliczane. Flaga maili nie wpływa na te liczniki. Wypustki
+i przycisk korzystają z jednego źródła; nie powielać w Zadaniach (tylko
+ankiety). Zweryfikować także telefon, tablet i powrót na stronę.
