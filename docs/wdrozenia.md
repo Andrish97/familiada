@@ -166,6 +166,7 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 ## Dziennik
 
 | 2026-10-12 | Logo Rysunek — decyzja i poprawka | Branch codex/logo-draw-delete: × w opcjach zaznaczenia, Delete/Fn+Backspace, Cofnij/Ponów; punktowy opis manuala PL/EN/UK na wyraźne polecenie użytkownika. Decyzja w ujednolicenie-wygladu.md. | W toku: unit, punktowy e2e branch, Pages i kontrola produkcji. |
+| 2026-10-12 | Logo Rysunek — bramka branch | d16579dc2b; e2e38245344054 success1/1 bez retry, unit459/459 lokalnie i CI. Pojedyncze/wiele/mieszane/tekst/wszystkie elementy, ochrona pisania, Delete, Cofnij/Ponów i Ctrl+Z/⌘Z, autozapis/ponowne otwarcie, manual PL/EN/UK; zrzuty390/1400. Scalono aktualne main bez konfliktów, bez dalszych zmian frontu. | Wdrożenie Pages i identyczna kontrola na produkcji. |
 
 ### 2026-10-11 — E19 krok 6 wznowiony
 

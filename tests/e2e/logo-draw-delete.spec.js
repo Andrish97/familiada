@@ -43,6 +43,7 @@ test("Rysunek: × i Delete usuwają zaznaczenie, Cofnij/Ponów odtwarzają je", 
     await expect(page.locator("#cDelete")).toHaveAttribute("title", /Delete.*Fn \+ Backspace/);
     for (const width of [1400, 390]) {
       await page.setViewportSize({ width, height: 900 });
+      await page.mouse.move(0, 0);
       await expect(page.locator("#cDelete")).toBeVisible();
       await page.screenshot({ path: testInfo.outputPath(`shot-delete-selection-${width}.png`), fullPage: true });
     }
