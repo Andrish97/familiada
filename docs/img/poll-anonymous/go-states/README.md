@@ -1,6 +1,6 @@
 # Anonimowe ankiety — głosowanie i stany linków
 
-Przebieg [38320834879](https://github.com/Andrish97/familiada/actions/runs/38320834879), kod `012823a8d63775cf274dc41a384b6ba8d5ca8be9`.
+Przebieg [38321062827](https://github.com/Andrish97/familiada/actions/runs/38321062827), kod `333f212e0793b494920102ad31fbbfe214c1f595`.
 
 Macierz komunikatów: przykładowe odpowiedzi resolverów, rzeczywiste logowanie. Te zrzuty sprawdzają interfejs, nie dostarczanie maili ani zmiany w bazie. Telefon i komputer.
 
@@ -36,6 +36,14 @@ Macierz komunikatów: przykładowe odpowiedzi resolverów, rzeczywiste logowanie
 
 ![shot-anon362-go-matrix-canonical-account-390](shot-anon362-go-matrix-canonical-account-390.png)
 
+## go-matrix-friends-active-1400
+
+![shot-anon362-go-matrix-friends-active-1400](shot-anon362-go-matrix-friends-active-1400.png)
+
+## go-matrix-friends-active-390
+
+![shot-anon362-go-matrix-friends-active-390](shot-anon362-go-matrix-friends-active-390.png)
+
 ## go-matrix-guest-subscription-1400
 
 ![shot-anon362-go-matrix-guest-subscription-1400](shot-anon362-go-matrix-guest-subscription-1400.png)
@@ -51,6 +59,14 @@ Macierz komunikatów: przykładowe odpowiedzi resolverów, rzeczywiste logowanie
 ## go-matrix-historical-friend-390
 
 ![shot-anon362-go-matrix-historical-friend-390](shot-anon362-go-matrix-historical-friend-390.png)
+
+## go-matrix-legacy-notifications-1400
+
+![shot-anon362-go-matrix-legacy-notifications-1400](shot-anon362-go-matrix-legacy-notifications-1400.png)
+
+## go-matrix-legacy-notifications-390
+
+![shot-anon362-go-matrix-legacy-notifications-390](shot-anon362-go-matrix-legacy-notifications-390.png)
 
 ## go-matrix-network-retry-1400
 
