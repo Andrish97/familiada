@@ -1,6 +1,6 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-12T21201";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-12T21201";
-import { icon, iconText } from "./icons.js?v=v2026-10-12T21201";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-12T21213";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-12T21213";
+import { icon, iconText } from "./icons.js?v=v2026-10-12T21213";
 
 let modalEl = null;
 let isSubmitting = false;
@@ -218,7 +218,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-12T21201");
+    const { sb } = await import("./supabase.js?v=v2026-10-12T21213");
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
     const isGuest = user?.user_metadata?.is_guest === true || user?.app_metadata?.is_guest === true;
@@ -231,6 +231,7 @@ async function prefillEmail() {
 }
 
 export async function openContactModal(opts = {}) {
+  if (document.body?.hasAttribute("data-device-screen")) return;
   ensureModal();
   applyLabels();
 
@@ -379,6 +380,7 @@ async function submitContact() {
 }
 
 function ensureContactEntryPoint() {
+  if (document.body?.hasAttribute("data-device-screen")) return;
   if (document.querySelector('[data-contact-modal], .btn-contact-footer')) return;
   let footer = document.querySelector('.footer');
   if (!footer) {
