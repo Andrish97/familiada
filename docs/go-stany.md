@@ -24,12 +24,12 @@ Kopie Gier/Logo otrzymają własne wiersze przy E19C.
 | Stan | Komunikat | Akcja |
 |---|---|---|
 | Brak rodzaju linku | Brak linku | Brak |
-| Mieszane rodzaje/powtórzony token/niepoprawne parametry | Link nieważny | Brak; wspólny parser wszystkich rodzajów, frontend na branchu |
+| Mieszane rodzaje/powtórzony token/niepoprawne parametry | Link nieważny | Brak; wspólny parser wszystkich rodzajów, frontend zamknięty produkcyjnie |
 | Nie ma rodzica lub tokenu | To zaproszenie wygasło / Link nieważny, zależnie od znanego rodzaju | Brak; nie odtwarzać dawnego dostępu |
-| Cofnięty dostęp albo nadrzędna rezygnacja adresu (`revoked`) | Udostępnienie jest już niedostępne | Brak działania na zasobie; wspólny komunikat na branchu |
+| Cofnięty dostęp albo nadrzędna rezygnacja adresu (`revoked`) | Udostępnienie jest już niedostępne | Brak działania na zasobie; wspólny komunikat na produkcji |
 | Brak logowania do linku konta | Zaloguj się, aby otworzyć zaproszenie | Logowanie z zachowaniem rodzaju linku i powrotu |
-| Inne konto | To konto nie jest odbiorcą zaproszenia | Bez akceptacji/głosowania; wspólny komunikat bez pustego adresu na branchu |
-| Błąd sieci | Nie udało się sprawdzić linku. Spróbuj ponownie później. | Ponowne sprawdzenie wszystkich rodzin na branchu |
+| Inne konto | To konto nie jest odbiorcą zaproszenia | Bez akceptacji/głosowania; wspólny komunikat bez pustego adresu na produkcji |
+| Błąd sieci | Nie udało się sprawdzić linku. Spróbuj ponownie później. | Ponowne sprawdzenie wszystkich rodzin na produkcji |
 
 ## Znajomi (`f`; historyczny `s` może zwrócić rodzaj friend)
 
@@ -51,9 +51,9 @@ Kopie Gier/Logo otrzymają własne wiersze przy E19C.
 | cancelled / expired | Zaproszenie wygasło | Brak akceptacji, pola nowego maila ani tworzenia nowej relacji |
 | Globalna rezygnacja | Udostępnienie jest już niedostępne | Globalna reguła ma pierwszeństwo; zarządzanie flagą w centrum maili |
 | Adres został przypisany do konta | Konto korzysta ze Znajomych | Właściwe konto: Znajomi → Propozycje, bez akceptacji subskrypcji w panelu |
-| To konto potem zmieniło adres | Ten sam odbiorca | Resolver363 przekazuje zapisany `registered_user_id` (produkcja potwierdzona); Go na branchu sprawdza ten ID przed adresem |
+| To konto potem zmieniło adres | Ten sam odbiorca | Resolver363 przekazuje zapisany `registered_user_id` (produkcja potwierdzona); Go na produkcji sprawdza ten ID przed adresem |
 | Inne konto / nowy właściciel dawnego adresu | To konto nie jest odbiorcą zaproszenia | Brak przejęcia wcześniejszej relacji; kanoniczny ID ma pierwszeństwo |
-| `action=unsub` po konwersji tokenu na friend | Konto korzysta ze Znajomych | Na branchu: przejście do Znajomych; bez wywołania RPC subskrypcji dla relacji friend |
+| `action=unsub` po konwersji tokenu na friend | Konto korzysta ze Znajomych | Na produkcji: przejście do Znajomych; bez wywołania RPC subskrypcji dla relacji friend |
 
 ## Osobiste zadanie ankiety (`t`)
 
@@ -89,9 +89,9 @@ Jeden licznik dotyczy późniejszego formularza, nie sprawdzania linku w Go.
 | Stan | Komunikat | Akcja i warunek |
 |---|---|---|
 | pending/opened | Zaproszenie do bazy | Konto odbiorcy: Bazy → Udostępnione. Bez sesji: Logowanie. Akceptacja/odmowa na stronie Baz |
-| done | Baza została już przyjęta | Bazy, jeśli to właściwe konto; osobny komunikat na branchu |
-| declined do30 dni | Zaproszenie odrzucone | Bazy → Odrzucone przeze mnie, jeśli to właściwe konto; osobny komunikat na branchu |
-| cancelled | Udostępnienie zostało cofnięte | Brak akceptacji; osobny komunikat na branchu |
+| done | Baza została już przyjęta | Bazy, jeśli to właściwe konto; osobny komunikat na produkcji |
+| declined do30 dni | Zaproszenie odrzucone | Bazy → Odrzucone przeze mnie, jeśli to właściwe konto; osobny komunikat na produkcji |
+| cancelled | Udostępnienie zostało cofnięte | Brak akceptacji; osobny komunikat na produkcji |
 | expired po5 dniach oczekiwania lub30 dniach odmowy | Zaproszenie wygasło | Brak przyjmowania starego tokenu |
 | Inne konto | To konto nie jest odbiorcą zaproszenia | Bez akcji i bez pustego adresu w zdaniu |
 | Usunięta baza/konto | Zaproszenie wygasło | Brak dostępu; role i zadania zostały usunięte kaskadowo |
@@ -104,8 +104,8 @@ Jeden licznik dotyczy późniejszego formularza, nie sprawdzania linku w Go.
 | revoked | Właściciel cofnął udostępnienie | Brak podłączania |
 | expired po1h bez aktywności sesji | Sesja Control wygasła | Brak podłączania; potrzebny nowy link/sesja |
 | Inny typ/gra/braki/nieznany token | Link nieważny | Brak działania |
-| Błąd sieci | Nie udało się sprawdzić linku | Ponowne sprawdzenie na branchu |
-| d=qr | Ekran kodu QR ankiety | Obecne wejście na ekran; w treści kodu jest anonimowy link Go. Na branchu: walidacja parametrów i bieżącego poll_state przed przejściem |
+| Błąd sieci | Nie udało się sprawdzić linku | Ponowne sprawdzenie na produkcji |
+| d=qr | Ekran kodu QR ankiety | Obecne wejście na ekran; w treści kodu jest anonimowy link Go. Na produkcji: walidacja parametrów i bieżącego poll_state przed przejściem |
 
 ## Centrum maili i rezygnacje (`m`, historyczne `u`/`s&action=unsub`)
 
@@ -140,7 +140,7 @@ powiadomień, blokadzie ani stopce centrum.
 |---|---|---|
 | Tożsamość resolvera363 | Własne konto po zmianie maila; inny właściciel dawnego adresu; pending/active/declined; cofnięcie; brak sesji; usunięcie konta | Lokalny rollback, isolated38320404401/38320540803, produkcyjny rollback DB38320540716 — success; log363 OK23:10:01 UTC |
 | Parser i rzeczywiste handlery UI |8 rodzin; mieszane i duplikowane pola; niezgodny typ; stany Baz/Subskrypcji/Ankiet/Znajomych×brak sesji/właściwe/obce konto; komunikaty PL/EN/UK |529 unit success |
-| Przeglądarka i zrzuty | Zmienione komunikaty, przyciski i retry; rzeczywiste logowanie, jawne przykładowe odpowiedzi biznesowe; bez wysyłania maili i zmian zasobów | Branch38320834879 w toku; po nim Pages→ten sam main |
+| Przeglądarka i zrzuty | Zmienione komunikaty, przyciski i retry; rzeczywiste logowanie, jawne przykładowe odpowiedzi biznesowe; bez wysyłania maili i zmian zasobów | Branch38321062827 success; main38322222772 success po wdrożeniu wspólnego parsera Workera |
 
 Natychmiastowe przejścia aktywnych urządzeń i pełne anonimowe ankiety były
 sprawdzone natywnie w poprzednich paczkach. Nowa galeria nie zastępuje
@@ -152,4 +152,10 @@ Diag38321800038 potwierdził niepoprawne parametry po przejściu do innej strony
 Worker korzysta teraz z tego samego parseGoLink; przekierowuje wyłącznie
 poprawny pojedynczy m. Niepoprawne linki pozostają w Go. Deploy Workera
 śledzi także zmiany wspólnego parsera; unit obejmuje GET/HEAD i14 wariantów.
-Przed zamknięciem wymagane Worker→ta sama punktowa kontrola main.
+Worker38322130197 success; końcowa ta sama kontrola main38322222772 success1/1 bez retry i530 unit. Paczka zamknięta produkcyjnie.
+
+**Zamknięcie Go:** main38322222772 success1/1 bez retry,530 unit;
+Pages38321253667 i Worker38322130197 success,363 DB38320540716 success.
+22 zrzuty telefon/komputer w docs/img/poll-anonymous/go-states,
+commit1ec6ffe8bc. Nowe rodzaje kopii dostają odrębny kontrakt przy E19C.
+Przegląd usuwanych historycznych RPC pozostaje zadaniem E14.
