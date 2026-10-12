@@ -54,3 +54,24 @@ test('test14 preference restoration is private, fixed to test14 and cannot write
  }
  assert.equal(calls.length,2);
 });
+test('test mail trigger is signed, excludes reserved and real recipients, and bounds the time window',async t=>{
+ const endpoint=new URL('https://www.familiada.online/_e2e_api/mail-trigger');
+ const invoke=(body,authorized=true)=>handleE2EApi(new Request(endpoint,{method:'POST',headers:request({},authorized).headers,body:JSON.stringify(body)}),env,endpoint);
+ const after=new Date(Date.now()-2000).toISOString();
+ assert.equal((await invoke({recipient:'test14@familiada.online',after},false)).status,401);
+ for(const body of [{},{recipient:'real@example.com',after},{recipient:'test9@familiada.online',after},{recipient:'test10@familiada.online',after},{recipient:'test14@familiada.online',after:'bad'}, {recipient:'test14@familiada.online',after:new Date(Date.now()-901000).toISOString()}]) assert.equal((await invoke(body)).status,400);
+});
+test('test mail trigger selects pending current mail and invokes the normal selected worker without writing state',async t=>{
+ const endpoint=new URL('https://www.familiada.online/_e2e_api/mail-trigger'),after=new Date(Date.now()-2000).toISOString();
+ const req=()=>new Request(endpoint,{method:'POST',headers:request({}).headers,body:JSON.stringify({recipient:'test14@familiada.online',after,ids:['foreign'],bypassDelay:true})});
+ const previous=globalThis.fetch,calls=[];t.after(()=>globalThis.fetch=previous);
+ globalThis.fetch=async(input,options)=>{calls.push({input,options});return Response.json(calls.length===1?[{id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'}]:{ok:true});};
+ assert.equal((await handleE2EApi(req(),env,endpoint)).status,200);
+ assert.equal(calls.length,2);const query=new URL(calls[0].input).searchParams;
+ assert.equal(query.get('to_email'),'eq.test14@familiada.online');assert.equal(query.get('status'),'eq.pending');assert.equal(query.get('created_at'),'gte.'+after);assert.ok(query.get('not_before').startsWith('lte.'));assert.equal(query.get('limit'),'25');assert.equal(calls[0].options.method,'GET');
+ assert.ok(String(calls[1].input).endsWith('/rest/v1/rpc/invoke_mail_worker_ids'));
+ assert.deepEqual(JSON.parse(calls[1].options.body),{p_ids:['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],p_limit:1});
+ globalThis.fetch=async()=>Response.json([]);assert.deepEqual(await (await handleE2EApi(req(),env,endpoint)).json(),{ok:true,selected:0});
+ globalThis.fetch=async()=>new Response('Unavailable',{status:503});assert.equal((await handleE2EApi(req(),env,endpoint)).status,502);
+ let attempt=0;globalThis.fetch=async()=>++attempt===1?Response.json([{id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'}]):new Response('Unavailable',{status:503});assert.equal((await handleE2EApi(req(),env,endpoint)).status,502);
+});
