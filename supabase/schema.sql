@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LBIUgVKvf0aq6E35tO0WlqWwYOPPDj6b3Y1ZI7HFam69sjDTyeEw8ktuPG3AdFw
+\restrict PsrhZXXVHnjkLKcbP3bpXQzTzDTXc6yboLz7aaKfpwQ0fAzuRGOzZNAlsjhWHiy
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -192,6 +192,87 @@ $$;
 
 
 --
+-- Name: _base_friend_source_close(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_base_friend_source_close"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF TG_OP='DELETE' THEN
+  UPDATE public.base_share_tasks SET status=CASE WHEN declined_at IS NOT NULL THEN 'declined' ELSE 'cancelled' END,cancelled_at=coalesce(cancelled_at,now())
+   WHERE source_friendship_id=OLD.id AND status IN('pending','opened','declined');
+  RETURN OLD;
+ END IF;
+ IF NEW.status<>'active' OR NEW.cancelled_at IS NOT NULL THEN
+  UPDATE public.base_share_tasks SET status=CASE WHEN declined_at IS NOT NULL THEN 'declined' ELSE 'cancelled' END,cancelled_at=coalesce(cancelled_at,now())
+   WHERE source_friendship_id=NEW.id AND status IN('pending','opened','declined');
+ END IF;
+ RETURN NEW;
+END $$;
+
+
+--
+-- Name: _base_share_create("uuid", "uuid", "public"."base_share_role", boolean, "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_base_share_create"("p_base_id" "uuid", "p_recipient_user_id" "uuid", "p_role" "public"."base_share_role", "p_from_friend" boolean, "p_requested_email" "text" DEFAULT NULL::"text") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE uid uuid:=auth.uid(); owner uuid; title text; label text; email text;
+ target text; allowed boolean; deadline timestamptz; enabled boolean; t public.base_share_tasks%rowtype; source_friend uuid;
+BEGIN
+ IF uid IS NULL OR NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=uid AND public._poll_identity_regular(u.id,to_jsonb(u))) THEN RETURN QUERY SELECT false,'auth required',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,NULL::uuid; RETURN; END IF;
+ SELECT b.owner_id,b.name INTO owner,title FROM public.question_bases b WHERE id=p_base_id;
+ IF NOT FOUND OR owner<>uid THEN RETURN QUERY SELECT false,'not_owner',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,NULL::uuid; RETURN; END IF;
+ IF p_role IS NULL THEN RETURN QUERY SELECT false,'invalid_role',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ IF p_recipient_user_id=uid THEN RETURN QUERY SELECT false,'owner',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ SELECT public._norm_email(u.email) INTO email FROM auth.users u JOIN public.profiles p ON p.id=u.id WHERE u.id=p_recipient_user_id AND NOT p.is_guest AND public._poll_identity_regular(u.id,to_jsonb(u));
+ IF NOT FOUND THEN RETURN QUERY SELECT false,'unknown_user',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ PERFORM public._poll_identity_email_refs(ARRAY[email],ARRAY[uid,p_recipient_user_id]);
+ SELECT public._norm_email(u.email) INTO email FROM auth.users u JOIN public.profiles p ON p.id=u.id WHERE u.id=p_recipient_user_id AND NOT p.is_guest AND public._poll_identity_regular(u.id,to_jsonb(u));
+ IF NOT FOUND THEN RETURN QUERY SELECT false,'unknown_user',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ PERFORM public._poll_identity_mail_locks(ARRAY[email]);
+ IF p_requested_email IS NOT NULL AND public._poll_registered_uid(p_requested_email) IS DISTINCT FROM p_recipient_user_id THEN
+  RETURN QUERY SELECT false,'unknown_user',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN;
+ END IF;
+ IF p_from_friend THEN
+  PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(uid,p_recipient_user_id)::text||':'||GREATEST(uid,p_recipient_user_id)::text,329));
+  SELECT f.id INTO source_friend FROM public.friendships f WHERE f.status='active' AND f.cancelled_at IS NULL
+   AND ((f.requester_id=uid AND f.addressee_id=p_recipient_user_id) OR (f.addressee_id=uid AND f.requester_id=p_recipient_user_id)) FOR SHARE;
+  IF NOT FOUND THEN RETURN QUERY SELECT false,'not_friend',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ END IF;
+ PERFORM public._base_share_pair_lock(p_base_id,p_recipient_user_id);
+ SELECT b.name INTO title FROM public.question_bases b WHERE id=p_base_id AND b.owner_id=uid FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN QUERY SELECT false,'not_owner',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ DELETE FROM public.base_share_tasks bt WHERE bt.base_id=p_base_id AND bt.recipient_user_id=p_recipient_user_id
+ AND bt.status IN ('pending','opened','declined')
+ AND coalesce(bt.declined_at+interval '30 days',bt.created_at+interval '5 days')<=now();
+ IF EXISTS(SELECT 1 FROM public.question_base_shares WHERE base_id=p_base_id AND user_id=p_recipient_user_id) THEN
+   RETURN QUERY SELECT false,'already_active',NULL::text,NULL::text,title,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ IF EXISTS(SELECT 1 FROM public.base_share_tasks bt WHERE bt.base_id=p_base_id AND bt.owner_id=uid AND bt.recipient_user_id=p_recipient_user_id
+ AND bt.status IN ('pending','opened') AND bt.cancelled_at IS NULL
+ AND coalesce(bt.declined_at+interval '30 days',bt.created_at+interval '5 days')>now()) THEN
+   RETURN QUERY SELECT false,'already_pending',NULL::text,NULL::text,title,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ deadline:=public._base_share_refusal_until(p_base_id,p_recipient_user_id);
+ IF deadline IS NOT NULL THEN RETURN QUERY SELECT false,'declined',NULL::text,NULL::text,title,NULL::text,deadline,p_recipient_user_id; RETURN; END IF;
+ enabled:=public._contact_mail_enabled(email);
+ target:='pair:'||uid||':'||p_recipient_user_id||':base:'||p_base_id;
+ IF enabled THEN
+   SELECT c.ok,c.next_allowed_at INTO allowed,deadline FROM public.mail_cooldown_reserve('base:share',target) c;
+   IF NOT allowed THEN RETURN QUERY SELECT false,'cooldown',NULL::text,NULL::text,title,NULL::text,deadline,p_recipient_user_id; RETURN; END IF;
+ END IF;
+ SELECT coalesce(nullif(p.username,''),u.email) INTO label FROM public.profiles p JOIN auth.users u ON u.id=p.id WHERE p.id=uid;
+ INSERT INTO public.base_share_tasks(owner_id,base_id,recipient_user_id,recipient_email,role,status,email_sent_at,email_send_count,source_kind,source_friendship_id)
+ VALUES(uid,p_base_id,p_recipient_user_id,email,p_role,'pending',CASE WHEN enabled THEN now() END,CASE WHEN enabled THEN 1 ELSE 0 END,CASE WHEN p_from_friend THEN 'friend' ELSE 'base' END,source_friend)
+ RETURNING * INTO t;
+ RETURN QUERY SELECT true,NULL::text,CASE WHEN enabled THEN email END,'/go/?b='||t.token,title,label,NULL::timestamptz,p_recipient_user_id;
+END; $$;
+
+
+--
 -- Name: _base_share_pair_lock("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -218,6 +299,71 @@ CREATE FUNCTION "public"."_base_share_refusal_until"("p_base" "uuid", "p_recipie
  FROM public.base_share_tasks t WHERE t.base_id=p_base AND t.recipient_user_id=p_recipient
  AND t.declined_at>now()-interval '30 days';
 $$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = "heap";
+
+--
+-- Name: base_share_tasks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."base_share_tasks" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "owner_id" "uuid" NOT NULL,
+    "base_id" "uuid" NOT NULL,
+    "recipient_user_id" "uuid",
+    "recipient_email" "text",
+    "role" "public"."base_share_role" DEFAULT 'viewer'::"public"."base_share_role" NOT NULL,
+    "token" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "opened_at" timestamp with time zone,
+    "accepted_at" timestamp with time zone,
+    "declined_at" timestamp with time zone,
+    "cancelled_at" timestamp with time zone,
+    "email_sent_at" timestamp with time zone,
+    "email_send_count" integer DEFAULT 0 NOT NULL,
+    "source_friendship_id" "uuid",
+    "source_kind" "text" DEFAULT 'base'::"text" NOT NULL,
+    CONSTRAINT "base_task_source_kind" CHECK (((("source_kind" = 'base'::"text") AND ("source_friendship_id" IS NULL)) OR (("source_kind" = 'friend'::"text") AND (("source_friendship_id" IS NOT NULL) OR ("status" = 'done'::"text") OR ("cancelled_at" IS NOT NULL)))))
+);
+
+ALTER TABLE ONLY "public"."base_share_tasks" FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: _base_task_source_active("public"."base_share_tasks"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_base_task_source_active"("t" "public"."base_share_tasks") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT CASE WHEN t.status='done' THEN EXISTS(SELECT 1 FROM public.question_base_shares s WHERE s.base_id=t.base_id AND s.user_id=t.recipient_user_id)
+ WHEN t.source_kind='base' THEN true ELSE EXISTS(SELECT 1 FROM public.friendships f WHERE f.id=t.source_friendship_id
+ AND f.status='active' AND f.cancelled_at IS NULL AND ((f.requester_id=t.owner_id AND f.addressee_id=t.recipient_user_id) OR (f.addressee_id=t.owner_id AND f.requester_id=t.recipient_user_id))) END;
+$$;
+
+
+--
+-- Name: _base_task_source_lock("public"."base_share_tasks"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_base_task_source_lock"("t" "public"."base_share_tasks") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ PERFORM public._poll_identity_refs(ARRAY[t.owner_id,t.recipient_user_id]);
+ IF t.source_kind='base' OR t.status='done' THEN RETURN true; END IF;
+ IF t.source_friendship_id IS NULL THEN RETURN false; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(t.owner_id,t.recipient_user_id)::text||':'||GREATEST(t.owner_id,t.recipient_user_id)::text,329));
+ PERFORM 1 FROM public.friendships f WHERE f.id=t.source_friendship_id AND f.status='active' AND f.cancelled_at IS NULL
+ AND ((f.requester_id=t.owner_id AND f.addressee_id=t.recipient_user_id) OR (f.addressee_id=t.owner_id AND f.requester_id=t.recipient_user_id)) FOR SHARE;
+ RETURN FOUND;
+END $$;
 
 
 --
@@ -302,10 +448,10 @@ BEGIN
     AND ((pt.owner_id = p_a AND pt.recipient_user_id = p_b)
       OR (pt.owner_id = p_b AND pt.recipient_user_id = p_a));
 
-  DELETE FROM public.base_share_tasks bt
-  WHERE bt.status IN ('pending', 'opened')
-    AND ((bt.owner_id = p_a AND bt.recipient_user_id = p_b)
-      OR (bt.owner_id = p_b AND bt.recipient_user_id = p_a));
+  UPDATE public.base_share_tasks bt SET status=CASE WHEN bt.declined_at IS NOT NULL THEN 'declined' ELSE 'cancelled' END,cancelled_at=coalesce(bt.cancelled_at,now())
+  WHERE bt.status IN('pending','opened','declined') AND bt.source_kind='friend'
+  AND ((bt.owner_id=p_a AND bt.recipient_user_id=p_b) OR (bt.owner_id=p_b AND bt.recipient_user_id=p_a));
+
 END;
 $$;
 
@@ -320,10 +466,6 @@ CREATE FUNCTION "public"."_friend_initial_decision_user"() RETURNS "trigger"
     AS $$
 BEGIN NEW.decision_user_id:=coalesce(NEW.decision_user_id,NEW.addressee_id); RETURN NEW; END $$;
 
-
-SET default_tablespace = '';
-
-SET default_table_access_method = "heap";
 
 --
 -- Name: friendships; Type: TABLE; Schema: public; Owner: -
@@ -2159,6 +2301,7 @@ BEGIN
  IF uid IS NULL OR NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=uid AND NOT is_guest) THEN RETURN false; END IF;
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=uid;
  IF NOT FOUND THEN RETURN false; END IF;
+ IF NOT public._base_task_source_lock(t) THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(t.base_id,uid);
  PERFORM 1 FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id FOR KEY SHARE;
  IF NOT FOUND THEN RETURN false; END IF;
@@ -2202,25 +2345,24 @@ DECLARE
   v_lookup text := lower(trim(p_user_lookup));
   v_recipient uuid;
 BEGIN
-  IF auth.uid() IS NULL OR NOT EXISTS (
+  IF auth.uid() IS NULL OR NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=auth.uid() AND public._poll_identity_regular(u.id,to_jsonb(u))) OR NOT EXISTS (
     SELECT 1 FROM public.question_bases qb WHERE qb.id = p_base_id AND qb.owner_id = auth.uid()
   ) THEN
     RETURN QUERY SELECT false, 'not_owner', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
     RETURN;
   END IF;
 
-  SELECT pr.id INTO v_recipient
-  FROM public.profiles pr
-  WHERE lower(trim(pr.email)) = v_lookup OR lower(trim(pr.username)) = v_lookup
-  ORDER BY CASE WHEN lower(trim(pr.email)) = v_lookup THEN 0 ELSE 1 END
-  LIMIT 1;
+  SELECT pr.id INTO v_recipient FROM public.profiles pr JOIN auth.users u ON u.id=pr.id
+  WHERE NOT pr.is_guest AND public._poll_identity_regular(u.id,to_jsonb(u))
+    AND ((position('@' in v_lookup)>0 AND public._poll_registered_uid(v_lookup)=pr.id)
+      OR (position('@' in v_lookup)=0 AND lower(trim(pr.username))=v_lookup)) LIMIT 1;
 
   IF v_recipient IS NULL THEN
     RETURN QUERY SELECT false, 'unknown_user', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
     RETURN;
   END IF;
 
-  RETURN QUERY SELECT * FROM public.base_share_by_user(p_base_id, v_recipient, p_role);
+  RETURN QUERY SELECT * FROM public._base_share_create(p_base_id, v_recipient, p_role, false, CASE WHEN position('@' in v_lookup)>0 THEN v_lookup END);
 END;
 $$;
 
@@ -2232,43 +2374,9 @@ $$;
 CREATE FUNCTION "public"."base_share_by_user"("p_base_id" "uuid", "p_recipient_user_id" "uuid", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE uid uuid:=auth.uid(); owner uuid; title text; label text; email text;
- target text; allowed boolean; deadline timestamptz; enabled boolean; t public.base_share_tasks%rowtype;
-BEGIN
- IF uid IS NULL THEN RETURN QUERY SELECT false,'auth required',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,NULL::uuid; RETURN; END IF;
- SELECT b.owner_id,b.name INTO owner,title FROM public.question_bases b WHERE id=p_base_id;
- IF NOT FOUND OR owner<>uid THEN RETURN QUERY SELECT false,'not_owner',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,NULL::uuid; RETURN; END IF;
- IF p_role IS NULL THEN RETURN QUERY SELECT false,'invalid_role',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
- IF p_recipient_user_id=uid THEN RETURN QUERY SELECT false,'owner',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
- SELECT public._norm_email(p.email) INTO email FROM public.profiles p WHERE p.id=p_recipient_user_id AND NOT p.is_guest;
- IF NOT FOUND THEN RETURN QUERY SELECT false,'unknown_user',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
- PERFORM public._base_share_pair_lock(p_base_id,p_recipient_user_id);
- SELECT b.name INTO title FROM public.question_bases b WHERE id=p_base_id AND b.owner_id=uid FOR KEY SHARE;
- IF NOT FOUND THEN RETURN QUERY SELECT false,'not_owner',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
- DELETE FROM public.base_share_tasks bt WHERE bt.base_id=p_base_id AND bt.recipient_user_id=p_recipient_user_id
- AND bt.status IN ('pending','opened','declined')
- AND coalesce(bt.declined_at+interval '30 days',bt.created_at+interval '5 days')<=now();
- IF EXISTS(SELECT 1 FROM public.question_base_shares WHERE base_id=p_base_id AND user_id=p_recipient_user_id) THEN
-   RETURN QUERY SELECT false,'already_active',NULL::text,NULL::text,title,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
- IF EXISTS(SELECT 1 FROM public.base_share_tasks bt WHERE bt.base_id=p_base_id AND bt.owner_id=uid AND bt.recipient_user_id=p_recipient_user_id
- AND bt.status IN ('pending','opened') AND bt.cancelled_at IS NULL
- AND coalesce(bt.declined_at+interval '30 days',bt.created_at+interval '5 days')>now()) THEN
-   RETURN QUERY SELECT false,'already_pending',NULL::text,NULL::text,title,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
- deadline:=public._base_share_refusal_until(p_base_id,p_recipient_user_id);
- IF deadline IS NOT NULL THEN RETURN QUERY SELECT false,'declined',NULL::text,NULL::text,title,NULL::text,deadline,p_recipient_user_id; RETURN; END IF;
- enabled:=public._contact_mail_enabled(email);
- target:='pair:'||uid||':'||p_recipient_user_id||':base:'||p_base_id;
- IF enabled THEN
-   SELECT c.ok,c.next_allowed_at INTO allowed,deadline FROM public.mail_cooldown_reserve('base:share',target) c;
-   IF NOT allowed THEN RETURN QUERY SELECT false,'cooldown',NULL::text,NULL::text,title,NULL::text,deadline,p_recipient_user_id; RETURN; END IF;
- END IF;
- SELECT coalesce(nullif(p.username,''),p.email) INTO label FROM public.profiles p WHERE p.id=uid;
- INSERT INTO public.base_share_tasks(owner_id,base_id,recipient_user_id,recipient_email,role,status,email_sent_at,email_send_count)
- VALUES(uid,p_base_id,p_recipient_user_id,email,p_role,'pending',CASE WHEN enabled THEN now() END,CASE WHEN enabled THEN 1 ELSE 0 END)
- RETURNING * INTO t;
- RETURN QUERY SELECT true,NULL::text,CASE WHEN enabled THEN email END,'/go/?b='||t.token,title,label,NULL::timestamptz,p_recipient_user_id;
-END; $$;
+    AS $$ BEGIN
+ RETURN QUERY SELECT * FROM public._base_share_create(p_base_id,p_recipient_user_id,p_role,false);
+ END $$;
 
 
 --
@@ -2284,6 +2392,7 @@ BEGIN
  IF auth.uid() IS NULL THEN RETURN false; END IF;
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND owner_id=auth.uid();
  IF NOT FOUND THEN RETURN false; END IF;
+ IF NOT public._base_task_source_lock(t) THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(t.base_id,t.recipient_user_id);
  PERFORM 1 FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id FOR KEY SHARE;
  IF NOT FOUND THEN RETURN false; END IF;
@@ -2306,6 +2415,7 @@ BEGIN
  IF v_uid IS NULL THEN RETURN false; END IF;
  SELECT * INTO v_t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=v_uid;
  IF NOT FOUND THEN RETURN false; END IF;
+ IF NOT public._base_task_source_lock(v_t) THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(v_t.base_id,v_uid);
  PERFORM 1 FROM public.question_bases WHERE id=v_t.base_id AND owner_id=v_t.owner_id FOR KEY SHARE;
  IF NOT FOUND THEN RETURN false; END IF;
@@ -2377,6 +2487,7 @@ BEGIN
  IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND owner_id=auth.uid();
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
+ IF NOT public._base_task_source_lock(t) THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  PERFORM public._base_share_pair_lock(t.base_id,t.recipient_user_id);
  PERFORM 1 FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id FOR KEY SHARE;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
@@ -2386,7 +2497,7 @@ BEGIN
  SELECT * INTO b FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id;
  IF NOT FOUND OR coalesce(t.declined_at+interval '30 days',t.created_at+interval '5 days')<=now() THEN
    RETURN jsonb_build_object('ok',false,'err','expired'); END IF;
- SELECT public._norm_email(p.email) INTO email FROM public.profiles p WHERE id=t.recipient_user_id AND NOT is_guest;
+ SELECT public._norm_email(u.email) INTO email FROM auth.users u JOIN public.profiles p ON p.id=u.id WHERE u.id=t.recipient_user_id AND NOT p.is_guest AND public._poll_identity_regular(u.id,to_jsonb(u));
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','unknown_user'); END IF;
  IF NOT public._contact_mail_enabled(email) THEN RETURN jsonb_build_object('ok',true,'mail_allowed',false); END IF;
  target:='pair:'||t.owner_id||':'||t.recipient_user_id||':base:'||t.base_id;
@@ -2415,6 +2526,18 @@ $$;
 
 
 --
+-- Name: base_share_to_friend("uuid", "uuid", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."base_share_to_friend"("p_base_id" "uuid", "p_recipient_user_id" "uuid", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$ BEGIN
+ RETURN QUERY SELECT * FROM public._base_share_create(p_base_id,p_recipient_user_id,p_role,true);
+ END $$;
+
+
+--
 -- Name: base_share_token_info("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2431,8 +2554,9 @@ CREATE FUNCTION "public"."base_share_token_info"("p_token" "text") RETURNS TABLE
     op.email as owner_email,
     op.username as owner_username
   from public.base_share_tasks t
+  JOIN public.question_bases b ON b.id=t.base_id AND b.owner_id=t.owner_id
   left join public.profiles op on op.id = t.owner_id
-  where t.token::text=p_token
+  where t.token::text=p_token AND public._base_task_source_active(t)
   and (t.status not in ('pending','opened','declined') OR coalesce(t.declined_at+interval '30 days',t.created_at+interval '5 days')>now())
   limit 1;
 $$;
@@ -2451,6 +2575,7 @@ BEGIN
  IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
  SELECT * INTO v_t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=v_uid;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
+ IF NOT public._base_task_source_lock(v_t) THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  PERFORM public._base_share_pair_lock(v_t.base_id,v_uid);
  PERFORM 1 FROM public.question_bases WHERE id=v_t.base_id AND owner_id=v_t.owner_id FOR KEY SHARE;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
@@ -2479,6 +2604,7 @@ BEGIN
  IF p_role IS NULL THEN RETURN jsonb_build_object('ok',false,'err','invalid_role'); END IF;
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND owner_id=auth.uid();
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
+ IF NOT public._base_task_source_lock(t) THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  PERFORM public._base_share_pair_lock(t.base_id,t.recipient_user_id);
  PERFORM 1 FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id FOR KEY SHARE;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
@@ -15003,31 +15129,6 @@ CREATE TABLE "public"."app_ratings" (
 
 
 --
--- Name: base_share_tasks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."base_share_tasks" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "owner_id" "uuid" NOT NULL,
-    "base_id" "uuid" NOT NULL,
-    "recipient_user_id" "uuid",
-    "recipient_email" "text",
-    "role" "public"."base_share_role" DEFAULT 'viewer'::"public"."base_share_role" NOT NULL,
-    "token" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "opened_at" timestamp with time zone,
-    "accepted_at" timestamp with time zone,
-    "declined_at" timestamp with time zone,
-    "cancelled_at" timestamp with time zone,
-    "email_sent_at" timestamp with time zone,
-    "email_send_count" integer DEFAULT 0 NOT NULL
-);
-
-ALTER TABLE ONLY "public"."base_share_tasks" FORCE ROW LEVEL SECURITY;
-
-
---
 -- Name: contact_report_messages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -16982,6 +17083,13 @@ CREATE INDEX "base_share_tasks_recipient_idx" ON "public"."base_share_tasks" USI
 
 
 --
+-- Name: base_share_tasks_source_friendship_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "base_share_tasks_source_friendship_idx" ON "public"."base_share_tasks" USING "btree" ("source_friendship_id");
+
+
+--
 -- Name: base_share_tasks_status_created_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -17759,6 +17867,20 @@ CREATE UNIQUE INDEX "user_logos_user_name_uniq" ON "public"."user_logos" USING "
 
 
 --
+-- Name: friendships base_friend_source_close; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "base_friend_source_close" AFTER UPDATE OF "status", "cancelled_at" ON "public"."friendships" FOR EACH ROW EXECUTE FUNCTION "public"."_base_friend_source_close"();
+
+
+--
+-- Name: friendships base_friend_source_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "base_friend_source_delete" BEFORE DELETE ON "public"."friendships" FOR EACH ROW EXECUTE FUNCTION "public"."_base_friend_source_close"();
+
+
+--
 -- Name: contact_reports contact_reports_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -18195,6 +18317,14 @@ ALTER TABLE ONLY "public"."base_share_tasks"
 
 ALTER TABLE ONLY "public"."base_share_tasks"
     ADD CONSTRAINT "base_share_tasks_recipient_user_id_fkey" FOREIGN KEY ("recipient_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: base_share_tasks base_share_tasks_source_friendship_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."base_share_tasks"
+    ADD CONSTRAINT "base_share_tasks_source_friendship_id_fkey" FOREIGN KEY ("source_friendship_id") REFERENCES "public"."friendships"("id") ON DELETE SET NULL;
 
 
 --
@@ -20211,5 +20341,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LBIUgVKvf0aq6E35tO0WlqWwYOPPDj6b3Y1ZI7HFam69sjDTyeEw8ktuPG3AdFw
+\unrestrict PsrhZXXVHnjkLKcbP3bpXQzTzDTXc6yboLz7aaKfpwQ0fAzuRGOzZNAlsjhWHiy
 

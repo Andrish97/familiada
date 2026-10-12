@@ -854,3 +854,90 @@ wyglądu. E20 dopracowuje je razem według jednego wzorca.
 Ta decyzja zmienia docelowe strony nagłówka list zasobów względem
 wcześniejszego opisu „tytuł po lewej, akcje po prawej”. Wykonanych etapów
 nie otwiera ponownie; zmianę wdrożyć w E20. Manual pozostaje ostatni.
+
+### E20 — ikony akcji i kompaktowe narzędzia telefonu (2026-10-12)
+
+Na telefonie przyciski pasków akcji i narzędzi mają **same ikony**; na komputerze ikona może
+stać obok tekstu. Korzystać ze wspólnego katalogu ikon i tych samych
+rozmiarów/przerw, zachowując nazwy dostępności i podpowiedzi. Nie powiększać
+mobilnych przycisków względem uzgodnionego wzorca Gier. Formularze i
+potwierdzenia zachowują zrozumiałe etykiety (np. OK). Przejrzeć również
+inne miejsca, gdzie zastąpienie tekstu ikoną oszczędza miejsce.
+
+| Akcja | Ikona / obsługa |
+|---|---|
+| Graj | Gamepad |
+| Ustawienia | Zębatka |
+| Ankiety | Słupki — zachować istniejącą ikonę |
+| Edycja | Kartka z ołówkiem |
+| Podgląd | Oko |
+| Udostępnij (istniejące współdzielenie) | Koperta |
+| Wyślij (kopie Gier/Logo) | Koperta, w sekcji importu/eksportu |
+| Eksport | Pobieranie — strzałka w dół |
+| Import | Wysyłanie pliku do aplikacji — strzałka w górę |
+| Do bazy | Baza ze strzałką |
+| Filtr | Ikona filtra; po kliknięciu czytelna, większa lista opcji |
+| Sortowanie | Ikona sortowania; po kliknięciu czytelna, większa lista opcji |
+| Wyszukiwanie | Lupa otwiera wspólny modal z polem i OK. Nie zajmuje stale wysokości paskiem tekstowym. |
+
+Wyszukiwanie telefonu: zatwierdzenie OK stosuje wpisany tekst; aktywny
+filtr wyróżnia przycisk kolorem. Ikona może zmienić się w X do wyczyszczenia
+wyszukiwania; po wyczyszczeniu wraca lupa. Dokładne zachowanie dopracować
+wspólnie podczas wdrożenia, zachowując jednoznaczne otwieranie/edycję oraz
+kasowanie filtra. Anulowanie modala nie zmienia bieżącego wyszukiwania.
+Filtr i sortowanie również pokazują aktywny wybór; listy są wygodne do
+dotknięcia i przewijają się w dostępnej wysokości.
+
+**Kopie Gier/Logo:** nazwa akcji to „Wyślij”. Umieścić ją w grupie
+importu/eksportu, w dolnym pasku narzędzi; górna grupa akcji zasobu
+zachowuje swój dotychczasowy zakres. Źródło: `udostepnianie-kopii-plan.md`.
+
+To doprecyzowanie wcześniejszego kompaktowego wyszukiwania/filtrowania.
+Zachować dwie kolumny nagłówka list zasobów (akcje po lewej, tytuł/podpowiedź
+po prawej), wysokość kart i przewijanie wewnątrz. Sprawdzić telefon w obu
+orientacjach, tablet i komputer, PL/EN/UK, stan bez zaznaczenia i wszystkie
+stany dostępności akcji. Po wykonaniu zrzuty z przykładowymi danymi.
+
+### E20 — tablet w pionie i pomiary rzeczywistego urządzenia (2026-10-12)
+
+Tablet w pionie jest osobnym przypadkiem układu. Nie stosować automatycznie
+wariantu telefonu, hamburgera ani wszystkich uproszczeń mobilnych tylko
+z powodu pionowej orientacji, obsługi dotyku lub wspólnego szerokiego progu
+CSS. Wykorzystywać dostępną przestrzeń; nawigację zwijać dopiero, gdy jej
+elementy rzeczywiście przestają się mieścić. Ta sama zasada dotyczy pasków
+akcji, filtrów i podziału kart na wszystkich typach stron.
+
+| Zakres | Weryfikacja w E20 |
+|---|---|
+| Rzeczywisty tablet | Sprawdzić Lenovo z Androidem w pionie i poziomie; obecny hamburger w pionie jest zgłoszoną niespójnością do zbadania. Nie zamykać kontroli na podstawie samej emulacji. |
+| Dostępne miejsce | Zebrać na urządzeniu szerokość/wysokość obszaru strony w pikselach CSS, `document.documentElement.clientWidth/clientHeight`, `window.innerWidth/innerHeight` oraz dostępny `visualViewport` (wymiary i skala). |
+| Ekran i skala | Zapisać `screen.width/height`, `screen.availWidth/availHeight`, `devicePixelRatio` i orientację jako kontekst pomiaru. Parametry przeglądarki nie gwarantują fizycznych rozmiarów ekranu w calach ani pełnej rozdzielczości panelu. |
+| Różne warunki | Sprawdzić obrót, paski przeglądarki, klawiaturę, powiększenie i podział ekranu; dostępny obszar może różnić się od wymiarów ekranu. |
+| Progi układu | Dobrać do miejsca potrzebnego treści i nawigacji, nie do nazwy urządzenia, user-agenta, orientacji czy samego dotyku. Tablet może zachować pełniejszy układ, a w małym oknie przejść w kompaktowy. |
+| Dowody | Zrzuty po wykonaniu z przykładowymi danymi oraz wartościami pomiaru; odróżnić rzeczywisty tablet od symulacji. Nie przedstawiać emulacji jako sprawdzenia fizycznego urządzenia. |
+
+Pomiary wdrożyć jako narzędzie diagnostyczne przy weryfikacji E20, bez
+dodawania technicznych informacji do zwykłych ekranów ani manuala.
+
+**E20 / dialogi mobilne i historia (2026-10-12):** pełnoekranowy modal ma zachowywać się jak ekran również dla Wstecz przeglądarki/Androida: najpierw zamknięcie dialogu, potem normalna nawigacja. Wstecz w modalu i X korzystają z tego samego mechanizmu, bez pustych wpisów. Wdrożenie polityki/mapy w E19N (`nawigacja-mapa-plan.md`, końcowa podsekcja); w E20 sprawdzić spójność wszystkich dialogów, obrót i tablet.
+
+**Doprecyzowanie E19N/E20:** dialogi będące ekranami otrzymują stan w URL strony (np. dialog=share i wymagany zasób). Dalej odtwarza okno, tak samo odświeżenie/bezpośredni link, po kontroli dostępu. Nie powtarzać operacji przy odtwarzaniu. Źródło parametrów i stosu dialogów: mapa nawigacji.
+
+### E20 — filtrowanie zależne od zakładki (2026-10-12)
+
+Filtry pokazują wyłącznie opcje mające zastosowanie do aktywnej zakładki
+i jej typu zasobu. Dotyczy wspólnego wzorca list i nowych kompaktowych
+narzędzi telefonu, także menu filtra otwieranego ikoną.
+
+| Przypadek | Docelowe zachowanie |
+|---|---|
+| Gry → Preparowane | Bez opcji stanów ankiety, np. „Otwarta ankieta”; uwzględnić rzeczywiste stany preparowanej gry i jej gotowość do gry. |
+| Gry → ankiety tekstowe/punktowe | Opcje zgodne z cyklem życia właściwego typu ankiety. Rynek ma własny zakres filtrów odpowiadający jego zasobom. |
+| Zmiana zakładki | Opcje filtra przeliczyć dla nowej zakładki; zachować pasujący wybór, wyczyścić niepasujący do „Wszystkie”. Niewidoczny, niepasujący filtr nie może nadal ograniczać listy. |
+| URL / zapamiętany stan / powrót | Walidować filtr względem zakładki, także przy odświeżeniu i powrocie. Wyczyszczenie niepasującego filtra odzwierciedlić w przycisku, liście i zapisie stanu; bez dodatkowego kroku historii. |
+| Pozostałe listy | Bazy/Logo i inne strony z zakładkami sprawdzić według tej samej zasady; nie dodawać filtra, jeśli zakładka nie ma sensownych opcji. |
+| Testy | Każda zakładka i przejście między nimi: poprawny zakres opcji, niepasujący/pasujący wybór, URL, powrót, puste wyniki oraz telefon/tablet/komputer. Dane przykładowe obejmują różne stany zasobów. |
+
+Nie ograniczać opcji tylko dlatego, że chwilowo nie ma rekordów danego
+stanu: zakres wynika z typu zakładki. Prawidłowo zastosowany filtr może
+zwrócić pusty wynik zgodnie ze wspólnym wyglądem pustych list.
