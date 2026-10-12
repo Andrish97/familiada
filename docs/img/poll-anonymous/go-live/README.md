@@ -1,8 +1,8 @@
 # Anonimowe ankiety — głosowanie i stany linków
 
-Przebieg [38315943894](https://github.com/Andrish97/familiada/actions/runs/38315943894), kod `65cc43758a3007b9b7885f9d67f98708cfa16444`.
+Przebieg [38317376700](https://github.com/Andrish97/familiada/actions/runs/38317376700), kod `cda4e4890d0106d0d7781df8d0aeba45c754527d`.
 
-Rzeczywista baza i ankiety kont testowych. Odliczanie z serwera, zachowane odpowiedzi; telefon i komputer.
+Rzeczywista baza i ankiety kont testowych. Zrzuty po wykonaniu zmian; telefon i komputer.
 
 ## go-invalid-1400
 

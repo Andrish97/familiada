@@ -970,3 +970,39 @@ Go już ma zielony branch38315943894. Potem razem Pages→main oba spece3
 scenariusze, publisher dzieli cooldown/live oraz go-live (14 screenów).
 Nie powtarzać SQL/wyścigów362 ani zamkniętych maili. Go reszty rodzin i
 finalny audyt grafu dalej otwarte.
+
+**Bieżące sterowanie użytkownika:** sesja Termux przestała działać;
+użytkownik chce tutaj naprawić błąd statystyk i przebiegu rundy. Prośba
+o opis wysłana async, jeszcze bez odpowiedzi. Przeczytany failed38314754916
+z branchControl drugiej sesji: po END_ROUND widok runda2/Alfa90, stats
+rounds_played0/rounds_score_a0. Log pokazuje optymistyczny render przed
+commitNow write-ok (257ms), więc możliwy odczyt przed transakcją. Lokalny
+rollback z faktycznym ustawieniami z logu, r_play PLAY→r_roundStart READY,
+90 punktami daje1/90. Nie wdrażać naprawy DB na podstawie samego 0/0;
+sprawdzić moment odczytu i zaczekać na doprecyzowanie zgłoszenia.
+
+Użytkownik dopisał też odblokowanie Znajomych w Control i poprawę mapy:
+nowa konkretna podsekcja E19N w nawigacja-mapa-plan.md. Na razie decyzja/
+plan, bez zmiany przycisku; kontrola source modalPagesReview false i
+blockedUntil. Po zamknięciu obecnej publikacji priorytet statystyki,
+potem standardowa kolejka. Go + jeden licznik opublikowane main9d533fa094,
+Pages38316775614 success; main38316869123 jest w toku3 scenariusze/14 screenów.
+Branch pojedynczego licznika38316440463 success2/2,520 unit, screenyff3532d235.
+Nie wracać do zamkniętych SQL/SMTP362/360/361/Contact3.
+
+**Statystyki Control: diagnoza potwierdzona i branch zielony**38317373527
+success1/1 bez retry/521 unit. Pełna runda90 + zapisany roundNo2/Alfa90,
+statystyki1/90 oraz ta sama sesja/1 runda po odświeżeniu. Problem był
+w czytaniu przed potwierdzeniem transakcji optymistycznej akcji w teście;
+zapis backendu z poprawnym stanem działa. Bez zmiany SQL/engine ani
+osłabienia asercji statystyk. Użytkownik zlecił naprawę i powrót do planu.
+Dalej publikacja testu i dokładnie ten sam main Control, po nim kolejka.
+
+Go branch38317376700 success1/1 (521unit),10 screenów ae24a08c7d;
+setView usuwa data-i18n, żeby późniejszy init nie przywracał loadingTitle
+po błędnym linku. Następna main kontrola Go. Jeden licznik już przeszedł
+oba pełne main formularze w38316869123 (przebieg miał failure wyłącznie
+Go). Krótki poll-anonymous-layout.spec.js daje4 aktualne screeny native
+cooldown bez powtarzania30-sekundowych backendowych kontraktów. Zwykły
+pierwszy pełny głos i druga próba z tej samej przeglądarki, bez resetu
+zegara; przyjazna nazwa Rodzinna ankieta — wakacje. Publisher dzieli2galerie.

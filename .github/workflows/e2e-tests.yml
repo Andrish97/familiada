@@ -286,7 +286,7 @@ jobs:
           retention-days: 7
 
       - name: Publish requested anonymous poll screenshots
-        if: ${{ success() && inputs.publish_anonymous_screenshots && (contains(inputs.spec_filter, 'e2e/poll-anonymous.spec.js') || contains(inputs.spec_filter, 'e2e/poll-go.spec.js')) }}
+        if: ${{ success() && inputs.publish_anonymous_screenshots && (contains(inputs.spec_filter, 'e2e/poll-anonymous.spec.js') || contains(inputs.spec_filter, 'e2e/poll-anonymous-layout.spec.js') || contains(inputs.spec_filter, 'e2e/poll-go.spec.js')) }}
         env:
           EVIDENCE_RUN_ID: ${{ github.run_id }}
           EVIDENCE_SHA: ${{ github.sha }}

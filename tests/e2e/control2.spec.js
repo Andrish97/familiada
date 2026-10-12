@@ -1083,6 +1083,15 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     // finalizeRound(): próg (300) nieosiągnięty, pula ma jeszcze pytanie 2.
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", progressRe("Runda 2"), { timeout: 22000 });
 
+    // The operator view updates optimistically before game_state_write commits.
+    // Confirm the native persisted round first; statistics share that transaction.
+    await expect.poll(async () => page.evaluate(async (gid) => {
+      const { data, error } = await window.__sbClient.from("game_state")
+        .select("rev,step,detail").eq("game_id", gid).single();
+      if (error) throw new Error("read committed round: " + error.message);
+      return { roundNo: data.detail?.rounds?.roundNo, scoreA: data.detail?.rounds?.totals?.A };
+    }, game.id), { timeout: 10000 }).toEqual({ roundNo: 2, scoreA: 90 });
+
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
     const beforeReload = await readControl2Sessions(page, game.id);
     expect(beforeReload).toHaveLength(1);

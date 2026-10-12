@@ -1181,3 +1181,26 @@ miejsca nie dziedziczy ukrycia „Graj” ze starego wejścia.
 → brak „Graj” w każdym pasku/menu akcji → „Wstecz” przywraca bieżącą
 rozgrywkę; wejście z Gier zachowuje dotychczasowe reguły; back/forward i
 zmiana źródła wejścia nie gubią kontekstu ani nie odtwarzają starego ukrycia.
+
+### E19N — odblokowanie Znajomych w Control (ponowione 2026-10-12)
+
+Użytkownik wskazał nadal zablokowany przycisk. To pozostałość wcześniejszej
+zależności `modalPagesReview`; samo usunięcie stron modalnych jest już
+wykonane, a przegląd mapy/powrotów i aktywacja skrótu nadal otwarte.
+Dopiąć je jako jeden konkretny pakiet E19N, zamiast pozostawiać przycisk
+bez terminu odblokowania.
+
+| Część pakietu | Wymagany efekt |
+|---|---|
+| Control → Znajomi | Aktywny przycisk z ikoną; zwykła strona Znajomych. Jawny kontekst konkretnego Control i identyfikator gry w mapie. |
+| Znajomi → Wstecz | Powrót do tej samej gry Control; zapisany stan, sesja i podłączone urządzenia zachowane. |
+| Wstecz/Dalej przeglądarki i odświeżenie | Poprawny powrót/odtworzenie kontekstu. Bez zgadywania na podstawie referrer ani domyślnego rodzica Games. |
+| Autozapis i blokada | Wyjście kończy zapis i zwalnia blokadę panelu; powrót odzyskuje ją i sprawdza ważność istniejącej sesji. |
+| Koniec ważności/usunięcie gry | Czytelny stan, bez odtwarzania starego dostępu ani urządzeń. |
+| Pozostałe wejścia Znajomych | Games i inne strony zachowują własny poprawny Wstecz; kontekst Control nie przechodzi na niezależne wejście. |
+| Aktywacja | Po punktowych testach powyższych przejść zamknąć zależność mapy i usunąć `disabled`/opisy blokady; telefon, komputer oraz warianty bez konta. |
+
+**Stan: do wdrożenia w E19N.** Nie jest to ponowne wdrożenie usunięcia
+stron modalnych. Użytkownik zlecił dopisanie do planu; aktualne priorytety:
+zamknięcie bieżącej publikacji Go/jednego licznika i zgłoszenie statystyk
+Control, potem powrót do kolejki.
