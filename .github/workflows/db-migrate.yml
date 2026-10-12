@@ -143,6 +143,12 @@ jobs:
             "export GITHUB_SHA='${{ github.sha }}'; \
              bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
 
+      - name: Verify global mail preference before queue insert (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < tests/sql/mail-preference-queue-323.sql
+
       - name: Verify DRAW Host PNG references and Storage objects are removed
         run: |
           for attempt in $(seq 1 30); do
@@ -167,6 +173,69 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
             < tests/sql/control-cleanup-production.sql
+
+      - name: Verify Control runtime expiration (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < tests/sql/control-runtime-expiry-325.sql
+
+      - name: Verify physical base task cascade (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-base-task-cascade-345.sql
+
+      - name: Verify recipient account cascades and anonymous completed aggregates (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1'             < docs/sql/test-recipient-account-cascade-348.sql
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-dedicated-account-mail-cleanup-349.sql
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-dedicated-account-mail-cleanup-350.sql
+
+      - name: Verify poll recipient identity and canonical account email (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-poll-recipient-identity-351.sql
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-poll-recipient-test-cleanup-351.sql
+
+      - name: Verify guest conversion requires confirmed canonical email (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-guest-conversion-identity-352.sql
+
+      - name: Verify recorded poll sources and sticky subscriber identity (rollback)
+        run: |
+          for fixture in test-poll-contact-sources-353.sql test-contact-identity-entrypoints-353.sql test-subscriber-identity-cooldowns-353.sql test-independent-contact-grants-353.sql test-poll-closed-contact-source-353.sql; do
+            ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+              'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+              < "docs/sql/$fixture"
+          done
+
+      - name: Verify guest metadata identity and genuine conversion (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-guest-metadata-354.sql
+
+      - name: Verify derived friend proposal cascades and retained budgets (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-friend-proposal-sources-355.sql
+
+      - name: Audit legacy subscriber identities and expired task scopes (read-only)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/audit-subscriber-identity-352.sql
 
       # 7️⃣ Fetch schema + logs (bez wywalania się)
       - name: Fetch schema.sql + logs from server

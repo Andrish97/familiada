@@ -64,4 +64,8 @@ async function restoreTestAccount(account) {
   });
 }
 
-module.exports = { clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
+async function readMailDelivery({ recipient, after }) {
+  return api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
+}
+
+module.exports = { readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };

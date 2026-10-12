@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-10T22301"/>
+  <meta name="app-version" content="v2026-10-11T20294"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,11 +14,11 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-10T22301"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-10T22301"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-11T20294"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T20294"/>
   <!-- Reużywamy stylu strony gier, żeby było spójnie -->
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-10T22301"/>
-  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-10T22301"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-11T20294"/>
+  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-11T20294"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -32,9 +32,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/bases/js/bases.js?v=v2026-10-10T22301" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-10T22301" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-10T22301" defer></script>
+  <script type="module" src="/bases/js/bases.js?v=v2026-10-11T20294" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-11T20294" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-11T20294" defer></script>
 </head>
 
 <body class="games-body skel-body">
@@ -45,7 +45,8 @@
       <button class="btn" id="btnBack" type="button">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
-      <button class="btn" id="btnGoAlt" type="button"><span data-i18n="games.nav.pollsHubSubs" data-i18n-icon-after="bell">Subskrypcje</span> <span class="badge" id="altBadge" aria-hidden="true"></span></button>
+      <button class="btn" id="btnGoAlt" type="button"><span data-i18n="games.nav.friends" data-i18n-icon-after="people">Znajomi</span> <span class="badge" id="altBadge" aria-hidden="true"></span></button>
+      <button class="btn" id="btnSubscribers" type="button" data-nav-hidden="true" style="display:none;"><span data-i18n="games.nav.subscribers" data-i18n-icon-after="envelope">Subskrybenci</span></button>
     </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
@@ -106,6 +107,7 @@
 
             <div class="bases-section bases-section-shared" id="basesSectionShared" role="tabpanel" data-skel-step>
               <div class="grid bases-grid-shared" id="sharedGrid"></div>
+              <div id="baseDeclinesHost"></div>
             </div>
           </div>
 
@@ -150,60 +152,26 @@
           <button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
-        <!-- SEKCJA 1: Udostępnij -->
-        <div class="shareSection shareSection-share">
-          <div class="shareSectionTitle" data-i18n="bases.shareModal.shareSection">Udostępnij</div>
-
-          <!-- Tryb udostępnienia -->
-          <div class="share-mode-select" style="margin-top:10px">
-            <label class="share-mode-label" data-i18n="bases.shareModal.shareModeLabel">Tryb:</label>
-            <div class="ui-select" id="shareRole">
-              <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-              </button>
-              <div class="ui-select-menu" role="listbox"></div>
+        <div class="baseShareSections">
+          <section class="shareSection" data-section="lookup">
+            <h2 class="shareSectionTitle" data-i18n="baseSharePanel.lookup">E-mail lub nazwa użytkownika</h2>
+            <div id="shareMsg" class="app-toast app-toast--inline" role="status" aria-live="polite" hidden></div>
+            <div class="baseShareLookup">
+              <input id="shareEmail" class="inp" type="text" data-i18n-placeholder="bases.shareModal.placeholder" autocomplete="off"/>
+              <div id="shareRole"></div>
+              <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n="baseSharePanel.share">Udostępnij</button>
             </div>
-          </div>
-
-          <!-- Wybór: subskrybent czy nowy email -->
-          <div class="share-recipient-select" style="margin-top:10px">
-            <div class="ui-select" id="shareRecipientType">
-              <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-              </button>
-              <div class="ui-select-menu" role="listbox"></div>
-            </div>
-          </div>
-
-          <!-- Pole email/nazwa (pokazuje się gdy wybrano "wpisz email") -->
-          <div class="share-email-input" id="shareEmailWrap" style="display:none;margin-top:10px">
-            <input id="shareEmail" class="inp" type="text"
-                   placeholder="Nazwa użytkownika lub e-mail..."
-                   data-i18n-placeholder="bases.shareModal.placeholder"/>
-            <div class="share-email-error" id="shareEmailError" style="display:none;color:#f87171;font-size:12px;margin-top:4px"></div>
-          </div>
-
-          <!-- Lista subskrybentów (pokazuje się gdy wybrano "wybierz subskrybenta") -->
-          <div class="share-subs-input" id="shareSubsWrap" style="display:none;margin-top:10px">
-            <div class="ui-select" id="shareSubscriberSelect">
-              <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-              </button>
-              <div class="ui-select-menu" role="listbox"></div>
-            </div>
-          </div>
-
-          <!-- Przycisk udostępnij -->
-          <button class="btn gold share-submit-btn" id="btnShareAdd" type="button" data-i18n="bases.shareModal.add" style="margin-top:12px;width:100%">Dodaj</button>
-          <div class="importMsg" id="shareMsg"></div>
+          </section>
+          <section class="shareSection" data-section="friends">
+            <h2 class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</h2>
+            <div id="baseShareFriends" class="shareList shareList--scroll"></div>
+            <div class="baseShareFooter"><div id="baseShareFriendsRole"></div><button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n="control.shareDeviceModal.shareSelected" disabled>Udostępnij zaznaczonym</button></div>
+          </section>
+          <section class="shareSection" data-section="shared">
+            <h2 class="shareSectionTitle" data-i18n="bases.sections.shared">Udostępnione</h2>
+            <div id="shareSectionsHost" class="shareList shareList--scroll"></div>
+          </section>
         </div>
-
-        <!-- SEKCJE 2-3: Oczekujące · Aktywni (wspólny komponent share-sections.js) -->
-        <div id="shareSectionsHost"></div>
-
       </div>
     </div>
 

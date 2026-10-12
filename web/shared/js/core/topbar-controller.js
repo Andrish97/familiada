@@ -5,10 +5,10 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-10-10T22301';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-10T22301';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-10T22301';
-import { icon } from './icons.js?v=v2026-10-10T22301';
+import { signOut } from './auth.js?v=v2026-10-11T20294';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-11T20294';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-11T20294';
+import { icon } from './icons.js?v=v2026-10-11T20294';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
@@ -379,7 +379,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-10T22301');
+  const { getUser } = await import('./auth.js?v=v2026-10-11T20294');
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
   if (btn.dataset.topbarAuthReady === '1') return;
@@ -546,6 +546,14 @@ function initTopbarController() {
     toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 
+    // Hide the old panel before a navigation handler starts loading a page.
+    panel.addEventListener('click', (event) => {
+      const action = event.target.closest('[data-nav-href],a[href]');
+      if (!action || action.disabled || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      if (action.tagName === 'A' && (action.target === '_blank' || action.hasAttribute('download'))) return;
+      action.blur();
+      close();
+    }, true);
     toggleBtn.addEventListener('pointerdown', open);
     closeBtn.addEventListener('pointerdown', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });

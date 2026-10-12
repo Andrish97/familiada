@@ -2,6 +2,124 @@ name: Agent checks
 
 on:
   workflow_dispatch:
+    inputs:
+      verify_e19_321:
+        description: 'Verify migration 321 in isolated Postgres'
+        type: boolean
+        default: false
+      verify_e19_322:
+        description: 'Verify migration 322 in isolated Postgres'
+        type: boolean
+        default: false
+      verify_e19_323:
+        description: 'Verify migration 323 in isolated Postgres'
+        type: boolean
+        default: false
+      verify_e19_324:
+        description: 'Verify migration 324 in isolated Postgres'
+        type: boolean
+        default: false
+      verify_e19_325:
+        description: 'Verify migration 325 in isolated Postgres'
+        type: boolean
+        default: false
+      verify_e19_326:
+        description: 'Verify test14 mailbox allowlist and access boundaries'
+        type: boolean
+        default: false
+      verify_e19_327:
+        description: 'Verify contact metadata, notification flags and reminder timers'
+        type: boolean
+        default: false
+
+      verify_e19_328:
+        description: 'Verify persistent friend decline and immutable reminder'
+        type: boolean
+        default: false
+
+      verify_e19_329:
+        description: 'Verify friend refusal expiry, undo and invitation directions'
+        type: boolean
+        default: false
+
+      verify_e19_330:
+        description: 'Verify poll-only tasks and independent badge counts'
+        type: boolean
+        default: false
+
+      verify_e19_331:
+        description: 'Verify subscriber token acceptance and closed-token protection'
+        type: boolean
+        default: false
+
+      verify_e19_332:
+        description: 'Verify isolated subscriber mailbox cooldown cleanup'
+        type: boolean
+        default: false
+
+      verify_e19_333:
+        description: 'Verify subscriber refusals, withdrawal, flags, registration and races'
+        type: boolean
+        default: false
+
+      verify_e19_334:
+        description: 'Verify test14 mail flag fixture scope and permissions'
+        type: boolean
+        default: false
+
+      verify_e19_335:
+        description: 'Verify registered recipients cannot use subscriber sharing'
+        type: boolean
+        default: false
+
+      verify_e19_340:
+        description: 'Verify poll sharing flags, refusals, task boundaries and races'
+        type: boolean
+        default: false
+
+      verify_e19_339:
+        description: 'Verify muted base recipients and refusal availability metadata'
+        type: boolean
+        default: false
+
+      verify_e19_338:
+        description: 'Verify parent deletion and base sharing lock order'
+        type: boolean
+        default: false
+
+      verify_e19_337:
+        description: 'Verify base refusals, withdrawal, roles and invitation boundaries'
+        type: boolean
+        default: false
+
+      verify_e19_336:
+        description: 'Verify registered subscriber fixture scope and permissions'
+        type: boolean
+        default: false
+
+      verify_e19_mail:
+        description: 'Verify shared browser/Edge mail renderer and auth function types'
+        type: boolean
+        default: false
+      verify_e19_345:
+        description: 'Verify physical base task cascade, orphan cleanup and parent races'
+        type: boolean
+        default: false
+
+      verify_e19_346:
+        description: 'Verify friend withdrawal actors, refusal expiry, retained budget and races'
+        type: boolean
+        default: false
+
+      verify_e19_347:
+        description: 'Verify poll contact locks, partial vote cleanup and completed aggregate retention'
+        type: boolean
+        default: false
+
+      verify_e19_348:
+        description: 'Verify physical recipient account cascades and completed poll aggregates'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -40,3 +158,1163 @@ jobs:
       - name: Unit tests (one file at a time)
         working-directory: tests
         run: node --test --test-concurrency=1 unit/*.test.js
+
+  sql-e19-321:
+    if: ${{ inputs.verify_e19_321 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify E19 behavior
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_321_friends_subscribers.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friends-subscribers-321.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-322:
+    if: ${{ inputs.verify_e19_322 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify E19 behavior
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_322_bases_go_links.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-bases-go-322.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-322-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-323:
+    if: ${{ inputs.verify_e19_323 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify E19 behavior
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_323_mail_notification_preference_queue_guard.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-preference-323.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-323-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-324:
+    if: ${{ inputs.verify_e19_324 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify runtime expiry
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_324_control_runtime_sessions.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-control-runtime-session-324.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-324-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-325:
+    if: ${{ inputs.verify_e19_325 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify runtime expiry with mixed email types
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_325_control_share_email_type.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-control-runtime-session-324.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-325-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-326:
+    if: ${{ inputs.verify_e19_326 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify mailbox boundaries
+        run: |
+          # schema.sql is dumped without ACL; restore baseline mailbox privileges.
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-09-30_284_e2e_mailbox.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_326_e2e_mailbox_test14.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-e2e-mailbox-326.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-326-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-327:
+    if: ${{ inputs.verify_e19_327 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify contact metadata
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_327_contacts_mail_metadata.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-contacts-metadata-327.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-327-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-328:
+    if: ${{ inputs.verify_e19_328 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify contact metadata
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_327_contacts_mail_metadata.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_328_friend_declined_state.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-contacts-metadata-327.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-declined-328.sql
+          bash docs/sql/test-friend-declined-328-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-328-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-329:
+    if: ${{ inputs.verify_e19_329 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Apply migration and verify contact metadata
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_327_contacts_mail_metadata.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_328_friend_declined_state.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_329_friend_refusal_expiry.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-refusal-329.sql
+          bash docs/sql/test-friend-refusal-329-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-329-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-330:
+    if: ${{ inputs.verify_e19_330 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify poll-only tasks and independent counts
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_330_poll_only_tasks.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-only-tasks-330.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-330-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-331:
+    if: ${{ inputs.verify_e19_331 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify anonymous subscriber token acceptance
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_331_subscriber_token_acceptance.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-token-331.sql
+          bash docs/sql/test-subscriber-token-331-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-331-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-332:
+    if: ${{ inputs.verify_e19_332 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify scoped test mailbox cleanup
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_332_e2e_subscriber_baseline_cleanup.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-cleanup-332.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-332-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-333:
+    if: ${{ inputs.verify_e19_333 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify refusal lifecycle, mail flags and registration
+        run: |
+          # schema.sql omits grants; restore the prior Friends ACL before regression.
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_329_friend_refusal_expiry.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_333_subscriber_refusal_contract.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-token-331.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-refusal-329.sql
+          bash docs/sql/test-subscriber-refusal-333-concurrency.sh
+          bash docs/sql/test-subscriber-token-331-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-333-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-334:
+    if: ${{ inputs.verify_e19_334 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify test mailbox mail flag isolation
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_334_e2e_subscriber_mail_flag.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-mail-flag-334.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-334-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-335:
+    if: ${{ inputs.verify_e19_335 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify registered recipient sharing eligibility
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_335_subscriber_registered_sharing.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-registered-sharing-335.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-335-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-336:
+    if: ${{ inputs.verify_e19_336 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify registered subscriber fixture isolation
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_336_e2e_registered_subscriber_fixture.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-registered-subscriber-fixture-336.sql
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-336-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-337:
+    if: ${{ inputs.verify_e19_337 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify base refusal lifecycle, boundaries and races
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_337_base_refusal_contract.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-refusal-337.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-boundaries-337.sql
+          bash docs/sql/test-base-refusal-337-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-337-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-338:
+    if: ${{ inputs.verify_e19_338 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify base refusal lifecycle, boundaries and races
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_337_base_refusal_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_338_base_share_lock_order.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-refusal-337.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-boundaries-337.sql
+          bash docs/sql/test-base-refusal-337-concurrency.sh
+          bash docs/sql/test-base-parent-lock-338-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-338-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-339:
+    if: ${{ inputs.verify_e19_339 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify base refusal lifecycle, boundaries and races
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_337_base_refusal_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_338_base_share_lock_order.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_339_base_mail_flag_availability.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-mail-availability-339.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-refusal-337.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-boundaries-337.sql
+          bash docs/sql/test-base-refusal-337-concurrency.sh
+          bash docs/sql/test-base-parent-lock-338-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-339-sql-restore
+          path: /tmp/fam-restore.log
+
+  sql-e19-340:
+    if: ${{ inputs.verify_e19_340 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Verify poll sharing and recipient decision contracts
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_340_poll_share_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_341_poll_task_decision_guards.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_342_poll_mail_budget_events.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_343_poll_task_vote_guards.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_344_poll_task_atomic_completion.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-completion-344.sql
+          bash docs/sql/test-poll-task-completion-344-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-votes-343.sql
+          bash docs/sql/test-poll-task-votes-343-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-mail-budget-342.sql
+          bash docs/sql/test-poll-mail-budget-342-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-share-contract-340.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-boundaries-341.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-registered-sharing-335.sql
+          bash docs/sql/test-poll-task-341-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-340-sql-restore
+          path: /tmp/fam-restore.log
+
+  verify-e19-mail:
+    if: ${{ inputs.verify_e19_mail }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify generated browser renderer
+        run: |
+          node scripts/sync-mail-document.cjs
+          git diff --exit-code -- web/shared/js/core/mail-document.js cloudflare/maintenance-worker/src/lib/email/mail-document.js
+      - name: Check authentication Edge function
+        run: npx --yes deno check supabase/functions/send-email/index.ts supabase/functions/send-mail/index.ts
+      - name: Build mail Worker without deployment
+        working-directory: cloudflare/maintenance-worker
+        run: |
+          npm ci
+          npx wrangler deploy --dry-run --outdir /tmp/mail-worker-build
+
+  verify-e19-345:
+    if: ${{ inputs.verify_e19_345 }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Restore base policies and permissions omitted from schema dump
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_337_base_refusal_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_338_base_share_lock_order.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_339_base_mail_flag_availability.sql
+      - name: Reproduce legacy orphan and verify migration cleanup
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'ALTER TABLE public.base_share_tasks DROP CONSTRAINT IF EXISTS base_share_tasks_base_id_fkey'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-base-orphan-345.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_345_base_task_parent_cascade.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$ BEGIN
+            IF EXISTS(SELECT 1 FROM public.base_share_tasks WHERE id='dddddddd-3451-0000-0000-000000000004') THEN RAISE EXCEPTION 'legacy orphan remains'; END IF;
+          END $$;
+          DELETE FROM auth.users WHERE id='aaaaaaaa-3451-0000-0000-000000000001';
+          SQL
+      - name: Verify cascade, old base contracts and concurrent deletion
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-task-cascade-345.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-refusal-337.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-boundaries-337.sql
+          bash docs/sql/test-base-parent-cascade-345-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-345-sql-restore
+          path: /tmp/fam-restore.log
+
+  verify-e19-346:
+    if: ${{ inputs.verify_e19_346 }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Restore contact policies and ACL before migration
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_329_friend_refusal_expiry.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_330_poll_only_tasks.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_333_subscriber_refusal_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_335_subscriber_registered_sharing.sql
+      - name: Verify withdrawal actors, refusal lifecycle and compatibility
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS friendships_initial_decision_user ON public.friendships; ALTER TABLE public.friendships DROP COLUMN IF EXISTS decision_user_id; ALTER TABLE public.friendships DROP COLUMN IF EXISTS cancelled_at'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-friend-withdrawal-346.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_346_friend_withdrawal_actor.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-backfill-346.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-regression-346.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-registered-sharing-335.sql
+          bash docs/sql/test-friend-refusal-329-concurrency.sh
+          bash docs/sql/test-friend-withdrawal-346-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-346-sql-restore
+          path: /tmp/fam-restore.log
+
+  verify-e19-347:
+    if: ${{ inputs.verify_e19_347 || inputs.verify_e19_348 }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore schema with local Supabase stubs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Restore pre355 proposal shape for historical migration fixtures
+        run: psql -v ON_ERROR_STOP=1 -f docs/sql/reset-friend-proposal-test-schema-355.sql
+      - name: Restore pre353 contact shape for historical migration fixtures
+        run: psql -v ON_ERROR_STOP=1 -f docs/sql/reset-contact-source-test-schema-353.sql
+      - name: Restore current contact and poll policies and ACL
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_329_friend_refusal_expiry.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_330_poll_only_tasks.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_333_subscriber_refusal_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_335_subscriber_registered_sharing.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_340_poll_share_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_341_poll_task_decision_guards.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_342_poll_mail_budget_events.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_343_poll_task_vote_guards.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_344_poll_task_atomic_completion.sql
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS friendships_initial_decision_user ON public.friendships; ALTER TABLE public.friendships DROP COLUMN IF EXISTS decision_user_id; ALTER TABLE public.friendships DROP COLUMN IF EXISTS cancelled_at'
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_346_friend_withdrawal_actor.sql
+      - name: Verify contact locks, partial cleanup and old vote contracts
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS poll_tasks_cleanup_partial_votes ON public.poll_tasks'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-poll-contact-cleanup-347.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_347_poll_contact_locks_and_partial_cleanup.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-cleanup-backfill-347.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-completion-344.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-share-contract-340.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-boundaries-341.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          bash docs/sql/test-poll-cleanup-347-ddl-concurrency.sh
+          bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
+          bash docs/sql/test-poll-task-completion-344-concurrency.sh
+      - name: Verify physical recipient account cascade and retained aggregates
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_348_recipient_task_account_cascade.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-recipient-account-cascade-348.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_349_dedicated_account_mail_test_cleanup.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-dedicated-account-mail-cleanup-349.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_350_dedicated_deletion_account15.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-dedicated-account-mail-cleanup-350.sql
+          bash docs/sql/test-recipient-cascade-348-ddl-concurrency.sh
+          bash docs/sql/test-recipient-account-cascade-348-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-task-cascade-345.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
+          bash docs/sql/test-poll-task-completion-344-concurrency.sh
+      - name: Verify poll recipient identity, legacy binding and concurrent registration
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS poll_identity_auth_insert ON auth.users; DROP TRIGGER IF EXISTS poll_identity_auth_change ON auth.users; DROP TRIGGER IF EXISTS poll_identity_profile ON public.profiles; DROP TRIGGER IF EXISTS poll_identity_task_insert ON public.poll_tasks'
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS identity351_test_new_user ON auth.users; CREATE TRIGGER identity351_test_new_user AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user()'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-poll-recipient-identity-351.sql
+          bash docs/sql/test-poll-recipient-351-ddl-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-backfill-351.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-12_352_guest_conversion_identity.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-conversion-identity-352.sql
+          python3 docs/sql/test-guest-conversion-352-concurrency.py
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-test-cleanup-351.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-votes-343.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-completion-344.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-recipient-account-cascade-348.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-registered-sharing-335.sql
+          python3 docs/sql/test-poll-recipient-identity-351-concurrency.py
+          python3 docs/sql/test-poll-recipient-creation-351-concurrency.py
+          bash docs/sql/test-poll-task-votes-343-concurrency.sh
+          bash docs/sql/test-poll-task-completion-344-concurrency.sh
+          bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
+          bash docs/sql/test-recipient-account-cascade-348-concurrency.sh
+      - name: Verify contact source graph, historical boundaries and registration races
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-contact-source-history-353.sql
+          bash docs/sql/test-contact-source-353-ddl-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-contact-source-history-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-sources-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-contact-identity-entrypoints-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-identity-cooldowns-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-independent-contact-grants-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-closed-contact-source-353.sql
+          python3 docs/sql/test-poll-contact-source-353-concurrency.py
+          python3 docs/sql/test-subscriber-registration-close-353-concurrency.py
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-registered-sharing-335.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-recipient-account-cascade-348.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-conversion-identity-352.sql
+          bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
+      - name: Upload schema restore diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e19-347-sql-restore
+          path: /tmp/fam-restore.log
+      - name: Verify guest metadata cannot promote anonymous identities
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-guest-metadata-history-354.sql
+          bash docs/sql/test-guest-metadata-354-ddl-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-metadata-history-354.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-metadata-354.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-conversion-identity-352.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
+          python3 docs/sql/test-guest-metadata-354-concurrency.py
+      - name: Verify derived friend proposals follow their source
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          bash docs/sql/test-friend-proposal-355-ddl-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-proposal-sources-355.sql
+          python3 docs/sql/test-friend-proposal-355-concurrency.py
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-sources-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql

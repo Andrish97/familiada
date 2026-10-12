@@ -49,8 +49,8 @@ test("linkTo: karta instrukcji w ?tab=, hash zostaje kotwicą w karcie", () => {
 test("ret niesie kartę: powrót z podstrony wraca na tę samą kartę", () => {
   const bases = linkTo("baseExplorer", { id: "b1" }, ctx("/bases/?tab=shared"));
   assert.equal(backHref("baseExplorer", ctx(bases)), "/bases/?tab=shared");
-  const subs = linkTo("subscriptions", {}, ctx("/games/?tab=poll_text"));
-  assert.equal(backHref("subscriptions", ctx(subs)), "/games/?tab=poll_text");
+  const subs = linkTo("friends", {}, ctx("/games/?tab=poll_text"));
+  assert.equal(backHref("friends", ctx(subs)), "/games/?tab=poll_text");
   const manual = linkTo("manual", { tab: "bases" }, ctx("/bases/?tab=shared"));
   assert.equal(backHref("manual", ctx(manual)), "/bases/?tab=shared");
 });
@@ -62,13 +62,13 @@ test("karty w mapie: tabs jest listą niepustych nazw, a state je wymienia", () 
     assert.equal(new Set(p.tabs).size, p.tabs.length, `${id}.tabs bez powtórzeń`);
     assert.ok(p.state?.includes("tab"), `${id}.state ma tab`);
   }
-  for (const id of ["games", "bases", "polls", "subscriptions", "logoEditor", "manual"]) {
+  for (const id of ["games", "bases", "polls", "logoEditor", "manual"]) {
     assert.ok(PAGES[id].tabs, `${id} ma karty`);
   }
 });
 
-test("łańcuch powrotów: games -> subscriptions -> polls -> manual i z powrotem", () => {
-  const subs = linkTo("subscriptions", {}, ctx("/games/"));
+test("łańcuch powrotów: games -> friends -> polls -> manual i z powrotem", () => {
+  const subs = linkTo("friends", {}, ctx("/games/"));
   const polls = linkTo("polls", { id: 7 }, ctx(subs));
   const manual = linkTo("manual", { tab: "polls" }, ctx(polls));
 
@@ -77,9 +77,9 @@ test("łańcuch powrotów: games -> subscriptions -> polls -> manual i z powrote
   assert.equal(new URL(b1.href, "https://x.test").searchParams.get("id"), "7");
 
   const b2 = backTarget("polls", ctx(b1.href));
-  assert.equal(b2.pageId, "subscriptions");
+  assert.equal(b2.pageId, "friends");
 
-  const b3 = backTarget("subscriptions", ctx(b2.href));
+  const b3 = backTarget("friends", ctx(b2.href));
   assert.equal(b3.pageId, "games");
   assert.equal(b3.href, "/games/");
 });
@@ -113,9 +113,9 @@ test("zepsuty poziom w środku łańcucha unieważnia cały ret", () => {
 
 test("limit głębokości: łańcuch dłuższy niż MAX_RET_DEPTH wraca do parent", () => {
   assert.equal(MAX_RET_DEPTH, 4);
-  // 4 poziomy: subscriptions <- bases <- subscriptions <- bases ... -> games
+  // 4 poziomy: friends <- bases <- friends <- bases ... -> games
   const levels = ["/games/"];
-  const chain = ["bases", "subscriptions", "bases", "subscriptions", "bases"];
+  const chain = ["bases", "friends", "bases", "friends", "bases"];
   let cur = "/games/";
   for (const id of chain) {
     const next = linkTo(id, {}, ctx(cur));
@@ -130,20 +130,20 @@ test("limit głębokości: łańcuch dłuższy niż MAX_RET_DEPTH wraca do paren
 
   // ręcznie zbudowany, zbyt głęboki ret (5 poziomów) jest odrzucony
   let deep = "/games/";
-  for (const path of ["/bases/", "/subscriptions/", "/bases/", "/subscriptions/", "/bases/"]) {
+  for (const path of ["/bases/", "/friends/", "/bases/", "/friends/", "/bases/"]) {
     deep = `${path}?ret=${encodeURIComponent(deep)}`;
   }
   // deep = bases?ret=subs?ret=bases?ret=subs?ret=bases?ret=games -> 5 poziomów w ret
-  assert.equal(backHref("subscriptions", ctx(`/subscriptions/?ret=${encodeURIComponent(deep)}`)), "/games/");
+  assert.equal(backHref("friends", ctx(`/friends/?ret=${encodeURIComponent(deep)}`)), "/games/");
 });
 
 test("ret o dozwolonej głębokości (4 poziomy) jest przyjęty", () => {
   let deep = "/games/";
-  for (const path of ["/bases/", "/subscriptions/", "/bases/"]) {
+  for (const path of ["/bases/", "/friends/", "/bases/"]) {
     deep = `${path}?ret=${encodeURIComponent(deep)}`;
   }
   // deep: bases -> subs -> bases -> games = 4 strony
-  const target = backTarget("subscriptions", ctx(`/subscriptions/?ret=${encodeURIComponent(deep)}`));
+  const target = backTarget("friends", ctx(`/friends/?ret=${encodeURIComponent(deep)}`));
   assert.equal(target.pageId, "bases");
 });
 
@@ -220,4 +220,15 @@ test("loginUrl: /login/ z językiem", () => {
 
 test("nieznana strona to błąd programisty", () => {
   assert.throws(() => linkTo("nieMaTakiej", {}, ctx("/")), /nieznana strona/);
+});
+
+test("Control → Znajomi → Control zachowuje grę, język i łańcuch powrotów", () => {
+  const source = "/control/?id=game123&lang=en&ret=%2Fgames%2F%3Ftab%3Dprepared";
+  const target = linkTo("friends", {}, ctx(source, {lang:"en"}));
+  assert.equal(retOf(target), "/control/?id=game123&ret=%2Fgames%2F%3Ftab%3Dprepared");
+  const back = new URL(backHref("friends", ctx(target, {lang:"en"})), "https://x.test");
+  assert.equal(back.pathname, "/control/");
+  assert.equal(back.searchParams.get("id"), "game123");
+  assert.equal(back.searchParams.get("lang"), "en");
+  assert.equal(back.searchParams.get("ret"), "/games/?tab=prepared");
 });

@@ -3,7 +3,11 @@ const { pathToFileURL } = require("url");
 const path = require("path");
 const { loginAsPooledTestUser, loginAsGuest } = require("./helpers/login");
 
-// Exercise actual production navigation without replacing routes or files.
+const { serveBranchCode } = require("./helpers/branch-code");
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "control", "polls", "friends", "subscribers", "tasks", "manual", "connect", "logo", "marketplace", "account"] });
+});
 for (const path of ["/connect", "/connect/"]) {
   test(`anonim: powrót z ${path} ma strzałkę i prowadzi na stronę główną`, async ({ page }) => {
     await page.goto(path, { waitUntil: "networkidle" });
@@ -26,17 +30,17 @@ test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ 
   expect(new URL(page.url()).hash).toBe("#connect");
 });
 
-test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ page }, testInfo) => {
+test("zalogowany: Bazy → Znajomi → Bazy oraz powrót do gier", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   await page.goto("/bases/", { waitUntil: "networkidle" });
   await page.locator("#btnGoAlt").click();
-  await expect.poll(() => new URL(page.url()).pathname).toBe("/subscriptions/");
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/friends/");
   expect(new URL(page.url()).searchParams.get("ret")).toBe("/bases/");
   // Adres zmienia się przed wykonaniem modułu strony — „Wstecz” podpina
   // initPage dopiero po auth (topbar-ready).
   await page.waitForLoadState("domcontentloaded");
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
-  await page.locator("#btnBackToGames").click();
+  await page.locator("#btnBack").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/bases/");
   await page.waitForLoadState("domcontentloaded");
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
@@ -44,11 +48,11 @@ test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ 
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
 
-test("zalogowany: subskrypcje wracają do gier bez doklejania folderu", async ({ page }, testInfo) => {
+test("zalogowany: znajomi wracają do gier bez doklejania folderu", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  await page.goto("/subscriptions/", { waitUntil: "networkidle" });
+  await page.goto("/friends/", { waitUntil: "networkidle" });
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
-  await page.locator("#btnBackToGames").click();
+  await page.locator("#btnBack").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
 
@@ -70,7 +74,7 @@ const clickEl = (locator) => locator.evaluate((el) => el.click());
 // Id przycisku „Wstecz” na stronie docelowej (nie każda strona ma #btnBack).
 const BACK_ID = {
   marketplace: "btnGoGames",
-  subscriptions: "btnBackToGames",
+  friends: "btnBack",
   account: "backToGames",
 };
 
@@ -155,3 +159,80 @@ for (const map of MAP_LIST) {
     expect(clicked).toBeGreaterThan(0);
   });
 }
+
+for (const [device, viewport] of Object.entries(VIEWPORTS)) {
+  test(`kontakty: skróty i ikony na stronach — ${device}`, async ({page}, testInfo) => {
+    test.setTimeout(120000);
+    await page.setViewportSize(viewport);
+    await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+    const origins = [
+      ["/games/", ["btnFriends", "btnSubscribers"]],
+      ["/bases/", ["btnGoAlt", "btnSubscribers"]],
+      ["/polls/", ["btnFriends", "btnSubscribers"]],
+      ["/friends/", ["btnSubscribers"]],
+      ["/subscribers/", ["btnFriends"]],
+      ...device === "desktop" ? [["/control/", ["btnFriends"]]] : [],
+    ];
+    for (const [source, ids] of origins) for (const id of ids) {
+      await page.goto(source, {waitUntil:"domcontentloaded"});
+      await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+      const button = page.locator(`#${id}`);
+      const subscribers = id === "btnSubscribers";
+      await expect(button.locator(`svg.ico-${subscribers ? "envelope" : "people"}`)).toHaveCount(1);
+      expect(await button.evaluate(el => el.dataset.navHidden)).not.toBe("true");
+      if (source === "/control/") {
+        await expect(button).toBeDisabled();
+        await expect(button).toHaveAttribute("data-nav-blocked-until", "modalPagesReview");
+        continue;
+      }
+      await clickEl(button);
+      await expect.poll(() => new URL(page.url()).pathname).toBe(subscribers ? "/subscribers/" : "/friends/");
+      expect(new URL(page.url()).searchParams.get("ret")).toBe(source);
+      await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+      await page.locator("#btnBack").click();
+      await expect.poll(() => new URL(page.url()).pathname).toBe(source);
+    }
+    await page.goto("/games/");
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+    await page.screenshot({path:testInfo.outputPath(`shot-contact-navigation-${device}.png`),fullPage:true});
+  });
+}
+
+// Freeze navigation after the tap so the previous page's final frame can be inspected.
+test("tablet: hamburger closes before navigating without touch filter layers", async ({ browser }, testInfo) => {
+  const context = await browser.newContext({ viewport: { width: 800, height: 1280 }, isMobile: true, hasTouch: true });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "friends"] });
+  const page = await context.newPage();
+  try {
+    await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+    await page.goto("/games/", { waitUntil: "networkidle" });
+    await page.locator('.topbar-menu-toggle').tap();
+    const panel = page.locator('.topbar-mobile-overlay');
+    await expect(panel).toBeVisible();
+    const button = panel.locator('#btnFriends');
+    await expect(button).toHaveAttribute('data-nav-href', /friends/);
+    await expect.poll(() => button.evaluate(el => getComputedStyle(el).filter)).toBe('none');
+    await page.screenshot({ path: testInfo.outputPath('shot-tablet-menu-open.png'), fullPage: true });
+    let capture;
+    const clicked = new Promise(resolve => { capture = resolve; });
+    await page.exposeFunction('__captureMenuClick', capture);
+    await page.evaluate(() => document.addEventListener('click', event => {
+      if (!event.target.closest('#btnFriends')) return;
+      window.__captureMenuClick({
+        open: document.querySelector('.topbar-mobile-overlay').classList.contains('is-open'),
+        locked: document.body.classList.contains('topbar-mobile-lock'),
+      });
+    }));
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    await context.route('**/friends/**', async route => { if (route.request().isNavigationRequest()) await gate; await route.continue(); });
+    const tap = button.tap({ noWaitAfter: true });
+    try {
+      // Locators wait for a pending navigation, so inspect the final old-page
+      // state from the click event before that navigation starts instead.
+      expect(await clicked).toEqual({ open: false, locked: false });
+    } finally { release(); }
+    await tap;
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/friends/');
+  } finally { await context.close(); }
+});

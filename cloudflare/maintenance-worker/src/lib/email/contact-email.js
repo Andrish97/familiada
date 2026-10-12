@@ -1,4 +1,5 @@
 // src/lib/contact-email.js -- contact form email templates (teksty z tłumaczeń strony).
+import { renderRichMailDocument } from "./mail-document.js";
 import { escEmailText as esc, nl2br } from "./html-escape.js";
 import { normalizeLang } from "../core/utils.js";
 import { formatText, getTranslationSection } from "../core/translations.js";
@@ -52,28 +53,10 @@ export async function buildContactEmail(opts) {
 
   const closingLines = c.closing.split("\n");
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <meta name="color-scheme" content="dark"/>
-  <style>:root{color-scheme:dark}</style>
-</head>
-<body style="margin:0;padding:0;background:#050914;color:#ffffff;">
-<div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff;">
-  <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
-    <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-    <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>
-  </div>
-  <div style="padding:22px 20px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);">
-    <p style="margin:0 0 18px;font-size:14px;opacity:.9;">${esc(c.greeting)}</p>
-    ${contentHtml}
-    <p style="margin:24px 0 0;font-size:14px;opacity:.7;white-space:pre-line;">${closingLines.map(esc).join("<br>")}</p>
-  </div>
-</div>
-</body>
-</html>`;
+  const html = renderRichMailDocument({ lang: normalizeLang(lang), title: mailSubject,
+    subtitle: "familiada.online",
+    bodyHtml: `<p style="margin:0 0 18px;">${esc(c.greeting)}</p>${contentHtml}<p style="margin:24px 0 0;">${closingLines.map(esc).join("<br>")}</p>`,
+  });
 
   return { subject: mailSubject, html };
 }

@@ -1,25 +1,26 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-10T22301";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-11T20294";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-10T22301";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-10T22301";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-10T22301";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-10T22301";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-10T22301";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-10T22301";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-10T22301";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-10T22301";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-10T22301";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-10T22301";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-10T22301";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-10T22301";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-10T22301";
-import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-10T22301";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-10T22301";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-10T22301";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T20294";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-11T20294";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-11T20294";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T20294";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T20294";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-11T20294";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T20294";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-11T20294";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T20294";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-11T20294";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-11T20294";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T20294";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-11T20294";
+import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T20294";
+import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-11T20294";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T20294";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-11T20294";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-11T20294";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -94,12 +95,11 @@ const shareOverlay = document.getElementById("shareOverlay");
 const shareSectionsHost = document.getElementById("shareSectionsHost");
 
 const shareEmail = document.getElementById("shareEmail");
-const shareEmailWrap = document.getElementById("shareEmailWrap");
-const shareEmailError = document.getElementById("shareEmailError");
 const shareRole = document.getElementById("shareRole");
-const shareRecipientType = document.getElementById("shareRecipientType");
-const shareSubscriberSelect = document.getElementById("shareSubscriberSelect");
-const shareSubsWrap = document.getElementById("shareSubsWrap");
+const baseShareFriends = document.getElementById("baseShareFriends");
+const baseShareFriendsRole = document.getElementById("baseShareFriendsRole");
+const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
+const baseDeclinesHost = document.getElementById("baseDeclinesHost");
 const btnShareAdd = document.getElementById("btnShareAdd");
 const btnShareClose = document.getElementById("btnShareClose");
 const shareMsg = document.getElementById("shareMsg");
@@ -168,11 +168,12 @@ function stopAutoRefresh() {
   autoRefreshTimer = null;
 }
 
-let shareRoleSelect = null;
-let shareRecipientTypeSelect = null;
-let shareSubscriberSelectInst = null;
-const SHARE_MODAL_CACHE_TTL_MS = 20_000;
-const shareModalCache = new Map();
+let shareRoleValue = "editor";
+let friendsRoleValue = "editor";
+let ownBaseDeclines = [];
+let baseDeclinesCollapsed = true;
+let shareMessageTimer = null;
+let shareRenderVersion = 0;
 
 // modal nazwy – tryb
 let nameMode = "create"; // 'create' | 'rename'
@@ -195,67 +196,40 @@ function setMsg(el, t) {
   el.textContent = t || "";
 }
 
-function shareRoleOptions() {
-  return [
-    { value: "editor", label: t("bases.shareModal.roleEditor") },
-    { value: "viewer", label: t("bases.shareModal.roleViewer") },
-  ];
+function baseRoleButton(value, onChange) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn xsm baseShareRole";
+  const update = () => {
+    const editor = value === "editor";
+    button.innerHTML = icon(editor ? "edit-paper" : "eye");
+    button.title = t(editor ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");
+    button.setAttribute("aria-label", button.title);
+    button.dataset.role = value;
+  };
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    const next = value === "editor" ? "viewer" : "editor";
+    try { if (await onChange(next) !== false) value = next; }
+    finally { update(); button.disabled = false; }
+  });
+  update();
+  return button;
 }
-
-function shareRecipientTypeOptions() {
-  return [
-    { value: "email", label: t("bases.shareModal.recipientEmail") || "Wpisz adres e-mail lub nazwę użytkownika" },
-    { value: "subscriber", label: t("bases.shareModal.recipientSubscriber") || "Wybierz subskrybenta" },
-  ];
-}
-
 function initShareRoleSelect() {
-  if (!shareRole) return;
-  if (!shareRoleSelect) {
-    shareRoleSelect = initUiSelect(shareRole, {
-      options: shareRoleOptions(),
-      value: "editor",
-    });
-    return;
-  }
-  shareRoleSelect.setOptions(shareRoleOptions());
-  shareRoleSelect.setValue("editor", { silent: true });
+  shareRole?.replaceChildren(baseRoleButton(shareRoleValue, value => { shareRoleValue = value; }));
+  baseShareFriendsRole?.replaceChildren(baseRoleButton(friendsRoleValue, value => { friendsRoleValue = value; }));
 }
-
-function initShareRecipientTypeSelect() {
-  if (!shareRecipientType) return;
-  if (!shareRecipientTypeSelect) {
-    shareRecipientTypeSelect = initUiSelect(shareRecipientType, {
-      options: shareRecipientTypeOptions(),
-      value: "email",
-      onChange: (val) => onRecipientTypeChange(val),
-    });
-    return;
+function showShareMessage(message) {
+  clearTimeout(shareMessageTimer);
+  if (!shareMsg) return;
+  shareMsg.classList.remove("show");
+  shareMsg.hidden = !message;
+  shareMsg.textContent = message || "";
+  if (message) {
+    requestAnimationFrame(() => shareMsg.classList.add("show"));
+    shareMessageTimer = setTimeout(() => { shareMsg.classList.remove("show"); shareMsg.hidden = true; }, TOAST_DEFAULT_MS);
   }
-  shareRecipientTypeSelect.setOptions(shareRecipientTypeOptions());
-  shareRecipientTypeSelect.setValue("email", { silent: true });
-  onRecipientTypeChange("email");
-}
-
-function initShareSubscriberSelect() {
-  if (!shareSubscriberSelect) return;
-  if (!shareSubscriberSelectInst) {
-    shareSubscriberSelectInst = initUiSelect(shareSubscriberSelect, {
-      options: [],
-      value: "",
-      placeholder: t("bases.shareModal.selectSubscriber") || "Wybierz...",
-    });
-    return;
-  }
-  shareSubscriberSelectInst.setOptions([]);
-  shareSubscriberSelectInst.setValue("", { silent: true });
-}
-
-function onRecipientTypeChange(val) {
-  const showEmail = val === "email";
-  const showSubs = val === "subscriber";
-  if (shareEmailWrap) shareEmailWrap.style.display = showEmail ? "" : "none";
-  if (shareSubsWrap) shareSubsWrap.style.display = showSubs ? "" : "none";
 }
 
 function safeName(s) {
@@ -356,9 +330,9 @@ async function listSharedBases() {
     ownerEmail: r.owner_email,
     created_at: r.created_at,
     updated_at: r.updated_at,
-  
+
     sharedRole: r.shared_role,
-  
+
     proposed: !!r.proposed,
     taskId: r.task_id || null,
     taskStatus: r.task_status || null,
@@ -393,6 +367,11 @@ async function refreshBases() {
   }));
 
   const shared = guestMode ? [] : await listSharedBases();
+  if (!guestMode) {
+    const { data, error } = await sb().rpc("base_declines_list_mine");
+    if (error) throw error;
+    ownBaseDeclines = data || [];
+  } else ownBaseDeclines = [];
 
   ownedBases = ownedWithStats
     .slice()
@@ -783,70 +762,13 @@ function mailLink(link) {
   return u.href;
 }
 
-function escapeMail(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}
-
-function wrapEmailDoc(innerHtml) {
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <meta name="supported-color-schemes" content="dark">
-  <style>:root { color-scheme: dark; }</style>
-</head>
-<body style="margin:0;padding:0;background:#050914;color:#ffffff;">
-${innerHtml}
-</body>
-</html>`;
-}
-
 function buildMailHtml({ title, body, actionLabel, actionUrl }) {
-  const safeTitle = escapeMail(title || t("bases.mail.title"));
-  const safeBody = escapeMail(body || "");
-  const safeActionLabel = escapeMail(actionLabel || t("bases.mail.action"));
-  const safeActionUrl = escapeMail(actionUrl || "");
-
-  const subtitle = escapeMail(t("bases.mail.subtitle"));
-  const footer = escapeMail(t("bases.mail.footer"));
-  const linkLabel = escapeMail(t("bases.mail.linkLabel"));
-
-  const inner = `
-<div style="margin:0;padding:0;background:#050914;color:#ffffff;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;background:#050914;">
-    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${subtitle}</div>
-    </div>
-
-    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:#111827;background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${safeTitle}</div>
-      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${safeBody}</div>
-
-      <div style="margin:16px 0;">
-        <a href="${safeActionUrl}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:#2a2b1a;background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;text-transform:uppercase;">
-          ${safeActionLabel}
-        </a>
-      </div>
-
-      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-        ${linkLabel}
-        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">
-          ${safeActionUrl}
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${footer}</div>
-  </div>
-</div>
-`.trim();
-
-  return wrapEmailDoc(inner);
+  return renderMailDocument({ lang: getUiLang(), title, body, actionLabel, actionUrl,
+    subtitle: t("bases.mail.subtitle"), ignoreNote: t("bases.mail.footer"),
+    linkHint: t("bases.mail.linkLabel"),
+    autoNote: t("pollsHubSubscriptions.mail.autoNote"),
+    footerText: t("pollGo.mailAccountSettings"),
+    footerLinks: [{ url: mailLink("/account/"), label: t("pollGo.mailAccountSettingsLink") }] });
 }
 
 async function sendMail({ to, subject, html, cooldownActionKey, cooldownTargetKey }) {
@@ -867,23 +789,26 @@ async function sendMail({ to, subject, html, cooldownActionKey, cooldownTargetKe
     console.warn("[bases] sendMail failed:", await res.text());
     throw new Error(t("bases.mail.failed"));
   }
+  const payload = await res.json();
+  if (!payload?.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
+  return payload.results?.[0]?.queued ?? (Number(payload.queued) > 0);
 }
 
 // cooldownTargetKey musi być IDENTYCZNY jak w base_share_by_email/by_user
 // (migracja 291) -- "pair:<owner>:<recipient>:base:<base_id>" -- inaczej
 // trigger na mail_queue rezerwowałby inny, niezależny koszyk niż to, co RPC
 // właśnie sprawdziło/zarezerwowało.
-async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId, baseId }) {
+async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId, baseId, role, reminder = false }) {
   const actionUrl = mailLink(link);
   const html = buildMailHtml({
-    title: t("bases.mail.title"),
-    body: t("bases.mail.body", { owner: ownerLabel || "—", base: baseName || "—" }),
-    actionLabel: t("bases.mail.action"),
+    title: t(reminder ? "sharingMail.baseReminderTitle" : "bases.mail.title"),
+    body: t(reminder ? "sharingMail.baseReminderBody" : "sharingMail.baseBody", { owner: ownerLabel || "—", base: baseName || "—", role: t(`sharingMail.${role}`) }),
+    actionLabel: t("sharingMail.baseAction"),
     actionUrl,
   });
-  await sendMail({
+  return sendMail({
     to,
-    subject: t("bases.mail.subject", { base: baseName || "—" }),
+    subject: t(reminder ? "sharingMail.baseReminderSubject" : "bases.mail.subject", { base: baseName || "—" }),
     html,
     cooldownActionKey: "base:share",
     cooldownTargetKey: `pair:${currentUser.id}:${recipientId}:base:${baseId}`,
@@ -892,9 +817,10 @@ async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId,
 
 
 async function openShareModal() {
-  setMsg(shareMsg, "");
+  showShareMessage("");
   shareEmail.value = "";
-  shareRoleSelect?.setValue("editor", { silent: true });
+  shareRoleValue = friendsRoleValue = "editor";
+  initShareRoleSelect();
   await renderShareModal();
   show(shareOverlay, true);
   enterModalSheet(shareOverlay, { backBtn: btnBack, onClose: closeShareModal });
@@ -902,6 +828,9 @@ async function openShareModal() {
 
 function closeShareModal() {
   show(shareOverlay, false);
+  shareRenderVersion++;
+  shareCooldownTicker.resetBindings();
+  showShareMessage("");
   exitModalSheet(shareOverlay);
 
   // Odśwież status kafelków po zamknięciu modala (shareCount / udostępnione listy).
@@ -909,312 +838,146 @@ function closeShareModal() {
   void refreshView({ withBadge: true });
 }
 
-function invalidateShareModalCache(baseId) {
-  if (!baseId) return;
-  shareModalCache.delete(String(baseId));
-}
-
-function getShareModalCache(baseId) {
-  const key = String(baseId || "");
-  if (!key) return null;
-  const cached = shareModalCache.get(key);
-  if (!cached) return null;
-  if (Date.now() - cached.ts > SHARE_MODAL_CACHE_TTL_MS) {
-    shareModalCache.delete(key);
-    return null;
-  }
-  return cached.payload;
-}
-
-function setShareModalCache(baseId, payload) {
-  const key = String(baseId || "");
-  if (!key || !payload) return;
-  shareModalCache.set(key, { ts: Date.now(), payload });
-}
-
-// Żywy licznik cooldownu "base:share" -- zastępuje martwe msLeftLabel/
-// getCooldownUntil (nigdy nie wywoływane, zweryfikowane grepem) i statyczny,
-// jednorazowy komunikat "bases.share.cooldown" bez odliczania. Jeden
-// cooldown_until na raz (modal share jest jednoinstancyjny), stąd stały klucz.
 const shareCooldownTicker = createCooldownTicker();
-shareCooldownTicker.bind({ key: "base:share", labelEl: shareMsg, disableEls: [btnShareAdd] });
 shareCooldownTicker.start();
 
 async function renderShareModal() {
   const b = selectedBase();
-  if (!b || !isOwner(b)) {
-    shareSectionsHost?.replaceChildren();
-    return;
+  if (!b || !isOwner(b)) return;
+  const version = ++shareRenderVersion;
+  shareCooldownTicker.resetBindings();
+  const { data, error } = await sb().rpc("base_share_panel", { p_base_id: b.id });
+  if (version !== shareRenderVersion) return;
+  if (error || !data?.ok) { showShareMessage(t("bases.share.failed")); return; }
+  baseShareFriends.replaceChildren();
+  shareSectionsHost.replaceChildren();
+  const empty = host => {
+    const el = document.createElement("div"); el.className = "shareEmpty";
+    el.textContent = t("baseSharePanel.empty"); host.append(el);
+  };
+  if (!data.friends.length) empty(baseShareFriends);
+  for (const friend of data.friends) {
+    const row = shareRowEl({ id: friend.user_id, label: friend.label || friend.email, compact: true });
+    const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.value = friend.user_id;
+    checkbox.setAttribute("aria-label", friend.label || friend.email);
+    checkbox.addEventListener("change", updateBaseShareSelection);
+    row.prepend(checkbox);
+    row.addEventListener("click", event => {
+      if (checkbox.disabled || event.target.closest("input,button")) return;
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const { element, labelEl } = shareCooldownEl(); row.querySelector(".shareRowActions").append(element);
+    const key = `friend:${friend.user_id}`;
+    shareCooldownTicker.bind({ key, labelEl, disableEls: [checkbox], onTick: (_, active) => {
+      element.hidden = !active; row.classList.toggle("is-cooling-down", active); row.classList.toggle("pick", !active);
+      if (active) checkbox.checked = false;
+      updateBaseShareSelection();
+    }});
+    shareCooldownTicker.setEndMs(key, Date.parse(friend.cooldown_until) || 0);
+    baseShareFriends.append(row);
   }
+  updateBaseShareSelection();
+  const recipients = [...data.outgoing, ...data.active];
+  if (!recipients.length) empty(shareSectionsHost);
+  for (const recipient of recipients) {
+    const active = recipient.status === "done";
+    const roleEl = baseRoleButton(recipient.role, async role => {
+      const { data: result, error } = await sb().rpc(active ? "update_base_share_role" : "base_share_update_invite_role", active
+        ? { p_base_id: b.id, p_user_id: recipient.user_id, p_role: role }
+        : { p_task_id: recipient.task_id, p_role: role });
+      const response = Array.isArray(result) ? result[0] : result;
+      if (error || !response?.ok) { showShareMessage(t("bases.share.failed")); return false; }
 
-  // Reset UI
-  if (shareEmail) shareEmail.value = "";
-  if (shareEmailError) shareEmailError.style.display = "none";
-  setMsg(shareMsg, "");
-  shareRoleSelect?.setValue("editor", { silent: true });
-  shareRecipientTypeSelect?.setValue("email", { silent: true });
-  onRecipientTypeChange("email");
-  shareSubscriberSelectInst?.setValue("", { silent: true });
-
-  const cached = getShareModalCache(b.id);
-  let registeredSubs = cached?.registeredSubs || [];
-  let pending = cached?.pending || [];
-  let shared = cached?.shared || [];
-
-  if (!cached) {
-    const [subsRes, pendingRes, sharedRes] = await Promise.all([
-      sb().rpc("polls_hub_list_my_subscribers"),
-      sb().rpc("list_base_share_tasks_outgoing", { p_base_id: b.id }),
-      sb().rpc("list_base_shares", { p_base_id: b.id }),
-    ]);
-
-    if (subsRes.error) console.warn("[bases] polls_hub_list_my_subscriptions error:", subsRes.error);
-    if (pendingRes.error) console.warn("[bases] list_base_share_tasks_outgoing error:", pendingRes.error);
-    if (sharedRes.error) console.warn("[bases] list_base_shares error:", sharedRes.error);
-
-    registeredSubs = (subsRes.data || [])
-      .filter((r) => r.status === "active")
-      .filter((r) => !!r.subscriber_user_id);
-    pending = pendingRes.data || [];
-    shared = sharedRes.data || [];
-
-    setShareModalCache(b.id, { registeredSubs, pending, shared });
-  }
-
-  // Populate subscriber select
-  if (shareSubscriberSelectInst) {
-    const subOptions = registeredSubs.map((r) => ({
-      value: r.subscriber_user_id,
-      label: r.subscriber_username || r.subscriber_email || r.subscriber_label || "—",
-    }));
-    if (!subOptions.length) {
-      subOptions.push({ value: "", label: t("bases.shareModal.noSubscribers") || "Brak subskrybentów" });
-    }
-    shareSubscriberSelectInst.setOptions(subOptions);
-    shareSubscriberSelectInst.setValue("", { silent: true });
-  }
-
-  const sharedByUser = new Map((shared || []).map((x) => [x.user_id, x]));
-  const pendingByUser = new Map(
-    (pending || [])
-      .filter((x) => x.recipient_user_id)
-      .map((x) => [x.recipient_user_id, x])
-  );
-
-  // ── Sekcje Oczekujące · Aktywni: wspólny komponent (share-sections.js) ──
-  if (!shareSectionsHost) return;
-
-  const pendingRows = (pending || []).map((r) => {
-    const label = r.recipient_username || r.recipient_email || "—";
-    return {
-      id: r.task_id,
-      label,
-      title: r.recipient_email || label,
-      actions: [{
-        key: "cancel",
-        icon: "trash",
-        title: t("bases.shareModal.cancelPending"),
-        onClick: async () => {
-          setMsg(shareMsg, "");
-          if (!r.task_id) return;
-          const { data: ok, error } = await sb().rpc("base_share_cancel_task", { p_task_id: r.task_id });
-          if (error || !ok) {
-            await alertModal({ text: t("bases.share.failed") });
-            return;
-          }
-          invalidateShareModalCache(b.id);
+      return true;
+    });
+    const actions = [];
+    if (!active && recipient.status !== "declined" && recipient.email_enabled) actions.push({
+      key: "resend", icon: "refresh", title: t("contacts.actions.resend"), countdown: true,
+      onMount: ({ rowEl, button, labelEl }) => {
+        const key = `resend:${recipient.task_id}`;
+        shareCooldownTicker.bind({ key, labelEl, disableEls: [button], onTick: (_, cooling) => {
+          labelEl.hidden = !cooling; rowEl.classList.toggle("is-cooling-down", cooling);
+        }});
+        shareCooldownTicker.setEndMs(key, Date.parse(recipient.cooldown_until) || 0);
+      },
+      onClick: async (_, button) => {
+        button.disabled = true;
+        try {
+          const { data: response, error } = await sb().rpc("base_share_resend", { p_task_id: recipient.task_id });
+          if (error || !response?.ok) { showShareMessage(baseShareError(response)); return; }
+          const queued = response.mail_allowed && await deliverBaseShare(response, b.id, { role: recipient.role, reminder: true });
           await renderShareModal();
-        },
-      }],
-    };
-  });
-
-  const activeRows = (shared || []).map((r) => {
-    const userId = r.user_id;
-    const label = r.email || r.username || "—";
-    const role = r.role || "viewer";
-
-    const roleEl = document.createElement("div");
-    roleEl.className = "ui-select share-role-select";
-    roleEl.dataset.userId = String(userId);
-    roleEl.innerHTML = `
-      <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-        <span class="ui-select-label">—</span>
-        <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-      </button>
-      <div class="ui-select-menu" role="listbox"></div>`;
-    const roleSelectInst = initUiSelect(roleEl, {
-      options: [
-        { value: "editor", label: t("bases.share.roleEditor") || "Edycja" },
-        { value: "viewer", label: t("bases.share.roleViewer") || "Przeglądanie" },
-      ],
-      value: role,
-      onChange: async (newRole) => {
-        roleSelectInst?.setDisabled(true);
-        setMsg(shareMsg, "");
-        const { data, error } = await sb().rpc("update_base_share_role", {
-          p_base_id: b.id,
-          p_user_id: userId,
-          p_role: newRole,
-        });
-        roleSelectInst?.setDisabled(false);
-        const rowRes = Array.isArray(data) ? data[0] : data;
-        const ok = !error && !!rowRes?.ok;
-        invalidateShareModalCache(b.id);
-        await renderShareModal(); // czyści komunikat -- ustawiamy go dopiero potem
-        setMsg(shareMsg, ok ? t("bases.share.roleChanged") : t("bases.share.failed"));
+          showShareMessage(t(queued ? "bases.share.success" : "control.shareDeviceModal.friendMailDisabled"));
+        } catch { showShareMessage(t("bases.share.emailFailed")); }
+        finally { button.disabled = false; }
       },
     });
-
-    return {
-      id: userId,
-      label,
-      title: r.email || label,
-      extras: [roleEl],
-      actions: [{
-        key: "remove",
-        icon: "trash",
-        title: t("bases.share.remove"),
-        onClick: async () => {
-          const ok = await confirmModal({
-            title: t("bases.share.removeTitle"),
-            text: t("bases.share.removeText", { email: label }),
-            okText: t("bases.share.removeOk"),
-            cancelText: t("bases.share.removeCancel"),
-          });
-          if (!ok) return;
-          const { data: ok2, error } = await sb().rpc("revoke_base_share", { p_base_id: b.id, p_user_id: userId });
-          if (error || ok2 !== true) {
-            await alertModal({ text: t("bases.share.failed") });
-            return;
-          }
-          invalidateShareModalCache(b.id);
-          await renderShareModal();
-        },
-      }],
-    };
-  });
-
-  renderShareSections(shareSectionsHost, {
-    pending: { rows: pendingRows, subtitle: t("bases.shareModal.sectionPendingSub") },
-    active: { rows: activeRows, subtitle: t("bases.shareModal.sectionSharedSub") },
-  });
-}
-
-// Enter w polu + klik "Dodaj" (albo dwa kliki) nie mogą wysłać dwóch zaproszeń/maili.
-let shareAddInFlight = false;
-
-async function shareAdd() {
-  if (shareAddInFlight) return;
-  shareAddInFlight = true;
-  if (btnShareAdd) btnShareAdd.disabled = true;
-  try {
-    await shareAddInner();
-  } finally {
-    shareAddInFlight = false;
-    if (btnShareAdd) btnShareAdd.disabled = false;
+    actions.push({ key: active ? "remove" : "cancel", icon: "trash", title: t("bases.share.remove"), onClick: async (_, button) => {
+      button.disabled = true;
+      const { data: ok, error } = await sb().rpc(active ? "revoke_base_share" : "base_share_cancel_task", active
+        ? { p_base_id: b.id, p_user_id: recipient.user_id } : { p_task_id: recipient.task_id });
+      if (error || !ok) { button.disabled = false; showShareMessage(t("bases.share.failed")); return; }
+       await renderShareModal();
+    }});
+    const row = shareRowEl({ id: recipient.task_id || recipient.user_id, label: recipient.label || recipient.email,
+      title: recipient.email, compact: true,
+      tags: [{ text: t(recipient.is_friend ? "shareSections.channel.friend" : "control.shareDeviceModal.recipientKind.account") },
+        { text: t(active ? "contacts.status.active" : recipient.status === "declined" ? "contacts.status.declined" : "contacts.status.pending") }],
+      extras: [roleEl], actions });
+    if (recipient.status === "declined") {
+      const { element, labelEl } = shareCooldownEl(); row.querySelector(".shareRowActions").prepend(element);
+      const key = `refusal:${recipient.task_id}`;
+      shareCooldownTicker.bind({ key, labelEl, disableEls: [], onTick: (_, active) => { element.hidden = !active; } });
+      shareCooldownTicker.setEndMs(key, Date.parse(recipient.cooldown_until) || 0);
+    }
+    shareSectionsHost.append(row);
   }
 }
-
-async function shareAddInner() {
+function updateBaseShareSelection() {
+  btnBaseShareFriends.disabled = shareAddInFlight || !baseShareFriends?.querySelector('input:checked:not(:disabled)');
+}
+function baseShareError(row) {
+  if (row?.cooldown_until) return t("baseSharePanel.cooldown", { time: formatCooldownRemaining(Math.max(0, Date.parse(row.cooldown_until) - Date.now())) });
+  if (row?.err === "already_pending") return t("bases.share.alreadyPending");
+  if (row?.err === "already_active") return t("baseSharePanel.alreadyActive");
+  if (row?.err === "owner") return t("bases.share.owner");
+  if (row?.err === "unknown_user") return t("bases.share.unknownUser");
+  return t("bases.share.failed");
+}
+async function deliverBaseShare(row, baseId, { role, reminder = false } = {}) {
+  if (!row?.mail_to || !row?.mail_link) return;
+  return sendBaseShareEmail({ to: row.mail_to, link: row.mail_link, baseName: row.base_name,
+    ownerLabel: row.owner_label, recipientId: row.recipient_id, baseId, role, reminder });
+}
+let shareAddInFlight = false;
+async function shareAdd(friendIds = null) {
+  if (shareAddInFlight) return;
   const b = selectedBase();
   if (!b || !isOwner(b)) return;
-
-  const recipientType = shareRecipientTypeSelect?.getValue?.() || "email";
-  const role = shareRoleSelect?.getValue?.() || "editor";
-  let targetEmail = "";
-  let targetUserId = null;
-
-  if (recipientType === "email") {
-    const raw = String(shareEmail.value || "").trim();
-    if (!raw) {
-      setMsg(shareMsg, t("bases.share.enterEmail") || "Wpisz adres e-mail lub nazwę użytkownika");
-      return;
-    }
-    targetEmail = await resolveLoginToEmail(raw);
-    if (!emailLooksOk(targetEmail)) {
-      if (shareEmailError) {
-        shareEmailError.textContent = raw.includes("@") ? t("bases.share.invalidEmail") : t("bases.share.unknownUser");
-        shareEmailError.style.display = "block";
+  const raw = String(shareEmail.value || "").trim();
+  if (!friendIds && !raw) { showShareMessage(t("bases.share.enterEmail")); return; }
+  shareAddInFlight = true; btnShareAdd.disabled = true; updateBaseShareSelection();
+  let message = t("bases.share.success");
+  try {
+    for (const id of friendIds || [null]) {
+      const { data, error } = await sb().rpc("base_share_by_user", id
+        ? { p_base_id: b.id, p_recipient_user_id: id, p_role: friendsRoleValue }
+        : { p_base_id: b.id, p_user_lookup: raw, p_role: shareRoleValue });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row?.ok) { message = baseShareError(row); continue; }
+      try {
+        const queued = await deliverBaseShare(row, b.id, { role: id ? friendsRoleValue : shareRoleValue });
+        if (queued === false) message = t("control.shareDeviceModal.friendMailDisabled");
       }
-      return;
+      catch { message = t("bases.share.emailFailed"); }
+      if (!friendIds) shareEmail.value = "";
     }
-    if (shareEmailError) shareEmailError.style.display = "none";
-  } else {
-    targetUserId = shareSubscriberSelectInst?.getValue?.();
-    if (!targetUserId) {
-      setMsg(shareMsg, t("bases.share.selectSubscriber") || "Wybierz subskrybenta");
-      return;
-    }
-  }
-
-  // właściciel próbuje udostępnić samemu sobie
-  const me = String(currentUser?.email || "").trim().toLowerCase();
-  if (me && targetEmail === me) {
-    setMsg(shareMsg, t("bases.share.owner"));
-    return;
-  }
-
-  setMsg(shareMsg, "");
-
-  let data, error;
-  if (targetUserId) {
-    ({ data, error } = await sb().rpc("base_share_by_user", {
-      p_base_id: b.id,
-      p_recipient_user_id: targetUserId,
-      p_role: role,
-    }));
-  } else {
-    ({ data, error } = await sb().rpc("base_share_by_email", {
-      p_base_id: b.id,
-      p_email: targetEmail,
-      p_role: role,
-    }));
-  }
-
-  const row = Array.isArray(data) ? data[0] : data;
-
-  if (error || !row?.ok) {
-    const err = row?.err || "";
-    if (err === "cooldown") {
-      // Ticker przejmuje shareMsg i sam renderuje odliczanie (formatCooldownRemaining) --
-      // bez tego byłby to martwy, jednorazowy komunikat jak dawniej.
-      shareCooldownTicker.setEndMs("base:share", Date.parse(row.cooldown_until) || 0);
-    } else if (err === "already_pending") {
-      shareCooldownTicker.setEndMs("base:share", 0);
-      setMsg(shareMsg, t("bases.share.alreadyPending"));
-    } else {
-      shareCooldownTicker.setEndMs("base:share", 0);
-      setMsg(shareMsg, t("bases.share.failed"));
-    }
-    return;
-  }
-  shareCooldownTicker.setEndMs("base:share", 0);
-
-  // jeśli mail_to/link są obecne – wysyłamy maila
-  let mailFailed = false;
-  if (row?.mail_to && row?.mail_link) {
-    try {
-      await sendBaseShareEmail({
-        to: row.mail_to,
-        link: row.mail_link,
-        baseName: row.base_name,
-        ownerLabel: row.owner_label,
-        recipientId: row.recipient_id,
-        baseId: b.id,
-      });
-    } catch (e) {
-      console.warn("[bases] email send failed:", e);
-      mailFailed = true;
-    }
-  }
-
-  invalidateShareModalCache(b.id);
-  // renderShareModal() czyści formularz i komunikat -- komunikat ustawiamy PO nim,
-  // inaczej "mail nie wyszedł" (zaproszenie istnieje) znikałby bez śladu.
-  await renderShareModal();
-  setMsg(shareMsg, mailFailed ? t("bases.share.emailFailed") : t("bases.share.success"));
+     await renderShareModal(); showShareMessage(message);
+  } catch { showShareMessage(t("bases.share.failed")); }
+  finally { shareAddInFlight = false; btnShareAdd.disabled = false; updateBaseShareSelection(); }
 }
+btnBaseShareFriends?.addEventListener("click", () => shareAdd([...baseShareFriends.querySelectorAll('input:checked:not(:disabled)')].map(input => input.value)));
 
 /* ================= Wypustki (mine/shared) ================= */
 // Karty z mapy stron (pierwsza = domyślna); adres jest jedynym źródłem.
@@ -1248,6 +1011,21 @@ function render() {
 
   mineGrid.innerHTML = "";
   sharedGrid.innerHTML = "";
+  baseDeclinesHost?.replaceChildren();
+  if (ownBaseDeclines.length && baseDeclinesHost) {
+    baseDeclinesHost.append(shareSectionEl({
+      key: "base-declines", title: t("contacts.sections.declined"), collapsed: baseDeclinesCollapsed,
+      onToggle: value => { baseDeclinesCollapsed = value; },
+      rows: ownBaseDeclines.map(item => ({ id: item.id, label: item.name, compact: true,
+        note: item.owner_label,
+        actions: [{ key: "undo", icon: "undo", title: t("contacts.actions.undo_reject"), onClick: async () => {
+          const { data, error } = await sb().rpc("base_share_undo_decline", { p_task_id: item.id });
+          if (error || !data?.ok) await alertModal({ text: t("bases.proposed.failed") });
+          await refreshView({ withBadge: true });
+        }}],
+      })),
+    }));
+  }
 
   const renderTile = (b, hostEl) => {
     const tile = document.createElement("div");
@@ -1268,7 +1046,7 @@ function render() {
         kind: "proposed",
       });
     }
-    
+
     // Udostępniona (albo dopiero proponowana) -- ta sama informacja "od kogo"
     // i z jakim dostępem; dla zaproszenia rola pochodzi z proposed_role.
     const shareRole = b.sharedRole || (b.proposed ? b.proposedRole : null);
@@ -1306,7 +1084,7 @@ function render() {
           canDeleteOwned ? t("bases.actions.remove") : t("bases.actions.leaveShared")
         )}">${icon("trash")}</button>`
       : ``;
-      
+
     const proposedBtns = b.proposed
       ? `
         <div class="tileMiniActions">
@@ -1333,7 +1111,7 @@ function render() {
         <div class="tileTags">${badgesHtml}</div>
         ${proposedBtns}
       `;
-    
+
     if (b.proposed) {
       const respond = (rpcName) => async (e) => {
         e.stopPropagation();
@@ -1671,10 +1449,10 @@ const TILE_TAG_VARIANT = { proposed: "tag--warn", from: "tag--info", role: "tag-
 
 async function refreshAltBadge() {
   try {
-    const { data, error } = await sb().rpc("polls_badge_get");
+    const { data, error } = await sb().rpc("badges_get");
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
-    const n = Number(row?.subs_pending || 0);
+    const n = Number(row?.friends_pending || 0);
     if (!altBadgeEl || !btnGoAlt) return;
     altBadgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
   } catch {}
@@ -1684,12 +1462,12 @@ async function refreshAltBadge() {
 function removeShareParam() {
   try {
     const u = new URL(location.href);
-    u.searchParams.delete("share");
+    u.searchParams.delete("b");
     history.replaceState(history.state, "", u.toString());
   } catch {}
 }
 
-// Wejście z maila: ?share=<token>. Sama decyzja (przyjmij/odrzuć) jest na
+// Wejście z Go: ?b=<token>. Sama decyzja (przyjmij/odrzuć) jest na
 // kafelku zaproszenia -- tu tylko wyjaśniamy, dlaczego kafelka może nie być.
 async function handleShareLink(token) {
   let info = null;
@@ -1757,12 +1535,8 @@ function initFileLaunch() {
   tabBasesShared?.addEventListener("click", () => setActiveTab("shared"));
 
   initShareRoleSelect();
-  initShareRecipientTypeSelect();
-  initShareSubscriberSelect();
   window.addEventListener("i18n:lang", () => {
     initShareRoleSelect();
-    initShareRecipientTypeSelect();
-    initShareSubscriberSelect();
     setActiveTab(activeTab); // podpowiedź w nowym języku
     render();
     setButtonsState();
@@ -1781,6 +1555,6 @@ function initFileLaunch() {
   });
   startAutoRefresh();
 
-  const shareToken = new URLSearchParams(location.search).get("share");
+  const shareToken = new URLSearchParams(location.search).get("b");
   if (!guestMode && shareToken && loaded) await handleShareLink(shareToken);
 })();

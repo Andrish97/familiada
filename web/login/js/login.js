@@ -18,14 +18,15 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-10T22301";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-10T22301";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-10T22301";
+} from "../../shared/js/core/auth.js?v=v2026-10-11T20294";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T20294";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T20294";
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-10T22301";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-10T22301";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-10T22301";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T20294";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T20294";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-11T20294";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-11T20294";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-11T20294";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -50,7 +51,6 @@ const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "/login/confirm/";
 const resetUrl = baseUrls.resetUrl || "/login/reset/";
 const gamesUrl = baseUrls.gamesUrl || "/games/";
-const subscriptionsUrl = baseUrls.subscriptionsUrl;
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
 const captchaSiteKey = String(baseUrls.captchaSiteKey || "").trim();
 let captchaLoadPromise = null;
@@ -535,7 +535,9 @@ function setBusy(v) {
 const params = new URLSearchParams(location.search);
 const nextTarget = params.get("next");
 const nextTask = params.get("t");
-const nextSub = params.get("s");
+const nextBase = params.get("b");
+const nextFriend = params.get("f");
+const nextTab = params.get("tab");
 const guestUsername = params.get("guest_username") === "1";
 const setupUsername = params.get("setup") === "username";
 const guestExpired = params.get("guest_expired") === "1";
@@ -556,15 +558,11 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
-  const target = subscriptionsUrl;
-  if (!target) throw new Error(t("index.statusError"));
-  const url = new URL(target.startsWith("/") ? target : `/${target}`, location.origin);
-
-  if (nextTarget === "subscriptions" && nextSub) url.searchParams.set("s", nextSub);
-  if (nextTarget === "tasks") {
-    url.searchParams.set("tab", "tasks");
-    if (nextTask) url.searchParams.set("t", nextTask);
-  }
+  const url = new URL(nextTarget === "friends" ? "/friends/" : nextTarget === "bases" ? "/bases/" : "/tasks/", location.origin);
+  if (nextTarget === "friends" && nextFriend) url.searchParams.set("f", nextFriend);
+  if (nextTarget === "tasks" && nextTask) url.searchParams.set("t", nextTask);
+  if (nextTarget === "bases" && nextBase) url.searchParams.set("b", nextBase);
+  if (PAGES[nextTarget]?.tabs?.includes(nextTab)) url.searchParams.set("tab", nextTab);
 
   url.searchParams.set("lang", getUiLang());
   return url.toString();
@@ -838,7 +836,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await syncLanguage();
       if (setupUsername || !u.username) {
         openUsernameSetup();
-      } else if (nextTarget === "tasks" || nextTarget === "subscriptions") {
+      } else if (nextTarget === "tasks" || nextTarget === "friends" || nextTarget === "bases") {
         location.href = buildNextUrl();
       } else {
         location.href = withLangParam(gamesUrl);
@@ -1036,7 +1034,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await syncLanguage();
         if (!authed?.username) {
           openUsernameSetup();
-        } else if (nextTarget === "tasks" || nextTarget === "subscriptions") {
+        } else if (nextTarget === "tasks" || nextTarget === "friends" || nextTarget === "bases") {
           location.href = buildNextUrl();
         } else {
           location.href = withLangParam(gamesUrl);

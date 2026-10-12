@@ -71,6 +71,10 @@ function instrumentPage(page) {
     // żądania, nigdzie tu nielogowanym).
     if (res.url().includes("/rpc/")) {
       console.log(`[e2e-diag] rpc ${res.status()}`, res.url());
+      if (res.status() >= 400 && res.url().includes("/rpc/control_device_shares_list")) {
+        res.text().then((body) => console.log("[e2e-diag] control_device_shares_list error body:", body.slice(0, 1000)))
+          .catch((e) => console.log("[e2e-diag] control_device_shares_list body read failed:", e.message));
+      }
     }
     // game_state_write: 200 NIE dowodzi, że zwrócony wiersz faktycznie ma
     // oczekiwany step -- loguj TREŚĆ odpowiedzi (tylko pola stanu, nie całe

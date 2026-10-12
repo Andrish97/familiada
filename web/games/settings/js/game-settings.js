@@ -3,27 +3,27 @@
 // edytor pytań), przy wyjściu zapis idzie od razu — bez przycisku „Zapisz”
 // z ostrzeżeniem, jeśli ustawienia wymagają poprawienia. Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-10T22301";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-10T22301";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-10T22301";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-10T22301";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-10T22301";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-10T22301";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-10T22301";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-10T22301";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-10T22301";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-11T20294";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-11T20294";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-11T20294";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-11T20294";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-11T20294";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-11T20294";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-11T20294";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-11T20294";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-11T20294";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-11T20294";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-10T22301";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-11T20294";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-10T22301";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-10T22301";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-10T22301";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-10T22301";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-11T20294";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-11T20294";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-11T20294";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-11T20294";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -1737,6 +1737,22 @@ async function main() {
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
 
   localSettings = mergeSettings(game.settings);
+  // Walidacja działa także bez otwierania zakładki Dźwięk. Zachowaj własne
+  // pliki zapisane w chmurze, gdy tę grę otwarto na innym urządzeniu.
+  await loadSfxManifest();
+  const customFiles = await getSfxCustomFiles(gameId);
+  for (const [key, variant] of Object.entries(localSettings.sound.variants)) {
+    if (variant !== VARIANT_CUSTOM || customFiles.has(key)) continue;
+    const { data: blob, error } = await sb().storage.from("user-sounds").download(`${user.id}/${gameId}/${key}`);
+    if (error) {
+      if (String(error.status || error.statusCode) === "404" || /not found|does not exist/i.test(error.message || "")) continue;
+      throw error;
+    }
+    const filename = game.settings?.sound?.filenames?.[key] || `${key}.mp3`;
+    await setSfxCustomBlob(key, blob, filename, gameId);
+    customFiles.set(key, { blob, filename });
+  }
+  customSoundKeys = new Set(customFiles.keys());
 
   // Cleanup: usuń pytania finałowe z rounds (mogły tam trafić przed wdrożeniem tej logiki)
   // — tylko gdy finał faktycznie włączony, inaczej martwa lista finałowa

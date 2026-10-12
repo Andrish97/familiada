@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-10T22301"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-10T22301"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-10T22301"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-11T20294"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T20294"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-11T20294"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,9 +31,9 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-10T22301" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-11T20294" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-10T22301";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-11T20294";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
     import("/control/js/app.js?v=v2026-10-12T09580");
@@ -524,6 +524,7 @@
            wziąć kod/QR bez wracania do kroku Urządzenia. Otwiera ten sam
            #qrModalOverlay co przycisk "Kod QR" w kroku Urządzenia. -->
       <div class="c2-topbar-progress" id="c2TopbarProgress" aria-live="polite"></div>
+      <button class="btn" id="btnFriends" type="button" disabled data-nav-hidden="true" style="display:none;"><span data-i18n="games.nav.friends" data-i18n-icon-after="people">Znajomi</span></button>
       <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
         <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay" style="cursor:pointer;">
           <span class="dot mid" id="dotDisplay"></span><i class="ico" data-icon="display" aria-hidden="true"></i><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
@@ -586,30 +587,35 @@
       <div class="modal-actions"><button class="btn gold" id="deviceLostClose" type="button" data-i18n="common.a2hsOk">OK</button></div>
     </div>
   </div>
-  <div class="overlay" id="shareDeviceOverlay" style="display:none;">
+  <div class="overlay" id="shareDeviceOverlay" role="dialog" aria-modal="true" aria-labelledby="shareDeviceTitle" style="display:none;">
     <div class="modal shareModal">
       <div class="mHead">
         <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij</div>
         <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <div id="shareDeviceCurrentWrap" class="shareCurrent">
-        <div id="shareDeviceCurrentContent"></div>
-      </div>
-
-      <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail.</div>
-
-      <div class="shareSection">
-        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionAdd">Przez e-mail / nazwę</div>
+      <section class="shareSection shareSection--mail">
+        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionAdd">Mail lub nazwa użytkownika</div>
+        <div class="app-toast app-toast--inline" id="shareDeviceMsg" role="status" aria-live="polite" hidden></div>
         <div class="importRow">
           <input id="shareDeviceEmail" class="inp" type="text"
                  placeholder="Nazwa użytkownika lub e-mail..."
                  data-i18n-placeholder="bases.shareModal.placeholder"/>
-          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
+          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="control.shareDevice">Udostępnij</button>
         </div>
-        <div class="importMsg" id="shareDeviceMsg"></div>
-      </div>
+      </section>
 
-      <div id="shareDeviceSubsList"></div>
+      <section class="shareSection shareSection--friends">
+        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionFriends">Znajomi, którym możesz udostępnić</div>
+        <div id="shareDeviceSubsList" class="shareList"></div>
+        <div class="shareSectionActions">
+          <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled data-i18n="control.shareDeviceModal.shareSelected">Udostępnij zaznaczonym</button>
+        </div>
+      </section>
+
+      <section id="shareDeviceCurrentWrap" class="shareSection shareSection--shared">
+        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionShared">Udostępnione w tej sesji</div>
+        <div id="shareDeviceCurrentContent" class="shareList"></div>
+      </section>
     </div>
   </div>
 
@@ -627,6 +633,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-10T22301"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-11T20294"></script>
 </body>
 </html>

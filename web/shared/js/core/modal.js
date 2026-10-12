@@ -1,6 +1,6 @@
-import { icon } from "./icons.js?v=v2026-10-10T22301";
-import { t } from "../../translation/translation.js?v=v2026-10-10T22301";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-10T22301";
+import { icon } from "./icons.js?v=v2026-10-11T20294";
+import { t } from "../../translation/translation.js?v=v2026-10-11T20294";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-11T20294";
 let modalSeq = 0;
 
 function modalText(key, fallback) {
@@ -214,12 +214,13 @@ export function confirmModal({ title, text, okText, cancelText, showCancel = tru
   });
 }
 
-export function alertModal({ title, text, okText, onReady, sheet = null } = {}) {
+export function alertModal({ title, text, okText, body = null, onReady, sheet = null } = {}) {
   return openModal({
     title: title ?? modalText("common.modal.alertTitle", "Informacja"),
     text: text ?? "—",
     okText: okText ?? modalText("common.modal.alertOk", "OK"),
     showCancel: false,
+    body,
     onReady,
     sheet,
   });

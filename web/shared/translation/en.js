@@ -1,4 +1,11 @@
 const en = {
+  pollSharePanel: {
+    "anonymous": "Anonymous",
+    "recipients": "Recipients",
+    "opened": "Opened",
+    "empty": "No people on this list",
+    "mailDisabled": "Email notifications are disabled"
+  },
   meta: {
     lang: "en",
     label: "English",
@@ -79,6 +86,7 @@ const en = {
       contactBtn: "Contact",
     },
   },
+  baseSharePanel: {"empty": "No recipients.", "alreadyActive": "This person already has access to the base.", "cooldown": "You can share again in {time}.", "lookup": "Email or username", "share": "Share"},
   shareSections: {
     subscribers: "Subscribers",
     subscribersSub: "Not invited yet — pick who to invite.",
@@ -652,7 +660,7 @@ const en = {
       cooldown: "You can't add the same user again for 24h (anti-spam).",
       alreadyPending: "An invite is already pending.",
       emailFailed: "Invite created, but email sending failed.",
-      sectionSubscribers: "Subscribers",
+      sectionSubscribers: "Friends",
       sectionPending: "Pending",
       sectionPendingSub: "If not accepted within 5 days, the request disappears.",
       sectionShared: "Active",
@@ -665,9 +673,9 @@ const en = {
       shareSection: "Share",
       shareModeLabel: "Mode:",
       recipientEmail: "Enter email / username",
-      recipientSubscriber: "Select subscriber",
-      selectSubscriber: "Select subscriber...",
-      noSubscribers: "No subscribers",
+      recipientFriend: "Choose friend",
+      selectFriend: "Choose a friend...",
+      noFriends: "No friends",
       enterEmail: "Enter email or username",
     },
     delete: {
@@ -801,7 +809,7 @@ const en = {
     pageSubtitle: "{type} · {name}",
     tabs: {
       share: "Sharing",
-      results: "Results",
+      results: "Votes",
     },
     bar: {
       votes: ({ n }) => (Math.abs(Number(n) || 0) === 1 ? "1 vote" : `${Math.abs(Number(n) || 0)} votes`),
@@ -813,7 +821,16 @@ const en = {
       activeSub: "Voted in this poll.",
       linkTitle: "Voting link",
       scanHint: "Scan with your phone to vote",
+      recipientsTitle: "Shared with",
+      friendsTitle: "Friends",
       subsTitle: "Subscribers",
+      addRecipients: "Add recipients",
+      addRecipientsHint: "Choose people to invite to this poll.",
+      addSelected: "Add selected",
+      addSelectedN: "Add selected ({n})",
+      selectedCount: "Selected: {n}",
+      noRecipientsToAdd: "There are no new friends or subscribers to add.",
+      noSharedRecipients: "This poll has not been shared yet.",
       sendInvites: "Send invitations",
       sendInvitesN: "Send invitations ({n})",
       sendDisabledStopped: "The poll is stopped — you can send new invitations after resuming voting.",
@@ -2667,6 +2684,8 @@ const en = {
     nav: {
       pollsHubPolls: "Polls",
       pollsHubSubs: "Subscriptions",
+      friends: "Friends",
+      subscribers: "Subscribers",
       tasks: "Tasks",
       bases: "Question bases",
       logo: "Logo",
@@ -3082,12 +3101,24 @@ const en = {
     loginToAccept: "Log in to accept.",
     loginLabel: "Log in",
     loginToVote: "Log in to vote.",
+    taskInTasks: "Open Tasks to vote or decline this invitation.",
+    taskTasksAction: "Open Tasks",
     taskInviteActive: "Voting invitation is active.",
+    baseInviteTitle: "Shared question base invitation",
+    baseInviteLogin: "Sign in to the account that received the invitation. Accept it in Tasks.",
+    baseInviteMismatch: "This invitation belongs to another account ({email}). Sign in to the correct account.",
+    baseInviteHandled: "This invitation was cancelled, accepted, or declined.",
+    baseInviteBases: "{owner} shared a question base with you. Open Bases to accept it.",
+    baseInviteBasesAction: "Open Bases",
     voteLabel: "Vote",
     missingLinkTitle: "Missing link",
     missingLinkText: "Invitation token is missing.",
     invalidLinkTitle: "Invalid link",
     invalidLinkText: "The link is invalid or inactive.",
+    deviceLinkTitle: "Device link",
+    deviceLinkChecking: "Checking access and Control session…",
+    deviceLinkRevoked: "The owner revoked this share.",
+    deviceLinkExpired: "The Control session expired. Ask the owner for a new link.",
     inviteUnknown: "Unable to identify invitation.",
     openInviteFailed: "Unable to open invitation.",
     invitationRecipient: "invitation recipient",
@@ -3587,7 +3618,7 @@ const en = {
     title: "Familiada — tasks",
     bar: {
       title: "Tasks",
-      hint: "Polls, bases and devices that someone shared with you.",
+      hint: "Polls you have been invited to.",
     },
     sections: { todo: "To do", done: "Done" },
     filter: { aria: "Task type", all: "All", poll: "Polls", base: "Bases", device: "Devices" },
@@ -4778,12 +4809,21 @@ const en = {
       mailSent: "Email with the link sent.",
       noneCurrent: "This device has not been shared yet.",
       title: "Share",
-      subtitle: "Pick a subscriber or enter an email.",
       subtitle2: "Select subscribers and devices to share.",
       currentLabel: "Currently shared with:",
-      sectionAdd: "By email / username",
+      sectionAdd: "Email or username",
+      sectionFriends: "Friends you can share with",
+      sectionShared: "Shared in this session",
+      shareSelected: "Share with selected",
+      recipientKind: { friend: "friend", account: "has an account", mail: "email" },
       noneShared: "Not shared.",
       noSubs: "No subscribers.",
+      alreadyShared: "This device has already been shared with this person in this game session.",
+      recipientDisabled: "The share will appear on the account, but email notifications are turned off.",
+      friendMailDisabled: "Shared. The recipient has email notifications turned off.",
+      friendMailCooldown: "Shared. Email will be available after the cooldown.",
+      mailCooldownRemaining: "Email can be sent again in {time}.",
+      noFriends: "There are no friends to share with.",
       typeHost: "Host",
       typeBuzzer: "Buzzer",
       typeDisplay: "Display",
@@ -4977,6 +5017,68 @@ const en = {
   security: {
     selfXssWarning: "Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS. Do not enter or paste code that you do not understand.",
   },
+  contacts: {
+    tabs: { invite: "Invitations" },
+    "friends": {
+        "add": "Add a friend",
+        "title": "Friends",
+        "hint": "Invitations and people you are friends with.",
+        "empty": "No friends or invitations yet."
+    },
+    "subscribers": {
+        "add": "Add a subscriber",
+        "title": "Subscribers",
+        "hint": "People without an account who want to receive your polls.",
+        "empty": "No subscribers yet."
+    },
+    "invite": "+ Invite",
+    "handle": "Email or username",
+    "email": "Email address",
+    "go": "Go →",
+    "sent": "Invitation saved.",
+    "mailFailed": "Invitation saved, but the email could not be sent. You can resend it.",
+    "accountCreated": "Has an account — go to Friends.",
+    "sections": {"declined": "Declined by me", "incoming": "Suggestions", "outgoing": "Pending and declined", "friend": "Friends", "pending": "Pending", "active": "Subscribers"},
+    "status": {"pending": "Pending", "active": "Accepted", "declined": "Declined"},
+    "empty": {"incoming": "No new suggestions.", "outgoing": "No sent invitations.", "friend": "No friends yet.", "pending": "No pending invitations.", "active": "No subscribers yet."},
+    "actions": {
+        "undo_reject": "Undo decline",
+        "accept": "Accept",
+        "reject": "Decline",
+        "cancel": "Withdraw",
+        "remove": "Remove",
+        "resend": "Resend"
+    },
+    "confirm": {
+        "reject": "Decline this invitation?",
+        "cancel": "Withdraw this invitation?",
+        "remove": "Remove this person? Pending invitations and tasks will be deleted. Accepted bases and devices remain — you can revoke them separately."
+    },
+    "errors": {
+        "alreadyFriend": "This person is already your friend.",
+        "incomingPending": "You have a pending request from this person. Check Suggestions.",
+        "outgoingPending": "Your invitation to this person is already awaiting a response.",
+        "ownDeclined": "You declined this request. You can undo it in Declined by me.",
+        "declined": "This person declined the invitation. You cannot send another one yet.",
+
+        "hasAccount": "This email belongs to a Familiada account — you can invite this person as a friend.",
+        "emailOnly": "This email has no Familiada account — you can add this person as a subscriber.",
+        "cooldown": "You can send another invitation after: {date}.",
+        "already": "This person is already on the list.",
+        "action": "The action failed."
+    },
+    "mail": {
+        "friendTitle": "{owner} invites you to be friends on Familiada",
+        "friendBody": "{owner} wants to add you as a friend. Accept the invitation on Familiada.",
+        "friendAction": "Open invitation"
+    },
+    "goFriends": "Go to Friends",
+    "goAccountBody": "The recipient has a Familiada account. Account invitations are managed in Friends.",
+    "goTitle": "Friend invitation",
+    "goBody": "{owner} invites you to be friends.",
+    "open": "Open Friends"
+},
+
   gameSettings: {
     pageTitle: "Game settings",
     title: "Familiada — game settings",
@@ -5165,4 +5267,20 @@ const en = {
     play: "Play this game",
   },
 };
+en.sharingMail = {
+  "friendReminderSubject": "{owner} reminds you about a friend invitation",
+  "friendReminderBody": "The invitation from {owner} is still waiting for your decision. You can accept or decline it.",
+  "subscriberReminderSubject": "Subscription reminder from {owner}",
+  "subscriberReminderBody": "{owner} reminds you about a subscription invitation. Accept it to receive polls from this person, or decline.",
+  "pollReminderBody": "{owner} reminds you about the poll {name}. Your task is still waiting for your vote or refusal.",
+  "baseReminderSubject": "Reminder: base {base}",
+  "baseReminderTitle": "Your base invitation is still waiting",
+  "baseBody": "{owner} invites you to the question base “{base}” with the role: {role}. Access starts after you accept the invitation.",
+  "baseReminderBody": "The invitation from {owner} to the base “{base}” is still waiting for your decision. Role: {role}. You can accept or decline the invitation.",
+  "baseAction": "View invitation",
+  "editor": "editor",
+  "viewer": "viewer",
+  "deviceSubtitle": "Device sharing"
+};
+
 export default en;

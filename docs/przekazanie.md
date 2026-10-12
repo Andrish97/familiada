@@ -1,3 +1,389 @@
+# Wznowienie pracy — 2026-10-11
+
+## Bieżąca kontynuacja: kolejka §5 pkt7 Graf zależności
+
+Pkt4 Bazy337–339 i pkt5 Ankiety340–344 zamknięte produkcyjnie.
+Pkt6 Maile też zamknięty: pierwsza paczka13 green38170191574 + świeże
+wypisanie38171488172 ✓. Druga: Worker38172431062 / Edge38172431290 /
+Pages38172431095 ✓; main38172503834 ✓2/2 bez retry/unit447,15 realnych
+maili kontakt/ręczny/marketing do test14, HTTP200 czterech ilustracji,
+moduły przeglądarki zapisanych podglądów. Branch SMTP38172035648,
+preview38172320249, isolated38172318043 ✓. Zrzuty docs/img/e19-mails.
+Szczegółowe granice pokrycia w maile-granice.md; nie nazywać samych
+szablonów pełnym testem publicznego kontaktu/admina/signup/guest migration.
+
+Teraz pkt7: graf/locks/kaskady/Go/anon, zgodnie z E19 §7 i blokady-zasobow.md.
+Wypisanie=odmowa wszędzie zapisane. Audyt sprzed346 wykazał DELETE aktywnej
+relacji i jednostronny cooldown po cancel;346 zachowuje odmowę, aktora,
+budżet oraz zegary w obu kierunkach. _friend_drop_pair_tasks usuwa
+pending/opened taski pary; częściowe głosy i oczekujące maile to dalsza
+krawędź grafu.347 zamknięty produkcyjnie, z testami rzeczywistych maili.
+Kaskada345 wdrożona: FK base_share_tasks→question_bases ON DELETE CASCADE,
+DB38173636101/log OK20:48:43 UTC i rollbackowy smoke ✓; punktowy rzeczywisty
+Base mail/Go/odmowy/role main38173864796 ✓ bez retry. Wypisanie Znajomych346
+isolated38174631322 ✓ i DB38174746414 ✓/log21:04:59 UTC.
+Branch38174928575 ✓3/3,38175511620 ✓1/1 (artefakt screenshotów),
+main38175836595 ✓3/3 bez retry/unit447: trzy realne maile, oba aktory,
+Go/undo/badge/cancel i ukrycie pustej sekcji.346 zamknięte produkcyjnie.
+Lokalne podglądy z przykładowymi danymi: docs/img/e19-friends/withdraw-*.
+347 zamknięte produkcyjnie: finalny isolated38177985246 success,
+SQL DB38178919162/log OK22:05:58 UTC/schema368f847bcc. Poprawiony
+branch38179382545 success2/2, main38179873750 success2/2 bez retry,
+unit447/447, sześć realnych maili8/14 w56/96–101/84–87s.
+Oba typy i oba kontakty: częściowy batch przez RPC po mailu/Go,
+wypisanie usuwa partial, stary token bez dostępu; regresja pełnego
+tekstu w UI też success. Pierwszy38179100034 failure dotyczył tylko
+błędnej nazwy RPC w teście; poprawiono na poll_task_opened.
+
+348 SQL zastosowany22:34:52 UTC. Pierwszy DB38180862825 zatrzymał
+się na fixture: auth trigger tworzy powitalną grę. Seed/pętlę/asercję
+zawężono do dwóch własnych ID; lokalnie również z dodatkową grą powitalną
+success. DB38181241843 success, rollbackowy smoke wszystkich stanów/typów,
+schema d2ab891270. Finalny isolated38180667222 success przed SQL.
+Branch38181499992 failure PRZED usuwaniem konta8: stary klucz ankiety
+sprzed poll_open i nieobsługiwany restore8. Konta7/8 nie usunięte.
+Poprawiono pobranie bieżącego klucza, cleanup/log pierwotnego błędu.
+Konta11/12 przywrócone: Worker38183104197 success, branch38183147636
+oraz main38183277062 success1/1, oba logowania potwierdzone. Oba istniały.
+Nowa decyzja:15 dedykowane usuwaniu,11 hasło,12 profil/mail i adres13.
+Test kasowania12 NIE URUCHOMIONY; przeniesiony na15.349 DB38183364423
+success.350 rozszerza skrzynkę/helpery o15, Worker restore15 weryfikuje
+automatyczny wyjątek admina. Użytkownik dodaje routing15 w Cloudflare.
+350 isolated38183690135 success/unit455, DB38183762947 success/log23:19:59,
+schema a817702091, Worker38183764142 success. Routing15 potwierdzony mailem.
+Pierwszy branch38183939578: restore11/12/15 success, maile15 w7.4/61.7s,
+klik przed gotowością Account, BEZ kasowania. Oczekiwanie skel-step-ready
+oraz odpowiedź Edge poprawione. Świeży branch38184283428 success2/2,
+main38184602498 success2/2 bez retry/unit455. Mail15 w43.6/93.8s na branchu,
+92.3/107.1s na main. Kasowanie przez UI rzeczywiście wykonane, nowy ID
+po odtworzeniu, ukończony tekst zachowany/partial punkty usunięte,
+stare linki/RPC niedostępne nowemu kontu i anonimowo. Finally odtwarza15
+i sprawdza logowanie w świeżym kontekście; oba konta11/12 też logują się.
+Automatyczny wyjątek admina15 sprawdzony również po odtworzeniu.
+**348–350 zamknięte produkcyjnie; graf pkt7 nadal otwarty.**
+
+351 przygotowywane na osobnym branchu codex/e19-351. Wykryty problem:
+legacy task pozostaje e-mailowy po otwarciu; po zmianie adresu znika
+wymóg zalogowania. Poprawka wiąże task z kanonicznym ID konta przy
+rejestracji, zmianie adresu, konwersji gościa i przed skasowaniem konta;
+nowe taski oraz backfill obejmują wszystkie stany obu typów. Sama zmiana
+adresu profilu nie pozwala przejąć cudzych tasków. Prywatne blokady
+adresów i referencje kont porządkują równoczesną rejestrację/udostępnienie.
+Lokalnie351: kontrakt all-state, backfill, siedem regresji SQL,16 wyścigów
+głosowania oraz4 wyścigi tworzenia tasków success. DDL vs stary child-first
+cleanup success; unit455/455. 351 zastosowane00:46:56 UTC w38189206623; dalszy smoke zatrzymał się
+na nazwie testowego profilu po ponownym użyciu adresu. Metadata nowego
+konta poprawione; lokalnie z prawdziwym handle_new_user kontrakt success.
+Finalny isolated38189424237 success. DB38189563784 success,
+schema e1ba174d98/log351 already applied; oba rollbackowe smoke success.
+Branch38189625221 success1/1 bez retry: dwa realne maile, anon partial
+przed rejestracją, przypisanie obu typów do nowego ID, anon odmowa i Go
+logowanie, full tekst/partial punkty, drugie kasowanie i odtworzenie,
+stare tokeny niedostępne; finally świeże logowanie15.
+Main38190032466 success2/2 bez retry/unit455: restore11/12/15 i
+świeże logowania potwierdzone, oba maile15 oraz cały scenariusz rejestracji,
+przypisania, Go, full/partial, kasowania i odtworzenia również success.
+**351 zamknięte produkcyjnie w zakresie tożsamości tasków Ankiet.**
+Następne352: źródło kontaktu. Lokalne rollbacki /tmp/e19-352
+odtwarzają dwie luki: nowy właściciel starego adresu dostaje propozycję
+znajomości z dawnej subskrypcji; cofnięcie dawnej subskrypcji po
+przypisaniu taska do UID pozostawia task/partial i opened=ok.
+Trwała referencja źródła, konwersja relacji bez utraty ważnego dostępu,
+karencja30 dni bez obejścia i backfill bez zgadywania — zapisane w E19
+oraz blokady-zasobow.md.352 jeszcze bez migracji. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
+legacy Subskrypcji. Pending kolejka/proweniencja maili, Go/anon i dalsze
+krawędzie pozostają otwarte.
+
+UI/E20: dopisany audyt stopniowego ładowania (body→topbar→sekcje).
+Kontakty/Zadania odsłaniają zbiorczo; Ankiety nie mają etapów kart;
+Gry też wymagają przeglądu. Szczegóły i bramki w planie wyglądu, nie wdrożone.
+
+Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego
+słownictwa, z jednolitymi nazwami i tylko informacjami potrzebnymi użytkownikowi. Kontynuować bez
+kończenia tury po paczce, screeny po wykonaniu bez czekania na ocenę.
+
+Puste listy UI/E20: wspólny kafelek z przerywaną obwódką i tekstem
+na środku, jak brak gier, także dla „Nie masz jeszcze …”. Dopisane do
+planu wyglądu; nie wdrożone. Puste sekcje własnych odmów nadal ukryte.
+
+
+## Najnowszy stan: E19 krok 7 w realizacji
+
+Decyzja użytkownika 2026-10-11: **kontynuować zawsze bez pytania**, również po zamknięciu kolejnej paczki. Cykl testów i kontroli produkcji pozostaje obowiązkowy; zrzuty po wykonaniu, manual na końcu.
+
+E19 kroki 1–6 zamknięte produkcyjnie. Poprawiony wygląd Urządzeń i modal
+Control: `44063a604`, Pages 38133157139 ✓, kontrola 38133215588 ✓
+(2/2 + unit 401/401). Układ kontaktów (dwie karty, formularz po lewej,
+bez dolnego paska, wspólne sekcje i wiersze): `4bddca4af`, `e85be48d3`,
+Pages 38134388964 ✓; produkcja 38134439124 ✓ (4/4).
+
+Test14 podłączony do prywatnego API skrzynki: migracja 326, DB
+38134943769 ✓, Worker 38135085016 ✓. Test Subskrybentów odbiera teraz
+rzeczywistego maila i używa jego linku zamiast tokenu z bazy. Poprawiono
+stany go po ponownym otwarciu aktywnej/odrzuconej subskrypcji; po cofnięciu
+link nie staje się formularzem nowej subskrypcji. Pages 38135350253 ✓;
+branch 38135140865 ✓, produkcja 38135404218 ✓ (4/4 + unit 404/404),
+mail test14 odebrany produkcyjnie po 65 s. **Test14 nadal bez konta.**
+
+Branch `codex/e19-3` kontynuuje krok 7. Następne: zachowanie odmów w
+kontraktach kontaktów (328 zachowuje rekord odmowy; nowa decyzja wyłącza
+ponowienia odrzuconych i wymaga korekty RPC/UI) i wspólne
+sekcje Baz/Ankiet. Metadata flagi mailowej i cooldownów (327), liczniki
+oraz ikony/skróty kontaktów wdrożone: kontrola 38138576962 ✓. Lista w
+`e19-znajomi-plan.md` §5. Przegląd treści i wyglądu wszystkich maili jest
+osobnym punktem w `maile-granice.md`. Dla zmian rozpisywać pełne pokrycie
+stanów/uprawnień i przypadków krzyżowych, bez zastępowania testu odbioru
+maila odczytem tokenu. Wskazywać rzeczywisty zakres sprawdzeń.
+
+Starsze informacje o pauzie/drugiej sesji i otwartym kroku 6 niżej są
+historyczne. Użytkownik wznowił pracę, zezwolił na cięższe lokalne zadania
+i push na main po wymaganych kontrolach. Zmiany wizualne dokumentować
+zrzutami po wykonaniu, bez czekania na decyzję; Control na telefonie
+zachowuje guard. Manual zawsze na końcu.
+
+## Zadania — poprawka odstępów i przegląd kafelków
+
+Odstępy, ikony pochodzenia i lekkie kolory rodzajów wdrożone. Kompaktowy
+mobile `c9c25f2ef`: Pages 38140156595 ✓, kontrola 38140200630 ✓ (3/3
+bez retry, unit 408/408). Na telefonie opis bez dat, do dwóch linii tytułu
+i opisu, mała ikona; E20 rozszerzy zasadę na resztę systemu.
+Branch 38139084807 ✓: 3/3 bez retry (rzeczywista baza oraz kontrolowany
+przegląd wszystkich 10 wariantów, filtry, zwijanie, pusty stan, odstępy
+na 1400/390 px), unit 408/408. Kontrole produkcyjne 38139233191, 38139841640 i 38140200630 ✓;
+na main spec używa opublikowanych plików Pages, nie podmiany kodu.
+Sześć zrzutów w `docs/img/e19-tasks/`, tabela stanów i linki w planie E19.
+Ankiety z głosem: Zrobione 5 dni; bazy po decyzji znikają; urządzenia
+podłączone pozostają do cofnięcia/wygaśnięcia. Nie zmieniano tych zasad.
+
+## Odmowy i duplikaty — najnowsze doprecyzowanie
+
+Użytkownik potwierdził: brak przypomnień po odmowie. Odrzucone znikają
+z list i sama odmowa wygasa po czasie, umożliwiając nowe dodanie osoby
+(Znajomi/Subskrybenci/Bazy). Założenie realizacji: 30 dni od odmowy;
+znikanie z list nadawcy po 5 dniach. Użytkownik zatwierdził rozpisane
+propozycje i terminy; 5/30 dni nie są już otwartymi parametrami. Stary token unieważniony,
+nowe zaproszenie wymaga ponownej akceptacji; bez automatycznej wysyłki.
+Aktualna decyzja: wypisanie z aktywnej subskrypcji = odmowa (ten sam cykl 5/30). Globalna flaga wyłączenia maili jest osobna i trwała.
+Najnowsze doprecyzowanie: odbiorca ma zachować własne odmowy do wygaśnięcia,
+w zwiniętej sekcji „Odrzucone przeze mnie”. „Cofnij odmowę” przywraca
+oczekujące; osobne Akceptuj dopiero tworzy relację/dostęp. Bez nowego
+maila/tokenu i resetowania limitów. Znajomi przy Propozycjach, bazy
+w Bazy → Udostępnione, subskrypcje konta poza Zadaniami (model/lokalizacja
+jeszcze do rozstrzygnięcia). Subskrypcja
+bez konta: brak undo aż do wygaśnięcia 30 dni, potem nowe zaproszenie. Ukrywanie po
+5 dniach dotyczy tylko nadawcy. Akceptacja bazy obecnie istnieje zarówno
+w Bazach, jak i Zadaniach (ten sam rekord/RPC); poprzedni opis tylko
+Zadań był niepełny. Pełna tabela obu stron wszystkich odmów w E19 §7. Cofnięty/wygasły/usunięty zasób blokuje akcję.
+Paczka Znajomi 329 zakończona produkcyjnie: DB 38144511047 ✓, Pages
+38144511009 ✓, main 38144971546 ✓ 8/8 bez retry + unit 408/408. Wdrożone
+undo → pending, osobna akceptacja, terminy 5/30, bez przypominania odmów,
+osobne komunikaty duplikatów i brak automatycznej akceptacji krzyżowej.
+Dwa rzeczywiste maile odebrane test8. Stary token po 30 dniach nie działa;
+rekord fizycznie usuwany przy nowym invite, okresowy cleanup jeszcze w grafie.
+Zrzuty zwiniętej/rozwiniętej sekcji desktop/mobile docs/img/e19-friends/refusal-*.
+Menu zamyka się przed nawigacją, dotykowe hover/active bez filter/transform;
+test tabletowy ✓, fizyczny kolorowy szum Lenovo wymaga obserwacji użytkownika.
+
+## Najnowsza decyzja: Zadania tylko dla ankiet
+
+Zadania i ich plakietka mają obsługiwać wyłącznie ankiety. Bez zbiorczej
+skrzynki i sumowania liczników innych ikon. Znajomości obsługuje Friends,
+bazy Bases → Udostępnione, urządzenia Connect → Udostępnione dla mnie;
+subskrypcje na konto poza Tasks, właściwą lokalizację dopiąć bez starego
+/subscriptions/. Nowa sekcja undo subskrypcji nie powstaje w Zadaniach.
+Istniejące bazy/urządzenia w Tasks oraz Go prowadzące bazę do Tasks są
+starszym wykonanym etapem; teraz zmienić RPC, plakietki, UI, routing i testy
+spójnie. Rozpiska w końcowej sekcji E19. To decyzja, jeszcze nie wdrożenie.
+
+## E20 — kompaktowe informacje na telefonie
+
+Nowa decyzja użytkownika: ukrywać na telefonie nieobowiązkowe informacje
+zabierające miejsce, konsekwentnie na wszystkich stronach/komponentach.
+Zakres w `ujednolicenie-wygladu.md` §E20, etap w kolejce przed manualem.
+Zadania są pierwszym wzorcem; cały przegląd E20 nadal do wykonania.
+
+## Tymczasowa blokada skrótu Control (2026-10-11)
+
+Przycisk „Znajomi” w Control ma być widoczny z ikoną `people`, ale zablokowany.
+Zależność jest w PAGES: `blockedUntil=modalPagesReview`, centralnie
+`completed=false`; initPage i generowane diagramy korzystają z tej samej
+blokady. Odblokować dopiero po przeglądzie E19N (stare funkcje, mapa, zapis,
+blokady i wznowienie Control), zgodnie z tabelą w nawigacja-mapa-plan.md.
+Historyczne E7 nie zamyka nowej zależności. Pozostałe skróty kontaktów działają normalnie. Nie zdejmować tej
+blokady przy kolejnych zmianach wyglądu/kontraktów; mobilny guard też pozostaje.
+
+## Doprecyzowanie E19: hierarchia i routing linków
+
+Wspólne drzewo rodziców/potomków, wpływ na blokady oraz propagację usuwania
+opisują teraz `docs/blokady-zasobow.md` §7 i `docs/e19-znajomi-plan.md` §7.
+Wymaga ono jeszcze implementacji; nie traktować planu jako wdrożonej kaskady.
+Przegląd linków potwierdził, że tokenowe zaproszenia (`t/s/f/b`) używają
+resolvera `/go/`, linki urządzeń mają prefiks `/go/`, ale obecnie są tam tylko
+przekierowywane, a anonimowe głosowanie/QR idą wprost do `/polls/vote/...`.
+Wymaganie użytkownika: konsekwentnie wprowadzić każdy udostępniany link przez
+`/go/` i spójnie pokazywać tam wszystkie stany przed przejściem dalej; także
+anonimowy link ankiety trzeba objąć walidacją w `/go/`, zachowując anonimowość.
+Rezygnacja z maili już używa `/go/?u=` lub `/go/?s=…&action=unsub`; podglądy
+Control są wewnętrzne i mogą omijać `/go/`. Szczegóły w
+`docs/e19-znajomi-plan.md` sekcja „Routing linków”.
+
+Anonimowe głosy mają dziś losowy `voter_token` w `localStorage` per gra i
+uruchomienie, bez limitu IP; wyczyszczenie storage pozwala uzyskać nowy token.
+Łagodny limit 30 s między pełnymi wysłaniami z jednego pseudolosowego tokenu
+przeglądarki jest propozycją w planie, nie wdrożonym wymogiem.
+
+Aktualne doprecyzowanie UI ankiety (źródło: `docs/ankiety-refaktor.md`, nowa
+podsekcja E19; tabela w `docs/ujednolicenie-wygladu.md`): dwie karty to
+„Udostępnianie” i „Głosy” (starsza nazwa w planie: „Wyniki”). Karta
+Udostępnianie ma sekcje „Anonimowo” i „Odbiorcy” (znajomi/subskrybenci).
+Wspólne sekcje mają ten sam komponent i CSS. Płynne przejścia stanów karty
+Głosy pozostają jak w dotychczasowym planie. Nowa poprawka wizualna obejmuje
+wyłącznie globalne akcje nad kartami: styl zbliżony do przycisków Gier,
+rozmiar `.btn.sm`, kompaktowe na telefonie. Hierarchia zostaje jak w planie
+ankiet (główna akcja `.btn.gold`, „Przerwij” — czerwony obrys `.pollAbort`).
+Nie obejmuje przycisków wewnątrz kart ani zamykania dialogów/nawigacji; nie
+cofa wykonanych zmian. Wcześniejsze pytania otwarte/tabele w
+`ankiety-refaktor.md` §2–3 są historyczne, jeśli rozwiązano je w §1 i
+aktualizacji E19.
+
+Użytkownik wznowił pracę i zezwolił uruchamiać cięższe zadania lokalnie na serwerze Codexa. Repo po scaleniu E19 kroku 3 jest na `main` (`f280941fd`); branch `codex/e19-3` ma ten sam stan. Poprawiono test SQL 321
+(commit `6a8753616`): fixture pobiera token jako administrator ze względu na
+`FORCE ROW LEVEL SECURITY`, po czym resolver jest nadal wywoływany w roli
+`authenticated`. Walidacja runnera 38096872246: unit i SQL ✓. Punktowe e2e
+brancha 38096917201: dźwięk własny bez pliku i dźwięk Storage ✓ (2/2).
+
+Migracja 321 została wdrożona razem z frontem na `main`; log migracji, Pages,
+Worker i wszystkie kontrole produkcyjne są zielone. E19 krok 3 zamknięty.
+Wyniki produkcyjne: `friends` 38099344264 (2/2), `subscribers` 38099196468
+(2/2), `go --grep 'subscription invite'` 38099459575 (2/2),
+`frontend-navigation` 38099534030 (11/11), `account-deletion` 38099771245
+(1/1), regresja dźwięku 38099849073 (2/2); unit 401/401 w każdym przebiegu.
+E19 krok 4 jest zamknięty: branch po synchronizacji 38100967351 ✓; Pages
+38101052370 ✓; kontrola produkcyjna `poll-share.spec.js` 38101089865 ✓, unit
+401/401. Scenariusz sprawdza obie grupy, mail test8 i ukrywanie zaproszonych.
+Pierwsza próba testu przekroczyła limit oczekiwania na mail (pozostawał pending
+w kolejce); retry przeszedł. Rozpoczęty E19 krok 5: migracja 322 (`go?b=`)
+wdrożona na produkcji w runie 38101647703; izolowany Postgres/SQL runner
+38101686798 ✓. Branch ma commit migracji `e732e616c` i implementacji
+`bdbd03568`: znajomi jako skrót w jednym oknie udostępniania, konto po
+nazwie/e-mailu, link `/go/?b=`, prowadzenie do `/tasks/` (zachowuje `b`
+przez logowanie). Punktowe E2E brancha `bases.spec.js` run 38102116117
+wykryło pozostawione zaproszenie znajomości `pending` z poprzedniego runu;
+run 38102345561 potwierdził obsługę tego stanu, ale wskazał względny
+`mail_link` (naprawiono w teście; run brancha 38102541764 ✓). Front wypchnięto
+na `main`, Pages 38102630814 ✓. Produkcyjne E2E 38102671588: flow znajomego,
+link `/go/?b=` i akceptacja w `/tasks/` ✓; test maila do test8 nie dostał
+wiadomości także po retry. Diagnostyka obu wpisów: `status=pending`,
+`attempts=0`, `last_attempt_at=null`, `last_error=null` — wygląda na nieuruchomiony
+run 38103011217 potwierdził aktywny cron `*/2 * * * *`; test maila oczekiwał
+90 s, czyli mniej niż okres crona. Po zwiększeniu limitu oczekiwania do 150 s
+produkcyjne E2E `bases.spec.js` run 38103300067 przeszło 2/2, unit 401/401;
+mail dotarł po 33 s. Krok 5 zamknięty. Przed krokiem 6 skoordynować obszar
+Control z drugą sesją.
+
+Produkcyjne e2e
+Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po
+retry), ale test e-maila bez konta ujawnił, że `alertModal` odrzuca opcję `body`
+i przez to nie renderuje linku do Subskrybentów. Poprawiono `alertModal`, aby przekazywał `body` do wspólnego okna (commit
+`9e94f2258`). Branch e2e `friends.spec.js --grep 'e-mail bez konta'`
+38097620398 ✓ (1/1), unit 401/401 ✓. Pages z poprawką wdrożono w 38097702888; e2e produkcyjne `friends`
+38097736761 przechodzi test brakującego linku. Test `subscribers.spec.js`
+dostosowano do kontraktu E2E skrzynki test14 (worker mailbox API obsługuje
+test1–test13); branch `subscribers.spec.js` 38098985469 ✓ (2/2, unit
+401/401). W dalszej kolejności testy kontrolne produkcji: pełne friends,
+subscribers, punktowe go, frontend-navigation, account-deletion i regresja
+dźwięku. Krok 3 nadal otwarty do zielonych kontroli produkcyjnych.
+
+---
+
+# Przekazanie pracy — pauza 2026-10-11 (Codex)
+
+## Aktualizacja po wznowieniu — 2026-10-11
+
+Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control, i
+doprecyzował docelowe zachowanie udostępnień. E19 kroki 1–5 pozostają
+zamknięte; następny jest krok 6. Szczegółowe wymagania zapisano w
+[`e19-znajomi-plan.md`](e19-znajomi-plan.md), sekcja 7, z tabelą ekranów w
+[`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md) i regułą kolejki w
+[`maile-granice.md`](maile-granice.md). Aktualizacja dotyczy planu; nie
+rozpoczyna jeszcze implementacji.
+
+Ważne uzgodnienia: powiadomienie to e-mail; przed zakolejkowaniem sprawdzana
+jest flaga `user_flags.email_notifications`; ponowienie wysyła wyłącznie
+przypominający mail. Udostępnienia ankiety są przypięte do pojedynczego
+uruchomienia. Sesja Control ma wygasać po godzinie bezczynności, czyścić
+powiązane rekordy Storage i unieważniać udostępnienia urządzeń.
+
+**Praca zatrzymana na prośbę użytkownika. Nie uruchamiać testów ani dalszych
+wdrożeń bez wyraźnego wznowienia w nowej sesji.** Wszystkie zmiany kodu
+zapisane i wypchnięte na **`codex/e19-3`** w repo `Andrish97/familiada`.
+Ostatni commit kodu przed tym przekazaniem: **`6761989e5`**.
+
+## Bieżący stan — przeczytaj przed historycznym przekazaniem poniżej
+
+- **E7b zrobione na produkcji**: zmiany `b9cc476ac`, testy brancha
+  38089479328 (14 testów ok, dwie asercje naprawione), powtórka
+  38091455118 ✓ (2/2 + unit 401/401), Pages 38091648065 ✓,
+  kontrola produkcji **38091756034 ✓ (5/5 + unit 401/401)**.
+- **Reguła obciążenia lokalnego** (decyzja 2026-10-11) w AGENTS.md,
+  CLAUDE.md, nawigacja sekcja 7 i Dzienniku: ograniczać ciężkie zadania
+  i symulacje tutaj; e2e na GitHub Actions; wymagane sprawdzenia pojedynczo
+  z ograniczoną współbieżnością lub na odizolowanym runnerze.
+- **E19 krok 3 — kod na branchu, NIE wdrożony**. Migracja
+  `2026-10-11_321_friends_subscribers.sql` także **NIE na produkcji**.
+  Nie traktować kroku jako skończonego. Strony `/friends/` i `/subscribers/`,
+  wspólny moduł list `contacts-page.js`, `invite-mail.js`, mapy i Worker,
+  usunięcie `/subscriptions/`, przekierowania z logowania i głosowania,
+  migracja claim/udostępniania ankiet/usuwania danych są przygotowane.
+- Commity E19: `2c225d5da`, `bbf28ee61` (merge main i wersje CI),
+  `c919ce131` (fixture unit), `43604a54d` (zachowanie własnego dźwięku
+  ze Storage + plakietka znajomych na Bazach), `6761989e5` (walidacja
+  e-maila + regresja dźwięku). Dokumentacyjny `72b2356cf` potwierdza E7b.
+- Unit na runnerze **401/401 ✓** w 38092186340 i 38092310787.
+- SQL 38092094724: brak polityk maili w fixture; poprawione.
+  SQL 38092186340: brak walidacji e-maila (`_norm_email` tylko normalizuje);
+  poprawione. **SQL 38092310787 nadal czerwony**:
+  `docs/sql/test-friends-subscribers-321.sql:66: permission denied for table friendships`.
+  To zapytanie fixture pod rolą authenticated czyta `friendships` ze zrzutu
+  schematu; następna sesja ma ustalić i poprawić przyczynę uprawnień w
+  odizolowanym odtworzeniu (nie osłabiać produkcyjnego RLS).
+- **E2E dźwięku 38092315064 anulowane na prośbę użytkownika**.
+  Scenariusze `game-settings.spec.js --grep 'własny.dźwięk.z.chmury|bez.pliku'`
+  wymagają ponownego testu brancha i kontroli produkcji po wdrożeniu.
+- Nie uruchomiono jeszcze e2e nowych `friends.spec.js` / `subscribers.spec.js`.
+  Zawierają scenariusze mailowe, więc uruchamiać pojedynczo (konta 7/8
+  dla Znajomych; domyślne konto puli dla Subskrybentów; odbiorca test14
+  jest wyłącznie skrzynką bez konta).
+
+## Wznowienie w nowej sesji Codexa (również w aplikacji ChatGPT)
+
+1. Pobierz repo i przejdź na **`codex/e19-3`**, nie zaczynaj od nowego
+   brancha z main. Przeczytaj AGENTS.md, ten plik, wdrozenia.md,
+   e19-znajomi-plan.md (sekcje 5–6).
+2. Po wyraźnym wznowieniu: popraw test SQL 321 / odtworzenie schematu.
+   Workflow `agent-checks.yml` na branchu z wejściem
+   `verify_e19_321=true` uruchamia unit pojedynczo i odizolowany Postgres 16.
+   Zrzut schematu odtwarzany ze stubami Supabase (jak local-db.md),
+   diagnostyka restore jest artefaktem `e19-sql-restore`.
+3. Punktowy e2e brancha: test zachowania własnego dźwięku wskazany wyżej,
+   przez `REF=codex/e19-3 bash scripts/agent-tools/e2e-seq.sh ...`.
+   Skrypt nie ma prawa wykonywania w tym środowisku — wywoływać przez bash.
+4. Po zielonych SQL/unit: migracja 321 **razem z wymagającym jej frontem**
+   (wyjątek cyklu dla migracji zmieniających zachowanie). Sprawdzić
+   zastosowanie w `supabase/migration_logs/latest.log`, Pages i Worker.
+   Od razu punktowe testy kontrolne: friends, subscribers, go,
+   frontend-navigation, account-deletion i regresja własnego dźwięku.
+5. Dopiero po zielonej produkcji zamknąć krok 3; dalej E19 kroki 4–7,
+   potem E14 i E13. Control i control2 należą do drugiej sesji:
+   przed krokiem 6 skoordynować zakres. E18 pozostaje wstrzymane.
+
+Uwaga przy merge: resolver wersji przy konflikcie modify/delete przywrócił
+usuwane `web/subscriptions/index.html` i JS. Sprawdzono, że main zmieniał
+tylko wersje CI, po czym oba pliki usunięto ręcznie. Nie przywracać starej
+strony i nie dodawać aliasów. `version-assets.js` wykonano po merge.
+
+---
+
 # Przekazanie pracy — stan na 2026-10-10
 
 Dla kolejnego agenta (Codex). Zasady pracy: `AGENTS.md` (identyczne z
@@ -97,3 +483,232 @@ planie E19 sekcja 2) i na końcu **E13** (instrukcja).
   → unit. Nigdy `git checkout --ours -- web`.
 - Podgląd stron bez bazy: `scripts/agent-tools/` (atrapa Supabase, README).
 - Wynik każdego kroku w „Dzienniku” w `wdrozenia.md`.
+
+## Trwająca paczka 330 i pytanie o model subskrypcji
+
+SQL 330 na main: DB 38144761004 ✓, log OK 330 13:52:06 UTC; runner
+38144647258 ✓. Front na branchu a41f447ee, unit 409/409 ✓, zrzuty
+poll-only-* w docs/img/e19-tasks. Branch punktowy Tasks/Bases uruchomiony
+po zakończeniu kontroli 329. Dopiero po zielonym promować front i kontrola main.
+
+Pytanie kluczowe o subskrypcje wysłano asynchronicznie: obecny model
+subscribers_invite odmawia kontom i kieruje do Friends, a nowe tabele
+odmów rozważają subskrypcję na konto. Czy ma być niezależna subskrypcja
+konta, czy zostaje model konto→znajomy / subskrypcja tylko bez konta?
+Nie zmieniać tego modelu bez odpowiedzi; kontynuować niezależnie Tasks/Bases.
+
+330 branch 38145406627 ✓ 7/7, gotowy do promocji frontu. Nowe decyzje
+telefon/puste listy zapisane na końcu E19 i ujednolicenie-wygladu: dwie
+przełączane karty z plakietką, wspólny pusty stan. Nowy wygląd udostępniania
+Baz nadal do wykonania; SQL odmów 331 to tylko lokalny draft /tmp, nie etap
+wdrożony.
+
+Promocja 330: commit 63a2a4481 na main, Pages 38146034897 ✓, kontrola
+main 38146083458 w toku. Po zakończeniu wpisać wynik; nie ponawiać
+przebiegu równolegle. Lokalny /tmp/base331-draft.sql zawiera także
+warunkową rezerwację maila i uczciwy wynik cancel; nadal wymaga pełnych
+testów SQL/wyścigów i frontu. Nie generować go ponownie starym build331.py.
+
+**330 zakończona:** main 38146083458 ✓ 7/7 bez retry + unit 409/409,
+rzeczywisty mail test8 67 s. Pages 38146034897 ✓; SQL 330 OK. Następna
+paczka: odmowy Baz i wspólny wygląd udostępniania; potem przełączane
+karty mobilne kontaktów/plakietki/puste listy. Nie powtarzać zakończonej
+kontroli 330. Brak odpowiedzi o modelu subskrypcji nie blokuje Baz/UI.
+
+Bieżąca korekta Zadań (po decyzji o zbędnym wyszukiwaniu/typie zasobu):
+cc4d4953a usuwa initListSearch/dolny pasek/etykiety typu, zachowuje
+poll_type do routingu głosowania. Unit 410/410; nowe zrzuty simple-*.
+Branch UI 38147051449 w toku (dwa kontrolowane widoki 1400/390).
+Doprecyzowanie kontaktów: na telefonie zakładki **z wypustkami jak w Grach**,
+nie pionowe panele; zapisane w E19/UI, jeszcze do wdrożenia.
+
+Korekta Zadań: branch 38147051449 ✓ 2/2, Pages 38147149505 ✓,
+kontrola main 38147198385 w toku. Następnie zapisać wynik; nie uruchamiać
+równolegle drugiej kontroli. Pozostałe otwarte paczki zachowane.
+
+Uproszczenie Zadań zamknięte: main 38147198385 ✓ 2/2, unit 410/410;
+Pages 38147149505 ✓. Bieżąca kolejna korekta: usunięcie Zaakceptowano
+z aktywnych kafelków znajomych/subskrybentów, bez zmian pending/declined.
+Zakładki z wypustkami nadal otwarte, nie zrealizowane przy tej korekcie.
+
+**Pytanie o model Subskrybentów rozstrzygnięte:** tylko adresy bez konta,
+konto→Znajomi, zgodnie z obecnym subscribers_invite. Nie pytać ponownie,
+nie tworzyć osobnej obsługi subskrypcji kont ani jej plakietki. Otwarte
+kontrakty E19/UI skorygowane; historia wcześniejszego pytania zachowana.
+
+Statusy active: Pages 38147497547 ✓, kontrola main 38147553964 w toku.
+Branch 38147347570 ✓, lokalne cztery zrzuty active-* bez overflow.
+Plan subskrypcji bez konta i braku akceptacji w panelu zapisany; nie
+wracać do pytania o subskrypcje kont. Wypustki mobilne jeszcze do wdrożenia.
+
+**Korekta active zakończona:** main 38147553964 ✓ (oba panele, 1400/390),
+unit 410/410, Pages 38147497547 ✓. Nie powtarzać zakończonych kontroli.
+Następne otwarte zakresy: zakładki z wypustkami/plakietki/puste listy
+kontaktów, odmowy Baz i wspólny wygląd udostępniania, odmowy anonimowych
+Subskrybentów 5/30 dni bez undo/akceptacji w panelu; model kont rozstrzygnięty.
+Manual ostatni. Lokalny draft 331 nadal wymaga testów i frontu.
+
+**Aktualna kolejność po poleceniu użytkownika „wróć do planu”:** E19 §5
+pkt 2 domknąć zakładki mobilne; potem pkt 3 odmowy/cooldowny Subskrybentów
+(Znajomi 329 gotowi), pkt 4 Bazy, pkt 5 Ankiety, pkt 6 maile, pkt 7 graf.
+Nie przestawiać kolejki na podstawie samego ostatniego doprecyzowania.
+Zakładki teraz na branchu: unit 411/411, zrzuty tabs-*; brak kontroli
+branch/main przed oznaczeniem wykonania. Draft Baz /tmp/base331-draft.sql
+nie wyprzedza pkt 3 i przed użyciem musi dostać właściwy kolejny numer.
+
+**Pkt 2 kontaktów zamknięty produkcyjnie:** branch 38148641622 ✓,
+Pages 38148810039 ✓, main 38148894724 ✓ 3/3 bez retry, unit 411/411.
+Obejmuje wypustki 36 px, pełną wysokość kart, wewnętrzne niezależne
+przewijanie, stan zakładek/URL/Go/keyboard oraz regresje active/odmowy.
+Następny krok §5 pkt 3: Subskrybenci — audyt kontraktów zapisany na końcu
+E19. Nie powtarzać zakończonej kontroli kontaktów.
+
+Mobile landscape: zakres doprecyzowany w ujednolicenie-wygladu.md —
+PAGES plus wszystkie strony HTML, w tym Go/głosowanie/urządzenia i strony
+techniczne. Przegląd UI/E20 przed manualem; manual sprawdzić w jego
+ostatnim etapie. Nie oznaczać landscape jako wdrożonego: guard nadal
+blokuje telefon po obrocie. Kryteria/testy i macierz grup stron zapisane.
+
+**W toku pkt 3 / 331:** pierwsza paczka zabezpiecza zamknięte tokeny
+Subskrybentów (legacy RPC tworzył aktywny wpis po odmowie/cofnięciu).
+Migracja i rollback SQL/wyścigi lokalnie ✓, unit 411/411. Runner 331
+do uruchomienia; następnie SQL main/log i punktowe Subscribers z dwoma
+rzeczywistymi mailami na test14. Kontrakt odmów 5/30 i flag/claim pozostaje
+następną paczką 332; nie oznaczać pkt 3 zakończonego.
+
+331: runner 38150342363 ✓, SQL main ca1a635ab1; czeka na log zastosowania
+i punktowe branch/main Subscribers. E2E po reload czeka na komunikat Go,
+żeby asercja braku Akceptuj nie przeszła przed inicjalizacją strony.
+
+331 branch 38150591218 ✓ 3/3 bez retry, unit 411/411; dwa rzeczywiste
+maile test14 w 48/104 s. SQL OK 15:15:33 UTC, DB 38150405080 ✓.
+Do domknięcia ta sama kontrola main; frontend/CSS w 331 nie zmieniony.
+
+**331 main nie jest czystą kontrolą:** 38150902827 success, lecz 1 flaky
+(429 baseline:recipient przy drugim scenariuszu); retry przechodzi.
+Powód: helper E2E nie czyścił dodatkowej podłogi kolejki. 332 ograniczona
+do helpera własnej pary test1–8→test14; nie zmienia cooldownów użytkowników
+ani wyjątków kolejki. Lokalny rollback zakresu/ACL ✓, unit 412/412.
+Runner 332 → SQL main/log → świeże branch/main Subscribers bez retry.
+Następna właściwa paczka odmów/flag/claim otrzymuje 333 (332 zajęta).
+
+332 runner 38151596399 ✓ (SQL zakres/ACL + unit 412/412), SQL main
+41b0313828. Czeka log DB; potem trzy Subscribers branch/main jeszcze raz,
+bez retry, z rzeczywistymi mailami. 331 nie jest zamknięta do tej kontroli.
+
+332 SQL OK 15:33:35 UTC, DB 38151652553 ✓, schema 714682fa74;
+unit 412/412 po merge. Branch 38151820876 trwa; czekać, nie uruchamiać
+równolegle kolejnych maili. Po czystym wyniku ta sama kontrola main.
+
+331–332 branch 38151820876 ✓ 3/3 bez retry, unit 412/412, dostarczone
+maile 57/107 s. Następnie main ten sam spec, --retries=0; nie zamykać
+przed jego wynikiem. Pozostały pkt 3 odmów/flag/claim to paczka 333.
+
+**Aktualny stan — 331/332 zakończone:** main 38152153539 ✓ 3/3,
+--retries=0, unit 412/412. Dwa rzeczywiste maile test14 w 22/102 s,
+akceptacja/usunięcie i odmowa Go, oba RPC blokują zamknięte tokeny,
+active wymaga właściwego adresu; konto→Znajomi. Branch 38151820876 ✓,
+SQL/runner 331 i 332 ✓. Nie ponawiać tych kontroli. Front/CSS bez zmian.
+
+**Następna praca:** E19 §5 pkt 3, paczka 333 — pełny kontrakt odmów
+Subskrybentów: wypisanie = odmowa, niezależny trwały globalny mail-off,
+5 dni widoczności / 30 dni karencji, zachowanie karencji po cofnięciu,
+stare tokeny/nowe jawne zaproszenie, flagi przed licznikiem/kolejką,
+resend pending z blokadą/metadata, konto→Znajomi we wszystkich starych
+RPC i rejestracji/claim. Audyt na końcu E19. Dopiero potem pkt 4 Bazy
+(draft /tmp wymaga kolejnego numeru i pełnych testów), pkt 5 Ankiety itd.
+
+**333 lokalnie:** wypisanie = odmowa w każdym miejscu (czasy właściwe dla
+zasobu), dla Subskrybentów wspólne 5/30 także stare RPC; globalny mail-off
+trwały. SQL/wyścigi lokalne ✓, unit 412/412. Front pokazuje odmowy nadawcy
+bez ponowienia; Go konta→Znajomi. Runner/produkcja jeszcze do sprawdzenia;
+nie oznaczać pkt 3 zamkniętego. Zrzuty refusal-* w e19-subscribers.
+
+Bieżąca druga bramka: Agent38172033341 ✓ unit444/Deno/kopie/Worker build;
+branch38172035648 ✓15 SMTP i4 HTTP200 ilustracje. Zapisane podglądy Settings
+dopięte przez stored-mail; potrzebne unit447/isolated i punktowy browser
+preview, potem Worker/Pages oraz main15mail+preview. Producentów maili
+na branchu nie zmieniono po zielonym SMTP.
+
+Pkt7 bieżący draft345: base_share_tasks FK→question_bases CASCADE + indeks,
+cleanup orphanów, rollback SQL i nowe wyścigi. Lokalne klony fam345graph/
+fam345orphan PG16 ✓, regresje337 ✓. Agent input verify_e19_345 oraz
+produkcyjny rollbackowy smoke w db-migrate przygotowane. Najpierw isolated,
+SQL/main/log/smoke, potem punktowy istniejący E2E Baz. Front bez zmiany;
+queue, wypisanie Znajomych i pozostały graf nadal otwarte.
+
+**Aktualnie pkt7 /352:** lokalnie odtworzono publiczne legacy RPC
+konwersji gościa z niepotwierdzonym cudzym adresem; zaproszenie Znajomych
+mogło trafić do jego ID. Migracja352 wymaga potwierdzonego własnego adresu
+Auth, kontrakt SQL z rolą authenticated i regresja351 success. Do wykonania
+isolated, SQL/main/log i punktowy guest-conversion-identity.spec.js na
+branch/main. Draft źródeł /tmp/e19-352 to przyszły353, nadal niewdrożony.
+Audyt38192919036: task bez kontaktu jest testowy/current, odmowa znanego
+konta poza30 dniami. Nie zgadywać historycznych powiązań.
+
+**352 zakończone:** DB38202329118/log04:06:38/schema b212860fcd,
+isolated38202222524/unit455, branch38202524806 i main38202658311
+success3/3 bez retry. Dawne RPC konwersji wymaga potwierdzonego własnego
+adresu; Account/Login pending/cancel pozostają poprawne, goście posprzątani.
+Nie powtarzać tej paczki. **Dalej353:** /tmp/e19-353/source-draft.sql,
+fam353draft; public share/macierz dwóch typów/pięciu stanów i sześć
+regresji SQL success. Nadal lokalne, bez353 w repo/produkcji. Dalsze
+wejścia i wyścigi oraz rzeczywiste maile wymagane. Manual na końcu.
+
+**353 przygotowane w osobnym checkout:** /tmp/familiada-353-isolated,
+branch codex/e19-353. Migracja źródeł/markerów/karencji; pięć rollbackowych
+kontraktów, seed historii bez zgadywania,24 wyścigi i DDL. Lokalnie wszystkie
+przeszły na fam353draft/fam353final. W macierzy rejestracji powtórna kontrola
+właściciela po locku jest konieczna — stara kontrola negatywna cofała źródło
+anonimowo już po przypisaniu konta. Nazwy procesów testowych są krótkie, bo
+application_name w PostgreSQL obcina dłuższe nazwy. Reset shape353 wyłącznie
+na izolowanej bazie przed powtórnym testem historycznych migracji; nigdy
+produkcja. Najpierw unit/isolated353, potem SQL/log/smokes, real-mail branch
+oraz main.352 zakończone; nie oznaczać353 wdrożonym przed tymi bramkami.
+
+**353 zakończone produkcyjnie:** finalny isolated38209090723/unit455;
+main ab837febf0, DB38209426059/log05:48:30/schema8110af1b70; branch38210607530
+oraz main38211143647 success1/1 bez retry z rzeczywistymi mailami15. Wybrane
+źródło, signup, cofnięcie, partial0/full10, oba Go expired i odbudowa15
+potwierdzone. Nie powtarzać paczki.
+
+**Następna praca354:** prototyp /tmp/e19-354, DBfam354draft. Actual anonymous
+z metadata guest=false tworzy obecnie profil regular bez expiry. Root
+klasyfikacja musi pochodzić z Auth/potwierdzonej konwersji. Prototyp Ctor,
+regular classifier i normalizer success;351/352 pozytywnej konwersji także.
+Jeszcze bez354 w repo/produkcji. Do audytu historii i pełnych testów.
+Pozostałe źródła pochodnych propozycji/Baz i mailowe budżety/tokeny/kolejka
+w E19; UI/E20 dalej, manual na końcu.
+
+**Decyzja 2026-10-12 — ciągłość:** nie zatrzymywać pracy po raportach,
+pytaniach o postęp ani zamknięciu paczki. Kontynuować kolejkę bez nowego
+polecenia; zasada nadrzędna w AGENTS.md/CLAUDE.md. Pięć aktywnych etapów
+głównej kolejki: E19, E19N, E14, E20, E13 (manual ostatni); część E18 nadal
+historycznie wstrzymana. Numery migracji nie są liczbą punktów planu.
+
+**354 zakończone produkcyjnie:** isolated38231809411/unit455, DB38232023390
+OK09:48:17/schema d05bb70973. Po naprawie2 profili readonly38232398434
+wykazuje0 błędów przy51 guests. Branch38232792528 success2/2, main
+ce7e399097/38233127443 success4/4 --retries=0. Auth.updateUser odpowiedź
+może zawierać metadata z input; niezależny getUser potwierdza zapis true.
+Nie powtarzać354. Zasada ciągłości nadrzędna; raport nie zatrzymuje pracy.
+
+**Następne355 lokalnie:** /tmp/e19-355/derived-proposal-prototype.sql,
+DBfam355draft. FK friendships.source_subscription_id, jawne źródło tylko
+dla nowych auto-proposals, parent przed child w _friend_locked. Source close
+anuluje derived pending/declined bez kasowania count/cooldown; hard-delete
+BEFORE trigger przed FK SET NULL. Accepted/manual pozostają niezależne.
+Manual friends_invite już DELETE+INSERT, nowy ID i sourceNULL, zachowuje
+still-valid email counter; nie dodawać zbędnego token-detach triggera.
+7 kontraktów/8 wyścigów lokalnie success, w tym odmowa/source close.
+Brak355 w repo/produkcji. Potem Bazy/pozostałe mail budgets/tokeny/kolejka,
+Go/anon, E19N/E14/E20; manual ostatni. E20 tytuł/podpowiedź po prawej,
+akcje po lewej (nowa decyzja12.10), kompaktowe mobilne filtry.
+
+**355 przygotowane na branchu:** migracja/testy/CI w repo, przed isolated.
+Lokalnie7 kontraktów/8 wyścigów/DDL i14 rollbackowych regresji success,
+unit455. Produkcyjny test355 rozszerza poll-contact-source.spec.js:
+recipient Friends tworzy derived proposal, owner source revoke usuwa
+listę/accept/token/Go, actual SMTP obu poll typów i recovery15 pozostają.
+Reset355 przed reset353, tylko izolowana DB; restore _friend_locked legacy
+potrzebny po przyszłym schema355. Nie oznaczać355 wdrożonym przed bramkami.

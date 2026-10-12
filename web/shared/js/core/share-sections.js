@@ -6,12 +6,24 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-10T22301";
-import { icon } from "./icons.js?v=v2026-10-10T22301";
+import { t } from "../../translation/translation.js?v=v2026-10-11T20294";
+import { icon } from "./icons.js?v=v2026-10-11T20294";
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Wskaźnik dostępności: ikona z małym licznikiem pod spodem. */
+export function shareCooldownEl() {
+  const element = document.createElement("div");
+  element.className = "shareActionTimer";
+  element.hidden = true;
+  element.innerHTML = icon("hourglass");
+  const labelEl = document.createElement("span");
+  labelEl.className = "shareCountdown";
+  element.append(labelEl);
+  return { element, labelEl };
+}
 
 /**
  * Pojedynczy wiersz (kafel) sekcji.
@@ -30,7 +42,7 @@ const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").
  */
 export function shareRowEl(row) {
   const el = document.createElement("div");
-  el.className = "shareRow";
+  el.className = "shareRow" + (row.compact ? " shareRow--compact" : "");
   if (row.id != null) el.dataset.id = String(row.id);
   if (row.selected) el.classList.add("selected");
   if (row.disabled) el.classList.add("blocked");
@@ -58,8 +70,17 @@ export function shareRowEl(row) {
     b.setAttribute("aria-label", a.title || a.key);
     if (a.disabled) b.disabled = true;
     b.innerHTML = a.icon ? icon(a.icon) : esc(a.text || "");
-    b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e); });
+    b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e, b); });
+    let labelEl = null;
+    if (a.countdown) {
+      b.classList.add("shareActionCountdown");
+      labelEl = document.createElement("span");
+      labelEl.className = "shareCountdown";
+      labelEl.hidden = true;
+      b.append(labelEl);
+    }
     acts.append(b);
+    a.onMount?.({ rowEl: el, button: b, labelEl });
   }
   if (row.onClick && !row.disabled) {
     el.tabIndex = 0;
@@ -70,6 +91,42 @@ export function shareRowEl(row) {
     });
   }
   return el;
+}
+
+/** Wspólna sekcja także dla pustej listy i formularza dodawania odbiorcy. */
+export function shareSectionEl({ key, title, rows = [], emptyText = "", collapsed, onToggle }) {
+  const section = document.createElement("section");
+  section.className = "shareSection";
+  if (key) section.dataset.section = key;
+  const heading = document.createElement("h2");
+  heading.className = "shareSectionTitle";
+  heading.textContent = title;
+  const list = document.createElement("div");
+  list.className = "shareList shareList--scroll";
+  for (const row of rows) list.append(shareRowEl(row));
+  if (!rows.length && emptyText) {
+    const empty = document.createElement("div");
+    empty.className = "shareEmpty";
+    empty.textContent = emptyText;
+    list.append(empty);
+  }
+  if (typeof collapsed === "boolean") {
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "rowsSectionHead";
+    list.id = `share-list-${key}`;
+    const update = () => {
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.setAttribute("aria-controls", list.id);
+      toggle.innerHTML = `<span class="rowsSectionTitle">${esc(title)}</span><span class="rowsSectionCount">${rows.length}</span><span class="rowsSectionCaret" aria-hidden="true">${icon(collapsed ? "caret-down" : "caret-up")}</span>`;
+      list.hidden = collapsed;
+    };
+    toggle.addEventListener("click", () => { collapsed = !collapsed; update(); onToggle?.(collapsed); });
+    heading.replaceChildren(toggle);
+    update();
+  }
+  section.append(heading, list);
+  return section;
 }
 
 /**
@@ -117,7 +174,9 @@ const ROW_CHANNELS = ["friend", "subscriber", "mail"];
  * @param {string|number} [row.id]
  * @param {string} row.title
  * @param {string} [row.avatar]   tekst, z którego bierzemy inicjał (domyślnie tytuł)
+ * @param {string} [row.avatarIcon] ikona pochodzenia zamiast inicjału
  * @param {string} [row.note]     szara linijka stanu
+ * @param {string} [row.noteMobile] skrócony opis na telefonie
  * @param {"friend"|"subscriber"|"mail"} [row.channel]
  * @param {Record<string,string>} [row.data]  atrybuty data-* wiersza (np. kind)
  * @param {{key:string,text?:string,icon?:string,title?:string,gold?:boolean,iconOnly?:boolean,disabled?:boolean,onClick:Function}[]} [row.actions]
@@ -133,10 +192,11 @@ export function rowEl(row) {
   if (channel) noteParts.push(`<span class="rowsChannel rowsChannel--${channel}">${esc(t(`shareSections.channel.${channel}`))}</span>`);
   if (row.note) noteParts.push(esc(row.note));
   el.innerHTML = `
-    <span class="rowsAvatar" aria-hidden="true">${esc(initial.toLocaleUpperCase())}</span>
+    <span class="rowsAvatar" aria-hidden="true">${row.avatarIcon ? icon(row.avatarIcon) : esc(initial.toLocaleUpperCase())}</span>
     <div class="rowsMain">
       <div class="rowsTitle" title="${esc(row.title)}">${esc(row.title)}</div>
-      ${noteParts.length ? `<div class="rowsNote">${noteParts.join(" · ")}</div>` : ""}
+      ${noteParts.length ? `<div class="rowsNote${row.noteMobile != null ? " rowsNote--desktop" : ""}">${noteParts.join(" · ")}</div>` : ""}
+      ${row.noteMobile != null ? `<div class="rowsNote rowsNote--mobile">${esc(row.noteMobile)}</div>` : ""}
     </div>
     <div class="rowsActions"></div>`;
   const acts = el.querySelector(".rowsActions");

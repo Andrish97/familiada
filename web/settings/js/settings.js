@@ -30,7 +30,11 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-12T09554";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-11T20294";
+
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-11T20294";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-11T20294";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-11T20294";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-12T09554";
@@ -2994,13 +2998,13 @@ function showAttachmentPreview(url, filename) {
 
 function renderSimpleMessageContent(bubble, msg) {
   const bodyEl = document.createElement("div");
-  const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
+  const htmlSrc = msg.body_html;
   if (htmlSrc) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
     frame.sandbox = "allow-scripts allow-popups";
-    const wrappedHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:8px;background:#050914;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.4;}a{color:#ffeaa6;}</style></head><body>${htmlSrc}</body></html>`;
+    const wrappedHtml = buildStoredMailHtml(msg);
     frame.srcdoc = wrappedHtml;
     bodyEl.appendChild(frame);
   } else {
@@ -3070,28 +3074,13 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   bubble.style.cssText = "border:1px solid rgba(255,234,166,.4);box-shadow:0 0 15px rgba(255,234,166,.15);";
 
   const bodyEl = document.createElement("div");
-  const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
+  const htmlSrc = msg.body_html;
   if (htmlSrc) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
     frame.sandbox = "allow-scripts allow-popups";
-    // Wrap content in dark theme - ALWAYS force dark theme
-    const wrappedHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        * { background: #050914 !important; color: #ffffff !important; }
-        body { margin:0; padding:10px; background: #050914 !important; color: #ffffff !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; line-height:1.4; }
-        p, div, span, h1, h2, h3, h4, h5, h6 { background: transparent !important; color: #ffffff !important; }
-        a { color: #ffeaa6 !important; }
-        strong, b { color: #ffffff !important; }
-      </style>
-      </head>
-      <body>${htmlSrc}</body>
-      </html>
-    `;
+    const wrappedHtml = buildStoredMailHtml(msg);
     frame.srcdoc = wrappedHtml;
     bodyEl.appendChild(frame);
   } else {
@@ -3106,33 +3095,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     const htmlSrc = msg.body_html || msg.body;
     const subject = msg.subject || "(brak tematu)";
 
-    // Generate full HTML email for preview (dark theme)
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; }
-          .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
-          .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-          .email-body { padding: 24px; background: transparent; line-height: 1.4; }
-        </style>
-      </head>
-      <body>
-        <div class="email-container">
-          <div class="email-header">
-            <h1 class="email-subject">${escSetting(subject)}</h1>
-          </div>
-          <div class="email-body">
-            ${htmlSrc || ""}
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // Preview the saved document without nesting or overriding its theme.
+    const emailHtml = buildStoredMailHtml(msg);
 
     const frame = document.createElement("iframe");
     frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
@@ -3414,28 +3378,13 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     el.appendChild(metaEl);
 
     const bodyEl = document.createElement("div");
-    const htmlSrc = msg.body_html || (/<[a-z][\s\S]*>/i.test(msg.body || "") ? msg.body : null);
+    const htmlSrc = msg.body_html;
     if (htmlSrc) {
       bodyEl.className = "mail-msg-body-html";
       const frame = document.createElement("iframe");
       frame.className = "mail-msg-html-frame";
       frame.sandbox = "allow-scripts allow-popups";
-      // Wrap content in dark theme - ALWAYS force dark theme
-      const wrappedHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          * { background: #050914 !important; color: #ffffff !important; }
-          body { margin:0; padding:10px; background: #050914 !important; color: #ffffff !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; line-height:1.4; }
-          p, div, span, h1, h2, h3, h4, h5, h6 { background: transparent !important; color: #ffffff !important; }
-          a { color: #ffeaa6 !important; }
-          strong, b { color: #ffffff !important; }
-        </style>
-        </head>
-        <body>${htmlSrc}</body>
-        </html>
-      `;
+        const wrappedHtml = buildStoredMailHtml(msg);
       frame.srcdoc = wrappedHtml;
       bodyEl.appendChild(frame);
     } else {
@@ -3450,33 +3399,8 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       const htmlSrc = msg.body_html || msg.body;
       const subject = msg.subject || "(brak tematu)";
 
-      // Generate full HTML email for preview (dark theme)
-      const emailHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; }
-            .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
-            .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-            .email-body { padding: 24px; background: transparent; line-height: 1.4; }
-          </style>
-        </head>
-        <body>
-          <div class="email-container">
-            <div class="email-header">
-              <h1 class="email-subject">${escSetting(subject)}</h1>
-            </div>
-            <div class="email-body">
-              ${htmlSrc || ""}
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
+      // Preview the saved document without nesting or overriding its theme.
+      const emailHtml = buildStoredMailHtml(msg);
 
       const frame = document.createElement("iframe");
       frame.style.cssText = "width:100%;height:500px;border:none;display:block;";
@@ -4386,48 +4310,8 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
     lang: composeLang,
   });
 
-  // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
-  let bodyContent = body;
-
-  // Replace #quote placeholder with actual quote HTML (only when replying with quote)
-  if (quote) {
-    const quoteHtml = `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>`;
-    if (bodyContent.includes("#quote")) {
-      bodyContent = bodyContent.replace(/#quote/g, quoteHtml);
-    }
-  }
-
-  // Build full HTML email with Familiada branding
-  const htmlBody = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <style>:root{color-scheme:dark}</style>
-</head>
-<body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;">
-    <!-- Header -->
-    <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;margin-bottom:14px;">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-      <div style="margin-top:4px;font-size:11px;opacity:.7;letter-spacing:.06em;">familiada.online</div>
-    </div>
-    
-    <!-- Content -->
-    <div style="padding:16px;">
-      ${greetingText ? `<p style="margin:0 0 20px">${greetingText.replace(/\n/g, "<br>")}${greetingText.trim().endsWith(',') ? '' : ','}</p>` : ""}
-      <div style="line-height:1.6;color:#fff;margin-bottom:20px">${bodyContent}</div>
-      ${farewellText ? `<p style="margin:20px 0 0">${farewellText.replace(/\n/g, "<br>")}</p>` : ""}
-    </div>
-    
-    <!-- Footer -->
-    <div style="margin-top:26px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;opacity:.5;text-align:center;">
-      Ta wiadomość została wysłana przez system Familiada.
-    </div>
-  </div>
-</body>
-</html>`;
+  const htmlBody = buildComposeMailHtml({ lang: composeLang, subject, bodyHtml: body,
+    quote, greeting: greetingText, farewell: farewellText });
 
   // Upload attachments
   const uploadedAttachments = [];
@@ -4462,7 +4346,12 @@ async function sendComposeWithSignature(greetingSelect, farewellSelect, senderSe
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    showToast("Wysłano.", "success");
+    if (json.queued === 0) {
+      if (status) status.textContent = "";
+      showToast(t("pollSharePanel.mailDisabled"));
+      return;
+    }
+    showToast("Dodano do kolejki.", "success");
     closeCompose();
     await loadMailFolder({ silent: true });
   } catch (err) {
@@ -4499,9 +4388,6 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     lang: composeLang,
   });
 
-  // Add comma after greeting if present (but not if it already ends with comma)
-  const greetingWithComma = greetingText ? `${greetingText}${greetingText.trim().endsWith(',') ? '' : ','}` : "";
-
   const farewellText = buildEmailSignature({
     greeting: "none",
     farewell: farewellValue,
@@ -4512,55 +4398,9 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     lang: composeLang,
   });
 
-  // body from TinyMCE is already HTML (<p>, <strong>, etc.) - don't replace \n with <br>
-  let bodyHtml = body;
+  const emailHtml = buildComposeMailHtml({ lang: composeLang, subject, bodyHtml: body,
+    quote, greeting: greetingText, farewell: farewellText });
 
-  // Replace #quote placeholder with actual quote HTML
-  const quoteHtml = quote ? `<div style="margin:25px 0;padding:20px;background:rgba(255,255,255,.05);border-left:4px solid #ffeaa6;border-radius:4px;font-size:13px;line-height:1.6;color:#ccc">${quote.replace(/\n/g, "<br>")}</div>` : "";
-  if (bodyHtml.includes("#quote")) {
-    bodyHtml = bodyHtml.replace(/#quote/g, quoteHtml);
-  }
-
-  // Structure: Greeting → Body (with #quote replaced) → Farewell
-  const finalBody = `
-    ${greetingWithComma ? `<div style="margin-bottom:20px;line-height:1.4;font-size:14px">${greetingWithComma.replace(/\n/g, "<br>")}</div>` : ""}
-    <div style="line-height:1.4;color:#fff;margin-bottom:20px;font-size:14px">${bodyHtml}</div>
-    ${farewellText ? `<div style="margin-top:20px;line-height:1.4;font-size:14px">${farewellText.replace(/\n/g, "<br>")}</div>` : ""}
-  `;
-
-  // Generate full HTML email (dark theme like system emails)
-  const emailHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #050914; color: #ffffff; line-height: 1.4; }
-        .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .email-header { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 20px; margin: -20px -20px 25px -20px; border-radius: 8px 8px 0 0; }
-        .email-subject { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-        .email-body { padding: 0 5px; }
-        .email-quote { margin: 25px 0; padding: 20px; background: rgba(255,255,255,.05); border-left: 4px solid #ffeaa6; border-radius: 4px; font-size: 13px; line-height: 1.4; color: #ccc; }
-        .email-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.1); font-size: 12px; color: #888; }
-      </style>
-    </head>
-    <body>
-      <div class="email-container">
-        <div class="email-header">
-          <h1 class="email-subject">${escSetting(subject || "(brak tematu)")}</h1>
-        </div>
-        <div class="email-body">
-          ${finalBody}
-        </div>
-        <div class="email-footer">
-          <p style="margin:0;color:#888;font-size:12px">Ta wiadomość została wysłana przez system Familiada.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-  
   // Create iframe for preview (renders HTML exactly like system emails)
   const frame = document.createElement("iframe");
   frame.style.cssText = "width:100%;height:500px;border:none;display:block";
@@ -6002,31 +5842,9 @@ async function mktRefreshPreview() {
   const frame = document.getElementById("mktPreviewFrame");
   if (!frame) return;
   const subject = (document.getElementById("mktSubject")?.value || "").trim();
-
-  // Get HTML content from TinyMCE (same as what will be sent)
-  const mktEditor = tinymce.get("mktBody");
-  const bodyHtml = mktEditor ? mktEditor.getContent() : "";
-
-  // Build preview based on template type (same as sendMarketing)
-  let previewHtml = "";
-  
-  if (mktActiveTpl === "invitation") {
-    // Invitation - full template with feature tiles and images
-    const IMG_BASE = "https://familiada.online/img/pl";
-    previewHtml = `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="dark light"/><title>Familiada Online</title></head><body style="margin:0;padding:0;background:#050914;-webkit-text-size-adjust:100%"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050914"><tbody><tr><td align="center" style="padding:24px 12px 32px"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff"><tbody><tr><td style="padding:14px 16px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px" bgcolor="#000"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></td></tr><tr><td height="12"></td></tr><tr><td style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Witam,</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">Piszę w sprawie narzędzia, które ułatwia organizację wydarzeń i może realnie wesprzeć realizowane projekty.</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)"><strong style="color:#fff">familiada.online</strong> to profesjonalna platforma do prowadzenia teleturnieju na żywo. To kompletny system: od zbierania odpowiedzi od gości (kod QR), przez panel operatora, aż po animowaną tablicę wyników z dźwiękami prosto z telewizyjnego studia.</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-polls.webp?v=v2026-10-12T09554" width="516" alt="Sonda QR — goście głosują na żywo" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Sonda QR — goście głosują na żywo</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Uczestnicy odpowiadają z własnych telefonów. System automatycznie normalizuje wyniki do 100 punktów.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-control.webp?v=v2026-10-12T09554" width="516" alt="Panel operatora — pełna kontrola" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Panel operatora — pełna kontrola</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Intuicyjne sterowanie rundami, punktami i błędami (X) w czasie rzeczywistym.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-display.webp?v=v2026-10-12T09554" width="516" alt="Tablica wyników na TV lub rzutnik" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Tablica wyników na TV lub rzutnik</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Animowana tablica z zakrytymi odpowiedziami, bankiem punktów i błędami X — z dźwiękami prosto z telewizyjnego studia.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-host.webp?v=v2026-10-12T09554" width="516" alt="Niezależny widok prowadzącego" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Niezależny widok prowadzącego</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Osobny podgląd pytań dla prowadzącego na tablecie lub telefonie — dla pełnej swobody na scenie.</td></tr></tbody></table><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px"><p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Grach Społeczności</p><p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">Gotowe zestawy pytań udostępnione przez innych użytkowników — bez konieczności tworzenia gry od zera.</p></div><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić dotychczasową ofertę.</p><p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,<br/>Twórca familiada.online</p><div style="margin-top:24px;text-align:center"><a href="https://familiada.online" style="display:inline-block;padding:13px 30px;background:#ffeaa6;color:#050914;font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;border-radius:10px;text-decoration:none">Poznaj system familiada.online</a></div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.</div><div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br/>Wysłano z kontakt@familiada.online</div></td></tr></tbody></table></td></tr></tbody></table></body></html>`;
-  } else if (mktActiveTpl === "newsletter") {
-    // Newsletter - Familiada wrapper + TinyMCE HTML + unsubscribe + footer
-    previewHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head><body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;"><div style="max-width:560px;margin:0 auto;padding:26px 16px;"><div style="padding:14px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px;"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></div><div style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 6px;font-size:20px;font-weight:800;color:#ffeaa6">${escSetting(subject)}</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">${bodyHtml || '<em style="opacity:.5">(brak treści)</em>'}</div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.
-      </div>
-      <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br>Wysłano z kontakt@familiada.online</div></div></body></html>`;
-  } else {
-    // Custom - TinyMCE HTML + unsubscribe + footer
-    previewHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head><body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;"><div style="max-width:560px;margin:0 auto;padding:26px 16px;"><div style="padding:14px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px;"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></div><div style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">${bodyHtml || '<em style="opacity:.5">(brak treści)</em>'}</div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.
-      </div>
-      <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br>Wysłano z kontakt@familiada.online</div></div></body></html>`;
-  }
-  
-  frame.srcdoc = previewHtml;
+  const editor = tinymce.get("mktBody");
+  const bodyHtml = editor ? editor.getContent() : "";
+  frame.srcdoc = buildMarketingMailHtml({ template: mktActiveTpl, subject, bodyHtml });
 }
 
 function mktParseEmails() {
@@ -6073,23 +5891,7 @@ async function sendMarketing() {
   if (!subject) { showToast("Podaj temat.", "error"); return; }
   if (!mktValidEmails.length) { showToast("Waliduj listę adresów przed wysyłką.", "error"); return; }
 
-  // Build HTML email based on template type (templates in JS, not worker)
-  let htmlBody = "";
-  if (mktActiveTpl === "invitation") {
-    // Invitation - full template with feature tiles and images
-    const IMG_BASE = "https://familiada.online/img/pl";
-    htmlBody = `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="dark light"/><title>Familiada Online</title></head><body style="margin:0;padding:0;background:#050914;-webkit-text-size-adjust:100%"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050914"><tbody><tr><td align="center" style="padding:24px 12px 32px"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff"><tbody><tr><td style="padding:14px 16px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px" bgcolor="#000"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></td></tr><tr><td height="12"></td></tr><tr><td style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Witam,</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">Piszę w sprawie narzędzia, które ułatwia organizację wydarzeń i może realnie wesprzeć realizowane projekty.</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)"><strong style="color:#fff">familiada.online</strong> to profesjonalna platforma do prowadzenia teleturnieju na żywo. To kompletny system: od zbierania odpowiedzi od gości (kod QR), przez panel operatora, aż po animowaną tablicę wyników z dźwiękami prosto z telewizyjnego studia.</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-polls.webp?v=v2026-10-12T09554" width="516" alt="Sonda QR — goście głosują na żywo" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Sonda QR — goście głosują na żywo</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Uczestnicy odpowiadają z własnych telefonów. System automatycznie normalizuje wyniki do 100 punktów.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-control.webp?v=v2026-10-12T09554" width="516" alt="Panel operatora — pełna kontrola" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Panel operatora — pełna kontrola</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Intuicyjne sterowanie rundami, punktami i błędami (X) w czasie rzeczywistym.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-display.webp?v=v2026-10-12T09554" width="516" alt="Tablica wyników na TV lub rzutnik" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Tablica wyników na TV lub rzutnik</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Animowana tablica z zakrytymi odpowiedziami, bankiem punktów i błędami X — z dźwiękami prosto z telewizyjnego studia.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-host.webp?v=v2026-10-12T09554" width="516" alt="Niezależny widok prowadzącego" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Niezależny widok prowadzącego</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Osobny podgląd pytań dla prowadzącego na tablecie lub telefonie — dla pełnej swobody na scenie.</td></tr></tbody></table><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px"><p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Grach Społeczności</p><p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">Gotowe zestawy pytań udostępnione przez innych użytkowników — bez konieczności tworzenia gry od zera.</p></div><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić dotychczasową ofertę.</p><p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,<br/>Twórca familiada.online</p><div style="margin-top:24px;text-align:center"><a href="https://familiada.online" style="display:inline-block;padding:13px 30px;background:#ffeaa6;color:#050914;font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;border-radius:10px;text-decoration:none">Poznaj system familiada.online</a></div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.</div><div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br/>Wysłano z kontakt@familiada.online</div></td></tr></tbody></table></td></tr></tbody></table></body></html>`;
-  } else if (mktActiveTpl === "newsletter") {
-    // Newsletter - Familiada wrapper + TinyMCE HTML + unsubscribe + footer
-    htmlBody = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head><body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;"><div style="max-width:560px;margin:0 auto;padding:26px 16px;"><div style="padding:14px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px;"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></div><div style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 6px;font-size:20px;font-weight:800;color:#ffeaa6">${escSetting(subject)}</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">${bodyHtml}</div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.
-      </div>
-      <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br>Wysłano z kontakt@familiada.online</div></div></body></html>`;
-  } else {
-    // Custom - TinyMCE HTML + unsubscribe + footer (always the same structure)
-    htmlBody = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head><body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;"><div style="max-width:560px;margin:0 auto;padding:26px 16px;"><div style="padding:14px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px;"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></div><div style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">${bodyHtml}</div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.
-      </div>
-      <div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br>Wysłano z kontakt@familiada.online</div></div></body></html>`;
-  }
+  const htmlBody = buildMarketingMailHtml({ template: mktActiveTpl, subject, bodyHtml });
 
   const confirmed = await confirmModal({
     text: `Wysłać wiadomość do ${mktValidEmails.length} odbiorców?`,
@@ -6108,8 +5910,9 @@ async function sendMarketing() {
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
-    showToast(`Dodano do kolejki: ${json.queued}/${json.total}`, "success");
+    showToast(`Dodano do kolejki: ${json.queued}/${json.total}${json.skipped ? `; pominięto ${json.skipped} — powiadomienia wyłączone.` : ""}`, json.queued ? "success" : "info");
     if (statusEl) statusEl.textContent = "";
+    if (!json.queued) return;
     
     // Clear email list after successful send
     const emailInput = document.getElementById("mktEmailInput");

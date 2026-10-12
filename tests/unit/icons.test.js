@@ -56,8 +56,8 @@ test("każda nazwa ikony użyta w kodzie aplikacji istnieje w silniku", () => {
   })(ROOT);
   const missing = [];
   for (const f of files) {
-    const src = fs.readFileSync(f, "utf8");
-    for (const m of src.matchAll(/data-icon="([\w-]+)"|\bicon\(\s*["']([\w-]+)["']/g)) {
+    const src = fs.readFileSync(f, "utf8").replace(/^\s*\/\/.*$/gm, "");
+    for (const m of src.matchAll(/data-(?:i18n-)?icon(?:-after)?="([\w-]+)"|\bicon\(\s*["']([\w-]+)["']/g)) {
       const n = m[1] || m[2];
       if (!ICONS[n]) missing.push(`${path.relative(ROOT, f)}: ${n}`);
     }

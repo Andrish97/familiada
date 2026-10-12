@@ -8,7 +8,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import {
-  PAGES, ROLES, buttonHref, buttonRoles, buttonVisible, pageRoles, roleOf,
+  PAGES, NAV_DEPENDENCIES, ROLES, buttonBlocked, buttonHref, buttonRoles, buttonVisible, pageRoles, roleOf,
 } from "../../web/shared/js/core/nav-map.js";
 import { applyToDoc, mapGraph, MAPS } from "../../scripts/nav-maps.mjs";
 
@@ -80,7 +80,7 @@ test("w kodzie stron nie ma twardych przejść na adresy z mapy", () => {
   ];
   for (const f of files) {
     const code = readFileSync(path.join(WEB, f), "utf8").replace(/\/\/[^\n]*/g, "");
-    assert.doesNotMatch(code, /location\.href\s*=\s*[`"']\/(games|bases|subscriptions|polls|logo|marketplace|connect|manual|privacy)\//, f);
+    assert.doesNotMatch(code, /location\.href\s*=\s*[`"']\/(games|bases|friends|polls|logo|marketplace|connect|manual|privacy)\//, f);
   }
 });
 
@@ -101,7 +101,7 @@ test("role: anon, guest, user; wstęp na stronę wg access", () => {
   assert.equal(roleOf({}, false), "user");
   assert.deepEqual(pageRoles("marketplace"), ["anon", "guest", "user"]);
   assert.deepEqual(pageRoles("games"), ["guest", "user"]);
-  assert.deepEqual(pageRoles("subscriptions"), ["user"]);
+  assert.deepEqual(pageRoles("friends"), ["user"]);
 });
 
 test("locks: znane typy, id z parametrów stanu strony, tryb exclusive/shared", () => {
@@ -150,7 +150,7 @@ test("mapy: telefon nie ma stron i przycisków wide, komputer ma", () => {
   assert.ok(!phone.buttons.some((b) => b.label.startsWith("btnPlay")));
   assert.ok(desktop.buttons.some((b) => b.from === "games" && b.to === "control"));
   const guest = mapGraph({ role: "guest", phone: false });
-  assert.ok(!guest.nodes.includes("subscriptions"));
+  assert.ok(!guest.nodes.includes("friends"));
   assert.ok(!guest.buttons.some((b) => b.label === "btnConnectDevice"));
   assert.equal(MAPS.length, 6);
 });
@@ -158,4 +158,30 @@ test("mapy: telefon nie ma stron i przycisków wide, komputer ma", () => {
 test("docs/nawigacja-mapa-plan.md: diagramy zgodne z PAGES (node scripts/nav-maps.mjs)", () => {
   const doc = readFileSync(DOC, "utf8");
   assert.equal(applyToDoc(doc), doc, "diagramy nieaktualne — uruchom: node scripts/nav-maps.mjs");
+});
+
+test("skróty kontaktów: wspólne ikony, tylko konto i powrót do Control", () => {
+  for (const [id, p] of withButtons) for (const [bid, spec] of Object.entries(p.buttons)) {
+    if (!["friends", "subscribers"].includes(spec.to)) continue;
+    const html = readFileSync(htmlOf(id), "utf8");
+    const button = html.match(new RegExp(`<button[^>]*id="${bid}"[^>]*>[\\s\\S]*?</button>`))?.[0];
+    assert.ok(button, `${id}.${bid}`);
+    assert.match(button, new RegExp(`data-i18n-icon-after="${spec.to === "friends" ? "people" : "envelope"}"`));
+    assert.equal(buttonVisible(id, spec, "guest", false), false);
+    assert.equal(buttonVisible(id, spec, "user", false), true);
+  }
+  assert.match(readFileSync(htmlOf("games"), "utf8"), /data-i18n="games.nav.tasks" data-i18n-icon-after="bell"/);
+  assert.match(readFileSync(htmlOf("control"), "utf8"), /id="btnFriends"[^>]*disabled/);
+});
+
+test("zależność Control jest w mapie: widoczny zablokowany skrót, bez aktywnej strzałki", () => {
+  const spec = PAGES.control.buttons.btnFriends;
+  assert.equal(spec.blockedUntil, "modalPagesReview");
+  assert.equal(NAV_DEPENDENCIES.modalPagesReview.completed, false);
+  assert.equal(buttonBlocked(spec), true);
+  const graph = mapGraph({role:"user",phone:false});
+  assert.ok(graph.blocked.some(edge => edge.from === "control" && edge.to === "friends" && edge.dependency === spec.blockedUntil));
+  assert.ok(!graph.buttons.some(edge => edge.from === "control" && edge.to === "friends"));
+  assert.ok(!mapGraph({role:"user",phone:true}).blocked.some(edge => edge.from === "control"));
+  assert.equal(buttonBlocked(PAGES.games.buttons.btnFriends), false);
 });

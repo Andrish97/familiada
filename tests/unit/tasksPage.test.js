@@ -14,9 +14,9 @@ test("tasks: wpis w PAGES, trasa Workera, przycisk na liście gier", () => {
   assert.equal(PAGES.tasks.access, "user");
   assert.equal(PAGES.tasks.parent, "games");
   assert.ok(PAGES.tasks.from.includes("games"));
-  assert.deepEqual(PAGES.tasks.state, ["kind"]);
+  assert.deepEqual(PAGES.tasks.state, ["t"]);
   assert.deepEqual(PAGES.games.buttons.btnTasks, { to: "tasks", roles: ["user"] });
-  assert.match(read("cloudflare/maintenance-worker/src/lib/origin/origin.js"), /"subscriptions", "tasks"/);
+  assert.match(read("cloudflare/maintenance-worker/src/lib/origin/origin.js"), /"friends", "subscribers", "tasks"/);
   assert.match(read("web/games/index.html"), /id="btnTasks"/);
   assert.match(read("web/tasks/js/tasks.js"), /initPage\("tasks"/);
 });
@@ -39,4 +39,29 @@ test("komponent wierszy: sekcje zwijane, akcje z ikoną, usuwanie ikoną", () =>
   assert.match(src, /aria-expanded/);
   assert.match(src, /a\.icon === "trash"/);
   assert.match(read("web/shared/css/base.css"), /\.rowsPage\{ width: 100%; max-width: 760px/);
+});
+
+test("tasks: tylko ankiety, bez akcji baz lub urządzeń i filtra rodzaju", () => {
+  const src = read("web/tasks/js/tasks.js");
+  assert.match(src, /data\.filter\(task => task\.kind === "poll"\)/);
+  assert.doesNotMatch(src, /base_share_accept|base_share_decline|connectDevice|focusBaseToken|labelKey: "tasks\.filter/);
+  assert.match(read("web/go/js/go.js"), /baseInviteBasesAction/);
+});
+
+test("tasks: bez wyszukiwania, dolnego paska i tekstowej etykiety typu", () => {
+  const src = read("web/tasks/js/tasks.js");
+  assert.doesNotMatch(src, /initListSearch|list-search|tasks\.pollType/);
+  assert.doesNotMatch(read("web/tasks/index.html"), /games-bottom/);
+  assert.match(src, /noteMobile: owner/);
+});
+
+test("kontakty: wspólne karty, stan w mapie i wypustki CSS Gier", () => {
+  for (const id of ["friends", "subscribers"]) {
+    assert.deepEqual(PAGES[id].tabs, ["invite", "received"]);
+    assert.ok(PAGES[id].state.includes("tab"));
+    assert.match(read(`web/${id}/index.html`), /games\/css\/games.css/);
+    assert.match(read(`web/${id}/index.html`), /tab-corner-left/);
+  }
+  const src = read("web/shared/js/core/contacts-page.js");
+  assert.match(src, /tabFromUrl\(/); assert.match(src, /setTab\(/);
 });

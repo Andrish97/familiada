@@ -1,8 +1,10 @@
 // web/go/js/go.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-10T22301";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-10T22301";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-10T22301";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T20294";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-11T20294";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T20294";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-11T20294";
+
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-11T20294";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -73,13 +75,16 @@ const MSG = {
 const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
 const subToken = qs.get("s");
+const friendToken = qs.get("f");
+const baseToken = qs.get("b");
 const unsubToken = qs.get("u");
 const actionParam = qs.get("action");
 const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
 const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);
 const hasTaskToken = Boolean(taskToken) && !isUnsubOwner;
 const hasSubToken = Boolean(subToken) && !isUnsubOwner;
-const goToken = hasTaskToken === hasSubToken ? null : (hasTaskToken ? taskToken : subToken);
+const tokenCount = [taskToken, subToken, friendToken, baseToken].filter(Boolean).length;
+const goToken = tokenCount === 1 ? (friendToken || baseToken || taskToken || subToken) : null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -91,6 +96,43 @@ const emailRow = $("emailRow");
 const emailInput = $("emailInput");
 
 let resolvedInviteData = null;
+
+async function handleControlDeviceGateway() {
+  await i18nReady;
+  clearActions();
+  showEmailInput(false);
+  const type = qs.get("d");
+  const gameId = qs.get("id");
+  const token = qs.get("key");
+  const paths = { display: "/control/display/", host: "/control/host/", buzzer: "/control/buzzer/" };
+  if (!paths[type] || !gameId || !token) {
+    setView({ head: MSG.invalidLinkTitle(), text: MSG.invalidLinkText() });
+    return;
+  }
+  setView({ head: t("pollGo.deviceLinkTitle"), text: t("pollGo.deviceLinkChecking") });
+  try {
+    const { data, error } = await sb().rpc("control_device_share_resolve", { p_token: token });
+    if (error) throw error;
+    if (data?.state !== "active" || data?.game_id !== gameId || data?.device_type !== type) {
+      const expired = data?.state === "expired";
+      const revoked = data?.state === "revoked";
+      setView({
+        head: expired ? MSG.inviteExpired() : revoked ? t("pollGo.deviceLinkTitle") : MSG.invalidLinkTitle(),
+        text: expired ? t("pollGo.deviceLinkExpired") :
+          revoked ? t("pollGo.deviceLinkRevoked") : MSG.invalidLinkText(),
+      });
+      return;
+    }
+    const target = new URL(paths[type], location.origin);
+    const params = new URLSearchParams(location.search);
+    params.delete("d");
+    target.search = params.toString();
+    location.replace(target.toString());
+  } catch (error) {
+    console.warn("[go device gateway]", error?.message || error);
+    setView({ head: MSG.error(), text: "Nie udało się sprawdzić linku. Spróbuj ponownie później." });
+  }
+}
 
 function setView({ head, text, hintText }) {
   if (title) title.textContent = head;
@@ -117,19 +159,23 @@ function addAction(label, kind, handler) {
 function redirectToLogin() {
   const url = new URL("/login/", location.href);
   url.searchParams.set("from", "poll-go");
-  url.searchParams.set("next", taskToken ? "tasks" : "subscriptions");
+  url.searchParams.set("next", friendToken || resolvedInviteData?.kind === "friend" ? "friends" : baseToken || resolvedInviteData?.kind === "base" ? "bases" : "tasks");
+  if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
+  if (baseToken) url.searchParams.set("b", baseToken);
   if (taskToken) url.searchParams.set("t", taskToken);
-  if (subToken) url.searchParams.set("s", subToken);
+  if (subToken && resolvedInviteData?.kind !== "friend") url.searchParams.set("s", subToken);
+  if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
   location.href = url.toString();
 }
 
 function redirectToHub() {
-  const url = new URL("/subscriptions/", location.href);
+  const url = new URL(baseToken || resolvedInviteData?.kind === "base" ? "/bases/" : taskToken ? "/tasks/" : "/friends/", location.href);
+  if (baseToken) url.searchParams.set("b", baseToken);
   if (taskToken) {
-    url.searchParams.set("tab", "tasks");
     url.searchParams.set("t", taskToken);
   }
-  if (subToken) url.searchParams.set("s", subToken);
+  if (subToken && resolvedInviteData?.kind !== "friend") url.searchParams.set("s", subToken);
+  if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
   location.href = url.toString();
 }
 
@@ -223,7 +269,14 @@ function openVote(type) {
 
 async function declineTask() {
   try {
-    await sb().rpc("poll_task_decline", { p_token: goToken });
+    const { data, error } = await sb().rpc("poll_task_decline", { p_token: goToken });
+    if (error) throw error;
+    if (data !== "ok") {
+      const byState = { poll_stopped: MSG.pollStopped(), poll_closed: MSG.pollEnded(), expired: MSG.inviteExpired(), not_found: MSG.inviteExpired() };
+      clearActions();
+      setView({ head: byState[data] || MSG.error(), text: byState[data] ? "" : MSG.declineTaskFailed() });
+      return;
+    }
     setView({ head: MSG.declined(), text: MSG.taskDeclined() });
     clearActions();
   } catch (e) {
@@ -370,9 +423,47 @@ function showSubInviteAnonEmail(head, subscriberEmail) {
 async function handleSubInvite(data, user) {
   const head = buildSubHeading(data);
   const expectedEmail = normalizeEmail(data.subscriber_email);
-  const isActive = data.status === "pending";
   const hasAccountInvite = Boolean(data.subscriber_user_id);
   const userEmail = normalizeEmail(user?.email);
+
+  // Konto korzysta ze Znajomych; token nie aktywuje subskrypcji konta.
+  // Odmowa pozostaje odmową także po rejestracji.
+  if (data.friend_conversion_required && ["pending", "active"].includes(data.status)) {
+    if (user && !matchesInviteTarget({ user, expectedUserId: data.subscriber_user_id, expectedEmail })) {
+      showMismatch(head, expectedEmail);
+      return;
+    }
+    setView({ head, text: t("contacts.goAccountBody") });
+    clearActions();
+    showEmailInput(false);
+    addAction(user ? t("contacts.goFriends") : MSG.loginLabel(), "gold", () => {
+      const url = new URL(user ? linkTo("friends", { tab: "received" }) : linkTo("login"), location.href);
+      if (!user) { url.searchParams.set("from", "poll-go"); url.searchParams.set("next", "friends"); url.searchParams.set("tab", "received"); }
+      location.href = url.toString();
+    });
+    return;
+  }
+
+  // Nieaktywne zaproszenie pokazuje rzeczywisty stan, także po odświeżeniu.
+  // Link konkretnej osoby nie staje się formularzem nowej subskrypcji.
+  if (data.status !== "pending") {
+    if (user && hasAccountInvite && !matchesInviteTarget({
+      user, expectedUserId: data.subscriber_user_id, expectedEmail,
+    })) {
+      showMismatch(head, expectedEmail);
+      return;
+    }
+    if (data.status === "active") {
+      setView({ head: MSG.subscriptionActive(), text: MSG.inviteAccepted() });
+    } else if (data.status === "declined") {
+      setView({ head: MSG.declined(), text: MSG.inviteDeclined() });
+    } else {
+      setView({ head: MSG.inviteExpired(), text: "" });
+    }
+    clearActions();
+    showEmailInput(false);
+    return;
+  }
 
   // Case 1: Zalogowany user + account invite
   if (user && hasAccountInvite) {
@@ -385,30 +476,18 @@ async function handleSubInvite(data, user) {
       showMismatch(head, data.subscriber_email);
       return;
     }
-    if (!isActive) {
-      showExpired(head);
-      return;
-    }
     showSubInviteAccountMatch(head, expectedEmail);
     return;
   }
 
   // Case 2: Zalogowany user + email invite (bez account)
   if (user && !hasAccountInvite) {
-    if (!isActive) {
-      showExpired(head);
-      return;
-    }
     showSubInviteLoggedIn(head, userEmail, expectedEmail);
     return;
   }
 
   // Case 3: Niezalogowany + account invite (wymagaj logowania)
   if (!user && hasAccountInvite) {
-    if (!isActive) {
-      showExpired(head);
-      return;
-    }
     setView({ head, text: MSG.loginToAccept() });
     clearActions();
     addAction(MSG.loginLabel(), "gold", redirectToLogin);
@@ -417,14 +496,6 @@ async function handleSubInvite(data, user) {
   }
 
   // Case 4: Niezalogowany + email invite (bez account)
-  if (!isActive) {
-    setView({ head, text: MSG.subscribePrompt() });
-    showEmailInput(true);
-    clearActions();
-    addAction(MSG.subscribeLabel(), "gold", async () => subscribeByEmail());
-    return;
-  }
-
   showSubInviteAnonEmail(head, data.subscriber_email);
 }
 
@@ -432,11 +503,11 @@ async function handleSubInvite(data, user) {
 function showTaskInviteAccountMatch(head, expectedEmail) {
   setView({
     head,
-    text: MSG.acceptInHub(),
+    text: t("pollGo.taskInTasks"),
     hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
   });
   clearActions();
-  addAction(MSG.hubLabel(), "gold", redirectToHub);
+  addAction(t("pollGo.taskTasksAction"), "gold", redirectToHub);
   showEmailInput(false);
 }
 
@@ -519,6 +590,13 @@ async function handleUnsubOwner() {
       setView({ head: MSG.error(), text: MSG.invalidLinkText() });
       return;
     }
+    if (!["pending", "active"].includes(data.status)) {
+      setView({ head: data.status === "declined" ? MSG.declined() : MSG.inviteExpired(),
+        text: data.status === "declined" ? MSG.inviteDeclined() : "" });
+      clearActions();
+      showEmailInput(false);
+      return;
+    }
     const ownerLabel = data.owner_label || "";
     setView({ head: MSG.unsubOwnerHeading(ownerLabel), text: MSG.unsubOwnerText() });
     clearActions();
@@ -572,10 +650,37 @@ async function handleUnsubGlobal() {
   }
 }
 
+function handleBaseInvite(data, user) {
+  clearActions();
+  showEmailInput(false);
+  if (!user) {
+    setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteLogin") });
+    addAction(MSG.loginLabel(), "gold", redirectToLogin);
+    return;
+  }
+  if (!data.recipient_matches_me) {
+    setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteMismatch", { email: data.recipient_email || "" }) });
+    return;
+  }
+  if (!['pending', 'opened'].includes(data.status)) {
+    setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteHandled") });
+    return;
+  }
+  setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteBases", { owner: data.owner_label || "" }) });
+  addAction(t("pollGo.baseInviteBasesAction"), "gold", redirectToHub);
+}
+
 async function init() {
-  // ?d=<urządzenie> obsługuje inline-moduł w index.html (przekierowanie przed
-  // ciężkimi importami) — tu nic do roboty.
-  if (qs.has("d")) return;
+  if (qs.has("d")) {
+    if (qs.get("d") === "qr") {
+      const params = new URLSearchParams(location.search);
+      params.delete("d");
+      location.replace("/polls/vote/qr/" + (params.size ? `?${params}` : ""));
+      return;
+    }
+    await handleControlDeviceGateway();
+    return;
+  }
   // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
   // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
   // zwracając surowy klucz zamiast tłumaczenia (patrz t() w translation.js).
@@ -618,6 +723,16 @@ async function init() {
       return;
     }
 
+    if (data.kind === "friend") {
+      clearActions();
+      showEmailInput(false);
+      const head = ["active", "declined"].includes(data.status) ? t(`contacts.status.${data.status}`) : t("contacts.goTitle");
+      setView({ head, text: t("contacts.goBody", { owner: data.owner_label }) });
+      if (!user) addAction(MSG.loginLabel(), "gold", redirectToLogin);
+      else if (data.recipient_matches_me) addAction(t("contacts.open"), "gold", redirectToHub);
+      else setView({ head: t("contacts.goTitle"), text: MSG.invitationRecipient() });
+      return;
+    }
     if (data.kind === "sub") {
       await handleSubInvite(data, user);
       return;
@@ -625,6 +740,10 @@ async function init() {
 
     if (data.kind === "task") {
       await handleTaskInvite(data, user);
+      return;
+    }
+    if (data.kind === "base") {
+      handleBaseInvite(data, user);
       return;
     }
 

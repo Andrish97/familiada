@@ -81,3 +81,10 @@ test("FAQ opisuje aktualny tryb gościa i Gry Społeczności tak samo w PL/EN/UK
   assert.doesNotMatch(pl.home.faq.q4.a, /pełną funkcjonalność/i);
   assert.match(pl.home.faq.q4.a, /e-mail i hasło/);
 });
+
+
+test("serveBranchCode podmienia kod login, zachowując HTML Workera i Turnstile", () => {
+  assert.equal(localFileFor("/login/", ["subscribers"]), null);
+  assert.equal(localFileFor("/login/index.html", ["subscribers"]), null);
+  assert.equal(localFileFor("/login/js/login.js", ["subscribers"]), path.join(root, "web/login/js/login.js"));
+});

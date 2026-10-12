@@ -223,7 +223,7 @@ test("klucze pageGuard są w pl/en/uk, stare deviceGuard i guestGuard zniknęły
 // --- przyciski z PAGES[id].buttons ---------------------------------------
 
 function gamesButtons() {
-  for (const id of ["btnMarketplace", "btnLogoEditor", "btnConnectDevice", "btnSubscriptionsHub", "btnBases", "btnPlay", "btnSettings", "btnEdit", "btnPoll"]) {
+  for (const id of ["btnMarketplace", "btnLogoEditor", "btnConnectDevice", "btnFriends", "btnSubscribers", "btnTasks", "btnBases", "btnPlay", "btnSettings", "btnEdit", "btnPoll"]) {
     els[id] = fakeEl();
   }
   els.btnConnectDevice.dataset.navHidden = "true";
@@ -236,7 +236,9 @@ test("przyciski: konto widzi wszystkie, przejście przez linkTo", async () => {
   gamesButtons();
   const { deps } = makeDeps();
   await initPage("games", { deps });
-  assert.equal(els.btnSubscriptionsHub.hidden, false);
+  assert.equal(els.btnFriends.hidden, false);
+  assert.equal(els.btnSubscribers.hidden, false);
+  assert.equal(els.btnTasks.hidden, false);
   assert.equal(els.btnConnectDevice.dataset.navHidden, undefined, "zdjęte domyślne ukrycie z HTML");
   assert.equal(els.btnConnectDevice.style.display, "");
   await els.btnBases.click();
@@ -250,7 +252,7 @@ test("przyciski: gość nie dostaje przycisków dla konta (roles: user)", async 
   const guest = { id: "g1", user_metadata: { is_guest: true } };
   const { deps } = makeDeps({ user: guest });
   await initPage("games", { deps });
-  for (const id of ["btnSubscriptionsHub", "btnConnectDevice"]) {
+  for (const id of ["btnFriends", "btnSubscribers", "btnTasks", "btnConnectDevice"]) {
     assert.equal(els[id].hidden, true, id);
     assert.equal(els[id].style.display, "none", id);
     assert.equal(els[id].dataset.navHidden, "true", id);
@@ -298,4 +300,14 @@ test("przyciski: odnośnik <a> dostaje href zamiast nasłuchu", async () => {
   await initPage("manual", { deps: makeDeps().deps });
   assert.equal(els.btnLegal.attrs.href, "/privacy/?ret=%2Fmanual%2F");
   assert.equal(els.btnLegal.listeners.click, undefined);
+});
+
+test("Control: initPage wymusza blokadę z PAGES niezależnie od początkowego HTML", async () => {
+  els.btnFriends = fakeEl();
+  els.btnFriends.disabled = false;
+  loc.pathname = "/control/";
+  await initPage("control", {deps:makeDeps().deps});
+  assert.equal(els.btnFriends.disabled, true);
+  assert.equal(els.btnFriends.dataset.navBlockedUntil, "modalPagesReview");
+  assert.equal(els.btnFriends.listeners.click, undefined);
 });

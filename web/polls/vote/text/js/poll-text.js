@@ -1,7 +1,7 @@
 // js/pages/poll-text.js
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-10T22301";
-import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-10T22301";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-11T20294";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-11T20294";
+import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-11T20294";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -255,7 +255,7 @@ async function maybeReturnToHub(){
   try{
     const u = await getUser();
     if (!u) return;
-    setTimeout(() => { location.href = "/subscriptions/?tab=tasks"; }, 650);
+    setTimeout(() => { location.href = "/tasks/"; }, 650);
   }catch{}
 }
 

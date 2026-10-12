@@ -1,3 +1,4 @@
+const { expectMailDocument } = require("./helpers/mail-document");
 // tests/e2e/control.spec.js
 //
 // Wszystkie testy E2E dla Control v2 w jednym pliku (na wyraźną prośbę —
@@ -69,7 +70,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE === "1") {
-    await serveBranchCode(context, { pages: ["control", "settings"] });
+    await serveBranchCode(context, { pages: ["control", "settings", "go"] });
   }
 });
 
@@ -77,7 +78,7 @@ test.beforeEach(async ({ context }) => {
 async function controlContext(browser, options = {}) {
   const context = await browser.newContext({ ...options, serviceWorkers: "block" });
   if (process.env.TEST_BRANCH_CODE === "1") {
-    await serveBranchCode(context, { pages: ["control", "settings"] });
+    await serveBranchCode(context, { pages: ["control", "settings", "go"] });
   }
   return context;
 }
@@ -117,7 +118,7 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
     expect(new URL(tv.url()).searchParams.get("id")).toBe(game.id);
     await expect(tv.locator("#fsBtn")).toBeVisible();
     // The new Display remains directly accessible; its sound prompt works with TV OK.
-    await tv.goto(`https://www.familiada.online/control/display/?id=${game.id}&key=${game.share_key_display}`);
+    await tv.goto(`https://www.familiada.online/go/?d=display&id=${game.id}&key=${game.share_key_display}`);
     // Przy domyślnym źródle Control ekran odblokowania dźwięku na Display
     // pozostaje ukryty; pojawia się dopiero po wybraniu Display jako źródła.
     await expect(tv.locator("#audioUnlockScreen")).toBeHidden({ timeout: 15000 });
@@ -568,7 +569,23 @@ async function padGame(page, gameId) {
 async function makeGame(page, name, opts = {}) {
   const g = await makeGameRaw(page, name, opts);
   await padGame(page, g.id);
-  return g;
+  const keys = await page.evaluate(async (gameId) => {
+    const sb = window.__sbClient;
+    const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch", {
+      p_game_id: gameId, p_session_id: null,
+    });
+    if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Control runtime session failed");
+    const result = {};
+    for (const type of ["display", "host", "buzzer"]) {
+      const { data, error } = await sb.rpc("control_runtime_device_link", { p_game_id: gameId, p_device_type: type });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || `Device token failed: ${type}`);
+      result[type] = data.token;
+    }
+    return result;
+  }, g.id);
+  // Existing fixture call sites use these names to build device URLs; return
+  // only session-bound link tokens, never games.share_key_*.
+  return { ...g, share_key_display: keys.display, share_key_host: keys.host, share_key_buzzer: keys.buzzer };
 }
 
 async function makeGameRaw(page, name, { settings = {}, roundQuestions = [], finalAnswerPts = null } = {}) {
@@ -775,6 +792,14 @@ function instrumentAnon(p, label) {
 }
 
 async function openAnon(browser, contexts, path, label, errors) {
+  const devicePaths = { "/control/display": "display", "/control/host": "host", "/control/buzzer": "buzzer" };
+  const parsed = new URL(path, "https://www.familiada.online");
+  const deviceType = devicePaths[parsed.pathname.replace(/\/$/, "")];
+  if (deviceType && !parsed.searchParams.has("preview")) {
+    parsed.pathname = "/go/";
+    parsed.searchParams.set("d", deviceType);
+    path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  }
   const ctx = await controlContext(browser, );
   contexts.push(ctx);
   const p = await ctx.newPage();
@@ -2439,7 +2464,7 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
   await loginAsTestUser(page, context, { username: lockTestPool[1] || lockTestPool[0] });
 
   const logoName = `E2E-CONTROL2-LOGOLOCK-${Date.now()}`;
-  const { logoId, gameId, hostKey } = await page.evaluate(async ({ name, payload }) => {
+  const { logoId, gameId, hostKey, displayKey } = await page.evaluate(async ({ name, payload }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const { data: logo, error: logoErr } = await sb.from("user_logos")
@@ -2452,9 +2477,14 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
         owner_id: userData.user.id, type: "prepared", status: "ready",
         settings: { teams: { teamA: "Alfa", teamB: "Beta" }, game: { hasFinal: false }, display: { logoId: logo.id } },
       })
-      .select("id, share_key_host").single();
+      .select("id").single();
     if (gameErr) throw new Error("insert game failed: " + gameErr.message);
-    return { logoId: logo.id, gameId: game.id, hostKey:game.share_key_host };
+    const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch", { p_game_id: game.id, p_session_id: null });
+    if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Control session failed");
+    const { data: host, error: hostError } = await sb.rpc("control_runtime_device_link", { p_game_id: game.id, p_device_type: "host" });
+    const { data: display, error: displayError } = await sb.rpc("control_runtime_device_link", { p_game_id: game.id, p_device_type: "display" });
+    if (hostError || displayError || !host?.ok || !display?.ok) throw new Error(hostError?.message || displayError?.message || "Device token failed");
+    return { logoId: logo.id, gameId: game.id, hostKey:host.token, displayKey:display.token };
   }, { name: logoName, payload: blankGlyphPayload() });
 
   // stan "play" wymaga >= 10 pytań, inaczej overlay stanu przykrywa blokadę logo
@@ -2485,7 +2515,7 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByLabel("Przycisk fizyczny").check();
-    await openAnon(browser, logoContexts, `/control/display?id=${gameId}&key=${await page.evaluate(async id => (await window.__sbClient.from("games").select("share_key_display").eq("id",id).single()).data.share_key_display, gameId)}`, "display", []);
+    await openAnon(browser, logoContexts, `/control/display?id=${gameId}&key=${displayKey}`, "display", []);
     await page.getByRole("button", {name:"Dalej",exact:true}).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie");
     await expect.poll(() => hostPage.locator("#cover2Logo canvas").evaluateAll(canvases => canvases.some(canvas => {
@@ -2514,12 +2544,14 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
 // tests/e2e/helpers/mailbox.js co bases.spec.js's "@mailbox" testy) i
 // dowodzi, że link z maila faktycznie łączy -- NOWY, niezalogowany kontekst
 // przeglądarki otwiera go i dostaje działającą stronę Prowadzącego, bez
-// żadnego logowania (sam share_key_host w URL-u wystarcza).
+// żadnego logowania (token jednego odbiorcy w URL-u wystarcza).
 test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -- link z maila faktycznie łączy", async ({ page, context, browser }, testInfo) => {
+  test.setTimeout(300000); // setup + pełny interwał mail-worker + otwarcie linku
   const recipient = testAccountUsername(7);
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
   const game = await makeGame(page, `E2E-CONTROL2-SHAREMAIL-${Date.now()}`);
   const contexts = [];
+  let recipientSetupPage = null, recipientUid = null, recipientOriginalFlag = null;
   try {
     await resetMailProviderLimits(page);
     await clearMailbox(recipient);
@@ -2546,21 +2578,23 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
       const { data } = await window.__sbClient.auth.getUser();
       return data?.user?.id || null;
     });
-    const recipientSetupContext = await controlContext(browser, );
-    const recipientSetupPage = await recipientSetupContext.newPage();
-    let recipientUid = null;
-    try {
-      await loginAsTestUser(recipientSetupPage, recipientSetupContext, { username: recipient });
-      recipientUid = await recipientSetupPage.evaluate(async (ownerId) => {
-        const sb = window.__sbClient;
-        const { data: userData } = await sb.auth.getUser();
-        await sb.from("user_flags").upsert({ user_id: userData.user.id, email_notifications: true }, { onConflict: "user_id" });
-        if (ownerId) await sb.rpc("e2e_shared_devices_cleanup", { p_other_user_id: ownerId });
-        return userData.user.id;
-      }, ownerUid);
-    } finally {
-      await recipientSetupContext.close().catch(() => {});
-    }
+    const recipientSetupContext = await controlContext(browser);
+    contexts.push(recipientSetupContext);
+    recipientSetupPage = await recipientSetupContext.newPage();
+    await loginAsTestUser(recipientSetupPage, recipientSetupContext, { username: recipient });
+    const identity = await recipientSetupPage.evaluate(async () => {
+      const client = window.__sbClient, user = (await client.auth.getUser()).data.user;
+      const { data, error } = await client.from("user_flags").select("email_notifications").eq("user_id", user.id).maybeSingle();
+      if (error) throw new Error(error.message);
+      return { id: user.id, flag: data?.email_notifications ?? true };
+    });
+    recipientUid = identity.id; recipientOriginalFlag = identity.flag;
+    await recipientSetupPage.evaluate(async ({ ownerId, recipientId }) => {
+      const client = window.__sbClient;
+      const { error } = await client.from("user_flags").upsert({ user_id: recipientId, email_notifications: true }, { onConflict: "user_id" });
+      if (error) throw new Error(error.message);
+      if (ownerId) await client.rpc("e2e_shared_devices_cleanup", { p_other_user_id: ownerId });
+    }, { ownerId: ownerUid, recipientId: recipientUid });
 
     // ZNALEZIONA REALNA PRZYCZYNA (run #333): list_my_device_shares() (RPC
     // za #shareDeviceCurrentContent) zwraca WSZYSTKIE udostępnienia danego
@@ -2591,8 +2625,13 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 
     await page.locator('[data-device="host"]').getByRole("button", { name: "Udostępnij" }).click();
     await expect(page.locator("#shareDeviceOverlay")).toBeVisible({ timeout: 10000 });
+    // Regresja CSS: brak klamry wcześniej zagnieżdżał te reguły pod finałem.
+    await expect(page.locator('[data-device="host"]')).toHaveCSS("border-top-style", "solid");
+    await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "520px");
+    await expect(page.locator("#shareDeviceSubsList")).toHaveCSS("overflow-y", "auto");
+    await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
     await page.locator("#shareDeviceEmail").fill(recipient);
-    await page.getByRole("button", { name: "Dodaj" }).click();
+    await page.locator("#btnShareDeviceAdd").click();
     // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
     // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
     // username || current.recipient_email` -- skoro test7 ma ustawiony
@@ -2600,6 +2639,21 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // e-mail -- real finding z pierwszego przebiegu CI, nie zgadywane.
     const recipientUsername = recipient.split("@")[0];
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
+
+    // Jedno okno: trzy sekcje i znikający wspólny komunikat nad polem.
+    await expect(page.locator("#shareDeviceOverlay .shareSection")).toHaveCount(3);
+    await page.locator("#shareDeviceEmail").fill(recipient);
+    await expect(page.locator("#shareDeviceMsg")).toContainText("już udostępniono", { timeout: 10000 });
+    const messageShot = testInfo.outputPath("shot-control-share-message.png");
+    await page.screenshot({ path: messageShot, fullPage: true });
+    await testInfo.attach("control-share-message", { path: messageShot, contentType: "image/png" });
+    await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
+    await expect(page.locator("#shareDeviceMsg")).toBeHidden({ timeout: 5000 });
+    // Zniknięcie komunikatu nie odblokowuje duplikatu udostępnienia.
+    await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
+    const readyShot = testInfo.outputPath("shot-control-share-ready.png");
+    await page.screenshot({ path: readyShot, fullPage: true });
+    await testInfo.attach("control-share-ready", { path: readyShot, contentType: "image/png" });
 
     // Zgłoszony realny bug naprawiony migracją 287: share_device() robiło
     // ON CONFLICT DO UPDATE bez sygnalizowania wywołującemu, czy to nowy
@@ -2609,44 +2663,31 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // odbiorcy/typu i sprawdza created=false -- to jest naprawiony sygnał,
     // na którym shareDevice.js opiera decyzję "wysłać drugi mail czy nie",
     // bez kosztu drugiego 90s oczekiwania na pocztę.
-    // ZNALEZIONA REALNA NIEZGODNOŚĆ przy ujednolicaniu cooldownów (migracja
-    // 290): v_created teraz prawidłowo uwzględnia też game_id (bez tego
-    // zmiana gry dla tej samej osoby/urządzenia cicho nie wysyłała maila,
-    // mimo że odbiorca realnie potrzebuje nowego linku -- patrz migracja
-    // 290). Ten test MUSI więc podać TEN SAM p_game_id co pierwotne
-    // udostępnienie wyżej, inaczej to jest już inna, nowa kombinacja
-    // (created=true słusznie) -- nie regresja, tylko stary test pisany
-    // pod starą, mniej precyzyjną granularność.
-    const resendResult = await page.evaluate(async ({ recipientId, gameId }) => {
-      const { data, error } = await window.__sbClient.rpc("share_device", {
+    const repeatResult = await page.evaluate(async ({ recipientId, gameId }) => {
+      const { data, error } = await window.__sbClient.rpc("control_device_share_create", {
         p_recipient_user_id: recipientId,
+        p_recipient_email: null,
         p_device_type: "host",
         p_game_id: gameId,
       });
       return { data, error: error?.message || null };
     }, { recipientId: recipientUid, gameId: game.id });
-    expect(resendResult.error).toBeNull();
-    expect(resendResult.data?.ok).toBe(true);
-    expect(resendResult.data?.created, "powtórne udostępnienie temu samemu odbiorcy nie powinno być 'created' -- inaczej shareDevice.js wysłałby drugi mail").toBe(false);
+    expect(repeatResult.error).toBeNull();
+    expect(repeatResult.data?.ok).toBe(true);
+    expect(repeatResult.data?.created, "duplikat grantu dla aktywnej sesji nie tworzy nowego tokenu ani ponownego maila").toBe(false);
 
-    // BEZ `timeout` -- domyślne 90s z helpers/mailbox.js, tak jak WSZYSTKIE
-    // inne testy mailowe w repo (bases.spec.js/
-    // subscriptions.spec.js/account-password-email.spec.js). Zgłoszone:
-    // poprzednia wersja jawnie skracała do 60_000 -- ale docs/email-system-
-    // description.md's mail-worker przetwarza kolejkę `mail_queue` co 60s
-    // (pg_cron), więc worst-case opóźnienie samo w sobie zbliża się do 60s
-    // (mail wstawiony tuż PO tiku czeka na kolejny), zanim doliczyć jeszcze
-    // czas wysyłki przez łańcuch dostawców -- 60_000 nie był bezpiecznym
-    // marginesem ponad to, tylko dokładnie na jego granicy (realny powód
-    // sporadycznych "Nie otrzymano maila... w 60000 ms" w CI, nie infra flake).
-    const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/ });
+    // Mail-worker działa co 2 minuty. W produkcyjnym przebiegu 38129826723
+    // wiadomość nadal była pending po 90 s, a dotarła po ok. 122 s;
+    // używamy 150 s, żeby pokryć pełny interwał i czas dostawcy.
+    const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/, timeout: 150_000 });
+    expectMailDocument(email, { accountFooter: true });
     const links = extractHttpLinks(email).filter((u) => u.includes("/go/") && u.includes("d=host"));
     expect(links.length, "mail musi zawierać działający link do /go/?d=host").toBeGreaterThan(0);
 
     await page.locator("#btnShareDeviceClose").click();
 
     // Odbiorca klika link z maila -- zupełnie NOWY, niezalogowany kontekst
-    // (nie ten sam user/sesja co operator) -- dowód, że share_key_host w
+    // (nie ten sam user/sesja co operator) -- dowód, że token grantu
     // URL-u wystarcza, bez żadnego logowania.
     const recipientContext = await controlContext(browser, );
     contexts.push(recipientContext);
@@ -2663,9 +2704,16 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // testu musiał paść.
     await expect(recipientPage.locator("#paper")).toBeVisible({ timeout: 15000 });
   } finally {
+    try {
+      if (recipientUid && recipientOriginalFlag !== null) await recipientSetupPage.evaluate(async ({ id, value }) => {
+        const { error } = await window.__sbClient.from("user_flags").upsert({ user_id: id, email_notifications: value }, { onConflict: "user_id" });
+        if (error) throw new Error(error.message);
+      }, { id: recipientUid, value: recipientOriginalFlag });
+    } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await clearMailbox(recipient).catch(() => {});
     await deleteGame(page, game.id);
+    }
   }
 });
 

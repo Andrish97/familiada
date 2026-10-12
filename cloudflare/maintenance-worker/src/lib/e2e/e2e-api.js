@@ -8,7 +8,7 @@ import { fetchFromOrigin } from "../origin/origin.js";
 export const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
 const E2E_NONCE_TTL_SECONDS = 10 * 60; // 10 minut w KV, żeby pokryć zegar-skew
-const E2E_EMAIL_RE = /^test([1-9]|1[0-3])@familiada\.online$/;
+const E2E_EMAIL_RE = /^test([1-9]|1[0-5])@familiada\.online$/;
 
 export function normalizeE2ERecipient(value) {
   const recipient = String(value || "").trim().toLowerCase();
@@ -155,10 +155,12 @@ export async function restoreE2EAccount(request, env) {
   const account = String(body?.account || "").toLowerCase();
   const password = String(body?.password || "");
   const config = account === "test11"
-    ? { targetEmail: "test11@familiada.online", candidates: ["test11@familiada.online"], username: null }
+    ? { targetEmail: "test11@familiada.online", candidates: ["test11@familiada.online"], username: null, allowCreate: true }
     : account === "test12"
-      ? { targetEmail: "test12@familiada.online", candidates: ["test12@familiada.online", "test13@familiada.online"], username: "test12" }
-      : null;
+      ? { targetEmail: "test12@familiada.online", candidates: ["test12@familiada.online", "test13@familiada.online"], username: "test12", allowCreate: true }
+      : account === "test15"
+        ? { targetEmail: "test15@familiada.online", candidates: ["test15@familiada.online"], username: "test15", allowCreate: true }
+        : null;
   if (!config || password.length < 8 || password.length > 200) {
     return json({ ok: false, error: "invalid_restore_request" }, 400);
   }
@@ -167,11 +169,23 @@ export async function restoreE2EAccount(request, env) {
   if (!usersRes.ok) return json({ ok: false, error: "users_read_failed" }, usersRes.status || 500);
   const users = Array.isArray(usersRes.data?.users) ? usersRes.data.users : [];
   const matches = users.filter((user) => config.candidates.includes(String(user?.email || "").toLowerCase()));
-  if (matches.length !== 1) {
+  let user = matches[0];
+  let created = false;
+  if (matches.length === 0 && config.allowCreate) {
+    const createRes = await supabaseRequest(env, "/auth/v1/admin/users", {
+      method: "POST",
+      body: { email: config.targetEmail, password, email_confirm: true, user_metadata: { username: config.username || account, is_guest: false } },
+    });
+    if (!createRes.ok) return json({ ok: false, error: "account_create_failed" }, createRes.status || 500);
+    user = createRes.data?.user || createRes.data;
+    if (!user?.id || String(user.email || "").toLowerCase() !== config.targetEmail) {
+      return json({ ok: false, error: "created_account_invalid" }, 502);
+    }
+    created = true;
+  } else if (matches.length !== 1) {
     return json({ ok: false, error: "test_account_not_unique", matches: matches.length }, 409);
   }
 
-  const user = matches[0];
   // Admin updateUser nie zawsze zeruje pola secure email change w auth.users.
   // Uzywamy tej samej funkcji, ktora zasila przycisk "Anuluj zmiane" w UI,
   // zanim ustawimy bazowy adres i metadane konta testowego.
@@ -240,7 +254,13 @@ export async function restoreE2EAccount(request, env) {
     }
   }
 
-  return json({ ok: true, account, user_id: user.id, email: config.targetEmail });
+  let adminExcluded;
+  if (account === "test15") {
+    const excluded = await supabaseRequest(env, `/rest/v1/stats_exclusions_effective?user_id=eq.${encodeURIComponent(user.id)}&select=reason`);
+    adminExcluded = excluded.ok && Array.isArray(excluded.data) && excluded.data.some(row => row.reason === "test_account" || row.reason === "manual");
+    if (!adminExcluded) return json({ ok: false, error: "admin_exclusion_missing" }, 502);
+  }
+  return json({ ok: true, account, user_id: user.id, email: config.targetEmail, ...(config.allowCreate ? { created } : {}), ...(account === "test15" ? { admin_excluded: adminExcluded } : {}) });
 }
 
 export async function handleE2ELoginBypass(request, env, url, originBase, originHost, resolveOverride) {

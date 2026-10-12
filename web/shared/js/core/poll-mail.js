@@ -1,89 +1,33 @@
 // Maile z zaproszeniem do ankiety / przypomnieniem — wspólne dla strony ankiety
 // (i, do czasu usunięcia, Centrum ankiet). Baza rezerwuje cooldown "poll:share"
 // przed wysyłką; tu budujemy treść, wysyłamy i oznaczamy zaproszenia jako wysłane.
-import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-10T22301";
-import { t } from "../../translation/translation.js?v=v2026-10-10T22301";
+import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-11T20294";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-11T20294";
 
+import { renderMailDocument } from "./mail-document.js?v=v2026-10-11T20294";
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 export function mailLink(path) {
   try {
-    return new URL(path, location.origin).href;
+    const url = new URL(path, location.origin);
+    url.searchParams.set("lang", getUiLang() || "pl");
+    return url.href;
   } catch {
     return path;
   }
 }
 
-function wrapEmailDoc(innerHtml) {
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <meta name="supported-color-schemes" content="dark">
-  <style>:root{color-scheme:dark}</style>
-</head>
-<body style="margin:0;padding:0;background:#050914;color:#ffffff;">
-${innerHtml}
-</body>
-</html>`;
-}
-
-export function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl, subToken, unsubToken, ownerLabel: ownerLabelUnsub, isRegistered }) {
-  let footerExtra = "";
-  if (isRegistered) {
-    const accountUrl = new URL("/account/", location.origin).href;
-    footerExtra = `<div style="margin-top:10px;font-size:11px;opacity:.55;text-align:center;">
-      ${t("pollGo.mailAccountSettings")}
-      <a href="${accountUrl}" style="color:#ffeaa6;text-decoration:underline;">${t("pollGo.mailAccountSettingsLink")}</a>
-    </div>`;
-  } else if (subToken || unsubToken) {
-    const parts = [];
-    if (subToken) {
-      const unsubOwnerUrl = new URL(`/go/?s=${encodeURIComponent(subToken)}&action=unsub`, location.origin).href;
-      parts.push(`<a href="${unsubOwnerUrl}" style="color:#ffeaa6;opacity:.7;text-decoration:underline;">${t("pollGo.mailUnsubOwner", { owner: ownerLabelUnsub || "" })}</a>`);
-    }
-    if (unsubToken) {
-      const globalUrl = new URL(`/go/?u=${encodeURIComponent(unsubToken)}`, location.origin).href;
-      parts.push(`<a href="${globalUrl}" style="color:#ffeaa6;opacity:.7;text-decoration:underline;">${t("pollGo.mailUnsubGlobal")}</a>`);
-    }
-    if (parts.length) {
-      footerExtra = `<div style="margin-top:10px;font-size:11px;opacity:.55;text-align:center;">${parts.join(" &nbsp;·&nbsp; ")}</div>`;
-    }
+export function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl, subToken, unsubToken, ownerLabel, isRegistered }) {
+  const footerLinks = [];
+  if (isRegistered) footerLinks.push({ url: mailLink("/account/"), label: t("pollGo.mailAccountSettingsLink") });
+  else {
+    if (subToken) footerLinks.push({ url: mailLink(`/go/?s=${encodeURIComponent(subToken)}&action=unsub`), label: t("pollGo.mailUnsubOwner", { owner: ownerLabel || "" }) });
+    if (unsubToken) footerLinks.push({ url: mailLink(`/go/?u=${encodeURIComponent(unsubToken)}`), label: t("pollGo.mailUnsubGlobal") });
   }
-
-  const inner = `
-    <div style="margin:0;padding:0;background:#050914;color:#ffffff;">
-      <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;background:#050914;">
-        <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
-          <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-          <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${subtitle}</div>
-        </div>
-
-        <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:#111827;background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-          <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${title}</div>
-          <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${body}</div>
-
-          <div style="margin:16px 0;">
-            <a href="${actionUrl}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:#2a2b1a;background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;text-transform:uppercase;">${actionLabel}</a>
-          </div>
-
-          <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t("pollsHubPolls.mail.ignoreNote")}</div>
-
-          <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-            ${t("pollsHubPolls.mail.linkHint")}
-            <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">${actionUrl}</div>
-          </div>
-        </div>
-
-        <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t("pollsHubPolls.mail.autoNote")}</div>
-        ${footerExtra}
-      </div>
-    </div>
-  `.trim();
-
-  return wrapEmailDoc(inner);
+  return renderMailDocument({ lang: getUiLang(), title, subtitle, body, actionLabel, actionUrl,
+    ignoreNote: t("pollsHubPolls.mail.ignoreNote"), linkHint: t("pollsHubPolls.mail.linkHint"),
+    autoNote: t("pollsHubPolls.mail.autoNote"),
+    footerText: isRegistered ? t("pollGo.mailAccountSettings") : "", footerLinks });
 }
 
 export async function sendMailBatch(items) {
@@ -125,13 +69,13 @@ export async function sendMailBatch(items) {
 }
 
 /**
- * Wysyła maile dla elementów `mail` zwróconych przez polls_hub_share_poll /
+ * Wysyła maile dla elementów `mail` zwróconych przez poll_share_send /
  * poll_share_remind i oznacza zaproszenia jako wysłane.
  * Zwraca { total, sent, failed }. Błąd wysyłki nie rzuca — liczy się w `failed`.
  */
 export async function sendPollInviteMails({ mailItems, pollName, currentUser, reminder = false }) {
   const list = (Array.isArray(mailItems) ? mailItems : []).filter((it) => it?.to && it?.link);
-  if (!list.length) return { total: 0, sent: 0, failed: 0 };
+  if (!list.length) return { total: 0, sent: 0, failed: 0, skipped: 0 };
 
   const ownerLabel = currentUser?.username || currentUser?.email || t("pollsHubPolls.ownerFallback");
   const name = pollName || t("pollsHubPolls.pollFallback");
@@ -162,7 +106,7 @@ export async function sendPollInviteMails({ mailItems, pollName, currentUser, re
       html: buildMailHtml({
         title: reminder ? t("polls.share.mailReminderTitle") : t("pollsHubPolls.mail.taskTitle"),
         subtitle: t("pollsHubPolls.mail.subtitle"),
-        body: t("pollsHubPolls.mail.taskBody", { owner: ownerLabel, name: safeName }),
+        body: t(reminder ? "sharingMail.pollReminderBody" : "pollsHubPolls.mail.taskBody", { owner: ownerLabel, name: safeName }),
         actionLabel: t("pollsHubPolls.mail.taskAction"),
         actionUrl: mailLink(item.link),
         subToken: unsubInfo?.sub_token || null,
@@ -179,15 +123,18 @@ export async function sendPollInviteMails({ mailItems, pollName, currentUser, re
 
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
   const sentTaskIds = [];
   try {
     const out = await sendMailBatch(items);
     for (const r of Array.isArray(out?.results) ? out.results : []) {
       const emailKey = String(r?.to || "").toLowerCase();
-      if (r?.ok) {
+      if (r?.ok && r?.queued !== false) {
         sent += 1;
         const tid = emailToTaskId.get(emailKey);
         if (tid) sentTaskIds.push(tid);
+      } else if (r?.skipped) {
+        skipped += 1;
       } else if (emailKey) {
         failed += 1;
       }
@@ -199,5 +146,5 @@ export async function sendPollInviteMails({ mailItems, pollName, currentUser, re
   if (sentTaskIds.length) {
     try { await sb().rpc("polls_hub_tasks_mark_emailed", { p_task_ids: sentTaskIds }); } catch { /* nieblokujące */ }
   }
-  return { total: items.length, sent, failed };
+  return { total: items.length, sent, failed, skipped };
 }

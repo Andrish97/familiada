@@ -15,7 +15,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { PAGES, buttonVisible, pageRoles } from "../web/shared/js/core/nav-map.js";
+import { PAGES, NAV_DEPENDENCIES, buttonVisible, buttonBlocked, pageRoles } from "../web/shared/js/core/nav-map.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOC_PATH = path.join(__dirname, "..", "docs", "nawigacja-mapa-plan.md");
@@ -40,10 +40,13 @@ export function mapGraph({ role, phone }) {
     .filter((id) => !(phone && restricted(PAGES[id])));
   const set = new Set(nodes);
   const buttons = [];
+  const blocked = [];
   for (const id of nodes) {
     for (const [bid, spec] of Object.entries(PAGES[id].buttons || {})) {
       if (set.has(spec.to) && buttonVisible(id, spec, role, phone)) {
-        buttons.push({ from: id, to: spec.to, label: spec.custom ? `${bid}*` : bid });
+        const entry = { from: id, to: spec.to, label: spec.custom ? `${bid}*` : bid };
+        if (buttonBlocked(spec)) blocked.push({ ...entry, dependency: spec.blockedUntil });
+        else buttons.push(entry);
       }
     }
   }
@@ -53,14 +56,15 @@ export function mapGraph({ role, phone }) {
     const target = (role === "anon" && p.parentAnon) || p.parent;
     if (target && set.has(target)) backs.push({ from: id, to: target });
   }
-  return { nodes, buttons, backs };
+  return { nodes, buttons, blocked, backs };
 }
 
 export function mermaidFor(map) {
-  const { nodes, buttons, backs } = mapGraph(map);
+  const { nodes, buttons, blocked, backs } = mapGraph(map);
   const lines = ["flowchart LR"];
   for (const id of nodes) lines.push(`  ${id}["${PAGES[id].path}"]`);
   for (const b of buttons) lines.push(`  ${b.from} -->|${b.label}| ${b.to}`);
+  for (const b of blocked) lines.push(`  ${b.from} ---|"${b.label}: zablokowany — ${NAV_DEPENDENCIES[b.dependency].label}"| ${b.to}`);
   for (const b of backs) lines.push(`  ${b.from} -.->|↩| ${b.to}`);
   return lines.join("\n");
 }
@@ -72,6 +76,7 @@ export function generateBlock() {
   out.push("↩ „Wstecz” bez `?ret=` (rodzic z mapy). `?` (instrukcja) prowadzi z każdej");
   out.push("strony z topbarem i nie jest tu rysowane. Przejścia z elementów list");
   out.push("(kafelki gier, baz, logo) nie są przyciskami mapy.");
+  out.push("Linia bez strzałki: widoczny, zablokowany przycisk; podpis wskazuje zależność z mapy.");
   out.push("");
   for (const m of MAPS) {
     out.push(`#### Diagram ${m.id} — ${m.title}`, "", "```mermaid", mermaidFor(m), "```", "");

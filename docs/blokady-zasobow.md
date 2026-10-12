@@ -291,7 +291,9 @@ nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
    edytora / właściciela; czytelnik nic nie trzyma); wyłączne `base:B` →
    pełna blokada „Trwa zmiana całej bazy”; `forbidden` → „Odebrano Ci dostęp do
    tej bazy”. Lista baz: okno zmiany nazwy trzyma `base:B` wyłącznie, usunięcie
-   — na czas akcji. Udostępnianie bez blokad.
+   — na czas akcji. Udostępnianie nie trzyma długiej blokady zawartości; jego
+   RPC musi jednak atomowo sprawdzić, że baza nadal istnieje i nie jest w trakcie
+   destrukcyjnego usuwania (szczegóły w sekcji 7).
 6. **Wdrożone.** Okna zmiany nazwy na liście gier, logo i baz trzymają zasób
    wyłącznie do zamknięcia okna (zajęty → alert, okno się nie otwiera).
 7. Pola `locks` w mapie stron; test porównujący mapę z wywołaniami
@@ -301,3 +303,191 @@ nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
    `control2.spec.js` dopasowane do nowych komunikatów (bez uruchomienia);
    brakuje nowych scenariuszy bazy (eksplorator ↔ zmiana nazwy / usunięcie
    bazy) i mapy `PAGES`.
+
+## 7. Jedno drzewo zależności dla blokad, uprawnień i usuwania — E19
+
+Decyzja/doprecyzowanie 2026-10-11. Zasób, jego blokady i jego potomne dane
+mają jedną hierarchię. Kanoniczna tabela poniżej jest współdzielona z
+[`e19-znajomi-plan.md`](e19-znajomi-plan.md), sekcja 7. Każdy nowy RPC
+zmieniający potomka musi znać rodzica i sprawdzić jego stan w tej samej
+transakcji.
+
+| Korzeń / rodzic | Dzieci zasobowe | Kto trzyma blokadę dziś / docelowo | Propagacja do potomków |
+|---|---|---|---|
+| Konto właściciela | Gra | `game:G` wyłącznie w edytorze, ustawieniach, Control i stronie ankiety. | Usunięcie konta zamyka całe poddrzewo; otwarte karty dostają `gone`. |
+| Gra | Przebieg ankiety, sesje pytań, głosy, zadania/udostępnienia | Obecne `game:G` obejmuje operacje stanu i edycji ankiety. Głosujący wielu równolegle nie trzymają blokady edycji. | Open/close/abort i usunięcie gry kończą albo usuwają właściwy przebieg oraz jego potomków; odrębne zadanie może dostać `forbidden` po odebraniu uprawnienia. |
+| Gra → sesja runtime Control (dokładny rekord/klucz do zmapowania) | Stan podłączonych urządzeń, rekordy tymczasowe, udostępnienia i tokeny urządzeń | `game:G` wyłącznie w aktywnym Control; osobny TTL sesji runtime Control = 1 h bezczynności (nie mylić z heartbeat TTL blokady `edit_locks`). | Wygaśnięcie sesji kasuje powiązany Storage i unieważnia wszystkie tokeny udostępnień urządzeń z tej sesji; Control wraca do podłączania urządzeń. |
+| Konto właściciela → baza | Elementy bazy i udostępnienia/role | `base:B` współdzielone w eksploratorze; akcje zawartości blokują konkretne elementy, akcje całej bazy — `base:B` wyłącznie. | Usunięcie bazy usuwa elementy, role, zadania i linki; odebranie roli blokuje dalsze odnowienie blokady (`forbidden`). |
+| Konto | Znajomości, zaproszenia, subskrypcje | Relacje kontaktów są odrębnymi węzłami. Nie blokują automatycznie zasobu, do którego niezależne uprawnienie już nadano. | Usunięcie kontaktu usuwa zadania/wysłane zaproszenia zgodnie z typem relacji. Usunięcie konta zamyka jego relacje i zasoby. |
+
+### Jedna reguła konfliktu, zależna od rodzaju operacji
+
+| Operacja | Blokada / kontrola |
+|---|---|
+| Edycja treści lub zmiana stanu potomka | Deklaruje blokadę węzła, który zmienia, i sprawdza wymagane blokady przodków wg `edit_lock_blockers()`. Nie można zmodyfikować potomka, jeśli jego nadrzędny zasób jest w trakcie destrukcyjnej operacji. |
+| Udostępnienie, zmiana roli, cofnięcie | Nie bierze długiej blokady całej zawartości. RPC w transakcji blokuje/odczytuje rodzica tak, by współbieżne usuwanie nie zostawiło osieroconego tokenu; sprawdza właściciela, stan/uruchomienie i uprawnienia. Cofnięcie natychmiast unieważnia liść. |
+| Usunięcie albo wygaśnięcie rodzica | Zamyka tworzenie/zmiany potomków, przechodzi całe poddrzewo, unieważnia tokeny i zadania, anuluje jeszcze niewysłane maile przypisane do potomków, sprząta Storage. Usunięcie konta pozostaje nadrzędnym wyjątkiem: nie czeka na blokady. |
+| Utrata dostępu przez współpracownika | Na najbliższym heartbeat albo akcji dostaje `forbidden`; usunięty zasób daje `gone`. Żaden potomny token nie powinien nadal zapewniać dostępu. |
+
+Drzewo opisuje **zależność i propagację**, nie oznacza, że każda operacja
+potomna ma blokować całą gałąź. Baza zachowuje współpracę: `base:B` shared
+działa równolegle, a edycja elementu blokuje tylko ten element. Zmiana
+udostępnienia nie wyklucza edycji treści, ale musi być atomowo bezpieczna
+wobec usunięcia rodzica.
+
+### Plan ujednolicenia z mapą stron
+
+1. **Mapowanie istniejących danych — zweryfikowane 2026-10-11.**
+   `game_sessions` to telemetria ukończonych/porzuconych przebiegów; `game_session_active`
+   jest tylko prywatnym wskaźnikiem do wiersza telemetrii. `game_state` jest
+   jedynym trwałym bieżącym stanem Control 2; wartość startowa ma
+   `top_card='devices'`, `step='devices_display'`, `detail={}`. `device_presence`
+   to heartbeat urządzeń (online liczone przez UI przez 6,5 s). `device_connect_codes`
+   przechowuje tymczasowe kody parowania, ale obecnie ich rozwiązywanie zwraca
+   globalny `games.share_key_*`. `shared_devices` jest starym grantem per
+   właściciel/odbiorca/typ (unikat nie obejmuje gry), bez tokenu per odbiorca.
+   Control nie zapisuje stanu gry do `localStorage`; jedyny jego wpis
+   `sessionStorage` to znacznik animacji ekranu końcowego. Zasoby w bucketach
+   Storage (logo/dźwięki) są zasobami gry, nie sesji Control i nie wolno ich
+   usuwać przy jej wygaśnięciu. Brakuje osobnego rejestru runtime z TTL 1 h.
+   Należy go dodać, a z nim wiązać udostępnienia i kody parowania. Wygaśnięcie
+   ma zresetować `game_state` do ekranu podłączania urządzeń, zakończyć aktywny
+   wpis telemetrii jako porzucony, usunąć wskaźnik przebiegu, kody parowania
+   i granty/tokeny sesji oraz wyczyścić klucz animacji w `sessionStorage`.
+2. Uzupełnić grafem `PAGES.locks` rodziców i dzieci oraz macierz operacji:
+   wejście, edycja, zmiana stanu, share/grant, revoke, delete, expiry.
+3. W `edit_lock_blockers()` / rodzinie RPC `*_checked` zapewnić wspólną
+   walidację przodków, włączając gry, biegi ankiet i sesje Control, bazy i
+   elementy. Nie zastępować locków stanem HTTP/klientowym.
+4. Dodać blokadę wyścigu: równoległe tworzenie potomka i usuwanie rodzica
+   muszą kończyć się albo kompletnym potomkiem, albo czystym usunięciem — nigdy
+   osieroconym rekordem, aktywnym linkiem lub mailem do nieistniejącego zasobu.
+5. Osobno wdrożyć TTL 1 h dla sesji Control; nie zmieniać TTL `edit_locks`
+   (120 s / heartbeat) przez pomyłkę. Expiry powinno unieważnić share tokens,
+   wyczyścić session Storage i zwolnić potomne blokady.
+6. Testy macierzy: dla każdego poziomu gałęzi sprawdzić blokadę konkurencyjnej
+   operacji, `forbidden`/`gone`, cofnięcie tokenu, usunięcie zadań i maili oraz
+   cleanup Storage. Zaktualizować `PAGES.locks` i `cross-resource-locks.spec.js`.
+
+Plan nie zmienia jeszcze istniejących zachowań runtime; E19 ma wdrożyć tę
+macierz w sposób zgodny z decyzjami o współpracy w bazach i bez blokowania
+głosujących.
+# Decyzja wspólna 2026-10-11 — wypisanie = odmowa
+
+Użytkownik rozszerzył zasadę na każde miejsce systemu. Rezygnacja
+odbiorcy z przyjętej relacji/udostępnienia stosuje stan odmowy i jego
+czas życia dla danego zasobu, niezależnie od strony/Go/starego RPC.
+Uwzględnić przy przeglądzie grafu zależności i kaskad w E19: brak
+reaktywacji starego tokenu, brak resetu karencji przez cofnięcie/usunięcie,
+brak automatycznej akceptacji lub maila po wygaśnięciu. Flaga globalnego
+wyłączenia maili pozostaje trwała i niezależna od wygaśnięcia relacji.
+Szczegóły i bieżąca kolejność w e19-znajomi-plan.md; zapis decyzji nie
+oznacza jeszcze wdrożenia wszystkich rodzajów zasobów.
+
+### Uzupełnienie audytu Baz337/338 — 2026-10-11
+
+`base_share_tasks.base_id` obecnie nie ma klucza obcego do
+`question_bases`; usunięcie bazy nie usuwa fizycznie tych tasków.
+Guards338 blokują decyzje po braku rodzica, listy odmów używają JOIN
+do żyjącej bazy. W pkt7 grafu dopiąć fizyczne sprzątanie/kaskadę
+oraz jednoznaczny stan Go po usunięciu; obecnych kontroli guarded
+RPC nie traktować jako wykonanej fizycznej kaskady. Lock pary
+poprzedza blokadę rodzica, potem rekordów task/share; cleanup zaproszeń
+w invite dotyczy własnej pary po locku, bez globalnego DELETE przed nim.
+
+### Węzły Ankiet340–344 — dopięcie grafu (2026-10-11)
+
+| Ścieżka | Cykl i granica |
+|---|---|
+| Konto właściciela → gra → bieżący klucz ankiety → task → głosy taska | SHARE rodzica → UPDATE własnego taska przy głosowaniu, UPDATE rodzica → task przy decyzjach. Odmowa usuwa niepełne głosy; ostatni batch zapisuje komplet i done atomowo; późniejsza odmowa zablokowana. Owner remove kasuje głosy i zamyka task, zachowuje odmowę bieżącego runu. |
+| Konto właściciela → poll_mail_budget_events (hash e-maila, czas zakolejkowania) | Jest dzieckiem konta, bez FK do gry/taska/kolejki. Dostarczenie/usunięcie kolejki, gry, taska lub subskrypcji nie zeruje limitu3/24h. Konto właściciela usuwa zdarzenia przez auth.users FK CASCADE; logiczny limit24h, fizyczne sprzątanie własnej pary przy insercie i godzinowe cron. Prywatna tabela, bez treści i surowego adresu. |
+
+Nie mieszać blokad wierszy tej transakcji z heartbeat edit_locks: dwóch
+odbiorców może głosować równolegle. Aktualizacja344 nie bierze wyłącznej
+blokady rodzica po wcześniejszym SHARE, co zapobiega upgrade deadlock.
+Usunięcie konta odbiorcy zachowuje swój obecny cleanup także po e-mailu
+w delete_user_everything; pkt7 ma przetestować całą macierz, w tym dawne
+email-taski i ponowne założenie konta. Fizyczna kaskada Baz pozostaje otwarta.
+
+### Pkt7 — audyt po domknięciu maili (2026-10-11)
+
+- friends_remove nadal fizycznie DELETE active; odmowa przy dobrowolnym
+  zakończeniu musi znać osobę podejmującą decyzję niezależnie od pierwotnego
+  kierunku zaproszenia. Własne undo przywraca pending, potem osobne accept.
+- friends_cancel usuwa declined, a cooldown po odmowie ma klucz tylko
+  requester→addressee. Cofnięcie nie może pozwolić obejść30 dni odwrotnym
+  kierunkiem; token cofnięty nie może pozwalać undo/accept.
+- _friend_drop_pair_tasks usuwa pending/opened poll/base tasks. Zbadać
+  powiązane częściowe głosy oraz pending mail; zachować niezależne przyjęte
+  uprawnienia do Baz/urządzeń, zgodnie z drzewem E19.
+- _friend_mail_limit_until liczy rekordy friendships. Usunięcie rekordu
+  może zgubić licznik; audyt trwałości obejmie również kontakty, tak jak
+  zrobiona trwałość ankiet342. Samo ukrycie nie resetuje budżetu.
+- Admin queue i zapis historii są dwiema operacjami. Awaria historii po
+  queued nie może sugerować użytkownikowi bezpiecznego ponowienia wysyłki.
+
+To wyniki przeglądu kodu, nie wykonane poprawki. Bazy bez FK, routing Go,
+blokady rodziców i anonimowy token pozostają pozostałą częścią pkt7.
+
+### Baza → zadanie: fizyczna kaskada345 przygotowana
+
+FK i indeks base_id; cleanup starych orphanów w migracji po locku
+question_bases→base_share_tasks. Taski pending/opened/accepted/declined/
+cancelled kasują się z bazą, więc token/undo/accept nie może być reaktywowany
+po usunięciu. Konto właściciela kaskaduje przez bazę do taska. Inne bazy
+pozostają niezależne. PG16/rollback/regresje i wyścigi lokalnie ✓;
+bramki wdrożenia jeszcze wymagane. To tylko krawędź zasobowa, nie rozwiązanie
+oczekujących maili ani trwającej zewnętrznej wysyłki SMTP.
+
+### Aktualizacja pkt7 — Bazy345 zamknięte, Znajomi346 po isolated
+
+Kaskada345 zastosowana na produkcji: DB38173636101/log20:48:43 UTC,
+rollbackowy smoke i rzeczywisty Base mail/Go main38173864796 ✓.
+Wcześniejsze akapity o braku FK opisują stan sprzed345.
+
+Znajomi346: lokalne i isolated38174631322 ✓. Aktor własnej odmowy
+nie zależy od pierwotnego kierunku zaproszenia. Jeden lock nieuporządkowanej
+pary poprzedza świeży odczyt/lock relacji; remove/reject/undo/accept/cancel
+i resend używają tego samego helpera. Cancel zachowuje rekord, oba zegary
+odmowy oraz budżet mailowy; nieważny token nie pozwala undo.
+Przeniesienie ważnego budżetu do nowego tokenu odbywa się pod lockiem pary.
+SQL346 i rzeczywista kontrola interfejsu jeszcze wymagane do zamknięcia.
+
+Dalsza krawędź grafu: _friend_drop_pair_tasks nie usuwa głosów task:<id>,
+a poll_share_send blokuje grę i czyta are_friends bez blokady pary.
+W kolejnej paczce objąć tworzenie/czyszczenie tasków wspólną kolejnością
+blokad oraz głosami i oczekującymi mailami; nie uznawać346 za jej wykonanie.
+
+### Graf kontaktów i ankiet — audyt352 (2026-10-12)
+
+Zadanie ma równocześnie rodziców: uruchomienie ankiety oraz kontakt,
+z którego wynika udostępnienie. Stały ID odbiorcy po rejestracji/zmianie
+adresu nie zastępuje referencji tego kontaktu. Cofnięcie źródła ma
+unieważniać jego udostępnienia i usuwać niepełne głosy; konwersja
+subskrybenta w znajomego ma zachować uprawnienie pod nową relacją.
+Niezależne zadanie udostępnione przez Znajomych nie jest potomkiem starej
+subskrypcji. Lokalne reprodukcje na351 wskazały brak tej referencji oraz
+przypisanie dawnej relacji nowemu właścicielowi adresu. Szczegóły i
+macierz do wdrożenia w E19, podsekcja352; brak wdrożenia tej krawędzi.
+
+### Stan wykonania wspólnego grafu — 2026-10-12
+
+Mapa w §7 jest wspólnym kontraktem. Wykonanie opiera się na FK, triggerach,
+transakcyjnych RPC oraz wspólnych edit_locks; nie ma osobnego, ukończonego
+silnika, który automatycznie obsługuje dowolny nowy rodzaj zasobu.
+Każda nowa krawędź wymaga jawnej referencji rodzica, kontroli tworzenia,
+blokad i sprawdzonej propagacji cofnięcia/usunięcia.
+
+| Krawędź / mechanizm | Stan rzeczywisty |
+|---|---|
+| Blokady edycji oraz kontrole przodków | E2 wdrożone; dalszy przegląd spójności nowych krawędzi w E19 |
+| Baza → zadanie udostępnienia | Fizyczny FK/kaskada345 wdrożona |
+| Konto odbiorcy → udostępnienia i niepełne głosy |348/351 wdrożone; pełne anonimowe agregaty zachowane |
+| Kontakt → zadanie ankiety |353 wdrożone: jawne źródło, cofnięcie, transfer w znajomość, Go/open/vote |
+| Auth gościa → profil/klasyfikacja |354 wdrożone; main38233127443 success4/4 bez retry, błędne profile naprawione |
+| Subskrypcja → pochodna propozycja znajomości | Otwarte; lokalny test po cofnięciu źródła pozostawia1 pending proposal |
+| Znajomość lub ręczne nadanie → zaproszenie bazy | Pochodzenie do dopięcia; przyjęte niezależne role mają zachować własny cykl |
+| Zasób/konto → tokeny, cooldowny i oczekujące maile | Pozostały audyt i implementacja wspólnej ważności przed kolejką/dostarczeniem |
+
+Całego grafu nie oznaczać jako zakończonego na podstawie jednej zielonej
+paczki. Etapy353 i354 nie zastępują domknięcia pozostałych krawędzi.

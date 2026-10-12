@@ -10,7 +10,7 @@ const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase
 test("wszystkie strony z kartami używają wspólnego tabs.js (replaceState, bez sessionStorage)", () => {
   const files = [
     "games/js/games.js", "bases/js/bases.js", "settings/js/settings.js", "polls/js/polls.js",
-    "subscriptions/js/subscriptions.js", "logo/js/list.js", "manual/js/manual.js",
+    "logo/js/list.js", "manual/js/manual.js",
   ];
   for (const file of files) {
     const source = read(file);
@@ -104,6 +104,14 @@ test("cleanup E2E usuwa też cooldowny z ujednoliconego mail_cooldowns", () => {
   assert.match(sql, /action_key = 'device:share'/);
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.e2e_poll_subscriptions_cleanup/);
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.e2e_shared_devices_cleanup/);
+});
+
+test("cleanup skrzynki bez konta usuwa baseline wyłącznie własnej pary test1–8 → test14", () => {
+  const sql = read("supabase/migrations/2026-10-11_332_e2e_subscriber_baseline_cleanup.sql");
+  assert.match(sql, /test\[1-8\]@familiada/);
+  assert.match(sql, /v_email IS DISTINCT FROM 'test14@familiada.online'/);
+  assert.match(sql, /action_key='baseline:recipient'\s+AND target_key='pair:'\|\|v_uid::text\|\|':'\|\|md5\(v_email\)/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.e2e_subscriber_email_cleanup\(text\) FROM PUBLIC,anon/);
 });
 
 test("podłoga baseline:recipient pomija parę e2e->e2e, żeby CI nie fałszywie blokował mail", () => {

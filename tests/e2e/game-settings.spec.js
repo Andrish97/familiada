@@ -652,3 +652,32 @@ test("ustawienia gry: niepoprawny stan — Wstecz ostrzega, anulowanie zostawia 
     await deleteGame(page, gameId);
   }
 });
+
+test("ustawienia gry: własny dźwięk z chmury zostaje po zapisie i wyjściu bez otwierania Dźwięku", async ({ page, context }) => {
+  test.setTimeout(60000);
+  await loginAsTestUser(page, context);
+  const gameId = await createGame(page);
+  try {
+    const key = await page.evaluate(async gameId => {
+      const sb = window.__sbClient;
+      const { data: auth } = await sb.auth.getUser();
+      const { categories } = await (await fetch("/shared/data/sounds.json")).json();
+      const key = categories[0].key;
+      const blob = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "audio/mpeg" });
+      const { error: uploadError } = await sb.storage.from("user-sounds").upload(`${auth.user.id}/${gameId}/${key}`, blob, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { error } = await sb.from("games").update({ settings: { sound: { variants: { [key]: "__custom__" }, filenames: { [key]: "cloud.mp3" } } } }).eq("id", gameId);
+      if (error) throw error;
+      return key;
+    }, gameId);
+    await openSettings(page, gameId, "&ret=%2Fgames%2F");
+    await page.locator("#gsTeamA").fill("Zachowany dźwięk");
+    await page.locator("#btnBack").click();
+    await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/);
+    await page.waitForLoadState("networkidle");
+    const game = await getGameRow(page, gameId);
+    expect(game.settings.sound.variants[key]).toBe("__custom__");
+    expect(game.settings.sound.filenames[key]).toBe("cloud.mp3");
+    expect(game.settings.teams.teamA).toBe("Zachowany dźwięk");
+  } finally { await deleteGame(page, gameId); }
+});

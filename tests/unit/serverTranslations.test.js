@@ -166,6 +166,10 @@ test("buildContactEmail: każdy typ maila w PL/EN/UK używa tekstów z tłumacze
 
     const conf = await buildContactEmail({ type: "confirmation", lang, ...vars, message: "treść" });
     assert.equal(conf.subject, formatText(tr.confirmationSubject, vars), `${lang} confirmation subject`);
+    assert.ok(conf.html.includes(`<html lang="${lang}">`));
+    assert.ok(conf.html.includes("font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif"));
+    assert.ok(conf.html.includes("max-width:560px"));
+    assert.ok(!conf.html.includes("href="));
     assert.ok(conf.html.includes(tr.greeting), `${lang} greeting`);
     assert.ok(conf.html.includes("Temat &lt;x&gt;"), `${lang} subject escaped in body`);
     for (const line of tr.closing.split("\n")) assert.ok(conf.html.includes(line), `${lang} closing`);

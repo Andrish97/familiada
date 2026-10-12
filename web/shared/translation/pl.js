@@ -1,4 +1,11 @@
 const pl = {
+  pollSharePanel: {
+    "anonymous": "Anonimowo",
+    "recipients": "Odbiorcy",
+    "opened": "Otwarto",
+    "empty": "Brak osób na liście",
+    "mailDisabled": "Powiadomienia mailowe są wyłączone"
+  },
   meta: {
     lang: "pl",
     label: "Polski",
@@ -79,6 +86,7 @@ const pl = {
       contactBtn: "Kontakt",
     },
   },
+  baseSharePanel: {"empty": "Brak odbiorców.", "alreadyActive": "Ta osoba ma już dostęp do bazy.", "cooldown": "Możesz udostępnić ponownie za {time}.", "lookup": "E-mail lub nazwa użytkownika", "share": "Udostępnij"},
   shareSections: {
     subscribers: "Subskrybenci",
     subscribersSub: "Jeszcze bez zaproszenia — zaznacz, kogo zaprosić.",
@@ -660,7 +668,7 @@ const pl = {
       cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
       alreadyPending: "Zaproszenie już oczekuje na akceptację.",
       emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać wiadomości e-mail.",
-      sectionSubscribers: "Subskrybenci",
+      sectionSubscribers: "Znajomi",
       sectionPending: "Oczekujące",
       sectionPendingSub: "Po 5 dniach bez akceptacji zapytanie znika.",
       sectionShared: "Aktywni",
@@ -673,9 +681,9 @@ const pl = {
       shareSection: "Udostępnij",
       shareModeLabel: "Tryb:",
       recipientEmail: "Wpisz adres e-mail lub nazwę użytkownika",
-      recipientSubscriber: "Wybierz subskrybenta",
-      selectSubscriber: "Wybierz subskrybenta...",
-      noSubscribers: "Brak subskrybentów",
+      recipientFriend: "Wybierz znajomego",
+      selectFriend: "Wybierz znajomego...",
+      noFriends: "Brak znajomych",
       enterEmail: "Wpisz adres e-mail lub nazwę użytkownika",
     },
     delete: {
@@ -809,7 +817,7 @@ const pl = {
     pageSubtitle: "{type} · {name}",
     tabs: {
       share: "Udostępnianie",
-      results: "Wyniki",
+      results: "Głosy",
     },
     bar: {
       votes: ({ n }) => {
@@ -827,7 +835,16 @@ const pl = {
       activeSub: "Zagłosowali w tej ankiecie.",
       linkTitle: "Link do głosowania",
       scanHint: "Zeskanuj telefonem, żeby zagłosować",
+      recipientsTitle: "Udostępniono",
+      friendsTitle: "Znajomi",
       subsTitle: "Subskrybenci",
+      addRecipients: "Dodaj odbiorców",
+      addRecipientsHint: "Wybierz osoby, które chcesz zaprosić do tej ankiety.",
+      addSelected: "Dodaj wybrane",
+      addSelectedN: "Dodaj wybrane ({n})",
+      selectedCount: "Wybrano: {n}",
+      noRecipientsToAdd: "Nie ma nowych znajomych ani subskrybentów do dodania.",
+      noSharedRecipients: "Nie udostępniono jeszcze tej ankiety.",
       sendInvites: "Wyślij zaproszenia",
       sendInvitesN: "Wyślij zaproszenia ({n})",
       sendDisabledStopped: "Ankieta jest zatrzymana — nowe zaproszenia wyślesz po wznowieniu głosowania.",
@@ -2562,6 +2579,8 @@ const pl = {
     nav: {
       pollsHubPolls: "Ankiety",
       pollsHubSubs: "Subskrypcje",
+      friends: "Znajomi",
+      subscribers: "Subskrybenci",
       tasks: "Zadania",
       bases: "Bazy pytań",
       logo: "Logo",
@@ -2983,12 +3002,24 @@ const pl = {
     loginToAccept: "Żeby zaakceptować musisz się zalogować.",
     loginLabel: "Zaloguj",
     loginToVote: "Żeby zagłosować musisz się zalogować.",
+    taskInTasks: "Żeby zagłosować lub odrzucić zaproszenie, otwórz Zadania.",
+    taskTasksAction: "Otwórz Zadania",
     taskInviteActive: "Zaproszenie do ankiety jest aktywne.",
+    baseInviteTitle: "Zaproszenie do udostępnionej bazy",
+    baseInviteLogin: "Zaloguj się na konto, na które wysłano zaproszenie. Akceptacja odbywa się w Zadaniach.",
+    baseInviteMismatch: "To zaproszenie jest przypisane do innego konta ({email}). Zaloguj się na właściwe konto.",
+    baseInviteHandled: "To zaproszenie zostało cofnięte, przyjęte albo odrzucone.",
+    baseInviteBases: "{owner} udostępnia Ci bazę pytań. Otwórz Bazy, aby ją zaakceptować.",
+    baseInviteBasesAction: "Otwórz Bazy",
     voteLabel: "Głosuj",
     missingLinkTitle: "Brak linku",
     missingLinkText: "Brakuje tokenu zaproszenia.",
     invalidLinkTitle: "Link nieważny",
     invalidLinkText: "Link jest nieważny lub nieaktywny.",
+    deviceLinkTitle: "Link do urządzenia",
+    deviceLinkChecking: "Weryfikuję dostęp i stan sesji Control…",
+    deviceLinkRevoked: "Właściciel cofnął to udostępnienie.",
+    deviceLinkExpired: "Sesja Control wygasła. Poproś właściciela o nowy link.",
     inviteUnknown: "Nie udało się rozpoznać zaproszenia.",
     openInviteFailed: "Nie udało się otworzyć zaproszenia.",
     invitationRecipient: "adresata zaproszenia",
@@ -3488,7 +3519,7 @@ const pl = {
     title: "Familiada — zadania",
     bar: {
       title: "Zadania",
-      hint: "Ankiety, bazy i urządzenia, które ktoś Ci udostępnił.",
+      hint: "Ankiety, do których ktoś Cię zaprosił.",
     },
     sections: { todo: "Do zrobienia", done: "Zrobione" },
     filter: { aria: "Rodzaj zadania", all: "Wszystkie", poll: "Ankiety", base: "Bazy", device: "Urządzenia" },
@@ -4494,11 +4525,20 @@ const pl = {
       mailSent: "Wysłano e-mail z linkiem.",
       noneCurrent: "Nie udostępniono jeszcze tego urządzenia.",
       title: "Udostępnij",
-      subtitle: "Wybierz subskrybenta lub wpisz e-mail.",
       currentLabel: "Aktualnie udostępnione dla:",
-      sectionAdd: "Przez e-mail / nazwę",
+      sectionAdd: "Mail lub nazwa użytkownika",
+      sectionFriends: "Znajomi, którym możesz udostępnić",
+      sectionShared: "Udostępnione w tej sesji",
+      shareSelected: "Udostępnij zaznaczonym",
+      recipientKind: { friend: "znajomy", account: "ma konto", mail: "mail" },
       noneShared: "Nie udostępniono.",
       noSubs: "Brak subskrybentów.",
+      alreadyShared: "Tej osobie już udostępniono to urządzenie w tej sesji gry.",
+      recipientDisabled: "Udostępnienie będzie widoczne na koncie, ale powiadomienia e-mail są wyłączone.",
+      friendMailDisabled: "Udostępniono. Odbiorca ma wyłączone powiadomienia e-mail.",
+      friendMailCooldown: "Udostępniono. E-mail będzie dostępny po zakończeniu cooldownu.",
+      mailCooldownRemaining: "E-mail będzie można wysłać za {time}.",
+      noFriends: "Nie ma znajomych do udostępnienia.",
       typeHost: "Prowadzący",
       typeBuzzer: "Przycisk do pojedynku",
       typeDisplay: "Wyświetlacz",
@@ -4886,6 +4926,68 @@ const pl = {
   security: {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
   },
+  contacts: {
+    tabs: { invite: "Zaproszenia" },
+    "friends": {
+        "add": "Dodaj znajomego",
+        "title": "Znajomi",
+        "hint": "Zaproszenia i osoby, z którymi masz dwustronną znajomość.",
+        "empty": "Nie masz jeszcze znajomych ani zaproszeń."
+    },
+    "subscribers": {
+        "add": "Dodaj subskrybenta",
+        "title": "Subskrybenci",
+        "hint": "Osoby bez konta, które chcą otrzymywać Twoje ankiety.",
+        "empty": "Nie masz jeszcze subskrybentów."
+    },
+    "invite": "+ Zaproś",
+    "handle": "E-mail lub nazwa użytkownika",
+    "email": "Adres e-mail",
+    "go": "Przejdź →",
+    "sent": "Zaproszenie zapisane.",
+    "mailFailed": "Zaproszenie zapisane, ale nie udało się wysłać maila. Możesz ponowić wysyłkę.",
+    "accountCreated": "Ma konto — przejdź do Znajomych.",
+    "sections": {"declined": "Odrzucone przeze mnie", "incoming": "Propozycje", "outgoing": "Oczekujące i odrzucone", "friend": "Znajomi", "pending": "Oczekujące", "active": "Subskrybenci"},
+    "status": {"pending": "Oczekuje", "active": "Zaakceptowano", "declined": "Odrzucono"},
+    "empty": {"incoming": "Nie masz nowych propozycji.", "outgoing": "Nie masz wysłanych zaproszeń.", "friend": "Nie masz jeszcze znajomych.", "pending": "Nie masz oczekujących zaproszeń.", "active": "Nie masz jeszcze subskrybentów."},
+    "actions": {
+        "undo_reject": "Cofnij odmowę",
+        "accept": "Przyjmij",
+        "reject": "Odrzuć",
+        "cancel": "Cofnij",
+        "remove": "Usuń",
+        "resend": "Wyślij ponownie"
+    },
+    "confirm": {
+        "reject": "Odrzucić zaproszenie?",
+        "cancel": "Cofnąć zaproszenie?",
+        "remove": "Usunąć tę osobę? Oczekujące zaproszenia i zadania zostaną usunięte. Przyjęte bazy i urządzenia zostają — można je cofnąć osobno."
+    },
+    "errors": {
+        "alreadyFriend": "Ta osoba jest już Twoim znajomym.",
+        "incomingPending": "Masz oczekującą prośbę od tej osoby. Sprawdź Propozycje.",
+        "outgoingPending": "Zaproszenie do tej osoby już oczekuje na odpowiedź.",
+        "ownDeclined": "Odrzuciłeś tę prośbę. Możesz cofnąć odmowę w sekcji Odrzucone przeze mnie.",
+        "declined": "Ta osoba odrzuciła zaproszenie. Nie można teraz wysłać kolejnego.",
+
+        "hasAccount": "Do tego maila jest przypisane konto w systemie Familiada — możesz zaprosić tę osobę do znajomych.",
+        "emailOnly": "Do tego maila nie jest przypisane konto w systemie Familiada — możesz dodać tę osobę jako subskrybenta.",
+        "cooldown": "Kolejne zaproszenie można wysłać po: {date}.",
+        "already": "Ta osoba jest już na liście.",
+        "action": "Nie udało się wykonać akcji."
+    },
+    "mail": {
+        "friendTitle": "{owner} zaprasza Cię do znajomych w Familiadzie",
+        "friendBody": "{owner} chce dodać Cię do znajomych. Przyjmij zaproszenie w Familiadzie.",
+        "friendAction": "Otwórz zaproszenie"
+    },
+    "goFriends": "Przejdź do Znajomych",
+    "goAccountBody": "Odbiorca ma konto w Familiadzie. Zaproszenia dla kont obsługujesz w Znajomych.",
+    "goTitle": "Zaproszenie do znajomych",
+    "goBody": "{owner} zaprasza Cię do znajomych.",
+    "open": "Otwórz Znajomych"
+},
+
   gameSettings: {
     pageTitle: "Ustawienia gry",
     title: "Familiada — ustawienia gry",
@@ -5073,6 +5175,22 @@ const pl = {
     originCommunity: "Społeczność",
     play: "Graj w tę grę",
   },
+};
+
+pl.sharingMail = {
+  "friendReminderSubject": "{owner} przypomina o zaproszeniu do znajomych",
+  "friendReminderBody": "Zaproszenie od {owner} nadal czeka na Twoją decyzję. Możesz je zaakceptować lub odrzucić.",
+  "subscriberReminderSubject": "Przypomnienie o subskrypcji u {owner}",
+  "subscriberReminderBody": "{owner} przypomina o zaproszeniu do subskrypcji. Zaakceptuj je, jeśli chcesz otrzymywać ankiety od tej osoby, lub odrzuć.",
+  "pollReminderBody": "{owner} przypomina o ankiecie {name}. Twoje zadanie nadal czeka na głos lub odmowę.",
+  "baseReminderSubject": "Przypomnienie: baza {base}",
+  "baseReminderTitle": "Zaproszenie do bazy nadal czeka",
+  "baseBody": "{owner} zaprasza Cię do bazy „{base}” z uprawnieniem: {role}. Dostęp otrzymasz po akceptacji zaproszenia.",
+  "baseReminderBody": "Zaproszenie od {owner} do bazy „{base}” nadal czeka na decyzję. Uprawnienie: {role}. Możesz zaakceptować lub odrzucić zaproszenie.",
+  "baseAction": "Sprawdź zaproszenie",
+  "editor": "edytor",
+  "viewer": "przeglądający",
+  "deviceSubtitle": "Udostępnienie urządzenia"
 };
 
 export default pl;

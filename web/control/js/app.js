@@ -100,6 +100,7 @@ function applyGameSettingsToState(settings, state) {
 }
 
 import { createStore } from "./store.js?v=v2026-10-12T09580";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-12T09580";
 import { createEngine } from "./engine.js?v=v2026-10-12T09580";
 import { createActionGate } from "./actionGate.js?v=v2026-10-12T09580";
 import { createDevices } from "./devices.js?v=v2026-10-12T09580";
@@ -170,6 +171,7 @@ async function main() {
   // Wyjście z Control: przed „Wstecz” sprawdzenie rozgrywki; podmieniane po
   // utworzeniu store (do tego czasu wyjście jest swobodne).
   let beforeLeave = async () => true;
+  let runtimeSession = null;
   const i18nP = initI18n({ withSwitcher: true });
   // Blokady strony (guardResourceLocks): zwalniane przed przejściem do
   // instrukcji / ustawień gry, żeby tamta strona mogła je od razu zająć.
@@ -197,6 +199,11 @@ async function main() {
 
   const user = await userP;
   if (!user) return; // initPage przekierował na logowanie
+  document.getElementById("btnFriends")?.addEventListener("click", async (event) => {
+    if (event.currentTarget.disabled) return;
+    if (!(await beforeLeave())) return;
+    await leaveTo(linkTo("friends"));
+  });
 
   if (!gameId) { root.textContent = "Brak parametru ?id= w URL."; return; }
 
@@ -220,6 +227,26 @@ async function main() {
   // Blokada stanu: gra, która nie nadaje się do rozgrywki (np. ankieta
   // otwarta, za mało pytań), blokuje Control w całości.
   if (!(await guardGameState(gameId, "play"))) return;
+
+  runtimeSession = createRuntimeSession({
+    gameId,
+    onExpired: () => {
+      runtimeSession?.stop();
+      location.reload();
+    },
+  });
+  let runtimeSessionResult;
+  try {
+    runtimeSessionResult = await runtimeSession.start();
+  } catch (error) {
+    root.textContent = error?.message || "Nie udało się uruchomić sesji Control.";
+    return;
+  }
+  if (!runtimeSessionResult?.ok) {
+    root.textContent = runtimeSessionResult?.error || "Nie udało się uruchomić sesji Control.";
+    return;
+  }
+  if (runtimeSessionResult.expired) return;
 
   setCurrentGameId(gameId);
   await loadSfxManifest();
@@ -714,7 +741,7 @@ async function main() {
   });
 
   const devices = createDevices({ game });
-  const urls = devices.buildUrls(getUiLang());
+  const urls = await devices.buildUrls(getUiLang());
   const connectCodes = {};
   for (const kind of ["display", "host", "buzzer"]) {
     connectCodes[kind] = await devices.generateConnectCode(kind).catch(() => null);
@@ -1085,9 +1112,9 @@ async function main() {
       });
       if (!ok) return false;
     }
-    // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
-    // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
-    shareDevice.expireShares().catch(() => {});
+    // Sesja i jej linki wygasają po godzinie bezczynności, także po wyjściu
+    // z Control. Nawigacja nie może unieważnić grantów przed tym terminem.
+    runtimeSession?.stop();
     return true;
   };
 
