@@ -959,3 +959,14 @@ błąd sieci+powtórzenie.10 screenów branch2ecd9206ba go-live. Teraz
 publikacja Go na main→Pages→ten sam pojedynczy spec na produkcji (bez
 branch substitution). Main1 i branch2 korzystały z rozłącznych kont;
 bez maili/kontaktów/resetowania zegara. Cały E19/pkt7 nadal otwarty.
+
+**Korekta „po co3 liczniki”:** użytkownik wskazał trzykrotne sekundy na
+screenie. Usunięte odliczanie w opisie i dodatkowy toast. Wspólny helper
+pokazuje jeden licznik na przycisku oraz „Odpowiedzi są zachowane.”.
+Backend362 bez zmiany.2 nowe unit/PLENUK/timer/manual retry, lokalny
+Chromium obu typów390/1400 success i4 obrazy odświeżone. Następny branch
+E2E poll-anonymous.spec.js z asercją zapisanego opisu i braku app-toast;
+Go już ma zielony branch38315943894. Potem razem Pages→main oba spece3
+scenariusze, publisher dzieli cooldown/live oraz go-live (14 screenów).
+Nie powtarzać SQL/wyścigów362 ani zamkniętych maili. Go reszty rodzin i
+finalny audyt grafu dalej otwarte.

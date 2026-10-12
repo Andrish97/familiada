@@ -2906,6 +2906,7 @@ const pl = {
     },
   },
   pollAnonymous: {
+    saved: "Odpowiedzi są zachowane.",
     ready: "Możesz już wysłać odpowiedzi.",
     retry: "Spróbuj ponownie",
     retryIn: "Spróbuj ponownie za {seconds} s",

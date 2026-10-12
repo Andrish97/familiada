@@ -1537,3 +1537,12 @@ finalizacja po trzech pełnych głosach, usunięcie i retry po błędzie sieci.
 Dziesięć screenów w `docs/img/poll-anonymous/go-live`, branch2ecd9206ba.
 Następne publikacja Pages i ten sam main. Pozostałe rodziny Go oraz
 końcowy audyt grafu nadal otwarte.
+
+### Doprecyzowanie użytkownika 2026-10-12 — jedno odliczanie
+
+Ten sam cooldown bieżącej akcji pokazuje jeden licznik. W anonimowym
+formularzu ankiety odliczanie jest na przycisku ponownego wysłania.
+Opis nad nim: „Odpowiedzi są zachowane.”, bez sekund. Dodatkowy toast
+z odliczaniem usunięty. Po końcu zwłoki przycisk staje się aktywny.
+Ta korekta dotyczy interfejsu po zakończonej362; odstęp i backend bez zmian.
+Oba typy korzystają z tego samego komponentu. Nowe zrzuty po wykonaniu.

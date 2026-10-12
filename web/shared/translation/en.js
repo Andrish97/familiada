@@ -3005,6 +3005,7 @@ const en = {
     },
   },
   pollAnonymous: {
+    saved: "Your answers are saved.",
     ready: "You can send your answers now.",
     retry: "Try again",
     retryIn: "Try again in {seconds} s",

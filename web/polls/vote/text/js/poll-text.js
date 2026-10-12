@@ -1,9 +1,9 @@
 // js/pages/poll-text.js
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-12T22181";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-12T22181";
-import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-12T22181";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-12T22181";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-12T22181";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-12T22235";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-12T22235";
+import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-12T22235";
+import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-12T22235";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-12T22235";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');

@@ -33,9 +33,10 @@ const questions=Array.from({length:30},(_,i)=>({id:`dddddddd-3622-0000-0000-${St
     if(kind==='text'){await page.locator('#answerInput').fill('Książkę');await page.locator('#btnSend').click();}
     else await page.locator('#alist button').first().click();
    }
-   try { await page.waitForFunction(()=>document.getElementById('sub').textContent.includes('Możesz wysłać'),null,{timeout:5000}); } catch(error) { console.log('retry diagnostic',JSON.stringify({calls:calls.length,sub:await page.locator('#sub').textContent(),prog:await page.locator('#prog').textContent(),errors})); throw error; }
+   try { await page.waitForFunction(()=>document.getElementById('sub').textContent.includes('Odpowiedzi są zachowane.'),null,{timeout:5000}); } catch(error) { console.log('retry diagnostic',JSON.stringify({calls:calls.length,sub:await page.locator('#sub').textContent(),prog:await page.locator('#prog').textContent(),errors})); throw error; }
    assert.equal(calls.length,1);assert.equal(calls[0].p_items.length,30);
    const retry=page.locator(kind==='text'?'#btnSend':'#alist button');assert.equal(await retry.isDisabled(),true);
+   assert.match(await retry.textContent(),/Spróbuj ponownie za \d+ s/);assert.equal(await page.locator('.app-toast').count(),0);
    await page.screenshot({path:path.join(out,`cooldown-${kind}-${width}.png`),fullPage:true});
    await retry.waitFor({state:'visible'});await page.waitForFunction(selector=>!document.querySelector(selector).disabled,kind==='text'?'#btnSend':'#alist button');
    await retry.click();await page.waitForFunction(()=>document.getElementById('qbox').style.display==='none');
