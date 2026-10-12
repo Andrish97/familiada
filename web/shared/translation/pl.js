@@ -1905,6 +1905,10 @@ const pl = {
         </li>
       </ul>
 
+      <h3 class="m-h3">Usuwanie elementów rysunku</h3>
+      <p class="m-p">Zaznacz element lub kilka elementów i kliknij <span class="m-code">×</span> w pasku ich opcji. Możesz też nacisnąć <span class="m-code">Delete</span> (na Macu <span class="m-code">Fn + Backspace</span>). Usuniesz tylko zaznaczone elementy. Przycisk <span class="m-code">Wyczyść</span> usuwa cały rysunek.</p>
+      <p class="m-p">Usunięcie możesz cofnąć przyciskiem <span class="m-code">Cofnij</span> lub skrótem <span class="m-code">Ctrl + Z</span> (Mac: <span class="m-code">⌘ + Z</span>). Przycisk <span class="m-code">Ponów</span> ponownie wykonuje cofnięte usunięcie. Cofanie i ponawianie są dostępne podczas bieżącej edycji; po ponownym otwarciu logo historia zaczyna się od nowa.</p>
+
       <h3 class="m-h3">Podgląd na wyświetlaczu</h3>
 
       <p class="m-p">
@@ -3880,6 +3884,7 @@ const pl = {
       },
       confirmClear: "Usunąć wszystko ze sceny?",
       ui: {
+        deleteSelection: "Usuń zaznaczone — Delete (Mac: Fn + Backspace)",
         strokeLabel: "Grubość",
         styleLabel: "Styl",
         colorLabel: "Kolor",

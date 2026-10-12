@@ -1875,6 +1875,10 @@ const uk = {
         </li>
       </ul>
 
+      <h3 class="m-h3">Видалення елементів малюнка</h3>
+      <p class="m-p">Вибери один або кілька елементів і натисни <span class="m-code">×</span> на панелі їхніх параметрів. Також можна натиснути <span class="m-code">Delete</span> (Mac: <span class="m-code">Fn + Backspace</span>). Це видаляє лише вибрані елементи. Кнопка <span class="m-code">Очистити</span> видаляє весь малюнок.</p>
+      <p class="m-p">Скасуй видалення кнопкою <span class="m-code">Скасувати</span> або скороченням <span class="m-code">Ctrl + Z</span> (Mac: <span class="m-code">⌘ + Z</span>). Кнопка <span class="m-code">Повторити</span> знову виконує скасоване видалення. Скасування та повторення доступні під час поточного редагування; після повторного відкриття логотипу історія починається заново.</p>
+
       <h3 class="m-h3">Попередній перегляд на табло</h3>
 
       <p class="m-p">
@@ -3977,6 +3981,7 @@ const uk = {
       },
       confirmClear: "Прибрати все зі сцени?",
       ui: {
+        deleteSelection: "Видалити вибрані — Delete (Mac: Fn + Backspace)",
         strokeLabel: "Товщина",
         styleLabel: "Стиль",
         colorLabel: "Колір",

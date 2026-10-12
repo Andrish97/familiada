@@ -779,6 +779,14 @@ export function initDrawEditor(ctx) {
   }
 
   function renderSettings() {
+    renderSettingsContent();
+    if (!toolCtx || !selectedObjects().length || (tool !== TOOL.SELECT && tool !== TOOL.TEXT)) return;
+    toolCtx.insertAdjacentHTML("beforeend", group(toggleBtn("cDelete", false, icon("close"), T("deleteSelection"))));
+    $("cDelete").setAttribute("aria-keyshortcuts", "Delete Backspace");
+    on("cDelete", "click", () => removeObjects(selectedObjects()));
+  }
+
+  function renderSettingsContent() {
     lineStyleSel?.destroy();
     lineStyleSel = null;
     if (!toolCtx) return;
@@ -1197,7 +1205,7 @@ export function initDrawEditor(ctx) {
       if (key === "Backspace" || key === "Delete") { ev.preventDefault(); popPolyPoint(); return; }
     }
 
-    if (tool === TOOL.SELECT && (key === "Backspace" || key === "Delete")) {
+    if ((tool === TOOL.SELECT || tool === TOOL.TEXT) && (key === "Backspace" || key === "Delete")) {
       if (selectedObjects().length) { ev.preventDefault(); removeObjects(selectedObjects()); }
       return;
     }

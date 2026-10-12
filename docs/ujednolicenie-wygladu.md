@@ -426,6 +426,8 @@ nadrzędnego unieważnia zależne uprawnienia zgodnie z cyklem życia w planie E
 
 ## Decyzje do raportu wzorców (E18, 2026-10-09)
 
+- **2026-10-12 — edytor logo Rysunek:** w pasku opcji zaznaczenia przycisk × usuwa tylko zaznaczone elementy, odróżniony od Wyczyść (cała scena). Skrót Delete, na Macu Fn+Backspace. Usunięcie podlega Cofnij/Ponów oraz Ctrl+Z/⌘Z; sprawdzić istniejącą historię. Użytkownik polecił od razu uzupełnić ten opis w manualu PL/EN/UK, niezależnie od późniejszego pełnego przeglądu E13.
+
 Odpowiedzi na sekcję D w [`wzorce-ui.md`](wzorce-ui.md):
 
 1. **Konto** — tytuł `USTAWIENIA KONTA` w topbarze, bez `.bar`. Tak.

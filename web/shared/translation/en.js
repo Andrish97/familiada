@@ -1881,6 +1881,10 @@ const en = {
         </li>
       </ul>
 
+      <h3 class="m-h3">Deleting drawing elements</h3>
+      <p class="m-p">Select one or more elements and click <span class="m-code">×</span> in their options bar. You can also press <span class="m-code">Delete</span> (Mac: <span class="m-code">Fn + Backspace</span>). This removes only the selected elements. The <span class="m-code">Clear</span> button removes the entire drawing.</p>
+      <p class="m-p">Undo deletion with <span class="m-code">Undo</span> or <span class="m-code">Ctrl + Z</span> (Mac: <span class="m-code">⌘ + Z</span>). <span class="m-code">Redo</span> repeats the undone deletion. Undo and redo are available during the current editing session; reopening the logo starts a new history.</p>
+
       <h3 class="m-h3">Display preview</h3>
 
       <p class="m-p">
@@ -3979,6 +3983,7 @@ const en = {
       },
       confirmClear: "Remove everything from the canvas?",
       ui: {
+        deleteSelection: "Delete selected — Delete (Mac: Fn + Backspace)",
         strokeLabel: "Width",
         styleLabel: "Style",
         colorLabel: "Color",
