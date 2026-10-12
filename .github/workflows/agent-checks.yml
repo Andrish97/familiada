@@ -1279,7 +1279,7 @@ jobs:
         if: ${{ inputs.verify_e19_348 }}
         run: |
           psql -v ON_ERROR_STOP=1 -f docs/sql/seed-guest-metadata-history-354.sql
-          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-12_354_guest_metadata_identity.sql
+          bash docs/sql/test-guest-metadata-354-ddl-concurrency.sh
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-metadata-history-354.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-metadata-354.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-conversion-identity-352.sql
