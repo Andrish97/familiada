@@ -1,10 +1,16 @@
 # Control — tryb testowy
 
-Status: tryb wdrożony; **korekta gotowa do publikacji**, integracja brancha38306861683 success1/1 (PL/EN/UK, urządzenia, statystyki).
+Status: tryb i korekta wdrożone; Pages38307255666 success, kontrola produkcyjna38307396879 success2/2. Integracja brancha38306861683 success1/1 (PL/EN/UK, urządzenia, statystyki).
 Pages38300728957 success; kontrola main38301293181 success3/3 bez retry.
 Branch38300241381 success2/2 przed publikacją. Brak migracji.
 
 ## Decyzje użytkownika — 2026-10-12
+
+- Domyślne nazwy drużyn na Wyświetlaczu zmieniają język natychmiast po
+  otrzymaniu ustawienia języka i wczytaniu słownika, niezależnie od animacji
+  i dźwięków. Własne nazwy pozostają bez zmian. Starsze animacje nie mogą
+  przywracać poprzednich nazw. Tę poprawkę użytkownik polecił wdrożyć
+  bezpośrednio na main, bez testów (wyjątek od cyklu wdrożenia).
 
 1. W kroku **Urządzenia** dodać przełącznik **Tryb testowy**. Pozwala
    sprawdzić rozgrywkę bez drugiego ekranu i osobnych urządzeń.

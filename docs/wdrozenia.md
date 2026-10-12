@@ -1027,3 +1027,7 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 | 2026-10-12 |360 / macierz brancha kompletna |38306917576:4 rodziny success, ankieta38307788495 success po aktualizacji stanu expired, oba typy ankiet/regularny+anonimowy SMTP, Go i czyszczenie partial. Centrum38306663799 success. | Backend/Worker już potwierdzone; końcowy front Control i helpery do publikacji, następnie main2scenariusze centrum + pięć wybranych rodzin. Jawnie włączane publikowanie screenshotów do docs omija niedostępny transport artefaktów i daje zwykłe linki GitHub; nie zmienia UI/danych systemu. |
 
 - 2026-10-12: podczas publikacji main przesunął się do6a89e78fae: wyłącznie schema/log, testowy endpoint kolejki i Dziennik, bez zmian web. Zachowano te commity; przetestowane źródła Control nie zmieniły się.
+
+- 2026-10-12: korekta układu i domyślnych nazw zamknięta produkcyjnie: main821be8dc6f, Pages38307255666 success, punktowa kontrola38307396879 success2/2 (tryb testowy i pełna runda przez cztery urządzenia).
+
+- 2026-10-12: na wyraźne polecenie użytkownika bezpośrednia poprawka main BEZ uruchamiania testów: nazwy drużyn Display odświeżane po wczytaniu języka, przed przygotowaniem dźwięku i poza kolejką animacji; kolejka korzysta z najnowszych nazw. Własne nazwy bez zmian, bez migracji. Wersje zasobów odświeżone.
