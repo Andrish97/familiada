@@ -80,7 +80,17 @@ Branch38189625221 success1/1 bez retry: dwa realne maile, anon partial
 przed rejestracją, przypisanie obu typów do nowego ID, anon odmowa i Go
 logowanie, full tekst/partial punkty, drugie kasowanie i odtworzenie,
 stare tokeny niedostępne; finally świeże logowanie15.
-Pozostała promocja speca oraz identyczny main + restore11/12/15. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
+Main38190032466 success2/2 bez retry/unit455: restore11/12/15 i
+świeże logowania potwierdzone, oba maile15 oraz cały scenariusz rejestracji,
+przypisania, Go, full/partial, kasowania i odtworzenia również success.
+**351 zamknięte produkcyjnie w zakresie tożsamości tasków Ankiet.**
+Następne352: źródło kontaktu. Lokalne rollbacki /tmp/e19-352
+odtwarzają dwie luki: nowy właściciel starego adresu dostaje propozycję
+znajomości z dawnej subskrypcji; cofnięcie dawnej subskrypcji po
+przypisaniu taska do UID pozostawia task/partial i opened=ok.
+Trwała referencja źródła, konwersja relacji bez utraty ważnego dostępu,
+karencja30 dni bez obejścia i backfill bez zgadywania — zapisane w E19
+oraz blokady-zasobow.md.352 jeszcze bez migracji. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
 legacy Subskrypcji. Pending kolejka/proweniencja maili, Go/anon i dalsze
 krawędzie pozostają otwarte.
 

@@ -457,3 +457,15 @@ Dalsza krawędź grafu: _friend_drop_pair_tasks nie usuwa głosów task:<id>,
 a poll_share_send blokuje grę i czyta are_friends bez blokady pary.
 W kolejnej paczce objąć tworzenie/czyszczenie tasków wspólną kolejnością
 blokad oraz głosami i oczekującymi mailami; nie uznawać346 za jej wykonanie.
+
+### Graf kontaktów i ankiet — audyt352 (2026-10-12)
+
+Zadanie ma równocześnie rodziców: uruchomienie ankiety oraz kontakt,
+z którego wynika udostępnienie. Stały ID odbiorcy po rejestracji/zmianie
+adresu nie zastępuje referencji tego kontaktu. Cofnięcie źródła ma
+unieważniać jego udostępnienia i usuwać niepełne głosy; konwersja
+subskrybenta w znajomego ma zachować uprawnienie pod nową relacją.
+Niezależne zadanie udostępnione przez Znajomych nie jest potomkiem starej
+subskrypcji. Lokalne reprodukcje na351 wskazały brak tej referencji oraz
+przypisanie dawnej relacji nowemu właścicielowi adresu. Szczegóły i
+macierz do wdrożenia w E19, podsekcja352; brak wdrożenia tej krawędzi.

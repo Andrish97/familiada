@@ -1312,3 +1312,38 @@ rekordy obejmuje ta sama zasada. Lokalnie kontrakt, backfill,20 wyścigów,
 DDL oraz siedem regresji SQL success; unit455. Wdrożenie i rzeczywisty
 mail/Go jeszcze pending. Konwersja legacy Subskrypcji, kolejka mailowa
 i pozostałe krawędzie grafu nie są zamknięte tą paczką.
+
+### Graf pkt7 — następna krawędź352: kontakt będący źródłem zadania
+
+Audit lokalny na351, transakcje rollbackowe w /tmp/e19-352:
+
+| Przypadek | Obecny wynik | Wymagany wynik |
+|---|---|---|
+| Dawny subskrybent zakłada konto, zmienia adres; inne konto używa starego adresu | friend_invites_from_subscriptions tworzy propozycję dla nowego właściciela adresu | Stara relacja pozostaje przy pierwotnym odbiorcy; ponowne użycie adresu nie przejmuje kontaktu |
+| Mailowe zadanie dostaje trwały ID konta, następnie nadawca cofa dawną subskrypcję | Źródło cancelled, task pending i partial1 pozostają; otwarcie przez odbiorcę zwraca ok | Cofnięcie źródła odbiera jego udostępnienie i czyści partial; ukończony anonimowy wynik pozostaje |
+
+To otwarta krawędź grafu, nie rozwiązana351. Referencja źródłowego kontaktu
+musi przetrwać zmianę tożsamości odbiorcy. Odbiorca i źródło uprawnienia
+są dwiema różnymi krawędziami. Uwzględnić również akceptację znajomości
+usuwającą stary wpis Subskrybenta: zachować dotychczasowy dostęp podczas
+konwersji relacji i nie usuwać niezależnego zadania ze Znajomych przy
+cofaniu starej subskrypcji. Odmowy/karencja30 dni nadal nie do obejścia
+przez rejestrację. Konto nie otrzymuje nowej subskrypcji ani jej panelu.
+Przed352: macierz obu typów, pięciu stanów, aktorów i kolejności operacji,
+odczyt poprzednich kontraktów, backfill i wyścigi; potem rzeczywisty mail/Go.
+Nie przypisywać historycznego źródła na podstawie podobnego adresu bez
+jednoznacznego związku. Kolejka mailowa i jej źródła pozostają kolejną
+częścią grafu.
+
+###351 — zamknięcie produkcyjne tożsamości tasków Ankiet
+
+SQL351 OK00:46:56 UTC; końcowy DB38189563784 success i schema e1ba174d98.
+Pierwszy smoke38189206623 zatrzymał się na nazwie fixture po ponownym
+użyciu adresu; poprawiony z prawdziwym handle_new_user. Finalny isolated
+38189424237 success. Pierwszy mail38189426209 fixture pominął normalne
+przygotowanie globalnego tokena wypisania; poprawiony bez zmiany produktu.
+Branch38189625221 success1/1, main38190032466 success2/2 bez retry/unit455.
+Dwa realne maile, przypisanie po rejestracji, anon odmowa/Go logowanie,
+full tekst/partial punkty, kasowanie i nowy ID, stare linki niedostępne,
+recovery15 i logowania11/12 potwierdzone.352 źródła kontaktów oraz kolejka
+maili pozostają otwarte; to nie jest zamknięcie całego pkt7.
