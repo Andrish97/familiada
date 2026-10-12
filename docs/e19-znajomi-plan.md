@@ -1426,3 +1426,22 @@ Korekta ograniczona do Auth anonymous bez potwierdzonego adresu; nie kasuje
 danych, przywraca standardowe5 dni od naprawy, zachowuje genuine converted
 i normal registrations. Lokalny kontrakt/historia/351/352 i4 wyścigi success.
 Migracja przygotowana, przed isolated/produkcją.
+
+354 zamknięte: DB38232023390/09:48:17, audyt po naprawie38232398434
+bez błędnych profili; branch38232792528 success2/2 i main38233127443
+success4/4 bez retry. Następna355: jawny rodzic pochodnej propozycji
+znajomości, brak revival po cofnięciu źródła i zachowanie budżetów/odmów.
+Prototyp i kontrakty lokalne; jeszcze brak355 w repo/produkcji.
+
+###355 — źródło pochodnej propozycji znajomości (w przygotowaniu)
+
+Nowe automatyczne propozycje zachowują ID źródłowej subskrypcji. Cofnięcie,
+odmowa lub usunięcie źródła unieważnia pending/declined; zachowuje licznik
+maili i cooldowny. Przyjęta znajomość staje się niezależnym korzeniem;
+ręczne zaproszenia i historyczne źródła bez dowodu pozostają niezależne.
+Blokować rodzica przed propozycją również przy akceptacji. Hard delete
+anuluje propozycję przed FK SET NULL. Ręczne dodanie po cofnięciu nadal
+respektuje5/30 dni i zachowuje budżet, otrzymuje nowy ID/token bez starego
+źródła (istniejące friends_invite).7 kontraktów/8 wyścigów/DDL i regresje
+lokalnie success. Dopiero isolated → DB/main/log → real-mail branch/main
+zamyka tę krawędź; Bazy i kolejka pozostają otwarte.

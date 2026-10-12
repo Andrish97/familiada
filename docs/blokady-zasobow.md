@@ -484,7 +484,7 @@ blokad i sprawdzonej propagacji cofnięcia/usunięcia.
 | Baza → zadanie udostępnienia | Fizyczny FK/kaskada345 wdrożona |
 | Konto odbiorcy → udostępnienia i niepełne głosy |348/351 wdrożone; pełne anonimowe agregaty zachowane |
 | Kontakt → zadanie ankiety |353 wdrożone: jawne źródło, cofnięcie, transfer w znajomość, Go/open/vote |
-| Auth gościa → profil/klasyfikacja |354 po izolacji, wdrożenie i kontrola produkcji w toku |
+| Auth gościa → profil/klasyfikacja |354 wdrożone; main38233127443 success4/4 bez retry, błędne profile naprawione |
 | Subskrypcja → pochodna propozycja znajomości | Otwarte; lokalny test po cofnięciu źródła pozostawia1 pending proposal |
 | Znajomość lub ręczne nadanie → zaproszenie bazy | Pochodzenie do dopięcia; przyjęte niezależne role mają zachować własny cykl |
 | Zasób/konto → tokeny, cooldowny i oczekujące maile | Pozostały audyt i implementacja wspólnej ważności przed kolejką/dostarczeniem |

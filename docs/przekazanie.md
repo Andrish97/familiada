@@ -685,3 +685,30 @@ pytaniach o postęp ani zamknięciu paczki. Kontynuować kolejkę bez nowego
 polecenia; zasada nadrzędna w AGENTS.md/CLAUDE.md. Pięć aktywnych etapów
 głównej kolejki: E19, E19N, E14, E20, E13 (manual ostatni); część E18 nadal
 historycznie wstrzymana. Numery migracji nie są liczbą punktów planu.
+
+**354 zakończone produkcyjnie:** isolated38231809411/unit455, DB38232023390
+OK09:48:17/schema d05bb70973. Po naprawie2 profili readonly38232398434
+wykazuje0 błędów przy51 guests. Branch38232792528 success2/2, main
+ce7e399097/38233127443 success4/4 --retries=0. Auth.updateUser odpowiedź
+może zawierać metadata z input; niezależny getUser potwierdza zapis true.
+Nie powtarzać354. Zasada ciągłości nadrzędna; raport nie zatrzymuje pracy.
+
+**Następne355 lokalnie:** /tmp/e19-355/derived-proposal-prototype.sql,
+DBfam355draft. FK friendships.source_subscription_id, jawne źródło tylko
+dla nowych auto-proposals, parent przed child w _friend_locked. Source close
+anuluje derived pending/declined bez kasowania count/cooldown; hard-delete
+BEFORE trigger przed FK SET NULL. Accepted/manual pozostają niezależne.
+Manual friends_invite już DELETE+INSERT, nowy ID i sourceNULL, zachowuje
+still-valid email counter; nie dodawać zbędnego token-detach triggera.
+7 kontraktów/8 wyścigów lokalnie success, w tym odmowa/source close.
+Brak355 w repo/produkcji. Potem Bazy/pozostałe mail budgets/tokeny/kolejka,
+Go/anon, E19N/E14/E20; manual ostatni. E20 tytuł/podpowiedź po prawej,
+akcje po lewej (nowa decyzja12.10), kompaktowe mobilne filtry.
+
+**355 przygotowane na branchu:** migracja/testy/CI w repo, przed isolated.
+Lokalnie7 kontraktów/8 wyścigów/DDL i14 rollbackowych regresji success,
+unit455. Produkcyjny test355 rozszerza poll-contact-source.spec.js:
+recipient Friends tworzy derived proposal, owner source revoke usuwa
+listę/accept/token/Go, actual SMTP obu poll typów i recovery15 pozostają.
+Reset355 przed reset353, tylko izolowana DB; restore _friend_locked legacy
+potrzebny po przyszłym schema355. Nie oznaczać355 wdrożonym przed bramkami.
