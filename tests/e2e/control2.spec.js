@@ -2819,9 +2819,14 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
 
     await expect.poll(async () => {
       const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).map(event => event.kind);
-    }).toEqual(expect.arrayContaining(["disconnect", "reconnect"]));
+      return (sessions[0]?.stats_detail.events || []).filter(event => event.kind === "diagnostic" && event.category === "connectivity").length;
+    }, { timeout: 20_000 }).toBe(1);
     const reconnectSessions = await readControl2Sessions(page, game.id);
+    const outageEvents = reconnectSessions[0].stats_detail.events || [];
+    const outage = outageEvents.find(event => event.kind === "diagnostic" && event.category === "connectivity");
+    expect(outage.devices).toEqual(expect.arrayContaining(["display", "host", "buzzer"]));
+    expect(outage.metrics.blocked_duration_ms).toBeGreaterThan(6_500);
+    expect(outageEvents.filter(event => ["disconnect", "reconnect"].includes(event.kind))).toHaveLength(0);
     expect(reconnectSessions).toHaveLength(1);
     expect(reconnectSessions[0].rounds_played).toBe(1);
     expect(reconnectSessions[0].ended_at).toBeNull();
