@@ -318,3 +318,16 @@ Potwierdzenie właściciela adresu: przed pokazaniem danych, zdjęciem blokady l
 Znajomości, Bazy i kopie Gier/Logo wymagają konta, nie są dokładane sztucznie do centrum mail-only. Przegląd nie daje dodatkowych uprawnień i nie unieważnia niczego automatycznie. Braki: wspólne kafelki z przerywaną obwódką. Wspólne wiersze, komunikaty i cooldowny, przewijanie wewnętrzne, telefon/tablet/landscape; zrzuty po wdrożeniu.
 
 Dopiąć graf: adres/preferencja → żądanie potwierdzenia → czasowa sesja centrum → akcja na aktualnym źródle. Rejestracja/zmiana adresu/usunięcie rodzica/wygaśnięcie źródła nie pozwala wykorzystać starej sesji do zarządzania nieaktualnymi danymi. Sesja centrum nie jest kontem Auth, nie tworzy profilu ani gościa. Publiczne wejście ujawnia tylko decyzję o logowaniu wymaganą przez użytkownika; listy i tokeny dostępu dopiero po potwierdzeniu. Tests: konto vs mail-only, global-off, realny mail potwierdzający, brak zgody przed potwierdzeniem, termin/jednorazowość, cudzy/niepoprawny token, wszystkie źródła/statusy, kaskady i wyścigi; potem branch/main.
+
+### Doprecyzowanie użytkownika — dwie sekcje i rodzaje kafli `/mail/` (2026-10-12)
+
+Dwie sekcje główne: **Subskrypcje** oraz **Zadania i udostępnienia**. Wcześniejsza tabela zakresu opisuje rodzaje danych, nie cztery odrębne karty. Globalny stan/przełącznik powiadomień w pasku nad sekcjami. Na komputerze równy podział na dwie kolumny; na telefonie wspólny wzorzec dwóch zakładek z niskimi wypustkami, pełna wysokość i przewijanie w środku.
+
+| Sekcja | Zawartość i akcje |
+|---|---|
+| Subskrypcje | Aktywne: wypisz się/anuluj. Oczekujące: akceptuj lub odrzuć. Wypisanie i odmowa zachowują kontrakt30 dni dla adresu bez konta; nie przywracać ich przez samo włączenie maili. |
+| Zadania i udostępnienia | Ankiety: przejdź do głosowania/zadania, odrzuć. Urządzenia: przejdź do podłączenia dla aktualnej sesji. Kafelki z ikoną pochodzenia i delikatnym kolorem rodzaju jak w dawnych Zadaniach; ankiety i urządzenia na tej liście. |
+
+Wspólne stany puste, kafelki/akcje i mobilne skrócenie informacji; żadnego zbędnego filtra typu/wyszukiwania. Zwykła strona Zadania dla kont pozostaje tylko ankietowa zgodnie z wcześniejszą decyzją; rozszerzona lista dotyczy centrum mail-only.
+
+Mechanizm potwierdzenia: nowy jednorazowy link z tokenem przez Go, zamiast obowiązku przepisywania kodu. Po potwierdzeniu otwiera czasową sesję centrum dla tego adresu. Nie zastępuje tokenów zadań, subskrypcji ani grantów urządzeń; kolejne przejście do zasobu używa jego istniejącego tokenu i sprawdza aktualną ważność. Wydanie potwierdzenia/sesji nie włącza powiadomień ani nie akceptuje propozycji samoistnie. Zastępuje wcześniejsze „anonymousundo do uzgodnienia” dla globalnych maili: przywrócenie przez potwierdzone `/mail/` albo ustawienia konta. Pozostałe kontrakty odmów pozostają zgodne z E19.

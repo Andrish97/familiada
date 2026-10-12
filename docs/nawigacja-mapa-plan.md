@@ -1145,3 +1145,5 @@ katalog wartości/parametrów dopracować w audycie mapy przed implementacją.
 ### Decyzja2026-10-12 — `/mail/`, centrum adresu bez konta
 
 Dodać zwykłą publiczną stronę `/mail/` do PAGES/Worker/mapy, bez aliasów i modalnej strony. Go po globalnym wypisaniu wskazuje `/mail/` oraz rejestrację→ustawienia konta. Adres z regularnym kontem → jawny komunikat i login→account; brak konta → potwierdzenie maila przez link Go i centrum adresu. Szczegółowe kontrakty i zakres: maile-granice.md, „centrum adresu bez konta”. Link potwierdzenia również przez Go; konkretny parametr bez kolizji z t/s/f/b/u/d i walidacja typów w mapie. Forward/refresh nie powtarza włączenia, wypisania ani wysyłki potwierdzenia. Sesja potwierdzonego adresu nie tworzy Auth/profilu i po rejestracji nie daje anonimowego obejścia logowania.
+
+Potwierdzenie centrum `/mail/`: wybrany jednorazowy link tokenowy przez Go (zamiast kodu do wpisania); Go tworzy/otwiera czasową sesję adresu, a następne przejście do ankiety lub urządzenia używa dotychczasowego tokenu źródła. Dwie sekcje centrum: Subskrypcje oraz Zadania i udostępnienia (ankiety+urządzenia); na telefonie dwie zakładki. Konto nadal login→account.
