@@ -844,3 +844,10 @@ pomiary renderera64 przypadki bez przewijania/wyjścia poza obszar.
 To nie zamyka etapu: następne punktowe E2E brancha z produkcyjną bazą,
 zapisem statystyk, odświeżeniem i rzeczywistymi urządzeniami. Dopiero green
 pozwala wdrożyć Pages, potem kontrola main. Nie zmieniano schematu bazy.
+
+Control tryb testowy: branch542efe1f25, pierwszy Actions38297907740 zatrzymany
+przed E2E przez dawny unit wymagający konkretnej dwukolumnowej struktury
+podsumowania. Dopasowano kontrakt do sekcji na pełną szerokość z dostępem
+do wszystkich ustawień, zachowując test pełnych etykiet dźwięków. Kolejne
+lokalne pomiary120 przypadków (także sekcje podsumowania): zero przewijania
+i wyjść poza panel. Nie jest to jeszcze potwierdzenie połączeń/statystyk.
