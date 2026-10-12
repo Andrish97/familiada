@@ -802,9 +802,15 @@ Wyjątek Kontakt ma queue→inbound message→report/recipient match;
 nie są blokowane flagą automatycznych powiadomień. Nie wysyłać rzeczywistego
 zgłoszenia w testach (Telegram) — UI i transport Contact są zastępowane.
 
-Otwarte: Auth fallback nie ma wymaganych cooldown keys/private source,
-sprawdzić transakcję hooka przed wdrożeniem nowego issuer/footer Auth;
-pięć trwałych źródeł zaproszeń queue/claim/requeue/fresh delivery;
+**Ostateczna korekta Auth:** użytkownik wyłączył korespondencję rejestracji,
+resetu/zmiany adresu/konwersji gościa ze stopki centrum i rezygnacji.
+Osobna funkcja/direct send pozostaje bez zmian. Dodaną stopkę wycofano;
+draft account-footer usunięty, nie odtwarzać go ani nie naprawiać Auth
+fallback w360. To był oddzielny audyt poza grafem powiadomień.
+Treści podstawia Edge. Wiadomości Auth w ogóle nie są powiadomieniami;
+nie podlegają fladze konta, globalnej rezygnacji ani odmowom zasobów.
+
+Otwarte: pięć trwałych źródeł zaproszeń queue/claim/requeue/fresh delivery;
 DDL/nowe wyścigi, finalna migracja360, rzeczywiste SMTP+UI branch/main.
 Nie ogłaszać zamkniętego grafu ani produkcji `/mail/`. Sześć etapów głównych
 w kolejce wdrożeń, manual ostatni. Aktualizacje około30–60s, po statusie

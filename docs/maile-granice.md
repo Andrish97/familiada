@@ -298,6 +298,28 @@ nowym funkcjonalnym E2E tej paczki. Audyt atomowości queue/historia pkt7.
 
 ### Decyzja użytkownika — zawsze stopka i nadrzędna preferencja (2026-10-12)
 
+**Korekta zakresu:** maile rejestracji, odzyskiwania hasła, potwierdzenia
+zmiany adresu i konwersji konta gościa korzystają z osobnej funkcji
+uwierzytelniania i bezpośredniej wysyłki. Nie dodawać do nich stopki
+centrum `/mail/` ani rezygnacji z powiadomień. Native linki logowania
+i potwierdzenia pozostają ich własną ścieżką. Poniższa zasada „każdy mail”
+dotyczy powiadomień systemowych, nie korespondencji uwierzytelniającej.
+Treść tych maili podstawia Edge `send-email`/`email-templates.ts`;
+nie przenosić jej do renderera powiadomień ani centrum.
+Nie są powiadomieniami: nie podlegają `user_flags.email_notifications`,
+globalnemu `suppressed_at`, odmowom zaproszeń ani blokadom maili
+powiadomień. Wyłączenie maili nie blokuje rejestracji, resetu hasła,
+potwierdzenia/zmiany adresu ani konwersji gościa. Natywne ograniczenia
+prób uwierzytelniania pozostają osobnym mechanizmem.
+
+| Rodzaj wiadomości | Globalna rezygnacja z powiadomień | Stopka centrum | Ścieżka |
+|---|---|---|---|
+| Znajomi, Subskrybenci, Ankiety, Bazy, Control, przypomnienia | blokuje mail | tak | kolejka powiadomień |
+| Marketing i wiadomość bez wątku zgłoszenia | blokuje mail | tak | kolejka |
+| Potwierdzenie centrum zamówione przez odbiorcę | nie blokuje | ten sam jednorazowy link | prywatne źródło weryfikacji |
+| Potwierdzenie przyjęcia zgłoszenia Kontakt i odpowiedź w jego wątku | nie blokuje | tak | rzeczywiste zgłoszenie i zgodny odbiorca |
+| Rejestracja, reset hasła, potwierdzenie/zmiana adresu, konwersja gościa | **nie dotyczy** | **nie** | osobna funkcja Edge uwierzytelniania |
+
 **Świadome zgłoszenie Kontakt jest wyjątkiem:** globalna rezygnacja nie
 blokuje wysłania formularza ani potwierdzenia przyjęcia i odpowiedzi
 w jego wątku. Nie włącza to powiadomień i nie przywraca zaproszeń.
