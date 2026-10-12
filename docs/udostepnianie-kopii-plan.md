@@ -109,8 +109,8 @@ Akceptacja oferty dokładnie raz będzie odrębną transakcyjną paczką.
 
 ### Ważność oczekującej kopii — pytanie architektoniczne
 
-Historia nadawcy ma ustalone30 dni. Termin oczekującej oferty kopii nie
-został określony; pytanie wysłane do użytkownika (bez terminu /30 dni /5 dni).
+Historia nadawcy ma ustalone30 dni. Termin oczekującej oferty kopii był nieokreślony; pytanie wysłane do
+użytkownika (bez terminu /30 dni /5 dni), a następnie wybrane5 dni.
 Użytkownik poprosił najpierw o porównanie: aktualna oferta bazy wygasa po
 5 dniach od utworzenia, osobiste zadanie ankiety żyje w bieżącym uruchomieniu
 (bez stałego terminu dni). Zatrzymanie blokuje głosowanie, wznowienie może
@@ -132,4 +132,22 @@ nie tworzy osobnego formatu dla kopiowania.
 Native logo-transfer-format.spec.js przygotowany dla3 trybów: realny
 plik w Storage, eksport/parser/własny rekord i własny plik IMAGE,
 niezależne źródło DRAW, brak pakietu po404 i cleanup własnych danych.
-Na razie na branchu; sama oferta i jej termin nadal niezdecydowane.
+Na razie na branchu; sama oferta jeszcze niewdrożona. Termin wybrany:5 dni.
+
+## Decyzja: oczekująca kopia wygasa po5 dniach — 2026-10-12
+
+Użytkownik: „No to zrób jak w bazach5 dni”. Termin liczony od pierwotnego
+wysłania; otwieranie linku, odświeżenie, ponowne wejście ani dostarczenie
+maila nie przedłuża ważności. Po terminie nie można przyjąć starej oferty,
+plakietka znika, niewysłany mail jest anulowany, pakiet i jego nieużywane
+pliki są sprzątane. Nowa świadoma wysyłka tworzy nową ofertę z własnym
+terminem, przy zwykłych kontrolach znajomości, flagi i cooldownów.
+
+| Zegar | Czas i zakres |
+|---|---|
+| Oczekująca oferta Gry/Logo |5 dni od wysłania, jak w Bazach |
+| Historia nadawcy |30 dni od wysłania; niezależna od statusu oferty |
+| Przyjęta własna kopia | Bez terminu oferty; zwykły zasób odbiorcy, usuwany jego decyzją lub wraz z kontem |
+
+Odmowa i możliwość zmiany decyzji zachowują wspólny model E19; nie
+przedłużać terminu oczekującej kopii przez przypomnienie/otwarcie.
