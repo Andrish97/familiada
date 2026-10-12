@@ -1201,6 +1201,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
           sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
           psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Restore pre357 base share shape for historical migration fixtures
+        run: psql -v ON_ERROR_STOP=1 -f docs/sql/reset-base-share-test-schema-357.sql
       - name: Restore pre355 proposal shape for historical migration fixtures
         run: psql -v ON_ERROR_STOP=1 -f docs/sql/reset-friend-proposal-test-schema-355.sql
       - name: Restore pre353 contact shape for historical migration fixtures
@@ -1318,3 +1320,15 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-sources-353.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
+      - name: Verify base invitations follow their explicit source
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          bash docs/sql/test-base-share-sources-357-ddl-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-share-sources-357.sql
+          python3 docs/sql/test-base-share-sources-357-concurrency.py
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-refusal-337.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-boundaries-337.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-mail-availability-339.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-task-cascade-345.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-proposal-sources-355.sql
