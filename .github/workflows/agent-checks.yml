@@ -1229,6 +1229,7 @@ jobs:
           bash docs/sql/test-poll-recipient-351-ddl-concurrency.sh
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-backfill-351.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-test-cleanup-351.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-votes-343.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-completion-344.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
