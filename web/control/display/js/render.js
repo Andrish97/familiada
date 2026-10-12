@@ -1,4 +1,4 @@
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T20545";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T21023";
 // control/display/js/render.js
 //
 // Tłumaczy wiersz public.game_state (a dokładniej: różnicę między
@@ -24,9 +24,9 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T2054
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-12T20545";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-12T20545";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-12T20545";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-12T21023";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-12T21023";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-12T21023";
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -35,7 +35,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-12T20545";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-12T21023";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
@@ -287,8 +287,10 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   // detail.teams, zamiast wysyłane raz przez stateGameReady(). Widoczne
   // przez całą właściwą rozgrywkę (rundy+finał), tak jak w oryginale.
   let lastTeamNames = null;
+  let latestTeamNamesRow = null;
   function paintTeamNames(row, force = false) {
-    const raw = row.detail?.teams || {};
+    // Starsza animacja z kolejki nie może przywrócić poprzednich nazw.
+    const raw = (latestTeamNamesRow || row).detail?.teams || {};
     const teams = {
       teamA: raw.defaultA === true || !raw.teamA ? t("control.teamADefault") : raw.teamA,
       teamB: raw.defaultB === true || !raw.teamB ? t("control.teamBDefault") : raw.teamB,
@@ -296,6 +298,14 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     if (force || lastTeamNames?.teamA !== teams.teamA) api.small.long1(teams.teamA || "");
     if (force || lastTeamNames?.teamB !== teams.teamB) api.small.long2(teams.teamB || "");
     lastTeamNames = { ...teams };
+  }
+
+  function updateTeamNames(row) {
+    latestTeamNamesRow = row;
+    if (row.detail?.display?.mode === "GAME"
+      && !["devices_display", "setup_finish"].includes(row.step)) {
+      paintTeamNames(row);
+    }
   }
 
   async function paintForStep(row) {
@@ -662,5 +672,5 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     }
   }
 
-  return { renderSnapshot, renderDiff, cancel };
+  return { renderSnapshot, renderDiff, cancel, updateTeamNames };
 }

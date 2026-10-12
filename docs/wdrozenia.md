@@ -1011,3 +1011,7 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 | 2026-10-12 | SMTP / prywatny trigger kolejki testowej | Endpoint mail-trigger uruchamia istniejący invoke_mail_worker_ids tylko dla świeżych, gotowych pending skrzynek testowych; wyklucza9/10, nie modyfikuje źródeł, flag, limitów i czasu opóźnienia. | Unit500/500, podpis/zakres/pusta kolejka/awanse/błędy backendu sprawdzone. Publikacja Workera przed nowym punktowym SMTP; bez zmian w produkcyjnej ścieżce dostarczania. |
 
 - 2026-10-12: podczas publikacji main przesunął się do6a89e78fae: wyłącznie schema/log, testowy endpoint kolejki i Dziennik, bez zmian web. Zachowano te commity; przetestowane źródła Control nie zmieniły się.
+
+- 2026-10-12: korekta układu i domyślnych nazw zamknięta produkcyjnie: main821be8dc6f, Pages38307255666 success, punktowa kontrola38307396879 success2/2 (tryb testowy i pełna runda przez cztery urządzenia).
+
+- 2026-10-12: na wyraźne polecenie użytkownika bezpośrednia poprawka main BEZ uruchamiania testów: nazwy drużyn Display odświeżane po wczytaniu języka, przed przygotowaniem dźwięku i poza kolejką animacji; kolejka korzysta z najnowszych nazw. Własne nazwy bez zmian, bez migracji. Wersje zasobów odświeżone.

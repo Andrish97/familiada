@@ -1,15 +1,15 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T20545";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-12T20545";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-12T20545";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-12T20545";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-12T20545";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-12T20545";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T20545";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T20545";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T20545";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-12T20545";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-12T20545";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T20545";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T21023";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-12T21023";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-12T21023";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-12T21023";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-12T21023";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-12T21023";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T21023";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T21023";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T21023";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-12T21023";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-12T21023";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T21023";
 
 
 
