@@ -542,3 +542,33 @@ Lokalnie: świeży pełny schemat + wszystkie kontrakty360/361 oraz60
 wyścigów (5 rodzin × tworzenie/delivery × cofnięcie/usunięcie/flaga ×
 obie kolejności), także sprawdzenie odzyskania Auth przez stary child-first
 zapis. To nie zamyka całego pkt7 ani produkcyjnych bramek.
+
+### Wykonana krawędź362: przebieg ankiety → anonimowe liczniki tempa
+
+Migracja362 zastosowana (DB38314862992/log22:09:59 UTC). Kontrola frontend
+produkcyjna zamknięta: main38315815400 success2/2 bez retry. Licznik `poll_anonymous_limits` zależy od gry,
+bieżącego klucza przebiegu i hasha losowego tokenu przeglądarki.
+
+| Operacja na przodku lub liściu | Zachowanie362 |
+|---|---|
+| Pełny głos | Krótkie blokady konta właściciela/aktora (kolejność ID), potem gry i własnego licznika; sprawdzenie klucza/stanu/typu, całego formularza oraz zapis w jednej transakcji. Zegar30s zaczyna się po pełnym zapisie. |
+| Błędny formularz | Bez częściowych głosów i bez zajęcia zegara. |
+| Utrata odpowiedzi serwera | Ta sama próba i pełna treść zwraca idempotentne potwierdzenie; zmieniona treść próby jest odrzucana. |
+| Zatrzymanie/zamknięcie/przerwanie | Zegar jest usuwany; stan rodzica blokuje dalsze anonimowe głosy. |
+| Rotacja klucza, zmiana typu lub właściciela | Zegary usuwane triggerem gry; starego klucza nie można użyć. |
+| Usunięcie gry albo konta właściciela | FK `game_id ON DELETE CASCADE` usuwa zegary wraz z całym poddrzewem gry. |
+| Stary anonimowy scalar/batch | Wymaga prywatnej autoryzacji tej samej transakcji pełnego formularza. Zwykły klient nie może zapisywać licznika. |
+| Osobiste zadanie lub ręczna porcja właściciela | Zachowuje swój kontrakt; osobisty token i uprawnienia sprawdza dotychczasowy guard. |
+
+```mermaid
+flowchart TD
+  Account[Konto właściciela] --> Game[Gra]
+  Game --> Run[Bieżący klucz ankiety]
+  Run --> Questions[Sesje pytań]
+  Questions --> Votes[Pełne głosy]
+  Run --> Tasks[Osobiste zadania]
+  Run --> Rate[Prywatne liczniki tempa przeglądarek]
+```
+
+SQL tekst/punkty/40 pytań,8 wyścigów i końcowe DDL sprawdzone lokalnie oraz
+w isolated38314641449. Nie oznacza to zamknięcia całego grafu E19.

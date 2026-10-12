@@ -1524,3 +1524,16 @@ Stan: przygotowane lokalnie; nowa ścieżka nie wymaga migracji. Punktowy
 ponowne otwarcie, finalizacja po trzech głosach, usunięcie i błąd sieci.
 Publikacja dopiero po zamknięciu362 i zielonym branch E2E. Dalsze stany Go
 innych rodzin oraz końcowy audyt grafu pozostają otwarte.
+
+**362 zamknięte produkcyjnie:** DB38314862992/log362 OK22:09:59 UTC,
+Pages38314862930 success; main38315815400 success2/2 bez retry/514 unit.
+Pełny zakres obu typów i granice pokrycia w Dzienniku. Cztery rzeczywiste
+screeny w `docs/img/poll-anonymous/live` (main13d5be4759). Lokalny szkic i
+wcześniejsze wpisy zachowane jako historia pracy; nie ponawiać pakietu362.
+
+**Go na branchu, bramka zielona:**38315943894 success1/1 bez retry/518 unit,
+28s; rzeczywiste oba typy, card link/QR/popup, stop/abort/draft/reopen,
+finalizacja po trzech pełnych głosach, usunięcie i retry po błędzie sieci.
+Dziesięć screenów w `docs/img/poll-anonymous/go-live`, branch2ecd9206ba.
+Następne publikacja Pages i ten sam main. Pozostałe rodziny Go oraz
+końcowy audyt grafu nadal otwarte.

@@ -945,3 +945,17 @@ finalizacja obu typów po trzech pełnych głosach). Jeszcze bez bramki
 branch/produkcji. Publisher rozdziela galerę cooldown/live i go-live,
 żeby nie nadpisywać poprzednich screenów. Nie uruchamiać na koncie1
 równolegle z38315815400.
+
+**362 zamknięte:** main38315815400 success2/2, bez retry,514 unit.
+Oba typy potwierdzone na faktycznych Pages: naturalne30s, zachowane
+odpowiedzi, idempotencja po utracie odpowiedzi serwera, niezależna
+przeglądarka z tej samej sieci, legacy gate, stop/nowy klucz/cleanup.
+Screeny main13d5be4759:docs/img/poll-anonymous/live. Nie powtarzać362.
+
+**Go branch38315943894 success1/1**, bez retry/518 unit,28s. Generator
+karty/QR/Otwórz rzeczywistego ekranu działa; realne open/stopped/draft/
+expired/ended po finalizacji obydwu typów/deleted, błędne parametry i
+błąd sieci+powtórzenie.10 screenów branch2ecd9206ba go-live. Teraz
+publikacja Go na main→Pages→ten sam pojedynczy spec na produkcji (bez
+branch substitution). Main1 i branch2 korzystały z rozłącznych kont;
+bez maili/kontaktów/resetowania zegara. Cały E19/pkt7 nadal otwarty.
