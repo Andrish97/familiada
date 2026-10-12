@@ -810,3 +810,5 @@ Doprecyzowanie `/mail/`: dwie sekcje Subskrypcje (akceptuj/odrzuć oczekujące, 
 ### 2026-10-12 — Control358 zakończone produkcyjnie
 
 Main38261432758 success2/2 --retries=0/unit459 na fed93b0a91 (assets po dbc53057b2), rzeczywiste maile konta i test14, Go/Host, nazwą użytkownika/duplikat/mail-off/zero queue-clock/cofnięcie/grant niezależny/stale friend. Pages38260925626 success; SQL38257393434 OK13:42:37Z; isolated38256954899. Nie powtarzać358. Następna globalna stopka/preferencja/centrum /mail/ oraz bound źródła claim/delivery, reszta pkt7. Manual ostatni.
+
+Najnowsza zmiana centrum mail-only: globalna rezygnacja nadrzędna, anuluje wszystkie przypisane źródła i ukrywa listy. Footer-token otwiera centrum przez Go, bez dodatkowego maila; ręczne wejście nadal weryfikuje adres. Cofanie rezygnacji nie przywraca źródeł i nie resetuje cooldownów. Lokalny prototyp zachowujący widoczne subskrypcje jest zastąpiony i nie do wdrożenia. Jedno pytanie architektoniczne o zakres dla ustawień konta (mail-only vs także odwołanie dostępów); praca nad mail-only/tokenami nie czeka. Graf nadal częściowy,358 zakończone.
