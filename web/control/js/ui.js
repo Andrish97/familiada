@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-12T19414";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T19414";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-12T19414";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-12T19414";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-12T19414";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T19414";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-12T20214";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T20214";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-12T20214";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-12T20214";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-12T20214";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T20214";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-12T19414";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-12T20214";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -41,6 +41,8 @@ function h(tag, attrs = {}, children = []) {
 }
 
 export function createUI({ root, emit }) {
+  let summaryTab = 1;
+  const summaryPages = new Map();
   function clear() { root.innerHTML = ""; }
   function setTopbarProgress(label) {
     const el = document.getElementById("c2TopbarProgress");
@@ -262,6 +264,21 @@ export function createUI({ root, emit }) {
     if (state.settings.physicalBuzzer) buzzerRow.setAttribute("data-opted-out", "");
     rows.push(buzzerRow);
 
+    if (state.settings.testMode) {
+      for (const row of rows) {
+        row.querySelectorAll("button,input").forEach(el => { el.disabled = true; });
+        row.querySelectorAll("a").forEach(el => { el.removeAttribute("href"); el.setAttribute("aria-disabled", "true"); el.tabIndex = -1; });
+      }
+    }
+    const testToggle = h("input", { id: "controlTestToggle", type: "checkbox" });
+    testToggle.checked = state.settings.testMode === true;
+    testToggle.disabled = ctx.testModeChanging === true || (!testToggle.checked && ctx.testModeAvailable === false);
+    on(testToggle, "change", () => emit("devices.testMode", testToggle.checked));
+    const testChoice = h("div", { class: "control-test-choice" }, [
+      h("label", { class: "device-opt-check" }, [testToggle, h("span", { text: t("control.testModeLabel") })]),
+      h("span", { class: "device-opt-check-hint", text: t(ctx.testModeAvailable === false ? "control.testModeTooSmall" : "control.testModeHint"), role: "status" }),
+    ]);
+
     // ===== Dźwięk — JEDNA sekcja, przełącznik dwustanowy w tym samym stylu
     // co "Losowo"/"Wybierz" w ustawieniach gry (.toggle-group/.toggle-item/
     // .toggle-slider, control.css — reużyte 1:1, control2.html i tak już
@@ -309,7 +326,7 @@ export function createUI({ root, emit }) {
     // rozgrywce. Ujednolicone z tej samej przyczyny (zgłoszone: "zobacz
     // też pozostałe przyciski dalej/wstecz jakie mają style").
     const next = navButton(t("common.next"), {
-      disabled: !requiredOnline || !displayAudioReady,
+      disabled: ctx.testModeChanging === true || !requiredOnline || !displayAudioReady,
       onclick: () => emit("devices.next"),
     });
 
@@ -321,6 +338,7 @@ export function createUI({ root, emit }) {
       // (display:none) i istnieje wyłącznie jako stabilny selektor testów E2E,
       // więc nie jest to string user-facing.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
+      testChoice,
       // Przewija się tylko lista kart urządzeń. Podpowiedź pozostaje obok
       // listy widoczna także po przewinięciu do sekcji dźwięku.
       h("div", { class: "c2-roundlayout c2-devices-layout" }, [
@@ -454,6 +472,47 @@ export function createUI({ root, emit }) {
   }
 
   let setupFinishFingerprint = null;
+  function pagedSummary(sections) {
+    const panels = h("div", { class: "c2-summary-pages" }, sections);
+    const tabs = h("div", { class: "c2-summary-tabs", role: "tablist" });
+    const pagers = [];
+    for (let index = 0; index < sections.length; index++) {
+      const section = sections[index];
+      const title = section.querySelector(".summarySectionTitle").textContent;
+      const button = h("button", { class: "btn sm", type: "button", role: "tab", text: title });
+      on(button, "click", () => { stopSummarySoundPreview(); summaryTab = index; select(); });
+      tabs.append(button);
+      const items = [...section.querySelectorAll(".c2-qpreview-item,.summarySoundRow")];
+      if (items.length > 5) {
+        const pages = Math.ceil(items.length / 5);
+        const label = h("span");
+        const previous = h("button", { class: "btn sm", type: "button", text: t("common.back") });
+        const next = h("button", { class: "btn sm", type: "button", text: t("common.next") });
+        const apply = () => {
+          const page = Math.min(summaryPages.get(index) || 0, pages - 1);
+          items.forEach((item, i) => { item.hidden = Math.floor(i / 5) !== page; });
+          previous.disabled = page === 0;
+          next.disabled = page === pages - 1;
+          label.textContent = `${page + 1} / ${pages}`;
+        };
+        on(previous, "click", () => { summaryPages.set(index, Math.max(0, (summaryPages.get(index) || 0) - 1)); apply(); });
+        on(next, "click", () => { summaryPages.set(index, Math.min(pages - 1, (summaryPages.get(index) || 0) + 1)); apply(); });
+        const pager = h("div", { class: "c2-summary-pagination" }, [previous, label, next]);
+        panels.append(pager);
+        pagers.push({ index, pager });
+        apply();
+      }
+    }
+    function select() {
+      summaryTab = Math.min(summaryTab, sections.length - 1);
+      sections.forEach((section, index) => { section.hidden = index !== summaryTab; });
+      [...tabs.children].forEach((button, index) => { button.setAttribute("aria-selected", String(index === summaryTab)); button.classList.toggle("gold", index === summaryTab); });
+      pagers.forEach(({ index, pager }) => { pager.hidden = index !== summaryTab; });
+    }
+    select();
+    return [tabs, panels];
+  }
+
   function renderSetupFinish(state, ctx = {}) {
     const s = state.settings;
     const d = state.display;
@@ -656,11 +715,7 @@ export function createUI({ root, emit }) {
       // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
       // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
-      h("div", { class: "c2-scroll-area c2-summary-grid" }, [
-        displaySummarySection,
-        h("div", { class: "c2-summary-columns" }, settingSummarySections),
-        h("div", { class: `c2-summary-question-grid${hasFinal ? " has-final" : ""}` }, questionSummarySections),
-      ]),
+      ...pagedSummary([displaySummarySection, ...settingSummarySections, ...questionSummarySections].filter(Boolean)),
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
         finalIncomplete ? h("div", { class: "msg msg-pill", text: t("control.finalPickIncompleteWarning") }) : null,

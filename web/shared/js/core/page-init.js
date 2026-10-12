@@ -28,16 +28,16 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-12T19414";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-12T19414";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-12T19414";
+import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-12T20214";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-12T20214";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-12T20214";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-12T19414"),
-    import("./topbar-controller.js?v=v2026-10-12T19414"),
-    import("./modal-sheet.js?v=v2026-10-12T19414"),
-    import("./device-guard.js?v=v2026-10-12T19414"),
+    import("./auth.js?v=v2026-10-12T20214"),
+    import("./topbar-controller.js?v=v2026-10-12T20214"),
+    import("./modal-sheet.js?v=v2026-10-12T20214"),
+    import("./device-guard.js?v=v2026-10-12T20214"),
   ]);
   return {
     getUser: auth.getUser,
@@ -151,7 +151,7 @@ export async function initPage(id, opts = {}) {
   // Urządzenie: guard stoi przed wszystkim, co strona zrobi dalej.
   let blockedByDevice = false;
   if (p.device === "wide") {
-    d.guardDesktopOnly({ backHref: backHref(id, { anon: !user }) });
+    d.guardDesktopOnly({ backHref: backHref(id, { anon: !user }), ...opts.deviceGuard });
   } else if (p.device === "noPhone") {
     blockedByDevice = d.blockPhone({ backHref: backHref(id, { anon: !user }) });
   }

@@ -1,0 +1,1082 @@
+[
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "devices_display",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "setup_finish:0",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "setup_finish:1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "setup_finish:2",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "setup_finish:3",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "setup_finish:4",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "setup_finish:5",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "setup_finish:6",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "setup_finish:7",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "r_duel",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "r_play",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "f_p1_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "f_p2_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "f_p1_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "native",
+    "step": "f_p2_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "devices_display",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "setup_finish:0",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "setup_finish:1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "setup_finish:2",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "setup_finish:3",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "setup_finish:4",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "setup_finish:5",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "setup_finish:6",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "setup_finish:7",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "r_duel",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "r_play",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "f_p1_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "f_p2_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "f_p1_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "h": 720,
+    "mode": "scaled",
+    "step": "f_p2_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "devices_display",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "setup_finish:0",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "setup_finish:1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "setup_finish:2",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "setup_finish:3",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "setup_finish:4",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "setup_finish:5",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "setup_finish:6",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "setup_finish:7",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "r_duel",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "r_play",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "f_p1_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "f_p2_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "f_p1_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "native",
+    "step": "f_p2_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "devices_display",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "setup_finish:0",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "setup_finish:1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "setup_finish:2",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "setup_finish:3",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "setup_finish:4",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "setup_finish:5",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "setup_finish:6",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "setup_finish:7",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "r_duel",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "r_play",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "f_p1_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "f_p2_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "f_p1_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1366,
+    "h": 768,
+    "mode": "scaled",
+    "step": "f_p2_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "devices_display",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "setup_finish:0",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "setup_finish:1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "setup_finish:2",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "setup_finish:3",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "setup_finish:4",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "setup_finish:5",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "setup_finish:6",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "setup_finish:7",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "r_duel",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "r_play",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "f_p1_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "f_p2_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "f_p1_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "native",
+    "step": "f_p2_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "devices_display",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "setup_finish:0",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "setup_finish:1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "setup_finish:2",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "setup_finish:3",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "setup_finish:4",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "setup_finish:5",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "setup_finish:6",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "setup_finish:7",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "r_duel",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "r_play",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "f_p1_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "f_p2_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "f_p1_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1400,
+    "h": 900,
+    "mode": "scaled",
+    "step": "f_p2_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "devices_display",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "setup_finish:0",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "setup_finish:1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "setup_finish:2",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "setup_finish:3",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "setup_finish:4",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "setup_finish:5",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "setup_finish:6",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "setup_finish:7",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "r_duel",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "r_play",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "f_p1_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "f_p2_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "f_p1_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "native",
+    "step": "f_p2_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "devices_display",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "setup_finish:0",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "setup_finish:1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "setup_finish:2",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "setup_finish:3",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "setup_finish:4",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "setup_finish:5",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "setup_finish:6",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "setup_finish:7",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "r_duel",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "r_play",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "f_p1_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "f_p2_entry",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "f_p1_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  },
+  {
+    "w": 1920,
+    "h": 1080,
+    "mode": "scaled",
+    "step": "f_p2_map_q1",
+    "overflow": [],
+    "clipped": [],
+    "errors": []
+  }
+]

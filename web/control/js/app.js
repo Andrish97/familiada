@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-12T19414";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-12T20214";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,19 +7,19 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T19414";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-12T19414";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T19414";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T19414";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T19414";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-12T19414";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-12T19414";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-12T19414";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-12T19414";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T19414";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-12T19414";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-12T19414";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T19414";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T20214";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-12T20214";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T20214";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T20214";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T20214";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-12T20214";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-12T20214";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-12T20214";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-12T20214";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T20214";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-12T20214";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-12T20214";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T20214";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -99,21 +99,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-12T19414";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-12T19414";
-import { createEngine } from "./engine.js?v=v2026-10-12T19414";
-import { createActionGate } from "./actionGate.js?v=v2026-10-12T19414";
-import { createDevices } from "./devices.js?v=v2026-10-12T19414";
-import { createPresence } from "./presence.js?v=v2026-10-12T19414";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-12T19414";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-12T19414";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-12T19414";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-12T19414";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-12T19414";
-import { createUI } from "./ui.js?v=v2026-10-12T19414";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-12T19414";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-12T19414";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T19414";
+import { createStore } from "./store.js?v=v2026-10-12T20214";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-12T20214";
+import { createEngine } from "./engine.js?v=v2026-10-12T20214";
+import { createActionGate } from "./actionGate.js?v=v2026-10-12T20214";
+import { createDevices } from "./devices.js?v=v2026-10-12T20214";
+import { createPresence } from "./presence.js?v=v2026-10-12T20214";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-12T20214";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-12T20214";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-12T20214";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-12T20214";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-12T20214";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-12T20214";
+import { createUI } from "./ui.js?v=v2026-10-12T20214";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-12T20214";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-12T20214";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T20214";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -172,6 +173,8 @@ async function main() {
   // utworzeniu store (do tego czasu wyjście jest swobodne).
   let beforeLeave = async () => true;
   let runtimeSession = null;
+  let testModePanel = null;
+  let testModeChanging = false;
   const i18nP = initI18n({ withSwitcher: true });
   // Blokady strony (guardResourceLocks): zwalniane przed przejściem do
   // instrukcji / ustawień gry, żeby tamta strona mogła je od razu zająć.
@@ -185,6 +188,7 @@ async function main() {
   // jest w bazie, więc po powrocie store.hydrate() wznawia rozgrywkę.
   const userP = initPage("control", {
     ready: i18nP,
+    deviceGuard: { fits: () => currentControlGeometry().fits, messageKey: "control.panelTooSmall" },
     onBack: async (href) => {
       if (!(await beforeLeave())) return;
       location.href = href;
@@ -548,7 +552,7 @@ async function main() {
   // gry. Nie może blokować przejścia do rozgrywki; UI zatrzymuje go przy
   // wyjściu z Podsumowania. Poza tym krokiem aktywne SFX nadal blokują akcje.
   function presenceReadBlocksGame() { return presenceUnavailable && store.state.locks.gameStarted && !store.state.locks.gameEnded; }
-  function busy() { return controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  function busy() { return testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
@@ -602,6 +606,7 @@ async function main() {
   // dostawać DOKŁADNIE tę samą blokadę, inaczej auto-pudło z 3s zegarka
   // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
   async function dispatchGatedNow(action) {
+    if (testModePanel?.blocked() && !action.type.startsWith("EXPIRE_")) return null;
     if (controlOffline || waitingForDisplayAudioUnlock()) return null;
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
@@ -742,6 +747,7 @@ async function main() {
 
   const devices = createDevices({ game });
   const urls = await devices.buildUrls(getUiLang());
+  testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
   const connectCodes = {};
   for (const kind of ["display", "host", "buzzer"]) {
     connectCodes[kind] = await devices.generateConnectCode(kind).catch(() => null);
@@ -983,7 +989,7 @@ async function main() {
     if (ended && !outroReturnReady && !outroUnlockTimer) {
       outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
     }
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, outroReturnReady, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -997,7 +1003,8 @@ async function main() {
     // przez kolejkę dispatchGated()), a operator z trwale zablokowanym UI
     // bez żadnego śladu w konsoli, dlaczego.
     try {
-      ui.render(store.state, renderCtx());
+      testModePanel.update(store.state.settings.testMode);
+      ui.render(store.state, { ...renderCtx(), testModeAvailable: testModePanel.canEnable() });
     } catch (e) {
       console.error("[control2] render() rzucił -- UI może zostać nieaktualne:", e);
     }
@@ -1052,6 +1059,7 @@ async function main() {
     return t("control.qrModalTitle");
   }
   function showQrModal(kind) {
+    if (store.state.settings.testMode) return;
     const url = getDeviceUrl(kind);
     if (!url) return;
     const overlay = document.getElementById("qrModalOverlay");
@@ -1223,6 +1231,34 @@ async function main() {
 
   async function handle(action, payload) {
     try {
+      if (testModeChanging && action !== "devices.testMode") return;
+      if (testModePanel.blocked() && action !== "devices.testMode") return;
+      if (store.state.settings.testMode && ["devices.noHostTablet", "devices.physicalBuzzer", "devices.copyCode", "devices.shareOpen", "qr.modal.show", "qr.host.toggle", "qr.buzzer.toggle"].includes(action)) return;
+      if (action === "devices.testMode") {
+        if (testModeChanging || store.state.step !== "devices_display" || (payload && !testModePanel.canEnable())) return;
+        const previous = structuredClone({ settings:store.state.settings, display:store.state.display });
+        testModeChanging = true;
+        try {
+          store.state.settings.testMode = !!payload;
+          if (payload) {
+            store.state.settings.noHostTablet = false;
+            store.state.settings.physicalBuzzer = false;
+            store.state.display.qr.host.show = false;
+            store.state.display.qr.buzzer.show = false;
+            store.state.display.mode = "BLACK";
+          }
+          renderCurrent();
+          await store.commit();
+        } catch (error) {
+          store.state.settings = previous.settings;
+          store.state.display = previous.display;
+          throw error;
+        } finally {
+          testModeChanging = false;
+          renderCurrent();
+        }
+        return;
+      }
       const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
       if (gameAction && restarting) return;
       if (gameAction && missingDevices(store.state, presenceFlags).length) noteConnectivityBlockedAction(payload?.type || action);
@@ -1476,7 +1512,7 @@ async function main() {
     for (const key of ADVANCED_SETTINGS_KEYS) keptAdvanced[key] = store.state.settings[key];
     store.state.locks = { gameStarted: false, finalActive: false, gameEnded: false };
     store.state.teams = { teamA: "", teamB: "" };
-    store.state.settings = { ...DEFAULT_SETTINGS, ...keptAdvanced };
+    store.state.settings = { ...DEFAULT_SETTINGS, ...keptAdvanced, testMode: store.state.settings.testMode === true };
     store.state.rounds = {
       roundNo: 1, bankPts: 0, xA: 0, xB: 0, totals: { A: 0, B: 0 },
       passUsed: false, allowPass: false, canEndRound: false, lockPlayControls: false,

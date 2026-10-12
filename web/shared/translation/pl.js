@@ -2027,6 +2027,7 @@ const pl = {
 <p class="m-p">W górnym pasku sprawdzisz połączenie Wyświetlacza, Prowadzącego i Przycisku. Przyciski urządzeń pozwalają wrócić do ich linków, kodów i udostępniania także w trakcie gry. Główna część panelu zmienia się wraz z etapem: w przygotowaniu pokazuje urządzenia lub Podsumowanie, w rundach pytanie i odpowiedzi, a w finale pola wpisywania albo ocenę pojedynczej odpowiedzi.</p>
 <p class="m-p">Kolumna podpowiedzi wyjaśnia, kto teraz odpowiada i na jaką czynność czeka system. Pasek pod planszą pokazuje bieżące informacje: w rundach drużynę grającą i bank, a przy odsłanianiu finału sumę punktów. Przycisk dalszego przejścia opisuje następny krok. Nie musisz zgadywać, co zrobi <span class="m-code">Dalej</span> — przy ważnych przejściach jego nazwa zmienia się np. na <span class="m-code">Przejdź do finału</span> lub <span class="m-code">Zakończ finał</span>.</p>
 <h3 class="m-h2">1) Urządzenia</h3>
+<p class="m-p">Aby sprawdzić grę na jednym komputerze, włącz <span class="m-code">Tryb testowy</span>. Wyświetlacz, Prowadzący i Przycisk pojawią się po prawej stronie panelu, a pozostałe opcje podłączania będą niedostępne. Tryb pozostaje włączony po odświeżeniu. Jeśli okno jest za małe, powiększ je, aby włączyć tryb.</p>
 <p class="m-p">Pierwszy etap w panelu to podłączenie urządzeń. W górnym pasku panelu widzisz trzy statusy: <span class="m-strong">Wyświetlacz</span>, <span class="m-strong">Prowadzący</span>, <span class="m-strong">Przycisk do pojedynku</span>. Operator zaczyna od podłączenia wymaganych urządzeń. Prowadzący jest opcjonalny — rozgrywkę można prowadzić bezpośrednio z Panelu sterowania.</p>
 <h4 class="m-h3">Wyświetlacz</h4>
 <p class="m-p">Panel pokazuje <span class="m-strong">6-cyfrowy kod</span> dla Wyświetlacza. Najlepiej otworzyć Wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki). Dopiero gdy Wyświetlacz jest połączony, panel pozwala przejść dalej.</p>
@@ -2062,6 +2063,7 @@ const pl = {
 <div class="m-warn"><b>Uwaga:</b><br/>Źródło „Wyświetlacz” wybierz, gdy dźwięk ma odtwarzać osobny telewizor lub inne osobne urządzenie na którym będzie otwarta karta urządzenia „Wyświetlacz”. Przy HDMI zwykle wygodniej pozostawić „Panel sterowania” i wybrać telewizor jako wyjście dźwięku w ustawieniach komputera. Po podłączeniu HDMI system często robi to automatycznie. Przy AirPlay przesyłasz obraz i dźwięk z Maca, iPhone’a lub iPada na Apple TV.</div>
 <p class="m-p"><span class="m-strong">Skrót:</span> M wycisza lub przywraca dźwięk od razu, bez Entera.</p>
 <h3 class="m-h2">2) Ustawienia</h3>
+<p class="m-p">W Podsumowaniu wybierz sekcję przyciskami u góry. Długie listy pytań i dźwięków są podzielone na strony; przechodź między nimi przyciskami Wstecz i Dalej pod listą.</p>
 <div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Tablet pokazuje logo wybrane w ustawieniach gry. Gdy wcześniej trwa edycja tego logo, pokazuje domyślne logo Familiady. Przy wejściu operatora w Podsumowanie ustawień pobiera wybrane logo ponownie; wcześniej pokazane logo domyślne zostaje wtedy zastąpione właściwym.</div>
 <p class="m-p">Gdy urządzenia są połączone, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie <span class="m-strong">Ustawień rozgrywki</span> — Panel sterowania wczyta je automatycznie.</p>
 <p class="m-p"><span class="m-strong">Skróty:</span> W Podsumowaniu E zaznacza zmianę ustawień, a Enter ją otwiera. B i Enter wracają, gdy powrót jest dostępny.</p>
@@ -4284,6 +4286,10 @@ const pl = {
     qrModalImgAlt: "Kod QR",
     qrModalLinkAria: "Link do urządzenia",
     qrModalCodeHint: "familiada.online → Podłącz urządzenie → wprowadź kod",
+    testModeLabel: "Tryb testowy",
+    testModeHint: "Wyświetlacz, prowadzący i przycisk w tym oknie.",
+    testModeTooSmall: "Powiększ okno, aby zmieścić panel i trzy urządzenia bez przewijania.",
+    panelTooSmall: "Powiększ okno, aby zmieścić cały panel bez przewijania.",
     deviceCodeHint: "Wejdź na familiada.online, kliknij \"Podłącz urządzenie\" i wprowadź kod urządzenia.",
     qrCodeBtn: "Kod QR",
     qrOnDisplayToggle: "QR na wyświetlaczu",

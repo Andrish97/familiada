@@ -2003,6 +2003,7 @@ const en = {
 <p class="m-p">The top bar shows Display, Host and Buzzer connections. Device buttons let you reopen links, codes and sharing during play. The main area follows the current stage: devices or the Summary during preparation, questions and answers in rounds, and entry fields or individual answer assessment in the final.</p>
 <p class="m-p">The hints column explains who is answering and what action is needed. The bar below the board shows the playing team and bank in rounds, or the final total during final reveals. The next-action button describes its destination: at major transitions, <span class="m-code">Next</span> becomes, for example, <span class="m-code">Go to the final</span> or <span class="m-code">Finish final</span>.</p>
 <h3 class="m-h2">1) Devices</h3>
+<p class="m-p">To try a game on one computer, enable <span class="m-code">Test mode</span>. The Display, Host and Buzzer appear on the right of the panel, and other connection options become unavailable. The mode stays enabled after refreshing. If the window is too small, enlarge it to enable the mode.</p>
 <p class="m-p">Connect devices first. The top bar shows <span class="m-strong">Display</span>, <span class="m-strong">Host</span> and <span class="m-strong">Buzzer</span> status. Connect all required devices; the Host is optional and the game can be hosted directly from the Control Panel.</p>
 <h4 class="m-h3">Display</h4>
 <p class="m-p">The panel provides a <span class="m-strong">6-digit code</span>. Open the Display on a TV or projector in fullscreen without browser bars. The panel allows the next step once the Display is connected.</p>
@@ -2038,6 +2039,7 @@ const en = {
 <div class="m-warn"><b>Warning:</b><br/>Choose Display when audio should play on a separate TV or other device running the Display page. With HDMI, keeping Control panel as the source and selecting the TV as the computer&#39;s audio output is usually easier; the system often does this automatically. AirPlay sends video and sound from a Mac, iPhone or iPad to Apple TV.</div>
 <p class="m-p"><span class="m-strong">Shortcut:</span> M mutes or restores sound immediately, without Enter.</p>
 <h3 class="m-h2">2) Settings</h3>
+<p class="m-p">In the Summary, select a section using the buttons at the top. Long question and sound lists are split into pages; use Back and Next below the list to move between them.</p>
 <div class="m-host"><strong class="m-host-title">Host:</strong> The tablet shows the logo selected in game settings. If that logo is being edited earlier, it shows the default Familiada logo. When the operator opens the settings Summary, the tablet reloads the selected logo and replaces the temporary default.</div>
 <p class="m-p">After connecting devices, check the settings Summary. Colours, sounds and game parameters can be configured beforehand in <span class="m-strong">Game settings</span> and are loaded automatically.</p>
 <p class="m-p"><span class="m-strong">Shortcuts:</span> In the Summary, E selects settings editing and Enter opens it. B followed by Enter goes back when available.</p>
@@ -4568,6 +4570,10 @@ const en = {
     qrModalImgAlt: "QR Code",
     qrModalLinkAria: "Device link",
     qrModalCodeHint: "familiada.online → Connect device → enter code",
+    testModeLabel: "Test mode",
+    testModeHint: "Display, host and buzzer in this window.",
+    testModeTooSmall: "Enlarge the window to fit the panel and three devices without scrolling.",
+    panelTooSmall: "Enlarge the window to fit the whole panel without scrolling.",
     deviceCodeHint: "Go to familiada.online, click \"Connect device\" and enter the device code.",
     alertOk: "OK",
     colorTitle: "Color",

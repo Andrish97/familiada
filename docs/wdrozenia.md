@@ -7,6 +7,12 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
 ## Zasady
 
+Osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md) —
+**zrobione**, Pages38300728957 success, main38301293181 success3/3.
+Guard zwykłego Control i dodatkowy próg trybu testowego są osobnymi
+regułami; podsumowanie bez przewijania, trzy urządzenia w pasku, zapis flagi
+w istniejącym JSON-ie i etykieta w statystykach. Bez migracji.
+
 1. **Źródła prawdy** (decyzje, mapy, stan docelowy):
    - nawigacja, adresy, karty, strony modalne: [`nawigacja-mapa-plan.md`](nawigacja-mapa-plan.md)
      (sekcja 6 — kroki, sekcja 7 — decyzje, sekcja 8 — adresy),
@@ -871,6 +877,52 @@ Najnowsza zmiana centrum mail-only: globalna rezygnacja nadrzędna, anuluje wszy
 | 2026-10-12 | Auth / zamknięte produkcyjnie | Main fcdea7a889/closure cf1955779d, Edge38298008652 success, branch38297713527 i main38298190111 success1/1 bez retry. Prawdziwy reset test11 przy flag=false, wcześniejsza preferencja przywrócona; main unit467/467. | Nie powtarzać Auth. Centrum360/graf361 nadal osobne. |
 | 2026-10-12 |361 / świeży kontrakt i60 wyścigów | fam361proof: 7 kontraktów360, źródła361 przed binderem, jednorazowe alokacje, 5 rzeczywistych RPC rodzin, TTL, tożsamości, flagi, role/sesje, claim/delivery/requeue i twarde kaskady success.60 wyścigów obu kolejności + legacy child-first odzyskanie Auth success; znaleziony zanik źródła podczas retry daje teraz jawne skipped zamiast błędu RPC. Potwierdzenie centrum i Kontakt sprawdzone ponownie po361. | Jeszcze prototyp/bez migracji. SMTP szablonów przeniesiony do prywatnego HMAC test14 bez podszywania się pod Contact; dalej isolated gate, DDL i finalna migracja/backend oraz branch/main. |
 
+### 2026-10-12 — Control: osobny guard i tryb testowy, pierwsza implementacja
+
+Branch `codex/control-test-mode`: flaga w istniejących ustawieniach,
+trzy aktywne iframe, geometria panelu i osobny próg dostępności, podsumowanie
+z sekcjami i stronicowaniem, oznaczenie statystyk. Point unit29/29;
+pomiary renderera64 przypadki bez przewijania/wyjścia poza obszar.
+To nie zamyka etapu: następne punktowe E2E brancha z produkcyjną bazą,
+zapisem statystyk, odświeżeniem i rzeczywistymi urządzeniami. Dopiero green
+pozwala wdrożyć Pages, potem kontrola main. Nie zmieniano schematu bazy.
+
+Control tryb testowy: branch542efe1f25, pierwszy Actions38297907740 zatrzymany
+przed E2E przez dawny unit wymagający konkretnej dwukolumnowej struktury
+podsumowania. Dopasowano kontrakt do sekcji na pełną szerokość z dostępem
+do wszystkich ustawień, zachowując test pełnych etykiet dźwięków. Kolejne
+lokalne pomiary120 próbek (także powtarzane widoki sekcji podsumowania): zero przewijania
+i wyjść poza panel. Nie jest to jeszcze potwierdzenie połączeń/statystyk.
+
+Control tryb testowy: **38298166305 success**, branch e590062750,
+2/2 E2E bez retry, konta4/5, kod brancha (`TEST_BRANCH_CODE=1`) na bazie
+produkcyjnej. Trzy rzeczywiste iframe1024×768, blokada osobnych opcji,
+przywrócenie po reload, osobny próg trybu bez blokady zwykłego panelu,
+zwężenie aktywnego trybu, odblokowanie dźwięku Display, buzzer i rzeczywisty
+`game_sessions.stats_detail.settings.testMode=true`; renderer statystyk
+pokazuje etykietę tylko dla true. Artefakt production-statistics-records.
+Następna paczka: ochrona podwójnego przełączania/zapis rollback, krótki
+manual PL/EN/UK i screenshoty z prefiksem wymaganym przez workflow; testy
+tej wersji + regresja zwykłego przebiegu przed main. Drugi równoległy
+38298190111 to test hasła innej sesji, nie dowód naszego Control.
+
+Control tryb testowy: **38298597313 success3/3**, branch42bbc92632,
+bez retry/unit467. Tryb i statystyki ponownie green; także zwykła pełna runda
+z rzeczywistymi czterema urządzeniami i wznowieniem Control w rundzie2.
+Podglądy pozostają osobno w Wyglądzie (dwa, własne połówki), obok niezależnego
+paska trzech urządzeń. Finalna kontrola brancha: wyłączenie/ponowne włączenie,
+powrót z guarda, blokada Next podczas zapisu i screenshot sekcji Wygląd.
+
+Zrzut38298597313 obejrzany: układ mieści się, iframe mają równe pola.
+Drobne dopracowanie osadzenia: ukrycie przycisku pełnego ekranu tylko
+wewnątrz iframe testowych i taki sam wygaszony wygląd zablokowanego linku
+Otwórz jak pozostałych przycisków. Zwykłe strony urządzeń bez zmian.
+
+Control tryb: **38299326792 success2/2**, branchf39b3220b3, bez retry;
+wyłączenie/ponowne włączenie i dwa osobno centrowane podglądy potwierdzone.
+Decyzja użytkownika: manual z wzmianką i brak pełnego ekranu w osadzeniu;
+wykonane PL/EN/UK i dla trzech urządzeń. Domykający E2E sprawdza ukrycie FS.
+
 | 2026-10-12 | Auth / pełne oddzielenie od powiadomień | Usunięta dawna awaryjna ścieżka send-email→mail_queue po wyczerpaniu dostawców. Auth bez flag, globalnej rezygnacji i stopki centrum; awaria zwraca błąd wysyłki. Cztery testy funkcji success. Branch38297713527 success1/1 bez retry: prawdziwy mail resetu test11 przy email_notifications=false, preferencja przywrócona w finally. Runner E2E Node22 jak agent-checks. | Ta osobna poprawka nie wdraża centrum360 ani grafu361. Dalej Edge deployment i identyczna kontrola produkcji. |
 
 | 2026-10-12 | Auth / zamknięte produkcyjnie | Main fcdea7a889, unit467/467, Edge38298008652 success. Kontrola38298190111 success1/1 bez retry: prawdziwy reset test11 przy wyłączonych powiadomieniach, poprawny mail bez stopki centrum i link akcji; wcześniejsza preferencja przywrócona w finally. Branch38297713527 success1/1. | Auth nigdy do mail_queue, nie odczytuje flag/globalnej rezygnacji; awaria/brak dostawców jawnie odrzuca wysyłkę (4 unit). Centrum360 i graf361 nadal w przygotowaniu. |
@@ -882,3 +934,44 @@ Najnowsza zmiana centrum mail-only: globalna rezygnacja nadrzędna, anuluje wszy
 | 2026-10-12 |360 / final isolated fixture |38301885755: prototypowe kontrakty i wyścigi przeszły; drugie odtworzenie bazy zatrzymało się na ponownym CREATE ROLE (role wspólne dla klastra). W drugim restore pominięto wyłącznie pierwszą linię ról; schemat/initializer bez zmian. Dopinany cleanup: unieważnienie zgody usuwa pending queue, zachowuje consumed ledger i sending lease; proof FK cascade usuwa nieaktualną weryfikację. | Bez publikacji migracji i bez zmian produkcji360. Dalej powtórna isolated final bramka. |
 
 | 2026-10-12 |360 / DDL runner host |38302758637: wszystkie prototypowe kontrakty/60 wyścigów success, świeży final restore success. DDL runner blokował się podczas synchronicznego przekazywania dużego SQL do stdin przed obsługą bariery; błąd BrokenPipe w teście. Wejście SQL podaje teraz osobny wątek, główny obsługuje rzeczywiste bariery i legacy writer. | Bez zmiany SQL produktu i bez publikacji360. Powtórzyć wyłącznie isolated workflow finalnego pakietu. |
+
+Control tryb: **38299715000 success2/2**, branch1ef53ea667, bez retry;
+ukrycie FS we wszystkich trzech iframe potwierdzone, dwa centrowane podglądy,
+powrót po reload, disable/enable, źródło Display, rzeczywisty buzzer i statystyki.
+Scalono aktualny maincf1955779d w **1eec2fab26**, zachowano oba dopiski
+Dziennika (konflikt tylko w dokumentacji). Wersje zasobów przepisane narzędziem;
+point unit30/30 oraz konflikt/wersjonowanie5/5. Kolejny punktowy test na
+scalonym branchu przed publikacją; nadal nie ma wdrożenia trybu na Pages.
+
+### 2026-10-12 — Control tryb testowy: bramka brancha spełniona, publikacja
+
+**38300241381 success2/2**, bez retry/unit471, finalny scalony branch
+43dc50b9a4 (maincf1955779d uwzględniony). Wszystkie kontrakty trybu i
+statystyk, brak FS w iframe, podglądy, reload, disable/enable, guard i
+buzzer green. Regresja zwykłego przebiegu38298597313 success wcześniej.
+Dodatkowe lokalne pomiary60 przypadków panelu przy980/981/1024/1100px:
+brak przewijania i wychodzenia treści poza panel. Zrzuty rzeczywistych
+urządzeń i podsumowania1400px oraz guarda390px: docs/img/control-test-mode,
+pochodzą z38299715000; robocze pomiary sekcji w control-test-layout/measurements.json.
+Zgoda użytkownika na publikację po testach jest w planie. Brak migracji.
+Następne: push main, Pages success i te same punktowe spece na produkcji.
+
+
+### 2026-10-12 — Control tryb testowy zamknięty produkcyjnie
+
+Main2c166c165e / wersje b5af28c037; **Pages38300728957 success**.
+**Main38301293181 success3/3**, bez retry/unit471, źródło produkcyjne0,
+pula4/5: rzeczywisty tryb/iframe/buzzer/dźwięk/guard/reload/disable-enable,
+dwa centrowane podglądy, brak FS, prawdziwy zapis settings.testMode w
+statystykach i renderer etykiety; zwykły pełny przebieg + reload rundy2.
+Branch38300241381 success2/2 przed publikacją. Zrzuty w
+`docs/img/control-test-mode/` zastąpione produkcyjnymi z38301293181,
+1400px oraz390px (guard). ManualPL/EN/UK gotowy. Bez migracji; testowe gry
+usunięte zwykłym cleanup. Zasada zero przewijania i osobnych progów zapisana
+w planie. Dalsza niezależna kolejka E19 bez zmian.
+
+Doprecyzowanie raportu Control: liczba lokalnych próbek obejmuje również
+powtórzenia widoków; punktowy E2E iteruje rzeczywiście dostępne sekcje
+Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
+
+| 2026-10-12 |360 / końcowy gate success i przygotowanie publikacji | Isolated38303218296 success: prototypowe24+60 wyścigów, świeży final restore, pełne DDL i10 kontraktów finalnych API; local494/494 przed scalenieniem bieżącego Control test-mode z main ce81a3a9af. Finalna migracja360 wygenerowana z tych samych modułów. | Publikacja SQL+Edge+Worker+Pages razem: wyjątek AGENTS dla migracji zmieniającej zachowanie; nowe źródła/API i linki stopki nie działają na starej bazie/bez nowej strony. Po lokalnych bramkach natychmiast rzeczywisty SMTP/UI branch/main. Poprzedni opis „backend, potem Pages” uzupełniony o sprzężoną stronę /mail. |

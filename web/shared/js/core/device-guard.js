@@ -16,7 +16,7 @@
 //             (znika sam po obrocie),
 //   narrow -- komputer z za wąskim oknem: „poszerz okno”.
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-12T19414";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-12T20214";
 
 export const PHONE_MAX_SHORT_SIDE = 700;
 export const MIN_WORK_WIDTH = 980;
@@ -74,10 +74,16 @@ export function blockPhone({ backHref = null } = {}) {
 }
 
 /** Strona potrzebuje szerokiego okna: blokada na żywo (resize / obrót). */
-export function guardDesktopOnly({ minWidth = MIN_WORK_WIDTH, backHref = null } = {}) {
-  function apply() {
+export function guardDesktopOnly({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null } = {}) {
+  const currentState = () => {
     const state = deviceGuardState(minWidth);
-    if (state !== "ok") showDeviceGuard(state, backHref);
+    return state === "ok" && fits && !fits() ? "narrow" : state;
+  };
+  function apply() {
+    const state = currentState();
+    if (state === "narrow" && messageKey) {
+      showPageGuard({ kind: "device", state, iconName: "fullscreen-enter", titleKey: TEXTS.narrow.title, messageKey, backHref });
+    } else if (state !== "ok") showDeviceGuard(state, backHref);
     else hidePageGuard();
     document.documentElement.dataset.deviceGuard = state;
     // Usuń wczesną blokadę (inline script w <head>) — guard przejął kontrolę
@@ -89,5 +95,5 @@ export function guardDesktopOnly({ minWidth = MIN_WORK_WIDTH, backHref = null } 
   window.addEventListener("orientationchange", () => setTimeout(apply, 250));
   apply();
 
-  return { refresh: apply, state: () => deviceGuardState(minWidth) };
+  return { refresh: apply, state: currentState };
 }
