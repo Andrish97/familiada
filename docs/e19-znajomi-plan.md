@@ -1456,3 +1456,7 @@ w Zadaniach i bez zliczania zaakceptowanych lub odrzuconych. Pełna tabela
 i stany w końcowej podsekcji ujednolicenie-wygladu.md; kopie w
 udostepnianie-kopii-plan.md. Uwzględnić w E19C/E20, wcześniejszych
 wykonanych etapów nie oznaczać ponownie jako otwartych.
+
+### Pkt7 — Control: tożsamość i preferencje mailowe (2026-10-12, paczka358)
+
+Używać Auth jako źródła ID i aktualnego adresu: wpisany e-mail/nazwa przez lookup, checkbox wyłącznie przez jawne API wymagające aktywnej znajomości. Zmiana/usunięcie konta, gry i sesji blokowane w kolejności rodzice→grant. Mail kierowany na zwrócony przez serwer mail_to; profile.email nie ustala adresata. Gość nie może udostępniać mailem, publiczne parowanie pozostaje dostępne. Flaga konta lub adresu bez konta sprawdzana przed budżetem i insercją kolejki; dostęp niezależny od maila. Usunięcie znajomości po nadaniu nie unieważnia aktywnego grantu. Stan: backend w repo, przed isolated/SQL gate/front branch/main SMTP; cały pkt7 niezakończony.
