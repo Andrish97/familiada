@@ -301,3 +301,20 @@ nowym funkcjonalnym E2E tej paczki. Audyt atomowości queue/historia pkt7.
 Stopka globalnego wypisania ma być w każdym mailu, także do odbiorcy z kontem; sam odnośnik do ustawień konta nie zastępuje wypisania. Jeden globalny stan odbiorcy obowiązuje wszystkich nadawców i wszystkie miejsca kolejkowania/dostarczania powiadomień. UI może wyjaśniać „Ta osoba zrezygnowała z powiadomień e-mail. Dostęp zostanie nadany bez maila”. Mail-off nie cofa uprawnienia.
 
 Audyt aktualnego Go: przed potwierdzeniem „zablokować wszystkie powiadomienia mailowe”, po nim „Nie będziesz już otrzymywać żadnych maili”, brak instrukcji przywrócenia i brak anonimowego cofnięcia. Ustawienia konta zapisują user_flags, ale nie czyszczą globalnego suppressed_at; niespójność do naprawienia. Dla konta przywrócenie powinno być świadomą akcją właściciela w ustawieniach. Sposób przywrócenia adresu bez konta pozostaje do uzgodnienia; nie ogłaszać bezwarunkowo nieodwracalności ani dodawać samodzielnie anonimowego włączania przez nadawcę. Dopiąć opis skutków i drogi powrotu w Go, wspólną stopkę i macierz flag/zmiany maila/rejestracji/kolejki.
+
+### Decyzja użytkownika — centrum adresu bez konta `/mail/` (2026-10-12)
+
+Strona domyka lukę powrotu do powiadomień i zbiera aktualne powiązania adresu bez przeszukiwania skrzynki. Po globalnym wypisaniu Go przedstawia dwie drogi: zarejestrować konto i świadomie włączyć maile w ustawieniach albo wejść na `/mail/`, podać adres i przywrócić powiadomienia. Dla adresu z kontem komunikat „Masz konto w systemie. Zaloguj się, żeby zarządzać swoimi powiadomieniami” i logowanie; stan ustalany przez kanoniczny Auth.
+
+Potwierdzenie właściciela adresu: przed pokazaniem danych, zdjęciem blokady lub anulowaniem relacji wymagany link potwierdzający wysłany na podany adres. Sam wpis adresu nie stanowi uprawnienia. To mail żądany do zarządzania adresem, dostępny również przy wyłączonych powiadomieniach; nie włącza ich samoczynnie. Potwierdzenie prowadzi przez Go, ma termin ważności i nie ujawnia danych osobie wpisującej cudzy adres. Dopiero po potwierdzeniu następuje świadome włączenie. Zwykłe powiadomienia nadal podlegają nadrzędnej globalnej fladze. Limitowanie żądań potwierdzenia współdzielone, jawny cooldown, bez resetowania limitów zaproszeń/odmów.
+
+| Sekcja `/mail/` po potwierdzeniu | Dane i akcje |
+|---|---|
+| Powiadomienia | Prawdziwy globalny stan adresu, włącz/wyłącz; sam podgląd i odświeżenie nie zmieniają zgody. |
+| Subskrypcje | Wszystkie aktualne aktywne subskrypcje, nazwa nadawcy, wypisz się; wypisanie od konkretnego nadawcy zachowuje odmowę30 dni. |
+| Zaproszenia / ankiety | Aktualne propozycje subskrypcji i ważne ankiety przypisane do adresu, zgodne stany i dostępne akcje jak w Go; bez obejścia terminów, odmów i limitów. |
+| Udostępnione urządzenia | Aktualne granty mailowe dla ważnych sesji Control, gra/nadawca/typ, przejdź do urządzenia; wygasłe/cofnięte znikają zgodnie z grafem. |
+
+Znajomości, Bazy i kopie Gier/Logo wymagają konta, nie są dokładane sztucznie do centrum mail-only. Przegląd nie daje dodatkowych uprawnień i nie unieważnia niczego automatycznie. Braki: wspólne kafelki z przerywaną obwódką. Wspólne wiersze, komunikaty i cooldowny, przewijanie wewnętrzne, telefon/tablet/landscape; zrzuty po wdrożeniu.
+
+Dopiąć graf: adres/preferencja → żądanie potwierdzenia → czasowa sesja centrum → akcja na aktualnym źródle. Rejestracja/zmiana adresu/usunięcie rodzica/wygaśnięcie źródła nie pozwala wykorzystać starej sesji do zarządzania nieaktualnymi danymi. Sesja centrum nie jest kontem Auth, nie tworzy profilu ani gościa. Publiczne wejście ujawnia tylko decyzję o logowaniu wymaganą przez użytkownika; listy i tokeny dostępu dopiero po potwierdzeniu. Tests: konto vs mail-only, global-off, realny mail potwierdzający, brak zgody przed potwierdzeniem, termin/jednorazowość, cudzy/niepoprawny token, wszystkie źródła/statusy, kaskady i wyścigi; potem branch/main.

@@ -1475,3 +1475,7 @@ Audyt po358: producenci przekazują action/target oraz link Go w HTML, ale mail_
 | Przyszłe kopie Gier/Logo / E19C | Niezależny pakiet/oferta odbiorcy | Zamknięta oferta/brak odbiorcy;30 dni dotyczy wyłącznie historii nadawcy | Usunięcie oryginału, nadawcy lub znajomości po wysłaniu nie unieważnia pakietu |
 
 Implementacja następnej paczki: dodające referencje źródeł, walidacja nadawcy/adresata/tokenu podczas insert, oba pickery oraz ostatnia kontrola Worker przed dostawcą. Zweryfikować też requeue i zmianę adresu/flag w trakcie. Historia bez jednoznacznego dowodu nie jest przypisywana heurystycznie; nie wnioskować źródła z samego adresu/tytułu. Zachować dotychczasowe budżety i czasy odmów. Macierz SQL/races/ACL, realne SMTP i Go dla każdej rodziny; migracja i front/Worker przez osobne bramki. Stopka wypisania Control bez konta pozostaje jawnie odnotowaną luką maili, nie wykonaniem358.
+
+### Pkt7 — rozszerzenie centrum powiadomień mail-only (2026-10-12)
+
+Użytkownik rozszerzył zakres o `/mail/`: aktualne subskrypcje, zaproszenia/ankiety i granty urządzeń przypisane do potwierdzonego adresu; globalne przywrócenie powiadomień, konto→login/ustawienia. Źródło kontraktu: maile-granice.md, ostatnia podsekcja. Nie odkładać do manuala ani traktować stopki jako wystarczającego zamknięcia. Powiązać z globalną flagą, Go, tokenami, źródłami/kaskadami i wspólnymi elementami UI. Nadal część E19/pkt7, nie nowy nadrzędny etap. Najpierw domknąć main358, potem globalna stopka/preferencja/centrum i dalsza kolejka zgodnie z bramkami.

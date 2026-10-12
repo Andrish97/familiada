@@ -800,3 +800,7 @@ Branch38259859217: SMTPtest14 + Go/Host/globalne wypisanie/mail-off i brak devic
 ### 2026-10-12 — Control358 branch green, frontend do main
 
 Branch38260515251 success1/1 control358 --retries=0/unit459: rzeczywisty SMTPtest14, Go/Host, globalna flaga, zero kolejki/eventów/device-clock dla mail-off, revoke, friend grant niezależny po usunięciu znajomości i stale checkbox bez fallback. Przepływ konto/nazwa użytkownika/SMTP/Go/duplikat wcześniej green w38258380406 (drugi test tam miał błąd fixture). Oba scenariusze kodu brancha sprawdzone. Front kwalifikuje się do main; następnie Pages i2 tests razem na main, dopiero zamknięcie358. Stopka zawsze i globalne przywracanie flag następną paczką, prototyp359 wyłącznie lokalny.
+
+### 2026-10-12 — Pages Control358 i rozszerzenie centrum maila
+
+Main dbc53057b2, Pages38260925626 success, unit459 po assets. Uruchomiona kontrola main2 tests/retries0/pula1,2,7. Nowa decyzja użytkownika: /mail/ domyka przywracanie globalnych powiadomień i przegląd aktualnych subskrypcji/zaproszeń/urządzeń bez szukania starych maili; adres z kontem→login. Szczegóły maile-granice.md + mapa. Dane/mutacje po potwierdzeniu linkiem mailowym; potwierdzenie na żądanie nie jest zwykłym powiadomieniem blokowanym opt-out. Rozszerzenie w E19/pkt7,6 etapów głównych nadal, manual ostatni.
