@@ -1275,3 +1275,13 @@ jobs:
         with:
           name: e19-347-sql-restore
           path: /tmp/fam-restore.log
+      - name: Verify guest metadata cannot promote anonymous identities
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-guest-metadata-history-354.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-12_354_guest_metadata_identity.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-metadata-history-354.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-metadata-354.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-conversion-identity-352.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
+          python3 docs/sql/test-guest-metadata-354-concurrency.py
