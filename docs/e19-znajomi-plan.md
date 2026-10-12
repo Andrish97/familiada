@@ -142,7 +142,7 @@ pula test1–test8; test9/test10 zarezerwowane.
 | 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | **zrobione** — branch po synchronizacji 38100967351 ✓; Pages 38101052370 ✓; produkcja 38101089865 ✓, unit 401/401. Test zaliczył retry: pierwsza próba nie doczekała maila, który nadal był w kolejce; retry zakończył się pomyślnie |
 | 5. Bazy: jedno okno (udostępnieni + dodawanie), `go?b=`, akceptacja w `/tasks/` | **zrobione** — migracja 322 i front na produkcji; runner SQL 38101686798 ✓; Pages 38102630814 ✓; branch E2E 38102541764 ✓; produkcyjne E2E 38103300067 ✓, 2/2, unit 401/401. Cron `*/2` aktywny; po wydłużeniu timeoutu mail test8 dotarł po 33 s; oba scenariusze bazy zaliczone |
 | 6. Urządzenia: jedno okno, odbiorca bez konta, token unieważniany per osoba i sesję Control | **zrobione — backend i TTL sprawdzone produkcyjnie (38130087825, 38130327633, 38130590463); dopracowany modal i przywrócony styl Urządzeń na main `44063a604`, Pages 38133157139 ✓, branch 38132982841: 2/2 + unit 401/401; kontrola produkcyjna nowego UI 38133215588 ✓: 2/2 + unit 401/401** |
-| 7. Ujednolicenie Znajomych, Subskrybentów i udostępnień wg tabeli zachowań | **w toku**; podpunkty1–6 (wspólny wygląd/listy, kontakty, odmowy/cooldowny, Bazy, Ankiety, maile) zamknięte produkcyjnie. Podpunkt7: kaskady/tożsamość/źródła kontaktów wdrożone;360 źródło→kolejka→dostarczenie oraz centrum /mail/ opublikowane, kontrole produkcyjne otwarte. Dalsze: pełne stany Go, łagodny limit anonimowy i końcowy audyt grafu. |
+| 7. Ujednolicenie Znajomych, Subskrybentów i udostępnień wg tabeli zachowań | **w toku**; podpunkty1–6 (wspólny wygląd/listy, kontakty, odmowy/cooldowny, Bazy, Ankiety, maile) zamknięte produkcyjnie. Podpunkt7: kaskady/tożsamość/źródła kontaktów wdrożone;360 źródło→kolejka→dostarczenie oraz centrum /mail/ zamknięte produkcyjnie (main38308851386:7/7). Dalsze: pełne stany Go, łagodny limit anonimowy i końcowy audyt grafu. |
 
 ### Dalsza realizacja kroku 7 po zamknięciu Control
 
@@ -1479,3 +1479,27 @@ Implementacja następnej paczki: dodające referencje źródeł, walidacja nadaw
 ### Pkt7 — rozszerzenie centrum powiadomień mail-only (2026-10-12)
 
 Użytkownik rozszerzył zakres o `/mail/`: aktualne subskrypcje, zaproszenia/ankiety i granty urządzeń przypisane do potwierdzonego adresu; globalne przywrócenie powiadomień, konto→login/ustawienia. Źródło kontraktu: maile-granice.md, ostatnia podsekcja. Nie odkładać do manuala ani traktować stopki jako wystarczającego zamknięcia. Powiązać z globalną flagą, Go, tokenami, źródłami/kaskadami i wspólnymi elementami UI. Nadal część E19/pkt7, nie nowy nadrzędny etap. Najpierw domknąć main358, potem globalna stopka/preferencja/centrum i dalsza kolejka zgodnie z bramkami.
+
+### Pkt7 /362 — anonimowy formularz i odstęp, wykonanie 2026-10-12
+
+Aktualny kontrakt anonimowego głosu: pełny formularz jest jedną transakcją.
+Dawne rozbijanie anonimowego formularza na porcje po25 nie obejmuje nowej
+ścieżki; pozostało dla osobistych zadań. Prywatny licznik zaczyna30s dopiero
+po zapisaniu całego głosu. Zakres: przeglądarka+gra+bieżący klucz ankiety,
+bez IP. Każdy formularz ma odrębny token głosu; ponowienie po utracie
+odpowiedzi serwera używa tego samego i nie zapisuje głosów drugi raz.
+Nowy głos po30s jest dozwolony; nie ma limitu łącznej liczby głosów.
+Stara lokalna flaga „już głosował” nie blokuje formularza.
+
+Przy odliczaniu odpowiedzi zostają zachowane i widoczny jest przycisk
+z liczbą sekund; po upływie czasu ręczne wysłanie. Błędne/niekompletne
+formularze nie zapisują części głosów ani zegara. Normalizacja odpowiedzi
+tekstowej odbywa się po stronie serwera. Zamknięcie, zmiana klucza/typu/
+właściciela lub usunięcie gry/konta sprząta licznik. Osobiste zadania i
+ręczne porcje właściciela zachowują dotychczasowy kontrakt.
+
+**Stan:** lokalne SQL obu typów (w tym40 pytań),8 wyścigów, atomowy DDL
+ze starym Game-first oraz514 unit success. Podgląd Chromium390/1400 z30
+pytaniami, lokalne zrzuty docs/img/poll-anonymous. Workflow isolated i
+punktowy e2e/poll-anonymous.spec.js przygotowane. SQL/frontend362 jeszcze
+nie wdrożone; wymagają sprzężonego wdrożenia zgodnie z wyjątkiem AGENTS.

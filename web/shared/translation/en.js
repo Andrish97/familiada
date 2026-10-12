@@ -3004,6 +3004,13 @@ const en = {
       resetFailed: "Could not prepare the poll for editing. Try again.",
     },
   },
+  pollAnonymous: {
+    ready: "You can send your answers now.",
+    retry: "Try again",
+    retryIn: "Try again in {seconds} s",
+    wait: "You can send your answers in {seconds} s.",
+    failed: "Your answers could not be sent. Try again.",
+  },
   pollText: {
     title: "Familiada — text poll",
     pollTitle: "Poll",

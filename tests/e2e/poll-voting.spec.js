@@ -157,12 +157,12 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       // Po ostatnim pytaniu powinno przejść do wysyłki i podziękowania
       await expect(page.locator(".sub")).toContainText(/Dziękujemy|Thanks|Дякуємо/, { timeout: 10000 });
 
-      // Sprawdź że localStorage ma mark "już zagłosowałeś"
-      const isDone = await page.evaluate(
-        (key) => localStorage.getItem(`fam_poll_done_${key}`) === "1",
+      // Przeglądarka zachowuje identyfikator tylko dla tej ankiety i uruchomienia.
+      const hasBrowser = await page.evaluate(
+        (key) => Boolean(localStorage.getItem(`fam_anon_browser_${key}`)),
         `${game.gameId}_${game.shareKey}`
       );
-      expect(isDone).toBe(true);
+      expect(hasBrowser).toBe(true);
 
       await deleteGame(page, game.gameId);
     } finally {
@@ -209,11 +209,11 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await expect(page.locator(".sub")).toContainText(/Dziękujemy|Thanks|Дякуємо/, { timeout: 10000 });
 
       // Sprawdź localStorage
-      const isDone = await page.evaluate(
-        (key) => localStorage.getItem(`fam_poll_done_${key}`) === "1",
+      const hasBrowser = await page.evaluate(
+        (key) => Boolean(localStorage.getItem(`fam_anon_browser_${key}`)),
         `${game.gameId}_${game.shareKey}`
       );
-      expect(isDone).toBe(true);
+      expect(hasBrowser).toBe(true);
 
       await deleteGame(page, game.gameId);
     } finally {
@@ -221,7 +221,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: komunikat 'już zagłosowałeś' przy powtórnym wejściu", async ({ page, context }, testInfo) => {
+  test("poll-text: stara flaga ukończenia nie blokuje nowego anonimowego formularza", async ({ page, context }, testInfo) => {
     try {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page, "poll_text");
@@ -240,13 +240,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać komunikat "Już zagłosowałeś" zamiast pytań
-      const closed = page.locator(".closed");
-      await expect(closed).toContainText(/oddałeś głos|already voted|проголосували/, { timeout: 10000 });
-
-      // Formularz powinien być ukryty
-      const qbox = page.locator(".qbox");
-      await expect(qbox).not.toBeVisible();
+      // Complete anonymous votes can repeat; the server controls only the interval.
+      await expect(page.locator(".qtext")).toContainText("Pytanie 1", { timeout: 10000 });
+      await expect(page.locator(".qbox")).toBeVisible();
 
       await deleteGame(page, game.gameId);
     } finally {
