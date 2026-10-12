@@ -985,3 +985,12 @@ maili nie wpływa na te liczniki. Wypustki i przycisk korzystają z jednego
 uzgodnioną historię wysyłek, bez plakietek śledzących decyzje odbiorcy.
 Zweryfikować telefon, tablet i powrót na stronę; istniejące Bazy objąć
 regresją wspólnego mechanizmu, bez ponownego wdrażania go.
+
+### `/mail/` — lekki wzorzec Go (2026-10-12)
+
+Centrum maili: lekki topbar jak Go i jedna karta obejmująca nadrzędną
+sekcję globalnej rezygnacji oraz listy Subskrypcji i Zadań/udostępnień.
+Kolumny na większym ekranie i zakładki mobilne są podziałem wewnątrz
+karty. Opcjonalna krótka zachęta do obejrzenia systemu i rejestracji,
+bez rozbudowanego nagłówka zasobów. Zrzuty po wykonaniu z danymi.
+Źródło zakresu i zachowania: maile-granice.md.

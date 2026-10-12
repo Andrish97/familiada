@@ -345,3 +345,36 @@ Zmiana zastępuje wcześniejszy wariant „tylko mail, źródła pozostają wido
 Granica uprawnień tokenu stopki: obecny email_unsub_tokens.token bywa zwracany nadawcy przez API przygotowania subskrypcji i służy wyłącznie wypisaniu. Nie rozszerzać go na odczyt wszystkich relacji i kluczy urządzeń odbiorcy. Nowy token pełnego centrum jest wydawany tylko przez usługę wysyłki i trafia do odbiorcy w rzeczywistym mailu, nie do przeglądarki/API nadawcy. Historyczne uprawnienie unsubscribe nie staje się odczytem innych zasobów. Ręczne potwierdzenie wydaje odpowiednią ograniczoną sesję po poprawnym linku. Testować brak odkrywania tokenów centrum przez właściciela zasobu i anon, a także prawidłowy dostęp odbiorcy z rzeczywistego maila.
 
 Nadrzędna rezygnacja mail-only obejmuje też nowo próbowane zaproszenia/udostępnienia w czasie blokady: nie powstaje aktywny dostęp ukryty przez frontend. Backend tworzenia/Go/open/vote/device-key/listy/kolejka respektuje stan rodzica. TestControl358 z dostępem bez maila był kontraktem wcześniejszej decyzji; nowy pakiet celowo zmienia globalnie zablokowany adres bez konta, bez przedstawiania358 jako błędnie wdrożonego. Zakres kont nadal czeka na odpowiedź.
+
+### Wygląd centrum maili — decyzja użytkownika 2026-10-12
+
+Wzorzec wizualny: Go. Lekki topbar, następnie **jedna karta z listami**.
+Globalna rezygnacja jako nadrzędna sekcja karty; pod nią Subskrypcje oraz
+Zadania i udostępnienia. Wcześniejszy podział na kolumny/zakładki dotyczy
+sekcji wewnątrz tej karty, nie osobnych rozbudowanych kart ani panelu
+podobnego do Gier. Wspólne wiersze i akcje pozostają zgodne z E19.
+Dopuszczona mała, dyskretna zachęta do obejrzenia Familiady i rejestracji;
+nie zasłania list ani zarządzania powiadomieniami. Brak obowiązku konta.
+
+### Realizacja dostępu centrum — lokalny kontrakt360
+
+Odrębny token stopki i jednorazowego potwierdzenia, losowe32 bajty,
+w bazie wyłącznie skrót; nowe sesje również zapisują tylko skrót.
+Wydanie/wymiana/odczyt zakresu i list przez usługę, nie RPC nadawcy.
+Przeglądarka otrzyma sesję w ciasteczku HttpOnly/Secure, bez sekretu
+w odpowiedzi JSON lub trwałym storage. Ostateczny endpoint i ochrona
+żądań zostaną sprawdzone przed wdrożeniem.
+
+Parametry realizacji: link stopki30 dni (potem nowe potwierdzenie ze
+strony), potwierdzenie15 minut/jednorazowe, sesja1 godzina bez aktywności
+oraz24 godziny maksymalnie. Wygaśnięcie potwierdzenia po jego użyciu nie
+skraca już potwierdzonej sesji; nie przedłuża się jej granica24 godzin.
+Rejestracja/zmiana adresu/usunięcie konta lub rodzica unieważnia wcześniejsze
+uprawnienie, bez odzyskania go przez ponowne użycie starego adresu.
+Globalna rezygnacja pozostawia dostęp do nadrzędnej sekcji przywrócenia,
+które nie przywraca dawnych źródeł ani liczników.
+
+Lokalne szkice w docs/sql/*mail-center*360*, nie migracje produkcyjne.
+Kontrakt bazowy, ACL,24 wyścigi i rezygnacja przez potwierdzoną sesję
+sprawdzone lokalnie. Brakuje list/akcji, ochrony nowych źródeł w czasie
+blokady, żądania potwierdzenia i dostarczenia pełnej stopki oraz UI/Go.

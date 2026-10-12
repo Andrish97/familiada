@@ -822,3 +822,12 @@ Najnowsza zmiana centrum mail-only: globalna rezygnacja nadrzędna, anuluje wszy
 - Lokalnie: 463/463 unit; SQL na pełnym izolowanym schemacie: czyszczenie, załączniki, niezmienione inne źródła/kierunki, powtórne wykonanie migracji, odmowa technicznego nadawcy i akceptacja zwykłych nadawców. Kontrakt produkcyjny wyłącznie z wycofywanymi danymi testowymi, bez wysyłania kontaktu/Telegrama.
 - Scalono bieżący `main` (5d41924dcb), zachowując zmiany drugiej sesji w statystykach Control. Paczka `aea5f23a74` wdrożona: Worker **38267398689 success**, baza **38267398627 success**, migracja OK **15:05:09Z**. Usunięto **13** technicznych kopii, zero z załącznikami; schema/log wróciły w **19983eef0c**.
 - Kontrola produkcyjna **38267524680 success**, punktowy test udostępniania Control 1/1, retries0, konta1/7; rzeczywisty SMTP odebrany przez test7 po **26,9 s**. Test zakończony15:06:15Z; kontrola SQL pustej listy technicznych kopii i ochrony RPC przeszła **15:06:21Z**, po dostarczeniu maila. Unit463/463. Incydent zamknięty; dalsza kolejka grafu/centrum `/mail/` pozostaje aktualna.
+
+### 2026-10-12 — wznowienie po naprawie359 / centrum maili
+
+- Po odpowiedzi kończącej naprawę359 nie działał proces w tle. Na prośbę o postęp wznowiono pkt7; sześć etapów głównych pozostaje otwartych.
+- Lokalny prototyp `/tmp/e19-360/mail-center-access-prototype.sql` zastosowany w izolowanej `fam360draft`: hashowane tokeny i sesje, wydanie/wymiana tylko service-role, odrębne od widocznego nadawcy tokenu wypisania, unieważnianie po zmianie tożsamości. Jeszcze bez migracji/produkcji; testy kontraktów i wyścigów w toku.
+- Wygląd doprecyzowany: Go, lekki topbar, jedna karta z listami; dopuszczona dyskretna zachęta do obejrzenia systemu/rejestracji. Sekcje/kolumny/zakładki wewnątrz karty. Źródła maile-granice.md oraz ujednolicenie-wygladu.md zaktualizowane.
+- Potwierdzono zakres dalszej krawędzi grafu: źródło→oczekujący mail→dostarczenie. Kontrola przy dodawaniu istnieje; trwałe powiązanie źródła i kontrola aktualności przy pobraniu/wysyłce nadal otwarte.
+
+-360 lokalny dostęp: kontrakt hashowania/ACL/TTL/jednorazowości/kaskad/tożsamości success;24 wyścigi wymiany przeciw drugiej wymianie, rejestracji, cofnięciu i usunięciu rodzica, obie kolejności×3. Rezygnacja przez potwierdzoną sesję zamyka subskrypcje/task/urządzenia; przywrócenie flagi nie odtwarza źródeł. Szkice trwale w docs/sql, osobna izolowana bramka mail-center-checks bez wdrożenia. Listy/nowe źródła/Worker/stopka/UI nadal w realizacji.
