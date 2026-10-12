@@ -741,3 +741,5 @@ Stan szczegółowy:
 | 2026-10-12 | E19N / URL dialogów i Dalej | Pełnoekranowe dialogi mają jawny stan URL (przykład dialog=share) i wymagany zasób; Wstecz zamyka, Dalej ponownie otwiera, odświeżenie/link odtwarza po walidacji. Bez powtarzania działań i bez dawnego iframe/modal strony. | Skorygowano zapis samego history.state; katalog parametrów w mapie przed wdrożeniem. |
 
 | 2026-10-12 |357 / isolated ACL starszych Baz |38242263678: nowe kontrakty i24 wyścigi success, stara regresja337 zatrzymała się na ACL eksportu bez uprawnień. Izolacja odtwarza teraz rzeczywiste337/339 przed357 (tak jak inne obszary), zamiast samych polityk. Produkt357 bez zmiany. | Ponowna bramka isolated przed wdrożeniem; nie ogłaszać357 produkcyjnym. |
+
+| 2026-10-12 |357 / precyzyjny restore uprawnień |38242603106: source/identity/24 races +4 regresje Baz success; pełne odtworzenie337 nadpisało nowszy Go resolver, złapała to regresja346. Zastąpiono je izolowanym replay wyłącznie istniejących ACL i polityk337, bez zmiany treści funkcji. | Produkt357 bez zmiany; ponowna izolacja całej macierzy przed produkcją. |

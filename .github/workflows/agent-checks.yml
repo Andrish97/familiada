@@ -1323,8 +1323,7 @@ jobs:
       - name: Verify base invitations follow their explicit source
         if: ${{ inputs.verify_e19_348 }}
         run: |
-          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_337_base_refusal_contract.sql
-          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_339_base_mail_flag_availability.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/restore-base-test-permissions-337.sql
           bash docs/sql/test-base-share-sources-357-ddl-concurrency.sh
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-share-sources-357.sql
           python3 docs/sql/test-base-share-sources-357-concurrency.py
