@@ -5,6 +5,14 @@ pierwszy do wdrożenia. Ten plik jest źródłem prawdy dla tego etapu.
 
 ---
 
+## Decyzje — poprawka ikon AI w Ustawieniach (2026-10-12)
+
+Użytkownik zgłosił znany na Androidzie problem przezroczystości przy ikonach
+zmiany kolejności providerów AI. Zastosować istniejący wzorzec kryjącego
+podłoża i przycisków oraz wyłączenia filter/transform dla dotyku.
+Dla tej punktowej poprawki użytkownik zezwolił na bezpośrednie wdrożenie
+na `main` bez uruchamiania testów. Zrzuty z przykładowymi danymi: 390/1400 px.
+
 ## 1. Strony list — wspólny układ
 
 Dotyczy: `/games/`, `/bases/`, `/logo/`, `/polls-hub/`, `/subscriptions/`.
