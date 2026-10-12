@@ -6,7 +6,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
 ## Zanim zaczniesz
 
 - **Przekazanie z 2026-10-10:** [`docs/przekazanie.md`](docs/przekazanie.md) — co
-  zrobione, następny krok (E19 krok 3), otwarte sprawy.
+  zrobione, aktualny następny krok i otwarte sprawy.
 
 - Przeczytaj [`docs/wdrozenia.md`](docs/wdrozenia.md) — kolejka etapów,
   stan, zasady i odnośniki do sekcji z decyzjami. To jest plan; rozmowa
@@ -14,6 +14,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
 - Decyzje użytkownika zapisuj od razu w sekcji „Decyzje” właściwego
   dokumentu (`docs/nawigacja-mapa-plan.md`, `docs/blokady-zasobow.md`,
   `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
+  Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
 
 ## Cykl wdrożenia (decyzja 2026-10-10) — każda zmiana potwierdzona testem na produkcji
 
