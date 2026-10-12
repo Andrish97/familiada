@@ -1,0 +1,105 @@
+name: Mail center isolated contracts
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/mail-center-checks.yml'
+      - 'docs/sql/*mail-center*360*'
+      - 'docs/sql/*mail-notification*361*'
+permissions:
+  contents: read
+jobs:
+  verify-mail-center:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore actual schema and account initialization
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/mail-center-schema.sql
+          psql -v ON_ERROR_STOP=1 -f /tmp/mail-center-schema.sql > /tmp/mail-center-restore.log 2>&1
+          psql -v ON_ERROR_STOP=1 -f docs/sql/restore-identity-auth-triggers-358.sql
+      - name: Verify private capability and verified resignation drafts
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-access-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-resignation-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-lists-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-source-guards-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-confirmation-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-delivery-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-preferences-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-cleanup-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-access-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-resignation-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-source-guards-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-confirmation-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-delivery-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-preferences-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-cleanup-360.sql
+          python3 docs/sql/test-mail-center-access-360-concurrency.py
+      - name: Verify notification sources, budgets and delivery graph
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-sources-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-sources-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-allocations-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-rpc-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-bind-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-revocation-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-delivery-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-allocations-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-delivery-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-revocation-361.sql
+          python3 docs/sql/test-mail-notification-concurrency-361.py
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-confirmation-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-delivery-360.sql
+      - name: Restore a clean database for the final migration
+        env:
+          PGDATABASE: fam_final
+        run: |
+          psql -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE fam_final'
+          sed '1d' docs/sql/local-stubs.sql > /tmp/mail-center-final-stubs.sql
+          psql -v ON_ERROR_STOP=1 -f /tmp/mail-center-final-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          psql -v ON_ERROR_STOP=1 -f /tmp/mail-center-schema.sql > /tmp/mail-center-final-restore.log 2>&1
+          psql -v ON_ERROR_STOP=1 -f docs/sql/restore-identity-auth-triggers-358.sql
+      - name: Verify complete migration and legacy DDL lock order
+        env:
+          PGDATABASE: fam_final
+        run: |
+          python3 docs/sql/test-mail-center-final-ddl-360.py
+          for name in access resignation source-guards confirmation delivery preferences cleanup; do
+            sed 's/_prototype//g' "docs/sql/test-mail-center-${name}-360.sql" > "/tmp/test-final-${name}.sql"
+            psql -v ON_ERROR_STOP=1 -f "/tmp/test-final-${name}.sql"
+          done
+          for name in allocations delivery revocation; do
+            sed 's/_prototype//g' "docs/sql/test-mail-notification-${name}-361.sql" > "/tmp/test-final-source-${name}.sql"
+            psql -v ON_ERROR_STOP=1 -f "/tmp/test-final-source-${name}.sql"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mail-center-isolated-restore
+          path: |
+            /tmp/mail-center-restore.log
+            /tmp/mail-center-final-restore.log

@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
+import { notificationReference } from '../../supabase/functions/_shared/notification-reference.js';
 const read = file => fs.readFileSync(new URL('../../' + file, import.meta.url), 'utf8');
 const resultModule = await import('data:text/javascript;base64,' + Buffer.from(read('supabase/functions/_shared/mail-queue-results.js')).toString('base64'));
 const source = read('supabase/functions/send-mail/index.ts')
   .replace(/^import .*;\n/gm, '')
-  .replaceAll(': string | null', '').replaceAll(': string', '').replaceAll(': any', '')
+  .replaceAll(': any[]', '').replaceAll(': string | null', '').replaceAll(': string', '').replaceAll(': any', '')
   .replace(/Deno.env.get\(([^)]*)\)!/g, 'Deno.env.get($1)');
 function handler() {
   const state = { inserted: [], error: null, batchMax: 100, rows: [] };
@@ -17,7 +18,7 @@ function handler() {
   const anonymous = { auth: { getUser: async token => token === 'valid-test-token' ? { data: { user: { id: 'test-owner' } } } : { data: {}, error: new Error('Invalid token') } } };
   const context = vm.createContext({ Response, Request, Date, JSON, String, Number, Math, crypto: webcrypto,
     Deno: { env: { get: key => key } }, createClient: (_url, key) => key === 'SUPABASE_SERVICE_ROLE_KEY' ? service : anonymous,
-    serve: fn => { state.handler = fn; }, mailQueueResult: resultModule.mailQueueResult });
+    serve: fn => { state.handler = fn; }, mailQueueResult: resultModule.mailQueueResult, notificationReference });
   vm.runInContext(source, context);
   state.request = async (body, { token = 'valid-test-token', method = 'POST', raw = false } = {}) => {
     const request = new Request('https://example.com/functions/v1/send-mail', { method, headers: token ? { authorization: `Bearer ${token}` } : {}, ...(method === 'POST' ? { body: raw ? body : JSON.stringify(body) } : {}) });
@@ -26,7 +27,7 @@ function handler() {
   };
   return state;
 }
-const item = to => ({ to, subject: 'Test', html: '<p>Test</p>', cooldownActionKey: 'friend:invite', cooldownTargetKey: `email:${to}` });
+const item = to => ({ to, subject: 'Test', html: '<a href="https://www.familiada.online/go/?f=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa">Test</a>', cooldownActionKey: 'friend:invite', cooldownTargetKey: `email:${to}` });
 test('full send-mail handler returns actual queued0/mixed/full results, keeping owner and policy in inserted rows', async () => {
   const app = handler();
   const body = { items: [item('test8@familiada.online'), item('test14@familiada.online')] };
@@ -53,5 +54,8 @@ test('full send-mail handler rejects unauthorized, malformed, empty and missing-
   for (const token of ['', 'invalid-test-token']) assert.equal((await app.request(item('test8@familiada.online'), { token })).status, 401);
   for (const raw of ['', '{']) assert.equal((await app.request(raw, { raw: true })).status, 400);
   for (const body of [null, 14, "body", [], {}, { to: 'test8@familiada.online', subject: 'Test', html: '<p>Test</p>' }]) assert.equal((await app.request(body)).status, 400);
+  for (const cooldownActionKey of ['admin:compose','contact:confirmation','auth:reset_password']) {
+    assert.equal((await app.request({...item('test8@familiada.online'),cooldownActionKey})).status,400);
+  }
   assert.equal((await app.request(null, { method: 'OPTIONS', token: '' })).status, 204);
 });

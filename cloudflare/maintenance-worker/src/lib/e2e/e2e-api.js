@@ -80,6 +80,50 @@ export async function handleE2EApi(request, env, url) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 
+  if (url.pathname === "/_e2e_api/mail-center-preference" && request.method === "POST") {
+    let body;
+    try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
+    const stamp = body?.suppressed_at;
+    if (stamp !== null && (typeof stamp !== "string" || stamp.length > 40 || !Number.isFinite(Date.parse(stamp)))) {
+      return json({ ok: false, error: "invalid_preference_fixture" }, 400);
+    }
+    // Restore precisely the prior test14 flag; no source resurrection/budget reset.
+    const result = await supabaseRequest(env, "/rest/v1/email_unsub_tokens?email=eq.test14%40familiada.online", {
+      method: "PATCH", body: { suppressed_at: stamp },
+    });
+    return json({ ok: result.ok }, result.ok ? 200 : 502);
+  }
+
+  if (url.pathname === "/_e2e_api/mail-center-capabilities" && request.method === "DELETE") {
+    // Only the anonymous test mailbox; never touch preferences or source budgets.
+    const result = await supabaseRequest(env, "/rest/v1/mail_center_links?email=eq.test14%40familiada.online", { method: "DELETE" });
+    return json({ ok: result.ok }, result.ok ? 200 : 502);
+  }
+
+  // Template SMTP fixtures are private test traffic. They use the ordinary
+  // preference-checked service route, never a forged contact/resource source.
+  if (url.pathname === "/_e2e_api/mail-template-fixtures" && request.method === "POST") {
+    let body;
+    try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
+    if (body?.recipient !== "test14@familiada.online" || !Array.isArray(body.items) || body.items.length < 1 || body.items.length > 15) {
+      return json({ ok: false, error: "invalid_fixture_batch" }, 400);
+    }
+    const validSubject = /^E2E-PKT6-\d{10,16}-(?:(?:pl|en|uk)-(?:confirmation|reply|compose|manual)|marketing-(?:invitation|newsletter|custom))$/;
+    if (body.items.some(item => !item || typeof item.subject !== "string" || !validSubject.test(item.subject)
+      || typeof item.html !== "string" || !item.html || item.html.length > 64000)) {
+      return json({ ok: false, error: "invalid_fixture_document" }, 400);
+    }
+    const rows = body.items.map(item => ({ created_by: null, to_email: "test14@familiada.online",
+      subject: item.subject, html: item.html, status: "pending", not_before: new Date().toISOString(), attempts: 0,
+      cooldown_action_key: "admin:marketing", cooldown_target_key: "e2e-template:test14",
+      meta: { e2e_template_fixture: true } }));
+    const result = await supabaseRequest(env, "/rest/v1/mail_queue?select=id", {
+      method: "POST", headers: { Prefer: "return=representation" }, body: rows,
+    });
+    if (!result.ok) return json({ ok: false, error: "fixture_queue_failed" }, 502);
+    return json({ ok: true, queued: Array.isArray(result.data) ? result.data.length : 0 });
+  }
+
   if (url.pathname === "/_e2e_api/mark-test-guest" && request.method === "POST") {
     const token = request.headers.get("Authorization") || "";
     if (!token.startsWith("Bearer ")) return json({ok:false,error:"guest_token_required"},401);

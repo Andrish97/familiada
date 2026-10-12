@@ -508,3 +508,37 @@ Blokady i walidacja snapshotu zgodnie ze wspólnym eksportem/importem.
 Adres bez konta → globalna rezygnacja → subskrypcje/propozycje + bieżące zadania ankiet + granty mailowe urządzeń. Rezygnacja zamyka dzieci, brak widocznych list i brak nowych aktywnych dzieci podczas blokady; włączenie flagi nie przywraca zamkniętych źródeł ani budżetów. Root(mail) i wszystkie rodzice kontaktów/gier/sesji przed dziećmi i kolejką; uwzględnić dawne cleanup child-first, registration/email change oraz wyścig tworzenia z rezygnacją. Zakończone agregaty mają dotychczasowy wyjątek retencji.
 
 Token stopki → czasowa sesja centrum → uprawnienie do konkretnego aktualnego źródła. Token pełnego centrum tylko w dostarczonym mailu, nigdy zwracany nadawcy. Historyczny token samego wypisania nie uzyskuje nowych uprawnień do cudzych danych. Pojawienie się konta na adresie kończy anonimowe zarządzanie i wymaga loginu. Zakres anulowania dla zarejestrowanych jest pytaniem otwartym; nie stosować go do zaakceptowanych ról Baz ani kopii bez odpowiedzi.
+
+### Kolejka i źródło zaproszenia — lokalny kontrakt361 (2026-10-12)
+
+Prototyp, jeszcze bez wdrożenia. Jedna skuteczna próba z dotychczasowego
+RPC rezerwującego budżet daje jedną prywatną zgodę na zapis maila. Usunięcie
+maila z kolejki nie pozwala jej ponownie wykorzystać. Cofnięcie źródła,
+zmiana jego odbiorcy, roli lub sesji oraz wyłączenie maili unieważnia stare
+zgody; przywrócenie nie ożywia wcześniejszej kolejki ani budżetu.
+
+| Rodzina | Aktualny rodzic / źródło | Koniec ważności maila | Dostęp niezależny od maila |
+|---|---|---|---|
+| Znajomi | Kanoniczne konta → konkretne zaproszenie; ewentualna subskrypcja źródłowa | Decyzja, cofnięcie, zmiana tożsamości lub zamknięcie źródła | Tak; sama flaga konta wyłącza mail |
+| Subskrybenci | Właściciel → konkretny adres bez konta → zaproszenie | Decyzja, zamknięcie, zmiana adresu lub rejestracja | Anonimowa globalna rezygnacja zamyka także relację |
+| Ankiety | Właściciel → gra → bieżące uruchomienie → zadanie → źródło kontaktu | Koniec uruchomienia, decyzja/głos, cofnięcie źródła lub zmiana odbiorcy | Flaga konta nie usuwa zadania; anonimowa globalna rezygnacja zamyka je |
+| Bazy | Właściciel → baza → oczekujące nadanie roli → źródło kontaktu | Decyzja, pięć dni, zmiana roli, cofnięcie źródła lub usunięcie rodzica | Przyjęta rola przeżywa usunięcie znajomości |
+| Urządzenia | Właściciel → gra → konkretna sesja Control → grant urządzenia | Cofnięcie grantu, zakończenie/wygaśnięcie sesji (1h bez aktywności), usunięcie rodzica | Późniejsze usunięcie znajomości nie cofa nadanego grantu |
+
+W każdej ścieżce: źródło → prywatna zgoda na próbę → kolejka → wybór
+i świeża kontrola przed każdym dostawcą. Usunięcie źródła/rodzica usuwa
+jego zgody i oczekującą kolejkę. Żywego zadania nie odtwarzamy przez sam
+HTML/token starego maila. „Oczekuje” → „Otwarte” nie unieważnia maila.
+Ponowienie nie przejmuje aktywnej wysyłki i nie usuwa przyszłego terminu.
+
+Obsługa konta (Edge send-email) jest osobną ścieżką bez kolejki i blokad
+powiadomień. Kontakt ma rzeczywisty raport/wiadomość jako źródło wyjątku;
+zamówiony dostęp do centrum ma prywatny dowód. Podgląd SMTP szablonów
+nie udaje tych źródeł: prywatny HMAC endpoint tylko do test14, bez obejścia
+flagi, bez prawdziwego zgłoszenia/Telegrama. Kopie Gier/Logo E19C dostaną
+osobną ścieżkę należącą do odbiorcy; usunięcie nadawcy nie kasuje paczki.
+
+Lokalnie: świeży pełny schemat + wszystkie kontrakty360/361 oraz60
+wyścigów (5 rodzin × tworzenie/delivery × cofnięcie/usunięcie/flaga ×
+obie kolejności), także sprawdzenie odzyskania Auth przez stary child-first
+zapis. To nie zamyka całego pkt7 ani produkcyjnych bramek.

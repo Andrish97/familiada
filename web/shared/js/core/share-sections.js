@@ -6,8 +6,8 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-12T20271";
-import { icon } from "./icons.js?v=v2026-10-12T20271";
+import { t } from "../../translation/translation.js?v=v2026-10-12T20501";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-12T20501";
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
 
@@ -69,7 +69,8 @@ export function shareRowEl(row) {
     b.title = a.title || "";
     b.setAttribute("aria-label", a.title || a.key);
     if (a.disabled) b.disabled = true;
-    b.innerHTML = a.icon ? icon(a.icon) : esc(a.text || "");
+    const actionIcon = sharingActionIcon(a.key, a.icon);
+    b.innerHTML = actionIcon ? icon(actionIcon) : esc(a.text || "");
     b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e, b); });
     let labelEl = null;
     if (a.countdown) {
@@ -202,7 +203,8 @@ export function rowEl(row) {
   const acts = el.querySelector(".rowsActions");
   for (const a of row.actions || []) {
     const label = a.title || a.text || a.key;
-    const iconOnly = a.iconOnly || a.icon === "trash" || !a.text;
+    const actionIcon = sharingActionIcon(a.key, a.icon);
+    const iconOnly = a.iconOnly || actionIcon === "trash" || !a.text;
     const b = document.createElement("button");
     b.type = "button";
     b.className = "btn xsm rowsAct" + (a.gold ? " gold" : "") + (iconOnly ? " rowsAct--icon" : "");
@@ -211,7 +213,7 @@ export function rowEl(row) {
     b.setAttribute("aria-label", label);
     if (a.disabled) b.disabled = true;
     b.innerHTML = (a.text && !iconOnly ? `<span class="rowsActText">${esc(a.text)}</span>` : "")
-      + (a.icon ? `<span class="rowsActIcon">${icon(a.icon)}</span>` : "");
+      + (actionIcon ? `<span class="rowsActIcon">${icon(actionIcon)}</span>` : "");
     b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e, b); });
     acts.append(b);
   }

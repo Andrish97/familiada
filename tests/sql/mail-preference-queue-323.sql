@@ -1,7 +1,11 @@
 -- Produkcyjny smoke test migracji 323. Całość jest w transakcji i kończy
 -- ROLLBACK, więc nie pozostawia wierszy user_flags ani mail_queue.
+-- Po360 zwykły serwisowy mail ma created_by=NULL; powiadomienia użytkownika
+-- wymagają żywego źródła i rezerwacji z RPC (osobne kontrakty360/361).
 \set ON_ERROR_STOP on
 BEGIN;
+INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce)
+ VALUES('admin:marketing','pair',0,false) ON CONFLICT DO NOTHING;
 DO $$
 DECLARE
   v_sender uuid;
@@ -27,17 +31,17 @@ BEGIN
     ON CONFLICT (user_id) DO UPDATE SET email_notifications=true;
 
   INSERT INTO public.mail_queue(created_by,to_email,subject,html,cooldown_action_key,cooldown_target_key)
-    VALUES(v_sender,v_muted_email,'E19-323-muted-'||gen_random_uuid(),'','legacy:unclassified','e19-323-muted');
+    VALUES(NULL,v_muted_email,'E19-323-muted-'||gen_random_uuid(),'','admin:marketing','e19-323-muted');
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows <> 0 THEN RAISE EXCEPTION 'disabled account was inserted into mail_queue'; END IF;
 
   INSERT INTO public.mail_queue(created_by,to_email,subject,html,cooldown_action_key,cooldown_target_key)
-    VALUES(v_sender,v_enabled_email,'E19-323-enabled-'||gen_random_uuid(),'','legacy:unclassified','e19-323-enabled');
+    VALUES(NULL,v_enabled_email,'E19-323-enabled-'||gen_random_uuid(),'','admin:marketing','e19-323-enabled');
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows <> 1 THEN RAISE EXCEPTION 'enabled account was not inserted into mail_queue'; END IF;
 
   INSERT INTO public.mail_queue(created_by,to_email,subject,html,cooldown_action_key,cooldown_target_key)
-    VALUES(v_sender,'test14@familiada.online','E19-323-no-account-'||gen_random_uuid(),'','legacy:unclassified','e19-323-no-account');
+    VALUES(NULL,'test14@familiada.online','E19-323-no-account-'||gen_random_uuid(),'','admin:marketing','e19-323-no-account');
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows <> 1 THEN RAISE EXCEPTION 'mailbox without an account was not inserted into mail_queue'; END IF;
 END $$;

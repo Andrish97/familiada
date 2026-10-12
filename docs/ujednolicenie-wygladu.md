@@ -993,3 +993,56 @@ maili nie wpływa na te liczniki. Wypustki i przycisk korzystają z jednego
 uzgodnioną historię wysyłek, bez plakietek śledzących decyzje odbiorcy.
 Zweryfikować telefon, tablet i powrót na stronę; istniejące Bazy objąć
 regresją wspólnego mechanizmu, bez ponownego wdrażania go.
+
+### `/mail/` — lekki wzorzec Go (2026-10-12)
+
+Centrum maili: lekki topbar jak Go i jedna karta obejmująca nadrzędną
+sekcję globalnej rezygnacji oraz listy Subskrypcji i Zadań/udostępnień.
+Kolumny na większym ekranie i zakładki mobilne są podziałem wewnątrz
+karty. Opcjonalna krótka zachęta do obejrzenia systemu i rejestracji,
+bez rozbudowanego nagłówka zasobów. Zrzuty po wykonaniu z danymi.
+Źródło zakresu i zachowania: maile-granice.md.
+
+### Ostatnia korekta wyglądu `/mail/` — 2026-10-12
+
+Sekcja globalnej rezygnacji **nad** kartą list. Karta ma rzeczywiste
+wypustki jak Ankiety: ten sam HTML/CSS, dwie zakładki Subskrypcje oraz
+Zadania, również na komputerze. Zastępuje wcześniejsze dwie równoczesne
+kolumny i prostokątne mobilne przyciski. Tytuł „Moje powiadomienia”
+w stylu nagłówka Gier, złote logo, lekki topbar; stopka stale przy dolnej
+krawędzi przez pełną wysokość układu. Globalna rezygnacja ukrywa kartę
+list, zachowuje nadrzędną sekcję przywrócenia.
+
+Ostateczne doprecyzowanie ikon wszystkich udostępnień: X dla odmowy,
+rezygnacji, opuszczenia dostępu przez odbiorcę; śmietnik dla usunięcia
+zasobu, relacji lub cofnięcia/anulowania własnego udostępnienia przez
+nadawcę. Samo zamknięcie okna nadal X. Wspólny sharingActionIcon oraz
+renderery udostępnień pilnują tej semantyki; podpis opisuje akcję.
+Zastępuje przejściową interpretację „śmietnik przy każdej rezygnacji”.
+
+### Kontakt w stopce — decyzja użytkownika 2026-10-12
+
+Formularz Kontakt jest dostępny na każdej stronie, również bez logowania.
+W `/mail/` wspólny przycisk data-contact-modal i istniejący formularz,
+bez drugiej implementacji. „Poznaj system” prowadzi do `/` (strona główna),
+„Logowanie i rejestracja” do `/login/`. Audyt pozostałych stron obejmuje
+obecność przycisku, otwarcie anonimowe i zachowanie pełnego ekranu/landscape.
+Nie wysyłać prawdziwego zgłoszenia podczas podglądu/testów — wywołuje
+powiadomienie admina; transport zastąpić kontrolowanym testowym odbiorem.
+
+Korekta podglądu Kontakt: na pełnym ekranie telefonu Wstecz w topbarze zamiast X,
+także na stronach bez przycisku Wstecz w topbarze (np. `/mail/`). Nagłówek
+ma tło zgodne z treścią modala, bez jaśniejszego prostokąta. Na stronach
+z istniejącym wspólnym trybem sheet nadal przejmowany jest przycisk
+topbara. Zwykłe okno na komputerze zachowuje zamknięcie X.
+Gdy strona nie ma przejmowanego przycisku, pełnoekranowy Kontakt ma
+dedykowany przycisk we wspólnym topbarze. W `/mail/` wspólny sheet mieści
+się w mail-wrap; topbar ze zmianą języka i stopka strony pozostają widoczne.
+Wstecz nie ląduje w nagłówku formularza. Własny topbar pełnoekranowy
+dotyczy wyłącznie stron, na których nie istnieje wspólna struktura strony.
+
+Stopka `/mail/`: wspólna `.footer`, linia oddzielająca, podpis Familiada
+i Kontakt; bez dodatkowych zachęt w stopce. „Poznaj system” oraz logowanie
+pozostają małą sekcją treści centrum, niewidoczną podczas Kontakt.
+Wspólne Wstecz topbara: ikona i napis wyśrodkowane pionowo, jawny odstęp6px,
+równy padding boków i wysokość zgodna z przyciskiem języka.

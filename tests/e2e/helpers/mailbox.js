@@ -68,4 +68,22 @@ async function readMailDelivery({ recipient, after }) {
   return api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
 }
 
-module.exports = { readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
+async function queueMailTemplateFixtures(items) {
+  return api("/mail-template-fixtures", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recipient: "test14@familiada.online", items: items.map(({ subject, html }) => ({ subject, html })) }),
+  });
+}
+
+async function clearMailCenterCapabilities() {
+  return api("/mail-center-capabilities", { method: "DELETE" });
+}
+
+async function restoreMailCenterPreference(suppressedAt) {
+  return api("/mail-center-preference", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ suppressed_at: suppressedAt }),
+  });
+}
+
+module.exports = { restoreMailCenterPreference, clearMailCenterCapabilities, queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };

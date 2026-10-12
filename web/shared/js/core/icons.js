@@ -249,3 +249,13 @@ if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
   else start();
 }
+
+// Shared meaning for invitation/sharing actions. Sender cancellation removes
+// their grant; recipient rejection/withdrawal expresses their own decision.
+const SHARING_ACTION_ICONS = new Map([
+  ['decline','close'], ['reject','close'], ['withdraw','close'], ['leave','close'],
+  ['delete','trash'], ['remove','trash'], ['revoke','trash'], ['cancel','trash'],
+]);
+export function sharingActionIcon(action, fallback = '') {
+  return SHARING_ACTION_ICONS.get(action) || fallback;
+}

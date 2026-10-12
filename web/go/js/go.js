@@ -1,10 +1,11 @@
 // web/go/js/go.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T20271";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-12T20271";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-12T20271";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-12T20271";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T20501";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-12T20501";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-12T20501";
+import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-12T20501";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-12T20501";
 
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T20271";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T20501";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -78,6 +79,14 @@ const subToken = qs.get("s");
 const friendToken = qs.get("f");
 const baseToken = qs.get("b");
 const unsubToken = qs.get("u");
+const mailCenterToken = qs.get("m");
+if (mailCenterToken) {
+  const center = new URL(linkTo("mailCenter"), location.origin);
+  center.searchParams.set("m", mailCenterToken);
+  const lang=qs.get("lang"); if (["pl","en","uk"].includes(lang)) center.searchParams.set("lang",lang);
+  location.replace(center.href);
+}
+
 const actionParam = qs.get("action");
 const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
 const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);
@@ -148,10 +157,15 @@ function showEmailInput(show) {
   if (emailRow) emailRow.style.display = show ? "flex" : "none";
 }
 
-function addAction(label, kind, handler) {
+function addAction(label, kind, handler, action = "") {
   const btn = document.createElement("button");
   btn.className = `btn sm ${kind || ""}`.trim();
-  btn.textContent = label;
+  const actionIcon = sharingActionIcon(action);
+  if (actionIcon) {
+    const image = document.createElement("span"); image.innerHTML = icon(actionIcon);
+    const caption = document.createElement("span"); caption.textContent = label;
+    btn.append(image, caption);
+  } else btn.textContent = label;
   btn.addEventListener("click", handler);
   actions?.appendChild(btn);
 }
@@ -408,7 +422,7 @@ function showSubInviteLoggedIn(head, userEmail, expectedEmail) {
   clearActions();
   showEmailInput(false);
   addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(userEmail || expectedEmail));
-  addAction(MSG.declineLabel(), "danger", async () => declineSub());
+  addAction(MSG.declineLabel(), "danger", async () => declineSub(), "decline");
 }
 
 // Helper: sub invite niezalogowany bez account invite
@@ -417,7 +431,7 @@ function showSubInviteAnonEmail(head, subscriberEmail) {
   clearActions();
   showEmailInput(false);
   addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(subscriberEmail));
-  addAction(MSG.declineLabel(), "danger", async () => declineSub());
+  addAction(MSG.declineLabel(), "danger", async () => declineSub(), "decline");
 }
 
 async function handleSubInvite(data, user) {
@@ -517,7 +531,7 @@ function showTaskInviteLoggedIn(head, pollType) {
   clearActions();
   showEmailInput(false);
   addAction(MSG.voteLabel(), "gold", () => openVote(pollType));
-  addAction(MSG.declineLabel(), "danger", async () => declineTask());
+  addAction(MSG.declineLabel(), "danger", async () => declineTask(), "decline");
 }
 
 // Helper: task invite niezalogowany bez account invite
@@ -526,7 +540,7 @@ function showTaskInviteAnon(head, pollType) {
   clearActions();
   showEmailInput(false);
   addAction(MSG.voteLabel(), "gold", () => openVote(pollType));
-  addAction(MSG.declineLabel(), "danger", async () => declineTask());
+  addAction(MSG.declineLabel(), "danger", async () => declineTask(), "decline");
 }
 
 async function handleTaskInvite(data, user) {
@@ -611,7 +625,7 @@ async function handleUnsubOwner() {
         console.error("[poll-go] unsubscribe owner failed:", e);
         setView({ head: MSG.error(), text: MSG.unsubOwnerFailed() });
       }
-    });
+    }, "withdraw");
   } catch (e) {
     console.error("[poll-go] unsub owner init failed:", e);
     setView({ head: MSG.error(), text: MSG.openInviteFailed() });
@@ -643,7 +657,7 @@ async function handleUnsubGlobal() {
         console.error("[poll-go] unsub global failed:", e);
         setView({ head: MSG.error(), text: MSG.unsubGlobalFailed() });
       }
-    });
+    }, "withdraw");
   } catch (e) {
     console.error("[poll-go] unsub global init failed:", e);
     setView({ head: MSG.error(), text: MSG.openInviteFailed() });

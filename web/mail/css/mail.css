@@ -1,0 +1,63 @@
+.mail-body{height:100dvh;overflow:hidden}
+.mail-body .brand{text-decoration:none}
+.mail-wrap{width:min(1040px,100%);box-sizing:border-box;margin:0 auto;padding:24px;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.mail-entry{margin:0;padding:24px;overflow:auto}
+.mail-wrap.has-session{justify-content:flex-start}
+.mail-summary{flex:0 0 auto}
+.mail-heading{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
+.mail-heading h1{margin:0}
+#mailAddress{font-size:13px;opacity:.7;overflow-wrap:anywhere}
+#mailMessage{margin:10px 0 0}
+.mail-form{max-width:580px;margin-top:22px}
+.mail-form label{font-size:13px;opacity:.8;display:block;margin-bottom:8px}
+.mail-form-row{display:flex;gap:10px}
+.mail-form-row input{flex:1;min-width:0}
+.mail-preference{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:14px 0 0;margin-top:4px}
+.mail-preference h2,.mail-panel h2{font-size:15px;margin:0;font-weight:800}
+.mail-preference p{font-size:13px;line-height:1.5;opacity:.75;margin:5px 0 0}
+.mail-preference .btn{flex:0 0 auto}
+.mail-preference.is-disabled{border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px;align-items:flex-start}
+#mailLists{min-height:0;flex:1;display:flex;flex-direction:column}
+.mail-list-shell .tabs-card{margin:0}
+.mail-card{margin:0;min-height:0;flex:1;display:flex;flex-direction:column;overflow:hidden;padding:18px}
+.mail-panel{display:none;min-width:0;min-height:0;flex:1;flex-direction:column}
+.mail-panel.active{display:flex}
+.mail-panel .shareList{overflow:auto;min-height:0;flex:1;margin:0;padding:0 2px 2px;align-content:start}
+.mail-tabs-card .tab-label{display:flex;align-items:center;justify-content:center;gap:8px}
+.mail-tabs-card .badge{position:static!important;transform:none!important}
+.mail-row .mail-row-copy{min-width:0;flex:1}
+.mail-row .shareEmail{white-space:normal;overflow-wrap:anywhere;font-size:13.5px}
+.mail-row .shareNote{color:var(--text);opacity:.65;font-size:12px;margin-top:5px}
+.mail-row .shareRowActions{flex-wrap:nowrap;align-self:stretch;align-items:stretch}
+.mail-row .shareRowActions .btn{width:36px;min-width:36px;min-height:38px;padding:6px;display:inline-flex;align-items:center;justify-content:center}
+.mail-row .mail-kind{width:18px;flex:0 0 18px;opacity:.8}
+.mail-row--poll{border-left:3px solid #bea968;background:rgba(190,169,104,.035)}
+.mail-row--device{border-left:3px solid #799eb7;background:rgba(121,158,183,.045)}
+.mail-row--subscription{border-left:3px solid #9a91b5;background:rgba(154,145,181,.035)}
+.mail-empty{border:1px dashed var(--line);border-radius:12px;padding:28px 12px;text-align:center;font-size:13px;opacity:.7}
+.mail-discover{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:7px 16px;font-size:12px;color:rgba(255,255,255,.55);flex:0 0 auto;text-align:center;padding:14px 24px 18px;}
+.mail-discover a{color:var(--gold);text-decoration:none;opacity:.85}
+.mail-feedback{margin-top:12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,234,166,.05);font-size:13px}
+.mail-card [hidden]{display:none!important}
+@media(max-width:620px){
+ .mail-wrap{padding:16px 12px;gap:16px}
+ .mail-entry{padding:18px 14px;border-radius:18px}
+ #mailAddress{font-size:12px}
+ #mailMessage{font-size:13px}
+ .mail-form-row{gap:8px}
+ .mail-form-row .btn{padding:9px 12px;font-size:13px;white-space:nowrap}
+ .mail-preference{gap:10px;padding:12px 0 0}
+ .mail-preference p{font-size:12px}
+ .mail-preference h2{font-size:13px}
+ .mail-preference .btn{padding:7px 10px;font-size:12px}
+ .mail-preference.is-disabled{flex-direction:column;gap:12px;padding:14px}
+ .mail-card{padding:12px}
+ .mail-row .shareNote{font-size:11px}
+ .mail-discover{font-size:11px;gap:6px 12px;padding:12px 14px}
+ .mail-discover>span{width:100%}
+}
+@media(max-height:500px) and (min-width:621px){.mail-wrap{padding:12px 20px;gap:10px}.mail-preference{padding:8px 0 0}.mail-discover{padding:8px 16px}.mail-discover>span{display:none}}
+
+.mail-wrap [hidden]{display:none!important}
+.mail-footer{flex:0 0 auto;width:min(1040px,100%);margin:0 auto;padding:14px 24px 18px;box-sizing:border-box}
+@media(max-width:620px){.mail-footer{padding:12px 14px}}

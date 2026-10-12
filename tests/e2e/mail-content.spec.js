@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { loginAsPooledTestUser } = require('./helpers/login');
-const { clearMailbox, waitForEmail, resetMailProviderLimits } = require('./helpers/mailbox');
+const { queueMailTemplateFixtures, clearMailbox, waitForEmail, resetMailProviderLimits } = require('./helpers/mailbox');
 const { expectMailDocument } = require('./helpers/mail-document');
 const ROOT = path.resolve(__dirname, '../..');
 const EMAIL = 'test14@familiada.online';
@@ -57,13 +57,8 @@ test('mail content: contact/manual PL/EN/UK and marketing templates delivered', 
   await clearMailbox(EMAIL); await resetMailProviderLimits(page);
   const after = new Date().toISOString();
   try {
-    const result = await page.evaluate(async ({ email, items }) => {
-      const { data } = await window.__sbClient.auth.getSession();
-      const response = await fetch('https://api.familiada.online/functions/v1/send-mail', { method: 'POST', headers: { Authorization: `Bearer ${data.session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ items: items.map(item => ({ to: email, subject: item.subject, html: item.html, cooldownActionKey: 'contact:confirmation', cooldownTargetKey: `email:${email}` })) }) });
-      return { status: response.status, body: await response.json() };
-    }, { email: EMAIL, items });
-    expect(result.status).toBe(200); expect(result.body.queued).toBe(items.length);
-    expect(result.body.results.every(item => item.queued)).toBe(true);
+    const result = await queueMailTemplateFixtures(items);
+    expect(result.queued).toBe(items.length);
     const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const received = await Promise.all(items.map(item => waitForEmail({ recipient: EMAIL, after, subject: new RegExp(`^${escapeRegex(item.subject)}$`), timeout: 180000 })));
     for (let n = 0; n < items.length; n++) {
