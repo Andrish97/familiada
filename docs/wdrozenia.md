@@ -7,13 +7,11 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
 ## Zasady
 
-Bieżące osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md).
-Prace najpierw na `codex/control-test-mode`; wdrożenie Pages autoryzowane
-po zielonych testach brancha, w tym zapisu trybu w statystykach, potem
-kontrola produkcyjna. Flaga w istniejącym JSON-ie ustawień, bez migracji. Plan obejmuje
-trzy urządzenia w pasku, lekkie skalowanie oraz blokadę przy zbyt wąskim oknie.
-Guard zwykłego Control i dodatkowy próg trybu testowego pozostają osobnymi
-regułami; w obu układach wymagane zero przewijania.
+Osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md) —
+**zrobione**, Pages38300728957 success, main38301293181 success3/3.
+Guard zwykłego Control i dodatkowy próg trybu testowego są osobnymi
+regułami; podsumowanie bez przewijania, trzy urządzenia w pasku, zapis flagi
+w istniejącym JSON-ie i etykieta w statystykach. Bez migracji.
 
 1. **Źródła prawdy** (decyzje, mapy, stan docelowy):
    - nawigacja, adresy, karty, strony modalne: [`nawigacja-mapa-plan.md`](nawigacja-mapa-plan.md)
@@ -905,3 +903,17 @@ urządzeń i podsumowania1400px oraz guarda390px: docs/img/control-test-mode,
 pochodzą z38299715000; robocze pomiary sekcji w control-test-layout/measurements.json.
 Zgoda użytkownika na publikację po testach jest w planie. Brak migracji.
 Następne: push main, Pages success i te same punktowe spece na produkcji.
+
+
+### 2026-10-12 — Control tryb testowy zamknięty produkcyjnie
+
+Main2c166c165e / wersje b5af28c037; **Pages38300728957 success**.
+**Main38301293181 success3/3**, bez retry/unit471, źródło produkcyjne0,
+pula4/5: rzeczywisty tryb/iframe/buzzer/dźwięk/guard/reload/disable-enable,
+dwa centrowane podglądy, brak FS, prawdziwy zapis settings.testMode w
+statystykach i renderer etykiety; zwykły pełny przebieg + reload rundy2.
+Branch38300241381 success2/2 przed publikacją. Zrzuty w
+`docs/img/control-test-mode/` zastąpione produkcyjnymi z38301293181,
+1400px oraz390px (guard). ManualPL/EN/UK gotowy. Bez migracji; testowe gry
+usunięte zwykłym cleanup. Zasada zero przewijania i osobnych progów zapisana
+w planie. Dalsza niezależna kolejka E19 bez zmian.

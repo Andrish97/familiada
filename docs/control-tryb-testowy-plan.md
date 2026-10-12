@@ -1,8 +1,8 @@
 # Control — tryb testowy
 
-Status: plan zatwierdzony, przygotowanie na branchu `codex/control-test-mode`.
-Wdrożenie Pages i scalenie do `main` dopiero po zielonych testach brancha,
-w tym potwierdzeniu zapisu trybu w statystykach. Następnie kontrola produkcyjna.
+Status: **wdrożone i potwierdzone na produkcji**.
+Pages38300728957 success; kontrola main38301293181 success3/3 bez retry.
+Branch38300241381 success2/2 przed publikacją. Brak migracji.
 
 ## Decyzje użytkownika — 2026-10-12
 
@@ -69,18 +69,18 @@ w tym potwierdzeniu zapisu trybu w statystykach. Następnie kontrola produkcyjna
 - [x] Spisać uzgodnienia i sprawdzić obecny sposób zapisu opcji urządzeń.
 - [x] Wstępnie zmierzyć rzeczywisty renderer kroków Control z przykładowymi
   danymi przy 1280×720, 1366×768, 1400×900 i 1920×1080.
-- [ ] Wyznaczyć minimalny czytelny rozmiar i próg blokady trybu; pomniejszenie
+- [x] Wyznaczyć minimalny czytelny rozmiar i próg blokady trybu; pomniejszenie
   ma być lekkie, nie dowolnie duże.
-- [ ] Dodać przełącznik, zapis flagi, wzajemne blokowanie opcji i odtworzenie
+- [x] Dodać przełącznik, zapis flagi, wzajemne blokowanie opcji i odtworzenie
   po odświeżeniu. Zachować tryb przy rozpoczęciu od nowa w tym panelu.
-- [ ] Dodać pasek rzeczywistych iframe, wirtualny viewport i dopasowanie panelu.
-- [ ] Dopasować podsumowanie bez przewijania, z dostępem do wszystkich treści.
-- [ ] Dodać oznaczenie przebiegu w statystykach z istniejącego zapisu ustawień.
-- [ ] Punktowe testy geometrii oraz E2E kodu brancha na produkcyjnej bazie:
+- [x] Dodać pasek rzeczywistych iframe, wirtualny viewport i dopasowanie panelu.
+- [x] Dopasować podsumowanie bez przewijania, z dostępem do wszystkich treści.
+- [x] Dodać oznaczenie przebiegu w statystykach z istniejącego zapisu ustawień.
+- [x] Punktowe testy geometrii oraz E2E kodu brancha na produkcyjnej bazie:
   włączanie/wyłączanie, blokady, trzy połączenia, buzzer, dźwięk z Control
   i Wyświetlacza, odświeżenie, zmiana rozmiaru, finał gracza 2, statystyki.
-- [ ] Zrzuty z przykładowymi danymi, w tym 1400 px i mobilna blokada 390 px.
-- [ ] Krótka aktualizacja manuala PL/EN/UK, raport wyników i stan brancha.
+- [x] Zrzuty z przykładowymi danymi, w tym 1400 px i mobilna blokada 390 px.
+- [x] Krótka aktualizacja manuala PL/EN/UK, raport wyników i stan brancha.
 
 ## Dotychczasowe pomiary — ograniczenia
 
@@ -136,3 +136,26 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
   punktowy E2E sprawdza również niewidoczność przycisków we wszystkich iframe.
 - 38299326792 success2/2 na f39b3220b3, bez retry: wyłączanie i ponowne
   włączanie, zwężenie, oba centrowane podglądy oraz zapis statystyk.
+
+
+### Zamknięcie na produkcji
+
+- Push main2c166c165e; wersje CI w b5af28c037. Pages **38300728957 success**.
+- **38301293181 success3/3**, retries0, unit471/471, kod produkcyjny
+  (`TEST_BRANCH_CODE=0`), pula4/5. Tryb i statystyki oraz zwykły pełny
+  przebieg z reloadem w rundzie2 przeszły po wdrożeniu.
+- Sprawdzone: trzy rzeczywiste urządzenia1024×768, brak pełnego ekranu
+  w osadzeniu, osobne blokady, zapis/odświeżenie trybu, wyłączenie i ponowne
+  włączenie, blokada przy zwężeniu i jej zdjęcie po powiększeniu,
+  odblokowanie dźwięku Display, buzzer i rzeczywisty wpis statystyk.
+- Oba podglądy w sekcji Wygląd osobno centrowane. Zrzuty produkcyjne:
+  [Urządzenia](img/control-test-mode/devices-1400.png),
+  [Podsumowanie](img/control-test-mode/summary-1400.png),
+  [guard na telefonie](img/control-test-mode/guard-390.png).
+- Manual PL/EN/UK: wzmianka o trybie oraz obsłudze sekcji i stron
+  Podsumowania. Żadnych nowych tabel, kolumn ani migracji.
+- Granice dowodu: punktowe E2E wykonano w Chromium. Pomiary renderera
+  objęły kroki urządzeń/podsumowania/rund/wpisywania i mapowania obu graczy,
+  osiem sekcji podsumowania oraz wąskie okna zwykłego Control. To testy
+  wybranych rozmiarów i przykładowych danych, nie deklaracja pomiaru
+  każdego możliwego ekranu. Guard blokuje okna poniżej czytelnej skali.
