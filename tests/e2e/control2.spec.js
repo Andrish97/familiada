@@ -1060,7 +1060,10 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 
     // Odpowiedź #1 ma najwyższe punkty (40) — trafienie wygrywa pojedynek.
     await dumpControlState(page, "przed-reveal-1");
+    await clearSfxLog(page);
     await revealAnswer(page, 1);
+    await expect.poll(() => getSfxKeys(page)).toContain("answer_correct");
+    expect(await getSfxKeys(page)).not.toContain("reveal");
     await dumpControlState(page, "po-reveal-1");
     await revealAnswer(page, 2);
     await dumpControlState(page, "po-reveal-2");

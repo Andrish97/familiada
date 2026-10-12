@@ -16,8 +16,8 @@ function setup() {
   return { renderer, calls, release };
 }
 
-test("round total waits for the complete answer; both phases share one sound duration", async () => {
-  const { renderer, calls, release } = setup();
+test("round answer reveals before points; bank starts near the end of the points animation", async () => {
+  const { renderer, calls } = setup();
   const state = makeDefaultState("reveal");
   state.step = "r_play";
   state.topCard = "rounds";
@@ -26,14 +26,19 @@ test("round total waits for the complete answer; both phases share one sound dur
   state.rounds.revealed = [1];
   state.rounds.bankPts = 30;
   const pending = renderer.renderDiff(before, row(state));
-  await new Promise((resolve) => setImmediate(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  assert.equal(calls.some((call) => call.name === "rounds.setText"), true);
+  assert.equal(calls.some((call) => call.name === "rounds.setPts"), true);
   assert.equal(calls.some((call) => call.name === "rounds.setSuma"), false);
-  release();
   await pending;
-  const answer = calls.find((call) => call.name === "rounds.setRow");
+  const answer = calls.find((call) => call.name === "rounds.setText");
+  const points = calls.find((call) => call.name === "rounds.setPts");
   const total = calls.find((call) => call.name === "rounds.setSuma");
-  assert.equal(answer.args[1].animIn.ms + total.args[1].animIn.ms, 1000);
-  assert.ok(calls.indexOf(answer) < calls.indexOf(total));
+  assert.equal(answer.args[2].animIn.ms, 500);
+  assert.equal(points.args[2].animIn.ms, 500);
+  assert.equal(total.args[1].animIn.ms, 150);
+  assert.ok(calls.indexOf(answer) < calls.indexOf(points));
+  assert.ok(calls.indexOf(points) < calls.indexOf(total));
 });
 
 test("automatic final zero waits for the answer without doubling the sound duration", async () => {

@@ -554,9 +554,9 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
         case "ANSWER_REVEALED": {
           const r = nextRow.detail.rounds;
           const bankChanged = r.bankPts !== (prevRow.detail?.rounds?.bankPts ?? 0);
-          // Kolejność ma znaczenie: najpierw tekst, później jednocześnie
-          // punkty odpowiedzi i nowa suma banku. Obie fazy dzielą jeden
-          // czas dźwięku, więc nie wydłużamy przejścia.
+          // Kolejność ma znaczenie: najpierw tekst, potem punkty odpowiedzi.
+          // Bank zaczyna się pod koniec animacji punktów i kończy razem z nimi.
+          // Obie fazy mieszczą się w czasie jednego dźwięku.
           const answerMs = answerAnimMs * 0.5;
           const pointsMs = answerAnimMs - answerMs;
           const revealedAnswers = ev.ords
@@ -573,10 +573,15 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
           // roundsRevealRow tam w ogóle nie woła RSUMA/TOP) — bez tego
           // SUMA dostawałaby zbędną animację na niezmienioną liczbę.
           if (bankChanged) {
-            api.small.topDigits(pad3(r.bankPts));
-            pointAnimations.push(api.rounds.setSuma(String(r.bankPts ?? 0), {
-              animIn: { ...ANSWER_ANIM, ms: pointsMs },
-            }));
+            const bankDelayMs = pointsMs * 0.7;
+            const bankAnimMs = pointsMs - bankDelayMs;
+            pointAnimations.push((async () => {
+              await new Promise((resolve) => setTimeout(resolve, bankDelayMs));
+              api.small.topDigits(pad3(r.bankPts));
+              await api.rounds.setSuma(String(r.bankPts ?? 0), {
+                animIn: { ...ANSWER_ANIM, ms: bankAnimMs },
+              });
+            })());
           }
           await Promise.all(pointAnimations);
           // W pojedynku trafienie nie-topowej odpowiedzi oddaje głos DRUGIEJ

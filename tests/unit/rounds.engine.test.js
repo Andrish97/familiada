@@ -104,6 +104,7 @@ test("pojedynek: trafienie w odpowiedź #1 przy pierwszej próbie -> WIN, phase=
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
   assert.equal(store.state.step, "r_play");
   await dispatch({ type: "REVEAL_ANSWER", ord: 1 }); // #1 = najwyżej punktowana (40 pkt)
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_correct");
   assert.equal(store.state.phase, "PLAY");
   assert.equal(store.state.controlTeam, "A");
   assert.ok(store.state.rounds.revealed.includes(1));
@@ -375,6 +376,7 @@ test("END_ROUND: niepełny bank przechodzi w REVEAL i wymaga REVEAL_LEFT; NEXT_A
   // operator musi kliknąć osobno (NEXT_AFTER_REVEAL), inaczej ekran kolejnej
   // rundy odpalał się "znikąd".
   await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // REVEAL_ANSWER w fazie REVEAL deleguje do REVEAL_LEFT
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_correct");
   await dispatch({ type: "REVEAL_ANSWER", ord: 3 });
   const roundNoBefore = store.state.rounds.roundNo;
 

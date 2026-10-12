@@ -828,3 +828,17 @@ do naprawy.
   Nadal obowiązującą blokadę dźwięku Control odczytuje z `locked_until`
   i odblokowuje panel po jej wygaśnięciu.
 - Zmiana naprawiona lokalnie; bez migracji. Testów nie uruchomiono.
+
+## Dźwięki odsłaniania odpowiedzi — 2026-10-12
+
+- W rundach odsłonięcie odpowiedzi odtwarza wyłącznie dźwięk poprawnej
+  odpowiedzi. Nie uruchamia dodatkowego dźwięku reveal.
+- W finale trafiona odpowiedź odsłania tekst przy dźwięku reveal, a punkty
+  przy dźwięku poprawnej odpowiedzi. Wpisana błędna odpowiedź odsłania tekst
+  przy reveal, a zero przy dźwięku błędnej odpowiedzi.
+- Brak odpowiedzi w finale pozostaje pojedynczą akcją operatora: odpowiedź i
+  zero odsłaniają się automatycznie, a odtwarza się wyłącznie dźwięk błędnej
+  odpowiedzi.
+- W rundach nowa suma banku nie pojawia się równocześnie ze startem punktów:
+  zaczyna się po 70% czasu animacji punktów i kończy razem z nimi, w tym samym
+  czasie dźwięku.

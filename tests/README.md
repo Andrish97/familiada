@@ -130,6 +130,11 @@ Actions, albo uruchomienia lokalnie.
 Pole **"spec_filter"** pozwala odpalić wyrywkowo tylko jeden plik albo
 wzorzec zamiast całego zestawu — **to najczęstszy sposób odpalania tego
 workflow**, nie pełny zestaw:
+
+Pole **"unit_filter"** pozwala równocześnie ograniczyć unit testy do
+wybranych plików rozdzielonych spacją, np.
+`unit/rounds.engine.test.js unit/final.engine.test.js`. Puste pole zachowuje
+dotychczasowy pełny zestaw.
 - `e2e/nazwa-testu.spec.js` — tylko ten plik,
 - `--grep "fragment nazwy testu"` — tylko pasujące testy.
 

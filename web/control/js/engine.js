@@ -286,11 +286,11 @@ const REDUCERS = {
       const result = duelRegisterResult(r.duel, team, { pts: ans.fixed_points, isX: false, isTop });
       if (result.type === "WIN") {
         r.allowPass = true;
-        return { step: "r_play", phase: "PLAY", controlTeam: result.winner, topCard: "rounds", soundCueKey: "reveal" };
+        return { step: "r_play", phase: "PLAY", controlTeam: result.winner, topCard: "rounds", soundCueKey: "answer_correct" };
       }
       // CONTINUE_SECOND lub RESET — duel.currentTeam już zaktualizowany przez
       // duelRegisterResult, zostajemy w tym samym kroku/fazie.
-      return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "reveal" };
+      return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "answer_correct" };
     }
 
     r.revealed.push(action.ord);
@@ -303,11 +303,11 @@ const REDUCERS = {
       r.stealWon = true;
       r.steal.active = false;
       r.canEndRound = true;
-      return { step: "r_play", phase: "STEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "reveal" };
+      return { step: "r_play", phase: "STEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "answer_correct" };
     }
 
     if (r.revealed.length >= r.answers.length) r.canEndRound = true;
-    return { step: "r_play", phase: state.phase, controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "reveal" };
+    return { step: "r_play", phase: state.phase, controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "answer_correct" };
   },
 
   // ---- R4: pass (raz na rundę, tylko PLAY, tylko przed 1. trafieniem) ----
@@ -462,7 +462,7 @@ const REDUCERS = {
     const r = state.rounds;
     if (r.revealed.includes(action.ord)) return null;
     r.revealed.push(action.ord);
-    return { step: "r_play", phase: "REVEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "reveal" };
+    return { step: "r_play", phase: "REVEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "answer_correct" };
   },
 
   // ---- R8->R9: operator potwierdza koniec rundy PO ręcznym odsłonięciu

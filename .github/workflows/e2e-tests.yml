@@ -7,6 +7,10 @@ on:
         description: 'Opcjonalnie: odpal tylko wybrany plik/wzorzec (np. "e2e/nowy-test.spec.js" albo "--grep nazwa"). Puste = wszystkie testy, w równoległych grupach (patrz niżej). To pole jest najczęściej używane -- pojedynczy plik/wzorzec zamiast całego zestawu.'
         required: false
         default: ""
+      unit_filter:
+        description: 'Opcjonalnie: rozdzielone spacją pliki testów unit, np. "unit/rounds.engine.test.js unit/final.engine.test.js". Puste = cały zestaw unit.'
+        required: false
+        default: ""
       workers:
         description: 'Liczba workerów; 1 do diagnostyki współdzielonych kont i poczty.'
         required: false
@@ -222,9 +226,23 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: tests
 
-      - name: Unit tests (one file at a time)
+      - name: Unit tests (pointwise when selected)
+        env:
+          UNIT_FILTER: ${{ inputs.unit_filter }}
         working-directory: tests
-        run: node --test --test-concurrency=1 unit/*.test.js
+        run: |
+          if [ -n "$UNIT_FILTER" ]; then
+            read -r -a unit_files <<< "$UNIT_FILTER"
+            for file in "${unit_files[@]}"; do
+              case "$file" in
+                unit/*.test.js) ;;
+                *) echo "Nieprawidłowa ścieżka testu unit: $file" >&2; exit 2 ;;
+              esac
+            done
+            node --test --test-concurrency=1 "${unit_files[@]}"
+          else
+            node --test --test-concurrency=1 unit/*.test.js
+          fi
 
       - name: Run E2E tests (spec_filter)
         env:

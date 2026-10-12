@@ -1056,6 +1056,8 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 
 - 2026-10-12: procentowy fade na zegarze audio opublikowany: main69c3c8b6c3, Pages38310986351 success. Wszystkie domyślne/własne pliki, 5% wejście/8% wyjście, odsłuch ustawień i rozgrywka wspólnym torem; mute wspólnym wyjściem bez zatrzymania. Bez testów na polecenie użytkownika; nie deklarować potwierdzonej poprawy odsłuchu przed sprawdzeniem użytkownika.
 
+- 2026-10-13: doprecyzowanie dźwięków i kolejności odsłaniania: w rundach odpowiedź gra wyłącznie `answer_correct`; w finale tekst trafienia lub wpisanej pomyłki gra `reveal`, a punkty odpowiednio `answer_correct`/`answer_wrong`. Puste pole w finale pozostaje pojedynczą akcją: odpowiedź i zero odsłaniają się automatycznie, słychać wyłącznie `answer_wrong`. W rundach bank zaczyna animować się w końcowych 30% animacji punktów. Podręcznik PL/EN/UK zaktualizowany. Punktowe testy silnika rund, finału, dźwięku i renderera: 84/84; składnia JS/E2E i `git diff --check` ✓. Workflow zyskał `unit_filter`, żeby test branch/produkcja mógł uruchamiać tylko wybrane unity. Bez migracji. E2E branch przed wdrożeniem.
+
 
 - 2026-10-12: Control: odsłanianie odpowiedzi w dwóch fazach — tekst, potem
   punkty wraz z nowym bankiem, w obrębie czasu reveal. Naprawiono też

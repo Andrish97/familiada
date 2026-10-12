@@ -199,3 +199,11 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
   wczytanego stanu. Buzzer może zmienić numer zapisu przez `lastPressed`,
   nie zmieniając planszy. Pozostałą blokadę akcji odtwarzamy z
   `locked_until`.
+- W rundach odsłonięcie odpowiedzi gra wyłącznie dźwięk poprawnej odpowiedzi.
+  W finale trafienie i wpisana błędna odpowiedź najpierw odsłaniają tekst z
+  dźwiękiem reveal, potem punkty z odpowiednim dźwiękiem. Brak odpowiedzi
+  pozostaje jednym kliknięciem: tekst i zero odsłaniają się automatycznie,
+  słychać tylko dźwięk błędnej odpowiedzi.
+- W rundach suma banku zaczyna animować się w końcowej części odsłaniania
+  punktów, tak aby nie wyprzedzała odpowiedzi i zdążyła pojawić się przed
+  końcem dźwięku.
