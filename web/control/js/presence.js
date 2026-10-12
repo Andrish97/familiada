@@ -11,7 +11,7 @@
 // game_state przy każdym (re)connect). Ten moduł robi wyłącznie to, co jest
 // realnie faktem obecności: kto jest online, od kiedy.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-10T22301";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T09554";
 
 const ONLINE_MS = 6_500; // Two missed 3s heartbeats, with a small margin.
 const POLL_MS = 750;
@@ -25,6 +25,9 @@ export function createPresence({ gameId, onChange }) {
   let displayAudioUnlockNonce = null;
   let displayAudioUnlockStatus = { requestNonce: null, acknowledgedNonce: null };
   let lastSeenAt = { display: null, host: null, buzzer: null };
+  let deviceMeta = { display: {}, host: {}, buzzer: {} };
+  let lastPageVisibility = { display: null, host: null, buzzer: null };
+  let pageVisibilityChangedAt = { display: null, host: null, buzzer: null };
   let readUnavailable = false;
   // Zgłoszone: "cały panel jest zlagowany, przewijanie też" — onChange()
   // (control/js/app.js's renderCurrent(), pełny root.innerHTML="" +
@@ -96,6 +99,14 @@ export function createPresence({ gameId, onChange }) {
     }
 
     lastSeenAt = { display: d?.last_seen_at ?? null, host: h?.last_seen_at ?? null, buzzer: b?.last_seen_at ?? null };
+    deviceMeta = { display: d?.meta || {}, host: h?.meta || {}, buzzer: b?.meta || {} };
+    for (const kind of ["display", "host", "buzzer"]) {
+      const visibility = deviceMeta[kind]?.page_visibility || null;
+      if (lastPageVisibility[kind] != null && visibility != null && visibility !== lastPageVisibility[kind]) {
+        pageVisibilityChangedAt[kind] = Date.now();
+      }
+      if (visibility != null) lastPageVisibility[kind] = visibility;
+    }
     // isOnline() liczy się od Date.now() — flags może się zmienić (online
     // -> offline) samym upływem czasu, BEZ żadnej zmiany w bazie, więc
     // porównanie musi patrzeć na WYLICZONE flags, nie na surowe lastSeenAt.
@@ -115,13 +126,27 @@ export function createPresence({ gameId, onChange }) {
   // nie wpływa na to, czy warto zawiadamiać. Wywołanie tylko przy realnej
   // zmianie flags.
   function reportIfChanged(payload) {
+    const deviceDiagnostics = Object.fromEntries(["display", "host", "buzzer"].map(kind => {
+      const lastSeen = lastSeenAt[kind] ? new Date(lastSeenAt[kind]).getTime() : null;
+      return [kind, {
+        lastSeenAt: lastSeenAt[kind],
+        ageMs: lastSeen == null ? null : Math.max(0, Date.now() - lastSeen),
+        browserContextId: deviceMeta[kind]?.browser_context_id || null,
+        visibility: deviceMeta[kind]?.page_visibility || null,
+        visibilityChangedAt: pageVisibilityChangedAt[kind],
+        focused: typeof deviceMeta[kind]?.page_focused === "boolean" ? deviceMeta[kind].page_focused : null,
+        audioDiagnostic: deviceMeta[kind]?.audio_diagnostic || null,
+        renderDiagnostic: deviceMeta[kind]?.render_diagnostic || null,
+      }];
+    }));
     const reported = {
       ...payload,
+      deviceDiagnostics,
       displayAudioUnlocked: payload.displayAudioUnlocked ?? displayAudioUnlocked,
       displayAudioUnlockNonce: payload.displayAudioUnlockNonce ?? displayAudioUnlockNonce,
       displayAudioUnlockStatus: payload.displayAudioUnlockStatus ?? displayAudioUnlockStatus,
     };
-    const fp = JSON.stringify({ flags: reported.flags, readUnavailable: !!reported.error, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce, displayAudioUnlockStatus: reported.displayAudioUnlockStatus });
+    const fp = JSON.stringify({ flags: reported.flags, readUnavailable: !!reported.error, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce, displayAudioUnlockStatus: reported.displayAudioUnlockStatus, deviceVisibility: Object.fromEntries(Object.entries(deviceDiagnostics).map(([kind, item]) => [kind, [item.visibility, item.focused, item.browserContextId]])), displayAudioDiagnosticId: deviceDiagnostics.display.audioDiagnostic?.id || null, displayRenderDiagnosticId: deviceDiagnostics.display.renderDiagnostic?.id || null });
     if (fp === lastReported) return;
     lastReported = fp;
     onChange?.(reported);

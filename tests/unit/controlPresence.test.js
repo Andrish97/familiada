@@ -37,6 +37,8 @@ test("odczyt w toku i jego awaria nie zmieniają urządzeń na offline; poprawny
   presence.start();
   await settle();
   assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true });
+  assert.equal(changes.at(-1).deviceDiagnostics.display.ageMs, 0);
+  assert.equal(changes.at(-1).deviceDiagnostics.display.visibility, null);
 
   pending = true;
   timers.get(750)();

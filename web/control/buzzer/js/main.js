@@ -10,14 +10,15 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-10T22301";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-10T22301";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-10T22301";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-10T22301";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-10T22301";
-import { createPressController } from "./press.js?v=v2026-10-10T22301";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-10T22301";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-12T09554";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-12T09554";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T09554";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-12T09554";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-12T09554";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T09554";
+import { createPressController } from "./press.js?v=v2026-10-12T09554";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-12T09554";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-12T09554";
 
 // Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
 startKeepAlive();
@@ -30,17 +31,26 @@ function parseParams() {
 function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   const DEVICE_ID_KEY = "familiada:deviceId:buzzer";
   let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
+  let pingInFlight = false;
   const ping = async () => {
+    if (pingInFlight) return;
+    pingInFlight = true;
+    try {
     const { data, error } = await sb().rpc("device_ping", {
-      p_game_id: gameId, p_device_type: "buzzer", p_key: key, p_device_id: deviceId, p_meta: {},
+      p_game_id: gameId, p_device_type: "buzzer", p_key: key, p_device_id: deviceId, p_meta: getDevicePresenceMeta(gameId),
     });
     if (!error && data?.device_id && !deviceId) {
       deviceId = data.device_id;
       localStorage.setItem(DEVICE_ID_KEY, deviceId);
     }
+    } catch { /* Presence diagnostics must never interrupt the Buzzer. */ }
+    finally { pingInFlight = false; }
   };
   ping();
   setInterval(ping, pingMs);
+  for (const event of ["visibilitychange", "focus", "blur", "pageshow", "pagehide"]) {
+    window.addEventListener(event, () => { void ping(); });
+  }
 }
 
 // js/pages/buzzer.js's isIOSSafari()/setPseudoFS()/toggleFullscreen() — na

@@ -88,3 +88,17 @@ workflow e2e, a następnie czasowo usunąć odpowiednie konto z wykluczeń w
 panelu administratora. Domyślnie testy usuwają utworzone gry.
 Historyczne potwierdzenie zachowania i wykluczeń: przebiegi 37489529236 i
 37491323090. Jednorazowy test zależny od pozostawionych wtedy gier usunięto.
+
+## Diagnostyka odczuwalnych problemów — zakres zatwierdzony 2026-10-12
+
+Użytkownik chce rozróżniać awarie widoczne dla operatora od krótkich, bezobjawowych zmian obecności oraz ustalać, co działo się na urządzeniu.
+
+- Łączyć krótkie nawroty utraty połączenia w jeden incydent. Zapisywać czas trwania, liczbę nawrotów i to, czy Control blokował akcje albo operator próbował wykonać zablokowaną akcję. Nie zapisywać surowych heartbeatów.
+- Przy incydencie zapisać stan karty urządzenia: widoczna/ukryta oraz ostatnia zmiana widoczności. Brak fokusu sam nie oznacza problemu; Display może pracować na ekranie zewnętrznym.
+- Rozróżnienie urządzeń oznacza wyłącznie ten sam lub inny profil przeglądarki, nie ten sam fizyczny komputer. Ostatnią zmianę widoczności pokazujemy jako czas od zaobserwowanej zmiany.
+- Mierzyć opóźnienie ukończenia zmiany planszy Display względem oczekiwanego czasu animacji/dźwięku oraz nieudane lub opóźnione rozpoczęcie dźwięku. Rejestrować tylko przekroczenia ustalonych progów lub błędy, nie każdy dźwięk i każdą animację.
+- Mierzyć widoczne zacięcia klatek podczas renderowania planszy; pomijać pomiar w tle, a zapisywać wyłącznie przerwy co najmniej 250 ms.
+- Wykrywać wspólny kontekst przeglądarki przy użyciu losowego identyfikatora ograniczonego do jednej gry i wspólnego dla kart tej samej przeglądarki/profilu. W statystykach pokazywać wyłącznie relację „ten sam profil”, „inny profil” lub „brak danych”; nie zapisywać identyfikatora, adresu IP ani fingerprintu. To nie jest pewne rozpoznanie tego samego fizycznego komputera.
+- Szczegóły mają pokazywać objaw i jego skutek, np. „Display w tle; akcje zablokowane 2 razy; plansza potwierdzona 2,4 s po oczekiwanym końcu dźwięku”, a nie szereg technicznych przełączeń online/offline.
+
+Decyzja użytkownika („chcę to”, 2026-10-12): wdrożyć zakres. Implementacja jest na branchu `codex/control2-incident-diagnostics`: incydent łączy zaniki do 10 s stabilnego połączenia; zdarzenia dźwięku zapisują start opóźniony o co najmniej 500 ms lub błąd; opóźnienie planszy zapisuje się po przekroczeniu oczekiwanego czasu o 1,5 s; widoczne zacięcie klatki od 250 ms. Payload SQL ogranicza kategorie i rozmiar. Telemetria nie zmienia blokad ani stanu rozgrywki, a błędy wysyłania są nieblokujące. Testy SQL i unit uruchamiać na GitHub Actions; e2e punktowo zgodnie z `AGENTS.md`.

@@ -25,6 +25,7 @@ INSERT INTO game_sessions(game_id,status,team_a_score) VALUES
  ('00000000-0000-0000-0000-000000000001','final',100);
 \ir ../../supabase/migrations/2026-10-06_300_control2_sessions.sql
 \ir ../../supabase/migrations/2026-10-06_301_control2_session_event_serialization.sql
+\ir ../../supabase/migrations/2026-10-12_322_control2_incident_diagnostics.sql
 
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
@@ -54,8 +55,15 @@ UPDATE game_state SET rev=11,step='devices_display',detail=jsonb_set(detail,'{lo
 UPDATE game_state SET rev=12,step='r_roundStart',detail=jsonb_set(detail,'{locks}','{"gameStarted":true}');
 SELECT control2_session_ping('00000000-0000-0000-0000-000000000001','{"kind":"disconnect","devices":["display"]}');
 SELECT control2_session_ping('00000000-0000-0000-0000-000000000001','{"kind":"error","message":"Test"}');
+SELECT control2_session_ping('00000000-0000-0000-0000-000000000001','{"kind":"diagnostic","category":"connectivity","message":"Utrata obecności","devices":["display"],"metrics":{"blocked_duration_ms":2400,"blocked_action_attempts":1,"device_context":{"display":{"profile":"same_profile","visibility":"hidden"}}}}');
+DO $$ BEGIN
+  BEGIN PERFORM control2_session_ping('00000000-0000-0000-0000-000000000001','{"kind":"diagnostic","category":"raw_fingerprint"}');
+    RAISE EXCEPTION 'unknown diagnostic category accepted';
+  EXCEPTION WHEN OTHERS THEN IF SQLERRM <> 'invalid diagnostic category' THEN RAISE; END IF; END;
+END $$;
 UPDATE game_state SET rev=13,step='devices_display',detail=jsonb_set(detail,'{locks}','{"gameStarted":false}');
-SELECT pg_temp.assert_true((SELECT status='abandoned' AND stats_detail->>'end_reason'='restart' AND jsonb_array_length(stats_detail->'events')=2 FROM game_sessions WHERE control_version=2 AND start_rev=12),'restart and local events');
+SELECT pg_temp.assert_true((SELECT status='abandoned' AND stats_detail->>'end_reason'='restart' AND jsonb_array_length(stats_detail->'events')=3 FROM game_sessions WHERE control_version=2 AND start_rev=12),'restart and local events');
+SELECT pg_temp.assert_true((SELECT stats_detail#>>'{events,2,category}'='connectivity' AND stats_detail#>>'{events,2,metrics,device_context,display,profile}'='same_profile' FROM game_sessions WHERE control_version=2 AND start_rev=12),'structured diagnostics persisted');
 
 UPDATE game_state SET rev=14,step='r_roundStart',detail=jsonb_set(detail,'{locks}','{"gameStarted":true}');
 UPDATE game_state SET rev=15,step='f_p1_map_q3',detail=detail ||
@@ -64,6 +72,8 @@ SELECT pg_temp.assert_true((SELECT client_meta->>'final_step'='p1_q3' FROM game_
 UPDATE game_state SET rev=16,step='f_end',detail=jsonb_set(jsonb_set(detail,'{final,runtime,sum}','210'),'{final,runtime,reached200}','true');
 UPDATE game_state SET rev=17,detail=jsonb_set(jsonb_set(detail,'{rounds,totals,A}','510'),'{locks,gameEnded}','true');
 SELECT pg_temp.assert_true((SELECT rounds_score_a=300 AND team_a_score=510 AND final_points=210 AND stats_detail->>'prize'='26530' AND stats_detail->>'end_reason'='final_target' FROM game_sessions WHERE start_rev=14),'split final scores and prize');
+SELECT control2_session_ping('00000000-0000-0000-0000-000000000001','{"kind":"diagnostic","category":"connectivity","message":"Incydent domknięty przy końcu gry","devices":["display"],"metrics":{"blocked_duration_ms":900}}');
+SELECT pg_temp.assert_true((SELECT stats_detail#>>'{events,0,message}'='Incydent domknięty przy końcu gry' FROM game_sessions WHERE start_rev=14),'final incident can be flushed after game end');
 SELECT set_config('test.user_id','00000000-0000-0000-0000-000000000003',false);
 DO $$ BEGIN
   BEGIN PERFORM control2_session_ping('00000000-0000-0000-0000-000000000001');

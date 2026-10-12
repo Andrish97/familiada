@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-10T22301";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-12T09554";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,19 +7,19 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-10T22301";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-10T22301";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-10T22301";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-10T22301";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-10T22301";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-10T22301";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-10T22301";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-10T22301";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-10T22301";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-10T22301";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-10T22301";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-10T22301";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T09554";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-12T09554";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T09554";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T09554";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T09554";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-12T09554";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-12T09554";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-12T09554";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-12T09554";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T09554";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-12T09554";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-12T09554";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T09554";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -99,18 +99,20 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-10T22301";
-import { createEngine } from "./engine.js?v=v2026-10-10T22301";
-import { createActionGate } from "./actionGate.js?v=v2026-10-10T22301";
-import { createDevices } from "./devices.js?v=v2026-10-10T22301";
-import { createPresence } from "./presence.js?v=v2026-10-10T22301";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-10T22301";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-10T22301";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-10T22301";
-import { createUI } from "./ui.js?v=v2026-10-10T22301";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-10T22301";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-10T22301";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-10T22301";
+import { createStore } from "./store.js?v=v2026-10-12T09554";
+import { createEngine } from "./engine.js?v=v2026-10-12T09554";
+import { createActionGate } from "./actionGate.js?v=v2026-10-12T09554";
+import { createDevices } from "./devices.js?v=v2026-10-12T09554";
+import { createPresence } from "./presence.js?v=v2026-10-12T09554";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-12T09554";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-12T09554";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-12T09554";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-12T09554";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-12T09554";
+import { createUI } from "./ui.js?v=v2026-10-12T09554";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-12T09554";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-12T09554";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T09554";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -326,6 +328,35 @@ async function main() {
   let presenceUnavailable = false;
   let disconnectEpisode = false;
   let lastDisconnectState = "";
+  const browserContextId = getGameBrowserContextId(gameId);
+  let lastDisplayAudioDiagnosticId = null;
+  let lastDisplayRenderDiagnosticId = null;
+  let hasInitialPresenceSnapshot = false;
+  function summarizedDeviceContext(deviceDiagnostics, kind) {
+    const item = deviceDiagnostics?.[kind];
+    return {
+      profile: compareBrowserContexts(browserContextId, item?.browserContextId),
+      visibility: item?.visibility || "unknown",
+      focused: item?.focused ?? null,
+      stale_ms: Number.isFinite(item?.ageMs) ? item.ageMs : null,
+      visibility_change_ms_ago: Number.isFinite(item?.visibilityChangedAt)
+        ? Math.max(0, Date.now() - item.visibilityChangedAt) : null,
+    };
+  }
+  const connectivityTracker = createConnectivityIncidentTracker({
+    onIncident: ({ devices, ...metrics }) => void sessionTelemetry.report({
+      kind: "diagnostic", category: "connectivity",
+      message: "Utrata obecności urządzeń podczas gry.",
+      devices,
+      metrics,
+    }),
+  });
+  function noteConnectivityBlockedAction(action) {
+    connectivityTracker.noteBlockedAction(action, missingDevices(store.state, presenceFlags));
+  }
+  function updateConnectivityIncident(missing, deviceDiagnostics, wasOnline) {
+    connectivityTracker.update(missing, Object.fromEntries(missing.map(kind => [kind, summarizedDeviceContext(deviceDiagnostics, kind)])), wasOnline);
+  }
   let restarting = false;
   let dispatchGeneration = 0;
   let lockedUntil = 0;
@@ -333,15 +364,69 @@ async function main() {
   // czas round-tripu store.setLock(ms).
   let lockConfirmPending = false;
   const displayCompletion = createRenderCompletionGate(store.state.rev);
+  const displayCompletionTimes = new Map();
+  let previousDisplayRow = store.state.__row || null;
   let lastDisplayCueSeq = store.state.__row?.sound_cue_seq;
   let lastDisplayStep = store.state.step;
+  async function expectedDisplayTransitionMs(previous, row) {
+    const key = row?.sound_cue_key;
+    if (!key) return null;
+    if (key === "round_transition") return actionGate.timing.syncedMs("round_transition", "reveal");
+    if (key === "show_intro") return actionGate.timing.syncedMs("show_intro", "reveal");
+    if (key === "final_theme" && previous?.step === "f_start" && row.step === "f_p1_entry") {
+      return (await actionGate.timing.dur("final_theme")) + await actionGate.timing.syncedMs("round_transition", "reveal");
+    }
+    if (key === "final_theme" && row.step === "f_end") return actionGate.timing.syncedMs("final_theme", "reveal");
+    return actionGate.timing.dur(key);
+  }
+  function evaluateDisplayCompletion(revision, item) {
+    if (item.reported || item.completedAt == null || item.expectedMs == null) return;
+    item.reported = true;
+    if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
+    const actualMs = Math.max(0, Math.round(item.completedAt - item.requestedAt));
+    const extraMs = actualMs - item.expectedMs;
+    if (extraMs <= 1500) return;
+    const visible = document.visibilityState || "unknown";
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "display_delay",
+      message: "Display potwierdził zmianę planszy z opóźnieniem.",
+      devices: ["display"],
+      metrics: {
+        revision, sound: item.sound, expected_ms: Math.round(item.expectedMs),
+        actual_ms: actualMs, extra_ms: Math.round(extraMs), control_visibility: visible,
+        control_focused: !!document.hasFocus?.(),
+      },
+    });
+  }
+  function reportDisplayCompletionTimeout(revision, item) {
+    if (item.reported || item.completedAt != null || item.expectedMs == null) return;
+    item.reported = true;
+    const lowerBoundMs = Math.round(performance.now() - item.requestedAt);
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "display_delay",
+      message: "Display nie potwierdził ukończenia planszy w oczekiwanym czasie.",
+      devices: ["display"],
+      metrics: { revision, sound: item.sound, reason: "ack_timeout", wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs) },
+    });
+  }
   function noteDisplayRequest() {
     const row = store.state.__row;
     if (row && (row.step !== lastDisplayStep || row.sound_cue_seq !== lastDisplayCueSeq)) {
       displayCompletion.request(row.rev);
+      const item = { requestedAt: performance.now(), completedAt: null, expectedMs: null, sound: row.sound_cue_key || null, reported: false };
+      displayCompletionTimes.set(row.rev, item);
+      void expectedDisplayTransitionMs(previousDisplayRow, row).then(expectedMs => {
+        item.expectedMs = expectedMs;
+        evaluateDisplayCompletion(row.rev, item);
+        if (expectedMs != null && !item.reported) {
+          item.timeoutTimer = setTimeout(() => reportDisplayCompletionTimeout(row.rev, item), Math.max(0, expectedMs + 1500));
+        }
+      });
+      while (displayCompletionTimes.size > 40) displayCompletionTimes.delete(displayCompletionTimes.keys().next().value);
       lastDisplayStep = row.step;
       lastDisplayCueSeq = row.sound_cue_seq;
     }
+    if (row) previousDisplayRow = row;
   }
   function waitingForDisplay() {
     return !/^(devices_|setup_)/.test(store.state.step) && displayCompletion.pending;
@@ -410,6 +495,17 @@ async function main() {
     try {
       const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
       if (!error && data && displayCompletion.acknowledge(data.rendered_rev)) {
+        const completedAt = performance.now();
+        for (const [revision, item] of displayCompletionTimes) {
+          if (revision <= data.rendered_rev && item.completedAt == null) {
+            item.completedAt = completedAt;
+            if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
+            evaluateDisplayCompletion(revision, item);
+          }
+        }
+        for (const revision of displayCompletionTimes.keys()) {
+          if (revision <= data.rendered_rev) displayCompletionTimes.delete(revision);
+        }
         renderCurrent();
       }
     } catch { /* Keep waiting; the next poll retries. */ } finally { completionReadPending = false; }
@@ -626,7 +722,7 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, error }) => {
+    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, deviceDiagnostics, error }) => {
       const previous = presenceFlags;
       const displayAudioWasUnlocked = displayAudioUnlocked === true;
       const displayReconnected = !previous.display && flags.display === true;
@@ -675,11 +771,43 @@ async function main() {
         clearInterval(displayUnlockRetryTimer);
         displayUnlockRetryTimer = null;
       }
+      const audioDiagnostic = deviceDiagnostics?.display?.audioDiagnostic;
+      if (!hasInitialPresenceSnapshot) {
+        hasInitialPresenceSnapshot = true;
+        lastDisplayAudioDiagnosticId = audioDiagnostic?.id || null;
+      } else if (audioDiagnostic?.id && audioDiagnostic.id !== lastDisplayAudioDiagnosticId) {
+        lastDisplayAudioDiagnosticId = audioDiagnostic.id;
+        void sessionTelemetry.report({
+          kind: "diagnostic", category: "audio_start",
+          message: "Opóźniony start lub błąd dźwięku na Wyświetlaczu.",
+          devices: ["display"],
+          metrics: {
+            sound: String(audioDiagnostic.sound || "unknown").slice(0, 80),
+            start_delay_ms: Math.max(0, Number(audioDiagnostic.delayMs) || 0),
+            failed: !!audioDiagnostic.failed,
+            error: String(audioDiagnostic.error || "").slice(0, 160),
+          },
+        });
+      }
+      const renderDiagnostic = deviceDiagnostics?.display?.renderDiagnostic;
+      if (renderDiagnostic?.id && renderDiagnostic.id !== lastDisplayRenderDiagnosticId) {
+        lastDisplayRenderDiagnosticId = renderDiagnostic.id;
+        void sessionTelemetry.report({
+          kind: "diagnostic", category: "display_delay",
+          message: "Widoczne zacięcie animacji na Wyświetlaczu.",
+          devices: ["display"],
+          metrics: {
+            reason: "frame_stall",
+            max_frame_gap_ms: Math.max(0, Number(renderDiagnostic.maxGapMs) || 0),
+            stalled_frames: Math.max(0, Number(renderDiagnostic.stalledFrames) || 0),
+            display_visibility: String(renderDiagnostic.visibility || "unknown"),
+          },
+        });
+      }
       const missing = missingDevices(store.state, flags);
-      const presenceMessage = `presence:${["display", "host", "buzzer"].map((kind) => `${kind}=${flags[kind] ? "online" : "offline"}`).join(",")}`;
+      updateConnectivityIncident(missing, deviceDiagnostics, missing.some(kind => previous[kind]));
       const overlay = document.getElementById("deviceLostOverlay");
       if (!missing.length) {
-        if (disconnectEpisode) void sessionTelemetry.report({ kind: "reconnect", message: presenceMessage });
         disconnectEpisode = false;
         lastDisconnectState = "";
         overlay?.classList.add("hidden");
@@ -689,7 +817,6 @@ async function main() {
         if (text) text.textContent = t("control.deviceLostText", { devices: missing.map((kind) => labels[kind]).join(", ") });
         const disconnectState = JSON.stringify(flags);
         if ((missing.some((kind) => previous[kind]) || disconnectEpisode) && disconnectState !== lastDisconnectState) {
-          void sessionTelemetry.report({ kind: "disconnect", devices: missing, message: presenceMessage });
           lastDisconnectState = disconnectState;
           // Jeden modal na całe zdarzenie utraty połączenia. Przywracanie
           // urządzeń po kolei zmienia listę brakujących, ale nie powinno
@@ -746,12 +873,36 @@ async function main() {
       // corresponding render; timeout is the network-failure fallback.
       waiter.timer = setTimeout(() => {
         if (displayCueStartWaiters.get(seq) === waiter) displayCueStartWaiters.delete(seq);
+        if (store.state.locks.gameStarted && !store.state.locks.gameEnded && store.state.settings.soundSource === "control") {
+          void sessionTelemetry.report({
+            kind: "diagnostic", category: "display_delay",
+            message: "Display nie potwierdził startu animacji w ciągu 1,2 s; Control uruchomił dźwięk po limicie.",
+            devices: ["display"], metrics: { reason: "start_signal_timeout", sound_cue_seq: seq, wait_ms: 1200 },
+          });
+        }
         resolve();
       }, 1200);
       displayCueStartWaiters.set(seq, waiter);
     });
   }
   const soundReactor = createSoundReactor(store, { waitForStart: waitForDisplayCueStart });
+  const stopAudioDiagnostics = onSfxPlayback(event => {
+    const state = store.state;
+    if (!state.locks.gameStarted || state.locks.gameEnded || state.settings.soundSource === "display" || state.settings.soundMuted) return;
+    if (!event.failed && event.delayMs < 500) return;
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "audio_start",
+      message: "Opóźniony start lub błąd dźwięku w Control.",
+      devices: ["control"],
+      metrics: {
+        sound: String(event.key || "unknown").slice(0, 80),
+        start_delay_ms: Math.max(0, Number(event.delayMs) || 0),
+        failed: !!event.failed,
+        error: String(event.error || "").slice(0, 160),
+      },
+    });
+  });
+  window.addEventListener("pagehide", stopAudioDiagnostics, { once: true });
 
   // Odblokowanie audio po cichu na pierwszej dowolnej interakcji (sekcja 3a
   // pkt 4) — bez osobnego ekranu, bez dźwięku słyszalnego dla operatora.
@@ -809,6 +960,7 @@ async function main() {
   }
 
   function renderCurrent() {
+    if (store.state.locks.gameEnded) connectivityTracker.flush();
     noteDisplayRequest();
     scheduleFinalTimerWatch();
     scheduleTimer3Watch();
@@ -1046,6 +1198,7 @@ async function main() {
     try {
       const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
       if (gameAction && restarting) return;
+      if (gameAction && missingDevices(store.state, presenceFlags).length) noteConnectivityBlockedAction(payload?.type || action);
       if (gameAction && queuedGameAction && payload?.type !== "SET_ENTRY_TEXT") return;
       if (gameAction && typingCommit && payload?.type !== "SET_ENTRY_TEXT") {
         // Reserve this command immediately: later typing cannot overtake

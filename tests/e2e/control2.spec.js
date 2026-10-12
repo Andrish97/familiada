@@ -700,6 +700,9 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
       empty: inspect([]),
       orphan: inspect([event("reconnect")]),
       outage: inspect([event("disconnect", { devices: ["display"], message: "presence:display=offline,host=online,buzzer=online" }), event("reconnect")]),
+      diagnostic: inspect([event("diagnostic", { category: "connectivity", devices: ["display"], metrics: { blocked_duration_ms: 2400, repeated_drops: 2, blocked_action_attempts: 1, device_context: { display: { profile: "same_profile", visibility: "hidden" } } } })]),
+      audioDiagnostic: inspect([event("diagnostic", { category: "audio_start", devices: ["control"], metrics: { sound: "reveal", start_delay_ms: 850, failed: false } })]),
+      frameDiagnostic: inspect([event("diagnostic", { category: "display_delay", devices: ["display"], metrics: { reason: "frame_stall", max_frame_gap_ms: 320, stalled_frames: 2, display_visibility: "visible" } })]),
       error: inspect([event("error", { message: "Nie można odczytać statusu urządzeń." })]),
     };
   }, source);
@@ -709,6 +712,14 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.outage.rows).toHaveLength(1);
   expect(result.outage.rows[0]).toContain("Przerwa: Wyświetlacz");
   expect(result.outage.rows[0]).toContain("Prowadzący: online");
+  expect(result.diagnostic.sections).toBe(1);
+  expect(result.diagnostic.rows).toHaveLength(1);
+  expect(result.diagnostic.rows[0]).toContain("ten sam profil przeglądarki");
+  expect(result.diagnostic.rows[0]).toContain("karta była w tle");
+  expect(result.diagnostic.rows[0]).toContain("próby akcji podczas blokady: 1");
+  expect(result.audioDiagnostic.rows[0]).toContain("Dźwięk: reveal · Control · wystartował po 0,9 s");
+  expect(result.frameDiagnostic.rows[0]).toContain("Zacięcie animacji planszy");
+  expect(result.frameDiagnostic.rows[0]).toContain("karta była widoczna");
   expect(result.error.sections).toBe(1);
   expect(result.error.rows).toHaveLength(1);
   expect(result.error.rows[0]).toContain("Błąd · Nie można odczytać statusu urządzeń.");

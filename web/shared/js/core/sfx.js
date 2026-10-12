@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-10T22301";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T09554";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -46,6 +46,19 @@ function getCategoryMeta(key) {
 
 const cache = new Map();     // key → Audio
 const _fadeRafs = new Map(); // key → rafId (zdefiniowane tu, używane w loadIntoCache i fade)
+const playbackObservers = new Set();
+
+export function onSfxPlayback(observer) {
+  if (typeof observer !== "function") return () => {};
+  playbackObservers.add(observer);
+  return () => playbackObservers.delete(observer);
+}
+
+function reportPlayback(event) {
+  for (const observer of playbackObservers) {
+    try { observer(event); } catch {}
+  }
+}
 
 function _cancelFade(key) {
   const id = _fadeRafs.get(key);
@@ -327,18 +340,29 @@ export function onSfxEnd(key, fn) {
 // się z Playwrighta zweryfikować, JAKI dźwięk (i w jakiej kolejności) faktycznie
 // poleciał — Audio Web API nie eksponuje tego nigdzie w DOM.
 export function playSfx(key) {
+  const requestedAt = performance.now();
   if (typeof window !== "undefined") {
     (window.__sfxLog ??= []).push({ key, at: Date.now() });
   }
   const a = cache.get(key);
-  if (!a) return;
+  if (!a) {
+    reportPlayback({ key, failed: true, error: "sound_not_loaded", delayMs: 0 });
+    return;
+  }
   try {
     _cancelFade(key);
     a.currentTime = 0;
     a.volume = 0;
-    a.play().catch(() => {});
+    const started = a.play();
+    if (started?.then) started.then(() => {
+      reportPlayback({ key, failed: false, delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
+    }).catch(error => {
+      reportPlayback({ key, failed: true, error: String(error?.name || "play_rejected"), delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
+    });
     _startFade(key, a);
-  } catch {}
+  } catch (error) {
+    reportPlayback({ key, failed: true, error: String(error?.name || "play_failed"), delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
+  }
 }
 
 export function createSfxMixer() {
@@ -449,7 +473,7 @@ export async function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-10T22301";
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T09554";
     // Call play() synchronously in the gesture handler, then trust its
     // promise. Previously a rejected autoplay attempt still returned true,
     // allowing Display to report an unlock the browser had refused.
@@ -490,7 +514,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-10T22301" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T09554" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   for (const [key, pct] of Object.entries(volumes)) {

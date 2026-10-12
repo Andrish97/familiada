@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-10T22301";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-12T09554";
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,18 +7,19 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-10T22301";
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-10T22301";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-10T22301";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { createScene } from "./scene.js?v=v2026-10-10T22301";
-import { createQRController } from "./qr.js?v=v2026-10-10T22301";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-10T22301";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-10T22301";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-10T22301";
-import { createRenderer } from "./render.js?v=v2026-10-10T22301";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-10T22301";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying } from "../../../shared/js/core/sfx.js?v=v2026-10-10T22301";
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-12T09554";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-12T09554";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-12T09554";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-12T09554";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T09554";
+import { createScene } from "./scene.js?v=v2026-10-12T09554";
+import { createQRController } from "./qr.js?v=v2026-10-12T09554";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-12T09554";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-12T09554";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-12T09554";
+import { createRenderer } from "./render.js?v=v2026-10-12T09554";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-12T09554";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback } from "../../../shared/js/core/sfx.js?v=v2026-10-12T09554";
 
 startKeepAlive();
 
@@ -51,7 +52,7 @@ async function authDisplayOrThrow(gameId, key) {
 function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   const DEVICE_ID_KEY = "familiada:deviceId:display";
   let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
-  let meta = { audio_unlocked: false, audio_unlock_nonce: null };
+  let meta = getDevicePresenceMeta(gameId, { audio_unlocked: false, audio_unlock_nonce: null });
   let metaVersion = 0;
   let pingWork = null;
   const ping = async () => {
@@ -67,7 +68,7 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
       do {
         version = metaVersion;
         const { data, error } = await sb().rpc("device_ping", {
-          p_game_id: gameId, p_device_type: "display", p_key: key, p_device_id: deviceId, p_meta: { ...meta },
+          p_game_id: gameId, p_device_type: "display", p_key: key, p_device_id: deviceId, p_meta: getDevicePresenceMeta(gameId, meta),
         }).abortSignal(AbortSignal.timeout(6500));
         if (!error && data?.device_id && !deviceId) {
           deviceId = data.device_id;
@@ -78,10 +79,14 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
       return ok;
     })();
     try { return await pingWork; }
+    catch { return false; }
     finally { pingWork = null; }
   };
   ping();
   setInterval(ping, pingMs);
+  for (const event of ["visibilitychange", "focus", "blur", "pageshow", "pagehide"]) {
+    window.addEventListener(event, () => { void ping(); });
+  }
   return {
     setMeta(patch) { meta = { ...meta, ...patch }; metaVersion++; return ping(); },
   };
@@ -91,6 +96,31 @@ function showBlack() {
   $("blackScreen")?.classList.remove("hidden");
   $("qrScreen")?.classList.add("hidden");
   $("gameScreen")?.classList.add("hidden");
+}
+
+function monitorVisibleFrameGaps() {
+  if (document.visibilityState !== "visible" || typeof requestAnimationFrame !== "function") return () => null;
+  let active = true;
+  let previous = performance.now();
+  let maxGapMs = 0;
+  let stalledFrames = 0;
+  let frameId = 0;
+  const tick = now => {
+    if (!active) return;
+    const gap = Math.max(0, now - previous);
+    previous = now;
+    if (gap >= 150) { stalledFrames += 1; maxGapMs = Math.max(maxGapMs, gap); }
+    frameId = requestAnimationFrame(tick);
+  };
+  frameId = requestAnimationFrame(tick);
+  return () => {
+    active = false;
+    cancelAnimationFrame(frameId);
+    // Report only obvious visible stalls; background-tab throttling is excluded.
+    return stalledFrames && maxGapMs >= 250
+      ? { maxGapMs: Math.round(maxGapMs), stalledFrames }
+      : null;
+  };
 }
 
 // Instrumentacja WYŁĄCZNIE do obserwacji w E2E (tests/e2e/control.spec.js).
@@ -278,6 +308,19 @@ window.addEventListener("DOMContentLoaded", async () => {
     let audioUnlockRequestNonce = audioSessionNonce;
     let displaySoundSelected = false;
     let activeGameStep = null;
+    let lastFrameDiagnosticAt = 0;
+    let frameDiagnosticId = 0;
+    const stopAudioDiagnostics = onSfxPlayback(event => {
+      if (!displaySoundSelected || !activeGameStep || /^(devices_|setup_)/.test(activeGameStep)) return;
+      if (!event.failed && event.delayMs < 500) return;
+      const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      void displayPresence.setMeta({ audio_diagnostic: {
+        id, sound: String(event.key || "unknown").slice(0, 80),
+        delayMs: Math.max(0, Number(event.delayMs) || 0), failed: !!event.failed,
+        error: String(event.error || "").slice(0, 160),
+      } });
+    });
+    window.addEventListener("pagehide", stopAudioDiagnostics, { once: true });
     function syncAudioUnlockScreen(row = null) {
       if (!audioUnlockScreen) return;
       const soundSource = row?.detail?.settings?.soundSource;
@@ -499,7 +542,23 @@ window.addEventListener("DOMContentLoaded", async () => {
             }, { mode: "http" }).catch(() => {});
           }
           await renderAndConfirm(
-            () => !prev || restarting ? renderer.renderSnapshot(row) : renderer.renderDiff(prev, row),
+            async () => {
+              const stopFrameMonitor = monitorVisibleFrameGaps();
+              try {
+                return await (!prev || restarting ? renderer.renderSnapshot(row) : renderer.renderDiff(prev, row));
+              } finally {
+                const gap = stopFrameMonitor();
+                const now = Date.now();
+                if (gap && now - lastFrameDiagnosticAt >= 15_000) {
+                  lastFrameDiagnosticAt = now;
+                  const id = globalThis.crypto?.randomUUID?.() || `${now}-${++frameDiagnosticId}`;
+                  void displayPresence.setMeta({ render_diagnostic: {
+                    id, maxGapMs: gap.maxGapMs, stalledFrames: gap.stalledFrames,
+                    visibility: document.visibilityState || "unknown",
+                  } });
+                }
+              }
+            },
             async () => {
               completedRenderRev = Math.max(completedRenderRev, row.rev);
               await reportCompletion();

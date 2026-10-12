@@ -7,14 +7,15 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-10T22301";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-10T22301";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-10T22301";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-10T22301";
-import { createHostRenderer } from "./render.js?v=v2026-10-10T22301";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-10T22301";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-10T22301";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-10T22301";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-12T09554";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-12T09554";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-12T09554";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T09554";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-12T09554";
+import { createHostRenderer } from "./render.js?v=v2026-10-12T09554";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-12T09554";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-12T09554";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-12T09554";
 
 function parseParams() {
   const u = new URL(location.href);
@@ -24,17 +25,26 @@ function parseParams() {
 function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   const DEVICE_ID_KEY = "familiada:deviceId:host";
   let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
+  let pingInFlight = false;
   const ping = async () => {
+    if (pingInFlight) return;
+    pingInFlight = true;
+    try {
     const { data, error } = await sb().rpc("device_ping", {
-      p_game_id: gameId, p_device_type: "host", p_key: key, p_device_id: deviceId, p_meta: {},
+      p_game_id: gameId, p_device_type: "host", p_key: key, p_device_id: deviceId, p_meta: getDevicePresenceMeta(gameId),
     });
     if (!error && data?.device_id && !deviceId) {
       deviceId = data.device_id;
       localStorage.setItem(DEVICE_ID_KEY, deviceId);
     }
+    } catch { /* Presence diagnostics must never interrupt the Host. */ }
+    finally { pingInFlight = false; }
   };
   ping();
   setInterval(ping, pingMs);
+  for (const event of ["visibilitychange", "focus", "blur", "pageshow", "pagehide"]) {
+    window.addEventListener(event, () => { void ping(); });
+  }
 }
 
 // css/host.css pozycjonuje .text (paperText1/2) jako position:absolute, a
