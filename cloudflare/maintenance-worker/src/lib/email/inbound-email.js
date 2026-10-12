@@ -30,6 +30,12 @@ export function decodeMimeWords(str) {
 export async function handleInboundEmail(message, env) {
   const from    = message.from || "";
   const recipient = normalizeE2ERecipient(message.to);
+  // Envelope sender, not visible From/To headers. Keep exact test destinations
+  // in the test mailbox; our provider's technical copies are not admin mail.
+  if (!recipient && /^bounce\+[a-z0-9_-]+@bounce-zem\.familiada\.online$/i.test(from.trim())) {
+    console.log("[email] ignored own provider technical copy");
+    return;
+  }
   const subject = decodeMimeWords(message.headers.get("subject") || "");
 
   // Parse body from raw MIME stream
@@ -39,7 +45,6 @@ export async function handleInboundEmail(message, env) {
   try {
     const rawText = await new Response(message.raw).text();
     console.log("[email] raw length:", rawText.length);
-    console.log("[email] raw preview:", rawText.slice(0, 500));
     const parts = extractMimeParts(rawText);
     console.log("[email] parsed:", { textLen: parts.text?.length, htmlLen: parts.html?.length, attCount: parts.attachments?.length });
     body = parts.text;

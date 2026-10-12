@@ -219,3 +219,53 @@ test("restore15 wymaga potwierdzonego wyjątku admina", async () => {
   assert.equal(result.status, 502);
   assert.equal(result.data.error, "admin_exclusion_missing");
 });
+
+const TECHNICAL_FROM = 'bounce+948a5050-c564-11f1-8b41-16423a433ff6_vt1@bounce-zem.familiada.online';
+for (const recipient of ['admin@familiada.online', 'unknown@familiada.online']) {
+  test(`own SMTP copy to ${recipient} never reaches inbox, forwarding or Telegram`, async (t) => {
+    const calls = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => { calls.push(String(url)); return Response.json({}); };
+    t.after(() => { globalThis.fetch = originalFetch; });
+    let forwarded = false;
+    await worker.email({ from: TECHNICAL_FROM.toUpperCase(), to: recipient,
+      headers: new Headers({ subject: 'Zaproszenie do ankiety' }),
+      raw: new Blob(['Content-Type: text/plain\r\n\r\nFAMILIADA']).stream(),
+      async forward() { forwarded = true; },
+    }, { ...env(), FORWARD_EMAIL: 'owner@example.com', TELEGRAM_BOT_TOKEN: 'fixture', TELEGRAM_CHAT_ID: 'fixture' });
+    assert.deepEqual(calls, []);
+    assert.equal(forwarded, false);
+  });
+}
+test('technical sender still delivers to every exact test mailbox', async (t) => {
+  const calls = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => { calls.push({ url: String(url), body: JSON.parse(options.body) }); return Response.json([{ id: 'fixture' }]); };
+  t.after(() => { globalThis.fetch = originalFetch; });
+  for (let n = 1; n <= 15; n++) {
+    const to = `test${n}@familiada.online`;
+    await worker.email({ from: TECHNICAL_FROM, to, headers: new Headers({ subject: 'Invitation' }),
+      raw: new Blob(['Content-Type: text/plain\r\n\r\nFixture']).stream(),
+      async forward() { assert.fail('test mail forwarded'); },
+    }, env());
+    assert.equal(calls.at(-1).body.recipient, to);
+    assert.match(calls.at(-1).url, /\/e2e_emails$/);
+  }
+  assert.equal(calls.length, 15);
+});
+test('ordinary replies and similar domains retain the real inbox path', async (t) => {
+  const calls = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => { calls.push(String(url)); return Response.json(String(url).includes('/rpc/') ? [{ id: 'fixture' }] : []); };
+  t.after(() => { globalThis.fetch = originalFetch; });
+  for (const from of ['person@example.com', 'bounce+abc@other.example.com', 'bounce+abc@bounce-zem.familiada.online.attacker.example', 'support@bounce-zem.familiada.online']) {
+    calls.length = 0;
+    let forwarded = false;
+    await worker.email({ from, to: 'admin@familiada.online', headers: new Headers({ subject: 'Re: Zaproszenie do ankiety' }),
+      raw: new Blob(['Content-Type: text/plain\r\n\r\nReply']).stream(),
+      async forward() { forwarded = true; },
+    }, { ...env(), FORWARD_EMAIL: 'owner@example.com' });
+    assert.equal(forwarded, true);
+    assert.ok(calls.some(url => url.includes('/rpc/save_inbound_message')));
+  }
+});

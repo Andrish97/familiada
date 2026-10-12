@@ -768,3 +768,11 @@ Gotowy lokalny plik control-identity-preferences-draft.sql; przed przeniesieniem
 **358 zakończone:** main38261432758 success2/2 --retries=0/unit459,2 real SMTP, Pages38260925626, branch38260515251 (test14) i38258380406 (konto), SQL38257393434 OK13:42:37Z/isolated38256954899. Root scala mainfed93b0a91; code Control canonical/flags completed. Nie powtarzać358.
 
 **Nowy zakres /mail/ potwierdzony:** maile-granice.md ostatnie sekcje + navmap. Dwie sekcje Subskrypcje i Zadania/udostępnienia (ankiety+urządzenia), globalny stan nad nimi; jeden link potwierdzający przez Go, dane/mutacje po proof, konto→login/account. Powiadomienia global-off nie mają anulować źródeł zarządzanych osobno w centrum; dawny poll_go_global_unsubscribe zamykał subskrypcje/poll_tasks — lokalny nowy wariant tylko preference, source odmowy nadal oddzielne. /tmp/e19-359/global-unsubscribe-prototype.sql + test green (account flag=getter/restore, anonymous root, subscription active preserved). Footer-context-prototype.sql/test green service-only/stabletokens/account/mail-only. Brak359 w repo/produkcji. Trzeba pełny proof/session/races/ACL, wszystkie mailery, portal/front/Go i SMTP screens/gates. Część E19/pkt7, nie nowy główny etap.
+
+### 2026-10-12 — pilna skrzynka admina
+
+Użytkownik zgłosił techniczne kopie własnych zaproszeń w skrzynce admina
+(zrzut: nadawca `bounce+…@bounce-zem.familiada.online`). Paczka359 dodaje
+pomijanie w Workerze, ochronę RPC i selektywne czyszczenie; testowe skrzynki
+pozostają dostępne. Stan wdrożenia i przebiegi w dzienniku wdrożeń.
+To ma pierwszeństwo przed kontynuacją grafu/centrum `/mail/`.
