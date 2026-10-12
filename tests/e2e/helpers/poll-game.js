@@ -1,3 +1,4 @@
+const {expect}=require('@playwright/test');
 // Own pooled test games only; cleanup is the caller's responsibility.
 async function rpc(page,name,args){return page.evaluate(async({name,args})=>{const {data,error}=await window.__sbClient.rpc(name,args);if(error)throw new Error(error.message);return data;},{name,args});}
 async function seed(page,type){return page.evaluate(async type=>{
