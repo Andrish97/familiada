@@ -1,5 +1,7 @@
 -- Synthetic identities only. No mail is queued; all changes roll back.
 BEGIN;
+INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce)
+VALUES ('friend:invite','pair',432000,true) ON CONFLICT DO NOTHING;
 INSERT INTO auth.users(id,email,is_anonymous,raw_user_meta_data) VALUES
 ('aaaaaaaa-3525-0000-0000-000000000001','owner352guest@example.invalid',false,'{"username":"owner352guest"}'),
 ('bbbbbbbb-3525-0000-0000-000000000002',NULL,true,'{"username":"guest352audit","is_guest":true}');

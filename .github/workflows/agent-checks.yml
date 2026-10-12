@@ -1231,6 +1231,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-backfill-351.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-12_352_guest_conversion_identity.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-conversion-identity-352.sql
+          python3 docs/sql/test-guest-conversion-352-concurrency.py
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-test-cleanup-351.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-votes-343.sql
