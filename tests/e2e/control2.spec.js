@@ -3473,7 +3473,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await page.screenshot({ path:testInfo.outputPath('shot-test-mode-summary.png') });
     await page.getByRole('button', { name:'Gotowe — przejdź do rozgrywki' }).click();
     for (const [call, expected] of [['api.small.long1','Drużyna A'],['api.small.long2','Drużyna B'],['api.small.leftDigits',''],['api.small.rightDigits','']]) {
-      await expect.poll(() => display.locator('body').evaluate(call => (window.__displayLog || []).filter(item => item.call === call).at(-1)?.args[0], call)).toBe(expected);
+      await expect.poll(() => display.locator('body').evaluate((_body, call) => (window.__displayLog || []).filter(item => item.call === call).at(-1)?.args[0], call)).toBe(expected);
     }
     await page.screenshot({path:testInfo.outputPath('shot-test-mode-default-team-names.png')});
     await page.getByRole('button', { name:'Rozpocznij grę', exact:true }).click();
