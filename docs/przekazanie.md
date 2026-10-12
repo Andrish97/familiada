@@ -660,7 +660,7 @@ branch codex/e19-353. Migracja źródeł/markerów/karencji; pięć rollbackowyc
 kontraktów, seed historii bez zgadywania,24 wyścigi i DDL. Lokalnie wszystkie
 przeszły na fam353draft/fam353final. W macierzy rejestracji powtórna kontrola
 właściciela po locku jest konieczna — stara kontrola negatywna cofała źródło
-anonimowo już po przypisaniu konta. Nowe czasy nazw procesów krótkie, bo
+anonimowo już po przypisaniu konta. Nazwy procesów testowych są krótkie, bo
 application_name w PostgreSQL obcina dłuższe nazwy. Reset shape353 wyłącznie
 na izolowanej bazie przed powtórnym testem historycznych migracji; nigdy
 produkcja. Najpierw unit/isolated353, potem SQL/log/smokes, real-mail branch

@@ -1395,3 +1395,17 @@ Kod tylko w osobnym `codex/e19-353`, do isolated i rzeczywistych maili.
 Nie zamyka Baz bez zapisanego źródła, kolejki/globalnych tokenów maila ani
 pozostałego grafu tym etapem. Profil nie jest podstawą wyszukania odbiorcy
 po adresie ani wyboru adresu maila dla zaproszenia do Znajomych.
+
+353 uzupełnienie: panel wyklucza kontakt z przypisanym kontem również po
+zmianie adresu, a listy i przypomnienia Znajomych/Ankiet korzystają z Auth.
+Mail-off sprawdzany przed zużyciem licznika w obu przypomnieniach; fixture
+rozbieżnego profilu potwierdza adres i brak wydania budżetu. Konwersja na
+znajomość dotyczy wyłącznie żywego źródła — późniejsza niezależna znajomość
+nie ożywia wcześniej cofniętego udostępnienia.
+
+**Pozostałe krawędzie po353:** pochodna propozycja znajomości powstająca z
+subskrypcji musi mieć zapisane źródło i wygasać po cofnięciu tego źródła;
+przy przyjęciu staje się niezależną relacją. Osobno dokończyć pochodzenie
+zaproszeń Baz, przenoszenie pozostałych budżetów maila z adresu na ID przy
+rejestracji/zmianie adresu, globalne tokeny oraz autoryzację/ważność źródła
+przed kolejką i wysyłką. Nie oznaczać całego grafu zamkniętym po353.

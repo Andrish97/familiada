@@ -46,6 +46,19 @@ DO $$ BEGIN
  IF (SELECT count(*) FROM public.poll_text_entries WHERE game_id='dddddddd-3530-0000-0000-000000000004')<>10 OR (SELECT count(*) FROM public.poll_votes WHERE game_id='dddddddd-3530-0000-0000-000000000005')<>10 THEN RAISE EXCEPTION 'partial retained or complete lost'; END IF;
  IF (SELECT count(*) FROM public.poll_tasks WHERE source_friendship_id='ffffffff-3530-0000-0000-000000000006')<>2 THEN RAISE EXCEPTION 'independent friend grants lost'; END IF;
 END $$;
+-- A later independent friendship does not revive a source already cancelled.
+INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce)
+VALUES('friend:invite','pair',432000,true),('friend:invite_after_reject','pair',2592000,true) ON CONFLICT DO NOTHING;
+DO $$ DECLARE proposal jsonb; BEGIN
+ PERFORM set_config('request.jwt.claim.sub','aaaaaaaa-3530-0000-0000-000000000001',true);
+ proposal:=public.friends_invite('changed353@example.invalid');
+ IF proposal->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'later friendship fixture %',proposal; END IF;
+ PERFORM set_config('request.jwt.claim.sub','bbbbbbbb-3530-0000-0000-000000000002',true);
+ IF public.friends_accept((proposal->>'id')::uuid)->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'later friendship acceptance'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.poll_subscriptions WHERE id='eeeeeeee-3530-0000-0000-000000000005' AND status='cancelled') THEN RAISE EXCEPTION 'cancelled source unexpectedly converted'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.poll_tasks WHERE id IN(SELECT id FROM source353_tasks WHERE status='done') AND source_kind='subscriber' AND source_subscription_id='eeeeeeee-3530-0000-0000-000000000005') THEN RAISE EXCEPTION 'cancelled grant revived by later friendship'; END IF;
+ IF EXISTS(SELECT 1 FROM public.poll_tasks WHERE id IN(SELECT id FROM source353_tasks) AND source_friendship_id=(proposal->>'id')::uuid) THEN RAISE EXCEPTION 'closed grants transferred'; END IF;
+END $$;
 DELETE FROM public.poll_subscriptions WHERE id='eeeeeeee-3530-0000-0000-000000000005';
 DO $$ BEGIN
  IF EXISTS(SELECT 1 FROM public.poll_tasks WHERE id IN(SELECT id FROM source353_tasks)) THEN RAISE EXCEPTION 'source cascade left tasks'; END IF;
