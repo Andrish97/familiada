@@ -4035,6 +4035,7 @@ const pl = {
       subtitle: "Nie zamykaj strony — trwa przygotowanie pliku.",
     },
     errors: {
+      exportIncomplete: "Nie udało się dołączyć obrazu do logo. Spróbuj ponownie.",
       notFound: "Nie znaleziono tego logo.",
       wrongType: "To logo jest innego typu niż ten edytor.",
       saveFailed: "Nie udało się zapisać.",

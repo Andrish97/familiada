@@ -106,3 +106,30 @@ wejścia i wartości domyślne. Punktowy game-transfer-format.spec.js ma
 sprawdzić rzeczywisty eksport→istniejący import wszystkich trzech typów,
 nowe ID, zgodność całej definicji i cleanup wyłącznie własnych gier.
 Akceptacja oferty dokładnie raz będzie odrębną transakcyjną paczką.
+
+### Ważność oczekującej kopii — pytanie architektoniczne
+
+Historia nadawcy ma ustalone30 dni. Termin oczekującej oferty kopii nie
+został określony; pytanie wysłane do użytkownika (bez terminu /30 dni /5 dni).
+Użytkownik poprosił najpierw o porównanie: aktualna oferta bazy wygasa po
+5 dniach od utworzenia, osobiste zadanie ankiety żyje w bieżącym uruchomieniu
+(bez stałego terminu dni). Zatrzymanie blokuje głosowanie, wznowienie może
+przywrócić je w tym samym uruchomieniu.30 dni odmowy bazy to inny zegar.
+Nie traktować pytania o obecne terminy jako wyboru terminu kopii.
+Wspólny format/pakiet i niezależność plików można przygotowywać dalej.
+
+### Druga paczka formatu — kompletne Logo
+
+Wspólny eksporter Logo przygotowuje samowystarczalne source: IMAGE
+osadza obraz, DRAW osadza także zagnieżdżone obrazy/tło/clipPath. Usuwa
+historię edycji i pochodny raster Host, zachowując edytowalną treść.
+Nieudane pobranie przerywa eksport z komunikatem PL/EN/UK; nie oddaje
+pakietu z odwołaniem do pliku nadawcy. To uzupełnia istniejący .famlogo,
+nie tworzy osobnego formatu dla kopiowania.
+
+5 unit: IMAGE/TEXT/DRAW, osadzone dane bez odczytu nadawcy, nested
+źródła, brak mutacji, niekompletne/błędne pobranie, teksty PL/EN/UK.
+Native logo-transfer-format.spec.js przygotowany dla3 trybów: realny
+plik w Storage, eksport/parser/własny rekord i własny plik IMAGE,
+niezależne źródło DRAW, brak pakietu po404 i cleanup własnych danych.
+Na razie na branchu; sama oferta i jej termin nadal niezdecydowane.
