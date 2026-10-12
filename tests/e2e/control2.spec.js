@@ -3255,7 +3255,12 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     await clearMailbox(email); await resetMailProviderLimits(page);
     const after = new Date().toISOString();
     await page.goto(`/control/?id=${game.id}`);
-    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia");
+    try {
+      await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", {timeout:15_000});
+    } catch(error) {
+      console.log("[e2e-diag] control358 initial view",JSON.stringify({url:page.url(),body:(await page.locator("body").innerText()).slice(0,1200)}));
+      throw error;
+    }
     const open = async type => {
       await page.locator(`[data-device="${type}"]`).getByRole("button",{name:"Udostępnij"}).click();
       await expect(page.locator("#shareDeviceOverlay")).toBeVisible();

@@ -295,3 +295,9 @@ nowym funkcjonalnym E2E tej paczki. Audyt atomowości queue/historia pkt7.
 ### Pozostałe domknięcie kolejki i stopki Control (audyt 2026-10-12)
 
 358 sprawdza globalną preferencję konta/adresu przed budżetem Control i insercją czterech rodzin powiadomień; nie kończy kontroli źródeł podczas dostarczania. Obecny mail Control do adresu bez konta nie zawiera stopki globalnego wypisania (potwierdzone rzeczywistym mailem test14 w38257851591). Uzupełnić ją w dalszym ujednoliceniu maili, używając istniejącego globalnego tokenu adresu i Go, bez zakładania konta ani własnego systemu preferencji. Test358 globalnego mail-off wykorzystuje istniejący token z subscribers_invite; nie jest dowodem stopki Control.
+
+### Decyzja użytkownika — zawsze stopka i nadrzędna preferencja (2026-10-12)
+
+Stopka globalnego wypisania ma być w każdym mailu, także do odbiorcy z kontem; sam odnośnik do ustawień konta nie zastępuje wypisania. Jeden globalny stan odbiorcy obowiązuje wszystkich nadawców i wszystkie miejsca kolejkowania/dostarczania powiadomień. UI może wyjaśniać „Ta osoba zrezygnowała z powiadomień e-mail. Dostęp zostanie nadany bez maila”. Mail-off nie cofa uprawnienia.
+
+Audyt aktualnego Go: przed potwierdzeniem „zablokować wszystkie powiadomienia mailowe”, po nim „Nie będziesz już otrzymywać żadnych maili”, brak instrukcji przywrócenia i brak anonimowego cofnięcia. Ustawienia konta zapisują user_flags, ale nie czyszczą globalnego suppressed_at; niespójność do naprawienia. Dla konta przywrócenie powinno być świadomą akcją właściciela w ustawieniach. Sposób przywrócenia adresu bez konta pozostaje do uzgodnienia; nie ogłaszać bezwarunkowo nieodwracalności ani dodawać samodzielnie anonimowego włączania przez nadawcę. Dopiąć opis skutków i drogi powrotu w Go, wspólną stopkę i macierz flag/zmiany maila/rejestracji/kolejki.
