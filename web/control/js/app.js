@@ -37,14 +37,16 @@ const ADVANCED_SETTINGS_KEYS = ["roundMultipliers", "finalMinPoints", "finalTarg
 // wyłącznie PODSUMOWANIE tych już zapisanych ustawień (plan, tabela D3),
 // nie formularz do wypełnienia — więc to musi się wykonać, zanim operator
 // tam dotrze, nie jako efekt kliknięcia "Rozpocznij".
+function applyTeamNamesToState(teams, state) {
+  state.teams.teamA = String(teams?.teamA ?? "").trim() || t("control.teamADefault");
+  state.teams.teamB = String(teams?.teamB ?? "").trim() || t("control.teamBDefault");
+}
+
 function applyGameSettingsToState(settings, state) {
   if (!settings || typeof settings !== "object") return;
   const { teams, display, game, questions } = settings;
 
-  if (teams?.teamA || teams?.teamB) {
-    state.teams.teamA = teams.teamA || "";
-    state.teams.teamB = teams.teamB || "";
-  }
+  applyTeamNamesToState(teams, state);
 
   if (display) {
     if (display.colors) state.display.colors = { ...state.display.colors, ...display.colors };
@@ -299,6 +301,11 @@ async function main() {
   // wznowieniu Control w trakcie rozgrywki (patrz komentarz przy funkcji).
   if (!store.state.locks.gameStarted) {
     applyGameSettingsToState(game.settings, store.state);
+    applyTeamNamesToState(store.state.teams, store.state);
+    await store.commit();
+  } else if (!store.state.teams.teamA?.trim() || !store.state.teams.teamB?.trim()) {
+    // Wznowienie rozpoczętej gry z pustymi domyślnymi nazwami.
+    applyTeamNamesToState(store.state.teams, store.state);
     await store.commit();
   }
 

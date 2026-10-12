@@ -3371,7 +3371,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
   test.setTimeout(240000);
   await page.setViewportSize({ width: 1400, height: 900 });
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const game = await makeGame(page, `E2E-CONTROL-TESTMODE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
+  const game = await makeGame(page, `E2E-CONTROL-TESTMODE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS, settings:{teams:{teamA:"",teamB:""}} });
   const assertFits = async () => {
     await expect.poll(() => page.evaluate(() => {
       const area = document.querySelector('#controlStagePanel').getBoundingClientRect();
@@ -3472,6 +3472,10 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await assertFits();
     await page.screenshot({ path:testInfo.outputPath('shot-test-mode-summary.png') });
     await page.getByRole('button', { name:'Gotowe — przejdź do rozgrywki' }).click();
+    for (const [call, expected] of [['api.small.long1','Drużyna A'],['api.small.long2','Drużyna B'],['api.small.leftDigits',''],['api.small.rightDigits','']]) {
+      await expect.poll(() => display.locator('body').evaluate(call => (window.__displayLog || []).filter(item => item.call === call).at(-1)?.args[0], call)).toBe(expected);
+    }
+    await page.screenshot({path:testInfo.outputPath('shot-test-mode-default-team-names.png')});
     await page.getByRole('button', { name:'Rozpocznij grę', exact:true }).click();
     await expect.poll(async () => (await readControl2Sessions(page, game.id))[0]?.stats_detail?.settings?.testMode).toBe(true);
     await page.getByRole('button', { name:'Rozpocznij rundę', exact:true }).click({ timeout:60000 });

@@ -933,3 +933,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: commit89dc980a0f, branch38304058278 w toku (wybrane2 E2E,4/5,retries0). Punktowe lokalne unit34/34; pełne unit Actions success. Pomiary16 stanów zapisane w docs/img/control-test-mode/measurements-correction.json.
 
 - 2026-10-12: branch38304058278: pełna runda przez4 urządzenia success; tryb testowy zatrzymany przy natychmiastowym pomiarze po zmianie rozmiaru (przed zdarzeniem resize). Zrzut końcowy potwierdza poprawne dopasowanie1280×650. Asercja teraz oczekuje na dopasowanie układu przez expect.poll; ponawiany wyłącznie ten test. Unit Actions475/475 success.
+
+- 2026-10-12: branch38304477272 success1/1 bez retry (tryb testowy), wcześniejszy38304058278 potwierdził pełną rundę. Nowe zgłoszenie: domyślne nazwy widoczne tylko jako zastępczy tekst Control, w game_state były puste. Normalizacja nazw przed startem oraz wznowieniem z pustymi nazwami; test trybu rozszerzony o rzeczywiste rysowanie nazw i brak zer przy Rozpocznij grę. Kolejna punktowa bramka przed main.
