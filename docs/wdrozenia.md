@@ -1078,3 +1078,5 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
   potwierdzenia planszy, a pozostały czas blokady odczytywany jest z
   `locked_until`. Manual PL/EN/UK zaktualizowany. main7579211cb6, Pages38312649324 success. Bez migracji; testów nie
   uruchomiono. Składnia zmienionych modułów i `git diff --check` poprawne.
+
+| 2026-10-12 |362 final isolated | Branch e7ec6d3c7d, workflow38314641449 success: rzeczywisty schemat361, pełne formularze tekst/punkty/40 pytań, zadania/owner batch,8 wyścigów, końcowy DDL podczas Game-first i te same kontrakty finalnych nazw.514/514 unit. | Nowa migracja362. Publikacja sprzężona z frontendem na podstawie wyjątku AGENTS: bramka starego anonimowego RPC wymaga nowego formularza. Potem natychmiast2 punktowe E2E na main; main spec czyta faktyczne Pages, bez serveBranchCode. Zachowane bieżące zmiany Control/audio. |

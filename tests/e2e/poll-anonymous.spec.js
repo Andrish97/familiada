@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const { serveBranchCode } = require('./helpers/branch-code');
 const { loginAsPooledTestUser, instrumentPage } = require('./helpers/login');
 const origin='https://www.familiada.online';
+const useBranchCode=process.env.GITHUB_REF_NAME!=='main';
 test.use({serviceWorkers:'block'});
 async function rpc(page,name,args){return page.evaluate(async({name,args})=>{const {data,error}=await window.__sbClient.rpc(name,args);if(error)throw new Error(error.message);return data;},{name,args});}
 async function seed(page,type){return page.evaluate(async type=>{
@@ -30,7 +31,7 @@ for(const type of ['poll_text','poll_points'])test(`anonymous362 ${type}: preser
   await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
   game=await seed(page,type);
   const anonymous=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});anonymousContexts.push(anonymous);
-  await serveBranchCode(anonymous,{pages:['polls/vote/text','polls/vote/points']});
+  if(useBranchCode)await serveBranchCode(anonymous,{pages:['polls/vote/text','polls/vote/points']});
   await anonymous.addInitScript(({id,key})=>{localStorage.setItem('fam_poll_done_'+id+'_'+key,'1');localStorage.setItem('uiLang','pl');},game);
   const voter=await anonymous.newPage();instrumentPage(voter);const pageErrors=[];voter.on('pageerror',error=>pageErrors.push(error.message));
   const url=`${origin}/polls/vote/${type==='poll_text'?'text':'points'}/?id=${game.id}&key=${game.key}`;
@@ -57,7 +58,7 @@ for(const type of ['poll_text','poll_points'])test(`anonymous362 ${type}: preser
   }
   // Same network, independent browser: no IP throttle.
   const other=await browser.newContext({serviceWorkers:'block'});anonymousContexts.push(other);
-  await serveBranchCode(other,{pages:['polls/vote/text','polls/vote/points']});
+  if(useBranchCode)await serveBranchCode(other,{pages:['polls/vote/text','polls/vote/points']});
   const independent=await other.newPage();await independent.goto(url,{waitUntil:'domcontentloaded'});await complete(independent,type);
   await expect(independent.locator('.sub')).toContainText('Dziękujemy');expect(await count(page,game.id,type)).toBe(20);
   const legacy=await voter.evaluate(async({game,type,args})=>{

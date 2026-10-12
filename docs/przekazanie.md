@@ -918,3 +918,11 @@ wybranym specu. SQL362/migracja jeszcze nie opublikowane. Po isolated
 wymagają publikacji sprzężonej z frontendem (zmiana zachowania starego
 anonimowego RPC). Mainf3a5bbd00f z równoległą poprawką Control zachować;
 38314420248 to przebieg drugiej sesji, nie używać jej kont9/10.
+
+**362 final isolated38314641449 success** na e7ec6d3c7d. Wygenerowana
+2026-10-12_362_poll_anonymous_browser_interval.sql, identyczna z finalnym
+szkicem przetestowanym wCI. Publikacja sprzężona SQL+Pages, potem E2E
+obu typów w e2e/poll-anonymous.spec.js. Na main spec NIE podmienia Pages
+branch-code, żeby potwierdzić faktycznie opublikowany front. Manual dalej
+ostatni. Merge zachował nowe sekwencje Control/audio; stary unit renderu
+zaktualizowany do już opublikowanego setText→setPts+bank,514 green.
