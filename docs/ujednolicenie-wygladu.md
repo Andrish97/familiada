@@ -961,19 +961,25 @@ z listy i zapisu stanu; wyszukiwanie/sortowanie mają własną dostępność.
 Wcześniejszą ogólną sugestię filtra rynku zastępuje jawna decyzja
 „Gry społeczności bez filtra”; wykonanych etapów nie otwierać ponownie.
 
-### E19C/E20 — plakietki oczekujących Logo i Baz (2026-10-12)
+### E19C/E20 — plakietki wysłanych kopii Gier i Logo (2026-10-12)
+
+Doprecyzowanie użytkownika: nowy zakres to **Gry i Logo**, oczekujące na
+akceptację u odbiorcy. **Bazy już to mają** i są wzorcem, bez nowego
+zadania dodawania im plakietek.
 
 | Miejsce | Co zlicza plakietka przed akceptacją |
 |---|---|
-| Bazy → wypustka Udostępnione | Dostępne propozycje baz oczekujące na decyzję odbiorcy. |
-| Logo → wypustki typów | Oczekujące kopie danego typu logo; dotyczy każdej odpowiedniej wypustki. |
-| Przycisk strony Logo | Suma oczekujących propozycji ze wszystkich typów Logo, w miejscach gdzie ten skrót występuje. |
+| Gry → wypustki typów | Oczekujące kopie danego typu gry (Preparowane, tekstowe, punktowe). |
+| Logo → wypustki typów | Oczekujące kopie danego typu logo. |
+| Przyciski stron Gry i Logo | Suma oczekujących propozycji właściwego zasobu, w miejscach gdzie skrót występuje. |
 
-Wspólna `.badge`, te same rozmiary i zasady co pozostałe plakietki. Otwarcie
-propozycji bez decyzji nie usuwa plakietki. Akceptacja/odrzucenie, cofnięcie
-dostępu do bazy, usunięcie albo wygaśnięcie propozycji aktualizują liczniki;
-cofnięcie własnej odmowy przywraca licznik, jeśli propozycja znów oczekuje.
-Zero ukrywa plakietkę. Przyjęty własny zasób/zaakceptowany dostęp oraz
-odmowy nie są zliczane. Flaga maili nie wpływa na te liczniki. Wypustki
-i przycisk korzystają z jednego źródła; nie powielać w Zadaniach (tylko
-ankiety). Zweryfikować także telefon, tablet i powrót na stronę.
+Wspólna `.badge`, te same rozmiary i zasady co istniejące plakietki Baz.
+Otwarcie propozycji bez decyzji nie usuwa plakietki. Akceptacja/odrzucenie,
+usunięcie albo wygaśnięcie propozycji aktualizują liczniki; cofnięcie
+własnej odmowy przywraca licznik, jeśli propozycja znów oczekuje. Zero
+ukrywa plakietkę. Przyjęty własny zasób i odmowy nie są zliczane. Flaga
+maili nie wpływa na te liczniki. Wypustki i przycisk korzystają z jednego
+źródła; nie powielać w Zadaniach (tylko ankiety). Nadawca zachowuje tylko
+uzgodnioną historię wysyłek, bez plakietek śledzących decyzje odbiorcy.
+Zweryfikować telefon, tablet i powrót na stronę; istniejące Bazy objąć
+regresją wspólnego mechanizmu, bez ponownego wdrażania go.

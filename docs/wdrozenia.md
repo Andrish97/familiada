@@ -757,3 +757,5 @@ Stan szczegółowy:
 | 2026-10-12 | Następny audyt kolejki / lokalny dowód | /tmp/e19-358/queue-source-audit.sql na fam357ddl, rollback: pending mail do syntetycznego odbiorcy z linkiem bazy, potem cofnięcie taska; mail_queue_pick_selected nadal wybiera1 zamknięte zaproszenie do wysyłki. Bez SMTP i bez danych produkcyjnych. | Po zamknięciu357 wspólna ważność przed queue/claim/delivery; nie ma358 w repo/produkcji. |
 
 | 2026-10-12 | E19C/E20 / plakietki Logo i Baz | Przed akceptacją: Bazy na wypustce Udostępnione, Logo na wypustkach typów i suma na przycisku strony Logo. Otwarcie bez decyzji zachowuje licznik; po decyzji/zamknięciu aktualizacja, zero ukryte, mail-off bez wpływu, Zadania bez powielenia. | Dopisano do E19, kopii i źródła wyglądu. |
+
+| 2026-10-12 | Korekta zakresu plakietek | Użytkownik doprecyzował: wysłane kopie Gier i Logo, oczekujące u odbiorcy, na wypustkach typów i przyciskach stron. Bazy już mają ten mechanizm, są wzorcem i regresją, bez nowego wdrożenia. | Poprawiono bieżące sekcje E19/E19C/E20; poprzedni wpis dziennika pozostaje historią korekty. |

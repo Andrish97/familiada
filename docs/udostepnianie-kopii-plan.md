@@ -17,7 +17,7 @@ Realizacja po bieżącym E19, przed E19N/E14/E20; manual pozostaje ostatni.
 | Filtr Gier | We wszystkich własnych zakładkach typu (Preparowane, tekstowe, punktowe) dostępne „Otrzymane”, oparte na zapisanym pochodzeniu kopii od znajomych. Gry społeczności bez filtra; wspólny wygląd E20. |
 | Przyjęta kopia | Tylko lekki znacznik „od X”, bez statusu „zaakceptowano”, uprawnień i dodatkowego panelu udostępnienia. |
 | Cofanie | Nadawca nie może cofnąć wysłanej kopii. Odbiorca zarządza przyjętym zasobem tak jak własnym importem. |
-| Plakietki | Oczekujące kopie liczyć na właściwej stronie/ikonie Gier lub Logo i wypustce zakładki typu. Logo ma również plakietkę na przycisku prowadzącym do strony Logo; wypustki pokazują oczekujące kopie swojego typu, przycisk ich sumę. Po akceptacji/odrzuceniu/usunięciu/wygaśnięciu aktualizować, zero ukrywa plakietkę. Bez powielania w Zadaniach. |
+| Plakietki | Oczekujące kopie liczyć na właściwej stronie/ikonie Gier lub Logo i wypustce zakładki typu. Gry i Logo mają plakietki na wypustkach typów oraz przyciskach prowadzących do właściwej strony; wypustki pokazują oczekujące u odbiorcy kopie swojego typu, przycisk ich sumę. Bazy już mają ten mechanizm i są wzorcem. Po akceptacji/odrzuceniu/usunięciu/wygaśnięciu aktualizować, zero ukrywa plakietkę. Bez powielania w Zadaniach. |
 | Mail i link | Zasada systemowa: odbiorca dostaje propozycję również przy wyłączonych mailach. Flagę sprawdzać przed kolejką. Link przez `/go/`, z kontrolą właściwego konta i spójnymi komunikatami stanów. |
 
 ## Snapshot i graf zasobów

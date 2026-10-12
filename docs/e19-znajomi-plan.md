@@ -1446,11 +1446,12 @@ respektuje5/30 dni i zachowuje budżet, otrzymuje nowy ID/token bez starego
 lokalnie success. Dopiero isolated → DB/main/log → real-mail branch/main
 zamyka tę krawędź; Bazy i kolejka pozostają otwarte.
 
-### Uzupełnienie plakietek Baz i Logo (2026-10-12)
+### Uzupełnienie plakietek kopii Gier i Logo (2026-10-12)
 
-Przed akceptacją Bazy mają plakietkę oczekujących na wypustce Udostępnione.
-Kopie Logo w E19C mają ją na wypustkach typów i sumę na przycisku strony
-Logo. Te same źródła/odświeżanie/zero co istniejące badges; bez powielania
+Nowy zakres: wysłane kopie Gier i Logo w E19C, oczekujące u odbiorcy,
+mają plakietki na wypustkach typów oraz sumę na przycisku właściwej strony.
+Bazy już mają tę obsługę i są wzorcem, bez nowego zadania wdrożenia Baz.
+Te same źródła/odświeżanie/zero co istniejące badges; bez powielania
 w Zadaniach i bez zliczania zaakceptowanych lub odrzuconych. Pełna tabela
 i stany w końcowej podsekcji ujednolicenie-wygladu.md; kopie w
 udostepnianie-kopii-plan.md. Uwzględnić w E19C/E20, wcześniejszych
