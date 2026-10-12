@@ -24,3 +24,5 @@ html, body { overflow:hidden!important; scrollbar-gutter:auto!important; }
 }
 @keyframes control-panel-in { from { transform:translateX(12px); opacity:.8; } to { transform:none; opacity:1; } }
 @keyframes control-devices-in { from { transform:translateX(12px); opacity:0; } to { transform:none; opacity:1; } }
+
+#controlStage .device-row a[aria-disabled="true"] { opacity:.45; pointer-events:none; }

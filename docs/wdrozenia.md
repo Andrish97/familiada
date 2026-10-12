@@ -870,3 +870,8 @@ z rzeczywistymi czterema urządzeniami i wznowieniem Control w rundzie2.
 Podglądy pozostają osobno w Wyglądzie (dwa, własne połówki), obok niezależnego
 paska trzech urządzeń. Finalna kontrola brancha: wyłączenie/ponowne włączenie,
 powrót z guarda, blokada Next podczas zapisu i screenshot sekcji Wygląd.
+
+Zrzut38298597313 obejrzany: układ mieści się, iframe mają równe pola.
+Drobne dopracowanie osadzenia: ukrycie przycisku pełnego ekranu tylko
+wewnątrz iframe testowych i taki sam wygaszony wygląd zablokowanego linku
+Otwórz jak pozostałych przycisków. Zwykłe strony urządzeń bez zmian.
