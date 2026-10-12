@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/mail-center-checks.yml'
       - 'docs/sql/*mail-center*360*'
+      - 'docs/sql/*mail-notification*361*'
 permissions:
   contents: read
 jobs:
@@ -57,6 +58,21 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-preferences-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-cleanup-360.sql
           python3 docs/sql/test-mail-center-access-360-concurrency.py
+      - name: Verify notification sources, budgets and delivery graph
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-sources-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-sources-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-allocations-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-rpc-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-bind-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-revocation-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-notification-delivery-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-allocations-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-delivery-361.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-notification-revocation-361.sql
+          python3 docs/sql/test-mail-notification-concurrency-361.py
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-confirmation-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-delivery-360.sql
       - uses: actions/upload-artifact@v4
         if: always()
         with:

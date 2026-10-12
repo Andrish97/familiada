@@ -824,3 +824,15 @@ po skasowaniu kolejki. Szkice docs/sql/*mail-notification*361.sql; DB
 fam360clean. Nie wdrożono. Dalsze: unieważnianie po zamknięciu/flagach,
 claim/requeue/fresh delivery, pięć rodzin i wyścigi, isolated i produkcyjne
 bramki. Auth/send-email nie zmieniać: bez kolejki, flag i stopki centrum.
+
+**Aktualny graf361:** pliki sources/allocations/rpc/bind/revocation/delivery
+w docs/sql, wszystkie kontrakty na świeżym fam361proof success;60
+wyścigów source close/delete/flag × enqueue/delivery ×5rodzin ×obie
+kolejności success, z odzyskaniem Auth przez legacy child-first writer.
+Root/source closure nie ożywa po undo; queue deletion nie resetuje
+pozwolenia/budżetu. Hard-delete cascade sprawdzony, lease/delay zachowane.
+Powtórny confirmation/Contact po361 success. Nowy HMAC test14 template
+endpoint zwykły service marketing, nie udaje rzeczywistego zgłoszenia.
+Dalej commit/isolated, DDL, finalna migracja i bramki SMTP branch/main.
+**Auth już zamknięte:** fcdea7a889/cf1955779d, Edge38298008652, branch
+38297713527/main38298190111 success1/1, mainunit467. Nie powtarzać.

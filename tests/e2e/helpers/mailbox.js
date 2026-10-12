@@ -68,4 +68,11 @@ async function readMailDelivery({ recipient, after }) {
   return api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
 }
 
-module.exports = { readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
+async function queueMailTemplateFixtures(items) {
+  return api("/mail-template-fixtures", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recipient: "test14@familiada.online", items: items.map(({ subject, html }) => ({ subject, html })) }),
+  });
+}
+
+module.exports = { queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };

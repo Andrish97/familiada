@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { mailQueueResult } from "../_shared/mail-queue-results.js";
+import { notificationReference } from "../_shared/notification-reference.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,7 +61,7 @@ serve(async (req) => {
     const topTargetKey = body.cooldownTargetKey ? String(body.cooldownTargetKey).trim() : "";
 
     const items = Array.isArray(body.items) ? body.items : [body];
-    const validItems = items.filter((x: any) => x?.to && x?.subject && x?.html).map((x: any) => ({
+    const validItems: any[] = items.filter((x: any) => x?.to && x?.subject && x?.html).map((x: any) => ({
       to: String(x.to).trim(),
       subject: String(x.subject).trim(),
       html: String(x.html).trim(),
@@ -72,6 +73,9 @@ serve(async (req) => {
     if (validItems.some((it: any) => !it.cooldownActionKey || !it.cooldownTargetKey)) {
       return json({ ok: false, error: "Missing cooldownActionKey/cooldownTargetKey" }, 400);
     }
+    try {
+      for (const item of validItems) item.reference = notificationReference(item.html, item.cooldownActionKey);
+    } catch { return json({ ok: false, error: "invalid_notification_reference" }, 400); }
 
     const settings = await sbAdmin.from("mail_settings").select("delay_ms,batch_max").eq("id", 1).maybeSingle();
     const batchMax = Math.min(500, Math.max(1, Number(settings?.data?.batch_max) || 100));
@@ -88,6 +92,9 @@ serve(async (req) => {
       attempts: 0,
       cooldown_action_key: it.cooldownActionKey,
       cooldown_target_key: it.cooldownTargetKey,
+      notification_source_kind: it.reference.kind,
+      notification_source_token: it.reference.token,
+      meta: { notification_reference: it.reference },
     }));
 
     const { data: inserted, error } = await sbAdmin.from("mail_queue").insert(rows).select("to_email");

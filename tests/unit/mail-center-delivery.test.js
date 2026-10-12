@@ -26,7 +26,7 @@ test('requested verification preserves the short one-time proof without adding a
  assert.equal(result.html,html);assert.ok(!result.html.includes('data-familiada-mail-center'));
 });
 test('closed source and preference return skipped, malformed or unavailable backend fail closed',async()=>{
- for(const reason of ['skipped_notification_preference','skipped_verification_closed','skipped_contact_closed','skipped_missing'])assert.deepEqual(await prepareMailDelivery(async()=>({data:{ok:true,allowed:false,reason}}),id),{allowed:false,reason});
+ for(const reason of ['skipped_notification_source','skipped_notification_preference','skipped_verification_closed','skipped_contact_closed','skipped_missing'])assert.deepEqual(await prepareMailDelivery(async()=>({data:{ok:true,allowed:false,reason}}),id),{allowed:false,reason});
  for(const response of [{error:{message:'db down'}},{data:null},{data:{ok:true}},{data:{...valid,footer_token:'old-u'}},{data:{...valid,verification:undefined}}])await assert.rejects(prepareMailDelivery(async()=>response,id));
 });
 
