@@ -645,3 +645,12 @@ isolated, SQL/main/log i punktowy guest-conversion-identity.spec.js na
 branch/main. Draft źródeł /tmp/e19-352 to przyszły353, nadal niewdrożony.
 Audyt38192919036: task bez kontaktu jest testowy/current, odmowa znanego
 konta poza30 dniami. Nie zgadywać historycznych powiązań.
+
+**352 zakończone:** DB38202329118/log04:06:38/schema b212860fcd,
+isolated38202222524/unit455, branch38202524806 i main38202658311
+success3/3 bez retry. Dawne RPC konwersji wymaga potwierdzonego własnego
+adresu; Account/Login pending/cancel pozostają poprawne, goście posprzątani.
+Nie powtarzać tej paczki. **Dalej353:** /tmp/e19-353/source-draft.sql,
+fam353draft; public share/macierz dwóch typów/pięciu stanów i sześć
+regresji SQL success. Nadal lokalne, bez353 w repo/produkcji. Dalsze
+wejścia i wyścigi oraz rzeczywiste maile wymagane. Manual na końcu.

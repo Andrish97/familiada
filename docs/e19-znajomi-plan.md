@@ -1363,3 +1363,11 @@ bieżącym zadaniem między kontami testowymi; jedyna odmowa powiązana z
 obecnym kontem jest starsza niż30 dni. To nie dowodzi pierwotnego źródła.
 Historyczne referencje wolno uzupełniać wyłącznie z zapisanej tożsamości;
 nie tworzyć znajomości na podstawie samego odzyskanego adresu.
+
+352 zamknięte: isolated38202222524; SQL04:06:38/DB38202329118;
+branch38202524806 i main38202658311 success3/3 bez retry/unit455.
+Nowy gość nie przejmuje adresu przez dawne RPC; istniejące formularze
+migracji zachowują pending/cancel. To nie zamyka innych krawędzi konta.
+353 lokalny draft przeniesiony do /tmp/e19-353, sześć regresji i nowa
+macierz obu typów/pięciu stanów success; źródło podczas transferu na
+Znajomych aktualizuje się razem z ID relacji. Nadal bez wdrożenia353.
