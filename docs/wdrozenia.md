@@ -875,3 +875,8 @@ Zrzut38298597313 obejrzany: układ mieści się, iframe mają równe pola.
 Drobne dopracowanie osadzenia: ukrycie przycisku pełnego ekranu tylko
 wewnątrz iframe testowych i taki sam wygaszony wygląd zablokowanego linku
 Otwórz jak pozostałych przycisków. Zwykłe strony urządzeń bez zmian.
+
+Control tryb: **38299326792 success2/2**, branchf39b3220b3, bez retry;
+wyłączenie/ponowne włączenie i dwa osobno centrowane podglądy potwierdzone.
+Decyzja użytkownika: manual z wzmianką i brak pełnego ekranu w osadzeniu;
+wykonane PL/EN/UK i dla trzech urządzeń. Domykający E2E sprawdza ukrycie FS.

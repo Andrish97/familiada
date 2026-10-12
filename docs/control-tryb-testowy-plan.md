@@ -129,3 +129,10 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
 - Domknięcie: kontrola wyłączenia/ponownego włączenia, zabezpieczenie zapisu
   przed podwójną akcją, powrót z guarda oraz zrzut Wyglądu i krótki manual.
   Ostatni punktowy przebieg tej wersji przed wdrożeniem.
+
+- 2026-10-12: użytkownik potwierdził krótką wzmiankę w manualu i ukrycie
+  przycisków pełnego ekranu w osadzonych urządzeniach trybu testowego.
+  Zwykłe strony urządzeń zachowują pełny ekran. Wzmianka jest w PL/EN/UK;
+  punktowy E2E sprawdza również niewidoczność przycisków we wszystkich iframe.
+- 38299326792 success2/2 na f39b3220b3, bez retry: wyłączanie i ponowne
+  włączanie, zwężenie, oba centrowane podglądy oraz zapis statystyk.

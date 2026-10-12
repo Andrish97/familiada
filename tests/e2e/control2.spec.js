@@ -3401,6 +3401,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
       await expect(frame.locator('body')).toBeVisible({ timeout: 20000 });
       const viewport = await frame.locator('body').evaluate(() => ({ width:innerWidth, height:innerHeight }));
       expect(viewport).toEqual({ width:1024, height:768 });
+      await expect(frame.locator(kind === 'display' ? '#fsBtn' : '#btnFS')).toBeHidden();
     }
     await expect(page.getByRole('button', { name:'Dalej', exact:true })).toBeEnabled({ timeout:30000 });
     await assertFits();
