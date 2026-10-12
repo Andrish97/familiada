@@ -18,7 +18,7 @@ test("@mailbox ankieta353: cofnięcie źródła po rejestracji usuwa partial i z
   const recipientContext = await browser.newContext({ serviceWorkers: "block" });
   const anonymousContext = await browser.newContext({ serviceWorkers: "block" });
   if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") {
-    for (const context of [ownerContext, recipientContext, anonymousContext]) await serveBranchCode(context, { pages: ["polls", "account", "go", "tasks"] });
+    for (const context of [ownerContext, recipientContext, anonymousContext]) await serveBranchCode(context, { pages: ["polls", "account", "go", "tasks", "friends"] });
   }
   const owner = await ownerContext.newPage();
   const recipient = await recipientContext.newPage();
@@ -135,6 +135,17 @@ test("@mailbox ankieta353: cofnięcie źródła po rejestracji usuwa partial i z
     expect(restored.user_id).not.toBe(oldRecipientId);
     await loginAsTestUser(recipient, recipientContext, { username: email });
     const registeredId = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+    await recipient.goto("https://www.familiada.online/friends/");
+    await recipient.waitForFunction(() => !!window.__sbClient);
+    expect((await rpc(recipient, "friend_invites_from_subscriptions")).ok).toBe(true);
+    const proposal = await owner.evaluate(async ({ source }) => {
+      const { data, error } = await window.__sbClient.from("friendships").select("id,token,source_subscription_id,status,cancelled_at").eq("source_subscription_id", source).single();
+      if (error) throw error;
+      return data;
+    }, { source: subscription.id });
+    expect(proposal.status).toBe("pending");
+    expect(proposal.cancelled_at).toBeNull();
+    expect((await rpc(recipient, "friends_token_info", { p_token: proposal.token })).ok).toBe(true);
     for (const fixture of games) {
       const task = (await rpc(owner, "poll_share_panel", { p_game_id: fixture.id })).tasks.find(task => task.id === fixture.taskId);
       expect(task.recipient_user_id).toBe(registeredId);
@@ -162,6 +173,11 @@ test("@mailbox ankieta353: cofnięcie źródła po rejestracji usuwa partial i z
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(1);
     expect((await rpc(owner, "polls_hub_subscriber_remove", { p_id: subscription.id })).ok).toBe(true);
+    expect((await rpc(recipient, "friends_list")).some(row => row.id === proposal.id)).toBe(false);
+    expect((await rpc(recipient, "friends_accept", { p_id: proposal.id })).ok).toBe(false);
+    expect((await rpc(recipient, "friends_token_info", { p_token: proposal.token })).ok).toBe(false);
+    await recipient.goto("https://www.familiada.online/go/?f=" + proposal.token);
+    await expect(recipient.locator("#title")).toContainText(/wygas|nieważn|nieprawidł|niedostępn/i);
     expect(await count(games[0])).toBe(10);
     expect(await count(games[1])).toBe(0);
     expect((await rpc(owner, "poll_share_panel", { p_game_id: games[0].id })).tasks).toHaveLength(1);

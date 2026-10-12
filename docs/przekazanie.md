@@ -704,3 +704,11 @@ still-valid email counter; nie dodawać zbędnego token-detach triggera.
 Brak355 w repo/produkcji. Potem Bazy/pozostałe mail budgets/tokeny/kolejka,
 Go/anon, E19N/E14/E20; manual ostatni. E20 tytuł/podpowiedź po prawej,
 akcje po lewej (nowa decyzja12.10), kompaktowe mobilne filtry.
+
+**355 przygotowane na branchu:** migracja/testy/CI w repo, przed isolated.
+Lokalnie7 kontraktów/8 wyścigów/DDL i14 rollbackowych regresji success,
+unit455. Produkcyjny test355 rozszerza poll-contact-source.spec.js:
+recipient Friends tworzy derived proposal, owner source revoke usuwa
+listę/accept/token/Go, actual SMTP obu poll typów i recovery15 pozostają.
+Reset355 przed reset353, tylko izolowana DB; restore _friend_locked legacy
+potrzebny po przyszłym schema355. Nie oznaczać355 wdrożonym przed bramkami.

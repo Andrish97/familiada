@@ -1179,6 +1179,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
           sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
           psql -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+      - name: Restore pre355 proposal shape for historical migration fixtures
+        run: psql -v ON_ERROR_STOP=1 -f docs/sql/reset-friend-proposal-test-schema-355.sql
       - name: Restore pre353 contact shape for historical migration fixtures
         run: psql -v ON_ERROR_STOP=1 -f docs/sql/reset-contact-source-test-schema-353.sql
       - name: Restore current contact and poll policies and ACL
@@ -1285,3 +1287,12 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-guest-conversion-identity-352.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
           python3 docs/sql/test-guest-metadata-354-concurrency.py
+      - name: Verify derived friend proposals follow their source
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          bash docs/sql/test-friend-proposal-355-ddl-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-proposal-sources-355.sql
+          python3 docs/sql/test-friend-proposal-355-concurrency.py
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-sources-353.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
