@@ -44,6 +44,12 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
 8. **Kontynuacja bez pytań (2026-10-11):** użytkownik polecił „Kontynuuj zawsze bez pytania”. Po zakończeniu paczki przechodzić samodzielnie do kolejnej zgodnie z planem, z testami i kontrolą produkcji. Nie czekać na zatwierdzenie wyglądu; pokazywać zrzuty po wykonaniu. Zatrzymać się wyłącznie przy kluczowej decyzji architektonicznej, której nie da się rozstrzygnąć z ustaleń.
 
+   **Nadrzędne doprecyzowanie 2026-10-12:** pytania o postęp i raporty nie
+   zatrzymują realizacji. Po odpowiedzi wracać do pracy w tej samej turze.
+   Zakończenie paczki i skrócenie kontekstu również nie wymagają ponownego
+   polecenia ani nowej rozmowy. Wyjątki: wyraźne zatrzymanie przez użytkownika,
+   rzeczywista blokada wykonania lub brak kluczowej decyzji architektonicznej.
+
 ## Przekazanie (2026-10-10)
 
 Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
@@ -106,6 +112,12 @@ Przegląd treści dopiero na końcu, po ustaleniu ostatecznego działania UI.
 na środku, jak przy braku gier. Wspólny wygląd w całym systemie;
 puste sekcje własnych odmów pozostają ukryte. Szczegóły w
 `ujednolicenie-wygladu.md`, „Doprecyzowanie telefonu i pustych list”.
+
+**E20 — typy stron (2026-10-12):** wspólny wygląd w ramach każdego typu.
+Gry/Bazy/Logo: obecny styl, kompaktowe wyszukiwanie i filtry telefonu;
+w nagłówku dwie kolumny — akcje po lewej, tytuł i podpowiedź po prawej.
+Szczegóły: `ujednolicenie-wygladu.md`, „E20 — wspólne typy stron i nagłówek
+list zasobów”. Doprecyzowanie do wdrożenia w E20, bez zmiany bieżącej kolejki.
 
 **Kolejność = kolumna # — zatwierdzona 2026-10-07. Użytkownik wznowił pracę i 2026-10-11 polecił zawsze kontynuować bez pytania.** Uzasadnienie: E0 daje wiarygodne testy; E3 to
 drobiazg; E10 pierwszy z dużych (decyzja); E11 wcześnie, bo zamyka lukę
@@ -682,3 +694,7 @@ Stan szczegółowy:
 | 2026-10-12 | Pkt7 /353 zakończone produkcyjnie | Finalny isolated38209090723 success/unit455,26 funkcji. Main ab837febf0; DB38209426059 success, APPLY05:48:29/OK05:48:30 UTC, pięć rollbackowych kontraktów success, schema/log8110af1b70. Branch38210607530 success1/1 bez retry: SMTP15 w52.1/105.1s; main38211143647 success1/1 bez retry. Public share zapisuje wybrany kontakt, signup15 wiąże ID, cofnięcie źródła sprząta partial i zamyka Go dla obu aktorów; pełny tekst10 pozostaje. Rzeczywiste kasowanie/odtworzenie15 i świeże logowanie w finally. |353 zamknięte w swoim zakresie. Graf nadal otwarty: źródła pochodnych propozycji/Baz, pozostałe budżety i globalne tokeny/kolejka. Bez zmiany CSS/frontu. |
 
 | 2026-10-12 | Pkt7 / następny lokalny audit354 | Odtworzono na353: Auth anonymous=true + editable metadata is_guest=false daje profile guest=false, brak daty wygaśnięcia i klasyfikację regular=true. Prototyp /tmp/e19-354, fam354draft: rzeczywisty anonimowy/unconfirmed nie staje się członkiem przez metadata; profil guest=true/expiry obecna/regular=false. Dodatkowa normalizacja metadata według profilu, regresje351/352 prawidłowej potwierdzonej konwersji success. |354 wyłącznie prototyp lokalny; brak migracji repo/produkcji. Potrzebny audyt historii bez PII, pełny kontrakt i Guest E2E. Kontynuować bez pytania; manual ostatni. |
+
+| 2026-10-12 | Ciągłość i lokalny kontrakt354 | Nadrzędna zasada: raport nie zatrzymuje pracy; zapis w AGENTS/CLAUDE i przekazaniu. Unit455 success. Nowy rollbackowy kontrakt354 na fam354draft: tworzenie gościa z false/brakiem metadata, zmiany w obu kierunkach, zachowanie języka i prawidłowa konwersja success. Przygotowany osobny audyt produkcji tylko zbiorczych liczników. |354 nadal lokalny; audit przed decyzją o historycznej korekcie, następnie bramki wdrożenia. |
+
+| 2026-10-12 | E20 / typy stron | Decyzja zapisana w źródle wyglądu: wspólny wzorzec w ramach typu; Gry/Bazy/Logo zachowują styl, akcje po lewej, tytuł/podpowiedź po prawej, mniej miejsca na mobilne filtry/wyszukiwanie. Poprzedni układ nagłówka oznaczony jako zastępowany w E20. | Do realizacji w E20; bieżąca354 kontynuowana. |

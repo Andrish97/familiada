@@ -679,3 +679,9 @@ regular classifier i normalizer success;351/352 pozytywnej konwersji także.
 Jeszcze bez354 w repo/produkcji. Do audytu historii i pełnych testów.
 Pozostałe źródła pochodnych propozycji/Baz i mailowe budżety/tokeny/kolejka
 w E19; UI/E20 dalej, manual na końcu.
+
+**Decyzja 2026-10-12 — ciągłość:** nie zatrzymywać pracy po raportach,
+pytaniach o postęp ani zamknięciu paczki. Kontynuować kolejkę bez nowego
+polecenia; zasada nadrzędna w AGENTS.md/CLAUDE.md. Pięć aktywnych etapów
+głównej kolejki: E19, E19N, E14, E20, E13 (manual ostatni); część E18 nadal
+historycznie wstrzymana. Numery migracji nie są liczbą punktów planu.

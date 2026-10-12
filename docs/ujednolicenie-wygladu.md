@@ -834,3 +834,21 @@ Przy wdrożeniu:
   przejście między etapami również udokumentować.
 
 Realizacja w UI/E20 po bieżącym grafie zależności; manual nadal ostatni.
+
+### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
+
+Każdy typ strony ma wspólny układ i wspólne style na wszystkich stronach
+tego typu. Listy zasobów **Gry, Bazy i Logo** zachowują obecny charakter
+wyglądu. E20 dopracowuje je razem według jednego wzorca.
+
+| Element | Docelowa zasada dla Gier, Baz i Logo |
+|---|---|
+| Górna część strony | Dwie niewidoczne kolumny: **akcje po lewej**, **tytuł i podpowiedź po prawej**. Tytuł i podpowiedź tworzą jedną grupę. |
+| Zawijanie | Elementy zawijają się w obrębie swojej kolumny; nie tworzą jednej mieszanej kolejki tytułu, podpowiedzi i przycisków. |
+| Wyszukiwanie i filtrowanie na telefonie | Przemyśleć wspólny, bardziej kompaktowy układ, żeby zajmował mniej miejsca i zostawiał więcej wysokości na listę; funkcje pozostają dostępne. Szczegółowy układ dopracować podczas wdrożenia E20. |
+| Pozostałe typy stron | Ujednolicać w ramach ich własnego typu (np. edytory oraz strony kontaktów), zgodnie z ustalonym dla nich podziałem. |
+| Weryfikacja | Te same reguły na trzech stronach; telefon pionowo i poziomo oraz komputer, krótkie/długie tytuły i podpowiedzi, PL/EN/UK. Zrzuty z przykładowymi danymi po wykonaniu. |
+
+Ta decyzja zmienia docelowe strony nagłówka list zasobów względem
+wcześniejszego opisu „tytuł po lewej, akcje po prawej”. Wykonanych etapów
+nie otwiera ponownie; zmianę wdrożyć w E20. Manual pozostaje ostatni.
