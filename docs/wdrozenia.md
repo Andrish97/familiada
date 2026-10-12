@@ -892,3 +892,16 @@ Scalono aktualny maincf1955779d w **1eec2fab26**, zachowano oba dopiski
 Dziennika (konflikt tylko w dokumentacji). Wersje zasobów przepisane narzędziem;
 point unit30/30 oraz konflikt/wersjonowanie5/5. Kolejny punktowy test na
 scalonym branchu przed publikacją; nadal nie ma wdrożenia trybu na Pages.
+
+### 2026-10-12 — Control tryb testowy: bramka brancha spełniona, publikacja
+
+**38300241381 success2/2**, bez retry/unit471, finalny scalony branch
+43dc50b9a4 (maincf1955779d uwzględniony). Wszystkie kontrakty trybu i
+statystyk, brak FS w iframe, podglądy, reload, disable/enable, guard i
+buzzer green. Regresja zwykłego przebiegu38298597313 success wcześniej.
+Dodatkowe lokalne pomiary60 przypadków panelu przy980/981/1024/1100px:
+brak przewijania i wychodzenia treści poza panel. Zrzuty rzeczywistych
+urządzeń i podsumowania1400px oraz guarda390px: docs/img/control-test-mode,
+pochodzą z38299715000; robocze pomiary sekcji w control-test-layout/measurements.json.
+Zgoda użytkownika na publikację po testach jest w planie. Brak migracji.
+Następne: push main, Pages success i te same punktowe spece na produkcji.
