@@ -759,3 +759,5 @@ Stan szczegółowy:
 | 2026-10-12 | E19C/E20 / plakietki Logo i Baz | Przed akceptacją: Bazy na wypustce Udostępnione, Logo na wypustkach typów i suma na przycisku strony Logo. Otwarcie bez decyzji zachowuje licznik; po decyzji/zamknięciu aktualizacja, zero ukryte, mail-off bez wpływu, Zadania bez powielenia. | Dopisano do E19, kopii i źródła wyglądu. |
 
 | 2026-10-12 | Korekta zakresu plakietek | Użytkownik doprecyzował: wysłane kopie Gier i Logo, oczekujące u odbiorcy, na wypustkach typów i przyciskach stron. Bazy już mają ten mechanizm, są wzorcem i regresją, bez nowego wdrożenia. | Poprawiono bieżące sekcje E19/E19C/E20; poprzedni wpis dziennika pozostaje historią korekty. |
+
+| 2026-10-12 |357 / branch-code4 success |38244399918 success4/4 --retries=0, unit459.3 rzeczywiste maile test2:90.8/33.7/116.7s. Wybór friend RPC, source close/Go, direct invitation survives/accept, stale checkbox not_friend/no task, accepted independent, odmowy/undo/role/mail-off i wspólne sekcje success. | Promować sprawdzony front na main, Pages i te same4 testy kontrolne; dopiero zamknąć357. |
