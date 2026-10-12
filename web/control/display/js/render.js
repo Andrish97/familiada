@@ -1,3 +1,4 @@
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T20271";
 // control/display/js/render.js
 //
 // Tłumaczy wiersz public.game_state (a dokładniej: różnicę między
@@ -287,7 +288,11 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   // przez całą właściwą rozgrywkę (rundy+finał), tak jak w oryginale.
   let lastTeamNames = null;
   function paintTeamNames(row, force = false) {
-    const teams = row.detail?.teams || {};
+    const raw = row.detail?.teams || {};
+    const teams = {
+      teamA: raw.defaultA === true || !raw.teamA ? t("control.teamADefault") : raw.teamA,
+      teamB: raw.defaultB === true || !raw.teamB ? t("control.teamBDefault") : raw.teamB,
+    };
     if (force || lastTeamNames?.teamA !== teams.teamA) api.small.long1(teams.teamA || "");
     if (force || lastTeamNames?.teamB !== teams.teamB) api.small.long2(teams.teamB || "");
     lastTeamNames = { ...teams };
@@ -395,7 +400,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     if (prevRow.step === nextRow.step && nextRow.detail?.display?.mode === "GAME") {
       const before = prevRow.detail?.teams || {};
       const after = nextRow.detail?.teams || {};
-      if (before.teamA !== after.teamA || before.teamB !== after.teamB) paintTeamNames(nextRow);
+      if (before.teamA !== after.teamA || before.teamB !== after.teamB || prevRow.detail?.settings?.uiLang !== nextRow.detail?.settings?.uiLang) paintTeamNames(nextRow);
     }
     const events = deriveEvents(prevRow, nextRow);
     // Jeden dispatch = jeden potwierdzony sound_cue_key dla CAŁEGO wiersza —

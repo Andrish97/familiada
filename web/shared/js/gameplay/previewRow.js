@@ -56,7 +56,7 @@ export function buildDisplayPreviewRow({ teams, display, logoPreview } = {}) {
     top_card: "rounds", step: "r_intro", phase: null, control_team: null,
     sound_cue_key: null, sound_cue_seq: 0,
     detail: {
-      teams: { teamA: teams?.teamA || "Drużyna A", teamB: teams?.teamB || "Drużyna B" },
+      teams: { teamA: teams?.teamA || "Drużyna A", teamB: teams?.teamB || "Drużyna B", defaultA: teams?.defaultA === true || !teams?.teamA, defaultB: teams?.defaultB === true || !teams?.teamB },
       rounds: { roundNo: 1, bankPts: 0, xA: 0, xB: 0, totals: { A: 0, B: 0 } },
       final: { runtime: {} },
       display: displayDetail,

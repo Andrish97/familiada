@@ -939,3 +939,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: commit1e8e9eea1c normalizuje nazwy, d11c145cac odświeża je na Display bez zmiany kroku. Unit13/13, w tym nazwy PL/EN/UK.38304950158 anulowany przed zamknięciem, żeby objąć ostatnią poprawkę; nowa bramka38305149894 na test5 (bez równoległego użycia4), tryb + domyślne nazwy + brak zer + statystyki.
 
 - 2026-10-12:38305149894 failure wyłącznie obserwacji testowej: Locator.evaluate podaje element jako pierwszy argument, test omyłkowo traktował go jako nazwę wywołania. Zrzut potwierdził obie domyślne nazwy na Display przy Rozpocznij grę, bez zer. Poprawiono argument testu; unit Actions success479/479. Ponawiany tylko tryb testowy.
+
+- 2026-10-12: decyzja: domyślne nazwy podążają za językiem, własne pozostają bez zmiany. Dodano znaczniki defaultA/B do istniejącego JSON-ie teams, Display czeka na słownik przed rysowaniem nazw; podgląd zachowuje znaczniki i język. Test trybu obejmuje PL→EN→UK→PL przed rozpoczęciem gry. Bez migracji.

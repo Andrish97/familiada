@@ -8,7 +8,7 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
 import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-12T20271";
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-12T20271";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-12T20271";
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-12T20271";
 import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-12T20271";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T20271";
@@ -224,7 +224,11 @@ async function bootPreview(params) {
     const row = e.data.row;
     previewQueue = previewQueue.then(async () => {
     const appearance = JSON.stringify(row.detail?.display);
-    const teams = row.detail?.teams || {};
+    const rawTeams = row.detail?.teams || {};
+    const teams = {
+      teamA: rawTeams.defaultA === true || !rawTeams.teamA ? t("control.teamADefault") : rawTeams.teamA,
+      teamB: rawTeams.defaultB === true || !rawTeams.teamB ? t("control.teamBDefault") : rawTeams.teamB,
+    };
     if (previewAppearance === appearance) {
       if (previewTeams.teamA !== teams.teamA) scene.api.small.long1(teams.teamA || "");
       if (previewTeams.teamB !== teams.teamB) scene.api.small.long2(teams.teamB || "");
@@ -488,9 +492,11 @@ window.addEventListener("DOMContentLoaded", async () => {
           // PRZED zapisem wyniku setUiLang() + .catch(()=>{}) łykający błąd
           // bez retry zostawiałby stronę trwale w starym języku po
           // przejściowym błędzie przy dynamicznym imporcie słownika.
-          setUiLang(lang, { persist: true, updateUrl: true, apply: true })
-            .then(() => { appliedLang = lang; })
-            .catch((e) => console.warn("[display2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e));
+          try {
+            if (await setUiLang(lang, { persist: true, updateUrl: true, apply: true })) appliedLang = lang;
+          } catch (e) {
+            console.warn("[display2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e);
+          }
         }
 
         // Dźwięk — patrz komentarz przy setCurrentGameId() wyżej. Reaplikowane

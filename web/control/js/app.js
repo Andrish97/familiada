@@ -38,8 +38,15 @@ const ADVANCED_SETTINGS_KEYS = ["roundMultipliers", "finalMinPoints", "finalTarg
 // nie formularz do wypełnienia — więc to musi się wykonać, zanim operator
 // tam dotrze, nie jako efekt kliknięcia "Rozpocznij".
 function applyTeamNamesToState(teams, state) {
-  state.teams.teamA = String(teams?.teamA ?? "").trim() || t("control.teamADefault");
-  state.teams.teamB = String(teams?.teamB ?? "").trim() || t("control.teamBDefault");
+  const nameA = String(teams?.teamA ?? "").trim();
+  const nameB = String(teams?.teamB ?? "").trim();
+  const defaultA = teams?.defaultA === true || !nameA;
+  const defaultB = teams?.defaultB === true || !nameB;
+  state.teams = {
+    teamA: defaultA ? t("control.teamADefault") : nameA,
+    teamB: defaultB ? t("control.teamBDefault") : nameB,
+    defaultA, defaultB,
+  };
 }
 
 function applyGameSettingsToState(settings, state) {

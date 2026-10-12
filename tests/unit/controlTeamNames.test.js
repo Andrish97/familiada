@@ -9,9 +9,9 @@ for (const lang of ['pl','en','uk']) test(`Control: domyślne i własne nazwy dr
   const apply = new Function('t','teams','state',body).bind(null,key=>dict.control[key.split('.').at(-1)]);
   const state = {teams:{}};
   apply({teamA:'',teamB:'   '},state);
-  assert.deepEqual(state.teams,{teamA:dict.control.teamADefault,teamB:dict.control.teamBDefault});
+  assert.deepEqual(state.teams,{teamA:dict.control.teamADefault,teamB:dict.control.teamBDefault, defaultA:true, defaultB:true});
   apply({teamA:'Kasztany',teamB:null},state);
-  assert.deepEqual(state.teams,{teamA:'Kasztany',teamB:dict.control.teamBDefault});
+  assert.deepEqual(state.teams,{teamA:'Kasztany',teamB:dict.control.teamBDefault, defaultA:false, defaultB:true});
   apply({teamA:'Kasztany',teamB:'Wygnani'},state);
-  assert.deepEqual(state.teams,{teamA:'Kasztany',teamB:'Wygnani'});
+  assert.deepEqual(state.teams,{teamA:'Kasztany',teamB:'Wygnani',defaultA:false,defaultB:false});
 });

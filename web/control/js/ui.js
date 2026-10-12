@@ -485,6 +485,7 @@ export function createUI({ root, emit }) {
         url.searchParams.delete("d");
         url.pathname = `/control/${device}/`;
         url.searchParams.set("preview", "1");
+        url.searchParams.set("lang", getUiLang());
         return url.toString();
       } catch { return null; }
     };
@@ -545,8 +546,8 @@ export function createUI({ root, emit }) {
 
     const sections = [
       summarySection(t("control.summaryTeams"), h("div", { class: "summarySectionValue", text: t("control.teamsVsFormat", {
-        teamA: state.teams.teamA || t("control.teamADefault"),
-        teamB: state.teams.teamB || t("control.teamBDefault"),
+        teamA: state.teams.defaultA === true ? t("control.teamADefault") : state.teams.teamA || t("control.teamADefault"),
+        teamB: state.teams.defaultB === true ? t("control.teamBDefault") : state.teams.teamB || t("control.teamBDefault"),
       }) }), "c2-summary-teams"),
       summarySection(t("control.summaryDisplay"), h("div", { class: "summaryDisplayInfo" }, [
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryColors")}: ` }), colorDots(d.colors)]),
