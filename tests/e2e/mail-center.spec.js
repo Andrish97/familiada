@@ -39,9 +39,14 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await clearMailCenterCapabilities(); await clearMailbox(EMAIL); await resetMailProviderLimits(page);
     const after = new Date(Date.now() - 2000).toISOString();
     await page.goto('https://www.familiada.online/subscribers/');
+    await expect(page.locator('[data-skel-step]')).toHaveClass(/skel-step-ready/);
     await expect(page.locator('#inviteForm')).toBeVisible();
     await page.locator('#inviteInput').fill(EMAIL);
+    const sendResponse = page.waitForResponse(response => response.url().includes('/functions/v1/send-mail') && response.request().method() === 'POST', { timeout: 15000 });
     await page.locator('#inviteForm button[type=submit]').click();
+    const sent = await sendResponse; expect(sent.ok()).toBe(true);
+    expect(await sent.json()).toMatchObject({ ok: true, queued: 1 });
+    await expect(page.locator('.rowsSection--pending .shareRow').filter({ hasText: EMAIL })).toHaveCount(1);
     const email = await waitForEmail({ recipient: EMAIL, after, subject: /subskrypc|subscript|підпис/i, timeout: 180000 });
     expectMailDocument(email, { globalUnsub: true });
     const footer = proofLink(email); expect(footer).toBeTruthy();
@@ -101,6 +106,7 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await expect(entry.locator('#mailTitle')).toHaveText('Sprawdź swoją skrzynkę');
     const verification = await waitForEmail({ recipient: EMAIL, after: confirmationAfter, timeout: 180000 });
     const tokenLink = proofLink(verification); expect(tokenLink).toBeTruthy();
+    expect((await second.request.head(tokenLink, { maxRedirects: 0 })).status()).toBe(302);
     expect((await second.request.get(tokenLink, { maxRedirects: 0 })).status()).toBe(302);
     await entry.goto(tokenLink); await expect(entry.locator('#mailTitle')).toHaveText('Otwórz centrum maili');
     await entry.screenshot({ path: testInfo.outputPath('mail360-confirmation.png'), fullPage: true });

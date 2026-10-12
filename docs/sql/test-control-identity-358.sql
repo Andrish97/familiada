@@ -26,6 +26,16 @@ BEGIN
   IF scenario='profile-spoof' THEN UPDATE public.profiles SET email='spoof358contract@example.invalid' WHERE id=peer; END IF;
   PERFORM set_config('request.jwt.claim.sub',owner_id::text,true);
   pre:=public.control_device_share_preflight(game,'host',pid,addr);
+  IF scenario='address-off' THEN
+   --360: global refusal of an anonymous address also rejects new grants.
+   IF pre->>'error' IS DISTINCT FROM 'notifications_disabled'
+    OR public.control_device_share_create(game,'host',pid,addr)->>'error' IS DISTINCT FROM 'notifications_disabled'
+    OR EXISTS(SELECT 1 FROM public.control_device_shares WHERE game_id=game)
+    OR EXISTS(SELECT 1 FROM public.mail_cooldowns WHERE action_key='device:share' AND target_key LIKE 'pair:'||owner_id||':%:game:'||game)
+   THEN RAISE EXCEPTION 'anonymous global refusal allowed access or spent budget: %',pre; END IF;
+   RAISE NOTICE 'Control358/360 contract: address-off rejects new grants';
+   CONTINUE;
+  END IF;
   IF pre->>'ok' IS DISTINCT FROM 'true' OR (pre->>'mail_disabled')::boolean IS DISTINCT FROM off
    THEN RAISE EXCEPTION 'preflight % %',scenario,pre; END IF;
   r:=public.control_device_share_create(game,'host',pid,addr);

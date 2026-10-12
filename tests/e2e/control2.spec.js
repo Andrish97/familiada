@@ -3261,12 +3261,6 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const flag = await rpc(page,"e2e_subscriber_mail_flag",{p_reset:false});
     expect(flag).toMatchObject({ok:true,suppressed_at:null});
     expect((await rpc(page,"e2e_subscriber_email_cleanup",{p_email:email})).ok).toBe(true);
-    // The existing subscriber API issues the address-wide preference token.
-    // Control does not currently include that footer; do not invent one in the test.
-    const addressInvite = await rpc(page,"subscribers_invite",{p_email:email});
-    expect(addressInvite.ok).toBe(true);
-    const addressPreference = await rpc(page,"polls_hub_subscriber_resend",{p_id:addressInvite.id});
-    expect(addressPreference.ok).toBe(true); expect(addressPreference.unsub_token).toBeTruthy();
     expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
     const invited = await rpc(page,"friends_invite",{p_handle:peer.email});
     expect(invited.ok).toBe(true);
@@ -3297,32 +3291,31 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const duplicate = await rpc(page,"control_device_share_create_by_lookup",{p_game_id:game.id,p_device_type:"host",p_lookup:email});
     expect(duplicate).toMatchObject({ok:true,created:false,mail_allowed:false});
     const delivered = await waitForEmail({recipient:email,after,subject:/Udostępniono urządzenie/,timeout:150_000});
-    expectMailDocument(delivered,{text:["E2E-CONTROL358"]});
+    expectMailDocument(delivered,{globalUnsub:true,text:["E2E-CONTROL358"]});
     const links = extractHttpLinks(delivered);
     const device = links.find(url=>new URL(url).searchParams.get("d")==="host");
-    const unsub = `https://www.familiada.online/go/?u=${addressPreference.unsub_token}`;
+    const unsub = links.find(url=>/^[a-f0-9]{64}$/.test(new URL(url).searchParams.get("m") || ""));
     expect(device).toBeTruthy(); expect(unsub).toBeTruthy();
     const gateway = await anonymous.newPage();
     await gateway.goto(device);
     await expect(gateway).toHaveURL(/\/control\/host\//);
     await expect(gateway.locator("#paper")).toBeVisible({timeout:15_000});
     await gateway.goto(unsub);
-    await gateway.locator("#actions button").click();
-    await expect(gateway.locator("#message")).toContainText("Nie będziesz już otrzymywać żadnych maili");
+    await expect(gateway.locator("#mailAddress")).toHaveText(email);
+    await gateway.locator("#mailPreferenceButton").click();
+    await gateway.locator(".uni-foot .btn.gold").click();
+    await expect(gateway.locator("#mailPreferenceTitle")).toHaveText("Powiadomienia są wyłączone");
+    expect((await rpc(page,"control_device_share_resolve",{p_token:host.share_token})).ok).toBe(false);
     await page.locator("#btnShareDeviceClose").click();
     const mutedAfter = new Date().toISOString();
     await open("buzzer");
     await page.locator("#shareDeviceEmail").fill(email);
-    await expect(page.locator("#shareDeviceMsg")).toContainText("Dostęp zostanie nadany bez maila");
-    await page.locator("#btnShareDeviceAdd").click();
-    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(email);
-    const buzzer = (await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).find(row=>row.recipient_email===email);
-    expect(buzzer.cooldown_until).toBeNull();
-    expect((await rpc(page,"control_device_share_resolve",{p_token:buzzer.share_token})).ok).toBe(true);
+    await expect(page.locator("#shareDeviceMsg")).toContainText("Ta osoba zrezygnowała z zaproszeń i udostępnień");
+    await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
+    expect(await rpc(page,"control_device_share_create_by_lookup",{p_game_id:game.id,p_device_type:"buzzer",p_lookup:email})).toMatchObject({ok:false,error:"notifications_disabled"});
+    expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_email===email)).toBe(false);
     const delivery = await readMailDelivery({recipient:email,after:mutedAfter});
     expect(delivery.queue).toEqual([]); expect(delivery.events).toEqual([]);
-    expect((await rpc(page,"control_device_share_revoke",{p_share_id:buzzer.share_id})).ok).toBe(true);
-    expect(await rpc(page,"control_device_share_resolve",{p_token:buzzer.share_token})).toMatchObject({ok:false,state:"revoked"});
     await page.locator("#btnShareDeviceClose").click();
     await recipient.evaluate(async id=>{
       const {error}=await window.__sbClient.from("user_flags").upsert({user_id:id,email_notifications:false},{onConflict:"user_id"});

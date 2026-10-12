@@ -4848,6 +4848,7 @@ const en = {
       notFriend: "This person is no longer on your friends list.",
       unknownUser: "User not found.",
       invalidEmail: "Enter a valid email address.",
+      recipientResigned: "This person has opted out of invitations and sharing. You cannot share a device with them right now.",
       recipientChanged: "The recipient address changed. Enter it again.",
       selfShare: "You cannot share a device with yourself.",
       sessionExpired: "This game session has expired. Start again.",

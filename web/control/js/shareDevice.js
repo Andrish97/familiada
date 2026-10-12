@@ -21,6 +21,7 @@ function shareErrorMessage(code) {
   const keys = {
     not_friend: "notFriend", unknown_user: "unknownUser", invalid_email: "invalidEmail",
     recipient_not_found: "unknownUser", recipient_changed: "recipientChanged",
+    notifications_disabled: "recipientResigned",
     self_share: "selfShare", session_expired: "sessionExpired", gone: "sessionExpired",
   };
   return t(`control.shareDeviceModal.${keys[code] || "failed"}`);
@@ -327,7 +328,14 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       const { data, error } = await sb().rpc("control_device_share_preflight_by_lookup", {
         p_game_id: game.id, p_device_type: _deviceType, p_lookup: raw,
       });
-      if (version !== preflightVersion || error || !data?.ok) return;
+      if (version !== preflightVersion || error) return;
+      if (!data?.ok) {
+        if (data?.error === "notifications_disabled") {
+          showMessage(shareErrorMessage(data.error), { state: "error" });
+          if (btnAdd) btnAdd.disabled = true;
+        }
+        return;
+      }
       if (data.already_shared) {
         showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
         if (btnAdd) btnAdd.disabled = true;
