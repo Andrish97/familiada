@@ -74,7 +74,13 @@ głosowania oraz4 wyścigi tworzenia tasków success. DDL vs stary child-first
 cleanup success; unit455/455. 351 zastosowane00:46:56 UTC w38189206623; dalszy smoke zatrzymał się
 na nazwie testowego profilu po ponownym użyciu adresu. Metadata nowego
 konta poprawione; lokalnie z prawdziwym handle_new_user kontrakt success.
-Jeszcze bez zielonego końcowego DB i bez testu mail/Go na produkcji. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
+Finalny isolated38189424237 success. DB38189563784 success,
+schema e1ba174d98/log351 already applied; oba rollbackowe smoke success.
+Branch38189625221 success1/1 bez retry: dwa realne maile, anon partial
+przed rejestracją, przypisanie obu typów do nowego ID, anon odmowa i Go
+logowanie, full tekst/partial punkty, drugie kasowanie i odtworzenie,
+stare tokeny niedostępne; finally świeże logowanie15.
+Pozostała promocja speca oraz identyczny main + restore11/12/15. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
 legacy Subskrypcji. Pending kolejka/proweniencja maili, Go/anon i dalsze
 krawędzie pozostają otwarte.
 
