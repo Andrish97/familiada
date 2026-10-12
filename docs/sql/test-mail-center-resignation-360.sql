@@ -19,6 +19,8 @@ INSERT INTO public.control_device_shares(session_id,game_id,owner_id,recipient_e
 DO $$ DECLARE tok uuid; r jsonb; secret text; issued jsonb; refusal timestamptz; BEGIN
  tok:=public._ensure_unsub_token('address359resign@example.invalid');
  issued:=public.mail_center_issue_link_prototype('address359resign@example.invalid','footer'); secret:=public.mail_center_exchange_link_prototype(issued->>'token')->>'session_secret';
+ r:=public.mail_center_list_prototype(secret);
+ IF jsonb_array_length(r->'subscriptions')<>1 OR jsonb_array_length(r->'items')<>2 THEN RAISE EXCEPTION 'address-scoped lists wrong: %',r; END IF;
  r:=public.mail_center_set_notifications_prototype(secret,false);
  IF r->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'resignation failed %',r; END IF;
  IF public._contact_mail_enabled('address359resign@example.invalid') THEN RAISE EXCEPTION 'global flag ignored'; END IF;
@@ -33,6 +35,8 @@ DO $$ DECLARE tok uuid; r jsonb; secret text; issued jsonb; refusal timestamptz;
  IF public.mail_anon_resign_prototype(public._ensure_unsub_token('account359resign@example.invalid'))->>'error' IS DISTINCT FROM 'requires_login' THEN RAISE EXCEPTION 'registered scope changed prematurely'; END IF;
  RAISE NOTICE 'Anonymous global resignation: subscription/task/device closure, budgets/history, other recipients and registered boundary passed';
  IF public.mail_center_set_notifications_prototype(secret,true)->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'verified restore failed'; END IF;
+ r:=public.mail_center_list_prototype(secret);
+ IF jsonb_array_length(r->'subscriptions')<>0 OR jsonb_array_length(r->'items')<>0 THEN RAISE EXCEPTION 'restoration exposed cancelled sources'; END IF;
  IF NOT public._contact_mail_enabled('address359resign@example.invalid') THEN RAISE EXCEPTION 'restoration did not clear root'; END IF;
  IF EXISTS(SELECT 1 FROM public.poll_subscriptions WHERE subscriber_email='address359resign@example.invalid' AND status IN('pending','active')) OR EXISTS(SELECT 1 FROM public.control_device_shares WHERE recipient_email='address359resign@example.invalid' AND revoked_at IS NULL) THEN RAISE EXCEPTION 'restoration resurrected sources'; END IF;
 END $$;

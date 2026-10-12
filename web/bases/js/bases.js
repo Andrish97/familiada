@@ -1083,14 +1083,14 @@ function render() {
     const deleteBtn = (canDeleteOwned || canLeaveShared)
       ? `<button class="x" type="button" title="${escapeHtml(
           canDeleteOwned ? t("bases.actions.remove") : t("bases.actions.leaveShared")
-        )}">${icon("trash")}</button>`
+        )}">${icon(canDeleteOwned ? "trash" : "close")}</button>`
       : ``;
 
     const proposedBtns = b.proposed
       ? `
         <div class="tileMiniActions">
           <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}" aria-label="${escapeHtml(t("bases.proposed.accept"))}">${icon("check")}</button>
-          <button class="btn xsm" data-decline type="button" title="${escapeHtml(t("bases.proposed.decline"))}" aria-label="${escapeHtml(t("bases.proposed.decline"))}">${icon("cancel")}</button>
+          <button class="btn xsm" data-decline type="button" title="${escapeHtml(t("bases.proposed.decline"))}" aria-label="${escapeHtml(t("bases.proposed.decline"))}">${icon("close")}</button>
         </div>`
       : "";
 

@@ -378,3 +378,20 @@ Lokalne szkice w docs/sql/*mail-center*360*, nie migracje produkcyjne.
 Kontrakt bazowy, ACL,24 wyścigi i rezygnacja przez potwierdzoną sesję
 sprawdzone lokalnie. Brakuje list/akcji, ochrony nowych źródeł w czasie
 blokady, żądania potwierdzenia i dostarczenia pełnej stopki oraz UI/Go.
+
+### Ostatnia korekta wyglądu `/mail/` — 2026-10-12
+
+Sekcja globalnej rezygnacji **nad** kartą list. Karta ma rzeczywiste
+wypustki jak Ankiety: ten sam HTML/CSS, dwie zakładki Subskrypcje oraz
+Zadania, również na komputerze. Zastępuje wcześniejsze dwie równoczesne
+kolumny i prostokątne mobilne przyciski. Tytuł „Moje powiadomienia”
+w stylu nagłówka Gier, złote logo, lekki topbar; stopka stale przy dolnej
+krawędzi przez pełną wysokość układu. Globalna rezygnacja ukrywa kartę
+list, zachowuje nadrzędną sekcję przywrócenia.
+
+Ostateczne doprecyzowanie ikon wszystkich udostępnień: X dla odmowy,
+rezygnacji, opuszczenia dostępu przez odbiorcę; śmietnik dla usunięcia
+zasobu, relacji lub cofnięcia/anulowania własnego udostępnienia przez
+nadawcę. Samo zamknięcie okna nadal X. Wspólny sharingActionIcon oraz
+renderery udostępnień pilnują tej semantyki; podpis opisuje akcję.
+Zastępuje przejściową interpretację „śmietnik przy każdej rezygnacji”.

@@ -994,3 +994,20 @@ Kolumny na większym ekranie i zakładki mobilne są podziałem wewnątrz
 karty. Opcjonalna krótka zachęta do obejrzenia systemu i rejestracji,
 bez rozbudowanego nagłówka zasobów. Zrzuty po wykonaniu z danymi.
 Źródło zakresu i zachowania: maile-granice.md.
+
+### Ostatnia korekta wyglądu `/mail/` — 2026-10-12
+
+Sekcja globalnej rezygnacji **nad** kartą list. Karta ma rzeczywiste
+wypustki jak Ankiety: ten sam HTML/CSS, dwie zakładki Subskrypcje oraz
+Zadania, również na komputerze. Zastępuje wcześniejsze dwie równoczesne
+kolumny i prostokątne mobilne przyciski. Tytuł „Moje powiadomienia”
+w stylu nagłówka Gier, złote logo, lekki topbar; stopka stale przy dolnej
+krawędzi przez pełną wysokość układu. Globalna rezygnacja ukrywa kartę
+list, zachowuje nadrzędną sekcję przywrócenia.
+
+Ostateczne doprecyzowanie ikon wszystkich udostępnień: X dla odmowy,
+rezygnacji, opuszczenia dostępu przez odbiorcę; śmietnik dla usunięcia
+zasobu, relacji lub cofnięcia/anulowania własnego udostępnienia przez
+nadawcę. Samo zamknięcie okna nadal X. Wspólny sharingActionIcon oraz
+renderery udostępnień pilnują tej semantyki; podpis opisuje akcję.
+Zastępuje przejściową interpretację „śmietnik przy każdej rezygnacji”.
