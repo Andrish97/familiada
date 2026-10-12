@@ -880,3 +880,7 @@ Control tryb: **38299326792 success2/2**, branchf39b3220b3, bez retry;
 wyłączenie/ponowne włączenie i dwa osobno centrowane podglądy potwierdzone.
 Decyzja użytkownika: manual z wzmianką i brak pełnego ekranu w osadzeniu;
 wykonane PL/EN/UK i dla trzech urządzeń. Domykający E2E sprawdza ukrycie FS.
+
+| 2026-10-12 | Auth / pełne oddzielenie od powiadomień | Usunięta dawna awaryjna ścieżka send-email→mail_queue po wyczerpaniu dostawców. Auth bez flag, globalnej rezygnacji i stopki centrum; awaria zwraca błąd wysyłki. Cztery testy funkcji success. Branch38297713527 success1/1 bez retry: prawdziwy mail resetu test11 przy email_notifications=false, preferencja przywrócona w finally. Runner E2E Node22 jak agent-checks. | Ta osobna poprawka nie wdraża centrum360 ani grafu361. Dalej Edge deployment i identyczna kontrola produkcji. |
+
+| 2026-10-12 | Auth / zamknięte produkcyjnie | Main fcdea7a889, unit467/467, Edge38298008652 success. Kontrola38298190111 success1/1 bez retry: prawdziwy reset test11 przy wyłączonych powiadomieniach, poprawny mail bez stopki centrum i link akcji; wcześniejsza preferencja przywrócona w finally. Branch38297713527 success1/1. | Auth nigdy do mail_queue, nie odczytuje flag/globalnej rezygnacji; awaria/brak dostawców jawnie odrzuca wysyłkę (4 unit). Centrum360 i graf361 nadal w przygotowaniu. |

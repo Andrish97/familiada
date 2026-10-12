@@ -1,9 +1,9 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T16294";
-import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../../../shared/js/core/auth.js?v=v2026-10-12T16294";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-12T16294";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-12T16294";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-12T16294";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-12T16294";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T19465";
+import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../../../shared/js/core/auth.js?v=v2026-10-12T19465";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-12T19465";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-12T19465";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-12T19465";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-12T19465";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");

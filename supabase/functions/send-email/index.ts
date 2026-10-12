@@ -299,22 +299,6 @@ async function decrementImmediateLimit(provider: string, limits: Map<string, { n
   }
 }
 
-async function insertToQueue(to: string, subject: string, html: string, actorUserId: string | null) {
-  if (!sbAdmin) throw new Error("missing_supabase_service_credentials");
-  const { error } = await sbAdmin.from("mail_queue").insert({
-    created_by: actorUserId,
-    to_email: to,
-    subject,
-    html,
-    text: htmlToText(html),
-    status: "pending",
-    not_before: new Date().toISOString(),
-    attempts: 0,
-    provider_order: "brevo,mailgun",
-  });
-  if (error) throw error;
-}
-
 async function sendWithFallbacks(
   to: string,
   subject: string,
@@ -380,20 +364,15 @@ async function sendWithFallbacks(
       requestId: opts.requestId,
       level: "warn",
       event: "all_providers_exhausted",
-      status: "queued",
+      status: "failed",
       actorUserId: opts.actorUserId || null,
       recipientEmail: to,
       error: errs.join("|"),
     });
   }
 
-  try {
-    await insertToQueue(to, subject, html, opts?.actorUserId || null);
-    return { provider: "queued", queued: true };
-  } catch (qErr) {
-    console.error("[send-email] queue_insert_failed", qErr);
-    throw new Error(errs.join("|"));
-  }
+  // Account actions remain direct. Never pass them to the notification queue.
+  throw new Error(errs.join("|") || "no_available_email_provider");
 }
 
 function getRedirectUrl(payload: HookPayload): URL | null {

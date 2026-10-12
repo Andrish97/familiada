@@ -345,3 +345,15 @@ Zmiana zastępuje wcześniejszy wariant „tylko mail, źródła pozostają wido
 Granica uprawnień tokenu stopki: obecny email_unsub_tokens.token bywa zwracany nadawcy przez API przygotowania subskrypcji i służy wyłącznie wypisaniu. Nie rozszerzać go na odczyt wszystkich relacji i kluczy urządzeń odbiorcy. Nowy token pełnego centrum jest wydawany tylko przez usługę wysyłki i trafia do odbiorcy w rzeczywistym mailu, nie do przeglądarki/API nadawcy. Historyczne uprawnienie unsubscribe nie staje się odczytem innych zasobów. Ręczne potwierdzenie wydaje odpowiednią ograniczoną sesję po poprawnym linku. Testować brak odkrywania tokenów centrum przez właściciela zasobu i anon, a także prawidłowy dostęp odbiorcy z rzeczywistego maila.
 
 Nadrzędna rezygnacja mail-only obejmuje też nowo próbowane zaproszenia/udostępnienia w czasie blokady: nie powstaje aktywny dostęp ukryty przez frontend. Backend tworzenia/Go/open/vote/device-key/listy/kolejka respektuje stan rodzica. TestControl358 z dostępem bez maila był kontraktem wcześniejszej decyzji; nowy pakiet celowo zmienia globalnie zablokowany adres bez konta, bez przedstawiania358 jako błędnie wdrożonego. Zakres kont nadal czeka na odpowiedź.
+
+### Maile obsługi konta — decyzja 2026-10-12
+
+Rejestracja, reset hasła, zmiana adresu i konwersja gościa nie są
+powiadomieniami. Osobna Edge funkcja send-email podstawia treści i wysyła
+je bez flag powiadomień, globalnej rezygnacji, odmów zasobów oraz stopki
+centrum. Nigdy nie wchodzą do kolejki powiadomień. Dawny awaryjny INSERT
+do tej kolejki po wyczerpaniu dostawców usunięty: w takim przypadku Auth
+zwraca błąd wysyłki. Treści i kolejność bezpośrednich dostawców pozostają
+bez zmian. Cztery testy funkcji obejmują sukces, awarię dostawcy, limit0
+i brak dostawców. Punktowy SMTP test11 obejmuje flagę false, odbiór maila
+resetu i odtworzenie wcześniejszej preferencji w finally.

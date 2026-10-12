@@ -184,6 +184,52 @@ test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ b
   }
 });
 
+test("Auth: reset hasla dociera przy wylaczonych powiadomieniach", async ({ page, context }) => {
+  test.setTimeout(180_000);
+  let previousFlag;
+  await restoreTestAccount("test11");
+  await clearMailbox(PASSWORD_EMAIL);
+  try {
+    await loginAsTestUser(page, context, { username: PASSWORD_EMAIL });
+    previousFlag = await page.evaluate(async () => {
+      const sb = window.__sbClient;
+      const { data: { user } } = await sb.auth.getUser();
+      const { data, error } = await sb.from("user_flags").select("email_notifications").eq("user_id", user.id).single();
+      if (error) throw error;
+      return data.email_notifications;
+    });
+    await page.evaluate(async () => {
+      const sb = window.__sbClient;
+      const { data: { user } } = await sb.auth.getUser();
+      const updated = await sb.from("user_flags").update({ email_notifications: false }).eq("user_id", user.id).select("email_notifications").single();
+      if (updated.error) throw updated.error;
+      if (updated.data.email_notifications !== false) throw new Error("Notification flag was not disabled");
+      await sb.auth.signOut();
+    });
+    const after = new Date(Date.now() - 2_000).toISOString();
+    await openLoginWithCaptchaBypass(page, context);
+    await page.locator("#email").fill(PASSWORD_EMAIL);
+    await page.locator("#btnForgot").click();
+    await expect(page.locator("#status")).toContainText("Wysłano", { timeout: 30_000 });
+    const email = await waitForEmail({ recipient: PASSWORD_EMAIL, after, subject: /has|reset|odzysk/i });
+    expectMailDocument(email, { lang: "pl" });
+    expect(email.body_html).not.toContain("data-familiada-mail-center");
+    expect(extractHttpLinks(email).some(link => /token_hash=|type=recovery/.test(link))).toBeTruthy();
+  } finally {
+    if (previousFlag !== undefined) {
+      await loginAsTestUser(page, context, { username: PASSWORD_EMAIL });
+      await page.evaluate(async (enabled) => {
+        const sb = window.__sbClient;
+        const { data: { user } } = await sb.auth.getUser();
+        const { error } = await sb.from("user_flags").update({ email_notifications: enabled }).eq("user_id", user.id);
+        if (error) throw error;
+      }, previousFlag);
+    }
+    await restoreTestAccount("test11");
+    await clearMailbox(PASSWORD_EMAIL);
+  }
+});
+
 for (const lang of MAIL_LANGS) {
   test(`mail resetu hasla (${lang}) ma teksty z translation/${lang}.js`, async ({ page, context }, testInfo) => {
     test.setTimeout(240_000);
