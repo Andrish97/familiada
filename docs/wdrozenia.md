@@ -935,3 +935,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: branch38304058278: pełna runda przez4 urządzenia success; tryb testowy zatrzymany przy natychmiastowym pomiarze po zmianie rozmiaru (przed zdarzeniem resize). Zrzut końcowy potwierdza poprawne dopasowanie1280×650. Asercja teraz oczekuje na dopasowanie układu przez expect.poll; ponawiany wyłącznie ten test. Unit Actions475/475 success.
 
 - 2026-10-12: branch38304477272 success1/1 bez retry (tryb testowy), wcześniejszy38304058278 potwierdził pełną rundę. Nowe zgłoszenie: domyślne nazwy widoczne tylko jako zastępczy tekst Control, w game_state były puste. Normalizacja nazw przed startem oraz wznowieniem z pustymi nazwami; test trybu rozszerzony o rzeczywiste rysowanie nazw i brak zer przy Rozpocznij grę. Kolejna punktowa bramka przed main.
+
+- 2026-10-12: commit1e8e9eea1c normalizuje nazwy, d11c145cac odświeża je na Display bez zmiany kroku. Unit13/13, w tym nazwy PL/EN/UK.38304950158 anulowany przed zamknięciem, żeby objąć ostatnią poprawkę; nowa bramka38305149894 na test5 (bez równoległego użycia4), tryb + domyślne nazwy + brak zer + statystyki.
