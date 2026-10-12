@@ -927,3 +927,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: korekta układu — rzeczywisty renderer 16 stanów przy1280×650/1400×900: przewijanie wyłącznie podsumowania, brak obcięć pozostałych kroków, w tym gracza2. Punktowe unit6/6. Pełne lokalne unit468/472: cztery testy Auth zatrzymane przez brak TypeScript w lokalnym Node (ERR_NO_TYPESCRIPT); wymagana kontrola kompletnego unit w Actions.
 
 - 2026-10-12: commit09cfcb0692 na branchu, Actions38303593794 w toku — wybrane testy Control: tryb testowy oraz pełna runda przez cztery urządzenia, pool4,5, retries0. Bez wdrożenia Pages do zielonego wyniku.
+
+- 2026-10-12: branch38303593794 failure2: stara asercja37px nie uwzględniała skalowania topbara (35.95px przy skali0.97); guard klasyfikował komputer1280×650 jako telefon tylko według krótszego boku. Dla Control dodano wymaganie dotyku do klasyfikacji telefonu (inne strony bez zmiany), test rozmiaru postępu znormalizowany do skali. Doprecyzowanie użytkownika: Znajomi tylko w Urządzeniach; test obejmuje ukrycie później i stałą stopkę przewijanego podsumowania.

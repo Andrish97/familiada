@@ -67,7 +67,7 @@ Branch38300241381 success2/2 przed publikacją. Brak migracji.
 ## Korekta układu — 2026-10-12
 
 - Cały Control, łącznie z topbarem, dopasowuje się do lewego obszaru.
-- Znajomi bezpośrednio przed ikonami urządzeń, w tej samej grupie przycisków.
+- Znajomi bezpośrednio przed ikonami urządzeń, w tej samej grupie przycisków; widoczni tylko w kroku Urządzenia (udostępnianie), potem ukryci.
 - Urządzenia zajmują pełną wysokość okna przeglądarki, każde 1/3; bez zaokrągleń i marginesów zewnętrznych.
 - Podsumowanie wraca do poprzedniego układu sekcji i dwóch podglądów. Tylko treść podsumowania może się przewijać; dolne przyciski pozostają widoczne. Zastępuje to wcześniejszy zakaz przewijania podsumowania i jego zakładki.
 - Pozostałe kroki i urządzenia bez przewijania. Złagodzić guard według wymiarów mieszczącego się panelu; komunikat nie wspomina o przewijaniu.

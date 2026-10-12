@@ -188,7 +188,7 @@ async function main() {
   // jest w bazie, więc po powrocie store.hydrate() wznawia rozgrywkę.
   const userP = initPage("control", {
     ready: i18nP,
-    deviceGuard: { fits: () => currentControlGeometry().fits, messageKey: "control.panelTooSmall" },
+    deviceGuard: { fits: () => currentControlGeometry().fits, messageKey: "control.panelTooSmall", phoneRequiresTouch: true },
     onBack: async (href) => {
       if (!(await beforeLeave())) return;
       location.href = href;
@@ -993,6 +993,7 @@ async function main() {
   }
 
   function renderCurrent() {
+    document.body.dataset.controlStep = store.state.step;
     if (store.state.locks.gameEnded) connectivityTracker.flush();
     noteDisplayRequest();
     scheduleFinalTimerWatch();
