@@ -1,6 +1,6 @@
 # Control — tryb testowy
 
-Status: tryb wdrożony; **korekta układu w testach brancha** (38303593794).
+Status: tryb wdrożony; **korekta gotowa do publikacji**, integracja brancha38306861683 success1/1 (PL/EN/UK, urządzenia, statystyki).
 Pages38300728957 success; kontrola main38301293181 success3/3 bez retry.
 Branch38300241381 success2/2 przed publikacją. Brak migracji.
 
@@ -72,7 +72,7 @@ Branch38300241381 success2/2 przed publikacją. Brak migracji.
 - Podsumowanie wraca do poprzedniego układu sekcji i dwóch podglądów. Tylko treść podsumowania może się przewijać; dolne przyciski pozostają widoczne. Zastępuje to wcześniejszy zakaz przewijania podsumowania i jego zakładki.
 - Pozostałe kroki i urządzenia bez przewijania. Złagodzić guard według wymiarów mieszczącego się panelu; komunikat nie wspomina o przewijaniu.
 - Dodatkowa krytyczna poprawka: puste nazwy z ustawień oznaczają domyślne Drużyna A/B w języku panelu. Zapisać je w stanie rozgrywki przed startem, także przy wznowieniu gry z pustymi nazwami; nazwy własne zachować. Nazwy domyślne odświeżają się przy zmianie języka (znaczniki defaultA/B w istniejącym JSON-ie teams; bez migracji). Pokazać na Wyświetlaczu w kroku Rozpocznij grę, bez zer wyniku.
-- Stan: w toku na `codex/control-test-layout`; punktowe testy brancha i produkcji przed zamknięciem.
+- Stan: branch38306861683 success; publikacja i punktowa kontrola produkcji przed zamknięciem.
 
 ## Kolejność wykonania
 
