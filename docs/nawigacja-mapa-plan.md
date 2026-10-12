@@ -1161,3 +1161,23 @@ Dodać zwykłą publiczną stronę `/mail/` do PAGES/Worker/mapy, bez aliasów i
 Potwierdzenie centrum `/mail/`: wybrany jednorazowy link tokenowy przez Go (zamiast kodu do wpisania); Go tworzy/otwiera czasową sesję adresu, a następne przejście do ankiety lub urządzenia używa dotychczasowego tokenu źródła. Dwie sekcje centrum: Subskrypcje oraz Zadania i udostępnienia (ankiety+urządzenia); na telefonie dwie zakładki. Konto nadal login→account.
 
 Najnowsze doprecyzowanie2026-10-12: token w stopce jest tokenem dostępu do `/mail/`, Go przekazuje do centrum bez dodatkowego potwierdzenia. Ręczne wpisanie adresu w centrum wymaga osobnego jednorazowego maila potwierdzającego. Globalna rezygnacja oraz pozostałe akcje wykonywane na `/mail/`; samo otwarcie/Forward/GET nie zmienia flagi. Przy rezygnacji widoczna jedynie nadrzędna sekcja flagi, pozostałe źródła są unieważnione i listy ukryte. Konto→login/account według dotychczasowej mapy; zakres anulowania dostępów konta oczekuje doprecyzowania.
+
+### E19N — Ustawienia rozgrywki otwarte z Control (decyzja 2026-10-12)
+
+| Kontekst wejścia | „Graj” w Ustawieniach rozgrywki | Powrót |
+|---|---|---|
+| Panel sterowania (Control) → Ustawienia rozgrywki | Ukryty; ponowne uruchomienie rozgrywki z ustawień jest błędem logicznym | „Wstecz” wraca do bieżącego Control, zachowując rozgrywkę i urządzenia |
+| Pozostałe dozwolone wejścia | Dotychczasowe reguły widoczności i dostępności | Według mapy nawigacji |
+
+Reguła dotyczy komputera, tabletu i telefonu (także landscape) oraz
+każdego wariantu prezentacji ustawień. Ukrycie wynika z rzeczywistego
+kontekstu wejścia zapisanego w mapie, nie z samego domyślnego rodzica
+`gameSettings.parent=control`. Nie tworzymy nowej sesji ani nie resetujemy
+urządzeń przy powrocie. Cofanie w przeglądarce i „Wstecz” mają przywracać
+ten sam kontekst zgodnie z E19N; późniejsze przejście do ustawień z innego
+miejsca nie dziedziczy ukrycia „Graj” ze starego wejścia.
+
+**Stan: dopisane do planu, do wdrożenia w E19N.** Testy: wejście z Control
+→ brak „Graj” w każdym pasku/menu akcji → „Wstecz” przywraca bieżącą
+rozgrywkę; wejście z Gier zachowuje dotychczasowe reguły; back/forward i
+zmiana źródła wejścia nie gubią kontekstu ani nie odtwarzają starego ukrycia.
