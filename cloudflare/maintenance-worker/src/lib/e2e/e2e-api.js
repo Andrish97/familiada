@@ -80,6 +80,25 @@ export async function handleE2EApi(request, env, url) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 
+  if (url.pathname === "/_e2e_api/mail-trigger" && request.method === "POST") {
+    let body;
+    try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
+    const recipient = normalizeE2ERecipient(body?.recipient), after = Date.parse(body?.after);
+    if (!recipient || /^test(?:9|10)@/.test(recipient) || !Number.isFinite(after) || after < Date.now() - 900000 || after > Date.now() + 5000) {
+      return json({ ok: false, error: "invalid_mail_fixture" }, 400);
+    }
+    // Select recent pending test mail only. Never reset flags, budgets, delays,
+    // leases or failures; the normal worker rechecks the actual source/provider.
+    const selected = await supabaseRequest(env, "/rest/v1/mail_queue?select=id&to_email=eq." + encodeURIComponent(recipient)
+      + "&status=eq.pending&created_at=gte." + encodeURIComponent(new Date(after).toISOString())
+      + "&not_before=lte." + encodeURIComponent(new Date().toISOString()) + "&order=created_at.asc&limit=25", { method: "GET" });
+    if (!selected.ok || !Array.isArray(selected.data)) return json({ ok: false, error: "mail_fixture_selection_failed" }, 502);
+    const ids = selected.data.map(row => row.id);
+    if (!ids.length) return json({ ok: true, selected: 0 });
+    const invoked = await supabaseRpc(env, "invoke_mail_worker_ids", { p_ids: ids, p_limit: ids.length });
+    return json({ ok: invoked.ok, selected: ids.length }, invoked.ok ? 200 : 502);
+  }
+
   if (url.pathname === "/_e2e_api/mail-center-preference" && request.method === "POST") {
     let body;
     try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
