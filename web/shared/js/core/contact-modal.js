@@ -1,6 +1,6 @@
 import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-12T14530";
 import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-12T14530";
-import { icon } from "./icons.js?v=v2026-10-12T14530";
+import { icon, iconText } from "./icons.js?v=v2026-10-12T14530";
 
 let modalEl = null;
 let isSubmitting = false;
@@ -29,6 +29,21 @@ function findPageBackBtn() {
   return candidates.find((el) => !el.hidden && el.style.display !== "none") || candidates[0] || null;
 }
 
+function ensureContactSheetBack() {
+  const slot = document.querySelector('.topbar .topbar-section-1');
+  if (!slot) return null;
+  let button = slot.querySelector('[data-contact-sheet-back]');
+  if (!button) {
+    button = document.createElement('button');
+    button.type = 'button'; button.className = 'btn sm topbar-sheet-back';
+    button.setAttribute('data-contact-sheet-back', '');
+    button.innerHTML = iconText('arrow-left', t('common.modalBack'));
+    button.addEventListener('click', closeContactModal);
+    slot.append(button);
+  }
+  return button;
+}
+
 // Modal kontaktu buduje własny DOM niezależnie od .overlay/.modal ze
 // wspólnych stron (patrz modal-sheet.js / css/base.css "Modal sheet
 // (mobile)"). Na stronach z main.wrap/.explorer (patrz openContactModal)
@@ -42,10 +57,15 @@ function ensureMobileStyle() {
   const style = document.createElement("style");
   style.id = MOBILE_STYLE_ID;
   style.textContent = `
+    #contactModalOverlay .contact-modal-topbar[hidden] { display: none !important; }
+    #contactModalOverlay .contact-modal-topbar { position: static; width: 100%; }
     @media (max-width: 600px) {
+      #contactModalOverlay.modal--sheet.sheet-active { z-index: auto !important; }
       #contactModalOverlay.overlay:not(.modal--sheet) {
         padding: 0;
         align-items: stretch;
+        grid-template-rows: auto minmax(0, 1fr);
+        background: var(--bg);
       }
       #contactModalOverlay.overlay:not(.modal--sheet) .modal {
         width: 100%;
@@ -54,13 +74,22 @@ function ensureMobileStyle() {
         max-height: none;
         border-radius: 0;
         margin: 0;
+        min-height: 0;
+        background: var(--bg);
+        --under: var(--bg);
+        border: 0;
+        box-shadow: none;
       }
       #contactModalOverlay.overlay:not(.modal--sheet) .mHead {
         position: sticky;
         top: 0;
-        background: var(--card);
+        background: var(--under);
+        padding: 0 0 14px;
+        border-bottom: 1px solid var(--line2);
         z-index: 1;
       }
+      #contactModalOverlay.overlay:not(.modal--sheet) #cModalX { display: none; }
+      #contactModalOverlay.overlay:not(.modal--sheet) .mTitle { text-transform: uppercase; letter-spacing: .1em; }
     }
   `;
   document.head.appendChild(style);
@@ -68,6 +97,12 @@ function ensureMobileStyle() {
 
 function buildModalHtml() {
   return `
+    <header class="topbar topbar-layout-4 contact-modal-topbar" hidden>
+      <div class="topbar-section topbar-section-1"><button class="btn sm" id="cModalBack" type="button"></button></div>
+      <div class="topbar-section topbar-section-2"></div>
+      <div class="topbar-section topbar-section-3"></div>
+      <div class="topbar-section topbar-section-4"></div>
+    </header>
     <div class="modal">
       <div class="mHead">
         <div class="mTitle" id="cModalTitle"></div>
@@ -132,6 +167,10 @@ function applyLabels() {
   set("cModalDone",         "common.done");
   const xBtn = document.getElementById("cModalX");
   if (xBtn) xBtn.setAttribute("aria-label", t("common.modal.closeLabel") || "Zamknij");
+  const backBtn = document.getElementById("cModalBack");
+  if (backBtn) backBtn.innerHTML = iconText("arrow-left", t("common.modalBack"));
+  if (isSheetViewport() && usedSheetMode) document.querySelectorAll('.sheet-back-active').forEach(button => { button.innerHTML = iconText('arrow-left', t('common.modalBack')); });
+  modalEl?.querySelector('.contact-modal-topbar')?.toggleAttribute('hidden', !isSheetViewport() || usedSheetMode);
   const ticketInp = document.getElementById("cModalTicket");
   if (ticketInp) ticketInp.placeholder = t("contact.modal.ticketPlaceholder") || "2026-0001";
 }
@@ -156,6 +195,7 @@ function ensureModal() {
   });
   document.getElementById("cModalClose")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalX")?.addEventListener("click", closeContactModal);
+  document.getElementById("cModalBack")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalDone")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalSubmit")?.addEventListener("click", submitContact);
   document.getElementById("cModalTicket")?.addEventListener("input", () => {
@@ -229,14 +269,17 @@ export async function openContactModal(opts = {}) {
   // zamiast zamykać modal. Ustalane przy KAŻDYM otwarciu (nie raz w
   // ensureModal), bo strona/main mogły się jeszcze nie wyrenderować przy
   // pierwszym imporcie.
-  const main = document.querySelector("main.wrap, main.explorer");
-  const backBtn = findPageBackBtn();
+  const main = document.querySelector("main.wrap, main.explorer, main.mail-wrap");
+  const backBtn = findPageBackBtn() || (main ? ensureContactSheetBack() : null);
   usedSheetMode = !!main && !!backBtn;
   if (usedSheetMode) {
     modalEl.classList.add("modal--sheet");
     const footer = main.querySelector(":scope > .footer");
     if (footer) main.insertBefore(modalEl, footer);
     else main.appendChild(modalEl);
+  } else {
+    modalEl.classList.remove("modal--sheet");
+    document.body.appendChild(modalEl);
   }
 
   modalEl.style.display = "grid";
@@ -244,6 +287,7 @@ export async function openContactModal(opts = {}) {
   if (usedSheetMode) {
     enterModalSheet(modalEl, { backBtn, onClose: closeContactModal });
   }
+  applyLabels();
   await prefillEmail();
   const emailInp = document.getElementById("cModalEmail");
   if (emailInp && !emailInp.value) emailInp.focus();
@@ -353,6 +397,8 @@ function ensureContactEntryPoint() {
 }
 
 if (typeof document !== "undefined") {
+  window.matchMedia("(max-width:600px)").addEventListener("change", applyLabels);
+  window.addEventListener('i18n:lang', applyLabels);
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureContactEntryPoint, { once: true });
   else ensureContactEntryPoint();
   document.addEventListener("click", (e) => {

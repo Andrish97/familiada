@@ -42,8 +42,23 @@ try{
     let submissions=0;
     await page.route('**/_api/contact',async route=>{submissions++;const body=route.request().postDataJSON();assert.equal(body.email,'anonymous@example.invalid');assert.equal(body.subject,'Podgląd kontaktu');await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,ticket_number:'DEMO-0001'})});});
     await page.locator('[data-contact-modal]').click();await page.locator('#cModalEmail').fill('anonymous@example.invalid');await page.locator('#cModalSubject').fill('Podgląd kontaktu');await page.locator('#cModalMessage').fill('Przykładowa wiadomość bez rzeczywistej wysyłki.');
+    if(size.name==='mobile'){
+     assert.equal((await page.locator('body > .topbar [data-contact-sheet-back]').textContent()).trim(),'Wstecz');
+     assert.equal(await page.locator('#cModalX').isVisible(),false);
+     const titleBox=await page.locator('#cModalTitle').boundingBox(),barBox=await page.locator('body > .topbar').boundingBox();
+     assert.ok(titleBox.y>=barBox.y+barBox.height,'form heading must be below topbar');
+     assert.equal(await page.locator('.mail-discover').isVisible(),true,'page footer must remain visible');
+     const footerBox=await page.locator('.mail-discover').boundingBox();assert.ok(footerBox.y+footerBox.height<=size.height+1,'footer must fit inside viewport');
+     assert.equal(await page.locator('body > .topbar .lang-btn').isVisible(),true,'language switch must remain visible');
+     await page.locator('.lang-btn').click();await page.locator('.lang-option[data-lang="en"]').click();await page.waitForFunction(()=>document.documentElement.lang==='en');
+     assert.equal(await page.locator('#cModalEmail').inputValue(),'anonymous@example.invalid','language change must preserve entered form');
+     assert.equal(await page.locator('#cModalTitle').textContent(),'Contact us');
+     await page.locator('.lang-btn').click();await page.locator('.lang-option[data-lang="pl"]').click();await page.waitForFunction(()=>document.documentElement.lang==='pl');
+     assert.equal(await page.locator('#contactModalOverlay .mHead').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(5, 9, 20)');
+    }
     await page.screenshot({path:`${out}/contact-${size.name}.png`});
     await page.locator('#cModalSubmit').click();await page.locator('#cModalSuccess').waitFor({state:'visible'});assert.equal(submissions,1);await page.locator('#cModalDone').click();
+    if(size.name==='mobile'){await page.locator('[data-contact-modal]').click();await page.locator('[data-contact-sheet-back]').click();assert.equal(await page.locator('#contactModalOverlay').isVisible(),false);}
     assert.equal(errors.length,0,'anonymous contact must open and finish without JS errors');
    }
    if(state==='active'){await page.locator('[data-tab="items"]').click();await page.screenshot({path:`${out}/active-tasks-${size.name}.png`});}

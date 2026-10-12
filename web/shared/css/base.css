@@ -896,7 +896,8 @@ main{
        reguła by przegrywała i dana sekcja zostawałaby widoczna obok
        modala, ściskając go do resztki miejsca zamiast go zastąpić. */
     body.sheet-open main.wrap > *:not(.footer):not(.modal--sheet),
-    body.sheet-open main.explorer > *:not(.footer):not(.modal--sheet) {
+    body.sheet-open main.explorer > *:not(.footer):not(.modal--sheet),
+    body.sheet-open main.mail-wrap > *:not(.modal--sheet) {
         display: none !important;
     }
 
@@ -910,7 +911,8 @@ main{
        ograniczonej wysokości rośnie zamiast się przewijać) i treść,
        która nie mieści się na ekranie, jest ucięta i nieosiągalna. */
     body.sheet-open main.wrap,
-    body.sheet-open main.explorer {
+    body.sheet-open main.explorer,
+    body.sheet-open main.mail-wrap {
         display: flex;
         flex-direction: column;
         height: calc(100dvh - var(--topbar-h));
@@ -1049,6 +1051,9 @@ main{
        obok niego — dwa widoczne przyciski "wstecz" naraz. */
     .topbar-sheet-back.sheet-back-active {
         display: inline-flex;
+    }
+    body.sheet-open .topbar-section-1:has([data-contact-sheet-back].sheet-back-active) > :not([data-contact-sheet-back]) {
+        display: none !important;
     }
 
     /* Wewnętrzne przewijane listy niektórych modali miały twardy limit

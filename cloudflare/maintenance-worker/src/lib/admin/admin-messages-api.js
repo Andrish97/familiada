@@ -127,6 +127,12 @@ export async function handleAdminMessagesApi(request, env, url) {
     // "admin:compose" ma enforce=false (admin legalnie odpowiada tej samej
     // osobie wielokrotnie w ciągu minut, nigdy nie ma być throttlowane).
     const toEmailNorm = String(to_email).trim().toLowerCase();
+    let contactMessageId = null;
+    if (report_id) {
+      const source = await supabaseRpc(env, "mail_contact_reply_source", { p_report: report_id, p_email: toEmailNorm });
+      if (!source.ok) return json({ ok: false, error: "contact_source_unavailable" }, 503);
+      contactMessageId = normalizeRpcValue(source.data) || null;
+    }
     const queueRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
       headers: { Prefer: "return=representation" },
@@ -137,6 +143,7 @@ export async function handleAdminMessagesApi(request, env, url) {
         text:     emailText,
         from_email: "kontakt@familiada.online",
         meta: { type: "admin_compose", report_id: report_id || null, attachments: sendAttachments?.map(a => ({ filename: a.filename, mime_type: a.mime_type, storage_path: a.storage_path })) || [] },
+        ...(contactMessageId ? { contact_message_id: contactMessageId } : {}),
         cooldown_action_key: "admin:compose",
         cooldown_target_key: `email:${toEmailNorm}`,
       },

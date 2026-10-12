@@ -59,3 +59,4 @@
 @media(max-height:500px) and (min-width:621px){.mail-wrap{padding:12px 20px;gap:10px}.mail-preference{padding:8px 0 0}.mail-discover{padding:8px 16px}.mail-discover>span{display:none}}
 
 .mail-wrap [hidden]{display:none!important}
+body.sheet-open .mail-discover [data-contact-modal]{display:none}

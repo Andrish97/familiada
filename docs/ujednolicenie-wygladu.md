@@ -1021,3 +1021,14 @@ bez drugiej implementacji. „Poznaj system” prowadzi do `/` (strona główna)
 obecność przycisku, otwarcie anonimowe i zachowanie pełnego ekranu/landscape.
 Nie wysyłać prawdziwego zgłoszenia podczas podglądu/testów — wywołuje
 powiadomienie admina; transport zastąpić kontrolowanym testowym odbiorem.
+
+Korekta podglądu Kontakt: na pełnym ekranie telefonu Wstecz w topbarze zamiast X,
+także na stronach bez przycisku Wstecz w topbarze (np. `/mail/`). Nagłówek
+ma tło zgodne z treścią modala, bez jaśniejszego prostokąta. Na stronach
+z istniejącym wspólnym trybem sheet nadal przejmowany jest przycisk
+topbara. Zwykłe okno na komputerze zachowuje zamknięcie X.
+Gdy strona nie ma przejmowanego przycisku, pełnoekranowy Kontakt ma
+dedykowany przycisk we wspólnym topbarze. W `/mail/` wspólny sheet mieści
+się w mail-wrap; topbar ze zmianą języka i stopka strony pozostają widoczne.
+Wstecz nie ląduje w nagłówku formularza. Własny topbar pełnoekranowy
+dotyczy wyłącznie stron, na których nie istnieje wspólna struktura strony.

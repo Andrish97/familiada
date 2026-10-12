@@ -298,6 +298,14 @@ nowym funkcjonalnym E2E tej paczki. Audyt atomowości queue/historia pkt7.
 
 ### Decyzja użytkownika — zawsze stopka i nadrzędna preferencja (2026-10-12)
 
+**Świadome zgłoszenie Kontakt jest wyjątkiem:** globalna rezygnacja nie
+blokuje wysłania formularza ani potwierdzenia przyjęcia i odpowiedzi
+w jego wątku. Nie włącza to powiadomień i nie przywraca zaproszeń.
+Potwierdzenie centrum zamówione ręcznie także jest wyjątkiem. Wyjątek
+mailowy musi mieć prywatne powiązanie z faktycznym zgłoszeniem/linkiem,
+nie wynikać z action_key albo deklaracji nadawcy. Zwykłe powiadomienia,
+zaproszenia, przypomnienia i marketing nadal respektują globalną flagę.
+
 Stopka globalnego wypisania ma być w każdym mailu, także do odbiorcy z kontem; sam odnośnik do ustawień konta nie zastępuje wypisania. Jeden globalny stan odbiorcy obowiązuje wszystkich nadawców i wszystkie miejsca kolejkowania/dostarczania powiadomień. UI może wyjaśniać „Ta osoba zrezygnowała z powiadomień e-mail. Dostęp zostanie nadany bez maila”. Mail-off nie cofa uprawnienia.
 
 Audyt aktualnego Go: przed potwierdzeniem „zablokować wszystkie powiadomienia mailowe”, po nim „Nie będziesz już otrzymywać żadnych maili”, brak instrukcji przywrócenia i brak anonimowego cofnięcia. Ustawienia konta zapisują user_flags, ale nie czyszczą globalnego suppressed_at; niespójność do naprawienia. Dla konta przywrócenie powinno być świadomą akcją właściciela w ustawieniach. Sposób przywrócenia adresu bez konta pozostaje do uzgodnienia; nie ogłaszać bezwarunkowo nieodwracalności ani dodawać samodzielnie anonimowego włączania przez nadawcę. Dopiąć opis skutków i drogi powrotu w Go, wspólną stopkę i macierz flag/zmiany maila/rejestracji/kolejki.

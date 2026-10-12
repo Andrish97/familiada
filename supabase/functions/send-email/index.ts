@@ -5,6 +5,7 @@ import { getEmailCopy, type CopyBlock, type EmailLang, type EmailType } from "./
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { renderMailDocument } from "../_shared/mail-document.js";
+import { appendMailCenterFooter } from "../_shared/mail-center-footer.js";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -498,7 +499,11 @@ async function sendEmail(
   html: string,
   opts: { requestId: string; actorUserId?: string | null } | null = null,
 ) {
-  await sendWithFallbacks(to, subject, html, opts);
+  if (!sbAdmin) throw new Error("mail_center_service_unavailable");
+  const { data, error } = await sbAdmin.rpc("mail_center_issue_link", { p_email: to, p_purpose: "footer" });
+  if (error || !data?.ok || !data?.token) throw new Error("mail_center_footer_unavailable");
+  const lang = html.match(/<html\b[^>]*\blang=["'](pl|en|uk)["']/i)?.[1] || "pl";
+  await sendWithFallbacks(to, subject, appendMailCenterFooter(html, data.token, lang), opts);
 }
 
 serve(async (req) => {

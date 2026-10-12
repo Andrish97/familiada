@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { prepareMailDelivery } from "../_shared/mail-center-footer.js";
 
 type ProviderType = "brevo" | "mailgun" | "sendpulse" | "zeptomail";
 type LogLevel = "debug" | "info" | "warn" | "error";
@@ -345,45 +346,7 @@ async function sendViaZeptomail(to: string, subject: string, html: string, fromE
   if (!res.ok) throw new Error(`zeptomail_failed:${await res.text().catch(() => "")}`);
 }
 
-async function checkSuppressedEmails(emails: string[]): Promise<Map<string, string>> {
-  const result = new Map<string, string>();
-  if (!emails.length) return result;
-  const norm = (e: string) => String(e || "").toLowerCase().trim();
-  const normEmails = [...new Set(emails.map(norm).filter(Boolean))];
-
-  const { data: profs } = await sbAdmin.from("profiles").select("id,email").in("email", normEmails);
-  const emailToUid = new Map<string, string>();
-  for (const p of profs || []) {
-    const em = norm((p as any).email);
-    if (em) emailToUid.set(em, (p as any).id);
-  }
-
-  const uids = [...new Set([...emailToUid.values()])];
-  if (uids.length) {
-    const { data: flags } = await sbAdmin.from("user_flags").select("user_id,email_notifications").in("user_id", uids);
-    for (const r of flags || []) {
-      if ((r as any).email_notifications === false) {
-        for (const [em, uid] of emailToUid.entries()) {
-          if (uid === (r as any).user_id) result.set(em, "skipped_user_flag");
-        }
-      }
-    }
-  }
-
-  const unregistered = normEmails.filter((em) => !emailToUid.has(em));
-  if (unregistered.length) {
-    const { data: suppressed } = await sbAdmin
-      .from("email_unsub_tokens")
-      .select("email")
-      .in("email", unregistered)
-      .not("suppressed_at", "is", null);
-    for (const r of suppressed || []) result.set(norm((r as any).email), "skipped_suppression");
-  }
-
-  return result;
-}
-
-async function sendWithFallbacks(to: string, subject: string, html: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], plainText?: string, metaAttachments?: Array<{ filename: string; storage_path: string }>) {
+async function sendWithFallbacks(queueId: string, providers: EmailProvider[], fromEmail?: string, attachments?: Attachment[], metaAttachments?: Array<{ filename: string; storage_path: string }>) {
   const available = providers.filter(p => p.rem_worker > 0);
   if (available.length === 0) throw new Error("no_available_worker_limits");
 
@@ -391,8 +354,12 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
   console.log("[mail-worker] trying first:", available[0]?.name);
 
   const errs: string[] = [];
-  const text = plainText || htmlToText(html);
   for (const p of available) {
+    // Repeat before every provider attempt, including a fallback after failure.
+    // A backend failure cannot turn into sending an unchecked notification.
+    const delivery = await prepareMailDelivery((name: string, args: Record<string, unknown>) => sbAdmin.rpc(name, args), queueId);
+    if (!delivery.allowed) return { skipped: delivery.reason, provider: "" };
+    const { to, subject, html, text } = delivery;
     try {
       console.log("[mail-worker] trying provider:", p.name, "type:", p.type);
       
@@ -405,7 +372,7 @@ async function sendWithFallbacks(to: string, subject: string, html: string, prov
       else { await sendViaMailgun(to, subject, html, fromEmail, attachments, text); }
       
       console.log("[mail-worker] SUCCESS via:", p.name);
-      return p.name;
+      return { provider: p.name, skipped: "" };
     } catch (e) {
 const errMsg = String((e as any)?.message || e);
       errs.push(`${p.name}:${errMsg}`);
@@ -493,14 +460,6 @@ serve(async (req) => {
     meta: { count: (rows || []).length, limit, pickFn, selectedIds: selectedIds.length },
   });
 
-  // batch suppression check for all recipients
-  const batchEmails = (rows || []).map((r: any) => String(r.to_email || "")).filter(Boolean);
-  const suppressedMap = await checkSuppressedEmails(batchEmails).catch((e) => {
-    console.warn("[mail-worker] suppression_check_failed", String(e));
-    return new Map<string, string>();
-  });
-  const normEmail = (e: string) => String(e || "").toLowerCase().trim();
-
   let sent = 0;
   let failed = 0;
   let skipped = 0;
@@ -524,10 +483,14 @@ serve(async (req) => {
 
     try {
 
-      // suppression check
-      const skipReason = suppressedMap.get(normEmail(r.to_email));
-      if (skipReason) {
-        await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: skipReason, p_error: "" });
+      // Load attachments from storage if any
+      const metaAttachments = (r.meta?.attachments || []) as Array<{filename: string, mime_type: string, storage_path: string}>;
+      const emailAttachments = metaAttachments.length ? await loadAttachmentsFromStorage(metaAttachments) : [];
+
+      const result = await sendWithFallbacks(r.id, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, metaAttachments);
+      if (result.skipped) {
+        const { error: skipError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: result.skipped, p_error: "" });
+        if (skipError) throw new Error("mail_queue_skip_failed");
         await writeLog({
           requestId,
           event: "email_skipped",
@@ -535,17 +498,13 @@ serve(async (req) => {
           level: "info",
           queueId: r.id,
           recipientEmail: r.to_email,
-          provider: skipReason,
+          provider: result.skipped,
         });
         skipped++;
         continue;
       }
 
-      // Load attachments from storage if any
-      const metaAttachments = (r.meta?.attachments || []) as Array<{filename: string, mime_type: string, storage_path: string}>;
-      const emailAttachments = metaAttachments.length ? await loadAttachmentsFromStorage(metaAttachments) : [];
-
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, providers, r.from_email || undefined, emailAttachments.length ? emailAttachments : undefined, r.text, metaAttachments);
+      const provider = result.provider;
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });

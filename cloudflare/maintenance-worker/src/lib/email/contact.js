@@ -87,6 +87,7 @@ export async function handleContactSubmit(request, env) {
         text: emailText,
         from_email: "no-reply@familiada.online",
         meta: { type: "contact_confirmation", ticket },
+        contact_message_id: msgId,
         cooldown_action_key: "contact:confirmation",
         cooldown_target_key: `email:${toEmailNorm}`,
       },

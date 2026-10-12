@@ -21,6 +21,17 @@ async function invoke(handler, path, body, replies) {
   } finally { globalThis.fetch = original; }
 }
 const compose = { to_email: ' TEST14@familiada.online ', subject: 'Subject', body: 'Body', body_html: '<p>Body</p>', attachments: [{filename:'a.txt',mime_type:'text/plain',storage_path:'fixture/a.txt',size:4}] };
+test('admin reply binds only a private recipient-matching contact source, backend failure never queues', async () => {
+ const body={...compose,attachments:[],report_id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',contact_message_id:'foreign-client-source'};
+ const bound=await invoke(handleAdminMessagesApi,'/_admin_api/messages/send',body,[[200,'actual-source'],[201,[{id:'q'}]],[200,'m']]);
+ assert.equal(bound.calls[0].path,'/rest/v1/rpc/mail_contact_reply_source');
+ assert.deepEqual(bound.calls[0].body,{p_report:body.report_id,p_email:'test14@familiada.online'});
+ assert.equal(bound.calls[1].body.contact_message_id,'actual-source');
+ const ordinary=await invoke(handleAdminMessagesApi,'/_admin_api/messages/send',body,[[200,null],[201,[]]]);
+ assert.equal(ordinary.calls[1].body.contact_message_id,undefined);assert.equal(ordinary.result.skipped,true);
+ const failed=await invoke(handleAdminMessagesApi,'/_admin_api/messages/send',body,[[503,{message:'db unavailable'}]]);
+ assert.equal(failed.status,503);assert.equal(failed.calls.length,1);
+});
 test('admin compose: skipped mail creates no sent history or attachments; queue failure is not success', async () => {
   const skipped = await invoke(handleAdminMessagesApi, '/_admin_api/messages/send', compose, [[201, []]]);
   assert.deepEqual(skipped.result, { ok:true, queued:0, skipped:true, reason:'notifications_disabled' });
