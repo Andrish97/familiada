@@ -1,4 +1,4 @@
-import { v } from '../core/cache-bust.js?v=v2026-10-12T22074';
+import { v } from '../core/cache-bust.js?v=v2026-10-12T22081';
 
 export const loadJson = async (url) => {
   const res = await fetch(await v(url), { cache: "no-store" });
