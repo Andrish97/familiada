@@ -167,9 +167,9 @@ async function handleAnonymousPollGateway() {
 }
 
 function setView({ head, text, hintText }) {
-  if (title) title.textContent = head;
-  if (message) message.textContent = text;
-  if (hint) hint.textContent = hintText || "";
+  if (title) { title.removeAttribute("data-i18n"); title.textContent = head; }
+  if (message) { message.removeAttribute("data-i18n"); message.textContent = text; }
+  if (hint) { hint.removeAttribute("data-i18n"); hint.textContent = hintText || ""; }
 }
 
 function clearActions() {

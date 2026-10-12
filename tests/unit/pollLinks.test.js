@@ -36,3 +36,9 @@ test('owner card and real QR screen share the Go generator; opening the QR scree
   for(const key of ['anonymousLinkTitle','anonymousLinkChecking','anonymousLinkExpired','anonymousLinkMissing','linkCheckFailed'])assert.equal(typeof dict.pollGo[key],'string',lang+'.'+key);
  }
 });
+test('Go dynamic states are protected from a later static language initialization',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const source=await readFile(new URL('../../web/go/js/go.js',import.meta.url),'utf8');
+ const setView=source.slice(source.indexOf('function setView('),source.indexOf('function clearActions('));
+ for(const element of ['title','message','hint'])assert.match(setView,new RegExp(element+'\\.removeAttribute\\("data-i18n"\\)'));
+});
