@@ -5,6 +5,14 @@ const origin='https://www.familiada.online';
 const token='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const branch=process.env.GITHUB_REF_NAME!=='main';
 test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+let currentCase='login';
+test.afterEach(async({page},testInfo)=>{
+ if(testInfo.status===testInfo.expectedStatus)return;
+ // Bounded UI diagnostics through check annotations: no headers, URLs or tokens.
+ const view=await page.evaluate(()=>({title:document.querySelector('#title')?.textContent||'',message:document.querySelector('#message')?.textContent||'',buttons:[...document.querySelectorAll('#actions button')].map(node=>node.textContent)})).catch(()=>({}));
+ const payload=JSON.stringify({case:currentCase,...view});
+ console.error('::error title=Go state diagnostic::'+payload.replaceAll('%','%25').replaceAll('\n','%0A').replaceAll('\r','%0D'));
+});
 async function evidence(page,testInfo,label){
  for(const width of [390,1400]){
   await page.setViewportSize({width,height:width===390?844:900});
@@ -24,7 +32,7 @@ test('Go state matrix: canonical account, terminal messages, every family, malfo
  await page.route('**/rest/v1/rpc/poll_go_resolve',resolve);
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  async function check(marker,data,heading,buttons){
-  result=data;await page.goto(`${origin}/go/?${marker}=${token}`,{waitUntil:'domcontentloaded'});
+  currentCase=marker+'/'+(data.status||data.error||data.kind);result=data;await page.goto(`${origin}/go/?${marker}=${token}`,{waitUntil:'domcontentloaded'});
   await expect(page.locator('#title')).toHaveText(heading,{timeout:15000});await expect(page.locator('#actions button')).toHaveCount(buttons);
   await expect(page.locator('#emailRow')).toBeHidden();
  }
@@ -55,26 +63,26 @@ test('Go state matrix: canonical account, terminal messages, every family, malfo
  }
  for(const [error,title] of [['poll_stopped','Ankieta jest zatrzymana'],['poll_closed','Ankieta zakończona'],['expired','To zaproszenie wygasło'],['invalid_token','To zaproszenie wygasło'],['revoked','Udostępnienie jest już niedostępne']])await check('t',{ok:false,error},title,0);
  await evidence(page,testInfo,'unavailable');
- result={ok:true,kind:'friend',status:'pending',recipient_matches_me:true,owner_label:'Ala'};
+ currentCase='historical-friend';result={ok:true,kind:'friend',status:'pending',recipient_matches_me:true,owner_label:'Ala'};
  await page.goto(`${origin}/go/?s=${token}&action=unsub`);await expect(page.locator('#actions button')).toHaveCount(1);
  await expect(page.locator('#actions button')).not.toContainText('Wypisz');await evidence(page,testInfo,'historical-friend');
  // Expected kind and syntactic ambiguity are both rejected.
  await check('b',{ok:true,kind:'task',status:'pending',recipient_user_id:user.id},'Link nieważny',0);
  for(const query of [`m=${'a'.repeat(64)}&b=${token}`,`b=${token}&b=${token}`,`d=host&id=${token}&key=${token}&t=${token}`,`t=bad`,`p=anon&id=${token}&key=public&f=${token}`]){
-  const before=calls;await page.goto(`${origin}/go/?${query}`);await expect(page.locator('#title')).toHaveText('Link nieważny');await expect(page.locator('#actions button')).toHaveCount(0);expect(calls).toBe(before);
+  currentCase='invalid-parameters';const before=calls;await page.goto(`${origin}/go/?${query}`);await expect(page.locator('#title')).toHaveText('Link nieważny');await expect(page.locator('#actions button')).toHaveCount(0);expect(calls).toBe(before);
  }
- fail=true;await page.goto(`${origin}/go/?b=${token}`);await expect(page.locator('#message')).toContainText('Nie udało się sprawdzić linku');await expect(page.locator('#actions button')).toHaveCount(1);
+ currentCase='network-retry';fail=true;await page.goto(`${origin}/go/?b=${token}`);await expect(page.locator('#message')).toContainText('Nie udało się sprawdzić linku');await expect(page.locator('#actions button')).toHaveCount(1);
  await evidence(page,testInfo,'network-retry');
  fail=false;result={ok:true,kind:'base',status:'declined',recipient_matches_me:true};await page.locator('#actions button').click();await expect(page.locator('#title')).toHaveText('Zaproszenie odrzucone');
  // Device and QR gateways preserve terminal states and allow retry without granting access.
- let deviceFail=true;
+ currentCase='device-retry';let deviceFail=true;
  await page.route('**/rest/v1/rpc/control_device_share_resolve',route=>deviceFail?route.abort('failed'):route.fulfill({json:{state:'revoked',game_id:token,device_type:'host'}}));
  await page.goto(`${origin}/go/?d=host&id=${token}&key=${token}`);await expect(page.locator('#actions button')).toHaveCount(1);deviceFail=false;await page.locator('#actions button').click();await expect(page.locator('#message')).toHaveText('Właściciel cofnął to udostępnienie.');await expect(page.locator('#actions button')).toHaveCount(0);
- await page.route('**/rest/v1/rpc/poll_state',route=>route.fulfill({json:{ok:true,state:'ended',type:'poll_text'}}));
+ currentCase='qr-ended';await page.route('**/rest/v1/rpc/poll_state',route=>route.fulfill({json:{ok:true,state:'ended',type:'poll_text'}}));
  await page.goto(`${origin}/go/?d=qr&id=${token}&key=public`);await expect(page.locator('#title')).toHaveText('Ankieta zakończona');await expect(page).toHaveURL(/\/go\//);
  expect(errors).toEqual([]);
  // A separate browser with no account sees the anonymous subscription actions and account login.
- const guest=await browser.newContext({serviceWorkers:'block'});
+ currentCase='guest-subscription-and-login';const guest=await browser.newContext({serviceWorkers:'block'});
  try{
   if(branch)await serveBranchCode(guest,{pages:['go']});
   await guest.addInitScript(()=>localStorage.setItem('uiLang','pl'));
