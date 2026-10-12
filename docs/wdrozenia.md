@@ -777,4 +777,6 @@ Stan szczegółowy:
 
 ### 2026-10-12 — Control358 przygotowane w repo, przed bramkami
 
-Migracja358: kanoniczny Auth odbiorcy i regularny nadawca, jawne API lookup/znajomy, mail_to z serwera, globalna flaga przed budżetem Control i kolejką czterech rodzin zasobów. Nie zmienia cyklu parowania ani wyglądu Urządzeń. Nowy isolated job verify_e19_358 zachowuje bieżące funkcje i rzeczywiste hooki Auth; rollbackowe kontrakty w db-migrate. Lokalnie kontrakty,32 wyścigi i unit459 green; wersja repo przed isolated/produkcją. Pozostałe powiązania źródeł maili i claim/delivery nadal w pkt7.
+Migracja358: kanoniczny Auth odbiorcy i regularny nadawca, jawne API lookup/znajomy, mail_to z serwera, globalna flaga przed budżetem Control i kolejką czterech rodzin zasobów. Nie zmienia cyklu parowania ani wyglądu Urządzeń. Osobny workflow control-identity-checks.yml zachowuje bieżące funkcje i rzeczywiste hooki Auth; rollbackowe kontrakty w db-migrate. Lokalnie kontrakty,32 wyścigi i unit459 green; wersja repo przed isolated/produkcją. Pozostałe powiązania źródeł maili i claim/delivery nadal w pkt7.
+
+Kontrola uruchomienia: agent-checks przekroczył limit25 inputs GitHuba — nowy isolated job przeniesiony do osobnego workflow control-identity-checks.yml, istniejące wejścia pozostają. Lokalny DDL wrapper Docker nie współdzielił katalogu tymczasowego z psql; uruchamiać skrypt w kontenerze. Bez wpływu na produkcję.
