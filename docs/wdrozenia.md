@@ -851,3 +851,15 @@ podsumowania. Dopasowano kontrakt do sekcji na pełną szerokość z dostępem
 do wszystkich ustawień, zachowując test pełnych etykiet dźwięków. Kolejne
 lokalne pomiary120 przypadków (także sekcje podsumowania): zero przewijania
 i wyjść poza panel. Nie jest to jeszcze potwierdzenie połączeń/statystyk.
+
+Control tryb testowy: **38298166305 success**, branch e590062750,
+2/2 E2E bez retry, konta4/5, kod brancha (`TEST_BRANCH_CODE=1`) na bazie
+produkcyjnej. Trzy rzeczywiste iframe1024×768, blokada osobnych opcji,
+przywrócenie po reload, osobny próg trybu bez blokady zwykłego panelu,
+zwężenie aktywnego trybu, odblokowanie dźwięku Display, buzzer i rzeczywisty
+`game_sessions.stats_detail.settings.testMode=true`; renderer statystyk
+pokazuje etykietę tylko dla true. Artefakt production-statistics-records.
+Następna paczka: ochrona podwójnego przełączania/zapis rollback, krótki
+manual PL/EN/UK i screenshoty z prefiksem wymaganym przez workflow; testy
+tej wersji + regresja zwykłego przebiegu przed main. Drugi równoległy
+38298190111 to test hasła innej sesji, nie dowód naszego Control.

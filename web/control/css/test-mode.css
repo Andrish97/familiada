@@ -18,3 +18,9 @@ html, body { overflow:hidden!important; scrollbar-gutter:auto!important; }
 .c2-summary-pages [hidden] { display:none!important; }
 .c2-summary-pagination { display:flex; gap:12px; align-items:center; justify-content:center; flex:none; }
 #controlStage .c2-scroll-area { overflow:visible; }
+@media(prefers-reduced-motion:no-preference) {
+  #controlStage[data-test-mode="true"] #controlStagePanel { animation:control-panel-in .22s ease-out; }
+  #controlTestDevices:not([hidden]) { animation:control-devices-in .22s ease-out; }
+}
+@keyframes control-panel-in { from { transform:translateX(12px); opacity:.8; } to { transform:none; opacity:1; } }
+@keyframes control-devices-in { from { transform:translateX(12px); opacity:0; } to { transform:none; opacity:1; } }

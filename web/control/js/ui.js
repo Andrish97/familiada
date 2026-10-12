@@ -272,7 +272,7 @@ export function createUI({ root, emit }) {
     }
     const testToggle = h("input", { id: "controlTestToggle", type: "checkbox" });
     testToggle.checked = state.settings.testMode === true;
-    testToggle.disabled = !testToggle.checked && ctx.testModeAvailable === false;
+    testToggle.disabled = ctx.testModeChanging === true || (!testToggle.checked && ctx.testModeAvailable === false);
     on(testToggle, "change", () => emit("devices.testMode", testToggle.checked));
     const testChoice = h("div", { class: "control-test-choice" }, [
       h("label", { class: "device-opt-check" }, [testToggle, h("span", { text: t("control.testModeLabel") })]),

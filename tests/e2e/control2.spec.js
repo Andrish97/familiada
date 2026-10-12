@@ -3385,6 +3385,9 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
   try {
     await page.goto(`/control?id=${game.id}`, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.stepTitle')).toHaveText('Urządzenia', { timeout: 20000 });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('#pageGuard')).toBeVisible();
+    await page.screenshot({ path:testInfo.outputPath('shot-control-mobile-guard.png') });
     await page.setViewportSize({ width: 1100, height: 768 });
     await expect(page.locator('#controlTestToggle')).toBeDisabled();
     await expect(page.locator('#pageGuard')).toBeHidden();
@@ -3401,7 +3404,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     }
     await expect(page.getByRole('button', { name:'Dalej', exact:true })).toBeEnabled({ timeout:30000 });
     await assertFits();
-    await page.screenshot({ path:testInfo.outputPath('test-mode-devices.png') });
+    await page.screenshot({ path:testInfo.outputPath('shot-test-mode-devices.png') });
     await page.reload({ waitUntil:'domcontentloaded' });
     await expect(page.locator('#controlTestToggle')).toBeChecked({ timeout:20000 });
     await expect(page.locator('#controlTestDevices iframe')).toHaveCount(3);
@@ -3420,7 +3423,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
       await tab.click();
       await assertFits();
     }
-    await page.screenshot({ path:testInfo.outputPath('test-mode-summary.png') });
+    await page.screenshot({ path:testInfo.outputPath('shot-test-mode-summary.png') });
     await page.getByRole('button', { name:'Gotowe — przejdź do rozgrywki' }).click();
     await page.getByRole('button', { name:'Rozpocznij grę', exact:true }).click();
     await expect.poll(async () => (await readControl2Sessions(page, game.id))[0]?.stats_detail?.settings?.testMode).toBe(true);

@@ -174,6 +174,7 @@ async function main() {
   let beforeLeave = async () => true;
   let runtimeSession = null;
   let testModePanel = null;
+  let testModeChanging = false;
   const i18nP = initI18n({ withSwitcher: true });
   // Blokady strony (guardResourceLocks): zwalniane przed przejściem do
   // instrukcji / ustawień gry, żeby tamta strona mogła je od razu zająć.
@@ -988,7 +989,7 @@ async function main() {
     if (ended && !outroReturnReady && !outroUnlockTimer) {
       outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
     }
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, outroReturnReady, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -1233,17 +1234,28 @@ async function main() {
       if (testModePanel.blocked() && action !== "devices.testMode") return;
       if (store.state.settings.testMode && ["devices.noHostTablet", "devices.physicalBuzzer", "devices.copyCode", "devices.shareOpen", "qr.modal.show", "qr.host.toggle", "qr.buzzer.toggle"].includes(action)) return;
       if (action === "devices.testMode") {
-        if (store.state.step !== "devices_display" || (payload && !testModePanel.canEnable())) return;
-        store.state.settings.testMode = !!payload;
-        if (payload) {
-          store.state.settings.noHostTablet = false;
-          store.state.settings.physicalBuzzer = false;
-          store.state.display.qr.host.show = false;
-          store.state.display.qr.buzzer.show = false;
-          store.state.display.mode = "BLACK";
+        if (testModeChanging || store.state.step !== "devices_display" || (payload && !testModePanel.canEnable())) return;
+        const previous = structuredClone({ settings:store.state.settings, display:store.state.display });
+        testModeChanging = true;
+        try {
+          store.state.settings.testMode = !!payload;
+          if (payload) {
+            store.state.settings.noHostTablet = false;
+            store.state.settings.physicalBuzzer = false;
+            store.state.display.qr.host.show = false;
+            store.state.display.qr.buzzer.show = false;
+            store.state.display.mode = "BLACK";
+          }
+          renderCurrent();
+          await store.commit();
+        } catch (error) {
+          store.state.settings = previous.settings;
+          store.state.display = previous.display;
+          throw error;
+        } finally {
+          testModeChanging = false;
+          renderCurrent();
         }
-        await store.commit();
-        renderCurrent();
         return;
       }
       const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
