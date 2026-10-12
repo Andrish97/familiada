@@ -121,6 +121,11 @@ on:
         type: boolean
         default: false
 
+      verify_e19_358:
+        description: 'Verify canonical Control recipients, mail preferences and parent races'
+        type: boolean
+        default: false
+
 permissions:
   contents: read
 
@@ -1333,3 +1338,54 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-task-cascade-345.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-proposal-sources-355.sql
+
+  verify-e19-358:
+    if: ${{ inputs.verify_e19_358 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore current schema without replaying historical Control APIs
+        run: |
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          psql -v ON_ERROR_STOP=1 -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
+          psql -v ON_ERROR_STOP=1 -f docs/sql/restore-identity-auth-triggers-358.sql
+          psql -v ON_ERROR_STOP=1 -c "INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce) VALUES('friend:invite_after_reject','pair',2592000,true) ON CONFLICT DO NOTHING"
+      - name: Apply and verify Control recipients and resource mail preferences
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-12_358_control_identity_and_mail_preferences.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-control-identity-358.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-resource-mail-preference-358.sql
+          python3 docs/sql/test-control-identity-358-concurrency.py
+          CONTROL358_MIGRATION=supabase/migrations/2026-10-12_358_control_identity_and_mail_preferences.sql bash docs/sql/test-control-identity-358-ddl-concurrency.sh
+      - name: Verify existing runtime expiration without changing fixture ownership
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'ALTER TABLE auth.users DISABLE TRIGGER on_auth_user_created'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-control-runtime-session-324.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e19-358-sql-restore
+          path: /tmp/fam-restore.log
