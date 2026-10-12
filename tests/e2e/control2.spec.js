@@ -3373,7 +3373,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL-TESTMODE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const assertFits = async () => {
-    const result = await page.evaluate(() => {
+    await expect.poll(() => page.evaluate(() => {
       const area = document.querySelector('#controlStagePanel').getBoundingClientRect();
       const elements = [...document.querySelectorAll('#app *')].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
       return elements.filter(el => {
@@ -3381,8 +3381,7 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
         if (el.closest('.c2-summary-grid')) return false;
         return box.width > 0 && box.height > 0 && (box.left < area.left - 2 || box.right > area.right + 2 || box.bottom > area.bottom + 2);
       }).map(el => el.className);
-    });
-    expect(result).toEqual([]);
+    })).toEqual([]);
   };
   try {
     await page.goto(`/control?id=${game.id}`, { waitUntil: 'domcontentloaded' });
