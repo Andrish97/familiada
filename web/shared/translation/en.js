@@ -3005,6 +3005,7 @@ const en = {
     },
   },
   pollAnonymous: {
+    saved: "Your answers are saved.",
     ready: "You can send your answers now.",
     retry: "Try again",
     retryIn: "Try again in {seconds} s",
@@ -3074,6 +3075,12 @@ const en = {
     answerFallback: "ANS {ord}",
   },
   pollGo: {
+    anonymousLinkTitle: "Poll",
+    anonymousLinkChecking: "Checking whether voting is still open…",
+    anonymousLinkExpired: "This link has expired",
+    anonymousLinkMissing: "There is no such poll",
+    linkCheckFailed: "Could not check the link. Please try again later.",
+
     title: "Familiada — poll invitation",
     loadingTitle: "Loading invitation…",
     loadingText: "Please wait.",

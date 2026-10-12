@@ -926,3 +926,47 @@ obu typów w e2e/poll-anonymous.spec.js. Na main spec NIE podmienia Pages
 branch-code, żeby potwierdzić faktycznie opublikowany front. Manual dalej
 ostatni. Merge zachował nowe sekwencje Control/audio; stary unit renderu
 zaktualizowany do już opublikowanego setText→setPts+bank,514 green.
+
+**362 kontrola main:**38315259508 failure z powodu uiLang drugiej
+przeglądarki (zapisy/idempotencja/cooldown/drugi niezależny głos działały).
+Poprawka3070ea5120 ustawia jej polski język i retries:0 w specu. Main
+kontrola38315815400 właśnie ruszyła,2 scenariusze z naturalnym30s,
+rzetelne Pages (bez branch interception), jawne publikowanie screenów.
+Nie zamykać362 przed wynikiem.
+
+Następna paczka Go lokalnie: poll-links.js+4 unit, karta Anonimowo i
+rzeczywisty ekran QR generują `/go/?p=anon&id=...&key=...&lang=...`.
+Go sprawdza istniejący poll_state, prowadzi tylko open do właściwego
+formularza, pokazuje closed/stopped/ended/expired/not_found, odrzuca
+braki/mieszane/duplikaty, ma powtórne sprawdzenie po błędzie sieci.
+Otwórz ekran QR przestał zagnieżdżać URL ekranu jako treść kodu.
+Punktowy poll-go.spec.js i pomocniczy poll-game.js przygotowane (rzeczywista
+finalizacja obu typów po trzech pełnych głosach). Jeszcze bez bramki
+branch/produkcji. Publisher rozdziela galerę cooldown/live i go-live,
+żeby nie nadpisywać poprzednich screenów. Nie uruchamiać na koncie1
+równolegle z38315815400.
+
+**362 zamknięte:** main38315815400 success2/2, bez retry,514 unit.
+Oba typy potwierdzone na faktycznych Pages: naturalne30s, zachowane
+odpowiedzi, idempotencja po utracie odpowiedzi serwera, niezależna
+przeglądarka z tej samej sieci, legacy gate, stop/nowy klucz/cleanup.
+Screeny main13d5be4759:docs/img/poll-anonymous/live. Nie powtarzać362.
+
+**Go branch38315943894 success1/1**, bez retry/518 unit,28s. Generator
+karty/QR/Otwórz rzeczywistego ekranu działa; realne open/stopped/draft/
+expired/ended po finalizacji obydwu typów/deleted, błędne parametry i
+błąd sieci+powtórzenie.10 screenów branch2ecd9206ba go-live. Teraz
+publikacja Go na main→Pages→ten sam pojedynczy spec na produkcji (bez
+branch substitution). Main1 i branch2 korzystały z rozłącznych kont;
+bez maili/kontaktów/resetowania zegara. Cały E19/pkt7 nadal otwarty.
+
+**Korekta „po co3 liczniki”:** użytkownik wskazał trzykrotne sekundy na
+screenie. Usunięte odliczanie w opisie i dodatkowy toast. Wspólny helper
+pokazuje jeden licznik na przycisku oraz „Odpowiedzi są zachowane.”.
+Backend362 bez zmiany.2 nowe unit/PLENUK/timer/manual retry, lokalny
+Chromium obu typów390/1400 success i4 obrazy odświeżone. Następny branch
+E2E poll-anonymous.spec.js z asercją zapisanego opisu i braku app-toast;
+Go już ma zielony branch38315943894. Potem razem Pages→main oba spece3
+scenariusze, publisher dzieli cooldown/live oraz go-live (14 screenów).
+Nie powtarzać SQL/wyścigów362 ani zamkniętych maili. Go reszty rodzin i
+finalny audyt grafu dalej otwarte.

@@ -1503,3 +1503,46 @@ ze starym Game-first oraz514 unit success. Podgląd Chromium390/1400 z30
 pytaniami, lokalne zrzuty docs/img/poll-anonymous. Workflow isolated i
 punktowy e2e/poll-anonymous.spec.js przygotowane. SQL/frontend362 jeszcze
 nie wdrożone; wymagają sprzężonego wdrożenia zgodnie z wyjątkiem AGENTS.
+
+### Pkt7 /Go — anonimowy link i ekran QR, paczka po362
+
+Kanoniczny link z sekcji Anonimowo oraz z kodu QR:
+`/go/?p=anon&id=<gra>&key=<bieżący-klucz>&lang=<język>`. Nie zawiera tokenu
+odbiorcy, wymogu logowania ani tożsamości. Go używa istniejącego `poll_state`:
+otwarta ankieta przechodzi do właściwego typu formularza; zatrzymana,
+zakończona, zamknięta, wygasły klucz i usunięta ankieta zostają w Go
+z czytelnym komunikatem. Brak parametrów, mieszane typy zaproszeń oraz
+duplikaty pól są odrzucane. Błąd sieci pozwala powtórzyć sprawdzenie.
+
+Wspólny generator linku dla karty Ankiet oraz ekranu QR. Naprawa wykrytego
+zagnieżdżania: przycisk Otwórz otwiera ekran QR z jego id/key; nie przekazuje
+adresu ekranu jako treści kolejnego kodu. Sam ekran koduje link do Go.
+Podgląd ekranu właściciela pozostaje wejściem wewnętrznym.
+
+Stan: przygotowane lokalnie; nowa ścieżka nie wymaga migracji. Punktowy
+`poll-go.spec.js`: rzeczywiste oba typy, generator/QR, stop, abort/draft,
+ponowne otwarcie, finalizacja po trzech głosach, usunięcie i błąd sieci.
+Publikacja dopiero po zamknięciu362 i zielonym branch E2E. Dalsze stany Go
+innych rodzin oraz końcowy audyt grafu pozostają otwarte.
+
+**362 zamknięte produkcyjnie:** DB38314862992/log362 OK22:09:59 UTC,
+Pages38314862930 success; main38315815400 success2/2 bez retry/514 unit.
+Pełny zakres obu typów i granice pokrycia w Dzienniku. Cztery rzeczywiste
+screeny w `docs/img/poll-anonymous/live` (main13d5be4759). Lokalny szkic i
+wcześniejsze wpisy zachowane jako historia pracy; nie ponawiać pakietu362.
+
+**Go na branchu, bramka zielona:**38315943894 success1/1 bez retry/518 unit,
+28s; rzeczywiste oba typy, card link/QR/popup, stop/abort/draft/reopen,
+finalizacja po trzech pełnych głosach, usunięcie i retry po błędzie sieci.
+Dziesięć screenów w `docs/img/poll-anonymous/go-live`, branch2ecd9206ba.
+Następne publikacja Pages i ten sam main. Pozostałe rodziny Go oraz
+końcowy audyt grafu nadal otwarte.
+
+### Doprecyzowanie użytkownika 2026-10-12 — jedno odliczanie
+
+Ten sam cooldown bieżącej akcji pokazuje jeden licznik. W anonimowym
+formularzu ankiety odliczanie jest na przycisku ponownego wysłania.
+Opis nad nim: „Odpowiedzi są zachowane.”, bez sekund. Dodatkowy toast
+z odliczaniem usunięty. Po końcu zwłoki przycisk staje się aktywny.
+Ta korekta dotyczy interfejsu po zakończonej362; odstęp i backend bez zmian.
+Oba typy korzystają z tego samego komponentu. Nowe zrzuty po wykonaniu.

@@ -3003,6 +3003,7 @@ const uk = {
     },
   },
   pollAnonymous: {
+    saved: "Ваші відповіді збережено.",
     ready: "Тепер ви можете надіслати відповіді.",
     retry: "Спробувати знову",
     retryIn: "Спробувати знову через {seconds} с",
@@ -3072,6 +3073,12 @@ const uk = {
     answerFallback: "ВІДП {ord}",
   },
   pollGo: {
+    anonymousLinkTitle: "Опитування",
+    anonymousLinkChecking: "Перевіряю, чи ще можна проголосувати…",
+    anonymousLinkExpired: "Це посилання втратило чинність",
+    anonymousLinkMissing: "Такого опитування немає",
+    linkCheckFailed: "Не вдалося перевірити посилання. Спробуйте пізніше.",
+
     title: "Familiada — запрошення до опитування",
     loadingTitle: "Завантажую запрошення…",
     loadingText: "Будь ласка, зачекай.",

@@ -1,7 +1,8 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-12T22081";
-import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-12T22081";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-12T22081";
+import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-12T22235";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-12T22235";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-12T22235";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-12T22235";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
@@ -132,12 +133,7 @@ if (!url && paramId && paramKey) {
     const endedKey = endedKeyForStatus(game.status);
     if (endedKey) throw new Error(endedKey);
 
-    const base = game.type === "poll_points" ? "/polls/vote/points/" : "/polls/vote/text/";
-    const voteUrl = new URL(base, location.href);
-    voteUrl.searchParams.set("id", game.id);
-    voteUrl.searchParams.set("key", paramKey);
-    if (currentLang) voteUrl.searchParams.set("lang", currentLang);
-    url = voteUrl.toString();
+    url = anonymousPollLink({ gameId:game.id, key:paramKey, lang:currentLang },location.href);
     myScope  = getScopeFromVoteUrl(url);
     myGameId = paramId;
   } catch(e) {

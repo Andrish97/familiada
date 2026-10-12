@@ -49,7 +49,9 @@ for(const type of ['poll_text','poll_points'])test(`anonymous362 ${type}: preser
   expect(await count(page,game.id,type)).toBe(10);expect(calls[1].result.already_submitted).toBe(true);
   expect(calls[0].args).toEqual(calls[1].args);expect(calls[0].args.p_items).toHaveLength(10);
   await voter.reload();await complete(voter,type);
-  await expect(voter.locator('.sub')).toContainText('Możesz wysłać odpowiedzi za');await expect(retry).toBeDisabled();
+  await expect(voter.locator('.sub')).toContainText('Odpowiedzi są zachowane.');await expect(retry).toBeDisabled();
+  await expect(retry).toHaveText(/Spróbuj ponownie za \d+ s/);
+  await expect(voter.locator('.app-toast')).toHaveCount(0);
   expect(calls[2].result.error).toBe('cooldown');expect(calls[2].args.p_browser_token).toBe(calls[0].args.p_browser_token);
   expect(calls[2].args.p_voter_token).not.toBe(calls[0].args.p_voter_token);expect(await count(page,game.id,type)).toBe(10);
   for(const width of [390,1400]){

@@ -1,8 +1,8 @@
-# Anonimowe ankiety — rzeczywiste odliczanie
+# Anonimowe ankiety — głosowanie i stany linków
 
-Przebieg [38315815400](https://github.com/Andrish97/familiada/actions/runs/38315815400), kod `3070ea5120a2f8520509d8c48812cfa5cd157c13`.
+Przebieg [38316440463](https://github.com/Andrish97/familiada/actions/runs/38316440463), kod `292296105ad2f86e5d1badc83ff4e24d2f166aa1`.
 
-Rzeczywista baza i ankiety kont testowych. Odliczanie z serwera, zachowane odpowiedzi; telefon i komputer.
+Rzeczywista baza i ankiety kont testowych. Zrzuty po wykonaniu zmian; telefon i komputer.
 
 ## poll_points-cooldown-1400
 
