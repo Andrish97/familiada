@@ -737,3 +737,5 @@ Stan szczegółowy:
 | 2026-10-12 |357 / isolated fixture |38241961813: unit459, DDL i3 pierwsze scenariusze success; brak danych polityki base:share_after_reject w pustym restore zatrzymał odmowę. Dodano istniejące polityki tylko do izolacji/rollback fixture, bez zmiany produktu. | Powtórzyć isolated przed SQL/main; frontend i real-mail test przygotowane, jeszcze niewdrożone. |
 
 | 2026-10-12 | E19N/E20 / Wstecz mobilnego modala | Przeglądarkowe/systemowe Wstecz najpierw zamyka pełnoekranowy dialog; wspólna historia z Wstecz/X, bez opuszczenia strony ani pustych kroków. Doprecyzowano wyjątek od replaceState zakładek oraz testy stosu, Dalej/linku/odświeżenia/obrotu i ochrony zmian. | Otwarte w mapie E19N, kontrola wyglądu E20; stare zamknięte E7 pozostaje historią. |
+
+| 2026-10-12 | E19N / URL dialogów i Dalej | Pełnoekranowe dialogi mają jawny stan URL (przykład dialog=share) i wymagany zasób; Wstecz zamyka, Dalej ponownie otwiera, odświeżenie/link odtwarza po walidacji. Bez powtarzania działań i bez dawnego iframe/modal strony. | Skorygowano zapis samego history.state; katalog parametrów w mapie przed wdrożeniem. |

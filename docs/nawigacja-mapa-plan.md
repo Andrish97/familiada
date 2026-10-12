@@ -1106,11 +1106,11 @@ zajmują całą stronę (np. udostępnianie, import/eksport, wybór/wyszukiwanie
 
 | Sytuacja | Docelowy wynik |
 |---|---|
-| Otwarcie modala jako ekranu | Jeden własny wpis `history.pushState`, przy tym samym adresie strony, ze stanem dialogu. Wspólna obsługa, bez osobnych obejść dla każdej strony. |
+| Otwarcie modala jako ekranu | Jeden własny wpis `history.pushState`, z jawnym stanem dialogu w URL strony (np. `?dialog=share`) i identyfikatorem zasobu, gdy wymagany. Dozwolone dialogi i ich parametry określa mapa danej strony. Wspólna obsługa, bez osobnych obejść dla każdej strony. |
 | Wstecz przeglądarki / systemowe Wstecz Androida | `popstate` zamyka najwyższy dialog; strona, zaznaczenie, karta i przewinięcie zostają. Kolejne Wstecz działa według zwykłej mapy powrotów. |
 | Wstecz w modalu / X / inne zamknięcie | Korzysta z tej samej ścieżki i usuwa własny bieżący wpis historii. Nie pozostawia pustego kroku wymagającego kolejnego Wstecz. Nie cofa historii, jeśli dialog nie ma własnego wpisu. |
 | Dialog na dialogu | Cofanie zamyka po jednym poziomie, bez opuszczania strony spod stosu okien. Zamknięcie rodzica sprząta jego dzieci i ich stan. |
-| Dalej, odświeżenie, wejście z linku | Stan dialogu można odtworzyć tylko dla nadal dostępnego zasobu i ważnej ścieżki. Brak modala/własnego wpisu nie może powodować wyjścia na obcą stronę, pętli ani automatycznego powtarzania wysyłki, importu lub akceptacji. |
+| Dalej, odświeżenie, wejście z linku | Dalej ponownie otwiera dialog zapisany w URL, odświeżenie i bezpośredni link także go odtwarzają; tylko dla nadal dostępnego zasobu i ważnej ścieżki. Brak modala/własnego wpisu nie może powodować wyjścia na obcą stronę, pętli ani automatycznego powtarzania wysyłki, importu lub akceptacji. |
 | Obrót/zmiana rozmiaru | Bez dodatkowych wpisów od samej zmiany układu i bez utraty możliwości zamknięcia. Uwzględnić tablet i telefon landscape. |
 | Formularz i trwająca operacja | Zachować istniejącą ochronę niezapisanych zmian i operacji; Wstecz nie obchodzi potwierdzenia ani nie wykonuje działania drugi raz. Dialog nadal nie zwalnia blokad strony tylko przez zamknięcie okna. |
 
@@ -1125,3 +1125,19 @@ dialogów, Dalej, wejście Go i bezpośredni link, odświeżenie, zmiana
 dostępności zasobu, obrót oraz brak zbędnych wpisów i powtórnych operacji.
 Kontrola przeglądarkowa i pomiary na rzeczywistym tablecie zgodnie z E20;
 zrzuty po zmianach wyglądu.
+
+**Doprecyzowanie URL i Dalej (2026-10-12):** pełnoekranowe dialogi jako
+ekrany mają jawny stan w URL, nie wyłącznie w pamięci `history.state`.
+Wstecz wraca do adresu rodzica/strony bez tego dialogu, Dalej otwiera go
+ponownie. Nazwy i wymagane identyfikatory walidować w źródle mapy; zachować
+parametry zakładki, zasobu, języka i powrotu. Dla stosu okien adres i stan
+historii muszą pozwalać odtworzyć rodzica i najwyższy dialog. Dialog
+nieznany, zasób usunięty lub dostęp cofnięty: spójny komunikat i bezpieczne
+przywrócenie poprawnego adresu, bez pętli historii.
+
+Nie wprowadza to ponownie starego `?modal=` ani stron osadzanych w iframe.
+Zwykłe strony pozostają stronami; `dialog` opisuje istniejące okno na
+właściwej stronie. Link udostępniany odbiorcy nadal przechodzi przez Go.
+Odtwarzanie URL tylko pokazuje stan interfejsu — nie wysyła maila, nie
+importuje, nie akceptuje i nie zapisuje danych samodzielnie. Dokładny
+katalog wartości/parametrów dopracować w audycie mapy przed implementacją.
