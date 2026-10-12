@@ -404,11 +404,17 @@ async function main() {
   }
   let restarting = false;
   let dispatchGeneration = 0;
-  let lockedUntil = 0;
+  let lockedUntil = Number.isFinite(Date.parse(store.state.__row?.locked_until || ""))
+    ? Date.parse(store.state.__row.locked_until) : 0;
   // Patrz armLock() niżej -- prawdziwa (nie zgadywana z góry) blokada na
   // czas round-tripu store.setLock(ms).
   let lockConfirmPending = false;
   const displayCompletion = createRenderCompletionGate(store.state.rev);
+  // Wznowienie strony nie jest nową zmianą planszy. W szczególności Buzzer
+  // może podnieść rev samym lastPressed, którego Wyświetlacz nie renderuje;
+  // traktowanie tego zapisanego stanu jako oczekującego potwierdzenia
+  // blokowało Control po odświeżeniu na etapie pojedynku.
+  displayCompletion.acknowledge(store.state.rev);
   const displayCompletionTimes = new Map();
   let previousDisplayRow = store.state.__row || null;
   let lastDisplayCueSeq = store.state.__row?.sound_cue_seq;
@@ -1593,6 +1599,9 @@ async function main() {
   store.subscribe(renderCurrent);
   completionUIReady = true;
   renderCurrent();
+  if (lockedUntil > Date.now()) {
+    setTimeout(renderCurrent, lockedUntil - Date.now() + 20);
+  }
 
   // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny testów
   // control2 utykających na "Rozpocznij grę" mimo game_state_write

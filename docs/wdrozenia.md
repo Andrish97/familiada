@@ -1055,3 +1055,11 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: dopasowano atrapy Web Audio w dwóch istniejących testach dekodowania i diagnostyki do nowego toru; testów nie uruchomiono. Sprawdzono wyłącznie składnię trzech zmienionych modułów JS (node --check), bez E2E i bez kont testowych.
 
 - 2026-10-12: procentowy fade na zegarze audio opublikowany: main69c3c8b6c3, Pages38310986351 success. Wszystkie domyślne/własne pliki, 5% wejście/8% wyjście, odsłuch ustawień i rozgrywka wspólnym torem; mute wspólnym wyjściem bez zatrzymania. Bez testów na polecenie użytkownika; nie deklarować potwierdzonej poprawy odsłuchu przed sprawdzeniem użytkownika.
+
+
+- 2026-10-12: Control: odsłanianie odpowiedzi w dwóch fazach — tekst, potem
+  punkty wraz z nowym bankiem, w obrębie czasu reveal. Naprawiono też
+  blokadę po odświeżeniu w pojedynku: istniejący stan nie oczekuje ponownego
+  potwierdzenia planszy, a pozostały czas blokady odczytywany jest z
+  `locked_until`. Manual PL/EN/UK zaktualizowany. Bez migracji; testów nie
+  uruchomiono. Oczekuje na publikację.

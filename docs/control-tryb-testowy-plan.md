@@ -188,3 +188,14 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
 - Dotyczy każdego domyślnego i własnego pliku: 5% długości wejście, 8% długości wyjście, bez limitów minimalnego/maksymalnego czasu.
 - Odsłuch Ustawień rozgrywki, Podsumowanie Control i oba źródła rozgrywki mają wspólny tor odtwarzania i ten sam procentowy fade. Automatyka GainNode działa na zegarze audio, niezależnie od RAF i ograniczania klatek w tle. Mute wycisza wspólne wyjście bez zatrzymywania.
 - Control stosuje głośności aktualnej sesji również po wznowieniu, a nie tylko pierwotne ustawienia gry.
+
+
+## Dodatkowe poprawki Control — 2026-10-12
+
+- Odsłanianie odpowiedzi w rundzie jest dwuetapowe: najpierw tekst, potem
+  równocześnie punkty odpowiedzi i zmiana banku. Każda faza zajmuje połowę
+  czasu reveal.
+- Przy wznowieniu Control nie czeka na potwierdzenie planszy dla już
+  wczytanego stanu. Buzzer może zmienić numer zapisu przez `lastPressed`,
+  nie zmieniając planszy. Pozostałą blokadę akcji odtwarzamy z
+  `locked_until`.
