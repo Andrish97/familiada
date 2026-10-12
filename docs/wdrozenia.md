@@ -751,3 +751,7 @@ Stan szczegółowy:
 | 2026-10-12 | E19C/E20 / Otrzymane i brak zbędnych filtrów | Własne zakładki Gier: Preparowane/tekstowe/punktowe mają filtr Otrzymane dla kopii od znajomych. Gry społeczności i Bazy Moje bez filtra/ikony; ukryty warunek nie ogranicza listy. | Ujednolicone źródło E20 i kopii E19C; poprzednia sugestia filtra rynku skorygowana. |
 
 | 2026-10-12 |357 / SQL produkcja success |DB38243208054 success: APPLY/OK11:33:28 UTC i rollbackowy nowy kontrakt357 success; schema/log9f3b8a420b. Wybrane checkboxy w branch-code użyją base_share_to_friend, wpisany mail/nazwa pozostaje ręczny; komunikat not_friend PL/EN/UK. | Punktowe4 testy base-refusals, --retries=0, prawdziwe3 maile łącznie; nie promować frontu przed branch success. |
+
+| 2026-10-12 |357 / branch E2E fixture |38243758561:3 stare testy success, nowy zatrzymany na bezpośrednim SELECT prywatnych źródeł (RLS deny all,406 single). Test źródła pozostaje w SQL, E2E kontroluje publiczne skutki; mail wybierany po unikatowej nazwie bazy, żeby wykluczyć resztkową kolejkę wcześniejszego testu. | Ponowne4 testy bez retry; front nadal poza main. |
+
+| 2026-10-12 | Następny audyt kolejki / lokalny dowód | /tmp/e19-358/queue-source-audit.sql na fam357ddl, rollback: pending mail do syntetycznego odbiorcy z linkiem bazy, potem cofnięcie taska; mail_queue_pick_selected nadal wybiera1 zamknięte zaproszenie do wysyłki. Bez SMTP i bez danych produkcyjnych. | Po zamknięciu357 wspólna ważność przed queue/claim/delivery; nie ma358 w repo/produkcji. |

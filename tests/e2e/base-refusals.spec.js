@@ -295,13 +295,8 @@ test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochod
       await expect(page.locator("#shareSectionsHost .shareRow")).toHaveCount(1);
       const tasks = await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: id });
       expect(tasks).toHaveLength(1);
-      const stored = await page.evaluate(async taskId => {
-        const { data, error } = await window.__sbClient.from("base_share_tasks").select("source_kind,source_friendship_id").eq("id", taskId).single();
-        if (error) throw error; return data;
-      }, tasks[0].task_id);
-      expect(stored.source_kind).toBe(source === "friend" ? "friend" : "base");
-      expect(stored.source_friendship_id).toBe(source === "friend" ? friendship.id : null);
-      const email = await waitForEmail({ recipient: recipientEmail, after, subject: /baz|base/i, timeout: 150_000 });
+      // Source columns are private (RLS deny all); SQL contracts verify them.
+      const email = await waitForEmail({ recipient: recipientEmail, after, subject: new RegExp(name), timeout: 150_000 });
       expectMailDocument(email, { accountFooter: true, text: [name] });
       const link = extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("b"));
       expect(link).toBeTruthy();
