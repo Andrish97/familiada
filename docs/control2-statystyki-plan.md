@@ -33,6 +33,16 @@ Pokaż przebieg rozwija szczegóły nowej rozgrywki w jej wierszu: drużyny, prz
 
 Sesje zaczęte przed instalacją statystyk mogą zawierać tylko obserwowany od wznowienia fragment. Nie odtwarzamy nieznanych wcześniejszych rund ani nie tworzymy wpisów dla już zakończonych gier.
 
+### Przerwana sesja bez rozliczonej rundy
+
+`control_idle_expired` oznacza godzinę bez odnotowanej aktywności Control; nie
+oznacza, że sama gra trwała godzinę. Szczegóły rozliczonej rundy trafiają do
+statystyk dopiero przy jej rozliczeniu, dlatego w przerwanej wcześniej grze
+może nie być listy rund ani pytań. Widok pokazuje wtedy ostatni zapisany etap
+oraz informację, że nie rozliczono żadnej rundy. Nie dopowiadamy przebiegu,
+którego statystyki nie zachowały. Wszystkie używane powody zakończenia mają
+polskie opisy; nieznana przyszła wartość również nie wyświetla surowego kodu.
+
 ## Potwierdzone zapisy na produkcji
 
 | Przypadek | Odczyt z bazy po prawdziwej rozgrywce |

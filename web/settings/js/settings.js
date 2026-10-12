@@ -12,15 +12,15 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T14101";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-12T14101";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T14101";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-12T14101";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-12T14101";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T14101";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-12T14101";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T14101";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-12T14101";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T14501";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-12T14501";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T14501";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-12T14501";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-12T14501";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T14501";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-12T14501";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T14501";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-12T14501";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -30,14 +30,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-12T14101";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-12T14501";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-12T14101";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-12T14101";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-12T14101";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-12T14501";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-12T14501";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-12T14501";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-12T14101";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-12T14501";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -1040,8 +1040,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-12T14101"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-12T14101"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-12T14501"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-12T14501"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -5302,8 +5302,36 @@ function buildSessionRunDetails(r) {
   gameTitle.className = "stats-session-run-teams";
   gameTitle.textContent = `${r.game_name || "Gra"} · ${teams.teamA || "Drużyna A"} / ${teams.teamB || "Drużyna B"}`;
   details.appendChild(gameTitle);
-  const reasons = { restart: "Rozpoczęto od nowa", final_target: "Osiągnięto próg finału", final_complete: "Ukończono finał", rounds_target: "Osiągnięto próg rund", questions_exhausted: "Wyczerpano pytania" };
-  if (info.end_reason) line(reasons[info.end_reason] || info.end_reason);
+  const reasons = {
+    restart: "Rozpoczęto grę od nowa.",
+    final_target: "Zakończono grę po osiągnięciu progu finału.",
+    final_complete: "Ukończono finał.",
+    rounds_target: "Zakończono grę po osiągnięciu progu rund.",
+    questions_exhausted: "Zakończono grę po wykorzystaniu pytań.",
+    control_idle_expired: "Gra została przerwana po godzinie bezczynności panelu sterowania.",
+  };
+  if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
+  if (info.end_reason === "control_idle_expired") {
+    const lastStep = String(info.last_step || "");
+    const stepNames = {
+      r_intro: "Ekran rozpoczęcia gry",
+      r_roundStart: "Przed rozpoczęciem rundy",
+      r_duel: "Pojedynek",
+      r_play: "Runda w trakcie",
+      r_gameEnd: "Zakończenie gry",
+      f_start: "Rozpoczęcie finału",
+      f_p1_entry: "Wpisywanie odpowiedzi — gracz 1",
+      f_p2_start: "Przejście do gracza 2",
+      f_p2_entry: "Wpisywanie odpowiedzi — gracz 2",
+      f_end: "Zakończenie finału",
+    };
+    const mappedFinal = lastStep.match(/^f_p([12])_map_q[1-5]$/);
+    const lastStepName = mappedFinal
+      ? `Mapowanie finału — gracz ${mappedFinal[1]}`
+      : stepNames[lastStep] || (lastStep ? "Etap gry zapisany w statystykach" : "Etap nie został zapisany");
+    line(`Ostatni etap: ${lastStepName}.`);
+    if (!Object.keys(info.rounds || {}).length) line("Nie rozliczono żadnej rundy.");
+  }
   if (info.resumed_at_install) line("Zapis statystyk rozpoczęty po wznowieniu trwającej gry.");
   Object.values(info.rounds || {}).sort((a,b) => a.number-b.number).forEach(round => {
     line(`Runda ${round.number}: ${round.question?.text || "—"}. Bank ${round.bank ?? "—"} × ${round.multiplier ?? "—"}; przyznano ${round.awarded_a}:${round.awarded_b}; wynik ${round.score_a}:${round.score_b}${round.steal?.used ? (round.steal.won ? "; kradzież udana" : "; kradzież nieudana") : ""}.`);
@@ -6409,7 +6437,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-12T14101");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-12T14501");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
