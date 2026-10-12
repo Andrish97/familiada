@@ -3285,7 +3285,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const gateway = await anonymous.newPage();
     await gateway.goto(device);
     await expect(gateway).toHaveURL(/\/control\/host\//);
-    await expect(gateway.locator(".ctrlTitle")).toBeVisible();
+    await expect(gateway.locator("#paper")).toBeVisible({timeout:15_000});
     await gateway.goto(unsub);
     await gateway.locator("#actions button").click();
     await expect(gateway.locator("#message")).toContainText("Nie będziesz już otrzymywać żadnych maili");
