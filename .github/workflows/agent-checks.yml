@@ -1323,6 +1323,7 @@ jobs:
       - name: Verify base invitations follow their explicit source
         if: ${{ inputs.verify_e19_348 }}
         run: |
+          psql -v ON_ERROR_STOP=1 -c "INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce) VALUES ('base:share','pair',86400,true),('base:share_after_reject','pair',2592000,true) ON CONFLICT DO NOTHING"
           bash docs/sql/test-base-share-sources-357-ddl-concurrency.sh
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-share-sources-357.sql
           python3 docs/sql/test-base-share-sources-357-concurrency.py

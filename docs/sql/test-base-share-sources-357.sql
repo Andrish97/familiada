@@ -1,6 +1,6 @@
 BEGIN;
 INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce)
-VALUES ('base:share','pair',86400,true) ON CONFLICT DO NOTHING;
+VALUES ('base:share','pair',86400,true),('base:share_after_reject','pair',2592000,true) ON CONFLICT DO NOTHING;
 DO $$ DECLARE scenario text; r record; manual_task uuid; friend_task uuid; token uuid;
  owner_id uuid:='aaaaaaaa-3571-0000-0000-000000000001'; recipient uuid:='bbbbbbbb-3571-0000-0000-000000000002';
  fid uuid:='dddddddd-3571-0000-0000-000000000004'; manual_base uuid:='cccccccc-3571-0000-0000-000000000003'; friend_base uuid:='cccccccc-3571-0000-0000-000000000005';
