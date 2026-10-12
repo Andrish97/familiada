@@ -196,6 +196,12 @@ jobs:
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
             < docs/sql/test-dedicated-account-mail-cleanup-350.sql
 
+      - name: Verify poll recipient identity and canonical account email (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-poll-recipient-identity-351.sql
+
       # 7️⃣ Fetch schema + logs (bez wywalania się)
       - name: Fetch schema.sql + logs from server
         run: |

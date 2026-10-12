@@ -1301,3 +1301,14 @@ dostępu anonimowego po zmianie adresu. Helper claim istnieje, ale nie jest
 wywoływany w aktualnym froncie. Poprawa z pełnym kontraktem stanów,
 rejestracji/zmian e-maila/ponownego konta i kolejności blokad w pkt7;
 nie oznacza jeszcze wdrożenia ani zamknięcia całego grafu.
+
+### Graf pkt7 —351: tożsamość odbiorcy tasków Ankiet (w realizacji)
+
+Trwałe przypisanie do ID konta przy rejestracji/zmianie adresu/konwersji
+gościa; przed kasowaniem przypisanie umożliwia kaskadę348. Adres pochodzi
+z Auth, nie z edytowalnego profilu. Wszystkie pięć stanów, oba typy;
+guest/nieznany adres zachowują tryb e-mail. Nowe udostępnienia i stare
+rekordy obejmuje ta sama zasada. Lokalnie kontrakt, backfill,20 wyścigów,
+DDL oraz siedem regresji SQL success; unit455. Wdrożenie i rzeczywisty
+mail/Go jeszcze pending. Konwersja legacy Subskrypcji, kolejka mailowa
+i pozostałe krawędzie grafu nie są zamknięte tą paczką.

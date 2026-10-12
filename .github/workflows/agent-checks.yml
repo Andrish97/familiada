@@ -1221,6 +1221,26 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-task-cascade-345.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
           bash docs/sql/test-poll-task-completion-344-concurrency.sh
+      - name: Verify poll recipient identity, legacy binding and concurrent registration
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS poll_identity_auth_insert ON auth.users; DROP TRIGGER IF EXISTS poll_identity_auth_change ON auth.users; DROP TRIGGER IF EXISTS poll_identity_profile ON public.profiles; DROP TRIGGER IF EXISTS poll_identity_task_insert ON public.poll_tasks'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-poll-recipient-identity-351.sql
+          bash docs/sql/test-poll-recipient-351-ddl-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-backfill-351.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-recipient-identity-351.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-votes-343.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-completion-344.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-recipient-account-cascade-348.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-registered-sharing-335.sql
+          python3 docs/sql/test-poll-recipient-identity-351-concurrency.py
+          python3 docs/sql/test-poll-recipient-creation-351-concurrency.py
+          bash docs/sql/test-poll-task-votes-343-concurrency.sh
+          bash docs/sql/test-poll-task-completion-344-concurrency.sh
+          bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
+          bash docs/sql/test-recipient-account-cascade-348-concurrency.sh
       - name: Upload schema restore diagnostics
         if: always()
         uses: actions/upload-artifact@v4

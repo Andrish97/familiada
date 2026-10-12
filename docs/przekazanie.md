@@ -62,14 +62,19 @@ i sprawdza logowanie w świeżym kontekście; oba konta11/12 też logują się.
 Automatyczny wyjątek admina15 sprawdzony również po odtworzeniu.
 **348–350 zamknięte produkcyjnie; graf pkt7 nadal otwarty.**
 
-Następne: trwałe wiązanie dawnych tasków e-mail z kontem. Lokalna próba
-/tmp/poll-legacy-identity-audit.sql odtworzyła brak: zalogowany odbiorca
-otwiera legacy task, recipient_user_id pozostaje NULL, potem zmiana
-adresu pozwala anonimowemu _poll_assert_voter przejść. Istnieje
-poll_claim_email_records/poll_on_login, ale frontend ich nie wywołuje.
-To audit, jeszcze bez351; uwzględnić rejestrację, zmianę maila, kasowanie,
-ponowne konto, wszystkie stany i wyścigi/locks, zanim powstanie migracja.
-Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
+351 przygotowywane na osobnym branchu codex/e19-351. Wykryty problem:
+legacy task pozostaje e-mailowy po otwarciu; po zmianie adresu znika
+wymóg zalogowania. Poprawka wiąże task z kanonicznym ID konta przy
+rejestracji, zmianie adresu, konwersji gościa i przed skasowaniem konta;
+nowe taski oraz backfill obejmują wszystkie stany obu typów. Sama zmiana
+adresu profilu nie pozwala przejąć cudzych tasków. Prywatne blokady
+adresów i referencje kont porządkują równoczesną rejestrację/udostępnienie.
+Lokalnie351: kontrakt all-state, backfill, siedem regresji SQL,16 wyścigów
+głosowania oraz4 wyścigi tworzenia tasków success. DDL vs stary child-first
+cleanup success; unit455/455. Jeszcze bez wdrożenia351 i bez testu mail/Go
+na produkcji. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
+legacy Subskrypcji. Pending kolejka/proweniencja maili, Go/anon i dalsze
+krawędzie pozostają otwarte.
 
 UI/E20: dopisany audyt stopniowego ładowania (body→topbar→sekcje).
 Kontakty/Zadania odsłaniają zbiorczo; Ankiety nie mają etapów kart;
