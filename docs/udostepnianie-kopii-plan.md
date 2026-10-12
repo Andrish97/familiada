@@ -1,6 +1,6 @@
 # Gry i Logo — wysyłanie kopii znajomym
 
-Stan: **do zrobienia**, etap E19C. Decyzja użytkownika 2026-10-12.
+Stan: **w przygotowaniu**, etap E19C. Wspólny pakiet Gier na branchu; samo wysyłanie/oferty/powiadomienia jeszcze nie wdrożone. Decyzja użytkownika 2026-10-12.
 Realizacja po bieżącym E19, przed E19N/E14/E20; manual pozostaje ostatni.
 
 ## Zasady i wygląd
@@ -74,3 +74,35 @@ paczki osobnego formatu obejmującego ustawienia czy logo gry. Pliki logo
 rozpatrywać również dla source/fabricData, aby kopia nie odwoływała się do
 Storage nadawcy. Oryginał i jego historia wysyłek pozostają gałęzią nadawcy;
 pakiet, oferta i przyjęty zasób — gałęzią stałego ID odbiorcy.
+
+## Powiadomienia o kopiach — doprecyzowanie użytkownika 2026-10-12
+
+Wysłana Gra i Logo są również źródłami powiadomień. Powiadomienie mailowe
+powstaje we wspólnej kolejce, z flagą odbiorcy sprawdzoną przed insercją
+oraz kontrolą aktualnej oferty przed dostarczeniem. Nowe rodzaje obejmuje
+ten sam graf źródło→alokacja→kolejka→dostarczenie i katalog treści PL/EN/UK.
+Link maila prowadzi przez Go do strony Gier albo Logo i właściwej zakładki.
+
+| Sytuacja | Zachowanie |
+|---|---|
+| Oczekująca kopia, mail włączony | Oferta w zakładce odbiorcy, plakietka zakładki i przycisku strony, mail powiadomienia z Go |
+| Oczekująca kopia, mail wyłączony | Ta sama oferta i plakietki; flaga blokuje utworzenie maila |
+| Przyjęcie/odmowa/usunięcie oferty lub konta odbiorcy | Przeliczenie plakietek; jeszcze niewysłany mail traci ważne źródło i jest anulowany |
+| Usunięcie oryginału, znajomości lub konta nadawcy po wysłaniu | Pakiet pozostaje w gałęzi odbiorcy; jego ważność i powiadomienie nie mogą zależeć od dalszego istnienia oryginału/nadawcy |
+| Przypisanie dawnego adresu do innego konta | Nowe konto nie przejmuje oferty ani powiadomienia; tożsamość odbiorcy jest stałym ID Auth |
+
+Decyzje i odbiór kopii pozostają na stronach Gier i Logo, zgodnie
+z dotychczasowym planem plakietek i zakresu Zadań (ankiety).
+
+### Pierwsza paczka E19C — wspólny pakiet Gry
+
+Istniejący eksport korzysta z game-transfer-format.js. To ten sam format
+.famgame i te same reguły dla Preparowanej/tekstowej/punktowej oraz ready
+→Preparowana; bez ID, ustawień, cudzych plików, głosów i runtime. Zachowany
+postęp eksportu. Nie wdraża jeszcze wysyłania ani propozycji.
+
+Unit sprawdza trzy typy×cztery stany, brak cudzych pól/ID, niezmienność
+wejścia i wartości domyślne. Punktowy game-transfer-format.spec.js ma
+sprawdzić rzeczywisty eksport→istniejący import wszystkich trzech typów,
+nowe ID, zgodność całej definicji i cleanup wyłącznie własnych gier.
+Akceptacja oferty dokładnie raz będzie odrębną transakcyjną paczką.
