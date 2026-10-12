@@ -4,7 +4,7 @@
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-12T11562";
 import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T11562";
 import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-12T11562";
-import { createCooldownTicker, formatCooldownRemaining, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-12T11562";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-12T11562";
 import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-12T11562";
 
 import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-12T11562";
@@ -17,13 +17,13 @@ function deviceTypeLabel(type) {
   return type;
 }
 
-async function resolveToUserId(login) {
-  const v = String(login || "").trim();
-  if (!v) return null;
-  const email = v.includes("@") ? v.toLowerCase() : String((await sb().rpc("profile_login_to_email", { p_login: v })).data || "").toLowerCase();
-  if (!email) return null;
-  const { data } = await sb().from("profiles").select("id,email,username").eq("email", email).maybeSingle();
-  return data || null;
+function shareErrorMessage(code) {
+  const keys = {
+    not_friend: "notFriend", unknown_user: "unknownUser", invalid_email: "invalidEmail",
+    recipient_not_found: "unknownUser", recipient_changed: "recipientChanged",
+    self_share: "selfShare", session_expired: "sessionExpired", gone: "sessionExpired",
+  };
+  return t(`control.shareDeviceModal.${keys[code] || "failed"}`);
 }
 
 function buildMailHtml({ title, body, actionLabel, actionUrl, isRegistered }) {
@@ -127,12 +127,6 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     }
   }
 
-  // Target cooldownu ma taką samą granularność jak RPC serwerowy:
-  // nadawca, odbiorca, typ urządzenia i gra.
-  function deviceCooldownTarget(recipientUserId) {
-    return `pair:${currentUser.id}:${recipientUserId}:device:${_deviceType}:game:${game?.id || "none"}`;
-  }
-
   function closeModal() {
     overlay.style.display = "none";
     renderVersion++;
@@ -228,7 +222,11 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       main.append(name);
       row.append(checkbox, main, cooldown);
       subsList.appendChild(row);
-      const { ok, nextAllowedAtMs } = await mailCooldownCheck("device:share", deviceCooldownTarget(friend.user_id)).catch(() => ({ ok: true }));
+      const { data: preflight } = await sb().rpc("control_device_share_preflight", {
+        p_game_id: game.id, p_device_type: deviceType, p_recipient_user_id: friend.user_id,
+      });
+      const nextAllowedAtMs = preflight?.mail_disabled ? 0 : Date.parse(preflight?.cooldown_until) || 0;
+      const ok = preflight?.mail_allowed !== false || preflight?.mail_disabled;
       if (version !== renderVersion) return;
       if (!ok && nextAllowedAtMs) {
         cooldownTicker.bind({ key: `device:${friend.user_id}`, labelEl: countdown, disableEls: [], onTick: (_, active) => {
@@ -248,7 +246,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
           let cooldown = false;
           let disabled = false;
           for (const item of selected) {
-            const result = await doShare(item.value, item.dataset.email);
+            const result = await doShare({ friendId: item.value });
             cooldown ||= result === false;
             disabled ||= result === "disabled";
           }
@@ -270,32 +268,31 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
 
   // Dostęp powstaje niezależnie od e-maila; stan zwrotny rozróżnia wysłanie,
   // cooldown, wyłączone powiadomienia i istniejący już grant.
-  async function doShare(userId, email) {
-    const { data, error } = await sb().rpc("control_device_share_create", {
-      p_recipient_user_id: userId || null,
-      p_recipient_email: userId ? null : email,
+  async function doShare({ friendId, lookup }) {
+    const { data, error } = await sb().rpc(friendId ? "control_device_share_to_friend" : "control_device_share_create_by_lookup", {
+      ...(friendId ? { p_friend_id: friendId } : { p_lookup: lookup }),
       p_device_type: _deviceType,
       p_game_id: game.id,
     });
     const res = data;
-    if (error || !res?.ok) throw new Error(res?.error || "Błąd.");
+    if (error || !res?.ok) throw new Error(shareErrorMessage(res?.error));
 
     // Grant jest unikalny dla odbiorcy, urządzenia i sesji Control.
     if (!res?.created) return "already";
     if (!res?.mail_allowed) {
-      if (res?.cooldown_until) cooldownTicker.setEndMs(`device:${userId || email}`, Date.parse(res.cooldown_until) || 0);
+      if (res?.cooldown_until) cooldownTicker.setEndMs(`device:${friendId || lookup}`, Date.parse(res.cooldown_until) || 0);
       return res?.mail_disabled ? "disabled" : false;
     }
 
     const queued = await sendShareEmail({
-      to: email,
+      to: res.mail_to,
       ownerLabel: currentUser?.username || currentUser?.email || "—",
       deviceType: _deviceType,
       gameId: game.id,
       gameName: game.name,
       shareKey: res.token,
       cooldownTargetKey: res.cooldown_target_key,
-      isRegistered: !!userId,
+      isRegistered: !!res.recipient_id,
     });
     return queued ? true : "disabled";
   }
@@ -304,11 +301,8 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     clearMessage();
     const raw = String(emailInp?.value || "").trim();
     if (!raw) return;
-    const profile = await resolveToUserId(raw);
-    const email = profile?.email || (raw.includes("@") ? raw.toLowerCase() : null);
-    if (!profile && !email) { showMessage(t("bases.share.userNotFound") || "Nie znaleziono użytkownika.", { state: "error" }); return; }
     try {
-      const mailSent = await doShare(profile?.id || null, email);
+      const mailSent = await doShare({ lookup: raw });
       if (emailInp) emailInp.value = "";
       await renderModal();
       await refreshBadges();
@@ -330,20 +324,15 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     if (!raw) return;
     setTimeout(async () => {
       if (version !== preflightVersion || raw !== String(emailInp.value || "").trim()) return;
-      const profile = await resolveToUserId(raw);
-      if (version !== preflightVersion) return;
-      const email = profile?.email || (raw.includes("@") ? raw.toLowerCase() : null);
-      if (!email) return;
-      const { data, error } = await sb().rpc("control_device_share_preflight", {
-        p_game_id: game.id, p_device_type: _deviceType,
-        p_recipient_user_id: profile?.id || null, p_recipient_email: profile ? null : email,
+      const { data, error } = await sb().rpc("control_device_share_preflight_by_lookup", {
+        p_game_id: game.id, p_device_type: _deviceType, p_lookup: raw,
       });
       if (version !== preflightVersion || error || !data?.ok) return;
       if (data.already_shared) {
         showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
         if (btnAdd) btnAdd.disabled = true;
       } else if (data.mail_disabled) {
-        showMessage(t("control.shareDeviceModal.recipientDisabled") || "Udostępnienie będzie widoczne na koncie, ale powiadomienia e-mail są wyłączone.");
+        showMessage(t("control.shareDeviceModal.recipientDisabled") || "Odbiorca ma wyłączone powiadomienia e-mail. Dostęp zostanie nadany bez maila.");
       } else if (data.mail_allowed === false && data.cooldown_until) {
         const until = Date.parse(data.cooldown_until) || 0;
         const remaining = Math.max(0, until - Date.now());

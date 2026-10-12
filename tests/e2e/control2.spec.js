@@ -2644,7 +2644,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await expect(page.locator("#shareDeviceOverlay .shareModal")).toHaveCSS("max-width", "520px");
     await expect(page.locator("#shareDeviceSubsList")).toHaveCSS("overflow-y", "auto");
     await expect(page.locator("#shareDeviceCurrentContent")).toHaveCSS("overflow-y", "auto");
-    await page.locator("#shareDeviceEmail").fill(recipient);
+    await page.locator("#shareDeviceEmail").fill(recipient.split("@")[0]);
     await page.locator("#btnShareDeviceAdd").click();
     // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
     // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
@@ -3211,5 +3211,121 @@ test("control2: opóźnione potwierdzenie Display blokuje następną akcję i bu
     release();
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
+  }
+});
+
+test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktualny checkbox", async ({ page, context, browser }) => {
+  test.setTimeout(300_000);
+  const email = "test14@familiada.online";
+  const rpc = (target, name, args = {}) => target.evaluate(async ({ name, args }) => {
+    const { data, error } = await window.__sbClient.rpc(name, args);
+    if (error) throw new Error(`${name}: ${error.message}`);
+    return data;
+  }, { name, args });
+  await loginAsPooledTestUser(page, context, 0);
+  const recipientContext = await controlContext(browser);
+  const recipient = await recipientContext.newPage();
+  const anonymous = await controlContext(browser);
+  let game = null, peer = null, oldFlag = null;
+  try {
+    await loginAsPooledTestUser(recipient, recipientContext, 1);
+    peer = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
+    oldFlag = await recipient.evaluate(async id => {
+      const { data, error } = await window.__sbClient.from("user_flags").select("email_notifications").eq("user_id",id).single();
+      if (error) throw error; return data.email_notifications;
+    }, peer.id);
+    const flag = await rpc(page,"e2e_subscriber_mail_flag",{p_reset:false});
+    expect(flag).toMatchObject({ok:true,suppressed_at:null});
+    expect((await rpc(page,"e2e_subscriber_email_cleanup",{p_email:email})).ok).toBe(true);
+    expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
+    const invited = await rpc(page,"friends_invite",{p_handle:peer.email});
+    expect(invited.ok).toBe(true);
+    expect((await rpc(recipient,"friends_accept",{p_id:invited.id})).ok).toBe(true);
+    game = await makeGame(page,`E2E-CONTROL358-${Date.now()}`);
+    await clearMailbox(email); await resetMailProviderLimits(page);
+    const after = new Date().toISOString();
+    await page.goto(`/control/?id=${game.id}`);
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia");
+    const open = async type => {
+      await page.locator(`[data-device="${type}"]`).getByRole("button",{name:"Udostępnij"}).click();
+      await expect(page.locator("#shareDeviceOverlay")).toBeVisible();
+      await expect(page.locator("#shareDeviceSubsList input").first()).toBeVisible();
+    };
+    await open("host");
+    await page.locator("#shareDeviceEmail").fill(email);
+    await page.locator("#btnShareDeviceAdd").click();
+    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(email);
+    const shares = await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"host"});
+    const host = shares.find(row=>row.recipient_email===email);
+    expect(host.recipient_id).toBeNull();
+    expect(host.recipient_kind).toBe("mail");
+    const duplicate = await rpc(page,"control_device_share_create_by_lookup",{p_game_id:game.id,p_device_type:"host",p_lookup:email});
+    expect(duplicate).toMatchObject({ok:true,created:false,mail_allowed:false});
+    const delivered = await waitForEmail({recipient:email,after,subject:/Udostępniono urządzenie/,timeout:150_000});
+    expectMailDocument(delivered,{globalUnsub:true,text:[game.name || "E2E-CONTROL358"]});
+    const links = extractHttpLinks(delivered);
+    const device = links.find(url=>new URL(url).searchParams.get("d")==="host");
+    const unsub = links.find(url=>new URL(url).searchParams.has("u"));
+    expect(device).toBeTruthy(); expect(unsub).toBeTruthy();
+    const gateway = await anonymous.newPage();
+    await gateway.goto(device);
+    await expect(gateway).toHaveURL(/\/control\/host\//);
+    await expect(gateway.locator(".ctrlTitle")).toBeVisible();
+    await gateway.goto(unsub);
+    await gateway.locator("#actions button").click();
+    await expect(gateway.locator("#message")).toContainText("Nie będziesz już otrzymywać żadnych maili");
+    await page.locator("#btnShareDeviceClose").click();
+    const mutedAfter = new Date().toISOString();
+    await open("buzzer");
+    await page.locator("#shareDeviceEmail").fill(email);
+    await expect(page.locator("#shareDeviceMsg")).toContainText("Dostęp zostanie nadany bez maila");
+    await page.locator("#btnShareDeviceAdd").click();
+    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(email);
+    const buzzer = (await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).find(row=>row.recipient_email===email);
+    expect(buzzer.cooldown_until).toBeNull();
+    expect((await rpc(page,"control_device_share_resolve",{p_token:buzzer.share_token})).ok).toBe(true);
+    const delivery = await readMailDelivery({recipient:email,after:mutedAfter});
+    expect(delivery.queue).toEqual([]); expect(delivery.events).toEqual([]);
+    expect((await rpc(page,"control_device_share_revoke",{p_share_id:buzzer.share_id})).ok).toBe(true);
+    expect(await rpc(page,"control_device_share_resolve",{p_token:buzzer.share_token})).toMatchObject({ok:false,state:"revoked"});
+    await page.locator("#btnShareDeviceClose").click();
+    await recipient.evaluate(async id=>{
+      const {error}=await window.__sbClient.from("user_flags").upsert({user_id:id,email_notifications:false},{onConflict:"user_id"});
+      if(error)throw error;
+    },peer.id);
+    await open("display");
+    const choice = page.locator(`#shareDeviceSubsList input[value="${peer.id}"]`);
+    await choice.check();
+    await page.locator("#btnShareDeviceFriends").click();
+    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(peer.user_metadata.username);
+    const display = (await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"display"})).find(row=>row.recipient_id===peer.id);
+    expect(display.cooldown_until).toBeNull();
+    expect((await rpc(page,"friends_remove",{p_id:invited.id})).ok).toBe(true);
+    expect((await rpc(page,"control_device_share_resolve",{p_token:display.share_token})).ok).toBe(true);
+    expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
+    const fresh = await rpc(page,"friends_invite",{p_handle:peer.email});
+    expect(fresh.ok).toBe(true); expect((await rpc(recipient,"friends_accept",{p_id:fresh.id})).ok).toBe(true);
+    await page.locator("#btnShareDeviceClose").click();
+    await open("buzzer");
+    await choice.check();
+    expect((await rpc(page,"friends_remove",{p_id:fresh.id})).ok).toBe(true);
+    await page.locator("#btnShareDeviceFriends").click();
+    await expect(page.locator("#shareDeviceMsg")).toContainText("Ta osoba nie jest już na liście znajomych");
+    expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_id===peer.id)).toBe(false);
+  } finally {
+    try {
+      expect((await rpc(page,"e2e_subscriber_mail_flag",{p_reset:true})).ok).toBe(true);
+      await rpc(page,"e2e_subscriber_email_cleanup",{p_email:email});
+      if(peer){
+        await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id});
+        if(oldFlag!==null)await recipient.evaluate(async ({id,value})=>{
+          const {error}=await window.__sbClient.from("user_flags").upsert({user_id:id,email_notifications:value},{onConflict:"user_id"});
+          if(error)throw error;
+        },{id:peer.id,value:oldFlag});
+      }
+    } finally {
+      if(game)await deleteGame(page,game.id);
+      await anonymous.close(); await recipientContext.close();
+    }
   }
 });

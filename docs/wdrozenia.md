@@ -780,3 +780,7 @@ Stan szczegółowy:
 Migracja358: kanoniczny Auth odbiorcy i regularny nadawca, jawne API lookup/znajomy, mail_to z serwera, globalna flaga przed budżetem Control i kolejką czterech rodzin zasobów. Nie zmienia cyklu parowania ani wyglądu Urządzeń. Osobny workflow control-identity-checks.yml zachowuje bieżące funkcje i rzeczywiste hooki Auth; rollbackowe kontrakty w db-migrate. Lokalnie kontrakty,32 wyścigi i unit459 green; wersja repo przed isolated/produkcją. Pozostałe powiązania źródeł maili i claim/delivery nadal w pkt7.
 
 Kontrola uruchomienia: agent-checks przekroczył limit25 inputs GitHuba — nowy isolated job przeniesiony do osobnego workflow control-identity-checks.yml, istniejące wejścia pozostają. Lokalny DDL wrapper Docker nie współdzielił katalogu tymczasowego z psql; uruchamiać skrypt w kontenerze. Bez wpływu na produkcję.
+
+### 2026-10-12 — Control358 isolated green, SQL gate uruchomiony
+
+control-identity-checks38256954899 success: pełne odtworzenie schema/hooków, kontrakty,32 wyścigi, DDL i regresja runtime324. Unit459 green. Backend main09fa3041a0, DB38257393434 w toku. Front na branchu przechodzi na by_lookup/to_friend i mail_to, zlokalizowane błędy PL/EN/UK; bez zmiany CSS. E2E punktowo: istniejący mail do konta rozszerzony o nazwę użytkownika; nowy control358 dla test14/SMTP/Go/global-off/0queue/0clock/revoke/friend/stale selection z cleanup finally. Jeszcze bez kontroli branch/main i bez zamknięcia358.
