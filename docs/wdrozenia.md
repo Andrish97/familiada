@@ -745,3 +745,5 @@ Stan szczegółowy:
 | 2026-10-12 |357 / precyzyjny restore uprawnień |38242603106: source/identity/24 races +4 regresje Baz success; pełne odtworzenie337 nadpisało nowszy Go resolver, złapała to regresja346. Zastąpiono je izolowanym replay wyłącznie istniejących ACL i polityk337, bez zmiany treści funkcji. | Produkt357 bez zmiany; ponowna izolacja całej macierzy przed produkcją. |
 
 | 2026-10-12 | E20 / filtry zakładek | Opcje filtra zależą od typu aktywnej zakładki, np. Preparowane bez Otwartej ankiety. Zmiana zakładki zachowuje pasujący wybór, niepasujący czyści w UI/listach/URL bez pustych wyników od ukrytego filtra. | Dopisane do wspólnego wzorca E20 i testów list. |
+
+| 2026-10-12 |357 / isolated finalny success |38242911572 success: unit459, pełna macierz historyczna E19, DDL357, kontrakty źródła/Auth/ACL,24 wyścigi i6 regresji. Odtworzone wyłącznie ACL/polityki337; bieżący Go zachowany. | Promować bazę357, sprawdzić DB/log/rollback smoke; dopiero potem branch-code real mail i główna wersja frontu. |
