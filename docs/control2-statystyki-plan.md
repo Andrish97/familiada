@@ -24,6 +24,10 @@ Statystyki są pomocnicze: ich awaria nie może odrzucać prawidłowej akcji gry
 - Panel administratora i telemetryka opublikowane: [Pages 37484422803](https://github.com/Andrish97/familiada/actions/runs/37484422803).
 - Sześć wybranych testów prawdziwej rozgrywki na produkcji: **6/6 zaliczone**, bez ponowień, 9,1 minuty. [Przebieg 37484802803](https://github.com/Andrish97/familiada/actions/runs/37484802803). Testy odczytują `game_sessions` i dołączają rekordy JSON; gry testowe są następnie usuwane. Nie uruchamiano pełnego zestawu testów.
 - Dotychczasowa historia pozostaje bez zmian.
+- Widok sesji przerwanych: wszystkie obecne powody zakończenia mają polskie
+  nazwy; po godzinie bezczynności pokazuje ostatni zapisany etap i informuje,
+  gdy nie rozliczono rund. Branch test przeszedł w Actions 38265890825,
+  Pages 38266129177, kontrola produkcyjna 38266216433 (1/1).
 
 ## Odczytywanie panelu administratora
 
@@ -32,6 +36,16 @@ Kafelek Rozgrywki korzysta ze wspólnej historii obu Control. W tabeli kolumna �
 Pokaż przebieg rozwija szczegóły nowej rozgrywki w jej wierszu: drużyny, przyczynę zakończenia, rundy z bankiem i mnożnikiem, wpisy i rozliczenia obu graczy finału oraz zdarzenia połączenia. Dawne wpisy bez szczegółów pokazują kreskę. Zakończenie oznacza zatwierdzenie przycisku Zakończ grę; sam ekran wyniku nie zamyka sesji. Restart zamyka trwającą sesję jako Przerwaną. Po godzinie bez aktywności panel pokazuje Utracono kontakt; ponowne działanie w tej samej grze przywraca jej aktualny status.
 
 Sesje zaczęte przed instalacją statystyk mogą zawierać tylko obserwowany od wznowienia fragment. Nie odtwarzamy nieznanych wcześniejszych rund ani nie tworzymy wpisów dla już zakończonych gier.
+
+### Przerwana sesja bez rozliczonej rundy
+
+`control_idle_expired` oznacza godzinę bez odnotowanej aktywności Control; nie
+oznacza, że sama gra trwała godzinę. Szczegóły rozliczonej rundy trafiają do
+statystyk dopiero przy jej rozliczeniu, dlatego w przerwanej wcześniej grze
+może nie być listy rund ani pytań. Widok pokazuje wtedy ostatni zapisany etap
+oraz informację, że nie rozliczono żadnej rundy. Nie dopowiadamy przebiegu,
+którego statystyki nie zachowały. Wszystkie używane powody zakończenia mają
+polskie opisy; nieznana przyszła wartość również nie wyświetla surowego kodu.
 
 ## Potwierdzone zapisy na produkcji
 
