@@ -35,7 +35,7 @@ END $$;
 INSERT INTO public.poll_tasks(owner_id,recipient_email,game_id,poll_type,share_key_poll) VALUES('aaaaaaaa-3510-0000-0000-000000000001','changed351@example.invalid','dddddddd-3510-0000-0000-000000000004','poll_text','key351-text');
 UPDATE auth.users SET email='changed351@example.invalid' WHERE id='bbbbbbbb-3510-0000-0000-000000000002';
 UPDATE public.profiles SET email='changed351@example.invalid' WHERE id='bbbbbbbb-3510-0000-0000-000000000002';
-INSERT INTO auth.users(id,email) VALUES('cccccccc-3510-0000-0000-000000000003','legacy351@example.invalid');
+INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES('cccccccc-3510-0000-0000-000000000003','legacy351@example.invalid','{"username":"replacement351"}');
 INSERT INTO public.profiles(id,email,username) VALUES('cccccccc-3510-0000-0000-000000000003','legacy351@example.invalid','new351') ON CONFLICT(id) DO NOTHING;
 DO $$ DECLARE t record; BEGIN
  IF (SELECT count(*) FROM public.poll_tasks WHERE recipient_user_id='bbbbbbbb-3510-0000-0000-000000000002')<>11 THEN RAISE EXCEPTION 'new address tasks not bound'; END IF;
