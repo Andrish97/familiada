@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Sr9tpWI9tw5WV7GtEOWFPJAvUKSsgXHLagh4GKwdRjXqnk04DDPndXteGShUsVZ
+\restrict wKFGTsNPkgkyV1B7a2GvKVfeD0i531JFQT0qsT08kiwrXJR1dZF53EDZAvXuK4l
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -342,6 +342,7 @@ CREATE TABLE "public"."friendships" (
     "declined_at" timestamp with time zone,
     "decision_user_id" "uuid" NOT NULL,
     "cancelled_at" timestamp with time zone,
+    "source_subscription_id" "uuid",
     CONSTRAINT "friendships_decision_party_check" CHECK ((("decision_user_id" = "requester_id") OR ("decision_user_id" = "addressee_id"))),
     CONSTRAINT "friendships_distinct_chk" CHECK (("requester_id" <> "addressee_id")),
     CONSTRAINT "friendships_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'declined'::"text"])))
@@ -372,14 +373,23 @@ CREATE FUNCTION "public"."_friend_locked"("p_id" "uuid") RETURNS "public"."frien
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE f public.friendships%rowtype; uid uuid:=auth.uid();
+DECLARE f public.friendships%rowtype; uid uuid:=auth.uid(); source_email text;
 BEGIN
  IF uid IS NULL THEN RETURN NULL; END IF;
- SELECT * INTO f FROM public.friendships WHERE id=p_id AND uid IN (requester_id,addressee_id);
+ SELECT * INTO f FROM public.friendships WHERE id=p_id AND uid IN(requester_id,addressee_id);
  IF NOT FOUND THEN RETURN NULL; END IF;
- PERFORM public._poll_identity_refs(ARRAY[f.requester_id,f.addressee_id]);
+ IF f.source_subscription_id IS NOT NULL THEN
+  SELECT subscriber_email INTO source_email FROM public.poll_subscriptions WHERE id=f.source_subscription_id;
+ END IF;
+ PERFORM public._poll_identity_email_refs(ARRAY[source_email],ARRAY[f.requester_id,f.addressee_id]);
  PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(f.requester_id,f.addressee_id)::text||':'||GREATEST(f.requester_id,f.addressee_id)::text,329));
- SELECT * INTO f FROM public.friendships WHERE id=p_id AND uid IN (requester_id,addressee_id) FOR UPDATE;
+ IF f.source_subscription_id IS NOT NULL THEN
+  PERFORM public._subscriber_pair_lock(f.requester_id,source_email);
+  PERFORM 1 FROM public.poll_subscriptions WHERE id=f.source_subscription_id
+   AND status IN('pending','active') AND cancelled_at IS NULL AND declined_at IS NULL FOR SHARE;
+  IF NOT FOUND THEN RETURN NULL; END IF;
+ END IF;
+ SELECT * INTO f FROM public.friendships WHERE id=p_id AND uid IN(requester_id,addressee_id) FOR UPDATE;
  IF NOT FOUND THEN RETURN NULL; END IF;
  RETURN f;
 END $$;
@@ -413,6 +423,25 @@ CREATE FUNCTION "public"."_friend_refusal_clocks"("p_a" "uuid", "p_b" "uuid") RE
 BEGIN
  PERFORM public.mail_cooldown_reserve('friend:invite_after_reject','pair:'||p_a||':'||p_b);
  PERFORM public.mail_cooldown_reserve('friend:invite_after_reject','pair:'||p_b||':'||p_a);
+END $$;
+
+
+--
+-- Name: _friend_source_closed(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_friend_source_closed"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF TG_OP='DELETE' THEN
+  UPDATE public.friendships SET cancelled_at=coalesce(cancelled_at,now()) WHERE source_subscription_id=OLD.id AND status IN('pending','declined');
+ ELSIF NEW.status NOT IN('pending','active') OR NEW.cancelled_at IS NOT NULL OR NEW.declined_at IS NOT NULL THEN
+  UPDATE public.friendships SET cancelled_at=coalesce(cancelled_at,now()) WHERE source_subscription_id=NEW.id AND status IN('pending','declined');
+ END IF;
+ IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+ RETURN NEW;
 END $$;
 
 
@@ -4382,6 +4411,7 @@ DECLARE
   r         record;
   v_cd_ok   boolean;
   v_n       integer;
+  source_id uuid;
 BEGIN
   IF v_uid IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
@@ -4410,6 +4440,14 @@ BEGIN
     PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(r.owner_id,v_uid)::text||':'||GREATEST(r.owner_id,v_uid)::text,329));
     PERFORM public._subscriber_pair_lock(r.owner_id,v_email);
     IF public._subscriber_refusal_until(r.owner_id,v_email) IS NOT NULL THEN CONTINUE; END IF;
+    SELECT s.id INTO source_id FROM public.poll_subscriptions s
+    WHERE s.owner_id=r.owner_id AND s.status IN ('pending','active')
+      AND s.cancelled_at IS NULL AND s.declined_at IS NULL
+      AND (s.registered_user_id=v_uid OR s.subscriber_user_id=v_uid
+        OR (s.registered_user_id IS NULL AND s.identity_tracking_enabled
+          AND public._norm_email(s.subscriber_email)=v_email))
+    ORDER BY s.created_at,s.id LIMIT 1 FOR SHARE;
+    IF source_id IS NULL THEN CONTINUE; END IF;
     IF EXISTS (
       SELECT 1 FROM public.friendships f
       WHERE LEAST(f.requester_id, f.addressee_id) = LEAST(r.owner_id, v_uid)
@@ -4424,8 +4462,8 @@ BEGIN
       CONTINUE;
     END IF;
 
-    INSERT INTO public.friendships (requester_id, addressee_id, status)
-    VALUES (r.owner_id, v_uid, 'pending')
+    INSERT INTO public.friendships (requester_id, addressee_id, status, source_subscription_id)
+    VALUES (r.owner_id, v_uid, 'pending', source_id)
     ON CONFLICT DO NOTHING;
     GET DIAGNOSTICS v_n = ROW_COUNT;
     v_created := v_created + v_n;
@@ -17051,6 +17089,13 @@ CREATE INDEX "friendships_requester_idx" ON "public"."friendships" USING "btree"
 
 
 --
+-- Name: friendships_source_subscription_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "friendships_source_subscription_idx" ON "public"."friendships" USING "btree" ("source_subscription_id");
+
+
+--
 -- Name: game_gen_queue_created_by_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -17709,6 +17754,20 @@ CREATE TRIGGER "contact_reports_updated_at" BEFORE UPDATE ON "public"."contact_r
 
 
 --
+-- Name: poll_subscriptions friend_source_closed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "friend_source_closed" AFTER UPDATE OF "status", "cancelled_at", "declined_at" ON "public"."poll_subscriptions" FOR EACH ROW EXECUTE FUNCTION "public"."_friend_source_closed"();
+
+
+--
+-- Name: poll_subscriptions friend_source_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "friend_source_delete" BEFORE DELETE ON "public"."poll_subscriptions" FOR EACH ROW EXECUTE FUNCTION "public"."_friend_source_closed"();
+
+
+--
 -- Name: friendships friendships_accept_cleanup; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -18260,6 +18319,14 @@ ALTER TABLE ONLY "public"."friendships"
 
 ALTER TABLE ONLY "public"."friendships"
     ADD CONSTRAINT "friendships_requester_id_fkey" FOREIGN KEY ("requester_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: friendships friendships_source_subscription_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."friendships"
+    ADD CONSTRAINT "friendships_source_subscription_id_fkey" FOREIGN KEY ("source_subscription_id") REFERENCES "public"."poll_subscriptions"("id") ON DELETE SET NULL;
 
 
 --
@@ -20132,5 +20199,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Sr9tpWI9tw5WV7GtEOWFPJAvUKSsgXHLagh4GKwdRjXqnk04DDPndXteGShUsVZ
+\unrestrict wKFGTsNPkgkyV1B7a2GvKVfeD0i531JFQT0qsT08kiwrXJR1dZF53EDZAvXuK4l
 
