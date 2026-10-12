@@ -847,7 +847,7 @@ Control tryb testowy: branch542efe1f25, pierwszy Actions38297907740 zatrzymany
 przed E2E przez dawny unit wymagający konkretnej dwukolumnowej struktury
 podsumowania. Dopasowano kontrakt do sekcji na pełną szerokość z dostępem
 do wszystkich ustawień, zachowując test pełnych etykiet dźwięków. Kolejne
-lokalne pomiary120 przypadków (także sekcje podsumowania): zero przewijania
+lokalne pomiary120 próbek (także powtarzane widoki sekcji podsumowania): zero przewijania
 i wyjść poza panel. Nie jest to jeszcze potwierdzenie połączeń/statystyk.
 
 Control tryb testowy: **38298166305 success**, branch e590062750,
@@ -917,3 +917,7 @@ Branch38300241381 success2/2 przed publikacją. Zrzuty w
 1400px oraz390px (guard). ManualPL/EN/UK gotowy. Bez migracji; testowe gry
 usunięte zwykłym cleanup. Zasada zero przewijania i osobnych progów zapisana
 w planie. Dalsza niezależna kolejka E19 bez zmian.
+
+Doprecyzowanie raportu Control: liczba lokalnych próbek obejmuje również
+powtórzenia widoków; punktowy E2E iteruje rzeczywiście dostępne sekcje
+Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.

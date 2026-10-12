@@ -156,6 +156,6 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
   Podsumowania. Żadnych nowych tabel, kolumn ani migracji.
 - Granice dowodu: punktowe E2E wykonano w Chromium. Pomiary renderera
   objęły kroki urządzeń/podsumowania/rund/wpisywania i mapowania obu graczy,
-  osiem sekcji podsumowania oraz wąskie okna zwykłego Control. To testy
+  dostępne sekcje podsumowania oraz wąskie okna zwykłego Control. To testy
   wybranych rozmiarów i przykładowych danych, nie deklaracja pomiaru
   każdego możliwego ekranu. Guard blokuje okna poniżej czytelnej skali.
