@@ -16,7 +16,7 @@
 //             (znika sam po obrocie),
 //   narrow -- komputer z za wąskim oknem: „poszerz okno”.
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-11T20294";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-12T10350";
 
 export const PHONE_MAX_SHORT_SIDE = 700;
 export const MIN_WORK_WIDTH = 980;
