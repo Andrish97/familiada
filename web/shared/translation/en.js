@@ -3075,6 +3075,11 @@ const en = {
     answerFallback: "ANS {ord}",
   },
   pollGo: {
+    accountMismatch: "This invitation is for another account. Sign in to the correct account.",
+    accessUnavailable: "This sharing is no longer available",
+    accessRevoked: "Sharing has been revoked",
+    baseInviteAccepted: "The base has already been accepted",
+
     anonymousLinkTitle: "Poll",
     anonymousLinkChecking: "Checking whether voting is still open…",
     anonymousLinkExpired: "This link has expired",
@@ -3126,7 +3131,7 @@ const en = {
     taskTasksAction: "Open Tasks",
     taskInviteActive: "Voting invitation is active.",
     baseInviteTitle: "Shared question base invitation",
-    baseInviteLogin: "Sign in to the account that received the invitation. Accept it in Tasks.",
+    baseInviteLogin: "Sign in to the account that received the invitation. Accept it on the Bases page.",
     baseInviteMismatch: "This invitation belongs to another account ({email}). Sign in to the correct account.",
     baseInviteHandled: "This invitation was cancelled, accepted, or declined.",
     baseInviteBases: "{owner} shared a question base with you. Open Bases to accept it.",

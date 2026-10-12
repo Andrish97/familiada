@@ -1027,3 +1027,18 @@ wyłącznie ten audyt zamiast ponawiać zamknięte guest354. Jeszcze bez
 wyniku produkcji. Później wspólna macierz rodzaj linku×stan×komunikat×akcje
 w Go dla wszystkich rodzin, zgodnie z ostatnią odpowiedzią użytkownikowi.
 E19C/E19N/E14/E20/E13 dalej kolejka; manual ostatni.
+
+**Aktualizacja Go/audytu:** produkcyjny graf38318723049 success,11 kontroli0;
+krótkie dwa wizualne formularze main38318725914 success,4 aktualne screeny
+b1eb9d1e45 (jeden licznik). Nie powtarzać zamkniętych kontraktów.
+Macierz docs/go-stany.md wszystkich rodzin ujawniła brak registered_user_id
+w Go subskrypcji. Dodająca363 i rollback wszystkich stanów/zmiany maila/
+nowego właściciela dawnego adresu/usunięcia: lokalnie success; izolowany
+branch38320404401/main38320540803 success, main9b0099a902. DB38320540716
+w toku, poczekać na finalny wynik i log363 przed bramką frontendu.
+Frontend wspólny parser, kanoniczny UID, osobne terminalne Bazy, revoked,
+obce konto, ponowne sprawdzenie po sieci, historyczny s/unsub→Friends,
+sprawdzenie QR:529 unit success. Nowy go-states.spec.js testuje konkretną
+macierz interfejsu na jawnych atrapach biznesowych i rzeczywistym logowaniu;
+nie deklarować tym ponownego SQL/SMTP. Osobna galeria go-states. Branch→Pages→
+main punktowo jeszcze wymagane. Reszta kolejki E19C/E19N/E14/E20/E13 bez zmian.

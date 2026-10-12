@@ -2976,6 +2976,11 @@ const pl = {
     answerFallback: "ODP {ord}",
   },
   pollGo: {
+    accountMismatch: "To konto nie jest odbiorcą zaproszenia. Zaloguj się na właściwe konto.",
+    accessUnavailable: "Udostępnienie jest już niedostępne",
+    accessRevoked: "Udostępnienie zostało cofnięte",
+    baseInviteAccepted: "Baza została już przyjęta",
+
     anonymousLinkTitle: "Ankieta",
     anonymousLinkChecking: "Sprawdzam, czy można jeszcze zagłosować…",
     anonymousLinkExpired: "Ten link wygasł",
@@ -3027,7 +3032,7 @@ const pl = {
     taskTasksAction: "Otwórz Zadania",
     taskInviteActive: "Zaproszenie do ankiety jest aktywne.",
     baseInviteTitle: "Zaproszenie do udostępnionej bazy",
-    baseInviteLogin: "Zaloguj się na konto, na które wysłano zaproszenie. Akceptacja odbywa się w Zadaniach.",
+    baseInviteLogin: "Zaloguj się na konto, na które wysłano zaproszenie. Akceptacja odbywa się na stronie Baz.",
     baseInviteMismatch: "To zaproszenie jest przypisane do innego konta ({email}). Zaloguj się na właściwe konto.",
     baseInviteHandled: "To zaproszenie zostało cofnięte, przyjęte albo odrzucone.",
     baseInviteBases: "{owner} udostępnia Ci bazę pytań. Otwórz Bazy, aby ją zaakceptować.",

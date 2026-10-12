@@ -1,12 +1,13 @@
 // web/go/js/go.js
-import { anonymousPollDestination, validAnonymousPollParams } from "../../shared/js/core/poll-links.js?v=v2026-10-12T22385";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T22385";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-12T22385";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-12T22385";
-import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-12T22385";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-12T22385";
+import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-12T23105";
+import { anonymousPollDestination, validAnonymousPollParams } from "../../shared/js/core/poll-links.js?v=v2026-10-12T23105";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T23105";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-12T23105";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-12T23105";
+import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-12T23105";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-12T23105";
 
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T22385";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T23105";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -75,18 +76,13 @@ const MSG = {
 };
 
 const qs = new URLSearchParams(location.search);
+const parsedLink = parseGoLink(qs);
 const taskToken = qs.get("t");
 const subToken = qs.get("s");
 const friendToken = qs.get("f");
 const baseToken = qs.get("b");
 const unsubToken = qs.get("u");
 const mailCenterToken = qs.get("m");
-if (mailCenterToken && !qs.has("p")) {
-  const center = new URL(linkTo("mailCenter"), location.origin);
-  center.searchParams.set("m", mailCenterToken);
-  const lang=qs.get("lang"); if (["pl","en","uk"].includes(lang)) center.searchParams.set("lang",lang);
-  location.replace(center.href);
-}
 
 const actionParam = qs.get("action");
 const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
@@ -140,7 +136,7 @@ async function handleControlDeviceGateway() {
     location.replace(target.toString());
   } catch (error) {
     console.warn("[go device gateway]", error?.message || error);
-    setView({ head: MSG.error(), text: t("pollGo.linkCheckFailed") });
+    showNetworkFailure(handleControlDeviceGateway);
   }
 }
 
@@ -161,9 +157,20 @@ async function handleAnonymousPollGateway() {
     setView({head:t(states[data.state] || "pollGo.invalidLinkTitle"),text:""});
   } catch(error) {
     console.warn("[go anonymous gateway]",error?.message || error);
-    setView({head:MSG.error(),text:t("pollGo.linkCheckFailed")});
-    addAction(t("pollAnonymous.retry"),"gold",handleAnonymousPollGateway,"remind");
+    showNetworkFailure(handleAnonymousPollGateway);
   }
+}
+
+function showNetworkFailure(retry = init) {
+  clearActions(); showEmailInput(false);
+  setView({ head: MSG.error(), text: t("pollGo.linkCheckFailed") });
+  addAction(t("pollAnonymous.retry"), "gold", retry, "remind");
+}
+
+function showResolveError(data) {
+  clearActions(); showEmailInput(false);
+  const key = goErrorKey(data?.error);
+  setView({ head: t(`pollGo.${key}`), text: key === "invalidLinkTitle" ? MSG.invalidLinkText() : "" });
 }
 
 function setView({ head, text, hintText }) {
@@ -333,14 +340,9 @@ function buildTaskHeading(data) {
   return MSG.taskHeading(name, owner);
 }
 
-function showMismatch(head, expectedEmail) {
-  const emailText = expectedEmail || MSG.invitationRecipient();
-  setView({
-    head,
-    text: MSG.mismatch(emailText),
-  });
-  clearActions();
-  showEmailInput(false);
+function showMismatch(head) {
+  setView({ head, text: t("pollGo.accountMismatch") });
+  clearActions(); showEmailInput(false);
 }
 
 // status zadania (tylko zaproszenia do ankiety): done / declined mają własne komunikaty
@@ -359,16 +361,7 @@ function showExpired(head, taskStatus) {
 }
 
 function matchesInviteTarget({ user, expectedUserId, expectedEmail }) {
-  if (!user) return false;
-
-  // ✅ Soft allow: jeśli token przypisany do konta → tylko user_id decyduje
-  if (expectedUserId) return user.id === expectedUserId;
-
-  // ✅ Email-only: match po email
-  const u = normalizeEmail(user.email);
-  const e = normalizeEmail(expectedEmail);
-  if (!u || !e) return false;
-  return u === e;
+  return matchesGoRecipient(user, expectedUserId, expectedEmail);
 }
 
 async function acceptSubDirect(email) {
@@ -460,13 +453,18 @@ function showSubInviteAnonEmail(head, subscriberEmail) {
 async function handleSubInvite(data, user) {
   const head = buildSubHeading(data);
   const expectedEmail = normalizeEmail(data.subscriber_email);
-  const hasAccountInvite = Boolean(data.subscriber_user_id);
+  const expectedUserId = data.registered_user_id || data.subscriber_user_id;
+  const hasAccountInvite = Boolean(expectedUserId);
   const userEmail = normalizeEmail(user?.email);
 
+  if (data.cancelled_at || data.status === "cancelled" || data.status === "expired") {
+    clearActions(); showEmailInput(false);
+    setView({ head: MSG.inviteExpired(), text: "" }); return;
+  }
   // Konto korzysta ze Znajomych; token nie aktywuje subskrypcji konta.
   // Odmowa pozostaje odmową także po rejestracji.
-  if (data.friend_conversion_required && ["pending", "active"].includes(data.status)) {
-    if (user && !matchesInviteTarget({ user, expectedUserId: data.subscriber_user_id, expectedEmail })) {
+  if ((data.friend_conversion_required || hasAccountInvite) && ["pending", "active"].includes(data.status)) {
+    if (user && !matchesInviteTarget({ user, expectedUserId, expectedEmail })) {
       showMismatch(head, expectedEmail);
       return;
     }
@@ -485,7 +483,7 @@ async function handleSubInvite(data, user) {
   // Link konkretnej osoby nie staje się formularzem nowej subskrypcji.
   if (data.status !== "pending") {
     if (user && hasAccountInvite && !matchesInviteTarget({
-      user, expectedUserId: data.subscriber_user_id, expectedEmail,
+      user, expectedUserId, expectedEmail,
     })) {
       showMismatch(head, expectedEmail);
       return;
@@ -506,7 +504,7 @@ async function handleSubInvite(data, user) {
   if (user && hasAccountInvite) {
     const okTarget = matchesInviteTarget({
       user,
-      expectedUserId: data.subscriber_user_id,
+      expectedUserId,
       expectedEmail: data.subscriber_email,
     });
     if (!okTarget) {
@@ -623,9 +621,14 @@ async function handleTaskInvite(data, user) {
 async function handleUnsubOwner() {
   try {
     const { data, error } = await sb().rpc("poll_go_resolve", { p_token: subToken });
-    if (error || !data?.ok) {
-      setView({ head: MSG.error(), text: MSG.invalidLinkText() });
-      return;
+    if (error) throw error;
+    if (!data?.ok) { showResolveError(data); return; }
+    if (!goKindMatches("s", data.kind)) { showResolveError(null); return; }
+    resolvedInviteData = data;
+    const user = await getUser();
+    if (data.kind === "friend") { handleFriendInvite(data, user); return; }
+    if (data.friend_conversion_required || data.registered_user_id || data.subscriber_user_id || data.cancelled_at) {
+      await handleSubInvite(data, user); return;
     }
     if (!["pending", "active"].includes(data.status)) {
       setView({ head: data.status === "declined" ? MSG.declined() : MSG.inviteExpired(),
@@ -651,17 +654,16 @@ async function handleUnsubOwner() {
     }, "withdraw");
   } catch (e) {
     console.error("[poll-go] unsub owner init failed:", e);
-    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
+    showNetworkFailure();
   }
 }
 
 async function handleUnsubGlobal() {
   try {
     const { data, error } = await sb().rpc("poll_go_resolve", { p_token: unsubToken });
-    if (error || !data?.ok || data?.kind !== "unsub") {
-      setView({ head: MSG.error(), text: MSG.invalidLinkText() });
-      return;
-    }
+    if (error) throw error;
+    if (!data?.ok) { showResolveError(data); return; }
+    if (data.kind !== "unsub") { showResolveError(null); return; }
     if (data.already_suppressed) {
       setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalAlready() });
       clearActions();
@@ -683,37 +685,73 @@ async function handleUnsubGlobal() {
     }, "withdraw");
   } catch (e) {
     console.error("[poll-go] unsub global init failed:", e);
-    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
+    showNetworkFailure();
   }
 }
 
 function handleBaseInvite(data, user) {
   clearActions();
   showEmailInput(false);
+  if (["cancelled", "expired"].includes(data.status)) {
+    setView({ head: t(`pollGo.${baseStateKey(data.status)}`), text: "" }); return;
+  }
   if (!user) {
     setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteLogin") });
     addAction(MSG.loginLabel(), "gold", redirectToLogin);
     return;
   }
   if (!data.recipient_matches_me) {
-    setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteMismatch", { email: data.recipient_email || "" }) });
+    showMismatch(t("pollGo.baseInviteTitle"), data.recipient_email);
     return;
   }
   if (!['pending', 'opened'].includes(data.status)) {
-    setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteHandled") });
+    setView({ head: t(`pollGo.${baseStateKey(data.status)}`), text: "" });
+    if (["done", "declined"].includes(data.status)) addAction(t("pollGo.baseInviteBasesAction"), "gold", redirectToHub);
     return;
   }
   setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteBases", { owner: data.owner_label || "" }) });
   addAction(t("pollGo.baseInviteBasesAction"), "gold", redirectToHub);
 }
 
+function handleFriendInvite(data, user) {
+  clearActions(); showEmailInput(false);
+  if (user && !data.recipient_matches_me) { showMismatch(t("contacts.goTitle")); return; }
+  const head = ["active", "declined"].includes(data.status) ? t(`contacts.status.${data.status}`) : t("contacts.goTitle");
+  setView({ head, text: t("contacts.goBody", { owner: data.owner_label }) });
+  if (!user) addAction(MSG.loginLabel(), "gold", redirectToLogin);
+  else addAction(t("contacts.open"), "gold", redirectToHub);
+}
+
+async function handleQrGateway() {
+  clearActions(); showEmailInput(false);
+  try {
+    const { data, error } = await sb().rpc("poll_state", { p_game_id: qs.get("id"), p_key: qs.get("key") });
+    if (error || !data?.ok) throw error || new Error("invalid poll state");
+    if (!["open", "stopped"].includes(data.state) || !["poll_text", "poll_points"].includes(data.type)) {
+      const keys = { ended: "pollEnded", draft: "pollClosed", expired: "anonymousLinkExpired", not_found: "anonymousLinkMissing" };
+      setView({ head: t(`pollGo.${keys[data.state] || "invalidLinkTitle"}`), text: "" }); return;
+    }
+    const params = new URLSearchParams(qs); params.delete("d");
+    location.replace("/polls/vote/qr/?" + params);
+  } catch (error) { showNetworkFailure(handleQrGateway); }
+}
+
 async function init() {
+  await i18nReady;
+  clearActions(); showEmailInput(false);
+  if (["invalid", "missing"].includes(parsedLink.kind)) {
+    setView({ head: parsedLink.kind === "missing" ? MSG.missingLinkTitle() : MSG.invalidLinkTitle(), text: parsedLink.kind === "missing" ? MSG.missingLinkText() : MSG.invalidLinkText() }); return;
+  }
+  if (parsedLink.kind === "m") {
+    const center = new URL(linkTo("mailCenter"), location.origin);
+    center.searchParams.set("m", mailCenterToken);
+    if (qs.has("lang")) center.searchParams.set("lang", qs.get("lang"));
+    location.replace(center.href); return;
+  }
   if (qs.has("p")) { await handleAnonymousPollGateway(); return; }
   if (qs.has("d")) {
     if (qs.get("d") === "qr") {
-      const params = new URLSearchParams(location.search);
-      params.delete("d");
-      location.replace("/polls/vote/qr/" + (params.size ? `?${params}` : ""));
+      await handleQrGateway();
       return;
     }
     await handleControlDeviceGateway();
@@ -738,39 +776,17 @@ async function init() {
     return;
   }
 
-  const user = await getUser();
   try {
+    const user = await getUser();
     const raw = await resolveToken();
     const data = await hydrateInviteIdentity(raw);
     resolvedInviteData = data || null;
     if (!data?.ok) {
-      // poll_go_resolve: 'poll_stopped' (ankieta zatrzymana) / 'poll_closed' (podliczona)
-      // / 'expired' (zaproszenie z wcześniejszego uruchomienia lub przerwanej ankiety)
-      // / 'invalid_token' (np. usunięte zadanie)
-      const byError = {
-        poll_stopped: MSG.pollStopped(),
-        poll_closed: MSG.pollEnded(),
-        expired: MSG.inviteExpired(),
-        invalid_token: MSG.inviteExpired(),
-      };
-      const head = byError[data?.error];
-      clearActions();
-      showEmailInput(false);
-      if (head) setView({ head, text: "" });
-      else setView({ head: MSG.invalidLinkTitle(), text: MSG.invalidLinkText() });
-      return;
+      showResolveError(data); return;
     }
+    if (!goKindMatches(parsedLink.kind, data.kind)) { showResolveError(null); return; }
+    if (data.kind === "friend") { handleFriendInvite(data, user); return; }
 
-    if (data.kind === "friend") {
-      clearActions();
-      showEmailInput(false);
-      const head = ["active", "declined"].includes(data.status) ? t(`contacts.status.${data.status}`) : t("contacts.goTitle");
-      setView({ head, text: t("contacts.goBody", { owner: data.owner_label }) });
-      if (!user) addAction(MSG.loginLabel(), "gold", redirectToLogin);
-      else if (data.recipient_matches_me) addAction(t("contacts.open"), "gold", redirectToHub);
-      else setView({ head: t("contacts.goTitle"), text: MSG.invitationRecipient() });
-      return;
-    }
     if (data.kind === "sub") {
       await handleSubInvite(data, user);
       return;
@@ -788,7 +804,7 @@ async function init() {
     setView({ head: MSG.error(), text: MSG.inviteUnknown() });
   } catch (e) {
     console.error(e);
-    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
+    showNetworkFailure();
   }
 }
 
