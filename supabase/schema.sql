@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dBQE9B7fEPafJz8WleWvK6hbmv6JWdyI2OQeNHYCmT4ePgKAd02F4RBhLJv0XRY
+\restrict Ld6Hr4J3rkKtcHQdiKjo5WdaAnDWAi2hDC6EvrYyciFNWuyGCbIhbFouzWMYx0g
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7276,6 +7276,8 @@ declare
   v_uid uuid := auth.uid();
   v_email text := lower(trim(coalesce(p_email, '')));
   v_is_guest boolean := false;
+  v_auth_email text;
+  v_confirmed_at timestamptz;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
@@ -7283,6 +7285,18 @@ begin
 
   if v_email = '' or position('@' in v_email) = 0 then
     return jsonb_build_object('ok', false, 'error', 'invalid_email');
+  end if;
+
+  -- Auth is the parent identity; lock it before touching profiles/tasks.
+  select lower(trim(email)), email_confirmed_at
+    into v_auth_email, v_confirmed_at
+  from auth.users where id = v_uid for update;
+
+  if v_confirmed_at is null then
+    return jsonb_build_object('ok', false, 'error', 'not_confirmed');
+  end if;
+  if v_auth_email is distinct from v_email then
+    return jsonb_build_object('ok', false, 'error', 'email_mismatch');
   end if;
 
   select coalesce(is_guest, false)
@@ -19876,5 +19890,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dBQE9B7fEPafJz8WleWvK6hbmv6JWdyI2OQeNHYCmT4ePgKAd02F4RBhLJv0XRY
+\unrestrict Ld6Hr4J3rkKtcHQdiKjo5WdaAnDWAi2hDC6EvrYyciFNWuyGCbIhbFouzWMYx0g
 
