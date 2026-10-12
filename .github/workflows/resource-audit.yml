@@ -1,0 +1,28 @@
+name: Resource identity audit (read only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guest-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up SSH
+        env:
+          AUDIT_SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          AUDIT_SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$AUDIT_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$AUDIT_SERVER_HOST" >> ~/.ssh/known_hosts
+      - name: Audit guest identity counts without changing data
+        env:
+          AUDIT_SERVER_USER: ${{ secrets.SERVER_USER }}
+          AUDIT_SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "$AUDIT_SERVER_USER@$AUDIT_SERVER_HOST" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/audit-guest-identity-354.sql

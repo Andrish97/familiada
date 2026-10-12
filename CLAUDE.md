@@ -48,6 +48,16 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 
 ## Tok pracy
 
+- **Nadrzędna zasada ciągłości (decyzja użytkownika 2026-10-12):** realizować
+  uzgodniony plan do końca bez oczekiwania na kolejne „kontynuuj”. Pytanie
+  o postęp, odpowiedź ze statusem, zakończenie paczki ani skrócenie kontekstu
+  nie kończą pracy. Po krótkiej aktualizacji wracać do bieżącego zadania,
+  a po jego zamknięciu przechodzić do następnego z kolejki. Stan odtwarzać
+  z dokumentów repo; nie wymagać nowej rozmowy. Przerwać wyłącznie na
+  wyraźne polecenie użytkownika, przy rzeczywistej blokadzie wykonania
+  albo kluczowej decyzji architektonicznej bez wystarczających ustaleń.
+  Nie deklarować pracy w tle, jeśli żaden proces faktycznie nie działa.
+
 - **Środowisko Codexa (decyzja użytkownika 2026-10-11):** można wykonywać
   cięższe zadania lokalne, w tym przeglądarkowe podglądy, SQL i testy.
   Nie obowiązuje wcześniejsze ograniczenie dla Termuxa. Zachować punktowe
