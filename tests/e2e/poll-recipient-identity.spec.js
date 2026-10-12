@@ -52,6 +52,8 @@ test("@mailbox ankieta351: rejestracja przypisuje e-mailowe udostępnienia, kaso
     expect((await rpc(owner, "e2e_subscriber_email_cleanup", { p_email: email })).ok).toBe(true);
     const subscription = await rpc(owner, "subscribers_invite", { p_email: email });
     expect(subscription.ok).toBe(true);
+    const subscriptionMail = await rpc(owner, "polls_hub_subscriber_resend", { p_id: subscription.id });
+    expect(subscriptionMail.unsub_token).toBeTruthy();
     await anonymous.goto("https://www.familiada.online/");
     await anonymous.waitForFunction(() => !!window.__sbClient);
     // Subscription is fixture setup via public RPC; actual poll mails are delivered below.
