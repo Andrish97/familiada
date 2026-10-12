@@ -1,5 +1,5 @@
 // js/core/db-guard.js
-import { sb } from "./supabase.js?v=v2026-10-12T21213";
+import { sb } from "./supabase.js?v=v2026-10-12T21221";
 
 // Supabase/PostgREST UPDATE ... WHERE trafiający w 0 wierszy NIE zwraca
 // błędu — to mechanizm stojący za "cichym sukcesem" przy edycji czegoś,
