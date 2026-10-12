@@ -1460,3 +1460,18 @@ wykonanych etapów nie oznaczać ponownie jako otwartych.
 ### Pkt7 — Control: tożsamość i preferencje mailowe (2026-10-12, paczka358)
 
 Używać Auth jako źródła ID i aktualnego adresu: wpisany e-mail/nazwa przez lookup, checkbox wyłącznie przez jawne API wymagające aktywnej znajomości. Zmiana/usunięcie konta, gry i sesji blokowane w kolejności rodzice→grant. Mail kierowany na zwrócony przez serwer mail_to; profile.email nie ustala adresata. Gość nie może udostępniać mailem, publiczne parowanie pozostaje dostępne. Flaga konta lub adresu bez konta sprawdzana przed budżetem i insercją kolejki; dostęp niezależny od maila. Usunięcie znajomości po nadaniu nie unieważnia aktywnego grantu. Stan: backend w repo, przed isolated/SQL gate/front branch/main SMTP; cały pkt7 niezakończony.
+
+### Pkt7 — następna krawędź: źródło powiadomienia → kolejka → dostarczenie
+
+Audyt po358: producenci przekazują action/target oraz link Go w HTML, ale mail_queue nie ma FK do zaproszenia/tasku/grantu. Oba pickery sprawdzają status kolejki, nie źródła. Worker ustala konto przez profiles.email, co wymaga przejścia na kanoniczny Auth. Lokalny negatywny audyt Baz potwierdza wybranie maila po anulowaniu taska, usunięciu bazy i odbiorcy; nie jest to wdrożone rozwiązanie kolejki.
+
+| Powiadomienie / producent | Jawne źródło do związania | Co ma blokować jeszcze niewysłany mail | Adres i wyjątki |
+|---|---|---|---|
+| Znajomość / invite-mail.js, friend:invite/resend | friendships.id/token | Cofnięcie, odmowa, aktywna już znajomość, wygaśnięcie, usunięcie strony relacji; zamknięcie pochodnej subskrypcji dla niezależnie niezaakceptowanej propozycji355 | Auth właściwego adresata zgodnego z kierunkiem decyzji346; nie profiles.email |
+| Subskrybent / invite-mail.js, poll:resend | poll_subscriptions.id/token | Cofnięcie, odmowa/wypisanie, wygaśnięcie, brak właściciela; konto na adresie obsługiwane według aktualnego kontraktu e-mail-only | Adres subskrypcji + globalna flaga; nie przepinać do nowego właściciela adresu |
+| Ankieta / poll-mail.js, poll:share | poll_tasks.id/token oraz istniejące źródło353 | Zamknięte uruchomienie, odmowa/zakończony głos, cofnięty kontakt, usunięta gra/nadawca/odbiorca | Auth dla UID, adres dla mail-only; ta sama sesja ankiety, bez ponownego tokenu |
+| Baza / bases.js, base:share | base_share_tasks.id/token oraz źródło357 | Cancel/decline/accepted/expiry, brak bazy/owner/recipient, utracone źródło znajomości dla pending | Auth odbiorcy; zaakceptowana niezależna rola nie wymaga kolejnego maila zaproszenia |
+| Control / shareDevice.js, device:share | control_device_shares.id/token i sesja324 | Revoke, wygasła/zakończona sesja, brak gry/nadawcy/odbiorcy | Auth lub recipient_email; późniejsze usunięcie znajomości nie odwołuje już nadanego grantu |
+| Przyszłe kopie Gier/Logo / E19C | Niezależny pakiet/oferta odbiorcy | Zamknięta oferta/brak odbiorcy, zgodnie z30-dniowym kontraktem | Usunięcie oryginału, nadawcy lub znajomości po wysłaniu nie unieważnia pakietu |
+
+Implementacja następnej paczki: dodające referencje źródeł, walidacja nadawcy/adresata/tokenu podczas insert, oba pickery oraz ostatnia kontrola Worker przed dostawcą. Zweryfikować też requeue i zmianę adresu/flag w trakcie. Historia bez jednoznacznego dowodu nie jest przypisywana heurystycznie; nie wnioskować źródła z samego adresu/tytułu. Zachować dotychczasowe budżety i czasy odmów. Macierz SQL/races/ACL, realne SMTP i Go dla każdej rodziny; migracja i front/Worker przez osobne bramki. Stopka wypisania Control bez konta pozostaje jawnie odnotowaną luką maili, nie wykonaniem358.

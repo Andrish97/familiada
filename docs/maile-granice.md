@@ -291,3 +291,7 @@ kontaktowy i marketingowy kod rzeczywistych szablonów + prawdziwy SMTP
 przez send-mail. Auth4typy×3lang renderer unit; reset i zmiana e-maila mają
 prawdziwe przepływy E2E oraz treściPL/EN/UK. Signup/guest migration nie były
 nowym funkcjonalnym E2E tej paczki. Audyt atomowości queue/historia pkt7.
+
+### Pozostałe domknięcie kolejki i stopki Control (audyt 2026-10-12)
+
+358 sprawdza globalną preferencję konta/adresu przed budżetem Control i insercją czterech rodzin powiadomień; nie kończy kontroli źródeł podczas dostarczania. Obecny mail Control do adresu bez konta nie zawiera stopki globalnego wypisania (potwierdzone rzeczywistym mailem test14 w38257851591). Uzupełnić ją w dalszym ujednoliceniu maili, używając istniejącego globalnego tokenu adresu i Go, bez zakładania konta ani własnego systemu preferencji. Test358 globalnego mail-off wykorzystuje istniejący token z subscribers_invite; nie jest dowodem stopki Control.
