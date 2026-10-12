@@ -10,13 +10,13 @@ function setup() {
   const gate = new Promise((resolve) => { release = resolve; });
   const api = new Proxy({}, { get: (_, group) => new Proxy({}, { get: (_, name) => (...args) => {
     calls.push({ name: `${group}.${name}`, args });
-    if (`${group}.${name}` === "rounds.setRow" || `${group}.${name}` === "final.setLeft") return gate;
+    if (`${group}.${name}` === "rounds.setText" || `${group}.${name}` === "final.setLeft") return gate;
   } }) });
   const renderer = createRenderer({ scene: { api }, qr: {}, getSfxDuration: async () => 1 });
   return { renderer, calls, release };
 }
 
-test("round total waits for the complete answer; both phases share one sound duration", async () => {
+test("round answer text finishes before points and bank; both phases share one sound duration", async () => {
   const { renderer, calls, release } = setup();
   const state = makeDefaultState("reveal");
   state.step = "r_play";
@@ -30,9 +30,12 @@ test("round total waits for the complete answer; both phases share one sound dur
   assert.equal(calls.some((call) => call.name === "rounds.setSuma"), false);
   release();
   await pending;
-  const answer = calls.find((call) => call.name === "rounds.setRow");
+  const answer = calls.find((call) => call.name === "rounds.setText");
   const total = calls.find((call) => call.name === "rounds.setSuma");
-  assert.equal(answer.args[1].animIn.ms + total.args[1].animIn.ms, 1000);
+  assert.equal(answer.args[2].animIn.ms + total.args[1].animIn.ms, 1000);
+  const points = calls.find((call) => call.name === "rounds.setPts");
+  assert.equal(points.args[2].animIn.ms, total.args[1].animIn.ms);
+  assert.ok(calls.indexOf(answer) < calls.indexOf(points));
   assert.ok(calls.indexOf(answer) < calls.indexOf(total));
 });
 

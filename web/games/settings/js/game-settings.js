@@ -3,27 +3,27 @@
 // edytor pytań), przy wyjściu zapis idzie od razu — bez przycisku „Zapisz”
 // z ostrzeżeniem, jeśli ustawienia wymagają poprawienia. Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-12T22034";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-12T22034";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-12T22034";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T22034";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-12T22034";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-12T22034";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-12T22034";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-12T22034";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-12T22034";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-12T22034";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-12T22045";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-12T22045";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-12T22045";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T22045";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-12T22045";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-12T22045";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-12T22045";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-12T22045";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-12T22045";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-12T22045";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
-  playSfx, setSfxVolume,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-12T22034";
+  playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
+} from "../../../shared/js/core/sfx.js?v=v2026-10-12T22045";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-12T22034";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-12T22034";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-12T22034";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-12T22034";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-12T22045";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-12T22045";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-12T22045";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-12T22045";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -951,7 +951,7 @@ async function renderSound() {
   let _previewUrl   = null; // blob URL do zwolnienia
 
   function _stopPreview() {
-    if (_previewAudio) { try { _previewAudio.pause(); _previewAudio.currentTime = 0; } catch {} }
+    if (_previewAudio) stopSfxAudio(_previewAudio, { dispose: true });
     if (_previewUrl)   { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
     if (_previewBtn)   { _previewBtn.innerHTML = icon("play"); delete _previewBtn.dataset.playing; }
     _previewAudio = null;
@@ -973,14 +973,13 @@ async function renderSound() {
         const custom = customFiles.get(key);
         if (!custom?.blob) return;
         blobUrl = URL.createObjectURL(custom.blob);
-        audio = new Audio(blobUrl);
+        audio = createSfxAudio(blobUrl);
       } else {
         const cat = categories.find(c => c.key === key);
         if (!cat) return;
-        audio = new Audio(`/assets/audio/${cat.folder}/${val}`);
+        audio = createSfxAudio(buildSfxUrl(cat.folder, val));
       }
-      audio.volume = vol;
-      audio.play().catch(() => {});
+      playSfxAudio(audio, vol).catch(() => {});
       audio.addEventListener("ended", _stopPreview, { once: true });
 
       _previewAudio = audio;
@@ -996,7 +995,7 @@ async function renderSound() {
     slider.addEventListener("input", () => {
       const key = slider.dataset.sfxVol;
       if (_previewBtn?.dataset.sfxPreview === key && _previewAudio) {
-        _previewAudio.volume = parseInt(slider.value, 10) / 100;
+        setSfxAudioVolume(_previewAudio, parseInt(slider.value, 10) / 100);
       }
     });
   }, true); // capture=true żeby odpalić przed istniejącym listenerem

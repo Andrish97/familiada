@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T22034";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T22045";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -50,9 +50,8 @@ let globalMuted = false;
 // Wyciszenie nie zmienia zegara audio, głośności ani zaplanowanych dźwięków.
 export function setSfxMuted(muted) {
   globalMuted = !!muted;
-  for (const audio of cache.values()) audio.muted = globalMuted;
+  if (masterGain) masterGain.gain.setValueAtTime(globalMuted ? 0 : 1, audioContext.currentTime);
 }
-const _fadeRafs = new Map(); // key → rafId (zdefiniowane tu, używane w loadIntoCache i fade)
 const playbackObservers = new Set();
 
 export function onSfxPlayback(observer) {
@@ -67,13 +66,68 @@ function reportPlayback(event) {
   }
 }
 
-function _cancelFade(key) {
-  const id = _fadeRafs.get(key);
-  if (id) cancelAnimationFrame(id);
-  _fadeRafs.delete(key);
+let audioContext = null;
+let masterGain = null;
+const audioNodes = new WeakMap();
+
+function getAudioContext() {
+  if (!audioContext) {
+    const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
+    audioContext = new Context();
+    masterGain = audioContext.createGain();
+    masterGain.gain.value = globalMuted ? 0 : 1;
+    masterGain.connect(audioContext.destination);
+  }
+  return audioContext;
 }
 
-function buildUrl(folder, file) {
+export function createSfxAudio(url) {
+  const context = getAudioContext();
+  const audio = new Audio();
+  audio.crossOrigin = "anonymous";
+  audio.preload = "auto";
+  audio.src = url;
+  const source = context.createMediaElementSource(audio);
+  const gain = context.createGain();
+  gain.gain.value = 0;
+  source.connect(gain);
+  gain.connect(masterGain);
+  audioNodes.set(audio, { source, gain, volume: 1, generation: 0 });
+  return audio;
+}
+
+export function setSfxAudioVolume(audio, volume) {
+  const nodes = audioNodes.get(audio);
+  if (!nodes) return;
+  nodes.volume = Math.max(0, Math.min(1, volume));
+  if (!audio.paused && !audio.ended) scheduleFade(audio);
+}
+
+export function stopSfxAudio(audio, { dispose = false } = {}) {
+  if (!audio) return;
+  const nodes = audioNodes.get(audio);
+  if (nodes) {
+    nodes.generation++;
+    nodes.gain.gain.cancelScheduledValues(audioContext.currentTime);
+    nodes.gain.gain.setValueAtTime(0, audioContext.currentTime);
+  }
+  try { audio.pause(); audio.currentTime = 0; } catch {}
+  if (dispose && nodes) {
+    nodes.source.disconnect();
+    nodes.gain.disconnect();
+    audioNodes.delete(audio);
+  }
+}
+
+function _cancelFade(key) {
+  const nodes = audioNodes.get(cache.get(key));
+  if (!nodes) return;
+  nodes.generation++;
+  nodes.gain.gain.cancelScheduledValues(audioContext.currentTime);
+  nodes.gain.gain.setValueAtTime(0, audioContext.currentTime);
+}
+
+export function buildSfxUrl(folder, file) {
   const currentVersion = MANIFEST_PATH.split("?")[1];
   return `${AUDIO_BASE}${folder}/${file.split("?")[0]}?${currentVersion}`;
 }
@@ -82,13 +136,11 @@ function loadIntoCache(key, url) {
   _cancelFade(key);
   const old = cache.get(key);
   if (old) {
-    try { old.pause(); } catch {}
+    stopSfxAudio(old, { dispose: true });
     if (old.src.startsWith("blob:")) URL.revokeObjectURL(old.src);
   }
   durationPromises.delete(key);
-  const a = new Audio(url);
-  a.preload = "auto";
-  a.muted = globalMuted;
+  const a = createSfxAudio(url);
   cache.set(key, a);
   return a;
 }
@@ -103,14 +155,14 @@ export function setSfxVariant(key, file) {
   const meta = getCategoryMeta(key);
   if (!meta) return;
   localStorage.setItem(`sfx_variant_${key}`, file);
-  loadIntoCache(key, buildUrl(meta.folder, file));
+  loadIntoCache(key, buildSfxUrl(meta.folder, file));
   _applySfxVolume(key);
 }
 
 export function resetSfxVariants() {
   for (const cat of getSfxCategories()) {
     localStorage.removeItem(`sfx_variant_${cat.key}`);
-    loadIntoCache(cat.key, buildUrl(cat.folder, "classic.mp3"));
+    loadIntoCache(cat.key, buildSfxUrl(cat.folder, "classic.mp3"));
     _applySfxVolume(cat.key);
   }
 }
@@ -134,12 +186,12 @@ export function setSfxVolume(key, v) {
   const clamped = Math.max(0, Math.min(1, v));
   localStorage.setItem(`sfx_vol_${key}`, String(clamped));
   const a = cache.get(key);
-  if (a) a.volume = clamped;
+  if (a) setSfxAudioVolume(a, _getEffectiveVolume(key));
 }
 
 function _applySfxVolume(key) {
   const a = cache.get(key);
-  if (a) a.volume = getSfxVolume(key);
+  if (a) setSfxAudioVolume(a, _getEffectiveVolume(key));
 }
 
 // Głośności sesyjne (nadpisują localStorage na czas sesji, nie zapisują)
@@ -149,9 +201,9 @@ const _sessionVolumes = new Map();
 export function setSessionSfxVolume(key, v) {
   const clamped = Math.max(0, Math.min(1, v));
   _sessionVolumes.set(key, clamped);
-  // Gdy nie gra: ustaw bezpośrednio; gdy gra: fade RAF odbierze zmianę na następnym ticku
+  // Zmiana poziomu nie restartuje odtwarzania ani procentowego fade.
   const a = cache.get(key);
-  if (a && a.paused) a.volume = clamped;
+  if (a) setSfxAudioVolume(a, clamped);
 }
 
 function _getEffectiveVolume(key) {
@@ -168,7 +220,7 @@ export function resetSfxVolumes() {
   for (const cat of getSfxCategories()) {
     localStorage.removeItem(`sfx_vol_${cat.key}`);
     const a = cache.get(cat.key);
-    if (a) a.volume = 1.0;
+    if (a) setSfxAudioVolume(a, _getEffectiveVolume(cat.key));
   }
 }
 
@@ -234,7 +286,7 @@ export async function clearSfxCustomFile(key, gameId = _currentGameId) {
   if (old?.src?.startsWith("blob:")) URL.revokeObjectURL(old.src);
   const meta = getCategoryMeta(key);
   if (meta) {
-    loadIntoCache(key, buildUrl(meta.folder, getSfxVariant(key)));
+    loadIntoCache(key, buildSfxUrl(meta.folder, getSfxVariant(key)));
     _applySfxVolume(key);
   }
   const db = await openIDB();
@@ -263,35 +315,51 @@ export function loadSfxFromCloud(urlMap) {
 
 /* ========= FADE ========= */
 
-// Fade: 5% długości na wejście, 8% na wyjście (min/max w sekundach)
-const FADE_IN_RATIO  = 0.05;
+// Każdy plik: pierwsze 5% to wejście, ostatnie 8% to wyjście.
+const FADE_IN_RATIO = 0.05;
 const FADE_OUT_RATIO = 0.08;
-const FADE_IN_MIN    = 0.08;
-const FADE_IN_MAX    = 0.4;
-const FADE_OUT_MIN   = 0.10;
-const FADE_OUT_MAX   = 0.6;
 
-function _fadeVolume(a, ct, dur, target) {
-  if (!dur || !isFinite(dur) || dur <= 0) return target;
-  const fadeIn  = Math.max(FADE_IN_MIN,  Math.min(FADE_IN_MAX,  dur * FADE_IN_RATIO));
-  const fadeOut = Math.max(FADE_OUT_MIN, Math.min(FADE_OUT_MAX, dur * FADE_OUT_RATIO));
-  const remaining = dur - ct;
-  if (ct < fadeIn)           return target * (ct / fadeIn);
-  if (remaining < fadeOut)   return target * Math.max(0, remaining / fadeOut);
-  return target;
+function scheduleFade(audio) {
+  const nodes = audioNodes.get(audio);
+  if (!nodes) return;
+  const now = audioContext.currentTime;
+  const position = audio.currentTime || 0;
+  const duration = audio.duration;
+  const gain = nodes.gain.gain;
+  const target = nodes.volume;
+  gain.cancelScheduledValues(now);
+  if (!Number.isFinite(duration) || duration <= 0) {
+    gain.setValueAtTime(target, now);
+    return;
+  }
+  const fadeIn = duration * FADE_IN_RATIO;
+  const fadeOut = duration * FADE_OUT_RATIO;
+  const fadeOutStart = duration - fadeOut;
+  const current = position < fadeIn ? target * position / fadeIn
+    : position > fadeOutStart ? target * Math.max(0, (duration - position) / fadeOut)
+    : target;
+  gain.setValueAtTime(current, now);
+  if (position < fadeIn) gain.linearRampToValueAtTime(target, now + fadeIn - position);
+  if (position < fadeOutStart) gain.setValueAtTime(target, now + fadeOutStart - position);
+  gain.linearRampToValueAtTime(0, now + Math.max(0, duration - position));
 }
 
-function _startFade(key, a) {
-  _cancelFade(key);
-  // Zegar pliku rusza dopiero po rzeczywistym starcie audio. Opóźnienie
-  // ładowania lub odblokowania nie może zużywać wejścia ani wyjścia.
-  function tick() {
-    if (!a || a.paused || a.ended) { _fadeRafs.delete(key); return; }
-    const target = _getEffectiveVolume(key); // czyta na żywo — reaguje na zmianę głośności
-    a.volume = Math.max(0, Math.min(1, _fadeVolume(a, a.currentTime, a.duration, target)));
-    _fadeRafs.set(key, requestAnimationFrame(tick));
-  }
-  _fadeRafs.set(key, requestAnimationFrame(tick));
+export function playSfxAudio(audio, volume = 1) {
+  const context = getAudioContext();
+  const nodes = audioNodes.get(audio);
+  nodes.generation++;
+  const generation = nodes.generation;
+  nodes.gain.gain.cancelScheduledValues(context.currentTime);
+  nodes.gain.gain.setValueAtTime(0, context.currentTime);
+  nodes.volume = Math.max(0, Math.min(1, volume));
+  audio.currentTime = 0;
+  // Wywołane synchronicznie w obsłudze gestu. Fade wykonuje silnik audio,
+  // również wtedy, gdy przeglądarka ogranicza klatki strony/iframe.
+  const resumed = context.state === "running" ? Promise.resolve() : context.resume();
+  const playing = audio.play();
+  return Promise.all([resumed, playing]).then(() => {
+    if (nodes.generation === generation && !audio.paused && !audio.ended) scheduleFade(audio);
+  });
 }
 
 /* ========= ODTWARZANIE ========= */
@@ -300,7 +368,7 @@ export function stopSfx(key) {
   _cancelFade(key);
   const a = cache.get(key);
   if (!a) return;
-  try { a.pause(); a.currentTime = 0; a.volume = 0; } catch {}
+  stopSfxAudio(a);
 }
 
 export function isSfxPlaying(key) {
@@ -316,7 +384,7 @@ export function isAnySfxPlaying() {
 export function debugSfx(key) {
   const a = cache.get(key);
   if (!a) { console.warn("[sfx debug]", key, "— NOT IN CACHE"); return; }
-  console.log("[sfx debug]", key, "| src:", a.src?.slice(-40), "| duration:", a.duration, "| paused:", a.paused, "| ended:", a.ended, "| error:", a.error?.code, "| readyState:", a.readyState, "| volume:", a.volume);
+  console.log("[sfx debug]", key, "| src:", a.src?.slice(-40), "| duration:", a.duration, "| paused:", a.paused, "| ended:", a.ended, "| error:", a.error?.code, "| readyState:", a.readyState, "| volume:", audioNodes.get(a)?.volume);
 }
 
 export function onSfxEnd(key, fn) {
@@ -342,17 +410,12 @@ export function playSfx(key) {
     return;
   }
   try {
-    _cancelFade(key);
-    a.currentTime = 0;
-    a.volume = 0;
-    const started = a.play();
+    const started = playSfxAudio(a, _getEffectiveVolume(key));
     if (started?.then) started.then(() => {
-      if (cache.get(key) === a && !a.paused && !a.ended) _startFade(key, a);
       reportPlayback({ key, failed: false, delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
     }).catch(error => {
       reportPlayback({ key, failed: true, error: String(error?.name || "play_rejected"), delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
     });
-    if (!started?.then) _startFade(key, a);
   } catch (error) {
     reportPlayback({ key, failed: true, error: String(error?.name || "play_failed"), delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
   }
@@ -361,7 +424,6 @@ export function playSfx(key) {
 export function createSfxMixer() {
   let audio = null;
   let raf = null;
-  let _fadeKey = null;
   let _endedHandler = null;
   const listeners = new Set();
 
@@ -373,11 +435,6 @@ export function createSfxMixer() {
   }
   function tick() {
     if (audio && !audio.paused) {
-      // fade
-      if (_fadeKey !== null) {
-        const target = _getEffectiveVolume(_fadeKey);
-        audio.volume = Math.max(0, Math.min(1, _fadeVolume(audio, audio.currentTime, audio.duration, target)));
-      }
       notify();
       raf = requestAnimationFrame(tick);
     }
@@ -385,12 +442,9 @@ export function createSfxMixer() {
   return {
     play(key) {
       this.stop();
-      _fadeKey = key;
       audio = cache.get(key);
       if (!audio) return;
-      audio.currentTime = 0;
-      audio.volume = 0;
-      audio.play().catch(() => {});
+      playSfxAudio(audio, _getEffectiveVolume(key)).catch(() => {});
       // Fired when audio ends naturally — lets onTime listeners detect end even if last RAF tick missed it
       _endedHandler = () => {
         const d = audio?.duration || 0;
@@ -402,10 +456,9 @@ export function createSfxMixer() {
     stop() {
       if (raf) cancelAnimationFrame(raf);
       raf = null;
-      _fadeKey = null;
       if (audio) {
         if (_endedHandler) { audio.removeEventListener("ended", _endedHandler); _endedHandler = null; }
-        try { audio.pause(); audio.currentTime = 0; } catch {}
+        stopSfxAudio(audio);
       }
       audio = null;
     },
@@ -461,19 +514,22 @@ let unlocked = false;
 let unlockPromise = null;
 
 export async function unlockAudio() {
-  if (unlocked) return true;
+  const context = getAudioContext();
+  if (unlocked && context.state === "running") return true;
   if (unlockPromise) return unlockPromise;
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T22034";
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T22045";
     // Call play() synchronously in the gesture handler, then trust its
     // promise. Previously a rejected autoplay attempt still returned true,
     // allowing Display to report an unlock the browser had refused.
-    unlockPromise = a.play().then(() => {
+    const resumed = context.resume();
+    const playing = a.play();
+    unlockPromise = Promise.all([resumed, playing]).then(() => {
       a.pause();
-      unlocked = true;
-      return true;
+      unlocked = context.state === "running";
+      return unlocked;
     }).catch(() => false).finally(() => { unlockPromise = null; });
     return await unlockPromise;
   } catch {
@@ -482,7 +538,7 @@ export async function unlockAudio() {
   }
 }
 
-export function isAudioUnlocked() { return unlocked; }
+export function isAudioUnlocked() { return unlocked && audioContext?.state === "running"; }
 
 /* ========= INICJALIZACJA ========= */
 
@@ -492,7 +548,7 @@ export function isAudioUnlocked() { return unlocked; }
  */
 export async function initSfx() {
   for (const cat of getSfxCategories()) {
-    loadIntoCache(cat.key, buildUrl(cat.folder, getSfxVariant(cat.key)));
+    loadIntoCache(cat.key, buildSfxUrl(cat.folder, getSfxVariant(cat.key)));
   }
   applySfxVolumes();
 
@@ -507,7 +563,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T22034" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T22045" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   // Brak wpisu oznacza 100%, tak jak suwak ustawień. Nie dziedziczymy

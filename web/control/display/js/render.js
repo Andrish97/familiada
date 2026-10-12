@@ -1,4 +1,4 @@
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T22034";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T22045";
 // control/display/js/render.js
 //
 // Tłumaczy wiersz public.game_state (a dokładniej: różnicę między
@@ -24,9 +24,9 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T2203
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-12T22034";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-12T22034";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-12T22034";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-12T22045";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-12T22045";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-12T22045";
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -35,7 +35,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-12T22034";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-12T22045";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
@@ -554,23 +554,31 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
         case "ANSWER_REVEALED": {
           const r = nextRow.detail.rounds;
           const bankChanged = r.bankPts !== (prevRow.detail?.rounds?.bankPts ?? 0);
-          // Odpowiedź najpierw, suma potem; obie mieszczą się w jednym
-          // dźwięku, zamiast każda dostać cały jego czas.
-          const rowMs = bankChanged ? answerAnimMs * 0.8 : answerAnimMs;
-          await Promise.all(ev.ords.map((ord) => {
-            const ans = r.answers.find((a) => a.ord === ord);
-            if (!ans) return;
-            return api.rounds.setRow(ord, { text: ans.text, pts: String(ans.fixed_points), animIn: { ...ANSWER_ANIM, ms: rowMs } });
+          // Kolejność ma znaczenie: najpierw tekst, później jednocześnie
+          // punkty odpowiedzi i nowa suma banku. Obie fazy dzielą jeden
+          // czas dźwięku, więc nie wydłużamy przejścia.
+          const answerMs = answerAnimMs * 0.5;
+          const pointsMs = answerAnimMs - answerMs;
+          const revealedAnswers = ev.ords
+            .map((ord) => ({ ord, ans: r.answers.find((a) => a.ord === ord) }))
+            .filter(({ ans }) => ans);
+          await Promise.all(revealedAnswers.map(({ ord, ans }) => {
+            return api.rounds.setText(ord, ans.text, { animIn: { ...ANSWER_ANIM, ms: answerMs } });
           }));
+          const pointAnimations = revealedAnswers.map(({ ord, ans }) => {
+            return api.rounds.setPts(ord, String(ans.fixed_points), { animIn: { ...ANSWER_ANIM, ms: pointsMs } });
+          });
           // R8 (odkrywanie reszty, phase REVEAL) jest czysto pokazowe —
           // bankPts się wtedy nie zmienia (control/js/display.js's
           // roundsRevealRow tam w ogóle nie woła RSUMA/TOP) — bez tego
-          // sprawdzenia SUMA dostawałaby zbędną animację na niezmienioną
-          // liczbę przy każdym kliknięciu w R8.
+          // SUMA dostawałaby zbędną animację na niezmienioną liczbę.
           if (bankChanged) {
-            await api.rounds.setSuma(String(r.bankPts ?? 0), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs - rowMs } });
             api.small.topDigits(pad3(r.bankPts));
+            pointAnimations.push(api.rounds.setSuma(String(r.bankPts ?? 0), {
+              animIn: { ...ANSWER_ANIM, ms: pointsMs },
+            }));
           }
+          await Promise.all(pointAnimations);
           // W pojedynku trafienie nie-topowej odpowiedzi oddaje głos DRUGIEJ
           // drużynie (duel.currentTeam się zmienia), bez żadnej zmiany
           // control_team (ta zostaje null aż do wygranej) — CONTROL_CHANGED

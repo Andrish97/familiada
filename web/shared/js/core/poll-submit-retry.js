@@ -1,5 +1,5 @@
-import { t } from '../../translation/translation.js?v=v2026-10-12T22034';
-import { toast } from './toast.js?v=v2026-10-12T22034';
+import { t } from '../../translation/translation.js?v=v2026-10-12T22045';
+import { toast } from './toast.js?v=v2026-10-12T22045';
 
 export function showPollSubmitRetry({ button, container, seconds = 0, setMessage, onRetry }) {
   const created = !button;

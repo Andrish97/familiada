@@ -1064,3 +1064,17 @@ próby podczas odliczania/ponowienia; ignoruje dawną flagę done.
 `docs/img/poll-anonymous`; jasno odróżnione od produkcji. Przygotowane
 isolated workflow i punktowe rzeczywiste E2E obu typów, także utrata
 odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
+
+- 2026-10-12: użytkownik doprecyzował: odsłuch ustawień normalny, gra cicha; fade dotyczy wszystkich plików i ma być procentowy. Odsłuch był bez fade, gra startowała od zera i podnosiła volume w RAF, co przy ograniczonych klatkach może wyciszyć aktywny fragment krótkiego efektu. Wspólny Web Audio GainNode: 5% wejście/8% wyjście bez min/max; Control, Display i odsłuch ustawień używają tego samego odtwarzania. Control synchronizuje aktualne ustawienia sesji po wznowieniu/zmianie. Bez migracji; na main bez testów zgodnie z poleceniem. Nie przypisywać użytkownikowi karty w tle bez potwierdzenia.
+
+- 2026-10-12: dopasowano atrapy Web Audio w dwóch istniejących testach dekodowania i diagnostyki do nowego toru; testów nie uruchomiono. Sprawdzono wyłącznie składnię trzech zmienionych modułów JS (node --check), bez E2E i bez kont testowych.
+
+- 2026-10-12: procentowy fade na zegarze audio opublikowany: main69c3c8b6c3, Pages38310986351 success. Wszystkie domyślne/własne pliki, 5% wejście/8% wyjście, odsłuch ustawień i rozgrywka wspólnym torem; mute wspólnym wyjściem bez zatrzymania. Bez testów na polecenie użytkownika; nie deklarować potwierdzonej poprawy odsłuchu przed sprawdzeniem użytkownika.
+
+
+- 2026-10-12: Control: odsłanianie odpowiedzi w dwóch fazach — tekst, potem
+  punkty wraz z nowym bankiem, w obrębie czasu reveal. Naprawiono też
+  blokadę po odświeżeniu w pojedynku: istniejący stan nie oczekuje ponownego
+  potwierdzenia planszy, a pozostały czas blokady odczytywany jest z
+  `locked_until`. Manual PL/EN/UK zaktualizowany. main7579211cb6, Pages38312649324 success. Bez migracji; testów nie
+  uruchomiono. Składnia zmienionych modułów i `git diff --check` poprawne.

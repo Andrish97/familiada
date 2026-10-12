@@ -263,11 +263,11 @@ punkt 4 wyżej; wcześniej oznaczone "nie zaczęte" przez przeoczenie).
 > "Jeśli chodzi o animacje ekranu to najpierw ma się odsłonić odpowiedź a
 > dopiero wtedy zmienić się suma, a nie na odwrót."
 
-`display2/js/render.js`: w rundach, `ANSWER_REVEALED` najpierw woła
-`api.rounds.setRow()` (tekst/punkty konkretnej odpowiedzi) w pętli, DOPIERO
-POTEM (i tylko jeśli `bankPts` się realnie zmienił — R8 jest czysto
-pokazowe) `api.rounds.setSuma()`. W finale to w ogóle DWA ODDZIELNE
-zdarzenia z różnych kliknięć operatora (`FINAL_ANSWER_REVEALED` →
+`display/js/render.js`: w rundach `ANSWER_REVEALED` odsłania tekst odpowiedzi
+jako pierwszy etap. Dopiero potem jednocześnie animuje punkty odpowiedzi i
+nową sumę banku (jeśli bank faktycznie się zmienił; R8 jest czysto pokazowe).
+Oba etapy dzielą czas dźwięku reveal po połowie. W finale to w ogóle DWA
+ODDZIELNE zdarzenia z różnych kliknięć operatora (`FINAL_ANSWER_REVEALED` →
 `setLeft`/`setRight`, zawsze osobno i wcześniej niż `FINAL_POINTS_REVEALED`
 → `setA`/`setB`/`setSumaFor`), więc kolejność jest strukturalnie
 wymuszona, nie przez przypadkową kolejność linii kodu.
@@ -435,9 +435,9 @@ ffmpeg osiągał około 722 MB RSS, P95 klatek nadal 16,7 ms. Brak podstaw,
 żeby przypisywać wykryty lag niedoborowi RAM. Nagrywanie dodaje trochę
 narzutu, lecz główna przyczyna jest w sekwencji i czasie animacji.
 
-Przygotowano poprawkę: równoległy tekst/punkty jednej odpowiedzi, `await`
-przed sumą, jeden budżet dźwięku na całą sekwencję, kompensowanie opóźnień
-pauz względem wspólnego czasu animacji. Cztery testy regresji czasu i
+Wcześniejszą poprawkę zastąpiono kolejnością dwuetapową opisaną w punkcie 6:
+najpierw tekst, potem jednocześnie punkty odpowiedzi i suma banku, w ramach
+jednego czasu dźwięku reveal. Cztery testy regresji czasu i
 kolejności oraz 35 powiązanych testów przeszły. Weryfikacja wdrożenia
 odbywa się w pełnym cyklu wszystkich 10 nagrań produkcyjnych.
 
@@ -815,3 +815,16 @@ do naprawy.
    wyżej, nieopisany osobno, ale odtwarzalny: patrz historia commitów tej
    sesji dla `control2.html`/`control2/js/ui.js` zmian.
 6. **Zaktualizuj ten plik** po każdym ukończonym/zbadanym punkcie.
+
+
+## Korekta odsłaniania punktów i wznowienia po Buzzerze — 2026-10-12
+
+- W rundzie Wyświetlacz najpierw odsłania tekst odpowiedzi. W drugiej fazie
+  jednocześnie odsłania punkty tej odpowiedzi i aktualizuje sumę banku. Fazy
+  dzielą jeden czas dźwięku reveal po połowie; nie wydłużają przejścia.
+- Po odświeżeniu Control uznaje aktualnie wczytany stan za stan bazowy, a nie
+  nową zmianę planszy wymagającą potwierdzenia. To ważne po naciśnięciu
+  Buzzera: zapis `lastPressed` zmienia numer stanu, choć nie zmienia planszy.
+  Nadal obowiązującą blokadę dźwięku Control odczytuje z `locked_until`
+  i odblokowuje panel po jej wygaśnięciu.
+- Zmiana naprawiona lokalnie; bez migracji. Testów nie uruchomiono.

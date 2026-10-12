@@ -31,7 +31,7 @@ for(const type of ['poll_text','poll_points'])test(`anonymous362 ${type}: preser
   game=await seed(page,type);
   const anonymous=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});anonymousContexts.push(anonymous);
   await serveBranchCode(anonymous,{pages:['polls/vote/text','polls/vote/points']});
-  await anonymous.addInitScript(({id,key})=>{localStorage.setItem('fam_poll_done_'+id+'_'+key,'1');localStorage.setItem('lang','pl');},game);
+  await anonymous.addInitScript(({id,key})=>{localStorage.setItem('fam_poll_done_'+id+'_'+key,'1');localStorage.setItem('uiLang','pl');},game);
   const voter=await anonymous.newPage();instrumentPage(voter);const pageErrors=[];voter.on('pageerror',error=>pageErrors.push(error.message));
   const url=`${origin}/polls/vote/${type==='poll_text'?'text':'points'}/?id=${game.id}&key=${game.key}`;
   const calls=[];let loseFirstResponse=true;

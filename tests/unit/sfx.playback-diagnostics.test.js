@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { AudioContextStub } from "./helpers/web-audio.js";
 import { loadSfxFromCloud, onSfxPlayback, playSfx } from "../../web/shared/js/core/sfx.js";
 
 test("SFX playback reports only its actual start or failure without leaking rejected play promises", async () => {
   const saved = {
-    Audio: globalThis.Audio, localStorage: globalThis.localStorage,
+    Audio: globalThis.Audio, AudioContext: globalThis.AudioContext, localStorage: globalThis.localStorage,
     requestAnimationFrame: globalThis.requestAnimationFrame,
     cancelAnimationFrame: globalThis.cancelAnimationFrame, window: globalThis.window,
   };
@@ -15,6 +16,7 @@ test("SFX playback reports only its actual start or failure without leaking reje
     play() { this.paused = false; return this.src.includes("reject") ? Promise.reject(new DOMException("blocked", "NotAllowedError")) : Promise.resolve(); }
   }
   globalThis.Audio = AudioStub;
+  globalThis.AudioContext = AudioContextStub;
   globalThis.localStorage = { getItem: () => null, setItem() {} };
   globalThis.requestAnimationFrame = () => 1;
   globalThis.cancelAnimationFrame = () => {};

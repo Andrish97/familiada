@@ -19,14 +19,24 @@
 // control/display/js/soundReactor.js przejmuje odtwarzanie, a ten tutaj po prostu
 // nic nie robi (zero podwójnego odtwarzania).
 
-import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx, setSfxMuted } from "../../shared/js/core/sfx.js?v=v2026-10-12T22034";
-import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-12T22034";
+import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx, setSfxMuted, applySfxGameSettings } from "../../shared/js/core/sfx.js?v=v2026-10-12T22045";
+import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-12T22045";
 
 export function createSoundReactor(store, { waitForStart = null } = {}) {
   const engine = createSoundCueEngine({ playSfx, getSfxDuration, stopSfx, waitForStart });
   let prevRow = null;
+  let appliedSound = null;
+  function syncSoundSettings(settings) {
+    const sound = settings?.sound || {};
+    const signature = JSON.stringify(sound);
+    if (signature !== appliedSound) {
+      applySfxGameSettings(sound);
+      appliedSound = signature;
+    }
+  }
 
   function onStateChange(state) {
+    syncSoundSettings(state.settings);
     setSfxMuted(state.settings?.soundMuted);
     const nextRow = state.__row;
     if (!nextRow) return;
@@ -49,6 +59,7 @@ export function createSoundReactor(store, { waitForStart = null } = {}) {
   const unsubscribe = store.subscribe(onStateChange);
   // Stan mógł już być załadowany (hydrate()) zanim ten reaktor powstał —
   // złap go od razu, żeby prevRow nie zostało puste do pierwszej zmiany.
+  syncSoundSettings(store.state.settings);
   setSfxMuted(store.state.settings?.soundMuted);
   if (store.state.__row) prevRow = store.state.__row;
 
