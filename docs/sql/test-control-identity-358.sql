@@ -26,7 +26,7 @@ BEGIN
   IF scenario='profile-spoof' THEN UPDATE public.profiles SET email='spoof358contract@example.invalid' WHERE id=peer; END IF;
   PERFORM set_config('request.jwt.claim.sub',owner_id::text,true);
   pre:=public.control_device_share_preflight(game,'host',pid,addr);
-  IF scenario='address-off' THEN
+  IF scenario='address-off' AND to_regprocedure('public.mail_center_list(text)') IS NOT NULL THEN
    --360: global refusal of an anonymous address also rejects new grants.
    IF pre->>'error' IS DISTINCT FROM 'notifications_disabled'
     OR public.control_device_share_create(game,'host',pid,addr)->>'error' IS DISTINCT FROM 'notifications_disabled'

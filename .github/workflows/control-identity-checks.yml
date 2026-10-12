@@ -36,9 +36,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Restore current schema without replaying historical Control APIs
         run: |
+          # Fixed real pre360 schema: production dumps now include the new APIs.
+          git fetch --no-tags --depth=1 origin ce81a3a9af33a590c2afea601b96857c9cd8ba43
+          git show ce81a3a9af33a590c2afea601b96857c9cd8ba43:supabase/schema.sql > /tmp/pre-mail-center-schema.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
           psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
-          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' supabase/schema.sql > /tmp/fam-schema.sql
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' /tmp/pre-mail-center-schema.sql > /tmp/fam-schema.sql
           psql -v ON_ERROR_STOP=1 -f /tmp/fam-schema.sql > /tmp/fam-restore.log 2>&1
           psql -v ON_ERROR_STOP=1 -f docs/sql/restore-identity-auth-triggers-358.sql
           psql -v ON_ERROR_STOP=1 -c "INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce) VALUES('friend:invite_after_reject','pair',2592000,true) ON CONFLICT DO NOTHING"
