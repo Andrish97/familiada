@@ -17,7 +17,7 @@ Wypisanie=odmowa wszędzie zapisane. Audyt sprzed346 wykazał DELETE aktywnej
 relacji i jednostronny cooldown po cancel;346 zachowuje odmowę, aktora,
 budżet oraz zegary w obu kierunkach. _friend_drop_pair_tasks usuwa
 pending/opened taski pary; częściowe głosy i oczekujące maile to dalsza
-krawędź grafu.347 zastosowany produkcyjnie; testy rzeczywistych maili w toku.
+krawędź grafu.347 zamknięty produkcyjnie, z testami rzeczywistych maili.
 Kaskada345 wdrożona: FK base_share_tasks→question_bases ON DELETE CASCADE,
 DB38173636101/log OK20:48:43 UTC i rollbackowy smoke ✓; punktowy rzeczywisty
 Base mail/Go/odmowy/role main38173864796 ✓ bez retry. Wypisanie Znajomych346
@@ -51,12 +51,30 @@ success.350 rozszerza skrzynkę/helpery o15, Worker restore15 weryfikuje
 automatyczny wyjątek admina. Użytkownik dodaje routing15 w Cloudflare.
 350 isolated38183690135 success/unit455, DB38183762947 success/log23:19:59,
 schema a817702091, Worker38183764142 success. Routing15 potwierdzony mailem.
-Branch38183939578: restore11/12/15 success, realne maile15 w7.4/61.7s;
-kasowanie nie wywołane: klik przed async gotowością Account. Dodano
-oczekiwanie skel-step-ready i asercję odpowiedzi Edge.15 ma konto,
-logowanie i automatyczny wyjątek admina; kasowanie wymaga świeżego branch/main.
-Nie zamykać348 przed tymi kontrolami; test14 nadal bez konta.
-Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
+Pierwszy branch38183939578: restore11/12/15 success, maile15 w7.4/61.7s,
+klik przed gotowością Account, BEZ kasowania. Oczekiwanie skel-step-ready
+oraz odpowiedź Edge poprawione. Świeży branch38184283428 success2/2,
+main38184602498 success2/2 bez retry/unit455. Mail15 w43.6/93.8s na branchu,
+92.3/107.1s na main. Kasowanie przez UI rzeczywiście wykonane, nowy ID
+po odtworzeniu, ukończony tekst zachowany/partial punkty usunięte,
+stare linki/RPC niedostępne nowemu kontu i anonimowo. Finally odtwarza15
+i sprawdza logowanie w świeżym kontekście; oba konta11/12 też logują się.
+Automatyczny wyjątek admina15 sprawdzony również po odtworzeniu.
+**348–350 zamknięte produkcyjnie; graf pkt7 nadal otwarty.**
+
+351 przygotowywane na osobnym branchu codex/e19-351. Wykryty problem:
+legacy task pozostaje e-mailowy po otwarciu; po zmianie adresu znika
+wymóg zalogowania. Poprawka wiąże task z kanonicznym ID konta przy
+rejestracji, zmianie adresu, konwersji gościa i przed skasowaniem konta;
+nowe taski oraz backfill obejmują wszystkie stany obu typów. Sama zmiana
+adresu profilu nie pozwala przejąć cudzych tasków. Prywatne blokady
+adresów i referencje kont porządkują równoczesną rejestrację/udostępnienie.
+Lokalnie351: kontrakt all-state, backfill, siedem regresji SQL,16 wyścigów
+głosowania oraz4 wyścigi tworzenia tasków success. DDL vs stary child-first
+cleanup success; unit455/455. Jeszcze bez wdrożenia351 i bez testu mail/Go
+na produkcji. To dotyczy tasków Ankiet, nie całego grafu ani konwersji
+legacy Subskrypcji. Pending kolejka/proweniencja maili, Go/anon i dalsze
+krawędzie pozostają otwarte.
 
 UI/E20: dopisany audyt stopniowego ładowania (body→topbar→sekcje).
 Kontakty/Zadania odsłaniają zbiorczo; Ankiety nie mają etapów kart;

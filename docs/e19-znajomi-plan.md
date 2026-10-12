@@ -1283,3 +1283,32 @@ starych dostępów. Dane i relacje nie wracają. Automatyczny wyjątek admina
 rozpoznaje zaufany adres auth, więc pozostaje skuteczny po zmianie ID.
 Użytkownik dodaje regułę Cloudflare15 → Worker; testuje ją rzeczywisty mail.
 Wcześniejszy wybór12 do usuwania zastąpiony tą decyzją przed testem kasowania.
+
+### Graf pkt7 — kaskady odbiorcy348 i bezpieczne konto15 zamknięte
+
+348: recipient FK CASCADE dla tasków Baz/Ankiet i legacy Subskrypcji.
+349–350: pomocniki testowe, skrzynka15 i trwały automatyczny wyjątek admina
+po zmianie ID. DB35038183762947/log23:19:59/schema a817702091, Worker38183764142.
+Branch38184283428 i main38184602498 success2/2 bez retry/unit455: realne maile,
+UI kasowania15, zachowanie pełnego anonimowego wyniku, usunięcie partial,
+nowe konto bez dawnych linków, restore/login w finally, logowania11/12/15.
+Pierwszy38183939578 kliknął przed podpięciem obsługi, nie kasował konta;
+test czeka teraz na gotowość i sprawdza odpowiedź delete-account.
+
+Następna krawędź: legacy task na e-mail → konto → zmiana adresu/kasowanie.
+Audit lokalny odtworzył brak trwałego ID po zalogowanym otwarciu i powrót
+dostępu anonimowego po zmianie adresu. Helper claim istnieje, ale nie jest
+wywoływany w aktualnym froncie. Poprawa z pełnym kontraktem stanów,
+rejestracji/zmian e-maila/ponownego konta i kolejności blokad w pkt7;
+nie oznacza jeszcze wdrożenia ani zamknięcia całego grafu.
+
+### Graf pkt7 —351: tożsamość odbiorcy tasków Ankiet (w realizacji)
+
+Trwałe przypisanie do ID konta przy rejestracji/zmianie adresu/konwersji
+gościa; przed kasowaniem przypisanie umożliwia kaskadę348. Adres pochodzi
+z Auth, nie z edytowalnego profilu. Wszystkie pięć stanów, oba typy;
+guest/nieznany adres zachowują tryb e-mail. Nowe udostępnienia i stare
+rekordy obejmuje ta sama zasada. Lokalnie kontrakt, backfill,20 wyścigów,
+DDL oraz siedem regresji SQL success; unit455. Wdrożenie i rzeczywisty
+mail/Go jeszcze pending. Konwersja legacy Subskrypcji, kolejka mailowa
+i pozostałe krawędzie grafu nie są zamknięte tą paczką.
