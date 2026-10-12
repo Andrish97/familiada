@@ -865,3 +865,39 @@ resolverem. Następne: log360/wdrożenia, punktowe rzeczywiste SMTP i
 mail-center2scenariusze branch/main, galerie screenshotów, dopiero closure.
 Nie nazywać grafu całego systemu zakończonym: dalsze Go/anon/pozostałe
 krawędzie i sześć etapów głównych, manual ostatni. Auth już zamknięte.
+
+### 2026-10-12 —360/361 oraz wyjątki Kontakt zakończone
+
+Centrum `/mail/` i graf źródło→kolejka→dostarczenie są na produkcji.
+Main38308851386 success7/7 bez retry/unit510:2 scenariusze centrum i5
+rodzin maili, rzeczywiste SMTP, Go, akceptacja/cofnięcie i partial,
+prywatne cookie/CSRF, preview/one-use/global-off i przywrócenie bez
+odtworzenia źródeł. Migracja360: DB38305424636 success; poprawka kanonicznego
+linku urządzenia361: DB38306068075 success. Prywatny testowy mail-trigger
+wywołuje tę samą kolejkę z istniejącym invoke_mail_worker_ids; żadnych
+resetów budżetów/flag/delay/lease. Czekanie skrócone z120s do4–8s;
+helper powtarza selekcję tylko dopóki UI nie wstawi maila. Domyślne
+trigger:true; trigger:false do kontroli crona. Skrzynki9/10 wykluczone.
+Syntetyczne szablony SMTP pozostają odrębne od Auth i rzeczywistego
+kontaktu. Auth/inbox/358/360/361 nie powtarzać.
+
+Rzeczywiste8 screenów: docs/img/mail-center/live/README.md, mainb148376779.
+Workflow e2e ma jawne publish_mail_screenshots; po udanym specu centrum
+zapisuje tylko shot-mail360-*.png do docs (zwykłe linki GitHub), ponieważ
+pobieranie Azure artefaktów w środowisku jest niedostępne.
+
+Korekta użytkownika: **Host/Display/Buzzer bez kontaktu**. Importy usunięte,
+data-device-screen blokuje również wstawienie/otwarcie w module. Branch
+38309604079 i main38310091221 success1/1,510/510, Pages38309965230 success.
+Wszystkie3 urządzenia są online i Podsumowanie działa. Zwykłe strony
+nadal mają Kontakt. Aktualny main zawiera również równoległe poprawki Control
+oraz domyślnej głośności; zachować je przy scaleniach.
+
+Dalej E19/pkt7: Go/łagodny anonimowy limit/końcowy audyt grafu. Lokalny
+szkic362 w docs/sql/draft-poll-anonymous-362.sql i DBfam362draft, nie
+migracja/produkcja. Pełny formularz atomowo,30s/przeglądarka/gra/klucz,
+bez IP, osobny token głosu i idempotentny retry; legacy anonymous RPC
+wymaga prywatnej autoryzacji transakcji, zadania i właściciel zachowują
+swój dotychczasowy kontrakt. Pierwsze kontrakty tekst/punkty success;
+dołożyć błędne payloady, duże formularze, zadania/właściciela, wyścigi,
+frontend oraz bramki. Cały E19 pozostaje otwarty, manual ostatni.
