@@ -572,3 +572,23 @@ flowchart TD
 
 SQL tekst/punkty/40 pytań,8 wyścigów i końcowe DDL sprawdzone lokalnie oraz
 w isolated38314641449. Nie oznacza to zamknięcia całego grafu E19.
+
+### Zamknięcie bieżących krawędzi E19 — 2026-10-12
+
+Starsze wpisy powyżej zachowują historię kolejnych audytów. Aktualny stan:
+360/361 wiążą źródło powiadomienia z kolejką i ostatnią kontrolą przed SMTP;
+centrum adresu i jego nadrzędna odmowa są powiązane z tym samym poddrzewem.
+362 wiąże prywatny zegar anonimowego formularza z grą i bieżącym kluczem,
+z cleanup po zamknięciu/rotacji/usunięciu.363 zachowuje kanonicznego odbiorcę
+w Go również po zmianie adresu.
+
+Audyt produkcji38318723049:11 kontroli,0 niespójności. Sprawdza aktualne
+referencje rodziców/źródeł, częściowe głosy, sesje/granty, zegary, centrum,
+alokacje/kolejkę i ACL prywatnych tabel. Jest read-only i nie dowodzi sam
+w sobie wszystkich zachowań; uzupełniają go SQL/races i native SMTP/E2E
+wcześniejszych zamkniętych paczek oraz main Go38322222772 success.
+
+Implementacja pozostaje zbiorem jawnych FK, triggerów i transakcyjnych RPC
+wspólnych gałęzi. Nowe kopie E19C muszą dołożyć swoje niezależne poddrzewo
+odbiorcy i osobne kontrakty, a E19N przegląda deklaracje/powroty stron.
+Nie traktować dzisiejszego zamknięcia jako obsługi dowolnego przyszłego zasobu.

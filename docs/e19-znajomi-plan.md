@@ -142,7 +142,7 @@ pula test1–test8; test9/test10 zarezerwowane.
 | 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | **zrobione** — branch po synchronizacji 38100967351 ✓; Pages 38101052370 ✓; produkcja 38101089865 ✓, unit 401/401. Test zaliczył retry: pierwsza próba nie doczekała maila, który nadal był w kolejce; retry zakończył się pomyślnie |
 | 5. Bazy: jedno okno (udostępnieni + dodawanie), `go?b=`, akceptacja w `/tasks/` | **zrobione** — migracja 322 i front na produkcji; runner SQL 38101686798 ✓; Pages 38102630814 ✓; branch E2E 38102541764 ✓; produkcyjne E2E 38103300067 ✓, 2/2, unit 401/401. Cron `*/2` aktywny; po wydłużeniu timeoutu mail test8 dotarł po 33 s; oba scenariusze bazy zaliczone |
 | 6. Urządzenia: jedno okno, odbiorca bez konta, token unieważniany per osoba i sesję Control | **zrobione — backend i TTL sprawdzone produkcyjnie (38130087825, 38130327633, 38130590463); dopracowany modal i przywrócony styl Urządzeń na main `44063a604`, Pages 38133157139 ✓, branch 38132982841: 2/2 + unit 401/401; kontrola produkcyjna nowego UI 38133215588 ✓: 2/2 + unit 401/401** |
-| 7. Ujednolicenie Znajomych, Subskrybentów i udostępnień wg tabeli zachowań | **w toku**; podpunkty1–6 (wspólny wygląd/listy, kontakty, odmowy/cooldowny, Bazy, Ankiety, maile) zamknięte produkcyjnie. Podpunkt7: kaskady/tożsamość/źródła kontaktów wdrożone;360 źródło→kolejka→dostarczenie oraz centrum /mail/ zamknięte produkcyjnie (main38308851386:7/7). Dalsze: pełne stany Go, łagodny limit anonimowy i końcowy audyt grafu. |
+| 7. Ujednolicenie Znajomych, Subskrybentów i udostępnień wg tabeli zachowań | **zrobione dla bieżących zasobów**; podpunkty1–7 zamknięte produkcyjnie.360/361 centrum i źródło→kolejka→dostarczenie (main38308851386:7/7),362 formularze obu typów (main38315815400:2/2), audyt grafu38318723049:11 kontroli/0 niespójności,363 tożsamość Go i końcowa macierz main38322222772:1/1 bez retry/530 unit. Nowe kopie E19C, przegląd nawigacji E19N, porządki E14 i dopieszczenie E20 pozostają osobnymi następnymi etapami. |
 
 ### Dalsza realizacja kroku 7 po zamknięciu Control
 
@@ -1564,3 +1564,16 @@ revoked, błędny rodzaj linku i błędy sieci, wspólny brak dopasowania odbior
 Historyczny s/action=unsub konwertowany na friend kierować do Znajomych.
 Usunięcia/wygaśnięcia bez istniejącego rekordu dają ogólny stan niedostępny;
 nie odtwarzać przodka ani dawnego dostępu w celu opisania starego tokenu.
+
+### Zamknięcie bieżącego E19/pkt7 — 2026-10-12
+
+Źródłem końcowych stanów Go jest go-stany.md. Main38322222772 success
+bez retry po naprawie wcześniejszego przekierowania m w Workerze;530 unit.
+Backend363 DB38320540716/log OK, Pages38321253667, Worker38322130197 success.
+22 zrzuty przykładowej macierzy po wdrożeniu w galerii1ec6ffe8bc. Są opisane
+jako interfejs na jawnych odpowiedziach przykładowych; wcześniejsze native
+DB/SMTP/formularze/QR i audyt11/0 zachowują osobne wyniki.
+
+Bieżące rodziny i gałęzie grafu domknięte. To nie wykonuje nowych kopii
+Gier/Logo (E19C), przeglądu mapy i odblokowania Znajomych w Control (E19N),
+usuwania zastąpionych RPC (E14) ani końcowego wyglądu (E20). Manual ostatni.

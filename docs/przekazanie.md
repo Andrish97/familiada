@@ -1042,3 +1042,21 @@ sprawdzenie QR:529 unit success. Nowy go-states.spec.js testuje konkretną
 macierz interfejsu na jawnych atrapach biznesowych i rzeczywistym logowaniu;
 nie deklarować tym ponownego SQL/SMTP. Osobna galeria go-states. Branch→Pages→
 main punktowo jeszcze wymagane. Reszta kolejki E19C/E19N/E14/E20/E13 bez zmian.
+
+**Bieżący E19 zamknięty produkcyjnie:** main Go38322222772 success1/1
+bez retry/530 unit. Pierwszy main38321380849 i diagnostyczny38321800038
+ujawniły Worker m→mail przed parserem; naprawa współdzieli parseGoLink
+z frontendem, unit14 błędnych GET/HEAD i ważny m bez backendu, wrangler
+dry-run success. Worker38322130197 success, Pages38321253667 success,
+DB36338320540716/log363 OK. Galeria22 screenów po wdrożeniu1ec6ffe8bc.
+Nie powtarzać domkniętych Go/Control/362/SMTP ani audytu11/0.
+
+**Następny E19C.** Inwentaryzacja w udostepnianie-kopii-plan.md:
+Gra pakiet: definicja+pytania+odpowiedzi, bez settings/logo/dźwięków;
+zamknięta ankieta→Prepared. Logo pakietGLYPH/PIX, obraz ma być osadzony,
+nie może zostać URL nadawcy po nieudanym pobraniu. Obecny importer gry
+nie jest jedną transakcją, logo IMAGE uploaduje osobny własny plik.
+Wysyłka wymaga kompletnego, niezależnego snapshotu i dokładnie jednego
+importu u stałego ID odbiorcy także przy race/lost response. Historia30dni
+nie usuwa oferty ani przyjętej kopii; po wysłaniu brak cofania nadawcy.
+Następnie E19N (Control→Znajomi i mapa), E14, E20; manualE13 ostatni.
