@@ -1,10 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { AudioContextStub } from "./helpers/web-audio.js";
 import { getSfxDurationAccurate, setSfxVariant } from "../../web/shared/js/core/sfx.js";
 
 test("new gameplay measures decoded audio instead of provisional MP3 metadata, caches by source", async () => {
-  const saved = { Audio: globalThis.Audio, OfflineAudioContext: globalThis.OfflineAudioContext, localStorage: globalThis.localStorage, fetch: globalThis.fetch };
+  const saved = { Audio: globalThis.Audio, AudioContext: globalThis.AudioContext, OfflineAudioContext: globalThis.OfflineAudioContext, localStorage: globalThis.localStorage, fetch: globalThis.fetch };
   let decodes = 0;
+  globalThis.AudioContext = AudioContextStub;
   globalThis.Audio = class { constructor(src) { this.src = src; this.duration = 4.5; } pause() {} };
   globalThis.localStorage = { setItem() {}, getItem() { return null; } };
   globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(1), json: async () => ({ categories: [{ key: "answer_correct", folder: "answer_correct" }] }) });

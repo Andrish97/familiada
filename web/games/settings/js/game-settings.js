@@ -16,7 +16,7 @@ import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.j
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
-  playSfx, setSfxVolume,
+  playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
 } from "../../../shared/js/core/sfx.js?v=v2026-10-12T21221";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
@@ -951,7 +951,7 @@ async function renderSound() {
   let _previewUrl   = null; // blob URL do zwolnienia
 
   function _stopPreview() {
-    if (_previewAudio) { try { _previewAudio.pause(); _previewAudio.currentTime = 0; } catch {} }
+    if (_previewAudio) stopSfxAudio(_previewAudio, { dispose: true });
     if (_previewUrl)   { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
     if (_previewBtn)   { _previewBtn.innerHTML = icon("play"); delete _previewBtn.dataset.playing; }
     _previewAudio = null;
@@ -973,14 +973,13 @@ async function renderSound() {
         const custom = customFiles.get(key);
         if (!custom?.blob) return;
         blobUrl = URL.createObjectURL(custom.blob);
-        audio = new Audio(blobUrl);
+        audio = createSfxAudio(blobUrl);
       } else {
         const cat = categories.find(c => c.key === key);
         if (!cat) return;
-        audio = new Audio(`/assets/audio/${cat.folder}/${val}`);
+        audio = createSfxAudio(buildSfxUrl(cat.folder, val));
       }
-      audio.volume = vol;
-      audio.play().catch(() => {});
+      playSfxAudio(audio, vol).catch(() => {});
       audio.addEventListener("ended", _stopPreview, { once: true });
 
       _previewAudio = audio;
@@ -996,7 +995,7 @@ async function renderSound() {
     slider.addEventListener("input", () => {
       const key = slider.dataset.sfxVol;
       if (_previewBtn?.dataset.sfxPreview === key && _previewAudio) {
-        _previewAudio.volume = parseInt(slider.value, 10) / 100;
+        setSfxAudioVolume(_previewAudio, parseInt(slider.value, 10) / 100);
       }
     });
   }, true); // capture=true żeby odpalić przed istniejącym listenerem
