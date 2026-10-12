@@ -667,6 +667,20 @@ async function deleteGame(page, gameId) {
   }, gameId).catch(() => {});
 }
 
+async function deleteStaleReconnectTestGames(page) {
+  const removed = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data, error } = await sb.from("games").select("id").like("name", "E2E-CONTROL2-RECONNECT-%");
+    if (error) throw new Error("find stale reconnect test games: " + error.message);
+    const ids = (data || []).map(row => row.id);
+    if (!ids.length) return 0;
+    const { error: deleteError } = await sb.from("games").delete().in("id", ids);
+    if (deleteError) throw new Error("delete stale reconnect test games: " + deleteError.message);
+    return ids.length;
+  });
+  if (removed) console.log(`[statistics-review] removed ${removed} stale reconnect test game(s)`);
+}
+
 async function readControl2Sessions(page, gameId) {
   statisticsGameIds.add(gameId);
   return page.evaluate(async (gid) => {
@@ -2762,6 +2776,7 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
 
 test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponowne podłączenie przez modal", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  await deleteStaleReconnectTestGames(page);
   const game = await makeGame(page, `E2E-CONTROL2-RECONNECT-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
   const errors = [];
