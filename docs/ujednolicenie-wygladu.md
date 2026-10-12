@@ -920,3 +920,22 @@ dodawania technicznych informacji do zwykłych ekranów ani manuala.
 **E20 / dialogi mobilne i historia (2026-10-12):** pełnoekranowy modal ma zachowywać się jak ekran również dla Wstecz przeglądarki/Androida: najpierw zamknięcie dialogu, potem normalna nawigacja. Wstecz w modalu i X korzystają z tego samego mechanizmu, bez pustych wpisów. Wdrożenie polityki/mapy w E19N (`nawigacja-mapa-plan.md`, końcowa podsekcja); w E20 sprawdzić spójność wszystkich dialogów, obrót i tablet.
 
 **Doprecyzowanie E19N/E20:** dialogi będące ekranami otrzymują stan w URL strony (np. dialog=share i wymagany zasób). Dalej odtwarza okno, tak samo odświeżenie/bezpośredni link, po kontroli dostępu. Nie powtarzać operacji przy odtwarzaniu. Źródło parametrów i stosu dialogów: mapa nawigacji.
+
+### E20 — filtrowanie zależne od zakładki (2026-10-12)
+
+Filtry pokazują wyłącznie opcje mające zastosowanie do aktywnej zakładki
+i jej typu zasobu. Dotyczy wspólnego wzorca list i nowych kompaktowych
+narzędzi telefonu, także menu filtra otwieranego ikoną.
+
+| Przypadek | Docelowe zachowanie |
+|---|---|
+| Gry → Preparowane | Bez opcji stanów ankiety, np. „Otwarta ankieta”; uwzględnić rzeczywiste stany preparowanej gry i jej gotowość do gry. |
+| Gry → ankiety tekstowe/punktowe | Opcje zgodne z cyklem życia właściwego typu ankiety. Rynek ma własny zakres filtrów odpowiadający jego zasobom. |
+| Zmiana zakładki | Opcje filtra przeliczyć dla nowej zakładki; zachować pasujący wybór, wyczyścić niepasujący do „Wszystkie”. Niewidoczny, niepasujący filtr nie może nadal ograniczać listy. |
+| URL / zapamiętany stan / powrót | Walidować filtr względem zakładki, także przy odświeżeniu i powrocie. Wyczyszczenie niepasującego filtra odzwierciedlić w przycisku, liście i zapisie stanu; bez dodatkowego kroku historii. |
+| Pozostałe listy | Bazy/Logo i inne strony z zakładkami sprawdzić według tej samej zasady; nie dodawać filtra, jeśli zakładka nie ma sensownych opcji. |
+| Testy | Każda zakładka i przejście między nimi: poprawny zakres opcji, niepasujący/pasujący wybór, URL, powrót, puste wyniki oraz telefon/tablet/komputer. Dane przykładowe obejmują różne stany zasobów. |
+
+Nie ograniczać opcji tylko dlatego, że chwilowo nie ma rekordów danego
+stanu: zakres wynika z typu zakładki. Prawidłowo zastosowany filtr może
+zwrócić pusty wynik zgodnie ze wspólnym wyglądem pustych list.
