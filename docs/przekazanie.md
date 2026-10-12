@@ -779,3 +779,12 @@ Zamknięte na produkcji: **13** kopii usuniętych; Worker38267398689 i
 baza38267398627 zielone. SMTP38267524680: zaproszenie odebrane przez test7,
 po nim SQL potwierdził brak technicznych kopii w skrzynce. Unit463/463.
 Następny krok: wrócić do grafu/centrum `/mail/`; nie powtarzać naprawy359.
+
+**Auth niezależne od powiadomień — zamknięte 2026-10-12:** main
+fcdea7a889, Edge38298008652, branch38297713527 i main38298190111
+success1/1 bez retry, unit467/467. Rzeczywisty reset test11 dostarczony
+przy email_notifications=false; wcześniejsza flaga przywrócona. Usunięta
+dawna awaryjna ścieżka send-email→mail_queue po wyczerpaniu dostawców.
+Auth nie ma kolejki/blokad powiadomień/stopki centrum; przy awarii zwraca
+błąd. Treści Edge bez zmian. Nie powtarzać tego zamkniętego pakietu.
+Nadal sześć głównych etapów planu; dalej E19 pkt7, manual ostatni.
