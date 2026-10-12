@@ -775,4 +775,7 @@ Użytkownik zgłosił techniczne kopie własnych zaproszeń w skrzynce admina
 (zrzut: nadawca `bounce+…@bounce-zem.familiada.online`). Paczka359 dodaje
 pomijanie w Workerze, ochronę RPC i selektywne czyszczenie; testowe skrzynki
 pozostają dostępne. Stan wdrożenia i przebiegi w dzienniku wdrożeń.
-To ma pierwszeństwo przed kontynuacją grafu/centrum `/mail/`.
+Zamknięte na produkcji: **13** kopii usuniętych; Worker38267398689 i
+baza38267398627 zielone. SMTP38267524680: zaproszenie odebrane przez test7,
+po nim SQL potwierdził brak technicznych kopii w skrzynce. Unit463/463.
+Następny krok: wrócić do grafu/centrum `/mail/`; nie powtarzać naprawy359.
