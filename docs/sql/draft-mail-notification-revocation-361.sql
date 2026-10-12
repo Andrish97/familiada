@@ -121,3 +121,17 @@ CREATE TRIGGER trg_notification_auth_epoch_prototype AFTER UPDATE OF email,is_an
 
 CREATE TRIGGER trg_notification_profile_epoch_prototype AFTER UPDATE OF is_guest ON public.profiles
  FOR EACH ROW EXECUTE FUNCTION public.mail_notification_parent_epoch_prototype();
+
+CREATE OR REPLACE FUNCTION public.mail_notification_cancel_pending_prototype()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+BEGIN
+ IF NEW.revoked_at IS NOT NULL AND OLD.revoked_at IS NULL THEN
+  -- Keep the consumed allocation ledger: deleting the pending queue entry
+  -- never creates a new right to send. Active provider attempts retain their lease.
+  DELETE FROM public.mail_queue WHERE notification_allocation_id=NEW.id AND status='pending';
+ END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public.mail_notification_cancel_pending_prototype() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER trg_notification_cancel_pending_prototype AFTER UPDATE OF revoked_at ON public.mail_notification_allocations_prototype
+ FOR EACH ROW EXECUTE FUNCTION public.mail_notification_cancel_pending_prototype();

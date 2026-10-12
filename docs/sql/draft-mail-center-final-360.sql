@@ -865,7 +865,7 @@ CREATE TRIGGER zz_mail_center_anon_source_guard BEFORE INSERT ON public.control_
 
 -- Consolidated source: draft-mail-center-confirmation-360.sql
 ALTER TABLE public.mail_queue ADD COLUMN mail_center_link_id uuid
- REFERENCES public.mail_center_links(id) ON DELETE SET NULL;
+ REFERENCES public.mail_center_links(id) ON DELETE CASCADE;
 CREATE TABLE public.mail_center_request_events(
  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  email_hash text NOT NULL, ip_hash text NOT NULL,
@@ -953,7 +953,7 @@ END;
 $$;
 
 -- Consolidated source: draft-mail-center-delivery-360.sql
--- Ordinary invitation source bindings are the next graph layer, not covered here.
+-- The notification source graph follows in the same transaction.
 ALTER TABLE public.mail_queue ADD COLUMN contact_message_id uuid
  REFERENCES public.messages(id) ON DELETE SET NULL;
 ALTER TABLE public.mail_queue ADD COLUMN contact_source_expected boolean NOT NULL DEFAULT false;
@@ -2233,6 +2233,20 @@ CREATE TRIGGER trg_notification_auth_epoch AFTER UPDATE OF email,is_anonymous,em
 
 CREATE TRIGGER trg_notification_profile_epoch AFTER UPDATE OF is_guest ON public.profiles
  FOR EACH ROW EXECUTE FUNCTION public.mail_notification_parent_epoch();
+
+CREATE OR REPLACE FUNCTION public.mail_notification_cancel_pending()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+BEGIN
+ IF NEW.revoked_at IS NOT NULL AND OLD.revoked_at IS NULL THEN
+  -- Keep the consumed allocation ledger: deleting the pending queue entry
+  -- never creates a new right to send. Active provider attempts retain their lease.
+  DELETE FROM public.mail_queue WHERE notification_allocation_id=NEW.id AND status='pending';
+ END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public.mail_notification_cancel_pending() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER trg_notification_cancel_pending AFTER UPDATE OF revoked_at ON public.mail_notification_allocations
+ FOR EACH ROW EXECUTE FUNCTION public.mail_notification_cancel_pending();
 
 -- Consolidated source: draft-mail-notification-delivery-361.sql
 CREATE OR REPLACE FUNCTION public._mail_notification_queue_live(q public.mail_queue)

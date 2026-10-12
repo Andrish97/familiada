@@ -1,6 +1,6 @@
 -- LOCAL DRAFT: user-requested confirmation has a private, live source.
 ALTER TABLE public.mail_queue ADD COLUMN mail_center_link_id_prototype uuid
- REFERENCES public.mail_center_links_prototype(id) ON DELETE SET NULL;
+ REFERENCES public.mail_center_links_prototype(id) ON DELETE CASCADE;
 CREATE TABLE public.mail_center_request_events_prototype(
  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  email_hash text NOT NULL, ip_hash text NOT NULL,

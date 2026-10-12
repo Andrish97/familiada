@@ -78,7 +78,8 @@ jobs:
           PGDATABASE: fam_final
         run: |
           psql -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE fam_final'
-          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          sed '1d' docs/sql/local-stubs.sql > /tmp/mail-center-final-stubs.sql
+          psql -v ON_ERROR_STOP=1 -f /tmp/mail-center-final-stubs.sql
           psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
           psql -v ON_ERROR_STOP=1 -f /tmp/mail-center-schema.sql > /tmp/mail-center-final-restore.log 2>&1
           psql -v ON_ERROR_STOP=1 -f docs/sql/restore-identity-auth-triggers-358.sql

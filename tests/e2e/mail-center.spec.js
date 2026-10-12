@@ -64,8 +64,8 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
         const { data, error } = await sb.from('games').insert({ owner_id: owner, type, status: 'draft', name }).select('id,share_key_poll').single();
         if (error) throw error; window.__mail360Games.push(data.id); return data;
       };
-      const poll = await create('poll_text', `E2E-MAIL360-POLL-${Date.now()}`);
-      const control = await create('prepared', `E2E-MAIL360-CONTROL-${Date.now()}`);
+      const poll = await create('poll_text', 'Wieczór rodzinny');
+      const control = await create('prepared', 'Finał turnieju');
       const questions = await sb.from('questions').insert(Array.from({ length: 10 }, (_, i) => ({ game_id: poll.id, ord: i + 1, text: `Pytanie ${i + 1}` })));
       if (questions.error) throw questions.error;
       const opened = await sb.rpc('poll_open', { p_game_id: poll.id, p_key: poll.share_key_poll }); if (opened.error) throw opened.error;
