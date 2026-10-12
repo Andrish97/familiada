@@ -49,6 +49,10 @@ test('Go state matrix: canonical account, terminal messages, every family, malfo
  for(const [status,title] of [['pending','Zaproszenie do ankiety w „Rodzinne wakacje” od użytkownika Ala'],['opened','Zaproszenie do ankiety w „Rodzinne wakacje” od użytkownika Ala'],['done','Dziękujemy, głos oddany'],['declined','Zaproszenie odrzucone'],['expired','To zaproszenie wygasło']]){
   await check('t',{ok:true,kind:'task',status,recipient_user_id:user.id,recipient_email:null,game_name:'Rodzinne wakacje',owner_label:'Ala',poll_type:'poll_text'},title,['pending','opened'].includes(status)?1:0);
  }
+ for(const [status,title] of [['pending','Zaproszenie do znajomych'],['active','Jesteście znajomymi'],['declined','Zaproszenie odrzucone']]){
+  await check('f',{ok:true,kind:'friend',status,recipient_matches_me:true,owner_label:'Ala'},title,1);
+  if(status==='active'){await expect(page.locator('#message')).toBeEmpty();await evidence(page,testInfo,'friends-active');}
+ }
  for(const [error,title] of [['poll_stopped','Ankieta jest zatrzymana'],['poll_closed','Ankieta zakończona'],['expired','To zaproszenie wygasło'],['invalid_token','To zaproszenie wygasło'],['revoked','Udostępnienie jest już niedostępne']])await check('t',{ok:false,error},title,0);
  await evidence(page,testInfo,'unavailable');
  result={ok:true,kind:'friend',status:'pending',recipient_matches_me:true,owner_label:'Ala'};
@@ -80,5 +84,7 @@ test('Go state matrix: canonical account, terminal messages, every family, malfo
   await anon.goto(`${origin}/go/?s=${token}`);await expect(anon.locator('#actions button')).toHaveCount(2);await evidence(anon,testInfo,'guest-subscription');
   guestData={...guestData,status:'declined'};await anon.reload();await expect(anon.locator('#title')).toHaveText('Odrzucono');await expect(anon.locator('#actions button')).toHaveCount(0);
   guestData={ok:true,kind:'base',status:'pending'};await anon.goto(`${origin}/go/?b=${token}`);await expect(anon.locator('#message')).toContainText('stronie Baz');await expect(anon.locator('#actions button')).toHaveText('Zaloguj');
+  guestData={ok:true,kind:'unsub',already_suppressed:true};await anon.goto(`${origin}/go/?u=${token}`);await expect(anon.locator('#title')).toHaveText('Wyłącz powiadomienia mailem');await expect(anon.locator('#message')).toHaveText('Powiadomienia mailem są już wyłączone.');await expect(anon.locator('#actions button')).toHaveCount(0);
+  guestData={...guestData,already_suppressed:false};await anon.reload();await expect(anon.locator('#actions button')).toHaveText('Wyłącz powiadomienia');await evidence(anon,testInfo,'legacy-notifications');
  }finally{await guest.close();}
 });

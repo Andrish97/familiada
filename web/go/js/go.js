@@ -716,8 +716,8 @@ function handleBaseInvite(data, user) {
 function handleFriendInvite(data, user) {
   clearActions(); showEmailInput(false);
   if (user && !data.recipient_matches_me) { showMismatch(t("contacts.goTitle")); return; }
-  const head = ["active", "declined"].includes(data.status) ? t(`contacts.status.${data.status}`) : t("contacts.goTitle");
-  setView({ head, text: t("contacts.goBody", { owner: data.owner_label }) });
+  const head = data.status === "active" ? t("pollGo.friendActive") : data.status === "declined" ? MSG.inviteDeclinedShort() : t("contacts.goTitle");
+  setView({ head, text: data.status === "pending" ? t("contacts.goBody", { owner: data.owner_label }) : "" });
   if (!user) addAction(MSG.loginLabel(), "gold", redirectToLogin);
   else addAction(t("contacts.open"), "gold", redirectToHub);
 }

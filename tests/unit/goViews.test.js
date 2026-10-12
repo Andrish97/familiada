@@ -46,6 +46,7 @@ for(const lang of ['pl','en','uk'])test(`actual Go views: states and actors ${la
   views.handleFriendInvite({status,recipient_matches_me:actor?.id===id,owner_label:'Ala'},actor);
   assert.equal(nodes.actions.children.length,actor?.id==='other'?0:1);
   if(actor?.id==='other')assert.equal(nodes.message.textContent,dict.pollGo.accountMismatch);
+  if(actor===user&&status==='active'){assert.equal(nodes.title.textContent,dict.pollGo.friendActive);assert.equal(nodes.message.textContent,'');}
  }
  for(const error of ['poll_stopped','poll_closed','expired','invalid_token','revoked','unknown']){
   views.showResolveError({error});assert.equal(nodes.actions.children.length,0);assert.equal(nodes.title.textContent,dict.pollGo[contract.goErrorKey(error)]);
