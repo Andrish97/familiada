@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T21131";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T21201";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -74,7 +74,8 @@ function _cancelFade(key) {
 }
 
 function buildUrl(folder, file) {
-  return `${AUDIO_BASE}${folder}/${file}`;
+  const currentVersion = MANIFEST_PATH.split("?")[1];
+  return `${AUDIO_BASE}${folder}/${file.split("?")[0]}?${currentVersion}`;
 }
 
 function loadIntoCache(key, url) {
@@ -465,7 +466,7 @@ export async function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T21131";
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T21201";
     // Call play() synchronously in the gesture handler, then trust its
     // promise. Previously a rejected autoplay attempt still returned true,
     // allowing Display to report an unlock the browser had refused.
@@ -506,11 +507,14 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T21131" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T21201" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
-  for (const [key, pct] of Object.entries(volumes)) {
-    if (typeof pct === "number") setSfxVolume(key, pct / 100);
+  // Brak wpisu oznacza 100%, tak jak suwak ustawień. Nie dziedziczymy
+  // głośności poprzedniej gry zapisanej w tej samej przeglądarce.
+  for (const { key } of getSfxCategories()) {
+    const pct = volumes[key];
+    setSfxVolume(key, typeof pct === "number" && Number.isFinite(pct) ? pct / 100 : 1);
   }
   for (const [key, file] of Object.entries(variants)) {
     // "__custom__" nie jest plikiem z audio/ — pomijamy,

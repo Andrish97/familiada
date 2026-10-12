@@ -1039,3 +1039,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: kolejne zgłoszenie złego fade: start pętli dopiero po potwierdzeniu play(), wejście i wyjście względem Audio.currentTime, zamiast zegara od żądania. Zachowano dotychczasowe długości fade. W tej samej paczce main, bez testów zgodnie z poleceniem.
 
 - 2026-10-12: paczka audio wdrożona: main7d7c9b2a6c, Pages38309221497 success. Mute Control/Display bez zatrzymywania; fade według pozycji pliku po starcie; plik Buzzera -13,58 LUFS / -1,12 dBTP po zmianie. Zachowano równoległe zmiany maili z main591300e59c. Bez testów na polecenie użytkownika; ocenę działania wykonuje użytkownik.
+
+- 2026-10-12: ponowne zgłoszenie cichego Buzzera: pobrany plik produkcyjny ma identyczny SHA256 jak podgłośniony plik repo. Kod ujawnił dziedziczenie lokalnej głośności z poprzedniej gry przy braku wpisu w sound.volumes, mimo suwaka100%; poprawiono domyślne100% w Control/Display. Adresy wbudowanych plików audio używają bieżącego znacznika wersji. Nie potwierdzono jeszcze, który mechanizm dotknął użytkownika; pytanie o źródło i odsłuch w ustawieniach pozostaje otwarte. Bez testów, bez migracji.
