@@ -806,3 +806,7 @@ Branch38260515251 success1/1 control358 --retries=0/unit459: rzeczywisty SMTPtes
 Main dbc53057b2, Pages38260925626 success, unit459 po assets. Uruchomiona kontrola main2 tests/retries0/pula1,2,7. Nowa decyzja użytkownika: /mail/ domyka przywracanie globalnych powiadomień i przegląd aktualnych subskrypcji/zaproszeń/urządzeń bez szukania starych maili; adres z kontem→login. Szczegóły maile-granice.md + mapa. Dane/mutacje po potwierdzeniu linkiem mailowym; potwierdzenie na żądanie nie jest zwykłym powiadomieniem blokowanym opt-out. Rozszerzenie w E19/pkt7,6 etapów głównych nadal, manual ostatni.
 
 Doprecyzowanie `/mail/`: dwie sekcje Subskrypcje (akceptuj/odrzuć oczekujące, wypisz aktywne) oraz Zadania i udostępnienia (ankiety→głosowanie/odmowa, urządzenia→podłącz). Kolory/ikony starego wzorca Zadań. Globalny przełącznik nad sekcjami, potwierdzenie jednorazowym linkiem przez Go. Kontrakt maile-granice.md dopisany bez przerabiania wykonanych etapów.
+
+### 2026-10-12 — Control358 zakończone produkcyjnie
+
+Main38261432758 success2/2 --retries=0/unit459 na fed93b0a91 (assets po dbc53057b2), rzeczywiste maile konta i test14, Go/Host, nazwą użytkownika/duplikat/mail-off/zero queue-clock/cofnięcie/grant niezależny/stale friend. Pages38260925626 success; SQL38257393434 OK13:42:37Z; isolated38256954899. Nie powtarzać358. Następna globalna stopka/preferencja/centrum /mail/ oraz bound źródła claim/delivery, reszta pkt7. Manual ostatni.
