@@ -755,6 +755,7 @@ const pl = {
       failed: "Nie udało się",
       invalidEmail: "Niepoprawny e-mail",
       unknownUser: "Nie znam takiej nazwy użytkownika",
+      notFriend: "Ta osoba nie jest już na liście znajomych.",
       owner: "Jesteś właścicielem tej bazy",
       success: "Udostępniono",
       removeTitle: "Usuń udostępnienie",

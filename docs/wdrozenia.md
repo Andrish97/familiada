@@ -749,3 +749,5 @@ Stan szczegółowy:
 | 2026-10-12 |357 / isolated finalny success |38242911572 success: unit459, pełna macierz historyczna E19, DDL357, kontrakty źródła/Auth/ACL,24 wyścigi i6 regresji. Odtworzone wyłącznie ACL/polityki337; bieżący Go zachowany. | Promować bazę357, sprawdzić DB/log/rollback smoke; dopiero potem branch-code real mail i główna wersja frontu. |
 
 | 2026-10-12 | E19C/E20 / Otrzymane i brak zbędnych filtrów | Własne zakładki Gier: Preparowane/tekstowe/punktowe mają filtr Otrzymane dla kopii od znajomych. Gry społeczności i Bazy Moje bez filtra/ikony; ukryty warunek nie ogranicza listy. | Ujednolicone źródło E20 i kopii E19C; poprzednia sugestia filtra rynku skorygowana. |
+
+| 2026-10-12 |357 / SQL produkcja success |DB38243208054 success: APPLY/OK11:33:28 UTC i rollbackowy nowy kontrakt357 success; schema/log9f3b8a420b. Wybrane checkboxy w branch-code użyją base_share_to_friend, wpisany mail/nazwa pozostaje ręczny; komunikat not_friend PL/EN/UK. | Punktowe4 testy base-refusals, --retries=0, prawdziwe3 maile łącznie; nie promować frontu przed branch success. |

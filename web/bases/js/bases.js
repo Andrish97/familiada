@@ -943,6 +943,7 @@ function baseShareError(row) {
   if (row?.err === "already_active") return t("baseSharePanel.alreadyActive");
   if (row?.err === "owner") return t("bases.share.owner");
   if (row?.err === "unknown_user") return t("bases.share.unknownUser");
+  if (row?.err === "not_friend") return t("bases.share.notFriend");
   return t("bases.share.failed");
 }
 async function deliverBaseShare(row, baseId, { role, reminder = false } = {}) {
@@ -961,7 +962,7 @@ async function shareAdd(friendIds = null) {
   let message = t("bases.share.success");
   try {
     for (const id of friendIds || [null]) {
-      const { data, error } = await sb().rpc("base_share_by_user", id
+      const { data, error } = await sb().rpc(id ? "base_share_to_friend" : "base_share_by_user", id
         ? { p_base_id: b.id, p_recipient_user_id: id, p_role: friendsRoleValue }
         : { p_base_id: b.id, p_user_lookup: raw, p_role: shareRoleValue });
       const row = Array.isArray(data) ? data[0] : data;
