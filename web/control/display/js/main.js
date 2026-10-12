@@ -84,7 +84,8 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   };
   ping();
   setInterval(ping, pingMs);
-  for (const event of ["visibilitychange", "focus", "blur", "pageshow", "pagehide"]) {
+  document.addEventListener("visibilitychange", () => { void ping(); });
+  for (const event of ["focus", "blur", "pageshow", "pagehide"]) {
     window.addEventListener(event, () => { void ping(); });
   }
   return {
@@ -107,6 +108,11 @@ function monitorVisibleFrameGaps() {
   let frameId = 0;
   const tick = now => {
     if (!active) return;
+    if (document.visibilityState !== "visible") {
+      previous = now;
+      frameId = requestAnimationFrame(tick);
+      return;
+    }
     const gap = Math.max(0, now - previous);
     previous = now;
     if (gap >= 150) { stalledFrames += 1; maxGapMs = Math.max(maxGapMs, gap); }
@@ -117,7 +123,7 @@ function monitorVisibleFrameGaps() {
     active = false;
     cancelAnimationFrame(frameId);
     // Report only obvious visible stalls; background-tab throttling is excluded.
-    return stalledFrames && maxGapMs >= 250
+    return document.visibilityState === "visible" && stalledFrames && maxGapMs >= 250
       ? { maxGapMs: Math.round(maxGapMs), stalledFrames }
       : null;
   };

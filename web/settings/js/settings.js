@@ -5495,7 +5495,8 @@ function buildSessionRunDetails(r) {
       : "";
     const formatDuration = value => {
       const ms = Math.max(0, Number(value) || 0);
-      return ms >= 10_000 ? `${(ms / 1000).toFixed(0)} s` : `${(ms / 1000).toFixed(1).replace(".", ",")} s`;
+      const seconds = ms >= 10_000 ? Math.round(ms / 1000) : Math.round(ms / 100) / 10;
+      return `${seconds.toFixed(ms >= 10_000 ? 0 : 1).replace(".", ",")} s`;
     };
     const diagnosticText = event => {
       const metrics = event.metrics || {};
@@ -5529,7 +5530,7 @@ function buildSessionRunDetails(r) {
           return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)}; dźwięk ruszył po limicie.` };
         }
         if (metrics.reason === "ack_timeout") {
-          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}.` };
+          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",

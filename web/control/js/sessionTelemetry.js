@@ -7,13 +7,10 @@ export function createSessionTelemetry(gameId, getState) {
     const state = getState();
     if (!state.locks.gameStarted || (state.locks.gameEnded && event?.kind !== "diagnostic") || state.step === "r_intro") return;
     try {
-      const { error } = await sb().rpc("control2_session_ping", {
+      await sb().rpc("control2_session_ping", {
         p_game_id: gameId, p_event: event,
       });
-      if (error) console.warn("[control2 statistics]", error.message);
-    } catch (error) {
-      console.warn("[control2 statistics]", error?.message);
-    }
+    } catch { /* Auxiliary diagnostics never interrupt gameplay or flood console. */ }
   }
   const timer = setInterval(() => { void report(); }, 5 * 60 * 1000);
   function visible() { if (!document.hidden) void report(); }

@@ -386,15 +386,15 @@ async function main() {
     const actualMs = Math.max(0, Math.round(item.completedAt - item.requestedAt));
     const extraMs = actualMs - item.expectedMs;
     if (extraMs <= 1500) return;
-    const visible = document.visibilityState || "unknown";
     void sessionTelemetry.report({
       kind: "diagnostic", category: "display_delay",
       message: "Display potwierdził zmianę planszy z opóźnieniem.",
       devices: ["display"],
       metrics: {
         revision, sound: item.sound, expected_ms: Math.round(item.expectedMs),
-        actual_ms: actualMs, extra_ms: Math.round(extraMs), control_visibility: visible,
-        control_focused: !!document.hasFocus?.(),
+        actual_ms: actualMs, extra_ms: Math.round(extraMs),
+        control_visibility: item.controlVisibility,
+        control_focused: item.controlFocused,
       },
     });
   }
@@ -406,14 +406,14 @@ async function main() {
       kind: "diagnostic", category: "display_delay",
       message: "Display nie potwierdził ukończenia planszy w oczekiwanym czasie.",
       devices: ["display"],
-      metrics: { revision, sound: item.sound, reason: "ack_timeout", wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs) },
+      metrics: { revision, sound: item.sound, reason: "ack_timeout", wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: item.controlVisibility, control_focused: item.controlFocused },
     });
   }
   function noteDisplayRequest() {
     const row = store.state.__row;
     if (row && (row.step !== lastDisplayStep || row.sound_cue_seq !== lastDisplayCueSeq)) {
       displayCompletion.request(row.rev);
-      const item = { requestedAt: performance.now(), completedAt: null, expectedMs: null, sound: row.sound_cue_key || null, reported: false };
+      const item = { requestedAt: performance.now(), completedAt: null, expectedMs: null, sound: row.sound_cue_key || null, controlVisibility: document.visibilityState || "unknown", controlFocused: !!document.hasFocus?.(), reported: false };
       displayCompletionTimes.set(row.rev, item);
       void expectedDisplayTransitionMs(previousDisplayRow, row).then(expectedMs => {
         item.expectedMs = expectedMs;
@@ -1430,6 +1430,7 @@ async function main() {
       text: "To wróci do podłączania urządzeń i wyzeruje postęp gry (drużyny, pytania, wyniki). Parowanie urządzeń zostaje. Ustawienia zaawansowane zostają zachowane.",
     });
     if (!ok) return;
+    connectivityTracker.flush();
     restarting = true;
     dispatchGeneration++;
     try {

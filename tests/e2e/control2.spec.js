@@ -717,7 +717,8 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.diagnostic.rows[0]).toContain("ten sam profil przeglądarki");
   expect(result.diagnostic.rows[0]).toContain("karta była w tle");
   expect(result.diagnostic.rows[0]).toContain("próby akcji podczas blokady: 1");
-  expect(result.audioDiagnostic.rows[0]).toContain("Dźwięk: reveal · Control · wystartował po 0,9 s");
+  expect(result.audioDiagnostic.rows[0]).toContain("Dźwięk: revealControl");
+  expect(result.audioDiagnostic.rows[0]).toContain("wystartował po 0,9 s");
   expect(result.frameDiagnostic.rows[0]).toContain("Zacięcie animacji planszy");
   expect(result.frameDiagnostic.rows[0]).toContain("karta była widoczna");
   expect(result.error.sections).toBe(1);

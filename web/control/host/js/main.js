@@ -42,7 +42,8 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   };
   ping();
   setInterval(ping, pingMs);
-  for (const event of ["visibilitychange", "focus", "blur", "pageshow", "pagehide"]) {
+  document.addEventListener("visibilitychange", () => { void ping(); });
+  for (const event of ["focus", "blur", "pageshow", "pagehide"]) {
     window.addEventListener(event, () => { void ping(); });
   }
 }
