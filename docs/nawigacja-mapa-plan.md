@@ -1032,7 +1032,8 @@ Podjęte (2026-10-07):
   gry (bez nowej karty).
 
 - **Przeglądarkowe „Wstecz”** działa jak przycisk ↩ (karty przez
-  `replaceState`, bez wpisów historii dla stanu wewnątrz strony).
+  `replaceState`; wyjątek: pełnoekranowe dialogi mobilne dostają własny
+  wpis historii zgodnie z doprecyzowaniem 2026-10-12 poniżej).
 - **Kolejność wdrażania**: zaczynamy od edytora logo (sekcja 6, krok 5a).
 - **Adresy (sekcja 8)**: `/games/settings/`, `/logo/editor/<typ>/`,
   `/connect/`, `/go/` jako jedyne wejście z zewnątrz; stare linki
@@ -1094,3 +1095,33 @@ modalPagesReview pozostaje. Implementacja frontu w paczce 330.
 w poziomie na telefonie, w tym obecne guardy wide/małego ekranu. Przegląd
 PAGES, dostępności/guardów i układu w UI/E20 przed manualem; szczegóły
 w ujednolicenie-wygladu.md. Nie usuwać guardów przed weryfikacją strony.
+
+### E19N — mobilny modal jako ekran i przeglądarkowe Wstecz (2026-10-12)
+
+Zgłoszona niespójność: przycisk Wstecz w pełnoekranowym modalu telefonu
+zamyka okno, ale Wstecz przeglądarki opuszcza stronę. Obie akcje mają
+zamknąć bieżący modal i zachować stronę pod nim. Nie przywracać usuniętych
+stron modalnych: dotyczy istniejących dialogów, które na małym ekranie
+zajmują całą stronę (np. udostępnianie, import/eksport, wybór/wyszukiwanie).
+
+| Sytuacja | Docelowy wynik |
+|---|---|
+| Otwarcie modala jako ekranu | Jeden własny wpis `history.pushState`, przy tym samym adresie strony, ze stanem dialogu. Wspólna obsługa, bez osobnych obejść dla każdej strony. |
+| Wstecz przeglądarki / systemowe Wstecz Androida | `popstate` zamyka najwyższy dialog; strona, zaznaczenie, karta i przewinięcie zostają. Kolejne Wstecz działa według zwykłej mapy powrotów. |
+| Wstecz w modalu / X / inne zamknięcie | Korzysta z tej samej ścieżki i usuwa własny bieżący wpis historii. Nie pozostawia pustego kroku wymagającego kolejnego Wstecz. Nie cofa historii, jeśli dialog nie ma własnego wpisu. |
+| Dialog na dialogu | Cofanie zamyka po jednym poziomie, bez opuszczania strony spod stosu okien. Zamknięcie rodzica sprząta jego dzieci i ich stan. |
+| Dalej, odświeżenie, wejście z linku | Stan dialogu można odtworzyć tylko dla nadal dostępnego zasobu i ważnej ścieżki. Brak modala/własnego wpisu nie może powodować wyjścia na obcą stronę, pętli ani automatycznego powtarzania wysyłki, importu lub akceptacji. |
+| Obrót/zmiana rozmiaru | Bez dodatkowych wpisów od samej zmiany układu i bez utraty możliwości zamknięcia. Uwzględnić tablet i telefon landscape. |
+| Formularz i trwająca operacja | Zachować istniejącą ochronę niezapisanych zmian i operacji; Wstecz nie obchodzi potwierdzenia ani nie wykonuje działania drugi raz. Dialog nadal nie zwalnia blokad strony tylko przez zamknięcie okna. |
+
+Przejrzeć wszystkie takie dialogi, dopisać wspólną politykę historii do
+źródła mapy i testów nawigacji. Stan zakładek nadal zmieniać przez
+`replaceState`, bez osobnego wpisu na każdą zakładkę. Jest to otwarta
+część E19N przeglądu przejść, powiązana z E20 wyglądu; pierwotnego E7
+nie oznaczać ponownie jako niewykonanego.
+
+Testy: oba przyciski Wstecz, Android, X, ponowne otwieranie, kilka
+dialogów, Dalej, wejście Go i bezpośredni link, odświeżenie, zmiana
+dostępności zasobu, obrót oraz brak zbędnych wpisów i powtórnych operacji.
+Kontrola przeglądarkowa i pomiary na rzeczywistym tablecie zgodnie z E20;
+zrzuty po zmianach wyglądu.

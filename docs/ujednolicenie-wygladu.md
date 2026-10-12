@@ -916,3 +916,5 @@ akcji, filtrów i podziału kart na wszystkich typach stron.
 
 Pomiary wdrożyć jako narzędzie diagnostyczne przy weryfikacji E20, bez
 dodawania technicznych informacji do zwykłych ekranów ani manuala.
+
+**E20 / dialogi mobilne i historia (2026-10-12):** pełnoekranowy modal ma zachowywać się jak ekran również dla Wstecz przeglądarki/Androida: najpierw zamknięcie dialogu, potem normalna nawigacja. Wstecz w modalu i X korzystają z tego samego mechanizmu, bez pustych wpisów. Wdrożenie polityki/mapy w E19N (`nawigacja-mapa-plan.md`, końcowa podsekcja); w E20 sprawdzić spójność wszystkich dialogów, obrót i tablet.
