@@ -1,5 +1,6 @@
 import { controlLayoutGeometry, DEVICE_VIEWPORT } from './layoutGeometry.js?v=v2026-10-12T16294';
 import { t } from '../../shared/translation/translation.js?v=v2026-10-12T16294';
+import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-12T16294';
 import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-12T16294';
 
 export function currentControlGeometry(testMode = false) {
@@ -59,7 +60,7 @@ export function createControlTestMode({ urls, onActivity, onResize }) {
     stage.style.setProperty('--control-device-scale', String(g.deviceScale));
     stage.style.top = `${(document.querySelector('.topbar')?.getBoundingClientRect().height || 68) + 16}px`;
     if (enabled && !g.fits && document.documentElement.dataset.deviceGuard === 'ok') {
-      showPageGuard({ kind:'device', state:'test-narrow', iconName:'fullscreen-enter', titleKey:'pageGuard.narrowTitle', messageKey:'control.testModeTooSmall' });
+      showPageGuard({ kind:'device', state:'test-narrow', iconName:'fullscreen-enter', titleKey:'pageGuard.narrowTitle', messageKey:'control.testModeTooSmall', backHref:backHref('control') });
       ownsGuard = true;
     } else if (ownsGuard && (g.fits || !enabled)) {
       if (document.documentElement.dataset.deviceGuard === 'ok') hidePageGuard();

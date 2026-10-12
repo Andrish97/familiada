@@ -3412,6 +3412,12 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await expect(page.locator('#pageGuard')).toBeVisible();
     await page.setViewportSize({ width:1400, height:900 });
     await expect(page.locator('#pageGuard')).toBeHidden();
+    await page.locator('#controlTestToggle').uncheck();
+    await expect(page.locator('#controlTestDevices iframe')).toHaveCount(0);
+    await expect(page.getByLabel('Nie używaj tabletu prowadzącego')).toBeEnabled();
+    await expect(page.getByLabel('Przycisk fizyczny')).toBeEnabled();
+    await page.locator('#controlTestToggle').check();
+    await expect(page.locator('#controlTestDevices iframe')).toHaveCount(3);
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
     const display = page.frameLocator('iframe[data-test-device="display"]');
     await expect(display.locator('#btnAudioUnlock')).toBeVisible({ timeout:20000 });
@@ -3423,6 +3429,15 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
       await tab.click();
       await assertFits();
     }
+    await page.getByRole('tab', { name:'Wygląd', exact:true }).click();
+    const previewCenters = await page.locator('.c2-device-preview-card').evaluateAll(cards => cards.map(card => {
+      const box = card.getBoundingClientRect();
+      const preview = card.querySelector('#c2DisplayPreview,#c2HostPreview').getBoundingClientRect();
+      return Math.abs((preview.left + preview.right) / 2 - (box.left + box.right) / 2);
+    }));
+    expect(previewCenters).toHaveLength(2);
+    for (const difference of previewCenters) expect(difference).toBeLessThan(2);
+    await assertFits();
     await page.screenshot({ path:testInfo.outputPath('shot-test-mode-summary.png') });
     await page.getByRole('button', { name:'Gotowe — przejdź do rozgrywki' }).click();
     await page.getByRole('button', { name:'Rozpocznij grę', exact:true }).click();

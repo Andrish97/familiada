@@ -326,7 +326,7 @@ export function createUI({ root, emit }) {
     // rozgrywce. Ujednolicone z tej samej przyczyny (zgłoszone: "zobacz
     // też pozostałe przyciski dalej/wstecz jakie mają style").
     const next = navButton(t("common.next"), {
-      disabled: !requiredOnline || !displayAudioReady,
+      disabled: ctx.testModeChanging === true || !requiredOnline || !displayAudioReady,
       onclick: () => emit("devices.next"),
     });
 

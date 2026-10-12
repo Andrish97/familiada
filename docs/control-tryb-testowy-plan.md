@@ -1,7 +1,8 @@
 # Control — tryb testowy
 
 Status: plan zatwierdzony, przygotowanie na branchu `codex/control-test-mode`.
-Nie wdrażać Pages ani scalać do `main` na tym etapie.
+Wdrożenie Pages i scalenie do `main` dopiero po zielonych testach brancha,
+w tym potwierdzeniu zapisu trybu w statystykach. Następnie kontrola produkcyjna.
 
 ## Decyzje użytkownika — 2026-10-12
 
@@ -114,3 +115,17 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
   64 przypadków renderera (osiem kroków, cztery rozmiary, dwa warianty):
   brak przewijania/wyjścia poza panel. Nadal wymagane sprawdzenie wszystkich
   sekcji podsumowania oraz rzeczywistego iframe/przepływu/statystyk w E2E.
+
+
+### Potwierdzenia brancha
+
+- 38298166305 success2/2, bez retry: kod brancha na produkcyjnej bazie,
+  pula4/5. Zapis statystyk rzeczywiście zawiera `settings.testMode=true`.
+- 38298597313 success3/3, bez retry: ponownie tryb/statystyki oraz zwykła
+  pełna runda z czterema urządzeniami i reload Control w drugiej rundzie.
+  Unit467/467 w workflow. Zrzuty e2e-shots, zapis production-statistics-records.
+- Podglądy w Podsumowaniu pozostają dwa, w sekcji Wygląd, każdy centrowany
+  w swojej połowie. Są niezależne od trzech aktywnych urządzeń trybu.
+- Domknięcie: kontrola wyłączenia/ponownego włączenia, zabezpieczenie zapisu
+  przed podwójną akcją, powrót z guarda oraz zrzut Wyglądu i krótki manual.
+  Ostatni punktowy przebieg tej wersji przed wdrożeniem.

@@ -863,3 +863,10 @@ Następna paczka: ochrona podwójnego przełączania/zapis rollback, krótki
 manual PL/EN/UK i screenshoty z prefiksem wymaganym przez workflow; testy
 tej wersji + regresja zwykłego przebiegu przed main. Drugi równoległy
 38298190111 to test hasła innej sesji, nie dowód naszego Control.
+
+Control tryb testowy: **38298597313 success3/3**, branch42bbc92632,
+bez retry/unit467. Tryb i statystyki ponownie green; także zwykła pełna runda
+z rzeczywistymi czterema urządzeniami i wznowieniem Control w rundzie2.
+Podglądy pozostają osobno w Wyglądzie (dwa, własne połówki), obok niezależnego
+paska trzech urządzeń. Finalna kontrola brancha: wyłączenie/ponowne włączenie,
+powrót z guarda, blokada Next podczas zapisu i screenshot sekcji Wygląd.

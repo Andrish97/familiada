@@ -1231,6 +1231,7 @@ async function main() {
 
   async function handle(action, payload) {
     try {
+      if (testModeChanging && action !== "devices.testMode") return;
       if (testModePanel.blocked() && action !== "devices.testMode") return;
       if (store.state.settings.testMode && ["devices.noHostTablet", "devices.physicalBuzzer", "devices.copyCode", "devices.shareOpen", "qr.modal.show", "qr.host.toggle", "qr.buzzer.toggle"].includes(action)) return;
       if (action === "devices.testMode") {
