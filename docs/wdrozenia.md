@@ -739,3 +739,5 @@ Stan szczegółowy:
 | 2026-10-12 | E19N/E20 / Wstecz mobilnego modala | Przeglądarkowe/systemowe Wstecz najpierw zamyka pełnoekranowy dialog; wspólna historia z Wstecz/X, bez opuszczenia strony ani pustych kroków. Doprecyzowano wyjątek od replaceState zakładek oraz testy stosu, Dalej/linku/odświeżenia/obrotu i ochrony zmian. | Otwarte w mapie E19N, kontrola wyglądu E20; stare zamknięte E7 pozostaje historią. |
 
 | 2026-10-12 | E19N / URL dialogów i Dalej | Pełnoekranowe dialogi mają jawny stan URL (przykład dialog=share) i wymagany zasób; Wstecz zamyka, Dalej ponownie otwiera, odświeżenie/link odtwarza po walidacji. Bez powtarzania działań i bez dawnego iframe/modal strony. | Skorygowano zapis samego history.state; katalog parametrów w mapie przed wdrożeniem. |
+
+| 2026-10-12 |357 / isolated ACL starszych Baz |38242263678: nowe kontrakty i24 wyścigi success, stara regresja337 zatrzymała się na ACL eksportu bez uprawnień. Izolacja odtwarza teraz rzeczywiste337/339 przed357 (tak jak inne obszary), zamiast samych polityk. Produkt357 bez zmiany. | Ponowna bramka isolated przed wdrożeniem; nie ogłaszać357 produkcyjnym. |
