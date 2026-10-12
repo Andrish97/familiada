@@ -117,6 +117,9 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await expect(sharedRow.locator(".baseShareRole")).toHaveAttribute("data-role", "viewer");
     const access = await rpc(page, "list_base_shares", { p_base_id: baseId });
     expect(access[0].role).toBe("viewer");
+    // Accepted access belongs to the base and survives removal of its original friendship.
+    expect((await rpc(page, "friends_remove", { p_id: friendship.id })).ok).toBe(true);
+    expect((await rpc(page, "list_base_shares", { p_base_id: baseId }))[0].role).toBe("viewer");
     await sharedRow.locator('[data-act="remove"]').click(); await expect(sharedRow).toHaveCount(0);
     expect((await rpc(recipient, "base_share_undo_decline", { p_task_id: taskId })).ok).toBe(false);
     expect(await rpc(recipient, "base_share_accept", { p_task_id: taskId })).toBe(false);
@@ -254,5 +257,81 @@ test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmow
     if (baseId) await page.evaluate(async id => { const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id); if (error) throw error; }, baseId);
     if (recipientId) await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });
     await recipientContext.close();
+  }
+});
+
+
+test("bazy357: dwa rzeczywiste maile, cofnięcie znajomości zamyka tylko pochodne zaproszenie", async ({ page, context, browser }) => {
+  test.setTimeout(420_000);
+  await loginAsPooledTestUser(page, context, 0);
+  const otherContext = await browser.newContext({ serviceWorkers: "block" });
+  if (branch) await serveBranchCode(otherContext, { pages: ["bases", "go"] });
+  const recipient = await otherContext.newPage();
+  const bases = [];
+  let recipientId, recipientEmail;
+  try {
+    await loginAsPooledTestUser(recipient, otherContext, 1);
+    const user = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
+    recipientId = user.id; recipientEmail = user.email;
+    await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });
+    const friendship = await rpc(page, "friends_invite", { p_handle: recipientEmail });
+    expect(friendship.ok).toBe(true);
+    expect((await rpc(recipient, "friends_accept", { p_id: friendship.id })).ok).toBe(true);
+    const invites = [];
+    for (const source of ["friend", "manual"]) {
+      const name = `E2E-B357-${source}-${Date.now()}`;
+      const id = await createBase(page, name); bases.push(id);
+      await clearMailbox(recipientEmail); await resetMailProviderLimits(page);
+      const after = new Date().toISOString();
+      await openShare(page, id);
+      if (source === "friend") {
+        await page.locator(`#baseShareFriends [data-id="${recipientId}"] input`).check();
+        const response = page.waitForResponse(res => res.url().endsWith("/rpc/base_share_to_friend") && res.request().method() === "POST");
+        await page.locator("#btnBaseShareFriends").click();
+        expect((await response).ok()).toBe(true);
+      } else {
+        await page.locator("#shareEmail").fill(recipientEmail); await page.locator("#btnShareAdd").click();
+      }
+      await expect(page.locator("#shareSectionsHost .shareRow")).toHaveCount(1);
+      const tasks = await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: id });
+      expect(tasks).toHaveLength(1);
+      // Source columns are private (RLS deny all); SQL contracts verify them.
+      const email = await waitForEmail({ recipient: recipientEmail, after, subject: new RegExp(name), timeout: 150_000 });
+      expectMailDocument(email, { accountFooter: true, text: [name] });
+      const link = extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("b"));
+      expect(link).toBeTruthy();
+      invites.push({ id, task: tasks[0].task_id, link });
+      await page.locator("#btnShareClose").click();
+    }
+    // A previously selected checkbox must not fall back to a direct invitation.
+    const staleBase = await createBase(page, `E2E-B357-stale-${Date.now()}`); bases.push(staleBase);
+    await openShare(page, staleBase);
+    await page.locator(`#baseShareFriends [data-id="${recipientId}"] input`).check();
+    expect((await rpc(page, "friends_remove", { p_id: friendship.id })).ok).toBe(true);
+    const rejectedResponse = page.waitForResponse(res => res.url().endsWith("/rpc/base_share_to_friend") && res.request().method() === "POST");
+    await page.locator("#btnBaseShareFriends").click();
+    const rejected = await (await rejectedResponse).json();
+    expect(rejected[0].ok).toBe(false); expect(rejected[0].err).toBe("not_friend");
+    await expect(page.locator("#shareMsg")).toContainText("Ta osoba nie jest już na liście znajomych.");
+    expect(await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: staleBase })).toHaveLength(0);
+
+    expect(await rpc(recipient, "base_share_accept", { p_task_id: invites[0].task })).toBe(false);
+    expect((await rpc(recipient, "base_share_undo_decline", { p_task_id: invites[0].task })).ok).toBe(false);
+    await recipient.goto(invites[0].link);
+    await expect(recipient.locator("#message")).toContainText(/wygas|cofnięt|anulowan|nieaktyw/i);
+    await recipient.goto(invites[1].link);
+    await expect(recipient.locator("#message")).toContainText(/udostępnia.*bazę/);
+    await recipient.locator("#actions button").click();
+    const proposed = recipient.locator(`#sharedGrid [data-base-id="${invites[1].id}"][data-proposed="1"]`);
+    await expect(proposed).toBeVisible(); await proposed.locator("[data-accept]").click();
+    await expect(recipient.locator(`#sharedGrid [data-base-id="${invites[1].id}"]:not([data-proposed])`)).toBeVisible();
+    expect((await rpc(page, "list_base_shares", { p_base_id: invites[1].id })).some(row => row.user_id === recipientId)).toBe(true);
+  } finally {
+    for (const id of bases) await page.evaluate(async id => {
+      const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id); if (error) throw error;
+    }, id);
+    if (recipientId) await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });
+    if (recipientEmail) await clearMailbox(recipientEmail);
+    await otherContext.close();
   }
 });

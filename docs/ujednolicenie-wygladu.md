@@ -931,8 +931,8 @@ narzędzi telefonu, także menu filtra otwieranego ikoną.
 
 | Przypadek | Docelowe zachowanie |
 |---|---|
-| Gry → Preparowane | Bez opcji stanów ankiety, np. „Otwarta ankieta”; uwzględnić rzeczywiste stany preparowanej gry i jej gotowość do gry. |
-| Gry → ankiety tekstowe/punktowe | Opcje zgodne z cyklem życia właściwego typu ankiety. Rynek ma własny zakres filtrów odpowiadający jego zasobom. |
+| Gry → Preparowane | Bez opcji stanów ankiety, np. „Otwarta ankieta”; uwzględnić rzeczywiste stany preparowanej gry i jej gotowość do gry. Dostępne „Otrzymane” dla kopii od znajomych. |
+| Gry → ankiety tekstowe/punktowe | Opcje zgodne z cyklem życia właściwego typu ankiety. Dostępne „Otrzymane” dla kopii od znajomych. Gry społeczności bez narzędzia filtra. |
 | Zmiana zakładki | Opcje filtra przeliczyć dla nowej zakładki; zachować pasujący wybór, wyczyścić niepasujący do „Wszystkie”. Niewidoczny, niepasujący filtr nie może nadal ograniczać listy. |
 | URL / zapamiętany stan / powrót | Walidować filtr względem zakładki, także przy odświeżeniu i powrocie. Wyczyszczenie niepasującego filtra odzwierciedlić w przycisku, liście i zapisie stanu; bez dodatkowego kroku historii. |
 | Pozostałe listy | Bazy/Logo i inne strony z zakładkami sprawdzić według tej samej zasady; nie dodawać filtra, jeśli zakładka nie ma sensownych opcji. |
@@ -941,3 +941,47 @@ narzędzi telefonu, także menu filtra otwieranego ikoną.
 Nie ograniczać opcji tylko dlatego, że chwilowo nie ma rekordów danego
 stanu: zakres wynika z typu zakładki. Prawidłowo zastosowany filtr może
 zwrócić pusty wynik zgodnie ze wspólnym wyglądem pustych list.
+
+**Doprecyzowanie filtrów (2026-10-12):**
+
+| Zakładka | Filtr |
+|---|---|
+| Gry → Preparowane | „Otrzymane” oraz właściwe opcje stanu tego typu; bez stanów ankiety. |
+| Gry → ankiety tekstowe | „Otrzymane” oraz właściwe opcje stanu ankiety. |
+| Gry → ankiety punktowe | „Otrzymane” oraz właściwe opcje stanu ankiety. |
+| Gry → Gry społeczności | Filtr ukryty w całości, także ikona. |
+| Bazy → Moje | Filtr ukryty w całości, także ikona. |
+| Pozostałe zakładki | Pokazać narzędzie tylko, gdy filtrowanie ma zastosowanie do tego typu listy; sprawdzić w przeglądzie E20. |
+
+„Otrzymane” dotyczy kopii przekazanych przez znajomych w E19C, z ich
+zapisanym pochodzeniem (propozycja lub przyjęta własna kopia). Nie oznaczać
+tak zwykłego importu z pliku ani pobrania gry społeczności. Stan ankiety
+i pochodzenie są różnymi kryteriami: odbierana gra zachowuje właściwy
+stan swojego typu. Dopiąć ten filtr razem z danymi E19C, a wspólny wygląd
+i kompaktowe menu w E20. Ukrycie filtra usuwa także jego aktywny warunek
+z listy i zapisu stanu; wyszukiwanie/sortowanie mają własną dostępność.
+Wcześniejszą ogólną sugestię filtra rynku zastępuje jawna decyzja
+„Gry społeczności bez filtra”; wykonanych etapów nie otwierać ponownie.
+
+### E19C/E20 — plakietki wysłanych kopii Gier i Logo (2026-10-12)
+
+Doprecyzowanie użytkownika: nowy zakres to **Gry i Logo**, oczekujące na
+akceptację u odbiorcy. **Bazy już to mają** i są wzorcem, bez nowego
+zadania dodawania im plakietek.
+
+| Miejsce | Co zlicza plakietka przed akceptacją |
+|---|---|
+| Gry → wypustki typów | Oczekujące kopie danego typu gry (Preparowane, tekstowe, punktowe). |
+| Logo → wypustki typów | Oczekujące kopie danego typu logo. |
+| Przyciski stron Gry i Logo | Suma oczekujących propozycji właściwego zasobu, w miejscach gdzie skrót występuje. |
+
+Wspólna `.badge`, te same rozmiary i zasady co istniejące plakietki Baz.
+Otwarcie propozycji bez decyzji nie usuwa plakietki. Akceptacja/odrzucenie,
+usunięcie albo wygaśnięcie propozycji aktualizują liczniki; cofnięcie
+własnej odmowy przywraca licznik, jeśli propozycja znów oczekuje. Zero
+ukrywa plakietkę. Przyjęty własny zasób i odmowy nie są zliczane. Flaga
+maili nie wpływa na te liczniki. Wypustki i przycisk korzystają z jednego
+źródła; nie powielać w Zadaniach (tylko ankiety). Nadawca zachowuje tylko
+uzgodnioną historię wysyłek, bez plakietek śledzących decyzje odbiorcy.
+Zweryfikować telefon, tablet i powrót na stronę; istniejące Bazy objąć
+regresją wspólnego mechanizmu, bez ponownego wdrażania go.

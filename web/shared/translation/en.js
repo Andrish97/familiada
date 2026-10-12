@@ -747,6 +747,7 @@ const en = {
       failed: "Failed",
       invalidEmail: "Invalid email",
       unknownUser: "Unknown username",
+      notFriend: "This person is no longer on your friends list.",
       owner: "You own this base",
       success: "Shared",
       removeTitle: "Remove share",

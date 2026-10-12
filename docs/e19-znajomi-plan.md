@@ -1445,3 +1445,14 @@ respektuje5/30 dni i zachowuje budżet, otrzymuje nowy ID/token bez starego
 źródła (istniejące friends_invite).7 kontraktów/8 wyścigów/DDL i regresje
 lokalnie success. Dopiero isolated → DB/main/log → real-mail branch/main
 zamyka tę krawędź; Bazy i kolejka pozostają otwarte.
+
+### Uzupełnienie plakietek kopii Gier i Logo (2026-10-12)
+
+Nowy zakres: wysłane kopie Gier i Logo w E19C, oczekujące u odbiorcy,
+mają plakietki na wypustkach typów oraz sumę na przycisku właściwej strony.
+Bazy już mają tę obsługę i są wzorcem, bez nowego zadania wdrożenia Baz.
+Te same źródła/odświeżanie/zero co istniejące badges; bez powielania
+w Zadaniach i bez zliczania zaakceptowanych lub odrzuconych. Pełna tabela
+i stany w końcowej podsekcji ujednolicenie-wygladu.md; kopie w
+udostepnianie-kopii-plan.md. Uwzględnić w E19C/E20, wcześniejszych
+wykonanych etapów nie oznaczać ponownie jako otwartych.

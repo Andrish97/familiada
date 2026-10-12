@@ -742,6 +742,7 @@ const uk = {
       failed: "Не вдалося",
       invalidEmail: "Невірний e-mail",
       unknownUser: "Невідоме ім'я користувача",
+      notFriend: "Цієї людини більше немає у списку друзів.",
       owner: "Ти власник цієї бази",
       success: "Надано доступ",
       removeTitle: "Видалити доступ",

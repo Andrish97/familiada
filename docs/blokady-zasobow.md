@@ -486,7 +486,7 @@ blokad i sprawdzonej propagacji cofnięcia/usunięcia.
 | Kontakt → zadanie ankiety |353 wdrożone: jawne źródło, cofnięcie, transfer w znajomość, Go/open/vote |
 | Auth gościa → profil/klasyfikacja |354 wdrożone; main38233127443 success4/4 bez retry, błędne profile naprawione |
 | Subskrypcja → pochodna propozycja znajomości |355 wdrożone; source close unieważnia pending/declined i zachowuje budżety; main38236412958 success1/1 z rzeczywistymi mailami |
-| Znajomość lub ręczne nadanie → zaproszenie bazy | Pochodzenie do dopięcia; przyjęte niezależne role mają zachować własny cykl |
+| Znajomość lub ręczne nadanie → zaproszenie bazy | SQL357 wdrożone (DB38243208054): jawne źródło dla nowych wybranych Znajomych, zamknięcie pending/declined zachowuje budżety; ręczne i przyjęte role niezależne. Front oraz real-mail branch/main jeszcze w kontroli. |
 | Zasób/konto → tokeny, cooldowny i oczekujące maile | Pozostały audyt i implementacja wspólnej ważności przed kolejką/dostarczeniem |
 
 Całego grafu nie oznaczać jako zakończonego na podstawie jednej zielonej
