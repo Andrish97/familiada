@@ -1,6 +1,11 @@
 name: Control identity isolated SQL
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/control-identity-checks.yml'
+      - 'supabase/migrations/*_358_*.sql'
+      - 'docs/sql/*358*'
 permissions:
   contents: read
 jobs:
