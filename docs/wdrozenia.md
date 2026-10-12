@@ -1061,5 +1061,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
   punkty wraz z nowym bankiem, w obrębie czasu reveal. Naprawiono też
   blokadę po odświeżeniu w pojedynku: istniejący stan nie oczekuje ponownego
   potwierdzenia planszy, a pozostały czas blokady odczytywany jest z
-  `locked_until`. Manual PL/EN/UK zaktualizowany. Bez migracji; testów nie
-  uruchomiono. Oczekuje na publikację.
+  `locked_until`. Manual PL/EN/UK zaktualizowany. main7579211cb6, Pages38312649324 success. Bez migracji; testów nie
+  uruchomiono. Składnia zmienionych modułów i `git diff --check` poprawne.
