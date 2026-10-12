@@ -747,3 +747,5 @@ Stan szczegółowy:
 | 2026-10-12 | E20 / filtry zakładek | Opcje filtra zależą od typu aktywnej zakładki, np. Preparowane bez Otwartej ankiety. Zmiana zakładki zachowuje pasujący wybór, niepasujący czyści w UI/listach/URL bez pustych wyników od ukrytego filtra. | Dopisane do wspólnego wzorca E20 i testów list. |
 
 | 2026-10-12 |357 / isolated finalny success |38242911572 success: unit459, pełna macierz historyczna E19, DDL357, kontrakty źródła/Auth/ACL,24 wyścigi i6 regresji. Odtworzone wyłącznie ACL/polityki337; bieżący Go zachowany. | Promować bazę357, sprawdzić DB/log/rollback smoke; dopiero potem branch-code real mail i główna wersja frontu. |
+
+| 2026-10-12 | E19C/E20 / Otrzymane i brak zbędnych filtrów | Własne zakładki Gier: Preparowane/tekstowe/punktowe mają filtr Otrzymane dla kopii od znajomych. Gry społeczności i Bazy Moje bez filtra/ikony; ukryty warunek nie ogranicza listy. | Ujednolicone źródło E20 i kopii E19C; poprzednia sugestia filtra rynku skorygowana. |
