@@ -26,8 +26,8 @@ Statystyki są pomocnicze: ich awaria nie może odrzucać prawidłowej akcji gry
 - Dotychczasowa historia pozostaje bez zmian.
 - Widok sesji przerwanych: wszystkie obecne powody zakończenia mają polskie
   nazwy; po godzinie bezczynności pokazuje ostatni zapisany etap i informuje,
-  gdy nie rozliczono rund. Branch test `control2: statystyki: zdarzenia...`
-  przeszedł w Actions 38265890825; kontrola po publikacji pozostaje do wykonania.
+  gdy nie rozliczono rund. Branch test przeszedł w Actions 38265890825,
+  Pages 38266129177, kontrola produkcyjna 38266216433 (1/1).
 
 ## Odczytywanie panelu administratora
 
