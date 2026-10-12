@@ -59,3 +59,18 @@ udostępnień, głosów i stanu urządzeń. Typ i stan początkowy zgodnie z imp
    wygaśnięcie, kasowanie rodziców, zmiana adresu i wyścigi. Sprawdzić także historię właściwej gry/logo, granicę 30 dni i niezależność kopii po usunięciu wpisu historii.
 6. Cykl wdrożenia z AGENTS.md; po zmianach wyglądu zrzuty z przykładowymi
    danymi (390/1400 px, także telefon w poziomie), bez czekania na akceptację.
+
+## Inwentaryzacja istniejącego importu i eksportu — 2026-10-12
+
+Przegląd kodu przed E19C (bez wykonania samego wysyłania):
+
+| Zasób | Istniejący pakiet | Reguła do zachowania | Luka do obsłużenia przed wysyłaniem |
+|---|---|---|---|
+| Gra (`games-import-export.js`) | Nazwa, typ, pytania i odpowiedzi/punkty. Bez ustawień, logo, dźwięków, głosów, urządzeń, udostępnień i cudzych ID | Zamknięta ankieta eksportuje się jako Preparowana; robocza tekstowa nie przenosi odpowiedzi, punktowa zeruje punkty. Import tworzy nowe ID i stan draft | Obecny importer zapisuje kolejno, z usunięciem częściowej gry po błędzie. Wspólna akceptacja kopii musi zapewnić dokładnie jeden kompletny wynik; po utracie odpowiedzi nie tworzyć drugiego importu |
+| Logo (`logo/js/transfer.js`, `list.js`) | GLYPH: warstwa/wiersze i source; PIX: format/rozmiar/bits oraz source. Obraz osadzany w JSON jako imageData. Bez ID/właściciela/historii edycji i rastra Host | Odbiorca korzysta z obecnego parsera. Import IMAGE zapisuje obraz w swoim Storage i sprząta go po błędzie rekordu; nazwa rozwiązuje konflikt w własnej liście | Obecny eksport po błędzie pobrania obrazu pozostawia imageUrl nadawcy. Wysyłanie ma odmówić niekompletnego pakietu albo zapewnić osadzenie; przekazana kopia nie może zależeć od pliku nadawcy |
+
+Zakres gry jest identyczny z bieżącym eksportem — nie dodawać do tej
+paczki osobnego formatu obejmującego ustawienia czy logo gry. Pliki logo
+rozpatrywać również dla source/fabricData, aby kopia nie odwoływała się do
+Storage nadawcy. Oryginał i jego historia wysyłek pozostają gałęzią nadawcy;
+pakiet, oferta i przyjęty zasób — gałęzią stałego ID odbiorcy.
