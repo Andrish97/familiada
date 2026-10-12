@@ -784,3 +784,7 @@ Kontrola uruchomienia: agent-checks przekroczył limit25 inputs GitHuba — nowy
 ### 2026-10-12 — Control358 isolated green, SQL gate uruchomiony
 
 control-identity-checks38256954899 success: pełne odtworzenie schema/hooków, kontrakty,32 wyścigi, DDL i regresja runtime324. Unit459 green. Backend main09fa3041a0, DB38257393434 w toku. Front na branchu przechodzi na by_lookup/to_friend i mail_to, zlokalizowane błędy PL/EN/UK; bez zmiany CSS. E2E punktowo: istniejący mail do konta rozszerzony o nazwę użytkownika; nowy control358 dla test14/SMTP/Go/global-off/0queue/0clock/revoke/friend/stale selection z cleanup finally. Jeszcze bez kontroli branch/main i bez zamknięcia358.
+
+### 2026-10-12 — Control358 SQL gate green
+
+DB38257393434 success; log OK13:42:37Z, schema2adf7d98cf. Rollbackowe kontrakty identity/preferences green na produkcji. Branch E2E38257851591 uruchomiony2 tests/1 worker/pula1,2,7/retries0; front jeszcze nie na main. Aktualizacja fixture tokenu globalnej flagi z istniejącego subscribers_invite (Control nie ma teraz stopki wypisania dla adresów bez konta; nie zakładać jej w teście).
