@@ -12,14 +12,14 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T09554";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-12T09554";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-10T22301";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-10T22301";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T09554";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-12T09554";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-10T22301";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-12T09554";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T09554";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-10T22301";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-12T09554";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T09554";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-10T22301";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-12T09554";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
