@@ -1006,3 +1006,24 @@ Go). Krótki poll-anonymous-layout.spec.js daje4 aktualne screeny native
 cooldown bez powtarzania30-sekundowych backendowych kontraktów. Zwykły
 pierwszy pełny głos i druga próba z tej samej przeglądarki, bez resetu
 zegara; przyjazna nazwa Rodzinna ankieta — wakacje. Publisher dzieli2galerie.
+
+**Control statystyki zamknięte produkcyjnie**main38317992983 success1/1
+bez retry,521 unit; faktyczne Pages, pełna runda90/cztery urządzenia,
+DBrunda2/Alfa90, statystyki1/90 oraz ta sama sesja i1 runda po odświeżeniu.
+Bez zmiany SQL/engine, poprawiona synchronizacja testu. Użytkownik
+polecił potem wrócić do planu i potwierdził dalszą pracę nad Go.
+
+**Go main**38317995881 scenariusz Go success (cały job failure dwóch
+krótkich wizualnych speców: helper poll-game.js nie importował expect).
+Import poprawiony i dodatkowy unit wykonuje obie ścieżki helpera, żeby
+błąd nie wymagał kolejnego CI do wykrycia. Dalej dwa krótkie spece do
+aktualnych screenów; nie powtarzać Go/Control/pełnego362/SMTP.
+
+Nowy audit-resource-graph-e19.sql: 11 agregatowych kontroli w READ ONLY,
+bez ujawniania tożsamości/adresów/tokenów/głosów. Lokalne0; izolowany
+negative test wykrywa nieprawidłowy licznik i grant kolumny, potwierdza
+brak zapisu przez audyt. Nowe graph_only w resource-audit.yml uruchomi
+wyłącznie ten audyt zamiast ponawiać zamknięte guest354. Jeszcze bez
+wyniku produkcji. Później wspólna macierz rodzaj linku×stan×komunikat×akcje
+w Go dla wszystkich rodzin, zgodnie z ostatnią odpowiedzią użytkownikowi.
+E19C/E19N/E14/E20/E13 dalej kolejka; manual ostatni.
