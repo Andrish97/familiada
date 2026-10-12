@@ -729,3 +729,5 @@ Stan szczegółowy:
 | 2026-10-12 | E19C / modal i historia | Standardowy modal: wybór znajomych + Wyślij, bez sekcji Udostępnione. Poniżej zwijana Historia wysyłek konkretnej gry/logo: komu i kiedy, wpisy usuwane po30 dniach bez wpływu na kopię odbiorcy. | Źródło kopii i kolejka ujednolicone; do wdrożenia w E19C. |
 
 | 2026-10-12 | Synchronizacja planu i numeracja Baz | Zachowano wdrożoną diagnostykę Control2 i jej migrację356. Doprecyzowania E19C/E20 scalone; kolejna paczka Baz będzie357, lokalny katalog prototypu nadal /tmp/e19-356. | Kontynuować E19 pkt7; kopie i wygląd pozostają w kolejce. |
+
+| 2026-10-12 | E20 / tablet portrait | Tablet w pionie osobno od telefonu; hamburger i uproszczenia dopiero gdy treść się nie mieści. Kontrola rzeczywistego Lenovo/Android, pomiary obszaru strony i ekranu/skali; emulacja nie zamyka weryfikacji urządzenia. | Dopisane do źródła E20; bieżący E19 bez zmiany kolejności. |

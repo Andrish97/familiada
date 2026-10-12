@@ -895,3 +895,24 @@ Zachować dwie kolumny nagłówka list zasobów (akcje po lewej, tytuł/podpowie
 po prawej), wysokość kart i przewijanie wewnątrz. Sprawdzić telefon w obu
 orientacjach, tablet i komputer, PL/EN/UK, stan bez zaznaczenia i wszystkie
 stany dostępności akcji. Po wykonaniu zrzuty z przykładowymi danymi.
+
+### E20 — tablet w pionie i pomiary rzeczywistego urządzenia (2026-10-12)
+
+Tablet w pionie jest osobnym przypadkiem układu. Nie stosować automatycznie
+wariantu telefonu, hamburgera ani wszystkich uproszczeń mobilnych tylko
+z powodu pionowej orientacji, obsługi dotyku lub wspólnego szerokiego progu
+CSS. Wykorzystywać dostępną przestrzeń; nawigację zwijać dopiero, gdy jej
+elementy rzeczywiście przestają się mieścić. Ta sama zasada dotyczy pasków
+akcji, filtrów i podziału kart na wszystkich typach stron.
+
+| Zakres | Weryfikacja w E20 |
+|---|---|
+| Rzeczywisty tablet | Sprawdzić Lenovo z Androidem w pionie i poziomie; obecny hamburger w pionie jest zgłoszoną niespójnością do zbadania. Nie zamykać kontroli na podstawie samej emulacji. |
+| Dostępne miejsce | Zebrać na urządzeniu szerokość/wysokość obszaru strony w pikselach CSS, `document.documentElement.clientWidth/clientHeight`, `window.innerWidth/innerHeight` oraz dostępny `visualViewport` (wymiary i skala). |
+| Ekran i skala | Zapisać `screen.width/height`, `screen.availWidth/availHeight`, `devicePixelRatio` i orientację jako kontekst pomiaru. Parametry przeglądarki nie gwarantują fizycznych rozmiarów ekranu w calach ani pełnej rozdzielczości panelu. |
+| Różne warunki | Sprawdzić obrót, paski przeglądarki, klawiaturę, powiększenie i podział ekranu; dostępny obszar może różnić się od wymiarów ekranu. |
+| Progi układu | Dobrać do miejsca potrzebnego treści i nawigacji, nie do nazwy urządzenia, user-agenta, orientacji czy samego dotyku. Tablet może zachować pełniejszy układ, a w małym oknie przejść w kompaktowy. |
+| Dowody | Zrzuty po wykonaniu z przykładowymi danymi oraz wartościami pomiaru; odróżnić rzeczywisty tablet od symulacji. Nie przedstawiać emulacji jako sprawdzenia fizycznego urządzenia. |
+
+Pomiary wdrożyć jako narzędzie diagnostyczne przy weryfikacji E20, bez
+dodawania technicznych informacji do zwykłych ekranów ani manuala.
