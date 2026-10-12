@@ -80,6 +80,26 @@ export async function handleE2EApi(request, env, url) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 
+  if (url.pathname === "/_e2e_api/mail-center-preference" && request.method === "POST") {
+    let body;
+    try { body = await readJson(request); } catch { return json({ ok: false, error: "invalid_body" }, 400); }
+    const stamp = body?.suppressed_at;
+    if (stamp !== null && (typeof stamp !== "string" || stamp.length > 40 || !Number.isFinite(Date.parse(stamp)))) {
+      return json({ ok: false, error: "invalid_preference_fixture" }, 400);
+    }
+    // Restore precisely the prior test14 flag; no source resurrection/budget reset.
+    const result = await supabaseRequest(env, "/rest/v1/email_unsub_tokens?email=eq.test14%40familiada.online", {
+      method: "PATCH", body: { suppressed_at: stamp },
+    });
+    return json({ ok: result.ok }, result.ok ? 200 : 502);
+  }
+
+  if (url.pathname === "/_e2e_api/mail-center-capabilities" && request.method === "DELETE") {
+    // Only the anonymous test mailbox; never touch preferences or source budgets.
+    const result = await supabaseRequest(env, "/rest/v1/mail_center_links?email=eq.test14%40familiada.online", { method: "DELETE" });
+    return json({ ok: result.ok }, result.ok ? 200 : 502);
+  }
+
   // Template SMTP fixtures are private test traffic. They use the ordinary
   // preference-checked service route, never a forged contact/resource source.
   if (url.pathname === "/_e2e_api/mail-template-fixtures" && request.method === "POST") {

@@ -29,3 +29,28 @@ test('SMTP fixture uses preference-checked service mail and never forges resourc
  assert.equal(rows[0].cooldown_action_key,'admin:marketing');assert.equal(rows[0].contact_message_id,undefined);assert.equal(rows[0].notification_source_kind,undefined);
  globalThis.fetch=async()=>new Response('Unavailable',{status:503});assert.equal((await handleE2EApi(request(valid),env,url)).status,502);
 });
+test('private capability cleanup requires signature and only removes test14 links, preserving root and budgets',async t=>{
+ const endpoint=new URL('https://www.familiada.online/_e2e_api/mail-center-capabilities?recipient=test9@familiada.online');
+ const denied=await handleE2EApi(new Request(endpoint,{method:'DELETE'}),env,endpoint);assert.equal(denied.status,401);
+ const headers=request(valid).headers;const previous=globalThis.fetch;const calls=[];
+ globalThis.fetch=async(input,options)=>{calls.push({input,options});return new Response(null,{status:204});};t.after(()=>globalThis.fetch=previous);
+ const response=await handleE2EApi(new Request(endpoint,{method:'DELETE',headers}),env,endpoint);assert.equal(response.status,200);
+ assert.equal(calls.length,1);assert.ok(String(calls[0].input).endsWith('/rest/v1/mail_center_links?email=eq.test14%40familiada.online'));
+ assert.equal(calls[0].options.method,'DELETE');
+});
+test('test14 preference restoration is private, fixed to test14 and cannot write caller-supplied fields',async t=>{
+ const endpoint=new URL('https://www.familiada.online/_e2e_api/mail-center-preference');
+ assert.equal((await handleE2EApi(new Request(endpoint,{method:'POST',body:'{}'}),env,endpoint)).status,401);
+ const previous=globalThis.fetch;const calls=[];globalThis.fetch=async(input,options)=>{calls.push({input,options});return new Response(null,{status:204});};t.after(()=>globalThis.fetch=previous);
+ for (const stamp of [null,'2026-10-12T12:00:00.000Z']) {
+  const headers=request(valid).headers;const req=new Request(endpoint,{method:'POST',headers,body:JSON.stringify({suppressed_at:stamp,email:'test9@familiada.online',token:'foreign'})});
+  assert.equal((await handleE2EApi(req,env,endpoint)).status,200);
+  const call=calls.at(-1);assert.ok(String(call.input).endsWith('/rest/v1/email_unsub_tokens?email=eq.test14%40familiada.online'));
+  assert.deepEqual(JSON.parse(call.options.body),{suppressed_at:stamp});assert.equal(call.options.method,'PATCH');
+ }
+ for(const stamp of [undefined,{},true,14,'not-date','x'.repeat(41)]){
+  const headers=request(valid).headers;const req=new Request(endpoint,{method:'POST',headers,body:JSON.stringify({suppressed_at:stamp})});
+  assert.equal((await handleE2EApi(req,env,endpoint)).status,400);
+ }
+ assert.equal(calls.length,2);
+});

@@ -75,4 +75,15 @@ async function queueMailTemplateFixtures(items) {
   });
 }
 
-module.exports = { queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
+async function clearMailCenterCapabilities() {
+  return api("/mail-center-capabilities", { method: "DELETE" });
+}
+
+async function restoreMailCenterPreference(suppressedAt) {
+  return api("/mail-center-preference", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ suppressed_at: suppressedAt }),
+  });
+}
+
+module.exports = { restoreMailCenterPreference, clearMailCenterCapabilities, queueMailTemplateFixtures, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };

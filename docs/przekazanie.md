@@ -845,3 +845,13 @@ dawna awaryjna ścieżka send-email→mail_queue po wyczerpaniu dostawców.
 Auth nie ma kolejki/blokad powiadomień/stopki centrum; przy awarii zwraca
 błąd. Treści Edge bez zmian. Nie powtarzać tego zamkniętego pakietu.
 Nadal sześć głównych etapów planu; dalej E19 pkt7, manual ostatni.
+
+**Końcowy360:** draft-mail-center-final-360.sql łączy8 modułów centrum
+i6 modułów źródeł361, usuwa sufiks_prototype i nakłada wszystko atomowo.
+Nowa migracja nie opublikowana. Lokalne fam360migration10 kontraktów
+i fam360ddl pełne DDL przy legacy Game-first success. Workflow dodaje
+świeży fam_final +DDL+te same kontrakty. E2E mail-center.spec.js gotowy
+na2 punktowe scenariusze branch/main po backendzie; prawdziwe test14
+footer/proof, global-off i źródła, UI/cookies/CSRF/cleanup/screeny.
+HMAC helpery tylkotest14 do private caps/preference rollback, bez resetu
+budżetów. Potrzebny final isolated, SQL+Edge+Worker, branch, Pages/main.

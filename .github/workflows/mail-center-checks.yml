@@ -73,8 +73,32 @@ jobs:
           python3 docs/sql/test-mail-notification-concurrency-361.py
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-confirmation-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-delivery-360.sql
+      - name: Restore a clean database for the final migration
+        env:
+          PGDATABASE: fam_final
+        run: |
+          psql -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE fam_final'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          psql -v ON_ERROR_STOP=1 -f /tmp/mail-center-schema.sql > /tmp/mail-center-final-restore.log 2>&1
+          psql -v ON_ERROR_STOP=1 -f docs/sql/restore-identity-auth-triggers-358.sql
+      - name: Verify complete migration and legacy DDL lock order
+        env:
+          PGDATABASE: fam_final
+        run: |
+          python3 docs/sql/test-mail-center-final-ddl-360.py
+          for name in access resignation source-guards confirmation delivery preferences cleanup; do
+            sed 's/_prototype//g' "docs/sql/test-mail-center-${name}-360.sql" > "/tmp/test-final-${name}.sql"
+            psql -v ON_ERROR_STOP=1 -f "/tmp/test-final-${name}.sql"
+          done
+          for name in allocations delivery revocation; do
+            sed 's/_prototype//g' "docs/sql/test-mail-notification-${name}-361.sql" > "/tmp/test-final-source-${name}.sql"
+            psql -v ON_ERROR_STOP=1 -f "/tmp/test-final-source-${name}.sql"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mail-center-isolated-restore
-          path: /tmp/mail-center-restore.log
+          path: |
+            /tmp/mail-center-restore.log
+            /tmp/mail-center-final-restore.log

@@ -86,6 +86,17 @@ BEGIN
  UPDATE public.mail_queue SET status='pending',not_before=now() WHERE id=ANY(queue_ids);
  SELECT count(*) INTO affected FROM public.mail_queue_pick_selected(queue_ids,25);
  IF affected<>0 THEN RAISE EXCEPTION 'closed sources claimed'; END IF;
+ -- Both account directions traverse the allocation/queue graph safely.
+ BEGIN
+  DELETE FROM auth.users WHERE id=owner_id;
+  IF EXISTS(SELECT 1 FROM public.mail_queue WHERE id=ANY(queue_ids)) THEN RAISE EXCEPTION 'owner deletion left source mail'; END IF;
+  RAISE EXCEPTION 'rollback owner deletion fixture' USING ERRCODE='ZX361';
+ EXCEPTION WHEN SQLSTATE 'ZX361' THEN NULL;
+ END;
+ DELETE FROM auth.users WHERE id=peer;
+ IF EXISTS(SELECT 1 FROM public.mail_queue WHERE id=ANY(queue_ids) AND notification_source_kind IN('base','poll','device')) THEN RAISE EXCEPTION 'recipient account deletion left source mail'; END IF;
+ DELETE FROM auth.users WHERE id=owner_id;
+ IF EXISTS(SELECT 1 FROM public.mail_queue WHERE id=ANY(queue_ids)) THEN RAISE EXCEPTION 'account graph left queue rows'; END IF;
  RAISE NOTICE 'five real RPC producers, source allocations, claim/delivery, pending/opened, delay/lease preservation, terminal undo and no closed requeue passed';
 END $$;
 ROLLBACK;

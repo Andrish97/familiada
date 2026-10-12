@@ -8,16 +8,11 @@ function expectMailDocument(email, { lang = 'pl', accountFooter = false, globalU
   expect(html).not.toMatch(/backdrop-filter|text-transform:uppercase/);
   for (const value of text) expect(html).toContain(value);
   const links = extractHttpLinks(email).map(link => new URL(link));
-  if (accountFooter) {
-    const settings = links.find(link => link.pathname === '/account/');
-    expect(settings, 'account notification settings footer').toBeTruthy();
-    expect(settings.searchParams.get('lang')).toBe(lang);
-    expect(links.some(link => link.searchParams.has('u'))).toBe(false);
-  }
-  if (globalUnsub) {
-    const unsubscribe = links.find(link => link.pathname === '/go/' && link.searchParams.has('u'));
-    expect(unsubscribe, 'anonymous global notification footer').toBeTruthy();
-    expect(unsubscribe.searchParams.get('lang')).toBe(lang);
+  if (accountFooter || globalUnsub) {
+    const footer = links.find(link => link.pathname === '/go/' && /^[a-f0-9]{64}$/.test(link.searchParams.get('m') || ''));
+    expect(footer, 'private notification center footer for every notification recipient').toBeTruthy();
+    expect(footer.searchParams.get('lang')).toBe(lang);
+    expect(html).toContain('data-familiada-mail-center');
   }
 }
 function escapeMailText(value) {

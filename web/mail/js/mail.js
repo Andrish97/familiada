@@ -34,7 +34,7 @@ async function perform(fn) {
 function stateFrom(data) {
   if (data.ok) return { ...data, state: 'active' };
   if (data.error === 'requires_login') return { state: 'registered', email: data.email };
-  if (['expired_token','expired_session','invalid_token','invalid_session'].includes(data.error)) return { state: 'expired' };
+  if (['expired_token','expired_session','invalid_token','invalid_session','invalid_request'].includes(data.error)) return { state: 'expired' };
   return { state: 'entry' };
 }
 function setTab(value) {
@@ -158,7 +158,7 @@ try {
   const url = new URL(location.href), access = url.searchParams.get('m');
   // Session bootstrap issues the nonce; peeking never consumes a one-time proof.
   const current = await api('session');
-  if (access) {
+  if (url.searchParams.has('m')) {
     url.searchParams.delete('m'); history.replaceState(null, '', url.pathname + url.search);
     pendingAccess = access;
     const result = await api('peek', { token: access });
