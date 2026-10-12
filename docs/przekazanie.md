@@ -836,3 +836,12 @@ endpoint zwykły service marketing, nie udaje rzeczywistego zgłoszenia.
 Dalej commit/isolated, DDL, finalna migracja i bramki SMTP branch/main.
 **Auth już zamknięte:** fcdea7a889/cf1955779d, Edge38298008652, branch
 38297713527/main38298190111 success1/1, mainunit467. Nie powtarzać.
+
+**Auth niezależne od powiadomień — zamknięte 2026-10-12:** main
+fcdea7a889, Edge38298008652, branch38297713527 i main38298190111
+success1/1 bez retry, unit467/467. Rzeczywisty reset test11 dostarczony
+przy email_notifications=false; wcześniejsza flaga przywrócona. Usunięta
+dawna awaryjna ścieżka send-email→mail_queue po wyczerpaniu dostawców.
+Auth nie ma kolejki/blokad powiadomień/stopki centrum; przy awarii zwraca
+błąd. Treści Edge bez zmian. Nie powtarzać tego zamkniętego pakietu.
+Nadal sześć głównych etapów planu; dalej E19 pkt7, manual ostatni.

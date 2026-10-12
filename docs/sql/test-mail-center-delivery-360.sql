@@ -38,6 +38,15 @@ DO $$ DECLARE result jsonb; q public.mail_queue; issued jsonb; message_id uuid; 
  UPDATE public.messages SET deleted_at=now() WHERE id=message_id;
  IF public.mail_contact_reply_source_prototype(report_id,'delivery360@example.invalid') IS NOT NULL THEN RAISE EXCEPTION 'deleted contact accepted as reply source'; END IF;
  IF public.mail_queue_delivery_context_prototype(row_id)->>'reason' IS DISTINCT FROM 'skipped_contact_closed' THEN RAISE EXCEPTION 'deleted contact source still deliverable'; END IF;
+ UPDATE public.messages SET deleted_at=NULL WHERE id=message_id;
+ UPDATE public.email_unsub_tokens SET suppressed_at=NULL WHERE email='delivery360@example.invalid';
+ INSERT INTO public.mail_queue(to_email,subject,html,cooldown_action_key,cooldown_target_key,status,contact_message_id_prototype)
+  VALUES('delivery360@example.invalid','Reply fixture','Original','admin:compose','fixture','sending',message_id) RETURNING id INTO row_id;
+ IF public.mail_queue_delivery_context_prototype(row_id)->>'allowed' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'valid reply rejected'; END IF;
+ DELETE FROM public.messages WHERE id=message_id;
+ IF NOT EXISTS(SELECT 1 FROM public.mail_queue WHERE id=row_id AND contact_message_id_prototype IS NULL AND contact_source_expected_prototype)
+  OR public.mail_queue_delivery_context_prototype(row_id)->>'reason' IS DISTINCT FROM 'skipped_contact_closed' THEN
+  RAISE EXCEPTION 'hard-deleted reply source became an ordinary mail'; END IF;
  BEGIN
   INSERT INTO public.mail_queue(to_email,subject,html,cooldown_action_key,cooldown_target_key) VALUES('delivery360@example.invalid','Spoof','Fake','contact:confirmation','fixture');
   RAISE EXCEPTION 'unbound contact bypassed global preference';

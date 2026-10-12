@@ -19,7 +19,7 @@ BEGIN
  IF q.cooldown_action_key='mail:center_verify' THEN
   RETURN public._mail_center_verification_live_prototype(q.mail_center_link_id_prototype,q.to_email);
  END IF;
- IF q.cooldown_action_key='contact:confirmation' OR q.contact_message_id_prototype IS NOT NULL THEN
+ IF q.contact_source_expected_prototype OR q.cooldown_action_key='contact:confirmation' OR q.contact_message_id_prototype IS NOT NULL THEN
   RETURN public._mail_contact_source_live_prototype(q.contact_message_id_prototype,q.to_email,q.cooldown_action_key);
  END IF;
  RETURN public._contact_mail_enabled(q.to_email);
@@ -62,7 +62,8 @@ BEGIN
     OR public._norm_email(q.to_email) IS DISTINCT FROM public._norm_email(initial.to_email)
     OR q.cooldown_action_key IS DISTINCT FROM initial.cooldown_action_key
     OR q.mail_center_link_id_prototype IS DISTINCT FROM initial.mail_center_link_id_prototype
-    OR q.contact_message_id_prototype IS DISTINCT FROM initial.contact_message_id_prototype THEN
+    OR q.contact_message_id_prototype IS DISTINCT FROM initial.contact_message_id_prototype
+    OR q.contact_source_expected_prototype IS DISTINCT FROM initial.contact_source_expected_prototype THEN
      RAISE EXCEPTION 'delivery source changed' USING ERRCODE='55P03';
    END IF;
    IF q.status<>'sending' THEN RETURN jsonb_build_object('ok',true,'allowed',false,'reason','skipped_not_claimed'); END IF;
@@ -76,7 +77,7 @@ BEGIN
     -- Global mail-off is intentionally bypassed only for this private proof.
     RETURN jsonb_build_object('ok',true,'allowed',true,'verification',true,'to_email',q.to_email,'subject',q.subject,'html',q.html,'text',q.text);
    END IF;
-   IF q.cooldown_action_key='contact:confirmation' OR q.contact_message_id_prototype IS NOT NULL THEN
+   IF q.contact_source_expected_prototype OR q.cooldown_action_key='contact:confirmation' OR q.contact_message_id_prototype IS NOT NULL THEN
     IF q.created_by IS NOT NULL OR NOT public._mail_contact_source_live_prototype(q.contact_message_id_prototype,q.to_email,q.cooldown_action_key) THEN
      RETURN jsonb_build_object('ok',true,'allowed',false,'reason','skipped_contact_closed');
     END IF;

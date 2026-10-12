@@ -435,3 +435,15 @@ usuwamy go. Bez dostępnego dostawcy funkcja Auth zwraca błąd wysyłki,
 nie pozorny sukces kolejkowania. Treści nadal podstawia Edge; brak stopki
 centrum i odczytu flag konta/globalnej rezygnacji. Testy obejmują sukces,
 błąd dostawcy, brak limitu i brak dostawców.
+
+### Maile obsługi konta — decyzja 2026-10-12
+
+Rejestracja, reset hasła, zmiana adresu i konwersja gościa nie są
+powiadomieniami. Osobna Edge funkcja send-email podstawia treści i wysyła
+je bez flag powiadomień, globalnej rezygnacji, odmów zasobów oraz stopki
+centrum. Nigdy nie wchodzą do kolejki powiadomień. Dawny awaryjny INSERT
+do tej kolejki po wyczerpaniu dostawców usunięty: w takim przypadku Auth
+zwraca błąd wysyłki. Treści i kolejność bezpośrednich dostawców pozostają
+bez zmian. Cztery testy funkcji obejmują sukces, awarię dostawcy, limit0
+i brak dostawców. Punktowy SMTP test11 obejmuje flagę false, odbiór maila
+resetu i odtworzenie wcześniejszej preferencji w finally.

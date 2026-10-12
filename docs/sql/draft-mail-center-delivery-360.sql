@@ -2,6 +2,7 @@
 -- Ordinary invitation source bindings are the next graph layer, not covered here.
 ALTER TABLE public.mail_queue ADD COLUMN contact_message_id_prototype uuid
  REFERENCES public.messages(id) ON DELETE SET NULL;
+ALTER TABLE public.mail_queue ADD COLUMN contact_source_expected_prototype boolean NOT NULL DEFAULT false;
 CREATE OR REPLACE FUNCTION public._mail_contact_source_live_prototype(p_message uuid,p_email text,p_action text)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp AS $$
  SELECT EXISTS(SELECT 1 FROM public.messages m JOIN public.reports r ON r.id=m.report_id
@@ -48,7 +49,8 @@ BEGIN
    IF public._norm_email(q.to_email) IS DISTINCT FROM public._norm_email(initial.to_email)
     OR q.cooldown_action_key IS DISTINCT FROM initial.cooldown_action_key
     OR q.mail_center_link_id_prototype IS DISTINCT FROM initial.mail_center_link_id_prototype
-    OR q.contact_message_id_prototype IS DISTINCT FROM initial.contact_message_id_prototype THEN
+    OR q.contact_message_id_prototype IS DISTINCT FROM initial.contact_message_id_prototype
+    OR q.contact_source_expected_prototype IS DISTINCT FROM initial.contact_source_expected_prototype THEN
      RAISE EXCEPTION 'delivery source changed' USING ERRCODE='55P03';
    END IF;
    IF q.status<>'sending' THEN RETURN jsonb_build_object('ok',true,'allowed',false,'reason','skipped_not_claimed'); END IF;
@@ -59,7 +61,7 @@ BEGIN
     -- Global mail-off is intentionally bypassed only for this private proof.
     RETURN jsonb_build_object('ok',true,'allowed',true,'verification',true,'to_email',q.to_email,'subject',q.subject,'html',q.html,'text',q.text);
    END IF;
-   IF q.cooldown_action_key='contact:confirmation' OR q.contact_message_id_prototype IS NOT NULL THEN
+   IF q.contact_source_expected_prototype OR q.cooldown_action_key='contact:confirmation' OR q.contact_message_id_prototype IS NOT NULL THEN
     IF q.created_by IS NOT NULL OR NOT public._mail_contact_source_live_prototype(q.contact_message_id_prototype,q.to_email,q.cooldown_action_key) THEN
      RETURN jsonb_build_object('ok',true,'allowed',false,'reason','skipped_contact_closed');
     END IF;
@@ -91,8 +93,10 @@ BEGIN
  END IF;
  IF NEW.cooldown_action_key='contact:confirmation' OR NEW.contact_message_id_prototype IS NOT NULL THEN
   IF NEW.created_by IS NOT NULL OR NOT public._mail_contact_source_live_prototype(NEW.contact_message_id_prototype,NEW.to_email,NEW.cooldown_action_key) THEN RAISE EXCEPTION 'invalid_contact_source'; END IF;
+  NEW.contact_source_expected_prototype:=true;
   RETURN NEW;
  END IF;
+ NEW.contact_source_expected_prototype:=false;
  IF NOT public._contact_mail_enabled(NEW.to_email) THEN RETURN NULL; END IF;
  RETURN NEW;
 END $$;

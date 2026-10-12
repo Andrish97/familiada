@@ -783,6 +783,40 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   gap: 6px;
 }
 
+/* Kryjące podłoże strzałek: ten sam wzorzec co .btn w base.css.
+   Android potrafi nakładać półprzezroczyste warstwy przy przerysowaniu. */
+.ai-provider-order{
+  --under: #161a24;
+  margin-top: 1rem;
+  padding: 12px;
+  background: var(--under);
+  border-radius: 8px;
+}
+
+.ai-provider-order-title{
+  font-size: .85rem;
+  color: #b6b8bd;
+  margin-bottom: 8px;
+}
+
+.ai-provider-order .provider-order-row{
+  background: var(--under);
+}
+
+.ai-provider-order .provider-order-rank{
+  background: #3b3b39;
+  flex-shrink: 0;
+}
+
+.ai-provider-order .provider-order-actions{
+  flex-shrink: 0;
+}
+
+@media (hover: none), (pointer: coarse){
+  .ai-provider-order .btn:hover{ filter: none; }
+  .ai-provider-order .btn:active{ transform: none; }
+}
+
 .mail-controls{
   display: flex;
   align-items: center;
