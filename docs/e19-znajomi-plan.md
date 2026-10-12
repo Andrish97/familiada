@@ -1426,3 +1426,9 @@ Korekta ograniczona do Auth anonymous bez potwierdzonego adresu; nie kasuje
 danych, przywraca standardowe5 dni od naprawy, zachowuje genuine converted
 i normal registrations. Lokalny kontrakt/historia/351/352 i4 wyścigi success.
 Migracja przygotowana, przed isolated/produkcją.
+
+354 zamknięte: DB38232023390/09:48:17, audyt po naprawie38232398434
+bez błędnych profili; branch38232792528 success2/2 i main38233127443
+success4/4 bez retry. Następna355: jawny rodzic pochodnej propozycji
+znajomości, brak revival po cofnięciu źródła i zachowanie budżetów/odmów.
+Prototyp i kontrakty lokalne; jeszcze brak355 w repo/produkcji.
