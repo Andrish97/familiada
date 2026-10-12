@@ -485,9 +485,20 @@ blokad i sprawdzonej propagacji cofnięcia/usunięcia.
 | Konto odbiorcy → udostępnienia i niepełne głosy |348/351 wdrożone; pełne anonimowe agregaty zachowane |
 | Kontakt → zadanie ankiety |353 wdrożone: jawne źródło, cofnięcie, transfer w znajomość, Go/open/vote |
 | Auth gościa → profil/klasyfikacja |354 wdrożone; main38233127443 success4/4 bez retry, błędne profile naprawione |
-| Subskrypcja → pochodna propozycja znajomości | Otwarte; lokalny test po cofnięciu źródła pozostawia1 pending proposal |
+| Subskrypcja → pochodna propozycja znajomości |355 wdrożone; source close unieważnia pending/declined i zachowuje budżety; main38236412958 success1/1 z rzeczywistymi mailami |
 | Znajomość lub ręczne nadanie → zaproszenie bazy | Pochodzenie do dopięcia; przyjęte niezależne role mają zachować własny cykl |
 | Zasób/konto → tokeny, cooldowny i oczekujące maile | Pozostały audyt i implementacja wspólnej ważności przed kolejką/dostarczeniem |
 
 Całego grafu nie oznaczać jako zakończonego na podstawie jednej zielonej
 paczki. Etapy353 i354 nie zastępują domknięcia pozostałych krawędzi.
+
+### Przekazanie kopii — nowa gałąź E19C (2026-10-12)
+
+Źródło decyzji: [`udostepnianie-kopii-plan.md`](udostepnianie-kopii-plan.md).
+Gra/logo nadawcy → snapshot eksportu → propozycja dla konta odbiorcy →
+własna gra/logo odbiorcy. Po wysłaniu snapshot należy do poddrzewa
+odbiorcy; znajomość i własność źródła warunkują utworzenie, a późniejsze
+usunięcie oryginału/konta nadawcy/znajomości nie cofa przekazanej kopii.
+To przeniesienie danych do samodzielnego zasobu, z własnymi identyfikatorami
+i plikami. Usunięcie konta odbiorcy sprząta jego propozycje i kopie.
+Blokady i walidacja snapshotu zgodnie ze wspólnym eksportem/importem.

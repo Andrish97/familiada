@@ -852,3 +852,46 @@ wyglądu. E20 dopracowuje je razem według jednego wzorca.
 Ta decyzja zmienia docelowe strony nagłówka list zasobów względem
 wcześniejszego opisu „tytuł po lewej, akcje po prawej”. Wykonanych etapów
 nie otwiera ponownie; zmianę wdrożyć w E20. Manual pozostaje ostatni.
+
+### E20 — ikony akcji i kompaktowe narzędzia telefonu (2026-10-12)
+
+Na telefonie przyciski pasków akcji i narzędzi mają **same ikony**; na komputerze ikona może
+stać obok tekstu. Korzystać ze wspólnego katalogu ikon i tych samych
+rozmiarów/przerw, zachowując nazwy dostępności i podpowiedzi. Nie powiększać
+mobilnych przycisków względem uzgodnionego wzorca Gier. Formularze i
+potwierdzenia zachowują zrozumiałe etykiety (np. OK). Przejrzeć również
+inne miejsca, gdzie zastąpienie tekstu ikoną oszczędza miejsce.
+
+| Akcja | Ikona / obsługa |
+|---|---|
+| Graj | Gamepad |
+| Ustawienia | Zębatka |
+| Ankiety | Słupki — zachować istniejącą ikonę |
+| Edycja | Kartka z ołówkiem |
+| Podgląd | Oko |
+| Udostępnij (istniejące współdzielenie) | Koperta |
+| Wyślij (kopie Gier/Logo) | Koperta, w sekcji importu/eksportu |
+| Eksport | Pobieranie — strzałka w dół |
+| Import | Wysyłanie pliku do aplikacji — strzałka w górę |
+| Do bazy | Baza ze strzałką |
+| Filtr | Ikona filtra; po kliknięciu czytelna, większa lista opcji |
+| Sortowanie | Ikona sortowania; po kliknięciu czytelna, większa lista opcji |
+| Wyszukiwanie | Lupa otwiera wspólny modal z polem i OK. Nie zajmuje stale wysokości paskiem tekstowym. |
+
+Wyszukiwanie telefonu: zatwierdzenie OK stosuje wpisany tekst; aktywny
+filtr wyróżnia przycisk kolorem. Ikona może zmienić się w X do wyczyszczenia
+wyszukiwania; po wyczyszczeniu wraca lupa. Dokładne zachowanie dopracować
+wspólnie podczas wdrożenia, zachowując jednoznaczne otwieranie/edycję oraz
+kasowanie filtra. Anulowanie modala nie zmienia bieżącego wyszukiwania.
+Filtr i sortowanie również pokazują aktywny wybór; listy są wygodne do
+dotknięcia i przewijają się w dostępnej wysokości.
+
+**Kopie Gier/Logo:** nazwa akcji to „Wyślij”. Umieścić ją w grupie
+importu/eksportu, w dolnym pasku narzędzi; górna grupa akcji zasobu
+zachowuje swój dotychczasowy zakres. Źródło: `udostepnianie-kopii-plan.md`.
+
+To doprecyzowanie wcześniejszego kompaktowego wyszukiwania/filtrowania.
+Zachować dwie kolumny nagłówka list zasobów (akcje po lewej, tytuł/podpowiedź
+po prawej), wysokość kart i przewijanie wewnątrz. Sprawdzić telefon w obu
+orientacjach, tablet i komputer, PL/EN/UK, stan bez zaznaczenia i wszystkie
+stany dostępności akcji. Po wykonaniu zrzuty z przykładowymi danymi.

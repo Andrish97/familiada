@@ -712,3 +712,31 @@ recipient Friends tworzy derived proposal, owner source revoke usuwa
 listę/accept/token/Go, actual SMTP obu poll typów i recovery15 pozostają.
 Reset355 przed reset353, tylko izolowana DB; restore _friend_locked legacy
 potrzebny po przyszłym schema355. Nie oznaczać355 wdrożonym przed bramkami.
+
+**Nowa decyzja12.10:** E19C kopie Gier/Logo tylko znajomym; spec
+udostepnianie-kopii-plan.md, kolejka po E19 i przed E19N/E14/E20/manual.
+Samodzielny snapshot odbiorcy, bez cofania/ról; od X po akceptacji,
+propozycje w zakładce typu, opcjonalna zwijana historia nadawcy. E20 nowe
+ikony akcji telefonu, modal wyszukiwania/OK i listy filtra/sortowania.
+6 aktywnych etapów głównych; manual nadal ostatni.
+
+**355 zakończone:** isolated38234773357/unit455; DB38235155267 OK10:17:07,
+main9c528ebd4e. Branch38235717751 i main38236412958 success1/1 bez retry,
+rzeczywiste maile15 i Friends/proposal/Go/partial/full/recovery15. Nie
+powtarzać355.
+
+**356 lokalny prototyp:** /tmp/e19-356/build-prototype.py oraz
+base-source-prototype.sql, DBfam356draft. Jawne base_share_to_friend
+(required active relation), stare UUID/text API pozostają nadaniem ręcznym.
+FK/typ pochodzenia taska, source guard/lock przed parą bazy/taskiem,
+cofanie zachowuje manual pending i accepted role oraz count/refusal.
+5 scenariuszy Source i6 regresji lokalnie success. Publiczny audit wykazał
+GuestOwner mógł stworzyć ręczny share mimo ukrytego UI; proto sprawdza
+regular Auth w create/lookup. Do pełnych kontraktów, wyścigów, DDL,
+wiring frontu i mail branch/main. Nie ma356 w repo ani na produkcji.
+Inna sesja rozwija Control2 diagnostics i pchnęła main4579b2ac54 —
+przy scalaniu zachować jej zmiany, sprawdzić następny numer migracji.
+
+**E19C doprecyzowanie:** „Wyślij” w sekcji importu/eksportu Gier/Logo. Standardowy modal: wybór znajomych i Wyślij, bez Udostępnionych; poniżej zwijana Historia wysyłek tej gry/logo (komu/kiedy), wpisy żyją30 dni. Usunięcie historii nie unieważnia wysłanej kopii. Aktualne źródło: udostepnianie-kopii-plan.md.
+
+**Numeracja kolejnej paczki:**356 zajęte przez Control2 diagnostics drugiej sesji na main; lokalny prototyp Baz /tmp/e19-356/fam356draft otrzyma357 (sprawdzić wolny numer przed migracją). Historyczne wpisy prototypu356 pozostają historią, bez wdrożenia Baz pod tym numerem.
