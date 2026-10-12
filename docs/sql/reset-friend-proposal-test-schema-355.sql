@@ -22,21 +22,4 @@ BEGIN
  IF NOT FOUND THEN RETURN NULL; END IF;
  RETURN f;
 END $$;
-
-
---
--- Name: _friend_mail_limit_until("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."_friend_mail_limit_until"("p_requester" "uuid", "p_addressee" "uuid") RETURNS timestamp with time zone
-    LANGUAGE "sql" STABLE SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-  SELECT CASE WHEN coalesce(sum(f.email_send_count), 0) >= 2
-              THEN max(f.email_sent_at) + interval '30 days' END
-  FROM public.friendships f
-  WHERE LEAST(f.requester_id,f.addressee_id)=LEAST(p_requester,p_addressee)
-    AND GREATEST(f.requester_id,f.addressee_id)=GREATEST(p_requester,p_addressee)
-    AND f.email_sent_at > now() - interval '30 days'
-$$;
 COMMIT;
