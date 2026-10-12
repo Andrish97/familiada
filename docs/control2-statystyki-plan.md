@@ -24,6 +24,10 @@ Statystyki są pomocnicze: ich awaria nie może odrzucać prawidłowej akcji gry
 - Panel administratora i telemetryka opublikowane: [Pages 37484422803](https://github.com/Andrish97/familiada/actions/runs/37484422803).
 - Sześć wybranych testów prawdziwej rozgrywki na produkcji: **6/6 zaliczone**, bez ponowień, 9,1 minuty. [Przebieg 37484802803](https://github.com/Andrish97/familiada/actions/runs/37484802803). Testy odczytują `game_sessions` i dołączają rekordy JSON; gry testowe są następnie usuwane. Nie uruchamiano pełnego zestawu testów.
 - Dotychczasowa historia pozostaje bez zmian.
+- Widok sesji przerwanych: wszystkie obecne powody zakończenia mają polskie
+  nazwy; po godzinie bezczynności pokazuje ostatni zapisany etap i informuje,
+  gdy nie rozliczono rund. Branch test `control2: statystyki: zdarzenia...`
+  przeszedł w Actions 38265890825; kontrola po publikacji pozostaje do wykonania.
 
 ## Odczytywanie panelu administratora
 
