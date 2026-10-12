@@ -1546,3 +1546,21 @@ Opis nad nim: „Odpowiedzi są zachowane.”, bez sekund. Dodatkowy toast
 z odliczaniem usunięty. Po końcu zwłoki przycisk staje się aktywny.
 Ta korekta dotyczy interfejsu po zakończonej362; odstęp i backend bez zmian.
 Oba typy korzystają z tego samego komponentu. Nowe zrzuty po wykonaniu.
+
+### Końcowa macierz Go — 2026-10-12
+
+Wspólny kontrakt rodzaj linku×stan×komunikat×akcja:
+[`go-stany.md`](go-stany.md), zweryfikowany z rzeczywistymi resolverami.
+Wykonana anonimowa ścieżka i opublikowany jeden licznik; audyt produkcji
+38318723049:11 kontroli,0 niespójności, READ ONLY (same agregaty).
+
+Macierz ujawniła dalszą korektę tożsamości: subskrypcja ma trwałe
+registered_user_id, ale poll_go_resolve go nie przekazuje, więc frontend
+po późniejszej zmianie adresu porównuje dawny adres zamiast kanonicznego ID.
+Dodać pole odpowiedzi w dodającej363, test zmiany adresu/obcego konta,
+a potem użyć go w Go. Nie zmieniać subskrypcji w akceptację konta.
+Dalsze poprawki komunikatów: odróżnić zaakceptowaną/odrzuconą/cofniętą Bazę,
+revoked, błędny rodzaj linku i błędy sieci, wspólny brak dopasowania odbiorcy.
+Historyczny s/action=unsub konwertowany na friend kierować do Znajomych.
+Usunięcia/wygaśnięcia bez istniejącego rekordu dają ogólny stan niedostępny;
+nie odtwarzać przodka ani dawnego dostępu w celu opisania starego tokenu.
