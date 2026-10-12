@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T21084";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-12T21123";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -282,29 +282,12 @@ function _fadeVolume(a, ct, dur, target) {
 
 function _startFade(key, a) {
   _cancelFade(key);
-  // Zgłoszone: sam początek pojedynczego dźwięku (np. "reveal" przy
-  // odsłonięciu, "round_transition" przy przejściu rundy) brzmi "brzydko" —
-  // znaleziony realny mechanizm: fade-in liczony był z a.currentTime, a NIE
-  // z czasu, który faktycznie upłynął. `a.currentTime` tuż po `a.play()`
-  // potrafi stać w miejscu (na 0) przez pierwsze kilka klatek RAF, dopóki
-  // silnik audio faktycznie nie zacznie odtwarzać zbuforowanego dźwięku,
-  // a POTEM skoczyć naraz do wartości odpowiadającej realnie upłynionemu
-  // czasowi — przy domyślnym, krótkim oknie fade-in (dolny próg 80ms, patrz
-  // FADE_IN_MIN) to właśnie te pierwsze klatki decydują o całym efekcie:
-  // zamiast płynnej rampy 0->docelowa głośność, głośność stoi w miejscu,
-  // POTEM skacze od razu na wysoką wartość — słyszalne jako "brzydki",
-  // nierówny start zamiast miękkiego wejścia. Poprawka: fade-in (i fade-out,
-  // dla spójności z tą samą funkcją) liczone z zegara ściennego
-  // (performance.now() od chwili wywołania play()), który narasta gładko
-  // klatka po klatce niezależnie od wewnętrznego, czasem "zacinającego się"
-  // zegara samego elementu <audio> — a.currentTime zostaje użyte wyłącznie
-  // do poznania a.duration (już i tak przekazywanego osobno).
-  const startedAt = performance.now();
+  // Zegar pliku rusza dopiero po rzeczywistym starcie audio. Opóźnienie
+  // ładowania lub odblokowania nie może zużywać wejścia ani wyjścia.
   function tick() {
     if (!a || a.paused || a.ended) { _fadeRafs.delete(key); return; }
     const target = _getEffectiveVolume(key); // czyta na żywo — reaguje na zmianę głośności
-    const elapsed = (performance.now() - startedAt) / 1000;
-    a.volume = Math.max(0, Math.min(1, _fadeVolume(a, elapsed, a.duration, target)));
+    a.volume = Math.max(0, Math.min(1, _fadeVolume(a, a.currentTime, a.duration, target)));
     _fadeRafs.set(key, requestAnimationFrame(tick));
   }
   _fadeRafs.set(key, requestAnimationFrame(tick));
@@ -363,11 +346,12 @@ export function playSfx(key) {
     a.volume = 0;
     const started = a.play();
     if (started?.then) started.then(() => {
+      if (cache.get(key) === a && !a.paused && !a.ended) _startFade(key, a);
       reportPlayback({ key, failed: false, delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
     }).catch(error => {
       reportPlayback({ key, failed: true, error: String(error?.name || "play_rejected"), delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
     });
-    _startFade(key, a);
+    if (!started?.then) _startFade(key, a);
   } catch (error) {
     reportPlayback({ key, failed: true, error: String(error?.name || "play_failed"), delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
   }
@@ -481,7 +465,7 @@ export async function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T21084";
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-12T21123";
     // Call play() synchronously in the gesture handler, then trust its
     // promise. Previously a rejected autoplay attempt still returned true,
     // allowing Display to report an unlock the browser had refused.
@@ -522,7 +506,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T21084" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-12T21123" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   for (const [key, pct] of Object.entries(volumes)) {

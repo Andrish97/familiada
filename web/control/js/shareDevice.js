@@ -1,13 +1,13 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-12T21084";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T21084";
-import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-12T21084";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-12T21084";
-import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-12T21084";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-12T21123";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T21123";
+import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-12T21123";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-12T21123";
+import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-12T21123";
 
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-12T21084";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-12T21123";
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 function deviceTypeLabel(type) {
@@ -21,6 +21,7 @@ function shareErrorMessage(code) {
   const keys = {
     not_friend: "notFriend", unknown_user: "unknownUser", invalid_email: "invalidEmail",
     recipient_not_found: "unknownUser", recipient_changed: "recipientChanged",
+    notifications_disabled: "recipientResigned",
     self_share: "selfShare", session_expired: "sessionExpired", gone: "sessionExpired",
   };
   return t(`control.shareDeviceModal.${keys[code] || "failed"}`);
@@ -327,7 +328,14 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       const { data, error } = await sb().rpc("control_device_share_preflight_by_lookup", {
         p_game_id: game.id, p_device_type: _deviceType, p_lookup: raw,
       });
-      if (version !== preflightVersion || error || !data?.ok) return;
+      if (version !== preflightVersion || error) return;
+      if (!data?.ok) {
+        if (data?.error === "notifications_disabled") {
+          showMessage(shareErrorMessage(data.error), { state: "error" });
+          if (btnAdd) btnAdd.disabled = true;
+        }
+        return;
+      }
       if (data.already_shared) {
         showMessage(t("control.shareDeviceModal.alreadyShared") || "Tej osobie już udostępniono to urządzenie w tej sesji gry.");
         if (btnAdd) btnAdd.disabled = true;

@@ -4563,6 +4563,7 @@ const pl = {
       notFriend: "Ta osoba nie jest już na liście znajomych.",
       unknownUser: "Nie znaleziono użytkownika.",
       invalidEmail: "Wpisz poprawny adres e-mail.",
+      recipientResigned: "Ta osoba zrezygnowała z zaproszeń i udostępnień. Nie można teraz udostępnić jej urządzenia.",
       recipientChanged: "Adres odbiorcy zmienił się. Wpisz go ponownie.",
       selfShare: "Nie możesz udostępnić urządzenia sobie.",
       sessionExpired: "Ta sesja rozgrywki już wygasła. Zacznij od nowa.",

@@ -1,6 +1,6 @@
 // base-explorerjs/context-menu.js
 
-import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-12T21084";
+import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-12T21123";
 import {
   createFolderHere,
   createQuestionHere,
@@ -12,10 +12,10 @@ import {
   deleteTags,
   duplicateSelected,
   canDeleteHere,
-} from "./actions.js?v=v2026-10-12T21084";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-12T21084";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T21084";
-import { renderAll } from "./render.js?v=v2026-10-12T21084";
+} from "./actions.js?v=v2026-10-12T21123";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-12T21123";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T21123";
+import { renderAll } from "./render.js?v=v2026-10-12T21123";
 
 
 const IS_MAC = navigator.platform.toLowerCase().includes("mac");

@@ -39,9 +39,14 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await clearMailCenterCapabilities(); await clearMailbox(EMAIL); await resetMailProviderLimits(page);
     const after = new Date(Date.now() - 2000).toISOString();
     await page.goto('https://www.familiada.online/subscribers/');
+    await expect(page.locator('[data-skel-step]')).toHaveClass(/skel-step-ready/);
     await expect(page.locator('#inviteForm')).toBeVisible();
     await page.locator('#inviteInput').fill(EMAIL);
+    const sendResponse = page.waitForResponse(response => response.url().includes('/functions/v1/send-mail') && response.request().method() === 'POST', { timeout: 15000 });
     await page.locator('#inviteForm button[type=submit]').click();
+    const sent = await sendResponse; expect(sent.ok()).toBe(true);
+    expect(await sent.json()).toMatchObject({ ok: true, queued: 1 });
+    await expect(page.locator('.rowsSection--pending .shareRow').filter({ hasText: EMAIL })).toHaveCount(1);
     const email = await waitForEmail({ recipient: EMAIL, after, subject: /subskrypc|subscript|підпис/i, timeout: 180000 });
     expectMailDocument(email, { globalUnsub: true });
     const footer = proofLink(email); expect(footer).toBeTruthy();
@@ -70,8 +75,8 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
       if (questions.error) throw questions.error;
       const opened = await sb.rpc('poll_open', { p_game_id: poll.id, p_key: poll.share_key_poll }); if (opened.error) throw opened.error;
       const subscribers = await sb.rpc('subscribers_list'); if (subscribers.error) throw subscribers.error;
-      const subscriber = subscribers.data.find(item => item.subscriber_email === email && item.status === 'active');
-      const shared = await sb.rpc('poll_share_send', { p_game_id: poll.id, p_friend_ids: [], p_subscriber_ids: [subscriber.sub_id || subscriber.id] });
+      const subscriber = subscribers.data.find(item => item.email === email && item.status === 'active');
+      const shared = await sb.rpc('poll_share_send', { p_game_id: poll.id, p_friend_ids: [], p_subscriber_ids: [subscriber.id] });
       if (shared.error || !shared.data?.ok || shared.data.created !== 1) throw shared.error || new Error('Poll share fixture failed');
       const runtime = await sb.rpc('control_runtime_session_touch', { p_game_id: control.id }); if (runtime.error || !runtime.data?.ok) throw runtime.error || new Error('Control session fixture failed');
       const device = await sb.rpc('control_device_share_create', { p_game_id: control.id, p_device_type: 'host', p_recipient_email: email });
@@ -83,9 +88,17 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await expect(center.locator('#itemsBadge')).toHaveText('2');
     await expect(center.locator('#itemsList .mail-row--poll')).toHaveCount(1);
     await expect(center.locator('#itemsList .mail-row--device')).toHaveCount(1);
-    await center.screenshot({ path: testInfo.outputPath('mail360-active-1400.png'), fullPage: true });
+    const devices = (await state(center)).items.filter(item => item.kind === 'device');
+    expect(devices[0].link).toMatch(/^\/go\/\?d=host&id=[a-f0-9-]+&key=[a-f0-9-]+$/);
+    const device = await anonymous.newPage();
+    try {
+      await device.goto(new globalThis.URL(devices[0].link, URL).href);
+      await expect(device).toHaveURL(/\/control\/host\//);
+      await expect(device.locator('#paper')).toBeVisible({ timeout: 15000 });
+    } finally { await device.close(); }
+    await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-1400.png'), fullPage: true });
     await center.setViewportSize({ width: 390, height: 844 });
-    await center.screenshot({ path: testInfo.outputPath('mail360-active-390.png'), fullPage: true });
+    await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-390.png'), fullPage: true });
     expect(await center.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const denied = await center.evaluate(async () => (await fetch('/_api/mail/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })).status);
     expect(denied).toBe(403); expect((await state(center)).notifications_enabled).toBe(true);
@@ -94,23 +107,24 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await expect(center.locator('#mailLists')).toBeHidden();
     const off = await state(center); expect(off.items).toEqual([]); expect(off.subscriptions).toEqual([]);
     expect(await page.evaluate(async token => (await window.__sbClient.rpc('control_device_share_resolve', { p_token: token })).data.ok, deviceToken)).toBe(false);
-    await center.screenshot({ path: testInfo.outputPath('mail360-disabled-390.png'), fullPage: true });
+    await center.screenshot({ path: testInfo.outputPath('shot-mail360-disabled-390.png'), fullPage: true });
     // A new proof is still sent while ordinary notifications are globally off.
     await clearMailbox(EMAIL); const confirmationAfter = new Date(Date.now() - 2000).toISOString();
     await entry.goto(URL); await entry.locator('#mailInput').fill(EMAIL); await entry.locator('#mailForm button').click();
     await expect(entry.locator('#mailTitle')).toHaveText('Sprawdź swoją skrzynkę');
     const verification = await waitForEmail({ recipient: EMAIL, after: confirmationAfter, timeout: 180000 });
     const tokenLink = proofLink(verification); expect(tokenLink).toBeTruthy();
+    expect((await second.request.head(tokenLink, { maxRedirects: 0 })).status()).toBe(302);
     expect((await second.request.get(tokenLink, { maxRedirects: 0 })).status()).toBe(302);
     await entry.goto(tokenLink); await expect(entry.locator('#mailTitle')).toHaveText('Otwórz centrum maili');
-    await entry.screenshot({ path: testInfo.outputPath('mail360-confirmation.png'), fullPage: true });
+    await entry.screenshot({ path: testInfo.outputPath('shot-mail360-confirmation.png'), fullPage: true });
     await entry.goto(tokenLink); await expect(entry.locator('#mailTitle')).toHaveText('Otwórz centrum maili');
     await entry.getByRole('button', { name: 'Otwórz moje powiadomienia', exact: true }).click();
     await expect(entry.locator('#mailPreferenceTitle')).toHaveText('Powiadomienia są wyłączone');
     await entry.locator('#mailPreferenceButton').click();
     await expect(entry.locator('#mailPreferenceTitle')).toHaveText('Powiadomienia są włączone');
     const restored = await state(entry); expect(restored.items).toEqual([]); expect(restored.subscriptions).toEqual([]);
-    await entry.screenshot({ path: testInfo.outputPath('mail360-restored-empty.png'), fullPage: true });
+    await entry.screenshot({ path: testInfo.outputPath('shot-mail360-restored-empty.png'), fullPage: true });
     // No preview consumes a proof; explicit use consumes it exactly once.
     await center.goto(tokenLink); await expect(center.locator('#mailTitle')).toHaveText('Ten link już nie działa');
   } finally {
@@ -136,16 +150,16 @@ test('mail360: brak dostepu, nieaktualny link i adres konta prowadzi do logowani
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   await expect(page.locator('#mailForm')).toBeVisible(); await expect(page.locator('#mailLists')).toBeHidden();
-  await page.screenshot({ path: testInfo.outputPath('mail360-entry-390.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('shot-mail360-entry-390.png'), fullPage: true });
   const publicSession = await state(page); expect(publicSession.ok).toBe(false); expect(publicSession.subscriptions).toBeUndefined(); expect(publicSession.items).toBeUndefined();
   await page.goto(URL + '?m=' + 'a'.repeat(64));
   await expect(page.locator('#mailTitle')).toHaveText('Ten link już nie działa');
-  await page.screenshot({ path: testInfo.outputPath('mail360-expired-390.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('shot-mail360-expired-390.png'), fullPage: true });
   await page.locator('#mailInput').fill('test1@familiada.online'); await page.locator('#mailForm button').click();
   await expect(page.locator('#mailTitle')).toHaveText('Masz konto w Familiadzie');
   await expect(page.locator('#mailActions a')).toHaveAttribute('href', '/login/?next=account');
   await expect(page.locator('#mailLists')).toBeHidden();
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.screenshot({ path: testInfo.outputPath('mail360-registered-landscape.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('shot-mail360-registered-landscape.png'), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

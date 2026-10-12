@@ -30,7 +30,8 @@ async function resetMailProviderLimits(page) {
   console.log("[e2e-mail] provider limits reset before delivery test");
 }
 
-async function waitForEmail({ recipient, after, subject, timeout = 90_000 }) {
+async function waitForEmail({ recipient, after, subject, timeout = 90_000, trigger = true }) {
+  let triggered = !trigger;
   const startedAt = Date.now();
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
@@ -39,6 +40,13 @@ async function waitForEmail({ recipient, after, subject, timeout = 90_000 }) {
     if (email) {
       console.log("[e2e-mail] received", JSON.stringify({ recipient, elapsedMs: Date.now() - startedAt, receivedAt: email.received_at }));
       return email;
+    }
+    if (!triggered) {
+      const result = await api('/mail-trigger', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipient, after }),
+      });
+      triggered = result.selected > 0;
     }
     await new Promise((resolve) => setTimeout(resolve, 2_000));
   }

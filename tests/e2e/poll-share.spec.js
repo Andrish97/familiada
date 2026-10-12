@@ -136,7 +136,7 @@ test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty",
           : await rpc(page, "poll_sub_unsubscribe", { p_token: subscription.token });
         expect(withdrawn.ok).toBe(true);
         expect(await count(task.id)).toBe(0);
-        expect(await rpc(page, "poll_task_opened", { p_token: token })).toBe(index === 0 ? "not_found" : "already_used");
+        expect(await rpc(page, "poll_task_opened", { p_token: token })).toBe(index === 0 ? "not_found" : "expired");
         await page.goto(links[index]);
         await expect(page.locator("#title")).toContainText(/cofnięt|anulowan|nieważn|niedostępn|wygas|nieprawidł/i);
       }
