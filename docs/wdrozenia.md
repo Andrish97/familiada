@@ -929,3 +929,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: commit09cfcb0692 na branchu, Actions38303593794 w toku — wybrane testy Control: tryb testowy oraz pełna runda przez cztery urządzenia, pool4,5, retries0. Bez wdrożenia Pages do zielonego wyniku.
 
 - 2026-10-12: branch38303593794 failure2: stara asercja37px nie uwzględniała skalowania topbara (35.95px przy skali0.97); guard klasyfikował komputer1280×650 jako telefon tylko według krótszego boku. Dla Control dodano wymaganie dotyku do klasyfikacji telefonu (inne strony bez zmiany), test rozmiaru postępu znormalizowany do skali. Doprecyzowanie użytkownika: Znajomi tylko w Urządzeniach; test obejmuje ukrycie później i stałą stopkę przewijanego podsumowania.
+
+- 2026-10-12: commit89dc980a0f, branch38304058278 w toku (wybrane2 E2E,4/5,retries0). Punktowe lokalne unit34/34; pełne unit Actions success. Pomiary16 stanów zapisane w docs/img/control-test-mode/measurements-correction.json.
