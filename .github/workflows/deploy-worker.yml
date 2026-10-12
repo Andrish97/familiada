@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "cloudflare/**"
+      - "web/shared/js/core/go-contract.js"
       - ".github/workflows/deploy-worker.yml"
   workflow_dispatch: {}
 

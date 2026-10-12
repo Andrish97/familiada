@@ -6,6 +6,7 @@
 // proxying, etc). This split is purely mechanical (every line of logic moved
 // verbatim into its new file, nothing rewritten) -- see git history for the
 // single-file version if something here looks surprising.
+import { parseGoLink } from "../../../web/shared/js/core/go-contract.js";
 import { handleMailCenterApi } from "./lib/mail-center/api.js";
 import { handleInboundEmail } from "./lib/email/inbound-email.js";
 import { cleanupExpiredAttachments, cleanupExpiredE2EEmails, cleanupMailCenter } from "./lib/core/cleanup.js";
@@ -196,7 +197,7 @@ export default {
     if (url.pathname.startsWith("/_api/mail/")) return handleMailCenterApi(request, env);
 
     // Footer/confirmation links use Go as the canonical entry, with no GET action.
-    if (["GET","HEAD"].includes(request.method) && ["/go","/go/","/go/index.html"].includes(url.pathname) && url.searchParams.has("m")) {
+    if (["GET","HEAD"].includes(request.method) && ["/go","/go/","/go/index.html"].includes(url.pathname) && parseGoLink(url.searchParams).kind === "m") {
       const center = new URL("https://www.familiada.online/mail/");
       center.searchParams.set("m",url.searchParams.get("m") || "");
       const lang=url.searchParams.get("lang"); if (["pl","en","uk"].includes(lang)) center.searchParams.set("lang",lang);
