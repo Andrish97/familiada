@@ -145,3 +145,11 @@ powiadomień, blokadzie ani stopce centrum.
 Natychmiastowe przejścia aktywnych urządzeń i pełne anonimowe ankiety były
 sprawdzone natywnie w poprzednich paczkach. Nowa galeria nie zastępuje
 wcześniejszych wyników DB/SMTP ani nie dowodzi ponownie ich działania.
+
+**Kontrola main ujawniła drugą warstwę wejścia:** Worker miał wcześniejsze
+przekierowanie każdego m, także m+b, zanim frontend Go zdążył odrzucić link.
+Diag38321800038 potwierdził niepoprawne parametry po przejściu do innej strony.
+Worker korzysta teraz z tego samego parseGoLink; przekierowuje wyłącznie
+poprawny pojedynczy m. Niepoprawne linki pozostają w Go. Deploy Workera
+śledzi także zmiany wspólnego parsera; unit obejmuje GET/HEAD i14 wariantów.
+Przed zamknięciem wymagane Worker→ta sama punktowa kontrola main.

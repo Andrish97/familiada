@@ -66,3 +66,15 @@ test('Go forwards center capability without redeeming or toggling preference',as
  const result=await worker.fetch(new Request('https://www.familiada.online/go/?m='+link+'&lang=uk'),env,{});
  assert.equal(result.status,302);const target=new URL(result.headers.get('location'));assert.equal(target.pathname,'/mail/');assert.equal(target.searchParams.get('m'),link);assert.equal(target.searchParams.get('lang'),'uk');
 });
+
+test('Worker retains invalid and mixed center links on Go with the shared parser',async(t)=>{
+ const {default:worker}=await import('../../cloudflare/maintenance-worker/src/index.js');
+ const targetEnv={...env,MAINT_KV:{get:async()=>null}};
+ const requested=[];stub(t,async(url)=>{requested.push(String(url));return new Response('<html><body>Go</body></html>',{headers:{'Content-Type':'text/html'}});});
+ for(const query of ['m='+link+'&b=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','m='+link+'&m='+link,'m='+link+'&p=anon','m=','m=bad','m='+link+'&lang=pl&lang=uk','m='+link+'&extra=1'])for(const method of ['GET','HEAD']){
+  const response=await worker.fetch(new Request('https://www.familiada.online/go/?'+query,{method}),targetEnv,{});
+  assert.equal(response.status,200,query);assert.equal(response.headers.get('location'),null);
+  assert.ok(new URL(requested.at(-1)).pathname.endsWith('/go/index.html'));
+  assert.equal(new URL(requested.at(-1)).search,'?'+query);
+ }
+});
