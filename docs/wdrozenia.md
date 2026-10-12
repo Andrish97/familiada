@@ -1007,3 +1007,7 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: finalny branch38306246176 success1/1 bez retry: układ, guard, odblokowanie audio, nazwy PL→EN→UK→PL, Buzzer i statystyki; unit479/479. Scalenie origin/main c5c265ffae: konflikty wersji rozwiązane dedykowanym skryptem, oba wpisy Dziennika zachowane. Po integracji krótka bramka na branchu przed Pages.
 
 - 2026-10-12: integracja main c5c265ffae na branchu4dfa7e9ace: unit26/26 lokalnie, Actions38306861683 success1/1 bez retry, pełne unit506/506. Cały Control z topbarem po lewej, urządzenia na pełną wysokość, Znajomi tylko w Urządzeniach, stare podsumowanie z przewijaną treścią, łagodniejszy guard, nazwy domyślne PL/EN/UK i własne. Gotowe do publikacji Pages i punktowej kontroli produkcji.
+
+| 2026-10-12 | SMTP / prywatny trigger kolejki testowej | Endpoint mail-trigger uruchamia istniejący invoke_mail_worker_ids tylko dla świeżych, gotowych pending skrzynek testowych; wyklucza9/10, nie modyfikuje źródeł, flag, limitów i czasu opóźnienia. | Unit500/500, podpis/zakres/pusta kolejka/awanse/błędy backendu sprawdzone. Publikacja Workera przed nowym punktowym SMTP; bez zmian w produkcyjnej ścieżce dostarczania. |
+
+- 2026-10-12: podczas publikacji main przesunął się do6a89e78fae: wyłącznie schema/log, testowy endpoint kolejki i Dziennik, bez zmian web. Zachowano te commity; przetestowane źródła Control nie zmieniły się.
