@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qsHMH2OXBLFdJlyCx3zUG8VOgmCRBbZ3cOINecUDcGx4g11wgdmOJVBPrK4ILXr
+\restrict guJPzIk8J4PKKHtgCWDRnG3gbcBnauG1Ck1KVEA4XqzevVDTTeyVn8vIxsgcqL8
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -13761,13 +13761,17 @@ $$;
 CREATE FUNCTION "public"."save_inbound_message"("p_from_email" "text", "p_subject" "text", "p_body" "text", "p_body_html" "text" DEFAULT NULL::"text", "p_ticket_number" "text" DEFAULT NULL::"text") RETURNS TABLE("id" "uuid", "report_id" "uuid", "ticket_number" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
-    AS $$
+    AS $_$
 DECLARE
   v_report_id  uuid;
   v_ticket     text;
   v_msg_id     uuid;
   v_clean_ticket text;
 BEGIN
+  -- Same envelope sender boundary as the Worker; protects older deployments.
+  IF lower(btrim(p_from_email)) ~ '^bounce[+][a-z0-9_-]+@bounce-zem[.]familiada[.]online$' THEN
+    RETURN;
+  END IF;
   -- normalise ticket: strip TICKET- prefix if present, keep YYYY-NNNN part
   IF p_ticket_number IS NOT NULL AND p_ticket_number <> '' THEN
     v_clean_ticket := regexp_replace(p_ticket_number, '^TICKET-', '');
@@ -13785,7 +13789,7 @@ BEGIN
 
   RETURN QUERY SELECT v_msg_id, v_report_id, v_ticket;
 END;
-$$;
+$_$;
 
 
 --
@@ -20440,5 +20444,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qsHMH2OXBLFdJlyCx3zUG8VOgmCRBbZ3cOINecUDcGx4g11wgdmOJVBPrK4ILXr
+\unrestrict guJPzIk8J4PKKHtgCWDRnG3gbcBnauG1Ck1KVEA4XqzevVDTTeyVn8vIxsgcqL8
 
