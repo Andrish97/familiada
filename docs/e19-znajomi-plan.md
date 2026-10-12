@@ -1409,3 +1409,14 @@ przy przyjęciu staje się niezależną relacją. Osobno dokończyć pochodzenie
 zaproszeń Baz, przenoszenie pozostałych budżetów maila z adresu na ID przy
 rejestracji/zmianie adresu, globalne tokeny oraz autoryzację/ważność źródła
 przed kolejką i wysyłką. Nie oznaczać całego grafu zamkniętym po353.
+
+353 zamknięte produkcyjnie: DB38209426059/05:48:30/schema8110af1b70,
+isolated38209090723, branch38210607530 i main38211143647 success1/1 bez retry,
+unit455. Rzeczywisty mail15, signup, cofnięcie źródła, partial0/full10,
+Go obu aktorów i recovery15. To nie jest zamknięcie całego grafu.
+
+354 przed dalszymi krawędziami: metadane przekazane przy zakładaniu gościa
+nie mogą zmieniać go w zwykłe konto ani usuwać daty wygaśnięcia. Wymagać
+rzeczywistego stanu Auth i potwierdzonej konwersji; nie opierać ról/blokad na
+edytowalnym polu. Lokalny audit/prototyp i regresje konwersji już wykonane,
+reszta kontraktu/audyt historii i bramki wdrożenia do wykonania.

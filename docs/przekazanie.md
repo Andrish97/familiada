@@ -665,3 +665,17 @@ application_name w PostgreSQL obcina dłuższe nazwy. Reset shape353 wyłącznie
 na izolowanej bazie przed powtórnym testem historycznych migracji; nigdy
 produkcja. Najpierw unit/isolated353, potem SQL/log/smokes, real-mail branch
 oraz main.352 zakończone; nie oznaczać353 wdrożonym przed tymi bramkami.
+
+**353 zakończone produkcyjnie:** finalny isolated38209090723/unit455;
+main ab837febf0, DB38209426059/log05:48:30/schema8110af1b70; branch38210607530
+oraz main38211143647 success1/1 bez retry z rzeczywistymi mailami15. Wybrane
+źródło, signup, cofnięcie, partial0/full10, oba Go expired i odbudowa15
+potwierdzone. Nie powtarzać paczki.
+
+**Następna praca354:** prototyp /tmp/e19-354, DBfam354draft. Actual anonymous
+z metadata guest=false tworzy obecnie profil regular bez expiry. Root
+klasyfikacja musi pochodzić z Auth/potwierdzonej konwersji. Prototyp Ctor,
+regular classifier i normalizer success;351/352 pozytywnej konwersji także.
+Jeszcze bez354 w repo/produkcji. Do audytu historii i pełnych testów.
+Pozostałe źródła pochodnych propozycji/Baz i mailowe budżety/tokeny/kolejka
+w E19; UI/E20 dalej, manual na końcu.
