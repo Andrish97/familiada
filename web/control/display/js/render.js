@@ -1,4 +1,4 @@
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T21131";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T21195";
 // control/display/js/render.js
 //
 // Tłumaczy wiersz public.game_state (a dokładniej: różnicę między
@@ -24,9 +24,9 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T2113
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-12T21131";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-12T21131";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-12T21131";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-12T21195";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-12T21195";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-12T21195";
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -35,7 +35,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-12T21131";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-12T21195";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
