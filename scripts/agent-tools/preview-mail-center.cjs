@@ -44,11 +44,15 @@ try{
     await page.locator('[data-contact-modal]').click();await page.locator('#cModalEmail').fill('anonymous@example.invalid');await page.locator('#cModalSubject').fill('Podgląd kontaktu');await page.locator('#cModalMessage').fill('Przykładowa wiadomość bez rzeczywistej wysyłki.');
     if(size.name==='mobile'){
      assert.equal((await page.locator('body > .topbar [data-contact-sheet-back]').textContent()).trim(),'Wstecz');
+     const backAlignment=await page.locator('[data-contact-sheet-back]').evaluate(el=>{const b=el.getBoundingClientRect(),i=el.querySelector('svg').getBoundingClientRect(),s=getComputedStyle(el);return {center:Math.abs((b.top+b.height/2)-(i.top+i.height/2)),left:s.paddingLeft,right:s.paddingRight,gap:s.columnGap};});
+     assert.ok(backAlignment.center<=1,'back icon must be vertically centered');assert.equal(backAlignment.left,backAlignment.right,'back padding must be symmetric');assert.equal(backAlignment.gap,'6px');
      assert.equal(await page.locator('#cModalX').isVisible(),false);
      const titleBox=await page.locator('#cModalTitle').boundingBox(),barBox=await page.locator('body > .topbar').boundingBox();
      assert.ok(titleBox.y>=barBox.y+barBox.height,'form heading must be below topbar');
-     assert.equal(await page.locator('.mail-discover').isVisible(),true,'page footer must remain visible');
-     const footerBox=await page.locator('.mail-discover').boundingBox();assert.ok(footerBox.y+footerBox.height<=size.height+1,'footer must fit inside viewport');
+     assert.equal(await page.locator('.mail-footer').isVisible(),true,'page footer must remain visible');
+     assert.equal(await page.locator('.mail-discover').isVisible(),false,'discovery links must not appear in contact');
+     const footerBox=await page.locator('.mail-footer').boundingBox();assert.ok(footerBox.y+footerBox.height<=size.height+1,'footer must fit inside viewport');
+     assert.notEqual(await page.locator('.mail-footer').evaluate(el=>getComputedStyle(el,'::before').content),'none','standard footer divider must exist');
      assert.equal(await page.locator('body > .topbar .lang-btn').isVisible(),true,'language switch must remain visible');
      await page.locator('.lang-btn').click();await page.locator('.lang-option[data-lang="en"]').click();await page.waitForFunction(()=>document.documentElement.lang==='en');
      assert.equal(await page.locator('#cModalEmail').inputValue(),'anonymous@example.invalid','language change must preserve entered form');

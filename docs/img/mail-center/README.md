@@ -8,6 +8,8 @@ Zrzuty 390×844, 1400×900 i844×390. Sprawdzono brak błędów JavaScript
 oraz poziomego przepełnienia strony. Żaden mail nie został wysłany przy
 wykonywaniu tych podglądów.
 Formularz Kontakt sprawdzony bez konta, z zastąpioną odpowiedzią wysyłki.
+Telefon: Wstecz we wspólnym topbarze, dostępna zmiana języka i stopka
+strony na dole. Zmiana języka zachowuje wpisane dane formularza.
 Otwarcie jednorazowego potwierdzenia nie zużywa linku przed przyciskiem.
 
 ## Potwierdzenie adresu

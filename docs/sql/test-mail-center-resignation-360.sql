@@ -39,5 +39,9 @@ DO $$ DECLARE tok uuid; r jsonb; secret text; issued jsonb; refusal timestamptz;
  IF jsonb_array_length(r->'subscriptions')<>0 OR jsonb_array_length(r->'items')<>0 THEN RAISE EXCEPTION 'restoration exposed cancelled sources'; END IF;
  IF NOT public._contact_mail_enabled('address359resign@example.invalid') THEN RAISE EXCEPTION 'restoration did not clear root'; END IF;
  IF EXISTS(SELECT 1 FROM public.poll_subscriptions WHERE subscriber_email='address359resign@example.invalid' AND status IN('pending','active')) OR EXISTS(SELECT 1 FROM public.control_device_shares WHERE recipient_email='address359resign@example.invalid' AND revoked_at IS NULL) THEN RAISE EXCEPTION 'restoration resurrected sources'; END IF;
+ r:=public.poll_go_global_unsubscribe(public._ensure_unsub_token('other359resign@example.invalid'));
+ IF r IS DISTINCT FROM '{"ok":true}'::jsonb THEN RAISE EXCEPTION 'legacy token returned more authority than unsubscribe'; END IF;
+ IF EXISTS(SELECT 1 FROM public.control_device_shares WHERE recipient_email='other359resign@example.invalid' AND revoked_at IS NULL)
+  OR EXISTS(SELECT 1 FROM public.poll_tasks WHERE recipient_email='other359resign@example.invalid' AND status IN('pending','opened')) THEN RAISE EXCEPTION 'legacy unsubscribe did not close anonymous source tree'; END IF;
 END $$;
 ROLLBACK;

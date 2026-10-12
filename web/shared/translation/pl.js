@@ -567,6 +567,7 @@ const pl = {
     emailNotifSavedOn: "Powiadomienia e-mail zostały włączone.",
     emailNotifSavedOff: "Powiadomienia e-mail zostały wyłączone.",
     emailNotifSaveFailed: "Nie udało się zapisać ustawień powiadomień. Spróbuj ponownie.",
+    emailNotifLoadFailed: "Nie udało się odczytać ustawienia powiadomień. Odśwież stronę.",
     demo: {
       title: "Materiały Demo",
       hint: "Przywróć przykładowe materiały startowe: bazy pytań, logo i gotowe gry różnych kategorii.",

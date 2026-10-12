@@ -1032,3 +1032,9 @@ dedykowany przycisk we wspólnym topbarze. W `/mail/` wspólny sheet mieści
 się w mail-wrap; topbar ze zmianą języka i stopka strony pozostają widoczne.
 Wstecz nie ląduje w nagłówku formularza. Własny topbar pełnoekranowy
 dotyczy wyłącznie stron, na których nie istnieje wspólna struktura strony.
+
+Stopka `/mail/`: wspólna `.footer`, linia oddzielająca, podpis Familiada
+i Kontakt; bez dodatkowych zachęt w stopce. „Poznaj system” oraz logowanie
+pozostają małą sekcją treści centrum, niewidoczną podczas Kontakt.
+Wspólne Wstecz topbara: ikona i napis wyśrodkowane pionowo, jawny odstęp6px,
+równy padding boków i wysokość zgodna z przyciskiem języka.

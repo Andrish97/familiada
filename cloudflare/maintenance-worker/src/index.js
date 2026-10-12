@@ -8,7 +8,7 @@
 // single-file version if something here looks surprising.
 import { handleMailCenterApi } from "./lib/mail-center/api.js";
 import { handleInboundEmail } from "./lib/email/inbound-email.js";
-import { cleanupExpiredAttachments, cleanupExpiredE2EEmails } from "./lib/core/cleanup.js";
+import { cleanupExpiredAttachments, cleanupExpiredE2EEmails, cleanupMailCenter } from "./lib/core/cleanup.js";
 import { handleE2EApi, handleE2ELoginBypass, authorizeE2EApi } from "./lib/e2e/e2e-api.js";
 import { getState } from "./lib/core/state.js";
 import { json, withHeaders } from "./lib/core/http.js";
@@ -50,6 +50,7 @@ export default {
     ctx.waitUntil(Promise.all([
       cleanupExpiredAttachments(env),
       cleanupExpiredE2EEmails(env),
+      cleanupMailCenter(env),
     ]));
   },
 

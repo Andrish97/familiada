@@ -47,11 +47,15 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-source-guards-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-confirmation-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-delivery-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-preferences-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-mail-center-cleanup-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-access-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-resignation-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-source-guards-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-confirmation-360.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-delivery-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-preferences-360.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-mail-center-cleanup-360.sql
           python3 docs/sql/test-mail-center-access-360-concurrency.py
       - uses: actions/upload-artifact@v4
         if: always()

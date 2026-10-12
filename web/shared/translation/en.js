@@ -554,6 +554,7 @@ const en = {
     emailNotifSavedOn: "Email notifications have been turned on.",
     emailNotifSavedOff: "Email notifications have been turned off.",
     emailNotifSaveFailed: "Could not save notification settings. Please try again.",
+    emailNotifLoadFailed: "Could not load your notification setting. Refresh the page.",
     demo: {
       title: "Demo Materials",
       hint: "Restore sample starter materials: a question bank, logos and ready-made games of various categories.",

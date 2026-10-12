@@ -78,7 +78,9 @@ async function initEmailNotificationsUi(user) {
     emailNotificationsChk.checked = enabled !== false;
   } catch (e) {
     console.warn("email_notifications load failed", e);
-    emailNotificationsChk.checked = true; // safe default
+    emailNotificationsChk.disabled = true;
+    showEmailNotifSaved(t("account.emailNotifLoadFailed"), "error");
+    return;
   }
 
   emailNotificationsChk.addEventListener("change", async () => {

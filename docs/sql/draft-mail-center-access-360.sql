@@ -121,6 +121,7 @@ BEGIN
  ELSIF TG_OP='UPDATE' THEN
   IF public._norm_email(NEW.email) IS NOT DISTINCT FROM public._norm_email(OLD.email)
    AND NEW.is_anonymous IS NOT DISTINCT FROM OLD.is_anonymous
+   AND (NEW.email_confirmed_at IS NOT NULL) IS NOT DISTINCT FROM (OLD.email_confirmed_at IS NOT NULL)
    AND (NEW.raw_user_meta_data->>'is_guest') IS NOT DISTINCT FROM (OLD.raw_user_meta_data->>'is_guest') THEN RETURN NEW; END IF;
   mailboxes:=ARRAY[public._norm_email(OLD.email),public._norm_email(NEW.email)];
  ELSIF TG_OP='INSERT' THEN

@@ -1083,7 +1083,12 @@ main{
 
 .topbar-sheet-back {
     display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 37px;
 }
+.topbar-sheet-back > svg.ico { display: block; }
 
 /* ===== UI Select (custom dropdown) ===== */
 .ui-select {

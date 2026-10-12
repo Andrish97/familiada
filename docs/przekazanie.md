@@ -767,7 +767,7 @@ Gotowy lokalny plik control-identity-preferences-draft.sql; przed przeniesieniem
 
 **358 zakończone:** main38261432758 success2/2 --retries=0/unit459,2 real SMTP, Pages38260925626, branch38260515251 (test14) i38258380406 (konto), SQL38257393434 OK13:42:37Z/isolated38256954899. Root scala mainfed93b0a91; code Control canonical/flags completed. Nie powtarzać358.
 
-**Nowy zakres /mail/ potwierdzony:** maile-granice.md ostatnie sekcje + navmap. Dwie sekcje Subskrypcje i Zadania/udostępnienia (ankiety+urządzenia), globalny stan nad nimi; jeden link potwierdzający przez Go, dane/mutacje po proof, konto→login/account. Powiadomienia global-off nie mają anulować źródeł zarządzanych osobno w centrum; dawny poll_go_global_unsubscribe zamykał subskrypcje/poll_tasks — lokalny nowy wariant tylko preference, source odmowy nadal oddzielne. /tmp/e19-359/global-unsubscribe-prototype.sql + test green (account flag=getter/restore, anonymous root, subscription active preserved). Footer-context-prototype.sql/test green service-only/stabletokens/account/mail-only. Brak359 w repo/produkcji. Trzeba pełny proof/session/races/ACL, wszystkie mailery, portal/front/Go i SMTP screens/gates. Część E19/pkt7, nie nowy główny etap.
+**Nowy zakres /mail/ — ostateczna korekta:** maile-granice.md ostatnie sekcje + navmap. Subskrypcje oraz Zadania (ankiety+urządzenia) w jednej karcie z wypustkami Ankiet, globalny stan nad kartą; Go→centrum, dane/mutacje po potwierdzeniu, konto→login/account. Mail-only global-off zamyka wszystkie anonimowe źródła, ukrywa listy i nie odtwarza ich po przywróceniu. Starszy lokalny wariant /tmp/e19-359 zachowujący subskrypcje jest zastąpiony — nie wdrażać. Dotychczasowy sender-visible token u daje tylko wypisanie, nie odczyt centrum. Pełna stopka ma osobny prywatnie wydany token.360 jeszcze poza produkcją;359 to już zakończona naprawa skrzynki, nie numer centrum. Zakres konta pozostaje mail-only do odpowiedzi na jedyne pytanie architektoniczne o cofanie dostępów.
 
 ### 2026-10-12 — pilna skrzynka admina
 
@@ -779,3 +779,34 @@ Zamknięte na produkcji: **13** kopii usuniętych; Worker38267398689 i
 baza38267398627 zielone. SMTP38267524680: zaproszenie odebrane przez test7,
 po nim SQL potwierdził brak technicznych kopii w skrzynce. Unit463/463.
 Następny krok: wrócić do grafu/centrum `/mail/`; nie powtarzać naprawy359.
+
+### 2026-10-12 — centrum360 na branchu, dalsza kontynuacja
+
+Ostatnie pushe4074de9dc0 i1fc15f574b: prywatna weryfikacja/peek/sesja,
+globalna rezygnacja/listy/źródła i kontrola delivery przed każdą próbą
+dostawcy. Izolacje38281983338 oraz38283742852 success;481 unit przed
+ostatnim pushem. Podglądy są danymi przykładowymi, nie produkcją360.
+Kontakt także anonimowo na wszystkich niezależnych stronach. Telefon:
+Wstecz w wspólnym topbarze, język dostępny bez utraty wpisów, stopka na
+dole. Ostatnia korekta: standardowa linia/podpis/Kontakt, zachęta w treści,
+wyśrodkowana ikona+napis Wstecz. Nowe zrzuty trzeba wypchnąć na branch.
+
+Teraz lokalne preferencje360 i cleanup: retained root przy rejestracji,
+getter Auth+global-off, explicit restore własnego potwierdzonego adresu,
+historyczne u zamyka też anonimowe urządzenia; testy SQL success.
+TTL cleanup zachowuje działającą sesję po15min wygaśnięcia proof i nie
+rusza root/cooldownów. Unit483 aktualnie green; kolejne zmiany przed
+commitem ponownie sprawdzić. Szkice w docs/sql, brak finalnej migracji.
+Wyjątek Kontakt ma queue→inbound message→report/recipient match;
+świadome zgłoszenie, jego potwierdzenie/odpowiedź i zamówiona weryfikacja
+nie są blokowane flagą automatycznych powiadomień. Nie wysyłać rzeczywistego
+zgłoszenia w testach (Telegram) — UI i transport Contact są zastępowane.
+
+Otwarte: Auth fallback nie ma wymaganych cooldown keys/private source,
+sprawdzić transakcję hooka przed wdrożeniem nowego issuer/footer Auth;
+pięć trwałych źródeł zaproszeń queue/claim/requeue/fresh delivery;
+DDL/nowe wyścigi, finalna migracja360, rzeczywiste SMTP+UI branch/main.
+Nie ogłaszać zamkniętego grafu ani produkcji `/mail/`. Sześć etapów głównych
+w kolejce wdrożeń, manual ostatni. Aktualizacje około30–60s, po statusie
+pracować dalej bez następnego „kontynuuj”. Konta9/10 nie używać,14 bez
+konta,15 tylko bezpieczne usuwanie z odtworzeniem,11/12 nie kasować.

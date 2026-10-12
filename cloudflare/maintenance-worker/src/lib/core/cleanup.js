@@ -1,6 +1,15 @@
 // src/lib/cleanup.js -- scheduled (cron) + on-demand cleanup jobs.
 import { getSupabaseConfig, supabaseRequest, supabaseRpc, summarizeSupabaseError } from "./supabase.js";
 
+export async function cleanupMailCenter(env) {
+  try {
+    const result = await supabaseRpc(env, "mail_center_cleanup", {});
+    if (!result.ok) console.error('[cron] mail center cleanup failed:', summarizeSupabaseError(result));
+  } catch (err) {
+    console.error('[cron] mail center cleanup failed:', String(err));
+  }
+}
+
 export async function cleanupExpiredAttachments(env) {
   try {
     const listRes = await supabaseRpc(env, "get_expired_attachments", {});

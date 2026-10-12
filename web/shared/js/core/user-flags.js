@@ -8,30 +8,17 @@ import { sb } from "./supabase.js?v=v2026-10-12T14530";
 export async function getUserEmailNotificationsFlag(userId) {
   if (!userId) throw new Error("getUserEmailNotificationsFlag: brak userId");
 
-  // ensure row exists (first time -> defaults from DB)
-  await sb()
-    .from("user_flags")
-    .upsert({ user_id: userId }, { onConflict: "user_id" });
-
-  const { data, error } = await sb()
-    .from("user_flags")
-    .select("email_notifications")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data, error } = await sb().rpc("get_my_email_notifications", { p_user_id: userId });
 
   if (error) throw error;
-  return data?.email_notifications !== false;
+  if (typeof data !== "boolean") throw new Error("invalid_notification_preference");
+  return data;
 }
 
 export async function setUserEmailNotificationsFlag(userId, value) {
   if (!userId) throw new Error("setUserEmailNotificationsFlag: brak userId");
 
-  const { error } = await sb()
-    .from("user_flags")
-    .upsert(
-      { user_id: userId, email_notifications: !!value },
-      { onConflict: "user_id" }
-    );
+  const { error } = await sb().rpc("set_my_email_notifications", { p_user_id: userId, p_enabled: !!value });
 
   if (error) throw error;
 }
