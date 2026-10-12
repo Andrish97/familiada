@@ -12,15 +12,15 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T14334";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-12T14334";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T14334";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-12T14334";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-12T14334";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T14334";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-12T14334";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T14334";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-12T14334";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-12T14365";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-12T14365";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-12T14365";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-12T14365";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-12T14365";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T14365";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-12T14365";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-12T14365";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-12T14365";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -30,14 +30,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-12T14334";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-12T14365";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-12T14334";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-12T14334";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-12T14334";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-12T14365";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-12T14365";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-12T14365";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-12T14334";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-12T14365";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -1040,8 +1040,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-12T14334"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-12T14334"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-12T14365"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-12T14365"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -5302,8 +5302,15 @@ function buildSessionRunDetails(r) {
   gameTitle.className = "stats-session-run-teams";
   gameTitle.textContent = `${r.game_name || "Gra"} · ${teams.teamA || "Drużyna A"} / ${teams.teamB || "Drużyna B"}`;
   details.appendChild(gameTitle);
-  const reasons = { restart: "Rozpoczęto od nowa", final_target: "Osiągnięto próg finału", final_complete: "Ukończono finał", rounds_target: "Osiągnięto próg rund", questions_exhausted: "Wyczerpano pytania", control_idle_expired: "Sesja Control została przerwana po godzinie bezczynności." };
-  if (info.end_reason) line(reasons[info.end_reason] || "Sesja została przerwana.");
+  const reasons = {
+    restart: "Rozpoczęto grę od nowa.",
+    final_target: "Zakończono grę po osiągnięciu progu finału.",
+    final_complete: "Ukończono finał.",
+    rounds_target: "Zakończono grę po osiągnięciu progu rund.",
+    questions_exhausted: "Zakończono grę po wykorzystaniu pytań.",
+    control_idle_expired: "Gra została przerwana po godzinie bezczynności panelu sterowania.",
+  };
+  if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
   if (info.end_reason === "control_idle_expired") {
     const lastStep = String(info.last_step || "");
     const stepNames = {
@@ -6430,7 +6437,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-12T14334");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-12T14365");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;

@@ -40,7 +40,8 @@ oznacza, że sama gra trwała godzinę. Szczegóły rozliczonej rundy trafiają 
 statystyk dopiero przy jej rozliczeniu, dlatego w przerwanej wcześniej grze
 może nie być listy rund ani pytań. Widok pokazuje wtedy ostatni zapisany etap
 oraz informację, że nie rozliczono żadnej rundy. Nie dopowiadamy przebiegu,
-którego statystyki nie zachowały.
+którego statystyki nie zachowały. Wszystkie używane powody zakończenia mają
+polskie opisy; nieznana przyszła wartość również nie wyświetla surowego kodu.
 
 ## Potwierdzone zapisy na produkcji
 

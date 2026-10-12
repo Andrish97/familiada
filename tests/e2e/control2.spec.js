@@ -730,6 +730,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
     return {
       empty: inspect([]),
       orphan: inspect([event("reconnect")]),
+      endReasons: ["restart", "final_target", "final_complete", "rounds_target", "questions_exhausted", "control_idle_expired"].map(end_reason => render({ game_name: "E2E", stats_detail: { end_reason, events: [] } }).textContent),
       expiredSession: render({ game_name: "E2E", stats_detail: { end_reason: "control_idle_expired", last_step: "r_play", events: [] } }).textContent,
       unknownEndReason: render({ game_name: "E2E", stats_detail: { end_reason: "unknown_internal_reason", events: [] } }).textContent,
       outage: inspect([event("disconnect", { devices: ["display"], message: "presence:display=offline,host=online,buzzer=online" }), event("reconnect")]),
@@ -741,11 +742,18 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   }, source);
   expect(result.empty).toEqual({ sections: 0, rows: [] });
   expect(result.orphan).toEqual({ sections: 0, rows: [] });
-  expect(result.expiredSession).toContain("Sesja Control została przerwana po godzinie bezczynności.");
+  expect(result.endReasons).toEqual(expect.arrayContaining([
+    expect.stringContaining("Rozpoczęto grę od nowa."),
+    expect.stringContaining("Zakończono grę po osiągnięciu progu finału."),
+    expect.stringContaining("Ukończono finał."),
+    expect.stringContaining("Zakończono grę po osiągnięciu progu rund."),
+    expect.stringContaining("Zakończono grę po wykorzystaniu pytań."),
+    expect.stringContaining("Gra została przerwana po godzinie bezczynności panelu sterowania."),
+  ]));
   expect(result.expiredSession).toContain("Ostatni etap: Runda w trakcie.");
   expect(result.expiredSession).toContain("Nie rozliczono żadnej rundy.");
   expect(result.expiredSession).not.toContain("control_idle_expired");
-  expect(result.unknownEndReason).toContain("Sesja została przerwana.");
+  expect(result.unknownEndReason).toContain("Przyczyna zakończenia nie jest rozpoznana.");
   expect(result.unknownEndReason).not.toContain("unknown_internal_reason");
   expect(result.outage.sections).toBe(1);
   expect(result.outage.rows).toHaveLength(1);
