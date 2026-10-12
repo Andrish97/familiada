@@ -1051,3 +1051,16 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: poprawka domyślnej głośności i wersjonowania dźwięków opublikowana: main944bedbbfa, Pages38310179185 success. Bez testów zgodnie z poleceniem; poprawka usuwa wykryte dziedziczenie głośności, rzeczywista przyczyna cichego buzzera u użytkownika nadal wymaga jego odsłuchu.
 
 | 2026-10-12 | Kontakt / trzy urządzenia zamknięte produkcyjnie | Main0189d92f9e, Pages38309965230 success; main38310091221 success1/1, bez retry/unit510. Host/Display/Buzzer bez przycisku i stopki kontaktu, wszystkie trzy online, przejście do Podsumowania działa. | Reguła i test wyjątków zapisane; pozostałe zwykłe strony zachowują kontakt. Wracamy do Go/anonimowych głosów; nie ponawiać zamkniętej paczki. |
+
+### 2026-10-12 —362 lokalne bramki anonimowego formularza
+
+Anonimowy limit30s/przeglądarka/gra/klucz, bez IP i bez limitu wszystkich
+pełnych głosów. SQL oba typy, atomowe40 pytań, błędne payloady i backend
+normalizacja; idempotencja/oddzielne przeglądarki, taski oraz rzeczywiste
+porcje właściciela success.8 współbieżnych scenariuszy i finalny DDL przy
+starym Game-first success. Front zachowuje odpowiedzi oraz tożsamość
+próby podczas odliczania/ponowienia; ignoruje dawną flagę done.
+514/514 unit. Cztery lokalne zrzuty390/1400 z30-pytaniową atrapą w
+`docs/img/poll-anonymous`; jasno odróżnione od produkcji. Przygotowane
+isolated workflow i punktowe rzeczywiste E2E obu typów, także utrata
+odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.

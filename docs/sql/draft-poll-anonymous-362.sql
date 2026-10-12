@@ -64,8 +64,8 @@ DECLARE before_owner uuid; g public.games; bucket public.poll_anonymous_limits_p
  kh text; bh text; vh text; ph text; q_count integer; item_count integer; unique_count integer; remaining integer;
 BEGIN
  IF p_browser_token IS NULL OR p_voter_token IS NULL OR p_key IS NULL OR p_items IS NULL
-  OR jsonb_typeof(p_items)<>'array' OR jsonb_array_length(p_items)>1000
-  OR octet_length(p_items::text)>256000 THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
+  OR jsonb_typeof(p_items)<>'array' THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
+ IF jsonb_array_length(p_items)>1000 OR octet_length(p_items::text)>256000 THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
  FOR attempt IN 1..1000 LOOP
   BEGIN
    SELECT owner_id INTO before_owner FROM public.games WHERE id=p_game_id;
@@ -82,10 +82,26 @@ BEGIN
    IF q_count=0 OR item_count<>q_count OR unique_count<>q_count OR EXISTS(
     SELECT 1 FROM jsonb_array_elements(p_items) item LEFT JOIN public.questions q ON q.id=(item->>'question_id')::uuid AND q.game_id=p_game_id WHERE q.id IS NULL)
    THEN RETURN jsonb_build_object('ok',false,'error','incomplete_form'); END IF;
+   IF g.type::text='poll_text' THEN
+    IF EXISTS(SELECT 1 FROM jsonb_array_elements(p_items) item WHERE jsonb_typeof(item->'answer_raw') IS DISTINCT FROM 'string'
+      OR btrim(item->>'answer_raw')='' OR char_length(btrim(item->>'answer_raw'))>17)
+    THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
+    SELECT jsonb_agg(jsonb_build_object('question_id',(item->>'question_id')::uuid,'answer_raw',btrim(item->>'answer_raw'),
+      'answer_norm',lower(regexp_replace(btrim(item->>'answer_raw'),'\s+',' ','g'))) ORDER BY item->>'question_id') INTO p_items FROM jsonb_array_elements(p_items) item;
+   ELSE
+    IF EXISTS(SELECT 1 FROM jsonb_array_elements(p_items) item LEFT JOIN public.answers a
+      ON a.id=(item->>'answer_id')::uuid AND a.question_id=(item->>'question_id')::uuid WHERE a.id IS NULL)
+    THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
+    SELECT jsonb_agg(jsonb_build_object('question_id',(item->>'question_id')::uuid,'answer_id',(item->>'answer_id')::uuid) ORDER BY item->>'question_id') INTO p_items FROM jsonb_array_elements(p_items) item;
+   END IF;
    kh:=public._poll_anon_hash_prototype(p_game_id,p_key,'key');
    bh:=public._poll_anon_hash_prototype(p_game_id,p_key,p_browser_token::text);
    vh:=public._poll_anon_hash_prototype(p_game_id,p_key,p_voter_token::text);
    SELECT encode(sha256(convert_to(jsonb_agg(item ORDER BY item->>'question_id')::text,'UTF8')),'hex') INTO ph FROM jsonb_array_elements(p_items) item;
+   IF (EXISTS(SELECT 1 FROM public.poll_text_entries WHERE game_id=p_game_id AND voter_token=p_voter_token::text)
+    OR EXISTS(SELECT 1 FROM public.poll_votes WHERE game_id=p_game_id AND voter_token=p_voter_token::text))
+    AND NOT EXISTS(SELECT 1 FROM public.poll_anonymous_limits_prototype WHERE game_id=p_game_id AND key_hash=kh AND browser_hash=bh AND voter_hash=vh)
+   THEN RETURN jsonb_build_object('ok',false,'error','attempt_reused'); END IF;
    INSERT INTO public.poll_anonymous_limits_prototype(game_id,key_hash,browser_hash) VALUES(p_game_id,kh,bh) ON CONFLICT DO NOTHING;
    SELECT * INTO bucket FROM public.poll_anonymous_limits_prototype WHERE game_id=p_game_id AND key_hash=kh AND browser_hash=bh FOR UPDATE NOWAIT;
    IF bucket.voter_hash=vh THEN
@@ -105,6 +121,10 @@ BEGIN
   EXCEPTION WHEN lock_not_available THEN IF attempt=1000 THEN RAISE; END IF; END;
   PERFORM pg_sleep(.01);
  END LOOP;
+EXCEPTION WHEN unique_violation THEN
+ RETURN jsonb_build_object('ok',false,'error','attempt_reused');
+WHEN invalid_text_representation OR not_null_violation OR foreign_key_violation THEN
+ RETURN jsonb_build_object('ok',false,'error','invalid_payload');
 END $$;
 REVOKE ALL ON FUNCTION public.poll_anonymous_submit_prototype(uuid,text,uuid,uuid,jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.poll_anonymous_submit_prototype(uuid,text,uuid,uuid,jsonb) TO anon,authenticated;

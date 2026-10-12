@@ -2905,6 +2905,13 @@ const pl = {
       resetFailed: "Nie udało się przygotować ankiety do edycji. Spróbuj ponownie.",
     },
   },
+  pollAnonymous: {
+    ready: "Możesz już wysłać odpowiedzi.",
+    retry: "Spróbuj ponownie",
+    retryIn: "Spróbuj ponownie za {seconds} s",
+    wait: "Możesz wysłać odpowiedzi za {seconds} s.",
+    failed: "Nie udało się wysłać odpowiedzi. Spróbuj ponownie.",
+  },
   pollText: {
     title: "Familiada — ankieta tekstowa",
     pollTitle: "Ankieta",

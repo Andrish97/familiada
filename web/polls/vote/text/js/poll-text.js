@@ -1,7 +1,9 @@
 // js/pages/poll-text.js
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-12T21221";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-12T21221";
-import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-12T21221";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-12T22034";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-12T22034";
+import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-12T22034";
+import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-12T22034";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-12T22034";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -60,19 +62,6 @@ let submitting = false;
 // lokalny bufor odpowiedzi (wysyłka dopiero na końcu)
 let outbox = [];
 
-/* ====== "już brałeś udział" ====== */
-function doneKey() {
-  return `fam_poll_done_${gameId}_${key}`;
-}
-function hasDone() {
-  if (taskToken) return false;
-  return localStorage.getItem(doneKey()) === "1";
-}
-function markDone() {
-  if (taskToken) return;
-  localStorage.setItem(doneKey(), "1");
-}
-
 function redirectToRoot() {
   setTimeout(() => {
     location.href = "/";
@@ -83,7 +72,6 @@ function showFinished() {
   if (finished) return;
   finished = true;
 
-  markDone();
 
   const sub = document.getElementById("sub");
   const qbox = document.getElementById("qbox");
@@ -205,7 +193,14 @@ function validateAndPack(questionId, rawText) {
   };
 }
 
+let anonymousSubmit = null;
+let retryAt = 0;
+let stopRetry = null;
 async function submitBatch(items) {
+  if (!taskToken) {
+    anonymousSubmit ||= createAnonymousSubmitter({ gameId, key, client: sb() });
+    return anonymousSubmit(items);
+  }
   const voter = getVoterToken();
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -324,7 +319,8 @@ function render() {
 
   if (!q) {
     // koniec pytań: wysyłka jednorazowa
-    if (submitting || finished) return;
+    if (submitting || finished || Date.now() < retryAt) return;
+    stopRetry?.(); stopRetry = null;
 
     submitting = true;
     if (btnSend) btnSend.disabled = true;
@@ -347,9 +343,8 @@ function render() {
           showStatus(linkState);
           return;
         }
-        setSub(MSG.error(e?.message || e));
-        // pozwól spróbować jeszcze raz (render wywoła się ponownie po kliknięciu)
-        if (btnSend) btnSend.disabled = false;
+        retryAt = Date.now() + (e?.retryAfter || 0) * 1000;
+        stopRetry = showPollSubmitRetry({ button: btnSend, container: document.getElementById("qbox"), seconds: e?.retryAfter || 0, setMessage: setSub, onRetry: render });
       });
 
     return;
@@ -371,7 +366,7 @@ function render() {
 window.addEventListener("i18n:lang", () => {
   if (payload) {
     render();
-  } else if (!finished && !hasDone()) {
+  } else if (!finished) {
     setSub(MSG.loading());
   }
 });
@@ -392,6 +387,8 @@ function setupBeforeUnloadWarn() {
     return e.returnValue;
   });
 }
+
+window.addEventListener("pagehide", () => stopRetry?.(), { once: true });
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -415,11 +412,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const linkState = await describeLinkState();
     if (linkState) {
       showStatus(linkState);
-      return;
-    }
-    if (hasDone()) {
-      showStatus(MSG.alreadyVoted());
-      redirectToRoot();
       return;
     }
 
@@ -465,7 +457,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (finished || submitting) return;
 
       const q = (payload?.questions || [])[idx];
-      if (!q) return;
+      if (!q) { render(); return; }
 
       try {
         setSub(MSG.sending());

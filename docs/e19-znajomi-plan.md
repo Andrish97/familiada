@@ -1479,3 +1479,27 @@ Implementacja następnej paczki: dodające referencje źródeł, walidacja nadaw
 ### Pkt7 — rozszerzenie centrum powiadomień mail-only (2026-10-12)
 
 Użytkownik rozszerzył zakres o `/mail/`: aktualne subskrypcje, zaproszenia/ankiety i granty urządzeń przypisane do potwierdzonego adresu; globalne przywrócenie powiadomień, konto→login/ustawienia. Źródło kontraktu: maile-granice.md, ostatnia podsekcja. Nie odkładać do manuala ani traktować stopki jako wystarczającego zamknięcia. Powiązać z globalną flagą, Go, tokenami, źródłami/kaskadami i wspólnymi elementami UI. Nadal część E19/pkt7, nie nowy nadrzędny etap. Najpierw domknąć main358, potem globalna stopka/preferencja/centrum i dalsza kolejka zgodnie z bramkami.
+
+### Pkt7 /362 — anonimowy formularz i odstęp, wykonanie 2026-10-12
+
+Aktualny kontrakt anonimowego głosu: pełny formularz jest jedną transakcją.
+Dawne rozbijanie anonimowego formularza na porcje po25 nie obejmuje nowej
+ścieżki; pozostało dla osobistych zadań. Prywatny licznik zaczyna30s dopiero
+po zapisaniu całego głosu. Zakres: przeglądarka+gra+bieżący klucz ankiety,
+bez IP. Każdy formularz ma odrębny token głosu; ponowienie po utracie
+odpowiedzi serwera używa tego samego i nie zapisuje głosów drugi raz.
+Nowy głos po30s jest dozwolony; nie ma limitu łącznej liczby głosów.
+Stara lokalna flaga „już głosował” nie blokuje formularza.
+
+Przy odliczaniu odpowiedzi zostają zachowane i widoczny jest przycisk
+z liczbą sekund; po upływie czasu ręczne wysłanie. Błędne/niekompletne
+formularze nie zapisują części głosów ani zegara. Normalizacja odpowiedzi
+tekstowej odbywa się po stronie serwera. Zamknięcie, zmiana klucza/typu/
+właściciela lub usunięcie gry/konta sprząta licznik. Osobiste zadania i
+ręczne porcje właściciela zachowują dotychczasowy kontrakt.
+
+**Stan:** lokalne SQL obu typów (w tym40 pytań),8 wyścigów, atomowy DDL
+ze starym Game-first oraz514 unit success. Podgląd Chromium390/1400 z30
+pytaniami, lokalne zrzuty docs/img/poll-anonymous. Workflow isolated i
+punktowy e2e/poll-anonymous.spec.js przygotowane. SQL/frontend362 jeszcze
+nie wdrożone; wymagają sprzężonego wdrożenia zgodnie z wyjątkiem AGENTS.

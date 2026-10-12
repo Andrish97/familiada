@@ -901,3 +901,20 @@ wymaga prywatnej autoryzacji transakcji, zadania i właściciel zachowują
 swój dotychczasowy kontrakt. Pierwsze kontrakty tekst/punkty success;
 dołożyć błędne payloady, duże formularze, zadania/właściciela, wyścigi,
 frontend oraz bramki. Cały E19 pozostaje otwarty, manual ostatni.
+
+**362 lokalnie gotowe do CI:**514 unit, oba typy SQL (40-pytaniowe pełne
+formularze, serwerowa normalizacja, niepoprawne payloady, taski i rzeczywiste
+owner batch),8 wyścigów oraz końcowe DDL na fam362final success. Szkic
+finalny draft-poll-anonymous-final-362.sql nakładany atomowo z NOWAIT retry
+wszystkich istniejących rodziców/dzieci. Front: poll-anonymous.js+
+poll-submit-retry.js,30s/przeglądarka/gra/klucz, zachowane odpowiedzi,
+idempotentne retry po straconej odpowiedzi, stara done ignorowana.
+UI390/1400 z30-pytaniową atrapą sprawdzone,4 lokalne screeny i README.
+Nowy workflow poll-anonymous-checks.yml i e2e/poll-anonymous.spec.js
+(oba typy, faktyczne zapisy, strata odpowiedzi, naturalne30s, osobna
+przeglądarka w tej samej sieci, legacy gate, stop/nowy klucz/cleanup).
+Nowy publisher tylko po jawnym publish_anonymous_screenshots i zielonym
+wybranym specu. SQL362/migracja jeszcze nie opublikowane. Po isolated
+wymagają publikacji sprzężonej z frontendem (zmiana zachowania starego
+anonimowego RPC). Mainf3a5bbd00f z równoległą poprawką Control zachować;
+38314420248 to przebieg drugiej sesji, nie używać jej kont9/10.
