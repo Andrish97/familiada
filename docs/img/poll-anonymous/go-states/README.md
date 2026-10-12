@@ -1,6 +1,6 @@
 # Anonimowe ankiety — głosowanie i stany linków
 
-Przebieg [38321062827](https://github.com/Andrish97/familiada/actions/runs/38321062827), kod `333f212e0793b494920102ad31fbbfe214c1f595`.
+Przebieg [38322222772](https://github.com/Andrish97/familiada/actions/runs/38322222772), kod `b9824f61e63dd96055e4ed4e0c4b1d9f9dfaf73f`.
 
 Macierz komunikatów: przykładowe odpowiedzi resolverów, rzeczywiste logowanie. Te zrzuty sprawdzają interfejs, nie dostarczanie maili ani zmiany w bazie. Telefon i komputer.
 
