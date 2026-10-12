@@ -37,6 +37,13 @@ Nie wdrażać Pages ani scalać do `main` na tym etapie.
    ponownie dostępna. Sprawdzić również zwężenie okna oraz odświeżenie,
    kiedy tryb jest już włączony: nie usuwać zapisanego wyboru; przy braku
    miejsca pokazać komunikat i wstrzymać korzystanie do poszerzenia okna.
+   **Doprecyzowanie:** guard zwykłego Control i dostępność trybu testowego
+   są osobnymi regułami. Guard Control ma zapewniać panel bez przewijania
+   niezależnie od trybu. Tryb testowy dodatkowo wymaga miejsca na trzy
+   urządzenia; niespełnienie jego progu blokuje tylko jego wybór, a nie
+   zwykły Control, jeśli ten nadal się mieści. Nie zastępować wspólnego
+   device guarda progiem trybu testowego ani nie podnosić przez niego
+   minimalnego rozmiaru zwykłego Control.
 9. Tryb ma przetrwać odświeżenie. Zapisać go **tak samo jak istniejące
    opcje urządzeń**, obok `noHostTablet` i `physicalBuzzer`, w istniejącym
    JSON-ie `game_state.detail.settings`, jako `testMode`. Nie dodawać
@@ -52,6 +59,9 @@ Nie wdrażać Pages ani scalać do `main` na tym etapie.
     kontami zgodnie z zasadami repo. Bez zmian schematu bazy i bez wdrożenia
     Pages. Manual na końcu: tylko krótka informacja potrzebna użytkownikowi
     w sekcji Urządzenia, we wszystkich obsługiwanych językach.
+    **Aktualizacja zgody:** po punktowych zielonych testach na branchu,
+    obejmujących także zapis trybu w statystykach, użytkownik zezwolił na
+    wdrożenie. Następnie obowiązuje punktowa kontrola produkcyjna.
 
 ## Kolejność wykonania
 
@@ -85,3 +95,6 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
 - 2026-10-12: utworzono branch i zapisano pełne decyzje, w tym najnowszą
   blokadę wyboru przy zbyt wąskim oknie oraz lekkie skalowanie czcionek.
   Kod produktu nie jest jeszcze zmieniony, nie ma wdrożenia ani E2E trybu.
+- 2026-10-12: rozdzielono regułę guarda zwykłego Control od dodatkowego
+  progu trybu testowego; zero przewijania jest zasadą nadrzędną w obu
+  układach. Zgoda na wdrożenie po testach brancha i potwierdzeniu statystyk.

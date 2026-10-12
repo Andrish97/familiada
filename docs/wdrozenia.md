@@ -8,9 +8,12 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 ## Zasady
 
 Bieżące osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md).
-Prace wyłącznie na `codex/control-test-mode`, bez wdrożenia Pages na tym
-etapie. Flaga w istniejącym JSON-ie ustawień, bez migracji. Plan obejmuje
+Prace najpierw na `codex/control-test-mode`; wdrożenie Pages autoryzowane
+po zielonych testach brancha, w tym zapisu trybu w statystykach, potem
+kontrola produkcyjna. Flaga w istniejącym JSON-ie ustawień, bez migracji. Plan obejmuje
 trzy urządzenia w pasku, lekkie skalowanie oraz blokadę przy zbyt wąskim oknie.
+Guard zwykłego Control i dodatkowy próg trybu testowego pozostają osobnymi
+regułami; w obu układach wymagane zero przewijania.
 
 1. **Źródła prawdy** (decyzje, mapy, stan docelowy):
    - nawigacja, adresy, karty, strony modalne: [`nawigacja-mapa-plan.md`](nawigacja-mapa-plan.md)
