@@ -30,7 +30,7 @@ BEGIN
  ) rows;
  SELECT coalesce(jsonb_agg(item ORDER BY created_at DESC,id),'[]'::jsonb) INTO devices FROM (
   SELECT d.id,d.created_at,jsonb_build_object('id',d.id,'kind','device','status','available',
-   'name',g.name,'device_type',d.device_type,'owner_label',p.username,'created_at',d.created_at,'link','/go/?d='||d.token) item
+   'name',g.name,'device_type',d.device_type,'owner_label',p.username,'created_at',d.created_at,'link','/go/?d='||d.device_type||'&id='||d.game_id||'&key='||d.token) item
   FROM public.control_device_shares d JOIN public.control_runtime_sessions r ON r.id=d.session_id
   JOIN public.games g ON g.id=d.game_id JOIN auth.users u ON u.id=d.owner_id
   LEFT JOIN public.profiles p ON p.id=d.owner_id

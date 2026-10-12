@@ -21,6 +21,9 @@ DO $$ DECLARE tok uuid; r jsonb; secret text; issued jsonb; refusal timestamptz;
  issued:=public.mail_center_issue_link_prototype('address359resign@example.invalid','footer'); secret:=public.mail_center_exchange_link_prototype(issued->>'token')->>'session_secret';
  r:=public.mail_center_list_prototype(secret);
  IF jsonb_array_length(r->'subscriptions')<>1 OR jsonb_array_length(r->'items')<>2 THEN RAISE EXCEPTION 'address-scoped lists wrong: %',r; END IF;
+ IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r->'items') item
+  WHERE item->>'kind'='device' AND item->>'link'=(SELECT '/go/?d='||device_type||'&id='||game_id||'&key='||token FROM public.control_device_shares WHERE recipient_email='address359resign@example.invalid'))
+ THEN RAISE EXCEPTION 'device action is not a canonical Go link'; END IF;
  r:=public.mail_center_set_notifications_prototype(secret,false);
  IF r->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'resignation failed %',r; END IF;
  IF public._contact_mail_enabled('address359resign@example.invalid') THEN RAISE EXCEPTION 'global flag ignored'; END IF;

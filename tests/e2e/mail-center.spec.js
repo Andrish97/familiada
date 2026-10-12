@@ -75,8 +75,8 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
       if (questions.error) throw questions.error;
       const opened = await sb.rpc('poll_open', { p_game_id: poll.id, p_key: poll.share_key_poll }); if (opened.error) throw opened.error;
       const subscribers = await sb.rpc('subscribers_list'); if (subscribers.error) throw subscribers.error;
-      const subscriber = subscribers.data.find(item => item.subscriber_email === email && item.status === 'active');
-      const shared = await sb.rpc('poll_share_send', { p_game_id: poll.id, p_friend_ids: [], p_subscriber_ids: [subscriber.sub_id || subscriber.id] });
+      const subscriber = subscribers.data.find(item => item.email === email && item.status === 'active');
+      const shared = await sb.rpc('poll_share_send', { p_game_id: poll.id, p_friend_ids: [], p_subscriber_ids: [subscriber.id] });
       if (shared.error || !shared.data?.ok || shared.data.created !== 1) throw shared.error || new Error('Poll share fixture failed');
       const runtime = await sb.rpc('control_runtime_session_touch', { p_game_id: control.id }); if (runtime.error || !runtime.data?.ok) throw runtime.error || new Error('Control session fixture failed');
       const device = await sb.rpc('control_device_share_create', { p_game_id: control.id, p_device_type: 'host', p_recipient_email: email });
@@ -88,6 +88,14 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await expect(center.locator('#itemsBadge')).toHaveText('2');
     await expect(center.locator('#itemsList .mail-row--poll')).toHaveCount(1);
     await expect(center.locator('#itemsList .mail-row--device')).toHaveCount(1);
+    const devices = (await state(center)).items.filter(item => item.kind === 'device');
+    expect(devices[0].link).toMatch(/^\/go\/\?d=host&id=[a-f0-9-]+&key=[a-f0-9-]+$/);
+    const device = await anonymous.newPage();
+    try {
+      await device.goto(new globalThis.URL(devices[0].link, URL).href);
+      await expect(device).toHaveURL(/\/control\/host\//);
+      await expect(device.locator('#paper')).toBeVisible({ timeout: 15000 });
+    } finally { await device.close(); }
     await center.screenshot({ path: testInfo.outputPath('mail360-active-1400.png'), fullPage: true });
     await center.setViewportSize({ width: 390, height: 844 });
     await center.screenshot({ path: testInfo.outputPath('mail360-active-390.png'), fullPage: true });
