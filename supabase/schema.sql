@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 0h93DJyCnbdgoiTObCTEODQYXfaJdZssLIurp5LehJyWDAdjA4aYChkBy6pyBgE
+\restrict Sr9tpWI9tw5WV7GtEOWFPJAvUKSsgXHLagh4GKwdRjXqnk04DDPndXteGShUsVZ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -417,6 +417,26 @@ END $$;
 
 
 --
+-- Name: _guest_identity_metadata(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_guest_identity_metadata"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE guest boolean;
+BEGIN
+ guest:=coalesce(NEW.raw_user_meta_data->>'is_guest','false')='true';
+ IF TG_OP='UPDATE' THEN
+  SELECT coalesce((SELECT p.is_guest FROM public.profiles p WHERE p.id=NEW.id),guest) INTO guest;
+ END IF;
+ guest:=guest OR (coalesce(NEW.is_anonymous,false) AND (NEW.email_confirmed_at IS NULL OR nullif(trim(NEW.email),'') IS NULL));
+ NEW.raw_user_meta_data:=coalesce(NEW.raw_user_meta_data,'{}'::jsonb)||jsonb_build_object('is_guest',guest);
+ RETURN NEW;
+END $$;
+
+
+--
 -- Name: _logo_image_path("jsonb", "uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -690,7 +710,9 @@ CREATE FUNCTION "public"."_poll_identity_regular"("p_uid" "uuid", "p_identity" "
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
  SELECT NOT coalesce((SELECT p.is_guest FROM public.profiles p WHERE p.id=p_uid),
-   coalesce(p_identity->>'is_anonymous','false')='true' OR coalesce(p_identity->'raw_user_meta_data'->>'is_guest','false')='true');
+   coalesce(p_identity->>'is_anonymous','false')='true' OR coalesce(p_identity->'raw_user_meta_data'->>'is_guest','false')='true')
+ AND NOT(coalesce(p_identity->>'is_anonymous','false')='true' AND
+   ((p_identity->>'email_confirmed_at') IS NULL OR public._norm_email(p_identity->>'email') IS NULL));
 $$;
 
 
@@ -7741,7 +7763,8 @@ declare
     v_lang text;
 begin
   v_email    := new.email;
-  v_is_guest := coalesce((new.raw_user_meta_data->>'is_guest')::boolean, false);
+  v_is_guest := coalesce(new.raw_user_meta_data->>'is_guest','false')='true' OR
+    (coalesce(new.is_anonymous,false) AND (new.email_confirmed_at IS NULL OR nullif(trim(new.email),'') IS NULL));
 
   -- Try to get username from metadata or email
   v_username := coalesce(
@@ -20109,5 +20132,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 0h93DJyCnbdgoiTObCTEODQYXfaJdZssLIurp5LehJyWDAdjA4aYChkBy6pyBgE
+\unrestrict Sr9tpWI9tw5WV7GtEOWFPJAvUKSsgXHLagh4GKwdRjXqnk04DDPndXteGShUsVZ
 
