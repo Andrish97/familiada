@@ -7,13 +7,13 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T20214";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-12T20214";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-12T20214";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-12T20214";
-import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-12T20214";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T20214";
-import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-12T20214";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-12T20282";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-12T20282";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-12T20282";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-12T20282";
+import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-12T20282";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-12T20282";
+import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-12T20282";
 
 const btnBack = document.getElementById("btnBack");
 
