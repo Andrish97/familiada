@@ -392,6 +392,11 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     if (["devices_display", "setup_finish"].includes(nextRow.step) && nextRow.detail?.display?.mode !== "QR") {
       await applyDisplayMode(nextRow); return;
     }
+    if (prevRow.step === nextRow.step && nextRow.detail?.display?.mode === "GAME") {
+      const before = prevRow.detail?.teams || {};
+      const after = nextRow.detail?.teams || {};
+      if (before.teamA !== after.teamA || before.teamB !== after.teamB) paintTeamNames(nextRow);
+    }
     const events = deriveEvents(prevRow, nextRow);
     // Jeden dispatch = jeden potwierdzony sound_cue_key dla CAŁEGO wiersza —
     // odsłonięcia (odpowiedzi/punkty rund lub finału) animują się dokładnie

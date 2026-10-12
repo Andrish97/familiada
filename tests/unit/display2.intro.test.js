@@ -163,3 +163,14 @@ test("round board disappearance and appearance each use half of reveal", async (
   assert.equal(into.args[0].animIn.ms, 10);
   assert.ok(calls.indexOf(out) < calls.indexOf(into));
 });
+
+test("team names refresh without changing the current game step", async () => {
+  const { renderer, calls, state } = setup();
+  await renderer.renderSnapshot(stateToRow(state));
+  const previous = stateToRow(state);
+  calls.length = 0;
+  state.teams = {teamA:"Drużyna A",teamB:"Drużyna B"};
+  await renderer.renderDiff(previous,stateToRow(state));
+  assert.deepEqual(calls.filter(call=>["small.long1","small.long2"].includes(call.name)).map(call=>call.args[0]),["Drużyna A","Drużyna B"]);
+  assert.equal(calls.some(call=>call.name === "big.clear"),false);
+});
