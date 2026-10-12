@@ -869,7 +869,8 @@ inne miejsca, gdzie zastąpienie tekstu ikoną oszczędza miejsce.
 | Ankiety | Słupki — zachować istniejącą ikonę |
 | Edycja | Kartka z ołówkiem |
 | Podgląd | Oko |
-| Udostępnij / wyślij kopię | Koperta |
+| Udostępnij (istniejące współdzielenie) | Koperta |
+| Wyślij (kopie Gier/Logo) | Koperta, w sekcji importu/eksportu |
 | Eksport | Pobieranie — strzałka w dół |
 | Import | Wysyłanie pliku do aplikacji — strzałka w górę |
 | Do bazy | Baza ze strzałką |
@@ -884,6 +885,10 @@ wspólnie podczas wdrożenia, zachowując jednoznaczne otwieranie/edycję oraz
 kasowanie filtra. Anulowanie modala nie zmienia bieżącego wyszukiwania.
 Filtr i sortowanie również pokazują aktywny wybór; listy są wygodne do
 dotknięcia i przewijają się w dostępnej wysokości.
+
+**Kopie Gier/Logo:** nazwa akcji to „Wyślij”. Umieścić ją w grupie
+importu/eksportu, w dolnym pasku narzędzi; górna grupa akcji zasobu
+zachowuje swój dotychczasowy zakres. Źródło: `udostepnianie-kopii-plan.md`.
 
 To doprecyzowanie wcześniejszego kompaktowego wyszukiwania/filtrowania.
 Zachować dwie kolumny nagłówka list zasobów (akcje po lewej, tytuł/podpowiedź

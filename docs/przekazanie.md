@@ -736,3 +736,7 @@ regular Auth w create/lookup. Do pełnych kontraktów, wyścigów, DDL,
 wiring frontu i mail branch/main. Nie ma356 w repo ani na produkcji.
 Inna sesja rozwija Control2 diagnostics i pchnęła main4579b2ac54 —
 przy scalaniu zachować jej zmiany, sprawdzić następny numer migracji.
+
+**E19C doprecyzowanie:** „Wyślij” w sekcji importu/eksportu Gier/Logo. Standardowy modal: wybór znajomych i Wyślij, bez Udostępnionych; poniżej zwijana Historia wysyłek tej gry/logo (komu/kiedy), wpisy żyją30 dni. Usunięcie historii nie unieważnia wysłanej kopii. Aktualne źródło: udostepnianie-kopii-plan.md.
+
+**Numeracja kolejnej paczki:**356 zajęte przez Control2 diagnostics drugiej sesji na main; lokalny prototyp Baz /tmp/e19-356/fam356draft otrzyma357 (sprawdzić wolny numer przed migracją). Historyczne wpisy prototypu356 pozostają historią, bez wdrożenia Baz pod tym numerem.
