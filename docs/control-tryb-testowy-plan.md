@@ -1,6 +1,6 @@
 # Control — tryb testowy
 
-Status: **wdrożone i potwierdzone na produkcji**.
+Status: tryb wdrożony; **korekta układu w testach brancha** (38303593794).
 Pages38300728957 success; kontrola main38301293181 success3/3 bez retry.
 Branch38300241381 success2/2 przed publikacją. Brak migracji.
 
@@ -27,9 +27,9 @@ Branch38300241381 success2/2 przed publikacją. Brak migracji.
    Uwzględniać zarówno dostępną szerokość, jak i wysokość. Nie pomniejszać
    panelu dowolnie, aż stanie się nieczytelny.
 7. **Żadnego przewijania ani obcinania** panelu lub urządzeń. Dotyczy też
-   Urządzeń, Podsumowania i drugiego gracza finału, w tym drugiego wiersza
-   odpowiedzi. Przy długiej zawartości podsumowania zapewnić dostęp do
-   całości bez przewijania; szczegółowy układ jest jeszcze do wykonania.
+   Urządzeń i drugiego gracza finału, w tym drugiego wiersza odpowiedzi.
+   **Ostateczna korekta:** wyłącznie treść Podsumowania może się przewijać;
+   przywrócić poprzedni układ sekcji, dolne przyciski poza przewijaniem.
 8. **Za wąskie okno:** wykrywać brak miejsca od razu w kroku Urządzenia,
    pokazać krótki komunikat i zablokować wybór trybu testowego. Nie pozwalać
    włączyć układu, który wymagałby nadmiernego pomniejszenia. Próg wyznaczyć
@@ -83,7 +83,7 @@ Branch38300241381 success2/2 przed publikacją. Brak migracji.
 - [x] Dodać przełącznik, zapis flagi, wzajemne blokowanie opcji i odtworzenie
   po odświeżeniu. Zachować tryb przy rozpoczęciu od nowa w tym panelu.
 - [x] Dodać pasek rzeczywistych iframe, wirtualny viewport i dopasowanie panelu.
-- [x] Dopasować podsumowanie bez przewijania, z dostępem do wszystkich treści.
+- [x] Przywrócić podsumowanie z przewijaną treścią i stałymi dolnymi przyciskami.
 - [x] Dodać oznaczenie przebiegu w statystykach z istniejącego zapisu ustawień.
 - [x] Punktowe testy geometrii oraz E2E kodu brancha na produkcyjnej bazie:
   włączanie/wyłączanie, blokady, trzy połączenia, buzzer, dźwięk z Control
@@ -111,13 +111,13 @@ konieczne jest dopasowanie podsumowania i ponowne pomiary.
 
 ### Pierwsza implementacja brancha
 
-- Dwie niezależne reguły geometrii. Robocza minimalna skala panelu 85%;
-  punkt odniesienia 1100×680 obszaru panelu. Próg wyliczany z obu wymiarów
+- Dwie niezależne reguły geometrii. Po korekcie minimalna skala panelu 80%;
+  punkt odniesienia 1100×640 obszaru panelu, topbar skalowany razem. Próg wyliczany z obu wymiarów
   okna i rzeczywistej wysokości topbara, nie ze stałej szerokości ekranu.
 - Wspólny device guard przyjmuje dodatkowy warunek dopasowania Control.
   Próg testowy blokuje opcję osobno; przy zwężeniu aktywnego trybu nakładka
   wstrzymuje korzystanie bez usuwania zapisanej flagi.
-- Podsumowanie ma sekcje wybierane przyciskami i strony po pięć pozycji
+- Pierwsze wdrożenie (zastąpione korektą): Podsumowanie miało sekcje wybierane przyciskami i strony po pięć pozycji
   dla długich list pytań i dźwięków. Wszystkie pozycje pozostają dostępne;
   nie są ukrywane przez obcięcie kontenera.
 - Testy jednostkowe geometrii i page-init: 29/29. Wstępne ponowne pomiary

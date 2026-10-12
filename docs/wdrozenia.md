@@ -925,3 +925,5 @@ Podsumowania. Nie traktować próbek jako120 odrębnych scenariuszy.
 - 2026-10-12: korekta Control na `codex/control-test-layout`: cały panel z topbarem po lewej, urządzenia na pełną wysokość okna bez zaokrągleń, Znajomi przy ikonach; przywrócenie poprzedniego podsumowania (jedyny krok z przewijaniem), łagodniejszy guard bez wzmianki o przewijaniu. Decyzje w control-tryb-testowy-plan.md.
 
 - 2026-10-12: korekta układu — rzeczywisty renderer 16 stanów przy1280×650/1400×900: przewijanie wyłącznie podsumowania, brak obcięć pozostałych kroków, w tym gracza2. Punktowe unit6/6. Pełne lokalne unit468/472: cztery testy Auth zatrzymane przez brak TypeScript w lokalnym Node (ERR_NO_TYPESCRIPT); wymagana kontrola kompletnego unit w Actions.
+
+- 2026-10-12: commit09cfcb0692 na branchu, Actions38303593794 w toku — wybrane testy Control: tryb testowy oraz pełna runda przez cztery urządzenia, pool4,5, retries0. Bez wdrożenia Pages do zielonego wyniku.
