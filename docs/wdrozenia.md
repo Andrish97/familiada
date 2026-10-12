@@ -7,6 +7,11 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
 ## Zasady
 
+Bieżące osobne zadanie Control: [tryb testowy](control-tryb-testowy-plan.md).
+Prace wyłącznie na `codex/control-test-mode`, bez wdrożenia Pages na tym
+etapie. Flaga w istniejącym JSON-ie ustawień, bez migracji. Plan obejmuje
+trzy urządzenia w pasku, lekkie skalowanie oraz blokadę przy zbyt wąskim oknie.
+
 1. **Źródła prawdy** (decyzje, mapy, stan docelowy):
    - nawigacja, adresy, karty, strony modalne: [`nawigacja-mapa-plan.md`](nawigacja-mapa-plan.md)
      (sekcja 6 — kroki, sekcja 7 — decyzje, sekcja 8 — adresy),
