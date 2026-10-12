@@ -1420,3 +1420,9 @@ nie mogą zmieniać go w zwykłe konto ani usuwać daty wygaśnięcia. Wymagać
 rzeczywistego stanu Auth i potwierdzonej konwersji; nie opierać ról/blokad na
 edytowalnym polu. Lokalny audit/prototyp i regresje konwersji już wykonane,
 reszta kontraktu/audyt historii i bramki wdrożenia do wykonania.
+
+354 audit38231063464:2 z51 actual guests mają błędny profil bez expiry.
+Korekta ograniczona do Auth anonymous bez potwierdzonego adresu; nie kasuje
+danych, przywraca standardowe5 dni od naprawy, zachowuje genuine converted
+i normal registrations. Lokalny kontrakt/historia/351/352 i4 wyścigi success.
+Migracja przygotowana, przed isolated/produkcją.
