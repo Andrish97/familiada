@@ -645,3 +645,23 @@ isolated, SQL/main/log i punktowy guest-conversion-identity.spec.js na
 branch/main. Draft źródeł /tmp/e19-352 to przyszły353, nadal niewdrożony.
 Audyt38192919036: task bez kontaktu jest testowy/current, odmowa znanego
 konta poza30 dniami. Nie zgadywać historycznych powiązań.
+
+**352 zakończone:** DB38202329118/log04:06:38/schema b212860fcd,
+isolated38202222524/unit455, branch38202524806 i main38202658311
+success3/3 bez retry. Dawne RPC konwersji wymaga potwierdzonego własnego
+adresu; Account/Login pending/cancel pozostają poprawne, goście posprzątani.
+Nie powtarzać tej paczki. **Dalej353:** /tmp/e19-353/source-draft.sql,
+fam353draft; public share/macierz dwóch typów/pięciu stanów i sześć
+regresji SQL success. Nadal lokalne, bez353 w repo/produkcji. Dalsze
+wejścia i wyścigi oraz rzeczywiste maile wymagane. Manual na końcu.
+
+**353 przygotowane w osobnym checkout:** /tmp/familiada-353-isolated,
+branch codex/e19-353. Migracja źródeł/markerów/karencji; pięć rollbackowych
+kontraktów, seed historii bez zgadywania,24 wyścigi i DDL. Lokalnie wszystkie
+przeszły na fam353draft/fam353final. W macierzy rejestracji powtórna kontrola
+właściciela po locku jest konieczna — stara kontrola negatywna cofała źródło
+anonimowo już po przypisaniu konta. Nazwy procesów testowych są krótkie, bo
+application_name w PostgreSQL obcina dłuższe nazwy. Reset shape353 wyłącznie
+na izolowanej bazie przed powtórnym testem historycznych migracji; nigdy
+produkcja. Najpierw unit/isolated353, potem SQL/log/smokes, real-mail branch
+oraz main.352 zakończone; nie oznaczać353 wdrożonym przed tymi bramkami.
