@@ -1,5 +1,5 @@
 """Apply the complete forward migration while old Game-first code is active."""
-import os, pathlib, shlex, subprocess, time
+import os, pathlib, shlex, subprocess, threading, time
 PSQL=shlex.split(os.environ.get('MAIL_CENTER_DDL_PSQL','psql'))+['-X','-At','-v','ON_ERROR_STOP=1']
 def run(sql):
  p=subprocess.run(PSQL,input=sql,text=True,capture_output=True)
@@ -7,7 +7,11 @@ def run(sql):
  return p.stdout.strip()
 def start(sql):
  p=subprocess.Popen(PSQL,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
- p.stdin.write(sql+'\n');p.stdin.flush();return p
+ def feed():
+  try:p.stdin.write(sql+'\n');p.stdin.flush()
+  except (BrokenPipeError,ValueError) as error:p.feed_error=error
+ p.feeder=threading.Thread(target=feed,daemon=True);p.feeder.start()
+ return p
 
 def barrier(name,condition):
  deadline=time.monotonic()+8
@@ -16,6 +20,8 @@ def barrier(name,condition):
   time.sleep(.025)
  raise RuntimeError('missing '+name+' barrier')
 def finish(p,suffix=''):
+ p.feeder.join(timeout=20)
+ if p.feeder.is_alive():raise RuntimeError('migration input did not finish')
  if suffix:p.stdin.write(suffix+'\n');p.stdin.flush()
  p.stdin.close();p.stdin=None
  out,err=p.communicate(timeout=20)
