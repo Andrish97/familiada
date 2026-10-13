@@ -1,16 +1,16 @@
 // js/core/page-init.js
 // Jedno wywołanie na starcie strony zamiast requireAuth + showGuestBlockedOverlay
-// + guardDesktopOnly + ręcznego podpinania #btnBack / #btnManual / konta.
+// + guardViewportWidth + ręcznego podpinania #btnBack / #btnManual / konta.
 // Wszystko wynika z wpisu strony w PAGES (nav-map.js):
 //
 //   1. dostęp   public — bez wymuszania logowania (user albo null),
 //               guest  — wymaga sesji (konto albo gość), inaczej loginUrl(),
 //               user   — tylko konto; gość dostaje wspólną nakładkę (page-overlay.js),
-//   2. urządzenie  "wide" — guardDesktopOnly (na żywo), "noPhone" — blokada telefonu,
+//   2. ekran    minViewportWidth — guard reagujący na resize i obrót,
 //   3. topbar   #btnBack (etykieta + cel z backHref, najpierw handleSheetBack()),
 //               #btnManual (linkTo("manual", { tab: wpis.manual })), konto, topbar-ready,
 //   4. przyciski  PAGES[id].buttons: niedostępne dla roli (anon / gość / konto)
-//               albo urządzenia (device wide / noPhone na telefonie) są chowane,
+//               albo zbyt wąskiego viewportu są chowane i aktualizowane po obrocie,
 //               pozostałe dostają przejście przez linkTo() — chyba że opis ma
 //               custom: true (strona coś sprawdza przed przejściem; cel daje strona),
 //   5. zwraca użytkownika (null dla niezalogowanego, zablokowanego albo przekierowanego).
@@ -28,26 +28,25 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-13T10543";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-13T10543";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-13T10543";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-13T10543";
+import { PAGES, backHref, buttonHref, buttonVisible, buttonRoles, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-13T13432";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-13T13432";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-13T13432";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-13T13432";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-13T10543"),
-    import("./topbar-controller.js?v=v2026-10-13T10543"),
-    import("./modal-sheet.js?v=v2026-10-13T10543"),
-    import("./device-guard.js?v=v2026-10-13T10543"),
+    import("./auth.js?v=v2026-10-13T13432"),
+    import("./topbar-controller.js?v=v2026-10-13T13432"),
+    import("./modal-sheet.js?v=v2026-10-13T13432"),
+    import("./device-guard.js?v=v2026-10-13T13432"),
   ]);
   return {
     getUser: auth.getUser,
     requireAuth: auth.requireAuth,
     setTopbarAccount: topbar.setTopbarAccount,
     handleSheetBack: sheet.handleSheetBack,
-    guardDesktopOnly: device.guardDesktopOnly,
-    blockPhone: device.blockPhone,
-    isPhoneScreen: device.isPhoneScreen,
+    guardViewportWidth: device.guardViewportWidth,
+    getDeviceProfile: device.getDeviceProfile,
   };
 }
 
@@ -101,13 +100,36 @@ function wireButtons(id, user, d) {
   const buttons = PAGES[id].buttons;
   if (!buttons) return;
   const role = roleOf(user, isGuestUser(user));
-  const phone = d.isPhoneScreen();
   for (const [bid, spec] of Object.entries(buttons)) {
     const btn = document.getElementById(bid);
     if (!btn) continue;
-    if (!buttonVisible(id, spec, role, phone)) { hideButton(btn); continue; }
-    // HTML startuje z ukrytym przyciskiem, gdy dostępność zależy od roli.
-    if (btn.dataset.navHidden === "true") { delete btn.dataset.navHidden; btn.hidden = false; btn.style.display = ""; }
+    if (!buttonRoles(id, spec).includes(role)) { hideButton(btn); continue; }
+    // Przyciski zależne od roli startują ukryte w HTML. Rola jest już
+    // rozstrzygnięta, więc dopiero teraz oceniamy wymaganą szerokość.
+    if (btn.dataset.navHidden === "true") {
+      delete btn.dataset.navHidden;
+      btn.hidden = false;
+      btn.style.display = "";
+    }
+    const updateDeviceVisibility = () => {
+      const visible = buttonVisible(id, spec, role, d.getDeviceProfile());
+      const wasHidden = btn.dataset.navHidden === "true";
+      if (visible === !wasHidden) return;
+      if (!visible) hideButton(btn);
+      else {
+        delete btn.dataset.navHidden;
+        btn.hidden = false;
+        btn.style.display = "";
+      }
+      if (spec.minViewportWidth) {
+        window.dispatchEvent?.(new Event("nav:visibilitychange"));
+      }
+    };
+    updateDeviceVisibility();
+    if (spec.minViewportWidth) {
+      window.addEventListener("resize", updateDeviceVisibility, { passive: true });
+      window.addEventListener("orientationchange", updateDeviceVisibility, { passive: true });
+    }
     if (spec.blockedUntil) {
       btn.disabled = buttonBlocked(spec);
       if (btn.disabled) {
@@ -151,11 +173,10 @@ export async function initPage(id, opts = {}) {
   setModalSheetPage(id);
 
   // Urządzenie: guard stoi przed wszystkim, co strona zrobi dalej.
-  let blockedByDevice = false;
-  if (p.device === "wide") {
-    d.guardDesktopOnly({ backHref: backHref(id, { anon: !user }), ...opts.deviceGuard });
-  } else if (p.device === "noPhone") {
-    blockedByDevice = d.blockPhone({ backHref: backHref(id, { anon: !user }) });
+  let deviceReady = Promise.resolve(true);
+  if (p.minViewportWidth) {
+    const guard = d.guardViewportWidth({ minWidth: p.minViewportWidth, backHref: backHref(id, { anon: !user }), ...opts.deviceGuard });
+    deviceReady = guard.ready;
   }
 
   // Topbar działa także pod nakładką — „Wstecz” jest wtedy wyjściem.
@@ -165,7 +186,7 @@ export async function initPage(id, opts = {}) {
   wireAccount(user, opts, d);
   document.querySelector(".topbar")?.classList.add("topbar-ready");
 
-  if (blockedByDevice) return null;
+  if (!(await deviceReady)) return null;
 
   if (p.access === "user" && isGuestUser(user)) {
     showPageGuard({

@@ -177,12 +177,10 @@ const pl = {
   },
   // Wspólna nakładka blokady strony (page-overlay.js): urządzenie i gość.
   pageGuard: {
-    phoneTitle: "Niedostępne na telefonie",
-    phoneMessage: "Ta strona potrzebuje większego ekranu. Przełącz się na komputer albo tablet.",
-    rotateTitle: "Obróć tablet",
-    rotateMessage: "Ta strona działa w poziomie. Obróć tablet — strona pojawi się sama.",
+    rotateTitle: "Obróć urządzenie",
+    rotateMessage: "Ta strona wymaga szerszego widoku. Obróć urządzenie — strona pojawi się sama.",
     narrowTitle: "Za wąskie okno",
-    narrowMessage: "Poszerz okno przeglądarki, żeby korzystać z tej strony.",
+    narrowMessage: "Użyj szerszego widoku lub poszerz okno przeglądarki, żeby korzystać z tej strony.",
     back: "Wróć",
     guestTitle: "Niedostępne w koncie gościa",
     guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i Centrum ankiet.",

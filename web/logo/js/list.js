@@ -1,7 +1,7 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-13T10543";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-13T10543";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-13T10543";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T10543";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-13T13432";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-13T13432";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-13T13432";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T13432";
 // familiada/logo/js/list.js
 // Lista logo (/logo/): kafelki w trzech kartach, modale (nowe / nazwa /
 // import / podgląd), eksport. Edycja to osobne strony /logo/editor/<tryb>/
@@ -15,35 +15,32 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T10
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T10543";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-13T10543";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T10543";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T10543";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T10543";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T10543";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T10543";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T10543";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-13T10543";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T10543";
-import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T10543";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T10543";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-13T10543";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T13432";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-13T13432";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T13432";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T13432";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T13432";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T13432";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T13432";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T13432";
+import { getDeviceProfile } from "../../shared/js/core/device-guard.js?v=v2026-10-13T13432";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T13432";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T13432";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T13432";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
 
-import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-13T10543";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-13T10543";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-13T10543";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-13T10543";
-import { cannotEditReason } from "./text.js?v=v2026-10-13T10543";
-import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-13T10543";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T10543";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-13T13432";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-13T13432";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-13T13432";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-13T13432";
+import { cannotEditReason } from "./text.js?v=v2026-10-13T13432";
+import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-13T13432";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T13432";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-13T10543";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-13T10543";
-// Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
-// jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
-// i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły
-// isPhoneScreen() (js/core/device-guard.js): krótszy bok ekranu, więc
-// tablet edytuje w poziomie i w pionie, a telefon w żadnej orientacji.
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-13T13432";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-13T13432";
+// Edycja wymaga viewportu co najmniej 700 px. Ograniczenie dotyczy miejsca,
+// nie typu urządzenia: telefon poziomo może otworzyć edytor.
 
 /* =========================================================
    DOM
@@ -114,8 +111,11 @@ function show(node, on) {
 }
 
 const setMsg = (text) => { if (el.msg) el.msg.textContent = text || ""; };
-const isPhone = isPhoneScreen;
-document.documentElement.classList.toggle("le-phone", isPhone());
+const isCompactViewport = () => getDeviceProfile().viewportWidth < 700;
+const refreshViewportClass = () => document.documentElement.classList.toggle("le-compact", isCompactViewport());
+refreshViewportClass();
+window.addEventListener("resize", refreshViewportClass, { passive: true });
+window.addEventListener("orientationchange", refreshViewportClass, { passive: true });
 const defaultName = () => t("logoEditor.defaults.logoName");
 
 function esc(s) {
@@ -478,7 +478,7 @@ async function createAndOpen(mode, name) {
 }
 
 async function editSelected() {
-  if (!selectedId || isPhone()) return;
+  if (!selectedId || isCompactViewport()) return;
   let logo;
   try {
     logo = await fetchLogo(selectedId);

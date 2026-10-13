@@ -796,13 +796,12 @@ wdrożenia porównać obie listy ponownie, żeby uwzględnić nowe strony.
 | Strona główna, prywatność, 404, maintenance, settings i narzędzia settings (również pliki HTML bez index.html) | Czytelność, nawigacja, komunikaty i osiągalne akcje również przy małej wysokości. |
 | Manual | Układ poziomy sprawdzić podczas ostatniego etapu aktualizacji manuala, po zakończeniu zmian produktu. |
 
-Stan zastany: `device-guard.js` rozpoznaje telefon po krótszym boku
-ekranu <700 px; `deviceGuardState()` zwraca phone przed sprawdzeniem
-szerokości. Dlatego obrót obecnie nie odblokowuje Control/ustawień gry,
-a `blockPhone()` blokuje edytory logo w obu orientacjach. Przegląd musi
-objąć również `buttonVisible()` i reguły device w mapie, żeby dostępna
-strona nie miała ukrytego przycisku wejścia. Nie oznaczać tych stron jako
-obsługujących landscape na podstawie samej istniejącej reguły CSS.
+Wstępny przegląd wykazał, że jedna etykieta „telefon” blokowała funkcję
+niezależnie od obrotu. Model E20 rozdziela format urządzenia (telefon,
+tablet, desktop), orientację viewportu i szerokość dostępną stronie.
+Mapa stron określa minimalną szerokość funkcji; obrót nie zmienia formatu,
+ale może spełnić wymaganie szerokości i odsłonić wejście. Sama reguła CSS
+ani emulowane szerokie okno nie są dowodem obsługi landscape.
 
 Minimum pomiarów: dotykowe 844×390 i 667×375 px, pary pionowe
 390×844 i 375×667 px oraz obrót w obu kierunkach. Rozmiar screen
@@ -929,6 +928,32 @@ wyglądu. E20 dopracowuje je razem według jednego wzorca.
 Ta decyzja zmienia docelowe strony nagłówka list zasobów względem
 wcześniejszego opisu „tytuł po lewej, akcje po prawej”. Wykonanych etapów
 nie otwiera ponownie; zmianę wdrożyć w E20. Manual pozostaje ostatni.
+
+### E20 — model urządzeń i macierz układów (decyzja 2026-10-13)
+
+Rozpoznawanie urządzenia nie wybiera samo układu strony. Wspólny profil
+oddziela `formFactor` (phone/tablet/desktop), orientację viewportu oraz
+jego bieżące wymiary. Ekran dotykowy z krótszym bokiem poniżej700 CSS px
+jest telefonem; pozostałe dotykowe ekrany są tabletami. Klasyfikacja służy
+opisowi formatu i wyjątków interakcji. Układ, zwijanie nawigacji i widoczność
+akcji wynikają z dostępnej szerokości oraz wysokości.
+
+| Rodzaj widoku | Telefon pionowo (np.390×844) | Telefon poziomo (np.844×390; także667×375) | Tablet pionowo (np.820×1180) | Tablet poziomo / szerokie okno |
+|---|---|---|---|---|
+| Listy zasobów: Gry, Bazy, Logo, Marketplace | Jedna kolumna; wspólny kompaktowy pasek ikon; wyszukiwanie przez modal; lista dostaje pozostałą wysokość. | Nadal telefonowy pasek ikon; ograniczyć opis karty, zachować najważniejsze akcje i przewijanie listy; uwzględnić małą wysokość. | Nie stosować wariantu telefonu z samego dotyku. Zachować pełne etykiety i szerszy układ, jeśli mieszczą się; lista może użyć dodatkowej kolumny. | Pełne etykiety i przestrzeń; kolumny listy/filtrów tylko tam, gdzie poprawiają porównywanie. |
+| Edytory: Gra, Baza, Logo | Pionowe sekcje/panele; akcje w zasięgu, bez poziomego przewijania całej strony. | Wykorzystać szerokość dla narzędzi obok podglądu, ale bez obcinania formularzy; własne progi wejścia edytora Logo są niezależne od progów Control. | Pełniejszy formularz, możliwy podział formularz/podgląd; bez telefonu tylko dlatego, że ekran jest dotykowy. | Pełny układ roboczy, stabilne panele i lokalne przewijanie długich narzędzi. |
+| Kontakty i Zadania | Jedna karta/kolumna na raz, wypustki przełączają zawartość; wspólne karty i akcje. | Ten sam model jednej aktywnej karty; skrócić drugorzędne metadane, nie zwężać pól i przycisków dotykowych. | Dwie karty/kolumny mogą być widoczne równocześnie, gdy szerokość daje czytelne wiersze; pełne nazwy. | Dwie kolumny lub pełne karty zależnie od typu; niezależne przewijanie tylko gdy jest wyraźny podział treści. |
+| Ankiety, formularze i okna | Pojedyncza kolumna; dialog ekranowy; pełne etykiety pól i przycisków. | Zachować jedną czytelną kolumnę; w dialogu użyć małej wysokości bez zasłaniania zatwierdzenia/klawiatury. | Formularz może użyć dodatkowej szerokości; okna nie muszą zajmować całego ekranu, jeśli pozostają wygodne dotykiem. | Szersze formularze lub podział podsumowanie/treść; nie rozciągać tekstowych pól bez potrzeby. |
+| Control i ustawienia gry | Blokada z instrukcją obrotu, jeśli dłuższy bok pozwoli uzyskać próg980 px; w przeciwnym razie jasny komunikat o wymaganym miejscu. | Telefon pozostaje telefonem; wejście do funkcji dopiero przy viewport co najmniej980 px. Nie zakładać, że typ urządzenia oznacza brak możliwości. | Tablet nie staje się telefonem. Portrait prosi o obrót tylko jeśli landscape spełni próg980 px. | W pełnym widoku zachować główny panel i sterowanie; dopasować po pomiarze rzeczywistego obszaru. |
+
+To macierz kierunkowa dla przeglądu, nie dowód, że każdy układ już tak
+działa. Każda rodzina wymaga sprawdzenia wszystkich rzeczywistych stron
+HTML, obu orientacji i małej wysokości. Progi funkcji zapisuje się jawnie
+przy stronie/przycisku; inne zachowania CSS opierają się na miejscu,
+nie na formFactor. Przy obrocie zachować zaznaczenie, wyszukiwanie, kartę,
+scroll i stan otwartego dialogu. Punktowa weryfikacja zrzutami obejmuje
+telefon pion/poziom, tablet pion/poziom i desktop; emulacja tabletu nie
+zamyka obowiązkowej kontroli fizycznego Lenovo.
 
 ### E20 — ikony akcji i kompaktowe narzędzia telefonu (2026-10-12)
 

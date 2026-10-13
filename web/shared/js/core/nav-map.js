@@ -7,7 +7,7 @@
 // Pola wpisu w PAGES:
 //   path          adres strony (pasuje dokładnie; subpaths: true — także podścieżki)
 //   access        "public" | "guest" (gość + konto) | "user" (tylko konto)
-//   device        "any" | "wide" (Control, ustawienia gry) | "noPhone"
+//   minViewportWidth  minimalna szerokość viewportu wymagana przez stronę
 //   parent        dokąd „Wstecz”, gdy nie ma poprawnego ?ret= (null — brak)
 //   parentAnon    to samo dla niezalogowanego (strony publiczne)
 //   parentParams  parametry adresu, które parent dostaje z bieżącej strony
@@ -22,7 +22,7 @@
 //                   roles   kto widzi przycisk: podzbiór ["anon", "guest", "user"]
 //                           (anon — niezalogowany, guest — gość, user — konto);
 //                           brak pola — każdy, kto ma wstęp na stronę
-//                   device  "wide" albo "noPhone" — na telefonie przycisk jest ukryty
+//                   minViewportWidth  szerokość viewportu wymagana przez cel
 //                   tab     karta strony docelowej (?tab=)
 //                   custom  true — przed przejściem strona coś sprawdza (wybrana
 //                           gra, validateGame…); initPage tylko chowa przycisk wg
@@ -38,8 +38,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-13T10543";
-import { iconText } from "./icons.js?v=v2026-10-13T10543";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-13T13432";
+import { iconText } from "./icons.js?v=v2026-10-13T13432";
 
 export const MAX_RET_DEPTH = 4;
 
@@ -63,8 +63,8 @@ export const PAGES = {
     btnSubscribers:      { to: "subscribers", roles: ["user"] },
     btnTasks:            { to: "tasks", roles: ["user"] },
     btnBases:            { to: "bases" },
-    btnPlay:             { to: "control", device: "wide", custom: true },
-    btnSettings:         { to: "gameSettings", device: "wide", custom: true },
+    btnPlay:             { to: "control", minViewportWidth: 980, custom: true },
+    btnSettings:         { to: "gameSettings", minViewportWidth: 980, custom: true },
     btnEdit:             { to: "editor", custom: true },
     btnPoll:             { to: "polls", custom: true },
   } },
@@ -87,13 +87,13 @@ export const PAGES = {
   } },
   baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay", "renameModal"], locks: [{ type: "base", id: "id", mode: "shared" }] },
   logoEditor:    { path: "/logo/",              access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["renameOverlay", "logoImportOverlay", "previewOverlay", "logoExportOverlay"] },
-  logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
-  logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
-  logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
-  control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"], buttons: {
+  logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
+  logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
+  logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
+  control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", minViewportWidth: 980, state: ["id"], buttons: {
     btnFriends: { to: "friends", roles: ["user"], custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
-  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"], buttons: {
+  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", minViewportWidth: 980, state: ["id"], buttons: {
     btnPlay: { to: "control", custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort", "dialog"], dialogs: ["submitOverlay", "gameDetailOverlay"] },
@@ -151,10 +151,11 @@ export function buttonRoles(pageId, spec) {
   return spec.roles ? spec.roles.filter((r) => allowed.includes(r)) : allowed;
 }
 
-/** Czy przycisk jest widoczny dla roli i urządzenia (phone: true — telefon). */
-export function buttonVisible(pageId, spec, role, phone) {
+/** Widoczność wynika z roli i minimalnej szerokości celu, nie z typu urządzenia. */
+export function buttonVisible(pageId, spec, role, deviceProfile = null) {
   if (!buttonRoles(pageId, spec).includes(role)) return false;
-  if (phone && (spec.device === "wide" || spec.device === "noPhone")) return false;
+  const viewportWidth = typeof deviceProfile === "number" ? deviceProfile : deviceProfile?.viewportWidth ?? Infinity;
+  if (spec.minViewportWidth && viewportWidth < spec.minViewportWidth) return false;
   return true;
 }
 

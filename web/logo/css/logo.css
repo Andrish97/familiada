@@ -103,9 +103,9 @@
   font-size: 14px;
 }
 
-/* Edycja niedostępna na telefonie (klasa z main.js: krótszy bok ekranu < 700 px) */
-.le-phone #btnEdit,
-.le-phone .le-edit-only{ display: none !important; }
+/* Edycja wymaga miejsca; próg zależy od viewportu, a nie od formatu urządzenia. */
+.le-compact #btnEdit,
+.le-compact .le-edit-only{ display: none !important; }
 .logoX:hover{
   border-color: var(--gold);
   --btn-tint: rgba(0,0,0,.32);

@@ -1250,20 +1250,22 @@ test.describe("telefon", () => {
     await expect(page.locator("#previewOverlay")).toBeVisible();
   });
 
-  test("adres edytora na telefonie: blokada z powrotem na listę, logo nietknięte", async ({ page }) => {
+  test("edytor telefonu w pionie prosi o obrót, a w poziomie otwiera zapisane logo", async ({ page }, testInfo) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("mobile-edit"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
     await page.goto(`${site.origin}/logo/editor/text/?id=${id}`);
     // Wspólna nakładka urządzenia (page-overlay.js), nie blokada zasobu.
     await expect(page.locator("#pageGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#pageGuard")).toHaveAttribute("data-kind", "device");
-    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "phone");
-    await expect(page.locator("#pageGuardMsg")).toContainText(/większego ekranu/);
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "rotate");
+    await expect(page.locator("#pageGuardMsg")).toContainText(/szerszego widoku/);
     await expect(page.locator("#logoName")).toBeDisabled();
     expect((await L.readLogo(page, id)).payload.source.text).toBe("AB");
-    // „Wróć” prowadzi na adres z mapy (lista logo), bez history.back()
-    await page.locator("#pageGuardBack").click();
-    await expect(page).toHaveURL(/\/logo\/(?:\?.*)?$/);
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-logo-editor-phone-portrait-guard.png"), fullPage: true });
+    await page.setViewportSize({ width: 800, height: 390 });
+    await expect(page.locator("#pageGuard")).toBeHidden();
+    await expect(page.locator("#logoName")).toBeEnabled({ timeout: 30000 });
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-logo-editor-phone-landscape.png"), fullPage: true });
   });
 });
 
@@ -1271,10 +1273,16 @@ test.describe("telefon w poziomie", () => {
   const LAND = { width: 844, height: 390 };
   test.use({ viewport: LAND, screen: LAND, isMobile: true, hasTouch: true });
 
-  test("tworzenie i edycja dalej ukryte (krótszy bok ekranu < 700 px)", async ({ page }) => {
+  test("poziomy viewport telefonu odsłania listę i pozwala otworzyć edytor", async ({ page }) => {
+    await open(page);
+    const id = await L.insertLogo(page, { name: L.uniq("landscape-edit"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
     await open(page);
     await expect(page.locator("#grid")).toBeVisible();
-    await expect(page.locator("#grid .addCard")).toBeHidden();
-    await expect(page.locator("#btnEdit")).toBeHidden();
+    await expect(page.locator("#grid .addCard")).toBeVisible();
+    await page.locator(`.logoTile[data-key="${id}"]`).tap();
+    await expect(page.locator("#btnEdit")).toBeEnabled();
+    await page.locator("#btnEdit").tap();
+    await expect(page).toHaveURL(/\/logo\/editor\/text\//);
+    await expect(page.locator("#logoName")).toBeEnabled({ timeout: 30000 });
   });
 });

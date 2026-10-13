@@ -82,24 +82,25 @@ const BACK_ID = {
 const loadNav = (file) => new Function("p", "return import(p)")(pathToFileURL(path.resolve(__dirname, file)).href);
 
 const VIEWPORTS = {
-  desktop: { width: 1280, height: 800 },
-  phone: { width: 390, height: 844 },
+  desktop: { viewportWidth: 1280, viewportHeight: 800, formFactor: "desktop", orientation: "landscape" },
+  phonePortrait: { viewportWidth: 390, viewportHeight: 844, formFactor: "phone", orientation: "portrait" },
+  phoneLandscape: { viewportWidth: 844, viewportHeight: 390, formFactor: "phone", orientation: "landscape" },
 };
 
 const MAP_LIST = [
-  { id: "A1", role: "anon", phone: false },
-  { id: "A2", role: "anon", phone: true },
-  { id: "B1", role: "guest", phone: false },
-  { id: "B2", role: "guest", phone: true },
-  { id: "C1", role: "user", phone: false },
-  { id: "C2", role: "user", phone: true },
+  { id: "A1", role: "anon", profile: VIEWPORTS.desktop },
+  { id: "A2", role: "anon", profile: VIEWPORTS.phonePortrait },
+  { id: "B1", role: "guest", profile: VIEWPORTS.desktop },
+  { id: "B2", role: "guest", profile: VIEWPORTS.phonePortrait },
+  { id: "C1", role: "user", profile: VIEWPORTS.desktop },
+  { id: "C2", role: "user", profile: VIEWPORTS.phonePortrait },
 ];
 
 for (const map of MAP_LIST) {
-  test(`mapa ${map.id} (${map.role}, ${map.phone ? "390×844" : "1280×800"}): przyciski, cele i „Wstecz”`, async ({ page }, testInfo) => {
+  test(`mapa ${map.id} (${map.role}, ${map.profile.orientation} ${map.profile.viewportWidth}×${map.profile.viewportHeight}): przyciski, cele i „Wstecz”`, async ({ page }, testInfo) => {
     test.setTimeout(240000);
     const { PAGES, buttonVisible, pageRoles } = await loadNav("../../web/shared/js/core/nav-map.js");
-    await page.setViewportSize(map.phone ? VIEWPORTS.phone : VIEWPORTS.desktop);
+    await page.setViewportSize({ width: map.profile.viewportWidth, height: map.profile.viewportHeight });
     const topbarReady = () => expect(page.locator(".topbar.topbar-ready")).toBeAttached();
     const pathOf = () => new URL(page.url()).pathname;
 
@@ -123,13 +124,12 @@ for (const map of MAP_LIST) {
     let clicked = 0;
     for (const [id, p] of Object.entries(PAGES)) {
       if (!p.buttons || !pageRoles(id).includes(map.role)) continue;
-      // Strony z device wide / noPhone na telefonie to nakładka; strony z id w adresie
-      // (ustawienia gry) wymagają konkretnej gry — poza tym testem.
-      if (map.phone && (p.device === "wide" || p.device === "noPhone")) continue;
+      // Strony wymagające zasobu z id oraz adresy z guardem viewportu mają
+      // osobne testy funkcjonalne.
       if (p.state?.includes("id")) continue;
 
       for (const [bid, spec] of Object.entries(p.buttons)) {
-        const visible = buttonVisible(id, spec, map.role, map.phone);
+        const visible = buttonVisible(id, spec, map.role, map.profile);
         await page.goto(p.path, { waitUntil: "networkidle" });
         await topbarReady();
         const btn = page.locator(`#${bid}`);

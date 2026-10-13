@@ -4,19 +4,12 @@
 // blokadą gościa (page-overlay.js), teksty: pageGuard.*; „Wróć” prowadzi na
 // backHref z mapy nawigacji (bez history.back() i referrera).
 //
-// Telefon rozpoznajemy po KRÓTSZYM BOKU EKRANU (< 700 px), a nie po
-// szerokości okna: ta miara nie zmienia się przy obrocie, więc tablet nie
-// „staje się telefonem” w pionie, a telefon w poziomie nie staje się
-// tabletem. Z tej samej funkcji korzysta edytor logo.
-//
-// Stany blokady (deviceGuardState):
-//   ok     -- okno ma co najmniej minWidth szerokości,
-//   phone  -- telefon: „przełącz się na komputer albo tablet”,
-//   rotate -- tablet w pionie, a w poziomie by się zmieścił: „obróć tablet”
-//             (znika sam po obrocie),
-//   narrow -- komputer z za wąskim oknem: „poszerz okno”.
+// Typ urządzenia, orientacja i dostępna szerokość są osobnymi cechami. Typ
+// wynika z ekranu dotykowego i krótszego boku ekranu; orientacja oraz to,
+// czy konkretna funkcja się mieści, wynikają z bieżącego viewportu. Obrót
+// nie zmienia typu urządzenia, ale może udostępnić funkcję wymagającą miejsca.
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-13T10543";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-13T13432";
 
 export const PHONE_MAX_SHORT_SIDE = 700;
 export const MIN_WORK_WIDTH = 980;
@@ -29,22 +22,36 @@ function screenSides() {
 
 const isTouch = () => navigator.maxTouchPoints > 0 || !!window.matchMedia?.("(pointer: coarse)").matches;
 
-/** Telefon: krótszy bok ekranu poniżej 700 px (niezależnie od orientacji). */
-export function isPhoneScreen() {
-  return screenSides().short < PHONE_MAX_SHORT_SIDE;
+export function getDeviceProfile() {
+  const { short, long } = screenSides();
+  const touch = isTouch();
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  return {
+    formFactor: touch ? (short < PHONE_MAX_SHORT_SIDE ? "phone" : "tablet") : "desktop",
+    orientation: width >= height ? "landscape" : "portrait",
+    viewportWidth: width,
+    viewportHeight: height,
+    screenShortSide: short,
+    screenLongSide: long,
+    touch,
+  };
 }
 
-/** "ok" | "phone" | "rotate" | "narrow" -- patrz opis na górze pliku. */
-export function deviceGuardState(minWidth = MIN_WORK_WIDTH, phoneRequiresTouch = false) {
-  if (isPhoneScreen() && (!phoneRequiresTouch || isTouch())) return "phone";
-  if (window.innerWidth >= minWidth) return "ok";
-  const portrait = window.innerHeight > window.innerWidth;
-  if (isTouch() && portrait && screenSides().long >= minWidth) return "rotate";
+/** Czy format urządzenia to telefon; niezależne od viewportu i orientacji. */
+export function isPhoneScreen() {
+  return getDeviceProfile().formFactor === "phone";
+}
+
+/** "ok" | "rotate" | "narrow" — decyzja zależy od wymagań funkcji. */
+export function deviceGuardState(minWidth = MIN_WORK_WIDTH) {
+  const profile = getDeviceProfile();
+  if (profile.viewportWidth >= minWidth) return "ok";
+  if (profile.touch && profile.orientation === "portrait" && profile.screenLongSide >= minWidth) return "rotate";
   return "narrow";
 }
 
 const TEXTS = {
-  phone:  { title: "pageGuard.phoneTitle",  message: "pageGuard.phoneMessage",  icon: "phone" },
   rotate: { title: "pageGuard.rotateTitle", message: "pageGuard.rotateMessage", icon: "rotate-right" },
   narrow: { title: "pageGuard.narrowTitle", message: "pageGuard.narrowMessage", icon: "fullscreen-enter" },
 };
@@ -61,22 +68,10 @@ function showDeviceGuard(state, backHref) {
   });
 }
 
-/**
- * Strona niedostępna na telefonie: blokada jednorazowa, bez nasłuchu (krótszy bok
- * ekranu nie zmienia się przy obrocie). Zwraca true, gdy zablokowała.
- */
-export function blockPhone({ backHref = null } = {}) {
-  if (!isPhoneScreen()) return false;
-  showDeviceGuard("phone", backHref);
-  document.documentElement.dataset.deviceGuard = "phone";
-  document.documentElement.removeAttribute("data-mobile-guard");
-  return true;
-}
-
-/** Strona potrzebuje szerokiego okna: blokada na żywo (resize / obrót). */
-export function guardDesktopOnly({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null, phoneRequiresTouch = false } = {}) {
+/** Strona wymaga minimalnej szerokości: guard reaguje na resize i obrót. */
+export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null } = {}) {
   const currentState = () => {
-    const state = deviceGuardState(minWidth, phoneRequiresTouch);
+    const state = deviceGuardState(minWidth);
     return state === "ok" && fits && !fits() ? "narrow" : state;
   };
   function apply() {
@@ -90,10 +85,22 @@ export function guardDesktopOnly({ minWidth = MIN_WORK_WIDTH, backHref = null, f
     document.documentElement.removeAttribute("data-mobile-guard");
   }
 
-  // obrót: resize przychodzi zwykle, orientationchange na starszym iOS czasem przed nowym rozmiarem
-  window.addEventListener("resize", apply);
-  window.addEventListener("orientationchange", () => setTimeout(apply, 250));
-  apply();
+  let resolveReady;
+  let readyResolved = false;
+  const ready = new Promise((resolve) => {
+    resolveReady = resolve;
+  });
+  const refresh = () => {
+    apply();
+    if (!readyResolved && deviceGuardState(minWidth) === "ok") {
+      readyResolved = true;
+      resolveReady?.(true);
+    }
+  };
+  const onOrientationChange = () => setTimeout(refresh, 250);
+  window.addEventListener("resize", refresh);
+  window.addEventListener("orientationchange", onOrientationChange);
+  refresh();
 
-  return { refresh: apply, state: currentState };
+  return { refresh, state: currentState, ready };
 }
