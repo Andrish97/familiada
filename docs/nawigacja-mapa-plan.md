@@ -1121,7 +1121,7 @@ zajmują całą stronę (np. udostępnianie, import/eksport, wybór/wyszukiwanie
 | Otwarcie modala jako ekranu | Jeden własny wpis `history.pushState`, z jawnym stanem dialogu w URL strony (np. `?dialog=share`) i identyfikatorem zasobu, gdy wymagany. Dozwolone dialogi i ich parametry określa mapa danej strony. Wspólna obsługa, bez osobnych obejść dla każdej strony. |
 | Wstecz przeglądarki / systemowe Wstecz Androida | `popstate` zamyka najwyższy dialog; strona, zaznaczenie, karta i przewinięcie zostają. Kolejne Wstecz działa według zwykłej mapy powrotów. |
 | Wstecz w modalu / X / inne zamknięcie | Korzysta z tej samej ścieżki i usuwa własny bieżący wpis historii. Nie pozostawia pustego kroku wymagającego kolejnego Wstecz. Nie cofa historii, jeśli dialog nie ma własnego wpisu. |
-| Dialog na dialogu | Cofanie zamyka po jednym poziomie, bez opuszczania strony spod stosu okien. Zamknięcie rodzica sprząta jego dzieci i ich stan. |
+| Pełnoekranowy arkusz na pełnoekranowym arkuszu | W aktualnym UI nie znaleziono takiego przepływu. Nie tworzyć obsługi URL dla potencjalnego przypadku bez rzeczywistego ekranu. Standardowe potwierdzenia i alerty nad arkuszem zostają zwykłymi oknami; nie dostają `?dialog=` ani własnego wpisu jako strona. Jeśli pojawi się rzeczywisty arkusz otwierający kolejny arkusz, dopisać jego kontrakt i test. |
 | Dalej, odświeżenie, wejście z linku | Dalej ponownie otwiera dialog zapisany w URL, odświeżenie i bezpośredni link także go odtwarzają; tylko dla nadal dostępnego zasobu i ważnej ścieżki. Brak modala/własnego wpisu nie może powodować wyjścia na obcą stronę, pętli ani automatycznego powtarzania wysyłki, importu lub akceptacji. |
 | Obrót/zmiana rozmiaru | Bez dodatkowych wpisów od samej zmiany układu i bez utraty możliwości zamknięcia. Uwzględnić tablet i telefon landscape. |
 | Formularz i trwająca operacja | Zachować istniejącą ochronę niezapisanych zmian i operacji; Wstecz nie obchodzi potwierdzenia ani nie wykonuje działania drugi raz. Dialog nadal nie zwalnia blokad strony tylko przez zamknięcie okna. |
@@ -1136,18 +1136,13 @@ Test obejmuje wyłącznie odtworzenie UI; nie wykonuje operacji biznesowej.
 Pomiary urządzeń i zrzuty wyglądu pozostają w E20; historycznego E7 nie
 oznaczać ponownie jako niewykonanego.
 
-**Status E19N: częściowo wdrożone; etap E19 pozostaje otwarty.** Aktualny
-`modal-sheet.js` przechowuje jeden `activeDialogKey`/`activeClose` i jeden
-parametr `dialog`. Nie zapisuje stosu ani nie odtwarza rodzica po zamknięciu
-dialogu potomnego. Zielony test produkcyjny pokrywa pojedynczy arkusz Bazy
-(Back/Forward, bezpośredni URL i refresh), nie dialog→dialog.
-
-Do domknięcia E19N pozostają co najmniej: obsługa i test odtwarzania stosu
-dialogów; ponowne otwieranie i brak zbędnych wpisów historii; sprawdzenie
-X i zamykania dostępnego dla każdego rodzaju arkusza. Testy wymienione
-poniżej nie są dowodem wykonania tylko dlatego, że E19N oznaczono wcześniej
-jako gotowe. Kontrola Androida, obrotu i rzeczywistego tabletu jest powiązana
-z E20.
+**Status E19N: wdrożone produkcyjnie; E19 zamknięte.** Audyt wszystkich
+wywołań `enterModalSheet` nie znalazł przepływu pełnoekranowy arkusz→arkusz.
+Zagnieżdżone `confirmModal`/`alertModal` (np. pytanie o porzucenie zmian
+formularza) pozostają zwykłymi oknami i nie mają stanu strony w URL.
+Pojedynczy arkusz Bazy ma produkcyjny test Back/Forward, bezpośredniego URL
+i refresh (`38370189342`, 1/1). Kontrola Androida, obrotu i rzeczywistego
+tabletu jest powiązana z E20.
 Kontrola przeglądarkowa i pomiary na rzeczywistym tablecie zgodnie z E20;
 zrzuty po zmianach wyglądu.
 
@@ -1155,10 +1150,11 @@ zrzuty po zmianach wyglądu.
 ekrany mają jawny stan w URL, nie wyłącznie w pamięci `history.state`.
 Wstecz wraca do adresu rodzica/strony bez tego dialogu, Dalej otwiera go
 ponownie. Nazwy i wymagane identyfikatory walidować w źródle mapy; zachować
-parametry zakładki, zasobu, języka i powrotu. Dla stosu okien adres i stan
-historii muszą pozwalać odtworzyć rodzica i najwyższy dialog. Dialog
-nieznany, zasób usunięty lub dostęp cofnięty: spójny komunikat i bezpieczne
-przywrócenie poprawnego adresu, bez pętli historii.
+parametry zakładki, zasobu, języka i powrotu. Jeśli aplikacja doda przepływ
+pełnoekranowy arkusz→pełnoekranowy arkusz, adres i historia muszą wtedy
+odtwarzać rodzica i aktywny arkusz. Zwykłe potwierdzenia i alerty pozostają
+poza URL. Dialog nieznany, zasób usunięty lub dostęp cofnięty: spójny
+komunikat i bezpieczne przywrócenie poprawnego adresu, bez pętli historii.
 
 Nie wprowadza to ponownie starego `?modal=` ani stron osadzanych w iframe.
 Zwykłe strony pozostają stronami; `dialog` opisuje istniejące okno na
