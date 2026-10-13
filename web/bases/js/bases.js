@@ -1,3 +1,4 @@
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-12T23450";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
@@ -55,6 +56,7 @@ const btnBack = document.getElementById("btnBack");
 const btnLogout = document.getElementById("btnLogout");
 const btnBrowse = document.getElementById("btnBrowse");
 const btnShare = document.getElementById("btnShare");
+const btnDuplicate = document.getElementById("btnDuplicate");
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
 const btnGoAlt = document.getElementById("btnGoAlt");
@@ -286,6 +288,7 @@ function setButtonsState() {
 
   // Eksport: każdy z dostępem
   if (btnExport) btnExport.disabled = !hasAccess;
+  if (btnDuplicate) btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasAccess || !owner || guestMode;
 }
 
 function showProgBlock(el, on) {
@@ -1522,6 +1525,7 @@ function initFileLaunch() {
   currentUser = await initPage("bases", { ready: i18nReady });
   if (!currentUser) return;
   guestMode = isGuestUser(currentUser);
+  bindResourceDuplicate({button:btnDuplicate,kind:"base",getSource:selectedBase,onDone:async id=>{selectedId=id;setActiveTab("mine");await refreshView();},onState:setButtonsState});
   if (guestMode) {
     document.body.classList.add("bases-guest");
     hideForGuest(currentUser, [btnShare, basesSectionShared]);

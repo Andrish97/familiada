@@ -11,6 +11,17 @@ const en = {
     label: "English",
     icon: "lang-en",
   },
+  resourceDuplicate: {
+  "action": "Duplicate",
+  "busy": "This resource is in use. Try again.",
+  "pending": "Accept the received resource first.",
+  "notExportable": "This game cannot be duplicated right now.",
+  "missing": "This resource no longer exists.",
+  "expired": "This attempt expired. Try again.",
+  "unavailable": "Duplication is currently unavailable.",
+  "image": "Could not copy the image. Try again.",
+  "failed": "Could not duplicate the resource. Try again."
+},
   common: {
     sort: {
       label: "Sort",

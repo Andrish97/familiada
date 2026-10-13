@@ -1,3 +1,5 @@
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-12T23450";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-12T23450";
 // familiada/logo/js/list.js
 // Lista logo (/logo/): kafelki w trzech kartach, modale (nowe / nazwa /
 // import / podgląd), eksport. Edycja to osobne strony /logo/editor/<tryb>/
@@ -54,6 +56,7 @@ const el = {
   msg: $("msg"),
   btnEdit: $("btnEdit"),
   btnPreview: $("btnPreview"),
+  btnDuplicate: $("btnDuplicate"),
   btnExport: $("btnExport"),
   btnImport: $("btnImport"),
   tabs: { TEXT: $("tabLogoText"), DRAW: $("tabLogoDraw"), IMAGE: $("tabLogoImage") },
@@ -253,6 +256,7 @@ function updateListButtons() {
   el.btnPreview.disabled = !has;
   el.btnEdit.disabled = !has;
   el.btnExport.disabled = !has;
+  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || isGuestUser(currentUser);
 }
 
 function makeTile(logo) {
@@ -595,6 +599,7 @@ async function loadFonts() {
 }
 
 function bindUi() {
+  bindResourceDuplicate({button:el.btnDuplicate,kind:"logo",getSource:()=>logos.find(l=>l.id===selectedId),onDone:async id=>{await refresh();const logo=logos.find(l=>l.id===id);if(logo)setActiveListMode(listModeForLogo(logo));selectTile(id);},onState:updateListButtons});
   // lista
   el.btnEdit.addEventListener("click", () => void editSelected());
   el.btnPreview.addEventListener("click", () => {

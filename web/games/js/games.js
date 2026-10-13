@@ -1,3 +1,5 @@
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-12T23450";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-12T23450";
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-12T23450";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T23450";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T23450";
@@ -116,6 +118,7 @@ const navMore = document.getElementById("navMore");
 const btnMore = document.getElementById("btnMore");
 const navMoreDropdown = document.getElementById("navMoreDropdown");
 
+const btnDuplicate = document.getElementById("btnDuplicate");
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
 const btnExportBase = document.getElementById("btnExportBase");
@@ -736,6 +739,7 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnSettings) btnSettings.disabled = !hasSel;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
+  if (btnDuplicate) btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canExport || isGuestUser(currentUser);
 }
 /* ================= Tabs ================= */
 // Karty i domyślna (pierwsza) z mapy stron; nazwy kart = wartości TYPES.
@@ -1232,6 +1236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   currentUser = await userP;
   if (!currentUser) return; // initPage przekierował na logowanie
+  bindResourceDuplicate({button:btnDuplicate,kind:"game",getSource:()=>gamesAll.find(g=>g.id===selectedId),onDone:async id=>{selectedId=id;const g=await loadGameBasic(id);setActiveTab(uiTypeFromRow(g));await refresh();},onState:()=>void updateActionState()});
 
   await maybeShowGuestInfoModal(currentUser);
   maybeShowGuestMigrateReminder(currentUser);
