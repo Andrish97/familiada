@@ -93,6 +93,23 @@ function tileByName(page, name) {
   return page.locator("#grid .card", { has: page.locator(".name", { hasText: name }) });
 }
 
+/* ================= E20: nagłówek wspólny Gier/Baz/Logo ================= */
+
+test("E20: akcje po lewej, tytuł i podpowiedź po prawej na komputerze i telefonie", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  for (const width of [1400, 390]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    await openGames(page);
+    const boxes = await page.evaluate(() => {
+      const actions = document.querySelector(".bar > .actions").getBoundingClientRect();
+      const heading = document.querySelector(".bar > :first-child").getBoundingClientRect();
+      return { actions: { left: actions.left, right: actions.right }, heading: { left: heading.left, right: heading.right } };
+    });
+    expect(boxes.actions.right, `actions overlap title at ${width}px`).toBeLessThanOrEqual(boxes.heading.left + 1);
+    expect(boxes.heading.right, `title is outside the right column at ${width}px`).toBeLessThanOrEqual(width - 8);
+  }
+});
+
 /* ================= 1) Kafelki: zaznaczanie, tworzenie, zmiana nazwy, usuwanie ================= */
 
 test.describe("games: audyt -- kafelki", () => {
