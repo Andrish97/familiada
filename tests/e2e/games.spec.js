@@ -240,6 +240,57 @@ test("E20: Bazy ujawniają błąd pierwszego odczytu po odsłonięciu sekcji", a
 
 test.describe("games: audyt -- kafelki", () => {
 
+  test("E20: telefon landscape zachowuje wyszukiwanie i zaznaczoną grę po obrocie", async ({ browser }, testInfo) => {
+    test.setTimeout(90_000);
+    const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
+      viewport: { width: 390, height: 844 }, screen: { width: 390, height: 844 }, hasTouch: true, isMobile: true,
+    });
+    const name = `E20-GM-ROTATE-${Date.now()}`;
+    try {
+      await seedPreparedGame(page, name);
+      await openGames(page);
+      const search = page.locator(".list-search-open");
+      await expect(search).toBeVisible();
+      await search.tap();
+      const searchInput = page.locator(".uni-modal input[type=search]");
+      await searchInput.fill(name);
+      await page.getByRole("button", { name: "OK", exact: true }).tap();
+
+      const tile = tileByName(page, name);
+      await expect(tile).toBeVisible();
+      await tile.tap();
+      await expect(tile).toHaveClass(/selected/);
+      const assertNoHorizontalOverflow = async (label) => {
+        const widths = await page.evaluate(() => ({
+          viewport: document.documentElement.clientWidth,
+          document: document.documentElement.scrollWidth,
+          body: document.body.scrollWidth,
+        }));
+        expect(widths.document, `${label}: document overflows horizontally`).toBeLessThanOrEqual(widths.viewport + 1);
+        expect(widths.body, `${label}: body overflows horizontally`).toBeLessThanOrEqual(widths.viewport + 1);
+      };
+      await assertNoHorizontalOverflow("portrait before rotate");
+      await page.screenshot({ path: testInfo.outputPath("shot-e20-games-rotation-390x844.png"), fullPage: true });
+
+      await page.setViewportSize({ width: 844, height: 390 });
+      await expect(tile).toBeVisible();
+      await expect(tile).toHaveClass(/selected/);
+      await expect(search).toHaveClass(/is-active/);
+      await assertNoHorizontalOverflow("landscape");
+      await page.screenshot({ path: testInfo.outputPath("shot-e20-games-rotation-844x390.png"), fullPage: true });
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect(tile).toBeVisible();
+      await expect(tile).toHaveClass(/selected/);
+      await expect(search).toHaveClass(/is-active/);
+      await assertNoHorizontalOverflow("portrait after rotate");
+      await page.screenshot({ path: testInfo.outputPath("shot-e20-games-rotation-back-390x844.png"), fullPage: true });
+    } finally {
+      await deleteGamesByName(page, name);
+      await ctx.close();
+    }
+  });
+
   test("telefon: tapnięcie zaznacza bez przebudowy listy, podwójne otwiera zmianę nazwy", async ({ browser }) => {
     test.setTimeout(90_000);
     const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
