@@ -6,6 +6,8 @@ on:
       - '.github/workflows/resource-clone-contract-checks.yml'
       - 'docs/sql/*365*'
       - 'supabase/migrations/*365*'
+      - 'supabase/migrations/*366*'
+      - 'docs/sql/*366*'
 permissions:
   contents: read
 jobs:
@@ -50,6 +52,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-resource-clone-365.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-resource-clone-staging-365.sql
           python3 docs/sql/test-resource-clone-concurrency-365.py
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-13_366_copy_account_deletion.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-copy-account-deletion-366.sql
       - uses: actions/upload-artifact@v4
         if: always()
         with:
