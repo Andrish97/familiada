@@ -275,3 +275,18 @@ To **lokalny prototyp, bez publicznego API i bez migracji**. Dalej:
 pełny audyt blokad/wyścigów i atomowego snapshotu źródła, własne pliki
 Logo podczas wysłania, kolejka/alokacja/dostarczenie, Go, UI i plakietki.
 Nie deklarować tym wdrożenia wysyłania ani testów Logo/SMTP.
+
+### Własny obraz odbiorcy — przygotowanie serwera
+
+Istniejący importer oraz przyszły serwer wysyłania używają wspólnych
+parseLogoPackage i decodeImportedLogoImage. Te same formaty, błędy
+i limit5MiB; osobne unit sprawdzają granicę rzeczywistych bajtów.
+Prywatny helper Workera przygotowany do zapisu w
+receiver_id/received/copy_id.ext na podstawie zweryfikowanego planu DB.
+Bez nadpisywania; konflikt ponowienia uznaje tylko identyczne bajty.
+Na razie helper nie jest podpięty do endpointu i nie wysyła kopii.
+
+Przed podłączeniem obowiązkowe: zweryfikowany plan tworzenia z własnością
+źródła/znajomością/stałym odbiorcą, snapshot, sprzątanie nieukończonych
+uploadów i wyścigi z usunięciem konta/odrzuceniem/wygaśnięciem. Nigdy
+nie przyjmować katalogu odbiorcy bezpośrednio z niezaufanego body żądania.
