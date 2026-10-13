@@ -126,6 +126,7 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
       if (viewport.width <= 980) {
         for (const selector of ["#btnExport", "#btnImport"]) {
           await expect(page.locator(`${selector} .ico`)).toBeVisible();
+          await expect(page.locator(`${selector} .only-desktop`)).toBeHidden();
           await expect(page.locator(selector)).toHaveAttribute("aria-label", /.+/);
         }
         await expect(page.locator(".list-search-open .ico")).toBeVisible();

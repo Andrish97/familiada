@@ -875,6 +875,7 @@ body.games-body > main.wrap{
   border-color: var(--gold); background: rgba(255, 215, 0, .12);
 }
 @media (max-width: 600px), (max-width: 980px) and (orientation: landscape){
+  .games-bottom .only-desktop{ display: none !important; }
   .games-bottom-left{ flex: 0 1 auto; min-width: 0; gap: 4px; }
   .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
   .games-bottom-left > #btnReceivedFilter[aria-pressed="true"]{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
