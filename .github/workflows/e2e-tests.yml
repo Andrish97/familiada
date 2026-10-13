@@ -19,6 +19,14 @@ on:
         description: 'Opcjonalna, odizolowana pula kont, np. 4,5. Pusta wartość używa zwykłej puli bez kont zarezerwowanych.'
         required: false
         default: ""
+      e20_gallery_pages:
+        description: 'Opcjonalnie: ID stron galerii E20 rozdzielone przecinkami. Puste = wszystkie strony.'
+        required: false
+        default: ""
+      e20_gallery_profiles:
+        description: 'Opcjonalnie: profile galerii E20 rozdzielone przecinkami. Puste = wszystkie urządzenia.'
+        required: false
+        default: ""
       publish_mail_screenshots:
         description: 'Publikuj zrzuty /mail/ w docs po udanym punktowym teście.'
         type: boolean
@@ -209,7 +217,7 @@ jobs:
       contents: write
     if: ${{ github.event.inputs.spec_filter != '' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: ${{ contains(github.event.inputs.spec_filter, 'e2e/e20-gallery.spec.js') && 180 || 60 }}
 
     steps:
       - name: Checkout
@@ -264,6 +272,8 @@ jobs:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           KEEP_STATISTICS_GAMES: ${{ inputs.retain_statistics_games && '1' || '0' }}
+          E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
+          E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
         run: npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
         working-directory: tests
 
