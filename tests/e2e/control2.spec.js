@@ -3526,10 +3526,21 @@ test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({
 
     const controlUrl = `/control/?id=${encodeURIComponent(game.id)}&lang=pl`;
     const settingsWithControl = `/games/settings/?id=${encodeURIComponent(game.id)}&lang=pl&ret=${encodeURIComponent(controlUrl)}`;
+    await page.locator("#btnFriends").click();
+    await page.waitForURL(/\/friends\//, { timeout: 15000 });
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
     await page.goto(settingsWithControl);
     await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 20000 });
     await expect(page.locator("#btnPlay")).toBeHidden();
 
+    await page.locator("#btnBack").click();
+    await page.waitForURL(url => url.pathname === "/control/" && url.searchParams.get("id") === game.id, { timeout: 20000, waitUntil: "domcontentloaded" });
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+    await page.locator("#btnFriends").click();
+    await page.waitForURL(/\/friends\//, { timeout: 15000 });
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
     await page.goto(`/games/settings/?id=${encodeURIComponent(game.id)}&lang=pl&ret=%2Fgames%2F`);
     await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 20000 });
     await expect(page.locator("#btnPlay")).toBeVisible();
