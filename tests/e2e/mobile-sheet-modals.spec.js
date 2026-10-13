@@ -222,7 +222,17 @@ test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modal
       await page.goBack();
       await expect(overlay).toBeHidden({ timeout: 5000 });
 
+      // Bezpośredni URL i odświeżenie odtwarzają stan UI bez ponawiania akcji.
+      const directUrl = new URL(page.url());
+      directUrl.searchParams.set("dialog", "shareOverlay");
+      await page.goto(directUrl.toString(), { waitUntil: "domcontentloaded" });
+      await expect(overlay).toBeVisible({ timeout: 10000 });
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(overlay).toBeVisible({ timeout: 10000 });
+
       // Tekst przycisku wraca do oryginału po zamknięciu.
+      await page.locator("#btnBack").click();
+      await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(btnBack).toHaveText(originalText);
     } finally {
       await deleteBaseDirect(page, baseId);
