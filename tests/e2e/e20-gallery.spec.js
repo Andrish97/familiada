@@ -127,6 +127,15 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
     const manifest = [];
     try {
       await serveBranchCode(context, { pages: PAGES, safeAreaInsets: profile.safe });
+      // Galeria sprawdza układ stron i guardy, nie dostępność usługi CAPTCHA.
+      // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
+      // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
+      // formularz logowania i prawdziwą autoryzację konta testowego.
+      await context.route(/^https:\/\/www\.familiada\.online\/login\/?$/, async (route) => {
+        const response = await route.fetch();
+        const html = (await response.text()).replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
+        await route.fulfill({ response, body: html });
+      });
       const page = await context.newPage();
       await loginAsTestUser(page, context, { username: galleryTestAccountUsername() });
       const fixtures = await seedE20GalleryFixtures(page);
