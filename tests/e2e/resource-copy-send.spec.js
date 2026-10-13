@@ -11,6 +11,7 @@ async function newUserContext(browser,username){
 }
 async function getUser(page){return page.evaluate(async()=>{const {data,error}=await window.__sbClient.auth.getUser();if(error)throw error;return data.user;});}
 async function setMailFlag(page,id,enabled){await page.evaluate(async({id,enabled})=>{const {error}=await window.__sbClient.from('user_flags').upsert({user_id:id,email_notifications:enabled});if(error)throw error;},{id,enabled});}
+async function discardOldCopyFixtures(page){await page.evaluate(async()=>{for(const kind of ['game','logo']){const {data,error}=await window.__sbClient.rpc('resource_copy_inbox',{p_kind:kind});if(error)throw error;for(const item of data.items||[]){if(String(item.name).startsWith('E2E-SEND-')){const {error:e}=await window.__sbClient.rpc('resource_copy_decide',{p_offer:item.id,p_decision:'decline'});if(e)throw e;}}}});}
 async function sendFromUi(page,path,selector,name,recipientId){
  await page.goto(`https://www.familiada.online/${path}/`);await page.locator(selector).filter({hasText:name}).click();
  await page.locator('#btnSendCopy').click();const dialog=page.locator('#resourceSendDialog');await expect(dialog).toBeVisible();
@@ -24,6 +25,7 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
  await loginAsTestUser(page,context,{username:testAccountUsername(1)});senderId=(await getUser(page)).id;
  try{
   ({ctx:recipientContext,page:recipientPage}=await newUserContext(browser,testAccountUsername(2)));const recipient=await getUser(recipientPage);recipientId=recipient.id;
+  await discardOldCopyFixtures(recipientPage);
   previousFlag=await recipientPage.evaluate(async id=>{const {data,error}=await window.__sbClient.from('user_flags').select('email_notifications').eq('user_id',id).maybeSingle();if(error)throw error;return data?.email_notifications??true;},recipientId);
   await setMailFlag(recipientPage,recipientId,true);
   await page.evaluate(async id=>{const {error}=await window.__sbClient.rpc('e2e_friendships_cleanup',{p_other_user_id:id});if(error)throw error;},recipientId);
@@ -50,7 +52,7 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
   await expect(recipientPage.locator('#receivedCopies')).toBeHidden({timeout:20000});
   const logoCopy=await recipientPage.evaluate(async name=>{const {data,error}=await window.__sbClient.from('user_logos').select('id,received_from_label').eq('name',name).single();if(error)throw error;return data;},logo.name);receivedLogos.push(logoCopy.id);expect(logoCopy.received_from_label).toBeTruthy();
  }finally{
-  if(recipientPage&&recipientId){for(const id of receivedGames)await recipientPage.evaluate(async id=>{await window.__sbClient.from('games').delete().eq('id',id);},id).catch(()=>{});for(const id of receivedLogos)await recipientPage.evaluate(async id=>{await window.__sbClient.from('user_logos').delete().eq('id',id);},id).catch(()=>{});if(previousFlag!==undefined)await setMailFlag(recipientPage,recipientId,previousFlag).catch(()=>{});await page.evaluate(async id=>{await window.__sbClient.rpc('e2e_friendships_cleanup',{p_other_user_id:id});},recipientId).catch(()=>{});}
+  if(recipientPage&&recipientId){await discardOldCopyFixtures(recipientPage).catch(()=>{});for(const id of receivedGames)await recipientPage.evaluate(async id=>{await window.__sbClient.from('games').delete().eq('id',id);},id).catch(()=>{});for(const id of receivedLogos)await recipientPage.evaluate(async id=>{await window.__sbClient.from('user_logos').delete().eq('id',id);},id).catch(()=>{});if(previousFlag!==undefined)await setMailFlag(recipientPage,recipientId,previousFlag).catch(()=>{});await page.evaluate(async id=>{await window.__sbClient.rpc('e2e_friendships_cleanup',{p_other_user_id:id});},recipientId).catch(()=>{});}
   for(const id of sourceGames)await page.evaluate(async id=>{await window.__sbClient.from('games').delete().eq('id',id);},id).catch(()=>{});
   for(const id of sourceLogos)await page.evaluate(async id=>{await window.__sbClient.from('user_logos').delete().eq('id',id);},id).catch(()=>{});
   if(recipientContext)await recipientContext.close();await clearMailbox(testAccountUsername(2)).catch(()=>{});
