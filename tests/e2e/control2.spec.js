@@ -3516,6 +3516,8 @@ test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({
     await expect(page.locator("#btnFriends")).toBeVisible({ timeout: 20000 });
     await page.locator("#btnFriends").click();
     await page.waitForURL(/\/friends\//, { timeout: 15000 });
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
     const ret = new URL(page.url()).searchParams.get("ret");
     expect(ret).toBe(`/control/?id=${game.id}`);
     await page.locator("#btnBack").click();
