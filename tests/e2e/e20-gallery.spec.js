@@ -3,13 +3,14 @@
 // rzeczywiste. Dane seedujemy idempotentnie na dedykowanym koncie test17.
 const fs = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
 const { test, expect } = require("./helpers/production-test");
-const { loginAsTestUser, galleryTestAccountUsername } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { seedE20GalleryFixtures } = require("./helpers/e20-gallery-fixtures");
 
 const ORIGIN = "https://www.familiada.online";
 const OUT = path.resolve(__dirname, "../test-results/e20-gallery");
+const FIXTURES_PATH = path.join(OUT, "fixtures.json");
+const AUTH_STATE_PATH = path.join(os.tmpdir(), "familiada-e20-gallery-auth.json");
 const PAGES = [
   "index", "account", "bases", "bases/explorer", "connect", "connect/tv",
   "control", "control/buzzer", "control/display", "control/host", "games",
@@ -85,20 +86,6 @@ function additionalStates(fixtures) {
   ];
 }
 
-async function withTimeout(promise, timeoutMs, label) {
-  let timer;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`${label}: przekroczono ${timeoutMs} ms`)), timeoutMs);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
   try {
@@ -150,6 +137,10 @@ test.use({ serviceWorkers: "block" });
 for (const profile of PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id))) {
   test(`E20 gallery · ${profile.label}`, async ({ browser }) => {
     fs.mkdirSync(OUT, { recursive: true });
+    if (!fs.existsSync(FIXTURES_PATH) || !fs.existsSync(AUTH_STATE_PATH)) {
+      throw new Error("Brak przygotowanej sesji lub danych galerii E20; uruchom krok Prepare E20 account and fixtures");
+    }
+    const fixtures = JSON.parse(fs.readFileSync(FIXTURES_PATH, "utf8"));
     const viewport = { width: profile.width, height: profile.height };
     const context = await browser.newContext({
       viewport,
@@ -159,6 +150,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       hasTouch: profile.touch,
       ...(profile.ua ? { userAgent: profile.ua } : {}),
       serviceWorkers: "block",
+      storageState: AUTH_STATE_PATH,
     });
     const manifest = [];
     try {
@@ -175,20 +167,32 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       const page = await context.newPage();
       page.setDefaultTimeout(20_000);
       page.setDefaultNavigationTimeout(20_000);
-      // Hasło jest przywracane raz przed równoległymi profilami w workflow.
-      await loginAsTestUser(page, context, { username: galleryTestAccountUsername() });
-      const fixtures = await withTimeout(
-        seedE20GalleryFixtures(page),
-        90_000,
-        `${profile.label}: przygotowanie danych galerii`,
-      );
-
       const selectedUrls = urls(fixtures).filter(([id]) => !requestedPages.length || requestedPages.includes(id));
       for (const [id, href] of selectedUrls) {
         if (id === "login") {
-          await page.evaluate(async () => { await window.__sbClient?.auth.signOut(); });
-        } else if (id === "logo") {
-          await loginAsTestUser(page, context, { username: galleryTestAccountUsername() });
+          // /login fotografujemy jako gość, nie wylogowując i nie logując
+          // ponownie głównej sesji używanej przez pozostałe strony.
+          const anonymous = await browser.newContext({
+            viewport, screen: profile.screen || viewport,
+            deviceScaleFactor: profile.scale, isMobile: profile.mobile,
+            hasTouch: profile.touch, ...(profile.ua ? { userAgent: profile.ua } : {}),
+            serviceWorkers: "block",
+          });
+          try {
+            await serveBranchCode(anonymous, { pages: PAGES, safeAreaInsets: profile.safe });
+            await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?$/, async (route) => {
+              const response = await route.fetch();
+              const html = (await response.text()).replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
+              await route.fulfill({ response, body: html });
+            });
+            const anonymousPage = await anonymous.newPage();
+            anonymousPage.setDefaultTimeout(20_000);
+            anonymousPage.setDefaultNavigationTimeout(20_000);
+            await capture(anonymousPage, profile, id, href, manifest);
+          } finally {
+            await anonymous.close();
+          }
+          continue;
         }
         const readySelector = id === "games"
           ? `.card[data-game-id="${fixtures.game.id}"]`
