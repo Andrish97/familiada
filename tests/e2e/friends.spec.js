@@ -420,3 +420,33 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
     await expect(owner.page.locator('[data-id="incoming"]')).toHaveClass(/rowsFocus/);
   } finally { await owner.context.close(); }
 });
+
+test("E20 kontakty pokazują ładowanie, błąd i pozwalają ponowić odczyt", async ({ browser }, testInfo) => {
+  const owner = await user(browser, 7);
+  let allowRetry = false;
+  await owner.context.route("**/rest/v1/rpc/contacts_list", async route => {
+    if (!allowRetry) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E20 controlled contacts read failure" }) });
+      return;
+    }
+    await route.continue();
+  });
+  try {
+    await owner.page.setViewportSize({ width: 390, height: 844 });
+    const navigation = owner.page.goto("https://www.familiada.online/friends/");
+    await expect(owner.page.locator("#contactsLoadMessage")).toHaveText("Wczytuję kontakty…");
+    await navigation;
+    await expect(owner.page.locator("#contactsLoadMessage")).toHaveText(/Nie udało się wczytać kontaktów/, { timeout: 20000 });
+    await expect(owner.page.locator("#contactsLoadRetry")).toBeVisible();
+    await expect(owner.page.locator("#contactsHost")).not.toHaveClass(/skel-step-ready/);
+    await owner.page.screenshot({ path: testInfo.outputPath("shot-e20-contacts-error-390.png"), fullPage: true });
+    allowRetry = true;
+    await owner.page.locator("#contactsLoadRetry").click();
+    await expect(owner.page.locator("#contactsLoadState")).toBeHidden();
+    await expect(owner.page.locator("#contactsHost")).toHaveClass(/skel-step-ready/);
+    await expect(owner.page.locator("#inviteForm")).toBeVisible();
+    await owner.page.setViewportSize({ width: 1400, height: 900 });
+    await owner.page.screenshot({ path: testInfo.outputPath("shot-e20-contacts-ready-1400.png"), fullPage: true });
+  } finally { await owner.context.close(); }
+});
