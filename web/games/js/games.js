@@ -329,9 +329,17 @@ function setImportMsg(t) {
 }
 
 let importParsed = null; // aktualnie sparsowany obiekt gry
+let importCompleted = false;
 
 function importResetPreview() {
   importParsed = null;
+  importCompleted = false;
+  if (btnImportJson) {
+    btnImportJson.setAttribute("data-i18n", "games.import.confirm");
+    btnImportJson.textContent = t("games.import.confirm");
+  }
+  setImportMsg("");
+  showProgBlock(importProg, false);
   if (importPreview) { importPreview.style.display = "none"; importPreview.innerHTML = ""; }
   if (importErr) { importErr.style.display = "none"; importErr.textContent = ""; }
   if (btnImportJson) btnImportJson.disabled = true;
@@ -1919,6 +1927,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnImportJson?.addEventListener("click", async () => {
+    if (importCompleted) { closeImportModal(); return; }
     if (btnImportJson?.disabled || !importParsed) return;
     const obj = importParsed;
     const qCount = Array.isArray(obj?.questions) ? obj.questions.length : 0;
@@ -1942,7 +1951,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       selectedId = newId;
       try { const ng = await loadGameBasic(newId); if (ng?.type) setActiveTab(uiTypeFromRow(ng)); } catch {}
       await refresh();
-      closeImportModal();
+      importCompleted = true;
+      if (btnImportJson) {
+        btnImportJson.setAttribute("data-i18n", "games.import.done");
+        btnImportJson.textContent = t("games.import.done");
+      }
     } catch (e) {
       console.error("IMPORT ERROR:", e);
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
@@ -1950,7 +1963,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
       setImportMsg(MSG.importDbFailed());
     } finally {
-      showProgBlock(importProg, false);
+      showProgBlock(importProg, importCompleted);
       if (btnImportJson) btnImportJson.disabled = !importParsed;
       if (btnCancelImport) btnCancelImport.disabled = false;
       if (importFile) importFile.disabled = false;

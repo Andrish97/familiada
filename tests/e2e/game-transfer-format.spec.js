@@ -49,6 +49,7 @@ test('common game transfer format: native export and existing import for all thr
 
 test('atomic game import: file modal retry after lost response, foreign owner and deleted result',async({page,context},testInfo)=>{
  test.setTimeout(120000);let importedId=null;let firstRequest=null;let stage='login';
+ await page.setViewportSize({width:390,height:844});
  if(branch)await serveBranchCode(context,{pages:['games']});
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
  await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
@@ -75,6 +76,14 @@ test('atomic game import: file modal retry after lost response, foreign owner an
   expect(importedId).toBeTruthy();expect(firstRequest?.p_request_id).toBeTruthy();
   await page.unroute(rpc);
   stage='retry same file in modal';
+  await page.locator('#btnImportJson').click();
+  await expect(page.locator('#btnImportJson')).toHaveText('Gotowe');
+  await expect(page.locator('#importProgStep')).toHaveText('Import zakończony.');
+  await expect(page.locator('#importProg')).toBeVisible();
+  await expect(page.locator('#importOverlay')).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath('shot-transfer-game-import-success-mobile.png'),fullPage:true});
+  await page.setViewportSize({width:1400,height:1000});
+  await page.screenshot({path:testInfo.outputPath('shot-transfer-game-import-success-desktop.png'),fullPage:true});
   await page.locator('#btnImportJson').click();
   await expect(page.locator('#importOverlay')).toBeHidden();
   expect(requests).toEqual([firstRequest.p_request_id,firstRequest.p_request_id]);

@@ -1069,3 +1069,11 @@ postęp, błędy i ponowienie po zerwanym połączeniu. Wspólne elementy
 mają używać tego samego CSS. Zakres przenoszonych danych i mechanizm
 snapshot/importu w udostepnianie-kopii-plan.md; nie dublować formatów.
 Zrzuty po wykonaniu z przykładowymi danymi390/1400 i landscape.
+
+**Korekta zakończenia operacji2026-10-13:** użytkownik zgłosił migające
+okno importu. Dla Gier/Logo/Baz operacja rusza natychmiast; pobieranie
+pliku zaczyna się zaraz po przygotowaniu, bez oczekiwania na Gotowe.
+Jeśli operacja ma okno postępu, po sukcesie zostaje potwierdzenie
+i przycisk Gotowe (tylko zamknięcie, bez ponowienia zapisu/pobrania).
+Bez sztucznego opóźnienia. Wybór innego pliku resetuje stan sukcesu.
+Pierwsze wdrożenie: import gry; pozostałe ścieżki w tym samym przeglądzie.
