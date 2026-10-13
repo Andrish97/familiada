@@ -110,14 +110,13 @@ async function createSubToken(page) {
     const { data: userData } = await sb.auth.getUser();
     const userId = userData.user.id;
 
-    // poll_subscriptions ma RLS bez INSERT policy dla klientów — jedyna
-    // droga stworzenia zaproszenia to RPC polls_hub_subscription_invite,
-    // tak samo jak robi to prawdziwy UI (subscriptions.js).
+    // poll_subscriptions ma RLS bez INSERT policy dla klientów — używamy
+    // obecnego RPC subskrybentów, tak samo jak robi to bieżący UI.
     const { data, error } = await sb.rpc("subscribers_invite", {
       p_email: `e2e-subscriber-${Date.now()}@example.com`,
     });
-    if (error) throw new Error("polls_hub_subscription_invite failed: " + error.message);
-    if (!data?.ok) throw new Error("polls_hub_subscription_invite returned not ok: " + JSON.stringify(data));
+    if (error) throw new Error("subscribers_invite failed: " + error.message);
+    if (!data?.ok) throw new Error("subscribers_invite returned not ok: " + JSON.stringify(data));
 
     return {
       subToken: data.token,

@@ -46,61 +46,15 @@ serve(async (req) => {
     const { error: deleteError } = await admin.rpc("delete_user_everything", { p_user_id: userId });
     if (deleteError) throw deleteError;
 
-    // Storage nie jest objęty kaskadą DB — pliki w bucketach kasujemy po bazie.
-    // Niepowodzenie tego kroku nie cofa usunięcia konta.
-    await cleanupUserStorage(userId);
+    // Profile DELETE atomowo dodaje pliki obu bucketów do storage_cleanup_queue.
+    // Usuwa je wspólny worker Storage, także po retry; ten endpoint nie kasuje
+    // plików bezpośrednio po usunięciu konta.
 
     return json({ ok: true });
   } catch (e) {
-    return json({ ok: false, error: String(e?.message || e) }, 500);
+    return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });
-
-// Usuwa wszystkie pliki danego użytkownika z bucketów user-sounds i user-logos.
-// user-sounds: {userId}/{gameId}/{sfxKey} (dwa poziomy folderów)
-// user-logos:  {userId}/{filename}        (jeden poziom)
-async function cleanupUserStorage(userId: string) {
-  await removeUserSoundsFolder(userId).catch((e) =>
-    console.error("[delete-account] cleanup user-sounds failed:", e?.message || e)
-  );
-  await removeUserLogosFolder(userId).catch((e) =>
-    console.error("[delete-account] cleanup user-logos failed:", e?.message || e)
-  );
-}
-
-async function removeUserSoundsFolder(userId: string) {
-  await removeFolderRecursive("user-sounds", userId);
-}
-
-async function removeUserLogosFolder(userId: string) {
-  await removeFolderRecursive("user-logos", userId);
-}
-
-// Usuwa rekurencyjnie wszystko pod prefiksem w buckecie, ze stronicowaniem
-// (list zwraca max 1000 wpisów na stronę). Foldery mają id === null.
-async function removeFolderRecursive(bucket: string, prefix: string) {
-  const PAGE = 1000;
-  for (;;) {
-    // zawsze od początku: po usunięciu plików kolejne wpisy przesuwają się na start
-    const { data: entries, error } = await admin.storage.from(bucket).list(prefix, { limit: PAGE, offset: 0 });
-    if (error) throw error;
-    if (!entries || entries.length === 0) return;
-
-    const files: string[] = [];
-    for (const entry of entries) {
-      const path = `${prefix}/${entry.name}`;
-      if (entry.id === null) await removeFolderRecursive(bucket, path);
-      else files.push(path);
-    }
-    if (files.length === 0) return;
-    const { error: rmError } = await admin.storage.from(bucket).remove(files);
-    if (rmError) throw rmError;
-    if (entries.length < PAGE) {
-      // ostatnia strona; ewentualne foldery zostały już opróżnione rekurencyjnie
-      return;
-    }
-  }
-}
 
 function json(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
