@@ -44,44 +44,49 @@ test('common game transfer format: native export and existing import for all thr
  }
 });
 
-test('atomic game import: lost response after commit, same attempt retry, foreign owner and deleted result',async({page,context},testInfo)=>{
- test.setTimeout(120000);let importedId=null;let stage='login';
+test('atomic game import: file modal retry after lost response, foreign owner and deleted result',async({page,context},testInfo)=>{
+ test.setTimeout(120000);let importedId=null;let firstRequest=null;let stage='login';
  if(branch)await serveBranchCode(context,{pages:['games']});
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
  await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
- const rpc='**/rest/v1/rpc/game_import_package';
+ const rpc='**/rest/v1/rpc/game_import_package';const requests=[];
+ page.on('request',request=>{if(new URL(request.url()).pathname.endsWith('/rpc/game_import_package'))requests.push(request.postDataJSON()?.p_request_id);});
  try{
+  stage='select file';
+  const packet={game:{name:'E2E-ATOMIC-'+Date.now(),type:'prepared'},questions:Array.from({length:10},(_,i)=>({text:'Pytanie '+(i+1),answers:[{text:'Tak',fixed_points:25}]}))};
+  await page.locator('#btnImport').click();
+  await page.locator('#importFile').setInputFiles({name:'atomic.famgame',mimeType:'application/octet-stream',buffer:Buffer.from(JSON.stringify(packet))});
+  await expect(page.locator('#btnImportJson')).toBeEnabled();
   stage='drop committed response';
   await page.route(rpc,async route=>{
-   const response=await route.fetch();const data=await response.json();
+   firstRequest=route.request().postDataJSON();const response=await route.fetch();const data=await response.json();
    if(data.ok&&data.id){importedId=data.id;await route.abort('failed');}else await route.fulfill({response});
   });
-  const first=await page.evaluate(async()=>{
-   const version=document.querySelector('meta[name="app-version"]')?.content;if(!version)throw new Error('missing app-version');
-   const {importGame}=await import('/games/js/games-import-export.js?v='+encodeURIComponent(version));
-   const {data,error}=await window.__sbClient.auth.getUser();if(error)throw error;
-   window.__atomicImport364={importGame,owner:data.user.id,packet:{game:{name:'E2E-ATOMIC-'+Date.now(),type:'prepared'},questions:Array.from({length:10},(_,i)=>({text:'Pytanie '+(i+1),answers:[{text:'Tak',fixed_points:25}]}))}};
-   try{await importGame(window.__atomicImport364.packet,data.user.id);return {failed:false};}catch{return {failed:true};}
-  });
-  expect(first.failed).toBe(true);expect(importedId).toBeTruthy();
+  await page.locator('#btnImportJson').click();
+  await expect(page.locator('#importMsg')).not.toHaveText('');
+  await expect(page.locator('#btnImportJson')).toBeEnabled();
+  await expect(page.locator('#importOverlay')).toBeVisible();
+  expect(importedId).toBeTruthy();expect(firstRequest?.p_request_id).toBeTruthy();
   await page.unroute(rpc);
-  stage='retry same attempt';
-  const replay=await page.evaluate(async()=>{
-   const {importGame,owner,packet}=window.__atomicImport364;
-   const id=await importGame(packet,owner);const {data:games,error}=await window.__sbClient.from('games').select('id').eq('name',packet.game.name).eq('owner_id',owner);if(error)throw error;
-   const {data:qs,error:qErr}=await window.__sbClient.from('questions').select('id,answers(id,fixed_points)').eq('game_id',id);if(qErr)throw qErr;
-   return {id,count:games.length,questions:qs.length,answers:qs.map(q=>q.answers)};
-  });
-  expect(replay.id).toBe(importedId);expect(replay.count).toBe(1);expect(replay.questions).toBe(10);
+  stage='retry same file in modal';
+  await page.locator('#btnImportJson').click();
+  await expect(page.locator('#importOverlay')).toBeHidden();
+  expect(requests).toEqual([firstRequest.p_request_id,firstRequest.p_request_id]);
+  const replay=await page.evaluate(async({id,request})=>{
+   const db=window.__sbClient;const {data:games,error}=await db.from('games').select('id').eq('name',request.p_payload.game.name).eq('owner_id',request.p_owner_id);if(error)throw error;
+   const {data:qs,error:qErr}=await db.from('questions').select('id,answers(id,fixed_points)').eq('game_id',id);if(qErr)throw qErr;
+   return {ids:games.map(game=>game.id),questions:qs.length,answers:qs.map(q=>q.answers)};
+  },{id:importedId,request:firstRequest});
+  expect(replay.ids).toEqual([importedId]);expect(replay.questions).toBe(10);
   expect(replay.answers.every(items=>items.length===1&&items[0].fixed_points===25)).toBe(true);
   stage='foreign owner';
-  const foreign=await page.evaluate(async()=>{
-   const {packet}=window.__atomicImport364;const {data,error}=await window.__sbClient.rpc('game_import_package',{p_payload:packet,p_owner_id:crypto.randomUUID(),p_request_id:crypto.randomUUID()});if(error)throw error;return data;
-  });expect(foreign.error).toBe('auth_required');
+  const foreign=await page.evaluate(async request=>{
+   const {data,error}=await window.__sbClient.rpc('game_import_package',{...request,p_owner_id:crypto.randomUUID(),p_request_id:crypto.randomUUID()});if(error)throw error;return data;
+  },firstRequest);expect(foreign.error).toBe('auth_required');
   stage='deleted result stays deleted';
   await page.evaluate(async id=>{const {error}=await window.__sbClient.from('games').delete().eq('id',id);if(error)throw error;},importedId);
-  const deleted=await page.evaluate(async()=>{const {importGame,packet,owner}=window.__atomicImport364;try{await importGame(packet,owner);return '';}catch(error){return error.message;}});
-  expect(deleted).toContain('została już usunięta');
+  const deleted=await page.evaluate(async request=>{const {data,error}=await window.__sbClient.rpc('game_import_package',request);if(error)throw error;return data;},firstRequest);
+  expect(deleted.error).toBe('previously_removed');
  }catch(error){console.log(`::error title=Atomic game import::stage=${stage}; ${String(error.message).split('\n')[0].slice(0,180)}`);throw error;}
  finally{
   await page.unroute(rpc);

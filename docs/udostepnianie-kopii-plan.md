@@ -26,6 +26,13 @@ Wysyłanie oznacza przekazanie pakietu odpowiadającego eksportowi w chwili
 wysłania. Przyjęcie wykorzystuje wspólny importer. Nie tworzyć drugiego
 formatu lub drugiej logiki klonowania obok importu/eksportu.
 
+Potwierdzenie użytkownikowi2026-10-13: wersja zostaje utrwalona przy
+wysłaniu, nie dopiero przy akceptacji. Usunięcie oryginału przed
+akceptacją pozostawia ofertę wraz z kompletnym pakietem i jej pierwotnym
+terminem. Dotyczy także osadzonych obrazów Logo. W testach wymagana
+akceptacja po usunięciu źródła, znajomości oraz konta nadawcy; żadna
+z tych operacji nie może usunąć gałęzi odbiorcy ani wyłączyć jej maila.
+
 | Zdarzenie / zależność | Skutek |
 |---|---|
 | Tworzenie kopii | Sprawdzić własność źródła, znajomość, stan i blokady zgodnie z eksportem; pakiet ma być kompletny i spójny. |
