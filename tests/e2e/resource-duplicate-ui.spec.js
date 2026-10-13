@@ -27,7 +27,7 @@ test('duplicate action on Games Bases Logo: own card and name only, shared icon 
    await expect(copy.locator(kind==='logo'?'.logoName':'.name')).toHaveText(source.name+' kopia');
    await expect(copy.locator('.tag').filter({hasText:/^kopia$/})).toHaveCount(0);
    for(const [label,width,height] of [['mobile',390,844],['desktop',1400,960],['landscape',844,390]]){
-    stage='screenshot '+kind+' '+label;await page.setViewportSize({width,height});await copy.scrollIntoViewIfNeeded();await expect(page.locator('#btnDuplicate .ico svg')).toBeVisible();
+    stage='screenshot '+kind+' '+label;await page.setViewportSize({width,height});await copy.scrollIntoViewIfNeeded();await expect(page.locator('#btnDuplicate svg.ico')).toBeVisible();
     if(label==='mobile')await expect(page.locator('#btnDuplicate .only-desktop')).toBeHidden();
     await page.screenshot({path:info.outputPath('shot-resource-duplicate-'+kind+'-'+label+'.png'),fullPage:true});
    }
