@@ -1055,3 +1055,17 @@ stopki/pływającego przycisku.** Nie wczytują modułu kontaktu; oznaczenie
 ekranu urządzenia blokuje jego automatyczne dodanie lub otwarcie przez
 wspólny moduł. Ta korekta zastępuje wcześniejszą interpretację obejmującą
 te trzy ekrany. Control jako panel zarządzania pozostaje zwykłą stroną.
+
+### E20 — starsze importy i eksporty w Grach/Logo (2026-10-13)
+
+Użytkownik wskazał wiek Importu/Eksportu/Do bazy i zaproponował
+uproszczenie obsługi. Wspólny pasek importu/eksportu ma jasno rozdzielać
+pobranie pliku, wczytanie pliku, wysłanie kopii znajomym oraz zapis pytań
+do bazy. Wyślij pozostaje w tej sekcji. Telefon: wspólne małe ikony;
+desktop: ikona i krótka nazwa, zgodnie z wcześniejszą decyzją.
+
+Sprawdzić liczbę kroków, wybór pliku/bazy/znajomych, podgląd,
+postęp, błędy i ponowienie po zerwanym połączeniu. Wspólne elementy
+mają używać tego samego CSS. Zakres przenoszonych danych i mechanizm
+snapshot/importu w udostepnianie-kopii-plan.md; nie dublować formatów.
+Zrzuty po wykonaniu z przykładowymi danymi390/1400 i landscape.

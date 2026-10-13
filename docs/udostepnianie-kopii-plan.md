@@ -26,6 +26,22 @@ Wysyłanie oznacza przekazanie pakietu odpowiadającego eksportowi w chwili
 wysłania. Przyjęcie wykorzystuje wspólny importer. Nie tworzyć drugiego
 formatu lub drugiej logiki klonowania obok importu/eksportu.
 
+### Starsze ścieżki importu/eksportu — doprecyzowanie2026-10-13
+
+Użytkownik wskazał, że Import/Eksport/Do bazy w Grach są bardzo stare
+i zaproponował uproszczenie. Przy porządkach starszych funkcjonalności
+przejrzeć wszystkie trzy ścieżki oraz ich komunikaty, błędy i częściowe
+zapisy; dopieszczenie obsługi/ikon w E20. Nie tworzyć osobnego formatu
+dla wysyłania. Znaczenie działań pozostaje jawne:
+
+| Działanie | Cel | Wspólny mechanizm |
+|---|---|---|
+| Eksport | Pobranie pliku | Snapshot Gier/Logo |
+| Wyślij | Zapisanie niezależnego pakietu i oferty dla znajomych | Ten sam snapshot; bez tworzenia zasobu odbiorcy przed akceptacją |
+| Import | Utworzenie własnego zasobu z pliku | Wspólny importer |
+| Akceptuj otrzymaną kopię | Utworzenie własnego zasobu z otrzymanego pakietu | Ten sam importer, stałe ID oferty i dokładnie jeden wynik |
+| Do bazy | Zapis pytań w wybranej bazie | Osobna istniejąca ścieżka pytań; uwzględnić w przeglądzie starych operacji |
+
 Potwierdzenie użytkownikowi2026-10-13: wersja zostaje utrwalona przy
 wysłaniu, nie dopiero przy akceptacji. Usunięcie oryginału przed
 akceptacją pozostawia ofertę wraz z kompletnym pakietem i jej pierwotnym
