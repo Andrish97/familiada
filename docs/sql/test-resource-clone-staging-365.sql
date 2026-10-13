@@ -4,7 +4,7 @@ INSERT INTO auth.users(id,email,is_anonymous,email_confirmed_at,raw_user_meta_da
  ('aaaaaaaa-3656-1000-0000-000000000002','otherstage365@example.invalid',false,now(),'{"username":"otherstage365"}');
 DO $$
 DECLARE actor uuid:='aaaaaaaa-3656-1000-0000-000000000001'; other_user uuid:='aaaaaaaa-3656-1000-0000-000000000002';
- source_id uuid; stage_job uuid; source_url text; packet jsonb; job jsonb; asset jsonb; result jsonb; target uuid; other_job uuid; expected_prefix text;
+ source_id uuid; stage_job uuid; source_url text; packet jsonb; job jsonb; asset jsonb; result jsonb; target uuid; other_job uuid; expired_job uuid; expected_prefix text;
  request_id uuid:=gen_random_uuid(); etag text:=repeat('a',32);
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
@@ -54,6 +54,21 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM public.storage_cleanup_queue WHERE path=actor::text||'/copies/'||other_job::text AND is_folder) THEN RAISE EXCEPTION 'unfinished folder not queued'; END IF;
  PERFORM public._resource_clone_cleanup(actor,other_job);
  IF NOT EXISTS(SELECT 1 FROM public.storage_cleanup_queue WHERE path=actor::text||'/copies/'||other_job::text AND is_folder) THEN RAISE EXCEPTION 'late upload cleanup missing'; END IF;
+ -- Names are allocated while the same owner lock protects the final write.
+ INSERT INTO public.games(owner_id,name,type,status) VALUES(other_user,'Test kopia','prepared','draft');
+ IF public._resource_clone_duplicate_name('game',other_user,'Test','kopia')<>'Test kopia 2' OR
+  char_length(public._resource_clone_duplicate_name('game',other_user,repeat('🙂',90),'copy'))<>80 THEN RAISE EXCEPTION 'name allocation inconsistent'; END IF;
+ INSERT INTO public.question_bases(owner_id,name) VALUES(other_user,'Expires') RETURNING id INTO source_id;
+ job:=public._resource_clone_begin(other_user,other_user,'base',source_id,'duplicate',gen_random_uuid());expired_job:=(job->>'id')::uuid;
+ UPDATE public.resource_clone_jobs SET created_at=clock_timestamp()-interval '1 hour' WHERE id=expired_job;
+ -- A late orphan file and a malformed folder prove GC uses the immutable
+ -- UUID owner and does not fail casts on arbitrary Storage object names.
+ INSERT INTO storage.objects(bucket_id,name,metadata) VALUES
+  ('user-logos',actor::text||'/copies/'||other_job::text||'/ffffffff-3656-1000-0000-000000000001.png','{}'),
+  ('user-logos',repeat('a',36)||'/copies/'||other_job::text||'/ffffffff-3656-1000-0000-000000000001.png','{}');
+ IF public._resource_clone_gc()<>1 THEN RAISE EXCEPTION 'expired job not processed'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.resource_clone_jobs WHERE id=expired_job AND status='expired' AND source_snapshot IS NULL) THEN RAISE EXCEPTION 'expired snapshot retained'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.storage_cleanup_queue WHERE owner_kind='user' AND owner_id=actor AND path=actor::text||'/copies/'||other_job::text) THEN RAISE EXCEPTION 'late orphan omitted by GC'; END IF;
  RAISE NOTICE 'Staging365: stable intent/assets, source references, own Storage proof, one result, detached snapshot, nested folder cleanup, parent deletion and late cleanup passed';
 END $$;
 ROLLBACK;

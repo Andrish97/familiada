@@ -1,16 +1,14 @@
 // Internal only: the owner, destination and expected file signature come from
 // the trusted clone plan. This helper is not a request-body authorization check.
-import { cloneLogoImagePath, isCopyUuid } from './paths.js';
+import { cloneLogoImagePath, isCopyUuid, isOwnedLogoStoragePath } from './paths.js';
 import { getSupabaseConfig } from '../core/supabase.js';
 
 const maxBytes = 5 * 1024 * 1024;
-const validPath = (path, owner) => typeof path === 'string' && path.startsWith(`${owner}/`) &&
-  path.split('/').every(part => /^[a-zA-Z0-9._-]+$/.test(part) && part !== '.' && part !== '..');
 const normalizeEtag = value => String(value || '').replace(/^"|"$/g, '').toLowerCase();
 
 export async function copyLogoStorageImage(env, plan) {
   const path = cloneLogoImagePath(plan, plan?.mime);
-  if (!isCopyUuid(plan?.source_owner_id) || !validPath(plan?.source_path, plan.source_owner_id) ||
+  if (!isCopyUuid(plan?.source_owner_id) || !isOwnedLogoStoragePath(plan?.source_path, plan.source_owner_id) ||
       !Number.isInteger(plan?.size) || plan.size < 1 || plan.size > maxBytes ||
       !/^[a-f0-9]{32}$/i.test(normalizeEtag(plan?.etag))) throw new Error('invalid_copy_storage_plan');
   const cfg = getSupabaseConfig(env);

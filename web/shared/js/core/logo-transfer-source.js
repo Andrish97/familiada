@@ -3,6 +3,7 @@ export async function mapLogoSourceImages(source, mapImage) {
   const result = structuredClone(source || {});
   for (const key of ['hostRasterUrl', 'hostRasterData', 'editHistory']) delete result[key];
   const embedded = value => typeof value === 'string' && /^data:image\//i.test(value);
+  if (result.imageData && !embedded(result.imageData) && !result.imageUrl) throw new Error('incomplete_logo_source');
   if (embedded(result.imageData) || result.imageUrl) {
     const value = await mapImage(embedded(result.imageData) ? result.imageData : result.imageUrl);
     if (embedded(value)) {

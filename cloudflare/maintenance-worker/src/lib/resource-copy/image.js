@@ -12,7 +12,13 @@ export async function uploadCloneLogoImage(env, plan) {
   cloneLogoImagePath(plan, "image/png");
   const cfg = getSupabaseConfig(env);
   if (!cfg) throw new Error("copy_storage_unavailable");
-  const { bytes, mime } = decodeImportedLogoImage(plan.image_data);
+  return uploadCloneLogoBytes(env, plan, decodeImportedLogoImage(plan.image_data));
+}
+
+export async function uploadCloneLogoBytes(env, plan, {bytes,mime}) {
+  const cfg = getSupabaseConfig(env);
+  if (!cfg) throw new Error("copy_storage_unavailable");
+  if (!(bytes instanceof Uint8Array) || bytes.length < 1 || bytes.length > 5 * 1024 * 1024) throw new Error("invalid_copy_storage_plan");
   const path = cloneLogoImagePath(plan, mime);
   const objectPath = `/storage/v1/object/user-logos/${path}`;
   const hash = await digest(bytes);

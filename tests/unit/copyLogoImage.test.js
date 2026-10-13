@@ -42,3 +42,9 @@ test('network errors and failed uploads do not return an accepted asset or attem
  }
  await mockFetch(async()=>{throw new Error('network lost');},async()=>await assert.rejects(uploadCloneLogoImage(env,plan),/network lost/));
 });
+test('raw bundled image bytes share the same owned path and reject oversized or unsupported payloads before upload',async()=>{
+ const {uploadCloneLogoBytes}=await import('../../cloudflare/maintenance-worker/src/lib/resource-copy/image.js');
+ await mockFetch(async()=>{assert.fail('invalid bytes reached Storage');},async()=>{
+  for(const value of [{bytes:new Uint8Array(),mime:'image/png'},{bytes:new Uint8Array(5*1024*1024+1),mime:'image/png'},{bytes:new Uint8Array([1]),mime:'constructor'},{bytes:[1],mime:'image/png'}])await assert.rejects(uploadCloneLogoBytes(env,plan,value),/invalid_copy_storage_plan/);
+ });
+});

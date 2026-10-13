@@ -110,16 +110,34 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public._resource_clone_cleanup(uuid,uuid) FROM PUBLIC,anon,authenticated;
 
-CREATE FUNCTION public._resource_clone_finish_duplicate(p_actor uuid,p_job uuid,p_definition jsonb,p_demo boolean,p_storage_base text)
+CREATE FUNCTION public._resource_clone_duplicate_name(p_kind text,p_owner uuid,p_name text,p_suffix text) RETURNS text
+ LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE candidate text; ending text; number integer:=1;
+BEGIN
+ IF p_kind IS NULL OR p_kind NOT IN('game','base','logo') OR p_suffix IS NULL OR p_suffix NOT IN('kopia','copy','копія') THEN RAISE EXCEPTION 'invalid_copy_name'; END IF;
+ LOOP
+  ending:=' '||p_suffix||CASE WHEN number=1 THEN '' ELSE ' '||number::text END;
+  candidate:=trim(rtrim(left(trim(coalesce(p_name,'')),80-char_length(ending)))||ending);
+  IF NOT EXISTS(SELECT 1 FROM public.games WHERE p_kind='game' AND owner_id=p_owner AND name=candidate
+   UNION ALL SELECT 1 FROM public.question_bases WHERE p_kind='base' AND owner_id=p_owner AND name=candidate
+   UNION ALL SELECT 1 FROM public.user_logos WHERE p_kind='logo' AND user_id=p_owner AND name=candidate) THEN RETURN candidate; END IF;
+  number:=number+1;
+ END LOOP;
+END $$;
+REVOKE ALL ON FUNCTION public._resource_clone_duplicate_name(text,uuid,text,text) FROM PUBLIC,anon,authenticated;
+
+CREATE FUNCTION public._resource_clone_finish_duplicate(p_actor uuid,p_job uuid,p_definition jsonb,p_demo boolean,p_storage_base text,p_suffix text DEFAULT 'kopia')
  RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,auth,pg_temp AS $$
-DECLARE item public.resource_clone_jobs; target uuid; result jsonb; hash text; ref text;
+DECLARE item public.resource_clone_jobs; target uuid; result jsonb; hash text; ref text; original_name text; name_key text[]; named_definition jsonb;
 BEGIN
  SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job AND actor_identity=p_actor;
  IF NOT FOUND OR item.action<>'duplicate' THEN RAISE EXCEPTION 'invalid_copy_job'; END IF;
  PERFORM 1 FROM auth.users u WHERE u.id=p_actor AND public._poll_identity_regular(u.id,to_jsonb(u)) FOR NO KEY UPDATE NOWAIT;
  IF NOT FOUND THEN RAISE EXCEPTION 'auth_required'; END IF;
  SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job FOR UPDATE NOWAIT;
- hash:=encode(sha256(convert_to(p_definition::text,'UTF8')),'hex');
+ name_key:=CASE WHEN item.resource_kind='logo' THEN ARRAY['name'] ELSE ARRAY[item.resource_kind,'name'] END;
+ named_definition:=p_definition #- name_key;
+ hash:=encode(sha256(convert_to(named_definition::text,'UTF8')),'hex');
  target:=CASE item.resource_kind WHEN 'game' THEN item.game_id WHEN 'base' THEN item.base_id ELSE item.logo_id END;
  IF item.status='complete' THEN
   IF item.definition_hash IS DISTINCT FROM hash THEN RAISE EXCEPTION 'request_conflict'; END IF;
@@ -141,7 +159,12 @@ BEGIN
      (a.source_kind<>'storage' OR trim(both '"' from o.metadata->>'eTag')=a.etag)) THEN RAISE EXCEPTION 'unmaterialized_copy_image'; END IF;
   END LOOP;
  END IF;
- result:=public._resource_clone_write(item.actor_identity,item.recipient_id,item.resource_kind,'duplicate',item.source_id,item.request_id,p_definition,p_demo);
+ original_name:=item.source_snapshot#>>ARRAY[item.resource_kind,'name'];
+ IF coalesce(trim(original_name),'')='' THEN
+  original_name:=CASE WHEN p_definition#>>name_key=p_suffix THEN '' ELSE regexp_replace(p_definition#>>name_key,' '||p_suffix||'( [0-9]+)?$','') END;
+ END IF;
+ named_definition:=jsonb_set(p_definition,name_key,to_jsonb(public._resource_clone_duplicate_name(item.resource_kind,item.recipient_id,original_name,p_suffix)));
+ result:=public._resource_clone_write(item.actor_identity,item.recipient_id,item.resource_kind,'duplicate',item.source_id,item.request_id,named_definition,p_demo);
  target:=(result->>'id')::uuid;
  UPDATE public.resource_clone_jobs SET status='complete',source_snapshot=NULL,completed_at=clock_timestamp(),definition_hash=hash,
   game_id=CASE WHEN resource_kind='game' THEN target END,base_id=CASE WHEN resource_kind='base' THEN target END,logo_id=CASE WHEN resource_kind='logo' THEN target END WHERE id=p_job;
@@ -150,7 +173,7 @@ BEGIN
  UPDATE public.resource_clone_assets SET reference='' WHERE job_id=p_job;
  RETURN result;
 END $$;
-REVOKE ALL ON FUNCTION public._resource_clone_finish_duplicate(uuid,uuid,jsonb,boolean,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public._resource_clone_finish_duplicate(uuid,uuid,jsonb,boolean,text,text) FROM PUBLIC,anon,authenticated;
 
 CREATE FUNCTION public._resource_clone_job_delete() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 BEGIN
@@ -173,4 +196,23 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public._resource_clone_logo_delete() FROM PUBLIC,anon,authenticated;
 CREATE TRIGGER clone_logo_cleanup BEFORE DELETE ON public.user_logos FOR EACH ROW EXECUTE FUNCTION public._resource_clone_logo_delete();
+CREATE FUNCTION public._resource_clone_gc() RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,auth,pg_temp AS $$
+DECLARE item public.resource_clone_jobs; processed integer:=0;
+BEGIN
+ FOR item IN SELECT * FROM public.resource_clone_jobs WHERE status='preparing' AND (created_at+interval '1 hour'<=clock_timestamp() OR actor_id IS NULL) FOR UPDATE SKIP LOCKED LOOP
+  UPDATE public.resource_clone_jobs SET status='expired',source_snapshot=NULL WHERE id=item.id;
+  IF item.resource_kind='logo' THEN PERFORM public._resource_clone_cleanup(item.recipient_id,item.id); END IF;
+  processed:=processed+1;
+ END LOOP;
+ -- A late service upload can outlive the account/job cascade. The owner UUID,
+ -- not the email or a new account, determines that these files are orphaned.
+ INSERT INTO public.storage_cleanup_queue(bucket,path,is_folder,owner_kind,owner_id)
+  SELECT DISTINCT 'user-logos',split_part(o.name,'/',1)||'/copies/'||split_part(o.name,'/',3),true,'user',split_part(o.name,'/',1)::uuid
+   FROM storage.objects o WHERE o.bucket_id='user-logos' AND
+    o.name ~ '^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}/copies/[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}/[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}[.](png|jpg|gif|webp)$' AND
+    NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=split_part(o.name,'/',1)::uuid) ON CONFLICT DO NOTHING;
+ IF processed>0 OR EXISTS(SELECT 1 FROM public.storage_cleanup_queue WHERE attempts<20) THEN PERFORM public.storage_cleanup_kick(); END IF;
+ RETURN processed;
+END $$;
+REVOKE ALL ON FUNCTION public._resource_clone_gc() FROM PUBLIC,anon,authenticated;
 COMMIT;
