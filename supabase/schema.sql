@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vpfeQqPDk69aBoLbt46lUySzIcdNhJQLrmVUkKQ1QcdcCTLa4S2pYpKuX6fozFK
+\restrict AmC6sQwfsYfZGkHgafNKj9XkEpYh7VXonrWAheXlI3dXdlm4bFlOSYpUlH6dEBx
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4773,6 +4773,76 @@ END; $$;
 
 
 --
+-- Name: control2_display_event("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control2_display_event"("p_game_id" "uuid", "p_key" "text", "p_event" "jsonb") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  sid uuid;
+  event_name text;
+  event_details jsonb;
+BEGIN
+  IF NOT public.control_device_key_valid(p_game_id, 'display', p_key) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  IF p_event IS NULL OR octet_length(p_event::text) > 2000 THEN
+    RAISE EXCEPTION 'invalid event';
+  END IF;
+  event_name := p_event->>'event_type';
+  IF event_name IS NULL OR event_name NOT IN ('page_state','render_stall','runtime_error','network_state') THEN
+    RAISE EXCEPTION 'invalid event type';
+  END IF;
+
+  SELECT a.session_id INTO sid
+  FROM public.game_session_active a
+  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
+  WHERE a.game_id=p_game_id AND s.control_version=2;
+  IF sid IS NULL THEN RETURN; END IF;
+
+  IF event_name='page_state' THEN
+    event_details := jsonb_build_object(
+      'reason', CASE WHEN p_event->>'reason' IN ('initial','visibilitychange','focus','blur') THEN p_event->>'reason' ELSE 'statechange' END,
+      'visibility', CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
+      'focused', CASE WHEN jsonb_typeof(p_event->'focused')='boolean' THEN (p_event->>'focused')::boolean ELSE NULL END,
+      'was_discarded', CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean' THEN (p_event->>'was_discarded')::boolean ELSE NULL END
+    );
+  ELSIF event_name='render_stall' THEN
+    event_details := jsonb_build_object(
+      'max_frame_gap_ms', LEAST(60000, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'max_frame_gap_ms')='number' THEN (p_event->>'max_frame_gap_ms')::numeric ELSE 0 END))::integer,
+      'stalled_frames', LEAST(10000, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'stalled_frames')='number' THEN (p_event->>'stalled_frames')::numeric ELSE 0 END))::integer,
+      'visibility', CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
+      'state_rev', LEAST(9223372036854775807::numeric, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint
+    );
+  ELSIF event_name='runtime_error' THEN
+    event_details := jsonb_build_object(
+      'phase', CASE WHEN p_event->>'phase' IN ('render','completion_ack') THEN p_event->>'phase' ELSE 'other' END,
+      'error_name', left(coalesce(p_event->>'error_name','Error'),80),
+      'state_rev', LEAST(9223372036854775807::numeric, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint
+    );
+  ELSE
+    event_details := jsonb_build_object(
+      'online', CASE WHEN jsonb_typeof(p_event->'online')='boolean' THEN (p_event->>'online')::boolean ELSE false END
+    );
+  END IF;
+
+  INSERT INTO public.control2_device_events(game_id,session_id,event_type,details)
+  VALUES (p_game_id,sid,event_name,event_details);
+
+  -- Keep the log bounded even for a frequently reused game.
+  DELETE FROM public.control2_device_events e
+  WHERE e.game_id=p_game_id
+    AND (e.created_at < now()-interval '30 days' OR e.id IN (
+      SELECT id FROM public.control2_device_events
+      WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500
+    ));
+END;
+$$;
+
+
+--
 -- Name: control2_session_ping("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8410,6 +8480,34 @@ $$;
 
 
 --
+-- Name: get_control2_display_events("uuid"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_control2_display_events"("p_session_ids" "uuid"[]) RETURNS "jsonb"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT coalesce(jsonb_object_agg(session_id::text, events), '{}'::jsonb)
+  FROM (
+    SELECT e.session_id, jsonb_agg(
+      jsonb_build_object(
+        'kind','diagnostic',
+        'category','display_state',
+        'at',e.created_at,
+        'message','Zdarzenie urządzenia Wyświetlacz.',
+        'devices',jsonb_build_array('display'),
+        'metrics',e.details || jsonb_build_object('reason',e.event_type)
+      ) ORDER BY e.created_at,e.id
+    ) AS events
+    FROM public.control2_device_events e
+    JOIN public.game_sessions s ON s.id=e.session_id AND s.control_version=2
+    WHERE e.session_id=ANY(coalesce(p_session_ids,'{}'::uuid[]))
+    GROUP BY e.session_id
+  ) logs;
+$$;
+
+
+--
 -- Name: get_email_intent_status("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9051,6 +9149,7 @@ BEGIN
     INTO result
     FROM (
       SELECT
+        s.id AS session_id,
         g.name AS game_name,
         pr.username AS owner,
         s.control_version,
@@ -17242,6 +17341,37 @@ CREATE TABLE "public"."contact_reports" (
 
 
 --
+-- Name: control2_device_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."control2_device_events" (
+    "id" bigint NOT NULL,
+    "game_id" "uuid" NOT NULL,
+    "session_id" "uuid",
+    "device_type" "text" DEFAULT 'display'::"text" NOT NULL,
+    "event_type" "text" NOT NULL,
+    "details" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = 'display'::"text")),
+    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text"])))
+);
+
+
+--
+-- Name: control2_device_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."control2_device_events" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME "public"."control2_device_events_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: control_device_link_tokens; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -18709,6 +18839,14 @@ ALTER TABLE ONLY "public"."contact_reports"
 
 
 --
+-- Name: control2_device_events control2_device_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control2_device_events"
+    ADD CONSTRAINT "control2_device_events_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: control_device_link_tokens control_device_link_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -19627,6 +19765,13 @@ CREATE INDEX "base_share_tasks_status_created_idx" ON "public"."base_share_tasks
 --
 
 CREATE INDEX "base_share_tasks_token_idx" ON "public"."base_share_tasks" USING "btree" ("token");
+
+
+--
+-- Name: control2_device_events_game_created_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "control2_device_events_game_created_idx" ON "public"."control2_device_events" USING "btree" ("game_id", "created_at" DESC, "id" DESC);
 
 
 --
@@ -21333,6 +21478,22 @@ ALTER TABLE ONLY "public"."contact_reports"
 
 
 --
+-- Name: control2_device_events control2_device_events_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control2_device_events"
+    ADD CONSTRAINT "control2_device_events_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: control2_device_events control2_device_events_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control2_device_events"
+    ADD CONSTRAINT "control2_device_events_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "public"."game_sessions"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: control_device_link_tokens control_device_link_tokens_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -22489,6 +22650,12 @@ ALTER TABLE "public"."contact_report_messages" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."contact_reports" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: control2_device_events; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."control2_device_events" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: control_device_link_tokens; Type: ROW SECURITY; Schema: public; Owner: -
@@ -23762,5 +23929,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vpfeQqPDk69aBoLbt46lUySzIcdNhJQLrmVUkKQ1QcdcCTLa4S2pYpKuX6fozFK
+\unrestrict AmC6sQwfsYfZGkHgafNKj9XkEpYh7VXonrWAheXlI3dXdlm4bFlOSYpUlH6dEBx
 
