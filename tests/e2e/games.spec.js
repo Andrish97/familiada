@@ -101,7 +101,7 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
   const pages = [
     { path: "/games/", action: "#btnEdit", name: "Edytuj", screenshot: "games" },
     { path: "/bases/", action: "#btnBrowse", name: "Przeglądaj", screenshot: "bases" },
-    { path: "/logo/", action: "#btnEdit", name: "Edytuj", screenshot: "logo" },
+    { path: "/logo/", action: "#btnPreview", name: "Podgląd", screenshot: "logo" },
   ];
   for (const width of [1400, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
@@ -117,7 +117,7 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
       expect(boxes.heading.right, `${item.path}: title is outside the right column at ${width}px`).toBeLessThanOrEqual(width - 8);
       await expect(page.locator(`${item.action} .ico`)).toBeVisible();
       await expect(page.locator(item.action)).toHaveAccessibleName(item.name);
-      await page.screenshot({ path: testInfo.outputPath(`e20-${item.screenshot}-${width}.png`), fullPage: true });
+      await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${width}.png`), fullPage: true });
     }
   }
 });
