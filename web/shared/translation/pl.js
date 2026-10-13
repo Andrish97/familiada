@@ -692,6 +692,7 @@ const pl = {
     exportModal: {
       title: "EKSPORT…",
       subtitle: "Nie zamykaj strony. Trwa przygotowanie pliku.",
+      close: "Gotowe",
     },
     shareModal: {
       title: "Udostępnij bazę",

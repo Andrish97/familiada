@@ -684,6 +684,7 @@ const en = {
     exportModal: {
       title: "EXPORT…",
       subtitle: "Do not close the page. Preparing the file.",
+      close: "Done",
     },
     shareModal: {
       title: "Share base",

@@ -674,6 +674,10 @@ test.describe("bases: audyt -- eksport / import", () => {
       const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
       const file = testInfo.outputPath("export.fambase");
       await download.saveAs(file);
+      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator("#exportJsonOverlay")).toBeHidden();
       const json = JSON.parse(fs.readFileSync(file, "utf8"));
       expect(json.categories).toHaveLength(2);
       expect(json.question_tags).toHaveLength(1);

@@ -679,6 +679,7 @@ const uk = {
     exportModal: {
       title: "ЕКСПОРТ…",
       subtitle: "Не закривай сторінку. Готуємо файл.",
+      close: "Готово",
     },
     shareModal: {
       title: "Поділитися базою",

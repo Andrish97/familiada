@@ -880,6 +880,12 @@ eksport z polskimi znakami i import pobranego pliku; pełny unit602/602.
 Pozostałe ścieżki Gier/Baz/Logo nadal wymagają przeglądu błędu, postępu,
 retry i zakończenia.
 
+**Eksport JSON Bazy (2026-10-13):** identyczny stan pozostaje po
+pobraniu i po błędzie; „Gotowe” zamyka wyłącznie okno. Round-trip Bazy z
+folderami, tagami pytań i tagami folderów przeszedł w E2E
+`38383626341`, 1/1; pełny unit602/602. Błąd i retry nadal trzeba
+zweryfikować dla tego eksportu.
+
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
 Każdy typ strony ma wspólny układ i wspólne style na wszystkich stronach
