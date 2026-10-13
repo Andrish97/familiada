@@ -3,6 +3,9 @@ const {serveBranchCode}=require('./helpers/branch-code');
 const {loginAsPooledTestUser}=require('./helpers/login');
 const branch=process.env.GITHUB_REF_NAME!=='main';
 test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
+test.afterEach(async({},testInfo)=>{
+ if(testInfo.status!==testInfo.expectedStatus)console.log(`::error title=Game transfer::${testInfo.title}; ${String(testInfo.errors?.[0]?.message||'').split('\n').filter(Boolean).slice(0,2).join(' ').slice(0,220)}`);
+});
 test('common game transfer format: native export and existing import for all three kinds, fresh identities and complete cleanup',async({page,context},testInfo)=>{
  test.setTimeout(180000);const owned=[];
  if(branch)await serveBranchCode(context,{pages:['games']});
@@ -54,7 +57,10 @@ test('atomic game import: file modal retry after lost response, foreign owner an
  try{
   stage='select file';
   const packet={game:{name:'E2E-ATOMIC-'+Date.now(),type:'prepared'},questions:Array.from({length:10},(_,i)=>({text:'Pytanie '+(i+1),answers:[{text:'Tak',fixed_points:25}]}))};
+  // Login waits for the URL, before Games finishes auth and installs handlers.
+  await expect(page.locator('#grid .card').first()).toBeVisible({timeout:15000});
   await page.locator('#btnImport').click();
+  await expect(page.locator('#importOverlay')).toBeVisible();
   await page.locator('#importFile').setInputFiles({name:'atomic.famgame',mimeType:'application/octet-stream',buffer:Buffer.from(JSON.stringify(packet))});
   await expect(page.locator('#btnImportJson')).toBeEnabled();
   stage='drop committed response';
@@ -87,7 +93,7 @@ test('atomic game import: file modal retry after lost response, foreign owner an
   await page.evaluate(async id=>{const {error}=await window.__sbClient.from('games').delete().eq('id',id);if(error)throw error;},importedId);
   const deleted=await page.evaluate(async request=>{const {data,error}=await window.__sbClient.rpc('game_import_package',request);if(error)throw error;return data;},firstRequest);
   expect(deleted.error).toBe('previously_removed');
- }catch(error){console.log(`::error title=Atomic game import::stage=${stage}; ${String(error.message).split('\n')[0].slice(0,180)}`);throw error;}
+ }catch(error){const previewError=await page.locator('#importErr').textContent().catch(()=>null);console.log(`::error title=Atomic game import::stage=${stage}; preview=${String(previewError||'').slice(0,120)}; ${String(error.message).split('\n')[0].slice(0,180)}`);throw error;}
  finally{
   await page.unroute(rpc);
   if(importedId)await page.evaluate(async id=>{const {error}=await window.__sbClient.from('games').delete().eq('id',id);if(error)throw error;},importedId);
