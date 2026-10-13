@@ -228,6 +228,28 @@ test.describe("import / eksport", () => {
     expect(JSON.parse(fs.readFileSync(f.path, "utf8")).kind).toBe("GLYPH");
   });
 
+  test("E20: błąd eksportu Logo zostaje do ręcznego zamknięcia i ponowienia", async ({ page }) => {
+    await open(page);
+    const id = await L.insertLogo(page, { name: L.uniq("export-retry"), type: "GLYPH_30x10", payload: L.textPayload() });
+    await page.locator(`.logoTile[data-key="${id}"]`).click();
+    const failedRequest = page.route("**/rest/v1/user_logos**", (route) => route.abort());
+    await failedRequest;
+    await page.locator("#btnExport").click();
+    await expect(page.locator("#logoExportOverlay")).toBeVisible();
+    await expect(page.locator("#logoExportMsg")).toContainText(/couldn't export|nie udało się wyeksportować/i);
+    await expect(page.locator("#btnLogoExportClose")).toBeVisible();
+    await page.waitForTimeout(1200);
+    await expect(page.locator("#logoExportOverlay")).toBeVisible();
+    await page.locator("#btnLogoExportClose").click();
+    await expect(page.locator("#logoExportOverlay")).toBeHidden();
+
+    await page.unroute("**/rest/v1/user_logos**");
+    const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
+    expect(download.suggestedFilename()).toContain("export-retry");
+    await expect(page.locator("#btnLogoExportClose")).toBeVisible();
+    await page.locator("#btnLogoExportClose").click();
+  });
+
   test("eksport -> import rysunku: nowe logo z tymi samymi bitami i sceną", async ({ page }) => {
     await open(page);
     const fabricData = { version: "5.3.0", objects: [L.rect(100, 100, 300, 200)], background: "#000000" };
