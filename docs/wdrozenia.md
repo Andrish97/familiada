@@ -100,13 +100,56 @@ Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control.
 | 12h | E19N | Przegląd starych funkcjonalności i mapy przejść; pełnoekranowe modale z `?dialog=`, Back/Forward/odświeżenie; zapis/flush, blokady i wznowienie Control; aktywacja Control → Znajomi | `nawigacja-mapa-plan.md`, „E19 — przegląd starych przejść”; `NAV_DEPENDENCIES.modalPagesReview` | **gotowe produkcyjnie**: Control/settings branch38368774633; Pages38369096986; main route E2E38369193504 success5/5; test dialog URL/back/forward/refresh branch38369837696 i main38370189342 success1/1; Worker38369096732; full unit602/602. Audyt nie znalazł przepływu pełnoekranowy arkusz→pełnoekranowy arkusz. Potwierdzenia i alerty nie są stronami/URL. E19 zamknięte na main `d847175100`. |
 | 12i | E14 | **Sprzątanie po potwierdzeniu** (migracje usuwające): martwe RPC ankiet i hubu (E11h); `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` / `guest_discard_current`; kasowanie plików w `delete-account` (zastąpione przez E12b) | ankiety-refaktor.md, usuwanie-danych.md | **zrobione produkcyjnie**: migracja368 + DB smoke/log `38372090287`, Edge Functions `38372090225`; main delete-account `38372530495`; stary RPC po migracji: punktowy test `38373614192` success. Branch przed migracją: `38371173337` delete-account i `38371452198` poll-share success6/6. `subscriber_user_id` zachowany, bo używają go aktywne funkcje. |
 | 12j | E20 | **Kompaktowy telefon:** mniej nieobowiązkowych danych; wspólne typy stron; akcje jako ikony, modal wyszukiwania i listy filtrów/sortowania; wysokość kart, landscape i stopniowe ładowanie; zrzuty desktop/mobile | `ujednolicenie-wygladu.md`, sekcje E20 | **w toku**: wspólny nagłówek, ikonowe główne i dolne akcje, modal wyszukiwania na telefonie, ikony filtra/sortowania z aktywnym stanem; pozostałe typy UI, stopniowe ładowanie, landscape i tablet rzeczywisty nadal otwarte |
-| 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
+| 13 | E13 | **Końcowe materiały dla użytkownika:** instrukcja, treści zapoznawcze indeksu `/`, automatyczne odświeżanie zrzutów indeksu oraz poprawa wydajności według PageSpeed | ta sekcja oraz `privacy-manual.spec.js`, `index.spec.js`, `indexAudit.test.js` | do zrobienia; E13 nadal ostatnie, a manual jest ostatnią częścią tego etapu |
 | 14 | C2-DIAG | **Control 2: diagnostyka odczuwalnych problemów** — agregacja krótkich rozłączeń, blokady i prób akcji, kontekst karty/profilu, opóźnienia dźwięku/planszy i widoczne zacięcia | [`control2-statystyki-plan.md`](control2-statystyki-plan.md), „Diagnostyka odczuwalnych problemów” | zakończone produkcyjnie: migracja 356 + Pages; renderer i pełne ponowne podłączenie zielone, potwierdzony rzeczywisty zapis diagnostyki; szczegóły w Dzienniku |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
 
-**Manual (E13) zawsze pozostaje ostatnim etapem** — wszystkie pozostałe prace,
+**E13 zawsze pozostaje ostatnim etapem** — wszystkie pozostałe prace,
 w tym końcowe poprawki wyglądu i porządki po E19, muszą być zakończone przed
-aktualizacją Instrukcji. Nie przesuwać E13 wyżej przy dopisywaniu etapów.
+jego rozpoczęciem. Wewnątrz E13 najpierw poprawić indeks i zrzuty, potem
+zakończyć audyt wydajności, a treść Instrukcji zaktualizować na końcu, gdy
+funkcje i nazwy w aplikacji są ustalone. Nie przesuwać E13 wyżej przy
+dopisywaniu etapów.
+
+### E13 — instrukcja, indeks, zrzuty i wydajność
+
+E13 obejmuje końcową warstwę zapoznawczą całego systemu, nie samą Instrukcję:
+
+1. **Indeks `/` — treści zapoznawcze:** przejrzeć opis działania systemu,
+   sekcje „O systemie”, „Funkcje”, „Dla kogo” i FAQ. Uporządkować informacje
+   tak, by nowa osoba rozumiała, jak przygotować grę, zebrać ankietę i
+   poprowadzić rozgrywkę, oraz gdzie zacząć. Zachować rozróżnienie ról,
+   wymagań konta/gościa i urządzeń. Indeks ma pomagać poznać system; nie
+   zastępuje szczegółowej Instrukcji ani nie powiela jej krok po kroku.
+   Spójność treści i odnośników sprawdzić dla PL/EN/UK.
+2. **Zrzuty używane na indeksie:** obecne obrazy `landing-*` (12 widoków
+   w `web/assets/img/{pl,en,uk}/`) odświeżać z rzeczywistych, deterministycznych
+   scenariuszy Playwright. Scenariusze mają wejść do właściwej funkcji,
+   ustawić stabilny przykładowy stan, poczekać na gotowość widoku i asercjami
+   potwierdzić treść przed zrzutem. Wykonać macierz języków i wymiarów
+   przyjętą dla indeksu; sprzątać utworzone dane w `finally` i nie pokazywać
+   danych prywatnych. Zrzuty najpierw trafiają do artefaktu E2E; po zielonym
+   scenariuszu dedykowany, jawnie włączany krok workflow publikuje je do
+   `web/assets/img/{pl,en,uk}/` i aktualizuje manifest/galerię, według wzorca
+   `tests/e2e/index.spec.js`, `e2e-tests.yml` i istniejących publisherów.
+   Dodać kontrolę brakujących/nieosiągalnych obrazów oraz poprawnych altów.
+3. **Wydajność:** odczytać raporty PageSpeed wskazane przez użytkownika dla
+   telefonu i komputera, zapisać datę, wynik oraz najważniejsze audyty jako
+   punkt odniesienia. Najpierw poprawiać indeks; następnie sprawdzić inne
+   strony, dla których PageSpeed lub zebrane raporty pokażą istotny problem.
+   Priorytet ustalać według zmierzonego wpływu na użytkownika, zwłaszcza
+   LCP/INP/CLS, blokowania renderowania, transferu obrazów, JavaScriptu,
+   fontów i cache. Po poprawkach ponowić PSI dla telefonu i komputera i
+   zapisać porównanie. Wynik PSI jest zmienny; bez osobnej decyzji nie
+   ustanawiać arbitralnego progu punktowego.
+
+   - [PageSpeed — indeks, telefon](https://pagespeed.web.dev/analysis/https-familiada-online/5oesbg85ga?utm_source=search_console&form_factor=mobile&hl=pl)
+   - [PageSpeed — indeks, komputer](https://pagespeed.web.dev/analysis/https-familiada-online/5oesbg85ga?utm_source=search_console&form_factor=desktop&hl=pl)
+4. **Instrukcja — ostatnia część E13:** po ustaleniu zachowania produktu,
+   indeksu i nazewnictwa przejrzeć oraz uzupełnić manual w PL/EN/UK zgodnie
+   z zasadami poniżej: bez technicznego słownictwa, z krokami i skutkami
+   widocznymi dla użytkownika. Sprawdzić go scenariuszami `privacy-manual`
+   i automatycznie utrzymywanymi zrzutami odpowiednich ekranów.
 
 **Zasady treści manuala (decyzja 2026-10-11):** zero technicznego
 słownictwa; spójne nazwy tych samych funkcji, stanów i czynności w całej
@@ -1230,3 +1273,5 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 | 2026-10-13 | E20 / Moje gry — obrót telefonu | Rzeczywisty dotykowy kontekst Playwright: portrait390×844 → landscape844×390 → portrait. Wyszukiwanie i zaznaczona gra zostają, bez poziomego overflow; zrzuty3 etapów w artefakcie11816088611. E2E `38403253632` success1/1; pełny unit602/602. | Kolejne strony landscape i PAGES/HTML, fizyczny tablet oraz pozostałe ścieżki plikowe nadal otwarte. |
 | 2026-10-13 | Audyt zagnieżdżonych arkuszy po pytaniu użytkownika | Przejrzano wszystkie wywołania `enterModalSheet` i ich ścieżki otwierania. Nie znaleziono przepływu, w którym jeden pełnoekranowy arkusz otwiera kolejny pełnoekranowy arkusz. Edytor pytania w eksploratorze Baz może pokazać zwykłe potwierdzenie porzucenia zmian; błędy w oknie udostępniania mogą pokazać zwykły alert. To nie są strony i nie trafiają do `?dialog=`. | Poprzednia korekta E19N opierała się na błędnym utożsamieniu zwykłych confirm/alert z arkuszami routowanymi. E19N i E19 pozostają oznaczone jako gotowe; standardowe potwierdzenia/alerty nie są częścią stosu URL. |
+
+| 2026-10-13 | E13 — rozszerzenie zakresu o indeks i wydajność | Użytkownik dodał do ostatniego etapu przegląd i poprawę treści zapoznawczych indeksu `/`, automatyczne odświeżanie 12 zrzutów `landing-*` w PL/EN/UK przez deterministyczne scenariusze Playwright i publisher workflow oraz optymalizację indeksu i innych stron według raportów PageSpeed mobile/desktop podlinkowanych w sekcji E13. Instrukcja zostaje ostatnią częścią E13 po ustaleniu zmian w produkcie. | Plan zapisany w sekcji E13 powyżej; brak implementacji w tej zmianie dokumentacyjnej. E13 pozostaje ostatnie po E20. |
