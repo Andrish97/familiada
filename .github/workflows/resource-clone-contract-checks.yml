@@ -1,0 +1,57 @@
+name: Resource clone isolated contracts
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/resource-clone-contract-checks.yml'
+      - 'docs/sql/*365*'
+permissions:
+  contents: read
+jobs:
+  verify-resource-clone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+          POSTGRES_DB: fam365isolated
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: fam365isolated
+      PGPASSWORD: isolated-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore immutable production schema before364
+        run: |
+          git fetch --no-tags --depth=1 origin 8c26879258848fd2d60f19d3f18ea64ce5480e22
+          git show 8c26879258848fd2d60f19d3f18ea64ce5480e22:supabase/schema.sql > /tmp/pre-import-schema.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/local-stubs.sql
+          psql -v ON_ERROR_STOP=1 -c 'ALTER EXTENSION pg_trgm SET SCHEMA public'
+          sed -e 's/"public"\."vector"(384)/real[]/g' -e 's/"p_embedding" "public"\."vector"/"p_embedding" real[]/' -e '/market_games_embedding_ivfflat_idx/d' -e '/transaction_timeout/d' -e '/CREATE SCHEMA "public";/d' /tmp/pre-import-schema.sql > /tmp/import-schema.sql
+          psql -v ON_ERROR_STOP=1 -f /tmp/import-schema.sql > /tmp/import-restore.log 2>&1
+          psql -v ON_ERROR_STOP=1 -f docs/sql/restore-identity-auth-triggers-358.sql
+      - name: Apply private clone prototypes and verify rollback and concurrency contracts
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-13_364_game_import_atomic.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-copy-send-365.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-resource-clone-source-365.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-resource-clone-write-365.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-copy-send-365.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-resource-clone-365.sql
+          python3 docs/sql/test-resource-clone-concurrency-365.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resource-clone-isolated-restore
+          path: /tmp/import-restore.log

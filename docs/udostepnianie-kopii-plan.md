@@ -339,3 +339,18 @@ wyniku i uznaje identyczny plik przy retry także po usunięciu źródła.
 14 nowych unit, razem573 green. Przygotowanie planu nie jest jeszcze
 publicznym klonowaniem: wymagane prywatne kwity/własność, staging/cleanup
 oraz podłączenie do zapisu definicji i kontrole demo na serwerze.
+
+### Bazy są objęte Powiel — ponowne potwierdzenie2026-10-13
+
+Lokalny wspólny _resource_clone_write tworzy także Bazę w jednej
+transakcji: nowe ID folderów/tagów/pytań, przemapowane rodzice/foldery
+i oba rodzaje tagowania. Bez przejęcia question_base_shares i zaproszeń.
+Test błędu drugiego pytania usuwa cały niezakończony wynik; retry
+zwraca jeden zasób, usuniętego wyniku nie odtwarza. Test usuwania konta
+wywołuje rzeczywiste delete_user_everything, nie sam DELETE Auth.
+Bezpośrednia kaskada Auth po fixture utworzonym w tej samej transakcji
+miała konflikt przejściowych FK Bazy; realna ścieżka z poprawną
+kolejnością usuwania przechodzi. To lokalne kontrakty, jeszcze bez
+publicznego Powiel. Source reader kontroluje konto/własność/pending
+i blokady, blokuje rodziców/dzieci na czas spójnego odczytu; wzorce
+demo trafiają do wspólnego porównania definicji na serwerze.

@@ -59,3 +59,27 @@ test('failed materialization produces no packet and never changes the original s
  await assert.rejects(mapLogoSourceImages(source,async()=>null),/incomplete_logo_source/);
  await assert.rejects(prepareResourceClone('logo',{logo:{type:'PIX_150x70',payload:{bits_b64:'AA==',source:{imageUrl:'original'}}}},{action:'duplicate',suffix:'kopia'}),/copy_image_materializer_required/);
 });
+
+test('unmarked imported or renamed game demo is recognized by its definition in each language',async()=>{
+ for(const lang of ['pl','en','uk'])for(const type of ['prepared','poll_text','poll_points']){
+  const game={name:'Demo-'+lang,type},questions=[{text:'Question-'+lang,answers:[{text:'Answer',fixed_points:10}]}];
+  const templates=[{lang,slot:type==='prepared'?'prepared':type+'_draft',payload:{game,questions}}];
+  const source={game:{...game,name:'Renamed',is_demo:false,status:'draft'},questions,demo_templates:templates};
+  await assert.rejects(prepareResourceClone('game',source,{action:'send'}),/demo_not_sendable/);
+  assert.equal((await prepareResourceClone('game',source,{action:'duplicate',suffix:'kopia'})).demoOrigin,true);
+  const changed={...source,questions:[{...questions[0],text:'Own question'}]};
+  assert.equal((await prepareResourceClone('game',changed,{action:'send'})).demoOrigin,false);
+ }
+ const template={slot:'poll_points_closed',payload:{game:{name:'Closed',type:'poll_points'},questions:[{text:'Closed?',answers:[{text:'Yes',fixed_points:60}]}]}};
+ await assert.rejects(prepareResourceClone('game',{game:{name:'Imported closed',type:'prepared',status:'draft'},questions:template.payload.questions,demo_templates:[template]},{action:'send'}),/demo_not_sendable/);
+});
+test('logo demo detection survives renamed imports and rehomed images; different rendered logos can be sent',async()=>{
+ for(const kind of ['GLYPH','PIX']){
+  const payload=kind==='GLYPH'?{rows:['101'],source:{mode:'TEXT',text:'Demo'}}:{bits_b64:'AAAA',source:{mode:'IMAGE',imageUrl:'demo asset'}};
+  const template={slot:kind==='GLYPH'?'logo_text':'logo_image',payload:{kind,name:'Demo',payload}};
+  const root={kind,name:'Imported under another name',payload:{...payload,source:{...payload.source,imageUrl:'my bucket'}}};
+  await assert.rejects(prepareResourceClone('logo',{logo:root,demo_templates:[template]},{action:'send'}),/demo_not_sendable/);
+  const altered={...root,payload:{...payload,...(kind==='GLYPH'?{rows:['010']}:{bits_b64:'BBBB'}),source:{mode:'TEXT'}}};
+  assert.equal((await prepareResourceClone('logo',{logo:altered,demo_templates:[template]},{action:'send'})).demoOrigin,false);
+ }
+});
