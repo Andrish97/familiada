@@ -654,7 +654,7 @@ const pl = {
   },
   bases: {
     title: "Familiada — bazy pytań",
-    headerTitle: "Twoje bazy pytań",
+    headerTitle: "Moje bazy pytań",
     headerHint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
     headerHintShared: "Naciśnij kafelek, żeby go zaznaczyć.",
     actions: {
@@ -2645,7 +2645,7 @@ const pl = {
       more: "Więcej",
     },
     header: {
-      title: "Twoje gry",
+      title: "Moje gry",
       hint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
     },
     actions: {
@@ -3893,7 +3893,7 @@ const pl = {
       image: "Familiada — logo z obrazu",
     },
     list: {
-      title: "Twoje logo",
+      title: "Moje logo",
       hint: "Kliknij kafelek, żeby go zaznaczyć. Dwuklik (albo przytrzymanie na dotyku) zmienia nazwę.",
       preview: "Podgląd",
       edit: "Edytuj",

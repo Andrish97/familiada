@@ -646,7 +646,7 @@ const en = {
   },
   bases: {
     title: "Familiada — question bases",
-    headerTitle: "Your question bases",
+    headerTitle: "My question bases",
     headerHint: "Press a tile to select it. Double-tap to rename.",
     headerHintShared: "Press a tile to select it.",
     actions: {
@@ -2750,7 +2750,7 @@ const en = {
       more: "More",
     },
     header: {
-      title: "Your games",
+      title: "My games",
       hint: "Press a tile to select it. Double-tap to rename.",
     },
     actions: {
@@ -3992,7 +3992,7 @@ const en = {
       image: "Familiada — image logo",
     },
     list: {
-      title: "Your logos",
+      title: "My logos",
       hint: "Click a tile to select it. Double-click (or long-press on touch) to rename.",
       preview: "Preview",
       edit: "Edit",
