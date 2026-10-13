@@ -14,12 +14,14 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
 | E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
-| E19N → E14 → E20 → Manual | Kolejno: przegląd przejść/Control→Znajomi; sprzątanie zastąpionych ścieżek; wspólny wygląd/mobile/tablet/landscape; instrukcja na końcu. Do E20 trzy etapy licząc aktualny E19C. |
+| E19N | Teraz. Domknąć przegląd przejść, URL dialogów i powroty, następnie wdrożyć Control→Znajomi i sprawdzić na produkcji. Użytkownik kazał zatrzymać pracę po całym E19. |
+| Po E19 | Następne dla kolejnego agenta: E14 → E20 → Manual. Nie rozpoczynać teraz. |
 
-## Aktualny checkpoint: E19C zamknięte
+## Aktualny checkpoint: E19C zamknięte, E19N w toku
 
-E19C jest wdrożone i zweryfikowane po Pages. Dalej zgodnie z kolejką:
-E19N→E14→E20→Manual. Pełne unity przed każdym commitem.
+E19C jest wdrożone i zweryfikowane po Pages. Obecna praca kończy E19N;
+po jego produkcyjnej kontroli oznaczyć cały E19 jako zakończony i zatrzymać
+pracę. Nie rozpoczynać E14/E20/Manual.
 
 Początkowy prototyp367 i jego prywatne SQL/testy są zachowane jako
 artefakty rozwoju. Zostały zastąpione migracją produkcyjną
@@ -30,6 +32,12 @@ odbiór, filter Otrzymane i plakietki są wdrożone.
 
 Bramka migracji367, Worker, Edge Functions, Pages i kontrola po wdrożeniu są spełnione. Zrzuty390/1400/landscape są w artefakcie E2E38362616613. Kopia i powiadomienie należą do gałęzi odbiorcy; nadawca i oryginał mogą zniknąć. Preferencja odbiorcy jest sprawdzana przed utworzeniem maila i przed dostarczeniem. Maile Auth pozostają bez zmian.
 Źródło decyzji: `docs/udostepnianie-kopii-plan.md`.
+
+E19N aktywna: z mapy przejść odblokowano skrót Control → Znajomi i dodano
+ukrycie „Graj” w Ustawieniach otwartych z Control. Arkusze mobilne mają
+dozwolone `?dialog=` w PAGES; Wstecz topbara/przeglądarki zamyka arkusz,
+Dalej odtwarza go. Test punktowy: navButtons17/17 i pageInit24/24. Przed
+zamknięciem E19: przeglądarkowe E2E, Pages i punktowa kontrola produkcyjna.
 
 E19C zostało wdrożone i zweryfikowane produkcyjnie zgodnie z wymaganym
 cyklem. Worker/Edge/Pages są wdrożone, migracja367 jest zastosowana,

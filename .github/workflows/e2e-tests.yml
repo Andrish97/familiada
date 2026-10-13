@@ -39,6 +39,11 @@ on:
         type: boolean
         required: false
         default: false
+      publish_resource_copy_screenshots:
+        description: 'Publikuj zrzuty Wyślij Gry/Logo po udanym punktowym teście.'
+        type: boolean
+        required: false
+        default: false
 
 # WAŻNE: celowo tylko workflow_dispatch — ani push, ani pull_request.
 # Ten workflow loguje się na prawdziwe konta na produkcji i ma dostęp do
@@ -337,6 +342,23 @@ jobs:
           if ! git diff --cached --quiet; then
             node --test --test-concurrency=1 tests/unit/*.test.js
             git commit -m "docs(resources): duplication screenshots [skip ci]"
+            git pull --rebase
+            git push
+          fi
+
+      - name: Publish requested resource copy send screenshots
+        if: ${{ success() && inputs.publish_resource_copy_screenshots && contains(inputs.spec_filter, 'e2e/resource-copy-send.spec.js') }}
+        env:
+          EVIDENCE_RUN_ID: ${{ github.run_id }}
+          EVIDENCE_SHA: ${{ github.sha }}
+        run: |
+          python3 scripts/agent-tools/publish-resource-copy-send-screenshots.py
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add docs/img/transfer/resource-copy-send
+          if ! git diff --cached --quiet; then
+            node --test tests/unit/navButtons.test.js tests/unit/pageInit.test.js tests/unit/notification-reference.test.js tests/unit/goContract.test.js tests/unit/duplicateResource.test.js tests/unit/resourceDuplicateApi.test.js
+            git commit -m "docs(resources): publish send flow screenshots [skip ci]"
             git pull --rebase
             git push
           fi

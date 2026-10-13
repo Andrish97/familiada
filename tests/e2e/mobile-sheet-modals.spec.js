@@ -119,6 +119,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
 
       const overlay = page.locator("#shareOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
+      await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
 
       const box = await overlay.locator(".modal").boundingBox();
       expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
@@ -208,6 +209,13 @@ test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modal
       await btnBack.click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
       expect(page.url()).toContain("/bases");
+      expect(new URL(page.url()).searchParams.has("dialog")).toBe(false);
+
+      await page.goForward();
+      await expect(overlay).toBeVisible({ timeout: 5000 });
+      await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
+      await page.goBack();
+      await expect(overlay).toBeHidden({ timeout: 5000 });
 
       // Tekst przycisku wraca do oryginału po zamknięciu.
       await expect(btnBack).toHaveText(originalText);

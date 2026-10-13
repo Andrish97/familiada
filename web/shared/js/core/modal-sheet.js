@@ -9,11 +9,14 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-13T07322";
-import { icon, iconText } from "./icons.js?v=v2026-10-13T07322";
+import { t } from "../../translation/translation.js?v=v2026-10-13T07415";
+import { icon, iconText } from "./icons.js?v=v2026-10-13T07415";
+import { PAGES } from "./nav-map.js?v=v2026-10-13T07415";
 
 const SHEET_MQ = "(max-width:600px)";
-const sheetMql = window.matchMedia(SHEET_MQ);
+const sheetMql = typeof window !== "undefined" && window.matchMedia
+  ? window.matchMedia(SHEET_MQ)
+  : { matches: false, addEventListener() {}, addListener() {} };
 
 let activeClose = null;
 let activeBackBtn = null;
@@ -21,6 +24,75 @@ let backBtnOrigText = null;
 let activeOverlay = null;
 let activeKeepBackBtnText = false;
 let savedScrollY = 0;
+let activeDialogKey = null;
+let activeHistoryEntry = false;
+let handlingPopstate = false;
+const sheetRoutes = new Map();
+let currentPageId = null;
+
+function urlDialog() {
+  const href = typeof location !== "undefined" && location.href ? location.href : "/";
+  return new URL(href, "https://familiada.invalid").searchParams.get("dialog");
+}
+
+function setUrlDialog(key, push) {
+  const url = new URL(location.href || "/", "https://familiada.invalid");
+  if (key) url.searchParams.set("dialog", key);
+  else url.searchParams.delete("dialog");
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  if (push) history.pushState({ ...(history.state || {}), __sheetDialog: key }, "", next);
+  else history.replaceState(history.state, "", next);
+}
+
+function showRoutedOverlay(el) {
+  if (!el) return false;
+  el.hidden = false;
+  el.classList.remove("hidden");
+  el.style.display = "";
+  const close = () => {
+    el.style.display = "none";
+    el.hidden = true;
+    exitModalSheet(el);
+  };
+  enterModalSheet(el, { onClose: close, historyKey: el.id, restore: false });
+  return true;
+}
+
+function onModalPopstate() {
+  const key = urlDialog();
+  if (activeClose && key !== activeDialogKey) {
+    handlingPopstate = true;
+    try { activeClose(); } finally { handlingPopstate = false; }
+  }
+  if (key && activeDialogKey !== key) {
+    const route = sheetRoutes.get(key);
+    if (route) {
+      route.overlay.hidden = false;
+      route.overlay.classList.remove("hidden");
+      route.overlay.style.display = "";
+      enterModalSheet(route.overlay, { ...route.options, historyKey: key, restore: true });
+    } else {
+      showRoutedOverlay(document.getElementById(key));
+    }
+  }
+}
+
+if (typeof window !== "undefined") window.addEventListener("popstate", onModalPopstate);
+
+export function setModalSheetPage(pageId) {
+  currentPageId = pageId;
+  if (typeof window === "undefined" || typeof location === "undefined" || !location.href) return;
+  const key = urlDialog();
+  if (!key) return;
+  const allowed = (PAGES[pageId]?.dialogs || []).includes(key);
+  const overlay = allowed ? document.getElementById(key) : null;
+  if (overlay) setTimeout(() => { if (!activeClose && urlDialog() === key) showRoutedOverlay(overlay); }, 0);
+  else {
+    const url = new URL(location.href);
+    url.searchParams.delete("dialog");
+    history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+}
 
 export function isSheetViewport() {
   return sheetMql.matches;
@@ -66,8 +138,9 @@ sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.
 //   ekran zmieni szerokość podczas gdy modal jest otwarty).
 // opts.onClose: funkcja zamykająca TEN modal — wywoływana przez
 //   handleSheetBack() gdy użytkownik kliknie przycisk wstecz w topbarze.
-export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText = false } = {}) {
+export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
   if (!isSheetViewport()) return;
+  if (!historyKey || !(PAGES[currentPageId]?.dialogs || []).includes(historyKey)) historyKey = null;
 
   // Wymuszone main.wrap{overflow:hidden;height:calc(100dvh - topbar-h)} w
   // trybie sheet (css/base.css) nagle kurczy przewijalny obszar strony (np.
@@ -81,6 +154,14 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
   activeOverlay = overlayEl || null;
   activeClose = onClose || null;
   activeKeepBackBtnText = keepBackBtnText;
+  activeDialogKey = historyKey || null;
+  const currentKey = urlDialog();
+  activeHistoryEntry = Boolean(activeDialogKey && history.state?.__sheetDialog === activeDialogKey && currentKey === activeDialogKey);
+  if (activeDialogKey && currentKey !== activeDialogKey) {
+    setUrlDialog(activeDialogKey, !restore);
+    activeHistoryEntry = !restore;
+  }
+  if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, keepBackBtnText } });
 
   if (backBtn) {
     activeBackBtn = backBtn;
@@ -91,6 +172,8 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
 }
 
 export function exitModalSheet(overlayEl) {
+  const key = activeDialogKey;
+  const ownEntry = activeHistoryEntry;
   applyPresentation(false);
 
   activeOverlay = null;
@@ -98,6 +181,13 @@ export function exitModalSheet(overlayEl) {
   backBtnOrigText = null;
   activeClose = null;
   activeKeepBackBtnText = false;
+  activeDialogKey = null;
+  activeHistoryEntry = false;
+
+  if (key && urlDialog() === key) {
+    if (ownEntry && !handlingPopstate) history.back();
+    else if (!handlingPopstate) setUrlDialog(null, false);
+  }
 
   // Poczekaj na przeliczenie layoutu (main.wrap wraca do swojej normalnej,
   // przewijalnej wysokości) zanim przywrócimy scroll — w tej samej klatce
@@ -116,7 +206,8 @@ export function exitModalSheet(overlayEl) {
 // Zwraca true, gdy przejęło kliknięcie (był otwarty sheet modal).
 export function handleSheetBack() {
   if (activeClose) {
-    activeClose();
+    if (activeHistoryEntry && urlDialog() === activeDialogKey) history.back();
+    else activeClose();
     return true;
   }
   return false;

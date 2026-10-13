@@ -8,7 +8,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import {
-  PAGES, NAV_DEPENDENCIES, ROLES, buttonBlocked, buttonHref, buttonRoles, buttonVisible, pageRoles, roleOf,
+  PAGES, NAV_DEPENDENCIES, ROLES, backTarget, buttonBlocked, buttonHref, buttonRoles, buttonVisible, pageRoles, roleOf,
 } from "../../web/shared/js/core/nav-map.js";
 import { applyToDoc, mapGraph, MAPS } from "../../scripts/nav-maps.mjs";
 
@@ -55,6 +55,15 @@ test("każdy przycisk z mapy istnieje w HTML swojej strony", () => {
     for (const bid of Object.keys(p.buttons)) {
       assert.match(html, new RegExp(`\\bid="${bid}"`), `${id}: brak #${bid} w HTML`);
     }
+  }
+});
+
+test("adresowe dialogi E19N są jawnie dozwolone w mapie i obecne na stronie", () => {
+  for (const [id, page] of Object.entries(PAGES)) {
+    if (!page.dialogs?.length) continue;
+    assert.ok(page.state?.includes("dialog"), `${id}: dialog musi być zachowany w adresie powrotu`);
+    const html = readFileSync(htmlOf(id), "utf8");
+    for (const dialog of page.dialogs) assert.match(html, new RegExp(`\\bid="${dialog}"`), `${id}: brak #${dialog}`);
   }
 });
 
@@ -171,17 +180,19 @@ test("skróty kontaktów: wspólne ikony, tylko konto i powrót do Control", () 
     assert.equal(buttonVisible(id, spec, "user", false), true);
   }
   assert.match(readFileSync(htmlOf("games"), "utf8"), /data-i18n="games.nav.tasks" data-i18n-icon-after="bell"/);
-  assert.match(readFileSync(htmlOf("control"), "utf8"), /id="btnFriends"[^>]*disabled/);
+  assert.match(readFileSync(htmlOf("control"), "utf8"), /id="btnFriends"[^>]*data-nav-hidden="true"/);
 });
 
-test("zależność Control jest w mapie: widoczny zablokowany skrót, bez aktywnej strzałki", () => {
+test("Control → Znajomi jest aktywny w mapie, a ustawienia zachowują kontekst gry", () => {
   const spec = PAGES.control.buttons.btnFriends;
-  assert.equal(spec.blockedUntil, "modalPagesReview");
-  assert.equal(NAV_DEPENDENCIES.modalPagesReview.completed, false);
-  assert.equal(buttonBlocked(spec), true);
+  assert.equal(spec.blockedUntil, undefined);
+  assert.equal(NAV_DEPENDENCIES.modalPagesReview.completed, true);
+  assert.equal(buttonBlocked(spec), false);
   const graph = mapGraph({role:"user",phone:false});
-  assert.ok(graph.blocked.some(edge => edge.from === "control" && edge.to === "friends" && edge.dependency === spec.blockedUntil));
-  assert.ok(!graph.buttons.some(edge => edge.from === "control" && edge.to === "friends"));
+  assert.ok(graph.buttons.some(edge => edge.from === "control" && edge.to === "friends"));
+  assert.ok(!graph.blocked.some(edge => edge.from === "control"));
   assert.ok(!mapGraph({role:"user",phone:true}).blocked.some(edge => edge.from === "control"));
   assert.equal(buttonBlocked(PAGES.games.buttons.btnFriends), false);
+  const backToControl = backTarget("gameSettings", { href: "/games/settings/?id=game-1&ret=%2Fcontrol%2F%3Fid%3Dgame-1" });
+  assert.equal(backToControl.pageId, "control");
 });

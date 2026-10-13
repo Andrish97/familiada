@@ -748,9 +748,9 @@ flowchart LR
   bases -->|btnGoAlt| friends
   bases -->|btnSubscribers| subscribers
   bases -->|btnBrowse*| baseExplorer
+  control -->|btnFriends*| friends
   gameSettings -->|btnPlay*| control
   manual -->|btnLegal| privacy
-  control ---|"btnFriends*: zablokowany — przegląd przejść po usunięciu stron modalnych"| friends
   login -.->|↩| home
   editor -.->|↩| games
   polls -.->|↩| games
@@ -1126,11 +1126,13 @@ zajmują całą stronę (np. udostępnianie, import/eksport, wybór/wyszukiwanie
 | Obrót/zmiana rozmiaru | Bez dodatkowych wpisów od samej zmiany układu i bez utraty możliwości zamknięcia. Uwzględnić tablet i telefon landscape. |
 | Formularz i trwająca operacja | Zachować istniejącą ochronę niezapisanych zmian i operacji; Wstecz nie obchodzi potwierdzenia ani nie wykonuje działania drugi raz. Dialog nadal nie zwalnia blokad strony tylko przez zamknięcie okna. |
 
-Przejrzeć wszystkie takie dialogi, dopisać wspólną politykę historii do
-źródła mapy i testów nawigacji. Stan zakładek nadal zmieniać przez
-`replaceState`, bez osobnego wpisu na każdą zakładkę. Jest to otwarta
-część E19N przeglądu przejść, powiązana z E20 wyglądu; pierwotnego E7
-nie oznaczać ponownie jako niewykonanego.
+W E19N wdrożono wspólną obsługę dla arkuszy jawnie wymienionych w `PAGES`
+(Gry, Bazy, eksplorator Baz, Logo, Ankiety i Marketplace). `dialog` trafia
+do URL, Back zamyka aktywny arkusz, Forward odtwarza go, a nieznany dialog
+jest odrzucany. Zakładki nadal używają `replaceState`. Przeglądarkowe E2E
+oraz sprawdzenie odświeżenia, stosu i formularzy są jeszcze bramką przed
+zamknięciem tej części E19N; dotychczasowego E7 nie oznaczać ponownie jako
+niewykonanego.
 
 Testy: oba przyciski Wstecz, Android, X, ponowne otwieranie, kilka
 dialogów, Dalej, wejście Go i bezpośredni link, odświeżenie, zmiana
@@ -1177,10 +1179,10 @@ urządzeń przy powrocie. Cofanie w przeglądarce i „Wstecz” mają przywraca
 ten sam kontekst zgodnie z E19N; późniejsze przejście do ustawień z innego
 miejsca nie dziedziczy ukrycia „Graj” ze starego wejścia.
 
-**Stan: dopisane do planu, do wdrożenia w E19N.** Testy: wejście z Control
-→ brak „Graj” w każdym pasku/menu akcji → „Wstecz” przywraca bieżącą
-rozgrywkę; wejście z Gier zachowuje dotychczasowe reguły; back/forward i
-zmiana źródła wejścia nie gubią kontekstu ani nie odtwarzają starego ukrycia.
+**Stan: wdrożone w E19N (2026-10-13).** Ustawienia sprawdzają walidowany
+cel „Wstecz”: po wejściu z Control przycisk „Graj” pozostaje ukryty; z Gier
+zachowuje dotychczasowe zachowanie. Pełny adres ustawień pozostaje w `ret`,
+więc Wstecz/przeglądarkowe cofnięcie przywraca ten sam Control i `id` gry.
 
 ### E19N — odblokowanie Znajomych w Control (ponowione 2026-10-12)
 
@@ -1200,7 +1202,12 @@ bez terminu odblokowania.
 | Pozostałe wejścia Znajomych | Games i inne strony zachowują własny poprawny Wstecz; kontekst Control nie przechodzi na niezależne wejście. |
 | Aktywacja | Po punktowych testach powyższych przejść zamknąć zależność mapy i usunąć `disabled`/opisy blokady; telefon, komputer oraz warianty bez konta. |
 
-**Stan: do wdrożenia w E19N.** Nie jest to ponowne wdrożenie usunięcia
-stron modalnych. Użytkownik zlecił dopisanie do planu; aktualne priorytety:
-zamknięcie bieżącej publikacji Go/jednego licznika i zgłoszenie statystyk
-Control, potem powrót do kolejki.
+**Stan: wdrożone w kodzie E19N (2026-10-13), produkcyjna bramka otwarta.**
+Mapa oznacza przegląd jako ukończony, diagramy pokazują aktywne Control → Znajomi. Przycisk dla konta
+przechodzi przez zwykłą stronę i przenosi bieżący adres Control z `id` gry
+w dozwolonym `ret`. `beforeLeave` zachowuje dotychczasowe ostrzeżenie i
+kończy aktywność sesji; wspólna blokada jest jawnie zwalniana przed
+przejściem, a powrót ponownie sprawdza dostęp, sesję i blokady. Skróty
+z Games i innych wejść pozostają niezależne. Weryfikacja punktowa:
+`tests/unit/navButtons.test.js` 17/17 i `tests/unit/pageInit.test.js` 24/24;
+Pages i produkcyjny test Control po publikacji są bramką końcową E19.

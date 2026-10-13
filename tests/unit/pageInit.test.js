@@ -302,12 +302,12 @@ test("przyciski: odnośnik <a> dostaje href zamiast nasłuchu", async () => {
   assert.equal(els.btnLegal.listeners.click, undefined);
 });
 
-test("Control: initPage wymusza blokadę z PAGES niezależnie od początkowego HTML", async () => {
+test("Control: aktywny skrót do Znajomych czeka na kontrolę leave", async () => {
   els.btnFriends = fakeEl();
   els.btnFriends.disabled = false;
   loc.pathname = "/control/";
   await initPage("control", {deps:makeDeps().deps});
-  assert.equal(els.btnFriends.disabled, true);
-  assert.equal(els.btnFriends.dataset.navBlockedUntil, "modalPagesReview");
+  assert.equal(els.btnFriends.disabled, false);
+  assert.equal(els.btnFriends.dataset.navBlockedUntil, undefined);
   assert.equal(els.btnFriends.listeners.click, undefined);
 });

@@ -3505,3 +3505,32 @@ test("control2: tryb testowy — guard, trzy iframe, odświeżenie, buzzer i zap
     await attachStatistics(testInfo, 'test-mode', await readControl2Sessions(page, game.id));
   } finally { await deleteGame(page, game.id); }
 });
+
+test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({ page }, testInfo) => {
+  test.setTimeout(90000);
+  await page.setViewportSize({ width: 1400, height: 960 });
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-E19N-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  try {
+    await page.goto(`/control/?id=${encodeURIComponent(game.id)}&lang=pl`);
+    await expect(page.locator("#btnFriends")).toBeVisible({ timeout: 20000 });
+    await page.locator("#btnFriends").click();
+    await page.waitForURL(/\/friends\//, { timeout: 15000 });
+    const ret = new URL(page.url()).searchParams.get("ret");
+    expect(ret).toBe(`/control/?id=${game.id}`);
+    await page.locator("#btnBack").click();
+    await page.waitForURL(url => url.pathname === "/control/" && url.searchParams.get("id") === game.id, { timeout: 20000 });
+
+    const controlUrl = `/control/?id=${encodeURIComponent(game.id)}&lang=pl`;
+    const settingsWithControl = `/games/settings/?id=${encodeURIComponent(game.id)}&lang=pl&ret=${encodeURIComponent(controlUrl)}`;
+    await page.goto(settingsWithControl);
+    await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 20000 });
+    await expect(page.locator("#btnPlay")).toBeHidden();
+
+    await page.goto(`/games/settings/?id=${encodeURIComponent(game.id)}&lang=pl&ret=%2Fgames%2F`);
+    await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 20000 });
+    await expect(page.locator("#btnPlay")).toBeVisible();
+  } finally {
+    await deleteGame(page, game.id);
+  }
+});
