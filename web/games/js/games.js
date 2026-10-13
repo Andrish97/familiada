@@ -1,39 +1,41 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T03222";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T03222";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T03222";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-13T03222";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T03222";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T03222";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T03222";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-13T03222";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T03222";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-13T03222";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-13T03222";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-13T04425";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T04425";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T04425";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T04425";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T04425";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-13T04425";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T04425";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T04425";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T04425";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-13T04425";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T04425";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-13T04425";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-13T04425";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T03222";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-13T03222";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T03222";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T04425";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-13T04425";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T04425";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-13T03222";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-13T03222';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-13T04425";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-13T04425';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-13T03222";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-13T04425";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-13T03222";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T03222";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T03222";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T03222";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T03222";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-13T04425";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T04425";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T04425";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T04425";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T04425";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -116,6 +118,7 @@ const navMore = document.getElementById("navMore");
 const btnMore = document.getElementById("btnMore");
 const navMoreDropdown = document.getElementById("navMoreDropdown");
 
+const btnDuplicate = document.getElementById("btnDuplicate");
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
 const btnExportBase = document.getElementById("btnExportBase");
@@ -736,6 +739,7 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnSettings) btnSettings.disabled = !hasSel;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
+  if (btnDuplicate) btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canExport || isGuestUser(currentUser);
 }
 /* ================= Tabs ================= */
 // Karty i domyślna (pierwsza) z mapy stron; nazwy kart = wartości TYPES.
@@ -1232,6 +1236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   currentUser = await userP;
   if (!currentUser) return; // initPage przekierował na logowanie
+  bindResourceDuplicate({button:btnDuplicate,kind:"game",getSource:()=>gamesAll.find(g=>g.id===selectedId),onDone:async id=>{selectedId=id;const g=await loadGameBasic(id);setActiveTab(uiTypeFromRow(g));await refresh();},onState:()=>void updateActionState()});
 
   await maybeShowGuestInfoModal(currentUser);
   maybeShowGuestMigrateReminder(currentUser);

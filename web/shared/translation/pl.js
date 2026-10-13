@@ -11,6 +11,17 @@ const pl = {
     label: "Polski",
     icon: "flag-pl",
   },
+  resourceDuplicate: {
+  "action": "Powiel",
+  "busy": "Zasób jest zajęty. Spróbuj ponownie.",
+  "pending": "Najpierw zaakceptuj otrzymany zasób.",
+  "notExportable": "Tej gry nie można teraz powielić.",
+  "missing": "Nie ma już tego zasobu.",
+  "expired": "Ta próba wygasła. Spróbuj ponownie.",
+  "unavailable": "Powielanie jest teraz niedostępne.",
+  "image": "Nie udało się skopiować obrazu. Spróbuj ponownie.",
+  "failed": "Nie udało się powielić zasobu. Spróbuj ponownie."
+},
   common: {
     sort: {
       label: "Sortowanie",

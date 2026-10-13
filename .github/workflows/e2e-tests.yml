@@ -324,6 +324,23 @@ jobs:
             git push
           fi
 
+      - name: Publish requested duplication screenshots
+        if: ${{ success() && inputs.publish_transfer_screenshots && contains(inputs.spec_filter, 'e2e/resource-duplicate-ui.spec.js') }}
+        env:
+          EVIDENCE_RUN_ID: ${{ github.run_id }}
+          EVIDENCE_SHA: ${{ github.sha }}
+        run: |
+          python3 scripts/agent-tools/publish-duplicate-screenshots.py
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add docs/img/transfer/duplicate
+          if ! git diff --cached --quiet; then
+            node --test --test-concurrency=1 tests/unit/*.test.js
+            git commit -m "docs(resources): duplication screenshots [skip ci]"
+            git pull --rebase
+            git push
+          fi
+
       - name: Publish requested mail screenshots
         if: ${{ success() && inputs.publish_mail_screenshots && contains(inputs.spec_filter, 'e2e/mail-center.spec.js') }}
         env:
