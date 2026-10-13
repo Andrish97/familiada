@@ -14,7 +14,7 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
 | E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
-| E19N | Teraz. Domknąć przegląd przejść, URL dialogów i powroty, następnie wdrożyć Control→Znajomi i sprawdzić na produkcji. Użytkownik kazał zatrzymać pracę po całym E19. |
+| E19N | W toku. E2E mobile sheet Back/Forward `38365106560` success1/1. Test zbiorczy `38365274862` zatrzymał się przed E2E, bo `tasksPage.test` nie uwzględniał dynamicznego globalnego dialogu; oczekiwanie poprawione na `t,dialog`, pełne unity lokalnie602/602. Dalej punktowe branch E2E starych przejść i Control→Znajomi, Pages/main i produkcyjna kontrola. |
 | Po E19 | Następne dla kolejnego agenta: E14 → E20 → Manual. Nie rozpoczynać teraz. |
 
 ## Aktualny checkpoint: E19C zamknięte, E19N w toku
@@ -36,8 +36,9 @@ Bramka migracji367, Worker, Edge Functions, Pages i kontrola po wdrożeniu są s
 E19N aktywna: z mapy przejść odblokowano skrót Control → Znajomi i dodano
 ukrycie „Graj” w Ustawieniach otwartych z Control. Arkusze mobilne mają
 dozwolone `?dialog=` w PAGES; Wstecz topbara/przeglądarki zamyka arkusz,
-Dalej odtwarza go. Test punktowy: navButtons17/17 i pageInit24/24. Przed
-zamknięciem E19: przeglądarkowe E2E, Pages i punktowa kontrola produkcyjna.
+Dalej odtwarza go. Unit po korekcie globalnego stanu `dialog`:602/602.
+Branch E2E Back/Forward dla arkusza green; pozostałe przejścia, Pages i
+punktowa kontrola produkcyjna nadal otwarte.
 
 E19C zostało wdrożone i zweryfikowane produkcyjnie zgodnie z wymaganym
 cyklem. Worker/Edge/Pages są wdrożone, migracja367 jest zastosowana,

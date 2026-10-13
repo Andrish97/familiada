@@ -14,7 +14,8 @@ test("tasks: wpis w PAGES, trasa Workera, przycisk na liście gier", () => {
   assert.equal(PAGES.tasks.access, "user");
   assert.equal(PAGES.tasks.parent, "games");
   assert.ok(PAGES.tasks.from.includes("games"));
-  assert.deepEqual(PAGES.tasks.state, ["t"]);
+  assert.deepEqual(PAGES.tasks.state, ["t", "dialog"]);
+  assert.equal(PAGES.tasks.dialogs, undefined);
   assert.deepEqual(PAGES.games.buttons.btnTasks, { to: "tasks", roles: ["user"] });
   assert.match(read("cloudflare/maintenance-worker/src/lib/origin/origin.js"), /"friends", "subscribers", "tasks"/);
   assert.match(read("web/games/index.html"), /id="btnTasks"/);
