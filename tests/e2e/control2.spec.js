@@ -70,7 +70,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE === "1") {
-    await serveBranchCode(context, { pages: ["control", "settings", "go"] });
+    await serveBranchCode(context, { pages: ["control", "settings", "games/settings", "go"] });
   }
 });
 
@@ -78,7 +78,7 @@ test.beforeEach(async ({ context }) => {
 async function controlContext(browser, options = {}) {
   const context = await browser.newContext({ ...options, serviceWorkers: "block" });
   if (process.env.TEST_BRANCH_CODE === "1") {
-    await serveBranchCode(context, { pages: ["control", "settings", "go"] });
+    await serveBranchCode(context, { pages: ["control", "settings", "games/settings", "go"] });
   }
   return context;
 }

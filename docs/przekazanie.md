@@ -14,7 +14,7 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
 | E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
-| E19N | W toku. E2E mobile sheet Back/Forward `38365106560` success1/1. Run `38365864772`: unit green, E2E10/12; arkusz Back/Forward green. Run `38367040021`: unit green, 3/4 przejść green (w tym nowy Control shortcut z mapy i istniejące Bazy/manual/kontakty); E19N powrót nadal nie przechodził, bo test klikał przed dołączeniem handlera `initPage` do topbara. Dodano oczekiwanie na `domcontentloaded` i `.topbar-ready` przed kliknięciem. Pełne unity lokalnie602/602. Ponowić punktowe E2E, następnie Pages/main i produkcyjna kontrola. |
+| E19N | W toku. E2E mobile sheet Back/Forward `38365106560` success1/1. Run `38365864772`: unit green, E2E10/12; arkusz Back/Forward green. Run `38367040021`: unit green, 3/4 przejść green (w tym Control shortcut z mapy i Bazy/manual/kontakty); test Control klikał przed handlerem `initPage`, dodano synchronizację DOM/topbar. Run `38367577385` potwierdził powrót do tej samej gry, ale fixture branch-code mapował `/games/settings/` zamiast właściwego `games/settings/index.html`; dodano jawne mapowanie. Pełne unity lokalnie602/602. Ponowić punktowe E2E, następnie Pages/main i produkcyjna kontrola. |
 | Po E19 | Następne dla kolejnego agenta: E14 → E20 → Manual. Nie rozpoczynać teraz. |
 
 ## Aktualny checkpoint: E19C zamknięte, E19N w toku
@@ -41,8 +41,10 @@ Branch E2E Back/Forward dla arkusza green. W runie `38365864772` stare
 oczekiwanie blokady Control→Znajomi okazało się nieaktualne; test mapy
 zaktualizowano do aktywnego skrótu z powrotem (green w `38367040021`). Test
 Control powrotu klikał przed podpięciem handlera topbara; dodano synchronizację
-na `domcontentloaded` i `.topbar-ready`. Pełne przejście Control→Znajomi→ta sama
-gra oraz publikacja Pages i punktowa kontrola produkcyjna nadal otwarte.
+na `domcontentloaded` i `.topbar-ready`. Run `38367577385` potwierdził
+Control→Znajomi→ta sama gra, ale wykrył nieprawidłowe fixture mapping dla
+`/games/settings/`; dodano `games/settings` do listy stron branch-code.
+Powtórzyć E2E ustawień, potem publikacja Pages i produkcyjna kontrola.
 
 E19C zostało wdrożone i zweryfikowane produkcyjnie zgodnie z wymaganym
 cyklem. Worker/Edge/Pages są wdrożone, migracja367 jest zastosowana,
