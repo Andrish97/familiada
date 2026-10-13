@@ -181,8 +181,13 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
       await expect(button.locator(`svg.ico-${subscribers ? "envelope" : "people"}`)).toHaveCount(1);
       expect(await button.evaluate(el => el.dataset.navHidden)).not.toBe("true");
       if (source === "/control/") {
-        await expect(button).toBeDisabled();
-        await expect(button).toHaveAttribute("data-nav-blocked-until", "modalPagesReview");
+        await expect(button).toBeEnabled();
+        await clickEl(button);
+        await expect.poll(() => new URL(page.url()).pathname).toBe("/friends/");
+        expect(new URL(page.url()).searchParams.get("ret")).toBe(source);
+        await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
+        await page.locator("#btnBack").click();
+        await expect.poll(() => new URL(page.url()).pathname).toBe(source);
         continue;
       }
       await clickEl(button);

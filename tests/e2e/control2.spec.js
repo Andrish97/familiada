@@ -3519,7 +3519,8 @@ test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({
     const ret = new URL(page.url()).searchParams.get("ret");
     expect(ret).toBe(`/control/?id=${game.id}`);
     await page.locator("#btnBack").click();
-    await page.waitForURL(url => url.pathname === "/control/" && url.searchParams.get("id") === game.id, { timeout: 20000 });
+    await page.waitForURL(url => url.pathname === "/control/" && url.searchParams.get("id") === game.id, { timeout: 20000, waitUntil: "domcontentloaded" });
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
 
     const controlUrl = `/control/?id=${encodeURIComponent(game.id)}&lang=pl`;
     const settingsWithControl = `/games/settings/?id=${encodeURIComponent(game.id)}&lang=pl&ret=${encodeURIComponent(controlUrl)}`;
