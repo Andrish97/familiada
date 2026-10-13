@@ -19,7 +19,7 @@
 
 const fs = require("fs");
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { loginAsTestUser, loginAsPooledTestUser, testAccountUsername } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const GAMES_URL = "https://www.familiada.online/games";
@@ -96,7 +96,7 @@ function tileByName(page, name) {
 /* ================= E20: nagłówek wspólny Gier/Baz/Logo ================= */
 
 test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na komputerze i telefonie", async ({ page, context }, testInfo) => {
-  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await loginAsPooledTestUser(page, context, 0);
   await serveBranchCode(context, { pages: ["games", "bases", "logo"] });
   const pages = [
     { path: "/games/", action: "#btnEdit", name: "Edytuj", screenshot: "games" },
