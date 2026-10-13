@@ -95,21 +95,30 @@ function tileByName(page, name) {
 
 /* ================= E20: nagłówek wspólny Gier/Baz/Logo ================= */
 
-test("E20: akcje po lewej, tytuł i podpowiedź po prawej na komputerze i telefonie", async ({ page, context }, testInfo) => {
+test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na komputerze i telefonie", async ({ page, context }, testInfo) => {
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await serveBranchCode(context, { pages: ["games", "bases", "logo"] });
+  const pages = [
+    { path: "/games/", action: "#btnEdit", name: "Edytuj", screenshot: "games" },
+    { path: "/bases/", action: "#btnBrowse", name: "Przeglądaj", screenshot: "bases" },
+    { path: "/logo/", action: "#btnEdit", name: "Edytuj", screenshot: "logo" },
+  ];
   for (const width of [1400, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
-    await openGames(page);
-    const boxes = await page.evaluate(() => {
-      const actions = document.querySelector(".bar > .actions").getBoundingClientRect();
-      const heading = document.querySelector(".bar > :first-child").getBoundingClientRect();
-      return { actions: { left: actions.left, right: actions.right }, heading: { left: heading.left, right: heading.right } };
-    });
-    expect(boxes.actions.right, `actions overlap title at ${width}px`).toBeLessThanOrEqual(boxes.heading.left + 1);
-    expect(boxes.heading.right, `title is outside the right column at ${width}px`).toBeLessThanOrEqual(width - 8);
-    await expect(page.locator("#btnEdit .ico")).toBeVisible();
-    await expect(page.locator("#btnEdit")).toHaveAccessibleName("Edytuj");
-    await page.screenshot({ path: testInfo.outputPath(`e20-games-${width}.png`), fullPage: true });
+    for (const item of pages) {
+      await page.goto(`https://www.familiada.online${item.path}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const boxes = await page.evaluate(() => {
+        const actions = document.querySelector(".bar > .actions").getBoundingClientRect();
+        const heading = document.querySelector(".bar > :first-child").getBoundingClientRect();
+        return { actions: { left: actions.left, right: actions.right }, heading: { left: heading.left, right: heading.right } };
+      });
+      expect(boxes.actions.right, `${item.path}: actions overlap title at ${width}px`).toBeLessThanOrEqual(boxes.heading.left + 1);
+      expect(boxes.heading.right, `${item.path}: title is outside the right column at ${width}px`).toBeLessThanOrEqual(width - 8);
+      await expect(page.locator(`${item.action} .ico`)).toBeVisible();
+      await expect(page.locator(item.action)).toHaveAccessibleName(item.name);
+      await page.screenshot({ path: testInfo.outputPath(`e20-${item.screenshot}-${width}.png`), fullPage: true });
+    }
   }
 });
 
