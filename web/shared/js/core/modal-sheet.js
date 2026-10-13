@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-13T07415";
-import { icon, iconText } from "./icons.js?v=v2026-10-13T07415";
-import { PAGES } from "./nav-map.js?v=v2026-10-13T07415";
+import { t } from "../../translation/translation.js?v=v2026-10-13T07454";
+import { icon, iconText } from "./icons.js?v=v2026-10-13T07454";
+import { PAGES } from "./nav-map.js?v=v2026-10-13T07454";
 
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = typeof window !== "undefined" && window.matchMedia
@@ -86,7 +86,19 @@ export function setModalSheetPage(pageId) {
   if (!key) return;
   const allowed = (PAGES[pageId]?.dialogs || []).includes(key);
   const overlay = allowed ? document.getElementById(key) : null;
-  if (overlay) setTimeout(() => { if (!activeClose && urlDialog() === key) showRoutedOverlay(overlay); }, 0);
+  if (overlay) {
+    // A directly opened URL still gets an in-page parent history entry, so
+    // Back closes the dialog instead of leaving the site. Refresh preserves
+    // the marker and does not add another layer.
+    if (history.state?.__sheetDialog !== key) {
+      const dialogUrl = new URL(location.href);
+      const parentUrl = new URL(dialogUrl);
+      parentUrl.searchParams.delete("dialog");
+      history.replaceState({ ...(history.state || {}), __sheetParent: key }, "", `${parentUrl.pathname}${parentUrl.search}${parentUrl.hash}`);
+      history.pushState({ __sheetDialog: key }, "", `${dialogUrl.pathname}${dialogUrl.search}${dialogUrl.hash}`);
+    }
+    setTimeout(() => { if (!activeClose && urlDialog() === key) showRoutedOverlay(overlay); }, 0);
+  }
   else {
     const url = new URL(location.href);
     url.searchParams.delete("dialog");

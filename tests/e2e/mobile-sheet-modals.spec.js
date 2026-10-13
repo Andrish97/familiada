@@ -120,6 +120,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       const overlay = page.locator("#shareOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
       await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
+      await expect.poll(() => page.evaluate(() => history.state?.__sheetDialog || null)).toBe("shareOverlay");
 
       const box = await overlay.locator(".modal").boundingBox();
       expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
@@ -212,6 +213,7 @@ test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modal
       expect(new URL(page.url()).searchParams.has("dialog")).toBe(false);
 
       await page.goForward();
+      await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
       await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
       await page.goBack();
