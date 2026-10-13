@@ -1946,7 +1946,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, { step: step || MSG.importSave(), i, n, msg, isError });
       });
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-        step: MSG.importDone(), done: true, i: qCount, n: qCount, msg: MSG.importDone(),
+        step: MSG.importDone(), done: true, i: qCount, n: qCount, msg: "",
       });
       selectedId = newId;
       try { const ng = await loadGameBasic(newId); if (ng?.type) setActiveTab(uiTypeFromRow(ng)); } catch {}

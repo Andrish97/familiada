@@ -26,6 +26,7 @@ test('actual import action leaves completed progress and Done; Done closes witho
  assert.equal(ui.context.importCompleted,true);assert.equal(ui.closes(),0);assert.equal(ui.imports(),1);
  assert.equal(ui.btn.disabled,false);assert.equal(ui.btn.attrs['data-i18n'],'games.import.done');
  assert.equal(ui.visible.at(-1),true);assert.equal(ui.progress.at(-1).done,true);
+ assert.equal(ui.progress.at(-1).msg,'');
  await ui.click();assert.equal(ui.closes(),1);assert.equal(ui.imports(),1);
  ui.context.resetImport();assert.equal(ui.context.importCompleted,false);assert.equal(ui.context.importParsed,null);
  assert.equal(ui.btn.attrs['data-i18n'],'games.import.confirm');assert.equal(ui.btn.disabled,true);assert.equal(ui.visible.at(-1),false);
