@@ -70,7 +70,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     filterValue = filterFromSearch(location.search, filter.param, filter.options.map((o) => o.value));
     const wrap = document.createElement("div");
     wrap.className = "ui-select list-filter";
-    wrap.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
+    wrap.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="filter"></i></span><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
     slot.insertBefore(wrap, box);
     const opts = () => [{ value: "", label: t(filter.allKey) }, ...filter.options.map((o) => ({ value: o.value, label: t(o.labelKey) }))];
     const aria = () => wrap.querySelector(".ui-select-btn")?.setAttribute("aria-label", t(filter.ariaKey));
@@ -93,7 +93,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     sortValue = filterFromSearch(location.search, sort.param, sort.options.map((o) => o.value));
     const wrapS = document.createElement("div");
     wrapS.className = "ui-select list-sort";
-    wrapS.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
+    wrapS.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="sort"></i></span><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
     slot.insertBefore(wrapS, slot.firstChild);
     const optsS = () => [{ value: "", label: t(sort.defaultKey) }, ...sort.options.map((o) => ({ value: o.value, label: t(o.labelKey) }))];
     const ariaS = () => wrapS.querySelector(".ui-select-btn")?.setAttribute("aria-label", t(sort.ariaKey));

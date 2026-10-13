@@ -875,12 +875,22 @@ body.games-body > main.wrap{
   border-color: var(--gold); background: rgba(255, 215, 0, .12);
 }
 @media (max-width: 600px){
-  .list-filter.ui-select, .list-sort.ui-select{ flex: 1 1 0; width: auto; min-width: 0; }
+  .games-bottom-left{ flex: 0 1 auto; min-width: 0; gap: 4px; }
+  .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
+  .games-bottom-left > #btnReceivedFilter[aria-pressed="true"]{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
+  .list-filter.ui-select, .list-sort.ui-select{ flex: 0 0 36px; width: 36px; min-width: 36px; }
+  .list-filter .ui-select-btn, .list-sort .ui-select-btn{ width: 36px; height: 36px; padding: 0; justify-content: center; }
+  .list-filter .ui-select-label, .list-filter .ui-select-caret,
+  .list-sort .ui-select-label, .list-sort .ui-select-caret{ display: none; }
+  .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{ color: var(--gold); }
   .list-filter .ui-select-menu, .list-sort .ui-select-menu{ max-height: min(55dvh, 420px); }
-  .list-filter .ui-select-item, .list-sort .ui-select-item{ min-height: 42px; }
+  .list-filter .ui-select-item, .list-sort .ui-select-item{ min-height: 44px; }
+  .games-bottom-right{ gap: 4px; }
+  .games-bottom-right .btn{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
+  .games-bottom-right .btn .ico, .games-bottom-left > #btnReceivedFilter .ico{ width: 18px; height: 18px; }
   .games-bottom-left .list-search{ flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
   .list-search .searchText, .list-search .list-search-clear{ display: none; }
-  .list-search .list-search-open{ display: grid; width: 40px; height: 40px; padding: 0; border-radius: 10px; }
+  .list-search .list-search-open{ display: grid; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
   .list-search-open.is-active{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
 }
 .list-empty{

@@ -117,6 +117,13 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
       expect(boxes.heading.right, `${item.path}: title is outside the right column at ${width}px`).toBeLessThanOrEqual(width - 8);
       await expect(page.locator(`${item.action} .ico`)).toBeVisible();
       await expect(page.locator(item.action)).toHaveAccessibleName(item.name);
+      if (width === 390) {
+        for (const selector of ["#btnExport", "#btnImport"]) {
+          await expect(page.locator(`${selector} .ico`)).toBeVisible();
+          await expect(page.locator(selector)).toHaveAttribute("aria-label", /.+/);
+        }
+        await expect(page.locator(".list-search-open .ico")).toBeVisible();
+      }
       await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${width}.png`), fullPage: true });
     }
   }

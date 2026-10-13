@@ -16,7 +16,7 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
 | E19N | **Gotowe produkcyjnie.** Branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte z Control i widoczne z Gier. Main `38369193504` success5/5; test bezpośredniego URL/odświeżenia arkusza main `38370189342` success1/1. Pages38369096986, Worker38369096732. Full unit602/602. E19 zamknięte na main `d847175100`. |
 | E14 | **Gotowe produkcyjnie**: DB/migracja368/smoke `38372090287`, Edge `38372090225`, main delete-account `38372530495`, po migracji stary RPC punktowo `38373614192`. |
-| E20 → Manual | W toku: branch ma wspólny nagłówek Gier/Baz/Logo (akcje lewo, tytuł/podpowiedź prawo), główne ikony akcji i etykiety dostępności na telefonie; E2E tych zmian do wykonania. Reszta przeglądu UI, mobile/tablet/landscape pozostaje otwarta. Instrukcja na końcu. |
+| E20 → Manual | W toku: wspólny nagłówek Gier/Baz/Logo, ikony akcji, telefonowy modal wyszukiwania, ikony/aktywne stany filtrów i sortowania. Branżowe E2E 38375069382: 2/2, sześć zrzutów 390/1400. Pozostałe typy UI, stopniowe ładowanie, landscape/tablet i operacje import/eksport nadal otwarte. Instrukcja na końcu. |
 
 ## Aktualny checkpoint: E19 zamknięte produkcyjnie
 

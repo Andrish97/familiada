@@ -65,6 +65,8 @@ export const ICONS = Object.freeze({
   image: s('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.8"/><path d="m21 15.5-3.6-3.6a1.8 1.8 0 0 0-2.5 0L5.5 21"/>'),
   save: s('<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7M7 3v4a1 1 0 0 0 1 1h7"/>'),
   search: s(SEARCH_BODY),
+  filter: s('<path d="M3 4h18l-7.2 8.1v5.3l-3.6 2.6v-7.9Z"/>'),
+  sort: s('<path d="M7 4v16M4 7l3-3 3 3M17 20V4m-3 13 3 3 3-3"/>'),
   "zoom-in": s(`${SEARCH_BODY}<path d="M11 8v6M8 11h6"/>`),
   "zoom-out": s(`${SEARCH_BODY}<path d="M8 11h6"/>`),
   "align-left": s('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),
@@ -106,6 +108,7 @@ export const ICONS = Object.freeze({
   home: s('<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-7h6v7"/>'),
   gamepad: s('<path d="M6.7 5h10.6a4 4 0 0 1 3.9 3.1l1.4 6.1a3.9 3.9 0 0 1-6.6 3.6L14.2 16H9.8L8 17.8a3.9 3.9 0 0 1-6.6-3.6l1.4-6.1A4 4 0 0 1 6.7 5Z"/><path d="M7 9v5M4.5 11.5h5"/><circle cx="16.5" cy="10" r=".8" fill="currentColor" stroke="none"/><circle cx="19" cy="12.5" r=".8" fill="currentColor" stroke="none"/>'),
   settings: s('<path d="M10 2.8h4l.7 2.4 2 .9 2.2-1.1 2.8 2.8-1.1 2.2.9 2 .7 2.4h-4l-.7-2.4-2-.9-2.2 1.1-2.8-2.8 1.1-2.2-.9-2Z"/><circle cx="12" cy="12" r="3.2"/>'),
+  "database-down": s('<ellipse cx="12" cy="5" rx="8.5" ry="3"/><path d="M3.5 5v10c0 1.7 3.8 3 8.5 3 1.3 0 2.5-.1 3.6-.3M20.5 5v6M3.5 10c0 1.7 3.8 3 8.5 3"/><path d="M18.5 14v7m-3-3 3 3 3-3"/>'),
   drawer: s('<rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M4 12h16M10 7h4M10 16.5h4"/>'),
   // rysunek z audytu: słupki na tle poziomych podziałek
   polls: f('<rect x="2" y="20" width="20" height="1.4" rx=".7" opacity=".5"/><rect x="2" y="15.5" width="20" height="1.1" rx=".55" opacity=".28"/><rect x="2" y="10.5" width="20" height="1.1" rx=".55" opacity=".28"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10" y="15" width="4" height="5" rx="1"/><rect x="16" y="6" width="4" height="14" rx="1"/>'),

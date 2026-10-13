@@ -23,9 +23,12 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
     const maxMenuHeight = 260;
     const spaceBelow = window.innerHeight - rect.bottom - 6;
     const spaceAbove = rect.top - 6;
+    const roomy = root.matches(".list-filter, .list-sort");
+    const menuWidth = Math.min(roomy ? Math.max(rect.width, 220) : rect.width, window.innerWidth - 16);
+    const menuLeft = roomy ? Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8)) : rect.left;
     menu.style.position = "fixed";
-    menu.style.left = rect.left + "px";
-    menu.style.width = rect.width + "px";
+    menu.style.left = menuLeft + "px";
+    menu.style.width = menuWidth + "px";
     menu.style.right = "auto";
     menu.style.zIndex = "200";
     if (spaceBelow >= Math.min(maxMenuHeight, spaceAbove) || spaceBelow >= spaceAbove) {
