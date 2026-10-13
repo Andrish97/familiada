@@ -56,7 +56,9 @@ test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async 
     await expect(page.locator("#gameDetailOverlay")).toBeVisible();
     await expect(page.locator("#detailTitle")).toContainText(title);
     await page.screenshot({ path: testInfo.outputPath("shot-e20-marketplace-phone-detail.png"), fullPage: true });
-    await page.locator("#btnDetailClose").click();
+    // W mobilnym sheet własny przycisk „×” jest ukryty. Zamyka go
+    // widoczny przycisk Wstecz w topbarze.
+    await page.locator("#btnGoGames").click();
     await expect(page.locator("#gameDetailOverlay")).toBeHidden();
     await expect(page.locator("#searchInput")).toHaveValue(title);
     await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);

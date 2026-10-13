@@ -100,6 +100,7 @@ async function capture(page, profile, id, href, manifest, prepare = null) {
     viewportWidth: innerWidth,
     bodyHeight: document.body?.scrollHeight || 0,
     pageText: document.body?.innerText?.slice(0, 500) || "",
+    loading: document.documentElement.classList.contains("page-loading"),
   }));
   const file = `${id}.png`;
   fs.mkdirSync(path.join(OUT, profile.id), { recursive: true });
@@ -151,6 +152,8 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       }
       fs.writeFileSync(path.join(OUT, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
       expect(manifest).toHaveLength(selectedUrls.length + extra.length);
+      const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1 || entry.loading);
+      expect(layoutIssues, `Problemy szerokości lub niedokończone ładowanie: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth, loading }) => ({ id, url, scrollWidth, viewportWidth, loading })))}`).toEqual([]);
     } finally {
       await context.close();
     }
