@@ -94,6 +94,58 @@ async function getUserId(page) {
 }
 
 
+test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", async ({ browser }) => {
+  test.setTimeout(90_000);
+  const portrait = { width: 390, height: 844 };
+  const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
+    viewport: portrait, screen: portrait, isMobile: true, hasTouch: true,
+  });
+  const name = `E20-BS-ROTATE-${Date.now()}`;
+  let baseId;
+  try {
+    baseId = await createBaseDirect(page, name);
+    await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    const tile = page.locator("#mineGrid .card", { hasText: name });
+    await expect(tile).toBeVisible();
+    await tile.tap();
+    await page.locator("#btnShare").tap();
+
+    const overlay = page.locator("#shareOverlay");
+    await expect(overlay).toBeVisible();
+    await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
+    const assertSheetFits = async (label) => {
+      const sizes = await page.evaluate(() => ({
+        viewport: document.documentElement.clientWidth,
+        document: document.documentElement.scrollWidth,
+        modal: document.querySelector("#shareOverlay .modal").getBoundingClientRect(),
+      }));
+      expect(sizes.document, `${label}: document overflow`).toBeLessThanOrEqual(sizes.viewport + 1);
+      expect(sizes.modal.left, `${label}: modal is outside viewport`).toBeGreaterThanOrEqual(-1);
+      expect(sizes.modal.right, `${label}: modal is outside viewport`).toBeLessThanOrEqual(sizes.viewport + 1);
+    };
+    await assertSheetFits("portrait");
+
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(overlay).toBeVisible();
+    await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
+    await expect(page.locator("#shareEmail")).toBeVisible();
+    await assertSheetFits("landscape");
+
+    await page.setViewportSize(portrait);
+    await expect(overlay).toBeVisible();
+    await expect(page.locator("#shareEmail")).toBeVisible();
+    await assertSheetFits("portrait after rotate");
+    await page.locator("#btnBack").tap();
+    await expect(overlay).toBeHidden();
+    await expect.poll(() => new URL(page.url()).searchParams.has("dialog")).toBe(false);
+  } finally {
+    if (baseId) await deleteBaseDirect(page, baseId);
+    await ctx.close();
+  }
+});
+
+
 // Symuluje "ktoś inny właśnie edytuje coś w środku tej bazy" -- to samo RPC
 // co acquireResourceLock()/acquireResourceLocks() w przeglądarce
 // (js/core/resource-lock.js), z jednorazowym tab_id.
