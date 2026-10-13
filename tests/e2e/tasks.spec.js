@@ -115,7 +115,9 @@ for (const viewport of [
           await expect(row.locator(".rowsNote--mobile")).not.toContainText("11.10.2026");
           expect((await row.boundingBox()).height).toBeLessThanOrEqual(104);
           if (task.state !== "done") {
-            await expect(row.locator(".rowsActText")).toBeHidden();
+            const allActionLabelsHidden = await row.locator(".rowsActText").evaluateAll((labels) =>
+              labels.every((label) => getComputedStyle(label).display === "none"));
+            expect(allActionLabelsHidden).toBe(true);
             await expect(row.locator(".rowsActIcon").first()).toBeVisible();
           }
         } else {
