@@ -932,7 +932,7 @@ wyglądu. E20 dopracowuje je razem według jednego wzorca.
 | Wyszukiwanie | Pole ma wysokość 36 px jak sąsiednie akcje. Lupa jest osobnym przyciskiem po prawej stronie pola, a mały X wewnątrz pola czyści wpis. Na wąskim telefonie dolny pasek może pokazywać samą lupę otwierającą modal. |
 | Wyszukiwanie i filtrowanie na telefonie | Kompaktowe ikony filtra/sortowania i lupy; po otwarciu lupy modal z zatwierdzeniem OK. Zostawić przestrzeń listy i zachować dostępne etykiety dla czytników. |
 | Pozostałe typy stron | Ujednolicać w ramach ich własnego typu (np. edytory oraz strony kontaktów), zgodnie z ustalonym dla nich podziałem. |
-| Weryfikacja | Te same reguły na trzech stronach; telefon pionowo i poziomo oraz komputer, krótkie/długie tytuły i podpowiedzi, PL/EN/UK. Zrzuty z przykładowymi danymi po wykonaniu. |
+| Weryfikacja | Każda strona osobno: pięć zrzutów — MacBook, iPad portrait, iPad landscape, iPhone portrait, iPhone landscape. Zrzuty mają pokazywać różnicę układu lub właściwy stan guarda; przy stronie z istotnymi, różnymi stanami ująć te stany zamiast powielać niemal identyczne obrazy. Wszystkie wykonane po poprawkach, z danymi z rzeczywistej bazy. |
 
 Ta reguła zastępuje wcześniejsze stałe kolumny nagłówka. Tytuł zawsze
 zaczyna się od lewej, a wyrównanie akcji zależy od tego, czy mieszczą się
