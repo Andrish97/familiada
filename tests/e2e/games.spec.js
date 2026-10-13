@@ -227,6 +227,17 @@ test("E20: lista Logo ujawnia błąd pierwszego odczytu zamiast pustej siatki", 
   await expect(page.locator("#msg")).not.toBeEmpty();
 });
 
+test("E20: Bazy ujawniają błąd pierwszego odczytu po odsłonięciu sekcji", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await serveBranchCode(context, { pages: ["bases"] });
+  await page.route("**/rest/v1/question_bases*", (route) => route.fulfill({
+    status: 500, contentType: "application/json", body: JSON.stringify({ message: "E20 test base load failure" }),
+  }));
+  await page.goto("https://www.familiada.online/bases/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#basesSectionMine")).toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#hint")).not.toBeEmpty();
+});
+
 test.describe("games: audyt -- kafelki", () => {
 
   test("telefon: tapnięcie zaznacza bez przebudowy listy, podwójne otwiera zmianę nazwy", async ({ browser }) => {
