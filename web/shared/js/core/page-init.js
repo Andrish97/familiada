@@ -180,5 +180,18 @@ export async function initPage(id, opts = {}) {
     return null;
   }
 
+  // Account notices are shared across authenticated pages, not tied to the
+  // Games library. Await the same blocking modal flow everywhere so users
+  // don't miss a one-time notice while the page continues initializing.
+  if (!new Set(["login", "privacy", "mailCenter", "connectDevice"]).has(id)) {
+    if (isGuestUser(user)) {
+      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-13T14135");
+      await maybeShowGuestInfoModal(user);
+    } else if (user) {
+      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-13T14135");
+      await initRatingSystem(user);
+    }
+  }
+
   return user;
 }

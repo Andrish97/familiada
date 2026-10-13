@@ -9,9 +9,7 @@ import { initI18n, t, applyTranslations } from "../../shared/translation/transla
 import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T14135";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T14135";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T14135";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-13T14135";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T14135";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-13T14135";
 import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-13T14135";
 
 import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T14135";
@@ -1243,14 +1241,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.documentElement.classList.remove('page-loading'); // translations ready — show skeleton
-  initRatingSystem();
-
   currentUser = await userP;
   if (!currentUser) return; // initPage przekierował na logowanie
   bindResourceDuplicate({button:btnDuplicate,kind:"game",getSource:()=>gamesAll.find(g=>g.id===selectedId),onDone:async id=>{selectedId=id;const g=await loadGameBasic(id);setActiveTab(uiTypeFromRow(g));await refresh();},onState:()=>void updateActionState()});
   bindResourceSend({button:btnSendCopy,kind:"game",getSource:()=>gamesAll.find(g=>g.id===selectedId),onDone:async()=>refresh(),onState:()=>void updateActionState()});
 
-  await maybeShowGuestInfoModal(currentUser);
   maybeShowGuestMigrateReminder(currentUser);
 
   // btnInstall: widoczny gdy pwa:installable odpalił (canInstall) lub iOS Safari — nie standalone
