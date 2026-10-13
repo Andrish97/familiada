@@ -26,6 +26,29 @@ Wysyłanie oznacza przekazanie pakietu odpowiadającego eksportowi w chwili
 wysłania. Przyjęcie wykorzystuje wspólny importer. Nie tworzyć drugiego
 formatu lub drugiej logiki klonowania obok importu/eksportu.
 
+### Starsze ścieżki importu/eksportu — doprecyzowanie2026-10-13
+
+Użytkownik wskazał, że Import/Eksport/Do bazy w Grach są bardzo stare
+i zaproponował uproszczenie. Przy porządkach starszych funkcjonalności
+przejrzeć wszystkie trzy ścieżki oraz ich komunikaty, błędy i częściowe
+zapisy; dopieszczenie obsługi/ikon w E20. Nie tworzyć osobnego formatu
+dla wysyłania. Znaczenie działań pozostaje jawne:
+
+| Działanie | Cel | Wspólny mechanizm |
+|---|---|---|
+| Eksport | Pobranie pliku | Snapshot Gier/Logo |
+| Wyślij | Zapisanie niezależnego pakietu i oferty dla znajomych | Ten sam snapshot; bez tworzenia zasobu odbiorcy przed akceptacją |
+| Import | Utworzenie własnego zasobu z pliku | Wspólny importer |
+| Akceptuj otrzymaną kopię | Utworzenie własnego zasobu z otrzymanego pakietu | Ten sam importer, stałe ID oferty i dokładnie jeden wynik |
+| Do bazy | Zapis pytań w wybranej bazie | Osobna istniejąca ścieżka pytań; uwzględnić w przeglądzie starych operacji |
+
+Potwierdzenie użytkownikowi2026-10-13: wersja zostaje utrwalona przy
+wysłaniu, nie dopiero przy akceptacji. Usunięcie oryginału przed
+akceptacją pozostawia ofertę wraz z kompletnym pakietem i jej pierwotnym
+terminem. Dotyczy także osadzonych obrazów Logo. W testach wymagana
+akceptacja po usunięciu źródła, znajomości oraz konta nadawcy; żadna
+z tych operacji nie może usunąć gałęzi odbiorcy ani wyłączyć jej maila.
+
 | Zdarzenie / zależność | Skutek |
 |---|---|
 | Tworzenie kopii | Sprawdzić własność źródła, znajomość, stan i blokady zgodnie z eksportem; pakiet ma być kompletny i spójny. |
@@ -167,3 +190,20 @@ Lokalny rollback i trzy kontrolowane wyścigi zielone: równoczesny
 import, usunięcie gry i konta. Zachowana zgodność starego edytora
 oraz importu gościa. Migracja dodająca364 gotowa do bramki izolowanego
 CI; frontend przejdzie na wspólne RPC dopiero po zastosowaniu DB.
+
+### Wspólna tabela stanów oferty — E19C
+
+| Stan odbiorcy | Odbiorca | Treść i ważność | Nadawca |
+|---|---|---|---|
+| Oczekuje | Kafelek w zakładce typu, Akceptuj/Odrzuć; liczony w plakietkach | Kompletny snapshot,5 dni od wysłania | Historia wysyłki; bez cofania ani ponawiania |
+| Odrzucono | Zwinięte „Odrzucone przeze mnie”, ikona cofnięcia odmowy; sekcja ukryta gdy pusta | Wspólny model Baz:30 dni od pierwszej odmowy, bez odnawiania przez kolejne odrzucenie | Bez ponowienia; nowa wysyłka tego samego źródła tej osobie zablokowana przez okres odmowy |
+| Cofnięto odmowę | Ponownie propozycja z osobnymi Akceptuj/Odrzuć | Jak w Bazach: zachowany pierwotny declined_at i jego30-dniowa granica, bez nowego okresu5 dni | Ta sama wysyłka, bez nowego maila/historycznego wpisu |
+| Przyjęto | Własna Gra/Logo, lekki znacznik „od X”; bez kafelka oczekującej oferty | Nowe własne ID/pliki; termin oferty nie dotyczy przyjętego zasobu | Historia mówi tylko komu i kiedy wysłano, nie pokazuje decyzji |
+| Oferta wygasła | Brak kafelka i plakietki; stary link nie pozwala przyjąć | Pakiet i nieużywane pliki sprzątane; niewysłany mail anulowany | Wpis historii do końca swoich30 dni; nowa świadoma wysyłka przy zwykłych kontrolach |
+| Usunięto źródło, znajomość albo konto nadawcy | Ten sam bieżący stan oferty | Bez zmiany snapshotu i jego zegarów | Sprzątanie własnych zasobów/historii nie usuwa gałęzi odbiorcy |
+| Usunięto konto odbiorcy | Brak oferty i własnej kopii | Kaskada pakietu, kwitów, własnego zasobu/plików oraz jego maila | Brak przejęcia przez nowe konto o tym samym adresie |
+
+Odmowa nie jest przypomnieniem ani nową wysyłką. Wspólny importer
+pilnuje pojedynczego wyniku również po utraconej odpowiedzi; akceptacja
+oferty używa stałego ID tej oferty. Historia nadawcy ma niezależny
+termin30 dni od wysłania i nie pokazuje statusów odbiorcy.

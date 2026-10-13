@@ -2684,6 +2684,11 @@ const en = {
     import: {
       step: "Import: creating game…",
       invalidFormat: "Invalid file format (missing game / questions).",
+      authRequired: "Sign in again to import the game.",
+      locked: "Another operation is in progress. Try again shortly.",
+      requestConflict: "The file contents changed. Select the file again.",
+      previouslyRemoved: "This imported game has been deleted. Select the file again to create a new one.",
+      failed: "Could not import the game. Try again.",
     },
   },
   games: {
