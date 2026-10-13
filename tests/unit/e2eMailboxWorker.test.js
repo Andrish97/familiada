@@ -46,7 +46,7 @@ test("E2E mailbox odrzuca brak podpisanego tokenu", async () => {
   assert.equal(response.status, 401);
 });
 
-test("E2E mailbox dopuszcza tylko test1..test15 i ograniczone okno czasu", async () => {
+test("E2E mailbox dopuszcza tylko przygotowane konta testowe i ograniczone okno czasu", async () => {
   const headers = { "X-E2E-Token": token() };
   const badRecipient = await worker.fetch(
     new Request(`https://www.familiada.online/_e2e_api/emails?recipient=test16%40familiada.online&after=${encodeURIComponent(new Date().toISOString())}`, { headers }),
@@ -64,7 +64,7 @@ test("E2E mailbox dopuszcza tylko test1..test15 i ograniczone okno czasu", async
   assert.equal(oldWindow.status, 400);
 });
 
-for (const recipient of ["test1@familiada.online", "test14@familiada.online", "test15@familiada.online"]) {
+for (const recipient of ["test1@familiada.online", "test14@familiada.online", "test15@familiada.online", "test17@familiada.online"]) {
 test(`mail do ${recipient} zapisuje sie w e2e_emails i nie jest forwardowany`, async (t) => {
   const calls = [];
   const originalFetch = globalThis.fetch;
@@ -94,7 +94,7 @@ test(`mail do ${recipient} zapisuje sie w e2e_emails i nie jest forwardowany`, a
 
 }
 
-test("restore konta jest ograniczony do test11, test12 i test15", async () => {
+test("restore konta jest ograniczony do jawnie wskazanych kont testowych", async () => {
   const response = await worker.fetch(
     new Request("https://www.familiada.online/_e2e_api/accounts/restore", {
       method: "POST",
@@ -109,8 +109,9 @@ test("restore konta jest ograniczony do test11, test12 i test15", async () => {
 });
 
 const { normalizeE2ERecipient } = await import("../../cloudflare/maintenance-worker/src/lib/e2e/e2e-api.js");
-test("allowlista adresów obejmuje 1..15 i odrzuca adresy spoza puli", () => {
+test("allowlista adresów obejmuje zwykłe konta, skrzynkę bez konta i dedykowane 17", () => {
   for (let n=1;n<=15;n++) assert.equal(normalizeE2ERecipient(` TEST${n}@FAMILIADA.ONLINE `), `test${n}@familiada.online`);
+  assert.equal(normalizeE2ERecipient(" TEST17@FAMILIADA.ONLINE "), "test17@familiada.online");
   for (const value of ["test0@familiada.online","test16@familiada.online","test014@familiada.online","test14@example.com","real@familiada.online","test14@familiada.online.attacker.net",null]) {
     assert.equal(normalizeE2ERecipient(value),null);
   }
@@ -156,8 +157,8 @@ async function restoreFixture(account, users, { createStatus = 200, createdEmail
   } finally { globalThis.fetch = originalFetch; }
 }
 
-test("restore tworzy brakujące11/12 z potwierdzonym adresem i nazwą", async () => {
-  for (const account of ["test11", "test12", "test15"]) {
+test("restore tworzy brakujące11/12/15/17 z potwierdzonym adresem i nazwą", async () => {
+  for (const account of ["test11", "test12", "test15", "test17"]) {
     const result = await restoreFixture(account, []);
     assert.equal(result.status, 200);
     assert.equal(result.data.created, true);
@@ -168,8 +169,8 @@ test("restore tworzy brakujące11/12 z potwierdzonym adresem i nazwą", async ()
   }
 });
 
-test("restore zachowuje tożsamość istniejących11/12 bez tworzenia kolejnego", async () => {
-  for (const account of ["test11", "test12", "test15"]) {
+test("restore zachowuje tożsamość istniejących11/12/15/17 bez tworzenia kolejnego", async () => {
+  for (const account of ["test11", "test12", "test15", "test17"]) {
     const result = await restoreFixture(account, [{ id: account, email: account + "@familiada.online" }]);
     assert.equal(result.status, 200);
     assert.equal(result.data.created, false);

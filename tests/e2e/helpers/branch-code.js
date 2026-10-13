@@ -16,7 +16,7 @@ const path = require("path");
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "web");
 const PROD_ORIGIN = "https://www.familiada.online";
 // base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
-const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "manual/", "privacy/", "go/", "mail/"];
+const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "manual/", "privacy/", "go/", "mail/", "maintenance/", "404/"];
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -26,6 +26,7 @@ const MIME = {
 
 function localFileFor(pathname, pages) {
   const rel = decodeURIComponent(pathname).replace(/^\/+/, "");
+  if (rel === "404.html" && pages.includes("404")) return path.join(REPO_ROOT, "404.html");
   // Strona główna jest serwowana pod "/", a nie "/index". Bez tego
   // pages:["index"] cicho testowało produkcyjny HTML zamiast pliku z brancha.
   if (!rel && pages.includes("index")) return path.join(REPO_ROOT, "index.html");
@@ -55,16 +56,28 @@ function localFileFor(pathname, pages) {
  * @param {import('@playwright/test').BrowserContext} context
  * @param {{ pages: string[] }} opts  np. { pages: ["bases"] } -> /bases z repo
  */
-async function serveBranchCode(context, { pages }) {
+async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
+  if (safeAreaInsets) {
+    await context.addInitScript((insets) => {
+      for (const side of ["top", "right", "bottom", "left"]) {
+        document.documentElement.style.setProperty(`--e20-safe-area-inset-${side}`, `${Number(insets[side]) || 0}px`);
+      }
+    }, safeAreaInsets);
+  }
   await context.route(`${PROD_ORIGIN}/**`, async (route) => {
     const url = new URL(route.request().url());
     const file = localFileFor(url.pathname, pages);
     if (!file) return route.continue();
+    let body = fs.readFileSync(file);
+    if (safeAreaInsets && path.extname(file) === ".css") {
+      body = body.toString("utf8").replace(/env\(\s*safe-area-inset-(top|right|bottom|left)(?:\s*,\s*[^)]+)?\s*\)/g,
+        (_match, side) => `var(--e20-safe-area-inset-${side}, 0px)`);
+    }
     return route.fulfill({
       status: 200,
       contentType: MIME[path.extname(file)] || "application/octet-stream",
       headers: { "cache-control": "no-store" },
-      body: fs.readFileSync(file),
+      body,
     });
   });
 }

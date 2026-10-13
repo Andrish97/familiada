@@ -52,7 +52,10 @@ function deviceTypeIcon(type) {
   return icon(deviceTypeIconName(type));
 }
 
-const _isMobile = isMobileDevice();
+const _isMobile = isMobileDevice() || navigator.maxTouchPoints > 0 || !!window.matchMedia?.("(pointer: coarse)").matches;
+// Pokaż skaner od razu: nie uzależniaj jego dostępności na iPhonie od
+// zakończenia pobierania tłumaczeń ani odpowiedzi strony po logowaniu.
+if (_isMobile && btnScanQr) btnScanQr.style.display = "";
 
 // ── Device preview modal ───────────────────────────────────────────────────────
 let _previewDeviceInfo = null;

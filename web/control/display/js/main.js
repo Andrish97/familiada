@@ -9,6 +9,7 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 
 import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-13T13432";
 import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-13T13432";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-13T14412";
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-13T13432";
 import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-13T13432";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-13T13432";
@@ -20,8 +21,6 @@ import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=
 import { createRenderer } from "./render.js?v=v2026-10-13T13432";
 import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-13T13432";
 import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-13T13432";
-
-startKeepAlive();
 
 const $ = (id) => document.getElementById(id);
 
@@ -267,6 +266,10 @@ async function bootPreview(params) {
 
 window.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: false });
+  const deviceGate = guardViewportWidth({ minWidth: 980, formFactors: ["desktop", "tablet"] });
+  document.documentElement.removeAttribute("data-device-guard-pending");
+  if (deviceGate.state() !== "ok") await deviceGate.ready;
+  startKeepAlive();
   initFullscreenButton();
 
   const params = new URL(location.href).searchParams;

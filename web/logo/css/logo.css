@@ -53,7 +53,7 @@
   padding: 12px;
   cursor: pointer;
   display: grid;
-  gap: 10px;
+  gap: 6px;
   min-height: 230px;
   transition: transform .08s ease, border-color .12s ease, background .12s ease, box-shadow .12s ease;
 }
@@ -1087,7 +1087,7 @@ body.games-body.logo-body > main.logoWrap{
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable both-edges; /* rezerwuje miejsce symetrycznie po obu stronach — brak zmiany szerokości kolumn i brak asymetrii */
+  scrollbar-gutter: stable; /* nie zabiera dodatkowej szerokości kaflom na małym ekranie */
   padding-right: 2px;
 }
 

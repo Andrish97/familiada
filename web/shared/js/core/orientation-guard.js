@@ -1,20 +1,35 @@
 // Wspólna blokada landscape na telefonach dla stron aplikacji.
 // Małe okna desktopu i viewporty tabletów nie są klasyfikowane jako telefony.
-import { getDeviceProfile } from "./device-guard.js?v=v2026-10-13T14412";
+import { deviceGuardState, getDeviceProfile, showDeviceGuard } from "./device-guard.js?v=v2026-10-13T14412";
 import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-13T14412";
+import { PAGES, pageIdForPath } from "./nav-map.js?v=v2026-10-13T13432";
 
 function refresh() {
   const profile = getDeviceProfile();
+  const route = PAGES[pageIdForPath(location.pathname)] || {};
+  const body = document.body;
+  const routeOptions = {
+    minWidth: Number(body?.dataset.minViewportWidth) || route.minViewportWidth || 0,
+    formFactors: body?.dataset.deviceFormFactors
+      ? body.dataset.deviceFormFactors.split(",").map((value) => value.trim()).filter(Boolean)
+      : route.deviceGuard?.formFactors || null,
+    requiresTouch: body?.dataset.requiresTouch === "true" || !!route.deviceGuard?.requiresTouch,
+  };
+  const routeState = deviceGuardState(routeOptions.minWidth, routeOptions);
   document.documentElement.dataset.formFactor = profile.formFactor;
   document.documentElement.dataset.screenOrientation = profile.orientation;
-  document.documentElement.dataset.viewportOrientation = profile.viewportOrientation;
+  document.documentElement.dataset.viewportOrientation = profile.orientation;
   const blocked = profile.formFactor === "phone" && profile.orientation === "landscape";
   document.documentElement.dataset.globalPhoneLandscape = String(blocked);
   delete document.documentElement.dataset.phoneLandscapePending;
   const overlay = document.getElementById("pageGuard");
   if (blocked) {
-    const routeState = document.documentElement.dataset.deviceGuard;
-    if (["unsupported", "touch"].includes(routeState)) return;
+    if (["unsupported", "screen", "touch"].includes(routeState)) {
+      showDeviceGuard(routeState);
+      return;
+    }
+    const activeGuard = document.documentElement.dataset.deviceGuard;
+    if (["unsupported", "screen", "touch"].includes(activeGuard)) return;
     const shown = showPageGuard({
       kind: "device",
       state: "rotate",
@@ -28,13 +43,15 @@ function refresh() {
 
   if (overlay?.dataset.globalPhoneLandscape !== "true") return;
   delete overlay.dataset.globalPhoneLandscape;
-  const routeState = document.documentElement.dataset.deviceGuard;
-  if (routeState && routeState !== "ok") return;
+  const activeGuardState = document.documentElement.dataset.deviceGuard;
+  if (activeGuardState && activeGuardState !== "ok") return;
   if (overlay.dataset.kind === "guest") return;
   hidePageGuard();
 }
 
-window.addEventListener("resize", refresh);
-window.addEventListener("orientationchange", () => setTimeout(refresh, 250));
-window.visualViewport?.addEventListener("resize", refresh);
-refresh();
+if (typeof window !== "undefined" && typeof document !== "undefined" && typeof location !== "undefined") {
+  window.addEventListener("resize", refresh);
+  window.addEventListener("orientationchange", () => setTimeout(refresh, 250));
+  window.visualViewport?.addEventListener("resize", refresh);
+  refresh();
+}

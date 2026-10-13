@@ -95,6 +95,46 @@ urządzenie. Typ scrolla opisuje przewijanie dokumentu. Gdy tabela mówi
 - Audyt screenami obejmuje widok po ustabilizowaniu danych oraz sprawdza, czy
   startowa powłoka/loader nie miga niekompletną zawartością. Dla stron z
   różnymi trybami danych kontroluje też właściwy pusty lub błędny stan.
+- Przy przygotowaniu galerii najpierw przejrzeć istniejące spece Playwrighta:
+  użyć ich rzeczywistych ścieżek, bezpiecznych scenariuszy tworzenia i
+  fixture’ów danych tam, gdzie strona już je ma. Nie dublować istniejących
+  przypadków ani nie tworzyć niepotrzebnych zasobów produkcyjnych. Dla stron
+  bez fixture’ów oprzeć zrzut na dostępnych, rzeczywistych danych i odizolować
+  wyłącznie niezwiązane blokady zajętości.
+- Narzędzie galerii ma być wielokrotnego użytku: katalog wszystkich stron i
+  stanów, jawna macierz profili urządzeń, nazewnictwo artefaktów, raport
+  brakujących fixture’ów i sprzątanie tymczasowych danych w `finally`.
+  Kod, CSS, logowanie i dane pochodzą z prawdziwej aplikacji/backendu; nie
+  używać zamockowanego Supabase ani lokalnych atrap jako dowodu wyglądu.
+  Istniejące scenariusze E2E są źródłem danych i przejść, jeśli dana strona
+  już je ma. Test ma omijać tylko blokady zajętości niezwiązane z urządzeniem,
+  nigdy guard urządzenia ani sprawdzenie dostępu. Artefakt powinien zawierać
+  samodzielną galerię czytelną na telefonie oraz manifest strony/profil/stanu.
+- Galerię uruchamiać przez osobny, ręczny workflow GitHub Actions, oddzielny
+  od workflow testów zachowania. Workflow wybiera strony/profile, uruchamia
+  dedykowany Playwright spec, buduje galerię z manifestem i publikuje
+  artefakty. Istniejące testy zachowania i ich fixture’y wykorzystać jako
+  wejście do katalogu scenariuszy; nie dopisywać zrzutów do przypadkowego
+  workflow ani pliku testowego strony.
+
+**Implementacja galerii (2026-10-13):** `e20-gallery.yml` obejmuje wszystkie
+35 plików HTML aplikacji (bez Tools) w pięciu profilach: MacBook, iPad mini 7 portrait i
+landscape oraz iPhone 14 portrait i landscape. Zrzuty używają kodu frontu
+z uruchomionego brancha i prawdziwego backendu. Safe Area w Playwright jest
+ustawiana według wymiarów CSS z macierzy; HTML galerii pokazuje ramkę,
+zaokrąglenia, notch i wskaźnik gestów. Artefakt ma zawierać PNG, manifest i
+samodzielny `index.html`.
+
+Konto `test17@familiada.online` jest wyłączne dla tego workflow, poza zwykłą
+pulą i testami równoległymi. `TEST_PASSWORD` odtwarza to samo hasło co innych
+kont testowych, a fixture gier, bazy, logo i ankiet są trwałe oraz
+idempotentne. Skrzynki test17 nie czyścimy zbiorczo.
+
+Każdy z 35 routów ma pięć bazowych ujęć (175), a siedem odmiennych stanów
+list/zakładek dodaje kolejne 35 ujęć: zaznaczoną grę, katalog społeczności,
+zaznaczone logo, zakładkę udostępnionych Baz, wyniki Ankiet oraz otrzymane
+zaproszenia Znajomych i Subskrybentów. Pełna galeria zawiera 210 ujęć.
+Wybrane `pages` w workflow uwzględniają również warianty tych stron.
 
 ## Zasady scrolla i orientacji
 

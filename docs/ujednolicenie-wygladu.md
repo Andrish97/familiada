@@ -964,6 +964,42 @@ scroll i stan otwartego dialogu. Punktowa weryfikacja zrzutami obejmuje
 telefon pion/poziom, tablet pion/poziom i desktop; emulacja tabletu nie
 zamyka obowiązkowej kontroli fizycznego Lenovo.
 
+### E20 — lista poprawek z przeglądu użytkownika (2026-10-13)
+
+Status oznacza stan kodu na branchu `codex/e19-3`; „w kodzie, bez dowodu”
+nie jest zamknięciem. Każdą pozycję uznać za gotową dopiero po sprawdzeniu
+rzeczywistej strony w pełnej galerii i punktowym teście właściwego zachowania.
+
+| Poprawka | Stan |
+|---|---|
+| Wyszukiwarka na wszystkich listach: wysokość jak sąsiednie przyciski, lupa po prawej, X mniejsze i wyśrodkowane w polu; poprawić wygląd we wszystkich typach i viewportach. | Wspólny mechanizm jest w kodzie; **niezweryfikowane** w bieżącej galerii. |
+| Górny pasek list: tytuł/podpowiedź od lewej, akcje od prawej; zostają w jednym wierszu, jeśli czytelnie się mieszczą; przy długiej podpowiedzi mogą zostać po prawej; gdy cała grupa się nie mieści, wszystkie akcje przechodzą pod nagłówek i wyrównują się do lewej. | Wcześniejszy układ jest w kodzie; **do poprawy i sprawdzenia** według ostatniego doprecyzowania. |
+| Dolny pasek list: lewa grupa od lewej, akcje od prawej, bez sztywnego podziału na dwa rzędy; zawijać proporcjonalnie i z najmniejszą liczbą wierszy. | Zmienione flexy Gier/Baz/Logo; **niezweryfikowane** na rzeczywistych stronach. |
+| Kolejność akcji: Powiel, Eksport, Eksport bazy, Import, Wyślij; pomijać brakujące akcje bez zmiany kolejności pozostałych. | HTML Gier/Baz/Logo poprawiony; **niezweryfikowane** wizualnie i funkcjonalnie. |
+| Ustawienia gry mają ikonę zębatki; przycisk Ustawienia ma kolor jak pozostałe akcje, a „Graj” zachowuje złoty priorytet. | **Otwarte**. |
+| `/connect/`: poprawić odstępy, zwłaszcza separator oddzielający kartę. | **Otwarte**. |
+| Manual i prywatność: zmniejszyć nadmierny dostęp/odstęp od górnej krawędzi. | **Otwarte**. |
+| Wspólny device guard: jednakowy wygląd i poprawne rozróżnienie braku dotyku, nieobsługiwanego urządzenia, landscape telefonu, fizycznie za małego ekranu i za wąskiego okna. Nie sugerować obrotu dla niedostępnego typu urządzenia. | Nadrzędność i wspólne teksty są w kodzie; **wymaga testów** na wszystkich profilach. |
+| Guard blokuje odsłonięcie strony i pobieranie danych, zanim zostanie spełniony warunek urządzenia/viewportu. | Zmieniono kolejność w `page-init`; **wymaga sprawdzenia** oraz audytu stron bez `page-init`. |
+| Kolory tła: sprawdzić i ujednolicić miejsca, gdzie granat wygląda na czarny. | **Otwarte; ustalić strony w galerii.** |
+| TV: usunąć błędny kontakt ze strony połączenia TV; zablokować `/connect/tv/` na telefonie. | Telefon jest blokowany wspólnym guardem; **kontakt i wygląd pozostają do weryfikacji**. |
+| Gry społeczności na telefonie: ikony narzędzi oraz wyszukiwanie/filtrowanie oparte na zasadach Gier, z układem właściwym dla tej strony. | **Otwarte**. |
+| Kafle Logo: zrównać szerokość z kaflami Gier/Baz na telefonie i zmniejszyć odstęp nazwa–podgląd. | Gap i scrollbar gutter poprawione; **szerokość niezweryfikowana**. |
+| Edytory tekstu Logo na iPhone portrait nie mogą pokazywać komunikatu „Obróć”; mają wyświetlić właściwą blokadę niedostępnego urządzenia. | Reguła form factor jest w mapie; **niezweryfikowane**. |
+| `/connect/`: skaner QR ma być widoczny na iPhonie z dotykiem także przy braku rozpoznania UA. | Wykrywanie touch/coarse pointer dodane; **niezweryfikowane na stronie**. |
+| Stopki Go, Mail, `/404.html` i Maintenance: prawidłowa standardowa treść; w 404/Maintenance kontakt przez e-mail, po lewej standardowy tekst Familiada 2026. | **Do sprawdzenia i ujednolicenia**; nie zakładać, że sam istniejący HTML jest poprawny. |
+| Safe Area: tło topbara rozciąga się pod wycięcie, zawartość pozostaje poniżej; stopka i pozostałe elementy odsuwają się od wszystkich krawędzi Safe Area i zaokrągleń iPhone/iPad. | Dodano padding stopki i ramki galerii; **wymaga sprawdzenia** w pięciu profilach. |
+| Zachować istniejące style TV oraz osobne zasady Control/edytorów; nie wprowadzać globalnych zmian CSS, które psują ich układ. | Zasada obowiązuje; **regresje sprawdzić w pełnej galerii**. |
+
+**Galeria całości:** każdy rzeczywisty HTML aplikacji z wyłączeniem
+`/settings/tools/**` ma wystąpić w galerii na MacBooku, iPadzie portrait i
+landscape oraz iPhonie portrait i landscape. Daje to co najmniej pięć ujęć
+na stronę; dla odmiennych stanów funkcjonalnych dodać osobne ujęcia zamiast
+powielać podobny ekran. Każdy wpis manifestu łączy stronę, profil, stan guarda,
+wynik/stan danych i PNG. Screeny mają pochodzić z kodu brancha, rzeczywistych
+stron Playwright i produkcyjnej bazy. Nie tworzyć ani nie publikować galerii,
+aż lista powyżej będzie naprawiona i sprawdzona.
+
 ### E20 — ikony akcji i kompaktowe narzędzia telefonu (2026-10-12)
 
 Na telefonie przyciski pasków akcji i narzędzi mają **same ikony**; na komputerze ikona może

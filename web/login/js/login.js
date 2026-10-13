@@ -1,4 +1,5 @@
 // js/pages/login.js
+import "../../shared/js/core/orientation-guard.js?v=v2026-10-13T14412";
 import {
   getUser,
   signIn,

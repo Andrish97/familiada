@@ -24,25 +24,30 @@ test('tablet portrait jest tabletem; obrót wystarcza dla progu 980 px', () => {
   assert.equal(api.deviceGuardState(700), 'ok');
 });
 
-test('telefon landscape pozostaje telefonem i blokuje stronę do obrócenia', () => {
+test('telefon landscape pozostaje telefonem, a mała fizyczna szerokość jest osobnym stanem', () => {
   const api = load({ screenWidth: 390, screenHeight: 844, width: 844, height: 390, touch: true });
   assert.equal(api.getDeviceProfile().formFactor, 'phone');
   assert.equal(api.getDeviceProfile().orientation, 'landscape');
   assert.equal(api.isPhoneScreen(), true);
   assert.equal(api.deviceGuardState(700), 'rotate');
-  assert.equal(api.deviceGuardState(980), 'unsupported');
+  assert.equal(api.deviceGuardState(980), 'screen');
 });
 
 test('telefon portrait nie dostaje komunikatu o obrocie przy globalnej blokadzie landscape', () => {
   const api = load({ screenWidth: 390, screenHeight: 844, touch: true });
   assert.equal(api.deviceGuardState(700), 'narrow');
-  assert.equal(api.deviceGuardState(980), 'unsupported');
+  assert.equal(api.deviceGuardState(980), 'screen');
 });
 
-test('telefon landscape nie przechodzi guardu szerokości mimo szerokiego viewportu', () => {
+test('telefon landscape strony tylko dla tabletu/desktopu nie dostaje komunikatu obrotu', () => {
   const api = load({ screenWidth: 390, screenHeight: 844, width: 844, height: 390, touch: true });
-  assert.equal(api.deviceGuardState(700), 'rotate');
-  assert.equal(api.deviceGuardState(980), 'unsupported');
+  assert.equal(api.deviceGuardState(700, { formFactors: ['tablet', 'desktop'] }), 'unsupported');
+  assert.equal(api.deviceGuardState(980), 'screen');
+});
+
+test('wymaganie dotyku ma pierwszeństwo dla komputera bez ekranu dotykowego', () => {
+  const api = load({ screenWidth: 1920, screenHeight: 1080, width: 1280, height: 800 });
+  assert.equal(api.deviceGuardState(0, { formFactors: ['phone', 'tablet'], requiresTouch: true }), 'touch');
 });
 
 test('desktop z wąskim viewportem nie jest klasyfikowany jako telefon', () => {
@@ -61,5 +66,5 @@ test('desktop o niskim oknie ale szerokim viewportcie nie dostaje blokady telefo
 test('dotykowy tablet bez wystarczająco szerokiego dłuższego boku dostaje stan narrow', () => {
   const api = load({ screenWidth: 700, screenHeight: 900, touch: true });
   assert.equal(api.getDeviceProfile().formFactor, 'tablet');
-  assert.equal(api.deviceGuardState(980), 'narrow');
+  assert.equal(api.deviceGuardState(980), 'screen');
 });

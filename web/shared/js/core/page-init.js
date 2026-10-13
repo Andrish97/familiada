@@ -3,10 +3,10 @@
 // + guardViewportWidth + ręcznego podpinania #btnBack / #btnManual / konta.
 // Wszystko wynika z wpisu strony w PAGES (nav-map.js):
 //
-//   1. dostęp   public — bez wymuszania logowania (user albo null),
+//   1. urządzenie — blokada przed odsłonięciem strony i sprawdzaniem konta,
+//   2. dostęp   public — bez wymuszania logowania (user albo null),
 //               guest  — wymaga sesji (konto albo gość), inaczej loginUrl(),
 //               user   — tylko konto; gość dostaje wspólną nakładkę (page-overlay.js),
-//   2. ekran    minViewportWidth — guard reagujący na resize i obrót,
 //   3. topbar   #btnBack (etykieta + cel z backHref, najpierw handleSheetBack()),
 //               #btnManual (linkTo("manual", { tab: wpis.manual })), konto, topbar-ready,
 //   4. przyciski  PAGES[id].buttons: niedostępne dla roli (anon / gość / konto)
@@ -16,8 +16,8 @@
 //   5. zwraca użytkownika (null dla niezalogowanego, zablokowanego albo przekierowanego).
 //
 // Odstępstwa strony przekazujemy przez opts, nie przez zapasowe ścieżki:
-//   ready          Promise (np. initI18n), na który czekamy przed pokazaniem czegokolwiek
-//                  — auth startuje od razu, równolegle z nim
+//   ready          Promise (np. initI18n), na który czekamy przed pokazaniem czegokolwiek;
+//                  inicjalizacja może biec równolegle z guardem, auth dopiero po nim
 //   back           id przycisku „Wstecz” (domyślnie "btnBack"); false — strona go nie ma
 //   backLabel      false — etykietę ustawia sama strona
 //   onBack         (href, ev) => … zamiast przejścia na href (np. zapis przed wyjściem);
@@ -161,7 +161,12 @@ export async function initPage(id, opts = {}) {
   if (!p) throw new Error(`initPage: nieznana strona "${id}"`);
   const d = opts.deps || await loadDeps();
 
-  // Auth startuje od razu, równolegle z i18n (opts.ready).
+  // Guard jest pierwszą bramką. Nie pytamy o sesję ani nie odsłaniamy strony,
+  // dopóki urządzenie i viewport nie spełniają warunków tej trasy.
+  const guard = d.guardViewportWidth({ minWidth: p.minViewportWidth || 0, backHref: backHref(id, { anon: true }), ...(p.deviceGuard || {}), ...opts.deviceGuard });
+  if (!(await guard.ready)) return null;
+
+  // Auth startuje dopiero po przejściu guarda; może biec równolegle z i18n.
   const userP = p.access === "public"
     ? Promise.resolve(d.getUser()).catch(() => null)
     : Promise.resolve(d.requireAuth(loginUrl()));
@@ -173,21 +178,12 @@ export async function initPage(id, opts = {}) {
   if (!user && p.access !== "public") return null;
   setModalSheetPage(id);
 
-  // Urządzenie: guard stoi przed wszystkim, co strona zrobi dalej.
-  let deviceReady = Promise.resolve(true);
-  if (p.minViewportWidth) {
-    const guard = d.guardViewportWidth({ minWidth: p.minViewportWidth, backHref: backHref(id, { anon: !user }), ...opts.deviceGuard });
-    deviceReady = guard.ready;
-  }
-
   // Topbar działa także pod nakładką — „Wstecz” jest wtedy wyjściem.
   wireBack(id, user, opts, d);
   wireManual(id, user, opts);
   wireButtons(id, user, d);
   wireAccount(user, opts, d);
   document.querySelector(".topbar")?.classList.add("topbar-ready");
-
-  if (!(await deviceReady)) return null;
 
   if (p.access === "user" && isGuestUser(user)) {
     showPageGuard({

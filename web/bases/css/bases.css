@@ -126,22 +126,3 @@
 @media (max-width: 980px){
   .tabs-card.hub-tabs.bases-tabs-card{ --tab-height: 44px; }
 }
-
-/* =========================================================
-   Mobile landscape — scroll strony, bez wewnętrznych scrolli
-========================================================= */
-
-@media (max-width: 980px) and (orientation: landscape){
-  /* games.css odblokowuje scroll strony — my tylko zdejmujemy "trapped" scroll w gridach */
-  .games-shell{ overflow: visible; }
-
-  .tabs-card.bases-tabs-card,
-  .bases-card,
-  .bases-layout,
-  .bases-section.active{
-    flex: 0 0 auto;
-    min-height: auto;
-  }
-
-  .bases-section .grid{ overflow: visible; }
-}

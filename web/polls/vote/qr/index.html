@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+  <style>html[data-device-guard-pending] body{visibility:hidden}</style><script>document.documentElement.dataset.deviceGuardPending="true"</script>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta name="app-version" content="v2026-10-13T13432"/>
 
@@ -24,7 +25,7 @@
   <script src="/shared/js/core/security-warning.js?v=v2026-10-13T13432" defer></script>
 </head>
 
-<body class="poll-qr-body">
+<body class="poll-qr-body" data-device-form-factors="desktop,tablet" data-min-viewport-width="980">
   <div class="qr-container">
     <div class="brand">FAMILIADA</div>
     <div id="qr" class="qr-box"></div>

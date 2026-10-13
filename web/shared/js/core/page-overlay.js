@@ -90,6 +90,11 @@ function lockScroll(on) {
  */
 export function showPageGuard({ kind, state = "", iconName = "info", titleKey, messageKey, backHref = null, loginHref = null }) {
   const overlay = ensureOverlay();
+  if (kind === "device" && document.body && !overlay.dataset.hidesBody) {
+    overlay.dataset.bodyVisibility = document.body.style.visibility;
+    document.body.style.visibility = "hidden";
+    overlay.dataset.hidesBody = "true";
+  }
   const title = overlay.querySelector("#pageGuardTitle");
   const msg = overlay.querySelector("#pageGuardMsg");
   title.setAttribute("data-i18n", titleKey);
@@ -120,6 +125,13 @@ export function showPageGuard({ kind, state = "", iconName = "info", titleKey, m
 /** Chowa nakładkę (np. po obrocie tabletu albo poszerzeniu okna). */
 export function hidePageGuard() {
   const overlay = document.getElementById(PAGE_GUARD_ID);
-  if (overlay) overlay.style.display = "none";
+  if (overlay) {
+    overlay.style.display = "none";
+    if (overlay.dataset.hidesBody === "true" && document.body) {
+      document.body.style.visibility = overlay.dataset.bodyVisibility || "";
+      delete overlay.dataset.bodyVisibility;
+      delete overlay.dataset.hidesBody;
+    }
+  }
   lockScroll(false);
 }

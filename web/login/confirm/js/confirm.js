@@ -1,3 +1,4 @@
+import "../../../shared/js/core/orientation-guard.js?v=v2026-10-13T14412";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-13T13432";
 import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-13T13432";
 import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-13T13432";

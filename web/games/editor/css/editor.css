@@ -490,7 +490,7 @@ body.editor-body .wrap {
 
 }
 
-@media (max-height:720px) and (orientation: landscape) {
+@media (max-height:720px) {
     body.editor-body {
         overflow: auto;
     }

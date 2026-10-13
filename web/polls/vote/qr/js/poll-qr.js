@@ -1,11 +1,16 @@
+import "../../../../shared/js/core/orientation-guard.js?v=v2026-10-13T14412";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-13T13432";
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-13T13432";
 import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-13T13432";
 import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-13T14412";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
+const deviceGate = guardViewportWidth({ minWidth: 980, formFactors: ["desktop", "tablet"] });
+document.documentElement.removeAttribute("data-device-guard-pending");
+if (deviceGate.state() !== "ok") await deviceGate.ready;
 
 const qs = new URLSearchParams(location.search);
 let url = qs.get("url");

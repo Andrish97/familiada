@@ -179,6 +179,8 @@ const pl = {
   pageGuard: {
     phoneTitle: "Niedostępne na telefonie",
     phoneMessage: "Ta strona wymaga większego ekranu. Otwórz ją na tablecie lub komputerze.",
+    screenTitle: "Wymagany większy ekran",
+    screenMessage: "Ten ekran nie zapewnia wystarczającej szerokości. Otwórz stronę na większym urządzeniu.",
     touchTitle: "Wymagany ekran dotykowy",
     touchMessage: "Otwórz tę stronę na telefonie lub tablecie z ekranem dotykowym.",
     tvPhoneTitle: "Otwórz na dużym ekranie",
@@ -4858,6 +4860,7 @@ const pl = {
     loading: "Ładowanie…",
     searchPlaceholder: "Szukaj gry…",
     searchLabel: "Szukaj gier",
+    searchClear: "Wyczyść wyszukiwanie",
     filterLabel: "Język",
     filterAll: "Wszystkie",
     sortLabel: "Sortowanie",

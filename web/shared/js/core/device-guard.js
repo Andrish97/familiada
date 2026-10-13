@@ -43,27 +43,34 @@ export function isPhoneScreen() {
   return getDeviceProfile().formFactor === "phone";
 }
 
-/** "ok" | "rotate" | "narrow" | "unsupported" — format, orientacja i próg. */
-export function deviceGuardState(minWidth = MIN_WORK_WIDTH) {
+/**
+ * Priorytet guarda: dotyk → dozwolony format/fizyczny rozmiar → landscape
+ * telefonu → próg viewportu i pomocny obrót tabletu → wąskie okno.
+ * `formFactors` opisuje twardą dostępność strony, `requiresTouch` jej wejście.
+ */
+export function deviceGuardState(minWidth = MIN_WORK_WIDTH, { formFactors = null, requiresTouch = false } = {}) {
   const profile = getDeviceProfile();
-  if (profile.formFactor === "phone" && minWidth > profile.screenLongSide) return "unsupported";
+  if (requiresTouch && !profile.touch) return "touch";
+  if (formFactors && !formFactors.includes(profile.formFactor)) return "unsupported";
+  if (minWidth > 0 && profile.touch && minWidth > profile.screenLongSide) return "screen";
   if (profile.formFactor === "phone" && profile.orientation === "landscape") return "rotate";
   if (profile.viewportWidth >= minWidth) return "ok";
-  // Telefony mają wspólną blokadę landscape, więc ich nie zachęcamy do
-  // obrotu na stronach z szerokością minimalną. Obrót sugerujemy tabletowi,
-  // gdy jego fizyczny ekran faktycznie pozwoli spełnić próg viewportu.
+  // Telefon landscape i tak blokuje reguła globalna. Obrót w celu uzyskania
+  // szerokości proponujemy wyłącznie tabletowi, jeśli fizycznie wystarczy.
   if (profile.formFactor === "tablet" && profile.orientation === "portrait" && profile.screenLongSide >= minWidth) return "rotate";
   return "narrow";
 }
 
 const TEXTS = {
   unsupported: { title: "pageGuard.phoneTitle", message: "pageGuard.phoneMessage", icon: "phone" },
+  screen: { title: "pageGuard.screenTitle", message: "pageGuard.screenMessage", icon: "fullscreen-enter" },
+  touch: { title: "pageGuard.touchTitle", message: "pageGuard.touchMessage", icon: "phone" },
   rotate: { title: "pageGuard.rotateTitle", message: "pageGuard.rotateMessage", icon: "rotate-right" },
   narrow: { title: "pageGuard.narrowTitle", message: "pageGuard.narrowMessage", icon: "fullscreen-enter" },
 };
 
-function showDeviceGuard(state, backHref) {
-  const txt = TEXTS[state];
+export function showDeviceGuard(state, backHref) {
+  const txt = TEXTS[state] || TEXTS.unsupported;
   showPageGuard({
     kind: "device",
     state,
@@ -75,9 +82,9 @@ function showDeviceGuard(state, backHref) {
 }
 
 /** Strona wymaga minimalnej szerokości: guard reaguje na resize i obrót. */
-export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null } = {}) {
+export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null, formFactors = null, requiresTouch = false } = {}) {
   const currentState = () => {
-    const state = deviceGuardState(minWidth);
+    const state = deviceGuardState(minWidth, { formFactors, requiresTouch });
     return state === "ok" && fits && !fits() ? "narrow" : state;
   };
   function apply() {
@@ -85,7 +92,7 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null,
     if (state === "narrow" && messageKey) {
       showPageGuard({ kind: "device", state, iconName: "fullscreen-enter", titleKey: TEXTS.narrow.title, messageKey, backHref });
     } else if (state !== "ok") showDeviceGuard(state, backHref);
-    else hidePageGuard();
+    else if (document.getElementById("pageGuard")?.dataset.kind !== "guest") hidePageGuard();
     document.documentElement.dataset.deviceGuard = state;
     // Usuń wczesną blokadę (inline script w <head>) — guard przejął kontrolę
     document.documentElement.removeAttribute("data-mobile-guard");

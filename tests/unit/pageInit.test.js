@@ -164,10 +164,26 @@ test("edytor Logo: jawny próg viewportu, topbar nadal działa", async () => {
   assert.deepEqual(topbar.classList.added, ["topbar-ready"]);
 });
 
-test("edytor Logo: na telefonie poziomo page-init nie klasyfikuje formatu jako blokady", async () => {
-  const { deps } = makeDeps({ viewportWidth: 844, formFactor: "phone", orientation: "landscape" });
+test("edytor Logo: przekazuje twardy wymóg tabletu/desktopu do guarda", async () => {
+  const { deps, calls } = makeDeps({ viewportWidth: 390, formFactor: "phone", orientation: "portrait" });
   loc.pathname = "/logo/editor/draw/";
   assert.deepEqual(await initPage("logoDraw", { deps }), { id: "u1" });
+  assert.deepEqual(calls.width[0].formFactors, ["tablet", "desktop"]);
+});
+
+test("nie pyta o sesję, dopóki device guard nie zezwoli na stronę", async () => {
+  const { deps, calls } = makeDeps();
+  let releaseGuard;
+  deps.guardViewportWidth = (o) => {
+    calls.width.push(o);
+    return { ready: new Promise((resolve) => { releaseGuard = resolve; }), refresh() {} };
+  };
+  const pending = initPage("editor", { deps });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(calls.requireAuth.length, 0);
+  releaseGuard(true);
+  assert.deepEqual(await pending, { id: "u1" });
+  assert.equal(calls.requireAuth.length, 1);
 });
 
 test("konto: loginHref i accountHref z mapy, opcje strony nadpisują", async () => {

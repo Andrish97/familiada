@@ -9,6 +9,7 @@ import { signOut } from './auth.js?v=v2026-10-13T13432';
 import { isGuestUser } from './guest-mode.js?v=v2026-10-13T13432';
 import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-13T13432';
 import { icon } from './icons.js?v=v2026-10-13T13432';
+import './orientation-guard.js?v=v2026-10-13T14412';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {

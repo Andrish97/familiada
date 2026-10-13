@@ -7,7 +7,7 @@ import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T13432"
 import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-13T13432";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T13432";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T13432";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T13432";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-13T13432";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T13432";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-13T13432";
 import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
@@ -144,14 +144,52 @@ function refreshBrowseSelectLabels() {
   sortUiSelect?.setOptions(sortOptions());
 }
 
+function syncSearchButton() {
+  const active = !!String(els.searchInput?.value || "").trim();
+  if (els.btnSearchFocus) {
+    els.btnSearchFocus.innerHTML = icon(active ? "close" : "search");
+    els.btnSearchFocus.classList.toggle("is-active", active);
+    const label = t(active ? "marketplace.searchClear" : "marketplace.searchLabel");
+    els.btnSearchFocus.setAttribute("aria-label", label);
+    els.btnSearchFocus.title = label;
+  }
+}
+
+function syncBrowseControlStates() {
+  els.langFilter?.classList.toggle("is-active", currentLangFilter !== "all");
+  els.sortSelect?.classList.toggle("is-active", currentSort !== "recommended");
+  syncSearchButton();
+}
+
 function initBrowseUiSelects() {
-  els.btnSearchFocus?.addEventListener("click", () => els.searchInput?.focus());
+  els.btnSearchFocus?.addEventListener("click", async () => {
+    if (!window.matchMedia("(max-width: 600px)").matches) {
+      els.searchInput?.focus();
+      return;
+    }
+    if (String(els.searchInput?.value || "").trim()) {
+      els.searchInput.value = "";
+      syncSearchButton();
+      els.searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+    const value = await promptModal({
+      title: t("marketplace.searchLabel"),
+      value: currentSearch,
+      placeholder: t("marketplace.searchPlaceholder"),
+    });
+    if (value === null) return;
+    els.searchInput.value = value;
+    syncSearchButton();
+    els.searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+  });
   langFilterUiSelect = initUiSelect(els.langFilter, {
     options: langFilterOptions(),
     value: currentLangFilter,
     onChange: async (value) => {
       if (value === currentLangFilter) return;
       currentLangFilter = value;
+      syncBrowseControlStates();
       syncBrowseParams();
       await loadBrowse({ reset: true });
     },
@@ -163,6 +201,7 @@ function initBrowseUiSelects() {
     onChange: async (value) => {
       if (value === currentSort) return;
       currentSort = value;
+      syncBrowseControlStates();
       syncBrowseParams();
       await loadBrowse({ reset: true });
     },
@@ -806,6 +845,7 @@ function wireEvents() {
   });
 
   els.searchInput?.addEventListener("input", () => {
+    syncSearchButton();
     clearTimeout(searchTimer);
     searchTimer = setTimeout(async () => {
       currentSearch = els.searchInput.value;
@@ -891,6 +931,7 @@ function restoreBrowseParams() {
   currentLangFilter = ["pl", "en", "uk"].includes(filter) ? filter : "all";
   currentSort = ["recommended", "rating", "popular", "newest", "title"].includes(sort) ? sort : "recommended";
   if (els.searchInput) els.searchInput.value = currentSearch;
+  syncBrowseControlStates();
   langFilterUiSelect?.setValue(currentLangFilter, { silent: true });
   sortUiSelect?.setValue(currentSort, { silent: true });
 }

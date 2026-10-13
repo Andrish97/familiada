@@ -8,7 +8,7 @@ import { fetchFromOrigin } from "../origin/origin.js";
 export const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
 const E2E_NONCE_TTL_SECONDS = 10 * 60; // 10 minut w KV, żeby pokryć zegar-skew
-const E2E_EMAIL_RE = /^test([1-9]|1[0-5])@familiada\.online$/;
+const E2E_EMAIL_RE = /^test([1-9]|1[0-5]|17)@familiada\.online$/;
 
 export function normalizeE2ERecipient(value) {
   const recipient = String(value || "").trim().toLowerCase();
@@ -223,6 +223,8 @@ export async function restoreE2EAccount(request, env) {
       ? { targetEmail: "test12@familiada.online", candidates: ["test12@familiada.online", "test13@familiada.online"], username: "test12", allowCreate: true }
       : account === "test15"
         ? { targetEmail: "test15@familiada.online", candidates: ["test15@familiada.online"], username: "test15", allowCreate: true }
+        : account === "test17"
+          ? { targetEmail: "test17@familiada.online", candidates: ["test17@familiada.online"], username: "test17", allowCreate: true }
         : null;
   if (!config || password.length < 8 || password.length > 200) {
     return json({ ok: false, error: "invalid_restore_request" }, 400);

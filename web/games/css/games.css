@@ -45,25 +45,6 @@ body.games-body > main.wrap{
   overflow: hidden;               /* 🔑 scroll tylko w środku karty */
 }
 
-/* Mobile landscape: allow full-page scroll and let cards stretch (prevents "trapped" UI) */
-@media (max-width: 980px) and (orientation: landscape){
-  body.games-body{
-    height: auto;
-    min-height: 100dvh;
-    overflow: auto;
-  }
-
-  body.games-body > main.wrap{
-    overflow: visible;
-  }
-
-  .games-card,
-  .games-shell,
-  .grid{
-    max-height: none !important;
-  }
-}
-
 /* W games.css masz własną .wrap – przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
 .wrap{
   margin: 0 auto;
@@ -79,7 +60,7 @@ body.games-body > main.wrap{
   .bar{ gap: 8px; }
   .bar > .actions{ gap: 4px; flex-wrap: wrap; }
 }
-@media (max-width: 600px), (max-width: 980px) and (orientation: landscape){
+@media (max-width: 600px){
   .bar > .actions{ align-content: start; }
   .bar .btn{ min-width: 38px; min-height: 38px; padding: 9px; }
   .bar .action-label{
@@ -475,15 +456,17 @@ body.games-body > main.wrap{
   border-top: 1px solid rgba(255,255,255,.12);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 8px 10px;
-  flex-wrap: wrap; /* cały blok przycisków spada pod wyszukiwanie dopiero, gdy się nie mieści */
+  flex-wrap: nowrap; /* sekcje zostają obok siebie; zawijają się ich przyciski */
 }
 
 .games-bottom-left{
-  flex: 1 1 0;
-  min-width: 300px; /* filtr + wyszukiwanie w jednym rzędzie; węziej: zawija się w środku */
+  flex: 1 1 max-content;
+  min-width: 0;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 8px;
   align-items: center;
 }
@@ -493,8 +476,9 @@ body.games-body > main.wrap{
   flex-wrap: wrap; /* zawijanie całymi przyciskami, bez łamania tekstu w przycisku */
   justify-content: flex-end;
   gap: 8px;
-  flex: 0 1 auto;
-  margin-left: auto;
+  flex: 1 1 max-content;
+  min-width: 0;
+  margin-left: 0;
 }
 .games-bottom-right .btn{ white-space: nowrap; }
 
@@ -870,7 +854,7 @@ body.games-body > main.wrap{
 .list-search-open{ display: grid; place-items: center; width: 36px; flex: 0 0 36px; }
 .list-search-open .ico{width:18px;height:18px}
 .list-search-clear{ width: 26px; height: 26px; min-height: 26px !important; flex: 0 0 26px; border-radius: 8px; }
-@media (max-width: 600px), (max-width: 980px) and (orientation: landscape){
+@media (max-width: 600px){
   .list-search{ width: auto; flex: 1 1 auto; max-width: none; }
   .list-search .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
 }
@@ -882,9 +866,9 @@ body.games-body > main.wrap{
 .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{
   border-color: var(--gold); background: rgba(255, 215, 0, .12);
 }
-@media (max-width: 600px), (max-width: 980px) and (orientation: landscape){
+@media (max-width: 600px){
   .games-bottom .only-desktop{ display: none !important; }
-  .games-bottom-left{ flex: 0 1 auto; min-width: 0; gap: 4px; }
+  .games-bottom-left{ flex: 1 1 max-content; min-width: 0; gap: 4px; }
   .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
   .games-bottom-left > #btnReceivedFilter[aria-pressed="true"]{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
   .list-filter.ui-select, .list-sort.ui-select{ flex: 0 0 36px; width: 36px; min-width: 36px; }
@@ -894,7 +878,7 @@ body.games-body > main.wrap{
   .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{ color: var(--gold); }
   .list-filter .ui-select-menu, .list-sort .ui-select-menu{ max-height: min(55dvh, 420px); }
   .list-filter .ui-select-item, .list-sort .ui-select-item{ min-height: 44px; }
-  .games-bottom-right{ gap: 4px; }
+  .games-bottom-right{ flex: 1 1 max-content; min-width: 0; gap: 4px; }
   .games-bottom-right .btn{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
   .games-bottom-right .btn .ico, .games-bottom-left > #btnReceivedFilter .ico{ width: 18px; height: 18px; }
   .games-bottom-left .list-search{ flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }

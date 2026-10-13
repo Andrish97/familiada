@@ -1,3 +1,4 @@
+import "../../shared/js/core/orientation-guard.js?v=v2026-10-13T14412";
 import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-13T13432';
 import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-13T13432';
 import { toast } from '../../shared/js/core/toast.js?v=v2026-10-13T13432';
