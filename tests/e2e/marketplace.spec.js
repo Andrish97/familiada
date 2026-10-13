@@ -32,6 +32,7 @@ test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async 
     await expect(page.locator("#langFilter")).toBeVisible();
     await expect(page.locator("#langFilter .ui-select-icon svg")).toBeVisible();
     expect(await page.locator("#langFilter .ui-select-icon svg").textContent()).toBe("A文");
+    await expect(page.locator("#langFilter .mkt-filter-btn #langFilterLabel")).toHaveText("Język");
     await expect(page.locator("#sortSelect")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 

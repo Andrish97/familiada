@@ -80,8 +80,9 @@ body.mkt-body > main.wrap {
 }
 
 .mkt-filter {
-  min-width: 150px;
+  min-width: 190px;
 }
+.mkt-filter-btn .ui-select-name{flex:0 0 auto;font-weight:800}
 
 /* ===== Browse grid ===== */
 .mkt-grid {
@@ -428,7 +429,7 @@ body.mkt-body > main.wrap {
   }
   .mkt-filter-btn{width:36px;height:36px;min-height:36px;padding:0;justify-content:center;gap:0}
   .mkt-filter-btn .ui-select-icon{display:inline-flex;flex:0 0 auto}
-  .mkt-filter-btn .ui-select-label,.mkt-filter-btn .ui-select-caret{display:none}
+  .mkt-filter-btn .ui-select-name,.mkt-filter-btn .ui-select-label,.mkt-filter-btn .ui-select-caret{display:none}
   .mkt-filter .ui-select-menu{max-height:min(55dvh,420px)}
   .mkt-filter .ui-select-item{min-height:44px}
 
