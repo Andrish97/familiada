@@ -1,5 +1,5 @@
-// Common duplicate orchestration; not routed until the database contracts and
-// cleanup/name allocation have passed the deployment gates.
+// Shared resource cloning. Duplicate is public after365; Send stays unrouted
+// until its private contracts, mail source and UI pass the deployment gates.
 import {supabaseRpc, supabaseRequest, getSupabaseConfig, normalizeRpcValue} from '../core/supabase.js';
 import {prepareResourceClone} from '../../../../../web/shared/js/core/resource-clone-plan.js';
 import {decodeImportedLogoImage} from '../../../../../web/shared/js/core/logo-image-data.js';
@@ -28,18 +28,31 @@ async function names(env,kind,actor){
 async function sha256(bytes){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),byte=>byte.toString(16).padStart(2,'0')).join('');}
 
 export async function duplicateResource(env,actor,input){
+ return cloneResource(env,actor,input,'duplicate',actor);
+}
+export async function sendResource(env,actor,input){
+ const recipient=typeof input.recipient_id==='string'?input.recipient_id.toLowerCase():input.recipient_id;
+ if(!isCopyUuid(recipient)||recipient===actor||!['game','logo'].includes(input.kind))throw new Error('invalid_copy_request');
+ return cloneResource(env,actor,input,'send',recipient);
+}
+async function cloneResource(env,actor,input,action,recipient){
  const {kind,source_id:sourceInput,request_id:requestInput}=input;
  const source_id=typeof sourceInput==='string'?sourceInput.toLowerCase():sourceInput,request_id=typeof requestInput==='string'?requestInput.toLowerCase():requestInput;
  if(!isCopyUuid(actor)||!isCopyUuid(source_id)||!isCopyUuid(request_id)||!['game','base','logo'].includes(kind))throw new Error('invalid_copy_request');
  const language=Object.hasOwn(suffixes,input.language)?input.language:'pl';
  const cfg=getSupabaseConfig(env);if(!cfg)throw new Error('copy_storage_unavailable');
- const parameters={p_actor:actor,p_owner:actor,p_kind:kind,p_source:source_id,p_action:'duplicate',p_request:request_id};
+ const parameters={p_actor:actor,p_owner:recipient,p_kind:kind,p_source:source_id,p_action:action,p_request:request_id};
  const job=await rpc(env,'_resource_clone_begin',parameters);
- if(!isCopyUuid(job?.id)||job.actor_id!==actor||job.recipient_id!==actor)throw new Error('invalid_copy_job');
- if(job.status==='complete'){
-  if(!isCopyUuid(job.target_id))throw new Error('previously_removed');
-  return {ok:true,id:job.target_id,already:true};
+ if(!isCopyUuid(job?.id)||job.actor_id!==actor||job.recipient_id!==recipient)throw new Error('invalid_copy_job');
+ async function completed(result){
+  if(!isCopyUuid(result.target_id))throw new Error('previously_removed');
+  if(action==='duplicate')return {ok:true,id:result.target_id,already:true};
+  const offer=await supabaseRequest(env,`/rest/v1/resource_copy_offers?sender_identity=eq.${actor}&recipient_id=eq.${recipient}&request_id=eq.${request_id}&source_id=eq.${source_id}&resource_kind=eq.${kind}&select=id&limit=1`);
+  if(!offer.ok||!Array.isArray(offer.data))throw new Error('copy_database_failed');
+  if(!isCopyUuid(offer.data[0]?.id))throw new Error('previously_removed');
+  return {ok:true,offer_id:offer.data[0].id,already:true};
  }
+ if(job.status==='complete')return completed(job);
  if(job.status!=='preparing'||job.snapshot?.[kind]?.id!==source_id)throw new Error('invalid_copy_job');
  const cached=kind==='logo'?await supabaseRequest(env,`/rest/v1/resource_clone_assets?job_id=eq.${job.id}&select=*`):{ok:true,data:[]};
  if(!cached.ok||!Array.isArray(cached.data))throw new Error('copy_database_failed');
@@ -83,7 +96,7 @@ export async function duplicateResource(env,actor,input){
    completedAssets.set(image,asset);
   }
   if(!isCopyUuid(asset.id)||asset.job_id!==job.id)throw new Error('invalid_copy_storage_plan');
-  const plan={recipient_id:actor,copy_id:job.id,asset_id:asset.id};
+  const plan={recipient_id:recipient,copy_id:job.id,asset_id:asset.id};
   const result=asset.source_kind==='storage'
    ?await copyLogoStorageImage(env,{...plan,source_owner_id:actor,source_path:asset.source_path,mime:asset.mime,size:asset.byte_size,etag:asset.etag})
    :asset.source_kind==='demo_asset'
@@ -96,13 +109,13 @@ export async function duplicateResource(env,actor,input){
   // A concurrent different job can take the proposed logo name. Refresh only
   // that name, reusing the same frozen source and immutable file recipes.
   for(let attempt=0;attempt<3;attempt++){
-   const prepared=await prepareResourceClone(kind,job.snapshot,{action:'duplicate',names:await names(env,kind,actor),suffix:suffixes[language],fallbackName:labels[language][kind],materializeImage:materialize});
-   try{return await rpc(env,'_resource_clone_finish_duplicate',{p_actor:actor,p_job:job.id,p_definition:prepared.definition,p_demo:prepared.demoOrigin,p_storage_base:cfg.baseUrl,p_suffix:suffixes[language]});}
+   const prepared=await prepareResourceClone(kind,job.snapshot,{action,names:action==='duplicate'?await names(env,kind,recipient):[],suffix:suffixes[language],fallbackName:labels[language][kind],materializeImage:materialize});
+   try{return await rpc(env,action==='duplicate'?'_resource_clone_finish_duplicate':'_resource_clone_finish_send',{p_actor:actor,p_job:job.id,p_definition:prepared.definition,p_demo:prepared.demoOrigin,p_storage_base:cfg.baseUrl,...(action==='duplicate'?{p_suffix:suffixes[language]}:{})});}
    catch(error){
     if(error.databaseCode==='23505')continue;
     if(error.message==='request_conflict'){
      const replay=await rpc(env,'_resource_clone_begin',parameters);
-     if(replay.status==='complete'&&isCopyUuid(replay.target_id))return {ok:true,id:replay.target_id,already:true};
+     if(replay.status==='complete'&&isCopyUuid(replay.target_id))return completed(replay);
     }
     throw error;
    }
@@ -112,8 +125,8 @@ export async function duplicateResource(env,actor,input){
   // The SQL cleanup function protects an installed result. It also works
   // after the account cascade removed the job while an upload was in flight.
   const current=await rpc(env,'_resource_clone_begin',parameters).catch(()=>null);
-  if(current?.status==='complete'&&isCopyUuid(current.target_id))return {ok:true,id:current.target_id,already:true};
-  if(kind==='logo'&&!current)await rpc(env,'_resource_clone_cleanup',{p_owner:actor,p_job:job.id}).catch(()=>{});
+  if(current?.status==='complete'&&isCopyUuid(current.target_id))return completed(current);
+  if(kind==='logo'&&!current)await rpc(env,'_resource_clone_cleanup',{p_owner:recipient,p_job:job.id}).catch(()=>{});
   throw error;
  }
 }

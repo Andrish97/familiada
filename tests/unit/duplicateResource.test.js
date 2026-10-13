@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {duplicateResource} from '../../cloudflare/maintenance-worker/src/lib/resource-copy/duplicate.js';
+import {duplicateResource,sendResource} from '../../cloudflare/maintenance-worker/src/lib/resource-copy/duplicate.js';
 const actor='aaaaaaaa-3657-1000-0000-000000000001',other='aaaaaaaa-3657-1000-0000-000000000002',source='bbbbbbbb-3657-1000-0000-000000000001';
 const request='cccccccc-3657-1000-0000-000000000001',job='dddddddd-3657-1000-0000-000000000001',target='eeeeeeee-3657-1000-0000-000000000001',assetId='ffffffff-3657-1000-0000-000000000001';
 const env={SUPABASE_URL:'https://storage.example',SUPABASE_SERVICE_ROLE_KEY:'synthetic-key'};
@@ -108,4 +108,67 @@ test('demo IMAGE bytes come only from the known bundled asset and upload directl
   if(call.url.endsWith('/_resource_clone_finish_duplicate')){assert.equal(call.body.p_demo,true);assert.ok(call.body.p_definition.payload.source.imageUrl.endsWith(path));assert.equal(call.body.p_definition.payload.source.imageData,undefined);return reply({ok:true,id:target});}
   assert.fail('unrecognized source fetch');
  },async()=>await duplicateResource(env,actor,input('logo')));
+});
+
+test('Send shares definition pipeline for game and logo while deriving source owner from Auth and destination from bound job',async()=>{
+ for(const kind of ['game','logo']){
+  await mocked(call=>{
+   if(call.url.endsWith('/_resource_clone_begin')){assert.equal(call.body.p_actor,actor);assert.equal(call.body.p_owner,other);assert.equal(call.body.p_action,'send');return reply({...begin(kind),recipient_id:other});}
+   if(call.url.includes('/resource_clone_assets?'))return reply([]);
+   if(call.url.endsWith('/_resource_clone_finish_send')){assert.equal(call.body.p_demo,false);assert.equal(call.body.p_suffix,undefined);assert.equal((kind==='game'?call.body.p_definition.game:call.body.p_definition).name,'Alpha');return reply({ok:true,offer_id:target,already:false});}
+   assert.fail('Send does not read name lists or call duplicate finish');
+  },async()=>assert.deepEqual(await sendResource(env,actor,{...input(kind),recipient_id:other,actor:other}),{ok:true,offer_id:target,already:false}));
+ }
+});
+test('Send rejects Base, self, invalid recipients and mismatched verified destinations before assets',async()=>{
+ await mocked(()=>assert.fail('invalid Send reached backend'),async()=>{
+  for(const value of [{...input('base'),recipient_id:other},{...input('game'),recipient_id:actor},{...input('game'),recipient_id:'bad'}])await assert.rejects(sendResource(env,actor,value),/invalid_copy_request/);
+ });
+ await mocked(()=>reply(begin('logo')),async calls=>{await assert.rejects(sendResource(env,actor,{...input('logo'),recipient_id:other}),/invalid_copy_job/);assert.equal(calls.length,1);});
+});
+test('Send protects private demo provenance before any storage image request',async()=>{
+ const state={...begin('logo'),recipient_id:other};state.snapshot.demo_origin=true;
+ state.snapshot.logo={id:source,name:'Renamed',type:'PIX_150x70',payload:{bits_b64:'AA==',source:{mode:'IMAGE',imageUrl:'https://www.familiada.online/logo/assets/demo-image.png'}}};
+ await mocked(call=>{if(call.url.endsWith('/_resource_clone_begin'))return reply(state);if(call.url.includes('/resource_clone_assets?'))return reply([]);assert.fail('Demo Send reached materialization');},async()=>await assert.rejects(sendResource(env,actor,{...input('logo'),recipient_id:other}),/demo_not_sendable/));
+});
+test('Send completed replay returns only the existing offer and does not expose the recipient decision',async()=>{
+ await mocked(call=>{if(call.url.endsWith('/_resource_clone_begin'))return reply({...begin('game'),recipient_id:other,status:'complete',snapshot:null,target_id:target});if(call.url.includes('/resource_copy_offers?')){assert.ok(call.url.includes('recipient_id=eq.'+other));assert.ok(call.url.includes('request_id=eq.'+request));assert.ok(call.url.includes('select=id'));return reply([{id:job,status:'declined'}]);}assert.fail('Replay read source or wrote another copy');},async calls=>{
+  assert.deepEqual(await sendResource(env,actor,{...input('game'),recipient_id:other}),{ok:true,offer_id:job,already:true});assert.equal(calls.length,2);
+ });
+});
+test('Send nested DRAW uses the same native file helper with recipient storage and sender source',async()=>{
+ const image=`${env.SUPABASE_URL}/storage/v1/object/public/user-logos/${actor}/original.png`;
+ const state={...begin('logo'),recipient_id:other};state.snapshot.logo={id:source,name:'Alpha',type:'PIX_150x70',payload:{bits_b64:'AA==',source:{mode:'DRAW',fabricData:{objects:[{src:image},{src:image}]}}}};
+ const path=`${other}/copies/${job}/${assetId}.png`,etag='a'.repeat(32);let destination=false;
+ await mocked(call=>{
+  if(call.url.endsWith('/_resource_clone_begin'))return reply(state);
+  if(call.url.includes('/resource_clone_assets?'))return reply([]);
+  if(call.url.endsWith('/_resource_clone_asset_register'))return reply({id:assetId,job_id:job,destination_path:path,source_kind:'storage',source_path:`${actor}/original.png`,mime:'image/png',byte_size:3,etag});
+  if(call.options.method==='HEAD')return call.url.endsWith(path)&&!destination?new Response(null,{status:400}):new Response(null,{headers:{ETag:etag,'Content-Type':'image/png','Content-Length':'3'}});
+  if(call.url.endsWith('/object/copy')){assert.equal(call.body.sourceKey,`${actor}/original.png`);assert.equal(call.body.destinationKey,path);destination=true;return reply({});}
+  if(call.url.endsWith('/_resource_clone_finish_send')){for(const object of call.body.p_definition.payload.source.fabricData.objects)assert.ok(object.src.endsWith(path));return reply({ok:true,offer_id:target});}
+  assert.fail('unexpected Send request');
+ },async calls=>{await sendResource(env,actor,{...input('logo'),recipient_id:other});assert.equal(calls.filter(call=>call.url.endsWith('/object/copy')).length,1);});
+});
+test('Send lost finish response recovers the same offer without another result or cleanup',async()=>{
+ let started=false;
+ await mocked(call=>{
+  if(call.url.endsWith('/_resource_clone_begin')){const state={...begin('game'),recipient_id:other};if(started)return reply({...state,status:'complete',snapshot:null,target_id:target});started=true;return reply(state);}
+  if(call.url.endsWith('/_resource_clone_finish_send'))throw new Error('response lost after Send commit');
+  if(call.url.includes('/resource_copy_offers?'))return reply([{id:job}]);
+  assert.fail('Send recovery duplicated work or cleaned an installed result');
+ },async()=>assert.deepEqual(await sendResource(env,actor,{...input('game'),recipient_id:other}),{ok:true,offer_id:job,already:true}));
+});
+test('Send late upload after recipient deletion cleans only the bound recipient job prefix',async()=>{
+ const state={...begin('logo'),recipient_id:other};state.snapshot.logo={id:source,name:'Alpha',type:'PIX_150x70',payload:{bits_b64:'AA==',source:{mode:'IMAGE',imageData:'data:image/png;base64,AQID'}}};let started=false;
+ const path=`${other}/copies/${job}/${assetId}.png`;
+ await mocked(call=>{
+  if(call.url.endsWith('/_resource_clone_begin')){if(started)return Response.json({message:'auth_required',code:'P0001'},{status:400});started=true;return reply(state);}
+  if(call.url.includes('/resource_clone_assets?'))return reply([]);
+  if(call.url.endsWith('/_resource_clone_asset_register'))return reply({id:assetId,job_id:job,source_kind:'embedded',destination_path:path,content_hash:call.body.p_content_hash});
+  if(call.url.endsWith(path))return reply({});
+  if(call.url.endsWith('/_resource_clone_finish_send'))return Response.json({message:'invalid_copy_job',code:'P0001'},{status:400});
+  if(call.url.endsWith('/_resource_clone_cleanup')){assert.deepEqual(call.body,{p_owner:other,p_job:job});return reply(null);}
+  assert.fail('unexpected late Send upload request');
+ },async calls=>{await assert.rejects(sendResource(env,actor,{...input('logo'),recipient_id:other,actor:other}),/invalid_copy_job/);assert.equal(calls.filter(call=>call.url.endsWith('/_resource_clone_cleanup')).length,1);});
 });

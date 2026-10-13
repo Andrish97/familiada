@@ -444,3 +444,20 @@ Bez migracji/grantów/endpointu. Dalsze wymagane bramki: wyścigi i
 dostęp do odczytu starych ścieżek, wspólna orkiestracja Workera,
 queue/alokacja/dostarczenie, Go, UI/historia/plakietki oraz screeny.
 366 zamknięte main38348612550 success2/2;367 jest lokalnym prototypem.
+
+### Następny graf powiadomień kopii — wymagane rozdzielenie ról
+
+Kopia i jej propozycja należą do stałego ID odbiorcy. Alokacja oraz
+niewysłany mail muszą mieć ten sam korzeń życia; usunięcie oryginału,
+znajomości i nadawcy nie może kasować prawidłowego powiadomienia.
+Nadawca pozostaje zapamiętaną tożsamością i etykietą w treści, nie FK
+warunkującym ważność. Budżet powiadomień kontrolować dla nadawcy
+i odbiorcy, oddzielnie od korzenia życia maila. Nowe SourceKind oraz
+Go nie mogą polegać na dalszym istnieniu oryginału/nadawcy.
+Przed insercją i dostarczeniem sprawdzać flagę, aktualny kanoniczny
+adres odbiorcy, ofertę pending oraz jej5 dni. Akceptacja, odmowa,
+expiry i usunięcie odbiorcy unieważniają jeszcze niewysłany mail.
+
+Private Send367 isolated38348943986 green. Wspólny cloneResource w
+Workerze przygotowany,600 unit/dry-run green; Send nieroutowane,
+bez publikacji/grantów367 i bez obietnicy dostarczenia SMTP.
