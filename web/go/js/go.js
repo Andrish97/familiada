@@ -1,13 +1,13 @@
 // web/go/js/go.js
-import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-13T08251";
-import { anonymousPollDestination, validAnonymousPollParams } from "../../shared/js/core/poll-links.js?v=v2026-10-13T08251";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T08251";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-13T08251";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-13T08251";
-import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-13T08251";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-13T08251";
+import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-13T13553";
+import { anonymousPollDestination, validAnonymousPollParams } from "../../shared/js/core/poll-links.js?v=v2026-10-13T13553";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T13553";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-13T13553";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-13T13553";
+import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-13T13553";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-13T13553";
 
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-13T08251";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-13T13553";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
