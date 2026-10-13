@@ -775,6 +775,11 @@ ujednolicenia; bieżąca kolejność E19 pozostaje zachowana.
 
 #### Zakres i kryteria zakończenia przeglądu landscape
 
+**Marketplace (2026-10-13):** test dotykowy844×390 przechodzi listę,
+wyszukiwanie, szczegóły gry i zamknięcie arkusza bez utraty filtra;
+`38385343907`, success1/1. Pozostałe strony mapy i rzeczywistego urządzenia
+nie są tym testem objęte.
+
 Lista kontrolna obejmuje PAGES **oraz wszystkie rzeczywiste strony HTML**
 w `web/` (także podstrony i strony techniczne poza mapą). Na początku
 wdrożenia porównać obie listy ponownie, żeby uwzględnić nowe strony.
