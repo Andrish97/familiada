@@ -47,6 +47,38 @@ const QN_COUNT = 10; // RULES.QN_MIN
 const TOTAL_VOTERS = 100;
 const REAL_UI_VOTERS = 1; // jedno prawdziwe kliknięcie na typ ankiety wystarczy — reszta (99) głosuje bezpośrednim RPC, patrz komentarz na górze pliku
 
+test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczyt", async ({ page, context }) => {
+  await loginAsTestUser(page, context);
+  const fixture = await seedPollGame(page, "poll_text");
+  let firstRead = true;
+  await page.route("**/rest/v1/games?*", async (route) => {
+    const requestUrl = new URL(route.request().url());
+    const isPollLoad = requestUrl.searchParams.get("select") === "id,name,type,status,share_key_poll,poll_opened_at,poll_closed_at";
+    if (isPollLoad && firstRead) {
+      firstRead = false;
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E20 controlled first read failure" }) });
+      return;
+    }
+    await route.continue();
+  });
+
+  try {
+    const navigation = page.goto(`https://www.familiada.online/polls?id=${fixture.gameId}`);
+    await expect(page.locator("#pollLoadMessage")).toHaveText("Wczytuję ankietę…");
+    await navigation;
+    await expect(page.locator("#pollLoadState")).toBeVisible();
+    await expect(page.locator("#pollLoadMessage")).toHaveText(/Nie udało się wczytać ankiety/);
+    await expect(page.locator("#pollLoadRetry")).toBeVisible();
+    await page.locator("#pollLoadRetry").click();
+    await expect(page.locator("#pollLoadState")).toBeHidden();
+    await expect(page.locator("#pollBar")).toBeVisible();
+    await expect(page.locator("#cardMain")).toBeVisible();
+  } finally {
+    await deleteGame(page, fixture.gameId);
+  }
+});
+
 // Nierówny rozkład głosów zamiast idealnie równego — realniej odwzorowuje
 // prawdziwe głosowanie (kilka popularnych opcji, nie identyczny podział).
 const POINTS_WEIGHTS = [45, 30, 15, 10]; // suma = TOTAL_VOTERS, po jednej wadze na 4 predefiniowane odpowiedzi

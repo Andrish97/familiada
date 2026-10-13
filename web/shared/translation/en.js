@@ -843,6 +843,7 @@ const en = {
       points: "points",
     },
     pageSubtitle: "{type} · {name}",
+    load: { loading: "Loading poll…", failed: "Could not load the poll.", retry: "Retry" },
     tabs: {
       share: "Sharing",
       results: "Votes",

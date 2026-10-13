@@ -851,6 +851,7 @@ const pl = {
       points: "punktowa",
     },
     pageSubtitle: "{type} · {name}",
+    load: { loading: "Wczytuję ankietę…", failed: "Nie udało się wczytać ankiety.", retry: "Ponów" },
     tabs: {
       share: "Udostępnianie",
       results: "Głosy",

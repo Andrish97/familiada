@@ -838,6 +838,7 @@ const uk = {
       points: "з балами",
     },
     pageSubtitle: "{type} · {name}",
+    load: { loading: "Завантажую опитування…", failed: "Не вдалося завантажити опитування.", retry: "Повторити" },
     tabs: {
       share: "Поширення",
       results: "Голоси",

@@ -6,26 +6,26 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-13T08251";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-13T08251";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T08251";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T08251";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T08251";
+import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-13T09584";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-13T09584";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T09584";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T09584";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T09584";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-13T08251";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T08251";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T08251";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T08251";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-13T08251";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-13T08251";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-13T08251";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-13T08251";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T08251";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T08251";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-13T08251";
-import { createTally } from "./poll-tally.js?v=v2026-10-13T08251";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-13T09584";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T09584";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T09584";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T09584";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-13T09584";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-13T09584";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-13T09584";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-13T09584";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T09584";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T09584";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-13T09584";
+import { createTally } from "./poll-tally.js?v=v2026-10-13T09584";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-13T08251";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-13T09584";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -54,6 +54,9 @@ const pollActions = $("pollActions");
 // treść
 const cardMain = $("cardMain");
 const cardEmpty = $("cardEmpty");
+const pollLoadState = $("pollLoadState");
+const pollLoadMessage = $("pollLoadMessage");
+const pollLoadRetry = $("pollLoadRetry");
 const tabShare = $("tabShare");
 const tabResults = $("tabResults");
 const secShare = $("secShare");
@@ -988,18 +991,38 @@ function renderShareSection(st, link) {
 async function refresh() {
   if (!currentUser) return; // initPage jeszcze nie wpuścił (albo pokazał nakładkę gościa)
   const seq = ++refreshSeq;
+  if (!game && pollLoadState) {
+    pollLoadState.hidden = false;
+    if (pollLoadMessage) pollLoadMessage.textContent = t("polls.load.loading");
+    if (pollLoadRetry) pollLoadRetry.hidden = true;
+  }
   if (!gameId) {
     if (pollBar) pollBar.style.display = "none";
     if (cardMain) cardMain.style.display = "none";
+    if (pollLoadState) pollLoadState.hidden = true;
     if (cardEmpty) cardEmpty.style.display = "";
     setMsg(t("polls.missingId"), "error");
     return;
   }
 
   const prev = game;
-  game = await loadGame();
+  try {
+    game = await loadGame();
+  } catch (error) {
+    console.warn("[polls] initial game load failed", error);
+    if (seq !== refreshSeq) return;
+    if (!prev) {
+      if (pollLoadState) pollLoadState.hidden = false;
+      if (pollLoadMessage) pollLoadMessage.textContent = t("polls.load.failed");
+      if (pollLoadRetry) pollLoadRetry.hidden = false;
+    } else {
+      setMsg(t("polls.load.failed"), "error");
+    }
+    return;
+  }
   if (seq !== refreshSeq) return;
 
+  if (pollLoadState) pollLoadState.hidden = true;
   if (cardEmpty) cardEmpty.style.display = "none";
   if (pollBar) pollBar.style.display = "";
   if (cardMain) cardMain.style.display = "";
@@ -1246,6 +1269,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const u = await userP;
   if (!u) return; // przekierowanie na logowanie albo nakładka gościa
   currentUser = u;
+  pollLoadRetry?.addEventListener("click", () => void refresh());
 
   window.addEventListener("pagehide", () => { void tally.flush(); });
 
