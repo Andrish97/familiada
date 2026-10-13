@@ -1108,3 +1108,5 @@ normalizacja z finalnym zapisem, świadome Importuj i bez cichego gubienia
 treści, zapisana w ujednolicenie-wygladu.md. Nie usuwać TXT teraz.
 Przegląd Do bazy: już batch200; odrębne folder/name/ord i sprzątanie
 wymagają późniejszego przeglądu. Manual nadal ostatni.
+
+**Aktualizacja2026-10-13:** parser Logo domknięty main38330805999 success1/1. E19C rozszerzone decyzją użytkownika: jeden mechanizm Powiel dla Gry/Bazy/Logo i Wyślij Gry/Logo. Dopisek „kopia” w nazwie, nie plakietka; ikona duplikowania przy importach/eksportach. Własne obrazy bucketowe kopiować Storage-native, base64 tylko format pliku/osadzone źródła. Zakaz wysyłania demo z ochroną przed obejściem przez zmianę nazwy/Powiel. Decyzje w udostepnianie-kopii-plan.md. Prywatny upload helper jeszcze nie podłączony; wymaga wspólnego planu plików i kontroli rodziców.

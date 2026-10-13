@@ -1,26 +1,28 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T01070";
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-13T01303";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-13T01070";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-13T01070";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T01070";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T01070";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T01070";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T01070";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T01070";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T01070";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T01070";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T01070";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-13T01070";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T01070";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-13T01070";
-import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-13T01070";
-import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-13T01070";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T01070";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T01070";
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-13T01070";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T01303";
+
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-13T01303";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-13T01303";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T01303";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T01303";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T01303";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T01303";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T01303";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T01303";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T01303";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T01303";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-13T01303";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T01303";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-13T01303";
+import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-13T01303";
+import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-13T01303";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T01303";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T01303";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-13T01303";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -583,19 +585,14 @@ async function exportBase(baseId, onProgress) {
   const ctags = await selectIn("qb_category_tags", "category_id,tag_id", "category_id", (cats || []).map((c) => c.id));
   prog(t("bases.export.steps.categoryTags"), 6, t("bases.export.count", { count: ctags.length }));
 
-  return {
-    base: { name: baseRow?.name ?? t("bases.defaults.baseLabel") },
-    categories: cats || [],
-    tags: tags || [],
-    questions: (qs || []).map((q) => ({
-      id: q.id,
-      category_id: q.category_id,
-      ord: Number(q.ord) || 0,
-      payload: q.payload || {},
-    })),
+  return baseExportSnapshot({
+    base: baseRow,
+    categories: cats,
+    tags,
+    questions: qs,
     question_tags: qtags,
     category_tags: ctags,
-  };
+  }, t("bases.defaults.baseLabel"));
 }
 
 function isValidImportPayload(p) {
