@@ -216,7 +216,11 @@ test.describe("import / eksport", () => {
     await page.setInputFiles("#inpImportLogoFile", file);
     await expect(page.locator("#btnLogoImportConfirm")).toBeEnabled();
     await page.locator("#btnLogoImportConfirm").click();
-    await expect(page.locator("#logoImportOverlay")).toBeHidden({ timeout: 15000 });
+    await expect(page.locator("#logoImportOverlay")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("#btnLogoImportDone")).toBeVisible();
+    await expect(page.locator("#logoImportErr")).toContainText(/Zaimportowano|Imported|Імпортовано/i);
+    await page.locator("#btnLogoImportDone").click();
+    await expect(page.locator("#logoImportOverlay")).toBeHidden();
   }
 
   test("P1-14: nazwa pliku eksportu zachowuje polskie litery", async ({ page }) => {

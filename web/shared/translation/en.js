@@ -4174,6 +4174,7 @@ const en = {
     import: {
       title: "Import logo",
       confirm: "Import",
+      done: "Done",
       steps: {
         uploadImage: "Uploading image to storage…",
         saveDb: "Saving to database…",
