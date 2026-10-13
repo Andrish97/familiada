@@ -2000,6 +2000,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // słowa wyjaśnienia (jakby użytkownik nie miał żadnych gier).
     console.error("[games] initial load failed:", e);
     setHint(t("games.alert.loadFailed"));
+  } finally {
+    // Nie pokazuj listy jako pustej przed pierwszą odpowiedzią; nawet przy
+    // błędzie odsłoń komunikat zamiast pozostawić niewidoczną sekcję.
+    document.querySelector(".games-shell")?.classList.add("skel-step-ready");
   }
 
   // Treść kafelków (typ, status, "Nowa gra", podpowiedź) jest składana w JS,

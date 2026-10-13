@@ -196,6 +196,23 @@ test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zap
   await expect(sort.locator('.ui-select-item[data-value="name"]')).toHaveAttribute("aria-selected", "true");
 });
 
+test("E20: lista Gier czeka na pierwszy odczyt i ujawnia komunikat przy błędzie", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  let releaseRequest;
+  const requestGate = new Promise((resolve) => { releaseRequest = resolve; });
+  await page.route("**/rest/v1/games*", async (route) => {
+    await requestGate;
+    await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "E20 test load failure" }) });
+  });
+
+  await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
+  const list = page.locator(".games-shell");
+  await expect(list).toHaveCSS("opacity", "0");
+  releaseRequest();
+  await expect(list).toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#hint")).not.toBeEmpty();
+});
+
 test.describe("games: audyt -- kafelki", () => {
 
   test("telefon: tapnięcie zaznacza bez przebudowy listy, podwójne otwiera zmianę nazwy", async ({ browser }) => {
