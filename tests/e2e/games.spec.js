@@ -103,8 +103,14 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
     { path: "/bases/", action: "#btnBrowse", name: "Przeglądaj", screenshot: "bases" },
     { path: "/logo/", action: "#btnPreview", name: "Podgląd", screenshot: "logo" },
   ];
-  for (const width of [1400, 390]) {
-    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+  const viewports = [
+    { width: 1400, height: 900, label: "1400" },
+    { width: 390, height: 844, label: "390" },
+    { width: 844, height: 390, label: "844x390" },
+    { width: 667, height: 375, label: "667x375" },
+  ];
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
     for (const item of pages) {
       await page.goto(`https://www.familiada.online${item.path}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
@@ -113,18 +119,18 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
         const heading = document.querySelector(".bar > :first-child").getBoundingClientRect();
         return { actions: { left: actions.left, right: actions.right }, heading: { left: heading.left, right: heading.right } };
       });
-      expect(boxes.actions.right, `${item.path}: actions overlap title at ${width}px`).toBeLessThanOrEqual(boxes.heading.left + 1);
-      expect(boxes.heading.right, `${item.path}: title is outside the right column at ${width}px`).toBeLessThanOrEqual(width - 8);
+      expect(boxes.actions.right, `${item.path}: actions overlap title at ${viewport.label}`).toBeLessThanOrEqual(boxes.heading.left + 1);
+      expect(boxes.heading.right, `${item.path}: title is outside the right column at ${viewport.label}`).toBeLessThanOrEqual(viewport.width - 8);
       await expect(page.locator(`${item.action} .ico`)).toBeVisible();
       await expect(page.locator(item.action)).toHaveAccessibleName(item.name);
-      if (width === 390) {
+      if (viewport.width <= 980) {
         for (const selector of ["#btnExport", "#btnImport"]) {
           await expect(page.locator(`${selector} .ico`)).toBeVisible();
           await expect(page.locator(selector)).toHaveAttribute("aria-label", /.+/);
         }
         await expect(page.locator(".list-search-open .ico")).toBeVisible();
       }
-      await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${width}.png`), fullPage: true });
+      await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${viewport.label}.png`), fullPage: true });
     }
   }
 });

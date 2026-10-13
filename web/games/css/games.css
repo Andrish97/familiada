@@ -79,7 +79,7 @@ body.games-body > main.wrap{
   .bar{ gap: 8px; }
   .bar > .actions{ gap: 4px; flex-wrap: wrap; }
 }
-@media (max-width: 600px){
+@media (max-width: 600px), (max-width: 980px) and (orientation: landscape){
   .bar > .actions{ align-content: start; }
   .bar .btn{ min-width: 38px; min-height: 38px; padding: 9px; }
   .bar .action-label{
@@ -862,7 +862,7 @@ body.games-body > main.wrap{
 }
 .list-search .btn{ padding: 2px 6px; min-height: 0; }
 .list-search-open{ display: none; }
-@media (max-width: 600px){
+@media (max-width: 600px), (max-width: 980px) and (orientation: landscape){
   .list-search{ width: auto; flex: 1 1 auto; max-width: none; }
   .list-search .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
 }
@@ -874,7 +874,7 @@ body.games-body > main.wrap{
 .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{
   border-color: var(--gold); background: rgba(255, 215, 0, .12);
 }
-@media (max-width: 600px){
+@media (max-width: 600px), (max-width: 980px) and (orientation: landscape){
   .games-bottom-left{ flex: 0 1 auto; min-width: 0; gap: 4px; }
   .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
   .games-bottom-left > #btnReceivedFilter[aria-pressed="true"]{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
