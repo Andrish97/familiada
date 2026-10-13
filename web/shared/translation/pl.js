@@ -143,7 +143,7 @@ const pl = {
       subscriptions: "Subskrypcje",
       bases: "Moje bazy",
       baseExplorer: "Menedżer bazy",
-      logoEditor: "Moje logo",
+      logoEditor: "Moje loga",
       logoText: "Edytor logo",
       logoDraw: "Edytor logo",
       logoImage: "Edytor logo",
@@ -3893,7 +3893,7 @@ const pl = {
       image: "Familiada — logo z obrazu",
     },
     list: {
-      title: "Moje logo",
+      title: "Moje loga",
       hint: "Kliknij kafelek, żeby go zaznaczyć. Dwuklik (albo przytrzymanie na dotyku) zmienia nazwę.",
       preview: "Podgląd",
       edit: "Edytuj",
