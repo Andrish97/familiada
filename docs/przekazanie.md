@@ -1,6 +1,57 @@
-# Wznowienie pracy — 2026-10-11
+# Przekazanie — punkt wznowienia2026-10-13
 
-## Bieżąca kontynuacja: kolejka §5 pkt7 Graf zależności
+## Aktualny stan — przeczytaj najpierw
+
+Repo `Andrish97/familiada`, branch `codex/e19-3`. Ostatni commit kodu
+`e565bffe07`; main sprawdzony `009104fd27`. Poniżej starszy dziennik;
+jego historyczne „następny krok” nie zastępują niniejszego stanu.
+
+| Etap | Stan teraz |
+|---|---|
+| E19 / graf dotychczasowych zasobów | Zamknięte produkcyjnie. Kolejka/mail/Go/kaskady/anonimowe formularze mają swoje wcześniejsze dowody w Dzienniku. |
+| E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
+| E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
+| E19C / Wyślij Gry/Logo | Jeszcze NIE jest funkcją publiczną. Prywatny SQL367/prototyp i wspólna orkiestracja Workera na branchu: isolated38348943986,600 unit, wrangler dry-run green. Brak publicznego endpointu, UI i dowodu SMTP kopii. |
+| E19N → E14 → E20 → Manual | Kolejno: przegląd przejść/Control→Znajomi; sprzątanie zastąpionych ścieżek; wspólny wygląd/mobile/tablet/landscape; instrukcja na końcu. Do E20 trzy etapy licząc aktualny E19C. |
+
+## Jeden aktualny następny cel: pełne Wyślij
+
+Domknąć razem przepływ Wyślij→mail/Go→odbiór/odmowa→historia/plakietki
+z normalnym cyklem DB→branch→Pages→main. Użytkownik wskazał zbyt wolny
+postęp (4 godziny); ograniczyć rozdrabnianie na kolejne paczki samego
+zaplecza. Raportować konkretnie co30–60s, testować punktowo, działać
+bez ponownego pytania o kontynuację. Pełne unit przed każdym commitem.
+
+Gotowe na branchu: `docs/sql/draft-resource-clone-send-367.sql` i
+`test-resource-clone-send-367.sql`. Games3/Logo3, tworzenie własnego
+zasobu przy wysłaniu, akceptacja tego samego ID, odmowa bez undo,
+expiry5 dni, odmowa30 dni, historia30 dni, own file manifests,
+obie kaskady i18 dodatkowych tabel operacyjnych z guardem pending.
+To prototyp, a NIE zastosowana migracja367. Worker
+`cloudflare/maintenance-worker/src/lib/resource-copy/duplicate.js`
+ma wspólny cloneResource i nieroutowany sendResource;7 dodatkowych
+unit obejmuje destination/demo/native DRAW/replay/lost response/late upload.
+
+Bieżąca luka: źródło/alokacja/kolejka/dostarczenie nowych maili kopii.
+Ich korzeń życia to odbiorca; nadawca i źródło po wysłaniu mogą zniknąć.
+Budżet nadawca–odbiorca zachować oddzielnie od korzenia życia.
+Flagę sprawdzić przed kolejką i dostarczeniem. Auth maile nadal direct,
+bez flagi/stopki powiadomień. Dalej Go, odczyt starych ścieżek pending,
+API, odbiór/historia/plakietki/filtr Otrzymane i zrzuty390/1400/landscape.
+Źródło decyzji: `docs/udostepnianie-kopii-plan.md`.
+
+Ostatnia sesja po pytaniu o postęp wykonała tylko odczyt istniejących
+funkcji mailowych; NIE dopisała nowej migracji ani nowego kodu maili.
+Przed tym przekazaniem repo było czyste; żaden E2E nie biegnie.
+Lokalny Postgres: kontener familiada-pg323, DB fam365release z365/366
+oraz lokalnym draft367. GitHub logs/artifacts Azure zwracają403;
+diagnostyka przez check annotations, zrzuty przez repo. Bez obchodzenia blokady.
+Konta1–8 pula;9/10 wykluczone;11/12 nie kasować;14 bez konta;15 kasowanie
+z odtworzeniem. Manual zawsze ostatni.
+
+## Historia wcześniejszych prac — od2026-10-11
+
+### Ówczesny etap: kolejka §5 pkt7 Graf zależności
 
 Pkt4 Bazy337–339 i pkt5 Ankiety340–344 zamknięte produkcyjnie.
 Pkt6 Maile też zamknięty: pierwsza paczka13 green38170191574 + świeże
