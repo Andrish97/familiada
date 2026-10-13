@@ -5,6 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, galleryTestAccountUsername } = require("./helpers/login");
+const { restoreTestAccount } = require("./helpers/mailbox");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { seedE20GalleryFixtures } = require("./helpers/e20-gallery-fixtures");
 
@@ -110,6 +111,11 @@ async function capture(page, profile, id, href, manifest, prepare = null) {
 test.describe.configure({ mode: "serial" });
 test.setTimeout(45 * 60 * 1000);
 test.use({ serviceWorkers: "block" });
+
+test.beforeAll(async () => {
+  // Przywraca wspólne hasło na dedykowanym koncie, zachowując jego UUID i dane.
+  await restoreTestAccount("test17");
+});
 
 for (const profile of PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id))) {
   test(`E20 gallery · ${profile.label}`, async ({ browser }) => {
