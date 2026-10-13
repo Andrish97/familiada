@@ -231,9 +231,14 @@ test.describe("import / eksport", () => {
   test("E20: błąd eksportu Logo zostaje do ręcznego zamknięcia i ponowienia", async ({ page }) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("export-retry"), type: "GLYPH_30x10", payload: L.textPayload() });
+    await open(page);
     await page.locator(`.logoTile[data-key="${id}"]`).click();
-    const failedRequest = page.route("**/rest/v1/user_logos**", (route) => route.abort());
-    await failedRequest;
+    await page.route("**/rest/v1/user_logos**", (route) => {
+      const req = route.request();
+      const url = new URL(req.url());
+      if (req.method() === "GET" && url.searchParams.get("id") === `eq.${id}`) return route.abort();
+      return route.continue();
+    });
     await page.locator("#btnExport").click();
     await expect(page.locator("#logoExportOverlay")).toBeVisible();
     await expect(page.locator("#logoExportMsg")).toContainText(/couldn't export|nie udało się wyeksportować/i);
