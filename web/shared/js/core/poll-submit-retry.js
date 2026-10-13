@@ -1,4 +1,4 @@
-import { t } from '../../translation/translation.js?v=v2026-10-13T13553';
+import { t } from '../../translation/translation.js?v=v2026-10-13T14135';
 
 export function showPollSubmitRetry({ button, container, seconds = 0, setMessage, onRetry }) {
   const created = !button;
