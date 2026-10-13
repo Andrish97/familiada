@@ -427,3 +427,20 @@ Następne Wyślij nie jest jeszcze wdrożone. Przed nim366 usuwa inbox
 odbiorcy przed zasobami i blokuje Auth względem równoległego wysyłania.
 Rzeczywiste delete_user_everything sprawdzone lokalnie dla obu stron,
 Gier i Logo;2 wyścigi green, wymagane finalne izolowane CI→DB/log.
+
+### Prywatny lokalny Send367 po naprawie366
+
+Finish_send współdzieli _resource_clone_write i stałe joby/manifesty.
+Trzy typy Gry i TEXT/IMAGE/DRAW powstają podczas wysłania; akceptacja
+zachowuje ich ID. Odmowa nieodwracalna,5 dni od wysłania,30 dni odmowy,
+historia niezależna. Własne pliki muszą odpowiadać zapisanym receptom
+i metadanym Storage; brak oryginalnego pliku w ukończonym payloadzie.
+Test lokalny sprawdza również18 realnych tabel potomnych: Control,
+urządzenia, runtime/statystyki, ankiety, publikacja społecznościowa.
+Guard blokuje tworzenie powiązań przed akceptacją; metadane kwitów,
+manifesta i ofert pozostają obsługiwane przez prywatny przebieg.
+
+Bez migracji/grantów/endpointu. Dalsze wymagane bramki: wyścigi i
+dostęp do odczytu starych ścieżek, wspólna orkiestracja Workera,
+queue/alokacja/dostarczenie, Go, UI/historia/plakietki oraz screeny.
+366 zamknięte main38348612550 success2/2;367 jest lokalnym prototypem.
