@@ -86,11 +86,14 @@ function additionalStates(fixtures) {
   ];
 }
 
-async function capture(page, profile, id, href, manifest, prepare = null) {
+async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20_000 });
   await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading")
     || !!document.documentElement.dataset.deviceGuard, null, { timeout: 8_000 }).catch(() => {});
+  if (readySelector) {
+    await page.locator(readySelector).waitFor({ state: "visible", timeout: 20_000 });
+  }
   if (prepare) await prepare(page);
   await page.waitForTimeout(450);
   const state = await page.evaluate(() => ({
@@ -105,6 +108,7 @@ async function capture(page, profile, id, href, manifest, prepare = null) {
   const file = `${id}.png`;
   fs.mkdirSync(path.join(OUT, profile.id), { recursive: true });
   await page.screenshot({ path: path.join(OUT, profile.id, file), fullPage: true, animations: "disabled" });
+  console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
   manifest.push({ id, profile: profile.id, label: profile.label, url: href, file: `${profile.id}/${file}`, ...state });
 }
 
@@ -153,7 +157,14 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
         } else if (id === "logo") {
           await loginAsTestUser(page, context, { username: galleryTestAccountUsername() });
         }
-        await capture(page, profile, id, href, manifest);
+        const readySelector = id === "games"
+          ? `.card[data-game-id="${fixtures.game.id}"]`
+          : id === "bases"
+            ? `.tile[data-base-id="${fixtures.base.id}"]`
+            : id === "logo"
+              ? `.logoTile[data-key="${fixtures.logo.id}"]`
+              : null;
+        await capture(page, profile, id, href, manifest, null, readySelector);
       }
       const extra = additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
       for (const state of extra) {
