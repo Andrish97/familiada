@@ -405,3 +405,14 @@ konta sprawdza UUID, nie dawny e-mail. Root już zapisanej kopii chroni
 jej pliki przed cleanup nieukończonego joba. API nie jest jeszcze
 routowane; wymagane izolowane kontrakty, dodająca migracja/log i cały
 cykl testów przed UI. Publiczne Wyślij/Go/mail pozostają dalszą paczką.
+
+### Powiel Gier/Baz/Logo — bramka publicznego UI
+
+365 zastosowane produkcyjnie (log03:14:54 UTC), Worker38341381212 success.
+Native API38342073981 success: wszystkie typy Gier i Logo, pełna Baza
+z folderami/tagami/oboma przypisaniami oraz nowymi ID bez shares.
+UI branch38343598152 success,9 zrzutów w docs/img/transfer/duplicate.
+Jeden bindResourceDuplicate, ikona przy importach/eksportach, nazwa
+z kopia/copy/копія; bez dodatkowego znacznika. Aktualnie Powiel dotyczy
+własnych zasobów zalogowanego konta. Publikacja UI i kontrola main
+pozostają bramką zamknięcia tej paczki. Wyślij/mail/Go jeszcze niewdrożone.
