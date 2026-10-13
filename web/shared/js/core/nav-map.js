@@ -38,8 +38,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-13T07454";
-import { iconText } from "./icons.js?v=v2026-10-13T07454";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-13T07485";
+import { iconText } from "./icons.js?v=v2026-10-13T07485";
 
 export const MAX_RET_DEPTH = 4;
 
@@ -87,9 +87,9 @@ export const PAGES = {
   } },
   baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay", "renameModal"], locks: [{ type: "base", id: "id", mode: "shared" }] },
   logoEditor:    { path: "/logo/",              access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["renameOverlay", "logoImportOverlay", "previewOverlay", "logoExportOverlay"] },
-  logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
-  logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
-  logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
+  logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
+  logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
+  logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
   control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"], buttons: {
     btnFriends: { to: "friends", roles: ["user"], custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
@@ -105,6 +105,21 @@ export const PAGES = {
   mailCenter:    { path: "/mail/", access: "public", parent: "home", from: ["home"], tabs: ["subscriptions","items"], state: ["tab","m"] },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
 };
+
+// Wspólny kontakt jest budowany dynamicznie, więc nie należy do statycznych
+// PAGES[id].dialogs. Jego dozwolone strony i stan URL nadal pochodzą z mapy.
+export const GLOBAL_DIALOGS = {
+  contactModalOverlay: Object.keys(PAGES).filter((id) => id !== "home" && id !== "login"),
+};
+
+export function dialogAllowed(pageId, dialogId) {
+  return Boolean(PAGES[pageId]?.dialogs?.includes(dialogId) || GLOBAL_DIALOGS[dialogId]?.includes(pageId));
+}
+
+for (const pageId of new Set(Object.values(GLOBAL_DIALOGS).flat())) {
+  const page = PAGES[pageId];
+  page.state = [...new Set([...(page.state || []), "dialog"] )];
+}
 
 // Z instrukcji i prywatności wracamy na każdą stronę z topbarem; do samej
 // instrukcji, prywatności, landingu i logowania nie.

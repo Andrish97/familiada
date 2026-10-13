@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-13T07454";
-import { icon, iconText } from "./icons.js?v=v2026-10-13T07454";
-import { PAGES } from "./nav-map.js?v=v2026-10-13T07454";
+import { t } from "../../translation/translation.js?v=v2026-10-13T07485";
+import { icon, iconText } from "./icons.js?v=v2026-10-13T07485";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-13T07485";
 
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = typeof window !== "undefined" && window.matchMedia
@@ -25,7 +25,6 @@ let activeOverlay = null;
 let activeKeepBackBtnText = false;
 let savedScrollY = 0;
 let activeDialogKey = null;
-let activeHistoryEntry = false;
 let handlingPopstate = false;
 const sheetRoutes = new Map();
 let currentPageId = null;
@@ -84,7 +83,14 @@ export function setModalSheetPage(pageId) {
   if (typeof window === "undefined" || typeof location === "undefined" || !location.href) return;
   const key = urlDialog();
   if (!key) return;
-  const allowed = (PAGES[pageId]?.dialogs || []).includes(key);
+  const allowed = dialogAllowed(pageId, key);
+  if (allowed && key === "contactModalOverlay") {
+    setTimeout(() => {
+      if (urlDialog() !== key) return;
+      import("./contact-modal.js?v=v2026-10-13T07485").then((module) => module.openContactModal());
+    }, 0);
+    return;
+  }
   const overlay = allowed ? document.getElementById(key) : null;
   if (overlay) {
     // A directly opened URL still gets an in-page parent history entry, so
@@ -152,7 +158,7 @@ sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.
 //   handleSheetBack() gdy użytkownik kliknie przycisk wstecz w topbarze.
 export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
   if (!isSheetViewport()) return;
-  if (!historyKey || !(PAGES[currentPageId]?.dialogs || []).includes(historyKey)) historyKey = null;
+  if (!historyKey || !dialogAllowed(currentPageId, historyKey)) historyKey = null;
 
   // Wymuszone main.wrap{overflow:hidden;height:calc(100dvh - topbar-h)} w
   // trybie sheet (css/base.css) nagle kurczy przewijalny obszar strony (np.
@@ -168,10 +174,8 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
   activeKeepBackBtnText = keepBackBtnText;
   activeDialogKey = historyKey || null;
   const currentKey = urlDialog();
-  activeHistoryEntry = Boolean(activeDialogKey && history.state?.__sheetDialog === activeDialogKey && currentKey === activeDialogKey);
   if (activeDialogKey && currentKey !== activeDialogKey) {
     setUrlDialog(activeDialogKey, !restore);
-    activeHistoryEntry = !restore;
   }
   if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, keepBackBtnText } });
 
@@ -185,7 +189,6 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
 
 export function exitModalSheet(overlayEl) {
   const key = activeDialogKey;
-  const ownEntry = activeHistoryEntry;
   applyPresentation(false);
 
   activeOverlay = null;
@@ -194,11 +197,9 @@ export function exitModalSheet(overlayEl) {
   activeClose = null;
   activeKeepBackBtnText = false;
   activeDialogKey = null;
-  activeHistoryEntry = false;
 
   if (key && urlDialog() === key) {
-    if (ownEntry && !handlingPopstate) history.back();
-    else if (!handlingPopstate) setUrlDialog(null, false);
+    if (!handlingPopstate) history.back();
   }
 
   // Poczekaj na przeliczenie layoutu (main.wrap wraca do swojej normalnej,
@@ -218,7 +219,7 @@ export function exitModalSheet(overlayEl) {
 // Zwraca true, gdy przejęło kliknięcie (był otwarty sheet modal).
 export function handleSheetBack() {
   if (activeClose) {
-    if (activeHistoryEntry && urlDialog() === activeDialogKey) history.back();
+    if (activeDialogKey && urlDialog() === activeDialogKey) history.back();
     else activeClose();
     return true;
   }

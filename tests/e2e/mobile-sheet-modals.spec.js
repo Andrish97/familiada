@@ -14,6 +14,7 @@
 
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
@@ -104,6 +105,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
   test("modal udostępniania na telefonie zastępuje treść strony (sheet), nie jest małym okienkiem", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
 
     const name = `E2E-BS-SHEET-SHARE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -177,11 +179,12 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
 });
 
 test.describe("bases: przycisk wstecz w topbarze przejmuje zamykanie sheet modala", () => {
-  test.use({ viewport: MOBILE_VIEWPORT });
+  test.use({ viewport: MOBILE_VIEWPORT, serviceWorkers: "block" });
 
   test("btnBack pokazuje 'Wstecz' gdy #shareOverlay jest otwarty, zamyka modal (nie nawiguje) i wraca do oryginalnego tekstu", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
 
     const name = `E2E-BS-SHEET-BACKBTN-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);

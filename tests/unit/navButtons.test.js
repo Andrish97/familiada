@@ -8,7 +8,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import {
-  PAGES, NAV_DEPENDENCIES, ROLES, backTarget, buttonBlocked, buttonHref, buttonRoles, buttonVisible, pageRoles, roleOf,
+  PAGES, NAV_DEPENDENCIES, ROLES, GLOBAL_DIALOGS, backTarget, buttonBlocked, buttonHref, buttonRoles, buttonVisible, dialogAllowed, pageRoles, roleOf,
 } from "../../web/shared/js/core/nav-map.js";
 import { applyToDoc, mapGraph, MAPS } from "../../scripts/nav-maps.mjs";
 
@@ -65,6 +65,12 @@ test("adresowe dialogi E19N są jawnie dozwolone w mapie i obecne na stronie", (
     const html = readFileSync(htmlOf(id), "utf8");
     for (const dialog of page.dialogs) assert.match(html, new RegExp(`\\bid="${dialog}"`), `${id}: brak #${dialog}`);
   }
+  for (const pageId of GLOBAL_DIALOGS.contactModalOverlay) {
+    assert.equal(dialogAllowed(pageId, "contactModalOverlay"), true, pageId);
+    assert.ok(PAGES[pageId].state?.includes("dialog"), `${pageId}: globalny dialog zachowuje stan URL`);
+  }
+  assert.equal(dialogAllowed("home", "contactModalOverlay"), false);
+  assert.equal(dialogAllowed("games", "missingOverlay"), false);
 });
 
 test("kod strony nie podpina ręcznie przejść z mapy (bez dublowania initPage)", () => {
