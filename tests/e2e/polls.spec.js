@@ -78,6 +78,15 @@ test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczy
     await expect(page.locator("#cardMain")).toBeVisible();
     await page.setViewportSize({ width: 1400, height: 900 });
     await page.screenshot({ path: "test-results/shot-e20-polls-ready-1400.png", fullPage: true });
+    await page.setViewportSize({ width: 844, height: 390 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.locator("#pollTabs")).toBeVisible();
+    await page.locator("#tabResults").click();
+    await expect(page.locator("#secResults")).toHaveClass(/active/);
+    await page.locator("#tabShare").click();
+    await expect(page.locator("#secShare")).toHaveClass(/active/);
+    await expect(page.locator("#pollBar")).toBeVisible();
+    await page.screenshot({ path: "test-results/shot-e20-polls-landscape-844x390.png", fullPage: true });
   } finally {
     await deleteGame(page, fixture.gameId);
   }
