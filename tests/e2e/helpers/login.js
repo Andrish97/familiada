@@ -197,14 +197,18 @@ async function loginAsTestUser(page, context, opts = {}) {
   instrumentPage(page);
   await withE2EBypass(context, { suppressRating: opts.suppressRating !== false });
   const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
-  // login.js attaches #btnPrimary/#btnGuest click listeners only after an
-  // async initI18n()+getUser() chain inside its DOMContentLoaded handler.
-  // "domcontentloaded" fires before that chain resolves, so a click right
-  // after goto can land before the listener exists — silently doing
-  // nothing (no error, no navigation), which then times out at
-  // waitForURL below looking like an unexplained login hang. Same root
-  // cause as the #demoRestoreBtn race fixed earlier for account.js.
-  await page.waitForLoadState("networkidle");
+  // login.js attaches #btnPrimary's listener only after its async
+  // initI18n()+getUser() chain inside DOMContentLoaded. Don't wait for
+  // networkidle here: the app polls production RPCs in the background, so
+  // the network may never become idle. The status leaving its initial
+  // "checking session" state signals that getUser() completed; listener
+  // setup follows immediately in the same initialization function.
+  await page.waitForFunction(() => {
+    const status = document.querySelector("#status")?.textContent?.trim() || "";
+    return !document.documentElement.classList.contains("page-loading")
+      && !!status
+      && !/checking|sprawdzam|перевіряю/i.test(status);
+  }, null, { timeout: 20000 });
   try {
     await page.fill("#email", username, { timeout: 15000 });
   } catch (e) {
