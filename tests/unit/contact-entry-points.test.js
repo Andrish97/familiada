@@ -4,13 +4,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 const root=path.resolve(import.meta.dirname,'../../web');
 function pages(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?pages(path.join(dir,entry.name)):entry.name==='index.html'?[path.join(dir,entry.name)]:[]);}
-test('regular application pages have contact; Host, Display and Buzzer do not',()=>{
- const devices=new Set(['control/host/index.html','control/display/index.html','control/buzzer/index.html']);
+test('regular application pages have contact; dedicated device screens do not',()=>{
+ const devices=new Set(['control/host/index.html','control/display/index.html','control/buzzer/index.html','connect/tv/index.html']);
+ const noContactModal=new Set([...devices,'maintenance/index.html']);
  for(const file of pages(root).filter(file=>!file.includes('/settings/tools/'))){
   const html=fs.readFileSync(file,'utf8');
-  if(devices.has(path.relative(root,file).split(path.sep).join('/'))){
+  const relative=path.relative(root,file).split(path.sep).join('/');
+  if(noContactModal.has(relative)){
    assert.doesNotMatch(html,/contact-modal\.js|data-contact-modal|btn-contact-footer/,file);
-   assert.match(html,/<body[^>]*data-device-screen/,file);
+   if(devices.has(relative)) assert.match(html,/<body[^>]*data-device-screen/,file);
   }else assert.match(html,/contact-modal\.js\?v=/,file);
  }
  const source=fs.readFileSync(path.join(root,'shared/js/core/contact-modal.js'),'utf8');
