@@ -2,8 +2,9 @@
 
 ## Aktualny stan — przeczytaj najpierw
 
-Repo `Andrish97/familiada`, branch `codex/e19-3`. Ostatni commit kodu
-`e565bffe07`; main sprawdzony `009104fd27`. Poniżej starszy dziennik;
+Repo `Andrish97/familiada`, branch `codex/e19-3`. Gałąź zawiera teraz
+implementację wysyłania, migrację367 i punktowe E2E; przed promocją należy
+zakończyć publikację Pages na main i kontrolę produkcyjną po Pages. Poniżej starszy dziennik;
 jego historyczne „następny krok” nie zastępują niniejszego stanu.
 
 | Etap | Stan teraz |
@@ -11,16 +12,16 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19 / graf dotychczasowych zasobów | Zamknięte produkcyjnie. Kolejka/mail/Go/kaskady/anonimowe formularze mają swoje wcześniejsze dowody w Dzienniku. |
 | E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
 | E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
-| E19C / Wyślij Gry/Logo | Kod Workera, wybór znajomych, recipient inbox/accept/decline, historia, mail/Go oraz filtr Otrzymane i oznaczenie pochodzenia są na dirty branchu. Migracja367 ma źródło maila, resolver Go, odczyt inbox/history/badges. Pozostaje domknięcie UI liczników/nawigacji, punktowe sprawdzenie, E2E/Pages/prod. |
+| E19C / Wyślij Gry/Logo | Kod, migracja367, Worker, UI i filtr Otrzymane gotowe na branchu. DB38361036623/log OK367, Worker38362108759, E2E branch38362616613 success1/1: rzeczywista wysyłka Gry i Logo, e-maile, Go i akceptacja. Pełny unit601/601. Pozostały Pages na main i kontrola E2E po Pages. |
 | E19N → E14 → E20 → Manual | Kolejno: przegląd przejść/Control→Znajomi; sprzątanie zastąpionych ścieżek; wspólny wygląd/mobile/tablet/landscape; instrukcja na końcu. Do E20 trzy etapy licząc aktualny E19C. |
 
-## Jeden aktualny następny cel: pełne Wyślij
+## Aktualny checkpoint: promocja Wyślij na main
 
-Domknąć razem przepływ Wyślij→mail/Go→odbiór/odmowa→historia/plakietki
-z normalnym cyklem DB→branch→Pages→main. Użytkownik wskazał zbyt wolny
-postęp (4 godziny); ograniczyć rozdrabnianie na kolejne paczki samego
-zaplecza. Raportować konkretnie co30–60s, testować punktowo, działać
-bez ponownego pytania o kontynuację. Pełne unit przed każdym commitem.
+Migracja i Worker są już na produkcji; branch E2E sprawdziło wysyłkę obu
+rodzajów, powiadomienia e-mail, link Go i akceptację. Do zamknięcia E19C
+pozostaje publikacja Pages przez main oraz punktowa kontrola po wdrożeniu.
+Po niej zapisać ostateczny status gotowe w obu dokumentach i kontynuować
+kolejkę E19N→E14→E20→Manual. Pełne unity przed każdym commitem.
 
 Gotowe na branchu: `docs/sql/draft-resource-clone-send-367.sql` i
 `test-resource-clone-send-367.sql`. Games3/Logo3, tworzenie własnego
@@ -32,7 +33,7 @@ To prototyp, a NIE zastosowana migracja367. Worker
 ma wspólny cloneResource i nieroutowany sendResource;7 dodatkowych
 unit obejmuje destination/demo/native DRAW/replay/lost response/late upload.
 
-Bieżąca luka: sprawdzenie i domknięcie migracji367 z nowym źródłem maila/Go, plakietki na nawigacji, punktowe E2E, zrzuty390/1400/landscape oraz wdrożenie. Kopia i powiadomienie należą do gałęzi odbiorcy; nadawca i oryginał mogą zniknąć. Preferencja odbiorcy jest sprawdzana przed utworzeniem maila i przed dostarczeniem. Maile Auth pozostają bez zmian.
+Bramka migracji367 i Workera jest spełniona; zrzuty390/1400/landscape są w artefakcie E2E38362616613. Pozostały Pages/main i kontrola produkcyjna. Kopia i powiadomienie należą do gałęzi odbiorcy; nadawca i oryginał mogą zniknąć. Preferencja odbiorcy jest sprawdzana przed utworzeniem maila i przed dostarczeniem. Maile Auth pozostają bez zmian.
 Źródło decyzji: `docs/udostepnianie-kopii-plan.md`.
 
 Sesja2026-10-13 dopisała endpoint Workera `/_api/resource-send`, UI wysyłki i odbioru, mail/Go, historię, filtr Otrzymane, znaczniki pochodzenia i liczniki zakładek; migracja367 rozszerza źródła maili oraz RPC inbox/history/badges/Go. Kod jest roboczy, niezweryfikowany end-to-end i niewdrożony. E19C nadal otwarte. Użytkownik polecił migrację

@@ -65,7 +65,10 @@ function translate(lang, key, params = {}) {
 }
 test('friend and subscriber reminders use distinct subjects/body and preserve existing token', async () => {
   const source = read('web/shared/js/core/invite-mail.js');
-  const sender = source.slice(source.indexOf('export async function sendInviteMail')).replace('export ', '');
+  const sender = source.slice(
+    source.indexOf('export async function sendInviteMail'),
+    source.indexOf('export async function sendResourceCopyMail'),
+  ).replace('export ', '');
   for (const lang of ['pl','en','uk']) {
     const sent = [];
     const context = vm.createContext({ t: (key, params) => translate(lang, key, params), sendMail: async item => sent.push(item), buildMailHtml: item => JSON.stringify(item), mailLink: path => new URL(path, 'https://www.familiada.online').href });

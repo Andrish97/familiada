@@ -10,15 +10,15 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-13T07101";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-13T07101";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-13T07101";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-13T07101";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-13T07101";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-13T07101";
-import { createPressController } from "./press.js?v=v2026-10-13T07101";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-13T07101";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-13T07101";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-13T07310";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-13T07310";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-13T07310";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-13T07310";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-13T07310";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-13T07310";
+import { createPressController } from "./press.js?v=v2026-10-13T07310";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-13T07310";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-13T07310";
 
 // Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
 startKeepAlive();

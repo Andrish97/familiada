@@ -1,6 +1,6 @@
 # Import gry — zakończenie
 
-Przebieg [38327689667](https://github.com/Andrish97/familiada/actions/runs/38327689667), kod `f9a599dd023f2b888dba2aa2fe7eacb0216228a6`.
+Przebieg [38328021470](https://github.com/Andrish97/familiada/actions/runs/38328021470), kod `14d12d6a33e84de5058fd6d1edded4cafd083694`.
 
 Rzeczywisty import pliku na koncie testowym. Okno po zapisaniu gry, przed kliknięciem Gotowe. Telefon390 i komputer1400.
 
