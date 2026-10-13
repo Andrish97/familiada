@@ -2579,6 +2579,11 @@ const pl = {
     import: {
       step: "Import: tworzenie gry…",
       invalidFormat: "Zły format pliku (brak game / questions).",
+      authRequired: "Zaloguj się ponownie, aby zaimportować grę.",
+      locked: "Trwa inna operacja. Spróbuj ponownie za chwilę.",
+      requestConflict: "Zawartość pliku zmieniła się. Wybierz plik ponownie.",
+      previouslyRemoved: "Ta zaimportowana gra została już usunięta. Wybierz plik ponownie, aby utworzyć nową.",
+      failed: "Nie udało się zaimportować gry. Spróbuj ponownie.",
     },
   },
   games: {

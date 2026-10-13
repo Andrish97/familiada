@@ -1,28 +1,24 @@
 // js/pages/games-import-export.js
-import { gameExportSnapshot, gameTransferType as safeType } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-12T23450";
+import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-12T23450";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T23450";
 import { t } from "../../shared/translation/translation.js?v=v2026-10-12T23450";
 
 /* =========================================================
 	 Helpers (bezpieczne skracanie / typy)
 ========================================================= */
-const safeName = (s) =>
-	(String(s ?? t("gamesImportExport.defaults.gameName")).trim() ||
-		t("gamesImportExport.defaults.gameName")).slice(0, 80);
-
 const safeQText = (s, i) =>
 	(String(s ?? t("gamesImportExport.defaults.question", { ord: i + 1 })).trim() ||
 		t("gamesImportExport.defaults.question", { ord: i + 1 })).slice(0, 200);
 
-const safeAText = (s, j) =>
-	(String(s ?? t("gamesImportExport.defaults.answer", { ord: j + 1 })).trim() ||
-		t("gamesImportExport.defaults.answer", { ord: j + 1 })).slice(0, 17);
-
-const safePts = (v) => {
-	const x = Number(v);
-	if (!Number.isFinite(x)) return 0;
-	return Math.max(0, Math.min(100, Math.floor(x)));
-};
+// The modal keeps its parsed object after a failed request. Its retry must
+// acknowledge a committed import even if the first response never arrived.
+const importAttempts = new WeakMap();
+function importRequestId(payload, ownerId) {
+	let owners = importAttempts.get(payload);
+	if (!owners) { owners = new Map(); importAttempts.set(payload, owners); }
+	if (!owners.has(ownerId)) owners.set(ownerId, crypto.randomUUID());
+	return owners.get(ownerId);
+}
 
 /* =========================================================
 	 EXPORT GAME
@@ -65,75 +61,25 @@ export async function importGame(payload, ownerId, onProgress) {
 		throw new Error(t("gamesImportExport.import.invalidFormat"));
 	}
 
-	const type = safeType(payload.game.type);
-	const name = safeName(payload.game.name);
-
-	const { data: game, error: gErr } = await sb()
-		.from("games")
-		.insert(
-			{
-				name,
-				type,
-				status: "draft",
-				owner_id: ownerId,
-			},
-			{ defaultToNull: false }
-		)
-		.select("id")
-		.single();
-	if (gErr) throw gErr;
-
-	// Import nie jest jedną transakcją: gdy coś padnie w połowie, usuwamy
-	// utworzoną grę (kaskada zabiera pytania/odpowiedzi) -- wcześniej na liście
-	// zostawała niepełna gra, a ponowny import robił drugą o tej samej nazwie.
-	try {
-		await importQuestions(game.id, payload.questions || [], onProgress);
-	} catch (e) {
-		const { data: delRes, error: delErr } = await sb().rpc("delete_resource_checked", { p_resource_type: "game", p_resource_id: game.id });
-		if (delErr || delRes?.ok === false) console.warn("[import] cleanup failed:", delErr || delRes);
-		throw e;
-	}
-
-	return game.id;
-}
-
-async function importQuestions(gameId, qs, onProgress) {
+	const qs = payload.questions;
 	const n = qs.length;
 	if (typeof onProgress === "function") {
 		onProgress({ step: t("gamesImportExport.import.step"), i: 0, n, msg: "" });
 	}
+	const { data, error } = await sb().rpc("game_import_package", {
+		p_payload: payload, p_owner_id: ownerId, p_request_id: importRequestId(payload, ownerId),
+		p_defaults: { game: t("gamesImportExport.defaults.gameName"),
+			question: t("gamesImportExport.defaults.question", { ord: "{ord}" }),
+			answer: t("gamesImportExport.defaults.answer", { ord: "{ord}" }) },
+	});
+	if (error) throw error;
+	if (!data?.ok || !data.id) {
+		const key = { invalid_payload: "invalidFormat", auth_required: "authRequired", locked: "locked",
+			request_conflict: "requestConflict", previously_removed: "previouslyRemoved" }[data?.error] || "failed";
+		throw new Error(t(`gamesImportExport.import.${key}`));
+	}
 	for (let qi = 0; qi < qs.length; qi++) {
-		const srcQ = qs[qi] || {};
-		const qText = safeQText(srcQ.text, qi);
-
-		const { data: qRow, error: qInsErr } = await sb()
-			.from("questions")
-			.insert(
-				{
-					game_id: gameId,
-					ord: qi + 1,
-					text: qText,
-				},
-				{ defaultToNull: false }
-			)
-			.select("id")
-			.single();
-		if (qInsErr) throw qInsErr;
-
-		// answers_ord_range: w bazie najwyżej 6 odpowiedzi na pytanie -- siódma
-		// wywracała cały import (ręcznie poprawiony plik, inny generator)
-		const srcA = (Array.isArray(srcQ.answers) ? srcQ.answers : []).slice(0, 6);
-		const rows = srcA.map((a, ai) => ({
-			question_id: qRow.id,
-			ord: ai + 1,
-			text: safeAText(a?.text, ai),
-			fixed_points: safePts(a?.fixed_points),
-		}));
-
-		if (rows.length) {
-			const { error: aInsErr } = await sb().from("answers").insert(rows);
-			if (aInsErr) throw aInsErr;
-		}
+		const qText = safeQText(qs[qi]?.text, qi);
 		if (typeof onProgress === "function") {
 			onProgress({
 				step: t("gamesImportExport.import.step"),
@@ -143,6 +89,7 @@ async function importQuestions(gameId, qs, onProgress) {
 			});
 		}
 	}
+	return data.id;
 }
 
 /* =========================================================
