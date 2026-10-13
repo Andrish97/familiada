@@ -50,12 +50,11 @@ const REAL_UI_VOTERS = 1; // jedno prawdziwe kliknięcie na typ ankiety wystarcz
 test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczyt", async ({ page, context }) => {
   await loginAsTestUser(page, context);
   const fixture = await seedPollGame(page, "poll_text");
-  let firstRead = true;
+  let pollPageRead = 0;
   await page.route("**/rest/v1/games?*", async (route) => {
     const requestUrl = new URL(route.request().url());
     const isPollLoad = requestUrl.searchParams.get("select") === "id,name,type,status,share_key_poll,poll_opened_at,poll_closed_at";
-    if (isPollLoad && firstRead) {
-      firstRead = false;
+    if (isPollLoad && ++pollPageRead === 2) {
       await new Promise(resolve => setTimeout(resolve, 500));
       await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E20 controlled first read failure" }) });
       return;
