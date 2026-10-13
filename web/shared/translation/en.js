@@ -4182,6 +4182,8 @@ const en = {
     export: {
       title: "Exporting…",
       subtitle: "Don't close the page — preparing the file.",
+      close: "Done",
+      success: "The logo file has been downloaded.",
     },
     errors: {
       exportIncomplete: "Could not include the image in the logo. Please try again.",

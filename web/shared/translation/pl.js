@@ -4083,6 +4083,8 @@ const pl = {
     export: {
       title: "Eksport…",
       subtitle: "Nie zamykaj strony — trwa przygotowanie pliku.",
+      close: "Gotowe",
+      success: "Plik logo został pobrany.",
     },
     errors: {
       exportIncomplete: "Nie udało się dołączyć obrazu do logo. Spróbuj ponownie.",

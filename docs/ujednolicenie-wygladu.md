@@ -886,6 +886,11 @@ folderami, tagami pytań i tagami folderów przeszedł w E2E
 `38383626341`, 1/1; pełny unit602/602. Błąd i retry nadal trzeba
 zweryfikować dla tego eksportu.
 
+**Eksport Logo (2026-10-13):** po pobraniu okno pokazuje trwały wynik i
+„Gotowe”; błąd też wyświetla się w oknie. E2E `38383911498`, 1/1,
+sprawdza nazwę z polskimi znakami i jawne zamknięcie okna; pełny unit602/602.
+Import/eksport Logo nadal wymaga testu błędów i retry.
+
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
 Każdy typ strony ma wspólny układ i wspólne style na wszystkich stronach

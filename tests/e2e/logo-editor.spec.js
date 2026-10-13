@@ -203,6 +203,11 @@ test.describe("import / eksport", () => {
     await L.openList(page, site, `/logo/${tab}`);
     await page.locator(`.logoTile[data-key="${id}"]`).click();
     const [dl] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
+    await expect(page.locator("#logoExportOverlay")).toBeVisible();
+    await expect(page.locator("#btnLogoExportClose")).toBeVisible();
+    await expect(page.locator("#logoExportMsg")).toContainText(/pobrany|downloaded|завантажено/i);
+    await page.locator("#btnLogoExportClose").click();
+    await expect(page.locator("#logoExportOverlay")).toBeHidden();
     return { name: dl.suggestedFilename(), path: await dl.path() };
   }
 
