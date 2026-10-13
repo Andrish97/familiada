@@ -860,9 +860,11 @@ Realizacja w UI/E20 po bieżącym grafie zależności; manual nadal ostatni.
 odczycie i widoczny błąd; punktowe E2E `38378348674`, 6/6. Strona
 Ankiety pokazuje stan pierwszego ładowania, zachowuje komunikat błędu mimo
 nakładających się odświeżeń i pozwala ponowić odczyt; `38381649291`, 1/1,
-zrzuty390/1400 w artefakcie11803369573. Zadania oraz Znajomi/Subskrybenci
-mają już testy landscape z obrotem. Pozostałe etapy kart Ankiet, Kontaktów,
-Zadań i całej mapy PAGES wciąż wymagają przeglądu.
+zrzuty390/1400 w artefakcie11803369573. Znajomi/Subskrybenci mają stan
+ładowania/błędu/retry hosta (`38382033831`, 1/1, artefakt11803776686), a
+Zadania osobny stan listy (`38382324509`, 1/1, artefakt11804131090).
+Zadania i kontakty mają też testy landscape z obrotem. Pozostałe etapy
+kart Ankiet, Kontaktów, Zadań i całej mapy PAGES wciąż wymagają przeglądu.
 
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
