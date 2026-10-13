@@ -64,7 +64,7 @@ test('Go forwards center capability without redeeming or toggling preference',as
  const {default:worker}=await import('../../cloudflare/maintenance-worker/src/index.js');
  stub(t,()=>assert.fail('Go should not call any backend'));
  const result=await worker.fetch(new Request('https://www.familiada.online/go/?m='+link+'&lang=uk'),env,{});
- assert.equal(result.status,302);const target=new URL(result.headers.get('location'));assert.equal(target.pathname,'/mail/');assert.equal(target.searchParams.get('m'),link);assert.equal(target.searchParams.get('lang'),'uk');
+ assert.equal(result.status,302);const target=new URL(result.headers.get('location'));assert.equal(target.pathname,'/mails/');assert.equal(target.searchParams.get('m'),link);assert.equal(target.searchParams.get('lang'),'uk');
 });
 
 test('Worker retains invalid and mixed center links on Go with the shared parser',async(t)=>{

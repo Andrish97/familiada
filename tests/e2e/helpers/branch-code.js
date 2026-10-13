@@ -16,7 +16,7 @@ const path = require("path");
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "web");
 const PROD_ORIGIN = "https://www.familiada.online";
 // base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
-const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "manual/", "privacy/", "go/", "mail/", "maintenance/", "404/"];
+const CODE_DIRS = ["login/", "shared/", "assets/", "home/", "games/", "bases/", "account/", "settings/", "marketplace/", "polls/", "friends/", "subscribers/", "tasks/", "connect/", "control/", "logo/", "logos/", "manual/", "privacy/", "go/", "mail/", "mails/", "maintenance/", "404/"];
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -42,8 +42,8 @@ function localFileFor(pathname, pages) {
   if (CODE_DIRS.some((d) => rel.startsWith(d))) {
     const abs = path.join(REPO_ROOT, rel);
     if (abs.startsWith(REPO_ROOT + path.sep) && fs.existsSync(abs) && fs.statSync(abs).isFile()) return abs;
-    // Nested page folders such as /logo/editor/draw/ have their own
-    // index.html. Resolve that before the SPA fallback to /logo/index.html.
+    // Nested page folders such as /logos/editor/draw/ have their own
+    // index.html. Resolve that before the SPA fallback to /logos/index.html.
     const nestedIndex = path.join(REPO_ROOT, rel, "index.html");
     if (nestedIndex.startsWith(REPO_ROOT + path.sep) && fs.existsSync(nestedIndex) && fs.statSync(nestedIndex).isFile()) return nestedIndex;
   }

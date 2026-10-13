@@ -2638,7 +2638,7 @@ const pl = {
       subscribers: "Subskrybenci",
       tasks: "Zadania",
       bases: "Bazy pytań",
-      logo: "Logo",
+      logo: "Loga",
       marketplace: "Gry Społeczności",
       connectDevice: "Podłącz urządzenie",
       account: "Ustawienia konta",
@@ -3886,7 +3886,7 @@ const pl = {
     shareCooldownAlert: "Ponowne zaproszenie do ankiety możliwe za {hours} godz.",
   },
   logoEditor: {
-    title: "Familiada — logo",
+    title: "Familiada — moje loga",
     titles: {
       text: "Familiada — logo tekstowe",
       draw: "Familiada — logo rysunkowe",

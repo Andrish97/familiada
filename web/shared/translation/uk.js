@@ -2735,7 +2735,7 @@ const uk = {
       subscribers: "Підписники",
       tasks: "Завдання",
       bases: "Бази питань",
-      logo: "Лого",
+      logo: "Логотипи",
       marketplace: "Ігри Спільноти",
       connectDevice: "Підключити пристрій",
       account: "Обліковий запис",

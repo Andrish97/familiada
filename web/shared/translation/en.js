@@ -2743,7 +2743,7 @@ const en = {
       subscribers: "Subscribers",
       tasks: "Tasks",
       bases: "Question bases",
-      logo: "Logo",
+      logo: "Logos",
       marketplace: "Community Games",
       connectDevice: "Connect device",
       account: "Account settings",

@@ -3,11 +3,11 @@ const { serveBranchCode } = require('./helpers/branch-code');
 const { loginAsPooledTestUser } = require('./helpers/login');
 const { clearMailbox, restoreMailCenterPreference, clearMailCenterCapabilities, resetMailProviderLimits, waitForEmail, extractHttpLinks } = require('./helpers/mailbox');
 const { expectMailDocument } = require('./helpers/mail-document');
-const URL = 'https://www.familiada.online/mail/';
+const URL = 'https://www.familiada.online/mails/';
 const EMAIL = 'test14@familiada.online';
 test.use({ serviceWorkers: 'block' });
 async function branch(context) {
-  if (process.env.GITHUB_REF_NAME !== 'main' && process.env.TEST_BRANCH_CODE !== '0') await serveBranchCode(context, { pages: ['mail', 'go', 'subscribers'] });
+  if (process.env.GITHUB_REF_NAME !== 'main' && process.env.TEST_BRANCH_CODE !== '0') await serveBranchCode(context, { pages: ['mails', 'go', 'subscribers'] });
   await context.addInitScript(() => { localStorage.setItem('uiLang', 'pl'); localStorage.setItem('fam:app_rating_suppressed', 'true'); });
 }
 async function cleanup(page) {

@@ -153,20 +153,20 @@ test("Control: jawny próg viewportu i backHref, użytkownik wraca", async () =>
 
 test("edytor Logo: jawny próg viewportu, topbar nadal działa", async () => {
   const { deps, calls } = makeDeps({ viewportWidth: 390, formFactor: "phone" });
-  loc.pathname = "/logo/editor/draw/";
+  loc.pathname = "/logos/editor/draw/";
   loc.search = "?id=3&lang=pl";
   const user = await initPage("logoDraw", { deps });
   assert.deepEqual(user, { id: "u1" });
   assert.equal(calls.width.length, 1);
   assert.equal(calls.width[0].minWidth, 700);
-  assert.equal(calls.width[0].backHref, "/logo/");
+  assert.equal(calls.width[0].backHref, "/logos/");
   assert.ok(els.btnBack.listeners.click, "„Wstecz” w topbarze zostaje");
   assert.deepEqual(topbar.classList.added, ["topbar-ready"]);
 });
 
 test("edytor Logo: przekazuje twardy wymóg tabletu/desktopu do guarda", async () => {
   const { deps, calls } = makeDeps({ viewportWidth: 390, formFactor: "phone", orientation: "portrait" });
-  loc.pathname = "/logo/editor/draw/";
+  loc.pathname = "/logos/editor/draw/";
   assert.deepEqual(await initPage("logoDraw", { deps }), { id: "u1" });
   assert.deepEqual(calls.width[0].formFactors, ["tablet", "desktop"]);
 });

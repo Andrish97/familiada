@@ -8,7 +8,7 @@ test.use({ serviceWorkers: "block", viewport: { width: 1400, height: 900 } });
 
 test("Rysunek: × i Delete usuwają zaznaczenie, Cofnij/Ponów odtwarzają je", async ({ page, context }, testInfo) => {
   test.setTimeout(180_000);
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["logo", "manual"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["logos", "manual"] });
   await loginAsTestUser(page, context, { username: testAccountUsername(2) });
   await L.openList(page, { origin: ORIGIN });
   const name = L.uniq("delete-selection");

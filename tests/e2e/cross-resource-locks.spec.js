@@ -242,7 +242,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
     await waitForLock(settingsPage, "game", gameId);
 
     // PIX bez obrazu źródłowego jest na karcie „Rysunek”.
-    await page.goto("https://www.familiada.online/logo/?tab=draw", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/logos/?tab=draw", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
@@ -253,7 +253,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
     await expect(page.locator(".uni-foot .btn.gold:visible")).toBeVisible({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 });
 
-    // Lista logo (/logo/) ma własne, statyczne modale (create/rename/preview/
+    // Lista logo (/logos/) ma własne, statyczne modale (create/rename/preview/
     // export) z klasą .mSub zawsze obecną w DOM — goły .mSub jest więc
     // niejednoznaczny. .uni-modal .mSub celuje tylko w dynamiczny modal
     // core/modal.js (confirmModal/alertModal). Komunikat od kroku 4 dotyczy
@@ -296,7 +296,7 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
   let deleted = false;
   try {
     // PIX bez obrazu źródłowego jest na karcie „Rysunek”.
-    await page.goto("https://www.familiada.online/logo/?tab=draw", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/logos/?tab=draw", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
@@ -704,7 +704,7 @@ test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gd
 /* ================= Krok 4: edytor logo — Warstwa A (per logo) i Warstwa B (cała pula) ================= */
 // Warstwa A: dwie karty nie mogą edytować TEGO SAMEGO logo naraz (ten sam
 // wzorzec co editor.js/game-settings.js dla gry -- lock trzymany przez
-// stronę edytora /logo/editor/<tryb>/?id= od wejścia do wyjścia).
+// stronę edytora /logos/editor/<tryb>/?id= od wejścia do wyjścia).
 // Warstwa B: Control/game-settings.js trzymają `logos` współdzielone i blokują
 // edycję/zmianę nazwy/usunięcie WSZYSTKICH logo użytkownika, nawet gdy dany logo nie jest w ogóle
 // referencowany przez żadną grę -- patrz docs/plan-testy-i-poprawki.md,
@@ -736,7 +736,7 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
 
   const tabA = await context.newPage();
   try {
-    await tabA.goto("https://www.familiada.online/logo/", { waitUntil: "domcontentloaded" });
+    await tabA.goto("https://www.familiada.online/logos/", { waitUntil: "domcontentloaded" });
     await tabA.waitForLoadState("networkidle");
     const tileA = tabA.locator(`.logoTile[data-key="${logoId}"]`);
     await expect(tileA).toBeVisible({ timeout: 10000 });
@@ -746,7 +746,7 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
     await tabA.waitForURL(/\/logo\/editor\/text\/\?id=/, { timeout: 10000 });
     await waitForLock(tabA, "logo", logoId);
 
-    await page.goto("https://www.familiada.online/logo/", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/logos/", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     const tileB = page.locator(`.logoTile[data-key="${logoId}"]`);
     await expect(tileB).toBeVisible({ timeout: 10000 });
@@ -791,7 +791,7 @@ test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-se
     await settingsPage.waitForLoadState("networkidle");
     await waitForLock(settingsPage, "game", gameId);
 
-    await page.goto("https://www.familiada.online/logo/", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/logos/", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);

@@ -216,7 +216,7 @@ function redirectToLogin() {
 }
 
 function redirectToHub() {
-  const copyPage=copyToken?(resolvedInviteData?.resource_kind === "logo" ? "/logo/" : "/games/"):null;
+  const copyPage=copyToken?(resolvedInviteData?.resource_kind === "logo" ? "/logos/" : "/games/"):null;
   const url = new URL(copyPage || (baseToken || resolvedInviteData?.kind === "base" ? "/bases/" : taskToken ? "/tasks/" : "/friends/"), location.href);
   if (copyToken) url.searchParams.set("c", copyToken);
   if (baseToken) url.searchParams.set("b", baseToken);

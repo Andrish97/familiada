@@ -25,7 +25,9 @@ test("ścieżki stron są unikalne i rozpoznawane", () => {
   assert.equal(pageIdForPath("/marketplace/game/abc"), "marketplace");
   assert.equal(pageIdForPath("/nie-ma/"), null);
   assert.equal(pageIdForPath("/games/settings"), "gameSettings");
-  assert.equal(pageIdForPath("/logo/editor/draw"), "logoDraw");
+  assert.equal(pageIdForPath("/logos/editor/draw"), "logoDraw");
+  assert.equal(pageIdForPath("/logo/"), null);
+  assert.equal(pageIdForPath("/mail/"), null);
 });
 
 test("linkTo niesie w ret pełny bieżący adres", () => {
@@ -173,15 +175,15 @@ test("język polski: parametr lang znika", () => {
 test("backHref bez ret: parent; games nie ma rodzica", () => {
   assert.equal(backHref("polls", ctx("/polls/?id=7")), "/games/");
   assert.equal(backHref("baseExplorer", ctx("/bases/explorer/?id=b1")), "/bases/");
-  assert.equal(backHref("logoDraw", ctx("/logo/editor/draw/?id=3")), "/logo/");
+  assert.equal(backHref("logoDraw", ctx("/logos/editor/draw/?id=3")), "/logos/");
   assert.equal(backHref("games", ctx("/games/")), null);
 });
 
 test("ret zachowuje kartę listy, z której wyszliśmy", () => {
   const explorer = linkTo("baseExplorer", { id: "b1" }, ctx("/bases/?tab=shared"));
   assert.equal(backHref("baseExplorer", ctx(explorer)), "/bases/?tab=shared");
-  const logo = linkTo("logoDraw", { id: 5 }, ctx("/logo/?tab=draw"));
-  assert.equal(backHref("logoDraw", ctx(logo)), "/logo/?tab=draw");
+  const logo = linkTo("logoDraw", { id: 5 }, ctx("/logos/?tab=draw"));
+  assert.equal(backHref("logoDraw", ctx(logo)), "/logos/?tab=draw");
 });
 
 test("gameSettings bez ret wraca do Control tej samej gry", () => {

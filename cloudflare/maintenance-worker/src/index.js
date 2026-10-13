@@ -219,7 +219,7 @@ export default {
 
     // Footer/confirmation links use Go as the canonical entry, with no GET action.
     if (["GET","HEAD"].includes(request.method) && ["/go","/go/","/go/index.html"].includes(url.pathname) && parseGoLink(url.searchParams).kind === "m") {
-      const center = new URL("https://www.familiada.online/mail/");
+      const center = new URL("https://www.familiada.online/mails/");
       center.searchParams.set("m",url.searchParams.get("m") || "");
       const lang=url.searchParams.get("lang"); if (["pl","en","uk"].includes(lang)) center.searchParams.set("lang",lang);
       return Response.redirect(center.toString(),302);

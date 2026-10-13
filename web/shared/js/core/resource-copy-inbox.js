@@ -42,7 +42,7 @@ export async function refreshResourceCopyBadges(){
    const n=counts.filter(item=>item.kind===slot.dataset.copyKind&&item.variant===slot.dataset.copyVariant&&(!slot.dataset.copyMode||item.mode===slot.dataset.copyMode)).reduce((sum,item)=>sum+Number(item.count||0),0);
    slot.dataset.copyCount=n?String(n>99?99:n):'';
   }
-  const pageKind=location.pathname.startsWith('/logo/')?'logo':'game';
+  const pageKind=location.pathname.startsWith('/logos/')?'logo':'game';
   const navBadge=document.getElementById(pageKind==='logo'?'gamesCopiesNavBadge':'logoCopiesNavBadge');
   if(navBadge)navBadge.textContent=total(pageKind==='logo'?'game':'logo')>99?'99+':String(total(pageKind==='logo'?'game':'logo')||'');
  }catch{

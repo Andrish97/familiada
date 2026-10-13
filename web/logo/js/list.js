@@ -3,8 +3,8 @@ import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-
 import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-13T13432";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T13432";
 // familiada/logo/js/list.js
-// Lista logo (/logo/): kafelki w trzech kartach, modale (nowe / nazwa /
-// import / podgląd), eksport. Edycja to osobne strony /logo/editor/<tryb>/
+// Lista logo (/logos/): kafelki w trzech kartach, modale (nowe / nazwa /
+// import / podgląd), eksport. Edycja to osobne strony /logos/editor/<tryb>/
 // (editor-page.js) -- „Nowe logo” od razu zakłada wiersz w bazie i otwiera
 // edytor z jego id w adresie.
 //
@@ -433,7 +433,7 @@ async function confirmNameModal() {
 }
 
 /* =========================================================
-   Edycja: osobne strony /logo/editor/<tryb>/?id=
+   Edycja: osobne strony /logos/editor/<tryb>/?id=
 ========================================================= */
 /** Pusty payload nowego logo danego trybu -- wiersz powstaje od razu, żeby
  *  edytor miał id w adresie od pierwszej chwili. */

@@ -8,7 +8,7 @@ let stage='login';
 test.afterEach(async({},info)=>{if(info.status!==info.expectedStatus)console.error('::error title=Native Storage copy::'+stage);});
 test('native logo Storage copy: actual bytes, lost-response retry after source deletion and immutable conflict',async({page,context},info)=>{
  test.setTimeout(120000);
- if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','logo']});
+ if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','logos']});
  await loginAsPooledTestUser(page,context,info.parallelIndex);
  const {copyLogoStorageImage}=await import('../../cloudflare/maintenance-worker/src/lib/resource-copy/storage-copy.js');
  const state=await page.evaluate(async()=>{

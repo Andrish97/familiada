@@ -642,12 +642,12 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
 });
 
 /* =====================================================================
-   5) lista logo (/logo/) -- modal zmiany nazwy / modal importu logo.
+   5) lista logo (/logos/) -- modal zmiany nazwy / modal importu logo.
    Tworzenie i edycja logo są na telefonie ukryte (.le-phone) -- edytory
-   to osobne strony /logo/editor/…/, niedostępne na telefonie.
+   to osobne strony /logos/editor/…/, niedostępne na telefonie.
 ===================================================================== */
 
-const LOGO_EDITOR_URL = "https://www.familiada.online/logo/";
+const LOGO_EDITOR_URL = "https://www.familiada.online/logos/";
 
 function blankGlyphPayload() {
   return {
@@ -780,7 +780,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
       await btnBack.click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#listShell")).toBeVisible();
-      expect(page.url()).toContain("/logo/");
+      expect(page.url()).toContain("/logos/");
     } finally {
       await deleteLogoDirect(page, logoId);
     }

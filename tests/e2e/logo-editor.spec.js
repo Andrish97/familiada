@@ -1,6 +1,6 @@
 // tests/e2e/logo-editor.spec.js
 //
-// Testy logo: lista /logo/ i trzy strony edytorów /logo/editor/<tryb>/?id=
+// Testy logo: lista /logos/ i trzy strony edytorów /logos/editor/<tryb>/?id=
 // (zmiany zapisują się same -- L.save czeka na autozapis). Strony są serwowane
 // z BIEŻĄCEGO CHECKOUTU przez lokalny serwer w runnerze (helpers/local-site.js),
 // a nie z www.familiada.online -- testują kod z gałęzi, na prawdziwym
@@ -158,7 +158,7 @@ test.describe("lista", () => {
     const row = await L.readLogoByName(page, name);
     expect(row.id).toBe(id);
     expect(row.payload.source.mode).toBe("DRAW");
-    expect(new URL(page.url()).searchParams.get("ret")).toBe("/logo/?tab=draw");
+    expect(new URL(page.url()).searchParams.get("ret")).toBe("/logos/?tab=draw");
     await expect(page.locator("#saveStatus")).toHaveAttribute("data-state", "idle");
     await L.close(page);
     await expect(page.locator("#tabLogoDraw")).toHaveClass(/active/);
@@ -185,10 +185,10 @@ test.describe("lista", () => {
   test("edytor bez id albo z logo innego typu pokazuje blokadę z powrotem na listę", async ({ page }) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("wrongtype"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
-    await page.goto(`${site.origin}/logo/editor/draw/?id=${id}`);
+    await page.goto(`${site.origin}/logos/editor/draw/?id=${id}`);
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#logoName")).toBeDisabled();
-    await page.goto(`${site.origin}/logo/editor/text/`);
+    await page.goto(`${site.origin}/logos/editor/text/`);
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await page.locator("#resourceLockGuardBack").click();
     await page.waitForURL(/\/logo\/(\?|$)/);
@@ -200,7 +200,7 @@ test.describe("import / eksport", () => {
     const row = await L.readLogo(page, id);
     const sourceMode = String(row?.payload?.source?.mode || "").toUpperCase();
     const tab = row?.type === "GLYPH_30x10" ? "" : sourceMode === "IMAGE" ? "?tab=image" : "?tab=draw";
-    await L.openList(page, site, `/logo/${tab}`);
+    await L.openList(page, site, `/logos/${tab}`);
     await page.locator(`.logoTile[data-key="${id}"]`).click();
     const [dl] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
     await expect(page.locator("#logoExportOverlay")).toBeVisible();
@@ -1057,7 +1057,7 @@ test.describe("zgodność ze starymi danymi", () => {
     };
 
     for (const d of demos) {
-      // Adres obrazu demo jak po migracji 308 (/logo-editor/assets -> /logo/assets),
+      // Adres obrazu demo jak po migracji 308 (/logo-editor/assets -> /logos/assets),
       // także zanim migracja trafi do bazy (testy na branchu przed wdrożeniem).
       d.payload = JSON.parse(JSON.stringify(d.payload).replaceAll("/logo-editor/assets/demo-image.png", "/logo/assets/demo-image.png"));
       const id = await L.insertLogo(page, { name: L.uniq(`demo-${d.type}`), type: d.type, payload: d.payload });
@@ -1253,7 +1253,7 @@ test.describe("telefon", () => {
   test("edytor telefonu w pionie prosi o obrót, a w poziomie otwiera zapisane logo", async ({ page }, testInfo) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("mobile-edit"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
-    await page.goto(`${site.origin}/logo/editor/text/?id=${id}`);
+    await page.goto(`${site.origin}/logos/editor/text/?id=${id}`);
     // Wspólna nakładka urządzenia (page-overlay.js), nie blokada zasobu.
     await expect(page.locator("#pageGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#pageGuard")).toHaveAttribute("data-kind", "device");

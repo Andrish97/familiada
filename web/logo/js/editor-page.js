@@ -1,5 +1,5 @@
 // familiada/logo/js/editor-page.js
-// Wspólna logika trzech stron edytora logo (/logo/editor/<tryb>/?id=).
+// Wspólna logika trzech stron edytora logo (/logos/editor/<tryb>/?id=).
 // Strona ma jeden tryb i jedno logo (id w adresie). Zmiany zapisują się
 // SAME: bez przycisku „Zapisz”, bez pytań przy wyjściu -- do pracy można
 // wrócić w każdej chwili, także po zamknięciu karty.

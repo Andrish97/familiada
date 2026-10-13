@@ -176,11 +176,11 @@ test("E20: lista Gier czeka na pierwszy odczyt i ujawnia komunikat przy błędzi
 
 test("E20: lista Logo ujawnia błąd pierwszego odczytu zamiast pustej siatki", async ({ page, context }) => {
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
-  await serveBranchCode(context, { pages: ["logo"] });
+  await serveBranchCode(context, { pages: ["logos"] });
   await page.route("**/rest/v1/user_logos*", (route) => route.fulfill({
     status: 500, contentType: "application/json", body: JSON.stringify({ message: "E20 test logo load failure" }),
   }));
-  await page.goto("https://www.familiada.online/logo/", { waitUntil: "domcontentloaded" });
+  await page.goto("https://www.familiada.online/logos/", { waitUntil: "domcontentloaded" });
   const list = page.locator(".logoShell");
   await expect(list).toHaveClass(/skel-step-ready/);
   await expect(page.locator("#msg")).not.toBeEmpty();

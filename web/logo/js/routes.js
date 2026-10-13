@@ -1,7 +1,7 @@
 // familiada/logo/js/routes.js
-// Adresy stron logo: lista /logo/ i trzy edytory /logo/editor/<tryb>/?id=.
+// Adresy stron logo: lista /logos/ i trzy edytory /logos/editor/<tryb>/?id=.
 // Cele i powroty liczy mapa nawigacji (core/nav-map.js): edytor wraca przez
-// ?ret= do listy z kartą, z której wszedł; bez ret — na /logo/.
+// ?ret= do listy z kartą, z której wszedł; bez ret — na /logos/.
 // Patrz docs/nawigacja-mapa-plan.md.
 
 import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-13T13432";
@@ -30,7 +30,7 @@ export function editorUrl(mode, id) {
   return linkTo(EDITOR_PAGE_IDS[mode], { id });
 }
 
-/** Powrót z edytora danego trybu: ret (lista logo) albo /logo/. */
+/** Powrót z edytora danego trybu: ret (lista logo) albo /logos/. */
 export function listBackUrl(mode) {
   return backHref(EDITOR_PAGE_IDS[mode]);
 }

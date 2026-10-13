@@ -15,8 +15,8 @@ const PAGES = [
   "index", "account", "bases", "bases/explorer", "connect", "connect/tv",
   "control", "control/buzzer", "control/display", "control/host", "games",
   "games/editor", "games/settings", "friends", "go", "login", "login/confirm",
-  "login/reset", "logo", "logo/editor/draw", "logo/editor/image", "logo/editor/text",
-  "mail", "maintenance", "manual", "marketplace", "polls", "polls/vote/points",
+  "login/reset", "logos", "logos/editor/draw", "logos/editor/image", "logos/editor/text",
+  "mails", "maintenance", "manual", "marketplace", "polls", "polls/vote/points",
   "polls/vote/qr", "polls/vote/text", "privacy", "settings", "subscribers", "tasks", "404",
 ];
 
@@ -44,11 +44,11 @@ function urls(fixtures) {
     ["games", "/games/"], ["game-editor", `/games/editor/?id=${game.id}`],
     ["game-settings", `/games/settings/?id=${game.id}`], ["friends", "/friends/"],
     ["go", "/go/"], ["login", "/login/"], ["login-confirm", "/login/confirm/"],
-    ["login-reset", "/login/reset/"], ["logo", "/logo/"],
-    ["logo-draw", `/logo/editor/draw/?id=${fixtures.logo.id}`],
-    ["logo-image", `/logo/editor/image/?id=${fixtures.logo.id}`],
-    ["logo-text", `/logo/editor/text/?id=${fixtures.logo.id}`],
-    ["mail", "/mail/"], ["maintenance", "/maintenance/"], ["manual", "/manual/"],
+    ["login-reset", "/login/reset/"], ["logo", "/logos/"],
+    ["logo-draw", `/logos/editor/draw/?id=${fixtures.logo.id}`],
+    ["logo-image", `/logos/editor/image/?id=${fixtures.logo.id}`],
+    ["logo-text", `/logos/editor/text/?id=${fixtures.logo.id}`],
+    ["mail", "/mails/"], ["maintenance", "/maintenance/"], ["manual", "/manual/"],
     ["marketplace", "/marketplace/"], ["polls", `/polls/?id=${pollText.id}`],
     ["poll-vote-points", `/polls/vote/points/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`],
     ["poll-vote-qr", `/polls/vote/qr/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`],
@@ -71,7 +71,7 @@ function additionalStates(fixtures) {
     },
     { id: "games-community", page: "games", href: "/games/?tab=market" },
     {
-      id: "logo-selected", page: "logo", href: "/logo/",
+      id: "logo-selected", page: "logo", href: "/logos/",
       prepare: async (page) => {
         const tile = page.locator(`.logoTile[data-key="${fixtures.logo.id}"]`);
         await tile.waitFor({ state: "visible", timeout: 20_000 });

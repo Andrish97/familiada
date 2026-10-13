@@ -6,7 +6,7 @@ const { loginAsPooledTestUser, loginAsGuest } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "control", "polls", "friends", "subscribers", "tasks", "manual", "connect", "logo", "marketplace", "account"] });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "control", "polls", "friends", "subscribers", "tasks", "manual", "connect", "logos", "marketplace", "account"] });
 });
 for (const path of ["/connect", "/connect/"]) {
   test(`anonim: powrót z ${path} ma strzałkę i prowadzi na stronę główną`, async ({ page }) => {

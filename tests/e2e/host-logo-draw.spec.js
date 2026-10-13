@@ -33,7 +33,7 @@ async function cleanupPreviousDrawRows(page, accountNumber) {
 
 async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
   test.setTimeout(120_000);
-  await serveBranchCode(context, { pages: ["logo", "host", "display"] });
+  await serveBranchCode(context, { pages: ["logos", "host", "display"] });
   // This dedicated spec has explicit permission to use test9/test10. They
   // remain excluded from the shared account pool and general E2E suites.
   await loginAsTestUser(page, context, { username: `test${accountNumber}@familiada.online` });
@@ -55,7 +55,7 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
         source: { mode: "DRAW" },
       },
     });
-    await page.goto(`${ORIGIN}/logo/editor/draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${ORIGIN}/logos/editor/draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW");
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
     await page.evaluate(() => {
