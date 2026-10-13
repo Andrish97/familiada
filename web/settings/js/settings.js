@@ -21,6 +21,7 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T08251";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T08251";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T08251";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T08251";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-13T133200";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -5722,6 +5723,21 @@ function buildStatsPagination(page, pages, onPage) {
   return nav;
 }
 
+function downloadControl2Stats(rows, period) {
+  const now = new Date();
+  const exportData = buildControl2StatsExport(rows, period, { now });
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = now.toISOString().slice(0, 10);
+  link.href = url;
+  link.download = `familiada-control2-${period}-${date}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 async function openStatsDetailModal(type) {
   const cfg = STAT_DETAIL_CONFIG[type];
   if (!cfg) return;
@@ -5740,7 +5756,29 @@ async function openStatsDetailModal(type) {
 
   const body = document.createElement("div");
   body.style.cssText = "min-width:min(680px,88vw);display:flex;flex-direction:column;max-height:calc(82vh - 140px);overflow:hidden";
+
+  const exportControls = document.createElement("div");
+  exportControls.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px";
+  exportControls.hidden = type !== "gameplay";
+  const exportPeriod = document.createElement("select");
+  exportPeriod.className = "btn sm";
+  exportPeriod.setAttribute("aria-label", "Zakres eksportu przebiegów Control 2");
+  exportPeriod.innerHTML = `
+    <option value="today">Dzisiaj</option>
+    <option value="7d">Ostatnie 7 dni</option>
+    <option value="30d">Ostatnie 30 dni</option>
+    <option value="recent">Wszystkie załadowane (do 500)</option>
+  `;
+  const exportButton = document.createElement("button");
+  exportButton.className = "btn sm gold";
+  exportButton.type = "button";
+  exportButton.textContent = "Pobierz JSON";
+  exportButton.disabled = true;
+  exportButton.addEventListener("click", () => downloadControl2Stats(allRows, exportPeriod.value));
+  exportControls.append(exportPeriod, exportButton);
+
   body.appendChild(infoEl);
+  body.appendChild(exportControls);
   body.appendChild(tableWrap);
   body.appendChild(pageWrap);
 
@@ -5794,6 +5832,7 @@ async function openStatsDetailModal(type) {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "błąd");
     allRows = type === "activity" ? activityDetailRows(data) : data.rows || [];
+    if (type === "gameplay") exportButton.disabled = false;
     renderPage(1);
   } catch (err) {
     tableWrap.textContent = `Błąd: ${err.message}`;
