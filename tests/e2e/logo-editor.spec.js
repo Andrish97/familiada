@@ -236,12 +236,14 @@ test.describe("import / eksport", () => {
     await page.route("**/rest/v1/user_logos**", (route) => {
       const req = route.request();
       const url = new URL(req.url());
-      if (req.method() === "GET" && url.searchParams.get("id") === `eq.${id}`) return route.abort();
+      if (req.method() === "GET" && url.searchParams.get("id") === `eq.${id}`) {
+        return route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ code: "E20_TEST", message: "E20 controlled export error" }) });
+      }
       return route.continue();
     });
     await page.locator("#btnExport").click();
     await expect(page.locator("#logoExportOverlay")).toBeVisible();
-    await expect(page.locator("#logoExportMsg")).toContainText(/couldn't export|nie udało się wyeksportować/i);
+    await expect(page.locator("#logoExportMsg")).toContainText("E20 controlled export error");
     await expect(page.locator("#btnLogoExportClose")).toBeVisible();
     await page.waitForTimeout(1200);
     await expect(page.locator("#logoExportOverlay")).toBeVisible();
