@@ -5,7 +5,6 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("./helpers/production-test");
 const { loginAsTestUser, galleryTestAccountUsername } = require("./helpers/login");
-const { restoreTestAccount } = require("./helpers/mailbox");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { seedE20GalleryFixtures } = require("./helpers/e20-gallery-fixtures");
 
@@ -86,13 +85,39 @@ function additionalStates(fixtures) {
   ];
 }
 
+async function withTimeout(promise, timeoutMs, label) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label}: przekroczono ${timeoutMs} ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20_000 });
-  await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading")
-    || !!document.documentElement.dataset.deviceGuard, null, { timeout: 8_000 }).catch(() => {});
+  try {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20_000 });
+  } catch (error) {
+    throw new Error(`${profile.label} · ${id}: nawigacja nie zakończyła się (${error.message})`);
+  }
+  try {
+    await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading")
+      || !!document.documentElement.dataset.deviceGuard, null, { timeout: 8_000 });
+  } catch {
+    throw new Error(`${profile.label} · ${id}: ładowanie strony nie zakończyło się w 8 s`);
+  }
   if (readySelector) {
-    await page.locator(readySelector).waitFor({ state: "visible", timeout: 20_000 });
+    try {
+      await page.locator(readySelector).waitFor({ state: "visible", timeout: 20_000 });
+    } catch {
+      throw new Error(`${profile.label} · ${id}: nie pojawił się element gotowości ${readySelector}`);
+    }
   }
   if (prepare) await prepare(page);
   await page.waitForTimeout(450);
@@ -105,21 +130,22 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     pageText: document.body?.innerText?.slice(0, 500) || "",
     loading: document.documentElement.classList.contains("page-loading"),
   }));
+  if (state.loading) throw new Error(`${profile.label} · ${id}: strona nadal ma page-loading po załadowaniu`);
+  if (state.scrollWidth > state.viewportWidth + 1) {
+    throw new Error(`${profile.label} · ${id}: poziomy overflow ${state.scrollWidth}px przy viewport ${state.viewportWidth}px`);
+  }
   const file = `${id}.png`;
   fs.mkdirSync(path.join(OUT, profile.id), { recursive: true });
-  await page.screenshot({ path: path.join(OUT, profile.id, file), fullPage: true, animations: "disabled" });
+  await page.screenshot({ path: path.join(OUT, profile.id, file), fullPage: true, animations: "disabled", timeout: 30_000 });
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
   manifest.push({ id, profile: profile.id, label: profile.label, url: href, file: `${profile.id}/${file}`, ...state });
+  // Checkpoint after every image so a failed profile still leaves useful work.
+  fs.writeFileSync(path.join(OUT, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
 }
 
-test.describe.configure({ mode: "serial" });
-test.setTimeout(45 * 60 * 1000);
+test.describe.configure({ mode: "parallel" });
+test.setTimeout(15 * 60 * 1000);
 test.use({ serviceWorkers: "block" });
-
-test.beforeAll(async () => {
-  // Przywraca wspólne hasło na dedykowanym koncie, zachowując jego UUID i dane.
-  await restoreTestAccount("test17");
-});
 
 for (const profile of PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id))) {
   test(`E20 gallery · ${profile.label}`, async ({ browser }) => {
@@ -147,8 +173,15 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
         await route.fulfill({ response, body: html });
       });
       const page = await context.newPage();
+      page.setDefaultTimeout(20_000);
+      page.setDefaultNavigationTimeout(20_000);
+      // Hasło jest przywracane raz przed równoległymi profilami w workflow.
       await loginAsTestUser(page, context, { username: galleryTestAccountUsername() });
-      const fixtures = await seedE20GalleryFixtures(page);
+      const fixtures = await withTimeout(
+        seedE20GalleryFixtures(page),
+        90_000,
+        `${profile.label}: przygotowanie danych galerii`,
+      );
 
       const selectedUrls = urls(fixtures).filter(([id]) => !requestedPages.length || requestedPages.includes(id));
       for (const [id, href] of selectedUrls) {
@@ -170,7 +203,6 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       for (const state of extra) {
         await capture(page, profile, state.id, state.href, manifest, state.prepare);
       }
-      fs.writeFileSync(path.join(OUT, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
       expect(manifest).toHaveLength(selectedUrls.length + extra.length);
       const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1 || entry.loading);
       expect(layoutIssues, `Problemy szerokości lub niedokończone ładowanie: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth, loading }) => ({ id, url, scrollWidth, viewportWidth, loading })))}`).toEqual([]);

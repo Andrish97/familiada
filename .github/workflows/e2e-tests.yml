@@ -217,7 +217,7 @@ jobs:
       contents: write
     if: ${{ github.event.inputs.spec_filter != '' }}
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ contains(github.event.inputs.spec_filter, 'e2e/e20-gallery.spec.js') && 180 || 60 }}
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -267,6 +267,13 @@ jobs:
             node --test --test-concurrency=1 unit/*.test.js
           fi
 
+      - name: Restore E20 gallery account once before parallel profiles
+        if: ${{ success() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        env:
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: node -e "require('./e2e/helpers/mailbox').restoreTestAccount('test17').catch(error => { console.error(error); process.exit(1); })"
+        working-directory: tests
+
       - name: Run E2E tests (spec_filter)
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
@@ -274,11 +281,17 @@ jobs:
           KEEP_STATISTICS_GAMES: ${{ inputs.retain_statistics_games && '1' || '0' }}
           E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
           E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
-        run: npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
+          IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
+        run: |
+          if [ "$IS_E20_GALLERY" = "1" ]; then
+            npx playwright test e2e/e20-gallery.spec.js --workers=5
+          else
+            npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
+          fi
         working-directory: tests
 
       - name: Build E20 gallery HTML and manifest
-        if: ${{ success() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && hashFiles('tests/test-results/e20-gallery/manifest-*.json') != '' }}
         run: node scripts/agent-tools/build-e20-gallery.cjs
 
       - name: Upload production statistics evidence
