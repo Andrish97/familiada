@@ -114,6 +114,7 @@ export const ICONS = Object.freeze({
   polls: f('<rect x="2" y="20" width="20" height="1.4" rx=".7" opacity=".5"/><rect x="2" y="15.5" width="20" height="1.1" rx=".55" opacity=".28"/><rect x="2" y="10.5" width="20" height="1.1" rx=".55" opacity=".28"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10" y="15" width="4" height="5" rx="1"/><rect x="16" y="6" width="4" height="14" rx="1"/>'),
   hamburger: s('<path d="M4 6h16M4 12h16M4 18h16"/>'),
   globe: s('<circle cx="12" cy="12" r="9.5"/><path d="M12 2.5a14 14 0 0 0 0 19 14 14 0 0 0 0-19M2.5 12h19"/>'),
+  translate: s('<path d="M4 4.5h10v14H4zM10 7.5h10v12H10"/><text x="6.2" y="14.2" fill="currentColor" stroke="none" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="7.5" font-weight="800">A</text><text x="12.2" y="15" fill="currentColor" stroke="none" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="6.8" font-weight="700">文</text>'),
   shield: s('<path d="M20 13c0 5-3.5 7.5-7.7 9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1Z"/><path d="m9 12 2 2 4-4"/>'),
   calendar: s('<rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/>'),
   hourglass: s('<path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/>'),
