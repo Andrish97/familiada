@@ -409,6 +409,12 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       expect(json.game).toMatchObject({ name, type: "prepared" });
       expect(json.questions).toHaveLength(10);
 
+      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.screenshot({ path: testInfo.outputPath("shot-e20-export-success-390.png"), fullPage: true });
+      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator("#exportJsonOverlay")).toBeHidden();
+
       await page.locator("#btnImport").click();
       await page.locator("#importFile").setInputFiles(file);
       await expect(page.locator("#importPreview")).toContainText(name);

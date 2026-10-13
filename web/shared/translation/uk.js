@@ -2833,6 +2833,7 @@ const uk = {
     exportFile: {
       title: "EXPORT…",
       subtitle: "Не закривай сторінку. Готується файл.",
+      close: "Готово",
       progress: {
         start: "Експортую…",
         fetch: "Отримую дані…",

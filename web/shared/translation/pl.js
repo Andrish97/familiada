@@ -2736,6 +2736,7 @@ const pl = {
     exportFile: {
       title: "EKSPORT…",
       subtitle: "Nie zamykaj strony. Trwa przygotowanie pliku.",
+      close: "Gotowe",
       progress: {
         start: "Eksportuję…",
         fetch: "Pobieram dane…",

@@ -872,6 +872,14 @@ a plik TXT nadal trafia do jednego pola tekstowego. Punktowe E2E
 `38382791836`, 1/1; zrzuty390/1400 w artefakcie11804730840. Pozostałe
 operacje importu/eksportu wymagają osobnego przeglądu.
 
+**Eksport JSON gry (2026-10-13):** pobranie uruchamia się od razu po
+przygotowaniu pliku. Okno pozostaje z wynikiem widocznym do kliknięcia
+„Gotowe”; przycisk tylko zamyka okno i nie powtarza pobierania. Błąd też
+pozostaje widoczny do zamknięcia. Branch E2E `38383237666`, 1/1, w tym
+eksport z polskimi znakami i import pobranego pliku; pełny unit602/602.
+Pozostałe ścieżki Gier/Baz/Logo nadal wymagają przeglądu błędu, postępu,
+retry i zakończenia.
+
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
 Każdy typ strony ma wspólny układ i wspólne style na wszystkich stronach
