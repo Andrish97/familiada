@@ -171,7 +171,7 @@ test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zap
   await filterButton.click();
   await expect(filterButton).toHaveAttribute("aria-expanded", "true");
   const openOption = filter.locator('.ui-select-item[data-value="open"]');
-  const filterMenu = await openOption.boundingBox();
+  const filterMenu = await filter.locator(".ui-select-menu").boundingBox();
   expect(filterMenu.width).toBeGreaterThanOrEqual(220);
   expect(filterMenu.height).toBeGreaterThanOrEqual(44);
   await openOption.click();
@@ -186,7 +186,7 @@ test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zap
   await sortButton.click();
   await expect(sortButton).toHaveAttribute("aria-expanded", "true");
   const nameOption = sort.locator('.ui-select-item[data-value="name"]');
-  const sortMenu = await nameOption.boundingBox();
+  const sortMenu = await sort.locator(".ui-select-menu").boundingBox();
   expect(sortMenu.width).toBeGreaterThanOrEqual(220);
   expect(sortMenu.height).toBeGreaterThanOrEqual(44);
   await nameOption.click();
