@@ -12,15 +12,15 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-13T09584";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T09584";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T09584";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-13T09584";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T09584";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T09584";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T09584";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T09584";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T09584";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-13T10060";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T10060";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T10060";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-13T10060";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T10060";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T10060";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T10060";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T10060";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T10060";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -30,14 +30,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-13T09584";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-13T10060";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-13T09584";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-13T09584";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-13T09584";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-13T10060";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-13T10060";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-13T10060";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-13T09584";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-13T10060";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -1040,8 +1040,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-13T09584"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-13T09584"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-13T10060"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-13T10060"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -6438,7 +6438,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-13T09584");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-13T10060");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
