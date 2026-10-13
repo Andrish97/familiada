@@ -107,6 +107,8 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej na komputerze i telefo
     });
     expect(boxes.actions.right, `actions overlap title at ${width}px`).toBeLessThanOrEqual(boxes.heading.left + 1);
     expect(boxes.heading.right, `title is outside the right column at ${width}px`).toBeLessThanOrEqual(width - 8);
+    await expect(page.locator("#btnEdit .ico")).toBeVisible();
+    await expect(page.locator("#btnEdit")).toHaveAccessibleName("Edytuj");
   }
 });
 

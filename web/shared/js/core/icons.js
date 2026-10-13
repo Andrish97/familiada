@@ -105,6 +105,7 @@ export const ICONS = Object.freeze({
   // --- nawigacja / miejsca ------------------------------------------------
   home: s('<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-7h6v7"/>'),
   gamepad: s('<path d="M6.7 5h10.6a4 4 0 0 1 3.9 3.1l1.4 6.1a3.9 3.9 0 0 1-6.6 3.6L14.2 16H9.8L8 17.8a3.9 3.9 0 0 1-6.6-3.6l1.4-6.1A4 4 0 0 1 6.7 5Z"/><path d="M7 9v5M4.5 11.5h5"/><circle cx="16.5" cy="10" r=".8" fill="currentColor" stroke="none"/><circle cx="19" cy="12.5" r=".8" fill="currentColor" stroke="none"/>'),
+  settings: s('<path d="M10 2.8h4l.7 2.4 2 .9 2.2-1.1 2.8 2.8-1.1 2.2.9 2 .7 2.4h-4l-.7-2.4-2-.9-2.2 1.1-2.8-2.8 1.1-2.2-.9-2Z"/><circle cx="12" cy="12" r="3.2"/>'),
   drawer: s('<rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M4 12h16M10 7h4M10 16.5h4"/>'),
   // rysunek z audytu: słupki na tle poziomych podziałek
   polls: f('<rect x="2" y="20" width="20" height="1.4" rx=".7" opacity=".5"/><rect x="2" y="15.5" width="20" height="1.1" rx=".55" opacity=".28"/><rect x="2" y="10.5" width="20" height="1.1" rx=".55" opacity=".28"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10" y="15" width="4" height="5" rx="1"/><rect x="16" y="6" width="4" height="14" rx="1"/>'),
