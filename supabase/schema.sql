@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict byQDM9zS2uPn71ZcKGMaw1NQc5Erich7yH1P4JiBOZ5I4WkQyFZd1GJFslUlx6O
+\restrict sEqHhdH72323cYBBXKE4fwSeNnxNlGGYX4u4sTQhbvfuh6uC0VyOv5vfz7RcP5X
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -580,6 +580,75 @@ BEGIN
  IF TG_OP='DELETE' THEN RETURN OLD; END IF;
  RETURN NEW;
 END $$;
+
+
+--
+-- Name: _game_import_package("jsonb", "uuid", "uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_game_import_package"("p_payload" "jsonb", "p_owner" "uuid", "p_request" "uuid", "p_defaults" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE receipt public.game_import_receipts; canonical jsonb; fingerprint text; gid uuid; imported jsonb;
+BEGIN
+ IF p_request IS NULL OR p_owner IS NULL THEN RETURN jsonb_build_object('ok',false,'error','invalid_request'); END IF;
+ -- Non-key update serializes imports without blocking the existing FK key-share checks.
+ PERFORM 1 FROM auth.users WHERE id=p_owner AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<=clock_timestamp()) FOR NO KEY UPDATE NOWAIT;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','auth_required'); END IF;
+ IF p_payload IS NULL THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
+ fingerprint:=encode(sha256(convert_to(p_payload::text,'UTF8')),'hex');
+ SELECT * INTO receipt FROM public.game_import_receipts WHERE owner_id=p_owner AND request_id=p_request FOR UPDATE;
+ IF FOUND THEN
+  IF receipt.payload_hash IS DISTINCT FROM fingerprint THEN RETURN jsonb_build_object('ok',false,'error','request_conflict'); END IF;
+  IF receipt.game_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.games WHERE id=receipt.game_id AND owner_id=p_owner) THEN
+   RETURN jsonb_build_object('ok',false,'error','previously_removed');
+  END IF;
+  RETURN jsonb_build_object('ok',true,'id',receipt.game_id,'already',true);
+ END IF;
+ canonical:=public._game_package_normalize(p_payload,p_defaults);
+ INSERT INTO public.games(owner_id,name,type,status) VALUES(p_owner,canonical#>>'{game,name}',(canonical#>>'{game,type}')::public.game_type,'draft') RETURNING id INTO gid;
+ -- One content importer for the editor, file import and later received game copies.
+ imported:=public.game_import_content(gid,canonical#>>'{game,name}',canonical->'questions');
+ IF imported->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'game_content_import_failed'; END IF;
+ INSERT INTO public.game_import_receipts(owner_id,request_id,game_id,payload_hash) VALUES(p_owner,p_request,gid,fingerprint);
+ RETURN jsonb_build_object('ok',true,'id',gid,'already',false);
+END $$;
+
+
+--
+-- Name: _game_package_normalize("jsonb", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_game_package_normalize"("p_payload" "jsonb", "p_defaults" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" IMMUTABLE
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+DECLARE typ text; name text; qs jsonb:='[]'; ans jsonb; q record; a record; qt text; at text; pts numeric; rawpts text;
+BEGIN
+ IF jsonb_typeof(p_payload) IS DISTINCT FROM 'object' OR jsonb_typeof(p_payload->'game') IS DISTINCT FROM 'object'
+  OR jsonb_typeof(p_payload->'questions') IS DISTINCT FROM 'array' OR octet_length(p_payload::text)>8388608 THEN
+  RAISE EXCEPTION 'invalid_game_package';
+ END IF;
+ typ:=CASE WHEN p_payload#>>'{game,type}' IN('prepared','poll_text','poll_points') THEN p_payload#>>'{game,type}' ELSE 'poll_text' END;
+ name:=left(coalesce(nullif(trim(p_payload#>>'{game,name}'),''),nullif(p_defaults->>'game',''),'Gra'),80);
+ FOR q IN SELECT value,ordinality FROM jsonb_array_elements(p_payload->'questions') WITH ORDINALITY LOOP
+  qt:=left(coalesce(nullif(trim(q.value->>'text'),''),replace(coalesce(nullif(p_defaults->>'question',''),'Pytanie {ord}'),'{ord}',q.ordinality::text)),200);
+  ans:='[]';
+  IF typ<>'poll_text' THEN
+   FOR a IN SELECT value,ordinality FROM jsonb_array_elements(CASE WHEN jsonb_typeof(q.value->'answers')='array' THEN q.value->'answers' ELSE '[]'::jsonb END) WITH ORDINALITY WHERE ordinality<=6 LOOP
+    at:=left(coalesce(nullif(trim(a.value->>'text'),''),replace(coalesce(nullif(p_defaults->>'answer',''),'Odpowiedź {ord}'),'{ord}',a.ordinality::text)),17);
+    rawpts:=trim(coalesce(a.value->>'fixed_points','')); pts:=0;
+    IF rawpts ~ '^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?$' THEN
+     BEGIN pts:=least(100,greatest(0,floor(rawpts::numeric))); EXCEPTION WHEN numeric_value_out_of_range OR invalid_text_representation THEN pts:=0; END;
+    ELSIF jsonb_typeof(a.value->'fixed_points')='boolean' AND rawpts='true' THEN pts:=1; END IF;
+    ans:=ans||jsonb_build_array(jsonb_build_object('text',at,'fixed_points',pts));
+   END LOOP;
+  END IF;
+  qs:=qs||jsonb_build_array(jsonb_build_object('text',qt,'answers',ans));
+ END LOOP;
+ RETURN jsonb_build_object('game',jsonb_build_object('name',name,'type',typ),'questions',qs);
+END $_$;
 
 
 --
@@ -6109,6 +6178,8 @@ begin
            a.ord,
            left(btrim(coalesce(a.item->>'text', '')), 17),
            case
+             when jsonb_typeof(a.item->'fixed_points') = 'number'
+               then least(100, greatest(0, floor((a.item->>'fixed_points')::numeric)))::int
              when v_type = 'prepared' and jsonb_typeof(a.item->'points') = 'number'
                then least(100, greatest(0, floor((a.item->>'points')::numeric)))::int
              else 0
@@ -6124,6 +6195,25 @@ begin
   return jsonb_build_object('ok', true, 'questions', v_count);
 end;
 $$;
+
+
+--
+-- Name: game_import_package("jsonb", "uuid", "uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_import_package"("p_payload" "jsonb", "p_owner_id" "uuid", "p_request_id" "uuid", "p_defaults" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+BEGIN
+ IF auth.uid() IS NULL OR auth.uid() IS DISTINCT FROM p_owner_id THEN RETURN jsonb_build_object('ok',false,'error','auth_required'); END IF;
+ RETURN public._game_import_package(p_payload,p_owner_id,p_request_id,p_defaults);
+EXCEPTION
+ WHEN lock_not_available THEN RETURN jsonb_build_object('ok',false,'error','locked');
+ WHEN raise_exception THEN
+  IF SQLERRM='invalid_game_package' THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
+  RAISE;
+END $$;
 
 
 --
@@ -16922,6 +17012,22 @@ CREATE TABLE "public"."game_gen_queue" (
 
 
 --
+-- Name: game_import_receipts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."game_import_receipts" (
+    "owner_id" "uuid" NOT NULL,
+    "request_id" "uuid" NOT NULL,
+    "game_id" "uuid",
+    "payload_hash" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    CONSTRAINT "game_import_receipts_payload_hash_check" CHECK (("payload_hash" ~ '^[a-f0-9]{64}$'::"text"))
+);
+
+ALTER TABLE ONLY "public"."game_import_receipts" FORCE ROW LEVEL SECURITY;
+
+
+--
 -- Name: game_session_active; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -18166,6 +18272,14 @@ ALTER TABLE ONLY "public"."friendships"
 
 ALTER TABLE ONLY "public"."game_gen_queue"
     ADD CONSTRAINT "game_gen_queue_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: game_import_receipts game_import_receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_import_receipts"
+    ADD CONSTRAINT "game_import_receipts_pkey" PRIMARY KEY ("owner_id", "request_id");
 
 
 --
@@ -20356,6 +20470,22 @@ ALTER TABLE ONLY "public"."friendships"
 
 
 --
+-- Name: game_import_receipts game_import_receipts_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_import_receipts"
+    ADD CONSTRAINT "game_import_receipts_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: game_import_receipts game_import_receipts_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_import_receipts"
+    ADD CONSTRAINT "game_import_receipts_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: game_session_active game_session_active_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -21363,6 +21493,12 @@ CREATE POLICY "game_gen_queue_select_own" ON "public"."game_gen_queue" FOR SELEC
 
 CREATE POLICY "game_gen_queue_worker_all" ON "public"."game_gen_queue" TO "service_role" USING (true) WITH CHECK (true);
 
+
+--
+-- Name: game_import_receipts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."game_import_receipts" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: game_session_active; Type: ROW SECURITY; Schema: public; Owner: -
@@ -22407,5 +22543,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict byQDM9zS2uPn71ZcKGMaw1NQc5Erich7yH1P4JiBOZ5I4WkQyFZd1GJFslUlx6O
+\unrestrict sEqHhdH72323cYBBXKE4fwSeNnxNlGGYX4u4sTQhbvfuh6uC0VyOv5vfz7RcP5X
 
