@@ -10,6 +10,7 @@
 
 import { t } from "../../translation/translation.js?v=v2026-10-13T08251";
 import { icon } from "./icons.js?v=v2026-10-13T08251";
+import { confirmModal } from "./modal.js?v=v2026-10-13T08251";
 import { initUiSelect } from "./ui-select.js?v=v2026-10-13T08251";
 import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-13T08251";
 
@@ -45,16 +46,22 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   input.className = "searchText";
   const clear = document.createElement("button");
   clear.type = "button";
-  clear.className = "btn";
+  clear.className = "btn list-search-clear";
   clear.innerHTML = icon("close");
+  const mobileSearch = document.createElement("button");
+  mobileSearch.type = "button";
+  mobileSearch.className = "btn icon list-search-open";
+  mobileSearch.innerHTML = icon("search");
   const label = () => {
     input.placeholder = t("common.searchByName");
     input.setAttribute("aria-label", t("common.searchByName"));
     clear.title = t("baseExplorer.search.clear");
     clear.setAttribute("aria-label", t("baseExplorer.search.clear"));
+    mobileSearch.title = input.value ? t("baseExplorer.search.clear") : t("common.searchByName");
+    mobileSearch.setAttribute("aria-label", mobileSearch.title);
   };
   label();
-  box.append(input, clear);
+  box.append(input, clear, mobileSearch);
   slot.appendChild(box);
 
   let filterValue = "";
@@ -74,6 +81,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       onChange: (val) => {
         filterValue = String(val || "");
         history.replaceState(history.state, "", filterToHref(location.href, filter.param, filterValue));
+        wrap.classList.toggle("is-active", !!filterValue);
         apply();
       },
     });
@@ -96,6 +104,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       onChange: (val) => {
         sortValue = String(val || "");
         history.replaceState(history.state, "", filterToHref(location.href, sort.param, sortValue));
+        wrapS.classList.toggle("is-active", !!sortValue);
         apply();
       },
     });
@@ -134,6 +143,12 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
 
   const apply = () => {
     const q = norm(input.value);
+    mobileSearch.innerHTML = icon(q ? "close" : "search");
+    mobileSearch.classList.toggle("is-active", !!q);
+    mobileSearch.title = q ? t("baseExplorer.search.clear") : t("common.searchByName");
+    mobileSearch.setAttribute("aria-label", mobileSearch.title);
+    if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
+    if (sort) document.querySelector(".list-sort")?.classList.toggle("is-active", !!sortValue);
     for (const grid of document.querySelectorAll(grids)) {
       sortGrid(grid);
       let total = 0, visible = 0;
@@ -154,8 +169,39 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   };
   input.addEventListener("input", apply);
   clear.addEventListener("click", () => { input.value = ""; apply(); input.focus(); });
+  mobileSearch.addEventListener("click", async () => {
+    if (input.value) {
+      input.value = "";
+      apply();
+      return;
+    }
+    const modalInput = document.createElement("input");
+    modalInput.type = "search";
+    modalInput.className = "inp uni-inp";
+    modalInput.value = input.value;
+    modalInput.placeholder = t("common.searchByName");
+    modalInput.setAttribute("aria-label", t("common.searchByName"));
+    modalInput.setAttribute("enterkeyhint", "search");
+    const ok = await confirmModal({
+      title: t("common.searchByName"),
+      text: "",
+      okText: t("common.modal.alertOk"),
+      cancelText: t("common.modal.confirmCancel"),
+      body: modalInput,
+      initialFocus: modalInput,
+      onReady: ({ okBtn }) => modalInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); okBtn.click(); }
+      }),
+    });
+    if (ok) {
+      input.value = modalInput.value;
+      apply();
+    }
+  });
   const mo = new MutationObserver(() => { if (input.value || filterValue || sortValue || sort) apply(); });
   for (const grid of document.querySelectorAll(grids)) mo.observe(grid, { childList: true, subtree: true });
   window.addEventListener("i18n:lang", () => { label(); apply(); });
+  if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
+  if (sort) document.querySelector(".list-sort")?.classList.toggle("is-active", !!sortValue);
   apply();
 }

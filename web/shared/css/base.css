@@ -722,6 +722,8 @@ main{
     margin-top: 6px
 }
 
+.mSub:empty{ display: none; }
+
 .importRow {
     display: flex;
     gap: 10px;

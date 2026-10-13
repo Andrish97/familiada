@@ -124,6 +124,28 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
 
 /* ================= 1) Kafelki: zaznaczanie, tworzenie, zmiana nazwy, usuwanie ================= */
 
+test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openGames(page);
+  const open = page.locator(".list-search-open");
+  await expect(open).toBeVisible();
+  await open.click();
+  await page.locator(".uni-modal input[type=search]").fill("zachowaj po anulowaniu");
+  await page.getByRole("button", { name: "Nie", exact: true }).click();
+  await expect(page.locator(".uni-modal")).toHaveCount(0);
+  await expect(open).not.toHaveClass(/is-active/);
+
+  await open.click();
+  await page.locator(".uni-modal input[type=search]").fill(`E20_BRAK_${Date.now()}`);
+  await page.getByRole("button", { name: "OK", exact: true }).click();
+  await expect(page.locator(".list-search-open")).toHaveClass(/is-active/);
+  await expect(page.locator(".list-empty").first()).toBeVisible();
+  await open.click();
+  await expect(open).not.toHaveClass(/is-active/);
+  await expect(page.locator(".list-empty").first()).toBeHidden();
+});
+
 test.describe("games: audyt -- kafelki", () => {
 
   test("telefon: tapnięcie zaznacza bez przebudowy listy, podwójne otwiera zmianę nazwy", async ({ browser }) => {
