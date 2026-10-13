@@ -11,7 +11,7 @@ import uk from "../../web/shared/translation/uk.js";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
 const require = createRequire(import.meta.url);
-const { localFileFor } = require("../e2e/helpers/branch-code.js");
+const { localFileFor, serveBranchCode } = require("../e2e/helpers/branch-code.js");
 const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase|cloudflare|services|docs)\//.test(file) ? file : "web/" + file), "utf8");
 
 function get(object, key) {
@@ -87,4 +87,15 @@ test("serveBranchCode podmienia kod login, zachowując HTML Workera i Turnstile"
   assert.equal(localFileFor("/login/", ["subscribers"]), null);
   assert.equal(localFileFor("/login/index.html", ["subscribers"]), null);
   assert.equal(localFileFor("/login/js/login.js", ["subscribers"]), path.join(root, "web/login/js/login.js"));
+});
+
+test("serveBranchCode oddaje dalszą obsługę żądań zewnętrznych kolejnym handlerom testu", async () => {
+  let handler;
+  await serveBranchCode({ route: (_pattern, callback) => { handler = callback; } }, { pages: ["games"] });
+  let fellBack = false;
+  await handler({
+    request: () => ({ url: () => "https://www.familiada.online/login" }),
+    fallback: async () => { fellBack = true; },
+  });
+  assert.equal(fellBack, true);
 });

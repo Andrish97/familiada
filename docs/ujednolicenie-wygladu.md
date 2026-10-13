@@ -1000,6 +1000,11 @@ wynik/stan danych i PNG. Screeny mają pochodzić z kodu brancha, rzeczywistych
 stron Playwright i produkcyjnej bazy. Nie tworzyć ani nie publikować galerii,
 aż lista powyżej będzie naprawiona i sprawdzona.
 
+Workflow galerii używa prawdziwego konta test17 i produkcyjnej bazy. Obejście
+Turnstile dotyczy tylko odpowiedzi formularza logowania w kontekście Playwrighta;
+żądania strony mogą użyć podpisanego bypassu konserwacji. Nie omija to device
+guardów ani ograniczeń viewportu — ich stany są częścią sprawdzenia.
+
 ### E20 — ikony akcji i kompaktowe narzędzia telefonu (2026-10-12)
 
 Na telefonie przyciski pasków akcji i narzędzi mają **same ikony**; na komputerze ikona może

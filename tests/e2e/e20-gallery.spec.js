@@ -3,7 +3,7 @@
 // rzeczywiste. Dane seedujemy idempotentnie na dedykowanym koncie test17.
 const fs = require("node:fs");
 const path = require("node:path");
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/production-test");
 const { loginAsTestUser, galleryTestAccountUsername } = require("./helpers/login");
 const { restoreTestAccount } = require("./helpers/mailbox");
 const { serveBranchCode } = require("./helpers/branch-code");

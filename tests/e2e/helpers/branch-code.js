@@ -67,7 +67,9 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
   await context.route(`${PROD_ORIGIN}/**`, async (route) => {
     const url = new URL(route.request().url());
     const file = localFileFor(url.pathname, pages);
-    if (!file) return route.continue();
+    // Pozwól kolejnym handlerom Playwrighta dodać np. kontrolowany bypass
+    // konserwacji dla testu; bez nich fallback zachowuje zwykłe żądanie sieciowe.
+    if (!file) return route.fallback();
     let body = fs.readFileSync(file);
     if (safeAreaInsets && path.extname(file) === ".css") {
       body = body.toString("utf8").replace(/env\(\s*safe-area-inset-(top|right|bottom|left)(?:\s*,\s*[^)]+)?\s*\)/g,
