@@ -1060,3 +1060,17 @@ Wysyłka wymaga kompletnego, niezależnego snapshotu i dokładnie jednego
 importu u stałego ID odbiorcy także przy race/lost response. Historia30dni
 nie usuwa oferty ani przyjętej kopii; po wysłaniu brak cofania nadawcy.
 Następnie E19N (Control→Znajomi i mapa), E14, E20; manualE13 ostatni.
+
+**E19C format Logo zamknięty:** mainfff35699ff, Pages38325603741,
+main38325798279 success1/1 bez retry/539 unit. Branch38324179700 też
+success. Nie powtarzać zamkniętych formatów/Go/SMTP/anon/grafu.
+Następna364: wspólny atomowy game_import_package deleguje istniejącemu
+importerowi zawartości edytora, prywatne kwity i idempotencja bez
+wskrzeszania po usunięciu gry. Lokalny rollback i3 kontrolowane wyścigi
+success (równoległy import, usunięcie gry/konta). Izolowany workflow
+na rzeczywistym niezmiennym schemacie363 przygotowany. Jeszcze bez
+wdrożenia DB ani zmiany frontendu; sama wysyłka kopii niewdrożona.
+Kontynuować: izolowany CI→DB/log→frontend ze stałym ID próby i testem
+utraconej odpowiedzi→branch→Pages→main, potem oferty/mail/Go/plakietki.
+Użytkownik ponownie wymaga konkretnego raportu co30–60s i szybszych
+małych paczek; status nie kończy pracy.
