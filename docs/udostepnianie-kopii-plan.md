@@ -13,17 +13,27 @@ Realizacja po bieżącym E19, przed E19N/E14/E20; manual pozostaje ostatni.
 | Po wysłaniu | Znikający dymek potwierdzenia. Bez listy współpracowników, ról, cofania i ponowień wiersza. |
 | Historia | Zwijana sekcja „Historia wysyłek” poniżej wyboru znajomych i przycisku „Wyślij”: komu wysłano tę konkretną grę/logo i kiedy. Wpisy żyją 30 dni, potem są usuwane. Bez zarządzania dostępem i śledzenia decyzji odbiorcy. Pusta sekcja ukryta. |
 | Odbiór | Propozycja kopii w odpowiedniej istniejącej zakładce typu na stronie Gier albo Logo. Przyciski akceptacji/odrzucenia jak w Bazach; nie dodawać tego do Zadań, które pozostają wyłącznie dla ankiet. |
-| Akceptacja | Powstaje własny zasób odbiorcy, jak po imporcie. Nowe identyfikatory i własne pliki; bez dostępu do oryginału i bez aktualizowania kopii zmianami oryginału. |
+| Utworzenie kopii | Już przy Wyślij powstaje własna gra/logo odbiorcy z nowymi ID i własnymi danymi/plikami, oznaczona jako oczekująca; bez zależności od oryginału. |
+| Akceptacja | Zatwierdza istniejącą oczekującą kopię i udostępnia zwykłe działania zasobu; nie tworzy kolejnego zasobu ani okna importu. |
+| Odrzucenie / brak decyzji przez5 dni | Usuwa oczekującą własną kopię i jej nieużywane pliki. Cofnięcie odmowy i ewentualne zachowanie pakietu są pytaniem otwartym poniżej. |
 | Filtr Gier | We wszystkich własnych zakładkach typu (Preparowane, tekstowe, punktowe) dostępne „Otrzymane”, oparte na zapisanym pochodzeniu kopii od znajomych. Gry społeczności bez filtra; wspólny wygląd E20. |
 | Przyjęta kopia | Tylko lekki znacznik „od X”, bez statusu „zaakceptowano”, uprawnień i dodatkowego panelu udostępnienia. |
 | Cofanie | Nadawca nie może cofnąć wysłanej kopii. Odbiorca zarządza przyjętym zasobem tak jak własnym importem. |
 | Plakietki | Oczekujące kopie liczyć na właściwej stronie/ikonie Gier lub Logo i wypustce zakładki typu. Gry i Logo mają plakietki na wypustkach typów oraz przyciskach prowadzących do właściwej strony; wypustki pokazują oczekujące u odbiorcy kopie swojego typu, przycisk ich sumę. Bazy już mają ten mechanizm i są wzorcem. Po akceptacji/odrzuceniu/usunięciu/wygaśnięciu aktualizować, zero ukrywa plakietkę. Bez powielania w Zadaniach. |
 | Mail i link | Zasada systemowa: odbiorca dostaje propozycję również przy wyłączonych mailach. Flagę sprawdzać przed kolejką. Link przez `/go/`, z kontrolą właściwego konta i spójnymi komunikatami stanów. |
 
+**Przyjęcie na kafelku — korekta2026-10-13:** Akceptuj zatwierdza
+własną kopię utworzoną podczas Wyślij, z przyciskiem zablokowanym na
+czas operacji. Nie otwiera okna importu pliku ani nie wymaga dodatkowego
+wyboru/pliku/ponownego zatwierdzania. Po sukcesie propozycję zastępuje
+własny kafelek z lekkim „od X”; błąd zostawia możliwość ponowienia tej
+samej próby. Wspólny importer oznacza wspólny zapis, nie wspólny modal.
+
 ## Snapshot i graf zasobów
 
-Wysyłanie oznacza przekazanie pakietu odpowiadającego eksportowi w chwili
-wysłania. Przyjęcie wykorzystuje wspólny importer. Nie tworzyć drugiego
+Wysyłanie oznacza przekazanie wersji odpowiadającej eksportowi w chwili
+wysłania i utworzenie oczekującego zasobu odbiorcy przez wspólny importer.
+Przyjęcie zmienia jego stan. Nie tworzyć drugiego
 formatu lub drugiej logiki klonowania obok importu/eksportu.
 
 ### Starsze ścieżki importu/eksportu — doprecyzowanie2026-10-13
@@ -37,9 +47,9 @@ dla wysyłania. Znaczenie działań pozostaje jawne:
 | Działanie | Cel | Wspólny mechanizm |
 |---|---|---|
 | Eksport | Pobranie pliku | Snapshot Gier/Logo |
-| Wyślij | Zapisanie niezależnego pakietu i oferty dla znajomych | Ten sam snapshot; bez tworzenia zasobu odbiorcy przed akceptacją |
+| Wyślij | Utworzenie niezależnej oczekującej kopii na koncie znajomego | Ten sam snapshot i importer; stałe ID próby zapobiega duplikatom |
 | Import | Utworzenie własnego zasobu z pliku | Wspólny importer |
-| Akceptuj otrzymaną kopię | Utworzenie własnego zasobu z otrzymanego pakietu | Ten sam importer, stałe ID oferty i dokładnie jeden wynik |
+| Akceptuj otrzymaną kopię | Zatwierdzenie istniejącej oczekującej kopii | Zmiana stanu, bez drugiego importu |
 | Do bazy | Zapis pytań w wybranej bazie | Osobna istniejąca ścieżka pytań; uwzględnić w przeglądzie starych operacji |
 
 Wstępny odczyt kodu Do bazy: qb_questions już zapisuje porcjami200,
@@ -65,7 +75,7 @@ z tych operacji nie może usunąć gałęzi odbiorcy ani wyłączyć jej maila.
 | Wysłany pakiet | Jest niezależną propozycją przeznaczoną dla konkretnego konta odbiorcy. Nie ma żywej zależności dostępu od źródłowej gry/logo ani znajomości. |
 | Edycja/usunięcie oryginału albo usunięcie znajomości po wysłaniu | Nie zmienia ani nie cofa przekazanej kopii. Nie tworzyć ukrytego cofania przez kaskadę. |
 | Usunięcie konta nadawcy | Usuwa jego oryginały i własną historię. Przekazana kopia należy do poddrzewa odbiorcy; nie daje dostępu do zasobów usuniętego nadawcy. Oznaczenie pochodzenia nie może wiązać się z nowym kontem o tej samej nazwie/adresie. |
-| Konto odbiorcy → propozycja → przyjęta gra/logo | Odbiorca jest stałym ID konta. Usunięcie jego konta sprząta propozycje, pakiety i jego zasoby/pliki. Nowe konto z tym samym adresem nie przejmuje starych kopii. |
+| Konto odbiorcy → oczekująca własna gra/logo → zatwierdzenie | Odbiorca jest stałym ID konta. Usunięcie jego konta sprząta propozycje, pakiety i jego zasoby/pliki, również przed akceptacją. Nowe konto z tym samym adresem nie przejmuje starych kopii. |
 | Pliki | Pakiet i przyjęta kopia nie mogą zależeć od plików w katalogu nadawcy. Sprzątanie odrzuconej/wygasłej propozycji nie usuwa plików używanych przez przyjęty zasób. |
 
 Przed wdrożeniem sprawdzić rzeczywistą zawartość obecnego eksportu/importu:
@@ -78,8 +88,9 @@ udostępnień, głosów i stanu urządzeń. Typ i stan początkowy zgodnie z imp
 1. Uzupełnić wspólną tabelę stanów, ważności i cooldownów dla propozycji
    kopii, uwzględniając duplikaty, odmowę i zmianę decyzji odbiorcy.
    Bez funkcji cofania nadawcy i bez przypomnień odrzuconych.
-2. Wspólny eksport/snapshot/import oraz graf plików; akceptacja dokładnie
-   raz, również przy dwóch równoczesnych kliknięciach. Limity jak przy imporcie.
+2. Wspólny eksport/snapshot/import oraz graf plików; utworzenie kopii
+   podczas Wyślij dokładnie raz, także po utraconej odpowiedzi. Akceptacja
+   zatwierdza istniejący zasób. Limity jak przy imporcie.
 3. Modal tylko ze znajomymi, propozycje w zakładkach typu, lekki znacznik
    po przyjęciu, plakietki i spójne puste stany. Wejście „Wyślij” w sekcji
    importu/eksportu (osobno od górnych akcji zasobu).
@@ -204,15 +215,47 @@ CI; frontend przejdzie na wspólne RPC dopiero po zastosowaniu DB.
 
 | Stan odbiorcy | Odbiorca | Treść i ważność | Nadawca |
 |---|---|---|---|
-| Oczekuje | Kafelek w zakładce typu, Akceptuj/Odrzuć; liczony w plakietkach | Kompletny snapshot,5 dni od wysłania | Historia wysyłki; bez cofania ani ponawiania |
-| Odrzucono | Zwinięte „Odrzucone przeze mnie”, ikona cofnięcia odmowy; sekcja ukryta gdy pusta | Wspólny model Baz:30 dni od pierwszej odmowy, bez odnawiania przez kolejne odrzucenie | Bez ponowienia; nowa wysyłka tego samego źródła tej osobie zablokowana przez okres odmowy |
-| Cofnięto odmowę | Ponownie propozycja z osobnymi Akceptuj/Odrzuć | Jak w Bazach: zachowany pierwotny declined_at i jego30-dniowa granica, bez nowego okresu5 dni | Ta sama wysyłka, bez nowego maila/historycznego wpisu |
-| Przyjęto | Własna Gra/Logo, lekki znacznik „od X”; bez kafelka oczekującej oferty | Nowe własne ID/pliki; termin oferty nie dotyczy przyjętego zasobu | Historia mówi tylko komu i kiedy wysłano, nie pokazuje decyzji |
-| Oferta wygasła | Brak kafelka i plakietki; stary link nie pozwala przyjąć | Pakiet i nieużywane pliki sprzątane; niewysłany mail anulowany | Wpis historii do końca swoich30 dni; nowa świadoma wysyłka przy zwykłych kontrolach |
+| Oczekuje | Kafelek w zakładce typu, Akceptuj/Odrzuć; liczony w plakietkach | Własna gra/logo odbiorcy już istnieje,5 dni od wysłania; zwykłe działania zasobu zablokowane do decyzji | Historia wysyłki; bez cofania ani ponawiania |
+| Odrzucono | Oczekująca gra/logo oraz jej pliki usunięte; dostępność cofnięcia jest pytaniem otwartym | Zachowany ukryty okres odmowy30 dni; zachowanie pakietu zależy od odpowiedzi o cofnięciu | Bez ponowienia; nowa wysyłka tego samego źródła tej osobie zablokowana przez okres odmowy |
+| Cofnięto odmowę | **Do rozstrzygnięcia**: ewentualne odtworzenie oczekującego zasobu z zachowanego pakietu | Jeśli wybrane: jak w Bazach zachować pierwotny30-dniowy zegar, bez nowego maila/historycznego wpisu | Bez nowego działania nadawcy |
+| Przyjęto | Istniejąca własna Gra/Logo zatwierdzona, lekki znacznik „od X”; bez kafelka oczekującej oferty | Bez drugiego importu i bez nowych ID przy akceptacji; termin oferty nie dotyczy zatwierdzonego zasobu | Historia mówi tylko komu i kiedy wysłano, nie pokazuje decyzji |
+| Oferta wygasła | Brak kafelka i plakietki; stary link nie pozwala przyjąć | Oczekująca kopia, pakiet i nieużywane pliki sprzątane; niewysłany mail anulowany | Wpis historii do końca swoich30 dni; nowa świadoma wysyłka przy zwykłych kontrolach |
 | Usunięto źródło, znajomość albo konto nadawcy | Ten sam bieżący stan oferty | Bez zmiany snapshotu i jego zegarów | Sprzątanie własnych zasobów/historii nie usuwa gałęzi odbiorcy |
 | Usunięto konto odbiorcy | Brak oferty i własnej kopii | Kaskada pakietu, kwitów, własnego zasobu/plików oraz jego maila | Brak przejęcia przez nowe konto o tym samym adresie |
 
 Odmowa nie jest przypomnieniem ani nową wysyłką. Wspólny importer
-pilnuje pojedynczego wyniku również po utraconej odpowiedzi; akceptacja
-oferty używa stałego ID tej oferty. Historia nadawcy ma niezależny
+pilnuje pojedynczego wyniku Wyślij również po utraconej odpowiedzi;
+akceptacja zatwierdza ten wynik. Historia nadawcy ma niezależny
 termin30 dni od wysłania i nie pokazuje statusów odbiorcy.
+
+### Korekta momentu tworzenia kopii — decyzja2026-10-13
+
+Użytkownik: kopie mają powstawać w bazie na koncie odbiorcy już przy
+wysłaniu, a odrzucenie ma je usuwać. Zastępuje wcześniejszy plan
+pakietu w osobnej tabeli i importu dopiero przy akceptacji. Zakończone
+formaty, pliki Logo i importer364 pozostają użyteczne; zmienia się
+moment wywołania importera i graf oczekującego zasobu.
+
+Docelowo games/questions/answers albo user_logos i własne pliki
+należą do odbiorcy od wysłania. Osobny wpis propozycji wiąże zasób,
+nadawcę, token, typ, ważność i decyzję. Do akceptacji oczekujący zasób
+ma podgląd oraz Akceptuj/Odrzuć; zwykła edycja/rozgrywka/ponowna
+wysyłka nie mogą ominąć tej decyzji przez stare ścieżki lub RPC.
+Zatwierdzenie nie zmienia ID i niczego ponownie nie importuje.
+
+Odrzucenie oraz brak decyzji przez5 dni usuwają oczekujący własny
+zasób i jego pliki, plakietkę oraz jeszcze niewysłany mail. Usunięcie
+nadawcy/oryginału/znajomości tego nie robi. Konto odbiorcy pozostaje
+nadrzędnym korzeniem wszystkich kopii i ich kolejki mailowej.
+
+**Pytanie architektoniczne oczekuje na odpowiedź:** zachować cofnięcie
+odmowy przez30 dni (usunąć zasób, ale zachować pakiet do odtworzenia)
+czy usuwać także pakiet i nie mieć cofnięcia kopii? Nowa świadoma
+wysyłka po okresie odmowy pozostaje możliwa. Nie wybierać wariantu
+za użytkownika i nie wdrażać zależnej logiki odmowy/odtwarzania.
+
+Lokalne draft-copy-graph-365.sql i test-copy-graph-365.sql sprawdziły
+**wcześniejszy model**, w szczególności niezależność od źródła/nadawcy,
+stałego odbiorcę, zegary i pojedynczy import przy akceptacji. Nie są
+migracją ani wdrożoną wysyłką i nie wolno publikować ich jako realizacji
+nowej decyzji; wymagają przeróbki momentu tworzenia kopii oraz blokad.

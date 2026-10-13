@@ -1074,3 +1074,36 @@ Kontynuować: izolowany CI→DB/log→frontend ze stałym ID próby i testem
 utraconej odpowiedzi→branch→Pages→main, potem oferty/mail/Go/plakietki.
 Użytkownik ponownie wymaga konkretnego raportu co30–60s i szybszych
 małych paczek; status nie kończy pracy.
+
+**2026-10-13 / aktualny E19C:** wspólny atomowy importer364 zamknięty:
+DB38326189425/log OK00:15:34 UTC, branch38326785797 success2/2,
+main38327057895 success2/2 bez retry/545 unit. Import trzech typów,
+urwana odpowiedź po zapisie w rzeczywistym modalu, ta sama próba/jeden
+wynik, cudzy owner i brak wskrzeszenia po usunięciu. Nowe zakończenie
+UI po zgłoszeniu mrugania: sukces zostaje do Gotowe, jedna linia,
+bez ponownego importu. Branch38327689667 i main38328021470 success1/1,
+547 unit, Pages38327838431. Galeria main3fd92bb406 w docs/img/transfer/game-import.
+
+**Kluczowa zmiana modelu użytkownika:** Wyślij tworzy od razu zwykłą
+własną grę/logo odbiorcy oznaczoną jako oczekującą; Akceptuj zmienia
+stan istniejącego zasobu, nie otwiera importu, Odrzuć usuwa kopię i
+pliki.5 dni bez decyzji również usuwa oczekującą kopię. Niezależność
+od oryginału/znajomości/nadawcy pozostaje. Plan skorygowany w
+udostepnianie-kopii-plan.md, końcowa sekcja korekty momentu tworzenia.
+Wymagane pytanie async o cofnięcie odmowy nadal bez odpowiedzi: zachować
+pakiet30 dni do odtworzenia czy usuwać pakiet i nie mieć undo? Nie
+wdrażać zależnego wariantu bez odpowiedzi. Lokalny fam365draft i dwa
+SQL365 to wcześniejszy model importu przy akceptacji, oznaczone jako
+historyczny prototyp, niewdrożony; nie zamieniać ich w migrację.
+Następna praca: własna oczekująca kopia podczas Send, blokady wszystkich
+starych ścieżek przed akceptacją, pełny graf własnych plików Logo oraz
+kolejka/mail/Go/badges; maile kopii nadal niezrealizowane.
+
+E20 dopisane: wspólne zakończenie importów/eksportów Gier/Logo/Baz,
+pobieranie od razu po przygotowaniu bez czekania na Gotowe. Edytor gry
+ma import TXT/wklejanie, nie eksport TXT. Propozycja zachowania TXT z
+żywym podglądem i wskazaniem wielu błędów po liniach, jeden parser/
+normalizacja z finalnym zapisem, świadome Importuj i bez cichego gubienia
+treści, zapisana w ujednolicenie-wygladu.md. Nie usuwać TXT teraz.
+Przegląd Do bazy: już batch200; odrębne folder/name/ord i sprzątanie
+wymagają późniejszego przeglądu. Manual nadal ostatni.
