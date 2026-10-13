@@ -159,6 +159,42 @@ test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści
   await expect(page.locator(".list-empty").first()).toBeHidden();
 });
 
+test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zapamiętują wybór", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openGames(page);
+
+  const filter = page.locator(".list-filter");
+  const filterButton = filter.locator(".ui-select-btn");
+  await expect(filter.locator(".ui-select-icon .ico")).toBeVisible();
+  await expect(filterButton).toHaveAttribute("aria-label", /.+/);
+  await filterButton.click();
+  await expect(filterButton).toHaveAttribute("aria-expanded", "true");
+  const openOption = filter.locator('.ui-select-item[data-value="open"]');
+  const filterMenu = await openOption.boundingBox();
+  expect(filterMenu.width).toBeGreaterThanOrEqual(220);
+  expect(filterMenu.height).toBeGreaterThanOrEqual(44);
+  await openOption.click();
+  await expect(filter).toHaveClass(/is-active/);
+  await expect(page).toHaveURL(/status=open/);
+  await expect(filter.locator('.ui-select-item[data-value="open"]')).toHaveAttribute("aria-selected", "true");
+
+  const sort = page.locator(".list-sort");
+  const sortButton = sort.locator(".ui-select-btn");
+  await expect(sort.locator(".ui-select-icon .ico")).toBeVisible();
+  await expect(sortButton).toHaveAttribute("aria-label", /.+/);
+  await sortButton.click();
+  await expect(sortButton).toHaveAttribute("aria-expanded", "true");
+  const nameOption = sort.locator('.ui-select-item[data-value="name"]');
+  const sortMenu = await nameOption.boundingBox();
+  expect(sortMenu.width).toBeGreaterThanOrEqual(220);
+  expect(sortMenu.height).toBeGreaterThanOrEqual(44);
+  await nameOption.click();
+  await expect(sort).toHaveClass(/is-active/);
+  await expect(page).toHaveURL(/sort=name/);
+  await expect(sort.locator('.ui-select-item[data-value="name"]')).toHaveAttribute("aria-selected", "true");
+});
+
 test.describe("games: audyt -- kafelki", () => {
 
   test("telefon: tapnięcie zaznacza bez przebudowy listy, podwójne otwiera zmianę nazwy", async ({ browser }) => {
