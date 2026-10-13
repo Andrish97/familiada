@@ -354,3 +354,11 @@ kolejnością usuwania przechodzi. To lokalne kontrakty, jeszcze bez
 publicznego Powiel. Source reader kontroluje konto/własność/pending
 i blokady, blokuje rodziców/dzieci na czas spójnego odczytu; wzorce
 demo trafiają do wspólnego porównania definicji na serwerze.
+
+**Ujednolicenie plików po decyzji2026-10-13:** zarówno bezpośrednia
+copyLogoStorageImage, jak i uploadCloneLogoImage dla osadzonych danych
+używają cloneLogoImagePath: receiver/copies/job_id/asset_id.ext.
+Zastępuje przygotowawczą ścieżkę received/copy.ext; nowy asset_id jest
+częścią zweryfikowanego planu. Lokalny staging trzyma utrwalony odczyt
+źródła i recepty plików; kolejne prace obejmują commit, GC i późne
+sprzątanie po usunięciu konta, zanim trafi do publicznego przepływu.
