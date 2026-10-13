@@ -1077,11 +1077,10 @@ Pierwotny E7 jest zamknięty produkcyjnie (2026-10-10); jego wykonanych prac
 nie cofamy. Aktualne doprecyzowanie użytkownika tworzy osobny przegląd
 starych funkcjonalności i przejść przed aktywacją nowych skrótów Control.
 
-Zależność w źródle mapy: `NAV_DEPENDENCIES.modalPagesReview.completed=false`,
-`PAGES.control.buttons.btnFriends.blockedUntil=modalPagesReview`.
-`initPage` wymusza blokadę, diagramy pokazują połączenie bez aktywnej strzałki.
-Odblokowanie to zamknięcie tej zależności po realizacji poniższej listy,
-nie usunięcie samego `disabled` w HTML.
+Zależność była wprowadzona w kodzie jako `completed=false`, a Control→Znajomi
+było celowo zablokowane do zamknięcia przeglądu. W E19N zamknięto ją po
+punktowych testach branch i main; obecnie `NAV_DEPENDENCIES.modalPagesReview`
+ma `completed=true`, a przycisk nie ma `blockedUntil`.
 
 | Sprawdzany obszar | Wymagany wynik |
 |---|---|
@@ -1101,7 +1100,8 @@ next=bases i b, Bases wskazuje propozycję w Udostępnione. PAGES: Tasks
 state t, Bases state tab/b, bez from Tasks dla Bases i Connect. Znajomości
 pozostają Friends f; urządzenia Connect share. Nie dodajemy aliasu starego
 /bases?share ani przekierowania starego /tasks?b. Blokada Friends w Control
-modalPagesReview pozostaje. Implementacja frontu w paczce 330.
+była stanem historycznym na etapie paczki 330; odblokowano ją po przeglądzie
+E19N (2026-10-13).
 
 **Mobile landscape — decyzja 2026-10-11:** zbadać i dopuścić każdą stronę
 w poziomie na telefonie, w tym obecne guardy wide/małego ekranu. Przegląd
@@ -1129,10 +1129,12 @@ zajmują całą stronę (np. udostępnianie, import/eksport, wybór/wyszukiwanie
 W E19N wdrożono wspólną obsługę dla arkuszy jawnie wymienionych w `PAGES`
 (Gry, Bazy, eksplorator Baz, Logo, Ankiety i Marketplace). `dialog` trafia
 do URL, Back zamyka aktywny arkusz, Forward odtwarza go, a nieznany dialog
-jest odrzucany. Zakładki nadal używają `replaceState`. Przeglądarkowe E2E
-oraz sprawdzenie odświeżenia, stosu i formularzy są jeszcze bramką przed
-zamknięciem tej części E19N; dotychczasowego E7 nie oznaczać ponownie jako
-niewykonanego.
+jest odrzucany. Zakładki nadal używają `replaceState`. Punktowy test Bazy
+potwierdził przycisk Wstecz, Back/Forward, bezpośredni URL z `?dialog=` i
+odświeżenie: branch38369837696 oraz produkcja38370189342 success1/1.
+Test obejmuje wyłącznie odtworzenie UI; nie wykonuje operacji biznesowej.
+Pomiary urządzeń i zrzuty wyglądu pozostają w E20; historycznego E7 nie
+oznaczać ponownie jako niewykonanego.
 
 Testy: oba przyciski Wstecz, Android, X, ponowne otwieranie, kilka
 dialogów, Dalej, wejście Go i bezpośredni link, odświeżenie, zmiana
@@ -1202,12 +1204,13 @@ bez terminu odblokowania.
 | Pozostałe wejścia Znajomych | Games i inne strony zachowują własny poprawny Wstecz; kontekst Control nie przechodzi na niezależne wejście. |
 | Aktywacja | Po punktowych testach powyższych przejść zamknąć zależność mapy i usunąć `disabled`/opisy blokady; telefon, komputer oraz warianty bez konta. |
 
-**Stan: wdrożone w kodzie E19N (2026-10-13), produkcyjna bramka otwarta.**
+**Stan: wdrożone produkcyjnie (2026-10-13).**
 Mapa oznacza przegląd jako ukończony, diagramy pokazują aktywne Control → Znajomi. Przycisk dla konta
 przechodzi przez zwykłą stronę i przenosi bieżący adres Control z `id` gry
 w dozwolonym `ret`. `beforeLeave` zachowuje dotychczasowe ostrzeżenie i
 kończy aktywność sesji; wspólna blokada jest jawnie zwalniana przed
 przejściem, a powrót ponownie sprawdza dostęp, sesję i blokady. Skróty
-z Games i innych wejść pozostają niezależne. Weryfikacja punktowa:
-`tests/unit/navButtons.test.js` 17/17 i `tests/unit/pageInit.test.js` 24/24;
-Pages i produkcyjny test Control po publikacji są bramką końcową E19.
+z Games i innych wejść pozostają niezależne. Weryfikacja: full unit602/602,
+navButtons17/17, pageInit24/24; branch Control/settings38368774633 success;
+main route checks38369193504 success5/5; Pages38369096986 success.
+E19N, a wraz z nim cały etap E19, jest zamknięty produkcyjnie.

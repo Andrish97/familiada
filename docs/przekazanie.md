@@ -14,14 +14,14 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
 | E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
-| E19N | W toku. E2E branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte przy wejściu z Control i widoczne z Gier. Main `38369193504` success5/5, obejmuje także Back/Forward arkusza, Bazy→Znajomi→Bazy, instrukcję i kontakty. Pages38369096986 i Worker38369096732 green. Rozszerzono mobile sheet test o bezpośredni `?dialog=` i odświeżenie; ponowić punktowy branch i main po aktualizacji testu, następnie zamknąć E19. Pełne unity lokalnie602/602. |
-| Po E19 | Następne dla kolejnego agenta: E14 → E20 → Manual. Nie rozpoczynać teraz. |
+| E19N | **Gotowe produkcyjnie.** Branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte z Control i widoczne z Gier. Main `38369193504` success5/5; test bezpośredniego URL/odświeżenia arkusza main `38370189342` success1/1. Pages38369096986, Worker38369096732. Full unit602/602. E19 zamknięte na main `d847175100`. |
+| Po E19 | Następne dla kolejnej pracy: E14 → E20 → Manual. |
 
-## Aktualny checkpoint: E19C zamknięte, E19N w toku
+## Aktualny checkpoint: E19 zamknięte produkcyjnie
 
-E19C jest wdrożone i zweryfikowane po Pages. Obecna praca kończy E19N;
-po jego produkcyjnej kontroli oznaczyć cały E19 jako zakończony i zatrzymać
-pracę. Nie rozpoczynać E14/E20/Manual.
+E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
+Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
+refresh przeszły. E19 jest zamknięte; następny etap według kolejki to E14.
 
 Początkowy prototyp367 i jego prywatne SQL/testy są zachowane jako
 artefakty rozwoju. Zostały zastąpione migracją produkcyjną
@@ -33,16 +33,14 @@ odbiór, filter Otrzymane i plakietki są wdrożone.
 Bramka migracji367, Worker, Edge Functions, Pages i kontrola po wdrożeniu są spełnione. Zrzuty390/1400/landscape są w artefakcie E2E38362616613. Kopia i powiadomienie należą do gałęzi odbiorcy; nadawca i oryginał mogą zniknąć. Preferencja odbiorcy jest sprawdzana przed utworzeniem maila i przed dostarczeniem. Maile Auth pozostają bez zmian.
 Źródło decyzji: `docs/udostepnianie-kopii-plan.md`.
 
-E19N aktywna: z mapy przejść odblokowano skrót Control → Znajomi i dodano
+E19N zamknięta: z mapy przejść odblokowano skrót Control → Znajomi i dodano
 ukrycie „Graj” w Ustawieniach otwartych z Control. Arkusze mobilne mają
 dozwolone `?dialog=` w PAGES; Wstecz topbara/przeglądarki zamyka arkusz,
 Dalej odtwarza go. Unit po korekcie globalnego stanu `dialog`:602/602.
-Branch E2E Back/Forward dla arkusza green; run main `38369193504` success5/5,
-Pages38369096986 i Worker38369096732 green. Control→Znajomi→ta sama gra,
-blokada jest zwalniana i odzyskiwana; „Graj” ukryte z Control i dostępne przy
-wejściu z Gier. Bazy/manual/kontakty wracają według mapy. Test arkusza dostał
-dodatkowe sprawdzenie bezpośredniego URL i refresh; po jego zielonym branch/main
-zamknąć E19 w obu dokumentach stanu.
+Branch Control/settings38368774633 green; produkcyjne E2E38369193504 5/5,
+test arkusza z bezpośrednim URL/refresh38370189342 1/1; Pages38369096986,
+Worker38369096732. Przy promocji CI dopisał wersje cache-busterów
+`1a97df0938`, zintegrowane w merge commit `d847175100`.
 
 E19C zostało wdrożone i zweryfikowane produkcyjnie zgodnie z wymaganym
 cyklem. Worker/Edge/Pages są wdrożone, migracja367 jest zastosowana,
