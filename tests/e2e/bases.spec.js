@@ -714,6 +714,39 @@ test.describe("bases: audyt -- eksport / import", () => {
     }
   });
 
+  test("E20 eksport Bazy: błąd pozostaje widoczny i eksport da się ponowić", async ({ page, context }) => {
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-BS-EXPORT-RETRY-${Date.now()}`;
+    const baseId = await createBaseDirect(page, name);
+    try {
+      await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      await page.locator("#mineGrid .card", { hasText: name }).locator(".name").click();
+      await page.route("**/rest/v1/question_bases**", (route) => {
+        const req = route.request();
+        const url = new URL(req.url());
+        if (req.method() === "GET" && url.searchParams.get("id") === `eq.${baseId}`) {
+          return route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ code: "E20_TEST", message: "E20 controlled export error" }) });
+        }
+        return route.continue();
+      });
+      await page.locator("#btnExport").click();
+      await expect(page.locator("#exportJsonMsg")).toContainText("E20 controlled export error");
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.waitForTimeout(3100);
+      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+      await page.unroute("**/rest/v1/question_bases**");
+      const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
+      expect(download.suggestedFilename()).toContain("E2E-BS-EXPORT-RETRY");
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+    } finally {
+      await page.unroute("**/rest/v1/question_bases**");
+      await deleteBaseDirect(page, baseId);
+    }
+  });
+
   test("nieudany import nie zostawia pustej/niepełnej bazy", async ({ page, context }, testInfo) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });

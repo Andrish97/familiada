@@ -432,6 +432,38 @@ test.describe("games: audyt -- eksport / import pliku", () => {
     }
   });
 
+  test("E20 eksport gry: błąd pozostaje widoczny, eksport można ponowić", async ({ page, context }) => {
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-GM-EXPORT-RETRY-${Date.now()}`;
+    const gameId = await seedPreparedGame(page, name, { questions: 1 });
+    try {
+      await openGames(page);
+      await tileByName(page, name).click();
+      await page.route("**/rest/v1/games**", (route) => {
+        const req = route.request();
+        const url = new URL(req.url());
+        if (req.method() === "GET" && url.searchParams.get("id") === `eq.${gameId}`) {
+          return route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ code: "E20_TEST", message: "E20 controlled export error" }) });
+        }
+        return route.continue();
+      });
+      await page.locator("#btnExport").click();
+      await expect(page.locator("#exportJsonMsg")).toContainText("E20 controlled export error");
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.waitForTimeout(1300);
+      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+      await page.unroute("**/rest/v1/games**");
+      const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
+      expect(download.suggestedFilename()).toBe(`${name}.famgame`);
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+    } finally {
+      await page.unroute("**/rest/v1/games**");
+      await deleteGamesByName(page, name);
+    }
+  });
+
   test("import: 7 odpowiedzi -> 6, zepsuty plik -> nasz komunikat", async ({ page, context }, testInfo) => {
     test.setTimeout(90_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
