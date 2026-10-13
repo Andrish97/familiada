@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict DtsaXkbLRALE0ZlrqDCyobbFUrU2T8AtK2mTkxvBvv0dgNmmSF44m3sL1g7bdJV
+\restrict Neel3OlapY6wHgO9nk9jhcxsvERjk7pEEaGqlYBKofKtRpNE2IZCjt4SLZqix9v
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5501,6 +5501,13 @@ begin
     select lower(trim(p.email)) from public.profiles p where p.id = p_user_id
   ) x
   where e is not null and e <> '';
+
+  -- Serialize against snapshot/write jobs before inspecting the inbox.
+  perform 1 from auth.users where id = p_user_id for update;
+
+  --366: remove only this recipient inbox before pending resource guards.
+  -- Sent copies already belong to their recipients and remain independent.
+  delete from public.resource_copy_offers where recipient_id = p_user_id;
 
   -- 312: usunięcie konta jest nadrzędne -- nie sprawdza blokad (edit_locks);
   -- blokady trzymane przez to konto i na jego zasobach znikają.
@@ -23663,5 +23670,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DtsaXkbLRALE0ZlrqDCyobbFUrU2T8AtK2mTkxvBvv0dgNmmSF44m3sL1g7bdJV
+\unrestrict Neel3OlapY6wHgO9nk9jhcxsvERjk7pEEaGqlYBKofKtRpNE2IZCjt4SLZqix9v
 
