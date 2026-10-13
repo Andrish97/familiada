@@ -866,6 +866,12 @@ Zadania osobny stan listy (`38382324509`, 1/1, artefakt11804131090).
 Zadania i kontakty mają też testy landscape z obrotem. Pozostałe etapy
 kart Ankiet, Kontaktów, Zadań i całej mapy PAGES wciąż wymagają przeglądu.
 
+**Import TXT edytora (2026-10-13):** podgląd używa `parseQaText` z finalnej
+ścieżki importu, aktualizuje się podczas wpisywania, pokazuje błąd parsowania,
+a plik TXT nadal trafia do jednego pola tekstowego. Punktowe E2E
+`38382791836`, 1/1; zrzuty390/1400 w artefakcie11804730840. Pozostałe
+operacje importu/eksportu wymagają osobnego przeglądu.
+
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
 Każdy typ strony ma wspólny układ i wspólne style na wszystkich stronach
