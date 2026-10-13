@@ -1,7 +1,7 @@
 # Gry i Logo — wysyłanie kopii znajomym
 
-Stan: **w realizacji**, etap E19C. Wspólne pakiety Gier i Logo zamknięte na produkcji; samo wysyłanie/oferty/powiadomienia jeszcze nie wdrożone. Decyzja użytkownika 2026-10-12.
-Realizacja po bieżącym E19, przed E19N/E14/E20; manual pozostaje ostatni.
+Stan: **gotowe produkcyjnie**, etap E19C. Wspólne pakiety Gier i Logo oraz wysyłanie/oferty/powiadomienia wdrożone i sprawdzone 2026-10-13.
+E19/E19C zamknięte. Następnie E19N→E14→E20; manual pozostaje ostatni.
 
 ## Zasady i wygląd
 
@@ -461,3 +461,19 @@ expiry i usunięcie odbiorcy unieważniają jeszcze niewysłany mail.
 Private Send367 isolated38348943986 green. Wspólny cloneResource w
 Workerze przygotowany,600 unit/dry-run green; Send nieroutowane,
 bez publikacji/grantów367 i bez obietnicy dostarczenia SMTP.
+
+### Wyślij Gry/Logo — gotowe produkcyjnie, 2026-10-13
+
+Migracja367: izolowany runner na main38363272889 success, workflow DB
+38361036623 zastosował migrację (`OK 2026-10-13T07:12:43Z`), ponowny
+pełny smoke DB38363272981 success; finalny schema/log commit3c2c197be0.
+Worker38363272935, Edge Functions38363273241 i Pages38363273053 success.
+Kontrola branch38362616613 success1/1 oraz produkcyjna po Pages38363398680
+success1/1 bez retry; druga maile faktycznie dotarły do test2, Go rozwiązało
+obie oferty, Akceptuj zachowało istniejące kopie Gry i Logo. Pełne unit
+601/601. Artefakt przebiegu zawiera zrzuty390/1400/844×390.
+
+Weryfikacja obejmuje wysyłkę obu typów, powiadomienia i akceptację.
+Odmowa/wygaśnięcie/kaskady i wszystkie18 guardów sprawdzone izolowanymi
+kontraktami SQL; pełny graf maila, historii, plakietek i ich terminów
+zawiera migracja367. Powiel Gier/Baz/Logo oraz366 zamknięte wcześniej.
