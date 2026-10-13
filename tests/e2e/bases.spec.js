@@ -94,7 +94,7 @@ async function getUserId(page) {
 }
 
 
-test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", async ({ browser }) => {
+test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", async ({ browser }, testInfo) => {
   test.setTimeout(90_000);
   const portrait = { width: 390, height: 844 };
   const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
@@ -125,17 +125,20 @@ test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", 
       expect(sizes.modal.right, `${label}: modal is outside viewport`).toBeLessThanOrEqual(sizes.viewport + 1);
     };
     await assertSheetFits("portrait");
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-portrait-390x844.png"), fullPage: true });
 
     await page.setViewportSize({ width: 844, height: 390 });
     await expect(overlay).toBeVisible();
     await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
     await expect(page.locator("#shareEmail")).toBeVisible();
     await assertSheetFits("landscape");
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-landscape-844x390.png"), fullPage: true });
 
     await page.setViewportSize(portrait);
     await expect(overlay).toBeVisible();
     await expect(page.locator("#shareEmail")).toBeVisible();
     await assertSheetFits("portrait after rotate");
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-back-390x844.png"), fullPage: true });
     await page.locator("#btnBack").tap();
     await expect(overlay).toBeHidden();
     await expect.poll(() => new URL(page.url()).searchParams.has("dialog")).toBe(false);
