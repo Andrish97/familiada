@@ -5,8 +5,9 @@
 //   (A) { kind:"GLYPH"|"PIX", name, payload:{ rows | layers | bits_b64, source } }  -- nasz eksport
 //   (B) { type:"GLYPH_30x10"|"PIX_150x70", name, payload }                          -- stary zrzut z bazy
 
-import { t } from "../../shared/translation/translation.js?v=v2026-10-12T23374";
-import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-12T23374";
+import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-13T00062";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-13T00062";
+import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-13T00062";
 
 /** Nazwa pliku z nazwy logo -- zostawia litery każdego alfabetu, wycina znaki zakazane w systemach plików. */
 export function safeFileName(name, fallback) {
@@ -30,21 +31,15 @@ async function fetchImageAsDataUrl(url) {
 export async function buildExport(logo, fallbackName) {
   const name = logo.name || fallbackName;
   const p = logo.payload || {};
-  const source = { ...(p.source || {}) };
+  let source;
+  try {
+    source = await standaloneLogoSource(p.source, fetchImageAsDataUrl);
+  } catch (error) {
+    console.warn("[logo/export] incomplete image source:", error?.message || error);
+    throw new Error(t("logoEditor.errors.exportIncomplete"));
+  }
 
   if (logo.type === TYPE_PIX) {
-    if (source.imageUrl && !source.imageData) {
-      try {
-        source.imageData = await fetchImageAsDataUrl(source.imageUrl);
-      } catch (e) {
-        console.warn("[logo/export] could not embed image:", e);
-      }
-    }
-    // Z osadzonym obrazem plik jest samowystarczalny; URL zostaje tylko, gdy osadzenie się nie udało.
-    if (source.imageData) delete source.imageUrl;
-    delete source.hostRasterUrl;
-    delete source.hostRasterData;
-    delete source.editHistory;
     return {
       kind: "PIX",
       name,

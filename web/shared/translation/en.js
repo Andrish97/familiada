@@ -4134,6 +4134,7 @@ const en = {
       subtitle: "Don't close the page — preparing the file.",
     },
     errors: {
+      exportIncomplete: "Could not include the image in the logo. Please try again.",
       notFound: "This logo was not found.",
       wrongType: "This logo is of a different type than this editor.",
       saveFailed: "Couldn't save.",

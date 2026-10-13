@@ -106,3 +106,48 @@ wejścia i wartości domyślne. Punktowy game-transfer-format.spec.js ma
 sprawdzić rzeczywisty eksport→istniejący import wszystkich trzech typów,
 nowe ID, zgodność całej definicji i cleanup wyłącznie własnych gier.
 Akceptacja oferty dokładnie raz będzie odrębną transakcyjną paczką.
+
+### Ważność oczekującej kopii — pytanie architektoniczne
+
+Historia nadawcy ma ustalone30 dni. Termin oczekującej oferty kopii był nieokreślony; pytanie wysłane do
+użytkownika (bez terminu /30 dni /5 dni), a następnie wybrane5 dni.
+Użytkownik poprosił najpierw o porównanie: aktualna oferta bazy wygasa po
+5 dniach od utworzenia, osobiste zadanie ankiety żyje w bieżącym uruchomieniu
+(bez stałego terminu dni). Zatrzymanie blokuje głosowanie, wznowienie może
+przywrócić je w tym samym uruchomieniu.30 dni odmowy bazy to inny zegar.
+Nie traktować pytania o obecne terminy jako wyboru terminu kopii.
+Wspólny format/pakiet i niezależność plików można przygotowywać dalej.
+
+### Druga paczka formatu — kompletne Logo
+
+Wspólny eksporter Logo przygotowuje samowystarczalne source: IMAGE
+osadza obraz, DRAW osadza także zagnieżdżone obrazy/tło/clipPath. Usuwa
+historię edycji i pochodny raster Host, zachowując edytowalną treść.
+Nieudane pobranie przerywa eksport z komunikatem PL/EN/UK; nie oddaje
+pakietu z odwołaniem do pliku nadawcy. To uzupełnia istniejący .famlogo,
+nie tworzy osobnego formatu dla kopiowania.
+
+5 unit: IMAGE/TEXT/DRAW, osadzone dane bez odczytu nadawcy, nested
+źródła, brak mutacji, niekompletne/błędne pobranie, teksty PL/EN/UK.
+Native logo-transfer-format.spec.js przygotowany dla3 trybów: realny
+plik w Storage, eksport/parser/własny rekord i własny plik IMAGE,
+niezależne źródło DRAW, brak pakietu po404 i cleanup własnych danych.
+Na razie na branchu; sama oferta jeszcze niewdrożona. Termin wybrany:5 dni.
+
+## Decyzja: oczekująca kopia wygasa po5 dniach — 2026-10-12
+
+Użytkownik: „No to zrób jak w bazach5 dni”. Termin liczony od pierwotnego
+wysłania; otwieranie linku, odświeżenie, ponowne wejście ani dostarczenie
+maila nie przedłuża ważności. Po terminie nie można przyjąć starej oferty,
+plakietka znika, niewysłany mail jest anulowany, pakiet i jego nieużywane
+pliki są sprzątane. Nowa świadoma wysyłka tworzy nową ofertę z własnym
+terminem, przy zwykłych kontrolach znajomości, flagi i cooldownów.
+
+| Zegar | Czas i zakres |
+|---|---|
+| Oczekująca oferta Gry/Logo |5 dni od wysłania, jak w Bazach |
+| Historia nadawcy |30 dni od wysłania; niezależna od statusu oferty |
+| Przyjęta własna kopia | Bez terminu oferty; zwykły zasób odbiorcy, usuwany jego decyzją lub wraz z kontem |
+
+Odmowa i możliwość zmiany decyzji zachowują wspólny model E19; nie
+przedłużać terminu oczekującej kopii przez przypomnienie/otwarcie.
