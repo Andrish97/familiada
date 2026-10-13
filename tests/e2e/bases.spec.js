@@ -687,7 +687,11 @@ test.describe("bases: audyt -- eksport / import", () => {
       await page.locator("#importFile").setInputFiles(file);
       await expect(page.locator("#btnImportJson")).toBeEnabled();
       await page.locator("#btnImportJson").click();
-      await expect(page.locator("#importOverlay")).toBeHidden({ timeout: 30000 });
+      await expect(page.locator("#importOverlay")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator("#btnImportDone")).toBeVisible();
+      await expect(page.locator("#importMsg")).toContainText("Zaimportowano");
+      await page.locator("#btnImportDone").click();
+      await expect(page.locator("#importOverlay")).toBeHidden();
 
       const summary = await page.evaluate(async ({ name, baseId }) => {
         const sb = window.__sbClient;

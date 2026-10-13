@@ -679,6 +679,7 @@ const en = {
       loadFile: "Load file",
       placeholder: "Paste JSON here...",
       confirm: "Import",
+      done: "Done",
       cancel: "Close",
     },
     exportModal: {

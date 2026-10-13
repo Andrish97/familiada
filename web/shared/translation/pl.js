@@ -687,6 +687,7 @@ const pl = {
       loadFile: "Wczytaj plik",
       placeholder: "Wklej JSON tutaj...",
       confirm: "Importuj",
+      done: "Gotowe",
       cancel: "Zamknij",
     },
     exportModal: {

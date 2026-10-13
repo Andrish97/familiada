@@ -674,6 +674,7 @@ const uk = {
       loadFile: "Завантажити файл",
       placeholder: "Встав JSON тут...",
       confirm: "Імпортувати",
+      done: "Готово",
       cancel: "Закрити",
     },
     exportModal: {
