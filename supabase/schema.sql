@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict n2krbdaHJhpcSDkOb1VKhTeqTjOr0aleuiP7V9jfwyx6FblI56oC3OTwkbE9jH0
+\restrict vpfeQqPDk69aBoLbt46lUySzIcdNhJQLrmVUkKQ1QcdcCTLa4S2pYpKuX6fozFK
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9337,65 +9337,33 @@ declare
   v_limit int := greatest(1, least(coalesce(p_limit, 500), 5000));
   v_deleted int := 0;
   v_id uuid;
-  v_url text;
-  v_jwt text;
 begin
-  select value into v_url from public.app_config where key = 'edge_url';
-  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
-
-  -- 1. Usuwanie wygasłych gości (zgodnie z istniejącą logiką)
   for v_id in
     select p.id
-    from public.profiles p
-    where p.is_guest = true
-      and p.guest_expires_at is not null
-      and p.guest_expires_at < now()
-    order by p.guest_expires_at asc
-    limit v_limit
+      from public.profiles p
+     where p.is_guest = true
+       and p.guest_expires_at is not null
+       and p.guest_expires_at < now()
+     order by p.guest_expires_at asc
+     limit v_limit
   loop
     perform public.delete_user_everything(v_id);
     v_deleted := v_deleted + 1;
-
-    if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
-      perform net.http_post(
-        url := v_url || '/functions/v1/cleanup-guest-storage',
-        headers := jsonb_build_object(
-          'Content-Type', 'application/json',
-          'Authorization', 'Bearer ' || v_jwt,
-          'apikey', v_jwt
-        ),
-        body := jsonb_build_object('userId', v_id)
-      );
-    end if;
   end loop;
 
-  -- 2. Usuwanie niepotwierdzonych kont (brak username, brak logowania, > 5 dni)
-  -- Robimy to tylko jeśli limit nie został wyczerpany przez gości
   if v_deleted < v_limit then
     for v_id in
       select u.id
-      from auth.users u
-      left join public.profiles p on p.id = u.id
-      where (p.username IS NULL OR p.id IS NULL) -- profil brakujący lub brak username
-        and u.last_sign_in_at IS NULL            -- nigdy się nie zalogował
-        and u.created_at < (now() - interval '5 days')
-        and coalesce(p.is_guest, false) = false  -- nie jest gościem (goście mają osobną logikę)
-      limit (v_limit - v_deleted)
+        from auth.users u
+        left join public.profiles p on p.id = u.id
+       where (p.username IS NULL OR p.id IS NULL)
+         and u.last_sign_in_at IS NULL
+         and u.created_at < (now() - interval '5 days')
+         and coalesce(p.is_guest, false) = false
+       limit (v_limit - v_deleted)
     loop
       perform public.delete_user_everything(v_id);
       v_deleted := v_deleted + 1;
-
-      if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
-        perform net.http_post(
-          url := v_url || '/functions/v1/cleanup-guest-storage',
-          headers := jsonb_build_object(
-            'Content-Type', 'application/json',
-            'Authorization', 'Bearer ' || v_jwt,
-            'apikey', v_jwt
-          ),
-          body := jsonb_build_object('userId', v_id)
-        );
-      end if;
     end loop;
   end if;
 
@@ -9475,8 +9443,6 @@ CREATE FUNCTION "public"."guest_discard_current"() RETURNS "jsonb"
 declare
   v_uid uuid := auth.uid();
   v_is_guest boolean := false;
-  v_url text;
-  v_jwt text;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
@@ -9484,30 +9450,14 @@ begin
 
   select coalesce(is_guest, false)
     into v_is_guest
-  from public.profiles
-  where id = v_uid;
+    from public.profiles
+   where id = v_uid;
 
   if not v_is_guest then
     return jsonb_build_object('ok', false, 'error', 'not_guest');
   end if;
 
   perform public.delete_user_everything(v_uid);
-
-  -- 312: pliki po usunięciu z bazy (baza najpierw)
-  select value into v_url from public.app_config where key = 'edge_url';
-  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
-  if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
-    perform net.http_post(
-      url := v_url || '/functions/v1/cleanup-guest-storage',
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || v_jwt,
-        'apikey', v_jwt
-      ),
-      body := jsonb_build_object('userId', v_uid)
-    );
-  end if;
-
   return jsonb_build_object('ok', true);
 end;
 $$;
@@ -13715,29 +13665,6 @@ END $$;
 
 
 --
--- Name: poll_sub_accept("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."poll_sub_accept"("p_token" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE s public.poll_subscriptions%rowtype; uid uuid:=auth.uid(); e text;
-BEGIN
- IF uid IS NULL THEN RETURN jsonb_build_object('ok',false,'error','not_authenticated'); END IF;
- SELECT public._norm_email(email) INTO e FROM public.profiles WHERE id=uid;
- SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token FOR UPDATE;
- IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
- IF (s.subscriber_user_id IS NOT NULL AND s.subscriber_user_id<>uid)
- OR (s.subscriber_user_id IS NULL AND public._norm_email(s.subscriber_email) IS DISTINCT FROM e) THEN
-   RETURN jsonb_build_object('ok',false,'error','not_your_invite'); END IF;
- IF s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL OR s.status NOT IN ('pending','active') THEN
-   RETURN jsonb_build_object('ok',false,'error','already_closed'); END IF;
- RETURN jsonb_build_object('ok',false,'error','has_account');
-END; $$;
-
-
---
 -- Name: poll_sub_accept_email("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -14604,29 +14531,6 @@ $$;
 
 
 --
--- Name: polls_badge_get(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_badge_get"() RETURNS TABLE("has_new" boolean, "tasks_pending" integer, "subs_pending" integer, "polls_open" integer)
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-  with ov as (
-    select public.polls_hub_overview() as j
-  )
-  select
-    (
-      coalesce((j->>'tasks_todo')::int, 0) > 0
-      or coalesce((j->>'subs_mine_pending')::int, 0) > 0
-    ) as has_new,
-    coalesce((j->>'tasks_todo')::int, 0) as tasks_pending,
-    coalesce((j->>'subs_mine_pending')::int, 0) as subs_pending,
-    coalesce((j->>'polls_open')::int, 0) as polls_open
-  from ov;
-$$;
-
-
---
 -- Name: polls_hub_anon_voters("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -15049,46 +14953,6 @@ $$;
 
 
 --
--- Name: polls_hub_list_my_subscriptions(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_list_my_subscriptions"() RETURNS TABLE("sub_id" "uuid", "owner_id" "uuid", "owner_label" "text", "status" "text", "created_at" timestamp with time zone, "token" "uuid", "go_url" "text", "is_expired" boolean)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-begin
-  perform public.poll_claim_email_records();
-
-  return query
-  with base as (
-    select
-      s.*,
-      greatest(
-        coalesce(s.declined_at,  '-infinity'::timestamptz),
-        coalesce(s.cancelled_at, '-infinity'::timestamptz),
-        coalesce(s.created_at,   '-infinity'::timestamptz)
-      ) as last_action_at
-    from public.poll_subscriptions s
-    where s.subscriber_user_id = auth.uid()
-  )
-  select
-    b.id as sub_id,
-    b.owner_id,
-    coalesce(p.username, p.email, '—') as owner_label,
-    b.status,
-    b.created_at,
-    b.token,
-    ('go?s=' || b.token::text)::text as go_url,
-    (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days') as is_expired
-  from base b
-  left join public.profiles p on p.id = b.owner_id
-  where not (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days')
-  order by b.created_at desc;
-end;
-$$;
-
-
---
 -- Name: polls_hub_list_open_polls(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -15148,105 +15012,6 @@ begin
   left join t on t.game_id = g.game_id
   order by g.created_at desc;
 end;
-$$;
-
-
---
--- Name: polls_hub_list_tasks(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_list_tasks"() RETURNS TABLE("task_id" "uuid", "game_id" "uuid", "game_name" "text", "poll_type" "text", "status" "text", "created_at" timestamp with time zone, "done_at" timestamp with time zone, "declined_at" timestamp with time zone, "cancelled_at" timestamp with time zone, "is_archived" boolean, "go_url" "text", "owner_id" "uuid", "owner_username" "text", "owner_email" "text")
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-begin
-  perform public.poll_claim_email_records();
-
-  return query
-  select
-    t.id,
-    t.game_id,
-    coalesce(g.name, ('Sondaż ' || left(t.game_id::text, 8))::text) as game_name,
-    t.poll_type,
-    case
-      when t.done_at is not null then 'done'
-      when t.declined_at is not null then 'declined'
-      when t.cancelled_at is not null then 'cancelled'
-      else 'pending'
-    end as status,
-    t.created_at,
-    t.done_at,
-    t.declined_at,
-    t.cancelled_at,
-    (coalesce(t.done_at, t.declined_at, t.cancelled_at) < now() - interval '5 days') as is_archived,
-    ('go?t=' || t.token::text)::text,
-    t.owner_id,
-    p.username,
-    p.email
-  from public.poll_tasks t
-  left join public.games g on g.id = t.game_id
-  left join public.profiles p on p.id = t.owner_id
-  where t.recipient_user_id = auth.uid()
-  order by t.created_at desc;
-end;
-$$;
-
-
---
--- Name: polls_hub_overview(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_overview"() RETURNS json
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_tasks_todo int;
-  v_subs_mine_pending int;
-  v_subs_their_pending int;
-begin
-  perform public.poll_claim_email_records();
-
-  select count(*) into v_tasks_todo
-  from public.poll_tasks t
-  where t.recipient_user_id = auth.uid()
-    and t.done_at is null
-    and t.declined_at is null
-    and t.cancelled_at is null;
-
-  select count(*) into v_subs_mine_pending
-  from public.poll_subscriptions s
-  where s.subscriber_user_id = auth.uid()
-    and s.status = 'pending'
-    and s.cancelled_at is null
-    and s.declined_at is null;
-
-  select count(*) into v_subs_their_pending
-  from public.poll_subscriptions s
-  where s.owner_id = auth.uid()
-    and s.status = 'pending'
-    and s.cancelled_at is null
-    and s.declined_at is null;
-
-  return json_build_object(
-    'polls_open', 0,
-    'tasks_todo', coalesce(v_tasks_todo,0),
-    'subs_mine_pending', coalesce(v_subs_mine_pending,0),
-    'subs_their_pending', coalesce(v_subs_their_pending,0)
-  );
-end;
-$$;
-
-
---
--- Name: polls_hub_share_poll("uuid", "uuid"[]); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_share_poll"("p_game_id" "uuid", "p_sub_ids" "uuid"[]) RETURNS "jsonb"
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
- SELECT public.poll_share_send(p_game_id,'{}'::uuid[],p_sub_ids)
-  || jsonb_build_object('cancelled',0,'blocked_sub_ids','[]'::jsonb)
 $$;
 
 
@@ -15318,83 +15083,6 @@ BEGIN
   PERFORM pg_sleep(.01);
  END LOOP;
 END $$;
-
-
---
--- Name: polls_hub_subscription_accept("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_accept"("p_id" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE tok uuid;
-BEGIN
- IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
- SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
- IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not found or not pending'); END IF;
- RETURN public.poll_sub_accept(tok);
-END; $$;
-
-
---
--- Name: polls_hub_subscription_cancel("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_cancel"("p_id" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE tok uuid;
-BEGIN
- IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
- SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
- IF NOT FOUND OR NOT public._subscriber_close(tok,true) THEN
- RETURN jsonb_build_object('ok',false,'error','not found or not pending/active'); END IF;
- RETURN jsonb_build_object('ok',true,'action','declined','id',p_id);
-END; $$;
-
-
---
--- Name: polls_hub_subscription_invite("text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_invite"("p_recipient" "text") RETURNS "jsonb"
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
- SELECT public.subscribers_invite(p_recipient);
-$$;
-
-
---
--- Name: polls_hub_subscription_invite_a("text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_invite_a"("p_handle" "text") RETURNS "jsonb"
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
- SELECT public.subscribers_invite(p_handle);
-$$;
-
-
---
--- Name: polls_hub_subscription_reject("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_reject"("p_id" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE tok uuid;
-BEGIN
- IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
- SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
- IF NOT FOUND OR NOT public._subscriber_close(tok,false) THEN
- RETURN jsonb_build_object('ok',false,'error','not found or not pending/active'); END IF;
- RETURN jsonb_build_object('ok',true,'action','declined','id',p_id);
-END; $$;
 
 
 --
@@ -24074,5 +23762,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict n2krbdaHJhpcSDkOb1VKhTeqTjOr0aleuiP7V9jfwyx6FblI56oC3OTwkbE9jH0
+\unrestrict vpfeQqPDk69aBoLbt46lUySzIcdNhJQLrmVUkKQ1QcdcCTLa4S2pYpKuX6fozFK
 
