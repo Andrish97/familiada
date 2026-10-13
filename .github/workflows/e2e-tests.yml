@@ -267,6 +267,10 @@ jobs:
         run: npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
         working-directory: tests
 
+      - name: Build E20 gallery HTML and manifest
+        if: ${{ success() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        run: node scripts/agent-tools/build-e20-gallery.cjs
+
       - name: Upload production statistics evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -294,6 +298,15 @@ jobs:
           path: tests/test-results/**/shot-*.png
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Upload E20 gallery
+        if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e20-gallery-${{ github.run_number }}
+          path: tests/test-results/e20-gallery/
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Publish requested anonymous poll screenshots
         if: ${{ success() && inputs.publish_anonymous_screenshots && (contains(inputs.spec_filter, 'e2e/poll-anonymous.spec.js') || contains(inputs.spec_filter, 'e2e/poll-anonymous-layout.spec.js') || contains(inputs.spec_filter, 'e2e/poll-go.spec.js') || contains(inputs.spec_filter, 'e2e/go-states.spec.js')) }}
