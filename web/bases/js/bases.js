@@ -1,6 +1,8 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-12T23450";
+
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-12T23450";
 
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-12T23450";
@@ -583,19 +585,14 @@ async function exportBase(baseId, onProgress) {
   const ctags = await selectIn("qb_category_tags", "category_id,tag_id", "category_id", (cats || []).map((c) => c.id));
   prog(t("bases.export.steps.categoryTags"), 6, t("bases.export.count", { count: ctags.length }));
 
-  return {
-    base: { name: baseRow?.name ?? t("bases.defaults.baseLabel") },
-    categories: cats || [],
-    tags: tags || [],
-    questions: (qs || []).map((q) => ({
-      id: q.id,
-      category_id: q.category_id,
-      ord: Number(q.ord) || 0,
-      payload: q.payload || {},
-    })),
+  return baseExportSnapshot({
+    base: baseRow,
+    categories: cats,
+    tags,
+    questions: qs,
     question_tags: qtags,
     category_tags: ctags,
-  };
+  }, t("bases.defaults.baseLabel"));
 }
 
 function isValidImportPayload(p) {

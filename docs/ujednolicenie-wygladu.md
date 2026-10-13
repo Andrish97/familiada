@@ -5,6 +5,17 @@ pierwszy do wdrożenia. Ten plik jest źródłem prawdy dla tego etapu.
 
 ---
 
+## Decyzje — Powiel na stronach zasobów (2026-10-13)
+
+Gry, Bazy i Logo otrzymują wspólną akcję Powiel z ikoną duplikowania,
+obok eksportu i importu. Dopisek „kopia” jest częścią nazwy nowego
+zasobu, **nie osobnym znacznikiem na kafelku**. Konflikty nazw mają
+spójne numerowanie. Mechanizm i zakres danych:
+[udostepnianie-kopii-plan.md](udostepnianie-kopii-plan.md).
+Gry/Logo mają także Wyślij w tej samej sekcji; Bazy zachowują obecne
+współdzielenie. Telefon: ikony z dostępnymi nazwami, komputer:
+ikony obok tekstu zgodnie z zasadami E20.
+
 ## Decyzje — poprawka ikon AI w Ustawieniach (2026-10-12)
 
 Użytkownik zgłosił znany na Androidzie problem przezroczystości przy ikonach

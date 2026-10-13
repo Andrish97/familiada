@@ -5,6 +5,42 @@ Realizacja po bieżącym E19, przed E19N/E14/E20; manual pozostaje ostatni.
 
 ## Zasady i wygląd
 
+### Wspólne powielanie i wysyłanie — decyzje2026-10-13
+
+Jeden mechanizm klonowania definicji i potrzebnych plików obsługuje
+Gry, Bazy i Logo. Powiel tworzy własny zasób; Wyślij wykorzystuje ten
+sam mechanizm do tworzenia oczekującej kopii Gry/Logo znajomego.
+Bazy zachowują obecne współdzielenie, a otrzymują możliwość Powiel.
+
+| Działanie | Właściciel wyniku | Nazwa i oznaczenia | Przenoszone dane |
+|---|---|---|---|
+| Powiel — Gra/Baza/Logo | Bieżące konto | Dopisek „kopia” **w nazwie**, nie osobna plakietka na kafelku; kolejne konflikty rozwiązywane numerem | Definicja zgodna z istniejącym formatem zasobu; foldery i tagi Bazy, własne potrzebne pliki Logo |
+| Wyślij — Gra/Logo | Znajomy, oczekująca własna kopia | Nazwa wysyłanego zasobu; po akceptacji lekki znacznik „od X” | Ta sama definicja i niezależne pliki, bez dodatkowego importu przy akceptacji |
+
+Powiel ma ikonę duplikowania obok eksportu/importu. Nie dziedziczy
+udostępnień, uprawnień innych osób, ofert, głosów, sesji, tokenów,
+historii, oznaczenia „od X” ani stanu urządzeń. Nowy wynik otrzymuje
+nowe ID. Powielanie nie wysyła powiadomienia do samego siebie.
+
+**Pliki:** obraz już znajdujący się w naszym buckecie kopiować przez
+Storage bez konwersji do base64 i ponownego uploadu. Przepisać również
+odwołania w zagnieżdżonych obrazach DRAW na własne pliki wyniku.
+Base64 pozostaje częścią samowystarczalnego eksportu/importu pliku
+oraz obsługi źródeł już osadzonych w danych. Obie ścieżki mają wspólny
+plan własności, limitów, ponowień i sprzątania po błędzie/usunięciu.
+
+**Demo:** zakazać wysyłania demonstracyjnych Gier i Logo. Sama zmiana
+nazwy ani Powiel nie mogą umożliwić wysłania niezmienionej treści demo;
+sprawdzenie na serwerze, nie tylko wyłączony przycisk. Wewnętrzna
+informacja potrzebna tej kontroli nie tworzy zależności dostępu ani
+żywego połączenia ze źródłem. Testy obejmują demo, zmianę nazwy,
+powielenie i próby obejścia przez stare ścieżki/RPC.
+
+Parser Logo zamknięty produkcyjnie: branch38330340333 success1/1,
+Pages38330568612 success, main38330805999 success1/1 bez retry.
+Prywatny upload obrazów opisany na końcu jest przygotowaniem dla
+osadzonych danych; zwykłe pliki bucketowe wymagają bezpośredniej kopii.
+
 | Obszar | Docelowe zachowanie |
 |---|---|
 | Odbiorcy | Wyłącznie znajomi. Brak pola e-mail/nazwy i brak Subskrybentów. |
@@ -290,3 +326,16 @@ Przed podłączeniem obowiązkowe: zweryfikowany plan tworzenia z własnością
 źródła/znajomością/stałym odbiorcą, snapshot, sprzątanie nieukończonych
 uploadów i wyścigi z usunięciem konta/odrzuceniem/wygaśnięciem. Nigdy
 nie przyjmować katalogu odbiorcy bezpośrednio z niezaufanego body żądania.
+
+### Wspólna definicja i bezpośrednia kopia pliku — realizacja
+
+prepareResourceClone współdzieli gameExportSnapshot, parseLogoPackage
+i baseExportSnapshot; obecny eksport Bazy także używa tego ostatniego.
+mapLogoSourceImages obsługuje IMAGE i nested DRAW; eksport do pliku
+zachowuje samowystarczalne base64, klonowanie może przypisać własny URL.
+copyLogoStorageImage używa native Storage copy, tylko metadane HEAD:
+kontrola własnego źródła, sygnatury pliku, MIME i5MiB; nie nadpisuje
+wyniku i uznaje identyczny plik przy retry także po usunięciu źródła.
+14 nowych unit, razem573 green. Przygotowanie planu nie jest jeszcze
+publicznym klonowaniem: wymagane prywatne kwity/własność, staging/cleanup
+oraz podłączenie do zapisu definicji i kontrole demo na serwerze.
