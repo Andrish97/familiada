@@ -754,10 +754,18 @@ wyszukiwarek do Zadań/Znajomych/Subskrybentów. Manual zawsze ostatni.
 
 ### Mobile landscape — wszystkie strony (2026-10-11)
 
-Użytkownik wymaga zbadania i dopuszczenia telefonu w poziomie na każdej
-stronie. Osobny przegląd całej mapy PAGES przed manualem, w etapie UI/E20.
-Obejmuje także strony dotychczas ograniczone guardem małego ekranu
-(Control/edytory); sam obrót nie może pozostawić nieuzasadnionej blokady.
+**Korekta zakresu 2026-10-13:** obowiązującą regułą jest globalna blokada
+telefonu w landscape. Nie dopasowujemy każdej strony do używania poziomego
+telefonu; sprawdzamy poprawny guard i brak nieosiągalnej, przymglonej treści.
+Jeśli strona w ogóle nie obsługuje telefonu, jej komunikat o niedostępności
+ma pierwszeństwo przed sugestią obrotu. Nadrzędność guardów i przykłady
+zapisano w `docs/e20-kategorie-stron.md`, sekcja „Nadrzędność guardów”.
+
+Pierwotna decyzja poniżej wymagała zbadania i dopuszczenia telefonu poziomo
+na każdej stronie. Została zastąpiona korektą powyżej: osobny przegląd mapy
+PAGES nadal jest wymagany, ale telefon landscape ma wspólny guard poza
+jawnym wyjątkiem. Nie wolno odblokowywać stron tylko po to, by spełnić
+pierwotną decyzję.
 
 Dla każdej strony sprawdzić dostęp do funkcji, niewielką wysokość
 viewportu, topbar/wypustki/akcje/narzędzia, formularze i klawiaturę,
