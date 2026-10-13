@@ -38,9 +38,12 @@ const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace
 export function initListSearch({ grids, tile, name, filter, sort }) {
   const slot = document.querySelector(".games-bottom-left");
   if (!slot) return;
-  // Ten sam komponent co w menedżerze bazy (.searchBox, base.css).
+  // Zewnętrzny wrapper odpowiada za szerokość/grupowanie, a .searchBox to
+  // właściwe pole. Lupa pozostaje osobnym przyciskiem obok pola.
+  const search = document.createElement("div");
+  search.className = "list-search";
   const box = document.createElement("div");
-  box.className = "searchBox list-search";
+  box.className = "searchBox";
   const input = document.createElement("input");
   input.type = "search";
   input.className = "searchText";
@@ -64,7 +67,8 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   // Pole z małym X w środku; przycisk lupy jest osobnym sąsiadującym
   // przyciskiem po prawej stronie pola.
   box.append(input, clear);
-  slot.append(box, mobileSearch);
+  search.append(box, mobileSearch);
+  slot.append(search);
 
   let filterValue = "";
   let filterApi = null;
@@ -73,7 +77,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     const wrap = document.createElement("div");
     wrap.className = "ui-select list-filter";
     wrap.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="filter"></i></span><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
-    slot.insertBefore(wrap, box);
+    slot.insertBefore(wrap, search);
     const opts = () => [{ value: "", label: t(filter.allKey) }, ...filter.options.map((o) => ({ value: o.value, label: t(o.labelKey) }))];
     const aria = () => wrap.querySelector(".ui-select-btn")?.setAttribute("aria-label", t(filter.ariaKey));
     aria();
