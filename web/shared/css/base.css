@@ -2421,6 +2421,11 @@ button.rowsSectionHead{ cursor: pointer; }
   .rowsAct .rowsActIcon{ display: inline-flex; }
   .rowsRow{ gap: 10px; padding: 9px 10px; }
 }
+@media (max-width: 980px) and (orientation: landscape){
+  .rowsAct{ width: 40px; min-width: 40px; min-height: 40px; padding: 6px; }
+  .rowsAct .rowsActText{ display: none; }
+  .rowsAct .rowsActIcon{ display: inline-flex; }
+}
 
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
 .shareList--scroll{ max-height: 240px; overflow-y: auto; overscroll-behavior: contain; }

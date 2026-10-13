@@ -77,11 +77,16 @@ test.describe("tasks: baza udostępniona drugiemu kontu", () => {
 });
 
 // Kontrolowane dane RPC; prawdziwy HTML, moduły, CSS i logowanie.
-for (const width of [1400, 390]) {
-  test(`tasks: wszystkie kafelki i odstępy — ${width}`, async ({ browser }) => {
+for (const viewport of [
+  { width: 1400, height: 1100, label: "1400" },
+  { width: 390, height: 844, label: "390" },
+  { width: 844, height: 390, label: "844x390" },
+  { width: 667, height: 375, label: "667x375" },
+]) {
+  test(`tasks: wszystkie kafelki i odstępy — ${viewport.label}`, async ({ browser }) => {
     const { ctx, page } = await newUserContext(browser, testAccountUsername(2));
     try {
-      await page.setViewportSize({ width, height: width === 390 ? 844 : 1100 });
+      await page.setViewportSize(viewport);
       let fixture = tasksPreview;
       await page.route("**/rest/v1/rpc/tasks_list", (route) => route.fulfill({ json: fixture }));
       await page.goto(TASKS_URL);
@@ -104,11 +109,15 @@ for (const width of [1400, 390]) {
           await expect(row.locator(note)).not.toContainText(/Ankieta tekstowa|Punktacja|Ankieta punktowa/);
           await expect(row.locator(note)).toContainText(task.owner_label);
         }
-        if (width === 390) {
+        if (viewport.width <= 980) {
           await expect(row.locator(".rowsNote--desktop")).toBeHidden();
           await expect(row.locator(".rowsNote--mobile")).toBeVisible();
           await expect(row.locator(".rowsNote--mobile")).not.toContainText("11.10.2026");
           expect((await row.boundingBox()).height).toBeLessThanOrEqual(104);
+          if (task.state !== "done") {
+            await expect(row.locator(".rowsActText")).toBeHidden();
+            await expect(row.locator(".rowsActIcon").first()).toBeVisible();
+          }
         } else {
           await expect(row.locator(".rowsNote--desktop")).toBeVisible();
           await expect(row.locator(".rowsNote--mobile")).toBeHidden();
@@ -132,7 +141,7 @@ for (const width of [1400, 390]) {
       expect(metrics.rowGap).toBeGreaterThanOrEqual(12);
       expect(metrics.overflow).toBe(false);
       expect(metrics.noteWrap).toBe("normal");
-      await page.screenshot({ path: test.info().outputPath(`tasks-${width}.png`), fullPage: true });
+      await page.screenshot({ path: test.info().outputPath(`tasks-${viewport.label}.png`), fullPage: true });
       fixture = [];
       await page.goto(TASKS_URL);
       await expect(page.locator(".rowsEmpty")).toBeVisible();

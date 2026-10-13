@@ -81,3 +81,15 @@ body.games-body > main.wrap > .bar{
   .tasks-card .rowsTitle{ line-height: 1.25; }
   .tasks-card .rowsNote{ margin-top: 3px; line-height: 1.35; }
 }
+
+@media (max-width: 980px) and (orientation: landscape){
+  .tasks-card .rowsNote--desktop{ display: none; }
+  .tasks-card .rowsNote--mobile{ display: block; }
+  .tasks-card .rowsTitle,
+  .tasks-card .rowsNote--mobile{
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+}
