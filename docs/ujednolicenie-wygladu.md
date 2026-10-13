@@ -856,6 +856,14 @@ Przy wdrożeniu:
 
 Realizacja w UI/E20 po bieżącym grafie zależności; manual nadal ostatni.
 
+**Postęp E20 (2026-10-13):** Gry/Bazy/Logo mają odsłanianie list po
+odczycie i widoczny błąd; punktowe E2E `38378348674`, 6/6. Strona
+Ankiety pokazuje stan pierwszego ładowania, zachowuje komunikat błędu mimo
+nakładających się odświeżeń i pozwala ponowić odczyt; `38381649291`, 1/1,
+zrzuty390/1400 w artefakcie11803369573. Zadania oraz Znajomi/Subskrybenci
+mają już testy landscape z obrotem. Pozostałe etapy kart Ankiet, Kontaktów,
+Zadań i całej mapy PAGES wciąż wymagają przeglądu.
+
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
 Każdy typ strony ma wspólny układ i wspólne style na wszystkich stronach
