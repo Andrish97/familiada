@@ -21,10 +21,12 @@ test('native logo Storage copy: actual bytes, lost-response retry after source d
  // all responses and Storage writes are real. No test endpoint or service key.
  const env={SUPABASE_URL:state.url,SUPABASE_SERVICE_ROLE_KEY:state.token};
  const originalFetch=globalThis.fetch,calls=[],files=[];
+ let planSignature;
  let loseResponse=true;
  globalThis.fetch=async(url,options)=>{
-  calls.push({url,method:options.method});
+  const call={url,method:options.method};calls.push(call);
   const response=await originalFetch(url,{...options,headers:{...options.headers,apikey:state.anon}});
+  call.status=response.status;
   if(loseResponse&&url.endsWith('/object/copy')&&response.ok){loseResponse=false;throw new Error('simulated lost copy response');}
   return response;
  };
@@ -35,6 +37,7 @@ test('native logo Storage copy: actual bytes, lost-response retry after source d
   const head=await originalFetch(`${state.url}/storage/v1/object/authenticated/user-logos/${sourcePath}`,{method:'HEAD',headers:{apikey:state.anon,Authorization:'Bearer '+state.token}});
   expect(head.ok).toBe(true);
   const plan={source_owner_id:state.owner,recipient_id:state.owner,copy_id:randomUUID(),asset_id:randomUUID(),source_path:sourcePath,etag:head.headers.get('ETag'),size:Number(head.headers.get('Content-Length')),mime:head.headers.get('Content-Type').split(';')[0]};
+  planSignature={etag:plan.etag,size:plan.size,mime:plan.mime};
   const destination=`${state.owner}/copies/${plan.copy_id}/${plan.asset_id}.png`;files.push(destination);
   stage='real copy with lost response';
   await expect(copyLogoStorageImage(env,plan)).rejects.toThrow('simulated lost copy response');
@@ -52,6 +55,11 @@ test('native logo Storage copy: actual bytes, lost-response retry after source d
   calls.length=0;
   await expect(copyLogoStorageImage(env,plan)).rejects.toThrow('copy_image_conflict');
   expect(calls.map(call=>call.method)).toEqual(['HEAD']);
+ }catch(error){
+  const detail=String(error.message||error).slice(0,1400).replace(/\r/g,'').replace(/\n/g,'%0A');
+  console.error('::error title=Native copy detail::'+detail);
+  console.error('::error title=Native copy metadata::'+JSON.stringify({signature:planSignature,requests:calls.map(({method,status})=>({method,status}))}));
+  throw error;
  }finally{
   globalThis.fetch=originalFetch;
   await page.evaluate(async files=>{const {error}=await window.__sbClient.storage.from('user-logos').remove(files);if(error)throw error;},files);
