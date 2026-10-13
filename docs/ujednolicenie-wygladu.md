@@ -873,7 +873,7 @@ kart Ankiet, Kontaktów, Zadań i całej mapy PAGES wciąż wymagają przeglądu
 
 **Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
 ↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje
-pasek stanu; `38387014627`, success1/1. Pozostałe strony i urządzenia nadal
+pasek stanu; `38387014627`, success1/1, artefakt11806951789. Pozostałe strony i urządzenia nadal
 wymagają osobnych testów.
 
 **Import TXT edytora (2026-10-13):** podgląd używa `parseQaText` z finalnej
