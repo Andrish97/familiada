@@ -93,6 +93,55 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   };
 }
 
+function createDisplayEventLog(gameId, key) {
+  let lastPageState = "";
+  let stopped = false;
+  let pending = Promise.resolve();
+  const report = (event) => {
+    if (stopped) return;
+    pending = pending.catch(() => {}).then(async () => {
+      const { error } = await sb().rpc("control2_display_event", {
+        p_game_id: gameId, p_key: key, p_event: event,
+      }).abortSignal(AbortSignal.timeout(6500));
+      if (error) throw error;
+    }).catch(() => { /* Diagnostics never interrupt rendering or gameplay. */ });
+  };
+  const reportPageState = (reason) => {
+    const state = {
+      visibility: document.visibilityState || "unknown",
+      focused: !!document.hasFocus?.(),
+    };
+    const signature = `${state.visibility}:${state.focused}`;
+    if (signature === lastPageState && reason !== "initial") return;
+    lastPageState = signature;
+    report({
+      event_type: "page_state", reason, ...state,
+      was_discarded: !!document.wasDiscarded,
+    });
+  };
+  const onVisibility = () => reportPageState("visibilitychange");
+  const onFocus = () => reportPageState("focus");
+  const onBlur = () => reportPageState("blur");
+  const onNetwork = () => report({ event_type: "network_state", online: navigator.onLine !== false });
+  reportPageState("initial");
+  document.addEventListener("visibilitychange", onVisibility);
+  window.addEventListener("focus", onFocus);
+  window.addEventListener("blur", onBlur);
+  window.addEventListener("online", onNetwork);
+  window.addEventListener("offline", onNetwork);
+  return {
+    report,
+    stop() {
+      stopped = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("online", onNetwork);
+      window.removeEventListener("offline", onNetwork);
+    },
+  };
+}
+
 function showBlack() {
   $("blackScreen")?.classList.remove("hidden");
   $("qrScreen")?.classList.add("hidden");
@@ -288,6 +337,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const { gameId, key } = parseParams();
     const game = await authDisplayOrThrow(gameId, key);
+    const displayEventLog = createDisplayEventLog(game.id, key);
+    window.addEventListener("pagehide", displayEventLog.stop, { once: true });
     const audioSessionNonce = globalThis.crypto?.randomUUID?.()
       || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     // Every Display page load starts a fresh atomic unlock generation. This
@@ -311,6 +362,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await loadSfxManifest();
     await initSfx();
     const soundReactor = createDisplaySoundReactor();
+    let displayWasStarted = false;
 
     const audioUnlockScreen = $("audioUnlockScreen");
     const btnAudioUnlock = $("btnAudioUnlock");
@@ -319,7 +371,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     let displaySoundSelected = false;
     let activeGameStep = null;
     let lastFrameDiagnosticAt = 0;
-    let frameDiagnosticId = 0;
     const stopAudioDiagnostics = onSfxPlayback(event => {
       if (!displaySoundSelected || !activeGameStep || /^(devices_|setup_)/.test(activeGameStep)) return;
       if (!event.failed && event.delayMs < 500) return;
@@ -451,6 +502,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     let completedRenderRev = -1;
     let reportedRenderRev = -1;
+    let loggedCompletionErrorRev = -1;
     let reportingCompletion = false;
     async function reportCompletion() {
       if (reportingCompletion || completedRenderRev <= 0 || completedRenderRev <= reportedRenderRev || isAnySfxPlaying()) return;
@@ -459,6 +511,15 @@ window.addEventListener("DOMContentLoaded", async () => {
       try {
         const { error } = await sb().rpc("game_state_display_complete", { p_game_id: gameId, p_key: key, p_rev: revision }).abortSignal(AbortSignal.timeout(6500));
         if (!error) reportedRenderRev = revision;
+        else if (loggedCompletionErrorRev !== revision) {
+          loggedCompletionErrorRev = revision;
+          displayEventLog.report({ event_type: "runtime_error", phase: "completion_ack", error_name: error.code || error.name || "RPCError", state_rev: revision });
+        }
+      } catch (error) {
+        if (loggedCompletionErrorRev !== revision) {
+          loggedCompletionErrorRev = revision;
+          displayEventLog.report({ event_type: "runtime_error", phase: "completion_ack", error_name: error?.name || "NetworkError", state_rev: revision });
+        }
       } finally { reportingCompletion = false; }
     }
     // Retry a lost acknowledgment without replaying any animation.
@@ -482,6 +543,15 @@ window.addEventListener("DOMContentLoaded", async () => {
         },
       },
       onRow: async (row) => {
+        if (row.detail?.locks?.gameStarted && !displayWasStarted) {
+          displayWasStarted = true;
+          displayEventLog.report({
+            event_type: "page_state", reason: "initial",
+            visibility: document.visibilityState || "unknown",
+            focused: !!document.hasFocus?.(),
+            was_discarded: !!document.wasDiscarded,
+          });
+        } else if (!row.detail?.locks?.gameStarted) displayWasStarted = false;
         setSfxMuted(row.detail?.settings?.soundMuted);
         // Język idzie za operatorem w Control (control/js/app.js's
         // LANG-push, dawniej osobna komenda `LANG <code>` — dziś zwykłe
@@ -566,11 +636,13 @@ window.addEventListener("DOMContentLoaded", async () => {
                 const now = Date.now();
                 if (gap && now - lastFrameDiagnosticAt >= 15_000) {
                   lastFrameDiagnosticAt = now;
-                  const id = globalThis.crypto?.randomUUID?.() || `${now}-${++frameDiagnosticId}`;
-                  void displayPresence.setMeta({ render_diagnostic: {
-                    id, maxGapMs: gap.maxGapMs, stalledFrames: gap.stalledFrames,
+                  displayEventLog.report({
+                    event_type: "render_stall",
+                    max_frame_gap_ms: gap.maxGapMs,
+                    stalled_frames: gap.stalledFrames,
                     visibility: document.visibilityState || "unknown",
-                  } });
+                    state_rev: row.rev,
+                  });
                 }
               }
             },
@@ -581,7 +653,10 @@ window.addEventListener("DOMContentLoaded", async () => {
             () => token === renderGeneration,
           );
         }).catch(error => {
-          if (error?.name !== "AbortError") console.warn("[display2] render failed", error);
+          if (error?.name !== "AbortError") {
+            displayEventLog.report({ event_type: "runtime_error", phase: "render", error_name: error?.name || "Error", state_rev: row.rev });
+            console.warn("[display2] render failed", error);
+          }
         });
       },
       onError: (error) => {

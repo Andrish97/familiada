@@ -5392,6 +5392,24 @@ function buildSessionRunDetails(r) {
           : `wystartował po ${formatDuration(metrics.start_delay_ms)}`;
         return { title: `Dźwięk: ${sound}`, detail: `${devices} · ${result}` };
       }
+      if (event.category === "display_state") {
+        if (metrics.reason === "page_state") {
+          const visibility = metrics.visibility === "hidden" ? "karta w tle" : metrics.visibility === "visible" ? "karta widoczna" : "widoczność nieznana";
+          const focus = metrics.focused === true ? "okno aktywne" : metrics.focused === false ? "okno bez fokusu" : "fokus nieznany";
+          const reasons = { initial:"stan przy rozpoczęciu", visibilitychange:"zmiana widoczności", focus:"aktywacja okna", blur:"utrata fokusu" };
+          return { title: "Stan Wyświetlacza", detail: `${reasons[metrics.reason] || "zmiana stanu"} · ${visibility} · ${focus}${metrics.was_discarded ? " · karta została wcześniej odtworzona po odrzuceniu" : ""}` };
+        }
+        if (metrics.reason === "network_state") {
+          return { title: "Sieć Wyświetlacza", detail: metrics.online ? "przeglądarka zgłosiła połączenie z siecią" : "przeglądarka zgłosiła brak połączenia z siecią" };
+        }
+        if (metrics.reason === "render_stall") {
+          return { title: "Zacięcie renderowania Wyświetlacza", detail: `Przerwa ${formatDuration(metrics.max_frame_gap_ms)} między klatkami (${metrics.stalled_frames || 0} zacięć)${metrics.visibility === "visible" ? " · karta była widoczna" : ""} · rewizja ${metrics.state_rev ?? "—"}` };
+        }
+        if (metrics.reason === "runtime_error") {
+          const phase = metrics.phase === "completion_ack" ? "potwierdzenie renderowania" : metrics.phase === "render" ? "renderowanie planszy" : "działanie strony";
+          return { title: "Błąd Wyświetlacza", detail: `${phase} · ${String(metrics.error_name || "Error")} · rewizja ${metrics.state_rev ?? "—"}` };
+        }
+      }
       if (event.category === "display_delay") {
         if (metrics.reason === "frame_stall") {
           return { title: "Zacięcie animacji planszy", detail: `Display: przerwa ${formatDuration(metrics.max_frame_gap_ms)} między klatkami (${metrics.stalled_frames || 0} zacięć)${metrics.display_visibility === "visible" ? " · karta była widoczna" : ""}` };

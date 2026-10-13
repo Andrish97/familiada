@@ -375,7 +375,6 @@ async function main() {
   let lastDisconnectState = "";
   const browserContextId = getGameBrowserContextId(gameId);
   let lastDisplayAudioDiagnosticId = null;
-  let lastDisplayRenderDiagnosticId = null;
   let hasInitialPresenceSnapshot = false;
   function summarizedDeviceContext(deviceDiagnostics, kind) {
     const item = deviceDiagnostics?.[kind];
@@ -839,21 +838,6 @@ async function main() {
             start_delay_ms: Math.max(0, Number(audioDiagnostic.delayMs) || 0),
             failed: !!audioDiagnostic.failed,
             error: String(audioDiagnostic.error || "").slice(0, 160),
-          },
-        });
-      }
-      const renderDiagnostic = deviceDiagnostics?.display?.renderDiagnostic;
-      if (renderDiagnostic?.id && renderDiagnostic.id !== lastDisplayRenderDiagnosticId) {
-        lastDisplayRenderDiagnosticId = renderDiagnostic.id;
-        void sessionTelemetry.report({
-          kind: "diagnostic", category: "display_delay",
-          message: "Widoczne zacięcie animacji na Wyświetlaczu.",
-          devices: ["display"],
-          metrics: {
-            reason: "frame_stall",
-            max_frame_gap_ms: Math.max(0, Number(renderDiagnostic.maxGapMs) || 0),
-            stalled_frames: Math.max(0, Number(renderDiagnostic.stalledFrames) || 0),
-            display_visibility: String(renderDiagnostic.visibility || "unknown"),
           },
         });
       }

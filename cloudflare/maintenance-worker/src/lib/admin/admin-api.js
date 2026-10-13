@@ -73,7 +73,28 @@ export async function handleAdminApi(request, env) {
     const limit = clampInt(url.searchParams.get("limit"), 1, 500, 200);
     const res = await supabaseRpc(env, "get_stats_detail", { p_type: type, p_limit: limit });
     if (!res.ok) return json({ ok: false, error: "stats_detail_failed", details: summarizeSupabaseError(res) }, res.status || 500);
-    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+    let rows = Array.isArray(res.data) ? res.data : [];
+    if (type === "gameplay") {
+      const sessionIds = rows
+        .filter(row => Number(row?.control_version) === 2 && typeof row?.session_id === "string")
+        .map(row => row.session_id);
+      let displayEvents = {};
+      if (sessionIds.length) {
+        const logRes = await supabaseRpc(env, "get_control2_display_events", { p_session_ids: sessionIds });
+        if (!logRes.ok) return json({ ok: false, error: "display_events_failed", details: summarizeSupabaseError(logRes) }, logRes.status || 500);
+        displayEvents = logRes.data && typeof logRes.data === "object" && !Array.isArray(logRes.data) ? logRes.data : {};
+      }
+      rows = rows.map(row => {
+        const { session_id: sessionId, ...publicRow } = row || {};
+        const extraEvents = displayEvents[sessionId] || [];
+        if (Number(publicRow.control_version) !== 2 || !extraEvents.length) return publicRow;
+        const stats = publicRow.stats_detail && typeof publicRow.stats_detail === "object" ? publicRow.stats_detail : {};
+        const events = [...(Array.isArray(stats.events) ? stats.events : []), ...extraEvents]
+          .sort((a, b) => Date.parse(a?.at || "") - Date.parse(b?.at || ""));
+        return { ...publicRow, stats_detail: { ...stats, events } };
+      });
+    }
+    return json({ ok: true, rows });
   }
 
   if (url.pathname === "/_admin_api/stats/polls") {
