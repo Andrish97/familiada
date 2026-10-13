@@ -1,5 +1,5 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-13T04480";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T04480";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-13T04483";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T04483";
 // familiada/logo/js/list.js
 // Lista logo (/logo/): kafelki w trzech kartach, modale (nowe / nazwa /
 // import / podgląd), eksport. Edycja to osobne strony /logo/editor/<tryb>/
@@ -13,30 +13,30 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T04
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T04480";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-13T04480";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T04480";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T04480";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T04480";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T04480";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T04480";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T04480";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-13T04480";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T04480";
-import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T04480";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T04480";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-13T04480";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T04483";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-13T04483";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T04483";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T04483";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T04483";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T04483";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T04483";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T04483";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-13T04483";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T04483";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T04483";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T04483";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-13T04483";
 
-import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-13T04480";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-13T04480";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-13T04480";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-13T04480";
-import { cannotEditReason } from "./text.js?v=v2026-10-13T04480";
-import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-13T04480";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T04480";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-13T04483";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-13T04483";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-13T04483";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-13T04483";
+import { cannotEditReason } from "./text.js?v=v2026-10-13T04483";
+import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-13T04483";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T04483";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-13T04480";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-13T04480";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-13T04483";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-13T04483";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
 // i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły

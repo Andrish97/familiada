@@ -28,16 +28,16 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-13T04480";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-13T04480";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-13T04480";
+import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-13T04483";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-13T04483";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-13T04483";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-13T04480"),
-    import("./topbar-controller.js?v=v2026-10-13T04480"),
-    import("./modal-sheet.js?v=v2026-10-13T04480"),
-    import("./device-guard.js?v=v2026-10-13T04480"),
+    import("./auth.js?v=v2026-10-13T04483"),
+    import("./topbar-controller.js?v=v2026-10-13T04483"),
+    import("./modal-sheet.js?v=v2026-10-13T04483"),
+    import("./device-guard.js?v=v2026-10-13T04483"),
   ]);
   return {
     getUser: auth.getUser,
