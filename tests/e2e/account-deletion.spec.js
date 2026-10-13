@@ -1,6 +1,6 @@
 // tests/e2e/account-deletion.spec.js
 // Weryfikuje, że usunięcie konta (supabase/functions/delete-account)
-// realnie czyści oba buckety — user-sounds i user-logos — nie tylko
+// kolejkuje i czyści oba buckety — user-sounds i user-logos — nie tylko
 // wiersze w DB. Używa świeżego, jednorazowego konta gościa (samo zniknie
 // po 5 dniach nawet gdyby test padł przed usunięciem — zero ryzyka dla
 // stałych fixture'ów).
@@ -30,6 +30,18 @@ async function listStorage(request, { supabaseUrl, anonKey, accessToken }, bucke
   });
   if (!res.ok()) return null;
   return await res.json();
+}
+
+async function waitForEmptyStorage(request, authInfo, bucket, prefix) {
+  const deadline = Date.now() + 120_000;
+  let last = null;
+  while (Date.now() < deadline) {
+    last = await listStorage(request, authInfo, bucket, prefix);
+    if (Array.isArray(last) && last.length === 0) return;
+    await new Promise(resolve => setTimeout(resolve, 2_000));
+  }
+  expect(last, `${bucket}/${prefix} powinno być czytelne do końca kontroli`).not.toBeNull();
+  expect(last?.length ?? 0, `${bucket}/${prefix} powinno zostać opróżnione przez kolejkę`).toBe(0);
 }
 
 test("usunięcie konta czyści user-sounds i user-logos dla tego usera", async ({ page, context, request }) => {
@@ -98,8 +110,8 @@ test("usunięcie konta czyści user-sounds i user-logos dla tego usera", async (
   // account.js po sukcesie: signOut() + redirect na /login
   await page.waitForURL(/login/, { timeout: 20000 });
 
-  const afterSounds = await listStorage(request, authInfo, "user-sounds", `${setup.userId}/${setup.gameId}`);
-  const afterLogos = await listStorage(request, authInfo, "user-logos", setup.userId);
-  expect(afterSounds?.length ?? 0, "user-sounds powinno być puste po usunięciu konta").toBe(0);
-  expect(afterLogos?.length ?? 0, "user-logos powinno być puste po usunięciu konta").toBe(0);
+  await Promise.all([
+    waitForEmptyStorage(request, authInfo, "user-sounds", `${setup.userId}/${setup.gameId}`),
+    waitForEmptyStorage(request, authInfo, "user-logos", setup.userId),
+  ]);
 });

@@ -270,6 +270,12 @@ jobs:
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
             < docs/sql/audit-subscriber-identity-352.sql
 
+      - name: Verify E14 legacy paths are removed and replacements remain (read-only)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-e14-legacy-cleanup.sql
+
       # 7️⃣ Fetch schema + logs (bez wywalania się)
       - name: Fetch schema.sql + logs from server
         run: |

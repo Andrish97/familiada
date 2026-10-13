@@ -115,9 +115,11 @@ usuwania, bez udziału przeglądarki.
 - Przeglądarka nie usuwa już plików przy usuwaniu gry, logo, kopii ze
   Społeczności ani przy przywróceniu demo. Wymiana obrazu w edytorze logo i
   reset dźwięków w ustawieniach gry (wiersz zostaje) — bez zmian.
-- Do usunięcia po potwierdzeniu na produkcji: edge function
-  `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` /
-  `guest_discard_current`, sprzątanie plików w `delete-account`.
+- E14 przenosi wszystkie te przypadki na istniejącą kolejkę `storage_cleanup_queue`:
+  migracja368 usuwa wywołania z `guest_cleanup_expired` /
+  `guest_discard_current`, funkcję Edge `cleanup-guest-storage` i bezpośrednie
+  kasowanie plików w `delete-account`. Wdrożenie i produkcyjne potwierdzenie
+  pozostają częścią E14.
 - Wywołanie funkcji: sekrety `vault` (`project_url`, `anon_key`) — migracja 318
   (`app_config` z 313 nie był ustawiony; kolejka nie była opróżniana do 2026-10-09).
 - Test lokalny: `docs/sql/test-storage-313.sql`.

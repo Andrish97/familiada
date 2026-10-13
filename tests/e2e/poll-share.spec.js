@@ -308,8 +308,14 @@ test("ankieta: odbiorca z kontem nie przechodzi starym kanałem Subskrybentów",
     await rpc(page, "poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
     const direct = await rpc(page, "poll_share_send", { p_game_id: gameId, p_friend_ids: [], p_subscriber_ids: [subId] });
     expect(direct).toMatchObject({ ok: true, created: 0, mail: [] });
-    const legacy = await rpc(page, "polls_hub_share_poll", { p_game_id: gameId, p_sub_ids: [subId] });
-    expect(legacy).toMatchObject({ ok: true, created: 0, mail: [] });
+    const legacy = await page.evaluate(async gameId => {
+      const { data, error } = await window.__sbClient.rpc("polls_hub_share_poll", {
+        p_game_id: gameId, p_sub_ids: [],
+      });
+      return { data, error: error && { code: error.code } };
+    }, gameId);
+    // E14 drops this retired path; before that migration it must remain inert.
+    expect(legacy.error?.code === "42883" || legacy.data?.created === 0).toBe(true);
     const rows = await page.evaluate(async id => {
       const { data, error } = await window.__sbClient.from("poll_tasks").select("id").eq("game_id", id);
       if (error) throw error;
