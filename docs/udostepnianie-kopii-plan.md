@@ -1,6 +1,6 @@
 # Gry i Logo — wysyłanie kopii znajomym
 
-Stan: **w przygotowaniu**, etap E19C. Wspólny pakiet Gier na branchu; samo wysyłanie/oferty/powiadomienia jeszcze nie wdrożone. Decyzja użytkownika 2026-10-12.
+Stan: **w realizacji**, etap E19C. Wspólne pakiety Gier i Logo zamknięte na produkcji; samo wysyłanie/oferty/powiadomienia jeszcze nie wdrożone. Decyzja użytkownika 2026-10-12.
 Realizacja po bieżącym E19, przed E19N/E14/E20; manual pozostaje ostatni.
 
 ## Zasady i wygląd
@@ -132,7 +132,9 @@ nie tworzy osobnego formatu dla kopiowania.
 Native logo-transfer-format.spec.js przygotowany dla3 trybów: realny
 plik w Storage, eksport/parser/własny rekord i własny plik IMAGE,
 niezależne źródło DRAW, brak pakietu po404 i cleanup własnych danych.
-Na razie na branchu; sama oferta jeszcze niewdrożona. Termin wybrany:5 dni.
+Zamknięte na produkcji: branch38324179700, Pages38325603741,
+main38325798279 success1/1 bez retry/539 unit. Sama oferta jeszcze
+niewdrożona. Termin wybrany:5 dni.
 
 ## Decyzja: oczekująca kopia wygasa po5 dniach — 2026-10-12
 
@@ -151,3 +153,17 @@ terminem, przy zwykłych kontrolach znajomości, flagi i cooldownów.
 
 Odmowa i możliwość zmiany decyzji zachowują wspólny model E19; nie
 przedłużać terminu oczekującej kopii przez przypomnienie/otwarcie.
+
+### Import dokładnie raz — paczka364
+
+Wspólny game_import_package tworzy grę i całą definicję w jednej
+transakcji, korzystając z istniejącego game_import_content używanego
+przez edytor. Prywatny kwit importu wiąże stałe ID właściciela, ID próby
+i skrót pakietu. Ponowienie tej samej próby zwraca ten sam wynik;
+inny pakiet z tym samym ID jest odrzucany. Usunięcie gry nie pozwala
+jej wskrzesić ponowieniem. Usunięcie konta sprząta także kwity.
+
+Lokalny rollback i trzy kontrolowane wyścigi zielone: równoczesny
+import, usunięcie gry i konta. Zachowana zgodność starego edytora
+oraz importu gościa. Migracja dodająca364 gotowa do bramki izolowanego
+CI; frontend przejdzie na wspólne RPC dopiero po zastosowaniu DB.
