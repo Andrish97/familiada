@@ -5760,21 +5760,31 @@ async function openStatsDetailModal(type) {
   const exportControls = document.createElement("div");
   exportControls.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px";
   exportControls.hidden = type !== "gameplay";
-  const exportPeriod = document.createElement("select");
-  exportPeriod.className = "btn sm";
-  exportPeriod.setAttribute("aria-label", "Zakres eksportu przebiegów Control 2");
+  const exportPeriod = document.createElement("div");
+  exportPeriod.className = "ui-select";
+  exportPeriod.style.minWidth = "220px";
   exportPeriod.innerHTML = `
-    <option value="today">Dzisiaj</option>
-    <option value="7d">Ostatnie 7 dni</option>
-    <option value="30d">Ostatnie 30 dni</option>
-    <option value="recent">Wszystkie załadowane (do 500)</option>
+    <button class="btn sm ui-select-btn" type="button" aria-label="Zakres eksportu przebiegów Control 2" aria-haspopup="listbox" aria-expanded="false">
+      <span class="ui-select-label"></span>
+      <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
+    </button>
+    <div class="ui-select-menu" role="listbox"></div>
   `;
+  const exportPeriodSelect = initUiSelect(exportPeriod, {
+    options: [
+      { value: "today", label: "Dzisiaj" },
+      { value: "7d", label: "Ostatnie 7 dni" },
+      { value: "30d", label: "Ostatnie 30 dni" },
+      { value: "recent", label: "Wszystkie załadowane (do 500)" },
+    ],
+    value: "today",
+  });
   const exportButton = document.createElement("button");
   exportButton.className = "btn sm gold";
   exportButton.type = "button";
   exportButton.textContent = "Pobierz JSON";
   exportButton.disabled = true;
-  exportButton.addEventListener("click", () => downloadControl2Stats(allRows, exportPeriod.value));
+  exportButton.addEventListener("click", () => downloadControl2Stats(allRows, exportPeriodSelect.getValue()));
   exportControls.append(exportPeriod, exportButton);
 
   body.appendChild(infoEl);
