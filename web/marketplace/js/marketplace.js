@@ -63,6 +63,7 @@ const els = {
   browseGrid:  document.getElementById("browseGrid"),
   browseInfo:  document.getElementById("browseInfo"),
   searchInput: document.getElementById("searchInput"),
+  btnSearchFocus: document.getElementById("btnSearchFocus"),
   langFilter: document.getElementById("langFilter"),
   sortSelect: document.getElementById("sortSelect"),
   loadMoreWrap:document.getElementById("loadMoreWrap"),
@@ -144,6 +145,7 @@ function refreshBrowseSelectLabels() {
 }
 
 function initBrowseUiSelects() {
+  els.btnSearchFocus?.addEventListener("click", () => els.searchInput?.focus());
   langFilterUiSelect = initUiSelect(els.langFilter, {
     options: langFilterOptions(),
     value: currentLangFilter,

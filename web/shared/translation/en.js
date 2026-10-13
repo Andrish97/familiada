@@ -177,6 +177,12 @@ const en = {
   },
   // Wspólna nakładka blokady strony (page-overlay.js): urządzenie i gość.
   pageGuard: {
+    phoneTitle: "Not available on a phone",
+    phoneMessage: "This page needs a larger screen. Open it on a tablet or computer.",
+    touchTitle: "Touchscreen required",
+    touchMessage: "Open this page on a phone or tablet with a touchscreen.",
+    tvPhoneTitle: "Use a larger screen",
+    tvPhoneMessage: "Display setup is intended for a TV. On a phone, return to Connect device.",
     rotateTitle: "Rotate your device",
     rotateMessage: "This page needs a wider view. Rotate your device — the page will appear on its own.",
     narrowTitle: "Window too narrow",

@@ -37,6 +37,7 @@ import {
 import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T13432";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T13432";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-13T14412";
 import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T13432";
 
 const MSG = {
@@ -1225,6 +1226,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // initPage: dostęp, topbar i konto wg mapy (auth startuje równolegle z i18n)
   const userP = initPage("games", { ready: i18nP, account: { withAccountSettings: true } });
   await i18nP;
+  initListHeaderLayout();
   // Typ to zakładki (preparowana/tekstowa/punktowa/rynek) — filtr tylko po stanie.
   initListSearch({
     grids: "#grid", tile: ".card", name: ".name",

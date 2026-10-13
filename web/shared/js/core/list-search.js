@@ -61,8 +61,10 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     mobileSearch.setAttribute("aria-label", mobileSearch.title);
   };
   label();
-  box.append(input, clear, mobileSearch);
-  slot.appendChild(box);
+  // Pole z małym X w środku; przycisk lupy jest osobnym sąsiadującym
+  // przyciskiem po prawej stronie pola.
+  box.append(input, clear);
+  slot.append(box, mobileSearch);
 
   let filterValue = "";
   let filterApi = null;
@@ -173,6 +175,10 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     if (input.value) {
       input.value = "";
       apply();
+      return;
+    }
+    if (!window.matchMedia("(max-width: 600px), (max-width: 980px) and (orientation: landscape)").matches) {
+      input.focus();
       return;
     }
     const modalInput = document.createElement("input");

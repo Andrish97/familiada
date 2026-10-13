@@ -95,7 +95,7 @@ function tileByName(page, name) {
 
 /* ================= E20: nagłówek wspólny Gier/Baz/Logo ================= */
 
-test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na komputerze i telefonie", async ({ page, context }, testInfo) => {
+test("E20: tytuł po lewej, akcje po prawej i lupa obok pola w Grach/Bazach/Logo", async ({ page, context }, testInfo) => {
   await loginAsPooledTestUser(page, context, 0);
   await serveBranchCode(context, { pages: ["games", "bases", "logo"] });
   const pages = [
@@ -119,10 +119,22 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
       const boxes = await page.evaluate(() => {
         const actions = document.querySelector(".bar > .actions").getBoundingClientRect();
         const heading = document.querySelector(".bar > :first-child").getBoundingClientRect();
-        return { actions: { left: actions.left, right: actions.right }, heading: { left: heading.left, right: heading.right } };
+        const below = document.querySelector(".bar").classList.contains("has-actions-below");
+        const search = document.querySelector(".list-search .searchBox");
+        const magnifier = document.querySelector(".list-search-open");
+        const input = search?.getBoundingClientRect();
+        const icon = magnifier?.getBoundingClientRect();
+        return {
+          actions: { left: actions.left, right: actions.right },
+          heading: { left: heading.left, right: heading.right }, below,
+          search: input && { left: input.left, right: input.right, height: input.height },
+          magnifier: icon && { left: icon.left, right: icon.right, height: icon.height },
+        };
       });
-      expect(boxes.actions.right, `${item.path}: actions overlap title at ${viewport.label}`).toBeLessThanOrEqual(boxes.heading.left + 1);
-      expect(boxes.heading.right, `${item.path}: title is outside the right column at ${viewport.label}`).toBeLessThanOrEqual(viewport.width - 8);
+      expect(boxes.heading.left, `${item.path}: title should start at the left at ${viewport.label}`).toBeLessThan(boxes.actions.left + 1);
+      expect(boxes.actions.right, `${item.path}: actions should align to the right at ${viewport.label}`).toBeGreaterThan(viewport.width - 220);
+      if (boxes.below) expect(Math.abs(boxes.actions.left - boxes.heading.left), `${item.path}: second-line actions should align left`).toBeLessThanOrEqual(2);
+      else expect(boxes.actions.left, `${item.path}: actions overlap the heading at ${viewport.label}`).toBeGreaterThanOrEqual(boxes.heading.right - 1);
       await expect(page.locator(`${item.action} .ico`)).toBeVisible();
       await expect(page.locator(item.action)).toHaveAccessibleName(/.+/);
       if (viewport.width <= 980) {
@@ -132,6 +144,12 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
           await expect(page.locator(selector)).toHaveAttribute("aria-label", /.+/);
         }
         await expect(page.locator(".list-search-open .ico")).toBeVisible();
+      } else {
+        expect(boxes.search, `${item.path}: desktop search field missing`).toBeTruthy();
+        expect(boxes.magnifier, `${item.path}: adjacent search button missing`).toBeTruthy();
+        expect(boxes.magnifier.left).toBeGreaterThanOrEqual(boxes.search.right - 1);
+        expect(boxes.search.height).toBeCloseTo(36, 0);
+        expect(boxes.magnifier.height).toBeCloseTo(36, 0);
       }
       await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${viewport.label}-${language}.png`), fullPage: true });
     }

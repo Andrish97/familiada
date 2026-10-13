@@ -22,11 +22,13 @@ import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/c
 import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-13T13432";
 import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-13T13432";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T13432";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-13T14412";
 import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T13432";
 import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-13T13432";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
+  initListHeaderLayout();
   // Moje/udostępnione to zakładki — filtr po roli (własna / edycja / odczyt).
   initListSearch({
     grids: "#mineGrid, #sharedGrid", tile: ".card", name: ".name",

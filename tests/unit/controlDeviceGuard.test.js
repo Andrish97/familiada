@@ -24,19 +24,25 @@ test('tablet portrait jest tabletem; obrót wystarcza dla progu 980 px', () => {
   assert.equal(api.deviceGuardState(700), 'ok');
 });
 
-test('telefon landscape pozostaje telefonem, ale może spełnić próg szerokości edytora', () => {
+test('telefon landscape pozostaje telefonem i blokuje stronę do obrócenia', () => {
   const api = load({ screenWidth: 390, screenHeight: 844, width: 844, height: 390, touch: true });
   assert.equal(api.getDeviceProfile().formFactor, 'phone');
   assert.equal(api.getDeviceProfile().orientation, 'landscape');
   assert.equal(api.isPhoneScreen(), true);
-  assert.equal(api.deviceGuardState(700), 'ok');
-  assert.equal(api.deviceGuardState(980), 'narrow');
+  assert.equal(api.deviceGuardState(700), 'rotate');
+  assert.equal(api.deviceGuardState(980), 'unsupported');
 });
 
-test('telefon portrait dostaje obrót tylko wtedy, gdy landscape spełni próg strony', () => {
+test('telefon portrait nie dostaje komunikatu o obrocie przy globalnej blokadzie landscape', () => {
   const api = load({ screenWidth: 390, screenHeight: 844, touch: true });
+  assert.equal(api.deviceGuardState(700), 'narrow');
+  assert.equal(api.deviceGuardState(980), 'unsupported');
+});
+
+test('telefon landscape nie przechodzi guardu szerokości mimo szerokiego viewportu', () => {
+  const api = load({ screenWidth: 390, screenHeight: 844, width: 844, height: 390, touch: true });
   assert.equal(api.deviceGuardState(700), 'rotate');
-  assert.equal(api.deviceGuardState(980), 'narrow');
+  assert.equal(api.deviceGuardState(980), 'unsupported');
 });
 
 test('desktop z wąskim viewportem nie jest klasyfikowany jako telefon', () => {

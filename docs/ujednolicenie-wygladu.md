@@ -919,15 +919,16 @@ wyglądu. E20 dopracowuje je razem według jednego wzorca.
 
 | Element | Docelowa zasada dla Gier, Baz i Logo |
 |---|---|
-| Górna część strony | Dwie niewidoczne kolumny: **akcje po lewej**, **tytuł i podpowiedź po prawej**. Tytuł i podpowiedź tworzą jedną grupę. |
-| Zawijanie | Elementy zawijają się w obrębie swojej kolumny; nie tworzą jednej mieszanej kolejki tytułu, podpowiedzi i przycisków. |
-| Wyszukiwanie i filtrowanie na telefonie | Przemyśleć wspólny, bardziej kompaktowy układ, żeby zajmował mniej miejsca i zostawiał więcej wysokości na listę; funkcje pozostają dostępne. Szczegółowy układ dopracować podczas wdrożenia E20. |
+| Górna część strony | Tytuł i podpowiedź zaczynają się od lewej, akcje są wyrównane do prawej, jeśli układ mieści się czytelnie. Krótka podpowiedź pozostaje w jednym wierszu. |
+| Zawijanie | Dłuższa podpowiedź może zawinąć się obok akcji, jeśli nie tworzy pustej, wysokiej kolumny. Gdy podpowiedź razem z całą grupą przycisków robi ciasny układ, przenieść wszystkie akcje do następnego wiersza i wyrównać je do lewej. Nie przewijać nagłówka poziomo. |
+| Wyszukiwanie | Pole ma wysokość 36 px jak sąsiednie akcje. Lupa jest osobnym przyciskiem po prawej stronie pola, a mały X wewnątrz pola czyści wpis. Na wąskim telefonie dolny pasek może pokazywać samą lupę otwierającą modal. |
+| Wyszukiwanie i filtrowanie na telefonie | Kompaktowe ikony filtra/sortowania i lupy; po otwarciu lupy modal z zatwierdzeniem OK. Zostawić przestrzeń listy i zachować dostępne etykiety dla czytników. |
 | Pozostałe typy stron | Ujednolicać w ramach ich własnego typu (np. edytory oraz strony kontaktów), zgodnie z ustalonym dla nich podziałem. |
 | Weryfikacja | Te same reguły na trzech stronach; telefon pionowo i poziomo oraz komputer, krótkie/długie tytuły i podpowiedzi, PL/EN/UK. Zrzuty z przykładowymi danymi po wykonaniu. |
 
-Ta decyzja zmienia docelowe strony nagłówka list zasobów względem
-wcześniejszego opisu „tytuł po lewej, akcje po prawej”. Wykonanych etapów
-nie otwiera ponownie; zmianę wdrożyć w E20. Manual pozostaje ostatni.
+Ta reguła zastępuje wcześniejsze stałe kolumny nagłówka. Tytuł zawsze
+zaczyna się od lewej, a wyrównanie akcji zależy od tego, czy mieszczą się
+obok bez ścisku. Manual pozostaje ostatni.
 
 ### E20 — model urządzeń i macierz układów (decyzja 2026-10-13)
 

@@ -195,10 +195,13 @@ export function renderToolbar(state) {
   // Renderuj "szkielet" TYLKO raz, potem aktualizuj wnętrze (żeby nie tracić fokusu w input)
   if (elToolbar.dataset.ready !== "1") {
     elToolbar.innerHTML = `
+      <div class="search-row">
       <div class="searchBox" id="searchBox">
         <div id="searchChips" class="searchChips"></div>
         <input id="searchText" class="searchText" placeholder="${t("baseExplorer.search.placeholder")}" />
         <button id="searchClearBtn" class="btn" type="button" title="${t("baseExplorer.search.clear")}" aria-label="${t("baseExplorer.search.clear")}">${icon("close")}</button>
+      </div>
+      <button id="searchSubmitBtn" class="btn search-submit" type="button" title="${t("common.searchByName")}" aria-label="${t("common.searchByName")}">${icon("search")}</button>
       </div>
 
       <div class="toolbar-btns-row">

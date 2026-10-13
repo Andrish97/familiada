@@ -36,6 +36,7 @@ import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPrevie
 import { cannotEditReason } from "./text.js?v=v2026-10-13T13432";
 import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-13T13432";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T13432";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-13T14412";
 
 const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-13T13432";
 const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-13T13432";
@@ -682,6 +683,7 @@ async function boot() {
   const userP = initPage("logoEditor", { ready: i18nP }); // auth startuje równolegle z i18n
   await i18nP;
   document.documentElement.classList.remove("page-loading");
+  initListHeaderLayout();
   initListSearch({ grids: "#grid", tile: ".logoTile", name: ".logoName" });
 
   currentUser = await userP;

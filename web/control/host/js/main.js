@@ -16,6 +16,9 @@ import { createHostRenderer } from "./render.js?v=v2026-10-13T13432";
 import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-13T13432";
 import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-13T13432";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { getDeviceProfile } from "../../../shared/js/core/device-guard.js?v=v2026-10-13T13432";
+import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-13T13432";
+import "../../../shared/js/core/orientation-guard.js?v=v2026-10-13T14412";
 
 function parseParams() {
   const u = new URL(location.href);
@@ -221,6 +224,13 @@ function setupPeekSwipe(renderer) {
 
 async function main() {
   await initI18n({ withSwitcher: false });
+  if (!getDeviceProfile().touch) {
+    document.body.style.visibility = "hidden";
+    document.documentElement.removeAttribute("data-touch-guard-pending");
+    showPageGuard({ kind: "device", state: "touch", iconName: "phone", titleKey: "pageGuard.touchTitle", messageKey: "pageGuard.touchMessage" });
+    return;
+  }
+  document.documentElement.removeAttribute("data-touch-guard-pending");
   setupFullscreenButton();
   setupOrientationClass();
   setupResponsivePaper();

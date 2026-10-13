@@ -43,15 +43,21 @@ export function isPhoneScreen() {
   return getDeviceProfile().formFactor === "phone";
 }
 
-/** "ok" | "rotate" | "narrow" — decyzja zależy od wymagań funkcji. */
+/** "ok" | "rotate" | "narrow" | "unsupported" — format, orientacja i próg. */
 export function deviceGuardState(minWidth = MIN_WORK_WIDTH) {
   const profile = getDeviceProfile();
+  if (profile.formFactor === "phone" && minWidth > profile.screenLongSide) return "unsupported";
+  if (profile.formFactor === "phone" && profile.orientation === "landscape") return "rotate";
   if (profile.viewportWidth >= minWidth) return "ok";
-  if (profile.touch && profile.orientation === "portrait" && profile.screenLongSide >= minWidth) return "rotate";
+  // Telefony mają wspólną blokadę landscape, więc ich nie zachęcamy do
+  // obrotu na stronach z szerokością minimalną. Obrót sugerujemy tabletowi,
+  // gdy jego fizyczny ekran faktycznie pozwoli spełnić próg viewportu.
+  if (profile.formFactor === "tablet" && profile.orientation === "portrait" && profile.screenLongSide >= minWidth) return "rotate";
   return "narrow";
 }
 
 const TEXTS = {
+  unsupported: { title: "pageGuard.phoneTitle", message: "pageGuard.phoneMessage", icon: "phone" },
   rotate: { title: "pageGuard.rotateTitle", message: "pageGuard.rotateMessage", icon: "rotate-right" },
   narrow: { title: "pageGuard.narrowTitle", message: "pageGuard.narrowMessage", icon: "fullscreen-enter" },
 };
@@ -92,7 +98,7 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null,
   });
   const refresh = () => {
     apply();
-    if (!readyResolved && deviceGuardState(minWidth) === "ok") {
+    if (!readyResolved && currentState() === "ok") {
       readyResolved = true;
       resolveReady?.(true);
     }

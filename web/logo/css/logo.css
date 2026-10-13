@@ -33,7 +33,7 @@
 .logoGridBig{
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   align-items: stretch;
 }
 .logoGridBig .addCard{ min-height: 230px; }
@@ -76,7 +76,7 @@
   align-items:flex-start;
   justify-content:space-between;
   gap:10px;
-  min-height: 40px;
+  min-height: 0;
 }
 .logoActions{
   display: flex;

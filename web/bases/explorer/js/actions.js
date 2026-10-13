@@ -2509,6 +2509,7 @@ export function wireActions({ state }) {
 
   // Blokada fokusa w search, gdy mamy aktywne Tagi/Kategorie (FILTER)
   const searchInput = document.getElementById("searchText");
+  document.getElementById("searchSubmitBtn")?.addEventListener("click", () => searchInput?.focus());
   if (searchInput) {
     searchInput.addEventListener("mousedown", () => {
       if (!isSearchLockedByLeftSelection(state)) return;

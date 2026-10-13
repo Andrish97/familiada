@@ -261,6 +261,10 @@ input,textarea {
     min-width: 140px;
 }
 
+.search-row{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0}
+.search-submit{ width:36px; height:36px; min-height:36px; flex:0 0 36px; display:grid; place-items:center; padding:0; }
+#searchClearBtn{ width:26px; height:26px; min-height:26px; flex:0 0 26px; display:grid; place-items:center; padding:0; border-radius:8px; }
+
 .chip,.tag-dots {
     display: inline-flex;
     align-items: center;
@@ -1666,8 +1670,10 @@ tr.row .tag-dot[data-tip]::before {
   }
 
   /* SearchBox — pełna szerokość, wiersz 1 */
+  .search-row { width:100%; min-width:0; flex:0 0 100%; }
   .searchBox {
-    width: 100%;
+    width: auto;
+    flex:1 1 auto;
     min-width: 0;
     flex-shrink: 0;
     margin-right: 0;

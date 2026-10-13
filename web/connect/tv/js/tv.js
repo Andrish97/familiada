@@ -1,6 +1,17 @@
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-13T13432";
 import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-13T13432";
+import { getDeviceProfile } from "../../../shared/js/core/device-guard.js?v=v2026-10-13T13432";
+import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-13T13432";
 await initI18n();
+const phoneBlocked = getDeviceProfile().formFactor === "phone";
+if (phoneBlocked) {
+  document.body.style.visibility = "hidden";
+  document.documentElement.removeAttribute("data-tv-guard-pending");
+  showPageGuard({ kind: "device", state: "phone", iconName: "display", titleKey: "pageGuard.tvPhoneTitle", messageKey: "pageGuard.tvPhoneMessage" });
+} else {
+  document.documentElement.removeAttribute("data-tv-guard-pending");
+}
+if (!phoneBlocked) {
 const form = document.getElementById("tvConnectForm");
 const input = document.getElementById("tvCode");
 const button = document.getElementById("tvConnect");
@@ -74,3 +85,4 @@ form.addEventListener("submit", async (event) => {
 input.disabled = false;
 button.disabled = false;
 input.focus();
+}

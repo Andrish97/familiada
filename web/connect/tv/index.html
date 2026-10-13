@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pl">
 <head>
+  <style>html[data-tv-guard-pending] body{visibility:hidden}</style><script>document.documentElement.dataset.tvGuardPending="true"</script>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="/connect/tv/js/tv.js?v=v2026-10-13T13432"></script>
 </head>
-<body class="tv-body">
+<body class="tv-body" data-device-screen>
   <header class="topbar tv-topbar">
     <div class="brand">FAMILIADA</div>
     <div class="topbar-section topbar-section-3 tv-language"></div>
@@ -25,6 +26,5 @@
       <p id="tvMessage" role="status" aria-live="polite"></p>
     </form>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-13T13432"></script>
 </body>
 </html>
