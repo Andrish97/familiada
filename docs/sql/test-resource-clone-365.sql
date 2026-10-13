@@ -51,6 +51,8 @@ BEGIN
  EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'resource_in_use' THEN RAISE; END IF; END;
  DELETE FROM public.edit_locks WHERE holder_tab_id='clone-test-tab';
  INSERT INTO public.games(owner_id,name,type,status,is_demo) VALUES(actor,'Demo renamed','prepared','draft',true) RETURNING id INTO game_source;
+ UPDATE public.games SET is_demo=false WHERE id=game_source;
+ IF public._resource_clone_read(actor,'game',game_source)->>'demo_origin' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'public flag change erased demo provenance'; END IF;
  PERFORM public.game_import_content(game_source,'Demo renamed','[{"text":"A?","answers":[{"text":"Yes","fixed_points":30}]}]');
  packet:='{"game":{"name":"Demo renamed kopia","type":"prepared"},"questions":[{"text":"A?","answers":[{"text":"Yes","fixed_points":30}]}]}';
  result:=public._resource_clone_write(actor,actor,'game','duplicate',game_source,gen_random_uuid(),packet,true);game_result:=(result->>'id')::uuid;

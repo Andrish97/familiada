@@ -74,6 +74,7 @@ BEGIN
  ELSE snapshot:=jsonb_build_object('logo',root); END IF;
  SELECT coalesce(bool_or(demo_origin),false) INTO inherited_demo FROM public.resource_clone_receipts
   WHERE recipient_id=p_actor AND CASE p_kind WHEN 'game' THEN game_id WHEN 'base' THEN base_id ELSE logo_id END=p_source;
+ inherited_demo:=inherited_demo OR EXISTS(SELECT 1 FROM public.resource_demo_origins WHERE CASE p_kind WHEN 'game' THEN game_id WHEN 'base' THEN base_id ELSE logo_id END=p_source);
  SELECT coalesce(jsonb_agg(jsonb_build_object('slot',slot,'lang',lang,'payload',payload) ORDER BY slot,lang),'[]') INTO templates FROM public.demo_template_data
   WHERE (p_kind='game' AND payload ? 'game') OR (p_kind='logo' AND slot LIKE 'logo_%');
  RETURN snapshot||jsonb_build_object('demo_origin',inherited_demo,'demo_templates',templates);

@@ -34,3 +34,6 @@ test('the real exporter has one independent source builder and all languages exp
  assert.match(source,/source = await standaloneLogoSource\(p.source, fetchImageAsDataUrl\)/);assert.doesNotMatch(source,/could not embed image|URL zostaje tylko/);
  for(const lang of ['pl','en','uk']){const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);assert.equal(typeof dict.logoEditor.errors.exportIncomplete,'string');}
 });
+test('invalid embedded-only source never produces a seemingly complete export',async()=>{
+ for(const imageData of ['not image data',{invalid:true},'data:text/html,invalid'])await assert.rejects(standaloneLogoSource({mode:'IMAGE',imageData},()=>assert.fail('invalid embedded data was fetched')),/incomplete_logo_source/);
+});
