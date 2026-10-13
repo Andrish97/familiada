@@ -13,9 +13,9 @@ test.beforeEach(async ({ context }) => {
   await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
 });
 
-test("E20: Marketplace działa dotykowo w landscape — lista, wyszukiwanie i szczegóły", async ({ browser }, testInfo) => {
+test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async ({ browser }, testInfo) => {
   const context = await browser.newContext({
-    viewport: { width: 844, height: 390 },
+    viewport: { width: 390, height: 844 },
     isMobile: true,
     hasTouch: true,
     serviceWorkers: "block",
@@ -27,18 +27,34 @@ test("E20: Marketplace działa dotykowo w landscape — lista, wyszukiwanie i sz
     await page.goto(`${URL}?sort=newest`, { waitUntil: "domcontentloaded" });
     const firstCard = page.locator("#browseGrid .mkt-card").first();
     await expect(firstCard).toBeVisible({ timeout: 20_000 });
-    await expect(page.locator("#searchInput")).toBeVisible();
+    await expect(page.locator("#searchInput")).toBeHidden();
+    await expect(page.locator("#btnSearchFocus")).toBeVisible();
     await expect(page.locator("#langFilter")).toBeVisible();
     await expect(page.locator("#sortSelect")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
     const title = (await firstCard.locator(".mkt-card-title").innerText()).trim();
-    await page.locator("#searchInput").fill(title);
+    await page.locator("#btnSearchFocus").click();
+    const searchModal = page.locator(".uni-modal");
+    await expect(searchModal).toBeVisible();
+    await searchModal.locator(".uni-inp").fill(title);
+    await searchModal.locator(".uni-foot .gold").click();
+    await expect(page.locator("#searchInput")).toHaveValue(title);
+    await expect(page).toHaveURL(/q=/);
     await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
+
+    await page.locator("#langFilter .ui-select-btn").click();
+    await page.locator('#langFilter .ui-select-item[data-value="pl"]').click();
+    await expect(page).toHaveURL(/filter=pl/);
+    await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
+    await page.locator("#sortSelect .ui-select-btn").click();
+    await page.locator('#sortSelect .ui-select-item[data-value="newest"]').click();
+    await expect(page).toHaveURL(/sort=newest/);
+
     await firstCard.click();
     await expect(page.locator("#gameDetailOverlay")).toBeVisible();
     await expect(page.locator("#detailTitle")).toContainText(title);
-    await page.screenshot({ path: testInfo.outputPath("shot-e20-marketplace-landscape-detail.png"), fullPage: true });
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-marketplace-phone-detail.png"), fullPage: true });
     await page.locator("#btnDetailClose").click();
     await expect(page.locator("#gameDetailOverlay")).toBeHidden();
     await expect(page.locator("#searchInput")).toHaveValue(title);
