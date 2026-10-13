@@ -21,6 +21,10 @@ test('native Storage copy uses JSON, trusted owner directories and metadata only
 test('completed clone retry survives deletion of the source and only inspects its own immutable destination',async()=>{
  await runMock([metadata()],async calls=>{assert.equal((await copyLogoStorageImage(env,plan)).already,true);assert.equal(calls.length,1);assert.ok(calls[0].url.endsWith(path));});
 });
+test('deployed Storage missing-HEAD400 still requires a valid source and never treats a broken source as usable',async()=>{
+ await runMock([new Response(null,{status:400}),metadata(),new Response('{}'),metadata()],async()=>assert.equal((await copyLogoStorageImage(env,plan)).already,false));
+ await runMock([new Response(null,{status:400}),new Response(null,{status:400})],async()=>await assert.rejects(copyLogoStorageImage(env,plan),/copy_image_source_changed/));
+});
 test('concurrent copy accepts only the identical destination after a Storage conflict',async()=>{
  for(const status of [400,409])await runMock([new Response(null,{status:404}),metadata(),new Response('{}',{status}),metadata()],async()=>{assert.equal((await copyLogoStorageImage(env,plan)).already,true);});
 });

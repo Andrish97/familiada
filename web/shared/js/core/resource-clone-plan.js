@@ -1,9 +1,9 @@
 // Definition preparation shared by duplicate-to-self and send-to-friend.
 // Authorization, demo provenance and the persisted request ID are server data.
-import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-13T01310';
-import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-13T01310';
-import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-13T01310';
-import { parseLogoPackage } from '../../../logo/js/package.js?v=v2026-10-13T01310';
+import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-13T01590';
+import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-13T01590';
+import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-13T01590';
+import { parseLogoPackage } from '../../../logo/js/package.js?v=v2026-10-13T01590';
 
 export function duplicateResourceName(name, names, suffix, maxLength = 80) {
   if (typeof suffix !== 'string' || !suffix.trim() || !Number.isInteger(maxLength) || maxLength < 12) throw new Error('invalid_copy_name');
@@ -18,6 +18,32 @@ export function duplicateResourceName(name, names, suffix, maxLength = 80) {
   throw new Error('copy_name_unavailable');
 }
 
+export function isDemoCloneSource(kind, source) {
+  if (source[kind]?.is_demo === true || source.demo_origin === true) return true;
+  const templates = source.demo_templates || [];
+  if (kind === 'game') {
+    const signature = packet => JSON.stringify({type: packet.game.type, questions: packet.questions});
+    const current = signature(gameExportSnapshot(source.game, source.questions));
+    return templates.some(template => {
+      const packet = template.payload;
+      if (!packet?.game || !Array.isArray(packet.questions)) return false;
+      // Compare the same export definition, excluding names and database IDs.
+      // Both seeded and copied closed polls may now be a prepared game.
+      const status = template.slot?.endsWith('_closed') ? 'ready' : 'draft';
+      return current === signature(gameExportSnapshot({...packet.game, status}, packet.questions));
+    });
+  }
+  if (kind === 'logo') {
+    const signature = value => {
+      const logo = parseLogoPackage(value);
+      return JSON.stringify(logo.type === 'GLYPH_30x10' ? {type: logo.type, layers: logo.payload.layers} : {type: logo.type, bits: logo.payload.bits_b64});
+    };
+    const current = signature(source.logo);
+    return templates.some(template => template.slot?.startsWith('logo_') && current === signature(template.payload));
+  }
+  return false;
+}
+
 export async function prepareResourceClone(kind, source, options) {
   const {action, names = [], suffix, fallbackName, materializeImage} = options;
   if (!['duplicate', 'send'].includes(action) || !['game', 'base', 'logo'].includes(kind) || action === 'send' && kind === 'base') throw new Error('invalid_copy_action');
@@ -25,7 +51,7 @@ export async function prepareResourceClone(kind, source, options) {
   if (!root) throw new Error('invalid_copy_source');
   // Trusted provenance survives duplication internally, without a parent FK
   // or a visible badge. It is never accepted as proof from the request body.
-  const demoOrigin = root.is_demo === true || source.demo_origin === true;
+  const demoOrigin = isDemoCloneSource(kind, source);
   if (action === 'send' && demoOrigin) throw new Error('demo_not_sendable');
   let definition;
   if (kind === 'game') definition = gameExportSnapshot(root, source.questions, fallbackName);

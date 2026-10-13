@@ -1,19 +1,19 @@
 // Called only with a recipient and copy ID from the validated database plan.
 import { decodeImportedLogoImage } from "../../../../../web/shared/js/core/logo-image-data.js";
+import { cloneLogoImagePath } from "./paths.js";
 import { getSupabaseConfig } from "../core/supabase.js";
 
-const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function digest(bytes) {
   const value = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(value), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export async function uploadReceivedLogoImage(env, plan) {
-  if (!uuid.test(plan?.recipient_id || "") || !uuid.test(plan?.copy_id || "")) throw new Error("invalid_copy_storage_plan");
+export async function uploadCloneLogoImage(env, plan) {
+  cloneLogoImagePath(plan, "image/png");
   const cfg = getSupabaseConfig(env);
   if (!cfg) throw new Error("copy_storage_unavailable");
-  const { bytes, mime, ext } = decodeImportedLogoImage(plan.image_data);
-  const path = `${plan.recipient_id}/received/${plan.copy_id}.${ext}`;
+  const { bytes, mime } = decodeImportedLogoImage(plan.image_data);
+  const path = cloneLogoImagePath(plan, mime);
   const objectPath = `/storage/v1/object/user-logos/${path}`;
   const hash = await digest(bytes);
   const headers = { apikey: cfg.serviceRoleKey, Authorization: `Bearer ${cfg.serviceRoleKey}` };
