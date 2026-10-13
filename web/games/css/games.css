@@ -76,27 +76,30 @@ body.games-body > main.wrap{
   .wrap{
     padding: 15px;
   }
+  .bar{ gap: 8px; }
+  .bar > .actions{ gap: 4px; flex-wrap: wrap; }
 }
 
 /* --- BAR (nagłówek listy) nie może rozpychać wysokości --- */
 .bar{
   flex: 0 0 auto;
-
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line2);
   margin-bottom: 0;
 }
 
-@media (max-width: 980px) and (orientation: portrait){
-  .bar{
-    display: block;
-  }
+/* Wspólny nagłówek list Gier, Baz i Logo: akcje po lewej,
+   tytuł z podpowiedzią po prawej. */
+.bar > :first-child{ grid-column: 2; grid-row: 1; min-width: 0; text-align: right; }
+.bar > .actions{
+  grid-column: 1; grid-row: 1; min-width: 0;
+  justify-content: flex-start; margin: 0;
 }
+.bar .title, .bar .hint{ overflow-wrap: anywhere; }
 
 .title{
   font-size: 18px;
