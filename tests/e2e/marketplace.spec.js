@@ -34,6 +34,7 @@ test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
     const title = (await firstCard.locator(".mkt-card-title").innerText()).trim();
+    const language = (await firstCard.locator(".mkt-lang-badge").innerText()).trim().toLowerCase();
     await page.locator("#btnSearchFocus").click();
     const searchModal = page.locator(".uni-modal");
     await expect(searchModal).toBeVisible();
@@ -44,8 +45,8 @@ test("E20: Marketplace na telefonie używa ikon wyszukiwania i filtrów", async 
     await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
 
     await page.locator("#langFilter .ui-select-btn").click();
-    await page.locator('#langFilter .ui-select-item[data-value="pl"]').click();
-    await expect(page).toHaveURL(/filter=pl/);
+    await page.locator(`#langFilter .ui-select-item[data-value="${language}"]`).click();
+    await expect(page).toHaveURL(new RegExp(`filter=${language}`));
     await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
     await page.locator("#sortSelect .ui-select-btn").click();
     await page.locator('#sortSelect .ui-select-item[data-value="newest"]').click();
