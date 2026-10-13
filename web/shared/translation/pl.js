@@ -3584,6 +3584,7 @@ const pl = {
   },
 
   tasks: {
+    load: { loading: "Wczytuję zadania…", failed: "Nie udało się wczytać zadań.", retry: "Ponów" },
     title: "Familiada — zadania",
     bar: {
       title: "Zadania",

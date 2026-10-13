@@ -3683,6 +3683,7 @@ const en = {
   },
 
   tasks: {
+    load: { loading: "Loading tasks…", failed: "Could not load tasks.", retry: "Retry" },
     title: "Familiada — tasks",
     bar: {
       title: "Tasks",

@@ -1,11 +1,11 @@
 // Zadania: wyłącznie ankiety. Do zrobienia / Zrobione (5 dni).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T10142";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T10142";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T10142";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-13T10142";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T10142";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-13T10142";
-import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-13T10142";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T10165";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T10165";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T10165";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-13T10165";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T10165";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-13T10165";
+import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-13T10165";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[tasks] i18n nieaktywny:", err);
@@ -15,12 +15,16 @@ const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
 
 const $ = (id) => document.getElementById(id);
 const host = $("tasksHost");
+const loadState = $("tasksLoadState");
+const loadMessage = $("tasksLoadMessage");
+const loadRetry = $("tasksLoadRetry");
 
 const qs = new URLSearchParams(location.search);
 const focusPollToken = qs.get("t");
 let focusHandled = false;
 
 let tasks = [];
+let tasksLoaded = false;
 
 function fmtDate(value) {
   if (!value) return "";
@@ -93,16 +97,27 @@ function focusFromUrl() {
 let inFlight = null;
 async function refresh() {
   if (inFlight) return inFlight;
+  if (!tasksLoaded && loadState) {
+    loadState.hidden = false;
+    if (loadMessage) loadMessage.textContent = t("tasks.load.loading");
+    if (loadRetry) loadRetry.hidden = true;
+  }
   inFlight = (async () => {
     try {
       const { data, error } = await sb().rpc("tasks_list", { p_kind: null });
       if (error) throw error;
       tasks = Array.isArray(data) ? data.filter(task => task.kind === "poll") : [];
+      tasksLoaded = true;
+      if (loadState) loadState.hidden = true;
+      document.querySelector(".tasks-scroll")?.classList.add("skel-step-ready");
       render();
       focusFromUrl();
     } catch (e) {
       console.error("[tasks] tasks_list:", e);
-      toast(t("tasks.errors.load"), { kind: "error" });
+      if (!tasksLoaded) {
+        if (loadMessage) loadMessage.textContent = t("tasks.load.failed");
+        if (loadRetry) loadRetry.hidden = false;
+      } else toast(t("tasks.errors.load"), { kind: "error" });
     }
   })();
   try { await inFlight; } finally { inFlight = null; }
@@ -112,10 +127,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const user = await initPage("tasks", { ready: i18nReady, back: $("btnBack") });
   if (!user) return;
 
+  loadRetry?.addEventListener("click", () => void refresh());
   window.addEventListener("i18n:lang", render);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
   setInterval(() => { if (!document.hidden) refresh(); }, 20000);
 
   await refresh();
-  document.querySelectorAll("[data-skel-step]").forEach((el) => el.classList.add("skel-step-ready"));
 });

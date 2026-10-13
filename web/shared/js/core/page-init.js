@@ -28,17 +28,17 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-13T10142";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-13T10142";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-13T10142";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-13T10142";
+import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-13T10165";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-13T10165";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-13T10165";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-13T10165";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-13T10142"),
-    import("./topbar-controller.js?v=v2026-10-13T10142"),
-    import("./modal-sheet.js?v=v2026-10-13T10142"),
-    import("./device-guard.js?v=v2026-10-13T10142"),
+    import("./auth.js?v=v2026-10-13T10165"),
+    import("./topbar-controller.js?v=v2026-10-13T10165"),
+    import("./modal-sheet.js?v=v2026-10-13T10165"),
+    import("./device-guard.js?v=v2026-10-13T10165"),
   ]);
   return {
     getUser: auth.getUser,

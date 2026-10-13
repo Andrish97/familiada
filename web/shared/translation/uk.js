@@ -3681,6 +3681,7 @@ const uk = {
   },
 
   tasks: {
+    load: { loading: "Завантажую завдання…", failed: "Не вдалося завантажити завдання.", retry: "Повторити" },
     title: "Familiada — завдання",
     bar: {
       title: "Завдання",
