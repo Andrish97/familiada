@@ -261,3 +261,17 @@ Lokalne draft-copy-graph-365.sql i test-copy-graph-365.sql sprawdziły
 stałego odbiorcę, zegary i pojedynczy import przy akceptacji. Nie są
 migracją ani wdrożoną wysyłką i nie wolno publikować ich jako realizacji
 nowej decyzji; wymagają przeróbki momentu tworzenia kopii oraz blokad.
+
+### Lokalny prototyp po korekcie — tworzenie podczas Wyślij
+
+draft-copy-send-365.sql oraz test-copy-send-365.sql, izolowany
+fam365send: trzy typy własnej gry powstają podczas wysłania, zanim
+odbiorca kliknie Akceptuj. Akceptacja zatwierdza te same ID. Odmowa
+usuwa grę/pytania/odpowiedzi i nie trzyma pakietu do odtworzenia;
+granicę5 dni oraz usuwanie obu kont sprawdza rollback. Wybrane stare
+mutacje gry/pytań/odpowiedzi/runtime są blokowane przed akceptacją.
+
+To **lokalny prototyp, bez publicznego API i bez migracji**. Dalej:
+pełny audyt blokad/wyścigów i atomowego snapshotu źródła, własne pliki
+Logo podczas wysłania, kolejka/alokacja/dostarczenie, Go, UI i plakietki.
+Nie deklarować tym wdrożenia wysyłania ani testów Logo/SMTP.
