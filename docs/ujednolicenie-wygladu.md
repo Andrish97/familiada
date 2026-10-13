@@ -881,22 +881,22 @@ operacje importu/eksportu wymagają osobnego przeglądu.
 przygotowaniu pliku. Okno pozostaje z wynikiem widocznym do kliknięcia
 „Gotowe”; przycisk tylko zamyka okno i nie powtarza pobierania. Błąd też
 pozostaje widoczny do zamknięcia. Branch E2E `38383237666`, 1/1, w tym
-eksport z polskimi znakami i import pobranego pliku; pełny unit602/602.
-Pozostałe ścieżki Gier/Baz/Logo nadal wymagają przeglądu błędu, postępu,
-retry i zakończenia.
+eksport z polskimi znakami i import pobranego pliku; kontrolowany błąd/retry
+`38385655794`, 1/1; pełny unit602/602.
 
 **Eksport JSON Bazy (2026-10-13):** identyczny stan pozostaje po
 pobraniu i po błędzie; „Gotowe” zamyka wyłącznie okno. Round-trip Bazy z
 folderami, tagami pytań i tagami folderów przeszedł w E2E
-`38383626341`, 1/1; pełny unit602/602. Błąd i retry nadal trzeba
-zweryfikować dla tego eksportu.
+`38383626341`, 1/1; kontrolowany HTTP500 pozostaje widoczny po3,1 s, a
+ponowny eksport działa (`38385776085`, 1/1); unit602/602.
 
 **Eksport Logo (2026-10-13):** po pobraniu okno pokazuje trwały wynik i
 „Gotowe”; błąd też wyświetla się w oknie. E2E `38383911498`, 1/1,
 sprawdza nazwę z polskimi znakami i jawne zamknięcie okna; pełny unit602/602.
 Kontrolowany HTTP500 pozostał widoczny ponad sekundę, a następnie eksport
-zadziałał po ponowieniu: `38385034279`, 1/1, unit602/602. Import Logo oraz
-inne błędy/retry w starych ścieżkach Gier/Baz/Logo nadal wymagają przeglądu.
+zadziałał po ponowieniu: `38385034279`, 1/1, unit602/602. Importy
+Gier/Baz/Logo i pozostałe błędy/retry w starych ścieżkach nadal wymagają
+przeglądu.
 
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
