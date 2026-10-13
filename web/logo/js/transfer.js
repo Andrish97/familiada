@@ -5,9 +5,10 @@
 //   (A) { kind:"GLYPH"|"PIX", name, payload:{ rows | layers | bits_b64, source } }  -- nasz eksport
 //   (B) { type:"GLYPH_30x10"|"PIX_150x70", name, payload }                          -- stary zrzut z bazy
 
-import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-13T00334";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-13T00334";
-import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-13T00334";
+import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-13T01064";
+import { parseLogoPackage } from "./package.js?v=v2026-10-13T01064";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-13T01064";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-13T01064";
 
 /** Nazwa pliku z nazwy logo -- zostawia litery każdego alfabetu, wycina znaki zakazane w systemach plików. */
 export function safeFileName(name, fallback) {
@@ -77,36 +78,12 @@ export function downloadJson(obj, fileName) {
 export function parseImport(text, fallbackName) {
   let obj;
   try { obj = JSON.parse(text); } catch { throw new Error(t("logoEditor.errors.invalidJson")); }
-
-  const kindRaw = String(obj?.kind || "").toUpperCase();
-  const typeRaw = String(obj?.type || "").toUpperCase();
-  const kind = kindRaw || (typeRaw.includes("GLYPH") ? "GLYPH" : typeRaw.includes("PIX") ? "PIX" : "");
-  const name = String(obj?.name || "").trim() || fallbackName;
-  const p = obj?.payload || {};
-  const source = p.source && typeof p.source === "object" ? { ...p.source } : {};
-  delete source.editHistory;
-  // Osadzony obraz ma pierwszeństwo przed URL-em ze Storage innego konta/instalacji.
-  if (source.imageData) delete source.imageUrl;
-  delete source.hostRasterUrl;
-  delete source.hostRasterData;
-
-  if (kind === "GLYPH") {
-    const rows = normalizeRows(p.rows ?? p.layers?.[0]?.rows ?? obj?.rows);
-    if (!source.mode) source.mode = "TEXT";
-    return { name, type: TYPE_GLYPH, payload: { layers: [{ color: "main", rows }], source } };
-  }
-
-  if (kind === "PIX") {
-    const w = Number(p.w) || DOT_W;
-    const h = Number(p.h) || DOT_H;
-    if (w !== DOT_W || h !== DOT_H) {
-      throw new Error(t("logoEditor.errors.pixSize", { expectedW: DOT_W, expectedH: DOT_H, actualW: w, actualH: h }));
+  try {
+    return parseLogoPackage(obj, fallbackName);
+  } catch (error) {
+    if (["pixSize", "missingBits", "unknownImportFormat"].includes(error?.code)) {
+      throw new Error(t(`logoEditor.errors.${error.code}`, error.params));
     }
-    const bits_b64 = String(p.bits_b64 || "");
-    if (!bits_b64) throw new Error(t("logoEditor.errors.missingBits"));
-    if (!source.mode) source.mode = source.fabricData ? "DRAW" : "IMAGE";
-    return { name, type: TYPE_PIX, payload: { w, h, format: PIX_FORMAT, bits_b64, source } };
+    throw error;
   }
-
-  throw new Error(t("logoEditor.errors.unknownImportFormat"));
 }

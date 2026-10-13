@@ -1,9 +1,10 @@
 // familiada/logo/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T00334";
-import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T00334";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-13T00334";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T01064";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T01064";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-13T01064";
+import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-13T01064";
 
 /** Błąd „zasób zajęty” z RPC *_checked -- reason: logo (inna karta edytuje to logo)
  *  | control | settings (pula logo trzymana przez grę) | locked. */
@@ -53,14 +54,7 @@ export async function createLogo(row) {
 /** Upload a self-contained IMAGE source from an imported .famlogo to Storage. */
 export async function uploadImportedLogoImage(dataUrl, userId) {
   if (!userId) throw new Error("You must be signed in to upload a logo image");
-  const match = String(dataUrl || "").match(/^data:(image\/(?:jpeg|png|gif|webp));base64,([A-Za-z0-9+/]+=*)$/i);
-  if (!match) throw new Error("Unsupported or invalid embedded logo image");
-  const mime = match[1].toLowerCase();
-  const encoded = match[2];
-  if (encoded.length > Math.ceil((5 * 1024 * 1024) / 3) * 4) throw new Error("Logo image exceeds 5 MB");
-  const bytes = Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
-  if (!bytes.length || bytes.length > 5 * 1024 * 1024) throw new Error("Logo image exceeds 5 MB or is empty");
-  const ext = { "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp" }[mime];
+  const { bytes, mime, ext } = decodeImportedLogoImage(dataUrl);
   const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const storage = sb().storage.from("user-logos");
   const { error } = await storage.upload(path, new Blob([bytes], { type: mime }), {
