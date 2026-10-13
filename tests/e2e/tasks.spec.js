@@ -143,7 +143,7 @@ for (const viewport of [
       expect(metrics.rowGap).toBeGreaterThanOrEqual(12);
       expect(metrics.overflow).toBe(false);
       expect(metrics.noteWrap).toBe("normal");
-      await page.screenshot({ path: test.info().outputPath(`tasks-${viewport.label}.png`), fullPage: true });
+      await page.screenshot({ path: test.info().outputPath(`shot-e20-tasks-${viewport.label}.png`), fullPage: true });
       fixture = [];
       await page.goto(TASKS_URL);
       await expect(page.locator(".rowsEmpty")).toBeVisible();

@@ -21,7 +21,7 @@ export async function initContactsPage(pageId) {
   let rows = [];
   let inFlight = null;
   let declinedCollapsed = true;
-  const mobile = matchMedia("(max-width: 720px)");
+  const mobile = matchMedia("(max-width: 720px), (max-width: 980px) and (orientation: landscape)");
   const allowedTabs = PAGES[pageId].tabs;
   let activeTab = tabFromUrl(allowedTabs, allowedTabs[0]);
   const tabButtons = [...document.querySelectorAll("[data-contact-tab]")];

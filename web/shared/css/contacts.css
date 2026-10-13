@@ -14,7 +14,7 @@
 .contacts-invite-row .inp{ flex: 1 1 auto; min-width: 0; }
 .contacts-invite-row .btn{ flex: 0 0 auto; }
 .contacts-card .shareRow.rowsFocus{ border-color: var(--gold); }
-@media (max-width: 720px){
+@media (max-width: 720px), (max-width: 980px) and (orientation: landscape){
   .contacts-body > main.wrap{ padding: 15px; }
   .contacts-layout{ grid-template-columns: minmax(0,1fr); gap: 14px; }
   .contacts-card{ padding: 10px; }
@@ -25,7 +25,7 @@
 .contacts-tabs{ margin: 0; --tab-height: 36px; --tab-extra: 1px; flex: 1 1 auto; min-height: 0; }
 .contacts-tabs > .tabs-strip{ display: none; }
 .contacts-card[hidden]{ display: none; }
-@media (max-width: 720px){
+@media (max-width: 720px), (max-width: 980px) and (orientation: landscape){
   .contacts-tabs > .tabs-strip{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
   .contacts-tabs .tab-slot{ width: 100%; }
   .contacts-tabs .tab-label{ z-index: 3; }

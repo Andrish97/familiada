@@ -344,7 +344,7 @@ test("@mailbox znajomi346: wypisanie obu stron, własna odmowa, undo i unieważn
   }
 });
 
-test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }) => {
+test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }, testInfo) => {
   const owner = await user(browser, 7);
   try {
     let empty = false;
@@ -370,6 +370,15 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
       await expect(owner.page).toHaveURL(/tab=received/);
       await expect(owner.page.locator("#contactsInvite")).toBeHidden();
       await expect(owner.page.locator("#contactsReceived")).toBeVisible();
+      for (const viewport of [{ width: 844, height: 390, label: "844x390" }, { width: 667, height: 375, label: "667x375" }]) {
+        await owner.page.setViewportSize(viewport);
+        await expect(owner.page.locator("#contactsTabs")).toBeVisible();
+        await expect(received).toHaveAttribute("aria-selected", "true");
+        await expect(owner.page.locator("#contactsInvite")).toBeHidden();
+        await expect(owner.page.locator("#contactsReceived")).toBeVisible();
+        await owner.page.screenshot({ path: testInfo.outputPath(`shot-e20-${kind}-${viewport.label}.png`), fullPage: true });
+      }
+      await owner.page.setViewportSize({ width: 390, height: 844 });
       await owner.page.reload();
       await expect(received).toHaveAttribute("aria-selected", "true");
       await owner.page.setViewportSize({ width: 1400, height: 900 });
