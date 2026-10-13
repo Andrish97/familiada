@@ -1143,6 +1143,8 @@ i przycisk Gotowe (tylko zamknięcie, bez ponowienia zapisu/pobrania).
 Bez sztucznego opóźnienia. Wybór innego pliku resetuje stan sukcesu.
 Pierwsze wdrożenie: import gry; pozostałe ścieżki w tym samym przeglądzie.
 
+**Wynik E20 (2026-10-13):** kontrolowane niepowodzenie importu Gier `38387894274` i Baz `38387645962` success1/1; brak niepełnych rekordów, unity602/602. Sukces importu Gier oraz pozostałe ścieżki wciąż otwarte.
+
 Pytanie użytkownika o edytor pytań: obecny edytor gry ma import TXT
 lub wklejonej treści, bez osobnego eksportu TXT. Ten import także objąć
 wspólnym czytelnym zakończeniem. Eksport całej gry pozostaje na liście
