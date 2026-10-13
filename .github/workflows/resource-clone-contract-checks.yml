@@ -45,10 +45,13 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-13_364_game_import_atomic.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/draft-copy-send-365.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-resource-demo-origin-365.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/draft-resource-clone-source-365.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/draft-resource-clone-write-365.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/draft-resource-clone-staging-365.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-copy-send-365.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-resource-clone-365.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-resource-clone-staging-365.sql
           python3 docs/sql/test-resource-clone-concurrency-365.py
       - uses: actions/upload-artifact@v4
         if: always()

@@ -362,3 +362,27 @@ Zastępuje przygotowawczą ścieżkę received/copy.ext; nowy asset_id jest
 częścią zweryfikowanego planu. Lokalny staging trzyma utrwalony odczyt
 źródła i recepty plików; kolejne prace obejmują commit, GC i późne
 sprzątanie po usunięciu konta, zanim trafi do publicznego przepływu.
+
+### Staging i ochrona demo — lokalne kontrakty365
+
+Jedna próba klonowania ma trwały job i recepty plików, zapisany spójny
+odczyt źródła i stały katalog receiver/copies/job/asset. Istniejący job
+nie czyta ponownie źródła po ukończeniu; przechowuje minimalny wynik,
+nie drugi pakiet po publikacji. Commit Logo sprawdza, że wszystkie
+referencje IMAGE/DRAW wskazują na zarejestrowane własne pliki z
+odpowiednimi metadanymi. Kasowanie wyniku zleca cały katalog plików;
+kasowanie konta również nieukończone joby. Oddzielne zapewnienie
+cleanup obsługuje późne zakończenie uploadu po usunięciu konta.
+
+Pochodzenie oryginalnego demo rejestrowane prywatnie przy seedzie
+i backfillu. Nie kasować go przy zmianie nazwy/publicznego is_demo.
+Bool demo_origin przechodzi wewnętrznie do własnej kopii, bez FK do
+oryginału i bez znacznika na kafelku. Dodatkowo porównanie definicji
+wykrywa niezmienione demo po imporcie; Bazy mają tylko Powiel,
+bez nowej blokady istniejącego współdzielenia Baz.
+
+To testy lokalne, nie publiczny endpoint. Pozostają: pełna orkiestracja
+Workera, atomowe wybieranie nazwy przy równoległych kopiach, GC
+nieukończonych prób, migracja/bramki i dopiero UI. Jednogodzinny
+termin joba jest wewnętrznym sprzątaniem niedokończonej operacji;
+nie zmienia5 dni oczekującej wysyłki ani30 dni jej historii/odmowy.
