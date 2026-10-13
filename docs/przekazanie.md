@@ -11,7 +11,7 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19 / graf dotychczasowych zasobów | Zamknięte produkcyjnie. Kolejka/mail/Go/kaskady/anonimowe formularze mają swoje wcześniejsze dowody w Dzienniku. |
 | E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
 | E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
-| E19C / Wyślij Gry/Logo | Jeszcze NIE jest funkcją publiczną. Prywatny SQL367/prototyp i wspólna orkiestracja Workera na branchu: isolated38348943986,600 unit, wrangler dry-run green. Brak publicznego endpointu, UI i dowodu SMTP kopii. |
+| E19C / Wyślij Gry/Logo | Kod Workera, wybór znajomych, recipient inbox/accept/decline, historia, mail/Go oraz filtr Otrzymane i oznaczenie pochodzenia są na dirty branchu. Migracja367 ma źródło maila, resolver Go, odczyt inbox/history/badges. Pozostaje domknięcie UI liczników/nawigacji, punktowe sprawdzenie, E2E/Pages/prod. |
 | E19N → E14 → E20 → Manual | Kolejno: przegląd przejść/Control→Znajomi; sprzątanie zastąpionych ścieżek; wspólny wygląd/mobile/tablet/landscape; instrukcja na końcu. Do E20 trzy etapy licząc aktualny E19C. |
 
 ## Jeden aktualny następny cel: pełne Wyślij
@@ -32,20 +32,14 @@ To prototyp, a NIE zastosowana migracja367. Worker
 ma wspólny cloneResource i nieroutowany sendResource;7 dodatkowych
 unit obejmuje destination/demo/native DRAW/replay/lost response/late upload.
 
-Bieżąca luka: źródło/alokacja/kolejka/dostarczenie nowych maili kopii.
-Ich korzeń życia to odbiorca; nadawca i źródło po wysłaniu mogą zniknąć.
-Budżet nadawca–odbiorca zachować oddzielnie od korzenia życia.
-Flagę sprawdzić przed kolejką i dostarczeniem. Auth maile nadal direct,
-bez flagi/stopki powiadomień. Dalej Go, odczyt starych ścieżek pending,
-API, odbiór/historia/plakietki/filtr Otrzymane i zrzuty390/1400/landscape.
+Bieżąca luka: sprawdzenie i domknięcie migracji367 z nowym źródłem maila/Go, plakietki na nawigacji, punktowe E2E, zrzuty390/1400/landscape oraz wdrożenie. Kopia i powiadomienie należą do gałęzi odbiorcy; nadawca i oryginał mogą zniknąć. Preferencja odbiorcy jest sprawdzana przed utworzeniem maila i przed dostarczeniem. Maile Auth pozostają bez zmian.
 Źródło decyzji: `docs/udostepnianie-kopii-plan.md`.
 
-Ostatnia sesja po pytaniu o postęp wykonała tylko odczyt istniejących
-funkcji mailowych; NIE dopisała nowej migracji ani nowego kodu maili.
-Przed tym przekazaniem repo było czyste; żaden E2E nie biegnie.
-Lokalny Postgres: kontener familiada-pg323, DB fam365release z365/366
-oraz lokalnym draft367. GitHub logs/artifacts Azure zwracają403;
-diagnostyka przez check annotations, zrzuty przez repo. Bez obchodzenia blokady.
+Sesja2026-10-13 dopisała endpoint Workera `/_api/resource-send`, UI wysyłki i odbioru, mail/Go, historię, filtr Otrzymane, znaczniki pochodzenia i liczniki zakładek; migracja367 rozszerza źródła maili oraz RPC inbox/history/badges/Go. Kod jest roboczy, niezweryfikowany end-to-end i niewdrożony. E19C nadal otwarte. Użytkownik polecił migrację
+sprawdzać i wdrażać na produkcji, bez atrapowej bazy. Managed environment
+nie ma credentials/secrets ani Supabase CLI; właściwa ścieżka produkcyjna
+repo to `.github/workflows/db-migrate.yml`, po spełnieniu bramek branch/main.
+GH CLI zalogowany do Andrish97. Repo dirty; E2E nie uruchomiono.
 Konta1–8 pula;9/10 wykluczone;11/12 nie kasować;14 bez konta;15 kasowanie
 z odtworzeniem. Manual zawsze ostatni.
 
@@ -159,6 +153,15 @@ planu wyglądu; nie wdrożone. Puste sekcje własnych odmów nadal ukryte.
 
 
 ## Najnowszy stan: E19 krok 7 w realizacji
+
+### E19C Wyślij — aktualizacja 2026-10-13
+
+Nowe elementy są niecommitowane i niewdrożone. Worker wyprowadza nadawcę z
+Supabase Auth; UI wysyła do aktywnych znajomych z idempotentnym request ID.
+Odbiorca pobiera własny inbox i decyduje przez ograniczone RPC. Historia
+nadawcy ma okno30 dni. Pełna integracja mail/Go, plakietki/filtr Otrzymane,
+test produkcyjny oraz Pages nadal do wykonania. 601/601 unitów po zmianach.
+Wymaganie produkcyjne: nie używać lokalnej bazy; repo ma db-migrate workflow.
 
 Decyzja użytkownika 2026-10-11: **kontynuować zawsze bez pytania**, również po zamknięciu kolejnej paczki. Cykl testów i kontroli produkcji pozostaje obowiązkowy; zrzuty po wykonaniu, manual na końcu.
 
@@ -1178,4 +1181,4 @@ wymagają późniejszego przeglądu. Manual nadal ostatni.
 
 **366 zamknięte:** isolated38348144953/main38348223900 green, DB38348223853/log366 OK04:50:12 UTC, main38348612550 success2/2 bez retry/593 unit: UI kasowania jednorazowego gościa/oba buckety + Powiel3. Kontynuacja E19C: docs/sql/draft-resource-clone-send-367.sql i test-resource-clone-send-367.sql lokalnie green Games3/Logo3, własne manifesty plików, retry/odmowa/expiry/obie kaskady i18 guardów realnych tabel potomnych. To prywatny prototyp bez migracji/endpointu/grantów. Dalej izolowane CI, race/read-access, wspólny Worker send, queue/alokacja/SMTP/Go/GUI/plakietki, dopiero cykl DB→branch→Pages→main. Manual ostatni.
 
-**Aktualna kontynuacja:** private Send367 isolated38348943986 success. Worker cloneResource wspólny dla Powiel i nieroutowanego sendResource;600 unit/dry-run green, kopiuje pliki do stałego ID odbiorcy, demo blokowane przed plikami, retry bez drugiej kopii i bez ujawniania decyzji. Nie publikować endpointu Send jeszcze: brak migracji/grantów367, źródła/alokacji/kolejki/SMTP/Go/UI/badges. Następne powiadomienia muszą należeć do gałęzi odbiorcy i przeżyć usunięcie źródła/nadawcy. Manual ostatni.
+**Aktualna kontynuacja:** na dirty branchu endpoint `/_api/resource-send`, UI wyboru aktywnych znajomych, inbox/accept/decline, historia30 dni, mail przez istniejący send-mail, Go `?c=`, filtr Otrzymane, lekkie oznaczenie nadawcy i badge RPC per typ. Migration367 rozszerza graph mail allocations/source binding i source-live oraz dodaje resolver/badges. Punktowe JS + unit: składnia 5 plików OK, 24/24 testów Go/clone/API. Niedokończone: badge w przyciskach nawigacji, E2E/Pages/main/prod i screenshoty. Migracja 367 niezweryfikowana na produkcji i nieuruchomiona; środowisko lokalne nie ma Supabase CLI/DB credentials. Przed prod przejrzeć kontrakty DB w branch workflow; manual ostatni.

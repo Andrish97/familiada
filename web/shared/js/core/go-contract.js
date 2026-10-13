@@ -1,6 +1,6 @@
 // Go validates the URL before resolving a token or delegating to another page.
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const primary = ['p', 'd', 't', 's', 'f', 'b', 'u', 'm'];
+const primary = ['p', 'd', 't', 's', 'f', 'b', 'u', 'm', 'c'];
 export function parseGoLink(params) {
   const markers = primary.filter(key => params.has(key));
   if (!markers.length) return { kind: 'missing' };
@@ -24,7 +24,7 @@ export function parseGoLink(params) {
   return { kind: marker, token: value };
 }
 export function goKindMatches(marker, kind) {
-  return ({ t: ['task'], s: ['sub', 'friend'], f: ['friend'], b: ['base'], u: ['unsub'] })[marker]?.includes(kind) || false;
+  return ({ t: ['task'], s: ['sub', 'friend'], f: ['friend'], b: ['base'], u: ['unsub'], c: ['copy'] })[marker]?.includes(kind) || false;
 }
 export function goErrorKey(error) {
   return ({ poll_stopped: 'pollStopped', poll_closed: 'pollEnded', expired: 'inviteExpired', invalid_token: 'inviteExpired', revoked: 'accessUnavailable' })[error] || 'invalidLinkTitle';

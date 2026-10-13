@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {handleResourceDuplicate} from '../../cloudflare/maintenance-worker/src/lib/resource-copy/api.js';
+import {handleResourceDuplicate,handleResourceSend} from '../../cloudflare/maintenance-worker/src/lib/resource-copy/api.js';
 const actor='aaaaaaaa-3658-1000-0000-000000000001',other='aaaaaaaa-3658-1000-0000-000000000002',source='bbbbbbbb-3658-1000-0000-000000000001',request='cccccccc-3658-1000-0000-000000000001',job='dddddddd-3658-1000-0000-000000000001',target='eeeeeeee-3658-1000-0000-000000000001';
 const env={SUPABASE_URL:'https://storage.example',SUPABASE_SERVICE_ROLE_KEY:'synthetic-service'};
 const body={kind:'base',source_id:source,request_id:request};
@@ -31,4 +31,20 @@ test('database locks have a stable public code; unknown backend details never en
    const response=await handleResourceDuplicate(req(body),env);assert.equal(response.status,status);assert.deepEqual(await response.json(),{ok:false,error:expected});
   });
  }
+});
+test('send API derives the sender from Auth and returns only the recipient offer receipt',async()=>{
+ const offer='ffffffff-3658-1000-0000-000000000001';
+ await mocked(async(url,options)=>{
+  if(url.endsWith('/auth/v1/user'))return Response.json({id:actor});
+  if(url.includes('/rpc/_resource_clone_begin')){
+   const args=JSON.parse(options.body);assert.equal(args.p_actor,actor);assert.equal(args.p_owner,other);assert.equal(args.p_action,'send');
+   return Response.json({id:job,actor_id:actor,recipient_id:other,status:'complete',target_id:target});
+  }
+  if(String(url).includes('/resource_copy_offers'))return Response.json([{id:offer,token:job}]);
+  if(String(url).includes('/mail_notification_allocations'))return Response.json([]);
+  assert.fail('unexpected send receipt query');
+ },async()=>{
+  const response=await handleResourceSend(new Request('https://www.familiada.online/_api/resource-send',{method:'POST',headers:{Authorization:'Bearer ordinary-user-token','Content-Type':'application/json'},body:JSON.stringify({...body,kind:'game',recipient_id:other,actor:other})}),env);
+  assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true,offer_id:offer,go_token:job,mail_allowed:false,already:true});
+ });
 });

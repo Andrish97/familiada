@@ -1,10 +1,10 @@
 // familiada/logo/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T23450";
-import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T23450";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-12T23450";
-import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-12T23450";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T07101";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T07101";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-13T07101";
+import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-13T07101";
 
 /** Błąd „zasób zajęty” z RPC *_checked -- reason: logo (inna karta edytuje to logo)
  *  | control | settings (pula logo trzymana przez grę) | locked. */
@@ -26,7 +26,7 @@ export function isUniqueViolation(e) {
 export async function listLogos() {
   const { data, error } = await sb()
     .from("user_logos")
-    .select("id,name,type,updated_at,bits_b64:payload->>bits_b64,w:payload->w,h:payload->h,layers:payload->layers,source_mode:payload->source->>mode")
+    .select("id,name,type,updated_at,received_from_label,received_from_identity,bits_b64:payload->>bits_b64,w:payload->w,h:payload->h,layers:payload->layers,source_mode:payload->source->>mode")
     .order("updated_at", { ascending: false });
   if (error) throw error;
   return (data || []).map((r) => ({
@@ -34,6 +34,8 @@ export async function listLogos() {
     name: r.name,
     type: r.type,
     updated_at: r.updated_at,
+    received_from_label: r.received_from_label,
+    received_from_identity: r.received_from_identity,
     payload: { bits_b64: r.bits_b64, w: r.w, h: r.h, layers: r.layers, source: r.source_mode ? { mode: r.source_mode } : null },
   }));
 }

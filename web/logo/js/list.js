@@ -1,5 +1,7 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-12T23450";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-12T23450";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-13T07101";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-13T07101";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-13T07101";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-13T07101";
 // familiada/logo/js/list.js
 // Lista logo (/logo/): kafelki w trzech kartach, modale (nowe / nazwa /
 // import / podgląd), eksport. Edycja to osobne strony /logo/editor/<tryb>/
@@ -13,30 +15,30 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-12T23
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-12T23450";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-12T23450";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-12T23450";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-12T23450";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-12T23450";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-12T23450";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-12T23450";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-12T23450";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-12T23450";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-12T23450";
-import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-12T23450";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-12T23450";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-12T23450";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T07101";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-13T07101";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T07101";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T07101";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T07101";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T07101";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T07101";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T07101";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-13T07101";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T07101";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T07101";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T07101";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-13T07101";
 
-import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-12T23450";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-12T23450";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-12T23450";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-12T23450";
-import { cannotEditReason } from "./text.js?v=v2026-10-12T23450";
-import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-12T23450";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-12T23450";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-13T07101";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-13T07101";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-13T07101";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-13T07101";
+import { cannotEditReason } from "./text.js?v=v2026-10-13T07101";
+import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-13T07101";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T07101";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-12T23450";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-12T23450";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-13T07101";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-13T07101";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
 // i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły
@@ -52,11 +54,13 @@ const el = {
 
   listShell: $("listShell"),
   grid: $("grid"),
+  receivedCopies: $("receivedCopies"),
   hint: $("hint"),
   msg: $("msg"),
   btnEdit: $("btnEdit"),
   btnPreview: $("btnPreview"),
   btnDuplicate: $("btnDuplicate"),
+  btnSendCopy: $("btnSendCopy"),
   btnExport: $("btnExport"),
   btnImport: $("btnImport"),
   tabs: { TEXT: $("tabLogoText"), DRAW: $("tabLogoDraw"), IMAGE: $("tabLogoImage") },
@@ -187,6 +191,7 @@ function setActiveListMode(mode, { updateUrl = true } = {}) {
     setTab(activeListMode.toLowerCase(), DEFAULT_LOGO_TAB);
   }
   renderList();
+  void refreshResourceCopyInbox({kind:"logo",variant:activeListMode,host:el.receivedCopies,onChanged:refresh});
 }
 
 /* =========================================================
@@ -241,6 +246,7 @@ async function refresh() {
   logos = await listLogos();
   if (selectedId && !logos.some((l) => l.id === selectedId)) selectedId = null;
   renderList();
+  await refreshResourceCopyInbox({kind:"logo",variant:activeListMode,host:el.receivedCopies,onChanged:refresh});
 }
 
 function selectTile(id) {
@@ -257,6 +263,7 @@ function updateListButtons() {
   el.btnEdit.disabled = !has;
   el.btnExport.disabled = !has;
   el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || isGuestUser(currentUser);
+  el.btnSendCopy.disabled = !!el.btnSendCopy.dataset.sendBusy || !has || isGuestUser(currentUser);
 }
 
 function makeTile(logo) {
@@ -269,7 +276,7 @@ function makeTile(logo) {
     <div class="logoTileTop">
       <div style="min-width:0">
         <div class="logoName" title="${esc(name)}">${esc(name)}</div>
-        <div class="logoMeta">${esc(fmtDate(logo.updated_at))}</div>
+        <div class="logoMeta">${logo.received_from_label ? `${esc(t("resourceSend.from", { name: logo.received_from_label }))} · ` : ""}${esc(fmtDate(logo.updated_at))}</div>
       </div>
       <div class="logoActions">
         <div class="logoX" role="button" tabindex="0" title="${esc(t("logoEditor.list.delete"))}" aria-label="${esc(t("logoEditor.list.delete"))}">${icon("trash")}</div>
@@ -600,6 +607,7 @@ async function loadFonts() {
 
 function bindUi() {
   bindResourceDuplicate({button:el.btnDuplicate,kind:"logo",getSource:()=>logos.find(l=>l.id===selectedId),onDone:async id=>{await refresh();const logo=logos.find(l=>l.id===id);if(logo)setActiveListMode(listModeForLogo(logo));selectTile(id);},onState:updateListButtons});
+  bindResourceSend({button:el.btnSendCopy,kind:"logo",getSource:()=>logos.find(l=>l.id===selectedId),onDone:async()=>refresh(),onState:updateListButtons});
   // lista
   el.btnEdit.addEventListener("click", () => void editSelected());
   el.btnPreview.addEventListener("click", () => {

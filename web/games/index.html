@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-12T23450"/>
+  <meta name="app-version" content="v2026-10-13T07101"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,11 +14,11 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="games.title">Familiada — moje gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-12T23450"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-12T23450"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-13T07101"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-13T07101"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-12T23450"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-12T23450"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-13T07101"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-13T07101"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -32,9 +32,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-12T23450" defer></script>
-  <script type="module" src="/games/js/games.js?v=v2026-10-12T23450" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-12T23450" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-13T07101" defer></script>
+  <script type="module" src="/games/js/games.js?v=v2026-10-13T07101" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-13T07101" defer></script>
 </head>
 
 <body class="games-body skel-body">
@@ -50,6 +50,7 @@
 
       <button class="btn" id="btnLogoEditor">
         <span data-i18n="games.nav.logo" data-i18n-icon-after="display">Logo</span>
+        <span class="badge" id="logoCopiesNavBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
@@ -119,7 +120,7 @@
         <!-- PASEK ZAKŁADEK -->
         <div class="tabs-strip">
           <!-- SLOT 1: ankieta tekstowa -->
-          <div class="tab-slot slot-pollText">
+          <div class="tab-slot slot-pollText" data-copy-kind="game" data-copy-variant="poll_text">
             <button class="tab-label" id="tabPollText" type="button">
               <span class="only-desktop" data-i18n="games.tabs.pollText">Ankieta tekstowa</span>
               <span class="only-mobile" data-i18n="games.tabs.pollTextMobile">Ankieta</span>
@@ -135,7 +136,7 @@
           </div>
 
           <!-- SLOT 2: punktacja -->
-          <div class="tab-slot slot-pollPoints">
+          <div class="tab-slot slot-pollPoints" data-copy-kind="game" data-copy-variant="poll_points">
             <button class="tab-label" id="tabPollPoints" type="button">
               <span class="only-desktop" data-i18n="games.tabs.pollPoints">Punktacja</span>
               <span class="only-mobile" data-i18n="games.tabs.pollPointsMobile">Punkty</span>
@@ -151,7 +152,7 @@
           </div>
 
           <!-- SLOT 3: preparowana -->
-          <div class="tab-slot slot-prepared">
+          <div class="tab-slot slot-prepared" data-copy-kind="game" data-copy-variant="prepared">
             <button class="tab-label" id="tabPrepared" type="button">
               <span data-i18n="games.tabs.prepared">Preparowana</span>
             </button>
@@ -183,14 +184,16 @@
 
         <!-- KARTA POD WYPUSTKĄ -->
         <div class="card games-card">
+          <div id="receivedCopies" class="resource-copy-inbox" hidden></div>
           <div class="grid" id="grid"></div>
 
           <div class="games-bottom">
-            <div class="games-bottom-left"></div>
+          <div class="games-bottom-left"><button class="btn sm" id="btnReceivedFilter" type="button" aria-pressed="false" data-i18n="resourceSend.receivedFilter">Otrzymane</button></div>
             <div class="games-bottom-right">
               <button class="btn sm" id="btnExport" type="button" disabled data-i18n="games.actions.exportFile">Eksportuj do pliku</button>
               <button class="btn sm" id="btnExportBase" type="button" disabled data-i18n="games.actions.exportBase">Eksportuj do bazy</button>
               <button class="btn sm" id="btnDuplicate" type="button" disabled data-i18n-title="resourceDuplicate.action" data-i18n-aria-label="resourceDuplicate.action"><i class="ico" data-icon="duplicate" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceDuplicate.action">Powiel</span></button>
+              <button class="btn sm" id="btnSendCopy" type="button" disabled data-i18n-title="resourceSend.action" data-i18n-aria-label="resourceSend.action"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceSend.action">Wyślij</span></button>
               <button class="btn sm" id="btnImport" type="button" data-i18n="games.actions.import">Importuj</button>
             </div>
           </div>
@@ -340,6 +343,6 @@
     </div>
   </div>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-12T23450"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-13T07101"></script>
 </body>
 </html>

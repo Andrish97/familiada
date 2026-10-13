@@ -4,7 +4,7 @@ import { notificationReference } from '../../supabase/functions/_shared/notifica
 const token='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',other='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 const anchor=url=>`<a href="${url}">Action</a>`;
 test('all source families read one canonical current Go action, with existing route forms',()=>{
- for(const [action,kind,key] of [['friend:invite','friend','f'],['friend:resend','friend','f'],['poll:invite','subscription','s'],['poll:resend','subscription','s'],['poll:share','poll','t'],['base:share','base','b']]){
+ for(const [action,kind,key] of [['friend:invite','friend','f'],['friend:resend','friend','f'],['poll:invite','subscription','s'],['poll:resend','subscription','s'],['poll:share','poll','t'],['base:share','base','b'],['copy:send','copy','c']]){
   for(const path of ['/go/','/go','/go/index.html'])assert.deepEqual(notificationReference(anchor(`https://www.familiada.online${path}?${key}=${token}&amp;lang=uk`),action),{kind,token});
  }
  assert.deepEqual(notificationReference(anchor(`https://www.familiada.online/go/?d=display&amp;id=${other}&amp;key=${token}`),'device:share'),{kind:'device',token,device_type:'display',game_id:other});

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-12T23450"/>
+  <meta name="app-version" content="v2026-10-13T07101"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,12 +14,12 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.title">Familiada — logo</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-12T23450"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-12T23450"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-13T07101"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-13T07101"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-12T23450"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-12T23450"/>
-  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-12T23450"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-13T07101"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-13T07101"/>
+  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-13T07101"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -34,8 +34,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
-  <script type="module" src="/logo/js/list.js?v=v2026-10-12T23450" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-12T23450" defer></script>
+  <script type="module" src="/logo/js/list.js?v=v2026-10-13T07101" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-13T07101" defer></script>
 </head>
 
 <body class="games-body logo-body skel-body">
@@ -43,7 +43,7 @@
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand" id="brandTitle">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button">Wstecz<span class="badge" id="gamesCopiesNavBadge" aria-hidden="true"></span></button>
     </div>
     <div class="topbar-section topbar-section-2"></div>
     <div class="topbar-section topbar-section-3">
@@ -75,20 +75,21 @@
 
       <section class="games-shell logoShell tabs-card logo-tabs-card">
         <div class="tabs-strip" role="tablist" aria-label="Typ logo">
-          <div class="tab-slot slot-logo-text">
+          <div class="tab-slot slot-logo-text" data-copy-kind="logo" data-copy-variant="GLYPH_30x10" data-copy-mode="TEXT">
             <button class="tab-label active" id="tabLogoText" type="button" role="tab" data-i18n="logoEditor.modes.text">Tekst</button>
             <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.text">Tekst</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
           </div>
-          <div class="tab-slot slot-logo-draw">
+          <div class="tab-slot slot-logo-draw" data-copy-kind="logo" data-copy-variant="PIX_150x70" data-copy-mode="DRAW">
             <button class="tab-label" id="tabLogoDraw" type="button" role="tab" data-i18n="logoEditor.modes.draw">Rysunek</button>
             <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.draw">Rysunek</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
           </div>
-          <div class="tab-slot slot-logo-image">
+          <div class="tab-slot slot-logo-image" data-copy-kind="logo" data-copy-variant="PIX_150x70" data-copy-mode="IMAGE">
             <button class="tab-label" id="tabLogoImage" type="button" role="tab" data-i18n="logoEditor.modes.image">Obraz</button>
             <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.image">Obraz</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
           </div>
         </div>
         <div class="card games-card logoCard">
+          <div id="receivedCopies" class="resource-copy-inbox" hidden></div>
           <div class="grid logoGridBig" id="grid"></div>
 
           <!-- dół jak games -->
@@ -97,6 +98,7 @@
             <div class="games-bottom-right">
               <button class="btn sm" id="btnExport" type="button" disabled data-i18n="logoEditor.list.export">Eksport</button>
               <button class="btn sm" id="btnDuplicate" type="button" disabled data-i18n-title="resourceDuplicate.action" data-i18n-aria-label="resourceDuplicate.action"><i class="ico" data-icon="duplicate" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceDuplicate.action">Powiel</span></button>
+              <button class="btn sm" id="btnSendCopy" type="button" disabled data-i18n-title="resourceSend.action" data-i18n-aria-label="resourceSend.action"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceSend.action">Wyślij</span></button>
               <button class="btn sm" id="btnImport" type="button" data-i18n="logoEditor.list.import">Import</button>
             </div>
           </div>
@@ -203,7 +205,7 @@
     </div>
   </div>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-12T23450"></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-12T23450"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-13T07101"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-13T07101"></script>
 </body>
 </html>

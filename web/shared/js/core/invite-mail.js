@@ -1,7 +1,7 @@
 // Wspólny dokument i transport wiadomości zaproszeń (E19).
-import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-12T23450";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-12T23450";
-import { renderMailDocument } from "./mail-document.js?v=v2026-10-12T23450";
+import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-13T07101";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-13T07101";
+import { renderMailDocument } from "./mail-document.js?v=v2026-10-13T07101";
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 function mailLink(path, { withLang = false } = {}) {
   let u;
@@ -62,4 +62,15 @@ export async function sendInviteMail({ to, link, ownerLabel, unsubToken = null, 
       actionUrl: mailLink(link, { withLang: true }), unsubToken, isRegistered: friend,
     }),
   });
+}
+
+export async function sendResourceCopyMail({to,link,ownerLabel,name,kind,ownerId,recipientId,sourceId}){
+  const label=kind==='logo'?t('resourceSend.logo'):t('resourceSend.game');
+  const subject=t('sharingMail.copySubject',{owner:ownerLabel});
+  return sendMail({to,subject,cooldownActionKey:'copy:send',
+    cooldownTargetKey:`pair:${ownerId}:${recipientId}:copy:${kind}:${sourceId}`,
+    html:buildMailHtml({title:subject,subtitle:t('pollsHubSubscriptions.mail.subtitle'),
+      body:t('resourceSend.mailBody',{owner:ownerLabel,name,kind:label}),
+      actionLabel:t('resourceSend.mailAction'),actionUrl:mailLink(link,{withLang:true}),
+      unsubToken:null,isRegistered:true})});
 }

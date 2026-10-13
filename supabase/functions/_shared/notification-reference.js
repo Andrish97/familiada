@@ -1,7 +1,7 @@
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const kinds={ 'friend:invite':['friend','f'],'friend:resend':['friend','f'],
  'poll:invite':['subscription','s'],'poll:resend':['subscription','s'],
- 'poll:share':['poll','t'],'base:share':['base','b'],'device:share':['device','key'] };
+ 'poll:share':['poll','t'],'base:share':['base','b'],'device:share':['device','key'],'copy:send':['copy','c'] };
 
 // This only reads a current outgoing document's canonical action reference.
 // Authority comes from the private allocation minted by the budget-checked RPC;

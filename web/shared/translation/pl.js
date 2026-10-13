@@ -22,6 +22,29 @@ const pl = {
   "image": "Nie udało się skopiować obrazu. Spróbuj ponownie.",
   "failed": "Nie udało się powielić zasobu. Spróbuj ponownie."
 },
+  resourceSend: {
+  "action": "Wyślij",
+  "title": "Wyślij znajomym",
+  "received": "Otrzymane kopie",
+  "receivedFilter": "Otrzymane",
+  "history": "Historia wysyłek",
+  "from": "Od: {name}",
+  "accept": "Akceptuj",
+  "decline": "Odrzuć",
+  "goTitle": "Otrzymano kopię",
+  "goBody": "{sender} wysyła Ci: {name}.",
+  "goAccepted": "Kopia dodana do Twoich zasobów.",
+  "goDeclined": "Odrzucono propozycję.",
+  "openResource": "Otwórz zasób",
+  "game": "grę",
+  "logo": "logo",
+  "mailBody": "{owner} wysłał Ci {kind}: {name}. Kopia jest już gotowa do przyjęcia.",
+  "mailAction": "Zobacz kopię",
+  "mailFailed": "Kopia została wysłana, ale e-mail nie został wysłany.",
+  "noFriends": "Nie masz jeszcze aktywnych znajomych.",
+  "sent": "Wysłano do znajomych: {count}.",
+  "errors": {"failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
+},
   common: {
     sort: {
       label: "Sortowanie",
@@ -5237,6 +5260,7 @@ const pl = {
 pl.sharingMail = {
   "friendReminderSubject": "{owner} przypomina o zaproszeniu do znajomych",
   "friendReminderBody": "Zaproszenie od {owner} nadal czeka na Twoją decyzję. Możesz je zaakceptować lub odrzucić.",
+  "copySubject": "{owner} wysłał Ci kopię",
   "subscriberReminderSubject": "Przypomnienie o subskrypcji u {owner}",
   "subscriberReminderBody": "{owner} przypomina o zaproszeniu do subskrypcji. Zaakceptuj je, jeśli chcesz otrzymywać ankiety od tej osoby, lub odrzuć.",
   "pollReminderBody": "{owner} przypomina o ankiecie {name}. Twoje zadanie nadal czeka na głos lub odmowę.",

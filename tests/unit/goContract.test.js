@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseGoLink,goKindMatches,goErrorKey,baseStateKey,matchesGoRecipient} from '../../web/shared/js/core/go-contract.js';
 const token='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-const valid={p:`p=anon&id=${token}&key=public`,d:`d=host&id=${token}&key=${token}`,t:`t=${token}`,s:`s=${token}`,f:`f=${token}`,b:`b=${token}`,u:`u=${token}`,m:`m=${'a'.repeat(64)}`};
+const valid={p:`p=anon&id=${token}&key=public`,d:`d=host&id=${token}&key=${token}`,t:`t=${token}`,s:`s=${token}`,f:`f=${token}`,b:`b=${token}`,u:`u=${token}`,m:`m=${'a'.repeat(64)}`,c:`c=${token}`};
 test('every Go family validates before dispatch, including mixed mail-center links',()=>{
  assert.equal(parseGoLink(new URLSearchParams()).kind,'missing');
  for(const [kind,query] of Object.entries(valid)){
@@ -17,8 +17,8 @@ test('every Go family validates before dispatch, including mixed mail-center lin
  assert.equal(parseGoLink(new URLSearchParams(`d=qr&id=${token}&key=public`)).kind,'d');
 });
 test('resolver kinds cannot be exchanged; historical subscription to friend is explicit',()=>{
- const accepted={t:['task'],s:['sub','friend'],f:['friend'],b:['base'],u:['unsub']};
- for(const marker of Object.keys(valid))for(const kind of ['task','sub','friend','base','unsub','unknown'])assert.equal(goKindMatches(marker,kind),Boolean(accepted[marker]?.includes(kind)),marker+'/'+kind);
+ const accepted={t:['task'],s:['sub','friend'],f:['friend'],b:['base'],u:['unsub'],c:['copy']};
+ for(const marker of Object.keys(valid))for(const kind of ['task','sub','friend','base','unsub','copy','unknown'])assert.equal(goKindMatches(marker,kind),Boolean(accepted[marker]?.includes(kind)),marker+'/'+kind);
 });
 test('canonical account has priority over a new owner of the old address',()=>{
  const original={id:token,email:'new@example.invalid'},other={id:'other',email:'old@example.invalid'};

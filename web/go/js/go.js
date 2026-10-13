@@ -1,13 +1,13 @@
 // web/go/js/go.js
-import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-12T23450";
-import { anonymousPollDestination, validAnonymousPollParams } from "../../shared/js/core/poll-links.js?v=v2026-10-12T23450";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-12T23450";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-12T23450";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-12T23450";
-import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-12T23450";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-12T23450";
+import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-13T07101";
+import { anonymousPollDestination, validAnonymousPollParams } from "../../shared/js/core/poll-links.js?v=v2026-10-13T07101";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T07101";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-13T07101";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-13T07101";
+import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-13T07101";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-13T07101";
 
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-12T23450";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-13T07101";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -83,14 +83,15 @@ const friendToken = qs.get("f");
 const baseToken = qs.get("b");
 const unsubToken = qs.get("u");
 const mailCenterToken = qs.get("m");
+const copyToken = qs.get("c");
 
 const actionParam = qs.get("action");
 const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
 const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);
 const hasTaskToken = Boolean(taskToken) && !isUnsubOwner;
 const hasSubToken = Boolean(subToken) && !isUnsubOwner;
-const tokenCount = [taskToken, subToken, friendToken, baseToken].filter(Boolean).length;
-const goToken = tokenCount === 1 ? (friendToken || baseToken || taskToken || subToken) : null;
+const tokenCount = [taskToken, subToken, friendToken, baseToken, copyToken].filter(Boolean).length;
+const goToken = tokenCount === 1 ? (friendToken || baseToken || taskToken || subToken || copyToken) : null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -198,14 +199,16 @@ function addAction(label, kind, handler, action = "") {
   } else btn.textContent = label;
   btn.addEventListener("click", handler);
   actions?.appendChild(btn);
+  return btn;
 }
 
 function redirectToLogin() {
   const url = new URL("/login/", location.href);
   url.searchParams.set("from", "poll-go");
-  url.searchParams.set("next", friendToken || resolvedInviteData?.kind === "friend" ? "friends" : baseToken || resolvedInviteData?.kind === "base" ? "bases" : "tasks");
+  url.searchParams.set("next", copyToken ? (resolvedInviteData?.resource_kind === "logo" ? "logo" : "games") : friendToken || resolvedInviteData?.kind === "friend" ? "friends" : baseToken || resolvedInviteData?.kind === "base" ? "bases" : "tasks");
   if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
   if (baseToken) url.searchParams.set("b", baseToken);
+  if (copyToken) url.searchParams.set("c", copyToken);
   if (taskToken) url.searchParams.set("t", taskToken);
   if (subToken && resolvedInviteData?.kind !== "friend") url.searchParams.set("s", subToken);
   if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
@@ -213,7 +216,9 @@ function redirectToLogin() {
 }
 
 function redirectToHub() {
-  const url = new URL(baseToken || resolvedInviteData?.kind === "base" ? "/bases/" : taskToken ? "/tasks/" : "/friends/", location.href);
+  const copyPage=copyToken?(resolvedInviteData?.resource_kind === "logo" ? "/logo/" : "/games/"):null;
+  const url = new URL(copyPage || (baseToken || resolvedInviteData?.kind === "base" ? "/bases/" : taskToken ? "/tasks/" : "/friends/"), location.href);
+  if (copyToken) url.searchParams.set("c", copyToken);
   if (baseToken) url.searchParams.set("b", baseToken);
   if (taskToken) {
     url.searchParams.set("t", taskToken);
@@ -228,6 +233,7 @@ function normalizeEmail(value) {
 }
 
 async function resolveToken() {
+  if(copyToken){const {data,error}=await sb().rpc("resource_copy_go_resolve",{p_token:copyToken});if(error)throw error;return data;}
   const req = sb().rpc("poll_go_resolve", { p_token: goToken });
   const timeoutMs = 15000;
   let timer = null;
@@ -722,6 +728,30 @@ function handleFriendInvite(data, user) {
   else addAction(t("contacts.open"), "gold", redirectToHub);
 }
 
+function handleCopyInvite(data,user){
+  clearActions();showEmailInput(false);
+  if(data.status==='expired'){setView({head:MSG.inviteExpired(),text:''});return;}
+  if(user&&!data.recipient_matches_me){showMismatch(t('resourceSend.goTitle'),data.recipient_email);return;}
+  if(!user){setView({head:t('resourceSend.goTitle'),text:t('resourceSend.goBody',{sender:data.sender_label,name:data.name})});addAction(MSG.loginLabel(),'gold',redirectToLogin);return;}
+  if(data.status==='accepted'){setView({head:t('resourceSend.goAccepted'),text:''});addAction(t('resourceSend.openResource'),'gold',redirectToHub);return;}
+  if(data.status!=='pending'){setView({head:MSG.inviteExpired(),text:''});return;}
+  setView({head:t('resourceSend.goTitle'),text:t('resourceSend.goBody',{sender:data.sender_label,name:data.name})});
+  let acceptButton;
+  acceptButton=addAction(MSG.acceptLabel(),'gold',async()=>{
+    if(acceptButton?.disabled)return;acceptButton.disabled=true;
+    try{
+      const {data:result,error}=await sb().rpc('resource_copy_decide',{p_offer:data.id,p_decision:'accept'});
+      if(error||!result?.ok){setView({head:MSG.acceptFailed(),text:''});acceptButton.disabled=false;return;}
+      resolvedInviteData={...data,status:'accepted'};setView({head:t('resourceSend.goAccepted'),text:''});clearActions();addAction(t('resourceSend.openResource'),'gold',redirectToHub);
+    }catch{setView({head:MSG.acceptFailed(),text:''});acceptButton.disabled=false;}
+  });
+  addAction(MSG.declineLabel(),'withdraw',async()=>{
+    const {data:result,error}=await sb().rpc('resource_copy_decide',{p_offer:data.id,p_decision:'decline'});
+    if(error||!result?.ok){setView({head:MSG.declineInviteFailed(),text:''});return;}
+    setView({head:t('resourceSend.goDeclined'),text:''});clearActions();
+  });
+}
+
 async function handleQrGateway() {
   clearActions(); showEmailInput(false);
   try {
@@ -785,6 +815,7 @@ async function init() {
       showResolveError(data); return;
     }
     if (!goKindMatches(parsedLink.kind, data.kind)) { showResolveError(null); return; }
+    if (data.kind === "copy") { handleCopyInvite(data,user); return; }
     if (data.kind === "friend") { handleFriendInvite(data, user); return; }
 
     if (data.kind === "sub") {

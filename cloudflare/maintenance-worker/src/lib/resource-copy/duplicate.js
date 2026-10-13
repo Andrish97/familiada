@@ -47,10 +47,12 @@ async function cloneResource(env,actor,input,action,recipient){
  async function completed(result){
   if(!isCopyUuid(result.target_id))throw new Error('previously_removed');
   if(action==='duplicate')return {ok:true,id:result.target_id,already:true};
-  const offer=await supabaseRequest(env,`/rest/v1/resource_copy_offers?sender_identity=eq.${actor}&recipient_id=eq.${recipient}&request_id=eq.${request_id}&source_id=eq.${source_id}&resource_kind=eq.${kind}&select=id&limit=1`);
+  const offer=await supabaseRequest(env,`/rest/v1/resource_copy_offers?sender_identity=eq.${actor}&recipient_id=eq.${recipient}&request_id=eq.${request_id}&source_id=eq.${source_id}&resource_kind=eq.${kind}&select=id,token&limit=1`);
   if(!offer.ok||!Array.isArray(offer.data))throw new Error('copy_database_failed');
   if(!isCopyUuid(offer.data[0]?.id))throw new Error('previously_removed');
-  return {ok:true,offer_id:offer.data[0].id,already:true};
+  const allocations=await supabaseRequest(env,`/rest/v1/mail_notification_allocations?copy_offer_id=eq.${offer.data[0].id}&select=id,revoked_at,consumed_at&limit=1`);
+  if(!allocations.ok||!Array.isArray(allocations.data))throw new Error('copy_database_failed');
+  return {ok:true,offer_id:offer.data[0].id,go_token:offer.data[0].token,mail_allowed:allocations.data.some(row=>!row.revoked_at&&!row.consumed_at),already:true};
  }
  if(job.status==='complete')return completed(job);
  if(job.status!=='preparing'||job.snapshot?.[kind]?.id!==source_id)throw new Error('invalid_copy_job');

@@ -22,6 +22,29 @@ const en = {
   "image": "Could not copy the image. Try again.",
   "failed": "Could not duplicate the resource. Try again."
 },
+  resourceSend: {
+  "action": "Send",
+  "title": "Send to friends",
+  "received": "Received copies",
+  "receivedFilter": "Received",
+  "history": "Send history",
+  "from": "From: {name}",
+  "accept": "Accept",
+  "decline": "Decline",
+  "goTitle": "You received a copy",
+  "goBody": "{sender} sent you: {name}.",
+  "goAccepted": "The copy was added to your resources.",
+  "goDeclined": "The offer was declined.",
+  "openResource": "Open resource",
+  "game": "a game",
+  "logo": "a logo",
+  "mailBody": "{owner} sent you {kind}: {name}. The copy is ready for you to accept.",
+  "mailAction": "View copy",
+  "mailFailed": "The copy was sent, but its email was not sent.",
+  "noFriends": "You do not have any active friends yet.",
+  "sent": "Sent to friends: {count}.",
+  "errors": {"failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Sign in again.","decisionFailed":"Could not save your decision. Try again."}
+},
   common: {
     sort: {
       label: "Sort",
@@ -5327,6 +5350,7 @@ const en = {
 en.sharingMail = {
   "friendReminderSubject": "{owner} reminds you about a friend invitation",
   "friendReminderBody": "The invitation from {owner} is still waiting for your decision. You can accept or decline it.",
+  "copySubject": "{owner} sent you a copy",
   "subscriberReminderSubject": "Subscription reminder from {owner}",
   "subscriberReminderBody": "{owner} reminds you about a subscription invitation. Accept it to receive polls from this person, or decline.",
   "pollReminderBody": "{owner} reminds you about the poll {name}. Your task is still waiting for your vote or refusal.",

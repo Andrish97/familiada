@@ -115,9 +115,9 @@ test('Send shares definition pipeline for game and logo while deriving source ow
   await mocked(call=>{
    if(call.url.endsWith('/_resource_clone_begin')){assert.equal(call.body.p_actor,actor);assert.equal(call.body.p_owner,other);assert.equal(call.body.p_action,'send');return reply({...begin(kind),recipient_id:other});}
    if(call.url.includes('/resource_clone_assets?'))return reply([]);
-   if(call.url.endsWith('/_resource_clone_finish_send')){assert.equal(call.body.p_demo,false);assert.equal(call.body.p_suffix,undefined);assert.equal((kind==='game'?call.body.p_definition.game:call.body.p_definition).name,'Alpha');return reply({ok:true,offer_id:target,already:false});}
+   if(call.url.endsWith('/_resource_clone_finish_send')){assert.equal(call.body.p_demo,false);assert.equal(call.body.p_suffix,undefined);assert.equal((kind==='game'?call.body.p_definition.game:call.body.p_definition).name,'Alpha');return reply({ok:true,offer_id:target,go_token:job,already:false});}
    assert.fail('Send does not read name lists or call duplicate finish');
-  },async()=>assert.deepEqual(await sendResource(env,actor,{...input(kind),recipient_id:other,actor:other}),{ok:true,offer_id:target,already:false}));
+  },async()=>assert.deepEqual(await sendResource(env,actor,{...input(kind),recipient_id:other,actor:other}),{ok:true,offer_id:target,go_token:job,already:false}));
  }
 });
 test('Send rejects Base, self, invalid recipients and mismatched verified destinations before assets',async()=>{
@@ -132,8 +132,8 @@ test('Send protects private demo provenance before any storage image request',as
  await mocked(call=>{if(call.url.endsWith('/_resource_clone_begin'))return reply(state);if(call.url.includes('/resource_clone_assets?'))return reply([]);assert.fail('Demo Send reached materialization');},async()=>await assert.rejects(sendResource(env,actor,{...input('logo'),recipient_id:other}),/demo_not_sendable/));
 });
 test('Send completed replay returns only the existing offer and does not expose the recipient decision',async()=>{
- await mocked(call=>{if(call.url.endsWith('/_resource_clone_begin'))return reply({...begin('game'),recipient_id:other,status:'complete',snapshot:null,target_id:target});if(call.url.includes('/resource_copy_offers?')){assert.ok(call.url.includes('recipient_id=eq.'+other));assert.ok(call.url.includes('request_id=eq.'+request));assert.ok(call.url.includes('select=id'));return reply([{id:job,status:'declined'}]);}assert.fail('Replay read source or wrote another copy');},async calls=>{
-  assert.deepEqual(await sendResource(env,actor,{...input('game'),recipient_id:other}),{ok:true,offer_id:job,already:true});assert.equal(calls.length,2);
+ await mocked(call=>{if(call.url.endsWith('/_resource_clone_begin'))return reply({...begin('game'),recipient_id:other,status:'complete',snapshot:null,target_id:target});if(call.url.includes('/resource_copy_offers?')){assert.ok(call.url.includes('recipient_id=eq.'+other));assert.ok(call.url.includes('request_id=eq.'+request));assert.ok(call.url.includes('select=id,token'));return reply([{id:job,token:assetId,status:'declined'}]);}if(call.url.includes('/mail_notification_allocations?'))return reply([]);assert.fail('Replay read source or wrote another copy');},async calls=>{
+  assert.deepEqual(await sendResource(env,actor,{...input('game'),recipient_id:other}),{ok:true,offer_id:job,go_token:assetId,mail_allowed:false,already:true});assert.equal(calls.length,3);
  });
 });
 test('Send nested DRAW uses the same native file helper with recipient storage and sender source',async()=>{
@@ -155,9 +155,10 @@ test('Send lost finish response recovers the same offer without another result o
  await mocked(call=>{
   if(call.url.endsWith('/_resource_clone_begin')){const state={...begin('game'),recipient_id:other};if(started)return reply({...state,status:'complete',snapshot:null,target_id:target});started=true;return reply(state);}
   if(call.url.endsWith('/_resource_clone_finish_send'))throw new Error('response lost after Send commit');
-  if(call.url.includes('/resource_copy_offers?'))return reply([{id:job}]);
+  if(call.url.includes('/resource_copy_offers?'))return reply([{id:job,token:assetId}]);
+  if(call.url.includes('/mail_notification_allocations?'))return reply([]);
   assert.fail('Send recovery duplicated work or cleaned an installed result');
- },async()=>assert.deepEqual(await sendResource(env,actor,{...input('game'),recipient_id:other}),{ok:true,offer_id:job,already:true}));
+ },async()=>assert.deepEqual(await sendResource(env,actor,{...input('game'),recipient_id:other}),{ok:true,offer_id:job,go_token:assetId,mail_allowed:false,already:true}));
 });
 test('Send late upload after recipient deletion cleans only the bound recipient job prefix',async()=>{
  const state={...begin('logo'),recipient_id:other};state.snapshot.logo={id:source,name:'Alpha',type:'PIX_150x70',payload:{bits_b64:'AA==',source:{mode:'IMAGE',imageData:'data:image/png;base64,AQID'}}};let started=false;

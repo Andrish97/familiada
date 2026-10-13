@@ -181,6 +181,25 @@ body.games-body > main.wrap{
   justify-content: center;
 }
 
+.tab-slot[data-copy-count]:not([data-copy-count=""])::after{
+  content: attr(data-copy-count);
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  z-index: 4;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--gold, #e6b84c);
+  color: #171717;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
 .tab-slot{
   width: var(--tab-width);
   flex: 1 1 0;
@@ -848,3 +867,11 @@ body.games-body > main.wrap{
   padding: 16px 0;
 }
 .list-empty[hidden]{ display: none; }
+.resource-copy-inbox{margin:12px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
+.resource-copy-inbox h3{margin:0 0 8px;font-size:14px}
+.resource-copy-inbox-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line2)}
+.resource-copy-inbox-row>strong{min-width:0;overflow-wrap:anywhere}
+.resource-copy-inbox-row>span{font-size:12px;opacity:.72;margin-right:auto}
+.resource-copy-inbox-actions{display:flex;gap:6px;flex:none}
+.resource-copy-inbox-error{color:var(--danger,#ff7373);font-size:12px}
+@media(max-width:600px){.resource-copy-inbox-row{align-items:flex-start;flex-wrap:wrap}.resource-copy-inbox-row>span{flex:1 1 100%;margin-left:0}.resource-copy-inbox-actions{margin-left:auto}}
