@@ -54,6 +54,7 @@ jobs:
           python3 docs/sql/test-resource-clone-concurrency-365.py
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-13_366_copy_account_deletion.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-copy-account-deletion-366.sql
+          python3 docs/sql/test-copy-account-concurrency-366.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

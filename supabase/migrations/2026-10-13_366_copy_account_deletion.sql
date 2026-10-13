@@ -24,6 +24,9 @@ begin
   ) x
   where e is not null and e <> '';
 
+  -- Serialize against snapshot/write jobs before inspecting the inbox.
+  perform 1 from auth.users where id = p_user_id for update;
+
   --366: remove only this recipient inbox before pending resource guards.
   -- Sent copies already belong to their recipients and remain independent.
   delete from public.resource_copy_offers where recipient_id = p_user_id;

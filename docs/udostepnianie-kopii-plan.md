@@ -416,3 +416,14 @@ Jeden bindResourceDuplicate, ikona przy importach/eksportach, nazwa
 z kopia/copy/копія; bez dodatkowego znacznika. Aktualnie Powiel dotyczy
 własnych zasobów zalogowanego konta. Publikacja UI i kontrola main
 pozostają bramką zamknięcia tej paczki. Wyślij/mail/Go jeszcze niewdrożone.
+
+### Powiel zamknięte produkcyjnie —2026-10-13
+
+Main38347856610 success2/2 bez retry/593 unit po Pages38347797671:
+publiczne API i rzeczywiste przyciski wszystkich3 stron. Galeria
+ec3a2efae5/docs/img/transfer/duplicate zawiera9 widoków. Baza zachowuje
+foldery/tagi/pytania i oba przypisania z nowymi ID, bez udostępnień.
+Następne Wyślij nie jest jeszcze wdrożone. Przed nim366 usuwa inbox
+odbiorcy przed zasobami i blokuje Auth względem równoległego wysyłania.
+Rzeczywiste delete_user_everything sprawdzone lokalnie dla obu stron,
+Gier i Logo;2 wyścigi green, wymagane finalne izolowane CI→DB/log.
