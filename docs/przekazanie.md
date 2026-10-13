@@ -1090,9 +1090,10 @@ stan istniejącego zasobu, nie otwiera importu, Odrzuć usuwa kopię i
 pliki.5 dni bez decyzji również usuwa oczekującą kopię. Niezależność
 od oryginału/znajomości/nadawcy pozostaje. Plan skorygowany w
 udostepnianie-kopii-plan.md, końcowa sekcja korekty momentu tworzenia.
-Wymagane pytanie async o cofnięcie odmowy nadal bez odpowiedzi: zachować
-pakiet30 dni do odtworzenia czy usuwać pakiet i nie mieć undo? Nie
-wdrażać zależnego wariantu bez odpowiedzi. Lokalny fam365draft i dwa
+Pytanie o cofnięcie rozstrzygnięte: odrzucenie usuwa kopię/pliki/pakiet
+i nie daje możliwości powrotu. Brak sekcji odrzuconych i undo dla kopii;
+minimalny zapis odmowy blokuje nową wysyłkę tego samego źródła tej
+osobie30 dni. Po okresie możliwa nowa świadoma wysyłka. Lokalny fam365draft i dwa
 SQL365 to wcześniejszy model importu przy akceptacji, oznaczone jako
 historyczny prototyp, niewdrożony; nie zamieniać ich w migrację.
 Następna praca: własna oczekująca kopia podczas Send, blokady wszystkich

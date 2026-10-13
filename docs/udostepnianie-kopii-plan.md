@@ -15,7 +15,7 @@ Realizacja po bieżącym E19, przed E19N/E14/E20; manual pozostaje ostatni.
 | Odbiór | Propozycja kopii w odpowiedniej istniejącej zakładce typu na stronie Gier albo Logo. Przyciski akceptacji/odrzucenia jak w Bazach; nie dodawać tego do Zadań, które pozostają wyłącznie dla ankiet. |
 | Utworzenie kopii | Już przy Wyślij powstaje własna gra/logo odbiorcy z nowymi ID i własnymi danymi/plikami, oznaczona jako oczekująca; bez zależności od oryginału. |
 | Akceptacja | Zatwierdza istniejącą oczekującą kopię i udostępnia zwykłe działania zasobu; nie tworzy kolejnego zasobu ani okna importu. |
-| Odrzucenie / brak decyzji przez5 dni | Usuwa oczekującą własną kopię i jej nieużywane pliki. Cofnięcie odmowy i ewentualne zachowanie pakietu są pytaniem otwartym poniżej. |
+| Odrzucenie / brak decyzji przez5 dni | Usuwa oczekującą własną kopię i jej nieużywane pliki. Odrzucenie usuwa również pakiet i nie daje cofnięcia odmowy ani odtworzenia. |
 | Filtr Gier | We wszystkich własnych zakładkach typu (Preparowane, tekstowe, punktowe) dostępne „Otrzymane”, oparte na zapisanym pochodzeniu kopii od znajomych. Gry społeczności bez filtra; wspólny wygląd E20. |
 | Przyjęta kopia | Tylko lekki znacznik „od X”, bez statusu „zaakceptowano”, uprawnień i dodatkowego panelu udostępnienia. |
 | Cofanie | Nadawca nie może cofnąć wysłanej kopii. Odbiorca zarządza przyjętym zasobem tak jak własnym importem. |
@@ -194,7 +194,8 @@ terminem, przy zwykłych kontrolach znajomości, flagi i cooldownów.
 | Historia nadawcy |30 dni od wysłania; niezależna od statusu oferty |
 | Przyjęta własna kopia | Bez terminu oferty; zwykły zasób odbiorcy, usuwany jego decyzją lub wraz z kontem |
 
-Odmowa i możliwość zmiany decyzji zachowują wspólny model E19; nie
+Odmowa zachowuje ukryty okres blokady nowej wysyłki30 dni, lecz dla
+kopii Gier/Logo usuwa zasób i pakiet bez możliwości cofnięcia. Nie
 przedłużać terminu oczekującej kopii przez przypomnienie/otwarcie.
 
 ### Import dokładnie raz — paczka364
@@ -216,8 +217,7 @@ CI; frontend przejdzie na wspólne RPC dopiero po zastosowaniu DB.
 | Stan odbiorcy | Odbiorca | Treść i ważność | Nadawca |
 |---|---|---|---|
 | Oczekuje | Kafelek w zakładce typu, Akceptuj/Odrzuć; liczony w plakietkach | Własna gra/logo odbiorcy już istnieje,5 dni od wysłania; zwykłe działania zasobu zablokowane do decyzji | Historia wysyłki; bez cofania ani ponawiania |
-| Odrzucono | Oczekująca gra/logo oraz jej pliki usunięte; dostępność cofnięcia jest pytaniem otwartym | Zachowany ukryty okres odmowy30 dni; zachowanie pakietu zależy od odpowiedzi o cofnięciu | Bez ponowienia; nowa wysyłka tego samego źródła tej osobie zablokowana przez okres odmowy |
-| Cofnięto odmowę | **Do rozstrzygnięcia**: ewentualne odtworzenie oczekującego zasobu z zachowanego pakietu | Jeśli wybrane: jak w Bazach zachować pierwotny30-dniowy zegar, bez nowego maila/historycznego wpisu | Bez nowego działania nadawcy |
+| Odrzucono | Oczekująca gra/logo oraz jej pliki i pakiet usunięte; brak sekcji odrzuconych i brak przywracania kopii | Minimalny zapis odmowy30 dni, bez treści zasobu i bez odtwarzania | Bez ponowienia; nowa wysyłka tego samego źródła tej osobie zablokowana przez okres odmowy |
 | Przyjęto | Istniejąca własna Gra/Logo zatwierdzona, lekki znacznik „od X”; bez kafelka oczekującej oferty | Bez drugiego importu i bez nowych ID przy akceptacji; termin oferty nie dotyczy zatwierdzonego zasobu | Historia mówi tylko komu i kiedy wysłano, nie pokazuje decyzji |
 | Oferta wygasła | Brak kafelka i plakietki; stary link nie pozwala przyjąć | Oczekująca kopia, pakiet i nieużywane pliki sprzątane; niewysłany mail anulowany | Wpis historii do końca swoich30 dni; nowa świadoma wysyłka przy zwykłych kontrolach |
 | Usunięto źródło, znajomość albo konto nadawcy | Ten sam bieżący stan oferty | Bez zmiany snapshotu i jego zegarów | Sprzątanie własnych zasobów/historii nie usuwa gałęzi odbiorcy |
@@ -248,11 +248,13 @@ zasób i jego pliki, plakietkę oraz jeszcze niewysłany mail. Usunięcie
 nadawcy/oryginału/znajomości tego nie robi. Konto odbiorcy pozostaje
 nadrzędnym korzeniem wszystkich kopii i ich kolejki mailowej.
 
-**Pytanie architektoniczne oczekuje na odpowiedź:** zachować cofnięcie
-odmowy przez30 dni (usunąć zasób, ale zachować pakiet do odtworzenia)
-czy usuwać także pakiet i nie mieć cofnięcia kopii? Nowa świadoma
-wysyłka po okresie odmowy pozostaje możliwa. Nie wybierać wariantu
-za użytkownika i nie wdrażać zależnej logiki odmowy/odtwarzania.
+**Pytanie rozstrzygnięte przez użytkownika:** „Odrzucenie usuwa i nie
+daje możliwości powrotu”. Odrzucenie usuwa oczekujący zasób, jego
+pliki i pakiet. Brak undo i sekcji „Odrzucone przeze mnie” dla kopii.
+Pozostaje minimalny zapis odmowy do ukrytej blokady30 dni oraz
+informacja stanu w Go; bez treści umożliwiającej odtworzenie. Nowa
+świadoma wysyłka po okresie odmowy pozostaje możliwa. Nie zmienia to
+wdrożonych odmów Znajomych/Subskrybentów/Baz/Ankiet.
 
 Lokalne draft-copy-graph-365.sql i test-copy-graph-365.sql sprawdziły
 **wcześniejszy model**, w szczególności niezależność od źródła/nadawcy,
