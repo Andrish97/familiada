@@ -775,6 +775,8 @@ ujednolicenia; bieżąca kolejność E19 pozostaje zachowana.
 
 #### Zakres i kryteria zakończenia przeglądu landscape
 
+**Moje Gry (2026-10-13):** dotykowy kontekst telefonu obraca się portrait390×844 → landscape844×390 → portrait; filtrowanie i zaznaczenie pozostają, bez poziomego przepełnienia. E2E `38403253632` success1/1, 3 zrzuty artefaktu11816088611.
+
 **Marketplace (2026-10-13):** test dotykowy844×390 przechodzi listę,
 wyszukiwanie, szczegóły gry i zamknięcie arkusza bez utraty filtra;
 `38385343907`, success1/1. Pozostałe strony mapy i rzeczywistego urządzenia
