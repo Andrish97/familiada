@@ -270,6 +270,8 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       await page.locator("#importFile").setInputFiles(file);
       await expect(page.locator("#importPreview")).toContainText(name);
       await page.locator("#btnImportJson").click();
+      await expect(page.locator("#btnImportJson")).toHaveAttribute("data-i18n", "games.import.done");
+      await page.locator("#btnImportJson").click();
       await expect(page.locator("#importOverlay")).toBeHidden({ timeout: 60000 });
 
       const games = await gamesByName(page, name);
@@ -303,6 +305,8 @@ test.describe("games: audyt -- eksport / import pliku", () => {
 
       await page.locator("#importFile").setInputFiles(file);
       await page.locator("#btnImportJson").click();
+      await expect(page.locator("#btnImportJson")).toHaveAttribute("data-i18n", "games.import.done");
+      await page.locator("#btnImportJson").click();
       await expect(page.locator("#importOverlay")).toBeHidden({ timeout: 30000 });
       const games = await gamesByName(page, name);
       expect(games).toHaveLength(1);
@@ -325,8 +329,8 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       ],
     }));
 
-    // awaria serwera w połowie importu (gra i pierwsze pytanie już zapisane)
-    await page.route("**/rest/v1/answers*", (route) =>
+    // Błąd pojedynczego RPC przed zapisem; atomowy rollback wewnątrz DB ma osobny kontrakt364.
+    await page.route("**/rest/v1/rpc/game_import_package", (route) =>
       route.request().method() === "POST"
         ? route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "e2e: symulowana awaria" }) })
         : route.continue());
@@ -338,7 +342,7 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       await expect(page.locator("#importMsg")).not.toBeEmpty({ timeout: 15000 });
       expect(await gamesByName(page, name), "po nieudanym imporcie gra ma zostać usunięta").toHaveLength(0);
     } finally {
-      await page.unroute("**/rest/v1/answers*");
+      await page.unroute("**/rest/v1/rpc/game_import_package");
       await deleteGamesByName(page, name);
     }
   });

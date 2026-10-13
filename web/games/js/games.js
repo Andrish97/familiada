@@ -1,39 +1,39 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T00232";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T00232";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T00232";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-13T00232";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T00232";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T00232";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T00232";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-13T00232";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T00232";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-13T00232";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-13T00232";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-13T00332";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T00332";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T00332";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-13T00332";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-13T00332";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T00332";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T00332";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-13T00332";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T00332";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-13T00332";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-13T00332";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T00232";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-13T00232";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T00232";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-13T00332";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-13T00332";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T00332";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-13T00232";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-13T00232';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-13T00332";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-13T00332';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-13T00232";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-13T00332";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-13T00232";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T00232";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T00232";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T00232";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T00232";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-13T00332";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T00332";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T00332";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T00332";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T00332";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -329,9 +329,17 @@ function setImportMsg(t) {
 }
 
 let importParsed = null; // aktualnie sparsowany obiekt gry
+let importCompleted = false;
 
 function importResetPreview() {
   importParsed = null;
+  importCompleted = false;
+  if (btnImportJson) {
+    btnImportJson.setAttribute("data-i18n", "games.import.confirm");
+    btnImportJson.textContent = t("games.import.confirm");
+  }
+  setImportMsg("");
+  showProgBlock(importProg, false);
   if (importPreview) { importPreview.style.display = "none"; importPreview.innerHTML = ""; }
   if (importErr) { importErr.style.display = "none"; importErr.textContent = ""; }
   if (btnImportJson) btnImportJson.disabled = true;
@@ -1919,6 +1927,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnImportJson?.addEventListener("click", async () => {
+    if (importCompleted) { closeImportModal(); return; }
     if (btnImportJson?.disabled || !importParsed) return;
     const obj = importParsed;
     const qCount = Array.isArray(obj?.questions) ? obj.questions.length : 0;
@@ -1937,12 +1946,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, { step: step || MSG.importSave(), i, n, msg, isError });
       });
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-        step: MSG.importDone(), done: true, i: qCount, n: qCount, msg: MSG.importDone(),
+        step: MSG.importDone(), done: true, i: qCount, n: qCount, msg: "",
       });
       selectedId = newId;
       try { const ng = await loadGameBasic(newId); if (ng?.type) setActiveTab(uiTypeFromRow(ng)); } catch {}
       await refresh();
-      closeImportModal();
+      importCompleted = true;
+      if (btnImportJson) {
+        btnImportJson.setAttribute("data-i18n", "games.import.done");
+        btnImportJson.textContent = t("games.import.done");
+      }
     } catch (e) {
       console.error("IMPORT ERROR:", e);
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
@@ -1950,7 +1963,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
       setImportMsg(MSG.importDbFailed());
     } finally {
-      showProgBlock(importProg, false);
+      showProgBlock(importProg, importCompleted);
       if (btnImportJson) btnImportJson.disabled = !importParsed;
       if (btnCancelImport) btnCancelImport.disabled = false;
       if (importFile) importFile.disabled = false;

@@ -2753,6 +2753,7 @@ const uk = {
     import: {
       title: "Імпорт",
       confirm: "Імпортувати",
+      done: "Готово",
       pickFile: "Вибери файл JSON.",
       loaded: "Файл завантажено.",
       loadFailed: "Не вдалося завантажити файл.",

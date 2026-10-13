@@ -2656,6 +2656,7 @@ const pl = {
     import: {
       title: "Importuj",
       confirm: "Importuj",
+      done: "Gotowe",
       pickFile: "Wybierz plik JSON.",
       loaded: "Plik wczytany.",
       loadFailed: "Nie udało się wczytać pliku.",

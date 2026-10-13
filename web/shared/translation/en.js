@@ -2761,6 +2761,7 @@ const en = {
     import: {
       title: "Import",
       confirm: "Import",
+      done: "Done",
       pickFile: "Choose a JSON file.",
       loaded: "File loaded.",
       loadFailed: "Failed to load file.",

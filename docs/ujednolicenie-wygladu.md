@@ -1069,3 +1069,41 @@ postęp, błędy i ponowienie po zerwanym połączeniu. Wspólne elementy
 mają używać tego samego CSS. Zakres przenoszonych danych i mechanizm
 snapshot/importu w udostepnianie-kopii-plan.md; nie dublować formatów.
 Zrzuty po wykonaniu z przykładowymi danymi390/1400 i landscape.
+
+**Korekta zakończenia operacji2026-10-13:** użytkownik zgłosił migające
+okno importu. Dla Gier/Logo/Baz operacja rusza natychmiast; pobieranie
+pliku zaczyna się zaraz po przygotowaniu, bez oczekiwania na Gotowe.
+Jeśli operacja ma okno postępu, po sukcesie zostaje potwierdzenie
+i przycisk Gotowe (tylko zamknięcie, bez ponowienia zapisu/pobrania).
+Bez sztucznego opóźnienia. Wybór innego pliku resetuje stan sukcesu.
+Pierwsze wdrożenie: import gry; pozostałe ścieżki w tym samym przeglądzie.
+
+Pytanie użytkownika o edytor pytań: obecny edytor gry ma import TXT
+lub wklejonej treści, bez osobnego eksportu TXT. Ten import także objąć
+wspólnym czytelnym zakończeniem. Eksport całej gry pozostaje na liście
+Gier. Nie oznaczać nieistniejącego eksportu edytora jako gotowej funkcji;
+ewentualne dodanie osobnego eksportu wymaga osobnego zakresu.
+
+### Propozycja poprawy importu TXT w edytorze —2026-10-13
+
+Użytkownik zaproponował okno poprawy, konwersję na bieżąco i zaznaczanie
+błędów albo usunięcie starego TXT. Proponowany kierunek: zachować
+wygodne wklejanie/wczytanie tekstu i dodać żywy podgląd. Osobny punkt
+przeglądu edytora w E20; nie oznaczać jako już wykonany.
+
+| Element | Proponowane zachowanie |
+|---|---|
+| Edycja | Jedno pole tekstu, możliwość wklejenia lub wczytania pliku; tekst pozostaje źródłem danych |
+| Konwersja | Na bieżąco po krótkiej pauzie pisania, ten sam parser i normalizacja co w finalnym imporcie |
+| Podgląd | Pytania, odpowiedzi i punkty w postaci przyszłego wyniku; bez pokazywania wewnętrznego JSON użytkownikowi |
+| Błędy | Wskazana linia i konkretny opis; kliknięcie przenosi do miejsca poprawy; nie kończyć analizy na pierwszym błędzie |
+| Ostrzeżenia | Pokazać skracanie zbyt długiej treści, nadmiar odpowiedzi oraz niepoprawne punkty zgodnie z typem gry; żadnego cichego gubienia danych |
+| Zapis | Dopiero Importuj, z dotychczasowym potwierdzeniem zastąpienia pytań. Wadliwy format blokuje zapis; niepełna poprawnie rozpoznana definicja zachowuje reguły roboczej gry |
+| Desktop/mobile | Desktop tekst i podgląd obok; telefon kompaktowe przełączanie Tekst/Podgląd z liczbą błędów; istniejący topbar Wstecz |
+| Koniec | Czytelny sukces/Gotowe, bez samoczynnego migania; wspólna zasada powyżej |
+
+Testy: wszystkie typy gry, oba źródła tekstu, numery i końce linii,
+punkty/opcjonalna nazwa, kilka jednoczesnych błędów, korekty na żywo,
+zgodność podglądu z zapisem, brak zapisu podczas edycji, potwierdzenie
+zastąpienia oraz błędny zapis zachowujący dotychczasowe pytania. Zrzuty
+po wykonaniu, bez zatrzymywania kolejki na ocenę wyglądu.

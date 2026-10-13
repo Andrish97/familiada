@@ -42,6 +42,15 @@ dla wysyłania. Znaczenie działań pozostaje jawne:
 | Akceptuj otrzymaną kopię | Utworzenie własnego zasobu z otrzymanego pakietu | Ten sam importer, stałe ID oferty i dokładnie jeden wynik |
 | Do bazy | Zapis pytań w wybranej bazie | Osobna istniejąca ścieżka pytań; uwzględnić w przeglądzie starych operacji |
 
+Wstępny odczyt kodu Do bazy: qb_questions już zapisuje porcjami200,
+więc nie powielać tam optymalizacji pojedynczych pytań. Nazwa/pozycja
+i utworzenie folderu są osobnymi operacjami; porażka uruchamia sprzątanie
+pytań i folderu. Przegląd obejmuje atomowość całego wyniku, równoczesne
+eksporty, utratę odpowiedzi i sprawdzenie błędów zwracanych przez
+sprzątanie. Korekta użytkownika2026-10-13: okno po sukcesie nie może
+mignąć i samoczynnie zniknąć. Zapis/pobieranie kończą się bez sztucznej
+zwłoki; pozostaje czytelne potwierdzenie i świadome zamknięcie Gotowe.
+
 Potwierdzenie użytkownikowi2026-10-13: wersja zostaje utrwalona przy
 wysłaniu, nie dopiero przy akceptacji. Usunięcie oryginału przed
 akceptacją pozostawia ofertę wraz z kompletnym pakietem i jej pierwotnym
