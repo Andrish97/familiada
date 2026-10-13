@@ -19,4 +19,5 @@ test('regular application pages have contact; dedicated device screens do not',(
  assert.match(source,/ensureContactEntryPoint/);assert.match(source,/document\.body\?\.hasAttribute\("data-device-screen"\)/);assert.match(source,/contact-footer-entry--floating/);
  assert.match(source,/document\.querySelector\('\[data-contact-modal\], \.btn-contact-footer'\)/);
  const mail=fs.readFileSync(path.join(root,'mail/index.html'),'utf8');assert.match(mail,/<footer[^>]*>[\s\S]*data-contact-modal/);
+ const connect=fs.readFileSync(path.join(root,'connect/index.html'),'utf8');assert.match(connect,/<\/main>\s*<footer class="footer wrap">[\s\S]*data-contact-modal/);
 });

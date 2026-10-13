@@ -977,16 +977,16 @@ rzeczywistej strony w pełnej galerii i punktowym teście właściwego zachowani
 | Dolny pasek list: lewa grupa od lewej, akcje od prawej, bez sztywnego podziału na dwa rzędy; zawijać proporcjonalnie i z najmniejszą liczbą wierszy. | Zmienione flexy Gier/Baz/Logo; **niezweryfikowane** na rzeczywistych stronach. |
 | Kolejność akcji: Powiel, Eksport, Eksport bazy, Import, Wyślij; pomijać brakujące akcje bez zmiany kolejności pozostałych. | HTML Gier/Baz/Logo poprawiony; **niezweryfikowane** wizualnie i funkcjonalnie. |
 | Ustawienia gry mają ikonę zębatki; przycisk Ustawienia ma kolor jak pozostałe akcje, a „Graj” zachowuje złoty priorytet. | **Otwarte**. |
-| `/connect/`: poprawić odstępy, zwłaszcza separator oddzielający kartę. | **Otwarte**. |
+| `/connect/`: poprawić odstępy, zwłaszcza separator oddzielający kartę. | Stopkę przeniesiono poza główną kartę, z zachowaniem wspólnej linii i Safe Area; **do sprawdzenia zrzutem**. |
 | Manual i prywatność: zmniejszyć nadmierny dostęp/odstęp od górnej krawędzi. | **Otwarte**. |
 | Wspólny device guard: jednakowy wygląd i poprawne rozróżnienie braku dotyku, nieobsługiwanego urządzenia, landscape telefonu, fizycznie za małego ekranu i za wąskiego okna. Nie sugerować obrotu dla niedostępnego typu urządzenia. | Nadrzędność i wspólne teksty są w kodzie; **wymaga testów** na wszystkich profilach. |
 | Guard blokuje odsłonięcie strony i pobieranie danych, zanim zostanie spełniony warunek urządzenia/viewportu. | Zmieniono kolejność w `page-init`; **wymaga sprawdzenia** oraz audytu stron bez `page-init`. |
 | Kolory tła: sprawdzić i ujednolicić miejsca, gdzie granat wygląda na czarny. | **Otwarte; ustalić strony w galerii.** |
-| TV: usunąć błędny kontakt ze strony połączenia TV; zablokować `/connect/tv/` na telefonie. | Telefon jest blokowany wspólnym guardem; **kontakt i wygląd pozostają do weryfikacji**. |
+| TV: usunąć błędny kontakt ze strony połączenia TV; zablokować `/connect/tv/` na telefonie. | Strona nie ma elementu kontaktu; `data-device-screen` oraz osobny guard blokują telefon przed odsłonięciem formularza. **Wymaga jeszcze zrzutu kontrolnego**. |
 | Gry społeczności na telefonie: ikony narzędzi oraz wyszukiwanie/filtrowanie oparte na zasadach Gier, z układem właściwym dla tej strony. | **Otwarte**. |
 | Kafle Logo: zrównać szerokość z kaflami Gier/Baz na telefonie i zmniejszyć odstęp nazwa–podgląd. | Gap i scrollbar gutter poprawione; **szerokość niezweryfikowana**. |
 | Edytory tekstu Logo na iPhone portrait nie mogą pokazywać komunikatu „Obróć”; mają wyświetlić właściwą blokadę niedostępnego urządzenia. | Reguła form factor jest w mapie; **niezweryfikowane**. |
-| `/connect/`: skaner QR ma być widoczny na iPhonie z dotykiem także przy braku rozpoznania UA. | Wykrywanie touch/coarse pointer dodane; **niezweryfikowane na stronie**. |
+| `/connect/`: skaner QR ma być widoczny na iPhonie z dotykiem także przy braku rozpoznania UA. | Wykrywanie touch/coarse pointer jest w kodzie; **niezweryfikowane na stronie**. |
 | Stopki Go, Mail, `/404.html` i Maintenance: prawidłowa standardowa treść; w 404/Maintenance kontakt przez e-mail, po lewej standardowy tekst Familiada 2026. | **Do sprawdzenia i ujednolicenia**; nie zakładać, że sam istniejący HTML jest poprawny. |
 | Safe Area: tło topbara rozciąga się pod wycięcie, zawartość pozostaje poniżej; stopka i pozostałe elementy odsuwają się od wszystkich krawędzi Safe Area i zaokrągleń iPhone/iPad. | Dodano padding stopki i ramki galerii; **wymaga sprawdzenia** w pięciu profilach. |
 | Zachować istniejące style TV oraz osobne zasady Control/edytorów; nie wprowadzać globalnych zmian CSS, które psują ich układ. | Zasada obowiązuje; **regresje sprawdzić w pełnej galerii**. |
