@@ -38,8 +38,9 @@ const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace
 export function initListSearch({ grids, tile, name, filter, sort }) {
   const slot = document.querySelector(".games-bottom-left");
   if (!slot) return;
-  // Zewnętrzny wrapper odpowiada za szerokość/grupowanie, a .searchBox to
-  // właściwe pole. Lupa pozostaje osobnym przyciskiem obok pola.
+  // Zewnętrzny wrapper odpowiada za szerokość/grupowanie. Przycisk po prawej
+  // stronie pola przełącza lupę na X, który czyści wyszukiwanie — tak jak w
+  // mobilnym wyszukiwaniu Gier Społeczności.
   const search = document.createElement("div");
   search.className = "list-search";
   const box = document.createElement("div");
@@ -47,26 +48,18 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   const input = document.createElement("input");
   input.type = "search";
   input.className = "searchText";
-  const clear = document.createElement("button");
-  clear.type = "button";
-  clear.className = "btn list-search-clear";
-  clear.innerHTML = icon("close");
   const mobileSearch = document.createElement("button");
   mobileSearch.type = "button";
-  mobileSearch.className = "btn icon list-search-open";
+  mobileSearch.className = "btn list-search-open";
   mobileSearch.innerHTML = icon("search");
   const label = () => {
     input.placeholder = t("common.searchByName");
     input.setAttribute("aria-label", t("common.searchByName"));
-    clear.title = t("baseExplorer.search.clear");
-    clear.setAttribute("aria-label", t("baseExplorer.search.clear"));
     mobileSearch.title = input.value ? t("baseExplorer.search.clear") : t("common.searchByName");
     mobileSearch.setAttribute("aria-label", mobileSearch.title);
   };
   label();
-  // Pole z małym X w środku; przycisk lupy jest osobnym sąsiadującym
-  // przyciskiem po prawej stronie pola.
-  box.append(input, clear);
+  box.append(input);
   search.append(box, mobileSearch);
   slot.append(search);
 
@@ -174,7 +167,6 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     }
   };
   input.addEventListener("input", apply);
-  clear.addEventListener("click", () => { input.value = ""; apply(); input.focus(); });
   mobileSearch.addEventListener("click", async () => {
     if (input.value) {
       input.value = "";

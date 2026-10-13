@@ -972,7 +972,7 @@ rzeczywistej strony w pełnej galerii i punktowym teście właściwego zachowani
 
 | Poprawka | Stan |
 |---|---|
-| Wyszukiwarka na wszystkich listach: wysokość jak sąsiednie przyciski, lupa po prawej, X mniejsze i wyśrodkowane w polu; poprawić wygląd we wszystkich typach i viewportach. | Wspólny mechanizm jest w kodzie; **niezweryfikowane** w bieżącej galerii. |
+| Wyszukiwarka na wszystkich listach: wysokość jak sąsiednie przyciski, lupa po prawej, przycisk X taki sam jak w Grach Społeczności. W Grach/Bazach/Logo przycisk po prawej zmienia lupę na X i czyści frazę; bez małego X wewnątrz pola. | Wdrożone przez wspólny `list-search.js` i CSS list; **niezweryfikowane w galerii**. |
 | Górny pasek list: tytuł/podpowiedź od lewej, akcje od prawej; zostają w jednym wierszu, jeśli czytelnie się mieszczą; przy długiej podpowiedzi mogą zostać po prawej; gdy cała grupa się nie mieści, wszystkie akcje przechodzą pod nagłówek i wyrównują się do lewej. | Wspólny `list-header-layout.js` mierzy szerokość i zawijanie na Grach/Bazach/Logo; **reguła w kodzie, wymaga kontroli zrzutem**. |
 | Dolny pasek list: lewa grupa od lewej, akcje od prawej, bez sztywnego podziału na dwa rzędy; zawijać proporcjonalnie i z najmniejszą liczbą wierszy. | Zmienione flexy Gier/Baz/Logo; **niezweryfikowane** na rzeczywistych stronach. |
 | Kolejność akcji: Powiel, Eksport, Eksport bazy, Import, Wyślij; pomijać brakujące akcje bez zmiany kolejności pozostałych. | HTML Gier/Baz/Logo poprawiony; **niezweryfikowane** wizualnie i funkcjonalnie. |
@@ -983,7 +983,7 @@ rzeczywistej strony w pełnej galerii i punktowym teście właściwego zachowani
 | Guard blokuje odsłonięcie strony i pobieranie danych, zanim zostanie spełniony warunek urządzenia/viewportu. | Zmieniono kolejność w `page-init`; **wymaga sprawdzenia** oraz audytu stron bez `page-init`. |
 | Kolory tła: sprawdzić i ujednolicić miejsca, gdzie granat wygląda na czarny. | **Otwarte; ustalić strony w galerii.** |
 | TV: usunąć błędny kontakt ze strony połączenia TV; zablokować `/connect/tv/` na telefonie. | Strona nie ma elementu kontaktu; `data-device-screen` oraz osobny guard blokują telefon przed odsłonięciem formularza. **Wymaga jeszcze zrzutu kontrolnego**. |
-| Gry społeczności na telefonie: ikony narzędzi oraz wyszukiwanie/filtrowanie oparte na zasadach Gier, z układem właściwym dla tej strony. | W kodzie są przyciski ikonowe, modal wyszukiwania, ikony filtra/sortowania i aktywny stan. Punktowy E2E sprawdza wyszukiwanie, filtr i sortowanie; **sprawdzić układ w galerii**. |
+| Gry społeczności: na telefonie ikony narzędzi oraz wyszukiwanie/filtrowanie oparte na zasadach Gier, z układem właściwym dla tej strony. Ikona filtra języka ma znak tłumaczenia „A 文”, a jego nazwa znajduje się wewnątrz przycisku. | Wdrożone: przycisk ikony lupy/X, filtr i sortowanie; etykieta Język przeniesiona do przycisku, ikona `translate` w zestawie. Punktowy E2E obejmuje wyszukiwanie, filtr, sortowanie i detal; **sprawdzić układ w galerii**. |
 | Kafle Logo: zrównać szerokość z kaflami Gier/Baz na telefonie i zmniejszyć odstęp nazwa–podgląd. | Gap i scrollbar gutter poprawione; **szerokość niezweryfikowana**. |
 | Edytory tekstu Logo na iPhone portrait nie mogą pokazywać komunikatu „Obróć”; mają wyświetlić właściwą blokadę niedostępnego urządzenia. | Reguła form factor jest w mapie; **niezweryfikowane**. |
 | `/connect/`: skaner QR ma być widoczny na iPhonie z dotykiem także przy braku rozpoznania UA. | Wykrywanie touch/coarse pointer jest w kodzie; **niezweryfikowane na stronie**. |

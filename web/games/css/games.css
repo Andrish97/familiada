@@ -851,9 +851,9 @@ body.games-body > main.wrap{
 .list-search .searchBox{width:auto;flex:1 1 auto;min-width:0;height:36px;box-sizing:border-box;padding:0 5px 0 10px;margin:0}
 .list-search .searchText{height:100%;padding:0 4px}
 .list-search .btn{ padding: 0; min-height: 36px; }
-.list-search-open{ display: grid; place-items: center; width: 36px; flex: 0 0 36px; }
+.list-search-open{ display: grid; place-items: center; width: 36px; height: 36px; min-height: 36px !important; flex: 0 0 36px; border-radius: 10px; }
 .list-search-open .ico{width:18px;height:18px}
-.list-search-clear{ width: 26px; height: 26px; min-height: 26px !important; flex: 0 0 26px; border-radius: 8px; }
+.list-search-open.is-active{ color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
 @media (max-width: 600px){
   .list-search{ width: auto; flex: 1 1 auto; max-width: none; }
   .list-search .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
@@ -884,7 +884,6 @@ body.games-body > main.wrap{
   .games-bottom-left .list-search{ flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
   .list-search .searchBox{ display:none; }
   .list-search .list-search-open{ display: grid; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
-  .list-search-open.is-active{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
 }
 .list-empty{
   opacity: .55;

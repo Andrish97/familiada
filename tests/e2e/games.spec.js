@@ -111,6 +111,10 @@ test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści
   await page.locator(".uni-modal input[type=search]").fill(`E20_BRAK_${Date.now()}`);
   await page.getByRole("button", { name: "OK", exact: true }).click();
   await expect(page.locator(".list-search-open")).toHaveClass(/is-active/);
+  await expect(open).toHaveAttribute("title", "Wyczyść");
+  const clearButton = await open.boundingBox();
+  expect(clearButton.width).toBe(36);
+  expect(clearButton.height).toBe(36);
   await expect(page.locator(".list-empty").first()).toBeVisible();
   await open.click();
   await expect(open).not.toHaveClass(/is-active/);
