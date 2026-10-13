@@ -14,15 +14,17 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
 | E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
-| E19N | **Gotowe produkcyjnie.** Branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte z Control i widoczne z Gier. Main `38369193504` success5/5; test bezpośredniego URL/odświeżenia arkusza main `38370189342` success1/1. Pages38369096986, Worker38369096732. Full unit602/602. E19 zamknięte na main `d847175100`. |
+| E19N | **Częściowo wdrożone; E19 pozostaje otwarte.** Produkcyjne testy pojedynczego arkusza Bazy potwierdziły URL, Wstecz/Dalej i odświeżenie (`38370189342` 1/1). Control→Znajomi i ustawienia przeszły (`38368774633`, main `38369193504` 5/5). Brakuje wymaganej obsługi stosu zagnieżdżonych dialogów: kod ma tylko jeden aktywny dialog i jeden parametr `dialog`; nie ma testu odtwarzania rodzica po zamknięciu dziecka. |
 | E14 | **Gotowe produkcyjnie**: DB/migracja368/smoke `38372090287`, Edge `38372090225`, main delete-account `38372530495`, po migracji stary RPC punktowo `38373614192`. |
 | E20 → Manual | W toku: wspólny nagłówek Gier/Baz/Logo, ikony akcji, telefonowy modal wyszukiwania i filtry/sortowanie. Landscape do 980 px: E2E 38376106783 success2/2 (12 zrzutów), PL/EN/UK 38378078762 5/5, G/B/Logo błędy 38378348674 6/6. Marketplace dotykowy landscape `38385343907` success1/1: lista, wyszukiwanie, szczegóły/arkusz i powrót zachowują stan. Ankieta landscape `38387014627` success1/1 (artefakt11806951789): brak przepełnienia, zakładki i pasek stanu zachowane po retry. Landscape zadań `38379023778` success4/4; kontakty `38379572388` success1/1, obrót/zakładki/formularz/scroll; Ankieta `38381649291` success1/1, ładowanie/błąd/retry. Kontakty `38382033831` i Zadania `38382324509` po 1/1, kontrolowane błędy/retry (artefakty11803776686 i11804131090). Podgląd TXT edytora `38382791836` success1/1 (artefakt11804730840). Eksport pliku Gier `38383237666`, Baz `38383626341` i Logo `38383911498` zostawia wynik do zamknięcia; błędy/retry Gier `38385655794`, Baz `38385776085`, Logo `38385034279`. Import Logo z wynikiem do zamknięcia `38386121426` (2/2 round-trip), Bazy `38386612386` (1/1); błędny import Gier/Baz `38387894274`/`38387645962` po 1/1, brak niepełnych rekordów; import sukcesu Gry i odrzucenie pliku Logo `38388086960`/`38388238433` po 1/1. Wszystkie unity602/602. Pozostałe typy UI/karty, pełny przegląd landscape, rzeczywisty tablet oraz pozostałe import/eksport Gier/Baz/Logo otwarte. Manual na końcu. |
 
-## Aktualny checkpoint: E19 zamknięte produkcyjnie
+## Aktualny checkpoint: E19 wymaga domknięcia E19N
 
-E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
-Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
-refresh przeszły. E19 i E14 są zamknięte produkcyjnie; bieżący etap to E20.
+E19C oraz wymienione pojedyncze przepływy E19N są wdrożone i zweryfikowane
+po Pages. E19 nie jest jeszcze zamknięte: wymagany stos zagnieżdżonych
+dialogów nie jest obsłużony ani pokryty testem. Przed zamknięciem E19 należy
+dokończyć ten przepływ i jego punktową kontrolę. Nie rozpoczynać kolejnych
+etapów przed tym krokiem.
 
 Początkowy prototyp367 i jego prywatne SQL/testy są zachowane jako
 artefakty rozwoju. Zostały zastąpione migracją produkcyjną
@@ -34,14 +36,18 @@ odbiór, filter Otrzymane i plakietki są wdrożone.
 Bramka migracji367, Worker, Edge Functions, Pages i kontrola po wdrożeniu są spełnione. Zrzuty390/1400/landscape są w artefakcie E2E38362616613. Kopia i powiadomienie należą do gałęzi odbiorcy; nadawca i oryginał mogą zniknąć. Preferencja odbiorcy jest sprawdzana przed utworzeniem maila i przed dostarczeniem. Maile Auth pozostają bez zmian.
 Źródło decyzji: `docs/udostepnianie-kopii-plan.md`.
 
-E19N zamknięta: z mapy przejść odblokowano skrót Control → Znajomi i dodano
+E19N częściowo wdrożona: z mapy przejść odblokowano skrót Control → Znajomi i dodano
 ukrycie „Graj” w Ustawieniach otwartych z Control. Arkusze mobilne mają
 dozwolone `?dialog=` w PAGES; Wstecz topbara/przeglądarki zamyka arkusz,
 Dalej odtwarza go. Unit po korekcie globalnego stanu `dialog`:602/602.
 Branch Control/settings38368774633 green; produkcyjne E2E38369193504 5/5,
-test arkusza z bezpośrednim URL/refresh38370189342 1/1; Pages38369096986,
-Worker38369096732. Przy promocji CI dopisał wersje cache-busterów
-`1a97df0938`, zintegrowane w merge commit `d847175100`.
+test pojedynczego arkusza z bezpośrednim URL/refresh38370189342 1/1;
+Pages38369096986, Worker38369096732. Przy promocji CI dopisał wersje
+cache-busterów `1a97df0938`, zintegrowane w merge commit `d847175100`.
+To nie pokrywa wymaganego E19N stosu dialog→dialog. `modal-sheet.js` ma
+pojedyncze `activeClose`/`activeDialogKey` i jeden parametr `dialog`, więc
+zamknięcie dialogu potomnego nie odtwarza rodzica z URL/historii. E19
+pozostaje otwarte do implementacji oraz punktowego testu tego przypadku.
 
 E19C zostało wdrożone i zweryfikowane produkcyjnie zgodnie z wymaganym
 cyklem. Worker/Edge/Pages są wdrożone, migracja367 jest zastosowana,

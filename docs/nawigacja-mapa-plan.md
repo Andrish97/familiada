@@ -1126,7 +1126,7 @@ zajmują całą stronę (np. udostępnianie, import/eksport, wybór/wyszukiwanie
 | Obrót/zmiana rozmiaru | Bez dodatkowych wpisów od samej zmiany układu i bez utraty możliwości zamknięcia. Uwzględnić tablet i telefon landscape. |
 | Formularz i trwająca operacja | Zachować istniejącą ochronę niezapisanych zmian i operacji; Wstecz nie obchodzi potwierdzenia ani nie wykonuje działania drugi raz. Dialog nadal nie zwalnia blokad strony tylko przez zamknięcie okna. |
 
-W E19N wdrożono wspólną obsługę dla arkuszy jawnie wymienionych w `PAGES`
+W E19N wdrożono wspólną obsługę pojedynczego arkusza dla stron jawnie wymienionych w `PAGES`
 (Gry, Bazy, eksplorator Baz, Logo, Ankiety i Marketplace). `dialog` trafia
 do URL, Back zamyka aktywny arkusz, Forward odtwarza go, a nieznany dialog
 jest odrzucany. Zakładki nadal używają `replaceState`. Punktowy test Bazy
@@ -1136,9 +1136,18 @@ Test obejmuje wyłącznie odtworzenie UI; nie wykonuje operacji biznesowej.
 Pomiary urządzeń i zrzuty wyglądu pozostają w E20; historycznego E7 nie
 oznaczać ponownie jako niewykonanego.
 
-Testy: oba przyciski Wstecz, Android, X, ponowne otwieranie, kilka
-dialogów, Dalej, wejście Go i bezpośredni link, odświeżenie, zmiana
-dostępności zasobu, obrót oraz brak zbędnych wpisów i powtórnych operacji.
+**Status E19N: częściowo wdrożone; etap E19 pozostaje otwarty.** Aktualny
+`modal-sheet.js` przechowuje jeden `activeDialogKey`/`activeClose` i jeden
+parametr `dialog`. Nie zapisuje stosu ani nie odtwarza rodzica po zamknięciu
+dialogu potomnego. Zielony test produkcyjny pokrywa pojedynczy arkusz Bazy
+(Back/Forward, bezpośredni URL i refresh), nie dialog→dialog.
+
+Do domknięcia E19N pozostają co najmniej: obsługa i test odtwarzania stosu
+dialogów; ponowne otwieranie i brak zbędnych wpisów historii; sprawdzenie
+X i zamykania dostępnego dla każdego rodzaju arkusza. Testy wymienione
+poniżej nie są dowodem wykonania tylko dlatego, że E19N oznaczono wcześniej
+jako gotowe. Kontrola Androida, obrotu i rzeczywistego tabletu jest powiązana
+z E20.
 Kontrola przeglądarkowa i pomiary na rzeczywistym tablecie zgodnie z E20;
 zrzuty po zmianach wyglądu.
 
