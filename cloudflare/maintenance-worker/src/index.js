@@ -6,6 +6,7 @@
 // proxying, etc). This split is purely mechanical (every line of logic moved
 // verbatim into its new file, nothing rewritten) -- see git history for the
 // single-file version if something here looks surprising.
+import { handleResourceDuplicate } from "./lib/resource-copy/api.js";
 import { parseGoLink } from "../../../web/shared/js/core/go-contract.js";
 import { handleMailCenterApi } from "./lib/mail-center/api.js";
 import { handleInboundEmail } from "./lib/email/inbound-email.js";
@@ -192,6 +193,16 @@ export default {
     ) {
       const e2eRes = await handleE2ELoginBypass(request, env, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       if (e2eRes) return e2eRes;
+    }
+
+    if (url.pathname === "/_api/resource-duplicate") {
+      const state = await getState(env);
+      if (state.enabled && state.mode !== "off" && !hasAdminBypass(request, env) && !await authorizeE2EApi(request, env)) {
+        return json({ok:false,error:"maintenance"},503);
+      }
+      const work = handleResourceDuplicate(request, env);
+      ctx.waitUntil(work.then(() => undefined));
+      return work;
     }
 
     if (url.pathname.startsWith("/_api/mail/")) return handleMailCenterApi(request, env);

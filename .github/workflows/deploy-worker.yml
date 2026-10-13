@@ -6,6 +6,13 @@ on:
     paths:
       - "cloudflare/**"
       - "web/shared/js/core/go-contract.js"
+      - "web/shared/js/core/resource-clone-plan.js"
+      - "web/shared/js/core/base-transfer-format.js"
+      - "web/shared/js/core/game-transfer-format.js"
+      - "web/shared/js/core/logo-transfer-source.js"
+      - "web/shared/js/core/logo-image-data.js"
+      - "web/logo/js/package.js"
+      - "web/logo/js/render.js"
       - ".github/workflows/deploy-worker.yml"
   workflow_dispatch: {}
 
