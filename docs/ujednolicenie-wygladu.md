@@ -871,6 +871,11 @@ Zadania osobny stan listy (`38382324509`, 1/1, artefakt11804131090).
 Zadania i kontakty mają też testy landscape z obrotem. Pozostałe etapy
 kart Ankiet, Kontaktów, Zadań i całej mapy PAGES wciąż wymagają przeglądu.
 
+**Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
+↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje
+pasek stanu; `38387014627`, success1/1. Pozostałe strony i urządzenia nadal
+wymagają osobnych testów.
+
 **Import TXT edytora (2026-10-13):** podgląd używa `parseQaText` z finalnej
 ścieżki importu, aktualizuje się podczas wpisywania, pokazuje błąd parsowania,
 a plik TXT nadal trafia do jednego pola tekstowego. Punktowe E2E
