@@ -95,7 +95,7 @@ function tileByName(page, name) {
 
 /* ================= E20: nagłówek wspólny Gier/Baz/Logo ================= */
 
-test("E20: akcje po lewej, tytuł i podpowiedź po prawej na komputerze i telefonie", async ({ page, context }) => {
+test("E20: akcje po lewej, tytuł i podpowiedź po prawej na komputerze i telefonie", async ({ page, context }, testInfo) => {
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
   for (const width of [1400, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
@@ -109,6 +109,7 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej na komputerze i telefo
     expect(boxes.heading.right, `title is outside the right column at ${width}px`).toBeLessThanOrEqual(width - 8);
     await expect(page.locator("#btnEdit .ico")).toBeVisible();
     await expect(page.locator("#btnEdit")).toHaveAccessibleName("Edytuj");
+    await page.screenshot({ path: testInfo.outputPath(`e20-games-${width}.png`), fullPage: true });
   }
 });
 
