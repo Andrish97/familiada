@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zF4hbXbdNqxaYRm8NqQrl0k4MEBgLX4ef0pPZiM6EPFjpY5S0z1iKomlCdMge2Y
+\restrict 1TCg45QRtp2BP9DNAdzfiRp7bs5I0ciajCmkNhDRBiWauCf23PNpIGcxtgv5NUm
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -379,6 +379,136 @@ END $_$;
 
 
 --
+-- Name: _copy_decide("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_copy_decide"("p_offer" "uuid", "p_decision" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE actor uuid:=auth.uid(); item public.resource_copy_offers; target uuid;
+BEGIN
+ IF actor IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth_required'); END IF;
+ IF p_decision NOT IN('accept','decline') THEN RETURN jsonb_build_object('ok',false,'error','invalid_decision'); END IF;
+ PERFORM 1 FROM auth.users WHERE id=actor FOR NO KEY UPDATE NOWAIT;
+ SELECT * INTO item FROM public.resource_copy_offers WHERE id=p_offer AND recipient_id=actor FOR UPDATE;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not_found'); END IF;
+ IF item.status IN('declined','expired') THEN RETURN jsonb_build_object('ok',false,'error',item.status); END IF;
+ IF item.status='accepted' AND p_decision='decline' THEN RETURN jsonb_build_object('ok',false,'error','already_accepted'); END IF;
+ IF item.status='pending' AND item.created_at+interval '5 days'<=clock_timestamp() THEN
+  PERFORM public._copy_discard(item.id,'expired'); RETURN jsonb_build_object('ok',false,'error','expired');
+ END IF;
+ IF p_decision='decline' THEN PERFORM public._copy_discard(item.id,'declined'); RETURN jsonb_build_object('ok',true); END IF;
+ target:=CASE item.resource_kind WHEN 'game' THEN item.game_id ELSE item.logo_id END;
+ IF target IS NULL THEN RETURN jsonb_build_object('ok',false,'error','previously_removed'); END IF;
+ UPDATE public.resource_copy_offers SET status='accepted',decided_at=coalesce(decided_at,clock_timestamp()) WHERE id=item.id;
+ RETURN jsonb_build_object('ok',true,'id',target,'already',item.status='accepted');
+END $$;
+
+
+--
+-- Name: _copy_discard("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_copy_discard"("p_offer" "uuid", "p_status" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE item public.resource_copy_offers;
+BEGIN
+ IF p_status NOT IN('declined','expired') THEN RAISE EXCEPTION 'invalid_copy_decision'; END IF;
+ SELECT * INTO item FROM public.resource_copy_offers WHERE id=p_offer FOR UPDATE;
+ IF NOT FOUND OR item.status<>'pending' THEN RETURN; END IF;
+ -- The authoritative state changes before deleting children, within one transaction.
+ UPDATE public.resource_copy_offers SET status=p_status,decided_at=clock_timestamp(),game_id=NULL,logo_id=NULL WHERE id=p_offer;
+ IF item.game_id IS NOT NULL THEN DELETE FROM public.games WHERE id=item.game_id AND owner_id=item.recipient_id; END IF;
+ IF item.logo_id IS NOT NULL THEN DELETE FROM public.user_logos WHERE id=item.logo_id AND user_id=item.recipient_id; END IF;
+END $$;
+
+
+--
+-- Name: _copy_game_send("uuid", "uuid", "jsonb", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_copy_game_send"("p_source" "uuid", "p_recipient" "uuid", "p_payload" "jsonb", "p_request" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE actor uuid:=auth.uid(); source public.games; existing public.resource_copy_offers; canonical jsonb;
+ fingerprint text; expected_type text; offer_id uuid:=gen_random_uuid(); imported jsonb; gid uuid; label text; blocked_until timestamptz;
+BEGIN
+ IF actor IS NULL OR p_recipient IS NULL OR actor=p_recipient OR p_request IS NULL THEN RETURN jsonb_build_object('ok',false,'error','invalid_request'); END IF;
+ PERFORM 1 FROM auth.users u WHERE u.id IN(actor,p_recipient) ORDER BY u.id FOR NO KEY UPDATE NOWAIT;
+ IF (SELECT count(*) FROM auth.users u WHERE u.id IN(actor,p_recipient) AND public._poll_identity_regular(u.id,to_jsonb(u)))<>2 THEN RETURN jsonb_build_object('ok',false,'error','auth_required'); END IF;
+ canonical:=public._game_package_normalize(p_payload);
+ fingerprint:=encode(sha256(convert_to(canonical::text,'UTF8')),'hex');
+ SELECT * INTO existing FROM public.resource_copy_offers WHERE sender_identity=actor AND request_id=p_request AND recipient_id=p_recipient FOR UPDATE;
+ IF FOUND THEN
+  IF existing.source_id IS DISTINCT FROM p_source OR existing.resource_kind<>'game' OR existing.payload_hash IS DISTINCT FROM fingerprint THEN RETURN jsonb_build_object('ok',false,'error','request_conflict'); END IF;
+  RETURN jsonb_build_object('ok',true,'already',true,'offer_id',existing.id);
+ END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(actor,p_recipient)::text||':'||GREATEST(actor,p_recipient)::text,329));
+ PERFORM 1 FROM public.friendships WHERE status='active' AND cancelled_at IS NULL
+  AND ((requester_id=actor AND addressee_id=p_recipient) OR (requester_id=p_recipient AND addressee_id=actor)) FOR SHARE NOWAIT;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not_friend'); END IF;
+ SELECT * INTO source FROM public.games WHERE id=p_source AND owner_id=actor FOR SHARE NOWAIT;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not_found'); END IF;
+ IF source.type::text NOT IN('prepared','poll_text','poll_points') OR source.status::text NOT IN('draft','ready') THEN RETURN jsonb_build_object('ok',false,'error','not_exportable'); END IF;
+ IF EXISTS(SELECT 1 FROM public.resource_copy_offers WHERE game_id=p_source AND status='pending') THEN RETURN jsonb_build_object('ok',false,'error','received_copy_pending'); END IF;
+ expected_type:=CASE WHEN source.type::text<>'prepared' AND source.status::text='ready' THEN 'prepared' ELSE source.type::text END;
+ IF canonical#>>'{game,type}' IS DISTINCT FROM expected_type OR canonical#>>'{game,name}' IS DISTINCT FROM coalesce(nullif(trim(source.name),''),'Gra') THEN RETURN jsonb_build_object('ok',false,'error','source_changed'); END IF;
+ SELECT max(decided_at+interval '30 days') INTO blocked_until FROM public.resource_copy_offers
+  WHERE sender_identity=actor AND source_id=p_source AND recipient_id=p_recipient AND status='declined';
+ IF blocked_until>clock_timestamp() THEN RETURN jsonb_build_object('ok',false,'error','declined_cooldown','cooldown_until',blocked_until); END IF;
+ SELECT * INTO existing FROM public.resource_copy_offers WHERE sender_identity=actor AND source_id=p_source AND recipient_id=p_recipient AND status='pending' FOR UPDATE;
+ IF FOUND THEN
+  IF existing.created_at+interval '5 days'>clock_timestamp() THEN RETURN jsonb_build_object('ok',false,'error','already_sent'); END IF;
+  PERFORM public._copy_discard(existing.id,'expired');
+ END IF;
+ imported:=public._game_import_package(canonical,p_recipient,offer_id);
+ IF imported->>'ok' IS DISTINCT FROM 'true' THEN RETURN imported; END IF;
+ gid:=(imported->>'id')::uuid;
+ SELECT coalesce(nullif(p.username,''),u.email) INTO label FROM auth.users u LEFT JOIN public.profiles p ON p.id=u.id WHERE u.id=actor;
+ UPDATE public.games SET received_from_label=label,received_from_identity=actor WHERE id=gid AND owner_id=p_recipient;
+ INSERT INTO public.resource_copy_offers(id,recipient_id,sender_id,sender_identity,sender_label,source_id,resource_kind,variant,name,request_id,payload_hash,game_id)
+  VALUES(offer_id,p_recipient,actor,actor,label,p_source,'game',expected_type,canonical#>>'{game,name}',p_request,fingerprint,gid);
+ INSERT INTO public.resource_copy_history(sender_id,game_id,offer_id,recipient_identity,recipient_label)
+  SELECT actor,p_source,offer_id,p_recipient,coalesce(nullif(p.username,''),u.email) FROM auth.users u LEFT JOIN public.profiles p ON p.id=u.id WHERE u.id=p_recipient;
+ RETURN jsonb_build_object('ok',true,'already',false,'offer_id',offer_id);
+END $$;
+
+
+--
+-- Name: _copy_pending_guard(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_copy_pending_guard"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE ids uuid[]; question_ids uuid[]; old_row jsonb; new_row jsonb; kind text:='game';
+BEGIN
+ IF TG_OP<>'INSERT' THEN old_row:=to_jsonb(OLD); END IF;
+ IF TG_OP<>'DELETE' THEN new_row:=to_jsonb(NEW); END IF;
+ IF TG_TABLE_NAME IN('games','user_logos') THEN
+  ids:=ARRAY[(old_row->>'id')::uuid,(new_row->>'id')::uuid];
+  IF TG_TABLE_NAME='user_logos' THEN kind:='logo'; END IF;
+ ELSIF TG_TABLE_NAME='market_games' THEN
+  ids:=ARRAY[(old_row->>'source_game_id')::uuid,(new_row->>'source_game_id')::uuid];
+ ELSIF TG_TABLE_NAME='answers' THEN
+  question_ids:=ARRAY[(old_row->>'question_id')::uuid,(new_row->>'question_id')::uuid];
+  SELECT array_agg(game_id) INTO ids FROM public.questions WHERE id=ANY(question_ids);
+ ELSE ids:=ARRAY[(old_row->>'game_id')::uuid,(new_row->>'game_id')::uuid]; END IF;
+ IF EXISTS(SELECT 1 FROM public.resource_copy_offers o JOIN auth.users u ON u.id=o.recipient_id
+  WHERE o.status='pending' AND u.deleted_at IS NULL AND o.resource_kind=kind
+   AND CASE kind WHEN 'game' THEN o.game_id ELSE o.logo_id END=ANY(ids)) THEN
+  RAISE EXCEPTION 'received_copy_pending';
+ END IF;
+ IF TG_OP='DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
+END $$;
+
+
+--
 -- Name: _ensure_unsub_token("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -583,6 +713,75 @@ END $$;
 
 
 --
+-- Name: _game_import_package("jsonb", "uuid", "uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_game_import_package"("p_payload" "jsonb", "p_owner" "uuid", "p_request" "uuid", "p_defaults" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE receipt public.game_import_receipts; canonical jsonb; fingerprint text; gid uuid; imported jsonb;
+BEGIN
+ IF p_request IS NULL OR p_owner IS NULL THEN RETURN jsonb_build_object('ok',false,'error','invalid_request'); END IF;
+ -- Non-key update serializes imports without blocking the existing FK key-share checks.
+ PERFORM 1 FROM auth.users WHERE id=p_owner AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<=clock_timestamp()) FOR NO KEY UPDATE NOWAIT;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','auth_required'); END IF;
+ IF p_payload IS NULL THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
+ fingerprint:=encode(sha256(convert_to(p_payload::text,'UTF8')),'hex');
+ SELECT * INTO receipt FROM public.game_import_receipts WHERE owner_id=p_owner AND request_id=p_request FOR UPDATE;
+ IF FOUND THEN
+  IF receipt.payload_hash IS DISTINCT FROM fingerprint THEN RETURN jsonb_build_object('ok',false,'error','request_conflict'); END IF;
+  IF receipt.game_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.games WHERE id=receipt.game_id AND owner_id=p_owner) THEN
+   RETURN jsonb_build_object('ok',false,'error','previously_removed');
+  END IF;
+  RETURN jsonb_build_object('ok',true,'id',receipt.game_id,'already',true);
+ END IF;
+ canonical:=public._game_package_normalize(p_payload,p_defaults);
+ INSERT INTO public.games(owner_id,name,type,status) VALUES(p_owner,canonical#>>'{game,name}',(canonical#>>'{game,type}')::public.game_type,'draft') RETURNING id INTO gid;
+ -- One content importer for the editor, file import and later received game copies.
+ imported:=public.game_import_content(gid,canonical#>>'{game,name}',canonical->'questions');
+ IF imported->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'game_content_import_failed'; END IF;
+ INSERT INTO public.game_import_receipts(owner_id,request_id,game_id,payload_hash) VALUES(p_owner,p_request,gid,fingerprint);
+ RETURN jsonb_build_object('ok',true,'id',gid,'already',false);
+END $$;
+
+
+--
+-- Name: _game_package_normalize("jsonb", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_game_package_normalize"("p_payload" "jsonb", "p_defaults" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" IMMUTABLE
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+DECLARE typ text; name text; qs jsonb:='[]'; ans jsonb; q record; a record; qt text; at text; pts numeric; rawpts text;
+BEGIN
+ IF jsonb_typeof(p_payload) IS DISTINCT FROM 'object' OR jsonb_typeof(p_payload->'game') IS DISTINCT FROM 'object'
+  OR jsonb_typeof(p_payload->'questions') IS DISTINCT FROM 'array' OR octet_length(p_payload::text)>8388608 THEN
+  RAISE EXCEPTION 'invalid_game_package';
+ END IF;
+ typ:=CASE WHEN p_payload#>>'{game,type}' IN('prepared','poll_text','poll_points') THEN p_payload#>>'{game,type}' ELSE 'poll_text' END;
+ name:=left(coalesce(nullif(trim(p_payload#>>'{game,name}'),''),nullif(p_defaults->>'game',''),'Gra'),80);
+ FOR q IN SELECT value,ordinality FROM jsonb_array_elements(p_payload->'questions') WITH ORDINALITY LOOP
+  qt:=left(coalesce(nullif(trim(q.value->>'text'),''),replace(coalesce(nullif(p_defaults->>'question',''),'Pytanie {ord}'),'{ord}',q.ordinality::text)),200);
+  ans:='[]';
+  IF typ<>'poll_text' THEN
+   FOR a IN SELECT value,ordinality FROM jsonb_array_elements(CASE WHEN jsonb_typeof(q.value->'answers')='array' THEN q.value->'answers' ELSE '[]'::jsonb END) WITH ORDINALITY WHERE ordinality<=6 LOOP
+    at:=left(coalesce(nullif(trim(a.value->>'text'),''),replace(coalesce(nullif(p_defaults->>'answer',''),'Odpowiedź {ord}'),'{ord}',a.ordinality::text)),17);
+    rawpts:=trim(coalesce(a.value->>'fixed_points','')); pts:=0;
+    IF rawpts ~ '^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?$' THEN
+     BEGIN pts:=least(100,greatest(0,floor(rawpts::numeric))); EXCEPTION WHEN numeric_value_out_of_range OR invalid_text_representation THEN pts:=0; END;
+    ELSIF jsonb_typeof(a.value->'fixed_points')='boolean' AND rawpts='true' THEN pts:=1; END IF;
+    ans:=ans||jsonb_build_array(jsonb_build_object('text',at,'fixed_points',pts));
+   END LOOP;
+  END IF;
+  qs:=qs||jsonb_build_array(jsonb_build_object('text',qt,'answers',ans));
+ END LOOP;
+ RETURN jsonb_build_object('game',jsonb_build_object('name',name,'type',typ),'questions',qs);
+END $_$;
+
+
+--
 -- Name: _guest_identity_metadata(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -600,6 +799,30 @@ BEGIN
  NEW.raw_user_meta_data:=coalesce(NEW.raw_user_meta_data,'{}'::jsonb)||jsonb_build_object('is_guest',guest);
  RETURN NEW;
 END $$;
+
+
+--
+-- Name: _logo_clone_image_refs("jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_logo_clone_image_refs"("p_source" "jsonb") RETURNS SETOF "text"
+    LANGUAGE "sql" IMMUTABLE
+    AS $$
+ WITH RECURSIVE nodes(value) AS (
+  SELECT p_source->'fabricData'
+  UNION ALL
+  SELECT child.value FROM nodes n CROSS JOIN LATERAL (
+   SELECT value FROM jsonb_each(CASE WHEN jsonb_typeof(n.value)='object' THEN n.value ELSE '{}' END)
+   UNION ALL
+   SELECT value FROM jsonb_array_elements(CASE WHEN jsonb_typeof(n.value)='array' THEN n.value ELSE '[]' END)
+  ) child WHERE jsonb_typeof(child.value) IN('object','array')
+ ), refs(value) AS (
+  SELECT CASE WHEN p_source->>'imageData' ~* '^data:image/' THEN p_source->>'imageData' ELSE p_source->>'imageUrl' END
+  UNION ALL
+  SELECT e.value#>>'{}' FROM nodes n CROSS JOIN LATERAL jsonb_each(CASE WHEN jsonb_typeof(n.value)='object' THEN n.value ELSE '{}' END) e
+   WHERE e.key='src' AND jsonb_typeof(e.value)='string'
+ ) SELECT DISTINCT value FROM refs WHERE value IS NOT NULL AND value<>'';
+$$;
 
 
 --
@@ -636,26 +859,21 @@ CREATE FUNCTION "public"."_mail_allocate_notification"("p_kind" "text", "p_id" "
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE q public.mail_queue; allocation_id uuid;
+DECLARE q public.mail_queue;allocation_id uuid;recipient uuid;
 BEGIN
- -- Only called inside an already validated, budget-reserving invitation RPC.
- -- Do not acquire parents after its child locks; original RPC holds its roots.
- q:=public._mail_notification_probe(p_kind,p_id,p_action);
- IF q IS NULL THEN RETURN NULL; END IF;
- -- Serialize a flag change with minting. NOWAIT permits the RPC wrapper to
- -- release its source locks and retry rather than wait behind child-first code.
+ q:=public._mail_notification_probe(p_kind,p_id,p_action);IF q IS NULL THEN RETURN NULL;END IF;
+ recipient:=(q.notification_snapshot->>'recipient_id')::uuid;
  PERFORM 1 FROM public.user_flags WHERE user_id=(q.notification_snapshot->>'identity_id')::uuid FOR SHARE NOWAIT;
  PERFORM 1 FROM public.email_unsub_tokens WHERE public._norm_email(email)=public._norm_email(q.to_email) FOR SHARE NOWAIT;
- IF q IS NULL OR NOT public._mail_notification_source_live(q) THEN RETURN NULL; END IF;
- -- A later successful reminder replaces an unused earlier enqueue permission.
+ IF NOT public._mail_notification_source_live(q) THEN RETURN NULL;END IF;
  UPDATE public.mail_notification_allocations SET revoked_at=clock_timestamp()
-  WHERE source_kind=p_kind AND source_token=q.notification_source_token
-   AND consumed_at IS NULL AND revoked_at IS NULL;
+  WHERE source_kind=p_kind AND source_token=q.notification_source_token AND consumed_at IS NULL AND revoked_at IS NULL;
  INSERT INTO public.mail_notification_allocations(owner_id,lifecycle_owner_id,recipient_id,identity_id,to_email,source_kind,source_token,
-  friendship_id,subscription_id,poll_task_id,base_task_id,device_share_id,snapshot)
- VALUES(q.created_by,q.created_by,(q.notification_snapshot->>'recipient_id')::uuid,(q.notification_snapshot->>'identity_id')::uuid,q.to_email,p_kind,q.notification_source_token,
-  q.notification_friendship_id,q.notification_subscription_id,q.notification_poll_task_id,q.notification_base_task_id,q.notification_device_share_id,q.notification_snapshot)
- RETURNING id INTO allocation_id;
+  friendship_id,subscription_id,poll_task_id,base_task_id,device_share_id,copy_offer_id,snapshot)
+ VALUES(q.created_by,CASE WHEN p_kind='copy' THEN recipient ELSE q.created_by END,recipient,
+  (q.notification_snapshot->>'identity_id')::uuid,q.to_email,p_kind,q.notification_source_token,
+  q.notification_friendship_id,q.notification_subscription_id,q.notification_poll_task_id,q.notification_base_task_id,
+  q.notification_device_share_id,q.notification_copy_offer_id,q.notification_snapshot) RETURNING id INTO allocation_id;
  RETURN allocation_id;
 END $$;
 
@@ -881,7 +1099,8 @@ CREATE FUNCTION "public"."_mail_notification_action_matches"("p_kind" "text", "p
     AS $$
  SELECT coalesce(CASE p_kind WHEN 'friend' THEN p_action IN('friend:invite','friend:resend')
   WHEN 'subscription' THEN p_action IN('poll:invite','poll:resend') WHEN 'poll' THEN p_action='poll:share'
-  WHEN 'base' THEN p_action='base:share' WHEN 'device' THEN p_action='device:share' ELSE false END,false);
+  WHEN 'base' THEN p_action='base:share' WHEN 'device' THEN p_action='device:share'
+  WHEN 'copy' THEN p_action='copy:send' ELSE false END,false);
 $$;
 
 
@@ -933,7 +1152,8 @@ CREATE TABLE "public"."mail_queue" (
     "notification_device_share_id" "uuid",
     "notification_snapshot" "jsonb",
     "notification_allocation_id" "uuid",
-    CONSTRAINT "mail_queue_notification_source_kind_check" CHECK (("notification_source_kind" = ANY (ARRAY['friend'::"text", 'subscription'::"text", 'poll'::"text", 'base'::"text", 'device'::"text"])))
+    "notification_copy_offer_id" "uuid",
+    CONSTRAINT "mail_queue_notification_source_kind_check" CHECK ((("notification_source_kind" IS NULL) OR ("notification_source_kind" = ANY (ARRAY['friend'::"text", 'subscription'::"text", 'poll'::"text", 'base'::"text", 'device'::"text", 'copy'::"text"]))))
 );
 
 
@@ -954,19 +1174,18 @@ CREATE FUNCTION "public"."_mail_notification_probe"("p_kind" "text", "p_id" "uui
     AS $$
 DECLARE q public.mail_queue; info jsonb;
 BEGIN
- q.created_by:=auth.uid(); q.notification_source_kind:=p_kind; q.cooldown_action_key:=p_action;
+ q.created_by:=auth.uid();q.notification_source_kind:=p_kind;q.cooldown_action_key:=p_action;
  CASE p_kind
   WHEN 'friend' THEN q.notification_friendship_id:=p_id;SELECT token INTO q.notification_source_token FROM public.friendships WHERE id=p_id;
   WHEN 'subscription' THEN q.notification_subscription_id:=p_id;SELECT token INTO q.notification_source_token FROM public.poll_subscriptions WHERE id=p_id;
   WHEN 'poll' THEN q.notification_poll_task_id:=p_id;SELECT token INTO q.notification_source_token FROM public.poll_tasks WHERE id=p_id;
   WHEN 'base' THEN q.notification_base_task_id:=p_id;SELECT token INTO q.notification_source_token FROM public.base_share_tasks WHERE id=p_id;
   WHEN 'device' THEN q.notification_device_share_id:=p_id;SELECT token INTO q.notification_source_token FROM public.control_device_shares WHERE id=p_id;
+  WHEN 'copy' THEN q.notification_copy_offer_id:=p_id;SELECT token INTO q.notification_source_token FROM public.resource_copy_offers WHERE id=p_id;
   ELSE RETURN NULL;
  END CASE;
- info:=public._mail_notification_source_info(q);
- IF info IS NULL THEN RETURN NULL; END IF;
- q.to_email:=info->>'email';
- q.notification_snapshot:=jsonb_build_object('resource',info->'snapshot','recipient_id',info->'recipient_id','identity_id',public._poll_registered_uid(q.to_email));
+ info:=public._mail_notification_source_info(q);IF info IS NULL THEN RETURN NULL;END IF;
+ q.to_email:=info->>'email';q.notification_snapshot:=jsonb_build_object('resource',info->'snapshot','recipient_id',info->'recipient_id','identity_id',public._poll_registered_uid(q.to_email));
  RETURN q;
 END $$;
 
@@ -980,23 +1199,17 @@ CREATE FUNCTION "public"."_mail_notification_queue_live"("q" "public"."mail_queu
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
 BEGIN
- IF q.cooldown_action_key ~ '^(friend|poll|base|device):' THEN
-  RETURN public._mail_notification_source_live(q) AND EXISTS(
-   SELECT 1 FROM public.mail_notification_allocations a WHERE a.id=q.notification_allocation_id
-    AND a.consumed_queue_id=q.id AND a.consumed_at IS NOT NULL AND a.revoked_at IS NULL
-    AND a.owner_id=q.created_by AND a.to_email=public._norm_email(q.to_email)
-    AND a.source_kind=q.notification_source_kind AND a.source_token=q.notification_source_token
-    AND a.snapshot=q.notification_snapshot
-    AND a.friendship_id IS NOT DISTINCT FROM q.notification_friendship_id
-    AND a.subscription_id IS NOT DISTINCT FROM q.notification_subscription_id
-    AND a.poll_task_id IS NOT DISTINCT FROM q.notification_poll_task_id
-    AND a.base_task_id IS NOT DISTINCT FROM q.notification_base_task_id
-    AND a.device_share_id IS NOT DISTINCT FROM q.notification_device_share_id);
+ IF q.cooldown_action_key ~ '^(friend|poll|base|device|copy):' THEN
+  RETURN public._mail_notification_source_live(q) AND EXISTS(SELECT 1 FROM public.mail_notification_allocations a WHERE a.id=q.notification_allocation_id
+   AND a.consumed_queue_id=q.id AND a.consumed_at IS NOT NULL AND a.revoked_at IS NULL AND a.owner_id=q.created_by
+   AND a.to_email=public._norm_email(q.to_email) AND a.source_kind=q.notification_source_kind AND a.source_token=q.notification_source_token
+   AND a.snapshot=q.notification_snapshot AND a.friendship_id IS NOT DISTINCT FROM q.notification_friendship_id
+   AND a.subscription_id IS NOT DISTINCT FROM q.notification_subscription_id AND a.poll_task_id IS NOT DISTINCT FROM q.notification_poll_task_id
+   AND a.base_task_id IS NOT DISTINCT FROM q.notification_base_task_id AND a.device_share_id IS NOT DISTINCT FROM q.notification_device_share_id
+   AND a.copy_offer_id IS NOT DISTINCT FROM q.notification_copy_offer_id);
  END IF;
  IF q.created_by IS NOT NULL OR q.notification_source_kind IS NOT NULL OR q.notification_allocation_id IS NOT NULL THEN RETURN false; END IF;
- IF q.cooldown_action_key='mail:center_verify' THEN
-  RETURN public._mail_center_verification_live(q.mail_center_link_id,q.to_email);
- END IF;
+ IF q.cooldown_action_key='mail:center_verify' THEN RETURN public._mail_center_verification_live(q.mail_center_link_id,q.to_email); END IF;
  IF q.contact_source_expected OR q.cooldown_action_key='contact:confirmation' OR q.contact_message_id IS NOT NULL THEN
   RETURN public._mail_contact_source_live(q.contact_message_id,q.to_email,q.cooldown_action_key);
  END IF;
@@ -1017,50 +1230,44 @@ BEGIN
  CASE q.notification_source_kind
  WHEN 'friend' THEN
   SELECT jsonb_build_object('owner_id',CASE WHEN f.decision_user_id=f.requester_id THEN f.addressee_id ELSE f.requester_id END,
-   'recipient_id',f.decision_user_id,'email',public._norm_email(u.email),
-   'friendship_id',f.id,'subscription_id',f.source_subscription_id,
-   'active',f.status='pending' AND f.cancelled_at IS NULL AND (f.source_subscription_id IS NULL
-    OR EXISTS(SELECT 1 FROM public.poll_subscriptions s WHERE s.id=f.source_subscription_id AND s.owner_id=f.requester_id
-      AND coalesce(s.registered_user_id,s.subscriber_user_id)=f.addressee_id
-      AND s.status IN('pending','active') AND s.cancelled_at IS NULL AND s.declined_at IS NULL)),
+   'recipient_id',f.decision_user_id,'email',public._norm_email(u.email),'friendship_id',f.id,'subscription_id',f.source_subscription_id,
+   'active',f.status='pending' AND f.cancelled_at IS NULL AND (f.source_subscription_id IS NULL OR EXISTS(
+    SELECT 1 FROM public.poll_subscriptions s WHERE s.id=f.source_subscription_id AND s.owner_id=f.requester_id
+     AND coalesce(s.registered_user_id,s.subscriber_user_id)=f.addressee_id AND s.status IN('pending','active') AND s.cancelled_at IS NULL AND s.declined_at IS NULL)),
    'snapshot',jsonb_build_object('source_subscription_id',f.source_subscription_id)) INTO info
-  FROM public.friendships f JOIN auth.users u ON u.id=f.decision_user_id
-  WHERE f.id=q.notification_friendship_id AND f.token=q.notification_source_token;
+  FROM public.friendships f JOIN auth.users u ON u.id=f.decision_user_id WHERE f.id=q.notification_friendship_id AND f.token=q.notification_source_token;
  WHEN 'subscription' THEN
-  SELECT jsonb_build_object('owner_id',s.owner_id,'recipient_id',coalesce(s.registered_user_id,s.subscriber_user_id),
-   'email',public._norm_email(s.subscriber_email),'subscription_id',s.id,
-   'active',s.status='pending' AND s.cancelled_at IS NULL AND s.declined_at IS NULL
-    AND s.subscriber_user_id IS NULL AND s.registered_user_id IS NULL AND public._poll_registered_uid(s.subscriber_email) IS NULL,
+  SELECT jsonb_build_object('owner_id',s.owner_id,'recipient_id',coalesce(s.registered_user_id,s.subscriber_user_id),'email',public._norm_email(s.subscriber_email),
+   'subscription_id',s.id,'active',s.status='pending' AND s.cancelled_at IS NULL AND s.declined_at IS NULL AND s.subscriber_user_id IS NULL
+    AND s.registered_user_id IS NULL AND public._poll_registered_uid(s.subscriber_email) IS NULL,
    'snapshot',jsonb_build_object('subscriber_email',public._norm_email(s.subscriber_email))) INTO info
   FROM public.poll_subscriptions s WHERE s.id=q.notification_subscription_id AND s.token=q.notification_source_token;
  WHEN 'poll' THEN
-  SELECT jsonb_build_object('owner_id',t.owner_id,'recipient_id',t.recipient_user_id,
-   'email',public._norm_email(CASE WHEN t.recipient_user_id IS NULL THEN t.recipient_email ELSE u.email END),
+  SELECT jsonb_build_object('owner_id',t.owner_id,'recipient_id',t.recipient_user_id,'email',public._norm_email(CASE WHEN t.recipient_user_id IS NULL THEN t.recipient_email ELSE u.email END),
    'game_id',t.game_id,'friendship_id',t.source_friendship_id,'subscription_id',t.source_subscription_id,
-   'active',t.status IN('pending','opened') AND t.cancelled_at IS NULL AND t.declined_at IS NULL
-    AND g.owner_id=t.owner_id AND g.status::text='poll_open' AND g.type::text=t.poll_type
-    AND g.share_key_poll=t.share_key_poll AND public._poll_task_source_active(t),
+   'active',t.status IN('pending','opened') AND t.cancelled_at IS NULL AND t.declined_at IS NULL AND g.owner_id=t.owner_id
+    AND g.status::text='poll_open' AND g.type::text=t.poll_type AND g.share_key_poll=t.share_key_poll AND public._poll_task_source_active(t),
    'snapshot',jsonb_build_object('game_id',t.game_id,'poll_key',t.share_key_poll,'poll_type',t.poll_type)) INTO info
-  FROM public.poll_tasks t JOIN public.games g ON g.id=t.game_id LEFT JOIN auth.users u ON u.id=t.recipient_user_id
-  WHERE t.id=q.notification_poll_task_id AND t.token=q.notification_source_token;
+  FROM public.poll_tasks t JOIN public.games g ON g.id=t.game_id LEFT JOIN auth.users u ON u.id=t.recipient_user_id WHERE t.id=q.notification_poll_task_id AND t.token=q.notification_source_token;
  WHEN 'base' THEN
-  SELECT jsonb_build_object('owner_id',t.owner_id,'recipient_id',t.recipient_user_id,'email',public._norm_email(u.email),
-   'base_id',t.base_id,'friendship_id',t.source_friendship_id,
-   'active',t.status IN('pending','opened') AND t.cancelled_at IS NULL AND t.declined_at IS NULL
+  SELECT jsonb_build_object('owner_id',t.owner_id,'recipient_id',t.recipient_user_id,'email',public._norm_email(u.email),'base_id',t.base_id,
+   'friendship_id',t.source_friendship_id,'active',t.status IN('pending','opened') AND t.cancelled_at IS NULL AND t.declined_at IS NULL
     AND t.created_at>clock_timestamp()-interval '5 days' AND b.owner_id=t.owner_id AND public._base_task_source_active(t),
    'snapshot',jsonb_build_object('base_id',t.base_id,'role',t.role)) INTO info
-  FROM public.base_share_tasks t JOIN public.question_bases b ON b.id=t.base_id JOIN auth.users u ON u.id=t.recipient_user_id
-  WHERE t.id=q.notification_base_task_id AND t.token=q.notification_source_token;
+  FROM public.base_share_tasks t JOIN public.question_bases b ON b.id=t.base_id JOIN auth.users u ON u.id=t.recipient_user_id WHERE t.id=q.notification_base_task_id AND t.token=q.notification_source_token;
  WHEN 'device' THEN
-  SELECT jsonb_build_object('owner_id',s.owner_id,'recipient_id',s.recipient_id,
-   'email',public._norm_email(CASE WHEN s.recipient_id IS NULL THEN s.recipient_email ELSE u.email END),
-   'game_id',s.game_id,'session_id',s.session_id,
-   'active',s.revoked_at IS NULL AND g.owner_id=s.owner_id AND rs.game_id=s.game_id AND rs.owner_id=s.owner_id
+  SELECT jsonb_build_object('owner_id',s.owner_id,'recipient_id',s.recipient_id,'email',public._norm_email(CASE WHEN s.recipient_id IS NULL THEN s.recipient_email ELSE u.email END),
+   'game_id',s.game_id,'session_id',s.session_id,'active',s.revoked_at IS NULL AND g.owner_id=s.owner_id AND rs.game_id=s.game_id AND rs.owner_id=s.owner_id
     AND rs.ended_at IS NULL AND rs.expires_at>clock_timestamp() AND rs.last_activity_at>clock_timestamp()-interval '1 hour',
    'snapshot',jsonb_build_object('game_id',s.game_id,'session_id',s.session_id,'device_type',s.device_type)) INTO info
   FROM public.control_device_shares s JOIN public.games g ON g.id=s.game_id JOIN public.control_runtime_sessions rs ON rs.id=s.session_id
-   LEFT JOIN auth.users u ON u.id=s.recipient_id
-  WHERE s.id=q.notification_device_share_id AND s.token=q.notification_source_token;
+   LEFT JOIN auth.users u ON u.id=s.recipient_id WHERE s.id=q.notification_device_share_id AND s.token=q.notification_source_token;
+ WHEN 'copy' THEN
+  SELECT jsonb_build_object('owner_id',o.sender_identity,'recipient_id',o.recipient_id,'email',public._norm_email(u.email),
+   'active',o.status='pending' AND o.created_at+interval '5 days'>clock_timestamp(),
+   'snapshot',jsonb_build_object('offer_id',o.id,'resource_kind',o.resource_kind,'name',o.name)) INTO info
+  FROM public.resource_copy_offers o JOIN auth.users u ON u.id=o.recipient_id
+  WHERE o.id=q.notification_copy_offer_id AND o.token=q.notification_source_token;
  ELSE RETURN NULL;
  END CASE;
  RETURN info;
@@ -1080,12 +1287,12 @@ BEGIN
  IF NOT public._mail_notification_action_matches(q.notification_source_kind,q.cooldown_action_key) THEN RETURN false; END IF;
  info:=public._mail_notification_source_info(q);
  IF info IS NULL OR info->>'active' IS DISTINCT FROM 'true' OR q.notification_snapshot IS NULL THEN RETURN false; END IF;
- owner_id:=(info->>'owner_id')::uuid; recipient_id:=(info->>'recipient_id')::uuid; mailbox:=info->>'email';
+ owner_id:=(info->>'owner_id')::uuid;recipient_id:=(info->>'recipient_id')::uuid;mailbox:=info->>'email';
  IF q.created_by IS DISTINCT FROM owner_id OR public._norm_email(q.to_email) IS DISTINCT FROM mailbox
-   OR q.notification_snapshot->'resource' IS DISTINCT FROM info->'snapshot'
-   OR (q.notification_snapshot->>'recipient_id')::uuid IS DISTINCT FROM recipient_id
-   OR (q.notification_snapshot->>'identity_id')::uuid IS DISTINCT FROM public._poll_registered_uid(mailbox) THEN RETURN false; END IF;
- IF NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=owner_id AND public._poll_identity_regular(u.id,to_jsonb(u))) THEN RETURN false; END IF;
+  OR q.notification_snapshot->'resource' IS DISTINCT FROM info->'snapshot'
+  OR (q.notification_snapshot->>'recipient_id')::uuid IS DISTINCT FROM recipient_id
+  OR (q.notification_snapshot->>'identity_id')::uuid IS DISTINCT FROM public._poll_registered_uid(mailbox) THEN RETURN false; END IF;
+ IF q.notification_source_kind<>'copy' AND NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=owner_id AND public._poll_identity_regular(u.id,to_jsonb(u))) THEN RETURN false; END IF;
  IF recipient_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=recipient_id AND public._poll_identity_regular(u.id,to_jsonb(u))) THEN RETURN false; END IF;
  RETURN public._contact_mail_enabled(mailbox);
 END $$;
@@ -2634,6 +2841,545 @@ BEGIN
     ord := v_n; atext := r.txt; points := v_p;
     RETURN NEXT;
   END LOOP;
+END $$;
+
+
+--
+-- Name: _resource_clone_asset_register("uuid", "uuid", "text", "text", "text", integer, "text", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_asset_register"("p_actor" "uuid", "p_job" "uuid", "p_reference" "text", "p_kind" "text", "p_mime" "text", "p_size" integer, "p_etag" "text", "p_content_hash" "text", "p_source_path" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $_$
+DECLARE item public.resource_clone_jobs; asset public.resource_clone_assets; fingerprint text; ext text; aid uuid:=gen_random_uuid();
+BEGIN
+ SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job AND actor_identity=p_actor FOR UPDATE;
+ IF NOT FOUND OR item.actor_id IS NULL OR item.status<>'preparing' OR item.resource_kind<>'logo' OR item.created_at+interval '1 hour'<=clock_timestamp() THEN RAISE EXCEPTION 'invalid_copy_job'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public._logo_clone_image_refs(item.source_snapshot#>'{logo,payload,source}') ref WHERE ref=p_reference) THEN RAISE EXCEPTION 'invalid_copy_image_reference'; END IF;
+ fingerprint:=encode(sha256(convert_to(p_reference,'UTF8')),'hex');
+ SELECT * INTO asset FROM public.resource_clone_assets WHERE job_id=p_job AND reference_hash=fingerprint;
+ IF FOUND THEN
+  IF asset.source_kind IS DISTINCT FROM p_kind OR asset.mime IS DISTINCT FROM p_mime OR asset.byte_size IS DISTINCT FROM p_size OR asset.etag IS DISTINCT FROM p_etag OR
+   asset.content_hash IS DISTINCT FROM p_content_hash OR asset.source_path IS DISTINCT FROM p_source_path THEN RAISE EXCEPTION 'copy_image_source_changed'; END IF;
+  RETURN to_jsonb(asset)||jsonb_build_object('copy_id',item.id,'recipient_id',item.recipient_id,'source_owner_id',item.actor_identity,'asset_id',asset.id);
+ END IF;
+ IF p_kind='storage' AND (p_source_path IS NULL OR p_source_path NOT LIKE item.actor_identity::text||'/%' OR p_etag IS NULL OR p_etag !~ '^[a-f0-9]{32}$') THEN RAISE EXCEPTION 'invalid_copy_storage_plan'; END IF;
+ IF p_kind IN('embedded','demo_asset') AND (p_content_hash IS NULL OR p_content_hash !~ '^[a-f0-9]{64}$') THEN RAISE EXCEPTION 'invalid_copy_storage_plan'; END IF;
+ ext:=CASE p_mime WHEN 'image/png' THEN 'png' WHEN 'image/jpeg' THEN 'jpg' WHEN 'image/gif' THEN 'gif' WHEN 'image/webp' THEN 'webp' END;
+ IF ext IS NULL THEN RAISE EXCEPTION 'invalid_copy_storage_plan'; END IF;
+ INSERT INTO public.resource_clone_assets(id,job_id,reference_hash,reference,source_kind,source_path,mime,byte_size,etag,content_hash,destination_path)
+  VALUES(aid,p_job,fingerprint,p_reference,p_kind,p_source_path,p_mime,p_size,p_etag,p_content_hash,item.recipient_id::text||'/copies/'||item.id::text||'/'||aid::text||'.'||ext) RETURNING * INTO asset;
+ RETURN to_jsonb(asset)||jsonb_build_object('copy_id',item.id,'recipient_id',item.recipient_id,'source_owner_id',item.actor_identity,'asset_id',asset.id);
+END $_$;
+
+
+--
+-- Name: _resource_clone_begin("uuid", "uuid", "text", "uuid", "text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_begin"("p_actor" "uuid", "p_owner" "uuid", "p_kind" "text", "p_source" "uuid", "p_action" "text", "p_request" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE item public.resource_clone_jobs; snapshot jsonb; target uuid;
+BEGIN
+ IF p_actor IS NULL OR p_owner IS NULL OR p_source IS NULL OR p_request IS NULL OR p_kind IS NULL OR p_action IS NULL OR
+  p_kind NOT IN('game','base','logo') OR p_action NOT IN('duplicate','send') OR
+  (p_action='duplicate' AND p_actor<>p_owner) OR (p_action='send' AND (p_actor=p_owner OR p_kind='base')) THEN RAISE EXCEPTION 'invalid_copy_action'; END IF;
+ PERFORM 1 FROM auth.users u WHERE id IN(p_actor,p_owner) ORDER BY id FOR NO KEY UPDATE NOWAIT;
+ IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND public._poll_identity_regular(u.id,to_jsonb(u)))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
+ SELECT * INTO item FROM public.resource_clone_jobs WHERE actor_identity=p_actor AND recipient_id=p_owner AND request_id=p_request FOR UPDATE;
+ IF FOUND THEN
+  IF item.source_id<>p_source OR item.resource_kind<>p_kind OR item.action<>p_action THEN RAISE EXCEPTION 'request_conflict'; END IF;
+  target:=CASE p_kind WHEN 'game' THEN item.game_id WHEN 'base' THEN item.base_id ELSE item.logo_id END;
+  IF item.status IN('removed','expired') OR (item.status='complete' AND target IS NULL) THEN RAISE EXCEPTION 'previously_removed'; END IF;
+  RETURN jsonb_build_object('id',item.id,'status',item.status,'target_id',target,'snapshot',item.source_snapshot,'recipient_id',item.recipient_id,'actor_id',item.actor_identity);
+ END IF;
+ IF p_action='send' THEN
+  PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(p_actor,p_owner)::text||':'||GREATEST(p_actor,p_owner)::text,329));
+  PERFORM 1 FROM public.friendships WHERE status='active' AND cancelled_at IS NULL AND
+   ((requester_id=p_actor AND addressee_id=p_owner) OR (requester_id=p_owner AND addressee_id=p_actor)) FOR SHARE NOWAIT;
+  IF NOT FOUND THEN RAISE EXCEPTION 'not_friend'; END IF;
+ END IF;
+ snapshot:=public._resource_clone_read(p_actor,p_kind,p_source);
+ INSERT INTO public.resource_clone_jobs(actor_id,actor_identity,recipient_id,source_id,resource_kind,action,request_id,source_snapshot)
+  VALUES(p_actor,p_actor,p_owner,p_source,p_kind,p_action,p_request,snapshot) RETURNING * INTO item;
+ RETURN jsonb_build_object('id',item.id,'status',item.status,'snapshot',snapshot,'recipient_id',item.recipient_id,'actor_id',item.actor_identity);
+END $$;
+
+
+--
+-- Name: _resource_clone_check_assets("text", "uuid", "jsonb", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_check_assets"("p_kind" "text", "p_job" "uuid", "p_definition" "jsonb", "p_storage_base" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'storage', 'pg_temp'
+    AS $_$
+DECLARE ref text;
+BEGIN
+ IF p_kind='logo' THEN
+  IF p_storage_base IS NULL OR p_storage_base !~ '^https://[a-zA-Z0-9.-]+$' THEN RAISE EXCEPTION 'invalid_copy_storage_plan'; END IF;
+  FOR ref IN SELECT public._logo_clone_image_refs(p_definition#>'{payload,source}') LOOP
+   IF NOT EXISTS(SELECT 1 FROM public.resource_clone_assets a JOIN storage.objects o ON o.bucket_id='user-logos' AND o.name=a.destination_path
+    WHERE a.job_id=p_job AND ref=p_storage_base||'/storage/v1/object/public/user-logos/'||a.destination_path AND
+     o.metadata->>'mimetype'=a.mime AND (o.metadata->>'size')::bigint=a.byte_size AND
+     (a.source_kind<>'storage' OR trim(both '"' from o.metadata->>'eTag')=a.etag)) THEN RAISE EXCEPTION 'unmaterialized_copy_image'; END IF;
+  END LOOP;
+ END IF;
+END $_$;
+
+
+--
+-- Name: _resource_clone_cleanup("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_cleanup"("p_owner" "uuid", "p_job" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF EXISTS(SELECT 1 FROM public.resource_clone_jobs WHERE id=p_job AND recipient_id=p_owner AND status='complete' AND logo_id IS NOT NULL) THEN RETURN; END IF;
+ INSERT INTO public.storage_cleanup_queue(bucket,path,is_folder,owner_kind,owner_id)
+  VALUES('user-logos',p_owner::text||'/copies/'||p_job::text,true,'logo',p_job) ON CONFLICT DO NOTHING;
+ PERFORM public.storage_cleanup_kick();
+END $$;
+
+
+--
+-- Name: _resource_clone_duplicate_name("text", "uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_duplicate_name"("p_kind" "text", "p_owner" "uuid", "p_name" "text", "p_suffix" "text") RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE candidate text; ending text; number integer:=1;
+BEGIN
+ IF p_kind IS NULL OR p_kind NOT IN('game','base','logo') OR p_suffix IS NULL OR p_suffix NOT IN('kopia','copy','копія') THEN RAISE EXCEPTION 'invalid_copy_name'; END IF;
+ LOOP
+  ending:=' '||p_suffix||CASE WHEN number=1 THEN '' ELSE ' '||number::text END;
+  candidate:=trim(rtrim(left(trim(coalesce(p_name,'')),80-char_length(ending)))||ending);
+  IF NOT EXISTS(SELECT 1 FROM public.games WHERE p_kind='game' AND owner_id=p_owner AND name=candidate
+   UNION ALL SELECT 1 FROM public.question_bases WHERE p_kind='base' AND owner_id=p_owner AND name=candidate
+   UNION ALL SELECT 1 FROM public.user_logos WHERE p_kind='logo' AND user_id=p_owner AND name=candidate) THEN RETURN candidate; END IF;
+  number:=number+1;
+ END LOOP;
+END $$;
+
+
+--
+-- Name: _resource_clone_finish_duplicate("uuid", "uuid", "jsonb", boolean, "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_finish_duplicate"("p_actor" "uuid", "p_job" "uuid", "p_definition" "jsonb", "p_demo" boolean, "p_storage_base" "text", "p_suffix" "text" DEFAULT 'kopia'::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $_$
+DECLARE item public.resource_clone_jobs; target uuid; result jsonb; hash text; ref text; original_name text; name_key text[]; named_definition jsonb;
+BEGIN
+ SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job AND actor_identity=p_actor;
+ IF NOT FOUND OR item.action<>'duplicate' THEN RAISE EXCEPTION 'invalid_copy_job'; END IF;
+ PERFORM 1 FROM auth.users u WHERE u.id=p_actor AND public._poll_identity_regular(u.id,to_jsonb(u)) FOR NO KEY UPDATE NOWAIT;
+ IF NOT FOUND THEN RAISE EXCEPTION 'auth_required'; END IF;
+ SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job FOR UPDATE NOWAIT;
+ name_key:=CASE WHEN item.resource_kind='logo' THEN ARRAY['name'] ELSE ARRAY[item.resource_kind,'name'] END;
+ named_definition:=p_definition #- name_key;
+ hash:=encode(sha256(convert_to(named_definition::text,'UTF8')),'hex');
+ target:=CASE item.resource_kind WHEN 'game' THEN item.game_id WHEN 'base' THEN item.base_id ELSE item.logo_id END;
+ IF item.status='complete' THEN
+  IF item.definition_hash IS DISTINCT FROM hash THEN RAISE EXCEPTION 'request_conflict'; END IF;
+  IF target IS NULL THEN RAISE EXCEPTION 'previously_removed'; END IF;
+  RETURN jsonb_build_object('ok',true,'id',target,'already',true);
+ END IF;
+ IF item.status IN('removed','expired') THEN RAISE EXCEPTION 'previously_removed'; END IF;
+ IF item.created_at+interval '1 hour'<=clock_timestamp() THEN
+  UPDATE public.resource_clone_jobs SET status='expired',source_snapshot=NULL WHERE id=p_job;
+  IF item.resource_kind='logo' THEN PERFORM public._resource_clone_cleanup(item.recipient_id,item.id); END IF;
+  RETURN jsonb_build_object('ok',false,'error','expired');
+ END IF;
+ IF item.resource_kind='logo' THEN
+  IF p_storage_base IS NULL OR p_storage_base !~ '^https://[a-zA-Z0-9.-]+$' THEN RAISE EXCEPTION 'invalid_copy_storage_plan'; END IF;
+  FOR ref IN SELECT public._logo_clone_image_refs(p_definition#>'{payload,source}') LOOP
+   IF NOT EXISTS(SELECT 1 FROM public.resource_clone_assets a JOIN storage.objects o ON o.bucket_id='user-logos' AND o.name=a.destination_path
+    WHERE a.job_id=p_job AND ref=p_storage_base||'/storage/v1/object/public/user-logos/'||a.destination_path AND
+     o.metadata->>'mimetype'=a.mime AND (o.metadata->>'size')::bigint=a.byte_size AND
+     (a.source_kind<>'storage' OR trim(both '"' from o.metadata->>'eTag')=a.etag)) THEN RAISE EXCEPTION 'unmaterialized_copy_image'; END IF;
+  END LOOP;
+ END IF;
+ original_name:=item.source_snapshot#>>ARRAY[item.resource_kind,'name'];
+ IF coalesce(trim(original_name),'')='' THEN
+  original_name:=CASE WHEN p_definition#>>name_key=p_suffix THEN '' ELSE regexp_replace(p_definition#>>name_key,' '||p_suffix||'( [0-9]+)?$','') END;
+ END IF;
+ named_definition:=jsonb_set(p_definition,name_key,to_jsonb(public._resource_clone_duplicate_name(item.resource_kind,item.recipient_id,original_name,p_suffix)));
+ result:=public._resource_clone_write(item.actor_identity,item.recipient_id,item.resource_kind,'duplicate',item.source_id,item.request_id,named_definition,p_demo);
+ target:=(result->>'id')::uuid;
+ UPDATE public.resource_clone_jobs SET status='complete',source_snapshot=NULL,completed_at=clock_timestamp(),definition_hash=hash,
+  game_id=CASE WHEN resource_kind='game' THEN target END,base_id=CASE WHEN resource_kind='base' THEN target END,logo_id=CASE WHEN resource_kind='logo' THEN target END WHERE id=p_job;
+ -- The file manifest remains tied to the result; the copied bytes are not
+ -- duplicated in a database snapshot after the resource has been published.
+ UPDATE public.resource_clone_assets SET reference='' WHERE job_id=p_job;
+ RETURN result;
+END $_$;
+
+
+--
+-- Name: _resource_clone_finish_send("uuid", "uuid", "jsonb", boolean, "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_finish_send"("p_actor" "uuid", "p_job" "uuid", "p_definition" "jsonb", "p_demo" boolean, "p_storage_base" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE item public.resource_clone_jobs; existing public.resource_copy_offers; hash text; target uuid; offer_id uuid; offer_token uuid; allocation_id uuid;
+ blocked_until timestamptz; imported jsonb; label text; receiver_label text; recipient_email text; key text[]; named jsonb; variant text;
+BEGIN
+ SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job AND actor_identity=p_actor;
+ IF NOT FOUND OR item.action<>'send' THEN RAISE EXCEPTION 'invalid_copy_job'; END IF;
+ PERFORM 1 FROM auth.users WHERE id IN(p_actor,item.recipient_id) ORDER BY id FOR NO KEY UPDATE NOWAIT;
+ IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,item.recipient_id) AND public._poll_identity_regular(u.id,to_jsonb(u)))<>2 THEN RAISE EXCEPTION 'auth_required'; END IF;
+ SELECT * INTO item FROM public.resource_clone_jobs WHERE id=p_job FOR UPDATE NOWAIT;
+ key:=CASE item.resource_kind WHEN 'game' THEN ARRAY['game','name'] ELSE ARRAY['name'] END;
+ hash:=encode(sha256(convert_to((p_definition #- key)::text,'UTF8')),'hex');
+ SELECT * INTO existing FROM public.resource_copy_offers WHERE sender_identity=p_actor AND recipient_id=item.recipient_id AND request_id=item.request_id;
+ IF item.status='complete' THEN
+  IF item.definition_hash IS DISTINCT FROM hash THEN RAISE EXCEPTION 'request_conflict'; END IF;
+  IF NOT FOUND THEN RAISE EXCEPTION 'previously_removed'; END IF;
+  SELECT public._norm_email(u.email) INTO recipient_email FROM auth.users u WHERE u.id=item.recipient_id;
+  RETURN jsonb_build_object('ok',true,'offer_id',existing.id,'go_token',existing.token,'mail_to',recipient_email,
+   'mail_allowed',EXISTS(SELECT 1 FROM public.mail_notification_allocations a WHERE a.copy_offer_id=existing.id AND a.revoked_at IS NULL),'already',true);
+ END IF;
+ IF item.status IN('removed','expired') THEN RAISE EXCEPTION 'previously_removed'; END IF;
+ IF item.created_at+interval '1 hour'<=clock_timestamp() THEN
+  UPDATE public.resource_clone_jobs SET status='expired',source_snapshot=NULL WHERE id=p_job;
+  PERFORM public._resource_clone_cleanup(item.recipient_id,p_job);
+  RETURN jsonb_build_object('ok',false,'error','expired');
+ END IF;
+ IF p_demo IS DISTINCT FROM false OR coalesce((item.source_snapshot->>'demo_origin')::boolean,false) OR coalesce((item.source_snapshot#>>ARRAY[item.resource_kind,'is_demo'])::boolean,false) THEN RAISE EXCEPTION 'demo_not_sendable'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended(LEAST(p_actor,item.recipient_id)::text||':'||GREATEST(p_actor,item.recipient_id)::text,329));
+ PERFORM 1 FROM public.friendships WHERE status='active' AND cancelled_at IS NULL AND
+  ((requester_id=p_actor AND addressee_id=item.recipient_id) OR (requester_id=item.recipient_id AND addressee_id=p_actor)) FOR SHARE NOWAIT;
+ IF NOT FOUND THEN RAISE EXCEPTION 'not_friend'; END IF;
+ SELECT max(decided_at+interval '30 days') INTO blocked_until FROM public.resource_copy_offers
+  WHERE sender_identity=p_actor AND recipient_id=item.recipient_id AND source_id=item.source_id AND status='declined';
+ IF blocked_until>clock_timestamp() THEN RETURN jsonb_build_object('ok',false,'error','declined_cooldown','cooldown_until',blocked_until); END IF;
+ SELECT * INTO existing FROM public.resource_copy_offers WHERE sender_identity=p_actor AND recipient_id=item.recipient_id AND source_id=item.source_id AND status='pending' FOR UPDATE;
+ IF FOUND THEN
+  IF existing.created_at+interval '5 days'>clock_timestamp() THEN RETURN jsonb_build_object('ok',false,'error','already_sent'); END IF;
+  PERFORM public._copy_discard(existing.id,'expired');
+ END IF;
+ PERFORM public._resource_clone_check_assets(item.resource_kind,p_job,p_definition,p_storage_base);
+ named:=jsonb_set(p_definition,key,to_jsonb(public._resource_clone_send_name(item.resource_kind,item.recipient_id,p_definition#>>key)));
+ imported:=public._resource_clone_write(p_actor,item.recipient_id,item.resource_kind,'send',item.source_id,item.request_id,named,false);
+ IF imported->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'clone_import_failed'; END IF;
+ target:=(imported->>'id')::uuid;
+ SELECT coalesce(nullif(p.username,''),u.email) INTO label FROM auth.users u LEFT JOIN public.profiles p ON p.id=u.id WHERE u.id=p_actor;
+ SELECT coalesce(nullif(p.username,''),u.email),public._norm_email(u.email) INTO receiver_label,recipient_email FROM auth.users u LEFT JOIN public.profiles p ON p.id=u.id WHERE u.id=item.recipient_id;
+ IF item.resource_kind='game' THEN
+  UPDATE public.games SET received_from_label=label,received_from_identity=p_actor WHERE id=target;
+  variant:=named#>>'{game,type}';
+ ELSE
+  UPDATE public.user_logos SET received_from_label=label,received_from_identity=p_actor WHERE id=target;
+  variant:=named->>'type';
+ END IF;
+ INSERT INTO public.resource_copy_offers(recipient_id,sender_id,sender_identity,sender_label,source_id,resource_kind,variant,name,request_id,payload_hash,game_id,logo_id)
+ VALUES(item.recipient_id,p_actor,p_actor,label,item.source_id,item.resource_kind,variant,named#>>key,item.request_id,hash,
+  CASE WHEN item.resource_kind='game' THEN target END,CASE WHEN item.resource_kind='logo' THEN target END) RETURNING id,token INTO offer_id,offer_token;
+ INSERT INTO public.resource_copy_history(sender_id,game_id,logo_id,offer_id,recipient_identity,recipient_label)
+ VALUES(p_actor,CASE WHEN item.resource_kind='game' THEN item.source_id END,CASE WHEN item.resource_kind='logo' THEN item.source_id END,offer_id,item.recipient_id,receiver_label);
+ PERFORM set_config('request.jwt.claim.sub',p_actor::text,true);
+ allocation_id:=public._mail_allocate_notification('copy',offer_id,'copy:send');
+ UPDATE public.resource_clone_jobs SET status='complete',source_snapshot=NULL,definition_hash=hash,completed_at=clock_timestamp(),
+  game_id=CASE WHEN resource_kind='game' THEN target END,logo_id=CASE WHEN resource_kind='logo' THEN target END WHERE id=p_job;
+ UPDATE public.resource_clone_assets SET reference='' WHERE job_id=p_job;
+ RETURN jsonb_build_object('ok',true,'offer_id',offer_id,'go_token',offer_token,'mail_to',recipient_email,'mail_allowed',allocation_id IS NOT NULL,'already',false);
+END $$;
+
+
+--
+-- Name: _resource_clone_gc(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_gc"() RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $_$
+DECLARE item public.resource_clone_jobs; processed integer:=0;
+BEGIN
+ FOR item IN SELECT * FROM public.resource_clone_jobs WHERE status='preparing' AND (created_at+interval '1 hour'<=clock_timestamp() OR actor_id IS NULL) FOR UPDATE SKIP LOCKED LOOP
+  UPDATE public.resource_clone_jobs SET status='expired',source_snapshot=NULL WHERE id=item.id;
+  IF item.resource_kind='logo' THEN PERFORM public._resource_clone_cleanup(item.recipient_id,item.id); END IF;
+  processed:=processed+1;
+ END LOOP;
+ -- A late service upload can outlive the account/job cascade. The owner UUID,
+ -- not the email or a new account, determines that these files are orphaned.
+ INSERT INTO public.storage_cleanup_queue(bucket,path,is_folder,owner_kind,owner_id)
+  SELECT DISTINCT 'user-logos',split_part(o.name,'/',1)||'/copies/'||split_part(o.name,'/',3),true,'user',split_part(o.name,'/',1)::uuid
+   FROM storage.objects o WHERE o.bucket_id='user-logos' AND
+    o.name ~ '^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}/copies/[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}/[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}[.](png|jpg|gif|webp)$' AND
+    NOT EXISTS(SELECT 1 FROM auth.users u WHERE u.id=split_part(o.name,'/',1)::uuid) ON CONFLICT DO NOTHING;
+ IF processed>0 OR EXISTS(SELECT 1 FROM public.storage_cleanup_queue WHERE attempts<20) THEN PERFORM public.storage_cleanup_kick(); END IF;
+ RETURN processed;
+END $_$;
+
+
+--
+-- Name: _resource_clone_job_delete(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_job_delete"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF OLD.resource_kind='logo' AND OLD.status<>'complete' THEN
+  INSERT INTO public.storage_cleanup_queue(bucket,path,is_folder,owner_kind,owner_id)
+   VALUES('user-logos',OLD.recipient_id::text||'/copies/'||OLD.id::text,true,'logo',OLD.id) ON CONFLICT DO NOTHING;
+ END IF;
+ RETURN OLD;
+END $$;
+
+
+--
+-- Name: _resource_clone_logo_delete(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_logo_delete"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ INSERT INTO public.storage_cleanup_queue(bucket,path,is_folder,owner_kind,owner_id)
+  SELECT 'user-logos',recipient_id::text||'/copies/'||id::text,true,'logo',OLD.id FROM public.resource_clone_jobs WHERE logo_id=OLD.id ON CONFLICT DO NOTHING;
+ UPDATE public.resource_clone_jobs SET status='removed',source_snapshot=NULL WHERE logo_id=OLD.id;
+ RETURN OLD;
+END $$;
+
+
+--
+-- Name: _resource_clone_read("uuid", "text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_read"("p_actor" "uuid", "p_kind" "text", "p_source" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE root jsonb; snapshot jsonb; templates jsonb; inherited_demo boolean;
+BEGIN
+ IF p_actor IS NULL OR p_kind IS NULL OR p_kind NOT IN('game','base','logo') OR p_source IS NULL THEN RAISE EXCEPTION 'invalid_copy_source'; END IF;
+ PERFORM 1 FROM auth.users u WHERE u.id=p_actor AND public._poll_identity_regular(u.id,to_jsonb(u)) FOR NO KEY UPDATE NOWAIT;
+ IF NOT FOUND THEN RAISE EXCEPTION 'auth_required'; END IF;
+ -- Parent locks prevent new child FK insertions while reading the definition.
+ IF p_kind='game' THEN
+  SELECT jsonb_build_object('id',g.id,'name',g.name,'type',g.type,'status',g.status,'is_demo',g.is_demo) INTO root
+   FROM public.games g WHERE id=p_source AND owner_id=p_actor FOR UPDATE NOWAIT;
+ ELSIF p_kind='base' THEN
+  SELECT jsonb_build_object('id',b.id,'name',b.name,'is_demo',b.is_demo) INTO root
+   FROM public.question_bases b WHERE id=p_source AND owner_id=p_actor FOR UPDATE NOWAIT;
+ ELSE
+  SELECT jsonb_build_object('id',l.id,'name',l.name,'type',l.type,'payload',l.payload,'is_demo',l.is_demo) INTO root
+   FROM public.user_logos l WHERE id=p_source AND user_id=p_actor FOR UPDATE NOWAIT;
+ END IF;
+ IF root IS NULL THEN RAISE EXCEPTION 'not_found'; END IF;
+ IF EXISTS(SELECT 1 FROM public.resource_copy_offers o WHERE status='pending' AND
+  CASE p_kind WHEN 'game' THEN o.game_id WHEN 'logo' THEN o.logo_id END=p_source) THEN RAISE EXCEPTION 'received_copy_pending'; END IF;
+ IF p_kind='game' AND root->>'status' NOT IN('draft','ready') THEN RAISE EXCEPTION 'not_exportable'; END IF;
+ IF p_kind='game' AND root->>'type' NOT IN('prepared','poll_text','poll_points') THEN RAISE EXCEPTION 'not_exportable'; END IF;
+ IF EXISTS(SELECT 1 FROM public.edit_locks l WHERE heartbeat_at>clock_timestamp()-public.edit_lock_ttl() AND (
+  (l.resource_type=p_kind AND l.resource_id=p_source) OR
+  (p_kind='logo' AND l.resource_type='logos' AND l.resource_id=p_actor) OR
+  (p_kind='base' AND (
+   (l.resource_type='base_question' AND l.resource_id IN(SELECT id FROM public.qb_questions WHERE base_id=p_source)) OR
+   (l.resource_type='base_folder' AND l.resource_id IN(SELECT id FROM public.qb_categories WHERE base_id=p_source)) OR
+   (l.resource_type='base_tag' AND l.resource_id IN(SELECT id FROM public.qb_tags WHERE base_id=p_source))))
+ )) THEN RAISE EXCEPTION 'resource_in_use'; END IF;
+ IF p_kind='game' THEN
+  PERFORM 1 FROM public.questions WHERE game_id=p_source ORDER BY id FOR UPDATE NOWAIT;
+  PERFORM 1 FROM public.answers a JOIN public.questions q ON q.id=a.question_id WHERE q.game_id=p_source ORDER BY a.id FOR SHARE OF a NOWAIT;
+  SELECT jsonb_build_object('game',root,'questions',coalesce(jsonb_agg(jsonb_build_object('text',q.text,'answers',coalesce((
+   SELECT jsonb_agg(jsonb_build_object('text',a.text,'fixed_points',a.fixed_points) ORDER BY a.ord,a.id)
+    FROM public.answers a WHERE a.question_id=q.id),'[]'::jsonb)) ORDER BY q.ord,q.id),'[]'::jsonb)) INTO snapshot
+   FROM public.questions q WHERE q.game_id=p_source;
+ ELSIF p_kind='base' THEN
+  PERFORM 1 FROM public.qb_categories WHERE base_id=p_source ORDER BY id FOR UPDATE NOWAIT;
+  PERFORM 1 FROM public.qb_tags WHERE base_id=p_source ORDER BY id FOR UPDATE NOWAIT;
+  PERFORM 1 FROM public.qb_questions WHERE base_id=p_source ORDER BY id FOR UPDATE NOWAIT;
+  PERFORM 1 FROM public.qb_question_tags e JOIN public.qb_questions q ON q.id=e.question_id WHERE q.base_id=p_source ORDER BY e.question_id,e.tag_id FOR SHARE OF e NOWAIT;
+  PERFORM 1 FROM public.qb_category_tags e JOIN public.qb_categories c ON c.id=e.category_id WHERE c.base_id=p_source ORDER BY e.category_id,e.tag_id FOR SHARE OF e NOWAIT;
+  snapshot:=jsonb_build_object('base',root,
+   'categories',coalesce((SELECT jsonb_agg(jsonb_build_object('id',id,'parent_id',parent_id,'name',name,'ord',ord) ORDER BY ord,id) FROM public.qb_categories WHERE base_id=p_source),'[]'),
+   'tags',coalesce((SELECT jsonb_agg(jsonb_build_object('id',id,'name',name,'color',color,'ord',ord) ORDER BY ord,id) FROM public.qb_tags WHERE base_id=p_source),'[]'),
+   'questions',coalesce((SELECT jsonb_agg(jsonb_build_object('id',id,'category_id',category_id,'ord',ord,'payload',payload) ORDER BY ord,id) FROM public.qb_questions WHERE base_id=p_source),'[]'),
+   'question_tags',coalesce((SELECT jsonb_agg(jsonb_build_object('question_id',e.question_id,'tag_id',e.tag_id) ORDER BY e.question_id,e.tag_id) FROM public.qb_question_tags e JOIN public.qb_questions q ON q.id=e.question_id WHERE q.base_id=p_source),'[]'),
+   'category_tags',coalesce((SELECT jsonb_agg(jsonb_build_object('category_id',e.category_id,'tag_id',e.tag_id) ORDER BY e.category_id,e.tag_id) FROM public.qb_category_tags e JOIN public.qb_categories c ON c.id=e.category_id WHERE c.base_id=p_source),'[]'));
+ ELSE snapshot:=jsonb_build_object('logo',root); END IF;
+ SELECT coalesce(bool_or(demo_origin),false) INTO inherited_demo FROM public.resource_clone_receipts
+  WHERE recipient_id=p_actor AND CASE p_kind WHEN 'game' THEN game_id WHEN 'base' THEN base_id ELSE logo_id END=p_source;
+ inherited_demo:=inherited_demo OR EXISTS(SELECT 1 FROM public.resource_demo_origins WHERE CASE p_kind WHEN 'game' THEN game_id WHEN 'base' THEN base_id ELSE logo_id END=p_source);
+ SELECT coalesce(jsonb_agg(jsonb_build_object('slot',slot,'lang',lang,'payload',payload) ORDER BY slot,lang),'[]') INTO templates FROM public.demo_template_data
+  WHERE (p_kind='game' AND payload ? 'game') OR (p_kind='logo' AND slot LIKE 'logo_%');
+ RETURN snapshot||jsonb_build_object('demo_origin',inherited_demo,'demo_templates',templates);
+END $$;
+
+
+--
+-- Name: _resource_clone_send_name("text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_send_name"("p_kind" "text", "p_owner" "uuid", "p_name" "text") RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE original text:=left(trim(p_name),80); candidate text; number integer:=1; tail text;
+BEGIN
+ IF coalesce(original,'')='' OR p_kind NOT IN('game','logo') THEN RAISE EXCEPTION 'invalid_copy_name'; END IF;
+ LOOP
+  tail:=CASE WHEN number=1 THEN '' ELSE ' '||number::text END;
+  candidate:=left(original,80-length(tail))||tail;
+  IF NOT EXISTS(SELECT 1 FROM public.games WHERE p_kind='game' AND owner_id=p_owner AND name=candidate) AND
+     NOT EXISTS(SELECT 1 FROM public.user_logos WHERE p_kind='logo' AND user_id=p_owner AND name=candidate) THEN RETURN candidate; END IF;
+  number:=number+1;
+  IF number>10000 THEN RAISE EXCEPTION 'copy_name_unavailable'; END IF;
+ END LOOP;
+END $$;
+
+
+--
+-- Name: _resource_clone_write("uuid", "uuid", "text", "text", "uuid", "uuid", "jsonb", boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_clone_write"("p_actor" "uuid", "p_owner" "uuid", "p_kind" "text", "p_action" "text", "p_source" "uuid", "p_request" "uuid", "p_definition" "jsonb", "p_demo" boolean) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE receipt public.resource_clone_receipts; copy_id uuid:=gen_random_uuid(); target uuid; hash text; imported jsonb;
+ catmap jsonb; tagmap jsonb; qmap jsonb; packet_name text; typ text; source_snapshot jsonb;
+BEGIN
+ IF p_actor IS NULL OR p_owner IS NULL OR p_source IS NULL OR p_request IS NULL OR p_definition IS NULL OR
+  p_kind IS NULL OR p_action IS NULL OR p_demo IS NULL OR p_kind NOT IN('game','base','logo') OR p_action NOT IN('duplicate','send') OR
+  (p_action='duplicate' AND p_actor<>p_owner) OR (p_action='send' AND (p_actor=p_owner OR p_kind='base')) THEN RAISE EXCEPTION 'invalid_copy_action'; END IF;
+ PERFORM 1 FROM auth.users u WHERE id IN(p_actor,p_owner) ORDER BY id FOR NO KEY UPDATE NOWAIT;
+ IF (SELECT count(*) FROM auth.users u WHERE id IN(p_actor,p_owner) AND public._poll_identity_regular(u.id,to_jsonb(u)))<>(CASE WHEN p_actor=p_owner THEN 1 ELSE 2 END) THEN RAISE EXCEPTION 'auth_required'; END IF;
+ hash:=encode(sha256(convert_to(p_definition::text,'UTF8')),'hex');
+ SELECT * INTO receipt FROM public.resource_clone_receipts WHERE creator_identity=p_actor AND recipient_id=p_owner AND request_id=p_request FOR UPDATE;
+ IF FOUND THEN
+  IF receipt.source_id<>p_source OR receipt.resource_kind<>p_kind OR receipt.action<>p_action OR receipt.definition_hash<>hash OR receipt.demo_origin IS DISTINCT FROM p_demo THEN RAISE EXCEPTION 'request_conflict'; END IF;
+  target:=CASE p_kind WHEN 'game' THEN receipt.game_id WHEN 'base' THEN receipt.base_id ELSE receipt.logo_id END;
+  IF target IS NULL THEN RAISE EXCEPTION 'previously_removed'; END IF;
+  RETURN jsonb_build_object('ok',true,'id',target,'already',true);
+ END IF;
+ source_snapshot:=public._resource_clone_read(p_actor,p_kind,p_source);
+ IF (source_snapshot#>>ARRAY[p_kind,'is_demo'])::boolean OR (source_snapshot->>'demo_origin')::boolean THEN
+  IF p_demo IS DISTINCT FROM true THEN RAISE EXCEPTION 'invalid_demo_provenance'; END IF;
+ END IF;
+ IF p_action='send' AND coalesce(p_demo,false) THEN RAISE EXCEPTION 'demo_not_sendable'; END IF;
+ IF p_action='send' AND NOT EXISTS(SELECT 1 FROM public.friendships WHERE status='active' AND cancelled_at IS NULL AND
+  ((requester_id=p_actor AND addressee_id=p_owner) OR (requester_id=p_owner AND addressee_id=p_actor))) THEN RAISE EXCEPTION 'not_friend'; END IF;
+ IF p_kind='game' THEN
+  imported:=public._game_import_package(p_definition,p_owner,copy_id);
+  IF imported->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'clone_import_failed'; END IF;
+  target:=(imported->>'id')::uuid;
+ ELSIF p_kind='base' THEN
+  IF jsonb_typeof(p_definition->'base') IS DISTINCT FROM 'object' OR jsonb_typeof(p_definition->'questions') IS DISTINCT FROM 'array' OR
+   jsonb_typeof(p_definition->'categories') IS DISTINCT FROM 'array' OR jsonb_typeof(p_definition->'tags') IS DISTINCT FROM 'array' OR
+   jsonb_typeof(p_definition->'question_tags') IS DISTINCT FROM 'array' OR jsonb_typeof(p_definition->'category_tags') IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'invalid_copy_definition'; END IF;
+  IF EXISTS(SELECT 1 FROM jsonb_array_elements(p_definition->'categories') x GROUP BY x->>'id' HAVING count(*)>1) OR
+   EXISTS(SELECT 1 FROM jsonb_array_elements(p_definition->'tags') x GROUP BY x->>'id' HAVING count(*)>1) OR
+   EXISTS(SELECT 1 FROM jsonb_array_elements(p_definition->'questions') x GROUP BY x->>'id' HAVING count(*)>1) THEN RAISE EXCEPTION 'invalid_copy_definition'; END IF;
+  packet_name:=left(trim(p_definition#>>'{base,name}'),80);
+  IF coalesce(packet_name,'')='' THEN RAISE EXCEPTION 'invalid_copy_definition'; END IF;
+  INSERT INTO public.question_bases(owner_id,name) VALUES(p_owner,packet_name) RETURNING id INTO target;
+  SELECT coalesce(jsonb_object_agg(x->>'id',gen_random_uuid()),'{}') INTO catmap FROM jsonb_array_elements(p_definition->'categories') x;
+  SELECT coalesce(jsonb_object_agg(x->>'id',gen_random_uuid()),'{}') INTO tagmap FROM jsonb_array_elements(p_definition->'tags') x;
+  SELECT coalesce(jsonb_object_agg(x->>'id',gen_random_uuid()),'{}') INTO qmap FROM jsonb_array_elements(p_definition->'questions') x;
+  INSERT INTO public.qb_categories(id,base_id,parent_id,name,ord)
+   SELECT (catmap->>(x->>'id'))::uuid,target,(catmap->>(x->>'parent_id'))::uuid,left(x->>'name',80),coalesce((x->>'ord')::int,0)
+    FROM jsonb_array_elements(p_definition->'categories') x;
+  INSERT INTO public.qb_tags(id,base_id,name,color,ord)
+   SELECT (tagmap->>(x->>'id'))::uuid,target,left(x->>'name',40),left(x->>'color',24),coalesce((x->>'ord')::int,0)
+    FROM jsonb_array_elements(p_definition->'tags') x;
+  INSERT INTO public.qb_questions(id,base_id,category_id,ord,payload,updated_by)
+   SELECT (qmap->>(x->>'id'))::uuid,target,(catmap->>(x->>'category_id'))::uuid,coalesce((x->>'ord')::int,0),coalesce(x->'payload','{}'),p_owner
+    FROM jsonb_array_elements(p_definition->'questions') x;
+  INSERT INTO public.qb_question_tags(question_id,tag_id)
+   SELECT DISTINCT (qmap->>(x->>'question_id'))::uuid,(tagmap->>(x->>'tag_id'))::uuid
+    FROM jsonb_array_elements(p_definition->'question_tags') x WHERE qmap ? (x->>'question_id') AND tagmap ? (x->>'tag_id');
+  INSERT INTO public.qb_category_tags(category_id,tag_id)
+   SELECT DISTINCT (catmap->>(x->>'category_id'))::uuid,(tagmap->>(x->>'tag_id'))::uuid
+    FROM jsonb_array_elements(p_definition->'category_tags') x WHERE catmap ? (x->>'category_id') AND tagmap ? (x->>'tag_id');
+ ELSE
+  packet_name:=left(trim(p_definition->>'name'),80);typ:=p_definition->>'type';
+  IF coalesce(packet_name,'')='' OR typ NOT IN('GLYPH_30x10','PIX_150x70') OR jsonb_typeof(p_definition->'payload') IS DISTINCT FROM 'object' THEN RAISE EXCEPTION 'invalid_copy_definition'; END IF;
+  INSERT INTO public.user_logos(user_id,name,type,payload) VALUES(p_owner,packet_name,typ,p_definition->'payload') RETURNING id INTO target;
+ END IF;
+ INSERT INTO public.resource_clone_receipts(id,recipient_id,creator_id,creator_identity,request_id,source_id,resource_kind,action,demo_origin,definition_hash,game_id,base_id,logo_id)
+  VALUES(copy_id,p_owner,p_actor,p_actor,p_request,p_source,p_kind,p_action,coalesce(p_demo,false),hash,
+   CASE WHEN p_kind='game' THEN target END,CASE WHEN p_kind='base' THEN target END,CASE WHEN p_kind='logo' THEN target END);
+ RETURN jsonb_build_object('ok',true,'id',target,'already',false);
+END $$;
+
+
+--
+-- Name: _resource_copy_history_gc(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_copy_history_gc"() RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE removed integer;
+BEGIN DELETE FROM public.resource_copy_history WHERE sent_at<=clock_timestamp()-interval '30 days'; GET DIAGNOSTICS removed=ROW_COUNT; RETURN removed; END $$;
+
+
+--
+-- Name: _resource_copy_mail_epoch(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_copy_mail_epoch"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF NEW.status IS DISTINCT FROM OLD.status OR NEW.token IS DISTINCT FROM OLD.token OR NEW.recipient_id IS DISTINCT FROM OLD.recipient_id THEN
+  UPDATE public.mail_notification_allocations SET revoked_at=clock_timestamp() WHERE copy_offer_id=OLD.id AND revoked_at IS NULL;
+ END IF;
+ RETURN NEW;
+END $$;
+
+
+--
+-- Name: _resource_copy_offer_gc(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_copy_offer_gc"() RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE item public.resource_copy_offers; removed integer:=0;
+BEGIN
+ FOR item IN SELECT * FROM public.resource_copy_offers WHERE status='pending' AND created_at+interval '5 days'<=clock_timestamp() FOR UPDATE SKIP LOCKED LOOP
+  PERFORM public._copy_discard(item.id,'expired');removed:=removed+1;
+ END LOOP;
+ RETURN removed;
+END $$;
+
+
+--
+-- Name: _resource_demo_origin_mark(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_resource_demo_origin_mark"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF NEW.is_demo THEN
+  IF TG_TABLE_NAME='games' THEN INSERT INTO public.resource_demo_origins(owner_id,game_id) VALUES(NEW.owner_id,NEW.id) ON CONFLICT(game_id) DO NOTHING;
+  ELSIF TG_TABLE_NAME='question_bases' THEN INSERT INTO public.resource_demo_origins(owner_id,base_id) VALUES(NEW.owner_id,NEW.id) ON CONFLICT(base_id) DO NOTHING;
+  ELSE INSERT INTO public.resource_demo_origins(owner_id,logo_id) VALUES(NEW.user_id,NEW.id) ON CONFLICT(logo_id) DO NOTHING; END IF;
+ END IF;
+ RETURN NEW;
 END $$;
 
 
@@ -4904,6 +5650,13 @@ begin
   ) x
   where e is not null and e <> '';
 
+  -- Serialize against snapshot/write jobs before inspecting the inbox.
+  perform 1 from auth.users where id = p_user_id for update;
+
+  --366: remove only this recipient inbox before pending resource guards.
+  -- Sent copies already belong to their recipients and remain independent.
+  delete from public.resource_copy_offers where recipient_id = p_user_id;
+
   -- 312: usunięcie konta jest nadrzędne -- nie sprawdza blokad (edit_locks);
   -- blokady trzymane przez to konto i na jego zasobach znikają.
   delete from public.edit_locks where holder_user_id = p_user_id;
@@ -6109,6 +6862,8 @@ begin
            a.ord,
            left(btrim(coalesce(a.item->>'text', '')), 17),
            case
+             when jsonb_typeof(a.item->'fixed_points') = 'number'
+               then least(100, greatest(0, floor((a.item->>'fixed_points')::numeric)))::int
              when v_type = 'prepared' and jsonb_typeof(a.item->'points') = 'number'
                then least(100, greatest(0, floor((a.item->>'points')::numeric)))::int
              else 0
@@ -6124,6 +6879,25 @@ begin
   return jsonb_build_object('ok', true, 'questions', v_count);
 end;
 $$;
+
+
+--
+-- Name: game_import_package("jsonb", "uuid", "uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_import_package"("p_payload" "jsonb", "p_owner_id" "uuid", "p_request_id" "uuid", "p_defaults" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+BEGIN
+ IF auth.uid() IS NULL OR auth.uid() IS DISTINCT FROM p_owner_id THEN RETURN jsonb_build_object('ok',false,'error','auth_required'); END IF;
+ RETURN public._game_import_package(p_payload,p_owner_id,p_request_id,p_defaults);
+EXCEPTION
+ WHEN lock_not_available THEN RETURN jsonb_build_object('ok',false,'error','locked');
+ WHEN raise_exception THEN
+  IF SQLERRM='invalid_game_package' THEN RETURN jsonb_build_object('ok',false,'error','invalid_payload'); END IF;
+  RAISE;
+END $$;
 
 
 --
@@ -10452,62 +11226,42 @@ CREATE FUNCTION "public"."mail_queue_notification_source_bind"() RETURNS "trigge
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE info jsonb; allocation public.mail_notification_allocations; source_id uuid;
+DECLARE info jsonb;allocation public.mail_notification_allocations;
 BEGIN
- IF NEW.cooldown_action_key !~ '^(friend|poll|base|device):' THEN
+ IF NEW.cooldown_action_key !~ '^(friend|poll|base|device|copy):' THEN
   IF NEW.created_by IS NOT NULL OR NEW.notification_source_kind IS NOT NULL OR NEW.notification_source_token IS NOT NULL OR NEW.notification_allocation_id IS NOT NULL THEN RAISE EXCEPTION 'invalid_notification_source'; END IF;
   RETURN NEW;
  END IF;
  IF NEW.created_by IS NULL OR (auth.uid() IS NOT NULL AND auth.uid() IS DISTINCT FROM NEW.created_by)
   OR NEW.notification_source_token IS NULL OR NOT public._mail_notification_action_matches(NEW.notification_source_kind,NEW.cooldown_action_key) THEN RAISE EXCEPTION 'invalid_notification_source'; END IF;
- NEW.notification_friendship_id:=NULL;NEW.notification_subscription_id:=NULL;NEW.notification_poll_task_id:=NULL;NEW.notification_base_task_id:=NULL;NEW.notification_device_share_id:=NULL;
+ NEW.notification_friendship_id:=NULL;NEW.notification_subscription_id:=NULL;NEW.notification_poll_task_id:=NULL;
+ NEW.notification_base_task_id:=NULL;NEW.notification_device_share_id:=NULL;NEW.notification_copy_offer_id:=NULL;
  CASE NEW.notification_source_kind
   WHEN 'friend' THEN SELECT id INTO NEW.notification_friendship_id FROM public.friendships WHERE token=NEW.notification_source_token;
   WHEN 'subscription' THEN SELECT id INTO NEW.notification_subscription_id FROM public.poll_subscriptions WHERE token=NEW.notification_source_token;
   WHEN 'poll' THEN SELECT id INTO NEW.notification_poll_task_id FROM public.poll_tasks WHERE token=NEW.notification_source_token;
   WHEN 'base' THEN SELECT id INTO NEW.notification_base_task_id FROM public.base_share_tasks WHERE token=NEW.notification_source_token;
   WHEN 'device' THEN SELECT id INTO NEW.notification_device_share_id FROM public.control_device_shares WHERE token=NEW.notification_source_token;
+  WHEN 'copy' THEN SELECT id INTO NEW.notification_copy_offer_id FROM public.resource_copy_offers WHERE token=NEW.notification_source_token;
  END CASE;
  info:=public._mail_notification_source_info(NEW);
  IF info IS NULL OR (info->>'owner_id')::uuid IS DISTINCT FROM NEW.created_by OR info->>'email' IS DISTINCT FROM public._norm_email(NEW.to_email) THEN RAISE EXCEPTION 'invalid_notification_source'; END IF;
- FOR attempt IN 1..1000 LOOP
-  BEGIN
  PERFORM public._mail_notification_source_lock(NEW);
- -- Existing cooldown/event writers can start from a child. Never wait on them
- -- while holding identity/source roots; release this subtransaction and retry.
- PERFORM 1 FROM public.mail_cooldowns WHERE action_key='baseline:recipient'
-  AND target_key='pair:'||NEW.created_by::text||':'||md5(lower(trim(NEW.to_email))) FOR UPDATE NOWAIT;
- IF NEW.cooldown_action_key='poll:share' THEN
-  IF NOT pg_try_advisory_xact_lock(hashtextextended('poll-mail-budget:'||NEW.created_by||':'||public._norm_email(NEW.to_email),342)) THEN
-   RAISE EXCEPTION 'poll mail budget busy' USING ERRCODE='55P03';
-  END IF;
-  PERFORM 1 FROM public.poll_mail_budget_events WHERE owner_id=NEW.created_by
-   AND recipient_key=md5(public._norm_email(NEW.to_email)) FOR UPDATE NOWAIT;
- END IF;
  info:=public._mail_notification_source_info(NEW);
  NEW.notification_snapshot:=jsonb_build_object('resource',info->'snapshot','recipient_id',info->'recipient_id','identity_id',public._poll_registered_uid(NEW.to_email));
  IF NEW.notification_source_kind='device' AND (NEW.meta#>>'{notification_reference,device_type}' IS DISTINCT FROM info#>>'{snapshot,device_type}'
   OR NEW.meta#>>'{notification_reference,game_id}' IS DISTINCT FROM info#>>'{snapshot,game_id}') THEN RAISE EXCEPTION 'invalid_notification_reference'; END IF;
  IF NOT public._mail_notification_source_live(NEW) THEN RAISE EXCEPTION 'invalid_notification_source'; END IF;
- SELECT * INTO allocation FROM public.mail_notification_allocations a
-  WHERE a.owner_id=NEW.created_by AND a.to_email=public._norm_email(NEW.to_email)
-   AND a.source_kind=NEW.notification_source_kind AND a.source_token=NEW.notification_source_token
-   AND a.friendship_id IS NOT DISTINCT FROM NEW.notification_friendship_id
-   AND a.subscription_id IS NOT DISTINCT FROM NEW.notification_subscription_id
-   AND a.poll_task_id IS NOT DISTINCT FROM NEW.notification_poll_task_id
-   AND a.base_task_id IS NOT DISTINCT FROM NEW.notification_base_task_id
-   AND a.device_share_id IS NOT DISTINCT FROM NEW.notification_device_share_id
-   AND a.snapshot=NEW.notification_snapshot AND a.consumed_at IS NULL AND a.revoked_at IS NULL AND a.enqueue_before>clock_timestamp()
+ SELECT * INTO allocation FROM public.mail_notification_allocations a WHERE a.owner_id=NEW.created_by AND a.to_email=public._norm_email(NEW.to_email)
+  AND a.source_kind=NEW.notification_source_kind AND a.source_token=NEW.notification_source_token
+  AND a.friendship_id IS NOT DISTINCT FROM NEW.notification_friendship_id AND a.subscription_id IS NOT DISTINCT FROM NEW.notification_subscription_id
+  AND a.poll_task_id IS NOT DISTINCT FROM NEW.notification_poll_task_id AND a.base_task_id IS NOT DISTINCT FROM NEW.notification_base_task_id
+  AND a.device_share_id IS NOT DISTINCT FROM NEW.notification_device_share_id AND a.copy_offer_id IS NOT DISTINCT FROM NEW.notification_copy_offer_id
+  AND a.snapshot=NEW.notification_snapshot AND a.consumed_at IS NULL AND a.revoked_at IS NULL AND a.enqueue_before>clock_timestamp()
   ORDER BY a.created_at DESC,a.id LIMIT 1 FOR UPDATE NOWAIT;
  IF NOT FOUND THEN RAISE EXCEPTION 'invalid_notification_attempt'; END IF;
  UPDATE public.mail_notification_allocations SET consumed_at=clock_timestamp(),consumed_queue_id=NEW.id WHERE id=allocation.id;
- NEW.notification_allocation_id:=allocation.id;
- RETURN NEW;
-  EXCEPTION WHEN lock_not_available THEN
-   IF attempt=1000 THEN RAISE; END IF;
-  END;
-  PERFORM pg_sleep(.01);
- END LOOP;
+ NEW.notification_allocation_id:=allocation.id;RETURN NEW;
 END $$;
 
 
@@ -12248,7 +13002,7 @@ BEGIN
   SELECT
     ps.id, ps.status, ps.owner_id,
     p.username AS owner_label,
-    ps.subscriber_user_id, ps.subscriber_email, ps.opened_at,ps.registered_user_id
+    ps.subscriber_user_id, ps.subscriber_email, ps.opened_at,ps.registered_user_id,ps.cancelled_at,ps.declined_at
   INTO s
   FROM public.poll_subscriptions ps
   LEFT JOIN public.profiles p ON p.id = ps.owner_id
@@ -12264,6 +13018,8 @@ BEGIN
       'sub_id', s.id, 'status', s.status,
       'owner_id', s.owner_id, 'owner_label', s.owner_label,
       'subscriber_user_id', s.subscriber_user_id,
+      'registered_user_id', s.registered_user_id,
+      'cancelled_at', s.cancelled_at, 'declined_at', s.declined_at,
       'subscriber_email', s.subscriber_email,
       'friend_conversion_required', s.registered_user_id IS NOT NULL OR s.subscriber_user_id IS NOT NULL OR public._poll_registered_uid(s.subscriber_email) IS NOT NULL
     );
@@ -14993,6 +15749,111 @@ $$;
 
 
 --
+-- Name: resource_copy_badges(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."resource_copy_badges"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE actor uuid:=auth.uid(); items jsonb;
+BEGIN
+ IF actor IS NULL OR NOT public._poll_identity_regular(actor,(SELECT to_jsonb(u) FROM auth.users u WHERE u.id=actor)) THEN
+  RETURN jsonb_build_object('ok',false,'items','[]'::jsonb);
+ END IF;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('kind',resource_kind,'variant',variant,'mode',mode,'count',n)),'[]'::jsonb)
+ INTO items FROM (SELECT o.resource_kind,o.variant,
+   CASE WHEN o.resource_kind='logo' THEN CASE WHEN l.type='GLYPH_30x10' THEN 'TEXT' ELSE coalesce(l.payload#>>'{source,mode}','DRAW') END END mode,
+   count(*)::integer n FROM public.resource_copy_offers o LEFT JOIN public.user_logos l ON l.id=o.logo_id
+  WHERE o.recipient_id=actor AND o.status='pending' AND o.created_at+interval '5 days'>clock_timestamp()
+  GROUP BY o.resource_kind,o.variant,mode) counts;
+ RETURN jsonb_build_object('ok',true,'items',items);
+END $$;
+
+
+--
+-- Name: resource_copy_decide("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."resource_copy_decide"("p_offer" "uuid", "p_decision" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+BEGIN RETURN public._copy_decide(p_offer,p_decision); END $$;
+
+
+--
+-- Name: resource_copy_go_resolve("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."resource_copy_go_resolve"("p_token" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE item public.resource_copy_offers; actor uuid:=auth.uid(); recipient_email text; recipient_label text;
+BEGIN
+ SELECT * INTO item FROM public.resource_copy_offers WHERE token=p_token FOR UPDATE;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
+ IF item.status='pending' AND item.created_at+interval '5 days'<=clock_timestamp() THEN
+  PERFORM public._copy_discard(item.id,'expired');
+  SELECT * INTO item FROM public.resource_copy_offers WHERE id=item.id;
+ END IF;
+ SELECT public._norm_email(u.email),coalesce(nullif(p.username,''),public._norm_email(u.email)) INTO recipient_email,recipient_label
+  FROM auth.users u LEFT JOIN public.profiles p ON p.id=u.id WHERE u.id=item.recipient_id;
+ RETURN jsonb_build_object('ok',true,'kind','copy','id',item.id,'status',item.status,'resource_kind',item.resource_kind,
+  'name',item.name,'sender_label',item.sender_label,'recipient_email',recipient_email,
+  'recipient_matches_me',actor=item.recipient_id,'recipient_label',recipient_label,
+  'expires_at',item.created_at+interval '5 days');
+END $$;
+
+
+--
+-- Name: resource_copy_history("text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."resource_copy_history"("p_kind" "text", "p_source" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE actor uuid:=auth.uid(); items jsonb;
+BEGIN
+ IF actor IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth_required','items','[]'::jsonb); END IF;
+ IF p_kind='game' AND NOT EXISTS(SELECT 1 FROM public.games WHERE id=p_source AND owner_id=actor)
+  OR p_kind='logo' AND NOT EXISTS(SELECT 1 FROM public.user_logos WHERE id=p_source AND user_id=actor)
+  OR p_kind NOT IN('game','logo') THEN RAISE EXCEPTION 'not_found'; END IF;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('recipient_label',h.recipient_label,'sent_at',h.sent_at)
+   ORDER BY h.sent_at DESC),'[]'::jsonb) INTO items FROM public.resource_copy_history h
+  WHERE h.sender_id=actor AND h.sent_at>clock_timestamp()-interval '30 days'
+   AND CASE p_kind WHEN 'game' THEN h.game_id ELSE h.logo_id END=p_source;
+ RETURN jsonb_build_object('ok',true,'items',items);
+END $$;
+
+
+--
+-- Name: resource_copy_inbox("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."resource_copy_inbox"("p_kind" "text" DEFAULT NULL::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE actor uuid:=auth.uid(); items jsonb;
+BEGIN
+ IF actor IS NULL OR NOT public._poll_identity_regular(actor,(SELECT to_jsonb(u) FROM auth.users u WHERE u.id=actor)) THEN
+  RETURN jsonb_build_object('ok',false,'error','auth_required','items','[]'::jsonb);
+ END IF;
+ IF p_kind IS NOT NULL AND p_kind NOT IN('game','logo') THEN RAISE EXCEPTION 'invalid_copy_kind'; END IF;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',o.id,'resource_kind',o.resource_kind,'variant',o.variant,
+  'logo_mode',CASE WHEN o.resource_kind='logo' THEN (SELECT CASE WHEN l.type='GLYPH_30x10' THEN 'TEXT' ELSE l.payload#>>'{source,mode}' END FROM public.user_logos l WHERE l.id=o.logo_id) END,
+  'name',o.name,'sender_label',o.sender_label,'created_at',o.created_at,'expires_at',o.created_at+interval '5 days',
+  'game_id',o.game_id,'logo_id',o.logo_id) ORDER BY o.created_at DESC),'[]'::jsonb)
+ INTO items FROM public.resource_copy_offers o WHERE o.recipient_id=actor AND o.status='pending'
+  AND o.created_at+interval '5 days'>clock_timestamp() AND (p_kind IS NULL OR o.resource_kind=p_kind);
+ RETURN jsonb_build_object('ok',true,'items',items);
+END $$;
+
+
+--
 -- Name: restore_message("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -16920,6 +17781,22 @@ CREATE TABLE "public"."game_gen_queue" (
 
 
 --
+-- Name: game_import_receipts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."game_import_receipts" (
+    "owner_id" "uuid" NOT NULL,
+    "request_id" "uuid" NOT NULL,
+    "game_id" "uuid",
+    "payload_hash" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    CONSTRAINT "game_import_receipts_payload_hash_check" CHECK (("payload_hash" ~ '^[a-f0-9]{64}$'::"text"))
+);
+
+ALTER TABLE ONLY "public"."game_import_receipts" FORCE ROW LEVEL SECURITY;
+
+
+--
 -- Name: game_session_active; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -17051,6 +17928,8 @@ CREATE TABLE "public"."games" (
     "poll_qr_lang" "text",
     "rules_state" "jsonb",
     "poll_ended_key" "text",
+    "received_from_label" "text",
+    "received_from_identity" "uuid",
     CONSTRAINT "games_name_len" CHECK ((("char_length"("name") >= 1) AND ("char_length"("name") <= 80))),
     CONSTRAINT "games_poll_status_ok" CHECK (((("type" = ANY (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))) OR (("type" <> ALL (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'poll_stopped'::"public"."game_status", 'ready'::"public"."game_status"]))))),
     CONSTRAINT "games_status_check" CHECK (("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'poll_stopped'::"public"."game_status", 'ready'::"public"."game_status"]))),
@@ -17243,9 +18122,10 @@ CREATE TABLE "public"."mail_notification_allocations" (
     "consumed_at" timestamp with time zone,
     "consumed_queue_id" "uuid",
     "revoked_at" timestamp with time zone,
-    CONSTRAINT "mail_notification_allocations_check" CHECK (("num_nonnulls"("friendship_id", "subscription_id", "poll_task_id", "base_task_id", "device_share_id") = 1)),
+    "copy_offer_id" "uuid",
     CONSTRAINT "mail_notification_allocations_check1" CHECK ((("consumed_at" IS NULL) = ("consumed_queue_id" IS NULL))),
-    CONSTRAINT "mail_notification_allocations_source_kind_check" CHECK (("source_kind" = ANY (ARRAY['friend'::"text", 'subscription'::"text", 'poll'::"text", 'base'::"text", 'device'::"text"])))
+    CONSTRAINT "mail_notification_allocations_one_source" CHECK (("num_nonnulls"("friendship_id", "subscription_id", "poll_task_id", "base_task_id", "device_share_id", "copy_offer_id") = 1)),
+    CONSTRAINT "mail_notification_allocations_source_kind_check" CHECK (("source_kind" = ANY (ARRAY['friend'::"text", 'subscription'::"text", 'poll'::"text", 'base'::"text", 'device'::"text", 'copy'::"text"])))
 );
 
 
@@ -17714,6 +18594,162 @@ CREATE TABLE "public"."reserved_username_prefixes" (
 
 
 --
+-- Name: resource_clone_assets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."resource_clone_assets" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "job_id" "uuid" NOT NULL,
+    "reference_hash" "text" NOT NULL,
+    "reference" "text" NOT NULL,
+    "source_kind" "text" NOT NULL,
+    "source_path" "text",
+    "mime" "text" NOT NULL,
+    "byte_size" integer NOT NULL,
+    "etag" "text",
+    "content_hash" "text",
+    "destination_path" "text" NOT NULL,
+    CONSTRAINT "resource_clone_assets_byte_size_check" CHECK ((("byte_size" >= 1) AND ("byte_size" <= 5242880))),
+    CONSTRAINT "resource_clone_assets_mime_check" CHECK (("mime" = ANY (ARRAY['image/png'::"text", 'image/jpeg'::"text", 'image/gif'::"text", 'image/webp'::"text"]))),
+    CONSTRAINT "resource_clone_assets_source_kind_check" CHECK (("source_kind" = ANY (ARRAY['storage'::"text", 'embedded'::"text", 'demo_asset'::"text"])))
+);
+
+ALTER TABLE ONLY "public"."resource_clone_assets" FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: resource_clone_jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."resource_clone_jobs" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "actor_id" "uuid",
+    "actor_identity" "uuid" NOT NULL,
+    "recipient_id" "uuid" NOT NULL,
+    "source_id" "uuid" NOT NULL,
+    "resource_kind" "text" NOT NULL,
+    "action" "text" NOT NULL,
+    "request_id" "uuid" NOT NULL,
+    "source_snapshot" "jsonb",
+    "status" "text" DEFAULT 'preparing'::"text" NOT NULL,
+    "game_id" "uuid",
+    "base_id" "uuid",
+    "logo_id" "uuid",
+    "created_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    "completed_at" timestamp with time zone,
+    "definition_hash" "text",
+    CONSTRAINT "resource_clone_jobs_action_check" CHECK (("action" = ANY (ARRAY['duplicate'::"text", 'send'::"text"]))),
+    CONSTRAINT "resource_clone_jobs_check" CHECK (("num_nonnulls"("game_id", "base_id", "logo_id") <= 1)),
+    CONSTRAINT "resource_clone_jobs_check1" CHECK (((("action" = 'duplicate'::"text") AND ("actor_identity" = "recipient_id")) OR (("action" = 'send'::"text") AND ("actor_identity" <> "recipient_id") AND ("resource_kind" <> 'base'::"text")))),
+    CONSTRAINT "resource_clone_jobs_resource_kind_check" CHECK (("resource_kind" = ANY (ARRAY['game'::"text", 'base'::"text", 'logo'::"text"]))),
+    CONSTRAINT "resource_clone_jobs_status_check" CHECK (("status" = ANY (ARRAY['preparing'::"text", 'complete'::"text", 'removed'::"text", 'expired'::"text"])))
+);
+
+ALTER TABLE ONLY "public"."resource_clone_jobs" FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: resource_clone_receipts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."resource_clone_receipts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "recipient_id" "uuid" NOT NULL,
+    "creator_id" "uuid",
+    "creator_identity" "uuid" NOT NULL,
+    "request_id" "uuid" NOT NULL,
+    "source_id" "uuid" NOT NULL,
+    "resource_kind" "text" NOT NULL,
+    "action" "text" NOT NULL,
+    "demo_origin" boolean DEFAULT false NOT NULL,
+    "definition_hash" "text" NOT NULL,
+    "game_id" "uuid",
+    "base_id" "uuid",
+    "logo_id" "uuid",
+    "created_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    CONSTRAINT "resource_clone_receipts_action_check" CHECK (("action" = ANY (ARRAY['duplicate'::"text", 'send'::"text"]))),
+    CONSTRAINT "resource_clone_receipts_check" CHECK (("num_nonnulls"("game_id", "base_id", "logo_id") <= 1)),
+    CONSTRAINT "resource_clone_receipts_check1" CHECK ((("game_id" IS NULL) OR ("resource_kind" = 'game'::"text"))),
+    CONSTRAINT "resource_clone_receipts_check2" CHECK ((("base_id" IS NULL) OR ("resource_kind" = 'base'::"text"))),
+    CONSTRAINT "resource_clone_receipts_check3" CHECK ((("logo_id" IS NULL) OR ("resource_kind" = 'logo'::"text"))),
+    CONSTRAINT "resource_clone_receipts_check4" CHECK (((("action" = 'duplicate'::"text") AND ("creator_identity" = "recipient_id")) OR (("action" = 'send'::"text") AND ("creator_identity" <> "recipient_id") AND ("resource_kind" <> 'base'::"text")))),
+    CONSTRAINT "resource_clone_receipts_resource_kind_check" CHECK (("resource_kind" = ANY (ARRAY['game'::"text", 'base'::"text", 'logo'::"text"])))
+);
+
+ALTER TABLE ONLY "public"."resource_clone_receipts" FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: resource_copy_history; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."resource_copy_history" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "sender_id" "uuid" NOT NULL,
+    "game_id" "uuid",
+    "logo_id" "uuid",
+    "offer_id" "uuid",
+    "recipient_identity" "uuid" NOT NULL,
+    "recipient_label" "text" NOT NULL,
+    "sent_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    CONSTRAINT "resource_copy_history_check" CHECK (("num_nonnulls"("game_id", "logo_id") = 1))
+);
+
+ALTER TABLE ONLY "public"."resource_copy_history" FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: resource_copy_offers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."resource_copy_offers" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "token" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "recipient_id" "uuid" NOT NULL,
+    "sender_id" "uuid",
+    "sender_identity" "uuid" NOT NULL,
+    "sender_label" "text" NOT NULL,
+    "source_id" "uuid" NOT NULL,
+    "resource_kind" "text" NOT NULL,
+    "variant" "text" NOT NULL,
+    "name" "text" NOT NULL,
+    "request_id" "uuid" NOT NULL,
+    "payload_hash" "text" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    "decided_at" timestamp with time zone,
+    "game_id" "uuid",
+    "logo_id" "uuid",
+    CONSTRAINT "resource_copy_offers_check" CHECK (("sender_identity" <> "recipient_id")),
+    CONSTRAINT "resource_copy_offers_check1" CHECK (((("resource_kind" = 'game'::"text") AND ("variant" = ANY (ARRAY['prepared'::"text", 'poll_text'::"text", 'poll_points'::"text"]))) OR (("resource_kind" = 'logo'::"text") AND ("variant" = ANY (ARRAY['GLYPH_30x10'::"text", 'PIX_150x70'::"text"]))))),
+    CONSTRAINT "resource_copy_offers_check2" CHECK ((("game_id" IS NULL) OR ("resource_kind" = 'game'::"text"))),
+    CONSTRAINT "resource_copy_offers_check3" CHECK ((("logo_id" IS NULL) OR ("resource_kind" = 'logo'::"text"))),
+    CONSTRAINT "resource_copy_offers_check4" CHECK ((("status" <> ALL (ARRAY['declined'::"text", 'expired'::"text"])) OR (("game_id" IS NULL) AND ("logo_id" IS NULL)))),
+    CONSTRAINT "resource_copy_offers_payload_hash_check" CHECK (("payload_hash" ~ '^[a-f0-9]{64}$'::"text")),
+    CONSTRAINT "resource_copy_offers_resource_kind_check" CHECK (("resource_kind" = ANY (ARRAY['game'::"text", 'logo'::"text"]))),
+    CONSTRAINT "resource_copy_offers_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'accepted'::"text", 'declined'::"text", 'expired'::"text"])))
+);
+
+ALTER TABLE ONLY "public"."resource_copy_offers" FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: resource_demo_origins; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."resource_demo_origins" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "owner_id" "uuid" NOT NULL,
+    "game_id" "uuid",
+    "base_id" "uuid",
+    "logo_id" "uuid",
+    CONSTRAINT "resource_demo_origins_check" CHECK (("num_nonnulls"("game_id", "base_id", "logo_id") = 1))
+);
+
+ALTER TABLE ONLY "public"."resource_demo_origins" FORCE ROW LEVEL SECURITY;
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -17887,6 +18923,8 @@ CREATE TABLE "public"."user_logos" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "is_demo" boolean DEFAULT false NOT NULL,
+    "received_from_label" "text",
+    "received_from_identity" "uuid",
     CONSTRAINT "user_logos_type_check" CHECK (("type" = ANY (ARRAY['GLYPH_30x10'::"text", 'PIX_150x70'::"text"])))
 );
 
@@ -18164,6 +19202,14 @@ ALTER TABLE ONLY "public"."friendships"
 
 ALTER TABLE ONLY "public"."game_gen_queue"
     ADD CONSTRAINT "game_gen_queue_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: game_import_receipts game_import_receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_import_receipts"
+    ADD CONSTRAINT "game_import_receipts_pkey" PRIMARY KEY ("owner_id", "request_id");
 
 
 --
@@ -18639,6 +19685,126 @@ ALTER TABLE ONLY "public"."reserved_username_prefixes"
 
 
 --
+-- Name: resource_clone_assets resource_clone_assets_destination_path_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_assets"
+    ADD CONSTRAINT "resource_clone_assets_destination_path_key" UNIQUE ("destination_path");
+
+
+--
+-- Name: resource_clone_assets resource_clone_assets_job_id_reference_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_assets"
+    ADD CONSTRAINT "resource_clone_assets_job_id_reference_hash_key" UNIQUE ("job_id", "reference_hash");
+
+
+--
+-- Name: resource_clone_assets resource_clone_assets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_assets"
+    ADD CONSTRAINT "resource_clone_assets_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: resource_clone_jobs resource_clone_jobs_actor_identity_recipient_id_request_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_jobs"
+    ADD CONSTRAINT "resource_clone_jobs_actor_identity_recipient_id_request_id_key" UNIQUE ("actor_identity", "recipient_id", "request_id");
+
+
+--
+-- Name: resource_clone_jobs resource_clone_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_jobs"
+    ADD CONSTRAINT "resource_clone_jobs_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: resource_clone_receipts resource_clone_receipts_creator_identity_recipient_id_reque_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_receipts"
+    ADD CONSTRAINT "resource_clone_receipts_creator_identity_recipient_id_reque_key" UNIQUE ("creator_identity", "recipient_id", "request_id");
+
+
+--
+-- Name: resource_clone_receipts resource_clone_receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_receipts"
+    ADD CONSTRAINT "resource_clone_receipts_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: resource_copy_history resource_copy_history_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_history"
+    ADD CONSTRAINT "resource_copy_history_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: resource_copy_offers resource_copy_offers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_offers"
+    ADD CONSTRAINT "resource_copy_offers_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: resource_copy_offers resource_copy_offers_sender_identity_request_id_recipient_i_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_offers"
+    ADD CONSTRAINT "resource_copy_offers_sender_identity_request_id_recipient_i_key" UNIQUE ("sender_identity", "request_id", "recipient_id");
+
+
+--
+-- Name: resource_copy_offers resource_copy_offers_token_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_offers"
+    ADD CONSTRAINT "resource_copy_offers_token_key" UNIQUE ("token");
+
+
+--
+-- Name: resource_demo_origins resource_demo_origins_base_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_demo_origins"
+    ADD CONSTRAINT "resource_demo_origins_base_id_key" UNIQUE ("base_id");
+
+
+--
+-- Name: resource_demo_origins resource_demo_origins_game_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_demo_origins"
+    ADD CONSTRAINT "resource_demo_origins_game_id_key" UNIQUE ("game_id");
+
+
+--
+-- Name: resource_demo_origins resource_demo_origins_logo_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_demo_origins"
+    ADD CONSTRAINT "resource_demo_origins_logo_id_key" UNIQUE ("logo_id");
+
+
+--
+-- Name: resource_demo_origins resource_demo_origins_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_demo_origins"
+    ADD CONSTRAINT "resource_demo_origins_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -18808,6 +19974,20 @@ CREATE INDEX "control_runtime_sessions_expiry_idx" ON "public"."control_runtime_
 --
 
 CREATE UNIQUE INDEX "control_runtime_sessions_one_active_per_game" ON "public"."control_runtime_sessions" USING "btree" ("game_id") WHERE ("ended_at" IS NULL);
+
+
+--
+-- Name: copy_inbox; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "copy_inbox" ON "public"."resource_copy_offers" USING "btree" ("recipient_id", "resource_kind", "variant", "status", "created_at");
+
+
+--
+-- Name: copy_pair; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "copy_pair" ON "public"."resource_copy_offers" USING "btree" ("sender_identity", "source_id", "recipient_id", "status", "decided_at");
 
 
 --
@@ -19126,6 +20306,13 @@ CREATE INDEX "mail_function_logs_request_idx" ON "public"."mail_function_logs" U
 
 
 --
+-- Name: mail_notification_allocations_copy_offer_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "mail_notification_allocations_copy_offer_id_idx" ON "public"."mail_notification_allocations" USING "btree" ("copy_offer_id") WHERE ("copy_offer_id" IS NOT NULL);
+
+
+--
 -- Name: mail_notification_allocations_source_kind_source_token_crea_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -19151,6 +20338,13 @@ CREATE UNIQUE INDEX "mail_queue_notification_allocation_id_idx" ON "public"."mai
 --
 
 CREATE INDEX "mail_queue_notification_base_task_id_idx" ON "public"."mail_queue" USING "btree" ("notification_base_task_id") WHERE ("notification_base_task_id" IS NOT NULL);
+
+
+--
+-- Name: mail_queue_notification_copy_offer_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "mail_queue_notification_copy_offer_id_idx" ON "public"."mail_queue" USING "btree" ("notification_copy_offer_id") WHERE ("notification_copy_offer_id" IS NOT NULL);
 
 
 --
@@ -19595,6 +20789,13 @@ CREATE INDEX "reports_status_idx" ON "public"."reports" USING "btree" ("status")
 
 
 --
+-- Name: resource_copy_history_retention; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "resource_copy_history_retention" ON "public"."resource_copy_history" USING "btree" ("sent_at");
+
+
+--
 -- Name: site_activity_seen_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -19637,10 +20838,213 @@ CREATE TRIGGER "base_friend_source_delete" BEFORE DELETE ON "public"."friendship
 
 
 --
+-- Name: games clone_demo_origin; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "clone_demo_origin" AFTER INSERT OR UPDATE OF "is_demo" ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."_resource_demo_origin_mark"();
+
+
+--
+-- Name: question_bases clone_demo_origin; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "clone_demo_origin" AFTER INSERT OR UPDATE OF "is_demo" ON "public"."question_bases" FOR EACH ROW EXECUTE FUNCTION "public"."_resource_demo_origin_mark"();
+
+
+--
+-- Name: user_logos clone_demo_origin; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "clone_demo_origin" AFTER INSERT OR UPDATE OF "is_demo" ON "public"."user_logos" FOR EACH ROW EXECUTE FUNCTION "public"."_resource_demo_origin_mark"();
+
+
+--
+-- Name: resource_clone_jobs clone_job_cleanup; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "clone_job_cleanup" BEFORE DELETE ON "public"."resource_clone_jobs" FOR EACH ROW EXECUTE FUNCTION "public"."_resource_clone_job_delete"();
+
+
+--
+-- Name: resource_clone_jobs clone_job_cleanup_kick; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "clone_job_cleanup_kick" AFTER DELETE ON "public"."resource_clone_jobs" FOR EACH STATEMENT EXECUTE FUNCTION "public"."_storage_cleanup_kick_trigger"();
+
+
+--
+-- Name: user_logos clone_logo_cleanup; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "clone_logo_cleanup" BEFORE DELETE ON "public"."user_logos" FOR EACH ROW EXECUTE FUNCTION "public"."_resource_clone_logo_delete"();
+
+
+--
 -- Name: contact_reports contact_reports_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER "contact_reports_updated_at" BEFORE UPDATE ON "public"."contact_reports" FOR EACH ROW EXECUTE FUNCTION "public"."contact_reports_set_updated_at"();
+
+
+--
+-- Name: answers copy_pending_answer; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_answer" BEFORE INSERT OR DELETE OR UPDATE ON "public"."answers" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: control_device_link_tokens copy_pending_control_device_link_tokens; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_control_device_link_tokens" BEFORE INSERT OR DELETE OR UPDATE ON "public"."control_device_link_tokens" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: control_device_shares copy_pending_control_device_shares; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_control_device_shares" BEFORE INSERT OR DELETE OR UPDATE ON "public"."control_device_shares" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: control_runtime_sessions copy_pending_control_runtime_sessions; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_control_runtime_sessions" BEFORE INSERT OR DELETE OR UPDATE ON "public"."control_runtime_sessions" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: device_connect_codes copy_pending_device_connect_codes; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_device_connect_codes" BEFORE INSERT OR DELETE OR UPDATE ON "public"."device_connect_codes" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: device_presence copy_pending_device_presence; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_device_presence" BEFORE INSERT OR DELETE OR UPDATE ON "public"."device_presence" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: display_audio_unlock copy_pending_display_audio_unlock; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_display_audio_unlock" BEFORE INSERT OR DELETE OR UPDATE ON "public"."display_audio_unlock" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: games copy_pending_game; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_game" BEFORE DELETE OR UPDATE ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: game_session_active copy_pending_game_session_active; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_game_session_active" BEFORE INSERT OR DELETE OR UPDATE ON "public"."game_session_active" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: game_sessions copy_pending_game_sessions; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_game_sessions" BEFORE INSERT OR DELETE OR UPDATE ON "public"."game_sessions" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: game_state_history copy_pending_game_state_history; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_game_state_history" BEFORE INSERT OR DELETE OR UPDATE ON "public"."game_state_history" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: user_logos copy_pending_logo; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_logo" BEFORE DELETE OR UPDATE ON "public"."user_logos" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: market_games copy_pending_market_games; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_market_games" BEFORE INSERT OR DELETE OR UPDATE ON "public"."market_games" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: poll_anonymous_limits copy_pending_poll_anonymous_limits; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_poll_anonymous_limits" BEFORE INSERT OR DELETE OR UPDATE ON "public"."poll_anonymous_limits" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: poll_sessions copy_pending_poll_sessions; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_poll_sessions" BEFORE INSERT OR DELETE OR UPDATE ON "public"."poll_sessions" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: poll_tally_drafts copy_pending_poll_tally_drafts; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_poll_tally_drafts" BEFORE INSERT OR DELETE OR UPDATE ON "public"."poll_tally_drafts" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: poll_tasks copy_pending_poll_tasks; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_poll_tasks" BEFORE INSERT OR DELETE OR UPDATE ON "public"."poll_tasks" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: poll_text_entries copy_pending_poll_text_entries; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_poll_text_entries" BEFORE INSERT OR DELETE OR UPDATE ON "public"."poll_text_entries" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: poll_votes copy_pending_poll_votes; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_poll_votes" BEFORE INSERT OR DELETE OR UPDATE ON "public"."poll_votes" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: questions copy_pending_question; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_question" BEFORE INSERT OR DELETE OR UPDATE ON "public"."questions" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: game_state copy_pending_runtime; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_runtime" BEFORE INSERT OR DELETE OR UPDATE ON "public"."game_state" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: shared_devices copy_pending_shared_devices; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_shared_devices" BEFORE INSERT OR DELETE OR UPDATE ON "public"."shared_devices" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
+
+
+--
+-- Name: user_market_library copy_pending_user_market_library; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "copy_pending_user_market_library" BEFORE INSERT OR DELETE OR UPDATE ON "public"."user_market_library" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
 
 
 --
@@ -19718,6 +21122,13 @@ CREATE TRIGGER "profiles_reserve_test_username" BEFORE INSERT OR UPDATE OF "user
 --
 
 CREATE TRIGGER "request_display_completion" AFTER INSERT OR UPDATE ON "public"."game_state" FOR EACH ROW EXECUTE FUNCTION "public"."request_display_completion"();
+
+
+--
+-- Name: resource_copy_offers resource_copy_mail_epoch; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "resource_copy_mail_epoch" AFTER UPDATE ON "public"."resource_copy_offers" FOR EACH ROW EXECUTE FUNCTION "public"."_resource_copy_mail_epoch"();
 
 
 --
@@ -20354,6 +21765,22 @@ ALTER TABLE ONLY "public"."friendships"
 
 
 --
+-- Name: game_import_receipts game_import_receipts_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_import_receipts"
+    ADD CONSTRAINT "game_import_receipts_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: game_import_receipts game_import_receipts_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_import_receipts"
+    ADD CONSTRAINT "game_import_receipts_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: game_session_active game_session_active_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -20458,6 +21885,14 @@ ALTER TABLE ONLY "public"."mail_notification_allocations"
 
 
 --
+-- Name: mail_notification_allocations mail_notification_allocations_copy_offer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."mail_notification_allocations"
+    ADD CONSTRAINT "mail_notification_allocations_copy_offer_id_fkey" FOREIGN KEY ("copy_offer_id") REFERENCES "public"."resource_copy_offers"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: mail_notification_allocations mail_notification_allocations_device_share_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -20543,6 +21978,14 @@ ALTER TABLE ONLY "public"."mail_queue"
 
 ALTER TABLE ONLY "public"."mail_queue"
     ADD CONSTRAINT "mail_queue_notification_base_task_id_fkey" FOREIGN KEY ("notification_base_task_id") REFERENCES "public"."base_share_tasks"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: mail_queue mail_queue_notification_copy_offer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."mail_queue"
+    ADD CONSTRAINT "mail_queue_notification_copy_offer_id_fkey" FOREIGN KEY ("notification_copy_offer_id") REFERENCES "public"."resource_copy_offers"("id") ON DELETE CASCADE;
 
 
 --
@@ -20927,6 +22370,190 @@ ALTER TABLE ONLY "public"."questions"
 
 ALTER TABLE ONLY "public"."reserved_username_accounts"
     ADD CONSTRAINT "reserved_username_accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_clone_assets resource_clone_assets_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_assets"
+    ADD CONSTRAINT "resource_clone_assets_job_id_fkey" FOREIGN KEY ("job_id") REFERENCES "public"."resource_clone_jobs"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_clone_jobs resource_clone_jobs_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_jobs"
+    ADD CONSTRAINT "resource_clone_jobs_actor_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_clone_jobs resource_clone_jobs_base_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_jobs"
+    ADD CONSTRAINT "resource_clone_jobs_base_id_fkey" FOREIGN KEY ("base_id") REFERENCES "public"."question_bases"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_clone_jobs resource_clone_jobs_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_jobs"
+    ADD CONSTRAINT "resource_clone_jobs_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_clone_jobs resource_clone_jobs_logo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_jobs"
+    ADD CONSTRAINT "resource_clone_jobs_logo_id_fkey" FOREIGN KEY ("logo_id") REFERENCES "public"."user_logos"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_clone_jobs resource_clone_jobs_recipient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_jobs"
+    ADD CONSTRAINT "resource_clone_jobs_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_clone_receipts resource_clone_receipts_base_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_receipts"
+    ADD CONSTRAINT "resource_clone_receipts_base_id_fkey" FOREIGN KEY ("base_id") REFERENCES "public"."question_bases"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_clone_receipts resource_clone_receipts_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_receipts"
+    ADD CONSTRAINT "resource_clone_receipts_creator_id_fkey" FOREIGN KEY ("creator_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_clone_receipts resource_clone_receipts_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_receipts"
+    ADD CONSTRAINT "resource_clone_receipts_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_clone_receipts resource_clone_receipts_logo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_receipts"
+    ADD CONSTRAINT "resource_clone_receipts_logo_id_fkey" FOREIGN KEY ("logo_id") REFERENCES "public"."user_logos"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_clone_receipts resource_clone_receipts_recipient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_clone_receipts"
+    ADD CONSTRAINT "resource_clone_receipts_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_copy_history resource_copy_history_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_history"
+    ADD CONSTRAINT "resource_copy_history_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_copy_history resource_copy_history_logo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_history"
+    ADD CONSTRAINT "resource_copy_history_logo_id_fkey" FOREIGN KEY ("logo_id") REFERENCES "public"."user_logos"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_copy_history resource_copy_history_offer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_history"
+    ADD CONSTRAINT "resource_copy_history_offer_id_fkey" FOREIGN KEY ("offer_id") REFERENCES "public"."resource_copy_offers"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_copy_history resource_copy_history_sender_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_history"
+    ADD CONSTRAINT "resource_copy_history_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_copy_offers resource_copy_offers_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_offers"
+    ADD CONSTRAINT "resource_copy_offers_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_copy_offers resource_copy_offers_logo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_offers"
+    ADD CONSTRAINT "resource_copy_offers_logo_id_fkey" FOREIGN KEY ("logo_id") REFERENCES "public"."user_logos"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_copy_offers resource_copy_offers_recipient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_offers"
+    ADD CONSTRAINT "resource_copy_offers_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_copy_offers resource_copy_offers_sender_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_copy_offers"
+    ADD CONSTRAINT "resource_copy_offers_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: resource_demo_origins resource_demo_origins_base_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_demo_origins"
+    ADD CONSTRAINT "resource_demo_origins_base_id_fkey" FOREIGN KEY ("base_id") REFERENCES "public"."question_bases"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_demo_origins resource_demo_origins_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_demo_origins"
+    ADD CONSTRAINT "resource_demo_origins_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_demo_origins resource_demo_origins_logo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_demo_origins"
+    ADD CONSTRAINT "resource_demo_origins_logo_id_fkey" FOREIGN KEY ("logo_id") REFERENCES "public"."user_logos"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: resource_demo_origins resource_demo_origins_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."resource_demo_origins"
+    ADD CONSTRAINT "resource_demo_origins_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 --
@@ -21361,6 +22988,12 @@ CREATE POLICY "game_gen_queue_select_own" ON "public"."game_gen_queue" FOR SELEC
 
 CREATE POLICY "game_gen_queue_worker_all" ON "public"."game_gen_queue" TO "service_role" USING (true) WITH CHECK (true);
 
+
+--
+-- Name: game_import_receipts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."game_import_receipts" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: game_session_active; Type: ROW SECURITY; Schema: public; Owner: -
@@ -22277,6 +23910,42 @@ ALTER TABLE "public"."reserved_username_accounts" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."reserved_username_prefixes" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: resource_clone_assets; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."resource_clone_assets" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: resource_clone_jobs; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."resource_clone_jobs" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: resource_clone_receipts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."resource_clone_receipts" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: resource_copy_history; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."resource_copy_history" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: resource_copy_offers; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."resource_copy_offers" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: resource_demo_origins; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."resource_demo_origins" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: shared_devices; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -22405,5 +24074,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zF4hbXbdNqxaYRm8NqQrl0k4MEBgLX4ef0pPZiM6EPFjpY5S0z1iKomlCdMge2Y
+\unrestrict 1TCg45QRtp2BP9DNAdzfiRp7bs5I0ciajCmkNhDRBiWauCf23PNpIGcxtgv5NUm
 
