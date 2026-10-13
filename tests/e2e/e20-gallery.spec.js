@@ -88,9 +88,9 @@ function additionalStates(fixtures) {
 
 async function capture(page, profile, id, href, manifest, prepare = null) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20_000 });
   await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading")
-    || !!document.documentElement.dataset.deviceGuard, null, { timeout: 20_000 }).catch(() => {});
+    || !!document.documentElement.dataset.deviceGuard, null, { timeout: 8_000 }).catch(() => {});
   if (prepare) await prepare(page);
   await page.waitForTimeout(450);
   const state = await page.evaluate(() => ({
