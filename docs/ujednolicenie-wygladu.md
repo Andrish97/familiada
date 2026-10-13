@@ -898,6 +898,13 @@ zadziałał po ponowieniu: `38385034279`, 1/1, unit602/602. Importy
 Gier/Baz/Logo i pozostałe błędy/retry w starych ścieżkach nadal wymagają
 przeglądu.
 
+**Sukces importu Logo/Bazy (2026-10-13):** po zapisie okno nie znika;
+pokazuje wynik i przycisk „Gotowe”, który wyłącznie zamyka okno. Wybór
+nowego pliku resetuje wynik importu Logo. E2E Logo `38386121426`, 2/2
+(rysunek i obraz, pełny round-trip); Baza `38386612386`, 1/1 (foldery,
+tagi pytań/folderów oraz import pliku). Unity602/602. Import Gier i
+pozostałe błędy/retry nadal do przeglądu.
+
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
 Każdy typ strony ma wspólny układ i wspólne style na wszystkich stronach
