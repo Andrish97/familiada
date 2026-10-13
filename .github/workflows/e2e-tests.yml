@@ -270,6 +270,7 @@ jobs:
       - name: Restore E20 gallery account once before parallel profiles
         if: ${{ success() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
         env:
+          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: node -e "require('./e2e/helpers/mailbox').restoreTestAccount('test17').catch(error => { console.error(error); process.exit(1); })"
         working-directory: tests
