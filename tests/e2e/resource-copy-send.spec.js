@@ -12,14 +12,15 @@ async function newUserContext(browser,username){
 async function getUser(page){return page.evaluate(async()=>{const {data,error}=await window.__sbClient.auth.getUser();if(error)throw error;return data.user;});}
 async function setMailFlag(page,id,enabled){await page.evaluate(async({id,enabled})=>{const {error}=await window.__sbClient.from('user_flags').upsert({user_id:id,email_notifications:enabled});if(error)throw error;},{id,enabled});}
 async function cleanCopyFixtures(page){await page.evaluate(async()=>{const db=window.__sbClient;for(const kind of ['game','logo']){const {data,error}=await db.rpc('resource_copy_inbox',{p_kind:kind});if(error)throw error;for(const item of data.items||[]){if(String(item.name).startsWith('E2E-SEND-')){const {error:e}=await db.rpc('resource_copy_decide',{p_offer:item.id,p_decision:'decline'});if(e)throw e;}}}for(const [table,ownerColumn] of [['games','owner_id'],['user_logos','user_id']]){const {data:rows,error}=await db.from(table).select('id').like('name','E2E-SEND-%');if(error)throw error;for(const row of rows||[]){const {error:e}=await db.from(table).delete().eq('id',row.id);if(e)throw e;}}});}
-async function sendFromUi(page,path,selector,name,recipientId){
+async function sendFromUi(page,path,selector,name,recipientId,{testInfo,captureScreenshots=false}={}){
  await page.goto(`https://www.familiada.online/${path}/`);await page.locator(selector).filter({hasText:name}).click();
  await page.locator('#btnSendCopy').click();const dialog=page.locator('#resourceSendDialog');await expect(dialog).toBeVisible();
  await dialog.locator(`input[value="${recipientId}"]`).check();
+ if(captureScreenshots){for(const [label,width,height] of [['mobile',390,844],['desktop',1400,960],['landscape',844,390]]){await page.setViewportSize({width,height});await page.screenshot({path:testInfo.outputPath(`shot-resource-copy-send-${label}.png`),fullPage:true});}await page.setViewportSize({width:1400,height:960});}
  const response=page.waitForResponse(r=>r.url().endsWith('/_api/resource-send')&&r.request().method()==='POST');
  await dialog.locator('[data-send]').click();const result=await response;expect(result.status()).toBe(200);return result.json();
 }
-test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',async({page,context,browser})=>{
+test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',async({page,context,browser},testInfo)=>{
  test.setTimeout(240000);const name=`E2E-SEND-${Date.now()}`;let recipientContext,recipientPage,recipientId,senderId,previousFlag;const sourceGames=[],sourceLogos=[],receivedGames=[],receivedLogos=[];
  if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','logo','go']});
  await loginAsTestUser(page,context,{username:testAccountUsername(1)});senderId=(await getUser(page)).id;
@@ -35,7 +36,7 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
   await clearMailbox(testAccountUsername(2));await resetMailProviderLimits(page);
 
   const game=await page.evaluate(async prefix=>{const db=window.__sbClient,{data:u}=await db.auth.getUser(),name=prefix+'-GAME';const {data:g,error}=await db.from('games').insert({owner_id:u.user.id,name,type:'prepared',status:'draft'}).select('id,name').single();if(error)throw error;const {error:e}=await db.rpc('game_import_content',{p_game_id:g.id,p_name:name,p_questions:[{text:'Pytanie?',answers:[{text:'Rodzina',fixed_points:20}]}]});if(e)throw e;return g;},name);sourceGames.push(game.id);
-  const gameSend=await sendFromUi(page,'games','.card[data-game-id]',game.name,recipientId);expect(gameSend.ok).toBeTruthy();
+  const gameSend=await sendFromUi(page,'games','.card[data-game-id]',game.name,recipientId,{testInfo,captureScreenshots:true});expect(gameSend.ok).toBeTruthy();
   const gameMail=await waitForEmail({recipient:testAccountUsername(2),after:new Date(Date.now()-5000).toISOString(),subject:/kopię|copy/i,timeout:120000});
   const gameGo=extractHttpLinks(gameMail).map(value=>new URL(value)).find(url=>url.pathname==='/go/'&&url.searchParams.has('c'));expect(gameGo).toBeTruthy();
   await recipientPage.goto(gameGo.href);await expect(recipientPage.locator('#message')).toContainText(game.name,{timeout:20000});
