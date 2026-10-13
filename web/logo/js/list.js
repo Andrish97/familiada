@@ -677,7 +677,15 @@ async function boot() {
 
   bindUi();
   setActiveListMode(listModeFromUrl(), { updateUrl: false });
-  await refresh();
+  try {
+    await refresh();
+  } catch (e) {
+    console.error("[logo] initial list load failed:", e);
+    setMsg(t("logoEditor.errors.loadFailed", { error: String(e?.message || "") }));
+  } finally {
+    // Keep the grid hidden until its first result; errors still reveal their message.
+    document.querySelector(".logoShell")?.classList.add("skel-step-ready");
+  }
 }
 
 boot();
