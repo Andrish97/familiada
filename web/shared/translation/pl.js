@@ -2854,6 +2854,12 @@ const pl = {
         "@Moja gra\n#Zwierzeta w Afryce\n1 Słoń /29\n2 Lew /19\n3 Małpa /16\n\n#Drugie pytanie\n1 Odpowiedź 1\n2 Odpowiedź 2\n3 Odpowiedź 3",
       formatHint:
         "Działa też format bez numerów (po prostu linie z odpowiedziami). Import toleruje spacje/taby, „1.”, „2)” itp. Jeśli odpowiedź ma więcej niż 17 znaków, zostanie ucięta.",
+      previewLabel: "Podgląd importu",
+      previewTitle: "Podgląd na żywo",
+      previewEmpty: "Wpisz pytania, aby zobaczyć podgląd.",
+      previewSummary: "{questions} pytań · {answers} odpowiedzi",
+      previewError: "Popraw format, aby zobaczyć podgląd: {error}",
+      previewMore: "i {count} kolejnych pytań",
       confirm: "Importuj",
       cancel: "Zamknij",
     },

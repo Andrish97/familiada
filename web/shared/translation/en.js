@@ -2953,6 +2953,12 @@ const en = {
         "@My game\n#Animals in Africa\n1 Elephant /29\n2 Lion /19\n3 Monkey /16\n\n#Second question\n1 Answer 1\n2 Answer 2\n3 Answer 3",
       formatHint:
         "The format also works without numbers (just answer lines). Import tolerates spaces/tabs, “1.”, “2)” etc. Answers longer than 17 characters will be trimmed.",
+      previewLabel: "Import preview",
+      previewTitle: "Live preview",
+      previewEmpty: "Enter questions to see a preview.",
+      previewSummary: "{questions} questions · {answers} answers",
+      previewError: "Fix the format to see a preview: {error}",
+      previewMore: "and {count} more questions",
       confirm: "Import",
       cancel: "Close",
     },

@@ -180,6 +180,33 @@ test("edytor: puste pole pytania zapisuje się jako domyślna etykieta (nie bł�
 });
 
 /* ================= B: import zawsze wipeuje istniejącą zawartość ================= */
+test("E20 import TXT pokazuje podgląd na żywo, błąd formatu i bezpieczny tekst", async ({ page, context }, testInfo) => {
+  await loginAsTestUser(page, context);
+  const gameId = await createGame(page, { type: "prepared" });
+  try {
+    await openEditor(page, gameId);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#btnImportTxt").click();
+    await page.locator("#txtTa").fill("@Demo\n#Pytanie A\n1 Odpowiedź A\n2 Odpowiedź B\n#Pytanie B\n1 <img src=x onerror=alert(1)>");
+    const preview = page.locator("#txtPreviewBody");
+    await expect(preview).toContainText("Pytanie A");
+    await expect(preview).toContainText("Odpowiedź A");
+    await expect(preview.locator("img")).toHaveCount(0);
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-editor-txt-preview-390.png"), fullPage: true });
+
+    await page.locator("#txtTa").fill("Odpowiedź przed pytaniem");
+    await expect(preview).toHaveClass(/is-error/);
+    await page.locator("#txtTa").fill("#Poprawione pytanie\n1 Poprawiona odpowiedź");
+    await expect(preview).toContainText("Poprawione pytanie");
+    await expect(preview).not.toHaveClass(/is-error/);
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-editor-txt-preview-1400.png"), fullPage: true });
+    expect(await getQuestionsRows(page, gameId)).toHaveLength(0);
+  } finally {
+    await deleteGame(page, gameId);
+  }
+});
+
 test("edytor: import tekstowy zawsze zastępuje (wipeuje) istniejącą zawartość gry", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);

@@ -3,23 +3,23 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-13T10165";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-13T10165";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-13T10165";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-13T10165";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-13T10165";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-13T10210";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-13T10210";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-13T10210";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-13T10210";
+import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-13T10210";
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-13T10165";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-13T10165";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-13T10165";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-13T10165";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-13T10165";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-13T10165";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-13T10165";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-13T10165";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-13T10210";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-13T10210";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-13T10210";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-13T10210";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-13T10210";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-13T10210";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-13T10210";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-13T10210";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
@@ -826,9 +826,60 @@ async function boot() {
   const txtTa = $("txtTa");
   const btnTxtImport = $("btnTxtImport");
   const importOverlay = $("txtImportOverlay");
+  const txtPreviewBody = $("txtPreviewBody");
+  let txtPreviewTimer = 0;
   let importing = false;
 
   const setTxtMsg = (s) => { $("txtMsg").textContent = s || ""; };
+  function renderTxtPreview() {
+    if (!txtPreviewBody) return;
+    const raw = String(txtTa?.value || "");
+    if (!raw.trim()) {
+      txtPreviewBody.classList.remove("is-error");
+      txtPreviewBody.textContent = t("editor.importModal.previewEmpty");
+      return;
+    }
+    const parsed = parseQaText(raw);
+    if (!parsed.ok) {
+      txtPreviewBody.classList.add("is-error");
+      txtPreviewBody.textContent = t("editor.importModal.previewError", {
+        error: MSG.importParseError(parsed.code, parsed.params),
+      });
+      return;
+    }
+    txtPreviewBody.classList.remove("is-error");
+    const summary = document.createElement("div");
+    summary.className = "txt-preview-summary";
+    summary.textContent = t("editor.importModal.previewSummary", {
+      questions: parsed.items.length,
+      answers: parsed.items.reduce((sum, item) => sum + item.answers.length, 0),
+    });
+    const list = document.createElement("div");
+    list.className = "txt-preview-list";
+    for (const [index, item] of parsed.items.slice(0, 3).entries()) {
+      const row = document.createElement("div");
+      row.className = "txt-preview-item";
+      const question = document.createElement("strong");
+      question.textContent = `${index + 1}. ${item.qText}`;
+      const answers = document.createElement("div");
+      answers.className = "txt-preview-answers";
+      answers.textContent = item.answers.slice(0, 5).map(answer => answer.text).join(" · ");
+      if (item.answers.length > 5) answers.textContent += " · …";
+      row.append(question, answers);
+      list.append(row);
+    }
+    if (parsed.items.length > 3) {
+      const more = document.createElement("div");
+      more.className = "txt-preview-answers";
+      more.textContent = t("editor.importModal.previewMore", { count: parsed.items.length - 3 });
+      list.append(more);
+    }
+    txtPreviewBody.replaceChildren(summary, list);
+  }
+  function scheduleTxtPreview() {
+    clearTimeout(txtPreviewTimer);
+    txtPreviewTimer = setTimeout(renderTxtPreview, 160);
+  }
 
   function setImporting(on) {
     importing = on;
@@ -846,6 +897,7 @@ async function boot() {
     txtTa.value = "";
     txtFile.value = "";
     setTxtMsg("");
+    renderTxtPreview();
     openOverlay("txtImportOverlay", true);
     txtTa.focus();
   });
@@ -862,6 +914,7 @@ async function boot() {
     try {
       txtTa.value = await file.text();
       setTxtMsg("");
+      renderTxtPreview();
     } catch (e) {
       console.error(e);
       setTxtMsg(MSG.importFileFailed());
@@ -869,6 +922,8 @@ async function boot() {
   }
   txtFile?.addEventListener("change", loadFileIntoTextarea);
   $("btnTxtLoadFile")?.addEventListener("click", loadFileIntoTextarea);
+  txtTa?.addEventListener("input", scheduleTxtPreview);
+  window.addEventListener("i18n:lang", renderTxtPreview);
 
   btnTxtImport?.addEventListener("click", async () => {
     if (importing) return;

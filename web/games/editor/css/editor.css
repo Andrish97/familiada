@@ -359,6 +359,16 @@ body.editor-body .wrap {
     font-weight: 800
 }
 
+.txt-preview{ margin-top:12px; padding:10px 12px; border:1px solid var(--line2); border-radius:12px; background:rgba(0,0,0,.18); }
+.txt-preview-title{ font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.txt-preview-body{ margin-top:7px; font-size:13px; line-height:1.45; }
+.txt-preview-summary{ color:var(--gold); font-weight:800; margin-bottom:6px; }
+.txt-preview-list{ max-height:180px; overflow:auto; display:grid; gap:7px; }
+.txt-preview-item{ padding-top:6px; border-top:1px solid rgba(255,255,255,.08); overflow-wrap:anywhere; }
+.txt-preview-item strong{ display:block; }
+.txt-preview-answers{ color:var(--muted); margin-top:2px; }
+.txt-preview-body.is-error{ color:#fca5a5; }
+
 .importMsg {
     margin-left: auto;
     opacity: .85;
