@@ -109,11 +109,13 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
     { width: 844, height: 390, label: "844x390" },
     { width: 667, height: 375, label: "667x375" },
   ];
-  for (const viewport of viewports) {
+  for (const [viewportIndex, viewport] of viewports.entries()) {
     await page.setViewportSize(viewport);
-    for (const item of pages) {
-      await page.goto(`https://www.familiada.online${item.path}`, { waitUntil: "domcontentloaded" });
+    for (const [pageIndex, item] of pages.entries()) {
+      const language = ["pl", "en", "uk"][(viewportIndex + pageIndex) % 3];
+      await page.goto(`https://www.familiada.online${item.path}?lang=${language}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
+      await expect(page.locator("html")).toHaveAttribute("lang", language);
       const boxes = await page.evaluate(() => {
         const actions = document.querySelector(".bar > .actions").getBoundingClientRect();
         const heading = document.querySelector(".bar > :first-child").getBoundingClientRect();
@@ -122,7 +124,7 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
       expect(boxes.actions.right, `${item.path}: actions overlap title at ${viewport.label}`).toBeLessThanOrEqual(boxes.heading.left + 1);
       expect(boxes.heading.right, `${item.path}: title is outside the right column at ${viewport.label}`).toBeLessThanOrEqual(viewport.width - 8);
       await expect(page.locator(`${item.action} .ico`)).toBeVisible();
-      await expect(page.locator(item.action)).toHaveAccessibleName(item.name);
+      await expect(page.locator(item.action)).toHaveAccessibleName(/.+/);
       if (viewport.width <= 980) {
         for (const selector of ["#btnExport", "#btnImport"]) {
           await expect(page.locator(`${selector} .ico`)).toBeVisible();
@@ -131,7 +133,7 @@ test("E20: akcje po lewej, tytuł i podpowiedź po prawej w Grach/Bazach/Logo na
         }
         await expect(page.locator(".list-search-open .ico")).toBeVisible();
       }
-      await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${viewport.label}.png`), fullPage: true });
+      await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${viewport.label}-${language}.png`), fullPage: true });
     }
   }
 });
