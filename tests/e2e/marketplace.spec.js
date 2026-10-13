@@ -13,6 +13,41 @@ test.beforeEach(async ({ context }) => {
   await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
 });
 
+test("E20: Marketplace działa dotykowo w landscape — lista, wyszukiwanie i szczegóły", async ({ browser }, testInfo) => {
+  const context = await browser.newContext({
+    viewport: { width: 844, height: 390 },
+    isMobile: true,
+    hasTouch: true,
+    serviceWorkers: "block",
+  });
+  await serveBranchCode(context, { pages: ["marketplace"] });
+  await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
+  const page = await context.newPage();
+  try {
+    await page.goto(`${URL}?sort=newest`, { waitUntil: "domcontentloaded" });
+    const firstCard = page.locator("#browseGrid .mkt-card").first();
+    await expect(firstCard).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator("#searchInput")).toBeVisible();
+    await expect(page.locator("#langFilter")).toBeVisible();
+    await expect(page.locator("#sortSelect")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+    const title = (await firstCard.locator(".mkt-card-title").innerText()).trim();
+    await page.locator("#searchInput").fill(title);
+    await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
+    await firstCard.click();
+    await expect(page.locator("#gameDetailOverlay")).toBeVisible();
+    await expect(page.locator("#detailTitle")).toContainText(title);
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-marketplace-landscape-detail.png"), fullPage: true });
+    await page.locator("#btnDetailClose").click();
+    await expect(page.locator("#gameDetailOverlay")).toBeHidden();
+    await expect(page.locator("#searchInput")).toHaveValue(title);
+    await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
+  } finally {
+    await context.close();
+  }
+});
+
 async function rpc(page, name, args = {}) {
   return page.evaluate(async ({ name, args }) => {
     const { data, error } = await window.__sbClient.rpc(name, args);
