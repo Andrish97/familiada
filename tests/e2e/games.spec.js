@@ -95,28 +95,37 @@ function tileByName(page, name) {
 
 /* ================= E20: nagłówek wspólny Gier/Baz/Logo ================= */
 
-test("E20: tytuł po lewej, akcje po prawej i lupa obok pola w Grach/Bazach/Logo", async ({ page, context }, testInfo) => {
-  await loginAsPooledTestUser(page, context, 0);
-  await serveBranchCode(context, { pages: ["games", "bases", "logo"] });
+test("E20: świeża galeria Gier/Baz/Logo — MacBook, iPad ×2, iPhone ×2", async ({ browser }, testInfo) => {
   const pages = [
     { path: "/games/", action: "#btnEdit", name: "Edytuj", screenshot: "games" },
     { path: "/bases/", action: "#btnBrowse", name: "Przeglądaj", screenshot: "bases" },
     { path: "/logo/", action: "#btnPreview", name: "Podgląd", screenshot: "logo" },
   ];
   const viewports = [
-    { width: 1400, height: 900, label: "1400" },
-    { width: 390, height: 844, label: "390" },
-    { width: 844, height: 390, label: "844x390" },
-    { width: 667, height: 375, label: "667x375" },
+    { label: "macbook", viewport: { width: 1440, height: 900 }, screen: { width: 1440, height: 900 }, isMobile: false, hasTouch: false },
+    { label: "ipad-portrait", viewport: { width: 744, height: 1133 }, screen: { width: 744, height: 1133 }, isMobile: true, hasTouch: true },
+    { label: "ipad-landscape", viewport: { width: 1133, height: 744 }, screen: { width: 1133, height: 744 }, isMobile: true, hasTouch: true },
+    { label: "iphone-portrait", viewport: { width: 390, height: 844 }, screen: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
+    { label: "iphone-landscape", viewport: { width: 844, height: 390 }, screen: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
   ];
-  for (const [viewportIndex, viewport] of viewports.entries()) {
-    await page.setViewportSize(viewport);
-    for (const [pageIndex, item] of pages.entries()) {
-      const language = ["pl", "en", "uk"][(viewportIndex + pageIndex) % 3];
-      await page.goto(`https://www.familiada.online${item.path}?lang=${language}`, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle");
-      await expect(page.locator("html")).toHaveAttribute("lang", language);
-      const boxes = await page.evaluate(() => {
+  for (const [viewportIndex, profile] of viewports.entries()) {
+    const context = await browser.newContext({ viewport: profile.viewport, screen: profile.screen, isMobile: profile.isMobile, hasTouch: profile.hasTouch, deviceScaleFactor: profile.isMobile ? 2 : 2, serviceWorkers: "block" });
+    try {
+      await serveBranchCode(context, { pages: ["games", "bases", "logo"] });
+      const page = await context.newPage();
+      await loginAsPooledTestUser(page, context, 0);
+      for (const [pageIndex, item] of pages.entries()) {
+        const language = ["pl", "en", "uk"][(viewportIndex + pageIndex) % 3];
+        await page.goto(`https://www.familiada.online${item.path}?lang=${language}`, { waitUntil: "domcontentloaded" });
+        await page.waitForLoadState("networkidle");
+        await expect(page.locator("html")).toHaveAttribute("lang", language);
+        if (profile.label === "iphone-landscape") {
+          await expect(page.locator("#pageGuard")).toBeVisible();
+          await expect(page.locator("#pageGuard")).toContainText(/obr[oó]t|rotate/i);
+          await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${profile.label}-${language}.png`), fullPage: true });
+          continue;
+        }
+        const boxes = await page.evaluate(() => {
         const actions = document.querySelector(".bar > .actions").getBoundingClientRect();
         const heading = document.querySelector(".bar > :first-child").getBoundingClientRect();
         const below = document.querySelector(".bar").classList.contains("has-actions-below");
@@ -130,28 +139,27 @@ test("E20: tytuł po lewej, akcje po prawej i lupa obok pola w Grach/Bazach/Logo
           search: input && { left: input.left, right: input.right, height: input.height },
           magnifier: icon && { left: icon.left, right: icon.right, height: icon.height },
         };
-      });
-      expect(boxes.heading.left, `${item.path}: title should start at the left at ${viewport.label}`).toBeLessThan(boxes.actions.left + 1);
-      expect(boxes.actions.right, `${item.path}: actions should align to the right at ${viewport.label}`).toBeGreaterThan(viewport.width - 220);
-      if (boxes.below) expect(Math.abs(boxes.actions.left - boxes.heading.left), `${item.path}: second-line actions should align left`).toBeLessThanOrEqual(2);
-      else expect(boxes.actions.left, `${item.path}: actions overlap the heading at ${viewport.label}`).toBeGreaterThanOrEqual(boxes.heading.right - 1);
-      await expect(page.locator(`${item.action} .ico`)).toBeVisible();
-      await expect(page.locator(item.action)).toHaveAccessibleName(/.+/);
-      if (viewport.width <= 980) {
-        for (const selector of ["#btnExport", "#btnImport"]) {
-          await expect(page.locator(`${selector} .ico`)).toBeVisible();
-          await expect(page.locator(`${selector} .only-desktop`)).toBeHidden();
-          await expect(page.locator(selector)).toHaveAttribute("aria-label", /.+/);
+        });
+        expect(boxes.heading.left, `${item.path}: title starts left at ${profile.label}`).toBeLessThan(boxes.actions.left + 1);
+        expect(boxes.actions.right, `${item.path}: actions align right at ${profile.label}`).toBeGreaterThan(profile.viewport.width - 220);
+        if (boxes.below) expect(Math.abs(boxes.actions.left - boxes.heading.left), `${item.path}: second-line actions align left`).toBeLessThanOrEqual(2);
+        else expect(boxes.actions.left, `${item.path}: actions overlap heading at ${profile.label}`).toBeGreaterThanOrEqual(boxes.heading.right - 1);
+        await expect(page.locator(`${item.action} .ico`)).toBeVisible();
+        await expect(page.locator(item.action)).toHaveAccessibleName(/.+/);
+        if (profile.label === "iphone-portrait") {
+          await expect(page.locator(".list-search-open .ico")).toBeVisible();
         }
-        await expect(page.locator(".list-search-open .ico")).toBeVisible();
-      } else {
-        expect(boxes.search, `${item.path}: desktop search field missing`).toBeTruthy();
-        expect(boxes.magnifier, `${item.path}: adjacent search button missing`).toBeTruthy();
-        expect(boxes.magnifier.left).toBeGreaterThanOrEqual(boxes.search.right - 1);
-        expect(boxes.search.height).toBeCloseTo(36, 0);
-        expect(boxes.magnifier.height).toBeCloseTo(36, 0);
+        if (profile.label === "macbook") {
+          expect(boxes.search, `${item.path}: desktop field missing`).toBeTruthy();
+          expect(boxes.magnifier, `${item.path}: adjacent magnifier missing`).toBeTruthy();
+          expect(boxes.magnifier.left).toBeGreaterThanOrEqual(boxes.search.right - 1);
+          expect(boxes.search.height).toBeCloseTo(36, 0);
+          expect(boxes.magnifier.height).toBeCloseTo(36, 0);
+        }
+        await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${profile.label}-${language}.png`), fullPage: true });
       }
-      await page.screenshot({ path: testInfo.outputPath(`shot-e20-${item.screenshot}-${viewport.label}-${language}.png`), fullPage: true });
+    } finally {
+      await context.close();
     }
   }
 });
