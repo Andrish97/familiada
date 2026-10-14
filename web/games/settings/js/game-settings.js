@@ -1,7 +1,5 @@
-// Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z autozapisem.
-// Każda zmiana zapisuje się sama po krótkiej przerwie (jak edytory logo i
-// edytor pytań), przy wyjściu zapis idzie od razu — bez przycisku „Zapisz”
-// z ostrzeżeniem, jeśli ustawienia wymagają poprawienia. Podgląd Wyświetlacza i Prowadzącego:
+// Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
+// Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
 import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-13T17145";
 import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-13T17145";
@@ -126,6 +124,7 @@ let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 
 // ===== ELEMENTS =====
 const titleEl = document.getElementById("gsTitle");
+const btnSaveAll = document.getElementById("btnSaveAll");
 const btnResetAll = document.getElementById("btnResetAll");
 const btnPlay = document.getElementById("btnPlay");
 const content = document.getElementById("gsContentInner");
@@ -147,15 +146,9 @@ const colorPreviewEl = document.getElementById("gsColorPreview");
 const colorModalClose = document.getElementById("gsColorModalClose");
 const colorModalDone = document.getElementById("gsColorModalDone");
 
-// ===== AUTOZAPIS =====
-// Wzorzec jak web/logo/js/editor-page.js: markDirty() planuje zapis po
-// DEBOUNCE_MS, flush() zapisuje od razu (wyjście, schowanie karty).
-// Niepoprawne wartości przy zapisie wracają do poprawnych ustawień.
-const DEBOUNCE_MS = 800;
-const RETRY_MS = 5000;
+// ===== DIRTY / SAVE =====
 let ready = false;        // ustawienia wczytane, zmiany się liczą
 let changeSeq = 0;        // rośnie z każdą zmianą; zapis wie, czy w trakcie przyszło coś nowego
-let saveTimer = null;
 let saving = null;        // Promise trwającego zapisu
 let stopped = false;      // konflikt zapisu: dalszy autozapis wstrzymany
 let soundTouched = false; // zmiana wariantów/plików dźwięku: po zapisie zsynchronizuj bucket
@@ -164,8 +157,6 @@ const invalidInputs = new Map();
 let leaving = false;
 let pageLock = null;      // blokada zasobów strony (release przed wyjściem)
 
-// Komunikat pod paskiem akcji: tylko dla stanów, które wymagają uwagi
-// (nie do zapisania / błąd / konflikt). Zwykły zapis nic nie pokazuje.
 function setSaveStatus(state, text = "") {
   const el = document.getElementById("gsFooterMsg");
   if (!el) return;
@@ -178,7 +169,7 @@ function markDirty() {
   if (!ready || stopped) return;
   isDirty = true;
   changeSeq++;
-  scheduleSave(DEBOUNCE_MS);
+  setSaveStatus("dirty", t("gameSettings.unsaved") || "Niezapisane zmiany");
 }
 
 function markSoundDirty() {
@@ -186,41 +177,17 @@ function markSoundDirty() {
   markDirty();
 }
 
-function scheduleSave(ms) {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => { saveTimer = null; void saveAll(); }, ms);
-}
-
-// Zapis od razu (wyjście ze strony, schowanie karty, „Przywróć domyślne”).
-async function flush() {
-  clearTimeout(saveTimer);
-  saveTimer = null;
-  await saveAll({ force: true }).catch(() => {});
-}
-
-function hasInvalidSettings() {
-  return invalidInputs.size > 0
-    || (localSettings.game.hasFinal === true && localSettings.game.finalQuestionsMode === "pick"
-      && localSettings.questions.final.length !== 5)
-    || Object.entries(localSettings.sound.variants).some(([key, value]) =>
-      value === VARIANT_CUSTOM && !customSoundKeys.has(key));
-}
-
-// Przed zapisem przy wyjściu użytkownik może zostać i poprawić wartości.
+// Przy wyjściu niezapisane zmiany są porzucane dopiero po potwierdzeniu.
 async function leaveTo(href) {
   if (leaving) return;
   leaving = true;
-  if (hasInvalidSettings()) {
-    clearTimeout(saveTimer);
-    saveTimer = null;
-    const confirmed = await confirmModal({ text: t("gameSettings.leaveInvalidConfirm") });
+  if (isDirty) {
+    const confirmed = await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy chcesz opuścić stronę?" });
     if (!confirmed) {
       leaving = false;
-      if (isDirty) scheduleSave(DEBOUNCE_MS);
       return;
     }
   }
-  await flush();
   ready = false;
   await pageLock?.release?.().catch(() => {});
   location.href = href;
@@ -233,8 +200,7 @@ async function saveAll() {
     await saving;
     return isDirty ? saveAll() : true;
   }
-  clearTimeout(saveTimer);
-  saveTimer = null;
+  if (btnSaveAll) btnSaveAll.disabled = true;
   const seq = changeSeq;
   let ok = false;
   saving = (async () => {
@@ -271,13 +237,9 @@ async function saveAll() {
       if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
         const count = localSettings.questions.final.length;
         if (count !== 5) {
-          localSettings.game.finalQuestionsMode = "random";
-          const inRounds = new Set(localSettings.questions.rounds.map(q => q.id));
-          localSettings.questions.rounds.push(...localSettings.questions.final.filter(q => !inRounds.has(q.id)));
-          localSettings.questions.final = [];
-          updateSubTabStates();
-          if (activeCat === "finale") setActiveCat("questions");
-          else if (activeCat === "questions" || activeCat === "rounds") renderCat(activeCat);
+          await alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
+          setActiveCat("finale");
+          return;
         }
       }
 
@@ -289,8 +251,12 @@ async function saveAll() {
           localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
         );
         customSoundKeys = new Set(cfCheck.keys());
-        for (const cat of missing) delete localSettings.sound.variants[cat.key];
-        if (missing.length && activeCat === "sound") await renderSound();
+        if (missing.length) {
+          const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
+          await alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
+          setActiveCat("sound");
+          return;
+        }
       }
 
       for (const [id, value] of invalidInputs) {
@@ -312,7 +278,9 @@ async function saveAll() {
       lastSavedSettingsRaw = payload;
       if (changeSeq === seq) isDirty = false;
       ok = true;
-      setSaveStatus("saved");
+      setSaveStatus(isDirty ? "dirty" : "saved", isDirty
+        ? (t("gameSettings.unsaved") || "Niezapisane zmiany")
+        : (t("gameSettings.saved") || "Zapisano"));
 
       // Synchronizuj custom pliki audio z bucketem (po sukcesie zapisu do DB);
       // tylko gdy dźwięk się zmienił — nie przy każdej literze w nazwie drużyny.
@@ -324,24 +292,22 @@ async function saveAll() {
         });
       }
     } catch (e) {
-      console.error("[game-settings] autosave error:", e);
+      console.error("[game-settings] save error:", e);
       if (e?.code === ROW_GONE) {
         // Ktoś zapisał te ustawienia w międzyczasie: nie nadpisujemy.
         stopped = true;
-        clearTimeout(saveTimer);
         setSaveStatus("conflict", t("gameSettings.saveConflict"));
         return;
       }
       setSaveStatus("error", t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)));
-      scheduleSave(RETRY_MS);
     }
   })();
   try {
     await saving;
   } finally {
     saving = null;
+    if (btnSaveAll) btnSaveAll.disabled = false;
   }
-  if (ok && isDirty) scheduleSave(DEBOUNCE_MS); // zmiany w trakcie zapisu
   return ok && !isDirty;
 }
 
@@ -1668,7 +1634,7 @@ function showIngameGuard() {
 // ===== MAIN =====
 async function main() {
   // Dostęp, nakładka wąskiego okna / telefonu, „Wstecz”, „Wskazówki” i konto
-  // wg mapy. Wyjście zapisuje ustawienia od razu, bez pytań.
+  // wg mapy. Przy wyjściu pytamy o porzucenie niezapisanych zmian.
   const user = await initPage("gameSettings", {
     account: { showAuthEntry: false },
     onBack: (href) => leaveTo(href),
@@ -1800,6 +1766,9 @@ async function main() {
     if (cat) setActiveCat(cat);
   });
 
+  // Save button
+  btnSaveAll?.addEventListener("click", saveAll);
+
   // Reset to defaults
   btnResetAll?.addEventListener("click", async () => {
     if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne?" })) return;
@@ -1820,7 +1789,6 @@ async function main() {
     markSoundDirty();
     updateSubTabStates();
     setActiveCat(activeCat);
-    await flush();
   });
 
   initColorModal();
@@ -1833,16 +1801,11 @@ async function main() {
   setActiveCat("teams");
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
   ready = true;
-  // Schowanie karty / przejście do innej aplikacji: zapis od razu.
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") void flush();
-  });
   window.addEventListener("beforeunload", e => {
-    if (!ready || leaving || (!isDirty && !hasInvalidSettings())) return;
+    if (!ready || leaving || !isDirty) return;
     e.preventDefault();
     e.returnValue = "";
   });
-  window.addEventListener("pagehide", () => { void flush(); });
 
   window.addEventListener("i18n:lang", () => {
     resolveThemeLabels();
