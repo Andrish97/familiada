@@ -53,8 +53,12 @@ asercja galerii błędnie wymagała dolnego safe area od topbara. Poprawka
 sprawdza wszystkie cztery rzeczywiste wartości insetów, trzy krawędzie
 topbara i dolną krawędź stopki osobno. Lokalny zestaw guarda, mapy, punktów
 wejścia i stopniowego ładowania przeszedł 59/59. Poprawka oczekuje teraz na
-krótki przebieg produkcyjny; po nim uruchomić całą galerię. Zrzuty są
-zapisywane do folderów stron, nie folderów urządzeń.
+krótki przebieg produkcyjny; po nim uruchomić całą galerię. Run
+`38619899573` przeszedł sześć profili dla Gier, ale filtr stron w wejściu
+został podany ścieżkami zamiast ID (`display`, `poll-vote-qr`,
+`game-settings`, `connect-tv`), więc pozostałe strony nie weszły do tego
+krótkiego przebiegu. Powtarzam próbę z poprawnymi ID. Zrzuty są zapisywane
+do folderów stron, nie folderów urządzeń.
 
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
 Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
