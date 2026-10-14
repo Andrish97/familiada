@@ -5071,7 +5071,7 @@ const pl = {
   gameSettings: {
     pageTitle: "Ustawienia gry",
     title: "Familiada — ustawienia gry",
-    saveAll: "Zapisz wszystko",
+    saveAll: "Zapisz",
     resetAll: "Przywróć domyślne",
     play: "Graj",
     resetAllConfirm: "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone.",

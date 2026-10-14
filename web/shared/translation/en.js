@@ -5162,7 +5162,7 @@ const en = {
   gameSettings: {
     pageTitle: "Game settings",
     title: "Familiada — game settings",
-    saveAll: "Save all",
+    saveAll: "Save",
     resetAll: "Restore defaults",
     play: "Play",
     resetAllConfirm: "Restore default settings? Unsaved changes will be lost.",

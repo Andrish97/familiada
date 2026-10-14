@@ -5162,7 +5162,7 @@ const uk = {
   gameSettings: {
     pageTitle: "Налаштування гри",
     title: "Familiada — налаштування гри",
-    saveAll: "Зберегти все",
+    saveAll: "Зберегти",
     resetAll: "Відновити типові",
     play: "Грати",
     resetAllConfirm: "Відновити типові налаштування? Незбережені зміни буде втрачено.",
