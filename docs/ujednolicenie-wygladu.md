@@ -846,10 +846,10 @@ Audyt kodu (nie jest to jeszcze wdrożenie ani pomiar wizualny):
 | Strona | Obecne podpięcie | Zakres ujednolicenia |
 |---|---|---|
 | Konto, Bazy, edytor gry, ustawienia gry | Wspólne `skel-body`, topbar i `data-skel-step`; odsłonięcie po danych. | Zachować wzorzec i sprawdzić gotowość akcji; Konto podpina kliknięcia dopiero po `loadProfile`. |
-| Znajomi i Subskrybenci | Topbar ma wspólny wzorzec; cały `contactsHost` odsłaniany jednocześnie po odczytach. | Osobno odsłaniać gotowe sekcje/karty, zgodnie z ich zależnościami, także zakładki telefonu. |
-| Zadania | Topbar i zbiorcze odsłonięcie `tasks-scroll` po `refresh`; reszta karty nie ma własnych etapów. | Spójnie odsłonić stan, kartę i listę; nie pokazywać pustego stanu przed wynikiem odczytu. |
-| Ankiety | `skel-body` i topbar; w głównym HTML brak etapów `data-skel-step` dla kart. | Etapy dla nazwy/statusu/akcji oraz kart Udostępnianie i Głosy; karty zależne od faktycznego stanu ankiety. |
-| Gry | Wspólne odsłonięcie body/topbara; główna lista bez `data-skel-step`. | Przejrzeć także ten ekran; nie traktować częściowego podpięcia jako wzorca kompletnej gotowości. |
+| Znajomi i Subskrybenci | `contactsHost` pojawia się dopiero po odczycie i zbudowaniu wierszy. Obie zakładki korzystają z jednego wyniku `contacts_list`. | Nie rozdzielać etapów bez rozdzielenia źródeł danych; błąd renderowania ma pozostać błędem pierwszego ładowania z retry. |
+| Zadania | Widoczny stan ładowania/błędu/retry; `tasks-scroll` po wyniku i wyrenderowaniu wierszy z akcjami. | Utrzymać wspólną kolejność przy każdym odświeżeniu; stan pusty wyświetlać dopiero po odpowiedzi. |
+| Ankiety | `pollBar` i główna karta po danych gry; lista Głosów w osobnym etapie po odczycie wyników. | Weryfikować stany niepowodzenia każdej sekcji oraz zależność kart od stanu ankiety. |
+| Gry | `.games-shell` jest etapem `data-skel-step`; lista odsłania się po `refresh`, stanie akcji i przygotowaniu sekcji kopii. | Zachować wzorzec; weryfikować również błąd odczytu oraz aktywność akcji podczas startu. |
 
 Źródło: `shared/css/base.css` (body, topbar, etapy sekcji),
 `shared/js/core/page-init.js` (`topbar-ready`), bootstrapping poszczególnych
@@ -881,6 +881,18 @@ zrzuty390/1400 w artefakcie11803369573. Znajomi/Subskrybenci mają stan
 Zadania osobny stan listy (`38382324509`, 1/1, artefakt11804131090).
 Zadania i kontakty mają też testy landscape z obrotem. Pozostałe etapy
 kart Ankiet, Kontaktów, Zadań i całej mapy PAGES wciąż wymagają przeglądu.
+
+**Stopniowe ładowanie — poprawki 2026-10-14:** device guard jest pierwszą
+bramką przed auth, topbarem i logiką danych. Po pokazaniu guarda znika klasa
+startowego ukrycia, ale wspólny overlay ukrywa całe `body`; dotyczy to także
+globalnego guarda telefonu w poziomie i stron z własnym progiem urządzenia.
+Etapy `data-skel-step` nie przyjmują fokusu ani kliknięć przed `skel-step-ready`.
+QR odsłania guard przed oczekiwaniem na dozwoloną szerokość. Kontakty i Zadania
+oznaczają dane jako gotowe dopiero po zbudowaniu widoku; Ankiety odsłaniają
+dane bazowe i wyniki osobno. Kontrakt unit `progressiveLoading.test.js`
+sprawdza kolejność i stany: 4/4, razem z testami device guard/page init: 38/38.
+Pełny przegląd ładowania wszystkich podstron i błędów sieciowych pozostaje
+częścią E20.
 
 **Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
 ↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje

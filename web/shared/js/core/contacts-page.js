@@ -174,10 +174,12 @@ export async function initContactsPage(pageId) {
         await call("friend_invites_from_subscriptions");
         const data = await call("contacts_list", { p_kind: friends ? "friends" : "subscribers" });
         rows = Array.isArray(data) ? data : [];
+        // Najpierw zbuduj wiersze i podepnij ich akcje; dopiero gotowy widok
+        // zastępuje komunikat ładowania.
+        render();
         contactsLoaded = true;
         if (loadState) loadState.hidden = true;
         host?.classList.add("skel-step-ready");
-        render();
       } catch (error) {
         if (!contactsLoaded) {
           if (loadMessage) loadMessage.textContent = t("contacts.load.failed");

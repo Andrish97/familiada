@@ -25,7 +25,9 @@ function refresh() {
   const overlay = document.getElementById("pageGuard");
   if (blocked) {
     if (["unsupported", "screen", "touch"].includes(routeState)) {
+      document.documentElement.dataset.deviceGuard = routeState;
       showDeviceGuard(routeState);
+      document.documentElement.classList.remove("page-loading");
       return;
     }
     const activeGuard = document.documentElement.dataset.deviceGuard;
@@ -38,6 +40,10 @@ function refresh() {
       messageKey: "pageGuard.rotateMessage",
     });
     shown.dataset.globalPhoneLandscape = "true";
+    document.documentElement.dataset.deviceGuard = "rotate";
+    // Pokazujemy sam komunikat blokady; page-overlay utrzymuje treść aplikacji
+    // ukrytą, dopóki telefon pozostaje w poziomie.
+    document.documentElement.classList.remove("page-loading");
     return;
   }
 

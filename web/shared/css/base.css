@@ -244,10 +244,14 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
 ──────────────────────────────────────────────────────────── */
 [data-skel-step] {
     opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
     transition: opacity .3s ease;
 }
 [data-skel-step].skel-step-ready {
     opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 /* ─────────────────────────────────────────────────────────────────────────── */
 

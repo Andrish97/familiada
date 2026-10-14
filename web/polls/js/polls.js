@@ -1066,6 +1066,10 @@ async function refresh() {
 
   renderShareSection(st, st === STATUS.DRAFT ? "" : pollLink(game));
   renderBar();
+  // Podstawowe dane gry, zakładki i obsługa akcji są gotowe; wyniki pozostają
+  // w osobnym etapie do czasu odczytu odpowiedzi.
+  pollBar?.classList.add("skel-step-ready");
+  cardMain?.classList.add("skel-step-ready");
 
   try {
     const [chk] = await Promise.all([
@@ -1081,6 +1085,7 @@ async function refresh() {
     if (resultsMeta) resultsMeta.textContent = t("polls.results.refreshFailed");
     lastCheck = null;
   }
+  resultsList?.classList.add("skel-step-ready");
   renderBar();
 }
 

@@ -107,10 +107,12 @@ async function refresh() {
       const { data, error } = await sb().rpc("tasks_list", { p_kind: null });
       if (error) throw error;
       tasks = Array.isArray(data) ? data.filter(task => task.kind === "poll") : [];
+      // Najpierw renderuj wiersze z działającymi akcjami. Jeśli render się
+      // nie powiedzie, pierwsze ładowanie nadal pokaże błąd i przycisk retry.
+      render();
       tasksLoaded = true;
       if (loadState) loadState.hidden = true;
       document.querySelector(".tasks-scroll")?.classList.add("skel-step-ready");
-      render();
       focusFromUrl();
     } catch (e) {
       console.error("[tasks] tasks_list:", e);

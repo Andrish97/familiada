@@ -151,7 +151,10 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   }
   const file = `${id}.png`;
   fs.mkdirSync(path.join(OUT, profile.id), { recursive: true });
-  await page.screenshot({ path: path.join(OUT, profile.id, file), fullPage: true, scale: "css", animations: "disabled", timeout: 45_000 });
+  // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe
+  // zrzuty na długich/animowanych widokach wisiały w Chromium po 45 s; wysokość
+  // całej strony pozostaje w manifeście, a screenshot zachowuje viewport i safe area.
+  await page.screenshot({ path: path.join(OUT, profile.id, file), fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
   page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
   manifest.push({ id, profile: profile.id, label: profile.label, url: href, file: `${profile.id}/${file}`, ...state });

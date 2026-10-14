@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const read = (file) => fs.readFileSync(path.join(here, '../../web', file), 'utf8');
+
+test('guard poprzedza auth i odsłonięcie topbara', () => {
+  const source = read('shared/js/core/page-init.js');
+  assert.ok(source.indexOf('await guard.ready') < source.indexOf('d.requireAuth(loginUrl())'));
+  assert.ok(source.indexOf('await guard.ready') < source.indexOf('document.querySelector(".topbar")?.classList.add("topbar-ready")'));
+});
+
+test('ukryte etapy ładowania nie przyjmują fokusu ani kliknięć', () => {
+  const css = read('shared/css/base.css');
+  const hidden = css.match(/\[data-skel-step\]\s*\{([^}]+)\}/)?.[1] || '';
+  const ready = css.match(/\[data-skel-step\]\.skel-step-ready\s*\{([^}]+)\}/)?.[1] || '';
+  assert.match(hidden, /visibility:\s*hidden/);
+  assert.match(hidden, /pointer-events:\s*none/);
+  assert.match(ready, /visibility:\s*visible/);
+  assert.match(ready, /pointer-events:\s*auto/);
+});
+
+test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => {
+  const contacts = read('shared/js/core/contacts-page.js');
+  const tasks = read('tasks/js/tasks.js');
+  assert.ok(contacts.indexOf('render();', contacts.indexOf('async function refresh')) < contacts.indexOf('contactsLoaded = true'));
+  assert.ok(tasks.indexOf('render();', tasks.indexOf('async function refresh')) < tasks.indexOf('tasksLoaded = true'));
+});
+
+test('ankiety mają osobny etap bazowy i wyników', () => {
+  const html = read('polls/index.html');
+  const js = read('polls/js/polls.js');
+  assert.match(html, /id="pollBar"[^>]*data-skel-step/);
+  assert.match(html, /id="cardMain"[^>]*data-skel-step/);
+  assert.match(html, /id="resultsList" data-skel-step/);
+  assert.match(js, /pollBar\?\.classList\.add\("skel-step-ready"\)/);
+  assert.match(js, /resultsList\?\.classList\.add\("skel-step-ready"\)/);
+});

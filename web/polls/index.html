@@ -66,7 +66,7 @@
     </div>
     <!-- A. Pasek stanu: stan słowem po lewej, WSZYSTKIE akcje po prawej
          (telefon: stan u góry, akcje w dolnym pasku przyklejonym do ekranu) -->
-    <div class="pollBar" id="pollBar" data-state="" style="display:none;">
+    <div class="pollBar" id="pollBar" data-state="" data-skel-step style="display:none;">
       <div class="pollBarState">
         <span class="pollStateWord" id="pollStateWord"></span>
         <span class="pollStateInfo" id="pollStateInfo"></span>
@@ -86,7 +86,7 @@
     </div>
 
     <!-- B. Treść: wypustki Udostępnianie · Wyniki -->
-    <section class="games-shell" id="cardMain" style="display:none;">
+    <section class="games-shell" id="cardMain" data-skel-step style="display:none;">
       <div class="tabs-card hub-tabs polls-tabs-card" id="pollTabsCard">
         <div class="tabs-strip" id="pollTabs" role="tablist">
           <div class="tab-slot slot-share active">
@@ -163,7 +163,7 @@
                 <button class="btn sm" id="btnRedo" type="button" disabled data-i18n-title="polls.tally.redo" data-i18n-aria-label="polls.tally.redo" title="Ponów" aria-label="Ponów"><i class="ico" data-icon="redo"></i></button>
               </div>
             </div>
-            <div id="resultsList"></div>
+            <div id="resultsList" data-skel-step></div>
           </div>
         </div>
       </div>
