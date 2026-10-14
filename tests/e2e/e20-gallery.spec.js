@@ -99,6 +99,32 @@ async function installMaintenanceVisualState(context) {
   }));
 }
 
+async function installSettingsAccessSimulation(context) {
+  // Settings znajduje się za Cloudflare Access. Omijamy wyłącznie bramkę
+  // autoryzacji API w tym kontekście Playwrighta; HTML, JS i CSS nadal pochodzą
+  // z badanego brancha. Dzięki odpowiedziom API strona pokazuje panel, a nie
+  // ekran logowania ani pusty podgląd.
+  await context.route("**/_admin_api/**", async (route) => {
+    const url = new URL(route.request().url());
+    let body;
+    if (url.pathname === "/_admin_api/me") {
+      body = { ok: true, user: { email: "e20-visual-test@familiada.online" } };
+    } else if (url.pathname === "/_admin_api/state") {
+      body = {
+        enabled: false,
+        mode: "message",
+        useStandardText: true,
+        customComments: {},
+        returnAt: null,
+        bypass: false,
+      };
+    } else {
+      body = {};
+    }
+    await route.fulfill({ status: 200, contentType: "application/json; charset=utf-8", body: JSON.stringify(body) });
+  });
+}
+
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
   const pageErrors = [];
@@ -144,6 +170,46 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       throw new Error(`${profile.label} · ${id}: brak elementu gotowości ${readySelector}; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
     });
   }
+  // page-loading oznacza tylko, że można pokazać szkielet. Przed zdjęciem
+  // czekamy też na koniec żądań strony, sieciową ciszę, stabilny DOM, fonty
+  // i dekodowanie obrazów. To zapobiega fotografowaniu pustych list/kafli.
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 20_000 });
+    await page.waitForFunction(() => {
+      const now = performance.now();
+      const body = document.body;
+      if (!body || document.fonts?.status === "loading") return false;
+      const pendingImage = [...document.images].some((image) => image.getClientRects().length && !image.complete);
+      if (pendingImage) return false;
+      const pendingText = /^(ładowanie|ładuję|wczytuję|loading|please wait)[.…\s]*$/i;
+      const visibleLoading = [...body.querySelectorAll("[aria-busy='true'], .loading, .skeleton, .skel")]
+        .some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
+      const textLoading = [...body.querySelectorAll("body *")].some((el) => {
+        if (el.children.length || !el.getClientRects().length) return false;
+        return pendingText.test((el.textContent || "").trim());
+      });
+      const state = window.__e20DomStable || (window.__e20DomStable = { last: now, observer: null });
+      if (!state.observer) state.observer = new MutationObserver(() => { state.last = performance.now(); });
+      if (!state.observerStarted) {
+        state.observer.observe(body, { subtree: true, childList: true, attributes: true, characterData: true });
+        state.observerStarted = true;
+      }
+      return !visibleLoading && !textLoading && now - state.last >= 900;
+    }, null, { timeout: 20_000 });
+    await page.evaluate(() => Promise.all([
+      document.fonts?.ready || Promise.resolve(),
+      ...[...document.images].filter((image) => image.complete && image.decode).map((image) => image.decode().catch(() => {})),
+    ]));
+  } catch {
+    const diagnostics = await page.evaluate(() => ({
+      loading: document.documentElement.classList.contains("page-loading"),
+      visibleBusy: [...document.querySelectorAll("[aria-busy='true'], .loading, .skeleton, .skel")]
+        .filter((el) => el.getClientRects().length).map((el) => `${el.tagName}.${el.className}`).slice(0, 8),
+      title: document.title,
+      text: document.body?.innerText?.slice(0, 400) || "",
+    })).catch(() => ({}));
+    throw new Error(`${profile.label} · ${id}: treść nie osiągnęła stabilnego stanu; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
+  }
   const blockedByGuard = await page.evaluate(() => {
     const state = document.documentElement.dataset.deviceGuard || "";
     return state !== "" && state !== "ok" && document.getElementById("pageGuard")?.style.display === "flex";
@@ -151,7 +217,6 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // Stany interaktywne nie zastępują guarda: na niedostępnym urządzeniu
   // zapisujemy ten guard zamiast wymuszać klik w ukryty zasób.
   if (prepare && !blockedByGuard) await prepare(page);
-  await page.waitForTimeout(450);
   const state = await page.evaluate(() => ({
     guard: document.documentElement.dataset.deviceGuard || document.getElementById("pageGuard")?.dataset.state || "",
     title: document.title,
@@ -165,15 +230,14 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   if (state.scrollWidth > state.viewportWidth + 1) {
     throw new Error(`${profile.label} · ${id}: poziomy overflow ${state.scrollWidth}px przy viewport ${state.viewportWidth}px`);
   }
-  const file = `${id}.png`;
-  fs.mkdirSync(path.join(OUT, profile.id), { recursive: true });
+  fs.mkdirSync(path.join(OUT, id), { recursive: true });
   // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe
   // zrzuty na długich/animowanych widokach wisiały w Chromium po 45 s; wysokość
   // całej strony pozostaje w manifeście, a screenshot zachowuje viewport i safe area.
-  await page.screenshot({ path: path.join(OUT, profile.id, file), fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
+  await page.screenshot({ path: path.join(OUT, id, `${profile.id}.png`), fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
   page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
-  manifest.push({ id, profile: profile.id, label: profile.label, url: href, file: `${profile.id}/${file}`, ...state });
+  manifest.push({ id, profile: profile.id, label: profile.label, url: href, file: `${id}/${profile.id}.png`, ...state });
   // Checkpoint after every image so a failed profile still leaves useful work.
   fs.writeFileSync(path.join(OUT, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
 }
@@ -209,6 +273,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
         if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
       });
       await installMaintenanceVisualState(context);
+      await installSettingsAccessSimulation(context);
       // Galeria sprawdza układ stron i guardy, nie dostępność usługi CAPTCHA.
       // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
       // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
@@ -238,6 +303,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
               if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
             });
             await installMaintenanceVisualState(anonymous);
+            await installSettingsAccessSimulation(anonymous);
             await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?$/, async (route) => {
               const response = await route.fetch();
               const html = (await response.text()).replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
