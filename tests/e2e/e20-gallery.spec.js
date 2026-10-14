@@ -223,12 +223,16 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   }
   const expectedSafe = profile.safe || { top: 0, right: 0, bottom: 0, left: 0 };
   const actualSafe = await page.evaluate(() => {
-    const styles = getComputedStyle(document.documentElement);
+    const root = document.documentElement;
     return Object.fromEntries(["top", "right", "bottom", "left"].map((side) => [
       side,
-      Number.parseFloat(styles.getPropertyValue(`--e20-safe-area-inset-${side}`)) || 0,
+      Number.parseFloat(root.style.getPropertyValue(`--e20-safe-area-inset-${side}`)) || 0,
     ]));
   });
+  if (profile.safe) {
+    const injected = await page.locator("html").getAttribute("data-e20-safe-area-injected");
+    if (injected !== "true") throw new Error(`${profile.label} · ${id}: skrypt galerii nie wstrzyknął safe area`);
+  }
   for (const side of ["top", "right", "bottom", "left"]) {
     if (actualSafe[side] !== expectedSafe[side]) {
       throw new Error(`${profile.label} · ${id}: safe area ${side}=${actualSafe[side]}px, oczekiwano ${expectedSafe[side]}px`);

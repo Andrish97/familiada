@@ -59,9 +59,16 @@ function localFileFor(pathname, pages) {
 async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
   if (safeAreaInsets) {
     await context.addInitScript((insets) => {
-      for (const side of ["top", "right", "bottom", "left"]) {
-        document.documentElement.style.setProperty(`--e20-safe-area-inset-${side}`, `${Number(insets[side]) || 0}px`);
-      }
+      const applyInsets = () => {
+        const root = document.documentElement;
+        if (!root) return;
+        for (const side of ["top", "right", "bottom", "left"]) {
+          root.style.setProperty(`--e20-safe-area-inset-${side}`, `${Number(insets[side]) || 0}px`);
+        }
+        root.dataset.e20SafeAreaInjected = "true";
+      };
+      if (document.documentElement) applyInsets();
+      else document.addEventListener("DOMContentLoaded", applyInsets, { once: true });
     }, safeAreaInsets);
   }
   await context.route(`${PROD_ORIGIN}/**`, async (route) => {
