@@ -251,7 +251,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       topbarPadding: style ? {
         top: number(style.paddingTop), right: number(style.paddingRight), bottom: number(style.paddingBottom), left: number(style.paddingLeft),
       } : null,
-      footerPaddingBottom: footerStyle ? number(footerStyle.paddingBottom) : null,
+      footerPaddingBottom: footerStyle && footerStyle.position !== "fixed" ? number(footerStyle.paddingBottom) : null,
+      footerBottom: footerStyle?.position === "fixed" ? number(footerStyle.bottom) : null,
     };
   });
   if (safeGeometry.topbarTop !== null && safeGeometry.topbarTop !== 0) {
@@ -266,6 +267,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   }
   if (safeGeometry.footerPaddingBottom !== null && safeGeometry.footerPaddingBottom + 0.5 < expectedSafe.bottom) {
     throw new Error(`${profile.label} · ${id}: stopka nie uwzględnia dolnej safe area (${safeGeometry.footerPaddingBottom}px < ${expectedSafe.bottom}px)`);
+  }
+  if (safeGeometry.footerBottom !== null && safeGeometry.footerBottom + 0.5 < expectedSafe.bottom) {
+    throw new Error(`${profile.label} · ${id}: pływająca stopka nie uwzględnia dolnej safe area (${safeGeometry.footerBottom}px < ${expectedSafe.bottom}px)`);
   }
   const state = await page.evaluate(() => ({
     guard: document.documentElement.dataset.deviceGuard || document.getElementById("pageGuard")?.dataset.state || "",

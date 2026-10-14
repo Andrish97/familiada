@@ -61,9 +61,12 @@ górnego odstępu zamiast 24 px. Reguła `.tv-topbar` nadpisywała safe area
 z `base.css`; poprawka w `tv.css` uwzględnia górny i boczne insety również
 w wąskim landscape. Poprawiony test `38620721900` przeszedł 6/6 profili;
 przechwycił 46 widoków wybranych stron/stanów, w tym właściwe guardy i TV.
-Artefakt: `e20-gallery-853` (ID `11921422585`). Pobrać/obejrzeć go i potem
-uruchomić pełną galerię. Zrzuty są zapisywane do folderów stron, nie folderów
-urządzeń.
+Artefakt: `e20-gallery-853` (ID `11921422585`). Pełny run `38621309630`
+zatrzymał się na asercji stopki Eksploratora bazy: pływający przycisk
+kontaktu ma bezpieczne położenie `bottom: 8px + inset`, ale test sprawdzał
+jego wewnętrzny padding. Asercję rozdzielono dla stopki w przepływie i
+pływającej; pełny przebieg trzeba powtórzyć od początku. Zrzuty są
+zapisywane do folderów stron, nie folderów urządzeń.
 
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
 Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
