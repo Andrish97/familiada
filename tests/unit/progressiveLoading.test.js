@@ -67,6 +67,8 @@ test('galeria czeka na gotowe widoczne etapy, a widoczny device guard jest końc
   assert.match(source, /serveBranchLoginHtml/);
   assert.match(source, /web\/login\/index\.html/);
   assert.ok(source.includes("(?:\\?.*)?$"));
+  const branchCode = fs.readFileSync(path.join(here, '../e2e/helpers/branch-code.js'), 'utf8');
+  assert.match(branchCode, /loginPage !== "login" && pages\.includes\(loginPage\)/);
 });
 
 test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => {

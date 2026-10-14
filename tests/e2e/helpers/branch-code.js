@@ -30,8 +30,14 @@ function localFileFor(pathname, pages) {
   // Strona główna jest serwowana pod "/", a nie "/index". Bez tego
   // pages:["index"] cicho testowało produkcyjny HTML zamiast pliku z brancha.
   if (!rel && pages.includes("index")) return path.join(REPO_ROOT, "index.html");
-  // Login HTML stays with Worker Turnstile; its JS/CSS can come from branch.
-  if (rel.startsWith("login/") && !/\.(js|css)$/.test(rel)) return null;
+  // Główne HTML logowania zwykle zostaje po stronie Workera ze względu na
+  // Turnstile; galeria E20 przechwytuje je jawnie. Strony potwierdzenia i
+  // resetu nie korzystają z Turnstile, więc bierzemy ich HTML z brancha.
+  if (rel.startsWith("login/") && !/\.(js|css)$/.test(rel)) {
+    const loginPage = rel.replace(/\/$/, "");
+    if (loginPage !== "login" && pages.includes(loginPage)) return path.join(REPO_ROOT, `${loginPage}/index.html`);
+    return null;
+  }
   const page = rel.replace(/\.html$/, "").replace(/\/$/, "");
   if (pages.includes(page)) return path.join(REPO_ROOT, `${page}/index.html`);
   // Trasy typu /marketplace/game/<slug> są obsługiwane przez tę samą stronę
