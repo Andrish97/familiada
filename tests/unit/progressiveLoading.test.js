@@ -121,6 +121,15 @@ test('Eksplorator i strony urządzeń odsłaniają treść po stanie pierwszego 
   }
 });
 
+test('Buzzer ma etapy gotowości dla widoku wyłączonego i błędu początkowego', () => {
+  const html = read('control/buzzer/index.html');
+  const js = read('control/buzzer/js/main.js');
+  assert.match(html, /id="offScreen" data-skel-step hidden/);
+  assert.match(html, /id="deviceLoadError"[^>]*data-skel-step hidden/);
+  assert.match(js, /offScreen\?\.classList\.add\("skel-step-ready"\)/);
+  assert.match(js, /if \(!initialStateReady\) revealStep\(loadError\)/);
+});
+
 test('Gry społeczności nie zawierają etykiet Szukaj gier i Sortowanie', () => {
   const html = read('marketplace/index.html');
   assert.doesNotMatch(html, /<label[^>]*(?:searchInput|sortSelectLabel)/);

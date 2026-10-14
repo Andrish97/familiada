@@ -150,10 +150,15 @@ async function main() {
 
   const { gameId, key } = parseParams();
   const loadError = document.getElementById("deviceLoadError");
+  const offScreen = document.getElementById("offScreen");
+  const revealStep = (element) => {
+    if (!element) return;
+    element.hidden = false;
+    element.classList.add("skel-step-ready");
+  };
   document.querySelector("[data-retry-device]")?.addEventListener("click", () => location.reload());
   if (!gameId || !key) {
-    if (loadError) loadError.hidden = false;
-    document.getElementById("arena")?.classList.add("skel-step-ready");
+    revealStep(loadError);
     return;
   }
 
@@ -227,13 +232,13 @@ async function main() {
       initialStateReady = true;
       if (loadError) loadError.hidden = true;
       document.getElementById("arena")?.classList.add("skel-step-ready");
+      offScreen?.classList.add("skel-step-ready");
       void checkDisplayReady();
       scheduleUnlockRerender(row);
     },
     onError: (error) => {
       console.warn("[buzzer2] game_state_get failed:", error);
-      if (!initialStateReady && loadError) loadError.hidden = false;
-      document.getElementById("arena")?.classList.add("skel-step-ready");
+      if (!initialStateReady) revealStep(loadError);
     },
   });
 
