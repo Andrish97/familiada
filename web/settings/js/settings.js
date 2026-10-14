@@ -5388,7 +5388,11 @@ function buildSessionRunDetails(r) {
       }
       if (event.category === "audio_start") {
         const sound = String(metrics.sound || "dźwięk");
-        const result = metrics.failed ? `nie uruchomił się${metrics.error ? ` (${metrics.error})` : ""}`
+        const browserError = String(metrics.error || "");
+        const errorMessage = browserError === "NotAllowedError"
+          ? "przeglądarka zablokowała odtworzenie dźwięku; odblokuj dźwięk na Wyświetlaczu"
+          : browserError ? `błąd przeglądarki: ${browserError}` : "";
+        const result = metrics.failed ? `nie uruchomił się${errorMessage ? ` (${errorMessage})` : ""}`
           : `wystartował po ${formatDuration(metrics.start_delay_ms)}`;
         return { title: `Dźwięk: ${sound}`, detail: `${devices} · ${result}` };
       }
@@ -5407,10 +5411,17 @@ function buildSessionRunDetails(r) {
         }
         if (metrics.reason === "runtime_error") {
           const phase = metrics.phase === "completion_ack" ? "potwierdzenie renderowania" : metrics.phase === "render" ? "renderowanie planszy" : "działanie strony";
-          return { title: "Błąd Wyświetlacza", detail: `${phase} · ${String(metrics.error_name || "Error")} · rewizja ${metrics.state_rev ?? "—"}` };
+          const rawError = String(metrics.error_name || "Error");
+          const error = rawError === "NotAllowedError" ? "przeglądarka zablokowała dźwięk (wymaga odblokowania na Wyświetlaczu)" : rawError;
+          return { title: "Błąd Wyświetlacza", detail: `${phase} · ${error} · rewizja ${metrics.state_rev ?? "—"}` };
         }
       }
       if (event.category === "display_delay") {
+        if (metrics.reason === "ack_read_error") {
+          const errorNames = { AbortError: "przekroczono limit czasu odczytu", TimeoutError: "przekroczono limit czasu odczytu", TypeError: "błąd sieci podczas odczytu" };
+          const cause = errorNames[metrics.error_code] || (metrics.error_code && metrics.error_code !== "read_error" ? `kod: ${metrics.error_code}` : "nieznana przyczyna");
+          return { title: "Problem z odczytem potwierdzenia planszy", detail: `Panel sterowania nie mógł odczytać potwierdzenia Wyświetlacza (${cause}).` };
+        }
         if (metrics.reason === "frame_stall") {
           return { title: "Zacięcie animacji planszy", detail: `Display: przerwa ${formatDuration(metrics.max_frame_gap_ms)} między klatkami (${metrics.stalled_frames || 0} zacięć)${metrics.display_visibility === "visible" ? " · karta była widoczna" : ""}` };
         }
@@ -5418,7 +5429,7 @@ function buildSessionRunDetails(r) {
           return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)}; dźwięk ruszył po limicie.` };
         }
         if (metrics.reason === "ack_timeout") {
-          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
+          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",

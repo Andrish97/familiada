@@ -155,6 +155,14 @@ function monitorVisibleFrameGaps() {
   let maxGapMs = 0;
   let stalledFrames = 0;
   let frameId = 0;
+  // RAF may be paused while a tab is hidden and resume with a large gap.
+  // That gap belongs to background suspension, not a visible rendering stall.
+  const resetWindow = () => {
+    previous = performance.now();
+    stalledFrames = 0;
+    maxGapMs = 0;
+  };
+  document.addEventListener("visibilitychange", resetWindow);
   const tick = now => {
     if (!active) return;
     if (document.visibilityState !== "visible") {
@@ -171,6 +179,7 @@ function monitorVisibleFrameGaps() {
   return () => {
     active = false;
     cancelAnimationFrame(frameId);
+    document.removeEventListener("visibilitychange", resetWindow);
     // Report only obvious visible stalls; background-tab throttling is excluded.
     return document.visibilityState === "visible" && stalledFrames && maxGapMs >= 250
       ? { maxGapMs: Math.round(maxGapMs), stalledFrames }

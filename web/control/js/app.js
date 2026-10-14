@@ -456,7 +456,22 @@ async function main() {
       kind: "diagnostic", category: "display_delay",
       message: "Display nie potwierdził ukończenia planszy w oczekiwanym czasie.",
       devices: ["display"],
-      metrics: { revision, sound: item.sound, reason: "ack_timeout", wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: item.controlVisibility, control_focused: item.controlFocused },
+      metrics: { revision, sound: item.sound, reason: "ack_timeout", ack_read_error: !!item.ackReadError, wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: item.controlVisibility, control_focused: item.controlFocused },
+    });
+  }
+  function reportDisplayCompletionReadError(revision, item, error) {
+    if (item.ackReadError) return;
+    item.ackReadError = true;
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "display_delay",
+      message: "Control nie może odczytać potwierdzenia renderowania Wyświetlacza.",
+      devices: ["control", "display"],
+      metrics: {
+        revision, sound: item.sound, reason: "ack_read_error",
+        error_code: String(error?.code || error?.name || "read_error").slice(0, 80),
+        control_visibility: document.visibilityState || "unknown",
+        control_focused: !!document.hasFocus?.(),
+      },
     });
   }
   function noteDisplayRequest() {
@@ -544,7 +559,11 @@ async function main() {
     completionReadPending = true;
     try {
       const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
-      if (!error && data && displayCompletion.acknowledge(data.rendered_rev)) {
+      if (error) {
+        for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
+        return;
+      }
+      if (data && displayCompletion.acknowledge(data.rendered_rev)) {
         const completedAt = performance.now();
         for (const [revision, item] of displayCompletionTimes) {
           if (revision <= data.rendered_rev && item.completedAt == null) {
@@ -558,7 +577,9 @@ async function main() {
         }
         renderCurrent();
       }
-    } catch { /* Keep waiting; the next poll retries. */ } finally { completionReadPending = false; }
+    } catch (error) {
+      for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
+    } finally { completionReadPending = false; }
   }
   setInterval(() => { void refreshDisplayCompletion(); }, 500);
   function soundBusy() { return isAnySfxPlaying(); }
