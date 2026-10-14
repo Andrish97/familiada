@@ -221,6 +221,19 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     await expect(page.locator("#panelScreen")).toBeVisible({ timeout: 5_000 });
     await expect(page.locator("#authScreen")).toBeHidden({ timeout: 5_000 });
   }
+  const expectedSafe = profile.safe || { top: 0, right: 0, bottom: 0, left: 0 };
+  const actualSafe = await page.evaluate(() => {
+    const styles = getComputedStyle(document.documentElement);
+    return Object.fromEntries(["top", "right", "bottom", "left"].map((side) => [
+      side,
+      Number.parseFloat(styles.getPropertyValue(`--e20-safe-area-inset-${side}`)) || 0,
+    ]));
+  });
+  for (const side of ["top", "right", "bottom", "left"]) {
+    if (actualSafe[side] !== expectedSafe[side]) {
+      throw new Error(`${profile.label} · ${id}: safe area ${side}=${actualSafe[side]}px, oczekiwano ${expectedSafe[side]}px`);
+    }
+  }
   const state = await page.evaluate(() => ({
     guard: document.documentElement.dataset.deviceGuard || document.getElementById("pageGuard")?.dataset.state || "",
     title: document.title,
@@ -241,12 +254,22 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   await page.screenshot({ path: path.join(OUT, id, `${profile.id}.png`), fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
   page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
-  manifest.push({ id, profile: profile.id, label: profile.label, url: href, file: `${id}/${profile.id}.png`, ...state });
+  manifest.push({
+    id,
+    profile: profile.id,
+    label: profile.label,
+    safeAreaInsets: expectedSafe,
+    url: href,
+    file: `${id}/${profile.id}.png`,
+    ...state,
+  });
   // Checkpoint after every image so a failed profile still leaves useful work.
   fs.writeFileSync(path.join(OUT, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
 }
 
-test.describe.configure({ mode: "parallel" });
+// Każdy profil używa tych samych fixture'ów test17. Sekwencyjne konteksty
+// zapobiegają blokadom zasobów między emulowanymi urządzeniami.
+test.describe.configure({ mode: "serial" });
 test.setTimeout(15 * 60 * 1000);
 test.use({ serviceWorkers: "block" });
 
