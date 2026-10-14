@@ -38,6 +38,15 @@ galeria i przegląd stopniowego ładowania nadal są otwarte.
 
 ## Aktualny checkpoint: E19 zamknięte produkcyjnie
 
+**Wznowienie E20 po uwagach do galerii (2026-10-14):** poprzednia galeria
+`38599567526` (210 ujęć, 5/5 profili) nie zamyka przeglądu — użytkownik
+zgłosił widoki zablokowane przez równoległe użycie zasobów i poprawki wyglądu
+urządzeń, wspólnych pasków/stopki oraz stron. Wszystkie uwagi zapisano jako
+checklistę w `docs/ujednolicenie-wygladu.md`, w podsekcji „E20 — uwagi
+użytkownika do galerii i następna paczka poprawek”. Kontynuować jej punkty
+po kolei, zachować pięć profili, uruchamiać galerie sekwencyjnie, dopiero po
+punktowych testach wygenerować pełną nową galerię.
+
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
 Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
 refresh przeszły. W audycie wywołań arkuszy nie znaleziono przypadku

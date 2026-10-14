@@ -918,6 +918,43 @@ Na profilach blokowanych dodatkowe stany interaktywne pokazują właściwy guard
 Poprzednia galeria nie zawierała pewnej kontroli gotowości treści i została
 zastąpiona powyższym artefaktem.
 
+### E20 — uwagi użytkownika do galerii i następna paczka poprawek (2026-10-14)
+
+Poprzednia galeria jest punktem odniesienia, nie akceptacją wyglądu. Niektóre
+widoki blokowały zasoby, gdy pięć profili otwierało równocześnie ten sam
+fixture. Kolejny przebieg ma być sekwencyjny: jeden profil/strona naraz,
+zamknięcie kontekstu przed następnym użyciem wspólnych zasobów. Ramki urządzeń
+mają wyraźnie pokazywać zaokrąglone ekrany, notch i wskaźniki systemowe, a
+macierz safe area musi odpowiadać profilowi i być używana jednolicie przez
+wszystkie strony.
+
+| Zakres | Wymaganie | Status |
+|---|---|---|
+| Galeria i safe area | iPhone: wyraźny notch i zaokrąglone narożniki; iPad: zaokrąglone narożniki, właściwy wskaźnik systemowy. Insety mają być spójne z profilami iPhone 14/iPad mini 7: iPhone portrait 47/0/34/0, landscape 0/47/21/47; iPad portrait i landscape 24/0/20/0. Przebieg nie może otwierać równolegle profili na tych samych danych, żeby nie wywoływać resource locków. | Do wdrożenia i ponownego sprawdzenia. |
+| Puste listy | Komunikaty „Nie masz…”, „Brak…” i równoważne stany pustych list, które używają kafelków, mają być kaflem o wspólnym wyglądzie i przerywanej obwódce. Dotyczy m.in. Connect i list zasobów. Nie zmieniać stanów ładowania, błędów ani pustych sekcji celowo ukrytych. | Do audytu i wdrożenia. |
+| Topbar | Zwiększyć odstęp między topbarem a nagłówkiem na większości stron; Privacy i Manual wymagają tej samej korekty. Topbar polls vote (punkty i tekst) ma zawsze widoczny brand, również na telefonie. Strona 404 nie ma przycisku „Wróć” w topbarze. | Do przeglądu stron i wdrożenia. |
+| Nagłówek i paski akcji | Nie zawijać przedwcześnie: jeśli cała zawartość mieści się w dostępnej szerokości, zostaje w jednym wierszu. Jeśli nie, dopiero wtedy zawinąć. W nagłówku podpowiedź może złamać się na granicy zdań/fraz i zostać obok akcji; akcje przenieść dopiero, gdy po takim zawinięciu nadal nie mieszczą się czytelnie. W pasku filtrów/eksportów grupy zachowują lewy/prawy brzeg, a prawa grupa rozkłada się równomiernie przy zawinięciu. | Do korekty wspólnego pomiaru oraz sprawdzenia na rzeczywistych szerokościach. |
+| Stopki | Dwie sekcje: lewa przy lewej krawędzi, prawa przy prawej; przy braku miejsca zawijać obie z rozsądnym podziałem. Trzy sekcje: skrajne przy krawędziach, środkowa centralnie; przy zawijaniu utrzymać proporcje. | Do wdrożenia jako wspólna reguła. |
+| Games | „Ustawienia rozgrywki”: złoty przycisk z ikoną zębatki. Wypustki społeczności mają czytelną pełną nazwę, a Preparowana ma być krótsza/kompaktowa. Ikona „Eksportuj do bazy” ma używać istniejącej ikony Bazy z nałożoną strzałką. Sortowanie „Otrzymano” ma należeć do pozostałych kryteriów sortowania, nie działać jako osobny wybór. | Do wdrożenia. |
+| Gry społeczności | Usunąć widoczne etykiety „Szukaj gier” i „Sortowanie”; zachować pola i przyciski z dostępnymi nazwami. Poprawić ikonę języka. „Moje wysłane” nie może trafić do drugiego wiersza. | Do wdrożenia. |
+| Ankiety | Na telefonie pokazać trzy karty. Kartę anonimowości oraz odbiorców podzielić zgodnie z funkcją, zachowując czytelną grupę. | Do wdrożenia; sprawdzić też komputer po usunięciu kolizji resource locków. |
+| Logo | Używać publicznego adresu strony `/logos/` we wszystkich linkach, mapach, testach i dokumentacji; bez aliasu `/logo/`. Przycisk Podgląd na mobile zawsze pozostaje w pierwszym wierszu. | Do audytu tras i wdrożenia. |
+| Mail | Publiczny adres strony to `/mails/` we wszystkich linkach, mapach, testach i dokumentacji; bez aliasu `/mail/`. Ścieżki plików JS/CSS i endpointów API nie są trasą strony i mają pozostać bez zmian. | Do audytu tras i wdrożenia. |
+| Polls QR i Display | Wspólny kierunek blokady dla komputera/TV, ale z odmiennym wymaganiem rozmiaru: mały tablet, w tym iPad mini, jest blokowany dla QR i Display. Każdy typ otrzymuje precyzyjny komunikat zamiast ogólnego „komputer lub telewizor”. Polls QR nie pokazuje stopki ani przycisku kontaktu. | Do wdrożenia wraz z testami nadrzędności guarda. |
+| Connect TV | Dostępny wyłącznie na TV. Inne urządzenia dostają guard z przyciskiem „Wróć” prowadzącym bezpośrednio do `/connect/`. Bez odsłaniania pod spodem TV UI. | Do wdrożenia i testu. |
+| Connect | Pusty stan udostępnionych urządzeń używa wspólnego pustego kafla. Jeśli „Skanuj kod QR” przechodzi do drugiego wiersza, umieścić separator pod nagłówkiem/przyciskiem i zachować odstęp jak na pozostałych stronach. | Do wdrożenia. |
+| Ustawienia gry | iPad mini portrait jest obsługiwany. Ukrywać boczny pasek pod przyciskiem, jak w poprzednim modalnym układzie; nie pokazywać guarda. | Do wdrożenia i sprawdzenia edytora. |
+| Control | Karta trybu testowego znajduje się pod kartami głównych trybów. | Do wdrożenia. |
+| Host i Buzzer | Wyjątki od globalnego guarda mobile landscape: mogą używać obróconego widoku. W portrait pokazać spójny przycisk/sugestię obrotu zgodną z pozostałymi guardami, bez blokowania dopuszczonej sesji. | Do wdrożenia i testu obrotu w obu kierunkach. |
+| Podgląd Logo | Na mobile przycisk Podgląd nigdy nie może znaleźć się w drugim wierszu. | Do wdrożenia razem z paskiem akcji Logo. |
+
+Kolejność realizacji: (1) zapisać kryteria galerii i wyłączyć równoległe
+użycie zasobów, (2) naprawić profile urządzeń/safe area i wspólne puste stany,
+topbar, paski oraz stopki, (3) dopracować wskazane strony, (4) audytować
+publiczne trasy `/mails/` i `/logos/`, (5) puścić krótkie testy dla każdej
+paczki, a po ich powodzeniu pełną galerię. Każdy wiersz powyżej pozostaje
+otwarty, dopóki rzeczywista strona i odpowiednie stany nie zostaną sprawdzone.
+
 **Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
 ↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje
 pasek stanu; `38387014627`, success1/1, artefakt11806951789. Pozostałe strony i urządzenia nadal
