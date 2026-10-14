@@ -38,18 +38,12 @@ body.games-body{
 
 /* main.wrap musi być flex-kolumną, żeby bar + shell weszły w viewport */
 body.games-body > main.wrap{
+  width: 100%;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;               /* 🔑 scroll tylko w środku karty */
-}
-
-/* Na tablecie w poziomie lista wykorzystuje szerokość widoku. Szerokość 90%
-   pochodziła ze wspólnego .wrap i niepotrzebnie przenosiła akcje do kolejnego
-   wiersza, mimo wolnego miejsca przy krawędziach. */
-@media (orientation: landscape) and (min-width: 700px){
-  body.games-body > main.wrap{ width: 100%; }
 }
 
 /* W games.css masz własną .wrap – przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
