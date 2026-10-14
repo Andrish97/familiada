@@ -1,5 +1,5 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-13T13432";
+import { icon } from "./icons.js?v=v2026-10-14T220100";
 import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-13T13432";
 import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-13T13432";
 

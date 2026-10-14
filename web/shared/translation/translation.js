@@ -4,7 +4,7 @@ const LANG_LOADERS = {
   uk: async () => (await import('./uk.js?v=v2026-10-13T13432')).default,
 };
 
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-14T220100";
 
 const LANG_ORDER = ["pl", "en", "uk"];
 

@@ -7,7 +7,7 @@ import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T13432";
 import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-13T13432";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-13T13432";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
 
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");

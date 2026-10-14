@@ -23,7 +23,7 @@ import {
 } from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-13T13432";
 import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-13T13432";
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-13T13432";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-14T220100";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");

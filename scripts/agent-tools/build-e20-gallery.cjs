@@ -1,41 +1,32 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
 
+// E20 output is deliberately only page folders containing PNG files. The
+// manifests are runner-local validation data, never part of the artifact.
 const root = path.resolve(__dirname, "../../tests/test-results/e20-gallery");
+const temp = process.env.RUNNER_TEMP || os.tmpdir();
+const manifestRoot = path.join(temp, "familiada-e20-gallery-manifests");
 const profiles = ["macbook", "ipad-portrait", "ipad-landscape", "iphone-portrait", "iphone-landscape", "tv"];
 const entries = profiles.flatMap((profile) => {
-  const file = path.join(root, `manifest-${profile}.json`);
+  const file = path.join(manifestRoot, `manifest-${profile}.json`);
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : [];
 });
-if (!entries.length) throw new Error(`Brak manifestów galerii w ${root}`);
+if (!entries.length) throw new Error(`Brak manifestów walidacyjnych w ${manifestRoot}`);
+
 const fullGalleryRequested = !process.env.E20_GALLERY_PAGES && !process.env.E20_GALLERY_PROFILES;
 if (fullGalleryRequested) {
   const expectedPerProfile = { macbook: 42, "ipad-portrait": 42, "ipad-landscape": 42, "iphone-portrait": 42, "iphone-landscape": 42, tv: 1 };
   for (const [profile, expected] of Object.entries(expectedPerProfile)) {
     const actual = entries.filter((entry) => entry.profile === profile).length;
-    if (actual !== expected) throw new Error(`Niepełna galeria E20 dla ${profile}: ${actual}/${expected} zrzutów`);
+    if (actual !== expected) throw new Error(`Niekompletne zrzuty E20 dla ${profile}: ${actual}/${expected}`);
   }
-  if (entries.length !== 211) throw new Error(`Niepełna galeria E20: ${entries.length}/211 zrzutów`);
+  if (entries.length !== 211) throw new Error(`Niekompletne zrzuty E20: ${entries.length}/211`);
 }
 
-const htmlEscape = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+for (const entry of entries) {
+  const file = path.join(root, entry.file);
+  if (!entry.file.endsWith(".png") || !fs.existsSync(file)) throw new Error(`Brak zrzutu PNG: ${entry.file}`);
+}
 const pages = [...new Set(entries.map((entry) => entry.id))];
-const groups = pages.map((page) => {
-  const rows = entries.filter((entry) => entry.id === page);
-  if (!rows.length) return "";
-  return `<section class="page" id="${htmlEscape(page)}"><h2>${htmlEscape(page)} <small>${rows.length} widoków</small></h2><div class="grid">${rows.map((entry) => {
-    const guard = entry.guard ? `<b class="guard">${htmlEscape(entry.guard)}</b>` : "";
-    const overflow = entry.scrollWidth > entry.viewportWidth ? `<b class="overflow">scroll ${entry.scrollWidth}px</b>` : "";
-    const imagePath = path.join(root, entry.file);
-    if (!fs.existsSync(imagePath)) throw new Error(`Brak pliku zrzutu: ${imagePath}`);
-    const imageData = `data:image/png;base64,${fs.readFileSync(imagePath).toString("base64")}`;
-    return `<article><h3>${htmlEscape(entry.label)} (${entry.viewportWidth} × ${entry.bodyHeight} CSS px) ${guard} ${overflow}</h3><div class="frame ${entry.profile}"><img loading="lazy" src="${imageData}" alt="${htmlEscape(entry.id)} · ${htmlEscape(entry.label)}"><i aria-hidden="true"></i></div><p>${htmlEscape(entry.url)}</p></article>`;
-  }).join("")}</div></section>`;
-}).join("");
-
-const output = `<!doctype html><html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>E20 · galeria stron</title><style>
-*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f5f7fb;font:14px/1.45 system-ui,sans-serif}header{position:sticky;top:0;z-index:2;padding:14px 20px;background:#101828;border-bottom:1px solid #ffffff24}h1{font-size:20px;margin:0 0 10px}nav{display:flex;gap:8px;flex-wrap:wrap;max-height:92px;overflow:auto}nav a{color:#ffeaa6;text-decoration:none;padding:5px 9px;border:1px solid #ffffff25;border-radius:8px}.page{padding:22px 20px;border-bottom:1px solid #ffffff20}.page>h2{margin:0 0 16px;text-transform:capitalize}.page small{opacity:.6;font-size:12px;font-weight:400}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:22px;align-items:start}article{min-width:0}h3{font-size:13px;margin:0 0 8px;overflow-wrap:anywhere}.guard,.overflow{display:inline-block;border:1px solid #ffffff25;border-radius:6px;padding:1px 5px;margin-left:5px;font-size:10px;color:#ffeaa6}.overflow{color:#ffacac}.frame{position:relative;display:block;width:fit-content;max-width:100%;background:#030407;border:8px solid #030407;box-shadow:0 9px 30px #0009;overflow:hidden}.frame img{display:block;width:auto;max-width:min(100%,390px);height:auto;max-height:72vh;object-fit:contain;background:#0b1020}.frame.iphone-portrait,.frame.iphone-landscape{border-radius:46px;border-width:8px}.frame.iphone-portrait i{position:absolute;top:0;left:50%;transform:translateX(-50%);width:42.56%;height:4.27%;border-radius:0 0 20px 20px;background:#030407}.frame.iphone-portrait i:after{content:"";position:absolute;right:12%;top:33%;width:15%;height:12%;border-radius:4px;background:#111;box-shadow:-28px 0 0 3px #080808}.frame.iphone-landscape i{position:absolute;top:50%;left:0;transform:translateY(-50%);width:4.27%;height:42.56%;border-radius:0 20px 20px 0;background:#030407}.frame.iphone-landscape i:after{content:"";position:absolute;left:33%;bottom:12%;width:12%;height:15%;border-radius:4px;background:#111;box-shadow:0 -28px 0 3px #080808}.frame.ipad-portrait,.frame.ipad-landscape{border-radius:34px;border-width:8px}.frame.ipad-portrait i,.frame.ipad-landscape i{position:absolute;bottom:1%;left:50%;transform:translateX(-50%);width:5%;height:.5%;border-radius:4px;background:#ffffff80}.frame.macbook{border-radius:8px}.frame.macbook img{max-width:100%;max-height:65vh}article p{max-width:390px;color:#9ba6b9;font-size:11px;overflow-wrap:anywhere;margin:7px 0 0}@media(max-width:640px){header{padding:12px}.page{padding:16px 12px}.grid{grid-template-columns:1fr}.frame img{max-height:74vh}}
-</style><header><h1>E20 · zrzuty z prawdziwych stron i bazy</h1><nav>${pages.map((page)=>`<a href="#${encodeURIComponent(page)}">${htmlEscape(page)}</a>`).join("")}</nav></header><main>${groups}</main></html>`;
-fs.writeFileSync(path.join(root, "index.html"), output);
-fs.writeFileSync(path.join(root, "manifest.json"), JSON.stringify({ createdAt: new Date().toISOString(), count: entries.length, profiles, pages: [...new Set(entries.map((entry) => entry.id))], entries }, null, 2));
-console.log(`Wygenerowano galerię: ${entries.length} zrzutów, ${new Set(entries.map((entry) => entry.id)).size} stron.`);
+console.log(`Zweryfikowano ${entries.length} zrzutów PNG na ${pages.length} stronach. Artefakt zawiera wyłącznie foldery stron i obrazy.`);

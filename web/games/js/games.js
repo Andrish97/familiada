@@ -35,7 +35,7 @@ import {
   rulesFromState,
 } from "../../shared/js/core/game-validate.js?v=v2026-10-13T13432";
 import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T13432";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-13T13432";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-14T21501";
 import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-13T13432";

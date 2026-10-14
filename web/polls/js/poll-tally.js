@@ -15,7 +15,7 @@
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T13432";
 import { t } from "../../shared/translation/translation.js?v=v2026-10-13T13432";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
 import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-13T13432";
 import {
   pointsPollPreview,

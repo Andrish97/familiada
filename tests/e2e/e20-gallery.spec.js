@@ -9,9 +9,10 @@ const { serveBranchCode } = require("./helpers/branch-code");
 
 const ORIGIN = "https://www.familiada.online";
 const OUT = path.resolve(__dirname, "../test-results/e20-gallery");
-// Playwright clears test-results on startup. Shared preparation files belong
-// in the runner temp directory, alongside auth state, not inside test output.
+// Playwright clears test-results on startup. Gallery output remains only page
+// folders with PNGs; manifests live in runner temp and are not in the artifact.
 const PREP_DIR = process.env.RUNNER_TEMP || os.tmpdir();
+const MANIFEST_DIR = path.join(PREP_DIR, "familiada-e20-gallery-manifests");
 const FIXTURES_PATH = path.join(PREP_DIR, "familiada-e20-gallery-fixtures.json");
 const AUTH_STATE_PATH = path.join(PREP_DIR, "familiada-e20-gallery-auth.json");
 const PAGES = [
@@ -49,9 +50,9 @@ function urls(fixtures) {
     ["game-settings", `/games/settings/?id=${game.id}`], ["friends", "/friends/"],
     ["go", "/go/"], ["login", "/login/"], ["login-confirm", "/login/confirm/"],
     ["login-reset", "/login/reset/"], ["logo", "/logos/"],
-    ["logo-draw", `/logos/editor/draw/?id=${fixtures.logo.id}`],
-    ["logo-image", `/logos/editor/image/?id=${fixtures.logo.id}`],
-    ["logo-text", `/logos/editor/text/?id=${fixtures.logo.id}`],
+    ["logo-draw", `/logos/editor/draw/?id=${fixtures.logos.draw.id}`],
+    ["logo-image", `/logos/editor/image/?id=${fixtures.logos.image.id}`],
+    ["logo-text", `/logos/editor/text/?id=${fixtures.logos.text.id}`],
     ["mail", "/mails/"], ["maintenance", "/maintenance/"], ["manual", "/manual/"],
     ["marketplace", "/marketplace/"], ["polls", `/polls/?id=${pollText.id}`],
     ["poll-vote-points", `/polls/vote/points/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`],
@@ -126,19 +127,61 @@ async function installSettingsAccessSimulation(context) {
   });
 }
 
-async function installVisualResourceLockIsolation(context) {
-  // Galeria mierzy układ i guardy urządzeń, nie współbieżność edycji. Konto
-  // ma stałe fixture'y produkcyjne, które mogą być równolegle otwarte w innej
-  // sesji. Przechwytujemy wyłącznie API edit_locks w tym kontekście Playwrighta;
-  // pozostałe odczyty/zapisy Supabase nadal trafiają do prawdziwego backendu.
-  await context.route("https://api.familiada.online/rest/v1/rpc/acquire_edit_lock_mode", (route) =>
+async function installVisualResourceLockIsolation(page) {
+  // Izolacja dotyczy tylko tras, które naprawdę pobierają edit lock. Pozostałe
+  // strony rozmawiają z prawdziwym API blokad, jeśli mają taką funkcję.
+  // Weryfikujemy wygląd edytora; współbieżność samych blokad sprawdzają osobne E2E.
+  const acquire = "https://api.familiada.online/rest/v1/rpc/acquire_edit_lock_mode";
+  const release = "https://api.familiada.online/rest/v1/rpc/release_edit_lock";
+  const locks = "https://api.familiada.online/rest/v1/edit_locks**";
+  await page.route(acquire, (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
-  await context.route("https://api.familiada.online/rest/v1/rpc/release_edit_lock", (route) =>
+  await page.route(release, (route) =>
     route.fulfill({ status: 204, body: "" }));
-  await context.route("https://api.familiada.online/rest/v1/edit_locks**", (route) => {
+  await page.route(locks, (route) => {
     if (route.request().method() !== "GET") return route.continue();
     return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
   });
+  return async () => {
+    await page.unroute(acquire);
+    await page.unroute(release);
+    await page.unroute(locks);
+  };
+}
+
+async function saveDeviceScreenshot(page, profile, id, outputPath) {
+  const image = await page.screenshot({ fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
+  if (!["iphone-portrait", "iphone-landscape", "ipad-portrait", "ipad-landscape"].includes(profile.id)) {
+    fs.writeFileSync(outputPath, image);
+    return;
+  }
+  const iPhone = profile.id.startsWith("iphone");
+  const landscape = profile.id.endsWith("landscape");
+  const radius = iPhone ? 42 : 28;
+  const bezel = iPhone ? 8 : 9;
+  const notch = iPhone
+    ? landscape
+      ? '<i class="notch side"><b></b></i>'
+      : '<i class="notch top"><b></b></i>'
+    : '<i class="gesture"></i>';
+  const frame = `<!doctype html><meta charset="utf-8"><style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#10131a;display:grid;place-items:center;overflow:hidden}
+    .device{display:inline-block;padding:${bezel}px;background:#030407;border:2px solid #30343d;border-radius:${radius + bezel}px;box-shadow:0 12px 44px #000b;line-height:0}
+    .screen{position:relative;width:${profile.width}px;height:${profile.height}px;overflow:hidden;border-radius:${radius}px;background:#050914}
+    img{display:block;width:100%;height:100%;object-fit:fill}
+    .notch{position:absolute;display:block;background:#030407;z-index:3}
+    .notch.top{top:0;left:50%;transform:translateX(-50%);width:42.56%;height:4.27%;border-radius:0 0 22px 22px}
+    .notch.top b{position:absolute;top:34%;right:13%;width:15%;height:15%;border-radius:5px;background:#111318;box-shadow:-28px 0 0 3px #08090c}
+    .notch.side{left:0;top:50%;transform:translateY(-50%);width:4.27%;height:42.56%;border-radius:0 22px 22px 0}
+    .notch.side b{position:absolute;left:34%;bottom:13%;width:15%;height:15%;border-radius:5px;background:#111318;box-shadow:0 -28px 0 3px #08090c}
+    .gesture{position:absolute;z-index:3;left:50%;bottom:7px;transform:translateX(-50%);width:92px;height:4px;border-radius:99px;background:#ffffffa8}
+  </style><div class="device"><div class="screen"><img src="data:image/png;base64,${image.toString("base64")}">${notch}</div></div>`;
+  // Reuse this tab for the offline composition. No second page or application
+  // route is opened, so this cannot contend for a resource lock.
+  await page.setViewportSize({ width: profile.width + 2 * bezel + 8, height: profile.height + 2 * bezel + 8 });
+  await page.setContent(frame, { waitUntil: "load" });
+  await page.screenshot({ path: outputPath, fullPage: true, scale: "css", animations: "disabled", timeout: 20_000 });
+  await page.setViewportSize({ width: profile.width, height: profile.height });
 }
 
 async function serveBranchLoginHtml(route) {
@@ -371,7 +414,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe
   // zrzuty na długich/animowanych widokach wisiały w Chromium po 45 s; wysokość
   // całej strony pozostaje w manifeście, a screenshot zachowuje viewport i safe area.
-  await page.screenshot({ path: path.join(OUT, id, `${profile.id}.png`), fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
+  await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, `${profile.id}.png`));
   expect(page.context().pages(), `${profile.label} · ${id}: otwarto równoległą kartę`).toHaveLength(1);
   page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
@@ -385,7 +428,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     ...state,
   });
   // Checkpoint after every image so a failed profile still leaves useful work.
-  fs.writeFileSync(path.join(OUT, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
+  fs.mkdirSync(MANIFEST_DIR, { recursive: true });
+  fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
 }
 
 // Każdy profil używa tych samych fixture'ów test17. Sekwencyjne konteksty
@@ -422,7 +466,6 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       });
       await installMaintenanceVisualState(context);
       await installSettingsAccessSimulation(context);
-      await installVisualResourceLockIsolation(context);
       // Galeria sprawdza układ stron i guardy, nie dostępność usługi CAPTCHA.
       // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
       // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
@@ -451,7 +494,6 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
             });
             await installMaintenanceVisualState(anonymous);
             await installSettingsAccessSimulation(anonymous);
-            await installVisualResourceLockIsolation(anonymous);
             await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
             const anonymousPage = await anonymous.newPage();
             anonymousPage.setDefaultTimeout(20_000);
@@ -469,7 +511,13 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
             : id === "logo"
               ? `.logoTile[data-key="${fixtures.logo.id}"]`
               : null;
-        await capture(page, profile, id, href, manifest, null, readySelector);
+        const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "logo-draw", "logo-image", "logo-text", "polls"]);
+        const removeLockIsolation = lockSensitive.has(id) ? await installVisualResourceLockIsolation(page) : null;
+        try {
+          await capture(page, profile, id, href, manifest, null, readySelector);
+        } finally {
+          await removeLockIsolation?.();
+        }
       }
       const extra = profile.id === "tv" ? [] : additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
       for (const state of extra) {

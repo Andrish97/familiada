@@ -15,7 +15,7 @@ import { createSubscription } from "../../../shared/js/core/game-state-subscribe
 import { createHostRenderer } from "./render.js?v=v2026-10-13T13432";
 import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-13T13432";
 import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-13T13432";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-14T220100";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-13T14412";
 import "../../../shared/js/core/orientation-guard.js?v=v2026-10-14T195500";
 

@@ -1,8 +1,12 @@
 // Trwałe, idempotentne dane dla dedykowanego konta galerii E20.
 // Nie usuwamy ich po przebiegu: następne zrzuty mają korzystać z tych samych
 // rekordów i tych samych adresów. Każda nazwa jest ograniczona do test17.
+const fs = require("node:fs");
+const path = require("node:path");
+
 async function seedE20GalleryFixtures(page) {
-  return page.evaluate(async () => {
+  const demoImage = fs.readFileSync(path.resolve(__dirname, "../../../web/logo/assets/demo-image.png")).toString("base64");
+  return page.evaluate(async ({ demoImage }) => {
     const db = window.__sbClient;
     const { data: auth, error: authError } = await db.auth.getUser();
     if (authError || !auth?.user?.id) throw new Error(authError?.message || "Konto galerii nie jest zalogowane");
@@ -87,10 +91,48 @@ async function seedE20GalleryFixtures(page) {
       if (questionError) throw questionError;
     }
 
-    const logo = await oneOrCreate("user_logos", "user_id", "E20-GALLERY-LOGO", {
-      type: "GLYPH_30x10",
-      payload: { layers: [{ color: "main", rows: ["10101", "01110"] }], source: { mode: "TEXT", text: "RODZINA", fontId: "familiada" } },
-    }, "id");
+    const imagePath = `${ownerId}/e20-gallery-demo-image.png`;
+    const imageBytes = Uint8Array.from(atob(demoImage), (char) => char.charCodeAt(0));
+    const { error: imageUploadError } = await db.storage.from("user-logos").upload(imagePath, imageBytes, {
+      upsert: true, contentType: "image/png",
+    });
+    if (imageUploadError) throw imageUploadError;
+    const { data: publicImage } = db.storage.from("user-logos").getPublicUrl(imagePath);
+
+    async function ensureLogo(name, type, payload) {
+      const { data: existing, error: readError } = await db.from("user_logos").select("id,type,payload")
+        .eq("user_id", ownerId).eq("name", name).maybeSingle();
+      if (readError) throw readError;
+      if (existing) {
+        if (existing.type !== type || JSON.stringify(existing.payload) !== JSON.stringify(payload)) {
+          const { error } = await db.from("user_logos").update({ type, payload }).eq("id", existing.id);
+          if (error) throw error;
+        }
+        return existing.id;
+      }
+      const { data, error } = await db.from("user_logos").insert({ user_id: ownerId, name, type, payload }).select("id").single();
+      if (error) throw error;
+      return data.id;
+    }
+    const logoText = {
+      id: await ensureLogo("E20-GALLERY-LOGO-TEXT", "GLYPH_30x10", {
+        layers: [{ color: "main", rows: ["111111", "100001", "111110"] }],
+        source: { mode: "TEXT", text: "RODZINA", fontId: "familiada" },
+      }),
+    };
+    const logoDraw = {
+      id: await ensureLogo("E20-GALLERY-LOGO-DRAW", "PIX_150x70", {
+        w: 150, h: 70, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64: "",
+        source: { mode: "DRAW", fabricData: { version: "5.3.0", objects: [], background: "#000" }, world: { w: 1040, h: 440 } },
+      }),
+    };
+    const logoImage = {
+      id: await ensureLogo("E20-GALLERY-LOGO-IMAGE", "PIX_150x70", {
+        w: 150, h: 70, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64: "",
+        source: { mode: "IMAGE", imageUrl: publicImage.publicUrl, crop: { x: 0, y: 0 } },
+      }),
+    };
+    const logo = logoText;
 
     const polls = {};
     for (const type of ["poll_points", "poll_text"]) {
@@ -107,8 +149,8 @@ async function seedE20GalleryFixtures(page) {
       if (error) throw error;
       polls[type] = current;
     }
-    return { game, base, logo, deviceKeys, polls };
-  });
+    return { game, base, logo, logos: { text: logoText, draw: logoDraw, image: logoImage }, deviceKeys, polls };
+  }, { demoImage });
 }
 
 module.exports = { seedE20GalleryFixtures };

@@ -13,6 +13,7 @@ const OUT = path.resolve(__dirname, "../../test-results/e20-gallery");
 const PREP_DIR = process.env.RUNNER_TEMP || os.tmpdir();
 const AUTH_STATE_PATH = path.join(PREP_DIR, "familiada-e20-gallery-auth.json");
 const FIXTURES_PATH = path.join(PREP_DIR, "familiada-e20-gallery-fixtures.json");
+const MANIFEST_DIR = path.join(PREP_DIR, "familiada-e20-gallery-manifests");
 const PAGES = [
   "index", "account", "bases", "bases/explorer", "connect", "connect/tv",
   "control", "control/buzzer", "control/display", "control/host", "games",
@@ -38,6 +39,8 @@ async function main() {
     page.setDefaultNavigationTimeout(20_000);
     await loginAsTestUser(page, context, { username: galleryTestAccountUsername() });
     const fixtures = await seedE20GalleryFixtures(page);
+    fs.rmSync(MANIFEST_DIR, { recursive: true, force: true });
+    fs.mkdirSync(MANIFEST_DIR, { recursive: true });
     fs.mkdirSync(OUT, { recursive: true });
     fs.writeFileSync(FIXTURES_PATH, JSON.stringify(fixtures, null, 2));
     await context.storageState({ path: AUTH_STATE_PATH });

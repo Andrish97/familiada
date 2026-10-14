@@ -21,7 +21,7 @@ import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-1
 import "../../shared/js/core/contact-modal.js?v=v2026-10-13T13432";
 import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-13T13432";
 import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T13432";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
 import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-13T13432";
 import { createTally } from "./poll-tally.js?v=v2026-10-13T13432";
 

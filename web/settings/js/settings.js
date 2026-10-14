@@ -19,7 +19,7 @@ import { alertModal, confirmModal, promptModal } from "../../shared/js/core/moda
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T13432";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T13432";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T13432";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T13432";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -1042,7 +1042,7 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-13T13432"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-14T220100"/>
   <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-13T13432"/>
   <style>
     body{margin:0;padding:0}

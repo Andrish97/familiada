@@ -122,7 +122,7 @@ import { createSoundReactor } from "./soundReactor.js?v=v2026-10-13T13432";
 import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-14T195500";
 import { createUI } from "./ui.js?v=v2026-10-13T13432";
 import { createShareDevice } from "./shareDevice.js?v=v2026-10-13T13432";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T13432";
 
 async function pickQuestionPool(state) {

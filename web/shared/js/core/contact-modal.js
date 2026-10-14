@@ -1,6 +1,6 @@
 import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-13T13432";
 import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-13T13432";
-import { icon, iconText } from "./icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "./icons.js?v=v2026-10-14T220100";
 
 let modalEl = null;
 let isSubmitting = false;

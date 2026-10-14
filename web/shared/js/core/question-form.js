@@ -12,7 +12,7 @@
 
 import { RULES, TYPES } from "./game-validate.js?v=v2026-10-13T13432";
 import { t } from "../../translation/translation.js?v=v2026-10-13T13432";
-import { icon } from "./icons.js?v=v2026-10-13T13432";
+import { icon } from "./icons.js?v=v2026-10-14T220100";
 
 export const LIMITS = {
   Q_TEXT: 200,   // questions_text_len

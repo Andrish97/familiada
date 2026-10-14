@@ -903,10 +903,11 @@ workflow [38640316467](https://github.com/Andrish97/familiada/actions/runs/38640
 zawiera 211 zrzutów: 35 tras i 7 dodatkowych stanów na MacBooku, iPadzie
 portrait/landscape, iPhonie portrait/landscape oraz widok TV. Foldery są pogrupowane
 według stron, a wewnątrz znajdują się pliki nazwane profilem urządzenia.
-Galeria `index.html` osadza podglądy z lokalnych PNG; manifest zapisuje także
-wysokość treści i jej początkowy tekst. Zrzuty czekają na bezczynność sieci,
-stabilny DOM, gotowe fonty i zdekodowane widoczne obrazy, zamiast kończyć
-oczekiwanie na samym zdjęciu `page-loading`.
+Artefakt zawiera wyłącznie foldery stron z plikami PNG. Ramka iPhone'a/iPada,
+wycięcie lub zaokrąglenia oraz wskaźnik systemowy są już narysowane na każdym
+obrazie; nie wymaga to otwierania HTML ani dodatkowego podglądu. Metadane do
+walidacji trzymane są poza artefaktem. Zrzuty czekają na bezczynność sieci,
+stabilny DOM, gotowe fonty i zdekodowane widoczne obrazy.
 
 Settings jest serwowane z badanego brancha, a test symuluje wyłącznie
 odpowiedzi API Cloudflare Access, ponieważ panel jest za tą bramką. Asercje
@@ -930,12 +931,12 @@ wszystkie strony.
 
 | Zakres | Wymaganie | Status |
 |---|---|---|
-| Galeria i safe area | iPhone: wyraźny notch i zaokrąglone narożniki; iPad: zaokrąglone narożniki, właściwy wskaźnik systemowy. Insety mają być spójne z profilami iPhone 14/iPad mini 7: iPhone portrait 47/0/34/0, landscape 0/47/21/47; iPad portrait i landscape 24/0/20/0. Przebieg nie może otwierać równolegle profili na tych samych danych, żeby nie wywoływać resource locków. | Ramki mają notch/zaokrąglenia, konteksty i strony są wykonywane szeregowo, katalogi są grupowane według stron. Asercje safe area poprawiono po `38619471614`; `38620324946` wykrył nadpisanie insetu na Connect TV, naprawione w `tv.css`. Krótki test `38620721900` przeszedł 6/6 profili; artefakt `e20-gallery-853` (`11921422585`). Pełny `38621309630` zatrzymał się na błędnym pomiarze pływającej stopki Eksploratora. Test odróżnia teraz jej bezpieczne położenie od paddingu zwykłej stopki. Powtórzyć pełną galerię. |
+| Galeria i safe area | iPhone: wyraźny notch i zaokrąglone narożniki na samym PNG; iPad: zaokrąglone narożniki i wskaźnik systemowy. Insety: iPhone portrait 47/0/34/0, landscape 0/47/21/47; iPad portrait/landscape 24/0/20/0. Artefakt ma być wyłącznie folderami stron i obrazami, bez HTML. | E2E składa ramkę urządzenia bezpośrednio w PNG w tym samym tabie; katalogi są grupowane według stron. Test sprawdza safe area, ładowanie i sekwencyjny przebieg. Pełny run `38643769954` wykrył błędne fixture logo-draw i nie jest dowodem kompletnej galerii. |
 | Puste listy | Komunikaty „Nie masz…”, „Brak…” i równoważne stany pustych list, które używają kafelków, mają być kaflem o wspólnym wyglądzie i przerywanej obwódce. Dotyczy m.in. Connect i list zasobów. Nie zmieniać stanów ładowania, błędów ani pustych sekcji celowo ukrytych. | Wspólne puste kafle dodane dla list zasobów, Connect i udostępnień; sprawdzić w galerii. |
 | Topbar | Zwiększyć odstęp między topbarem a nagłówkiem na większości stron; Privacy i Manual wymagają tej samej korekty. Topbar polls vote (punkty i tekst) ma zawsze widoczny brand, również na telefonie. Strona 404 nie ma przycisku „Wróć” w topbarze. | Odstęp, oba topbary vote i 404 poprawione; sprawdzić w galerii. |
-| Nagłówek i paski akcji | Nie zawijać przedwcześnie: jeśli cała zawartość mieści się w dostępnej szerokości, zostaje w jednym wierszu. Jeśli nie, dopiero wtedy zawinąć. W nagłówku podpowiedź może złamać się na granicy zdań/fraz i zostać obok akcji; akcje przenieść dopiero, gdy po takim zawinięciu nadal nie mieszczą się czytelnie. W pasku filtrów/eksportów grupy zachowują lewy/prawy brzeg, a prawa grupa rozkłada się równomiernie przy zawinięciu. | Korekta pomiaru: podpowiedź nie może sama przenosić akcji, usunięta osobna reguła absolutnego pozycjonowania akcji Logo. Dolny pasek mierzy pełną naturalną szerokość; przy braku miejsca dzieli szerokość grup proporcjonalnie i układa każdą grupę w możliwie równych wierszach, zachowując lewą/prawą krawędź. Krótka galeria punktowa i kontrola zrzutów jeszcze do wykonania. |
-| Stopki | Dwie sekcje: lewa przy lewej krawędzi, prawa przy prawej; przy braku miejsca zawijać obie z rozsądnym podziałem. Trzy sekcje: skrajne przy krawędziach, środkowa centralnie; przy zawijaniu utrzymać proporcje. | Wspólna reguła dwóch/trzech sekcji dodana; sprawdzić w galerii. |
-| Games | „Ustawienia rozgrywki”: złoty przycisk z ikoną zębatki. Wypustki społeczności mają czytelną pełną nazwę, a Preparowana ma być krótsza/kompaktowa. Ikona „Eksportuj do bazy” ma używać istniejącej ikony Bazy z nałożoną strzałką. Sortowanie „Otrzymano” ma należeć do pozostałych kryteriów sortowania, nie działać jako osobny wybór. | Złote ustawienia zębatką, czytelna nazwa Społeczności, mniejsza Preparowana, ikona bazy ze strzałką i sortowanie Otrzymano dodane; sprawdzić w galerii. |
+| Nagłówek i paski akcji | Nie zawijać przedwcześnie. Podpowiedź ma preferować naturalne granice zdań (kropkę/przecinek); można ją złamać w innym miejscu, jeżeli poprawia to układ przycisków. Dolny pasek ma zostać w jednym wierszu, gdy się mieści; po zawinięciu lewa grupa trzyma lewą, prawa trzyma prawą krawędź i obie rozkładają się proporcjonalnie z możliwie małą liczbą wierszy. | Pomiar nagłówka nie używa minimum szerokości podpowiedzi jako progu dla akcji. CSS podpowiedzi ma `text-wrap: pretty` i hyphenację. Dolny pasek mierzy naturalną szerokość i dzieli przestrzeń proporcjonalnie. Krótki test `38643551060` potwierdził stan jednowierszowy na MacBooku dla Gier/Baz/Logo; zawijanie mobilne czeka na nowy przebieg. |
+| Stopki | Lewa treść zawija się wyłącznie po lewej, prawa wyłącznie po prawej; sekcje nigdy nie spadają jedna pod drugą ani nie mieszają się. Przy trzech sekcjach skrajne trzymają krawędzie, środkowa środek. | Stopka ma stałą siatkę dwóch lub trzech kolumn; tekst może zawijać się tylko wewnątrz własnej kolumny i zachowuje wyrównanie do swojej krawędzi. Nowa galeria ma sprawdzić szczególnie 404 na telefonie. |
+| Games | „Ustawienia rozgrywki” zawsze złote i z czytelną zębatką. Wszystkie wypustki mają ten sam rozmiar pisma i mają pomieścić licznik; na mobile nazwy nie mogą być niezrozumiałymi skrótami. Eksport do bazy używa ikony szafki/baz z istniejącego przycisku i strzałki skierowanej w jej stronę. „Otrzymano” pozostaje kryterium sortowania, bez osobnego przycisku. | Złoty styl ustawień wzmocniono również w stanie disabled, ikonę settings przerysowano jako czytelny trybik. Wszystkie mobilne zakładki mają wspólną typografię i rezerwę na licznik; eksport używa nowej kompozycji istniejącej ikony drawer z grotkiem strzałki. „Otrzymano” już jest w selektorze sortowania; osobnego przycisku nie ma. |
 | Gry społeczności | Usunąć etykiety „Szukaj gier” i „Sortowanie” z widoku; pola i przyciski zachowują dostępne nazwy przez `aria-label`. Poprawić ikonę języka. „Moje wysłane” nie może trafić do drugiego wiersza. | Etykiety widokowe usunięte z HTML, nazwy dostępności są na kontrolkach; ikona globusa i przypięcie „Moje wysłane” do nagłówka pozostają. Sprawdzić w galerii. |
 | Ankiety | Na telefonie pokazać trzy karty. Kartę anonimowości oraz odbiorców podzielić zgodnie z funkcją, zachowując czytelną grupę. | Udostępnianie podzielone na trzy karty; sprawdzić na telefonie i komputerze w nowym przebiegu. |
 | Logo | Używać publicznego adresu strony `/logos/` we wszystkich linkach, mapach, testach i dokumentacji; nie utrzymywać aliasów starych tras. Przycisk Podgląd na mobile zawsze pozostaje w pierwszym wierszu. | Mapę, PWA, dokumentację i URL zrzutów ujednolicono; Podgląd przypięty do pierwszego wiersza. Sprawdzić w galerii. |
@@ -1002,14 +1003,13 @@ publiczne trasy `/mails/` i `/logos/`, (5) puścić krótkie testy dla każdej
 paczki, a po ich powodzeniu pełną galerię. Każdy wiersz powyżej pozostaje
 otwarty, dopóki rzeczywista strona i odpowiednie stany nie zostaną sprawdzone.
 
-**Galeria na telefonie (2026-10-14):** archiwum zachowuje PNG w folderach
-według stron, a `index.html` ma zawierać obrazy jako data URI, żeby można
-było otworzyć sam plik bez zależności od lokalnych ścieżek i przeglądarki
-pliku na Androidzie. Pełny build ma odrzucać niekompletną galerię zamiast
-opisywać częściowe manifesty jako pełny wynik; oczekiwane jest 211 ujęć
-(42 na każdym z pięciu standardowych profili i 1 na TV dla Connect TV).
-Generator oraz workflow zostały dopasowane do tego kontraktu; potwierdzić
-na końcowym artefakcie.
+**Galeria na telefonie (2026-10-14):** artefakt ma zawierać wyłącznie foldery
+według stron i pliki PNG, bez galerii HTML ani manifestów. Każde PNG ma mieć
+już widoczną ramkę urządzenia, notch/zaokrąglenia i wskaźnik systemowy.
+Walidacja kompletności pozostaje poza artefaktem i odrzuca niepełny pełny
+przebieg: oczekiwane jest 211 ujęć (42 na każdym z pięciu standardowych
+profili i 1 na TV dla Connect TV). Aktualny pełny run `38643769954` przerwał
+się na złym typie fixture Logo, więc nie spełnia tego kontraktu.
 
 **Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
 ↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje
@@ -1107,7 +1107,7 @@ rzeczywistej strony w pełnej galerii i punktowym teście właściwego zachowani
 | Górny pasek list: tytuł/podpowiedź od lewej, akcje od prawej; zostają w jednym wierszu, jeśli czytelnie się mieszczą; przy długiej podpowiedzi mogą zostać po prawej; gdy cała grupa się nie mieści, wszystkie akcje przechodzą pod nagłówek i wyrównują się do lewej. | Wspólny `list-header-layout.js` mierzy szerokość i zawijanie na Grach/Bazach/Logo; **reguła w kodzie, wymaga kontroli zrzutem**. |
 | Dolny pasek list: lewa grupa od lewej, akcje od prawej, bez sztywnego podziału na dwa rzędy; zawijać proporcjonalnie i z najmniejszą liczbą wierszy. | Zmienione flexy Gier/Baz/Logo; **niezweryfikowane** na rzeczywistych stronach. |
 | Kolejność akcji: Powiel, Eksport, Eksport bazy, Import, Wyślij; pomijać brakujące akcje bez zmiany kolejności pozostałych. | HTML Gier/Baz/Logo poprawiony; **niezweryfikowane** wizualnie i funkcjonalnie. |
-| Ustawienia gry mają ikonę zębatki; przycisk Ustawienia ma kolor jak pozostałe akcje, a „Graj” zachowuje złoty priorytet. | HTML Gier ma ikonę `settings` i neutralny przycisk Ustawienia; tylko Graj ma klasę `gold`. **Sprawdzić w galerii**. |
+| Ustawienia gry mają ikonę zębatki; przycisk Ustawienia i „Graj” są złote. | Przycisk Ustawienia ma klasę `gold`; także jego stan disabled zachowuje złotą barwę. Ikonę settings poprawiono na czytelny trybik. **Sprawdzić w nowym PNG**. |
 | `/connect/`: poprawić odstępy, zwłaszcza separator oddzielający kartę. | Stopkę przeniesiono poza główną kartę, z zachowaniem wspólnej linii i Safe Area; **do sprawdzenia zrzutem**. |
 | Manual i prywatność: zmniejszyć nadmierny dostęp/odstęp od górnej krawędzi. | Wspólny `manual.css` zeruje górny padding `main` oraz górny margines tytułu; **sprawdzić oba routy w galerii**. |
 | Wspólny device guard: jednakowy wygląd i poprawne rozróżnienie braku dotyku, nieobsługiwanego urządzenia, landscape telefonu, fizycznie za małego ekranu i za wąskiego okna. Nie sugerować obrotu dla niedostępnego typu urządzenia. | Nadrzędność i wspólne teksty są w kodzie; **wymaga testów** na wszystkich profilach. |

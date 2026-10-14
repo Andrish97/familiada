@@ -21,7 +21,7 @@ import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10
 import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-13T13432";
 import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-13T13432";
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-13T13432";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
 
 import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-13T13432";
 

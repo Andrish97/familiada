@@ -39,7 +39,7 @@
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
 import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-13T13432";
-import { iconText } from "./icons.js?v=v2026-10-13T13432";
+import { iconText } from "./icons.js?v=v2026-10-14T220100";
 
 export const MAX_RET_DEPTH = 4;
 

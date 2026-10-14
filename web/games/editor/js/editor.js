@@ -18,7 +18,7 @@ import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v
 import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-13T13432";
 import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-13T13432";
 import "../../../shared/js/core/contact-modal.js?v=v2026-10-13T13432";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-14T220100";
 import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-13T13432";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 

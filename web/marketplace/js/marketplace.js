@@ -10,7 +10,7 @@ import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T13432";
 import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-13T13432";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T13432";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-13T13432";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };

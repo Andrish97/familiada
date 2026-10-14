@@ -63,7 +63,8 @@ body.games-body > main.wrap{
 @media (max-width: 600px){
   .bar > .actions{ align-content: start; }
   .bar .btn{ min-width: 38px; min-height: 38px; padding: 9px; }
-  .slot-prepared :is(.tab-label,.tab-active){font-size:10px;letter-spacing:.025em}
+  .tabs-strip :is(.tab-label,.tab-active){font-size:10px;letter-spacing:.015em}
+  .tab-slot[data-copy-count]:not([data-copy-count=""]) :is(.tab-label,.tab-active){padding-right:18px}
   .bar .action-label{
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;

@@ -17,7 +17,7 @@ import { createSubscription } from "../../../shared/js/core/game-state-subscribe
 import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-13T13432";
 import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-13T13432";
 import { createPressController } from "./press.js?v=v2026-10-13T13432";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-13T13432";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-14T220100";
 import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-13T13432";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-13T14412";
 import "../../../shared/js/core/orientation-guard.js?v=v2026-10-14T195500";

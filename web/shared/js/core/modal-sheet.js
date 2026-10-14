@@ -10,7 +10,7 @@
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
 import { t } from "../../translation/translation.js?v=v2026-10-13T13432";
-import { icon, iconText } from "./icons.js?v=v2026-10-13T13432";
+import { icon, iconText } from "./icons.js?v=v2026-10-14T220100";
 import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-13T13432";
 
 const SHEET_MQ = "(max-width:600px)";

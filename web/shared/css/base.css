@@ -484,11 +484,10 @@ main{
     padding-right: max(16px, env(safe-area-inset-right));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
     padding-left: max(16px, env(safe-area-inset-left));
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
     gap: 8px;
-    flex-wrap: wrap;
     opacity: .85;
     font-size: 12px;
     margin-top: auto;
@@ -504,8 +503,9 @@ main{
     padding-bottom: max(8px, env(safe-area-inset-bottom));
     padding-left: max(16px, env(safe-area-inset-left));
 }
-.footer > :first-child{ margin-right:auto; min-width:0; text-align:left; }
-.footer > :last-child{ margin-left:auto; min-width:0; text-align:right; }
+.footer > *{ min-width:0; overflow-wrap:anywhere; }
+.footer > :first-child{ justify-self:start; text-align:left; }
+.footer > :last-child{ justify-self:end; text-align:right; }
 .footer:has(> :nth-child(3)){
     display:grid;
     grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,1fr);
@@ -576,8 +576,8 @@ main{
 }
 .btn.gold:disabled {
     --btn-tint: rgba(255,234,166,.04);
-    color: #77705a;
-    border-color: #3a3629;
+    color: rgba(255,234,166,.7);
+    border-color: rgba(255,234,166,.28);
 }
 .btn.danger:disabled {
     color: #7a5a62;
