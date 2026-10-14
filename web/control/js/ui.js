@@ -336,7 +336,6 @@ export function createUI({ root, emit }) {
       // (display:none) i istnieje wyłącznie jako stabilny selektor testów E2E,
       // więc nie jest to string user-facing.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
-      testChoice,
       // Przewija się tylko lista kart urządzeń. Podpowiedź pozostaje obok
       // listy widoczna także po przewinięciu do sekcji dźwięku.
       h("div", { class: "c2-roundlayout c2-devices-layout" }, [
@@ -346,6 +345,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(t("control.deviceCodeHint"))]),
       ]),
+      testChoice,
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
     ]));
   }

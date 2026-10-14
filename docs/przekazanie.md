@@ -16,7 +16,7 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
 | E19N | **Gotowe produkcyjnie.** Branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte z Control i widoczne z Gier. Main `38369193504` success5/5; test bezpośredniego URL/odświeżenia arkusza main `38370189342` success1/1. Pages38369096986, Worker38369096732. Full unit602/602. E19 zamknięte na main `d847175100`. Audyt nie znalazł przepływu arkusz→arkusz; zwykłe potwierdzenia/alerty pozostają modalami, nie stronami. |
 | E14 | **Gotowe produkcyjnie**: DB/migracja368/smoke `38372090287`, Edge `38372090225`, main delete-account `38372530495`, po migracji stary RPC punktowo `38373614192`. |
-| E20 → Manual | W toku: wspólny nagłówek Gier/Baz/Logo, ikony akcji, telefonowy modal wyszukiwania i filtry/sortowanie. Landscape do 980 px: E2E 38376106783 success2/2 (12 zrzutów), PL/EN/UK 38378078762 5/5, G/B/Logo błędy 38378348674 6/6. Marketplace dotykowy landscape `38385343907` success1/1: lista, wyszukiwanie, szczegóły/arkusz i powrót zachowują stan. Ankieta landscape `38387014627` success1/1 (artefakt11806951789): brak przepełnienia, zakładki i pasek stanu zachowane po retry. Moje Gry: rzeczywisty dotykowy kontekst i obrót w obie strony `38403253632` success1/1 (3 zrzuty, artefakt11816088611); landscape zadań `38379023778` success4/4; kontakty `38379572388` success1/1, obrót/zakładki/formularz/scroll; Ankieta `38381649291` success1/1, ładowanie/błąd/retry. Kontakty `38382033831` i Zadania `38382324509` po 1/1, kontrolowane błędy/retry (artefakty11803776686 i11804131090). Podgląd TXT edytora `38382791836` success1/1 (artefakt11804730840). Eksport pliku Gier `38383237666`, Baz `38383626341` i Logo `38383911498` zostawia wynik do zamknięcia; błędy/retry Gier `38385655794`, Baz `38385776085`, Logo `38385034279`. Import Logo z wynikiem do zamknięcia `38386121426` (2/2 round-trip), Bazy `38386612386` (1/1); błędny import Gier/Baz `38387894274`/`38387645962` po 1/1, brak niepełnych rekordów; import sukcesu Gry i odrzucenie pliku Logo `38388086960`/`38388238433` po 1/1. Wszystkie unity602/602. Nowa lokalna paczka rozdziela formFactor/orientację/progi viewportu; punktowe unity48/48. Macierz układów typów stron zapisana w `ujednolicenie-wygladu.md`; wizualna realizacja tej macierzy, E2E/zrzuty nowej paczki, pełny przegląd landscape, rzeczywisty tablet i pozostałe import/eksport nadal otwarte. Ikony: telefon sama ikona z nazwą dostępności, desktop ikona z tekstem. Manual na końcu. |
+| E20 → Manual | Lista poprawek po galerii i status każdej pozycji są w `ujednolicenie-wygladu.md`. W tej zmianie poprawiono safe area/ramki, wspólne paski i stopki, puste kafle, wskazane strony, guardy i adresy. Unit619/619. Czeka krótki produkcyjny przebieg punktowy, potem nowa pełna sekwencyjna galeria: pięć profili dla każdej strony oraz TV tylko na Connect TV. Manual na końcu. |
 
 **E20, checkpoint 2026-10-14:** zamknięcie E20 wymaga też pełnego przeglądu
 stopniowego ładowania na mapie stron i wspólnych sekcjach, wraz z każdą nową
@@ -41,11 +41,12 @@ galeria i przegląd stopniowego ładowania nadal są otwarte.
 **Wznowienie E20 po uwagach do galerii (2026-10-14):** poprzednia galeria
 `38599567526` (210 ujęć, 5/5 profili) nie zamyka przeglądu — użytkownik
 zgłosił widoki zablokowane przez równoległe użycie zasobów i poprawki wyglądu
-urządzeń, wspólnych pasków/stopki oraz stron. Wszystkie uwagi zapisano jako
-checklistę w `docs/ujednolicenie-wygladu.md`, w podsekcji „E20 — uwagi
-użytkownika do galerii i następna paczka poprawek”. Kontynuować jej punkty
-po kolei, zachować pięć profili, uruchamiać galerie sekwencyjnie, dopiero po
-punktowych testach wygenerować pełną nową galerię.
+urządzeń, wspólnych pasków/stopki oraz stron. Checklista i status poprawek są
+w `docs/ujednolicenie-wygladu.md`, podsekcja „E20 — uwagi użytkownika do
+galerii i następna paczka poprawek”. Implementacja jest na gałęzi roboczej,
+unity619/619 przeszły, nowa galeria jeszcze się nie uruchomiła. Najpierw
+krótki test punktowy; potem pełny, sekwencyjny przebieg, pięć profili na
+każdą stronę oraz dodatkowy prawdziwy profil TV wyłącznie dla `/connect/tv/`.
 
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
 Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
@@ -493,7 +494,7 @@ plan; rozmowa nim nie jest**. Decyzje użytkownika zapisuj od razu w sekcji
 | E12, E12b | usuwanie gry i konta; pliki w Storage usuwa baza (`storage_cleanup_queue`, migracje 313, 317, 318) | `usuwanie-danych.md` |
 | E2 | blokady wg mapy docelowej (`logos`, `base:B`, keepalive przy zamknięciu karty) | `blokady-zasobow.md` |
 | E4 | `nav-map.js` (`PAGES`, `linkTo`, `backHref`, łańcuch `ret`) | `nawigacja-mapa-plan.md` |
-| E5 | nowe adresy (`/go/`, `/polls/vote/*`, `/games/{editor,settings}/`, `/control/{display,host,buzzer}/`, `/connect/`, `/logo/editor/*`, `/login/{reset,confirm}/`), migracja 319 | `nawigacja-mapa-plan.md` sekcja 8 |
+| E5 | nowe adresy (`/go/`, `/polls/vote/*`, `/games/{editor,settings}/`, `/control/{display,host,buzzer}/`, `/connect/`, `/logos/editor/*`, `/login/{reset,confirm}/`), migracja 319 | `nawigacja-mapa-plan.md` sekcja 8 |
 | E6 | `initPage()` (`page-init.js`), wspólna nakładka gość/urządzenie (`page-overlay.js`) | j.w. 6.4 |
 | E7 | bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, Control → ustawienia/instrukcja zwykłym przejściem, bez `?modal=` | j.w. 6.5 |
 | E8 | jeden moduł kart `tabs.js` (`?tab=`), stan eksploratora w `localStorage` | j.w. 6.6 |
@@ -860,7 +861,7 @@ Gotowy lokalny plik control-identity-preferences-draft.sql; przed przeniesieniem
 
 **358 zakończone:** main38261432758 success2/2 --retries=0/unit459,2 real SMTP, Pages38260925626, branch38260515251 (test14) i38258380406 (konto), SQL38257393434 OK13:42:37Z/isolated38256954899. Root scala mainfed93b0a91; code Control canonical/flags completed. Nie powtarzać358.
 
-**Nowy zakres /mail/ — ostateczna korekta:** maile-granice.md ostatnie sekcje + navmap. Subskrypcje oraz Zadania (ankiety+urządzenia) w jednej karcie z wypustkami Ankiet, globalny stan nad kartą; Go→centrum, dane/mutacje po potwierdzeniu, konto→login/account. Mail-only global-off zamyka wszystkie anonimowe źródła, ukrywa listy i nie odtwarza ich po przywróceniu. Starszy lokalny wariant /tmp/e19-359 zachowujący subskrypcje jest zastąpiony — nie wdrażać. Dotychczasowy sender-visible token u daje tylko wypisanie, nie odczyt centrum. Pełna stopka ma osobny prywatnie wydany token.360 jeszcze poza produkcją;359 to już zakończona naprawa skrzynki, nie numer centrum. Zakres konta pozostaje mail-only do odpowiedzi na jedyne pytanie architektoniczne o cofanie dostępów.
+**Nowy zakres /mails/ — ostateczna korekta:** maile-granice.md ostatnie sekcje + navmap. Subskrypcje oraz Zadania (ankiety+urządzenia) w jednej karcie z wypustkami Ankiet, globalny stan nad kartą; Go→centrum, dane/mutacje po potwierdzeniu, konto→login/account. Mail-only global-off zamyka wszystkie anonimowe źródła, ukrywa listy i nie odtwarza ich po przywróceniu. Starszy lokalny wariant /tmp/e19-359 zachowujący subskrypcje jest zastąpiony — nie wdrażać. Dotychczasowy sender-visible token u daje tylko wypisanie, nie odczyt centrum. Pełna stopka ma osobny prywatnie wydany token.360 jeszcze poza produkcją;359 to już zakończona naprawa skrzynki, nie numer centrum. Zakres konta pozostaje mail-only do odpowiedzi na jedyne pytanie architektoniczne o cofanie dostępów.
 
 ### 2026-10-12 — pilna skrzynka admina
 
@@ -871,7 +872,7 @@ pozostają dostępne. Stan wdrożenia i przebiegi w dzienniku wdrożeń.
 Zamknięte na produkcji: **13** kopii usuniętych; Worker38267398689 i
 baza38267398627 zielone. SMTP38267524680: zaproszenie odebrane przez test7,
 po nim SQL potwierdził brak technicznych kopii w skrzynce. Unit463/463.
-Następny krok: wrócić do grafu/centrum `/mail/`; nie powtarzać naprawy359.
+Następny krok: wrócić do grafu/centrum `/mails/`; nie powtarzać naprawy359.
 
 ### 2026-10-12 — centrum360 na branchu, dalsza kontynuacja
 
@@ -905,7 +906,7 @@ nie podlegają fladze konta, globalnej rezygnacji ani odmowom zasobów.
 
 Otwarte: pięć trwałych źródeł zaproszeń queue/claim/requeue/fresh delivery;
 DDL/nowe wyścigi, finalna migracja360, rzeczywiste SMTP+UI branch/main.
-Nie ogłaszać zamkniętego grafu ani produkcji `/mail/`. Sześć etapów głównych
+Nie ogłaszać zamkniętego grafu ani produkcji `/mails/`. Sześć etapów głównych
 w kolejce wdrożeń, manual ostatni. Aktualizacje około30–60s, po statusie
 pracować dalej bez następnego „kontynuuj”. Konta9/10 nie używać,14 bez
 konta,15 tylko bezpieczne usuwanie z odtworzeniem,11/12 nie kasować.
@@ -961,7 +962,7 @@ krawędzie i sześć etapów głównych, manual ostatni. Auth już zamknięte.
 
 ### 2026-10-12 —360/361 oraz wyjątki Kontakt zakończone
 
-Centrum `/mail/` i graf źródło→kolejka→dostarczenie są na produkcji.
+Centrum `/mails/` i graf źródło→kolejka→dostarczenie są na produkcji.
 Main38308851386 success7/7 bez retry/unit510:2 scenariusze centrum i5
 rodzin maili, rzeczywiste SMTP, Go, akceptacja/cofnięcie i partial,
 prywatne cookie/CSRF, preview/one-use/global-off i przywrócenie bez

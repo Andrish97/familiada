@@ -93,11 +93,12 @@ export const PAGES = {
   control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", minViewportWidth: 980, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id"], buttons: {
     btnFriends: { to: "friends", roles: ["user"], custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
-  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", minViewportWidth: 980, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id"], buttons: {
+  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", minViewportWidth: 600, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id"], buttons: {
     btnPlay: { to: "control", custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort", "dialog"], dialogs: ["submitOverlay", "gameDetailOverlay"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect", state: ["share"] },
+  connectTv:     { path: "/connect/tv/", access: "public", parent: "connectDevice", parentAnon: "connectDevice", from: ["connectDevice"], deviceGuard: { formFactors: ["tv"] } },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
   manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
     btnLegal: { to: "privacy" },

@@ -5,10 +5,10 @@ import fs from 'node:fs';
 const source = fs.readFileSync(new URL('../../web/shared/js/core/device-guard.js', import.meta.url), 'utf8')
   .replace(/^import .*;$/m, '')
   .replace(/export /g, '');
-const load = ({ screenWidth, screenHeight, width = screenWidth, height = screenHeight, touch = false }) => {
+const load = ({ screenWidth, screenHeight, width = screenWidth, height = screenHeight, touch = false, userAgent = '' }) => {
   const api = new Function('window', 'navigator', `${source}; return {getDeviceProfile, deviceGuardState, isPhoneScreen};`)(
     { innerWidth: width, innerHeight: height, screen: { width: screenWidth, height: screenHeight }, matchMedia: () => ({ matches: touch }) },
-    { maxTouchPoints: touch ? 1 : 0 },
+    { maxTouchPoints: touch ? 1 : 0, userAgent },
   );
   return api;
 };
@@ -67,4 +67,16 @@ test('dotykowy tablet bez wystarczająco szerokiego dłuższego boku dostaje sta
   const api = load({ screenWidth: 700, screenHeight: 900, touch: true });
   assert.equal(api.getDeviceProfile().formFactor, 'tablet');
   assert.equal(api.deviceGuardState(980), 'screen');
+});
+
+test('iPad mini jest osobnym stanem za małego ekranu dla Display i ankiety QR', () => {
+  const api = load({ screenWidth: 744, screenHeight: 1133, touch: true });
+  assert.equal(api.deviceGuardState(980, { formFactors: ['desktop', 'tablet'], minScreenShortSide: 800 }), 'screen');
+});
+
+test('Host i Buzzer dopuszczają telefon w poziomie, a strona TV rozpoznaje telewizor', () => {
+  const phone = load({ screenWidth: 390, screenHeight: 844, width: 844, height: 390, touch: true });
+  assert.equal(phone.deviceGuardState(0, { formFactors: ['phone', 'tablet'], requiresTouch: true, allowPhoneLandscape: true }), 'ok');
+  const tv = load({ screenWidth: 1920, screenHeight: 1080, userAgent: 'Mozilla/5.0 (SMART-TV; Linux; Tizen 6.5)' });
+  assert.equal(tv.getDeviceProfile().formFactor, 'tv');
 });

@@ -130,6 +130,8 @@ const btnResetAll = document.getElementById("btnResetAll");
 const btnPlay = document.getElementById("btnPlay");
 const content = document.getElementById("gsContentInner");
 const sidebar = document.getElementById("gsSidebar");
+const sidebarToggle = document.getElementById("gsSidebarToggle");
+const sidebarBackdrop = document.getElementById("gsSidebarBackdrop");
 const sidebarFinale = document.getElementById("sidebarFinale");
 const sidebarRounds = document.getElementById("sidebarRounds");
 
@@ -1798,7 +1800,18 @@ async function main() {
     if (!btn || btn.classList.contains("gs-sidebar-item-disabled")) return;
     const cat = btn.dataset.cat;
     if (cat) setActiveCat(cat);
+    sidebar?.classList.remove("is-open");
+    sidebarBackdrop?.classList.remove("is-open");
+    sidebarToggle?.setAttribute("aria-expanded", "false");
   });
+  const toggleSidebar = (open = !sidebar?.classList.contains("is-open")) => {
+    sidebar?.classList.toggle("is-open", open);
+    sidebarBackdrop?.classList.toggle("is-open", open);
+    sidebarToggle?.setAttribute("aria-expanded", String(open));
+  };
+  sidebarToggle?.addEventListener("click", () => toggleSidebar());
+  sidebarBackdrop?.addEventListener("click", () => toggleSidebar(false));
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
 
   // Reset to defaults
   btnResetAll?.addEventListener("click", async () => {

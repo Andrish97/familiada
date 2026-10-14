@@ -8,7 +8,7 @@
     color: #fff
 }
 
-.manual-body > main.wrap{ padding-top: 0; }
+.manual-body > main.wrap{ padding-top: 24px; }
 
 .page-title {
     margin: 0 0 12px;

@@ -26,7 +26,7 @@ na `main` bez uruchamiania testów. Zrzuty z przykładowymi danymi: 390/1400 px.
 
 ## 1. Strony list — wspólny układ
 
-Dotyczy: `/games/`, `/bases/`, `/logo/`, `/polls-hub/`, `/subscriptions/`.
+Dotyczy: `/games/`, `/bases/`, `/logos/`, `/polls-hub/`, `/subscriptions/`.
 Wzór: gry i bazy (pasek `.bar`, karty `.tabs-card`, `.card.games-card`,
 siatka `.grid` kafli `.card`, dolny pasek `.games-bottom`).
 
@@ -84,7 +84,7 @@ nazwę użytkownika.
 ## 4. Edytory — nazwa strony i informacja w topbarze
 
 Dotyczy: edytor pytań `/editor/`, ankieta gry `/polls/`, ustawienia gry
-`/game-settings/`, edytory logo `/logo/editor-*/`, eksplorator bazy
+`/game-settings/`, edytory logo `/logos/editor-*/`, eksplorator bazy
 `/base-explorer/`. W edytorach liczy się miejsce, więc nazwa strony
 i informacja nie mogą stać pod topbarem — idą **do topbaru**, tak jak dziś
 w eksploratorze bazy.
@@ -930,22 +930,22 @@ wszystkie strony.
 
 | Zakres | Wymaganie | Status |
 |---|---|---|
-| Galeria i safe area | iPhone: wyraźny notch i zaokrąglone narożniki; iPad: zaokrąglone narożniki, właściwy wskaźnik systemowy. Insety mają być spójne z profilami iPhone 14/iPad mini 7: iPhone portrait 47/0/34/0, landscape 0/47/21/47; iPad portrait i landscape 24/0/20/0. Przebieg nie może otwierać równolegle profili na tych samych danych, żeby nie wywoływać resource locków. | Do wdrożenia i ponownego sprawdzenia. |
-| Puste listy | Komunikaty „Nie masz…”, „Brak…” i równoważne stany pustych list, które używają kafelków, mają być kaflem o wspólnym wyglądzie i przerywanej obwódce. Dotyczy m.in. Connect i list zasobów. Nie zmieniać stanów ładowania, błędów ani pustych sekcji celowo ukrytych. | Do audytu i wdrożenia. |
-| Topbar | Zwiększyć odstęp między topbarem a nagłówkiem na większości stron; Privacy i Manual wymagają tej samej korekty. Topbar polls vote (punkty i tekst) ma zawsze widoczny brand, również na telefonie. Strona 404 nie ma przycisku „Wróć” w topbarze. | Do przeglądu stron i wdrożenia. |
-| Nagłówek i paski akcji | Nie zawijać przedwcześnie: jeśli cała zawartość mieści się w dostępnej szerokości, zostaje w jednym wierszu. Jeśli nie, dopiero wtedy zawinąć. W nagłówku podpowiedź może złamać się na granicy zdań/fraz i zostać obok akcji; akcje przenieść dopiero, gdy po takim zawinięciu nadal nie mieszczą się czytelnie. W pasku filtrów/eksportów grupy zachowują lewy/prawy brzeg, a prawa grupa rozkłada się równomiernie przy zawinięciu. | Do korekty wspólnego pomiaru oraz sprawdzenia na rzeczywistych szerokościach. |
-| Stopki | Dwie sekcje: lewa przy lewej krawędzi, prawa przy prawej; przy braku miejsca zawijać obie z rozsądnym podziałem. Trzy sekcje: skrajne przy krawędziach, środkowa centralnie; przy zawijaniu utrzymać proporcje. | Do wdrożenia jako wspólna reguła. |
-| Games | „Ustawienia rozgrywki”: złoty przycisk z ikoną zębatki. Wypustki społeczności mają czytelną pełną nazwę, a Preparowana ma być krótsza/kompaktowa. Ikona „Eksportuj do bazy” ma używać istniejącej ikony Bazy z nałożoną strzałką. Sortowanie „Otrzymano” ma należeć do pozostałych kryteriów sortowania, nie działać jako osobny wybór. | Do wdrożenia. |
-| Gry społeczności | Usunąć widoczne etykiety „Szukaj gier” i „Sortowanie”; zachować pola i przyciski z dostępnymi nazwami. Poprawić ikonę języka. „Moje wysłane” nie może trafić do drugiego wiersza. | Do wdrożenia. |
-| Ankiety | Na telefonie pokazać trzy karty. Kartę anonimowości oraz odbiorców podzielić zgodnie z funkcją, zachowując czytelną grupę. | Do wdrożenia; sprawdzić też komputer po usunięciu kolizji resource locków. |
-| Logo | Używać publicznego adresu strony `/logos/` we wszystkich linkach, mapach, testach i dokumentacji; bez aliasu `/logo/`. Przycisk Podgląd na mobile zawsze pozostaje w pierwszym wierszu. | Do audytu tras i wdrożenia. |
-| Mail | Publiczny adres strony to `/mails/` we wszystkich linkach, mapach, testach i dokumentacji; bez aliasu `/mail/`. Ścieżki plików JS/CSS i endpointów API nie są trasą strony i mają pozostać bez zmian. | Do audytu tras i wdrożenia. |
-| Polls QR i Display | Wspólny kierunek blokady dla komputera/TV, ale z odmiennym wymaganiem rozmiaru: mały tablet, w tym iPad mini, jest blokowany dla QR i Display. Każdy typ otrzymuje precyzyjny komunikat zamiast ogólnego „komputer lub telewizor”. Polls QR nie pokazuje stopki ani przycisku kontaktu. | Do wdrożenia wraz z testami nadrzędności guarda. |
-| Connect TV | Dostępny wyłącznie na TV. Inne urządzenia dostają guard z przyciskiem „Wróć” prowadzącym bezpośrednio do `/connect/`. Bez odsłaniania pod spodem TV UI. | Do wdrożenia i testu. |
-| Connect | Pusty stan udostępnionych urządzeń używa wspólnego pustego kafla. Jeśli „Skanuj kod QR” przechodzi do drugiego wiersza, umieścić separator pod nagłówkiem/przyciskiem i zachować odstęp jak na pozostałych stronach. | Do wdrożenia. |
-| Ustawienia gry | iPad mini portrait jest obsługiwany. Ukrywać boczny pasek pod przyciskiem, jak w poprzednim modalnym układzie; nie pokazywać guarda. | Do wdrożenia i sprawdzenia edytora. |
-| Control | Karta trybu testowego znajduje się pod kartami głównych trybów. | Do wdrożenia. |
-| Host i Buzzer | Wyjątki od globalnego guarda mobile landscape: mogą używać obróconego widoku. W portrait pokazać spójny przycisk/sugestię obrotu zgodną z pozostałymi guardami, bez blokowania dopuszczonej sesji. | Do wdrożenia i testu obrotu w obu kierunkach. |
+| Galeria i safe area | iPhone: wyraźny notch i zaokrąglone narożniki; iPad: zaokrąglone narożniki, właściwy wskaźnik systemowy. Insety mają być spójne z profilami iPhone 14/iPad mini 7: iPhone portrait 47/0/34/0, landscape 0/47/21/47; iPad portrait i landscape 24/0/20/0. Przebieg nie może otwierać równolegle profili na tych samych danych, żeby nie wywoływać resource locków. | Harness działa sekwencyjnie; safe area wstrzyknięta i asercje geometrii dodane. Czeka na krótki przebieg oraz nową pełną galerię. |
+| Puste listy | Komunikaty „Nie masz…”, „Brak…” i równoważne stany pustych list, które używają kafelków, mają być kaflem o wspólnym wyglądzie i przerywanej obwódce. Dotyczy m.in. Connect i list zasobów. Nie zmieniać stanów ładowania, błędów ani pustych sekcji celowo ukrytych. | Wspólne puste kafle dodane dla list zasobów, Connect i udostępnień; sprawdzić w galerii. |
+| Topbar | Zwiększyć odstęp między topbarem a nagłówkiem na większości stron; Privacy i Manual wymagają tej samej korekty. Topbar polls vote (punkty i tekst) ma zawsze widoczny brand, również na telefonie. Strona 404 nie ma przycisku „Wróć” w topbarze. | Odstęp, oba topbary vote i 404 poprawione; sprawdzić w galerii. |
+| Nagłówek i paski akcji | Nie zawijać przedwcześnie: jeśli cała zawartość mieści się w dostępnej szerokości, zostaje w jednym wierszu. Jeśli nie, dopiero wtedy zawinąć. W nagłówku podpowiedź może złamać się na granicy zdań/fraz i zostać obok akcji; akcje przenieść dopiero, gdy po takim zawinięciu nadal nie mieszczą się czytelnie. W pasku filtrów/eksportów grupy zachowują lewy/prawy brzeg, a prawa grupa rozkłada się równomiernie przy zawinięciu. | Pomiar naturalnej szerokości i czytelnego minimum podpowiedzi oraz rozmiarowanie grup paska poprawione; sprawdzić na zrzutach. |
+| Stopki | Dwie sekcje: lewa przy lewej krawędzi, prawa przy prawej; przy braku miejsca zawijać obie z rozsądnym podziałem. Trzy sekcje: skrajne przy krawędziach, środkowa centralnie; przy zawijaniu utrzymać proporcje. | Wspólna reguła dwóch/trzech sekcji dodana; sprawdzić w galerii. |
+| Games | „Ustawienia rozgrywki”: złoty przycisk z ikoną zębatki. Wypustki społeczności mają czytelną pełną nazwę, a Preparowana ma być krótsza/kompaktowa. Ikona „Eksportuj do bazy” ma używać istniejącej ikony Bazy z nałożoną strzałką. Sortowanie „Otrzymano” ma należeć do pozostałych kryteriów sortowania, nie działać jako osobny wybór. | Złote ustawienia zębatką, czytelna nazwa Społeczności, mniejsza Preparowana, ikona bazy ze strzałką i sortowanie Otrzymano dodane; sprawdzić w galerii. |
+| Gry społeczności | Usunąć widoczne etykiety „Szukaj gier” i „Sortowanie”; zachować pola i przyciski z dostępnymi nazwami. Poprawić ikonę języka. „Moje wysłane” nie może trafić do drugiego wiersza. | Etykiety ukryte wizualnie, ikona globusa, „Moje wysłane” przypięte do nagłówka; sprawdzić w galerii. |
+| Ankiety | Na telefonie pokazać trzy karty. Kartę anonimowości oraz odbiorców podzielić zgodnie z funkcją, zachowując czytelną grupę. | Udostępnianie podzielone na trzy karty; sprawdzić na telefonie i komputerze w nowym przebiegu. |
+| Logo | Używać publicznego adresu strony `/logos/` we wszystkich linkach, mapach, testach i dokumentacji; nie utrzymywać aliasów starych tras. Przycisk Podgląd na mobile zawsze pozostaje w pierwszym wierszu. | Mapę, PWA, dokumentację i URL zrzutów ujednolicono; Podgląd przypięty do pierwszego wiersza. Sprawdzić w galerii. |
+| Mail | Publiczny adres strony to `/mails/` we wszystkich linkach, mapach, testach i dokumentacji; nie utrzymywać aliasów starych tras. Ścieżki plików JS/CSS i endpointów API nie są trasą strony i mają pozostać bez zmian. | Mapę, dokumentację i canonical URL ujednolicono; ścieżki assetów/API pozostały. Sprawdzić w galerii. |
+| Polls QR i Display | Wspólny kierunek blokady dla komputera/TV, ale z odmiennym wymaganiem rozmiaru: mały tablet, w tym iPad mini, jest blokowany dla QR i Display. Każdy typ otrzymuje precyzyjny komunikat zamiast ogólnego „komputer lub telewizor”. Polls QR nie pokazuje stopki ani przycisku kontaktu. | iPad mini ma próg krótszego boku 800 px i osobne komunikaty; kontakt usunięty z QR. Czeka na sprawdzenie stanu guarda w galerii. |
+| Connect TV | Dostępny wyłącznie na TV. Inne urządzenia dostają guard z przyciskiem „Wróć” prowadzącym bezpośrednio do `/connect/`. Bez odsłaniania pod spodem TV UI. | Rozpoznawanie Smart TV oraz pełnoekranowy guard z powrotem do Connect dodane; sprawdzić profile MacBook/TV. |
+| Connect | Pusty stan udostępnionych urządzeń używa wspólnego pustego kafla. Jeśli „Skanuj kod QR” przechodzi do drugiego wiersza, umieścić separator pod nagłówkiem/przyciskiem i zachować odstęp jak na pozostałych stronach. | Pusty kafel i odstępy separatora dla drugiego wiersza poprawione; sprawdzić iPhone/iPad. |
+| Ustawienia gry | iPad mini portrait jest obsługiwany. Ukrywać boczny pasek pod przyciskiem, jak w poprzednim modalnym układzie; nie pokazywać guarda. | Próg mapy obniżony do 600 px dla tabletów; wysuwany panel sekcji dodany. Czeka na sprawdzenie zawartości w iPad portrait. |
+| Control | Karta trybu testowego znajduje się pod kartami głównych trybów. | Karta trybu testowego przeniesiona pod karty urządzeń; sprawdzić w galerii. |
+| Host i Buzzer | Wyjątki od globalnego guarda mobile landscape: mogą używać obróconego widoku. W portrait pokazać spójny przycisk/sugestię obrotu zgodną z pozostałymi guardami, bez blokowania dopuszczonej sesji. | Globalny guard ma wyjątki Host/Buzzer; w pionie pojawia się niedegradująca sesji sugestia z przyciskiem obrotu. Czeka na sprawdzenie obu orientacji. |
 | Podgląd Logo | Na mobile przycisk Podgląd nigdy nie może znaleźć się w drugim wierszu. | Do wdrożenia razem z paskiem akcji Logo. |
 
 Kolejność realizacji: (1) zapisać kryteria galerii i wyłączyć równoległe
@@ -1211,7 +1211,7 @@ uzgodnioną historię wysyłek, bez plakietek śledzących decyzje odbiorcy.
 Zweryfikować telefon, tablet i powrót na stronę; istniejące Bazy objąć
 regresją wspólnego mechanizmu, bez ponownego wdrażania go.
 
-### `/mail/` — lekki wzorzec Go (2026-10-12)
+### `/mails/` — lekki wzorzec Go (2026-10-12)
 
 Centrum maili: lekki topbar jak Go i jedna karta obejmująca nadrzędną
 sekcję globalnej rezygnacji oraz listy Subskrypcji i Zadań/udostępnień.
@@ -1220,7 +1220,7 @@ karty. Opcjonalna krótka zachęta do obejrzenia systemu i rejestracji,
 bez rozbudowanego nagłówka zasobów. Zrzuty po wykonaniu z danymi.
 Źródło zakresu i zachowania: maile-granice.md.
 
-### Ostatnia korekta wyglądu `/mail/` — 2026-10-12
+### Ostatnia korekta wyglądu `/mails/` — 2026-10-12
 
 Sekcja globalnej rezygnacji **nad** kartą list. Karta ma rzeczywiste
 wypustki jak Ankiety: ten sam HTML/CSS, dwie zakładki Subskrypcje oraz
@@ -1240,7 +1240,7 @@ Zastępuje przejściową interpretację „śmietnik przy każdej rezygnacji”.
 ### Kontakt w stopce — decyzja użytkownika 2026-10-12
 
 Formularz Kontakt jest dostępny na każdej stronie, również bez logowania.
-W `/mail/` wspólny przycisk data-contact-modal i istniejący formularz,
+W `/mails/` wspólny przycisk data-contact-modal i istniejący formularz,
 bez drugiej implementacji. „Poznaj system” prowadzi do `/` (strona główna),
 „Logowanie i rejestracja” do `/login/`. Audyt pozostałych stron obejmuje
 obecność przycisku, otwarcie anonimowe i zachowanie pełnego ekranu/landscape.
@@ -1248,17 +1248,17 @@ Nie wysyłać prawdziwego zgłoszenia podczas podglądu/testów — wywołuje
 powiadomienie admina; transport zastąpić kontrolowanym testowym odbiorem.
 
 Korekta podglądu Kontakt: na pełnym ekranie telefonu Wstecz w topbarze zamiast X,
-także na stronach bez przycisku Wstecz w topbarze (np. `/mail/`). Nagłówek
+także na stronach bez przycisku Wstecz w topbarze (np. `/mails/`). Nagłówek
 ma tło zgodne z treścią modala, bez jaśniejszego prostokąta. Na stronach
 z istniejącym wspólnym trybem sheet nadal przejmowany jest przycisk
 topbara. Zwykłe okno na komputerze zachowuje zamknięcie X.
 Gdy strona nie ma przejmowanego przycisku, pełnoekranowy Kontakt ma
-dedykowany przycisk we wspólnym topbarze. W `/mail/` wspólny sheet mieści
+dedykowany przycisk we wspólnym topbarze. W `/mails/` wspólny sheet mieści
 się w mail-wrap; topbar ze zmianą języka i stopka strony pozostają widoczne.
 Wstecz nie ląduje w nagłówku formularza. Własny topbar pełnoekranowy
 dotyczy wyłącznie stron, na których nie istnieje wspólna struktura strony.
 
-Stopka `/mail/`: wspólna `.footer`, linia oddzielająca, podpis Familiada
+Stopka `/mails/`: wspólna `.footer`, linia oddzielająca, podpis Familiada
 i Kontakt; bez dodatkowych zachęt w stopce. „Poznaj system” oraz logowanie
 pozostają małą sekcją treści centrum, niewidoczną podczas Kontakt.
 Wspólne Wstecz topbara: ikona i napis wyśrodkowane pionowo, jawny odstęp6px,

@@ -1,6 +1,6 @@
 # Centrum maili — podgląd stanów
 
-Nowy interfejs `/mail/`, przykładowe dane. Backend jest jeszcze w realizacji.
+Nowy interfejs `/mails/`, przykładowe dane. Backend jest jeszcze w realizacji.
 Lekki topbar jak Go, złote logo i tytuł „Moje powiadomienia” w stylu Gier.
 Sekcja globalnej rezygnacji nad kartą. Wypustki korzystają z tego samego
 HTML i CSS co Ankiety; listy przewijają się wewnątrz. Stopka przy dolnej krawędzi.

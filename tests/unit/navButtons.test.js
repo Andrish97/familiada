@@ -29,7 +29,7 @@ test("wymagania szerokości stron są jawne i odróżniają edytory od Control",
   assert.equal(PAGES.logoDraw.minViewportWidth, 700);
   assert.equal(PAGES.logoImage.minViewportWidth, 700);
   assert.equal(PAGES.control.minViewportWidth, 980);
-  assert.equal(PAGES.gameSettings.minViewportWidth, 980);
+  assert.equal(PAGES.gameSettings.minViewportWidth, 600);
   for (const page of Object.values(PAGES)) {
     if (page.minViewportWidth) assert.ok(Number.isFinite(page.minViewportWidth));
   }

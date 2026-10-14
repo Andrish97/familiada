@@ -8,7 +8,7 @@ on:
         required: false
         default: ""
       profiles:
-        description: "Profile: macbook, ipad-portrait, ipad-landscape, iphone-portrait, iphone-landscape; puste = wszystkie"
+        description: "Profile: macbook, ipad-portrait, ipad-landscape, iphone-portrait, iphone-landscape, tv; puste = wszystkie"
         required: false
         default: ""
 
@@ -41,6 +41,13 @@ jobs:
 
       - name: Chromium
         run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Przygotuj konto E20 i dane galerii
+        env:
+          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: node e2e/helpers/prepare-e20-gallery.js
         working-directory: tests
 
       - name: Zrzuty każdej strony i profilu

@@ -1,7 +1,7 @@
 # Go — rodzaj linku, stan, komunikat i akcja
 
 Źródła: `poll_go_resolve`, `poll_state`, `control_device_share_resolve`,
-centrum `/mail/` i reguły E19. Mapa przejść: `nawigacja-mapa-plan.md`.
+centrum `/mails/` i reguły E19. Mapa przejść: `nawigacja-mapa-plan.md`.
 To wspólny kontrakt komunikatów; wpis „do poprawy” nie oznacza wykonania.
 Kopie Gier/Logo otrzymają własne wiersze przy E19C.
 
@@ -109,14 +109,14 @@ Jeden licznik dotyczy późniejszego formularza, nie sprawdzania linku w Go.
 
 ## Centrum maili i rezygnacje (`m`, historyczne `u`/`s&action=unsub`)
 
-`m` kieruje do `/mail/`; stany prywatnego dostępu i nadrzędnej flagi są
+`m` kieruje do `/mails/`; stany prywatnego dostępu i nadrzędnej flagi są
 wyświetlane tam w tym samym lekkim stylu. Go nie powiela procesu potwierdzenia.
 Auth (rejestracja, reset, zmiana maila) ma osobne linki i nie podlega kolejce
 powiadomień, blokadzie ani stopce centrum.
 
 | Stan | Komunikat / miejsce | Akcja |
 |---|---|---|
-| Ważny prywatny dostęp | Moje powiadomienia w `/mail/` | Subskrypcje, zadania, urządzenia i flaga adresu |
+| Ważny prywatny dostęp | Moje powiadomienia w `/mails/` | Subskrypcje, zadania, urządzenia i flaga adresu |
 | Dostęp do konta | Zaloguj się na swoje konto | Login → ustawienia konta |
 | Wygasły/niepoprawny/użyty dowód | Komunikat centrum maili | Nowe potwierdzenie; bez odtwarzania dostępu starego dowodu |
 | Globalna rezygnacja aktywna | Sekcja flagi w centrum | Inne listy ukryte, zaproszenia/udostępnienia odrzucone zgodnie z grafem |

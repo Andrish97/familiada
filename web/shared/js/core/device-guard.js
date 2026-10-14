@@ -27,8 +27,9 @@ export function getDeviceProfile() {
   const touch = isTouch();
   const width = window.innerWidth;
   const height = window.innerHeight;
+  const isTv = /SmartTV|SMART-TV|Tizen|web0s|WebOS|HbbTV|BRAVIA|Android TV|GoogleTV|Roku|Viera|NetCast/i.test(navigator.userAgent || "");
   return {
-    formFactor: touch ? (short < PHONE_MAX_SHORT_SIDE ? "phone" : "tablet") : "desktop",
+    formFactor: isTv ? "tv" : touch ? (short < PHONE_MAX_SHORT_SIDE ? "phone" : "tablet") : "desktop",
     orientation: width >= height ? "landscape" : "portrait",
     viewportWidth: width,
     viewportHeight: height,
@@ -48,12 +49,13 @@ export function isPhoneScreen() {
  * telefonu → próg viewportu i pomocny obrót tabletu → wąskie okno.
  * `formFactors` opisuje twardą dostępność strony, `requiresTouch` jej wejście.
  */
-export function deviceGuardState(minWidth = MIN_WORK_WIDTH, { formFactors = null, requiresTouch = false } = {}) {
+export function deviceGuardState(minWidth = MIN_WORK_WIDTH, { formFactors = null, requiresTouch = false, minScreenShortSide = 0, allowPhoneLandscape = false } = {}) {
   const profile = getDeviceProfile();
   if (requiresTouch && !profile.touch) return "touch";
   if (formFactors && !formFactors.includes(profile.formFactor)) return "unsupported";
+  if (minScreenShortSide && profile.touch && profile.screenShortSide < minScreenShortSide) return "screen";
   if (minWidth > 0 && profile.touch && minWidth > profile.screenLongSide) return "screen";
-  if (profile.formFactor === "phone" && profile.orientation === "landscape") return "rotate";
+  if (!allowPhoneLandscape && profile.formFactor === "phone" && profile.orientation === "landscape") return "rotate";
   if (profile.viewportWidth >= minWidth) return "ok";
   // Telefon landscape i tak blokuje reguła globalna. Obrót w celu uzyskania
   // szerokości proponujemy wyłącznie tabletowi, jeśli fizycznie wystarczy.
@@ -69,29 +71,30 @@ const TEXTS = {
   narrow: { title: "pageGuard.narrowTitle", message: "pageGuard.narrowMessage", icon: "fullscreen-enter" },
 };
 
-export function showDeviceGuard(state, backHref) {
+export function showDeviceGuard(state, backHref, messageKey = null) {
   const txt = TEXTS[state] || TEXTS.unsupported;
   showPageGuard({
     kind: "device",
     state,
     iconName: txt.icon,
     titleKey: txt.title,
-    messageKey: txt.message,
+    messageKey: messageKey || txt.message,
     backHref,
   });
 }
 
 /** Strona wymaga minimalnej szerokości: guard reaguje na resize i obrót. */
-export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null, formFactors = null, requiresTouch = false } = {}) {
+export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null, fits = null, messageKey = null, screenMessageKey = null, formFactors = null, requiresTouch = false, minScreenShortSide = 0, allowPhoneLandscape = false } = {}) {
   const currentState = () => {
-    const state = deviceGuardState(minWidth, { formFactors, requiresTouch });
+    const state = deviceGuardState(minWidth, { formFactors, requiresTouch, minScreenShortSide, allowPhoneLandscape });
     return state === "ok" && fits && !fits() ? "narrow" : state;
   };
   function apply() {
     const state = currentState();
     if (state === "narrow" && messageKey) {
       showPageGuard({ kind: "device", state, iconName: "fullscreen-enter", titleKey: TEXTS.narrow.title, messageKey, backHref });
-    } else if (state !== "ok") showDeviceGuard(state, backHref);
+    } else if (state === "screen" && screenMessageKey) showDeviceGuard(state, backHref, screenMessageKey);
+    else if (state !== "ok") showDeviceGuard(state, backHref);
     else if (document.getElementById("pageGuard")?.dataset.kind !== "guest") hidePageGuard();
     document.documentElement.dataset.deviceGuard = state;
     // Guard jest końcowym, widocznym stanem zablokowanej nawigacji. Zdejmujemy

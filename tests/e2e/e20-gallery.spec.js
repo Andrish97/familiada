@@ -29,6 +29,7 @@ const PROFILES = [
   { id: "ipad-landscape", label: "iPad mini 7 poziomo", width: 1133, height: 744, scale: 2, mobile: true, touch: true, ua: "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", safe: { top: 24, right: 0, bottom: 20, left: 0 } },
   { id: "iphone-portrait", label: "iPhone 14 pionowo", width: 390, height: 844, scale: 3, mobile: true, touch: true, ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", safe: { top: 47, right: 0, bottom: 34, left: 0 } },
   { id: "iphone-landscape", label: "iPhone 14 poziomo", width: 844, height: 390, screen: { width: 390, height: 844 }, scale: 3, mobile: true, touch: true, ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", safe: { top: 0, right: 47, bottom: 21, left: 47 } },
+  { id: "tv", label: "Telewizor 1920 × 1080", width: 1920, height: 1080, scale: 1, mobile: false, touch: false, ua: "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.5) AppleWebKit/537.36 (KHTML, like Gecko) Version/6.5 TV Safari/537.36", safe: null },
 ];
 const requestedPages = String(process.env.E20_GALLERY_PAGES || "").split(",").map((value) => value.trim()).filter(Boolean);
 const requestedProfiles = String(process.env.E20_GALLERY_PROFILES || "").split(",").map((value) => value.trim()).filter(Boolean);
@@ -233,10 +234,36 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     const injected = await page.locator("html").getAttribute("data-e20-safe-area-injected");
     if (injected !== "true") throw new Error(`${profile.label} · ${id}: skrypt galerii nie wstrzyknął safe area`);
   }
-  for (const side of ["top", "right", "bottom", "left"]) {
+  for (const side of ["top", "right", "left"]) {
     if (actualSafe[side] !== expectedSafe[side]) {
       throw new Error(`${profile.label} · ${id}: safe area ${side}=${actualSafe[side]}px, oczekiwano ${expectedSafe[side]}px`);
     }
+  }
+  const safeGeometry = await page.evaluate(() => {
+    const topbar = document.querySelector(".topbar");
+    const footer = document.querySelector(".footer");
+    const number = (value) => Number.parseFloat(value) || 0;
+    const style = topbar ? getComputedStyle(topbar) : null;
+    const footerStyle = footer ? getComputedStyle(footer) : null;
+    const rect = topbar?.getBoundingClientRect();
+    return {
+      topbarTop: rect?.top ?? null,
+      topbarPadding: style ? {
+        top: number(style.paddingTop), right: number(style.paddingRight), bottom: number(style.paddingBottom), left: number(style.paddingLeft),
+      } : null,
+      footerPaddingBottom: footerStyle ? number(footerStyle.paddingBottom) : null,
+    };
+  });
+  if (safeGeometry.topbarTop !== null && safeGeometry.topbarTop !== 0) {
+    throw new Error(`${profile.label} · ${id}: topbar nie rozciąga tła od krawędzi ekranu (${safeGeometry.topbarTop}px)`);
+  }
+  for (const side of ["top", "right", "bottom", "left"]) {
+    if (safeGeometry.topbarPadding && safeGeometry.topbarPadding[side] + 0.5 < expectedSafe[side]) {
+      throw new Error(`${profile.label} · ${id}: topbar ${side} safe area=${safeGeometry.topbarPadding[side]}px, oczekiwano co najmniej ${expectedSafe[side]}px`);
+    }
+  }
+  if (safeGeometry.footerPaddingBottom !== null && safeGeometry.footerPaddingBottom + 0.5 < expectedSafe.bottom) {
+    throw new Error(`${profile.label} · ${id}: stopka nie uwzględnia dolnej safe area (${safeGeometry.footerPaddingBottom}px < ${expectedSafe.bottom}px)`);
   }
   const state = await page.evaluate(() => ({
     guard: document.documentElement.dataset.deviceGuard || document.getElementById("pageGuard")?.dataset.state || "",
@@ -256,6 +283,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // zrzuty na długich/animowanych widokach wisiały w Chromium po 45 s; wysokość
   // całej strony pozostaje w manifeście, a screenshot zachowuje viewport i safe area.
   await page.screenshot({ path: path.join(OUT, id, `${profile.id}.png`), fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
+  expect(page.context().pages(), `${profile.label} · ${id}: otwarto równoległą kartę`).toHaveLength(1);
   page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
   manifest.push({
@@ -317,7 +345,9 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       const page = await context.newPage();
       page.setDefaultTimeout(20_000);
       page.setDefaultNavigationTimeout(20_000);
-      const selectedUrls = urls(fixtures).filter(([id]) => !requestedPages.length || requestedPages.includes(id));
+      const selectedUrls = urls(fixtures)
+        .filter(([id]) => !requestedPages.length || requestedPages.includes(id))
+        .filter(([id]) => profile.id !== "tv" || id === "connect-tv");
       for (const [id, href] of selectedUrls) {
         if (id === "login" || id === "home") {
           // /login i strona główna są widokami gościa (zalogowany użytkownik
@@ -358,7 +388,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
               : null;
         await capture(page, profile, id, href, manifest, null, readySelector);
       }
-      const extra = additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
+      const extra = profile.id === "tv" ? [] : additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
       for (const state of extra) {
         await capture(page, profile, state.id, state.href, manifest, state.prepare);
       }

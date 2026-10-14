@@ -119,6 +119,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     const stamp = (el, k) => Date.parse(el.dataset[k] || el.dataset.created || "") || 0;
     const nm = (el) => norm(el.querySelector(name)?.textContent);
     const cmp = sortValue === "name" ? (a, b) => nm(a).localeCompare(nm(b), "pl")
+      : sortValue === "received" ? (a, b) => (Date.parse(b.dataset.received || "") || 0) - (Date.parse(a.dataset.received || "") || 0)
       : sortValue === "created" ? (a, b) => stamp(b, "created") - stamp(a, "created")
       : (a, b) => stamp(b, "updated") - stamp(a, "updated");
     const sorted = [...tiles].sort(cmp);

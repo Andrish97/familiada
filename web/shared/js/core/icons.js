@@ -109,6 +109,7 @@ export const ICONS = Object.freeze({
   gamepad: s('<path d="M6.7 5h10.6a4 4 0 0 1 3.9 3.1l1.4 6.1a3.9 3.9 0 0 1-6.6 3.6L14.2 16H9.8L8 17.8a3.9 3.9 0 0 1-6.6-3.6l1.4-6.1A4 4 0 0 1 6.7 5Z"/><path d="M7 9v5M4.5 11.5h5"/><circle cx="16.5" cy="10" r=".8" fill="currentColor" stroke="none"/><circle cx="19" cy="12.5" r=".8" fill="currentColor" stroke="none"/>'),
   settings: s('<path d="M10 2.8h4l.7 2.4 2 .9 2.2-1.1 2.8 2.8-1.1 2.2.9 2 .7 2.4h-4l-.7-2.4-2-.9-2.2 1.1-2.8-2.8 1.1-2.2-.9-2Z"/><circle cx="12" cy="12" r="3.2"/>'),
   "database-down": s('<ellipse cx="12" cy="5" rx="8.5" ry="3"/><path d="M3.5 5v10c0 1.7 3.8 3 8.5 3 1.3 0 2.5-.1 3.6-.3M20.5 5v6M3.5 10c0 1.7 3.8 3 8.5 3"/><path d="M18.5 14v7m-3-3 3 3 3-3"/>'),
+  "database-export": s('<ellipse cx="10" cy="5" rx="7.5" ry="2.7"/><path d="M2.5 5v10c0 1.5 3.4 2.8 7.5 2.8M2.5 10c0 1.5 3.4 2.8 7.5 2.8M17.5 8v12m-4-4 4 4 4-4M10 7.7v4.8"/>'),
   drawer: s('<rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M4 12h16M10 7h4M10 16.5h4"/>'),
   // rysunek z audytu: słupki na tle poziomych podziałek
   polls: f('<rect x="2" y="20" width="20" height="1.4" rx=".7" opacity=".5"/><rect x="2" y="15.5" width="20" height="1.1" rx=".55" opacity=".28"/><rect x="2" y="10.5" width="20" height="1.1" rx=".55" opacity=".28"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10" y="15" width="4" height="5" rx="1"/><rect x="16" y="6" width="4" height="14" rx="1"/>'),

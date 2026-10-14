@@ -9,6 +9,12 @@ body.pollpub-body {
     flex-direction: column;
 }
 
+.poll-vote-topbar{
+    justify-content:flex-start;
+    min-height:var(--topbar-h);
+}
+.poll-vote-topbar .brand{ color:var(--gold); }
+
 body.pollpub-body .card {
     margin-top: auto;
     margin-bottom: auto;

@@ -2,6 +2,7 @@ const en = {
   pollSharePanel: {
     "anonymous": "Anonymous",
     "recipients": "Recipients",
+    "recipientList": "Recipient list",
     "opened": "Opened",
     "empty": "No people on this list",
     "mailDisabled": "Email notifications are disabled"
@@ -185,8 +186,12 @@ const en = {
     touchMessage: "Open this page on a phone or tablet with a touchscreen.",
     tvPhoneTitle: "Use a larger screen",
     tvPhoneMessage: "Display setup is intended for a TV. On a phone, return to Connect device.",
+    tvOnlyTitle: "This page is for TVs",
+    tvOnlyMessage: "Connect a display on a TV. On this device, use the Connect device page.",
     rotateTitle: "Rotate your device",
     rotateMessage: "This page needs a wider view. Rotate your device — the page will appear on its own.",
+    rotateSuggestion: "This page is easier to use in landscape.",
+    rotateNow: "Rotate",
     narrowTitle: "Window too narrow",
     narrowMessage: "Use a wider view or browser window to use this page.",
     back: "Back",
@@ -619,6 +624,7 @@ const en = {
   },
   display: {
     title: "Familiada — display",
+    screenMessage: "Display requires a computer, TV, or large tablet. The iPad mini screen is too small.",
     qrHost: "Host",
     qrBuzzer: "Buzzer",
     qrHostAlt: "QR Host",
@@ -3224,6 +3230,7 @@ const en = {
   },
   pollQr: {
     title: "Familiada — QR code poll",
+    screenMessage: "The QR poll display requires a computer, TV, or large tablet. The iPad mini screen is too small.",
     fullscreen: "Fullscreen",
     scan: "Scan the QR code to vote",
     missingUrl: "Missing URL",
@@ -5201,6 +5208,7 @@ const en = {
     pageTitle: "Game settings",
     defaultGameName: "Game",
     categories: {
+      open: "Show settings sections",
       teams: "Teams",
       display: "Display",
       sound: "Sound",

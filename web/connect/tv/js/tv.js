@@ -3,15 +3,14 @@ import { initI18n, t, getUiLang } from "../../../shared/translation/translation.
 import { getDeviceProfile } from "../../../shared/js/core/device-guard.js?v=v2026-10-13T13432";
 import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-13T13432";
 await initI18n();
-const phoneBlocked = getDeviceProfile().formFactor === "phone";
-if (phoneBlocked) {
-  document.body.style.visibility = "hidden";
+const tvOnlyBlocked = getDeviceProfile().formFactor !== "tv";
+if (tvOnlyBlocked) {
   document.documentElement.removeAttribute("data-tv-guard-pending");
-  showPageGuard({ kind: "device", state: "phone", iconName: "display", titleKey: "pageGuard.tvPhoneTitle", messageKey: "pageGuard.tvPhoneMessage" });
+  showPageGuard({ kind: "device", state: "tv-only", iconName: "display", titleKey: "pageGuard.tvOnlyTitle", messageKey: "pageGuard.tvOnlyMessage", backHref: "/connect/" });
 } else {
   document.documentElement.removeAttribute("data-tv-guard-pending");
 }
-if (!phoneBlocked) {
+if (!tvOnlyBlocked) {
 const form = document.getElementById("tvConnectForm");
 const input = document.getElementById("tvCode");
 const button = document.getElementById("tvConnect");

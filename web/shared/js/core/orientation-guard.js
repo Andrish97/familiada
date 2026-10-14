@@ -3,9 +3,11 @@
 import { deviceGuardState, getDeviceProfile, showDeviceGuard } from "./device-guard.js?v=v2026-10-13T14412";
 import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-13T14412";
 import { PAGES, pageIdForPath } from "./nav-map.js?v=v2026-10-13T13432";
+import { applyTranslations } from "../../translation/translation.js?v=v2026-10-13T13432";
 
 function refresh() {
   const profile = getDeviceProfile();
+  const isTvConnect = /\/connect\/tv\//.test(location.pathname);
   const route = PAGES[pageIdForPath(location.pathname)] || {};
   const body = document.body;
   const routeOptions = {
@@ -14,19 +16,36 @@ function refresh() {
       ? body.dataset.deviceFormFactors.split(",").map((value) => value.trim()).filter(Boolean)
       : route.deviceGuard?.formFactors || null,
     requiresTouch: body?.dataset.requiresTouch === "true" || !!route.deviceGuard?.requiresTouch,
+    minScreenShortSide: Number(body?.dataset.minScreenShortSide) || route.deviceGuard?.minScreenShortSide || 0,
+    allowPhoneLandscape: /\/control\/(?:host|buzzer)\//.test(location.pathname),
   };
   const routeState = deviceGuardState(routeOptions.minWidth, routeOptions);
+  const suggestsLandscape = routeOptions.allowPhoneLandscape && profile.formFactor === "phone" && profile.orientation === "portrait";
+  let suggestion = document.getElementById("orientationSuggestion");
+  if (suggestsLandscape && !suggestion) {
+    suggestion = document.createElement("aside");
+    suggestion.id = "orientationSuggestion";
+    suggestion.className = "orientation-suggestion";
+    suggestion.setAttribute("role", "status");
+    suggestion.innerHTML = `<span data-i18n="pageGuard.rotateSuggestion">Wygodniej używać w poziomie</span><button class="btn sm" type="button" data-i18n="pageGuard.rotateNow">Obróć</button>`;
+    suggestion.querySelector("button")?.addEventListener("click", async () => {
+      try { await screen.orientation?.lock?.("landscape"); } catch { /* przeglądarka może wymagać ręcznego obrotu */ }
+    });
+    window.addEventListener("i18n:lang", () => { if (suggestion?.isConnected) applyTranslations(suggestion); });
+    applyTranslations(suggestion);
+    document.body.appendChild(suggestion);
+  } else if (!suggestsLandscape) suggestion?.remove();
   document.documentElement.dataset.formFactor = profile.formFactor;
   document.documentElement.dataset.screenOrientation = profile.orientation;
   document.documentElement.dataset.viewportOrientation = profile.orientation;
-  const blocked = profile.formFactor === "phone" && profile.orientation === "landscape";
+  const blocked = profile.formFactor === "phone" && profile.orientation === "landscape" && !routeOptions.allowPhoneLandscape && !isTvConnect;
   document.documentElement.dataset.globalPhoneLandscape = String(blocked);
   delete document.documentElement.dataset.phoneLandscapePending;
   const overlay = document.getElementById("pageGuard");
   if (blocked) {
     if (["unsupported", "screen", "touch"].includes(routeState)) {
       document.documentElement.dataset.deviceGuard = routeState;
-      showDeviceGuard(routeState);
+      showDeviceGuard(routeState, null, routeState === "screen" ? body?.dataset.screenMessageKey || null : null);
       document.documentElement.classList.remove("page-loading");
       return;
     }

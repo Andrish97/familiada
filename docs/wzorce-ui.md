@@ -299,8 +299,8 @@ Lokalizacje `plik:linia` względem `web/`.
 | `/subscriptions/` | lista | ✓ | ✗ K4 | ✗ P1 | ✓ |
 | `/bases/` | lista | ✓ | ✗ K1, K4 | ✗ P1 | ✓ |
 | `/bases/explorer/` | praca | ✗ T1, T3 | — | ✓ | ✗ R3 |
-| `/logo/` | lista | ✓ | ✓ | ✗ P3 | ✓ |
-| `/logo/editor/*` | praca | ✗ T1, T3 | — | — | ✓ |
+| `/logos/` | lista | ✓ | ✓ | ✗ P3 | ✓ |
+| `/logos/editor/*` | praca | ✗ T1, T3 | — | — | ✓ |
 | `/marketplace/` | lista | ✗ T6 | ✗ K6 | ✗ P4 | ✓ |
 | `/account/` | formularz | ✗ T2, T5 | — | — | ✓ |
 | `/manual/` | tekstowa | ✓ | ✗ K7 | — | ✓ |
@@ -323,8 +323,8 @@ Lokalizacje `plik:linia` względem `web/`.
 | `/subscriptions/` | ✗ L2 | ✓ | ✗ S1 | ✗ X1 | ✗ D2 | ✗ M1 | ✓ | ✗ E1 |
 | `/bases/` | ✗ L3 | ✓ | ✓ | ✗ X4 | ✓ | ✗ M1 | ✓ | ✓ |
 | `/bases/explorer/` | — (wiersze) | ✓ (`.chip`) | ✓ | — | ✓ | ✓ | ✗ B5 | — |
-| `/logo/` | ✗ L1 | — | ✓ | — | ✓ | ✓ | ✓ | ✗ E1 |
-| `/logo/editor/*` | — | — | — | — | ✓ | ✓ | ✗ B6 | — |
+| `/logos/` | ✗ L1 | — | ✓ | — | ✓ | ✓ | ✓ | ✗ E1 |
+| `/logos/editor/*` | — | — | — | — | ✓ | ✓ | ✗ B6 | — |
 | `/marketplace/` | ✗ L4 | ✗ O1 | ✗ S2 | — | ✓ (wspólny) | ✗ M1 | ✓ | ✗ E1 |
 | `/account/` | — | — | — | — | ✗ D3 | ✓ | ✗ B7 | — |
 | `/manual/` | — | — | — | — | — | — | ✓ | — |
@@ -356,9 +356,9 @@ Tło: szkielet strony bez danych (patrz „Jak wykonano”). Kolejność jak w t
 <tr><td><code>/bases/</code></td><td><img src="img/wzorce/bases-m.png" width="150"></td><td><img src="img/wzorce/bases-d.png" width="420"></td></tr>
 <tr><td><code>/bases/explorer/</code></td><td><img src="img/wzorce/bases-explorer-m.png" width="150"></td><td><img src="img/wzorce/bases-explorer-d.png" width="420"></td></tr>
 <tr><td><code>/logo/</code></td><td><img src="img/wzorce/logo-m.png" width="150"></td><td><img src="img/wzorce/logo-d.png" width="420"></td></tr>
-<tr><td><code>/logo/editor/text/</code></td><td><img src="img/wzorce/logo-text-m.png" width="150"></td><td><img src="img/wzorce/logo-text-d.png" width="420"></td></tr>
-<tr><td><code>/logo/editor/draw/</code></td><td><img src="img/wzorce/logo-draw-m.png" width="150"></td><td><img src="img/wzorce/logo-draw-d.png" width="420"></td></tr>
-<tr><td><code>/logo/editor/image/</code></td><td><img src="img/wzorce/logo-image-m.png" width="150"></td><td><img src="img/wzorce/logo-image-d.png" width="420"></td></tr>
+<tr><td><code>/logos/editor/text/</code></td><td><img src="img/wzorce/logo-text-m.png" width="150"></td><td><img src="img/wzorce/logo-text-d.png" width="420"></td></tr>
+<tr><td><code>/logos/editor/draw/</code></td><td><img src="img/wzorce/logo-draw-m.png" width="150"></td><td><img src="img/wzorce/logo-draw-d.png" width="420"></td></tr>
+<tr><td><code>/logos/editor/image/</code></td><td><img src="img/wzorce/logo-image-m.png" width="150"></td><td><img src="img/wzorce/logo-image-d.png" width="420"></td></tr>
 <tr><td><code>/marketplace/</code></td><td><img src="img/wzorce/marketplace-m.png" width="150"></td><td><img src="img/wzorce/marketplace-d.png" width="420"></td></tr>
 <tr><td><code>/account/</code></td><td><img src="img/wzorce/account-m.png" width="150"></td><td><img src="img/wzorce/account-d.png" width="420"></td></tr>
 <tr><td><code>/manual/</code></td><td><img src="img/wzorce/manual-m.png" width="150"></td><td><img src="img/wzorce/manual-d.png" width="420"></td></tr>
@@ -392,7 +392,7 @@ pokazują stan szkieletu po usunięciu blokady lub komunikat „brak parametru i
   (`bases/explorer/index.html:65`) zamiast jednego `common.logout`. Control: sekcja 2 to
   wskaźniki urządzeń (`.top-status`) i `#c2TopbarProgress` zamiast tytułu —
   inny układ niż pozostałe strony pracy.
-- **T4 — `/logo/` (drobiazg):** `id="brandTitle"` siedzi na znaku `FAMILIADA` (`logo/index.html:45`) — pozostałość po starym edytorze; id używa już tylko `logo/js/editor-page.js:55` (podtytuł edytora), na liście jest martwe.
+- **T4 — `/logos/` (drobiazg):** `id="brandTitle"` siedzi na znaku `FAMILIADA` (`logo/index.html:45`) — pozostałość po starym edytorze; id używa już tylko `logo/js/editor-page.js:55` (podtytuł edytora), na liście jest martwe.
 - **T5 — `/account/`:** sekcja 4 pusta (`account/index.html:49`) — brak menu
   konta (`nazwa ▾`), mimo planu „sekcja 4 także na account”. To samo `/go/`
   (`go/index.html:47`, ale tam brak konta uzasadniony).
@@ -547,7 +547,7 @@ pokazują stan szkieletu po usunięciu blokady lub komunikat „brak parametru i
 
 | Strona | `main` padding | Treść |
 |---|---|---|
-| `/games/`, `/connect/`, `/subscriptions/`, `/bases/`, `/account/`, `/logo/`, `/marketplace/`, `/manual/`, `/privacy/`, `/games/editor/`, `/logo/editor/text/` | 15 / 15 | 15 – 15 ✓ |
+| `/games/`, `/connect/`, `/subscriptions/`, `/bases/`, `/account/`, `/logos/`, `/marketplace/`, `/manual/`, `/privacy/`, `/games/editor/`, `/logos/editor/text/` | 15 / 15 | 15 – 15 ✓ |
 | `/control/` | 15 / 15 | **35 – 35** (`.wrap.wide`) |
 | `/games/settings/` | **28 / 28** | menu boczne bez marginesu |
 | `/bases/explorer/` | **8 / 8** | panel 8 px |

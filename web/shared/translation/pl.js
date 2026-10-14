@@ -2,6 +2,7 @@ const pl = {
   pollSharePanel: {
     "anonymous": "Anonimowo",
     "recipients": "Odbiorcy",
+    "recipientList": "Lista odbiorców",
     "opened": "Otwarto",
     "empty": "Brak osób na liście",
     "mailDisabled": "Powiadomienia mailowe są wyłączone"
@@ -26,7 +27,7 @@ const pl = {
   "action": "Wyślij",
   "title": "Wyślij znajomym",
   "received": "Otrzymane kopie",
-  "receivedFilter": "Otrzymane",
+  "receivedFilter": "Otrzymano",
   "history": "Historia wysyłek",
   "from": "Od: {name}",
   "accept": "Akceptuj",
@@ -185,8 +186,12 @@ const pl = {
     touchMessage: "Otwórz tę stronę na telefonie lub tablecie z ekranem dotykowym.",
     tvPhoneTitle: "Otwórz na dużym ekranie",
     tvPhoneMessage: "Podłączanie wyświetlacza jest przeznaczone dla telewizora. Na telefonie wróć do strony Podłącz urządzenie.",
+    tvOnlyTitle: "Ta strona jest przeznaczona dla telewizora",
+    tvOnlyMessage: "Podłącz wyświetlacz na telewizorze. Na tym urządzeniu użyj strony Podłącz urządzenie.",
     rotateTitle: "Obróć urządzenie",
     rotateMessage: "Ta strona wymaga szerszego widoku. Obróć urządzenie — strona pojawi się sama.",
+    rotateSuggestion: "Wygodniej używać tej strony w poziomie.",
+    rotateNow: "Obróć",
     narrowTitle: "Za wąskie okno",
     narrowMessage: "Użyj szerszego widoku lub poszerz okno przeglądarki, żeby korzystać z tej strony.",
     back: "Wróć",
@@ -632,6 +637,7 @@ const pl = {
   },
   display: {
     title: "Familiada — wyświetlacz",
+    screenMessage: "Wyświetlacz wymaga komputera, telewizora lub dużego tabletu. iPad mini ma za mały ekran.",
     qrHost: "Prowadzący",
     qrBuzzer: "Przyciski",
     qrHostAlt: "QR Prowadzący",
@@ -2675,7 +2681,7 @@ const pl = {
       pollPointsMobile: "Punkty",
       prepared: "Preparowana",
       market: "Gry Społeczności",
-      marketMobile: "Społ.",
+      marketMobile: "Społeczność",
     },
     iosWebapp: {
       title: "Dodaj Familiadę do ekranu głównego",
@@ -3125,6 +3131,7 @@ const pl = {
   },
   pollQr: {
     title: "Familiada — ankieta z kodem QR",
+    screenMessage: "Wyświetlanie ankiety QR wymaga komputera, telewizora lub dużego tabletu. iPad mini ma za mały ekran.",
     fullscreen: "Pełny ekran",
     scan: "Zeskanuj QR, aby zagłosować",
     missingUrl: "Brak URL",
@@ -5110,6 +5117,7 @@ const pl = {
     pageTitle: "Ustawienia gry",
     defaultGameName: "Gra",
     categories: {
+      open: "Pokaż sekcje ustawień",
       teams: "Drużyny",
       display: "Wygląd",
       sound: "Dźwięk",

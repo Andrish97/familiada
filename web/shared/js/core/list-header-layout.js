@@ -1,6 +1,6 @@
-// Nagłówek list Gier/Baz/Logo: akcje pozostają przy prawej krawędzi,
-// dopóki tekst po ich lewej nie staje się zbyt ciasny. Wtedy cała grupa
-// akcji przechodzi do następnego wiersza i zaczyna od lewej.
+// Nagłówek list Gier/Baz/Logo: najpierw pozwól podpowiedzi naturalnie i
+// czytelnie zawinąć się obok akcji. Przenieś całą grupę dopiero, gdy nawet
+// po tym brakuje miejsca na tytuł lub same akcje nie mieszczą się w jednym rzędzie.
 export function initListHeaderLayout(selector = ".bar") {
   const bars = [...document.querySelectorAll(selector)].filter((bar) => bar.querySelector(":scope > .actions"));
   for (const bar of bars) {
@@ -9,17 +9,28 @@ export function initListHeaderLayout(selector = ".bar") {
       queued = false;
       const actions = bar.querySelector(":scope > .actions");
       const heading = [...bar.children].find((child) => child !== actions);
-      const hint = heading?.querySelector(".hint");
       if (!actions || !heading) return;
       bar.classList.remove("has-actions-below");
       const available = bar.clientWidth;
-      const actionWidth = Math.min(actions.scrollWidth, available);
-      const headWidth = Math.max(0, available - actionWidth - 12);
-      const hintHeight = hint?.getBoundingClientRect().height || 0;
-      const lineHeight = hint ? parseFloat(getComputedStyle(hint).lineHeight) || 16 : 16;
-      const hintLines = hintHeight / lineHeight;
-      const actionRows = new Set([...actions.children].map((child) => Math.round(child.getBoundingClientRect().top))).size;
-      if (headWidth < 132 || hintLines > 2.2 || actionRows > 1 || actions.scrollWidth > available) {
+      const actionStyle = getComputedStyle(actions);
+      const actionGap = parseFloat(actionStyle.columnGap) || parseFloat(actionStyle.gap) || 0;
+      const visibleActions = [...actions.children].filter((child) => child.getClientRects().length);
+      const actionWidth = visibleActions.reduce((width, child) => width + child.getBoundingClientRect().width, 0)
+        + Math.max(0, visibleActions.length - 1) * actionGap;
+      const title = heading.querySelector(".title, h1, [data-list-title]");
+      const titleStyle = title ? getComputedStyle(title) : null;
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (context && titleStyle) context.font = titleStyle.font;
+      const titleWidth = title ? Math.ceil(context?.measureText(title.textContent.trim()).width || title.scrollWidth) : 0;
+      const hint = heading.querySelector(".hint");
+      const hintStyle = hint ? getComputedStyle(hint) : null;
+      if (context && hintStyle) context.font = hintStyle.font;
+      const hintWidth = hint ? Math.ceil(context?.measureText(hint.textContent.trim()).width || hint.scrollWidth) : 0;
+      const hintRoom = available - titleWidth - actionWidth - 12;
+      const actionRows = new Set(visibleActions.map((child) => Math.round(child.getBoundingClientRect().top))).size;
+      const hintWouldBeHardToRead = hint && hintWidth > hintRoom && hintRoom < 148;
+      if (titleWidth + actionWidth + 12 > available || actionRows > 1 || actionWidth > available || hintWouldBeHardToRead) {
         bar.classList.add("has-actions-below");
       }
     };

@@ -133,7 +133,7 @@ function setupFullscreenButton() {
 
 async function main() {
   await initI18n({ withSwitcher: false });
-  const deviceGate = guardViewportWidth({ minWidth: 0, formFactors: ["phone", "tablet"], requiresTouch: true });
+  const deviceGate = guardViewportWidth({ minWidth: 0, formFactors: ["phone", "tablet"], requiresTouch: true, allowPhoneLandscape: true });
   document.documentElement.removeAttribute("data-touch-guard-pending");
   if (deviceGate.state() !== "ok") await deviceGate.ready;
   // Utrzymujemy ekran aktywny dopiero po przejściu wspólnego guarda.

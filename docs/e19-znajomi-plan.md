@@ -1478,7 +1478,7 @@ Implementacja następnej paczki: dodające referencje źródeł, walidacja nadaw
 
 ### Pkt7 — rozszerzenie centrum powiadomień mail-only (2026-10-12)
 
-Użytkownik rozszerzył zakres o `/mail/`: aktualne subskrypcje, zaproszenia/ankiety i granty urządzeń przypisane do potwierdzonego adresu; globalne przywrócenie powiadomień, konto→login/ustawienia. Źródło kontraktu: maile-granice.md, ostatnia podsekcja. Nie odkładać do manuala ani traktować stopki jako wystarczającego zamknięcia. Powiązać z globalną flagą, Go, tokenami, źródłami/kaskadami i wspólnymi elementami UI. Nadal część E19/pkt7, nie nowy nadrzędny etap. Najpierw domknąć main358, potem globalna stopka/preferencja/centrum i dalsza kolejka zgodnie z bramkami.
+Użytkownik rozszerzył zakres o `/mails/`: aktualne subskrypcje, zaproszenia/ankiety i granty urządzeń przypisane do potwierdzonego adresu; globalne przywrócenie powiadomień, konto→login/ustawienia. Źródło kontraktu: maile-granice.md, ostatnia podsekcja. Nie odkładać do manuala ani traktować stopki jako wystarczającego zamknięcia. Powiązać z globalną flagą, Go, tokenami, źródłami/kaskadami i wspólnymi elementami UI. Nadal część E19/pkt7, nie nowy nadrzędny etap. Najpierw domknąć main358, potem globalna stopka/preferencja/centrum i dalsza kolejka zgodnie z bramkami.
 
 ### Pkt7 /362 — anonimowy formularz i odstęp, wykonanie 2026-10-12
 

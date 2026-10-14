@@ -149,7 +149,6 @@ const tabPollText = document.getElementById("tabPollText");
 const tabPollPoints = document.getElementById("tabPollPoints");
 const tabPrepared = document.getElementById("tabPrepared");
 const tabMarket = document.getElementById("tabMarket");
-const btnReceivedFilter = document.getElementById("btnReceivedFilter");
 const connectDeviceBadge = document.getElementById("connectDeviceBadge");
 
 // Modal importu JSON
@@ -247,7 +246,6 @@ function stopAutoRefresh() {
 
 // DOMYŚLNIE: PREPAROWANA
 let activeTab = TYPES.PREPARED;
-let receivedOnly = false;
 
 
 /* ================= UI helpers ================= */
@@ -761,7 +759,6 @@ function gameTabFromUrl() {
 function setActiveTab(type, { updateUrl = true } = {}) {
   type = GAME_TABS.includes(type) ? type : DEFAULT_GAME_TAB;
   activeTab = type;
-  if (btnReceivedFilter) btnReceivedFilter.hidden = type === TYPES.MARKET;
 
   if (updateUrl) setTab(type, DEFAULT_GAME_TAB);
 
@@ -930,6 +927,7 @@ function cardGame(g) {
   el.dataset.gameId = g.id;
   el.dataset.created = g.created_at || "";
   el.dataset.updated = g.updated_at || "";
+  el.dataset.received = g.received_from_identity ? (g.created_at || "") : "";
   el.dataset.status = statusKey(g.status, g);
 
   el.innerHTML = `
@@ -1018,10 +1016,9 @@ function render() {
     return;
   }
 
-  const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab && (!receivedOnly || !!g.received_from_identity));
+  const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab);
 
-  // W filtrze „Otrzymane” lista pokazuje wyłącznie kopie od znajomych.
-  if (!receivedOnly) grid.appendChild(cardAdd(activeTab));
+  grid.appendChild(cardAdd(activeTab));
 
   for (const g of games) {
     const el = cardGame(g);
@@ -1038,7 +1035,6 @@ function render() {
   });
 
   setHint(MSG.hintSelectPlus());
-  if (btnReceivedFilter) btnReceivedFilter.setAttribute("aria-pressed", String(receivedOnly));
 }
 
 function renderMarket() {
@@ -1230,7 +1226,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Typ to zakładki (preparowana/tekstowa/punktowa/rynek) — filtr tylko po stanie.
   initListSearch({
     grids: "#grid", tile: ".card", name: ".name",
-    sort: SORT_LIST,
+    sort: {
+      ...SORT_LIST,
+      options: [...SORT_LIST.options, { value: "received", labelKey: "resourceSend.receivedFilter" }],
+    },
     filter: {
       param: "status", attr: "status",
       options: ["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
@@ -1449,7 +1448,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
   tabPollPoints?.addEventListener("click", () => setActiveTab(TYPES.POLL_POINTS));
   tabPrepared?.addEventListener("click", () => setActiveTab(TYPES.PREPARED));
-  btnReceivedFilter?.addEventListener("click", () => { receivedOnly = !receivedOnly; render(); });
   tabMarket?.addEventListener("click", async () => {
     if (activeTab !== TYPES.MARKET) {
       await loadMarketGames();

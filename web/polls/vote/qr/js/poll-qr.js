@@ -8,7 +8,7 @@ import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
-const deviceGate = guardViewportWidth({ minWidth: 980, formFactors: ["desktop", "tablet"] });
+const deviceGate = guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, screenMessageKey: "pollQr.screenMessage", formFactors: ["desktop", "tablet"] });
 document.documentElement.removeAttribute("data-device-guard-pending");
 // Guard musi być widoczny od razu na niedozwolonym urządzeniu. Nie czekaj
 // z odsłonięciem dokumentu na zmianę szerokości — ready rozwiązuje się dopiero

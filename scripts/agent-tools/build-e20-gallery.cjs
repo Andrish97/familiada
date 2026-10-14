@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "../../tests/test-results/e20-gallery");
-const profiles = ["macbook", "ipad-portrait", "ipad-landscape", "iphone-portrait", "iphone-landscape"];
+const profiles = ["macbook", "ipad-portrait", "ipad-landscape", "iphone-portrait", "iphone-landscape", "tv"];
 const entries = profiles.flatMap((profile) => {
   const file = path.join(root, `manifest-${profile}.json`);
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : [];

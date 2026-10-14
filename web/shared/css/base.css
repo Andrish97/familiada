@@ -481,9 +481,9 @@ main{
     position: relative;
     margin: 16px 0 8px;
     padding-top: 20px;
-    padding-right: max(0px, env(safe-area-inset-right));
+    padding-right: max(16px, env(safe-area-inset-right));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
-    padding-left: max(0px, env(safe-area-inset-left));
+    padding-left: max(16px, env(safe-area-inset-left));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -496,6 +496,16 @@ main{
     justify-self: stretch;
     align-self: stretch;
 }
+.footer > :first-child{ margin-right:auto; min-width:0; text-align:left; }
+.footer > :last-child{ margin-left:auto; min-width:0; text-align:right; }
+.footer:has(> :nth-child(3)){
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,1fr);
+    column-gap:12px;
+}
+.footer:has(> :nth-child(3)) > :first-child{ justify-self:start; }
+.footer:has(> :nth-child(3)) > :nth-child(2){ justify-self:center; min-width:0; text-align:center; }
+.footer:has(> :nth-child(3)) > :last-child{ justify-self:end; }
 .footer::before{
     content: "";
     position: absolute;
@@ -525,6 +535,9 @@ main{
     text-decoration: none;
 }
 .btn-contact-footer:hover { filter: brightness(1.08); }
+
+.orientation-suggestion{position:fixed;z-index:9;top:calc(var(--topbar-h, 0px) + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid var(--line2);border-radius:12px;background:#111827;box-shadow:0 8px 28px rgba(0,0,0,.35);font-size:12px;pointer-events:none}
+.orientation-suggestion .btn{pointer-events:auto}
 
 @media (max-width: 600px){
     .footer{
@@ -652,7 +665,7 @@ main{
 .wrap {
     width: 90%;
     margin: 0 auto;
-    padding: 18px
+    padding: 24px 18px 18px
 }
 
 .row,.stack {
@@ -2012,11 +2025,16 @@ body{
 
 /* Wspólny pusty stan list udostępniania (bazy i Control). */
 .share-empty-state{
+  min-height:84px;
+  display:grid;
+  place-items:center;
   border:1px dashed var(--line2);
   border-radius:12px;
-  padding:12px;
+  padding:16px;
   font-size:.85rem;
   opacity:.7;
+  text-align:center;
+  background:rgba(255,255,255,.015);
 }
 
 /* ===== Edytory: nazwa strony w topbarze (sekcja 2) =====
@@ -2422,7 +2440,18 @@ button.rowsSectionHead{ cursor: pointer; }
 .rowsAct .rowsActIcon svg{ width: 100%; height: 100%; }
 .rowsAct--icon .rowsActIcon{ display: inline-flex; }
 .rowsAct:disabled{ opacity: .4; cursor: not-allowed; }
-.rowsEmpty{ text-align: center; opacity: .7; padding: 24px 8px; }
+.rowsEmpty,.shareEmpty{
+    display:flex;
+    min-height:84px;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    text-align:center;
+    opacity:.76;
+    border:1px dashed var(--line2, rgba(255,255,255,.2));
+    border-radius:12px;
+    background:rgba(255,255,255,.015);
+}
 @media (max-width: 640px){
   .rowsAct .rowsActText{ display: none; }
   .rowsAct .rowsActIcon{ display: inline-flex; }
@@ -2430,7 +2459,7 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
 .shareList--scroll{ max-height: 240px; overflow-y: auto; overscroll-behavior: contain; }
-.shareEmpty{ padding: 12px 4px; font-size: 13px; color: var(--muted); }
+.shareEmpty{ font-size:13px; color:var(--muted); }
 .shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
 .shareRow--compact .shareNote{ flex-basis: 100%; margin-top: 0; }
 

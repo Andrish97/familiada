@@ -266,7 +266,7 @@ async function bootPreview(params) {
 
 window.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: false });
-  const deviceGate = guardViewportWidth({ minWidth: 980, formFactors: ["desktop", "tablet"] });
+  const deviceGate = guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, screenMessageKey: "display.screenMessage", formFactors: ["desktop", "tablet"] });
   document.documentElement.removeAttribute("data-device-guard-pending");
   if (deviceGate.state() !== "ok") await deviceGate.ready;
   startKeepAlive();
