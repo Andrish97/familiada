@@ -40,6 +40,18 @@ html:has(.login-body) {
     padding: 18px;
 }
 
+.login-shell[data-skel-step] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .3s ease;
+}
+.login-shell[data-skel-step].skel-step-ready {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
 .login-card {
     background: rgba(255,255,255,.06);
     --under: #141822; /* podłoże przycisków (css/base.css) */

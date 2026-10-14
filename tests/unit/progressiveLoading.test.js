@@ -20,6 +20,15 @@ test('globalny guard telefonu odsłania komunikat i nie odsłania zawartości ap
   assert.match(overlay, /document\.body\.style\.visibility\s*=\s*"hidden"/);
 });
 
+test('logowanie pokazuje pierwszy etap po inicjalizacji języka i ukrywa go do tego momentu', () => {
+  const html = read('login/index.html');
+  const css = read('login/css/login.css');
+  const js = read('login/js/login.js');
+  assert.match(html, /class="login-shell" data-skel-step/);
+  assert.match(css, /\.login-shell\[data-skel-step\][\s\S]*?visibility:\s*hidden/);
+  assert.ok(js.indexOf('setStatus(t("index.statusChecking"))') < js.indexOf('login-shell[data-skel-step]') );
+});
+
 test('ukryte etapy ładowania nie przyjmują fokusu ani kliknięć', () => {
   const css = read('shared/css/base.css');
   const hidden = css.match(/\[data-skel-step\]\s*\{([^}]+)\}/)?.[1] || '';

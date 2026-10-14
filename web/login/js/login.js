@@ -796,6 +796,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   applyMode();
   initPasswordToggles();
   setStatus(t("index.statusChecking"));
+  // Pierwszy etap logowania: szkielet formularza jest gotowy po i18n i
+  // przygotowaniu trybu, bez czekania na późniejsze żądania auth/captcha.
+  document.querySelector(".login-shell[data-skel-step]")?.classList.add("skel-step-ready");
   if (guestExpired) {
     void alertModal({ text: t("index.guestExpired") });
   }
@@ -1218,7 +1221,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.preventDefault();
     btnPrimary.click(); // 🔴 jedyne miejsce wywołania
   });
-
-  document.querySelector(".login-shell[data-skel-step]")?.classList.add("skel-step-ready");
 
 });
