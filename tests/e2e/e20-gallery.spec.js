@@ -181,6 +181,12 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     }, null, { timeout: 20_000 });
   } catch {
     const diagnostics = await page.evaluate(() => ({
+      url: location.href,
+      stages: [...document.querySelectorAll("[data-skel-step]")].map((step) => ({
+        tag: step.tagName, className: String(step.className), ready: step.classList.contains("skel-step-ready"),
+        hidden: step.hidden, display: getComputedStyle(step).display, visibility: getComputedStyle(step).visibility,
+      })),
+      loginShell: Boolean(document.querySelector(".login-shell")),
       guard: document.getElementById("pageGuard")?.dataset.state || document.documentElement.dataset.deviceGuard || "",
       resourceGuard: getComputedStyle(document.getElementById("resourceLockGuard") || document.body).display,
       pendingSteps: [...document.querySelectorAll("[data-skel-step]")]
