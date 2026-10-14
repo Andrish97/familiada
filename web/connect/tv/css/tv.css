@@ -1,6 +1,6 @@
 :root{color-scheme:dark;font:24px/1.4 system-ui,sans-serif;--topbar-h:84px}
 body.tv-body{--topbar-h:84px;font:24px/1.4 system-ui,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;padding:calc(var(--topbar-h) + 5vh) 6vw 5vh;background:var(--bg)}
-.tv-topbar{min-height:var(--topbar-h);padding:12px 6vw}
+.tv-topbar{min-height:var(--topbar-h);padding:max(12px,env(safe-area-inset-top)) max(6vw,env(safe-area-inset-right)) 12px max(6vw,env(safe-area-inset-left))}
 .tv-topbar .brand{font-size:32px}
 main{width:min(680px,100%);text-align:center}
 h1{font-size:clamp(32px,4vw,48px);margin:0 0 28px;color:var(--gold)}
@@ -12,7 +12,7 @@ label{font-size:clamp(22px,2.5vw,30px);color:#d5d9e2}
 .tv-connect{font-weight:900}
 .tv-connect:focus-visible{outline:2px solid rgba(255,234,166,.7);outline-offset:3px}
 #tvMessage{min-height:2.8em;margin:0;font-size:24px;color:var(--gold)}
-@media(max-height:650px){body.tv-body{--topbar-h:64px}body.tv-body{--topbar-h:64px;padding:calc(var(--topbar-h) + 24px) 6vw 24px}.tv-topbar{padding:12px 6vw}.tv-topbar .brand{font-size:28px}h1{margin-bottom:16px}form{gap:16px}.tv-code,.tv-connect{min-height:70px;padding:10px 20px}}
+@media(max-height:650px){body.tv-body{--topbar-h:64px}body.tv-body{--topbar-h:64px;padding:calc(var(--topbar-h) + 24px) 6vw 24px}.tv-topbar{padding:max(12px,env(safe-area-inset-top)) max(6vw,env(safe-area-inset-right)) 12px max(6vw,env(safe-area-inset-left))}.tv-topbar .brand{font-size:28px}h1{margin-bottom:16px}form{gap:16px}.tv-code,.tv-connect{min-height:70px;padding:10px 20px}}
 
 .tv-language{margin-left:auto}
 .tv-language .lang-btn{min-width:56px;min-height:56px;font-size:20px}
