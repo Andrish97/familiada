@@ -217,6 +217,10 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // Stany interaktywne nie zastępują guarda: na niedostępnym urządzeniu
   // zapisujemy ten guard zamiast wymuszać klik w ukryty zasób.
   if (prepare && !blockedByGuard) await prepare(page);
+  if (id === "settings" && !blockedByGuard) {
+    await expect(page.locator("#panelScreen")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("#authScreen")).toBeHidden({ timeout: 5_000 });
+  }
   const state = await page.evaluate(() => ({
     guard: document.documentElement.dataset.deviceGuard || document.getElementById("pageGuard")?.dataset.state || "",
     title: document.title,
