@@ -8,6 +8,7 @@ import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retr
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 });
 
 const MSG = {
@@ -91,6 +92,7 @@ function showClosed(on) {
   if (qbox) qbox.style.display = on ? "none" : "";
   if (on && subEl) subEl.style.display = "none"; // Hide loading sub when showing closed/error msg
   else if (!on && subEl) subEl.style.display = "";
+  if (on) document.getElementById("closed")?.classList.add("skel-step-ready");
 }
 
 function setClosedMsg(msg) {
@@ -102,6 +104,7 @@ function showStatus(msg) {
   showClosed(true);
   setSub("");
   setClosedMsg(msg);
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }
 
 // Stan ankiety względem klucza z linku (poll_state, anon): zatrzymana / zakończona /
@@ -281,6 +284,7 @@ let payload = null;
 let idx = 0;
 
 function render() {
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
   const game = payload?.game || {};
   const questions = payload?.questions || [];
   const q = questions[idx];
@@ -331,6 +335,7 @@ function render() {
 
   if (qtext) qtext.textContent = q.text || t("common.dash");
   if (prog) prog.textContent = MSG.questionProgress(q.ord, questions.length);
+  qbox?.classList.add("skel-step-ready");
   setSub("");
 
   if (alist) {

@@ -257,6 +257,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   /** Strona nie może edytować -- komunikat z jedynym wyjściem: lista logo. */
   function block(message) {
     showBlockingOverlay({ message, backHref: listBackUrl(mode) });
+    document.querySelector("main.logoWrap[data-skel-step]")?.classList.add("skel-step-ready");
   }
 
   /* ---------- UI (działa od razu, także w trakcie wczytywania) ---------- */
@@ -346,4 +347,5 @@ export async function bootEditorPage({ mode, initEditor }) {
   el.logoName.disabled = false;
   await editor.open(logo.payload || null);
   ready = true;
+  document.querySelector("main.logoWrap[data-skel-step]")?.classList.add("skel-step-ready");
 }

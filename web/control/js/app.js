@@ -1026,6 +1026,7 @@ async function main() {
     try {
       testModePanel.update(store.state.settings.testMode);
       ui.render(store.state, { ...renderCtx(), testModeAvailable: testModePanel.canEnable() });
+      document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
     } catch (e) {
       console.error("[control2] render() rzucił -- UI może zostać nieaktualne:", e);
     }

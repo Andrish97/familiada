@@ -149,7 +149,13 @@ async function main() {
   document.documentElement.classList.remove("page-loading");
 
   const { gameId, key } = parseParams();
-  if (!gameId) return;
+  const loadError = document.getElementById("deviceLoadError");
+  document.querySelector("[data-retry-device]")?.addEventListener("click", () => location.reload());
+  if (!gameId || !key) {
+    if (loadError) loadError.hidden = false;
+    document.getElementById("arena")?.classList.add("skel-step-ready");
+    return;
+  }
 
   const renderer = createButtonRenderer();
   let lastRow = null;
@@ -196,6 +202,7 @@ async function main() {
     lockTimer = setTimeout(() => presses.render(lastRow), Math.max(0, msLeft) + 20);
   }
 
+  let initialStateReady = false;
   const subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
     // game_state_set_lock przesuwa locked_until bez podbicia rev i bez
@@ -217,10 +224,17 @@ async function main() {
       }
       lastRow = row;
       presses.render(row);
+      initialStateReady = true;
+      if (loadError) loadError.hidden = true;
+      document.getElementById("arena")?.classList.add("skel-step-ready");
       void checkDisplayReady();
       scheduleUnlockRerender(row);
     },
-    onError: (error) => console.warn("[buzzer2] game_state_get failed:", error),
+    onError: (error) => {
+      console.warn("[buzzer2] game_state_get failed:", error);
+      if (!initialStateReady && loadError) loadError.hidden = false;
+      document.getElementById("arena")?.classList.add("skel-step-ready");
+    },
   });
 
   const presses = createPressController({
@@ -248,7 +262,6 @@ async function main() {
   document.getElementById("btnA")?.addEventListener("touchstart", (e) => { e.preventDefault(); press("A"); }, { passive: false });
   document.getElementById("btnB")?.addEventListener("touchstart", (e) => { e.preventDefault(); press("B"); }, { passive: false });
 
-  if (!key) return;
   startPresenceHeartbeat({ gameId, key });
   await subscription.start();
 }

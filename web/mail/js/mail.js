@@ -126,6 +126,9 @@ function render() {
   if (!enabled) { $('subscriptionList').replaceChildren(); $('itemsList').replaceChildren(); }
   document.querySelector('[data-tab="items"]').setAttribute('aria-label', text('items'));
   updateCooldown();
+  if (active) $('mailSummary').classList.add('skel-step-ready');
+  else $('mailEntry').classList.add('skel-step-ready');
+  if (enabled) $('mailLists').classList.add('skel-step-ready');
 }
 function updateCooldown() {
   const remaining = Math.max(0, Math.ceil((requestUntil - Date.now()) / 1000));
@@ -155,6 +158,7 @@ window.addEventListener('i18n:lang', () => { if (document.querySelector('.topbar
 
 await initI18n({ withSwitcher: true });
 document.querySelector('.topbar').classList.add('topbar-ready');
+document.getElementById('mailEntry')?.classList.add('skel-step-ready');
 try {
   const url = new URL(location.href), access = url.searchParams.get('m');
   // Session bootstrap issues the nonce; peeking never consumes a one-time proof.

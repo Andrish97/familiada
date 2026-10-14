@@ -10,6 +10,7 @@ import { initI18n, withLangParam } from "../../shared/translation/translation.js
     document.documentElement.classList.remove('page-loading');
     document.querySelector('.topbar')?.classList.add('topbar-ready');
   }
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
   setTimeout(() => {
     window.location.href = withLangParam("/");
   }, 5000);

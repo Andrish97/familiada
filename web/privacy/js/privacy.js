@@ -20,4 +20,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.documentElement.classList.remove('page-loading');
 
   await pageP;
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 });

@@ -102,6 +102,7 @@ async function init() {
 
   decorateManualControls(document, document.documentElement.lang);
   wireTabs();
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }
 
 void init();

@@ -272,6 +272,7 @@ function showAuth(statusText) {
   document.body.classList.add("no-footer-line");
   moveLangSwitcher(true);
   setText(els.authStatus, statusText);
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }
 
 function showPanel() {
@@ -281,6 +282,7 @@ function showPanel() {
   document.body.classList.remove("no-footer-line");
   moveLangSwitcher(false);
   syncTopbarHeight();
+  document.querySelector("main[data-skel-step]")?.classList.remove("skel-step-ready");
 }
 
 function stopPolling() {
@@ -7157,6 +7159,7 @@ function wireEvents() {
     startActivityPanel();
     activateSettingsTabFromUrl();
     await loadState();
+    document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
     if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
   } else {
     showAuth("Wymagane logowanie przez Cloudflare Access.");

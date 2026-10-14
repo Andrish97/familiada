@@ -56,6 +56,7 @@ function showEnded(msgKey) {
   if (renderAbortController) renderAbortController.abort();
   if (pollLangInterval) clearInterval(pollLangInterval);
   document.querySelector(".qr-container")?.classList.add("is-ended");
+  document.querySelector(".qr-container[data-skel-step]")?.classList.add("skel-step-ready");
   if (qr) qr.textContent = t(msgKey);
   document.documentElement.classList.remove("page-loading");
 }
@@ -233,7 +234,11 @@ window.addEventListener("beforeunload", () => {
 
 updateFsIcon();
 if (!deviceInitFailed) {
-  render(url).finally(() => document.documentElement.classList.remove('page-loading'));
+  render(url).finally(() => {
+    document.querySelector(".qr-container[data-skel-step]")?.classList.add("skel-step-ready");
+    document.documentElement.classList.remove('page-loading');
+  });
 } else {
+  document.querySelector(".qr-container[data-skel-step]")?.classList.add("skel-step-ready");
   document.documentElement.classList.remove('page-loading');
 }

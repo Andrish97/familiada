@@ -84,4 +84,5 @@ form.addEventListener("submit", async (event) => {
 input.disabled = false;
 button.disabled = false;
 input.focus();
+document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }

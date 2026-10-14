@@ -115,18 +115,24 @@ function getBaseIdFromUrl() {
 
     // refresh (żeby search/filter działały od razu spójnie)
     await api.refreshList();
+    document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
+      .forEach((step) => step.classList.add("skel-step-ready"));
 
   } catch (e) {
     console.error(e);
 
     // brak dostępu – wracamy do baz
     if (e?.code === "NO_ACCESS") {
+      document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
+        .forEach((step) => step.classList.add("skel-step-ready"));
       void alertModal({ text: t("baseExplorer.errors.noAccess") });
       //location.href = "../bases";
       return;
     }
 
     void alertModal({ text: t("baseExplorer.errors.loadFailed") });
+    document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
+      .forEach((step) => step.classList.add("skel-step-ready"));
     //location.href = "../bases";
   }
 })();

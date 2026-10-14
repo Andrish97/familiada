@@ -12,6 +12,7 @@ import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-13T13432";
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 });
 
 const MSG = {

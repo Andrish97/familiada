@@ -948,23 +948,45 @@ wszystkie strony.
 | Host i Buzzer | Wyjątki od globalnego guarda mobile landscape. Tylko Buzzer na telefonie portrait pokazuje sugestię obrotu do landscape. Host nie pokazuje sugestii ani blokad poza blokadą niedotykowego urządzenia. W widoku testowym Control wymaganie dotyku jest pomijane. | Sugestię ograniczono do Buzzer; Host zachowuje wyłącznie guard dotyku. Iframe testu Control ma jawny znacznik, który pomija ograniczenia dotyku i form factor. Wymaga testu punktowego. |
 | Podgląd Logo | Na mobile przycisk Podgląd nigdy nie może znaleźć się w drugim wierszu. | Do wdrożenia razem z paskiem akcji Logo. |
 
-#### Audyt stopniowego ładowania — status na 2026-10-14
+#### Audyt stopniowego ładowania — stan na 2026-10-14
 
-Nie wszystkie strony mają stopniowe odsłanianie sekcji po danych. Klasa
-`page-loading` ukrywa całą stronę do inicjalizacji; nie jest równoważna
-`data-skel-step`, które odsłania konkretną sekcję po jej gotowości. Szybki
-przegląd 35 stron HTML znalazł jawne etapy na 12 stronach, a pozostałe 23
-wymagają oceny, czy są statyczne, czy mają dane/sekcje ujawniane przed
-gotowością. To nie jest jeszcze audyt zakończony.
+`page-loading` ukrywa całą stronę do startu aplikacji. `data-skel-step` to
+osobny etap: konkretna sekcja pozostaje niewidoczna i nieaktywna do chwili,
+gdy ma gotowy stan lub widoczny komunikat błędu. Statyczne strony odsłaniają
+treść po tłumaczeniach i inicjalizacji obsługi; strony z danymi zachowują
+osobne etapy dla list/kart, jeśli ich źródła gotowości są niezależne. Nie
+dodawać sztucznych opóźnień.
 
-Braki wymagające pierwszeństwa w dalszym audycie: Eksplorator bazy, Control,
-Go, strona główna, potwierdzenie/reset logowania, edytory Logo, Mails,
-Maintenance, Manual, Privacy, Settings, głosowanie ankietami (punkty/tekst/QR)
-oraz strony urządzeń Host/Buzzer/Display i Connect TV. Strony czysto
-informacyjne (np. 404, Manual, Privacy) mogą nie potrzebować etapów danych;
-decyzję należy podjąć per strona, nie dodawać pustych markerów. Dla każdej
-dynamicznej sekcji trzeba wskazać źródło danych, stan ładowania/błędu/pusty,
-moment `skel-step-ready` i sprawdzić, że guard poprzedza pobranie danych.
+**Wdrożenie 2026-10-14:** jawny etap jest teraz obecny na wszystkich 35
+stronach aplikacji (bez narzędzi wewnętrznych). Dodano brakujące etapy m.in.
+na Eksploratorze bazy, Control, Go, stronie głównej, Loginie, potwierdzeniu
+i resecie logowania, trzech edytorach Logo, Mails, Maintenance, Manual,
+Privacy, Settings, trzech wariantach głosowania, Host/Buzzer/Display oraz
+Connect TV. Strony statyczne odsłaniają treść po inicjalizacji; dynamiczne
+po gotowym renderze lub stanie błędu/odmowy. Vote punkty/tekst pokazują
+przetłumaczony nagłówek i stan oczekiwania przed pobraniem payloadu, a pytanie
+lub komunikat zamknięcia dopiero po odpowiedzi. Mails najpierw pokazuje stan
+wejścia, a podsumowanie/listy odsłania po odpowiedzi sesji. Settings najpierw
+pokazuje ekran Access, po autoryzacji ponownie ukrywa panel na czas pierwszego
+odczytu. Guard urządzenia pozostaje przed odsłonięciem treści i przed
+pobraniem danych.
+
+| Grupa tras | Etapy widoku | Moment gotowości |
+|---|---|---|
+| Strony zasobów: Gry, Bazy, Logo, Marketplace, Zadania, Znajomi, Subskrybenci, Konto, Connect | Topbar/szkielet → sekcje/listy; niezależne karty pozostają osobnymi etapami, jeśli mają osobne dane | Po odpowiedzi API, renderze pustego/wypełnionego stanu i podpięciu akcji; przy błędzie widoczny retry/komunikat |
+| Edytory: Eksplorator, Edytor gry, Ustawienia gry, trzy edytory Logo | Topbar → edytor/lista po danych i sprawdzeniu dostępu | Po danych, guardzie zasobu i zamontowaniu edytora; blokada/odmowa ma własny komunikat |
+| Ustawienia administratora | Ekran Cloudflare Access → panel ukryty na czas pobrania → panel | Po potwierdzeniu Access i pierwszym `loadState`; przy braku Access ekran statusu jest widoczny |
+| Control oraz urządzenia Host/Buzzer/Display i Connect TV | Guard urządzenia → oczekiwanie → pierwsza odpowiedź/render; Control renderuje po hydratacji | Dopiero po przejściu guarda i pierwszym stanie; błędna odpowiedź odsłania jawny stan końcowy |
+| Polls vote: punkty, tekst, QR | Tłumaczony ekran/stanu oczekiwania → pytanie, QR lub komunikat zamknięcia | Po payloadzie/API albo zakończonym generowaniu QR; urządzeniowy guard QR przed odczytem |
+| Go i Mails | Tłumaczony komunikat startowy → wynik rozpoznania linku/sesji → akcje/listy | Po rozwiązaniu linku lub odpowiedzi sesji; błąd API daje wynik błędu, nie pustą kartę |
+| Strona główna, Manual, Privacy, 404, Maintenance, Login i landingi auth | Tłumaczona struktura → treść z podpiętą obsługą; Maintenance dodatkowo czeka na status serwera | Po tłumaczeniach i inicjalizacji interakcji, a dla Maintenance po odpowiedzi lub fallbacku |
+
+Szybki test strukturalny potwierdza marker na wszystkich 35 trasach; testy
+punktowe obejmują kolejność guarda, gotowość Kontaktu/Zadań/Konta/Ankiet,
+Eksploratora i urządzeń. To potwierdza implementację etapów, nie zastępuje
+jeszcze wizualnego sprawdzenia każdej trasy przy wolnej sieci i błędzie API.
+Przed zamknięciem E20 nadal należy sprawdzić te stany w sekwencyjnej galerii
+oraz dopisać test dla nowej strony/sekcji do macierzy.
 
 Kolejność realizacji: (1) zapisać kryteria galerii i wyłączyć równoległe
 użycie zasobów, (2) naprawić profile urządzeń/safe area i wspólne puste stany,

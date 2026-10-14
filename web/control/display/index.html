@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title data-i18n="display.title">Familiada — wyświetlacz</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/control/display/js/main.js?v=v2026-10-13T13432"></script>
-  <link rel="stylesheet" href="/control/display/css/styles.css?v=v2026-10-13T13432" />
+  <script type="module" src="/control/display/js/main.js?v=v2026-10-14T203300"></script>
+  <link rel="stylesheet" href="/control/display/css/styles.css?v=v2026-10-14T203300" />
   <link rel="icon" href="/favicon.ico?v=v2026-10-13T13432" />
 </head>
 <body data-device-screen data-device-form-factors="desktop,tablet" data-min-viewport-width="980" data-min-screen-short-side="800" data-screen-message-key="display.screenMessage">
@@ -18,7 +18,7 @@
   <!-- TRYB QR — host i buzzer NIEZALEŻNE, jeden LUB oba naraz (dokładnie
        jak dzisiejszy display.html — ta sama markup/CSS, reużyty
        control/display/js/qr.js jako czysty kontroler DOM bez związku z komendami). -->
-  <div id="qrScreen" class="qr-screen hidden" aria-hidden="true">
+  <div id="qrScreen" class="qr-screen hidden" data-skel-step aria-hidden="true">
     <div class="qr-grid">
       <div class="qr-card" id="qrHostCard">
         <img id="qrHostImg" class="qr-img" alt="QR Prowadzący" data-i18n-alt="display.qrHostAlt"/>
@@ -35,7 +35,7 @@
 
   <!-- TRYB GRA – 3 warstwy (identyczne jak dzisiejszy display.html, ta sama
        styles.css — wygląd się nie zmienia). -->
-  <div id="gameScreen" class="hidden">
+  <div id="gameScreen" class="hidden" data-skel-step>
     <div id="displayRoot" class="display-root">
       <div class="layer-bg"></div>
       <div class="display-frame">
@@ -44,7 +44,7 @@
       </div>
     </div>
   </div>
-  <div id="blackScreen" class="black-screen"></div>
+  <div id="blackScreen" class="black-screen" data-skel-step></div>
 
   <!-- Gdy źródłem dźwięku jest Wyświetlacz (settings.soundSource="display"),
        przeglądarka może wymagać gestu użytkownika przed odtwarzaniem. Ekran

@@ -30,6 +30,25 @@ test('ukryte etapy ładowania nie przyjmują fokusu ani kliknięć', () => {
   assert.match(ready, /pointer-events:\s*auto/);
 });
 
+test('każda strona aplikacji ma jawny etap odsłonięcia treści', () => {
+  const root = path.join(here, '../../web');
+  const pages = [];
+  const visit = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name === 'tools') continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(full);
+      else if (entry.isFile() && (entry.name === 'index.html' || entry.name === '404.html')) pages.push(full);
+    }
+  };
+  visit(root);
+  assert.ok(pages.length >= 30, `zebrano tylko ${pages.length} stron`);
+  for (const file of pages) {
+    const html = fs.readFileSync(file, 'utf8');
+    assert.match(html, /data-skel-step/, `${path.relative(root, file)} nie ma etapu treści`);
+  }
+});
+
 test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => {
   const contacts = read('shared/js/core/contacts-page.js');
   const tasks = read('tasks/js/tasks.js');
@@ -63,6 +82,21 @@ test('Connect ma pełnowysokościową kartę główną z dwiema kartami etapowym
   assert.match(html, /id="sharedDevicesCard" hidden/);
   assert.match(js, /sharedDevicesCard\.hidden = false/);
   assert.match(js, /games-shell\[data-skel-step\].*skel-step-ready/);
+});
+
+test('Eksplorator i strony urządzeń odsłaniają treść po stanie pierwszego wejścia', () => {
+  const explorerHtml = read('bases/explorer/index.html');
+  const explorerJs = read('bases/explorer/js/page.js');
+  assert.match(explorerHtml, /id="toolbar"[^>]*data-skel-step/);
+  assert.match(explorerJs, /await api\.refreshList\(\);[\s\S]{0,180}skel-step-ready/);
+  for (const [htmlPath, jsPath] of [
+    ['control/host/index.html', 'control/host/js/main.js'],
+    ['control/buzzer/index.html', 'control/buzzer/js/main.js'],
+    ['connect/tv/index.html', 'connect/tv/js/tv.js'],
+  ]) {
+    assert.match(read(htmlPath), /data-skel-step/);
+    assert.match(read(jsPath), /skel-step-ready/);
+  }
 });
 
 test('Gry społeczności nie zawierają etykiet Szukaj gier i Sortowanie', () => {

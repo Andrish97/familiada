@@ -1219,4 +1219,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnPrimary.click(); // 🔴 jedyne miejsce wywołania
   });
 
+  document.querySelector(".login-shell[data-skel-step]")?.classList.add("skel-step-ready");
+
 });

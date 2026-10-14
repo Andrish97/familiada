@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-13T13432"/>
+  <meta name="app-version" content="v2026-10-14T203300"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -20,18 +20,18 @@
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/polls/vote/text/js/poll-text.js?v=v2026-10-13T13432" defer></script>
+  <script type="module" src="/polls/vote/text/js/poll-text.js?v=v2026-10-14T203300" defer></script>
   <script src="/shared/js/core/security-warning.js?v=v2026-10-13T13432" defer></script>
 </head>
 
 <body class="pollpub-body is-text skel-body">
   <header class="topbar poll-vote-topbar"><div class="brand brand-static">FAMILIADA</div></header>
-  <main class="wrap">
+  <main class="wrap" data-skel-step>
     <div class="card">
       <div class="title" id="title" data-i18n="pollText.pollTitle">Ankieta</div>
       <div class="sub" id="sub" data-i18n="pollText.loading">Ładuję…</div>
 
-      <div class="qbox" id="qbox" style="display:none;">
+      <div class="qbox" id="qbox" data-skel-step style="display:none;">
         <div class="qtext" id="qtext">—</div>
 
         <div class="trow">
@@ -56,7 +56,7 @@
         </div>
       </div>
 
-      <div class="closed" id="closed" style="display:none;">-</div>
+      <div class="closed" id="closed" data-skel-step style="display:none;">-</div>
     </div>
 
     <div class="footer">

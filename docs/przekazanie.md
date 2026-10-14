@@ -16,7 +16,7 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
 | E19N | **Gotowe produkcyjnie.** Branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte z Control i widoczne z Gier. Main `38369193504` success5/5; test bezpośredniego URL/odświeżenia arkusza main `38370189342` success1/1. Pages38369096986, Worker38369096732. Full unit602/602. E19 zamknięte na main `d847175100`. Audyt nie znalazł przepływu arkusz→arkusz; zwykłe potwierdzenia/alerty pozostają modalami, nie stronami. |
 | E14 | **Gotowe produkcyjnie**: DB/migracja368/smoke `38372090287`, Edge `38372090225`, main delete-account `38372530495`, po migracji stary RPC punktowo `38373614192`. |
-| E20 → Manual | Lista poprawek po galerii i status każdej pozycji są w `ujednolicenie-wygladu.md`. W tej zmianie poprawiono safe area/ramki, wspólne paski i stopki, puste kafle, wskazane strony, guardy i adresy. Unit619/619. Czeka krótki produkcyjny przebieg punktowy, potem nowa pełna sekwencyjna galeria: pięć profili dla każdej strony oraz TV tylko na Connect TV. Manual na końcu. |
+| E20 → Manual | Lista poprawek po galerii i status każdej pozycji są w `ujednolicenie-wygladu.md`. Wszystkie 35 tras mają teraz jawny etap odsłonięcia; dane odsłaniają się po renderze, błędzie lub odmowie, a guard pozostaje przed zawartością. Test punktowy progressive-loading + guard: 21/21; składnia 21 zmienionych JS i `git diff --check` czyste. Nadal trzeba sprawdzić wszystkie etapy w sekwencyjnej galerii i dokończyć pozostałe uwagi E20. Manual na końcu. |
 
 **E20, checkpoint 2026-10-14:** zamknięcie E20 wymaga też pełnego przeglądu
 stopniowego ładowania na mapie stron i wspólnych sekcjach, wraz z każdą nową
@@ -1260,3 +1260,16 @@ wymagają późniejszego przeglądu. Manual nadal ostatni.
 **366 zamknięte:** isolated38348144953/main38348223900 green, DB38348223853/log366 OK04:50:12 UTC, main38348612550 success2/2 bez retry/593 unit: UI kasowania jednorazowego gościa/oba buckety + Powiel3. Kontynuacja E19C: docs/sql/draft-resource-clone-send-367.sql i test-resource-clone-send-367.sql lokalnie green Games3/Logo3, własne manifesty plików, retry/odmowa/expiry/obie kaskady i18 guardów realnych tabel potomnych. To prywatny prototyp bez migracji/endpointu/grantów. Dalej izolowane CI, race/read-access, wspólny Worker send, queue/alokacja/SMTP/Go/GUI/plakietki, dopiero cykl DB→branch→Pages→main. Manual ostatni.
 
 **Aktualna kontynuacja:** na dirty branchu endpoint `/_api/resource-send`, UI wyboru aktywnych znajomych, inbox/accept/decline, historia30 dni, mail przez istniejący send-mail, Go `?c=`, filtr Otrzymane, lekkie oznaczenie nadawcy i badge RPC per typ. Migration367 rozszerza graph mail allocations/source binding i source-live oraz dodaje resolver/badges. Punktowe JS + unit: składnia 5 plików OK, 24/24 testów Go/clone/API. Niedokończone: badge w przyciskach nawigacji, E2E/Pages/main/prod i screenshoty. Migracja 367 niezweryfikowana na produkcji i nieuruchomiona; środowisko lokalne nie ma Supabase CLI/DB credentials. Przed prod przejrzeć kontrakty DB w branch workflow; manual ostatni.
+
+**E20 / etapy ładowania — aktualizacja 2026-10-14:** dodano jawne
+`data-skel-step` na wszystkich 35 trasach aplikacji (bez tools). Eksplorator
+odsłania toolbar i treść po pobraniu, renderze i podpięciu akcji; Ankieta
+punktowa/tekstowa pokazuje przetłumaczony stan oczekiwania, a pytanie lub
+komunikat zamknięcia dopiero po odpowiedzi; Mails pokazuje stan wejścia przed
+odpowiedzią sesji i listy po niej; Settings ponownie chowa panel na czas
+pierwszego odczytu. Host/Buzzer dostają widoczny błąd z odświeżeniem, jeśli
+nie przyjdzie pierwszy stan. Statyczne strony odsłaniają treść po inicjalizacji;
+guard urządzenia pozostaje przed treścią i pobraniem danych. Testy punktowe
+`progressiveLoading` + `controlDeviceGuard`: 21/21; składnia 21 zmienionych
+JS i `git diff --check` przechodzą. Wdrożenie czeka na push i kontrolę etapów
+w sekwencyjnej galerii; samo dodanie markerów nie zamyka E20.

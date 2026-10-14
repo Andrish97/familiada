@@ -375,6 +375,7 @@ async function refresh() {
     document.querySelector('.topbar')?.classList.add('topbar-ready');
   }
   await refresh();
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
   window.addEventListener("i18n:lang", () => {
     if (lastState) {
       renderState(lastState);

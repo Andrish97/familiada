@@ -412,6 +412,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initPipeline();
   initImageViewer();
   initFaqCarets();
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 
   // Te zapytania są niekrytyczne: landing pozostaje gotowy także przy wolnym
   // lub niedostępnym backendzie, a każde odrzucenie jest jawnie obsłużone.

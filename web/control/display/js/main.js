@@ -583,6 +583,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             },
             () => token === renderGeneration,
           );
+          if (token === renderGeneration) {
+            document.querySelectorAll("[data-skel-step]").forEach((step) => step.classList.add("skel-step-ready"));
+          }
         }).catch(error => {
           if (error?.name !== "AbortError") console.warn("[display2] render failed", error);
         });
@@ -590,6 +593,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       onError: (error) => {
         console.warn("[display2] game_state_get failed:", error);
         showBlack();
+        document.querySelectorAll("[data-skel-step]").forEach((step) => step.classList.add("skel-step-ready"));
       },
     });
 
@@ -598,5 +602,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (e) {
     console.warn("[display2]", e?.message || e);
     showBlack();
+    document.querySelectorAll("[data-skel-step]").forEach((step) => step.classList.add("skel-step-ready"));
   }
 });

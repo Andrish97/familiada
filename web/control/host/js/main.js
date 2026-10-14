@@ -255,7 +255,13 @@ async function main() {
     return;
   }
 
-  if (!gameId || !key) return;
+  const loadError = document.getElementById("deviceLoadError");
+  document.querySelector("[data-retry-device]")?.addEventListener("click", () => location.reload());
+  if (!gameId || !key) {
+    if (loadError) loadError.hidden = false;
+    document.getElementById("paper")?.classList.add("skel-step-ready");
+    return;
+  }
 
   // Wszystkie trzy urządzenia utrzymują ekran aktywny przez Wake Lock
   // oraz zapasowy, wyciszony strumień wideo. Podgląd w ustawieniach nie.
@@ -276,6 +282,7 @@ async function main() {
   setupPeekSwipe(renderer);
 
   let appliedLang = null;
+  let initialStateReady = false;
   const subscription = createSubscription({
     gameId, deviceType: "host", key,
     onRow: async (row) => {
@@ -304,8 +311,15 @@ async function main() {
       await hostTheme.apply(row);
       renderer.render(row);
       coverLogo.apply(row);
+      initialStateReady = true;
+      if (loadError) loadError.hidden = true;
+      document.getElementById("paper")?.classList.add("skel-step-ready");
     },
-    onError: (error) => console.warn("[host2] game_state_get failed:", error),
+    onError: (error) => {
+      console.warn("[host2] game_state_get failed:", error);
+      if (!initialStateReady && loadError) loadError.hidden = false;
+      document.getElementById("paper")?.classList.add("skel-step-ready");
+    },
   });
   await subscription.start();
 }
