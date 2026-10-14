@@ -306,7 +306,10 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       const state = window.__e20DomStable || (window.__e20DomStable = { last: now, observer: null });
       if (!state.observer) state.observer = new MutationObserver(() => { state.last = performance.now(); });
       if (!state.observerStarted) {
-        state.observer.observe(body, { subtree: true, childList: true, attributes: true, characterData: true });
+        // Nie czekaj na ciszę wszystkich atrybutów CSS/UI — przy responsywnych
+        // kaflach i animacjach atrybuty mogą się zmieniać stale mimo gotowej
+        // treści. Liczy się dopisanie/usunięcie elementów lub zmiana tekstu.
+        state.observer.observe(body, { subtree: true, childList: true, characterData: true });
         state.observerStarted = true;
       }
       return !visibleLoading && !textLoading && now - state.last >= 900;
