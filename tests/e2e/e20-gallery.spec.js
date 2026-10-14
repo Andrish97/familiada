@@ -158,19 +158,25 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       const root = document.documentElement;
       const overlay = document.getElementById("pageGuard");
       const guarded = overlay?.style.display === "flex" && Boolean(overlay.dataset.state);
-      if (guarded) return true;
+      const resourceGuard = document.getElementById("resourceLockGuard");
+      const resourceBlocked = resourceGuard && getComputedStyle(resourceGuard).display !== "none"
+        && getComputedStyle(resourceGuard).visibility !== "hidden";
+      if (guarded || resourceBlocked) return true;
       const visibleSteps = [...document.querySelectorAll("[data-skel-step]")].filter((step) => {
-        if (!step.getClientRects().length) return false;
         for (let node = step; node && node !== document.body; node = node.parentElement) {
-          if (node.hidden || getComputedStyle(node).display === "none") return false;
+          const style = getComputedStyle(node);
+          if (node.hidden || style.display === "none") return false;
         }
-        return true;
+        // Gotowy etap może mieć zerowy własny rect (np. kontener siatki
+        // logowania), ale jego treść i tak jest już odsłonięta.
+        return step.classList.contains("skel-step-ready") || step.getClientRects().length > 0;
       });
       return visibleSteps.length > 0 && visibleSteps.every((step) => step.classList.contains("skel-step-ready"));
     }, null, { timeout: 20_000 });
   } catch {
     const diagnostics = await page.evaluate(() => ({
       guard: document.getElementById("pageGuard")?.dataset.state || document.documentElement.dataset.deviceGuard || "",
+      resourceGuard: getComputedStyle(document.getElementById("resourceLockGuard") || document.body).display,
       pendingSteps: [...document.querySelectorAll("[data-skel-step]")]
         .filter((step) => !step.classList.contains("skel-step-ready") && step.getClientRects().length)
         .map((step) => `${step.tagName}.${String(step.className).replace(/\s+/g, ".")}`).slice(0, 8),

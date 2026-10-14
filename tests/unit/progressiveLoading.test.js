@@ -53,6 +53,8 @@ test('galeria czeka na gotowe widoczne etapy, a widoczny device guard jest końc
   const source = fs.readFileSync(path.join(here, '../e2e/e20-gallery.spec.js'), 'utf8');
   assert.match(source, /visibleSteps\.every\(\(step\) => step\.classList\.contains\("skel-step-ready"\)\)/);
   assert.match(source, /overlay\?\.style\.display === "flex" && Boolean\(overlay\.dataset\.state\)/);
+  assert.match(source, /getElementById\("resourceLockGuard"\)/);
+  assert.match(source, /step\.classList\.contains\("skel-step-ready"\) \|\| step\.getClientRects\(\)\.length > 0/);
 });
 
 test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => {
