@@ -48,6 +48,14 @@ unity619/619 przeszły, nowa galeria jeszcze się nie uruchomiła. Najpierw
 krótki test punktowy; potem pełny, sekwencyjny przebieg, pięć profili na
 każdą stronę oraz dodatkowy prawdziwy profil TV wyłącznie dla `/connect/tv/`.
 
+Aktualny test punktowy `38619471614` zatrzymał się na pierwszym profilu iPada:
+asercja galerii błędnie wymagała dolnego safe area od topbara. Poprawka
+sprawdza wszystkie cztery rzeczywiste wartości insetów, trzy krawędzie
+topbara i dolną krawędź stopki osobno. Lokalny zestaw guarda, mapy, punktów
+wejścia i stopniowego ładowania przeszedł 59/59. Poprawka oczekuje teraz na
+krótki przebieg produkcyjny; po nim uruchomić całą galerię. Zrzuty są
+zapisywane do folderów stron, nie folderów urządzeń.
+
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
 Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
 refresh przeszły. W audycie wywołań arkuszy nie znaleziono przypadku

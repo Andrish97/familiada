@@ -234,7 +234,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     const injected = await page.locator("html").getAttribute("data-e20-safe-area-injected");
     if (injected !== "true") throw new Error(`${profile.label} · ${id}: skrypt galerii nie wstrzyknął safe area`);
   }
-  for (const side of ["top", "right", "left"]) {
+  for (const side of ["top", "right", "bottom", "left"]) {
     if (actualSafe[side] !== expectedSafe[side]) {
       throw new Error(`${profile.label} · ${id}: safe area ${side}=${actualSafe[side]}px, oczekiwano ${expectedSafe[side]}px`);
     }
@@ -257,7 +257,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   if (safeGeometry.topbarTop !== null && safeGeometry.topbarTop !== 0) {
     throw new Error(`${profile.label} · ${id}: topbar nie rozciąga tła od krawędzi ekranu (${safeGeometry.topbarTop}px)`);
   }
-  for (const side of ["top", "right", "bottom", "left"]) {
+  // Górny pasek nie zajmuje dolnej krawędzi ekranu. Dolny inset sprawdzamy
+  // osobno na stopce; pozostałe trzy krawędzie topbara muszą chronić treść.
+  for (const side of ["top", "right", "left"]) {
     if (safeGeometry.topbarPadding && safeGeometry.topbarPadding[side] + 0.5 < expectedSafe[side]) {
       throw new Error(`${profile.label} · ${id}: topbar ${side} safe area=${safeGeometry.topbarPadding[side]}px, oczekiwano co najmniej ${expectedSafe[side]}px`);
     }
