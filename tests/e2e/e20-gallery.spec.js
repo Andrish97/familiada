@@ -391,17 +391,44 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-single-row")
       ? "single-row"
       : document.querySelector(".games-bottom")?.classList.contains("is-balanced-wrap") ? "balanced-wrap" : "not-measured",
+    listBottomMetrics: (() => {
+      const bar = document.querySelector(".games-bottom");
+      const naturalWidth = (group) => {
+        if (!group) return 0;
+        const probe = group.cloneNode(true);
+        Object.assign(probe.style, { position: "fixed", left: "-100000px", top: "0", display: "flex", width: "max-content", minWidth: "max-content", maxWidth: "none", flex: "0 0 auto", flexWrap: "nowrap", visibility: "hidden", margin: "0" });
+        for (const child of probe.children) child.style.flex = "0 0 auto";
+        document.body.append(probe);
+        const width = probe.getBoundingClientRect().width;
+        probe.remove();
+        return width;
+      };
+      if (!bar) return null;
+      const left = bar.querySelector(":scope > .games-bottom-left");
+      const right = bar.querySelector(":scope > .games-bottom-right");
+      return {
+        available: bar.clientWidth,
+        left: naturalWidth(left),
+        right: naturalWidth(right),
+        groupGap: Number.parseFloat(getComputedStyle(bar).columnGap || getComputedStyle(bar).gap) || 0,
+      };
+    })(),
   }));
   if (state.loading) throw new Error(`${profile.label} · ${id}: strona nadal ma page-loading po załadowaniu`);
   if (state.scrollWidth > state.viewportWidth + 1) {
     throw new Error(`${profile.label} · ${id}: poziomy overflow ${state.scrollWidth}px przy viewport ${state.viewportWidth}px`);
   }
-  if (["games", "bases", "logo"].includes(id) && profile.width >= 1133) {
-    if (state.listHeaderActionsBelow) {
+  if (["games", "bases", "logo"].includes(id)) {
+    if (profile.width >= 1133 && state.listHeaderActionsBelow) {
       throw new Error(`${profile.label} · ${id}: pasek nagłówka przeniósł akcje mimo szerokiego ekranu`);
     }
-    if (state.listBottomLayout !== "single-row") {
-      throw new Error(`${profile.label} · ${id}: dolny pasek zawinął się na szerokim ekranie (${state.listBottomLayout})`);
+    const fitsSingleRow = state.listBottomMetrics
+      && state.listBottomMetrics.left + state.listBottomMetrics.right + state.listBottomMetrics.groupGap <= state.listBottomMetrics.available + 1;
+    if (fitsSingleRow && state.listBottomLayout !== "single-row") {
+      throw new Error(`${profile.label} · ${id}: dolny pasek zawinął się, choć mieści się w jednym wierszu; ${JSON.stringify(state.listBottomMetrics)}`);
+    }
+    if (!fitsSingleRow && state.listBottomLayout !== "balanced-wrap") {
+      throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; ${JSON.stringify(state.listBottomMetrics)}`);
     }
   }
   fs.mkdirSync(path.join(OUT, id), { recursive: true });
