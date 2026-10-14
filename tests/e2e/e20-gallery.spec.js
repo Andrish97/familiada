@@ -126,6 +126,21 @@ async function installSettingsAccessSimulation(context) {
   });
 }
 
+async function installVisualResourceLockIsolation(context) {
+  // Galeria mierzy układ i guardy urządzeń, nie współbieżność edycji. Konto
+  // ma stałe fixture'y produkcyjne, które mogą być równolegle otwarte w innej
+  // sesji. Przechwytujemy wyłącznie API edit_locks w tym kontekście Playwrighta;
+  // pozostałe odczyty/zapisy Supabase nadal trafiają do prawdziwego backendu.
+  await context.route("https://api.familiada.online/rest/v1/rpc/acquire_edit_lock_mode", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await context.route("https://api.familiada.online/rest/v1/rpc/release_edit_lock", (route) =>
+    route.fulfill({ status: 204, body: "" }));
+  await context.route("https://api.familiada.online/rest/v1/edit_locks**", (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+  });
+}
+
 async function serveBranchLoginHtml(route) {
   const file = path.resolve(__dirname, "../../web/login/index.html");
   const html = fs.readFileSync(file, "utf8").replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
@@ -195,6 +210,19 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       text: document.body?.innerText?.slice(0, 240) || "",
     })).catch(() => ({}));
     throw new Error(`${profile.label} · ${id}: etap widocznej treści nie osiągnął gotowości; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
+  }
+  const resourceLockState = await page.evaluate(() => {
+    const overlay = document.getElementById("resourceLockGuard");
+    if (!overlay) return null;
+    const style = getComputedStyle(overlay);
+    if (style.display === "none" || style.visibility === "hidden") return null;
+    return {
+      title: overlay.querySelector("#resourceLockGuardTitle")?.textContent?.trim() || "",
+      message: overlay.querySelector("#resourceLockGuardMsg")?.textContent?.trim() || "",
+    };
+  });
+  if (resourceLockState) {
+    throw new Error(`${profile.label} · ${id}: galeria nie powinna pokazywać blokady edycji; ${JSON.stringify(resourceLockState)}`);
   }
   if (readySelector) {
     await page.waitForFunction((selector) => {
@@ -382,6 +410,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       });
       await installMaintenanceVisualState(context);
       await installSettingsAccessSimulation(context);
+      await installVisualResourceLockIsolation(context);
       // Galeria sprawdza układ stron i guardy, nie dostępność usługi CAPTCHA.
       // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
       // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
@@ -410,6 +439,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
             });
             await installMaintenanceVisualState(anonymous);
             await installSettingsAccessSimulation(anonymous);
+            await installVisualResourceLockIsolation(anonymous);
             await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
             const anonymousPage = await anonymous.newPage();
             anonymousPage.setDefaultTimeout(20_000);
