@@ -587,7 +587,7 @@ flowchart LR
   login["/login/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   login -.->|↩| home
   marketplace -.->|↩| home
@@ -604,7 +604,7 @@ flowchart LR
   login["/login/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   login -.->|↩| home
   marketplace -.->|↩| home
@@ -624,17 +624,17 @@ flowchart LR
   polls["/polls/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
-  logoEditor["/logo/"]
-  logoText["/logo/editor/text/"]
-  logoDraw["/logo/editor/draw/"]
-  logoImage["/logo/editor/image/"]
+  logoEditor["/logos/"]
+  logoText["/logos/editor/text/"]
+  logoDraw["/logos/editor/draw/"]
+  logoImage["/logos/editor/image/"]
   control["/control/"]
   gameSettings["/games/settings/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   account["/account/"]
   manual["/manual/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -676,12 +676,12 @@ flowchart LR
   polls["/polls/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
-  logoEditor["/logo/"]
+  logoEditor["/logos/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   account["/account/"]
   manual["/manual/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -718,17 +718,17 @@ flowchart LR
   tasks["/tasks/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
-  logoEditor["/logo/"]
-  logoText["/logo/editor/text/"]
-  logoDraw["/logo/editor/draw/"]
-  logoImage["/logo/editor/image/"]
+  logoEditor["/logos/"]
+  logoText["/logos/editor/text/"]
+  logoDraw["/logos/editor/draw/"]
+  logoImage["/logos/editor/image/"]
   control["/control/"]
   gameSettings["/games/settings/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   account["/account/"]
   manual["/manual/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -787,12 +787,12 @@ flowchart LR
   tasks["/tasks/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
-  logoEditor["/logo/"]
+  logoEditor["/logos/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   account["/account/"]
   manual["/manual/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor

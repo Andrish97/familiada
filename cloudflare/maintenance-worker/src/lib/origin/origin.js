@@ -82,8 +82,8 @@ const PAGE_ROUTES = new Set([
   "account", "bases", "bases/explorer",
   "connect", "connect/tv", "control", "control/buzzer", "control/display", "control/host",
   "games", "games/editor", "games/settings", "login", "login/confirm", "login/reset",
-  "logo", "logo/editor/draw", "logo/editor/image", "logo/editor/text",
-  "maintenance", "manual", "marketplace", "go", "mail",
+  "logos", "logos/editor/draw", "logos/editor/image", "logos/editor/text",
+  "maintenance", "manual", "marketplace", "go", "mails",
   "polls", "polls/vote/points", "polls/vote/qr", "polls/vote/text",
   "privacy", "friends", "subscribers", "tasks",
 ]);
