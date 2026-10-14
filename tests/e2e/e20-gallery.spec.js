@@ -430,6 +430,10 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     if (!fitsSingleRow && state.listBottomLayout !== "balanced-wrap") {
       throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; ${JSON.stringify(state.listBottomMetrics)}`);
     }
+    if (profile.width >= 744) {
+      const { available, left, right, groupGap } = state.listBottomMetrics;
+      console.log(`[e20-layout] ${profile.id} · ${id}: naturalne ${Math.round(left + right + groupGap)}px / dostępne ${available}px; ${state.listBottomLayout}; akcje pod nagłówkiem=${state.listHeaderActionsBelow}`);
+    }
   }
   fs.mkdirSync(path.join(OUT, id), { recursive: true });
   // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe
