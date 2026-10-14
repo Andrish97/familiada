@@ -13,6 +13,13 @@ test('guard poprzedza auth i odsłonięcie topbara', () => {
   assert.ok(source.indexOf('await guard.ready') < source.indexOf('document.querySelector(".topbar")?.classList.add("topbar-ready")'));
 });
 
+test('globalny guard telefonu odsłania komunikat i nie odsłania zawartości aplikacji', () => {
+  const orientation = read('shared/js/core/orientation-guard.js');
+  const overlay = read('shared/js/core/page-overlay.js');
+  assert.match(orientation, /showPageGuard\([\s\S]*?state:\s*"rotate"[\s\S]*?\);[\s\S]*?classList\.remove\("page-loading"\)/);
+  assert.match(overlay, /document\.body\.style\.visibility\s*=\s*"hidden"/);
+});
+
 test('ukryte etapy ładowania nie przyjmują fokusu ani kliknięć', () => {
   const css = read('shared/css/base.css');
   const hidden = css.match(/\[data-skel-step\]\s*\{([^}]+)\}/)?.[1] || '';
@@ -28,6 +35,13 @@ test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => 
   const tasks = read('tasks/js/tasks.js');
   assert.ok(contacts.indexOf('render();', contacts.indexOf('async function refresh')) < contacts.indexOf('contactsLoaded = true'));
   assert.ok(tasks.indexOf('render();', tasks.indexOf('async function refresh')) < tasks.indexOf('tasksLoaded = true'));
+});
+
+test('konto odsłania formularze po danych i po podpięciu akcji', () => {
+  const source = read('account/js/account.js');
+  assert.ok(source.indexOf('await loadProfile(await userP)') < source.indexOf('saveUsername?.addEventListener("click", handleUsernameSave)'));
+  assert.ok(source.indexOf('saveUsername?.addEventListener("click", handleUsernameSave)')
+    < source.lastIndexOf("document.querySelectorAll('[data-skel-step]')"));
 });
 
 test('ankiety mają osobny etap bazowy i wyników', () => {

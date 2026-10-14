@@ -871,9 +871,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
-  await loadProfile(await userP).finally(() => {
-    document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
-  });
+  try {
+    await loadProfile(await userP);
+  } catch (error) {
+    console.error("[account] initial profile load failed:", error);
+    setErr(niceAuthError(error));
+  }
 
   saveUsername?.addEventListener("click", handleUsernameSave);
   saveEmail?.addEventListener("click", handleEmailSave);
@@ -916,4 +919,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.preventDefault();
     deleteAccount?.click();
   });
+
+  // Odsłoń konto dopiero po danych i po podpięciu wszystkich akcji formularzy.
+  document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
 });

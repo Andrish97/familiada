@@ -845,7 +845,7 @@ Audyt kodu (nie jest to jeszcze wdrożenie ani pomiar wizualny):
 
 | Strona | Obecne podpięcie | Zakres ujednolicenia |
 |---|---|---|
-| Konto, Bazy, edytor gry, ustawienia gry | Wspólne `skel-body`, topbar i `data-skel-step`; odsłonięcie po danych. | Zachować wzorzec i sprawdzić gotowość akcji; Konto podpina kliknięcia dopiero po `loadProfile`. |
+| Konto, Bazy, edytor gry, ustawienia gry | Wspólne `skel-body`, topbar i `data-skel-step`; odsłonięcie po danych. | Zachować wzorzec i odsłonić Konto po `loadProfile` oraz podpięciu wszystkich akcji. |
 | Znajomi i Subskrybenci | `contactsHost` pojawia się dopiero po odczycie i zbudowaniu wierszy. Obie zakładki korzystają z jednego wyniku `contacts_list`. | Nie rozdzielać etapów bez rozdzielenia źródeł danych; błąd renderowania ma pozostać błędem pierwszego ładowania z retry. |
 | Zadania | Widoczny stan ładowania/błędu/retry; `tasks-scroll` po wyniku i wyrenderowaniu wierszy z akcjami. | Utrzymać wspólną kolejność przy każdym odświeżeniu; stan pusty wyświetlać dopiero po odpowiedzi. |
 | Ankiety | `pollBar` i główna karta po danych gry; lista Głosów w osobnym etapie po odczycie wyników. | Weryfikować stany niepowodzenia każdej sekcji oraz zależność kart od stanu ankiety. |
@@ -887,10 +887,11 @@ bramką przed auth, topbarem i logiką danych. Po pokazaniu guarda znika klasa
 startowego ukrycia, ale wspólny overlay ukrywa całe `body`; dotyczy to także
 globalnego guarda telefonu w poziomie i stron z własnym progiem urządzenia.
 Etapy `data-skel-step` nie przyjmują fokusu ani kliknięć przed `skel-step-ready`.
-QR odsłania guard przed oczekiwaniem na dozwoloną szerokość. Kontakty i Zadania
-oznaczają dane jako gotowe dopiero po zbudowaniu widoku; Ankiety odsłaniają
-dane bazowe i wyniki osobno. Kontrakt unit `progressiveLoading.test.js`
-sprawdza kolejność i stany: 4/4, razem z testami device guard/page init: 38/38.
+QR odsłania guard przed oczekiwaniem na dozwoloną szerokość. Konto, Kontakty i
+Zadania oznaczają dane jako gotowe dopiero po zbudowaniu widoku; Ankiety
+odsłaniają dane bazowe i wyniki osobno. Kontrakt unit
+`progressiveLoading.test.js` sprawdza kolejność i stany: 6/6, razem z testami
+device guard/page init: 40/40.
 Pełny przegląd ładowania wszystkich podstron i błędów sieciowych pozostaje
 częścią E20.
 
