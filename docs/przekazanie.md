@@ -28,8 +28,13 @@ Po naprawie tras `/logos/` i `/mails/`, testu stopki oraz diagramów wszystkie
 611 unity przechodzą lokalnie. W `38527509799` przygotowanie konta i fixture’ów
 przeszło, lecz Playwright nie znalazł fixture’ów, bo czyści katalog
 `test-results` na starcie; przeniesiono pliki przygotowawcze do `RUNNER_TEMP`.
-Najpierw uruchomić jeden profil i jedną stronę; pełną galerię dopiero po jego
-powodzeniu. Oba przebiegi E2E pozostają nieudane i nie dostarczyły galerii.
+Lekki MacBook + strona główna `38528168676` przeszedł 1/1. Pełna galeria
+`38528295329` nie przeszła: część stron pozostała w `page-loading`, zrzuty
+pełnej strony przekroczyły limit przy końcowym przechwytywaniu, a test Baz
+oczekiwał kafla także w iPhone landscape, gdzie właściwym stanem jest guard.
+Artefakty częściowe: galeria11876463671 (125 plików) i błędy11876413675.
+Nie traktować ich jako zamknięcia E20; unity611/611 przechodzą, lecz kompletna
+galeria i przegląd stopniowego ładowania nadal są otwarte.
 
 ## Aktualny checkpoint: E19 zamknięte produkcyjnie
 
