@@ -126,6 +126,12 @@ async function installSettingsAccessSimulation(context) {
   });
 }
 
+async function serveBranchLoginHtml(route) {
+  const file = path.resolve(__dirname, "../../web/login/index.html");
+  const html = fs.readFileSync(file, "utf8").replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
+  await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", headers: { "cache-control": "no-store" }, body: html });
+}
+
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
   const pageErrors = [];
@@ -374,11 +380,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
       // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
       // formularz logowania i prawdziwą autoryzację konta testowego.
-      await context.route(/^https:\/\/www\.familiada\.online\/login\/?$/, async (route) => {
-        const response = await route.fetch();
-        const html = (await response.text()).replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
-        await route.fulfill({ response, body: html });
-      });
+      await context.route(/^https:\/\/www\.familiada\.online\/login\/?$/, serveBranchLoginHtml);
       const page = await context.newPage();
       page.setDefaultTimeout(20_000);
       page.setDefaultNavigationTimeout(20_000);
@@ -402,11 +404,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
             });
             await installMaintenanceVisualState(anonymous);
             await installSettingsAccessSimulation(anonymous);
-            await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?$/, async (route) => {
-              const response = await route.fetch();
-              const html = (await response.text()).replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
-              await route.fulfill({ response, body: html });
-            });
+            await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?$/, serveBranchLoginHtml);
             const anonymousPage = await anonymous.newPage();
             anonymousPage.setDefaultTimeout(20_000);
             anonymousPage.setDefaultNavigationTimeout(20_000);

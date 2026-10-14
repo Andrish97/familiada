@@ -64,6 +64,8 @@ test('galeria czeka na gotowe widoczne etapy, a widoczny device guard jest końc
   assert.match(source, /overlay\?\.style\.display === "flex" && Boolean\(overlay\.dataset\.state\)/);
   assert.match(source, /getElementById\("resourceLockGuard"\)/);
   assert.match(source, /step\.classList\.contains\("skel-step-ready"\) \|\| step\.getClientRects\(\)\.length > 0/);
+  assert.match(source, /serveBranchLoginHtml/);
+  assert.match(source, /web\/login\/index\.html/);
 });
 
 test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => {
