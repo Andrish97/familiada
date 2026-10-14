@@ -30,6 +30,6 @@ znajduje się obok.
 Wartości docelowe podglądu: waga 900, wysokość 133%, szerokość 82%, odstęp
 11 px, rybie oko 0,50,
 głębokość 12 px pod kątem 32° i skala podglądu 135%. Paleta pochodzi z
-`web/assets/img/logo.svg`: lico `#ffcc00`, głębia `#aa8800`. Przy zmianie
+`fixtures/original-logo.svg`: lico `#ffcc00`, głębia `#aa8800`. Przy zmianie
 koloru DOT głębia jest wyliczana jako DOT przyciemniony o jedną trzecią, co
 zachowuje relację kolorów z oryginalnego logo.

@@ -6,6 +6,7 @@ import { chromium } from "@playwright/test";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const webRoot = path.join(repo, "web");
+const originalLogoPath = path.join(repo, "tests/preview/host-unbounded-logo/fixtures/original-logo.svg");
 const output = path.join(repo, "tests/recordings/host-buzzer-preview");
 const logoOptionsOutput = path.join(output, "host-logo-smoothing-options");
 const demoMigration = await fs.readFile(path.join(repo, "supabase/migrations/2026-07-14_218_fix_demo_image_correct_bits.sql"), "utf8");
@@ -21,8 +22,10 @@ const contentTypes = new Map([
 const server = http.createServer(async (request, response) => {
   const urlPath = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
   const relativePath = urlPath.endsWith("/") ? `${urlPath}index.html` : urlPath;
-  const file = path.resolve(webRoot, `.${relativePath}`);
-  if (!file.startsWith(`${webRoot}${path.sep}`)) { response.writeHead(403).end(); return; }
+  const file = urlPath === "/assets/img/logo.svg"
+    ? originalLogoPath
+    : path.resolve(webRoot, `.${relativePath}`);
+  if (file !== originalLogoPath && !file.startsWith(`${webRoot}${path.sep}`)) { response.writeHead(403).end(); return; }
   try {
     const body = await fs.readFile(file);
     response.writeHead(200, { "content-type": contentTypes.get(path.extname(file)) || "application/octet-stream" });
