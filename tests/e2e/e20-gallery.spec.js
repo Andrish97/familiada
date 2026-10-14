@@ -156,8 +156,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   try {
     await page.waitForFunction(() => {
       const root = document.documentElement;
-      const guarded = root.dataset.deviceGuard && root.dataset.deviceGuard !== "ok"
-        && document.getElementById("pageGuard")?.style.display === "flex";
+      const overlay = document.getElementById("pageGuard");
+      const guarded = overlay?.style.display === "flex" && Boolean(overlay.dataset.state);
       if (guarded) return true;
       const visibleSteps = [...document.querySelectorAll("[data-skel-step]")].filter((step) => {
         if (!step.getClientRects().length) return false;
@@ -170,7 +170,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     }, null, { timeout: 20_000 });
   } catch {
     const diagnostics = await page.evaluate(() => ({
-      guard: document.documentElement.dataset.deviceGuard || "",
+      guard: document.getElementById("pageGuard")?.dataset.state || document.documentElement.dataset.deviceGuard || "",
       pendingSteps: [...document.querySelectorAll("[data-skel-step]")]
         .filter((step) => !step.classList.contains("skel-step-ready") && step.getClientRects().length)
         .map((step) => `${step.tagName}.${String(step.className).replace(/\s+/g, ".")}`).slice(0, 8),

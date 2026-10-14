@@ -49,6 +49,12 @@ test('każda strona aplikacji ma jawny etap odsłonięcia treści', () => {
   }
 });
 
+test('galeria czeka na gotowe widoczne etapy, a widoczny device guard jest końcowym stanem', () => {
+  const source = fs.readFileSync(path.join(here, '../e2e/e20-gallery.spec.js'), 'utf8');
+  assert.match(source, /visibleSteps\.every\(\(step\) => step\.classList\.contains\("skel-step-ready"\)\)/);
+  assert.match(source, /overlay\?\.style\.display === "flex" && Boolean\(overlay\.dataset\.state\)/);
+});
+
 test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => {
   const contacts = read('shared/js/core/contacts-page.js');
   const tasks = read('tasks/js/tasks.js');
