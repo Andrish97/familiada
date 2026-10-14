@@ -895,6 +895,21 @@ device guard/page init: 40/40.
 Pełny przegląd ładowania wszystkich podstron i błędów sieciowych pozostaje
 częścią E20.
 
+**Galeria E20 (2026-10-14):** pełny Playwright na prawdziwej bazie, front z
+`codex/e19-3`, zakończony powodzeniem: workflow
+[38531555157](https://github.com/Andrish97/familiada/actions/runs/38531555157),
+5/5 profili. Artefakt [e20-gallery-845.zip](https://github.com/Andrish97/familiada/actions/runs/38531555157/artifacts/11877439381)
+zawiera 210 zrzutów: 35 tras i 7 dodatkowych stanów na MacBooku, iPadzie
+portrait/landscape oraz iPhonie portrait/landscape. Galeria `index.html`
+korzysta z dołączonych plików PNG, bez zewnętrznych obrazów; manifest zapisuje
+też wysokość całej treści. Zrzuty pokazują viewport urządzenia z safe area.
+W kontekście galerii wyciszony jest prompt instalacji PWA, a ekran maintenance
+ma stabilny stan wizualny, bo produkcja przekierowuje przy wyłączonych pracach;
+żaden z tych warunków nie zmienia produkcyjnego konta ani stanu usługi.
+Na profilach blokowanych dodatkowe stany interaktywne pokazują właściwy guard.
+Galeria obejmuje gotowe widoki; przejścia między etapami ładowania i testy
+wolnej sieci nadal pozostają do weryfikacji w E20.
+
 **Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
 ↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje
 pasek stanu; `38387014627`, success1/1, artefakt11806951789. Pozostałe strony i urządzenia nadal
