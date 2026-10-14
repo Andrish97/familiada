@@ -187,6 +187,11 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
     const manifest = [];
     try {
       await serveBranchCode(context, { pages: PAGES, safeAreaInsets: profile.safe });
+      // Wycisz wyłącznie instalacyjny prompt w kontekście wizualnym galerii;
+      // nie jest to ekran układu i inaczej przykrywał kafle stanów wyboru.
+      await context.addInitScript(() => {
+        if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
+      });
       // Galeria sprawdza układ stron i guardy, nie dostępność usługi CAPTCHA.
       // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
       // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
@@ -212,6 +217,9 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
           });
           try {
             await serveBranchCode(anonymous, { pages: PAGES, safeAreaInsets: profile.safe });
+            await anonymous.addInitScript(() => {
+              if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
+            });
             await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?$/, async (route) => {
               const response = await route.fetch();
               const html = (await response.text()).replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
