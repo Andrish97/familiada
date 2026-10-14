@@ -1,6 +1,5 @@
 // Testy wspólnego silnika ikon (js/core/icons.js).
-// Pilnują, żeby każda ikona była poprawnym, samodzielnym <svg> (bez obcych
-// kolorów poza flagami), żeby icon() było bezpieczne dla nieznanej nazwy
+// Pilnują, żeby każda ikona wskazywała na plik SVG w assets i żeby icon() było bezpieczne dla nieznanej nazwy
 // i etykiety, oraz żeby każda nazwa użyta w kodzie aplikacji istniała.
 
 import { test } from "node:test";
@@ -12,17 +11,17 @@ import { ICONS, ICON_NAMES, icon } from "../../web/shared/js/core/icons.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 
-test("każda ikona to kompletny <svg> z viewBox, klasą i currentColor", () => {
+test("każda ikona używa właściwego, osobnego pliku SVG", () => {
   assert.ok(ICON_NAMES.length > 50);
   for (const name of ICON_NAMES) {
     const svg = icon(name);
     assert.match(svg, /^<svg class="ico ico-[\w-]+"/, name);
-    assert.match(svg, /viewBox="[\d. -]+"/, name);
+    assert.ok(svg.includes(`<use href="${ICONS[name]}#icon"></use>`), name);
     assert.match(svg, /<\/svg>$/, name);
     assert.match(svg, /aria-hidden="true"/, name);
-    if (!name.startsWith("flag-")) {
-      assert.doesNotMatch(svg, /#[0-9a-f]{3,6}\b/i, `${name}: kolor na sztywno — ma być currentColor`);
-    }
+    const assetPath = path.join(ROOT, ICONS[name].replace(/^\//, ""));
+    assert.ok(fs.existsSync(assetPath), `${name}: brakuje ${assetPath}`);
+    assert.match(fs.readFileSync(assetPath, "utf8"), /<svg[^>]*\bid="icon"[^>]*\bviewBox=/, name);
   }
 });
 
@@ -36,12 +35,14 @@ test("nieznana nazwa daje pusty string, etykieta jest escapowana", () => {
 });
 
 test("ustalone rysunki: anuluj ≠ błąd, info i „!” bez kółka, telefon z falami, buzzer i host", () => {
-  assert.notEqual(ICONS.cancel.body, ICONS.error.body);
-  assert.doesNotMatch(ICONS.info.body, /r="[89]/, "info bez kółka");
-  assert.doesNotMatch(ICONS.error.body, /r="[89]/, "„!” bez kółka");
-  assert.match(ICONS.phone.body, /M19\.7 7a7\.2 7\.2 0 0 1 0 10/, "telefon z falami sygnału");
-  assert.match(ICONS.host.body, /rect x="16\.8" y="3" width="4" height="7"/, "host z mikrofonem");
-  assert.match(ICONS.buzzer.body, /M5\.75 11\.25a6\.25 6\.25 0 0 1 12\.5 0Z/, "buzzer — przycisk z boku");
+  const svg = (name) => fs.readFileSync(path.join(ROOT, ICONS[name].slice(1)), "utf8");
+  assert.notEqual(svg("cancel"), svg("error"));
+  assert.doesNotMatch(svg("info"), /r="[89]/, "info bez kółka");
+  assert.doesNotMatch(svg("error"), /r="[89]/, "„!” bez kółka");
+  assert.match(svg("phone"), /M19\.7 7a7\.2 7\.2 0 0 1 0 10/, "telefon z falami sygnału");
+  assert.match(svg("host"), /rect x="16\.8" y="3" width="4" height="7"/, "host z mikrofonem");
+  assert.match(svg("buzzer"), /M5\.75 11\.25a6\.25 6.25 0 0 1 12\.5 0Z/, "buzzer — przycisk z boku");
+  assert.match(svg("settings"), /<circle[^>]+r="3\.2"/, "zębatka ustawień");
 });
 
 test("każda nazwa ikony użyta w kodzie aplikacji istnieje w silniku", () => {
@@ -90,13 +91,11 @@ test("moduł importujący icon nie przesłania go zmienną ani parametrem o tej 
   assert.deepEqual(bad, []);
 });
 
-test("ikony z maską/clipPath mają unikalne id przy każdym wstawieniu", () => {
-  // Regresja: ten sam id maski flagi w ukrytym menu języków i w przycisku —
-  // przeglądarka brała maskę z ukrytego menu i flaga traciła napis „PL”.
+test("pliki ikon językowych i połowy gwiazdki są osobnymi źródłami SVG", () => {
   for (const name of ["flag-pl", "flag-ua", "star-half"]) {
-    const a = icon(name), b = icon(name);
-    const idA = a.match(/ id="([^"]+)"/)[1], idB = b.match(/ id="([^"]+)"/)[1];
-    assert.notEqual(idA, idB, name);
-    assert.ok(a.includes(`url(#${idA})`), `${name}: odwołanie url(#…) wskazuje na własne id`);
+    const file = path.join(ROOT, ICONS[name].slice(1));
+    const svg = fs.readFileSync(file, "utf8");
+    assert.match(svg, /<svg[^>]*\bid="icon"/, name);
+    assert.match(icon(name), new RegExp(`${ICONS[name]}#icon`), name);
   }
 });

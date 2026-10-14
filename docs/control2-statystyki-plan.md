@@ -124,3 +124,32 @@ Decyzja użytkownika („chcę to”, 2026-10-12): wdrożyć zakres. Zrealizowan
 - W kontrolnym rekordzie czas blokady wyniósł 7501 ms; wszystkie trzy karty miały stan `visible`, a urządzenia były na `different_profile`. Ten drugi wynik był oczekiwany, bo test celowo odtwarza ponowne podłączenie w nowych kontekstach przeglądarki. Nie oznacza innego urządzenia fizycznego.
 - Test wymusza 503 przy odczycie obecności, dlatego zapisany w nim błąd odczytu jest scenariuszem kontrolnym. Ewentualny wpis opóźnienia Display z tej gry również nie potwierdza sam w sobie problemu gracza — kontrola działa na runnerze CI. Dopiero przebiegi rzeczywistych gier pokażą, jak często objawy faktycznie występują.
 - Dwie wcześniejsze próby miały włączoną retencję. Ostatni test usunął cztery pozostawione przez nie gry przed wykonaniem scenariusza; bieżąca gra została usunięta standardowo po odczycie artefaktu.
+
+## Eksport przebiegów Control 2 — 2026-10-13
+
+W Ustawieniach → Statystyki → Rozgrywki szczegóły przebiegów można pobrać jako JSON. Domyślnie eksport obejmuje dzisiejsze sesje Control 2 według lokalnej strefy czasowej przeglądarki; dostępne są też ostatnie 7 dni, 30 dni lub wszystkie załadowane rekordy (do 500 najnowszych). Eksport zachowuje pełne szczegóły sesji, w tym zdarzenia diagnostyczne. Archiwum i Control 1 nie są dołączane.
+
+## Trwały dziennik urządzenia Display — 2026-10-13
+
+Decyzja użytkownika: dodać dokładniejsze logowanie stanu Display po analizie
+przebiegów z 13 października. Migracja369 zapisuje rzadkie zdarzenia do
+`control2_device_events`: zmiany widoczności/fokusu strony, utratę i powrót
+połączenia, widoczne zacięcia renderowania oraz błędy renderowania. Zdarzenia
+wiążą się z aktywną sesją Control2 i są dołączane do `stats_detail.events`,
+więc pojawiają się w szczegółach sesji oraz eksporcie JSON w panelu
+administratora. Surowa tabela jest zablokowana dla właścicieli gier i zwykłych
+klientów. Nie zapisujemy heartbeatów, tekstów błędów, IP ani fingerprintu
+przeglądarki. Retencja surowej tabeli jest ograniczona do30 dni i500 ostatnich
+zdarzeń na grę; sesyjna kopia podlega dotychczasowej historii statystyk.
+
+Po wdrożeniu log można odczytać w Supabase SQL Editor, podstawiając lokalną
+datę:
+
+```sql
+select g.name as gra, e.session_id, e.created_at, e.event_type, e.details
+from public.control2_device_events e
+join public.games g on g.id=e.game_id
+where e.created_at >= ('2026-10-13 00:00:00'::timestamp at time zone 'Europe/Warsaw')
+  and e.created_at <  ('2026-10-14 00:00:00'::timestamp at time zone 'Europe/Warsaw')
+order by e.created_at;
+```

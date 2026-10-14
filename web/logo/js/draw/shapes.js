@@ -1,27 +1,23 @@
-// familiada/logo/js/draw/shapes.js
-// Kształty narzędzia „Kształty”: lista (ikony, czy mogą mieć wypełnienie)
-// i geometria ścieżek SVG w prostokącie (x1,y1)-(x2,y2).
-
-const svg = (inner) => `<svg viewBox="0 0 24 24" style="width:20px;height:20px">${inner}</svg>`;
-const STROKE = 'fill="none" stroke="currentColor" stroke-width="2"';
+// Kształty narzędzia „Kształty”: metadane/geometria; podglądy są w assets.
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-14T23162";
 
 // label = klucz tłumaczenia
 export const SHAPES = [
-  { id: "line", label: "logoEditor.draw.ui.shapes.line", hasFill: false, icon: svg(`<line x1="4" y1="20" x2="20" y2="4" ${STROKE} stroke-linecap="round"/>`) },
-  { id: "rect", label: "logoEditor.draw.ui.shapes.rect", hasFill: true, icon: svg(`<rect x="4" y="6" width="16" height="12" rx="1" ${STROKE}/>`) },
-  { id: "roundRect", label: "logoEditor.draw.ui.shapes.roundRect", hasFill: true, icon: svg(`<rect x="4" y="6" width="16" height="12" rx="4" ${STROKE}/>`) },
-  { id: "ellipse", label: "logoEditor.draw.ui.shapes.ellipse", hasFill: true, icon: svg(`<ellipse cx="12" cy="12" rx="9" ry="6" ${STROKE}/>`) },
-  { id: "triangle", label: "logoEditor.draw.ui.shapes.triangle", hasFill: true, icon: svg(`<polygon points="12,4 20,20 4,20" ${STROKE} stroke-linejoin="round"/>`) },
-  { id: "diamond", label: "logoEditor.draw.ui.shapes.diamond", hasFill: true, icon: svg(`<polygon points="12,3 21,12 12,21 3,12" ${STROKE} stroke-linejoin="round"/>`) },
-  { id: "pentagon", label: "logoEditor.draw.ui.shapes.pentagon", hasFill: true, icon: svg(`<polygon points="12,3 21,9 18,20 6,20 3,9" ${STROKE} stroke-linejoin="round"/>`) },
-  { id: "hexagon", label: "logoEditor.draw.ui.shapes.hexagon", hasFill: true, icon: svg(`<polygon points="12,3 21,8 21,16 12,21 3,16 3,8" ${STROKE} stroke-linejoin="round"/>`) },
-  { id: "star5", label: "logoEditor.draw.ui.shapes.star5", hasFill: true, icon: svg(`<polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9" ${STROKE} stroke-linejoin="round"/>`) },
-  { id: "arrow1", label: "logoEditor.draw.ui.shapes.arrow1", hasFill: false, icon: svg(`<path d="M5 12h14M14 7l5 5-5 5" ${STROKE} stroke-linecap="round" stroke-linejoin="round"/>`) },
-  { id: "arrow2", label: "logoEditor.draw.ui.shapes.arrow2", hasFill: false, icon: svg(`<path d="M5 12h14M14 7l5 5-5 5M10 7L5 12l5 5" ${STROKE} stroke-linecap="round" stroke-linejoin="round"/>`) },
-  { id: "arrow1Fill", label: "logoEditor.draw.ui.shapes.arrow1Fill", hasFill: true, icon: svg(`<path d="M12 19L19 12L12 5V9H5V15H12V19Z" ${STROKE} stroke-linejoin="round"/>`) },
-  { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: svg(`<path d="M2 12 8.5 5V9h7V5L22 12l-6.5 7v-4h-7v4Z" ${STROKE} stroke-linejoin="round"/>`) },
-  { id: "heart", label: "logoEditor.draw.ui.shapes.heart", hasFill: true, icon: svg(`<path d="M12 21C12 21 4 15 4 8.5 4 5 7 3 12 7c5-4 8-2 8 1.5 0 6.5-8 12.5-8 12.5z" ${STROKE} stroke-linejoin="round"/>`) },
-  { id: "polygon", label: "logoEditor.draw.ui.shapes.polygon", hasFill: true, isPoly: true, icon: svg(`<polygon points="3,5 20,3 22,16 8,21" ${STROKE} stroke-linejoin="round"/>`) },
+  { id: "line", label: "logoEditor.draw.ui.shapes.line", hasFill: false, icon: icon("logo-shape-line") },
+  { id: "rect", label: "logoEditor.draw.ui.shapes.rect", hasFill: true, icon: icon("logo-shape-rect") },
+  { id: "roundRect", label: "logoEditor.draw.ui.shapes.roundRect", hasFill: true, icon: icon("logo-shape-round-rect") },
+  { id: "ellipse", label: "logoEditor.draw.ui.shapes.ellipse", hasFill: true, icon: icon("logo-shape-ellipse") },
+  { id: "triangle", label: "logoEditor.draw.ui.shapes.triangle", hasFill: true, icon: icon("logo-shape-triangle") },
+  { id: "diamond", label: "logoEditor.draw.ui.shapes.diamond", hasFill: true, icon: icon("logo-shape-diamond") },
+  { id: "pentagon", label: "logoEditor.draw.ui.shapes.pentagon", hasFill: true, icon: icon("logo-shape-pentagon") },
+  { id: "hexagon", label: "logoEditor.draw.ui.shapes.hexagon", hasFill: true, icon: icon("logo-shape-hexagon") },
+  { id: "star5", label: "logoEditor.draw.ui.shapes.star5", hasFill: true, icon: icon("logo-shape-star5") },
+  { id: "arrow1", label: "logoEditor.draw.ui.shapes.arrow1", hasFill: false, icon: icon("logo-shape-arrow1") },
+  { id: "arrow2", label: "logoEditor.draw.ui.shapes.arrow2", hasFill: false, icon: icon("logo-shape-arrow2") },
+  { id: "arrow1Fill", label: "logoEditor.draw.ui.shapes.arrow1Fill", hasFill: true, icon: icon("logo-shape-arrow1-fill") },
+  { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: icon("logo-shape-arrow2-fill") },
+  { id: "heart", label: "logoEditor.draw.ui.shapes.heart", hasFill: true, icon: icon("logo-shape-heart") },
+  { id: "polygon", label: "logoEditor.draw.ui.shapes.polygon", hasFill: true, isPoly: true, icon: icon("logo-shape-polygon") },
 ];
 
 export const shapeById = (id) => SHAPES.find((s) => s.id === id) || SHAPES[1];

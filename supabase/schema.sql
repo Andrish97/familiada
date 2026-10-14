@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict n2krbdaHJhpcSDkOb1VKhTeqTjOr0aleuiP7V9jfwyx6FblI56oC3OTwkbE9jH0
+\restrict AmC6sQwfsYfZGkHgafNKj9XkEpYh7VXonrWAheXlI3dXdlm4bFlOSYpUlH6dEBx
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4773,6 +4773,76 @@ END; $$;
 
 
 --
+-- Name: control2_display_event("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control2_display_event"("p_game_id" "uuid", "p_key" "text", "p_event" "jsonb") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  sid uuid;
+  event_name text;
+  event_details jsonb;
+BEGIN
+  IF NOT public.control_device_key_valid(p_game_id, 'display', p_key) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  IF p_event IS NULL OR octet_length(p_event::text) > 2000 THEN
+    RAISE EXCEPTION 'invalid event';
+  END IF;
+  event_name := p_event->>'event_type';
+  IF event_name IS NULL OR event_name NOT IN ('page_state','render_stall','runtime_error','network_state') THEN
+    RAISE EXCEPTION 'invalid event type';
+  END IF;
+
+  SELECT a.session_id INTO sid
+  FROM public.game_session_active a
+  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
+  WHERE a.game_id=p_game_id AND s.control_version=2;
+  IF sid IS NULL THEN RETURN; END IF;
+
+  IF event_name='page_state' THEN
+    event_details := jsonb_build_object(
+      'reason', CASE WHEN p_event->>'reason' IN ('initial','visibilitychange','focus','blur') THEN p_event->>'reason' ELSE 'statechange' END,
+      'visibility', CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
+      'focused', CASE WHEN jsonb_typeof(p_event->'focused')='boolean' THEN (p_event->>'focused')::boolean ELSE NULL END,
+      'was_discarded', CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean' THEN (p_event->>'was_discarded')::boolean ELSE NULL END
+    );
+  ELSIF event_name='render_stall' THEN
+    event_details := jsonb_build_object(
+      'max_frame_gap_ms', LEAST(60000, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'max_frame_gap_ms')='number' THEN (p_event->>'max_frame_gap_ms')::numeric ELSE 0 END))::integer,
+      'stalled_frames', LEAST(10000, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'stalled_frames')='number' THEN (p_event->>'stalled_frames')::numeric ELSE 0 END))::integer,
+      'visibility', CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
+      'state_rev', LEAST(9223372036854775807::numeric, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint
+    );
+  ELSIF event_name='runtime_error' THEN
+    event_details := jsonb_build_object(
+      'phase', CASE WHEN p_event->>'phase' IN ('render','completion_ack') THEN p_event->>'phase' ELSE 'other' END,
+      'error_name', left(coalesce(p_event->>'error_name','Error'),80),
+      'state_rev', LEAST(9223372036854775807::numeric, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint
+    );
+  ELSE
+    event_details := jsonb_build_object(
+      'online', CASE WHEN jsonb_typeof(p_event->'online')='boolean' THEN (p_event->>'online')::boolean ELSE false END
+    );
+  END IF;
+
+  INSERT INTO public.control2_device_events(game_id,session_id,event_type,details)
+  VALUES (p_game_id,sid,event_name,event_details);
+
+  -- Keep the log bounded even for a frequently reused game.
+  DELETE FROM public.control2_device_events e
+  WHERE e.game_id=p_game_id
+    AND (e.created_at < now()-interval '30 days' OR e.id IN (
+      SELECT id FROM public.control2_device_events
+      WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500
+    ));
+END;
+$$;
+
+
+--
 -- Name: control2_session_ping("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8410,6 +8480,34 @@ $$;
 
 
 --
+-- Name: get_control2_display_events("uuid"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_control2_display_events"("p_session_ids" "uuid"[]) RETURNS "jsonb"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  SELECT coalesce(jsonb_object_agg(session_id::text, events), '{}'::jsonb)
+  FROM (
+    SELECT e.session_id, jsonb_agg(
+      jsonb_build_object(
+        'kind','diagnostic',
+        'category','display_state',
+        'at',e.created_at,
+        'message','Zdarzenie urządzenia Wyświetlacz.',
+        'devices',jsonb_build_array('display'),
+        'metrics',e.details || jsonb_build_object('reason',e.event_type)
+      ) ORDER BY e.created_at,e.id
+    ) AS events
+    FROM public.control2_device_events e
+    JOIN public.game_sessions s ON s.id=e.session_id AND s.control_version=2
+    WHERE e.session_id=ANY(coalesce(p_session_ids,'{}'::uuid[]))
+    GROUP BY e.session_id
+  ) logs;
+$$;
+
+
+--
 -- Name: get_email_intent_status("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9051,6 +9149,7 @@ BEGIN
     INTO result
     FROM (
       SELECT
+        s.id AS session_id,
         g.name AS game_name,
         pr.username AS owner,
         s.control_version,
@@ -9337,65 +9436,33 @@ declare
   v_limit int := greatest(1, least(coalesce(p_limit, 500), 5000));
   v_deleted int := 0;
   v_id uuid;
-  v_url text;
-  v_jwt text;
 begin
-  select value into v_url from public.app_config where key = 'edge_url';
-  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
-
-  -- 1. Usuwanie wygasłych gości (zgodnie z istniejącą logiką)
   for v_id in
     select p.id
-    from public.profiles p
-    where p.is_guest = true
-      and p.guest_expires_at is not null
-      and p.guest_expires_at < now()
-    order by p.guest_expires_at asc
-    limit v_limit
+      from public.profiles p
+     where p.is_guest = true
+       and p.guest_expires_at is not null
+       and p.guest_expires_at < now()
+     order by p.guest_expires_at asc
+     limit v_limit
   loop
     perform public.delete_user_everything(v_id);
     v_deleted := v_deleted + 1;
-
-    if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
-      perform net.http_post(
-        url := v_url || '/functions/v1/cleanup-guest-storage',
-        headers := jsonb_build_object(
-          'Content-Type', 'application/json',
-          'Authorization', 'Bearer ' || v_jwt,
-          'apikey', v_jwt
-        ),
-        body := jsonb_build_object('userId', v_id)
-      );
-    end if;
   end loop;
 
-  -- 2. Usuwanie niepotwierdzonych kont (brak username, brak logowania, > 5 dni)
-  -- Robimy to tylko jeśli limit nie został wyczerpany przez gości
   if v_deleted < v_limit then
     for v_id in
       select u.id
-      from auth.users u
-      left join public.profiles p on p.id = u.id
-      where (p.username IS NULL OR p.id IS NULL) -- profil brakujący lub brak username
-        and u.last_sign_in_at IS NULL            -- nigdy się nie zalogował
-        and u.created_at < (now() - interval '5 days')
-        and coalesce(p.is_guest, false) = false  -- nie jest gościem (goście mają osobną logikę)
-      limit (v_limit - v_deleted)
+        from auth.users u
+        left join public.profiles p on p.id = u.id
+       where (p.username IS NULL OR p.id IS NULL)
+         and u.last_sign_in_at IS NULL
+         and u.created_at < (now() - interval '5 days')
+         and coalesce(p.is_guest, false) = false
+       limit (v_limit - v_deleted)
     loop
       perform public.delete_user_everything(v_id);
       v_deleted := v_deleted + 1;
-
-      if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
-        perform net.http_post(
-          url := v_url || '/functions/v1/cleanup-guest-storage',
-          headers := jsonb_build_object(
-            'Content-Type', 'application/json',
-            'Authorization', 'Bearer ' || v_jwt,
-            'apikey', v_jwt
-          ),
-          body := jsonb_build_object('userId', v_id)
-        );
-      end if;
     end loop;
   end if;
 
@@ -9475,8 +9542,6 @@ CREATE FUNCTION "public"."guest_discard_current"() RETURNS "jsonb"
 declare
   v_uid uuid := auth.uid();
   v_is_guest boolean := false;
-  v_url text;
-  v_jwt text;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
@@ -9484,30 +9549,14 @@ begin
 
   select coalesce(is_guest, false)
     into v_is_guest
-  from public.profiles
-  where id = v_uid;
+    from public.profiles
+   where id = v_uid;
 
   if not v_is_guest then
     return jsonb_build_object('ok', false, 'error', 'not_guest');
   end if;
 
   perform public.delete_user_everything(v_uid);
-
-  -- 312: pliki po usunięciu z bazy (baza najpierw)
-  select value into v_url from public.app_config where key = 'edge_url';
-  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
-  if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
-    perform net.http_post(
-      url := v_url || '/functions/v1/cleanup-guest-storage',
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || v_jwt,
-        'apikey', v_jwt
-      ),
-      body := jsonb_build_object('userId', v_uid)
-    );
-  end if;
-
   return jsonb_build_object('ok', true);
 end;
 $$;
@@ -13715,29 +13764,6 @@ END $$;
 
 
 --
--- Name: poll_sub_accept("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."poll_sub_accept"("p_token" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE s public.poll_subscriptions%rowtype; uid uuid:=auth.uid(); e text;
-BEGIN
- IF uid IS NULL THEN RETURN jsonb_build_object('ok',false,'error','not_authenticated'); END IF;
- SELECT public._norm_email(email) INTO e FROM public.profiles WHERE id=uid;
- SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token FOR UPDATE;
- IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
- IF (s.subscriber_user_id IS NOT NULL AND s.subscriber_user_id<>uid)
- OR (s.subscriber_user_id IS NULL AND public._norm_email(s.subscriber_email) IS DISTINCT FROM e) THEN
-   RETURN jsonb_build_object('ok',false,'error','not_your_invite'); END IF;
- IF s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL OR s.status NOT IN ('pending','active') THEN
-   RETURN jsonb_build_object('ok',false,'error','already_closed'); END IF;
- RETURN jsonb_build_object('ok',false,'error','has_account');
-END; $$;
-
-
---
 -- Name: poll_sub_accept_email("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -14604,29 +14630,6 @@ $$;
 
 
 --
--- Name: polls_badge_get(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_badge_get"() RETURNS TABLE("has_new" boolean, "tasks_pending" integer, "subs_pending" integer, "polls_open" integer)
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-  with ov as (
-    select public.polls_hub_overview() as j
-  )
-  select
-    (
-      coalesce((j->>'tasks_todo')::int, 0) > 0
-      or coalesce((j->>'subs_mine_pending')::int, 0) > 0
-    ) as has_new,
-    coalesce((j->>'tasks_todo')::int, 0) as tasks_pending,
-    coalesce((j->>'subs_mine_pending')::int, 0) as subs_pending,
-    coalesce((j->>'polls_open')::int, 0) as polls_open
-  from ov;
-$$;
-
-
---
 -- Name: polls_hub_anon_voters("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -15049,46 +15052,6 @@ $$;
 
 
 --
--- Name: polls_hub_list_my_subscriptions(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_list_my_subscriptions"() RETURNS TABLE("sub_id" "uuid", "owner_id" "uuid", "owner_label" "text", "status" "text", "created_at" timestamp with time zone, "token" "uuid", "go_url" "text", "is_expired" boolean)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-begin
-  perform public.poll_claim_email_records();
-
-  return query
-  with base as (
-    select
-      s.*,
-      greatest(
-        coalesce(s.declined_at,  '-infinity'::timestamptz),
-        coalesce(s.cancelled_at, '-infinity'::timestamptz),
-        coalesce(s.created_at,   '-infinity'::timestamptz)
-      ) as last_action_at
-    from public.poll_subscriptions s
-    where s.subscriber_user_id = auth.uid()
-  )
-  select
-    b.id as sub_id,
-    b.owner_id,
-    coalesce(p.username, p.email, '—') as owner_label,
-    b.status,
-    b.created_at,
-    b.token,
-    ('go?s=' || b.token::text)::text as go_url,
-    (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days') as is_expired
-  from base b
-  left join public.profiles p on p.id = b.owner_id
-  where not (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days')
-  order by b.created_at desc;
-end;
-$$;
-
-
---
 -- Name: polls_hub_list_open_polls(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -15148,105 +15111,6 @@ begin
   left join t on t.game_id = g.game_id
   order by g.created_at desc;
 end;
-$$;
-
-
---
--- Name: polls_hub_list_tasks(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_list_tasks"() RETURNS TABLE("task_id" "uuid", "game_id" "uuid", "game_name" "text", "poll_type" "text", "status" "text", "created_at" timestamp with time zone, "done_at" timestamp with time zone, "declined_at" timestamp with time zone, "cancelled_at" timestamp with time zone, "is_archived" boolean, "go_url" "text", "owner_id" "uuid", "owner_username" "text", "owner_email" "text")
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-begin
-  perform public.poll_claim_email_records();
-
-  return query
-  select
-    t.id,
-    t.game_id,
-    coalesce(g.name, ('Sondaż ' || left(t.game_id::text, 8))::text) as game_name,
-    t.poll_type,
-    case
-      when t.done_at is not null then 'done'
-      when t.declined_at is not null then 'declined'
-      when t.cancelled_at is not null then 'cancelled'
-      else 'pending'
-    end as status,
-    t.created_at,
-    t.done_at,
-    t.declined_at,
-    t.cancelled_at,
-    (coalesce(t.done_at, t.declined_at, t.cancelled_at) < now() - interval '5 days') as is_archived,
-    ('go?t=' || t.token::text)::text,
-    t.owner_id,
-    p.username,
-    p.email
-  from public.poll_tasks t
-  left join public.games g on g.id = t.game_id
-  left join public.profiles p on p.id = t.owner_id
-  where t.recipient_user_id = auth.uid()
-  order by t.created_at desc;
-end;
-$$;
-
-
---
--- Name: polls_hub_overview(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_overview"() RETURNS json
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_tasks_todo int;
-  v_subs_mine_pending int;
-  v_subs_their_pending int;
-begin
-  perform public.poll_claim_email_records();
-
-  select count(*) into v_tasks_todo
-  from public.poll_tasks t
-  where t.recipient_user_id = auth.uid()
-    and t.done_at is null
-    and t.declined_at is null
-    and t.cancelled_at is null;
-
-  select count(*) into v_subs_mine_pending
-  from public.poll_subscriptions s
-  where s.subscriber_user_id = auth.uid()
-    and s.status = 'pending'
-    and s.cancelled_at is null
-    and s.declined_at is null;
-
-  select count(*) into v_subs_their_pending
-  from public.poll_subscriptions s
-  where s.owner_id = auth.uid()
-    and s.status = 'pending'
-    and s.cancelled_at is null
-    and s.declined_at is null;
-
-  return json_build_object(
-    'polls_open', 0,
-    'tasks_todo', coalesce(v_tasks_todo,0),
-    'subs_mine_pending', coalesce(v_subs_mine_pending,0),
-    'subs_their_pending', coalesce(v_subs_their_pending,0)
-  );
-end;
-$$;
-
-
---
--- Name: polls_hub_share_poll("uuid", "uuid"[]); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_share_poll"("p_game_id" "uuid", "p_sub_ids" "uuid"[]) RETURNS "jsonb"
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
- SELECT public.poll_share_send(p_game_id,'{}'::uuid[],p_sub_ids)
-  || jsonb_build_object('cancelled',0,'blocked_sub_ids','[]'::jsonb)
 $$;
 
 
@@ -15318,83 +15182,6 @@ BEGIN
   PERFORM pg_sleep(.01);
  END LOOP;
 END $$;
-
-
---
--- Name: polls_hub_subscription_accept("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_accept"("p_id" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE tok uuid;
-BEGIN
- IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
- SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
- IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not found or not pending'); END IF;
- RETURN public.poll_sub_accept(tok);
-END; $$;
-
-
---
--- Name: polls_hub_subscription_cancel("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_cancel"("p_id" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE tok uuid;
-BEGIN
- IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
- SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
- IF NOT FOUND OR NOT public._subscriber_close(tok,true) THEN
- RETURN jsonb_build_object('ok',false,'error','not found or not pending/active'); END IF;
- RETURN jsonb_build_object('ok',true,'action','declined','id',p_id);
-END; $$;
-
-
---
--- Name: polls_hub_subscription_invite("text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_invite"("p_recipient" "text") RETURNS "jsonb"
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
- SELECT public.subscribers_invite(p_recipient);
-$$;
-
-
---
--- Name: polls_hub_subscription_invite_a("text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_invite_a"("p_handle" "text") RETURNS "jsonb"
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
- SELECT public.subscribers_invite(p_handle);
-$$;
-
-
---
--- Name: polls_hub_subscription_reject("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_subscription_reject"("p_id" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE tok uuid;
-BEGIN
- IF auth.uid() IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth required'); END IF;
- SELECT token INTO tok FROM public.poll_subscriptions WHERE id=p_id AND subscriber_user_id=auth.uid();
- IF NOT FOUND OR NOT public._subscriber_close(tok,false) THEN
- RETURN jsonb_build_object('ok',false,'error','not found or not pending/active'); END IF;
- RETURN jsonb_build_object('ok',true,'action','declined','id',p_id);
-END; $$;
 
 
 --
@@ -17554,6 +17341,37 @@ CREATE TABLE "public"."contact_reports" (
 
 
 --
+-- Name: control2_device_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."control2_device_events" (
+    "id" bigint NOT NULL,
+    "game_id" "uuid" NOT NULL,
+    "session_id" "uuid",
+    "device_type" "text" DEFAULT 'display'::"text" NOT NULL,
+    "event_type" "text" NOT NULL,
+    "details" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = 'display'::"text")),
+    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text"])))
+);
+
+
+--
+-- Name: control2_device_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."control2_device_events" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME "public"."control2_device_events_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: control_device_link_tokens; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -19021,6 +18839,14 @@ ALTER TABLE ONLY "public"."contact_reports"
 
 
 --
+-- Name: control2_device_events control2_device_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control2_device_events"
+    ADD CONSTRAINT "control2_device_events_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: control_device_link_tokens control_device_link_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -19939,6 +19765,13 @@ CREATE INDEX "base_share_tasks_status_created_idx" ON "public"."base_share_tasks
 --
 
 CREATE INDEX "base_share_tasks_token_idx" ON "public"."base_share_tasks" USING "btree" ("token");
+
+
+--
+-- Name: control2_device_events_game_created_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "control2_device_events_game_created_idx" ON "public"."control2_device_events" USING "btree" ("game_id", "created_at" DESC, "id" DESC);
 
 
 --
@@ -21645,6 +21478,22 @@ ALTER TABLE ONLY "public"."contact_reports"
 
 
 --
+-- Name: control2_device_events control2_device_events_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control2_device_events"
+    ADD CONSTRAINT "control2_device_events_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: control2_device_events control2_device_events_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control2_device_events"
+    ADD CONSTRAINT "control2_device_events_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "public"."game_sessions"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: control_device_link_tokens control_device_link_tokens_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -22801,6 +22650,12 @@ ALTER TABLE "public"."contact_report_messages" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."contact_reports" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: control2_device_events; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."control2_device_events" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: control_device_link_tokens; Type: ROW SECURITY; Schema: public; Owner: -
@@ -24074,5 +23929,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict n2krbdaHJhpcSDkOb1VKhTeqTjOr0aleuiP7V9jfwyx6FblI56oC3OTwkbE9jH0
+\unrestrict AmC6sQwfsYfZGkHgafNKj9XkEpYh7VXonrWAheXlI3dXdlm4bFlOSYpUlH6dEBx
 

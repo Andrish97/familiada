@@ -315,7 +315,7 @@ test("ankieta: odbiorca z kontem nie przechodzi starym kanałem Subskrybentów",
       return { data, error: error && { code: error.code } };
     }, gameId);
     // E14 drops this retired path; before that migration it must remain inert.
-    expect(["42883", "404", "PGRST202"].includes(legacy.error?.code) || legacy.data?.created === 0).toBe(true);
+    expect(legacy.error?.code === "42883" || legacy.data?.created === 0).toBe(true);
     const rows = await page.evaluate(async id => {
       const { data, error } = await window.__sbClient.from("poll_tasks").select("id").eq("game_id", id);
       if (error) throw error;

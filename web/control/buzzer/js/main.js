@@ -10,17 +10,18 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-13T13432";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-13T13432";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-13T13432";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-13T13432";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-13T13432";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-13T13432";
-import { createPressController } from "./press.js?v=v2026-10-13T13432";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-14T220100";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-13T13432";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-13T14412";
-import "../../../shared/js/core/orientation-guard.js?v=v2026-10-14T195500";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-14T23162";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-14T23162";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-14T23162";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-14T23162";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-14T23162";
+import { createPressController } from "./press.js?v=v2026-10-14T23162";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-14T23162";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-14T23162";
+
+// Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
+startKeepAlive();
 
 function parseParams() {
   const u = new URL(location.href);

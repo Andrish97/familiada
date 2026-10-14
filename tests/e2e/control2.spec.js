@@ -777,6 +777,42 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.error.rows[0]).toContain("Błąd · Nie można odczytać statusu urządzeń.");
 });
 
+test("statystyki Settings: eksport Control 2 daje JSON tylko z wybranego zakresu", async ({ page, request }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  let source;
+  if (process.env.TEST_BRANCH_CODE === "0") {
+    const response = await request.get("https://andrish97.github.io/settings/js/stats-export.js", {
+      headers: { Host: "familiada.online", "Cache-Control": "no-cache" },
+    });
+    expect(response.status()).toBe(200);
+    source = await response.text();
+  } else {
+    source = await page.evaluate(async () => {
+      const response = await fetch("/settings/js/stats-export.js", { cache: "no-store" });
+      if (!response.ok) throw new Error(`stats-export.js: ${response.status}`);
+      return response.text();
+    });
+  }
+
+  const exported = await page.evaluate(source => {
+    const moduleBody = source.replace(/^export function /m, "function ");
+    const build = new Function(`${moduleBody}; return buildControl2StatsExport;`)();
+    const now = new Date(2026, 9, 13, 12, 0, 0);
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    return build([
+      { id: "control2-today", control_version: 2, started_at: today.toISOString(), stats_detail: { events: [{ kind: "diagnostic" }] } },
+      { id: "control1-today", control_version: 1, started_at: now.toISOString() },
+      { id: "control2-old", control_version: 2, started_at: new Date(2026, 9, 12, 23, 59).toISOString() },
+    ], "today", { now, timeZone: "Europe/Warsaw" });
+  }, source);
+
+  expect(exported.session_count).toBe(1);
+  expect(exported.timezone).toBe("Europe/Warsaw");
+  expect(exported.sessions[0].id).toBe("control2-today");
+  expect(exported.sessions[0].stats_detail.events[0].kind).toBe("diagnostic");
+});
+
 function trackErrors(p, label, bucket) {
   p.on("pageerror", (err) => bucket.push(`${label}: ${err.message}`));
 }

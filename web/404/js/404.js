@@ -1,5 +1,4 @@
-import "../../shared/js/core/orientation-guard.js?v=v2026-10-14T195500";
-import { initI18n, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T13432";
+import { initI18n, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
 
 (async () => {
   try {

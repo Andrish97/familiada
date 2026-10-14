@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-13T13432";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-14T23162";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,19 +7,19 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-13T13432";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-13T13432";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-13T13432";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-13T13432";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T13432";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-13T13432";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-13T13432";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-13T13432";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-13T13432";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-13T13432";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-13T13432";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-13T13432";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-13T13432";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-14T23162";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-14T23162";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-14T23162";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-14T23162";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-14T23162";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-14T23162";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-14T23162";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-14T23162";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-14T23162";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -108,22 +108,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-13T13432";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-13T13432";
-import { createEngine } from "./engine.js?v=v2026-10-13T13432";
-import { createActionGate } from "./actionGate.js?v=v2026-10-13T13432";
-import { createDevices } from "./devices.js?v=v2026-10-13T13432";
-import { createPresence } from "./presence.js?v=v2026-10-13T13432";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-13T13432";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-13T13432";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-13T13432";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-13T13432";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-13T13432";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-14T195500";
-import { createUI } from "./ui.js?v=v2026-10-13T13432";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-13T13432";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T13432";
+import { createStore } from "./store.js?v=v2026-10-14T23162";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-14T23162";
+import { createEngine } from "./engine.js?v=v2026-10-14T23162";
+import { createActionGate } from "./actionGate.js?v=v2026-10-14T23162";
+import { createDevices } from "./devices.js?v=v2026-10-14T23162";
+import { createPresence } from "./presence.js?v=v2026-10-14T23162";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-14T23162";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-14T23162";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-14T23162";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-14T23162";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-14T23162";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-14T23162";
+import { createUI } from "./ui.js?v=v2026-10-14T23162";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-14T23162";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-14T23162";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -375,7 +375,6 @@ async function main() {
   let lastDisconnectState = "";
   const browserContextId = getGameBrowserContextId(gameId);
   let lastDisplayAudioDiagnosticId = null;
-  let lastDisplayRenderDiagnosticId = null;
   let hasInitialPresenceSnapshot = false;
   function summarizedDeviceContext(deviceDiagnostics, kind) {
     const item = deviceDiagnostics?.[kind];
@@ -457,7 +456,22 @@ async function main() {
       kind: "diagnostic", category: "display_delay",
       message: "Display nie potwierdził ukończenia planszy w oczekiwanym czasie.",
       devices: ["display"],
-      metrics: { revision, sound: item.sound, reason: "ack_timeout", wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: item.controlVisibility, control_focused: item.controlFocused },
+      metrics: { revision, sound: item.sound, reason: "ack_timeout", ack_read_error: !!item.ackReadError, wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: item.controlVisibility, control_focused: item.controlFocused },
+    });
+  }
+  function reportDisplayCompletionReadError(revision, item, error) {
+    if (item.ackReadError) return;
+    item.ackReadError = true;
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "display_delay",
+      message: "Control nie może odczytać potwierdzenia renderowania Wyświetlacza.",
+      devices: ["control", "display"],
+      metrics: {
+        revision, sound: item.sound, reason: "ack_read_error",
+        error_code: String(error?.code || error?.name || "read_error").slice(0, 80),
+        control_visibility: document.visibilityState || "unknown",
+        control_focused: !!document.hasFocus?.(),
+      },
     });
   }
   function noteDisplayRequest() {
@@ -545,7 +559,11 @@ async function main() {
     completionReadPending = true;
     try {
       const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
-      if (!error && data && displayCompletion.acknowledge(data.rendered_rev)) {
+      if (error) {
+        for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
+        return;
+      }
+      if (data && displayCompletion.acknowledge(data.rendered_rev)) {
         const completedAt = performance.now();
         for (const [revision, item] of displayCompletionTimes) {
           if (revision <= data.rendered_rev && item.completedAt == null) {
@@ -559,7 +577,9 @@ async function main() {
         }
         renderCurrent();
       }
-    } catch { /* Keep waiting; the next poll retries. */ } finally { completionReadPending = false; }
+    } catch (error) {
+      for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
+    } finally { completionReadPending = false; }
   }
   setInterval(() => { void refreshDisplayCompletion(); }, 500);
   function soundBusy() { return isAnySfxPlaying(); }
@@ -839,21 +859,6 @@ async function main() {
             start_delay_ms: Math.max(0, Number(audioDiagnostic.delayMs) || 0),
             failed: !!audioDiagnostic.failed,
             error: String(audioDiagnostic.error || "").slice(0, 160),
-          },
-        });
-      }
-      const renderDiagnostic = deviceDiagnostics?.display?.renderDiagnostic;
-      if (renderDiagnostic?.id && renderDiagnostic.id !== lastDisplayRenderDiagnosticId) {
-        lastDisplayRenderDiagnosticId = renderDiagnostic.id;
-        void sessionTelemetry.report({
-          kind: "diagnostic", category: "display_delay",
-          message: "Widoczne zacięcie animacji na Wyświetlaczu.",
-          devices: ["display"],
-          metrics: {
-            reason: "frame_stall",
-            max_frame_gap_ms: Math.max(0, Number(renderDiagnostic.maxGapMs) || 0),
-            stalled_frames: Math.max(0, Number(renderDiagnostic.stalledFrames) || 0),
-            display_visibility: String(renderDiagnostic.visibility || "unknown"),
           },
         });
       }

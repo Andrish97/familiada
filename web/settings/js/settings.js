@@ -12,15 +12,16 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-13T13432";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-13T13432";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-13T13432";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-13T13432";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-13T13432";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-13T13432";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-13T13432";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T220100";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-13T13432";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-14T23162";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-14T23162";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-14T23162";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-14T23162";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-14T23162";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-14T23162";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -30,14 +31,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-13T13432";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-14T23162";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-13T13432";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-13T13432";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-13T13432";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-14T23162";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-14T23162";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-14T23162";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-13T13432";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-14T23162";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -1042,8 +1043,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-14T220100"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-13T13432"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-14T23162"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-14T23162"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -5389,11 +5390,40 @@ function buildSessionRunDetails(r) {
       }
       if (event.category === "audio_start") {
         const sound = String(metrics.sound || "dźwięk");
-        const result = metrics.failed ? `nie uruchomił się${metrics.error ? ` (${metrics.error})` : ""}`
+        const browserError = String(metrics.error || "");
+        const errorMessage = browserError === "NotAllowedError"
+          ? "przeglądarka zablokowała odtworzenie dźwięku; odblokuj dźwięk na Wyświetlaczu"
+          : browserError ? `błąd przeglądarki: ${browserError}` : "";
+        const result = metrics.failed ? `nie uruchomił się${errorMessage ? ` (${errorMessage})` : ""}`
           : `wystartował po ${formatDuration(metrics.start_delay_ms)}`;
         return { title: `Dźwięk: ${sound}`, detail: `${devices} · ${result}` };
       }
+      if (event.category === "display_state") {
+        if (metrics.reason === "page_state") {
+          const visibility = metrics.visibility === "hidden" ? "karta w tle" : metrics.visibility === "visible" ? "karta widoczna" : "widoczność nieznana";
+          const focus = metrics.focused === true ? "okno aktywne" : metrics.focused === false ? "okno bez fokusu" : "fokus nieznany";
+          const reasons = { initial:"stan przy rozpoczęciu", visibilitychange:"zmiana widoczności", focus:"aktywacja okna", blur:"utrata fokusu" };
+          return { title: "Stan Wyświetlacza", detail: `${reasons[metrics.reason] || "zmiana stanu"} · ${visibility} · ${focus}${metrics.was_discarded ? " · karta została wcześniej odtworzona po odrzuceniu" : ""}` };
+        }
+        if (metrics.reason === "network_state") {
+          return { title: "Sieć Wyświetlacza", detail: metrics.online ? "przeglądarka zgłosiła połączenie z siecią" : "przeglądarka zgłosiła brak połączenia z siecią" };
+        }
+        if (metrics.reason === "render_stall") {
+          return { title: "Zacięcie renderowania Wyświetlacza", detail: `Przerwa ${formatDuration(metrics.max_frame_gap_ms)} między klatkami (${metrics.stalled_frames || 0} zacięć)${metrics.visibility === "visible" ? " · karta była widoczna" : ""} · rewizja ${metrics.state_rev ?? "—"}` };
+        }
+        if (metrics.reason === "runtime_error") {
+          const phase = metrics.phase === "completion_ack" ? "potwierdzenie renderowania" : metrics.phase === "render" ? "renderowanie planszy" : "działanie strony";
+          const rawError = String(metrics.error_name || "Error");
+          const error = rawError === "NotAllowedError" ? "przeglądarka zablokowała dźwięk (wymaga odblokowania na Wyświetlaczu)" : rawError;
+          return { title: "Błąd Wyświetlacza", detail: `${phase} · ${error} · rewizja ${metrics.state_rev ?? "—"}` };
+        }
+      }
       if (event.category === "display_delay") {
+        if (metrics.reason === "ack_read_error") {
+          const errorNames = { AbortError: "przekroczono limit czasu odczytu", TimeoutError: "przekroczono limit czasu odczytu", TypeError: "błąd sieci podczas odczytu" };
+          const cause = errorNames[metrics.error_code] || (metrics.error_code && metrics.error_code !== "read_error" ? `kod: ${metrics.error_code}` : "nieznana przyczyna");
+          return { title: "Problem z odczytem potwierdzenia planszy", detail: `Panel sterowania nie mógł odczytać potwierdzenia Wyświetlacza (${cause}).` };
+        }
         if (metrics.reason === "frame_stall") {
           return { title: "Zacięcie animacji planszy", detail: `Display: przerwa ${formatDuration(metrics.max_frame_gap_ms)} między klatkami (${metrics.stalled_frames || 0} zacięć)${metrics.display_visibility === "visible" ? " · karta była widoczna" : ""}` };
         }
@@ -5401,7 +5431,7 @@ function buildSessionRunDetails(r) {
           return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)}; dźwięk ruszył po limicie.` };
         }
         if (metrics.reason === "ack_timeout") {
-          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
+          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",
@@ -5724,6 +5754,21 @@ function buildStatsPagination(page, pages, onPage) {
   return nav;
 }
 
+function downloadControl2Stats(rows, period) {
+  const now = new Date();
+  const exportData = buildControl2StatsExport(rows, period, { now });
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = now.toISOString().slice(0, 10);
+  link.href = url;
+  link.download = `familiada-control2-${period}-${date}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 async function openStatsDetailModal(type) {
   const cfg = STAT_DETAIL_CONFIG[type];
   if (!cfg) return;
@@ -5742,7 +5787,39 @@ async function openStatsDetailModal(type) {
 
   const body = document.createElement("div");
   body.style.cssText = "min-width:min(680px,88vw);display:flex;flex-direction:column;max-height:calc(82vh - 140px);overflow:hidden";
+
+  const exportControls = document.createElement("div");
+  exportControls.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px";
+  exportControls.hidden = type !== "gameplay";
+  const exportPeriod = document.createElement("div");
+  exportPeriod.className = "ui-select";
+  exportPeriod.style.minWidth = "220px";
+  exportPeriod.innerHTML = `
+    <button class="btn sm ui-select-btn" type="button" aria-label="Zakres eksportu przebiegów Control 2" aria-haspopup="listbox" aria-expanded="false">
+      <span class="ui-select-label"></span>
+      <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
+    </button>
+    <div class="ui-select-menu" role="listbox"></div>
+  `;
+  const exportPeriodSelect = initUiSelect(exportPeriod, {
+    options: [
+      { value: "today", label: "Dzisiaj" },
+      { value: "7d", label: "Ostatnie 7 dni" },
+      { value: "30d", label: "Ostatnie 30 dni" },
+      { value: "recent", label: "Wszystkie załadowane (do 500)" },
+    ],
+    value: "today",
+  });
+  const exportButton = document.createElement("button");
+  exportButton.className = "btn sm gold";
+  exportButton.type = "button";
+  exportButton.textContent = "Pobierz JSON";
+  exportButton.disabled = true;
+  exportButton.addEventListener("click", () => downloadControl2Stats(allRows, exportPeriodSelect.getValue()));
+  exportControls.append(exportPeriod, exportButton);
+
   body.appendChild(infoEl);
+  body.appendChild(exportControls);
   body.appendChild(tableWrap);
   body.appendChild(pageWrap);
 
@@ -5796,6 +5873,7 @@ async function openStatsDetailModal(type) {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "błąd");
     allRows = type === "activity" ? activityDetailRows(data) : data.rows || [];
+    if (type === "gameplay") exportButton.disabled = false;
     renderPage(1);
   } catch (err) {
     tableWrap.textContent = `Błąd: ${err.message}`;
@@ -6440,7 +6518,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-13T13432");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-14T23162");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
