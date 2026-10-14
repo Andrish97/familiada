@@ -1208,9 +1208,3 @@ body.games-body.logo-body > main.logoWrap{
 .resource-copy-inbox-actions{display:flex;gap:6px;flex:none}
 .resource-copy-inbox-error{color:var(--danger,#ff7373);font-size:12px}
 @media(max-width:600px){.resource-copy-inbox-row{align-items:flex-start;flex-wrap:wrap}.resource-copy-inbox-row>span{flex:1 1 100%;margin-left:0}.resource-copy-inbox-actions{margin-left:auto}}
-
-@media(max-width:600px){
-  .logo-body .bar{position:relative;padding-right:88px}
-  .logo-body .bar > .actions,.logo-body .bar.has-actions-below > .actions{position:absolute;top:0;right:0;flex:0 0 auto;width:auto;justify-content:flex-end}
-  .logo-body .bar.has-actions-below > :first-child{flex:1 1 auto;width:100%}
-}

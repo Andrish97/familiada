@@ -350,10 +350,22 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     bodyHeight: document.body?.scrollHeight || 0,
     pageText: document.body?.innerText?.slice(0, 500) || "",
     loading: document.documentElement.classList.contains("page-loading"),
+    listHeaderActionsBelow: document.querySelector("main .bar")?.classList.contains("has-actions-below") || false,
+    listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-single-row")
+      ? "single-row"
+      : document.querySelector(".games-bottom")?.classList.contains("is-balanced-wrap") ? "balanced-wrap" : "not-measured",
   }));
   if (state.loading) throw new Error(`${profile.label} · ${id}: strona nadal ma page-loading po załadowaniu`);
   if (state.scrollWidth > state.viewportWidth + 1) {
     throw new Error(`${profile.label} · ${id}: poziomy overflow ${state.scrollWidth}px przy viewport ${state.viewportWidth}px`);
+  }
+  if (["games", "bases", "logo"].includes(id) && profile.width >= 1133) {
+    if (state.listHeaderActionsBelow) {
+      throw new Error(`${profile.label} · ${id}: pasek nagłówka przeniósł akcje mimo szerokiego ekranu`);
+    }
+    if (state.listBottomLayout !== "single-row") {
+      throw new Error(`${profile.label} · ${id}: dolny pasek zawinął się na szerokim ekranie (${state.listBottomLayout})`);
+    }
   }
   fs.mkdirSync(path.join(OUT, id), { recursive: true });
   // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe

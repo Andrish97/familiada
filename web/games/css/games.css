@@ -92,7 +92,7 @@ body.games-body > main.wrap{
 .bar.has-actions-below > :first-child{ flex: 1 1 100%; }
 .bar.has-actions-below > .actions{ flex: 1 1 100%; justify-content: flex-start; }
 .bar .title{ overflow-wrap: anywhere; }
-.bar .hint{ overflow-wrap: break-word; text-wrap: pretty; }
+.bar .hint{ overflow-wrap: normal; hyphens: auto; text-wrap: pretty; }
 .bar .btn{ display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .bar .btn .ico{ width: 17px; height: 17px; flex: 0 0 auto; }
 
@@ -902,6 +902,29 @@ body.games-body > main.wrap{
   text-align: center;
 }
 .list-empty[hidden]{ display: none; }
+
+/* Układ wspólny dla Gier, Baz i Logo. Najpierw pełny pojedynczy rząd; klasy
+   włącza pomiar naturalnej szerokości z list-header-layout.js dopiero wtedy,
+   gdy wszystkie kontrolki faktycznie przekraczają szerokość paska. */
+.games-bottom.is-single-row > .games-bottom-left,
+.games-bottom.is-single-row > .games-bottom-right{
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  width: max-content;
+  max-width: none;
+}
+.games-bottom.is-balanced-wrap > .games-bottom-left,
+.games-bottom.is-balanced-wrap > .games-bottom-right{
+  display: grid;
+  grid-template-columns: repeat(var(--toolbar-columns, 1), max-content);
+  flex: 0 1 auto;
+  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+  align-content: start;
+}
+.games-bottom.is-balanced-wrap > .games-bottom-left{ justify-items: start; justify-content: start; }
+.games-bottom.is-balanced-wrap > .games-bottom-right{ justify-items: end; justify-content: end; }
 .resource-copy-inbox{margin:12px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
 .resource-copy-inbox h3{margin:0 0 8px;font-size:14px}
 .resource-copy-inbox-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line2)}
