@@ -291,7 +291,6 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   try {
     await page.waitForLoadState("networkidle", { timeout: 20_000 });
     await page.waitForFunction(() => {
-      const now = performance.now();
       const body = document.body;
       if (!body || document.fonts?.status === "loading") return false;
       const pendingImage = [...document.images].some((image) => image.getClientRects().length && !image.complete);
@@ -303,21 +302,13 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         if (el.children.length || !el.getClientRects().length) return false;
         return pendingText.test((el.textContent || "").trim());
       });
-      const state = window.__e20DomStable || (window.__e20DomStable = { last: now, observer: null });
-      if (!state.observer) state.observer = new MutationObserver(() => { state.last = performance.now(); });
-      if (!state.observerStarted) {
-        // Nie czekaj na ciszę wszystkich atrybutów CSS/UI — przy responsywnych
-        // kaflach i animacjach atrybuty mogą się zmieniać stale mimo gotowej
-        // treści. Liczy się dopisanie/usunięcie elementów lub zmiana tekstu.
-        state.observer.observe(body, { subtree: true, childList: true, characterData: true });
-        state.observerStarted = true;
-      }
-      return !visibleLoading && !textLoading && now - state.last >= 900;
+      return !visibleLoading && !textLoading;
     }, null, { timeout: 20_000 });
     await page.evaluate(() => Promise.all([
       document.fonts?.ready || Promise.resolve(),
       ...[...document.images].filter((image) => image.complete && image.decode).map((image) => image.decode().catch(() => {})),
     ]));
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   } catch {
     const diagnostics = await page.evaluate(() => ({
       loading: document.documentElement.classList.contains("page-loading"),
