@@ -1,4 +1,4 @@
-import "../../shared/js/core/orientation-guard.js?v=v2026-10-13T14412";
+import "../../shared/js/core/orientation-guard.js?v=v2026-10-14T195500";
 import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-13T13432";
 
 const ENDPOINT = "/maintenance-state.json?v=v2026-10-13T13432";

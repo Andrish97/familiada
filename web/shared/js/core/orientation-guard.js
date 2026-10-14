@@ -10,6 +10,8 @@ function refresh() {
   const isTvConnect = /\/connect\/tv\//.test(location.pathname);
   const route = PAGES[pageIdForPath(location.pathname)] || {};
   const body = document.body;
+  const controlTestFrame = window.parent !== window
+    && window.frameElement?.dataset.controlTestMode === "true";
   const routeOptions = {
     minWidth: Number(body?.dataset.minViewportWidth) || route.minViewportWidth || 0,
     formFactors: body?.dataset.deviceFormFactors
@@ -19,8 +21,14 @@ function refresh() {
     minScreenShortSide: Number(body?.dataset.minScreenShortSide) || route.deviceGuard?.minScreenShortSide || 0,
     allowPhoneLandscape: /\/control\/(?:host|buzzer)\//.test(location.pathname),
   };
+  if (controlTestFrame) {
+    routeOptions.formFactors = null;
+    routeOptions.requiresTouch = false;
+  }
   const routeState = deviceGuardState(routeOptions.minWidth, routeOptions);
-  const suggestsLandscape = routeOptions.allowPhoneLandscape && profile.formFactor === "phone" && profile.orientation === "portrait";
+  const suggestsLandscape = /\/control\/buzzer\//.test(location.pathname)
+    && profile.formFactor === "phone"
+    && profile.orientation === "portrait";
   let suggestion = document.getElementById("orientationSuggestion");
   if (suggestsLandscape && !suggestion) {
     suggestion = document.createElement("aside");

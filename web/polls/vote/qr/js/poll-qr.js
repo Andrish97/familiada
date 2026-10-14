@@ -1,4 +1,4 @@
-import "../../../../shared/js/core/orientation-guard.js?v=v2026-10-13T14412";
+import "../../../../shared/js/core/orientation-guard.js?v=v2026-10-14T195500";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-13T13432";
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-13T13432";

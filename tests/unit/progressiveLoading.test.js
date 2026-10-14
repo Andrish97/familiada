@@ -53,3 +53,34 @@ test('ankiety mają osobny etap bazowy i wyników', () => {
   assert.match(js, /pollBar\?\.classList\.add\("skel-step-ready"\)/);
   assert.match(js, /resultsList\?\.classList\.add\("skel-step-ready"\)/);
 });
+
+test('Connect ma pełnowysokościową kartę główną z dwiema kartami etapowymi', () => {
+  const html = read('connect/index.html');
+  const js = read('connect/js/connect-device.js');
+  assert.match(html, /class="games-shell" data-skel-step/);
+  assert.match(html, /class="card games-card connect-device-main-card"/);
+  assert.match(html, /id="enterCodeCard"/);
+  assert.match(html, /id="sharedDevicesCard" hidden/);
+  assert.match(js, /sharedDevicesCard\.hidden = false/);
+  assert.match(js, /games-shell\[data-skel-step\].*skel-step-ready/);
+});
+
+test('Gry społeczności nie zawierają etykiet Szukaj gier i Sortowanie', () => {
+  const html = read('marketplace/index.html');
+  assert.doesNotMatch(html, /<label[^>]*(?:searchInput|sortSelectLabel)/);
+  assert.match(html, /id="searchInput"[^>]*data-i18n-aria-label="marketplace\.searchLabel"/);
+  assert.match(html, /id="sortSelect"[\s\S]*?data-i18n-aria-label="marketplace\.sortLabel"/);
+});
+
+test('rotację sugeruje tylko Buzzer; podgląd testowy Control pomija guard dotyku', () => {
+  const orientation = read('shared/js/core/orientation-guard.js');
+  const testMode = read('control/js/testMode.js');
+  const host = read('control/host/js/main.js');
+  const buzzer = read('control/buzzer/js/main.js');
+  assert.match(orientation, /suggestsLandscape = .*buzzer/);
+  assert.match(testMode, /frame\.dataset\.controlTestMode\s*=\s*'true'/);
+  for (const source of [host, buzzer]) {
+    assert.match(source, /controlTestFrame/);
+    assert.match(source, /requiresTouch:\s*!controlTestFrame/);
+  }
+});

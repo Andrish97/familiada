@@ -31,6 +31,7 @@ export function createControlTestMode({ urls, onActivity, onResize }) {
       slot.className = 'control-test-device';
       const frame = document.createElement('iframe');
       frame.dataset.testDevice = kind;
+      frame.dataset.controlTestMode = 'true';
       frame.title = t(`control.device${kind[0].toUpperCase()}${kind.slice(1)}`);
       frame.width = String(DEVICE_VIEWPORT.width);
       frame.height = String(DEVICE_VIEWPORT.height);

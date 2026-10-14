@@ -936,17 +936,35 @@ wszystkie strony.
 | Nagłówek i paski akcji | Nie zawijać przedwcześnie: jeśli cała zawartość mieści się w dostępnej szerokości, zostaje w jednym wierszu. Jeśli nie, dopiero wtedy zawinąć. W nagłówku podpowiedź może złamać się na granicy zdań/fraz i zostać obok akcji; akcje przenieść dopiero, gdy po takim zawinięciu nadal nie mieszczą się czytelnie. W pasku filtrów/eksportów grupy zachowują lewy/prawy brzeg, a prawa grupa rozkłada się równomiernie przy zawinięciu. | Pomiar naturalnej szerokości i czytelnego minimum podpowiedzi oraz rozmiarowanie grup paska poprawione; sprawdzić na zrzutach. |
 | Stopki | Dwie sekcje: lewa przy lewej krawędzi, prawa przy prawej; przy braku miejsca zawijać obie z rozsądnym podziałem. Trzy sekcje: skrajne przy krawędziach, środkowa centralnie; przy zawijaniu utrzymać proporcje. | Wspólna reguła dwóch/trzech sekcji dodana; sprawdzić w galerii. |
 | Games | „Ustawienia rozgrywki”: złoty przycisk z ikoną zębatki. Wypustki społeczności mają czytelną pełną nazwę, a Preparowana ma być krótsza/kompaktowa. Ikona „Eksportuj do bazy” ma używać istniejącej ikony Bazy z nałożoną strzałką. Sortowanie „Otrzymano” ma należeć do pozostałych kryteriów sortowania, nie działać jako osobny wybór. | Złote ustawienia zębatką, czytelna nazwa Społeczności, mniejsza Preparowana, ikona bazy ze strzałką i sortowanie Otrzymano dodane; sprawdzić w galerii. |
-| Gry społeczności | Usunąć widoczne etykiety „Szukaj gier” i „Sortowanie”; zachować pola i przyciski z dostępnymi nazwami. Poprawić ikonę języka. „Moje wysłane” nie może trafić do drugiego wiersza. | Etykiety ukryte wizualnie, ikona globusa, „Moje wysłane” przypięte do nagłówka; sprawdzić w galerii. |
+| Gry społeczności | Usunąć etykiety „Szukaj gier” i „Sortowanie” z widoku; pola i przyciski zachowują dostępne nazwy przez `aria-label`. Poprawić ikonę języka. „Moje wysłane” nie może trafić do drugiego wiersza. | Etykiety widokowe usunięte z HTML, nazwy dostępności są na kontrolkach; ikona globusa i przypięcie „Moje wysłane” do nagłówka pozostają. Sprawdzić w galerii. |
 | Ankiety | Na telefonie pokazać trzy karty. Kartę anonimowości oraz odbiorców podzielić zgodnie z funkcją, zachowując czytelną grupę. | Udostępnianie podzielone na trzy karty; sprawdzić na telefonie i komputerze w nowym przebiegu. |
 | Logo | Używać publicznego adresu strony `/logos/` we wszystkich linkach, mapach, testach i dokumentacji; nie utrzymywać aliasów starych tras. Przycisk Podgląd na mobile zawsze pozostaje w pierwszym wierszu. | Mapę, PWA, dokumentację i URL zrzutów ujednolicono; Podgląd przypięty do pierwszego wiersza. Sprawdzić w galerii. |
 | Mail | Publiczny adres strony to `/mails/` we wszystkich linkach, mapach, testach i dokumentacji; nie utrzymywać aliasów starych tras. Ścieżki plików JS/CSS i endpointów API nie są trasą strony i mają pozostać bez zmian. | Mapę, dokumentację i canonical URL ujednolicono; ścieżki assetów/API pozostały. Sprawdzić w galerii. |
 | Polls QR i Display | Wspólny kierunek blokady dla komputera/TV, ale z odmiennym wymaganiem rozmiaru: mały tablet, w tym iPad mini, jest blokowany dla QR i Display. Każdy typ otrzymuje precyzyjny komunikat zamiast ogólnego „komputer lub telewizor”. Polls QR nie pokazuje stopki ani przycisku kontaktu. | iPad mini ma próg krótszego boku 800 px i osobne komunikaty; kontakt usunięty z QR. Czeka na sprawdzenie stanu guarda w galerii. |
 | Connect TV | Dostępny wyłącznie na TV. Inne urządzenia dostają guard z przyciskiem „Wróć” prowadzącym bezpośrednio do `/connect/`. Bez odsłaniania pod spodem TV UI. | Smart TV only i pełnoekranowy guard z powrotem do Connect. Po wykryciu błędu safe area w `38620324946` topbar poprawiono; `38620721900` przeszedł MacBook, tablet/iPhone w obu orientacjach i TV. Pełna galeria jeszcze do przejrzenia. |
-| Connect | Pusty stan udostępnionych urządzeń używa wspólnego pustego kafla. Jeśli „Skanuj kod QR” przechodzi do drugiego wiersza, umieścić separator pod nagłówkiem/przyciskiem i zachować odstęp jak na pozostałych stronach. | Pusty kafel i odstępy separatora dla drugiego wiersza poprawione; sprawdzić iPhone/iPad. |
+| Connect | Jedna karta główna na całą dostępną wysokość, wewnątrz dwie karty: „Podłącz” i „Udostępnione dla mnie”. Gdy jedna jest ukryta, druga wypełnia kartę główną. Zachować pusty kafel i odstępy separatora/skanera. | Zmieniono HTML/CSS na kartę główną i dwie elastyczne karty wewnętrzne; ukryta karta jest wyjmowana z układu, widoczna zajmuje dostępną przestrzeń. Skaner i pusty stan zachowane. Wymaga punktowego sprawdzenia widoku anonimowego i zalogowanego. |
 | Ustawienia gry | iPad mini portrait jest obsługiwany. Ukrywać boczny pasek pod przyciskiem, jak w poprzednim modalnym układzie; nie pokazywać guarda. | Próg mapy obniżony do 600 px dla tabletów; wysuwany panel sekcji dodany. Czeka na sprawdzenie zawartości w iPad portrait. |
 | Control | Karta trybu testowego znajduje się pod kartami głównych trybów. | Karta trybu testowego przeniesiona pod karty urządzeń; sprawdzić w galerii. |
-| Host i Buzzer | Wyjątki od globalnego guarda mobile landscape: mogą używać obróconego widoku. W portrait pokazać spójny przycisk/sugestię obrotu zgodną z pozostałymi guardami, bez blokowania dopuszczonej sesji. | Globalny guard ma wyjątki Host/Buzzer; w pionie pojawia się niedegradująca sesji sugestia z przyciskiem obrotu. Czeka na sprawdzenie obu orientacji. |
+| Host i Buzzer | Wyjątki od globalnego guarda mobile landscape. Tylko Buzzer na telefonie portrait pokazuje sugestię obrotu do landscape. Host nie pokazuje sugestii ani blokad poza blokadą niedotykowego urządzenia. W widoku testowym Control wymaganie dotyku jest pomijane. | Sugestię ograniczono do Buzzer; Host zachowuje wyłącznie guard dotyku. Iframe testu Control ma jawny znacznik, który pomija ograniczenia dotyku i form factor. Wymaga testu punktowego. |
 | Podgląd Logo | Na mobile przycisk Podgląd nigdy nie może znaleźć się w drugim wierszu. | Do wdrożenia razem z paskiem akcji Logo. |
+
+#### Audyt stopniowego ładowania — status na 2026-10-14
+
+Nie wszystkie strony mają stopniowe odsłanianie sekcji po danych. Klasa
+`page-loading` ukrywa całą stronę do inicjalizacji; nie jest równoważna
+`data-skel-step`, które odsłania konkretną sekcję po jej gotowości. Szybki
+przegląd 35 stron HTML znalazł jawne etapy na 12 stronach, a pozostałe 23
+wymagają oceny, czy są statyczne, czy mają dane/sekcje ujawniane przed
+gotowością. To nie jest jeszcze audyt zakończony.
+
+Braki wymagające pierwszeństwa w dalszym audycie: Eksplorator bazy, Control,
+Go, strona główna, potwierdzenie/reset logowania, edytory Logo, Mails,
+Maintenance, Manual, Privacy, Settings, głosowanie ankietami (punkty/tekst/QR)
+oraz strony urządzeń Host/Buzzer/Display i Connect TV. Strony czysto
+informacyjne (np. 404, Manual, Privacy) mogą nie potrzebować etapów danych;
+decyzję należy podjąć per strona, nie dodawać pustych markerów. Dla każdej
+dynamicznej sekcji trzeba wskazać źródło danych, stan ładowania/błędu/pusty,
+moment `skel-step-ready` i sprawdzić, że guard poprzedza pobranie danych.
 
 Kolejność realizacji: (1) zapisać kryteria galerii i wyłączyć równoległe
 użycie zasobów, (2) naprawić profile urządzeń/safe area i wspólne puste stany,

@@ -17,7 +17,7 @@ import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-13T13432";
 import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-13T13432";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-13T13432";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-13T14412";
-import "../../../shared/js/core/orientation-guard.js?v=v2026-10-13T14412";
+import "../../../shared/js/core/orientation-guard.js?v=v2026-10-14T195500";
 
 function parseParams() {
   const u = new URL(location.href);
@@ -223,7 +223,14 @@ function setupPeekSwipe(renderer) {
 
 async function main() {
   await initI18n({ withSwitcher: false });
-  const deviceGate = guardViewportWidth({ minWidth: 0, formFactors: ["phone", "tablet"], requiresTouch: true, allowPhoneLandscape: true });
+  const controlTestFrame = window.parent !== window
+    && window.frameElement?.dataset.controlTestMode === "true";
+  const deviceGate = guardViewportWidth({
+    minWidth: 0,
+    formFactors: null,
+    requiresTouch: !controlTestFrame,
+    allowPhoneLandscape: true,
+  });
   document.documentElement.removeAttribute("data-touch-guard-pending");
   if (deviceGate.state() !== "ok") await deviceGate.ready;
   setupFullscreenButton();

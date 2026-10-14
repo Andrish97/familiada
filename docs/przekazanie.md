@@ -73,6 +73,19 @@ przerobiono tak, by osadził PNG bezpośrednio w `index.html` (do otwarcia na
 Androidzie) i odrzucał pełny wynik bez dokładnie 211 ujęć. Ta wersja czeka na
 push i świeży pełny przebieg.
 
+Krótki test `38623213005` zakończył się sukcesem 5/5 profili dla Connect i
+Eksploratora bazy; zapisał 10 ujęć w artefakcie `e20-gallery-856`
+([11923290238](https://github.com/Andrish97/familiada/actions/runs/38623213005/artifacts/11923290238)). Test używał commitu `b7418fdcd3`, więc
+nie obejmuje kolejnych zmian układu Connect ani Host/Buzzer. Po uwagach
+użytkownika dopisano do checklisty: Connect jako jedną kartę z dwoma
+wewnętrznymi panelami, usunięcie etykiet wyszukiwania/sortowania, obrót
+wyłącznie jako sugestię Buzzer, wyjątek Host tylko od blokady dotyku oraz
+pominięcie blokady dotyku w iframe testowym Control. W audycie statycznych
+markerów `data-skel-step` znaleziono 12 z 35 stron; to nie jest pełny audyt
+logiki, bo strony statyczne mogą nie potrzebować etapów, a pozostałe wymagają
+oceny danych i stanów. Zmiany są lokalne i przeszły 19/19 wskazanych unitów;
+czekają na commit/push i nowy test punktowy.
+
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
 Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
 refresh przeszły. W audycie wywołań arkuszy nie znaleziono przypadku

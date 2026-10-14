@@ -373,7 +373,8 @@ async function startQrScan() {
   }
 
   if (isLoggedIn && !guestMode) {
-    if (sharedDevicesCard) sharedDevicesCard.style.display = "";
+    if (sharedDevicesCard) sharedDevicesCard.hidden = false;
     await renderSharedDevices();
   }
+  document.querySelector(".games-shell[data-skel-step]")?.classList.add("skel-step-ready");
 })();

@@ -19,12 +19,12 @@
   <meta name="theme-color" content="#050914"/>
   <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-13T13432"/>
   <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-13T13432"/>
-  <link rel="stylesheet" href="/connect/css/connect-device.css?v=v2026-10-13T13432"/>
+  <link rel="stylesheet" href="/connect/css/connect-device.css?v=v2026-10-14T195500"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="/shared/js/core/security-warning.js?v=v2026-10-13T13432" defer></script>
-  <script type="module" src="/connect/js/connect-device.js?v=v2026-10-13T13432" defer></script>
+  <script type="module" src="/connect/js/connect-device.js?v=v2026-10-14T195500" defer></script>
   <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-13T13432" defer></script>
 </head>
 
@@ -58,21 +58,23 @@
       </div>
     </div>
 
-    <section class="games-shell">
-      <!-- Blok: Wprowadź kod -->
-      <div class="card games-card" id="enterCodeCard">
-        <div class="connect-device-card-header" data-i18n="connectDevice.enterCode.title">Wprowadź kod urządzenia</div>
-        <div class="connect-device-enter-code-row">
-          <input class="inp connect-device-code-input" id="connectCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" spellcheck="false" data-i18n-placeholder="connectDevice.enterCode.placeholder"/>
-          <button class="btn gold" id="btnConnectCode" type="button" data-i18n="connectDevice.enterCode.btn">Podłącz</button>
-        </div>
-        <div id="connectCodeMsg" class="connect-device-msg"></div>
-      </div>
+    <section class="games-shell" data-skel-step>
+      <div class="card games-card connect-device-main-card">
+        <!-- Blok: Wprowadź kod -->
+        <section class="connect-device-inner-card" id="enterCodeCard">
+          <div class="connect-device-card-header" data-i18n="connectDevice.enterCode.title">Wprowadź kod urządzenia</div>
+          <div class="connect-device-enter-code-row">
+            <input class="inp connect-device-code-input" id="connectCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" spellcheck="false" data-i18n-placeholder="connectDevice.enterCode.placeholder"/>
+            <button class="btn gold" id="btnConnectCode" type="button" data-i18n="connectDevice.enterCode.btn">Podłącz</button>
+          </div>
+          <div id="connectCodeMsg" class="connect-device-msg"></div>
+        </section>
 
-      <!-- Blok: Udostępnione dla mnie (tylko zalogowani) -->
-      <div class="card games-card" id="sharedDevicesCard" style="display:none;">
-        <div class="connect-device-card-header" data-i18n="connectDevice.shared.title">Urządzenia udostępnione dla mnie</div>
-        <div id="sharedDevicesList" class="grid"></div>
+        <!-- Blok: Udostępnione dla mnie (tylko zalogowani) -->
+        <section class="connect-device-inner-card" id="sharedDevicesCard" hidden>
+          <div class="connect-device-card-header" data-i18n="connectDevice.shared.title">Urządzenia udostępnione dla mnie</div>
+          <div id="sharedDevicesList" class="grid"></div>
+        </section>
       </div>
     </section>
 

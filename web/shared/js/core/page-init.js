@@ -32,7 +32,7 @@ import { PAGES, backHref, buttonHref, buttonVisible, buttonRoles, buttonBlocked,
 import { isGuestUser } from "./guest-mode.js?v=v2026-10-13T13432";
 import { showPageGuard } from "./page-overlay.js?v=v2026-10-13T13432";
 import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-13T13432";
-import "./orientation-guard.js?v=v2026-10-13T14412";
+import "./orientation-guard.js?v=v2026-10-14T195500";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
