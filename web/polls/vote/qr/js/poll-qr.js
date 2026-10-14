@@ -10,7 +10,13 @@ import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v
 await initI18n({ withSwitcher: false });
 const deviceGate = guardViewportWidth({ minWidth: 980, formFactors: ["desktop", "tablet"] });
 document.documentElement.removeAttribute("data-device-guard-pending");
-if (deviceGate.state() !== "ok") await deviceGate.ready;
+// Guard musi być widoczny od razu na niedozwolonym urządzeniu. Nie czekaj
+// z odsłonięciem dokumentu na zmianę szerokości — ready rozwiązuje się dopiero
+// po wejściu w dozwolony widok.
+if (deviceGate.state() !== "ok") {
+  document.documentElement.classList.remove("page-loading");
+  await deviceGate.ready;
+}
 
 const qs = new URLSearchParams(location.search);
 let url = qs.get("url");

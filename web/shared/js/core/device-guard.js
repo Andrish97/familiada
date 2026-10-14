@@ -94,6 +94,10 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null,
     } else if (state !== "ok") showDeviceGuard(state, backHref);
     else if (document.getElementById("pageGuard")?.dataset.kind !== "guest") hidePageGuard();
     document.documentElement.dataset.deviceGuard = state;
+    // Guard jest końcowym, widocznym stanem zablokowanej nawigacji. Zdejmujemy
+    // ukrywanie startowe po pokazaniu nakładki; page-overlay ukrywa body, więc
+    // sekcje strony nadal nie są odsłonięte ani ładowane przed decyzją guarda.
+    if (state !== "ok") document.documentElement.classList.remove("page-loading");
     // Usuń wczesną blokadę (inline script w <head>) — guard przejął kontrolę
     document.documentElement.removeAttribute("data-mobile-guard");
   }

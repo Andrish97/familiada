@@ -91,23 +91,48 @@ function additionalStates(fixtures) {
 
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
+  const pageErrors = [];
+  const onPageError = (error) => pageErrors.push(error.message);
+  page.on("pageerror", onPageError);
   try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20_000 });
   } catch (error) {
     throw new Error(`${profile.label} · ${id}: nawigacja nie zakończyła się (${error.message})`);
   }
   try {
-    await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading")
-      || !!document.documentElement.dataset.deviceGuard, null, { timeout: 8_000 });
+    await page.waitForFunction(() => {
+      const html = document.documentElement;
+      const guarded = html.dataset.deviceGuard && html.dataset.deviceGuard !== "ok"
+        && document.getElementById("pageGuard")?.style.display === "flex";
+      return !html.classList.contains("page-loading") || guarded;
+    }, null, { timeout: 8_000 });
   } catch {
-    throw new Error(`${profile.label} · ${id}: ładowanie strony nie zakończyło się w 8 s`);
+    const diagnostics = await page.evaluate(() => ({
+      loading: document.documentElement.classList.contains("page-loading"),
+      guard: document.documentElement.dataset.deviceGuard || "",
+      guardDisplay: document.getElementById("pageGuard")?.style.display || "missing",
+      title: document.title,
+      text: document.body?.innerText?.slice(0, 240) || "",
+    })).catch(() => ({}));
+    throw new Error(`${profile.label} · ${id}: ładowanie strony nie zakończyło się w 8 s; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
   }
   if (readySelector) {
-    try {
-      await page.locator(readySelector).waitFor({ state: "visible", timeout: 20_000 });
-    } catch {
-      throw new Error(`${profile.label} · ${id}: nie pojawił się element gotowości ${readySelector}`);
-    }
+    await page.waitForFunction((selector) => {
+      const html = document.documentElement;
+      const guarded = html.dataset.deviceGuard && html.dataset.deviceGuard !== "ok"
+        && document.getElementById("pageGuard")?.style.display === "flex";
+      return guarded || [...document.querySelectorAll(selector)].some((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && getComputedStyle(element).visibility !== "hidden";
+      });
+    }, readySelector, { timeout: 20_000 }).catch(async () => {
+      const diagnostics = await page.evaluate(() => ({
+        guard: document.documentElement.dataset.deviceGuard || "",
+        guardDisplay: document.getElementById("pageGuard")?.style.display || "missing",
+        loading: document.documentElement.classList.contains("page-loading"),
+      })).catch(() => ({}));
+      throw new Error(`${profile.label} · ${id}: brak elementu gotowości ${readySelector}; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
+    });
   }
   if (prepare) await prepare(page);
   await page.waitForTimeout(450);
@@ -126,7 +151,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   }
   const file = `${id}.png`;
   fs.mkdirSync(path.join(OUT, profile.id), { recursive: true });
-  await page.screenshot({ path: path.join(OUT, profile.id, file), fullPage: true, animations: "disabled", timeout: 30_000 });
+  await page.screenshot({ path: path.join(OUT, profile.id, file), fullPage: true, scale: "css", animations: "disabled", timeout: 45_000 });
+  page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
   manifest.push({ id, profile: profile.id, label: profile.label, url: href, file: `${profile.id}/${file}`, ...state });
   // Checkpoint after every image so a failed profile still leaves useful work.
