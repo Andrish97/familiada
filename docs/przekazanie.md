@@ -16,7 +16,7 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
 | E19N | **Gotowe produkcyjnie.** Branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte z Control i widoczne z Gier. Main `38369193504` success5/5; test bezpośredniego URL/odświeżenia arkusza main `38370189342` success1/1. Pages38369096986, Worker38369096732. Full unit602/602. E19 zamknięte na main `d847175100`. Audyt nie znalazł przepływu arkusz→arkusz; zwykłe potwierdzenia/alerty pozostają modalami, nie stronami. |
 | E14 | **Gotowe produkcyjnie**: DB/migracja368/smoke `38372090287`, Edge `38372090225`, main delete-account `38372530495`, po migracji stary RPC punktowo `38373614192`. |
-| E20 → Manual | Lista poprawek po galerii i status każdej pozycji są w `ujednolicenie-wygladu.md`. Wszystkie 35 tras mają teraz jawny etap odsłonięcia; dane odsłaniają się po renderze, błędzie lub odmowie, a guard pozostaje przed zawartością. Test punktowy progressive-loading + guard: 21/21; składnia 21 zmienionych JS i `git diff --check` czyste. Nadal trzeba sprawdzić wszystkie etapy w sekwencyjnej galerii i dokończyć pozostałe uwagi E20. Manual na końcu. |
+| E20 → Manual | Wszystkie 35 tras mają jawne etapy odsłonięcia; guard pozostaje przed treścią i pobieraniem danych. Test punktowy progressive-loading: 14/14. Pełna galeria na produkcyjnej bazie przeszła: [workflow 38640316467](https://github.com/Andrish97/familiada/actions/runs/38640316467), [artefakt e20-gallery-873.zip](https://github.com/Andrish97/familiada/actions/runs/38640316467/artifacts/11930421040) — 211 zrzutów/42 widoki w manifestach. Pozostałe uwagi E20 i przegląd wizualny galerii są otwarte; Manual na końcu. |
 
 **E20, checkpoint 2026-10-14:** zamknięcie E20 wymaga też pełnego przeglądu
 stopniowego ładowania na mapie stron i wspólnych sekcjach, wraz z każdą nową
@@ -35,6 +35,13 @@ oczekiwał kafla także w iPhone landscape, gdzie właściwym stanem jest guard.
 Artefakty częściowe: galeria11876463671 (125 plików) i błędy11876413675.
 Nie traktować ich jako zamknięcia E20; unity611/611 przechodzą, lecz kompletna
 galeria i przegląd stopniowego ładowania nadal są otwarte.
+
+**Najnowszy stan E20 (2026-10-14):** dodano brakujące HTML fixture’ów logowania
+oraz osobne etapy Buz zera dla wyłączonego ekranu i błędu początkowego. Test
+punktowy progresywnego ładowania przeszedł 14/14. Pełny sekwencyjny run
+`38640316467` wygenerował 211 zrzutów i przeszedł kontrolę kompletności
+manifestu; aktualny artefakt jest podlinkowany w tabeli powyżej. Galerię trzeba
+jeszcze obejrzeć i zamknąć pozostałe uwagi checklisty; E20 pozostaje otwarte.
 
 ## Aktualny checkpoint: E19 zamknięte produkcyjnie
 

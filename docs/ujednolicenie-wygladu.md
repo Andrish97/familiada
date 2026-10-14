@@ -897,11 +897,11 @@ częścią E20.
 
 **Galeria E20 (2026-10-14):** pełny Playwright z frontem brancha
 `codex/e19-3` i prawdziwymi danymi produkcyjnymi zakończony powodzeniem:
-workflow [38599567526](https://github.com/Andrish97/familiada/actions/runs/38599567526),
-5/5 profili. Artefakt
-[e20-gallery-847.zip](https://github.com/Andrish97/familiada/actions/runs/38599567526/artifacts/11910899946)
-zawiera 210 zrzutów: 35 tras i 7 dodatkowych stanów na MacBooku, iPadzie
-portrait/landscape oraz iPhonie portrait/landscape. Foldery są pogrupowane
+workflow [38640316467](https://github.com/Andrish97/familiada/actions/runs/38640316467),
+5/5 profili oraz TV dla Connect TV. Artefakt
+[e20-gallery-873.zip](https://github.com/Andrish97/familiada/actions/runs/38640316467/artifacts/11930421040)
+zawiera 211 zrzutów: 35 tras i 7 dodatkowych stanów na MacBooku, iPadzie
+portrait/landscape, iPhonie portrait/landscape oraz widok TV. Foldery są pogrupowane
 według stron, a wewnątrz znajdują się pliki nazwane profilem urządzenia.
 Galeria `index.html` osadza podglądy z lokalnych PNG; manifest zapisuje także
 wysokość treści i jej początkowy tekst. Zrzuty czekają na bezczynność sieci,
@@ -970,6 +970,13 @@ wejścia, a podsumowanie/listy odsłania po odpowiedzi sesji. Settings najpierw
 pokazuje ekran Access, po autoryzacji ponownie ukrywa panel na czas pierwszego
 odczytu. Guard urządzenia pozostaje przed odsłonięciem treści i przed
 pobraniem danych.
+
+Po wygenerowaniu pełnej galerii poprawiono również fixture HTML dla stron
+potwierdzenia/resetu logowania (routing wcześniej pomijał `?lang=pl`) oraz
+etapy Buz zera: widok `offScreen` i stan błędu mają oddzielne znaczniki
+gotowości. Punktowy test etapów ładowania przeszedł 14/14, a run 38640316467
+wygenerował kompletną galerię 211 zrzutów. Pozostaje ręczny przegląd ujęć i
+zamknięcie pozostałych uwag; E20 nadal jest otwarte.
 
 | Grupa tras | Etapy widoku | Moment gotowości |
 |---|---|---|
