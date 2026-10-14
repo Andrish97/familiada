@@ -8,6 +8,15 @@ const entries = profiles.flatMap((profile) => {
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : [];
 });
 if (!entries.length) throw new Error(`Brak manifestów galerii w ${root}`);
+const fullGalleryRequested = !process.env.E20_GALLERY_PAGES && !process.env.E20_GALLERY_PROFILES;
+if (fullGalleryRequested) {
+  const expectedPerProfile = { macbook: 42, "ipad-portrait": 42, "ipad-landscape": 42, "iphone-portrait": 42, "iphone-landscape": 42, tv: 1 };
+  for (const [profile, expected] of Object.entries(expectedPerProfile)) {
+    const actual = entries.filter((entry) => entry.profile === profile).length;
+    if (actual !== expected) throw new Error(`Niepełna galeria E20 dla ${profile}: ${actual}/${expected} zrzutów`);
+  }
+  if (entries.length !== 211) throw new Error(`Niepełna galeria E20: ${entries.length}/211 zrzutów`);
+}
 
 const htmlEscape = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 const pages = [...new Set(entries.map((entry) => entry.id))];
@@ -17,7 +26,10 @@ const groups = pages.map((page) => {
   return `<section class="page" id="${htmlEscape(page)}"><h2>${htmlEscape(page)} <small>${rows.length} widoków</small></h2><div class="grid">${rows.map((entry) => {
     const guard = entry.guard ? `<b class="guard">${htmlEscape(entry.guard)}</b>` : "";
     const overflow = entry.scrollWidth > entry.viewportWidth ? `<b class="overflow">scroll ${entry.scrollWidth}px</b>` : "";
-    return `<article><h3>${htmlEscape(entry.label)} (${entry.viewportWidth} × ${entry.bodyHeight} CSS px) ${guard} ${overflow}</h3><a class="frame ${entry.profile}" href="${htmlEscape(entry.file)}"><img loading="lazy" src="${htmlEscape(entry.file)}" alt="${htmlEscape(entry.id)} · ${htmlEscape(entry.label)}"><i aria-hidden="true"></i></a><p>${htmlEscape(entry.url)}</p></article>`;
+    const imagePath = path.join(root, entry.file);
+    if (!fs.existsSync(imagePath)) throw new Error(`Brak pliku zrzutu: ${imagePath}`);
+    const imageData = `data:image/png;base64,${fs.readFileSync(imagePath).toString("base64")}`;
+    return `<article><h3>${htmlEscape(entry.label)} (${entry.viewportWidth} × ${entry.bodyHeight} CSS px) ${guard} ${overflow}</h3><div class="frame ${entry.profile}"><img loading="lazy" src="${imageData}" alt="${htmlEscape(entry.id)} · ${htmlEscape(entry.label)}"><i aria-hidden="true"></i></div><p>${htmlEscape(entry.url)}</p></article>`;
   }).join("")}</div></section>`;
 }).join("");
 

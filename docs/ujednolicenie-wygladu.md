@@ -955,6 +955,15 @@ publiczne trasy `/mails/` i `/logos/`, (5) puścić krótkie testy dla każdej
 paczki, a po ich powodzeniu pełną galerię. Każdy wiersz powyżej pozostaje
 otwarty, dopóki rzeczywista strona i odpowiednie stany nie zostaną sprawdzone.
 
+**Galeria na telefonie (2026-10-14):** archiwum zachowuje PNG w folderach
+według stron, a `index.html` ma zawierać obrazy jako data URI, żeby można
+było otworzyć sam plik bez zależności od lokalnych ścieżek i przeglądarki
+pliku na Androidzie. Pełny build ma odrzucać niekompletną galerię zamiast
+opisywać częściowe manifesty jako pełny wynik; oczekiwane jest 211 ujęć
+(42 na każdym z pięciu standardowych profili i 1 na TV dla Connect TV).
+Generator oraz workflow zostały dopasowane do tego kontraktu; potwierdzić
+na końcowym artefakcie.
+
 **Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
 ↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje
 pasek stanu; `38387014627`, success1/1, artefakt11806951789. Pozostałe strony i urządzenia nadal

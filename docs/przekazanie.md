@@ -66,7 +66,10 @@ zatrzymał się na asercji stopki Eksploratora bazy: pływający przycisk
 kontaktu ma bezpieczne położenie `bottom: 8px + inset`, ale test sprawdzał
 jego wewnętrzny padding. Asercję rozdzielono dla stopki w przepływie i
 pływającej; pełny przebieg trzeba powtórzyć od początku. Zrzuty są
-zapisywane do folderów stron, nie folderów urządzeń.
+zapisywane do folderów stron, nie folderów urządzeń. Generator galerii
+przerobiono tak, by osadził PNG bezpośrednio w `index.html` (do otwarcia na
+Androidzie) i odrzucał pełny wynik bez dokładnie 211 ujęć. Ta wersja czeka na
+push i świeży pełny przebieg.
 
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
 Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i

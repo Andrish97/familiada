@@ -293,6 +293,9 @@ jobs:
 
       - name: Build E20 gallery HTML and manifest
         if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && hashFiles('tests/test-results/e20-gallery/manifest-*.json') != '' }}
+        env:
+          E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
+          E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
         run: node scripts/agent-tools/build-e20-gallery.cjs
 
       - name: Upload production statistics evidence
