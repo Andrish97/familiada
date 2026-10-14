@@ -60,4 +60,4 @@
 
 .mail-wrap [hidden]{display:none!important}
 .mail-footer{flex:0 0 auto;width:min(1040px,100%);margin:0 auto;padding:14px 24px max(18px,env(safe-area-inset-bottom));box-sizing:border-box}
-@media(max-width:620px){.mail-footer{padding:12px 14px}}
+@media(max-width:620px){.mail-footer{padding:12px 14px max(18px,env(safe-area-inset-bottom))}}
