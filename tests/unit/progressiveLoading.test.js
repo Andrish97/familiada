@@ -66,6 +66,7 @@ test('galeria czeka na gotowe widoczne etapy, a widoczny device guard jest końc
   assert.match(source, /step\.classList\.contains\("skel-step-ready"\) \|\| step\.getClientRects\(\)\.length > 0/);
   assert.match(source, /serveBranchLoginHtml/);
   assert.match(source, /web\/login\/index\.html/);
+  assert.ok(source.includes("(?:\\?.*)?$"));
 });
 
 test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => {

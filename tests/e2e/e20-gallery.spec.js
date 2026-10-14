@@ -386,7 +386,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
       // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
       // formularz logowania i prawdziwą autoryzację konta testowego.
-      await context.route(/^https:\/\/www\.familiada\.online\/login\/?$/, serveBranchLoginHtml);
+      await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
       const page = await context.newPage();
       page.setDefaultTimeout(20_000);
       page.setDefaultNavigationTimeout(20_000);
@@ -410,7 +410,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
             });
             await installMaintenanceVisualState(anonymous);
             await installSettingsAccessSimulation(anonymous);
-            await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?$/, serveBranchLoginHtml);
+            await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
             const anonymousPage = await anonymous.newPage();
             anonymousPage.setDefaultTimeout(20_000);
             anonymousPage.setDefaultNavigationTimeout(20_000);
