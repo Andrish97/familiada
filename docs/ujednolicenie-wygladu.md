@@ -895,20 +895,28 @@ device guard/page init: 40/40.
 Pełny przegląd ładowania wszystkich podstron i błędów sieciowych pozostaje
 częścią E20.
 
-**Galeria E20 (2026-10-14):** pełny Playwright na prawdziwej bazie, front z
-`codex/e19-3`, zakończony powodzeniem: workflow
-[38531555157](https://github.com/Andrish97/familiada/actions/runs/38531555157),
-5/5 profili. Artefakt [e20-gallery-845.zip](https://github.com/Andrish97/familiada/actions/runs/38531555157/artifacts/11877439381)
+**Galeria E20 (2026-10-14):** pełny Playwright z frontem brancha
+`codex/e19-3` i prawdziwymi danymi produkcyjnymi zakończony powodzeniem:
+workflow [38599567526](https://github.com/Andrish97/familiada/actions/runs/38599567526),
+5/5 profili. Artefakt
+[e20-gallery-847.zip](https://github.com/Andrish97/familiada/actions/runs/38599567526/artifacts/11910899946)
 zawiera 210 zrzutów: 35 tras i 7 dodatkowych stanów na MacBooku, iPadzie
-portrait/landscape oraz iPhonie portrait/landscape. Galeria `index.html`
-korzysta z dołączonych plików PNG, bez zewnętrznych obrazów; manifest zapisuje
-też wysokość całej treści. Zrzuty pokazują viewport urządzenia z safe area.
-W kontekście galerii wyciszony jest prompt instalacji PWA, a ekran maintenance
-ma stabilny stan wizualny, bo produkcja przekierowuje przy wyłączonych pracach;
-żaden z tych warunków nie zmienia produkcyjnego konta ani stanu usługi.
+portrait/landscape oraz iPhonie portrait/landscape. Foldery są pogrupowane
+według stron, a wewnątrz znajdują się pliki nazwane profilem urządzenia.
+Galeria `index.html` osadza podglądy z lokalnych PNG; manifest zapisuje także
+wysokość treści i jej początkowy tekst. Zrzuty czekają na bezczynność sieci,
+stabilny DOM, gotowe fonty i zdekodowane widoczne obrazy, zamiast kończyć
+oczekiwanie na samym zdjęciu `page-loading`.
+
+Settings jest serwowane z badanego brancha, a test symuluje wyłącznie
+odpowiedzi API Cloudflare Access, ponieważ panel jest za tą bramką. Asercje
+sprawdzają, że widoczny jest właściwy panel administratora, a ekran logowania
+jest ukryty. W kontekście galerii wyciszony jest prompt instalacji PWA, a ekran
+maintenance ma stabilny stan wizualny, bo produkcja przekierowuje przy
+wyłączonych pracach; nie zmienia to produkcyjnego konta ani stanu usługi.
 Na profilach blokowanych dodatkowe stany interaktywne pokazują właściwy guard.
-Galeria obejmuje gotowe widoki; przejścia między etapami ładowania i testy
-wolnej sieci nadal pozostają do weryfikacji w E20.
+Poprzednia galeria nie zawierała pewnej kontroli gotowości treści i została
+zastąpiona powyższym artefaktem.
 
 **Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
 ↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje
