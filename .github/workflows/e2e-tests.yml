@@ -334,7 +334,7 @@ jobs:
 
       - name: Remove temporary E20 authentication state
         if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
-        run: rm -f "$RUNNER_TEMP/familiada-e20-gallery-auth.json"
+        run: rm -f "$RUNNER_TEMP/familiada-e20-gallery-auth.json" "$RUNNER_TEMP/familiada-e20-gallery-fixtures.json"
 
       - name: Publish requested anonymous poll screenshots
         if: ${{ success() && inputs.publish_anonymous_screenshots && (contains(inputs.spec_filter, 'e2e/poll-anonymous.spec.js') || contains(inputs.spec_filter, 'e2e/poll-anonymous-layout.spec.js') || contains(inputs.spec_filter, 'e2e/poll-go.spec.js') || contains(inputs.spec_filter, 'e2e/go-states.spec.js')) }}

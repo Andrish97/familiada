@@ -9,8 +9,11 @@ const { serveBranchCode } = require("./helpers/branch-code");
 
 const ORIGIN = "https://www.familiada.online";
 const OUT = path.resolve(__dirname, "../test-results/e20-gallery");
-const FIXTURES_PATH = path.join(OUT, "fixtures.json");
-const AUTH_STATE_PATH = path.join(os.tmpdir(), "familiada-e20-gallery-auth.json");
+// Playwright clears test-results on startup. Shared preparation files belong
+// in the runner temp directory, alongside auth state, not inside test output.
+const PREP_DIR = process.env.RUNNER_TEMP || os.tmpdir();
+const FIXTURES_PATH = path.join(PREP_DIR, "familiada-e20-gallery-fixtures.json");
+const AUTH_STATE_PATH = path.join(PREP_DIR, "familiada-e20-gallery-auth.json");
 const PAGES = [
   "index", "account", "bases", "bases/explorer", "connect", "connect/tv",
   "control", "control/buzzer", "control/display", "control/host", "games",

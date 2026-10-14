@@ -10,7 +10,9 @@ const { serveBranchCode } = require("./branch-code");
 const { seedE20GalleryFixtures } = require("./e20-gallery-fixtures");
 
 const OUT = path.resolve(__dirname, "../../test-results/e20-gallery");
-const AUTH_STATE_PATH = path.join(os.tmpdir(), "familiada-e20-gallery-auth.json");
+const PREP_DIR = process.env.RUNNER_TEMP || os.tmpdir();
+const AUTH_STATE_PATH = path.join(PREP_DIR, "familiada-e20-gallery-auth.json");
+const FIXTURES_PATH = path.join(PREP_DIR, "familiada-e20-gallery-fixtures.json");
 const PAGES = [
   "index", "account", "bases", "bases/explorer", "connect", "connect/tv",
   "control", "control/buzzer", "control/display", "control/host", "games",
@@ -37,7 +39,7 @@ async function main() {
     await loginAsTestUser(page, context, { username: galleryTestAccountUsername() });
     const fixtures = await seedE20GalleryFixtures(page);
     fs.mkdirSync(OUT, { recursive: true });
-    fs.writeFileSync(path.join(OUT, "fixtures.json"), JSON.stringify(fixtures, null, 2));
+    fs.writeFileSync(FIXTURES_PATH, JSON.stringify(fixtures, null, 2));
     await context.storageState({ path: AUTH_STATE_PATH });
     console.log("[e20-gallery] Konto test17 zalogowane raz; fixture'y i stan sesji gotowe.");
   } finally {

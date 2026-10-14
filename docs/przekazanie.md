@@ -18,6 +18,19 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 | E14 | **Gotowe produkcyjnie**: DB/migracja368/smoke `38372090287`, Edge `38372090225`, main delete-account `38372530495`, po migracji stary RPC punktowo `38373614192`. |
 | E20 → Manual | W toku: wspólny nagłówek Gier/Baz/Logo, ikony akcji, telefonowy modal wyszukiwania i filtry/sortowanie. Landscape do 980 px: E2E 38376106783 success2/2 (12 zrzutów), PL/EN/UK 38378078762 5/5, G/B/Logo błędy 38378348674 6/6. Marketplace dotykowy landscape `38385343907` success1/1: lista, wyszukiwanie, szczegóły/arkusz i powrót zachowują stan. Ankieta landscape `38387014627` success1/1 (artefakt11806951789): brak przepełnienia, zakładki i pasek stanu zachowane po retry. Moje Gry: rzeczywisty dotykowy kontekst i obrót w obie strony `38403253632` success1/1 (3 zrzuty, artefakt11816088611); landscape zadań `38379023778` success4/4; kontakty `38379572388` success1/1, obrót/zakładki/formularz/scroll; Ankieta `38381649291` success1/1, ładowanie/błąd/retry. Kontakty `38382033831` i Zadania `38382324509` po 1/1, kontrolowane błędy/retry (artefakty11803776686 i11804131090). Podgląd TXT edytora `38382791836` success1/1 (artefakt11804730840). Eksport pliku Gier `38383237666`, Baz `38383626341` i Logo `38383911498` zostawia wynik do zamknięcia; błędy/retry Gier `38385655794`, Baz `38385776085`, Logo `38385034279`. Import Logo z wynikiem do zamknięcia `38386121426` (2/2 round-trip), Bazy `38386612386` (1/1); błędny import Gier/Baz `38387894274`/`38387645962` po 1/1, brak niepełnych rekordów; import sukcesu Gry i odrzucenie pliku Logo `38388086960`/`38388238433` po 1/1. Wszystkie unity602/602. Nowa lokalna paczka rozdziela formFactor/orientację/progi viewportu; punktowe unity48/48. Macierz układów typów stron zapisana w `ujednolicenie-wygladu.md`; wizualna realizacja tej macierzy, E2E/zrzuty nowej paczki, pełny przegląd landscape, rzeczywisty tablet i pozostałe import/eksport nadal otwarte. Ikony: telefon sama ikona z nazwą dostępności, desktop ikona z tekstem. Manual na końcu. |
 
+**E20, checkpoint 2026-10-14:** zamknięcie E20 wymaga też pełnego przeglądu
+stopniowego ładowania na mapie stron i wspólnych sekcjach, wraz z każdą nową
+stroną dodaną później; opis etapów i pozostałych luk jest w
+`ujednolicenie-wygladu.md` §E20. Nie uznawać galerii screenshotów ani zmian
+testowych za domknięcie tego punktu. Przebieg galerii `38485339215` zatrzymał
+się na nieaktualnych ścieżkach testów jednostkowych przed Playwrightem.
+Po naprawie tras `/logos/` i `/mails/`, testu stopki oraz diagramów wszystkie
+611 unity przechodzą lokalnie. W `38527509799` przygotowanie konta i fixture’ów
+przeszło, lecz Playwright nie znalazł fixture’ów, bo czyści katalog
+`test-results` na starcie; przeniesiono pliki przygotowawcze do `RUNNER_TEMP`.
+Najpierw uruchomić jeden profil i jedną stronę; pełną galerię dopiero po jego
+powodzeniu. Oba przebiegi E2E pozostają nieudane i nie dostarczyły galerii.
+
 ## Aktualny checkpoint: E19 zamknięte produkcyjnie
 
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi

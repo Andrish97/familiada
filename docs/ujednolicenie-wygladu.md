@@ -858,6 +858,8 @@ kolejki wymuszającej opóźnienie każdej karty.
 
 Przy wdrożeniu:
 - Przejrzeć całą mapę stron, a także wspólne modale i sekcje udostępniania.
+- Każda nowa strona lub sekcja dodana później musi stosować te same etapy
+  gotowości; dodać ją do przeglądu i testu, zanim uzna się E20 za zamknięte.
 - Każda sekcja ma widoczny stan ładowania, wyniku lub błędu; błąd nie może
   pozostawić na stałe niewidocznej zawartości. Pusty kafelek dopiero po odczycie.
 - Widoczne akcje odblokować po podpięciu obsługi i ustaleniu uprawnień;
