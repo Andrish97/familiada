@@ -65,7 +65,9 @@ Artefakt: `e20-gallery-853` (ID `11921422585`). Pełny run `38621309630`
 zatrzymał się na asercji stopki Eksploratora bazy: pływający przycisk
 kontaktu ma bezpieczne położenie `bottom: 8px + inset`, ale test sprawdzał
 jego wewnętrzny padding. Asercję rozdzielono dla stopki w przepływie i
-pływającej; pełny przebieg trzeba powtórzyć od początku. Zrzuty są
+pływającej. Kolejny test znalazł realny problem na Connect: `.wrap` nadpisywał
+padding stopki 15 px zamiast 20 px. Reguła `.footer.wrap` w `base.css`
+zachowuje teraz safe area. Zrzuty są
 zapisywane do folderów stron, nie folderów urządzeń. Generator galerii
 przerobiono tak, by osadził PNG bezpośrednio w `index.html` (do otwarcia na
 Androidzie) i odrzucał pełny wynik bez dokładnie 211 ujęć. Ta wersja czeka na

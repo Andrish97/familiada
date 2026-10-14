@@ -496,6 +496,14 @@ main{
     justify-self: stretch;
     align-self: stretch;
 }
+/* .wrap z gier/urządzeń ma własny padding (także dolne 15px), który
+   nie może odbierać stopce odstępu safe area po załadowaniu obu arkuszy. */
+.footer.wrap{
+    padding-top: 20px;
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-left: max(16px, env(safe-area-inset-left));
+}
 .footer > :first-child{ margin-right:auto; min-width:0; text-align:left; }
 .footer > :last-child{ margin-left:auto; min-width:0; text-align:right; }
 .footer:has(> :nth-child(3)){
