@@ -89,6 +89,16 @@ function additionalStates(fixtures) {
   ];
 }
 
+async function installMaintenanceVisualState(context) {
+  // /maintenance przekierowuje, gdy prace są wyłączone. Dla audytu wyglądu
+  // utrzymujemy deterministyczny stan aktywnej przerwy tylko w tej sesji.
+  await context.route("**/maintenance-state.json**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json; charset=utf-8",
+    body: JSON.stringify({ enabled: true, mode: "message", useStandardText: true, customComments: {} }),
+  }));
+}
+
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
   const pageErrors = [];
@@ -134,7 +144,13 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       throw new Error(`${profile.label} · ${id}: brak elementu gotowości ${readySelector}; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
     });
   }
-  if (prepare) await prepare(page);
+  const blockedByGuard = await page.evaluate(() => {
+    const state = document.documentElement.dataset.deviceGuard || "";
+    return state !== "" && state !== "ok" && document.getElementById("pageGuard")?.style.display === "flex";
+  });
+  // Stany interaktywne nie zastępują guarda: na niedostępnym urządzeniu
+  // zapisujemy ten guard zamiast wymuszać klik w ukryty zasób.
+  if (prepare && !blockedByGuard) await prepare(page);
   await page.waitForTimeout(450);
   const state = await page.evaluate(() => ({
     guard: document.documentElement.dataset.deviceGuard || document.getElementById("pageGuard")?.dataset.state || "",
@@ -192,6 +208,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       await context.addInitScript(() => {
         if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
       });
+      await installMaintenanceVisualState(context);
       // Galeria sprawdza układ stron i guardy, nie dostępność usługi CAPTCHA.
       // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
       // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
@@ -220,6 +237,7 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
             await anonymous.addInitScript(() => {
               if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
             });
+            await installMaintenanceVisualState(anonymous);
             await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?$/, async (route) => {
               const response = await route.fetch();
               const html = (await response.text()).replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
