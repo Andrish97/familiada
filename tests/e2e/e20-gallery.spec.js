@@ -172,9 +172,9 @@ for (const profile of PROFILES.filter((item) => !requestedProfiles.length || req
       page.setDefaultNavigationTimeout(20_000);
       const selectedUrls = urls(fixtures).filter(([id]) => !requestedPages.length || requestedPages.includes(id));
       for (const [id, href] of selectedUrls) {
-        if (id === "login") {
-          // /login fotografujemy jako gość, nie wylogowując i nie logując
-          // ponownie głównej sesji używanej przez pozostałe strony.
+        if (id === "login" || id === "home") {
+          // /login i strona główna są widokami gościa (zalogowany użytkownik
+          // trafia z / do /games/). Nie wylogowujemy sesji profilu.
           const anonymous = await browser.newContext({
             viewport, screen: profile.screen || viewport,
             deviceScaleFactor: profile.scale, isMobile: profile.mobile,
