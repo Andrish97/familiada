@@ -6,13 +6,15 @@
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
   <title data-i18n="buzzer.title">Familiada — Przycisk do pojedynku</title>
-  <link rel="icon" href="/favicon.ico?v=v2026-10-15T12004"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T12004"/>
-  <link rel="stylesheet" href="/control/buzzer/css/buzzer.css?v=v2026-10-15T12004"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T15590"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T15590"/>
+  <link rel="stylesheet" href="/shared/css/device-lease.css?v=v2026-10-15T15590"/>
+  <link rel="stylesheet" href="/control/buzzer/css/buzzer.css?v=v2026-10-15T15590"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/control/buzzer/js/main.js?v=v2026-10-15T12004" defer></script>
+  <script type="module" src="/control/buzzer/js/main.js?v=v2026-10-15T15590" defer></script>
 </head>
 <body class="buzzer-body" data-device-screen>
+  <section id="deviceLeaseOverlay" class="device-lease-overlay" hidden aria-live="polite" aria-atomic="true"><div class="device-lease-card"><h1 id="deviceLeaseTitle"></h1><p id="deviceLeaseText"></p></div></section>
   <div class="a2hs" id="buzzerA2HS" role="dialog" aria-modal="true" aria-labelledby="buzzerA2HSTitle" aria-hidden="true">
   <div class="a2hsCard">
     <h2 class="a2hsTitle" id="buzzerA2HSTitle" data-i18n="common.a2hsTitle">Pełny ekran na iPhone</h2>

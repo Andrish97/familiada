@@ -1,6 +1,6 @@
 # Plan: Realtime i blokady instancji urządzeń w Control v2
 
-**Status:** plan, nie wdrożenie. Dokument opisuje uzgodniony kierunek i stan repozytorium z 2026-10-15. Nie zmienia działania aplikacji.
+**Status:** wdrożenie etapowe w toku (2026-10-15). Migracja 371 rejestru lease jest na produkcji; migracja 372 fencing RPC jest w trakcie wdrażania. Front klienta pozostaje na branchu `codex/control2-device-leases-client` i nie został jeszcze opublikowany. Korekta 373 zachowuje wywołanie gotowości starego Buzzera w protokole 1. Aktywne sesje protokołu 1 pozostają obsługiwane.
 
 **Środowisko wdrożenia:** jedna produkcyjna baza. Branch daje osobny kod do testów E2E, nie osobną bazę. Testy muszą używać przeznaczonych do tego kont i tworzonych przez nie gier/sesji w produkcyjnej bazie, po czym sprawdzać zapis i sprzątać dane zgodnie z workflow. Nie ma osobnej piaskownicy Supabase.
 

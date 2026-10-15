@@ -1030,6 +1030,42 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
   }
 });
 
+test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu głównej", async ({ page, browser }, testInfo) => {
+  test.setTimeout(120000);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGameRaw(page, `E2E-CONTROL2-LEASE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    const keys = await page.evaluate(async (gameId) => {
+      const sb = window.__sbClient;
+      const result = {};
+      for (const type of ["display", "host", "buzzer"]) {
+        const { data, error } = await sb.rpc("control_runtime_device_link", { p_game_id: gameId, p_device_type: type });
+        if (error || !data?.ok) throw new Error(error?.message || data?.error || `Device link failed: ${type}`);
+        result[type] = data.token;
+      }
+      return result;
+    }, game.id);
+
+    for (const type of ["display", "host", "buzzer"]) {
+      const path = `/control/${type}?id=${game.id}&key=${keys[type]}`;
+      const primary = await openAnon(browser, contexts, path, `${type}-primary`, []);
+      await expect(primary.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
+      const waiting = await openAnon(browser, contexts, path, `${type}-waiting`, []);
+      await expect(waiting.locator("#deviceLeaseOverlay")).toBeVisible({ timeout: 10000 });
+      await expect(waiting.locator("#deviceLeaseText")).toHaveText(/\S+/, { timeout: 10000 });
+      await primary.close();
+      await expect(waiting.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
+      await waiting.close();
+    }
+  } finally {
+    for (const context of contexts) await context.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
 // ===== 2. Pełna runda + wznowienie po przeładowaniu =====
 
 test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeładowaniu w środku rundy 2", async ({ page, browser }, testInfo) => {

@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-15T12004";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-15T15590";
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,19 +7,20 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-15T12004";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-15T12004";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-15T12004";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-15T12004";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T12004";
-import { createScene } from "./scene.js?v=v2026-10-15T12004";
-import { createQRController } from "./qr.js?v=v2026-10-15T12004";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-15T12004";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-15T12004";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-15T12004";
-import { createRenderer } from "./render.js?v=v2026-10-15T12004";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-15T12004";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-15T12004";
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-15T15590";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-15T15590";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-15T15590";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-15T15590";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T15590";
+import { createScene } from "./scene.js?v=v2026-10-15T15590";
+import { createQRController } from "./qr.js?v=v2026-10-15T15590";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-15T15590";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-15T15590";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-15T15590";
+import { createRenderer } from "./render.js?v=v2026-10-15T15590";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-15T15590";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-15T15590";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-15T15590";
 
 startKeepAlive();
 
@@ -93,7 +94,7 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   };
 }
 
-function createDisplayEventLog(gameId, key) {
+function createDisplayEventLog(gameId, key, lease) {
   let lastPageState = "";
   let stopped = false;
   let sessionActive = false;
@@ -109,7 +110,7 @@ function createDisplayEventLog(gameId, key) {
         if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
         try {
           const { data, error } = await sb().rpc("control2_display_event", {
-            p_game_id: gameId, p_key: key, p_event: payload,
+            p_game_id: gameId, p_key: key, p_event: payload, ...lease.actionArgs(),
           }).abortSignal(AbortSignal.timeout(4000));
           if (error) throw error;
           if (data === true) return;
@@ -365,21 +366,46 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const { gameId, key } = parseParams();
     const game = await authDisplayOrThrow(gameId, key);
-    const displayEventLog = createDisplayEventLog(game.id, key);
+    let subscription = null;
+    let rendererInstance = null;
+    let soundReactorInstance = null;
+    let audioSessionRegistration = Promise.resolve(false);
+    const lease = createDeviceLease({ gameId: game.id, deviceType: "display", key, onState: ({ state, mode }) => {
+      updateDeviceLeaseOverlay(state, mode);
+      if (subscription) {
+        if (state === "primary" || mode === "legacy") {
+          audioSessionRegistration = registerAudioSession();
+          void subscription.start();
+        } else {
+          subscription.stop();
+          rendererInstance?.cancel?.();
+          soundReactorInstance?.cancel?.();
+          setSfxMuted(true);
+          $("audioUnlockScreen")?.classList.add("hidden");
+          showBlack();
+        }
+      }
+    } });
+    await lease.start();
+    updateDeviceLeaseOverlay(lease.state, lease.mode);
+    const displayEventLog = createDisplayEventLog(game.id, key, lease);
     window.addEventListener("pagehide", displayEventLog.stop, { once: true });
     const audioSessionNonce = globalThis.crypto?.randomUUID?.()
       || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     // Every Display page load starts a fresh atomic unlock generation. This
     // catches reloads even when the 6.5 s presence timeout never elapsed.
-    const audioSessionRegistration = sb().rpc("begin_display_audio_session", {
-      p_game_id: game.id, p_key: key, p_session_nonce: audioSessionNonce,
-    }).then(({ error }) => {
+    function registerAudioSession() {
+      return sb().rpc("begin_display_audio_session", {
+        p_game_id: game.id, p_key: key, p_session_nonce: audioSessionNonce, ...lease.actionArgs(),
+      }).then(({ error }) => {
       if (error) console.warn("[display2 audio unlock] session registration failed:", error.message);
       return !error;
     }).catch((error) => {
       console.warn("[display2 audio unlock] session registration failed:", error?.message || error);
       return false;
     });
+    }
+    if (lease.state === "primary" || lease.mode === "legacy") audioSessionRegistration = registerAudioSession();
     const displayPresence = startPresenceHeartbeat({ gameId: game.id, key });
 
     // Dźwięk "ze źródła Wyświetlacz" (zgłoszone) — ten sam js/core/sfx.js co
@@ -390,6 +416,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await loadSfxManifest();
     await initSfx();
     const soundReactor = createDisplaySoundReactor();
+    soundReactorInstance = soundReactor;
     let displayWasStarted = false;
 
     const audioUnlockScreen = $("audioUnlockScreen");
@@ -444,7 +471,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const sessionRegistered = await audioSessionRegistration;
         if (audioUnlockRequestNonce && sessionRegistered) {
           const { data, error } = await sb().rpc("acknowledge_display_audio_unlock", {
-            p_game_id: game.id, p_key: key, p_nonce: audioUnlockRequestNonce,
+            p_game_id: game.id, p_key: key, p_nonce: audioUnlockRequestNonce, ...lease.actionArgs(),
           }).abortSignal(AbortSignal.timeout(6500));
           if (!error) reported = data === true;
           else {
@@ -505,6 +532,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     };
 
     const renderer = createRenderer({ scene, qr, getSfxDuration });
+    rendererInstance = renderer;
     async function warmCueTiming(row, previous) {
       const keys = new Set();
       const key = row?.sound_cue_key;
@@ -537,7 +565,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       reportingCompletion = true;
       const revision = completedRenderRev;
       try {
-        const { error } = await sb().rpc("game_state_display_complete", { p_game_id: gameId, p_key: key, p_rev: revision }).abortSignal(AbortSignal.timeout(6500));
+        const { error } = await sb().rpc("game_state_display_complete", { p_game_id: gameId, p_key: key, p_rev: revision, ...lease.actionArgs() }).abortSignal(AbortSignal.timeout(6500));
         if (!error) reportedRenderRev = revision;
         else if (loggedCompletionErrorRev !== revision) {
           loggedCompletionErrorRev = revision;
@@ -552,10 +580,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     // Retry a lost acknowledgment without replaying any animation.
     setInterval(() => { void reportCompletion().catch(() => {}); }, 500);
-    const subscription = createSubscription({
+    subscription = createSubscription({
       gameId: game.id,
       deviceType: "display",
       key,
+      getLeaseArgs: () => lease.actionArgs(),
       onBroadcast: {
         audio_unlock_required: (message) => {
           const nonce = message?.payload?.nonce;
@@ -647,7 +676,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           // so repeated identical sounds remain distinct.
           await cueTimingReady;
           if (token !== renderGeneration) return;
-          if (prev && row.sound_cue_seq !== prev.sound_cue_seq
+          if (lease.state === "primary" && prev && row.sound_cue_seq !== prev.sound_cue_seq
             && row.detail?.settings?.soundSource === "control") {
             rt(doorbellTopic(game.id)).sendBroadcast("display_transition_started", {
               sound_cue_seq: row.sound_cue_seq,
@@ -693,7 +722,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
 
     document.documentElement.classList.remove("page-loading");
-    await subscription.start();
+    if (lease.state === "primary" || lease.mode === "legacy") await subscription.start();
   } catch (e) {
     console.warn("[display2]", e?.message || e);
     showBlack();

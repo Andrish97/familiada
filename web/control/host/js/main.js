@@ -7,15 +7,16 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-15T12004";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-15T12004";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-15T12004";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T12004";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-15T12004";
-import { createHostRenderer } from "./render.js?v=v2026-10-15T12004";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-15T12004";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-15T12004";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-15T12004";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-15T15590";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-15T15590";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-15T15590";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T15590";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-15T15590";
+import { createHostRenderer } from "./render.js?v=v2026-10-15T15590";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-15T15590";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-15T15590";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-15T15590";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-15T15590";
 
 function parseParams() {
   const u = new URL(location.href);
@@ -249,6 +250,16 @@ async function main() {
   // oraz zapasowy, wyciszony strumień wideo. Podgląd w ustawieniach nie.
   startKeepAlive();
   startPresenceHeartbeat({ gameId, key });
+  let subscription = null;
+  const lease = createDeviceLease({ gameId, deviceType: "host", key, onState: ({ state, mode }) => {
+    updateDeviceLeaseOverlay(state, mode);
+    if (subscription) {
+      if (state === "primary" || mode === "legacy") void subscription.start();
+      else subscription.stop();
+    }
+  } });
+  await lease.start();
+  updateDeviceLeaseOverlay(lease.state, lease.mode);
   const renderer = createHostRenderer();
   // Zmiana orientacji w locie (obrót tabletu) ma przeliczyć podpowiedź
   // przesunięcia (portrait/landscape mają inny kierunek) -- dokładnie jak
@@ -264,8 +275,9 @@ async function main() {
   setupPeekSwipe(renderer);
 
   let appliedLang = null;
-  const subscription = createSubscription({
+  subscription = createSubscription({
     gameId, deviceType: "host", key,
+    getLeaseArgs: () => lease.actionArgs(),
     onRow: async (row) => {
       // Język idzie za operatorem w Control (patrz control/display/js/main.js —
       // ta sama zasada). render.js's pasmo 1/2 JEST tłumaczone przez t()
@@ -295,7 +307,7 @@ async function main() {
     },
     onError: (error) => console.warn("[host2] game_state_get failed:", error),
   });
-  await subscription.start();
+  if (lease.state === "primary" || lease.mode === "legacy") await subscription.start();
 }
 
 main();

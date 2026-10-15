@@ -1,7 +1,7 @@
 // Sesja runtime Control jest osobna od telemetryki game_sessions i od
 // krótkiego TTL blokady strony. Aktywność oznacza świadome działanie
 // operatora; heartbeat urządzeń ani animacje nie przesuwają terminu.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T12004";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T15590";
 
 const IDLE_STORAGE_KEY = (gameId) => `fam:control:runtime:${gameId}`;
 const OUTRO_STORAGE_KEY = (gameId) => `control2:outro-started:${gameId}`;
@@ -18,7 +18,7 @@ export function createRuntimeSession({ gameId, onExpired }) {
     if (inFlight || stopped) return null;
     inFlight = true;
     try {
-      const { data, error } = await sb().rpc("control_runtime_session_touch", {
+      const { data, error } = await sb().rpc("control_runtime_session_touch_v2", {
         p_game_id: gameId,
         p_session_id: sessionId,
       });
@@ -26,6 +26,9 @@ export function createRuntimeSession({ gameId, onExpired }) {
       if (!data?.ok) throw new Error(data?.error || "Nie udało się odnowić sesji Control.");
 
       sessionId = data.session_id;
+      if (data.device_protocol !== 1 && data.device_protocol !== 2) {
+        throw new Error("Serwer zwrócił nieznaną wersję połączenia urządzeń.");
+      }
       if (sessionId) sessionStorage.setItem(storageKey, sessionId);
       lastSentAt = Date.now();
       if (data.expired) {
