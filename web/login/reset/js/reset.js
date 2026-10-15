@@ -1,10 +1,10 @@
-import "../../../shared/js/core/orientation-guard.js?v=v2026-10-15T15495";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T15495";
-import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../../../shared/js/core/auth.js?v=v2026-10-15T15495";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-15T15495";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-15T15495";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-15T15495";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-15T15495";
+import "../../../shared/js/core/orientation-guard.js?v=v2026-10-15T15525";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T15525";
+import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../../../shared/js/core/auth.js?v=v2026-10-15T15525";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-15T15525";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-15T15525";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-15T15525";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-15T15525";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
