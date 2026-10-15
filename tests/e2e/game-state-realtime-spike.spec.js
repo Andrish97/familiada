@@ -69,10 +69,31 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
       return error?.message || null;
     }, game.id);
     expect(writeError, "game_state_write (właściciel) nie powiodło się").toBeNull();
+    const runtimeKey = await page.evaluate(async gid => {
+      const sb = window.__sbClient;
+      const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch_v2", {
+        p_game_id: gid, p_session_id: null,
+      });
+      if (sessionError || !session?.ok) throw sessionError || new Error(session?.error || "session touch failed");
+      const { data: link, error: linkError } = await sb.rpc("control_runtime_device_link", {
+        p_game_id: gid, p_device_type: "display",
+      });
+      if (linkError || !link?.ok) throw linkError || new Error(link?.error || "device link failed");
+      return link.token;
+    }, game.id);
 
     const anonContext = await browser.newContext();
     const anonPage = await anonContext.newPage();
     await anonPage.goto("/", { waitUntil: "domcontentloaded" });
+    const lease = await anonPage.evaluate(async ({ gid, key }) => {
+      const connectionId = crypto.randomUUID();
+      const { data, error } = await window.__sbClient.rpc("control_device_instance_register", {
+        p_game_id: gid, p_device_type: "display", p_key: key, p_connection_id: connectionId,
+        p_meta: { visibility: "visible", focused: true },
+      });
+      if (error || data?.state !== "primary") throw error || new Error("display was not made primary");
+      return { connectionId, epoch: data.epoch };
+    }, { gid: game.id, key: runtimeKey });
 
     // 1) Bezpośredni SELECT jako anon — musi zwrócić zero wierszy, bez
     //    względu na status gry czy znajomość game_id. Brak polityki SELECT
@@ -93,6 +114,7 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
         p_game_id: gid,
         p_device_type: "display",
         p_key: "zly-klucz-na-pewno-nieprawidlowy",
+        p_connection_id: lease.connectionId, p_epoch: lease.epoch,
       });
       return { data, error: error?.message || null };
     }, game.id);
@@ -101,16 +123,18 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
     // 3) game_state_get z POPRAWNYM kluczem pozostaje działającą ścieżką
     //    dla zwykłego JWT anon i musi zwrócić prawdziwy stan gry.
     const goodKeyResult = await anonPage.evaluate(
-      async ({ gid, key }) => {
+      async ({ gid, key, lease }) => {
         const sb = window.__sbClient;
         const { data, error } = await sb.rpc("game_state_get", {
           p_game_id: gid,
           p_device_type: "display",
           p_key: key,
+          p_connection_id: lease.connectionId,
+          p_epoch: lease.epoch,
         });
         return { step: data?.step ?? null, error: error?.message || null };
       },
-      { gid: game.id, key: game.share_key_display }
+      { gid: game.id, key: runtimeKey, lease }
     );
     expect(goodKeyResult.error, "game_state_get z poprawnym kluczem nie powinno się nie udać").toBeNull();
     expect(goodKeyResult.step, "game_state_get z poprawnym kluczem powinno zwrócić zapisany stan").toBe("devices_display");
@@ -120,7 +144,7 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
     //    każdym broadcastowym "dzwonku"). 10 kolejnych wywołań z tej samej,
     //    anonimowej karty, tak jak realnie robiłoby to Display/Host/Buzzer.
     const timings = await anonPage.evaluate(
-      async ({ gid, key }) => {
+      async ({ gid, key, lease }) => {
         const sb = window.__sbClient;
         const results = [];
         for (let i = 0; i < 10; i++) {
@@ -129,12 +153,14 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
             p_game_id: gid,
             p_device_type: "display",
             p_key: key,
+            p_connection_id: lease.connectionId,
+            p_epoch: lease.epoch,
           });
           results.push({ ms: performance.now() - t0, error: error?.message || null });
         }
         return results;
       },
-      { gid: game.id, key: game.share_key_display }
+      { gid: game.id, key: runtimeKey, lease }
     );
     const failedTimings = timings.filter((t) => t.error);
     expect(failedTimings.length, "żadne z 10 wywołań pomiarowych nie powinno się nie udać").toBe(0);
@@ -185,9 +211,11 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       return { error };
     }, game.id);
     expect(seedError, "seed game_state_write should succeed").toBeNull();
-    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     const keyResult = await page.evaluate(async (gid) => {
+      const { data: session, error: sessionError } = await window.__sbClient.rpc("control_runtime_session_touch_v2", {
+        p_game_id: gid, p_session_id: null,
+      });
+      if (sessionError || !session?.ok) throw sessionError || new Error(session?.error || "session touch failed");
       const { data, error } = await window.__sbClient.rpc("control_runtime_device_link", {
         p_game_id: gid, p_device_type: "display",
       });
