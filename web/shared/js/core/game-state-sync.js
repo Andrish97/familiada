@@ -1,7 +1,6 @@
 // js/core/game-state-sync.js
-// Logika "dociągnij stan, gdy dzwonek mówi, że jest nowszy" — bez zależności od
-// Supabase/DOM, żeby dało się ją sprawdzić testem jednostkowym. Używane przez
-// game-state-subscribe.js (Display/Host/Buzzer).
+// Monotoniczny, serializowany odbiór wierszy dla Broadcast/poll fallbacku
+// oraz bezpośrednich zdarzeń postgres_changes.
 //
 // Dzwonek (broadcast {rev}) jest tylko podpowiedzią i bywa gubiony: błąd
 // sieciowy w trakcie game_state_get, zawieszone żądanie albo przerwa w
@@ -18,13 +17,47 @@ export function createRowSync({ fetchRow, onRow, onError, retryMs = 2000, sameRe
   let lastRow = null;
   let fetching = false;
   let pendingRefetch = false;
+  let pendingRow = null;
   let retryScheduled = false;
 
-  function isNewer(data) {
-    if (data.rev > lastRev) return true;
+  function isNewer(data, baseRev = lastRev, baseRow = lastRow) {
+    if (data.rev > baseRev) return true;
     // Opcjonalnie: ten sam rev, ale zmieniło się pole zapisywane bez podbicia
     // rev (game_state_set_lock zmienia tylko locked_until).
-    return data.rev === lastRev && !!lastRow && !!sameRevChanged && sameRevChanged(lastRow, data);
+    return data.rev === baseRev && !!baseRow && !!sameRevChanged && sameRevChanged(baseRow, data);
+  }
+
+  function newerThanPending(data) {
+    return !pendingRow || isNewer(data, pendingRow.rev, pendingRow);
+  }
+
+  async function acceptRow(data) {
+    if (!data || !isNewer(data)) return;
+    lastRev = data.rev;
+    lastRow = data;
+    try {
+      await onRow(data);
+    } catch (error) {
+      console.warn("[game-state-sync] onRow rzucił wyjątek:", error);
+    }
+  }
+
+  function drainPending() {
+    if (fetching) return;
+    if (pendingRow) {
+      const row = pendingRow;
+      pendingRow = null;
+      fetching = true;
+      void acceptRow(row).finally(() => {
+        fetching = false;
+        drainPending();
+      });
+      return;
+    }
+    if (pendingRefetch) {
+      pendingRefetch = false;
+      void fetchGuarded();
+    }
   }
 
   function scheduleRetry() {
@@ -45,17 +78,7 @@ export function createRowSync({ fetchRow, onRow, onError, retryMs = 2000, sameRe
       return;
     }
     if (!data) return; // Control jeszcze nigdy nic nie zapisał dla tej gry
-    if (!isNewer(data)) return; // dzwonek spóźniony/zdublowany — nic nowego
-    lastRev = data.rev;
-    lastRow = data;
-    // await: patrz komentarz w game-state-subscribe.js (render Display jest
-    // asynchroniczny; kolejny odczyt nie może się z nim nakładać).
-    try {
-      await onRow(data);
-    } catch (error) {
-      // Błąd renderu to nie błąd odczytu (onError czerni Display) — tylko log.
-      console.warn("[game-state-sync] onRow rzucił wyjątek:", error);
-    }
+    await acceptRow(data); // stary Broadcast / polling może przynieść spóźniony rev
   }
 
   async function fetchGuarded() {
@@ -65,21 +88,28 @@ export function createRowSync({ fetchRow, onRow, onError, retryMs = 2000, sameRe
       await fetchOnce();
     } finally {
       fetching = false;
-      if (pendingRefetch) { pendingRefetch = false; fetchGuarded(); }
+      drainPending();
     }
   }
 
-  // Wiersz z innego źródła niż odczyt (odpowiedź game_state_buzzer_press).
+  // Wiersz z Realtime lub odpowiedzi game_state_buzzer_press. Render jest
+  // serializowany tak samo jak odpowiedź RPC; podczas animacji zachowujemy
+  // tylko najnowszą odebraną rewizję.
   function applyRow(row) {
-    if (!row || row.rev <= lastRev) return;
-    lastRev = row.rev;
-    lastRow = row;
-    onRow(row);
+    if (!row || !isNewer(row)) return;
+    if (fetching) {
+      if (newerThanPending(row)) pendingRow = row;
+      return;
+    }
+    pendingRow = row;
+    drainPending();
   }
 
   function reset() {
     lastRev = -1;
     lastRow = null;
+    pendingRow = null;
+    pendingRefetch = false;
   }
 
   return { fetchGuarded, applyRow, reset, get lastRev() { return lastRev; } };

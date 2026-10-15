@@ -1,8 +1,7 @@
 // js/core/game-state-subscribe.js
 // Devices use a short-lived, lease-scoped JWT for direct postgres_changes.
-// RPC bootstrap, the existing Broadcast doorbell and polling remain active
-// during rollout and recover missed events. Realtime payloads only signal
-// that the authoritative row should be fetched again through game_state_get.
+// Realtime rows are applied directly; RPC bootstrap, Broadcast and polling
+// recover missed events whenever the direct channel is unavailable.
 //
 // Mechanizm: (1) bootstrap — jedno wywołanie RPC przy starcie strony;
 // (2) "dzwonek" — Control po każdym zapisie wysyła malutki, nieautorytatywny
@@ -23,6 +22,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   let active = false;
   let pollTimer = null;
   let directChannel = null;
+  let directConnected = false;
   let tokenTimer = null;
   let directUnavailableLogged = false;
   // Limit czasu: zawieszone żądanie trzymało `fetching` na zawsze i wszystkie
@@ -50,7 +50,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     const channel = rt(doorbellTopic(gameId));
     channel.onBroadcast("rev", (msg) => {
       const rev = msg?.payload?.rev;
-      if (typeof rev === "number" && rev > sync.lastRev) fetchGuarded();
+      if (!directConnected && typeof rev === "number" && rev > sync.lastRev) fetchGuarded();
     });
     for (const [event, handler] of Object.entries(onBroadcast)) {
       if (typeof handler === "function") channel.onBroadcast(event, handler);
@@ -75,11 +75,20 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       directChannel.on("postgres_changes", {
         event: "*", schema: "public", table: "game_state", filter: `game_id=eq.${gameId}`,
       }, (payload) => {
-        const rev = Number(payload?.new?.rev);
-        if (Number.isFinite(rev) && rev > sync.lastRev) fetchGuarded();
+        const row = payload?.new;
+        const rev = Number(row?.rev);
+        if (row && Number.isFinite(rev)) sync.applyRow({ ...row, rev });
+        else if (payload?.eventType === "DELETE") fetchGuarded();
       }).subscribe((status) => {
-        if (status === "SUBSCRIBED" && active) fetchGuarded();
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        if (status === "SUBSCRIBED" && active) {
+          directConnected = true;
+          // Close the bootstrap/subscription race, then let direct row events
+          // carry subsequent state without an additional RPC per event.
+          fetchGuarded();
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          directConnected = false;
+          if (active) fetchGuarded();
           console.warn(`[device-realtime] ${status}; działa transport awaryjny`);
         }
       });
@@ -100,6 +109,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   }
 
   async function stopDirect() {
+    directConnected = false;
     clearTimeout(tokenTimer);
     tokenTimer = null;
     if (directChannel) {
@@ -108,6 +118,14 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       await sb().removeChannel(channel).catch(() => {});
     }
     try { await sb().realtime.setAuth(SUPABASE_ANON_KEY); } catch {}
+  }
+
+  function resync() {
+    if (!active) return;
+    fetchGuarded();
+    rt(doorbellTopic(gameId)).reset();
+    subscribeDoorbell();
+    void stopDirect().finally(() => { if (active) void startDirect(); });
   }
 
   async function start() {
@@ -124,33 +142,19 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     // gdy rev się nie zmienił).
     rt(doorbellTopic(gameId)).whenReady().then((ok) => { if (ok) fetchGuarded(); }).catch(() => {});
 
-    // Karta w tle (np. Wyświetlacz na monitorze/TV, nie w foreground; albo
-    // ekran urządzenia zgaszony) — przeglądarka potrafi po cichu ubić/zamrozić
-    // ten WebSocket bez żadnego widocznego błędu po stronie klienta (zwłaszcza
-    // po dłuższej nieaktywności). Nic wtedy nie budzi kanału z powrotem — nie
-    // ma żadnego heartbeatu ani reconnecta w tym pliku — więc dzwonek milknie
-    // NA ZAWSZE, dopóki ktoś ręcznie nie przeładuje strony (zgłoszone: "Display
-    // nie pokazuje rund, odświeża dopiero po przeładowaniu, jeśli był w tle").
-    // Gdy karta wraca na pierwszy plan / urządzenie znów ma sieć: dociągnij
-    // stan OD RAZU (na wypadek zgubionego dzwonka w trakcie przerwy) i
-    // bezwarunkowo zbuduj kanał na nowo — nie polegamy na status'ie kanału
-    // (po zamrożeniu JS-u status wciąż pokazuje ostatnią znaną, "zdrową"
-    // wartość, bo nic nie miało szansy jej zaktualizować w tle).
-    const resync = () => {
-      fetchGuarded();
-      rt(doorbellTopic(gameId)).reset();
-      subscribeDoorbell();
-      void stopDirect().finally(startDirect);
-    };
+    // Karta mogła zostać zamrożona przez przeglądarkę. Po powrocie na ekran
+    // odbuduj kanał i pobierz stan, bo sam status WebSocketu może być nieaktualny.
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pageshow", resync);
     window.addEventListener("online", resync);
     // Siatka bezpieczeństwa na zgubiony dzwonek.
-    if (pollMs > 0) pollTimer = setInterval(() => { if (active) fetchGuarded(); }, pollMs);
+    if (pollMs > 0) pollTimer = setInterval(() => {
+      if (active && !directConnected) fetchGuarded();
+    }, pollMs);
   }
 
   function onVisibility() {
-      if (document.visibilityState === "visible") resync();
+    if (document.visibilityState === "visible") resync();
   }
 
   function stop() {
