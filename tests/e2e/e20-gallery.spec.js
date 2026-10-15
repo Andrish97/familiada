@@ -148,23 +148,28 @@ async function installVisualResourceLockIsolation(page) {
   };
 }
 
-async function saveDeviceScreenshot(page, profile, id, outputPath) {
+async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithoutFontWait = false) {
   let image;
-  try {
-    image = await page.screenshot({ fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
-  } catch (error) {
-    if (!/TimeoutError|timeout/i.test(error.message)) throw error;
-    // Playwright czeka na document.fonts.ready przed każdym screenem. Niektóre
-    // modalne fonty nigdy nie kończą ładowania; CDP zapisuje ten sam viewport
-    // bez blokowania na tym zdarzeniu.
+  const captureWithCDP = async () => {
     const session = await page.context().newCDPSession(page);
     try {
       const result = await session.send("Page.captureScreenshot", {
         format: "png", fromSurface: true, captureBeyondViewport: false,
       });
-      image = Buffer.from(result.data, "base64");
+      return Buffer.from(result.data, "base64");
     } finally {
       await session.detach();
+    }
+  };
+  if (captureWithoutFontWait) {
+    image = await captureWithCDP();
+  } else {
+    try {
+      image = await page.screenshot({ fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
+    } catch (error) {
+      if (!/TimeoutError|timeout/i.test(error.message)) throw error;
+      // Playwright czeka na document.fonts.ready; CDP zapisuje ten sam viewport bez tego oczekiwania.
+      image = await captureWithCDP();
     }
   }
   if (!["iphone-portrait", "iphone-landscape", "ipad-portrait", "ipad-landscape"].includes(profile.id)) {
@@ -539,7 +544,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe
   // zrzuty na długich/animowanych widokach wisiały w Chromium po 45 s; wysokość
   // całej strony pozostaje w manifeście, a screenshot zachowuje viewport i safe area.
-  await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, fileName));
+  await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, fileName), Boolean(options.stateId));
   expect(page.context().pages(), `${profile.label} · ${id}: otwarto równoległą kartę`).toHaveLength(1);
   page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
