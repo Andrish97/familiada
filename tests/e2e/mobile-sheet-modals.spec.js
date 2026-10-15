@@ -415,7 +415,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
 
       await expect(page.locator("#tagsL2")).toBeVisible();
       await expect(page.locator("#tagsL2Save")).toBeInViewport();
-      await page.locator("#tagsEditName").fill("Nowy tag mobilny");
+      await page.locator("#tagsEditName").fill("Nowy_tag_mobilny");
       await page.locator("#tagsL2Save").click();
       await expect(page.locator("#tagsL1")).toBeVisible();
       await expect(page.locator("#tagsAssignList .tags-row")).toHaveCount(61, { timeout: 10000 });
