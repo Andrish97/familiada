@@ -142,6 +142,7 @@ async function installVisualResourceLockIsolation(page) {
     return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
   });
   return async () => {
+    if (page.isClosed()) return;
     await page.unroute(acquire);
     await page.unroute(release);
     await page.unroute(locks);
