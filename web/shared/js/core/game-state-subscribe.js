@@ -16,12 +16,14 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb } from "./supabase.js?v=v2026-10-15T12004";
-import { rt } from "./realtime.js?v=v2026-10-15T12004";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-15T12004";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-15T12004";
+import { sb } from "./supabase.js?v=v2026-10-15T20321";
+import { rt } from "./realtime.js?v=v2026-10-15T20321";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-15T20321";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-15T20321";
 
-export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, pollMs = 5000, sameRevChanged = null }) {
+export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, pollMs = 5000, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
+  let active = false;
+  let pollTimer = null;
   // Limit czasu: zawieszone żądanie trzymało `fetching` na zawsze i wszystkie
   // kolejne dzwonki tylko zaznaczały pendingRefetch (urządzenie zostawało na
   // starym stanie). Szczegóły: game-state-sync.js.
@@ -30,14 +32,15 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       p_game_id: gameId,
       p_device_type: deviceType,
       p_key: key,
+      ...getLeaseArgs(),
     }).abortSignal(AbortSignal.timeout(8000)),
     // await onRow: control/display/js/render.js's renderSnapshot()/renderDiff() mają
     // realne animacje trwające setki ms-kilka s — kolejny odczyt nie może się
     // z nimi nakładać (dwa renderDiff() na tym samym płótnie SVG, podwójny
     // dźwięk przy odsłanianiu). Dla urządzeń bez animacji (buzzer, host)
     // onRow zwraca od razu.
-    onRow,
-    onError,
+    onRow: (...args) => { if (active) return onRow?.(...args); },
+    onError: (...args) => { if (active) return onError?.(...args); },
     sameRevChanged,
   });
   const fetchGuarded = sync.fetchGuarded;
@@ -54,7 +57,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   }
 
   async function start() {
+    if (active) return;
+    active = true;
+    sync.reset();
     await fetchGuarded();
+    if (!active) return;
     subscribeDoorbell();
     // Dzwonek wysłany między bootstrapem a dołączeniem do kanału przepada
     // (broadcast nie ma historii), a bez kolejnego zapisu urządzenie zostałoby
@@ -79,15 +86,26 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       rt(doorbellTopic(gameId)).reset();
       subscribeDoorbell();
     };
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") resync();
-    });
+    document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pageshow", resync);
     window.addEventListener("online", resync);
+    // Siatka bezpieczeństwa na zgubiony dzwonek.
+    if (pollMs > 0) pollTimer = setInterval(() => { if (active) fetchGuarded(); }, pollMs);
+  }
 
-    // Siatka bezpieczeństwa na zgubiony dzwonek (patrz game-state-sync.js):
-    // tani odczyt, który i tak jest no-opem, gdy rev się nie zmienił.
-    if (pollMs > 0) setInterval(() => { fetchGuarded(); }, pollMs);
+  function onVisibility() {
+      if (document.visibilityState === "visible") resync();
+  }
+
+  function stop() {
+    if (!active) return;
+    active = false;
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+    document.removeEventListener("visibilitychange", onVisibility);
+    window.removeEventListener("pageshow", resync);
+    window.removeEventListener("online", resync);
+    rt(doorbellTopic(gameId)).reset();
   }
 
   // Dla Buzzera: game_state_buzzer_press zwraca już świeży wiersz w tej
@@ -102,5 +120,5 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // nie czekamy na własny dzwonek, tylko dociągamy od razu.
   function refetchNow() { return fetchGuarded(); }
 
-  return { start, applyRow, refetchNow };
+  return { start, stop, applyRow, refetchNow };
 }

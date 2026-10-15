@@ -611,6 +611,12 @@ const en = {
     errInvalidPassword: "Invalid password.",
     errDeleteFailed: "Failed to delete account.",
   },
+  deviceLease: {
+    waitingTitle: "This device is waiting",
+    waitingText: "Another tab for this device is already open in this session. To use this screen, close the other tab; this one will activate automatically.",
+    reconnectingTitle: "Checking the device connection",
+    reconnectingText: "This screen cannot control the game until its connection is confirmed. It will retry automatically.",
+  },
   display: {
     title: "Familiada — display",
     qrHost: "Host",

@@ -1,0 +1,16 @@
+.device-lease-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  background: rgba(8, 12, 24, .96);
+  color: #fff;
+  font: 500 18px/1.5 system-ui, sans-serif;
+  text-align: center;
+}
+.device-lease-overlay[hidden] { display: none; }
+.device-lease-card { width: min(100%, 620px); padding: clamp(24px, 5vw, 48px); border: 1px solid rgba(255,255,255,.18); border-radius: 20px; background: #151b2d; box-shadow: 0 24px 80px rgba(0,0,0,.42); }
+.device-lease-card h1 { margin: 0 0 16px; font-size: clamp(24px, 5vw, 38px); line-height: 1.15; }
+.device-lease-card p { margin: 0; color: rgba(255,255,255,.86); }

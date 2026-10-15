@@ -77,5 +77,10 @@ export function createRowSync({ fetchRow, onRow, onError, retryMs = 2000, sameRe
     onRow(row);
   }
 
-  return { fetchGuarded, applyRow, get lastRev() { return lastRev; } };
+  function reset() {
+    lastRev = -1;
+    lastRow = null;
+  }
+
+  return { fetchGuarded, applyRow, reset, get lastRev() { return lastRev; } };
 }

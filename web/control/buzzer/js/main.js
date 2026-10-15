@@ -10,15 +10,16 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-15T12004";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-15T12004";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T12004";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-15T12004";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-15T12004";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-15T12004";
-import { createPressController } from "./press.js?v=v2026-10-15T12004";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-15T12004";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-15T12004";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-15T20321";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-15T20321";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T20321";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-15T20321";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-15T20321";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-15T20321";
+import { createPressController } from "./press.js?v=v2026-10-15T20321";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-15T20321";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-15T20321";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-15T20321";
 
 // Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
 startKeepAlive();
@@ -140,6 +141,17 @@ async function main() {
   const { gameId, key } = parseParams();
   if (!gameId) return;
 
+  let subscription = null;
+  const lease = createDeviceLease({ gameId, deviceType: "buzzer", key, onState: ({ state, mode }) => {
+    updateDeviceLeaseOverlay(state, mode);
+    if (subscription) {
+      if (state === "primary" || mode === "legacy") void subscription.start();
+      else subscription.stop();
+    }
+  } });
+  await lease.start();
+  updateDeviceLeaseOverlay(lease.state, lease.mode);
+
   const renderer = createButtonRenderer();
   let lastRow = null;
   let appliedLang = null;
@@ -157,7 +169,7 @@ async function main() {
     // Keep one in-flight request per transition; late replies are ignored.
     displayCheckPendingKey = requestKey;
     try {
-      const { data, error } = await sb().rpc("game_state_display_is_ready", { p_game_id: gameId, p_key: key }).abortSignal(AbortSignal.timeout(6500));
+      const { data, error } = await sb().rpc("game_state_display_is_ready", { p_game_id: gameId, p_key: key, p_device_type: "buzzer", ...lease.actionArgs() }).abortSignal(AbortSignal.timeout(6500));
       // Completion is requested only when step or sound_cue_seq changes
       // (migration 305). Unrelated revisions, including a buzzer press or
       // locked_until update, must not invalidate an acknowledgment already
@@ -185,8 +197,9 @@ async function main() {
     lockTimer = setTimeout(() => presses.render(lastRow), Math.max(0, msLeft) + 20);
   }
 
-  const subscription = createSubscription({
+  subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
+    getLeaseArgs: () => lease.actionArgs(),
     // game_state_set_lock przesuwa locked_until bez podbicia rev i bez
     // dzwonka — bez tego Buzzer odblokowywał się wg starszej blokady, a
     // odrzucone naciśnięcie ("locked") nie dociągało nowszej.
@@ -217,6 +230,7 @@ async function main() {
     render: (row, team) => renderer.render(row ? { ...row, display_animation_pending: !isDisplayReady(row) } : row, team),
     send: (team) => sb().rpc("game_state_buzzer_press", {
       p_game_id: gameId, p_key: key, p_team: team,
+      ...lease.actionArgs(),
     }),
     applyRow: (row) => subscription.applyRow(row),
     refetch: () => subscription.refetchNow(),
@@ -239,7 +253,7 @@ async function main() {
 
   if (!key) return;
   startPresenceHeartbeat({ gameId, key });
-  await subscription.start();
+  if (lease.state === "primary" || lease.mode === "legacy") await subscription.start();
 }
 
 main();

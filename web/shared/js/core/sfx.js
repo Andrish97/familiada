@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-15T12004";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-15T20321";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -50,6 +50,7 @@ let globalMuted = false;
 // Wyciszenie nie zmienia zegara audio, głośności ani zaplanowanych dźwięków.
 export function setSfxMuted(muted) {
   globalMuted = !!muted;
+  if (typeof window !== "undefined") window.__sfxMuted = globalMuted;
   if (masterGain) masterGain.gain.setValueAtTime(globalMuted ? 0 : 1, audioContext.currentTime);
 }
 const playbackObservers = new Set();
@@ -402,7 +403,7 @@ export function onSfxEnd(key, fn) {
 export function playSfx(key) {
   const requestedAt = performance.now();
   if (typeof window !== "undefined") {
-    (window.__sfxLog ??= []).push({ key, at: Date.now() });
+    (window.__sfxLog ??= []).push({ key, at: Date.now(), muted: globalMuted });
   }
   const a = cache.get(key);
   if (!a) {
@@ -520,7 +521,7 @@ export async function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-15T12004";
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-15T20321";
     // Call play() synchronously in the gesture handler, then trust its
     // promise. Previously a rejected autoplay attempt still returned true,
     // allowing Display to report an unlock the browser had refused.
@@ -563,7 +564,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-15T12004" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-15T20321" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   // Brak wpisu oznacza 100%, tak jak suwak ustawień. Nie dziedziczymy
