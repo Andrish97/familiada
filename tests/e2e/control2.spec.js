@@ -30,8 +30,8 @@ const { expectMailDocument } = require("./helpers/mail-document");
 //       tylko jeden zaakceptowany, oba urządzenia się zgadzają.
 //   11b. Ponów naciśnięcie (RETRY_DUEL) — odrzuca błędne zgłoszenie,
 //       Buzzer otwiera się na nowo.
-//   12. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
-//       odtwarza mimo normalnie grającej akcji.
+//   12. Wyciszenie dźwięku — akcje dźwiękowe nadal się uruchamiają, ale
+//       master gain jest wyciszony.
 //   12b. Dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień,
 //       chwilowe mute w rundzie.
 //   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
@@ -168,7 +168,10 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     for (let i = 0; i < samples; i++) wav.writeInt16LE(Math.round(Math.sin(i * 2 * Math.PI * 440 / sampleRate) * 500), 44 + i * 2);
     await fileInput.setInputFiles({ name: "outro-test-31s.wav", mimeType: "audio/wav", buffer: wav });
     await expect(page.locator('.sfx-row:has(input[data-sfx-key="show_outro"]) .sfx-file-name')).toHaveText("outro-test-31s.wav", { timeout: 15000 });
-    // Autozapis; „Wstecz” zapisuje od razu i wraca do Control (ret).
+    // Ustawienia zapisują się jawnie przyciskiem, a czyste wyjście wraca
+    // bez ostrzeżenia o niezapisanych zmianach.
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
     await page.locator("#btnBack").click();
     // Control is intentionally opened by the production link as /control?id=…
     // (without a trailing slash); accept both canonical forms.
@@ -2247,7 +2250,7 @@ test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer ot
 
 // ===== 12. Wyciszenie dźwięku =====
 
-test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwarza", async ({ page, browser }, testInfo) => {
+test("control2: wyciszenie dźwięku — Mute zeruje wyjście, zachowując zdarzenia audio", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-MUTE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
@@ -2283,7 +2286,9 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await revealAnswer(page, 1); // normalnie: buzzer_press + answer_correct
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
-    expect(await getSfxKeys(page), "wyciszenie ma zablokować KAŻDY dźwięk, nie tylko część").toEqual([]);
+    const mutedSfx = await page.evaluate(() => window.__sfxLog || []);
+    expect(mutedSfx.map((entry) => entry.key), "Mute nie może zatrzymywać zdarzeń dźwiękowych ani ich synchronizacji").toContain("buzzer_press");
+    expect(mutedSfx.every((entry) => entry.muted), "każde zdarzenie po Mute musi przejść przez zerowy master gain").toBe(true);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -2363,8 +2368,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // zmienia "reveal", więc każda asercja wiąże się jednoznacznie z jednym
     // z dwóch mechanizmów.
 
-    // (a) games.settings jako punkt wyjściowy — strona ustawień (zwykłe
-    // przejście z Control, ustawienia zapisują się same).
+    // (a) games.settings jako punkt wyjściowy — zmiana jest jawnie zapisana
+    // na stronie ustawień przed powrotem do Control.
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
     await page.waitForURL(/\/games\/settings\//, { timeout: 15000 });
     // #gsTeamA staje się widoczny dopiero po zakończeniu async inicjalizacji
@@ -2379,7 +2384,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
       el.value = "70";
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
-    // „Wstecz” zapisuje zmiany od razu (bez pytania) i wraca do Control (ret).
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
     await page.locator("#btnBack").click();
     await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
@@ -2448,10 +2454,13 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // ===== Mute na chwilę w tej samej rundzie — odpowiedź #2 podczas wyciszenia =====
     await page.locator("#btnMute").click();
     await expect(page.locator("#btnMute .ico-speaker-off")).toHaveCount(1);
+    await expect.poll(() => displayPage.evaluate(() => window.__sfxMuted)).toBe(true);
     await clearSfxLog(displayPage);
     await revealAnswer(page, 2); // Odpowiedź B, 30 pkt
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
-    expect(await getSfxKeys(displayPage), "wyciszone -> Display nie powinien nic odtworzyć").toEqual([]);
+    const mutedDisplaySfx = await displayPage.evaluate(() => window.__sfxLog || []);
+    expect(mutedDisplaySfx.map((entry) => entry.key), "wyciszony Display nadal musi odebrać cue i zachować synchronizację").toContain("reveal");
+    expect(mutedDisplaySfx.every((entry) => entry.muted), "Display ma wyciszyć wyjście dla każdego cue").toBe(true);
 
     // ===== Un-mute — odpowiedź #3 znów słyszalna =====
     await page.locator("#btnMute").click();
