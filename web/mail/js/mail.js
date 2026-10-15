@@ -1,7 +1,7 @@
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-15T16134';
-import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-15T16134';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-15T16134';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-15T16134';
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-15T16170';
+import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-15T16170';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-15T16170';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-15T16170';
 
 const $ = id => document.getElementById(id);
 const text = (key, vars) => t(`mailCenter.${key}`, vars);

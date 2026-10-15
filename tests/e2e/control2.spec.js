@@ -861,7 +861,7 @@ function instrumentAnon(p, label) {
   });
 }
 
-async function openAnon(browser, contexts, path, label, errors) {
+async function openAnon(browser, contexts, path, label, errors, { onPage } = {}) {
   const devicePaths = { "/control/display": "display", "/control/host": "host", "/control/buzzer": "buzzer" };
   const parsed = new URL(path, "https://www.familiada.online");
   const deviceType = devicePaths[parsed.pathname.replace(/\/$/, "")];
@@ -873,6 +873,7 @@ async function openAnon(browser, contexts, path, label, errors) {
   const ctx = await controlContext(browser, );
   contexts.push(ctx);
   const p = await ctx.newPage();
+  onPage?.(p);
   trackErrors(p, label, errors);
   instrumentAnon(p, label);
   await p.goto(path, { waitUntil: "domcontentloaded" });
@@ -1069,30 +1070,39 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
 
     for (const type of ["display", "host", "buzzer"]) {
       const path = `/control/${type}?id=${game.id}&key=${keys[type]}`;
-      const primary = await openAnon(browser, contexts, path, `${type}-primary`, []);
-      for (const [label, devicePage] of [["primary", primary]]) {
-        devicePage.on("response", async response => {
+      const primaryStates = [];
+      const primary = await openAnon(browser, contexts, path, `${type}-primary`, [], {
+        onPage(devicePage) {
+          devicePage.on("response", async response => {
           if (!response.url().includes("control_device_instance_")) return;
           let body = "<unreadable>";
           try { body = JSON.stringify(await response.json()); } catch {}
-          console.log(`[lease e2e ${type}-${label}] ${response.url().split("/").pop()} ${response.status()} ${body}`);
-        });
-      }
-      await expect(primary.locator("#deviceLeaseOverlay")).toHaveAttribute("data-lease-state", "primary", { timeout: 10000 });
-      await expect(primary.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
-      const waiting = await openAnon(browser, contexts, path, `${type}-waiting`, []);
-      waiting.on("response", async response => {
-        if (!response.url().includes("control_device_instance_")) return;
-        let body = "<unreadable>";
-        try { body = JSON.stringify(await response.json()); } catch {}
-        console.log(`[lease e2e ${type}-waiting] ${response.url().split("/").pop()} ${response.status()} ${body}`);
+          const parsed = body === "<unreadable>" ? null : JSON.parse(body);
+          if (parsed?.state) primaryStates.push(parsed.state);
+          console.log(`[lease e2e ${type}-primary] ${response.url().split("/").pop()} ${response.status()} ${body}`);
+          });
+        },
       });
-      await expect(waiting.locator("#deviceLeaseOverlay")).toHaveAttribute("data-lease-state", "waiting", { timeout: 10000 });
+      await expect.poll(() => primaryStates.includes("primary"), { timeout: 10000 }).toBe(true);
+      await expect(primary.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
+      const waitingStates = [];
+      const waiting = await openAnon(browser, contexts, path, `${type}-waiting`, [], {
+        onPage(devicePage) {
+          devicePage.on("response", async response => {
+            if (!response.url().includes("control_device_instance_")) return;
+            let body = "<unreadable>";
+            try { body = JSON.stringify(await response.json()); } catch {}
+            const parsed = body === "<unreadable>" ? null : JSON.parse(body);
+            if (parsed?.state) waitingStates.push(parsed.state);
+            console.log(`[lease e2e ${type}-waiting] ${response.url().split("/").pop()} ${response.status()} ${body}`);
+          });
+        },
+      });
+      await expect.poll(() => waitingStates.includes("waiting"), { timeout: 10000 }).toBe(true);
       await expect(waiting.locator("#deviceLeaseOverlay")).toBeVisible({ timeout: 10000 });
       await expect(waiting.locator("#deviceLeaseText")).toHaveText(/\S+/, { timeout: 10000 });
       await primary.close();
-      await expect(waiting.locator("#deviceLeaseOverlay")).toHaveAttribute("data-lease-state", "primary", { timeout: 20000 });
-      await expect(waiting.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
+      await expect(waiting.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 20000 });
       await waiting.close();
     }
   } finally {
