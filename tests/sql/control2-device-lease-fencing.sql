@@ -14,7 +14,7 @@ CREATE TABLE public.control_runtime_sessions(id uuid PRIMARY KEY DEFAULT gen_ran
 CREATE TABLE public.control_device_link_tokens(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),session_id uuid NOT NULL REFERENCES public.control_runtime_sessions(id),game_id uuid NOT NULL REFERENCES public.games(id),device_type text NOT NULL,token uuid NOT NULL UNIQUE);
 CREATE TABLE public.control_device_shares(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),session_id uuid NOT NULL REFERENCES public.control_runtime_sessions(id),game_id uuid NOT NULL REFERENCES public.games(id),device_type text NOT NULL,token uuid NOT NULL UNIQUE,revoked_at timestamptz);
 CREATE FUNCTION public.control_device_key_valid(p_game_id uuid,p_device_type text,p_key text) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS(SELECT 1 FROM public.control_device_link_tokens WHERE game_id=p_game_id AND device_type=p_device_type AND token::text=p_key) $$;
-CREATE TABLE public.game_state(game_id uuid PRIMARY KEY,step text,detail jsonb,rev bigint,updated_at timestamptz);
+CREATE TABLE public.game_state(game_id uuid PRIMARY KEY,step text,detail jsonb,rev bigint,updated_at timestamptz,locked_until timestamptz);
 CREATE TABLE public.game_state_display_completion(game_id uuid PRIMARY KEY,rendered_rev bigint,requested_rev bigint);
 CREATE TABLE public.display_audio_unlock(game_id uuid PRIMARY KEY,session_nonce text,request_nonce text,acknowledged_nonce text,requested_at timestamptz,acknowledged_at timestamptz);
 CREATE TABLE public.game_sessions(id uuid PRIMARY KEY,game_id uuid,control_version integer,ended_at timestamptz);
@@ -33,6 +33,7 @@ CREATE FUNCTION public.control2_display_event(uuid,text,jsonb) RETURNS boolean L
 \ir ../../supabase/migrations/2026-10-15_371_control2_device_leases.sql
 \ir ../../supabase/migrations/2026-10-15_372_control2_device_lease_fencing.sql
 \ir ../../supabase/migrations/2026-10-15_373_legacy_buzzer_ready_compat.sql
+\ir ../../supabase/migrations/2026-10-15_374_restore_buzzer_guards.sql
 
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
@@ -47,6 +48,7 @@ INSERT INTO public.control_runtime_sessions(id,game_id,owner_id,device_protocol)
  ('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000001',1);
 INSERT INTO public.control_device_link_tokens(session_id,game_id,device_type,token) VALUES
  ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001'),
+ ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','buzzer','30000000-0000-0000-0000-000000000004'),
  ('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002'),
  ('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','buzzer','30000000-0000-0000-0000-000000000003');
 INSERT INTO public.game_state(game_id,step,detail,rev,updated_at) VALUES
@@ -55,10 +57,25 @@ INSERT INTO public.game_state(game_id,step,detail,rev,updated_at) VALUES
 SELECT set_config('test.user_id','00000000-0000-0000-0000-000000000001',false);
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001')->>'epoch')='1','first display receives epoch 1');
 SELECT pg_temp.assert_true(_control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1),'current primary epoch authorizes device RPC');
-SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1) IS NOT NULL,'fenced RPC can read state for current primary');
-SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002') IS NOT NULL,'legacy key-only RPC remains available for protocol 1');
-SELECT pg_temp.assert_true(NOT game_state_display_is_ready('10000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000003'),'legacy Buzzer can still call ready RPC without device_type');
+SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1) IS DISTINCT FROM NULL::public.game_state,'fenced RPC can read state for current primary');
+SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002') IS DISTINCT FROM NULL::public.game_state,'legacy key-only RPC remains available for protocol 1');
+>SELECT pg_temp.assert_true(NOT game_state_display_is_ready('10000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000003'),'legacy Buzzer can still call ready RPC without device_type');
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',2),'stale epoch is denied');
+SELECT control_device_instance_register('10000000-0000-0000-0000-000000000001','buzzer','30000000-0000-0000-0000-000000000004','40000000-0000-0000-0000-000000000004');
+UPDATE public.game_state SET step='r_duel',detail='{"settings":{"physicalBuzzer":true},"rounds":{"duel":{"lastPressed":null}}}' WHERE game_id='10000000-0000-0000-0000-000000000001';
+DO $$ BEGIN
+  PERFORM game_state_buzzer_press('10000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000004','A','40000000-0000-0000-0000-000000000004',1);
+  RAISE EXCEPTION 'expected device_disabled';
+EXCEPTION WHEN OTHERS THEN
+  IF SQLERRM <> 'device_disabled' THEN RAISE; END IF;
+END $$;
+UPDATE public.game_state SET detail='{"settings":{"physicalBuzzer":false},"rounds":{"duel":{"lastPressed":null}}}',locked_until=now()+interval '1 minute' WHERE game_id='10000000-0000-0000-0000-000000000001';
+DO $$ BEGIN
+  PERFORM game_state_buzzer_press('10000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000004','A','40000000-0000-0000-0000-000000000004',1);
+  RAISE EXCEPTION 'expected locked';
+EXCEPTION WHEN OTHERS THEN
+  IF SQLERRM <> 'locked' THEN RAISE; END IF;
+END $$;
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001',NULL,NULL),'key-only legacy call is denied for protocol 2');
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002')->>'state')='waiting','second display queues');
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002',NULL),'waiting display cannot access active RPCs');
