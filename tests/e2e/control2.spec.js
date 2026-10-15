@@ -1035,8 +1035,21 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGameRaw(page, `E2E-CONTROL2-LEASE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
+  page.on("pageerror", error => console.log("[lease e2e pageerror]", error.message));
+  page.on("console", message => {
+    if (message.type() === "error") console.log("[lease e2e console]", message.text());
+  });
   try {
+    await padGame(page, game.id);
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2000);
+    const routeState = await page.evaluate(() => ({
+      path: location.pathname,
+      title: document.title,
+      headings: [...document.querySelectorAll(".stepTitle")].map(el => el.textContent),
+      message: document.body.innerText.slice(0, 300),
+    }));
+    console.log("[lease e2e] control route state", JSON.stringify(routeState));
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     const keys = await page.evaluate(async (gameId) => {
       const sb = window.__sbClient;
