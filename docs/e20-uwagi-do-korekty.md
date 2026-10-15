@@ -75,7 +75,7 @@ Pracować po kolei. Po zakończeniu każdej uwagi zatrzymać się przed następn
 | 6 | Ankiety mobile: karty są zagnieżdżone/powielone, np. anonimowość w drugiej karcie. | Naprawione lokalnie: wewnętrzne sekcje Udostępniania nie rysują drugiej karty wewnątrz `.polls-card`; mobilne wypustki „Anonimowo” i „Odbiorcy” identyfikują aktywną sekcję, więc powtórzone nagłówki są ukryte. Ramki konkretnych elementów, np. sceny QR, pozostają. |
 | 7 | Zwykłe modale są przesunięte w lewo względem środka. | Naprawione lokalnie: `.modal` otrzymał wspólne poziome auto-marginesy, które centrują okna także wtedy, gdy skrypt pokazuje overlay jako flex lub block zamiast grid. Mobilne arkusze zachowują własne marginesy. |
 | 8 | Mail: pole e-mail ma pokazywać sugerowany tekst zamiast hinta nad polem. | Naprawione na stronie Mails: usunięto widoczną etykietę nad polem, dodano tłumaczony placeholder, a nazwę pola dla czytników ekranu zachowano przez `aria-label`. Panel admina pozostał bez zmian. |
-| 9 | Import pytań w edytorze gier ma stary styl. | Oczekuje. |
+| 9 | Import pytań w edytorze gier ma stary styl. | Naprawione lokalnie w zakresie wskazanym przez użytkownika: usunięto półprzezroczyste tło okna desktopowego, ustawiając kryjący kolor taki jak we wspólnych modalach. Mobilny arkusz zachowuje transparentne tło strony. |
 | 10 | Modal wyboru koloru w Game Settings ma niespójny styl. | Oczekuje. |
 | 11 | Control, modal Udostępnij: sekcja „Udostępnione w tej sesji” nie ma pustego kafla. | Oczekuje. |
 | 12 | Connect: separator jest za daleko od nagłówka i zbyt blisko karty. | Oczekuje. |

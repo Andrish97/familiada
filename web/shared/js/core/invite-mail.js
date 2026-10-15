@@ -1,7 +1,7 @@
 // Wspólny dokument i transport wiadomości zaproszeń (E19).
-import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-15T22011";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-15T22011";
-import { renderMailDocument } from "./mail-document.js?v=v2026-10-15T22011";
+import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-15T22043";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-15T22043";
+import { renderMailDocument } from "./mail-document.js?v=v2026-10-15T22043";
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 function mailLink(path, { withLang = false } = {}) {
   let u;
