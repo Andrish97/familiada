@@ -202,7 +202,52 @@ async function serveBranchLoginHtml(route) {
   await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", headers: { "cache-control": "no-store" }, body: html });
 }
 
-async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null) {
+function pageModalIds(page) {
+  return page.locator('.overlay[id], .colorModalOverlay[id], .dt-modal[id], .drawer-overlay[id], dialog[id], [role="dialog"][id]')
+    .evaluateAll((items) => items
+      .filter((el) => !["pageGuard", "resourceLockGuard"].includes(el.id))
+      .filter((el) => !/(alert|confirm|error|errModal)/i.test(el.id))
+      .map((el) => el.id));
+}
+
+async function showModalWithRepresentativeContent(page, modalId) {
+  await page.evaluate((id) => {
+    const modal = document.getElementById(id);
+    if (!modal) throw new Error(`Nie znaleziono modalu ${id}`);
+    modal.hidden = false;
+    modal.removeAttribute("aria-hidden");
+    modal.classList.remove("hidden", "is-hidden");
+    if (modal.matches("dialog") && !modal.open) modal.showModal();
+    else modal.style.display = "flex";
+    modal.style.visibility = "visible";
+    modal.style.opacity = "1";
+    modal.style.pointerEvents = "auto";
+    for (const input of modal.querySelectorAll("input:not([type=hidden]), textarea")) {
+      if (input.value) continue;
+      const hint = input.getAttribute("placeholder") || input.getAttribute("aria-label") || "";
+      input.value = /mail|email/i.test(`${input.name} ${input.id} ${hint}`)
+        ? "anna@example.com"
+        : /name|nazwa|title|tytuł/i.test(`${input.name} ${input.id} ${hint}`)
+          ? "Przykładowa nazwa"
+          : /url|link/i.test(`${input.name} ${input.id} ${hint}`)
+            ? "https://familiada.online/przyklad"
+            : "Treść przykładowa";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    for (const select of modal.querySelectorAll("select")) {
+      if (select.value) continue;
+      const option = [...select.options].find((item) => item.value && !item.disabled);
+      if (option) select.value = option.value;
+    }
+    for (const region of modal.querySelectorAll("[contenteditable=true]")) {
+      if (!region.textContent.trim()) region.textContent = "Przykładowa treść";
+    }
+  }, modalId);
+  await page.locator(`#${modalId}`).waitFor({ state: "visible", timeout: 2_000 });
+}
+
+async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null, options = {}) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
   const pageErrors = [];
   const onPageError = (error) => pageErrors.push(error.message);
@@ -411,15 +456,11 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       const bar = document.querySelector(".games-bottom");
       const naturalWidth = (group) => {
         if (!group) return 0;
-        const probe = group.cloneNode(true);
-        Object.assign(probe.style, { position: "fixed", left: "-100000px", top: "0", display: "flex", width: "max-content", minWidth: "max-content", maxWidth: "none", flex: "0 0 auto", flexWrap: "nowrap", visibility: "hidden", margin: "0" });
-        for (const child of probe.children) child.style.flex = "0 0 auto";
-        document.body.append(probe);
-        const widths = [...probe.children].map((child) => child.getBoundingClientRect().width);
-        const style = getComputedStyle(probe);
+        const widths = [...group.children].filter((child) => child.getClientRects().length)
+          .map((child) => child.getBoundingClientRect().width);
+        const style = getComputedStyle(group);
         const gap = Number.parseFloat(style.columnGap || style.gap) || 0;
         const width = widths.reduce((total, itemWidth) => total + itemWidth, 0) + Math.max(0, widths.length - 1) * gap;
-        probe.remove();
         return width;
       };
       const rowSizes = (group) => {
@@ -472,33 +513,37 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       console.log(`[e20-layout] ${profile.id} · ${id}: naturalne ${Math.round(left + right + groupGap)}px / dostępne ${available}px; ${state.listBottomLayout}; akcje pod nagłówkiem=${state.listHeaderActionsBelow}`);
     }
   }
+  const fileName = options.fileName || `${profile.id}.png`;
+  const modalIds = await pageModalIds(page).catch(() => []);
   fs.mkdirSync(path.join(OUT, id), { recursive: true });
   // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe
   // zrzuty na długich/animowanych widokach wisiały w Chromium po 45 s; wysokość
   // całej strony pozostaje w manifeście, a screenshot zachowuje viewport i safe area.
-  await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, `${profile.id}.png`));
+  await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, fileName));
   expect(page.context().pages(), `${profile.label} · ${id}: otwarto równoległą kartę`).toHaveLength(1);
   page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
   manifest.push({
     id,
+    ...(options.stateId ? { stateId: options.stateId } : {}),
     profile: profile.id,
     label: profile.label,
     safeAreaInsets: expectedSafe,
     url: href,
-    file: `${id}/${profile.id}.png`,
+    file: `${id}/${fileName}`,
     ...state,
   });
   // Checkpoint after every image so a failed profile still leaves useful work.
   fs.mkdirSync(MANIFEST_DIR, { recursive: true });
   fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
+  return { modalIds, blockedByGuard };
 }
 
 // Profile są rozdzielone między istniejące konta. Każde konto robi swoje
 // widoki i urządzenia po kolei, a niezależne konta mogą pracować równolegle.
 // To usuwa współbieżność blokad zasobów bez tworzenia osobnego konta galerii.
 test.describe.configure({ mode: "parallel" });
-test.setTimeout(requestedPages.length ? 3 * 60 * 1000 : requestedProfiles.length === 1 ? 5 * 60 * 1000 : 10 * 60 * 1000);
+test.setTimeout(requestedPages.length ? 5 * 60 * 1000 : requestedProfiles.length === 1 ? 15 * 60 * 1000 : 30 * 60 * 1000);
 test.use({ serviceWorkers: "block" });
 
 const selectedProfiles = PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id));
@@ -561,6 +606,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         let page = await context.newPage();
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);
+        let modalCaptureCount = 0;
         for (const [id, href] of selectedUrls) {
           if (["home", "login", "login-confirm", "login-reset"].includes(id)) continue;
           const readySelector = id === "games"
@@ -573,7 +619,19 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "games", "logo-draw", "logo-image", "logo-text", "polls"]);
           const removeLockIsolation = lockSensitive.has(id) ? await installVisualResourceLockIsolation(page) : null;
           try {
-            await capture(page, profile, id, href, manifest, null, readySelector);
+            const baseState = await capture(page, profile, id, href, manifest, null, readySelector);
+            if (!baseState.blockedByGuard) {
+              for (const modalId of baseState.modalIds) {
+                const safeModalName = modalId.replace(/[^a-zA-Z0-9_-]/g, "-");
+                await capture(
+                  page, profile, id, href, manifest,
+                  (modalPage) => showModalWithRepresentativeContent(modalPage, modalId),
+                  `#${modalId}`,
+                  { fileName: `modal-${safeModalName}-${profile.id}.png`, stateId: `modal:${modalId}` },
+                );
+                modalCaptureCount += 1;
+              }
+            }
           } finally {
             await removeLockIsolation?.();
           }
@@ -597,7 +655,8 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             await removeLockIsolation?.();
           }
         }
-        expect(manifest).toHaveLength(selectedUrls.length + extra.length);
+        expect(manifest.filter((entry) => !entry.stateId)).toHaveLength(selectedUrls.length + extra.length);
+        expect(manifest.filter((entry) => entry.stateId)).toHaveLength(modalCaptureCount);
         const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1 || entry.loading);
         expect(layoutIssues, `Problemy szerokości lub niedokończone ładowanie: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth, loading }) => ({ id, url, scrollWidth, viewportWidth, loading })))}`).toEqual([]);
       } finally {

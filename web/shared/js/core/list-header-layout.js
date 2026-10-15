@@ -90,13 +90,16 @@ function initListBottomToolbarLayout() {
       display: "block", flex: "none",
     });
     bar.append(measureBox);
-    const measureGroup = (group) => {
+    const measureGroup = (group, mode = "text") => {
       if (!group) return { width: 0, items: [] };
       const clone = group.cloneNode(true);
       Object.assign(clone.style, {
         display: "flex", width: "max-content", minWidth: "max-content", maxWidth: "none",
         flex: "0 0 auto", flexWrap: "nowrap", margin: "0", position: "static",
       });
+      for (const label of clone.querySelectorAll(".only-desktop")) {
+        label.style.setProperty("display", mode === "icons" ? "none" : "inline", "important");
+      }
       for (const child of clone.children) child.style.flex = "0 0 auto";
       measureBox.replaceChildren(clone);
       const items = [...clone.children].map((item) => item.getBoundingClientRect().width);
@@ -120,75 +123,99 @@ function initListBottomToolbarLayout() {
         bar.classList.remove("is-compact-icons");
       }
       lastAvailableWidth = available;
-      const leftMeasure = measureGroup(left);
-      const rightMeasure = measureGroup(right);
+      const textLeft = measureGroup(left, "text");
+      const textRight = measureGroup(right, "text");
+      const iconLeft = measureGroup(left, "icons");
+      const iconRight = measureGroup(right, "icons");
       const barStyle = getComputedStyle(bar);
       const groupGap = parseFloat(barStyle.columnGap) || parseFloat(barStyle.gap) || 0;
-      const needed = leftMeasure.width + rightMeasure.width + groupGap;
-      if (needed <= available + 1) {
-        const layout = "single";
-        if (layout === lastLayout) return;
-        lastLayout = layout;
-        bar.classList.remove("is-balanced-wrap");
-        bar.classList.add("is-single-row");
-        left.style.removeProperty("width");
-        right.style.removeProperty("width");
-        left.style.removeProperty("--toolbar-columns");
-        right.style.removeProperty("--toolbar-columns");
-        return;
-      }
-
       const room = Math.max(0, available - groupGap);
       const leftGap = parseFloat(getComputedStyle(left).columnGap) || parseFloat(getComputedStyle(left).gap) || 0;
       const rightGap = parseFloat(getComputedStyle(right).columnGap) || parseFloat(getComputedStyle(right).gap) || 0;
-      const groupRows = (items, perRow, gap) => {
-        let width = 0;
-        for (let start = 0; start < items.length; start += perRow) {
-          const rowWidth = items.slice(start, start + perRow).reduce((total, itemWidth) => total + itemWidth, 0)
-            + Math.max(0, Math.min(perRow, items.length - start) - 1) * gap;
-          width = Math.max(width, rowWidth);
+      const packRows = (items, width, gap) => {
+        const rows = [];
+        let rowWidth = 0;
+        for (const itemWidth of items) {
+          const nextWidth = rowWidth ? rowWidth + gap + itemWidth : itemWidth;
+          if (rowWidth && nextWidth > width + 1) {
+            rows.push(rowWidth);
+            rowWidth = itemWidth;
+          } else rowWidth = nextWidth;
         }
-        return width;
+        if (rowWidth || !items.length) rows.push(rowWidth);
+        return rows;
       };
-      const chooseLayout = (leftItems, rightItems) => {
+      const candidateWidths = (items, gap) => {
+        if (!items.length) return [0];
+        const widths = new Set();
+        for (let end = 1; end <= items.length; end++) {
+          widths.add(items.slice(0, end).reduce((total, width) => total + width, 0) + (end - 1) * gap);
+        }
+        return [...widths].sort((a, b) => a - b);
+      };
+      const compareScore = (a, b) => {
+        for (let index = 0; index < a.length; index++) {
+          if (Math.abs(a[index] - b[index]) > 0.01) return a[index] < b[index] ? -1 : 1;
+        }
+        return 0;
+      };
+      const chooseLayout = (leftMeasure, rightMeasure) => {
         let best = null;
-        for (let leftPerRow = 1; leftPerRow <= Math.max(1, leftItems.length); leftPerRow++) {
-          for (let rightPerRow = 1; rightPerRow <= Math.max(1, rightItems.length); rightPerRow++) {
-            const leftWidth = groupRows(leftItems, leftPerRow, leftGap);
-            const rightWidth = groupRows(rightItems, rightPerRow, rightGap);
-            if (leftWidth + rightWidth + groupGap > room + 1) continue;
-            const leftRows = Math.ceil(leftItems.length / leftPerRow) || 1;
-            const rightRows = Math.ceil(rightItems.length / rightPerRow) || 1;
-            const score = [Math.max(leftRows, rightRows), leftRows + rightRows, Math.abs(leftRows - rightRows), -(leftPerRow + rightPerRow)];
-            if (!best || score.some((value, index) => value < best.score[index]
-              && score.slice(0, index).every((earlier, prior) => earlier === best.score[prior]))) {
-              best = { leftPerRow, rightPerRow, leftWidth, rightWidth, score };
+        for (const leftWidth of candidateWidths(leftMeasure.items, leftGap)) {
+          for (const rightWidth of candidateWidths(rightMeasure.items, rightGap)) {
+            if (leftWidth + rightWidth + groupGap > available + 1) continue;
+            const leftRows = packRows(leftMeasure.items, leftWidth, leftGap);
+            const rightRows = packRows(rightMeasure.items, rightWidth, rightGap);
+            const rowCount = Math.max(leftRows.length, rightRows.length);
+            let sideBalance = 0;
+            let rowVariation = 0;
+            for (let row = 0; row < rowCount; row++) {
+              const leftRow = leftRows[row] || 0;
+              const rightRow = rightRows[row] || 0;
+              sideBalance += Math.abs(leftRow - rightRow);
+              if (row) {
+                rowVariation += Math.abs(leftRow - (leftRows[row - 1] || 0));
+                rowVariation += Math.abs(rightRow - (rightRows[row - 1] || 0));
+              }
+            }
+            // Najpierw jak najmniej rzędów; potem wyrównujemy szerokość
+            // lewego i prawego bloku w każdym rzędzie, a na końcu szerokość
+            // samych rzędów i obu elastycznych "kolumn".
+            const firstRowFill = (leftRows[0] || 0) + (rightRows[0] || 0);
+            const score = [rowCount, sideBalance, -firstRowFill, rowVariation, Math.abs(leftWidth - rightWidth)];
+            if (!best || compareScore(score, best.score) < 0) {
+              best = { leftWidth, rightWidth, leftRows, rightRows, score };
             }
           }
         }
         return best;
       };
-      let chosen = chooseLayout(leftMeasure.items, rightMeasure.items);
-      // Na tabletach tekstowe etykiety nie mają tworzyć trzeciego rzędu.
-      // Gdy nie da się ułożyć przycisków tekstowych w maksymalnie dwóch,
-      // wybieramy wariant ikonowy i ponownie liczymy jego rzeczywistą szerokość.
       const hasVisibleTextLabels = [...bar.querySelectorAll(".games-bottom-right .only-desktop")]
         .some((label) => label.getClientRects().length);
-      if (chosen?.score[0] > 2 && hasVisibleTextLabels && !bar.classList.contains("is-compact-icons")) {
-        bar.classList.add("is-compact-icons");
-        queued = true;
-        requestAnimationFrame(() => { queued = false; schedule(); });
+      const textLayout = chooseLayout(textLeft, textRight);
+      const iconLayout = chooseLayout(iconLeft, iconRight);
+      const useIcons = hasVisibleTextLabels && textLayout && iconLayout
+        && textLayout.score[0] - iconLayout.score[0] >= 2;
+      bar.classList.toggle("is-compact-icons", Boolean(useIcons));
+      const leftMeasure = useIcons ? iconLeft : textLeft;
+      const rightMeasure = useIcons ? iconRight : textRight;
+      const chosen = useIcons ? iconLayout : textLayout;
+      const needed = leftMeasure.width + rightMeasure.width + groupGap;
+      if (needed <= available + 1) {
+        const layoutKey = `single:${useIcons}`;
+        if (layoutKey === lastLayout) return;
+        lastLayout = layoutKey;
+        bar.classList.remove("is-balanced-wrap");
+        bar.classList.add("is-single-row");
+        left.style.removeProperty("width");
+        right.style.removeProperty("width");
         return;
       }
-      const layout = `${available}:${leftMeasure.items.length}:${rightMeasure.items.length}`;
+      const layout = `${available}:${leftMeasure.items.length}:${rightMeasure.items.length}:${useIcons}`;
       bar.classList.remove("is-single-row");
       bar.classList.add("is-balanced-wrap");
-      // Gdy mimo tego żaden układ się nie mieści, po równo ogranicz liczbę
-      // kolumn. To pozostawia kontrolki w możliwie najmniejszej liczbie rzędów.
-      chosen ||= { leftPerRow: 1, rightPerRow: 1, leftWidth: room / 2, rightWidth: room / 2 };
-      const leftPerRow = chosen.leftPerRow;
-      const rightPerRow = chosen.rightPerRow;
-      const layoutKey = `${layout}:${leftPerRow}:${rightPerRow}:${chosen.leftWidth}:${chosen.rightWidth}:${bar.classList.contains("is-compact-icons")}`;
+      chosen ||= { leftWidth: Math.min(room / 2, available), rightWidth: Math.min(room / 2, available) };
+      const layoutKey = `${layout}:${chosen.leftWidth}:${chosen.rightWidth}`;
       if (layoutKey === lastLayout) return;
       lastLayout = layoutKey;
       left.style.width = `${chosen.leftWidth}px`;
