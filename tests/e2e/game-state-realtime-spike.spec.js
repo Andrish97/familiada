@@ -254,6 +254,10 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       });
       if (readError) throw readError;
       await sb.realtime.setAuth(data.token);
+      const { data: completionBefore, error: completionReadError } = await sb
+        .from("game_state_display_completion").select("rendered_rev,requested_rev").eq("game_id", gid).single();
+      if (completionReadError) throw completionReadError;
+      if (!completionBefore) throw new Error("scoped primary cannot read its Display completion row");
       const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
       const channel = sb.channel(channelName).on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
@@ -287,7 +291,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       // Give Realtime's postgres_changes listener a short settle interval
       // after the channel join acknowledgement before the first write.
       await new Promise(resolve => setTimeout(resolve, 500));
-      return { channelName, completionChannelName, beforeRev: before?.rev };
+      return { channelName, completionChannelName, beforeRev: before?.rev, completionBefore };
     }, { gid: game.id, key: keyResult, lease });
     channelName = direct.channelName;
     completionChannelName = direct.completionChannelName;
@@ -316,6 +320,12 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
         p_connection_id: lease.connection_id, p_epoch: lease.epoch,
       });
       if (completionError) throw completionError;
+      const { data: completionRow, error: completionReadError } = await sb
+        .from("game_state_display_completion").select("rendered_rev").eq("game_id", gid).single();
+      if (completionReadError) throw completionReadError;
+      if (Number(completionRow?.rendered_rev) !== Number(data.rev)) {
+        throw new Error(`completion row did not persist rendered_rev=${data.rev}: ${JSON.stringify(completionRow)}`);
+      }
       return data.rev;
     }, { gid: game.id, key: keyResult, lease });
     await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionRev || null), { timeout: 15000 })
