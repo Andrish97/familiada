@@ -935,6 +935,13 @@ body.games-body > main.wrap{
   display:grid;
   place-items:center;
 }
+.games-bottom.is-compact-icons .list-filter,
+.games-bottom.is-compact-icons .list-sort{
+  width:36px;
+  min-width:36px;
+  max-width:36px;
+  flex:0 0 36px;
+}
 .games-bottom.is-compact-icons .games-bottom-left .list-search{
   width:36px;
   min-width:36px;
