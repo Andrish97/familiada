@@ -5396,7 +5396,7 @@ function buildSessionRunDetails(r) {
         const states = { waiting:"oczekuje na zwolnienie blokady", primary:"zostało aktywowane jako główne", released:"zwolniło blokadę", expired:"utraciło blokadę po wygaśnięciu lease", revoked:"jego połączenie zostało cofnięte" };
         const from = metrics.from_state ? `${metrics.from_state} → ` : "";
         const epoch = Number.isFinite(Number(metrics.epoch)) ? ` · epoka ${metrics.epoch}` : "";
-        return { title: `Blokada: ${devices}`, detail: `${from}${states[metrics.to_state] || "zmieniło stan połączenia"}${epoch}` };
+        return { title: "Stan blokady urządzenia", detail: ` ${devices} · ${from}${states[metrics.to_state] || "zmieniło stan połączenia"}${epoch}` };
       }
       if (event.category === "audio_start") {
         const sound = String(metrics.sound || "dźwięk");

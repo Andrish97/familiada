@@ -773,8 +773,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.diagnostic.rows[0]).toContain("karta była w tle");
   expect(result.diagnostic.rows[0]).toContain("próby akcji podczas blokady: 1");
   expect(result.leaseDiagnostic.sections).toBe(1);
-  expect(result.leaseDiagnostic.rows[0]).toContain("Blokada: Przycisk");
-  expect(result.leaseDiagnostic.rows[0]).toContain("oczekuje → zostało aktywowane jako główne");
+  expect(result.leaseDiagnostic.rows[0]).toContain("Stan blokady urządzenia Przycisk · waiting → zostało aktywowane jako główne");
   expect(result.leaseDiagnostic.rows[0]).toContain("epoka 4");
   expect(result.audioDiagnostic.rows[0]).toContain("Dźwięk: revealControl");
   expect(result.audioDiagnostic.rows[0]).toContain("wystartował po 0,9 s");
