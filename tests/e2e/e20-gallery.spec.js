@@ -436,21 +436,28 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     // kontekście wizualnym odsłaniamy jego istniejący DOM i chowamy ekran Access.
     await page.locator("#panelScreen").waitFor({ state: "attached" });
     await page.evaluate(() => {
-      const showPanel = () => {
-        const panel = document.getElementById("panelScreen");
-        const auth = document.getElementById("authScreen");
-        if (panel?.hidden) panel.hidden = false;
-        if (auth && !auth.hidden) auth.hidden = true;
-        document.body.classList.remove("settings-locked", "no-footer-line");
-      };
-      showPanel();
-      if (!window.__e20SettingsPanelObserver) {
-        window.__e20SettingsPanelObserver = new MutationObserver(showPanel);
-        window.__e20SettingsPanelObserver.observe(document.documentElement, {
-          subtree: true, attributes: true, attributeFilter: ["hidden", "class"],
+      const nativeHidden = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "hidden");
+      for (const [id, alwaysHidden] of [["panelScreen", false], ["authScreen", true]]) {
+        const element = document.getElementById(id);
+        if (!element || element.__e20HiddenOverride) continue;
+        element.removeAttribute("hidden");
+        Object.defineProperty(element, "hidden", {
+          configurable: true,
+          get: () => alwaysHidden,
+          set: (value) => {
+            if (Boolean(value) !== alwaysHidden) return;
+            nativeHidden.set.call(element, value);
+          },
         });
+        element.__e20HiddenOverride = true;
       }
+      document.body.classList.remove("settings-locked", "no-footer-line");
     });
+    await page.addStyleTag({ content: `
+      body.settings-locked header, body.settings-locked main { display: block !important; }
+      #panelScreen { display: block !important; }
+      #authScreen { display: none !important; }
+    ` });
     await expect(page.locator("#panelScreen")).toBeVisible({ timeout: 5_000 });
     await expect(page.locator("#authScreen")).toBeHidden({ timeout: 5_000 });
   }
