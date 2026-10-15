@@ -566,7 +566,10 @@ window.addEventListener("DOMContentLoaded", async () => {
       const revision = completedRenderRev;
       try {
         const { error } = await sb().rpc("game_state_display_complete", { p_game_id: gameId, p_key: key, p_rev: revision, ...lease.actionArgs() }).abortSignal(AbortSignal.timeout(6500));
-        if (!error) reportedRenderRev = revision;
+        if (!error) {
+          reportedRenderRev = revision;
+          lease.setProgress({ renderedRev: revision });
+        }
         else if (loggedCompletionErrorRev !== revision) {
           loggedCompletionErrorRev = revision;
           displayEventLog.report({ event_type: "runtime_error", phase: "completion_ack", error_name: error.code || error.name || "RPCError", state_rev: revision });
@@ -600,6 +603,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         },
       },
       onRow: async (row) => {
+        lease.setProgress({ receivedRev: Number(row.rev) || 0 });
         const gameIsActive = !!row.detail?.locks?.gameStarted && !row.detail?.locks?.gameEnded;
         if (gameIsActive && !displayWasStarted) {
           displayWasStarted = true;
@@ -645,6 +649,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (displayOwnsSound) await cueTimingReady;
         else void cueTimingReady;
         soundReactor.onRow(row);
+        lease.setProgress({ startedSoundCueSeq: Number(row.sound_cue_seq) || 0 });
         syncAudioUnlockScreen(row);
 
         // Widoczność kontenerów zależy wyłącznie od trybu — samo malowanie

@@ -42,6 +42,7 @@ CREATE FUNCTION public.control2_display_event(uuid,text,jsonb) RETURNS boolean L
 ALTER TABLE public.game_state_display_completion ENABLE ROW LEVEL SECURITY;
 \ir ../../supabase/migrations/2026-10-15_376_control2_display_completion_realtime.sql
 \ir ../../supabase/migrations/2026-10-15_377_control2_display_ack_in_game_state.sql
+\ir ../../supabase/migrations/2026-10-15_378_control2_device_progress_telemetry.sql
 
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
@@ -67,6 +68,10 @@ INSERT INTO public.game_state_display_completion(game_id,rendered_rev,requested_
  ('10000000-0000-0000-0000-000000000002',1,2);
 SELECT set_config('test.user_id','00000000-0000-0000-0000-000000000001',false);
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001')->>'epoch')='1','first display receives epoch 1');
+SELECT control_device_instance_heartbeat('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1,'{"received_rev":12,"rendered_rev":11,"started_sound_cue_seq":4}'::jsonb);
+SELECT pg_temp.assert_true((SELECT received_rev=12 AND rendered_rev=11 AND started_sound_cue_seq=4 FROM public.control_device_connections WHERE id='40000000-0000-0000-0000-000000000001'),'fenced heartbeat records per-instance render progress');
+SELECT control_device_instance_heartbeat('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1,'{"received_rev":2,"rendered_rev":3,"started_sound_cue_seq":1}'::jsonb);
+SELECT pg_temp.assert_true((SELECT received_rev=12 AND rendered_rev=11 AND started_sound_cue_seq=4 FROM public.control_device_connections WHERE id='40000000-0000-0000-0000-000000000001'),'reported progress is monotonic across delayed heartbeat payloads');
 SELECT pg_temp.assert_true(control_device_realtime_authorize('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1)->>'session_id'='20000000-0000-0000-0000-000000000001','realtime authorization returns scope only for current primary');
 SELECT pg_temp.assert_true(control_device_realtime_claim_valid('10000000-0000-0000-0000-000000000001',jsonb_build_object('role','anon','game_id','10000000-0000-0000-0000-000000000001','device_type','display','session_id','20000000-0000-0000-0000-000000000001','connection_id','40000000-0000-0000-0000-000000000001','epoch',1,'exp',extract(epoch FROM now())::bigint+300)),'current primary claims pass RLS validation');
 SELECT pg_temp.assert_true(_control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1),'current primary epoch authorizes device RPC');
