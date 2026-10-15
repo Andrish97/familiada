@@ -291,7 +291,7 @@ jobs:
           IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
         run: |
           if [ "$IS_E20_GALLERY" = "1" ]; then
-            npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS"
+            npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS" --retries=0
           else
             npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
           fi

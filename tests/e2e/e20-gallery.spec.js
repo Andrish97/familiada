@@ -459,7 +459,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
 // widoki i urządzenia po kolei, a niezależne konta mogą pracować równolegle.
 // To usuwa współbieżność blokad zasobów bez tworzenia osobnego konta galerii.
 test.describe.configure({ mode: "parallel" });
-test.setTimeout(25 * 60 * 1000);
+test.setTimeout(10 * 60 * 1000);
 test.use({ serviceWorkers: "block" });
 
 const selectedProfiles = PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id));
@@ -488,7 +488,9 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
       // Home/Login są publiczne: fotografujemy je w jednej tymczasowej
       // niezalogowanej sesji, zamykamy ją, a dopiero potem otwieramy sesję
       // konta. Nie uruchamiamy testów guarda gościa ani dwóch stron naraz.
-      const publicUrls = selectedUrls.filter(([id]) => id === "home" || id === "login");
+      // Te strony mogą wylogować aktywną sesję. To publiczne przepływy
+      // logowania, więc fotografujemy je przed prywatnymi stronami.
+      const publicUrls = selectedUrls.filter(([id]) => ["home", "login", "login-confirm", "login-reset"].includes(id));
       if (publicUrls.length) {
         const publicContext = await browser.newContext(deviceOptions);
         try {
@@ -521,7 +523,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);
         for (const [id, href] of selectedUrls) {
-          if (id === "home" || id === "login") continue;
+          if (["home", "login", "login-confirm", "login-reset"].includes(id)) continue;
           const readySelector = id === "games"
             ? `.card[data-game-id="${fixtures.game.id}"]`
             : id === "bases"
