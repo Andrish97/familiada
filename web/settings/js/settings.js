@@ -5313,6 +5313,11 @@ function buildSessionRunDetails(r) {
     control_idle_expired: "Gra została przerwana po godzinie bezczynności panelu sterowania.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
+  if (r.display_event_log?.status === "no_events_recorded") {
+    line("Brak zapisanych zdarzeń stanu Wyświetlacza dla tej sesji.");
+  } else if (r.display_event_log?.status === "session_id_missing") {
+    line("Nie można powiązać logu Wyświetlacza z tą sesją.");
+  }
   if (info.end_reason === "control_idle_expired") {
     const lastStep = String(info.last_step || "");
     const stepNames = {

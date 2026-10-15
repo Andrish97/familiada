@@ -96,17 +96,33 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
 function createDisplayEventLog(gameId, key) {
   let lastPageState = "";
   let stopped = false;
+  let sessionActive = false;
   let pending = Promise.resolve();
   const report = (event) => {
-    if (stopped) return;
+    if (stopped || !sessionActive) return;
+    const eventId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const payload = { ...event, event_id: eventId };
     pending = pending.catch(() => {}).then(async () => {
-      const { error } = await sb().rpc("control2_display_event", {
-        p_game_id: gameId, p_key: key, p_event: event,
-      }).abortSignal(AbortSignal.timeout(6500));
-      if (error) throw error;
-    }).catch(() => { /* Diagnostics never interrupt rendering or gameplay. */ });
+      let lastError = null;
+      for (const delayMs of [0, 500, 1500, 3500]) {
+        if (stopped && delayMs > 0) return;
+        if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
+        try {
+          const { data, error } = await sb().rpc("control2_display_event", {
+            p_game_id: gameId, p_key: key, p_event: payload,
+          }).abortSignal(AbortSignal.timeout(4000));
+          if (error) throw error;
+          if (data === true) return;
+          lastError = new Error("Zdarzenie nie zostało przypisane do aktywnej rozgrywki.");
+        } catch (error) { lastError = error; }
+      }
+      console.warn("[display2 diagnostics] nie udało się zapisać zdarzenia:", payload.event_type, lastError?.message || lastError);
+    }).catch(error => {
+      console.warn("[display2 diagnostics] kolejka zapisu przerwana:", error?.message || error);
+    });
   };
   const reportPageState = (reason) => {
+    if (!sessionActive) return;
     const state = {
       visibility: document.visibilityState || "unknown",
       focused: !!document.hasFocus?.(),
@@ -123,7 +139,6 @@ function createDisplayEventLog(gameId, key) {
   const onFocus = () => reportPageState("focus");
   const onBlur = () => reportPageState("blur");
   const onNetwork = () => report({ event_type: "network_state", online: navigator.onLine !== false });
-  reportPageState("initial");
   document.addEventListener("visibilitychange", onVisibility);
   window.addEventListener("focus", onFocus);
   window.addEventListener("blur", onBlur);
@@ -131,6 +146,10 @@ function createDisplayEventLog(gameId, key) {
   window.addEventListener("offline", onNetwork);
   return {
     report,
+    setSessionActive(active) {
+      sessionActive = !!active;
+      if (sessionActive) reportPageState("initial");
+    },
     stop() {
       stopped = true;
       document.removeEventListener("visibilitychange", onVisibility);
@@ -552,15 +571,14 @@ window.addEventListener("DOMContentLoaded", async () => {
         },
       },
       onRow: async (row) => {
-        if (row.detail?.locks?.gameStarted && !displayWasStarted) {
+        const gameIsActive = !!row.detail?.locks?.gameStarted && !row.detail?.locks?.gameEnded;
+        if (gameIsActive && !displayWasStarted) {
           displayWasStarted = true;
-          displayEventLog.report({
-            event_type: "page_state", reason: "initial",
-            visibility: document.visibilityState || "unknown",
-            focused: !!document.hasFocus?.(),
-            was_discarded: !!document.wasDiscarded,
-          });
-        } else if (!row.detail?.locks?.gameStarted) displayWasStarted = false;
+          displayEventLog.setSessionActive(true);
+        } else if (!gameIsActive) {
+          displayWasStarted = false;
+          displayEventLog.setSessionActive(false);
+        }
         setSfxMuted(row.detail?.settings?.soundMuted);
         // Język idzie za operatorem w Control (control/js/app.js's
         // LANG-push, dawniej osobna komenda `LANG <code>` — dziś zwykłe
