@@ -554,6 +554,23 @@ async function main() {
   window.addEventListener("online", onControlReconnect);
   let completionUIReady = false;
   let completionReadPending = false;
+  let completionRealtimeConnected = false;
+  function applyDisplayCompletion(revision) {
+    const renderedRev = Number(revision);
+    if (!Number.isFinite(renderedRev) || !displayCompletion.acknowledge(renderedRev)) return;
+    const completedAt = performance.now();
+    for (const [requestedRev, item] of displayCompletionTimes) {
+      if (requestedRev <= renderedRev && item.completedAt == null) {
+        item.completedAt = completedAt;
+        if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
+        evaluateDisplayCompletion(requestedRev, item);
+      }
+    }
+    for (const requestedRev of displayCompletionTimes.keys()) {
+      if (requestedRev <= renderedRev) displayCompletionTimes.delete(requestedRev);
+    }
+    renderCurrent();
+  }
   async function refreshDisplayCompletion() {
     if (!completionUIReady || completionReadPending || !waitingForDisplay()) return;
     completionReadPending = true;
@@ -563,25 +580,22 @@ async function main() {
         for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
         return;
       }
-      if (data && displayCompletion.acknowledge(data.rendered_rev)) {
-        const completedAt = performance.now();
-        for (const [revision, item] of displayCompletionTimes) {
-          if (revision <= data.rendered_rev && item.completedAt == null) {
-            item.completedAt = completedAt;
-            if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
-            evaluateDisplayCompletion(revision, item);
-          }
-        }
-        for (const revision of displayCompletionTimes.keys()) {
-          if (revision <= data.rendered_rev) displayCompletionTimes.delete(revision);
-        }
-        renderCurrent();
-      }
+      if (data) applyDisplayCompletion(data.rendered_rev);
     } catch (error) {
       for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
     } finally { completionReadPending = false; }
   }
-  setInterval(() => { void refreshDisplayCompletion(); }, 500);
+  const completionChannel = sb().channel(`display-completion:${gameId}`);
+  completionChannel.on("postgres_changes", {
+    event: "UPDATE", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
+  }, (payload) => applyDisplayCompletion(payload?.new?.rendered_rev));
+  completionChannel.subscribe((status) => {
+    completionRealtimeConnected = status === "SUBSCRIBED";
+    if (completionRealtimeConnected) void refreshDisplayCompletion();
+  });
+  setInterval(() => {
+    if (!completionRealtimeConnected) void refreshDisplayCompletion();
+  }, 500);
   function soundBusy() { return isAnySfxPlaying(); }
   let lastSoundBusy = false;
   setInterval(() => {
@@ -1603,6 +1617,7 @@ async function main() {
 
   store.subscribe(renderCurrent);
   completionUIReady = true;
+  void refreshDisplayCompletion();
   renderCurrent();
   if (lockedUntil > Date.now()) {
     setTimeout(renderCurrent, lockedUntil - Date.now() + 20);

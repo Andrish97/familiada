@@ -19,6 +19,7 @@ CREATE TABLE public.control_device_shares(id uuid PRIMARY KEY DEFAULT gen_random
 CREATE FUNCTION public.control_device_key_valid(p_game_id uuid,p_device_type text,p_key text) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS(SELECT 1 FROM public.control_device_link_tokens WHERE game_id=p_game_id AND device_type=p_device_type AND token::text=p_key) $$;
 CREATE TABLE public.game_state(game_id uuid PRIMARY KEY,step text,detail jsonb,rev bigint,updated_at timestamptz,locked_until timestamptz);
 CREATE TABLE public.game_state_display_completion(game_id uuid PRIMARY KEY,rendered_rev bigint,requested_rev bigint);
+CREATE PUBLICATION supabase_realtime FOR TABLE public.game_state;
 CREATE TABLE public.display_audio_unlock(game_id uuid PRIMARY KEY,session_nonce text,request_nonce text,acknowledged_nonce text,requested_at timestamptz,acknowledged_at timestamptz);
 CREATE TABLE public.game_sessions(id uuid PRIMARY KEY,game_id uuid,control_version integer,ended_at timestamptz);
 CREATE TABLE public.game_session_active(game_id uuid,session_id uuid);
@@ -38,6 +39,8 @@ CREATE FUNCTION public.control2_display_event(uuid,text,jsonb) RETURNS boolean L
 \ir ../../supabase/migrations/2026-10-15_373_legacy_buzzer_ready_compat.sql
 \ir ../../supabase/migrations/2026-10-15_374_restore_buzzer_guards.sql
 \ir ../../supabase/migrations/2026-10-15_375_control2_realtime_device_auth.sql
+ALTER TABLE public.game_state_display_completion ENABLE ROW LEVEL SECURITY;
+\ir ../../supabase/migrations/2026-10-15_376_control2_display_completion_realtime.sql
 
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
@@ -58,6 +61,9 @@ INSERT INTO public.control_device_link_tokens(session_id,game_id,device_type,tok
 INSERT INTO public.game_state(game_id,step,detail,rev,updated_at) VALUES
  ('10000000-0000-0000-0000-000000000001','setup', '{}'::jsonb,1,now()),
  ('10000000-0000-0000-0000-000000000002','setup', '{}'::jsonb,1,now());
+INSERT INTO public.game_state_display_completion(game_id,rendered_rev,requested_rev) VALUES
+ ('10000000-0000-0000-0000-000000000001',1,1),
+ ('10000000-0000-0000-0000-000000000002',1,1);
 SELECT set_config('test.user_id','00000000-0000-0000-0000-000000000001',false);
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001')->>'epoch')='1','first display receives epoch 1');
 SELECT pg_temp.assert_true(control_device_realtime_authorize('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1)->>'session_id'='20000000-0000-0000-0000-000000000001','realtime authorization returns scope only for current primary');
@@ -94,7 +100,10 @@ SELECT set_config('request.jwt.claims',jsonb_build_object('role','anon','game_id
 SET ROLE anon;
 SELECT pg_temp.assert_true((SELECT count(*)=1 FROM public.game_state WHERE game_id='10000000-0000-0000-0000-000000000001'),'scoped token sees only authorized game state row');
 SELECT pg_temp.assert_true((SELECT count(*)=0 FROM public.game_state WHERE game_id='10000000-0000-0000-0000-000000000002'),'scoped token cannot read a different game');
+SELECT pg_temp.assert_true((SELECT count(*)=1 FROM public.game_state_display_completion WHERE game_id='10000000-0000-0000-0000-000000000001'),'scoped primary token can read its game completion row');
+SELECT pg_temp.assert_true((SELECT count(*)=0 FROM public.game_state_display_completion WHERE game_id='10000000-0000-0000-0000-000000000002'),'scoped primary token cannot read another game completion');
 SELECT set_config('request.jwt.claims','{}',false);
 SELECT pg_temp.assert_true((SELECT count(*)=0 FROM public.game_state WHERE game_id='10000000-0000-0000-0000-000000000001'),'ordinary anon token sees no game state row');
+SELECT pg_temp.assert_true((SELECT count(*)=0 FROM public.game_state_display_completion WHERE game_id='10000000-0000-0000-0000-000000000001'),'ordinary anon token sees no display completion row');
 RESET ROLE;
 \echo 'Control2 device lease fencing SQL checks passed'
