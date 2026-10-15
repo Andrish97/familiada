@@ -5318,6 +5318,7 @@ pl.mailCenter = {
   "loading": "Ładuję…",
   "centerTitle": "Moje powiadomienia",
   "emailLabel": "Twój adres e-mail",
+  "emailPlaceholder": "Wpisz swój adres e-mail",
   "sendLink": "Wyślij link",
   "subscriptions": "Subskrypcje",
   "items": "Zadania i udostępnienia",

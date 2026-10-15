@@ -5408,6 +5408,7 @@ en.mailCenter = {
   "loading": "Loading…",
   "centerTitle": "My notifications",
   "emailLabel": "Your email address",
+  "emailPlaceholder": "Enter your email address",
   "sendLink": "Send link",
   "subscriptions": "Subscriptions",
   "items": "Tasks and shared devices",

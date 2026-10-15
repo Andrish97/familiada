@@ -5407,6 +5407,7 @@ uk.mailCenter = {
   "loading": "Завантаження…",
   "centerTitle": "Мої сповіщення",
   "emailLabel": "Ваша електронна адреса",
+  "emailPlaceholder": "Введіть свою електронну адресу",
   "sendLink": "Надіслати посилання",
   "subscriptions": "Підписки",
   "items": "Завдання та пристрої",

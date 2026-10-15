@@ -3,24 +3,24 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T22004";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-15T22004";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-15T22004";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-15T22004";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-15T22004";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T22011";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-15T22011";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-15T22011";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-15T22011";
+import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-15T22011";
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-15T22004";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-15T22004";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-15T22004";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-15T22004";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-15T22004";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-15T22004";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-15T22004";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-15T22004";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-15T22004";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-15T22011";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-15T22011";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-15T22011";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-15T22011";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-15T22011";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-15T22011";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-15T22011";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-15T22011";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-15T22011";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
