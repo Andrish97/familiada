@@ -200,7 +200,7 @@ body.games-body > main.wrap{
 }
 
 /* Licznik nie może po pojawieniu się zmieniać szerokości wypustki. */
-#tabs-root .tab-slot[data-copy-kind] :is(.tab-label,.tab-active){ padding-right:32px; }
+#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) :is(.tab-label,.tab-active){ padding-right:32px; }
 
 #tabs-root .tab-slot,
 .tab-slot{
@@ -930,6 +930,7 @@ body.games-body > main.wrap{
 }
 .games-bottom.is-balanced-wrap > .games-bottom-left{ justify-items: start; justify-content: start; }
 .games-bottom.is-balanced-wrap > .games-bottom-right{ justify-items: end; justify-content: end; }
+.games-bottom.is-compact-icons .only-desktop{ display:none !important; }
 .resource-copy-inbox{margin:12px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
 .resource-copy-inbox h3{margin:0 0 8px;font-size:14px}
 .resource-copy-inbox-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line2)}

@@ -23,8 +23,7 @@
     min-width: 30px;
 }
 .tabs-strip .tab-label > .badge:empty{
-    display: inline-flex;
-    visibility: hidden;
+    display: none;
 }
 @media (max-width: 600px){
     :root{
