@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-14T23162"/>
+  <meta name="app-version" content="v2026-10-15T15495"/>
 
   <meta charset="utf-8" />
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -15,12 +15,12 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15Ttoolbar1" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-14T23162" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-14T23162" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-14T23162" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T15495" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T15495" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-15T15495" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-15T15495" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-14T23162"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T15495"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -35,9 +35,9 @@
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-14T23162"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-15T15495"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-14T23162" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T15495" defer></script>
 </head>
 
 <body class="skel-body topbar-title-mobile">
@@ -66,13 +66,14 @@
     </div>
   </header>
 
+  <main class="wrap explorer-page">
   <!-- TOOLBAR -->
   <section id="toolbar" class="toolbar" data-skel-step>
     <!-- wypełniane dynamicznie w JS -->
   </section>
 
   <!-- GŁÓWNY LAYOUT: drzewo + zawartość -->
-  <main class="explorer" data-skel-step>
+  <div class="explorer" data-skel-step>
 
     <!-- OVERLAY do zamykania drawera na mobile -->
     <div id="drawerOverlay" class="drawer-overlay" hidden aria-hidden="true"></div>
@@ -101,6 +102,8 @@
       </div>
     </section>
 
+
+  </div>
 
   <!-- Modal: tagi (3 warstwy) — styl jak bases (overlay/modal) -->
   <div class="overlay modal--sheet" id="tagsOverlay" style="display:none;">
@@ -359,6 +362,10 @@
     </div>
   </div>
 
+  <footer class="footer">
+    <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+    <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+  </footer>
   </main>
 
   <!-- KONTEKST MENU (prawy klik) -->
@@ -368,6 +375,6 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-14T23162"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T15495"></script>
 </body>
 </html>

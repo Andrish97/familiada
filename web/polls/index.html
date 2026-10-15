@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-14T23162"/>
+  <meta name="app-version" content="v2026-10-15T15495"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,10 +14,10 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="polls.title">Familiada — ankieta i wyniki</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-14T23162"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15Ttoolbar1"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-14T23162"/>
-  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-14T23162"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-15T15495"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -31,9 +31,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-14T23162" defer></script>
-  <script type="module" src="/polls/js/polls.js?v=v2026-10-14T23162" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-14T23162" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T15495" defer></script>
+  <script type="module" src="/polls/js/polls.js?v=v2026-10-15T15495" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T15495" defer></script>
 </head>
 
 <body class="games-body polls-body topbar-title-mobile skel-body">
@@ -62,7 +62,7 @@
   <main class="wrap">
     <div class="card" id="pollLoadState" role="status" aria-live="polite">
       <div class="name" id="pollLoadMessage" data-i18n="polls.load.loading">Wczytuję ankietę…</div>
-      <button class="btn sm" id="pollLoadRetry" type="button" data-i18n="polls.load.retry" hidden>Ponów</button>
+      <button class="btn sm" id="pollLoadRetry" type="button" data-i18n="polls.load.retry" data-i18n-icon="refresh" hidden>Ponów</button>
     </div>
     <!-- A. Pasek stanu: stan słowem po lewej, WSZYSTKIE akcje po prawej
          (telefon: stan u góry, akcje w dolnym pasku przyklejonym do ekranu) -->
@@ -199,8 +199,8 @@
         </div>
         <div class="uni-foot modal-actions">
           <span class="importMsg" id="pollRecipientsCount" aria-live="polite"></span>
-          <button class="btn sm" id="pollRecipientsCancel" type="button" data-i18n="common.cancel">Anuluj</button>
-          <button class="btn sm gold" id="pollRecipientsAdd" type="button" disabled data-i18n="polls.share.addSelected">Dodaj wybrane</button>
+          <button class="btn sm" id="pollRecipientsCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="pollRecipientsAdd" type="button" disabled data-i18n="polls.share.addSelected" data-i18n-icon="people">Dodaj wybrane</button>
         </div>
       </div>
     </div>
@@ -220,13 +220,17 @@
           <div class="uni-hint" id="pollQrModalHint" data-i18n="polls.qrModal.hint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
         </div>
         <div class="uni-foot modal-actions" id="pollQrModalActions">
-          <button class="btn sm" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn">Otwórz</button>
-          <button class="btn sm gold" id="pollQrModalCopy" type="button" data-i18n="polls.qrModal.copyBtn">Kopiuj</button>
+          <button class="btn sm" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn" data-i18n-icon="arrow-right">Otwórz</button>
+          <button class="btn sm gold" id="pollQrModalCopy" type="button" data-i18n="polls.qrModal.copyBtn" data-i18n-icon="copy">Kopiuj</button>
         </div>
       </div>
     </div>
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-14T23162"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T15495"></script>
 </body>
 </html>

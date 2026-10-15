@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-14T23162"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15Ttoolbar1"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-14T23162"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-15T15495"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-14T23162" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T15495" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-15Tguard1";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-15T15495";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-14T23162");
+    import("/control/js/app.js?v=v2026-10-15T15495");
   </script>
 
   <style>
@@ -508,7 +508,7 @@
     #c2DisplayPreview iframe, #c2HostPreview iframe { width:100%; height:100%; border:0; display:block; }
     @media (max-width:760px) { #c2DevicePreviews { grid-template-columns:1fr; } }
   </style>
-<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-14T23162"/>
+<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-15T15495"/>
 </head>
 <body class="control-body skel-body">
   <header class="topbar topbar-layout-4">
@@ -547,8 +547,17 @@
     </div>
   </header>
 
+  <main class="wrap wide" data-skel-step>
+    <div class="shell">
+      <div class="control-tabs-card">
+        <section class="main control-main-card">
+          <div id="app"><!-- renderowane przez control/js/ui.js --></div>
+        </section>
+      </div>
+    </div>
+
   <!-- Modal QR urządzeń z top bara -->
-  <div class="overlay hidden" id="qrModalOverlay">
+  <div class="overlay modal--sheet hidden" id="qrModalOverlay">
     <div class="modal uni-modal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
       <div class="uni-head">
         <div class="mTitle" id="qrModalTitle" data-i18n="control.qrModalTitle">Urządzenie</div>
@@ -569,7 +578,7 @@
 
       <div class="uni-foot modal-actions">
         <a class="btn sm hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
-        <button class="btn sm gold" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
+        <button class="btn sm gold" id="qrModalCopy" type="button" data-i18n="common.copy" data-i18n-icon="copy">Kopiuj</button>
       </div>
     </div>
   </div>
@@ -586,7 +595,7 @@
       <div class="modal-actions"><button class="btn gold" id="deviceLostClose" type="button" data-i18n="common.a2hsOk">OK</button></div>
     </div>
   </div>
-  <div class="overlay" id="shareDeviceOverlay" role="dialog" aria-modal="true" aria-labelledby="shareDeviceTitle" style="display:none;">
+  <div class="overlay modal--sheet" id="shareDeviceOverlay" role="dialog" aria-modal="true" aria-labelledby="shareDeviceTitle" style="display:none;">
     <div class="modal shareModal">
       <div class="mHead">
         <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij</div>
@@ -599,15 +608,15 @@
           <input id="shareDeviceEmail" class="inp" type="text"
                  placeholder="Nazwa użytkownika lub e-mail..."
                  data-i18n-placeholder="bases.shareModal.placeholder"/>
-          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="control.shareDevice">Udostępnij</button>
+          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n-title="control.shareDevice" data-i18n-aria-label="control.shareDevice" aria-label="Udostępnij"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDevice">Udostępnij</span></button>
         </div>
       </section>
 
       <section class="shareSection shareSection--friends">
         <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionFriends">Znajomi, którym możesz udostępnić</div>
-        <div id="shareDeviceSubsList" class="shareList"></div>
+        <div id="shareDeviceSubsList" class="shareList shareList--scroll"></div>
         <div class="shareSectionActions">
-          <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled data-i18n="control.shareDeviceModal.shareSelected">Udostępnij zaznaczonym</button>
+          <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled data-i18n-title="control.shareDeviceModal.shareSelected" data-i18n-aria-label="control.shareDeviceModal.shareSelected" aria-label="Udostępnij zaznaczonym"><i class="ico" data-icon="people" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDeviceModal.shareSelected">Udostępnij zaznaczonym</span></button>
         </div>
       </section>
 
@@ -618,20 +627,12 @@
     </div>
   </div>
 
-  <main class="wrap wide" data-skel-step>
-    <div class="shell">
-      <div class="control-tabs-card">
-        <section class="main control-main-card">
-          <div id="app"><!-- renderowane przez control/js/ui.js --></div>
-        </section>
-      </div>
-    </div>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-14T23162"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T15495"></script>
 </body>
 </html>

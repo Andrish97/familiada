@@ -3,23 +3,24 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-14T23162";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-14T23162";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-14T23162";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-14T23162";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T15495";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-15T15495";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-15T15495";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-15T15495";
+import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-15T15495";
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-14T23162";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-14T23162";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-14T23162";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-14T23162";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-14T23162";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-14T23162";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-15T15495";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-15T15495";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-15T15495";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-15T15495";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-15T15495";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-15T15495";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-15T15495";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-15T15495";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-15T15495";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
@@ -96,7 +97,12 @@ function ruleBlocked(e) {
 
 function openOverlay(id, on) {
   const el = $(id);
-  if (el) el.style.display = on ? "grid" : "none";
+  if (!el) return;
+  el.style.display = on ? "grid" : "none";
+  if (id === "txtImportOverlay") {
+    if (on) enterModalSheet(el, { backBtn: $("btnBack"), onClose: () => openOverlay(id, false) });
+    else exitModalSheet(el);
+  }
 }
 
 // debounce z flush(): przy przełączeniu pytania / wyjściu ze strony
@@ -903,7 +909,7 @@ async function boot() {
   });
   $("btnTxtClose")?.addEventListener("click", closeImport);
   importOverlay?.addEventListener("click", (e) => {
-    if (e.target === importOverlay) closeImport();
+    if (e.target === importOverlay && !isSheetViewport()) closeImport();
   });
 
   // "Wczytaj plik" nie był do niczego podpięty -- plik wybrany w polu nie

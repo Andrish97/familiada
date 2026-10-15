@@ -89,7 +89,7 @@ const en = {
       closeLabel: "Close",
     },
     fullscreen: "Fullscreen",
-    a2hsTitle: "Fullscreen on iPhone",
+    a2hsTitle: "Fullscreen on iPhone and iPad",
     a2hsHost:
       "Safari can't force true fullscreen. Use <b>Share</b> → <b>Add to Home Screen</b>, then launch it like an app.",
     a2hsBuzzer:
@@ -4184,6 +4184,8 @@ const en = {
     },
     import: {
       title: "Import logo",
+      chooseFile: "Choose file",
+      noFileSelected: "No file selected",
       confirm: "Import",
       done: "Done",
       steps: {
@@ -4624,7 +4626,7 @@ const en = {
       desktopOnly: "This page works best on a desktop or TV. You may continue.",
     },
     enterCode: {
-      title: "Enter device code",
+      title: "Connect by code",
       placeholder: "000000",
       btn: "Connect",
       connectBtn: "Connect",

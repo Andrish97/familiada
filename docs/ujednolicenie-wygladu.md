@@ -921,6 +921,24 @@ zastąpiona powyższym artefaktem.
 
 ### E20 — uwagi użytkownika do galerii i następna paczka poprawek (2026-10-14)
 
+**Decyzja modalowa (2026-10-15):** w mobilnym widoku strony modal ma nagłówek
+z tytułem i opcjonalnie jedną podpowiedzią wspólną dla całego modala,
+następnie akcje, separator i przewijaną treść. Kilka podpowiedzi kontekstowych
+zostaje przy swoich sekcjach. Treść przewija się jednym obszarem; osobne
+przewijanie zostaje tylko tam, gdzie lista ma pozostać dostępna pod stałym
+nagłówkiem i akcjami. Zwykła stopka strony pozostaje widoczna pod arkuszem.
+W zwykłym widoku modal
+pozostaje oknem na tle strony. Ujednolicenie obejmuje wskazane modale Gier,
+Baz, Ankiet, Control, Eksploratora baz, edytora Gier, Marketplace i Settings,
+oraz ich ikony, puste stany i przyczepione do viewportu menu. Menu i drawer
+nie mogą zmieniać geometrii pozostałej strony; w Eksploratorze modal zastępuje
+również toolbar i ma tę samą stopkę co reszta strony.
+
+**Kontynuacja (2026-10-15):** użytkownik polecił po poprawkach modalowych
+kontynuować pozostałe uwagi z listy bez zatrzymywania się po każdej z nich
+i wrócić z nową galerią. Wcześniejsze ograniczenie galerii nie obowiązuje;
+galerię uruchomić po wdrożeniu całej bieżącej paczki.
+
 Poprzednia galeria jest punktem odniesienia, nie akceptacją wyglądu. Niektóre
 widoki blokowały zasoby, gdy pięć profili otwierało równocześnie ten sam
 fixture. Kolejny przebieg ma być sekwencyjny: jeden profil/strona naraz,
@@ -1382,3 +1400,10 @@ punkty/opcjonalna nazwa, kilka jednoczesnych błędów, korekty na żywo,
 zgodność podglądu z zapisem, brak zapisu podczas edycji, potwierdzenie
 zastąpienia oraz błędny zapis zachowujący dotychczasowe pytania. Zrzuty
 po wykonaniu, bez zatrzymywania kolejki na ocenę wyglądu.
+
+### Kontynuacja poprawek UI (decyzja użytkownika 2026-10-15)
+
+Po wdrożeniu uzgodnionej paczki mobilnych modalów kontynuować wszystkie
+pozostałe punkty aktualnej listy bez zatrzymywania się po każdej poprawce.
+Po zakończeniu przygotować i udostępnić nową pełną galerię E20. Poprzednia
+prośba o uzgodnienie galerii nie obowiązuje dla tej kontynuacji.

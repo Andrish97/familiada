@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-14T23162"/>
+  <meta name="app-version" content="v2026-10-15T15495"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,18 +14,18 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="connectDevice.title">Familiada — podłącz urządzenie</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-14T23162"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-14T23162"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T15495"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-15T15495"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15Ttoolbar1"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-14T23162"/>
-  <link rel="stylesheet" href="/connect/css/connect-device.css?v=v2026-10-14T23162"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/connect/css/connect-device.css?v=v2026-10-15T15495"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-14T23162" defer></script>
-  <script type="module" src="/connect/js/connect-device.js?v=v2026-10-14T23162" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-14T23162" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T15495" defer></script>
+  <script type="module" src="/connect/js/connect-device.js?v=v2026-10-15T15495" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T15495" defer></script>
 </head>
 
 <body class="games-body connect-device-body skel-body">
@@ -62,10 +62,10 @@
       <div class="card games-card connect-device-main-card">
         <!-- Blok: Wprowadź kod -->
         <section class="connect-device-inner-card" id="enterCodeCard">
-          <div class="connect-device-card-header" data-i18n="connectDevice.enterCode.title">Wprowadź kod urządzenia</div>
+          <div class="connect-device-card-header" data-i18n="connectDevice.enterCode.title">Podłącz kodem</div>
           <div class="connect-device-enter-code-row">
             <input class="inp connect-device-code-input" id="connectCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" spellcheck="false" data-i18n-placeholder="connectDevice.enterCode.placeholder"/>
-            <button class="btn gold" id="btnConnectCode" type="button" data-i18n="connectDevice.enterCode.btn">Podłącz</button>
+            <button class="btn gold" id="btnConnectCode" type="button" data-i18n="connectDevice.enterCode.btn" data-i18n-icon="arrow-right">Podłącz</button>
           </div>
           <div id="connectCodeMsg" class="connect-device-msg"></div>
         </section>
@@ -86,7 +86,7 @@
   </footer>
 
   <!-- Modal: podgląd urządzenia po kodzie -->
-  <div class="overlay" id="devicePreviewOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="devicePreviewOverlay" style="display:none;">
     <div class="modal">
       <div class="mHead">
         <div class="mTitle" id="devicePreviewTitle">Urządzenie</div>
@@ -94,12 +94,12 @@
       </div>
       <div class="mSub" id="devicePreviewSub"></div>
       <div class="importRow modal-actions" style="margin-top:16px;">
-        <button class="btn" id="btnDevicePreviewCancel" type="button" data-i18n="common.cancel">Anuluj</button>
-        <button class="btn gold" id="btnDevicePreviewConnect" type="button" data-i18n="connectDevice.enterCode.connectBtn">Połącz</button>
+        <button class="btn" id="btnDevicePreviewCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn gold" id="btnDevicePreviewConnect" type="button" data-i18n="connectDevice.enterCode.connectBtn" data-i18n-icon="arrow-right">Połącz</button>
       </div>
     </div>
   </div>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-14T23162"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T15495"></script>
 </body>
 </html>

@@ -122,6 +122,10 @@
   flex: 0 0 auto;
 }
 
+.connect-device-main-card:not(:has(#sharedDevicesCard:not([hidden]))) { flex: 0 0 auto; }
+#enterCodeCard { flex: 0 0 auto; }
+.connect-device-inner-card .connect-device-card-header { padding-bottom: 8px; margin-bottom: 8px; }
+
 .connect-device-enter-code-row {
   margin-top: auto;
   margin-bottom: auto;

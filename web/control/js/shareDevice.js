@@ -1,13 +1,14 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
-import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-14T23162";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-14T23162";
-import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-14T23162";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-15T15495";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15T15495";
+import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-15T15495";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-15T15495";
+import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-15T15495";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T15495";
 
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-14T23162";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-15T15495";
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 function deviceTypeLabel(type) {
@@ -82,6 +83,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   const msgEl = document.getElementById("shareDeviceMsg");
   const currentWrap = document.getElementById("shareDeviceCurrentWrap");
   const currentCont = document.getElementById("shareDeviceCurrentContent");
+  const backBtn = document.getElementById("btnBack");
 
   if (!overlay || isGuest) {
     return { open: () => {}, isGuest, refreshBadges: async () => ({}) };
@@ -130,12 +132,15 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
 
   function closeModal() {
     overlay.style.display = "none";
+    exitModalSheet(overlay);
     renderVersion++;
     preflightVersion++;
     clearMessage();
   }
   btnClose?.addEventListener("click", closeModal);
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay && !(overlay.classList.contains("modal--sheet") && isSheetViewport())) closeModal();
+  });
 
   async function renderModal() {
     const version = ++renderVersion;
@@ -360,6 +365,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     if (emailInp) emailInp.value = "";
     if (btnAdd) btnAdd.disabled = false;
     overlay.style.display = "grid";
+    enterModalSheet(overlay, { backBtn, onClose: closeModal });
     await renderModal();
   }
 

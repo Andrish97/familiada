@@ -80,3 +80,18 @@
     padding: 24px 18px;
   }
 }
+
+/* Na niskim ekranie landscape karta ma własny dostępny scroll zamiast
+   wchodzić pod dolny obszar bezpieczny lub stopkę. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .maintenance-body { min-height: 100dvh; height: 100dvh; overflow: hidden; }
+  .maintenance-main {
+    flex: 1 1 0;
+    min-height: 0;
+    align-items: flex-start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+  }
+  .maintenance-card { padding: 16px 18px; }
+}

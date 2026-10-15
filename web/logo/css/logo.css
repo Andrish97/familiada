@@ -1207,3 +1207,5 @@ body.games-body.logo-body > main.logoWrap{
 .resource-copy-inbox-actions{display:flex;gap:6px;flex:none}
 .resource-copy-inbox-error{color:var(--danger,#ff7373);font-size:12px}
 @media(max-width:600px){.resource-copy-inbox-row{align-items:flex-start;flex-wrap:wrap}.resource-copy-inbox-row>span{flex:1 1 100%;margin-left:0}.resource-copy-inbox-actions{margin-left:auto}}
+.logo-import-file-native { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; clip-path: inset(50%); }
+.logo-import-file-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .75; }

@@ -22,6 +22,32 @@ body,html {
     overflow: hidden;
 }
 
+/* Toolbar, Eksplorator, modale i stopka muszą być w jednym main.wrap.
+   Dzięki temu arkusz zastępuje toolbar, a nie zaczyna się dopiero pod nim. */
+main.explorer-page.wrap {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+main.explorer-page > .explorer {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+@media (max-width: 600px) {
+    body.sheet-open main.explorer-page > .toolbar,
+    body.sheet-open main.explorer-page > .explorer {
+        display: none !important;
+    }
+    body.sheet-open #contextMenu { display: none !important; }
+}
+
 .explorer {
     display: grid;
     grid-template-columns: 320px 1fr;
@@ -1730,7 +1756,7 @@ tr.row .tag-dot[data-tip]::before {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Modale nad drawerem */
+  /* Modale nad drawerem; tryb sheet przełącza je do przepływu strony. */
   .overlay { z-index: 1100; }
   .tags-modal,
   .export-modal,

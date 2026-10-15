@@ -89,11 +89,11 @@ const pl = {
       closeLabel: "Zamknij",
     },
     fullscreen: "Pełny ekran",
-    a2hsTitle: "Pełny ekran na iPhone",
+    a2hsTitle: "Pełny ekran na iPhonie i iPadzie",
     a2hsHost:
       "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom jako aplikację.",
     a2hsBuzzer:
-      "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.",
+      "W Safari na iPhonie i iPadzie nie da się wymusić pełnego ekranu. Wybierz <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom aplikację z ekranu początkowego.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
     rating: {
@@ -649,7 +649,7 @@ const pl = {
   },
   buzzer: {
     title: "Familiada — Przycisk do pojedynku",
-    rotateMessage: "Obróć telefon poziomo, aby korzystać z Buzzera.",
+    rotateMessage: "Obróć telefon poziomo, aby korzystać z przycisku do pojedynku.",
     btnA: "Przycisk A",
     btnB: "Przycisk B",
     rotateHint: "Obróć urządzenie do poziomu",
@@ -4085,6 +4085,8 @@ const pl = {
     },
     import: {
       title: "Import logo",
+      chooseFile: "Wybierz plik",
+      noFileSelected: "Nie wybrano pliku",
       confirm: "Importuj",
       done: "Gotowe",
       steps: {
@@ -5016,7 +5018,7 @@ const pl = {
       desktopOnly: "Ta strona działa najlepiej na komputerze lub TV. Możesz kontynuować.",
     },
     enterCode: {
-      title: "Wprowadź kod urządzenia",
+      title: "Podłącz kodem",
       placeholder: "000000",
       btn: "Podłącz",
       connectBtn: "Połącz",

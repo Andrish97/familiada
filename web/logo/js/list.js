@@ -1,7 +1,7 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-14T23162";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-14T23162";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-14T23162";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-14T23162";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-15T15495";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-15T15495";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-15T15495";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T15495";
 // familiada/logo/js/list.js
 // Lista logo (/logos/): kafelki w trzech kartach, modale (nowe / nazwa /
 // import / podgląd), eksport. Edycja to osobne strony /logos/editor/<tryb>/
@@ -15,31 +15,31 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-14T23
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-14T23162";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-14T23162";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-14T23162";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-14T23162";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-14T23162";
-import { getDeviceProfile, isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-15Tguard1";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-14T23162";
-import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-14T23162";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15Ttoolbar6";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-15T15495";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-15T15495";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-15T15495";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15T15495";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15T15495";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-15T15495";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-15T15495";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-15T15495";
+import { getDeviceProfile, isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-15T15495";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-15T15495";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-15T15495";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T15495";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-15T15495";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15T15495";
 
-import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-14T23162";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-14T23162";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-14T23162";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-14T23162";
-import { cannotEditReason } from "./text.js?v=v2026-10-14T23162";
-import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-14T23162";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-14T23162";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-15T15495";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-15T15495";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-15T15495";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-15T15495";
+import { cannotEditReason } from "./text.js?v=v2026-10-15T15495";
+import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-15T15495";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-15T15495";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-14T23162";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-14T23162";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-15T15495";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-15T15495";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
 // i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły
@@ -75,6 +75,8 @@ const el = {
 
   importOverlay: $("logoImportOverlay"),
   importFile: $("inpImportLogoFile"),
+  importChoose: $("btnImportLogoChoose"),
+  importFileName: $("logoImportFileName"),
   importPreviewWrap: $("logoImportPreviewWrap"),
   importPreviewCanvas: $("logoImportPreviewCanvas"),
   importErr: $("logoImportErr"),
@@ -514,6 +516,12 @@ function resetImportModal() {
   el.btnImportConfirm.disabled = true;
   el.btnImportConfirm.hidden = false;
   el.btnImportDone.hidden = true;
+  if (el.importFileName) el.importFileName.textContent = t("logoEditor.import.noFileSelected");
+}
+
+function updateImportFileName() {
+  if (!el.importFileName) return;
+  el.importFileName.textContent = el.importFile?.files?.[0]?.name || t("logoEditor.import.noFileSelected");
 }
 
 function openImportModal() {
@@ -525,6 +533,7 @@ function openImportModal() {
 async function onImportFileChosen() {
   resetImportModal();
   const file = el.importFile.files?.[0];
+  updateImportFileName();
   if (!file) return;
   try {
     importParsed = parseImport(await file.text(), defaultName());
@@ -597,6 +606,15 @@ async function exportSelected() {
   el.exportMsg.textContent = "";
   el.btnExportClose.hidden = true;
   show(el.exportOverlay, true);
+  enterModalSheet(el.exportOverlay, {
+    backBtn: el.btnBack,
+    onClose: () => {
+      if (!el.btnExportClose.hidden) {
+        show(el.exportOverlay, false);
+        exitModalSheet(el.exportOverlay);
+      }
+    },
+  });
   try {
     const logo = await fetchLogo(selectedId);
     const fileName = `${safeFileName(logo.name, t("logoEditor.defaults.logoFileName"))}.famlogo`;
@@ -627,6 +645,7 @@ function bindUi() {
   el.btnImportDone.addEventListener("click", () => closeOverlay(el.importOverlay));
   el.btnExportClose.addEventListener("click", () => {
     show(el.exportOverlay, false);
+    exitModalSheet(el.exportOverlay);
     el.btnExportClose.hidden = true;
   });
   bindResourceDuplicate({button:el.btnDuplicate,kind:"logo",getSource:()=>logos.find(l=>l.id===selectedId),onDone:async id=>{await refresh();const logo=logos.find(l=>l.id===id);if(logo)setActiveListMode(listModeForLogo(logo));selectTile(id);},onState:updateListButtons});
@@ -655,6 +674,7 @@ function bindUi() {
   });
 
   // import
+  el.importChoose?.addEventListener("click", () => el.importFile?.click());
   el.importFile.addEventListener("change", () => void onImportFileChosen());
   el.btnImportConfirm.addEventListener("click", () => void confirmImport());
   el.btnImportCancel.addEventListener("click", () => closeOverlay(el.importOverlay));
@@ -665,6 +685,7 @@ function bindUi() {
   closeOnBackdrop(el.previewOverlay, closePreview);
 
   window.addEventListener("i18n:lang", () => {
+    if (!el.importFile?.files?.length) updateImportFileName();
     setActiveListMode(activeListMode, { updateUrl: false });
   });
 

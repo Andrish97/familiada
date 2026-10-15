@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-14T23162"/>
+  <meta name="app-version" content="v2026-10-15T15495"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -15,12 +15,12 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.title">Familiada — logo</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-14T23162"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-14T23162"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T15495"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-15T15495"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15Ttoolbar1"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=codex-e20-mobile-toolbar-20261015d"/>
-  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-15Ttoolbar1"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T15495"/>
+  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-15T15495"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -35,8 +35,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
-  <script type="module" src="/logo/js/list.js?v=v2026-10-14T23162" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-14T23162" defer></script>
+  <script type="module" src="/logo/js/list.js?v=v2026-10-15T15495" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T15495" defer></script>
 </head>
 
 <body class="games-body logo-body skel-body">
@@ -125,8 +125,8 @@
       </div>
 
       <div class="importRow modal-actions">
-        <button class="btn sm" id="btnRenameCancel" type="button" data-i18n="logoEditor.common.cancel">Anuluj</button>
-        <button class="btn sm gold" id="btnRenameOk" type="button" data-i18n="logoEditor.common.save">Zapisz</button>
+        <button class="btn sm" id="btnRenameCancel" type="button" data-i18n="logoEditor.common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn sm gold" id="btnRenameOk" type="button" data-i18n="logoEditor.common.save" data-i18n-icon="save">Zapisz</button>
         <div class="importMsg" id="renameMsg"></div>
       </div>
     </div>
@@ -141,7 +141,9 @@
       </div>
 
       <div class="importRow" style="margin-top:8px">
-        <input id="inpImportLogoFile" type="file" accept=".famlogo,.json,application/json" class="inp" style="flex:1;min-width:0">
+        <input id="inpImportLogoFile" class="logo-import-file-native" type="file" accept=".famlogo,.json,application/json" tabindex="-1" aria-hidden="true">
+        <button class="btn sm" id="btnImportLogoChoose" type="button" data-i18n="logoEditor.import.chooseFile" data-i18n-icon="upload">Wybierz plik</button>
+        <span class="logo-import-file-name" id="logoImportFileName" data-i18n="logoEditor.import.noFileSelected">Nie wybrano pliku</span>
       </div>
 
       <!-- Podgląd canvas -->
@@ -164,8 +166,8 @@
       </div>
 
       <div class="importRow modal-actions" style="margin-top:12px">
-        <button class="btn sm gold" id="btnLogoImportConfirm" type="button" disabled data-i18n="logoEditor.import.confirm">Importuj</button>
-        <button class="btn sm gold" id="btnLogoImportDone" type="button" data-i18n="logoEditor.import.done" hidden>Gotowe</button>
+        <button class="btn sm gold" id="btnLogoImportConfirm" type="button" disabled data-i18n="logoEditor.import.confirm" data-i18n-icon="upload">Importuj</button>
+        <button class="btn sm gold" id="btnLogoImportDone" type="button" data-i18n="logoEditor.import.done" data-i18n-icon="check" hidden>Gotowe</button>
       </div>
     </div>
   </div>
@@ -186,15 +188,8 @@
       </div>
     </div>
 
-    <div class="footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
-  </main>
-
-
-  <!-- PROGRES: EXPORT LOGO -->
-  <div class="overlay" id="logoExportOverlay" style="display:none;">
+  <!-- Progres eksportu logo -->
+  <div class="overlay modal--sheet" id="logoExportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
       <div class="mTitle" data-i18n="logoEditor.export.title">Eksport…</div>
       <div class="mSub" id="logoExportSub" data-i18n="logoEditor.export.subtitle">Nie zamykaj strony — trwa przygotowanie pliku.</div>
@@ -205,12 +200,19 @@
         <div class="importMsg" id="logoExportMsg" style="min-height:18px"></div>
       </div>
       <div class="importRow modal-actions" style="margin-top:12px;justify-content:flex-end">
-        <button class="btn sm gold" id="btnLogoExportClose" type="button" data-i18n="logoEditor.export.close" hidden>Gotowe</button>
+        <button class="btn sm gold" id="btnLogoExportClose" type="button" data-i18n="logoEditor.export.close" data-i18n-icon="check" hidden>Gotowe</button>
       </div>
     </div>
   </div>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-14T23162"></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-14T23162"></script>
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T15495"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T15495"></script>
 </body>
 </html>

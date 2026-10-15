@@ -739,6 +739,7 @@ main{
 }
 
 .modal {
+    box-sizing: border-box;
     width: min(860px,94vw);
     border-radius: 22px;
     border: 1px solid var(--line);
@@ -931,6 +932,14 @@ main{
     margin-right: auto
 }
 
+/* Neutralne poza arkuszem; ułatwia wspólną kolejność mobilną bez zmian
+   w wyglądzie okienek desktopowych. */
+.sheet-modal-head,
+.sheet-modal-actions,
+.sheet-modal-body { display: contents; }
+.sheet-modal-head[hidden],
+.sheet-modal-actions[hidden] { display: none; }
+
 /* ===== Modal sheet (mobile) =====
    Rozbudowane modale (nie confirm/alert/prompt — te mają klasę .uni-modal
    i zostają małe) dostają na telefonie znacznik .modal--sheet. W tym
@@ -1022,13 +1031,97 @@ main{
         margin: 0 !important; /* settings.css: .overlay .modal{margin-top:20px!important} */
         display: flex;
         flex-direction: column;
-        overflow-y: auto; /* własny, samodzielny obszar przewijania */
+        overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
         -webkit-overflow-scrolling: touch;
         /* Modal ma wyglądać jak treść strony, nie jak karta na tle strony */
         background: transparent;
         --under: #050914; /* arkusz leży na tle strony */
         border: 0;
         box-shadow: none;
+    }
+
+    .modal--sheet.sheet-active .sheet-modal-head,
+    .modal--sheet.sheet-active .sheet-modal-actions,
+    .modal--sheet.sheet-active .sheet-modal-body {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head {
+        flex: 0 0 auto;
+        padding-bottom: 12px;
+    }
+    .modal--sheet.sheet-active .sheet-modal-actions {
+        flex: 0 0 auto;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--line2);
+    }
+    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup,.baseShareFooter,.shareSectionActions,.shareSection--mail) {
+        margin-top: 0 !important;
+    }
+    .modal--sheet.sheet-active .sheet-modal-actions[hidden] {
+        display: none !important;
+        padding: 0;
+        margin: 0;
+        border: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-actions:has(> .modal-actions):not(:has(> .modal-actions > :not([hidden]))) {
+        display: none !important;
+        padding: 0;
+        margin: 0;
+        border: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .modal--sheet.sheet-active .sheet-modal-body > .uni-body {
+        display: block;
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
+    }
+    /* Zwykle przewija się cała treść jedną warstwą. Odbiorcy ankiety to
+       wyjątek: nagłówek i akcje są stałe, a przewijają się wyłącznie listy. */
+    .modal--sheet.sheet-active .sheet-modal-body:has(.pollRecipientGroup) {
+        overflow: hidden;
+    }
+    .modal--sheet.sheet-active .sheet-modal-body:has(.pollRecipientGroup) > .uni-body {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+    .modal--sheet.sheet-active .pollRecipientsModal .shareList {
+        max-height: none;
+    }
+    .modal--sheet.sheet-active .shareModal .shareList--scroll,
+    .modal--sheet.sheet-active .shareModal #shareDeviceCurrentContent {
+        max-height: none;
+        overflow: visible;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head > :is(.uni-head,.mHead,.tagsHead,.bld-preview-head,.mkt-detail-head,.previewModalTitle) {
+        position: static;
+        border: 0 !important;
+        padding-bottom: 0;
+        margin-bottom: 8px !important;
+        background: transparent !important;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head > .mSub {
+        margin: 0;
+        padding: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head > .mTitle {
+        text-transform: uppercase;
+        letter-spacing: .1em;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head:not(:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden]))):not(:has(+ .sheet-modal-actions > .modal-actions > :not([hidden]))) {
+        border-bottom: 1px solid var(--line2);
+        margin-bottom: 12px;
     }
 
     /* Nagłówek modala w trybie sheet ma wyglądać jak nagłówek strony "Moje
@@ -1084,9 +1177,7 @@ main{
         display: none !important;
     }
 
-    body.sheet-open .footer .btn-contact-footer {
-        display: none;
-    }
+    /* Pełnoekranowy modal zachowuje zwykłą stopkę strony wraz z Kontaktem. */
 
     /* Strony bez naturalnego przycisku wstecz w topbarze na mobile
        (games.html, settings.html) dostają dedykowany przycisk tylko na
@@ -1132,6 +1223,33 @@ main{
        tamtej reguły, więc trzeba przebić tym samym. */
     .modal--sheet .tags-modal {
         width: 100% !important;
+    }
+    .modal--sheet.sheet-active .tags-modal:has(> .sheet-modal-body > .tags-layer) {
+        overflow: hidden;
+    }
+    .modal--sheet.sheet-active .tags-modal > .sheet-modal-body:has(> .tags-layer) {
+        overflow: hidden;
+    }
+    .modal--sheet.sheet-active .tags-modal .tags-layer {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        flex-direction: column;
+    }
+    .modal--sheet.sheet-active .tags-modal .tagsPickList,
+    .modal--sheet.sheet-active .tags-modal .qBody,
+    .modal--sheet.sheet-active .tags-modal .xBody,
+    .modal--sheet.sheet-active .tags-modal .colorModalBody {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .modal--sheet.sheet-active .tags-modal .tagsPickList { max-height: none; }
+    .modal--sheet.sheet-active .tags-modal .tagsFoot {
+        flex: 0 0 auto;
+        margin-top: 10px;
     }
 }
 
@@ -1568,6 +1686,8 @@ html.showA2HS .a2hs {
     z-index: 10050;
     background: var(--scrim);
     display: none;
+    box-sizing: border-box;
+    overflow: auto;
     padding: 10px;
     padding-left: max(10px, env(safe-area-inset-left));
     padding-right: max(10px, env(safe-area-inset-right));
@@ -1588,7 +1708,7 @@ html.showA2HS .a2hs {
     max-width: 560px;
     margin: 0 auto;
     display: grid;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
     gap: 10px;
 
     /* nie wychodź poza ekran (iOS/Android) */
@@ -1773,6 +1893,9 @@ html.showA2HS .a2hs {
 html{
   background: var(--bg);
 }
+
+/* Zachowaj szerokość layoutu, gdy wysuwane menu blokuje przewijanie body. */
+html:has(body.topbar-mobile-lock, body.explorer-drawer-open) { scrollbar-gutter: stable; }
 
 /* gasi biały bounce (zwłaszcza gdy scroll jest w kontenerach) */
 body{
@@ -2491,9 +2614,40 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
 .shareList--scroll{ max-height: 240px; overflow-y: auto; overscroll-behavior: contain; }
+.modal--sheet.sheet-active #shareDeviceSubsList,
+.modal--sheet.sheet-active #shareDeviceCurrentContent {
+    max-height: min(32dvh, 260px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
 .shareEmpty{ font-size:13px; color:var(--muted); }
 .shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
 .shareRow--compact .shareNote{ flex-basis: 100%; margin-top: 0; }
+
+@media (max-width: 600px) {
+  /* W pickerze odbiorców przewijają się same listy, a tytuł i licznik
+     pozostają dostępne na ekranie. */
+  .pollRecipientsModal .shareList--scroll {
+    max-height: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pollRecipientsModal .pollRecipientGroup { display: flex; flex: 1 1 0; min-height: 0; }
+  .pollRecipientsModal .pollRecipientGroup > .shareSection {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+  }
+  .pollRecipientsModal .uni-hint { flex: 0 0 auto; }
+  .baseShareLookup .btn .only-desktop,
+  .baseShareFooter .btn .only-desktop { display: none !important; }
+}
 
 /* Touch menus: avoid hover/pressed compositing while navigating on tablets. */
 @media (hover: none) and (pointer: coarse) {

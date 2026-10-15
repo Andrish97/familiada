@@ -1,14 +1,15 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-14T23162";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-14T23162";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-14T23162";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-14T23162";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T15495";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T15495";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-15T15495";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15T15495";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15T15495";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-15T15495";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-15T15495";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-15T15495";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15T15495";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T15495";
 
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");
@@ -75,17 +76,22 @@ function showDevicePreview(info) {
     devicePreviewSub.textContent = `${gameLabel} ${gameName}\n${ownerLabel} ${owner}`;
   }
   if (devicePreviewOverlay) devicePreviewOverlay.style.display = "";
+  enterModalSheet(devicePreviewOverlay, {
+    backBtn: document.getElementById("btnBack"),
+    onClose: hideDevicePreview,
+  });
 }
 
 function hideDevicePreview() {
   if (devicePreviewOverlay) devicePreviewOverlay.style.display = "none";
+  exitModalSheet(devicePreviewOverlay);
   _previewDeviceInfo = null;
 }
 
 btnDevicePreviewClose?.addEventListener("click", hideDevicePreview);
 btnDevicePreviewCancel?.addEventListener("click", hideDevicePreview);
 devicePreviewOverlay?.addEventListener("click", (e) => {
-  if (e.target === devicePreviewOverlay) hideDevicePreview();
+  if (e.target === devicePreviewOverlay && !(devicePreviewOverlay.classList.contains("modal--sheet") && isSheetViewport())) hideDevicePreview();
 });
 
 btnDevicePreviewConnect?.addEventListener("click", () => {
