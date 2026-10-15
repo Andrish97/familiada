@@ -2430,7 +2430,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await clearSfxLog(displayPage);
     await revealAnswer(page, 1); // Odpowiedź A, 40 pkt -> wygrywa pojedynek
-    await waitForSfxSequence(displayPage, ["reveal"], 10000);
+    await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
 
     // Ponowne podłączenie Display w trakcie gry wymaga nowego gestu audio.
     // Control blokuje odsłanianie do momentu potwierdzenia przez nową kartę.
@@ -2459,7 +2459,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await revealAnswer(page, 2); // Odpowiedź B, 30 pkt
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
     const mutedDisplaySfx = await displayPage.evaluate(() => window.__sfxLog || []);
-    expect(mutedDisplaySfx.map((entry) => entry.key), "wyciszony Display nadal musi odebrać cue i zachować synchronizację").toContain("reveal");
+    expect(mutedDisplaySfx.map((entry) => entry.key), "wyciszony Display nadal musi odebrać cue i zachować synchronizację").toContain("answer_correct");
     expect(mutedDisplaySfx.every((entry) => entry.muted), "Display ma wyciszyć wyjście dla każdego cue").toBe(true);
 
     // ===== Un-mute — odpowiedź #3 znów słyszalna =====
@@ -2467,7 +2467,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await expect(page.locator("#btnMute .ico-speaker-on")).toHaveCount(1);
     await clearSfxLog(displayPage);
     await revealAnswer(page, 3); // Odpowiedź C, 20 pkt -> wszystko odkryte
-    await waitForSfxSequence(displayPage, ["reveal"], 10000);
+    await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
 
     // Control przez całą rundę zostaje cicho — dowód, że gating jest
     // symetryczny (nie tylko "Display gra", ale i "Control naprawdę nie gra").
