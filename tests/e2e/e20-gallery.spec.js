@@ -162,19 +162,20 @@ async function saveDeviceScreenshot(page, profile, id, outputPath) {
     ? landscape
       ? '<i class="notch side"><b></b></i>'
       : '<i class="notch top"><b></b></i>'
-    : '<i class="gesture"></i>';
+    : "";
+  const deviceIndicators = `${notch}<i class="gesture"></i>`;
   const frame = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
     *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#10131a;display:grid;place-items:center;overflow:hidden}
     .device{display:inline-block;padding:${bezel}px;background:#030407;border:2px solid #30343d;border-radius:${radius + bezel}px;box-shadow:0 12px 44px #000b;line-height:0}
     .screen{position:relative;width:${profile.width}px;height:${profile.height}px;overflow:hidden;border-radius:${radius}px;background:#050914}
     img{display:block;width:100%;height:100%;object-fit:fill}
     .notch{position:absolute;display:block;background:#030407;z-index:3}
-    .notch.top{top:0;left:50%;transform:translateX(-50%);width:42.56%;height:4.27%;border-radius:0 0 22px 22px}
+    .notch.top{top:0;left:50%;transform:translateX(-50%);width:32.3%;height:4.27%;border-radius:0 0 22px 22px}
     .notch.top b{position:absolute;top:34%;right:13%;width:15%;height:15%;border-radius:5px;background:#111318;box-shadow:-28px 0 0 3px #08090c}
-    .notch.side{left:0;top:50%;transform:translateY(-50%);width:4.27%;height:42.56%;border-radius:0 22px 22px 0}
+    .notch.side{left:0;top:50%;transform:translateY(-50%);width:4.27%;height:32.3%;border-radius:0 22px 22px 0}
     .notch.side b{position:absolute;left:34%;bottom:13%;width:15%;height:15%;border-radius:5px;background:#111318;box-shadow:0 -28px 0 3px #08090c}
     .gesture{position:absolute;z-index:3;left:50%;bottom:7px;transform:translateX(-50%);width:92px;height:4px;border-radius:99px;background:#ffffffa8}
-  </style><div class="device"><div class="screen"><img src="data:image/png;base64,${image.toString("base64")}">${notch}</div></div>`;
+  </style><div class="device"><div class="screen"><img src="data:image/png;base64,${image.toString("base64")}">${deviceIndicators}</div></div>`;
   // Najpierw opuszczamy badaną stronę, żeby zwolnić jej JS i ewentualne blokady.
   // Ramkę rysuje osobna, krótko żyjąca karta bez URL/backendu; nie zostawia
   // zakodowanych obrazów w rendererze, który otworzy następną stronę aplikacji.
