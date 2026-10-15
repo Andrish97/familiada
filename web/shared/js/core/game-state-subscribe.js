@@ -13,10 +13,10 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-15T21000";
-import { rt } from "./realtime.js?v=v2026-10-15T21000";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-15T21000";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-15T21000";
+import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-15T21161";
+import { rt } from "./realtime.js?v=v2026-10-15T21161";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-15T21161";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-15T21161";
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, pollMs = 5000, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
   let active = false;
