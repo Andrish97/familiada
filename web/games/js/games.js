@@ -36,6 +36,7 @@ import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/c
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-14T23162";
 import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-14T23162";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15Tguard1";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
