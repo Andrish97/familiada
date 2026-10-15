@@ -57,6 +57,7 @@ const pl = {
     filterAll: "Wszystkie",
     noResults: "Brak wyników.",
     genericError: "Wystąpił błąd.",
+    filePicker: { choose: "Wybierz plik", none: "Nie wybrano pliku" },
     manualLabel: "Wskazówki",
     contactBtn: "Kontakt",
     modalBack: "Wstecz",

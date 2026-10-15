@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-15T22254"/>
+  <meta name="app-version" content="v2026-10-15T22295"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,11 +14,11 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="games.title">Familiada — moje gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-15T22254"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-15T22254"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T22295"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-15T22295"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T22254"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T22254"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T22295"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T22295"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -32,9 +32,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T22254" defer></script>
-  <script type="module" src="/games/js/games.js?v=v2026-10-15T22254" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T22254" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T22295" defer></script>
+  <script type="module" src="/games/js/games.js?v=v2026-10-15T22295" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T22295" defer></script>
 </head>
 
 <body class="games-body skel-body">
@@ -251,8 +251,10 @@
           <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
-        <div class="importRow" style="margin-top:8px">
-          <input id="importFile" class="inp" type="file" accept=".famgame,.json,application/json">
+        <div class="importRow import-file-picker" style="margin-top:8px">
+          <input id="importFile" type="file" accept=".famgame,.json,application/json" hidden>
+          <button class="btn sm" id="btnChooseImportFile" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
+          <span class="import-file-name" id="importFileName" aria-live="polite">Nie wybrano pliku</span>
         </div>
 
         <!-- Podgląd / błąd po wczytaniu pliku -->
@@ -348,6 +350,6 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T22254"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T22295"></script>
 </body>
 </html>

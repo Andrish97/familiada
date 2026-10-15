@@ -790,6 +790,22 @@ main{
     width: 100%
 }
 
+.import-file-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+    width: 100%;
+}
+
+.import-file-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    opacity: .75;
+    font-size: .9rem;
+}
+
 .importMsg {
     margin-left: auto;
     opacity: .85;

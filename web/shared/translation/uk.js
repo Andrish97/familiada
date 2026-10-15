@@ -57,6 +57,7 @@ const uk = {
     filterAll: "Усі",
     noResults: "Немає результатів.",
     genericError: "Сталася помилка.",
+    filePicker: { choose: "Вибрати файл", none: "Файл не вибрано" },
     manualLabel: "Підказки",
     contactBtn: "Контакт",
     modalBack: "Назад",
