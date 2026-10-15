@@ -100,6 +100,26 @@ function initListBottomToolbarLayout() {
       for (const label of clone.querySelectorAll(".only-desktop")) {
         label.style.setProperty("display", mode === "icons" ? "none" : "inline", "important");
       }
+      if (mode === "icons") {
+        // Pomiar odbywa się poza .games-bottom, więc nie dziedziczy reguł
+        // .is-compact-icons. Odtwórz w klonie faktyczne wymiary kompaktowego
+        // wariantu, w tym selecty, które normalnie mają szerokość 150 px.
+        for (const label of clone.querySelectorAll(".ui-select-label, .ui-select-caret")) {
+          label.style.setProperty("display", "none", "important");
+        }
+        for (const control of clone.querySelectorAll(".games-bottom-right .btn, .list-filter .ui-select-btn, .list-sort .ui-select-btn, #btnReceivedFilter, .list-search-open")) {
+          Object.assign(control.style, {
+            width: "36px", minWidth: "36px", maxWidth: "36px",
+            height: "36px", minHeight: "36px", padding: "0",
+            display: "grid", placeItems: "center", boxSizing: "border-box",
+          });
+        }
+        for (const select of clone.querySelectorAll(".list-filter, .list-sort")) {
+          Object.assign(select.style, {
+            width: "36px", minWidth: "36px", maxWidth: "36px", flex: "0 0 36px",
+          });
+        }
+      }
       for (const child of clone.children) child.style.flex = "0 0 auto";
       measureBox.replaceChildren(clone);
       const items = [...clone.children].map((item) => item.getBoundingClientRect().width);
