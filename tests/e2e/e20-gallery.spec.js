@@ -283,14 +283,14 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       throw new Error(`${profile.label} · ${id}: brak elementu gotowości ${readySelector}; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
     });
   }
-  // page-loading oznacza tylko, że można pokazać szkielet. Przed zdjęciem
-  // czekamy też na koniec żądań strony, sieciową ciszę, stabilny DOM, fonty
-  // i dekodowanie obrazów. To zapobiega fotografowaniu pustych list/kafli.
+  // Dane aplikacji są już potwierdzone przez gotowe etapy i readySelector.
+  // Nie wymagamy pełnej ciszy sieci: urządzenia gry mają heartbeat, a listy
+  // mogą odpytywać backend mimo gotowej treści.
   try {
-    await page.waitForLoadState("networkidle", { timeout: 20_000 });
+    await page.waitForLoadState("networkidle", { timeout: 1_000 }).catch(() => {});
     await page.waitForFunction(() => {
       const body = document.body;
-      if (!body || document.fonts?.status === "loading") return false;
+      if (!body) return false;
       const pendingImage = [...document.images].some((image) => image.getClientRects().length && !image.complete);
       if (pendingImage) return false;
       const pendingText = /^(ładowanie|ładuję|wczytuję|loading|please wait)[.…\s]*$/i;
@@ -303,7 +303,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       return !visibleLoading && !textLoading;
     }, null, { timeout: 20_000 });
     await page.evaluate(() => Promise.all([
-      document.fonts?.ready || Promise.resolve(),
+      Promise.race([document.fonts?.ready || Promise.resolve(), new Promise((resolve) => setTimeout(resolve, 5_000))]),
       ...[...document.images].filter((image) => image.complete && image.decode).map((image) => image.decode().catch(() => {})),
     ]));
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));

@@ -1,6 +1,6 @@
-// Trwałe, idempotentne dane dla dedykowanego konta galerii E20.
+// Trwałe, idempotentne dane galerii E20 na każdym przekazanym koncie.
 // Nie usuwamy ich po przebiegu: następne zrzuty mają korzystać z tych samych
-// rekordów i tych samych adresów. Każda nazwa jest ograniczona do test17.
+// rekordów i tych samych adresów. Fixture'y należą do konta, które je seeduje.
 const fs = require("node:fs");
 const path = require("node:path");
 
