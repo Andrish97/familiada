@@ -1,10 +1,8 @@
 // js/core/game-state-subscribe.js
-// Odczyt stanu gry dla urządzeń v2 (Display/Host/Buzzer) — WYŁĄCZNIE przez
-// game_state_get (RPC, SECURITY DEFINER, sprawdza share_key wewnątrz
-// siebie), nigdy przez bezpośredni SELECT ani postgres_changes (świadomie
-// zablokowane dla anon, patrz plan sekcja 1 — decyzja końcowa, nie
-// tymczasowy fallback). Wspólne dla display/host/buzzer — parametryzowane
-// przez deviceType, żeby nie duplikować identycznej logiki trzy razy.
+// Devices use a short-lived, lease-scoped JWT for direct postgres_changes.
+// RPC bootstrap, the existing Broadcast doorbell and polling remain active
+// during rollout and recover missed events. Realtime payloads only signal
+// that the authoritative row should be fetched again through game_state_get.
 //
 // Mechanizm: (1) bootstrap — jedno wywołanie RPC przy starcie strony;
 // (2) "dzwonek" — Control po każdym zapisie wysyła malutki, nieautorytatywny
@@ -16,7 +14,7 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb } from "./supabase.js?v=v2026-10-15T20410";
+import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-15T20410";
 import { rt } from "./realtime.js?v=v2026-10-15T20410";
 import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-15T20410";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-15T20410";
@@ -24,6 +22,9 @@ import { createRowSync } from "./game-state-sync.js?v=v2026-10-15T20410";
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, pollMs = 5000, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
   let active = false;
   let pollTimer = null;
+  let directChannel = null;
+  let tokenTimer = null;
+  let directUnavailableLogged = false;
   // Limit czasu: zawieszone żądanie trzymało `fetching` na zawsze i wszystkie
   // kolejne dzwonki tylko zaznaczały pendingRefetch (urządzenie zostawało na
   // starym stanie). Szczegóły: game-state-sync.js.
@@ -56,6 +57,59 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     }
   }
 
+  async function startDirect() {
+    if (!active) return;
+    const lease = getLeaseArgs();
+    if (!lease?.p_connection_id || !lease?.p_epoch) return;
+    try {
+      const { data, error } = await sb().functions.invoke("device-realtime-token", {
+        body: { game_id: gameId, device_type: deviceType, key,
+          connection_id: lease.p_connection_id, epoch: lease.p_epoch },
+      });
+      if (error || !data?.token || !active) throw error || new Error("Brak tokenu Realtime");
+      await sb().realtime.setAuth(data.token);
+      if (!active) { try { await sb().realtime.setAuth(SUPABASE_ANON_KEY); } catch {} return; }
+      directUnavailableLogged = false;
+      if (directChannel) await sb().removeChannel(directChannel);
+      directChannel = sb().channel(`game-state-direct:${gameId}:${deviceType}:${lease.p_connection_id}`);
+      directChannel.on("postgres_changes", {
+        event: "*", schema: "public", table: "game_state", filter: `game_id=eq.${gameId}`,
+      }, (payload) => {
+        const rev = Number(payload?.new?.rev);
+        if (Number.isFinite(rev) && rev > sync.lastRev) fetchGuarded();
+      }).subscribe((status) => {
+        if (status === "SUBSCRIBED" && active) fetchGuarded();
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.warn(`[device-realtime] ${status}; działa transport awaryjny`);
+        }
+      });
+      clearTimeout(tokenTimer);
+      tokenTimer = setTimeout(() => { if (active) void startDirect(); }, 240_000);
+    } catch (error) {
+      // No token/config or temporary Realtime failure: RPC + doorbell + poll
+      // remain active, so the current transport continues to work.
+      if (active) {
+        if (!directUnavailableLogged) {
+          console.info("[device-realtime] bezpośredni kanał niedostępny; działa transport awaryjny", error);
+          directUnavailableLogged = true;
+        }
+        clearTimeout(tokenTimer);
+        tokenTimer = setTimeout(() => { if (active) void startDirect(); }, 15_000);
+      }
+    }
+  }
+
+  async function stopDirect() {
+    clearTimeout(tokenTimer);
+    tokenTimer = null;
+    if (directChannel) {
+      const channel = directChannel;
+      directChannel = null;
+      await sb().removeChannel(channel).catch(() => {});
+    }
+    try { await sb().realtime.setAuth(SUPABASE_ANON_KEY); } catch {}
+  }
+
   async function start() {
     if (active) return;
     active = true;
@@ -63,6 +117,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     await fetchGuarded();
     if (!active) return;
     subscribeDoorbell();
+    void startDirect();
     // Dzwonek wysłany między bootstrapem a dołączeniem do kanału przepada
     // (broadcast nie ma historii), a bez kolejnego zapisu urządzenie zostałoby
     // na starym stanie. Po SUBSCRIBED dociągnij stan jeszcze raz (tani no-op,
@@ -85,6 +140,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       fetchGuarded();
       rt(doorbellTopic(gameId)).reset();
       subscribeDoorbell();
+      void stopDirect().finally(startDirect);
     };
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pageshow", resync);
@@ -106,6 +162,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     window.removeEventListener("pageshow", resync);
     window.removeEventListener("online", resync);
     rt(doorbellTopic(gameId)).reset();
+    void stopDirect();
   }
 
   // Dla Buzzera: game_state_buzzer_press zwraca już świeży wiersz w tej

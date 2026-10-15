@@ -1,10 +1,9 @@
 // tests/e2e/game-state-realtime-spike.spec.js
 //
-// Historia: ten plik zaczynał jako test-spike sprawdzający, czy
-// `postgres_changes` na public.game_state dochodzi do roli `anon`
-// (Display/Host/Buzzer). Odpowiedź (seria uruchomień 2026-09-04/05,
-// łącznie z ręczną diagnozą bezpośrednio na produkcyjnym self-hosted
-// Supabase): NIE — i to nie jest błąd konfiguracji do naprawienia.
+// Zwykły JWT anon nie może odbierać `postgres_changes` z public.game_state.
+// Migration 375 dodaje osobną, wąską politykę dla 5-minutowego JWT, który
+// backend wystawia dopiero po sprawdzeniu klucza urządzenia i primary lease.
+// Ten test nadal sprawdza brak dostępu bez tego scoped tokenu.
 //
 // Wykluczone kolejno jako przyczyna (wszystkie poprawne): publikacja
 // supabase_realtime, slot replikacji, REPLICA IDENTITY FULL, GRANT SELECT
@@ -17,23 +16,16 @@
 // baseline) wymaga niestandardowego JWT-claimu "share_key", którego nic w
 // tym repo nigdy nie ustawia.
 //
-// Decyzja architektoniczna (migracja 2026-09-05_261): zamiast to naprawiać,
-// usunięto politykę anon na game_state CAŁKOWICIE — dokładnie jak dziś
-// public.device_state (zero polityki SELECT dla anon). Prawdziwe
-// zabezpieczenie treści gry ma być egzekwowane wyłącznie przez
-// share_key/6-cyfrowy kod sprawdzany WEWNĄTRZ SECURITY DEFINER RPC
-// (game_state_get) — nie przez RLS na surowej tabeli. Ktoś odpytujący
-// game_state bezpośrednio (REST, postgres_changes) bez przejścia przez ten
-// RPC ma dostać zero wierszy ZAWSZE, niezależnie od statusu gry czy
-// znajomości game_id.
+// Decyzja migracji 261 nadal obowiązuje wobec zwykłego JWT anon: nie ma
+// szerokiej polityki SELECT, a klucz urządzenia jest sprawdzany przez
+// SECURITY DEFINER RPC. Migracja 375 dodaje osobną politykę RLS dla
+// podpisanego, krótkotrwałego JWT z aktualnym primary lease. Ktoś odpytujący
+// bezpośrednio bez takiego JWT nadal dostaje zero wierszy.
 //
-// Ten plik teraz pilnuje właśnie TEGO — że anon nigdy nie widzi wiersza
-// bezpośrednio, a jedyna działająca droga to game_state_get z poprawnym
-// kluczem. To świadomy, trwały stan, nie coś do "naprawienia" jeśli kiedyś
-// zacznie się zmieniać (np. przy upgradzie Realtime) — stąd deterministyczne
-// asercje zamiast pollowania z 20s timeoutem jak w poprzedniej wersji tego
-// testu.
-//
+// Ten scenariusz pilnuje braku dostępu zwykłego anon i sprawdza, że
+// game_state_get z poprawnym kluczem pozostaje działający. Niżej osobny E2E
+// sprawdza token scoped i dostarczenie zmiany przez postgres_changes.
+
 // Dotyka wyłącznie nowej, addytywnej tabeli public.game_state (migracje
 // 259/260/261) — zero wpływu na dzisiejszy control.html/display/index.html i ich
 // dane.
@@ -41,7 +33,7 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
 
-test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyną drogą jest game_state_get z poprawnym kluczem", async ({
+test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state_get nadal działa z kluczem", async ({
   page,
   browser,
 }) => {
@@ -105,8 +97,8 @@ test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyn�
     }, game.id);
     expect(badKeyResult.error, "game_state_get z błędnym kluczem powinno rzucić błąd").toContain("forbidden");
 
-    // 3) game_state_get z POPRAWNYM kluczem — to jest jedyna działająca
-    //    droga odczytu dla anon, i musi zwrócić prawdziwy stan gry.
+    // 3) game_state_get z POPRAWNYM kluczem pozostaje działającą ścieżką
+    //    dla zwykłego JWT anon i musi zwrócić prawdziwy stan gry.
     const goodKeyResult = await anonPage.evaluate(
       async ({ gid, key }) => {
         const sb = window.__sbClient;
@@ -164,5 +156,116 @@ test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyn�
       const sb = window.__sbClient;
       await sb.from("games").delete().eq("id", gid);
     }, game.id);
+  }
+});
+
+test("control2: krótkotrwały token primary dostarcza zmiany game_state przez postgres_changes", async ({ page, browser }) => {
+  await loginAsTestUser(page, page.context());
+  const gameName = `E2E-GAME-STATE-SCOPED-REALTIME-${Date.now()}`;
+  const game = await page.evaluate(async (name) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("games").insert({
+      name, owner_id: userData.user.id, type: "prepared", status: "ready",
+    }).select("id").single();
+    if (error) throw error;
+    return data;
+  }, gameName);
+  const deviceContext = await browser.newContext();
+  let channelName = "";
+  try {
+    const { error: seedError } = await page.evaluate(async gid => {
+      const { error } = await window.__sbClient.rpc("game_state_write", {
+        p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
+        p_phase: null, p_control_team: null,
+        p_detail: { teams: { teamA: "Seed A", teamB: "Seed B" } },
+        p_sound_cue_key: null, p_expected_rev: null,
+      });
+      return { error };
+    }, game.id);
+    expect(seedError, "seed game_state_write should succeed").toBeNull();
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    const keyResult = await page.evaluate(async (gid) => {
+      const { data, error } = await window.__sbClient.rpc("control_runtime_device_link", {
+        p_game_id: gid, p_device_type: "display",
+      });
+      if (error || !data?.ok) throw error || new Error(data?.error || "link failed");
+      return data.token;
+    }, game.id);
+
+    const devicePage = await deviceContext.newPage();
+    let lease = null;
+    devicePage.on("request", request => {
+      if (!request.url().includes("control_device_instance_register")) return;
+      try {
+        const body = JSON.parse(request.postData() || "{}");
+        lease = { connection_id: body.p_connection_id, epoch: null };
+      } catch {}
+    });
+    devicePage.on("response", async response => {
+      if (!response.url().includes("control_device_instance_register")) return;
+      try {
+        const data = await response.json();
+        if (lease && data?.state === "primary") lease.epoch = data.epoch;
+      } catch {}
+    });
+    await devicePage.goto(`/control/display?id=${game.id}&key=${keyResult}`, { waitUntil: "domcontentloaded" });
+    await expect(devicePage.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
+    await expect.poll(() => lease?.connection_id && lease?.epoch).toBeTruthy();
+
+    const direct = await devicePage.evaluate(async ({ gid, key, lease }) => {
+      const sb = window.__sbClient;
+      const { data, error } = await sb.functions.invoke("device-realtime-token", {
+        body: { game_id: gid, device_type: "display", key,
+          connection_id: lease.connection_id, epoch: lease.epoch },
+      });
+      if (error || !data?.token) throw error || new Error(data?.error || "missing realtime token");
+      const { data: before, error: readError } = await sb.rpc("game_state_get", {
+        p_game_id: gid, p_device_type: "display", p_key: key,
+        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+      });
+      if (readError) throw readError;
+      await sb.realtime.setAuth(data.token);
+      const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
+      const channel = sb.channel(channelName).on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
+      }, payload => {
+        if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedRealtimeRev = payload.new.rev;
+      });
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("postgres_changes subscribe timeout")), 12000);
+        channel.subscribe(status => {
+          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            clearTimeout(timeout); reject(new Error(`postgres_changes: ${status}`));
+          }
+        });
+      });
+      return { channelName, beforeRev: before?.rev };
+    }, { gid: game.id, key: keyResult, lease });
+    channelName = direct.channelName;
+
+    const { error: writeError } = await page.evaluate(async gid => {
+      const { error } = await window.__sbClient.rpc("game_state_write", {
+        p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
+        p_phase: null, p_control_team: null,
+        p_detail: { teams: { teamA: "Realtime A", teamB: "Realtime B" } },
+        p_sound_cue_key: null, p_expected_rev: null,
+      });
+      return { error };
+    }, game.id);
+    expect(writeError, "owner game_state_write should succeed").toBeNull();
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 12000 })
+      .not.toBeNull();
+  } finally {
+    if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
+      const sb = window.__sbClient;
+      const channel = sb.getChannels().find(item => item.topic.endsWith(name));
+      if (channel) await sb.removeChannel(channel);
+      await sb.realtime.setAuth(undefined);
+    }, channelName).catch(() => {});
+    await deviceContext.close().catch(() => {});
+    await page.evaluate(async gid => { await window.__sbClient.from("games").delete().eq("id", gid); }, game.id);
   }
 });
