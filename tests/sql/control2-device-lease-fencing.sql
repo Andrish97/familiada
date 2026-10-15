@@ -32,6 +32,7 @@ CREATE FUNCTION public.control2_display_event(uuid,text,jsonb) RETURNS boolean L
 
 \ir ../../supabase/migrations/2026-10-15_371_control2_device_leases.sql
 \ir ../../supabase/migrations/2026-10-15_372_control2_device_lease_fencing.sql
+\ir ../../supabase/migrations/2026-10-15_373_legacy_buzzer_ready_compat.sql
 
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
@@ -46,7 +47,8 @@ INSERT INTO public.control_runtime_sessions(id,game_id,owner_id,device_protocol)
  ('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000001',1);
 INSERT INTO public.control_device_link_tokens(session_id,game_id,device_type,token) VALUES
  ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001'),
- ('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002');
+ ('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002'),
+ ('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','buzzer','30000000-0000-0000-0000-000000000003');
 INSERT INTO public.game_state(game_id,step,detail,rev,updated_at) VALUES
  ('10000000-0000-0000-0000-000000000001','setup', '{}'::jsonb,1,now()),
  ('10000000-0000-0000-0000-000000000002','setup', '{}'::jsonb,1,now());
@@ -55,6 +57,7 @@ SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000
 SELECT pg_temp.assert_true(_control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1),'current primary epoch authorizes device RPC');
 SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1) IS NOT NULL,'fenced RPC can read state for current primary');
 SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002') IS NOT NULL,'legacy key-only RPC remains available for protocol 1');
+SELECT pg_temp.assert_true(NOT game_state_display_is_ready('10000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000003'),'legacy Buzzer can still call ready RPC without device_type');
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',2),'stale epoch is denied');
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001',NULL,NULL),'key-only legacy call is denied for protocol 2');
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002')->>'state')='waiting','second display queues');
