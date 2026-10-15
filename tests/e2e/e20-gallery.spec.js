@@ -68,7 +68,10 @@ function additionalStates(fixtures) {
       prepare: async (page) => {
         const tile = page.locator(`.card[data-game-id="${fixtures.game.id}"]`);
         await tile.waitFor({ state: "visible", timeout: 20_000 });
-        await tile.click();
+        // Na mobilnych viewportach Playwright może próbować przewijać listę
+        // podczas syntetycznego tapnięcia i utkwić na kaflu. Kliknięcie DOM
+        // uruchamia ten sam handler aplikacji bez zależności od geometrii dotyku.
+        await tile.evaluate((element) => element.click());
         await expect(tile).toHaveClass(/selected/);
       },
     },
