@@ -489,7 +489,13 @@ body.games-body > main.wrap{
   min-width: 0;
   margin-left: 0;
 }
-.games-bottom-right .btn{ white-space: nowrap; }
+.games-bottom-right .btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  white-space:nowrap;
+}
 .games-bottom:has(.games-bottom-left):has(.games-bottom-right){justify-content:space-between}
 .games-bottom .only-desktop{ display: inline !important; }
 
@@ -861,7 +867,7 @@ body.games-body > main.wrap{
 .list-search .searchBox{width:auto;flex:1 1 auto;min-width:0;height:36px;box-sizing:border-box;padding:0 5px 0 10px;margin:0}
 .list-search .searchText{height:100%;padding:0 4px}
 .list-search .btn{ padding: 0; min-height: 36px; }
-.list-search-open{ display: grid; place-items: center; width: 36px; height: 36px; min-height: 36px !important; flex: 0 0 36px; border-radius: 10px; }
+.list-search-open{ display: inline-flex; align-items:center; justify-content:center; width: 36px; height: 36px; min-height: 36px !important; flex: 0 0 36px; border-radius: 10px; }
 .list-search-open .ico{width:18px;height:18px}
 .list-search-open.is-active{ color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
 @media (max-width: 600px){
@@ -878,7 +884,7 @@ body.games-body > main.wrap{
 }
 @media (max-width: 600px){
   .games-bottom-left{ flex: 0 1 auto; min-width: 0; gap: 4px; }
-  .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
+  .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: inline-flex; align-items:center; justify-content:center; }
   .games-bottom-left > #btnReceivedFilter[aria-pressed="true"]{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
   .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{ color: var(--gold); }
   .list-filter .ui-select-menu, .list-sort .ui-select-menu{ max-height: min(55dvh, 420px); }
@@ -887,7 +893,7 @@ body.games-body > main.wrap{
   .games-bottom-left > #btnReceivedFilter .ico{ width: 18px; height: 18px; }
   .games-bottom-left .list-search{ flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
   .list-search .searchBox{ display:none; }
-  .list-search .list-search-open{ display: grid; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
+  .list-search .list-search-open{ display: inline-flex; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
 }
 .list-empty{
   grid-column: 1 / -1;
@@ -932,8 +938,10 @@ body.games-body > main.wrap{
   height:36px;
   min-height:36px;
   padding:0;
-  display:grid;
-  place-items:center;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:0;
 }
 .games-bottom.is-compact-icons .list-filter,
 .games-bottom.is-compact-icons .list-sort{
