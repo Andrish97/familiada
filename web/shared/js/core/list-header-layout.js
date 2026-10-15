@@ -194,8 +194,14 @@ function initListBottomToolbarLayout() {
         .some((label) => label.getClientRects().length);
       const textLayout = chooseLayout(textLeft, textRight);
       const iconLayout = chooseLayout(iconLeft, iconRight);
+      const textRows = textLayout ? Math.max(textLayout.leftRows.length, textLayout.rightRows.length) : 0;
+      const iconRows = iconLayout ? Math.max(iconLayout.leftRows.length, iconLayout.rightRows.length) : 0;
+      // Trzy lub więcej wierszy tekstowych jest już zbyt wysokim paskiem.
+      // Jeśli wariant ikon skraca układ, wybierz go; przy mniejszej różnicy
+      // wymagaj wyraźnej oszczędności dwóch wierszy. Decyzja wynika wyłącznie
+      // z dostępnej szerokości i zmierzonej liczby wierszy.
       const useIcons = hasVisibleTextLabels && textLayout && iconLayout
-        && textLayout.score[0] - iconLayout.score[0] >= 2;
+        && ((textRows > 2 && iconRows < textRows) || textRows - iconRows >= 2);
       bar.classList.toggle("is-compact-icons", Boolean(useIcons));
       const leftMeasure = useIcons ? iconLeft : textLeft;
       const rightMeasure = useIcons ? iconRight : textRight;
