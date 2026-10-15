@@ -148,8 +148,16 @@ function initListBottomToolbarLayout() {
       const candidateWidths = (items, gap) => {
         if (!items.length) return [0];
         const widths = new Set();
-        for (let end = 1; end <= items.length; end++) {
-          widths.add(items.slice(0, end).reduce((total, width) => total + width, 0) + (end - 1) * gap);
+        // Każdy rząd może zaczynać się od innego przycisku. Mierz wszystkie
+        // ciągłe zestawy, nie tylko prefiksy grupy; inaczej algorytm nie widzi
+        // szerokości potrzebnej np. dla drugiej pary i niepotrzebnie tworzy
+        // dodatkowy rząd.
+        for (let start = 0; start < items.length; start++) {
+          let width = 0;
+          for (let end = start; end < items.length; end++) {
+            width += items[end] + (end > start ? gap : 0);
+            widths.add(width);
+          }
         }
         return [...widths].sort((a, b) => a - b);
       };
