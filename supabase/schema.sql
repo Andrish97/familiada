@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nSttWInfsmrZwPgtxQGDIFjCUsErb5dtpBLc7bnNqDIBzE9vtcady2d02SaC7TW
+\restrict YU3uik6tqw3g9QVxQzHPWivchOh335texK7FdAdo4nxr9ZAzdSWOj3TgUdJkQMz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7871,15 +7871,32 @@ CREATE FUNCTION "public"."game_state_display_complete"("p_game_id" "uuid", "p_ke
     AS $$
 DECLARE current_rev bigint;
 BEGIN
-  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
   SELECT rev INTO current_rev FROM public.game_state WHERE game_id=p_game_id;
-  IF current_rev IS NULL OR p_rev IS NULL OR p_rev<0 OR p_rev>current_rev THEN RAISE EXCEPTION 'invalid revision'; END IF;
-  INSERT INTO public.game_state_display_completion(game_id,rendered_rev) VALUES(p_game_id,p_rev)
-    ON CONFLICT(game_id) DO UPDATE SET rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
+  IF current_rev IS NULL OR p_rev IS NULL OR p_rev<0 OR p_rev>current_rev THEN
+    RAISE EXCEPTION 'invalid revision';
+  END IF;
+
+  INSERT INTO public.game_state_display_completion(game_id,rendered_rev)
+    VALUES(p_game_id,p_rev)
+    ON CONFLICT(game_id) DO UPDATE
+      SET rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
+
+  -- This update emits the acknowledgment through the same RLS protected
+  -- game_state stream already consumed by every device.
   UPDATE public.game_state
     SET display_rendered_rev=greatest(display_rendered_rev,p_rev)
     WHERE game_id=p_game_id AND display_rendered_rev<p_rev;
 END $$;
+
+
+--
+-- Name: FUNCTION "game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint, "p_connection_id" "uuid", "p_epoch" bigint); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint, "p_connection_id" "uuid", "p_epoch" bigint) IS 'Fenced Display acknowledgment. Persists the completion row and mirrors rendered_rev to game_state so all devices receive the acknowledgment on their scoped Realtime stream.';
 
 
 --
@@ -18224,6 +18241,8 @@ CREATE TABLE "public"."game_state_display_completion" (
     "requested_rev" bigint DEFAULT 0 NOT NULL
 );
 
+ALTER TABLE ONLY "public"."game_state_display_completion" REPLICA IDENTITY FULL;
+
 
 --
 -- Name: game_state_history; Type: TABLE; Schema: public; Owner: -
@@ -23361,6 +23380,20 @@ CREATE POLICY "display_audio_unlock_owner_read" ON "public"."display_audio_unloc
 
 
 --
+-- Name: game_state_display_completion display_completion_device_realtime_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" FOR SELECT TO "anon" USING ("public"."control_device_realtime_claim_valid"("game_id", "auth"."jwt"()));
+
+
+--
+-- Name: POLICY "display_completion_device_realtime_read" ON "game_state_display_completion"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" IS 'Allows only a signed primary-device JWT with a current lease to receive the completion row for its game.';
+
+
+--
 -- Name: game_state_display_completion display_completion_owner; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -24572,5 +24605,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nSttWInfsmrZwPgtxQGDIFjCUsErb5dtpBLc7bnNqDIBzE9vtcady2d02SaC7TW
+\unrestrict YU3uik6tqw3g9QVxQzHPWivchOh335texK7FdAdo4nxr9ZAzdSWOj3TgUdJkQMz
 
