@@ -256,8 +256,15 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       await sb.realtime.setAuth(data.token);
       const { data: completionBefore, error: completionReadError } = await sb
         .from("game_state_display_completion").select("rendered_rev,requested_rev").eq("game_id", gid).single();
-      if (completionReadError) throw completionReadError;
-      if (!completionBefore) throw new Error("scoped primary cannot read its Display completion row");
+      const completionRead = {
+        data: completionBefore,
+        error: completionReadError ? {
+          code: completionReadError.code || null,
+          message: completionReadError.message || String(completionReadError),
+          details: completionReadError.details || null,
+          hint: completionReadError.hint || null,
+        } : null,
+      };
       const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
       const channel = sb.channel(channelName).on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
@@ -291,8 +298,10 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       // Give Realtime's postgres_changes listener a short settle interval
       // after the channel join acknowledgement before the first write.
       await new Promise(resolve => setTimeout(resolve, 500));
-      return { channelName, completionChannelName, beforeRev: before?.rev, completionBefore };
+      return { channelName, completionChannelName, beforeRev: before?.rev, completionRead };
     }, { gid: game.id, key: keyResult, lease });
+    expect(direct.completionRead.error, "scoped primary must be able to read its completion row").toBeNull();
+    expect(direct.completionRead.data).toBeTruthy();
     channelName = direct.channelName;
     completionChannelName = direct.completionChannelName;
 
