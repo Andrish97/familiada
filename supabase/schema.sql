@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AmC6sQwfsYfZGkHgafNKj9XkEpYh7VXonrWAheXlI3dXdlm4bFlOSYpUlH6dEBx
+\restrict x1Swg25qUumJZ3NeU5P7FhJGGATDyW0WMlfLkTccL7Ryjbt3w9CTLBWQAbSaLdz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4776,7 +4776,7 @@ END; $$;
 -- Name: control2_display_event("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."control2_display_event"("p_game_id" "uuid", "p_key" "text", "p_event" "jsonb") RETURNS "void"
+CREATE FUNCTION "public"."control2_display_event"("p_game_id" "uuid", "p_key" "text", "p_event" "jsonb") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
@@ -4799,8 +4799,8 @@ BEGIN
   SELECT a.session_id INTO sid
   FROM public.game_session_active a
   JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
-  WHERE a.game_id=p_game_id AND s.control_version=2;
-  IF sid IS NULL THEN RETURN; END IF;
+  WHERE a.game_id=p_game_id AND s.control_version=2 AND s.ended_at IS NULL;
+  IF sid IS NULL THEN RETURN false; END IF;
 
   IF event_name='page_state' THEN
     event_details := jsonb_build_object(
@@ -4828,16 +4828,17 @@ BEGIN
     );
   END IF;
 
-  INSERT INTO public.control2_device_events(game_id,session_id,event_type,details)
-  VALUES (p_game_id,sid,event_name,event_details);
+  INSERT INTO public.control2_device_events(game_id,session_id,event_type,event_id,details)
+  VALUES (p_game_id,sid,event_name,left(p_event->>'event_id',80),event_details)
+  ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
 
-  -- Keep the log bounded even for a frequently reused game.
   DELETE FROM public.control2_device_events e
   WHERE e.game_id=p_game_id
     AND (e.created_at < now()-interval '30 days' OR e.id IN (
       SELECT id FROM public.control2_device_events
       WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500
     ));
+  RETURN true;
 END;
 $$;
 
@@ -17352,6 +17353,7 @@ CREATE TABLE "public"."control2_device_events" (
     "event_type" "text" NOT NULL,
     "details" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "event_id" "text",
     CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = 'display'::"text")),
     CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text"])))
 );
@@ -19765,6 +19767,13 @@ CREATE INDEX "base_share_tasks_status_created_idx" ON "public"."base_share_tasks
 --
 
 CREATE INDEX "base_share_tasks_token_idx" ON "public"."base_share_tasks" USING "btree" ("token");
+
+
+--
+-- Name: control2_device_events_event_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "control2_device_events_event_id_idx" ON "public"."control2_device_events" USING "btree" ("game_id", "event_id") WHERE ("event_id" IS NOT NULL);
 
 
 --
@@ -23929,5 +23938,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AmC6sQwfsYfZGkHgafNKj9XkEpYh7VXonrWAheXlI3dXdlm4bFlOSYpUlH6dEBx
+\unrestrict x1Swg25qUumJZ3NeU5P7FhJGGATDyW0WMlfLkTccL7Ryjbt3w9CTLBWQAbSaLdz
 
