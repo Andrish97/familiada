@@ -741,6 +741,7 @@ main{
 .modal {
     box-sizing: border-box;
     width: min(860px,94vw);
+    margin-inline: auto;
     border-radius: 22px;
     border: 1px solid var(--line);
     /* kryjące (= --card na zaciemnionym tle nakładki) */

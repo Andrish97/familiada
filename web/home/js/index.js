@@ -1,9 +1,9 @@
-import "../../shared/js/core/orientation-guard.js?v=v2026-10-15T21472";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-15T21472";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T21472";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-15T21472";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T21472";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-15T21472";
+import "../../shared/js/core/orientation-guard.js?v=v2026-10-15T21530";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-15T21530";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T21530";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-15T21530";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T21530";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-15T21530";
 
 async function redirectIfSession() {
   try {

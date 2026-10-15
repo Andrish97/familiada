@@ -73,7 +73,7 @@ Pracować po kolei. Po zakończeniu każdej uwagi zatrzymać się przed następn
 | 4 | W mobilnych modalach widać po dwie linie rozdzielające. | Naprawione lokalnie we wspólnym arkuszu modalnym: gdy widoczny jest pasek akcji, pozostaje separator pod nim, a separator wewnętrznego nagłówka jest wyłączony. Bez paska akcji nagłówek zachowuje separator. |
 | 5 | Modal QR na Display: odstępy między sekcjami są zbyt małe. | Naprawione lokalnie: w mobilnym modalu QR w Control przywrócono pionowy układ `.uni-body` i odstęp 20 px między widocznymi sekcjami. |
 | 6 | Ankiety mobile: karty są zagnieżdżone/powielone, np. anonimowość w drugiej karcie. | Naprawione lokalnie: wewnętrzne sekcje Udostępniania nie rysują drugiej karty wewnątrz `.polls-card`; mobilne wypustki „Anonimowo” i „Odbiorcy” identyfikują aktywną sekcję, więc powtórzone nagłówki są ukryte. Ramki konkretnych elementów, np. sceny QR, pozostają. |
-| 7 | Zwykłe modale są przesunięte w lewo względem środka. | Oczekuje. |
+| 7 | Zwykłe modale są przesunięte w lewo względem środka. | Naprawione lokalnie: `.modal` otrzymał wspólne poziome auto-marginesy, które centrują okna także wtedy, gdy skrypt pokazuje overlay jako flex lub block zamiast grid. Mobilne arkusze zachowują własne marginesy. |
 | 8 | Mail: pole wyboru ma pokazywać sugerowany tekst zamiast hinta nad polem. | Oczekuje. |
 | 9 | Import pytań w edytorze gier ma stary styl. | Oczekuje. |
 | 10 | Modal wyboru koloru w Game Settings ma niespójny styl. | Oczekuje. |
