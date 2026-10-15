@@ -64,6 +64,7 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
         p_detail: { teams: { teamA: "Spike A", teamB: "Spike B" } },
         p_sound_cue_key: null,
         p_expected_rev: null,
+        p_lock_ms: null,
       });
       return error?.message || null;
     }, game.id);
@@ -179,7 +180,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
         p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
         p_phase: null, p_control_team: null,
         p_detail: { teams: { teamA: "Seed A", teamB: "Seed B" } },
-        p_sound_cue_key: null, p_expected_rev: null,
+        p_sound_cue_key: null, p_expected_rev: null, p_lock_ms: null,
       });
       return { error };
     }, game.id);
@@ -251,7 +252,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
         p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
         p_phase: null, p_control_team: null,
         p_detail: { teams: { teamA: "Realtime A", teamB: "Realtime B" } },
-        p_sound_cue_key: null, p_expected_rev: null,
+        p_sound_cue_key: null, p_expected_rev: null, p_lock_ms: null,
       });
       return { error };
     }, game.id);
