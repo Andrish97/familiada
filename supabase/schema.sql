@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nSttWInfsmrZwPgtxQGDIFjCUsErb5dtpBLc7bnNqDIBzE9vtcady2d02SaC7TW
+\restrict pEfljccLue5qwEsFzXquDa5KVLL6YFbvIQjwaf3WdA7LqQC8xQqo0nUT2a7urXq
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -18212,6 +18212,8 @@ CREATE TABLE "public"."game_state_display_completion" (
     "requested_rev" bigint DEFAULT 0 NOT NULL
 );
 
+ALTER TABLE ONLY "public"."game_state_display_completion" REPLICA IDENTITY FULL;
+
 
 --
 -- Name: game_state_history; Type: TABLE; Schema: public; Owner: -
@@ -23349,6 +23351,20 @@ CREATE POLICY "display_audio_unlock_owner_read" ON "public"."display_audio_unloc
 
 
 --
+-- Name: game_state_display_completion display_completion_device_realtime_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" FOR SELECT TO "anon" USING ("public"."control_device_realtime_claim_valid"("game_id", "auth"."jwt"()));
+
+
+--
+-- Name: POLICY "display_completion_device_realtime_read" ON "game_state_display_completion"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" IS 'Allows only a signed primary-device JWT with a current lease to receive the completion row for its game.';
+
+
+--
 -- Name: game_state_display_completion display_completion_owner; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -24560,5 +24576,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nSttWInfsmrZwPgtxQGDIFjCUsErb5dtpBLc7bnNqDIBzE9vtcady2d02SaC7TW
+\unrestrict pEfljccLue5qwEsFzXquDa5KVLL6YFbvIQjwaf3WdA7LqQC8xQqo0nUT2a7urXq
 
