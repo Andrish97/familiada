@@ -205,7 +205,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
   }, gameName);
   const deviceContext = await browser.newContext();
   let channelName = "";
-  let completionChannelName = "";
+  let ownerCompletionChannelName = "";
   try {
     const { error: seedError } = await page.evaluate(async gid => {
       const { error } = await window.__sbClient.rpc("game_state_write", {
@@ -230,24 +230,16 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     }, game.id);
 
     const devicePage = await deviceContext.newPage();
-    let lease = null;
-    devicePage.on("request", request => {
-      if (!request.url().includes("control_device_instance_register")) return;
-      try {
-        const body = JSON.parse(request.postData() || "{}");
-        lease = { connection_id: body.p_connection_id, epoch: null };
-      } catch {}
-    });
-    devicePage.on("response", async response => {
-      if (!response.url().includes("control_device_instance_register")) return;
-      try {
-        const data = await response.json();
-        if (lease && data?.state === "primary") lease.epoch = data.epoch;
-      } catch {}
-    });
-    await devicePage.goto(`/control/display?id=${game.id}&key=${keyResult}`, { waitUntil: "domcontentloaded" });
-    await expect(devicePage.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
-    await expect.poll(() => lease?.connection_id && lease?.epoch).toBeTruthy();
+    await devicePage.goto("/", { waitUntil: "domcontentloaded" });
+    const lease = await devicePage.evaluate(async ({ gid, key }) => {
+      const connectionId = crypto.randomUUID();
+      const { data, error } = await window.__sbClient.rpc("control_device_instance_register", {
+        p_game_id: gid, p_device_type: "display", p_key: key,
+        p_connection_id: connectionId, p_meta: { visibility: "visible", focused: true },
+      });
+      if (error || data?.state !== "primary") throw error || new Error("display did not become primary");
+      return { connection_id: connectionId, epoch: data.epoch };
+    }, { gid: game.id, key: keyResult });
 
     const direct = await devicePage.evaluate(async ({ gid, key, lease }) => {
       const sb = window.__sbClient;
@@ -256,6 +248,24 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
           connection_id: lease.connection_id, epoch: lease.epoch },
       });
       if (error || !data?.token) throw error || new Error(data?.error || "missing realtime token");
+      const scopedRest = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, {
+        global: { headers: { Authorization: `Bearer ${data.token}` } },
+      });
+      const { data: completionRows, error: completionReadError } = await scopedRest
+        .from("game_state_display_completion").select("game_id,rendered_rev")
+        .eq("game_id", gid);
+      if (completionReadError) throw completionReadError;
+      window.__scopedCompletionReadCount = completionRows?.length ?? 0;
+      // Realtime RLS deliberately checks the live connection heartbeat. Keep
+      // this bare-page fixture alive at the same cadence as the real device
+      // lease client, which normally runs every three seconds.
+      window.__deviceHeartbeatTimer = setInterval(() => {
+        void sb.rpc("control_device_instance_heartbeat", {
+          p_game_id: gid, p_device_type: "display", p_key: key,
+          p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+          p_meta: { visibility: "visible", focused: true },
+        });
+      }, 3000);
       const { data: before, error: readError } = await sb.rpc("game_state_get", {
         p_game_id: gid, p_device_type: "display", p_key: key,
         p_connection_id: lease.connection_id, p_epoch: lease.epoch,
@@ -266,13 +276,10 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       const channel = sb.channel(channelName).on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
       }, payload => {
+        if (Number(payload?.new?.display_rendered_rev) > 0) {
+          window.__scopedRealtimeRenderedRev = payload.new.display_rendered_rev;
+        }
         if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedRealtimeRev = payload.new.rev;
-      });
-      const completionChannelName = `e2e-scoped-completion:${crypto.randomUUID()}`;
-      const completionChannel = sb.channel(completionChannelName).on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
-      }, payload => {
-        if (Number(payload?.new?.rendered_rev) > 0) window.__scopedRealtimeCompletionRev = payload.new.rendered_rev;
       });
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error("postgres_changes subscribe timeout")), 12000);
@@ -283,22 +290,30 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
           }
         });
       });
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("completion postgres_changes subscribe timeout")), 12000);
-        completionChannel.subscribe(status => {
-          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
-          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            clearTimeout(timeout); reject(new Error(`completion postgres_changes: ${status}`));
-          }
-        });
-      });
       // Give Realtime's postgres_changes listener a short settle interval
       // after the channel join acknowledgement before the first write.
       await new Promise(resolve => setTimeout(resolve, 500));
-      return { channelName, completionChannelName, beforeRev: before?.rev };
+      return { channelName, beforeRev: before?.rev };
     }, { gid: game.id, key: keyResult, lease });
     channelName = direct.channelName;
-    completionChannelName = direct.completionChannelName;
+    expect(await devicePage.evaluate(() => window.__scopedCompletionReadCount)).toBe(1);
+
+    ownerCompletionChannelName = `e2e-owner-completion:${crypto.randomUUID()}`;
+    await page.evaluate(async ({ gid, channelName }) => {
+      const sb = window.__sbClient;
+      const channel = sb.channel(channelName).on("postgres_changes", {
+        event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
+      }, payload => { window.__ownerRealtimeCompletionRev = payload?.new?.rendered_rev ?? null; });
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("owner completion subscribe timeout")), 12000);
+        channel.subscribe(status => {
+          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            clearTimeout(timeout); reject(new Error(`owner completion postgres_changes: ${status}`));
+          }
+        });
+      });
+    }, { gid: game.id, channelName: ownerCompletionChannelName });
 
     const { error: writeError } = await page.evaluate(async gid => {
       const { error } = await window.__sbClient.rpc("game_state_write", {
@@ -326,20 +341,30 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       if (completionError) throw completionError;
       return data.rev;
     }, { gid: game.id, key: keyResult, lease });
-    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionRev || null), { timeout: 15000 })
+    const storedCompletion = await page.evaluate(async gid => {
+      const { data, error } = await window.__sbClient.from("game_state_display_completion")
+        .select("rendered_rev").eq("game_id", gid).single();
+      return { renderedRev: data?.rendered_rev ?? null, error: error?.message || null };
+    }, game.id);
+    expect(storedCompletion.error).toBeNull();
+    expect(Number(storedCompletion.renderedRev)).toBe(Number(completedRevision));
+    await expect.poll(() => page.evaluate(() => window.__ownerRealtimeCompletionRev || null), { timeout: 15000 })
+      .toBe(completedRevision);
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRenderedRev || null), { timeout: 15000 })
       .toBe(completedRevision);
   } finally {
+    await deviceContext.pages()[0]?.evaluate(() => clearInterval(window.__deviceHeartbeatTimer)).catch(() => {});
     if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
       const sb = window.__sbClient;
       const channel = sb.getChannels().find(item => item.topic.endsWith(name));
       if (channel) await sb.removeChannel(channel);
       await sb.realtime.setAuth(undefined);
     }, channelName).catch(() => {});
-    if (completionChannelName) await deviceContext.pages()[0]?.evaluate(async name => {
+    if (ownerCompletionChannelName) await page.evaluate(async name => {
       const sb = window.__sbClient;
       const channel = sb.getChannels().find(item => item.topic.endsWith(name));
       if (channel) await sb.removeChannel(channel);
-    }, completionChannelName).catch(() => {});
+    }, ownerCompletionChannelName).catch(() => {});
     await deviceContext.close().catch(() => {});
     await page.evaluate(async gid => { await window.__sbClient.from("games").delete().eq("id", gid); }, game.id);
   }

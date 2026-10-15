@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pEfljccLue5qwEsFzXquDa5KVLL6YFbvIQjwaf3WdA7LqQC8xQqo0nUT2a7urXq
+\restrict YU3uik6tqw3g9QVxQzHPWivchOh335texK7FdAdo4nxr9ZAzdSWOj3TgUdJkQMz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7778,7 +7778,9 @@ CREATE TABLE "public"."game_state" (
     "detail" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "locked_until" timestamp with time zone
+    "locked_until" timestamp with time zone,
+    "display_rendered_rev" bigint DEFAULT 0 NOT NULL,
+    CONSTRAINT "game_state_display_rendered_rev_check" CHECK (("display_rendered_rev" >= 0))
 );
 
 ALTER TABLE ONLY "public"."game_state" REPLICA IDENTITY FULL;
@@ -7810,6 +7812,13 @@ COMMENT ON COLUMN "public"."game_state"."detail" IS 'Wszystko poza jawnymi kolum
 --
 
 COMMENT ON COLUMN "public"."game_state"."locked_until" IS 'Do kiedy trwa dźwięk/animacja bieżącego przejścia — game_state_write/game_state_buzzer_press odrzucają zapis, dopóki now() < locked_until. Ustawiane przez game_state_set_lock, PO potwierdzeniu głównego zapisu treści.';
+
+
+--
+-- Name: COLUMN "game_state"."display_rendered_rev"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."game_state"."display_rendered_rev" IS 'Highest game_state revision acknowledged as rendered by the primary Display; mirrored to game_state for device Realtime delivery.';
 
 
 --
@@ -7862,12 +7871,32 @@ CREATE FUNCTION "public"."game_state_display_complete"("p_game_id" "uuid", "p_ke
     AS $$
 DECLARE current_rev bigint;
 BEGIN
-  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
   SELECT rev INTO current_rev FROM public.game_state WHERE game_id=p_game_id;
-  IF current_rev IS NULL OR p_rev IS NULL OR p_rev<0 OR p_rev>current_rev THEN RAISE EXCEPTION 'invalid revision'; END IF;
-  INSERT INTO public.game_state_display_completion(game_id,rendered_rev) VALUES(p_game_id,p_rev)
-    ON CONFLICT(game_id) DO UPDATE SET rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
+  IF current_rev IS NULL OR p_rev IS NULL OR p_rev<0 OR p_rev>current_rev THEN
+    RAISE EXCEPTION 'invalid revision';
+  END IF;
+
+  INSERT INTO public.game_state_display_completion(game_id,rendered_rev)
+    VALUES(p_game_id,p_rev)
+    ON CONFLICT(game_id) DO UPDATE
+      SET rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
+
+  -- This update emits the acknowledgment through the same RLS protected
+  -- game_state stream already consumed by every device.
+  UPDATE public.game_state
+    SET display_rendered_rev=greatest(display_rendered_rev,p_rev)
+    WHERE game_id=p_game_id AND display_rendered_rev<p_rev;
 END $$;
+
+
+--
+-- Name: FUNCTION "game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint, "p_connection_id" "uuid", "p_epoch" bigint); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint, "p_connection_id" "uuid", "p_epoch" bigint) IS 'Fenced Display acknowledgment. Persists the completion row and mirrors rendered_rev to game_state so all devices receive the acknowledgment on their scoped Realtime stream.';
 
 
 --
@@ -24576,5 +24605,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pEfljccLue5qwEsFzXquDa5KVLL6YFbvIQjwaf3WdA7LqQC8xQqo0nUT2a7urXq
+\unrestrict YU3uik6tqw3g9QVxQzHPWivchOh335texK7FdAdo4nxr9ZAzdSWOj3TgUdJkQMz
 

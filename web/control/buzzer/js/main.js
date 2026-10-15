@@ -181,7 +181,7 @@ async function main() {
     } finally { if (displayCheckPendingKey === requestKey) displayCheckPendingKey = null; }
   }
   setInterval(() => {
-    if (!subscription?.isDirectTableConnected("game_state_display_completion")) void checkDisplayReady();
+    if (!subscription?.isDirectConnected()) void checkDisplayReady();
   }, 500);
 
   // Migracja 264 -- game_state_set_lock (control/js/store.js) NIE dzwoni
@@ -202,15 +202,10 @@ async function main() {
   subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
     getLeaseArgs: () => lease.actionArgs(),
-    onDirectTables: {
-      game_state_display_completion: ({ status }) => {
-        if (status === "SUBSCRIBED" || status === "CHANGE") void checkDisplayReady();
-      },
-    },
-    // game_state_set_lock przesuwa locked_until bez podbicia rev i bez
-    // dzwonka — bez tego Buzzer odblokowywał się wg starszej blokady, a
-    // odrzucone naciśnięcie ("locked") nie dociągało nowszej.
-    sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until,
+    // Bez podbicia rev powiadamiamy też o wygaśnięciu blokady i potwierdzeniu
+    // renderowania Wyświetlacza; oba pola są dostarczane tym samym strumieniem.
+    sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until
+      || prev.display_rendered_rev !== next.display_rendered_rev,
     onRow: (row) => {
       // Język idzie za operatorem w Control — patrz control/display/js/main.js.
       const lang = row.detail?.settings?.uiLang;
