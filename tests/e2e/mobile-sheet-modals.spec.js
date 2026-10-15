@@ -356,7 +356,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
     const baseId = await createBase(page, `E2E-XB-SHEET-TAGS-${Date.now()}`);
 
     try {
-      for (let ord = 1; ord <= 30; ord++) {
+      for (let ord = 1; ord <= 60; ord++) {
         await createTag(page, { baseId, name: `Tag mobile ${ord}`, ord });
       }
       const qid = await createQuestion(page, {
@@ -383,6 +383,8 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(page.locator("#explorerLeft")).toBeHidden();
       await expect(page.locator(".explorer-right")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
+
+      await expect(page.locator("#tagsAssignList .tags-row")).toHaveCount(60, { timeout: 10000 });
 
       const tagScroll = await page.locator("#tagsAssignList").evaluate((el) => ({
         scrollHeight: el.scrollHeight,
@@ -467,9 +469,11 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(page.locator("#xCreate")).toBeEnabled({ timeout: 5000 });
       await page.locator("#xCreate").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
+      await page.waitForURL(/\/games\//, { timeout: 15000 });
+      await page.goto(`${BASE_EXPLORER_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForFunction(() => !!window.__sbClient, { timeout: 10000 });
       createdGameId = await findGameIdByName(page, gameName);
       expect(createdGameId, "gra powinna powstać po zatwierdzeniu w mobilnym modalu").toBeTruthy();
-      await expect(page.locator("#explorerLeft")).toBeVisible();
     } finally {
       if (createdGameId) await deleteGameDirect(page, createdGameId);
       await deleteBase(page, baseId);
