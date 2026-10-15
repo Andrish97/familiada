@@ -247,7 +247,7 @@ async function showModalWithRepresentativeContent(page, modalId) {
     modal.style.setProperty("opacity", "1", "important");
     modal.style.setProperty("pointer-events", "auto", "important");
   }, modalId);
-  await page.locator(`#${modalId}`).waitFor({ state: "visible", timeout: 2_000 });
+  await page.waitForTimeout(250);
 }
 
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null, options = {}) {
