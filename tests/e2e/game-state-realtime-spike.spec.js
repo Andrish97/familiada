@@ -283,6 +283,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       const completionChannel = sb.channel(completionChannelName).on("postgres_changes", {
         event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
       }, payload => {
+        window.__scopedRealtimeCompletionPayload = payload;
         if (Number(payload?.new?.rendered_rev) > 0) window.__scopedRealtimeCompletionRev = payload.new.rendered_rev;
       });
       await new Promise((resolve, reject) => {
@@ -364,8 +365,10 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     expect(Number(storedCompletion.renderedRev)).toBe(Number(completedRevision));
     await expect.poll(() => page.evaluate(() => window.__ownerRealtimeCompletionRev || null), { timeout: 15000 })
       .toBe(completedRevision);
-    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionRev || null), { timeout: 15000 })
-      .toBe(completedRevision);
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionPayload || null), { timeout: 15000 })
+      .not.toBeNull();
+    const completionPayload = await devicePage.evaluate(() => window.__scopedRealtimeCompletionPayload);
+    expect(Number(completionPayload?.new?.rendered_rev)).toBe(Number(completedRevision));
   } finally {
     await deviceContext.pages()[0]?.evaluate(() => clearInterval(window.__deviceHeartbeatTimer)).catch(() => {});
     if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
