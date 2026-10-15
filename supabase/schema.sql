@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YU3uik6tqw3g9QVxQzHPWivchOh335texK7FdAdo4nxr9ZAzdSWOj3TgUdJkQMz
+\restrict gcpwOgaoVZjrPgZy42zxSadfihr4PaX0UIOfVyLN8pR58e8HCDLrqvoGKcgcNkW
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5020,7 +5020,7 @@ $$;
 CREATE FUNCTION "public"."control_device_instance_heartbeat"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint, "p_meta" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth'
-    AS $$
+    AS $_$
 DECLARE
   v_session_id uuid;
   v_connection public.control_device_connections;
@@ -5043,7 +5043,10 @@ BEGIN
      AND v_slot.epoch=p_epoch AND v_slot.lease_expires_at>clock_timestamp() THEN
     UPDATE public.control_device_connections SET last_seen_at=clock_timestamp(),
       page_visibility=CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
-      focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END
+      focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END,
+      received_rev=GREATEST(received_rev,CASE WHEN coalesce(p_meta->>'received_rev','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'received_rev')::bigint ELSE received_rev END),
+      rendered_rev=GREATEST(rendered_rev,CASE WHEN coalesce(p_meta->>'rendered_rev','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'rendered_rev')::bigint ELSE rendered_rev END),
+      started_sound_cue_seq=GREATEST(started_sound_cue_seq,CASE WHEN coalesce(p_meta->>'started_sound_cue_seq','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'started_sound_cue_seq')::bigint ELSE started_sound_cue_seq END)
     WHERE id=p_connection_id;
     UPDATE public.control_device_slots SET lease_expires_at=clock_timestamp()+interval '12 seconds',
       updated_at=clock_timestamp() WHERE session_id=v_session_id AND device_type=p_device_type;
@@ -5054,14 +5057,24 @@ BEGIN
   ELSE
     UPDATE public.control_device_connections SET last_seen_at=clock_timestamp(),
       page_visibility=CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
-      focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END
+      focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END,
+      received_rev=GREATEST(received_rev,CASE WHEN coalesce(p_meta->>'received_rev','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'received_rev')::bigint ELSE received_rev END),
+      rendered_rev=GREATEST(rendered_rev,CASE WHEN coalesce(p_meta->>'rendered_rev','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'rendered_rev')::bigint ELSE rendered_rev END),
+      started_sound_cue_seq=GREATEST(started_sound_cue_seq,CASE WHEN coalesce(p_meta->>'started_sound_cue_seq','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'started_sound_cue_seq')::bigint ELSE started_sound_cue_seq END)
     WHERE id=p_connection_id;
   END IF;
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
     || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id);
 END;
-$$;
+$_$;
+
+
+--
+-- Name: FUNCTION "control_device_instance_heartbeat"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint, "p_meta" "jsonb"); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."control_device_instance_heartbeat"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint, "p_meta" "jsonb") IS 'Renews an instance lease and monotonically records client render progress, fenced by the active primary epoch.';
 
 
 --
@@ -24605,5 +24618,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YU3uik6tqw3g9QVxQzHPWivchOh335texK7FdAdo4nxr9ZAzdSWOj3TgUdJkQMz
+\unrestrict gcpwOgaoVZjrPgZy42zxSadfihr4PaX0UIOfVyLN8pR58e8HCDLrqvoGKcgcNkW
 
