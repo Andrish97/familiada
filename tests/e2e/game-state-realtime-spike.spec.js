@@ -104,6 +104,13 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
     }, game.id);
     expect(directRead.error, "bezpośredni SELECT jako anon nie powinien zwracać błędu uprawnień").toBeNull();
     expect(directRead.rowCount, "anon nie powinien widzieć żadnego wiersza game_state bezpośrednio").toBe(0);
+    const ordinaryCompletionRead = await anonPage.evaluate(async (gid) => {
+      const { data, error } = await window.__sbClient
+        .from("game_state_display_completion").select("game_id").eq("game_id", gid);
+      return { rowCount: data?.length ?? -1, error: error?.message || null };
+    }, game.id);
+    expect(ordinaryCompletionRead.error).toBeNull();
+    expect(ordinaryCompletionRead.rowCount, "zwykły anon nie powinien czytać potwierdzenia Displaya").toBe(0);
 
     // 2) game_state_get z NIEPOPRAWNYM kluczem — musi odmówić.
     const badKeyResult = await anonPage.evaluate(async ({ gid, lease }) => {
@@ -198,6 +205,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
   }, gameName);
   const deviceContext = await browser.newContext();
   let channelName = "";
+  let completionChannelName = "";
   try {
     const { error: seedError } = await page.evaluate(async gid => {
       const { error } = await window.__sbClient.rpc("game_state_write", {
@@ -260,6 +268,12 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       }, payload => {
         if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedRealtimeRev = payload.new.rev;
       });
+      const completionChannelName = `e2e-scoped-completion:${crypto.randomUUID()}`;
+      const completionChannel = sb.channel(completionChannelName).on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
+      }, payload => {
+        if (Number(payload?.new?.rendered_rev) > 0) window.__scopedRealtimeCompletionRev = payload.new.rendered_rev;
+      });
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error("postgres_changes subscribe timeout")), 12000);
         channel.subscribe(status => {
@@ -269,12 +283,22 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
           }
         });
       });
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("completion postgres_changes subscribe timeout")), 12000);
+        completionChannel.subscribe(status => {
+          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            clearTimeout(timeout); reject(new Error(`completion postgres_changes: ${status}`));
+          }
+        });
+      });
       // Give Realtime's postgres_changes listener a short settle interval
       // after the channel join acknowledgement before the first write.
       await new Promise(resolve => setTimeout(resolve, 500));
-      return { channelName, beforeRev: before?.rev };
+      return { channelName, completionChannelName, beforeRev: before?.rev };
     }, { gid: game.id, key: keyResult, lease });
     channelName = direct.channelName;
+    completionChannelName = direct.completionChannelName;
 
     const { error: writeError } = await page.evaluate(async gid => {
       const { error } = await window.__sbClient.rpc("game_state_write", {
@@ -288,6 +312,22 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     expect(writeError, "owner game_state_write should succeed").toBeNull();
     await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 15000 })
       .not.toBeNull();
+    const completedRevision = await devicePage.evaluate(async ({ gid, key, lease }) => {
+      const sb = window.__sbClient;
+      const { data, error } = await sb.rpc("game_state_get", {
+        p_game_id: gid, p_device_type: "display", p_key: key,
+        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+      });
+      if (error || !data?.rev) throw error || new Error("missing current game_state revision");
+      const { error: completionError } = await sb.rpc("game_state_display_complete", {
+        p_game_id: gid, p_key: key, p_rev: data.rev,
+        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+      });
+      if (completionError) throw completionError;
+      return data.rev;
+    }, { gid: game.id, key: keyResult, lease });
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionRev || null), { timeout: 15000 })
+      .toBe(completedRevision);
   } finally {
     if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
       const sb = window.__sbClient;
@@ -295,6 +335,11 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       if (channel) await sb.removeChannel(channel);
       await sb.realtime.setAuth(undefined);
     }, channelName).catch(() => {});
+    if (completionChannelName) await deviceContext.pages()[0]?.evaluate(async name => {
+      const sb = window.__sbClient;
+      const channel = sb.getChannels().find(item => item.topic.endsWith(name));
+      if (channel) await sb.removeChannel(channel);
+    }, completionChannelName).catch(() => {});
     await deviceContext.close().catch(() => {});
     await page.evaluate(async gid => { await window.__sbClient.from("games").delete().eq("id", gid); }, game.id);
   }

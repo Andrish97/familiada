@@ -18,11 +18,13 @@ import { rt } from "./realtime.js?v=v2026-10-15T21161";
 import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-15T21161";
 import { createRowSync } from "./game-state-sync.js?v=v2026-10-15T21161";
 
-export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, pollMs = 5000, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
+export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 5000, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
   let active = false;
   let pollTimer = null;
   let directChannel = null;
   let directConnected = false;
+  const directTableChannels = new Map();
+  const directTableConnected = new Map();
   let tokenTimer = null;
   let directUnavailableLogged = false;
   // Limit czasu: zawieszone żądanie trzymało `fetching` na zawsze i wszystkie
@@ -71,6 +73,9 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       if (!active) { try { await sb().realtime.setAuth(SUPABASE_ANON_KEY); } catch {} return; }
       directUnavailableLogged = false;
       if (directChannel) await sb().removeChannel(directChannel);
+      for (const channel of directTableChannels.values()) await sb().removeChannel(channel).catch(() => {});
+      directTableChannels.clear();
+      directTableConnected.clear();
       directChannel = sb().channel(`game-state-direct:${gameId}:${deviceType}:${lease.p_connection_id}`);
       directChannel.on("postgres_changes", {
         event: "*", schema: "public", table: "game_state", filter: `game_id=eq.${gameId}`,
@@ -92,6 +97,18 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
           console.warn(`[device-realtime] ${status}; działa transport awaryjny`);
         }
       });
+      for (const [table, handler] of Object.entries(onDirectTables)) {
+        if (typeof handler !== "function" || !/^[a-z_]+$/.test(table)) continue;
+        const channel = sb().channel(`game-state-direct:${gameId}:${deviceType}:${lease.p_connection_id}:${table}`);
+        directTableChannels.set(table, channel);
+        channel.on("postgres_changes", {
+          event: "*", schema: "public", table, filter: `game_id=eq.${gameId}`,
+        }, (payload) => handler({ status: "CHANGE", payload }));
+        channel.subscribe((status) => {
+          directTableConnected.set(table, status === "SUBSCRIBED");
+          handler({ status, payload: null });
+        });
+      }
       clearTimeout(tokenTimer);
       tokenTimer = setTimeout(() => { if (active) void startDirect(); }, 240_000);
     } catch (error) {
@@ -117,6 +134,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       directChannel = null;
       await sb().removeChannel(channel).catch(() => {});
     }
+    for (const [table, channel] of directTableChannels) {
+      directTableConnected.set(table, false);
+      await sb().removeChannel(channel).catch(() => {});
+    }
+    directTableChannels.clear();
     try { await sb().realtime.setAuth(SUPABASE_ANON_KEY); } catch {}
   }
 
@@ -181,5 +203,6 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // nie czekamy na własny dzwonek, tylko dociągamy od razu.
   function refetchNow() { return fetchGuarded(); }
 
-  return { start, stop, applyRow, refetchNow };
+  return { start, stop, applyRow, refetchNow,
+    isDirectTableConnected(table) { return directTableConnected.get(table) === true; } };
 }
