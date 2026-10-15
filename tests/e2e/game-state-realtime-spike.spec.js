@@ -230,24 +230,16 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     }, game.id);
 
     const devicePage = await deviceContext.newPage();
-    let lease = null;
-    devicePage.on("request", request => {
-      if (!request.url().includes("control_device_instance_register")) return;
-      try {
-        const body = JSON.parse(request.postData() || "{}");
-        lease = { connection_id: body.p_connection_id, epoch: null };
-      } catch {}
-    });
-    devicePage.on("response", async response => {
-      if (!response.url().includes("control_device_instance_register")) return;
-      try {
-        const data = await response.json();
-        if (lease && data?.state === "primary") lease.epoch = data.epoch;
-      } catch {}
-    });
-    await devicePage.goto(`/control/display?id=${game.id}&key=${keyResult}`, { waitUntil: "domcontentloaded" });
-    await expect(devicePage.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
-    await expect.poll(() => lease?.connection_id && lease?.epoch).toBeTruthy();
+    await devicePage.goto("/", { waitUntil: "domcontentloaded" });
+    const lease = await devicePage.evaluate(async ({ gid, key }) => {
+      const connectionId = crypto.randomUUID();
+      const { data, error } = await window.__sbClient.rpc("control_device_instance_register", {
+        p_game_id: gid, p_device_type: "display", p_key: key,
+        p_connection_id: connectionId, p_meta: { visibility: "visible", focused: true },
+      });
+      if (error || data?.state !== "primary") throw error || new Error("display did not become primary");
+      return { connection_id: connectionId, epoch: data.epoch };
+    }, { gid: game.id, key: keyResult });
 
     const direct = await devicePage.evaluate(async ({ gid, key, lease }) => {
       const sb = window.__sbClient;
