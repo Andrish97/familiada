@@ -252,6 +252,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       loginShell: Boolean(document.querySelector(".login-shell")),
       guard: document.getElementById("pageGuard")?.dataset.state || document.documentElement.dataset.deviceGuard || "",
       resourceGuard: getComputedStyle(document.getElementById("resourceLockGuard") || document.body).display,
+      resourceGuardTitle: document.getElementById("resourceLockGuardTitle")?.textContent?.trim() || "",
+      resourceGuardMessage: document.getElementById("resourceLockGuardMsg")?.textContent?.trim() || "",
       pendingSteps: [...document.querySelectorAll("[data-skel-step]")]
         .filter((step) => !step.classList.contains("skel-step-ready") && step.getClientRects().length)
         .map((step) => `${step.tagName}.${String(step.className).replace(/\s+/g, ".")}`).slice(0, 8),
@@ -538,7 +540,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
               : id === "logo"
                 ? `.logoTile[data-key="${fixtures.logo.id}"]`
                 : null;
-          const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "logo-draw", "logo-image", "logo-text", "polls"]);
+          const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "games", "logo-draw", "logo-image", "logo-text", "polls"]);
           const removeLockIsolation = lockSensitive.has(id) ? await installVisualResourceLockIsolation(page) : null;
           try {
             await capture(page, profile, id, href, manifest, null, readySelector);
@@ -548,7 +550,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         }
         const extra = profile.id === "tv" ? [] : additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
         for (const state of extra) {
-          const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "logo-draw", "logo-image", "logo-text", "polls"]);
+          const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "games", "logo-draw", "logo-image", "logo-text", "polls"]);
           const removeLockIsolation = lockSensitive.has(state.page) ? await installVisualResourceLockIsolation(page) : null;
           try {
             await capture(page, profile, state.id, state.href, manifest, state.prepare);
