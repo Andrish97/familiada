@@ -2458,6 +2458,10 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await clearSfxLog(displayPage);
     await revealAnswer(page, 2); // Odpowiedź B, 30 pkt
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
+    // Aktualizacja planszy może dotrzeć przed końcem asynchronicznego
+    // dekodowania pliku dźwiękowego. Czekamy na wywołanie playSfx, ale
+    // sprawdzamy zarazem, że miało miejsce przy aktywnym wyciszeniu.
+    await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
     const mutedDisplaySfx = await displayPage.evaluate(() => window.__sfxLog || []);
     expect(mutedDisplaySfx.map((entry) => entry.key), "wyciszony Display nadal musi odebrać cue i zachować synchronizację").toContain("answer_correct");
     expect(mutedDisplaySfx.every((entry) => entry.muted), "Display ma wyciszyć wyjście dla każdego cue").toBe(true);
