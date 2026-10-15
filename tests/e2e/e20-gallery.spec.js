@@ -163,7 +163,7 @@ async function saveDeviceScreenshot(page, profile, id, outputPath) {
       ? '<i class="notch side"><b></b></i>'
       : '<i class="notch top"><b></b></i>'
     : '<i class="gesture"></i>';
-  const frame = `<!doctype html><meta charset="utf-8"><style>
+  const frame = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
     *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#10131a;display:grid;place-items:center;overflow:hidden}
     .device{display:inline-block;padding:${bezel}px;background:#030407;border:2px solid #30343d;border-radius:${radius + bezel}px;box-shadow:0 12px 44px #000b;line-height:0}
     .screen{position:relative;width:${profile.width}px;height:${profile.height}px;overflow:hidden;border-radius:${radius}px;background:#050914}
@@ -186,6 +186,12 @@ async function saveDeviceScreenshot(page, profile, id, outputPath) {
     await framePage.screenshot({ path: outputPath, fullPage: true, scale: "css", animations: "disabled", timeout: 20_000 });
   } finally {
     await framePage.close();
+  }
+  const png = fs.readFileSync(outputPath);
+  const actualFrameSize = { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
+  const expectedFrameSize = { width: profile.width + 2 * bezel + 8, height: profile.height + 2 * bezel + 8 };
+  if (actualFrameSize.width !== expectedFrameSize.width || actualFrameSize.height !== expectedFrameSize.height) {
+    throw new Error(`${profile.label} · ${id}: obraz ramki ma rozmiar ${actualFrameSize.width}×${actualFrameSize.height}, oczekiwano ${expectedFrameSize.width}×${expectedFrameSize.height}`);
   }
 }
 
