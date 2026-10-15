@@ -626,7 +626,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 await capture(
                   page, profile, id, href, manifest,
                   (modalPage) => showModalWithRepresentativeContent(modalPage, modalId),
-                  `#${modalId}`,
+                  null,
                   { fileName: `modal-${safeModalName}-${profile.id}.png`, stateId: `modal:${modalId}` },
                 );
                 modalCaptureCount += 1;
