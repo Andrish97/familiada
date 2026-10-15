@@ -1070,8 +1070,22 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
     for (const type of ["display", "host", "buzzer"]) {
       const path = `/control/${type}?id=${game.id}&key=${keys[type]}`;
       const primary = await openAnon(browser, contexts, path, `${type}-primary`, []);
+      for (const [label, devicePage] of [["primary", primary]]) {
+        devicePage.on("response", async response => {
+          if (!response.url().includes("control_device_instance_")) return;
+          let body = "<unreadable>";
+          try { body = JSON.stringify(await response.json()); } catch {}
+          console.log(`[lease e2e ${type}-${label}] ${response.url().split("/").pop()} ${response.status()} ${body}`);
+        });
+      }
       await expect(primary.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
       const waiting = await openAnon(browser, contexts, path, `${type}-waiting`, []);
+      waiting.on("response", async response => {
+        if (!response.url().includes("control_device_instance_")) return;
+        let body = "<unreadable>";
+        try { body = JSON.stringify(await response.json()); } catch {}
+        console.log(`[lease e2e ${type}-waiting] ${response.url().split("/").pop()} ${response.status()} ${body}`);
+      });
       await expect(waiting.locator("#deviceLeaseOverlay")).toBeVisible({ timeout: 10000 });
       await expect(waiting.locator("#deviceLeaseText")).toHaveText(/\S+/, { timeout: 10000 });
       await primary.close();
