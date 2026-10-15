@@ -1078,6 +1078,7 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
           console.log(`[lease e2e ${type}-${label}] ${response.url().split("/").pop()} ${response.status()} ${body}`);
         });
       }
+      await expect(primary.locator("#deviceLeaseOverlay")).toHaveAttribute("data-lease-state", "primary", { timeout: 10000 });
       await expect(primary.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
       const waiting = await openAnon(browser, contexts, path, `${type}-waiting`, []);
       waiting.on("response", async response => {
@@ -1086,10 +1087,12 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
         try { body = JSON.stringify(await response.json()); } catch {}
         console.log(`[lease e2e ${type}-waiting] ${response.url().split("/").pop()} ${response.status()} ${body}`);
       });
+      await expect(waiting.locator("#deviceLeaseOverlay")).toHaveAttribute("data-lease-state", "waiting", { timeout: 10000 });
       await expect(waiting.locator("#deviceLeaseOverlay")).toBeVisible({ timeout: 10000 });
       await expect(waiting.locator("#deviceLeaseText")).toHaveText(/\S+/, { timeout: 10000 });
       await primary.close();
-      await expect(waiting.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 15000 });
+      await expect(waiting.locator("#deviceLeaseOverlay")).toHaveAttribute("data-lease-state", "primary", { timeout: 20000 });
+      await expect(waiting.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
       await waiting.close();
     }
   } finally {

@@ -1,5 +1,5 @@
-import { sb } from "./supabase.js?v=v2026-10-15T15590";
-import { t } from "../../translation/translation.js?v=v2026-10-15T15590";
+import { sb } from "./supabase.js?v=v2026-10-15T16134";
+import { t } from "../../translation/translation.js?v=v2026-10-15T16134";
 
 const HEARTBEAT_MS = 3_000;
 const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
@@ -11,6 +11,7 @@ const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
 export function updateDeviceLeaseOverlay(state, mode = "lease") {
   const overlay = document.getElementById("deviceLeaseOverlay");
   if (!overlay) return;
+  overlay.dataset.leaseState = mode === "legacy" ? "primary" : (state || "starting");
   if (mode === "legacy" || state === "primary") {
     overlay.hidden = true;
     return;
