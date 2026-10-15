@@ -95,6 +95,7 @@
 }
 /* przyciski stanu: jedna wysokość, tekst nie zawija się w środku przycisku */
 .pollBarActions .btn{ white-space: nowrap; flex: 0 0 auto; }
+.pollBarActions .ico{ width: 16px; height: 16px; flex: 0 0 16px; }
 /* Przerwij: .btn.danger (czerwony obrys, base.css), zawsze ostatni */
 
 /* Stan i akcje stanowią osobną sekcję nad kartami; rozmiar przycisków z Gier. */
@@ -111,6 +112,11 @@
   .pollBarActions .btn{ flex: 0 0 auto; }
   .pollBarHint{ flex-basis: 100%; max-width: none; }
 }
+@media (max-width: 600px){
+  .pollBarActions .pollActionLabel{ display: none; }
+  .pollBarActions .btn{ width: 38px; min-width: 38px; height: 36px; padding: 0; justify-content: center; }
+  .pollBarActions .ico{ width: 18px; height: 18px; flex-basis: 18px; }
+}
 
 /* B. Karta z wypustkami (2 × 50%), wzór: bases.css */
 .tabs-card.hub-tabs.polls-tabs-card{
@@ -122,7 +128,9 @@
   overflow: hidden;
 }
 .polls-tabs-card .tabs-strip{ display: flex; gap: 0; }
-.polls-tabs-card .tab-slot{ width: auto; flex: 1 1 0; min-width: 0; }
+.polls-tabs-card .tab-slot{ width: auto; flex: 1 1 max-content; min-width: 0; }
+.polls-tabs-card .slot-recipients{ display: none; }
+.pollShareLabelMobile{ display: none; }
 .polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }
 .polls-tabs-card .tab-label::before{ opacity: 0 !important; }
 @media (hover: hover) and (pointer: fine){
@@ -132,6 +140,7 @@
 .polls-tabs-card .tab-slot.active .tab-wrapper{ display: block; }
 .polls-tabs-card .tab-active{ z-index: 1; }
 .polls-tabs-card:has(.slot-share.active) .slot-share .tab-corner-left,
+.polls-tabs-card:has(.slot-recipients.active) .slot-recipients .tab-corner-left,
 .polls-tabs-card:has(.slot-results.active) .slot-results .tab-corner-right{ display: none; }
 /* wypustka nieaktywna (np. Udostępnianie po podliczeniu) */
 .polls-tabs-card .tab-label:disabled{ opacity: .38; cursor: not-allowed; }
@@ -141,6 +150,7 @@
   border-top-right-radius: var(--radius);
 }
 .polls-tabs-card:has(.slot-share.active) .polls-card{ border-top-left-radius: 0; }
+.polls-tabs-card:has(.slot-recipients.active) .polls-card{ border-top-left-radius: 0; border-top-right-radius: 0; }
 .polls-tabs-card:has(.slot-results.active) .polls-card{ border-top-right-radius: 0; }
 
 .polls-section{ display: none; }
@@ -149,8 +159,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 .pollsEmpty{
   margin: auto;
@@ -162,15 +171,24 @@
 }
 .pollsEmpty a{ color: var(--gold); }
 
-/* Udostępnianie: dwie kolumny wyrównane do góry — Link (lewa), Subskrybenci (prawa) */
+/* Udostępnianie: dwie pełnej wysokości karty — Anonimowo (lewa), Odbiorcy (prawa). */
 .shareCols{
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
+  align-content: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 @media (max-width: 980px){
+  .polls-tabs-card .slot-recipients{ display: flex; }
+  .pollShareLabelDesktop{ display: none; }
+  .pollShareLabelMobile{ display: inline; }
   .shareCols{ grid-template-columns: minmax(0, 1fr); }
+  .shareCols > .pollRecipientsSec{ display: none; }
+  .polls-tabs-card.mobile-recipients-active .shareCols > .pollLinkSec{ display: none; }
+  .polls-tabs-card.mobile-recipients-active .shareCols > .pollRecipientsSec{ display: flex; }
   /* równe marginesy: sekcje bez własnej ramki (karta ma już swój margines),
      przewijanie nie odejmuje pasa od jednej strony */
   .card.games-card.polls-card{ padding: 12px 12px 8px; }
@@ -183,6 +201,8 @@
   border: 1px solid rgba(255,255,255,.10);
   min-width: 0;
 }
+.pollRecipientsSec{ display: flex; flex-direction: column; min-height: 0; }
+.pollRecipientsSec .subsGrid{ flex: 1 1 auto; min-height: 0; }
 @media (max-width: 980px){
   .pollSec{ padding: 12px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 14px; }
 }
@@ -317,7 +337,7 @@
 .pollRecipientsModal .shareList{ max-height: min(240px, 25dvh); }
 .pollRecipientsModal .uni-foot{ align-items: center; justify-content: flex-end; }
 .pollRecipientsModal #pollRecipientsCount{ margin-right: auto; }
-.pollSubsSec .shareList{ max-height: min(360px, 45dvh); }
+.pollRecipientsSec .shareList{ max-height: min(360px, 45dvh); }
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
 #resultsList{ display: grid; gap: 12px; }

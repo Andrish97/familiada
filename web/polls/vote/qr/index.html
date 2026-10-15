@@ -21,11 +21,11 @@
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/polls/vote/qr/js/poll-qr.js?v=v2026-10-14T23162" defer></script>
+  <script type="module" src="/polls/vote/qr/js/poll-qr.js?v=v2026-10-15Tguard1" defer></script>
   <script src="/shared/js/core/security-warning.js?v=v2026-10-14T23162" defer></script>
 </head>
 
-<body class="poll-qr-body" data-device-form-factors="desktop,tablet" data-min-viewport-width="980" data-min-screen-short-side="800" data-screen-message-key="pollQr.screenMessage">
+<body class="poll-qr-body" data-device-form-factors="desktop,tablet,tv" data-min-viewport-width="980" data-min-screen-short-side="800" data-min-tv-resolution="hd">
   <div class="qr-container" data-skel-step>
     <div class="brand">FAMILIADA</div>
     <div id="qr" class="qr-box"></div>
@@ -41,6 +41,5 @@
     title="Pełny ekran"
     data-i18n-title="pollQr.fullscreen"
   ><i class="ico" data-icon="fullscreen-enter"></i></button>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-14T23162"></script>
 </body>
 </html>

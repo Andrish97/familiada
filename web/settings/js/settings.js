@@ -12,7 +12,7 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-14T23162";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-14T23162";
 import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";

@@ -1,13 +1,14 @@
-import "../../../../shared/js/core/orientation-guard.js?v=v2026-10-14T195500";
+import "../../../../shared/js/core/orientation-guard.js?v=v2026-10-15Tguard1";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-14T23162";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-15Tguard1";
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-14T23162";
-import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-14T23162";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
-const deviceGate = guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, screenMessageKey: "pollQr.screenMessage", formFactors: ["desktop", "tablet"] });
+const deviceGate = guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
 document.documentElement.removeAttribute("data-device-guard-pending");
 // Guard musi być widoczny od razu na niedozwolonym urządzeniu. Nie czekaj
 // z odsłonięciem dokumentu na zmianę szerokości — ready rozwiązuje się dopiero

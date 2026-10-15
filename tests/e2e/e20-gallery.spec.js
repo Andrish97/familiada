@@ -1,20 +1,17 @@
 // Pełna galeria stron E20 na prawdziwym backendzie produkcyjnym.
 // Front ładowany jest z badanego brancha; Supabase, Worker i poczta pozostają
-// rzeczywiste. Dane seedujemy idempotentnie na dedykowanym koncie test17.
+// rzeczywiste. Fixture'y seedujemy raz na istniejących kontach 1–3.
 const fs = require("node:fs");
 const path = require("node:path");
-const os = require("node:os");
 const { test, expect } = require("./helpers/production-test");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { galleryAccountNumbers, galleryAccountPaths, PREP_DIR } = require("./helpers/e20-gallery-accounts");
 
 const ORIGIN = "https://www.familiada.online";
 const OUT = path.resolve(__dirname, "../test-results/e20-gallery");
 // Playwright clears test-results on startup. Gallery output remains only page
 // folders with PNGs; manifests live in runner temp and are not in the artifact.
-const PREP_DIR = process.env.RUNNER_TEMP || os.tmpdir();
 const MANIFEST_DIR = path.join(PREP_DIR, "familiada-e20-gallery-manifests");
-const FIXTURES_PATH = path.join(PREP_DIR, "familiada-e20-gallery-fixtures.json");
-const AUTH_STATE_PATH = path.join(PREP_DIR, "familiada-e20-gallery-auth.json");
 const PAGES = [
   "index", "account", "bases", "bases/explorer", "connect", "connect/tv",
   "control", "control/buzzer", "control/display", "control/host", "games",
@@ -34,6 +31,7 @@ const PROFILES = [
 ];
 const requestedPages = String(process.env.E20_GALLERY_PAGES || "").split(",").map((value) => value.trim()).filter(Boolean);
 const requestedProfiles = String(process.env.E20_GALLERY_PROFILES || "").split(",").map((value) => value.trim()).filter(Boolean);
+const requestedAccounts = galleryAccountNumbers();
 
 function urls(fixtures) {
   const pollPoints = fixtures.polls.poll_points;
@@ -457,102 +455,96 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
 }
 
-// Każdy profil używa tych samych fixture'ów test17. Sekwencyjne konteksty
-// zapobiegają blokadom zasobów między emulowanymi urządzeniami.
-test.describe.configure({ mode: "serial" });
-test.setTimeout(15 * 60 * 1000);
+// Profile są rozdzielone między istniejące konta. Każde konto robi swoje
+// widoki i urządzenia po kolei, a niezależne konta mogą pracować równolegle.
+// To usuwa współbieżność blokad zasobów bez tworzenia osobnego konta galerii.
+test.describe.configure({ mode: "parallel" });
+test.setTimeout(25 * 60 * 1000);
 test.use({ serviceWorkers: "block" });
 
-for (const profile of PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id))) {
-  test(`E20 gallery · ${profile.label}`, async ({ browser }) => {
+const selectedProfiles = PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id));
+for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
+  const accountProfiles = selectedProfiles.filter((_, profileIndex) => profileIndex % requestedAccounts.length === accountIndex);
+  if (!accountProfiles.length) continue;
+  test(`E20 gallery · test${accountNumber} · ${accountProfiles.map((profile) => profile.id).join(", ")}`, async ({ browser }) => {
     fs.mkdirSync(OUT, { recursive: true });
-    if (!fs.existsSync(FIXTURES_PATH) || !fs.existsSync(AUTH_STATE_PATH)) {
-      throw new Error("Brak przygotowanej sesji lub danych galerii E20; uruchom krok Prepare E20 account and fixtures");
+    const files = galleryAccountPaths(accountNumber);
+    if (!fs.existsSync(files.fixtures) || !fs.existsSync(files.authState)) {
+      throw new Error(`Brak przygotowanej sesji lub danych galerii dla test${accountNumber}; uruchom krok Prepare E20 fixtures and session`);
     }
-    const fixtures = JSON.parse(fs.readFileSync(FIXTURES_PATH, "utf8"));
-    const viewport = { width: profile.width, height: profile.height };
-    const context = await browser.newContext({
-      viewport,
-      screen: profile.screen || viewport,
-      deviceScaleFactor: profile.scale,
-      isMobile: profile.mobile,
-      hasTouch: profile.touch,
-      ...(profile.ua ? { userAgent: profile.ua } : {}),
-      serviceWorkers: "block",
-      storageState: AUTH_STATE_PATH,
-    });
-    const manifest = [];
-    try {
-      await serveBranchCode(context, { pages: PAGES, safeAreaInsets: profile.safe });
-      // Wycisz wyłącznie instalacyjny prompt w kontekście wizualnym galerii;
-      // nie jest to ekran układu i inaczej przykrywał kafle stanów wyboru.
-      await context.addInitScript(() => {
-        if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
-      });
-      await installMaintenanceVisualState(context);
-      await installSettingsAccessSimulation(context);
-      // Galeria sprawdza układ stron i guardy, nie dostępność usługi CAPTCHA.
-      // Na runnerze GitHub domena challenges.cloudflare.com bywa nierozwiązywalna;
-      // lokalnie dla tego testu wyłączamy sam widżet, zachowując produkcyjny
-      // formularz logowania i prawdziwą autoryzację konta testowego.
-      await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
-      const page = await context.newPage();
-      page.setDefaultTimeout(20_000);
-      page.setDefaultNavigationTimeout(20_000);
+    const fixtures = JSON.parse(fs.readFileSync(files.fixtures, "utf8"));
+    for (const profile of accountProfiles) {
+      const viewport = { width: profile.width, height: profile.height };
+      const deviceOptions = {
+        viewport, screen: profile.screen || viewport, deviceScaleFactor: profile.scale,
+        isMobile: profile.mobile, hasTouch: profile.touch,
+        ...(profile.ua ? { userAgent: profile.ua } : {}), serviceWorkers: "block",
+      };
+      const manifest = [];
       const selectedUrls = urls(fixtures)
         .filter(([id]) => !requestedPages.length || requestedPages.includes(id))
         .filter(([id]) => profile.id !== "tv" || id === "connect-tv");
-      for (const [id, href] of selectedUrls) {
-        if (id === "login" || id === "home") {
-          // /login i strona główna są widokami gościa (zalogowany użytkownik
-          // trafia z / do /games/). Nie wylogowujemy sesji profilu.
-          const anonymous = await browser.newContext({
-            viewport, screen: profile.screen || viewport,
-            deviceScaleFactor: profile.scale, isMobile: profile.mobile,
-            hasTouch: profile.touch, ...(profile.ua ? { userAgent: profile.ua } : {}),
-            serviceWorkers: "block",
-          });
-          try {
-            await serveBranchCode(anonymous, { pages: PAGES, safeAreaInsets: profile.safe });
-            await anonymous.addInitScript(() => {
-              if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
-            });
-            await installMaintenanceVisualState(anonymous);
-            await installSettingsAccessSimulation(anonymous);
-            await anonymous.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
-            const anonymousPage = await anonymous.newPage();
-            anonymousPage.setDefaultTimeout(20_000);
-            anonymousPage.setDefaultNavigationTimeout(20_000);
-            await capture(anonymousPage, profile, id, href, manifest);
-          } finally {
-            await anonymous.close();
-          }
-          continue;
-        }
-        const readySelector = id === "games"
-          ? `.card[data-game-id="${fixtures.game.id}"]`
-          : id === "bases"
-            ? `.tile[data-base-id="${fixtures.base.id}"]`
-            : id === "logo"
-              ? `.logoTile[data-key="${fixtures.logo.id}"]`
-              : null;
-        const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "logo-draw", "logo-image", "logo-text", "polls"]);
-        const removeLockIsolation = lockSensitive.has(id) ? await installVisualResourceLockIsolation(page) : null;
+
+      // Home/Login są publiczne: fotografujemy je w jednej tymczasowej
+      // niezalogowanej sesji, zamykamy ją, a dopiero potem otwieramy sesję
+      // konta. Nie uruchamiamy testów guarda gościa ani dwóch stron naraz.
+      const publicUrls = selectedUrls.filter(([id]) => id === "home" || id === "login");
+      if (publicUrls.length) {
+        const publicContext = await browser.newContext(deviceOptions);
         try {
-          await capture(page, profile, id, href, manifest, null, readySelector);
+          await serveBranchCode(publicContext, { pages: PAGES, safeAreaInsets: profile.safe });
+          await publicContext.addInitScript(() => {
+            if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
+          });
+          await installMaintenanceVisualState(publicContext);
+          await installSettingsAccessSimulation(publicContext);
+          await publicContext.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
+          const publicPage = await publicContext.newPage();
+          publicPage.setDefaultTimeout(20_000);
+          publicPage.setDefaultNavigationTimeout(20_000);
+          for (const [id, href] of publicUrls) await capture(publicPage, profile, id, href, manifest);
         } finally {
-          await removeLockIsolation?.();
+          await publicContext.close();
         }
       }
-      const extra = profile.id === "tv" ? [] : additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
-      for (const state of extra) {
-        await capture(page, profile, state.id, state.href, manifest, state.prepare);
+
+      const context = await browser.newContext({ ...deviceOptions, storageState: files.authState });
+      try {
+        await serveBranchCode(context, { pages: PAGES, safeAreaInsets: profile.safe });
+        await context.addInitScript(() => {
+          if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
+        });
+        await installMaintenanceVisualState(context);
+        await installSettingsAccessSimulation(context);
+        await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
+        const page = await context.newPage();
+        page.setDefaultTimeout(20_000);
+        page.setDefaultNavigationTimeout(20_000);
+        for (const [id, href] of selectedUrls) {
+          if (id === "home" || id === "login") continue;
+          const readySelector = id === "games"
+            ? `.card[data-game-id="${fixtures.game.id}"]`
+            : id === "bases"
+              ? `.tile[data-base-id="${fixtures.base.id}"]`
+              : id === "logo"
+                ? `.logoTile[data-key="${fixtures.logo.id}"]`
+                : null;
+          const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "logo-draw", "logo-image", "logo-text", "polls"]);
+          const removeLockIsolation = lockSensitive.has(id) ? await installVisualResourceLockIsolation(page) : null;
+          try {
+            await capture(page, profile, id, href, manifest, null, readySelector);
+          } finally {
+            await removeLockIsolation?.();
+          }
+        }
+        const extra = profile.id === "tv" ? [] : additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
+        for (const state of extra) await capture(page, profile, state.id, state.href, manifest, state.prepare);
+        expect(manifest).toHaveLength(selectedUrls.length + extra.length);
+        const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1 || entry.loading);
+        expect(layoutIssues, `Problemy szerokości lub niedokończone ładowanie: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth, loading }) => ({ id, url, scrollWidth, viewportWidth, loading })))}`).toEqual([]);
+      } finally {
+        await context.close();
       }
-      expect(manifest).toHaveLength(selectedUrls.length + extra.length);
-      const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1 || entry.loading);
-      expect(layoutIssues, `Problemy szerokości lub niedokończone ładowanie: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth, loading }) => ({ id, url, scrollWidth, viewportWidth, loading })))}`).toEqual([]);
-    } finally {
-      await context.close();
     }
   });
 }

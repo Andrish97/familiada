@@ -17,7 +17,7 @@
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
 import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-14T23162";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-14T23162";
 import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-14T23162";
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-14T23162";
@@ -306,6 +306,11 @@ export function createUI({ root, emit }) {
       ]),
       h("div", { class: "device-row-opt" }, soundRowChildren),
     ]));
+    // Tryb testowy jest kolejną kartą listy urządzeń: bezpośrednio po
+    // czterech kartach (Wyświetlacz, Prowadzący, Przycisk, Dźwięk), przed
+    // dolną podpowiedzią, separatorem i nawigacją kroku.
+    testChoice.classList.add("device-row");
+    rows.push(testChoice);
 
     // Dokładnie jak dzisiejsze btnDevicesNext (control/js/app.js's
     // requiredOnline): Wyświetlacz jest WYMAGANY zawsze (nie ma dla niego
@@ -336,8 +341,8 @@ export function createUI({ root, emit }) {
       // (display:none) i istnieje wyłącznie jako stabilny selektor testów E2E,
       // więc nie jest to string user-facing.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
-      // Przewija się tylko lista kart urządzeń. Podpowiedź pozostaje obok
-      // listy widoczna także po przewinięciu do sekcji dźwięku.
+      // Przewija się lista kart urządzeń wraz z kartą trybu testowego.
+      // Krótka podpowiedź jest zwykłym tekstem na dole, pod listą.
       h("div", { class: "c2-roundlayout c2-devices-layout" }, [
         h("div", { class: "c2-roundlayout-main" }, [
           h("div", { class: "c2-scroll-area" }, [h("div", { class: "c2-devicerows" }, rows)]),
@@ -345,7 +350,6 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(t("control.deviceCodeHint"))]),
       ]),
-      testChoice,
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
     ]));
   }

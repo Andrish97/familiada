@@ -8,9 +8,9 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
 import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-14T23162";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-14T23162";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
 import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-14T23162";
 import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-14T23162";
@@ -197,7 +197,11 @@ async function main() {
   // jest w bazie, więc po powrocie store.hydrate() wznawia rozgrywkę.
   const userP = initPage("control", {
     ready: i18nP,
-    deviceGuard: { fits: () => currentControlGeometry().fits, messageKey: "control.panelTooSmall" },
+    deviceGuard: {
+      fits: () => currentControlGeometry().fits,
+      fitsAfterRotate: () => currentControlGeometry(false, { width: innerHeight, height: innerWidth }).fits,
+      messageKey: "control.panelTooSmall",
+    },
     onBack: async (href) => {
       if (!(await beforeLeave())) return;
       location.href = href;

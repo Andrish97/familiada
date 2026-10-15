@@ -7,9 +7,10 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-14T23162";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-15Tguard1";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-14T23162";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-15Tguard1";
 import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-14T23162";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-14T23162";
 import { createScene } from "./scene.js?v=v2026-10-14T23162";
@@ -20,8 +21,6 @@ import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=
 import { createRenderer } from "./render.js?v=v2026-10-14T23162";
 import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-14T23162";
 import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-14T23162";
-
-startKeepAlive();
 
 const $ = (id) => document.getElementById(id);
 
@@ -325,7 +324,7 @@ async function bootPreview(params) {
 
 window.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: false });
-  const deviceGate = guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, screenMessageKey: "display.screenMessage", formFactors: ["desktop", "tablet"] });
+  const deviceGate = guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
   document.documentElement.removeAttribute("data-device-guard-pending");
   if (deviceGate.state() !== "ok") await deviceGate.ready;
   startKeepAlive();

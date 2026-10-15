@@ -1,6 +1,6 @@
 // theme_manager.js
 // Menadżer motywów – rejestr z themes.json, dynamiczne ładowanie, THEME command
-import { t } from "../../translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../translation/translation.js?v=v2026-10-15Tguard1";
 
 let THEMES = {};
 let THEME_META = [];

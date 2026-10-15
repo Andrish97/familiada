@@ -9,11 +9,6 @@ const LOGIN_URL = "https://www.familiada.online/login";
 // TEST_PASSWORD. Loginy (test1@…, test2@…, ...) same w sobie niczego nie
 // odsłaniają bez prawdziwego hasła.
 const TEST_ACCOUNT_DOMAIN = "familiada.online";
-const GALLERY_TEST_ACCOUNT = "test17@familiada.online";
-
-/** Dedykowane konto galerii; nie jest częścią zwykłej puli E2E. */
-function galleryTestAccountUsername() { return GALLERY_TEST_ACCOUNT; }
-
 // Znany, nieszkodliwy szum widoczny w KAŻDYM przebiegu każdego testu --
 // zgłoszone: zalewa logi CI, utrudniając wyłowienie prawdziwego failu.
 // Odfiltrowane tu i w control2.spec.js's instrumentAnon() (ten sam wzorzec,
@@ -350,7 +345,6 @@ module.exports = {
   loginAsTestUser,
   loginAsGuest,
   loginAsPooledTestUser,
-  galleryTestAccountUsername,
   getTestAccountPool,
   testAccountUsername,
   EXCLUDED_TEST_ACCOUNTS,

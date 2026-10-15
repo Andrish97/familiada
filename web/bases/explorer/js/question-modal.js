@@ -8,7 +8,7 @@
 // autozapis edytora), liczba odpowiedzi 0–6 i punkty opcjonalne (pytanie w
 // bazie nie ma jeszcze typu gry).
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-14T23162";
 import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-14T23162";
 import {

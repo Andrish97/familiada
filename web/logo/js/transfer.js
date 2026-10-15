@@ -7,7 +7,7 @@
 
 import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-14T23162";
 import { parseLogoPackage } from "./package.js?v=v2026-10-14T23162";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-14T23162";
 
 /** Nazwa pliku z nazwy logo -- zostawia litery każdego alfabetu, wycina znaki zakazane w systemach plików. */

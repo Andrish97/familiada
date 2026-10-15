@@ -27,8 +27,12 @@ on:
         description: 'Opcjonalnie: profile galerii E20 rozdzielone przecinkami. Puste = wszystkie urządzenia.'
         required: false
         default: ""
+      e20_gallery_accounts:
+        description: 'Istniejące konta testowe do galerii E20, np. 1,2,3. Widoki jednego konta są sekwencyjne; konta pracują równolegle.'
+        required: false
+        default: "1,2,3"
       publish_mail_screenshots:
-        description: 'Publikuj zrzuty /mail/ w docs po udanym punktowym teście.'
+        description: 'Publikuj zrzuty /mails/ w docs po udanym punktowym teście.'
         type: boolean
         required: false
         default: false
@@ -267,11 +271,12 @@ jobs:
             node --test --test-concurrency=1 unit/*.test.js
           fi
 
-      - name: Prepare E20 account and fixtures once
+      - name: Prepare E20 fixtures and session once
         if: ${{ success() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '1,2,3' }}
         run: node e2e/helpers/prepare-e20-gallery.js
         working-directory: tests
 
@@ -282,10 +287,11 @@ jobs:
           KEEP_STATISTICS_GAMES: ${{ inputs.retain_statistics_games && '1' || '0' }}
           E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
           E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
+          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '1,2,3' }}
           IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
         run: |
           if [ "$IS_E20_GALLERY" = "1" ]; then
-            npx playwright test e2e/e20-gallery.spec.js --workers=1
+            npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS"
           else
             npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
           fi
@@ -337,7 +343,7 @@ jobs:
 
       - name: Remove temporary E20 authentication state
         if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
-        run: rm -f "$RUNNER_TEMP/familiada-e20-gallery-auth.json" "$RUNNER_TEMP/familiada-e20-gallery-fixtures.json"
+        run: rm -f "$RUNNER_TEMP"/familiada-e20-gallery-test*-auth.json "$RUNNER_TEMP"/familiada-e20-gallery-test*-fixtures.json
 
       - name: Publish requested anonymous poll screenshots
         if: ${{ success() && inputs.publish_anonymous_screenshots && (contains(inputs.spec_filter, 'e2e/poll-anonymous.spec.js') || contains(inputs.spec_filter, 'e2e/poll-anonymous-layout.spec.js') || contains(inputs.spec_filter, 'e2e/poll-go.spec.js') || contains(inputs.spec_filter, 'e2e/go-states.spec.js')) }}

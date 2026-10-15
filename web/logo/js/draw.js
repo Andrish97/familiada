@@ -16,7 +16,7 @@
 
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-14T23162";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-14T23162";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
 import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-14T23162";

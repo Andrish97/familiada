@@ -9,10 +9,10 @@
 import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-14T23162";
 import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-14T23162";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-14T23162";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-14T23162";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-14T23162";
 import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
@@ -58,9 +58,11 @@ const pollLoadState = $("pollLoadState");
 const pollLoadMessage = $("pollLoadMessage");
 const pollLoadRetry = $("pollLoadRetry");
 const tabShare = $("tabShare");
+const tabRecipients = $("tabRecipients");
 const tabResults = $("tabResults");
 const secShare = $("secShare");
 const secResults = $("secResults");
+const pollTabsCard = $("pollTabsCard");
 
 // Udostępnianie
 const shareEmpty = $("shareEmpty");
@@ -513,17 +515,25 @@ async function approveTallyFlow() {
 const POLL_TABS = PAGES.polls.tabs;
 const DEFAULT_POLL_TAB = POLL_TABS[0];
 let activeTab = tabFromUrl(POLL_TABS, DEFAULT_POLL_TAB);
+let activeShareSide = "anonymous";
 let tabTouchedByUser = new URLSearchParams(location.search).has("tab");
 let urlTabPending = tabTouchedByUser;
 
 function setActiveTab(tab, { byUser = false } = {}) {
-  activeTab = POLL_TABS.includes(tab) ? tab : DEFAULT_POLL_TAB;
+  const selected = tab === "recipients" ? "recipients" : tab === "results" ? "results" : "share";
+  activeTab = selected === "results" ? "results" : "share";
+  activeShareSide = selected === "recipients" ? "recipients" : "anonymous";
   if (byUser) tabTouchedByUser = true;
   setTab(activeTab, DEFAULT_POLL_TAB);
   const shareOn = activeTab === "share";
   secShare?.classList.toggle("active", shareOn);
   secResults?.classList.toggle("active", !shareOn);
-  for (const [btn, on] of [[tabShare, shareOn], [tabResults, !shareOn]]) {
+  pollTabsCard?.classList.toggle("mobile-recipients-active", shareOn && activeShareSide === "recipients");
+  for (const [btn, on] of [
+    [tabShare, shareOn && activeShareSide === "anonymous"],
+    [tabRecipients, shareOn && activeShareSide === "recipients"],
+    [tabResults, !shareOn],
+  ]) {
     btn?.classList.toggle("active", on);
     btn?.closest(".tab-slot")?.classList.toggle("active", on);
     btn?.setAttribute("aria-selected", on ? "true" : "false");
@@ -531,11 +541,13 @@ function setActiveTab(tab, { byUser = false } = {}) {
 }
 
 function setShareTabEnabled(on) {
-  if (tabShare) {
-    tabShare.disabled = !on;
-    tabShare.setAttribute("aria-disabled", on ? "false" : "true");
+  for (const btn of [tabShare, tabRecipients]) {
+    if (!btn) continue;
+    btn.disabled = !on;
+    btn.setAttribute("aria-disabled", on ? "false" : "true");
   }
   tabShare?.closest(".tab-slot")?.classList.toggle("is-disabled", !on);
+  tabRecipients?.closest(".tab-slot")?.classList.toggle("is-disabled", !on);
   if (!on && activeTab === "share") setActiveTab("results");
 }
 
@@ -1054,7 +1066,9 @@ async function refresh() {
     votesText = "";
   }
   // Wypustka z adresu / wybrana przez użytkownika zostaje; inaczej wg stanu ankiety.
-  setActiveTab(tabTouchedByUser ? activeTab : (st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results"));
+  setActiveTab(tabTouchedByUser
+    ? (activeTab === "share" && activeShareSide === "recipients" ? "recipients" : activeTab)
+    : (st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results"));
 
   const nameEl = $("pollGameName");
   if (nameEl) {
@@ -1283,7 +1297,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.addEventListener("pagehide", () => { void tally.flush(); });
 
   tabShare?.addEventListener("click", () => { if (!tabShare.disabled) setActiveTab("share", { byUser: true }); });
+  tabRecipients?.addEventListener("click", () => { if (!tabRecipients.disabled) setActiveTab("recipients", { byUser: true }); });
   tabResults?.addEventListener("click", () => setActiveTab("results", { byUser: true }));
+  const mobilePollTabs = window.matchMedia("(max-width: 980px)");
+  mobilePollTabs.addEventListener?.("change", (event) => {
+    if (!event.matches && activeShareSide === "recipients") setActiveTab("share");
+  });
 
   [pollRecipientsClose, pollRecipientsCancel].forEach((button) => button?.addEventListener("click", closeRecipientPicker));
   pollRecipientsAdd?.addEventListener("click", () => void acceptRecipientSelection());

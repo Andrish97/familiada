@@ -57,10 +57,10 @@
 
 .bases-tabs-card .tabs-strip{ display: flex; gap: 0; }
 
-/* 50/50, ignoruj --tab-width z games.css */
+/* Szerokości wypustek wynikają z ich etykiet i plakietek. */
 .bases-tabs-card .tab-slot{
   width: auto;
-  flex: 1 1 0;
+  flex: 1 1 max-content;
   min-width: 0;
 }
 

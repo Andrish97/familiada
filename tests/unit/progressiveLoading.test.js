@@ -16,7 +16,10 @@ test('guard poprzedza auth i odsłonięcie topbara', () => {
 test('globalny guard telefonu odsłania komunikat i nie odsłania zawartości aplikacji', () => {
   const orientation = read('shared/js/core/orientation-guard.js');
   const overlay = read('shared/js/core/page-overlay.js');
+  const deviceGuard = read('shared/js/core/device-guard.js');
   assert.match(orientation, /showPageGuard\([\s\S]*?state:\s*"rotate"[\s\S]*?\);[\s\S]*?classList\.remove\("page-loading"\)/);
+  assert.match(orientation, /messageKey:\s*"pageGuard\.rotateMessage"/);
+  assert.match(deviceGuard, /backHref:\s*state\s*===\s*"rotate"\s*\?\s*null\s*:\s*backHref/);
   assert.match(overlay, /document\.body\.style\.visibility\s*=\s*"hidden"/);
 });
 
@@ -142,7 +145,12 @@ test('rotację sugeruje tylko Buzzer; podgląd testowy Control pomija guard doty
   const testMode = read('control/js/testMode.js');
   const host = read('control/host/js/main.js');
   const buzzer = read('control/buzzer/js/main.js');
-  assert.match(orientation, /suggestsLandscape = .*buzzer/);
+  const deviceGuard = read('shared/js/core/device-guard.js');
+  assert.match(orientation, /allowPhoneLandscape: \/.*host\|buzzer/);
+  assert.match(buzzer, /requirePhoneLandscape:\s*!controlTestFrame/);
+  assert.match(buzzer, /rotateMessageKey:\s*"buzzer\.rotateMessage"/);
+  assert.doesNotMatch(host, /requirePhoneLandscape|rotateMessageKey/);
+  assert.match(deviceGuard, /requirePhoneLandscape && profile\.formFactor === "phone" && profile\.orientation === "portrait"/);
   assert.match(testMode, /frame\.dataset\.controlTestMode\s*=\s*'true'/);
   for (const source of [host, buzzer]) {
     assert.match(source, /controlTestFrame/);

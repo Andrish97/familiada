@@ -1,9 +1,9 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-14T23162";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-14T23162";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-14T23162";
 import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-14T23162";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-14T23162";

@@ -20,6 +20,21 @@ jego historyczne „następny krok” nie zastępują niniejszego stanu.
 
 ## Aktualny checkpoint: E19 zamknięte produkcyjnie
 
+**Kontynuacja E20 (2026-10-15):** poprawki są prowadzone pojedynczo według
+`docs/e20-uwagi-do-korekty.md`; punkty sprawdzone i zamknięte pozostają
+zapisane w kolumnie statusu. Ostatnie domknięte sprawdzenia: 25 (guard
+`rotate` bez „Wróć”), 28 (pusty kafel Connect bez rozciągania), 29 (wspólny
+układ nagłówka Connect), 30 (etapy ładowania na 35 trasach) i 31
+(sekwencyjna galeria, wąska izolacja locków). Nie wracać do tych decyzji
+bez nowej uwagi użytkownika. Konto 17 nie jest potrzebne: galeria loguje
+istniejące konta 1–3, przygotowuje fixture’y osobno dla każdego, przypisuje
+profile do kont, a strony i urządzenia na jednym koncie fotografuje kolejno.
+Równolegle pracują tylko różne konta. Nie tworzy ani nie resetuje kont; nie
+audytuje guarda gościa. Następny krok: krótki przebieg `games`/MacBook na
+koncie 1, naprawa każdego wykrytego błędu, a potem pełna galeria 35
+tras × 5 profili oraz TV tylko dla Connect TV. Wynik pełnej galerii i jej
+artefakt wpisać poniżej po zakończeniu.
+
 **Wznowienie E20 po uwagach do galerii (2026-10-14):** poprzednia galeria
 `38599567526` (210 ujęć, 5/5 profili) nie zamyka przeglądu — użytkownik
 zgłosił widoki zablokowane przez równoległe użycie zasobów i poprawki wyglądu

@@ -11,7 +11,7 @@
 // czy grę wolno otworzyć / grać, decyduje baza (js/core/game-validate.js).
 
 import { RULES, TYPES } from "./game-validate.js?v=v2026-10-14T23162";
-import { t } from "../../translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../translation/translation.js?v=v2026-10-15Tguard1";
 import { icon } from "./icons.js?v=v2026-10-14T23162";
 
 export const LIMITS = {

@@ -3,11 +3,12 @@
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-14T23162";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-14T23162";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-14T23162";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
 import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-14T23162";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-14T23162";
 
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");
@@ -147,7 +148,7 @@ async function renderSharedDevices() {
 
   if (!items.length) {
     sharedDevicesList.classList.add("is-empty");
-    sharedDevicesList.innerHTML = `<div class="connect-device-empty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
+    sharedDevicesList.innerHTML = `<div class="share-empty-state">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
     return;
   }
   sharedDevicesList.classList.remove("is-empty");
@@ -371,6 +372,7 @@ async function startQrScan() {
     btnScanQr.style.display = "";
     btnScanQr.addEventListener("click", startQrScan);
   }
+  initListHeaderLayout(".connect-device-body > main.wrap > .bar");
 
   if (isLoggedIn && !guestMode) {
     if (sharedDevicesCard) sharedDevicesCard.hidden = false;

@@ -33,7 +33,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="/shared/js/core/security-warning.js?v=v2026-10-14T23162" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-14T23162";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-15Tguard1";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
     import("/control/js/app.js?v=v2026-10-14T23162");
@@ -191,10 +191,9 @@
     .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
     .c2-roundlayout-side { flex:0 0 240px; min-width:0; min-height:0; display:flex; flex-direction:column; }
     .c2-roundlayout-side .c2-hint { flex:1; }
-    /* Urządzenia (renderDevicesStep) reużywa ten sam c2-roundlayout — lista
-       urządzeń po lewej, hint o wpisywaniu kodu po prawej, zamiast dawnego
-       paska na całą szerokość pod spodem. Z powrotem pojedynczy słupek 1x4
-       (zgłoszone: wariant 2x2 się nie sprawdził) — gap grida zastępuje
+    /* Urządzenia (renderDevicesStep) reużywa c2-roundlayout — cztery karty
+       urządzeń i karta testu są u góry, a krótka podpowiedź pod nimi. Na
+       szerokim ekranie karty układają się w siatce 2x2. Gap grida zastępuje
        .device-row's własny margin-bottom (control.css, reużywane też przez
        stary, jednokolumnowy control.html — tam margin ma sens, tu dublowałby
        się z gapem), zmniejszony (zgłoszone: za duży odstęp między kaflami).
@@ -206,6 +205,9 @@
     .topbar .top-status .dotRow { padding:10px 12px; min-height:37px; box-sizing:border-box; border-radius:14px; font-size:13px; line-height:1; }
     .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:1fr; gap:8px; align-content:start; }
     .c2-devicerows .device-row { margin-bottom:0; align-content:start; padding:10px; gap:6px; }
+    .c2-devicerows .control-test-choice { grid-column:1 / -1; display:flex; flex-direction:row; align-items:center; gap:16px !important; }
+    .c2-devicerows .control-test-choice > .device-opt-check { flex:0 0 auto; }
+    .c2-devicerows .control-test-choice > .device-opt-check-hint { flex:1 1 auto; min-width:0; }
     .c2-devicerows .device-row-2 { gap:6px; }
     .c2-devicerows .device-row-2 .btn { padding:7px 9px; }
     .c2-devicerows .device-row-opt { margin-top:0; padding-top:5px; }
@@ -384,10 +386,6 @@
     @media (min-width:981px) {
       .c2-devicerows { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .c2-devices-layout { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:8px; }
-      /* .c2-roundlayout-main ma width:0 dla bazowego układu flex z kolumną
-         podpowiedzi. Tutaj staje się elementem grida, więc musi rozciągnąć
-         się na szerokość swojego toru; inaczej lista urządzeń zapada się i
-         przechwytuje kliknięcia mimo że jej elementy są w DOM. */
       .c2-devices-layout > .c2-roundlayout-main { width:100%; }
       .c2-devices-layout .c2-roundlayout-divider { display:none; }
       .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }

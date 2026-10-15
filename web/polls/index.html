@@ -74,14 +74,14 @@
         <span class="pollBarHint" id="hintTop"></span>
       </div>
       <div class="pollBarActions" id="pollActions">
-        <button class="btn sm" id="btnResumePoll" type="button" hidden data-i18n="polls.actions.resumePoll">Wznów głosowanie</button>
-        <button class="btn sm" id="btnLeaveTally" type="button" hidden data-i18n="polls.actions.leaveTally">Wyjdź z podliczania</button>
-        <button class="btn sm gold" id="btnOpenPoll" type="button" hidden data-i18n="polls.actions.openPoll">Uruchom</button>
-        <button class="btn sm gold" id="btnStopPoll" type="button" hidden data-i18n="polls.actions.stopPoll">Zatrzymaj</button>
-        <button class="btn sm gold" id="btnTallyPoll" type="button" hidden data-i18n="polls.actions.tallyPoll">Podlicz głosy</button>
-        <button class="btn sm gold" id="btnApproveTally" type="button" hidden data-i18n="polls.actions.approve">Zatwierdź</button>
-        <button class="btn sm gold" id="btnReopenPoll" type="button" hidden data-i18n="polls.actions.reopenPoll">Uruchom ponownie</button>
-        <button class="btn sm pollAbort" id="btnAbort" type="button" hidden data-i18n="polls.actions.abort">Przerwij</button>
+        <button class="btn sm" id="btnResumePoll" type="button" hidden data-i18n-title="polls.actions.resumePoll" data-i18n-aria-label="polls.actions.resumePoll" title="Wznów głosowanie" aria-label="Wznów głosowanie"><i class="ico" data-icon="play" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.resumePoll">Wznów głosowanie</span></button>
+        <button class="btn sm" id="btnLeaveTally" type="button" hidden data-i18n-title="polls.actions.leaveTally" data-i18n-aria-label="polls.actions.leaveTally" title="Wyjdź z podliczania" aria-label="Wyjdź z podliczania"><i class="ico" data-icon="arrow-left" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.leaveTally">Wyjdź z podliczania</span></button>
+        <button class="btn sm gold" id="btnOpenPoll" type="button" hidden data-i18n-title="polls.actions.openPoll" data-i18n-aria-label="polls.actions.openPoll" title="Uruchom" aria-label="Uruchom"><i class="ico" data-icon="play" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.openPoll">Uruchom</span></button>
+        <button class="btn sm gold" id="btnStopPoll" type="button" hidden data-i18n-title="polls.actions.stopPoll" data-i18n-aria-label="polls.actions.stopPoll" title="Zatrzymaj" aria-label="Zatrzymaj"><i class="ico" data-icon="stop" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.stopPoll">Zatrzymaj</span></button>
+        <button class="btn sm gold" id="btnTallyPoll" type="button" hidden data-i18n-title="polls.actions.tallyPoll" data-i18n-aria-label="polls.actions.tallyPoll" title="Podlicz głosy" aria-label="Podlicz głosy"><i class="ico" data-icon="polls" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.tallyPoll">Podlicz głosy</span></button>
+        <button class="btn sm gold" id="btnApproveTally" type="button" hidden data-i18n-title="polls.actions.approve" data-i18n-aria-label="polls.actions.approve" title="Zatwierdź" aria-label="Zatwierdź"><i class="ico" data-icon="check" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.approve">Zatwierdź</span></button>
+        <button class="btn sm gold" id="btnReopenPoll" type="button" hidden data-i18n-title="polls.actions.reopenPoll" data-i18n-aria-label="polls.actions.reopenPoll" title="Uruchom ponownie" aria-label="Uruchom ponownie"><i class="ico" data-icon="refresh" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.reopenPoll">Uruchom ponownie</span></button>
+        <button class="btn sm pollAbort" id="btnAbort" type="button" hidden data-i18n-title="polls.actions.abort" data-i18n-aria-label="polls.actions.abort" title="Przerwij" aria-label="Przerwij"><i class="ico" data-icon="cancel" aria-hidden="true"></i><span class="pollActionLabel" data-i18n="polls.actions.abort">Przerwij</span></button>
       </div>
     </div>
 
@@ -91,7 +91,19 @@
         <div class="tabs-strip" id="pollTabs" role="tablist">
           <div class="tab-slot slot-share active">
             <button class="tab-label active" id="tabShare" type="button" role="tab" aria-controls="secShare" aria-selected="true">
-              <span data-i18n="polls.tabs.share">Udostępnianie</span>
+              <span class="pollShareLabelDesktop" data-i18n="polls.tabs.share">Udostępnianie</span>
+              <span class="pollShareLabelMobile" data-i18n="pollSharePanel.anonymous">Anonimowo</span>
+            </button>
+            <div class="tab-wrapper" aria-hidden="true">
+              <div class="tab-active"></div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+
+          <div class="tab-slot slot-recipients">
+            <button class="tab-label" id="tabRecipients" type="button" role="tab" aria-controls="secShare" aria-selected="false">
+              <span data-i18n="pollSharePanel.recipients">Odbiorcy</span>
             </button>
             <div class="tab-wrapper" aria-hidden="true">
               <div class="tab-active"></div>
@@ -136,17 +148,13 @@
                 </div>
               </section>
 
-              <section class="pollSec pollRecipientsToolsSec">
+              <section class="pollSec pollRecipientsSec">
                 <div class="pollSecHead">
                   <h3 class="pollSecTitle" data-i18n="pollSharePanel.recipients">Odbiorcy</h3>
                 </div>
                 <div class="subsTools" id="subsTools">
                   <button class="btn sm gold" id="btnAddRecipients" type="button" data-i18n="polls.share.addRecipients">Dodaj odbiorców</button>
                 </div>
-              </section>
-
-              <section class="pollSec pollSubsSec">
-                <div class="pollSecHead"><h3 class="pollSecTitle" data-i18n="pollSharePanel.recipientList">Lista odbiorców</h3></div>
                 <div class="pollsEmpty" id="subsEmpty" style="display:none;"></div>
                 <div class="grid subsGrid" id="subsGrid"></div>
                 <div class="subsFoot">

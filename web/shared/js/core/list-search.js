@@ -8,7 +8,7 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../translation/translation.js?v=v2026-10-15Tguard1";
 import { icon } from "./icons.js?v=v2026-10-14T23162";
 import { initUiSelect } from "./ui-select.js?v=v2026-10-14T23162";
 import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-14T23162";
@@ -118,7 +118,6 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     const stamp = (el, k) => Date.parse(el.dataset[k] || el.dataset.created || "") || 0;
     const nm = (el) => norm(el.querySelector(name)?.textContent);
     const cmp = sortValue === "name" ? (a, b) => nm(a).localeCompare(nm(b), "pl")
-      : sortValue === "received" ? (a, b) => (Date.parse(b.dataset.received || "") || 0) - (Date.parse(a.dataset.received || "") || 0)
       : sortValue === "created" ? (a, b) => stamp(b, "created") - stamp(a, "created")
       : (a, b) => stamp(b, "updated") - stamp(a, "updated");
     const sorted = [...tiles].sort(cmp);
@@ -142,6 +141,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
 
   const apply = () => {
     const q = norm(input.value);
+    const selectedFilterOption = filter?.options.find((option) => option.value === filterValue);
     mobileSearch.innerHTML = icon(q ? "close" : "search");
     mobileSearch.classList.toggle("is-active", !!q);
     mobileSearch.title = q ? t("baseExplorer.search.clear") : t("common.searchByName");
@@ -155,7 +155,9 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
         if (el.classList.contains("addCard")) continue;
         total++;
         const hit = (!q || norm(el.querySelector(name)?.textContent).includes(q))
-          && (!filter || matchesFilter(el.dataset[filter.attr], filterValue));
+          && (!filterValue || (selectedFilterOption?.matches
+            ? selectedFilterOption.matches(el)
+            : matchesFilter(el.dataset[filter.attr], filterValue)));
         el.hidden = !hit;
         if (hit) visible++;
       }

@@ -4,7 +4,7 @@
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-14T23162";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-14T23162";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-14T23162";
 import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-14T23162";
 import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-14T23162";
@@ -15,7 +15,7 @@ import {
 } from "../../../shared/js/core/question-form.js?v=v2026-10-14T23162";
 import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-14T23162";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-14T23162";
 import "../../../shared/js/core/contact-modal.js?v=v2026-10-14T23162";
 import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-14T23162";

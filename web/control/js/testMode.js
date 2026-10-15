@@ -1,11 +1,11 @@
 import { controlLayoutGeometry, DEVICE_VIEWPORT } from './layoutGeometry.js?v=v2026-10-14T23162';
-import { t } from '../../shared/translation/translation.js?v=v2026-10-14T23162';
+import { t } from '../../shared/translation/translation.js?v=v2026-10-15Tguard1';
 import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-14T23162';
-import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-14T23162';
+import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-15Tguard1';
 
-export function currentControlGeometry(testMode = false) {
+export function currentControlGeometry(testMode = false, { width = innerWidth, height = innerHeight } = {}) {
   const topbarHeight = document.querySelector('.topbar')?.offsetHeight || 68;
-  return controlLayoutGeometry({ width: innerWidth, height: innerHeight, topbarHeight, testMode });
+  return controlLayoutGeometry({ width, height, topbarHeight, testMode });
 }
 
 export function createControlTestMode({ urls, onActivity, onResize }) {

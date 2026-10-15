@@ -14,7 +14,7 @@ import {
   canDeleteHere,
 } from "./actions.js?v=v2026-10-14T23162";
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-14T23162";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { renderAll } from "./render.js?v=v2026-10-14T23162";
 
 

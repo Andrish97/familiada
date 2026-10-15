@@ -12,7 +12,7 @@ import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v
 import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-14T23162";
 import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-14T23162";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-14T23162";
 
 const btnBack = document.getElementById("btnBack");

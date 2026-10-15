@@ -17,7 +17,8 @@ renderowanie stron i pierwsze poprawki layoutu.
   usług i przykładowymi danymi. Wymiary Safe Area, notch i zaokrąglenia są
   emulowane. To nie są dane kont produkcyjnych ani test na fizycznym sprzęcie.
 
-[Otwórz galerię zrzutów](img/e20-audit/index.html).
+Wcześniejszy podgląd HTML został usunięty. Końcowa galeria E20 będzie
+udostępniona jako artefakt zawierający foldery stron i same pliki PNG.
 
 ## Wyniki automatycznego pomiaru
 

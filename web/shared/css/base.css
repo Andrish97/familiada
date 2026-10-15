@@ -5,7 +5,32 @@
     --card2: rgba(0,0,0,.18);
     --line: rgba(255,255,255,.14);
     --line2: rgba(255,255,255,.18);
-    --gold: #ffeaa6
+    --gold: #ffeaa6;
+    --tab-label-font-size: 12px;
+    --tab-label-letter-spacing: .08em;
+}
+
+.tabs-strip :is(.tab-label,.tab-active){
+    font-size: var(--tab-label-font-size);
+    letter-spacing: var(--tab-label-letter-spacing);
+}
+.tabs-strip > .tab-slot{
+    width: auto;
+    min-width: 0;
+    flex: 1 1 max-content;
+}
+.tabs-strip .tab-label > .badge{
+    min-width: 30px;
+}
+.tabs-strip .tab-label > .badge:empty{
+    display: inline-flex;
+    visibility: hidden;
+}
+@media (max-width: 600px){
+    :root{
+        --tab-label-font-size: 10px;
+        --tab-label-letter-spacing: .015em;
+    }
 }
 
 /* Bez niebieskiej poświaty przy dotknięciu elementu (Chrome/Safari mobilne).
@@ -484,8 +509,9 @@ main{
     padding-right: max(16px, env(safe-area-inset-right));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
     padding-left: max(16px, env(safe-area-inset-left));
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
     align-items: start;
     gap: 8px;
     opacity: .85;
@@ -503,17 +529,16 @@ main{
     padding-bottom: max(8px, env(safe-area-inset-bottom));
     padding-left: max(16px, env(safe-area-inset-left));
 }
-.footer > *{ min-width:0; overflow-wrap:anywhere; }
-.footer > :first-child{ justify-self:start; text-align:left; }
-.footer > :last-child{ justify-self:end; text-align:right; }
+.footer > *{ min-width:0; max-width:100%; flex:0 1 auto; overflow-wrap:break-word; hyphens:auto; text-wrap:pretty; }
+.footer > :first-child{ text-align:left; }
+.footer > :last-child{ text-align:right; }
 .footer:has(> :nth-child(3)){
-    display:grid;
-    grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,1fr);
-    column-gap:12px;
+    display:flex;
+    flex-wrap:nowrap;
+    justify-content:space-between;
+    gap:8px 12px;
 }
-.footer:has(> :nth-child(3)) > :first-child{ justify-self:start; }
-.footer:has(> :nth-child(3)) > :nth-child(2){ justify-self:center; min-width:0; text-align:center; }
-.footer:has(> :nth-child(3)) > :last-child{ justify-self:end; }
+.footer:has(> :nth-child(3)) > :nth-child(2){ margin-inline:auto; text-align:center; }
 .footer::before{
     content: "";
     position: absolute;

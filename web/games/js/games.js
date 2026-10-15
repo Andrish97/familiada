@@ -5,10 +5,10 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-14T23
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-14T23162";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-14T23162";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-14T23162";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-14T23162";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-14T23162";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-14T23162";
 import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-14T23162";
 
@@ -1220,16 +1220,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userP = initPage("games", { ready: i18nP, account: { withAccountSettings: true } });
   await i18nP;
   initListHeaderLayout();
-  // Typ to zakładki (preparowana/tekstowa/punktowa/rynek) — filtr tylko po stanie.
+  // Typ to zakładki (preparowana/tekstowa/punktowa/rynek); filtr obejmuje stan i odebrane kopie.
   initListSearch({
     grids: "#grid", tile: ".card", name: ".name",
     sort: {
       ...SORT_LIST,
-      options: [...SORT_LIST.options, { value: "received", labelKey: "resourceSend.receivedFilter" }],
     },
     filter: {
       param: "status", attr: "status",
-      options: ["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
+      options: [
+        ...["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
+        { value: "received", labelKey: "resourceSend.receivedFilter", matches: (tile) => !!tile.dataset.received },
+      ],
       allKey: "common.filterAll", ariaKey: "games.filter.label",
     },
   });

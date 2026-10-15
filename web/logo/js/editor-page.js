@@ -19,10 +19,10 @@
 //     komunikat z powrotem na listę.
 
 import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-14T23162";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-14T23162";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15Tguard1";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-14T23162";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-14T23162";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-15Tguard1";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-14T23162";
 import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-14T23162";

@@ -14,7 +14,7 @@
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-14T23162";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
 import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-14T23162";
 import {

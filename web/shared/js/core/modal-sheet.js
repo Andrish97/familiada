@@ -9,7 +9,7 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../translation/translation.js?v=v2026-10-15Tguard1";
 import { icon, iconText } from "./icons.js?v=v2026-10-14T23162";
 import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-14T23162";
 

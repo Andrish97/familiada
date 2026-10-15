@@ -30,7 +30,7 @@
 
 import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-14T23162";
 import { isGuestUser } from "./guest-mode.js?v=v2026-10-14T23162";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-14T23162";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-15Tguard1";
 import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-14T23162";
 
 async function loadDeps() {
@@ -38,7 +38,7 @@ async function loadDeps() {
     import("./auth.js?v=v2026-10-14T23162"),
     import("./topbar-controller.js?v=v2026-10-14T23162"),
     import("./modal-sheet.js?v=v2026-10-14T23162"),
-    import("./device-guard.js?v=v2026-10-14T23162"),
+    import("./device-guard.js?v=v2026-10-15Tguard1"),
   ]);
   return {
     getUser: auth.getUser,

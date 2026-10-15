@@ -1040,8 +1040,7 @@ body.games-body.logo-body > main.logoWrap{
 
 .logo-tabs-card .tabs-strip{
   flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
 }
 
 .logo-tabs-card .tab-slot,

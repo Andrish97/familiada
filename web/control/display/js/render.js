@@ -1,4 +1,4 @@
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 // control/display/js/render.js
 //
 // Tłumaczy wiersz public.game_state (a dokładniej: różnicę między
@@ -25,7 +25,7 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-14T2316
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
 import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-14T23162";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-14T23162";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-15Tguard1";
 import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-14T23162";
 import {
   ROUND_INTRO_ANIM,

@@ -26,7 +26,7 @@
 .contacts-tabs > .tabs-strip{ display: none; }
 .contacts-card[hidden]{ display: none; }
 @media (max-width: 720px){
-  .contacts-tabs > .tabs-strip{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .contacts-tabs > .tabs-strip{ display: flex; }
   .contacts-tabs .tab-slot{ width: 100%; }
   .contacts-tabs .tab-label{ z-index: 3; }
   .contacts-tabs .tab-slot:first-child .tab-corner-left,

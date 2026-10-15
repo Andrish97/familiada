@@ -1,6 +1,6 @@
 // js/core/rating-system.js
 import { sb } from "./supabase.js?v=v2026-10-14T23162";
-import { t } from "../../translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../translation/translation.js?v=v2026-10-15Tguard1";
 import { alertModal } from "./modal.js?v=v2026-10-14T23162";
 import { icon } from "./icons.js?v=v2026-10-14T23162";
 

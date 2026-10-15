@@ -29,7 +29,7 @@ import { createAnimator } from "../../../shared/js/display/anim.js?v=v2026-10-14
 import { createDisplays } from "../../../shared/js/display/displays.js?v=v2026-10-14T23162";
 import { createThemeManager } from "../../../shared/js/display/theme_manager.js?v=v2026-10-14T23162";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-14T23162";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-14T23162";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-15Tguard1";
 import { clipDisplayText } from "../../../shared/js/gameplay/displayText.js?v=v2026-10-14T23162";
 
 export async function createScene() {
