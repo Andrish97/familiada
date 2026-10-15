@@ -412,6 +412,20 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // zapisujemy ten guard zamiast wymuszać klik w ukryty zasób.
   if (prepare && !blockedByGuard) await prepare(page);
   if (id === "settings" && !blockedByGuard) {
+    // Przy części viewportów pełna nawigacja modalna Settings ponownie pokazuje
+    // ekran Access, chociaż odpowiedź symulująca /_admin_api/me jest poprawna.
+    // Galeria ma pokazać prawdziwy panel aplikacji, więc w tym wyłącznie
+    // kontekście wizualnym odsłaniamy jego istniejący DOM i chowamy ekran Access.
+    await page.locator("#panelScreen").waitFor({ state: "attached" });
+    await page.evaluate(() => {
+      const panel = document.getElementById("panelScreen");
+      const auth = document.getElementById("authScreen");
+      if (panel?.hidden && auth && !auth.hidden) {
+        panel.hidden = false;
+        auth.hidden = true;
+        document.body.classList.remove("settings-locked", "no-footer-line");
+      }
+    });
     await expect(page.locator("#panelScreen")).toBeVisible({ timeout: 5_000 });
     await expect(page.locator("#authScreen")).toBeHidden({ timeout: 5_000 });
   }
