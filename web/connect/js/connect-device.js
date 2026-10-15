@@ -1,21 +1,21 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T22194";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T22194";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-15T22194";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15T22194";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15T22194";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-15T22194";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-15T22194";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-15T22194";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15T22194";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T22194";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T22234";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T22234";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-15T22234";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15T22234";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15T22234";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-15T22234";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-15T22234";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-15T22234";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-15T22234";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15T22234";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T22234";
 
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");
 const sharedDevicesCard   = document.getElementById("sharedDevicesCard");
 const sharedDevicesList   = document.getElementById("sharedDevicesList");
-const msg                 = document.getElementById("msg");
 const pageHint            = document.getElementById("pageHint");
 const connectCodeInput    = document.getElementById("connectCodeInput");
 const btnConnectCode      = document.getElementById("btnConnectCode");
@@ -28,7 +28,6 @@ const btnDevicePreviewConnect = document.getElementById("btnDevicePreviewConnect
 const btnDevicePreviewCancel  = document.getElementById("btnDevicePreviewCancel");
 const btnDevicePreviewClose   = document.getElementById("btnDevicePreviewClose");
 
-function setMsg(text)     { if (msg) msg.textContent = text || ""; }
 function setCodeMsg(text) { if (connectCodeMsg) connectCodeMsg.textContent = text || ""; }
 
 function escapeHtml(s) {
@@ -184,7 +183,7 @@ async function renderSharedDevices() {
 
     row.addEventListener("click", async () => {
       if (!item.game_id || !item.share_key) {
-        setMsg(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry.");
+        toast(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry.", { kind: "error" });
         return;
       }
       const isMobileType = item.device_type === "host" || item.device_type === "buzzer";
@@ -193,12 +192,11 @@ async function renderSharedDevices() {
       } else if (!_isMobile && isMobileType) {
         alertModal({ text: t("connectDevice.warning.mobileOnly") });
       }
-      setMsg(t("connectDevice.shared.opening") || "Otwieranie…");
       try {
         const device = item.device_type === "poll_qr" ? "qr" : item.device_type;
         window.location.href = `/go/?d=${device}&id=${item.game_id}&key=${item.share_key}`;
       } catch (e) {
-        setMsg(e?.message || "Błąd.");
+        toast(e?.message || "Błąd.", { kind: "error" });
       }
     });
 
@@ -300,7 +298,7 @@ async function startQrScan() {
       }
       return;
     } catch {
-      setMsg(t("connectDevice.scan.cameraError") || "Brak dostępu do kamery.");
+      toast(t("connectDevice.scan.cameraError") || "Brak dostępu do kamery.", { kind: "error" });
       return;
     }
   }
@@ -347,7 +345,7 @@ async function startQrScan() {
     if (code?.data?.startsWith("http")) {
       window.location.href = code.data;
     } else {
-      setMsg(t("connectDevice.scan.noQr") || "Nie znaleziono kodu QR.");
+      toast(t("connectDevice.scan.noQr") || "Nie znaleziono kodu QR.", { kind: "error" });
     }
   });
 

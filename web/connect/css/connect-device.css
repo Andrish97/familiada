@@ -4,14 +4,8 @@
 }
 
 
-.connect-device-msg {
-  font-size: .85rem;
-  min-height: 18px;
-  margin-top: 4px;
-  opacity: .7;
-}
-
-.connect-device-body .bar.has-actions-below{row-gap:6px;padding-bottom:12px;margin-bottom:10px}
+.connect-device-body .bar { margin-bottom: 12px; }
+.connect-device-body .bar.has-actions-below{row-gap:6px;padding-bottom:12px;margin-bottom:12px}
 .connect-device-body .bar.has-actions-below > .actions{margin-top:0;justify-content:flex-start}
 
 .connect-device-card-header {
