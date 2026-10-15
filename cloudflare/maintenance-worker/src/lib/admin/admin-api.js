@@ -91,12 +91,15 @@ export async function handleAdminApi(request, env) {
         const stats = publicRow.stats_detail && typeof publicRow.stats_detail === "object" ? publicRow.stats_detail : {};
         const events = [...(Array.isArray(stats.events) ? stats.events : []), ...extraEvents]
           .sort((a, b) => Date.parse(a?.at || "") - Date.parse(b?.at || ""));
+        const eventLog = {
+          status: sessionId ? (extraEvents.length ? "events_recorded" : "no_events_recorded") : "session_id_missing",
+          event_count: extraEvents.length,
+        };
         return {
           ...publicRow,
-          display_event_log: {
-            status: sessionId ? (extraEvents.length ? "events_recorded" : "no_events_recorded") : "session_id_missing",
-            event_count: extraEvents.length,
-          },
+          device_event_log: eventLog,
+          // Keep the old key for saved Admin exports and older clients.
+          display_event_log: eventLog,
           stats_detail: { ...stats, events },
         };
       });
