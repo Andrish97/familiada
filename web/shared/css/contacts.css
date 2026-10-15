@@ -13,12 +13,19 @@
 .contacts-invite-row{ display: flex; align-items: center; gap: 10px; }
 .contacts-invite-row .inp{ flex: 1 1 auto; min-width: 0; }
 .contacts-invite-row .btn{ flex: 0 0 auto; }
+.contacts-invite-icon{ display: none; }
 .contacts-card .shareRow.rowsFocus{ border-color: var(--gold); }
 @media (max-width: 720px){
   .contacts-body > main.wrap{ padding: 15px; }
   .contacts-layout{ grid-template-columns: minmax(0,1fr); gap: 14px; }
   .contacts-card{ padding: 10px; }
   .contacts-invite-row{ gap: 8px; }
+}
+
+@media (max-width: 720px), (max-width: 980px) and (orientation: landscape){
+  .contacts-invite-row #btnInvite{ box-sizing: border-box; width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0; flex: 0 0 36px; display: inline-flex; align-items: center; justify-content: center; }
+  .contacts-invite-row .contacts-invite-label{ display: none; }
+  .contacts-invite-row .contacts-invite-icon{ display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; }
 }
 
 /* Wypustki korzystają wprost z games.css; na komputerze obie kolumny. */
