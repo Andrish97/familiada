@@ -1033,7 +1033,12 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu głównej", async ({ page, browser }, testInfo) => {
   test.setTimeout(120000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const game = await makeGameRaw(page, `E2E-CONTROL2-LEASE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const game = await makeGameRaw(page, `E2E-CONTROL2-LEASE-${Date.now()}`, {
+    roundQuestions: Array.from({ length: 6 }, (_, i) => ({
+      ord: i + 1, text: `Lease pytanie ${i + 1}`,
+      answers: [{ ord: 1, text: `Odp. ${i + 1}`, fixed_points: 10 }],
+    })),
+  });
   const contexts = [];
   page.on("pageerror", error => console.log("[lease e2e pageerror]", error.message));
   page.on("console", message => {
