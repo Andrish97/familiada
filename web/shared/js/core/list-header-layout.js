@@ -254,7 +254,6 @@ function initListBottomToolbarLayout() {
       // z dostępnej szerokości i zmierzonej liczby wierszy.
       const useIcons = hasTextLabels && textLayout && iconLayout
         && ((textRows > 2 && iconRows < textRows) || textRows - iconRows >= 2);
-      bar.dataset.toolbarLayoutDebug = JSON.stringify({ available, textLeft: textLeft.items, textRight: textRight.items, iconLeft: iconLeft.items, iconRight: iconRight.items, textRows, iconRows, hasTextLabels, useIcons });
       bar.classList.toggle("is-compact-icons", Boolean(useIcons));
       const leftMeasure = useIcons ? iconLeft : textLeft;
       const rightMeasure = useIcons ? iconRight : textRight;

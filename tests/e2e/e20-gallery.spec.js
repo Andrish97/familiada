@@ -522,8 +522,6 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-single-row")
       ? "single-row"
       : document.querySelector(".games-bottom")?.classList.contains("is-balanced-wrap") ? "balanced-wrap" : "not-measured",
-    listBottomCompactIcons: document.querySelector(".games-bottom")?.classList.contains("is-compact-icons") || false,
-    listBottomLayoutDebug: document.querySelector(".games-bottom")?.dataset.toolbarLayoutDebug || "",
     listBottomTextLabels: [...document.querySelectorAll(".games-bottom-right .only-desktop")]
       .some((label) => label.getClientRects().length > 0),
     listBottomMetrics: (() => {
@@ -574,12 +572,12 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       throw new Error(`${profile.label} · ${id}: dolny pasek zawinął się, choć mieści się w jednym wierszu; ${JSON.stringify(state.listBottomMetrics)}`);
     }
     if (!fitsSingleRow && state.listBottomLayout !== "balanced-wrap") {
-      throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; compact=${state.listBottomCompactIcons}; ${JSON.stringify(state.listBottomMetrics)}; pomiar=${state.listBottomLayoutDebug}`);
+        throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; ${JSON.stringify(state.listBottomMetrics)}`);
     }
     if (state.listBottomTextLabels && state.listBottomMetrics) {
       const longestGroup = Math.max(state.listBottomMetrics.leftRows.length, state.listBottomMetrics.rightRows.length);
       if (longestGroup > 2) {
-        throw new Error(`${profile.label} · ${id}: tekstowe przyciski paska filtrów/akcji tworzą więcej niż dwa rzędy zamiast przejść do ikon; compact=${state.listBottomCompactIcons}; ${JSON.stringify(state.listBottomMetrics)}; pomiar=${state.listBottomLayoutDebug}`);
+        throw new Error(`${profile.label} · ${id}: tekstowe przyciski paska filtrów/akcji tworzą więcej niż dwa rzędy zamiast przejść do ikon; ${JSON.stringify(state.listBottomMetrics)}`);
       }
     }
     if (profile.width >= 744) {
