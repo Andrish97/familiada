@@ -68,9 +68,8 @@ function additionalStates(fixtures) {
       prepare: async (page) => {
         const tile = page.locator(`.card[data-game-id="${fixtures.game.id}"]`);
         await tile.waitFor({ state: "visible", timeout: 20_000 });
-        // Użyj produkcyjnego handlera wyboru bez dotykowej hit-test akcji.
-        // Na iPadzie syntetyczny tap potrafi zawiesić renderer po przewinięciu.
-        await page.evaluate((id) => selectGame(id), fixtures.game.id);
+        // Uruchom produkcyjny listener bez niestabilnego hit-testu dotyku.
+        await tile.dispatchEvent("click");
         await expect(tile).toHaveClass(/selected/);
       },
     },
