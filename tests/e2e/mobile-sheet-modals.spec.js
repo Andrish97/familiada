@@ -356,7 +356,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
     const baseId = await createBase(page, `E2E-XB-SHEET-TAGS-${Date.now()}`);
 
     try {
-      for (let ord = 1; ord <= 20; ord++) {
+      for (let ord = 1; ord <= 30; ord++) {
         await createTag(page, { baseId, name: `Tag mobile ${ord}`, ord });
       }
       const qid = await createQuestion(page, {

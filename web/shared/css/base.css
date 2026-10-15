@@ -1284,6 +1284,17 @@ main{
         -webkit-overflow-scrolling: touch;
     }
     .modal--sheet.sheet-active .tags-modal .tagsPickList { max-height: none; }
+    /* W mobilnym eksporcie gry przewija się cała treść arkusza. Nie
+       zagnieżdżaj pod nią scrolla formularza ani listy pytań. */
+    .modal--sheet.sheet-active .export-modal .xBody {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
+    }
+    .modal--sheet.sheet-active .export-modal .xPickList {
+        max-height: none;
+        overflow: visible;
+    }
     .modal--sheet.sheet-active .tags-modal .tagsFoot {
         flex: 0 0 auto;
         margin-top: 10px;
