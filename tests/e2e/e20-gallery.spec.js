@@ -528,7 +528,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         await installMaintenanceVisualState(context);
         await installSettingsAccessSimulation(context);
         await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
-        const page = await context.newPage();
+        let page = await context.newPage();
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);
         for (const [id, href] of selectedUrls) {
@@ -549,6 +549,15 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           }
         }
         const extra = profile.id === "tv" ? [] : additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
+        if (extra.length) {
+          // Podstawowe strony mogą zostawić stan karty lub heartbeat blokady.
+          // Zamykamy ją całkowicie i stany dodatkowe fotografujemy w nowej,
+          // pojedynczej karcie, nadal sekwencyjnie.
+          await page.close();
+          page = await context.newPage();
+          page.setDefaultTimeout(20_000);
+          page.setDefaultNavigationTimeout(20_000);
+        }
         for (const state of extra) {
           const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "games", "logo-draw", "logo-image", "logo-text", "polls"]);
           const removeLockIsolation = lockSensitive.has(state.page) ? await installVisualResourceLockIsolation(page) : null;
