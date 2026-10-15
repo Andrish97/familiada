@@ -1,5 +1,5 @@
-import { sb } from "./supabase.js?v=v2026-10-15T16225";
-import { t } from "../../translation/translation.js?v=v2026-10-15T16225";
+import { sb } from "./supabase.js?v=v2026-10-15T16253";
+import { t } from "../../translation/translation.js?v=v2026-10-15T16253";
 
 const HEARTBEAT_MS = 3_000;
 const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
@@ -38,12 +38,11 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
     focused: !!document.hasFocus?.(),
   });
 
-  function publish(next, data = {}) {
+  function publish(data = {}) {
     mode = data.mode || mode;
     const previous = `${state}:${epoch}`;
     state = data.state || state;
     epoch = state === "primary" ? Number(data.epoch) : null;
-    console.info("[device lease trace] response", JSON.stringify({ mode, state, epoch, raw: data }));
     if (`${state}:${epoch}` !== previous) onState?.({ mode, state, epoch, queuePosition: data.queue_position ?? null, waitingCount: data.waiting_count ?? 0 });
   }
 
@@ -75,7 +74,6 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
       publish(data || {});
       return data;
     } catch (error) {
-      console.info("[device lease trace] error", error?.message || String(error), mode, state);
       if (mode === "lease") {
         state = "unavailable";
         onState?.({ mode, state, epoch, queuePosition: null, waitingCount: 0, error });

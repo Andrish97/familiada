@@ -842,7 +842,6 @@ const TWO_QUESTIONS = [
 // potwierdzenie. Etykieta z `label` odróżnia urządzenia w jednym logu.
 function instrumentAnon(p, label) {
   p.on("console", (msg) => {
-    if (msg.text().startsWith("[device lease trace]")) console.log(`[e2e-diag:${label}]`, msg.text());
     if ((msg.type() === "error" || msg.type() === "warning") && !isKnownNoiseText(msg.text())) {
       console.log(`[e2e-diag:${label}] console:${msg.type()}`, msg.text());
     }
@@ -1072,27 +1071,18 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
     for (const type of ["display", "host", "buzzer"]) {
       const path = `/control/${type}?id=${game.id}&key=${keys[type]}`;
       const primaryStates = [];
-      const primaryErrors = [];
       const primary = await openAnon(browser, contexts, path, `${type}-primary`, [], {
         onPage(devicePage) {
           devicePage.on("response", async response => {
-          if (!response.url().includes("control_device_instance_")) return;
-          let body = "<unreadable>";
-          try { body = JSON.stringify(await response.json()); } catch {}
-          const parsed = body === "<unreadable>" ? null : JSON.parse(body);
-          if (parsed?.state) primaryStates.push(parsed.state);
-          console.log(`[lease e2e ${type}-primary] ${response.url().split("/").pop()} ${response.status()} ${body}`);
+            if (!response.url().includes("control_device_instance_")) return;
+            try {
+              const parsed = await response.json();
+              if (parsed?.state) primaryStates.push(parsed.state);
+            } catch {}
           });
-          devicePage.on("pageerror", error => primaryErrors.push(error.message));
         },
       });
       await expect.poll(() => primaryStates.includes("primary"), { timeout: 10000 }).toBe(true);
-      console.log(`[lease e2e ${type}-primary] ui ${JSON.stringify(await primary.evaluate(() => ({
-        url: location.href,
-        overlay: document.getElementById("deviceLeaseOverlay")?.outerHTML,
-        hidden: document.getElementById("deviceLeaseOverlay")?.hidden,
-        leaseState: document.getElementById("deviceLeaseOverlay")?.dataset.leaseState,
-      })))} errors=${JSON.stringify(primaryErrors)}`);
       await expect(primary.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
       const waitingStates = [];
       const waiting = await openAnon(browser, contexts, path, `${type}-waiting`, [], {
