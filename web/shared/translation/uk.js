@@ -693,8 +693,8 @@ const uk = {
     shareModal: {
       title: "Поділитися базою",
       placeholder: "Ім'я користувача або e-mail...",
-      roleEditor: "Редагування",
-      roleViewer: "Перегляд",
+      roleEditor: "Може редагувати",
+      roleViewer: "Лише перегляд",
       add: "Додати",
       close: "Закрити",
       cooldown: "Не можна додати того самого користувача знову протягом 24 год (антиспам).",
@@ -781,8 +781,8 @@ const uk = {
     },
     share: {
       empty: "Немає доступів.",
-      roleEditor: "Редагування",
-      roleViewer: "Перегляд",
+      roleEditor: "Може редагувати",
+      roleViewer: "Лише перегляд",
       remove: "Видалити",
       failed: "Не вдалося",
       invalidEmail: "Невірний e-mail",

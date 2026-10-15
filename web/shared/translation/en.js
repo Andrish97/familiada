@@ -698,8 +698,8 @@ const en = {
     shareModal: {
       title: "Share base",
       placeholder: "Username or email...",
-      roleEditor: "Edit",
-      roleViewer: "View",
+      roleEditor: "Can edit",
+      roleViewer: "View only",
       add: "Add",
       close: "Close",
       cooldown: "You can't add the same user again for 24h (anti-spam).",
@@ -786,8 +786,8 @@ const en = {
     },
     share: {
       empty: "No shares.",
-      roleEditor: "Edit",
-      roleViewer: "View",
+      roleEditor: "Can edit",
+      roleViewer: "View only",
       remove: "Remove",
       failed: "Failed",
       invalidEmail: "Invalid email",

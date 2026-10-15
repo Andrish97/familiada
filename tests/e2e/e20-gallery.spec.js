@@ -279,7 +279,23 @@ async function showModalWithRepresentativeContent(page, modalId) {
     for (const region of modal.querySelectorAll("[contenteditable=true]")) {
       if (!region.textContent.trim()) region.textContent = "Przykładowa treść";
     }
-    modal.style.setProperty("display", modal.classList.contains("modal--sheet") ? "flex" : "grid", "important");
+    const ensureEmptyTile = (selector, text) => {
+      const list = modal.querySelector(selector);
+      if (!list || list.children.length) return;
+      const empty = document.createElement("div");
+      empty.className = "share-empty-state";
+      empty.textContent = text;
+      list.append(empty);
+    };
+    if (id === "shareOverlay") {
+      ensureEmptyTile("#baseShareFriends", "Brak odbiorców.");
+      ensureEmptyTile("#shareSectionsHost", "Brak odbiorców.");
+    } else if (id === "shareDeviceOverlay") {
+      ensureEmptyTile("#shareDeviceSubsList", "Nie ma znajomych do udostępnienia.");
+      ensureEmptyTile("#shareDeviceCurrentContent", "Nie udostępniono jeszcze tego urządzenia.");
+    }
+    const isMobileSheet = modal.classList.contains("modal--sheet") && matchMedia("(max-width: 600px)").matches;
+    modal.style.setProperty("display", isMobileSheet ? "flex" : "grid", "important");
     modal.style.setProperty("visibility", "visible", "important");
     modal.style.setProperty("opacity", "1", "important");
     modal.style.setProperty("pointer-events", "auto", "important");

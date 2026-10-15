@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-15T22090";
-import { icon, iconText } from "./icons.js?v=v2026-10-15T22090";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-15T22090";
+import { t } from "../../translation/translation.js?v=v2026-10-15T22194";
+import { icon, iconText } from "./icons.js?v=v2026-10-15T22194";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-15T22194";
 
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = typeof window !== "undefined" && window.matchMedia
@@ -88,7 +88,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-15T22090").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-15T22194").then((module) => module.openContactModal());
     }, 0);
     return;
   }
@@ -137,8 +137,10 @@ function prepareSheetLayout(overlayEl) {
   const movableHint = isGlobalHint ? onlyHint : null;
   const headerChildren = children.filter(isHeader);
   const actionChildren = children.filter(isAction);
-  const nestedActions = [...modal.querySelectorAll(nestedActionSelectors.join(","))]
-    .filter(el => !children.includes(el) && !el.parentElement?.closest(".sheet-modal-actions"));
+  const nestedActions = modal.hasAttribute("data-sheet-local-actions")
+    ? []
+    : [...modal.querySelectorAll(nestedActionSelectors.join(","))]
+      .filter(el => !children.includes(el) && !el.parentElement?.closest(".sheet-modal-actions"));
   const relocated = [...nestedActions, ...(movableHint && !children.includes(movableHint) ? [movableHint] : [])];
   sheetLayouts.set(modal, {
     childNodes: [...modal.childNodes],

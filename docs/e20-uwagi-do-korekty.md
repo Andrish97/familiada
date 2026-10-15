@@ -77,10 +77,10 @@ Pracować po kolei. Po zakończeniu każdej uwagi zatrzymać się przed następn
 | 8 | Mail: pole e-mail ma pokazywać sugerowany tekst zamiast hinta nad polem. | Naprawione na stronie Mails: usunięto widoczną etykietę nad polem, dodano tłumaczony placeholder, a nazwę pola dla czytników ekranu zachowano przez `aria-label`. Panel admina pozostał bez zmian. |
 | 9 | Import pytań w edytorze gier ma stary styl. | Naprawione lokalnie w zakresie wskazanym przez użytkownika: usunięto półprzezroczyste tło okna desktopowego, ustawiając kryjący kolor taki jak we wspólnych modalach. Mobilny arkusz zachowuje transparentne tło strony. |
 | 10 | Modal wyboru koloru w Game Settings ma niespójny styl. | Przeniesiono do wspólnego `confirmModal`: standardowe nagłówek, stopka, przyciski i tło; suwaki RGB oraz pole HEX pozostają w treści, a zmiana koloru zatwierdza się dopiero przy „Gotowe”. |
-| 11 | Control, modal Udostępnij: sekcja „Udostępnione w tej sesji” nie ma pustego kafla. | Oczekuje. |
+| 11 | Control, modal Udostępnij: sekcja „Udostępnione w tej sesji” nie ma pustego kafla. | Render aplikacji dodaje kafel `.share-empty-state`, gdy sesja nie ma udostępnień. Poprawiono też E20 capture, który wcześniej tylko odsłaniał HTML i pomijał render list; teraz pokazuje reprezentatywny kafel pustego stanu. |
 | 12 | Connect: separator jest za daleko od nagłówka i zbyt blisko karty. | Oczekuje. |
 | 13 | Manager baz: modal eksportu gry na telefonie lekko wypycha treść poza prawą krawędź. | Oczekuje. |
-| 14 | Bazy, modal udostępniania mobile: układ się miesza; zwykły modal ma nierówne przyciski, przycisk obok Znajomych spada pod niego (to samo w Control), a sekcja Udostępnione nie ma pustego kafla. | Oczekuje. |
+| 14 | Bazy, modal udostępniania mobile: układ się miesza; zwykły modal ma nierówne przyciski, przycisk obok Znajomych spada pod niego (to samo w Control), a sekcja Udostępnione nie ma pustego kafla. | Mobilny szkielet arkusza nie wyciąga już akcji z tych sekcji do wspólnego paska: dodawanie pozostaje przy adresie, udostępnianie znajomym przy ich liście, a treść ma jeden scroll. Role w Bazach mają widoczną etykietę obok ikony, a przyciski głównych akcji wyrównaną wysokość. E20 capture pokazuje kafle pustych list i centruje modal desktopowy. |
 | 15 | Modale importu pokazują angielskie teksty. | Oczekuje. |
 | 16 | Potwierdzić działanie mobilnych modalów tagów i tworzenia gry w Base Explorer. | Oczekuje na analizę i weryfikację. |
 | 17 | Ujednolicić modale importu; w jednym z nich ikony Wczytaj plik i Import były takie same. | Oczekuje. |

@@ -706,8 +706,8 @@ const pl = {
     shareModal: {
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
-      roleEditor: "Edycja",
-      roleViewer: "Przeglądanie",
+      roleEditor: "Może edytować",
+      roleViewer: "Tylko podgląd",
       add: "Dodaj",
       close: "Zamknij",
       cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
@@ -794,8 +794,8 @@ const pl = {
     },
     share: {
       empty: "Brak udostępnień.",
-      roleEditor: "Edycja",
-      roleViewer: "Przeglądanie",
+      roleEditor: "Może edytować",
+      roleViewer: "Tylko podgląd",
       remove: "Usuń",
       failed: "Nie udało się",
       invalidEmail: "Niepoprawny e-mail",
