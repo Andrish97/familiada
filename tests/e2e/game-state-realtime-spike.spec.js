@@ -248,6 +248,16 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
           connection_id: lease.connection_id, epoch: lease.epoch },
       });
       if (error || !data?.token) throw error || new Error(data?.error || "missing realtime token");
+      // Realtime RLS deliberately checks the live connection heartbeat. Keep
+      // this bare-page fixture alive at the same cadence as the real device
+      // lease client, which normally runs every three seconds.
+      window.__deviceHeartbeatTimer = setInterval(() => {
+        void sb.rpc("control_device_instance_heartbeat", {
+          p_game_id: gid, p_device_type: "display", p_key: key,
+          p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+          p_meta: { visibility: "visible", focused: true },
+        });
+      }, 3000);
       const { data: before, error: readError } = await sb.rpc("game_state_get", {
         p_game_id: gid, p_device_type: "display", p_key: key,
         p_connection_id: lease.connection_id, p_epoch: lease.epoch,
@@ -328,6 +338,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionRev || null), { timeout: 15000 })
       .toBe(completedRevision);
   } finally {
+    await deviceContext.pages()[0]?.evaluate(() => clearInterval(window.__deviceHeartbeatTimer)).catch(() => {});
     if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
       const sb = window.__sbClient;
       const channel = sb.getChannels().find(item => item.topic.endsWith(name));
