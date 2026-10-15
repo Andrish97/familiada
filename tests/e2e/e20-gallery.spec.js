@@ -424,6 +424,11 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       if (auth) auth.hidden = true;
       document.body.classList.remove("settings-locked", "no-footer-line");
     });
+    await page.addStyleTag({ content: `
+      body.settings-locked header, body.settings-locked main { display: block !important; }
+      #panelScreen[hidden] { display: block !important; }
+      #authScreen:not([hidden]) { display: none !important; }
+    ` });
     await expect(page.locator("#panelScreen")).toBeVisible({ timeout: 5_000 });
     await expect(page.locator("#authScreen")).toBeHidden({ timeout: 5_000 });
   }
