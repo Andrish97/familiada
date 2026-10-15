@@ -95,10 +95,8 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
       return { connectionId, epoch: data.epoch };
     }, { gid: game.id, key: runtimeKey });
 
-    // 1) Bezpośredni SELECT jako anon — musi zwrócić zero wierszy, bez
-    //    względu na status gry czy znajomość game_id. Brak polityki SELECT
-    //    dla anon (migracja 261) oznacza, że RLS filtruje wszystko, nie że
-    //    to błąd uprawnień — więc `error` powinien być null, a `data` puste.
+    // 1) Bezpośredni SELECT ze zwykłym JWT anon — musi zwrócić zero wierszy.
+    //    Sama rola anon nie spełnia scoped polityki z migracji 375.
     const directRead = await anonPage.evaluate(async (gid) => {
       const sb = window.__sbClient;
       const { data, error } = await sb.from("game_state").select("*").eq("game_id", gid);
