@@ -28,7 +28,7 @@ import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-14
 import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-14T23162";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-14T23162";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-14T23162";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15Ttoolbar3";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15Ttoolbar4";
 
 import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-14T23162";
 import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-14T23162";

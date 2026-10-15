@@ -82,6 +82,7 @@ function initListBottomToolbarLayout() {
     let queued = false;
     let lastLayout = "";
     let lastAvailableWidth = null;
+    let lastTextMeasures = null;
     const measureBox = document.createElement("div");
     // Daj klonom tę samą bazową kaskadę .games-bottom co prawdziwemu paskowi;
     // bez tego mobilne .only-desktop i reguły kompaktowe nie są mierzone tak,
@@ -95,6 +96,18 @@ function initListBottomToolbarLayout() {
     bar.append(measureBox);
     const measureGroup = (group, mode = "text") => {
       if (!group) return { width: 0, items: [] };
+      if (mode === "text") {
+        const items = [...group.children]
+          .filter((item) => item.getClientRects().length)
+          .map((item) => Math.max(item.getBoundingClientRect().width, item.scrollWidth));
+        const style = getComputedStyle(group);
+        const gap = parseFloat(style.columnGap) || parseFloat(style.gap) || 0;
+        return {
+          width: items.reduce((total, itemWidth) => total + itemWidth, 0)
+            + Math.max(0, items.length - 1) * gap,
+          items,
+        };
+      }
       measureBox.classList.toggle("is-compact-icons", mode === "icons");
       const clone = group.cloneNode(true);
       Object.assign(clone.style, {
@@ -147,8 +160,15 @@ function initListBottomToolbarLayout() {
         bar.classList.remove("is-compact-icons");
       }
       lastAvailableWidth = available;
-      const textLeft = measureGroup(left, "text");
-      const textRight = measureGroup(right, "text");
+      const textLeft = bar.classList.contains("is-compact-icons") && lastTextMeasures
+        ? lastTextMeasures.left
+        : measureGroup(left, "text");
+      const textRight = bar.classList.contains("is-compact-icons") && lastTextMeasures
+        ? lastTextMeasures.right
+        : measureGroup(right, "text");
+      if (!bar.classList.contains("is-compact-icons") || !lastTextMeasures) {
+        lastTextMeasures = { left: textLeft, right: textRight };
+      }
       const iconLeft = measureGroup(left, "icons");
       const iconRight = measureGroup(right, "icons");
       const barStyle = getComputedStyle(bar);
