@@ -177,12 +177,18 @@ async function saveDeviceScreenshot(page, profile, id, outputPath) {
     .notch.side b{position:absolute;left:34%;bottom:13%;width:15%;height:15%;border-radius:5px;background:#111318;box-shadow:0 -28px 0 3px #08090c}
     .gesture{position:absolute;z-index:3;left:50%;bottom:7px;transform:translateX(-50%);width:92px;height:4px;border-radius:99px;background:#ffffffa8}
   </style><div class="device"><div class="screen"><img src="data:image/png;base64,${image.toString("base64")}">${notch}</div></div>`;
-  // Reuse this tab for the offline composition. No second page or application
-  // route is opened, so this cannot contend for a resource lock.
-  await page.setViewportSize({ width: profile.width + 2 * bezel + 8, height: profile.height + 2 * bezel + 8 });
-  await page.setContent(frame, { waitUntil: "load" });
-  await page.screenshot({ path: outputPath, fullPage: true, scale: "css", animations: "disabled", timeout: 20_000 });
-  await page.setViewportSize({ width: profile.width, height: profile.height });
+  // Najpierw opuszczamy badaną stronę, żeby zwolnić jej JS i ewentualne blokady.
+  // Ramkę rysuje osobna, krótko żyjąca karta bez URL/backendu; nie zostawia
+  // zakodowanych obrazów w rendererze, który otworzy następną stronę aplikacji.
+  await page.goto("about:blank", { waitUntil: "domcontentloaded", timeout: 10_000 });
+  const framePage = await page.context().newPage();
+  try {
+    await framePage.setViewportSize({ width: profile.width + 2 * bezel + 8, height: profile.height + 2 * bezel + 8 });
+    await framePage.setContent(frame, { waitUntil: "load", timeout: 20_000 });
+    await framePage.screenshot({ path: outputPath, fullPage: true, scale: "css", animations: "disabled", timeout: 20_000 });
+  } finally {
+    await framePage.close();
+  }
 }
 
 async function serveBranchLoginHtml(route) {
