@@ -1770,7 +1770,35 @@ tr.row .tag-dot[data-tip]::before {
 
   /* Export modal — jedna kolumna */
   .xGrid2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+  }
+
+  .export-modal .xField,
+  .export-modal .xPickList {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .export-modal .xPickItem {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    min-width: 0;
+  }
+
+  .export-modal .xNm {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+
+  .export-modal .xTypeLabels {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .export-modal .xTypeLbl {
+    min-width: 0;
+    padding-inline: 6px;
   }
 
 }
