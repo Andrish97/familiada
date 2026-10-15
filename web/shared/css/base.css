@@ -1236,6 +1236,19 @@ main{
         min-height: 0;
         flex-direction: column;
     }
+    /* Warstwy Eksploratora zawierają własny nagłówek i stopkę wewnątrz
+       sekcji. Na telefonie przenieś pasek akcji przed listę/pola, ale
+       zostaw samą listę jako jedyny przewijany element. */
+    .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead { order: 0; }
+    .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsFoot {
+        order: 1;
+        flex: 0 0 auto;
+        margin: 0 0 10px !important;
+        padding: 0 0 10px;
+        border-top: 0;
+        border-bottom: 1px solid var(--line2);
+    }
+    .modal--sheet.sheet-active .tags-modal .tags-layer > :not(.tagsHead):not(.tagsFoot) { order: 2; }
     .modal--sheet.sheet-active .tags-modal .tagsPickList,
     .modal--sheet.sheet-active .tags-modal .qBody,
     .modal--sheet.sheet-active .tags-modal .xBody,
