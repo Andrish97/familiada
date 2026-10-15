@@ -205,7 +205,6 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
   }, gameName);
   const deviceContext = await browser.newContext();
   let channelName = "";
-  let completionChannelName = "";
   let ownerCompletionChannelName = "";
   try {
     const { error: seedError } = await page.evaluate(async gid => {
@@ -277,14 +276,10 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       const channel = sb.channel(channelName).on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
       }, payload => {
+        if (Number(payload?.new?.display_rendered_rev) > 0) {
+          window.__scopedRealtimeRenderedRev = payload.new.display_rendered_rev;
+        }
         if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedRealtimeRev = payload.new.rev;
-      });
-      const completionChannelName = `e2e-scoped-completion:${crypto.randomUUID()}`;
-      const completionChannel = sb.channel(completionChannelName).on("postgres_changes", {
-        event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
-      }, payload => {
-        window.__scopedRealtimeCompletionPayload = payload;
-        if (Number(payload?.new?.rendered_rev) > 0) window.__scopedRealtimeCompletionRev = payload.new.rendered_rev;
       });
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error("postgres_changes subscribe timeout")), 12000);
@@ -295,22 +290,12 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
           }
         });
       });
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("completion postgres_changes subscribe timeout")), 12000);
-        completionChannel.subscribe(status => {
-          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
-          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            clearTimeout(timeout); reject(new Error(`completion postgres_changes: ${status}`));
-          }
-        });
-      });
       // Give Realtime's postgres_changes listener a short settle interval
       // after the channel join acknowledgement before the first write.
       await new Promise(resolve => setTimeout(resolve, 500));
-      return { channelName, completionChannelName, beforeRev: before?.rev };
+      return { channelName, beforeRev: before?.rev };
     }, { gid: game.id, key: keyResult, lease });
     channelName = direct.channelName;
-    completionChannelName = direct.completionChannelName;
     expect(await devicePage.evaluate(() => window.__scopedCompletionReadCount)).toBe(1);
 
     ownerCompletionChannelName = `e2e-owner-completion:${crypto.randomUUID()}`;
@@ -365,10 +350,8 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     expect(Number(storedCompletion.renderedRev)).toBe(Number(completedRevision));
     await expect.poll(() => page.evaluate(() => window.__ownerRealtimeCompletionRev || null), { timeout: 15000 })
       .toBe(completedRevision);
-    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionPayload || null), { timeout: 15000 })
-      .not.toBeNull();
-    const completionPayload = await devicePage.evaluate(() => window.__scopedRealtimeCompletionPayload);
-    expect(Number(completionPayload?.new?.rendered_rev)).toBe(Number(completedRevision));
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRenderedRev || null), { timeout: 15000 })
+      .toBe(completedRevision);
   } finally {
     await deviceContext.pages()[0]?.evaluate(() => clearInterval(window.__deviceHeartbeatTimer)).catch(() => {});
     if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
@@ -377,11 +360,6 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       if (channel) await sb.removeChannel(channel);
       await sb.realtime.setAuth(undefined);
     }, channelName).catch(() => {});
-    if (completionChannelName) await deviceContext.pages()[0]?.evaluate(async name => {
-      const sb = window.__sbClient;
-      const channel = sb.getChannels().find(item => item.topic.endsWith(name));
-      if (channel) await sb.removeChannel(channel);
-    }, completionChannelName).catch(() => {});
     if (ownerCompletionChannelName) await page.evaluate(async name => {
       const sb = window.__sbClient;
       const channel = sb.getChannels().find(item => item.topic.endsWith(name));

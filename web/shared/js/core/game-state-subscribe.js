@@ -204,5 +204,6 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   function refetchNow() { return fetchGuarded(); }
 
   return { start, stop, applyRow, refetchNow,
+    isDirectConnected() { return directConnected; },
     isDirectTableConnected(table) { return directTableConnected.get(table) === true; } };
 }
