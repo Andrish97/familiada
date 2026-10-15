@@ -420,11 +420,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     await page.evaluate(() => {
       const panel = document.getElementById("panelScreen");
       const auth = document.getElementById("authScreen");
-      if (panel?.hidden && auth && !auth.hidden) {
-        panel.hidden = false;
-        auth.hidden = true;
-        document.body.classList.remove("settings-locked", "no-footer-line");
-      }
+      if (panel) panel.hidden = false;
+      if (auth) auth.hidden = true;
+      document.body.classList.remove("settings-locked", "no-footer-line");
     });
     await expect(page.locator("#panelScreen")).toBeVisible({ timeout: 5_000 });
     await expect(page.locator("#authScreen")).toBeHidden({ timeout: 5_000 });
