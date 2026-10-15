@@ -218,10 +218,6 @@ async function showModalWithRepresentativeContent(page, modalId) {
     modal.removeAttribute("aria-hidden");
     modal.classList.remove("hidden", "is-hidden");
     if (modal.matches("dialog") && !modal.open) modal.showModal();
-    else modal.style.display = "flex";
-    modal.style.visibility = "visible";
-    modal.style.opacity = "1";
-    modal.style.pointerEvents = "auto";
     for (const input of modal.querySelectorAll("input:not([type=hidden]), textarea")) {
       if (input instanceof HTMLInputElement && !["text", "email", "url", "search", "tel", "number", "password"].includes(input.type)) continue;
       if (input.value) continue;
@@ -233,8 +229,6 @@ async function showModalWithRepresentativeContent(page, modalId) {
           : /url|link/i.test(`${input.name} ${input.id} ${hint}`)
             ? "https://familiada.online/przyklad"
             : "Treść przykładowa";
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
     }
     for (const select of modal.querySelectorAll("select")) {
       if (select.value) continue;
@@ -244,6 +238,14 @@ async function showModalWithRepresentativeContent(page, modalId) {
     for (const region of modal.querySelectorAll("[contenteditable=true]")) {
       if (!region.textContent.trim()) region.textContent = "Przykładowa treść";
     }
+    if (modal.classList.contains("modal--sheet")) {
+      modal.classList.add("sheet-active");
+      document.body.classList.add("sheet-open");
+    }
+    modal.style.setProperty("display", modal.classList.contains("modal--sheet") ? "flex" : "grid", "important");
+    modal.style.setProperty("visibility", "visible", "important");
+    modal.style.setProperty("opacity", "1", "important");
+    modal.style.setProperty("pointer-events", "auto", "important");
   }, modalId);
   await page.locator(`#${modalId}`).waitFor({ state: "visible", timeout: 2_000 });
 }
