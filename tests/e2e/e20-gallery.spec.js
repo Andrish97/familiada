@@ -648,13 +648,22 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             if (!baseState.blockedByGuard) {
               for (const modalId of baseState.modalIds) {
                 const safeModalName = modalId.replace(/[^a-zA-Z0-9_-]/g, "-");
-                await capture(
-                  page, profile, id, href, manifest,
-                  (modalPage) => showModalWithRepresentativeContent(modalPage, modalId),
-                  null,
-                  { fileName: `modal-${safeModalName}-${profile.id}.png`, stateId: `modal:${modalId}` },
-                );
-                modalCaptureCount += 1;
+                await page.close();
+                page = await context.newPage();
+                page.setDefaultTimeout(20_000);
+                page.setDefaultNavigationTimeout(20_000);
+                const removeModalLockIsolation = lockSensitive.has(id) ? await installVisualResourceLockIsolation(page) : null;
+                try {
+                  await capture(
+                    page, profile, id, href, manifest,
+                    (modalPage) => showModalWithRepresentativeContent(modalPage, modalId),
+                    null,
+                    { fileName: `modal-${safeModalName}-${profile.id}.png`, stateId: `modal:${modalId}` },
+                  );
+                  modalCaptureCount += 1;
+                } finally {
+                  await removeModalLockIsolation?.();
+                }
               }
             }
           } finally {
