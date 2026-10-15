@@ -207,6 +207,7 @@ async function main() {
     sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until
       || prev.display_rendered_rev !== next.display_rendered_rev,
     onRow: (row) => {
+      lease.setProgress({ receivedRev: Number(row.rev) || 0 });
       // Język idzie za operatorem w Control — patrz control/display/js/main.js.
       const lang = row.detail?.settings?.uiLang;
       if (lang && lang !== appliedLang) {
@@ -221,6 +222,7 @@ async function main() {
       }
       lastRow = row;
       presses.render(row);
+      lease.setProgress({ renderedRev: Number(row.rev) || 0 });
       void checkDisplayReady();
       scheduleUnlockRerender(row);
     },

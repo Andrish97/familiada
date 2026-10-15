@@ -32,10 +32,12 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   let inFlight = false;
   let timer = null;
   let stopped = false;
+  const progress = { received_rev: 0, rendered_rev: 0, started_sound_cue_seq: 0 };
 
   const meta = () => ({
     visibility: document.visibilityState || "unknown",
     focused: !!document.hasFocus?.(),
+    ...progress,
   });
 
   function publish(data = {}) {
@@ -125,6 +127,11 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
     get state() { return state; },
     get epoch() { return epoch; },
     get connectionId() { return connectionId; },
+    setProgress({ receivedRev, renderedRev, startedSoundCueSeq } = {}) {
+      if (Number.isSafeInteger(receivedRev) && receivedRev >= 0) progress.received_rev = Math.max(progress.received_rev, receivedRev);
+      if (Number.isSafeInteger(renderedRev) && renderedRev >= 0) progress.rendered_rev = Math.max(progress.rendered_rev, renderedRev);
+      if (Number.isSafeInteger(startedSoundCueSeq) && startedSoundCueSeq >= 0) progress.started_sound_cue_seq = Math.max(progress.started_sound_cue_seq, startedSoundCueSeq);
+    },
     actionArgs() { return mode === "lease" && state === "primary" ? { p_connection_id: connectionId, p_epoch: epoch } : {}; },
   };
 }
