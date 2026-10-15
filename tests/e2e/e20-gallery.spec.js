@@ -279,14 +279,21 @@ async function showModalWithRepresentativeContent(page, modalId) {
     for (const region of modal.querySelectorAll("[contenteditable=true]")) {
       if (!region.textContent.trim()) region.textContent = "Przykładowa treść";
     }
-    if (modal.classList.contains("modal--sheet")) {
-      modal.classList.add("sheet-active");
-      document.body.classList.add("sheet-open");
-    }
     modal.style.setProperty("display", modal.classList.contains("modal--sheet") ? "flex" : "grid", "important");
     modal.style.setProperty("visibility", "visible", "important");
     modal.style.setProperty("opacity", "1", "important");
     modal.style.setProperty("pointer-events", "auto", "important");
+  }, modalId);
+  await page.evaluate(async (id) => {
+    const modal = document.getElementById(id);
+    if (!modal?.classList.contains("modal--sheet")) return;
+    const version = document.querySelector('meta[name="app-version"]')?.content;
+    const { enterModalSheet } = await import(`/shared/js/core/modal-sheet.js?v=${encodeURIComponent(version || "")}`);
+    enterModalSheet(modal, {
+      backBtn: document.getElementById("btnBack"),
+      onClose: () => {},
+      historyKey: null,
+    });
   }, modalId);
   await page.waitForTimeout(250);
 }
