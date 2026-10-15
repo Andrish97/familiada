@@ -538,7 +538,15 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           }
         }
         const extra = profile.id === "tv" ? [] : additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
-        for (const state of extra) await capture(page, profile, state.id, state.href, manifest, state.prepare);
+        for (const state of extra) {
+          const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "logo-draw", "logo-image", "logo-text", "polls"]);
+          const removeLockIsolation = lockSensitive.has(state.page) ? await installVisualResourceLockIsolation(page) : null;
+          try {
+            await capture(page, profile, state.id, state.href, manifest, state.prepare);
+          } finally {
+            await removeLockIsolation?.();
+          }
+        }
         expect(manifest).toHaveLength(selectedUrls.length + extra.length);
         const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1 || entry.loading);
         expect(layoutIssues, `Problemy szerokości lub niedokończone ładowanie: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth, loading }) => ({ id, url, scrollWidth, viewportWidth, loading })))}`).toEqual([]);
