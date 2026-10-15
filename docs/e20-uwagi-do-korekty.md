@@ -76,7 +76,7 @@ Pracować po kolei. Po zakończeniu każdej uwagi zatrzymać się przed następn
 | 7 | Zwykłe modale są przesunięte w lewo względem środka. | Naprawione lokalnie: `.modal` otrzymał wspólne poziome auto-marginesy, które centrują okna także wtedy, gdy skrypt pokazuje overlay jako flex lub block zamiast grid. Mobilne arkusze zachowują własne marginesy. |
 | 8 | Mail: pole e-mail ma pokazywać sugerowany tekst zamiast hinta nad polem. | Naprawione na stronie Mails: usunięto widoczną etykietę nad polem, dodano tłumaczony placeholder, a nazwę pola dla czytników ekranu zachowano przez `aria-label`. Panel admina pozostał bez zmian. |
 | 9 | Import pytań w edytorze gier ma stary styl. | Naprawione lokalnie w zakresie wskazanym przez użytkownika: usunięto półprzezroczyste tło okna desktopowego, ustawiając kryjący kolor taki jak we wspólnych modalach. Mobilny arkusz zachowuje transparentne tło strony. |
-| 10 | Modal wyboru koloru w Game Settings ma niespójny styl. | Oczekuje. |
+| 10 | Modal wyboru koloru w Game Settings ma niespójny styl. | Przeniesiono do wspólnego `confirmModal`: standardowe nagłówek, stopka, przyciski i tło; suwaki RGB oraz pole HEX pozostają w treści, a zmiana koloru zatwierdza się dopiero przy „Gotowe”. |
 | 11 | Control, modal Udostępnij: sekcja „Udostępnione w tej sesji” nie ma pustego kafla. | Oczekuje. |
 | 12 | Connect: separator jest za daleko od nagłówka i zbyt blisko karty. | Oczekuje. |
 | 13 | Manager baz: modal eksportu gry na telefonie lekko wypycha treść poza prawą krawędź. | Oczekuje. |

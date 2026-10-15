@@ -1,8 +1,8 @@
-import "../../shared/js/core/orientation-guard.js?v=v2026-10-15T22043";
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-15T22043';
-import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-15T22043';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-15T22043';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-15T22043';
+import "../../shared/js/core/orientation-guard.js?v=v2026-10-15T22090";
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-15T22090';
+import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-15T22090';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-15T22090';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-15T22090';
 
 const $ = id => document.getElementById(id);
 const text = (key, vars) => t(`mailCenter.${key}`, vars);

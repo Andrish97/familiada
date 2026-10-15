@@ -421,32 +421,9 @@
 .swatchBtn:focus{ outline:2px solid rgba(255,234,166,.35); outline-offset:2px; }
 
 /* ===== COLOR MODAL ===== */
-.colorModalOverlay{
-  position:fixed; inset:0;
-  background:var(--scrim);
-  
-  display:flex; align-items:center; justify-content:center;
-  z-index:2100;
-}
-.colorModalOverlay.hidden{ display:none; }
-.colorModalBox{
-  background:#05050a;
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.16);
-  box-shadow:0 18px 60px rgba(0,0,0,.85);
-  max-width:560px; width:calc(100% - 32px);
-  padding:18px 18px 16px;
-}
-.colorModalHead{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:10px; margin-bottom:10px;
-}
-.colorModalTitle{
-  font-weight:1000; letter-spacing:.06em;
-  font-size:13px; text-transform:uppercase; opacity:.9;
-}
-.colorModalBody{ display:flex; flex-direction:column; gap:12px; }
+.colorModalControls{ display:flex; flex-direction:column; gap:12px; }
 .colorTopRow{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.colorHexField{ min-width:220px; flex:1; display:grid; gap:6px; }
 .colorPreview{
   width:92px; height:92px; border-radius:16px;
   border:1px solid rgba(255,255,255,.18);
@@ -479,11 +456,6 @@
   border-radius:999px; background:#fff;
   border:1px solid rgba(0,0,0,.15);
   box-shadow:0 2px 8px rgba(0,0,0,.35);
-}
-.colorModalFoot{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:10px; flex-wrap:wrap; padding-top:8px;
-  border-top:1px solid rgba(255,255,255,.1);
 }
 
 /* ===== SFX TABLE (identyczny z control-new) ===== */

@@ -1,27 +1,27 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-15T22043";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-15T22043";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-15T22043";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T22043";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-15T22043";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-15T22043";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-15T22043";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-15T22043";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-15T22043";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-15T22043";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-15T22090";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-15T22090";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-15T22090";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T22090";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-15T22090";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-15T22090";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-15T22090";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-15T22090";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-15T22090";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-15T22090";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-15T22043";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-15T22090";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-15T22043";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-15T22043";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-15T22043";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-15T22043";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-15T22090";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-15T22090";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-15T22090";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-15T22090";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -133,20 +133,6 @@ const sidebarToggle = document.getElementById("gsSidebarToggle");
 const sidebarBackdrop = document.getElementById("gsSidebarBackdrop");
 const sidebarFinale = document.getElementById("sidebarFinale");
 const sidebarRounds = document.getElementById("sidebarRounds");
-
-// Color modal elements
-const colorModal = document.getElementById("gsColorModal");
-const colorModalTitleEl = document.getElementById("gsColorModalTitle");
-const colorR = document.getElementById("gsColorR");
-const colorG = document.getElementById("gsColorG");
-const colorB = document.getElementById("gsColorB");
-const colorRVal = document.getElementById("gsColorRVal");
-const colorGVal = document.getElementById("gsColorGVal");
-const colorBVal = document.getElementById("gsColorBVal");
-const colorHex = document.getElementById("gsColorHex");
-const colorPreviewEl = document.getElementById("gsColorPreview");
-const colorModalClose = document.getElementById("gsColorModalClose");
-const colorModalDone = document.getElementById("gsColorModalDone");
 
 // ===== DIRTY / SAVE =====
 let ready = false;        // ustawienia wczytane, zmiany się liczą
@@ -416,26 +402,66 @@ function getColorLabels() {
   };
 }
 
-function openColorModal(key) {
+function buildColorModalBody() {
+  const body = document.createElement("div");
+  body.className = "colorModalControls";
+  body.innerHTML = `
+    <div class="colorTopRow">
+      <div class="colorPreview" id="gsColorPreview"></div>
+      <label class="colorHexField"><span class="lbl2">HEX</span><input class="inp" id="gsColorHex" autocomplete="off" spellcheck="false" inputmode="text" placeholder="#RRGGBB"/></label>
+    </div>
+    <div class="sliders">
+      <label class="sliderRow"><span class="sLbl">R</span><input class="rng" id="gsColorR" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorRVal">0</span></label>
+      <label class="sliderRow"><span class="sLbl">G</span><input class="rng" id="gsColorG" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorGVal">0</span></label>
+      <label class="sliderRow"><span class="sLbl">B</span><input class="rng" id="gsColorB" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorBVal">0</span></label>
+    </div>`;
+  return body;
+}
+
+async function openColorModal(key) {
   colorModalTarget = key;
   const hex = localSettings.display.colors[key] || "#000000";
   const { r, g, b } = hexToRgb(hex);
   colorModalR = r; colorModalG = g; colorModalB = b;
-  if (colorModalTitleEl) colorModalTitleEl.textContent = getColorLabels()[key] || key;
-  syncColorModalUI();
-  colorModal?.classList.remove("hidden");
+  const body = buildColorModalBody();
+  const refs = {
+    r: body.querySelector("#gsColorR"), g: body.querySelector("#gsColorG"), b: body.querySelector("#gsColorB"),
+    rVal: body.querySelector("#gsColorRVal"), gVal: body.querySelector("#gsColorGVal"), bVal: body.querySelector("#gsColorBVal"),
+    hex: body.querySelector("#gsColorHex"), preview: body.querySelector("#gsColorPreview"),
+  };
+  syncColorModalUI(refs);
+  const confirmed = await confirmModal({
+    title: getColorLabels()[key] || key,
+    text: "",
+    okText: t("common.done") || "Gotowe",
+    cancelText: t("common.cancel") || "Anuluj",
+    body,
+    initialFocus: refs.hex,
+    onReady: () => {
+      refs.r.addEventListener("input", () => { colorModalR = Number(refs.r.value); syncColorModalUI(refs); });
+      refs.g.addEventListener("input", () => { colorModalG = Number(refs.g.value); syncColorModalUI(refs); });
+      refs.b.addEventListener("input", () => { colorModalB = Number(refs.b.value); syncColorModalUI(refs); });
+      refs.hex.addEventListener("change", () => {
+        const normalized = normHex(refs.hex.value);
+        if (!normalized) return;
+        ({ r: colorModalR, g: colorModalG, b: colorModalB } = hexToRgb(normalized));
+        syncColorModalUI(refs);
+      });
+    },
+  });
+  if (confirmed) applyColorModal();
 }
 
-function syncColorModalUI() {
-  if (colorR) { colorR.value = colorModalR; if (colorRVal) colorRVal.textContent = colorModalR; }
-  if (colorG) { colorG.value = colorModalG; if (colorGVal) colorGVal.textContent = colorModalG; }
-  if (colorB) { colorB.value = colorModalB; if (colorBVal) colorBVal.textContent = colorModalB; }
+function syncColorModalUI(refs) {
+  if (refs.r) { refs.r.value = colorModalR; if (refs.rVal) refs.rVal.textContent = colorModalR; }
+  if (refs.g) { refs.g.value = colorModalG; if (refs.gVal) refs.gVal.textContent = colorModalG; }
+  if (refs.b) { refs.b.value = colorModalB; if (refs.bVal) refs.bVal.textContent = colorModalB; }
   const hex = rgbToHex(colorModalR, colorModalG, colorModalB);
-  if (colorHex) colorHex.value = hex;
-  if (colorPreviewEl) colorPreviewEl.style.background = hex;
-  updateSliderTrack(colorR, colorModalG, colorModalB, "r");
-  updateSliderTrack(colorG, colorModalR, colorModalB, "g");
-  updateSliderTrack(colorB, colorModalR, colorModalG, "b");
+  if (refs.hex) refs.hex.value = hex;
+  if (refs.preview) refs.preview.style.background = hex;
+  updateSliderTrack(refs.r, colorModalG, colorModalB, "r");
+  updateSliderTrack(refs.g, colorModalR, colorModalB, "g");
+  updateSliderTrack(refs.b, colorModalR, colorModalG, "b");
 }
 
 function updateSliderTrack(el, v1, v2, ch) {
@@ -454,34 +480,6 @@ function applyColorModal() {
     el.style.background = hex;
   });
   postPreviewRow();
-  colorModal?.classList.add("hidden");
-}
-
-function initColorModal() {
-  colorR?.addEventListener("input", () => {
-    colorModalR = parseInt(colorR.value, 10);
-    syncColorModalUI();
-  });
-  colorG?.addEventListener("input", () => {
-    colorModalG = parseInt(colorG.value, 10);
-    syncColorModalUI();
-  });
-  colorB?.addEventListener("input", () => {
-    colorModalB = parseInt(colorB.value, 10);
-    syncColorModalUI();
-  });
-  colorHex?.addEventListener("change", () => {
-    const h = normHex(colorHex.value);
-    if (!h) return;
-    const { r, g, b } = hexToRgb(h);
-    colorModalR = r; colorModalG = g; colorModalB = b;
-    syncColorModalUI();
-  });
-  colorModalClose?.addEventListener("click", () => colorModal?.classList.add("hidden"));
-  colorModalDone?.addEventListener("click", applyColorModal);
-  colorModal?.addEventListener("click", e => {
-    if (e.target === colorModal) colorModal.classList.add("hidden");
-  });
 }
 
 // ===== STRING HELPERS =====
@@ -1803,8 +1801,6 @@ async function main() {
     updateSubTabStates();
     setActiveCat(activeCat);
   });
-
-  initColorModal();
 
   // Podgląd Wyświetlacza — ta strona sama osadza /control/display?preview=1 i
   // przesyła mu postMessage (patrz postPreviewRow() wyżej).
