@@ -920,16 +920,15 @@ body.games-body > main.wrap{
 }
 .games-bottom.is-balanced-wrap > .games-bottom-left,
 .games-bottom.is-balanced-wrap > .games-bottom-right{
-  display: grid;
-  grid-template-columns: repeat(var(--toolbar-columns, 1), max-content);
+  display: flex;
+  flex-wrap: wrap;
   flex: 0 1 auto;
   min-width: 0;
-  width: max-content;
   max-width: 100%;
   align-content: start;
 }
-.games-bottom.is-balanced-wrap > .games-bottom-left{ justify-items: start; justify-content: start; }
-.games-bottom.is-balanced-wrap > .games-bottom-right{ justify-items: end; justify-content: end; }
+.games-bottom.is-balanced-wrap > .games-bottom-left{ justify-content: flex-start; }
+.games-bottom.is-balanced-wrap > .games-bottom-right{ justify-content: flex-end; }
 .games-bottom.is-compact-icons .only-desktop{ display:none !important; }
 .resource-copy-inbox{margin:12px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
 .resource-copy-inbox h3{margin:0 0 8px;font-size:14px}

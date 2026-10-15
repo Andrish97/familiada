@@ -405,6 +405,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-single-row")
       ? "single-row"
       : document.querySelector(".games-bottom")?.classList.contains("is-balanced-wrap") ? "balanced-wrap" : "not-measured",
+    listBottomTextLabels: [...document.querySelectorAll(".games-bottom-right .only-desktop")]
+      .some((label) => label.getClientRects().length > 0),
     listBottomMetrics: (() => {
       const bar = document.querySelector(".games-bottom");
       const naturalWidth = (group) => {
@@ -413,9 +415,22 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         Object.assign(probe.style, { position: "fixed", left: "-100000px", top: "0", display: "flex", width: "max-content", minWidth: "max-content", maxWidth: "none", flex: "0 0 auto", flexWrap: "nowrap", visibility: "hidden", margin: "0" });
         for (const child of probe.children) child.style.flex = "0 0 auto";
         document.body.append(probe);
-        const width = probe.getBoundingClientRect().width;
+        const widths = [...probe.children].map((child) => child.getBoundingClientRect().width);
+        const style = getComputedStyle(probe);
+        const gap = Number.parseFloat(style.columnGap || style.gap) || 0;
+        const width = widths.reduce((total, itemWidth) => total + itemWidth, 0) + Math.max(0, widths.length - 1) * gap;
         probe.remove();
         return width;
+      };
+      const rowSizes = (group) => {
+        if (!group) return [];
+        const rows = new Map();
+        for (const child of group.children) {
+          if (!child.getClientRects().length) continue;
+          const top = Math.round(child.getBoundingClientRect().top);
+          rows.set(top, (rows.get(top) || 0) + 1);
+        }
+        return [...rows.values()];
       };
       if (!bar) return null;
       const left = bar.querySelector(":scope > .games-bottom-left");
@@ -425,6 +440,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         left: naturalWidth(left),
         right: naturalWidth(right),
         groupGap: Number.parseFloat(getComputedStyle(bar).columnGap || getComputedStyle(bar).gap) || 0,
+        leftRows: rowSizes(left),
+        rightRows: rowSizes(right),
       };
     })(),
   }));
@@ -443,6 +460,12 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     }
     if (!fitsSingleRow && state.listBottomLayout !== "balanced-wrap") {
       throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; ${JSON.stringify(state.listBottomMetrics)}`);
+    }
+    if (state.listBottomTextLabels && state.listBottomMetrics) {
+      const longestGroup = Math.max(state.listBottomMetrics.leftRows.length, state.listBottomMetrics.rightRows.length);
+      if (longestGroup > 2) {
+        throw new Error(`${profile.label} · ${id}: tekstowe przyciski paska filtrów/akcji tworzą więcej niż dwa rzędy zamiast przejść do ikon; ${JSON.stringify(state.listBottomMetrics)}`);
+      }
     }
     if (profile.width >= 744) {
       const { available, left, right, groupGap } = state.listBottomMetrics;

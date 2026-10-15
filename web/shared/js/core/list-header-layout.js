@@ -131,6 +131,8 @@ function initListBottomToolbarLayout() {
         lastLayout = layout;
         bar.classList.remove("is-balanced-wrap");
         bar.classList.add("is-single-row");
+        left.style.removeProperty("width");
+        right.style.removeProperty("width");
         left.style.removeProperty("--toolbar-columns");
         right.style.removeProperty("--toolbar-columns");
         return;
@@ -139,24 +141,28 @@ function initListBottomToolbarLayout() {
       const room = Math.max(0, available - groupGap);
       const leftGap = parseFloat(getComputedStyle(left).columnGap) || parseFloat(getComputedStyle(left).gap) || 0;
       const rightGap = parseFloat(getComputedStyle(right).columnGap) || parseFloat(getComputedStyle(right).gap) || 0;
-      const groupColumns = (items, columns, gap) => {
-        const widths = Array.from({ length: columns }, (_, column) =>
-          Math.max(0, ...items.filter((_, index) => index % columns === column)));
-        return widths.reduce((total, width) => total + width, 0) + Math.max(0, columns - 1) * gap;
+      const groupRows = (items, perRow, gap) => {
+        let width = 0;
+        for (let start = 0; start < items.length; start += perRow) {
+          const rowWidth = items.slice(start, start + perRow).reduce((total, itemWidth) => total + itemWidth, 0)
+            + Math.max(0, Math.min(perRow, items.length - start) - 1) * gap;
+          width = Math.max(width, rowWidth);
+        }
+        return width;
       };
       const chooseLayout = (leftItems, rightItems) => {
         let best = null;
-        for (let leftColumns = 1; leftColumns <= Math.max(1, leftItems.length); leftColumns++) {
-          for (let rightColumns = 1; rightColumns <= Math.max(1, rightItems.length); rightColumns++) {
-            const leftWidth = groupColumns(leftItems, leftColumns, leftGap);
-            const rightWidth = groupColumns(rightItems, rightColumns, rightGap);
+        for (let leftPerRow = 1; leftPerRow <= Math.max(1, leftItems.length); leftPerRow++) {
+          for (let rightPerRow = 1; rightPerRow <= Math.max(1, rightItems.length); rightPerRow++) {
+            const leftWidth = groupRows(leftItems, leftPerRow, leftGap);
+            const rightWidth = groupRows(rightItems, rightPerRow, rightGap);
             if (leftWidth + rightWidth + groupGap > room + 1) continue;
-            const leftRows = Math.ceil(leftItems.length / leftColumns) || 1;
-            const rightRows = Math.ceil(rightItems.length / rightColumns) || 1;
-            const score = [Math.max(leftRows, rightRows), leftRows + rightRows, Math.abs(leftRows - rightRows), -(leftColumns + rightColumns)];
+            const leftRows = Math.ceil(leftItems.length / leftPerRow) || 1;
+            const rightRows = Math.ceil(rightItems.length / rightPerRow) || 1;
+            const score = [Math.max(leftRows, rightRows), leftRows + rightRows, Math.abs(leftRows - rightRows), -(leftPerRow + rightPerRow)];
             if (!best || score.some((value, index) => value < best.score[index]
               && score.slice(0, index).every((earlier, prior) => earlier === best.score[prior]))) {
-              best = { leftColumns, rightColumns, score };
+              best = { leftPerRow, rightPerRow, leftWidth, rightWidth, score };
             }
           }
         }
@@ -179,23 +185,17 @@ function initListBottomToolbarLayout() {
       bar.classList.add("is-balanced-wrap");
       // Gdy mimo tego żaden układ się nie mieści, po równo ogranicz liczbę
       // kolumn. To pozostawia kontrolki w możliwie najmniejszej liczbie rzędów.
-      chosen ||= { leftColumns: 1, rightColumns: 1 };
-      const leftColumns = chosen.leftColumns;
-      const rightColumns = chosen.rightColumns;
-      const layoutKey = `${layout}:${leftColumns}:${rightColumns}:${bar.classList.contains("is-compact-icons")}`;
+      chosen ||= { leftPerRow: 1, rightPerRow: 1, leftWidth: room / 2, rightWidth: room / 2 };
+      const leftPerRow = chosen.leftPerRow;
+      const rightPerRow = chosen.rightPerRow;
+      const layoutKey = `${layout}:${leftPerRow}:${rightPerRow}:${chosen.leftWidth}:${chosen.rightWidth}:${bar.classList.contains("is-compact-icons")}`;
       if (layoutKey === lastLayout) return;
       lastLayout = layoutKey;
-      left.style.setProperty("--toolbar-columns", String(leftColumns));
-      right.style.setProperty("--toolbar-columns", String(rightColumns));
-      for (const item of right.children) item.style.removeProperty("grid-column");
-      const lastRowItems = right.children.length % rightColumns;
-      if (lastRowItems) {
-        const firstLastRow = right.children.length - lastRowItems;
-        const offset = rightColumns - lastRowItems;
-        [...right.children].slice(firstLastRow).forEach((item, index) => {
-          item.style.gridColumn = String(offset + index + 1);
-        });
-      }
+      left.style.width = `${chosen.leftWidth}px`;
+      right.style.width = `${chosen.rightWidth}px`;
+      left.style.removeProperty("--toolbar-columns");
+      right.style.removeProperty("--toolbar-columns");
+      for (const item of [...left.children, ...right.children]) item.style.flex = "0 0 auto";
     };
     const schedule = () => {
       if (queued) return;
