@@ -53,7 +53,7 @@ export const ICONS = Object.freeze({
   // Nawigacja i ustawienia
   home: "/assets/icons/navigation/home.svg?v=v2026-10-14T23162",
   drawer: "/assets/icons/navigation/drawer.svg?v=v2026-10-14T23162",
-  "drawer-export": "/assets/icons/navigation/drawer-export.svg?v=codex-e20-drawer-export-20261015d",
+  "drawer-export": "/assets/icons/navigation/drawer-export.svg?v=codex-e20-drawer-export-20261015e",
   hamburger: "/assets/icons/navigation/hamburger.svg?v=v2026-10-14T23162",
   "arrow-up": "/assets/icons/navigation/arrow-up.svg?v=v2026-10-14T23162",
   "arrow-down": "/assets/icons/navigation/arrow-down.svg?v=v2026-10-14T23162",
