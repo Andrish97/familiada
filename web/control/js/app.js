@@ -587,7 +587,7 @@ async function main() {
   }
   const completionChannel = sb().channel(`display-completion:${gameId}`);
   completionChannel.on("postgres_changes", {
-    event: "UPDATE", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
+    event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
   }, (payload) => applyDisplayCompletion(payload?.new?.rendered_rev));
   completionChannel.subscribe((status) => {
     completionRealtimeConnected = status === "SUBSCRIBED";

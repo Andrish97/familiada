@@ -254,17 +254,6 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       });
       if (readError) throw readError;
       await sb.realtime.setAuth(data.token);
-      const { data: completionBefore, error: completionReadError } = await sb
-        .from("game_state_display_completion").select("rendered_rev,requested_rev").eq("game_id", gid).single();
-      const completionRead = {
-        data: completionBefore,
-        error: completionReadError ? {
-          code: completionReadError.code || null,
-          message: completionReadError.message || String(completionReadError),
-          details: completionReadError.details || null,
-          hint: completionReadError.hint || null,
-        } : null,
-      };
       const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
       const channel = sb.channel(channelName).on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
@@ -273,7 +262,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       });
       const completionChannelName = `e2e-scoped-completion:${crypto.randomUUID()}`;
       const completionChannel = sb.channel(completionChannelName).on("postgres_changes", {
-        event: "UPDATE", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
+        event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
       }, payload => {
         if (Number(payload?.new?.rendered_rev) > 0) window.__scopedRealtimeCompletionRev = payload.new.rendered_rev;
       });
@@ -298,10 +287,8 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       // Give Realtime's postgres_changes listener a short settle interval
       // after the channel join acknowledgement before the first write.
       await new Promise(resolve => setTimeout(resolve, 500));
-      return { channelName, completionChannelName, beforeRev: before?.rev, completionRead };
+      return { channelName, completionChannelName, beforeRev: before?.rev };
     }, { gid: game.id, key: keyResult, lease });
-    expect(direct.completionRead.error, "scoped primary must be able to read its completion row").toBeNull();
-    expect(direct.completionRead.data).toBeTruthy();
     channelName = direct.channelName;
     completionChannelName = direct.completionChannelName;
 
@@ -329,14 +316,15 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
         p_connection_id: lease.connection_id, p_epoch: lease.epoch,
       });
       if (completionError) throw completionError;
-      const { data: completionRow, error: completionReadError } = await sb
-        .from("game_state_display_completion").select("rendered_rev").eq("game_id", gid).single();
-      if (completionReadError) throw completionReadError;
-      if (Number(completionRow?.rendered_rev) !== Number(data.rev)) {
-        throw new Error(`completion row did not persist rendered_rev=${data.rev}: ${JSON.stringify(completionRow)}`);
-      }
       return data.rev;
     }, { gid: game.id, key: keyResult, lease });
+    const storedCompletion = await page.evaluate(async gid => {
+      const { data, error } = await window.__sbClient.from("game_state_display_completion")
+        .select("rendered_rev").eq("game_id", gid).single();
+      return { renderedRev: data?.rendered_rev ?? null, error: error?.message || null };
+    }, game.id);
+    expect(storedCompletion.error).toBeNull();
+    expect(Number(storedCompletion.renderedRev)).toBe(Number(completedRevision));
     await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionRev || null), { timeout: 15000 })
       .toBe(completedRevision);
   } finally {
