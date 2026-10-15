@@ -468,7 +468,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
 // widoki i urządzenia po kolei, a niezależne konta mogą pracować równolegle.
 // To usuwa współbieżność blokad zasobów bez tworzenia osobnego konta galerii.
 test.describe.configure({ mode: "parallel" });
-test.setTimeout(10 * 60 * 1000);
+test.setTimeout(requestedPages.length ? 3 * 60 * 1000 : requestedProfiles.length === 1 ? 5 * 60 * 1000 : 10 * 60 * 1000);
 test.use({ serviceWorkers: "block" });
 
 const selectedProfiles = PROFILES.filter((item) => !requestedProfiles.length || requestedProfiles.includes(item.id));
