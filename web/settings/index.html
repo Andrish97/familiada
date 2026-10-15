@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-15T21591"/>
+  <meta name="app-version" content="v2026-10-15T22004"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -15,18 +15,18 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-15T21591"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T21591"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T21591"/>
-  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-15T21591"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T22004"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T22004"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T22004"/>
+  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-15T22004"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T21591" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T21591" defer></script>
-  <script type="module" src="/settings/js/settings.js?v=v2026-10-15T21591" defer></script>
-  <script type="module" src="/settings/js/generator.js?v=v2026-10-15T21591" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T22004" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T22004" defer></script>
+  <script type="module" src="/settings/js/settings.js?v=v2026-10-15T22004" defer></script>
+  <script type="module" src="/settings/js/generator.js?v=v2026-10-15T22004" defer></script>
 </head>
 <body class="games-body settings-body settings-locked no-footer-line skel-body">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -834,7 +834,8 @@
           <!-- Odbiorcy -->
           <div class="field">
             <label class="field-label">Odbiorcy</label>
-            <textarea class="inp" id="mktEmailInput" rows="4" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="Wpisz adresy e-mail, oddzielając je przecinkami lub nową linią…&#10;Np. jan@example.com, anna@example.com"></textarea>
+            <span class="field-hint" style="display:block;margin-bottom:6px">Wpisz adresy e-mail oddzielone przecinkami lub nową linią, lub wczytaj z pliku (.txt/.csv).</span>
+            <textarea class="inp" id="mktEmailInput" rows="4" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="jan@example.com, anna@example.com&#10;lub&#10;jeden@mail.pl&#10;drugi@mail.pl"></textarea>
             <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
               <input type="file" id="mktFileInput" accept=".txt,.csv" style="display:none">
               <label for="mktFileInput" class="btn sm" style="cursor:pointer">Wczytaj z pliku</label>
@@ -1095,6 +1096,6 @@
     </div>
   </div>
 
-   <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T21591"></script>
+   <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T22004"></script>
 </body>
 </html>
