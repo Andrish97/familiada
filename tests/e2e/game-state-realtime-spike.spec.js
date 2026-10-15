@@ -206,6 +206,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
   const deviceContext = await browser.newContext();
   let channelName = "";
   let completionChannelName = "";
+  let ownerCompletionChannelName = "";
   try {
     const { error: seedError } = await page.evaluate(async gid => {
       const { error } = await window.__sbClient.rpc("game_state_write", {
@@ -302,6 +303,23 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     channelName = direct.channelName;
     completionChannelName = direct.completionChannelName;
 
+    ownerCompletionChannelName = `e2e-owner-completion:${crypto.randomUUID()}`;
+    await page.evaluate(async ({ gid, channelName }) => {
+      const sb = window.__sbClient;
+      const channel = sb.channel(channelName).on("postgres_changes", {
+        event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
+      }, payload => { window.__ownerRealtimeCompletionRev = payload?.new?.rendered_rev ?? null; });
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("owner completion subscribe timeout")), 12000);
+        channel.subscribe(status => {
+          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            clearTimeout(timeout); reject(new Error(`owner completion postgres_changes: ${status}`));
+          }
+        });
+      });
+    }, { gid: game.id, channelName: ownerCompletionChannelName });
+
     const { error: writeError } = await page.evaluate(async gid => {
       const { error } = await window.__sbClient.rpc("game_state_write", {
         p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
@@ -335,6 +353,8 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     }, game.id);
     expect(storedCompletion.error).toBeNull();
     expect(Number(storedCompletion.renderedRev)).toBe(Number(completedRevision));
+    await expect.poll(() => page.evaluate(() => window.__ownerRealtimeCompletionRev || null), { timeout: 15000 })
+      .toBe(completedRevision);
     await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeCompletionRev || null), { timeout: 15000 })
       .toBe(completedRevision);
   } finally {
@@ -350,6 +370,11 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       const channel = sb.getChannels().find(item => item.topic.endsWith(name));
       if (channel) await sb.removeChannel(channel);
     }, completionChannelName).catch(() => {});
+    if (ownerCompletionChannelName) await page.evaluate(async name => {
+      const sb = window.__sbClient;
+      const channel = sb.getChannels().find(item => item.topic.endsWith(name));
+      if (channel) await sb.removeChannel(channel);
+    }, ownerCompletionChannelName).catch(() => {});
     await deviceContext.close().catch(() => {});
     await page.evaluate(async gid => { await window.__sbClient.from("games").delete().eq("id", gid); }, game.id);
   }
