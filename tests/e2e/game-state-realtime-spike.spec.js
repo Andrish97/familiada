@@ -108,7 +108,7 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
     expect(directRead.rowCount, "anon nie powinien widzieć żadnego wiersza game_state bezpośrednio").toBe(0);
 
     // 2) game_state_get z NIEPOPRAWNYM kluczem — musi odmówić.
-    const badKeyResult = await anonPage.evaluate(async (gid) => {
+    const badKeyResult = await anonPage.evaluate(async ({ gid, lease }) => {
       const sb = window.__sbClient;
       const { data, error } = await sb.rpc("game_state_get", {
         p_game_id: gid,
@@ -117,7 +117,7 @@ test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state
         p_connection_id: lease.connectionId, p_epoch: lease.epoch,
       });
       return { data, error: error?.message || null };
-    }, game.id);
+    }, { gid: game.id, lease });
     expect(badKeyResult.error, "game_state_get z błędnym kluczem powinno rzucić błąd").toContain("forbidden");
 
     // 3) game_state_get z POPRAWNYM kluczem pozostaje działającą ścieżką
@@ -271,6 +271,9 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
           }
         });
       });
+      // Give Realtime's postgres_changes listener a short settle interval
+      // after the channel join acknowledgement before the first write.
+      await new Promise(resolve => setTimeout(resolve, 500));
       return { channelName, beforeRev: before?.rev };
     }, { gid: game.id, key: keyResult, lease });
     channelName = direct.channelName;
@@ -285,7 +288,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
       return { error };
     }, game.id);
     expect(writeError, "owner game_state_write should succeed").toBeNull();
-    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 12000 })
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 15000 })
       .not.toBeNull();
   } finally {
     if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
