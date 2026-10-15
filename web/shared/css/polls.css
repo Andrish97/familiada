@@ -192,6 +192,11 @@
   /* równe marginesy: sekcje bez własnej ramki (karta ma już swój margines),
      przewijanie nie odejmuje pasa od jednej strony */
   .card.games-card.polls-card{ padding: 12px 12px 8px; }
+  /* Mobilna wypustka już nazywa aktywną sekcję. Jej treść nie potrzebuje
+     powtórzonego tytułu ani drugiej ramki wewnątrz głównej karty. */
+  .polls-card .pollSec{ padding: 0; background: none; border: 0; border-radius: 0; }
+  .polls-card .pollLinkSec > .pollSecTitle,
+  .polls-card .pollRecipientsSec > .pollSecHead{ display: none; }
 }
 .pollSec{
   --under: #0b1020;

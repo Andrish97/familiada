@@ -91,7 +91,7 @@
     align-items: flex-start;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   }
   .maintenance-card { padding: 16px 18px; }
 }

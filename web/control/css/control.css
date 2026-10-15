@@ -1354,6 +1354,16 @@
     padding: 8px 0
 }
 
+@media (max-width: 600px) {
+    /* Arkusz mobilny spłaszcza .uni-body do bloku; w modalu QR przywróć
+       układ kolumnowy i czytelne odstępy między QR, kodem i podpowiedzią. */
+    #qrModalOverlay.sheet-active .sheet-modal-body > .uni-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+
 .qrBlock img,.qrBox img,.uni-qr img,.qrSlim img {
     background: #fff;
     box-sizing: border-box

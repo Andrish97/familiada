@@ -5048,7 +5048,7 @@ const pl = {
         "hint": "Osoby bez konta, które chcą otrzymywać Twoje ankiety.",
         "empty": "Nie masz jeszcze subskrybentów."
     },
-    "invite": "+ Zaproś",
+    "invite": "Zaproś",
     "handle": "E-mail lub nazwa użytkownika",
     "email": "Adres e-mail",
     "go": "Przejdź →",

@@ -5139,7 +5139,7 @@ const en = {
         "hint": "People without an account who want to receive your polls.",
         "empty": "No subscribers yet."
     },
-    "invite": "+ Invite",
+    "invite": "Invite",
     "handle": "Email or username",
     "email": "Email address",
     "go": "Go →",

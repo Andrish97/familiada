@@ -60,3 +60,27 @@ Stan roboczy na 2026-10-14. Tabela rozbija każdą uwagę na osobny wiersz. „J
 - Krótki workflow `38643551060` przeszedł: 7/7 ujęć dla Gier, Baz i Logo na MacBooku; asercje potwierdziły, że akcje nagłówka nie spadły pod tytuł, a dolny pasek został w jednym wierszu.
 - Pełny workflow `38643769954` przerwał się na `logo-draw`: fixture `E20-GALLERY-LOGO` jest typu TEXT, a ścieżka otwiera edytor DRAW. Wygenerowane 19 ujęć MacBooka to część niekompletna, nie gotowa galeria.
 - Uwaga o paskach jest więc potwierdzona punktowo tylko dla szerokiego MacBooka. Nie deklaruję jeszcze potwierdzenia telefonów, zawijania ani wszystkich stron.
+
+## Nowa runda uwag użytkownika — 2026-10-15
+
+Pracować po kolei. Po zakończeniu każdej uwagi zatrzymać się przed następną. To jest bieżąca lista; wcześniejsze tabele pozostają historią. Nie uruchamiać pełnej galerii ani pełnych testów bez uzgodnienia.
+
+| # | Uwaga | Status |
+|---:|---|---|
+| 1 | Znajomi i Subskrybenci: przycisk „Zaproś” pokazuje dwa plusy. | Naprawione lokalnie: usunięto „+” z etykiet PL/EN/UK, SVG plus jest jedynym znakiem; zachowano ikonę-only na telefonie. Cache assetów odświeżony. |
+| 2 | Widoki 404 i przerwy technicznej: karta w iPhone landscape wchodzi pod safe area. | Naprawione lokalnie: wspólny `.maintenance-main` na niskim landscape uwzględnia bezpieczne insety lewo/prawo oraz góra/dół; dotyczy Maintenance i 404. Kodowo sprawdzone, bez testów/galerii. |
+| 3 | Subskrybenci: plakietki „Odrzucono”/„Oczekuje” czasem wychodzą poza kafelki na mobile; sprawdzić podobne widoki. | Naprawione lokalnie po zrzucie: tytuł/adres może łamać się na wiele linii i zwiększać wysokość kafelka; tylko długie plakietki statusu pozostają jednoliniowe i są skracane wielokropkiem. Zmiana obejmuje wspólne wiersze Znajomych, Subskrybentów, Baz i Ankiet. |
+| 4 | W mobilnych modalach widać po dwie linie rozdzielające. | Naprawione lokalnie we wspólnym arkuszu modalnym: gdy widoczny jest pasek akcji, pozostaje separator pod nim, a separator wewnętrznego nagłówka jest wyłączony. Bez paska akcji nagłówek zachowuje separator. |
+| 5 | Modal QR na Display: odstępy między sekcjami są zbyt małe. | Naprawione lokalnie: w mobilnym modalu QR w Control przywrócono pionowy układ `.uni-body` i odstęp 20 px między widocznymi sekcjami. |
+| 6 | Ankiety mobile: karty są zagnieżdżone/powielone, np. anonimowość w drugiej karcie. | Naprawione lokalnie: wewnętrzne sekcje Udostępniania nie rysują drugiej karty wewnątrz `.polls-card`; mobilne wypustki „Anonimowo” i „Odbiorcy” identyfikują aktywną sekcję, więc powtórzone nagłówki są ukryte. Ramki konkretnych elementów, np. sceny QR, pozostają. |
+| 7 | Zwykłe modale są przesunięte w lewo względem środka. | Oczekuje. |
+| 8 | Mail: pole wyboru ma pokazywać sugerowany tekst zamiast hinta nad polem. | Oczekuje. |
+| 9 | Import pytań w edytorze gier ma stary styl. | Oczekuje. |
+| 10 | Modal wyboru koloru w Game Settings ma niespójny styl. | Oczekuje. |
+| 11 | Control, modal Udostępnij: sekcja „Udostępnione w tej sesji” nie ma pustego kafla. | Oczekuje. |
+| 12 | Connect: separator jest za daleko od nagłówka i zbyt blisko karty. | Oczekuje. |
+| 13 | Manager baz: modal eksportu gry na telefonie lekko wypycha treść poza prawą krawędź. | Oczekuje. |
+| 14 | Bazy, modal udostępniania mobile: układ się miesza; zwykły modal ma nierówne przyciski, przycisk obok Znajomych spada pod niego (to samo w Control), a sekcja Udostępnione nie ma pustego kafla. | Oczekuje. |
+| 15 | Modale importu pokazują angielskie teksty. | Oczekuje. |
+| 16 | Potwierdzić działanie mobilnych modalów tagów i tworzenia gry w Base Explorer. | Oczekuje na analizę i weryfikację. |
+| 17 | Ujednolicić modale importu; w jednym z nich ikony Wczytaj plik i Import były takie same. | Oczekuje. |

@@ -13,7 +13,7 @@
 .contacts-invite-row{ display: flex; align-items: center; gap: 10px; }
 .contacts-invite-row .inp{ flex: 1 1 auto; min-width: 0; }
 .contacts-invite-row .btn{ flex: 0 0 auto; }
-.contacts-invite-icon{ display: none; }
+.contacts-invite-icon{ display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; }
 .contacts-card .shareRow.rowsFocus{ border-color: var(--gold); }
 @media (max-width: 720px){
   .contacts-body > main.wrap{ padding: 15px; }

@@ -1146,6 +1146,13 @@ main{
         z-index: 1;
     }
 
+    /* Gdy arkusz ma pasek akcji, jedyny separator znajduje się pod nim.
+       Nie rysuj drugiej kreski na wewnętrznym nagłówku. */
+    .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden])) > :is(.uni-head,.mHead,.tagsHead,.bld-preview-head,.mkt-detail-head,.previewModalTitle),
+    .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > .modal-actions > :not([hidden])) > :is(.uni-head,.mHead,.tagsHead,.bld-preview-head,.mkt-detail-head,.previewModalTitle) {
+        border-bottom: 0 !important;
+    }
+
     .modal--sheet.sheet-active .uni-head .mTitle,
     .modal--sheet.sheet-active .mHead .mTitle,
     .modal--sheet.sheet-active .tagsHead .mTitle,
@@ -2625,6 +2632,14 @@ button.rowsSectionHead{ cursor: pointer; }
   .rowsAct .rowsActIcon{ display: inline-flex; }
   .rowsRow{ gap: 10px; padding: 9px 10px; }
 }
+@media (max-width: 720px){
+  /* Let row content wrap normally; truncate only long status badges so they
+     stay inside the tile without forcing the tile beyond its available width. */
+  .shareRow--compact .shareMain{ display: block; }
+  .shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
+  .shareRow--compact .shareTags{ width: max-content; max-width: 100%; margin-top: 6px; flex-wrap: nowrap; overflow: hidden; }
+  .shareRow--compact .shareTags > *{ min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
 .shareList--scroll{ max-height: 240px; overflow-y: auto; overscroll-behavior: contain; }
 .modal--sheet.sheet-active #shareDeviceSubsList,
@@ -2635,8 +2650,6 @@ button.rowsSectionHead{ cursor: pointer; }
     -webkit-overflow-scrolling: touch;
 }
 .shareEmpty{ font-size:13px; color:var(--muted); }
-.shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
-.shareRow--compact .shareNote{ flex-basis: 100%; margin-top: 0; }
 
 @media (max-width: 600px) {
   /* W pickerze odbiorców przewijają się same listy, a tytuł i licznik
