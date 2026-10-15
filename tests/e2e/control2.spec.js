@@ -842,6 +842,7 @@ const TWO_QUESTIONS = [
 // potwierdzenie. Etykieta z `label` odróżnia urządzenia w jednym logu.
 function instrumentAnon(p, label) {
   p.on("console", (msg) => {
+    if (msg.text().startsWith("[device lease trace]")) console.log(`[e2e-diag:${label}]`, msg.text());
     if ((msg.type() === "error" || msg.type() === "warning") && !isKnownNoiseText(msg.text())) {
       console.log(`[e2e-diag:${label}] console:${msg.type()}`, msg.text());
     }

@@ -1,8 +1,8 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-15T16202";
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-15T16202";
-import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-15T16202";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-15T16202";
+import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-15T16225";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-15T16225";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-15T16225";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-15T16225";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
