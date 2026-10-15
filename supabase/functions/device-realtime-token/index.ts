@@ -11,7 +11,7 @@ const url = Deno.env.get("SUPABASE_URL") || "";
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 // This must be the signing secret configured for the Supabase project's JWTs.
 // Never fall back to the anon/service key: tokens must be accepted by Realtime.
-const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET") || "";
+const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET") || Deno.env.get("JWT_SECRET") || "";
 const admin = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
