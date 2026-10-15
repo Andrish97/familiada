@@ -63,7 +63,7 @@ INSERT INTO public.game_state(game_id,step,detail,rev,updated_at) VALUES
  ('10000000-0000-0000-0000-000000000002','setup', '{}'::jsonb,1,now());
 INSERT INTO public.game_state_display_completion(game_id,rendered_rev,requested_rev) VALUES
  ('10000000-0000-0000-0000-000000000001',1,1),
- ('10000000-0000-0000-0000-000000000002',1,1);
+ ('10000000-0000-0000-0000-000000000002',1,2);
 SELECT set_config('test.user_id','00000000-0000-0000-0000-000000000001',false);
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001')->>'epoch')='1','first display receives epoch 1');
 SELECT pg_temp.assert_true(control_device_realtime_authorize('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1)->>'session_id'='20000000-0000-0000-0000-000000000001','realtime authorization returns scope only for current primary');
