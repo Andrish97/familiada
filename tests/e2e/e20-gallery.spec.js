@@ -223,6 +223,7 @@ async function showModalWithRepresentativeContent(page, modalId) {
     modal.style.opacity = "1";
     modal.style.pointerEvents = "auto";
     for (const input of modal.querySelectorAll("input:not([type=hidden]), textarea")) {
+      if (input instanceof HTMLInputElement && !["text", "email", "url", "search", "tel", "number", "password"].includes(input.type)) continue;
       if (input.value) continue;
       const hint = input.getAttribute("placeholder") || input.getAttribute("aria-label") || "";
       input.value = /mail|email/i.test(`${input.name} ${input.id} ${hint}`)
