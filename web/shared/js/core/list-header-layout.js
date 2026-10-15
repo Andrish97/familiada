@@ -230,6 +230,9 @@ function initListBottomToolbarLayout() {
       // z dostępnej szerokości i zmierzonej liczby wierszy.
       const useIcons = hasVisibleTextLabels && textLayout && iconLayout
         && ((textRows > 2 && iconRows < textRows) || textRows - iconRows >= 2);
+      if (available < 400) {
+        console.info("[list-bottom-layout]", JSON.stringify({ available, textLeft: textLeft.items, textRight: textRight.items, iconLeft: iconLeft.items, iconRight: iconRight.items, textRows, iconRows, hasVisibleTextLabels, useIcons }));
+      }
       bar.classList.toggle("is-compact-icons", Boolean(useIcons));
       const leftMeasure = useIcons ? iconLeft : textLeft;
       const rightMeasure = useIcons ? iconRight : textRight;
