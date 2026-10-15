@@ -72,6 +72,14 @@ async function deleteGameDirect(page, gameId) {
   }, gameId);
 }
 
+async function findGameIdByName(page, name) {
+  return await page.evaluate(async (name) => {
+    const { data, error } = await window.__sbClient.from("games").select("id").eq("name", name).maybeSingle();
+    if (error) throw new Error("query game by name failed: " + error.message);
+    return data?.id || null;
+  }, name);
+}
+
 /* =====================================================================
    1) bases.html -- modal udostępniania / modal nazwy
 ===================================================================== */
@@ -325,16 +333,32 @@ async function createQuestion(page, { baseId, categoryId = null, ord = 1, payloa
   }, { baseId, categoryId, ord, payload, createdAt });
 }
 
+async function createTag(page, { baseId, name, ord }) {
+  return await page.evaluate(async ({ baseId, name, ord }) => {
+    const { data, error } = await window.__sbClient
+      .from("qb_tags")
+      .insert({ base_id: baseId, name, color: "#4da3ff", ord })
+      .select("id")
+      .single();
+    if (error) throw new Error("insert qb_tags failed: " + error.message);
+    return data.id;
+  }, { baseId, name, ord });
+}
+
 test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => {
-  test.use({ viewport: MOBILE_VIEWPORT });
+  test.use({ viewport: MOBILE_VIEWPORT, serviceWorkers: "block" });
 
   test("modal tagów na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases/explorer"] });
 
     const baseId = await createBase(page, `E2E-XB-SHEET-TAGS-${Date.now()}`);
 
     try {
+      for (let ord = 1; ord <= 20; ord++) {
+        await createTag(page, { baseId, name: `Tag mobile ${ord}`, ord });
+      }
       const qid = await createQuestion(page, {
         baseId, ord: 1, payload: { text: "Pytanie do tagowania (mobile)", answers: [] },
       });
@@ -360,6 +384,16 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(page.locator(".explorer-right")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
 
+      const tagScroll = await page.locator("#tagsAssignList").evaluate((el) => ({
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        modalFits: el.closest(".modal").scrollHeight <= el.closest(".modal").clientHeight + 1,
+      }));
+      expect(tagScroll.scrollHeight).toBeGreaterThan(tagScroll.clientHeight + 1);
+      expect(tagScroll.modalFits, "cały modal tagów nie powinien przewijać się razem z listą").toBe(true);
+      await page.locator("#tagsAssignList").evaluate((el) => { el.scrollTop = el.scrollHeight; });
+      await expect(page.locator("#tagsL1Save")).toBeInViewport();
+
       await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#explorerLeft")).toBeVisible();
@@ -371,8 +405,10 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
   test("modal eksportu na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases/explorer"] });
 
     const baseId = await createBase(page, `E2E-XB-SHEET-EXPORT-${Date.now()}`);
+    let createdGameId = null;
 
     try {
       let firstQid = null;
@@ -404,14 +440,38 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(page.locator("#explorerLeft")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
 
+      const scrollState = await page.locator("#exportOverlay").evaluate((overlay) => {
+        const modal = overlay.querySelector(".modal");
+        const body = modal.querySelector(".sheet-modal-body");
+        const xBody = modal.querySelector(".xBody");
+        const list = modal.querySelector(".xPickList");
+        const overflows = (el) => el.scrollHeight > el.clientHeight + 1;
+        return {
+          body: overflows(body),
+          xBody: overflows(xBody),
+          list: overflows(list),
+        };
+      });
+      expect(scrollState.body, "na telefonie ma przewijać się treść arkusza").toBe(true);
+      expect(scrollState.xBody, "wewnętrzny kontener nie powinien tworzyć drugiego scrolla").toBe(false);
+      expect(scrollState.list, "lista pytań nie powinna tworzyć trzeciego scrolla").toBe(false);
+      await expect(page.locator("#xCreate")).toBeInViewport();
+
       // klik w tło nic nie robi na telefonie (wychodzi tylko przez X)
       await overlay.click({ position: { x: 5, y: 5 } });
       await expect(overlay).toBeVisible();
 
-      await closeSheetViaBack(page);
+      const gameName = `E2E-XB-MOBILE-GAME-${Date.now()}`;
+      await page.locator("#lbl0").click();
+      await page.locator("#xName").fill(gameName);
+      await expect(page.locator("#xCreate")).toBeEnabled({ timeout: 5000 });
+      await page.locator("#xCreate").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
+      createdGameId = await findGameIdByName(page, gameName);
+      expect(createdGameId, "gra powinna powstać po zatwierdzeniu w mobilnym modalu").toBeTruthy();
       await expect(page.locator("#explorerLeft")).toBeVisible();
     } finally {
+      if (createdGameId) await deleteGameDirect(page, createdGameId);
       await deleteBase(page, baseId);
     }
   });
