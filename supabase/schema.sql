@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict DtgHAdzor4almaJacXF7Z8ts5uFFtrBA2RNbI69lgfOO5gp8iPLCKKxHcfpGfPU
+\restrict 9dlEbX4drrSB7d1zdO0j2DlzI07c0tjhMtfvi5khqOLJ5Co2fO6cSnuodzpeEC9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -350,6 +350,75 @@ CREATE FUNCTION "public"."_contact_mail_enabled"("p_email" "text") RETURNS boole
    AND coalesce((SELECT f.email_notifications FROM auth.users u
      JOIN public.user_flags f ON f.user_id=u.id
      WHERE lower(trim(u.email))=public._norm_email(p_email) LIMIT 1),true);
+$$;
+
+
+--
+-- Name: _control2_log_device_lease_transition(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control2_log_device_lease_transition"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_session_id uuid;
+  v_from text;
+  v_epoch bigint;
+  v_event_id text;
+BEGIN
+  IF TG_OP='INSERT' THEN
+    -- Only log a queue insertion if another live instance already owns the slot.
+    IF NEW.state<>'waiting' OR NOT EXISTS (
+      SELECT 1 FROM public.control_device_slots s
+      WHERE s.session_id=NEW.session_id AND s.device_type=NEW.device_type
+        AND s.primary_connection_id IS NOT NULL AND s.primary_connection_id<>NEW.id
+    ) THEN RETURN NEW; END IF;
+    v_from := NULL;
+    v_epoch := 0;
+    v_event_id := 'lease:'||NEW.id::text||':waiting';
+  ELSE
+    IF OLD.state IS NOT DISTINCT FROM NEW.state THEN RETURN NEW; END IF;
+    v_from := OLD.state;
+    v_epoch := coalesce(NEW.epoch,OLD.epoch,0);
+    v_event_id := 'lease:'||NEW.id::text||':'||NEW.state||':'||v_epoch::text;
+  END IF;
+
+  SELECT a.session_id INTO v_session_id
+  FROM public.game_session_active a
+  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
+  WHERE a.game_id=NEW.game_id AND s.control_version=2 AND s.ended_at IS NULL
+  LIMIT 1;
+  IF v_session_id IS NULL THEN RETURN NEW; END IF;
+
+  BEGIN
+    INSERT INTO public.control2_device_events(
+      game_id,session_id,device_type,event_type,event_id,details
+    ) VALUES (
+      NEW.game_id,v_session_id,NEW.device_type,'lease_state',v_event_id,
+      jsonb_build_object(
+        'device_type',NEW.device_type,
+        'from_state',v_from,
+        'to_state',NEW.state,
+        'epoch',v_epoch,
+        'connection_id',NEW.id,
+        'visibility',NEW.page_visibility,
+        'focused',NEW.focused
+      )
+    ) ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
+
+    DELETE FROM public.control2_device_events e
+    WHERE e.game_id=NEW.game_id
+      AND (e.created_at<now()-interval '30 days' OR e.id IN (
+        SELECT id FROM public.control2_device_events
+        WHERE game_id=NEW.game_id ORDER BY created_at DESC,id DESC OFFSET 500
+      ));
+  EXCEPTION WHEN OTHERS THEN
+    -- A diagnostic write must not break device registration or lease renewal.
+    RAISE WARNING 'Control 2 lease event was not recorded: %',SQLERRM;
+  END;
+  RETURN NEW;
+END;
 $$;
 
 
@@ -8993,16 +9062,24 @@ CREATE FUNCTION "public"."get_control2_display_events"("p_session_ids" "uuid"[])
     LANGUAGE "sql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-  SELECT coalesce(jsonb_object_agg(session_id::text, events), '{}'::jsonb)
+  SELECT coalesce(jsonb_object_agg(session_id::text,events),'{}'::jsonb)
   FROM (
-    SELECT e.session_id, jsonb_agg(
+    SELECT e.session_id,jsonb_agg(
       jsonb_build_object(
         'kind','diagnostic',
-        'category','display_state',
+        'category',CASE WHEN e.event_type='lease_state' THEN 'device_lease' ELSE 'display_state' END,
         'at',e.created_at,
-        'message','Zdarzenie urządzenia Wyświetlacz.',
-        'devices',jsonb_build_array('display'),
-        'metrics',e.details || jsonb_build_object('reason',e.event_type)
+        'message',CASE
+          WHEN e.event_type<>'lease_state' THEN 'Zdarzenie urządzenia Wyświetlacz.'
+          WHEN e.details->>'to_state'='waiting' THEN 'Urządzenie oczekuje na zwolnienie blokady.'
+          WHEN e.details->>'to_state'='primary' THEN 'Urządzenie zostało aktywowane jako główne.'
+          WHEN e.details->>'to_state'='released' THEN 'Urządzenie zwolniło blokadę.'
+          WHEN e.details->>'to_state'='expired' THEN 'Blokada urządzenia wygasła.'
+          WHEN e.details->>'to_state'='revoked' THEN 'Połączenie urządzenia zostało cofnięte.'
+          ELSE 'Zmienił się stan blokady urządzenia.' END,
+        'devices',CASE WHEN e.event_type='lease_state'
+          THEN jsonb_build_array(e.device_type) ELSE jsonb_build_array('display') END,
+        'metrics',e.details||jsonb_build_object('reason',e.event_type)
       ) ORDER BY e.created_at,e.id
     ) AS events
     FROM public.control2_device_events e
@@ -17859,8 +17936,8 @@ CREATE TABLE "public"."control2_device_events" (
     "details" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "event_id" "text",
-    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = 'display'::"text")),
-    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text"])))
+    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"]))),
+    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text", 'lease_state'::"text"])))
 );
 
 
@@ -21329,6 +21406,13 @@ CREATE TRIGGER "contact_reports_updated_at" BEFORE UPDATE ON "public"."contact_r
 
 
 --
+-- Name: control_device_connections control_device_connections_log_lease_state; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "control_device_connections_log_lease_state" AFTER INSERT OR UPDATE OF "state" ON "public"."control_device_connections" FOR EACH ROW EXECUTE FUNCTION "public"."_control2_log_device_lease_transition"();
+
+
+--
 -- Name: answers copy_pending_answer; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -24618,5 +24702,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DtgHAdzor4almaJacXF7Z8ts5uFFtrBA2RNbI69lgfOO5gp8iPLCKKxHcfpGfPU
+\unrestrict 9dlEbX4drrSB7d1zdO0j2DlzI07c0tjhMtfvi5khqOLJ5Co2fO6cSnuodzpeEC9
 
