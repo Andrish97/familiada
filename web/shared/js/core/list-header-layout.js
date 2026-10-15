@@ -83,7 +83,10 @@ function initListBottomToolbarLayout() {
     let lastLayout = "";
     let lastAvailableWidth = null;
     const measureBox = document.createElement("div");
-    measureBox.className = "toolbar-measure-box";
+    // Daj klonom tę samą bazową kaskadę .games-bottom co prawdziwemu paskowi;
+    // bez tego mobilne .only-desktop i reguły kompaktowe nie są mierzone tak,
+    // jak potem renderują się na stronie.
+    measureBox.className = "games-bottom toolbar-measure-box";
     Object.assign(measureBox.style, {
       position: "fixed", left: "-100000px", top: "0", width: "max-content",
       maxWidth: "none", visibility: "hidden", pointerEvents: "none",
@@ -92,6 +95,7 @@ function initListBottomToolbarLayout() {
     bar.append(measureBox);
     const measureGroup = (group, mode = "text") => {
       if (!group) return { width: 0, items: [] };
+      measureBox.classList.toggle("is-compact-icons", mode === "icons");
       const clone = group.cloneNode(true);
       Object.assign(clone.style, {
         display: "flex", width: "max-content", minWidth: "max-content", maxWidth: "none",
@@ -218,8 +222,8 @@ function initListBottomToolbarLayout() {
         }
         return best;
       };
-      const hasVisibleTextLabels = [...bar.querySelectorAll(".games-bottom-right .only-desktop")]
-        .some((label) => label.getClientRects().length);
+      const hasTextLabels = [...bar.querySelectorAll(".games-bottom-right .only-desktop")]
+        .some((label) => label.textContent.trim());
       const textLayout = chooseLayout(textLeft, textRight);
       const iconLayout = chooseLayout(iconLeft, iconRight);
       const textRows = textLayout ? Math.max(textLayout.leftRows.length, textLayout.rightRows.length) : 0;
@@ -228,9 +232,9 @@ function initListBottomToolbarLayout() {
       // Jeśli wariant ikon skraca układ, wybierz go; przy mniejszej różnicy
       // wymagaj wyraźnej oszczędności dwóch wierszy. Decyzja wynika wyłącznie
       // z dostępnej szerokości i zmierzonej liczby wierszy.
-      const useIcons = hasVisibleTextLabels && textLayout && iconLayout
+      const useIcons = hasTextLabels && textLayout && iconLayout
         && ((textRows > 2 && iconRows < textRows) || textRows - iconRows >= 2);
-      bar.dataset.toolbarLayoutDebug = JSON.stringify({ available, textLeft: textLeft.items, textRight: textRight.items, iconLeft: iconLeft.items, iconRight: iconRight.items, textRows, iconRows, hasVisibleTextLabels, useIcons });
+      bar.dataset.toolbarLayoutDebug = JSON.stringify({ available, textLeft: textLeft.items, textRight: textRight.items, iconLeft: iconLeft.items, iconRight: iconRight.items, textRows, iconRows, hasTextLabels, useIcons });
       bar.classList.toggle("is-compact-icons", Boolean(useIcons));
       const leftMeasure = useIcons ? iconLeft : textLeft;
       const rightMeasure = useIcons ? iconRight : textRight;

@@ -935,6 +935,16 @@ body.games-body > main.wrap{
   display:grid;
   place-items:center;
 }
+.games-bottom.is-compact-icons .games-bottom-left .list-search{
+  width:36px;
+  min-width:36px;
+  max-width:36px;
+  flex:0 0 36px;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.games-bottom.is-compact-icons .list-search .searchBox{ display:none !important; }
 .games-bottom.is-compact-icons .list-filter .ui-select-label,
 .games-bottom.is-compact-icons .list-filter .ui-select-caret,
 .games-bottom.is-compact-icons .list-sort .ui-select-label,
