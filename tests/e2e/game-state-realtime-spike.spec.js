@@ -249,6 +249,14 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
           connection_id: lease.connection_id, epoch: lease.epoch },
       });
       if (error || !data?.token) throw error || new Error(data?.error || "missing realtime token");
+      const scopedRest = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, {
+        global: { headers: { Authorization: `Bearer ${data.token}` } },
+      });
+      const { data: completionRows, error: completionReadError } = await scopedRest
+        .from("game_state_display_completion").select("game_id,rendered_rev")
+        .eq("game_id", gid);
+      if (completionReadError) throw completionReadError;
+      window.__scopedCompletionReadCount = completionRows?.length ?? 0;
       // Realtime RLS deliberately checks the live connection heartbeat. Keep
       // this bare-page fixture alive at the same cadence as the real device
       // lease client, which normally runs every three seconds.
@@ -302,6 +310,7 @@ test("control2: krótkotrwały token primary dostarcza zmiany game_state przez p
     }, { gid: game.id, key: keyResult, lease });
     channelName = direct.channelName;
     completionChannelName = direct.completionChannelName;
+    expect(await devicePage.evaluate(() => window.__scopedCompletionReadCount)).toBe(1);
 
     ownerCompletionChannelName = `e2e-owner-completion:${crypto.randomUUID()}`;
     await page.evaluate(async ({ gid, channelName }) => {
