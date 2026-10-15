@@ -7,6 +7,9 @@ DO $$ BEGIN CREATE ROLE supabase_admin; EXCEPTION WHEN duplicate_object THEN NUL
 CREATE SCHEMA auth;
 CREATE TABLE auth.users(id uuid PRIMARY KEY);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.user_id',true),'')::uuid $$;
+CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $$ SELECT coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
+GRANT USAGE ON SCHEMA auth TO anon;
+GRANT EXECUTE ON FUNCTION auth.jwt() TO anon;
 CREATE TYPE public.device_type AS ENUM ('display','host','buzzer');
 CREATE TYPE public.game_team AS ENUM ('A','B');
 CREATE TABLE public.games(id uuid PRIMARY KEY,owner_id uuid NOT NULL REFERENCES auth.users(id));
@@ -34,6 +37,7 @@ CREATE FUNCTION public.control2_display_event(uuid,text,jsonb) RETURNS boolean L
 \ir ../../supabase/migrations/2026-10-15_372_control2_device_lease_fencing.sql
 \ir ../../supabase/migrations/2026-10-15_373_legacy_buzzer_ready_compat.sql
 \ir ../../supabase/migrations/2026-10-15_374_restore_buzzer_guards.sql
+\ir ../../supabase/migrations/2026-10-15_375_control2_realtime_device_auth.sql
 
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
@@ -56,6 +60,8 @@ INSERT INTO public.game_state(game_id,step,detail,rev,updated_at) VALUES
  ('10000000-0000-0000-0000-000000000002','setup', '{}'::jsonb,1,now());
 SELECT set_config('test.user_id','00000000-0000-0000-0000-000000000001',false);
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001')->>'epoch')='1','first display receives epoch 1');
+SELECT pg_temp.assert_true(control_device_realtime_authorize('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1)->>'session_id'='20000000-0000-0000-0000-000000000001','realtime authorization returns scope only for current primary');
+SELECT pg_temp.assert_true(control_device_realtime_claim_valid('10000000-0000-0000-0000-000000000001',jsonb_build_object('role','anon','game_id','10000000-0000-0000-0000-000000000001','device_type','display','session_id','20000000-0000-0000-0000-000000000001','connection_id','40000000-0000-0000-0000-000000000001','epoch',1,'exp',extract(epoch FROM now())::bigint+300)),'current primary claims pass RLS validation');
 SELECT pg_temp.assert_true(_control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1),'current primary epoch authorizes device RPC');
 SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1) IS DISTINCT FROM NULL::public.game_state,'fenced RPC can read state for current primary');
 SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002') IS DISTINCT FROM NULL::public.game_state,'legacy key-only RPC remains available for protocol 1');
@@ -78,7 +84,17 @@ EXCEPTION WHEN OTHERS THEN
 END $$;
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001',NULL,NULL),'key-only legacy call is denied for protocol 2');
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002')->>'state')='waiting','second display queues');
+SELECT pg_temp.assert_true(NOT control_device_realtime_claim_valid('10000000-0000-0000-0000-000000000001',jsonb_build_object('role','anon','game_id','10000000-0000-0000-0000-000000000001','device_type','display','session_id','20000000-0000-0000-0000-000000000001','connection_id','40000000-0000-0000-0000-000000000002','epoch',1,'exp',extract(epoch FROM now())::bigint+300)),'waiting connection claims fail RLS validation');
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000002',NULL),'waiting display cannot access active RPCs');
 SELECT pg_temp.assert_true((control_device_instance_release('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1)->>'primary_connection_id')='40000000-0000-0000-0000-000000000002','release promotes next display');
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1),'demoted display cannot access active RPCs');
+SELECT pg_temp.assert_true(NOT control_device_realtime_claim_valid('10000000-0000-0000-0000-000000000001',jsonb_build_object('role','anon','game_id','10000000-0000-0000-0000-000000000001','device_type','display','session_id','20000000-0000-0000-0000-000000000001','connection_id','40000000-0000-0000-0000-000000000001','epoch',1,'exp',extract(epoch FROM now())::bigint+300)),'demoted connection claims fail RLS validation');
+ALTER TABLE public.game_state ENABLE ROW LEVEL SECURITY;
+SELECT set_config('request.jwt.claims',jsonb_build_object('role','anon','game_id','10000000-0000-0000-0000-000000000001','device_type','display','session_id','20000000-0000-0000-0000-000000000001','connection_id','40000000-0000-0000-0000-000000000002','epoch',2,'exp',extract(epoch FROM now())::bigint+300)::text,false);
+SET ROLE anon;
+SELECT pg_temp.assert_true((SELECT count(*)=1 FROM public.game_state WHERE game_id='10000000-0000-0000-0000-000000000001'),'scoped token sees only authorized game state row');
+SELECT pg_temp.assert_true((SELECT count(*)=0 FROM public.game_state WHERE game_id='10000000-0000-0000-0000-000000000002'),'scoped token cannot read a different game');
+SELECT set_config('request.jwt.claims','{}',false);
+SELECT pg_temp.assert_true((SELECT count(*)=0 FROM public.game_state WHERE game_id='10000000-0000-0000-0000-000000000001'),'ordinary anon token sees no game state row');
+RESET ROLE;
 \echo 'Control2 device lease fencing SQL checks passed'
