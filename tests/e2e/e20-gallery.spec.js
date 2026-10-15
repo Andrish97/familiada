@@ -149,7 +149,24 @@ async function installVisualResourceLockIsolation(page) {
 }
 
 async function saveDeviceScreenshot(page, profile, id, outputPath) {
-  const image = await page.screenshot({ fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
+  let image;
+  try {
+    image = await page.screenshot({ fullPage: false, scale: "css", animations: "disabled", timeout: 20_000 });
+  } catch (error) {
+    if (!/TimeoutError|timeout/i.test(error.message)) throw error;
+    // Playwright czeka na document.fonts.ready przed każdym screenem. Niektóre
+    // modalne fonty nigdy nie kończą ładowania; CDP zapisuje ten sam viewport
+    // bez blokowania na tym zdarzeniu.
+    const session = await page.context().newCDPSession(page);
+    try {
+      const result = await session.send("Page.captureScreenshot", {
+        format: "png", fromSurface: true, captureBeyondViewport: false,
+      });
+      image = Buffer.from(result.data, "base64");
+    } finally {
+      await session.detach();
+    }
+  }
   if (!["iphone-portrait", "iphone-landscape", "ipad-portrait", "ipad-landscape"].includes(profile.id)) {
     fs.writeFileSync(outputPath, image);
     return;
