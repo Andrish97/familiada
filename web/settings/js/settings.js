@@ -5313,10 +5313,11 @@ function buildSessionRunDetails(r) {
     control_idle_expired: "Gra została przerwana po godzinie bezczynności panelu sterowania.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
-  if (r.display_event_log?.status === "no_events_recorded") {
-    line("Brak zapisanych zdarzeń stanu Wyświetlacza dla tej sesji.");
-  } else if (r.display_event_log?.status === "session_id_missing") {
-    line("Nie można powiązać logu Wyświetlacza z tą sesją.");
+  const deviceEventLog = r.device_event_log || r.display_event_log;
+  if (deviceEventLog?.status === "no_events_recorded") {
+    line("Brak zapisanych zdarzeń urządzeń dla tej sesji.");
+  } else if (deviceEventLog?.status === "session_id_missing") {
+    line("Nie można powiązać logu urządzeń z tą sesją.");
   }
   if (info.end_reason === "control_idle_expired") {
     const lastStep = String(info.last_step || "");
@@ -5390,6 +5391,12 @@ function buildSessionRunDetails(r) {
           details.push(`${names[kind] || kind}: ${relation}, ${visibility}${sinceChange}`);
         });
         return { title: `Połączenie: ${devices}`, detail: details.join(" · ") };
+      }
+      if (event.category === "device_lease") {
+        const states = { waiting:"oczekuje na zwolnienie blokady", primary:"zostało aktywowane jako główne", released:"zwolniło blokadę", expired:"utraciło blokadę po wygaśnięciu lease", revoked:"jego połączenie zostało cofnięte" };
+        const from = metrics.from_state ? `${metrics.from_state} → ` : "";
+        const epoch = Number.isFinite(Number(metrics.epoch)) ? ` · epoka ${metrics.epoch}` : "";
+        return { title: "Stan blokady urządzenia", detail: ` ${devices} · ${from}${states[metrics.to_state] || "zmieniło stan połączenia"}${epoch}` };
       }
       if (event.category === "audio_start") {
         const sound = String(metrics.sound || "dźwięk");

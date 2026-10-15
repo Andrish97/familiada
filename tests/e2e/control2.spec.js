@@ -740,6 +740,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
       unknownEndReason: render({ game_name: "E2E", stats_detail: { end_reason: "unknown_internal_reason", events: [] } }).textContent,
       outage: inspect([event("disconnect", { devices: ["display"], message: "presence:display=offline,host=online,buzzer=online" }), event("reconnect")]),
       diagnostic: inspect([event("diagnostic", { category: "connectivity", devices: ["display"], metrics: { blocked_duration_ms: 2400, repeated_drops: 2, blocked_action_attempts: 1, device_context: { display: { profile: "same_profile", visibility: "hidden" } } } })]),
+      leaseDiagnostic: inspect([event("diagnostic", { category: "device_lease", devices: ["buzzer"], metrics: { from_state: "waiting", to_state: "primary", epoch: 4 } })]),
       audioDiagnostic: inspect([event("diagnostic", { category: "audio_start", devices: ["control"], metrics: { sound: "reveal", start_delay_ms: 850, failed: false } })]),
       frameDiagnostic: inspect([event("diagnostic", { category: "display_delay", devices: ["display"], metrics: { reason: "frame_stall", max_frame_gap_ms: 320, stalled_frames: 2, display_visibility: "visible" } })]),
       error: inspect([event("error", { message: "Nie można odczytać statusu urządzeń." })]),
@@ -771,6 +772,9 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.diagnostic.rows[0]).toContain("ten sam profil przeglądarki");
   expect(result.diagnostic.rows[0]).toContain("karta była w tle");
   expect(result.diagnostic.rows[0]).toContain("próby akcji podczas blokady: 1");
+  expect(result.leaseDiagnostic.sections).toBe(1);
+  expect(result.leaseDiagnostic.rows[0]).toContain("Stan blokady urządzenia Przycisk · waiting → zostało aktywowane jako główne");
+  expect(result.leaseDiagnostic.rows[0]).toContain("epoka 4");
   expect(result.audioDiagnostic.rows[0]).toContain("Dźwięk: revealControl");
   expect(result.audioDiagnostic.rows[0]).toContain("wystartował po 0,9 s");
   expect(result.frameDiagnostic.rows[0]).toContain("Zacięcie animacji planszy");
