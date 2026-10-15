@@ -1,6 +1,6 @@
 # Plan: Realtime i blokady instancji urządzeń w Control v2
 
-**Status:** wdrożenie etapowe w toku (2026-10-15). Migracje 371–373 rejestru lease, fencing RPC i zgodności starego Buzzera są na produkcji. Aktywne sesje protokołu 1 nadal używają starej ścieżki. Klient jest w PR #97. Test kolejki dla Display/Host/Buzzer przechodzi. Pełny Control 2 E2E przed poprawką: 26/32 zaliczonych; wykryto utratę zabezpieczeń `locked_until` i `physicalBuzzer` w zastąpionym RPC Buzzera. Migracja 374 oraz asercje SQL przywracają oba warunki. Po poprawce ponawiam sześć nieudanych scenariuszy, a następnie cały filtr Control 2. Nie wdrażać klienta, dopóki pełna regresja nie przejdzie.
+**Status:** wdrożenie etapowe w toku (2026-10-15). Migracje 371–374 są na produkcyjnej bazie. Aktywne sesje protokołu 1 nadal używają starej ścieżki. Klient pozostaje w PR #97 i nie jest wdrożony. Pełny Control 2 E2E `38795519886`: 25 zaliczonych, 4 niezaliczone, 3 zaliczone po retry. Punktowa bramka `38801870926`: reconnect wszystkich trzech urządzeń i timer3 zaliczone; test wyciszonego cue poprawiono, bo asercja sprawdzała dziennik przed asynchronicznym `playSfx`. Oczekuje na powtórzenie poprawionego testu, synchronizację z aktualnym `main` i kolejną bramkę.
 
 **Środowisko wdrożenia:** jedna produkcyjna baza. Branch daje osobny kod do testów E2E, nie osobną bazę. Testy muszą używać przeznaczonych do tego kont i tworzonych przez nie gier/sesji w produkcyjnej bazie, po czym sprawdzać zapis i sprzątać dane zgodnie z workflow. Nie ma osobnej piaskownicy Supabase.
 
