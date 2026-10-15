@@ -396,6 +396,31 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await page.locator("#tagsAssignList").evaluate((el) => { el.scrollTop = el.scrollHeight; });
       await expect(page.locator("#tagsL1Save")).toBeInViewport();
 
+      await page.locator("#tagsAddNew").click();
+      await expect(page.locator("#tagsL2")).toBeVisible();
+      await expect(page.locator("#tagsEditName")).toBeInViewport();
+      await expect(page.locator("#tagsEditColorTile")).toBeInViewport();
+      await expect(page.locator("#tagsL2Save")).toBeInViewport();
+
+      await page.locator("#tagsEditColorTile").click();
+      await expect(page.locator("#tagsL3")).toBeVisible();
+      await expect(page.locator("#tagsColorPreview")).toBeInViewport();
+      await expect(page.locator("#tagsColorHex")).toBeInViewport();
+      await expect(page.locator("#tagsColorR")).toBeInViewport();
+      await expect(page.locator("#tagsColorG")).toBeInViewport();
+      await expect(page.locator("#tagsColorB")).toBeInViewport();
+      await expect(page.locator("#tagsL3Save")).toBeInViewport();
+      await page.locator("#tagsColorHex").fill("#2a7fbc");
+      await page.locator("#tagsL3Save").click();
+
+      await expect(page.locator("#tagsL2")).toBeVisible();
+      await expect(page.locator("#tagsL2Save")).toBeInViewport();
+      await page.locator("#tagsEditName").fill("Nowy tag mobilny");
+      await page.locator("#tagsL2Save").click();
+      await expect(page.locator("#tagsL1")).toBeVisible();
+      await expect(page.locator("#tagsAssignList .tags-row")).toHaveCount(61, { timeout: 10000 });
+      await expect(page.locator("#tagsL1Save")).toBeInViewport();
+
       await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#explorerLeft")).toBeVisible();
