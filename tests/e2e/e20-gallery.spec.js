@@ -574,7 +574,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       throw new Error(`${profile.label} · ${id}: dolny pasek zawinął się, choć mieści się w jednym wierszu; ${JSON.stringify(state.listBottomMetrics)}`);
     }
     if (!fitsSingleRow && state.listBottomLayout !== "balanced-wrap") {
-      throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; ${JSON.stringify(state.listBottomMetrics)}`);
+      throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; compact=${state.listBottomCompactIcons}; ${JSON.stringify(state.listBottomMetrics)}; pomiar=${state.listBottomLayoutDebug}`);
     }
     if (state.listBottomTextLabels && state.listBottomMetrics) {
       const longestGroup = Math.max(state.listBottomMetrics.leftRows.length, state.listBottomMetrics.rightRows.length);
