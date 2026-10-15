@@ -491,6 +491,7 @@ body.games-body > main.wrap{
 }
 .games-bottom-right .btn{ white-space: nowrap; }
 .games-bottom:has(.games-bottom-left):has(.games-bottom-right){justify-content:space-between}
+.games-bottom .only-desktop{ display: inline !important; }
 
 /* =========================================================
    MODALS (jak było)
@@ -876,20 +877,14 @@ body.games-body > main.wrap{
   border-color: var(--gold); background: rgba(255, 215, 0, .12);
 }
 @media (max-width: 600px){
-  .games-bottom .only-desktop{ display: none !important; }
   .games-bottom-left{ flex: 0 1 auto; min-width: 0; gap: 4px; }
   .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
   .games-bottom-left > #btnReceivedFilter[aria-pressed="true"]{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
-  .list-filter.ui-select, .list-sort.ui-select{ flex: 0 0 36px; width: 36px; min-width: 36px; }
-  .list-filter .ui-select-btn, .list-sort .ui-select-btn{ width: 36px; height: 36px; padding: 0; justify-content: center; }
-  .list-filter .ui-select-label, .list-filter .ui-select-caret,
-  .list-sort .ui-select-label, .list-sort .ui-select-caret{ display: none; }
   .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{ color: var(--gold); }
   .list-filter .ui-select-menu, .list-sort .ui-select-menu{ max-height: min(55dvh, 420px); }
   .list-filter .ui-select-item, .list-sort .ui-select-item{ min-height: 44px; }
   .games-bottom-right{ flex: 0 1 auto; min-width: 0; gap: 4px; }
-  .games-bottom-right .btn{ width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
-  .games-bottom-right .btn .ico, .games-bottom-left > #btnReceivedFilter .ico{ width: 18px; height: 18px; }
+  .games-bottom-left > #btnReceivedFilter .ico{ width: 18px; height: 18px; }
   .games-bottom-left .list-search{ flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
   .list-search .searchBox{ display:none; }
   .list-search .list-search-open{ display: grid; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
@@ -930,6 +925,23 @@ body.games-body > main.wrap{
 .games-bottom.is-balanced-wrap > .games-bottom-left{ justify-content: flex-start; }
 .games-bottom.is-balanced-wrap > .games-bottom-right{ justify-content: flex-end; }
 .games-bottom.is-compact-icons .only-desktop{ display:none !important; }
+.games-bottom.is-compact-icons .games-bottom-right .btn,
+.games-bottom.is-compact-icons .list-filter .ui-select-btn,
+.games-bottom.is-compact-icons .list-sort .ui-select-btn{
+  width:36px;
+  height:36px;
+  min-height:36px;
+  padding:0;
+  display:grid;
+  place-items:center;
+}
+.games-bottom.is-compact-icons .list-filter .ui-select-label,
+.games-bottom.is-compact-icons .list-filter .ui-select-caret,
+.games-bottom.is-compact-icons .list-sort .ui-select-label,
+.games-bottom.is-compact-icons .list-sort .ui-select-caret{ display:none !important; }
+.games-bottom.is-compact-icons .games-bottom-right .btn .ico,
+.games-bottom.is-compact-icons .list-filter .ui-select-icon .ico,
+.games-bottom.is-compact-icons .list-sort .ui-select-icon .ico{ width:18px;height:18px; }
 .resource-copy-inbox{margin:12px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
 .resource-copy-inbox h3{margin:0 0 8px;font-size:14px}
 .resource-copy-inbox-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line2)}
