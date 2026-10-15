@@ -105,7 +105,25 @@ async function installSettingsAccessSimulation(context) {
   // autoryzacji API w tym kontekście Playwrighta; HTML, JS i CSS nadal pochodzą
   // z badanego brancha. Dzięki odpowiedziom API strona pokazuje panel, a nie
   // ekran logowania ani pusty podgląd.
-  await context.route("**/_admin_api/**", async (route) => {
+  await context.addInitScript(() => {
+    if (!location.pathname.startsWith("/settings")) return;
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const requestUrl = typeof input === "string" ? input : input.url;
+      const url = new URL(requestUrl, location.href);
+      if (!url.pathname.startsWith("/_admin_api/")) return nativeFetch(input, init);
+      const body = url.pathname === "/_admin_api/me"
+        ? { ok: true, user: { email: "e20-visual-test@familiada.online" } }
+        : url.pathname === "/_admin_api/state"
+          ? { enabled: false, mode: "message", useStandardText: true, customComments: {}, returnAt: null, bypass: false }
+          : {};
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "content-type": "application/json; charset=utf-8" },
+      });
+    };
+  });
+  await context.route("**/_admin_api**", async (route) => {
     const url = new URL(route.request().url());
     let body;
     if (url.pathname === "/_admin_api/me") {
