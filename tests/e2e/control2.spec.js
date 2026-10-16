@@ -3016,10 +3016,11 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     // ===== Zerwanie wszystkich trzech naraz =====
     const toClose = contexts.splice(0, contexts.length); // zdejmij z listy sprzątanej w finally -- zamykamy je TU, świadomie
     await Promise.all(toClose.map((ctx) => ctx.close()));
-    // TTL obecności 6,5 s + margines na odczyt i render pod obciążeniem.
-    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 8500 });
-    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 8500 });
-    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 8500 });
+    // Primary lease wygasa po 12 s; pagehide release jest best-effort, więc
+    // Control przełącza status dopiero po serwerowym wygaśnięciu lease.
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 15000 });
     await expect(answerTile(page, 2)).toBeDisabled();
     await expect(page.locator(".c2-gameplay .msg-pill")).toHaveCount(0);
     await expect(page.locator("#deviceLostOverlay")).toBeVisible();
