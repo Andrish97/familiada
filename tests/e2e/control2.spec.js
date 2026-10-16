@@ -569,7 +569,7 @@ async function padGame(page, gameId) {
 }
 
 async function makeGame(page, name, opts = {}) {
-  const { deviceProtocol = 1, ...gameOpts } = opts;
+  const { deviceProtocol = 2, ...gameOpts } = opts;
   const g = await makeGameRaw(page, name, gameOpts);
   await padGame(page, g.id);
   const keys = await page.evaluate(async ({ gameId, deviceProtocol }) => {
@@ -1123,7 +1123,7 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
 
 test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeładowaniu w środku rundy 2", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const game = await makeGame(page, `E2E-CONTROL2-FULLGAME-${Date.now()}`, { roundQuestions: TWO_QUESTIONS, deviceProtocol: 2 });
+  const game = await makeGame(page, `E2E-CONTROL2-FULLGAME-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
   const errors = [];
   try {
