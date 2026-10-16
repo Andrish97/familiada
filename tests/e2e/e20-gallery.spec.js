@@ -117,6 +117,13 @@ function additionalStates(data) {
           const tile = await selectOwnedBase(page, data.base.id);
           await tile.dblclick();
         },
+        cleanup: async (page) => {
+          const modal = page.locator("#nameOverlay");
+          if (await modal.isVisible().catch(() => false)) {
+            await page.locator("#btnNameCancel").click();
+            await modal.waitFor({ state: "hidden", timeout: 5_000 });
+          }
+        },
       },
       {
         id: "bases", stateId: "modal:share-base", page: "bases", href: "/bases/",
@@ -345,6 +352,13 @@ function additionalStates(data) {
           await tile.waitFor({ state: "visible", timeout: 15_000 });
           await tile.dblclick();
         },
+        cleanup: async (page) => {
+          const modal = page.locator("#nameOverlay");
+          if (await modal.isVisible().catch(() => false)) {
+            await page.locator("#btnNameCancel").click();
+            await modal.waitFor({ state: "hidden", timeout: 5_000 });
+          }
+        },
       },
       {
         id: "games", stateId: "modal:import-games", page: "games", href: "/games/",
@@ -367,7 +381,6 @@ function additionalStates(data) {
           await page.locator(`#grid .card[data-game-id="${data.game.id}"]`).click();
           await expect(page.locator("#btnExport")).toBeEnabled();
           await page.locator("#btnExport").click();
-          await page.locator("#exportJsonOverlay").waitFor({ state: "visible", timeout: 15_000 });
         },
       },
       {
