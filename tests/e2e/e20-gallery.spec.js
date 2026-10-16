@@ -968,7 +968,11 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   }
   const blockedByGuard = await page.evaluate(() => {
     const state = document.documentElement.dataset.deviceGuard || "";
-    return state !== "" && state !== "ok" && document.getElementById("pageGuard")?.style.display === "flex";
+    const pageGuard = document.getElementById("pageGuard");
+    const resourceGuard = document.getElementById("resourceLockGuard");
+    const visible = (element) => element && getComputedStyle(element).display !== "none"
+      && getComputedStyle(element).visibility !== "hidden" && element.getClientRects().length > 0;
+    return (state !== "" && state !== "ok" && pageGuard?.style.display === "flex") || visible(resourceGuard);
   });
   const allowSpecificModalPreparation = options.allowInitialSkeletonTimeout === true;
   if (prepare && (!contentReady || blockedByGuard) && !(allowSpecificModalPreparation && !blockedByGuard)) {
@@ -1165,6 +1169,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     file: `${id}/${fileName}`,
     contentReady,
     contentStable,
+    blockedByGuard,
     ...state,
   });
   // Checkpoint after every image so a failed profile still leaves useful work.
@@ -1245,6 +1250,15 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           const isBaseExplorer = id === "base-explorer";
           const baseState = await capture(page, profile, id, href, manifest, null, readySelector, id === "control" ? {
             waitForReady: async (controlPage) => {
+              const unavailable = await controlPage.evaluate(() => {
+                const state = document.documentElement.dataset.deviceGuard || "";
+                const pageGuard = document.getElementById("pageGuard");
+                const resourceGuard = document.getElementById("resourceLockGuard");
+                const visible = (element) => element && getComputedStyle(element).display !== "none"
+                  && getComputedStyle(element).visibility !== "hidden" && element.getClientRects().length > 0;
+                return (state !== "" && state !== "ok" && pageGuard?.style.display === "flex") || visible(resourceGuard);
+              });
+              if (unavailable) return;
               await restartControlToDevices(controlPage);
             },
           } : id === "polls" ? {
@@ -1255,6 +1269,15 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             await code.waitFor({ state: "visible", timeout: 20_000 });
             await page.waitForFunction(() => /^\d{6}$/.test(document.querySelector('#app .device-row[data-device="display"] .device-connect-code-val')?.textContent?.trim() || ""), null, { timeout: 20_000 });
             data.connectPreviewCode = (await code.innerText()).trim();
+          }
+          if (id === "control") {
+            if (profile.width < 980) {
+              expect(baseState.blockedByGuard, `${profile.label} · Control should show its minimum-width guard`)
+                .toBe(true);
+            } else {
+              expect(baseState.blockedByGuard, `${profile.label} · Control should be available at this width`)
+                .toBe(false);
+            }
           }
           if (isBaseExplorer && !baseState.blockedByGuard) {
             const tagShots = [
@@ -1340,8 +1363,12 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             );
           }
         }
+        const guardedPages = new Set(manifest
+          .filter((entry) => entry.profile === profile.id && !entry.stateId && entry.blockedByGuard)
+          .map((entry) => entry.id));
         const extra = additionalStates(data).filter((state) =>
           (!requestedPages.length || requestedPages.includes(state.page))
+          && !guardedPages.has(state.page)
           // Widoki „mobile” dopasowują się do rzeczywistych breakpointów;
           // łącznie z iPhone landscape (niska wysokość) i bez iPada landscape.
           && (!state.mobileOnly || (profile.mobile && (profile.width <= 1100 || profile.height <= 720)))

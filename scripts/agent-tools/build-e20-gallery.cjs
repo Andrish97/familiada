@@ -32,7 +32,7 @@ if (fullGalleryRequested) {
     ["base-explorer", "modal:tags-assign"], ["base-explorer", "modal:tags-create"], ["base-explorer", "modal:tags-color"],
     ["base-explorer", "modal:export-questions"], ["base-explorer", "modal:add-question"],
     ["base-explorer", "modal:edit-question"], ["base-explorer", "modal:rename-item"],
-    ["connect", "modal:device-preview"], ["control", "modal:share-device"],
+    ["connect", "modal:device-preview"],
     ["games", "modal:create-game"], ["games", "modal:rename-game"], ["games", "modal:import-games"],
     ["games", "modal:export-game-base"], ["games", "modal:preview-game"],
     ["games", "modal:preview-poll"], ["games", "modal:export-game-json"], ["games", "modal:contact"],
@@ -51,13 +51,15 @@ if (fullGalleryRequested) {
     const profileEntries = entries.filter((entry) => entry.profile === profile);
     const pageEntries = profileEntries.filter((entry) => !entry.stateId);
     const pageIds = new Set(pageEntries.map((entry) => entry.id));
+    const guardedPages = new Set(pageEntries.filter((entry) => entry.blockedByGuard).map((entry) => entry.id));
     const missingPages = requiredPages.filter((id) => !pageIds.has(id));
     const capturedStates = new Set(profileEntries.filter((entry) => entry.stateId).map((entry) => `${entry.id}:${entry.stateId}`));
     const compactMobile = profile === "ipad-portrait" || profile.startsWith("iphone-");
     const expectedStates = [
-      ...requiredStates,
-      ...(compactMobile ? requiredMobileStates : []),
-      ...(profile === "iphone-portrait" ? [["marketplace", "modal:marketplace-search"]] : []),
+      ...requiredStates.filter(([page]) => !guardedPages.has(page)),
+      ...(!guardedPages.has("control") ? [["control", "modal:share-device"]] : []),
+      ...(compactMobile ? requiredMobileStates.filter(([page]) => !guardedPages.has(page)) : []),
+      ...(profile === "iphone-portrait" && !guardedPages.has("marketplace") ? [["marketplace", "modal:marketplace-search"]] : []),
     ];
     const missingStates = expectedStates.filter(([page, state]) => !capturedStates.has(`${page}:${state}`))
       .map(([page, state]) => `${page}/${state}`);
