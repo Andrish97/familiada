@@ -33,13 +33,12 @@ async function readE20GalleryData(page) {
       const openB = isOpen(b) ? 1 : 0;
       return openB - openA;
     })[0] || null;
-    const pollForPreview = (type) => {
+    const closedDemoForPreview = (type) => {
       const polls = games.filter((game) => game.type === type);
       const demos = polls.filter((game) => /\bdemo\b/i.test(game.name || ""));
-      return demos.find((game) => game.status === "ready")
-        || demos[0]
-        || polls.find(isOpen)
-        || null;
+      // Wiersz polls galerii ma pokazywać wyniki zamkniętego Demo. Otwarte
+      // ankiety są wybierane osobno wyłącznie dla publicznych stron głosowania.
+      return demos.find((game) => game.status === "ready") || null;
     };
     return {
       game: preferDemo(games.filter((game) => game.type === "prepared")),
@@ -50,10 +49,9 @@ async function readE20GalleryData(page) {
         image: byLogoMode("IMAGE"),
       },
       polls: {
-        // Zamknięta ankieta Demo daje pełny, stabilny widok właściciela i
-        // wyników; jeśli jej nie ma, wybieramy otwartą ankietę istniejącą na koncie.
-        poll_points: pollForPreview("poll_points"),
-        poll_text: pollForPreview("poll_text"),
+        // Zamknięta ankieta Demo daje pełny, stabilny widok właściciela i wyników.
+        poll_points: closedDemoForPreview("poll_points"),
+        poll_text: closedDemoForPreview("poll_text"),
         poll_points_vote: games.find((game) => game.type === "poll_points" && isOpen(game) && game.share_key_poll) || null,
         poll_text_vote: games.find((game) => game.type === "poll_text" && isOpen(game) && game.share_key_poll) || null,
       },

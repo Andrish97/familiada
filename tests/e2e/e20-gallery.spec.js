@@ -45,7 +45,10 @@ function urls(data) {
     ["friends", "/friends/"], ["go", "/go/"], ["login", "/login/"],
     ["login-confirm", "/login/confirm/"], ["login-reset", "/login/reset/"], ["logos", "/logos/"],
     ["mails", "/mails/"], ["maintenance", "/maintenance/"], ["manual", "/manual/"],
-    ["marketplace", "/marketplace/"], ["polls", (pollTextVote || pollText) ? `/polls/?id=${(pollTextVote || pollText).id}` : "/polls/"],
+    // Strona polls w galerii ma pokazać zamknięte Demo i jego wyniki. Otwarte
+    // ankiety mają osobne foldery poll-vote-*; wybór ich tutaj dawał niestabilny
+    // ekran właściciela i omijał zatwierdzony widok wyników.
+    ["marketplace", "/marketplace/"], ["polls", (pollText || pollTextVote) ? `/polls/?id=${(pollText || pollTextVote).id}` : "/polls/"],
     ["privacy", "/privacy/"], ["subscribers", "/subscribers/"], ["tasks", "/tasks/"], ["404", "/404.html"],
   ];
   if (data.base) result.push(["base-explorer", `/bases/explorer/?id=${data.base.id}`]);
@@ -72,7 +75,7 @@ function additionalStates(data) {
   const states = [
     { id: "bases", stateId: "shared", page: "bases", href: "/bases/?tab=shared" },
     ...(data.polls.poll_text ? [{ id: "polls", stateId: "results", page: "polls", href: `/polls/?id=${data.polls.poll_text.id}&tab=results` }] : []),
-    ...((data.polls.poll_text_vote || data.polls.poll_text) ? [{ id: "polls", stateId: "recipients", page: "polls", href: `/polls/?id=${(data.polls.poll_text_vote || data.polls.poll_text).id}&tab=recipients`, mobileOnly: true }] : []),
+    ...((data.polls.poll_text || data.polls.poll_text_vote) ? [{ id: "polls", stateId: "recipients", page: "polls", href: `/polls/?id=${(data.polls.poll_text || data.polls.poll_text_vote).id}&tab=recipients`, mobileOnly: true }] : []),
     { id: "marketplace", stateId: "mine", page: "marketplace", href: "/marketplace/", prepare: async (page) => {
       await page.locator("#btnMySent").click();
       await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
@@ -470,7 +473,15 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     contentStable = true;
   }
   if (pollPageHasId && !pollBlockedByDeviceGuard && !pollContentReady) {
-    throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi`);
+    const diagnostics = await page.evaluate(() => ({
+      title: document.title,
+      text: document.body?.innerText?.slice(0, 500) || "",
+      load: document.getElementById("pollLoadMessage")?.textContent?.trim() || "",
+      guard: document.getElementById("resourceLockGuard")?.innerText?.trim().slice(0, 240) || "",
+      status: document.getElementById("pollStateWord")?.textContent?.trim() || "",
+      game: document.getElementById("pollGameName")?.textContent?.trim() || "",
+    }));
+    throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi; ${JSON.stringify(diagnostics)}`);
   }
   const blockedByGuard = await page.evaluate(() => {
     const state = document.documentElement.dataset.deviceGuard || "";
