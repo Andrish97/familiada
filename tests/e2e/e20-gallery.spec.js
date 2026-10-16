@@ -584,7 +584,7 @@ async function selectOwnedBase(page, baseId) {
 
 async function restartControlToDevices(page) {
   await page.locator("#btnStartOver").click();
-  const confirmation = page.locator(".uni-modal");
+  const confirmation = page.getByRole("dialog", { name: "Zacznij od nowa" });
   await confirmation.waitFor({ state: "visible", timeout: 10_000 });
   await expect(confirmation.locator(".mTitle")).toHaveText("Zacznij od nowa");
   await confirmation.locator(".uni-foot .btn.gold").click();
