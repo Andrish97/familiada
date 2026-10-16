@@ -678,8 +678,11 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 if (capturedModalIds.has(openedId)) {
                   const latest = manifest.at(-1);
                   if (latest?.stateId === `modal:${openedId}`) {
-                    fs.rmSync(path.join(OUT, latest.file), { force: true });
+                    const duplicateFile = latest.file;
                     manifest.pop();
+                    if (!manifest.some((entry) => entry.file === duplicateFile)) {
+                      fs.rmSync(path.join(OUT, duplicateFile), { force: true });
+                    }
                     fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
                   }
                 } else {
