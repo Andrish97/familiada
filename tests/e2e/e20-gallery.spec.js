@@ -170,7 +170,7 @@ async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithou
 }
 
 function pageModalIds(page) {
-  return page.locator('.overlay[id], .overlay .modal[role="dialog"], .colorModalOverlay[id], .dt-modal[id], .drawer-overlay[id], dialog[id], [role="dialog"][id]')
+  return page.locator('.overlay[id], .overlay .modal, .colorModalOverlay[id], .dt-modal[id], .drawer-overlay[id], dialog[id], [role="dialog"][id]')
     .evaluateAll((items) => items
       .filter((el) => !["pageGuard", "resourceLockGuard"].includes(el.id))
       .filter((el) => !/(alert|confirm|error|errModal)/i.test(el.id))
@@ -220,7 +220,7 @@ async function clickModalAction(page, action) {
   }
   if (await target.count() > 1) target = target.nth(0);
   await target.click({ timeout: 5_000 });
-  await page.waitForFunction(() => [...document.querySelectorAll('.overlay[id], .overlay .modal[role="dialog"], .colorModalOverlay[id], .dt-modal[id], dialog[id], [role="dialog"][id]')]
+  await page.waitForFunction(() => [...document.querySelectorAll('.overlay[id], .overlay .modal, .colorModalOverlay[id], .dt-modal[id], dialog[id], [role="dialog"][id]')]
     .some((el) => {
       const style = getComputedStyle(el);
       return !el.hidden && style.display !== "none" && style.visibility !== "hidden" && el.getClientRects().length > 0;
@@ -231,7 +231,7 @@ async function clickModalAction(page, action) {
 async function captureAndDismissBlockingModal(page, profile, id) {
   const ratingOverlay = page.locator("#ratingOverlay");
   const hasRatingModal = await ratingOverlay.count() > 0 && await ratingOverlay.isVisible().catch(() => false);
-  const genericDialog = page.locator(".overlay .modal[role='dialog']").first();
+  const genericDialog = page.locator(".overlay .modal").filter({ has: page.locator("button") }).first();
   const hasGenericModal = !hasRatingModal && await genericDialog.count() > 0 && await genericDialog.isVisible().catch(() => false);
   if (!hasRatingModal && !hasGenericModal) return null;
 
@@ -302,9 +302,10 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       const style = getComputedStyle(rating);
       if (!rating.hidden && style.display !== "none" && style.visibility !== "hidden" && rating.getClientRects().length) return true;
     }
-    const genericModal = [...document.querySelectorAll(".overlay .modal[role='dialog']")].find((item) => {
+    const genericModal = [...document.querySelectorAll(".overlay .modal")].find((item) => {
       const style = getComputedStyle(item);
-      return !item.hidden && style.display !== "none" && style.visibility !== "hidden" && item.getClientRects().length;
+      return !item.hidden && style.display !== "none" && style.visibility !== "hidden"
+        && item.getClientRects().length && item.querySelector("button");
     });
     if (genericModal) return true;
     const guard = document.getElementById("pageGuard");
