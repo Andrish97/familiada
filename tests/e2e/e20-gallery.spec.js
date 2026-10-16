@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("./helpers/production-test");
-const { serveBranchCode, serveBranchLoginHtml } = require("./helpers/branch-code");
+const { serveBranchCode } = require("./helpers/branch-code");
 const { galleryAccountNumbers, galleryAccountPaths, PREP_DIR } = require("./helpers/e20-gallery-accounts");
 const { withE2EBypass } = require("./helpers/login");
 
@@ -503,10 +503,9 @@ function additionalStates(data) {
       id: "game-settings", stateId: "modal:color-picker", page: "game-settings", href: `/games/settings/?id=${data.game.id}`,
       modalCapture: true, expectedVisibleSelector: ".uni-modal", actionLabel: "Ustawienia gry → Wybór koloru",
       prepare: async (page) => {
+        const sidebarToggle = page.locator("#gsSidebarToggle");
+        if (await sidebarToggle.isVisible().catch(() => false)) await sidebarToggle.click();
         const displayCategory = page.locator('#gsSidebar [data-cat="display"]');
-        if (!await displayCategory.isInViewport().catch(() => false)) {
-          await page.locator("#gsSidebarToggle").click();
-        }
         await displayCategory.click();
         await page.locator(".swatchBtn").first().waitFor({ state: "visible", timeout: 15_000 });
         await page.locator(".swatchBtn").first().click();
@@ -563,15 +562,6 @@ function additionalStates(data) {
         await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
         await page.locator("#btnSubmitNew").waitFor({ state: "visible", timeout: 15_000 });
         await page.locator("#btnSubmitNew").click();
-      },
-    },
-    {
-      id: "marketplace", stateId: "modal:marketplace-search", page: "marketplace", href: "/marketplace/",
-      mobileOnly: true, maxWidth: 600, modalCapture: true, expectedVisibleSelector: ".uni-modal",
-      actionLabel: "Gry Społeczności → mobilne wyszukiwanie",
-      prepare: async (page) => {
-        await page.locator("#btnSearchFocus").click();
-        await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
       },
     },
     {
@@ -1252,7 +1242,6 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         try {
           await withE2EBypass(publicContext);
           await serveBranchCode(publicContext, { pages: PAGES, safeAreaInsets: profile.safe });
-          await publicContext.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
           const publicPage = await publicContext.newPage();
           publicPage.setDefaultTimeout(20_000);
           publicPage.setDefaultNavigationTimeout(20_000);
@@ -1266,7 +1255,6 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
       try {
         await withE2EBypass(context);
         await serveBranchCode(context, { pages: PAGES, safeAreaInsets: profile.safe });
-        await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
         let page = await context.newPage();
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);

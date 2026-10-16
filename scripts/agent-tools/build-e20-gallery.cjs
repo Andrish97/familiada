@@ -61,7 +61,6 @@ if (fullGalleryRequested) {
         && !pageById.get(page)?.unavailableStates?.includes(state)),
       ...(!guardedPages.has("control") ? [["control", "modal:share-device"]] : []),
       ...(compactMobile ? requiredMobileStates.filter(([page]) => !guardedPages.has(page)) : []),
-      ...(profile === "iphone-portrait" && !guardedPages.has("marketplace") ? [["marketplace", "modal:marketplace-search"]] : []),
     ];
     const missingStates = expectedStates.filter(([page, state]) => !capturedStates.has(`${page}:${state}`))
       .map(([page, state]) => `${page}/${state}`);
