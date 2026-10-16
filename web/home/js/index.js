@@ -1,8 +1,8 @@
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-16T17344";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-16T17344";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-16T17344";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-16T17344";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-16T17344";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-16T17591";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-16T17591";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-16T17591";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-16T17591";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-16T17591";
 
 async function redirectIfSession() {
   try {
