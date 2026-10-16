@@ -403,11 +403,18 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       const load = document.getElementById("pollLoadState");
       const main = document.getElementById("cardMain");
       const bar = document.getElementById("pollBar");
+      const results = document.getElementById("resultsList");
+      const meta = document.getElementById("resultsMeta");
       const visible = (element) => element && !element.hidden
         && getComputedStyle(element).display !== "none"
         && element.getClientRects().length > 0;
       return load?.hidden && visible(main) && visible(bar)
-        && Boolean(document.getElementById("pollGameName")?.textContent.trim());
+        && Boolean(document.getElementById("pollGameName")?.textContent.trim())
+        // pollBar/cardMain są gotowe wcześniej niż asynchroniczny odczyt
+        // wyników. Czekamy na sygnał po get_poll_preview, żeby nie złapać
+        // pustej karty podczas gdy właściwa treść ankiety nadal się ładuje.
+        && results?.classList.contains("skel-step-ready")
+        && Boolean(meta?.textContent.trim());
     }, null, { timeout: 30_000 }).catch(() => {
       contentReady = false;
       console.log(`[e20-gallery] ${profile.id} · polls: brak gotowej ankiety Demo; zrzut nie będzie oznaczony jako stabilny.`);
