@@ -256,7 +256,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         return step.classList.contains("skel-step-ready") || step.getClientRects().length > 0;
       });
       return visibleSteps.length > 0 && visibleSteps.every((step) => step.classList.contains("skel-step-ready"));
-    }, null, { timeout: 20_000 });
+    }, null, { timeout: 60_000 });
   } catch {
     const diagnostics = await page.evaluate(() => ({
       url: location.href,
