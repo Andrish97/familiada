@@ -3466,13 +3466,10 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const mutedAfter = new Date().toISOString();
     await open("buzzer");
     await page.locator("#shareDeviceEmail").fill(email);
-    await expect(page.locator("#shareDeviceMsg")).toContainText("Dostęp zostanie nadany bez maila");
-    await expect(page.locator("#btnShareDeviceAdd")).toBeEnabled();
-    await page.locator("#btnShareDeviceAdd").click();
-    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(email);
-    const buzzer = (await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).find(row=>row.recipient_email===email);
-    expect(buzzer).toMatchObject({recipient_id:null,recipient_kind:"mail",cooldown_until:null});
-    expect((await rpc(page,"control_device_share_resolve",{p_token:buzzer.share_token})).ok).toBe(true);
+    await expect(page.locator("#shareDeviceMsg")).toContainText("Ta osoba zrezygnowała z zaproszeń i udostępnień");
+    await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
+    expect(await rpc(page,"control_device_share_create_by_lookup",{p_game_id:game.id,p_device_type:"buzzer",p_lookup:email})).toMatchObject({ok:false,error:"notifications_disabled"});
+    expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_email===email)).toBe(false);
     const delivery = await readMailDelivery({recipient:email,after:mutedAfter});
     expect(delivery.queue).toEqual([]); expect(delivery.events).toEqual([]);
     await page.locator("#btnShareDeviceClose").click();
@@ -3481,6 +3478,8 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
       if(error)throw error;
     },peer.id);
     await open("display");
+    expect(await rpc(page,"control_device_share_preflight",{p_game_id:game.id,p_device_type:"display",p_recipient_user_id:peer.id})).toMatchObject({ok:true,already_shared:false,mail_disabled:true,mail_allowed:false});
+    const friendShareAfter = new Date().toISOString();
     const choice = page.locator(`#shareDeviceSubsList input[value="${peer.id}"]`);
     await choice.check();
     await page.locator("#btnShareDeviceFriends").click();
@@ -3489,6 +3488,8 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     expect(display.cooldown_until).toBeNull();
     expect((await rpc(page,"friends_remove",{p_id:invited.id})).ok).toBe(true);
     expect((await rpc(page,"control_device_share_resolve",{p_token:display.share_token})).ok).toBe(true);
+    const friendDelivery = await readMailDelivery({recipient:peer.email,after:friendShareAfter});
+    expect(friendDelivery.queue).toEqual([]); expect(friendDelivery.events).toEqual([]);
     expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
     const fresh = await rpc(page,"friends_invite",{p_handle:peer.email});
     expect(fresh.ok).toBe(true); expect((await rpc(recipient,"friends_accept",{p_id:fresh.id})).ok).toBe(true);
