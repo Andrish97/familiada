@@ -569,14 +569,11 @@ async function padGame(page, gameId) {
 }
 
 async function makeGame(page, name, opts = {}) {
-  const { deviceProtocol = 2, ...gameOpts } = opts;
-  const g = await makeGameRaw(page, name, gameOpts);
+  const g = await makeGameRaw(page, name, opts);
   await padGame(page, g.id);
-  const keys = await page.evaluate(async ({ gameId, deviceProtocol }) => {
+  const keys = await page.evaluate(async (gameId) => {
     const sb = window.__sbClient;
-    const { data: session, error: sessionError } = await sb.rpc(deviceProtocol === 2
-      ? "control_runtime_session_touch_v2"
-      : "control_runtime_session_touch", {
+    const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch_v2", {
       p_game_id: gameId, p_session_id: null,
     });
     if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Control runtime session failed");
@@ -587,7 +584,7 @@ async function makeGame(page, name, opts = {}) {
       result[type] = data.token;
     }
     return result;
-  }, { gameId: g.id, deviceProtocol });
+  }, g.id);
   // Existing fixture call sites use these names to build device URLs; return
   // only session-bound link tokens, never games.share_key_*.
   return { ...g, share_key_display: keys.display, share_key_host: keys.host, share_key_buzzer: keys.buzzer };
