@@ -195,19 +195,24 @@ function additionalStates(data) {
         prepare: async (page) => {
           await page.goto(`${ORIGIN}/bases/explorer/?id=${data.base.id}&lang=pl`, { waitUntil: "domcontentloaded", timeout: 20_000 });
           await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 20_000 });
-          const existingIds = await page.evaluate(async (baseId) => {
-            const { data: rows, error } = await window.__sbClient.from("qb_questions").select("id").eq("base_id", baseId);
+          const previousLastQuestion = await page.evaluate(async (baseId) => {
+            const { data, error } = await window.__sbClient.from("qb_questions")
+              .select("id,ord,payload").eq("base_id", baseId).is("category_id", null)
+              .order("ord", { ascending: false }).limit(1).maybeSingle();
             if (error) throw error;
-            return (rows || []).map((row) => row.id);
+            return data || null;
           }, data.base.id);
-          page.__e20QuestionIdsBeforeCreate = existingIds;
+          page.__e20QuestionStateBeforeCreate = previousLastQuestion;
           const drawer = page.locator("#btnDrawerToggle");
           if (await drawer.isVisible().catch(() => false)) await drawer.click();
           await page.locator('#toolbar [data-act="newQuestion"]').click();
-          const newQuestionId = await page.waitForFunction(async ({ baseId, before }) => {
-            const { data: rows, error } = await window.__sbClient.from("qb_questions").select("id").eq("base_id", baseId);
-            return !error ? (rows || []).find((row) => !before.includes(row.id))?.id || false : false;
-          }, { baseId: data.base.id, before: existingIds }, { timeout: 15_000 });
+          const newQuestionId = await page.waitForFunction(async ({ baseId, beforeId, beforeOrd }) => {
+            const { data, error } = await window.__sbClient.from("qb_questions")
+              .select("id,ord,payload").eq("base_id", baseId).is("category_id", null)
+              .order("ord", { ascending: false }).limit(1).maybeSingle();
+            if (error || !data || data.id === beforeId || Number(data.ord) <= Number(beforeOrd || 0)) return false;
+            return data.payload?.text === "Nowe pytanie" ? data.id : false;
+          }, { baseId: data.base.id, beforeId: previousLastQuestion?.id || "", beforeOrd: previousLastQuestion?.ord || 0 }, { timeout: 15_000 });
           const newId = await newQuestionId.jsonValue();
           if (!newId) throw new Error("UI nie ujawnił identyfikatora nowo dodanego pytania.");
           page.__e20TemporaryQuestionId = newId;
@@ -225,13 +230,15 @@ function additionalStates(data) {
         cleanup: async (page) => {
           if (page.isClosed()) return;
           let questionId = page.__e20TemporaryQuestionId;
-          if (!questionId && page.__e20QuestionIdsBeforeCreate) {
+          if (!questionId && page.__e20QuestionStateBeforeCreate) {
             questionId = await page.evaluate(async ({ baseId, before }) => {
-              const { data: rows, error } = await window.__sbClient.from("qb_questions").select("id").eq("base_id", baseId);
+              const { data, error } = await window.__sbClient.from("qb_questions")
+                .select("id,ord,payload").eq("base_id", baseId).is("category_id", null)
+                .order("ord", { ascending: false }).limit(1).maybeSingle();
               if (error) throw error;
-              const created = (rows || []).filter((row) => !before.includes(row.id));
-              return created.length === 1 ? created[0].id : "";
-            }, { baseId: data.base.id, before: page.__e20QuestionIdsBeforeCreate });
+              return data && data.id !== before?.id && Number(data.ord) > Number(before?.ord || 0)
+                && data.payload?.text === "Nowe pytanie" ? data.id : "";
+            }, { baseId: data.base.id, before: page.__e20QuestionStateBeforeCreate });
           }
           if (!questionId) return;
           let removed = false;
