@@ -233,6 +233,15 @@ function additionalStates(data) {
         },
         cleanup: async (page) => {
           if (page.isClosed()) return;
+          // Mobilny zapis ramki opuszcza aplikację i zostawia kartę na about:blank.
+          // Przywróć prawdziwy widok, aby sprzątanie mogło użyć klienta bazy
+          // i usunąć pytanie przez ten sam interfejs co pozostałe akcje galerii.
+          if (page.url() === "about:blank") {
+            await page.goto(`${ORIGIN}/bases/explorer/?id=${data.base.id}&lang=pl`, {
+              waitUntil: "domcontentloaded", timeout: 20_000,
+            });
+            await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 20_000 });
+          }
           let questionId = page.__e20TemporaryQuestionId;
           if (!questionId && page.__e20VisibleQuestionIdsBeforeCreate) {
             questionId = await page.locator('#list .row[data-kind="q"][data-id]').evaluateAll((rows, beforeIds) =>
