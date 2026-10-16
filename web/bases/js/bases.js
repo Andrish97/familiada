@@ -1,31 +1,31 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-15T22295";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-15T22404";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-15T22295";
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-15T22404";
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-15T22295";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-15T22404";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-15T22295";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-15T22295";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-15T22295";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-15T22295";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T22295";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15T22295";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-15T22295";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-15T22295";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15T22295";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T22295";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-15T22295";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-15T22295";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15T22295";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-15T22295";
-import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-15T22295";
-import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-15T22295";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-15T22295";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-15T22295";
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-15T22295";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-15T22295";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-15T22404";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-15T22404";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-15T22404";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-15T22404";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T22404";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-15T22404";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-15T22404";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15T22404";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T22404";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-15T22404";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-15T22404";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15T22404";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-15T22404";
+import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-15T22404";
+import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-15T22404";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-15T22404";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-15T22404";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-15T22404";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-15T22404";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -86,6 +86,7 @@ const importFilePicker = bindLocalizedFilePicker({
 const btnImportJson = document.getElementById("btnImportJson");
 const btnImportDone = document.getElementById("btnImportDone");
 const btnCancelImport = document.getElementById("btnCancelImport");
+const btnImportCancelAction = document.getElementById("btnImportCancelAction");
 const importErr = document.getElementById("importErr");
 const importMsg = document.getElementById("importMsg");
 
@@ -1307,6 +1308,7 @@ function importResetState() {
   if (btnImportJson) btnImportJson.disabled = true;
   if (btnImportJson) btnImportJson.hidden = false;
   if (btnImportDone) btnImportDone.hidden = true;
+  if (btnImportCancelAction) btnImportCancelAction.hidden = false;
   setMsg(importMsg, "");
 }
 
@@ -1420,6 +1422,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     if (btnImportJson) btnImportJson.disabled = true;
     if (btnCancelImport) btnCancelImport.disabled = true;
+    if (btnImportCancelAction) btnImportCancelAction.disabled = true;
     if (importFile) importFile.disabled = true;
 
     try {
@@ -1435,6 +1438,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setMsg(importMsg, t("bases.import.success"));
       if (btnImportJson) btnImportJson.hidden = true;
       if (btnImportDone) btnImportDone.hidden = false;
+      if (btnImportCancelAction) btnImportCancelAction.hidden = true;
     } catch (e) {
       console.warn("[bases] import error:", e);
       setMsg(importMsg, t("bases.import.failed"));
@@ -1445,11 +1449,13 @@ document.addEventListener("DOMContentLoaded", () => {
       showProgBlock(importProg, false);
       if (btnImportJson) btnImportJson.disabled = !importParsed;
       if (btnCancelImport) btnCancelImport.disabled = false;
+      if (btnImportCancelAction) btnImportCancelAction.disabled = false;
       if (importFile) importFile.disabled = false;
     }
   });
 
   btnCancelImport?.addEventListener("click", () => closeImportModal());
+  btnImportCancelAction?.addEventListener("click", () => closeImportModal());
   btnImportDone?.addEventListener("click", () => closeImportModal());
 
   btnNameCancel?.addEventListener("click", () => closeNameModal());

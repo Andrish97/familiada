@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-15T22295"/>
+  <meta name="app-version" content="v2026-10-15T22404"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,11 +14,11 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-15T22295"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T22295"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T22404"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T22404"/>
   <!-- Reużywamy stylu strony gier, żeby było spójnie -->
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T22295"/>
-  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-15T22295"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T22404"/>
+  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-15T22404"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -32,9 +32,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/bases/js/bases.js?v=v2026-10-15T22295" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T22295" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T22295" defer></script>
+  <script type="module" src="/bases/js/bases.js?v=v2026-10-15T22404" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T22404" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T22404" defer></script>
 </head>
 
 <body class="games-body skel-body">
@@ -208,8 +208,9 @@
         </div>
 
         <div class="importRow modal-actions" style="margin-top:12px">
+          <button class="btn sm" id="btnImportCancelAction" type="button" data-i18n="common.cancel">Anuluj</button>
           <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="bases.importModal.confirm" data-i18n-icon="upload">Importuj</button>
-          <button class="btn sm gold" id="btnImportDone" type="button" data-i18n="bases.importModal.done" hidden>Gotowe</button>
+          <button class="btn sm gold" id="btnImportDone" type="button" data-i18n="bases.importModal.done" data-i18n-icon="check" hidden>Gotowe</button>
           <div class="importMsg" id="importMsg"></div>
         </div>
       </div>
@@ -245,6 +246,6 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T22295"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T22404"></script>
 </body>
 </html>

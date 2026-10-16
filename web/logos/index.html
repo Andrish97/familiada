@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-15T22295"/>
+  <meta name="app-version" content="v2026-10-15T22404"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -15,12 +15,12 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.title">Familiada — logo</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-15T22295"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-15T22295"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-15T22404"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-15T22404"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T22295"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T22295"/>
-  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-15T22295"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T22404"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-15T22404"/>
+  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-15T22404"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -35,8 +35,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
-  <script type="module" src="/logo/js/list.js?v=v2026-10-15T22295" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T22295" defer></script>
+  <script type="module" src="/logo/js/list.js?v=v2026-10-15T22404" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-15T22404" defer></script>
 </head>
 
 <body class="games-body logo-body skel-body">
@@ -140,10 +140,10 @@
         <button class="btn sm" id="btnLogoImportCancel" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
 
-      <div class="importRow" style="margin-top:8px">
-        <input id="inpImportLogoFile" class="logo-import-file-native" type="file" accept=".famlogo,.json,application/json" tabindex="-1" aria-hidden="true">
-        <button class="btn sm" id="btnImportLogoChoose" type="button" data-i18n="logoEditor.import.chooseFile" data-i18n-icon="upload">Wybierz plik</button>
-        <span class="logo-import-file-name" id="logoImportFileName" data-i18n="logoEditor.import.noFileSelected">Nie wybrano pliku</span>
+      <div class="importRow import-file-picker" style="margin-top:8px">
+        <input id="inpImportLogoFile" type="file" accept=".famlogo,.json,application/json" hidden>
+        <button class="btn sm" id="btnImportLogoChoose" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
+        <span class="import-file-name" id="logoImportFileName" data-i18n="common.filePicker.none" aria-live="polite">Nie wybrano pliku</span>
       </div>
 
       <!-- Podgląd canvas -->
@@ -166,6 +166,7 @@
       </div>
 
       <div class="importRow modal-actions" style="margin-top:12px">
+        <button class="btn sm" id="btnLogoImportCancelAction" type="button" data-i18n="common.cancel">Anuluj</button>
         <button class="btn sm gold" id="btnLogoImportConfirm" type="button" disabled data-i18n="logoEditor.import.confirm" data-i18n-icon="upload">Importuj</button>
         <button class="btn sm gold" id="btnLogoImportDone" type="button" data-i18n="logoEditor.import.done" data-i18n-icon="check" hidden>Gotowe</button>
       </div>
@@ -212,7 +213,7 @@
   </main>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T22295"></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T22295"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-15T22404"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-15T22404"></script>
 </body>
 </html>

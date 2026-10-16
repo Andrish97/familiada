@@ -1,43 +1,43 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-15T22295";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-15T22295";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-15T22295";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T22295";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-15T22295";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T22295";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-15T22295";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-15T22295";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-15T22295";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-15T22295";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15T22295";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-15T22295";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-15T22295";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-15T22404";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-15T22404";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-15T22404";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-15T22404";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-15T22404";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T22404";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-15T22404";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-15T22404";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-15T22404";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-15T22404";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-15T22404";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-15T22404";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-15T22295";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-15T22295";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T22295";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-15T22404";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-15T22404";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T22404";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-15T22295";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-15T22295';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-15T22404";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-15T22404';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-15T22295";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-15T22404";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-15T22295";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-15T22295";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-15T22295";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-15T22295";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-15T22295";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15T22295";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-15T22295";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-15T22404";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-15T22404";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-15T22404";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-15T22404";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-15T22404";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-15T22404";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-15T22404";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -161,6 +161,7 @@ const importFilePicker = bindLocalizedFilePicker({
 });
 const btnImportJson = document.getElementById("btnImportJson");
 const btnCancelImport = document.getElementById("btnCancelImport");
+const btnImportCancelAction = document.getElementById("btnImportCancelAction");
 const importPreview = document.getElementById("importPreview");
 const importErr = document.getElementById("importErr");
 const importMsg = document.getElementById("importMsg");
@@ -349,8 +350,10 @@ function importResetPreview() {
   importCompleted = false;
   if (btnImportJson) {
     btnImportJson.setAttribute("data-i18n", "games.import.confirm");
-    btnImportJson.textContent = t("games.import.confirm");
+    btnImportJson.setAttribute("data-i18n-icon", "upload");
+    btnImportJson.innerHTML = iconText("upload", t("games.import.confirm"));
   }
+  if (btnImportCancelAction) btnImportCancelAction.hidden = false;
   setImportMsg("");
   showProgBlock(importProg, false);
   if (importPreview) { importPreview.style.display = "none"; importPreview.innerHTML = ""; }
@@ -1865,6 +1868,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
   btnCancelImport?.addEventListener("click", closeImportModal);
+  btnImportCancelAction?.addEventListener("click", closeImportModal);
 
   // RENAME (modal)
   btnNameCancel?.addEventListener("click", closeRenameModal);
@@ -1978,6 +1982,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     if (btnImportJson) btnImportJson.disabled = true;
     if (btnCancelImport) btnCancelImport.disabled = true;
+    if (btnImportCancelAction) btnImportCancelAction.disabled = true;
     if (importFile) importFile.disabled = true;
 
     try {
@@ -1993,8 +1998,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       importCompleted = true;
       if (btnImportJson) {
         btnImportJson.setAttribute("data-i18n", "games.import.done");
-        btnImportJson.textContent = t("games.import.done");
+        btnImportJson.setAttribute("data-i18n-icon", "check");
+        btnImportJson.innerHTML = iconText("check", t("games.import.done"));
       }
+      if (btnImportCancelAction) btnImportCancelAction.hidden = true;
     } catch (e) {
       console.error("IMPORT ERROR:", e);
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
@@ -2005,6 +2012,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showProgBlock(importProg, importCompleted);
       if (btnImportJson) btnImportJson.disabled = !importParsed;
       if (btnCancelImport) btnCancelImport.disabled = false;
+      if (btnImportCancelAction) btnImportCancelAction.disabled = false;
       if (importFile) importFile.disabled = false;
     }
   });
