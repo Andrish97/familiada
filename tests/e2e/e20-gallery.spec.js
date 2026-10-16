@@ -768,38 +768,56 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 layerId: "tagsL1",
                 actionLabel: "Tagi → przypisz",
                 prepare: async (modalPage) => {
-                  let questionRows = modalPage.locator('#list .row[data-kind="q"][data-id]');
-                  for (let depth = 0; depth < 12 && !await questionRows.first().isVisible().catch(() => false); depth += 1) {
-                    const folder = modalPage.locator('#list .row[data-kind="cat"][data-id]').first();
-                    if (!await folder.isVisible().catch(() => false)) break;
-                    await folder.dblclick();
-                    await modalPage.waitForTimeout(250);
-                    questionRows = modalPage.locator('#list .row[data-kind="q"][data-id]');
-                  }
-                  await questionRows.first().waitFor({ state: "visible", timeout: 15_000 });
                   const action = modalPage.locator('#toolbar [data-act="editTags"]');
                   await action.waitFor({ state: "visible", timeout: 5_000 });
-                  const count = await questionRows.count();
-                  for (let index = 0; index < count; index += 1) {
-                    const question = questionRows.nth(index);
-                    await question.click();
-                    await action.click();
-                    const outcome = await Promise.race([
-                      modalPage.locator("#tagsOverlay").waitFor({ state: "visible", timeout: 8_000 }).then(() => "opened").catch(() => null),
-                      modalPage.locator(".uni-modal").waitFor({ state: "visible", timeout: 8_000 }).then(() => "blocked").catch(() => null),
-                    ]);
-                    if (outcome === "opened") return;
-                    if (outcome !== "blocked") throw new Error("Przypisanie taga nie otworzyło modalа ani komunikatu o blokadzie.");
+                  async function tryVisibleQuestions() {
+                    const questions = modalPage.locator('#list .row[data-kind="q"][data-id]');
+                    const count = await questions.count();
+                    for (let index = 0; index < count; index += 1) {
+                      const question = questions.nth(index);
+                      if (!await question.isVisible().catch(() => false)) continue;
+                      await question.click();
+                      await action.click();
+                      const outcome = await Promise.race([
+                        modalPage.locator("#tagsOverlay").waitFor({ state: "visible", timeout: 8_000 }).then(() => "opened").catch(() => null),
+                        modalPage.locator(".uni-modal").waitFor({ state: "visible", timeout: 8_000 }).then(() => "blocked").catch(() => null),
+                      ]);
+                      if (outcome === "opened") return true;
+                      if (outcome !== "blocked") throw new Error("Przypisanie taga nie otworzyło modalа ani komunikatu o blokadzie.");
 
-                    const alert = modalPage.locator(".overlay:visible .uni-modal").first();
-                    const message = await alert.innerText();
-                    if (!/edytowany w innej karcie|edited in another tab/i.test(message)) {
-                      throw new Error(`Przypisanie taga zwróciło nieoczekiwany komunikat: ${message}`);
+                      const alert = modalPage.locator(".overlay:visible .uni-modal").first();
+                      const message = await alert.innerText();
+                      if (!/edytowany w innej karcie|edited in another tab/i.test(message)) {
+                        throw new Error(`Przypisanie taga zwróciło nieoczekiwany komunikat: ${message}`);
+                      }
+                      await alert.getByRole("button", { name: /^(OK|Okay)$/i }).click();
+                      await alert.waitFor({ state: "hidden", timeout: 5_000 });
                     }
-                    await alert.getByRole("button", { name: /^(OK|Okay)$/i }).click();
-                    await alert.waitFor({ state: "hidden", timeout: 5_000 });
+                    return false;
                   }
-                  throw new Error(`Wszystkie ${count} widoczne pytania są obecnie zablokowane; nie otwieram widoku assign na fikcyjnych danych.`);
+                  async function findUnlockedQuestion(depth = 0) {
+                    if (depth > 12) return false;
+                    if (await tryVisibleQuestions()) return true;
+                    const folders = modalPage.locator('#list .row[data-kind="cat"][data-id]');
+                    const folderIds = await folders.evaluateAll((items) => items.map((item) => item.dataset.id).filter(Boolean));
+                    for (const folderId of folderIds) {
+                      const folder = modalPage.locator(`#list .row[data-kind="cat"][data-id="${folderId}"]`);
+                      if (!await folder.isVisible().catch(() => false)) continue;
+                      await folder.dblclick();
+                      await modalPage.waitForTimeout(250);
+                      const found = await findUnlockedQuestion(depth + 1);
+                      if (found) return true;
+                      const crumbs = modalPage.locator('#breadcrumbs .crumb[data-kind="crumb"]');
+                      const crumbCount = await crumbs.count();
+                      if (crumbCount > 1) await crumbs.nth(crumbCount - 2).click();
+                      else await modalPage.locator('#breadcrumbs .crumb[data-kind="root"]').click();
+                      await modalPage.waitForTimeout(250);
+                    }
+                    return false;
+                  }
+                  if (!await findUnlockedQuestion()) {
+                    throw new Error("W całej bazie nie znaleziono odblokowanego pytania; widoku przypisania nie zastępuję fikcyjnymi danymi.");
+                  }
                 },
               },
               {
