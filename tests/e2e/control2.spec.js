@@ -1128,9 +1128,20 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
-    await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const displayPage = await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
     const hostPage = await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
     const buzzerPage = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+
+    // Potwierdź, że prawdziwe strony urządzeń dołączyły do kanału
+    // postgres_changes. Samo przejście gry mogłoby zostać zamaskowane przez
+    // stary Broadcast/polling, więc sprawdzamy kanał używany przez aplikację.
+    for (const [kind, devicePage] of [["Display", displayPage], ["Host", hostPage], ["Buzzer", buzzerPage]]) {
+      await expect.poll(() => devicePage.evaluate(() => window.__sbClient?.getChannels?.()
+        ?.some(channel => String(channel.topic || "").includes("game-state-direct") && channel.state === "joined") || false), {
+        timeout: 15000,
+        message: `${kind} powinien dołączyć do bezpośredniego kanału Realtime przed rozpoczęciem gry`,
+      }).toBe(true);
+    }
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
