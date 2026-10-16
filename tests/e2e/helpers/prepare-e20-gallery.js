@@ -41,6 +41,10 @@ async function main() {
         await page.waitForFunction(() => Boolean(window.__sbClient), null, { timeout: 20_000 });
         const data = await readE20GalleryData(page);
         fs.writeFileSync(files.data, JSON.stringify(data, null, 2));
+        const pollSummary = Object.entries(data.polls)
+          .map(([slot, poll]) => `${slot}=${poll ? `${poll.name} [${poll.status}]` : "brak"}`)
+          .join("; ");
+        console.log(`[e20-gallery] ${files.username}: ankiety galerii: ${pollSummary}.`);
         await context.storageState({ path: files.authState });
         console.log(`[e20-gallery] ${files.username}: sesja zapisana, odczytano istniejące rekordy bez zmian.`);
       } finally {
