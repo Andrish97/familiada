@@ -251,15 +251,15 @@ async function main() {
   startKeepAlive();
   startPresenceHeartbeat({ gameId, key });
   let subscription = null;
-  const lease = createDeviceLease({ gameId, deviceType: "host", key, onState: ({ state, mode }) => {
-    updateDeviceLeaseOverlay(state, mode);
+  const lease = createDeviceLease({ gameId, deviceType: "host", key, onState: ({ state }) => {
+    updateDeviceLeaseOverlay(state);
     if (subscription) {
-      if (state === "primary" || mode === "legacy") void subscription.start();
+      if (state === "primary") void subscription.start();
       else subscription.stop();
     }
   } });
   await lease.start();
-  updateDeviceLeaseOverlay(lease.state, lease.mode);
+  updateDeviceLeaseOverlay(lease.state);
   const renderer = createHostRenderer();
   // Zmiana orientacji w locie (obrót tabletu) ma przeliczyć podpowiedź
   // przesunięcia (portrait/landscape mają inny kierunek) -- dokładnie jak
@@ -309,7 +309,7 @@ async function main() {
     },
     onError: (error) => console.warn("[host2] game_state_get failed:", error),
   });
-  if (lease.state === "primary" || lease.mode === "legacy") await subscription.start();
+  if (lease.state === "primary") await subscription.start();
 }
 
 main();

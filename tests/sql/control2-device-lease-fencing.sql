@@ -46,6 +46,17 @@ ALTER TABLE public.game_state_display_completion ENABLE ROW LEVEL SECURITY;
 \ir ../../supabase/migrations/2026-10-15_378_control2_device_progress_telemetry.sql
 \ir ../../supabase/migrations/2026-10-15_379_control2_lease_events_in_admin_stats.sql
 
+-- Simulate a live v1 row present at rollout. Migration 380 must move it to the
+-- lease protocol and reject key-only device actions.
+INSERT INTO auth.users VALUES('00000000-0000-0000-0000-000000000002');
+INSERT INTO public.games VALUES
+ ('10000000-0000-0000-0000-000000000003','00000000-0000-0000-0000-000000000002');
+INSERT INTO public.control_runtime_sessions(id,game_id,owner_id,device_protocol) VALUES
+ ('20000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000003','00000000-0000-0000-0000-000000000002',1);
+INSERT INTO public.control_device_link_tokens(session_id,game_id,device_type,token) VALUES
+ ('20000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000003','display','30000000-0000-0000-0000-000000000005');
+\ir ../../supabase/migrations/2026-10-16_380_control2_remove_legacy_device_protocol.sql
+
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
 
@@ -73,6 +84,9 @@ VALUES('50000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000
 INSERT INTO public.game_session_active(game_id,session_id)
 VALUES('10000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001');
 SELECT set_config('test.user_id','00000000-0000-0000-0000-000000000001',false);
+SELECT pg_temp.assert_true((SELECT device_protocol=2 FROM public.control_runtime_sessions WHERE id='20000000-0000-0000-0000-000000000004'),'migration upgrades a remaining live v1 session');
+SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000003','display','30000000-0000-0000-0000-000000000005',NULL,NULL),'upgraded session cannot use the old key-only action contract');
+SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000003','display','30000000-0000-0000-0000-000000000005','40000000-0000-0000-0000-000000000005')->>'state')='primary','upgraded session registers through the lease contract');
 SELECT pg_temp.assert_true((control_device_instance_register('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001')->>'epoch')='1','first display receives epoch 1');
 SELECT pg_temp.assert_true((SELECT count(*)=1 FROM public.control2_device_events WHERE session_id='50000000-0000-0000-0000-000000000001' AND event_type='lease_state' AND details->>'to_state'='primary'),'active game session records the primary instance');
 SELECT control_device_instance_heartbeat('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1,'{"received_rev":12,"rendered_rev":11,"started_sound_cue_seq":4}'::jsonb);
@@ -85,8 +99,8 @@ SELECT pg_temp.assert_true(_control_device_action_valid('10000000-0000-0000-0000
 SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',1) IS DISTINCT FROM NULL::public.game_state,'fenced RPC can read state for current primary');
 SELECT game_state_display_complete('10000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001',1,'40000000-0000-0000-0000-000000000001',1);
 SELECT pg_temp.assert_true((SELECT display_rendered_rev=1 FROM public.game_state WHERE game_id='10000000-0000-0000-0000-000000000001'),'display acknowledgment is mirrored into game_state for realtime delivery');
-SELECT pg_temp.assert_true(game_state_get('10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002') IS DISTINCT FROM NULL::public.game_state,'legacy key-only RPC remains available for protocol 1');
-SELECT pg_temp.assert_true(NOT game_state_display_is_ready('10000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000003'),'legacy Buzzer can still call ready RPC without device_type');
+SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000002','display','30000000-0000-0000-0000-000000000002',NULL,NULL),'protocol 1 session cannot use key-only Display RPCs');
+SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000002','buzzer','30000000-0000-0000-0000-000000000003',NULL,NULL),'protocol 1 session cannot use key-only Buzzer RPCs');
 SELECT pg_temp.assert_true(NOT _control_device_action_valid('10000000-0000-0000-0000-000000000001','display','30000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',2),'stale epoch is denied');
 SELECT control_device_instance_register('10000000-0000-0000-0000-000000000001','buzzer','30000000-0000-0000-0000-000000000004','40000000-0000-0000-0000-000000000004');
 UPDATE public.game_state SET step='r_duel',detail='{"settings":{"physicalBuzzer":true},"rounds":{"duel":{"lastPressed":null}}}' WHERE game_id='10000000-0000-0000-0000-000000000001';

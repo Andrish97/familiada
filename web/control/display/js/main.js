@@ -370,10 +370,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     let rendererInstance = null;
     let soundReactorInstance = null;
     let audioSessionRegistration = Promise.resolve(false);
-    const lease = createDeviceLease({ gameId: game.id, deviceType: "display", key, onState: ({ state, mode }) => {
-      updateDeviceLeaseOverlay(state, mode);
+    const lease = createDeviceLease({ gameId: game.id, deviceType: "display", key, onState: ({ state }) => {
+      updateDeviceLeaseOverlay(state);
       if (subscription) {
-        if (state === "primary" || mode === "legacy") {
+        if (state === "primary") {
           audioSessionRegistration = registerAudioSession();
           void subscription.start();
         } else {
@@ -387,7 +387,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     } });
     await lease.start();
-    updateDeviceLeaseOverlay(lease.state, lease.mode);
+    updateDeviceLeaseOverlay(lease.state);
     const displayEventLog = createDisplayEventLog(game.id, key, lease);
     window.addEventListener("pagehide", displayEventLog.stop, { once: true });
     const audioSessionNonce = globalThis.crypto?.randomUUID?.()
@@ -405,7 +405,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       return false;
     });
     }
-    if (lease.state === "primary" || lease.mode === "legacy") audioSessionRegistration = registerAudioSession();
+    if (lease.state === "primary") audioSessionRegistration = registerAudioSession();
     const displayPresence = startPresenceHeartbeat({ gameId: game.id, key });
 
     // Dźwięk "ze źródła Wyświetlacz" (zgłoszone) — ten sam js/core/sfx.js co
@@ -727,7 +727,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
 
     document.documentElement.classList.remove("page-loading");
-    if (lease.state === "primary" || lease.mode === "legacy") await subscription.start();
+    if (lease.state === "primary") await subscription.start();
   } catch (e) {
     console.warn("[display2]", e?.message || e);
     showBlack();
