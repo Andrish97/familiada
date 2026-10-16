@@ -127,7 +127,7 @@ function additionalStates(data) {
       {
         id: "base-explorer", stateId: "modal:rename-item", page: "base-explorer",
         href: `/bases/explorer/?id=${data.base.id}`, modalCapture: true,
-        expectedVisibleSelector: ".uni-modal", actionLabel: "Eksplorator bazy → Zmień nazwę elementu",
+        expectedVisibleSelector: "#renameModal", actionLabel: "Eksplorator bazy → Zmień nazwę elementu",
         prepare: async (page) => {
           const item = page.locator('#list .row[data-kind="cat"][data-id]').first();
           await item.waitFor({ state: "visible", timeout: 15_000 });
@@ -135,7 +135,7 @@ function additionalStates(data) {
           const drawer = page.locator("#btnDrawerToggle");
           if (await drawer.isVisible().catch(() => false)) await drawer.click();
           await page.locator('#toolbar [data-act="rename"]').click();
-          await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator("#renameModal").waitFor({ state: "visible", timeout: 15_000 });
         },
       },
       {
