@@ -418,6 +418,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         && Boolean(meta?.textContent.trim());
     }, null, { timeout: 30_000 }).then(() => {
       pollContentReady = true;
+      contentReady = true;
     }).catch(() => {
       contentReady = false;
       console.log(`[e20-gallery] ${profile.id} · polls: brak gotowej ankiety Demo; zrzut nie będzie oznaczony jako stabilny.`);
@@ -463,7 +464,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     ]));
     contentStable = true;
   }
-  if (pollPageHasId && !pollBlockedByDeviceGuard && (!contentReady || !pollContentReady)) {
+  if (pollPageHasId && !pollBlockedByDeviceGuard && !pollContentReady) {
     throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi`);
   }
   const blockedByGuard = await page.evaluate(() => {
