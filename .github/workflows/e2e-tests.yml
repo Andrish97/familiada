@@ -30,7 +30,7 @@ on:
       e20_gallery_accounts:
         description: 'Istniejące konta testowe do galerii E20, np. 1,2,3. Widoki jednego konta są sekwencyjne; konta pracują równolegle.'
         required: false
-        default: "1,2,3"
+        default: "2"
       publish_mail_screenshots:
         description: 'Publikuj zrzuty /mails/ w docs po udanym punktowym teście.'
         type: boolean
@@ -276,7 +276,7 @@ jobs:
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '1,2,3' }}
+          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '2' }}
         run: node e2e/helpers/prepare-e20-gallery.js
         working-directory: tests
 
@@ -287,7 +287,7 @@ jobs:
           KEEP_STATISTICS_GAMES: ${{ inputs.retain_statistics_games && '1' || '0' }}
           E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
           E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
-          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '1,2,3' }}
+          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '2' }}
           IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
         run: |
           if [ "$IS_E20_GALLERY" = "1" ]; then

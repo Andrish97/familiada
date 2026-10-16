@@ -24,14 +24,23 @@ async function readE20GalleryData(page) {
     const bases = (basesResult.data || []).filter((record) => !isPreviousGalleryRecord(record));
     const logos = (logosResult.data || []).filter((record) => !isPreviousGalleryRecord(record));
     const byLogoMode = (mode) => logos.find((logo) => logo.payload?.source?.mode === mode) || null;
+    const isOpen = (game) => game.status === "poll_open" || game.status === "open";
     const preferDemo = (items) => [...items].sort((a, b) => {
       const demoA = /\bdemo\b/i.test(a.name || "") ? 1 : 0;
       const demoB = /\bdemo\b/i.test(b.name || "") ? 1 : 0;
       if (demoA !== demoB) return demoB - demoA;
-      const openA = a.status === "open" ? 1 : 0;
-      const openB = b.status === "open" ? 1 : 0;
+      const openA = isOpen(a) ? 1 : 0;
+      const openB = isOpen(b) ? 1 : 0;
       return openB - openA;
     })[0] || null;
+    const pollForPreview = (type) => {
+      const polls = games.filter((game) => game.type === type);
+      const demos = polls.filter((game) => /\bdemo\b/i.test(game.name || ""));
+      return demos.find((game) => game.status === "ready")
+        || demos[0]
+        || polls.find(isOpen)
+        || null;
+    };
     return {
       game: preferDemo(games.filter((game) => game.type === "prepared")),
       base: bases[0] || null,
@@ -43,10 +52,10 @@ async function readE20GalleryData(page) {
       polls: {
         // Zamknięta ankieta Demo daje pełny, stabilny widok właściciela i
         // wyników; jeśli jej nie ma, wybieramy otwartą ankietę istniejącą na koncie.
-        poll_points: preferDemo(games.filter((game) => game.type === "poll_points")),
-        poll_text: preferDemo(games.filter((game) => game.type === "poll_text")),
-        poll_points_vote: games.find((game) => game.type === "poll_points" && game.status === "open" && game.share_key_poll) || null,
-        poll_text_vote: games.find((game) => game.type === "poll_text" && game.status === "open" && game.share_key_poll) || null,
+        poll_points: pollForPreview("poll_points"),
+        poll_text: pollForPreview("poll_text"),
+        poll_points_vote: games.find((game) => game.type === "poll_points" && isOpen(game) && game.share_key_poll) || null,
+        poll_text_vote: games.find((game) => game.type === "poll_text" && isOpen(game) && game.share_key_poll) || null,
       },
     };
   });

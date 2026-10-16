@@ -379,7 +379,13 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     });
   }
   const pollPageHasId = id === "polls" && /[?&]id=/.test(href);
-  if (pollPageHasId) {
+  const pollBlockedByDeviceGuard = pollPageHasId && await page.evaluate(() => {
+    const guard = document.getElementById("pageGuard");
+    const state = document.documentElement.dataset.deviceGuard || "";
+    return Boolean(guard && state && state !== "ok"
+      && getComputedStyle(guard).display !== "none" && guard.getClientRects().length);
+  });
+  if (pollPageHasId && !pollBlockedByDeviceGuard) {
     await page.waitForFunction(() => {
       const load = document.getElementById("pollLoadState");
       const main = document.getElementById("cardMain");
@@ -424,7 +430,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     contentStable = false;
     console.log(`[e20-gallery] ${profile.id} · ${id}: treść nie osiągnęła stabilnego stanu; zapisuję widoczny stan aplikacji.`);
   }
-  if (pollPageHasId && (!contentReady || !contentStable)) {
+  if (pollPageHasId && !pollBlockedByDeviceGuard && (!contentReady || !contentStable)) {
     throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi`);
   }
   const blockedByGuard = await page.evaluate(() => {

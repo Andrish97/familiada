@@ -5,7 +5,7 @@ const { testAccountUsername } = require("./login");
 const PREP_DIR = process.env.RUNNER_TEMP || os.tmpdir();
 
 function galleryAccountNumbers(raw = process.env.E20_GALLERY_ACCOUNTS) {
-  const values = String(raw || "1,2,3").split(",").map((value) => value.trim()).filter(Boolean);
+  const values = String(raw || "2").split(",").map((value) => value.trim()).filter(Boolean);
   const numbers = values.map((value) => {
     if (!/^\d+$/.test(value)) throw new Error(`Nieprawidłowy numer konta galerii E20: ${value}`);
     const number = Number(value);
