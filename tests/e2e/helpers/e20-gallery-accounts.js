@@ -22,7 +22,7 @@ function galleryAccountPaths(accountNumber) {
   return {
     username: testAccountUsername(accountNumber),
     authState: path.join(PREP_DIR, `familiada-e20-gallery-${account}-auth.json`),
-    fixtures: path.join(PREP_DIR, `familiada-e20-gallery-${account}-fixtures.json`),
+    data: path.join(PREP_DIR, `familiada-e20-gallery-${account}-data.json`),
   };
 }
 

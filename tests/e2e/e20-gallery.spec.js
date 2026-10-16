@@ -1,6 +1,5 @@
-// Pełna galeria stron E20 na prawdziwym backendzie produkcyjnym.
-// Front ładowany jest z badanego brancha; Supabase, Worker i poczta pozostają
-// rzeczywiste. Fixture'y seedujemy raz na istniejących kontach 1–3.
+// Galeria E20 pokazuje front z badanego brancha na prawdziwym backendzie,
+// wykorzystując wyłącznie rekordy już obecne na kontach testowych.
 const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("./helpers/production-test");
@@ -14,11 +13,11 @@ const OUT = path.resolve(__dirname, "../test-results/e20-gallery");
 const MANIFEST_DIR = path.join(PREP_DIR, "familiada-e20-gallery-manifests");
 const PAGES = [
   "index", "account", "bases", "bases/explorer", "connect", "connect/tv",
-  "control", "control/buzzer", "control/display", "control/host", "games",
+  "control", "games",
   "games/editor", "games/settings", "friends", "go", "login", "login/confirm",
   "login/reset", "logos", "logos/editor/draw", "logos/editor/image", "logos/editor/text",
   "mails", "maintenance", "manual", "marketplace", "polls", "polls/vote/points",
-  "polls/vote/qr", "polls/vote/text", "privacy", "settings", "subscribers", "tasks", "404",
+  "polls/vote/qr", "polls/vote/text", "privacy", "subscribers", "tasks", "404",
 ];
 
 const PROFILES = [
@@ -33,138 +32,69 @@ const requestedPages = String(process.env.E20_GALLERY_PAGES || "").split(",").ma
 const requestedProfiles = String(process.env.E20_GALLERY_PROFILES || "").split(",").map((value) => value.trim()).filter(Boolean);
 const requestedAccounts = galleryAccountNumbers();
 
-function urls(fixtures) {
-  const pollPoints = fixtures.polls.poll_points;
-  const pollText = fixtures.polls.poll_text;
-  const game = fixtures.game;
-  return [
+function urls(data) {
+  const game = data.game;
+  const pollPoints = data.polls.poll_points;
+  const pollText = data.polls.poll_text;
+  const logo = data.logos.text || data.logos.draw || data.logos.image;
+  const result = [
     ["home", "/"], ["account", "/account/"], ["bases", "/bases/"],
-    ["base-explorer", `/bases/explorer/?id=${fixtures.base.id}`], ["connect", "/connect/"],
-    ["connect-tv", "/connect/tv/"], ["control", `/control/?id=${game.id}`],
-    ["buzzer", `/control/buzzer/?id=${game.id}&key=${fixtures.deviceKeys.buzzer}`],
-    ["display", `/control/display/?id=${game.id}&key=${fixtures.deviceKeys.display}`],
-    ["host", `/control/host/?id=${game.id}&key=${fixtures.deviceKeys.host}`],
-    ["games", "/games/"], ["game-editor", `/games/editor/?id=${game.id}`],
-    ["game-settings", `/games/settings/?id=${game.id}`], ["friends", "/friends/"],
-    ["go", "/go/"], ["login", "/login/"], ["login-confirm", "/login/confirm/"],
-    ["login-reset", "/login/reset/"], ["logo", "/logos/"],
-    ["logo-draw", `/logos/editor/draw/?id=${fixtures.logos.draw.id}`],
-    ["logo-image", `/logos/editor/image/?id=${fixtures.logos.image.id}`],
-    ["logo-text", `/logos/editor/text/?id=${fixtures.logos.text.id}`],
+    ["connect", "/connect/"], ["connect-tv", "/connect/tv/"],
+    ["games", "/games/"],
+    ["friends", "/friends/"], ["go", "/go/"], ["login", "/login/"],
+    ["login-confirm", "/login/confirm/"], ["login-reset", "/login/reset/"], ["logo", "/logos/"],
     ["mail", "/mails/"], ["maintenance", "/maintenance/"], ["manual", "/manual/"],
-    ["marketplace", "/marketplace/"], ["polls", `/polls/?id=${pollText.id}`],
-    ["poll-vote-points", `/polls/vote/points/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`],
-    ["poll-vote-qr", `/polls/vote/qr/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`],
-    ["poll-vote-text", `/polls/vote/text/?id=${pollText.id}&key=${pollText.share_key_poll}`],
-    ["privacy", "/privacy/"], ["settings", "/settings/"],
-    ["subscribers", "/subscribers/"], ["tasks", "/tasks/"], ["404", "/404.html"],
+    ["marketplace", "/marketplace/"], ["polls", pollText ? `/polls/?id=${pollText.id}` : "/polls/"],
+    ["privacy", "/privacy/"], ["subscribers", "/subscribers/"], ["tasks", "/tasks/"], ["404", "/404.html"],
   ];
+  if (data.base) result.push(["base-explorer", `/bases/explorer/?id=${data.base.id}`]);
+  if (game) {
+    result.push(["control", `/control/?id=${game.id}`]);
+    result.push(["game-editor", `/games/editor/?id=${game.id}`]);
+    result.push(["game-settings", `/games/settings/?id=${game.id}`]);
+  }
+  if (logo) {
+    const modePage = { TEXT: "text", DRAW: "draw", IMAGE: "image" }[logo.payload?.source?.mode];
+    if (modePage) result.push([`logo-${modePage}`, `/logos/editor/${modePage}/?id=${logo.id}`]);
+  }
+  if (pollPoints?.share_key_poll) {
+    result.push(["poll-vote-points", `/polls/vote/points/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`]);
+    result.push(["poll-vote-qr", `/polls/vote/qr/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`]);
+  }
+  if (pollText?.share_key_poll) {
+    result.push(["poll-vote-text", `/polls/vote/text/?id=${pollText.id}&key=${pollText.share_key_poll}`]);
+  }
+  return result;
 }
 
-function additionalStates(fixtures) {
-  return [
-    {
+function additionalStates(data) {
+  const states = [
+    ...(data.game ? [{
       id: "games-selected", page: "games", href: "/games/",
       prepare: async (page) => {
-        const tile = page.locator(`.card[data-game-id="${fixtures.game.id}"]`);
+        const tile = page.locator(`.card[data-game-id="${data.game.id}"]`);
         await tile.waitFor({ state: "visible", timeout: 20_000 });
-        // Uruchom produkcyjny listener bez niestabilnego hit-testu dotyku.
-        await tile.dispatchEvent("click");
+        await tile.click();
         await expect(tile).toHaveClass(/selected/);
       },
-    },
+    }] : []),
     { id: "games-community", page: "games", href: "/games/?tab=market" },
-    {
+    ...((data.logos.text || data.logos.draw || data.logos.image) ? [{
       id: "logo-selected", page: "logo", href: "/logos/",
       prepare: async (page) => {
-        const tile = page.locator(`.logoTile[data-key="${fixtures.logo.id}"]`);
+        const logo = data.logos.text || data.logos.draw || data.logos.image;
+        const tile = page.locator(`.logoTile[data-key="${logo.id}"]`);
         await tile.waitFor({ state: "visible", timeout: 20_000 });
         await tile.click();
         await expect(tile).toHaveClass(/is-selected/);
       },
-    },
+    }] : []),
     { id: "bases-shared", page: "bases", href: "/bases/?tab=shared" },
-    { id: "polls-results", page: "polls", href: `/polls/?id=${fixtures.polls.poll_text.id}&tab=results` },
+    ...(data.polls.poll_text ? [{ id: "polls-results", page: "polls", href: `/polls/?id=${data.polls.poll_text.id}&tab=results` }] : []),
     { id: "friends-received", page: "friends", href: "/friends/?tab=received" },
     { id: "subscribers-received", page: "subscribers", href: "/subscribers/?tab=received" },
   ];
-}
-
-async function installMaintenanceVisualState(context) {
-  // /maintenance przekierowuje, gdy prace są wyłączone. Dla audytu wyglądu
-  // utrzymujemy deterministyczny stan aktywnej przerwy tylko w tej sesji.
-  await context.route("**/maintenance-state.json**", (route) => route.fulfill({
-    status: 200,
-    contentType: "application/json; charset=utf-8",
-    body: JSON.stringify({ enabled: true, mode: "message", useStandardText: true, customComments: {} }),
-  }));
-}
-
-async function installSettingsAccessSimulation(context) {
-  // Settings znajduje się za Cloudflare Access. Omijamy wyłącznie bramkę
-  // autoryzacji API w tym kontekście Playwrighta; HTML, JS i CSS nadal pochodzą
-  // z badanego brancha. Dzięki odpowiedziom API strona pokazuje panel, a nie
-  // ekran logowania ani pusty podgląd.
-  await context.addInitScript(() => {
-    if (!location.pathname.startsWith("/settings")) return;
-    const nativeFetch = window.fetch.bind(window);
-    window.fetch = async (input, init) => {
-      const requestUrl = typeof input === "string" ? input : input.url;
-      const url = new URL(requestUrl, location.href);
-      if (!url.pathname.startsWith("/_admin_api/")) return nativeFetch(input, init);
-      const body = url.pathname === "/_admin_api/me"
-        ? { ok: true, user: { email: "e20-visual-test@familiada.online" } }
-        : url.pathname === "/_admin_api/state"
-          ? { enabled: false, mode: "message", useStandardText: true, customComments: {}, returnAt: null, bypass: false }
-          : {};
-      return new Response(JSON.stringify(body), {
-        status: 200,
-        headers: { "content-type": "application/json; charset=utf-8" },
-      });
-    };
-  });
-  await context.route("**/_admin_api**", async (route) => {
-    const url = new URL(route.request().url());
-    let body;
-    if (url.pathname === "/_admin_api/me") {
-      body = { ok: true, user: { email: "e20-visual-test@familiada.online" } };
-    } else if (url.pathname === "/_admin_api/state") {
-      body = {
-        enabled: false,
-        mode: "message",
-        useStandardText: true,
-        customComments: {},
-        returnAt: null,
-        bypass: false,
-      };
-    } else {
-      body = {};
-    }
-    await route.fulfill({ status: 200, contentType: "application/json; charset=utf-8", body: JSON.stringify(body) });
-  });
-}
-
-async function installVisualResourceLockIsolation(page) {
-  // Izolacja dotyczy tylko tras, które naprawdę pobierają edit lock. Pozostałe
-  // strony rozmawiają z prawdziwym API blokad, jeśli mają taką funkcję.
-  // Weryfikujemy wygląd edytora; współbieżność samych blokad sprawdzają osobne E2E.
-  const acquire = "https://api.familiada.online/rest/v1/rpc/acquire_edit_lock_mode";
-  const release = "https://api.familiada.online/rest/v1/rpc/release_edit_lock";
-  const locks = "https://api.familiada.online/rest/v1/edit_locks**";
-  await page.route(acquire, (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
-  await page.route(release, (route) =>
-    route.fulfill({ status: 204, body: "" }));
-  await page.route(locks, (route) => {
-    if (route.request().method() !== "GET") return route.continue();
-    return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
-  });
-  return async () => {
-    if (page.isClosed()) return;
-    await page.unroute(acquire);
-    await page.unroute(release);
-    await page.unroute(locks);
-  };
+  return states;
 }
 
 async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithoutFontWait = false) {
@@ -239,8 +169,12 @@ async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithou
 
 async function serveBranchLoginHtml(route) {
   const file = path.resolve(__dirname, "../../web/login/index.html");
-  const html = fs.readFileSync(file, "utf8").replace(/data-captcha-site-key="[^"]*"/, 'data-captcha-site-key=""');
-  await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", headers: { "cache-control": "no-store" }, body: html });
+  const productionResponse = await route.fetch();
+  const productionHtml = await productionResponse.text();
+  const testSiteKey = productionHtml.match(/data-captcha-site-key="([^"]*)"/)?.[1];
+  if (!testSiteKey) throw new Error("Worker nie zwrócił testowego klucza Turnstile dla sesji E2E");
+  const html = fs.readFileSync(file, "utf8").replace(/data-captcha-site-key="[^"]*"/, `data-captcha-site-key="${testSiteKey}"`);
+  await route.fulfill({ response: productionResponse, headers: { "cache-control": "no-store" }, body: html });
 }
 
 function pageModalIds(page) {
@@ -248,70 +182,42 @@ function pageModalIds(page) {
     .evaluateAll((items) => items
       .filter((el) => !["pageGuard", "resourceLockGuard"].includes(el.id))
       .filter((el) => !/(alert|confirm|error|errModal)/i.test(el.id))
+      .filter((el) => {
+        const style = getComputedStyle(el);
+        return !el.hidden && style.display !== "none" && style.visibility !== "hidden"
+          && el.getClientRects().length > 0;
+      })
       .map((el) => el.id));
 }
 
-async function showModalWithRepresentativeContent(page, modalId) {
-  await page.evaluate((id) => {
-    const modal = document.getElementById(id);
-    if (!modal) throw new Error(`Nie znaleziono modalu ${id}`);
-    modal.hidden = false;
-    modal.removeAttribute("aria-hidden");
-    modal.classList.remove("hidden", "is-hidden");
-    if (modal.matches("dialog") && !modal.open) modal.showModal();
-    for (const input of modal.querySelectorAll("input:not([type=hidden]), textarea")) {
-      if (input instanceof HTMLInputElement && !["text", "email", "url", "search", "tel", "number", "password"].includes(input.type)) continue;
-      if (input.value) continue;
-      const hint = input.getAttribute("placeholder") || input.getAttribute("aria-label") || "";
-      input.value = /mail|email/i.test(`${input.name} ${input.id} ${hint}`)
-        ? "anna@example.com"
-        : /name|nazwa|title|tytuł/i.test(`${input.name} ${input.id} ${hint}`)
-          ? "Przykładowa nazwa"
-          : /url|link/i.test(`${input.name} ${input.id} ${hint}`)
-            ? "https://familiada.online/przyklad"
-            : "Treść przykładowa";
-    }
-    for (const select of modal.querySelectorAll("select")) {
-      if (select.value) continue;
-      const option = [...select.options].find((item) => item.value && !item.disabled);
-      if (option) select.value = option.value;
-    }
-    for (const region of modal.querySelectorAll("[contenteditable=true]")) {
-      if (!region.textContent.trim()) region.textContent = "Przykładowa treść";
-    }
-    const ensureEmptyTile = (selector, text) => {
-      const list = modal.querySelector(selector);
-      if (!list || list.children.length) return;
-      const empty = document.createElement("div");
-      empty.className = "share-empty-state";
-      empty.textContent = text;
-      list.append(empty);
-    };
-    if (id === "shareOverlay") {
-      ensureEmptyTile("#baseShareFriends", "Brak odbiorców.");
-      ensureEmptyTile("#shareSectionsHost", "Brak odbiorców.");
-    } else if (id === "shareDeviceOverlay") {
-      ensureEmptyTile("#shareDeviceSubsList", "Nie ma znajomych do udostępnienia.");
-      ensureEmptyTile("#shareDeviceCurrentContent", "Nie udostępniono jeszcze tego urządzenia.");
-    }
-    const isMobileSheet = modal.classList.contains("modal--sheet") && matchMedia("(max-width: 600px)").matches;
-    modal.style.setProperty("display", isMobileSheet ? "flex" : "grid", "important");
-    modal.style.setProperty("visibility", "visible", "important");
-    modal.style.setProperty("opacity", "1", "important");
-    modal.style.setProperty("pointer-events", "auto", "important");
-  }, modalId);
-  await page.evaluate(async (id) => {
-    const modal = document.getElementById(id);
-    if (!modal?.classList.contains("modal--sheet")) return;
-    const version = document.querySelector('meta[name="app-version"]')?.content;
-    const { enterModalSheet } = await import(`/shared/js/core/modal-sheet.js?v=${encodeURIComponent(version || "")}`);
-    enterModalSheet(modal, {
-      backBtn: document.getElementById("btnBack"),
-      onClose: () => {},
-      historyKey: null,
-    });
-  }, modalId);
-  await page.waitForTimeout(250);
+async function findModalActions(page) {
+  return page.locator('button, [role="button"], a[aria-haspopup="dialog"]')
+    .evaluateAll((items) => items.map((el, index) => {
+      const style = getComputedStyle(el);
+      if (el.disabled || el.hidden || el.type === "submit" || style.display === "none" || style.visibility === "hidden" || !el.getClientRects().length) return null;
+      const label = [el.innerText, el.getAttribute("aria-label"), el.title].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+      const icon = el.querySelector("[data-icon]")?.getAttribute("data-icon") || el.getAttribute("data-icon") || "";
+      const contact = el.hasAttribute("data-contact-modal");
+      const safeLabel = /wyszukaj|szukaj|search|udostępnij|udostepnij|import|eksport|export|qr|podgląd|podglad|preview|tagi|kolor/i.test(label);
+      const safeIcon = /^(search|share|qr|palette|tag|eye)$/i.test(icon);
+      if (!contact && !el.hasAttribute("aria-haspopup") && !el.hasAttribute("data-modal-target") && !safeLabel && !safeIcon) return null;
+      if (/usuń|usun|delete|wyloguj|zapisz|save|wyślij|wyslij|submit/i.test(label)) return null;
+      return { index, id: el.id || "", label: label || icon || "przycisk" };
+    }).filter(Boolean));
+}
+
+async function clickModalAction(page, action) {
+  const selector = action.id
+    ? `#${action.id.replace(/([^a-zA-Z0-9_-])/g, "\\$1")}`
+    : 'button, [role="button"], a[aria-haspopup="dialog"]';
+  const target = action.id ? page.locator(selector) : page.locator(selector).nth(action.index);
+  await target.click({ timeout: 5_000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('.overlay[id], .colorModalOverlay[id], .dt-modal[id], dialog[id], [role="dialog"][id]')]
+    .some((el) => {
+      const style = getComputedStyle(el);
+      return !el.hidden && style.display !== "none" && style.visibility !== "hidden" && el.getClientRects().length > 0;
+    }), null, { timeout: 3_000 }).catch(() => {});
+  return pageModalIds(page);
 }
 
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null, options = {}) {
@@ -380,19 +286,6 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     })).catch(() => ({}));
     throw new Error(`${profile.label} · ${id}: etap widocznej treści nie osiągnął gotowości; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
   }
-  const resourceLockState = await page.evaluate(() => {
-    const overlay = document.getElementById("resourceLockGuard");
-    if (!overlay) return null;
-    const style = getComputedStyle(overlay);
-    if (style.display === "none" || style.visibility === "hidden") return null;
-    return {
-      title: overlay.querySelector("#resourceLockGuardTitle")?.textContent?.trim() || "",
-      message: overlay.querySelector("#resourceLockGuardMsg")?.textContent?.trim() || "",
-    };
-  });
-  if (resourceLockState) {
-    throw new Error(`${profile.label} · ${id}: galeria nie powinna pokazywać blokady edycji; ${JSON.stringify(resourceLockState)}`);
-  }
   if (readySelector) {
     await page.waitForFunction((selector) => {
       const html = document.documentElement;
@@ -451,39 +344,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   });
   // Stany interaktywne nie zastępują guarda: na niedostępnym urządzeniu
   // zapisujemy ten guard zamiast wymuszać klik w ukryty zasób.
-  if (prepare && !blockedByGuard) await prepare(page);
-  if (id === "settings" && !blockedByGuard) {
-    // Przy części viewportów pełna nawigacja modalna Settings ponownie pokazuje
-    // ekran Access, chociaż odpowiedź symulująca /_admin_api/me jest poprawna.
-    // Galeria ma pokazać prawdziwy panel aplikacji, więc w tym wyłącznie
-    // kontekście wizualnym odsłaniamy jego istniejący DOM i chowamy ekran Access.
-    await page.locator("#panelScreen").waitFor({ state: "attached" });
-    await page.evaluate(() => {
-      const nativeHidden = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "hidden");
-      for (const [id, alwaysHidden] of [["panelScreen", false], ["authScreen", true]]) {
-        const element = document.getElementById(id);
-        if (!element || element.__e20HiddenOverride) continue;
-        element.removeAttribute("hidden");
-        Object.defineProperty(element, "hidden", {
-          configurable: true,
-          get: () => alwaysHidden,
-          set: (value) => {
-            if (Boolean(value) !== alwaysHidden) return;
-            nativeHidden.set.call(element, value);
-          },
-        });
-        element.__e20HiddenOverride = true;
-      }
-      document.body.classList.remove("settings-locked", "no-footer-line");
-    });
-    await page.addStyleTag({ content: `
-      body.settings-locked header, body.settings-locked main { display: block !important; }
-      #panelScreen { display: block !important; }
-      #authScreen { display: none !important; }
-    ` });
-    await expect(page.locator("#panelScreen")).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("#authScreen")).toBeHidden({ timeout: 5_000 });
-  }
+  let preparedState = null;
+  if (prepare && !blockedByGuard) preparedState = await prepare(page);
   const expectedSafe = profile.safe || { top: 0, right: 0, bottom: 0, left: 0 };
   const actualSafe = await page.evaluate(() => {
     const root = document.documentElement;
@@ -608,8 +470,16 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       console.log(`[e20-layout] ${profile.id} · ${id}: naturalne ${Math.round(left + right + groupGap)}px / dostępne ${available}px; ${state.listBottomLayout}; akcje pod nagłówkiem=${state.listHeaderActionsBelow}`);
     }
   }
-  const fileName = options.fileName || `${profile.id}.png`;
   const modalIds = await pageModalIds(page).catch(() => []);
+  const modalCandidates = options.modalCapture ? [] : await findModalActions(page).catch(() => []);
+  if (options.requireModal && !modalIds.length) {
+    throw new Error(`${profile.label} · ${id}: akcja „${options.actionLabel || "?"}” nie otworzyła prawdziwego modala`);
+  }
+  const safeModalName = (modalIds[0] || "dialog").replace(/[^a-zA-Z0-9_-]/g, "-");
+  const fileName = options.fileName || (options.modalCapture
+    ? `modal-${safeModalName}-${profile.id}.png`
+    : `${profile.id}.png`);
+  const finalUrl = page.url();
   fs.mkdirSync(path.join(OUT, id), { recursive: true });
   // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe
   // zrzuty na długich/animowanych widokach wisiały w Chromium po 45 s; wysokość
@@ -620,18 +490,20 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
   manifest.push({
     id,
-    ...(options.stateId ? { stateId: options.stateId } : {}),
+    ...(options.stateId || (options.modalCapture && modalIds[0]) ? { stateId: options.stateId || `modal:${modalIds[0]}` } : {}),
     profile: profile.id,
     label: profile.label,
     safeAreaInsets: expectedSafe,
     url: href,
+    finalUrl,
+    ...(options.actionLabel ? { actionLabel: options.actionLabel } : {}),
     file: `${id}/${fileName}`,
     ...state,
   });
   // Checkpoint after every image so a failed profile still leaves useful work.
   fs.mkdirSync(MANIFEST_DIR, { recursive: true });
   fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
-  return { modalIds, blockedByGuard };
+  return { modalIds, modalCandidates, blockedByGuard, preparedState };
 }
 
 // Profile są rozdzielone między istniejące konta. Każde konto robi swoje
@@ -648,10 +520,10 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
   test(`E20 gallery · test${accountNumber} · ${accountProfiles.map((profile) => profile.id).join(", ")}`, async ({ browser }) => {
     fs.mkdirSync(OUT, { recursive: true });
     const files = galleryAccountPaths(accountNumber);
-    if (!fs.existsSync(files.fixtures) || !fs.existsSync(files.authState)) {
-      throw new Error(`Brak przygotowanej sesji lub danych galerii dla test${accountNumber}; uruchom krok Prepare E20 fixtures and session`);
+    if (!fs.existsSync(files.data) || !fs.existsSync(files.authState)) {
+      throw new Error(`Brak przygotowanej sesji lub odczytu danych konta test${accountNumber}; uruchom krok Prepare E20 session`);
     }
-    const fixtures = JSON.parse(fs.readFileSync(files.fixtures, "utf8"));
+    const data = JSON.parse(fs.readFileSync(files.data, "utf8"));
     for (const profile of accountProfiles) {
       const viewport = { width: profile.width, height: profile.height };
       const deviceOptions = {
@@ -660,7 +532,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         ...(profile.ua ? { userAgent: profile.ua } : {}), serviceWorkers: "block",
       };
       const manifest = [];
-      const selectedUrls = urls(fixtures)
+      const selectedUrls = urls(data)
         .filter(([id]) => !requestedPages.length || requestedPages.includes(id))
         .filter(([id]) => profile.id !== "tv" || id === "connect-tv");
 
@@ -674,11 +546,6 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         const publicContext = await browser.newContext(deviceOptions);
         try {
           await serveBranchCode(publicContext, { pages: PAGES, safeAreaInsets: profile.safe });
-          await publicContext.addInitScript(() => {
-            if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
-          });
-          await installMaintenanceVisualState(publicContext);
-          await installSettingsAccessSimulation(publicContext);
           await publicContext.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
           const publicPage = await publicContext.newPage();
           publicPage.setDefaultTimeout(20_000);
@@ -692,11 +559,6 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
       const context = await browser.newContext({ ...deviceOptions, storageState: files.authState });
       try {
         await serveBranchCode(context, { pages: PAGES, safeAreaInsets: profile.safe });
-        await context.addInitScript(() => {
-          if (location.hostname === "www.familiada.online") localStorage.setItem("pwa:install_dismissed", "1");
-        });
-        await installMaintenanceVisualState(context);
-        await installSettingsAccessSimulation(context);
         await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
         let page = await context.newPage();
         page.setDefaultTimeout(20_000);
@@ -705,42 +567,51 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         for (const [id, href] of selectedUrls) {
           if (["home", "login", "login-confirm", "login-reset"].includes(id)) continue;
           const readySelector = id === "games"
-            ? `.card[data-game-id="${fixtures.game.id}"]`
+            ? data.game ? `.card[data-game-id="${data.game.id}"]` : null
             : id === "bases"
-              ? `.tile[data-base-id="${fixtures.base.id}"]`
+              ? data.base ? `.tile[data-base-id="${data.base.id}"]` : null
               : id === "logo"
-                ? `.logoTile[data-key="${fixtures.logo.id}"]`
+                ? (data.logos.text || data.logos.draw || data.logos.image)
+                  ? `.logoTile[data-key="${(data.logos.text || data.logos.draw || data.logos.image).id}"]` : null
                 : null;
-          const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "games", "logo-draw", "logo-image", "logo-text", "polls"]);
-          const removeLockIsolation = lockSensitive.has(id) ? await installVisualResourceLockIsolation(page) : null;
-          try {
-            const baseState = await capture(page, profile, id, href, manifest, null, readySelector);
-            if (!baseState.blockedByGuard) {
-              for (const modalId of baseState.modalIds) {
-                const safeModalName = modalId.replace(/[^a-zA-Z0-9_-]/g, "-");
-                await page.close();
-                page = await context.newPage();
-                page.setDefaultTimeout(20_000);
-                page.setDefaultNavigationTimeout(20_000);
-                const removeModalLockIsolation = lockSensitive.has(id) ? await installVisualResourceLockIsolation(page) : null;
-                try {
-                  await capture(
-                    page, profile, id, href, manifest,
-                    (modalPage) => showModalWithRepresentativeContent(modalPage, modalId),
-                    null,
-                    { fileName: `modal-${safeModalName}-${profile.id}.png`, stateId: `modal:${modalId}` },
-                  );
+          const baseState = await capture(page, profile, id, href, manifest, null, readySelector);
+          if (!baseState.blockedByGuard) {
+            const capturedModalIds = new Set(baseState.modalIds);
+            for (const action of baseState.modalCandidates) {
+              await page.close();
+              page = await context.newPage();
+              page.setDefaultTimeout(20_000);
+              page.setDefaultNavigationTimeout(20_000);
+              const result = await capture(
+                page, profile, id, href, manifest,
+                (modalPage) => clickModalAction(modalPage, action),
+                null,
+                { modalCapture: true, requireModal: true, actionLabel: action.label },
+              ).catch((error) => {
+                if (/nie otworzyła prawdziwego modala/i.test(error.message)) {
+                  console.log(`[e20-gallery] ${profile.id} · ${id}: akcja „${action.label}” nie otworzyła modala; bez zrzutu`);
+                  return null;
+                }
+                throw error;
+              });
+              if (result?.modalIds?.length) {
+                const openedId = result.modalIds[0];
+                if (capturedModalIds.has(openedId)) {
+                  const latest = manifest.at(-1);
+                  if (latest?.stateId === `modal:${openedId}`) {
+                    fs.rmSync(path.join(OUT, latest.file), { force: true });
+                    manifest.pop();
+                    fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
+                  }
+                } else {
+                  capturedModalIds.add(openedId);
                   modalCaptureCount += 1;
-                } finally {
-                  await removeModalLockIsolation?.();
                 }
               }
             }
-          } finally {
-            await removeLockIsolation?.();
           }
         }
-        const extra = profile.id === "tv" ? [] : additionalStates(fixtures).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
+        const extra = profile.id === "tv" ? [] : additionalStates(data).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
         if (extra.length) {
           // Podstawowe strony mogą zostawić stan karty lub heartbeat blokady.
           // Zamykamy ją całkowicie i stany dodatkowe fotografujemy w nowej,
@@ -751,13 +622,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           page.setDefaultNavigationTimeout(20_000);
         }
         for (const state of extra) {
-          const lockSensitive = new Set(["base-explorer", "control", "game-editor", "game-settings", "games", "logo-draw", "logo-image", "logo-text", "polls"]);
-          const removeLockIsolation = lockSensitive.has(state.page) ? await installVisualResourceLockIsolation(page) : null;
-          try {
-            await capture(page, profile, state.id, state.href, manifest, state.prepare);
-          } finally {
-            await removeLockIsolation?.();
-          }
+          await capture(page, profile, state.id, state.href, manifest, state.prepare);
         }
         expect(manifest.filter((entry) => !entry.stateId)).toHaveLength(selectedUrls.length + extra.length);
         expect(manifest.filter((entry) => entry.stateId)).toHaveLength(modalCaptureCount);

@@ -1,5 +1,24 @@
 # E20 — audyt renderów, stan 2026-10-13
 
+## Korekta metody galerii — 2026-10-16
+
+Na prośbę użytkownika nowy przebieg korzysta wyłącznie z istniejących,
+niegaleryjnych rekordów kont testowych. Przygotowanie sesji wykonuje tylko
+odczyty; nie tworzy ani nie zmienia gier, baz, logo, ankiet ani linków
+urządzeń. Pozostałości o nazwach `E20-GALLERY-*` z dawnych przebiegów są
+pomijane, nie są usuwane.
+
+Widoczne modale są otwierane kliknięciem rzeczywistych akcji interfejsu.
+Nie zmieniamy DOM, wartości pól, pustych stanów ani odpowiedzi API, by
+wyprodukować kadr. Panel admina `/settings/` jest wyłączony; Ustawienia gry
+`/games/settings/` zostają. Konserwacja i blokady korzystają z bieżącego
+stanu backendu.
+
+Widoki urządzeń nadal korzystają z emulowanych wymiarów przeglądarki oraz
+ramek i safe area zapisanych w wymaganiach E20; treść i stan aplikacji nie
+są emulowane. Nowa galeria pozostaje niepotwierdzona do czasu ukończenia
+workflow i sprawdzenia artefaktu.
+
 Tabela kategorii i wspólnych cech stron jest ukończona i odhaczona w głównym
 planie E20 w `ujednolicenie-wygladu.md`. Ten raport dokumentuje osobny etap:
 renderowanie stron i pierwsze poprawki layoutu.

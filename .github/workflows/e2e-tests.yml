@@ -271,7 +271,7 @@ jobs:
             node --test --test-concurrency=1 unit/*.test.js
           fi
 
-      - name: Prepare E20 fixtures and session once
+      - name: Prepare E20 session and read existing account data
         if: ${{ success() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
@@ -343,7 +343,7 @@ jobs:
 
       - name: Remove temporary E20 authentication state
         if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
-        run: rm -f "$RUNNER_TEMP"/familiada-e20-gallery-test*-auth.json "$RUNNER_TEMP"/familiada-e20-gallery-test*-fixtures.json
+        run: rm -f "$RUNNER_TEMP"/familiada-e20-gallery-test*-auth.json "$RUNNER_TEMP"/familiada-e20-gallery-test*-data.json
 
       - name: Publish requested anonymous poll screenshots
         if: ${{ success() && inputs.publish_anonymous_screenshots && (contains(inputs.spec_filter, 'e2e/poll-anonymous.spec.js') || contains(inputs.spec_filter, 'e2e/poll-anonymous-layout.spec.js') || contains(inputs.spec_filter, 'e2e/poll-go.spec.js') || contains(inputs.spec_filter, 'e2e/go-states.spec.js')) }}

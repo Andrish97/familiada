@@ -13,16 +13,23 @@ const entries = profiles.flatMap((profile) => {
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : [];
 });
 if (!entries.length) {
-  console.log("Brak zrzutów PNG do walidacji; przyczynę sprawdź w kroku E2E.");
-  process.exit(0);
+  throw new Error("Galeria E20 nie zawiera żadnych zrzutów PNG.");
 }
 
 const fullGalleryRequested = !process.env.E20_GALLERY_PAGES && !process.env.E20_GALLERY_PROFILES;
 if (fullGalleryRequested) {
-  const expectedPerProfile = { macbook: 42, "ipad-portrait": 42, "ipad-landscape": 42, "iphone-portrait": 42, "iphone-landscape": 42, tv: 1 };
-  for (const [profile, expected] of Object.entries(expectedPerProfile)) {
-    const actual = entries.filter((entry) => entry.profile === profile && !entry.stateId).length;
-    if (actual !== expected) throw new Error(`Niekompletne zrzuty stron E20 dla ${profile}: ${actual}/${expected}`);
+  const requiredPages = [
+    "home", "account", "bases", "connect", "connect-tv", "games",
+    "friends", "go", "login", "login-confirm",
+    "login-reset", "logo", "mail", "maintenance", "manual", "marketplace", "polls",
+    "privacy", "subscribers", "tasks", "404",
+  ];
+  for (const profile of profiles) {
+    const profileEntries = entries.filter((entry) => entry.profile === profile && !entry.stateId);
+    const ids = new Set(profileEntries.map((entry) => entry.id));
+    const expected = profile === "tv" ? ["connect-tv"] : requiredPages;
+    const missing = expected.filter((id) => !ids.has(id));
+    if (missing.length) throw new Error(`Niekompletna galeria E20 dla ${profile}; brakuje: ${missing.join(", ")}`);
   }
 }
 
@@ -32,4 +39,4 @@ for (const entry of entries) {
 }
 const pages = [...new Set(entries.map((entry) => entry.id))];
 const modals = entries.filter((entry) => entry.stateId).length;
-console.log(`Zweryfikowano ${entries.length} zrzutów PNG (${modals} modali) na ${pages.length} stronach. Artefakt zawiera wyłącznie foldery stron i obrazy.`);
+console.log(`Zweryfikowano ${entries.length} zrzutów PNG (${modals} modalów otwartych przez interfejs) na ${pages.length} stronach. Artefakt zawiera wyłącznie foldery stron i obrazy.`);
