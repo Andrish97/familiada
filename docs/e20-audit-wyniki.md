@@ -1,4 +1,22 @@
-# E20 — audyt renderów, stan 2026-10-13
+# E20 — audyt renderów, stan 2026-10-16
+
+
+## Wynik nowej galerii — 2026-10-16
+
+Workflow [`38874077525`](https://github.com/Andrish97/familiada/actions/runs/38874077525)
+przeszedł E20, wybrany test jednostkowy `progressiveLoading.test.js` oraz
+walidację artefaktu. Galeria zawiera 270 zrzutów PNG dla 32 stron w sześciu
+profilach urządzeń i okien; 109 zrzutów to modale otwarte kliknięciem akcji UI.
+Artefakt `e20-gallery-1044` ma 22 782 528 bajtów i jest dostępny przez stronę
+workflow. Panel admina `/settings/` jest pominięty, a `/games/settings/`
+pozostaje w zakresie.
+
+Na stronie Ankiet treść nie osiągnęła stanu stabilnego na MacBooku, obu profilach
+iPada i iPhonie pionowo; zrzuty zachowują rzeczywisty widoczny stan zamiast
+wstawiać przykładową zawartość. Akcje QR w Connect i Control, które nie otworzyły
+modala w rzeczywistym UI, nie zostały zapisane jako modale. Pobranie artefaktu
+przez środowisko `gh` zwróciło 403 z hosta blob; artefakt został poprawnie
+zweryfikowany i wysłany przez GitHub Actions, skąd użytkownik może go pobrać.
 
 ## Korekta metody galerii — 2026-10-16
 
@@ -16,8 +34,10 @@ stanu backendu.
 
 Widoki urządzeń nadal korzystają z emulowanych wymiarów przeglądarki oraz
 ramek i safe area zapisanych w wymaganiach E20; treść i stan aplikacji nie
-są emulowane. Nowa galeria pozostaje niepotwierdzona do czasu ukończenia
-workflow i sprawdzenia artefaktu.
+są emulowane. Workflow `38874077525` zakończył się powodzeniem. Zweryfikował
+270 PNG na 32 stronach; 109 kadrów przedstawia modale otwarte przez UI. Panel
+admina `/settings/` nie wchodzi do galerii; Ustawienia gry są uwzględnione.
+Szczegóły i ograniczenia nowego przebiegu opisuje sekcja poniżej.
 
 Tabela kategorii i wspólnych cech stron jest ukończona i odhaczona w głównym
 planie E20 w `ujednolicenie-wygladu.md`. Ten raport dokumentuje osobny etap:
