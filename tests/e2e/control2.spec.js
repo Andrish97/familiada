@@ -36,10 +36,9 @@ const { expectMailDocument } = require("./helpers/mail-document");
 //       chwilowe mute w rundzie.
 //   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
-//   14. Modal ustawień gry (js/pages/game-settings.js) — zmiana nazwy
-//       drużyny faktycznie odświeża zagnieżdżony podgląd Wyświetlacza
-//       (/control/display?preview=1) — regresja na naprawę martwego podglądu w
-//       trybie modalu.
+//   14. Osobna strona ustawień gry — zmiana nazwy drużyny odświeża
+//       zagnieżdżony podgląd Wyświetlacza, zapisuje się jawnie i wraca do
+//       Control przez topbar.
 //   15. Blokada logo — Control czeka, aż logo-editor.js zwolni logo
 //       referencowane przez grę, wznawia się sam po zwolnieniu.
 //   16. Udostępnianie urządzenia przez e-mail — realny mail + link, który
@@ -2307,11 +2306,11 @@ test("control2: wyciszenie dźwięku — Mute zeruje wyjście, zachowując zdarz
 // rzeczy". Przechodzi przez CAŁĄ ścieżkę na raz: przełącznik "Dźwięk" w
 // kroku Urządzeń -> #audioUnlockScreen na Display (musi się pojawić,
 // kliknięcie musi je schować) -> DWA różne suwaki, dwie różne kategorie
-// dźwięku (żeby nie dało się ich pomylić w asercjach): (a) modal "Zmień
+// dźwięku (żeby nie dało się ich pomylić w asercjach): (a) osobna strona "Zmień
 // ustawienia" -> games.settings.sound jako punkt wyjściowy, denormalizacja
 // do game_state dopiero po powrocie z ustawień; (b) suwak BEZPOŚREDNIO w
 // sekcji "Dźwięk" Podsumowania (control/js/ui.js's soundSummarySection)
-// -> zapis prosto do game_state na żywo, bez modala. Oba muszą dotrzeć do
+// -> zapis prosto do game_state na żywo, bez przechodzenia na stronę ustawień. Oba muszą dotrzeć do
 // Display (nie do Control — sprawdzone osobno, że Control zostaje cicho
 // przez cały czas) -> Mute (współdzielony, patrz control/js/soundReactor.js)
 // wyciszony na chwilę w środku rundy, potem wznowiony — ten sam #btnMute co
@@ -2357,7 +2356,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // Dwa RÓŻNE mechanizmy, dwie różne kategorie dźwięku, żeby nie dało się
     // ich pomylić w asercjach:
     //
-    // (a) Modal "Zmień ustawienia" -> games.settings.sound -> denormalizacja
+    // (a) Osobna strona "Zmień ustawienia" -> games.settings.sound -> denormalizacja
     //     do game_state DOPIERO po powrocie z ustawień (applyGameSettingsToState() w
     //     control/js/app.js). To jest "punkt wyjściowy" — trwały, per-gra
     //     domyślny zapis, edytowalny tylko tam (warianty/pliki własne też).
@@ -2365,15 +2364,15 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // (b) Suwak BEZPOŚREDNIO w sekcji "Dźwięk" Podsumowania
     //     (control/js/ui.js's soundSummarySection) -> zapis PROSTO do
     //     game_state ("settings.setSoundVolume" w app.js), NA ŻYWO, bez
-    //     dotykania games.settings i bez otwierania modala w ogóle.
+    //     dotykania games.settings i bez przechodzenia na stronę ustawień.
     //
     // Zgłoszone wprost: to są różne rzeczy, oba mają działać i oba mają być
-    // przetestowane osobno — modal zmienia "round_transition", Podsumowanie
+    // przetestowane osobno — strona ustawień zmienia "round_transition", Podsumowanie
     // zmienia "reveal", więc każda asercja wiąże się jednoznacznie z jednym
     // z dwóch mechanizmów.
 
     // (a) games.settings jako punkt wyjściowy — zmiana jest jawnie zapisana
-    // na stronie ustawień przed powrotem do Control.
+    // na osobnej stronie ustawień przed powrotem do Control.
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
     await page.waitForURL(/\/games\/settings\//, { timeout: 15000 });
     // #gsTeamA staje się widoczny dopiero po zakończeniu async inicjalizacji
@@ -2396,10 +2395,10 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 
     await expect.poll(
       () => displayPage.evaluate(() => localStorage.getItem("sfx_vol_round_transition")),
-      { timeout: 10000, message: "głośność 'round_transition' skonfigurowana w games.settings (modal) powinna dotrzeć do Display" }
+      { timeout: 10000, message: "głośność 'round_transition' skonfigurowana na stronie ustawień powinna dotrzeć do Display" }
     ).toBe("0.7");
 
-    // (b) game_state na żywo — suwak w Podsumowaniu, bez modala.
+    // (b) game_state na żywo — suwak w Podsumowaniu, bez przechodzenia na stronę ustawień.
     const revealSlider = page.locator('input.summarySoundVol[data-sfx-vol="reveal"]');
     await expect(revealSlider).toBeVisible({ timeout: 10000 });
     // "input" (przeciąganie) tylko podgląd lokalny; dopiero "change"
@@ -2536,13 +2535,13 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
   }
 });
 
-// ===== 14. Modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza =====
+// ===== 14. Osobna strona ustawień — podgląd, zapis i powrót do Control =====
 //
-// Zgłoszone: podgląd Wyświetlacza w modalu ustawień (js/pages/game-settings.js)
-// był całkowicie martwy — sendDisplayCmd() w trybie modalu tylko przekazywał
+// Zgłoszone: podgląd Wyświetlacza na stronie ustawień
+// (games/settings/js/game-settings.js) był całkowicie martwy — sendDisplayCmd()
 // tekstowe komendy do window.parent, licząc na Control, żeby je dalej
 // przekazał "prawdziwemu" Displayowi (czego Control v2 nigdy nie robi —
-// komend już nie ma). Naprawa: modal sam osadza /control/display?preview=1 i
+// komend już nie ma). Naprawa: strona ustawień osadza /control/display?preview=1 i
 // przesyła mu postMessage familiada:preview-row, ten sam mechanizm co D3.
 // Ten test dowodzi, że to faktycznie działa: zmiana nazwy drużyny w polu
 // formularza musi się pojawić w window.__displayLog ZAGNIEŻDŻONEGO iframe'a
@@ -2567,14 +2566,11 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
 
-    // Skróty są ignorowane, dopóki plansza jest zajęta (zapis przejścia do
-    // Podsumowania jeszcze trwa, a ekran renderuje się optymistycznie) —
-    // powtarzaj "e" + Enter, aż Control przejdzie na stronę ustawień.
-    await expect(async () => {
-      await page.keyboard.press("e");
-      await page.keyboard.press("Enter");
-      await page.waitForURL(/\/games\/settings\//, { timeout: 1500 });
-    }).toPass({ timeout: 20000 });
+    // Ustawienia są osobną stroną. Otwieramy je widocznym przyciskiem,
+    // zapisujemy jawnie i wracamy przez topbar — bez starego skrótu
+    // klawiaturowego, który nie jest częścią tego scenariusza.
+    await page.getByRole("button", { name: "Zmień ustawienia" }).click();
+    await page.waitForURL(/\/games\/settings\//, { timeout: 15000 });
 
     // Kategoria "Drużyny" jest domyślnie aktywna — pole nazwy drużyny A jest
     // widoczne od razu, bez przełączania zakładek.
@@ -2595,13 +2591,20 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
       const log = await previewFrame().evaluate(() => window.__displayLog || []);
       return log.some((e) => e.call === "api.small.long1" && e.args?.[0] === "Testowi Mistrzowie");
     }, { timeout: 10000 }).toBe(true);
+
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
+    await page.locator("#btnBack").click();
+    await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 30000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
+    await expect(page.locator(".c2-summary-teams .summarySectionValue")).toContainText("Testowi Mistrzowie");
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
   }
 });
 
-// ===== 15. Blokada logo — Control (i modal ustawień gry) czekają, aż
+// ===== 15. Blokada logo — Control (i strona ustawień gry) czekają, aż
 // logo-editor.js zwolni logo referencowane przez grę =====
 //
 // js/core/resource-lock.js's guardResourceBusy() — dodane w tej sesji do
@@ -3387,19 +3390,21 @@ test("control2: opóźnione potwierdzenie Display blokuje następną akcję i bu
 
 test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktualny checkbox", async ({ page, context, browser }) => {
   test.setTimeout(300_000);
+  const accountPool = getTestAccountPool();
+  test.skip(accountPool.length < 2, "Scenariusz znajomego wymaga dwóch różnych kont testowych.");
   const email = "test14@familiada.online";
   const rpc = (target, name, args = {}) => target.evaluate(async ({ name, args }) => {
     const { data, error } = await window.__sbClient.rpc(name, args);
     if (error) throw new Error(`${name}: ${error.message}`);
     return data;
   }, { name, args });
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAsTestUser(page, context, { username: accountPool[0] });
   const recipientContext = await controlContext(browser);
   const recipient = await recipientContext.newPage();
   const anonymous = await controlContext(browser);
   let game = null, peer = null, oldFlag = null;
   try {
-    await loginAsPooledTestUser(recipient, recipientContext, 1);
+    await loginAsTestUser(recipient, recipientContext, { username: accountPool[1] });
     peer = await recipient.evaluate(async () => {
       const user = (await window.__sbClient.auth.getUser()).data.user;
       const {data,error}=await window.__sbClient.from("profiles").select("username").eq("id",user.id).single();
@@ -3414,7 +3419,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     expect((await rpc(page,"e2e_subscriber_email_cleanup",{p_email:email})).ok).toBe(true);
     expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
     const invited = await rpc(page,"friends_invite",{p_handle:peer.email});
-    expect(invited.ok).toBe(true);
+    expect(invited, `friends_invite response: ${JSON.stringify(invited)}`).toMatchObject({ok:true});
     expect((await rpc(recipient,"friends_accept",{p_id:invited.id})).ok).toBe(true);
     game = await makeGame(page,`E2E-CONTROL358-${Date.now()}`);
     await clearMailbox(email); await resetMailProviderLimits(page);
@@ -3461,10 +3466,13 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     const mutedAfter = new Date().toISOString();
     await open("buzzer");
     await page.locator("#shareDeviceEmail").fill(email);
-    await expect(page.locator("#shareDeviceMsg")).toContainText("Ta osoba zrezygnowała z zaproszeń i udostępnień");
-    await expect(page.locator("#btnShareDeviceAdd")).toBeDisabled();
-    expect(await rpc(page,"control_device_share_create_by_lookup",{p_game_id:game.id,p_device_type:"buzzer",p_lookup:email})).toMatchObject({ok:false,error:"notifications_disabled"});
-    expect((await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).some(row=>row.recipient_email===email)).toBe(false);
+    await expect(page.locator("#shareDeviceMsg")).toContainText("Dostęp zostanie nadany bez maila");
+    await expect(page.locator("#btnShareDeviceAdd")).toBeEnabled();
+    await page.locator("#btnShareDeviceAdd").click();
+    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(email);
+    const buzzer = (await rpc(page,"control_device_shares_list",{p_game_id:game.id,p_device_type:"buzzer"})).find(row=>row.recipient_email===email);
+    expect(buzzer).toMatchObject({recipient_id:null,recipient_kind:"mail",cooldown_until:null});
+    expect((await rpc(page,"control_device_share_resolve",{p_token:buzzer.share_token})).ok).toBe(true);
     const delivery = await readMailDelivery({recipient:email,after:mutedAfter});
     expect(delivery.queue).toEqual([]); expect(delivery.events).toEqual([]);
     await page.locator("#btnShareDeviceClose").click();
