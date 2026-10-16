@@ -582,7 +582,14 @@ async function selectOwnedBase(page, baseId) {
 }
 
 async function restartControlToDevices(page) {
-  await page.locator("#btnStartOver").click();
+  const startOver = page.locator("#btnStartOver");
+  if (!await startOver.isVisible().catch(() => false)) {
+    const menuToggle = page.locator(".topbar-menu-toggle");
+    await menuToggle.waitFor({ state: "visible", timeout: 10_000 });
+    await menuToggle.click();
+  }
+  await startOver.waitFor({ state: "visible", timeout: 10_000 });
+  await startOver.click();
   const confirmation = page.getByRole("dialog", { name: "Zacznij od nowa" });
   await confirmation.waitFor({ state: "visible", timeout: 10_000 });
   await expect(confirmation.locator(".mTitle")).toHaveText("Zacznij od nowa");
@@ -1238,7 +1245,6 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           const isBaseExplorer = id === "base-explorer";
           const baseState = await capture(page, profile, id, href, manifest, null, readySelector, id === "control" ? {
             waitForReady: async (controlPage) => {
-              await controlPage.locator("#btnStartOver").waitFor({ state: "visible", timeout: 20_000 });
               await restartControlToDevices(controlPage);
             },
           } : id === "polls" ? {
