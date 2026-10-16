@@ -242,6 +242,22 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // initPage czeka na odpowiedź na rzeczywisty, blokujący modal oceny. Zapisz
   // go w stanie otwartym i kliknij jego prawdziwy przycisk „Później”, żeby
   // dalszy widok strony pokazywał stan, do którego użytkownik faktycznie dotrze.
+  await page.waitForFunction(() => {
+    const rating = document.getElementById("ratingOverlay");
+    if (rating) {
+      const style = getComputedStyle(rating);
+      if (!rating.hidden && style.display !== "none" && style.visibility !== "hidden" && rating.getClientRects().length) return true;
+    }
+    const guard = document.getElementById("pageGuard");
+    if (guard?.style.display === "flex" && guard.dataset.state) return true;
+    const steps = [...document.querySelectorAll("[data-skel-step]")].filter((step) => {
+      for (let node = step; node && node !== document.body; node = node.parentElement) {
+        if (node.hidden || getComputedStyle(node).display === "none") return false;
+      }
+      return step.classList.contains("skel-step-ready") || step.getClientRects().length > 0;
+    });
+    return steps.length > 0 && steps.every((step) => step.classList.contains("skel-step-ready"));
+  }, null, { timeout: 60_000 });
   let autoModalImage = null;
   const ratingOverlay = page.locator("#ratingOverlay");
   if (await ratingOverlay.count() && await ratingOverlay.isVisible().catch(() => false)) {
