@@ -103,6 +103,54 @@ function additionalStates(data) {
         },
       },
     ] : []),
+    ...(data.base ? [
+      {
+        id: "base-explorer", stateId: "modal:export-questions", page: "base-explorer",
+        href: `/bases/explorer/?id=${data.base.id}`, modalCapture: true,
+        expectedModalId: "exportOverlay", actionLabel: "Eksplorator bazy → Eksport pytań",
+        prepare: async (page) => {
+          const target = await findUnlockedQuestionAcrossBases(page, data);
+          if (!target) throw new Error("Brak dostępnego pytania do wyboru w eksporcie bazy.");
+          await page.goto(`${ORIGIN}/bases/explorer/?id=${target.base.id}&lang=pl`, { waitUntil: "domcontentloaded", timeout: 20_000 });
+          await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 20_000 });
+          await openQuestionInBaseFolder(page, target.base.id, target.question);
+          const drawer = page.locator("#btnDrawerToggle");
+          if (await drawer.isVisible().catch(() => false)) await drawer.click();
+          await page.locator('#toolbar [data-act="createGame"]').click();
+        },
+      },
+      {
+        id: "base-explorer", stateId: "modal:rename-item", page: "base-explorer",
+        href: `/bases/explorer/?id=${data.base.id}`, modalCapture: true,
+        expectedVisibleSelector: ".uni-modal", actionLabel: "Eksplorator bazy → Zmień nazwę elementu",
+        prepare: async (page) => {
+          const item = page.locator('#list .row[data-kind="cat"][data-id]').first();
+          await item.waitFor({ state: "visible", timeout: 15_000 });
+          await item.click();
+          const drawer = page.locator("#btnDrawerToggle");
+          if (await drawer.isVisible().catch(() => false)) await drawer.click();
+          await page.locator('#toolbar [data-act="rename"]').click();
+          await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
+        },
+      },
+      {
+        id: "base-explorer", stateId: "modal:edit-question", page: "base-explorer",
+        href: `/bases/explorer/?id=${data.base.id}`, modalCapture: true,
+        expectedModalId: "questionOverlay", actionLabel: "Eksplorator bazy → Edytuj pytanie",
+        prepare: async (page) => {
+          const target = await findUnlockedQuestionAcrossBases(page, data);
+          if (!target) throw new Error("Brak odblokowanego pytania, którego edycję można pokazać na bazie rzeczywistych danych.");
+          await page.goto(`${ORIGIN}/bases/explorer/?id=${target.base.id}&lang=pl`, { waitUntil: "domcontentloaded", timeout: 20_000 });
+          await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 20_000 });
+          await openQuestionInBaseFolder(page, target.base.id, target.question);
+          const drawer = page.locator("#btnDrawerToggle");
+          if (await drawer.isVisible().catch(() => false)) await drawer.click();
+          const action = page.locator('#toolbar [data-act="editQuestion"]');
+          await action.click();
+          await page.locator("#questionOverlay").waitFor({ state: "visible", timeout: 10_000 });
+        },
+      },
+    ] : []),
     ...(data.polls.poll_text ? [{ id: "polls", stateId: "results", page: "polls", href: `/polls/?id=${data.polls.poll_text.id}&tab=results` }] : []),
     ...(mobileSharePoll ? [
       { id: "polls", stateId: "anonymous", page: "polls", href: `/polls/?id=${mobileSharePoll.id}&tab=share`, mobileOnly: true },
@@ -372,6 +420,58 @@ async function clickModalAction(page, action) {
       return !el.hidden && style.display !== "none" && style.visibility !== "hidden" && el.getClientRects().length > 0;
     }), null, { timeout: 3_000 }).catch(() => {});
   return pageModalIds(page);
+}
+
+// Wybór pytania odbywa się po sprawdzeniu blokady przez tę samą funkcję RPC,
+// której używa UI. Sam zrzut nadal otwiera modal przez widok i kliknięcia UI.
+async function findUnlockedBaseQuestion(page, baseId) {
+  return page.evaluate(async (id) => {
+    const db = window.__sbClient;
+    if (!db) throw new Error("Brak klienta bazy danych w stronie eksploratora");
+    const { data: questions, error } = await db.from("qb_questions")
+      .select("id,category_id")
+      .eq("base_id", id)
+      .limit(1000);
+    if (error) throw error;
+    for (const question of questions || []) {
+      const tabId = `e20-gallery-probe:${crypto.randomUUID()}`;
+      const { data: lock, error: lockError } = await db.rpc("acquire_edit_lock_mode", {
+        p_resource_type: "base_question",
+        p_resource_id: question.id,
+        p_tab_id: tabId,
+        p_context: "e20-gallery-probe",
+        p_mode: "exclusive",
+      });
+      if (lockError) throw lockError;
+      if (!lock?.ok) continue;
+      const { error: releaseError } = await db.rpc("release_edit_lock", {
+        p_resource_type: "base_question", p_resource_id: question.id, p_tab_id: tabId,
+      });
+      if (releaseError) throw releaseError;
+      return question;
+    }
+    return null;
+  }, baseId);
+}
+
+async function findUnlockedQuestionAcrossBases(page, data) {
+  const candidates = data.baseCandidates?.length ? data.baseCandidates : data.base ? [data.base] : [];
+  for (const base of candidates) {
+    const question = await findUnlockedBaseQuestion(page, base.id);
+    if (question) return { base, question };
+  }
+  return null;
+}
+
+async function openQuestionInBaseFolder(page, baseId, question) {
+  if (question.category_id) {
+    const href = `/bases/explorer/?id=${encodeURIComponent(baseId)}&folder=${encodeURIComponent(question.category_id)}&lang=pl`;
+    await page.goto(`${ORIGIN}${href}`, { waitUntil: "domcontentloaded", timeout: 20_000 });
+    await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 20_000 });
+  }
+  const row = page.locator(`#list .row[data-kind="q"][data-id="${question.id}"]`);
+  await row.waitFor({ state: "visible", timeout: 15_000 });
+  await row.click();
 }
 
 async function captureAndDismissBlockingModal(page, profile, id) {
@@ -913,61 +1013,13 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 prepare: async (modalPage) => {
                   const action = modalPage.locator('#toolbar [data-act="editTags"]');
                   await action.waitFor({ state: "visible", timeout: 5_000 });
-                  async function tryVisibleQuestions() {
-                    const questions = modalPage.locator('#list .row[data-kind="q"][data-id]');
-                    const count = await questions.count();
-                    for (let index = 0; index < count; index += 1) {
-                      const question = questions.nth(index);
-                      if (!await question.isVisible().catch(() => false)) continue;
-                      await question.click();
-                      await action.click();
-                      const outcome = await Promise.race([
-                        modalPage.locator("#tagsOverlay").waitFor({ state: "visible", timeout: 4_000 }).then(() => "opened").catch(() => null),
-                        modalPage.locator(".uni-modal").waitFor({ state: "visible", timeout: 4_000 }).then(() => "blocked").catch(() => null),
-                      ]);
-                      if (outcome === "opened") return true;
-                      if (outcome !== "blocked") throw new Error("Przypisanie taga nie otworzyło modalа ani komunikatu o blokadzie.");
-
-                      const alert = modalPage.locator(".overlay:visible .uni-modal").first();
-                      const message = await alert.innerText();
-                      if (!/edytowany w innej karcie|edited in another tab/i.test(message)) {
-                        throw new Error(`Przypisanie taga zwróciło nieoczekiwany komunikat: ${message}`);
-                      }
-                      await alert.getByRole("button", { name: /^(OK|Okay)$/i }).click();
-                      await alert.waitFor({ state: "hidden", timeout: 5_000 });
-                    }
-                    return false;
-                  }
-                  const visitedFolderIds = new Set();
-                  async function findUnlockedQuestion(depth = 0) {
-                    if (depth > 12) return false;
-                    if (await tryVisibleQuestions()) return true;
-                    const folders = modalPage.locator('#list .row[data-kind="cat"][data-id]');
-                    const folderIds = await folders.evaluateAll((items) => items.map((item) => item.dataset.id).filter(Boolean));
-                    for (const folderId of folderIds) {
-                      if (visitedFolderIds.has(folderId)) continue;
-                      visitedFolderIds.add(folderId);
-                      const folder = modalPage.locator(`#list .row[data-kind="cat"][data-id="${folderId}"]`);
-                      if (!await folder.isVisible().catch(() => false)) continue;
-                      // Drzewo przebudowuje wiersze po pierwszym kliknięciu.
-                      // Wymuszone double-click nadal idzie przez prawdziwy
-                      // handler UI, ale nie czeka na stabilność elementu,
-                      // który zaraz zostanie zastąpiony przez render.
-                      await folder.dblclick({ force: true, timeout: 4_000 }).catch(() => {});
-                      await modalPage.waitForTimeout(250);
-                      const found = await findUnlockedQuestion(depth + 1);
-                      if (found) return true;
-                      const crumbs = modalPage.locator('#breadcrumbs .crumb[data-kind="crumb"]');
-                      const crumbCount = await crumbs.count();
-                      if (crumbCount > 1) await crumbs.nth(crumbCount - 2).click();
-                      else await modalPage.locator('#breadcrumbs .crumb[data-kind="root"]').click();
-                      await modalPage.waitForTimeout(250);
-                    }
-                    return false;
-                  }
-                  if (!await findUnlockedQuestion()) {
-                    throw new Error("W całej bazie nie znaleziono odblokowanego pytania; widoku przypisania nie zastępuję fikcyjnymi danymi.");
-                  }
+                  const target = await findUnlockedQuestionAcrossBases(modalPage, data);
+                  if (!target) throw new Error("W żadnej z baz konta nie ma pytania, którego blokadę można legalnie uzyskać; nie podstawiam fikcyjnego stanu.");
+                  await modalPage.goto(`${ORIGIN}/bases/explorer/?id=${target.base.id}&lang=pl`, { waitUntil: "domcontentloaded", timeout: 20_000 });
+                  await modalPage.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 20_000 });
+                  await openQuestionInBaseFolder(modalPage, target.base.id, target.question);
+                  await action.click();
+                  await modalPage.locator("#tagsOverlay").waitFor({ state: "visible", timeout: 10_000 });
                 },
               },
               {

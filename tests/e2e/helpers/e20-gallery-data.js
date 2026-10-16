@@ -43,6 +43,7 @@ async function readE20GalleryData(page) {
     return {
       game: preferDemo(games.filter((game) => game.type === "prepared")),
       base: bases[0] || null,
+      baseCandidates: bases,
       logos: {
         text: byLogoMode("TEXT"),
         draw: byLogoMode("DRAW"),
