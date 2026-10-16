@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-16T18105";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-16T19025";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,19 +7,19 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-16T18105";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-16T18105";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-16T18105";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-16T18105";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-16T18105";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-16T18105";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-16T18105";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-16T18105";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-16T18105";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-16T18105";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-16T18105";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-16T18105";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-16T18105";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-16T19025";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-16T19025";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-16T19025";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-16T19025";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-16T19025";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-16T19025";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-16T19025";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-16T19025";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-16T19025";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-16T19025";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-16T19025";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-16T19025";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-16T19025";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -108,22 +108,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-16T18105";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-16T18105";
-import { createEngine } from "./engine.js?v=v2026-10-16T18105";
-import { createActionGate } from "./actionGate.js?v=v2026-10-16T18105";
-import { createDevices } from "./devices.js?v=v2026-10-16T18105";
-import { createPresence } from "./presence.js?v=v2026-10-16T18105";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-16T18105";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-16T18105";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-16T18105";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-16T18105";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-16T18105";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-16T18105";
-import { createUI } from "./ui.js?v=v2026-10-16T18105";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-16T18105";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-16T18105";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-16T18105";
+import { createStore } from "./store.js?v=v2026-10-16T19025";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-16T19025";
+import { createEngine } from "./engine.js?v=v2026-10-16T19025";
+import { createActionGate } from "./actionGate.js?v=v2026-10-16T19025";
+import { createDevices } from "./devices.js?v=v2026-10-16T19025";
+import { createPresence } from "./presence.js?v=v2026-10-16T19025";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-16T19025";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-16T19025";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-16T19025";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-16T19025";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-16T19025";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-16T19025";
+import { createUI } from "./ui.js?v=v2026-10-16T19025";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-16T19025";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-16T19025";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-16T19025";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -477,11 +477,23 @@ async function main() {
   function noteDisplayRequest() {
     const row = store.state.__row;
     if (row && (row.step !== lastDisplayStep || row.sound_cue_seq !== lastDisplayCueSeq)) {
+      const priorRow = previousDisplayRow;
       displayCompletion.request(row.rev);
-      const item = { requestedAt: performance.now(), completedAt: null, expectedMs: null, sound: row.sound_cue_key || null, controlVisibility: document.visibilityState || "unknown", controlFocused: !!document.hasFocus?.(), reported: false };
+      const item = { requestedAt: performance.now(), completedAt: null, expectedMs: null, sound: row.sound_cue_key || null, step: row.step, soundCueSeq: row.sound_cue_seq, previousStep: lastDisplayStep, controlVisibility: document.visibilityState || "unknown", controlFocused: !!document.hasFocus?.(), reported: false };
       displayCompletionTimes.set(row.rev, item);
-      void expectedDisplayTransitionMs(previousDisplayRow, row).then(expectedMs => {
+      void expectedDisplayTransitionMs(priorRow, row).then(expectedMs => {
         item.expectedMs = expectedMs;
+        void sessionTelemetry.report({
+          kind: "diagnostic", category: "state_sync",
+          message: "Control wysłał zmianę stanu oczekującą na Display.",
+          devices: ["display"],
+          metrics: {
+            phase: "requested", revision: row.rev, previous_revision: priorRow?.rev ?? null,
+            from_step: item.previousStep, to_step: item.step, sound_cue_seq: item.soundCueSeq,
+            sound: item.sound, expected_ms: Number.isFinite(expectedMs) ? Math.round(expectedMs) : null,
+            control_visibility: item.controlVisibility, control_focused: item.controlFocused,
+          },
+        });
         evaluateDisplayCompletion(row.rev, item);
         if (expectedMs != null && !item.reported) {
           item.timeoutTimer = setTimeout(() => reportDisplayCompletionTimeout(row.rev, item), Math.max(0, expectedMs + 1500));
@@ -555,7 +567,7 @@ async function main() {
   let completionUIReady = false;
   let completionReadPending = false;
   let completionRealtimeConnected = false;
-  function applyDisplayCompletion(revision) {
+  function applyDisplayCompletion(revision, source = "realtime") {
     const renderedRev = Number(revision);
     if (!Number.isFinite(renderedRev) || !displayCompletion.acknowledge(renderedRev)) return;
     const completedAt = performance.now();
@@ -563,6 +575,18 @@ async function main() {
       if (requestedRev <= renderedRev && item.completedAt == null) {
         item.completedAt = completedAt;
         if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
+        const latencyMs = Math.max(0, Math.round(completedAt - item.requestedAt));
+        void sessionTelemetry.report({
+          kind: "diagnostic", category: "state_sync",
+          message: "Display potwierdził wyrenderowanie zmiany stanu.",
+          devices: ["display"],
+          metrics: {
+            phase: "acknowledged", revision: requestedRev, acknowledged_revision: renderedRev,
+            sound_cue_seq: item.soundCueSeq, sound: item.sound, latency_ms: latencyMs,
+            expected_ms: Number.isFinite(item.expectedMs) ? Math.round(item.expectedMs) : null,
+            ack_source: source, control_visibility: document.visibilityState || "unknown",
+          },
+        });
         evaluateDisplayCompletion(requestedRev, item);
       }
     }
@@ -580,7 +604,7 @@ async function main() {
         for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
         return;
       }
-      if (data) applyDisplayCompletion(data.rendered_rev);
+      if (data) applyDisplayCompletion(data.rendered_rev, "fallback_read");
     } catch (error) {
       for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
     } finally { completionReadPending = false; }
@@ -588,9 +612,22 @@ async function main() {
   const completionChannel = sb().channel(`display-completion:${gameId}`);
   completionChannel.on("postgres_changes", {
     event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
-  }, (payload) => applyDisplayCompletion(payload?.new?.rendered_rev));
+  }, (payload) => applyDisplayCompletion(payload?.new?.rendered_rev, "realtime"));
+  let lastCompletionRealtimeState = null;
   completionChannel.subscribe((status) => {
     completionRealtimeConnected = status === "SUBSCRIBED";
+    const state = completionRealtimeConnected ? "connected" : "disconnected";
+    if (state !== lastCompletionRealtimeState) {
+      lastCompletionRealtimeState = state;
+      if (store.state.locks.gameStarted) void sessionTelemetry.report({
+        kind: "diagnostic", category: "realtime",
+        message: completionRealtimeConnected
+          ? "Kanał ACK Displaya połączony."
+          : "Kanał ACK Displaya niedostępny; Control używa odpytywania awaryjnego.",
+        devices: ["control", "display"],
+        metrics: { channel: "display_completion", state, fallback: !completionRealtimeConnected },
+      });
+    }
     if (completionRealtimeConnected) void refreshDisplayCompletion();
   });
   setInterval(() => {

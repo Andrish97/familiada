@@ -3079,15 +3079,24 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     const outageEvents = reconnectSessions[0].stats_detail.events || [];
     const outage = outageEvents.find(event => event.kind === "diagnostic" && event.category === "connectivity");
     expect(outage.devices).toEqual(expect.arrayContaining(["display", "host", "buzzer"]));
-    await attachStatistics(testInfo, "reconnect", reconnectSessions);
     console.log(`[statistics-review] reconnect diagnostic: ${JSON.stringify(outage)}`);
     // To czas od wykrycia braku urządzeń do ich ponownego podłączenia; zależy
     // od tempa odtworzenia trzech kart, więc sprawdzamy sam fakt blokady.
     expect(outage.metrics.blocked_duration_ms).toBeGreaterThan(0);
     expect(outageEvents.filter(event => ["disconnect", "reconnect"].includes(event.kind))).toHaveLength(0);
-    expect(reconnectSessions).toHaveLength(1);
-    expect(reconnectSessions[0].rounds_played).toBe(1);
-    expect(reconnectSessions[0].ended_at).toBeNull();
+    await expect.poll(async () => {
+      const sessions = await readControl2Sessions(page, game.id);
+      return (sessions[0]?.stats_detail.events || []).filter(event => event.kind === "diagnostic"
+        && event.category === "state_sync" && event.metrics?.phase === "acknowledged").length;
+    }, { timeout: 15_000 }).toBeGreaterThan(0);
+    const syncSessions = await readControl2Sessions(page, game.id);
+    const syncEvents = syncSessions[0].stats_detail.events.filter(event => event.kind === "diagnostic" && event.category === "state_sync");
+    expect(syncEvents.some(event => event.metrics?.phase === "requested" && Number.isFinite(event.metrics?.revision))).toBe(true);
+    expect(syncEvents.some(event => event.metrics?.phase === "acknowledged" && ["realtime", "fallback_read"].includes(event.metrics?.ack_source))).toBe(true);
+    await attachStatistics(testInfo, "reconnect", syncSessions);
+    expect(syncSessions).toHaveLength(1);
+    expect(syncSessions[0].rounds_played).toBe(1);
+    expect(syncSessions[0].ended_at).toBeNull();
     expect(errors, "żadne z urządzeń (stare ani świeżo podłączone) nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
