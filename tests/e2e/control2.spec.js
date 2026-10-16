@@ -569,11 +569,14 @@ async function padGame(page, gameId) {
 }
 
 async function makeGame(page, name, opts = {}) {
-  const g = await makeGameRaw(page, name, opts);
+  const { deviceProtocol = 1, ...gameOpts } = opts;
+  const g = await makeGameRaw(page, name, gameOpts);
   await padGame(page, g.id);
-  const keys = await page.evaluate(async (gameId) => {
+  const keys = await page.evaluate(async ({ gameId, deviceProtocol }) => {
     const sb = window.__sbClient;
-    const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch", {
+    const { data: session, error: sessionError } = await sb.rpc(deviceProtocol === 2
+      ? "control_runtime_session_touch_v2"
+      : "control_runtime_session_touch", {
       p_game_id: gameId, p_session_id: null,
     });
     if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Control runtime session failed");
@@ -584,7 +587,7 @@ async function makeGame(page, name, opts = {}) {
       result[type] = data.token;
     }
     return result;
-  }, g.id);
+  }, { gameId: g.id, deviceProtocol });
   // Existing fixture call sites use these names to build device URLs; return
   // only session-bound link tokens, never games.share_key_*.
   return { ...g, share_key_display: keys.display, share_key_host: keys.host, share_key_buzzer: keys.buzzer };
@@ -1120,7 +1123,7 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
 
 test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeładowaniu w środku rundy 2", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const game = await makeGame(page, `E2E-CONTROL2-FULLGAME-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
+  const game = await makeGame(page, `E2E-CONTROL2-FULLGAME-${Date.now()}`, { roundQuestions: TWO_QUESTIONS, deviceProtocol: 2 });
   const contexts = [];
   const errors = [];
   try {
