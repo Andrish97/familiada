@@ -582,6 +582,15 @@ async function selectOwnedBase(page, baseId) {
   return tile;
 }
 
+async function restartControlToDevices(page) {
+  await page.locator("#btnStartOver").click();
+  const confirmation = page.locator(".uni-modal");
+  await confirmation.waitFor({ state: "visible", timeout: 10_000 });
+  await expect(confirmation.locator(".mTitle")).toHaveText("Zacznij od nowa");
+  await confirmation.locator(".uni-foot .btn.gold").click();
+  await page.waitForFunction(() => document.body.dataset.controlStep === "devices_display", null, { timeout: 20_000 });
+}
+
 async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithoutFontWait = false, capturedImage = null) {
   let image;
   const captureWithCDP = async () => {
@@ -1213,9 +1222,12 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           const isControl = id === "control";
           const isBaseExplorer = id === "base-explorer";
           const baseState = await capture(page, profile, id, href, manifest, null, readySelector, id === "control" ? {
-            waitForReady: async (controlPage) => controlPage.waitForFunction(() =>
-              /^\d{6}$/.test(document.querySelector('#app .device-row[data-device="display"] .device-connect-code-val')?.textContent?.trim() || ""),
-            null, { timeout: 20_000 }),
+            waitForReady: async (controlPage) => {
+              await controlPage.waitForFunction(() =>
+                /^\d{6}$/.test(document.querySelector('#app .device-row[data-device="display"] .device-connect-code-val')?.textContent?.trim() || ""),
+              null, { timeout: 20_000 });
+              await restartControlToDevices(controlPage);
+            },
           } : {});
           if (id === "control" && data.game) {
             const code = page.locator('#app .device-row[data-device="display"] .device-connect-code-val');
@@ -1296,6 +1308,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             await capture(
               page, profile, id, href, manifest,
               async (modalPage) => {
+                await restartControlToDevices(modalPage);
                 const shareButton = modalPage.locator('#app .device-row[data-device="display"] button')
                   .filter({ hasText: /Udostępnij/ }).first();
                 await shareButton.waitFor({ state: "visible", timeout: 15_000 });
