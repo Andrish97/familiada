@@ -487,7 +487,18 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     }
     preparedState = await prepare(page);
     if (options.expectedModalId) {
-      await page.locator(`#${options.expectedModalId}`).waitFor({ state: "visible", timeout: 15_000 });
+      try {
+        await page.locator(`#${options.expectedModalId}`).waitFor({ state: "visible", timeout: 15_000 });
+      } catch (error) {
+        const modalDiagnostics = await page.evaluate(() => ({
+          visibleOverlays: [...document.querySelectorAll(".overlay, [role=dialog]")]
+            .filter((element) => element.getClientRects().length && getComputedStyle(element).display !== "none")
+            .map((element) => ({ id: element.id, className: element.className, text: element.innerText.trim().slice(0, 180) })),
+          selectedRows: [...document.querySelectorAll('#list .row.is-selected')].map((row) => ({ kind: row.dataset.kind, id: row.dataset.id })),
+          tagActionDisabled: document.querySelector('#toolbar [data-act="editTags"]')?.disabled ?? null,
+        }));
+        throw new Error(`${profile.label} · ${id}: modale #${options.expectedModalId} nie otworzył się po akcji; ${JSON.stringify({ ...modalDiagnostics, pageErrors })}; ${error.message}`);
+      }
     }
     if (options.expectedVisibleSelector) {
       await page.locator(options.expectedVisibleSelector).waitFor({ state: "visible", timeout: 15_000 });
