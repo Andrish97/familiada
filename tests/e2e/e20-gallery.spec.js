@@ -34,8 +34,8 @@ const requestedAccounts = galleryAccountNumbers();
 
 function urls(data) {
   const game = data.game;
-  const pollPoints = data.polls.poll_points;
-  const pollText = data.polls.poll_text;
+  const pollPoints = data.polls.poll_points_vote;
+  const pollText = data.polls.poll_text_vote;
   const logo = data.logos.text || data.logos.draw || data.logos.image;
   const result = [
     ["home", "/"], ["account", "/account/"], ["bases", "/bases/"],
@@ -69,30 +69,34 @@ function urls(data) {
 
 function additionalStates(data) {
   const states = [
-    ...(data.game ? [{
-      id: "games-selected", page: "games", href: "/games/",
-      prepare: async (page) => {
-        const tile = page.locator(`.card[data-game-id="${data.game.id}"]`);
-        await tile.waitFor({ state: "visible", timeout: 20_000 });
-        await tile.click();
-        await expect(tile).toHaveClass(/selected/);
+    { id: "bases", stateId: "shared", page: "bases", href: "/bases/?tab=shared" },
+    ...(data.polls.poll_text ? [{ id: "polls", stateId: "results", page: "polls", href: `/polls/?id=${data.polls.poll_text.id}&tab=results` }] : []),
+    { id: "friends", stateId: "list", page: "friends", href: "/friends/?tab=received", mobileOnly: true },
+    { id: "subscribers", stateId: "list", page: "subscribers", href: "/subscribers/?tab=received", mobileOnly: true },
+    ...(data.game ? [
+      {
+        id: "game-editor", stateId: "question", page: "game-editor", href: `/games/editor/?id=${data.game.id}`,
+        mobileOnly: true,
+        prepare: async (page) => {
+          const question = page.locator("#qList .qcard[data-id]").first();
+          await question.waitFor({ state: "visible", timeout: 20_000 });
+          await question.click();
+          await expect(page.locator("body")).toHaveClass(/mobile-editing/);
+          await page.locator("#qText").scrollIntoViewIfNeeded();
+        },
       },
-    }] : []),
-    { id: "games-community", page: "games", href: "/games/?tab=market" },
-    ...((data.logos.text || data.logos.draw || data.logos.image) ? [{
-      id: "logo-selected", page: "logo", href: "/logos/",
-      prepare: async (page) => {
-        const logo = data.logos.text || data.logos.draw || data.logos.image;
-        const tile = page.locator(`.logoTile[data-key="${logo.id}"]`);
-        await tile.waitFor({ state: "visible", timeout: 20_000 });
-        await tile.click();
-        await expect(tile).toHaveClass(/is-selected/);
+      {
+        id: "game-editor", stateId: "answers", page: "game-editor", href: `/games/editor/?id=${data.game.id}`,
+        mobileOnly: true,
+        prepare: async (page) => {
+          const question = page.locator("#qList .qcard[data-id]").first();
+          await question.waitFor({ state: "visible", timeout: 20_000 });
+          await question.click();
+          await expect(page.locator("body")).toHaveClass(/mobile-editing/);
+          await page.locator("#aList").scrollIntoViewIfNeeded();
+        },
       },
-    }] : []),
-    { id: "bases-shared", page: "bases", href: "/bases/?tab=shared" },
-    ...(data.polls.poll_text ? [{ id: "polls-results", page: "polls", href: `/polls/?id=${data.polls.poll_text.id}&tab=results` }] : []),
-    { id: "friends-received", page: "friends", href: "/friends/?tab=received" },
-    { id: "subscribers-received", page: "subscribers", href: "/subscribers/?tab=received" },
+    ] : []),
   ];
   return states;
 }
@@ -182,7 +186,7 @@ function pageModalIds(page) {
       .map((el) => el.id || el.classList?.[0] || el.querySelector?.(".mTitle")?.textContent?.trim() || "dialog"));
 }
 
-async function findModalActions(page) {
+async function findModalActions(page, pageId) {
   return page.locator('button, [role="button"], a[aria-haspopup="dialog"]')
     .evaluateAll((items) => items.map((el, index) => {
       const style = getComputedStyle(el);
@@ -190,6 +194,7 @@ async function findModalActions(page) {
       const label = [el.innerText, el.getAttribute("aria-label"), el.title].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
       const icon = el.querySelector("[data-icon]")?.getAttribute("data-icon") || el.getAttribute("data-icon") || "";
       const contact = el.hasAttribute("data-contact-modal");
+      if (contact && pageId !== "games") return null;
       const dialogTarget = el.getAttribute("aria-haspopup") === "dialog" || el.hasAttribute("data-modal-target");
       const safeLabel = /udostępnij|udostepnij|import|eksport|export|qr|podgląd|podglad|preview|tagi|kolor/i.test(label);
       const safeIcon = /^(share|qr|palette|tag|eye)$/i.test(icon);
@@ -270,6 +275,16 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   const pageErrors = [];
   const onPageError = (error) => pageErrors.push(error.message);
   page.on("pageerror", onPageError);
+  if (id === "maintenance") {
+    // Podgląd Maintenance korzysta z właściwej strony i jej JS, a przykładowy
+    // stan pozwala pokazać ją również wtedy, gdy produkcyjna przerwa jest wyłączona.
+    await page.route("**/maintenance-state.json*", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "cache-control": "no-store" },
+      body: JSON.stringify({ enabled: true, mode: "message", useStandardText: true }),
+    }));
+  }
   try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20_000 });
   } catch (error) {
@@ -363,6 +378,22 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       console.log(`[e20-gallery] ${profile.id} · ${id}: brak elementu ${readySelector}; zapisuję widoczny stan aplikacji.`);
     });
   }
+  const pollPageHasId = id === "polls" && /[?&]id=/.test(href);
+  if (pollPageHasId) {
+    await page.waitForFunction(() => {
+      const load = document.getElementById("pollLoadState");
+      const main = document.getElementById("cardMain");
+      const bar = document.getElementById("pollBar");
+      const visible = (element) => element && !element.hidden
+        && getComputedStyle(element).display !== "none"
+        && element.getClientRects().length > 0;
+      return load?.hidden && visible(main) && visible(bar)
+        && Boolean(document.getElementById("pollGameName")?.textContent.trim());
+    }, null, { timeout: 20_000 }).catch(() => {
+      contentReady = false;
+      console.log(`[e20-gallery] ${profile.id} · polls: brak gotowej ankiety Demo; zrzut nie będzie oznaczony jako stabilny.`);
+    });
+  }
   // Dane aplikacji są już potwierdzone przez gotowe etapy i readySelector.
   // Nie wymagamy pełnej ciszy sieci: urządzenia gry mają heartbeat, a listy
   // mogą odpytywać backend mimo gotowej treści.
@@ -392,6 +423,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   } catch {
     contentStable = false;
     console.log(`[e20-gallery] ${profile.id} · ${id}: treść nie osiągnęła stabilnego stanu; zapisuję widoczny stan aplikacji.`);
+  }
+  if (pollPageHasId && (!contentReady || !contentStable)) {
+    throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi`);
   }
   const blockedByGuard = await page.evaluate(() => {
     const state = document.documentElement.dataset.deviceGuard || "";
@@ -532,20 +566,20 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     }
   }
   const modalIds = await pageModalIds(page).catch(() => []);
-  const modalCandidates = options.modalCapture ? [] : await findModalActions(page).catch(() => []);
+  const modalCandidates = options.modalCapture ? [] : await findModalActions(page, id).catch(() => []);
   if (options.requireModal && !modalIds.length) {
     throw new Error(`${profile.label} · ${id}: akcja „${options.actionLabel || "?"}” nie otworzyła prawdziwego modala`);
   }
   const safeModalName = (modalIds[0] || "dialog").replace(/[^a-zA-Z0-9_-]/g, "-");
   const fileName = options.fileName || (options.modalCapture
     ? `modal-${safeModalName}-${profile.id}.png`
-    : `${profile.id}.png`);
+    : options.stateId ? `${options.stateId}-${profile.id}.png` : `${profile.id}.png`);
   const finalUrl = page.url();
   fs.mkdirSync(path.join(OUT, id), { recursive: true });
   // Każdy plik ma przedstawiać rzeczywisty ekran urządzenia. Pełnostronicowe
   // zrzuty na długich/animowanych widokach wisiały w Chromium po 45 s; wysokość
   // całej strony pozostaje w manifeście, a screenshot zachowuje viewport i safe area.
-  await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, fileName), Boolean(options.stateId));
+  await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, fileName), Boolean(options.modalCapture));
   expect(page.context().pages(), `${profile.label} · ${id}: otwarto równoległą kartę`).toHaveLength(1);
   page.off("pageerror", onPageError);
   console.log(`[e20-gallery] ${profile.id}: captured ${id}`);
@@ -612,8 +646,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
       };
       const manifest = [];
       const selectedUrls = urls(data)
-        .filter(([id]) => !requestedPages.length || requestedPages.includes(id))
-        .filter(([id]) => profile.id !== "tv" || id === "connect-tv");
+        .filter(([id]) => !requestedPages.length || requestedPages.includes(id));
 
       // Home/Login są publiczne: fotografujemy je w jednej tymczasowej
       // niezalogowanej sesji, zamykamy ją, a dopiero potem otwieramy sesję
@@ -694,7 +727,9 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             }
           }
         }
-        const extra = profile.id === "tv" ? [] : additionalStates(data).filter((state) => !requestedPages.length || requestedPages.includes(state.page));
+        const extra = additionalStates(data).filter((state) =>
+          (!requestedPages.length || requestedPages.includes(state.page))
+          && (!state.mobileOnly || (profile.mobile && (profile.width <= 1100 || profile.height <= 720))));
         if (extra.length) {
           // Podstawowe strony mogą zostawić stan karty lub heartbeat blokady.
           // Zamykamy ją całkowicie i stany dodatkowe fotografujemy w nowej,
@@ -705,10 +740,10 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           page.setDefaultNavigationTimeout(20_000);
         }
         for (const state of extra) {
-          await capture(page, profile, state.id, state.href, manifest, state.prepare);
+          await capture(page, profile, state.id, state.href, manifest, state.prepare, null, { stateId: state.stateId });
         }
-        expect(manifest.filter((entry) => !entry.stateId)).toHaveLength(selectedUrls.length + extra.length);
-        const recordedModalCaptures = manifest.filter((entry) => entry.stateId).length;
+        expect(manifest.filter((entry) => !entry.stateId)).toHaveLength(selectedUrls.length);
+        const recordedModalCaptures = manifest.filter((entry) => String(entry.stateId || "").startsWith("modal:")).length;
         if (recordedModalCaptures !== modalCaptureCount) {
           console.log(`[e20-gallery] ${profile.id}: zapisano ${recordedModalCaptures} rzeczywistych dialogów i stanów informacyjnych.`);
         }

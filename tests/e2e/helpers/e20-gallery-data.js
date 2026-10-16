@@ -24,8 +24,16 @@ async function readE20GalleryData(page) {
     const bases = (basesResult.data || []).filter((record) => !isPreviousGalleryRecord(record));
     const logos = (logosResult.data || []).filter((record) => !isPreviousGalleryRecord(record));
     const byLogoMode = (mode) => logos.find((logo) => logo.payload?.source?.mode === mode) || null;
+    const preferDemo = (items) => [...items].sort((a, b) => {
+      const demoA = /\bdemo\b/i.test(a.name || "") ? 1 : 0;
+      const demoB = /\bdemo\b/i.test(b.name || "") ? 1 : 0;
+      if (demoA !== demoB) return demoB - demoA;
+      const openA = a.status === "open" ? 1 : 0;
+      const openB = b.status === "open" ? 1 : 0;
+      return openB - openA;
+    })[0] || null;
     return {
-      game: games.find((game) => game.type === "prepared") || null,
+      game: preferDemo(games.filter((game) => game.type === "prepared")),
       base: bases[0] || null,
       logos: {
         text: byLogoMode("TEXT"),
@@ -33,8 +41,12 @@ async function readE20GalleryData(page) {
         image: byLogoMode("IMAGE"),
       },
       polls: {
-        poll_points: games.find((game) => game.type === "poll_points" && game.status === "open") || null,
-        poll_text: games.find((game) => game.type === "poll_text" && game.status === "open") || null,
+        // Zamknięta ankieta Demo daje pełny, stabilny widok właściciela i
+        // wyników; jeśli jej nie ma, wybieramy otwartą ankietę istniejącą na koncie.
+        poll_points: preferDemo(games.filter((game) => game.type === "poll_points")),
+        poll_text: preferDemo(games.filter((game) => game.type === "poll_text")),
+        poll_points_vote: games.find((game) => game.type === "poll_points" && game.status === "open" && game.share_key_poll) || null,
+        poll_text_vote: games.find((game) => game.type === "poll_text" && game.status === "open" && game.share_key_poll) || null,
       },
     };
   });

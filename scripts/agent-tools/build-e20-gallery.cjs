@@ -27,7 +27,7 @@ if (fullGalleryRequested) {
   for (const profile of profiles) {
     const profileEntries = entries.filter((entry) => entry.profile === profile && !entry.stateId);
     const ids = new Set(profileEntries.map((entry) => entry.id));
-    const expected = profile === "tv" ? ["connect-tv"] : requiredPages;
+    const expected = requiredPages;
     const missing = expected.filter((id) => !ids.has(id));
     if (missing.length) throw new Error(`Niekompletna galeria E20 dla ${profile}; brakuje: ${missing.join(", ")}`);
   }
@@ -38,5 +38,5 @@ for (const entry of entries) {
   if (!entry.file.endsWith(".png") || !fs.existsSync(file)) throw new Error(`Brak zrzutu PNG: ${entry.file}`);
 }
 const pages = [...new Set(entries.map((entry) => entry.id))];
-const modals = entries.filter((entry) => entry.stateId).length;
+const modals = entries.filter((entry) => String(entry.stateId || "").startsWith("modal:")).length;
 console.log(`Zweryfikowano ${entries.length} zrzutów PNG (${modals} modalów otwartych przez interfejs) na ${pages.length} stronach. Artefakt zawiera wyłącznie foldery stron i obrazy.`);
