@@ -7,16 +7,16 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-16T18105";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-16T18105";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-16T18105";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-16T18105";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-16T18105";
-import { createHostRenderer } from "./render.js?v=v2026-10-16T18105";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-16T18105";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-16T18105";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-16T18105";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-16T18105";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-16T19025";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-16T19025";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-16T19025";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-16T19025";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-16T19025";
+import { createHostRenderer } from "./render.js?v=v2026-10-16T19025";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-16T19025";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-16T19025";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-16T19025";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-16T19025";
 
 function parseParams() {
   const u = new URL(location.href);
