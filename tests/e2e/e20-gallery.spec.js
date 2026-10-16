@@ -82,6 +82,11 @@ function additionalStates(data) {
       modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Moje bazy → Utwórz bazę",
       prepare: async (page) => { await page.locator("#mineGrid .addCard").click(); },
     },
+    {
+      id: "bases", stateId: "modal:import-base", page: "bases", href: "/bases/",
+      modalCapture: true, expectedModalId: "importOverlay", actionLabel: "Moje bazy → Importuj bazę",
+      prepare: async (page) => { await page.locator("#btnImport").click(); },
+    },
     ...(data.base ? [
       {
         id: "bases", stateId: "modal:rename-base", page: "bases", href: "/bases/",
@@ -178,6 +183,41 @@ function additionalStates(data) {
         },
       },
       {
+        id: "games", stateId: "modal:import-games", page: "games", href: "/games/",
+        modalCapture: true, expectedModalId: "importOverlay", actionLabel: "Gry → Importuj gry",
+        prepare: async (page) => { await page.locator("#btnImport").click(); },
+      },
+      {
+        id: "games", stateId: "modal:export-game-base", page: "games", href: "/games/",
+        modalCapture: true, expectedModalId: "exportBaseOverlay", actionLabel: "Gry → Eksportuj grę do bazy",
+        prepare: async (page) => {
+          await page.locator(`#grid .card[data-game-id="${data.game.id}"]`).click();
+          await expect(page.locator("#btnExportBase")).toBeEnabled();
+          await page.locator("#btnExportBase").click();
+        },
+      },
+      {
+        id: "games", stateId: "modal:export-game-json", page: "games", href: "/games/",
+        modalCapture: true, expectedModalId: "exportJsonOverlay", actionLabel: "Gry → Eksport JSON",
+        prepare: async (page) => {
+          await page.locator(`#grid .card[data-game-id="${data.game.id}"]`).click();
+          await expect(page.locator("#btnExport")).toBeEnabled();
+          await page.locator("#btnExport").click();
+          await page.locator("#exportJsonOverlay").waitFor({ state: "visible", timeout: 15_000 });
+        },
+      },
+      {
+        id: "games", stateId: "modal:preview-game", page: "games", href: "/games/",
+        modalCapture: true, expectedModalId: "previewOverlay", actionLabel: "Gry → Podgląd gry",
+        prepare: async (page) => {
+          await page.locator(`#grid .card[data-game-id="${data.game.id}"]`).click();
+          await expect(page.locator("#btnPreview")).toBeEnabled();
+          await page.locator("#btnPreview").click();
+          await page.locator("#previewOverlay").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator("#previewQuestions").waitFor({ state: "visible", timeout: 10_000 });
+        },
+      },
+      {
         id: "game-editor", stateId: "question", page: "game-editor", href: `/games/editor/?id=${data.game.id}`,
         mobileOnly: true,
         prepare: async (page) => {
@@ -210,6 +250,39 @@ function additionalStates(data) {
         await tile.dblclick();
       },
     }] : []),
+    ...((data.logos.text || data.logos.draw || data.logos.image) ? [
+      {
+        id: "logos", stateId: "modal:preview-logo", page: "logos", href: "/logos/",
+        modalCapture: true, expectedModalId: "previewOverlay", actionLabel: "Lista logo → Podgląd logo",
+        prepare: async (page) => {
+          const logo = data.logos.text || data.logos.draw || data.logos.image;
+          await page.locator(`.logoTile[data-key="${logo.id}"]`).click();
+          await expect(page.locator("#btnPreview")).toBeEnabled();
+          await page.locator("#btnPreview").click();
+        },
+      },
+      {
+        id: "logos", stateId: "modal:import-logo", page: "logos", href: "/logos/",
+        modalCapture: true, expectedModalId: "logoImportOverlay", actionLabel: "Lista logo → Import logo",
+        prepare: async (page) => { await page.locator("#btnImport").click(); },
+      },
+    ] : []),
+    ...["text", "draw", "image"].flatMap((mode) => {
+      const logo = data.logos[mode];
+      if (!logo) return [];
+      const pageId = `logo-editor-${mode}`;
+      const trigger = mode === "text" ? "#bigPreview" : mode === "draw" ? "#tEye" : "#imgBigPreview";
+      return [{
+        id: pageId, stateId: "modal:preview", page: pageId,
+        href: `/logos/editor/${mode}/?id=${logo.id}`,
+        modalCapture: true, expectedModalId: "previewOverlay",
+        actionLabel: `Edytor logo ${mode} → Powiększony podgląd`,
+        prepare: async (page) => {
+          await page.locator(trigger).waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator(trigger).click();
+        },
+      }];
+    }),
     ...(pollPreview ? [{
       id: "games", stateId: "modal:preview-poll", page: "games", href: "/games/",
       modalCapture: true, expectedModalId: "previewOverlay", actionLabel: "Podgląd gry → Ankieta",

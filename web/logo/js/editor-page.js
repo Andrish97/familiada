@@ -228,7 +228,9 @@ export async function bootEditorPage({ mode, initEditor }) {
 
   /* ---------- podgląd ---------- */
   let previewZoom = null;
+  let latestPreview = null;
   function openPreview(preview) {
+    if (!preview) return;
     renderPreview(preview, el.previewCanvas, GLYPH_5x7);
     // Tablety z Chrome przedstawiają się jak desktop -- sprawdzamy też dotyk.
     const touch = isMobileDevice() || navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)").matches;
@@ -247,8 +249,25 @@ export async function bootEditorPage({ mode, initEditor }) {
   }
 
   function onEditorPreview(preview) {
-    if (preview && el.bigPreview) renderPreview(preview, el.bigPreview, GLYPH_5x7);
+    if (!preview) return;
+    latestPreview = preview;
+    if (el.bigPreview) renderPreview(preview, el.bigPreview, GLYPH_5x7);
   }
+
+  // Tryb tekstowy nie miał żadnej akcji otwierającej istniejący modal
+  // powiększonego podglądu. Kliknięcie podglądu działa teraz tak samo jak w
+  // edytorach rysowania i obrazu.
+  if (el.bigPreview) {
+    el.bigPreview.tabIndex = 0;
+    el.bigPreview.setAttribute("role", "button");
+    el.bigPreview.setAttribute("aria-label", "Otwórz powiększony podgląd");
+  }
+  el.bigPreview?.addEventListener("click", () => openPreview(latestPreview));
+  el.bigPreview?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openPreview(latestPreview);
+  });
 
   function renderHeader() {
     el.brandTitle.textContent = modeLabel();
