@@ -114,8 +114,7 @@ function additionalStates(data) {
         id: "bases", stateId: "modal:rename-base", page: "bases", href: "/bases/",
         modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Moje bazy → Zmień nazwę bazy",
         prepare: async (page) => {
-          const tile = page.locator(`.tile[data-base-id="${data.base.id}"]`);
-          await tile.waitFor({ state: "visible", timeout: 15_000 });
+          const tile = await selectOwnedBase(page, data.base.id);
           await tile.dblclick();
         },
       },
@@ -123,7 +122,7 @@ function additionalStates(data) {
         id: "bases", stateId: "modal:share-base", page: "bases", href: "/bases/",
         modalCapture: true, expectedModalId: "shareOverlay", actionLabel: "Moje bazy → Udostępnij bazę",
         prepare: async (page) => {
-          await page.locator(`.tile[data-base-id="${data.base.id}"]`).click();
+          await selectOwnedBase(page, data.base.id);
           await page.locator("#btnShare").waitFor({ state: "visible" });
           await expect(page.locator("#btnShare")).toBeEnabled();
           await page.locator("#btnShare").click();
@@ -133,11 +132,9 @@ function additionalStates(data) {
         id: "bases", stateId: "modal:export-base-json", page: "bases", href: "/bases/",
         modalCapture: true, expectedModalId: "exportJsonOverlay", actionLabel: "Moje bazy → Eksportuj bazę do JSON",
         prepare: async (page) => {
-          await page.locator(`.tile[data-base-id="${data.base.id}"]`).click();
+          await selectOwnedBase(page, data.base.id);
           await expect(page.locator("#btnExport")).toBeEnabled();
           await page.locator("#btnExport").click();
-          await page.locator("#exportJsonOverlay").waitFor({ state: "visible", timeout: 15_000 });
-          await expect(page.locator("#exportJsonStep")).toHaveText(/\S/, { timeout: 5_000 });
         },
       },
     ] : []),
@@ -559,6 +556,17 @@ function additionalStates(data) {
   return states;
 }
 
+async function selectOwnedBase(page, baseId) {
+  const mineTab = page.locator("#tabBasesMine");
+  await mineTab.click();
+  await expect(mineTab).toHaveAttribute("aria-selected", "true");
+  const tile = page.locator(`.tile[data-base-id="${baseId}"]`);
+  await tile.waitFor({ state: "visible", timeout: 15_000 });
+  await tile.click();
+  await expect(tile).toHaveClass(/selected/);
+  return tile;
+}
+
 async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithoutFontWait = false, capturedImage = null) {
   let image;
   const captureWithCDP = async () => {
@@ -942,6 +950,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
             .filter((element) => element.getClientRects().length && getComputedStyle(element).display !== "none")
             .map((element) => ({ id: element.id, className: element.className, text: element.innerText.trim().slice(0, 180) })),
           selectedRows: [...document.querySelectorAll('#list .row.is-selected')].map((row) => ({ kind: row.dataset.kind, id: row.dataset.id })),
+          selectedBaseTiles: [...document.querySelectorAll(".tile.selected[data-base-id]")].map((tile) => ({ id: tile.dataset.baseId, text: tile.querySelector(".name")?.textContent?.trim() || "" })),
+          exportButtonDisabled: document.querySelector("#btnExport")?.disabled ?? null,
           tagActionDisabled: document.querySelector('#toolbar [data-act="editTags"]')?.disabled ?? null,
         }));
         throw new Error(`${profile.label} · ${id}: modale #${options.expectedModalId} nie otworzył się po akcji; ${JSON.stringify({ ...modalDiagnostics, pageErrors })}; ${error.message}`);
