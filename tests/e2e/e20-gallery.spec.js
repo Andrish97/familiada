@@ -97,7 +97,7 @@ function additionalStates(data) {
   return states;
 }
 
-async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithoutFontWait = false) {
+async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithoutFontWait = false, capturedImage = null) {
   let image;
   const captureWithCDP = async () => {
     const session = await page.context().newCDPSession(page);
@@ -110,7 +110,9 @@ async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithou
       await session.detach();
     }
   };
-  if (captureWithoutFontWait) {
+  if (capturedImage) {
+    image = capturedImage;
+  } else if (captureWithoutFontWait) {
     image = await captureWithCDP();
   } else {
     try {
@@ -236,6 +238,26 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       text: document.body?.innerText?.slice(0, 240) || "",
     })).catch(() => ({}));
     throw new Error(`${profile.label} · ${id}: ładowanie strony nie zakończyło się w 8 s; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
+  }
+  // initPage czeka na odpowiedź na rzeczywisty, blokujący modal oceny. Zapisz
+  // go w stanie otwartym i kliknij jego prawdziwy przycisk „Później”, żeby
+  // dalszy widok strony pokazywał stan, do którego użytkownik faktycznie dotrze.
+  let autoModalImage = null;
+  const ratingOverlay = page.locator("#ratingOverlay");
+  if (await ratingOverlay.count() && await ratingOverlay.isVisible().catch(() => false)) {
+    const session = await page.context().newCDPSession(page);
+    try {
+      const result = await session.send("Page.captureScreenshot", {
+        format: "png", fromSurface: true, captureBeyondViewport: false,
+      });
+      autoModalImage = Buffer.from(result.data, "base64");
+    } finally {
+      await session.detach();
+    }
+    const laterButton = page.locator("#btnRatingLater");
+    await laterButton.waitFor({ state: "visible", timeout: 5_000 });
+    await laterButton.click();
+    await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
   }
   try {
     await page.waitForFunction(() => {
@@ -490,10 +512,26 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     file: `${id}/${fileName}`,
     ...state,
   });
+  if (autoModalImage) {
+    const fileName = `modal-ratingOverlay-${profile.id}.png`;
+    const file = `${id}/${fileName}`;
+    await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, fileName), false, autoModalImage);
+    manifest.push({
+      id,
+      stateId: "modal:ratingOverlay",
+      profile: profile.id,
+      label: profile.label,
+      safeAreaInsets: expectedSafe,
+      url: href,
+      finalUrl,
+      actionLabel: "Później",
+      file,
+    });
+  }
   // Checkpoint after every image so a failed profile still leaves useful work.
   fs.mkdirSync(MANIFEST_DIR, { recursive: true });
   fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
-  return { modalIds, modalCandidates, blockedByGuard, preparedState };
+  return { modalIds, modalCandidates, blockedByGuard, preparedState, autoModalCaptured: Boolean(autoModalImage) };
 }
 
 // Profile są rozdzielone między istniejące konta. Każde konto robi swoje
@@ -553,7 +591,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         let page = await context.newPage();
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);
-        let modalCaptureCount = 0;
+          let modalCaptureCount = 0;
         for (const [id, href] of selectedUrls) {
           if (["home", "login", "login-confirm", "login-reset"].includes(id)) continue;
           const readySelector = id === "games"
@@ -565,6 +603,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                   ? `.logoTile[data-key="${(data.logos.text || data.logos.draw || data.logos.image).id}"]` : null
                 : null;
           const baseState = await capture(page, profile, id, href, manifest, null, readySelector);
+          if (baseState.autoModalCaptured) modalCaptureCount += 1;
           if (!baseState.blockedByGuard) {
             const capturedModalIds = new Set(baseState.modalIds);
             for (const action of baseState.modalCandidates) {
