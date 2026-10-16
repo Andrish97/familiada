@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("./helpers/production-test");
-const { serveBranchCode } = require("./helpers/branch-code");
+const { serveBranchCode, serveBranchLoginHtml } = require("./helpers/branch-code");
 const { galleryAccountNumbers, galleryAccountPaths, PREP_DIR } = require("./helpers/e20-gallery-accounts");
 
 const ORIGIN = "https://www.familiada.online";
@@ -165,16 +165,6 @@ async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithou
   if (actualFrameSize.width !== expectedFrameSize.width || actualFrameSize.height !== expectedFrameSize.height) {
     throw new Error(`${profile.label} · ${id}: obraz ramki ma rozmiar ${actualFrameSize.width}×${actualFrameSize.height}, oczekiwano ${expectedFrameSize.width}×${expectedFrameSize.height}`);
   }
-}
-
-async function serveBranchLoginHtml(route) {
-  const file = path.resolve(__dirname, "../../web/login/index.html");
-  const productionResponse = await route.fetch();
-  const productionHtml = await productionResponse.text();
-  const testSiteKey = productionHtml.match(/data-captcha-site-key="([^"]*)"/)?.[1];
-  if (!testSiteKey) throw new Error("Worker nie zwrócił testowego klucza Turnstile dla sesji E2E");
-  const html = fs.readFileSync(file, "utf8").replace(/data-captcha-site-key="[^"]*"/, `data-captcha-site-key="${testSiteKey}"`);
-  await route.fulfill({ response: productionResponse, headers: { "cache-control": "no-store" }, body: html });
 }
 
 function pageModalIds(page) {

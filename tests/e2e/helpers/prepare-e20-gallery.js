@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { chromium } = require("@playwright/test");
 const { loginAsTestUser } = require("./login");
-const { serveBranchCode } = require("./branch-code");
+const { serveBranchCode, serveBranchLoginHtml } = require("./branch-code");
 const { readE20GalleryData } = require("./e20-gallery-data");
 const { galleryAccountNumbers, galleryAccountPaths, PREP_DIR } = require("./e20-gallery-accounts");
 
@@ -29,6 +29,7 @@ async function main() {
       const context = await browser.newContext({ serviceWorkers: "block" });
       try {
         await serveBranchCode(context, { pages: PAGES });
+        await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
         const page = await context.newPage();
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);

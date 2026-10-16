@@ -98,4 +98,14 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
   });
 }
 
-module.exports = { serveBranchCode, localFileFor };
+async function serveBranchLoginHtml(route) {
+  const productionResponse = await route.fetch();
+  const productionHtml = await productionResponse.text();
+  const testSiteKey = productionHtml.match(/data-captcha-site-key="([^"]*)"/)?.[1];
+  if (!testSiteKey) throw new Error("Worker nie zwrócił testowego klucza Turnstile dla sesji E2E");
+  const file = path.join(REPO_ROOT, "login", "index.html");
+  const html = fs.readFileSync(file, "utf8").replace(/data-captcha-site-key="[^"]*"/, `data-captcha-site-key="${testSiteKey}"`);
+  await route.fulfill({ response: productionResponse, headers: { "cache-control": "no-store" }, body: html });
+}
+
+module.exports = { serveBranchCode, serveBranchLoginHtml, localFileFor };
