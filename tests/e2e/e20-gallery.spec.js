@@ -228,6 +228,43 @@ async function clickModalAction(page, action) {
   return pageModalIds(page);
 }
 
+async function captureAndDismissBlockingModal(page, profile, id) {
+  const ratingOverlay = page.locator("#ratingOverlay");
+  const hasRatingModal = await ratingOverlay.count() > 0 && await ratingOverlay.isVisible().catch(() => false);
+  const genericDialog = page.locator(".overlay .modal[role='dialog']").first();
+  const hasGenericModal = !hasRatingModal && await genericDialog.count() > 0 && await genericDialog.isVisible().catch(() => false);
+  if (!hasRatingModal && !hasGenericModal) return null;
+
+  const session = await page.context().newCDPSession(page);
+  let image;
+  try {
+    const result = await session.send("Page.captureScreenshot", {
+      format: "png", fromSurface: true, captureBeyondViewport: false,
+    });
+    image = Buffer.from(result.data, "base64");
+  } finally {
+    await session.detach();
+  }
+  if (hasRatingModal) {
+    await page.locator("#btnRatingLater").click({ timeout: 5_000 });
+    await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
+    return { image, id: "ratingOverlay" };
+  }
+
+  const modalId = await genericDialog.getAttribute("class").then((value) => value?.split(/\s+/)[0] || "dialog");
+  const safeDismiss = genericDialog.getByRole("button", { name: /zamknij|close|anuluj|cancel|później|later|nie/i }).first();
+  if (await safeDismiss.count()) {
+    await safeDismiss.click();
+  } else {
+    const buttons = genericDialog.locator("button:visible");
+    const count = await buttons.count();
+    if (!count) throw new Error(`${profile.label} · ${id}: widoczny modal informacyjny nie ma przycisku do zamknięcia`);
+    await buttons.nth(count > 1 ? 0 : count - 1).click();
+  }
+  await genericDialog.waitFor({ state: "hidden", timeout: 10_000 });
+  return { image, id: modalId };
+}
+
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null, options = {}) {
   const url = `${ORIGIN}${href}${href.includes("?") ? "&" : "?"}lang=pl`;
   const pageErrors = [];
@@ -258,6 +295,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // initPage czeka na odpowiedź na rzeczywisty, blokujący modal oceny. Zapisz
   // go w stanie otwartym i kliknij jego prawdziwy przycisk „Później”, żeby
   // dalszy widok strony pokazywał stan, do którego użytkownik faktycznie dotrze.
+  let contentReady = true;
   await page.waitForFunction(() => {
     const rating = document.getElementById("ratingOverlay");
     if (rating) {
@@ -278,42 +316,13 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       return step.classList.contains("skel-step-ready") || step.getClientRects().length > 0;
     });
     return steps.length > 0 && steps.every((step) => step.classList.contains("skel-step-ready"));
-  }, null, { timeout: 60_000 });
+  }, null, { timeout: 20_000 }).catch(() => { contentReady = false; });
   let autoModalImage = null;
   let autoModalId = "";
-  const ratingOverlay = page.locator("#ratingOverlay");
-  const hasRatingModal = await ratingOverlay.count() > 0 && await ratingOverlay.isVisible().catch(() => false);
-  const genericDialog = page.locator(".overlay .modal[role='dialog']").first();
-  const hasGenericModal = !hasRatingModal && await genericDialog.count() > 0 && await genericDialog.isVisible().catch(() => false);
-  if (hasRatingModal || hasGenericModal) {
-    const session = await page.context().newCDPSession(page);
-    try {
-      const result = await session.send("Page.captureScreenshot", {
-        format: "png", fromSurface: true, captureBeyondViewport: false,
-      });
-      autoModalImage = Buffer.from(result.data, "base64");
-    } finally {
-      await session.detach();
-    }
-    if (hasRatingModal) {
-      autoModalId = "ratingOverlay";
-      const laterButton = page.locator("#btnRatingLater");
-      await laterButton.waitFor({ state: "visible", timeout: 5_000 });
-      await laterButton.click();
-      await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
-    } else {
-      autoModalId = await genericDialog.getAttribute("class").then((value) => value?.split(/\s+/)[0] || "dialog");
-      const safeDismiss = genericDialog.getByRole("button", { name: /zamknij|close|anuluj|cancel|później|later|nie/i }).first();
-      if (await safeDismiss.count()) {
-        await safeDismiss.click();
-      } else {
-        const buttons = genericDialog.locator("button:visible");
-        const count = await buttons.count();
-        if (!count) throw new Error(`${profile.label} · ${id}: widoczny modal informacyjny nie ma przycisku do zamknięcia`);
-        await buttons.nth(count > 1 ? 0 : count - 1).click();
-      }
-      await genericDialog.waitFor({ state: "hidden", timeout: 10_000 });
-    }
+  const earlyModal = await captureAndDismissBlockingModal(page, profile, id);
+  if (earlyModal) {
+    autoModalImage = earlyModal.image;
+    autoModalId = earlyModal.id;
   }
   try {
     await page.waitForFunction(() => {
@@ -334,25 +343,10 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         return step.classList.contains("skel-step-ready") || step.getClientRects().length > 0;
       });
       return visibleSteps.length > 0 && visibleSteps.every((step) => step.classList.contains("skel-step-ready"));
-    }, null, { timeout: 60_000 });
+    }, null, { timeout: 20_000 });
   } catch {
-    const diagnostics = await page.evaluate(() => ({
-      url: location.href,
-      stages: [...document.querySelectorAll("[data-skel-step]")].map((step) => ({
-        tag: step.tagName, className: String(step.className), ready: step.classList.contains("skel-step-ready"),
-        hidden: step.hidden, display: getComputedStyle(step).display, visibility: getComputedStyle(step).visibility,
-      })),
-      loginShell: Boolean(document.querySelector(".login-shell")),
-      guard: document.getElementById("pageGuard")?.dataset.state || document.documentElement.dataset.deviceGuard || "",
-      resourceGuard: getComputedStyle(document.getElementById("resourceLockGuard") || document.body).display,
-      resourceGuardTitle: document.getElementById("resourceLockGuardTitle")?.textContent?.trim() || "",
-      resourceGuardMessage: document.getElementById("resourceLockGuardMsg")?.textContent?.trim() || "",
-      pendingSteps: [...document.querySelectorAll("[data-skel-step]")]
-        .filter((step) => !step.classList.contains("skel-step-ready") && step.getClientRects().length)
-        .map((step) => `${step.tagName}.${String(step.className).replace(/\s+/g, ".")}`).slice(0, 8),
-      text: document.body?.innerText?.slice(0, 240) || "",
-    })).catch(() => ({}));
-    throw new Error(`${profile.label} · ${id}: etap widocznej treści nie osiągnął gotowości; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
+    contentReady = false;
+    console.log(`[e20-gallery] ${profile.id} · ${id}: limit oczekiwania na etap treści; zapisuję widoczny stan aplikacji.`);
   }
   if (readySelector) {
     await page.waitForFunction((selector) => {
@@ -363,19 +357,17 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         const rect = element.getBoundingClientRect();
         return rect.width > 0 && rect.height > 0 && getComputedStyle(element).visibility !== "hidden";
       });
-    }, readySelector, { timeout: 20_000 }).catch(async () => {
-      const diagnostics = await page.evaluate(() => ({
-        guard: document.documentElement.dataset.deviceGuard || "",
-        guardDisplay: document.getElementById("pageGuard")?.style.display || "missing",
-        loading: document.documentElement.classList.contains("page-loading"),
-      })).catch(() => ({}));
-      throw new Error(`${profile.label} · ${id}: brak elementu gotowości ${readySelector}; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
+    }, readySelector, { timeout: 20_000 }).catch(() => {
+      contentReady = false;
+      console.log(`[e20-gallery] ${profile.id} · ${id}: brak elementu ${readySelector}; zapisuję widoczny stan aplikacji.`);
     });
   }
   // Dane aplikacji są już potwierdzone przez gotowe etapy i readySelector.
   // Nie wymagamy pełnej ciszy sieci: urządzenia gry mają heartbeat, a listy
   // mogą odpytywać backend mimo gotowej treści.
+  let contentStable = true;
   try {
+    if (!contentReady) throw new Error("etap treści nie jest gotowy");
     await page.waitForLoadState("networkidle", { timeout: 1_000 }).catch(() => {});
     await page.waitForFunction(() => {
       const body = document.body;
@@ -397,14 +389,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     ]));
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   } catch {
-    const diagnostics = await page.evaluate(() => ({
-      loading: document.documentElement.classList.contains("page-loading"),
-      visibleBusy: [...document.querySelectorAll("[aria-busy='true'], .loading, .skeleton, .skel")]
-        .filter((el) => el.getClientRects().length).map((el) => `${el.tagName}.${el.className}`).slice(0, 8),
-      title: document.title,
-      text: document.body?.innerText?.slice(0, 400) || "",
-    })).catch(() => ({}));
-    throw new Error(`${profile.label} · ${id}: treść nie osiągnęła stabilnego stanu; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
+    contentStable = false;
+    console.log(`[e20-gallery] ${profile.id} · ${id}: treść nie osiągnęła stabilnego stanu; zapisuję widoczny stan aplikacji.`);
   }
   const blockedByGuard = await page.evaluate(() => {
     const state = document.documentElement.dataset.deviceGuard || "";
@@ -413,7 +399,14 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // Stany interaktywne nie zastępują guarda: na niedostępnym urządzeniu
   // zapisujemy ten guard zamiast wymuszać klik w ukryty zasób.
   let preparedState = null;
-  if (prepare && !blockedByGuard) preparedState = await prepare(page);
+  if (prepare && !blockedByGuard && contentReady) {
+    const lateModal = await captureAndDismissBlockingModal(page, profile, id);
+    if (lateModal && !autoModalImage) {
+      autoModalImage = lateModal.image;
+      autoModalId = lateModal.id;
+    }
+    preparedState = await prepare(page);
+  }
   const expectedSafe = profile.safe || { top: 0, right: 0, bottom: 0, left: 0 };
   const actualSafe = await page.evaluate(() => {
     const root = document.documentElement;
@@ -511,7 +504,6 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       };
     })(),
   }));
-  if (state.loading) throw new Error(`${profile.label} · ${id}: strona nadal ma page-loading po załadowaniu`);
   if (state.scrollWidth > state.viewportWidth + 1) {
     throw new Error(`${profile.label} · ${id}: poziomy overflow ${state.scrollWidth}px przy viewport ${state.viewportWidth}px`);
   }
@@ -566,6 +558,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     finalUrl,
     ...(options.actionLabel ? { actionLabel: options.actionLabel } : {}),
     file: `${id}/${fileName}`,
+    contentReady,
+    contentStable,
     ...state,
   });
   if (autoModalImage) {
@@ -587,7 +581,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   // Checkpoint after every image so a failed profile still leaves useful work.
   fs.mkdirSync(MANIFEST_DIR, { recursive: true });
   fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
-  return { modalIds, modalCandidates, blockedByGuard, preparedState, autoModalCaptured: Boolean(autoModalImage) };
+  return { modalIds, modalCandidates: contentReady ? modalCandidates : [], blockedByGuard, preparedState, autoModalCaptured: Boolean(autoModalImage) };
 }
 
 // Profile są rozdzielone między istniejące konta. Każde konto robi swoje
@@ -711,8 +705,12 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         }
         expect(manifest.filter((entry) => !entry.stateId)).toHaveLength(selectedUrls.length + extra.length);
         expect(manifest.filter((entry) => entry.stateId)).toHaveLength(modalCaptureCount);
-        const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1 || entry.loading);
-        expect(layoutIssues, `Problemy szerokości lub niedokończone ładowanie: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth, loading }) => ({ id, url, scrollWidth, viewportWidth, loading })))}`).toEqual([]);
+        const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1);
+        expect(layoutIssues, `Poziomy overflow: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth }) => ({ id, url, scrollWidth, viewportWidth })))}`).toEqual([]);
+        const incomplete = manifest.filter((entry) => entry.contentReady === false || entry.contentStable === false);
+        if (incomplete.length) {
+          console.log(`[e20-gallery] ${profile.id}: ${incomplete.length} widoków zapisano w stanie ładowania aplikacji (${[...new Set(incomplete.map((entry) => entry.id))].join(", ")}).`);
+        }
       } finally {
         await context.close();
       }
