@@ -387,6 +387,18 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       && getComputedStyle(guard).display !== "none" && guard.getClientRects().length);
   });
   if (pollPageHasId && !pollBlockedByDeviceGuard) {
+    // Strona właściciela może chwilowo pokazać rzeczywistą blokadę edycji
+    // pozostawioną przez poprzednią kartę galerii. resource-lock.js sam
+    // ponawia próbę po zwolnieniu zasobu (lub wygaśnięciu TTL); czekamy na
+    // ten stan, zamiast archiwizować ekran blokady jako widok ankiety.
+    await page.waitForFunction(() => {
+      const guard = document.getElementById("resourceLockGuard");
+      return !guard || getComputedStyle(guard).display === "none"
+        || getComputedStyle(guard).visibility === "hidden";
+    }, null, { timeout: 150_000 }).catch(() => {
+      contentReady = false;
+      console.log(`[e20-gallery] ${profile.id} · polls: zasób Demo pozostał zablokowany; nie zapisuję ekranu blokady jako ankiety.`);
+    });
     await page.waitForFunction(() => {
       const load = document.getElementById("pollLoadState");
       const main = document.getElementById("cardMain");
@@ -396,7 +408,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         && element.getClientRects().length > 0;
       return load?.hidden && visible(main) && visible(bar)
         && Boolean(document.getElementById("pollGameName")?.textContent.trim());
-    }, null, { timeout: 20_000 }).catch(() => {
+    }, null, { timeout: 30_000 }).catch(() => {
       contentReady = false;
       console.log(`[e20-gallery] ${profile.id} · polls: brak gotowej ankiety Demo; zrzut nie będzie oznaczony jako stabilny.`);
     });
