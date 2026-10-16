@@ -152,6 +152,16 @@ function additionalStates(data) {
         },
       },
     ] : []),
+    ...((data.logos.text || data.logos.draw || data.logos.image) ? [{
+      id: "logos", stateId: "modal:rename-logo", page: "logos", href: "/logos/",
+      modalCapture: true, expectedModalId: "renameOverlay", actionLabel: "Lista logo → Zmień nazwę",
+      prepare: async (page) => {
+        const logo = data.logos.text || data.logos.draw || data.logos.image;
+        const tile = page.locator(`.logoTile[data-key="${logo.id}"]`);
+        await tile.waitFor({ state: "visible", timeout: 15_000 });
+        await tile.dblclick();
+      },
+    }] : []),
     ...(pollPreview ? [{
       id: "games", stateId: "modal:preview-poll", page: "games", href: "/games/",
       modalCapture: true, expectedModalId: "previewOverlay", actionLabel: "Podgląd gry → Ankieta",
