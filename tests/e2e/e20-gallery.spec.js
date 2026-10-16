@@ -751,7 +751,13 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 layerId: "tagsL1",
                 actionLabel: "Tagi → przypisz",
                 prepare: async (modalPage) => {
-                  const question = modalPage.locator('#list .row[data-kind="q"][data-id]').first();
+                  let question = modalPage.locator('#list .row[data-kind="q"][data-id]').first();
+                  for (let depth = 0; depth < 12 && !await question.isVisible().catch(() => false); depth += 1) {
+                    const folder = modalPage.locator('#list .row[data-kind="cat"][data-id]').first();
+                    if (!await folder.isVisible().catch(() => false)) break;
+                    await folder.dblclick();
+                    await modalPage.waitForTimeout(250);
+                  }
                   await question.waitFor({ state: "visible", timeout: 15_000 });
                   await question.click();
                   const action = modalPage.locator('#toolbar [data-act="editTags"]');
