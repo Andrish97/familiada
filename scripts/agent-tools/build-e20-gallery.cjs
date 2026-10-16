@@ -25,16 +25,56 @@ if (fullGalleryRequested) {
     "mails", "maintenance", "manual", "marketplace", "polls", "poll-vote-points", "poll-vote-qr", "poll-vote-text",
     "privacy", "subscribers", "tasks", "404",
   ];
+  const requiredStates = [
+    ["bases", "shared"],
+    ["bases", "modal:create-base"], ["bases", "modal:import-base"],
+    ["bases", "modal:rename-base"], ["bases", "modal:share-base"], ["bases", "modal:export-base-json"],
+    ["base-explorer", "modal:tags-assign"], ["base-explorer", "modal:tags-create"], ["base-explorer", "modal:tags-color"],
+    ["base-explorer", "modal:export-questions"], ["base-explorer", "modal:add-question"],
+    ["base-explorer", "modal:edit-question"], ["base-explorer", "modal:rename-item"],
+    ["connect", "modal:device-preview"], ["control", "modal:share-device"],
+    ["games", "modal:create-game"], ["games", "modal:rename-game"], ["games", "modal:import-games"],
+    ["games", "modal:export-game-base"], ["games", "modal:preview-game"],
+    ["games", "modal:preview-poll"], ["games", "modal:export-game-json"], ["games", "modal:contact"],
+    ["game-editor", "modal:import-questions-text"], ["game-settings", "modal:color-picker"],
+    ["logos", "modal:rename-logo"], ["logos", "modal:import-logo"], ["logos", "modal:preview-logo"], ["logos", "modal:export-logo"],
+    ["logo-editor-text", "modal:preview"], ["logo-editor-draw", "modal:preview"], ["logo-editor-image", "modal:preview"],
+    ["marketplace", "mine"], ["marketplace", "modal:marketplace-detail"], ["marketplace", "modal:marketplace-submit"],
+    ["polls", "results"], ["polls", "modal:recipient-picker"], ["polls", "modal:display-qr"], ["polls", "modal:vote-qr-large"],
+  ];
+  const requiredMobileStates = [
+    ["friends", "list"], ["subscribers", "list"],
+    ["game-editor", "question"], ["game-editor", "answers"],
+    ["polls", "anonymous"], ["polls", "recipients"],
+  ];
   for (const profile of profiles) {
-    const profileEntries = entries.filter((entry) => entry.profile === profile && !entry.stateId);
-    const ids = new Set(profileEntries.map((entry) => entry.id));
-    const expected = requiredPages;
-    const missing = expected.filter((id) => !ids.has(id));
-    if (missing.length) throw new Error(`Niekompletna galeria E20 dla ${profile}; brakuje: ${missing.join(", ")}`);
+    const profileEntries = entries.filter((entry) => entry.profile === profile);
+    const pageEntries = profileEntries.filter((entry) => !entry.stateId);
+    const pageIds = new Set(pageEntries.map((entry) => entry.id));
+    const missingPages = requiredPages.filter((id) => !pageIds.has(id));
+    const capturedStates = new Set(profileEntries.filter((entry) => entry.stateId).map((entry) => `${entry.id}:${entry.stateId}`));
+    const compactMobile = profile === "ipad-portrait" || profile.startsWith("iphone-");
+    const expectedStates = [
+      ...requiredStates,
+      ...(compactMobile ? requiredMobileStates : []),
+      ...(profile === "iphone-portrait" ? [["marketplace", "modal:marketplace-search"]] : []),
+    ];
+    const missingStates = expectedStates.filter(([page, state]) => !capturedStates.has(`${page}:${state}`))
+      .map(([page, state]) => `${page}/${state}`);
+    if (missingPages.length || missingStates.length) {
+      const details = [
+        missingPages.length ? `widoki: ${missingPages.join(", ")}` : "",
+        missingStates.length ? `stany: ${missingStates.join(", ")}` : "",
+      ].filter(Boolean).join("; ");
+      throw new Error(`Niekompletna galeria E20 dla ${profile}; brakuje ${details}`);
+    }
   }
 }
 
 for (const entry of entries) {
+  if (path.posix.dirname(entry.file) !== entry.id) {
+    throw new Error(`Zrzut ${entry.file} nie należy do folderu swojej strony (${entry.id}/).`);
+  }
   const file = path.join(root, entry.file);
   if (!entry.file.endsWith(".png") || !fs.existsSync(file)) throw new Error(`Brak zrzutu PNG: ${entry.file}`);
 }

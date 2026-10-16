@@ -36,8 +36,8 @@ const requestedAccounts = galleryAccountNumbers();
 function urls(data) {
   const game = data.game;
   const pollPoints = data.polls.poll_points_vote;
-  const pollText = data.polls.poll_text;
   const pollTextVote = data.polls.poll_text_vote;
+  const pollResults = data.polls.poll_text || data.polls.poll_points;
   const result = [
     ["home", "/"], ["account", "/account/"], ["bases", "/bases/"],
     ["connect", "/connect/"], ["connect-tv", "/connect/tv/"],
@@ -48,7 +48,7 @@ function urls(data) {
     // Strona polls w galerii ma pokazać zamknięte Demo i jego wyniki. Otwarte
     // ankiety mają osobne foldery poll-vote-*; wybór ich tutaj dawał niestabilny
     // ekran właściciela i omijał zatwierdzony widok wyników.
-    ["marketplace", "/marketplace/"], ["polls", (pollText || pollTextVote) ? `/polls/?id=${(pollText || pollTextVote).id}` : "/polls/"],
+    ["marketplace", "/marketplace/"], ["polls", (pollResults || pollTextVote) ? `/polls/?id=${(pollResults || pollTextVote).id}` : "/polls/"],
     ["privacy", "/privacy/"], ["subscribers", "/subscribers/"], ["tasks", "/tasks/"], ["404", "/404.html"],
   ];
   if (data.base) result.push(["base-explorer", `/bases/explorer/?id=${data.base.id}`]);
@@ -76,7 +76,29 @@ function additionalStates(data) {
   const mobileSharePoll = data.polls.poll_text_vote || data.polls.poll_points_vote;
   const pollPreview = data.polls.poll_text || data.polls.poll_points;
   const states = [
-    { id: "bases", stateId: "shared", page: "bases", href: "/bases/?tab=shared" },
+    ...(data.game ? [{
+      id: "connect", stateId: "modal:device-preview", page: "connect", href: "/connect/",
+      modalCapture: true, expectedModalId: "devicePreviewOverlay", actionLabel: "Podłączanie urządzenia → podgląd przed połączeniem",
+      prepare: async (page) => {
+        if (!/^\d{6}$/.test(data.connectPreviewCode || "")) {
+          throw new Error("Control nie udostępnił prawdziwego kodu urządzenia do podglądu Connect.");
+        }
+        await page.goto(`${ORIGIN}/connect/?lang=pl`, { waitUntil: "domcontentloaded", timeout: 20_000 });
+        await page.locator("#connectCodeInput").waitFor({ state: "visible", timeout: 15_000 });
+        await page.locator("#connectCodeInput").fill(data.connectPreviewCode);
+        await page.locator("#btnConnectCode").click();
+        await page.locator("#devicePreviewOverlay").waitFor({ state: "visible", timeout: 15_000 });
+      },
+    }] : []),
+    {
+      id: "bases", stateId: "shared", page: "bases", href: "/bases/?tab=shared",
+      actionLabel: "Moje bazy → Udostępnione",
+      prepare: async (page) => {
+        await expect(page.locator("#tabBasesShared")).toHaveAttribute("aria-selected", "true");
+        await expect(page.locator("#basesSectionShared")).toHaveClass(/active/);
+        await page.locator("#sharedGrid").waitFor({ state: "visible", timeout: 15_000 });
+      },
+    },
     {
       id: "bases", stateId: "modal:create-base", page: "bases", href: "/bases/",
       modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Moje bazy → Utwórz bazę",
@@ -105,6 +127,17 @@ function additionalStates(data) {
           await page.locator("#btnShare").waitFor({ state: "visible" });
           await expect(page.locator("#btnShare")).toBeEnabled();
           await page.locator("#btnShare").click();
+        },
+      },
+      {
+        id: "bases", stateId: "modal:export-base-json", page: "bases", href: "/bases/",
+        modalCapture: true, expectedModalId: "exportJsonOverlay", actionLabel: "Moje bazy → Eksportuj bazę do JSON",
+        prepare: async (page) => {
+          await page.locator(`.tile[data-base-id="${data.base.id}"]`).click();
+          await expect(page.locator("#btnExport")).toBeEnabled();
+          await page.locator("#btnExport").click();
+          await page.locator("#exportJsonOverlay").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator("#btnExportJsonClose").waitFor({ state: "visible", timeout: 20_000 });
         },
       },
     ] : []),
@@ -155,19 +188,140 @@ function additionalStates(data) {
           await page.locator("#questionOverlay").waitFor({ state: "visible", timeout: 10_000 });
         },
       },
+      {
+        id: "base-explorer", stateId: "modal:add-question", page: "base-explorer",
+        href: `/bases/explorer/?id=${data.base.id}`, modalCapture: true,
+        expectedModalId: "questionOverlay", actionLabel: "Eksplorator bazy → Dodaj pytanie",
+        prepare: async (page) => {
+          await page.goto(`${ORIGIN}/bases/explorer/?id=${data.base.id}&lang=pl`, { waitUntil: "domcontentloaded", timeout: 20_000 });
+          await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 20_000 });
+          const existingIds = await page.evaluate(async (baseId) => {
+            const { data: rows, error } = await window.__sbClient.from("qb_questions").select("id").eq("base_id", baseId);
+            if (error) throw error;
+            return (rows || []).map((row) => row.id);
+          }, data.base.id);
+          page.__e20QuestionIdsBeforeCreate = existingIds;
+          const drawer = page.locator("#btnDrawerToggle");
+          if (await drawer.isVisible().catch(() => false)) await drawer.click();
+          await page.locator('#toolbar [data-act="newQuestion"]').click();
+          const newQuestionId = await page.waitForFunction(async ({ baseId, before }) => {
+            const { data: rows, error } = await window.__sbClient.from("qb_questions").select("id").eq("base_id", baseId);
+            return !error ? (rows || []).find((row) => !before.includes(row.id))?.id || false : false;
+          }, { baseId: data.base.id, before: existingIds }, { timeout: 15_000 });
+          const newId = await newQuestionId.jsonValue();
+          if (!newId) throw new Error("UI nie ujawnił identyfikatora nowo dodanego pytania.");
+          page.__e20TemporaryQuestionId = newId;
+          const newQuestionRow = page.locator(`#list .row[data-kind="q"][data-id="${newId}"]`);
+          await newQuestionRow.waitFor({ state: "visible", timeout: 15_000 });
+          await newQuestionRow.click();
+          const editButton = page.locator('#toolbar [data-act="editQuestion"]');
+          if (!await editButton.isVisible().catch(() => false)) {
+            const drawer = page.locator("#btnDrawerToggle");
+            if (await drawer.isVisible().catch(() => false)) await drawer.click();
+          }
+          await editButton.click();
+          await page.locator("#questionOverlay").waitFor({ state: "visible", timeout: 10_000 });
+        },
+        cleanup: async (page) => {
+          if (page.isClosed()) return;
+          let questionId = page.__e20TemporaryQuestionId;
+          if (!questionId && page.__e20QuestionIdsBeforeCreate) {
+            questionId = await page.evaluate(async ({ baseId, before }) => {
+              const { data: rows, error } = await window.__sbClient.from("qb_questions").select("id").eq("base_id", baseId);
+              if (error) throw error;
+              const created = (rows || []).filter((row) => !before.includes(row.id));
+              return created.length === 1 ? created[0].id : "";
+            }, { baseId: data.base.id, before: page.__e20QuestionIdsBeforeCreate });
+          }
+          if (!questionId) return;
+          let removed = false;
+          try {
+            if (await page.locator("#questionOverlay").isVisible().catch(() => false)) {
+              await page.locator("#qClose").click();
+              await page.locator("#questionOverlay").waitFor({ state: "hidden", timeout: 10_000 });
+            }
+            const row = page.locator(`#list .row[data-kind="q"][data-id="${questionId}"]`);
+            if (await row.isVisible().catch(() => false)) {
+              await row.click();
+              const deleteButton = page.locator('#toolbar [data-act="delete"]');
+              if (!await deleteButton.isVisible().catch(() => false)) {
+                const drawer = page.locator("#btnDrawerToggle");
+                if (await drawer.isVisible().catch(() => false)) await drawer.click();
+              }
+              await deleteButton.click();
+              const confirm = page.locator(".uni-modal:visible");
+              await confirm.waitFor({ state: "visible", timeout: 10_000 });
+              await confirm.locator(".uni-foot .gold").click();
+              await page.waitForFunction((id) => !document.querySelector(`#list .row[data-kind="q"][data-id="${CSS.escape(id)}"]`), questionId, { timeout: 15_000 });
+              removed = true;
+            }
+          } catch (cleanupError) {
+            const errorMessage = await page.evaluate(async (id) => {
+              const { error } = await window.__sbClient.from("qb_questions").delete().eq("id", id);
+              return error?.message || "";
+            }, questionId).catch((error) => error.message);
+            if (errorMessage) throw new Error(`Nie udało się usunąć tymczasowego pytania E20 (${cleanupError.message}; ${errorMessage})`);
+            removed = true;
+          }
+          if (!removed) {
+            const errorMessage = await page.evaluate(async (id) => {
+              const { error } = await window.__sbClient.from("qb_questions").delete().eq("id", id);
+              return error?.message || "";
+            }, questionId);
+            if (errorMessage) throw new Error(`Nie udało się usunąć tymczasowego pytania E20: ${errorMessage}`);
+          }
+          page.__e20TemporaryQuestionId = null;
+        },
+      },
     ] : []),
-    ...(data.polls.poll_text ? [{ id: "polls", stateId: "results", page: "polls", href: `/polls/?id=${data.polls.poll_text.id}&tab=results` }] : []),
+    ...(pollPreview ? [{
+      id: "polls", stateId: "results", page: "polls", href: `/polls/?id=${pollPreview.id}&tab=results`,
+      actionLabel: "Ankiety → wyniki zamkniętej ankiety Demo",
+      prepare: async (page) => {
+        await expect(page.locator("#tabResults")).toHaveAttribute("aria-selected", "true");
+        await expect(page.locator("#resultsList")).toBeVisible();
+      },
+    }] : []),
     ...(mobileSharePoll ? [
-      { id: "polls", stateId: "anonymous", page: "polls", href: `/polls/?id=${mobileSharePoll.id}&tab=share`, mobileOnly: true },
-      { id: "polls", stateId: "recipients", page: "polls", href: `/polls/?id=${mobileSharePoll.id}&tab=recipients`, mobileOnly: true },
+      {
+        id: "polls", stateId: "anonymous", page: "polls", href: `/polls/?id=${mobileSharePoll.id}&tab=share`, mobileOnly: true,
+        actionLabel: "Ankiety → udostępnianie anonimowe",
+        prepare: async (page) => {
+          await expect(page.locator("#tabShare")).toHaveAttribute("aria-selected", "true");
+          await expect(page.locator("#secShare")).toHaveClass(/active/);
+        },
+      },
+      {
+        id: "polls", stateId: "recipients", page: "polls", href: `/polls/?id=${mobileSharePoll.id}&tab=recipients`, mobileOnly: true,
+        actionLabel: "Ankiety → odbiorcy",
+        prepare: async (page) => {
+          await expect(page.locator("#tabRecipients")).toHaveAttribute("aria-selected", "true");
+          await expect(page.locator("#pollTabsCard")).toHaveClass(/mobile-recipients-active/);
+        },
+      },
     ] : []),
     { id: "marketplace", stateId: "mine", page: "marketplace", href: "/marketplace/", prepare: async (page) => {
       await page.locator("#btnMySent").click();
       await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
     } },
-    { id: "friends", stateId: "list", page: "friends", href: "/friends/?tab=received", mobileOnly: true },
-    { id: "subscribers", stateId: "list", page: "subscribers", href: "/subscribers/?tab=received", mobileOnly: true },
+    ...["friends", "subscribers"].map((id) => ({
+      id, stateId: "list", page: id, href: `/${id}/?tab=received`, mobileOnly: true,
+      actionLabel: `${id === "friends" ? "Znajomi" : "Subskrybenci"} → otrzymane zaproszenia`,
+      prepare: async (page) => {
+        await expect(page.locator("#contactsTabReceived")).toHaveAttribute("aria-selected", "true");
+        await expect(page.locator("#contactsReceived")).toBeVisible();
+      },
+    })),
     ...(data.game ? [
+      {
+        id: "game-editor", stateId: "modal:import-questions-text", page: "game-editor",
+        href: `/games/editor/?id=${data.game.id}`, modalCapture: true,
+        expectedModalId: "txtImportOverlay", actionLabel: "Edytor gry → Import pytań z tekstu",
+        prepare: async (page) => {
+          await page.locator("#btnImportTxt").click();
+          await page.locator("#txtImportOverlay").waitFor({ state: "visible", timeout: 15_000 });
+        },
+      },
       {
         id: "games", stateId: "modal:create-game", page: "games", href: "/games/",
         modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Gry → Utwórz grę",
@@ -266,6 +420,18 @@ function additionalStates(data) {
         modalCapture: true, expectedModalId: "logoImportOverlay", actionLabel: "Lista logo → Import logo",
         prepare: async (page) => { await page.locator("#btnImport").click(); },
       },
+      {
+        id: "logos", stateId: "modal:export-logo", page: "logos", href: "/logos/",
+        modalCapture: true, expectedModalId: "logoExportOverlay", actionLabel: "Lista logo → Eksport logo",
+        prepare: async (page) => {
+          const logo = data.logos.text || data.logos.draw || data.logos.image;
+          await page.locator(`.logoTile[data-key="${logo.id}"]`).click();
+          await expect(page.locator("#btnExport")).toBeEnabled();
+          await page.locator("#btnExport").click();
+          await page.locator("#logoExportOverlay").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator("#btnLogoExportClose").waitFor({ state: "visible", timeout: 20_000 });
+        },
+      },
     ] : []),
     ...["text", "draw", "image"].flatMap((mode) => {
       const logo = data.logos[mode];
@@ -359,6 +525,23 @@ function additionalStates(data) {
         await page.locator("#btnSubmitNew").click();
       },
     },
+    {
+      id: "marketplace", stateId: "modal:marketplace-search", page: "marketplace", href: "/marketplace/",
+      mobileOnly: true, maxWidth: 600, modalCapture: true, expectedVisibleSelector: ".uni-modal",
+      actionLabel: "Gry Społeczności → mobilne wyszukiwanie",
+      prepare: async (page) => {
+        await page.locator("#btnSearchFocus").click();
+        await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
+      },
+    },
+    {
+      id: "games", stateId: "modal:contact", page: "games", href: "/games/",
+      modalCapture: true, expectedModalId: "contactModalOverlay", actionLabel: "Gry → Kontakt",
+      prepare: async (page) => {
+        await page.locator("[data-contact-modal]").click();
+        await page.locator("#contactModalOverlay").waitFor({ state: "visible", timeout: 15_000 });
+      },
+    },
   ];
   return states;
 }
@@ -448,53 +631,6 @@ function pageModalIds(page) {
       .map((el) => el.id || el.classList?.[0] || el.querySelector?.(".mTitle")?.textContent?.trim() || "dialog"));
 }
 
-async function findModalActions(page, pageId) {
-  return page.locator('button, [role="button"], a[aria-haspopup="dialog"]')
-    .evaluateAll((items) => items.map((el, index) => {
-      const style = getComputedStyle(el);
-      if (el.disabled || el.hidden || el.type === "submit" || style.display === "none" || style.visibility === "hidden" || !el.getClientRects().length) return null;
-      const label = [el.innerText, el.getAttribute("aria-label"), el.title].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
-      const icon = el.querySelector("[data-icon]")?.getAttribute("data-icon") || el.getAttribute("data-icon") || "";
-      const contact = el.hasAttribute("data-contact-modal");
-      if (contact && pageId !== "games") return null;
-      const dialogTarget = el.getAttribute("aria-haspopup") === "dialog" || el.hasAttribute("data-modal-target");
-      const safeLabel = /udostępnij|udostepnij|import|eksport|export|qr|podgląd|podglad|preview|tagi|kolor/i.test(label);
-      const safeIcon = /^(share|qr|palette|tag|eye)$/i.test(icon);
-      if (!contact && !dialogTarget && !safeLabel && !safeIcon) return null;
-      if (/usuń|usun|delete|wyloguj|zapisz|save|wyślij|wyslij|submit/i.test(label)) return null;
-      return {
-        index,
-        id: el.id || "",
-        modalTarget: el.getAttribute("data-modal-target") || "",
-        contact,
-        role: el.matches("a[href]") ? "link" : "button",
-        name: el.getAttribute("aria-label") || el.innerText?.replace(/\s+/g, " ").trim() || el.title || icon || "przycisk",
-        label: label || icon || "przycisk",
-      };
-    }).filter(Boolean));
-}
-
-async function clickModalAction(page, action) {
-  let target;
-  if (action.id) {
-    target = page.locator(`#${action.id.replace(/([^a-zA-Z0-9_-])/g, "\\$1")}`);
-  } else if (action.modalTarget) {
-    target = page.locator(`[data-modal-target="${action.modalTarget.replace(/\\/g, "\\\\").replace(/"/g, "\\\"")}"]`);
-  } else if (action.contact) {
-    target = page.locator("[data-contact-modal]");
-  } else {
-    target = page.getByRole(action.role, { name: action.name, exact: true });
-  }
-  if (await target.count() > 1) target = target.nth(0);
-  await target.click({ timeout: 5_000 });
-  await page.waitForFunction(() => [...document.querySelectorAll('.overlay[id], .overlay .modal, .colorModalOverlay[id], .dt-modal[id], dialog[id], [role="dialog"][id]')]
-    .some((el) => {
-      const style = getComputedStyle(el);
-      return !el.hidden && style.display !== "none" && style.visibility !== "hidden" && el.getClientRects().length > 0;
-    }), null, { timeout: 3_000 }).catch(() => {});
-  return pageModalIds(page);
-}
-
 // Wybór pytania odbywa się po sprawdzeniu blokady przez tę samą funkcję RPC,
 // której używa UI. Sam zrzut nadal otwiera modal przez widok i kliknięcia UI.
 async function findUnlockedBaseQuestion(page, baseId) {
@@ -547,30 +683,19 @@ async function openQuestionInBaseFolder(page, baseId, question) {
   await row.click();
 }
 
-async function captureAndDismissBlockingModal(page, profile, id) {
+async function dismissBlockingModal(page, profile, id) {
   const ratingOverlay = page.locator("#ratingOverlay");
   const hasRatingModal = await ratingOverlay.count() > 0 && await ratingOverlay.isVisible().catch(() => false);
   const genericDialog = page.locator(".overlay:visible").filter({ has: page.locator("button:visible") }).first();
   const hasGenericModal = !hasRatingModal && await genericDialog.count() > 0 && await genericDialog.isVisible().catch(() => false);
-  if (!hasRatingModal && !hasGenericModal) return null;
+  if (!hasRatingModal && !hasGenericModal) return;
 
-  const session = await page.context().newCDPSession(page);
-  let image;
-  try {
-    const result = await session.send("Page.captureScreenshot", {
-      format: "png", fromSurface: true, captureBeyondViewport: false,
-    });
-    image = Buffer.from(result.data, "base64");
-  } finally {
-    await session.detach();
-  }
   if (hasRatingModal) {
     await page.locator("#btnRatingLater").click({ timeout: 5_000 });
     await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
-    return { image, id: "ratingOverlay" };
+    return;
   }
 
-  const modalId = await genericDialog.getAttribute("class").then((value) => value?.split(/\s+/)[0] || "dialog");
   const safeDismiss = genericDialog.getByRole("button", { name: /zamknij|close|anuluj|cancel|później|later|nie/i }).first();
   if (await safeDismiss.count()) {
     await safeDismiss.click();
@@ -581,7 +706,6 @@ async function captureAndDismissBlockingModal(page, profile, id) {
     await buttons.nth(count > 1 ? 0 : count - 1).click();
   }
   await genericDialog.waitFor({ state: "hidden", timeout: 10_000 });
-  return { image, id: modalId };
 }
 
 async function capture(page, profile, id, href, manifest, prepare = null, readySelector = null, options = {}) {
@@ -621,9 +745,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     })).catch(() => ({}));
     throw new Error(`${profile.label} · ${id}: ładowanie strony nie zakończyło się w 8 s; ${JSON.stringify({ ...diagnostics, pageErrors })}`);
   }
-  // initPage czeka na odpowiedź na rzeczywisty, blokujący modal oceny. Zapisz
-  // go w stanie otwartym i kliknij jego prawdziwy przycisk „Później”, żeby
-  // dalszy widok strony pokazywał stan, do którego użytkownik faktycznie dotrze.
+  // initPage może zatrzymać stronę na globalnym komunikacie. Zamykamy takie
+  // blokady, ale nie zapisujemy ich jako dodatkowych stanów galerii; lista
+  // zrzutów modalnych jest wymuszona jawnie w additionalStates().
   let contentReady = true;
   await page.waitForFunction(() => {
     const rating = document.getElementById("ratingOverlay");
@@ -647,13 +771,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     });
     return steps.length > 0 && steps.every((step) => step.classList.contains("skel-step-ready"));
   }, null, { timeout: 20_000 }).catch(() => { contentReady = false; });
-  let autoModalImage = null;
-  let autoModalId = "";
-  const earlyModal = await captureAndDismissBlockingModal(page, profile, id);
-  if (earlyModal) {
-    autoModalImage = earlyModal.image;
-    autoModalId = earlyModal.id;
-  }
+  await dismissBlockingModal(page, profile, id);
   try {
     await page.waitForFunction(() => {
       const root = document.documentElement;
@@ -692,6 +810,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       console.log(`[e20-gallery] ${profile.id} · ${id}: brak elementu ${readySelector}; zapisuję widoczny stan aplikacji.`);
     });
   }
+  if (options.waitForReady && contentReady) await options.waitForReady(page);
   const pollPageHasId = id === "polls" && /[?&]id=/.test(href);
   const pollBlockedByDeviceGuard = pollPageHasId && await page.evaluate(() => {
     const guard = document.getElementById("pageGuard");
@@ -792,15 +911,14 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     const state = document.documentElement.dataset.deviceGuard || "";
     return state !== "" && state !== "ok" && document.getElementById("pageGuard")?.style.display === "flex";
   });
+  if (prepare && (!contentReady || blockedByGuard)) {
+    throw new Error(`${profile.label} · ${id}: nie można otworzyć wymaganego stanu „${options.actionLabel || options.stateId || "widok"}” — treść nie jest gotowa lub strona jest zablokowana`);
+  }
   // Stany interaktywne nie zastępują guarda: na niedostępnym urządzeniu
   // zapisujemy ten guard zamiast wymuszać klik w ukryty zasób.
   let preparedState = null;
   if (prepare && !blockedByGuard && contentReady) {
-    const lateModal = await captureAndDismissBlockingModal(page, profile, id);
-    if (lateModal && !autoModalImage) {
-      autoModalImage = lateModal.image;
-      autoModalId = lateModal.id;
-    }
+    await dismissBlockingModal(page, profile, id);
     preparedState = await prepare(page);
     if (options.expectedModalId) {
       try {
@@ -944,7 +1062,6 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     }
   }
   const modalIds = await pageModalIds(page).catch(() => []);
-  const modalCandidates = options.modalCapture || options.skipAutoModals ? [] : await findModalActions(page, id).catch(() => []);
   if (options.requireModal && !modalIds.length) {
     throw new Error(`${profile.label} · ${id}: akcja „${options.actionLabel || "?"}” nie otworzyła prawdziwego modala`);
   }
@@ -981,26 +1098,10 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     contentStable,
     ...state,
   });
-  if (autoModalImage) {
-    const fileName = `modal-${autoModalId || "dialog"}-${profile.id}.png`;
-    const file = `${id}/${fileName}`;
-    await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, fileName), false, autoModalImage);
-    manifest.push({
-      id,
-      stateId: `modal:${autoModalId || "dialog"}`,
-      profile: profile.id,
-      label: profile.label,
-      safeAreaInsets: expectedSafe,
-      url: href,
-      finalUrl,
-      actionLabel: "Później",
-      file,
-    });
-  }
   // Checkpoint after every image so a failed profile still leaves useful work.
   fs.mkdirSync(MANIFEST_DIR, { recursive: true });
   fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
-  return { modalIds, modalCandidates: contentReady ? modalCandidates : [], blockedByGuard, preparedState, autoModalCaptured: Boolean(autoModalImage) };
+  return { modalIds, blockedByGuard, preparedState };
 }
 
 // Profile są rozdzielone między istniejące konta. Każde konto robi swoje
@@ -1061,7 +1162,6 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         let page = await context.newPage();
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);
-          let modalCaptureCount = 0;
         for (const [id, href] of selectedUrls) {
           if (["home", "login", "login-confirm", "login-reset"].includes(id)) continue;
           const readySelector = id === "games"
@@ -1074,8 +1174,17 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 : null;
           const isControl = id === "control";
           const isBaseExplorer = id === "base-explorer";
-          const baseState = await capture(page, profile, id, href, manifest, null, readySelector, { skipAutoModals: isControl || isBaseExplorer });
-          if (baseState.autoModalCaptured) modalCaptureCount += 1;
+          const baseState = await capture(page, profile, id, href, manifest, null, readySelector, id === "control" ? {
+            waitForReady: async (controlPage) => controlPage.waitForFunction(() =>
+              /^\d{6}$/.test(document.querySelector('#app .device-row[data-device="display"] .device-connect-code-val')?.textContent?.trim() || ""),
+            null, { timeout: 20_000 }),
+          } : {});
+          if (id === "control" && data.game) {
+            const code = page.locator('#app .device-row[data-device="display"] .device-connect-code-val');
+            await code.waitFor({ state: "visible", timeout: 20_000 });
+            await page.waitForFunction(() => /^\d{6}$/.test(document.querySelector('#app .device-row[data-device="display"] .device-connect-code-val')?.textContent?.trim() || ""), null, { timeout: 20_000 });
+            data.connectPreviewCode = (await code.innerText()).trim();
+          }
           if (isBaseExplorer && !baseState.blockedByGuard) {
             const tagShots = [
               {
@@ -1139,7 +1248,6 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                   expectedVisibleSelector: `#${shot.layerId}`,
                 },
               );
-              modalCaptureCount += 1;
             }
           }
           if (isControl && !baseState.blockedByGuard) {
@@ -1147,7 +1255,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             page = await context.newPage();
             page.setDefaultTimeout(20_000);
             page.setDefaultNavigationTimeout(20_000);
-            const result = await capture(
+            await capture(
               page, profile, id, href, manifest,
               async (modalPage) => {
                 const shareButton = modalPage.locator('#app .device-row[data-device="display"] button')
@@ -1158,50 +1266,14 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
               null,
               { modalCapture: true, requireModal: true, expectedModalId: "shareDeviceOverlay", actionLabel: "Urządzenia → Udostępnij urządzenie", stateId: "modal:share-device", fileName: `modal-share-device-${profile.id}.png` },
             );
-            if (result.modalIds.includes("shareDeviceOverlay")) modalCaptureCount += 1;
-          }
-          if (!baseState.blockedByGuard) {
-            const capturedModalIds = new Set(baseState.modalIds);
-            for (const action of baseState.modalCandidates) {
-              await page.close();
-              page = await context.newPage();
-              page.setDefaultTimeout(20_000);
-              page.setDefaultNavigationTimeout(20_000);
-              const result = await capture(
-                page, profile, id, href, manifest,
-                (modalPage) => clickModalAction(modalPage, action),
-                null,
-                { modalCapture: true, requireModal: true, actionLabel: action.label },
-              ).catch((error) => {
-                if (/nie otworzyła prawdziwego modala/i.test(error.message)) {
-                  console.log(`[e20-gallery] ${profile.id} · ${id}: akcja „${action.label}” nie otworzyła modala; bez zrzutu`);
-                  return null;
-                }
-                throw error;
-              });
-              if (result?.modalIds?.length) {
-                const openedId = result.modalIds[0];
-                if (capturedModalIds.has(openedId)) {
-                  const latest = manifest.at(-1);
-                  if (latest?.stateId === `modal:${openedId}`) {
-                    const duplicateFile = latest.file;
-                    manifest.pop();
-                    if (!manifest.some((entry) => entry.file === duplicateFile)) {
-                      fs.rmSync(path.join(OUT, duplicateFile), { force: true });
-                    }
-                    fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
-                  }
-                } else {
-                  capturedModalIds.add(openedId);
-                  modalCaptureCount += 1;
-                }
-              }
-            }
           }
         }
         const extra = additionalStates(data).filter((state) =>
           (!requestedPages.length || requestedPages.includes(state.page))
-          && (!state.mobileOnly || (profile.mobile && (profile.width <= 1100 || profile.height <= 720))));
+          // Widoki „mobile” dopasowują się do rzeczywistych breakpointów;
+          // łącznie z iPhone landscape (niska wysokość) i bez iPada landscape.
+          && (!state.mobileOnly || (profile.mobile && (profile.width <= 1100 || profile.height <= 720)))
+          && (!state.maxWidth || profile.width <= state.maxWidth));
         if (extra.length) {
           // Podstawowe strony mogą zostawić stan karty lub heartbeat blokady.
           // Zamykamy ją całkowicie i stany dodatkowe fotografujemy w nowej,
@@ -1214,6 +1286,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         for (const state of extra) {
           const stateOptions = {
             stateId: state.stateId,
+            ...(state.actionLabel ? { actionLabel: state.actionLabel } : {}),
             ...(state.modalCapture ? {
               modalCapture: true,
               requireModal: true,
@@ -1223,13 +1296,13 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             ...(state.expectedModalId ? { expectedModalId: state.expectedModalId } : {}),
             ...(state.expectedVisibleSelector ? { expectedVisibleSelector: state.expectedVisibleSelector } : {}),
           };
-          await capture(page, profile, state.id, state.href, manifest, state.prepare, null, stateOptions);
+          try {
+            await capture(page, profile, state.id, state.href, manifest, state.prepare, null, stateOptions);
+          } finally {
+            if (state.cleanup) await state.cleanup(page);
+          }
         }
         expect(manifest.filter((entry) => !entry.stateId)).toHaveLength(selectedUrls.length);
-        const recordedModalCaptures = manifest.filter((entry) => String(entry.stateId || "").startsWith("modal:")).length;
-        if (recordedModalCaptures !== modalCaptureCount) {
-          console.log(`[e20-gallery] ${profile.id}: zapisano ${recordedModalCaptures} rzeczywistych dialogów i stanów informacyjnych.`);
-        }
         const layoutIssues = manifest.filter((entry) => entry.scrollWidth > entry.viewportWidth + 1);
         expect(layoutIssues, `Poziomy overflow: ${JSON.stringify(layoutIssues.map(({ id, url, scrollWidth, viewportWidth }) => ({ id, url, scrollWidth, viewportWidth })))}`).toEqual([]);
         const incomplete = manifest.filter((entry) => entry.contentReady === false || entry.contentStable === false);

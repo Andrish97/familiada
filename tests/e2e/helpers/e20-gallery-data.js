@@ -40,7 +40,7 @@ async function readE20GalleryData(page) {
       // ankiety są wybierane osobno wyłącznie dla publicznych stron głosowania.
       return demos.find((game) => game.status === "ready") || null;
     };
-    return {
+    const galleryData = {
       game: preferDemo(games.filter((game) => game.type === "prepared")),
       base: bases[0] || null,
       baseCandidates: bases,
@@ -57,6 +57,18 @@ async function readE20GalleryData(page) {
         poll_text_vote: games.find((game) => game.type === "poll_text" && isOpen(game) && game.share_key_poll) || null,
       },
     };
+    const missing = [];
+    if (!galleryData.game) missing.push("przygotowana gra do widoków Games i edytora");
+    if (!galleryData.base) missing.push("baza pytań do widoków Bases i Base Explorer");
+    for (const mode of ["text", "draw", "image"]) {
+      if (!galleryData.logos[mode]) missing.push(`logo trybu ${mode}`);
+    }
+    if (!galleryData.polls.poll_text && !galleryData.polls.poll_points) missing.push("zamknięta ankieta Demo do wyników");
+    if (!galleryData.polls.poll_text_vote && !galleryData.polls.poll_points_vote) missing.push("otwarta ankieta z kodem do udostępniania i widoków mobilnych");
+    if (missing.length) {
+      throw new Error(`Konto nie ma rzeczywistych danych wymaganych przez zatwierdzoną galerię E20: ${missing.join("; ")}. Nie zastępuję ich fikcyjnymi rekordami.`);
+    }
+    return galleryData;
   });
 }
 
