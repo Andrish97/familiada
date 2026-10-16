@@ -486,6 +486,12 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       autoModalId = lateModal.id;
     }
     preparedState = await prepare(page);
+    if (options.expectedModalId) {
+      await page.locator(`#${options.expectedModalId}`).waitFor({ state: "visible", timeout: 15_000 });
+    }
+    if (options.expectedVisibleSelector) {
+      await page.locator(options.expectedVisibleSelector).waitFor({ state: "visible", timeout: 15_000 });
+    }
   }
   const expectedSafe = profile.safe || { top: 0, right: 0, bottom: 0, left: 0 };
   const actualSafe = await page.evaluate(() => {
