@@ -68,10 +68,11 @@ test('galeria czeka na gotowe widoczne etapy, a widoczny device guard jest końc
   assert.match(source, /getElementById\("resourceLockGuard"\)/);
   assert.match(source, /step\.classList\.contains\("skel-step-ready"\) \|\| step\.getClientRects\(\)\.length > 0/);
   assert.match(source, /serveBranchLoginHtml/);
-  assert.match(source, /web\/login\/index\.html/);
   assert.ok(source.includes("(?:\\?.*)?$"));
   const branchCode = fs.readFileSync(path.join(here, '../e2e/helpers/branch-code.js'), 'utf8');
   assert.match(branchCode, /loginPage !== "login" && pages\.includes\(loginPage\)/);
+  assert.match(branchCode, /async function serveBranchLoginHtml/);
+  assert.match(branchCode, /path\.join\(REPO_ROOT, "login", "index\.html"\)/);
 });
 
 test('kontakty i zadania odsłaniają listę po renderze, nie przed nim', () => {
