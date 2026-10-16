@@ -885,13 +885,16 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       const visible = (element) => element && !element.hidden
         && getComputedStyle(element).display !== "none"
         && element.getClientRects().length > 0;
-      return load?.hidden && visible(main) && visible(bar)
+      const resultsSelected = document.getElementById("tabResults")?.getAttribute("aria-selected") === "true";
+      const recipientsSelected = document.getElementById("tabRecipients")?.getAttribute("aria-selected") === "true";
+      const sectionReady = resultsSelected
+        ? visible(document.getElementById("secResults")) && Boolean(meta?.textContent.trim())
+        : visible(document.getElementById("secShare"))
+          || (recipientsSelected && document.getElementById("pollTabsCard")?.classList.contains("mobile-recipients-active"));
+      return load?.hidden && visible(main) && visible(bar) && sectionReady
         && Boolean(document.getElementById("pollGameName")?.textContent.trim())
-        // pollBar/cardMain są gotowe wcześniej niż asynchroniczny odczyt
-        // wyników. Czekamy na sygnał po get_poll_preview, żeby nie złapać
-        // pustej karty podczas gdy właściwa treść ankiety nadal się ładuje.
         && results?.classList.contains("skel-step-ready")
-        && Boolean(meta?.textContent.trim());
+        && Boolean(document.getElementById("pollStateWord")?.textContent.trim());
     }, null, { timeout: 30_000 }).then(() => {
       pollContentReady = true;
       contentReady = true;
@@ -950,6 +953,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       guard: document.getElementById("resourceLockGuard")?.innerText?.trim().slice(0, 240) || "",
       status: document.getElementById("pollStateWord")?.textContent?.trim() || "",
       game: document.getElementById("pollGameName")?.textContent?.trim() || "",
+      loadHidden: document.getElementById("pollLoadState")?.hidden ?? null,
+      selectedTab: [...document.querySelectorAll("#pollTabs [aria-selected='true']")].map((item) => item.id),
+      resultMeta: document.getElementById("resultsMeta")?.textContent?.trim() || "",
     }));
     throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi; oczekiwano „${options.expectedPollName || "nieznanej ankiety"}”; ${JSON.stringify(diagnostics)}`);
   }
