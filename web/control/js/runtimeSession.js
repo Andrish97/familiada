@@ -26,7 +26,7 @@ export function createRuntimeSession({ gameId, onExpired }) {
       if (!data?.ok) throw new Error(data?.error || "Nie udało się odnowić sesji Control.");
 
       sessionId = data.session_id;
-      if (data.device_protocol !== 1 && data.device_protocol !== 2) {
+      if (data.device_protocol !== 2) {
         throw new Error("Serwer zwrócił nieznaną wersję połączenia urządzeń.");
       }
       if (sessionId) sessionStorage.setItem(storageKey, sessionId);

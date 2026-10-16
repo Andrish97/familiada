@@ -8,11 +8,11 @@ const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
     return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
   });
 
-export function updateDeviceLeaseOverlay(state, mode = "lease") {
+export function updateDeviceLeaseOverlay(state) {
   const overlay = document.getElementById("deviceLeaseOverlay");
   if (!overlay) return;
-  overlay.dataset.leaseState = mode === "legacy" ? "primary" : (state || "starting");
-  if (mode === "legacy" || state === "primary") {
+  overlay.dataset.leaseState = state || "starting";
+  if (state === "primary") {
     overlay.hidden = true;
     return;
   }
@@ -64,15 +64,6 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
       };
       const data = await call(register ? "control_device_instance_register" : "control_device_instance_heartbeat",
         register ? params : { ...params, p_epoch: epoch });
-      if (data?.mode === "legacy") {
-        mode = "legacy";
-        state = "primary";
-        epoch = null;
-        clearInterval(timer);
-        timer = null;
-        onState?.({ mode, state, epoch, queuePosition: null, waitingCount: 0 });
-        return data;
-      }
       publish(data || {});
       return data;
     } catch (error) {
@@ -102,7 +93,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
 
   async function start() {
     await heartbeat(true);
-    if (mode !== "legacy") timer = setInterval(() => void heartbeat(mode !== "lease"), HEARTBEAT_MS);
+    timer = setInterval(() => void heartbeat(false), HEARTBEAT_MS);
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("pagehide", onPageHide, { once: true });
@@ -132,6 +123,6 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
       if (Number.isSafeInteger(renderedRev) && renderedRev >= 0) progress.rendered_rev = Math.max(progress.rendered_rev, renderedRev);
       if (Number.isSafeInteger(startedSoundCueSeq) && startedSoundCueSeq >= 0) progress.started_sound_cue_seq = Math.max(progress.started_sound_cue_seq, startedSoundCueSeq);
     },
-    actionArgs() { return mode === "lease" && state === "primary" ? { p_connection_id: connectionId, p_epoch: epoch } : {}; },
+    actionArgs() { return state === "primary" ? { p_connection_id: connectionId, p_epoch: epoch } : {}; },
   };
 }

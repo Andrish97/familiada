@@ -142,15 +142,15 @@ async function main() {
   if (!gameId) return;
 
   let subscription = null;
-  const lease = createDeviceLease({ gameId, deviceType: "buzzer", key, onState: ({ state, mode }) => {
-    updateDeviceLeaseOverlay(state, mode);
+  const lease = createDeviceLease({ gameId, deviceType: "buzzer", key, onState: ({ state }) => {
+    updateDeviceLeaseOverlay(state);
     if (subscription) {
-      if (state === "primary" || mode === "legacy") void subscription.start();
+      if (state === "primary") void subscription.start();
       else subscription.stop();
     }
   } });
   await lease.start();
-  updateDeviceLeaseOverlay(lease.state, lease.mode);
+  updateDeviceLeaseOverlay(lease.state);
 
   const renderer = createButtonRenderer();
   let lastRow = null;
@@ -257,7 +257,7 @@ async function main() {
 
   if (!key) return;
   startPresenceHeartbeat({ gameId, key });
-  if (lease.state === "primary" || lease.mode === "legacy") await subscription.start();
+  if (lease.state === "primary") await subscription.start();
 }
 
 main();
