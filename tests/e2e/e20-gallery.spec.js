@@ -1260,16 +1260,16 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
               });
               if (unavailable) return;
               await restartControlToDevices(controlPage);
+              const code = controlPage.locator('#app .device-row[data-device="display"] .device-connect-code-val');
+              await code.waitFor({ state: "visible", timeout: 20_000 });
+              await controlPage.waitForFunction(() =>
+                /^\d{6}$/.test(document.querySelector('#app .device-row[data-device="display"] .device-connect-code-val')?.textContent?.trim() || ""),
+              null, { timeout: 20_000 });
+              data.connectPreviewCode = (await code.innerText()).trim();
             },
           } : id === "polls" ? {
             expectedPollName: data.polls.poll_open_demo?.name || null,
           } : {});
-          if (id === "control" && data.game) {
-            const code = page.locator('#app .device-row[data-device="display"] .device-connect-code-val');
-            await code.waitFor({ state: "visible", timeout: 20_000 });
-            await page.waitForFunction(() => /^\d{6}$/.test(document.querySelector('#app .device-row[data-device="display"] .device-connect-code-val')?.textContent?.trim() || ""), null, { timeout: 20_000 });
-            data.connectPreviewCode = (await code.innerText()).trim();
-          }
           if (id === "control") {
             if (profile.width < 980) {
               expect(baseState.blockedByGuard, `${profile.label} · Control should show its minimum-width guard`)
