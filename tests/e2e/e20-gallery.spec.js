@@ -35,9 +35,9 @@ const requestedAccounts = galleryAccountNumbers();
 
 function urls(data) {
   const game = data.game;
+  const openDemoPoll = data.polls.poll_open_demo;
   const pollPoints = data.polls.poll_points_vote;
   const pollTextVote = data.polls.poll_text_vote;
-  const pollResults = data.polls.poll_text || data.polls.poll_points;
   const result = [
     ["home", "/"], ["account", "/account/"], ["bases", "/bases/"],
     ["connect", "/connect/"], ["connect-tv", "/connect/tv/"],
@@ -45,10 +45,9 @@ function urls(data) {
     ["friends", "/friends/"], ["go", "/go/"], ["login", "/login/"],
     ["login-confirm", "/login/confirm/"], ["login-reset", "/login/reset/"], ["logos", "/logos/"],
     ["mails", "/mails/"], ["maintenance", "/maintenance/"], ["manual", "/manual/"],
-    // Strona polls w galerii ma pokazać zamknięte Demo i jego wyniki. Otwarte
-    // ankiety mają osobne foldery poll-vote-*; wybór ich tutaj dawał niestabilny
-    // ekran właściciela i omijał zatwierdzony widok wyników.
-    ["marketplace", "/marketplace/"], ["polls", (pollResults || pollTextVote) ? `/polls/?id=${(pollResults || pollTextVote).id}` : "/polls/"],
+    // Główny widok Ankiet pokazuje otwartą ankietę Demo. Dodatkowy stan
+    // `results` poniżej pokazuje zamknięte Demo z wynikami.
+    ["marketplace", "/marketplace/"], ["polls", openDemoPoll ? `/polls/?id=${openDemoPoll.id}` : "/polls/"],
     ["privacy", "/privacy/"], ["subscribers", "/subscribers/"], ["tasks", "/tasks/"], ["404", "/404.html"],
   ];
   if (data.base) result.push(["base-explorer", `/bases/explorer/?id=${data.base.id}`]);
@@ -1231,7 +1230,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
               await restartControlToDevices(controlPage);
             },
           } : id === "polls" ? {
-            expectedPollName: (data.polls.poll_text || data.polls.poll_points)?.name || null,
+            expectedPollName: data.polls.poll_open_demo?.name || null,
           } : {});
           if (id === "control" && data.game) {
             const code = page.locator('#app .device-row[data-device="display"] .device-connect-code-val');
