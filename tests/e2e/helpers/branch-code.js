@@ -101,8 +101,12 @@ async function serveBranchCode(context, { pages, safeAreaInsets = null }) {
 async function serveBranchLoginHtml(route) {
   let productionResponse;
   let testSiteKey = "";
+  // route.fetch() does not reliably inherit browser context extra headers.
+  // Forward the actual navigation headers so the Worker can validate the
+  // one-time E2E bypass token and inject the Turnstile test key.
+  const requestHeaders = await route.request().allHeaders();
   for (let attempt = 1; attempt <= 3; attempt++) {
-    productionResponse = await route.fetch();
+    productionResponse = await route.fetch({ headers: requestHeaders });
     const productionHtml = await productionResponse.text();
     testSiteKey = productionHtml.match(/data-captcha-site-key="([^"]*)"/)?.[1] || "";
     if (testSiteKey) break;
