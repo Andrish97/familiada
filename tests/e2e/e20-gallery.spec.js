@@ -190,19 +190,35 @@ async function findModalActions(page) {
       const label = [el.innerText, el.getAttribute("aria-label"), el.title].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
       const icon = el.querySelector("[data-icon]")?.getAttribute("data-icon") || el.getAttribute("data-icon") || "";
       const contact = el.hasAttribute("data-contact-modal");
+      const dialogTarget = el.getAttribute("aria-haspopup") === "dialog" || el.hasAttribute("data-modal-target");
       const safeLabel = /wyszukaj|szukaj|search|udostępnij|udostepnij|import|eksport|export|qr|podgląd|podglad|preview|tagi|kolor/i.test(label);
       const safeIcon = /^(search|share|qr|palette|tag|eye)$/i.test(icon);
-      if (!contact && !el.hasAttribute("aria-haspopup") && !el.hasAttribute("data-modal-target") && !safeLabel && !safeIcon) return null;
+      if (!contact && !dialogTarget && !safeLabel && !safeIcon) return null;
       if (/usuń|usun|delete|wyloguj|zapisz|save|wyślij|wyslij|submit/i.test(label)) return null;
-      return { index, id: el.id || "", label: label || icon || "przycisk" };
+      return {
+        index,
+        id: el.id || "",
+        modalTarget: el.getAttribute("data-modal-target") || "",
+        contact,
+        role: el.matches("a[href]") ? "link" : "button",
+        name: el.getAttribute("aria-label") || el.innerText?.replace(/\s+/g, " ").trim() || el.title || icon || "przycisk",
+        label: label || icon || "przycisk",
+      };
     }).filter(Boolean));
 }
 
 async function clickModalAction(page, action) {
-  const selector = action.id
-    ? `#${action.id.replace(/([^a-zA-Z0-9_-])/g, "\\$1")}`
-    : 'button, [role="button"], a[aria-haspopup="dialog"]';
-  const target = action.id ? page.locator(selector) : page.locator(selector).nth(action.index);
+  let target;
+  if (action.id) {
+    target = page.locator(`#${action.id.replace(/([^a-zA-Z0-9_-])/g, "\\$1")}`);
+  } else if (action.modalTarget) {
+    target = page.locator(`[data-modal-target="${action.modalTarget.replace(/\\/g, "\\\\").replace(/"/g, "\\\"")}"]`);
+  } else if (action.contact) {
+    target = page.locator("[data-contact-modal]");
+  } else {
+    target = page.getByRole(action.role, { name: action.name, exact: true });
+  }
+  if (await target.count() > 1) target = target.nth(0);
   await target.click({ timeout: 5_000 });
   await page.waitForFunction(() => [...document.querySelectorAll('.overlay[id], .colorModalOverlay[id], .dt-modal[id], dialog[id], [role="dialog"][id]')]
     .some((el) => {
