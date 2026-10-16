@@ -19,9 +19,10 @@ if (!entries.length) {
 const fullGalleryRequested = !process.env.E20_GALLERY_PAGES && !process.env.E20_GALLERY_PROFILES;
 if (fullGalleryRequested) {
   const requiredPages = [
-    "home", "account", "bases", "connect", "connect-tv", "games",
-    "friends", "go", "login", "login-confirm",
-    "login-reset", "logo", "mail", "maintenance", "manual", "marketplace", "polls",
+    "home", "account", "bases", "base-explorer", "connect", "connect-tv", "control", "games",
+    "game-editor", "game-settings", "friends", "go", "login", "login-confirm",
+    "login-reset", "logos", "logo-editor-text", "logo-editor-draw", "logo-editor-image",
+    "mails", "maintenance", "manual", "marketplace", "polls", "poll-vote-points", "poll-vote-qr", "poll-vote-text",
     "privacy", "subscribers", "tasks", "404",
   ];
   for (const profile of profiles) {

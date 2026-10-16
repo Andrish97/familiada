@@ -38,15 +38,14 @@ function urls(data) {
   const pollPoints = data.polls.poll_points_vote;
   const pollText = data.polls.poll_text;
   const pollTextVote = data.polls.poll_text_vote;
-  const logo = data.logos.text || data.logos.draw || data.logos.image;
   const result = [
     ["home", "/"], ["account", "/account/"], ["bases", "/bases/"],
     ["connect", "/connect/"], ["connect-tv", "/connect/tv/"],
     ["games", "/games/"],
     ["friends", "/friends/"], ["go", "/go/"], ["login", "/login/"],
-    ["login-confirm", "/login/confirm/"], ["login-reset", "/login/reset/"], ["logo", "/logos/"],
-    ["mail", "/mails/"], ["maintenance", "/maintenance/"], ["manual", "/manual/"],
-    ["marketplace", "/marketplace/"], ["polls", pollText ? `/polls/?id=${pollText.id}` : "/polls/"],
+    ["login-confirm", "/login/confirm/"], ["login-reset", "/login/reset/"], ["logos", "/logos/"],
+    ["mails", "/mails/"], ["maintenance", "/maintenance/"], ["manual", "/manual/"],
+    ["marketplace", "/marketplace/"], ["polls", (pollTextVote || pollText) ? `/polls/?id=${(pollTextVote || pollText).id}` : "/polls/"],
     ["privacy", "/privacy/"], ["subscribers", "/subscribers/"], ["tasks", "/tasks/"], ["404", "/404.html"],
   ];
   if (data.base) result.push(["base-explorer", `/bases/explorer/?id=${data.base.id}`]);
@@ -55,9 +54,9 @@ function urls(data) {
     result.push(["game-editor", `/games/editor/?id=${game.id}`]);
     result.push(["game-settings", `/games/settings/?id=${game.id}`]);
   }
-  if (logo) {
-    const modePage = { TEXT: "text", DRAW: "draw", IMAGE: "image" }[logo.payload?.source?.mode];
-    if (modePage) result.push([`logo-${modePage}`, `/logos/editor/${modePage}/?id=${logo.id}`]);
+  for (const modePage of ["text", "draw", "image"]) {
+    const logo = data.logos[modePage];
+    if (logo) result.push([`logo-editor-${modePage}`, `/logos/editor/${modePage}/?id=${logo.id}`]);
   }
   if (pollPoints?.share_key_poll) {
     result.push(["poll-vote-points", `/polls/vote/points/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`]);
@@ -73,6 +72,11 @@ function additionalStates(data) {
   const states = [
     { id: "bases", stateId: "shared", page: "bases", href: "/bases/?tab=shared" },
     ...(data.polls.poll_text ? [{ id: "polls", stateId: "results", page: "polls", href: `/polls/?id=${data.polls.poll_text.id}&tab=results` }] : []),
+    ...((data.polls.poll_text_vote || data.polls.poll_text) ? [{ id: "polls", stateId: "recipients", page: "polls", href: `/polls/?id=${(data.polls.poll_text_vote || data.polls.poll_text).id}&tab=recipients`, mobileOnly: true }] : []),
+    { id: "marketplace", stateId: "mine", page: "marketplace", href: "/marketplace/", prepare: async (page) => {
+      await page.locator("#btnMySent").click();
+      await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
+    } },
     { id: "friends", stateId: "list", page: "friends", href: "/friends/?tab=received", mobileOnly: true },
     { id: "subscribers", stateId: "list", page: "subscribers", href: "/subscribers/?tab=received", mobileOnly: true },
     ...(data.game ? [
@@ -583,7 +587,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   if (state.scrollWidth > state.viewportWidth + 1) {
     throw new Error(`${profile.label} · ${id}: poziomy overflow ${state.scrollWidth}px przy viewport ${state.viewportWidth}px`);
   }
-  if (contentReady && ["games", "bases", "logo"].includes(id) && state.listBottomMetrics?.available > 0) {
+  if (contentReady && ["games", "bases", "logos"].includes(id) && state.listBottomMetrics?.available > 0) {
     if (profile.width >= 1133 && state.listHeaderActionsBelow) {
       throw new Error(`${profile.label} · ${id}: pasek nagłówka przeniósł akcje mimo szerokiego ekranu`);
     }
@@ -607,9 +611,15 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     }
   }
   const modalIds = await pageModalIds(page).catch(() => []);
-  const modalCandidates = options.modalCapture ? [] : await findModalActions(page, id).catch(() => []);
+  const modalCandidates = options.modalCapture || options.skipAutoModals ? [] : await findModalActions(page, id).catch(() => []);
   if (options.requireModal && !modalIds.length) {
     throw new Error(`${profile.label} · ${id}: akcja „${options.actionLabel || "?"}” nie otworzyła prawdziwego modala`);
+  }
+  if (options.expectedModalId && !modalIds.includes(options.expectedModalId)) {
+    throw new Error(`${profile.label} · ${id}: oczekiwano modala #${options.expectedModalId}, widoczne: ${modalIds.join(", ") || "brak"}`);
+  }
+  if (options.expectedVisibleSelector && !await page.locator(options.expectedVisibleSelector).isVisible().catch(() => false)) {
+    throw new Error(`${profile.label} · ${id}: oczekiwano widocznej warstwy ${options.expectedVisibleSelector}`);
   }
   const safeModalName = (modalIds[0] || "dialog").replace(/[^a-zA-Z0-9_-]/g, "-");
   const fileName = options.fileName || (options.modalCapture
@@ -725,12 +735,92 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             ? data.game ? `.card[data-game-id="${data.game.id}"]` : null
             : id === "bases"
               ? data.base ? `.tile[data-base-id="${data.base.id}"]` : null
-              : id === "logo"
+              : id === "logos"
                 ? (data.logos.text || data.logos.draw || data.logos.image)
                   ? `.logoTile[data-key="${(data.logos.text || data.logos.draw || data.logos.image).id}"]` : null
                 : null;
-          const baseState = await capture(page, profile, id, href, manifest, null, readySelector);
+          const isControl = id === "control";
+          const isBaseExplorer = id === "base-explorer";
+          const baseState = await capture(page, profile, id, href, manifest, null, readySelector, { skipAutoModals: isControl || isBaseExplorer });
           if (baseState.autoModalCaptured) modalCaptureCount += 1;
+          if (isBaseExplorer && !baseState.blockedByGuard) {
+            const tagShots = [
+              {
+                stateId: "modal:tags-assign",
+                fileName: `modal-tags-assign-${profile.id}.png`,
+                layerId: "tagsL1",
+                actionLabel: "Tagi → przypisz",
+                prepare: async (modalPage) => {
+                  const question = modalPage.locator('#list .row[data-kind="q"][data-id]').first();
+                  await question.waitFor({ state: "visible", timeout: 15_000 });
+                  await question.click();
+                  const action = modalPage.locator('#toolbar [data-act="editTags"]');
+                  await action.waitFor({ state: "visible", timeout: 5_000 });
+                  await action.click();
+                },
+              },
+              {
+                stateId: "modal:tags-create",
+                fileName: `modal-tags-create-${profile.id}.png`,
+                layerId: "tagsL2",
+                actionLabel: "Tagi → dodaj tag",
+                prepare: async (modalPage) => {
+                  const drawer = modalPage.locator("#btnDrawerToggle");
+                  if (await drawer.isVisible().catch(() => false)) await drawer.click();
+                  await modalPage.locator("#btnAddTag").click();
+                },
+              },
+              {
+                stateId: "modal:tags-color",
+                fileName: `modal-tags-color-${profile.id}.png`,
+                layerId: "tagsL3",
+                actionLabel: "Tagi → dodaj tag → wybierz kolor",
+                prepare: async (modalPage) => {
+                  const drawer = modalPage.locator("#btnDrawerToggle");
+                  if (await drawer.isVisible().catch(() => false)) await drawer.click();
+                  await modalPage.locator("#btnAddTag").click();
+                  await modalPage.locator("#tagsEditColorTile").click();
+                },
+              },
+            ];
+            for (const shot of tagShots) {
+              await page.close();
+              page = await context.newPage();
+              page.setDefaultTimeout(20_000);
+              page.setDefaultNavigationTimeout(20_000);
+              await capture(
+                page, profile, id, href, manifest, shot.prepare, null,
+                {
+                  modalCapture: true,
+                  requireModal: true,
+                  expectedModalId: "tagsOverlay",
+                  actionLabel: shot.actionLabel,
+                  stateId: shot.stateId,
+                  fileName: shot.fileName,
+                  expectedVisibleSelector: `#${shot.layerId}`,
+                },
+              );
+              modalCaptureCount += 1;
+            }
+          }
+          if (isControl && !baseState.blockedByGuard) {
+            await page.close();
+            page = await context.newPage();
+            page.setDefaultTimeout(20_000);
+            page.setDefaultNavigationTimeout(20_000);
+            const result = await capture(
+              page, profile, id, href, manifest,
+              async (modalPage) => {
+                const shareButton = modalPage.locator('#app .device-row[data-device="display"] button')
+                  .filter({ hasText: /Udostępnij/ }).first();
+                await shareButton.waitFor({ state: "visible", timeout: 15_000 });
+                await shareButton.click();
+              },
+              null,
+              { modalCapture: true, requireModal: true, expectedModalId: "shareDeviceOverlay", actionLabel: "Urządzenia → Udostępnij urządzenie", stateId: "modal:share-device", fileName: `modal-share-device-${profile.id}.png` },
+            );
+            if (result.modalIds.includes("shareDeviceOverlay")) modalCaptureCount += 1;
+          }
           if (!baseState.blockedByGuard) {
             const capturedModalIds = new Set(baseState.modalIds);
             for (const action of baseState.modalCandidates) {
