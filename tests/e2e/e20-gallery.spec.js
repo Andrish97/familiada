@@ -35,7 +35,8 @@ const requestedAccounts = galleryAccountNumbers();
 function urls(data) {
   const game = data.game;
   const pollPoints = data.polls.poll_points_vote;
-  const pollText = data.polls.poll_text_vote;
+  const pollText = data.polls.poll_text;
+  const pollTextVote = data.polls.poll_text_vote;
   const logo = data.logos.text || data.logos.draw || data.logos.image;
   const result = [
     ["home", "/"], ["account", "/account/"], ["bases", "/bases/"],
@@ -61,8 +62,8 @@ function urls(data) {
     result.push(["poll-vote-points", `/polls/vote/points/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`]);
     result.push(["poll-vote-qr", `/polls/vote/qr/?id=${pollPoints.id}&key=${pollPoints.share_key_poll}`]);
   }
-  if (pollText?.share_key_poll) {
-    result.push(["poll-vote-text", `/polls/vote/text/?id=${pollText.id}&key=${pollText.share_key_poll}`]);
+  if (pollTextVote?.share_key_poll) {
+    result.push(["poll-vote-text", `/polls/vote/text/?id=${pollTextVote.id}&key=${pollTextVote.share_key_poll}`]);
   }
   return result;
 }
