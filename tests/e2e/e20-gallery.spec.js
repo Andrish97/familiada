@@ -170,7 +170,7 @@ async function saveDeviceScreenshot(page, profile, id, outputPath, captureWithou
 }
 
 function pageModalIds(page) {
-  return page.locator('.overlay[id], .colorModalOverlay[id], .dt-modal[id], .drawer-overlay[id], dialog[id], [role="dialog"][id]')
+  return page.locator('.overlay[id], .overlay .modal[role="dialog"], .colorModalOverlay[id], .dt-modal[id], .drawer-overlay[id], dialog[id], [role="dialog"][id]')
     .evaluateAll((items) => items
       .filter((el) => !["pageGuard", "resourceLockGuard"].includes(el.id))
       .filter((el) => !/(alert|confirm|error|errModal)/i.test(el.id))
@@ -179,7 +179,7 @@ function pageModalIds(page) {
         return !el.hidden && style.display !== "none" && style.visibility !== "hidden"
           && el.getClientRects().length > 0;
       })
-      .map((el) => el.id));
+      .map((el) => el.id || el.classList?.[0] || el.querySelector?.(".mTitle")?.textContent?.trim() || "dialog"));
 }
 
 async function findModalActions(page) {
@@ -191,8 +191,8 @@ async function findModalActions(page) {
       const icon = el.querySelector("[data-icon]")?.getAttribute("data-icon") || el.getAttribute("data-icon") || "";
       const contact = el.hasAttribute("data-contact-modal");
       const dialogTarget = el.getAttribute("aria-haspopup") === "dialog" || el.hasAttribute("data-modal-target");
-      const safeLabel = /wyszukaj|szukaj|search|udostępnij|udostepnij|import|eksport|export|qr|podgląd|podglad|preview|tagi|kolor/i.test(label);
-      const safeIcon = /^(search|share|qr|palette|tag|eye)$/i.test(icon);
+      const safeLabel = /udostępnij|udostepnij|import|eksport|export|qr|podgląd|podglad|preview|tagi|kolor/i.test(label);
+      const safeIcon = /^(share|qr|palette|tag|eye)$/i.test(icon);
       if (!contact && !dialogTarget && !safeLabel && !safeIcon) return null;
       if (/usuń|usun|delete|wyloguj|zapisz|save|wyślij|wyslij|submit/i.test(label)) return null;
       return {
@@ -220,7 +220,7 @@ async function clickModalAction(page, action) {
   }
   if (await target.count() > 1) target = target.nth(0);
   await target.click({ timeout: 5_000 });
-  await page.waitForFunction(() => [...document.querySelectorAll('.overlay[id], .colorModalOverlay[id], .dt-modal[id], dialog[id], [role="dialog"][id]')]
+  await page.waitForFunction(() => [...document.querySelectorAll('.overlay[id], .overlay .modal[role="dialog"], .colorModalOverlay[id], .dt-modal[id], dialog[id], [role="dialog"][id]')]
     .some((el) => {
       const style = getComputedStyle(el);
       return !el.hidden && style.display !== "none" && style.visibility !== "hidden" && el.getClientRects().length > 0;
@@ -264,6 +264,11 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       const style = getComputedStyle(rating);
       if (!rating.hidden && style.display !== "none" && style.visibility !== "hidden" && rating.getClientRects().length) return true;
     }
+    const genericModal = [...document.querySelectorAll(".overlay .modal[role='dialog']")].find((item) => {
+      const style = getComputedStyle(item);
+      return !item.hidden && style.display !== "none" && style.visibility !== "hidden" && item.getClientRects().length;
+    });
+    if (genericModal) return true;
     const guard = document.getElementById("pageGuard");
     if (guard?.style.display === "flex" && guard.dataset.state) return true;
     const steps = [...document.querySelectorAll("[data-skel-step]")].filter((step) => {
@@ -275,8 +280,12 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     return steps.length > 0 && steps.every((step) => step.classList.contains("skel-step-ready"));
   }, null, { timeout: 60_000 });
   let autoModalImage = null;
+  let autoModalId = "";
   const ratingOverlay = page.locator("#ratingOverlay");
-  if (await ratingOverlay.count() && await ratingOverlay.isVisible().catch(() => false)) {
+  const hasRatingModal = await ratingOverlay.count() > 0 && await ratingOverlay.isVisible().catch(() => false);
+  const genericDialog = page.locator(".overlay .modal[role='dialog']").first();
+  const hasGenericModal = !hasRatingModal && await genericDialog.count() > 0 && await genericDialog.isVisible().catch(() => false);
+  if (hasRatingModal || hasGenericModal) {
     const session = await page.context().newCDPSession(page);
     try {
       const result = await session.send("Page.captureScreenshot", {
@@ -286,10 +295,25 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     } finally {
       await session.detach();
     }
-    const laterButton = page.locator("#btnRatingLater");
-    await laterButton.waitFor({ state: "visible", timeout: 5_000 });
-    await laterButton.click();
-    await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
+    if (hasRatingModal) {
+      autoModalId = "ratingOverlay";
+      const laterButton = page.locator("#btnRatingLater");
+      await laterButton.waitFor({ state: "visible", timeout: 5_000 });
+      await laterButton.click();
+      await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
+    } else {
+      autoModalId = await genericDialog.getAttribute("class").then((value) => value?.split(/\s+/)[0] || "dialog");
+      const safeDismiss = genericDialog.getByRole("button", { name: /zamknij|close|anuluj|cancel|później|later|nie/i }).first();
+      if (await safeDismiss.count()) {
+        await safeDismiss.click();
+      } else {
+        const buttons = genericDialog.locator("button:visible");
+        const count = await buttons.count();
+        if (!count) throw new Error(`${profile.label} · ${id}: widoczny modal informacyjny nie ma przycisku do zamknięcia`);
+        await buttons.nth(count > 1 ? 0 : count - 1).click();
+      }
+      await genericDialog.waitFor({ state: "hidden", timeout: 10_000 });
+    }
   }
   try {
     await page.waitForFunction(() => {
@@ -545,12 +569,12 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     ...state,
   });
   if (autoModalImage) {
-    const fileName = `modal-ratingOverlay-${profile.id}.png`;
+    const fileName = `modal-${autoModalId || "dialog"}-${profile.id}.png`;
     const file = `${id}/${fileName}`;
     await saveDeviceScreenshot(page, profile, id, path.join(OUT, id, fileName), false, autoModalImage);
     manifest.push({
       id,
-      stateId: "modal:ratingOverlay",
+      stateId: `modal:${autoModalId || "dialog"}`,
       profile: profile.id,
       label: profile.label,
       safeAreaInsets: expectedSafe,

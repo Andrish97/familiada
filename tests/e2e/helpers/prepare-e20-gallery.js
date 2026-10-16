@@ -33,7 +33,10 @@ async function main() {
         const page = await context.newPage();
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);
-        await loginAsTestUser(page, context, { username: files.username, suppressRating: false });
+        // Pytanie o ocenę jest niezwiązane z widokami E20 i blokuje każdy
+        // prywatny route, dopóki nie dostanie odpowiedzi. Pozostawiamy jego
+        // standardowe wyciszenie dla kont testowych, jak w pozostałych testach.
+        await loginAsTestUser(page, context, { username: files.username });
         await page.goto("https://www.familiada.online/games/?lang=pl", { waitUntil: "domcontentloaded" });
         await page.waitForFunction(() => Boolean(window.__sbClient), null, { timeout: 20_000 });
         const data = await readE20GalleryData(page);
