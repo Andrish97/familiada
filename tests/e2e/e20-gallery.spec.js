@@ -72,10 +72,42 @@ function urls(data) {
 }
 
 function additionalStates(data) {
+  const pollForRecipientModal = data.polls.poll_text_vote || data.polls.poll_points_vote;
+  const mobileSharePoll = data.polls.poll_text_vote || data.polls.poll_points_vote;
+  const pollPreview = data.polls.poll_text || data.polls.poll_points;
   const states = [
     { id: "bases", stateId: "shared", page: "bases", href: "/bases/?tab=shared" },
+    {
+      id: "bases", stateId: "modal:create-base", page: "bases", href: "/bases/",
+      modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Moje bazy → Utwórz bazę",
+      prepare: async (page) => { await page.locator("#mineGrid .addCard").click(); },
+    },
+    ...(data.base ? [
+      {
+        id: "bases", stateId: "modal:rename-base", page: "bases", href: "/bases/",
+        modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Moje bazy → Zmień nazwę bazy",
+        prepare: async (page) => {
+          const tile = page.locator(`.tile[data-base-id="${data.base.id}"]`);
+          await tile.waitFor({ state: "visible", timeout: 15_000 });
+          await tile.dblclick();
+        },
+      },
+      {
+        id: "bases", stateId: "modal:share-base", page: "bases", href: "/bases/",
+        modalCapture: true, expectedModalId: "shareOverlay", actionLabel: "Moje bazy → Udostępnij bazę",
+        prepare: async (page) => {
+          await page.locator(`.tile[data-base-id="${data.base.id}"]`).click();
+          await page.locator("#btnShare").waitFor({ state: "visible" });
+          await expect(page.locator("#btnShare")).toBeEnabled();
+          await page.locator("#btnShare").click();
+        },
+      },
+    ] : []),
     ...(data.polls.poll_text ? [{ id: "polls", stateId: "results", page: "polls", href: `/polls/?id=${data.polls.poll_text.id}&tab=results` }] : []),
-    ...((data.polls.poll_text || data.polls.poll_text_vote) ? [{ id: "polls", stateId: "recipients", page: "polls", href: `/polls/?id=${(data.polls.poll_text || data.polls.poll_text_vote).id}&tab=recipients`, mobileOnly: true }] : []),
+    ...(mobileSharePoll ? [
+      { id: "polls", stateId: "anonymous", page: "polls", href: `/polls/?id=${mobileSharePoll.id}&tab=share`, mobileOnly: true },
+      { id: "polls", stateId: "recipients", page: "polls", href: `/polls/?id=${mobileSharePoll.id}&tab=recipients`, mobileOnly: true },
+    ] : []),
     { id: "marketplace", stateId: "mine", page: "marketplace", href: "/marketplace/", prepare: async (page) => {
       await page.locator("#btnMySent").click();
       await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
@@ -83,6 +115,20 @@ function additionalStates(data) {
     { id: "friends", stateId: "list", page: "friends", href: "/friends/?tab=received", mobileOnly: true },
     { id: "subscribers", stateId: "list", page: "subscribers", href: "/subscribers/?tab=received", mobileOnly: true },
     ...(data.game ? [
+      {
+        id: "games", stateId: "modal:create-game", page: "games", href: "/games/",
+        modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Gry → Utwórz grę",
+        prepare: async (page) => { await page.locator("#grid .addCard").first().click(); },
+      },
+      {
+        id: "games", stateId: "modal:rename-game", page: "games", href: "/games/",
+        modalCapture: true, expectedModalId: "nameOverlay", actionLabel: "Gry → Zmień nazwę gry",
+        prepare: async (page) => {
+          const tile = page.locator(`#grid .card[data-game-id="${data.game.id}"]`);
+          await tile.waitFor({ state: "visible", timeout: 15_000 });
+          await tile.dblclick();
+        },
+      },
       {
         id: "game-editor", stateId: "question", page: "game-editor", href: `/games/editor/?id=${data.game.id}`,
         mobileOnly: true,
@@ -106,6 +152,82 @@ function additionalStates(data) {
         },
       },
     ] : []),
+    ...(pollPreview ? [{
+      id: "games", stateId: "modal:preview-poll", page: "games", href: "/games/",
+      modalCapture: true, expectedModalId: "previewOverlay", actionLabel: "Podgląd gry → Ankieta",
+      prepare: async (page) => {
+        const tab = pollPreview.type === "poll_points" ? "#tabPollPoints" : "#tabPollText";
+        await page.locator(tab).click();
+        const card = page.locator(`#grid .card[data-game-id="${pollPreview.id}"]`);
+        await card.waitFor({ state: "visible", timeout: 15_000 });
+        await card.click();
+        await page.locator("#btnPreview").waitFor({ state: "visible" });
+        await expect(page.locator("#btnPreview")).toBeEnabled();
+        await page.locator("#btnPreview").click();
+        await page.locator("#previewOverlay").waitFor({ state: "visible", timeout: 15_000 });
+        await page.locator("#btnPreviewModePoll").click();
+        await page.locator("#previewPoll").waitFor({ state: "visible", timeout: 10_000 });
+        await page.waitForFunction(() => !/^(ładowanie|loading)[.…\s]*$/i.test(document.querySelector("#previewPollMeta")?.textContent?.trim() || ""), null, { timeout: 20_000 });
+      },
+    }] : []),
+    ...(data.game ? [{
+      id: "game-settings", stateId: "modal:color-picker", page: "game-settings", href: `/games/settings/?id=${data.game.id}`,
+      modalCapture: true, expectedVisibleSelector: ".uni-modal", actionLabel: "Ustawienia gry → Wybór koloru",
+      prepare: async (page) => {
+        await page.locator(".swatchBtn").first().click();
+        await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
+      },
+    }] : []),
+    ...(pollForRecipientModal?.share_key_poll ? [
+      {
+        id: "polls", stateId: "modal:recipient-picker", page: "polls",
+        href: `/polls/?id=${pollForRecipientModal.id}&tab=share`, modalCapture: true,
+        expectedModalId: "pollRecipientsOverlay", actionLabel: "Odbiorcy ankiety → Wybierz odbiorców",
+        prepare: async (page) => {
+          await page.locator("#btnAddRecipients").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator("#btnAddRecipients").click();
+        },
+      },
+      {
+        id: "polls", stateId: "modal:display-qr", page: "polls",
+        href: `/polls/?id=${pollForRecipientModal.id}&tab=share`, modalCapture: true,
+        expectedModalId: "pollQrModalOverlay", actionLabel: "Udostępnianie ankiety → QR wyświetlacza",
+        prepare: async (page) => {
+          await page.locator("#btnOpenQr").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator("#btnOpenQr").click();
+        },
+      },
+      {
+        id: "polls", stateId: "modal:vote-qr-large", page: "polls",
+        href: `/polls/?id=${pollForRecipientModal.id}&tab=share`, modalCapture: true,
+        expectedModalId: "pollQrModalOverlay", actionLabel: "Udostępnianie ankiety → powiększony QR do głosowania",
+        prepare: async (page) => {
+          await page.locator("#qr").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator("#qr").click();
+          await page.locator("#pollQrModalOverlay").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator("#pollQrModalVote").waitFor({ state: "visible", timeout: 15_000 });
+        },
+      },
+    ] : []),
+    {
+      id: "marketplace", stateId: "modal:marketplace-detail", page: "marketplace", href: "/marketplace/",
+      modalCapture: true, expectedModalId: "gameDetailOverlay", actionLabel: "Gry Społeczności → Szczegóły gry",
+      prepare: async (page) => {
+        const card = page.locator(".mkt-card").first();
+        await card.waitFor({ state: "visible", timeout: 20_000 });
+        await card.click();
+      },
+    },
+    {
+      id: "marketplace", stateId: "modal:marketplace-submit", page: "marketplace", href: "/marketplace/?tab=mine",
+      modalCapture: true, expectedModalId: "submitOverlay", actionLabel: "Moje wysłane → Zgłoś grę",
+      prepare: async (page) => {
+        await page.locator("#btnMySent").click();
+        await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
+        await page.locator("#btnSubmitNew").waitFor({ state: "visible", timeout: 15_000 });
+        await page.locator("#btnSubmitNew").click();
+      },
+    },
   ];
   return states;
 }
@@ -790,8 +912,8 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                       await question.click();
                       await action.click();
                       const outcome = await Promise.race([
-                        modalPage.locator("#tagsOverlay").waitFor({ state: "visible", timeout: 8_000 }).then(() => "opened").catch(() => null),
-                        modalPage.locator(".uni-modal").waitFor({ state: "visible", timeout: 8_000 }).then(() => "blocked").catch(() => null),
+                        modalPage.locator("#tagsOverlay").waitFor({ state: "visible", timeout: 4_000 }).then(() => "opened").catch(() => null),
+                        modalPage.locator(".uni-modal").waitFor({ state: "visible", timeout: 4_000 }).then(() => "blocked").catch(() => null),
                       ]);
                       if (outcome === "opened") return true;
                       if (outcome !== "blocked") throw new Error("Przypisanie taga nie otworzyło modalа ani komunikatu o blokadzie.");
@@ -806,15 +928,22 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                     }
                     return false;
                   }
+                  const visitedFolderIds = new Set();
                   async function findUnlockedQuestion(depth = 0) {
                     if (depth > 12) return false;
                     if (await tryVisibleQuestions()) return true;
                     const folders = modalPage.locator('#list .row[data-kind="cat"][data-id]');
                     const folderIds = await folders.evaluateAll((items) => items.map((item) => item.dataset.id).filter(Boolean));
                     for (const folderId of folderIds) {
+                      if (visitedFolderIds.has(folderId)) continue;
+                      visitedFolderIds.add(folderId);
                       const folder = modalPage.locator(`#list .row[data-kind="cat"][data-id="${folderId}"]`);
                       if (!await folder.isVisible().catch(() => false)) continue;
-                      await folder.dblclick();
+                      // Drzewo przebudowuje wiersze po pierwszym kliknięciu.
+                      // Wymuszone double-click nadal idzie przez prawdziwy
+                      // handler UI, ale nie czeka na stabilność elementu,
+                      // który zaraz zostanie zastąpiony przez render.
+                      await folder.dblclick({ force: true, timeout: 4_000 }).catch(() => {});
                       await modalPage.waitForTimeout(250);
                       const found = await findUnlockedQuestion(depth + 1);
                       if (found) return true;
@@ -948,7 +1077,18 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           page.setDefaultNavigationTimeout(20_000);
         }
         for (const state of extra) {
-          await capture(page, profile, state.id, state.href, manifest, state.prepare, null, { stateId: state.stateId });
+          const stateOptions = {
+            stateId: state.stateId,
+            ...(state.modalCapture ? {
+              modalCapture: true,
+              requireModal: true,
+              actionLabel: state.actionLabel,
+              fileName: `modal-${state.stateId.replace(/^modal:/, "")}-${profile.id}.png`,
+            } : {}),
+            ...(state.expectedModalId ? { expectedModalId: state.expectedModalId } : {}),
+            ...(state.expectedVisibleSelector ? { expectedVisibleSelector: state.expectedVisibleSelector } : {}),
+          };
+          await capture(page, profile, state.id, state.href, manifest, state.prepare, null, stateOptions);
         }
         expect(manifest.filter((entry) => !entry.stateId)).toHaveLength(selectedUrls.length);
         const recordedModalCaptures = manifest.filter((entry) => String(entry.stateId || "").startsWith("modal:")).length;
