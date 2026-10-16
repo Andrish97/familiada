@@ -972,7 +972,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     const resourceGuard = document.getElementById("resourceLockGuard");
     const visible = (element) => element && getComputedStyle(element).display !== "none"
       && getComputedStyle(element).visibility !== "hidden" && element.getClientRects().length > 0;
-    return (state !== "" && state !== "ok" && pageGuard?.style.display === "flex") || visible(resourceGuard);
+    return Boolean((state !== "" && state !== "ok" && pageGuard?.style.display === "flex") || visible(resourceGuard));
   });
   const allowSpecificModalPreparation = options.allowInitialSkeletonTimeout === true;
   if (prepare && (!contentReady || blockedByGuard) && !(allowSpecificModalPreparation && !blockedByGuard)) {
