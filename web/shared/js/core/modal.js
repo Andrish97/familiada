@@ -22,7 +22,7 @@ function buildModal({
 
   const overlay = document.createElement("div");
   overlay.className = "overlay";
-  overlay.style.background = "rgba(0,0,0,.75)";
+  overlay.style.background = "var(--modal-scrim)";
   // sheet: rozbudowana treść (np. szczegóły statystyki, podgląd
   // wiadomości) przekazana przez wywołującego — na telefonie zastępuje
   // treść strony zamiast być małym oknem, patrz js/core/modal-sheet.js.

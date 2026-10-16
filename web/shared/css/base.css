@@ -433,6 +433,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     /* Lekkie przyciemnienie WOKÓŁ okien modalnych / menu — jedno dla całej
        aplikacji. Samo okno jest zawsze kryjące. */
     --scrim: rgba(2,6,23,.5);
+    --modal-scrim: rgba(0,0,0,.75);
 }
 
 .btn {
@@ -738,6 +739,10 @@ main{
     z-index: 50
 }
 
+.overlay.contact-modal-overlay {
+    background: var(--modal-scrim);
+}
+
 .modal {
     box-sizing: border-box;
     width: min(860px,94vw);
@@ -858,6 +863,7 @@ main{
 }
 
 .uni-modal > .uni-head,
+.uni-modal > .mHead,
 .uni-modal > .mSub,
 .uni-modal > .uni-foot {
     flex: 0 0 auto
@@ -1076,6 +1082,10 @@ main{
     }
     .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup,.baseShareFooter,.shareSectionActions,.shareSection--mail) {
         margin-top: 0 !important;
+    }
+    .contact-modal-overlay.modal--sheet.sheet-active .sheet-modal-actions > .uni-foot {
+        padding-top: 0;
+        border-top: 0;
     }
     .modal--sheet.sheet-active .sheet-modal-actions[hidden] {
         display: none !important;

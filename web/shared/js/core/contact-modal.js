@@ -80,6 +80,23 @@ function ensureMobileStyle() {
         border: 0;
         box-shadow: none;
       }
+      #contactModalOverlay.overlay:not(.modal--sheet) .mHead { order: 0; flex: 0 0 auto; }
+      #contactModalOverlay.overlay:not(.modal--sheet) #cModalFormActions,
+      #contactModalOverlay.overlay:not(.modal--sheet) #cModalSuccessActions {
+        order: 1;
+        flex: 0 0 auto;
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line2);
+      }
+      #contactModalOverlay.overlay:not(.modal--sheet) #cModalForm,
+      #contactModalOverlay.overlay:not(.modal--sheet) #cModalSuccess {
+        order: 2;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
       #contactModalOverlay.overlay:not(.modal--sheet) .mHead {
         position: sticky;
         top: 0;
@@ -108,24 +125,24 @@ function buildModalHtml() {
         <div class="mTitle" id="cModalTitle"></div>
         <button class="btn sm" id="cModalX" type="button" aria-label="Zamknij">${icon("close")}</button>
       </div>
-      <div id="cModalForm">
-        <div class="field" style="margin-top:14px">
+      <div id="cModalForm" class="uni-body">
+        <div class="field">
           <label class="field-label" id="cModalEmailLabel"></label>
           <input class="inp" id="cModalEmail" type="email" autocomplete="email" style="width:100%;box-sizing:border-box"/>
         </div>
-        <div class="field" style="margin-top:10px">
+        <div class="field">
           <label class="field-label" id="cModalTicketLabel"></label>
           <input class="inp" id="cModalTicket" type="text" style="width:100%;box-sizing:border-box" autocomplete="off"/>
         </div>
-        <div class="field" style="margin-top:10px" id="cModalSubjectField">
+        <div class="field" id="cModalSubjectField">
           <label class="field-label" id="cModalSubjectLabel"></label>
           <input class="inp" id="cModalSubject" type="text" style="width:100%;box-sizing:border-box"/>
         </div>
-        <div class="field" style="margin-top:10px">
+        <div class="field">
           <label class="field-label" id="cModalMessageLabel"></label>
           <textarea class="inp" id="cModalMessage" rows="7" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
         </div>
-        <div class="field" style="margin-top:10px">
+        <div class="field">
           <label class="field-label" id="cModalAttachLabel"></label>
           <input type="file" id="cModalAttachments" multiple style="display:none"/>
           <label for="cModalAttachments" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.65);cursor:pointer;user-select:none">
@@ -135,19 +152,19 @@ function buildModalHtml() {
           <div id="cModalAttachHint" style="font-size:11px;opacity:.4;margin-top:3px"></div>
           <div id="cModalFileList" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
         </div>
-        <div id="cModalError" style="margin-top:8px;font-size:13px;color:#ff6b6b;display:none"></div>
-        <div class="modal-actions" style="margin-top:14px">
-          <button class="btn sm" id="cModalClose" type="button"></button>
-          <button class="btn sm gold" id="cModalSubmit" type="button"></button>
-        </div>
+        <div id="cModalError" style="font-size:13px;color:#ff6b6b;display:none"></div>
       </div>
-      <div id="cModalSuccess" style="display:none;text-align:center;padding:16px 0">
+      <div id="cModalSuccess" class="uni-body" style="display:none;text-align:center;padding:16px 0">
         <div style="font-size:32px;margin-bottom:8px;color:#6ee7a8">${icon("check")}</div>
         <div style="font-size:15px;font-weight:700" id="cModalSuccessTitle"></div>
         <div style="margin-top:6px;font-size:13px;opacity:.7" id="cModalSuccessTicket"></div>
-        <div class="modal-actions" style="margin-top:16px">
-          <button class="btn sm gold" id="cModalDone" type="button"></button>
-        </div>
+      </div>
+      <div id="cModalFormActions" class="uni-foot modal-actions">
+        <button class="btn sm" id="cModalClose" type="button"></button>
+        <button class="btn sm gold" id="cModalSubmit" type="button"></button>
+      </div>
+      <div id="cModalSuccessActions" class="uni-foot modal-actions" style="display:none">
+        <button class="btn sm gold" id="cModalDone" type="button"></button>
       </div>
     </div>`;
 }
@@ -180,10 +197,14 @@ function ensureModal() {
   ensureMobileStyle();
   modalEl = document.createElement("div");
   modalEl.id = "contactModalOverlay";
-  modalEl.className = "overlay";
+  modalEl.className = "overlay contact-modal-overlay";
   modalEl.style.display = "none";
-  modalEl.style.zIndex = "9999";
   modalEl.innerHTML = buildModalHtml();
+  const modal = modalEl.querySelector(":scope > .modal");
+  modal?.classList.add("uni-modal");
+  modal?.setAttribute("role", "dialog");
+  modal?.setAttribute("aria-modal", "true");
+  modal?.setAttribute("aria-labelledby", "cModalTitle");
   document.body.appendChild(modalEl);
 
   modalEl.addEventListener("click", (e) => {
@@ -237,6 +258,8 @@ export async function openContactModal(opts = {}) {
 
   document.getElementById("cModalForm").style.display = "";
   document.getElementById("cModalSuccess").style.display = "none";
+  document.getElementById("cModalFormActions").style.display = "";
+  document.getElementById("cModalSuccessActions").style.display = "none";
   const errEl = document.getElementById("cModalError");
   if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
 
@@ -361,7 +384,9 @@ async function submitContact() {
     if (!json.ok) throw new Error(json.error || "send_failed");
 
     document.getElementById("cModalForm").style.display = "none";
+    document.getElementById("cModalFormActions").style.display = "none";
     document.getElementById("cModalSuccess").style.display = "";
+    document.getElementById("cModalSuccessActions").style.display = "";
     const ticketEl = document.getElementById("cModalSuccessTicket");
     if (ticketEl) {
       ticketEl.textContent = json.ticket_number
