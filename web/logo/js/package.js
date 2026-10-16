@@ -1,5 +1,5 @@
 // The file importer and copy sender use the same canonical logo package.
-import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-16T17591";
+import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-16T18105";
 
 function invalid(code, params = {}) {
   const error = new Error(code);
