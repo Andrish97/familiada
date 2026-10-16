@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vMuUPR9JmbFwlAdYgohUKwmknPJZ6HM1O3AVKb5Sywsp4BEfZg2x7yvf5hVxQdN
+\restrict 3uHZ9YtUsCuBf8u1dhr02YCBkoowvxtnhZPeB8GqybA6uUugdLXiEdY5V9tBHcl
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -430,14 +430,13 @@ CREATE FUNCTION "public"."_control_device_action_valid"("p_game_id" "uuid", "p_d
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-DECLARE v_session_id uuid; v_protocol smallint;
+DECLARE v_session_id uuid;
 BEGIN
   IF NOT public.control_device_key_valid(p_game_id,p_device_type,p_key) THEN RETURN false; END IF;
   v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
-  SELECT device_protocol INTO v_protocol FROM public.control_runtime_sessions
-    WHERE id=v_session_id AND game_id=p_game_id AND ended_at IS NULL AND expires_at>now();
-  IF NOT FOUND THEN RETURN false; END IF;
-  IF v_protocol=1 THEN RETURN p_connection_id IS NULL AND p_epoch IS NULL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.control_runtime_sessions
+    WHERE id=v_session_id AND game_id=p_game_id AND device_protocol=2
+      AND ended_at IS NULL AND expires_at>now()) THEN RETURN false; END IF;
   IF p_connection_id IS NULL OR p_epoch IS NULL THEN RETURN false; END IF;
   RETURN EXISTS (
     SELECT 1 FROM public.control_device_connections c
@@ -5156,7 +5155,6 @@ CREATE FUNCTION "public"."control_device_instance_register"("p_game_id" "uuid", 
     AS $$
 DECLARE
   v_session_id uuid;
-  v_protocol smallint;
   v_slot public.control_device_slots;
   v_existing public.control_device_connections;
   v_primary uuid;
@@ -5166,23 +5164,19 @@ BEGIN
     RAISE EXCEPTION 'forbidden';
   END IF;
   v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
-  SELECT device_protocol INTO v_protocol FROM public.control_runtime_sessions
-  WHERE id=v_session_id AND game_id=p_game_id AND ended_at IS NULL AND expires_at>now();
-  IF NOT FOUND THEN RAISE EXCEPTION 'forbidden'; END IF;
-  IF v_protocol<>2 THEN RETURN jsonb_build_object('ok',true,'mode','legacy'); END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.control_runtime_sessions
+    WHERE id=v_session_id AND game_id=p_game_id AND device_protocol=2
+      AND ended_at IS NULL AND expires_at>now()) THEN RAISE EXCEPTION 'forbidden'; END IF;
 
   INSERT INTO public.control_device_slots(session_id,game_id,device_type)
   VALUES(v_session_id,p_game_id,p_device_type) ON CONFLICT(session_id,device_type) DO NOTHING;
   SELECT * INTO v_slot FROM public.control_device_slots
   WHERE session_id=v_session_id AND device_type=p_device_type FOR UPDATE;
-  SELECT * INTO v_existing FROM public.control_device_connections
-  WHERE id=p_connection_id;
+  SELECT * INTO v_existing FROM public.control_device_connections WHERE id=p_connection_id;
   IF FOUND THEN
     IF v_existing.session_id<>v_session_id OR v_existing.game_id<>p_game_id
        OR v_existing.device_type<>p_device_type
-       OR v_existing.state NOT IN ('waiting','primary') THEN
-      RAISE EXCEPTION 'connection_expired';
-    END IF;
+       OR v_existing.state NOT IN ('waiting','primary') THEN RAISE EXCEPTION 'connection_expired'; END IF;
     IF v_existing.state='primary' AND NOT EXISTS (
       SELECT 1 FROM public.control_device_slots s
       WHERE s.session_id=v_session_id AND s.device_type=p_device_type
@@ -5190,12 +5184,11 @@ BEGIN
         AND s.lease_expires_at>clock_timestamp()
     ) THEN
       UPDATE public.control_device_connections SET state='waiting',epoch=NULL,
-        requested_at=clock_timestamp(),last_seen_at=clock_timestamp()
-      WHERE id=p_connection_id;
+        requested_at=clock_timestamp(),last_seen_at=clock_timestamp() WHERE id=p_connection_id;
     ELSE
       UPDATE public.control_device_connections SET last_seen_at=clock_timestamp(),
-      page_visibility=CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
-      focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END
+        page_visibility=CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
+        focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END
       WHERE id=p_connection_id;
       IF v_existing.state='primary' THEN
         UPDATE public.control_device_slots SET lease_expires_at=clock_timestamp()+interval '12 seconds',
@@ -5205,13 +5198,10 @@ BEGIN
       END IF;
     END IF;
   ELSE
-    INSERT INTO public.control_device_connections(
-      id,session_id,game_id,device_type,state,page_visibility,focused
-    ) VALUES (
-      p_connection_id,v_session_id,p_game_id,p_device_type,'waiting',
+    INSERT INTO public.control_device_connections(id,session_id,game_id,device_type,state,page_visibility,focused)
+    VALUES(p_connection_id,v_session_id,p_game_id,p_device_type,'waiting',
       CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
-      CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END
-    );
+      CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END);
   END IF;
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
@@ -5269,8 +5259,9 @@ DECLARE v_session_id uuid; v_primary uuid;
 BEGIN
   IF NOT public.control_device_key_valid(p_game_id,p_device_type,p_key) THEN RAISE EXCEPTION 'forbidden'; END IF;
   v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
-  IF NOT EXISTS(SELECT 1 FROM public.control_runtime_sessions WHERE id=v_session_id AND device_protocol=2) THEN
-    RETURN jsonb_build_object('ok',true,'mode','legacy');
+  IF NOT EXISTS (SELECT 1 FROM public.control_runtime_sessions
+    WHERE id=v_session_id AND device_protocol=2 AND ended_at IS NULL AND expires_at>now()) THEN
+    RAISE EXCEPTION 'forbidden';
   END IF;
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
@@ -5798,8 +5789,6 @@ CREATE FUNCTION "public"."control_runtime_session_touch_v2"("p_game_id" "uuid", 
 DECLARE
   v_uid uuid := auth.uid();
   v_owner uuid;
-  v_existing_id uuid;
-  v_existing_protocol smallint;
   v_data jsonb;
   v_session_id uuid;
 BEGIN
@@ -5808,22 +5797,11 @@ BEGIN
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','gone'); END IF;
   IF v_owner <> v_uid THEN RETURN jsonb_build_object('ok',false,'error','forbidden'); END IF;
 
-  SELECT id, device_protocol INTO v_existing_id, v_existing_protocol
-  FROM public.control_runtime_sessions
-  WHERE game_id=p_game_id AND ended_at IS NULL AND expires_at>now()
-  FOR UPDATE;
-
   v_data := public.control_runtime_session_touch(p_game_id,p_session_id);
   IF NOT coalesce((v_data->>'ok')::boolean,false) THEN RETURN v_data; END IF;
   v_session_id := (v_data->>'session_id')::uuid;
-
-  -- Do not switch a live legacy session underneath already-open devices.
-  -- A fresh session created by this client starts on the lease protocol.
-  IF v_existing_id IS NULL THEN
-    UPDATE public.control_runtime_sessions SET device_protocol=2 WHERE id=v_session_id;
-    v_existing_protocol := 2;
-  END IF;
-  RETURN v_data || jsonb_build_object('device_protocol',coalesce(v_existing_protocol,1));
+  UPDATE public.control_runtime_sessions SET device_protocol=2 WHERE id=v_session_id;
+  RETURN v_data || jsonb_build_object('device_protocol',2);
 END;
 $$;
 
@@ -18050,7 +18028,7 @@ CREATE TABLE "public"."control_runtime_sessions" (
     "expires_at" timestamp with time zone DEFAULT ("now"() + '01:00:00'::interval) NOT NULL,
     "ended_at" timestamp with time zone,
     "end_reason" "text",
-    "device_protocol" smallint DEFAULT 1 NOT NULL,
+    "device_protocol" smallint DEFAULT 2 NOT NULL,
     CONSTRAINT "control_runtime_sessions_device_protocol_check" CHECK (("device_protocol" = ANY (ARRAY[1, 2]))),
     CONSTRAINT "control_runtime_sessions_end_reason_check" CHECK ((("end_reason" IS NULL) OR ("end_reason" = ANY (ARRAY['idle'::"text", 'game_deleted'::"text"]))))
 );
@@ -24702,5 +24680,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vMuUPR9JmbFwlAdYgohUKwmknPJZ6HM1O3AVKb5Sywsp4BEfZg2x7yvf5hVxQdN
+\unrestrict 3uHZ9YtUsCuBf8u1dhr02YCBkoowvxtnhZPeB8GqybA6uUugdLXiEdY5V9tBHcl
 
