@@ -5,6 +5,7 @@ const path = require("node:path");
 const { test, expect } = require("./helpers/production-test");
 const { serveBranchCode, serveBranchLoginHtml } = require("./helpers/branch-code");
 const { galleryAccountNumbers, galleryAccountPaths, PREP_DIR } = require("./helpers/e20-gallery-accounts");
+const { withE2EBypass } = require("./helpers/login");
 
 const ORIGIN = "https://www.familiada.online";
 const OUT = path.resolve(__dirname, "../test-results/e20-gallery");
@@ -697,6 +698,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
       if (publicUrls.length) {
         const publicContext = await browser.newContext(deviceOptions);
         try {
+          await withE2EBypass(publicContext);
           await serveBranchCode(publicContext, { pages: PAGES, safeAreaInsets: profile.safe });
           await publicContext.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
           const publicPage = await publicContext.newPage();
@@ -710,6 +712,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
 
       const context = await browser.newContext({ ...deviceOptions, storageState: files.authState });
       try {
+        await withE2EBypass(context);
         await serveBranchCode(context, { pages: PAGES, safeAreaInsets: profile.safe });
         await context.route(/^https:\/\/www\.familiada\.online\/login\/?(?:\?.*)?$/, serveBranchLoginHtml);
         let page = await context.newPage();

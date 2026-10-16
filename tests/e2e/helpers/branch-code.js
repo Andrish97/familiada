@@ -109,7 +109,7 @@ async function serveBranchLoginHtml(route) {
     if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
   }
   if (!testSiteKey) {
-    throw new Error(`Worker nie zwrócił testowego klucza Turnstile dla sesji E2E po 3 próbach (HTTP ${productionResponse?.status ?? "brak odpowiedzi"})`);
+    throw new Error(`Worker nie zwrócił testowego klucza Turnstile dla sesji E2E po 3 próbach (HTTP ${productionResponse?.status?.() ?? "brak odpowiedzi"})`);
   }
   const file = path.join(REPO_ROOT, "login", "index.html");
   const html = fs.readFileSync(file, "utf8").replace(/data-captcha-site-key="[^"]*"/, `data-captcha-site-key="${testSiteKey}"`);

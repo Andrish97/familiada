@@ -342,6 +342,7 @@ async function loginAsPooledTestUser(page, context, workerIndex) {
 }
 
 module.exports = {
+  withE2EBypass,
   loginAsTestUser,
   loginAsGuest,
   loginAsPooledTestUser,
