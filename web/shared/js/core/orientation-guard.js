@@ -1,8 +1,8 @@
 // Wspólna blokada landscape na telefonach dla stron aplikacji.
 // Małe okna desktopu i viewporty tabletów nie są klasyfikowane jako telefony.
-import { deviceGuardState, getDeviceProfile, showDeviceGuard } from "./device-guard.js?v=v2026-10-15T22295";
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-15T22295";
-import { PAGES, pageIdForPath } from "./nav-map.js?v=v2026-10-15T22295";
+import { deviceGuardState, getDeviceProfile, showDeviceGuard } from "./device-guard.js?v=v2026-10-15T22404";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-15T22404";
+import { PAGES, pageIdForPath } from "./nav-map.js?v=v2026-10-15T22404";
 
 function refresh() {
   const profile = getDeviceProfile();
