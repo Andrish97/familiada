@@ -231,7 +231,7 @@ async function clickModalAction(page, action) {
 async function captureAndDismissBlockingModal(page, profile, id) {
   const ratingOverlay = page.locator("#ratingOverlay");
   const hasRatingModal = await ratingOverlay.count() > 0 && await ratingOverlay.isVisible().catch(() => false);
-  const genericDialog = page.locator(".overlay .modal").filter({ has: page.locator("button") }).first();
+  const genericDialog = page.locator(".overlay:visible").filter({ has: page.locator("button:visible") }).first();
   const hasGenericModal = !hasRatingModal && await genericDialog.count() > 0 && await genericDialog.isVisible().catch(() => false);
   if (!hasRatingModal && !hasGenericModal) return null;
 
