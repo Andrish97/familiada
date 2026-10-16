@@ -386,6 +386,7 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     return Boolean(guard && state && state !== "ok"
       && getComputedStyle(guard).display !== "none" && guard.getClientRects().length);
   });
+  let pollContentReady = false;
   if (pollPageHasId && !pollBlockedByDeviceGuard) {
     // Strona właściciela może chwilowo pokazać rzeczywistą blokadę edycji
     // pozostawioną przez poprzednią kartę galerii. resource-lock.js sam
@@ -415,7 +416,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
         // pustej karty podczas gdy właściwa treść ankiety nadal się ładuje.
         && results?.classList.contains("skel-step-ready")
         && Boolean(meta?.textContent.trim());
-    }, null, { timeout: 30_000 }).catch(() => {
+    }, null, { timeout: 30_000 }).then(() => {
+      pollContentReady = true;
+    }).catch(() => {
       contentReady = false;
       console.log(`[e20-gallery] ${profile.id} · polls: brak gotowej ankiety Demo; zrzut nie będzie oznaczony jako stabilny.`);
     });
@@ -450,7 +453,17 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     contentStable = false;
     console.log(`[e20-gallery] ${profile.id} · ${id}: treść nie osiągnęła stabilnego stanu; zapisuję widoczny stan aplikacji.`);
   }
-  if (pollPageHasId && !pollBlockedByDeviceGuard && (!contentReady || !contentStable)) {
+  if (pollContentReady) {
+    // Polls używa odpytywania na żywo, które może utrzymywać ogólną klasę
+    // loading mimo zakończonego RPC. Własny sygnał wyników (gotowa lista i
+    // meta po get_poll_preview) jest tu wiarygodniejszy niż globalny skaner.
+    await page.evaluate(() => Promise.all([
+      Promise.race([document.fonts?.ready || Promise.resolve(), new Promise((resolve) => setTimeout(resolve, 5_000))]),
+      new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    ]));
+    contentStable = true;
+  }
+  if (pollPageHasId && !pollBlockedByDeviceGuard && (!contentReady || !pollContentReady)) {
     throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi`);
   }
   const blockedByGuard = await page.evaluate(() => {
