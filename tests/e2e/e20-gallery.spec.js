@@ -137,7 +137,7 @@ function additionalStates(data) {
           await expect(page.locator("#btnExport")).toBeEnabled();
           await page.locator("#btnExport").click();
           await page.locator("#exportJsonOverlay").waitFor({ state: "visible", timeout: 15_000 });
-          await page.locator("#btnExportJsonClose").waitFor({ state: "visible", timeout: 20_000 });
+          await expect(page.locator("#exportJsonStep")).toHaveText(/\S/, { timeout: 5_000 });
         },
       },
     ] : []),
@@ -429,7 +429,7 @@ function additionalStates(data) {
           await expect(page.locator("#btnExport")).toBeEnabled();
           await page.locator("#btnExport").click();
           await page.locator("#logoExportOverlay").waitFor({ state: "visible", timeout: 15_000 });
-          await page.locator("#btnLogoExportClose").waitFor({ state: "visible", timeout: 20_000 });
+          await page.locator("#logoExportSub").toBeVisible();
         },
       },
     ] : []),
