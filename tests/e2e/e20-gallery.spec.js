@@ -944,13 +944,15 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
   if (pollPageHasId && !pollBlockedByDeviceGuard && !pollContentReady) {
     const diagnostics = await page.evaluate(() => ({
       title: document.title,
+      url: location.href,
+      requestedGameId: new URLSearchParams(location.search).get("id"),
       text: document.body?.innerText?.slice(0, 500) || "",
       load: document.getElementById("pollLoadMessage")?.textContent?.trim() || "",
       guard: document.getElementById("resourceLockGuard")?.innerText?.trim().slice(0, 240) || "",
       status: document.getElementById("pollStateWord")?.textContent?.trim() || "",
       game: document.getElementById("pollGameName")?.textContent?.trim() || "",
     }));
-    throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi; ${JSON.stringify(diagnostics)}`);
+    throw new Error(`${profile.label} · polls: ankieta nie osiągnęła stabilnego widoku z rzeczywistymi danymi; oczekiwano „${options.expectedPollName || "nieznanej ankiety"}”; ${JSON.stringify(diagnostics)}`);
   }
   const blockedByGuard = await page.evaluate(() => {
     const state = document.documentElement.dataset.deviceGuard || "";
@@ -1228,6 +1230,8 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
               null, { timeout: 20_000 });
               await restartControlToDevices(controlPage);
             },
+          } : id === "polls" ? {
+            expectedPollName: (data.polls.poll_text || data.polls.poll_points)?.name || null,
           } : {});
           if (id === "control" && data.game) {
             const code = page.locator('#app .device-row[data-device="display"] .device-connect-code-val');
