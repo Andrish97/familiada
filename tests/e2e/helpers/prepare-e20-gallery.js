@@ -37,7 +37,17 @@ async function main() {
         // prywatny route, dopóki nie dostanie odpowiedzi. Pozostawiamy jego
         // standardowe wyciszenie dla kont testowych, jak w pozostałych testach.
         await loginAsTestUser(page, context, { username: files.username });
-        await page.goto("https://www.familiada.online/games/?lang=pl", { waitUntil: "domcontentloaded" });
+        // Odnów prawdziwe materiały Demo przez stronę Konto, zanim wybierzemy
+        // istniejące rekordy do zrzutów. Dzięki temu każde konto urządzenia ma
+        // własne, odświeżone gry, bazy i logotypy; nie tworzymy atrap w teście.
+        await page.goto("https://www.familiada.online/account/?lang=pl", { waitUntil: "domcontentloaded" });
+        const restoreDemo = page.locator("#demoRestoreBtn");
+        await restoreDemo.waitFor({ state: "visible", timeout: 20_000 });
+        await restoreDemo.click();
+        const restoreConfirmation = page.locator(".uni-modal:visible");
+        await restoreConfirmation.waitFor({ state: "visible", timeout: 10_000 });
+        await restoreConfirmation.getByRole("button", { name: "Przywróć", exact: true }).click();
+        await page.waitForURL(/\/games\//, { timeout: 20_000 });
         await page.waitForFunction(() => Boolean(window.__sbClient), null, { timeout: 20_000 });
         const data = await readE20GalleryData(page);
         fs.writeFileSync(files.data, JSON.stringify(data, null, 2));
