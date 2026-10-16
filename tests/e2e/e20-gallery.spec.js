@@ -494,6 +494,8 @@ function additionalStates(data) {
       id: "game-settings", stateId: "modal:color-picker", page: "game-settings", href: `/games/settings/?id=${data.game.id}`,
       modalCapture: true, expectedVisibleSelector: ".uni-modal", actionLabel: "Ustawienia gry → Wybór koloru",
       prepare: async (page) => {
+        await page.locator('#gsSidebar [data-cat="display"]').click();
+        await page.locator(".swatchBtn").first().waitFor({ state: "visible", timeout: 15_000 });
         await page.locator(".swatchBtn").first().click();
         await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
       },
