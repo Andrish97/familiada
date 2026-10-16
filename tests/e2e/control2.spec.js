@@ -1137,10 +1137,11 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     // stary Broadcast/polling, więc sprawdzamy kanał używany przez aplikację.
     for (const [kind, devicePage] of [["Display", displayPage], ["Host", hostPage], ["Buzzer", buzzerPage]]) {
       await expect.poll(() => devicePage.evaluate(() => window.__sbClient?.getChannels?.()
-        ?.some(channel => String(channel.topic || "").includes("game-state-direct") && channel.state === "joined") || false), {
+        ?.filter(channel => String(channel.topic || "").includes("game-state-direct"))
+        .map(channel => `${channel.topic}:${channel.state}`) || []), {
         timeout: 15000,
         message: `${kind} powinien dołączyć do bezpośredniego kanału Realtime przed rozpoczęciem gry`,
-      }).toBe(true);
+      }).toEqual(expect.arrayContaining([expect.stringMatching(/:joined$/)]));
     }
 
     await page.getByRole("button", { name: "Dalej" }).click();
