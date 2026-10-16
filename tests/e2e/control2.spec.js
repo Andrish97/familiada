@@ -3047,12 +3047,10 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     // Świeżo podłączony Display musi pokazać PRAWDZIWY, aktualny obraz gry
     // (odkrytą odpowiedź #1) -- nie pusty/czarny ekran. Dowód realnego
     // wznowienia stanu, nie tylko zielonej kropki w topbarze.
-    const displayRenderState = await displayPage.evaluate(() => ({
-      url: location.href,
-      log: window.__displayLog || null,
-      visible: !!document.querySelector("#gameScreen") && !document.querySelector("#gameScreen").classList.contains("hidden"),
-    }));
-    console.log(`[e2e-diag:display-reconnected] ${JSON.stringify(displayRenderState)}`);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.rounds.setAll")).length, {
+      timeout: 5000,
+      message: "Display powinien dokończyć malowanie aktualnej planszy po ponownym podłączeniu",
+    }).toBeGreaterThan(0);
     const setAllCalls = await getDisplayCalls(displayPage, "api.rounds.setAll");
     expect(setAllCalls.length, "Display po ponownym podłączeniu musi przynajmniej raz namalować planszę rund").toBeGreaterThan(0);
     expect(setAllCalls.at(-1).args[0].rows[0]).toMatchObject({ text: "Odpowiedź A", pts: "40" });
