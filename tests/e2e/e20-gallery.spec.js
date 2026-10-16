@@ -1238,9 +1238,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           const isBaseExplorer = id === "base-explorer";
           const baseState = await capture(page, profile, id, href, manifest, null, readySelector, id === "control" ? {
             waitForReady: async (controlPage) => {
-              await controlPage.waitForFunction(() =>
-                /^\d{6}$/.test(document.querySelector('#app .device-row[data-device="display"] .device-connect-code-val')?.textContent?.trim() || ""),
-              null, { timeout: 20_000 });
+              await controlPage.locator("#btnStartOver").waitFor({ state: "visible", timeout: 20_000 });
               await restartControlToDevices(controlPage);
             },
           } : id === "polls" ? {
