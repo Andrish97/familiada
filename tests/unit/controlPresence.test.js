@@ -14,6 +14,7 @@ test("odczyt w toku i jego awaria nie zmieniają urządzeń na offline; poprawny
   const timers = new Map();
   const fresh = () => ["display", "host", "buzzer"].map(device_type => ({ device_type, last_seen_at: new Date(now).toISOString() }));
   let rows = fresh();
+  let leaseRows = ["display", "host", "buzzer"].map(device_type => ({ device_type, primary_online: true }));
   const client = { from(table) {
     const query = {
       select() { return this; }, eq() { return this; }, maybeSingle() { return this; },
@@ -24,6 +25,10 @@ test("odczyt w toku i jego awaria nie zmieniają urządzeń na offline; poprawny
       },
     };
     return query;
+  }, rpc(name, params) {
+    assert.equal(name, "control_device_slots_for_owner");
+    assert.equal(params.p_game_id, "test");
+    return { abortSignal: async () => ({ data: leaseRows, error: null }) };
   } };
   const context = {
     sb: () => client, AbortSignal,
@@ -36,28 +41,46 @@ test("odczyt w toku i jego awaria nie zmieniają urządzeń na offline; poprawny
   const settle = () => new Promise(resolve => setImmediate(resolve));
   presence.start();
   await settle();
-  assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true });
+  assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true }, JSON.stringify(changes));
   assert.equal(changes.at(-1).deviceDiagnostics.display.ageMs, 0);
   assert.equal(changes.at(-1).deviceDiagnostics.display.visibility, null);
 
+  now += 7_760;
+  rows = fresh().map(row => ({ ...row, last_seen_at: new Date(now - 7_760).toISOString() }));
+  await presence.refresh();
+  assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true },
+    "stary wpis presence nie powinien oznaczać offline, gdy lease primary nadal jest ważny");
+
+  rows = fresh();
+  leaseRows = [];
+  await presence.refresh();
+  assert.deepEqual(changes.at(-1).flags, { display: false, host: false, buzzer: false },
+    "świeży wpis waiting w device_presence nie powinien wyglądać jak aktywny primary");
+  leaseRows = ["display", "host", "buzzer"].map(device_type => ({ device_type, primary_online: true }));
+  await presence.refresh();
+  assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true });
+
+  const beforePending = changes.length;
   pending = true;
   timers.get(750)();
   now += 7500;
   timers.get(250)();
-  assert.equal(changes.length, 1, "oczekiwanie na odczyt nie zgłasza fałszywego rozłączenia");
+  assert.equal(changes.length, beforePending, "oczekiwanie na odczyt nie zgłasza fałszywego rozłączenia");
   pendingResolve({ error: { message: "HTTP 503" } });
   await settle();
   assert.equal(changes.at(-1).error.message, "HTTP 503");
   assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true });
   timers.get(250)();
-  assert.equal(changes.length, 2, "TTL nie kasuje informacji o błędzie");
+  assert.equal(changes.length, beforePending + 1, "TTL nie kasuje informacji o błędzie");
 
   pending = false;
   rows = fresh();
+  leaseRows = ["display", "host", "buzzer"].map(device_type => ({ device_type, primary_online: true }));
   await presence.refresh();
   assert.equal(changes.at(-1).error, null);
   assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true });
   rows = [];
+  leaseRows = [];
   await presence.refresh();
   assert.deepEqual(changes.at(-1).flags, { display: false, host: false, buzzer: false });
   presence.stop();
