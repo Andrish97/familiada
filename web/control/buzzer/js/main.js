@@ -181,7 +181,10 @@ async function main() {
     } finally { if (displayCheckPendingKey === requestKey) displayCheckPendingKey = null; }
   }
   setInterval(() => {
-    if (!subscription?.isDirectConnected()) void checkDisplayReady();
+    // A live Realtime channel does not prove this client received every ACK.
+    // Retry while the current transition is pending so one dropped
+    // display_rendered_rev event cannot leave the Buzzer disabled indefinitely.
+    if (lastRow && !isDisplayReady(lastRow)) void checkDisplayReady();
   }, 500);
 
   // Migracja 264 -- game_state_set_lock (control/js/store.js) NIE dzwoni
