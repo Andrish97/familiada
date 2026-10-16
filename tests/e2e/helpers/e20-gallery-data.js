@@ -44,8 +44,12 @@ async function readE20GalleryData(page) {
     ) || null;
     const galleryData = {
       game: preferDemo(games.filter((game) => game.type === "prepared")),
-      base: bases[0] || null,
-      baseCandidates: bases,
+      base: bases.find((base) => /\bdemo\b/i.test(base.name || "")) || bases[0] || null,
+      baseCandidates: [...bases].sort((a, b) => {
+        const demoA = /\bdemo\b/i.test(a.name || "") ? 1 : 0;
+        const demoB = /\bdemo\b/i.test(b.name || "") ? 1 : 0;
+        return demoB - demoA;
+      }),
       logos: {
         text: byLogoMode("TEXT"),
         draw: byLogoMode("DRAW"),

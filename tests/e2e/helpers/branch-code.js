@@ -105,15 +105,15 @@ async function serveBranchLoginHtml(route) {
   // Forward the actual navigation headers so the Worker can validate the
   // one-time E2E bypass token and inject the Turnstile test key.
   const requestHeaders = await route.request().allHeaders();
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 7; attempt++) {
     productionResponse = await route.fetch({ headers: requestHeaders });
     const productionHtml = await productionResponse.text();
     testSiteKey = productionHtml.match(/data-captcha-site-key="([^"]*)"/)?.[1] || "";
     if (testSiteKey) break;
-    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+    if (attempt < 7) await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
   }
   if (!testSiteKey) {
-    throw new Error(`Worker nie zwrócił testowego klucza Turnstile dla sesji E2E po 3 próbach (HTTP ${productionResponse?.status?.() ?? "brak odpowiedzi"})`);
+    throw new Error(`Worker nie zwrócił testowego klucza Turnstile dla sesji E2E po 7 próbach (HTTP ${productionResponse?.status?.() ?? "brak odpowiedzi"})`);
   }
   const file = path.join(REPO_ROOT, "login", "index.html");
   const html = fs.readFileSync(file, "utf8").replace(/data-captcha-site-key="[^"]*"/, `data-captcha-site-key="${testSiteKey}"`);

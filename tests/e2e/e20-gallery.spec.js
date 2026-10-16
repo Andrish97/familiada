@@ -503,7 +503,11 @@ function additionalStates(data) {
       id: "game-settings", stateId: "modal:color-picker", page: "game-settings", href: `/games/settings/?id=${data.game.id}`,
       modalCapture: true, expectedVisibleSelector: ".uni-modal", actionLabel: "Ustawienia gry → Wybór koloru",
       prepare: async (page) => {
-        await page.locator('#gsSidebar [data-cat="display"]').click();
+        const displayCategory = page.locator('#gsSidebar [data-cat="display"]');
+        if (!await displayCategory.isInViewport().catch(() => false)) {
+          await page.locator("#gsSidebarToggle").click();
+        }
+        await displayCategory.click();
         await page.locator(".swatchBtn").first().waitFor({ state: "visible", timeout: 15_000 });
         await page.locator(".swatchBtn").first().click();
         await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
@@ -515,6 +519,8 @@ function additionalStates(data) {
         href: `/polls/?id=${pollForRecipientModal.id}&tab=share`, modalCapture: true,
         expectedModalId: "pollRecipientsOverlay", actionLabel: "Odbiorcy ankiety → Wybierz odbiorców",
         prepare: async (page) => {
+          const recipientsTab = page.locator("#tabRecipients");
+          if (await recipientsTab.isVisible().catch(() => false)) await recipientsTab.click();
           await page.locator("#btnAddRecipients").waitFor({ state: "visible", timeout: 15_000 });
           await page.locator("#btnAddRecipients").click();
         },
