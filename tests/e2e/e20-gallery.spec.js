@@ -320,6 +320,7 @@ function additionalStates(data) {
         id: "polls", stateId: "recipients", page: "polls", href: `/polls/?id=${mobileSharePoll.id}&tab=recipients`, mobileOnly: true,
         actionLabel: "Ankiety → odbiorcy",
         prepare: async (page) => {
+          await page.locator("#tabRecipients").click();
           await expect(page.locator("#tabRecipients")).toHaveAttribute("aria-selected", "true");
           await expect(page.locator("#pollTabsCard")).toHaveClass(/mobile-recipients-active/);
         },
