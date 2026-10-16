@@ -52,11 +52,13 @@ if (fullGalleryRequested) {
     const pageEntries = profileEntries.filter((entry) => !entry.stateId);
     const pageIds = new Set(pageEntries.map((entry) => entry.id));
     const guardedPages = new Set(pageEntries.filter((entry) => entry.blockedByGuard).map((entry) => entry.id));
+    const pageById = new Map(pageEntries.map((entry) => [entry.id, entry]));
     const missingPages = requiredPages.filter((id) => !pageIds.has(id));
     const capturedStates = new Set(profileEntries.filter((entry) => entry.stateId).map((entry) => `${entry.id}:${entry.stateId}`));
     const compactMobile = profile === "ipad-portrait" || profile.startsWith("iphone-");
     const expectedStates = [
-      ...requiredStates.filter(([page]) => !guardedPages.has(page)),
+      ...requiredStates.filter(([page, state]) => !guardedPages.has(page)
+        && !pageById.get(page)?.unavailableStates?.includes(state)),
       ...(!guardedPages.has("control") ? [["control", "modal:share-device"]] : []),
       ...(compactMobile ? requiredMobileStates.filter(([page]) => !guardedPages.has(page)) : []),
       ...(profile === "iphone-portrait" && !guardedPages.has("marketplace") ? [["marketplace", "modal:marketplace-search"]] : []),

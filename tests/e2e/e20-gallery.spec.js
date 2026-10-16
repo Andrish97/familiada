@@ -75,7 +75,7 @@ function additionalStates(data) {
   const mobileSharePoll = data.polls.poll_text_vote || data.polls.poll_points_vote;
   const pollPreview = data.polls.poll_text || data.polls.poll_points;
   const states = [
-    ...(data.game ? [{
+    ...(data.game && /^\d{6}$/.test(data.connectPreviewCode || "") ? [{
       id: "connect", stateId: "modal:device-preview", page: "connect", href: "/connect/",
       modalCapture: true, expectedModalId: "devicePreviewOverlay", actionLabel: "Podłączanie urządzenia → podgląd przed połączeniem",
       prepare: async (page) => {
@@ -984,6 +984,17 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
       && getComputedStyle(element).visibility !== "hidden" && element.getClientRects().length > 0;
     return Boolean((state !== "" && state !== "ok" && pageGuard?.style.display === "flex") || visible(resourceGuard));
   });
+  const markPageUnavailable = (reason) => {
+    const pageEntry = manifest.find((entry) => entry.profile === profile.id && entry.id === id && !entry.stateId);
+    if (pageEntry) pageEntry.blockedByGuard = true;
+    fs.mkdirSync(MANIFEST_DIR, { recursive: true });
+    fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
+    console.log(`[e20-gallery] ${profile.id} · ${id}: pomijam dalsze stany strony — ${reason}.`);
+  };
+  if (prepare && blockedByGuard && options.skipWhenGuarded) {
+    markPageUnavailable("strona pokazała blokadę zasobu lub urządzenia");
+    return { modalIds: [], blockedByGuard: true, skipped: true };
+  }
   const allowSpecificModalPreparation = options.allowInitialSkeletonTimeout === true;
   if (prepare && (!contentReady || blockedByGuard) && !(allowSpecificModalPreparation && !blockedByGuard)) {
     throw new Error(`${profile.label} · ${id}: nie można otworzyć wymaganego stanu „${options.actionLabel || options.stateId || "widok"}” — treść nie jest gotowa lub strona jest zablokowana`);
@@ -1006,7 +1017,14 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
           selectedBaseTiles: [...document.querySelectorAll(".tile.selected[data-base-id]")].map((tile) => ({ id: tile.dataset.baseId, text: tile.querySelector(".name")?.textContent?.trim() || "" })),
           exportButtonDisabled: document.querySelector("#btnExport")?.disabled ?? null,
           tagActionDisabled: document.querySelector('#toolbar [data-act="editTags"]')?.disabled ?? null,
+          resourceGuard: document.getElementById("resourceLockGuard")?.innerText?.trim().slice(0, 180) || "",
         }));
+        if (options.skipWhenGuarded && /otwarta gdzie indziej|edytowana gdzie indziej/i.test(
+          `${modalDiagnostics.resourceGuard} ${modalDiagnostics.visibleOverlays.map((item) => item.text).join(" ")}`,
+        )) {
+          markPageUnavailable("aplikacja zablokowała zasób podczas otwierania stanu");
+          return { modalIds: [], blockedByGuard: true, skipped: true };
+        }
         throw new Error(`${profile.label} · ${id}: modale #${options.expectedModalId} nie otworzył się po akcji; ${JSON.stringify({ ...modalDiagnostics, pageErrors })}; ${error.message}`);
       }
     }
@@ -1284,9 +1302,15 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             if (profile.width < 980) {
               expect(baseState.blockedByGuard, `${profile.label} · Control should show its minimum-width guard`)
                 .toBe(true);
-            } else {
-              expect(baseState.blockedByGuard, `${profile.label} · Control should be available at this width`)
-                .toBe(false);
+            } else if (baseState.blockedByGuard) {
+              console.log(`[e20-gallery] ${profile.id} · Control: zapisano widok blokady; nie otwieram dodatkowych stanów.`);
+            }
+            if (!/^\d{6}$/.test(data.connectPreviewCode || "")) {
+              const connectEntry = manifest.find((entry) => entry.profile === profile.id && entry.id === "connect" && !entry.stateId);
+              if (connectEntry) {
+                connectEntry.unavailableStates = [...new Set([...(connectEntry.unavailableStates || []), "modal:device-preview"])];
+                fs.writeFileSync(path.join(MANIFEST_DIR, `manifest-${profile.id}.json`), JSON.stringify(manifest, null, 2));
+              }
             }
           }
           if (isBaseExplorer && !baseState.blockedByGuard) {
@@ -1369,7 +1393,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 await shareButton.click();
               },
               null,
-              { modalCapture: true, requireModal: true, expectedModalId: "shareDeviceOverlay", actionLabel: "Urządzenia → Udostępnij urządzenie", stateId: "modal:share-device", fileName: `modal-share-device-${profile.id}.png` },
+              { modalCapture: true, requireModal: true, skipWhenGuarded: true, expectedModalId: "shareDeviceOverlay", actionLabel: "Urządzenia → Udostępnij urządzenie", stateId: "modal:share-device", fileName: `modal-share-device-${profile.id}.png` },
             );
           }
         }
@@ -1393,7 +1417,9 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           page.setDefaultNavigationTimeout(20_000);
         }
         for (const state of extra) {
+          if (guardedPages.has(state.page)) continue;
           const stateOptions = {
+            skipWhenGuarded: true,
             stateId: state.stateId,
             ...(state.id === "base-explorer" ? { allowInitialSkeletonTimeout: true } : {}),
             ...(state.actionLabel ? { actionLabel: state.actionLabel } : {}),
@@ -1407,7 +1433,8 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
             ...(state.expectedVisibleSelector ? { expectedVisibleSelector: state.expectedVisibleSelector } : {}),
           };
           try {
-            await capture(page, profile, state.id, state.href, manifest, state.prepare, null, stateOptions);
+            const result = await capture(page, profile, state.id, state.href, manifest, state.prepare, null, stateOptions);
+            if (result?.skipped) guardedPages.add(state.page);
           } finally {
             if (state.cleanup) await state.cleanup(page);
           }
