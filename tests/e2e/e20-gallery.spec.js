@@ -795,6 +795,9 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 },
               },
             ];
+            // Najpierw warstwy dostępne bez zaznaczenia rekordu; przypisanie
+            // wymaga istniejącego pytania i jego blokady edycji.
+            tagShots.push(tagShots.shift());
             for (const shot of tagShots) {
               await page.close();
               page = await context.newPage();
