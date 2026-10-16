@@ -202,18 +202,19 @@ function additionalStates(data) {
             if (error) throw error;
             return data || null;
           }, data.base.id);
+          const visibleQuestionIds = await page.locator('#list .row[data-kind="q"][data-id]').evaluateAll((rows) =>
+            rows.map((row) => row.dataset.id));
+          page.__e20VisibleQuestionIdsBeforeCreate = visibleQuestionIds;
           page.__e20QuestionStateBeforeCreate = previousLastQuestion;
           const drawer = page.locator("#btnDrawerToggle");
           if (await drawer.isVisible().catch(() => false)) await drawer.click();
           await page.locator('#toolbar [data-act="newQuestion"]').click();
-          const newQuestionId = await page.waitForFunction(async ({ baseId, beforeId, beforeOrd }) => {
-            const { data, error } = await window.__sbClient.from("qb_questions")
-              .select("id,ord,payload").eq("base_id", baseId).is("category_id", null)
-              .order("ord", { ascending: false }).limit(1).maybeSingle();
-            if (error || !data || data.id === beforeId || Number(data.ord) <= Number(beforeOrd || 0)) return false;
-            return data.payload?.text === "Nowe pytanie" ? data.id : false;
-          }, { baseId: data.base.id, beforeId: previousLastQuestion?.id || "", beforeOrd: previousLastQuestion?.ord || 0 }, { timeout: 15_000 });
-          const newId = await newQuestionId.jsonValue();
+          await page.waitForFunction((beforeIds) =>
+            [...document.querySelectorAll('#list .row[data-kind="q"][data-id]')]
+              .some((row) => !beforeIds.includes(row.dataset.id)),
+          visibleQuestionIds, { timeout: 15_000 });
+          const newId = await page.locator('#list .row[data-kind="q"][data-id]').evaluateAll((rows, beforeIds) =>
+            rows.find((row) => !beforeIds.includes(row.dataset.id))?.dataset.id || "", visibleQuestionIds);
           if (!newId) throw new Error("UI nie ujawnił identyfikatora nowo dodanego pytania.");
           page.__e20TemporaryQuestionId = newId;
           const newQuestionRow = page.locator(`#list .row[data-kind="q"][data-id="${newId}"]`);
@@ -230,6 +231,11 @@ function additionalStates(data) {
         cleanup: async (page) => {
           if (page.isClosed()) return;
           let questionId = page.__e20TemporaryQuestionId;
+          if (!questionId && page.__e20VisibleQuestionIdsBeforeCreate) {
+            questionId = await page.locator('#list .row[data-kind="q"][data-id]').evaluateAll((rows, beforeIds) =>
+              rows.find((row) => !beforeIds.includes(row.dataset.id))?.dataset.id || "",
+            page.__e20VisibleQuestionIdsBeforeCreate);
+          }
           if (!questionId && page.__e20QuestionStateBeforeCreate) {
             questionId = await page.evaluate(async ({ baseId, before }) => {
               const { data, error } = await window.__sbClient.from("qb_questions")
