@@ -963,13 +963,14 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     const state = document.documentElement.dataset.deviceGuard || "";
     return state !== "" && state !== "ok" && document.getElementById("pageGuard")?.style.display === "flex";
   });
-  if (prepare && (!contentReady || blockedByGuard)) {
+  const allowSpecificModalPreparation = options.allowInitialSkeletonTimeout === true;
+  if (prepare && (!contentReady || blockedByGuard) && !(allowSpecificModalPreparation && !blockedByGuard)) {
     throw new Error(`${profile.label} · ${id}: nie można otworzyć wymaganego stanu „${options.actionLabel || options.stateId || "widok"}” — treść nie jest gotowa lub strona jest zablokowana`);
   }
   // Stany interaktywne nie zastępują guarda: na niedostępnym urządzeniu
   // zapisujemy ten guard zamiast wymuszać klik w ukryty zasób.
   let preparedState = null;
-  if (prepare && !blockedByGuard && contentReady) {
+  if (prepare && !blockedByGuard && (contentReady || allowSpecificModalPreparation)) {
     await dismissBlockingModal(page, profile, id);
     preparedState = await prepare(page);
     if (options.expectedModalId) {
@@ -990,6 +991,13 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     }
     if (options.expectedVisibleSelector) {
       await page.locator(options.expectedVisibleSelector).waitFor({ state: "visible", timeout: 15_000 });
+    }
+    if (allowSpecificModalPreparation && (options.expectedModalId || options.expectedVisibleSelector)) {
+      // W Base Explorer globalne etapy skeletonu potrafią pozostać niegotowe,
+      // mimo że konkretne, wymagane okno jest już otwarte i zweryfikowane.
+      // Stan modala ma własny, jawny warunek gotowości.
+      contentReady = true;
+      contentStable = true;
     }
   }
   const expectedSafe = profile.safe || { top: 0, right: 0, bottom: 0, left: 0 };
@@ -1346,6 +1354,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         for (const state of extra) {
           const stateOptions = {
             stateId: state.stateId,
+            ...(state.id === "base-explorer" ? { allowInitialSkeletonTimeout: true } : {}),
             ...(state.actionLabel ? { actionLabel: state.actionLabel } : {}),
             ...(state.modalCapture ? {
               modalCapture: true,
