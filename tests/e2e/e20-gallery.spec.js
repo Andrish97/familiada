@@ -452,7 +452,7 @@ function additionalStates(data) {
           await expect(page.locator("#btnExport")).toBeEnabled();
           await page.locator("#btnExport").click();
           await page.locator("#logoExportOverlay").waitFor({ state: "visible", timeout: 15_000 });
-          await page.locator("#logoExportSub").toBeVisible();
+          await expect(page.locator("#logoExportSub")).toBeVisible();
         },
       },
     ] : []),
