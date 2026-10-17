@@ -4,7 +4,7 @@
 // Lista budowana raz; potem tylko liczby i szerokości pasków (przejście CSS).
 // Punktacja: kolejność odpowiedzi z gry. Tekst: kolejność pojawienia się,
 // nowe na końcu. Sortowanie wg głosów dopiero przy zamykaniu.
-import { t } from "../../translation/translation.js?v=v2026-10-16T19043";
+import { t } from "../../translation/translation.js?v=v2026-10-17T18405";
 
 // poll_stopped: te same surowe wiersze co na żywo (głosy już się nie zmieniają)
 function resultsMode(status, type) {

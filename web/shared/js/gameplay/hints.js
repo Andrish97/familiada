@@ -1,4 +1,4 @@
-import { t } from "../../translation/translation.js?v=v2026-10-16T19043";
+import { t } from "../../translation/translation.js?v=v2026-10-17T18405";
 // web/js/gameplay/hints.js
 // Blok podpowiedzi nad siatką (control/js/ui.js) — odpowiednik starego
 // control/js/gameRounds.js's/gameFinal.js's setDuelMsg/setPlayMsg/
