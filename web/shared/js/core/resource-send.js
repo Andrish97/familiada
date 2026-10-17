@@ -1,7 +1,7 @@
-import {sb} from './supabase.js?v=v2026-10-17T18405';
-import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-17T18405';
-import {toast} from './toast.js?v=v2026-10-17T18405';
-import {sendResourceCopyMail} from './invite-mail.js?v=v2026-10-17T18405';
+import {sb} from './supabase.js?v=v2026-10-17T18441';
+import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-17T18441';
+import {toast} from './toast.js?v=v2026-10-17T18441';
+import {sendResourceCopyMail} from './invite-mail.js?v=v2026-10-17T18441';
 
 const attempts=new Map();
 function getDialog(){
