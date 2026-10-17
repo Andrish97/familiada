@@ -1085,6 +1085,16 @@ Podjęte (2026-10-07):
   bazy zablokowane), elementy jak dziś; opis według „kto trzyma — kto
   rozpoznaje”, nie według czasu trzymania.
 
+### Marketplace — „Moje wysłane” jako karta (2026-10-17)
+
+„Moje wysłane” jest sekcją tej samej strony `/marketplace/`, pod adresem
+`?tab=mine`; katalog używa karty domyślnej bez parametru. Nie utrzymujemy
+osobnej ścieżki `/marketplace/sent/`. Dostęp do `mine` wymaga zalogowanego
+konta bez statusu gościa. Niezalogowany użytkownik i gość, którzy otworzą
+`?tab=mine`, wracają do katalogu, a lista zgłoszeń nie jest pobierana.
+Worker nie ma osobnej reguły dla tej sekcji. Podścieżki Marketplace w mapie
+obejmują wyłącznie `/marketplace/game/...`.
+
 ### Skróty kontaktów — decyzja 2026-10-11
 
 Przyciski „Znajomi” i „Subskrybenci” mają ikony `people` i `envelope` ze

@@ -5,7 +5,7 @@
 // Decyzje: docs/nawigacja-mapa-plan.md (sekcje 2 i 7).
 //
 // Pola wpisu w PAGES:
-//   path          adres strony (pasuje dokładnie; subpaths: true — także podścieżki)
+//   path          adres strony (pasuje dokładnie; subpaths — jawne podścieżki)
 //   access        "public" | "guest" (gość + konto) | "user" (tylko konto)
 //   minViewportWidth  minimalna szerokość viewportu wymagana przez stronę
 //   parent        dokąd „Wstecz”, gdy nie ma poprawnego ?ret= (null — brak)
@@ -98,8 +98,7 @@ export const PAGES = {
   gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", minViewportWidth: 600, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id"], buttons: {
     btnPlay: { to: "control", custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
-  marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort", "dialog"], dialogs: ["gameDetailOverlay"] },
-  marketplaceSent: { path: "/marketplace/sent/", access: "user", parent: "marketplace", from: ["marketplace"], manual: "community", state: ["q", "filter", "sort"], guestRedirect: "marketplace" },
+  marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: ["game/"], from: ["home", "games"], manual: "community", tabs: ["browse", "mine"], state: ["q", "filter", "sort", "tab", "dialog"], dialogs: ["gameDetailOverlay"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect", state: ["share"] },
   connectTv:     { path: "/connect/tv/", access: "public", parent: "connectDevice", parentAnon: "connectDevice", from: ["connectDevice"], deviceGuard: { formFactors: ["tv"] } },
   controlDisplay:{ path: "/control/display/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Odbiornik ekranu uruchamiany kodem parowania; osobna sesja urządzenia." },
@@ -226,7 +225,10 @@ export function pageIdForPath(pathname) {
   let sub = null;
   for (const [id, p] of Object.entries(PAGES)) {
     if (p.path === withSlash) return id;
-    if (p.subpaths && withSlash.startsWith(p.path)) sub = id;
+    const matchesSubpath = Array.isArray(p.subpaths)
+      ? p.subpaths.some((prefix) => withSlash.startsWith(`${p.path}${prefix}`))
+      : p.subpaths && withSlash.startsWith(p.path);
+    if (matchesSubpath) sub = id;
   }
   return sub;
 }

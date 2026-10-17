@@ -12,6 +12,7 @@ import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } fro
 import "../../shared/js/core/contact-modal.js?v=v2026-10-17T22175";
 import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-17T22175";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-17T22175";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-17T22175";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
@@ -20,7 +21,8 @@ const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "
    Constants
 ========================================================= */
 const PAGE_SIZE = 20;
-const MARKETPLACE_SENT_ROUTE = /^\/marketplace\/sent\/?$/;
+const MARKETPLACE_TABS = ["browse", "mine"];
+const DEFAULT_MARKETPLACE_TAB = "browse";
 
 /* =========================================================
    State
@@ -120,6 +122,14 @@ function showView(name) {
   els.viewMine.hidden   = name !== "mine";
   if (els.btnGoGames)  els.btnGoGames.hidden  = name !== "browse";
   if (els.btnBackBrowse) els.btnBackBrowse.hidden = name !== "mine";
+}
+
+function switchMarketplaceTab(name) {
+  const next = name === "mine" && (isGuest || !currentUser) ? DEFAULT_MARKETPLACE_TAB : name;
+  setTab(next, DEFAULT_MARKETPLACE_TAB);
+  showView(next);
+  if (next === "mine") void loadMySent();
+  else void loadBrowse({ reset: true });
 }
 
 function langFilterOptions() {
@@ -841,11 +851,11 @@ function wireEvents() {
   // Browse
   els.btnMySent?.addEventListener("click", async () => {
     if (isGuest || !currentUser) return;
-    location.href = marketplaceUrl("/marketplace/sent/");
+    switchMarketplaceTab("mine");
   });
   els.btnBackBrowse?.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    location.href = marketplaceUrl("/marketplace/");
+    switchMarketplaceTab(DEFAULT_MARKETPLACE_TAB);
   });
 
   els.searchInput?.addEventListener("input", () => {
@@ -914,7 +924,18 @@ function wireEvents() {
     } else {
       closeDetail({ updateUrl: false });
       restoreBrowseParams();
-      loadBrowse({ reset: true });
+      const tab = tabFromUrl(MARKETPLACE_TABS, DEFAULT_MARKETPLACE_TAB);
+      if (tab === "mine" && (isGuest || !currentUser)) {
+        setTab(DEFAULT_MARKETPLACE_TAB, DEFAULT_MARKETPLACE_TAB);
+        showView(DEFAULT_MARKETPLACE_TAB);
+        loadBrowse({ reset: true });
+      } else if (tab === "mine") {
+        showView("mine");
+        loadMySent();
+      } else {
+        showView(DEFAULT_MARKETPLACE_TAB);
+        loadBrowse({ reset: true });
+      }
     }
   });
 }
@@ -945,13 +966,10 @@ function restoreBrowseParams() {
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
   const i18nP = initI18n({ withSwitcher: true });
-  const sentRoute = MARKETPLACE_SENT_ROUTE.test(location.pathname);
-  const pageId = sentRoute ? "marketplaceSent" : "marketplace";
-  // „Moje wysłane” ma własną trasę kontową; wejście gościa jest przekierowane
-  // przez wspólny page guard z powrotem do publicznego katalogu.
-  const userP = initPage(pageId, {
+  const requestedTab = tabFromUrl(MARKETPLACE_TABS, DEFAULT_MARKETPLACE_TAB);
+  const userP = initPage("marketplace", {
     ready: i18nP,
-    back: sentRoute ? false : els.btnGoGames,
+    back: els.btnGoGames,
     account: { showAuthEntry: false },
   });
   await i18nP;
@@ -962,12 +980,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   currentUser = await userP;
   isGuest = !currentUser || isGuestUser(currentUser);
-  // A protected same-HTML route must stop before loading its private dataset
-  // when the shared guard redirected a guest or an unauthenticated visitor.
-  if (sentRoute && !currentUser) return;
-
   // "Moje wysłane" button — only for logged-in non-guests
   if (els.btnMySent) els.btnMySent.hidden = isGuest || !currentUser;
+  const initialTab = requestedTab === "mine" && (isGuest || !currentUser)
+    ? DEFAULT_MARKETPLACE_TAB
+    : requestedTab;
+  if (initialTab !== requestedTab) setTab(initialTab, DEFAULT_MARKETPLACE_TAB);
 
   // init ui-select for game picker in submit modal
   submitGameUiSelect = initUiSelect(els.submitGameSelectEl, {
@@ -981,8 +999,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   restoreBrowseParams();
 
 
-  showView(sentRoute ? "mine" : "browse");
-  if (sentRoute) await loadMySent();
+  showView(initialTab);
+  if (initialTab === "mine") await loadMySent();
   await loadBrowse({ reset: true });
   document.getElementById('browseGrid')?.classList.add('skel-step-ready');
 
