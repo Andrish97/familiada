@@ -35,7 +35,7 @@ export async function serveNotFoundPage(request, originBase, originHost, resolve
 
   return withHeaders(base, {
     "Content-Security-Policy":
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
+      "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.familiada.online",
     "X-Content-Type-Options": "nosniff"
   });
 }

@@ -1,4 +1,5 @@
 import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-15T22404";
 
 const ENDPOINT = "/maintenance-state.json?v=v2026-10-15T22404";
 const POLL_MS = 30000;
@@ -29,6 +30,9 @@ const els = {
 let countdownTimer = null;
 let redirectTimer = null;
 let lastState = null;
+let hasSession = false;
+let sessionReady = null;
+const isTv = document.documentElement.dataset.tvLayout === "true";
 
 function setText(el, text) {
   if (el) el.textContent = text;
@@ -47,16 +51,27 @@ function tr(key, fallback) {
 function scheduleRedirect() {
   if (redirectTimer) return;
   redirectTimer = setTimeout(() => {
-    window.location.href = withLangParam(returnTarget());
+    void redirectToReturnTarget();
   }, 1500);
 }
 
 function redirectNow() {
-  window.location.href = withLangParam(returnTarget());
+  void redirectToReturnTarget();
 }
 
 function returnTarget() {
-  return document.documentElement.dataset.tvLayout === "true" ? "/connect/?tv=1" : "/";
+  if (isTv) return "/connect/?tv=1";
+  return hasSession ? "/games/" : "/";
+}
+
+async function redirectToReturnTarget() {
+  if (!isTv && !sessionReady) {
+    sessionReady = getUser()
+      .then((user) => { hasSession = Boolean(user); })
+      .catch(() => { hasSession = false; });
+  }
+  if (sessionReady) await sessionReady;
+  window.location.replace(withLangParam(returnTarget()));
 }
 
 function parseDate(value) {

@@ -4579,9 +4579,11 @@ const uk = {
     messageText:
       "Такої адреси не існує або її перенесено. Перевір посилання.",
     redirectHint: "Незабаром ти повернешся на головну сторінку.",
+    authRedirectHint: "Незабаром ти повернешся до Моїх ігор.",
     tvRedirectHint: "Незабаром ти повернешся на екран підключення дисплея.",
     homeBtn: "Головна",
     marketplaceBtn: "Переглянути Ігри Спільноти",
+    myGamesBtn: "Повернутися до Моїх ігор",
     footerLeft: "Familiada",
     footerRight: "Якщо це помилка — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },

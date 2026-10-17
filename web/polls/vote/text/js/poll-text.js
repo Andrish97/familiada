@@ -2,7 +2,7 @@
 import "../../../../shared/js/core/orientation-guard.js?v=v2026-10-15T22404";
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-15T22404";
 import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-15T22404";
-import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-15T22404";
+import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-15T22404";
 import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-15T22404";
 import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-15T22404";
 
@@ -66,7 +66,9 @@ let outbox = [];
 
 function redirectToRoot() {
   setTimeout(() => {
-    location.href = "/";
+    void getUser().then((user) => {
+      location.replace(withLangParam(user ? "/games/" : "/"));
+    });
   }, 5000);
 }
 

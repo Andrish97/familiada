@@ -162,12 +162,17 @@ function showOverlay({ title, message, backHref }) {
   overlay.querySelector("#resourceLockGuardMsg").textContent = message || "";
 
   const backBtn = overlay.querySelector("#resourceLockGuardBack");
-  backBtn.onclick = () => {
+  backBtn.onclick = async () => {
     if (backHref) { location.href = withLangParam(backHref); return; }
     try {
       if (window.history.length > 1) { history.back(); return; }
     } catch {}
-    location.href = "/";
+    let target = "/";
+    try {
+      const { data, error } = await sb().auth.getUser();
+      if (!error && data?.user) target = "/games/";
+    } catch {}
+    location.replace(withLangParam(target));
   };
 
   overlay.style.display = "flex";

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <!-- Cloudflare's zone-wide CSP header is applied after the Worker response.
          Keep the error page independently restricted; browsers enforce both policies. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.familiada.online" />
     <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="/shared/css/tv-layout.css?v=v2026-10-17T23000" />
     <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-15T22404" />
     <link rel="stylesheet" href="/404/css/404.css?v=v2026-10-15T22404" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script>document.documentElement.classList.add('page-loading')</script>
     <script src="/shared/js/core/security-warning.js?v=v2026-10-15T22404" defer></script>
 </head>
@@ -42,6 +43,7 @@
           <div class="notfound-actions">
             <a href="/" class="btn" data-i18n="notFound.homeBtn" data-i18n-icon="home">Strona główna</a>
             <a href="/marketplace/" class="btn gold" data-i18n="notFound.marketplaceBtn" data-i18n-icon="gamepad">Przeglądaj Gry Społeczności</a>
+            <a id="notFoundMyGames" href="/games/" class="btn gold" data-i18n="notFound.myGamesBtn" data-i18n-icon="arrow-left" hidden>Wróć do Moich gier</a>
           </div>
           <p class="notfound-hint" data-i18n="notFound.redirectHint" style="margin-top: 20px; opacity: 0.6;">Za chwilę wrócisz na stronę główną.</p>
         </div>

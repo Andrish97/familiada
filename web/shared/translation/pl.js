@@ -4969,9 +4969,11 @@ const pl = {
     messageText:
       "Tego adresu nie ma lub został przeniesiony. Sprawdź poprawność linku.",
     redirectHint: "Za chwilę wrócisz na stronę główną.",
+    authRedirectHint: "Za chwilę wrócisz do Moich gier.",
     tvRedirectHint: "Za chwilę wrócisz do ekranu Podłącz wyświetlacz.",
     homeBtn: "Strona główna",
     marketplaceBtn: "Przeglądaj Gry Społeczności",
+    myGamesBtn: "Wróć do Moich gier",
     footerLeft: "Familiada",
     footerRight: "Jeśli to błąd — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },

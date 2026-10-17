@@ -1,4 +1,5 @@
 import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-15T22404";
 
 (async () => {
   try {
@@ -16,7 +17,26 @@ import { initI18n, t, withLangParam } from "../../shared/translation/translation
     const hint = document.querySelector(".notfound-hint");
     if (hint) hint.textContent = t("notFound.tvRedirectHint");
   }
+  let returnTo = isTv ? "/connect/?tv=1" : "/";
+  if (!isTv) {
+    try {
+      if (await getUser()) {
+        returnTo = "/games/";
+        document.querySelector('[data-i18n="notFound.homeBtn"]')?.remove();
+        document.querySelector('[data-i18n="notFound.marketplaceBtn"]')?.remove();
+        const myGames = document.getElementById("notFoundMyGames");
+        if (myGames) {
+          myGames.hidden = false;
+          myGames.href = withLangParam("/games/");
+        }
+        const hint = document.querySelector(".notfound-hint");
+        if (hint) hint.textContent = t("notFound.authRedirectHint");
+      }
+    } catch (err) {
+      console.warn("[404] nie udało się sprawdzić sesji:", err);
+    }
+  }
   setTimeout(() => {
-    window.location.href = withLangParam(isTv ? "/connect/?tv=1" : "/");
+    window.location.href = withLangParam(returnTo);
   }, 5000);
 })();

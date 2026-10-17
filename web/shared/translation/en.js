@@ -4582,9 +4582,11 @@ const en = {
     messageText:
       "This address does not exist or has been moved. Check the link.",
     redirectHint: "You will be redirected to the home page shortly.",
+    authRedirectHint: "You will return to My Games shortly.",
     tvRedirectHint: "You will return to the Connect display screen shortly.",
     homeBtn: "Home",
     marketplaceBtn: "Browse Community Games",
+    myGamesBtn: "Back to My Games",
     footerLeft: "Familiada",
     footerRight: "If this is a mistake, <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
