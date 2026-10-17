@@ -6,26 +6,26 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-17T04580";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-17T04580";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T04580";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-17T04580";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T04580";
+import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-17T05000";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-17T05000";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05000";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-17T05000";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05000";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-17T04580";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-17T04580";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-17T04580";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T04580";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-17T04580";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-17T04580";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-17T04580";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-17T04580";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-17T04580";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-17T04580";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-17T04580";
-import { createTally } from "./poll-tally.js?v=v2026-10-17T04580";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-17T05000";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-17T05000";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-17T05000";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T05000";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-17T05000";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-17T05000";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-17T05000";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-17T05000";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-17T05000";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-17T05000";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-17T05000";
+import { createTally } from "./poll-tally.js?v=v2026-10-17T05000";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-17T04580";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-17T05000";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 

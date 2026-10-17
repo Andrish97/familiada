@@ -17,6 +17,22 @@
     }
 }
 
+/* Na telefonie w portrecie przewija się tylko tabela. Kontener .explorer
+   zajmuje stałą przestrzeń między toolbarem a stopką i nie przechwytuje
+   gestów pionowych listy. */
+@media (max-width: 900px) and (orientation: portrait) {
+  main.explorer-page > .explorer {
+    overflow: hidden;
+  }
+
+  main.explorer-page > .explorer .list {
+    overflow-x: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 body,html {
     height: 100dvh;
     overflow: hidden;
