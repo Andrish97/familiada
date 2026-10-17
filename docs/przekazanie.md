@@ -1296,9 +1296,9 @@ listach, które się nie mieszczą, rozważyć przełączane sekcje, bez ucinani
 treści.
 
 Landscape jest wyłączone z tej rundy; panel admina `/settings/` pozostaje poza
-zakresem. Najwyższy priorytet mają trzy modale Base Explorer: tagi (3 warstwy),
-dodawanie gry z bazy i edycja pytania. Dla pytania wzorcem jest mobilny
-Edytor gry; dla tagów i dodawania gry listę przewija sam panel, przy stałych
-nagłówkach/akcjach. Konkretne opisy i powiązania z wcześniejszymi uwagami są w
-`docs/e20-uwagi-do-korekty.md`. Propozycje są zapisane; UI nie zostało
-zmienione, pełnych testów ani galerii nie uruchamiano.
+zakresem. Najwyższy priorytet miały trzy modale Base Explorer: tagi (3 warstwy),
+dodawanie gry z bazy i edycja pytania. Wdrożono: przewijanie listy taga/pytania
+i odpowiedzi wewnątrz nieruchomego arkusza, stałe akcje oraz układ odpowiedzi zgodny z mobilnym Edytorem gry. `git diff --check` przechodzi; bez galerii/testów.
+Szczegóły i powiązania z wcześniejszymi uwagami są w
+`docs/e20-uwagi-do-korekty.md`. Pozostałe miejsca z audytu czekają na dalsze
+wdrożenie; pełnych testów ani galerii nie uruchamiano.

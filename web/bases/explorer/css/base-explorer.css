@@ -1802,3 +1802,185 @@ tr.row .tag-dot[data-tip]::before {
   }
 
 }
+
+/* E20: trzy ważne modale mają ograniczony arkusz i przewijają tylko
+   właściwy panel. Nagłówki oraz akcje nie jadą razem z długą listą. */
+.tags-modal,
+.question-modal,
+.export-modal {
+  min-height: 0;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tags-modal .tags-layer {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.tags-modal .tagsHead,
+.tags-modal .tagsFoot {
+  flex: 0 0 auto;
+}
+
+.tags-modal .tagsPickList {
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: min(320px, 42vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tags-modal .colorModalBody {
+  min-height: 0;
+  max-height: min(520px, 55vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.question-modal > .qBody,
+.question-modal > .sheet-modal-body > .qBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.question-modal .qAnswersBlock {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.question-modal .qAnswersBlock .qf-listShell {
+  flex: 1 1 auto;
+  min-height: 100px;
+  max-height: min(540px, 48vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.export-modal > .xBody,
+.export-modal > .sheet-modal-body > .xBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.export-modal .xGrid2 {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.export-modal .xField:has(.xPickList) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.export-modal .xPickList {
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: min(340px, 46vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .tags-modal,
+  .question-modal,
+  .export-modal {
+    max-height: none;
+  }
+
+  /* Warstwy tagów mają własne nagłówki i stopki. Ich arkusz jest
+     nieruchomy, a aktywna lista/picker dostaje dostępną wysokość. */
+  .modal--sheet.sheet-active .tags-modal > .sheet-modal-body:has(> .tags-layer) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .tags-modal .tagsPickList,
+  .modal--sheet.sheet-active .tags-modal .colorModalBody {
+    max-height: none;
+    min-height: 0;
+  }
+
+  /* Formularz pytania naśladuje Edytor gry: treść pytania zostaje
+     nieruchoma, a przewija się wyłącznie lista odpowiedzi. */
+  .modal--sheet.sheet-active .question-modal > .sheet-modal-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .question-modal > .sheet-modal-body > .mSub {
+    flex: 0 0 auto;
+  }
+
+  .modal--sheet.sheet-active .question-modal .qBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .modal--sheet.sheet-active .question-modal .qAnswersBlock .qf-listShell {
+    max-height: none;
+    min-height: 0;
+  }
+
+  /* Przy dodawaniu gry nazwa, typ i stopka zostają dostępne; przewija
+     się sama lista pytań. Na telefonie typ jest pod listą, ale poza nią. */
+  .modal--sheet.sheet-active .export-modal > .sheet-modal-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .export-modal > .sheet-modal-body > .mSub {
+    flex: 0 0 auto;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xGrid2 {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(120px, 1fr) auto;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xPickList {
+    max-height: none;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+
+@media (max-width: 600px) and (orientation: portrait) and (max-height: 720px) {
+  /* Na krótkim telefonie nadal zostaje miejsce na wybór typu i stopkę;
+     lista pytań może być krótsza, ale pozostaje przewijalna. */
+  .modal--sheet.sheet-active .export-modal .xGrid2 {
+    grid-template-rows: minmax(72px, 1fr) auto;
+  }
+}

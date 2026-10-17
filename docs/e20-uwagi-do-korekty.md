@@ -139,3 +139,15 @@ teraz przebudowy.
 planu wdrażać poprawki po wskazanych wierszach, sprawdzając najpierw każdy
 układ dotknięty wspólnym CSS; bez pełnej galerii i pełnych testów bez
 uzgodnienia.
+
+
+### Wdrożenie priorytetowych modalów Base Explorer — 2026-10-17
+
+Wdrożono na branchu `codex/e19-3`: przypisywanie tagów przewija samą listę,
+a aktywne nagłówki/akcje są nieruchome; edycja taga i wybór koloru mają
+wewnętrzny obszar treści bez przewijania arkusza. Modal dodawania gry z bazy
+przewija samą listę pytań, pozostawiając nazwę, wybór typu i akcję Utwórz
+dostępne. Modal edycji pytania przewija wyłącznie listę odpowiedzi i zachowuje
+wzorzec współdzielonego formularza z Edytora gry. Zaktualizowano cache-buster
+arkusza Base Explorer. `git diff --check` przechodzi; bez testów i galerii
+zgodnie z ustaleniem.
