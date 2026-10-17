@@ -130,17 +130,22 @@ branchu; dopasowanie wizualne czeka na uzgodnioną galerię.
 
 **Sprawdzone jako pojedynczy scroll lub bez potwierdzonego zagnieżdżenia:**
 strony Gry, Bazy, Zadania i Logo mają listę jako jedyny scroll obszaru roboczego;
-Mails ma jeden wewnętrzny scroll listy przy zablokowanym body; mobilny eksport
-gry w Base Explorer neutralizuje wewnętrzne scrolle; warstwy modala tagów mają
-już własne reguły ograniczania aktywnej warstwy. Te miejsca pozostają do
-punktowego sprawdzenia po wdrożeniu, lecz audyt kodu nie proponuje dla nich
-teraz przebudowy.
+Znajomi i Subskrybenci blokują scroll kart, przewijają widoczne listy, a na
+telefonie pokazują aktywną kartę zakładki; lista odrzuconych znajomych jest
+domyślnie zwinięta. Connect ogranicza scroll do listy urządzeń wewnątrz
+nieruchomej karty. Ankiety mają nieruchomy obszar roboczy i przewijaną listę
+odbiorców; widoki głosowania nie dodają własnego scrolla listy. W Control
+podsumowanie jest pojedynczym `.c2-scroll-area`; lista na Host przewija się
+w obrębie nieruchomej planszy. Mails pokazuje albo kartę wiadomości, albo
+centrum list — nie oba naraz; body jest zablokowane, a lista ma jeden scroll.
+Go i Instrukcja nie zawierają przewijanych list. Dla tych miejsc audyt kodu
+nie wskazał dodatkowych zagnieżdżonych pionowych scrolli. Eksport gry i
+warstwy modala tagów w Base Explorer mają już opisane wyżej reguły.
 
 **Wyłączone:** mobilne landscape (jak uzgodniono) oraz panel administracyjny
-`/settings/` (użytkownik wcześniej wyłączył go z tej pracy). Po zatwierdzeniu
-planu wdrażać poprawki po wskazanych wierszach, sprawdzając najpierw każdy
-układ dotknięty wspólnym CSS; bez pełnej galerii i pełnych testów bez
-uzgodnienia.
+`/settings/` (użytkownik wcześniej wyłączył go z tej pracy). Wskazane zmiany
+scrolla są wdrożone na branchu; przed zamknięciem rundy trzeba jeszcze ocenić
+układy na uzgodnionej galerii. Nie uruchamiano pełnych testów ani galerii.
 
 
 ### Wdrożenie priorytetowych modalów Base Explorer — 2026-10-17
