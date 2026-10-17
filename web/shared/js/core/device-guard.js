@@ -9,7 +9,7 @@
 // czy konkretna funkcja się mieści, wynikają z bieżącego viewportu. Obrót
 // nie zmienia typu urządzenia, ale może udostępnić funkcję wymagającą miejsca.
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-17T2130";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-17T22175";
 
 export const PHONE_MAX_SHORT_SIDE = 700;
 export const MIN_WORK_WIDTH = 980;
