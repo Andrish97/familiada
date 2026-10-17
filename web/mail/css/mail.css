@@ -14,7 +14,7 @@
 .mail-form-row{display:flex;gap:10px}
 .mail-form-row input{flex:1;min-width:0}
 .mail-preference{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:14px 0 0;margin-top:4px}
-.mail-preference h2,.mail-panel h2{font-size:15px;margin:0;font-weight:800}
+.mail-preference h2{font-size:15px;margin:0;font-weight:800}
 .mail-preference p{font-size:13px;line-height:1.5;opacity:.75;margin:5px 0 0}
 .mail-preference .btn{flex:0 0 auto}
 .mail-preference.is-disabled{border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px;align-items:flex-start}
@@ -24,7 +24,7 @@
 .mail-tabs-card>.tabs-strip{display:none}
 .mail-panels-card{margin:0;min-height:0;flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;overflow:hidden;padding:18px}
 .mail-panel{min-width:0;min-height:0;margin:0;display:flex;flex-direction:column;overflow:hidden;padding:14px}
-.mail-panel .mail-panel-title{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:4px 2px;font-size:14px;font-weight:800}
+.mail-panel .mail-panel-title{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:4px 2px}
 .mail-panel .shareList{overflow:auto;min-height:0;flex:1;margin:0;padding:0 2px 2px;align-content:start}
 .mail-row .mail-row-copy{min-width:0;flex:1}
 .mail-row .shareEmail{white-space:normal;overflow-wrap:anywhere;font-size:13.5px}
@@ -59,7 +59,7 @@
  .mail-panels-card{display:flex;gap:0;padding:12px}
  .mail-panel{display:none;flex:1;padding:0;border:0;background:transparent;box-shadow:none}
  .mail-panel.active{display:flex}
- .mail-panel-title{display:none}
+ .mail-panel .mail-panel-title{display:none}
  .mail-row .shareNote{font-size:11px}
  .mail-discover{font-size:11px;gap:6px 12px;padding:12px 14px}
  .mail-discover>span{width:100%}

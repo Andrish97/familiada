@@ -8,17 +8,7 @@
 .connect-device-body .bar.has-actions-below{row-gap:6px;padding-bottom:12px;margin-bottom:12px}
 .connect-device-body .bar.has-actions-below > .actions{margin-top:0;justify-content:flex-start}
 
-.connect-device-card-header {
-  flex: 0 0 auto;
-  font-weight: 800;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  font-size: .85rem;
-  opacity: .7;
-  padding-bottom: 12px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
+.connect-device-card-header { flex: 0 0 auto; margin: 0 0 8px; }
 
 .connect-device-tile {
   height: 72px;
@@ -118,7 +108,6 @@
 
 .connect-device-main-card:not(:has(#sharedDevicesCard:not([hidden]))) { flex: 0 0 auto; }
 #enterCodeCard { flex: 0 0 auto; }
-.connect-device-inner-card .connect-device-card-header { padding-bottom: 8px; margin-bottom: 8px; }
 
 .connect-device-enter-code-row {
   margin-top: auto;
