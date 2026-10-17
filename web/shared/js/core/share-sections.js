@@ -6,8 +6,8 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-16T19043";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-16T19043";
+import { t } from "../../translation/translation.js?v=v2026-10-17T18405";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-17T18405";
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
 
