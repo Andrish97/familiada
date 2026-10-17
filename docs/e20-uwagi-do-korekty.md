@@ -68,6 +68,14 @@ dziedziczyć stałą szerokość przycisku ikonowego, a etykieta „Może
 edytować” ma 12 px jak pozostałe przyciski xsm. Do wizualnego
 potwierdzenia; nie uruchamiano testów ani galerii.
 
+Punkt 10 — w widoku ankiety ograniczono szerokość całej karty z wypustkami
+razem z jej treścią do 960 px na ekranach do 1400 px na urządzeniach dotykowych. Karta jest
+wyśrodkowana, a wypustki nadal pokrywają się z jej krawędziami. Na
+telefonie pozostaje szerokości dostępnego obszaru, a na desktopie
+reguła nie zmienia szerokości. Wyłączono z reguły Mails. Odświeżono
+cache-buster arkusza ankiet. Do wizualnego potwierdzenia; bez testów
+i galerii.
+
 ### Ankiety — poprawki punktu 5 na branchu
 
 Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px
