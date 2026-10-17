@@ -187,6 +187,8 @@ const pl = {
     touchMessage: "Otwórz tę stronę na telefonie lub tablecie z ekranem dotykowym.",
     tvOnlyTitle: "Ta strona jest przeznaczona dla telewizora",
     tvOnlyMessage: "Podłącz wyświetlacz na telewizorze. Na tym urządzeniu użyj strony Podłącz urządzenie.",
+    tvUnsupportedTitle: "Niedostępne na telewizorze",
+    tvUnsupportedMessage: "Ta strona nie obsługuje telewizorów. Otwórz ją na komputerze, tablecie lub telefonie.",
     rotateTitle: "Obróć urządzenie",
     rotateMessage: "Obróć urządzenie, aby uzyskać właściwy widok.",
     narrowTitle: "Za wąskie okno",

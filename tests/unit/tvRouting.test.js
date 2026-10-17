@@ -6,9 +6,14 @@ function redirect(path, headers = {}, method = "GET") {
   const url = new URL(path, "https://www.familiada.online");
   return tvRedirect(new Request(url, { method, headers: { "user-agent": ua, accept: "text/html", ...headers } }), url);
 }
-test("TV routes every website page to code entry, including other device links", () => {
-  for (const path of ["/", "/login/", "/control/", "/control/", "/games/", "/control/host/?id=a&key=b", "/control/buzzer/?id=a&key=b", "/control/display/?preview=1", "/missing.html"]) {
+test("TV routes known website pages to code entry, including other device links", () => {
+  for (const path of ["/", "/login/", "/control/", "/games/", "/control/host/?id=a&key=b", "/control/buzzer/?id=a&key=b", "/control/display/?preview=1"]) {
     assert.equal(redirect(path)?.headers.get("location"), "https://www.familiada.online/connect/?tv=1");
+  }
+});
+test("TV leaves Maintenance, 404 and unknown paths to their own handlers", () => {
+  for (const path of ["/maintenance", "/maintenance/", "/404", "/404.html", "/missing.html"]) {
+    assert.equal(redirect(path), null);
   }
 });
 test("TV accepts Display and code page without loops but redirects missing credentials", () => {

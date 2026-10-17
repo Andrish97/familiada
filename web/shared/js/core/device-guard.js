@@ -96,10 +96,14 @@ const TEXTS = {
   touch: { title: "pageGuard.touchTitle", message: "pageGuard.touchMessage", icon: "phone" },
   rotate: { title: "pageGuard.rotateTitle", message: "pageGuard.rotateMessage", icon: "rotate-right" },
   narrow: { title: "pageGuard.narrowTitle", message: "pageGuard.narrowMessage", icon: "fullscreen-enter" },
+  tvUnsupported: { title: "pageGuard.tvUnsupportedTitle", message: "pageGuard.tvUnsupportedMessage", icon: "display" },
 };
 
 export function showDeviceGuard(state, backHref, messageKey = null) {
-  const txt = TEXTS[state] || TEXTS.unsupported;
+  const profile = getDeviceProfile();
+  const txt = state === "unsupported" && profile.formFactor === "tv"
+    ? TEXTS.tvUnsupported
+    : TEXTS[state] || TEXTS.unsupported;
   // Obrót rozwiązuje blokadę bez opuszczania bieżącej strony, więc nie
   // pokazuj nieużytecznego przycisku „Wróć” przy żadnym guardzie rotate.
   showPageGuard({

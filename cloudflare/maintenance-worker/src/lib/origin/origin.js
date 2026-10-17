@@ -88,6 +88,15 @@ const PAGE_ROUTES = new Set([
   "privacy", "friends", "subscribers", "tasks",
 ]);
 
+export function isKnownPagePath(pathname) {
+  if (pathname === "/" || pathname === "/index.html") return true;
+  const route = String(pathname || "")
+    .replace(/^\/+/, "")
+    .replace(/\/index\.html$/, "")
+    .replace(/\/$/, "");
+  return PAGE_ROUTES.has(route) || route.startsWith("marketplace/game/");
+}
+
 export function pageIndexPath(pathname) {
   if (pathname === "/") return "/index.html";
   const route = pathname.replace(/^\//, "").replace(/\/$/, "");

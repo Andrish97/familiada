@@ -2,6 +2,12 @@
 
 Stan roboczy na 2026-10-14. Tabela rozbija każdą uwagę na osobny wiersz. „Jak to rozumiem” opisuje oczekiwane zachowanie; „Zmiana w kodzie” zapisuje to, co jest obecnie wdrożone; status nie oznacza automatycznej akceptacji wyglądu. Sprostowania użytkownika są zapisane osobno, by wdrażać je bez zamiany na moje wcześniejsze interpretacje.
 
+## Korekta galerii TV — 2026-10-17
+
+| Uwaga | Zmiana | Status |
+|---|---|---|
+| Zrzuty TV pokazywały komunikat „niedostępna na telefonie”; strony takie jak Login powinny przejść przez prawdziwe przekierowanie Workera na ekran TV. Jeśli na innej stronie zadziała guard, komunikat ma mówić o telewizorze. | Profil TV galerii nie przechwytuje już lokalnych Home/Connect, więc Worker może wykonać prawdziwe przekierowanie. Dla TV galeria obejmuje Home, Login, Connect TV, Maintenance i 404; walidator nie wymaga widoków aplikacji, do których TV jest przekierowywany. Guard ma osobny komunikat „Niedostępne na telewizorze”. Worker kieruje znane strony do Connect TV, ale pozostawia Maintenance, 404 i nieznane ścieżki ich właściwej obsłudze. | Poprawka przygotowana; testów i galerii nie uruchamiano. |
+
 ## Sprostowania użytkownika i wdrożenie
 
 | # | Sprostowanie | Jak zmieniam zachowanie/kod | Stan |

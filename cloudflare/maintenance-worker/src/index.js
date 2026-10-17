@@ -61,7 +61,14 @@ export default {
     const host = url.host.toLowerCase();
     if (host === "www.familiada.online" || host === "familiada.online" || host === "settings.familiada.online") {
       const redirect = tvRedirect(request, url);
-      if (redirect) return redirect;
+      if (redirect) {
+        // Jeśli prace techniczne trwają, telewizor ma dostać Maintenance.
+        // W pozostałych stanach nadal wymuszamy ekran podłączania TV, również
+        // przy aktywnym bypassie administratora.
+        if (hasAdminBypass(request, env)) return redirect;
+        const tvState = await getState(env);
+        if (!tvState.enabled || tvState.mode === "off") return redirect;
+      }
     }
 
     // Prywatne API testow produkcyjnych. Obslugiwane przed redirectem apex

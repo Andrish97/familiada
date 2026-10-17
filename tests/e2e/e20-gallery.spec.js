@@ -29,6 +29,10 @@ const PROFILES = [
   { id: "iphone-landscape", label: "iPhone 14 poziomo", width: 844, height: 390, screen: { width: 390, height: 844 }, scale: 3, mobile: true, touch: true, ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", safe: { top: 0, right: 47, bottom: 21, left: 47 } },
   { id: "tv", label: "Telewizor 1920 × 1080", width: 1920, height: 1080, scale: 1, mobile: false, touch: false, ua: "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.5) AppleWebKit/537.36 (KHTML, like Gecko) Version/6.5 TV Safari/537.36", safe: null },
 ];
+// Produkcyjny Worker kieruje TV do formularza podłączenia. W galerii nie
+// fotografujemy więc ekranów innych aplikacji bez przejścia przez Worker;
+// wyjątki to jawne przekierowania Home/Login, Connect TV, Maintenance i 404.
+const TV_GALLERY_PAGES = new Set(["home", "login", "connect-tv", "maintenance", "404"]);
 const requestedPages = String(process.env.E20_GALLERY_PAGES || "").split(",").map((value) => value.trim()).filter(Boolean);
 const requestedProfiles = String(process.env.E20_GALLERY_PROFILES || "").split(",").map((value) => value.trim()).filter(Boolean);
 const requestedAccounts = galleryAccountNumbers();
@@ -1229,7 +1233,13 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
       };
       const manifest = [];
       const selectedUrls = urls(data)
-        .filter(([id]) => !requestedPages.length || requestedPages.includes(id));
+        .filter(([id]) => !requestedPages.length || requestedPages.includes(id))
+        .filter(([id]) => profile.id !== "tv" || TV_GALLERY_PAGES.has(id));
+      // Root i Connect muszą przejść przez Worker, który wykonuje rzeczywiste
+      // przekierowanie na /connect/?tv=1. Pozostałe ujęcia strony są z brancha.
+      const branchPages = profile.id === "tv"
+        ? PAGES.filter((id) => !["index", "connect"].includes(id))
+        : PAGES;
 
       // Home/Login są publiczne: fotografujemy je w jednej tymczasowej
       // niezalogowanej sesji, zamykamy ją, a dopiero potem otwieramy sesję
@@ -1241,7 +1251,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         const publicContext = await browser.newContext(deviceOptions);
         try {
           await withE2EBypass(publicContext);
-          await serveBranchCode(publicContext, { pages: PAGES, safeAreaInsets: profile.safe });
+          await serveBranchCode(publicContext, { pages: branchPages, safeAreaInsets: profile.safe });
           const publicPage = await publicContext.newPage();
           publicPage.setDefaultTimeout(20_000);
           publicPage.setDefaultNavigationTimeout(20_000);
@@ -1254,7 +1264,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
       const context = await browser.newContext({ ...deviceOptions, storageState: files.authState });
       try {
         await withE2EBypass(context);
-        await serveBranchCode(context, { pages: PAGES, safeAreaInsets: profile.safe });
+        await serveBranchCode(context, { pages: branchPages, safeAreaInsets: profile.safe });
         let page = await context.newPage();
         page.setDefaultTimeout(20_000);
         page.setDefaultNavigationTimeout(20_000);
@@ -1396,6 +1406,7 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
           .map((entry) => entry.id));
         const extra = additionalStates(data).filter((state) =>
           (!requestedPages.length || requestedPages.includes(state.page))
+          && selectedUrls.some(([id]) => id === state.page)
           && !guardedPages.has(state.page)
           // Widoki „mobile” dopasowują się do rzeczywistych breakpointów;
           // łącznie z iPhone landscape (niska wysokość) i bez iPada landscape.
