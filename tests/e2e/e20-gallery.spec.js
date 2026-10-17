@@ -79,20 +79,6 @@ function additionalStates(data) {
   const mobileSharePoll = data.polls.poll_text_vote || data.polls.poll_points_vote;
   const pollPreview = data.polls.poll_text || data.polls.poll_points;
   const states = [
-    ...(data.game && /^\d{6}$/.test(data.connectPreviewCode || "") ? [{
-      id: "connect", stateId: "modal:device-preview", page: "connect", href: "/connect/",
-      modalCapture: true, expectedModalId: "devicePreviewOverlay", actionLabel: "Podłączanie urządzenia → podgląd przed połączeniem",
-      prepare: async (page) => {
-        if (!/^\d{6}$/.test(data.connectPreviewCode || "")) {
-          throw new Error("Control nie udostępnił prawdziwego kodu urządzenia do podglądu Connect.");
-        }
-        await page.goto(`${ORIGIN}/connect/?lang=pl`, { waitUntil: "domcontentloaded", timeout: 20_000 });
-        await page.locator("#connectCodeInput").waitFor({ state: "visible", timeout: 15_000 });
-        await page.locator("#connectCodeInput").fill(data.connectPreviewCode);
-        await page.locator("#btnConnectCode").click();
-        await page.locator("#devicePreviewOverlay").waitFor({ state: "visible", timeout: 15_000 });
-      },
-    }] : []),
     {
       id: "bases", stateId: "shared", page: "bases", href: "/bases/?tab=shared",
       actionLabel: "Moje bazy → Udostępnione",

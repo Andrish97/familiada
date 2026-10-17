@@ -32,7 +32,6 @@ if (fullGalleryRequested) {
     ["base-explorer", "modal:tags-assign"], ["base-explorer", "modal:tags-create"], ["base-explorer", "modal:tags-color"],
     ["base-explorer", "modal:export-questions"], ["base-explorer", "modal:add-question"],
     ["base-explorer", "modal:edit-question"], ["base-explorer", "modal:rename-item"],
-    ["connect", "modal:device-preview"],
     ["games", "modal:create-game"], ["games", "modal:rename-game"], ["games", "modal:import-games"],
     ["games", "modal:export-game-base"], ["games", "modal:preview-game"],
     ["games", "modal:preview-poll"], ["games", "modal:export-game-json"], ["games", "modal:contact"],
