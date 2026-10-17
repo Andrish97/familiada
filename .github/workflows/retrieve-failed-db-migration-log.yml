@@ -1,0 +1,39 @@
+name: Retrieve failed DB migration diagnostics
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  retrieve:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login == 'Andrish97'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read the failed migration summary from the deployment host
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          TARGET_SHA: aa1da8c1a20df22a2afb2e73db9ad5f8ba262df1
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          remote_path="/home/$SERVER_USER/.deploy/db-migrate/$TARGET_SHA/out/latest.log"
+          summary=$(ssh -i ~/.ssh/id_ed25519 "$SERVER_USER@$SERVER_HOST" \
+            "if test -r '$remote_path'; then grep -E 'APPLY |FAIL |ERROR:|DETAIL:|HINT:|OK    |DONE' '$remote_path' | tail -40 || true; else echo 'FAILED_MIGRATION_LOG_NOT_FOUND'; fi")
+          if [ -z "$summary" ]; then summary='MIGRATION_SUMMARY_EMPTY'; fi
+          while IFS= read -r line; do
+            escaped=${line//'%'/'%25'}
+            escaped=${escaped//$'\r'/'%0D'}
+            escaped=${escaped//$'\n'/'%0A'}
+            escaped=${escaped/','/'%2C'}
+            escaped=${escaped/':'/'%3A'}
+            echo "::error title=Remote migration log::$escaped"
+          done <<< "$summary"
