@@ -20,6 +20,7 @@ const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "
    Constants
 ========================================================= */
 const PAGE_SIZE = 20;
+const MARKETPLACE_SENT_ROUTE = /^\/marketplace\/sent\/?$/;
 
 /* =========================================================
    State
@@ -840,12 +841,11 @@ function wireEvents() {
   // Browse
   els.btnMySent?.addEventListener("click", async () => {
     if (isGuest || !currentUser) return;
-    showView("mine");
-    await loadMySent();
+    location.href = marketplaceUrl("/marketplace/sent/");
   });
   els.btnBackBrowse?.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    showView("browse");
+    location.href = marketplaceUrl("/marketplace/");
   });
 
   els.searchInput?.addEventListener("input", () => {
@@ -945,8 +945,15 @@ function restoreBrowseParams() {
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
   const i18nP = initI18n({ withSwitcher: true });
-  // Strona publiczna: user albo null. Anonim wraca na Stronę główną (mapa), bez „Wskazówek”.
-  const userP = initPage("marketplace", { ready: i18nP, back: els.btnGoGames, account: { showAuthEntry: false } });
+  const sentRoute = MARKETPLACE_SENT_ROUTE.test(location.pathname);
+  const pageId = sentRoute ? "marketplaceSent" : "marketplace";
+  // „Moje wysłane” ma własną trasę kontową; wejście gościa jest przekierowane
+  // przez wspólny page guard z powrotem do publicznego katalogu.
+  const userP = initPage(pageId, {
+    ready: i18nP,
+    back: sentRoute ? false : els.btnGoGames,
+    account: { showAuthEntry: false },
+  });
   await i18nP;
   document.documentElement.classList.remove('page-loading');
   initListHeaderLayout(".mkt-head");
@@ -955,6 +962,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   currentUser = await userP;
   isGuest = !currentUser || isGuestUser(currentUser);
+  // A protected same-HTML route must stop before loading its private dataset
+  // when the shared guard redirected a guest or an unauthenticated visitor.
+  if (sentRoute && !currentUser) return;
 
   // "Moje wysłane" button — only for logged-in non-guests
   if (els.btnMySent) els.btnMySent.hidden = isGuest || !currentUser;
@@ -971,7 +981,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   restoreBrowseParams();
 
 
-  showView("browse");
+  showView(sentRoute ? "mine" : "browse");
+  if (sentRoute) await loadMySent();
   await loadBrowse({ reset: true });
   document.getElementById('browseGrid')?.classList.add('skel-step-ready');
 

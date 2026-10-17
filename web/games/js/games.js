@@ -745,6 +745,7 @@ function statusLabel(st, g) {
 }
 
 function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
+  const guest = isGuestUser(currentUser);
   if (btnEdit) btnEdit.disabled = !hasSel || !canEdit;
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
@@ -752,8 +753,16 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnSettings) btnSettings.disabled = !hasSel;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
-  if (btnDuplicate) btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canExport || isGuestUser(currentUser);
-  if (btnSendCopy) btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canExport || isGuestUser(currentUser);
+  if (btnDuplicate) {
+    btnDuplicate.hidden = guest;
+    btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canExport || guest;
+  }
+  if (btnSendCopy) {
+    btnSendCopy.hidden = guest;
+    btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canExport || guest;
+  }
+  const receivedCopies = document.getElementById("receivedCopies");
+  if (receivedCopies && guest) receivedCopies.hidden = true;
 }
 /* ================= Tabs ================= */
 // Karty i domyślna (pierwsza) z mapy stron; nazwy kart = wartości TYPES.

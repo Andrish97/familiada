@@ -9,6 +9,7 @@
 import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-17T05524";
 import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-17T05524";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-17T05524";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-17T05524";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05524";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
@@ -63,6 +64,8 @@ const tabResults = $("tabResults");
 const secShare = $("secShare");
 const secResults = $("secResults");
 const pollTabsCard = $("pollTabsCard");
+const recipientShareTab = tabRecipients?.closest(".tab-slot");
+const recipientShareSection = document.querySelector(".pollRecipientsSec");
 
 // Udostępnianie
 const shareEmpty = $("shareEmpty");
@@ -115,6 +118,7 @@ const btnRedo = $("btnRedo");
 
 let game = null;
 let currentUser = null;
+let guestMode = false;
 let initialLoadFailed = false;
 let busy = false; // trwa akcja stanu (uruchom / zatrzymaj / podlicz / przerwij)
 let lastCheck = null; // wynik validateGame() z ostatniego odświeżenia
@@ -520,7 +524,7 @@ let tabTouchedByUser = new URLSearchParams(location.search).has("tab");
 let urlTabPending = tabTouchedByUser;
 
 function setActiveTab(tab, { byUser = false } = {}) {
-  const selected = tab === "recipients" ? "recipients" : tab === "results" ? "results" : "share";
+  const selected = tab === "recipients" && !guestMode ? "recipients" : tab === "results" ? "results" : "share";
   activeTab = selected === "results" ? "results" : "share";
   activeShareSide = selected === "recipients" ? "recipients" : "anonymous";
   if (byUser) tabTouchedByUser = true;
@@ -588,6 +592,7 @@ function sharingAvailable(st = game?.status) {
 
 async function loadTasks() {
   if (!game || !currentUser) { tasks = []; return; }
+  if (guestMode) { friendsAll = []; subsAll = []; tasks = []; return; }
   const { data, error } = await sb().rpc("poll_share_panel", { p_game_id: gameId });
   if (error || !data?.ok) throw new Error(error?.message || data?.err || "poll_share_panel");
   friendsAll = data.friends || [];
@@ -793,7 +798,7 @@ function renderRecipientPicker() {
 }
 
 async function openRecipientPicker() {
-  if (!game || busy || recipientPickerLoading || !sharingAvailable() || game.status === STATUS.POLL_STOPPED || game.status === STATUS.READY) return;
+  if (guestMode || !game || busy || recipientPickerLoading || !sharingAvailable() || game.status === STATUS.POLL_STOPPED || game.status === STATUS.READY) return;
   recipientPickerLoading = true;
   if (btnAddRecipients) btnAddRecipients.disabled = true;
   try { await loadTasks(); }
@@ -1289,6 +1294,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const u = await userP;
   if (!u) return; // przekierowanie na logowanie albo nakładka gościa
   currentUser = u;
+  guestMode = isGuestUser(u);
+  if (guestMode) {
+    if (recipientShareTab) recipientShareTab.hidden = true;
+    if (recipientShareSection) recipientShareSection.hidden = true;
+    if (btnAddRecipients) btnAddRecipients.hidden = true;
+  }
   pollLoadRetry?.addEventListener("click", () => {
     initialLoadFailed = false;
     void refresh();

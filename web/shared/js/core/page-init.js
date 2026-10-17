@@ -185,6 +185,10 @@ export async function initPage(id, opts = {}) {
   document.querySelector(".topbar")?.classList.add("topbar-ready");
 
   if (p.access === "user" && isGuestUser(user)) {
+    if (p.guestRedirect) {
+      location.replace(linkTo(p.guestRedirect));
+      return null;
+    }
     showPageGuard({
       kind: "guest",
       state: "guest",

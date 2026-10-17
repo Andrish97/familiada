@@ -276,11 +276,15 @@ function selectTile(id) {
 
 function updateListButtons() {
   const has = !!selectedId;
+  const guest = isGuestUser(currentUser);
   el.btnPreview.disabled = !has;
   el.btnEdit.disabled = !has;
   el.btnExport.disabled = !has;
-  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || isGuestUser(currentUser);
-  el.btnSendCopy.disabled = !!el.btnSendCopy.dataset.sendBusy || !has || isGuestUser(currentUser);
+  el.btnDuplicate.hidden = guest;
+  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || guest;
+  el.btnSendCopy.hidden = guest;
+  el.btnSendCopy.disabled = !!el.btnSendCopy.dataset.sendBusy || !has || guest;
+  if (el.receivedCopies && guest) el.receivedCopies.hidden = true;
 }
 
 function makeTile(logo) {
