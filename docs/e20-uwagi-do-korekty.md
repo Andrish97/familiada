@@ -26,6 +26,23 @@ Punkt 4 zatwierdzony do poprawki; po wdrożeniu pozostaje otwarty do ponownego
 przeglądu. Nie oznaczać punktów tej listy jako zakończonych bez ponownego
 przejścia z użytkownikiem.
 
+### Ankiety — poprawki punktu 5 na branchu
+
+Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px
+w mobilnym modalu QR zgodnie z układem z Control, a wspólna stopka arkusza nie
+rysuje już drugiego separatora. Kafelki w obu wewnętrznie przewijanych listach
+odbiorców zachowują naturalną wysokość; „Dodaj odbiorców” jest wyrównane do
+prawej, a ikona `people` była już podłączona przez i18n. W mobilnym układzie
+trzech wypustek środkowa „Odbiorcy” zachowuje oba kąciki i zaokrąglenia karty;
+układ desktopowy nadal ma dwie wypustki.
+
+Audyt pozostałych miejsc ze zmienną liczbą wypustek: Bazy mają dwie dla konta
+zwykłego i żadnej dla gościa (resetują wtedy promienie karty); Gry mają stale
+cztery, Logo trzy, Znajomi/Subskrybenci i Mails po dwie. Ich kąciki i promienie
+odpowiadają pozycji zakładek. Reguły Control odnoszą się do nieobecnych w
+aktualnym HTML/JS `#navDevices`/`#navFinal` i nie sterują działającym widokiem.
+Punkt 5 pozostaje otwarty do ponownego przeglądu wizualnego.
+
 ## Korekta galerii TV — 2026-10-17
 
 | Uwaga | Zmiana | Status |

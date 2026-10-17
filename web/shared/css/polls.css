@@ -140,7 +140,6 @@
 .polls-tabs-card .tab-slot.active .tab-wrapper{ display: block; }
 .polls-tabs-card .tab-active{ z-index: 1; }
 .polls-tabs-card:has(.slot-share.active) .slot-share .tab-corner-left,
-.polls-tabs-card:has(.slot-recipients.active) .slot-recipients .tab-corner-left,
 .polls-tabs-card:has(.slot-results.active) .slot-results .tab-corner-right{ display: none; }
 /* wypustka nieaktywna (np. Udostępnianie po podliczeniu) */
 .polls-tabs-card .tab-label:disabled{ opacity: .38; cursor: not-allowed; }
@@ -150,7 +149,6 @@
   border-top-right-radius: var(--radius);
 }
 .polls-tabs-card:has(.slot-share.active) .polls-card{ border-top-left-radius: 0; }
-.polls-tabs-card:has(.slot-recipients.active) .polls-card{ border-top-left-radius: 0; border-top-right-radius: 0; }
 .polls-tabs-card:has(.slot-results.active) .polls-card{ border-top-right-radius: 0; }
 
 .polls-section{ display: none; }
@@ -304,7 +302,7 @@
 .qrBox.img:empty{ display: none; }
 .qrBox.img:empty + .pollQrHint{ display: none; }
 .qrBox.img:disabled{ cursor: default; }
-.qrFrameBig{ width: min(340px, 100%); margin: 0 auto; padding: 14px; border-radius: 16px; }
+.qrFrameBig{ width: min(480px, 100%); margin: 0 auto; padding: 14px; border-radius: 16px; }
 .pollQrVote{ display: flex; justify-content: center; }
 @media (max-width: 980px){
   .qrBox.img{ width: min(100%, 320px); }
@@ -312,7 +310,7 @@
 
 /* Subskrybenci: nagłówek z podsumowaniem, „Zaznacz wszystkich”, kafle, wyślij na dole */
 .subsSummary{ font-size: 12px; opacity: .85; }
-.subsTools{ display: flex; justify-content: flex-start; margin-top: 8px; }
+.subsTools{ display: flex; justify-content: flex-end; margin-top: 8px; }
 .subsFoot{
   display: flex;
   align-items: center;
@@ -343,6 +341,22 @@
 .pollRecipientsModal .uni-foot{ align-items: center; justify-content: flex-end; }
 .pollRecipientsModal #pollRecipientsCount{ margin-right: auto; }
 .pollRecipientsSec .shareList{ max-height: min(360px, 45dvh); }
+
+@media (max-width: 600px){
+  /* Układ QR taki sam jak w mobilnym modalu urządzenia w Control. */
+  #pollQrModalOverlay.sheet-active .sheet-modal-body > .uni-body{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  /* W arkuszu odbiorców listy przewijają się osobno, ale kafelki zachowują
+     swoją naturalną wysokość zamiast rozciągać się na całą wysokość listy. */
+  .pollRecipientsModal .shareList--scroll{
+    align-content: start;
+    grid-auto-rows: max-content;
+  }
+  .pollRecipientsModal .shareRow{ align-self: start; }
+}
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
 #resultsList{ display: grid; gap: 12px; }

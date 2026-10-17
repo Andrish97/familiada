@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-17T05524");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-17T06082");
 
 /* css/base.css */
 :root {
@@ -1084,6 +1084,11 @@ main{
     }
     .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup,.baseShareFooter,.shareSectionActions,.shareSection--mail) {
         margin-top: 0 !important;
+    }
+    /* Separator rysuje pasek akcji arkusza; stopka nie dodaje drugiej linii. */
+    .modal--sheet.sheet-active .sheet-modal-actions > .uni-foot {
+        padding-top: 0;
+        border-top: 0;
     }
     .contact-modal-overlay.modal--sheet.sheet-active .sheet-modal-actions > .uni-foot {
         padding-top: 0;
