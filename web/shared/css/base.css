@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-17T05084");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-17T05093");
 
 /* css/base.css */
 :root {
@@ -1255,6 +1255,14 @@ main{
     /* Podgląd Gry przewija jedną zawartość pod stałym nagłówkiem i
        przełącznikiem Gra/Ankieta; pytania nie tworzą drugiego scrolla. */
     .modal--sheet.sheet-active .sheet-modal-body > .bld-preview-questions {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
+    }
+
+    /* Szczegóły Marketplace przewijają jedną treść arkusza; lista pytań
+       rośnie naturalnie i nie tworzy drugiego scrolla. */
+    .modal--sheet.sheet-active .sheet-modal-body > .mkt-detail-questions {
         flex: 0 0 auto;
         min-height: auto;
         overflow: visible;
