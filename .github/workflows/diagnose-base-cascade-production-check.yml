@@ -1,0 +1,41 @@
+name: Diagnose production base cascade check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login == 'Andrish97'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rerun the rollback-only production assertion and report its SQL error
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          set +e
+          output=$(ssh -i ~/.ssh/id_ed25519 "$SERVER_USER@$SERVER_HOST" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-base-task-cascade-345.sql 2>&1)
+          result=$?
+          set -e
+          printf '%s\n' "$output" | grep -E 'ERROR:|CONTEXT:|DETAIL:|HINT:|WARNING:' | while IFS= read -r line; do
+            escaped=${line//'%'/'%25'}
+            escaped=${escaped//$'\r'/'%0D'}
+            escaped=${escaped//$'\n'/'%0A'}
+            escaped=${escaped/','/'%2C'}
+            escaped=${escaped/':'/'%3A'}
+            echo "::error title=Production SQL assertion::$escaped"
+          done || true
+          if [ "$result" -ne 0 ]; then exit "$result"; fi
