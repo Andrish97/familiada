@@ -1,5 +1,6 @@
-import { sb } from "./supabase.js?v=v2026-10-17T04535";
-import { t } from "../../translation/translation.js?v=v2026-10-17T04535";
+import { sb } from "./supabase.js?v=v2026-10-17T04580";
+import { t } from "../../translation/translation.js?v=v2026-10-17T04580";
+import { icon } from "./icons.js?v=v2026-10-17T04580";
 
 const HEARTBEAT_MS = 3_000;
 const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
@@ -17,8 +18,10 @@ export function updateDeviceLeaseOverlay(state) {
     return;
   }
   const waiting = state === "waiting";
+  const iconEl = document.getElementById("deviceLeaseIcon");
   const title = document.getElementById("deviceLeaseTitle");
   const text = document.getElementById("deviceLeaseText");
+  if (iconEl) iconEl.innerHTML = icon(waiting ? "hourglass" : "refresh");
   if (title) title.textContent = t(waiting ? "deviceLease.waitingTitle" : "deviceLease.reconnectingTitle");
   if (text) text.textContent = t(waiting ? "deviceLease.waitingText" : "deviceLease.reconnectingText");
   overlay.hidden = false;
