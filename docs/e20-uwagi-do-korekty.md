@@ -70,8 +70,8 @@ potwierdzenia; nie uruchamiano testów ani galerii.
 
 Punkt 10 — w widoku ankiety ograniczono szerokość całej karty z wypustkami
 razem z jej treścią do 760 px i wyśrodkowano ją na szerszych ekranach.
-Na telefonie zachowuje ona dostępną szerokość. Reguła obejmuje komputery
-i duże tablety, ale nie Mails. Odświeżono cache-buster arkusza ankiet.
+Na telefonie zachowuje ona dostępną szerokość. Reguła jest przypięta
+wyłącznie do `#pollTabsCard`; nie obejmuje żadnego z dwóch układów Mails. Odświeżono cache-buster arkusza ankiet.
 Do wizualnego potwierdzenia; bez testów i galerii.
 
 ### Ankiety — poprawki punktu 5 na branchu

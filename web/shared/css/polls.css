@@ -153,7 +153,7 @@
 
 /* Ogranicz szerokość karty z wypustkami także na komputerach i dużych
    tabletach; na telefonie min(100%, ...) zachowuje dostępną szerokość. */
-.polls-body #cardMain > .polls-tabs-card:not(.mail-tabs-card){
+#pollTabsCard{
   width: min(100%, 760px);
   align-self: center;
 }
