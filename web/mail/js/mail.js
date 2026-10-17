@@ -1,9 +1,9 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-17T05142";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-17T05524";
 guardViewportWidth({ minWidth: 0 });
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-17T05142';
-import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-17T05142';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-17T05142';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-17T05142';
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-17T05524';
+import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-17T05524';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-17T05524';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-17T05524';
 
 const $ = id => document.getElementById(id);
 const text = (key, vars) => t(`mailCenter.${key}`, vars);

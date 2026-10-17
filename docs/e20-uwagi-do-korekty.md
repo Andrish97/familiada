@@ -2,6 +2,30 @@
 
 Stan roboczy na 2026-10-14. Tabela rozbija każdą uwagę na osobny wiersz. „Jak to rozumiem” opisuje oczekiwane zachowanie; „Zmiana w kodzie” zapisuje to, co jest obecnie wdrożone; status nie oznacza automatycznej akceptacji wyglądu. Sprostowania użytkownika są zapisane osobno, by wdrażać je bez zamiany na moje wcześniejsze interpretacje.
 
+## Lista do ponownego przejścia — 2026-10-17
+
+Poniższe punkty są otwarte do ponownego przeglądu. Wcześniejsze zmiany kodu i
+historyczne statusy w dalszej części pliku nie zamykają tych uwag.
+
+1. Sprawdzić brakujące ikony na przyciskach i ujednolicić ikony tych samych akcji.
+2. Ponownie przejrzeć dostępność stron na TV, przekierowania i komunikat guarda dla telewizora.
+3. Ponownie sprawdzić długie listy oraz pojedynczy pionowy scroll na mobile.
+4. Marketplace: szczegóły gry nie zdążyły się wczytać.
+5. Ankiety: powiększyć QR w modalu; poprawić podwójne separatory, odstępy, listy odbiorców, wypustki i położenie przycisku „Dodaj odbiorców”.
+6. Logo: nagłówek modala podglądu ma mieć taką samą szerokość jak pozostałe.
+7. Gry: długie nazwy na kafelkach mają kończyć się wielokropkiem.
+8. Base Explorer: separatory w modalach, mobilny widok pytania zgodny z Edytorem gry oraz lista przypisanych tagów z trzema stanami checkboxa.
+9. Bazy: ponownie sprawdzić mobilny eksport gry, modal udostępniania i rozmiar przycisku „Może edytować”.
+10. Ankiety głosowania: podkarta na telefonie i dużym tablecie nie powinna nadmiernie rozciągać się na boki.
+11. Ustawienia gry: sprawdzić, dlaczego na MacBooku otwiera się niewłaściwa gra.
+12. Control: modal udostępniania ma pokazywać kafel pustego stanu.
+13. Mails: ponownie sprawdzić szerokość podkarty „Twoje maile”.
+14. Go: ponownie sprawdzić szerokość podkarty.
+
+Punkt 4 zatwierdzony do poprawki; po wdrożeniu pozostaje otwarty do ponownego
+przeglądu. Nie oznaczać punktów tej listy jako zakończonych bez ponownego
+przejścia z użytkownikiem.
+
 ## Korekta galerii TV — 2026-10-17
 
 | Uwaga | Zmiana | Status |

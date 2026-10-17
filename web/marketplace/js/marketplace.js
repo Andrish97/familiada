@@ -1,17 +1,17 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05142";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-17T05142";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-17T05142";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-17T05142";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-17T05142";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-17T05142";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-17T05142";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05142";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-17T05142";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-17T05142";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-17T05142";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-17T05142";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-17T05524";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-17T05524";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-17T05524";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-17T05524";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-17T05524";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05524";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-17T05524";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-17T05524";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-17T05524";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-17T05524";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
@@ -340,6 +340,7 @@ async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
   lastDetailTrigger = trigger || document.activeElement;
 
   // Show modal immediately with loading state
+  if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "loading";
   if (els.detailTitle) els.detailTitle.textContent = "…";
   if (els.detailMeta) els.detailMeta.textContent = "";
   if (els.detailDesc) els.detailDesc.textContent = "";
@@ -356,6 +357,7 @@ async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
   if (requestId !== detailRequest) return;
   if (error || !data) {
     console.error("[marketplace] openDetail error:", error);
+    if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "error";
     if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
     exitModalSheet(els.gameDetailOverlay);
     detailGameId = null;
@@ -366,6 +368,7 @@ async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
   const g = data;
   detailGame = g;
   renderDetail(g);
+  if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "ready";
 
   if (updateUrl) setDetailUrl(g.slug || id);
   els.btnDetailClose?.focus();

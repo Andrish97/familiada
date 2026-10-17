@@ -556,6 +556,22 @@ function additionalStates(data) {
         const card = page.locator(".mkt-card").first();
         await card.waitFor({ state: "visible", timeout: 20_000 });
         await card.click();
+        const detailOverlay = page.locator("#gameDetailOverlay");
+        await page.waitForFunction(() => {
+          const state = document.getElementById("gameDetailOverlay")?.dataset.detailState;
+          return state === "ready" || state === "error";
+        }, null, { timeout: 20_000 });
+        const detailState = await detailOverlay.getAttribute("data-detail-state");
+        if (detailState !== "ready") {
+          const diagnostics = await page.evaluate(() => ({
+            state: document.getElementById("gameDetailOverlay")?.dataset.detailState || "missing",
+            toast: document.querySelector(".toast, .app-toast")?.textContent?.trim() || "",
+            title: document.getElementById("detailTitle")?.textContent?.trim() || "",
+            questions: document.getElementById("detailQuestions")?.textContent?.trim().slice(0, 160) || "",
+          }));
+          throw new Error(`Szczegóły gry Marketplace nie załadowały się: ${JSON.stringify(diagnostics)}`);
+        }
+        await detailOverlay.waitFor({ state: "visible", timeout: 5_000 });
       },
     },
     {
