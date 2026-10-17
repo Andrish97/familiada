@@ -714,6 +714,9 @@
 }
 @media(max-width:900px){
   .finalLists{ grid-template-columns:1fr; }
+  /* Na wąskim układzie przewija się cała sekcja ustawień; listy finałowe
+     rosną naturalnie zamiast tworzyć zagnieżdżone obszary scrolla. */
+  .finalCol .qList{ max-height:none; overflow:visible; }
 }
 
 /* Na tablecie ustawienia pozostają używalne w pionie; sekcje otwierają się
