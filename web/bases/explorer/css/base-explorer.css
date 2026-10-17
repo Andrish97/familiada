@@ -726,6 +726,42 @@ input,textarea {
     overflow: auto
 }
 
+/* Aktualny modal używa #tagsOverlay (a nie dawnego #tagsModal). Każdy tag
+   ma własny, czytelny wiersz; indeterminate jest natywnym trzecim stanem
+   checkboxa ustawianym w tags-modal.js. */
+.tags-modal .tags-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.tags-modal .tags-row:hover { background: rgba(255,255,255,.06); }
+.tags-modal .tags-row input[type="checkbox"] {
+  flex: 0 0 auto;
+  accent-color: var(--gold);
+}
+.tags-modal .tags-row .tag-dot { flex: 0 0 12px; }
+.tags-modal .tags-row .m-p {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tags-modal .tags-row .m-note {
+  flex: 0 0 auto;
+  margin-left: auto;
+  opacity: .75;
+}
+.tagsAssignInfo {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: .75;
+}
+
 .tagsPickItem {
     display: flex;
     align-items: center;
@@ -1914,6 +1950,14 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 @media (max-width: 600px) and (orientation: portrait) {
+  /* .sheet-modal-actions rysuje jedyny separator; nie dubluj go linią
+     stopki Base Explorer. Stopki wewnątrz warstw tagów mają własną linię
+     poniżej akcji i nie są objęte tym selektorem. */
+  .modal--sheet.sheet-active .sheet-modal-actions > .tagsFoot {
+    padding-top: 0;
+    border-top: 0;
+  }
+
   .tags-modal,
   .question-modal,
   .export-modal {

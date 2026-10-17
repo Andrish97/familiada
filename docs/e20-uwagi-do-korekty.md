@@ -47,6 +47,18 @@ tytuły wierszy także są skracane, więc tam nie zmieniano wyglądu.
 Odświeżono cache-bustery zmienionych arkuszy. Do wizualnego
 potwierdzenia; testów ani galerii nie uruchamiano.
 
+Punkt 8 — naprawiono style wierszy listy tagów (stare reguły celowały w
+nieistniejący już `#tagsModal`, zamiast aktualnego `.tags-modal`). Każdy
+tag ma teraz własny wiersz, nazwę i widoczny checkbox. Zachowano trzy
+stany z wyliczeń dla zaznaczonych pytań/folderów (`none`, `some`,
+`all`); stan częściowy ma natywny checkbox mieszany oraz
+`aria-checked="mixed"`. Podsumowanie zaznaczenia nie jest już
+przenoszone ponad tytuł warstwy. W mobilnych arkuszach Base Explorer
+stopka nie dodaje drugiego separatora obok linii paska akcji. Widok
+pytania nadal korzysta ze wspólnego formularza i kontrolek Edytora
+gry; lista odpowiedzi przewija się wewnętrznie. Odświeżono cache
+CSS i modułu tagów. Do wizualnego potwierdzenia; bez testów/galerii.
+
 ### Ankiety — poprawki punktu 5 na branchu
 
 Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px

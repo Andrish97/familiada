@@ -27,7 +27,7 @@ import {
 } from "./repo.js?v=v2026-10-17T05524";
 
 import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-17T05524";
-import { openTagsModal } from "./tags-modal.js?v=v2026-10-17T05524";
+import { openTagsModal } from "./tags-modal.js?v=v2026-10-17T12002";
 import { initExportModal } from "./export-modal.js?v=v2026-10-17T05524";
 import { initQuestionModal } from "./question-modal.js?v=v2026-10-17T05524";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-17T05524";
