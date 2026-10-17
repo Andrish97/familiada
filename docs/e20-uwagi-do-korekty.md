@@ -59,6 +59,15 @@ pytania nadal korzysta ze wspólnego formularza i kontrolek Edytora
 gry; lista odpowiedzi przewija się wewnętrznie. Odświeżono cache
 CSS i modułu tagów. Do wizualnego potwierdzenia; bez testów/galerii.
 
+Punkt 9 — mobilny eksport gry w Base Explorer ma już ograniczenia
+`min-width: 0`, elastyczne kolumny i zawijanie długich nazw wierszy;
+aktywny cache-buster jego arkusza został odświeżony w punkcie 8. W
+modalu udostępniania obie listy nadal są widoczne jednocześnie i każda
+przewija się wewnętrznie. Poprawiono przycisk roli w wierszu: przestał
+dziedziczyć stałą szerokość przycisku ikonowego, a etykieta „Może
+edytować” ma 12 px jak pozostałe przyciski xsm. Do wizualnego
+potwierdzenia; nie uruchamiano testów ani galerii.
+
 ### Ankiety — poprawki punktu 5 na branchu
 
 Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px

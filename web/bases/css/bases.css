@@ -21,8 +21,16 @@
 .baseShareLookup .btn{ height: 40px; }
 .baseShareRole{ width: auto; min-width: 40px; height: 40px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
 .baseShareRole > .ico{ width: 16px; height: 16px; flex: 0 0 auto; }
-.baseShareRoleLabel{ font-size: 11px; letter-spacing: 0; }
+.baseShareRoleLabel{ font-size: 12px; line-height: 1.1; letter-spacing: 0; }
 .shareRowActions .baseShareRole{ height: auto; min-height: 34px; }
+/* Wspólne compact rows zwężają każde .btn do przycisku ikonowego. Rola
+   „Może edytować” ma też etykietę, więc zachowuje szerokość tekstu. */
+.shareRow--compact .shareRowActions .baseShareRole{
+  width: auto;
+  min-width: max-content;
+  min-height: 44px;
+  padding: 6px 8px;
+}
 .baseShareFooter{ display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
 .baseShareFooter > .btn{ height: 40px; }
 #baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
