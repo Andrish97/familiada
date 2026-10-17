@@ -1295,6 +1295,9 @@ ani nie ukrywać treści. W modalu bez listy przewija się jeden obszar treści
 pod nieruchomym nagłówkiem/akcjami.
 
 Landscape jest wyłączone z tej rundy; panel admina `/settings/` pozostaje poza
-zakresem. Audyt konkretnych miejsc i powiązania z wcześniejszymi uwagami są w
+zakresem. Najwyższy priorytet mają trzy modale Base Explorer: tagi (3 warstwy),
+dodawanie gry z bazy i edycja pytania. Dla pytania wzorcem jest mobilny
+Edytor gry; dla tagów i dodawania gry listę przewija sam panel, przy stałych
+nagłówkach/akcjach. Konkretne opisy i powiązania z wcześniejszymi uwagami są w
 `docs/e20-uwagi-do-korekty.md`. Propozycje są zapisane; UI nie zostało
 zmienione, pełnych testów ani galerii nie uruchamiano.
