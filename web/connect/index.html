@@ -58,22 +58,24 @@
     </div>
 
     <section class="games-shell" data-skel-step>
-      <div class="card games-card connect-device-main-card">
-        <!-- Blok: Wprowadź kod -->
-        <section class="connect-device-inner-card" id="enterCodeCard">
-          <div class="shareSectionTitle connect-device-card-header" data-i18n="connectDevice.enterCode.title">Podłącz kodem</div>
-          <div class="connect-device-enter-code-row">
-            <input class="inp connect-device-code-input" id="connectCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" spellcheck="false" data-i18n-placeholder="connectDevice.enterCode.placeholder"/>
-            <button class="btn gold" id="btnConnectCode" type="button" data-i18n="connectDevice.enterCode.btn" data-i18n-icon="arrow-right">Podłącz</button>
-          </div>
-          <div id="connectCodeMsg" class="connect-device-msg"></div>
-        </section>
+      <div class="card games-card tasks-card connect-device-main-card">
+        <div class="tasks-scroll">
+          <div class="rowsPage">
+            <section class="rowsSection" id="enterCodeCard">
+              <div class="rowsSectionHead"><span class="rowsSectionTitle" data-i18n="connectDevice.enterCode.title">Podłącz kodem</span></div>
+              <div class="connect-device-enter-code-row">
+                <input class="inp connect-device-code-input" id="connectCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" spellcheck="false" data-i18n-placeholder="connectDevice.enterCode.placeholder"/>
+                <button class="btn gold" id="btnConnectCode" type="button" data-i18n="connectDevice.enterCode.btn" data-i18n-icon="arrow-right">Podłącz</button>
+              </div>
+              <div id="connectCodeMsg" class="connect-device-msg"></div>
+            </section>
 
-        <!-- Blok: Udostępnione dla mnie (tylko zalogowani) -->
-        <section class="connect-device-inner-card" id="sharedDevicesCard" hidden>
-          <div class="shareSectionTitle connect-device-card-header" data-i18n="connectDevice.shared.title">Urządzenia udostępnione dla mnie</div>
-          <div id="sharedDevicesList" class="grid"></div>
-        </section>
+            <section class="rowsSection" id="sharedDevicesCard" hidden>
+              <div class="rowsSectionHead"><span class="rowsSectionTitle" data-i18n="connectDevice.shared.title">Urządzenia udostępnione dla mnie</span></div>
+              <div id="sharedDevicesList" class="rowsList"></div>
+            </section>
+          </div>
+        </div>
       </div>
     </section>
 

@@ -1443,11 +1443,11 @@ wspólną powierzchnię `--card` (`#111827`), zagnieżdżone sekcje są od nich
 odróżnione, a kafle/wiersze list pozostają ciemniejsze. Modalne karty mają
 wspólne kryjące tło. Panel admina pozostaje poza przeglądem.
 
-Na `/connect/` lista „Udostępnione dla mnie” ma wiersze zgodne z Zadaniami
-(64 px minimum, avatar 36/30 px, tekst zawija się bez wychodzenia poza kafel,
-wiersze 8 px desktop / 12 px mobile). Sama lista jest wyśrodkowana i węższa
-od karty; scroll nadal należy tylko do listy. Karta wewnętrzna dostaje taki
-sam poziom powierzchni i odstępów jak inne sekcje kart.
+Na `/connect/` główna karta ma ten sam układ co karta Zadania: jedna zewnętrzna
+karta, sekcje w wyśrodkowanej kolumnie do 760 px i jeden przewijany obszar.
+Pola „Podłącz kodem” i „Udostępnione dla mnie” nie są już osobnymi kartami
+wewnątrz niej. Kafle udostępnionych urządzeń używają wspólnego układu wierszy
+Zadań (64 px minimum, avatar 36/30 px, tekst w wierszu, pojedyncza kolumna).
 
 Po zmianach należy wykonać punktowy przebieg E20 `games`/MacBook, następnie
 pełną galerię E20 na aktualnym branchu.
