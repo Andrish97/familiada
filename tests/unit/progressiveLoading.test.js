@@ -14,10 +14,16 @@ test('guard poprzedza auth i odsłonięcie topbara', () => {
 });
 
 test('strony bez initPage używają wspólnego guarda orientacji', () => {
-  const orientation = read('shared/js/core/orientation-guard.js');
+  const home = read('home/js/index.js');
+  const login = read('login/js/login.js');
+  const pollQr = read('polls/vote/qr/js/poll-qr.js');
   const overlay = read('shared/js/core/page-overlay.js');
   const deviceGuard = read('shared/js/core/device-guard.js');
-  assert.match(orientation, /guardViewportWidth\(routeOptions\)/);
+  for (const source of [home, login]) {
+    assert.match(source, /from .*device-guard\.js/);
+    assert.match(source, /guardViewportWidth\(\{ minWidth: 0 \}\)/);
+  }
+  assert.match(pollQr, /guardViewportWidth\(\{ minWidth: 980, minScreenShortSide: 800/);
   assert.match(deviceGuard, /profile\.formFactor === "phone" && profile\.orientation === "landscape"/);
   assert.match(deviceGuard, /if \(state !== "ok"\)[\s\S]*?hidePageGuard\(\)/);
   assert.match(deviceGuard, /visualViewport\?\.addEventListener\("resize", refresh/);
@@ -144,12 +150,12 @@ test('Gry społeczności nie zawierają etykiet Szukaj gier i Sortowanie', () =>
 });
 
 test('rotację sugeruje tylko Buzzer; podgląd testowy Control pomija guard dotyku', () => {
-  const orientation = read('shared/js/core/orientation-guard.js');
   const testMode = read('control/js/testMode.js');
   const host = read('control/host/js/main.js');
   const buzzer = read('control/buzzer/js/main.js');
   const deviceGuard = read('shared/js/core/device-guard.js');
-  assert.match(orientation, /allowPhoneLandscape: \/.*host\|buzzer/);
+  assert.match(host, /allowPhoneLandscape:\s*true/);
+  assert.match(buzzer, /allowPhoneLandscape:\s*true/);
   assert.match(buzzer, /requirePhoneLandscape:\s*!controlTestFrame/);
   assert.match(buzzer, /rotateMessageKey:\s*"buzzer\.rotateMessage"/);
   assert.doesNotMatch(host, /requirePhoneLandscape|rotateMessageKey/);

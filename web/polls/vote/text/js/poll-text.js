@@ -1,5 +1,6 @@
 // js/pages/poll-text.js
-import "../../../../shared/js/core/orientation-guard.js?v=v2026-10-15T22404";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-15T22404";
+guardViewportWidth({ minWidth: 0 });
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-15T22404";
 import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-15T22404";
 import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-15T22404";

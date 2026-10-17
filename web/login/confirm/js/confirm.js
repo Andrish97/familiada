@@ -1,4 +1,5 @@
-import "../../../shared/js/core/orientation-guard.js?v=v2026-10-15T22404";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-15T22404";
+guardViewportWidth({ minWidth: 0 });
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T22404";
 import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-15T22404";
 import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-15T22404";

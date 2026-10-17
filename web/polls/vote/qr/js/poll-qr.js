@@ -1,4 +1,3 @@
-import "../../../../shared/js/core/orientation-guard.js?v=v2026-10-15T22404";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-15T22404";
 import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-15T22404";

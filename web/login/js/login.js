@@ -1,5 +1,6 @@
 // js/pages/login.js
-import "../../shared/js/core/orientation-guard.js?v=v2026-10-15T22404";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-15T22404";
+guardViewportWidth({ minWidth: 0 });
 import {
   getUser,
   signIn,
