@@ -363,7 +363,7 @@ body.editor-body .wrap {
 .txt-preview-title{ font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
 .txt-preview-body{ margin-top:7px; font-size:13px; line-height:1.45; }
 .txt-preview-summary{ color:var(--gold); font-weight:800; margin-bottom:6px; }
-.txt-preview-list{ max-height:180px; overflow:auto; display:grid; gap:7px; }
+.txt-preview-list{ display:grid; gap:7px; }
 .txt-preview-item{ padding-top:6px; border-top:1px solid rgba(255,255,255,.08); overflow-wrap:anywhere; }
 .txt-preview-item strong{ display:block; }
 .txt-preview-answers{ color:var(--muted); margin-top:2px; }
