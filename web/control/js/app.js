@@ -307,6 +307,34 @@ async function main() {
     sessionStorage.removeItem(outroStartedKey);
   }
   const sessionTelemetry = createSessionTelemetry(gameId, () => store.state);
+  const realtimeStates = new Map();
+  function observeRealtimeState(channel, rawStatus) {
+    const state = rawStatus === "SUBSCRIBED" ? "connected" : "disconnected";
+    const previous = realtimeStates.get(channel);
+    const snapshot = { state, rawStatus, reportedForGame: !!store.state.locks.gameStarted };
+    realtimeStates.set(channel, snapshot);
+    if (store.state.locks.gameStarted && previous?.state !== state) {
+      void sessionTelemetry.report({
+        kind: "diagnostic", category: "realtime",
+        message: `Kanał Realtime ${channel} ${state === "connected" ? "połączony" : "rozłączony"}.`,
+        devices: ["control", "display"],
+        metrics: { channel, state, raw_status: rawStatus, fallback: state !== "connected", phase: previous ? "status_change" : "game_start" },
+      });
+    }
+  }
+  function reportRealtimeSnapshots() {
+    if (!store.state.locks.gameStarted) return;
+    for (const [channel, snapshot] of realtimeStates) {
+      if (snapshot.reportedForGame) continue;
+      snapshot.reportedForGame = true;
+      void sessionTelemetry.report({
+        kind: "diagnostic", category: "realtime",
+        message: `Stan kanału Realtime ${channel} przy starcie gry: ${snapshot.state}.`,
+        devices: ["control", "display"],
+        metrics: { channel, state: snapshot.state, raw_status: snapshot.rawStatus, fallback: snapshot.state !== "connected", phase: "game_start" },
+      });
+    }
+  }
 
   // Tylko przed startem gry (D0-D3) — po "Rozpocznij" te pola żyją już
   // wyłącznie w game_state i nie mają być nadpisywane przy każdym
@@ -618,26 +646,24 @@ async function main() {
   completionChannel.on("postgres_changes", {
     event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
   }, (payload) => applyDisplayCompletion(payload?.new?.rendered_rev, "realtime"));
-  let lastCompletionRealtimeState = null;
   completionChannel.subscribe((status) => {
     completionRealtimeConnected = status === "SUBSCRIBED";
-    const state = completionRealtimeConnected ? "connected" : "disconnected";
-    if (state !== lastCompletionRealtimeState) {
-      lastCompletionRealtimeState = state;
-      if (store.state.locks.gameStarted) void sessionTelemetry.report({
-        kind: "diagnostic", category: "realtime",
-        message: completionRealtimeConnected
-          ? "Kanał ACK Displaya połączony."
-          : "Kanał ACK Displaya niedostępny; Control używa odpytywania awaryjnego.",
-        devices: ["control", "display"],
-        metrics: { channel: "display_completion", state, fallback: !completionRealtimeConnected },
-      });
-    }
+    observeRealtimeState("display_completion", status);
     if (completionRealtimeConnected) void refreshDisplayCompletion();
   });
   setInterval(() => {
     if (!completionRealtimeConnected) void refreshDisplayCompletion();
   }, 500);
+  function refreshPendingDisplayCompletionOnResume() {
+    if (document.visibilityState === "hidden") return;
+    // Background tabs throttle timers and may pause Realtime callbacks. Read
+    // the durable ACK immediately on return so a completed render does not
+    // keep Control locked until the browser resumes its polling timer.
+    void refreshDisplayCompletion();
+  }
+  document.addEventListener("visibilitychange", refreshPendingDisplayCompletionOnResume);
+  window.addEventListener("pageshow", refreshPendingDisplayCompletionOnResume);
+  window.addEventListener("focus", refreshPendingDisplayCompletionOnResume);
   function soundBusy() { return isAnySfxPlaying(); }
   let lastSoundBusy = false;
   setInterval(() => {
@@ -967,7 +993,9 @@ async function main() {
   shareDevice.refreshBadges();
 
   const displayCueStartWaiters = new Map();
-  rt(doorbellTopic(gameId)).onBroadcast("display_transition_started", (message) => {
+  const displayDoorbell = rt(doorbellTopic(gameId));
+  displayDoorbell.onStatus((status) => observeRealtimeState("display_transition_started", status));
+  displayDoorbell.onBroadcast("display_transition_started", (message) => {
     const seq = Number(message?.payload?.sound_cue_seq);
     const waiter = displayCueStartWaiters.get(seq);
     if (!waiter) return;
@@ -1075,6 +1103,7 @@ async function main() {
 
   function renderCurrent() {
     document.body.dataset.controlStep = store.state.step;
+    reportRealtimeSnapshots();
     if (store.state.locks.gameEnded) connectivityTracker.flush();
     noteDisplayRequest();
     scheduleFinalTimerWatch();

@@ -5,7 +5,7 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
 export function createSessionTelemetry(gameId, getState) {
   async function report(event = null) {
     const state = getState();
-    if (!state.locks.gameStarted || (state.locks.gameEnded && event?.kind !== "diagnostic") || state.step === "r_intro") return;
+    if (!state.locks.gameStarted || (state.locks.gameEnded && event?.kind !== "diagnostic") || (state.step === "r_intro" && event?.kind !== "diagnostic")) return;
     try {
       await sb().rpc("control2_session_ping", {
         p_game_id: gameId, p_event: event,

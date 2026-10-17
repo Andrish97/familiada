@@ -31,6 +31,14 @@ function createManagedChannel(topic) {
   let ch = null;
   let status = "IDLE"; // IDLE | SUBSCRIBING | SUBSCRIBED | ERROR | CLOSED
   let readyPromise = null;
+  const statusListeners = new Set();
+
+  function publishStatus(nextStatus) {
+    status = nextStatus;
+    for (const listener of statusListeners) {
+      try { listener(status); } catch (error) { console.warn("[realtime] status listener failed", error); }
+    }
+  }
 
   function ensureChannel() {
     if (ch) return ch;
@@ -40,7 +48,7 @@ function createManagedChannel(topic) {
     // subscribe + status tracking
     readyPromise = new Promise((resolve, reject) => {
       ch.subscribe((st) => {
-        status = st;
+        publishStatus(st);
         if (st === "SUBSCRIBED") resolve(true);
         if (st === "CHANNEL_ERROR" || st === "TIMED_OUT") reject(new Error(st));
         if (st === "CLOSED") reject(new Error("CLOSED"));
@@ -122,6 +130,15 @@ function createManagedChannel(topic) {
     return ch;
   }
 
+  function onStatus(handler) {
+    if (typeof handler !== "function") return () => {};
+    statusListeners.add(handler);
+    if (status !== "IDLE") {
+      try { handler(status); } catch (error) { console.warn("[realtime] status listener failed", error); }
+    }
+    return () => statusListeners.delete(handler);
+  }
+
   return {
     topic,
     get status() {
@@ -130,6 +147,7 @@ function createManagedChannel(topic) {
     whenReady,
     sendBroadcast,
     onBroadcast,
+    onStatus,
     reset,
   };
 }

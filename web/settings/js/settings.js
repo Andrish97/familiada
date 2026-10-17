@@ -5467,7 +5467,13 @@ function buildSessionRunDetails(r) {
       }
       if (event.category === "realtime") {
         const state = metrics.state === "connected" ? "połączony" : "rozłączony; działa odpytywanie awaryjne";
-        return { title: "Kanał Realtime ACK Displaya", detail: state };
+        const channels = {
+          display_completion: "Kanał potwierdzeń ACK Displaya",
+          display_transition_started: "Kanał sygnału startu animacji Displaya",
+        };
+        const phase = metrics.phase === "game_start" ? " · stan przy starcie gry" : "";
+        const raw = metrics.raw_status && metrics.raw_status !== metrics.state ? ` (${metrics.raw_status})` : "";
+        return { title: channels[metrics.channel] || "Kanał Realtime", detail: `${state}${raw}${phase}` };
       }
       return { title: "Problem podczas rozgrywki", detail: String(event.message || "") };
     };
