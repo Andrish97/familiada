@@ -1282,3 +1282,16 @@ guard urządzenia pozostaje przed treścią i pobraniem danych. Testy punktowe
 `progressiveLoading` + `controlDeviceGuard`: 21/21; składnia 21 zmienionych
 JS i `git diff --check` przechodzą. Wdrożenie czeka na push i kontrolę etapów
 w sekwencyjnej galerii; samo dodanie markerów nie zamyka E20.
+
+## Bieżąca runda E20 — audyt mobilnego scrolla (2026-10-17)
+
+Użytkownik ustalił, że w mobilnym portrecie nigdy nie ma być podwójnego
+pionowego scrolla (lista przewijana wewnątrz strony/modala). Landscape jest
+wyłączone z tej rundy; panel admina `/settings/` pozostaje poza zakresem.
+Audyt kodu i konkretne propozycje dla Base Explorer (strona, drawer, pytanie,
+warstwy taga), podglądu Gry, Marketplace, udostępniania Baz/Control, odbiorców
+Ankiet i listy pytań Game Settings są w `docs/e20-uwagi-do-korekty.md`.
+Dokumentacja odnotowuje propozycje; UI nie zostało zmienione. Następny krok:
+uzyskać decyzję użytkownika do proponowanego wspólnego modelu, a potem wdrażać
+miejsca po kolei z punktowym sprawdzeniem wspólnych CSS. Pełnej galerii ani
+pełnych testów na tym etapie nie uruchamiać.

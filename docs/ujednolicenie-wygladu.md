@@ -1412,3 +1412,22 @@ Po wdrożeniu uzgodnionej paczki mobilnych modalów kontynuować wszystkie
 pozostałe punkty aktualnej listy bez zatrzymywania się po każdej poprawce.
 Po zakończeniu przygotować i udostępnić nową pełną galerię E20. Poprzednia
 prośba o uzgodnienie galerii nie obowiązuje dla tej kontynuacji.
+
+### E20 — doprecyzowanie: jeden pionowy scroll na mobile (2026-10-17)
+
+Nowsza decyzja użytkownika zawęża wcześniejszą zasadę o osobno przewijanych
+listach. W mobilnym widoku portretowym ekran ma mieć tylko jednego pionowego
+właściciela scrolla. Lista nie może przewijać się wewnątrz przewijanej strony
+lub treści modala; kilka list nie powinno tworzyć kilku niezależnych pionowych
+obszarów. Jeśli nagłówek i akcje muszą zostać nieruchome, zewnętrzny ekran lub
+arkusz jest nieruchomy, a jeden wspólny obszar treści/list jest przewijany.
+Landscape pozostaje wyłączone z tej rundy. Panel administracyjny `/settings/`
+pozostaje poza zakresem.
+
+Audyt i propozycje dla konkretnych miejsc — Base Explorer (strona, drawer,
+modal pytania i warstwy taga), podgląd gry, Marketplace, udostępnianie Baz oraz
+Control, odbiorcy Ankiet oraz lista pytań Ustawień gry — są zapisane w
+[`docs/e20-uwagi-do-korekty.md`](e20-uwagi-do-korekty.md), w tabeli „Dopisek do
+bieżącej rundy”. Wcześniejsze punkty o modalach, listach, kaflach pustego stanu
+i zgodności pytania Base Explorer z edytorem pozostają powiązane z tym audytem.
+To jest propozycja do wdrożenia, nie informacja o zmianie kodu.

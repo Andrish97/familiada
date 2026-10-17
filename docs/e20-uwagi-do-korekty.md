@@ -96,3 +96,41 @@ Pracować po kolei. Po zakończeniu każdej uwagi zatrzymać się przed następn
 | 15 | Modale importu pokazują angielskie teksty („Choose File”, „File not chosen”). | Widoczne natywne pola zastąpiono wspólnym, tłumaczonym przyciskiem „Wybierz plik” i nazwą/stanem wybranego pliku w Grach, Bazach i imporcie pytań Edytora. Logo już korzystało z własnego selektora. Wewnętrzny język systemowego okna wyboru pozostaje ustawieniem przeglądarki/systemu. | Poprawione w kodzie; bez testów/galerii. |
 | 16 | Potwierdzić działanie mobilnych modalów tagów i tworzenia gry w Base Explorer. | Sprawdzone są wszystkie trzy warstwy modala tagów: przypisywanie, tworzenie/edycja oraz wybór koloru. Lista tagów przewija się niezależnie, akcje pozostają dostępne, a przepływ tworzenia wraca do przypisywania; modal tworzenia gry używa jednego obszaru przewijania i poprawnie tworzy grę. | E2E `38819249841` potwierdziło listę tagów i tworzenie gry; rozszerzony test wszystkich warstw `38819760977` przeszedł, w tym widoczność kontrolek koloru na telefonie i zapis nowego taga. Zmiana przewijania eksportu jest w `1f1bee4566`; testy w `e4bd13f826`, `6ae4616ef6`, `82e6d69f15`. |
 | 17 | Ujednolicić modale importu; w jednym z nich ikony Wczytaj plik i Import były takie same. | We wszystkich czterech importerach wspólny selektor pliku używa przycisku i komunikatu o wybranym pliku w tym samym stylu. „Wybierz plik” ma ikonę `file-doc`, „Importuj” ikonę `upload`; stopki mają wspólny układ z „Anuluj” oraz główną akcją „Importuj”. Po udanym imporcie pojawia się „Gotowe” z ikoną potwierdzenia. Zachowano właściwe dla każdego typu importu pola i podglądy. | Zmiany w Grach, Bazach, Logo i Edytorze gier wypchnięte w `71b338255f`. Logo używa wspólnego `bindLocalizedFilePicker`; zniknęło powtórzenie ikony `upload` przy wyborze i imporcie. `git diff --check` i `node --check` zmienionych skryptów przeszły; bez testów E2E/galerii. |
+
+## Dopisek do bieżącej rundy — jeden pionowy scroll na mobile (2026-10-17)
+
+**Zasada nadrzędna:** w mobilnym widoku portretowym na danym ekranie może
+przewijać się tylko jeden pionowy obszar. Lista nie może przewijać się
+wewnątrz przewijanej strony ani treści modala. Jeśli nagłówek/akcje mają
+pozostać przypięte, zewnętrzna strona lub arkusz modala jest nieruchomy,
+a jeden wskazany obszar treści/listy jest jedynym scroll ownerem. Gdy są
+różne listy, domyślnie przewija się wspólna treść; nie tworzymy kilku
+niezależnych pionowych scrolli obok siebie. Mobile landscape pozostaje poza
+tą rundą zgodnie z wcześniejszym ustaleniem. Poniższe pozycje są audytem
+kodu i propozycją; nie oznaczają jeszcze wdrożenia ani potwierdzenia wyglądu.
+
+| Miejsce | Co powoduje lub może powodować podwójny scroll | Proponowana poprawa | Powiązane uwagi z rundy |
+|---|---|---|---|
+| Base Explorer — główna strona i lista elementów | `.explorer` przewija się (`base-explorer.css`), a `.list` ma też `overflow:auto`; zewnętrzny obszar może więc przewijać razem z listą. | W mobilnym portrecie zablokować pionowy scroll `.explorer`; lista elementów ma być jedynym przewijanym obszarem głównej strony. Zachować jej poziomy scroll tabeli, jeśli jest potrzebny. | Bieżący audyt list; wcześniejsze uwagi o listach i rozjazdach Base Explorer. |
+| Base Explorer — drawer lewego panelu | Drawer `.explorer-left` ma `overflow-y:auto`, a jego `.tags` i `.tree` również przewijają się wewnętrznie (`base-explorer.css`). | Drawer jest jedynym pionowym scroll ownerem; drzewo i tagi układają się na naturalną wysokość bez własnego `overflow`/limitu wysokości. | Modal/drawer Base Explorer i jego układ; wcześniejsza uwaga o psującym układy drawer overlay. |
+| Base Explorer — mobilny modal pytania | Arkusz `.sheet-modal-body` przewija treść; w warstwie taga `.qBody` również dostaje scroll, a `.qf-listShell` ma `overflow:auto` (`base.css`, `question-form.css`). | Cała treść pytania przewija się jako jedna treść arkusza. Usunąć wewnętrzne ograniczenia i pionowe overflow z `.qBody` oraz `.qf-listShell` w mobilnym arkuszu. Zachować zgodność układu z widokiem pytania w edytorze gry. | Wcześniejsza uwaga: mobilny modal pytania Base Explorer ma być jak pytanie w edytorze; bieżące sprawdzenie długich list. |
+| Base Explorer — modal przypisywania tagów | Wspólny CSS ustawia przewijanie aktywnego `.tagsPickList`/warstwy, a modal zawiera kilka poziomów treści. | Zostawić tylko jeden aktywny obszar przewijania dla danej warstwy modala; nagłówek i stopka/akcje pozostają dostępne. Sprawdzić warstwy przypisywania, tworzenia/edycji i koloru oddzielnie; nie przewijać listy wewnątrz przewijanej warstwy. | Wcześniejsza uwaga o trzech zrzutach modala tagów oraz potwierdzenie poprawności jego warstw. |
+| Gry — modal podglądu gry | `.sheet-modal-body` przewija arkusz, a `.bld-preview-questions` ma własny limit `55vh` i `overflow-y:auto` (`games.css`). | W mobilnym widoku strony modalnej arkusz jest jedynym pionowym scrollem; lista pytań rośnie naturalnie. | E20: podgląd gry; wcześniejsze wymagania wspólnego mobilnego modelu modalów. |
+| Marketplace — modal szczegółów gry | Treść arkusza może przewijać się razem z `.mkt-detail-questions`, które ma własny limit wysokości i `overflow-y:auto` (`marketplace.css`). | Jeden scroll całej treści arkusza; lista pytań bez własnego scrolla i limitu wysokości. | E20: szczegóły gry; wcześniejsza uwaga „Szczegóły gry nie zdążyły się wczytać” (gotowość treści jest osobnym problemem). |
+| Bazy i Control — modale udostępniania | Wspólna treść arkusza przewija się, a listy `.shareList--scroll`, `#shareDeviceSubsList` i `#shareDeviceCurrentContent` mają własne scroll/max-height (`base.css`). Przy dwóch sekcjach list pojawiają się kolejne niezależne pionowe obszary. | Lista i pozostałe sekcje są częścią jednego przewijanego body arkusza. Zdjąć wewnętrzne pionowe limity list; zachować kafle pustego stanu, akcje przy właściwych listach i poprawne wyrównanie przycisków. | E20 #11 i #14: pusty kafel w Control oraz chaos/rozjazd modalów udostępniania Baz i Control; wcześniejsze uwagi o kaflach i przyciskach. |
+| Ankiety — modal dodawania odbiorców | Body arkusza jest celowo `overflow:hidden`, a listy dwóch grup odbiorców przewijają się osobno; są to siostrzane, ale niezależne pionowe scrolle (`base.css`). | Preferowany jeden scroll body modala z oboma typami odbiorców i sekcjami naturalnej wysokości. Jeśli zachowanie wymaga stałego nagłówka, udostępnić jeden wspólny scroll dla aktywnej listy zamiast osobnego scrolla dla każdej grupy. Nie zmieniać kart/wypustek ani logiki odbiorców. | Bieżąca reguła bez podwójnego scrolla; wcześniejsze uwagi o modalach odbiorców, kartach Ankiet i listach na mobile. |
+| Ustawienia gry — lista pytań w kolumnie końcowej na iPadzie pionowo | `.gs-content` przewija stronę ustawień, a `.finalCol .qList` ma własne `max-height:60vh` i `overflow-y:auto` (`game-settings.css`). Telefon jest blokowany, ale obsługiwany tablet może trafić w ten układ. | Na obsługiwanym wąskim/tabletowym widoku `.gs-content` jest jedynym pionowym scrollem; lista pytań rośnie naturalnie. Zachować dostępność całej listy i akcji. | Wcześniejsze ustalenie o obsługiwanym iPadzie pionowo. Panel administracyjny `/settings/` pozostaje poza tą rundą i poza audytem galerii. |
+
+**Sprawdzone jako pojedynczy scroll lub bez potwierdzonego zagnieżdżenia:**
+strony Gry, Bazy, Zadania i Logo mają listę jako jedyny scroll obszaru roboczego;
+Mails ma jeden wewnętrzny scroll listy przy zablokowanym body; mobilny eksport
+gry w Base Explorer neutralizuje wewnętrzne scrolle; warstwy modala tagów mają
+już własne reguły ograniczania aktywnej warstwy. Te miejsca pozostają do
+punktowego sprawdzenia po wdrożeniu, lecz audyt kodu nie proponuje dla nich
+teraz przebudowy.
+
+**Wyłączone:** mobilne landscape (jak uzgodniono) oraz panel administracyjny
+`/settings/` (użytkownik wcześniej wyłączył go z tej pracy). Po zatwierdzeniu
+planu wdrażać poprawki po wskazanych wierszach, sprawdzając najpierw każdy
+układ dotknięty wspólnym CSS; bez pełnej galerii i pełnych testów bez
+uzgodnienia.
