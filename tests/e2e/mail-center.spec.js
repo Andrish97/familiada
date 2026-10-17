@@ -84,7 +84,9 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
       return { games: [poll.id, control.id], token: device.data.token };
     }, EMAIL);
     games = resources.games; deviceToken = resources.token;
-    await center.reload(); await center.locator('[data-tab=items]').click();
+    await center.reload();
+    await expect(center.locator('#subscriptionPanel')).toBeVisible();
+    await expect(center.locator('#itemsPanel')).toBeVisible();
     await expect(center.locator('#itemsBadge')).toHaveText('2');
     await expect(center.locator('#itemsList .mail-row--poll')).toHaveCount(1);
     await expect(center.locator('#itemsList .mail-row--device')).toHaveCount(1);
@@ -99,6 +101,9 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-1400.png'), fullPage: true });
     await center.setViewportSize({ width: 390, height: 844 });
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-390.png'), fullPage: true });
+    await center.locator('[data-tab=items]').click();
+    await expect(center.locator('#itemsPanel')).toBeVisible();
+    await expect(center.locator('#subscriptionPanel')).toBeHidden();
     expect(await center.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const denied = await center.evaluate(async () => (await fetch('/_api/mail/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })).status);
     expect(denied).toBe(403); expect((await state(center)).notifications_enabled).toBe(true);

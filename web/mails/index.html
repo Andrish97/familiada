@@ -14,8 +14,8 @@
   <link rel="stylesheet" href="/go/css/go.css?v=v2026-10-17T05524"/>
   <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-17T05524"/>
   <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-17T05524"/>
-  <link rel="stylesheet" href="/mail/css/mail.css?v=v2026-10-17T05524"/>
-  <script type="module" src="/mail/js/mail.js?v=v2026-10-17T05524"></script>
+  <link rel="stylesheet" href="/mail/css/mail.css?v=v2026-10-17T15100"/>
+  <script type="module" src="/mail/js/mail.js?v=v2026-10-17T15100"></script>
 </head>
 <body class="poll-go-body mail-body">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -42,17 +42,23 @@
       <div class="tabs-card hub-tabs polls-tabs-card mail-tabs-card">
         <div class="tabs-strip" role="tablist">
           <div class="tab-slot slot-share active">
-            <button class="tab-label active" type="button" role="tab" aria-controls="subscriptionPanel" aria-selected="true" data-tab="subscriptions"><span data-i18n="mailCenter.subscriptions">Subskrypcje</span><span class="badge" id="subscriptionBadge" hidden></span></button>
+            <button class="tab-label active" id="subscriptionTab" type="button" role="tab" aria-controls="subscriptionPanel" aria-selected="true" data-tab="subscriptions"><span data-i18n="mailCenter.subscriptions">Subskrypcje</span><span class="badge" id="subscriptionBadge" hidden></span></button>
             <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
           </div>
           <div class="tab-slot slot-results">
-            <button class="tab-label" type="button" role="tab" aria-controls="itemsPanel" aria-selected="false" data-tab="items"><span data-i18n="mailCenter.tasksTab">Zadania</span><span class="badge" id="itemsBadge" hidden></span></button>
+            <button class="tab-label" id="itemsTab" type="button" role="tab" aria-controls="itemsPanel" aria-selected="false" data-tab="items"><span data-i18n="mailCenter.tasksTab">Zadania</span><span class="badge" id="itemsBadge" hidden></span></button>
             <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
           </div>
         </div>
-        <div class="card games-card polls-card mail-card">
-          <section class="mail-panel active" id="subscriptionPanel" data-panel="subscriptions" role="tabpanel"><div class="shareList" id="subscriptionList"></div></section>
-          <section class="mail-panel" id="itemsPanel" data-panel="items" role="tabpanel"><div class="shareList" id="itemsList"></div></section>
+        <div class="card mail-panels-card">
+        <section class="card mail-panel active" id="subscriptionPanel" data-panel="subscriptions" aria-labelledby="subscriptionTitle subscriptionTab" role="tabpanel">
+          <h2 class="mail-panel-title" id="subscriptionTitle"><span data-i18n="mailCenter.subscriptions">Subskrypcje</span><span class="badge" data-mail-count="subscriptionBadge" hidden></span></h2>
+          <div class="shareList" id="subscriptionList"></div>
+        </section>
+        <section class="card mail-panel" id="itemsPanel" data-panel="items" aria-labelledby="itemsTitle itemsTab" role="tabpanel">
+          <h2 class="mail-panel-title" id="itemsTitle"><span data-i18n="mailCenter.tasksTab">Zadania</span><span class="badge" data-mail-count="itemsBadge" hidden></span></h2>
+          <div class="shareList" id="itemsList"></div>
+        </section>
         </div>
       </div>
     </section>

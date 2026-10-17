@@ -39,14 +39,19 @@ function stateFrom(data) {
   if (['expired_token','expired_session','invalid_token','invalid_session','invalid_request'].includes(data.error)) return { state: 'expired' };
   return { state: 'entry' };
 }
+function badge(id, count) {
+  const mobileBadge = $(id), panelBadge = document.querySelector(`[data-mail-count="${id}"]`);
+  for (const node of [mobileBadge, panelBadge].filter(Boolean)) { node.textContent = String(count); node.hidden = count === 0; }
+}
 function setTab(value) {
   selectedTab = value;
   document.querySelectorAll('[data-tab]').forEach(node => {
-    const active = node.dataset.tab === value; node.classList.toggle('active', active); node.closest('.tab-slot').classList.toggle('active',active); node.setAttribute('aria-selected', String(active));
+    const active = node.dataset.tab === value;
+    node.classList.toggle('active', active); node.closest('.tab-slot').classList.toggle('active', active);
+    node.setAttribute('aria-selected', String(active));
   });
-  document.querySelectorAll('[data-panel]').forEach(node => { node.classList.toggle('active', node.dataset.panel === value); });
+  document.querySelectorAll('[data-panel]').forEach(node => node.classList.toggle('active', node.dataset.panel === value));
 }
-function badge(id, count) { $(id).textContent = String(count); $(id).hidden = count === 0; }
 function empty(id, key) { const node = document.createElement('div'); node.className = 'mail-empty'; node.textContent = text(key); $(id).replaceChildren(node); }
 function actionIcon(name, label, act, href) {
   const node = document.createElement(href ? 'a' : 'button'); node.className = 'btn sm';
@@ -125,7 +130,6 @@ function render() {
   $('mailMessage').hidden = !$('mailMessage').textContent;
   $('mailActions').hidden = !$('mailActions').children.length;
   if (!enabled) { $('subscriptionList').replaceChildren(); $('itemsList').replaceChildren(); }
-  document.querySelector('[data-tab="items"]').setAttribute('aria-label', text('items'));
   updateCooldown();
   if (active) $('mailSummary').classList.add('skel-step-ready');
   else $('mailEntry').classList.add('skel-step-ready');
@@ -154,8 +158,8 @@ $('mailPreferenceButton').addEventListener('click', () => perform(async () => {
   if (!result.ok) { model = stateFrom(result); return; }
   model = stateFrom(await api('session'));
 }));
-document.querySelectorAll('[data-tab]').forEach(node => node.addEventListener('click', () => setTab(node.dataset.tab)));
 window.addEventListener('i18n:lang', () => { if (document.querySelector('.topbar-ready')) render(); });
+document.querySelectorAll('[data-tab]').forEach(node => node.addEventListener('click', () => setTab(node.dataset.tab)));
 
 await initI18n({ withSwitcher: true });
 document.querySelector('.topbar').classList.add('topbar-ready');
