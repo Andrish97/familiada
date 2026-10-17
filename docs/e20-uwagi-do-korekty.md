@@ -26,6 +26,12 @@ Punkt 4 zatwierdzony do poprawki; po wdrożeniu pozostaje otwarty do ponownego
 przeglądu. Nie oznaczać punktów tej listy jako zakończonych bez ponownego
 przejścia z użytkownikiem.
 
+Punkt 12 — Control już renderuje wspólny pusty kafel dla listy „Udostępnione
+w tej sesji”. W `tests/e2e/e20-gallery.spec.js` modal jest otwierany po
+prawdziwym „Zacznij od nowa”; test czeka na rzeczywisty wiersz albo pusty
+kafelek i wymaga kafelka, gdy lista jest pusta. Nie wstrzykuje atrap ani nie
+zmienia danych listy. Potwierdzenie ekranu pozostaje częścią następnej galerii.
+
 Punkt 4 — test galerii Marketplace: po kliknięciu prawdziwej karty czeka do
 45 sekund na stan `ready` lub `error`, a przed zrzutem potwierdza zgodność
 tytułu szczegółów z kartą i obecność pierwszego wczytanego pytania. W razie

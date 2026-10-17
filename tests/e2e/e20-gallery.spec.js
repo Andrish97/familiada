@@ -1415,6 +1415,14 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                   .filter({ hasText: /Udostępnij/ }).first();
                 await shareButton.waitFor({ state: "visible", timeout: 15_000 });
                 await shareButton.click();
+                await modalPage.waitForFunction(() => {
+                  const list = document.getElementById("shareDeviceCurrentContent");
+                  return list && (list.querySelector(".share-empty-state") || list.querySelector(".shareRow"));
+                }, null, { timeout: 15_000 });
+                const sharedList = modalPage.locator("#shareDeviceCurrentContent");
+                if (await sharedList.locator(":scope > .shareRow").count() === 0) {
+                  await expect(sharedList.locator(":scope > .share-empty-state")).toBeVisible();
+                }
               },
               null,
               { modalCapture: true, requireModal: true, skipWhenGuarded: true, expectedModalId: "shareDeviceOverlay", actionLabel: "Urządzenia → Udostępnij urządzenie", stateId: "modal:share-device", fileName: `modal-share-device-${profile.id}.png` },
