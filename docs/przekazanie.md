@@ -1285,17 +1285,16 @@ w sekwencyjnej galerii; samo dodanie markerów nie zamyka E20.
 
 ## Bieżąca runda E20 — audyt mobilnego scrolla (2026-10-17)
 
-Użytkownik ustalił, że w mobilnym portrecie nie może być scrolla
-zagnieżdżonego w innym scrollu. Dwie potrzebne listy mogą być widoczne
-jednocześnie i przewijać się wewnętrznie, gdy zewnętrzny kontener jest
-nieruchomy; przy wielu listach trzeba ocenić, czy mieszczą się czytelnie.
-Landscape jest wyłączone z tej rundy; panel admina `/settings/` pozostaje poza zakresem.
-Audyt kodu i konkretne propozycje dla Base Explorer (strona, drawer, pytanie,
-warstwy taga), podglądu Gry, Marketplace, udostępniania Baz/Control, odbiorców
-Ankiet i listy pytań Game Settings są w `docs/e20-uwagi-do-korekty.md`.
-Dokumentacja odnotowuje propozycje; UI nie zostało zmienione. Następny krok:
-wdrażać zgodnie z doprecyzowaniem: podgląd Gry ma stały nagłówek i przełącznik;
-modale udostępniania Baz/Control i Ankiet mają nieruchome body oraz dwie
-widoczne, niezależnie przewijane listy. Dla pozostałych miejsc wyjaśnić
-proponowany układ przy wdrożeniu i najpierw potwierdzić, że nic się nie ucina. Pełnej galerii ani
-pełnych testów na tym etapie nie uruchamiać.
+Wspólny wzorzec strony i mobilnego modala: zewnętrzny ekran/arkusz jest
+nieruchomy; przewija się obszar roboczy albo lista. Przy jednej liście
+przewija się ona sama. Dwie równorzędne listy mogą być widoczne jednocześnie
+i każda przewija się wewnętrznie. Listy nie mogą być zagnieżdżone w
+przewijanym body. Nagłówki, akcje i przełączniki pozostają widoczne. Jeśli
+wiele list nie mieści się czytelnie, rozważyć przełączane sekcje; nie ucinać
+ani nie ukrywać treści. W modalu bez listy przewija się jeden obszar treści
+pod nieruchomym nagłówkiem/akcjami.
+
+Landscape jest wyłączone z tej rundy; panel admina `/settings/` pozostaje poza
+zakresem. Audyt konkretnych miejsc i powiązania z wcześniejszymi uwagami są w
+`docs/e20-uwagi-do-korekty.md`. Propozycje są zapisane; UI nie zostało
+zmienione, pełnych testów ani galerii nie uruchamiano.

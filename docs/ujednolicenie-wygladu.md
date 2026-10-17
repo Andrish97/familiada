@@ -1415,15 +1415,15 @@ prośba o uzgodnienie galerii nie obowiązuje dla tej kontynuacji.
 
 ### E20 — doprecyzowanie: jeden pionowy scroll na mobile (2026-10-17)
 
-Doprecyzowanie użytkownika: zakaz dotyczy scrolla zagnieżdżonego w innym
-scrollu, a nie kilku widocznych jednocześnie list. Strona lub body modala mogą
-pozostać nieruchome, a każda z dwóch potrzebnych list może przewijać się
-wewnętrznie. Nagłówek i przełączniki widoku pozostają widoczne, jeśli są
-potrzebne do orientacji. Przy większej liczbie list najpierw ocenić, czy
-wszystkie są czytelne w dostępnej wysokości; jeśli nie, rozważyć przełączane
-sekcje z jedną aktywną listą. Nic nie może zostać ucięte ani ukryte.
-Landscape pozostaje wyłączone z tej rundy. Panel administracyjny `/settings/`
-pozostaje poza zakresem.
+Wspólny wzorzec stron i mobilnych modali: zewnętrzny ekran/arkusz nie
+przewija się. Topbar, nagłówek, akcje i przełączniki pozostają widoczne,
+a przewija się przeznaczony obszar roboczy. Przy jednej liście przewija się
+lista; przy dwóch równorzędnych listach obie są widoczne i każda przewija
+się osobno. Nie zagnieżdżać list w przewijanym body. W modalu bez listy
+przewija się pojedynczy obszar treści pod nieruchomym nagłówkiem i akcjami.
+Gdy wiele list nie mieści się czytelnie, rozważyć przełączane sekcje; nie
+ucinać ani nie ukrywać treści. Mobile landscape i panel administracyjny `/settings/`
+pozostają poza zakresem tej rundy.
 
 Audyt i propozycje dla konkretnych miejsc — Base Explorer (strona, drawer,
 modal pytania i warstwy taga), podgląd gry, Marketplace, udostępnianie Baz oraz
