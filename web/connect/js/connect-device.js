@@ -152,14 +152,14 @@ async function renderSharedDevices() {
   );
 
   if (!items.length) {
-    sharedDevicesList.innerHTML = `<div class="rowsEmpty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
+    sharedDevicesList.innerHTML = `<div class="connect-device-empty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
     return;
   }
 
   sharedDevicesList.innerHTML = "";
   for (const item of items) {
     const row = document.createElement("div");
-    row.className = "rowsRow connect-device-tile";
+    row.className = "shareRow mail-row mail-row--device connect-device-tile";
     row.dataset.shareId = String(item.share_id);
 
     const ownerLabel = escapeHtml(item.owner_username || item.owner_email || "—");
@@ -167,16 +167,12 @@ async function renderSharedDevices() {
     const typeLabel  = deviceTypeLabel(item.device_type);
 
     row.innerHTML = `
-      <div class="rowsAvatar connect-device-tile-icon">${deviceTypeIcon(item.device_type)}</div>
-      <div class="rowsMain connect-device-tile-body">
-        <div class="rowsTitle connect-device-tile-name">${gameName}</div>
-        <div class="rowsNote connect-device-tile-meta">
-          <span>${typeLabel}</span>
-          <span class="connect-device-tile-meta-dot">•</span>
-          <span class="connect-device-tile-meta-owner">${ownerLabel}</span>
-        </div>
+      <span class="mail-kind connect-device-tile-icon">${deviceTypeIcon(item.device_type)}</span>
+      <div class="mail-row-copy connect-device-tile-body">
+        <div class="shareEmail connect-device-tile-name">${gameName}</div>
+        <div class="shareNote connect-device-tile-meta">${typeLabel} · ${ownerLabel}</div>
       </div>
-      <div class="rowsActions connect-device-tile-arrow">${icon("arrow-right")}</div>
+      <div class="shareRowActions connect-device-tile-arrow">${icon("arrow-right")}</div>
     `;
 
     row.addEventListener("click", async () => {

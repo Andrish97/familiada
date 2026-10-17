@@ -10,28 +10,55 @@
   padding: 2px 2px 12px;
   -webkit-overflow-scrolling: touch;
 }
-.connect-device-tile { min-height: 64px; cursor: pointer; }
+.connect-device-inner-card {
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+}
+.connect-device-inner-card:first-child { margin-top: 0; }
+.connect-device-card-header { margin: 0 0 8px; }
+.connect-device-tile {
+  min-height: 64px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
 .connect-device-tile:hover {
   background: rgba(255,255,255,.06);
   border-color: var(--gold);
 }
-
-.connect-device-tile .rowsAvatar { flex-basis: 36px; width: 36px; height: 36px; }
-.connect-device-tile .rowsMain { flex: 1 1 auto; }
-.connect-device-tile .rowsNote { display: flex; align-items: center; gap: 6px; }
-.connect-device-tile-meta-owner { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.connect-device-tile-arrow { opacity: .55; }
+.connect-device-tile.mail-row--device {
+  border-left: 3px solid #799eb7;
+  background: rgba(121,158,183,.045);
+}
+.connect-device-tile .mail-kind { width: 18px; flex: 0 0 18px; opacity: .8; }
+.connect-device-tile .mail-row-copy { min-width: 0; flex: 1 1 auto; }
+.connect-device-tile .shareEmail { min-width: 0; }
+.connect-device-tile .shareNote { color: var(--text); opacity: .65; font-size: 12px; margin-top: 5px; }
+.connect-device-tile-meta { overflow-wrap: anywhere; }
+.connect-device-tile-arrow {
+  width: 36px;
+  min-width: 36px;
+  height: 38px;
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  opacity: .75;
+}
 .connect-device-enter-code-row { display: flex; gap: 10px; align-items: center; }
+.connect-device-inner-card .connect-device-enter-code-row { margin-top: 0; }
+.connect-device-inner-card .shareList { margin-top: 8px; }
 
 @media (max-width: 600px) {
-  .connect-device-main-card { padding: 12px 12px 8px; }
-  .connect-device-tile { gap: 10px; padding: 9px 10px; }
-  .connect-device-tile .rowsAvatar { width: 30px; height: 30px; flex-basis: 30px; }
-  .connect-device-tile .rowsAvatar > svg { width: 20px; height: 20px; }
-  .connect-device-tile .rowsTitle { line-height: 1.25; }
-  .connect-device-tile .rowsNote { display: block; line-height: 1.35; white-space: normal; }
-  .connect-device-tile-meta-dot { padding: 0 3px; }
+  .connect-device-inner-card { padding: 12px; }
+  .connect-device-tile { gap: 8px; }
+  .connect-device-tile .shareNote { font-size: 11px; }
 }
+
+.connect-device-tile.mail-row--device:hover { background: rgba(121,158,183,.09); }
+.connect-device-empty { border: 1px dashed var(--line); border-radius: 12px; padding: 28px 12px; text-align: center; font-size: 13px; opacity: .7; }
 
 .connect-device-code-input {
   flex: 1;
