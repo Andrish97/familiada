@@ -5,10 +5,11 @@
 // tekst + przyciski. „Wróć” prowadzi na adres z mapy nawigacji (backHref),
 // nigdy przez history.back() ani referrer. i18n: pageGuard.*.
 
-import { applyTranslations, t } from "../../translation/translation.js?v=v2026-10-15T22404";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-15T22404";
 import { icon } from "./icons.js?v=v2026-10-15T22404";
 
 export const PAGE_GUARD_ID = "pageGuard";
+let redirectTimer = null;
 
 function ensureOverlay() {
   let overlay = document.getElementById(PAGE_GUARD_ID);
@@ -88,8 +89,12 @@ function lockScroll(on) {
  *   backHref    adres „Wróć” (null — bez przycisku)
  *   loginHref   adres „Zaloguj” (null — bez przycisku)
  */
-export function showPageGuard({ kind, state = "", iconName = "info", titleKey, messageKey, backHref = null, loginHref = null }) {
+export function showPageGuard({ kind, state = "", iconName = "info", titleKey, messageKey, backHref = null, loginHref = null, redirectHref = null, redirectDelayMs = 0 }) {
   const overlay = ensureOverlay();
+  if (redirectTimer) {
+    clearTimeout(redirectTimer);
+    redirectTimer = null;
+  }
   if (kind === "device" && document.body && !overlay.dataset.hidesBody) {
     overlay.dataset.bodyVisibility = document.body.style.visibility;
     document.body.style.visibility = "hidden";
@@ -117,6 +122,12 @@ export function showPageGuard({ kind, state = "", iconName = "info", titleKey, m
   overlay.dataset.kind = kind;
   overlay.dataset.state = state;
   overlay.style.display = "flex";
+  if (redirectHref) {
+    const target = withLangParam(redirectHref);
+    redirectTimer = setTimeout(() => {
+      if (overlay.style.display !== "none") window.location.replace(target);
+    }, Math.max(0, redirectDelayMs));
+  }
   lockScroll(true);
   applyTranslations(overlay);
   return overlay;
@@ -124,6 +135,10 @@ export function showPageGuard({ kind, state = "", iconName = "info", titleKey, m
 
 /** Chowa nakładkę (np. po obrocie tabletu albo poszerzeniu okna). */
 export function hidePageGuard() {
+  if (redirectTimer) {
+    clearTimeout(redirectTimer);
+    redirectTimer = null;
+  }
   const overlay = document.getElementById(PAGE_GUARD_ID);
   if (overlay) {
     overlay.style.display = "none";

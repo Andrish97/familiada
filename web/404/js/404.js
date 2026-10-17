@@ -1,4 +1,4 @@
-import { initI18n, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
 
 (async () => {
   try {
@@ -10,7 +10,13 @@ import { initI18n, withLangParam } from "../../shared/translation/translation.js
     document.querySelector('.topbar')?.classList.add('topbar-ready');
   }
   document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
+  const isTv = document.documentElement.dataset.tvLayout === "true";
+  if (isTv) {
+    document.querySelector(".notfound-actions")?.remove();
+    const hint = document.querySelector(".notfound-hint");
+    if (hint) hint.textContent = t("notFound.tvRedirectHint");
+  }
   setTimeout(() => {
-    window.location.href = withLangParam("/");
+    window.location.href = withLangParam(isTv ? "/connect/?tv=1" : "/");
   }, 5000);
 })();

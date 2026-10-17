@@ -188,7 +188,7 @@ const pl = {
     tvOnlyTitle: "Ta strona jest przeznaczona dla telewizora",
     tvOnlyMessage: "Podłącz wyświetlacz na telewizorze. Na tym urządzeniu użyj strony Podłącz urządzenie.",
     tvUnsupportedTitle: "Niedostępne na telewizorze",
-    tvUnsupportedMessage: "Ta strona nie obsługuje telewizorów. Otwórz ją na komputerze, tablecie lub telefonie.",
+    tvUnsupportedMessage: "Ta strona nie jest dostępna na telewizorze. Za chwilę wrócisz do ekranu Podłącz wyświetlacz.",
     rotateTitle: "Obróć urządzenie",
     rotateMessage: "Obróć urządzenie, aby uzyskać właściwy widok.",
     narrowTitle: "Za wąskie okno",
@@ -4969,6 +4969,7 @@ const pl = {
     messageText:
       "Tego adresu nie ma lub został przeniesiony. Sprawdź poprawność linku.",
     redirectHint: "Za chwilę wrócisz na stronę główną.",
+    tvRedirectHint: "Za chwilę wrócisz do ekranu Podłącz wyświetlacz.",
     homeBtn: "Strona główna",
     marketplaceBtn: "Przeglądaj Gry Społeczności",
     footerLeft: "Familiada",

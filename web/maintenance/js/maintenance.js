@@ -1,4 +1,4 @@
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
 
 const ENDPOINT = "/maintenance-state.json?v=v2026-10-15T22404";
 const POLL_MS = 30000;
@@ -47,12 +47,16 @@ function tr(key, fallback) {
 function scheduleRedirect() {
   if (redirectTimer) return;
   redirectTimer = setTimeout(() => {
-    window.location.href = "/";
+    window.location.href = withLangParam(returnTarget());
   }, 1500);
 }
 
 function redirectNow() {
-  window.location.href = "/";
+  window.location.href = withLangParam(returnTarget());
+}
+
+function returnTarget() {
+  return document.documentElement.dataset.tvLayout === "true" ? "/connect/?tv=1" : "/";
 }
 
 function parseDate(value) {

@@ -188,7 +188,7 @@ const en = {
     tvOnlyTitle: "This page is for TVs",
     tvOnlyMessage: "Connect a display on a TV. On this device, use the Connect device page.",
     tvUnsupportedTitle: "Not available on a TV",
-    tvUnsupportedMessage: "This page does not support TVs. Open it on a computer, tablet, or phone.",
+    tvUnsupportedMessage: "This page is not available on a TV. You will return to the Connect display screen shortly.",
     rotateTitle: "Rotate your device",
     rotateMessage: "Rotate your device to get the right view.",
     narrowTitle: "Window too narrow",
@@ -4582,6 +4582,7 @@ const en = {
     messageText:
       "This address does not exist or has been moved. Check the link.",
     redirectHint: "You will be redirected to the home page shortly.",
+    tvRedirectHint: "You will return to the Connect display screen shortly.",
     homeBtn: "Home",
     marketplaceBtn: "Browse Community Games",
     footerLeft: "Familiada",

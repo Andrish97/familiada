@@ -101,7 +101,8 @@ const TEXTS = {
 
 export function showDeviceGuard(state, backHref, messageKey = null) {
   const profile = getDeviceProfile();
-  const txt = state === "unsupported" && profile.formFactor === "tv"
+  const tvUnsupported = state === "unsupported" && profile.formFactor === "tv";
+  const txt = tvUnsupported
     ? TEXTS.tvUnsupported
     : TEXTS[state] || TEXTS.unsupported;
   // Obrót rozwiązuje blokadę bez opuszczania bieżącej strony, więc nie
@@ -112,7 +113,10 @@ export function showDeviceGuard(state, backHref, messageKey = null) {
     iconName: txt.icon,
     titleKey: txt.title,
     messageKey: messageKey || txt.message,
-    backHref: state === "rotate" ? null : backHref,
+    backHref: state === "rotate" || tvUnsupported ? null : backHref,
+    loginHref: tvUnsupported ? null : undefined,
+    redirectHref: tvUnsupported ? "/connect/?tv=1" : null,
+    redirectDelayMs: tvUnsupported ? 3000 : 0,
   });
 }
 
