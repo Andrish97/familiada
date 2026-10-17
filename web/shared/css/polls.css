@@ -151,14 +151,11 @@
 .polls-tabs-card:has(.slot-share.active) .polls-card{ border-top-left-radius: 0; }
 .polls-tabs-card:has(.slot-results.active) .polls-card{ border-top-right-radius: 0; }
 
-/* Karta głosowania jest wygodniejsza w czytaniu na wąskich ekranach i
-   tabletach: ogranicz szerokość razem z wypustkami, żeby ich krawędzie
-   nadal pokrywały się z treścią. Desktop zostaje pełnej szerokości. */
-@media (max-width: 1400px) and (pointer: coarse){
-  .polls-body #cardMain > .polls-tabs-card:not(.mail-tabs-card){
-    width: min(100%, 960px);
-    align-self: center;
-  }
+/* Ogranicz szerokość karty z wypustkami także na komputerach i dużych
+   tabletach; na telefonie min(100%, ...) zachowuje dostępną szerokość. */
+.polls-body #cardMain > .polls-tabs-card:not(.mail-tabs-card){
+  width: min(100%, 1040px);
+  align-self: center;
 }
 
 .polls-section{ display: none; }
