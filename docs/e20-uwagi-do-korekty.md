@@ -69,7 +69,7 @@ edytować” ma 12 px jak pozostałe przyciski xsm. Do wizualnego
 potwierdzenia; nie uruchamiano testów ani galerii.
 
 Punkt 10 — w widoku ankiety ograniczono szerokość całej karty z wypustkami
-razem z jej treścią do 1040 px i wyśrodkowano ją na szerszych ekranach.
+razem z jej treścią do 760 px i wyśrodkowano ją na szerszych ekranach.
 Na telefonie zachowuje ona dostępną szerokość. Reguła obejmuje komputery
 i duże tablety, ale nie Mails. Odświeżono cache-buster arkusza ankiet.
 Do wizualnego potwierdzenia; bez testów i galerii.
