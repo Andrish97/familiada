@@ -709,6 +709,8 @@ const en = {
       placeholder: "Username or email...",
       roleEditor: "Can edit",
       roleViewer: "View only",
+      roleEditorShort: "Edit",
+      roleViewerShort: "View",
       add: "Add",
       close: "Close",
       cooldown: "You can't add the same user again for 24h (anti-spam).",

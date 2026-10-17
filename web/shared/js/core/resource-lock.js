@@ -5,7 +5,7 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-17T05524";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-17T2130";
 import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-17T05524";
 import { rt } from "./realtime.js?v=v2026-10-17T05524";
 import { icon } from "./icons.js?v=v2026-10-17T05524";
@@ -121,7 +121,7 @@ function ensureOverlay() {
       <div id="resourceLockGuardMsg" class="blocking-message"></div>
 
       <div class="blocking-actions">
-        <button id="resourceLockGuardBack" class="blocking-action" type="button" data-i18n="resourceLock.back">${t("resourceLock.back")}</button>
+        <button id="resourceLockGuardBack" class="blocking-action" type="button" data-i18n="resourceLock.back" data-i18n-icon="arrow-left">${icon("arrow-left")} ${t("resourceLock.back")}</button>
       </div>
     </div>
   `;

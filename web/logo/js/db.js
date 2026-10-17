@@ -2,7 +2,7 @@
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
-import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T05524";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T2130";
 import { storagePathFromUrl } from "./image.js?v=v2026-10-17T05524";
 import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-17T05524";
 

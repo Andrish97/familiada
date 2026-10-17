@@ -14,7 +14,7 @@
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-17T05524";
 import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-17T05524";
 import {
@@ -96,14 +96,14 @@ export function createTally({ gameId, pollResults, ui }) {
       meta.innerHTML = `
         <span class="tallyCounter"></span>
         <span class="tallySum"></span>
-        <button class="btn xs tcMergeDup" type="button"></button>`;
+          <button class="btn xs tcMergeDup" type="button">${icon("merge")}<span></span></button>`;
       box.insertBefore(meta, slot.list);
       requestAnimationFrame(() => requestAnimationFrame(() => meta.classList.add("on")));
     }
     meta.querySelector(".tallyCounter").hidden = !withCounter;
     const dup = meta.querySelector(".tcMergeDup");
     dup.hidden = !withMergeDup;
-    dup.textContent = t("polls.tally.mergeDup");
+      dup.querySelector("span").textContent = t("polls.tally.mergeDup");
     dup.onclick = withMergeDup && qs ? () => mutate(() => mergeDuplicates(qs.q)) : null;
     return meta;
   }

@@ -10,7 +10,7 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-17T05524";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-17T05524";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-17T05524";

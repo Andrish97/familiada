@@ -1,5 +1,5 @@
 import { icon } from "./icons.js?v=v2026-10-17T05524";
-import { t } from "../../translation/translation.js?v=v2026-10-17T05524";
+import { t } from "../../translation/translation.js?v=v2026-10-17T2130";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-17T05524";
 let modalSeq = 0;
 
@@ -74,12 +74,14 @@ function buildModal({
   const okBtn = document.createElement("button");
   okBtn.className = "btn sm gold";
   okBtn.type = "button";
-  okBtn.textContent = okText;
+  okBtn.innerHTML = `${icon("check")}<span></span>`;
+  okBtn.querySelector("span").textContent = okText;
 
   const cancelBtn = document.createElement("button");
   cancelBtn.className = "btn sm";
   cancelBtn.type = "button";
-  cancelBtn.textContent = cancelText;
+  cancelBtn.innerHTML = `${icon("close")}<span></span>`;
+  cancelBtn.querySelector("span").textContent = cancelText;
 
   const msg = document.createElement("div");
   msg.className = "importMsg";

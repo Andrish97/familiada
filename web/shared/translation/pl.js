@@ -717,6 +717,8 @@ const pl = {
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Może edytować",
       roleViewer: "Tylko podgląd",
+      roleEditorShort: "Edycja",
+      roleViewerShort: "Podgląd",
       add: "Dodaj",
       close: "Zamknij",
       cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",

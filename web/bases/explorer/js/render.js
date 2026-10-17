@@ -2,7 +2,7 @@
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
 import { VIEW, META, META_ORDER } from "./state.js?v=v2026-10-17T05524";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-17T05524";
 
 /* ================= DOM ================= */
@@ -562,7 +562,7 @@ export function renderTags(state) {
   const metaHeader = `<div style="opacity:.75; margin-bottom:6px; margin-top:4px;">${t("baseExplorer.tags.metaHeader")}</div>`;
   const addBtn = `
     <button id="btnAddTag" class="btn" type="button" style="width:100%; margin-top:10px;">
-      ${t("baseExplorer.tags.addTag")}
+      ${icon("plus")} ${t("baseExplorer.tags.addTag")}
     </button>
   `;
 

@@ -1,22 +1,23 @@
 import {sb} from './supabase.js?v=v2026-10-17T05524';
-import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-17T05524';
+import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-17T2130';
 import {toast} from './toast.js?v=v2026-10-17T05524';
 import {sendResourceCopyMail} from './invite-mail.js?v=v2026-10-17T05524';
+import {icon,iconText} from './icons.js?v=v2026-10-17T05524';
 
 const attempts=new Map();
 function getDialog(){
  let dialog=document.getElementById('resourceSendDialog');if(dialog)return dialog;
  dialog=document.createElement('dialog');dialog.id='resourceSendDialog';dialog.className='resource-send-dialog';
- dialog.innerHTML='<form method="dialog" class="resource-send"><header><h2></h2><button class="btn sm" value="cancel" aria-label="Close">×</button></header><p class="resource-send-name"></p><div class="resource-send-friends"></div><details class="resource-send-history"><summary></summary><div></div></details><p class="resource-send-error" role="status"></p><footer><button class="btn sm" value="cancel"></button><button class="btn sm gold" type="button" data-send></button></footer></form>';
+ dialog.innerHTML='<form method="dialog" class="resource-send"><header><h2></h2><button class="btn sm" value="cancel" aria-label="Close"></button></header><p class="resource-send-name"></p><div class="resource-send-friends"></div><details class="resource-send-history"><summary></summary><div></div></details><p class="resource-send-error" role="status"></p><footer><button class="btn sm" value="cancel"></button><button class="btn sm gold" type="button" data-send></button></footer></form>';
  Object.assign(dialog.style,{padding:'20px',maxWidth:'520px',width:'calc(100% - 32px)',color:'var(--text,#fff)',background:'var(--panel,#202126)',border:'1px solid var(--line,#444)',borderRadius:'12px'});
  dialog.querySelector('.resource-send').style.cssText='display:grid;gap:12px';
  dialog.querySelector('header').style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px';
  dialog.querySelector('h2').style.margin='0';
  dialog.querySelector('h2').textContent=t('resourceSend.title');
- dialog.querySelector('header [value="cancel"]').setAttribute('aria-label',t('common.modal.closeLabel'));
+ const close=dialog.querySelector('header [value="cancel"]');close.setAttribute('aria-label',t('common.modal.closeLabel'));close.innerHTML=icon('close');
  dialog.querySelector('footer').style.cssText='display:flex;justify-content:flex-end;gap:8px';
- dialog.querySelector('footer [value="cancel"]').textContent=t('common.cancel');
- dialog.querySelector('[data-send]').textContent=t('resourceSend.action');
+ dialog.querySelector('footer [value="cancel"]').innerHTML=iconText('close',t('common.cancel'));
+ dialog.querySelector('[data-send]').innerHTML=iconText('envelope-out',t('resourceSend.action'));
   dialog.querySelector('.resource-send-history summary').textContent=t('resourceSend.history');
  document.body.append(dialog);return dialog;
 }

@@ -1,14 +1,14 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-17T05524";
 import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-17T05524";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-17T05524";
 import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-17T05524";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-17T05524";
 import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-17T05524";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-17T05524";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-17T2130";
 import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-17T05524";
 import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-17T05524";
 import {
@@ -19,7 +19,7 @@ import {
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-17T05524";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-17T05524";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-17T2130";
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-17T05524";
 import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-17T05524";
 
@@ -855,7 +855,7 @@ async function renderSound() {
 
     // Przycisk "Wybierz plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
     const showUploadBtn = !custom && activeVariant === VARIANT_CUSTOM;
-    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${t("control.sfxChooseFile") || "Wybierz plik"}</button>`;
+    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${icon("upload")} ${t("control.sfxChooseFile") || "Wybierz plik"}</button>`;
 
     // Przycisk odtwarzania — zablokowany gdy Własny bez pliku
     const previewDisabled = activeVariant === VARIANT_CUSTOM && !custom;
@@ -1610,8 +1610,8 @@ function showIngameGuard() {
         <div style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">${escText(t("control.ingameGuard.title"))}</div>
         <div style="opacity:.9;line-height:1.4;word-wrap:break-word;">${escText(t("control.ingameGuard.message"))}</div>
         <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
-          <button id="ingameGuardBack" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;">${escText(t("control.ingameGuard.back"))}</button>
-          <button id="ingameGuardUnlock" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,234,166,.85);color:#3a2c00;">${escText(t("control.ingameGuard.unlock"))}</button>
+          <button id="ingameGuardBack" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;">${icon("arrow-left")} ${escText(t("control.ingameGuard.back"))}</button>
+          <button id="ingameGuardUnlock" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,234,166,.85);color:#3a2c00;">${icon("refresh")} ${escText(t("control.ingameGuard.unlock"))}</button>
         </div>
       </div>
     `;

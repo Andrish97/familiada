@@ -13,9 +13,10 @@ import {
   duplicateSelected,
   canDeleteHere,
 } from "./actions.js?v=v2026-10-17T05524";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-17T05524";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-17T05524";
-import { renderAll } from "./render.js?v=v2026-10-17T05524";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-17T2130";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-17T2130";
+import { renderAll } from "./render.js?v=v2026-10-17T2130";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-17T05524";
 
 
 const IS_MAC = navigator.platform.toLowerCase().includes("mac");
@@ -64,7 +65,7 @@ function itemHtml(item, idx) {
     return `<div class="cm-sep" role="separator" aria-hidden="true"></div>`;
   }
 
-  const { label, disabled, danger, shortcut } = item;
+  const { label, disabled, danger, shortcut, icon: iconName } = item;
 
   const cls = [
     "cm-item",
@@ -76,6 +77,7 @@ function itemHtml(item, idx) {
   const rightHtml = right ? `<span class="cm-kbd">${right}</span>` : "";
   
   return `<button type="button" class="${cls}" data-idx="${idx}" ${disabled ? "disabled" : ""}>
+    ${iconName ? icon(iconName) : ""}
     <span>${label}</span>
     ${rightHtml}
   </button>`;
@@ -173,6 +175,7 @@ export async function showContextMenu({ state, x, y, target }) {
     if (target.kind === "meta") {
       items.push({
         label: t("baseExplorer.menu.show"),
+        icon: "eye",
         disabled: selectedMetaIds.length === 0,
         action: async () => {
           // wejście w VIEW.META (zachowaj browse location jak przy TAG)
@@ -189,10 +192,10 @@ export async function showContextMenu({ state, x, y, target }) {
   
       pushSep(items);
   
-      items.push({ label: t("baseExplorer.menu.addTag"), disabled: true });
-      items.push({ label: t("baseExplorer.menu.editTag"), disabled: true });
+      items.push({ label: t("baseExplorer.menu.addTag"), icon: "plus", disabled: true });
+      items.push({ label: t("baseExplorer.menu.editTag"), icon: "pencil", disabled: true });
       pushSep(items);
-      items.push({ label: t("baseExplorer.menu.delete"), disabled: true, danger: true });
+      items.push({ label: t("baseExplorer.menu.delete"), icon: "trash", disabled: true, danger: true });
   
       renderMenu(cm, items);
       positionMenu(cm, x, y);
@@ -202,6 +205,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Widok ---
     items.push({
       label: t("baseExplorer.menu.show"),
+      icon: "eye",
       disabled: selectedTagIds.length === 0,
       action: async () => {
         await state._api?.openTagView?.(selectedTagIds);
@@ -213,6 +217,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Zarządzanie tagami ---
     items.push({
       label: t("baseExplorer.menu.addTag"),
+      icon: "plus",
       disabled: !editor,
       action: async () => {
         const ok = await state._api?.openTagModal?.({ mode: "create" });
@@ -225,6 +230,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: t("baseExplorer.menu.editTag"),
+      icon: "pencil",
       disabled: !editor || selectedTagIds.length !== 1,
       action: async () => {
         const tagId = selectedTagIds[0];
@@ -243,6 +249,7 @@ export async function showContextMenu({ state, x, y, target }) {
       label: (selectedTagIds.length === 1)
         ? t("baseExplorer.menu.deleteTag")
         : t("baseExplorer.menu.deleteTags"),
+      icon: "trash",
       disabled: !editor || selectedTagIds.length === 0,
       danger: true,
       action: async () => {
@@ -301,6 +308,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Tworzenie ---
     items.push({
       label: t("baseExplorer.menu.newFolder"),
+      icon: "folder-plus",
       shortcut: { win: "Ctrl+Shift+N", mac: "⌘⇧N" },
       disabled: !editor || readOnlyView,
       action: async () => {
@@ -310,6 +318,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: t("baseExplorer.menu.newQuestion"),
+      icon: "file-plus",
       shortcut: { win: "Ctrl+N", mac: "⌘N" },
       disabled: !editor || readOnlyView,
       action: async () => {
@@ -327,6 +336,7 @@ export async function showContextMenu({ state, x, y, target }) {
   // Schowek ma sens dla cat/q, dla root też (bo wklejasz “tu”)
   items.push({
     label: t("baseExplorer.menu.copy"),
+    icon: "copy",
     shortcut: { win: "Ctrl+C", mac: "⌘C" },
     disabled: !editor || selectedRealCount === 0,
     action: async () => { copySelectedToClipboard(state); }
@@ -334,6 +344,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
   items.push({
     label: t("baseExplorer.menu.cut"),
+    icon: "cut",
     shortcut: { win:"Ctrl+X", mac:"⌘X" },
     disabled: !editor || readOnlyView || selectedRealCount === 0,
     action: async () => { cutSelectedToClipboard(state); }
@@ -341,6 +352,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
   items.push({
     label: t("baseExplorer.menu.paste"),
+    icon: "paste",
     shortcut: { win:"Ctrl+V", mac:"⌘V" },
     disabled: pasteDisabled || !editor,
     action: async () => {
@@ -351,6 +363,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
   items.push({
     label: t("baseExplorer.menu.duplicate"),
+    icon: "duplicate",
     shortcut: { win:"Ctrl+D", mac:"⌘D" },
     disabled: !editor || readOnlyView || selectedRealCount === 0,
     action: async () => {
@@ -369,6 +382,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: t("baseExplorer.menu.tags"),
+      icon: "tag",
       shortcut: { win:"Ctrl+T", mac:"⌘T" },
       disabled: !editor, // viewer ogląda
       action: async () => {
@@ -384,6 +398,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Nawigacja ---
     items.push({
       label: t("baseExplorer.menu.openFolder"),
+      icon: "folder",
       shortcut: { win: "Enter", mac: "⏎" },
       disabled: false,
       action: async () => {
@@ -398,6 +413,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Tworzenie w folderze ---
     items.push({
       label: t("baseExplorer.menu.newFolderIn"),
+      icon: "folder-plus",
       disabled: !editor || readOnlyView,
       action: async () => {
         await createFolderHere(state, { parentId: target.id });
@@ -406,6 +422,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: t("baseExplorer.menu.newQuestionIn"),
+      icon: "file-plus",
       disabled: !editor || readOnlyView,
       action: async () => {
         await createQuestionHere(state, { categoryId: target.id });
@@ -424,6 +441,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // tego nie blokowały; to menu kontekstowe miało zbędne dodatkowe ograniczenie.
     items.push({
       label: t("baseExplorer.menu.editQuestion"),
+      icon: "edit-paper",
       shortcut: { win:"Ctrl+E", mac:"⌘E" },
       disabled: !editor || selectedRealCount !== 1 || target.kind !== "q",
       action: async () => {
@@ -436,6 +454,7 @@ export async function showContextMenu({ state, x, y, target }) {
       label: target.kind === "cat"
         ? t("baseExplorer.menu.rename")
         : t("baseExplorer.menu.renameQuestion"),
+      icon: "pencil",
       shortcut: { win:"F2", mac:"F2" },
       disabled: !editor || readOnlyView || selectedRealCount !== 1,
       action: async () => {
@@ -448,6 +467,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Utwórz grę ---
     items.push({
       label: t("baseExplorer.menu.createGame"),
+      icon: "gamepad",
       shortcut: { win:"Ctrl+G", mac:"⌘G" },
       // Spójnie z toolbarem (render.js: hasQuestionInSel || hasFolderInSel) --
       // PPM na SAMYM folderze (bez żadnego "q:" w selekcji) musiało dawać
@@ -469,6 +489,7 @@ export async function showContextMenu({ state, x, y, target }) {
       label: (state.view === VIEW.TAG)
         ? t("baseExplorer.menu.deleteTags")
         : t("baseExplorer.menu.delete"),
+      icon: "trash",
       shortcut: { win:"Delete", mac:"Fn⌫" },
       danger: true,
       // TAG ma własną ścieżkę (zdejmowanie tagów, nie kasowanie) więc nie

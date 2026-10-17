@@ -1500,6 +1500,7 @@ tr.row .tag-dot[data-tip]::before {
   justify-content:space-between;
   gap:14px;
 }
+.cm-item > .ico{ width:16px; height:16px; flex:0 0 16px; opacity:.8; }
 .cm-kbd{
   opacity:.65;
   font-size:12px;
@@ -2050,7 +2051,42 @@ tr.row .tag-dot[data-tip]::before {
 
   .modal--sheet.sheet-active .export-modal .xGrid2 {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(120px, 1fr) auto;
+    grid-template-rows: minmax(120px, 1fr) minmax(0, auto);
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* iPhone ma ten sam układ pól co iPad, ale mniej miejsca w pionie:
+     typ gry pozostaje w całości widoczny, a wysokość zabiera lista pytań. */
+  .modal--sheet.sheet-active .export-modal .xTypeBox {
+    min-width: 0;
+    padding: 8px;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeTop {
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeHint {
+    text-align: right;
+    font-size: 11px;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xRange {
+    margin-top: 4px;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeLabels {
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 10px;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeLbl {
+    min-height: 40px;
+    padding: 4px 2px;
   }
 
   .modal--sheet.sheet-active .export-modal .xPickList {

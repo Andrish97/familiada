@@ -1,4 +1,4 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-17T05524";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-17T2130";
 import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-17T05524";
 import { icon, iconText } from "./icons.js?v=v2026-10-17T05524";
 
@@ -178,10 +178,11 @@ function applyLabels() {
   set("cModalMessageLabel", "contact.modal.message");
   set("cModalAttachLabel",    "contact.modal.attachments");
   set("cModalAttachBtnLabel", "contact.modal.chooseFiles");
-  set("cModalClose",        "common.cancel");
-  set("cModalSubmit",       "contact.modal.submit");
+  const setAction = (id, key, iconName) => { const el = document.getElementById(id); if (el) el.innerHTML = iconText(iconName, t(key) || id); };
+  setAction("cModalClose",  "common.cancel", "close");
+  setAction("cModalSubmit", "contact.modal.submit", "envelope-out");
   set("cModalSuccessTitle", "contact.modal.successTitle");
-  set("cModalDone",         "common.done");
+  setAction("cModalDone",   "common.done", "check");
   const xBtn = document.getElementById("cModalX");
   if (xBtn) xBtn.setAttribute("aria-label", t("common.modal.closeLabel") || "Zamknij");
   const backBtn = document.getElementById("cModalBack");

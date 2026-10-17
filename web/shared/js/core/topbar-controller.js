@@ -7,7 +7,7 @@
 
 import { signOut } from './auth.js?v=v2026-10-17T05524';
 import { isGuestUser } from './guest-mode.js?v=v2026-10-17T05524';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-17T05524';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-17T2130';
 import { icon } from './icons.js?v=v2026-10-17T05524';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────

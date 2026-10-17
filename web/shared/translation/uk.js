@@ -704,6 +704,8 @@ const uk = {
       placeholder: "Ім'я користувача або e-mail...",
       roleEditor: "Може редагувати",
       roleViewer: "Лише перегляд",
+      roleEditorShort: "Редагування",
+      roleViewerShort: "Перегляд",
       add: "Додати",
       close: "Закрити",
       cooldown: "Не можна додати того самого користувача знову протягом 24 год (антиспам).",

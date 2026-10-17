@@ -1,6 +1,6 @@
 
 import { sb as supabase } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05524";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T2130";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-17T05524";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-17T05524";
 

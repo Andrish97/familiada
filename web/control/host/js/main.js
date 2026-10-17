@@ -7,7 +7,7 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-17T05524";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-17T05524";
 import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-17T05524";

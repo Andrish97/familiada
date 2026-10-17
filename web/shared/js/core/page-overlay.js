@@ -5,7 +5,7 @@
 // tekst + przyciski. „Wróć” prowadzi na adres z mapy nawigacji (backHref),
 // nigdy przez history.back() ani referrer. i18n: pageGuard.*.
 
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-17T05524";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-17T2130";
 import { icon } from "./icons.js?v=v2026-10-17T05524";
 
 export const PAGE_GUARD_ID = "pageGuard";
@@ -29,8 +29,8 @@ function ensureOverlay() {
       <div id="pageGuardMsg" class="blocking-message"></div>
 
       <div class="blocking-actions">
-        <button id="pageGuardBack" class="blocking-action" type="button" data-i18n="pageGuard.back">${t("pageGuard.back")}</button>
-        <button id="pageGuardLogin" class="blocking-action is-accent" type="button" data-i18n="pageGuard.login">${t("pageGuard.login")}</button>
+        <button id="pageGuardBack" class="blocking-action" type="button" data-i18n="pageGuard.back" data-i18n-icon="arrow-left">${icon("arrow-left")} ${t("pageGuard.back")}</button>
+        <button id="pageGuardLogin" class="blocking-action is-accent" type="button" data-i18n="pageGuard.login" data-i18n-icon="person">${icon("person")} ${t("pageGuard.login")}</button>
       </div>
     </div>
   `;

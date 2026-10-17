@@ -12,10 +12,10 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-17T05524";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-17T05524";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05524";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-17T2130";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-17T05524";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-17T05524";
@@ -1043,7 +1043,7 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-17T20101"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-17T2130"/>
   <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-17T20101"/>
   <style>
     body{margin:0;padding:0}

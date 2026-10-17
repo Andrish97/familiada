@@ -1,5 +1,5 @@
 import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-17T05524";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-17T05524";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-17T2130";
 import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-17T05524";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-17T05524";
 // familiada/logo/js/list.js
@@ -17,15 +17,15 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-17T05
 
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-17T05524";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-17T05524";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05524";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T2130";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-17T05524";
 import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-17T05524";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-17T05524";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-17T05524";
 import { getDeviceProfile, isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-17T05524";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-17T05524";
-import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T05524";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T2130";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-17T05524";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-17T05524";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-17T05524";

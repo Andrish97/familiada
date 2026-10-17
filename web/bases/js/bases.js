@@ -8,15 +8,15 @@ import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026
 
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
 import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-17T05524";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T05524";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05524";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T2130";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T2130";
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-17T05524";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-17T05524";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-17T05524";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-17T05524";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-17T05524";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-17T05524";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-17T2130";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-17T05524";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-17T05524";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-17T05524";
@@ -219,7 +219,8 @@ function baseRoleButton(value, onChange) {
   const update = () => {
     const editor = value === "editor";
     const label = t(editor ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");
-    button.innerHTML = `${icon(editor ? "edit-paper" : "eye")}<span class="baseShareRoleLabel">${label}</span>`;
+    const shortLabel = t(editor ? "bases.shareModal.roleEditorShort" : "bases.shareModal.roleViewerShort");
+    button.innerHTML = `<span class="baseShareRoleLabel baseShareRoleFull">${label}</span><span class="baseShareRoleLabel baseShareRoleShort" aria-hidden="true">${shortLabel}</span>`;
     button.title = label;
     button.setAttribute("aria-label", button.title);
     button.dataset.role = value;

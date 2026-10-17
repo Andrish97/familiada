@@ -1,4 +1,4 @@
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-17T2130";
 // control/display/js/render.js
 //
 // Tłumaczy wiersz public.game_state (a dokładniej: różnicę między

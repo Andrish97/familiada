@@ -9,10 +9,10 @@
 
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-17T05524";
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-17T05524";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-17T05524";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-17T05524";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-17T2130";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-17T2130";
 import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-17T05524";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-17T05524";
 
 const btnBack = document.getElementById("btnBack");

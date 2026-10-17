@@ -1,11 +1,11 @@
 import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-17T05524";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-17T05524";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-17T2130";
 import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-17T05524";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-17T05524";
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-17T05524";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T05524";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T05524";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-17T05524";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-17T2130";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-17T2130";
 import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-17T05524";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-17T05524";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-17T05524";
@@ -24,7 +24,7 @@ const pwaApi = initPwa();
 import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-17T05524";
 import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-17T05524';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-17T05524";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-17T2130";
 import {
   TYPES,
   STATUS,
@@ -32,7 +32,7 @@ import {
   validateGame,
   rulesFromState,
 } from "../../shared/js/core/game-validate.js?v=v2026-10-17T05524";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T05524";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-17T2130";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-17T05524";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-17T05524";
 import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-17T05524";

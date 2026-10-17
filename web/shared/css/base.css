@@ -1291,7 +1291,12 @@ main{
     /* Warstwy Eksploratora zawierają własny nagłówek i stopkę wewnątrz
        sekcji. Na telefonie przenieś pasek akcji przed listę/pola, ale
        zostaw samą listę jako jedyny przewijany element. */
-    .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead { order: 0; }
+    .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead {
+        order: 0;
+        border-bottom: 0 !important;
+        padding-bottom: 0;
+        margin-bottom: 0 !important;
+    }
     .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsFoot {
         order: 1;
         flex: 0 0 auto;
