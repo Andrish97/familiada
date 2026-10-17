@@ -120,8 +120,8 @@ body.mkt-body > main.wrap {
   padding: 14px;
   border-radius: 18px;
   border: 1px solid var(--line);
-  background: var(--card);
-  --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
+  background: #070b16;
+  --under: #070b16; /* podłoże kryjących przycisków (css/base.css) */
   cursor: pointer;
   transition: border-color .15s, background .15s;
   user-select: none;
@@ -137,12 +137,12 @@ body.mkt-body > main.wrap {
 
 .mkt-card:hover {
   border-color: rgba(255,234,166,.35);
-  background: rgba(255,255,255,.09);
+  background: #0b1020;
 }
 
 .mkt-card-producer {
   border-color: rgba(255,234,166,.15);
-  background: linear-gradient(135deg, var(--card) 0%, rgba(255,234,166,.03) 100%);
+  background: #070b16;
 }
 
 .mkt-card-top {
@@ -221,7 +221,7 @@ body.mkt-body > main.wrap {
   border-radius: 16px;
   border: 1px solid var(--line);
   background: var(--card);
-  --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
+  --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
   margin-bottom: 10px;
 }
 

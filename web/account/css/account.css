@@ -23,7 +23,7 @@ main.account-wrap {
   padding: 16px;
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.24);
+  background: var(--card);
   box-shadow: 0 18px 40px rgba(0,0,0,.35);
   height: 100%;
   grid-template-rows: auto auto auto auto 1fr;
@@ -45,7 +45,7 @@ main.account-wrap {
 .account-panel.danger {
   --under: #19121c;
   border-color: rgba(255,120,120,.35);
-  background: rgba(255,120,120,.08);
+  background: var(--card);
 }
 
 .account-panel--demo {

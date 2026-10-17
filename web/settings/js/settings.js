@@ -1043,8 +1043,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-17T12001"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-17T05524"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-17T20101"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-17T20101"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }

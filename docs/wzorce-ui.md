@@ -23,6 +23,20 @@ akceptację użytkownika (sekcja D), dopiero potem poprawki.
 (sekcje 4–5 topbar, mobile / desktop; „Karty — jeden sposób”),
 [`ankiety-refaktor.md`](ankiety-refaktor.md) (sekcja 1, decyzje 2026-10-09).
 
+## A0. Tło strony i poziomy kart [E20, decyzja 2026-10-17]
+
+Tło obszaru strony korzysta ze wspólnego `--bg` (`#050914`); nie dodajemy
+lokalnych gradientów ani odcieni tła dla zwykłych stron. Wyjątkiem jest login,
+który zachowuje własny gradient. Tło strony jest odrębne od powierzchni kart.
+Karta zewnętrzna używa `--card` (`#111827`), a karta zagnieżdżona ma odrębne,
+jaśniejsze tło, żeby poziomy treści nie zlewały się. Wiersze list i kafle
+zasobów pozostają ciemniejsze zgodnie z A5 i wspólnym wzorcem list.
+
+Odstępy kart korzystają z rytmu 4 px: nagłówek i treść oddzielamy zwykle
+8–12 px, listy rozstawiamy 8 px na desktopie i 12 px na telefonie. Lista
+wewnątrz karty może być od niej trochę węższa, ale przewija się tylko jeden
+kontener listy.
+
 ## Jak wykonano przegląd (i czego nie widać)
 
 - Odczyt HTML / CSS / JS wszystkich stron użytkownika w `web/` (bez panelu
@@ -136,8 +150,10 @@ Jedna klasa / komponent w `base.css` (dziś `.games-body .grid .card` w
 4. **Ikony akcji w prawym górnym rogu** (`.x`: kosz, dzwonek; 32 × 32 px, ramka,
    `border-radius:10px`).
 
-Wspólne wymiary: promień 18 px, ramka `rgba(255,255,255,.22)`, tło `#070b16`,
+Wspólne wymiary: promień 18 px, ramka `rgba(255,255,255,.22)`, tło `#070b16` (ciemniejszy poziom kafla wewnątrz karty),
 `min-height:130px`, hover = złota ramka, zaznaczony = złota ramka + poświata.
+Lista Logo i Marketplace używa tej samej bazowej powierzchni i odstępu
+wewnętrznego 14 px; większy kafel Logo zachowuje wysokość wymaganą przez podgląd.
 Siatka `.grid`: `repeat(auto-fill, minmax(230px,1fr))`, odstęp 14 px — jedna
 minimalna szerokość dla wszystkich list. Kafel „+” (`.addCard`): zawsze ten sam
 kod — `.plus` + `.txt` (nazwa akcji) + opcjonalnie `.sub` (typ); jedna wysokość

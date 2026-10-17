@@ -481,7 +481,7 @@ input,textarea {
     position: relative;
     width: min(560px,calc(100vw - 24px));
     margin: 10vh auto 0;
-    background: #141418;
+    background: #121524;
     border: 1px solid rgba(255,255,255,.12);
     border-radius: 14px;
     overflow: hidden;

@@ -1434,3 +1434,20 @@ Control, odbiorcy Ankiet oraz lista pytań Ustawień gry — są zapisane w
 bieżącej rundy”. Wcześniejsze punkty o modalach, listach, kaflach pustego stanu
 i zgodności pytania Base Explorer z edytorem pozostają powiązane z tym audytem.
 To jest propozycja do wdrożenia, nie informacja o zmianie kodu.
+
+### E20 — tło stron, poziomy kart i Connect (2026-10-17)
+
+Zwykłe strony używają jednolitego `--bg` (`#050914`); gradient zostaje tylko
+na loginie. Nie mieszamy tła strony z tłem kart: główne karty zachowują
+wspólną powierzchnię `--card` (`#111827`), zagnieżdżone sekcje są od nich
+odróżnione, a kafle/wiersze list pozostają ciemniejsze. Modalne karty mają
+wspólne kryjące tło. Panel admina pozostaje poza przeglądem.
+
+Na `/connect/` lista „Udostępnione dla mnie” ma wiersze zgodne z Zadaniami
+(64 px minimum, avatar 36/30 px, tekst zawija się bez wychodzenia poza kafel,
+wiersze 8 px desktop / 12 px mobile). Sama lista jest wyśrodkowana i węższa
+od karty; scroll nadal należy tylko do listy. Karta wewnętrzna dostaje taki
+sam poziom powierzchni i odstępów jak inne sekcje kart.
+
+Po zmianach należy wykonać punktowy przebieg E20 `games`/MacBook, następnie
+pełną galerię E20 na aktualnym branchu.

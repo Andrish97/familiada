@@ -224,7 +224,7 @@
 
 .gs-section {
   background: var(--card);
-  --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
+  --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
   border-radius: 14px;
   padding: 18px 20px;
   margin-bottom: 14px;
@@ -539,7 +539,7 @@
 
 /* ===== FINALE / ROUNDS PICKER ===== */
 .gs-picker-card{
-  background:rgba(255,255,255,.05);
+  background:rgba(255,255,255,.04);
   border-radius:10px; padding:12px 14px; margin-top:4px;
 }
 .gs-picker-head{
