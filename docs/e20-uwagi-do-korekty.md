@@ -74,6 +74,13 @@ Na telefonie zachowuje ona dostępną szerokość. Reguła jest przypięta
 wyłącznie do `#pollTabsCard`; nie obejmuje żadnego z dwóch układów Mails. Odświeżono cache-buster arkusza ankiet.
 Do wizualnego potwierdzenia; bez testów i galerii.
 
+Doprecyzowanie użytkownika dla Mails (punkt 13): są dwa różne układy.
+Karta wpisywania adresu (`#mailEntry`) ma być węższa. Po przejściu do
+zwykłej strony z linkiem/listami normalny układ Mails ma zachować
+szerokość strony podobną do Znajomych lub Ankiet. Nie stosować
+ograniczenia karty ankiety ani węższej szerokości formularza do
+normalnego widoku Mails.
+
 ### Ankiety — poprawki punktu 5 na branchu
 
 Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px
