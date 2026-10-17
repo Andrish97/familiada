@@ -4174,7 +4174,7 @@ const pl = {
     },
     tags: {
       modalTitle: "Tagi",
-      addTag: "+ Dodaj tag",
+      addTag: "Dodaj tag",
       editTitle: "Tag",
       namePlaceholder: "Nazwa taga…",
       pickColor: "Wybierz kolor",

@@ -4273,7 +4273,7 @@ const en = {
     },
     tags: {
       modalTitle: "Tags",
-      addTag: "+ Add tag",
+      addTag: "Add tag",
       editTitle: "Tag",
       namePlaceholder: "Tag name…",
       pickColor: "Pick color",

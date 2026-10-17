@@ -4270,7 +4270,7 @@ const uk = {
     },
     tags: {
       modalTitle: "Теги",
-      addTag: "+ Додати тег",
+      addTag: "Додати тег",
       editTitle: "Тег",
       namePlaceholder: "Назва тегу…",
       pickColor: "Вибрати колір",
