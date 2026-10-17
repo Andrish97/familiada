@@ -36,6 +36,10 @@ const TV_GALLERY_PAGES = new Set(["home", "login", "connect-tv", "maintenance", 
 const requestedPages = String(process.env.E20_GALLERY_PAGES || "").split(",").map((value) => value.trim()).filter(Boolean);
 const requestedProfiles = String(process.env.E20_GALLERY_PROFILES || "").split(",").map((value) => value.trim()).filter(Boolean);
 const requestedAccounts = galleryAccountNumbers();
+const unknownProfiles = requestedProfiles.filter((id) => !PROFILES.some((profile) => profile.id === id));
+if (unknownProfiles.length) {
+  throw new Error(`Nieznane profile galerii E20: ${unknownProfiles.join(", ")}. Dostępne: ${PROFILES.map((profile) => profile.id).join(", ")}.`);
+}
 
 function urls(data) {
   const game = data.game;
@@ -1238,9 +1242,18 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
         ...(profile.ua ? { userAgent: profile.ua } : {}), serviceWorkers: "block",
       };
       const manifest = [];
-      const selectedUrls = urls(data)
+      const allUrls = urls(data);
+      const availablePageIds = new Set(allUrls.map(([id]) => id));
+      const unknownPages = requestedPages.filter((id) => !availablePageIds.has(id));
+      if (unknownPages.length) {
+        throw new Error(`Nieznane ID stron galerii E20: ${unknownPages.join(", ")}. Użyj ID takie jak "base-explorer", nie ścieżki URL.`);
+      }
+      const selectedUrls = allUrls
         .filter(([id]) => !requestedPages.length || requestedPages.includes(id))
         .filter(([id]) => profile.id !== "tv" || TV_GALLERY_PAGES.has(id));
+      if (!selectedUrls.length) {
+        throw new Error(`Filtry galerii E20 nie wybrały żadnych stron dla profilu ${profile.id}.`);
+      }
       // Root i Connect muszą przejść przez Worker, który wykonuje rzeczywiste
       // przekierowanie na /connect/?tv=1. Pozostałe ujęcia strony są z brancha.
       const branchPages = profile.id === "tv"
