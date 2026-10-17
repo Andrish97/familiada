@@ -30,13 +30,17 @@
           var _s = JSON.parse(localStorage.getItem(_k));
           var _u = _s && (_s.user || (_s.currentSession && _s.currentSession.user));
           var _exp = _s && (_s.expires_at || (_s.currentSession && _s.currentSession.expires_at));
-          if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
+          var _username = _u && ((_u.user_metadata && _u.user_metadata.username) || _u.username || '');
+          var _needsUsername = !_username || String(_username).toLowerCase().startsWith('guest_');
+          if (_u && !_u.is_anonymous && !_needsUsername && (!_exp || Date.now() / 1000 < _exp + 60)) {
             var _next = _p.get('next');
             var _dest;
             if (_next === 'tasks') {
               _dest = '/tasks/' + (_p.get('t') ? '?t=' + _p.get('t') : '');
             } else if (_next === 'friends') {
               _dest = '/friends/' + (_p.get('f') ? '?f=' + _p.get('f') : '');
+            } else if (_next === 'bases') {
+              _dest = '/bases/' + (_p.get('b') ? '?b=' + _p.get('b') : '');
             } else {
               _dest = '/games/';
             }
