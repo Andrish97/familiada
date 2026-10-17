@@ -165,6 +165,7 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null,
   const onOrientationChange = () => setTimeout(refresh, 250);
   window.addEventListener("resize", refresh);
   window.addEventListener("orientationchange", onOrientationChange);
+  window.visualViewport?.addEventListener("resize", refresh, { passive: true });
   refresh();
 
   return { refresh, state: currentState, ready };

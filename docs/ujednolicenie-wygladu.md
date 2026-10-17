@@ -767,6 +767,12 @@ PAGES nadal jest wymagany, ale telefon landscape ma wspólny guard poza
 jawnym wyjątkiem. Nie wolno odblokowywać stron tylko po to, by spełnić
 pierwotną decyzję.
 
+**Ujednolicenie uruchamiania guarda (2026-10-17):** strony bez `initPage()`
+korzystają z adaptera `orientation-guard.js`, który deleguje do tego samego
+`guardViewportWidth()` co pozostałe strony. Obrót oraz zmiana visual viewportu
+odświeżają wspólny stan i zdejmują nakładkę po powrocie do dozwolonego widoku;
+nie utrzymujemy osobnej logiki pokazywania i zwalniania blokady.
+
 Dla każdej strony sprawdzić dostęp do funkcji, niewielką wysokość
 viewportu, topbar/wypustki/akcje/narzędzia, formularze i klawiaturę,
 modale/overlays, dotyk oraz scroll i osiągalność wszystkich przycisków.
