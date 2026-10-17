@@ -10,16 +10,16 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T18441";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-17T18441";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-17T18441";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-17T18441";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-17T18441";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-17T18441";
-import { createPressController } from "./press.js?v=v2026-10-17T18441";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-17T18441";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-17T18441";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-17T18441";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T18493";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-17T18493";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-17T18493";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-17T18493";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-17T18493";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-17T18493";
+import { createPressController } from "./press.js?v=v2026-10-17T18493";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-17T18493";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-17T18493";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-17T18493";
 
 // Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
 startKeepAlive();
