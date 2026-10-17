@@ -14,11 +14,11 @@ uwierzytelniania, przekierowań, ograniczeń urządzeń, powrotu i deep linków.
 
 Mapa ma zawierać każdą rzeczywistą trasę HTML, również taką, która nie jest
 elementem zwykłego menu. Przepływy tokenowe, urządzeniowe, administracyjne i
-techniczne oznaczamy jawnie jako samodzielne oraz opisujemy, dlaczego nie
-uczestniczą w zwykłej nawigacji. Ich pominięcie bez wpisu jest błędem
-kompletności. Obecna tabela `PAGES` skupia się głównie na nawigacji; audyt
-`docs/audyt-initpage-trasy.md` wskazuje trasy, które trzeba włączyć do
-inwentarza przy jego uzupełnieniu.
+techniczne oznaczamy `kind: "standalone"`, opisujemy w `standaloneReason` i
+wyłączamy z automatycznych powrotów. Obsługa dialogów pozostaje określona
+osobno przez `dialogs`/`GLOBAL_DIALOGS`. Pominięcie trasy bez wpisu jest
+błędem kompletności. Aktualne wpisy i kontrola pokrycia HTML są
+opisane w `docs/audyt-initpage-trasy.md` i `tests/unit/navMap.test.js`.
 
 ---
 

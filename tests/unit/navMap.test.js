@@ -3,6 +3,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import {
   PAGES, MAX_RET_DEPTH, linkTo, backHref, backTarget, loginUrl, pageIdForPath,
 } from "../../web/shared/js/core/nav-map.js";
@@ -28,6 +30,38 @@ test("ścieżki stron są unikalne i rozpoznawane", () => {
   assert.equal(pageIdForPath("/logos/editor/draw"), "logoDraw");
   assert.equal(pageIdForPath("/logo/"), null);
   assert.equal(pageIdForPath("/mail/"), null);
+});
+
+test("każdy plik HTML ma wpis w mapie, a trasy standalone są jawnie opisane", () => {
+  const webRoot = path.resolve("web");
+  const htmlFiles = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const file = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(file);
+      else if (entry.isFile() && entry.name.endsWith(".html")) htmlFiles.push(file);
+    }
+  };
+  walk(webRoot);
+
+  const routeOf = (file) => {
+    const rel = path.relative(webRoot, file).split(path.sep).join("/");
+    if (rel === "index.html") return "/";
+    if (rel.endsWith("/index.html")) return `/${rel.slice(0, -"index.html".length)}`;
+    return `/${rel}`;
+  };
+
+  for (const file of htmlFiles) {
+    const route = routeOf(file);
+    assert.ok(pageIdForPath(route), `${route} (${path.relative(webRoot, file)}) nie ma wpisu w PAGES`);
+  }
+
+  for (const [id, page] of Object.entries(PAGES)) {
+    if (page.kind !== "standalone") continue;
+    assert.ok(page.standaloneReason, `${id} musi wyjaśnić, dlaczego jest samodzielna`);
+    assert.deepEqual(page.from, [], `${id} nie może być zwykłym celem powrotu`);
+    assert.ok(!PAGES.manual.from.includes(id), `${id} nie może pojawić się w powrotach z instrukcji`);
+  }
 });
 
 test("linkTo niesie w ret pełny bieżący adres", () => {

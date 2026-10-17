@@ -2,26 +2,17 @@
 
 ## Aktualny stan — przeczytaj najpierw
 
-**Punkt wznowienia 2026-10-17:** branch `codex/e19-3`, ostatni push
-`22f361aa11` (`Attach shared device guard directly to entry pages`).
-Wspólny `guardViewportWidth()` jest teraz podpięty bezpośrednio do stron,
-które nie używają `initPage()`; pośredni `orientation-guard.js` usunięto.
-Nie uruchamiano testów ani galerii.
+**Punkt wznowienia 2026-10-17:** branch `codex/e19-3`, kontynuacja zmian z
+audytu tras i startu stron. `PAGES` obejmuje teraz wszystkie pliki HTML,
+samodzielne przepływy mają opisane wpisy, a 16 wczesnych redirectów sesji
+zastąpiono samym `page-loading`, żeby decyzję podejmował `initPage()` po
+device guardzie. Punktowy `tests/unit/navMap.test.js` przeszedł 26/26;
+pełnych testów i galerii nie uruchamiano. Szczegóły: `docs/audyt-initpage-trasy.md`.
 
-Audyt `PAGES`/`initPage()`/przekierowań jest zapisany w
-[`docs/audyt-initpage-trasy.md`](audyt-initpage-trasy.md). Najważniejsze
-znalezisko: 16 standardowych chronionych stron ma stary inline redirect
-sprawdzający obecność tokenu w `localStorage` przed uruchomieniem `initPage()`.
-To może przekierować przed pokazaniem device guarda. Następny punkt do decyzji:
-usunąć te duplikaty, zostawić `page-loading` i powierzyć sesję `initPage()`;
-panel admina `/settings/` pozostawić poza zakresem.
-
-Nowa stała zasada użytkownika (2026-10-17): każda dodana lub zmieniana strona
-ma równocześnie zaktualizowaną mapę/inwentarz nawigacji, dokumentację oraz
-powiązane testy i generatory. Samodzielne trasy techniczne także muszą mieć
-jawny wpis z uzasadnieniem. Zasada jest zapisana w `AGENTS.md` i
-`docs/nawigacja-mapa-plan.md`; obecny audyt wymienia jeszcze nieuwzględnione
-samodzielne trasy do ujęcia w przyszłym uzupełnieniu mapy.
+Stała zasada użytkownika jest zapisana w `AGENTS.md` i
+`docs/nawigacja-mapa-plan.md`: każda dodana lub zmieniana strona wymaga
+aktualizacji mapy/inwentarza, dokumentacji oraz związanych testów/generatorów;
+trasy samodzielne muszą mieć jawny wpis z uzasadnieniem.
 
 Repo `Andrish97/familiada`, branch `codex/e19-3`. Gałąź zawiera teraz
 implementację wysyłania, migrację367 oraz bramki branch i produkcyjne.

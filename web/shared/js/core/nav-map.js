@@ -55,6 +55,8 @@ export function buttonBlocked(spec) {
 export const PAGES = {
   home:          { path: "/",                   access: "public", parent: null },
   login:         { path: "/login/",             access: "public", parent: "home" },
+  loginConfirm:  { path: "/login/confirm/",     access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy callback potwierdzenia e-mail; nie jest celem zwykłego powrotu." },
+  loginReset:    { path: "/login/reset/",       access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Przepływ resetu hasła oparty na tokenie z wiadomości." },
   games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab", "dialog"], dialogs: ["exportBaseOverlay", "importOverlay", "previewOverlay", "nameOverlay", "exportJsonOverlay"], buttons: {
     btnMarketplace:      { to: "marketplace" },
     btnLogoEditor:       { to: "logoEditor" },
@@ -99,12 +101,28 @@ export const PAGES = {
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort", "dialog"], dialogs: ["submitOverlay", "gameDetailOverlay"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect", state: ["share"] },
   connectTv:     { path: "/connect/tv/", access: "public", parent: "connectDevice", parentAnon: "connectDevice", from: ["connectDevice"], deviceGuard: { formFactors: ["tv"] } },
+  controlDisplay:{ path: "/control/display/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Odbiornik ekranu uruchamiany kodem parowania; osobna sesja urządzenia." },
+  controlHost:   { path: "/control/host/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok hosta sterowania otwierany przez połączone urządzenie." },
+  controlBuzzer: { path: "/control/buzzer/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok buzzera otwierany przez połączone urządzenie." },
+  go:            { path: "/go/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy link odbioru/akcji z tokenem; powrót nie może go ponownie uruchamiać." },
+  pollVotePoints:{ path: "/polls/vote/points/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania punktowego identyfikowany tokenem ankiety." },
+  pollVoteText:  { path: "/polls/vote/text/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania tekstowego identyfikowany tokenem ankiety." },
+  pollVoteQr:    { path: "/polls/vote/qr/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny ekran QR dla głosowania, z własnym guardem urządzenia." },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
   manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
     btnLegal: { to: "privacy" },
   } },
   mailCenter:    { path: "/mails/", access: "public", parent: "home", from: ["home"], tabs: ["subscriptions","items"], state: ["tab","m"] },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
+  notFound:      { path: "/404.html", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Dokument serwowany przez fallback 404; rzeczywisty nieznany URL pozostaje w pasku adresu." },
+  maintenance:   { path: "/maintenance/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Strona serwisowa zwracana przez bramkę Maintenance zamiast żądanej strony." },
+  admin:         { path: "/settings/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Panel administracyjny z osobną autoryzacją i powłoką." },
+  adminToolEditor: { path: "/settings/tools/editor_5x7.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolExporter: { path: "/settings/tools/exporterandeditor.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolHostLogo: { path: "/settings/tools/host-logo-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
+  adminToolKora: { path: "/settings/tools/kora-builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolLogoBackground: { path: "/settings/tools/logo-background-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
+  adminToolTheme: { path: "/settings/tools/theme_builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
 };
 
 // Wspólny kontakt jest budowany dynamicznie, więc nie należy do statycznych
@@ -125,7 +143,7 @@ for (const pageId of new Set(Object.values(GLOBAL_DIALOGS).flat())) {
 // Z instrukcji i prywatności wracamy na każdą stronę z topbarem; do samej
 // instrukcji, prywatności, landingu i logowania nie.
 const MANUAL_EXCLUDED = new Set(["manual", "privacy", "home", "login", "mailCenter"]);
-PAGES.manual.from = Object.keys(PAGES).filter((id) => !MANUAL_EXCLUDED.has(id));
+PAGES.manual.from = Object.keys(PAGES).filter((id) => !MANUAL_EXCLUDED.has(id) && PAGES[id].kind !== "standalone");
 
 export const ROLES = ["anon", "guest", "user"];
 
@@ -203,7 +221,7 @@ function parseInternal(raw) {
 // Strona jest serwowana także bez końcowego "/" (np. /game-settings), więc
 // adres bieżącej strony porównujemy z tym "/" dopisanym.
 export function pageIdForPath(pathname) {
-  const withSlash = pathname.endsWith("/") ? pathname : `${pathname}/`;
+  const withSlash = pathname.endsWith("/") || /\.[a-z0-9]+$/i.test(pathname) ? pathname : `${pathname}/`;
   let sub = null;
   for (const [id, p] of Object.entries(PAGES)) {
     if (p.path === withSlash) return id;
