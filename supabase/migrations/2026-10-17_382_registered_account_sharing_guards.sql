@@ -218,7 +218,7 @@ BEGIN
    'reminder_count',t.reminder_count,'declined_at',t.declined_at,'cancelled_at',t.cancelled_at,
    'hidden',t.status='cancelled' OR (t.status='declined' AND t.declined_at<=now()-interval '5 days'),
    'email_enabled',public._contact_mail_enabled(coalesce(public._norm_email(u.email),t.recipient_email)),
-   'cooldown_until',public._poll_mail_cooldown_until(uid,t.recipient_user_id,coalesce(public._norm_email(u.email),t.recipient_email),p_game_id)
+   'cooldown_until',public._poll_mail_cooldown_until(uid,t.recipient_user_id,coalesce(public._norm_email(u.email),t.recipient_email),p_game_id))
    ORDER BY t.created_at DESC),'[]'::jsonb) INTO ts
  FROM public.poll_tasks t LEFT JOIN public.profiles p ON p.id=t.recipient_user_id LEFT JOIN auth.users u ON u.id=t.recipient_user_id
  WHERE t.game_id=p_game_id AND t.owner_id=uid AND t.share_key_poll=g.share_key_poll AND (t.status<>'cancelled' OR t.declined_at IS NOT NULL);
