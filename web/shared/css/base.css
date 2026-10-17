@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-17T05093");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-17T05114");
 
 /* css/base.css */
 :root {
@@ -1127,11 +1127,6 @@ main{
     }
     .modal--sheet.sheet-active .pollRecipientsModal .shareList {
         max-height: none;
-    }
-    .modal--sheet.sheet-active .shareModal .shareList--scroll,
-    .modal--sheet.sheet-active .shareModal #shareDeviceCurrentContent {
-        max-height: none;
-        overflow: visible;
     }
     .modal--sheet.sheet-active .sheet-modal-head > :is(.uni-head,.mHead,.tagsHead,.bld-preview-head,.mkt-detail-head,.previewModalTitle) {
         position: static;
@@ -2729,6 +2724,61 @@ button.rowsSectionHead{ cursor: pointer; }
   .pollRecipientsModal .uni-hint { flex: 0 0 auto; }
   .baseShareLookup .btn .only-desktop,
   .baseShareFooter .btn .only-desktop { display: none !important; }
+
+  /* Udostępnianie bazy: formularz ma własny wiersz, a obie listy są
+     jednocześnie widoczne i dzielą pozostałą wysokość arkusza. */
+  #shareOverlay.sheet-active .shareModal { overflow: hidden; }
+  #shareOverlay.sheet-active .sheet-modal-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  #shareOverlay.sheet-active .baseShareSections {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #shareOverlay.sheet-active .baseShareSections > .shareSection { min-height: 0; overflow: hidden; }
+  #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="friends"],
+  #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="shared"] {
+    display: flex;
+    flex-direction: column;
+  }
+  #shareOverlay.sheet-active .baseShareSections .shareList--scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Udostępnianie urządzenia: formularz i dwie sekcje list zajmują osobne
+     wiersze; przewijają się wyłącznie listy znajomych i udostępnionych. */
+  #shareDeviceOverlay.sheet-active .shareModal { overflow: hidden; }
+  #shareDeviceOverlay.sheet-active .sheet-modal-body {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 8px;
+    overflow: hidden;
+  }
+  #shareDeviceOverlay.sheet-active .sheet-modal-body > .shareSection {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  #shareDeviceOverlay.sheet-active .shareList {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Touch menus: avoid hover/pressed compositing while navigating on tablets. */
