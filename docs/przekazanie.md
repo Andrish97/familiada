@@ -1285,14 +1285,15 @@ w sekwencyjnej galerii; samo dodanie markerów nie zamyka E20.
 
 ## Bieżąca runda E20 — audyt mobilnego scrolla (2026-10-17)
 
-Wspólny wzorzec strony i mobilnego modala: zewnętrzny ekran/arkusz jest
-nieruchomy; przewija się obszar roboczy albo lista. Przy jednej liście
-przewija się ona sama. Dwie równorzędne listy mogą być widoczne jednocześnie
-i każda przewija się wewnętrznie. Listy nie mogą być zagnieżdżone w
-przewijanym body. Nagłówki, akcje i przełączniki pozostają widoczne. Jeśli
-wiele list nie mieści się czytelnie, rozważyć przełączane sekcje; nie ucinać
-ani nie ukrywać treści. W modalu bez listy przewija się jeden obszar treści
-pod nieruchomym nagłówkiem/akcjami.
+Wspólny wzorzec strony i modala — mobilnego arkusza i zwykłego okna: strona
+nie przewija się jako całość, a modal mieści się w dostępnym obszarze. Nagłówek
+i akcje pozostają dostępne; przewija się obszar roboczy strony albo treść
+wewnątrz modala. Jedna lista ma własny scroll; dwie równorzędne listy mogą
+być widoczne jednocześnie i każda przewija się wewnętrznie. Nie zagnieżdżać
+list w przewijanym body ani nie przewijać całego okna wraz z nagłówkiem i
+akcjami. W modalu bez listy przewija się jeden obszar treści. Przy wielu
+listach, które się nie mieszczą, rozważyć przełączane sekcje, bez ucinania
+treści.
 
 Landscape jest wyłączone z tej rundy; panel admina `/settings/` pozostaje poza
 zakresem. Najwyższy priorytet mają trzy modale Base Explorer: tagi (3 warstwy),

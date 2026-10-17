@@ -99,16 +99,18 @@ Pracować po kolei. Po zakończeniu każdej uwagi zatrzymać się przed następn
 
 ## Dopisek do bieżącej rundy — jeden pionowy scroll na mobile (2026-10-17)
 
-**Wspólny wzorzec mobile (doprecyzowanie użytkownika 2026-10-17):** ekran
-strony ani zewnętrzny arkusz modala nie przewija się jako całość. Stałe
-elementy — topbar, nagłówek, akcje i przełączniki — zostają na miejscu.
-Przewija się przeznaczony do tego obszar roboczy/listy. Przy jednej liście
-przewija się lista; przy dwóch równorzędnych, potrzebnych listach obie są
-widoczne i każda przewija się wewnętrznie. Nie wolno zagnieżdżać przewijanej
-listy w przewijanym obszarze strony lub modala. Jeśli kilka list nie mieści
-się czytelnie, rozważyć przełączane sekcje z jedną aktywną listą; nic nie może
-zostać ucięte ani ukryte. W modalu bez listy przewija się pojedynczy obszar
-treści pod stałym nagłówkiem/akcjami. Mobile landscape pozostaje poza tą rundą.
+**Wspólny wzorzec stron i modalów (doprecyzowanie użytkownika 2026-10-17):**
+strona nie przewija się jako całość; przewija się jej obszar roboczy/lista.
+Modal — mobilny arkusz i zwykłe wyśrodkowane okno — mieści się w dostępnym
+obszarze. Nagłówek i akcje pozostają dostępne, a przy długiej treści przewija
+się wyznaczony obszar wewnątrz modala. Przy jednej liście przewija się lista;
+przy dwóch równorzędnych, potrzebnych listach obie są widoczne i każda
+przewija się wewnętrznie. Nie zagnieżdżać list w przewijanym body ani nie
+przewijać całego okna razem z jego nagłówkiem/akcjami. Jeśli kilka list nie
+mieści się czytelnie, rozważyć przełączane sekcje z jedną aktywną listą; nic
+nie może zostać ucięte ani ukryte. W modalu bez listy przewija się pojedynczy
+obszar treści pod stałym nagłówkiem/akcjami. Mobile landscape pozostaje poza
+tą rundą.
 Poniższe pozycje są propozycją, nie wdrożeniem ani potwierdzeniem wyglądu.
 
 | Miejsce | Co powoduje lub może powodować podwójny scroll | Proponowana poprawa | Powiązane uwagi z rundy |

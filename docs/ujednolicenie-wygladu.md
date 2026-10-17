@@ -1415,12 +1415,14 @@ prośba o uzgodnienie galerii nie obowiązuje dla tej kontynuacji.
 
 ### E20 — doprecyzowanie: jeden pionowy scroll na mobile (2026-10-17)
 
-Wspólny wzorzec stron i mobilnych modali: zewnętrzny ekran/arkusz nie
-przewija się. Topbar, nagłówek, akcje i przełączniki pozostają widoczne,
-a przewija się przeznaczony obszar roboczy. Przy jednej liście przewija się
-lista; przy dwóch równorzędnych listach obie są widoczne i każda przewija
-się osobno. Nie zagnieżdżać list w przewijanym body. W modalu bez listy
-przewija się pojedynczy obszar treści pod nieruchomym nagłówkiem i akcjami.
+Wspólny wzorzec stron i modalów — mobilnych arkuszy oraz zwykłych okien:
+zewnętrzna strona nie przewija się, a modal mieści się w dostępnym obszarze.
+Topbar, nagłówek i akcje zostają dostępne. Przewija się obszar roboczy strony
+albo wyznaczona treść wewnątrz modala. Przy jednej liście przewija się lista;
+przy dwóch równorzędnych listach obie są widoczne i każda przewija się osobno.
+Nie zagnieżdżać list w przewijanym body ani nie przewijać całego okna razem
+z nagłówkiem/akcjami. W modalu bez listy przewija się jeden obszar treści pod
+stałym nagłówkiem i akcjami.
 Gdy wiele list nie mieści się czytelnie, rozważyć przełączane sekcje; nie
 ucinać ani nie ukrywać treści. Mobile landscape i panel administracyjny `/settings/`
 pozostają poza zakresem tej rundy.
