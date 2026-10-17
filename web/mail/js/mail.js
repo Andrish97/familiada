@@ -4,10 +4,11 @@ import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-
 import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-17T05524';
 import { toast } from '../../shared/js/core/toast.js?v=v2026-10-17T05524';
 import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-17T05524';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-17T05524';
 
 const $ = id => document.getElementById(id);
 const text = (key, vars) => t(`mailCenter.${key}`, vars);
-let model = { state: 'entry' }, selectedTab = 'subscriptions', csrf = '', busy = false;
+let model = { state: 'entry' }, selectedTab = tabFromUrl(['subscriptions', 'items'], 'subscriptions'), csrf = '', busy = false;
 let requestUntil = 0, cooldownTimer = null, pendingAccess = '';
 async function exchangeAccess() { model = stateFrom(await api('exchange', { token: pendingAccess })); pendingAccess = ''; }
 
@@ -40,11 +41,11 @@ function stateFrom(data) {
   return { state: 'entry' };
 }
 function badge(id, count) {
-  const mobileBadge = $(id), panelBadge = document.querySelector(`[data-mail-count="${id}"]`);
-  for (const node of [mobileBadge, panelBadge].filter(Boolean)) { node.textContent = String(count); node.hidden = count === 0; }
+  const node = $(id); node.textContent = String(count); node.hidden = count === 0;
 }
 function setTab(value) {
   selectedTab = value;
+  setUrlTab(value, 'subscriptions');
   document.querySelectorAll('[data-tab]').forEach(node => {
     const active = node.dataset.tab === value;
     node.classList.toggle('active', active); node.closest('.tab-slot').classList.toggle('active', active);

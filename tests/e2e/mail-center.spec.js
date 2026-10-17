@@ -104,6 +104,9 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await center.locator('[data-tab=items]').click();
     await expect(center.locator('#itemsPanel')).toBeVisible();
     await expect(center.locator('#subscriptionPanel')).toBeHidden();
+    expect(new URL(center.url()).searchParams.get('tab')).toBe('items');
+    await center.locator('[data-tab=subscriptions]').click();
+    expect(new URL(center.url()).searchParams.has('tab')).toBe(false);
     expect(await center.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const denied = await center.evaluate(async () => (await fetch('/_api/mail/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })).status);
     expect(denied).toBe(403); expect((await state(center)).notifications_enabled).toBe(true);
