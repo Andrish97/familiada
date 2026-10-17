@@ -5,6 +5,21 @@ Cel: każda strona deklaruje w JEDNYM miejscu kto może na nią wejść
 i jak się nazywa. Strony przestają same składać `?ret=`, `?from=`, etykiety
 „← Wróć do …”, overlaye gościa i przekierowania na logowanie.
 
+## Decyzja 2026-10-17: mapa obejmuje każdą trasę
+
+Przy dodaniu, usunięciu lub zmianie strony zawsze aktualizujemy `PAGES` oraz
+`pageIdForPath` w tym samym pakiecie. Aktualizujemy też inwentarz tras,
+dokumentację i zależne testy/generatory. Dotyczy to zmian adresu, sesji,
+uwierzytelniania, przekierowań, ograniczeń urządzeń, powrotu i deep linków.
+
+Mapa ma zawierać każdą rzeczywistą trasę HTML, również taką, która nie jest
+elementem zwykłego menu. Przepływy tokenowe, urządzeniowe, administracyjne i
+techniczne oznaczamy jawnie jako samodzielne oraz opisujemy, dlaczego nie
+uczestniczą w zwykłej nawigacji. Ich pominięcie bez wpisu jest błędem
+kompletności. Obecna tabela `PAGES` skupia się głównie na nawigacji; audyt
+`docs/audyt-initpage-trasy.md` wskazuje trasy, które trzeba włączyć do
+inwentarza przy jego uzupełnieniu.
+
 ---
 
 ## 1. Co dziś jest niespójne (znalezione w kodzie)
