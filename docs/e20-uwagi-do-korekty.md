@@ -39,6 +39,14 @@ ekranach do 600 px; widok desktopowy nie zmienia się. Zaktualizowano
 cache-buster wspólnego CSS na czterech stronach Logo. Do wizualnego
 potwierdzenia w galerii; nie uruchamiano testów ani galerii.
 
+Punkt 7 — wspólne kafle Gry i Baz skracają długie nazwy do dwóch wierszy,
+z wielokropkiem; wymuszone `min-width: 0` zapobiega wypychaniu tytułu
+poza kolumnę. Ten sam limit dwóch wierszy dodano do tytułów kafli
+Marketplace. Logo i Connect już miały wielokropek, a w Zadaniach
+tytuły wierszy także są skracane, więc tam nie zmieniano wyglądu.
+Odświeżono cache-bustery zmienionych arkuszy. Do wizualnego
+potwierdzenia; testów ani galerii nie uruchamiano.
+
 ### Ankiety — poprawki punktu 5 na branchu
 
 Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px
