@@ -1,8 +1,7 @@
 // control/js/presence.js
-// Obecność urządzeń (kto jest online) — fakt, nie stan gry (plan, sekcja 2
-// punkt "0."), więc zostaje CAŁKOWICIE poza public.game_state, dokładnie
-// jak dziś: tabela public.device_presence, reużyta bez zmian, pollowana
-// przez Control.
+// Status dozwolonego urządzenia pochodzi z serwerowego lease primary.
+// device_presence pozostaje osobną telemetrią stanu karty i dźwięku; nie
+// rozstrzyga, czy urządzenie może brać udział w grze.
 //
 // W odróżnieniu od control/js/presence.js: brak jakiegokolwiek wysyłania
 // komend przy przejściu offline->online ("okno inicjalizacji" dzisiejszego
@@ -11,9 +10,9 @@
 // game_state przy każdym (re)connect). Ten moduł robi wyłącznie to, co jest
 // realnie faktem obecności: kto jest online, od kiedy.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T22404";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T04535";
 
-const ONLINE_MS = 6_500; // Two missed 3s heartbeats, with a small margin.
+const STATUS_READ_TIMEOUT_MS = 6_500;
 const POLL_MS = 750;
 
 export function createPresence({ gameId, onChange }) {
@@ -40,11 +39,6 @@ export function createPresence({ gameId, onChange }) {
   // onChange() wyłącznie do realnych zmian obecności.
   let lastReported = null;
 
-  function isOnline(lastSeen) {
-    if (!lastSeen) return false;
-    return Date.now() - new Date(lastSeen).getTime() < ONLINE_MS;
-  }
-
   function pickNewest(rows, deviceType) {
     return rows
       .filter((r) => String(r.device_type || "").toLowerCase() === deviceType)
@@ -55,24 +49,27 @@ export function createPresence({ gameId, onChange }) {
     if (inFlight) return;
     inFlight = true;
     try {
-    const [presenceResult, unlockResult] = await Promise.all([
+    const [presenceResult, unlockResult, leaseResult] = await Promise.all([
       sb().from("device_presence")
         .select("device_type,last_seen_at,meta")
         .eq("game_id", gameId)
-        .abortSignal(AbortSignal.timeout(ONLINE_MS)),
+        .abortSignal(AbortSignal.timeout(STATUS_READ_TIMEOUT_MS)),
       sb().from("display_audio_unlock")
         .select("request_nonce,acknowledged_nonce")
         .eq("game_id", gameId)
         .maybeSingle()
-        .abortSignal(AbortSignal.timeout(ONLINE_MS)),
+        .abortSignal(AbortSignal.timeout(STATUS_READ_TIMEOUT_MS)),
+      sb().rpc("control_device_slots_for_owner", { p_game_id: gameId })
+        .abortSignal(AbortSignal.timeout(STATUS_READ_TIMEOUT_MS)),
     ]);
     const { data, error } = presenceResult;
+    const { data: leaseRows, error: leaseError } = leaseResult;
 
-    if (error) {
-      // A failed read says nothing about device connectivity. Keep the last
-      // observed status; Control separately blocks actions until reads recover.
+    if (error || leaseError) {
+      // The lease RPC is authoritative for game actions. If it fails, keep the
+      // last flags and block actions until primary ownership can be verified.
       readUnavailable = true;
-      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error });
+      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error: leaseError || error });
       return;
     }
 
@@ -107,10 +104,10 @@ export function createPresence({ gameId, onChange }) {
       }
       if (visibility != null) lastPageVisibility[kind] = visibility;
     }
-    // isOnline() liczy się od Date.now() — flags może się zmienić (online
-    // -> offline) samym upływem czasu, BEZ żadnej zmiany w bazie, więc
-    // porównanie musi patrzeć na WYLICZONE flags, nie na surowe lastSeenAt.
-    flags = { display: isOnline(lastSeenAt.display), host: isOnline(lastSeenAt.host), buzzer: isOnline(lastSeenAt.buzzer) };
+    // Lease RPC jest źródłem prawdy: obecność transportowa karty nie oznacza,
+    // że dana instancja ma prawo obsługiwać grę.
+    const primaryByType = Object.fromEntries((leaseRows || []).map(row => [row.device_type, row.primary_online === true]));
+    flags = { display: !!primaryByType.display, host: !!primaryByType.host, buzzer: !!primaryByType.buzzer };
 
     reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, displayAudioUnlockStatus, error: null });
     } catch (error) {
@@ -159,7 +156,9 @@ export function createPresence({ gameId, onChange }) {
     // (także ponowień HTTP) brak świeżego wyniku nie dowodzi rozłączenia.
     expiryTimer = setInterval(() => {
       if (inFlight || readUnavailable) return;
-      flags = Object.fromEntries(Object.entries(lastSeenAt).map(([kind, at]) => [kind, isOnline(at)]));
+      // The lease RPC, not the older device_presence timestamp, decides
+      // whether the fenced primary is still valid. Time alone can't recreate
+      // that server-side ownership proof.
       reportIfChanged({ flags, lastSeenAt, error: null });
     }, 250);
   }

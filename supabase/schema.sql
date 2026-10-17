@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AmC6sQwfsYfZGkHgafNKj9XkEpYh7VXonrWAheXlI3dXdlm4bFlOSYpUlH6dEBx
+\restrict ecLfhgtOjbQdSZr9gwnmf3Dm0IpjcHaQ7PDJ5iTBz7RS7keML4Ibts0kBVMld0z
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -350,6 +350,225 @@ CREATE FUNCTION "public"."_contact_mail_enabled"("p_email" "text") RETURNS boole
    AND coalesce((SELECT f.email_notifications FROM auth.users u
      JOIN public.user_flags f ON f.user_id=u.id
      WHERE lower(trim(u.email))=public._norm_email(p_email) LIMIT 1),true);
+$$;
+
+
+--
+-- Name: _control2_log_device_lease_transition(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control2_log_device_lease_transition"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_session_id uuid;
+  v_from text;
+  v_epoch bigint;
+  v_event_id text;
+BEGIN
+  IF TG_OP='INSERT' THEN
+    -- Only log a queue insertion if another live instance already owns the slot.
+    IF NEW.state<>'waiting' OR NOT EXISTS (
+      SELECT 1 FROM public.control_device_slots s
+      WHERE s.session_id=NEW.session_id AND s.device_type=NEW.device_type
+        AND s.primary_connection_id IS NOT NULL AND s.primary_connection_id<>NEW.id
+    ) THEN RETURN NEW; END IF;
+    v_from := NULL;
+    v_epoch := 0;
+    v_event_id := 'lease:'||NEW.id::text||':waiting';
+  ELSE
+    IF OLD.state IS NOT DISTINCT FROM NEW.state THEN RETURN NEW; END IF;
+    v_from := OLD.state;
+    v_epoch := coalesce(NEW.epoch,OLD.epoch,0);
+    v_event_id := 'lease:'||NEW.id::text||':'||NEW.state||':'||v_epoch::text;
+  END IF;
+
+  SELECT a.session_id INTO v_session_id
+  FROM public.game_session_active a
+  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
+  WHERE a.game_id=NEW.game_id AND s.control_version=2 AND s.ended_at IS NULL
+  LIMIT 1;
+  IF v_session_id IS NULL THEN RETURN NEW; END IF;
+
+  BEGIN
+    INSERT INTO public.control2_device_events(
+      game_id,session_id,device_type,event_type,event_id,details
+    ) VALUES (
+      NEW.game_id,v_session_id,NEW.device_type,'lease_state',v_event_id,
+      jsonb_build_object(
+        'device_type',NEW.device_type,
+        'from_state',v_from,
+        'to_state',NEW.state,
+        'epoch',v_epoch,
+        'connection_id',NEW.id,
+        'visibility',NEW.page_visibility,
+        'focused',NEW.focused
+      )
+    ) ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
+
+    DELETE FROM public.control2_device_events e
+    WHERE e.game_id=NEW.game_id
+      AND (e.created_at<now()-interval '30 days' OR e.id IN (
+        SELECT id FROM public.control2_device_events
+        WHERE game_id=NEW.game_id ORDER BY created_at DESC,id DESC OFFSET 500
+      ));
+  EXCEPTION WHEN OTHERS THEN
+    -- A diagnostic write must not break device registration or lease renewal.
+    RAISE WARNING 'Control 2 lease event was not recorded: %',SQLERRM;
+  END;
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: _control_device_action_valid("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control_device_action_valid"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint) RETURNS boolean
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE v_session_id uuid;
+BEGIN
+  IF NOT public.control_device_key_valid(p_game_id,p_device_type,p_key) THEN RETURN false; END IF;
+  v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
+  IF NOT EXISTS (SELECT 1 FROM public.control_runtime_sessions
+    WHERE id=v_session_id AND game_id=p_game_id AND device_protocol=2
+      AND ended_at IS NULL AND expires_at>now()) THEN RETURN false; END IF;
+  IF p_connection_id IS NULL OR p_epoch IS NULL THEN RETURN false; END IF;
+  RETURN EXISTS (
+    SELECT 1 FROM public.control_device_connections c
+    JOIN public.control_device_slots s ON s.session_id=c.session_id AND s.device_type=c.device_type
+    WHERE c.id=p_connection_id AND c.session_id=v_session_id AND c.game_id=p_game_id
+      AND c.device_type=p_device_type AND c.state='primary' AND c.epoch=p_epoch
+      AND c.last_seen_at>clock_timestamp()-interval '12 seconds'
+      AND s.primary_connection_id=c.id AND s.epoch=p_epoch
+      AND s.lease_expires_at>clock_timestamp()
+  );
+END;
+$$;
+
+
+--
+-- Name: _control_device_promote_waiting("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control_device_promote_waiting"("p_session_id" "uuid", "p_device_type" "text") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_slot public.control_device_slots;
+  v_candidate uuid;
+  v_epoch bigint;
+BEGIN
+  SELECT * INTO v_slot FROM public.control_device_slots
+  WHERE session_id=p_session_id AND device_type=p_device_type FOR UPDATE;
+  IF NOT FOUND THEN RETURN NULL; END IF;
+
+  IF v_slot.primary_connection_id IS NOT NULL
+     AND v_slot.lease_expires_at > clock_timestamp()
+     AND EXISTS (
+       SELECT 1 FROM public.control_device_connections c
+       WHERE c.id=v_slot.primary_connection_id AND c.state='primary'
+         AND c.last_seen_at > clock_timestamp()-interval '12 seconds'
+     ) THEN
+    RETURN v_slot.primary_connection_id;
+  END IF;
+
+  IF v_slot.primary_connection_id IS NOT NULL THEN
+    UPDATE public.control_device_connections SET state='expired',epoch=NULL
+    WHERE id=v_slot.primary_connection_id AND state='primary';
+  END IF;
+  UPDATE public.control_device_connections SET state='expired',epoch=NULL
+  WHERE session_id=p_session_id AND device_type=p_device_type AND state='waiting'
+    AND last_seen_at<=clock_timestamp()-interval '12 seconds';
+
+  SELECT c.id INTO v_candidate
+  FROM public.control_device_connections c
+  WHERE c.session_id=p_session_id AND c.device_type=p_device_type
+    AND c.state='waiting' AND c.last_seen_at > clock_timestamp()-interval '12 seconds'
+  ORDER BY c.requested_at,c.id
+  FOR UPDATE SKIP LOCKED
+  LIMIT 1;
+
+  IF v_candidate IS NULL THEN
+    UPDATE public.control_device_slots SET primary_connection_id=NULL,
+      epoch=CASE WHEN v_slot.primary_connection_id IS NULL THEN v_slot.epoch ELSE v_slot.epoch+1 END,
+      lease_expires_at=NULL,updated_at=clock_timestamp()
+    WHERE session_id=p_session_id AND device_type=p_device_type;
+    RETURN NULL;
+  END IF;
+
+  v_epoch := v_slot.epoch + 1;
+  UPDATE public.control_device_connections SET state='primary',epoch=v_epoch
+  WHERE id=v_candidate;
+  UPDATE public.control_device_slots SET primary_connection_id=v_candidate,epoch=v_epoch,
+    lease_expires_at=clock_timestamp()+interval '12 seconds',updated_at=clock_timestamp()
+  WHERE session_id=p_session_id AND device_type=p_device_type;
+  RETURN v_candidate;
+END;
+$$;
+
+
+--
+-- Name: _control_device_session_for_key("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control_device_session_for_key"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text") RETURNS "uuid"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT t.session_id
+  FROM public.control_device_link_tokens t
+  JOIN public.control_runtime_sessions s ON s.id=t.session_id
+  WHERE t.game_id=p_game_id AND t.device_type=p_device_type AND t.token::text=p_key
+    AND s.ended_at IS NULL AND s.expires_at>now()
+  UNION ALL
+  SELECT sh.session_id
+  FROM public.control_device_shares sh
+  JOIN public.control_runtime_sessions s ON s.id=sh.session_id
+  WHERE sh.game_id=p_game_id AND sh.device_type=p_device_type AND sh.token::text=p_key
+    AND sh.revoked_at IS NULL AND s.ended_at IS NULL AND s.expires_at>now()
+  LIMIT 1
+$$;
+
+
+--
+-- Name: _control_device_status("uuid", "text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control_device_status"("p_session_id" "uuid", "p_device_type" "text", "p_connection_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_connection public.control_device_connections;
+  v_slot public.control_device_slots;
+  v_position integer;
+  v_waiting integer;
+BEGIN
+  SELECT * INTO v_connection FROM public.control_device_connections
+  WHERE id=p_connection_id AND session_id=p_session_id AND device_type=p_device_type;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'state','missing'); END IF;
+  SELECT * INTO v_slot FROM public.control_device_slots
+  WHERE session_id=p_session_id AND device_type=p_device_type;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'state',v_connection.state); END IF;
+  SELECT count(*)::integer INTO v_waiting FROM public.control_device_connections
+  WHERE session_id=p_session_id AND device_type=p_device_type AND state='waiting'
+    AND last_seen_at>clock_timestamp()-interval '12 seconds';
+  IF v_connection.state='waiting' THEN
+    SELECT count(*)::integer+1 INTO v_position FROM public.control_device_connections c
+    WHERE c.session_id=p_session_id AND c.device_type=p_device_type AND c.state='waiting'
+      AND c.last_seen_at>clock_timestamp()-interval '12 seconds'
+      AND (c.requested_at,c.id)<(v_connection.requested_at,v_connection.id);
+  END IF;
+  RETURN jsonb_build_object('ok',true,'state',v_connection.state,
+    'epoch',v_connection.epoch,'lease_expires_at',v_slot.lease_expires_at,
+    'waiting_count',v_waiting,'queue_position',v_position);
+END;
 $$;
 
 
@@ -3577,16 +3796,16 @@ $$;
 
 
 --
--- Name: acknowledge_display_audio_unlock("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: acknowledge_display_audio_unlock("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."acknowledge_display_audio_unlock"("p_game_id" "uuid", "p_key" "text", "p_nonce" "text") RETURNS boolean
+CREATE FUNCTION "public"."acknowledge_display_audio_unlock"("p_game_id" "uuid", "p_key" "text", "p_nonce" "text", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 DECLARE changed integer;
 BEGIN
-  IF NOT public.control_device_key_valid(p_game_id,'display',p_key) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
   UPDATE public.display_audio_unlock SET acknowledged_nonce=request_nonce,acknowledged_at=now()
     WHERE game_id=p_game_id AND request_nonce=p_nonce;
   GET DIAGNOSTICS changed=ROW_COUNT;
@@ -4486,20 +4705,19 @@ $$;
 
 
 --
--- Name: begin_display_audio_session("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: begin_display_audio_session("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."begin_display_audio_session"("p_game_id" "uuid", "p_key" "text", "p_session_nonce" "text") RETURNS boolean
+CREATE FUNCTION "public"."begin_display_audio_session"("p_game_id" "uuid", "p_key" "text", "p_session_nonce" "text", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 BEGIN
-  IF NOT public.control_device_key_valid(p_game_id,'display',p_key) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
   IF p_session_nonce IS NULL OR length(p_session_nonce)<8 OR length(p_session_nonce)>100 THEN RAISE EXCEPTION 'invalid nonce'; END IF;
   INSERT INTO public.display_audio_unlock(game_id,session_nonce,request_nonce,acknowledged_nonce,requested_at,acknowledged_at)
-  VALUES(p_game_id,p_session_nonce,p_session_nonce,NULL,now(),NULL)
-  ON CONFLICT(game_id) DO UPDATE SET session_nonce=EXCLUDED.session_nonce,
-    request_nonce=EXCLUDED.request_nonce,acknowledged_nonce=NULL,requested_at=now(),acknowledged_at=NULL;
+    VALUES(p_game_id,p_session_nonce,p_session_nonce,NULL,now(),NULL)
+    ON CONFLICT(game_id) DO UPDATE SET session_nonce=EXCLUDED.session_nonce,request_nonce=EXCLUDED.request_nonce,acknowledged_nonce=NULL,requested_at=now(),acknowledged_at=NULL;
   RETURN true;
 END $$;
 
@@ -4773,73 +4991,47 @@ END; $$;
 
 
 --
--- Name: control2_display_event("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: control2_display_event("uuid", "text", "jsonb", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."control2_display_event"("p_game_id" "uuid", "p_key" "text", "p_event" "jsonb") RETURNS "void"
+CREATE FUNCTION "public"."control2_display_event"("p_game_id" "uuid", "p_key" "text", "p_event" "jsonb", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  sid uuid;
-  event_name text;
-  event_details jsonb;
+DECLARE sid uuid; event_name text; event_details jsonb;
 BEGIN
-  IF NOT public.control_device_key_valid(p_game_id, 'display', p_key) THEN
-    RAISE EXCEPTION 'forbidden';
-  END IF;
-  IF p_event IS NULL OR octet_length(p_event::text) > 2000 THEN
-    RAISE EXCEPTION 'invalid event';
-  END IF;
-  event_name := p_event->>'event_type';
-  IF event_name IS NULL OR event_name NOT IN ('page_state','render_stall','runtime_error','network_state') THEN
-    RAISE EXCEPTION 'invalid event type';
-  END IF;
-
-  SELECT a.session_id INTO sid
-  FROM public.game_session_active a
-  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
-  WHERE a.game_id=p_game_id AND s.control_version=2;
-  IF sid IS NULL THEN RETURN; END IF;
-
+  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF p_event IS NULL OR octet_length(p_event::text)>2000 THEN RAISE EXCEPTION 'invalid event'; END IF;
+  event_name:=p_event->>'event_type';
+  IF event_name IS NULL OR event_name NOT IN ('page_state','render_stall','runtime_error','network_state') THEN RAISE EXCEPTION 'invalid event type'; END IF;
+  SELECT a.session_id INTO sid FROM public.game_session_active a
+    JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
+    WHERE a.game_id=p_game_id AND s.control_version=2 AND s.ended_at IS NULL;
+  IF sid IS NULL THEN RETURN false; END IF;
   IF event_name='page_state' THEN
-    event_details := jsonb_build_object(
-      'reason', CASE WHEN p_event->>'reason' IN ('initial','visibilitychange','focus','blur') THEN p_event->>'reason' ELSE 'statechange' END,
-      'visibility', CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
-      'focused', CASE WHEN jsonb_typeof(p_event->'focused')='boolean' THEN (p_event->>'focused')::boolean ELSE NULL END,
-      'was_discarded', CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean' THEN (p_event->>'was_discarded')::boolean ELSE NULL END
-    );
+    event_details:=jsonb_build_object('reason',CASE WHEN p_event->>'reason' IN ('initial','visibilitychange','focus','blur') THEN p_event->>'reason' ELSE 'statechange' END,
+      'visibility',CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
+      'focused',CASE WHEN jsonb_typeof(p_event->'focused')='boolean' THEN (p_event->>'focused')::boolean ELSE NULL END,
+      'was_discarded',CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean' THEN (p_event->>'was_discarded')::boolean ELSE NULL END);
   ELSIF event_name='render_stall' THEN
-    event_details := jsonb_build_object(
-      'max_frame_gap_ms', LEAST(60000, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'max_frame_gap_ms')='number' THEN (p_event->>'max_frame_gap_ms')::numeric ELSE 0 END))::integer,
-      'stalled_frames', LEAST(10000, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'stalled_frames')='number' THEN (p_event->>'stalled_frames')::numeric ELSE 0 END))::integer,
-      'visibility', CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
-      'state_rev', LEAST(9223372036854775807::numeric, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint
-    );
+    event_details:=jsonb_build_object('max_frame_gap_ms',LEAST(60000,GREATEST(0,CASE WHEN jsonb_typeof(p_event->'max_frame_gap_ms')='number' THEN (p_event->>'max_frame_gap_ms')::numeric ELSE 0 END))::integer,
+      'stalled_frames',LEAST(10000,GREATEST(0,CASE WHEN jsonb_typeof(p_event->'stalled_frames')='number' THEN (p_event->>'stalled_frames')::numeric ELSE 0 END))::integer,
+      'visibility',CASE WHEN p_event->>'visibility' IN ('visible','hidden') THEN p_event->>'visibility' ELSE 'unknown' END,
+      'state_rev',LEAST(9223372036854775807::numeric,GREATEST(0,CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint);
   ELSIF event_name='runtime_error' THEN
-    event_details := jsonb_build_object(
-      'phase', CASE WHEN p_event->>'phase' IN ('render','completion_ack') THEN p_event->>'phase' ELSE 'other' END,
-      'error_name', left(coalesce(p_event->>'error_name','Error'),80),
-      'state_rev', LEAST(9223372036854775807::numeric, GREATEST(0, CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint
-    );
+    event_details:=jsonb_build_object('phase',CASE WHEN p_event->>'phase' IN ('render','completion_ack') THEN p_event->>'phase' ELSE 'other' END,
+      'error_name',left(coalesce(p_event->>'error_name','Error'),80),
+      'state_rev',LEAST(9223372036854775807::numeric,GREATEST(0,CASE WHEN jsonb_typeof(p_event->'state_rev')='number' THEN (p_event->>'state_rev')::numeric ELSE 0 END))::bigint);
   ELSE
-    event_details := jsonb_build_object(
-      'online', CASE WHEN jsonb_typeof(p_event->'online')='boolean' THEN (p_event->>'online')::boolean ELSE false END
-    );
+    event_details:=jsonb_build_object('online',CASE WHEN jsonb_typeof(p_event->'online')='boolean' THEN (p_event->>'online')::boolean ELSE false END);
   END IF;
-
-  INSERT INTO public.control2_device_events(game_id,session_id,event_type,details)
-  VALUES (p_game_id,sid,event_name,event_details);
-
-  -- Keep the log bounded even for a frequently reused game.
-  DELETE FROM public.control2_device_events e
-  WHERE e.game_id=p_game_id
-    AND (e.created_at < now()-interval '30 days' OR e.id IN (
-      SELECT id FROM public.control2_device_events
-      WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500
-    ));
-END;
-$$;
+  INSERT INTO public.control2_device_events(game_id,session_id,event_type,event_id,details)
+    VALUES(p_game_id,sid,event_name,left(p_event->>'event_id',80),event_details)
+    ON CONFLICT(game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
+  DELETE FROM public.control2_device_events e WHERE e.game_id=p_game_id AND
+    (e.created_at<now()-interval '30 days' OR e.id IN (SELECT id FROM public.control2_device_events WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500));
+  RETURN true;
+END $$;
 
 
 --
@@ -4867,7 +5059,7 @@ BEGIN
     IF octet_length(p_event::text)>6000 THEN RAISE EXCEPTION 'event too large'; END IF;
     IF event_kind='diagnostic' THEN
       category:=p_event->>'category';
-      IF category IS NULL OR category NOT IN ('connectivity','audio_start','display_delay') THEN RAISE EXCEPTION 'invalid diagnostic category'; END IF;
+      IF category IS NULL OR category NOT IN ('connectivity','audio_start','display_delay','state_sync','realtime') THEN RAISE EXCEPTION 'invalid diagnostic category'; END IF;
       item:=jsonb_build_object('kind',event_kind,'category',category,'at',now(),
         'message',left(coalesce(p_event->>'message',''),300),
         'devices',CASE WHEN jsonb_typeof(p_event->'devices')='array' THEN p_event->'devices' ELSE '[]'::jsonb END,
@@ -4885,6 +5077,195 @@ BEGIN
     stats_detail=jsonb_set(stats_detail,'{events}',events),
     client_meta=client_meta || jsonb_build_object('error_count',
       (SELECT count(*) FROM jsonb_array_elements(events) e WHERE e->>'kind'='error')) WHERE id=sid;
+END;
+$$;
+
+
+--
+-- Name: control_device_instance_heartbeat("uuid", "text", "text", "uuid", bigint, "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_device_instance_heartbeat"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint, "p_meta" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $_$
+DECLARE
+  v_session_id uuid;
+  v_connection public.control_device_connections;
+  v_slot public.control_device_slots;
+  v_primary uuid;
+BEGIN
+  IF p_device_type NOT IN ('display','host','buzzer')
+     OR NOT public.control_device_key_valid(p_game_id,p_device_type,p_key) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
+  SELECT * INTO v_slot FROM public.control_device_slots
+  WHERE session_id=v_session_id AND game_id=p_game_id AND device_type=p_device_type FOR UPDATE;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'state','missing'); END IF;
+  SELECT * INTO v_connection FROM public.control_device_connections
+  WHERE id=p_connection_id AND session_id=v_session_id AND game_id=p_game_id AND device_type=p_device_type FOR UPDATE;
+  IF NOT FOUND OR v_connection.state NOT IN ('waiting','primary') THEN
+    RETURN jsonb_build_object('ok',false,'state','expired');
+  END IF;
+
+  IF v_connection.state='primary' AND v_slot.primary_connection_id=p_connection_id
+     AND v_slot.epoch=p_epoch AND v_slot.lease_expires_at>clock_timestamp() THEN
+    UPDATE public.control_device_connections SET last_seen_at=clock_timestamp(),
+      page_visibility=CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
+      focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END,
+      received_rev=GREATEST(received_rev,CASE WHEN coalesce(p_meta->>'received_rev','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'received_rev')::bigint ELSE received_rev END),
+      rendered_rev=GREATEST(rendered_rev,CASE WHEN coalesce(p_meta->>'rendered_rev','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'rendered_rev')::bigint ELSE rendered_rev END),
+      started_sound_cue_seq=GREATEST(started_sound_cue_seq,CASE WHEN coalesce(p_meta->>'started_sound_cue_seq','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'started_sound_cue_seq')::bigint ELSE started_sound_cue_seq END)
+    WHERE id=p_connection_id;
+    UPDATE public.control_device_slots SET lease_expires_at=clock_timestamp()+interval '12 seconds',
+      updated_at=clock_timestamp() WHERE session_id=v_session_id AND device_type=p_device_type;
+  ELSIF v_connection.state='primary' THEN
+    UPDATE public.control_device_connections SET state='waiting',epoch=NULL,
+      requested_at=clock_timestamp(),last_seen_at=clock_timestamp()
+    WHERE id=p_connection_id;
+  ELSE
+    UPDATE public.control_device_connections SET last_seen_at=clock_timestamp(),
+      page_visibility=CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
+      focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END,
+      received_rev=GREATEST(received_rev,CASE WHEN coalesce(p_meta->>'received_rev','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'received_rev')::bigint ELSE received_rev END),
+      rendered_rev=GREATEST(rendered_rev,CASE WHEN coalesce(p_meta->>'rendered_rev','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'rendered_rev')::bigint ELSE rendered_rev END),
+      started_sound_cue_seq=GREATEST(started_sound_cue_seq,CASE WHEN coalesce(p_meta->>'started_sound_cue_seq','') ~ '^[0-9]{1,18}$' THEN (p_meta->>'started_sound_cue_seq')::bigint ELSE started_sound_cue_seq END)
+    WHERE id=p_connection_id;
+  END IF;
+  v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
+  RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
+    || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id);
+END;
+$_$;
+
+
+--
+-- Name: FUNCTION "control_device_instance_heartbeat"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint, "p_meta" "jsonb"); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."control_device_instance_heartbeat"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint, "p_meta" "jsonb") IS 'Renews an instance lease and monotonically records client render progress, fenced by the active primary epoch.';
+
+
+--
+-- Name: control_device_instance_register("uuid", "text", "text", "uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_device_instance_register"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_meta" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+DECLARE
+  v_session_id uuid;
+  v_slot public.control_device_slots;
+  v_existing public.control_device_connections;
+  v_primary uuid;
+BEGIN
+  IF p_device_type NOT IN ('display','host','buzzer') OR p_connection_id IS NULL
+     OR NOT public.control_device_key_valid(p_game_id,p_device_type,p_key) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
+  IF NOT EXISTS (SELECT 1 FROM public.control_runtime_sessions
+    WHERE id=v_session_id AND game_id=p_game_id AND device_protocol=2
+      AND ended_at IS NULL AND expires_at>now()) THEN RAISE EXCEPTION 'forbidden'; END IF;
+
+  INSERT INTO public.control_device_slots(session_id,game_id,device_type)
+  VALUES(v_session_id,p_game_id,p_device_type) ON CONFLICT(session_id,device_type) DO NOTHING;
+  SELECT * INTO v_slot FROM public.control_device_slots
+  WHERE session_id=v_session_id AND device_type=p_device_type FOR UPDATE;
+  SELECT * INTO v_existing FROM public.control_device_connections WHERE id=p_connection_id;
+  IF FOUND THEN
+    IF v_existing.session_id<>v_session_id OR v_existing.game_id<>p_game_id
+       OR v_existing.device_type<>p_device_type
+       OR v_existing.state NOT IN ('waiting','primary') THEN RAISE EXCEPTION 'connection_expired'; END IF;
+    IF v_existing.state='primary' AND NOT EXISTS (
+      SELECT 1 FROM public.control_device_slots s
+      WHERE s.session_id=v_session_id AND s.device_type=p_device_type
+        AND s.primary_connection_id=p_connection_id AND s.epoch=v_existing.epoch
+        AND s.lease_expires_at>clock_timestamp()
+    ) THEN
+      UPDATE public.control_device_connections SET state='waiting',epoch=NULL,
+        requested_at=clock_timestamp(),last_seen_at=clock_timestamp() WHERE id=p_connection_id;
+    ELSE
+      UPDATE public.control_device_connections SET last_seen_at=clock_timestamp(),
+        page_visibility=CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
+        focused=CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END
+      WHERE id=p_connection_id;
+      IF v_existing.state='primary' THEN
+        UPDATE public.control_device_slots SET lease_expires_at=clock_timestamp()+interval '12 seconds',
+          updated_at=clock_timestamp()
+        WHERE session_id=v_session_id AND device_type=p_device_type
+          AND primary_connection_id=p_connection_id AND epoch=v_existing.epoch;
+      END IF;
+    END IF;
+  ELSE
+    INSERT INTO public.control_device_connections(id,session_id,game_id,device_type,state,page_visibility,focused)
+    VALUES(p_connection_id,v_session_id,p_game_id,p_device_type,'waiting',
+      CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
+      CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END);
+  END IF;
+  v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
+  RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
+    || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id);
+END;
+$$;
+
+
+--
+-- Name: control_device_instance_release("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_device_instance_release"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+DECLARE
+  v_session_id uuid;
+  v_connection public.control_device_connections;
+  v_slot public.control_device_slots;
+  v_primary uuid;
+BEGIN
+  IF NOT public.control_device_key_valid(p_game_id,p_device_type,p_key) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
+  SELECT * INTO v_slot FROM public.control_device_slots
+  WHERE session_id=v_session_id AND game_id=p_game_id AND device_type=p_device_type FOR UPDATE;
+  SELECT * INTO v_connection FROM public.control_device_connections
+  WHERE id=p_connection_id AND session_id=v_session_id AND game_id=p_game_id AND device_type=p_device_type FOR UPDATE;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',true,'released',false); END IF;
+  IF v_connection.state='primary' AND v_connection.epoch=p_epoch
+     AND v_slot.primary_connection_id=p_connection_id AND v_slot.epoch=p_epoch THEN
+    UPDATE public.control_device_connections SET state='released',released_at=clock_timestamp(),epoch=NULL
+    WHERE id=p_connection_id;
+    UPDATE public.control_device_slots SET lease_expires_at=clock_timestamp(),updated_at=clock_timestamp()
+    WHERE session_id=v_session_id AND device_type=p_device_type;
+  ELSIF v_connection.state='waiting' THEN
+    UPDATE public.control_device_connections SET state='released',released_at=clock_timestamp()
+    WHERE id=p_connection_id;
+  END IF;
+  v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
+  RETURN jsonb_build_object('ok',true,'released',true,'primary_connection_id',v_primary);
+END;
+$$;
+
+
+--
+-- Name: control_device_instance_status("uuid", "text", "text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_device_instance_status"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+DECLARE v_session_id uuid; v_primary uuid;
+BEGIN
+  IF NOT public.control_device_key_valid(p_game_id,p_device_type,p_key) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
+  IF NOT EXISTS (SELECT 1 FROM public.control_runtime_sessions
+    WHERE id=v_session_id AND device_protocol=2 AND ended_at IS NULL AND expires_at>now()) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
+  RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
+    || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id);
 END;
 $$;
 
@@ -4915,6 +5296,75 @@ BEGIN
       AND (sh.recipient_id IS NOT NULL OR public._contact_mail_enabled(sh.recipient_email))
       AND sh.revoked_at IS NULL AND s.ended_at IS NULL AND s.expires_at>now()
   );
+END;
+$$;
+
+
+--
+-- Name: control_device_realtime_authorize("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_device_realtime_authorize"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_epoch" bigint) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE v_session_id uuid;
+BEGIN
+  IF p_device_type NOT IN ('display','host','buzzer')
+     OR NOT public._control_device_action_valid(
+       p_game_id,p_device_type,p_key,p_connection_id,p_epoch
+     ) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  v_session_id := public._control_device_session_for_key(p_game_id,p_device_type,p_key);
+  IF v_session_id IS NULL OR NOT EXISTS (
+    SELECT 1 FROM public.control_runtime_sessions
+    WHERE id=v_session_id AND device_protocol=2
+  ) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  RETURN jsonb_build_object(
+    'game_id',p_game_id,'device_type',p_device_type,
+    'session_id',v_session_id,'connection_id',p_connection_id,'epoch',p_epoch
+  );
+END;
+$$;
+
+
+--
+-- Name: control_device_realtime_claim_valid("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_device_realtime_claim_valid"("p_game_id" "uuid", "p_claims" "jsonb") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE v_game uuid; v_session uuid; v_connection uuid; v_epoch bigint;
+  v_device text;
+BEGIN
+  IF p_claims IS NULL OR p_claims->>'role'<>'anon'
+     OR p_claims->>'device_type' NOT IN ('display','host','buzzer')
+     OR (p_claims->>'exp')::bigint <= extract(epoch FROM clock_timestamp())::bigint THEN RETURN false; END IF;
+  v_game := (p_claims->>'game_id')::uuid;
+  v_session := (p_claims->>'session_id')::uuid;
+  v_connection := (p_claims->>'connection_id')::uuid;
+  v_epoch := (p_claims->>'epoch')::bigint;
+  v_device := p_claims->>'device_type';
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.control_runtime_sessions s
+    JOIN public.control_device_slots slot ON slot.session_id=s.id
+    JOIN public.control_device_connections c
+      ON c.id=slot.primary_connection_id AND c.session_id=s.id
+    WHERE v_game=p_game_id AND s.id=v_session
+      AND s.game_id=p_game_id AND s.device_protocol=2
+      AND s.ended_at IS NULL AND s.expires_at>clock_timestamp()
+      AND slot.game_id=p_game_id AND slot.device_type=v_device
+      AND slot.primary_connection_id=v_connection AND slot.epoch=v_epoch
+      AND slot.lease_expires_at>clock_timestamp()
+      AND c.state='primary' AND c.epoch=slot.epoch
+      AND c.last_seen_at>clock_timestamp()-interval '12 seconds'
+  );
+EXCEPTION WHEN invalid_text_representation OR numeric_value_out_of_range THEN
+  RETURN false;
 END;
 $$;
 
@@ -5146,6 +5596,32 @@ $$;
 
 
 --
+-- Name: control_device_slots_for_owner("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_device_slots_for_owner"("p_game_id" "uuid") RETURNS TABLE("device_type" "text", "primary_online" boolean, "waiting_count" integer, "lease_expires_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+BEGIN
+  IF auth.uid() IS NULL OR NOT EXISTS(SELECT 1 FROM public.games WHERE id=p_game_id AND owner_id=auth.uid()) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  RETURN QUERY
+  SELECT s.device_type,
+    s.primary_connection_id IS NOT NULL AND s.lease_expires_at>clock_timestamp(),
+    (SELECT count(*)::integer FROM public.control_device_connections c
+      WHERE c.session_id=s.session_id AND c.device_type=s.device_type AND c.state='waiting'
+        AND c.last_seen_at>clock_timestamp()-interval '12 seconds'),
+    s.lease_expires_at
+  FROM public.control_device_slots s
+  JOIN public.control_runtime_sessions r ON r.id=s.session_id
+  WHERE s.game_id=p_game_id AND r.ended_at IS NULL AND r.expires_at>now();
+END;
+$$;
+
+
+--
 -- Name: control_runtime_device_link("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5298,6 +5774,34 @@ BEGIN
 
   RETURN jsonb_build_object('ok', true, 'expired', v_expired, 'session_id', v_session.id,
     'expires_at', v_session.expires_at);
+END;
+$$;
+
+
+--
+-- Name: control_runtime_session_touch_v2("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_runtime_session_touch_v2"("p_game_id" "uuid", "p_session_id" "uuid" DEFAULT NULL::"uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_owner uuid;
+  v_data jsonb;
+  v_session_id uuid;
+BEGIN
+  IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'error','not_authenticated'); END IF;
+  SELECT owner_id INTO v_owner FROM public.games WHERE id=p_game_id FOR UPDATE;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','gone'); END IF;
+  IF v_owner <> v_uid THEN RETURN jsonb_build_object('ok',false,'error','forbidden'); END IF;
+
+  v_data := public.control_runtime_session_touch(p_game_id,p_session_id);
+  IF NOT coalesce((v_data->>'ok')::boolean,false) THEN RETURN v_data; END IF;
+  v_session_id := (v_data->>'session_id')::uuid;
+  UPDATE public.control_runtime_sessions SET device_protocol=2 WHERE id=v_session_id;
+  RETURN v_data || jsonb_build_object('device_protocol',2);
 END;
 $$;
 
@@ -7334,7 +7838,9 @@ CREATE TABLE "public"."game_state" (
     "detail" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "locked_until" timestamp with time zone
+    "locked_until" timestamp with time zone,
+    "display_rendered_rev" bigint DEFAULT 0 NOT NULL,
+    CONSTRAINT "game_state_display_rendered_rev_check" CHECK (("display_rendered_rev" >= 0))
 );
 
 ALTER TABLE ONLY "public"."game_state" REPLICA IDENTITY FULL;
@@ -7369,74 +7875,121 @@ COMMENT ON COLUMN "public"."game_state"."locked_until" IS 'Do kiedy trwa dźwię
 
 
 --
--- Name: game_state_buzzer_press("uuid", "text", "public"."game_team"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: COLUMN "game_state"."display_rendered_rev"; Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."game_state_buzzer_press"("p_game_id" "uuid", "p_key" "text", "p_team" "public"."game_team") RETURNS "public"."game_state"
+COMMENT ON COLUMN "public"."game_state"."display_rendered_rev" IS 'Highest game_state revision acknowledged as rendered by the primary Display; mirrored to game_state for device Realtime delivery.';
+
+
+--
+-- Name: game_state_buzzer_press("uuid", "text", "public"."game_team", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_buzzer_press"("p_game_id" "uuid", "p_key" "text", "p_team" "public"."game_team", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS "public"."game_state"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth'
     AS $$
-DECLARE v_new public.game_state;
+DECLARE
+  v_old public.game_state;
+  v_new public.game_state;
 BEGIN
-  IF NOT public.control_device_key_valid(p_game_id,'buzzer',p_key) THEN
+  IF NOT public._control_device_action_valid(p_game_id,'buzzer',p_key,p_connection_id,p_epoch) THEN
     RAISE EXCEPTION 'forbidden';
   END IF;
-  UPDATE public.game_state SET detail=jsonb_set(detail,'{rounds,duel,lastPressed}',to_jsonb(p_team::text)),
-    rev=rev+1,updated_at=now()
+
+  SELECT * INTO v_old FROM public.game_state WHERE game_id=p_game_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'not found'; END IF;
+
+  IF v_old.locked_until IS NOT NULL AND v_old.locked_until>now() THEN
+    RAISE EXCEPTION 'locked';
+  END IF;
+
+  IF coalesce((v_old.detail #>> '{settings,physicalBuzzer}')::boolean,false) THEN
+    RAISE EXCEPTION 'device_disabled';
+  END IF;
+
+  UPDATE public.game_state
+  SET detail=jsonb_set(detail,'{rounds,duel,lastPressed}',to_jsonb(p_team::text)),
+      rev=rev+1,updated_at=now()
   WHERE game_id=p_game_id AND step='r_duel'
     AND (detail #>> '{rounds,duel,lastPressed}') IS NULL
   RETURNING * INTO v_new;
+
   IF NOT FOUND THEN RAISE EXCEPTION 'already_pressed'; END IF;
   RETURN v_new;
-END $$;
+END;
+$$;
 
 
 --
--- Name: game_state_display_complete("uuid", "text", bigint); Type: FUNCTION; Schema: public; Owner: -
+-- Name: game_state_display_complete("uuid", "text", bigint, "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint) RETURNS "void"
+CREATE FUNCTION "public"."game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint, "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 DECLARE current_rev bigint;
 BEGIN
-  IF NOT public.control_device_key_valid(p_game_id,'display',p_key) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
   SELECT rev INTO current_rev FROM public.game_state WHERE game_id=p_game_id;
-  IF current_rev IS NULL OR p_rev IS NULL OR p_rev<0 OR p_rev>current_rev THEN RAISE EXCEPTION 'invalid revision'; END IF;
-  INSERT INTO public.game_state_display_completion(game_id,rendered_rev) VALUES(p_game_id,p_rev)
-  ON CONFLICT(game_id) DO UPDATE SET rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
+  IF current_rev IS NULL OR p_rev IS NULL OR p_rev<0 OR p_rev>current_rev THEN
+    RAISE EXCEPTION 'invalid revision';
+  END IF;
+
+  INSERT INTO public.game_state_display_completion(game_id,rendered_rev)
+    VALUES(p_game_id,p_rev)
+    ON CONFLICT(game_id) DO UPDATE
+      SET rendered_rev=greatest(game_state_display_completion.rendered_rev,excluded.rendered_rev);
+
+  -- This update emits the acknowledgment through the same RLS protected
+  -- game_state stream already consumed by every device.
+  UPDATE public.game_state
+    SET display_rendered_rev=greatest(display_rendered_rev,p_rev)
+    WHERE game_id=p_game_id AND display_rendered_rev<p_rev;
 END $$;
 
 
 --
--- Name: game_state_display_is_ready("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: FUNCTION "game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint, "p_connection_id" "uuid", "p_epoch" bigint); Type: COMMENT; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."game_state_display_is_ready"("p_game_id" "uuid", "p_key" "text") RETURNS boolean
+COMMENT ON FUNCTION "public"."game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint, "p_connection_id" "uuid", "p_epoch" bigint) IS 'Fenced Display acknowledgment. Persists the completion row and mirrors rendered_rev to game_state so all devices receive the acknowledgment on their scoped Realtime stream.';
+
+
+--
+-- Name: game_state_display_is_ready("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_display_is_ready"("p_game_id" "uuid", "p_key" "text", "p_device_type" "text" DEFAULT NULL::"text", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 BEGIN
-  IF NOT public.control_device_key_valid(p_game_id,'display',p_key)
-     AND NOT public.control_device_key_valid(p_game_id,'buzzer',p_key) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF p_device_type IS NULL THEN
+    IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch)
+       AND NOT public._control_device_action_valid(p_game_id,'buzzer',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  ELSIF p_device_type NOT IN ('display','buzzer')
+     OR NOT public._control_device_action_valid(p_game_id,p_device_type,p_key,p_connection_id,p_epoch) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
   RETURN coalesce((SELECT rendered_rev>=requested_rev FROM public.game_state_display_completion WHERE game_id=p_game_id),false);
 END $$;
 
 
 --
--- Name: game_state_get("uuid", "public"."device_type", "text"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: game_state_get("uuid", "public"."device_type", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."game_state_get"("p_game_id" "uuid", "p_device_type" "public"."device_type", "p_key" "text") RETURNS "public"."game_state"
+CREATE FUNCTION "public"."game_state_get"("p_game_id" "uuid", "p_device_type" "public"."device_type", "p_key" "text", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS "public"."game_state"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth'
     AS $$
 DECLARE out public.game_state;
 BEGIN
-  IF NOT public.control_device_key_valid(p_game_id,p_device_type::text,p_key) THEN
-    RAISE EXCEPTION 'forbidden';
-  END IF;
+  IF NOT public._control_device_action_valid(p_game_id,p_device_type::text,p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
   SELECT * INTO out FROM public.game_state WHERE game_id=p_game_id;
   RETURN out;
 END $$;
@@ -8487,16 +9040,24 @@ CREATE FUNCTION "public"."get_control2_display_events"("p_session_ids" "uuid"[])
     LANGUAGE "sql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-  SELECT coalesce(jsonb_object_agg(session_id::text, events), '{}'::jsonb)
+  SELECT coalesce(jsonb_object_agg(session_id::text,events),'{}'::jsonb)
   FROM (
-    SELECT e.session_id, jsonb_agg(
+    SELECT e.session_id,jsonb_agg(
       jsonb_build_object(
         'kind','diagnostic',
-        'category','display_state',
+        'category',CASE WHEN e.event_type='lease_state' THEN 'device_lease' ELSE 'display_state' END,
         'at',e.created_at,
-        'message','Zdarzenie urządzenia Wyświetlacz.',
-        'devices',jsonb_build_array('display'),
-        'metrics',e.details || jsonb_build_object('reason',e.event_type)
+        'message',CASE
+          WHEN e.event_type<>'lease_state' THEN 'Zdarzenie urządzenia Wyświetlacz.'
+          WHEN e.details->>'to_state'='waiting' THEN 'Urządzenie oczekuje na zwolnienie blokady.'
+          WHEN e.details->>'to_state'='primary' THEN 'Urządzenie zostało aktywowane jako główne.'
+          WHEN e.details->>'to_state'='released' THEN 'Urządzenie zwolniło blokadę.'
+          WHEN e.details->>'to_state'='expired' THEN 'Blokada urządzenia wygasła.'
+          WHEN e.details->>'to_state'='revoked' THEN 'Połączenie urządzenia zostało cofnięte.'
+          ELSE 'Zmienił się stan blokady urządzenia.' END,
+        'devices',CASE WHEN e.event_type='lease_state'
+          THEN jsonb_build_array(e.device_type) ELSE jsonb_build_array('display') END,
+        'metrics',e.details||jsonb_build_object('reason',e.event_type)
       ) ORDER BY e.created_at,e.id
     ) AS events
     FROM public.control2_device_events e
@@ -17352,8 +17913,9 @@ CREATE TABLE "public"."control2_device_events" (
     "event_type" "text" NOT NULL,
     "details" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = 'display'::"text")),
-    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text"])))
+    "event_id" "text",
+    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"]))),
+    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text", 'lease_state'::"text"])))
 );
 
 
@@ -17368,6 +17930,34 @@ ALTER TABLE "public"."control2_device_events" ALTER COLUMN "id" ADD GENERATED AL
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
+);
+
+
+--
+-- Name: control_device_connections; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."control_device_connections" (
+    "id" "uuid" NOT NULL,
+    "session_id" "uuid" NOT NULL,
+    "game_id" "uuid" NOT NULL,
+    "device_type" "text" NOT NULL,
+    "state" "text" NOT NULL,
+    "requested_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    "last_seen_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    "released_at" timestamp with time zone,
+    "epoch" bigint,
+    "page_visibility" "text",
+    "focused" boolean,
+    "received_rev" bigint DEFAULT 0 NOT NULL,
+    "rendered_rev" bigint DEFAULT 0 NOT NULL,
+    "started_sound_cue_seq" bigint DEFAULT 0 NOT NULL,
+    CONSTRAINT "control_device_connections_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"]))),
+    CONSTRAINT "control_device_connections_page_visibility_check" CHECK ((("page_visibility" IS NULL) OR ("page_visibility" = ANY (ARRAY['visible'::"text", 'hidden'::"text", 'unknown'::"text"])))),
+    CONSTRAINT "control_device_connections_received_rev_check" CHECK (("received_rev" >= 0)),
+    CONSTRAINT "control_device_connections_rendered_rev_check" CHECK (("rendered_rev" >= 0)),
+    CONSTRAINT "control_device_connections_started_sound_cue_seq_check" CHECK (("started_sound_cue_seq" >= 0)),
+    CONSTRAINT "control_device_connections_state_check" CHECK (("state" = ANY (ARRAY['waiting'::"text", 'primary'::"text", 'released'::"text", 'expired'::"text", 'revoked'::"text"])))
 );
 
 
@@ -17408,6 +17998,24 @@ CREATE TABLE "public"."control_device_shares" (
 
 
 --
+-- Name: control_device_slots; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."control_device_slots" (
+    "session_id" "uuid" NOT NULL,
+    "game_id" "uuid" NOT NULL,
+    "device_type" "text" NOT NULL,
+    "primary_connection_id" "uuid",
+    "epoch" bigint DEFAULT 0 NOT NULL,
+    "lease_expires_at" timestamp with time zone,
+    "updated_at" timestamp with time zone DEFAULT "clock_timestamp"() NOT NULL,
+    CONSTRAINT "control_device_slots_check" CHECK ((("primary_connection_id" IS NULL) = ("lease_expires_at" IS NULL))),
+    CONSTRAINT "control_device_slots_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"]))),
+    CONSTRAINT "control_device_slots_epoch_check" CHECK (("epoch" >= 0))
+);
+
+
+--
 -- Name: control_runtime_sessions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -17420,6 +18028,8 @@ CREATE TABLE "public"."control_runtime_sessions" (
     "expires_at" timestamp with time zone DEFAULT ("now"() + '01:00:00'::interval) NOT NULL,
     "ended_at" timestamp with time zone,
     "end_reason" "text",
+    "device_protocol" smallint DEFAULT 2 NOT NULL,
+    CONSTRAINT "control_runtime_sessions_device_protocol_check" CHECK (("device_protocol" = ANY (ARRAY[1, 2]))),
     CONSTRAINT "control_runtime_sessions_end_reason_check" CHECK ((("end_reason" IS NULL) OR ("end_reason" = ANY (ARRAY['idle'::"text", 'game_deleted'::"text"]))))
 );
 
@@ -17698,6 +18308,8 @@ CREATE TABLE "public"."game_state_display_completion" (
     "rendered_rev" bigint DEFAULT 0 NOT NULL,
     "requested_rev" bigint DEFAULT 0 NOT NULL
 );
+
+ALTER TABLE ONLY "public"."game_state_display_completion" REPLICA IDENTITY FULL;
 
 
 --
@@ -18847,6 +19459,22 @@ ALTER TABLE ONLY "public"."control2_device_events"
 
 
 --
+-- Name: control_device_connections control_device_connections_id_session_id_game_id_device_typ_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control_device_connections"
+    ADD CONSTRAINT "control_device_connections_id_session_id_game_id_device_typ_key" UNIQUE ("id", "session_id", "game_id", "device_type");
+
+
+--
+-- Name: control_device_connections control_device_connections_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control_device_connections"
+    ADD CONSTRAINT "control_device_connections_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: control_device_link_tokens control_device_link_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -18884,6 +19512,14 @@ ALTER TABLE ONLY "public"."control_device_shares"
 
 ALTER TABLE ONLY "public"."control_device_shares"
     ADD CONSTRAINT "control_device_shares_token_key" UNIQUE ("token");
+
+
+--
+-- Name: control_device_slots control_device_slots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control_device_slots"
+    ADD CONSTRAINT "control_device_slots_pkey" PRIMARY KEY ("session_id", "device_type");
 
 
 --
@@ -19768,10 +20404,38 @@ CREATE INDEX "base_share_tasks_token_idx" ON "public"."base_share_tasks" USING "
 
 
 --
+-- Name: control2_device_events_event_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "control2_device_events_event_id_idx" ON "public"."control2_device_events" USING "btree" ("game_id", "event_id") WHERE ("event_id" IS NOT NULL);
+
+
+--
 -- Name: control2_device_events_game_created_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX "control2_device_events_game_created_idx" ON "public"."control2_device_events" USING "btree" ("game_id", "created_at" DESC, "id" DESC);
+
+
+--
+-- Name: control_device_connections_expiry_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "control_device_connections_expiry_idx" ON "public"."control_device_connections" USING "btree" ("last_seen_at") WHERE ("state" = ANY (ARRAY['waiting'::"text", 'primary'::"text"]));
+
+
+--
+-- Name: control_device_connections_one_primary_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "control_device_connections_one_primary_idx" ON "public"."control_device_connections" USING "btree" ("session_id", "device_type") WHERE ("state" = 'primary'::"text");
+
+
+--
+-- Name: control_device_connections_queue_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "control_device_connections_queue_idx" ON "public"."control_device_connections" USING "btree" ("session_id", "device_type", "requested_at", "id") WHERE ("state" = 'waiting'::"text");
 
 
 --
@@ -20720,6 +21384,13 @@ CREATE TRIGGER "contact_reports_updated_at" BEFORE UPDATE ON "public"."contact_r
 
 
 --
+-- Name: control_device_connections control_device_connections_log_lease_state; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "control_device_connections_log_lease_state" AFTER INSERT OR UPDATE OF "state" ON "public"."control_device_connections" FOR EACH ROW EXECUTE FUNCTION "public"."_control2_log_device_lease_transition"();
+
+
+--
 -- Name: answers copy_pending_answer; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -21494,6 +22165,22 @@ ALTER TABLE ONLY "public"."control2_device_events"
 
 
 --
+-- Name: control_device_connections control_device_connections_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control_device_connections"
+    ADD CONSTRAINT "control_device_connections_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: control_device_connections control_device_connections_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control_device_connections"
+    ADD CONSTRAINT "control_device_connections_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "public"."control_runtime_sessions"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: control_device_link_tokens control_device_link_tokens_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -21539,6 +22226,30 @@ ALTER TABLE ONLY "public"."control_device_shares"
 
 ALTER TABLE ONLY "public"."control_device_shares"
     ADD CONSTRAINT "control_device_shares_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "public"."control_runtime_sessions"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: control_device_slots control_device_slots_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control_device_slots"
+    ADD CONSTRAINT "control_device_slots_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: control_device_slots control_device_slots_primary_connection_id_session_id_game_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control_device_slots"
+    ADD CONSTRAINT "control_device_slots_primary_connection_id_session_id_game_fkey" FOREIGN KEY ("primary_connection_id", "session_id", "game_id", "device_type") REFERENCES "public"."control_device_connections"("id", "session_id", "game_id", "device_type") DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: control_device_slots control_device_slots_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."control_device_slots"
+    ADD CONSTRAINT "control_device_slots_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "public"."control_runtime_sessions"("id") ON DELETE CASCADE;
 
 
 --
@@ -22658,6 +23369,12 @@ ALTER TABLE "public"."contact_reports" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."control2_device_events" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: control_device_connections; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."control_device_connections" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: control_device_link_tokens; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -22668,6 +23385,12 @@ ALTER TABLE "public"."control_device_link_tokens" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE "public"."control_device_shares" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: control_device_slots; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."control_device_slots" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: control_runtime_sessions; Type: ROW SECURITY; Schema: public; Owner: -
@@ -22729,6 +23452,20 @@ ALTER TABLE "public"."display_audio_unlock" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "display_audio_unlock_owner_read" ON "public"."display_audio_unlock" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."games" "g"
   WHERE (("g"."id" = "display_audio_unlock"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
+
+
+--
+-- Name: game_state_display_completion display_completion_device_realtime_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" FOR SELECT TO "anon" USING ("public"."control_device_realtime_claim_valid"("game_id", "auth"."jwt"()));
+
+
+--
+-- Name: POLICY "display_completion_device_realtime_read" ON "game_state_display_completion"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON POLICY "display_completion_device_realtime_read" ON "public"."game_state_display_completion" IS 'Allows only a signed primary-device JWT with a current lease to receive the completion row for its game.';
 
 
 --
@@ -22876,6 +23613,20 @@ CREATE POLICY "game_sessions_owner_read" ON "public"."game_sessions" FOR SELECT 
 --
 
 ALTER TABLE "public"."game_state" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: game_state game_state_device_realtime_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "game_state_device_realtime_read" ON "public"."game_state" FOR SELECT TO "anon" USING ("public"."control_device_realtime_claim_valid"("game_id", "auth"."jwt"()));
+
+
+--
+-- Name: POLICY "game_state_device_realtime_read" ON "game_state"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON POLICY "game_state_device_realtime_read" ON "public"."game_state" IS 'Allows postgres_changes only to a signed device JWT whose session, type, primary connection and epoch still match the live lease.';
+
 
 --
 -- Name: game_state_display_completion; Type: ROW SECURITY; Schema: public; Owner: -
@@ -23929,5 +24680,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AmC6sQwfsYfZGkHgafNKj9XkEpYh7VXonrWAheXlI3dXdlm4bFlOSYpUlH6dEBx
+\unrestrict ecLfhgtOjbQdSZr9gwnmf3Dm0IpjcHaQ7PDJ5iTBz7RS7keML4Ibts0kBVMld0z
 

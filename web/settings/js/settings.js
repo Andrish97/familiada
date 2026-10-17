@@ -12,16 +12,16 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-15T22404";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-15T22404";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-15T22404";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-15T22404";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-15T22404";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-15T22404";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-15T22404";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-15T22404";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-15T22404";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-15T22404";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-17T04535";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-17T04535";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-17T04535";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-17T04535";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-17T04535";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T04535";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-17T04535";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-17T04535";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-17T04535";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-17T04535";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -31,14 +31,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-15T22404";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-17T04535";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-15T22404";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-15T22404";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-15T22404";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-17T04535";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-17T04535";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-17T04535";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-15T22404";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-17T04535";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -1043,8 +1043,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-15T22404"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-15T22404"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-17T04535"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-17T04535"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -5315,6 +5315,12 @@ function buildSessionRunDetails(r) {
     control_idle_expired: "Gra została przerwana po godzinie bezczynności panelu sterowania.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
+  const deviceEventLog = r.device_event_log || r.display_event_log;
+  if (deviceEventLog?.status === "no_events_recorded") {
+    line("Brak zapisanych zdarzeń urządzeń dla tej sesji.");
+  } else if (deviceEventLog?.status === "session_id_missing") {
+    line("Nie można powiązać logu urządzeń z tą sesją.");
+  }
   if (info.end_reason === "control_idle_expired") {
     const lastStep = String(info.last_step || "");
     const stepNames = {
@@ -5388,6 +5394,12 @@ function buildSessionRunDetails(r) {
         });
         return { title: `Połączenie: ${devices}`, detail: details.join(" · ") };
       }
+      if (event.category === "device_lease") {
+        const states = { waiting:"oczekuje na zwolnienie blokady", primary:"zostało aktywowane jako główne", released:"zwolniło blokadę", expired:"utraciło blokadę po wygaśnięciu lease", revoked:"jego połączenie zostało cofnięte" };
+        const from = metrics.from_state ? `${metrics.from_state} → ` : "";
+        const epoch = Number.isFinite(Number(metrics.epoch)) ? ` · epoka ${metrics.epoch}` : "";
+        return { title: "Stan blokady urządzenia", detail: ` ${devices} · ${from}${states[metrics.to_state] || "zmieniło stan połączenia"}${epoch}` };
+      }
       if (event.category === "audio_start") {
         const sound = String(metrics.sound || "dźwięk");
         const browserError = String(metrics.error || "");
@@ -5437,6 +5449,25 @@ function buildSessionRunDetails(r) {
           title: "Opóźniona zmiana planszy",
           detail: `Display: ${formatDuration(metrics.actual_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}; opóźnienie ${formatDuration(metrics.extra_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}`,
         };
+      }
+      if (event.category === "state_sync") {
+        if (metrics.phase === "requested") {
+          const from = metrics.from_step || "?";
+          const to = metrics.to_step || "?";
+          const cue = metrics.sound ? ` · ${metrics.sound}` : "";
+          const expected = metrics.expected_ms != null && Number.isFinite(Number(metrics.expected_ms)) ? ` · oczekiwano ${formatDuration(metrics.expected_ms)}` : "";
+          const previous = metrics.previous_revision != null ? `r${metrics.previous_revision} → ` : "";
+          return { title: `Wysłano stan r${metrics.revision ?? "—"}`, detail: `${previous}${from} → ${to}${cue}${expected}` };
+        }
+        if (metrics.phase === "acknowledged") {
+          const source = metrics.ack_source === "realtime" ? "Realtime" : "odczyt awaryjny";
+          const expected = metrics.expected_ms != null && Number.isFinite(Number(metrics.expected_ms)) ? `; oczekiwano ${formatDuration(metrics.expected_ms)}` : "";
+          return { title: `Display potwierdził r${metrics.acknowledged_revision ?? metrics.revision ?? "—"}`, detail: `ACK przez ${source} po ${formatDuration(metrics.latency_ms)}${expected}${metrics.control_visibility === "hidden" ? " · Control było w tle" : ""}` };
+        }
+      }
+      if (event.category === "realtime") {
+        const state = metrics.state === "connected" ? "połączony" : "rozłączony; działa odpytywanie awaryjne";
+        return { title: "Kanał Realtime ACK Displaya", detail: state };
       }
       return { title: "Problem podczas rozgrywki", detail: String(event.message || "") };
     };
@@ -6518,7 +6549,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-15T22404");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-17T04535");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;

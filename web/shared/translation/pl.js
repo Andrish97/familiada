@@ -634,6 +634,12 @@ const pl = {
     errInvalidPassword: "Nieprawidłowe hasło.",
     errDeleteFailed: "Nie udało się usunąć konta.",
   },
+  deviceLease: {
+    waitingTitle: "Urządzenie czeka na swoją kolej",
+    waitingText: "Inna karta tego urządzenia jest już otwarta dla tej sesji. Jeśli chcesz korzystać z tego ekranu, zamknij poprzednią kartę — ten ekran aktywuje się automatycznie.",
+    reconnectingTitle: "Sprawdzam połączenie urządzenia",
+    reconnectingText: "Do czasu potwierdzenia połączenia ten ekran nie steruje grą. Spróbuję połączyć się ponownie automatycznie.",
+  },
   display: {
     title: "Familiada — wyświetlacz",
     qrHost: "Prowadzący",

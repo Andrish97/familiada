@@ -86,3 +86,43 @@ test("wyjątek z onRow nie zatrzymuje kolejnych odczytów", async () => {
   } finally { console.warn = origWarn; }
   assert.deepEqual(seen, [1, 2]);
 });
+
+test("wiersz Realtime jest stosowany bez dodatkowego odczytu RPC", async () => {
+  const seen = [];
+  let calls = 0;
+  const sync = createRowSync({
+    fetchRow: async () => { calls++; return { data: row(1) }; },
+    onRow: (r) => seen.push(r.rev),
+  });
+  await sync.fetchGuarded();
+  sync.applyRow(row(3));
+  sync.applyRow(row(2)); // spóźniony payload nie cofa stanu
+  await tick();
+  assert.deepEqual(seen, [1, 3]);
+  assert.equal(calls, 1);
+});
+
+test("renderowanie wierszy Realtime jest serializowane i scala kolejkę do najnowszej rewizji", async () => {
+  const seen = [];
+  let release;
+  let rendering = false;
+  const firstRender = new Promise((resolve) => { release = resolve; });
+  const sync = createRowSync({
+    fetchRow: async () => ({ data: row(1) }),
+    onRow: async (r) => {
+      assert.equal(rendering, false, "rendery nie mogą się nakładać");
+      rendering = true;
+      seen.push(r.rev);
+      if (r.rev === 2) await firstRender;
+      rendering = false;
+    },
+  });
+  await sync.fetchGuarded();
+  sync.applyRow(row(2));
+  await tick();
+  sync.applyRow(row(3));
+  sync.applyRow(row(4));
+  release();
+  await tick(20);
+  assert.deepEqual(seen, [1, 2, 4]);
+});

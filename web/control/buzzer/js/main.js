@@ -10,16 +10,17 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-15T22404";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-15T22404";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-15T22404";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-15T22404";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-15T22404";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-15T22404";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-15T22404";
-import { createPressController } from "./press.js?v=v2026-10-15T22404";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-15T22404";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-15T22404";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-17T04535";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-17T04535";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-17T04535";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-17T04535";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-17T04535";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-17T04535";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-17T04535";
+import { createPressController } from "./press.js?v=v2026-10-17T04535";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-17T04535";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-17T04535";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-17T04535";
 
 function parseParams() {
   const u = new URL(location.href);
@@ -163,6 +164,17 @@ async function main() {
     return;
   }
 
+  let subscription = null;
+  const lease = createDeviceLease({ gameId, deviceType: "buzzer", key, onState: ({ state }) => {
+    updateDeviceLeaseOverlay(state);
+    if (subscription) {
+      if (state === "primary") void subscription.start();
+      else subscription.stop();
+    }
+  } });
+  await lease.start();
+  updateDeviceLeaseOverlay(lease.state);
+
   const renderer = createButtonRenderer();
   let lastRow = null;
   let appliedLang = null;
@@ -180,7 +192,7 @@ async function main() {
     // Keep one in-flight request per transition; late replies are ignored.
     displayCheckPendingKey = requestKey;
     try {
-      const { data, error } = await sb().rpc("game_state_display_is_ready", { p_game_id: gameId, p_key: key }).abortSignal(AbortSignal.timeout(6500));
+      const { data, error } = await sb().rpc("game_state_display_is_ready", { p_game_id: gameId, p_key: key, p_device_type: "buzzer", ...lease.actionArgs() }).abortSignal(AbortSignal.timeout(6500));
       // Completion is requested only when step or sound_cue_seq changes
       // (migration 305). Unrelated revisions, including a buzzer press or
       // locked_until update, must not invalidate an acknowledgment already
@@ -191,7 +203,12 @@ async function main() {
       }
     } finally { if (displayCheckPendingKey === requestKey) displayCheckPendingKey = null; }
   }
-  setInterval(() => { void checkDisplayReady(); }, 500);
+  setInterval(() => {
+    // A live Realtime channel does not prove this client received every ACK.
+    // Retry while the current transition is pending so one dropped
+    // display_rendered_rev event cannot leave the Buzzer disabled indefinitely.
+    if (lastRow && !isDisplayReady(lastRow)) void checkDisplayReady();
+  }, 500);
 
   // Migracja 264 -- game_state_set_lock (control/js/store.js) NIE dzwoni
   // dzwonkiem i NIE podbija rev (patrz komentarz tam) -- więc bez własnego
@@ -209,13 +226,15 @@ async function main() {
   }
 
   let initialStateReady = false;
-  const subscription = createSubscription({
+  subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
-    // game_state_set_lock przesuwa locked_until bez podbicia rev i bez
-    // dzwonka — bez tego Buzzer odblokowywał się wg starszej blokady, a
-    // odrzucone naciśnięcie ("locked") nie dociągało nowszej.
-    sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until,
+    getLeaseArgs: () => lease.actionArgs(),
+    // Bez podbicia rev powiadamiamy też o wygaśnięciu blokady i potwierdzeniu
+    // renderowania Wyświetlacza; oba pola są dostarczane tym samym strumieniem.
+    sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until
+      || prev.display_rendered_rev !== next.display_rendered_rev,
     onRow: (row) => {
+      lease.setProgress({ receivedRev: Number(row.rev) || 0 });
       // Język idzie za operatorem w Control — patrz control/display/js/main.js.
       const lang = row.detail?.settings?.uiLang;
       if (lang && lang !== appliedLang) {
@@ -230,6 +249,7 @@ async function main() {
       }
       lastRow = row;
       presses.render(row);
+      lease.setProgress({ renderedRev: Number(row.rev) || 0 });
       initialStateReady = true;
       if (loadError) loadError.hidden = true;
       document.getElementById("arena")?.classList.add("skel-step-ready");
@@ -248,6 +268,7 @@ async function main() {
     render: (row, team) => renderer.render(row ? { ...row, display_animation_pending: !isDisplayReady(row) } : row, team),
     send: (team) => sb().rpc("game_state_buzzer_press", {
       p_game_id: gameId, p_key: key, p_team: team,
+      ...lease.actionArgs(),
     }),
     applyRow: (row) => subscription.applyRow(row),
     refetch: () => subscription.refetchNow(),
@@ -269,7 +290,7 @@ async function main() {
   document.getElementById("btnB")?.addEventListener("touchstart", (e) => { e.preventDefault(); press("B"); }, { passive: false });
 
   startPresenceHeartbeat({ gameId, key });
-  await subscription.start();
+  if (lease.state === "primary") await subscription.start();
 }
 
 main();

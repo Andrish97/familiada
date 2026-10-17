@@ -1,10 +1,9 @@
 // tests/e2e/game-state-realtime-spike.spec.js
 //
-// Historia: ten plik zaczynał jako test-spike sprawdzający, czy
-// `postgres_changes` na public.game_state dochodzi do roli `anon`
-// (Display/Host/Buzzer). Odpowiedź (seria uruchomień 2026-09-04/05,
-// łącznie z ręczną diagnozą bezpośrednio na produkcyjnym self-hosted
-// Supabase): NIE — i to nie jest błąd konfiguracji do naprawienia.
+// Zwykły JWT anon nie może odbierać `postgres_changes` z public.game_state.
+// Migration 375 dodaje osobną, wąską politykę dla 5-minutowego JWT, który
+// backend wystawia dopiero po sprawdzeniu klucza urządzenia i primary lease.
+// Ten test nadal sprawdza brak dostępu bez tego scoped tokenu.
 //
 // Wykluczone kolejno jako przyczyna (wszystkie poprawne): publikacja
 // supabase_realtime, slot replikacji, REPLICA IDENTITY FULL, GRANT SELECT
@@ -17,23 +16,16 @@
 // baseline) wymaga niestandardowego JWT-claimu "share_key", którego nic w
 // tym repo nigdy nie ustawia.
 //
-// Decyzja architektoniczna (migracja 2026-09-05_261): zamiast to naprawiać,
-// usunięto politykę anon na game_state CAŁKOWICIE — dokładnie jak dziś
-// public.device_state (zero polityki SELECT dla anon). Prawdziwe
-// zabezpieczenie treści gry ma być egzekwowane wyłącznie przez
-// share_key/6-cyfrowy kod sprawdzany WEWNĄTRZ SECURITY DEFINER RPC
-// (game_state_get) — nie przez RLS na surowej tabeli. Ktoś odpytujący
-// game_state bezpośrednio (REST, postgres_changes) bez przejścia przez ten
-// RPC ma dostać zero wierszy ZAWSZE, niezależnie od statusu gry czy
-// znajomości game_id.
+// Decyzja migracji 261 nadal obowiązuje wobec zwykłego JWT anon: nie ma
+// szerokiej polityki SELECT, a klucz urządzenia jest sprawdzany przez
+// SECURITY DEFINER RPC. Migracja 375 dodaje osobną politykę RLS dla
+// podpisanego, krótkotrwałego JWT z aktualnym primary lease. Ktoś odpytujący
+// bezpośrednio bez takiego JWT nadal dostaje zero wierszy.
 //
-// Ten plik teraz pilnuje właśnie TEGO — że anon nigdy nie widzi wiersza
-// bezpośrednio, a jedyna działająca droga to game_state_get z poprawnym
-// kluczem. To świadomy, trwały stan, nie coś do "naprawienia" jeśli kiedyś
-// zacznie się zmieniać (np. przy upgradzie Realtime) — stąd deterministyczne
-// asercje zamiast pollowania z 20s timeoutem jak w poprzedniej wersji tego
-// testu.
-//
+// Ten scenariusz pilnuje braku dostępu zwykłego anon i sprawdza, że
+// game_state_get z poprawnym kluczem pozostaje działający. Niżej osobny E2E
+// sprawdza token scoped i dostarczenie zmiany przez postgres_changes.
+
 // Dotyka wyłącznie nowej, addytywnej tabeli public.game_state (migracje
 // 259/260/261) — zero wpływu na dzisiejszy control.html/display/index.html i ich
 // dane.
@@ -41,7 +33,7 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
 
-test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyną drogą jest game_state_get z poprawnym kluczem", async ({
+test("public.game_state: zwykły anon nie ma bezpośredniego odczytu, game_state_get nadal działa z kluczem", async ({
   page,
   browser,
 }) => {
@@ -72,19 +64,39 @@ test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyn�
         p_detail: { teams: { teamA: "Spike A", teamB: "Spike B" } },
         p_sound_cue_key: null,
         p_expected_rev: null,
+        p_lock_ms: null,
       });
       return error?.message || null;
     }, game.id);
     expect(writeError, "game_state_write (właściciel) nie powiodło się").toBeNull();
+    const runtimeKey = await page.evaluate(async gid => {
+      const sb = window.__sbClient;
+      const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch_v2", {
+        p_game_id: gid, p_session_id: null,
+      });
+      if (sessionError || !session?.ok) throw sessionError || new Error(session?.error || "session touch failed");
+      const { data: link, error: linkError } = await sb.rpc("control_runtime_device_link", {
+        p_game_id: gid, p_device_type: "display",
+      });
+      if (linkError || !link?.ok) throw linkError || new Error(link?.error || "device link failed");
+      return link.token;
+    }, game.id);
 
     const anonContext = await browser.newContext();
     const anonPage = await anonContext.newPage();
     await anonPage.goto("/", { waitUntil: "domcontentloaded" });
+    const lease = await anonPage.evaluate(async ({ gid, key }) => {
+      const connectionId = crypto.randomUUID();
+      const { data, error } = await window.__sbClient.rpc("control_device_instance_register", {
+        p_game_id: gid, p_device_type: "display", p_key: key, p_connection_id: connectionId,
+        p_meta: { visibility: "visible", focused: true },
+      });
+      if (error || data?.state !== "primary") throw error || new Error("display was not made primary");
+      return { connectionId, epoch: data.epoch };
+    }, { gid: game.id, key: runtimeKey });
 
-    // 1) Bezpośredni SELECT jako anon — musi zwrócić zero wierszy, bez
-    //    względu na status gry czy znajomość game_id. Brak polityki SELECT
-    //    dla anon (migracja 261) oznacza, że RLS filtruje wszystko, nie że
-    //    to błąd uprawnień — więc `error` powinien być null, a `data` puste.
+    // 1) Bezpośredni SELECT ze zwykłym JWT anon — musi zwrócić zero wierszy.
+    //    Sama rola anon nie spełnia scoped polityki z migracji 375.
     const directRead = await anonPage.evaluate(async (gid) => {
       const sb = window.__sbClient;
       const { data, error } = await sb.from("game_state").select("*").eq("game_id", gid);
@@ -92,32 +104,42 @@ test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyn�
     }, game.id);
     expect(directRead.error, "bezpośredni SELECT jako anon nie powinien zwracać błędu uprawnień").toBeNull();
     expect(directRead.rowCount, "anon nie powinien widzieć żadnego wiersza game_state bezpośrednio").toBe(0);
+    const ordinaryCompletionRead = await anonPage.evaluate(async (gid) => {
+      const { data, error } = await window.__sbClient
+        .from("game_state_display_completion").select("game_id").eq("game_id", gid);
+      return { rowCount: data?.length ?? -1, error: error?.message || null };
+    }, game.id);
+    expect(ordinaryCompletionRead.error).toBeNull();
+    expect(ordinaryCompletionRead.rowCount, "zwykły anon nie powinien czytać potwierdzenia Displaya").toBe(0);
 
     // 2) game_state_get z NIEPOPRAWNYM kluczem — musi odmówić.
-    const badKeyResult = await anonPage.evaluate(async (gid) => {
+    const badKeyResult = await anonPage.evaluate(async ({ gid, lease }) => {
       const sb = window.__sbClient;
       const { data, error } = await sb.rpc("game_state_get", {
         p_game_id: gid,
         p_device_type: "display",
         p_key: "zly-klucz-na-pewno-nieprawidlowy",
+        p_connection_id: lease.connectionId, p_epoch: lease.epoch,
       });
       return { data, error: error?.message || null };
-    }, game.id);
+    }, { gid: game.id, lease });
     expect(badKeyResult.error, "game_state_get z błędnym kluczem powinno rzucić błąd").toContain("forbidden");
 
-    // 3) game_state_get z POPRAWNYM kluczem — to jest jedyna działająca
-    //    droga odczytu dla anon, i musi zwrócić prawdziwy stan gry.
+    // 3) game_state_get z POPRAWNYM kluczem pozostaje działającą ścieżką
+    //    dla zwykłego JWT anon i musi zwrócić prawdziwy stan gry.
     const goodKeyResult = await anonPage.evaluate(
-      async ({ gid, key }) => {
+      async ({ gid, key, lease }) => {
         const sb = window.__sbClient;
         const { data, error } = await sb.rpc("game_state_get", {
           p_game_id: gid,
           p_device_type: "display",
           p_key: key,
+          p_connection_id: lease.connectionId,
+          p_epoch: lease.epoch,
         });
         return { step: data?.step ?? null, error: error?.message || null };
       },
-      { gid: game.id, key: game.share_key_display }
+      { gid: game.id, key: runtimeKey, lease }
     );
     expect(goodKeyResult.error, "game_state_get z poprawnym kluczem nie powinno się nie udać").toBeNull();
     expect(goodKeyResult.step, "game_state_get z poprawnym kluczem powinno zwrócić zapisany stan").toBe("devices_display");
@@ -127,7 +149,7 @@ test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyn�
     //    każdym broadcastowym "dzwonku"). 10 kolejnych wywołań z tej samej,
     //    anonimowej karty, tak jak realnie robiłoby to Display/Host/Buzzer.
     const timings = await anonPage.evaluate(
-      async ({ gid, key }) => {
+      async ({ gid, key, lease }) => {
         const sb = window.__sbClient;
         const results = [];
         for (let i = 0; i < 10; i++) {
@@ -136,12 +158,14 @@ test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyn�
             p_game_id: gid,
             p_device_type: "display",
             p_key: key,
+            p_connection_id: lease.connectionId,
+            p_epoch: lease.epoch,
           });
           results.push({ ms: performance.now() - t0, error: error?.message || null });
         }
         return results;
       },
-      { gid: game.id, key: game.share_key_display }
+      { gid: game.id, key: runtimeKey, lease }
     );
     const failedTimings = timings.filter((t) => t.error);
     expect(failedTimings.length, "żadne z 10 wywołań pomiarowych nie powinno się nie udać").toBe(0);
@@ -164,5 +188,184 @@ test("public.game_state: anon nie ma bezpośredniego dostępu do odczytu, jedyn�
       const sb = window.__sbClient;
       await sb.from("games").delete().eq("id", gid);
     }, game.id);
+  }
+});
+
+test("control2: krótkotrwały token primary dostarcza zmiany game_state przez postgres_changes", async ({ page, browser }) => {
+  await loginAsTestUser(page, page.context());
+  const gameName = `E2E-GAME-STATE-SCOPED-REALTIME-${Date.now()}`;
+  const game = await page.evaluate(async (name) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("games").insert({
+      name, owner_id: userData.user.id, type: "prepared", status: "ready",
+    }).select("id").single();
+    if (error) throw error;
+    return data;
+  }, gameName);
+  const deviceContext = await browser.newContext();
+  let channelName = "";
+  let ownerCompletionChannelName = "";
+  try {
+    const { error: seedError } = await page.evaluate(async gid => {
+      const { error } = await window.__sbClient.rpc("game_state_write", {
+        p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
+        p_phase: null, p_control_team: null,
+        p_detail: { teams: { teamA: "Seed A", teamB: "Seed B" } },
+        p_sound_cue_key: null, p_expected_rev: null, p_lock_ms: null,
+      });
+      return { error };
+    }, game.id);
+    expect(seedError, "seed game_state_write should succeed").toBeNull();
+    const keyResult = await page.evaluate(async (gid) => {
+      const { data: session, error: sessionError } = await window.__sbClient.rpc("control_runtime_session_touch_v2", {
+        p_game_id: gid, p_session_id: null,
+      });
+      if (sessionError || !session?.ok) throw sessionError || new Error(session?.error || "session touch failed");
+      const { data, error } = await window.__sbClient.rpc("control_runtime_device_link", {
+        p_game_id: gid, p_device_type: "display",
+      });
+      if (error || !data?.ok) throw error || new Error(data?.error || "link failed");
+      return data.token;
+    }, game.id);
+
+    const devicePage = await deviceContext.newPage();
+    await devicePage.goto("/", { waitUntil: "domcontentloaded" });
+    const lease = await devicePage.evaluate(async ({ gid, key }) => {
+      const connectionId = crypto.randomUUID();
+      const { data, error } = await window.__sbClient.rpc("control_device_instance_register", {
+        p_game_id: gid, p_device_type: "display", p_key: key,
+        p_connection_id: connectionId, p_meta: { visibility: "visible", focused: true },
+      });
+      if (error || data?.state !== "primary") throw error || new Error("display did not become primary");
+      return { connection_id: connectionId, epoch: data.epoch };
+    }, { gid: game.id, key: keyResult });
+
+    const direct = await devicePage.evaluate(async ({ gid, key, lease }) => {
+      const sb = window.__sbClient;
+      const { data, error } = await sb.functions.invoke("device-realtime-token", {
+        body: { game_id: gid, device_type: "display", key,
+          connection_id: lease.connection_id, epoch: lease.epoch },
+      });
+      if (error || !data?.token) throw error || new Error(data?.error || "missing realtime token");
+      const scopedRest = window.supabase.createClient(sb.supabaseUrl, sb.supabaseKey, {
+        global: { headers: { Authorization: `Bearer ${data.token}` } },
+      });
+      const { data: completionRows, error: completionReadError } = await scopedRest
+        .from("game_state_display_completion").select("game_id,rendered_rev")
+        .eq("game_id", gid);
+      if (completionReadError) throw completionReadError;
+      window.__scopedCompletionReadCount = completionRows?.length ?? 0;
+      // Realtime RLS deliberately checks the live connection heartbeat. Keep
+      // this bare-page fixture alive at the same cadence as the real device
+      // lease client, which normally runs every three seconds.
+      window.__deviceHeartbeatTimer = setInterval(() => {
+        void sb.rpc("control_device_instance_heartbeat", {
+          p_game_id: gid, p_device_type: "display", p_key: key,
+          p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+          p_meta: { visibility: "visible", focused: true },
+        });
+      }, 3000);
+      const { data: before, error: readError } = await sb.rpc("game_state_get", {
+        p_game_id: gid, p_device_type: "display", p_key: key,
+        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+      });
+      if (readError) throw readError;
+      await sb.realtime.setAuth(data.token);
+      const channelName = `e2e-scoped-state:${crypto.randomUUID()}`;
+      const channel = sb.channel(channelName).on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "game_state", filter: `game_id=eq.${gid}`,
+      }, payload => {
+        if (Number(payload?.new?.display_rendered_rev) > 0) {
+          window.__scopedRealtimeRenderedRev = payload.new.display_rendered_rev;
+        }
+        if (Number(payload?.new?.rev) > Number(before?.rev)) window.__scopedRealtimeRev = payload.new.rev;
+      });
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("postgres_changes subscribe timeout")), 12000);
+        channel.subscribe(status => {
+          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            clearTimeout(timeout); reject(new Error(`postgres_changes: ${status}`));
+          }
+        });
+      });
+      // Give Realtime's postgres_changes listener a short settle interval
+      // after the channel join acknowledgement before the first write.
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return { channelName, beforeRev: before?.rev };
+    }, { gid: game.id, key: keyResult, lease });
+    channelName = direct.channelName;
+    expect(await devicePage.evaluate(() => window.__scopedCompletionReadCount)).toBe(1);
+
+    ownerCompletionChannelName = `e2e-owner-completion:${crypto.randomUUID()}`;
+    await page.evaluate(async ({ gid, channelName }) => {
+      const sb = window.__sbClient;
+      const channel = sb.channel(channelName).on("postgres_changes", {
+        event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gid}`,
+      }, payload => { window.__ownerRealtimeCompletionRev = payload?.new?.rendered_rev ?? null; });
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("owner completion subscribe timeout")), 12000);
+        channel.subscribe(status => {
+          if (status === "SUBSCRIBED") { clearTimeout(timeout); resolve(); }
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            clearTimeout(timeout); reject(new Error(`owner completion postgres_changes: ${status}`));
+          }
+        });
+      });
+    }, { gid: game.id, channelName: ownerCompletionChannelName });
+
+    const { error: writeError } = await page.evaluate(async gid => {
+      const { error } = await window.__sbClient.rpc("game_state_write", {
+        p_game_id: gid, p_step: "devices_display", p_top_card: "devices",
+        p_phase: null, p_control_team: null,
+        p_detail: { teams: { teamA: "Realtime A", teamB: "Realtime B" } },
+        p_sound_cue_key: null, p_expected_rev: null, p_lock_ms: null,
+      });
+      return { error };
+    }, game.id);
+    expect(writeError, "owner game_state_write should succeed").toBeNull();
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRev || null), { timeout: 15000 })
+      .not.toBeNull();
+    const completedRevision = await devicePage.evaluate(async ({ gid, key, lease }) => {
+      const sb = window.__sbClient;
+      const { data, error } = await sb.rpc("game_state_get", {
+        p_game_id: gid, p_device_type: "display", p_key: key,
+        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+      });
+      if (error || !data?.rev) throw error || new Error("missing current game_state revision");
+      const { error: completionError } = await sb.rpc("game_state_display_complete", {
+        p_game_id: gid, p_key: key, p_rev: data.rev,
+        p_connection_id: lease.connection_id, p_epoch: lease.epoch,
+      });
+      if (completionError) throw completionError;
+      return data.rev;
+    }, { gid: game.id, key: keyResult, lease });
+    const storedCompletion = await page.evaluate(async gid => {
+      const { data, error } = await window.__sbClient.from("game_state_display_completion")
+        .select("rendered_rev").eq("game_id", gid).single();
+      return { renderedRev: data?.rendered_rev ?? null, error: error?.message || null };
+    }, game.id);
+    expect(storedCompletion.error).toBeNull();
+    expect(Number(storedCompletion.renderedRev)).toBe(Number(completedRevision));
+    await expect.poll(() => page.evaluate(() => window.__ownerRealtimeCompletionRev || null), { timeout: 15000 })
+      .toBe(completedRevision);
+    await expect.poll(() => devicePage.evaluate(() => window.__scopedRealtimeRenderedRev || null), { timeout: 15000 })
+      .toBe(completedRevision);
+  } finally {
+    await deviceContext.pages()[0]?.evaluate(() => clearInterval(window.__deviceHeartbeatTimer)).catch(() => {});
+    if (channelName) await deviceContext.pages()[0]?.evaluate(async name => {
+      const sb = window.__sbClient;
+      const channel = sb.getChannels().find(item => item.topic.endsWith(name));
+      if (channel) await sb.removeChannel(channel);
+      await sb.realtime.setAuth(undefined);
+    }, channelName).catch(() => {});
+    if (ownerCompletionChannelName) await page.evaluate(async name => {
+      const sb = window.__sbClient;
+      const channel = sb.getChannels().find(item => item.topic.endsWith(name));
+      if (channel) await sb.removeChannel(channel);
+    }, ownerCompletionChannelName).catch(() => {});
+    await deviceContext.close().catch(() => {});
+    await page.evaluate(async gid => { await window.__sbClient.from("games").delete().eq("id", gid); }, game.id);
   }
 });

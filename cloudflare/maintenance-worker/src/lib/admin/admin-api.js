@@ -86,12 +86,22 @@ export async function handleAdminApi(request, env) {
       }
       rows = rows.map(row => {
         const { session_id: sessionId, ...publicRow } = row || {};
-        const extraEvents = displayEvents[sessionId] || [];
-        if (Number(publicRow.control_version) !== 2 || !extraEvents.length) return publicRow;
+        if (Number(publicRow.control_version) !== 2) return publicRow;
+        const extraEvents = Array.isArray(displayEvents[sessionId]) ? displayEvents[sessionId] : [];
         const stats = publicRow.stats_detail && typeof publicRow.stats_detail === "object" ? publicRow.stats_detail : {};
         const events = [...(Array.isArray(stats.events) ? stats.events : []), ...extraEvents]
           .sort((a, b) => Date.parse(a?.at || "") - Date.parse(b?.at || ""));
-        return { ...publicRow, stats_detail: { ...stats, events } };
+        const eventLog = {
+          status: sessionId ? (extraEvents.length ? "events_recorded" : "no_events_recorded") : "session_id_missing",
+          event_count: extraEvents.length,
+        };
+        return {
+          ...publicRow,
+          device_event_log: eventLog,
+          // Keep the old key for saved Admin exports and older clients.
+          display_event_log: eventLog,
+          stats_detail: { ...stats, events },
+        };
       });
     }
     return json({ ok: true, rows });

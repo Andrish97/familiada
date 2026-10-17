@@ -30,16 +30,15 @@ const { expectMailDocument } = require("./helpers/mail-document");
 //       tylko jeden zaakceptowany, oba urządzenia się zgadzają.
 //   11b. Ponów naciśnięcie (RETRY_DUEL) — odrzuca błędne zgłoszenie,
 //       Buzzer otwiera się na nowo.
-//   12. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
-//       odtwarza mimo normalnie grającej akcji.
+//   12. Wyciszenie dźwięku — akcje dźwiękowe nadal się uruchamiają, ale
+//       master gain jest wyciszony.
 //   12b. Dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień,
 //       chwilowe mute w rundzie.
 //   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
-//   14. Modal ustawień gry (js/pages/game-settings.js) — zmiana nazwy
-//       drużyny faktycznie odświeża zagnieżdżony podgląd Wyświetlacza
-//       (/control/display?preview=1) — regresja na naprawę martwego podglądu w
-//       trybie modalu.
+//   14. Osobna strona ustawień gry — zmiana nazwy drużyny odświeża
+//       zagnieżdżony podgląd Wyświetlacza, zapisuje się jawnie i wraca do
+//       Control przez topbar.
 //   15. Blokada logo — Control czeka, aż logo-editor.js zwolni logo
 //       referencowane przez grę, wznawia się sam po zwolnieniu.
 //   16. Udostępnianie urządzenia przez e-mail — realny mail + link, który
@@ -168,7 +167,10 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     for (let i = 0; i < samples; i++) wav.writeInt16LE(Math.round(Math.sin(i * 2 * Math.PI * 440 / sampleRate) * 500), 44 + i * 2);
     await fileInput.setInputFiles({ name: "outro-test-31s.wav", mimeType: "audio/wav", buffer: wav });
     await expect(page.locator('.sfx-row:has(input[data-sfx-key="show_outro"]) .sfx-file-name')).toHaveText("outro-test-31s.wav", { timeout: 15000 });
-    // Autozapis; „Wstecz” zapisuje od razu i wraca do Control (ret).
+    // Ustawienia zapisują się jawnie przyciskiem, a czyste wyjście wraca
+    // bez ostrzeżenia o niezapisanych zmianach.
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
     await page.locator("#btnBack").click();
     // Control is intentionally opened by the production link as /control?id=…
     // (without a trailing slash); accept both canonical forms.
@@ -571,7 +573,7 @@ async function makeGame(page, name, opts = {}) {
   await padGame(page, g.id);
   const keys = await page.evaluate(async (gameId) => {
     const sb = window.__sbClient;
-    const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch", {
+    const { data: session, error: sessionError } = await sb.rpc("control_runtime_session_touch_v2", {
       p_game_id: gameId, p_session_id: null,
     });
     if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Control runtime session failed");
@@ -737,6 +739,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
       unknownEndReason: render({ game_name: "E2E", stats_detail: { end_reason: "unknown_internal_reason", events: [] } }).textContent,
       outage: inspect([event("disconnect", { devices: ["display"], message: "presence:display=offline,host=online,buzzer=online" }), event("reconnect")]),
       diagnostic: inspect([event("diagnostic", { category: "connectivity", devices: ["display"], metrics: { blocked_duration_ms: 2400, repeated_drops: 2, blocked_action_attempts: 1, device_context: { display: { profile: "same_profile", visibility: "hidden" } } } })]),
+      leaseDiagnostic: inspect([event("diagnostic", { category: "device_lease", devices: ["buzzer"], metrics: { from_state: "waiting", to_state: "primary", epoch: 4 } })]),
       audioDiagnostic: inspect([event("diagnostic", { category: "audio_start", devices: ["control"], metrics: { sound: "reveal", start_delay_ms: 850, failed: false } })]),
       frameDiagnostic: inspect([event("diagnostic", { category: "display_delay", devices: ["display"], metrics: { reason: "frame_stall", max_frame_gap_ms: 320, stalled_frames: 2, display_visibility: "visible" } })]),
       error: inspect([event("error", { message: "Nie można odczytać statusu urządzeń." })]),
@@ -768,6 +771,9 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.diagnostic.rows[0]).toContain("ten sam profil przeglądarki");
   expect(result.diagnostic.rows[0]).toContain("karta była w tle");
   expect(result.diagnostic.rows[0]).toContain("próby akcji podczas blokady: 1");
+  expect(result.leaseDiagnostic.sections).toBe(1);
+  expect(result.leaseDiagnostic.rows[0]).toContain("Stan blokady urządzenia Przycisk · waiting → zostało aktywowane jako główne");
+  expect(result.leaseDiagnostic.rows[0]).toContain("epoka 4");
   expect(result.audioDiagnostic.rows[0]).toContain("Dźwięk: revealControl");
   expect(result.audioDiagnostic.rows[0]).toContain("wystartował po 0,9 s");
   expect(result.frameDiagnostic.rows[0]).toContain("Zacięcie animacji planszy");
@@ -861,7 +867,7 @@ function instrumentAnon(p, label) {
   });
 }
 
-async function openAnon(browser, contexts, path, label, errors) {
+async function openAnon(browser, contexts, path, label, errors, { onPage } = {}) {
   const devicePaths = { "/control/display": "display", "/control/host": "host", "/control/buzzer": "buzzer" };
   const parsed = new URL(path, "https://www.familiada.online");
   const deviceType = devicePaths[parsed.pathname.replace(/\/$/, "")];
@@ -873,6 +879,7 @@ async function openAnon(browser, contexts, path, label, errors) {
   const ctx = await controlContext(browser, );
   contexts.push(ctx);
   const p = await ctx.newPage();
+  onPage?.(p);
   trackErrors(p, label, errors);
   instrumentAnon(p, label);
   await p.goto(path, { waitUntil: "domcontentloaded" });
@@ -1030,6 +1037,85 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
   }
 });
 
+test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu głównej", async ({ page, browser }, testInfo) => {
+  test.setTimeout(120000);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGameRaw(page, `E2E-CONTROL2-LEASE-${Date.now()}`, {
+    roundQuestions: Array.from({ length: 6 }, (_, i) => ({
+      ord: i + 1, text: `Lease pytanie ${i + 1}`,
+      answers: [{ ord: 1, text: `Odp. ${i + 1}`, fixed_points: 10 }],
+    })),
+  });
+  const contexts = [];
+  page.on("pageerror", error => console.log("[lease e2e pageerror]", error.message));
+  page.on("console", message => {
+    if (message.type() === "error") console.log("[lease e2e console]", message.text());
+  });
+  try {
+    await padGame(page, game.id);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2000);
+    const routeState = await page.evaluate(() => ({
+      path: location.pathname,
+      title: document.title,
+      headings: [...document.querySelectorAll(".stepTitle")].map(el => el.textContent),
+      message: document.body.innerText.slice(0, 300),
+    }));
+    console.log("[lease e2e] control route state", JSON.stringify(routeState));
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    const keys = await page.evaluate(async (gameId) => {
+      const sb = window.__sbClient;
+      const result = {};
+      for (const type of ["display", "host", "buzzer"]) {
+        const { data, error } = await sb.rpc("control_runtime_device_link", { p_game_id: gameId, p_device_type: type });
+        if (error || !data?.ok) throw new Error(error?.message || data?.error || `Device link failed: ${type}`);
+        result[type] = data.token;
+      }
+      return result;
+    }, game.id);
+
+    for (const type of ["display", "host", "buzzer"]) {
+      const path = `/control/${type}?id=${game.id}&key=${keys[type]}`;
+      const primaryStates = [];
+      const primary = await openAnon(browser, contexts, path, `${type}-primary`, [], {
+        onPage(devicePage) {
+          devicePage.on("response", async response => {
+            if (!response.url().includes("control_device_instance_")) return;
+            try {
+              const parsed = await response.json();
+              if (parsed?.state) primaryStates.push(parsed.state);
+            } catch {}
+          });
+        },
+      });
+      await expect.poll(() => primaryStates.includes("primary"), { timeout: 10000 }).toBe(true);
+      await expect(primary.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 10000 });
+      const waitingStates = [];
+      const waiting = await openAnon(browser, contexts, path, `${type}-waiting`, [], {
+        onPage(devicePage) {
+          devicePage.on("response", async response => {
+            if (!response.url().includes("control_device_instance_")) return;
+            let body = "<unreadable>";
+            try { body = JSON.stringify(await response.json()); } catch {}
+            const parsed = body === "<unreadable>" ? null : JSON.parse(body);
+            if (parsed?.state) waitingStates.push(parsed.state);
+            console.log(`[lease e2e ${type}-waiting] ${response.url().split("/").pop()} ${response.status()} ${body}`);
+          });
+        },
+      });
+      await expect.poll(() => waitingStates.includes("waiting"), { timeout: 10000 }).toBe(true);
+      await expect(waiting.locator("#deviceLeaseOverlay")).toBeVisible({ timeout: 10000 });
+      await expect(waiting.locator("#deviceLeaseText")).toHaveText(/\S+/, { timeout: 10000 });
+      await primary.close();
+      await expect(waiting.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 20000 });
+      await waiting.close();
+    }
+  } finally {
+    for (const context of contexts) await context.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
 // ===== 2. Pełna runda + wznowienie po przeładowaniu =====
 
 test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeładowaniu w środku rundy 2", async ({ page, browser }, testInfo) => {
@@ -1042,9 +1128,21 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
-    await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const displayPage = await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
     const hostPage = await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
     const buzzerPage = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+
+    // Potwierdź, że prawdziwe strony urządzeń dołączyły do kanału
+    // postgres_changes. Samo przejście gry mogłoby zostać zamaskowane przez
+    // stary Broadcast/polling, więc sprawdzamy kanał używany przez aplikację.
+    for (const [kind, devicePage] of [["Display", displayPage], ["Host", hostPage], ["Buzzer", buzzerPage]]) {
+      await expect.poll(() => devicePage.evaluate(() => window.__sbClient?.getChannels?.()
+        ?.filter(channel => String(channel.topic || "").includes("game-state-direct"))
+        .map(channel => `${channel.topic}:${channel.state}`) || []), {
+        timeout: 15000,
+        message: `${kind} powinien dołączyć do bezpośredniego kanału Realtime przed rozpoczęciem gry`,
+      }).toEqual(expect.arrayContaining([expect.stringMatching(/:joined$/)]));
+    }
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -2167,7 +2265,7 @@ test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer ot
 
 // ===== 12. Wyciszenie dźwięku =====
 
-test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwarza", async ({ page, browser }, testInfo) => {
+test("control2: wyciszenie dźwięku — Mute zeruje wyjście, zachowując zdarzenia audio", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-MUTE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
@@ -2203,7 +2301,9 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await revealAnswer(page, 1); // normalnie: buzzer_press + answer_correct
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
-    expect(await getSfxKeys(page), "wyciszenie ma zablokować KAŻDY dźwięk, nie tylko część").toEqual([]);
+    const mutedSfx = await page.evaluate(() => window.__sfxLog || []);
+    expect(mutedSfx.map((entry) => entry.key), "Mute nie może zatrzymywać zdarzeń dźwiękowych ani ich synchronizacji").toContain("buzzer_press");
+    expect(mutedSfx.every((entry) => entry.muted), "każde zdarzenie po Mute musi przejść przez zerowy master gain").toBe(true);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -2218,11 +2318,11 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 // rzeczy". Przechodzi przez CAŁĄ ścieżkę na raz: przełącznik "Dźwięk" w
 // kroku Urządzeń -> #audioUnlockScreen na Display (musi się pojawić,
 // kliknięcie musi je schować) -> DWA różne suwaki, dwie różne kategorie
-// dźwięku (żeby nie dało się ich pomylić w asercjach): (a) modal "Zmień
+// dźwięku (żeby nie dało się ich pomylić w asercjach): (a) osobna strona "Zmień
 // ustawienia" -> games.settings.sound jako punkt wyjściowy, denormalizacja
 // do game_state dopiero po powrocie z ustawień; (b) suwak BEZPOŚREDNIO w
 // sekcji "Dźwięk" Podsumowania (control/js/ui.js's soundSummarySection)
-// -> zapis prosto do game_state na żywo, bez modala. Oba muszą dotrzeć do
+// -> zapis prosto do game_state na żywo, bez przechodzenia na stronę ustawień. Oba muszą dotrzeć do
 // Display (nie do Control — sprawdzone osobno, że Control zostaje cicho
 // przez cały czas) -> Mute (współdzielony, patrz control/js/soundReactor.js)
 // wyciszony na chwilę w środku rundy, potem wznowiony — ten sam #btnMute co
@@ -2268,7 +2368,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // Dwa RÓŻNE mechanizmy, dwie różne kategorie dźwięku, żeby nie dało się
     // ich pomylić w asercjach:
     //
-    // (a) Modal "Zmień ustawienia" -> games.settings.sound -> denormalizacja
+    // (a) Osobna strona "Zmień ustawienia" -> games.settings.sound -> denormalizacja
     //     do game_state DOPIERO po powrocie z ustawień (applyGameSettingsToState() w
     //     control/js/app.js). To jest "punkt wyjściowy" — trwały, per-gra
     //     domyślny zapis, edytowalny tylko tam (warianty/pliki własne też).
@@ -2276,15 +2376,15 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // (b) Suwak BEZPOŚREDNIO w sekcji "Dźwięk" Podsumowania
     //     (control/js/ui.js's soundSummarySection) -> zapis PROSTO do
     //     game_state ("settings.setSoundVolume" w app.js), NA ŻYWO, bez
-    //     dotykania games.settings i bez otwierania modala w ogóle.
+    //     dotykania games.settings i bez przechodzenia na stronę ustawień.
     //
     // Zgłoszone wprost: to są różne rzeczy, oba mają działać i oba mają być
-    // przetestowane osobno — modal zmienia "round_transition", Podsumowanie
+    // przetestowane osobno — strona ustawień zmienia "round_transition", Podsumowanie
     // zmienia "reveal", więc każda asercja wiąże się jednoznacznie z jednym
     // z dwóch mechanizmów.
 
-    // (a) games.settings jako punkt wyjściowy — strona ustawień (zwykłe
-    // przejście z Control, ustawienia zapisują się same).
+    // (a) games.settings jako punkt wyjściowy — zmiana jest jawnie zapisana
+    // na osobnej stronie ustawień przed powrotem do Control.
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
     await page.waitForURL(/\/games\/settings\//, { timeout: 15000 });
     // #gsTeamA staje się widoczny dopiero po zakończeniu async inicjalizacji
@@ -2299,17 +2399,18 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
       el.value = "70";
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
-    // „Wstecz” zapisuje zmiany od razu (bez pytania) i wraca do Control (ret).
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
     await page.locator("#btnBack").click();
     await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
 
     await expect.poll(
       () => displayPage.evaluate(() => localStorage.getItem("sfx_vol_round_transition")),
-      { timeout: 10000, message: "głośność 'round_transition' skonfigurowana w games.settings (modal) powinna dotrzeć do Display" }
+      { timeout: 10000, message: "głośność 'round_transition' skonfigurowana na stronie ustawień powinna dotrzeć do Display" }
     ).toBe("0.7");
 
-    // (b) game_state na żywo — suwak w Podsumowaniu, bez modala.
+    // (b) game_state na żywo — suwak w Podsumowaniu, bez przechodzenia na stronę ustawień.
     const revealSlider = page.locator('input.summarySoundVol[data-sfx-vol="reveal"]');
     await expect(revealSlider).toBeVisible({ timeout: 10000 });
     // "input" (przeciąganie) tylko podgląd lokalny; dopiero "change"
@@ -2344,7 +2445,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await clearSfxLog(displayPage);
     await revealAnswer(page, 1); // Odpowiedź A, 40 pkt -> wygrywa pojedynek
-    await waitForSfxSequence(displayPage, ["reveal"], 10000);
+    await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
 
     // Ponowne podłączenie Display w trakcie gry wymaga nowego gestu audio.
     // Control blokuje odsłanianie do momentu potwierdzenia przez nową kartę.
@@ -2368,17 +2469,24 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // ===== Mute na chwilę w tej samej rundzie — odpowiedź #2 podczas wyciszenia =====
     await page.locator("#btnMute").click();
     await expect(page.locator("#btnMute .ico-speaker-off")).toHaveCount(1);
+    await expect.poll(() => displayPage.evaluate(() => window.__sfxMuted)).toBe(true);
     await clearSfxLog(displayPage);
     await revealAnswer(page, 2); // Odpowiedź B, 30 pkt
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
-    expect(await getSfxKeys(displayPage), "wyciszone -> Display nie powinien nic odtworzyć").toEqual([]);
+    // Aktualizacja planszy może dotrzeć przed końcem asynchronicznego
+    // dekodowania pliku dźwiękowego. Czekamy na wywołanie playSfx, ale
+    // sprawdzamy zarazem, że miało miejsce przy aktywnym wyciszeniu.
+    await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
+    const mutedDisplaySfx = await displayPage.evaluate(() => window.__sfxLog || []);
+    expect(mutedDisplaySfx.map((entry) => entry.key), "wyciszony Display nadal musi odebrać cue i zachować synchronizację").toContain("answer_correct");
+    expect(mutedDisplaySfx.every((entry) => entry.muted), "Display ma wyciszyć wyjście dla każdego cue").toBe(true);
 
     // ===== Un-mute — odpowiedź #3 znów słyszalna =====
     await page.locator("#btnMute").click();
     await expect(page.locator("#btnMute .ico-speaker-on")).toHaveCount(1);
     await clearSfxLog(displayPage);
     await revealAnswer(page, 3); // Odpowiedź C, 20 pkt -> wszystko odkryte
-    await waitForSfxSequence(displayPage, ["reveal"], 10000);
+    await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
 
     // Control przez całą rundę zostaje cicho — dowód, że gating jest
     // symetryczny (nie tylko "Display gra", ale i "Control naprawdę nie gra").
@@ -2439,13 +2547,13 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
   }
 });
 
-// ===== 14. Modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza =====
+// ===== 14. Osobna strona ustawień — podgląd, zapis i powrót do Control =====
 //
-// Zgłoszone: podgląd Wyświetlacza w modalu ustawień (js/pages/game-settings.js)
-// był całkowicie martwy — sendDisplayCmd() w trybie modalu tylko przekazywał
+// Zgłoszone: podgląd Wyświetlacza na stronie ustawień
+// (games/settings/js/game-settings.js) był całkowicie martwy — sendDisplayCmd()
 // tekstowe komendy do window.parent, licząc na Control, żeby je dalej
 // przekazał "prawdziwemu" Displayowi (czego Control v2 nigdy nie robi —
-// komend już nie ma). Naprawa: modal sam osadza /control/display?preview=1 i
+// komend już nie ma). Naprawa: strona ustawień osadza /control/display?preview=1 i
 // przesyła mu postMessage familiada:preview-row, ten sam mechanizm co D3.
 // Ten test dowodzi, że to faktycznie działa: zmiana nazwy drużyny w polu
 // formularza musi się pojawić w window.__displayLog ZAGNIEŻDŻONEGO iframe'a
@@ -2470,14 +2578,11 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
 
-    // Skróty są ignorowane, dopóki plansza jest zajęta (zapis przejścia do
-    // Podsumowania jeszcze trwa, a ekran renderuje się optymistycznie) —
-    // powtarzaj "e" + Enter, aż Control przejdzie na stronę ustawień.
-    await expect(async () => {
-      await page.keyboard.press("e");
-      await page.keyboard.press("Enter");
-      await page.waitForURL(/\/games\/settings\//, { timeout: 1500 });
-    }).toPass({ timeout: 20000 });
+    // Ustawienia są osobną stroną. Otwieramy je widocznym przyciskiem,
+    // zapisujemy jawnie i wracamy przez topbar — bez starego skrótu
+    // klawiaturowego, który nie jest częścią tego scenariusza.
+    await page.getByRole("button", { name: "Zmień ustawienia" }).click();
+    await page.waitForURL(/\/games\/settings\//, { timeout: 15000 });
 
     // Kategoria "Drużyny" jest domyślnie aktywna — pole nazwy drużyny A jest
     // widoczne od razu, bez przełączania zakładek.
@@ -2498,13 +2603,20 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
       const log = await previewFrame().evaluate(() => window.__displayLog || []);
       return log.some((e) => e.call === "api.small.long1" && e.args?.[0] === "Testowi Mistrzowie");
     }, { timeout: 10000 }).toBe(true);
+
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
+    await page.locator("#btnBack").click();
+    await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 30000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
+    await expect(page.locator(".c2-summary-teams .summarySectionValue")).toContainText("Testowi Mistrzowie");
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
   }
 });
 
-// ===== 15. Blokada logo — Control (i modal ustawień gry) czekają, aż
+// ===== 15. Blokada logo — Control (i strona ustawień gry) czekają, aż
 // logo-editor.js zwolni logo referencowane przez grę =====
 //
 // js/core/resource-lock.js's guardResourceBusy() — dodane w tej sesji do
@@ -2904,10 +3016,11 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     // ===== Zerwanie wszystkich trzech naraz =====
     const toClose = contexts.splice(0, contexts.length); // zdejmij z listy sprzątanej w finally -- zamykamy je TU, świadomie
     await Promise.all(toClose.map((ctx) => ctx.close()));
-    // TTL obecności 6,5 s + margines na odczyt i render pod obciążeniem.
-    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 8500 });
-    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 8500 });
-    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 8500 });
+    // Primary lease wygasa po 12 s; pagehide release jest best-effort, więc
+    // Control przełącza status dopiero po serwerowym wygaśnięciu lease.
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 15000 });
     await expect(answerTile(page, 2)).toBeDisabled();
     await expect(page.locator(".c2-gameplay .msg-pill")).toHaveCount(0);
     await expect(page.locator("#deviceLostOverlay")).toBeVisible();
@@ -2932,6 +3045,10 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     // Świeżo podłączony Display musi pokazać PRAWDZIWY, aktualny obraz gry
     // (odkrytą odpowiedź #1) -- nie pusty/czarny ekran. Dowód realnego
     // wznowienia stanu, nie tylko zielonej kropki w topbarze.
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.rounds.setAll")).length, {
+      timeout: 5000,
+      message: "Display powinien dokończyć malowanie aktualnej planszy po ponownym podłączeniu",
+    }).toBeGreaterThan(0);
     const setAllCalls = await getDisplayCalls(displayPage, "api.rounds.setAll");
     expect(setAllCalls.length, "Display po ponownym podłączeniu musi przynajmniej raz namalować planszę rund").toBeGreaterThan(0);
     expect(setAllCalls.at(-1).args[0].rows[0]).toMatchObject({ text: "Odpowiedź A", pts: "40" });
@@ -2962,15 +3079,24 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     const outageEvents = reconnectSessions[0].stats_detail.events || [];
     const outage = outageEvents.find(event => event.kind === "diagnostic" && event.category === "connectivity");
     expect(outage.devices).toEqual(expect.arrayContaining(["display", "host", "buzzer"]));
-    await attachStatistics(testInfo, "reconnect", reconnectSessions);
     console.log(`[statistics-review] reconnect diagnostic: ${JSON.stringify(outage)}`);
     // To czas od wykrycia braku urządzeń do ich ponownego podłączenia; zależy
     // od tempa odtworzenia trzech kart, więc sprawdzamy sam fakt blokady.
     expect(outage.metrics.blocked_duration_ms).toBeGreaterThan(0);
     expect(outageEvents.filter(event => ["disconnect", "reconnect"].includes(event.kind))).toHaveLength(0);
-    expect(reconnectSessions).toHaveLength(1);
-    expect(reconnectSessions[0].rounds_played).toBe(1);
-    expect(reconnectSessions[0].ended_at).toBeNull();
+    await expect.poll(async () => {
+      const sessions = await readControl2Sessions(page, game.id);
+      return (sessions[0]?.stats_detail.events || []).filter(event => event.kind === "diagnostic"
+        && event.category === "state_sync" && event.metrics?.phase === "acknowledged").length;
+    }, { timeout: 15_000 }).toBeGreaterThan(0);
+    const syncSessions = await readControl2Sessions(page, game.id);
+    const syncEvents = syncSessions[0].stats_detail.events.filter(event => event.kind === "diagnostic" && event.category === "state_sync");
+    expect(syncEvents.some(event => event.metrics?.phase === "requested" && Number.isFinite(event.metrics?.revision))).toBe(true);
+    expect(syncEvents.some(event => event.metrics?.phase === "acknowledged" && ["realtime", "fallback_read"].includes(event.metrics?.ack_source))).toBe(true);
+    await attachStatistics(testInfo, "reconnect", syncSessions);
+    expect(syncSessions).toHaveLength(1);
+    expect(syncSessions[0].rounds_played).toBe(1);
+    expect(syncSessions[0].ended_at).toBeNull();
     expect(errors, "żadne z urządzeń (stare ani świeżo podłączone) nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
@@ -3290,19 +3416,21 @@ test("control2: opóźnione potwierdzenie Display blokuje następną akcję i bu
 
 test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktualny checkbox", async ({ page, context, browser }) => {
   test.setTimeout(300_000);
+  const accountPool = getTestAccountPool();
+  test.skip(accountPool.length < 2, "Scenariusz znajomego wymaga dwóch różnych kont testowych.");
   const email = "test14@familiada.online";
   const rpc = (target, name, args = {}) => target.evaluate(async ({ name, args }) => {
     const { data, error } = await window.__sbClient.rpc(name, args);
     if (error) throw new Error(`${name}: ${error.message}`);
     return data;
   }, { name, args });
-  await loginAsPooledTestUser(page, context, 0);
+  await loginAsTestUser(page, context, { username: accountPool[0] });
   const recipientContext = await controlContext(browser);
   const recipient = await recipientContext.newPage();
   const anonymous = await controlContext(browser);
   let game = null, peer = null, oldFlag = null;
   try {
-    await loginAsPooledTestUser(recipient, recipientContext, 1);
+    await loginAsTestUser(recipient, recipientContext, { username: accountPool[1] });
     peer = await recipient.evaluate(async () => {
       const user = (await window.__sbClient.auth.getUser()).data.user;
       const {data,error}=await window.__sbClient.from("profiles").select("username").eq("id",user.id).single();
@@ -3317,7 +3445,7 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     expect((await rpc(page,"e2e_subscriber_email_cleanup",{p_email:email})).ok).toBe(true);
     expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
     const invited = await rpc(page,"friends_invite",{p_handle:peer.email});
-    expect(invited.ok).toBe(true);
+    expect(invited, `friends_invite response: ${JSON.stringify(invited)}`).toMatchObject({ok:true});
     expect((await rpc(recipient,"friends_accept",{p_id:invited.id})).ok).toBe(true);
     game = await makeGame(page,`E2E-CONTROL358-${Date.now()}`);
     await clearMailbox(email); await resetMailProviderLimits(page);
@@ -3376,6 +3504,8 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
       if(error)throw error;
     },peer.id);
     await open("display");
+    expect(await rpc(page,"control_device_share_preflight",{p_game_id:game.id,p_device_type:"display",p_recipient_user_id:peer.id})).toMatchObject({ok:true,already_shared:false,mail_disabled:true,mail_allowed:false});
+    const friendShareAfter = new Date().toISOString();
     const choice = page.locator(`#shareDeviceSubsList input[value="${peer.id}"]`);
     await choice.check();
     await page.locator("#btnShareDeviceFriends").click();
@@ -3384,6 +3514,8 @@ test("@mailbox control358: adres bez konta, globalne mail-off, znajomy i nieaktu
     expect(display.cooldown_until).toBeNull();
     expect((await rpc(page,"friends_remove",{p_id:invited.id})).ok).toBe(true);
     expect((await rpc(page,"control_device_share_resolve",{p_token:display.share_token})).ok).toBe(true);
+    const friendDelivery = await readMailDelivery({recipient:peer.email,after:friendShareAfter});
+    expect(friendDelivery.queue).toEqual([]); expect(friendDelivery.events).toEqual([]);
     expect((await rpc(page,"e2e_friendships_cleanup",{p_other_user_id:peer.id})).ok).toBe(true);
     const fresh = await rpc(page,"friends_invite",{p_handle:peer.email});
     expect(fresh.ok).toBe(true); expect((await rpc(recipient,"friends_accept",{p_id:fresh.id})).ok).toBe(true);
