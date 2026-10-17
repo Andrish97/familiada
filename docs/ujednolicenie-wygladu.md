@@ -1451,3 +1451,10 @@ sam poziom powierzchni i odstępów jak inne sekcje kart.
 
 Po zmianach należy wykonać punktowy przebieg E20 `games`/MacBook, następnie
 pełną galerię E20 na aktualnym branchu.
+
+### Szerokość kart sekcji Mails i Ankiet (2026-10-17)
+
+Karty z wypustkami na `/mails/` i `/polls/` mają zajmować pełną szerokość
+obszaru treści, tak jak karta w Games. Nie dziedziczą ograniczenia 760 px.
+Węższa karta wpisywania adresu e-mail (`#mailEntry`) oraz karty strony Go
+pozostają niezależne i zachowują swoje dotychczasowe ograniczenia.

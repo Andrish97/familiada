@@ -151,11 +151,11 @@
 .polls-tabs-card:has(.slot-share.active) .polls-card{ border-top-left-radius: 0; }
 .polls-tabs-card:has(.slot-results.active) .polls-card{ border-top-right-radius: 0; }
 
-/* Ogranicz szerokość karty z wypustkami także na komputerach i dużych
-   tabletach; na telefonie min(100%, ...) zachowuje dostępną szerokość. */
+/* Sekcje z wypustkami zajmują całą szerokość obszaru treści, jak w Games.
+   Węższe karty wpisywania maila i Go mają osobne reguły w swoich stylach. */
 #pollTabsCard{
-  width: min(100%, 760px);
-  align-self: center;
+  width: 100%;
+  align-self: stretch;
 }
 
 .polls-section{ display: none; }
