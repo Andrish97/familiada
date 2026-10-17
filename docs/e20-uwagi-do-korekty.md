@@ -6,7 +6,13 @@ Stan roboczy na 2026-10-14. Tabela rozbija każdą uwagę na osobny wiersz. „J
 
 | Uwaga | Zmiana | Status |
 |---|---|---|
-| Zrzuty TV pokazywały komunikat „niedostępna na telefonie”; strony takie jak Login powinny przejść przez prawdziwe przekierowanie Workera na ekran TV. Jeśli na innej stronie zadziała guard, komunikat ma mówić o telewizorze. | Profil TV galerii nie przechwytuje już lokalnych Home/Connect, więc Worker może wykonać prawdziwe przekierowanie. Dla TV galeria obejmuje Home, Login, Connect TV, Maintenance i 404; walidator nie wymaga widoków aplikacji, do których TV jest przekierowywany. Guard ma osobny komunikat „Niedostępne na telewizorze”. Worker kieruje znane strony do Connect TV, ale pozostawia Maintenance, 404 i nieznane ścieżki ich właściwej obsłudze. | Poprawka przygotowana; testów i galerii nie uruchamiano. |
+| Zrzuty TV pokazywały komunikat „niedostępna na telefonie”; strony takie jak Login powinny przejść przez prawdziwe przekierowanie Workera na ekran TV. Jeśli na innej stronie zadziała guard, komunikat ma mówić o telewizorze. | Profil TV galerii nie przechwytuje już lokalnych Home/Connect, więc Worker może wykonać prawdziwe przekierowanie. Dla TV galeria obejmuje Home, Login, Connect TV, Maintenance i 404; walidator nie wymaga widoków aplikacji, do których TV jest przekierowywany. Guard ma osobny komunikat „Niedostępne na telewizorze”. Worker kieruje znane strony do Connect TV, ale pozostawia Maintenance, 404 i nieznane ścieżki ich właściwej obsłudze. | Wdrożone i wypchnięte w `a736ed8d6e`; poprawione dalej w `d527870567`. Testów i galerii nie uruchamiano. |
+
+## Dostosowanie widoków dostępnych na TV — 2026-10-17
+
+| Uwaga | Zmiana | Status |
+|---|---|---|
+| Topbar i stopka na widokach dostępnych na TV mają mieć skalę jak ekran Podłącz wyświetlacz; komunikat guarda ma być bez przycisków i kierować z powrotem do Connect TV. | Maintenance i 404 rozpoznają TV, dostają większy topbar oraz stopkę. 404 ukrywa przyciski do zwykłych stron i zapowiada powrót do ekranu Podłącz wyświetlacz. Po wyłączeniu konserwacji oraz po 404 TV wraca na `/connect/?tv=1`; TV-guard nie pokazuje przycisków i po 3 sekundach wraca do tego ekranu. Inne urządzenia zachowują dotychczasowe przekierowanie na `/`. | Wdrożone i wypchnięte w `d527870567`; `git diff --check` i `node --check` przeszły. E2E i galerii nie uruchamiano. |
 
 ## Sprostowania użytkownika i wdrożenie
 
