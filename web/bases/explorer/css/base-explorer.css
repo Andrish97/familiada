@@ -2029,8 +2029,8 @@ tr.row .tag-dot[data-tip]::before {
     min-height: 0;
   }
 
-  /* Przy dodawaniu gry nazwa, typ i stopka zostają dostępne; przewija
-     się sama lista pytań. Na telefonie typ jest pod listą, ale poza nią. */
+  /* Przy dodawaniu gry nagłówek i akcje zostają nieruchome. Lista pytań
+     przewija się w swoim polu, a typ gry zajmuje osobny wiersz pod listą. */
   .modal--sheet.sheet-active .export-modal > .sheet-modal-body {
     display: flex;
     flex: 1 1 auto;
@@ -2050,17 +2050,39 @@ tr.row .tag-dot[data-tip]::before {
   }
 
   .modal--sheet.sheet-active .export-modal .xGrid2 {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(120px, 1fr) minmax(0, auto);
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 8px;
     min-width: 0;
     width: 100%;
+    overflow: hidden;
   }
 
-  /* iPhone ma ten sam układ pól co iPad, ale mniej miejsca w pionie:
-     typ gry pozostaje w całości widoczny, a wysokość zabiera lista pytań. */
+  .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) {
+    flex: 1 1 0;
+    min-height: 72px;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) .xPickList {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xField:not(:has(.xPickList)) {
+    flex: 0 0 auto;
+  }
+
+  /* Typ gry ma własny, nieprzezroczysty panel. Lista pytań kończy się
+     przed nim, a jej kafelki nie prześwitują pod przyciskami typów. */
   .modal--sheet.sheet-active .export-modal .xTypeBox {
     min-width: 0;
     padding: 8px;
+    border-color: rgba(255,255,255,.18);
+    background: #111827;
   }
 
   .modal--sheet.sheet-active .export-modal .xTypeTop {
@@ -2082,11 +2104,18 @@ tr.row .tag-dot[data-tip]::before {
     gap: 4px;
     margin-top: 6px;
     font-size: 10px;
+    opacity: 1;
   }
 
   .modal--sheet.sheet-active .export-modal .xTypeLbl {
     min-height: 40px;
     padding: 4px 2px;
+    background: #182131;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeLbl.active {
+    background: #3a3424;
+    border-color: rgba(255,234,166,.55);
   }
 
   .modal--sheet.sheet-active .export-modal .xPickList {
@@ -2098,10 +2127,10 @@ tr.row .tag-dot[data-tip]::before {
 
 
 @media (max-width: 600px) and (orientation: portrait) and (max-height: 720px) {
-  /* Na krótkim telefonie nadal zostaje miejsce na wybór typu i stopkę;
-     lista pytań może być krótsza, ale pozostaje przewijalna. */
-  .modal--sheet.sheet-active .export-modal .xGrid2 {
-    grid-template-rows: minmax(72px, 1fr) auto;
+  /* Na niskim ekranie skraca się pole listy; panel typu nadal zostaje
+     pod nim i w całości widoczny. */
+  .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) {
+    min-height: 48px;
   }
 }
 
