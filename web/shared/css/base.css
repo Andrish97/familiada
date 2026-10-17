@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-17T05011");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-17T05084");
 
 /* css/base.css */
 :root {
@@ -1250,6 +1250,14 @@ main{
         max-height: none;
         flex: 1;
         min-height: 0;
+    }
+
+    /* Podgląd Gry przewija jedną zawartość pod stałym nagłówkiem i
+       przełącznikiem Gra/Ankieta; pytania nie tworzą drugiego scrolla. */
+    .modal--sheet.sheet-active .sheet-modal-body > .bld-preview-questions {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
     }
 
     /* base-explorer.css ma własną, starszą regułę mobilną (@media

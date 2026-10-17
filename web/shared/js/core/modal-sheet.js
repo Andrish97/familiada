@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-17T05011";
-import { icon, iconText } from "./icons.js?v=v2026-10-17T05011";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-17T05011";
+import { t } from "../../translation/translation.js?v=v2026-10-17T05084";
+import { icon, iconText } from "./icons.js?v=v2026-10-17T05084";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-17T05084";
 
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = typeof window !== "undefined" && window.matchMedia
@@ -88,7 +88,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-17T05011").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-17T05084").then((module) => module.openContactModal());
     }, 0);
     return;
   }
@@ -124,7 +124,7 @@ function prepareSheetLayout(overlayEl) {
   const modal = overlayEl?.querySelector(":scope > .modal, :scope > .market-preview-card");
   if (!modal || modal.dataset.sheetLayoutReady === "1") return;
   const children = [...modal.children];
-  const headerSelectors = [".uni-head", ".mHead", ".tagsHead", ".bld-preview-head", ".mkt-detail-head", ".previewModalTitle", ".mTitle"];
+  const headerSelectors = [".uni-head", ".mHead", ".tagsHead", ".bld-preview-head", ".bld-preview-switch", ".mkt-detail-head", ".previewModalTitle", ".mTitle"];
   const actionSelectors = [".uni-foot", ".modal-actions", ".tagsFoot", ".mkt-detail-actions"];
   const nestedActionSelectors = [".baseShareLookup", ".baseShareFooter", ".shareSection--mail", ".shareSectionActions"];
   const isHeader = el => headerSelectors.some(sel => el.matches(sel));
