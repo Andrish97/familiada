@@ -26,6 +26,11 @@ Punkt 4 zatwierdzony do poprawki; po wdrożeniu pozostaje otwarty do ponownego
 przeglądu. Nie oznaczać punktów tej listy jako zakończonych bez ponownego
 przejścia z użytkownikiem.
 
+Punkt 4 — test galerii Marketplace: po kliknięciu prawdziwej karty czeka do
+45 sekund na stan `ready` lub `error`, a przed zrzutem potwierdza zgodność
+tytułu szczegółów z kartą i obecność pierwszego wczytanego pytania. W razie
+błędu komunikat zawiera tytuł/ID gry i stan DOM. Testu jeszcze nie uruchamiano.
+
 ### Ankiety — poprawki punktu 5 na branchu
 
 Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px

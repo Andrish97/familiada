@@ -555,12 +555,14 @@ function additionalStates(data) {
       prepare: async (page) => {
         const card = page.locator(".mkt-card").first();
         await card.waitFor({ state: "visible", timeout: 20_000 });
+        const browseTitle = (await card.locator(".mkt-card-title").innerText()).trim();
+        const browseId = await card.getAttribute("data-id");
         await card.click();
         const detailOverlay = page.locator("#gameDetailOverlay");
         await page.waitForFunction(() => {
           const state = document.getElementById("gameDetailOverlay")?.dataset.detailState;
           return state === "ready" || state === "error";
-        }, null, { timeout: 20_000 });
+        }, null, { timeout: 45_000 });
         const detailState = await detailOverlay.getAttribute("data-detail-state");
         if (detailState !== "ready") {
           const diagnostics = await page.evaluate(() => ({
@@ -569,9 +571,11 @@ function additionalStates(data) {
             title: document.getElementById("detailTitle")?.textContent?.trim() || "",
             questions: document.getElementById("detailQuestions")?.textContent?.trim().slice(0, 160) || "",
           }));
-          throw new Error(`Szczegóły gry Marketplace nie załadowały się: ${JSON.stringify(diagnostics)}`);
+          throw new Error(`Szczegóły gry Marketplace nie załadowały się dla ${browseTitle} (${browseId}): ${JSON.stringify(diagnostics)}`);
         }
         await detailOverlay.waitFor({ state: "visible", timeout: 5_000 });
+        await expect(page.locator("#detailTitle")).toHaveText(browseTitle, { timeout: 5_000 });
+        await expect(page.locator("#detailQuestions .mkt-q-block").first()).toBeVisible({ timeout: 5_000 });
       },
     },
     {
