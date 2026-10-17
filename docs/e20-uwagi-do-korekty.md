@@ -31,6 +31,14 @@ Punkt 4 — test galerii Marketplace: po kliknięciu prawdziwej karty czeka do
 tytułu szczegółów z kartą i obecność pierwszego wczytanego pytania. W razie
 błędu komunikat zawiera tytuł/ID gry i stan DOM. Testu jeszcze nie uruchamiano.
 
+Punkt 6 — w mobilnym arkuszu podglądu Logo wyłączono centrowanie
+elementów w poprzek, które zwężało opakowania nagłówka i treści.
+Nagłówek rozciąga się teraz na pełną szerokość jak w pozostałych
+mobilnych modalach. Reguła działa wyłącznie dla aktywnego arkusza na
+ekranach do 600 px; widok desktopowy nie zmienia się. Zaktualizowano
+cache-buster wspólnego CSS na czterech stronach Logo. Do wizualnego
+potwierdzenia w galerii; nie uruchamiano testów ani galerii.
+
 ### Ankiety — poprawki punktu 5 na branchu
 
 Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px

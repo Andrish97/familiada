@@ -937,6 +937,15 @@
   margin-bottom: 12px;
 }
 
+/* W trybie mobilnego arkusza modal.js opakowuje nagłówek i treść we
+   własne sekcje. Nie pozwól, by desktopowe centrowanie zawężało te sekcje:
+   nagłówek podglądu ma zajmować pełną szerokość jak w pozostałych arkuszach. */
+@media (max-width: 600px){
+  #previewOverlay.modal--sheet.sheet-active .modal.previewModal{
+    align-items: stretch;
+  }
+}
+
 #previewOverlay .previewModalTitle .mTitle{
   font-weight: 1000;
   letter-spacing: .04em;
