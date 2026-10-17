@@ -1,67 +1,28 @@
-# Centrum maili — podgląd stanów
+# Mails — symulowane zrzuty aktualnego interfejsu
 
-Nowy interfejs `/mails/`, przykładowe dane. Backend jest jeszcze w realizacji.
-Lekki topbar jak Go, złote logo i tytuł „Moje powiadomienia” w stylu Gier.
-Sekcja globalnej rezygnacji nad kartą. Wypustki korzystają z tego samego
-HTML i CSS co Ankiety; listy przewijają się wewnątrz. Stopka przy dolnej krawędzi.
-Zrzuty 390×844, 1400×900 i844×390. Sprawdzono brak błędów JavaScript
-oraz poziomego przepełnienia strony. Żaden mail nie został wysłany przy
-wykonywaniu tych podglądów.
-Formularz Kontakt sprawdzony bez konta, z zastąpioną odpowiedzią wysyłki.
-Telefon: Wstecz we wspólnym topbarze, dostępna zmiana języka i stopka
-strony na dole. Zmiana języka zachowuje wpisane dane formularza.
-Otwarcie jednorazowego potwierdzenia nie zużywa linku przed przyciskiem.
+Zrzuty renderują bieżący HTML, CSS i JavaScript z `web/`. Lokalny podgląd
+podstawia odpowiedzi API i przykładowe rekordy, więc niczego nie pobiera ani
+nie zapisuje na koncie i nie wysyła maili. Rozmiary: komputer 1400 × 900,
+telefon 390 × 844; dodatkowo aktywny widok telefonu poziomo 844 × 390.
 
-## Potwierdzenie adresu
+W każdym stanie sprawdzono brak błędów JavaScript i poziomego przepełnienia.
 
-![Potwierdzenie adresu na telefonie](confirm-mobile.png)
+| Stan | Telefon | Komputer |
+|---|---|---|
+| Wpisywanie adresu | ![Wpisywanie adresu — telefon](entry-mobile.png) | ![Wpisywanie adresu — komputer](entry-desktop.png) |
+| Link wysłany | ![Link wysłany — telefon](sent-mobile.png) | ![Link wysłany — komputer](sent-desktop.png) |
+| Potwierdzenie adresu | ![Potwierdzenie — telefon](confirm-mobile.png) | ![Potwierdzenie — komputer](confirm-desktop.png) |
+| Aktywne subskrypcje | ![Subskrypcje — telefon](active-mobile.png) | ![Subskrypcje — komputer](active-desktop.png) |
+| Zadania: ankiety i urządzenia | ![Zadania — telefon](active-tasks-mobile.png) | ![Zadania — komputer](active-tasks-desktop.png) |
+| Powiadomienia wyłączone | ![Powiadomienia wyłączone — telefon](disabled-mobile.png) | ![Powiadomienia wyłączone — komputer](disabled-desktop.png) |
+| Nieaktualny link | ![Nieaktualny link — telefon](expired-mobile.png) | ![Nieaktualny link — komputer](expired-desktop.png) |
+| Adres powiązany z kontem | ![Adres konta — telefon](registered-mobile.png) | ![Adres konta — komputer](registered-desktop.png) |
+| Puste centrum | ![Puste centrum — telefon](empty-mobile.png) | ![Puste centrum — komputer](empty-desktop.png) |
 
-## Kontakt bez logowania
+## Pozostałe ujęcia
 
-![Kontakt na telefonie](contact-mobile.png)
+![Aktywne centrum w poziomym telefonie](active-landscape.png)
 
-![Kontakt na komputerze](contact-desktop.png)
+![Wspólny modal kontaktu w widoku telefonu](contact-mobile.png)
 
-## Aktywne listy — komputer
-
-![Aktywne listy na komputerze](active-desktop.png)
-
-## Aktywne subskrypcje — telefon
-
-![Subskrypcje na telefonie](active-mobile.png)
-
-## Ankiety i urządzenia — komputer
-
-![Ankiety i urządzenia na komputerze](active-tasks-desktop.png)
-
-## Ankiety i urządzenia — telefon
-
-![Ankiety i urządzenia na telefonie](active-tasks-mobile.png)
-
-## Wpisanie adresu
-
-![Wpisanie adresu](entry-mobile.png)
-
-## Wysłano link
-
-![Wysłano link](sent-mobile.png)
-
-## Globalna rezygnacja
-
-![Globalna rezygnacja](disabled-mobile.png)
-
-## Wygasły link
-
-![Wygasły link](expired-mobile.png)
-
-## Adres z kontem
-
-![Adres z kontem](registered-mobile.png)
-
-## Puste listy
-
-![Puste listy](empty-mobile.png)
-
-## Telefon poziomo
-
-![Telefon poziomo](active-landscape.png)
+![Wspólny modal kontaktu w widoku komputera](contact-desktop.png)
