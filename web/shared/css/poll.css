@@ -26,6 +26,12 @@ body.pollpub-body .card {
     box-shadow: 0 24px 60px rgba(0,0,0,.45)
 }
 
+body.pollpub-body > main.wrap > .card {
+    width: min(680px, 100%);
+    align-self: center;
+    box-sizing: border-box;
+}
+
 body.pollpub-body .brand {
     font-weight: 1000;
     letter-spacing: .18em;

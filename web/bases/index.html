@@ -32,7 +32,7 @@
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnGoAlt" type="button"><span data-i18n="games.nav.friends" data-i18n-icon-after="people">Znajomi</span> <span class="badge" id="altBadge" aria-hidden="true"></span></button>
@@ -43,7 +43,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -208,11 +208,11 @@
 
   <!-- Progres eksportu do pliku (blokujący) -->
   <div class="overlay modal--sheet" id="exportJsonOverlay" style="display:none;">
-    <div class="modal" style="width:min(640px,94vw)">
+    <div class="modal export-json-modal" style="width:min(640px,94vw)">
       <div class="mTitle" data-i18n="bases.exportModal.title">EKSPORT…</div>
       <div class="mSub" id="exportJsonSub" data-i18n="bases.exportModal.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
 
-      <div style="margin-top:12px;display:grid;gap:10px">
+      <div class="export-json-progress" style="margin-top:12px;display:grid;gap:10px">
         <div class="importRow" style="align-items:center">
           <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em" data-i18n="bases.progress.placeholder">—</div>
           <div id="exportJsonCount" style="margin-left:auto;opacity:.8">0/0</div>

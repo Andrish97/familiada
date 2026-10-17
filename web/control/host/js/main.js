@@ -225,20 +225,20 @@ async function main() {
   await initI18n({ withSwitcher: false });
   const controlTestFrame = window.parent !== window
     && window.frameElement?.dataset.controlTestMode === "true";
-  const deviceGate = guardViewportWidth({
+  const { gameId, key, preview } = parseParams();
+  const deviceGate = preview || controlTestFrame ? null : guardViewportWidth({
     minWidth: 0,
     formFactors: null,
     requiresTouch: !controlTestFrame,
     allowPhoneLandscape: true,
   });
   document.documentElement.removeAttribute("data-touch-guard-pending");
-  if (deviceGate.state() !== "ok") await deviceGate.ready;
+  if (deviceGate && deviceGate.state() !== "ok") await deviceGate.ready;
   setupFullscreenButton();
   setupOrientationClass();
   setupResponsivePaper();
   document.documentElement.classList.remove("page-loading");
 
-  const { gameId, key, preview } = parseParams();
   if (preview) {
     const renderer = createHostRenderer();
     const coverLogo = createCoverLogoRenderer({ gameId, key });

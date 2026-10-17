@@ -2265,6 +2265,9 @@ body{
   font-size:.85rem;
   opacity:.7;
   text-align:center;
+  align-self:start;
+  justify-self:stretch;
+  box-sizing:border-box;
   background:rgba(255,255,255,.015);
 }
 
@@ -2584,7 +2587,7 @@ body{
 .shareSectionTitle{ margin: 0; font-size: inherit; font-weight: 800; letter-spacing: .2px; }
 .shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
 .shareList[hidden]{ display: none; }
-.shareList{ display: grid; gap: 8px; margin-top: 8px; }
+.shareList{ display: grid; align-content: start; gap: 8px; margin-top: 8px; }
 .shareHost{ grid-column: 1 / -1; }
 .shareList--grid{ grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .shareRow{
@@ -2679,6 +2682,9 @@ button.rowsSectionHead{ cursor: pointer; }
     justify-content:center;
     padding:16px;
     text-align:center;
+    align-self:start;
+    justify-self:stretch;
+    box-sizing:border-box;
     opacity:.76;
     border:1px dashed var(--line2, rgba(255,255,255,.2));
     border-radius:12px;

@@ -30,7 +30,7 @@
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2"></div>
     <div class="topbar-section topbar-section-3">
@@ -38,7 +38,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -54,7 +54,7 @@
       <div class="card games-card tasks-card">
         <div class="card" id="tasksLoadState" role="status" aria-live="polite">
           <div class="name" id="tasksLoadMessage" data-i18n="tasks.load.loading">Wczytuję zadania…</div>
-          <button class="btn sm" id="tasksLoadRetry" type="button" data-i18n="tasks.load.retry" hidden>Ponów</button>
+          <button class="btn sm" id="tasksLoadRetry" type="button" data-i18n="tasks.load.retry" hidden data-i18n-icon="refresh">Ponów</button>
         </div>
         <div class="tasks-scroll" data-skel-step>
           <div class="rowsPage" id="tasksHost"></div>

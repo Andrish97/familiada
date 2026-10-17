@@ -344,14 +344,17 @@ async function bootPreview(params) {
 
 window.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: false });
-  const deviceGate = guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
+  const params = new URL(location.href).searchParams;
+  const preview = params.get("preview") === "1";
+  const controlTestFrame = window.parent !== window
+    && window.frameElement?.dataset.controlTestMode === "true";
+  const deviceGate = preview || controlTestFrame ? null : guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
   document.documentElement.removeAttribute("data-device-guard-pending");
-  if (deviceGate.state() !== "ok") await deviceGate.ready;
+  if (deviceGate && deviceGate.state() !== "ok") await deviceGate.ready;
   startKeepAlive();
   initFullscreenButton();
 
-  const params = new URL(location.href).searchParams;
-  if (params.get("preview") === "1") {
+  if (preview) {
     await bootPreview(params);
     return;
   }

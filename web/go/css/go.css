@@ -24,6 +24,12 @@ body.poll-go-body > main.wrap {
   box-shadow: 0 24px 60px rgba(0,0,0,.45);
 }
 
+body.poll-go-body:not(.mail-body) .poll-go-card {
+  width: min(680px, 100%);
+  align-self: center;
+  box-sizing: border-box;
+}
+
 .poll-go-title {
   font-weight: 1000;
   font-size: 20px;

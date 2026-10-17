@@ -30,7 +30,7 @@
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnSubscribers" type="button" data-nav-hidden="true" style="display:none;"><span data-i18n="games.nav.subscribers" data-i18n-icon-after="envelope">Subskrybenci</span></button>
@@ -40,7 +40,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -65,7 +65,7 @@
       </div>
       <div class="card" id="contactsLoadState" role="status" aria-live="polite">
         <div class="name" id="contactsLoadMessage" data-i18n="contacts.load.loading">Wczytuję kontakty…</div>
-        <button class="btn sm" id="contactsLoadRetry" type="button" data-i18n="contacts.load.retry" hidden>Ponów</button>
+        <button class="btn sm" id="contactsLoadRetry" type="button" data-i18n="contacts.load.retry" hidden data-i18n-icon="refresh">Ponów</button>
       </div>
       <div class="contacts-layout" id="contactsHost" data-skel-step>
       <div class="card contacts-card" id="contactsInvite" data-contact-panel="invite">

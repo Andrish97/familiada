@@ -13,6 +13,19 @@
    SHARE MODAL + tile badges
 ========================================================= */
 
+.export-json-modal{ box-sizing:border-box; min-width:0; max-width:100%; }
+.export-json-progress{ min-width:0; width:100%; box-sizing:border-box; }
+.export-json-progress .importRow{ min-width:0; gap:10px; }
+.export-json-progress #exportJsonStep,
+.export-json-progress #exportJsonMsg{ min-width:0; overflow-wrap:anywhere; }
+.export-json-progress #exportJsonCount{ flex:0 0 auto; white-space:nowrap; }
+.export-json-progress > div:nth-child(2){ width:100%; box-sizing:border-box; }
+@media (max-width: 600px){
+  #exportJsonOverlay.sheet-active .export-json-modal{ width:100%; max-width:100%; min-width:0; }
+  #exportJsonOverlay.sheet-active .sheet-modal-body,
+  #exportJsonOverlay.sheet-active .export-json-progress{ min-width:0; width:100%; }
+}
+
 .modal.shareModal{ width: min(820px, 94vw); max-height: 90dvh; overflow-y: auto; }
 .baseShareSections{ display: grid; gap: 16px; min-width: 0; }
 .baseShareSections .shareSection{ margin-top: 0; }
@@ -30,6 +43,10 @@
   min-width: max-content;
   min-height: 44px;
   padding: 6px 8px;
+}
+@media (max-width: 600px){
+  .shareRow--compact .shareRowActions .baseShareRole{ min-height: 36px; padding: 4px 6px; gap: 4px; }
+  .shareRow--compact .baseShareRoleLabel{ font-size: 11px; }
 }
 .baseShareFooter{ display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
 .baseShareFooter > .btn{ height: 40px; }
