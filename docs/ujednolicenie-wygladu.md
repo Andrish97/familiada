@@ -1415,12 +1415,13 @@ prośba o uzgodnienie galerii nie obowiązuje dla tej kontynuacji.
 
 ### E20 — doprecyzowanie: jeden pionowy scroll na mobile (2026-10-17)
 
-Nowsza decyzja użytkownika zawęża wcześniejszą zasadę o osobno przewijanych
-listach. W mobilnym widoku portretowym ekran ma mieć tylko jednego pionowego
-właściciela scrolla. Lista nie może przewijać się wewnątrz przewijanej strony
-lub treści modala; kilka list nie powinno tworzyć kilku niezależnych pionowych
-obszarów. Jeśli nagłówek i akcje muszą zostać nieruchome, zewnętrzny ekran lub
-arkusz jest nieruchomy, a jeden wspólny obszar treści/list jest przewijany.
+Doprecyzowanie użytkownika: zakaz dotyczy scrolla zagnieżdżonego w innym
+scrollu, a nie kilku widocznych jednocześnie list. Strona lub body modala mogą
+pozostać nieruchome, a każda z dwóch potrzebnych list może przewijać się
+wewnętrznie. Nagłówek i przełączniki widoku pozostają widoczne, jeśli są
+potrzebne do orientacji. Przy większej liczbie list najpierw ocenić, czy
+wszystkie są czytelne w dostępnej wysokości; jeśli nie, rozważyć przełączane
+sekcje z jedną aktywną listą. Nic nie może zostać ucięte ani ukryte.
 Landscape pozostaje wyłączone z tej rundy. Panel administracyjny `/settings/`
 pozostaje poza zakresem.
 

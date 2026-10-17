@@ -1285,13 +1285,17 @@ w sekwencyjnej galerii; samo dodanie markerów nie zamyka E20.
 
 ## Bieżąca runda E20 — audyt mobilnego scrolla (2026-10-17)
 
-Użytkownik ustalił, że w mobilnym portrecie nigdy nie ma być podwójnego
-pionowego scrolla (lista przewijana wewnątrz strony/modala). Landscape jest
-wyłączone z tej rundy; panel admina `/settings/` pozostaje poza zakresem.
+Użytkownik ustalił, że w mobilnym portrecie nie może być scrolla
+zagnieżdżonego w innym scrollu. Dwie potrzebne listy mogą być widoczne
+jednocześnie i przewijać się wewnętrznie, gdy zewnętrzny kontener jest
+nieruchomy; przy wielu listach trzeba ocenić, czy mieszczą się czytelnie.
+Landscape jest wyłączone z tej rundy; panel admina `/settings/` pozostaje poza zakresem.
 Audyt kodu i konkretne propozycje dla Base Explorer (strona, drawer, pytanie,
 warstwy taga), podglądu Gry, Marketplace, udostępniania Baz/Control, odbiorców
 Ankiet i listy pytań Game Settings są w `docs/e20-uwagi-do-korekty.md`.
 Dokumentacja odnotowuje propozycje; UI nie zostało zmienione. Następny krok:
-uzyskać decyzję użytkownika do proponowanego wspólnego modelu, a potem wdrażać
-miejsca po kolei z punktowym sprawdzeniem wspólnych CSS. Pełnej galerii ani
+wdrażać zgodnie z doprecyzowaniem: podgląd Gry ma stały nagłówek i przełącznik;
+modale udostępniania Baz/Control i Ankiet mają nieruchome body oraz dwie
+widoczne, niezależnie przewijane listy. Dla pozostałych miejsc wyjaśnić
+proponowany układ przy wdrożeniu i najpierw potwierdzić, że nic się nie ucina. Pełnej galerii ani
 pełnych testów na tym etapie nie uruchamiać.
