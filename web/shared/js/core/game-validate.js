@@ -1,7 +1,7 @@
 // js/core/game-validate.js
-import { sb } from "./supabase.js?v=v2026-10-18T14222";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-18T14222";
-import { showBlockingOverlay } from "./resource-lock.js?v=v2026-10-18T14222";
+import { sb } from "./supabase.js?v=v2026-10-18T14245";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-18T14245";
+import { showBlockingOverlay } from "./resource-lock.js?v=v2026-10-18T14245";
 
 /**
  * Typy gier:
