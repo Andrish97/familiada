@@ -73,21 +73,21 @@ Udostępniona baza pozostaje wspólną bazą z określonymi uprawnieniami, a nie
 
 ## 6. Ankiety
 
-Ankiety zbierają odpowiedzi, które później wykorzystasz w grze. W **Moich grach** utwórz grę typu **Ankieta tekstowa** albo **Punktacja**, uzupełnij pytania i otwórz **Ankiety**. Gra preparowana nie zbiera głosów — jej odpowiedzi i punkty wpisujesz samodzielnie.
+Ankiety zbierają odpowiedzi, które później wykorzystasz w grze. W **Moich grach** utwórz grę typu **Ankieta tekstowa** albo **Punktacja**, uzupełnij pytania i otwórz **Ankiety** przy tej grze. Gra preparowana nie zbiera głosów — jej odpowiedzi i punkty wpisujesz samodzielnie.
 
 ### Zaproś osoby jako zadanie
 
-W Centrum ankiet otwórz ankietę, wybierz **Udostępnij**, wskaż znajomych lub subskrybentów i zapisz wybór. Zaproszone osoby znajdą ankietę w swoich **Zadaniach**, otworzą ją i oddadzą głos. Wróć do ankiety i wybierz **Szczegóły**, aby sprawdzić postęp oraz oddane głosy. Zadania służą do zebrania głosów od wskazanych osób; nie przekazują im gry.
+Na stronie **Ankiety** przy wybranej grze otwórz **Udostępnianie**, wybierz **Dodaj odbiorców** i wskaż znajomych lub subskrybentów. Każda zaproszona osoba dostaje ankietę w **Zadaniach** i może oddać głos. W **Udostępnianiu** sprawdzisz, kto jeszcze czeka, a kto już odpowiedział; odbiorca zobaczy swoje zadanie na liście **Zadań**. To nadal jedna ankieta i wspólny wynik — zadanie pozwala śledzić odpowiedź zaproszonej osoby, nie tworzy osobnego rodzaju głosu ani kopii gry.
 
 ### Otwórz głosowanie anonimowe
 
-1. Na liście **Moje ankiety** zaznacz gotową ankietę i wybierz **Uruchom**.
-2. Skopiuj link do głosowania albo wybierz **QR na wyświetlaczu**, jeśli chcesz pokazać kod na osobnym ekranie. Głosujący otwierają ankietę na swoich urządzeniach.
-3. Wróć do Centrum ankiet, by sprawdzić liczbę głosów i odpowiedzi. Gdy chcesz przerwać zbieranie, wybierz **Zatrzymaj**.
+1. Przy grze otwórz **Ankiety**, zaznacz gotową ankietę i wybierz **Uruchom**.
+2. W zakładce **Udostępnianie** skopiuj link albo pokaż **QR na wyświetlaczu**. Każda osoba, która otworzy link lub zeskanuje kod, może zagłosować bez zaproszenia do zadania.
+3. W zakładce **Głosy** sprawdzaj napływające odpowiedzi. W **Udostępnianiu** możesz sprawdzić, którzy zaproszeni odbiorcy już odpowiedzieli. Zatrzymaj zbieranie, gdy masz wystarczająco głosów.
 4. W ankiecie tekstowej każda odpowiedź może mieć do 17 znaków. Przejrzyj zebrane propozycje, połącz odpowiedzi o tym samym znaczeniu i popraw oczywiste literówki. W Punktacji odpowiedzi pochodzą z przygotowanej listy.
 5. Wybierz **Podlicz głosy**, sprawdź przygotowany wynik i zatwierdź go, aby zakończyć ankietę. W Punktacji punkty odpowiedzi sumują się do 100. W ankiecie tekstowej na planszy znajdzie się najwyżej sześć najlepiej ocenionych propozycji; odpowiedzi z małą liczbą głosów mogą się na niej nie pojawić, więc suma punktów może być niższa niż 100.
 
-Jeśli po zatrzymaniu ankiety chcesz dać głosującym więcej czasu, wybierz **Wznów**. Gdy zbieranie głosów jest zakończone, podlicz wynik. Jeśli chcesz zebrać odpowiedzi od początku, wybierz **Uruchom ponownie**. Poprzednie głosy i podliczony wynik zostaną usunięte. Po zakończeniu ankiety jej wynik można wykorzystać podczas prowadzenia gry.
+Głosy z linku, kodu QR i zadań trafiają do tej samej ankiety. Różni się sposób dotarcia do głosujących: link lub QR jest otwarty dla każdej osoby, a zadania wysyłasz wybranym znajomym albo subskrybentom. Po podliczeniu sprawdzisz wspólny wynik odpowiedzi; listę postępu zaproszonych osób najłatwiej sprawdzić wcześniej w **Udostępnianiu** i **Zadaniach**. Jeśli po zatrzymaniu chcesz dać głosującym więcej czasu, wybierz **Wznów**. Gdy zbieranie głosów jest zakończone, podlicz wynik. Jeśli chcesz zebrać odpowiedzi od początku, wybierz **Uruchom ponownie** — poprzednie głosy i podliczony wynik zostaną usunięte. Wynik ankiety możesz potem wykorzystać podczas prowadzenia gry.
 
 ## 7. Tworzenie logo
 

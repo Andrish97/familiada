@@ -45,12 +45,12 @@ Ten plik jest komentarzem dla osób redagujących instrukcję. Nie należy publi
 ## 6. Ankiety
 
 1. **Wprowadzenie — wybór gry ankietowej i zakres tej sekcji.** Łączy ankietę z etapem przygotowania odpowiedzi, a jednocześnie oddziela grę preparowaną, w której operator wpisuje odpowiedzi sam. Dzięki temu czytelnik wie, czy w ogóle potrzebuje dalszych kroków.
-2. **Zadanie dla subskrybentów/znajomych — zaproszenie i kontrola postępu.** Opisuje, kto dostaje ankietę, gdzie ją otwiera i gdzie nadawca sprawdza oddane głosy. Ta ścieżka jest osobno, bo łączy Centrum ankiet z Zadaniami i różni się od anonimowego linku/QR.
-3. **Anonimowe głosowanie, krok 1 — uruchomienie.** Zaczyna od stanu gotowej ankiety, bo dopiero wtedy można rozpocząć zbieranie. Nazwy Uruchom/Uruchomienie odpowiadają przyciskom listy ankiet.
-4. **Krok 2 — udostępnienie linku albo QR.** Pokazuje dwa praktyczne sposoby dotarcia do głosujących i cel QR na osobnym ekranie; nie objaśnia sposobu generowania linku.
-5. **Krok 3 — postęp i zatrzymanie.** Użytkownik decyduje, kiedy zebrał dość odpowiedzi. Zatrzymanie jest odwracalne przez wznowienie i nie powinno być mylone z końcowym podliczeniem.
+2. **Zadanie dla subskrybentów/znajomych — zaproszenie i kontrola postępu.** Opisuje, kogo wybrać w zakładce Udostępnianie, gdzie odbiorca otwiera ankietę i gdzie obie strony widzą stan zadania. Zadanie śledzi odpowiedź wskazanej osoby; jej głos trafia do tej samej ankiety i nie tworzy osobnego rodzaju wyniku.
+3. **Głosowanie otwarte, krok 1 — uruchomienie.** Zaczyna od stanu gotowej ankiety, bo dopiero wtedy można rozpocząć zbieranie. Nazwy Uruchom/Uruchomienie odpowiadają przyciskom listy ankiet.
+4. **Krok 2 — udostępnienie linku albo QR.** Pokazuje dwa sposoby dotarcia do głosujących. Każda osoba z linkiem lub kodem może odpowiedzieć bez otrzymania zadania; nie objaśnia technicznego sposobu tworzenia linku.
+5. **Krok 3 — postęp, status zaproszonych i zatrzymanie.** Użytkownik widzi liczbę głosów oraz postęp zaproszonych odbiorców. Ten stan jest użyteczny przed podliczeniem; po podliczeniu pokazany jest wspólny wynik ankiety. Zatrzymanie jest odwracalne przez wznowienie i nie powinno być mylone z końcowym podliczeniem.
 6. **Krok 4 — uporządkowanie odpowiedzi.** Limit 17 znaków jest widoczny osobie oddającej głos, więc warto go uprzedzić przed wpisywaniem. Łączenie synonimów i poprawa oczywistych literówek mają znaczenie w ankiecie tekstowej, natomiast Punktacja używa wcześniej przygotowanej listy. Dlatego instrukcja rozdziela te działania.
-7. **Krok 5 — podliczenie i widoczny wynik.** Mówi, jak głosy stają się gotową planszą. Limit sześciu propozycji i możliwość sumy poniżej 100 są skutkami, które użytkownik może zobaczyć i o które może się zastanawiać; pozostawione bez wzmianki mogłyby wyglądać jak brakujące odpowiedzi.
+7. **Krok 5 — podliczenie i widoczny wynik.** Mówi, jak głosy stają się gotową planszą. Limit sześciu propozycji i możliwość sumy poniżej 100 są skutkami, które użytkownik może zobaczyć i o które może się zastanawiać; pozostawione bez wzmianki mogłyby wyglądać jak brakujące odpowiedzi. Nie obiecuje identyfikacji głosu po podliczeniu, bo wtedy użytkownik pracuje ze wspólnym wynikiem.
 8. **Wznowienie lub ponowne uruchomienie — dwa różne skutki.** Wznowienie zachowuje już zebrane głosy i wydłuża zbieranie, natomiast ponowne uruchomienie kasuje poprzedni wynik. Rozróżnienie jest potrzebne, zanim użytkownik wybierze działanie.
 
 ## 7. Tworzenie logo
