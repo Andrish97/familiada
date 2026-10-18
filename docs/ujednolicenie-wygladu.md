@@ -1450,6 +1450,10 @@ Lista urządzeń jest pojedynczą, wyśrodkowaną kolumną węższą od karty, z
 wewnętrznym przewijaniem. Wiersze mają styl Mails: ikonę rodzaju, nazwę,
 opis właściciela i typ, subtelny akcent po lewej oraz strzałkę akcji.
 
+W zwykłych modalach udostępniania Baz i Control puste karty list mają
+minimalną wysokość 180 px; pusty kafel pozostaje naturalnej wysokości. W
+mobilnym arkuszu miejsce kart nadal wynika z układu dwóch list i ich scrolla.
+
 Po zmianach należy wykonać punktowy przebieg E20 `games`/MacBook, następnie
 pełną galerię E20 na aktualnym branchu.
 

@@ -2710,6 +2710,19 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
 .shareList--scroll{ max-height: 240px; overflow-y: auto; overscroll-behavior: contain; }
+
+/* W zwykłym (nie arkuszowym) widoku modali udostępniania pusta sekcja listy
+   nie może zmniejszyć karty do samego kafla braku. Na arkuszu mobile wysokość
+   kart przydzielają już jawne wiersze siatki poniżej. Sam kafel pozostaje
+   naturalnej wysokości. */
+#shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
+#shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"],
+#shareDeviceOverlay:not(.sheet-active) .shareModal > .shareSection--friends,
+#shareDeviceOverlay:not(.sheet-active) .shareModal > .shareSection--shared {
+  min-height: 180px;
+  box-sizing: border-box;
+}
+
 .modal--sheet.sheet-active #shareDeviceSubsList,
 .modal--sheet.sheet-active #shareDeviceCurrentContent {
     max-height: min(32dvh, 260px);
