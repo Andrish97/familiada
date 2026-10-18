@@ -468,8 +468,11 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
     await page.reload(); await expect(page.locator('#btnAddRecipients')).toBeDisabled();
     await expect(page.locator('#subsGrid [data-id=opened] [data-act=remind]')).toBeDisabled();
   } finally {
-    await page.unroute("**/rest/v1/rpc/poll_share_panel"); await page.unroute("**/rest/v1/rpc/poll_share_remind");
-    await page.evaluate(async id => { const { error } = await window.__sbClient.from("games").delete().eq("id", id); if (error) throw error; }, game.id);
+    if (!page.isClosed()) {
+      await page.unroute("**/rest/v1/rpc/poll_share_panel").catch(() => {});
+      await page.unroute("**/rest/v1/rpc/poll_share_remind").catch(() => {});
+      await page.evaluate(async id => { const { error } = await window.__sbClient.from("games").delete().eq("id", id); if (error) throw error; }, game.id).catch(() => {});
+    }
   }
 });
 

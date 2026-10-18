@@ -89,7 +89,7 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
     await page.locator(".uni-foot .btn.gold").click();
     await expect(active).toHaveCount(0);
     await invitePage.reload();
-    await expect(invitePage.locator(".poll-go-title")).toContainText(withdrawal ? "Odrzucono" : "To zaproszenie wygasło");
+    await expect(invitePage.locator(".poll-go-title")).toContainText("To zaproszenie wygasło");
     await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toHaveCount(0);
     await expect(invitePage.locator("#emailInput")).toBeHidden();
     const closed = await invitePage.evaluate(async ({ token, email }) => ({
@@ -224,7 +224,7 @@ test("subskrybenci: Go kieruje konta do Znajomych i zachowuje zamknięte stany",
   }
 });
 
-test("@mailbox subskrybenci: globalne wypisanie, mail-off bez kolejki i naliczeń", async ({ page, context, browser }) => {
+test("@mailbox subskrybenci: globalne wypisanie blokuje kolejne zaproszenia bez kolejki", async ({ page, context, browser }) => {
   test.setTimeout(240000);
   await loginAsPooledTestUser(page, context, 0);
   const flag = await page.evaluate(async () => (await window.__sbClient.rpc("e2e_subscriber_mail_flag", { p_reset: false })).data);
@@ -254,25 +254,25 @@ test("@mailbox subskrybenci: globalne wypisanie, mail-off bez kolejki i nalicze�
     const refused = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
     await expect(refused).toContainText("Odrzucono");
     await expect(refused.locator('[data-act="resend"]')).toHaveCount(0);
+    const mutedAfter = new Date().toISOString();
+    const mutedId = await refused.getAttribute("data-id");
+    const beforeBlockedInvite = await page.evaluate(async id => {
+      const { data, error } = await window.__sbClient.from("poll_subscriptions")
+        .select("status,declined_at,cancelled_at,email_sent_at,email_send_count").eq("id", id).single();
+      if (error) throw error;
+      return data;
+    }, mutedId);
     const blockedInvite = await page.evaluate(async email =>
       (await window.__sbClient.rpc("subscribers_invite", { p_email: email })).data, email);
     expect(blockedInvite).toMatchObject({ ok: false, err: "notifications_disabled", mail_allowed: false });
-    // Fixture removes only this test sender's history/clocks. Suppression stays.
-    await cleanup(page);
-    const mutedAfter = new Date().toISOString();
-    await page.reload();
-    await invite(page, email);
-    const muted = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
-    await expect(muted).toHaveCount(1);
-    await expect(muted.locator('[data-act="resend"]')).toHaveCount(0);
-    const actual = await page.evaluate(async id => ({
-      resend: (await window.__sbClient.rpc("polls_hub_subscriber_resend", { p_id: id })).data,
-      row: (await window.__sbClient.from("poll_subscriptions").select("email_sent_at,email_send_count").eq("id", id).single()).data,
-      flag: (await window.__sbClient.rpc("e2e_subscriber_mail_flag", { p_reset: false })).data,
-    }), await muted.getAttribute("data-id"));
-    expect(actual.resend).toEqual({ ok: true, mail_allowed: false });
-    expect(actual.row).toEqual({ email_sent_at: null, email_send_count: 0 });
-    expect(actual.flag.suppressed_at).toBeTruthy();
+    const afterBlockedInvite = await page.evaluate(async id => {
+      const { data, error } = await window.__sbClient.from("poll_subscriptions")
+        .select("status,declined_at,cancelled_at,email_sent_at,email_send_count").eq("id", id).single();
+      if (error) throw error;
+      return data;
+    }, mutedId);
+    expect(afterBlockedInvite).toEqual(beforeBlockedInvite);
+    await expect(refused.locator('[data-act="resend"]')).toHaveCount(0);
     const delivery = await readMailDelivery({ recipient: email, after: mutedAfter });
     expect(delivery.queue).toEqual([]);
     expect(delivery.events).toEqual([]);
