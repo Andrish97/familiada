@@ -726,9 +726,16 @@ export async function openTagsModal(state, opts = {}) {
     backBtn: btnBack,
     onClose: () => close(false),
     onBack: () => {
-      if (m.layer <= 1) return false;
-      go(m.layer - 1);
-      return true;
+      if (m.layer === 3) {
+        go(2);
+        return true;
+      }
+      if (m.layer === 2 && mode === "assign") {
+        go(1);
+        return true;
+      }
+      // Tryby create/edit zaczynają się od warstwy 2; nie mają warstwy 1.
+      return false;
     },
   });
   document.addEventListener("keydown", onKey);
