@@ -1,15 +1,15 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-import { sb } from "./supabase.js?v=v2026-10-18T07542";
-import { initPage } from "./page-init.js?v=v2026-10-18T07542";
-import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-18T07542";
-import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-18T07542";
-import { toast } from "./toast.js?v=v2026-10-18T07542";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-18T07542";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-18T07542";
-import { createCooldownTicker } from "./cooldown.js?v=v2026-10-18T07542";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-18T07542";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-18T07542";
-import "./contact-modal.js?v=v2026-10-18T07542";
+import { sb } from "./supabase.js?v=v2026-10-18T07580";
+import { initPage } from "./page-init.js?v=v2026-10-18T07580";
+import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-18T07580";
+import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-18T07580";
+import { toast } from "./toast.js?v=v2026-10-18T07580";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-18T07580";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-18T07580";
+import { createCooldownTicker } from "./cooldown.js?v=v2026-10-18T07580";
+import { sendInviteMail } from "./invite-mail.js?v=v2026-10-18T07580";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-10-18T07580";
+import "./contact-modal.js?v=v2026-10-18T07580";
 
 export async function initContactsPage(pageId) {
   const friends = pageId === "friends";
