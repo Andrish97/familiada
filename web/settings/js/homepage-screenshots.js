@@ -181,7 +181,7 @@ async function applyFixtureToFrame(scene, fixture) {
   }[scene.id] || [];
   for (const selector of requiredByScene) if (!doc.querySelector(selector)) throw new Error(`brakuje elementu ${selector} na widoku`);
   const who = doc.querySelector("#who, #whoStatic");
-  if (who) who.textContent = currentLanguage() === "en" ? "Jamie Taylor" : currentLanguage() === "uk" ? "Олена Коваль" : "Marta Nowak";
+  if (who) who.textContent = currentLanguage() === "en" ? "John Smith" : currentLanguage() === "uk" ? "Іван Петренко" : "Jan Kowalski";
 
   if (["host-round", "display-round", "main-display"].includes(scene.id)) {
     await prepareDeviceScene(scene, fixture);
@@ -193,7 +193,7 @@ async function applyFixtureToFrame(scene, fixture) {
     doc.body.dataset.fixtureReady = "true";
     return;
   }
-  const { icon, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-18T20575");
+  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-18T20575");
   const grid = doc.getElementById("grid");
   if (scene.id === "games") {
     const language = currentLanguage();
@@ -271,6 +271,34 @@ async function applyFixtureToFrame(scene, fixture) {
       searchSlot.innerHTML = `<div class="ui-select list-filter"><button class="btn sm ui-select-btn" type="button" aria-label="Filtruj wg stanu"><span class="ui-select-icon">${icon("filter")}</span><span class="ui-select-label">${escapeHtml(words.filter)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><div class="ui-select list-sort"><button class="btn sm ui-select-btn" type="button" aria-label="Sortowanie"><span class="ui-select-icon">${icon("sort")}</span><span class="ui-select-label">${escapeHtml(words.updated)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><div class="list-search"><div class="searchBox"><input class="searchText" type="text" placeholder="${escapeHtml(words.search)}" aria-label="${escapeHtml(words.search)}"></div><button class="btn list-search-open" type="button" aria-label="${escapeHtml(words.search)}">${icon("search")}</button></div>`;
     }
   } else if (scene.id === "game-editor") {
+    const language = currentLanguage();
+    const backLabel = language === "en" ? "Back" : language === "uk" ? "Назад" : "Wstecz";
+    const back = doc.getElementById("btnBack");
+    if (back) back.innerHTML = iconText("arrow-left", backLabel);
+    const section3 = doc.querySelector(".topbar-section-3");
+    if (section3) {
+      let lang = section3.querySelector(".lang-switcher");
+      if (!lang) { lang = doc.createElement("div"); lang.className = "lang-switcher"; section3.prepend(lang); }
+      const flag = { pl: "flag-pl", en: "lang-en", uk: "flag-ua" }[language] || "flag-pl";
+      const languageLabel = language === "en" ? "Language" : language === "uk" ? "Мова" : "Język";
+      lang.innerHTML = `<button type="button" class="btn lang-btn" aria-label="${languageLabel}">${icon(flag)}</button>`;
+    }
+    const login = doc.getElementById("btnLogout");
+    if (login) login.style.display = "none";
+    const account = doc.getElementById("who");
+    if (account) {
+      const accountName = language === "en" ? "John Smith" : language === "uk" ? "Іван Петренко" : "Jan Kowalski";
+      const logoutLabel = language === "en" ? "Sign out" : language === "uk" ? "Вийти" : "Wyloguj";
+      account.className = "who account-btn btn";
+      account.innerHTML = `<span class="account-who">${accountName}</span><span class="account-chevron">${icon("caret-down")}</span>`;
+      const menu = doc.createElement("div");
+      menu.id = "topbarAccountMenu";
+      menu.className = "account-menu";
+      menu.hidden = true;
+      const settingsLabel = language === "en" ? "Account settings" : language === "uk" ? "Налаштування облікового запису" : "Ustawienia konta";
+      menu.innerHTML = `<button class="btn account-menu-item" type="button">${icon("settings")} ${settingsLabel}</button><button class="btn account-menu-item" type="button">${icon("logout")} ${logoutLabel}</button>`;
+      account.after(menu);
+    }
     setInput(doc, "gameName", fixture.game);
     setText(doc, "pageTitle", fixture.game);
     setInput(doc, "qText", fixture.question);
