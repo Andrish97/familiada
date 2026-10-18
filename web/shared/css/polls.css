@@ -438,6 +438,9 @@
 .resultQ .aList.tally .tcBtn:hover{ background: rgba(255,255,255,.1); }
 .resultQ .aList.tally .tcDel:hover{ background: rgba(255,120,120,.18); }
 /* Scalanie jest dostępne przyciskiem na każdym urządzeniu; przeciąganie jest dodatkową opcją. */
+@media (hover: hover) and (pointer: fine){
+  .resultQ .aList.tally .tcMergeBtn{ display: none; }
+}
 .resultQ .aList.tallyText .aTxt{ display: none; }
 .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
 .resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
