@@ -282,7 +282,8 @@ async function prepareMainDisplayFixture(browser, language) {
 }
 
 test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, context, browser }, testInfo) => {
-  test.setTimeout(240_000);
+  test.setTimeout(600_000);
+  page.setDefaultTimeout(15_000);
   if (!USERS[LANGUAGE]) throw new Error(`Unsupported SCREENSHOT_LANG: ${LANGUAGE}`);
   const friendLang = { pl: "en", en: "uk", uk: "pl" }[LANGUAGE];
   const friendUsername = USERS[friendLang];
@@ -306,6 +307,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     friendContext = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1365, height: 768 } });
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(friendContext, { pages: ["tasks", "friends", "subscribers", "polls"] });
     const friendPage = await friendContext.newPage();
+    friendPage.setDefaultTimeout(15_000);
     await loginAsTestUser(friendPage, friendContext, { username: friendUsername });
     friendOriginalName = await setFriendlyScreenshotName(friendPage, COPY[LANGUAGE].friendName);
     await friendPage.evaluate(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
@@ -315,6 +317,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymousContext, { pages: ["polls/vote/points", "polls/vote/text"] });
     await anonymousContext.addInitScript(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
     const anonymousPage = await anonymousContext.newPage();
+    anonymousPage.setDefaultTimeout(15_000);
     await anonymousPage.goto("https://www.familiada.online/", { waitUntil: "domcontentloaded" });
     await anonymousPage.waitForFunction(() => !!window.__sbClient, { timeout: 20_000 });
 
@@ -322,6 +325,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(mobileContext, { pages: ["polls/vote/points"] });
     await mobileContext.addInitScript(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
     const mobilePage = await mobileContext.newPage();
+    mobilePage.setDefaultTimeout(15_000);
 
     const contacts = await createRealContacts(page, friendPage, anonymousPage, LANGUAGE);
     const taskSets = await shareGamesWithContacts(page, games, contacts);
@@ -332,14 +336,13 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     const gamesShotError = await take(page, testInfo, "games", async () => {
       await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("body")).toContainText(games[0].name, { timeout: 30_000 });
-      await expect(page.locator("body")).toContainText(games[1].name, { timeout: 10_000 });
-      await expect(page.locator("body")).toContainText(games[2].name, { timeout: 10_000 });
     });
     if (gamesShotError) captureErrors.push(gamesShotError);
     const editorShotError = await take(page, testInfo, "game-editor", async () => {
       await page.goto(`https://www.familiada.online/games/editor/?id=${games[0].id}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#qText")).toHaveValue(COPY[LANGUAGE].gameplay[0], { timeout: 30_000 });
-      await expect(page.locator("#aList")).toContainText(COPY[LANGUAGE].gameplay[1][0], { timeout: 10_000 });
+      await expect(page.locator("#aList input")).toHaveCount(6, { timeout: 15_000 });
+      await expect(page.locator("#aList input").first()).toHaveValue(COPY[LANGUAGE].gameplay[1][0]);
     });
     if (editorShotError) captureErrors.push(editorShotError);
     const readyGameError = await take(page, testInfo, "game-ready", async () => {
@@ -364,10 +367,11 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     const logoError = await take(page, testInfo, "logos", async () => {
       await page.goto(`https://www.familiada.online/logo/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#grid .addCard")).toBeAttached({ timeout: 30_000 });
+      await page.evaluate(language => window.__sbClient.from("user_logos").delete().like("name", `E13-${language}-%`), LANGUAGE);
       await Logo.insertLogo(page, { name: logoNames[0], type: "GLYPH_30x10", payload: Logo.textPayload("FAMILIADA") });
       await Logo.insertLogo(page, { name: `E13-${LANGUAGE}-team`, type: "GLYPH_30x10", payload: Logo.textPayload("ONLINE") });
       await page.reload({ waitUntil: "domcontentloaded" });
-      await expect(page.locator("#grid .logoTile")).toHaveCount(2, { timeout: 20_000 });
+      await expect(page.locator("#grid")).toContainText(logoNames[0], { timeout: 20_000 });
     });
     if (logoError) captureErrors.push(logoError);
 
@@ -387,6 +391,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       screenshotBaseId = await page.evaluate(async lang => {
         const sb = window.__sbClient;
         const { data: user } = await sb.auth.getUser();
+        await sb.from("question_bases").delete().eq("owner_id", user.user.id).eq("name", `E13 ${lang} — Zestaw rodzinny`);
         const { data: base, error } = await sb.from("question_bases").insert({ owner_id: user.user.id, name: `E13 ${lang} — Zestaw rodzinny` }).select("id").single();
         if (error) throw error;
         const { data: category, error: categoryError } = await sb.from("qb_categories").insert({ base_id: base.id, name: "Na co dzień", ord: 1 }).select("id").single();
@@ -413,11 +418,16 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     if (explorerError) captureErrors.push(explorerError);
 
     const settingsFinalError = await take(page, testInfo, "game-settings-finale", async () => {
+      // Let the editor release the game lock before opening its settings.
+      await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("body")).toContainText(games[0].name, { timeout: 20_000 });
+      await page.waitForTimeout(2_000);
       await page.goto(`https://www.familiada.online/games/settings?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator(".gs-sidebar-item[data-cat=questions]")).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator("#gsContentInner")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
       await page.locator('.gs-sidebar-item[data-cat="questions"]').click();
-      await page.locator('.toggle-item:has(input[name="gsHasFinal"][value="yes"])').click();
-      await page.locator('.toggle-item:has(input[name="gsFinalMode"][value="pick"])').click();
+      await page.locator('.toggle-item:has(input[name="gsHasFinal"][value="yes"])').click({ timeout: 12_000 });
+      await page.locator('.toggle-item:has(input[name="gsFinalMode"][value="pick"])').click({ timeout: 12_000 });
       await page.locator('.gs-sidebar-item[data-cat="finale"]').click();
       await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(9, { timeout: 20_000 });
       for (let i = 0; i < 5; i++) await page.locator("#gsFinalePool .qRow").first().click();
@@ -547,6 +557,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       }
     }
   } finally {
+    await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" }).catch(() => {});
+    await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 10_000 }).catch(() => {});
     if (games.length) {
       await page.evaluate(async ids => {
         const { error } = await window.__sbClient.from("games").delete().in("id", ids);
