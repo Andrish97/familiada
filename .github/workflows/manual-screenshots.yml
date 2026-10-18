@@ -29,9 +29,9 @@ jobs:
     timeout-minutes: 30
     strategy:
       fail-fast: false
-      # Test16–18 also serve as each other's friend recipients; serialize the
-      # three language scenes so relationship cleanup cannot overlap.
-      max-parallel: 1
+      # Each language uses its own screenshot account and local visual fixtures,
+      # so captures can run independently.
+      max-parallel: 3
       matrix:
         lang: [pl, en, uk]
     env:

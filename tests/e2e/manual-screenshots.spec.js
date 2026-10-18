@@ -1,7 +1,6 @@
 // Dedicated fixtures for the manual/landing screenshots. These accounts are
 // deliberately outside the regular E2E pool (test16 PL, test17 EN, test18 UK).
 const { test, expect } = require("@playwright/test");
-const { randomUUID } = require("node:crypto");
 const { loginAsTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 const Logo = require("./helpers/logo-editor");
@@ -53,7 +52,8 @@ async function seedGames(page, copy) {
     const sb = window.__sbClient;
     const { data: auth, error: authError } = await sb.auth.getUser();
     if (authError) throw authError;
-    // Reuse the prepared game; rebuild poll fixtures to allow clean sharing.
+    // Keep the seeded data compact: insert each game's questions and answers
+    // in batches instead of making one network round trip per row.
     const games = [];
     const definitions = [
       { type: "prepared", title: copy.names[0] },
@@ -89,19 +89,22 @@ async function seedGames(page, copy) {
         if (questionCleanupError) throw questionCleanupError;
       }
 
-      // The old Control screenshot's question stays first in all three games.
+      // The round question stays first in every game, including both polls.
       const prompts = [copy.gameplay[0], ...copy.questions.slice(0, 9)];
-      for (let ord = 0; ord < prompts.length; ord++) {
-        const { data: question, error: qError } = await sb.from("questions")
-          .insert({ game_id: game.id, ord: ord + 1, text: prompts[ord] }).select("id").single();
-        if (qError) throw qError;
-        if (index === 0 || index === 1) {
-          const isBoardQuestion = ord === 0;
-          const answers = index === 1 ? copy.pollAnswers : (isBoardQuestion ? copy.gameplay[1] : copy.fillerAnswers);
-          const points = index === 1 ? answers.map(() => 0) : (isBoardQuestion ? [39, 24, 16, 9, 7, 5] : [40, 30, 20, 10]);
-          const { error: aError } = await sb.from("answers").insert(answers.map((text, i) => ({ question_id: question.id, ord: i + 1, text, fixed_points: points[i] })));
-          if (aError) throw aError;
+      const { data: questionRows, error: qError } = await sb.from("questions")
+        .insert(prompts.map((text, ord) => ({ game_id: game.id, ord: ord + 1, text })))
+        .select("id,ord").order("ord");
+      if (qError) throw qError;
+      if (index === 0 || index === 1) {
+        const answerRows = [];
+        for (const question of questionRows) {
+          const first = question.ord === 1;
+          const answers = index === 1 ? copy.pollAnswers : (first ? copy.gameplay[1] : copy.fillerAnswers);
+          const points = index === 1 ? answers.map(() => 0) : (first ? [39, 24, 16, 9, 7, 5] : [40, 30, 20, 10]);
+          answers.forEach((text, i) => answerRows.push({ question_id: question.id, ord: i + 1, text, fixed_points: points[i] }));
         }
+        const { error: aError } = await sb.from("answers").insert(answerRows);
+        if (aError) throw aError;
       }
       if (index === 0) {
         const { error: readyError } = await sb.from("games").update({ status: "ready" }).eq("id", game.id);
@@ -118,14 +121,6 @@ async function seedGames(page, copy) {
     }
     return games;
   }, copy);
-}
-
-async function rpc(page, name, args) {
-  return page.evaluate(async ({ name, args }) => {
-    const { data, error } = await window.__sbClient.rpc(name, args);
-    if (error) throw new Error(`${name}: ${error.message}`);
-    return data;
-  }, { name, args });
 }
 
 async function setFriendlyScreenshotName(page, username) {
@@ -163,139 +158,70 @@ async function restoreScreenshotName(page, original) {
   }, original);
 }
 
-async function createRealContacts(ownerPage, friendPage, anonymousPage, language) {
-  const friend = await friendPage.evaluate(async () => {
-    const { data, error } = await window.__sbClient.auth.getUser();
-    if (error) throw error;
-    return { id: data.user.id, email: data.user.email };
-  });
-  const subscriberEmails = COPY[language].subscriberEmails;
-  const friendRows = await rpc(ownerPage, "contacts_list", { p_kind: "friends" });
-  let friendship = friendRows.find(row => row.user_id === friend.id && row.status === "active");
-  if (!friendship) {
-    friendship = friendRows.find(row => row.user_id === friend.id && row.status === "pending");
-    if (!friendship) {
-      const invite = await rpc(ownerPage, "friends_invite", { p_handle: friend.email });
-      if (!invite?.id) throw new Error("Could not create screenshot friend invitation");
-      friendship = { id: invite.id, direction: "outgoing", status: "pending" };
+// Use the application's own renderers with local visual data. This keeps the
+// examples consistent with the shipped UI without creating accounts, tasks,
+// subscriptions, or hundreds of production vote rows just for PNGs.
+async function renderVisualFixture(page, kind, copy) {
+  await page.evaluate(async ({ kind, copy }) => {
+    const lang = new URLSearchParams(location.search).get("lang") || "pl";
+    const { t } = await import("/shared/translation/translation.js?v=v2026-10-14T23162");
+    if (kind === "contacts") {
+      const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-14T23162");
+      const friends = location.pathname.includes("/friends/");
+      const host = document.getElementById("contactsReceived");
+      const people = friends
+        ? [{ label: copy.friendName, note: `${copy.friendName.toLocaleLowerCase().replaceAll(" ", ".")}@example.com`, state: "active" }]
+        : copy.subscriberEmails.map(email => ({ label: email, note: t("contacts.accountCreated"), state: "active" }));
+      const rows = people.map((person, index) => ({
+        id: `visual-${kind}-${index}`, label: person.label, compact: true,
+        tags: person.state === "active" ? [] : [{ text: t(`contacts.status.${person.state}`) }],
+        note: person.note,
+        actions: [{ key: "remove", icon: "trash", title: t("contacts.actions.remove"), onClick: () => {} }]
+      }));
+      host.replaceChildren(shareSectionEl({ key: "active", title: t(`contacts.sections.${friends ? "friend" : "active"}`), rows }));
+      return;
     }
-    const acceptingPage = friendship.direction === "incoming" ? ownerPage : friendPage;
-    const accepted = await rpc(acceptingPage, "friends_accept", { p_id: friendship.id });
-    if (!accepted?.ok) throw new Error("Could not accept screenshot friend invitation");
-  }
-
-  const subscriberRows = await rpc(ownerPage, "contacts_list", { p_kind: "subscribers" });
-  const subscriberIds = [];
-  for (const subscriberEmail of subscriberEmails) {
-    let subscriber = subscriberRows.find(row => row.email?.toLowerCase() === subscriberEmail && ["active", "pending"].includes(row.status));
-    if (!subscriber) subscriber = await rpc(ownerPage, "subscribers_invite", { p_email: subscriberEmail });
-    if (subscriber?.ok === false || !subscriber?.id) throw new Error(`Could not create screenshot subscriber ${subscriberEmail}: ${subscriber?.err || "unknown error"}`);
-    if (subscriber.status !== "active") {
-      if (!subscriber.token) throw new Error(`Screenshot subscriber ${subscriberEmail} has no invitation token`);
-      const acceptance = await rpc(anonymousPage, "poll_sub_accept_email", { p_token: subscriber.token, p_email: subscriberEmail });
-      if (!acceptance?.ok) throw new Error(`Could not accept screenshot subscriber ${subscriberEmail}: ${acceptance?.error || "unknown error"}`);
+    if (kind === "tasks" || kind === "tasks-done") {
+      const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-14T23162");
+      const host = document.getElementById("tasksHost");
+      const rows = [0, 1].map(index => ({
+        id: `visual-task-${index}`, avatarIcon: "polls", title: copy.names[index + 1],
+        note: `${t("tasks.from", { owner: copy.friendName })} · ${t("tasks.received", { date: new Date().toLocaleDateString(lang) })}`,
+        noteMobile: t("tasks.from", { owner: copy.friendName }),
+        actions: kind === "tasks-done" ? [] : [{ key: "vote", text: t("tasks.actions.vote"), icon: "polls", gold: true, onClick: () => {} }]
+      }));
+      const doneRows = rows.map(row => ({ ...row, id: `${row.id}-done`, note: `${t("tasks.from", { owner: copy.friendName })} · ${t("tasks.doneAt", { date: new Date().toLocaleDateString(lang) })}`, actions: [] }));
+      renderRowSections(host, [
+        { key: "todo", title: t("tasks.sections.todo"), rows: kind === "tasks" ? rows : [] },
+        { key: "done", title: t("tasks.sections.done"), rows: kind === "tasks-done" ? doneRows : [], collapsed: false }
+      ], { emptyText: t("tasks.empty") });
+      return;
     }
-    subscriberIds.push(subscriber.id);
-  }
-  return { friend, subscriberEmails, subscriberIds };
-}
-
-async function shareGamesWithContacts(ownerPage, games, contacts) {
-  const taskSets = [];
-  for (const game of games.filter(item => item.type.startsWith("poll_"))) {
-    const sent = await rpc(ownerPage, "poll_share_send", {
-      p_game_id: game.id, p_friend_ids: [contacts.friend.id], p_subscriber_ids: contacts.subscriberIds
-    });
-    if (!sent?.ok || sent.created !== 1 + contacts.subscriberIds.length) throw new Error(`Could not create friend and subscriber poll tasks (${game.name}): ${JSON.stringify(sent)}`);
-    const tasks = await ownerPage.evaluate(async gameId => {
-      const { data, error } = await window.__sbClient.from("poll_tasks")
-        .select("id,token,recipient_user_id,recipient_email,game_id,status")
-        .eq("game_id", gameId).order("created_at");
-      if (error) throw error;
-      return data;
-    }, game.id);
-    taskSets.push({ game, tasks });
-  }
-  return taskSets;
-}
-
-async function completeRealTasks(ownerPage, friendPage, anonymousPage, taskSets, copy) {
-  for (const { game, tasks } of taskSets) {
-    const source = await ownerPage.evaluate(async ({ gameId, type, voteText }) => {
-      const sb = window.__sbClient;
-      const { data: questions, error } = await sb.from("questions").select("id,ord").eq("game_id", gameId).order("ord");
-      if (error) throw error;
-      if (type === "poll_text") return questions.map(question => ({ question_id: question.id, answer_raw: voteText, answer_norm: voteText.toLocaleLowerCase() }));
-      const ids = questions.map(question => question.id);
-      const { data: answers, error: answerError } = await sb.from("answers").select("id,question_id").in("question_id", ids).eq("ord", 1);
-      if (answerError) throw answerError;
-      return questions.map(question => ({ question_id: question.id, answer_id: answers.find(answer => answer.question_id === question.id)?.id }));
-    }, { gameId: game.id, type: game.type, voteText: copy.voteText });
-    if (source.length !== 10 || source.some(item => game.type === "poll_points" ? !item.answer_id : !item.question_id)) {
-      throw new Error(`Screenshot fixture ${game.name} does not have ten valid voting items`);
+    if (kind === "poll-share") {
+      const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-14T23162");
+      document.getElementById("subsGrid").replaceChildren(shareSectionEl({
+        key: "poll-shared", title: t("polls.share.recipientsTitle"), rows: copy.subscriberEmails.map((email, index) => ({
+          id: `visual-recipient-${index}`, label: email, compact: true,
+          tags: [{ text: t("shareSections.channel.subscriber"), cls: "tag--muted" }],
+          note: index === 0 ? t("polls.share.state.done") : t("polls.share.state.waiting"),
+          actions: [{ key: "remove", icon: "trash", title: t("polls.share.remove"), onClick: () => {} }]
+        }))
+      }));
+      const summary = document.getElementById("subsSummary");
+      if (summary) summary.textContent = lang === "en" ? "3 invited · 1 responded" : lang === "uk" ? "Запрошено: 3 · відповіли: 1" : "Zaproszono: 3 · odpowiedziała 1 osoba";
+      return;
     }
-    for (const task of tasks) {
-      const voterPage = task.recipient_user_id ? friendPage : anonymousPage;
-      await rpc(voterPage, "poll_task_opened", { p_token: task.token });
-      await rpc(voterPage, game.type === "poll_text" ? "poll_text_submit_batch" : "poll_points_vote_batch", {
-        p_game_id: game.id, p_key: game.share_key_poll, p_voter_token: `task:${task.id}`, p_items: source
+    if (kind === "results" || kind === "text-results") {
+      const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-14T23162");
+      const renderer = createPollResults(document.getElementById("resultsList"));
+      if (kind === "results") renderer.render({
+        status: "poll_open", type: "poll_points", questions: [{ id: "visual-question", ord: 1, text: copy.gameplay[0], answers: copy.pollAnswers.map((text, index) => ({ id: `visual-answer-${index}`, text, votes: [65, 35, 20, 5][index] })) }]
       });
-      const completion = await rpc(voterPage, "poll_task_done", { p_token: task.token });
-      if (completion !== "ok") throw new Error(`Could not complete screenshot poll task: ${completion}`);
-    }
-  }
-}
-
-// A points poll collects raw votes first and converts their proportions to a
-// total of 100 points only after tallying. Add an anonymous audience large
-// enough to make that distinction visible in the live results screenshot.
-async function addAnonymousPollAudience(ownerPage, anonymousPage, game, counts = [60, 35, 20, 5]) {
-  const ballot = await ownerPage.evaluate(async gameId => {
-    const sb = window.__sbClient;
-    const { data: questions, error } = await sb.from("questions").select("id,ord").eq("game_id", gameId).order("ord");
-    if (error) throw error;
-    const { data: answers, error: answerError } = await sb.from("answers").select("id,question_id,ord").in("question_id", questions.map(question => question.id)).order("ord");
-    if (answerError) throw answerError;
-    return questions.map(question => ({
-      question_id: question.id,
-      answer_ids: answers.filter(answer => answer.question_id === question.id).map(answer => answer.id),
-    }));
-  }, game.id);
-  const voters = counts.reduce((total, count) => total + count, 0);
-  if (ballot.length !== 10 || ballot.some(question => question.answer_ids.length !== counts.length)) {
-    throw new Error("The points poll needs ten questions with matching answer choices before adding anonymous votes");
-  }
-  for (let answerIndex = 0; answerIndex < counts.length; answerIndex++) {
-    for (let vote = 0; vote < counts[answerIndex]; vote++) {
-      const result = await rpc(anonymousPage, "poll_anonymous_submit", {
-        p_game_id: game.id,
-        p_key: game.share_key_poll,
-        p_browser_token: randomUUID(),
-        p_voter_token: randomUUID(),
-        p_items: ballot.map(question => ({ question_id: question.question_id, answer_id: question.answer_ids[answerIndex] })),
+      else renderer.render({
+        status: "poll_open", type: "poll_text", questions: [{ id: "visual-text-question", ord: 1, text: copy.questions[0], text_rows: [{ text: copy.voteText, val: 18 }, { text: copy.pollAnswers[1], val: 7 }] }]
       });
-      if (!result?.ok) throw new Error(`Could not add anonymous screenshot vote: ${result?.error || "unknown error"}`);
     }
-  }
-  return voters;
-}
-
-test.beforeEach(async ({ context }) => {
-  if (process.env.TEST_BRANCH_CODE !== "0") {
-    await serveBranchCode(context, { pages: ["games", "games/editor", "games/settings", "polls", "polls/vote/points", "polls/vote/text", "tasks", "friends", "subscribers", "bases", "base-explorer", "logo", "logo/editor", "control"] });
-  }
-});
-
-async function take(page, testInfo, name, ready) {
-  try {
-    await ready();
-    await page.screenshot({ path: testInfo.outputPath(`shot-${LANGUAGE}-${name}.png`), fullPage: false, animations: "disabled" });
-    console.log(`[manual-screenshot] captured ${LANGUAGE}/${name}`);
-  } catch (error) {
-    // One missing scene must not prevent the remaining screenshots.
-    console.error(`[manual-screenshot] failed ${LANGUAGE}/${name}: ${error.message}`);
-    return error;
-  }
+  }, { kind, copy });
 }
 
 async function prepareDevicePreviewFixture(browser, language, device = "display") {
@@ -345,22 +271,34 @@ async function prepareDevicePreviewFixture(browser, language, device = "display"
   }
 }
 
+test.beforeEach(async ({ context }) => {
+  if (process.env.TEST_BRANCH_CODE !== "0") {
+    await serveBranchCode(context, { pages: ["games", "games/editor", "games/settings", "polls", "polls/vote/points", "polls/vote/text", "tasks", "friends", "subscribers", "bases", "base-explorer", "logo", "logo/editor", "control"] });
+  }
+});
+
+async function take(page, testInfo, name, ready) {
+  try {
+    await ready();
+    await page.screenshot({ path: testInfo.outputPath(`shot-${LANGUAGE}-${name}.png`), fullPage: false, animations: "disabled" });
+    console.log(`[manual-screenshot] captured ${LANGUAGE}/${name}`);
+  } catch (error) {
+    // One missing scene must not prevent the remaining screenshots.
+    console.error(`[manual-screenshot] failed ${LANGUAGE}/${name}: ${error.message}`);
+    return error;
+  }
+}
+
 test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, context, browser }, testInfo) => {
   test.setTimeout(600_000);
   page.setDefaultTimeout(15_000);
   if (!USERS[LANGUAGE]) throw new Error(`Unsupported SCREENSHOT_LANG: ${LANGUAGE}`);
-  const friendLang = { pl: "en", en: "uk", uk: "pl" }[LANGUAGE];
-  const friendUsername = USERS[friendLang];
-  let friendContext;
-  let anonymousContext;
   let mobileContext;
   let displayFixtureContext;
   let gameplayPreviewContexts = [];
   let games = [];
   let screenshotBaseId = null;
-  let friendId = null;
   let ownerOriginalName = null;
-  let friendOriginalName = null;
   const captureErrors = [];
   await loginAsTestUser(page, context, { username: USERS[LANGUAGE] });
   // Game settings can ask for confirmation while leaving after an auto-save.
@@ -375,7 +313,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
   ownerOriginalName = await setFriendlyScreenshotName(page, COPY[LANGUAGE].ownerName);
   await page.evaluate(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
   await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle");
+  await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 20_000 });
   games = await seedGames(page, COPY[LANGUAGE]);
     // Capture a clean Control setup, then the matching pre-rendered device views.
     // Screenshots describe the interface; they do not need live device sessions.
@@ -387,7 +325,6 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       const confirmReset = page.getByRole("button", { name: /^(Tak|Yes|Так|Да)$/ });
       if (await confirmReset.count()) await confirmReset.click();
       await expect(page.locator("#app")).toBeVisible({ timeout: 15_000 });
-      await page.waitForTimeout(1_000);
       const controlSound = page.locator('.toggle-item:has(input[name="soundSource"][value="control"])');
       if (await controlSound.count() && !(await controlSound.locator("input").isChecked())) await controlSound.click();
       // Reset first as the normal Control flow requires, then paint a matching
@@ -460,35 +397,14 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       }
     }
 
-    friendContext = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1365, height: 768 } });
-    if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(friendContext, { pages: ["tasks", "friends", "subscribers", "polls"] });
-    const friendPage = await friendContext.newPage();
-    friendPage.setDefaultTimeout(15_000);
-    await loginAsTestUser(friendPage, friendContext, { username: friendUsername });
-    friendOriginalName = await setFriendlyScreenshotName(friendPage, COPY[LANGUAGE].friendName);
-    await friendPage.evaluate(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
-    friendId = await friendPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
-
-    anonymousContext = await browser.newContext({ serviceWorkers: "block", viewport: { width: 390, height: 844 } });
-    if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymousContext, { pages: ["polls/vote/points", "polls/vote/text"] });
-    await anonymousContext.addInitScript(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
-    const anonymousPage = await anonymousContext.newPage();
-    anonymousPage.setDefaultTimeout(15_000);
-    await anonymousPage.goto("https://www.familiada.online/", { waitUntil: "domcontentloaded" });
-    await anonymousPage.waitForFunction(() => !!window.__sbClient, { timeout: 20_000 });
-
     mobileContext = await browser.newContext({ serviceWorkers: "block", viewport: { width: 390, height: 844 } });
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(mobileContext, { pages: ["polls/vote/points"] });
     await mobileContext.addInitScript(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
     const mobilePage = await mobileContext.newPage();
     mobilePage.setDefaultTimeout(15_000);
 
-    const contacts = await createRealContacts(page, friendPage, anonymousPage, LANGUAGE);
-    const taskSets = await shareGamesWithContacts(page, games, contacts);
-    const friendTasks = taskSets.flatMap(set => set.tasks.filter(task => task.recipient_user_id === friendId));
-    if (friendTasks.length !== 2) throw new Error("The friend account did not receive both screenshot tasks");
-
-    // Capture owner facing resources after the real friend/subscriber exist.
+    // The resource lists below use the application's own renderers with local
+    // example data; no test contacts or task records are written to production.
     const gamesShotError = await take(page, testInfo, "games", async () => {
       await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("body")).toContainText(games[0].name, { timeout: 30_000 });
@@ -599,7 +515,6 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       // round pool and the five finale prompts come from the other nine.
       for (let i = 0; i < 5; i++) await page.locator("#gsFinalePool .qRow").nth(1).click();
       await expect(page.locator(".gs-badge-row .tag b")).toHaveText("5");
-      await page.waitForTimeout(1200);
     });
     if (settingsFinalError) captureErrors.push(settingsFinalError);
 
@@ -608,7 +523,6 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.locator('.toggle-item:has(input[name="gsRoundsMode"][value="pick"])').click();
       await page.locator('.gs-sidebar-item[data-cat="rounds"]').click();
       await expect(page.locator("#gsRoundsOrderList .roundsOrderItem").first()).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 20_000 });
-      await page.waitForTimeout(1200);
     });
     if (settingsRoundsError) captureErrors.push(settingsRoundsError);
 
@@ -631,7 +545,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await expect(page.locator("#contactsHost")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
       await page.locator("#contactsTabReceived").dispatchEvent("click");
       await expect(page.locator("#contactsReceived")).toBeVisible();
-      await expect(page.locator("#contactsReceived")).toContainText(contacts.friend.email.split("@")[0], { timeout: 15_000 });
+      await renderVisualFixture(page, "contacts", COPY[LANGUAGE]);
+      await expect(page.locator("#contactsReceived .shareRow")).toHaveCount(1);
     });
     if (friendsShotError) captureErrors.push(friendsShotError);
     const subscribersShotError = await take(page, testInfo, "subscribers", async () => {
@@ -639,7 +554,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await expect(page.locator("#contactsHost")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
       await page.locator("#contactsTabReceived").dispatchEvent("click");
       await expect(page.locator("#contactsReceived")).toBeVisible();
-      for (const email of contacts.subscriberEmails) await expect(page.locator("#contactsReceived")).toContainText(email, { timeout: 15_000 });
+      await renderVisualFixture(page, "contacts", COPY[LANGUAGE]);
+      for (const email of COPY[LANGUAGE].subscriberEmails) await expect(page.locator("#contactsReceived")).toContainText(email);
     });
     if (subscribersShotError) captureErrors.push(subscribersShotError);
 
@@ -647,7 +563,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.goto(`https://www.familiada.online/polls/?id=${games[1].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("body")).toContainText(games[1].name, { timeout: 30_000 });
       await expect(page.locator("#btnAddRecipients")).toBeVisible({ timeout: 15_000 });
-      for (const email of contacts.subscriberEmails) await expect(page.locator("#subsGrid")).toContainText(email, { timeout: 15_000 });
+      await renderVisualFixture(page, "poll-share", COPY[LANGUAGE]);
+      for (const email of COPY[LANGUAGE].subscriberEmails) await expect(page.locator("#subsGrid")).toContainText(email);
       // The final public QR destination will be supplied later. Keep this
       // scene capturable while that link is undecided or QR rendering fails.
       // Hide only the empty/error QR control in this screenshot context; the
@@ -667,13 +584,16 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     const textPollShotError = await take(page, testInfo, "poll-text-sharing", async () => {
       await page.goto(`https://www.familiada.online/polls/?id=${games[2].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("body")).toContainText(games[2].name, { timeout: 30_000 });
-      for (const email of contacts.subscriberEmails) await expect(page.locator("#subsGrid")).toContainText(email, { timeout: 15_000 });
+      await renderVisualFixture(page, "poll-share", COPY[LANGUAGE]);
+      for (const email of COPY[LANGUAGE].subscriberEmails) await expect(page.locator("#subsGrid")).toContainText(email);
     });
     if (textPollShotError) captureErrors.push(textPollShotError);
 
-    const tasksPendingError = await take(friendPage, testInfo, "tasks-pending", async () => {
-      await friendPage.goto(`https://www.familiada.online/tasks/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
-      await expect(friendPage.locator("#tasksHost .rowsRow")).toHaveCount(2, { timeout: 30_000 });
+    const tasksPendingError = await take(page, testInfo, "tasks-pending", async () => {
+      await page.goto(`https://www.familiada.online/tasks/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#tasksHost")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
+      await renderVisualFixture(page, "tasks", COPY[LANGUAGE]);
+      await expect(page.locator("#tasksHost .rowsRow")).toHaveCount(2);
     });
     if (tasksPendingError) captureErrors.push(tasksPendingError);
 
@@ -684,31 +604,11 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     });
     if (mobileVoteError) captureErrors.push(mobileVoteError);
 
-    const anonymousDoneError = await take(mobilePage, testInfo, "anonymous-voting-done-mobile", async () => {
-      const prompts = [COPY[LANGUAGE].gameplay[0], ...COPY[LANGUAGE].questions.slice(0, 9)];
-      for (let index = 0; index < prompts.length; index++) {
-        await expect(mobilePage.locator("#qtext")).toContainText(prompts[index], { timeout: 15_000 });
-        await mobilePage.locator("#alist button").first().click();
-      }
-      await expect(mobilePage.locator("#qbox")).toBeHidden({ timeout: 30_000 });
-      const count = await page.evaluate(async gameId => {
-        const { count, error } = await window.__sbClient.from("poll_votes").select("id", { count: "exact", head: true }).eq("game_id", gameId);
-        if (error) throw error;
-        return count;
-      }, games[1].id);
-      // One anonymous participant voted once on each of the ten questions.
-      expect(count).toBe(10);
-    });
-    if (anonymousDoneError) captureErrors.push(anonymousDoneError);
-
-    await completeRealTasks(page, friendPage, anonymousPage, taskSets, COPY[LANGUAGE]);
-    const anonymousAudience = await addAnonymousPollAudience(page, anonymousPage, games[1]);
-    expect(anonymousAudience).toBe(120);
-    const tasksDoneError = await take(friendPage, testInfo, "tasks-done", async () => {
-      await friendPage.goto(`https://www.familiada.online/tasks/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
-      await expect(friendPage.locator("#tasksHost .rowsRow")).toHaveCount(2, { timeout: 30_000 });
-      await friendPage.locator(".rowsSection--done .rowsSectionHead").click();
-      await expect(friendPage.locator(".rowsSection--done .rowsRow")).toHaveCount(2);
+    const tasksDoneError = await take(page, testInfo, "tasks-done", async () => {
+      await page.goto(`https://www.familiada.online/tasks/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#tasksHost")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
+      await renderVisualFixture(page, "tasks-done", COPY[LANGUAGE]);
+      await expect(page.locator(".rowsSection--done .rowsRow")).toHaveCount(2);
     });
     if (tasksDoneError) captureErrors.push(tasksDoneError);
 
@@ -716,15 +616,17 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.goto(`https://www.familiada.online/polls/?id=${games[1].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#tabResults")).toBeVisible({ timeout: 30_000 });
       await page.locator("#tabResults").click();
-      await expect(page.locator("#resultsList")).toContainText(COPY[LANGUAGE].pollAnswers[0], { timeout: 20_000 });
-      await expect(page.locator("#resultsList .aVal").first()).toHaveText("65", { timeout: 30_000 });
+      await renderVisualFixture(page, "results", COPY[LANGUAGE]);
+      await expect(page.locator("#resultsList")).toContainText(COPY[LANGUAGE].pollAnswers[0]);
+      await expect(page.locator("#resultsList .aVal").first()).toHaveText("65");
     });
     if (resultsError) captureErrors.push(resultsError);
     const textResultsError = await take(page, testInfo, "poll-text-votes", async () => {
       await page.goto(`https://www.familiada.online/polls/?id=${games[2].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#tabResults")).toBeVisible({ timeout: 30_000 });
       await page.locator("#tabResults").click();
-      await expect(page.locator("#resultsList")).toContainText(COPY[LANGUAGE].voteText.toLocaleLowerCase(), { timeout: 20_000 });
+      await renderVisualFixture(page, "text-results", COPY[LANGUAGE]);
+      await expect(page.locator("#resultsList")).toContainText(COPY[LANGUAGE].voteText.toLocaleLowerCase());
     });
     if (textResultsError) captureErrors.push(textResultsError);
 
@@ -759,10 +661,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     // instead of creating declined rows/cooldowns on every run.
     // Keep one active friend and subscriber per dedicated account. Reuse them
     // on later runs; the two poll fixtures are replaced at the next run.
-    await restoreScreenshotName(friendContext?.pages()[0], friendOriginalName).catch(error => console.error("[manual-screenshot] friend name restore failed:", error.message));
     await restoreScreenshotName(page, ownerOriginalName).catch(error => console.error("[manual-screenshot] owner name restore failed:", error.message));
-    await friendContext?.close();
-    await anonymousContext?.close();
     await mobileContext?.close();
     await displayFixtureContext?.close();
   }
