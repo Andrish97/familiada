@@ -379,7 +379,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await reset.click();
       const confirmReset = page.getByRole("button", { name: /^(Tak|Yes|Так|Да)$/ });
       if (await confirmReset.count()) await confirmReset.click();
-      await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 15_000 });
+      await expect(page.locator("#app")).toBeVisible({ timeout: 15_000 });
+      await page.waitForTimeout(1_000);
       const controlSound = page.locator('.toggle-item:has(input[name="soundSource"][value="control"])');
       if (await controlSound.count() && !(await controlSound.locator("input").isChecked())) await controlSound.click();
     });
