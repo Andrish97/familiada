@@ -29,7 +29,7 @@ import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/j
 
 import { renderPreview } from "./render.js?v=v2026-10-18T07202";
 import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-18T07202";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-18T07202";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T07202";
 import { cannotEditReason } from "./text.js?v=v2026-10-18T07202";
 import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-10-18T07202";
 
@@ -235,7 +235,7 @@ export async function bootEditorPage({ mode, initEditor }) {
     // Tablety z Chrome przedstawiają się jak desktop -- sprawdzamy też dotyk.
     const touch = isMobileDevice() || navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)").matches;
     el.previewOverlay.querySelector(".modal")?.classList.toggle("is-touch", !!touch);
-    previewZoom ??= initPreviewPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
+    previewZoom ??= initPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
     previewZoom.reset();
     lockPageZoomForPreview();
     el.previewOverlay.style.display = "";

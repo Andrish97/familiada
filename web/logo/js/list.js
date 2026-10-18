@@ -12,7 +12,7 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T07
 //   render.js       – format bitów i podgląd „jak na wyświetlaczu”
 //   db.js           – tabela user_logos + pliki w Storage
 //   transfer.js     – eksport/import .famlogo
-//   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
+//   core/pinch-zoom.js – wspólny pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-18T07202";
@@ -33,7 +33,7 @@ import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js
 import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-18T07202";
 import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-18T07202";
 import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-18T07202";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-18T07202";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T07202";
 import { cannotEditReason } from "./text.js?v=v2026-10-18T07202";
 import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-18T07202";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-18T07202";
@@ -244,7 +244,7 @@ function openPreview(preview) {
   // Tablety z Chrome przedstawiają się jak desktop -- sprawdzamy też dotyk.
   const touch = isMobileDevice() || navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)").matches;
   el.previewOverlay.querySelector(".modal")?.classList.toggle("is-touch", !!touch);
-  previewZoom ??= initPreviewPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
+  previewZoom ??= initPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
   previewZoom.reset();
   lockPageZoomForPreview();
   openOverlay(el.previewOverlay, closePreview);

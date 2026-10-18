@@ -6,6 +6,7 @@ import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T07202";
 import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T07202";
 import { enterModalSheet, exitModalSheet, handleSheetBack, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T07202";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T07202";
 
 async function redirectIfSession() {
   try {
@@ -267,16 +268,8 @@ function initImageViewer() {
   const backBtn = document.getElementById("btnImageViewerBack");
   const titleEl = overlay.querySelector("#imgvTitle");
 
-  let currentImg = null;
+  let previewZoom = null;
   let previousFocus = null;
-  let scale = 1, tx = 0, ty = 0;
-  let startDist = 0, startScale = 1;
-  let pointers = new Map();
-  let lastPan = null;
-
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const setTransform = () => currentImg && (currentImg.style.transform = `translate3d(${tx}px,${ty}px,0) scale(${scale})`);
-  const resetZoom = () => { scale = 1; tx = 0; ty = 0; setTransform(); };
 
   const open = (src, title) => {
     if (overlay.classList.contains("is-open")) return;
@@ -290,11 +283,12 @@ function initImageViewer() {
       const img = document.createElement("img");
       img.className = "imgv-img"; img.src = src; img.alt = title || "";
       zoom.appendChild(img); stage.appendChild(zoom);
-      currentImg = img; resetZoom(); bindMobileZoom(zoom);
+      previewZoom = initPinchZoom(zoom, img, { maxScale: 4 });
+      lockPageZoomForPreview();
     } else {
       const img = document.createElement("img");
       img.className = "imgv-img"; img.src = src; img.alt = title || "";
-      stage.appendChild(img); currentImg = img;
+      stage.appendChild(img);
     }
     overlay.style.display = "";
     overlay.classList.add("is-open");
@@ -308,8 +302,10 @@ function initImageViewer() {
     overlay.style.display = "none";
     overlay.setAttribute("aria-hidden", "true");
     exitModalSheet(overlay);
-    stage.innerHTML = ""; currentImg = null;
-    pointers.clear(); startDist = 0; lastPan = null;
+    previewZoom?.reset();
+    previewZoom = null;
+    unlockPageZoomAfterPreview();
+    stage.innerHTML = "";
     previousFocus?.focus?.();
     previousFocus = null;
   };
@@ -351,46 +347,6 @@ function initImageViewer() {
     openShot(shot);
   });
 
-  function bindMobileZoom(root) {
-    pointers.clear(); lastPan = null; startDist = 0; startScale = scale;
-
-    root.onpointerdown = (e) => {
-      root.setPointerCapture?.(e.pointerId);
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    };
-
-    root.onpointermove = (e) => {
-      if (!pointers.has(e.pointerId)) return;
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      const pts = [...pointers.values()];
-      if (pts.length === 1 && scale > 1) {
-        const p = pts[0];
-        if (!lastPan) lastPan = { x: p.x, y: p.y };
-        tx += p.x - lastPan.x; ty += p.y - lastPan.y;
-        lastPan = { x: p.x, y: p.y }; setTransform(); return;
-      }
-      if (pts.length === 2) {
-        const [a, b] = pts;
-        const dist = Math.hypot(a.x - b.x, a.y - b.y);
-        if (!startDist) { startDist = dist; startScale = scale; lastPan = null; return; }
-        scale = clamp(startScale * (dist / startDist), 1, 4); setTransform();
-      }
-    };
-
-    root.onpointerup = (e) => {
-      pointers.delete(e.pointerId);
-      if (pointers.size < 2) startDist = 0;
-      if (pointers.size === 0) lastPan = null;
-    };
-    root.onpointercancel = root.onpointerup;
-
-    let lastTap = 0;
-    root.ontouchend = () => {
-      const now = Date.now();
-      if (now - lastTap < 280) resetZoom();
-      lastTap = now;
-    };
-  }
 }
 
 /* ---------- boot ---------- */

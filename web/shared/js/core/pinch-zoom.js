@@ -1,11 +1,11 @@
-// familiada/logo/js/preview-zoom.js
-// Pełnoekranowy podgląd: własny pinch-zoom/pan na canvasie i blokada
+// Shared image/canvas preview pinch-zoom/pan and page zoom lock.
+// Pełnoekranowy podgląd: własny pinch-zoom/pan i blokada
 // powiększania całej strony na czas otwarcia podglądu.
 
 // Własny pinch-zoom/pan na canvasie podglądu, niezależny od powiększania
 // całej strony przeglądarki (patrz touch-action:none w logo.css —
 // bez tego dwa palce na canvasie zoomowałyby cały layout, nie samą treść).
-export function initPreviewPinchZoom(container, canvas) {
+export function initPinchZoom(container, canvas, { maxScale = 6 } = {}) {
   // Model: canvas ma transform-origin 0 0, a jego NIEPRZEKSZTAŁCONY
   // lewy-górny róg leży w kontenerze w punkcie (offX, offY) — kontener
   // centruje canvas (flex), więc zwykle to NIE jest (0,0). Punkt treści p
@@ -15,7 +15,7 @@ export function initPreviewPinchZoom(container, canvas) {
   // do już przesuniętego tx przy KAŻDYM ruchu (błąd się kumulował) — stąd
   // skakanie obrazu przy przybliżaniu i ograniczaniu przesuwania.
   let scale = 1, tx = 0, ty = 0;
-  const MIN_SCALE = 1, MAX_SCALE = 6;
+  const MIN_SCALE = 1, MAX_SCALE = Math.max(MIN_SCALE, Number(maxScale) || 6);
   const pointers = new Map();
   let pinch = null;    // { p: {x,y}, startScale, startDist } — punkt treści pod palcami
   let panStart = null; // { x, y, tx, ty } dla pojedynczego palca gdy scale>1

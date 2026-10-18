@@ -403,6 +403,7 @@ details[open] .faq-q .faq-caret {
 .imgv-overlay.is-open { display: grid; }
 
 .imgv-panel {
+  width: fit-content;
   max-width: min(1200px, 92vw);
   max-height: min(82vh, 900px);
   padding: 12px;
@@ -410,7 +411,7 @@ details[open] .faq-q .faq-caret {
 
 @media (max-width: 980px) {
   .imgv-overlay { padding: 0; }
-  .imgv-panel { max-width: 100vw; max-height: 100vh; height: 100%; }
+  .imgv-panel { width: 100%; max-width: 100vw; max-height: 100vh; height: 100%; }
 }
 
 .imgv-top {
@@ -425,9 +426,7 @@ details[open] .faq-q .faq-caret {
 }
 
 .imgv-stage {
-  width: 100%;
-  height: min(72vh, 800px);
-  min-height: 280px;
+  width: auto;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -435,7 +434,7 @@ details[open] .faq-q .faq-caret {
 
 .imgv-img {
   max-width: 100%;
-  max-height: 100%;
+  max-height: min(72vh, 800px);
   display: block;
   user-select: none;
   -webkit-user-drag: none;
@@ -455,6 +454,7 @@ details[open] .faq-q .faq-caret {
 }
 
 @media (max-width: 600px) {
+  body.sheet-open .pipeline-wrap { display: none !important; }
   .imgv-overlay.sheet-active .imgv-panel { padding: 0; }
   .imgv-overlay.sheet-active .imgv-top {
     position: static;
@@ -466,7 +466,9 @@ details[open] .faq-q .faq-caret {
   }
   .imgv-overlay.sheet-active .imgv-stage {
     flex: 1 1 auto;
+    width: 100%;
     height: auto;
     min-height: 0;
   }
+  .imgv-overlay.sheet-active .imgv-img { max-height: 100%; }
 }
