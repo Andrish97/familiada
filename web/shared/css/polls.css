@@ -336,6 +336,16 @@
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
 #resultsList{ display: grid; gap: 12px; }
+#secResults.active #resultsList{
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-auto-rows: max-content;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  align-content: start;
+}
 #resultsMeta{ margin: 0 0 8px; }
 #resultsMeta:empty{ display: none; }
 .resultQ .aList{ display: grid; gap: 6px; }
@@ -393,6 +403,7 @@
   transition: max-height .4s ease, opacity .4s ease, margin .4s ease;
 }
 .resultQ .tallyMeta.on{ max-height: 60px; opacity: 1; margin: -2px 0 8px; }
+.resultQ .tallyMetaInstant{ transition: none; }
 .tallyCounter.invalid{ color: #ff9d9d; font-weight: 900; }
 .tallySum{ color: var(--gold); font-weight: 900; font-variant-numeric: tabular-nums; }
 .tallyMeta .btn{ white-space: nowrap; margin-left: auto; }
@@ -414,6 +425,11 @@
   transition: max-width .45s ease, opacity .35s ease;
 }
 .resultQ .aList.tally .aRow{ min-height: 46px; height: auto; gap: 6px; padding: 3px 8px; }
+.resultQ .aList.tally .aRow,
+.resultQ .aList.tally .aBar,
+.resultQ .aList.tally .tcHandle,
+.resultQ .aList.tally .tcCnt,
+.resultQ .aList.tally .tcBtn{ transition: none; }
 .resultQ .aList.tally .tcHandle{ max-width: 24px; opacity: .65; pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
 .resultQ .aList.tally .tcHandle:active{ cursor: grabbing; }
 .resultQ .aList.tally .tcCnt{ max-width: 112px; opacity: .82; font-size: 11px; white-space: nowrap; text-align: right; margin-left: auto; }
@@ -432,7 +448,6 @@
 .resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, rgba(190,196,208,.08), rgba(190,196,208,.18)); }
 .resultQ .aRow.tallySkipped .aTxt,
 .resultQ .aRow.tallySkipped .aVal{ color: #aab0bd; }
-.resultQ .aList.tallyFast .aBar{ transition: none; }
 .resultQ .aRow.merge-src .tcMergeBtn,
 .resultQ .tcMergeBtn[aria-pressed="true"]{ border-color: rgba(255,234,166,.95); background: rgba(255,234,166,.2); color: var(--gold); box-shadow: 0 0 0 2px rgba(255,234,166,.16); }
 .resultQ .tcMergeBtn[aria-pressed="true"]{ transform: scale(1.06); }
@@ -460,9 +475,6 @@
 .resultQ .aRow.drop-target{ border-color: var(--gold); background: rgba(255,234,166,.14); }
 .resultQ .aRow.merge-src{ border-color: rgba(255,234,166,.7); background: rgba(255,234,166,.14); }
 .resultQ .aRow.merge-target{ border-color: rgba(120,200,255,.5); }
-/* wiersz znika / pojawia się płynnie */
-.resultQ .aRow.leaving{ height: 0; opacity: 0; margin-top: -6px; border-width: 0; pointer-events: none; }
-.resultQ .aRow.entering{ opacity: 0; }
 @media (prefers-reduced-motion: reduce){
   .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tcBtn, .resultQ .tallyMeta{ transition: none; }
 }

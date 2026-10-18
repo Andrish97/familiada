@@ -27,30 +27,7 @@ import {
 
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;
-const ROW_LEAVE_MS = 320;
 const PAGE = 1000;
-
-// Liczba w elemencie płynnie przechodzi do nowej wartości (albo wstawia "—").
-function tweenText(el, to, ms = 650) {
-  if (el._raf) cancelAnimationFrame(el._raf);
-  if (typeof to !== "number") {
-    el.textContent = String(to);
-    return;
-  }
-  const from = Number.parseFloat(el.textContent);
-  if (!Number.isFinite(from) || from === to || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-    el.textContent = String(to);
-    return;
-  }
-  const t0 = performance.now();
-  const step = (now) => {
-    const k = Math.min(1, (now - t0) / ms);
-    const eased = 1 - Math.pow(1 - k, 3);
-    el.textContent = String(Math.round(from + (to - from) * eased));
-    if (k < 1) el._raf = requestAnimationFrame(step);
-  };
-  el._raf = requestAnimationFrame(step);
-}
 
 function mk(tag, cls, html) {
   const el = document.createElement(tag);
@@ -95,13 +72,12 @@ export function createTally({ gameId, pollResults, ui }) {
     const box = slot.list.parentElement;
     let meta = box.querySelector(":scope > .tallyMeta");
     if (!meta) {
-      meta = mk("div", "tallyMeta");
+      meta = mk("div", "tallyMeta on tallyMetaInstant");
       meta.innerHTML = `
         <span class="tallyCounter"></span>
         <span class="tallySum"></span>
           <button class="btn xs tcMergeDup" type="button">${icon("merge")}<span></span></button>`;
       box.insertBefore(meta, slot.list);
-      requestAnimationFrame(() => requestAnimationFrame(() => meta.classList.add("on")));
     }
     meta.querySelector(".tallyCounter").hidden = !withCounter;
     const dup = meta.querySelector(".tcMergeDup");
@@ -149,10 +125,10 @@ export function createTally({ gameId, pollResults, ui }) {
         r.row.classList.add("tallyRow");
         r.row.classList.toggle("tallySkipped", result.skipped);
         r.row.title = result.skipped ? t("polls.tally.skippedTitle", { pct: result.percent }) : "";
-        if (result.skipped) tweenText(r.val, "—");
+        if (result.skipped) r.val.textContent = "—";
         else {
           sum += result.points;
-          tweenText(r.val, result.points);
+          r.val.textContent = String(result.points);
         }
         setPct(r, result.points);
         pointRows.push({ r, votes, totalVotes });
@@ -173,7 +149,6 @@ export function createTally({ gameId, pollResults, ui }) {
       dropMeta(slot);
     }
     for (const { r, votes, totalVotes } of pointRows) {
-      if (r.val._raf) cancelAnimationFrame(r.val._raf);
       r.val.textContent = String(votes);
       setPct(r, totalVotes ? (100 * votes) / totalVotes : 0);
     }
@@ -319,11 +294,8 @@ export function createTally({ gameId, pollResults, ui }) {
         decorate(qs, r, it);
         qs.rows.set(it.id, r);
       }
-      reorder(qs, false);
+      reorder(qs);
     }
-    // jedna klatka na rozłożenie uchwytów, potem klasa włącza przejścia CSS
-    await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
-    for (const qs of states.values()) qs.slot.list.classList.add("tally", "tallyText");
     for (const qs of states.values()) updateQuestion(qs);
     validity();
     if (restored) ui.onNotice?.(t("polls.tally.restored"));
@@ -379,12 +351,10 @@ export function createTally({ gameId, pollResults, ui }) {
       const it = findItem();
       if (!it) return;
       it.text = inp.value;
-      qs.slot.list.classList.add("tallyFast");
       queueQuestionUpdate(qs);
       scheduleSave();
     });
     inp.addEventListener("blur", () => {
-      qs.slot.list.classList.remove("tallyFast");
       flushQuestionUpdate(qs);
       if (editSnap && editSnap !== snapshot()) {
         undo.push(editSnap);
@@ -541,31 +511,15 @@ export function createTally({ gameId, pollResults, ui }) {
 
   /* ---------- DOM wierszy: synchronizacja, kolejność, wartości ---------- */
 
-  function reorder(qs, animate = true) {
+  function reorder(qs) {
     const list = qs.slot.list;
     const want = qs.q.items.map((it) => qs.rows.get(it.id)?.row).filter(Boolean);
-    const have = [...list.children].filter((el) => el.classList.contains("aRow") && !el.classList.contains("leaving"));
+    const have = [...list.children].filter((el) => el.classList.contains("aRow"));
     if (want.length === have.length && want.every((el, i) => el === have[i])) return;
 
-    const before = new Map();
-    if (animate) for (const el of have) before.set(el, el.getBoundingClientRect().top);
     const fragment = document.createDocumentFragment();
     for (const el of want) fragment.appendChild(el);
     list.appendChild(fragment);
-    if (!animate) return;
-    for (const el of want) {
-      const prev = before.get(el);
-      if (prev == null) continue;
-      const dy = prev - el.getBoundingClientRect().top;
-      if (!dy) continue;
-      el.style.transition = "none";
-      el.style.transform = `translateY(${dy}px)`;
-      requestAnimationFrame(() => {
-        el.style.transition = "transform .35s ease";
-        el.style.transform = "";
-        setTimeout(() => { el.style.transition = ""; }, 380);
-      });
-    }
   }
 
   function sync(qs) {
@@ -573,19 +527,16 @@ export function createTally({ gameId, pollResults, ui }) {
     for (const [id, r] of [...qs.rows]) {
       if (ids.has(id)) continue;
       qs.rows.delete(id);
-      r.row.classList.add("leaving");
-      setTimeout(() => r.row.remove(), ROW_LEAVE_MS);
+      r.row.remove();
     }
     for (const it of qs.q.items) {
       if (qs.rows.has(it.id)) continue;
       const r = makeResultRow(it.text);
       r.val.textContent = String(it.count);
-      r.row.classList.add("entering");
       decorate(qs, r, it);
       qs.rows.set(it.id, r);
-      requestAnimationFrame(() => requestAnimationFrame(() => r.row.classList.remove("entering")));
     }
-    reorder(qs, true);
+    reorder(qs);
     updateQuestion(qs);
   }
 
@@ -594,7 +545,7 @@ export function createTally({ gameId, pollResults, ui }) {
     pendingQuestionUpdates.set(qs, setTimeout(() => {
       pendingQuestionUpdates.delete(qs);
       if (mode === "text" && states.get(qs.q.question_id) === qs) {
-        updateQuestion(qs, { animate: false });
+        updateQuestion(qs);
         validity();
       }
     }, 80));
@@ -604,12 +555,12 @@ export function createTally({ gameId, pollResults, ui }) {
     clearTimeout(pendingQuestionUpdates.get(qs));
     pendingQuestionUpdates.delete(qs);
     if (mode === "text" && states.get(qs.q.question_id) === qs) {
-      updateQuestion(qs, { animate: false });
+      updateQuestion(qs);
       validity();
     }
   }
 
-  function updateQuestion(qs, { animate = true } = {}) {
+  function updateQuestion(qs) {
     const items = qs.q.items;
     const analysis = textTallyAnalysis(items.map((it) => ({ text: it.text, count: it.count })));
     const byIdx = new Map(analysis.map((row) => [row.idx, row]));
@@ -623,8 +574,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (included) sum += pts;
       r.row.classList.toggle("out", !included);
       r.row.classList.toggle("tallySkipped", !!result?.belowThreshold);
-      if (animate) tweenText(r.val, included ? pts : "—");
-      else r.val.textContent = included ? String(pts) : "—";
+      r.val.textContent = included ? String(pts) : "—";
       setPct(r, included ? pts : 0);
       r.cnt.textContent = t("polls.tally.votesPercent", { n: it.count, pct: result?.percent || 0 });
       r.row.title = result?.belowThreshold ? t("polls.tally.skippedTitle", { pct: result.percent }) : "";
