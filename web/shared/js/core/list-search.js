@@ -137,7 +137,8 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       grid.append(el);
       emptyEls.set(grid, el);
     }
-    el.textContent = t("common.noResults");
+    const message = t("common.noResults");
+    if (el.textContent !== message) el.textContent = message;
     return el;
   };
 
@@ -195,7 +196,15 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       apply();
     }
   });
-  const mo = new MutationObserver(() => { if (input.value || filterValue || sortValue || sort) apply(); });
+  const mo = new MutationObserver((records) => {
+    const listChanged = records.some((record) => {
+      if (record.target.closest?.(".list-empty")) return false;
+      return [...record.addedNodes, ...record.removedNodes].some((node) =>
+        !(node.nodeType === Node.ELEMENT_NODE && (node.matches?.(".list-empty") || node.closest?.(".list-empty")))
+      );
+    });
+    if (listChanged && (input.value || filterValue || sortValue || sort)) apply();
+  });
   for (const grid of document.querySelectorAll(grids)) mo.observe(grid, { childList: true, subtree: true });
   window.addEventListener("i18n:lang", () => { label(); apply(); });
   if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
