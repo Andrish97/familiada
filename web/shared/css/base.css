@@ -1971,6 +1971,42 @@ html.showA2HS .a2hs {
   .topbar-mobile-hidden{ display:none !important; }
 }
 
+/* Tryb hamburgera włączany przez kontroler wtedy, gdy w sekcji nawigacji
+   nie mieści się nawet najważniejszy przycisk razem z „Więcej”. */
+@media (min-width: 761px){
+  .topbar-layout-4.topbar-mobile-forced{
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"s1 s3";
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+  }
+  .topbar-layout-4.topbar-mobile-forced .topbar-section-1{ grid-area:s1; flex-wrap:nowrap; min-width:0; }
+  .topbar-layout-4.topbar-mobile-forced .topbar-section-3{ grid-area:s3; justify-content:flex-end; align-items:center; }
+  .topbar-layout-4.topbar-mobile-forced .topbar-section-2,
+  .topbar-layout-4.topbar-mobile-forced .topbar-section-4{ display:none; }
+  .topbar-layout-4.topbar-mobile-forced:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand{ display:none; }
+  .topbar-layout-4.topbar-mobile-forced.topbar-mobile-keep-brand .topbar-section-1 .brand{
+    display:block; font-size:12px; letter-spacing:.1em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .topbar-mobile-forced .topbar-menu-toggle{ position:relative; padding:10px 12px; border-radius:12px; }
+  .topbar-mobile-forced .topbar-menu-toggle .badge{
+    position:absolute; top:-6px; right:-6px; margin-left:0; transform:translate(0,0); pointer-events:none;
+  }
+  .topbar-mobile-overlay.topbar-mobile-forced{
+    position:fixed; top:var(--topbar-h,60px); left:0; right:0; bottom:0; z-index:10050;
+    background:var(--scrim); display:none; box-sizing:border-box; overflow:auto; padding:10px;
+  }
+  .topbar-mobile-overlay.topbar-mobile-forced.is-open{ display:block; }
+  .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-panel{
+    background:#080c14; --under:#080c14; border:1px solid rgba(255,255,255,.16); border-radius:14px;
+    padding:10px; max-width:560px; margin:0 auto; display:grid; grid-template-rows:auto minmax(0,1fr);
+    gap:10px; max-height:calc(100dvh - var(--topbar-h,60px) - 20px); overflow:hidden;
+  }
+  .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-mount{ display:grid; gap:10px; overflow:auto; -webkit-overflow-scrolling:touch; }
+  .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-close{ justify-self:end; padding:6px 9px; border-radius:10px; }
+}
+
 /* ===============================
    Safari/macOS — scrollbars / overscroll (global)
 =============================== */

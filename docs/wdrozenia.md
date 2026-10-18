@@ -1349,7 +1349,7 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 | 2026-10-18 | Ankiety — widoczny wybór pominiętej odpowiedzi do scalania | Niebieskie obrysy wskazują pozostałe odpowiedzi w tym samym pytaniu jako możliwe cele scalania. Na czerwonych kafelkach obrys zachowuje standardową grubość; zaznaczone źródło nakłada półprzezroczysty żółty kolor na czerwone tło. | `git diff --check`; bez testów aplikacji. Push na `main`. |
 
-| 2026-10-18 | Topbar — późniejsze przejście do hamburgera i „Więcej” | Wspólny mobilny układ topbara włącza się od 760 px zamiast 980 px. Na tabletach odstępy między sekcjami i przyciskami są mniejsze; algorytm „Więcej” odczytuje rzeczywisty odstęp CSS zamiast zakładać 8 px. | `node --check web/shared/js/core/topbar-controller.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
+| 2026-10-18 | Topbar — przejście z „Więcej” do hamburgera według miejsca | W grach hamburger włącza się, gdy nawigacja już się nie mieści i nie można zostawić najważniejszego przycisku obok „Więcej”. Decyzja używa faktycznych szerokości przycisku, „Więcej”, sekcji i odstępu CSS; po zmianie szerokości pasek mierzy się ponownie. Odstępy tabletowe są mniejsze. | `node --check web/shared/js/core/topbar-controller.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
 
 | 2026-10-18 | Ankiety — przywrócenie elementów w tekstowym podliczaniu | Tryb tekstowy nie dodawał bazowej klasy `tally`, przez co CSS ukrywał uchwyt, licznik oraz przyciski scalania i usuwania. Tryb dodaje teraz obie klasy. Przycisk scalania jest ukryty na desktopie, gdzie można przeciągać odpowiedzi, i widoczny na urządzeniach dotykowych. | `node --check web/polls/js/poll-tally.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
 
