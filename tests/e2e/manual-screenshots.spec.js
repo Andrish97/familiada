@@ -549,13 +549,13 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       }
       const endRound = page.getByRole("button", { name: /^(Zakończ rundę|End round|Завершити раунд|Przejdź do zakończenia gry|Go to game end|Перейти до завершення гри)$/ });
       if (await endRound.isEnabled().catch(() => false)) await endRound.click();
-      const next = page.getByRole("button", { name: /^(Przejdź do finału|Continue to finale|Перейти до фіналу)$/ });
+      const next = page.getByRole("button", { name: /^(Przejdź do finału|Go to the final|Перейти до фіналу)$/ });
       await expect(next).toBeEnabled({ timeout: 25_000 });
       await next.click();
       const startFinal = page.getByRole("button", { name: /^(Rozpocznij finał|Start|Старт)$/ });
       await expect(startFinal).toBeEnabled({ timeout: 30_000 });
       await startFinal.click();
-      await expect(page.locator("#c2TopbarProgress")).toContainText(/Finał|Finale|Фінал/, { timeout: 30_000 });
+      await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", /Finał|Finale|Фінал/, { timeout: 30_000 });
     });
     if (gameplayFinaleError) captureErrors.push(gameplayFinaleError);
 
