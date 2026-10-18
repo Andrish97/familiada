@@ -220,7 +220,7 @@ function baseRoleButton(value, onChange) {
     const editor = value === "editor";
     const label = t(editor ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");
     const shortLabel = t(editor ? "bases.shareModal.roleEditorShort" : "bases.shareModal.roleViewerShort");
-    button.innerHTML = `<span class="baseShareRoleLabel baseShareRoleFull">${label}</span><span class="baseShareRoleLabel baseShareRoleShort" aria-hidden="true">${shortLabel}</span>`;
+    button.innerHTML = `${icon(editor ? "edit-paper" : "eye")}<span class="baseShareRoleLabel baseShareRoleFull">${label}</span><span class="baseShareRoleLabel baseShareRoleShort" aria-hidden="true">${shortLabel}</span>`;
     button.title = label;
     button.setAttribute("aria-label", button.title);
     button.dataset.role = value;
