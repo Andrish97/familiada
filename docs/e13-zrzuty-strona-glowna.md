@@ -1,6 +1,6 @@
 # Zrzuty strony głównej — zestaw do panelu admina
 
-Zrzuty pokazują aktualne widoki aplikacji z czytelnymi, przygotowanymi przykładami. Admin otwiera i edytuje dane danego widoku, przegląda jeden widok naraz w iframe i uruchamia odświeżenie całego zestawu. Każdy kadr czeka na gotową treść; błąd pojedynczego kadru nie zatrzymuje pozostałych. Gotowe pliki trafiają do bucketa, a strona główna pobiera je stamtąd. Nie używamy kont ani danych puli E2E do przygotowania galerii.
+Zrzuty pokazują aktualne widoki aplikacji z czytelnymi, przygotowanymi przykładami. Admin otwiera i edytuje dane danego widoku, przegląda jeden widok naraz w iframe i uruchamia odświeżenie całego zestawu. Każdy kadr czeka na gotową treść; błąd pojedynczego kadru nie zatrzymuje pozostałych. Gotowe pliki trafiają do bucketa. Na razie strona główna nadal korzysta ze starych obrazów; pobieranie nowych kadrów z bucketa zostanie podłączone osobno. Nie używamy kont ani danych puli E2E do przygotowania galerii.
 
 ## Kolejność i kadry
 
@@ -47,4 +47,4 @@ Rozmiary docelowe: widoki aplikacji **1440×900 px**, telefon **390×844 px**, g
 - Przechwycenie uruchamia się z panelu admina; nie jest osobnym workflow GitHub Actions i nie korzysta z kont testowych.
 - Każdy widok jest przechwytywany niezależnie po potwierdzeniu, że jego treść jest gotowa.
 - Nieudany kadr zostaje oznaczony jako nieudany, a przebieg przechodzi do następnego.
-- Publikacja strony głównej używa aktualnych obiektów z bucketa. Stare obrazy w repozytorium usuwa się dopiero po pełnym przełączeniu galerii na nowe adresy.
+- Po osobnym podłączeniu strona główna będzie używać aktualnych obiektów z bucketa. Stare obrazy w repozytorium usuwa się dopiero po pełnym przełączeniu galerii na nowe adresy.
