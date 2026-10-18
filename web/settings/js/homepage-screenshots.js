@@ -10,6 +10,8 @@ let editorSceneId = "";
 let editorLanguage = "pl";
 let saveTimer = 0;
 let previewTimer = 0;
+let languageSelectUI = null;
+let sceneSelectUI = null;
 const FIELD_LABELS = {
   game: "Nazwa gry", games: "Gry na liście", question: "Pytanie", answers: "Odpowiedzi i wyniki",
   points: "Punkty odpowiedzi", bases: "Bazy na liście", base: "Nazwa bazy", folders: "Foldery bazy",
@@ -81,11 +83,15 @@ function renderSceneList() {
     return option;
   }));
   if (config.scenes.some(scene => scene.id === selected)) select.value = selected;
+  sceneSelectUI?.setOptions(config.scenes.map(scene => ({ value: scene.id, label: scene.title })));
+  sceneSelectUI?.setValue(select.value, { silent: true });
   updateEditor();
 }
 
 function updateEditor() {
   const scene = currentScene();
+  languageSelectUI?.setValue(currentLanguage(), { silent: true });
+  sceneSelectUI?.setValue(scene.id, { silent: true });
   editorSceneId = scene.id;
   editorLanguage = currentLanguage();
   els.title.textContent = `${scene.title} · ${scene.width}×${scene.height}`;
@@ -577,11 +583,12 @@ function renderEditorFields(fixture) {
     const label = document.createElement("label"); label.textContent = FIELD_LABELS[key] || key; label.htmlFor = `homepage-shot-field-${key}`;
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
     input.id = label.htmlFor; input.dataset.field = key;
+    if (input.type !== "checkbox") input.classList.add("inp");
     if (typeof value === "boolean") { input.type = "checkbox"; input.checked = value; }
     else if (Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object")) input.value = JSON.stringify(value, null, 2);
     else if (Array.isArray(value)) input.value = value.join(value.every(item => typeof item === "number") ? ", " : "\n");
     else input.value = String(value ?? "");
-    if (input.tagName === "TEXTAREA") input.rows = Array.isArray(value) ? Math.min(8, Math.max(3, value.length)) : 4;
+    if (input.tagName === "TEXTAREA") { input.rows = Array.isArray(value) ? Math.min(8, Math.max(3, value.length)) : 4; wrapper.classList.add("homepage-shot-field--wide"); }
     wrapper.append(label, input); els.fields.append(wrapper);
   }
 }
@@ -704,12 +711,25 @@ export async function initHomepageScreenshots() {
     config.scenes = Array.isArray(config.scenes) ? config.scenes : [];
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     renderSceneList();
+    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-18T20403");
+    const languageSelect = byId("homepageShotLanguageSelect");
+    const sceneSelect = byId("homepageShotSceneSelect");
+    languageSelectUI = initUiSelect(languageSelect, {
+      options: [...els.language.options].map(option => ({ value: option.value, label: option.textContent })),
+      value: els.language.value,
+      onChange: value => { els.language.value = value; els.language.dispatchEvent(new Event("change")); },
+    });
+    sceneSelectUI = initUiSelect(sceneSelect, {
+      options: config.scenes.map(scene => ({ value: scene.id, label: scene.title })),
+      value: els.scene.value,
+      onChange: value => { els.scene.value = value; els.scene.dispatchEvent(new Event("change")); },
+    });
     els.scene.addEventListener("change", async () => {
-      if (!await flushEditor()) { els.scene.value = editorSceneId; return; }
+      if (!await flushEditor()) { els.scene.value = editorSceneId; sceneSelectUI?.setValue(editorSceneId, { silent: true }); return; }
       updateEditor();
     });
     els.language.addEventListener("change", async () => {
-      if (!await flushEditor()) { els.language.value = editorLanguage; return; }
+      if (!await flushEditor()) { els.language.value = editorLanguage; languageSelectUI?.setValue(editorLanguage, { silent: true }); return; }
       updateEditor();
     });
     els.fixture.addEventListener("input", scheduleFixtureSave);
@@ -746,5 +766,6 @@ async function moveScene(delta) {
   const index = config.scenes.findIndex(scene => scene.id === els.scene.value);
   const next = (index + delta + config.scenes.length) % config.scenes.length;
   els.scene.value = config.scenes[next].id;
+  sceneSelectUI?.setValue(els.scene.value, { silent: true });
   updateEditor();
 }
