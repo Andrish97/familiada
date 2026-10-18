@@ -559,7 +559,7 @@ async function loadMySent() {
   const rows = Array.isArray(data) ? data : [];
   if (els.mySentInfo) els.mySentInfo.textContent = "";
   if (!rows.length) {
-    els.mySentList.innerHTML = `<p class="mkt-empty">${esc(t("marketplace.mySent.empty"))}</p>`;
+    els.mySentList.innerHTML = `<div class="mkt-empty">${esc(t("marketplace.mySent.empty"))}</div>`;
     return;
   }
 

@@ -896,17 +896,19 @@ body.games-body > main.wrap{
   .list-search .list-search-open{ display: inline-flex; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
 }
 .list-empty{
-  grid-column: 1 / -1;
-  min-height: 84px;
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  border: 1px dashed var(--line2);
-  border-radius: 12px;
-  background: rgba(255,255,255,.015);
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 18px;
+  background: #070b16;
   opacity: .76;
   text-align: center;
+  cursor: default;
 }
+.logoGridBig > .list-empty{ min-height: 230px; border-radius: var(--radius-lg); }
 .list-empty[hidden]{ display: none; }
 
 /* Układ wspólny dla Gier, Baz i Logo. Najpierw pełny pojedynczy rząd; klasy

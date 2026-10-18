@@ -99,18 +99,19 @@ body.mkt-body > main.wrap {
 
 /* ===== Empty state ===== */
 .mkt-empty {
-  grid-column: 1 / -1;
-  min-height: 84px;
-  display: grid;
-  place-items: center;
-  border: 1px dashed var(--line2);
-  border-radius: 12px;
-  background: rgba(255,255,255,.015);
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 18px;
+  background: #070b16;
   text-align: center;
-  padding: 16px;
+  padding: 14px;
   opacity: .76;
   font-size: 14px;
 }
+#mySentList > .mkt-empty{ width:min(100%, 420px); box-sizing:border-box; }
 
 /* ===== Game card ===== */
 .mkt-card {

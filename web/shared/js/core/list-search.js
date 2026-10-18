@@ -115,7 +115,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   // Dotyka DOM tylko, gdy kolejność się zmienia (MutationObserver nie zapętla się).
   const sortGrid = (grid) => {
     if (!sort) return;
-    const tiles = [...grid.querySelectorAll(tile)].filter((el) => !el.classList.contains("addCard") && el.parentElement === grid);
+    const tiles = [...grid.querySelectorAll(tile)].filter((el) => !el.classList.contains("addCard") && !el.classList.contains("list-empty") && el.parentElement === grid);
     if (tiles.length < 2 || tiles.some((el) => !el.dataset.updated && !el.dataset.created)) return;
     const stamp = (el, k) => Date.parse(el.dataset[k] || el.dataset.created || "") || 0;
     const nm = (el) => norm(el.querySelector(name)?.textContent);
@@ -134,7 +134,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       el = document.createElement("div");
       el.className = "list-empty";
       el.hidden = true;
-      grid.after(el);
+      grid.append(el);
       emptyEls.set(grid, el);
     }
     el.textContent = t("common.noResults");
@@ -154,7 +154,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       sortGrid(grid);
       let total = 0, visible = 0;
       for (const el of grid.querySelectorAll(tile)) {
-        if (el.classList.contains("addCard")) continue;
+        if (el.classList.contains("addCard") || el.classList.contains("list-empty")) continue;
         total++;
         const hit = (!q || norm(el.querySelector(name)?.textContent).includes(q))
           && (!filterValue || (selectedFilterOption?.matches
