@@ -1,8 +1,8 @@
-import {sb} from './supabase.js?v=v2026-10-18T06275';
-import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-18T06275';
-import {toast} from './toast.js?v=v2026-10-18T06275';
-import {sendResourceCopyMail} from './invite-mail.js?v=v2026-10-18T06275';
-import {icon,iconText} from './icons.js?v=v2026-10-18T06275';
+import {sb} from './supabase.js?v=v2026-10-18T06305';
+import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-18T06305';
+import {toast} from './toast.js?v=v2026-10-18T06305';
+import {sendResourceCopyMail} from './invite-mail.js?v=v2026-10-18T06305';
+import {icon,iconText} from './icons.js?v=v2026-10-18T06305';
 
 const attempts=new Map();
 function getDialog(){
