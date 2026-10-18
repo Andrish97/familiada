@@ -264,6 +264,11 @@ body.skel-body .topbar.topbar-ready .topbar-section-3,
 body.skel-body .topbar.topbar-ready .topbar-section-4 {
     opacity: 1;
 }
+@media (max-width: 600px) {
+    /* W arkuszu topbar jest stałym elementem strony; przesunięcie visualViewport
+       dotyczy normalnej strony i nie może wsuwać treści modala pod topbar. */
+    body.sheet-open .topbar { top: 0; }
+}
 /* ── Slow-content reveal (individual elements) ─────────────────────────────
    Add data-skel-step to any element that loads slowly (after auth or data fetch).
    JS: after data ready → el.classList.add('skel-step-ready')
@@ -288,7 +293,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
 */
 .topbar {
     position: fixed;
-    top: 0;
+    top: var(--visual-viewport-top, 0px);
     left: 0;
     right: 0;
     z-index: 10;
