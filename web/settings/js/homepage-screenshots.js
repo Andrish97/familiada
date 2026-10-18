@@ -665,7 +665,8 @@ async function captureScene(scene) {
   await Promise.race([previewDoc.fonts?.ready || Promise.resolve(), new Promise(resolve => setTimeout(resolve, 6000))]);
   await Promise.all(Array.from(previewDoc.images || []).map(image => image.decode?.().catch(() => {}) || Promise.resolve()));
   const { toCanvas } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm");
-  const canvas = await toCanvas(previewDoc.documentElement, { width: scene.width, height: scene.height, pixelRatio: 1, backgroundColor: "#050914", cacheBust: true });
+  let canvas = await toCanvas(previewDoc.documentElement, { width: scene.width, height: scene.height, pixelRatio: 1, backgroundColor: "#050914", cacheBust: true });
+  if (scene.id === "poll-vote-mobile") canvas = composeIPhoneFrame(canvas);
   let image = canvas.toDataURL("image/webp", 0.88);
   if (!image.startsWith("data:image/webp")) image = canvas.toDataURL("image/png");
   const mimeType = image.slice(5, image.indexOf(";"));
@@ -677,6 +678,82 @@ async function captureScene(scene) {
   config.images[currentLanguage()][scene.id] = payload.url;
   await saveConfig();
   return payload;
+}
+
+function composeIPhoneFrame(screenCanvas) {
+  const bezel = 8;
+  const border = 2;
+  const margin = 4;
+  const radius = 42;
+  const output = document.createElement("canvas");
+  output.width = screenCanvas.width + bezel * 2 + border * 2 + margin;
+  output.height = screenCanvas.height + bezel * 2 + border * 2 + margin;
+  const ctx = output.getContext("2d");
+  ctx.fillStyle = "#10131a";
+  ctx.fillRect(0, 0, output.width, output.height);
+
+  const deviceX = margin / 2;
+  const deviceY = margin / 2;
+  const deviceW = output.width - margin;
+  const deviceH = output.height - margin;
+  ctx.save();
+  ctx.shadowColor = "#000b";
+  ctx.shadowBlur = 44;
+  ctx.shadowOffsetY = 12;
+  roundedRect(ctx, deviceX, deviceY, deviceW, deviceH, radius + bezel);
+  ctx.fillStyle = "#030407";
+  ctx.fill();
+  ctx.restore();
+  roundedRect(ctx, deviceX + 1, deviceY + 1, deviceW - 2, deviceH - 2, radius + bezel - 1);
+  ctx.strokeStyle = "#30343d";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const screenX = margin / 2 + border + bezel;
+  const screenY = margin / 2 + border + bezel;
+  ctx.save();
+  roundedRect(ctx, screenX, screenY, screenCanvas.width, screenCanvas.height, radius);
+  ctx.clip();
+  ctx.drawImage(screenCanvas, screenX, screenY);
+
+  const notchWidth = screenCanvas.width * 0.323;
+  const notchHeight = screenCanvas.height * 0.0427;
+  const notchX = screenX + (screenCanvas.width - notchWidth) / 2;
+  ctx.beginPath();
+  ctx.moveTo(notchX, screenY);
+  ctx.lineTo(notchX + notchWidth, screenY);
+  ctx.lineTo(notchX + notchWidth, screenY + notchHeight - 22);
+  ctx.quadraticCurveTo(notchX + notchWidth, screenY + notchHeight, notchX + notchWidth - 22, screenY + notchHeight);
+  ctx.lineTo(notchX + 22, screenY + notchHeight);
+  ctx.quadraticCurveTo(notchX, screenY + notchHeight, notchX, screenY + notchHeight - 22);
+  ctx.closePath();
+  ctx.fillStyle = "#030407";
+  ctx.fill();
+  ctx.fillStyle = "#111318";
+  ctx.beginPath();
+  ctx.roundRect(notchX + notchWidth * 0.72, screenY + notchHeight * 0.34, notchWidth * 0.15, notchHeight * 0.15, 5);
+  ctx.fill();
+  ctx.fillStyle = "#08090c";
+  ctx.beginPath();
+  ctx.arc(notchX + notchWidth * 0.72 - 28, screenY + notchHeight * 0.34 + notchHeight * 0.075, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ffffffa8";
+  ctx.beginPath();
+  ctx.roundRect(screenX + (screenCanvas.width - 92) / 2, screenY + screenCanvas.height - 11, 92, 4, 99);
+  ctx.fill();
+  ctx.restore();
+  return output;
+}
+
+function roundedRect(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
 }
 
 async function captureMany(scenes) {
