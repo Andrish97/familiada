@@ -72,7 +72,7 @@ async function seedGames(page, copy) {
           if (qError) throw qError;
           if (index === 0 || index === 1) {
             const isBoardQuestion = ord === 0;
-            const answers = isBoardQuestion ? copy.gameplay[1] : (index === 1 ? copy.pollAnswers : copy.fillerAnswers);
+            const answers = index === 1 ? copy.pollAnswers : (isBoardQuestion ? copy.gameplay[1] : copy.fillerAnswers);
             const points = index === 1 ? answers.map(() => 0) : (isBoardQuestion ? [39, 24, 16, 9, 7, 5] : [40, 30, 20, 10]);
             const { error: aError } = await sb.from("answers").insert(answers.map((text, i) => ({ question_id: question.id, ord: i + 1, text, fixed_points: points[i] })));
             if (aError) throw aError;
@@ -599,12 +599,13 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         await devices.pages[type].waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
       }
       const displayState = await devices.pages.display.evaluate(async ({ gameId, key }) => {
+        const urlKey = new URL(location.href).searchParams.get("key");
+        const { data: resolved, error: resolveError } = await window.__sbClient.rpc("control_device_share_resolve", { p_token: urlKey });
         const { data, error } = await window.__sbClient.rpc("game_state_get", {
-          p_game_id: gameId, p_device_type: "display", p_key: key,
+          p_game_id: gameId, p_device_type: "display", p_key: urlKey,
         });
-        return error ? { error: error.message } : {
-          step: data?.step, mode: data?.detail?.display?.mode, rev: data?.rev,
-        };
+        return { keyMatchesControl: urlKey === key, resolveState: resolved?.state, resolvedType: resolved?.device_type, resolveError: resolveError?.message,
+          stateError: error?.message, step: data?.step, mode: data?.detail?.display?.mode, rev: data?.rev };
       }, { gameId: games[0].id, key: deviceKeys.display });
       console.log(`[manual-screenshot] display gameplay state ${JSON.stringify(displayState)}`);
       await expect(devices.pages.display.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
