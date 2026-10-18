@@ -5019,6 +5019,14 @@ async function initToolsSelect() {
       openTool(val);
     },
   });
+
+  const syncToolsAvailability = (required = document.querySelector(".topbar")?.classList.contains("topbar-mobile-forced")) => {
+    uiSelect?.setDisabled(Boolean(required));
+  };
+  window.addEventListener("topbar:mobile-required", (event) => {
+    syncToolsAvailability(event.detail?.required);
+  });
+  syncToolsAvailability();
 }
 
 function openTool(path) {
