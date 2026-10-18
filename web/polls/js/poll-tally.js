@@ -357,6 +357,8 @@ export function createTally({ gameId, pollResults, ui }) {
     del.type = "button";
     del.title = t("polls.tally.remove");
     del.setAttribute("aria-label", t("polls.tally.remove"));
+    const actions = mk("span", "tcActionGroup");
+    actions.append(mergeBtn, del);
 
     r.txt = row.querySelector(".aTxt");
     r.inp = inp;
@@ -366,7 +368,7 @@ export function createTally({ gameId, pollResults, ui }) {
     row.insertBefore(handle, r.bar.nextSibling);
     r.txt.after(inp);
     row.insertBefore(cnt, r.val);
-    row.append(mergeBtn, del);
+    row.append(actions);
 
     const findItem = () => qs.q.items.find((x) => x.id === item.id);
 
