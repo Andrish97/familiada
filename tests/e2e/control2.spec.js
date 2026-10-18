@@ -3007,7 +3007,11 @@ test("control2: awaria device_presence nie blokuje akcji przy działającym leas
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
-    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    const startRoundButton = page.getByRole("button", { name: "Rozpocznij rundę" });
+    // r_gameStart holds the game lock briefly; don't confuse that intentional
+    // lock with a lease/read failure while preparing the metadata outage.
+    await expect(startRoundButton).toBeEnabled({ timeout: 30000 });
+    await startRoundButton.click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
