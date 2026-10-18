@@ -1,10 +1,10 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-18T07125";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-18T07140";
 guardViewportWidth({ minWidth: 0 });
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-18T07125';
-import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-18T07125';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-18T07125';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-18T07125';
-import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-18T07125';
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-18T07140';
+import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-18T07140';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-18T07140';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-18T07140';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-18T07140';
 
 const $ = id => document.getElementById(id);
 const text = (key, vars) => t(`mailCenter.${key}`, vars);
