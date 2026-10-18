@@ -1993,6 +1993,24 @@ html.showA2HS .a2hs {
   .topbar-mobile-panel .only-mobile  { display: none !important; }
 }
 
+/* Ikony w etykietach hamburgera muszą być wyrównane razem z tekstem, a nie
+   układać się według bazowej linii inline wewnątrz przycisku. */
+.topbar-mobile-group .btn{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+  text-align:left;
+}
+.topbar-mobile-group .btn > span[data-i18n]{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+}
+.topbar-mobile-group .btn > .badge{ margin-left:auto; }
+.topbar-mobile-group .btn svg.ico{ display:block; vertical-align:middle; }
+
 @media (max-width: 760px){
   .topbar-mobile-hidden{ display:none !important; }
 }
