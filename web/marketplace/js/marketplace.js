@@ -275,6 +275,7 @@ async function loadBrowse({ reset = false } = {}) {
   browseRows = rows;
 
   if (reset && rows.length === 0) {
+    if (els.browseInfo) els.browseInfo.textContent = "";
     if (els.browseGrid) els.browseGrid.innerHTML =
       `<div class="mkt-empty">${esc(t("marketplace.empty"))}</div>`;
     if (els.loadMoreWrap) els.loadMoreWrap.hidden = true;
