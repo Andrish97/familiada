@@ -1,10 +1,10 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-17T22470";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-18T06253";
 guardViewportWidth({ minWidth: 0 });
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-17T22470";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-17T22470";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-17T22470";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-17T22470";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-17T22470";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-18T06253";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T06253";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-18T06253";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T06253";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T06253";
 
 async function redirectIfSession() {
   try {
