@@ -1,6 +1,6 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-18T07253";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-18T07253";
-import { icon, iconText } from "./icons.js?v=v2026-10-18T07253";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-18T07271";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-18T07271";
+import { icon, iconText } from "./icons.js?v=v2026-10-18T07271";
 
 let modalEl = null;
 let isSubmitting = false;
@@ -240,7 +240,7 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-18T07253");
+    const { sb } = await import("./supabase.js?v=v2026-10-18T07271");
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
     const isGuest = user?.user_metadata?.is_guest === true || user?.app_metadata?.is_guest === true;
