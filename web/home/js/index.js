@@ -218,8 +218,6 @@ function initPipeline() {
 
   window.addEventListener("scroll", update, { passive: true });
   window.addEventListener("resize", update, { passive: true });
-  window.visualViewport?.addEventListener("resize", update, { passive: true });
-  window.visualViewport?.addEventListener("scroll", update, { passive: true });
   const sheetObserver = new MutationObserver(() => syncTop());
   sheetObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
