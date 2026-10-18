@@ -192,7 +192,7 @@ async function applyFixtureToFrame(scene, fixture) {
     const words = language === "en" ? {
       hint: "Select a game to use its actions. Double-click a game name to rename it.", search: "Search…", filter: "All statuses",
       updated: "Recently updated", created: "Recently added", byName: "Name A–Z", draft: "DRAFT", ready: "Ready", open: "OPEN", stopped: "STOPPED",
-      account: "Marta Nowak", language: "Polski", community: "Community games", logo: "Logos", bases: "Question banks", friends: "Friends",
+      account: "Account", community: "Community games", logo: "Logos", bases: "Question banks", friends: "Friends",
       connect: "Connect a device", subscribers: "Subscribers", tasks: "Tasks", more: "More", logout: "Sign out",
     } : language === "uk" ? {
       hint: "Виберіть гру, щоб скористатися її діями. Двічі натисніть назву, щоб перейменувати.", search: "Пошук…", filter: "Усі стани",
@@ -202,7 +202,7 @@ async function applyFixtureToFrame(scene, fixture) {
     } : {
       hint: "Zaznacz grę, aby włączyć jej akcje. Dwukrotne kliknięcie nazwy pozwala ją zmienić.", search: "Szukaj…", filter: "Wszystkie",
       updated: "Ostatnio zmienione", created: "Najnowsze", byName: "Nazwa A–Z", draft: "Szkic", ready: "Gotowe", open: "OTWARTA", stopped: "ZATRZYMANA",
-      account: "Marta Nowak", language: "Polski", community: "Gry Społeczności", logo: "Logo", bases: "Bazy pytań", friends: "Znajomi",
+      account: "Konto", community: "Gry Społeczności", logo: "Logo", bases: "Bazy pytań", friends: "Znajomi",
       connect: "Podłącz urządzenie", subscribers: "Subskrybenci", tasks: "Zadania", more: "Więcej", logout: "Wyloguj",
     };
     const headingHint = doc.getElementById("hint");
@@ -219,7 +219,7 @@ async function applyFixtureToFrame(scene, fixture) {
     if (section3 && !section3.querySelector(".lang-switcher")) {
       const lang = doc.createElement("div");
       lang.className = "lang-switcher";
-      lang.innerHTML = `<button type="button" class="btn lang-btn" aria-label="Język">${icon("flag-pl")}<span>${escapeHtml(words.language)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button>`;
+      lang.innerHTML = `<button type="button" class="btn lang-btn" aria-label="Język">${icon("flag-pl")}</button>`;
       section3.prepend(lang);
     }
     const login = doc.getElementById("btnLogout");
@@ -235,17 +235,20 @@ async function applyFixtureToFrame(scene, fixture) {
       accountMenu.innerHTML = `<button class="btn account-menu-item" type="button">${icon("settings")} ${language === "pl" ? "Ustawienia konta" : language === "en" ? "Account settings" : "Налаштування облікового запису"}</button><button class="btn account-menu-item" type="button">${icon("logout")} ${escapeHtml(words.logout)}</button>`;
       who.after(accountMenu);
     }
+    // Ukaż komplet nawigacji; ten sam układ priorytetów co na żywej stronie
+    // sam schowa najmniej ważne przyciski do „Więcej” tylko przy braku miejsca.
+    for (const id of ["btnMarketplace", "btnLogoEditor", "btnBases", "btnFriends", "btnConnectDevice", "btnSubscribers", "btnTasks"]) {
+      const button = doc.getElementById(id);
+      if (button) { button.dataset.navHidden = "false"; button.style.display = ""; }
+    }
     const more = doc.getElementById("navMore");
     const moreBtn = doc.getElementById("btnMore");
     const moreDropdown = doc.getElementById("navMoreDropdown");
     if (more && moreBtn && moreDropdown) {
-      more.style.display = "";
-      moreBtn.innerHTML = `${escapeHtml(words.more)} ${icon("caret-down")}`;
-      moreDropdown.hidden = false;
-      moreDropdown.innerHTML = [
-        ["btnConnectDevice", "phone", words.connect], ["btnSubscribers", "envelope", words.subscribers], ["btnTasks", "bell", words.tasks],
-      ].map(([id, glyph, label]) => `<button type="button" class="btn nav-more-item" id="shot-${id}">${icon(glyph)} ${escapeHtml(label)}</button>`).join("");
-      for (const id of ["btnConnectDevice", "btnSubscribers", "btnTasks"]) { const button = doc.getElementById(id); if (button) button.style.display = "none"; }
+      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-18T19512");
+      const nav = setTopbarNavPriority({ moreEl: more, moreDropdownEl: moreDropdown });
+      nav.recalc();
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
     for (const id of ["btnPlay", "btnSettings", "btnEdit", "btnPreview", "btnDuplicate", "btnExport", "btnExportBase", "btnImport", "btnSendCopy"]) {
       const button = doc.getElementById(id); if (button) button.disabled = false;
