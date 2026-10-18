@@ -636,11 +636,25 @@ function initTopbarController() {
 function updateTopbarHeight() {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
-  const h = Math.ceil(topbar.getBoundingClientRect().height);
-  document.body.style.setProperty('--topbar-h', `${h}px`);
-  // Ustawiamy --topbar-h na body (inline style bije CSS).
-  // CSS: body:has(.topbar) { padding-top: var(--topbar-h) } aktualizuje się automatycznie.
-  document.body.style.setProperty('--topbar-h', `${h}px`);
+  const rect = topbar.getBoundingClientRect();
+  const height = Math.ceil(rect.height);
+  const viewport = window.visualViewport;
+
+  // `--topbar-h` opisuje wyłącznie wysokość paska. Nie może zawierać jego
+  // położenia na ekranie, bo body używa tej wartości do paddingu i wysokości
+  // mobilnych arkuszy. Pozycja względem widocznego viewportu jest osobną
+  // zmienną, używaną wyłącznie przez fixed topbar.
+  document.body.style.setProperty('--topbar-h', `${height}px`);
+  if (viewport) {
+    const rawTop = Math.round(viewport.offsetTop || 0);
+    // Trzymaj pasek przy górnej krawędzi widocznego viewportu, ale nie
+    // pozwól, by błędna/krótkotrwała wartość przeglądarki schowała go
+    // całkowicie podczas animacji pasków Chrome lub klawiatury.
+    const minTop = -Math.max(0, height - 12);
+    const maxTop = Math.max(0, Math.floor(viewport.height - height));
+    const top = Math.max(minTop, Math.min(maxTop, rawTop));
+    document.body.style.setProperty('--visual-viewport-top', `${top}px`);
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -651,3 +665,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('load', updateTopbarHeight);
 window.addEventListener('resize', updateTopbarHeight);
+window.visualViewport?.addEventListener('resize', updateTopbarHeight, { passive: true });
+window.visualViewport?.addEventListener('scroll', updateTopbarHeight, { passive: true });
+window.addEventListener('DOMContentLoaded', () => {
+  const topbar = document.querySelector('.topbar');
+  if (topbar && typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(updateTopbarHeight).observe(topbar);
+  }
+}, { once: true });

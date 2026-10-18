@@ -160,13 +160,14 @@ function initPipeline() {
     if (!topbar) { wrap.style.top = "0px"; return; }
     const topbarBottom = topbar.getBoundingClientRect().bottom;
     wrap.style.top = Math.max(0, topbarBottom) + "px";
-    // Arkusz mobilny ukrywa pipeline, więc body ma wtedy rezerwować miejsce
-    // tylko na topbar. Po zamknięciu wraca pełny odstęp topbar + pipeline.
+    // Body rezerwuje wysokość elementów, nie ich współrzędne ekranowe.
+    // Dzięki temu zmiana visualViewport nie dodaje/odejmuje pustego pasa
+    // w dokumencie, a po zamknięciu arkusza wraca miejsce na pipeline.
     requestAnimationFrame(() => {
-      const pipelineBottom = wrap.getBoundingClientRect().bottom;
-      const currentTopbarBottom = topbar.getBoundingClientRect().bottom;
+      const topbarHeight = topbar.getBoundingClientRect().height;
+      const pipelineHeight = wrap.getBoundingClientRect().height;
       const sheetOpen = document.body.classList.contains("sheet-open");
-      document.body.style.paddingTop = Math.max(0, sheetOpen ? currentTopbarBottom : pipelineBottom) + "px";
+      document.body.style.paddingTop = Math.max(0, topbarHeight + (sheetOpen ? 0 : pipelineHeight)) + "px";
     });
   }
 
@@ -218,6 +219,8 @@ function initPipeline() {
 
   window.addEventListener("scroll", update, { passive: true });
   window.addEventListener("resize", update, { passive: true });
+  window.visualViewport?.addEventListener("resize", syncTop, { passive: true });
+  window.visualViewport?.addEventListener("scroll", syncTop, { passive: true });
   const sheetObserver = new MutationObserver(() => syncTop());
   sheetObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
