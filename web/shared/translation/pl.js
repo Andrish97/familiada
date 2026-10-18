@@ -273,7 +273,7 @@ const pl = {
       ctaConnectTitle: "Podłącz urządzenie do rozgrywki",
       note: "Dostępny tryb gościa — darmowa Familiada bez rejestracji.",
     },
-    imageViewer: { open: "Powiększ obraz: {title}" },
+    imageViewer: { title: "Podgląd", open: "Powiększ obraz: {title}" },
     about: {
       title: "Familiada Online — darmowy generator pytań i gra na żywo",
       p1: "Nasz system pozwala zorganizować własną grę w stylu Familiada od początku do końca. To idealne rozwiązanie jako atrakcja na wesele, urodziny czy integrację. Generator pytań pozwala na tworzenie własnych baz lub korzystanie z gotowych zestawów.",

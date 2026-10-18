@@ -424,9 +424,14 @@ details[open] .faq-q .faq-caret {
 
 .imgv-title {
   max-width: 78%;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.imgv-name {
+  margin: 0 0 10px;
 }
 
 .imgv-stage {
@@ -467,10 +472,6 @@ details[open] .faq-q .faq-caret {
 }
 
 @media (max-width: 600px) {
-  /* initPipeline zostawia padding inline liczony dla topbara i pipeline.
-     W arkuszu pipeline jest ukryty, więc zachowujemy wyłącznie odstęp
-     topbara — inaczej pod nim zostaje pusty pasek z podwójnymi liniami. */
-  body.home-body.sheet-open { padding-top: var(--topbar-h) !important; }
   body.sheet-open .pipeline-wrap { display: none !important; }
   .imgv-overlay.sheet-active {
     padding: 0;

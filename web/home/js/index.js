@@ -5,7 +5,7 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T07324";
 import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-18T07324";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T07324";
 import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T07324";
-import { enterModalSheet, exitModalSheet, handleSheetBack, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T07324";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T07324";
 import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T07324";
 
 async function redirectIfSession() {
@@ -158,12 +158,15 @@ function initPipeline() {
   // Ustaw top rury śledząc dolną krawędź topbara
   function syncTop() {
     if (!topbar) { wrap.style.top = "0px"; return; }
-    const bottom = topbar.getBoundingClientRect().bottom;
-    wrap.style.top = Math.max(0, bottom) + "px";
-    // Body padding musi uwzględniać topbar + pipeline żeby treść nie wchodziła pod pipeline
+    const topbarBottom = topbar.getBoundingClientRect().bottom;
+    wrap.style.top = Math.max(0, topbarBottom) + "px";
+    // Arkusz mobilny ukrywa pipeline, więc body ma wtedy rezerwować miejsce
+    // tylko na topbar. Po zamknięciu wraca pełny odstęp topbar + pipeline.
     requestAnimationFrame(() => {
       const pipelineBottom = wrap.getBoundingClientRect().bottom;
-      document.body.style.paddingTop = Math.max(0, pipelineBottom) + "px";
+      const currentTopbarBottom = topbar.getBoundingClientRect().bottom;
+      const sheetOpen = document.body.classList.contains("sheet-open");
+      document.body.style.paddingTop = Math.max(0, sheetOpen ? currentTopbarBottom : pipelineBottom) + "px";
     });
   }
 
@@ -215,6 +218,8 @@ function initPipeline() {
 
   window.addEventListener("scroll", update, { passive: true });
   window.addEventListener("resize", update, { passive: true });
+  const sheetObserver = new MutationObserver(() => syncTop());
+  sheetObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
   // Śledź animację chowania topbara (klasa is-hidden-mobile, transition ~0.22s)
   if (topbar) {
@@ -251,11 +256,12 @@ function initImageViewer() {
   overlay.style.display = "none";
   overlay.setAttribute("aria-hidden", "true");
   overlay.innerHTML = `
-    <div class="modal imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvTitle">
+    <div class="modal imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvHeading">
       <div class="imgv-top mHead">
-        <h2 class="imgv-title mTitle" id="imgvTitle"></h2>
+        <h2 class="imgv-title mTitle" id="imgvHeading">${t("home.imageViewer.title")}</h2>
         <button class="btn sm" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}" data-i18n-aria-label="common.modal.closeLabel">${icon("close")}</button>
       </div>
+      <p class="imgv-name mSub" id="imgvName"></p>
       <div class="imgv-stage" id="imgvStage"></div>
     </div>
   `;
@@ -266,7 +272,7 @@ function initImageViewer() {
   const stage = overlay.querySelector("#imgvStage");
   const closeBtn = overlay.querySelector("#imgvClose");
   const backBtn = document.getElementById("btnImageViewerBack");
-  const titleEl = overlay.querySelector("#imgvTitle");
+  const titleEl = overlay.querySelector("#imgvName");
 
   let previewZoom = null;
   let previousFocus = null;
@@ -311,7 +317,10 @@ function initImageViewer() {
   };
 
   closeBtn.addEventListener("click", close);
-  backBtn?.addEventListener("click", () => { handleSheetBack(); });
+  backBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    close();
+  });
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
   window.addEventListener("keydown", (e) => {
     if (!overlay.classList.contains("is-open")) return;

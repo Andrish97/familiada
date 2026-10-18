@@ -260,7 +260,7 @@ const en = {
       ctaConnectTitle: "Connect a device to a game",
       note: "Guest mode available — free Familiada without registration.",
     },
-    imageViewer: { open: "Enlarge image: {title}" },
+    imageViewer: { title: "Preview", open: "Enlarge image: {title}" },
     about: {
       title: "Familiada Online — free question generator and live game",
       p1: "Our system allows you to organize your own Familiada-style game from start to finish. It's an ideal solution as an attraction for weddings, birthdays or team building. The question generator allows you to create your own bases or use ready-made sets.",
