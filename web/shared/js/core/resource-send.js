@@ -43,7 +43,7 @@ function getDialog() {
   overlay.addEventListener("click", event => {
     if (event.target === overlay) close();
   });
-  document.body.append(overlay);
+  (document.querySelector("main.wrap") || document.body).append(overlay);
   return overlay;
 }
 
