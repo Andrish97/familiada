@@ -893,7 +893,13 @@ async function openAnon(browser, contexts, path, label, errors, { onPage } = {})
     parsed.searchParams.set("d", deviceType);
     path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
   }
-  const ctx = await controlContext(browser, );
+  // Host and Buzzer require touch-capable devices. Simulate a large tablet
+  // for device pages so the shared viewport guard exercises the actual app,
+  // instead of leaving those pages behind the desktop/touch warning overlay.
+  const ctx = await controlContext(browser, deviceType ? {
+    hasTouch: true,
+    viewport: { width: 1366, height: 1024 },
+  } : {});
   contexts.push(ctx);
   const p = await ctx.newPage();
   onPage?.(p);
