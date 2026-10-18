@@ -1,7 +1,7 @@
 // js/pages/games-import-export.js
-import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-18T07592";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T07592";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-18T07592";
+import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-18T08014";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T08014";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-18T08014";
 
 /* =========================================================
 	 Helpers (bezpieczne skracanie / typy)

@@ -5,10 +5,10 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-10-18T07592';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-18T07592';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-18T07592';
-import { icon } from './icons.js?v=v2026-10-18T07592';
+import { signOut } from './auth.js?v=v2026-10-18T08014';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-18T08014';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-18T08014';
+import { icon } from './icons.js?v=v2026-10-18T08014';
 
 // Android browsers expose their retractable browser chrome through dynamic
 // viewport units. Mark the document so that this positioning stays scoped to
@@ -389,7 +389,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-18T07592');
+  const { getUser } = await import('./auth.js?v=v2026-10-18T08014');
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
   if (btn.dataset.topbarAuthReady === '1') return;
