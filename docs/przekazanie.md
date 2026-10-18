@@ -5,13 +5,13 @@
 Repo Andrish97/familiada, branch main, ostatni commit przed tym porządkowaniem: ace79e8080.
 
 - E19 i E19N są zamknięte. E20 poprawki wizualne są wdrażane według bieżących uwag; ostatnie commity na main obejmują wspólny topbar i modal alertu Control.
-- E14 jest **w toku**. Migracje 368 i 387 usunęły część starych ścieżek, ale subscriber_user_id nadal jest używane przez aktywny SQL, tabelę i RLS. Stare RPC urządzeń mają wyłącznie odwołania testowe; użytkownik polecił nie traktować dostosowania testów jako blokady funkcjonalnych porządków.
+- E14 — usunięcie `subscriber_user_id` i starych RPC urządzeń wdrożono w migracji 388; poprawki 389–390 zachowują widoczność emailowych subskrypcji przypisanych do konta i zwracają `has_account` dla starych linków. Produkcyjna migracja jest zastosowana.
 - Read-only audyt produkcji (workflow 39113771174 i 39113860983) znalazł 4 stare wiersze `subscriber_user_id`: 1 active, 2 pending, 1 declined; wszystkie bez emaila i `registered_user_id`, żaden bez powiązanych `poll_tasks`. Audyt przyczyn wykazał, że active oraz jeden pending to samo-zaproszenia pominięte przez migrację 320; drugi pending jest już przeniesiony do friendship z tym samym tokenem. Brak równoległych nowych subskrypcji email. Wiersze źródłowe można bezpiecznie usunąć, gdy migracja zastąpi odwołania do kolumny; zadania nie utracą źródła.
-- Migracje 388–390 są zastosowane na produkcji: kolumna i stare RPC usunięte, lista źródeł emailowych uwzględnia `registered_user_id`, a stary link zwraca `has_account`. Smoke fixture 348 i sprawdzenie tożsamości 353 przechodzą. Zaktualizowano fixture niezależnych uprawnień, które nadal tworzyło legacy bezpośrednią subskrypcję; czekamy na workflow, aby pobrał `schema.sql`/log i potwierdził pozostałe kontrakty.
+- Synchronizacja `schema.sql`/logu jest jeszcze do ponowienia: przebieg 39115307537 zastosował migracje i przeszedł smoke’y do kroku read-only audytu, ale ten audyt miał stare odwołania do usuniętej kolumny. Skrypt został przepisany pod aktualny model email + `registered_user_id`; po ponownym przebiegu trzeba sprawdzić synchronizację i czystość drzewa.
 - Użytkownik polecił usunąć nie-E2E workflowy testowe, zostawiając E2E. Wdrożenia, migracje bazy i osobny read-only resource-audit są workflowami operacyjnymi, więc pozostają.
 - Artefakty screenshotów bez odwołań w repo oraz prototypy SQL zastąpione wdrożonymi migracjami zostały usunięte. Zasoby i testy używane przez bieżące workflowy pozostają.
 
-Następny krok: uzupełnić read-only audyt o stare wiersze i zadania, uzyskać wynik z produkcji, a potem dokończyć E14. Szczegóły etapów i dziennik: docs/wdrozenia.md; plan modelu znajomych/subskrybentów: docs/e19-znajomi-plan.md.
+Następny krok: ponowić `db-migrate.yml`, potwierdzić read-only audyt po E14 oraz pobranie `schema.sql` i logu. Testy aplikacji, które użytkownik uznał za wadliwe, nie są blokadą tego porządku. Szczegóły etapów i dziennik: docs/wdrozenia.md; plan modelu znajomych/subskrybentów: docs/e19-znajomi-plan.md.
 
 ## Archiwum wcześniejszych przekazań
 
