@@ -102,6 +102,9 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   let _hiddenBtns = [];
 
   function updateMoreBadge(hiddenBtns) {
+    const hasActiveHiddenButton = hiddenBtns.some(btn => btn.classList.contains('active'));
+    btnMore?.classList.toggle('active', hasActiveHiddenButton);
+    btnMore?.classList.toggle('tab-btn', hasActiveHiddenButton);
     if (!moreBadge) return;
     const sum = hiddenBtns.reduce((acc, btn) => acc + readBadgeCount(btn), 0);
     setBadgeCount(moreBadge, sum);
@@ -116,7 +119,13 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     else updateMoreBadge([]);
   });
   getButtons().forEach(btn => {
-    if (btn) badgeObserver.observe(btn, { subtree: true, characterData: true, childList: true });
+    if (btn) badgeObserver.observe(btn, {
+      subtree: true,
+      characterData: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
   });
 
   function getVisibleBtns() {
@@ -209,8 +218,14 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   btnMore?.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     if (_mobileActive) return;
-    moreDropdownEl.hidden = !moreDropdownEl.hidden;
-    if (!moreDropdownEl.hidden) repositionDropdown(moreEl, moreDropdownEl);
+    if (moreDropdownEl.hidden) {
+      // Najpierw oblicz pozycję, gdy dropdown jest niewidoczny. Odsłonięcie
+      // przed pomiarem potrafiło pokazać go na moment w lewym górnym rogu.
+      repositionDropdown(moreEl, moreDropdownEl);
+      moreDropdownEl.hidden = false;
+    } else {
+      moreDropdownEl.hidden = true;
+    }
   });
 
   document.addEventListener('pointerdown', (e) => {
