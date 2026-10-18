@@ -6,7 +6,7 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T10340";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T10340";
 import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-18T10340";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T10340";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T10340";
@@ -759,6 +759,24 @@ function renderRecipientGroup(host, rows, kind, title) {
   const section = shareSectionEl({ key: `poll-${kind}`, title, emptyText: rows.length ? "" : t("pollSharePanel.empty") });
   const list = section.querySelector(".shareList");
   const selectedIds = kind === "friend" ? selectedFriendIds : selectedSubIds;
+  const heading = section.querySelector(".shareSectionTitle");
+  heading.classList.add("shareSectionHeading");
+  const bulkActions = shareBulkActionsEl({
+    onSelectAll: () => {
+      for (const input of list.querySelectorAll('input[type="checkbox"]:not(:disabled)')) selectedIds.add(input.value);
+      list.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach((input) => { input.checked = true; });
+      recipientSelectionChanged();
+      syncBulkActions();
+    },
+    onDeselectAll: () => {
+      for (const input of list.querySelectorAll('input[type="checkbox"]')) selectedIds.delete(input.value);
+      list.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
+      recipientSelectionChanged();
+      syncBulkActions();
+    },
+  });
+  heading.append(bulkActions.element);
+  const syncBulkActions = () => bulkActions.update(list.querySelectorAll('input[type="checkbox"]'));
   for (const recipient of rows) {
     const row = shareRowEl({ id: recipient.id, label: recipient.label, title: recipient.email, compact: true });
     const checkbox = document.createElement("input");
@@ -768,6 +786,7 @@ function renderRecipientGroup(host, rows, kind, title) {
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) selectedIds.add(recipient.id); else selectedIds.delete(recipient.id);
       recipientSelectionChanged();
+      syncBulkActions();
     });
     row.prepend(checkbox);
     row.addEventListener("click", event => {
@@ -780,10 +799,12 @@ function renderRecipientGroup(host, rows, kind, title) {
       element.hidden = !cooling; row.classList.toggle("is-cooling-down", cooling); row.classList.toggle("pick", !cooling);
       if (cooling) { checkbox.checked = false; selectedIds.delete(recipient.id); }
       recipientSelectionChanged();
+      syncBulkActions();
     }});
     pickerTicker.setEndMs(key, Date.parse(recipient.cooldown_until) || 0);
     list.append(row);
   }
+  syncBulkActions();
   host.replaceChildren(section);
 }
 

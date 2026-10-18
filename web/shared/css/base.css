@@ -2623,6 +2623,14 @@ body{
 }
 .shareSection:first-child{ margin-top: 0; }
 .shareSectionTitle{ margin: 0; font-size: inherit; font-weight: 800; letter-spacing: .2px; }
+.shareSectionHeading{ display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.shareSectionHeading > .shareSectionTitle{ flex: 1 1 auto; min-width: 0; }
+.shareSectionTitle.shareSectionHeading{ flex-wrap: wrap; }
+.shareBulkActions{ display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 0 0 auto; }
+.shareBulkAction{ appearance: none; border: 0; padding: 2px 0; background: transparent; color: var(--gold, #ffeaa6); font: inherit; font-size: 12px; font-weight: 750; line-height: 1.2; cursor: pointer; white-space: nowrap; }
+.shareBulkAction:hover:not(:disabled){ text-decoration: underline; }
+.shareBulkAction:disabled{ opacity: .45; cursor: default; }
+.shareBulkActionShort{ display: none; }
 .shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
 .shareList[hidden]{ display: none; }
 .shareList{ display: grid; align-content: start; gap: 8px; margin-top: 8px; }
@@ -2766,6 +2774,10 @@ button.rowsSectionHead{ cursor: pointer; }
 .shareEmpty{ font-size:13px; color:var(--muted); }
 
 @media (max-width: 600px) {
+  .shareBulkActions{ gap: 10px; }
+  .shareBulkAction{ font-size: 11px; }
+  .shareBulkActionFull{ display: none; }
+  .shareBulkActionShort{ display: inline; }
   /* W pickerze odbiorców przewijają się same listy, a tytuł i licznik
      pozostają dostępne na ekranie. */
   .pollRecipientsModal .shareList--scroll {

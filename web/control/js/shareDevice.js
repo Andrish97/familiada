@@ -5,7 +5,7 @@ import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-18
 import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T10340";
 import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-18T10340";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-18T10340";
-import { shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T10340";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T10340";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T10340";
 
 import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-18T10340";
@@ -77,6 +77,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   const titleEl = document.getElementById("shareDeviceTitle");
   const emailInp = document.getElementById("shareDeviceEmail");
   const subsList = document.getElementById("shareDeviceSubsList");
+  const bulkHost = document.getElementById("shareDeviceBulkActions");
   const btnShareFriends = document.getElementById("btnShareDeviceFriends");
   const btnAdd = document.getElementById("btnShareDeviceAdd");
   const btnClose = document.getElementById("btnShareDeviceClose");
@@ -92,6 +93,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   let _deviceType = null;
   let renderVersion = 0;
   let preflightVersion = 0;
+  let bulkActions = null;
   let messageTimer = null;
   let messageVersion = 0;
   const cooldownTicker = createCooldownTicker();
@@ -205,6 +207,18 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     const already = new Set(current.filter((s) => s.recipient_id).map((s) => s.recipient_id));
     const activeFriends = (friends || []).filter((f) => f.status === "active" && f.direction === "friend" && !already.has(f.user_id));
     subsList.replaceChildren();
+    bulkHost?.replaceChildren();
+    bulkActions = shareBulkActionsEl({
+      onSelectAll: () => {
+        subsList.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach((input) => { input.checked = true; });
+        updateSelection();
+      },
+      onDeselectAll: () => {
+        subsList.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
+        updateSelection();
+      },
+    });
+    bulkHost?.replaceChildren(bulkActions.element);
     if (!activeFriends.length) {
       const empty = document.createElement("div");
       empty.className = "share-empty-state";
@@ -269,7 +283,9 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   }
 
   function updateSelection() {
-    if (btnShareFriends) btnShareFriends.disabled = !subsList?.querySelector('input[type="checkbox"]:checked');
+    const inputs = subsList?.querySelectorAll('input[type="checkbox"]') || [];
+    if (btnShareFriends) btnShareFriends.disabled = !subsList?.querySelector('input[type="checkbox"]:checked:not(:disabled)');
+    bulkActions?.update(inputs);
   }
 
   // Dostęp powstaje niezależnie od e-maila; stan zwrotny rozróżnia wysłanie,

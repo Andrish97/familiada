@@ -20,7 +20,7 @@ import "../../shared/js/core/contact-modal.js?v=v2026-10-18T10340";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T10340";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T10340";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-18T10340";
-import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T10340";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T10340";
 import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-18T10340";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-18T10340";
 import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-18T10340";
@@ -113,6 +113,7 @@ const shareSectionsHost = document.getElementById("shareSectionsHost");
 const shareEmail = document.getElementById("shareEmail");
 const shareRole = document.getElementById("shareRole");
 const baseShareFriends = document.getElementById("baseShareFriends");
+const baseShareBulkHost = document.getElementById("baseShareBulkActions");
 const baseShareFriendsRole = document.getElementById("baseShareFriendsRole");
 const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
@@ -864,12 +865,25 @@ async function renderShareModal() {
   if (version !== shareRenderVersion) return;
   if (error || !data?.ok) { showShareMessage(t("bases.share.failed")); return; }
   baseShareFriends.replaceChildren();
+  baseShareBulkHost?.replaceChildren();
   shareSectionsHost.replaceChildren();
   const empty = host => {
     const el = document.createElement("div"); el.className = "shareEmpty";
     el.textContent = t("baseSharePanel.empty"); host.append(el);
   };
   if (!data.friends.length) empty(baseShareFriends);
+  const bulkActions = shareBulkActionsEl({
+    onSelectAll: () => {
+      baseShareFriends.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach((input) => { input.checked = true; });
+      updateBaseShareSelection();
+    },
+    onDeselectAll: () => {
+      baseShareFriends.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
+      updateBaseShareSelection();
+    },
+  });
+  baseShareBulkHost?.replaceChildren(bulkActions.element);
+  baseShareBulkActions = bulkActions;
   for (const friend of data.friends) {
     const row = shareRowEl({ id: friend.user_id, label: friend.label || friend.email, compact: true });
     const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.value = friend.user_id;
@@ -948,8 +962,11 @@ async function renderShareModal() {
     shareSectionsHost.append(row);
   }
 }
+let baseShareBulkActions = null;
 function updateBaseShareSelection() {
+  const inputs = baseShareFriends?.querySelectorAll('input[type="checkbox"]') || [];
   btnBaseShareFriends.disabled = shareAddInFlight || !baseShareFriends?.querySelector('input:checked:not(:disabled)');
+  baseShareBulkActions?.update(inputs);
 }
 function baseShareError(row) {
   if (row?.cooldown_until) return t("baseSharePanel.cooldown", { time: formatCooldownRemaining(Math.max(0, Date.parse(row.cooldown_until) - Date.now())) });

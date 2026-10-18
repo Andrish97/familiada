@@ -25,6 +25,43 @@ export function shareCooldownEl() {
   return { element, labelEl };
 }
 
+/** Zwarte akcje zaznaczania listy odbiorców, wspólne dla modali udostępniania. */
+export function shareBulkActionsEl({ onSelectAll, onDeselectAll }) {
+  const element = document.createElement("div");
+  element.className = "shareBulkActions";
+  element.setAttribute("role", "group");
+  const makeButton = (key, onClick) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "shareBulkAction";
+    button.setAttribute("aria-label", t(`common.${key}`));
+    button.title = t(`common.${key}`);
+    const full = document.createElement("span");
+    full.className = "shareBulkActionFull";
+    full.textContent = t(`common.${key}`);
+    const short = document.createElement("span");
+    short.className = "shareBulkActionShort";
+    short.textContent = t(`common.${key}Short`);
+    button.append(full, short);
+    button.addEventListener("click", onClick);
+    element.append(button);
+    return button;
+  };
+  const selectAll = makeButton("selectAll", onSelectAll);
+  const deselectAll = makeButton("deselectAll", onDeselectAll);
+  return {
+    element,
+    update(inputs) {
+      const available = [...inputs].filter((input) => !input.disabled);
+      const checked = available.filter((input) => input.checked).length;
+      element.hidden = available.length === 0;
+      selectAll.disabled = available.length === 0 || checked === available.length;
+      deselectAll.hidden = checked === 0;
+      deselectAll.disabled = checked === 0;
+    },
+  };
+}
+
 /**
  * Pojedynczy wiersz (kafel) sekcji.
  * @param {object} row
