@@ -659,6 +659,17 @@ body.games-body > main.wrap{
   position: relative;
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
+}
+
+/* Licznik nie może zawijać się pod etykietę, gdy pasek robi się ciasny. */
+.nav-more > #btnMore {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .nav-more-dropdown {
