@@ -28,17 +28,17 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-18T16412";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-18T16412";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-18T16412";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-18T16412";
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-18T16474";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-18T16474";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-18T16474";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-18T16474";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-18T16412"),
-    import("./topbar-controller.js?v=v2026-10-18T16412"),
-    import("./modal-sheet.js?v=v2026-10-18T16412"),
-    import("./device-guard.js?v=v2026-10-18T16412"),
+    import("./auth.js?v=v2026-10-18T16474"),
+    import("./topbar-controller.js?v=v2026-10-18T16474"),
+    import("./modal-sheet.js?v=v2026-10-18T16474"),
+    import("./device-guard.js?v=v2026-10-18T16474"),
   ]);
   return {
     getUser: auth.getUser,
@@ -206,10 +206,10 @@ export async function initPage(id, opts = {}) {
   // don't miss a one-time notice while the page continues initializing.
   if (!new Set(["login", "privacy", "mailCenter", "connectDevice"]).has(id)) {
     if (isGuestUser(user)) {
-      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-18T16412");
+      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-18T16474");
       await maybeShowGuestInfoModal(user);
     } else if (user) {
-      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-18T16412");
+      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-18T16474");
       await initRatingSystem(user);
     }
   }
