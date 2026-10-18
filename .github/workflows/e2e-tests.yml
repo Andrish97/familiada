@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         group:
           - name: konto-glowne
@@ -205,7 +205,7 @@ jobs:
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-        run: npx playwright test ${{ matrix.group.files }} --workers="$TEST_WORKERS"
+        run: npx playwright test ${{ matrix.group.files }} --workers="$TEST_WORKERS" --retries=0 --max-failures=1
         working-directory: tests
 
       - name: Upload failure screenshots
@@ -291,9 +291,9 @@ jobs:
           IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
         run: |
           if [ "$IS_E20_GALLERY" = "1" ]; then
-            npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS" --retries=0
+            npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS" --retries=0 --max-failures=1
           else
-            npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
+            npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS" --retries=0 --max-failures=1
           fi
         working-directory: tests
 

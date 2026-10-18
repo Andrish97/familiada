@@ -430,7 +430,7 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
     for (const width of [1400, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await page.goto(`https://www.familiada.online/polls/?id=${game.id}`);
-      await page.locator("#tabRecipients").click();
+      if (width <= 980) await page.locator("#tabRecipients").click();
       await expect(page.locator('#subsGrid .shareRow')).toHaveCount(26, { timeout: 30_000 });
       for (const id of ["muted", "done", "declined"]) await expect(page.locator(`#subsGrid [data-id="${id}"] [data-act=remind]`)).toHaveCount(0);
       for (const id of ["pending", "limited"]) await expect(page.locator(`#subsGrid [data-id="${id}"] [data-act=remind]`)).toBeDisabled();
@@ -446,7 +446,9 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
       expect(Math.max(...geometry.sections) - Math.min(...geometry.sections)).toBeLessThanOrEqual(1);
       expect(geometry.buttons[0]).toEqual(geometry.buttons[1]); expect(geometry.overflow).toBe(false);
       for (const height of geometry.actions) expect(height).toBeLessThanOrEqual(36);
-      await page.locator('#subsGrid [data-id=opened] [data-act=remind]').click();
+      const openedReminder = page.locator('#subsGrid [data-id=opened] [data-act=remind]');
+      await expect(openedReminder).toBeVisible();
+      await openedReminder.click();
       await expect(page.locator('#appToast')).toHaveClass(/show/); await expect(page.locator('#appToast')).not.toHaveClass(/show/, { timeout: 6000 });
       await page.locator('#btnAddRecipients').click();
       await expect(page.locator('#pollRecipientsFriends [data-id=f0] input')).toBeDisabled();
