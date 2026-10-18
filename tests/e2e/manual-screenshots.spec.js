@@ -560,6 +560,15 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         await devices.pages[type].reload({ waitUntil: "domcontentloaded" });
         await devices.pages[type].waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
       }
+      const displayState = await devices.pages.display.evaluate(async ({ gameId, key }) => {
+        const { data, error } = await window.__sbClient.rpc("game_state_get", {
+          p_game_id: gameId, p_device_type: "display", p_key: key,
+        });
+        return error ? { error: error.message } : {
+          step: data?.step, mode: data?.detail?.display?.mode, rev: data?.rev,
+        };
+      }, { gameId: games[0].id, key: deviceKeys.display });
+      console.log(`[manual-screenshot] display gameplay state ${JSON.stringify(displayState)}`);
       await expect(devices.pages.display.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
       const startGame = page.getByRole("button", { name: /^(Rozpocznij grę|Start game|Розпочати гру)$/ });
       await expect(startGame).toBeEnabled({ timeout: 30_000 });
