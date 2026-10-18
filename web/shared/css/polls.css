@@ -477,8 +477,8 @@
 .resultQ .aRow.drop-target{ border-color: var(--gold); background: rgba(255,234,166,.14); }
 .resultQ .aRow.merge-src{ border-color: rgba(255,234,166,.7); background: rgba(255,234,166,.14); }
 .resultQ .aRow.merge-target{ border-color: rgba(120,200,255,.5); }
-.resultQ .aRow.tallySkipped.merge-src{ border-color: rgba(255,234,166,.95); background: rgba(255,234,166,.2); box-shadow: inset 0 0 0 1px rgba(255,234,166,.24); }
-.resultQ .aRow.tallySkipped.merge-target{ border-color: rgba(120,200,255,.75); background: rgba(120,200,255,.12); }
+.resultQ .aRow.tallySkipped.merge-src{ border-color: rgba(255,234,166,.95); background: rgba(255,234,166,.2); box-shadow: inset 0 0 0 2px rgba(255,234,166,.55); }
+.resultQ .aRow.tallySkipped.merge-target{ border-color: rgba(120,200,255,.95); background: rgba(120,200,255,.14); box-shadow: inset 0 0 0 2px rgba(120,200,255,.8); }
 @media (prefers-reduced-motion: reduce){
   .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tcBtn, .resultQ .tallyMeta{ transition: none; }
 }
