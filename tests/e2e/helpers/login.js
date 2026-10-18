@@ -74,6 +74,10 @@ function instrumentPage(page) {
         res.text().then((body) => console.log("[e2e-diag] control_device_shares_list error body:", body.slice(0, 1000)))
           .catch((e) => console.log("[e2e-diag] control_device_shares_list body read failed:", e.message));
       }
+      if (res.status() >= 400 && res.url().includes("/rpc/control_device_slots_for_owner")) {
+        res.json().then(({ code, message, details, hint }) => console.log("[e2e-diag] control_device_slots_for_owner error:", JSON.stringify({ code, message, details, hint })))
+          .catch(() => console.log("[e2e-diag] control_device_slots_for_owner error body unavailable"));
+      }
     }
     // game_state_write: 200 NIE dowodzi, że zwrócony wiersz faktycznie ma
     // oczekiwany step -- loguj TREŚĆ odpowiedzi (tylko pola stanu, nie całe

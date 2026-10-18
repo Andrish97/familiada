@@ -476,6 +476,8 @@ async function main() {
       metrics: {
         revision, sound: item.sound, expected_ms: Math.round(item.expectedMs),
         actual_ms: actualMs, extra_ms: Math.round(extraMs),
+        ack_source: item.ackSource || null,
+        completion_realtime_connected: completionRealtimeConnected,
         control_visibility: item.controlVisibility,
         control_focused: item.controlFocused,
       },
@@ -489,12 +491,13 @@ async function main() {
       kind: "diagnostic", category: "display_delay",
       message: "Display nie potwierdził ukończenia planszy w oczekiwanym czasie.",
       devices: ["display"],
-      metrics: { revision, sound: item.sound, reason: "ack_timeout", ack_read_error: !!item.ackReadError, wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: item.controlVisibility, control_focused: item.controlFocused },
+      metrics: { revision, sound: item.sound, reason: "ack_timeout", ack_read_error: !!item.ackReadError, completion_realtime_connected: completionRealtimeConnected, wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: document.visibilityState || "unknown", request_visibility: item.controlVisibility, control_focused: item.controlFocused },
     });
   }
   function reportDisplayCompletionReadError(revision, item, error) {
-    if (item.ackReadError) return;
-    item.ackReadError = true;
+    if (completionReadIncident) return;
+    completionReadIncident = { at: performance.now(), revision, sound: item.sound };
+    for (const pending of displayCompletionTimes.values()) pending.ackReadError = true;
     void sessionTelemetry.report({
       kind: "diagnostic", category: "display_delay",
       message: "Control nie może odczytać potwierdzenia renderowania Wyświetlacza.",
@@ -507,6 +510,17 @@ async function main() {
       },
     });
   }
+  function recoverDisplayCompletionRead() {
+    if (!completionReadIncident) return;
+    const incident = completionReadIncident;
+    completionReadIncident = null;
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "display_delay",
+      message: "Odczyt potwierdzenia renderowania Wyświetlacza wrócił.",
+      devices: ["control", "display"],
+      metrics: { revision: incident.revision, reason: "ack_read_recovered", duration_ms: Math.round(performance.now() - incident.at) },
+    });
+  }
   function noteDisplayRequest() {
     const row = store.state.__row;
     if (row && (row.step !== lastDisplayStep || row.sound_cue_seq !== lastDisplayCueSeq)) {
@@ -516,17 +530,6 @@ async function main() {
       displayCompletionTimes.set(row.rev, item);
       void expectedDisplayTransitionMs(priorRow, row).then(expectedMs => {
         item.expectedMs = expectedMs;
-        void sessionTelemetry.report({
-          kind: "diagnostic", category: "state_sync",
-          message: "Control wysłał zmianę stanu oczekującą na Display.",
-          devices: ["display"],
-          metrics: {
-            phase: "requested", revision: row.rev, previous_revision: priorRow?.rev ?? null,
-            from_step: item.previousStep, to_step: item.step, sound_cue_seq: item.soundCueSeq,
-            sound: item.sound, expected_ms: Number.isFinite(expectedMs) ? Math.round(expectedMs) : null,
-            control_visibility: item.controlVisibility, control_focused: item.controlFocused,
-          },
-        });
         evaluateDisplayCompletion(row.rev, item);
         if (expectedMs != null && !item.reported) {
           item.timeoutTimer = setTimeout(() => reportDisplayCompletionTimeout(row.rev, item), Math.max(0, expectedMs + 1500));
@@ -600,6 +603,7 @@ async function main() {
   let completionUIReady = false;
   let completionReadPending = false;
   let completionRealtimeConnected = false;
+  let completionReadIncident = null;
   function applyDisplayCompletion(revision, source = "realtime") {
     const renderedRev = Number(revision);
     if (!Number.isFinite(renderedRev) || !displayCompletion.acknowledge(renderedRev)) return;
@@ -608,18 +612,7 @@ async function main() {
       if (requestedRev <= renderedRev && item.completedAt == null) {
         item.completedAt = completedAt;
         if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
-        const latencyMs = Math.max(0, Math.round(completedAt - item.requestedAt));
-        void sessionTelemetry.report({
-          kind: "diagnostic", category: "state_sync",
-          message: "Display potwierdził wyrenderowanie zmiany stanu.",
-          devices: ["display"],
-          metrics: {
-            phase: "acknowledged", revision: requestedRev, acknowledged_revision: renderedRev,
-            sound_cue_seq: item.soundCueSeq, sound: item.sound, latency_ms: latencyMs,
-            expected_ms: Number.isFinite(item.expectedMs) ? Math.round(item.expectedMs) : null,
-            ack_source: source, control_visibility: document.visibilityState || "unknown",
-          },
-        });
+        item.ackSource = source;
         evaluateDisplayCompletion(requestedRev, item);
       }
     }
@@ -637,7 +630,7 @@ async function main() {
         for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
         return;
       }
-      if (data) applyDisplayCompletion(data.rendered_rev, "fallback_read");
+      if (data) { recoverDisplayCompletionRead(); applyDisplayCompletion(data.rendered_rev, "fallback_read"); }
     } catch (error) {
       for (const [revision, item] of displayCompletionTimes) reportDisplayCompletionReadError(revision, item, error);
     } finally { completionReadPending = false; }
@@ -645,7 +638,7 @@ async function main() {
   const completionChannel = sb().channel(`display-completion:${gameId}`);
   completionChannel.on("postgres_changes", {
     event: "*", schema: "public", table: "game_state_display_completion", filter: `game_id=eq.${gameId}`,
-  }, (payload) => applyDisplayCompletion(payload?.new?.rendered_rev, "realtime"));
+  }, (payload) => { recoverDisplayCompletionRead(); applyDisplayCompletion(payload?.new?.rendered_rev, "realtime"); });
   completionChannel.subscribe((status) => {
     completionRealtimeConnected = status === "SUBSCRIBED";
     observeRealtimeState("display_completion", status);
