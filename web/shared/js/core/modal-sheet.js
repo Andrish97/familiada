@@ -221,7 +221,7 @@ sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.
 // opts.onClose: funkcja zamykająca TEN modal — wywoływana przez
 //   handleSheetBack() gdy użytkownik kliknie przycisk wstecz w topbarze.
 export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
-  if (!isSheetViewport()) return;
+  if (!isSheetViewport() || overlayEl?.classList.contains("modal--keep-dialog")) return;
   prepareSheetLayout(overlayEl);
   if (!historyKey || !dialogAllowed(currentPageId, historyKey)) historyKey = null;
 
