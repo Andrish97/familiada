@@ -1,6 +1,6 @@
-import { sb } from "./supabase.js?v=v2026-10-18T06521";
-import { t } from "../../translation/translation.js?v=v2026-10-18T06521";
-import { icon } from "./icons.js?v=v2026-10-18T06521";
+import { sb } from "./supabase.js?v=v2026-10-18T06542";
+import { t } from "../../translation/translation.js?v=v2026-10-18T06542";
+import { icon } from "./icons.js?v=v2026-10-18T06542";
 
 const HEARTBEAT_MS = 3_000;
 const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
