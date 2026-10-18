@@ -636,11 +636,12 @@ function initTopbarController() {
 function updateTopbarHeight() {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
-  const h = Math.ceil(topbar.getBoundingClientRect().height);
-  document.body.style.setProperty('--topbar-h', `${h}px`);
-  // Ustawiamy --topbar-h na body (inline style bije CSS).
-  // CSS: body:has(.topbar) { padding-top: var(--topbar-h) } aktualizuje się automatycznie.
-  document.body.style.setProperty('--topbar-h', `${h}px`);
+  const viewportTop = Math.max(0, Math.round(window.visualViewport?.offsetTop || 0));
+  document.body.style.setProperty('--visual-viewport-top', `${viewportTop}px`);
+  // Liczymy do dolnej krawędzi widocznego paska: gdy Chrome przesuwa
+  // visual viewport, odstęp treści musi przesunąć się razem z topbarem.
+  const bottom = Math.ceil(topbar.getBoundingClientRect().bottom);
+  document.body.style.setProperty('--topbar-h', `${Math.max(0, bottom)}px`);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -651,3 +652,5 @@ window.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('load', updateTopbarHeight);
 window.addEventListener('resize', updateTopbarHeight);
+window.visualViewport?.addEventListener('resize', updateTopbarHeight, { passive: true });
+window.visualViewport?.addEventListener('scroll', updateTopbarHeight, { passive: true });
