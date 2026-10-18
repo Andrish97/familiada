@@ -87,6 +87,10 @@ export const ICONS = Object.freeze({
   phone: "/assets/icons/devices/phone.svg?v=v2026-10-18T14262",
   "qr-code": "/assets/icons/devices/qr-code.svg?v=v2026-10-18T14262",
 
+  // Zbiorcze akcje list odbiorców
+  "select-all": "/assets/icons/sharing/select-all.svg?v=v2026-10-18T14245",
+  "clear-selection": "/assets/icons/sharing/clear-selection.svg?v=v2026-10-18T14245",
+
   // Multimedia i oceny
   "speaker-on": "/assets/icons/media/speaker-on.svg?v=v2026-10-18T14262",
   "speaker-off": "/assets/icons/media/speaker-off.svg?v=v2026-10-18T14262",
