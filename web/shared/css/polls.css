@@ -477,7 +477,10 @@
 .resultQ .aRow.drop-target{ border-color: var(--gold); background: rgba(255,234,166,.14); }
 .resultQ .aRow.merge-src{ border-color: rgba(255,234,166,.7); background: rgba(255,234,166,.14); }
 .resultQ .aRow.merge-target{ border-color: rgba(120,200,255,.5); }
-.resultQ .aRow.tallySkipped.merge-src{ border-color: rgba(255,234,166,.8); }
+.resultQ .aRow.tallySkipped.merge-src{
+  border-color: rgba(255,234,166,.8);
+  background: linear-gradient(rgba(255,234,166,.16), rgba(255,234,166,.16)), rgba(255,92,104,.09);
+}
 .resultQ .aRow.tallySkipped.merge-target{ border-color: rgba(120,200,255,.75); }
 @media (prefers-reduced-motion: reduce){
   .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tcBtn, .resultQ .tallyMeta{ transition: none; }
