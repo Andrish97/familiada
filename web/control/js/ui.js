@@ -528,17 +528,22 @@ export function createUI({ root, emit }) {
       finalMode: hasFinal ? s.finalQuestionsMode : null, finalPicked: state.final.picked,
       finalPreview: state.final.pickedPreview, finalConfirmed: state.final.confirmed,
       sound: state.settings.sound,
-      // busy() dodane do odcisku PO tym, jak "Zakończ konfigurację"/"Wstecz"
-      // dostały disabled: boardBusy() -- bez tego pola tranzycja
-      // committing:true->false NIGDY nie unieważnia cache'u (żadne z
-      // powyższych pól faktycznie się nie zmienia), więc przycisk raz
-      // wyrenderowany jako disabled zostawał tak NA ZAWSZE, mimo że
-      // poprzedni zapis dawno się potwierdził -- znalezione na żywo przez
-      // control2.spec.js (test wisiał w nieskończoność na "Zakończ
-      // konfigurację" po devices.next).
-      busy: boardBusy(),
     });
-    if (fingerprint === setupFinishFingerprint && root.querySelector("#c2DisplayPreview")) return;
+    const finalIncomplete = hasFinal && (state.final.picked?.length !== 5 || !state.final.confirmed);
+    const syncActionState = () => {
+      const startButton = root.querySelector("[data-c2-summary-start]");
+      if (startButton) {
+        const isBusy = boardBusy();
+        startButton.disabled = finalIncomplete || displaySoundNeedsUnlock || isBusy;
+        startButton.classList.toggle("c2-btn-busy", isBusy && !finalIncomplete && !displaySoundNeedsUnlock);
+      }
+      const backButton = root.querySelector("[data-c2-summary-back]");
+      if (backButton) backButton.disabled = boardBusy();
+    };
+    if (fingerprint === setupFinishFingerprint && root.querySelector("#c2DisplayPreview")) {
+      syncActionState();
+      return;
+    }
     setupFinishFingerprint = fingerprint;
 
     clear();
@@ -652,7 +657,6 @@ export function createUI({ root, emit }) {
     // Po dodaniu sekcji ustawień zaawansowanych (push do leftSummarySections).
     const settingSummarySections = [...leftSummarySections, ...rightSummarySections];
 
-    const finalIncomplete = hasFinal && (state.final.picked?.length !== 5 || !state.final.confirmed);
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
     // przyciski dalej" — to był gołe `<button class="btn gold">` (globalny
     // styl przycisków apki), nie navButton() jak KAŻDE inne "Dalej" w
@@ -663,16 +667,21 @@ export function createUI({ root, emit }) {
     // (busy, pulsuje).
     const start = navButton(t("control.setupDoneBtn"), {
       iconName: "arrow-right", iconAfter: true,
-      disabled: finalIncomplete || displaySoundNeedsUnlock,
-      busy: boardBusy(),
-      onclick: () => { stopSummarySoundPreview(); emit("setup.start"); },
+      onclick: () => {
+        if (finalIncomplete || displaySoundNeedsUnlock || boardBusy()) return;
+        stopSummarySoundPreview(); emit("setup.start");
+      },
     });
+    start.dataset.c2SummaryStart = "true";
+    start.disabled = finalIncomplete || displaySoundNeedsUnlock || boardBusy();
+    start.classList.toggle("c2-btn-busy", boardBusy() && !finalIncomplete && !displaySoundNeedsUnlock);
     const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => { stopSummarySoundPreview(); emit("setup.openSettings"); } }, iconLabel("settings", t("control.summarySettingsLink")));
     // "Wstecz" (jak stare control.html's btnSetupFinishBack) — swobodny
     // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
     // lewej krawędzi stopki (patrz control2.html: .stepFootButtons ma
     // justify-content:flex-end, ten jeden dostaje margin-right:auto).
-    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: boardBusy() ? undefined : () => { stopSummarySoundPreview(); emit("setup.back"); } }, iconLabel("arrow-left", t("common.back")));
+    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: () => { if (!boardBusy()) { stopSummarySoundPreview(); emit("setup.back"); } } }, iconLabel("arrow-left", t("common.back")));
+    back.dataset.c2SummaryBack = "true";
 
     // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
