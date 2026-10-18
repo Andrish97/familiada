@@ -501,7 +501,12 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     if (logoError) captureErrors.push(logoError);
 
     const logoDrawError = await take(page, testInfo, "logo-draw-editor", async () => {
-      await Logo.createNew(page, "Draw", logoNames[1]);
+      const drawId = await Logo.insertLogo(page, {
+        name: logoNames[1], type: "PIX_150x70",
+        payload: { ...Logo.emptyPix, source: { mode: "DRAW", fabricData: { version: "5.3.0", objects: [], background: "#000000" }, world: { w: 1040, h: 440 } } }
+      });
+      await page.goto(`https://www.familiada.online/logo/editor/draw/?id=${drawId}&ret=${encodeURIComponent(`/logo/?tab=draw&lang=${LANGUAGE}`)}`, { waitUntil: "domcontentloaded" });
+      await Logo.waitEditorReady(page, "Draw");
       await page.keyboard.press("p");
       const stage = await Logo.stage(page);
       for (const [x, y] of [[0.2, 0.25], [0.75, 0.25], [0.5, 0.75]]) await page.mouse.click(stage.x + stage.width * x, stage.y + stage.height * y);

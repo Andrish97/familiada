@@ -38,7 +38,7 @@ Zwykłe kadry mają rozmiar **1365×768 px**. Głosowanie na telefonie ma **390�
 | **Edytor gry** (`game-editor`) | Otwiera pierwsze pytanie gry preparowanej, sześć odpowiedzi z punktami oraz listę pozostałych pytań. |
 | **Gra gotowa** (`game-ready`) | Otwiera tę samą grę po przygotowaniu do prowadzenia; na liście widać jej stan gotowości. |
 | **Logo** (`logos`) | Pokazuje nazwaną bibliotekę logo z przykładowymi zapisami. |
-| **Edytor rysunku** (`logo-draw-editor`) | Wchodzi do edytora rysunku, wybiera narzędzie, rysuje i zapisuje znak. |
+| **Edytor rysunku** (`logo-draw-editor`) | Otwiera przygotowany szkic w edytorze rysunku, wybiera narzędzie, rysuje i zapisuje znak. |
 | **Bazy pytań** (`bases`) | Pokazuje przykładową bazę z kategorią i wpisanymi pytaniami. |
 | **Eksplorator bazy** (`base-explorer`) | Wybiera przygotowaną bazę, klika **Przeglądaj** i czeka na widoczną treść w Eksploratorze. |
 | **Ustawienia finału** (`game-settings-finale`) | Włącza finał, przełącza na wybór ręczny i wskazuje pięć pytań innych niż pytanie Control. |
