@@ -403,7 +403,15 @@ async function main() {
   let displayUnlockRequestPending = false;
   let refreshDisplayPresence = null;
   let controlOffline = !navigator.onLine;
+  let controlUIReady = false;
   let presenceUnavailable = false;
+  let presenceFailureStartedAt = null;
+  let presenceFailureSource = null;
+  let presenceMetadataFailureStartedAt = null;
+  // renderCurrent can run from early async callbacks before the timer-watch
+  // factories below are initialized. Keep those calls safe during bootstrap.
+  let scheduleFinalTimerWatch = () => {};
+  let scheduleTimer3Watch = () => {};
   let disconnectEpisode = false;
   let lastDisconnectState = "";
   const browserContextId = getGameBrowserContextId(gameId);
@@ -669,6 +677,24 @@ async function main() {
   function presenceReadBlocksGame() { return presenceUnavailable && store.state.locks.gameStarted && !store.state.locks.gameEnded; }
   function busy() { return testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
+  function recoverLeaseStatusRead() {
+    if (!presenceUnavailable) return false;
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "connectivity",
+      message: "Control odzyskał odczyt statusu urządzeń.",
+      devices: ["control"],
+      metrics: {
+        phase: "recovered", source: presenceFailureSource,
+        duration_ms: presenceFailureStartedAt == null ? null : Math.max(0, Date.now() - presenceFailureStartedAt),
+      },
+    });
+    presenceFailureStartedAt = null;
+    presenceFailureSource = null;
+    presenceUnavailable = false;
+    requestDisplayAudioUnlock();
+    return true;
+  }
+
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
   // 264) faktycznie ustawi WŁASNY `locked_until` -- `store.setLock(ms)` to
@@ -870,8 +896,9 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, deviceDiagnostics, error }) => {
+    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, deviceDiagnostics, error, errorSource }) => {
       const previous = presenceFlags;
+      let leaseReadRecovered = false;
       const displayAudioWasUnlocked = displayAudioUnlocked === true;
       const displayReconnected = !previous.display && flags.display === true;
       const displayAudioSessionReset = previous.display === true && flags.display === true
@@ -901,15 +928,62 @@ async function main() {
         }
       }
       if (error) {
-        if (!presenceUnavailable) void sessionTelemetry.report({ kind: "error", message: "Nie można odczytać statusu urządzeń." });
-        presenceUnavailable = true;
-        renderCurrent();
-        return;
+        if (errorSource === "device_presence") {
+          if (presenceMetadataFailureStartedAt == null) {
+            presenceMetadataFailureStartedAt = Date.now();
+            void sessionTelemetry.report({
+              kind: "diagnostic", category: "connectivity",
+              message: "Control nie może odczytać dodatkowych danych obecności; status lease urządzeń nadal działa.",
+              devices: ["control"],
+              metrics: {
+                phase: "metadata_read_error", source: "device_presence",
+                error_name: String(error?.name || "Error").slice(0, 80),
+                error_code: String(error?.code || "").slice(0, 80) || null,
+                http_status: Number.isFinite(error?.status) ? error.status : null,
+                gameplay_blocked: false,
+              },
+            });
+          }
+          // A successful lease read is enough to restore safe game actions,
+          // even while supplemental presence metadata remains unavailable.
+          leaseReadRecovered = recoverLeaseStatusRead();
+        } else {
+          if (!presenceUnavailable) {
+            presenceFailureStartedAt = Date.now();
+            presenceFailureSource = errorSource || "status_read";
+            void sessionTelemetry.report({
+              kind: "diagnostic", category: "connectivity",
+              message: "Control utracił możliwość odczytu statusu urządzeń; akcje gry są chwilowo blokowane.",
+              devices: ["control"],
+              metrics: {
+                phase: "read_error", source: presenceFailureSource,
+                error_name: String(error?.name || "Error").slice(0, 80),
+                error_code: String(error?.code || "").slice(0, 80) || null,
+                http_status: Number.isFinite(error?.status) ? error.status : null,
+              },
+            });
+          }
+          presenceUnavailable = true;
+          renderCurrent();
+          return;
+        }
+      } else if (presenceMetadataFailureStartedAt != null) {
+        void sessionTelemetry.report({
+          kind: "diagnostic", category: "connectivity",
+          message: "Control odzyskał dodatkowe dane obecności; status lease urządzeń nie przestał działać.",
+          devices: ["control"],
+          metrics: {
+            phase: "metadata_recovered", source: "device_presence",
+            duration_ms: Math.max(0, Date.now() - presenceMetadataFailureStartedAt),
+            gameplay_blocked: false,
+          },
+        });
+        presenceMetadataFailureStartedAt = null;
       }
-      else if (presenceUnavailable) {
-        presenceUnavailable = false;
-        requestDisplayAudioUnlock();
-      } else if ((displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
+      if (!error && presenceUnavailable) {
+        leaseReadRecovered = recoverLeaseStatusRead();
+      }
+      if (!leaseReadRecovered && !error && (displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
         // A Display that reconnects during a game needs a fresh browser gesture
         // even if it reported an unlock before disconnecting. Send a new nonce
         // so its button returns and keep Control actions gated until it replies.
@@ -1071,8 +1145,10 @@ async function main() {
       }, Math.max(0, endsAt - Date.now()));
     };
   }
-  const scheduleFinalTimerWatch = makeTimerWatch(() => store.state.final?.runtime?.timer, "EXPIRE_TIMER");
-  const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
+  scheduleFinalTimerWatch = makeTimerWatch(() => store.state.final?.runtime?.timer, "EXPIRE_TIMER");
+  scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
+  scheduleFinalTimerWatch();
+  scheduleTimer3Watch();
 
   function renderCtx() {
     const ended = !!store.state.locks.gameEnded;
@@ -1095,6 +1171,9 @@ async function main() {
   }
 
   function renderCurrent() {
+    // Network/audio callbacks may resolve while main() is still awaiting the
+    // last bootstrap reads. The final render below covers their latest state.
+    if (!controlUIReady) return;
     document.body.dataset.controlStep = store.state.step;
     reportRealtimeSnapshots();
     if (store.state.locks.gameEnded) connectivityTracker.flush();
@@ -1683,6 +1762,7 @@ async function main() {
   // żadnego widocznego błędu).
   btnStartOver?.addEventListener("click", () => { handle("game.restart"); });
 
+  controlUIReady = true;
   store.subscribe(renderCurrent);
   completionUIReady = true;
   void refreshDisplayCompletion();

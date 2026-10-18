@@ -5378,6 +5378,32 @@ function buildSessionRunDetails(r) {
       const metrics = event.metrics || {};
       const devices = (event.devices || []).map(kind => names[kind] || kind).join(", ") || "Urządzenie";
       if (event.category === "connectivity") {
+        if (metrics.phase === "metadata_read_error") {
+          const error = metrics.error_code || metrics.http_status || metrics.error_name;
+          return {
+            title: "Dodatkowe dane obecności niedostępne",
+            detail: `Control nie odczytał device_presence${error ? ` (${error})` : ""}; lease urządzeń działał, akcje gry nie były blokowane.`,
+          };
+        }
+        if (metrics.phase === "metadata_recovered") {
+          return {
+            title: "Dodatkowe dane obecności wróciły",
+            detail: `Odczyt device_presence wznowił się po ${formatDuration(metrics.duration_ms)}; akcje gry nie były blokowane.`,
+          };
+        }
+        if (metrics.phase === "read_error") {
+          const error = metrics.error_code || metrics.http_status || metrics.error_name;
+          return {
+            title: "Control nie może potwierdzić statusu lease",
+            detail: `Odczyt ${metrics.source === "lease_status" ? "control_device_slots_for_owner" : "statusu urządzeń"} nie powiódł się${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu.`,
+          };
+        }
+        if (metrics.phase === "recovered") {
+          return {
+            title: "Control odzyskał status lease",
+            detail: `Odczyt statusu wrócił po ${formatDuration(metrics.duration_ms)}; akcje gry mogą być kontynuowane.`,
+          };
+        }
         const details = [`Blokada: ${formatDuration(metrics.blocked_duration_ms)}`];
         if (metrics.repeated_drops) details.push(`ponowne zaniki: ${metrics.repeated_drops}`);
         if (metrics.blocked_action_attempts) details.push(`próby akcji podczas blokady: ${metrics.blocked_action_attempts}`);
