@@ -9,7 +9,7 @@
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
 import { t } from "../../translation/translation.js?v=v2026-10-18T06595";
-import { confirmModal } from "./modal.js?v=v2026-10-18T06595";
+import { promptModal } from "./modal.js?v=v2026-10-18T06595";
 import { icon } from "./icons.js?v=v2026-10-18T06595";
 import { initUiSelect } from "./ui-select.js?v=v2026-10-18T06595";
 import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-18T06595";
@@ -182,26 +182,16 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       input.focus();
       return;
     }
-    const modalInput = document.createElement("input");
-    modalInput.type = "search";
-    modalInput.className = "inp uni-inp";
-    modalInput.value = input.value;
-    modalInput.placeholder = t("common.searchByName");
-    modalInput.setAttribute("aria-label", t("common.searchByName"));
-    modalInput.setAttribute("enterkeyhint", "search");
-    const ok = await confirmModal({
+    const value = await promptModal({
       title: t("common.searchByName"),
-      text: "",
-      okText: t("common.modal.alertOk"),
-      cancelText: t("common.modal.confirmCancel"),
-      body: modalInput,
-      initialFocus: modalInput,
-      onReady: ({ okBtn }) => modalInput.addEventListener("keydown", (event) => {
+      value: input.value,
+      placeholder: t("common.searchByName"),
+      onReady: ({ overlay, okBtn }) => overlay.querySelector(".uni-inp")?.addEventListener("keydown", (event) => {
         if (event.key === "Enter") { event.preventDefault(); okBtn.click(); }
       }),
     });
-    if (ok) {
-      input.value = modalInput.value;
+    if (value !== null) {
+      input.value = value;
       apply();
     }
   });
