@@ -1343,7 +1343,7 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 | 2026-10-18 | Ankiety — oznaczenie pominiętych odpowiedzi | W obu typach ankiet pominięte odpowiedzi mają teraz delikatne czerwone tło i obrys zamiast szarego przygaszenia. Wiersz zachowuje pełną widoczność oraz aktywne akcje edycji i scalania. | `git diff --check`; bez testów aplikacji. Push na `main`. |
 
-| 2026-10-18 | Ankiety — suma głosów na kaflu pytania | Obok sumy punktów w każdym kaflu pytania pokazujemy łączną liczbę głosów w stonowanym szarym kolorze. W tekstowym podliczaniu liczba odświeża się wraz z edycją, scalaniem i usuwaniem odpowiedzi. | `node --check web/polls/js/poll-tally.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
+| 2026-10-18 | Ankiety — suma głosów na kaflu pytania | W każdym kaflu pytania łączna liczba głosów, w stonowanym szarym kolorze, stoi przed sumą punktów. W tekstowym podliczaniu liczba odświeża się wraz z edycją, scalaniem i usuwaniem odpowiedzi. | `node --check web/polls/js/poll-tally.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
 
 | 2026-10-18 | Ankiety — ograniczenie pracy przy edycji podliczania | Edycja aktualizuje się na klatkę animacji, ważność korzysta z wyniku już policzonego pytania, agregowanie dużych zestawów oddaje czas przeglądarce co 1000 wpisów, a scalanie/usuwanie odświeża tylko zmienione pytanie. Kafelki wchodzą jednocześnie, bez widocznego postępu i stopniowego pojawiania się. | `node --check web/polls/js/poll-tally.js`, `node --check web/polls/js/polls.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
 

@@ -78,8 +78,8 @@ export function createTally({ gameId, pollResults, ui }) {
       meta = mk("div", "tallyMeta on tallyMetaInstant");
       meta.innerHTML = `
         <span class="tallyCounter"></span>
-        <span class="tallySum"></span>
         <span class="tallyVotesTotal"></span>
+        <span class="tallySum"></span>
           <button class="btn xs tcMergeDup" type="button">${icon("merge")}<span></span></button>`;
       box.insertBefore(meta, slot.list);
     }
