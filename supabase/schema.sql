@@ -2600,100 +2600,56 @@ CREATE FUNCTION "public"."_poll_points_normalize"("p_game_id" "uuid") RETURNS "v
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-begin
-  -- policz głosy z ostatniej sesji per pytanie i ustaw fixed_points w answers
-  with last_sess as (
-    select distinct on (ps.question_id)
-      ps.question_id, ps.id as poll_session_id
-    from public.poll_sessions ps
-    where ps.game_id = p_game_id
-    order by ps.question_id, ps.created_at desc
-  ),
-  a as (
-    select q.id as question_id, an.id as answer_id, an.ord as aord
-    from public.questions q
-    join public.answers an on an.question_id = q.id
-    where q.game_id = p_game_id
-  ),
-  c as (
-    select
-      a.question_id,
-      a.answer_id,
-      a.aord,
-      coalesce(count(v.id), 0)::int as cnt
-    from a
-    left join last_sess ls on ls.question_id = a.question_id
-    left join public.poll_votes v
-      on v.poll_session_id = ls.poll_session_id
-     and v.answer_id = a.answer_id
-    group by a.question_id, a.answer_id, a.aord
-  ),
-  c_fixed as (
-    select question_id, answer_id, aord,
-      case when cnt = 0 then 1 else cnt end as cnt1
-    from c
-  ),
-  tot as (
-    select question_id, sum(cnt1)::int as total
-    from c_fixed
-    group by question_id
-  ),
-  raw as (
-    select
-      cf.question_id,
-      cf.answer_id,
-      cf.aord,
-      (100.0 * cf.cnt1 / nullif(t.total, 0)) as raw_p,
-      floor(100.0 * cf.cnt1 / nullif(t.total, 0))::int as base_floor,
-      (100.0 * cf.cnt1 / nullif(t.total, 0)) - floor(100.0 * cf.cnt1 / nullif(t.total, 0)) as frac
-    from c_fixed cf
-    join tot t on t.question_id = cf.question_id
-  ),
-  base as (
-    select question_id, answer_id, aord,
-      greatest(1, base_floor) as p0,
-      frac
-    from raw
-  ),
-  sum_base as (
-    select question_id, sum(p0)::int as s0
-    from base
-    group by question_id
-  ),
-  need as (
-    select b.*, (100 - sb.s0)::int as diff
-    from base b
-    join sum_base sb on sb.question_id = b.question_id
-  ),
-  ranked_plus as (
-    select n.*,
-      row_number() over (partition by question_id order by frac desc, aord asc) as rn_plus
-    from need n
-  ),
-  ranked_minus as (
-    select n.*,
-      row_number() over (partition by question_id order by p0 desc, frac asc, aord desc) as rn_minus
-    from need n
-    where p0 > 1
-  ),
-  final as (
-    select
-      n.question_id,
-      n.answer_id,
-      case
-        when n.diff > 0 then n.p0 + case when rp.rn_plus <= n.diff then 1 else 0 end
-        when n.diff < 0 then n.p0 - case when rm.rn_minus is not null and rm.rn_minus <= abs(n.diff) then 1 else 0 end
-        else n.p0
-      end as p_final
-    from need n
-    left join ranked_plus rp on rp.question_id = n.question_id and rp.answer_id = n.answer_id
-    left join ranked_minus rm on rm.question_id = n.question_id and rm.answer_id = n.answer_id
+BEGIN
+  WITH last_sess AS (
+    SELECT DISTINCT ON (ps.question_id)
+      ps.question_id, ps.id AS poll_session_id
+    FROM public.poll_sessions ps
+    WHERE ps.game_id = p_game_id
+    ORDER BY ps.question_id, ps.created_at DESC
+  ), answers AS (
+    SELECT q.id AS question_id, an.id AS answer_id, an.ord AS aord
+    FROM public.questions q
+    JOIN public.answers an ON an.question_id = q.id
+    WHERE q.game_id = p_game_id
+  ), counts AS (
+    SELECT a.question_id, a.answer_id, a.aord,
+      count(v.id)::bigint AS votes
+    FROM answers a
+    LEFT JOIN last_sess ls ON ls.question_id = a.question_id
+    LEFT JOIN public.poll_votes v
+      ON v.poll_session_id = ls.poll_session_id
+     AND v.answer_id = a.answer_id
+    GROUP BY a.question_id, a.answer_id, a.aord
+  ), totals AS (
+    SELECT question_id, sum(votes)::bigint AS total
+    FROM counts
+    GROUP BY question_id
+  ), shares AS (
+    SELECT c.question_id, c.answer_id, c.aord, c.votes, t.total,
+      CASE WHEN t.total > 0 THEN floor(100.0 * c.votes / t.total)::int ELSE 0 END AS base_points,
+      CASE WHEN t.total > 0 THEN (100 * c.votes) % t.total ELSE 0 END AS remainder,
+      CASE WHEN t.total > 0 THEN round(100.0 * c.votes / t.total)::int ELSE 0 END AS rounded_percent
+    FROM counts c
+    JOIN totals t USING (question_id)
+  ), ranked AS (
+    SELECT s.*,
+      100 - sum(s.base_points) OVER (PARTITION BY s.question_id) AS points_left,
+      row_number() OVER (PARTITION BY s.question_id ORDER BY s.remainder DESC, s.aord ASC) AS remainder_rank
+    FROM shares s
+  ), final_points AS (
+    SELECT question_id, answer_id,
+      CASE
+        WHEN total = 0 OR rounded_percent < 3 THEN 0
+        ELSE base_points + CASE WHEN remainder_rank <= points_left THEN 1 ELSE 0 END
+      END AS points
+    FROM ranked
   )
-  update public.answers aup
-  set fixed_points = f.p_final
-  from final f
-  where aup.id = f.answer_id;
-end;
+  UPDATE public.answers a
+  SET fixed_points = f.points
+  FROM final_points f
+  WHERE a.id = f.answer_id;
+END;
 $$;
 
 
@@ -3033,56 +2989,62 @@ CREATE FUNCTION "public"."_poll_text_tally_points"("p_answers" "jsonb") RETURNS 
     AS $$
 DECLARE
   r record;
-  v_used integer[] := ARRAY[]::integer[];
-  v_p integer;
-  v_n integer := 0;
+  used_points integer[] := ARRAY[]::integer[];
+  p integer;
+  n integer := 0;
 BEGIN
   IF jsonb_typeof(p_answers) IS DISTINCT FROM 'array' THEN
     RETURN;
   END IF;
 
   FOR r IN
-    WITH c AS (
-      SELECT min(s.idx) AS idx,
-             (array_agg(s.txt ORDER BY s.idx))[1] AS txt,
-             sum(s.cnt)::bigint AS cnt
+    WITH grouped AS (
+      SELECT min(src.idx) AS idx,
+        (array_agg(src.txt ORDER BY src.idx))[1] AS txt,
+        sum(src.cnt)::bigint AS cnt
       FROM (
         SELECT x.i::integer AS idx,
-               left(btrim(coalesce(x.v->>'text', '')), 17) AS txt,
-               CASE WHEN jsonb_typeof(x.v->'count') = 'number'
-                    THEN greatest(0, floor((x.v->>'count')::numeric))::bigint ELSE 0 END AS cnt
+          left(btrim(coalesce(x.v->>'text', '')), 17) AS txt,
+          CASE WHEN jsonb_typeof(x.v->'count') = 'number'
+            THEN greatest(0, floor((x.v->>'count')::numeric))::bigint ELSE 0 END AS cnt
         FROM jsonb_array_elements(p_answers) WITH ORDINALITY AS x(v, i)
-      ) s
-      WHERE s.txt <> '' AND s.cnt > 0
-      GROUP BY lower(s.txt)
-    ),
-    f AS (
-      SELECT c.idx, c.txt,
-             ((100 * c.cnt) / t.total)::integer AS fl,
-             (100 * c.cnt) % t.total AS rem
-      FROM c CROSS JOIN (SELECT sum(cnt) AS total FROM c) t
-    ),
-    d AS (
-      SELECT f.*, 100 - sum(f.fl) OVER () AS diff,
-             row_number() OVER (ORDER BY f.rem DESC, f.idx) AS fidx
-      FROM f
+      ) src
+      WHERE src.txt <> '' AND src.cnt > 0
+      GROUP BY lower(src.txt)
+    ), shares AS (
+      SELECT g.idx, g.txt, g.cnt,
+        floor(100.0 * g.cnt / totals.total)::integer AS base_points,
+        (100 * g.cnt) % totals.total AS remainder,
+        round(100.0 * g.cnt / totals.total)::integer AS rounded_percent
+      FROM grouped g
+      CROSS JOIN (SELECT sum(cnt) AS total FROM grouped) totals
+    ), ranked AS (
+      SELECT shares.*,
+        100 - sum(base_points) OVER () AS points_left,
+        row_number() OVER (ORDER BY remainder DESC, idx ASC) AS remainder_rank
+      FROM shares
     )
-    SELECT d.txt, d.fl + CASE WHEN d.fidx <= d.diff THEN 1 ELSE 0 END AS pts, d.fidx
-    FROM d
-    WHERE d.fl + CASE WHEN d.fidx <= d.diff THEN 1 ELSE 0 END >= 3
-    ORDER BY 2 DESC, d.fidx
+    SELECT txt,
+      base_points + CASE WHEN remainder_rank <= points_left THEN 1 ELSE 0 END AS pts,
+      remainder_rank
+    FROM ranked
+    WHERE rounded_percent >= 3
+    ORDER BY 2 DESC, remainder_rank
     LIMIT 6
   LOOP
-    v_p := r.pts;
-    WHILE v_p > 0 AND v_p = ANY(v_used) LOOP
-      v_p := v_p - 1;
+    p := r.pts;
+    WHILE p > 0 AND p = ANY(used_points) LOOP
+      p := p - 1;
     END LOOP;
-    v_used := v_used || v_p;
-    v_n := v_n + 1;
-    ord := v_n; atext := r.txt; points := v_p;
+    used_points := used_points || p;
+    n := n + 1;
+    ord := n;
+    atext := r.txt;
+    points := p;
     RETURN NEXT;
   END LOOP;
-END $$;
+END;
+$$;
 
 
 --

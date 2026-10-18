@@ -54,7 +54,8 @@ body.pollpub-body .sub {
 }
 
 .qbox {
-    margin-top: 14px
+    margin-top: 14px;
+    scroll-margin-top: calc(var(--topbar-h, 0px) + 14px)
 }
 
 .qtext {

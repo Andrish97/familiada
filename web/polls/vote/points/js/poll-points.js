@@ -363,6 +363,7 @@ function render() {
         // przejście do następnego pytania
         idx++;
         render();
+        requestAnimationFrame(() => qbox?.scrollIntoView({ behavior: "smooth", block: "start" }));
       });
 
       alist.appendChild(b);

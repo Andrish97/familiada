@@ -480,6 +480,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         idx++;
         render();
+        requestAnimationFrame(() => qbox?.scrollIntoView({ behavior: "smooth", block: "start" }));
       } catch (e) {
         console.error("[poll-text] pack error:", e);
         setSub(MSG.error(e?.message || e));

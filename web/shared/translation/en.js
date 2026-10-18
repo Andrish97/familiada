@@ -1006,12 +1006,12 @@ const en = {
       },
       tallyPoints: {
         title: "Count the votes?",
-        text: "Points will be normalized to a sum of 100 in each question, and links and invitations will expire. The game will be ready.",
+        text: "Points are based on all votes. Answers below 3% after rounding will be skipped. Links and invitations will expire.",
         ok: "Approve",
       },
       tallyText: {
         title: "Approve the answers?",
-        text: "The answers will be saved with points (sum of 100 in each question), and links and invitations will expire. The game will be ready.",
+        text: "Answers will be saved with points. Shares are based on all votes; answers below 3% after rounding are skipped.",
         ok: "Approve",
       },
       reopen: {
@@ -1042,11 +1042,13 @@ const en = {
     },
     tally: {
       loading: "Loading answers…",
-      hintText: "Drag an answer onto another to merge them. Click the text to fix a typo. Answers are at most 17 characters.",
-      hintPoints: "Votes converted to points (sum of 100 in each question). Approve to finish the poll.",
+      hintText: "Share is based on all votes. Below 3% after rounding is skipped (gray row). Drag an answer onto another to merge; click its text to fix a typo. Max 17 characters.",
+        hintPoints: "Votes converted to points from all votes. Below 3% after rounding is skipped (gray row).",
       counter: "Answers: {n} (3–6 required)",
       sum: "sum: {n}",
       votes: "{n} v.",
+      votesPercent: "{n} v. · {pct}%",
+      skippedTitle: "Skipped: {pct}% of all votes (below 3%).",
       mergeDup: "Merge duplicates",
       mergeWith: "Merge with…",
       remove: "Remove",

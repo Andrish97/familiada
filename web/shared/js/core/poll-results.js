@@ -136,7 +136,11 @@ export function createPollResults(listEl) {
       if (mode === "final") {
         for (const a of q.answers || []) {
           const r = slot.rows.get(a.id);
-          if (r) setRowValue(r, Number(a.fixed_points) || 0, Number(a.fixed_points) || 0);
+          if (r) {
+            const points = Number(a.fixed_points) || 0;
+            setRowValue(r, points, points);
+            r.row.classList.toggle("tallySkipped", points === 0);
+          }
         }
       } else if (mode === "points") {
         const answers = q.answers || [];

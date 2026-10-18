@@ -4,9 +4,9 @@ import { pointsPollPreview, textTallyPoints } from "../../web/shared/js/core/pol
 
 const sum = (a) => a.reduce((s, x) => s + x, 0);
 
-test("punktowa: zero głosów liczy się jak jeden, suma zawsze 100", () => {
+test("punktowa: udziały liczą się tylko z oddanych głosów, próg ukrywa punkty poniżej 3%", () => {
   const out = pointsPollPreview([0, 0, 0, 0]);
-  assert.deepEqual(out, [25, 25, 25, 25]);
+  assert.deepEqual(out, [0, 0, 0, 0]);
   assert.equal(sum(pointsPollPreview([8, 6, 4, 2])), 100);
   assert.equal(sum(pointsPollPreview([1, 1, 1])), 100);
 });
@@ -17,14 +17,13 @@ test("punktowa: największe reszty, remis reszt wygrywa niższy numer odpowiedzi
   assert.deepEqual(pointsPollPreview([10, 5, 5]), [50, 25, 25]);
 });
 
-test("punktowa: minimum 1 punkt, nadwyżkę zabierają największe", () => {
+test("punktowa: odpowiedzi bez istotnego udziału nie dostają punktów", () => {
   const out = pointsPollPreview([1000, 1, 1]);
   assert.equal(sum(out), 100);
-  assert.ok(out.every((p) => p >= 1), JSON.stringify(out));
-  assert.deepEqual(out, [98, 1, 1]);
+  assert.deepEqual(out, [100, 0, 0]);
 });
 
-test("tekstowa: punkty do 100, odpowiedzi >= 3 pkt, najwyżej 6", () => {
+test("tekstowa: udziały dają punkty, odpowiedzi < 3% są pomijane, najwyżej 6", () => {
   const out = textTallyPoints([
     { text: "Pizza", count: 8 },
     { text: "Kotek", count: 6 },
@@ -49,7 +48,7 @@ test("tekstowa: duplikaty sumowane bez względu na wielkość liter, tekst przyc
   assert.equal(out[1].text.length, 17);
 });
 
-test("tekstowa: odpowiedzi poniżej 3 pkt odpadają, remisy punktów rozbijane w dół", () => {
+test("tekstowa: próg 3% od zaokrąglonego udziału i remisy punktów rozbijane w dół", () => {
   // 50 / 50 -> remis 50, drugi dostaje 49
   const tie = textTallyPoints([{ text: "A", count: 1 }, { text: "B", count: 1 }]);
   assert.deepEqual(tie.map((o) => o.points), [50, 49]);

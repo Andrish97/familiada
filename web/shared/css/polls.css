@@ -413,18 +413,30 @@
   pointer-events: none;
   transition: max-width .45s ease, opacity .35s ease;
 }
-.resultQ .aList.tally .aRow{ padding-left: 6px; padding-right: 6px; }
+.resultQ .aList.tally .aRow{ min-height: 46px; height: auto; gap: 6px; padding: 3px 8px; }
 .resultQ .aList.tally .tcHandle{ max-width: 24px; opacity: .65; pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
 .resultQ .aList.tally .tcHandle:active{ cursor: grabbing; }
-.resultQ .aList.tally .tcCnt{ max-width: 80px; opacity: .6; font-size: 11px; white-space: nowrap; text-align: right; }
-.resultQ .aList.tally .tcBtn{ max-width: 34px; opacity: .85; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 28px; border-radius: 8px; }
+.resultQ .aList.tally .tcCnt{ max-width: 112px; opacity: .82; font-size: 11px; white-space: nowrap; text-align: right; margin-left: auto; }
+.resultQ .aList.tally .tcBtn{ width: 40px; height: 40px; max-width: 42px; padding: 0; opacity: 1; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.055); border-radius: 10px; }
+.resultQ .aList.tally .tcMergeBtn{ margin-left: 6px; }
+.resultQ .aList.tally .tcDel{ margin-left: 3px; }
 .resultQ .aList.tally .tcBtn:hover{ background: rgba(255,255,255,.1); }
 .resultQ .aList.tally .tcDel:hover{ background: rgba(255,120,120,.18); }
 /* „Połącz z…” tylko na dotyku; na komputerze działa przeciąganie */
 @media (hover: hover) and (pointer: fine){
   .resultQ .aList.tally .tcMergeBtn{ max-width: 0; opacity: 0; pointer-events: none; }
 }
-.resultQ .aList.tally .aTxt{ display: none; }
+.resultQ .aList.tallyText .aTxt{ display: none; }
+.resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
+.resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
+.resultQ .aRow.tallySkipped{ opacity: .56; border-color: rgba(190,196,208,.19); background: rgba(190,196,208,.075); }
+.resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, rgba(190,196,208,.08), rgba(190,196,208,.18)); }
+.resultQ .aRow.tallySkipped .aTxt,
+.resultQ .aRow.tallySkipped .aVal{ color: #aab0bd; }
+.resultQ .aList.tallyFast .aBar{ transition: none; }
+.resultQ .aRow.merge-src .tcMergeBtn,
+.resultQ .tcMergeBtn[aria-pressed="true"]{ border-color: rgba(255,234,166,.95); background: rgba(255,234,166,.2); color: var(--gold); box-shadow: 0 0 0 2px rgba(255,234,166,.16); }
+.resultQ .tcMergeBtn[aria-pressed="true"]{ transform: scale(1.06); }
 .resultQ .aTxtInp{
   position: relative;
   flex: 1 1 auto;

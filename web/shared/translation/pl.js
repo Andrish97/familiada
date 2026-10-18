@@ -1020,12 +1020,12 @@ const pl = {
       },
       tallyPoints: {
         title: "Podliczyć głosy?",
-        text: "Punkty zostaną przeliczone do sumy 100 w każdym pytaniu, a linki i zaproszenia wygasną. Gra będzie gotowa.",
+        text: "Punkty będą liczone od wszystkich głosów. Odpowiedzi z udziałem poniżej 3% po zaokrągleniu zostaną pominięte. Linki i zaproszenia wygasną.",
         ok: "Zatwierdź",
       },
       tallyText: {
         title: "Zatwierdzić odpowiedzi?",
-        text: "Zostaną zapisane odpowiedzi z punktami (suma 100 w każdym pytaniu), a linki i zaproszenia wygasną. Gra będzie gotowa.",
+        text: "Zostaną zapisane odpowiedzi z punktami. Udział liczymy od wszystkich głosów; odpowiedzi poniżej 3% po zaokrągleniu są pomijane.",
         ok: "Zatwierdź",
       },
       reopen: {
@@ -1056,11 +1056,13 @@ const pl = {
     },
     tally: {
       loading: "Ładuję odpowiedzi…",
-      hintText: "Przeciągnij odpowiedź na inną, żeby je połączyć. Kliknij tekst, żeby poprawić literówkę. Odpowiedzi mają maksymalnie 17 znaków.",
-      hintPoints: "Głosy przeliczone na punkty (suma 100 w każdym pytaniu). Zatwierdź, żeby zakończyć ankietę.",
+      hintText: "Udział liczony od wszystkich głosów. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz). Przeciągnij odpowiedź na inną, żeby je połączyć; kliknij tekst, żeby poprawić literówkę. Maks. 17 znaków.",
+      hintPoints: "Głosy przeliczone na punkty od wszystkich odpowiedzi. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz).",
       counter: "Odpowiedzi: {n} (wymagane 3–6)",
       sum: "suma: {n}",
       votes: "{n} gł.",
+      votesPercent: "{n} gł. · {pct}%",
+      skippedTitle: "Pominięta: {pct}% wszystkich głosów (poniżej 3%).",
       mergeDup: "Scal identyczne",
       mergeWith: "Połącz z…",
       remove: "Usuń",
