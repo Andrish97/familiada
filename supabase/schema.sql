@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aW89y7YAkb0IUK1WxhJnvHCUV6DOTUFesx1vQCz87yKaP5tZs4uO7MFbNm7muyx
+\restrict 3FAym1Rqz9B6acfbbSx8okJwsHeHT2B6CflZXtPVprNLxuKHN6dnUUlgEerLH3n
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -12731,7 +12731,8 @@ CREATE FUNCTION "public"."market_game_by_slug"("p_slug" "text") RETURNS TABLE("i
     mg.slug
   FROM public.market_games mg
   LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
-  WHERE mg.slug = p_slug AND mg.status = 'published';
+  WHERE mg.slug = p_slug
+    AND (mg.status = 'published' OR mg.author_user_id = auth.uid());
 $$;
 
 
@@ -24928,5 +24929,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aW89y7YAkb0IUK1WxhJnvHCUV6DOTUFesx1vQCz87yKaP5tZs4uO7MFbNm7muyx
+\unrestrict 3FAym1Rqz9B6acfbbSx8okJwsHeHT2B6CflZXtPVprNLxuKHN6dnUUlgEerLH3n
 
