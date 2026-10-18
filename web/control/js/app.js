@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-18T14470";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-18T15231";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,20 +7,20 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T14470";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T14470";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-18T14470";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-18T14470";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T14470";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T14470";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-18T14470";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-18T14470";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-18T14470";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-18T14470";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T14470";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-18T14470";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-18T14470";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T14470";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T15231";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T15231";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-18T15231";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-18T15231";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T15231";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T15231";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-18T15231";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-18T15231";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-18T15231";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-18T15231";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T15231";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-18T15231";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-18T15231";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T15231";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -109,22 +109,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-18T14470";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-18T14470";
-import { createEngine } from "./engine.js?v=v2026-10-18T14470";
-import { createActionGate } from "./actionGate.js?v=v2026-10-18T14470";
-import { createDevices } from "./devices.js?v=v2026-10-18T14470";
-import { createPresence } from "./presence.js?v=v2026-10-18T14470";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-18T14470";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-18T14470";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-18T14470";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-18T14470";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-18T14470";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-18T14470";
-import { createUI } from "./ui.js?v=v2026-10-18T14470";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-18T14470";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-18T14470";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T14470";
+import { createStore } from "./store.js?v=v2026-10-18T15231";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-18T15231";
+import { createEngine } from "./engine.js?v=v2026-10-18T15231";
+import { createActionGate } from "./actionGate.js?v=v2026-10-18T15231";
+import { createDevices } from "./devices.js?v=v2026-10-18T15231";
+import { createPresence } from "./presence.js?v=v2026-10-18T15231";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-18T15231";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-18T15231";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-18T15231";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-18T15231";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-18T15231";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-18T15231";
+import { createUI } from "./ui.js?v=v2026-10-18T15231";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-18T15231";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-18T15231";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T15231";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -403,7 +403,15 @@ async function main() {
   let displayUnlockRequestPending = false;
   let refreshDisplayPresence = null;
   let controlOffline = !navigator.onLine;
+  let controlUIReady = false;
   let presenceUnavailable = false;
+  let presenceFailureStartedAt = null;
+  let presenceFailureSource = null;
+  let presenceMetadataFailureStartedAt = null;
+  // renderCurrent can run from early async callbacks before the timer-watch
+  // factories below are initialized. Keep those calls safe during bootstrap.
+  let scheduleFinalTimerWatch = () => {};
+  let scheduleTimer3Watch = () => {};
   let disconnectEpisode = false;
   let lastDisconnectState = "";
   const browserContextId = getGameBrowserContextId(gameId);
@@ -669,6 +677,24 @@ async function main() {
   function presenceReadBlocksGame() { return presenceUnavailable && store.state.locks.gameStarted && !store.state.locks.gameEnded; }
   function busy() { return testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
+  function recoverLeaseStatusRead() {
+    if (!presenceUnavailable) return false;
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "connectivity",
+      message: "Control odzyskał odczyt statusu urządzeń.",
+      devices: ["control"],
+      metrics: {
+        phase: "recovered", source: presenceFailureSource,
+        duration_ms: presenceFailureStartedAt == null ? null : Math.max(0, Date.now() - presenceFailureStartedAt),
+      },
+    });
+    presenceFailureStartedAt = null;
+    presenceFailureSource = null;
+    presenceUnavailable = false;
+    requestDisplayAudioUnlock();
+    return true;
+  }
+
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
   // 264) faktycznie ustawi WŁASNY `locked_until` -- `store.setLock(ms)` to
@@ -870,8 +896,9 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, deviceDiagnostics, error }) => {
+    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, deviceDiagnostics, error, errorSource }) => {
       const previous = presenceFlags;
+      let leaseReadRecovered = false;
       const displayAudioWasUnlocked = displayAudioUnlocked === true;
       const displayReconnected = !previous.display && flags.display === true;
       const displayAudioSessionReset = previous.display === true && flags.display === true
@@ -901,15 +928,62 @@ async function main() {
         }
       }
       if (error) {
-        if (!presenceUnavailable) void sessionTelemetry.report({ kind: "error", message: "Nie można odczytać statusu urządzeń." });
-        presenceUnavailable = true;
-        renderCurrent();
-        return;
+        if (errorSource === "device_presence") {
+          if (presenceMetadataFailureStartedAt == null) {
+            presenceMetadataFailureStartedAt = Date.now();
+            void sessionTelemetry.report({
+              kind: "diagnostic", category: "connectivity",
+              message: "Control nie może odczytać dodatkowych danych obecności; status lease urządzeń nadal działa.",
+              devices: ["control"],
+              metrics: {
+                phase: "metadata_read_error", source: "device_presence",
+                error_name: String(error?.name || "Error").slice(0, 80),
+                error_code: String(error?.code || "").slice(0, 80) || null,
+                http_status: Number.isFinite(error?.status) ? error.status : null,
+                gameplay_blocked: false,
+              },
+            });
+          }
+          // A successful lease read is enough to restore safe game actions,
+          // even while supplemental presence metadata remains unavailable.
+          leaseReadRecovered = recoverLeaseStatusRead();
+        } else {
+          if (!presenceUnavailable) {
+            presenceFailureStartedAt = Date.now();
+            presenceFailureSource = errorSource || "status_read";
+            void sessionTelemetry.report({
+              kind: "diagnostic", category: "connectivity",
+              message: "Control utracił możliwość odczytu statusu urządzeń; akcje gry są chwilowo blokowane.",
+              devices: ["control"],
+              metrics: {
+                phase: "read_error", source: presenceFailureSource,
+                error_name: String(error?.name || "Error").slice(0, 80),
+                error_code: String(error?.code || "").slice(0, 80) || null,
+                http_status: Number.isFinite(error?.status) ? error.status : null,
+              },
+            });
+          }
+          presenceUnavailable = true;
+          renderCurrent();
+          return;
+        }
+      } else if (presenceMetadataFailureStartedAt != null) {
+        void sessionTelemetry.report({
+          kind: "diagnostic", category: "connectivity",
+          message: "Control odzyskał dodatkowe dane obecności; status lease urządzeń nie przestał działać.",
+          devices: ["control"],
+          metrics: {
+            phase: "metadata_recovered", source: "device_presence",
+            duration_ms: Math.max(0, Date.now() - presenceMetadataFailureStartedAt),
+            gameplay_blocked: false,
+          },
+        });
+        presenceMetadataFailureStartedAt = null;
       }
-      else if (presenceUnavailable) {
-        presenceUnavailable = false;
-        requestDisplayAudioUnlock();
-      } else if ((displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
+      if (!error && presenceUnavailable) {
+        leaseReadRecovered = recoverLeaseStatusRead();
+      }
+      if (!leaseReadRecovered && !error && (displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
         // A Display that reconnects during a game needs a fresh browser gesture
         // even if it reported an unlock before disconnecting. Send a new nonce
         // so its button returns and keep Control actions gated until it replies.
@@ -1071,8 +1145,10 @@ async function main() {
       }, Math.max(0, endsAt - Date.now()));
     };
   }
-  const scheduleFinalTimerWatch = makeTimerWatch(() => store.state.final?.runtime?.timer, "EXPIRE_TIMER");
-  const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
+  scheduleFinalTimerWatch = makeTimerWatch(() => store.state.final?.runtime?.timer, "EXPIRE_TIMER");
+  scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
+  scheduleFinalTimerWatch();
+  scheduleTimer3Watch();
 
   function renderCtx() {
     const ended = !!store.state.locks.gameEnded;
@@ -1095,6 +1171,9 @@ async function main() {
   }
 
   function renderCurrent() {
+    // Network/audio callbacks may resolve while main() is still awaiting the
+    // last bootstrap reads. The final render below covers their latest state.
+    if (!controlUIReady) return;
     document.body.dataset.controlStep = store.state.step;
     reportRealtimeSnapshots();
     if (store.state.locks.gameEnded) connectivityTracker.flush();
@@ -1683,6 +1762,7 @@ async function main() {
   // żadnego widocznego błędu).
   btnStartOver?.addEventListener("click", () => { handle("game.restart"); });
 
+  controlUIReady = true;
   store.subscribe(renderCurrent);
   completionUIReady = true;
   void refreshDisplayCompletion();

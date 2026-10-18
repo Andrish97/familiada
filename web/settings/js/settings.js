@@ -12,16 +12,16 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T14470";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T14470";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T14470";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T14470";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T14470";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T14470";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T14470";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T14470";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T14470";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-18T14470";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T15231";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T15231";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T15231";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T15231";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T15231";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T15231";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T15231";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T15231";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T15231";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-18T15231";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -31,14 +31,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-18T14470";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-18T15231";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-18T14470";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-18T14470";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-18T14470";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-18T15231";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-18T15231";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-18T15231";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-18T14470";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-18T15231";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -1043,8 +1043,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T14470"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-18T14470"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T15231"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-18T15231"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -5378,6 +5378,32 @@ function buildSessionRunDetails(r) {
       const metrics = event.metrics || {};
       const devices = (event.devices || []).map(kind => names[kind] || kind).join(", ") || "Urządzenie";
       if (event.category === "connectivity") {
+        if (metrics.phase === "metadata_read_error") {
+          const error = metrics.error_code || metrics.http_status || metrics.error_name;
+          return {
+            title: "Dodatkowe dane obecności niedostępne",
+            detail: `Control nie odczytał device_presence${error ? ` (${error})` : ""}; lease urządzeń działał, akcje gry nie były blokowane.`,
+          };
+        }
+        if (metrics.phase === "metadata_recovered") {
+          return {
+            title: "Dodatkowe dane obecności wróciły",
+            detail: `Odczyt device_presence wznowił się po ${formatDuration(metrics.duration_ms)}; akcje gry nie były blokowane.`,
+          };
+        }
+        if (metrics.phase === "read_error") {
+          const error = metrics.error_code || metrics.http_status || metrics.error_name;
+          return {
+            title: "Control nie może potwierdzić statusu lease",
+            detail: `Odczyt ${metrics.source === "lease_status" ? "control_device_slots_for_owner" : "statusu urządzeń"} nie powiódł się${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu.`,
+          };
+        }
+        if (metrics.phase === "recovered") {
+          return {
+            title: "Control odzyskał status lease",
+            detail: `Odczyt statusu wrócił po ${formatDuration(metrics.duration_ms)}; akcje gry mogą być kontynuowane.`,
+          };
+        }
         const details = [`Blokada: ${formatDuration(metrics.blocked_duration_ms)}`];
         if (metrics.repeated_drops) details.push(`ponowne zaniki: ${metrics.repeated_drops}`);
         if (metrics.blocked_action_attempts) details.push(`próby akcji podczas blokady: ${metrics.blocked_action_attempts}`);
@@ -6574,7 +6600,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-18T14470");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-18T15231");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
