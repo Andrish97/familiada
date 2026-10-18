@@ -474,6 +474,9 @@ details[open] .faq-q .faq-caret {
 @media (max-width: 600px) {
   body.sheet-open .pipeline-wrap { display: none !important; }
   .imgv-overlay.sheet-active {
+    /* Jako element flex nie może zachować z-indexu nakładki: przykrywał
+       topbar, przez co nagłówek zachodził na niego, a Wstecz nie klikał. */
+    z-index: auto !important;
     padding: 0;
     margin-left: calc(-1 * max(15px, env(safe-area-inset-left)));
     margin-right: calc(-1 * max(15px, env(safe-area-inset-right)));
@@ -483,12 +486,13 @@ details[open] .faq-q .faq-caret {
     flex: 0 0 auto;
     width: 100%;
   }
-  .imgv-overlay.sheet-active .imgv-top {
+  .imgv-overlay.modal--sheet.sheet-active .imgv-top {
     position: static;
     height: auto;
-    padding: 0 0 12px;
+    padding: 0 0 8px;
     margin: 0;
-    background: none;
+    background: none !important;
+    border: 0 !important;
     pointer-events: auto;
   }
   .imgv-overlay.sheet-active .sheet-modal-body {
