@@ -531,11 +531,15 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.locator("#btnSaveAll").click();
       await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30_000 });
 
-      const devices = await createGameplayDevices(browser, page, games[0].id);
-      gameplayDeviceContexts = devices.contexts;
       await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
       await page.getByRole("button", { name: /^(Dalej|Next|Далі)$/ }).click();
+      await expect(page.locator(".stepTitle")).toContainText(/Podsumowanie|Summary|Підсумок/, { timeout: 30_000 });
+      // The Control setup wizard issues its own device links while building
+      // the summary. Create/open the linked devices only after that step, so
+      // their runtime keys are the current ones when gameplay starts.
+      const devices = await createGameplayDevices(browser, page, games[0].id);
+      gameplayDeviceContexts = devices.contexts;
       const ready = page.getByRole("button", { name: /^(Gotowe — przejdź do rozgrywki|Done — start the game|Готово — почати гру)$/ });
       await expect(ready).toBeEnabled({ timeout: 20_000 });
       await ready.click();
