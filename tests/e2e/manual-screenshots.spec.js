@@ -288,7 +288,7 @@ async function createGameplayDevices(browser, gameId, keys) {
     const deviceContext = await browser.newContext({ serviceWorkers: "block", locale: LANGUAGE === "uk" ? "uk-UA" : LANGUAGE === "en" ? "en-US" : "pl-PL", viewport: type === "display" ? { width: 1600, height: 900 } : { width: 1365, height: 768 } });
     contexts.push(deviceContext);
     await deviceContext.addInitScript(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
-    if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(deviceContext, { pages: [`control/${type}`] });
+    if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(deviceContext, { pages: ["go", `control/${type}`] });
     const devicePage = await deviceContext.newPage();
     devicePage.setDefaultTimeout(20_000);
     // Use the same link the Control screen gives to a player. `/go/` resolves
@@ -529,11 +529,17 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       page.on("response", captureDeviceKey);
       await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
+      // Reset through the same Control action an operator uses before a fresh
+      // run. This also clears a leftover state if a previous capture stopped
+      // midway through a game.
+      await page.locator("#btnStartOver").click();
+      await page.getByRole("button", { name: /^(Tak|Yes|Так)$/ }).click();
+      await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 15_000 });
       // Keep this fixture on the Control sound source. The separate Display
       // remains a real device in the scene, while it avoids a second audio
       // gesture when the test later reloads it into the active game state.
       const controlSound = page.locator('.toggle-item:has(input[name="soundSource"][value="control"])');
-      await controlSound.click();
+      if (!(await controlSound.locator("input").isChecked())) await controlSound.click();
       await expect(controlSound.locator('input')).toBeChecked();
       // Let Control create its runtime session first, then open its linked
       // devices and wait until they report as available to the setup screen.
@@ -541,11 +547,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       page.off("response", captureDeviceKey);
       const devices = await createGameplayDevices(browser, games[0].id, deviceKeys);
       gameplayDeviceContexts = devices.contexts;
-      const audioUnlock = devices.pages.display.locator("#btnAudioUnlock");
-      if (await audioUnlock.isVisible().catch(() => false)) {
-        await audioUnlock.click();
-        await expect(audioUnlock).toBeHidden({ timeout: 15_000 });
-      }
+      // With sound on Control, Display must not ask for an audio gesture.
+      await expect(devices.pages.display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 15_000 });
       const nextSetup = page.getByRole("button", { name: /^(Dalej|Next|Далі)$/ });
       await expect(nextSetup).toBeEnabled({ timeout: 30_000 });
       await nextSetup.click();
