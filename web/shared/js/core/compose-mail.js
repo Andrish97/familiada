@@ -1,4 +1,4 @@
-import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-18T16284";
+import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-18T16304";
 
 // Podgląd i wysyłka korzystają z tego samego dokumentu oraz podpisu.
 export function buildComposeMailHtml({ lang, subject, bodyHtml, quote = '', greeting = '', farewell = '' }) {
