@@ -281,20 +281,7 @@ async function prepareMainDisplayFixture(browser, language) {
   }
 }
 
-async function createGameplayDevices(browser, ownerPage, gameId) {
-  const keys = await ownerPage.evaluate(async gameId => {
-    const { data: session, error: sessionError } = await window.__sbClient.rpc("control_runtime_session_touch", {
-      p_game_id: gameId, p_session_id: null
-    });
-    if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Could not start screenshot game session");
-    const result = {};
-    for (const type of ["display", "host", "buzzer"]) {
-      const { data, error } = await window.__sbClient.rpc("control_runtime_device_link", { p_game_id: gameId, p_device_type: type });
-      if (error || !data?.ok) throw new Error(error?.message || data?.error || `Could not link screenshot ${type}`);
-      result[type] = data.token;
-    }
-    return result;
-  }, gameId);
+async function createGameplayDevices(browser, gameId, keys) {
   const contexts = [];
   const pages = {};
   for (const type of ["display", "host", "buzzer"]) {
@@ -531,12 +518,24 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.locator("#btnSaveAll").click();
       await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30_000 });
 
+      const deviceKeys = {};
+      const captureDeviceKey = async response => {
+        if (!response.url().includes("/rpc/control_runtime_device_link")) return;
+        try {
+          const type = response.request().postDataJSON()?.p_device_type;
+          const result = await response.json();
+          if (result?.ok && result.token && ["display", "host", "buzzer"].includes(type)) deviceKeys[type] = result.token;
+        } catch { /* ignore unrelated/aborted responses */ }
+      };
+      page.on("response", captureDeviceKey);
       await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
       // Let Control create its runtime session first, then open its linked
       // devices. The live Display may ask for a click to enable its audio;
       // completing that prompt is part of the normal setup flow.
-      const devices = await createGameplayDevices(browser, page, games[0].id);
+      await expect.poll(() => Object.keys(deviceKeys).length, { timeout: 30_000 }).toBe(3);
+      page.off("response", captureDeviceKey);
+      const devices = await createGameplayDevices(browser, games[0].id, deviceKeys);
       gameplayDeviceContexts = devices.contexts;
       const audioUnlock = devices.pages.display.locator("#btnAudioUnlock");
       if (await audioUnlock.isVisible().catch(() => false)) {
