@@ -193,10 +193,6 @@ async function prepareDevicePreviewFixture(browser, language, device, special = 
     await page.waitForFunction(() => window.previewReady === true, null, { timeout: 30_000 });
     const frame = page.frames().find(item => item.url().includes(`/control/${device}/`) && item.url().includes("preview=1"));
     if (!frame) throw new Error(`Could not load ${device} preview frame on main`);
-    await frame.evaluate(() => {
-      window.__manualDisplayDone = false;
-      window.addEventListener("familiada:preview-rendered", () => { window.__manualDisplayDone = true; }, { once: true });
-    });
     const data = COPY[language];
     const row = {
       rev: 1, step: "r_play", phase: "PLAY", top_card: "rounds", control_team: null,
@@ -213,7 +209,7 @@ async function prepareDevicePreviewFixture(browser, language, device, special = 
       }
     };
     await page.evaluate(row => document.getElementById("devicePreview").contentWindow.postMessage({ type: "familiada:preview-row", row }, location.origin), row);
-    if (device === "display") await frame.waitForFunction(() => window.__manualDisplayDone === true, null, { timeout: 30_000 });
+    if (device === "display") await page.waitForTimeout(1_600); // main Display's passive renderer has no completion event.
     else await expect(frame.locator("#paperText1")).toContainText(data.question, { timeout: 30_000 });
     return { context, page, frame };
   } catch (error) { await context.close(); throw error; }
@@ -278,7 +274,8 @@ test(`manual screenshots from main with local fixtures (${LANGUAGE})`, async ({ 
       const ui = createUI({ root: document.querySelector("#app"), emit: () => {} });
       ui.render(state, { presenceFlags: { display: true, host: true, buzzer: false }, busy: false, typingPending: false, devicesBlocked: false });
     }, { language: LANGUAGE, data, finale });
-    await expect(page.locator(finale ? ".c2-entryrows .c2-entryrow" : ".c2-stepper-question")).toBeVisible();
+    if (finale) await expect(page.locator(".c2-entryrows .c2-entryrow")).toHaveCount(5);
+    else await expect(page.locator(".c2-stepper-question")).toBeVisible();
   });
   const roundError = await gameplay("gameplay-control"); if (roundError) errors.push(roundError);
   const finaleError = await gameplay("gameplay-finale", true); if (finaleError) errors.push(finaleError);
@@ -292,14 +289,14 @@ test(`manual screenshots from main with local fixtures (${LANGUAGE})`, async ({ 
       });
       if (error) errors.push(error);
       await fixture.context.close();
-    } catch (error) { errors.push(error); }
+    } catch (error) { console.error(`[manual-screenshot] failed ${LANGUAGE}/gameplay-${device}: ${error.message}`); errors.push(error); }
   }
   if (LANGUAGE === "pl") {
     try {
       const fixture = await prepareDevicePreviewFixture(browser, LANGUAGE, "display", true);
       await take(fixture.page, testInfo, "main-display", async () => expect(fixture.frame.locator("#gameScreen")).toBeVisible());
       await fixture.context.close();
-    } catch (error) { errors.push(error); }
+    } catch (error) { console.error(`[manual-screenshot] failed ${LANGUAGE}/main-display: ${error.message}`); errors.push(error); }
   }
   await mobileContext.close();
   if (errors.length) throw new Error(`${errors.length} screenshot scene(s) failed; successful captures remain available as artifacts.`);
