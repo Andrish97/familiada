@@ -315,7 +315,7 @@ async function prepareDevicePreviewFixture(browser, language, device = "display"
         teams: { teamA: language === "pl" ? "FAMILIADA" : language === "en" ? "FAMILY" : "РОДИНА", teamB: language === "pl" ? "ONLINE" : language === "en" ? "ONLINE" : "ОНЛАЙН", defaultA: false, defaultB: false },
         settings: { uiLang: language },
         rounds: {
-          roundNo: 1, question: COPY[language].gameplay[0], bankPts: 62, totals: { A: 111, B: 111 },
+          roundNo: 1, question: { text: COPY[language].gameplay[0] }, bankPts: 62, totals: { A: 111, B: 111 },
           revealed: [1, 3, 5], xA: 3, xB: 3,
           answers: [
             { ord: 1, text: language === "pl" ? "TWÓRZ" : language === "en" ? "CREATE" : "СТВОРЮЙ", fixed_points: 39 },
