@@ -20,7 +20,6 @@ import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-1
 import {
   pointsPollAnalysis,
   textTallyAnalysis,
-  textTallyPoints,
   ANSWERS_MIN,
   TEXT_MAX_LEN,
 } from "../../shared/js/core/poll-tally-math.js?v=v2026-10-18T16320";
@@ -28,6 +27,11 @@ import {
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;
 const PAGE = 1000;
+const RENDER_BATCH = 40;
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(resolve));
+}
 
 function mk(tag, cls, html) {
   const el = document.createElement(tag);
@@ -84,7 +88,7 @@ export function createTally({ gameId, pollResults, ui }) {
     const dup = meta.querySelector(".tcMergeDup");
     dup.hidden = !withMergeDup;
       dup.querySelector("span").textContent = t("polls.tally.mergeDup");
-    dup.onclick = withMergeDup && qs ? () => mutate(() => mergeDuplicates(qs.q)) : null;
+    dup.onclick = withMergeDup && qs ? () => mutate(qs, () => mergeDuplicates(qs.q)) : null;
     return meta;
   }
 
@@ -197,14 +201,19 @@ export function createTally({ gameId, pollResults, ui }) {
 
     const counts = new Map(); // question_id -> Map(norm -> n)
     let total = 0;
-    for (const e of entries) {
-      if (latest.get(e.question_id) !== e.poll_session_id) continue;
-      const k = String(e.answer_norm || "").trim();
-      if (!k) continue;
-      if (!counts.has(e.question_id)) counts.set(e.question_id, new Map());
-      const m = counts.get(e.question_id);
-      m.set(k, (m.get(k) || 0) + 1);
-      total++;
+    for (let start = 0; start < entries.length; start += PAGE) {
+      const end = Math.min(start + PAGE, entries.length);
+      for (let i = start; i < end; i++) {
+        const e = entries[i];
+        if (latest.get(e.question_id) !== e.poll_session_id) continue;
+        const k = String(e.answer_norm || "").trim();
+        if (!k) continue;
+        if (!counts.has(e.question_id)) counts.set(e.question_id, new Map());
+        const m = counts.get(e.question_id);
+        m.set(k, (m.get(k) || 0) + 1);
+        total++;
+      }
+      if (end < entries.length) await nextFrame();
     }
 
     let n = 1;
@@ -265,40 +274,51 @@ export function createTally({ gameId, pollResults, ui }) {
     setSave("");
 
     const slots = pollResults.slots();
+    const totalRows = model.reduce((n, q) => n + q.items.length, 0);
+    let renderedRows = 0;
+    ui.hintEl.textContent = t("polls.tally.loadingRows", { done: 0, total: totalRows });
     for (const q of model) {
       const slot = slots.get(q.question_id);
       if (!slot) continue;
       q.items.sort((a, b) => b.count - a.count);
-      const qs = { q, slot, rows: new Map(), meta: null };
+      const qs = { q, slot, rows: new Map(), itemById: new Map(q.items.map((item) => [item.id, item])), meta: null, valid: false };
       states.set(q.question_id, qs);
       slot.list.classList.add("tally", "tallyText");
       qs.meta = ensureMeta(slot, { withCounter: true, withMergeDup: true, qs });
 
-      // te same wiersze co w widoku surowym: dopasowanie po tekście
-      const taken = new Set();
-      for (const it of q.items) {
-        const key = it.text;
-        const existing = !taken.has(key) ? slot.rows.get(key) : null;
-        if (existing) {
-          taken.add(key);
-          slot.rows.delete(key);
-          decorate(qs, existing, it);
-          qs.rows.set(it.id, existing);
-        }
-      }
-      // wiersze, których nie ma w modelu (np. spoza TOP 12 przy innym widoku)
-      for (const [, r] of slot.rows) r.row.remove();
+      // Zachowaj już widoczne wiersze, a resztę twórz w porcjach, żeby
+      // przeglądarka mogła odmalować ekran podczas przejścia do podliczania.
+      const existingRows = new Map(slot.rows);
       slot.rows.clear();
-      for (const it of q.items) {
-        if (qs.rows.has(it.id)) continue;
-        const r = makeResultRow(it.text);
-        r.val.textContent = t("polls.results.votesUnitCount", { n: it.count });
-        decorate(qs, r, it);
-        qs.rows.set(it.id, r);
+      const taken = new Set();
+      for (let start = 0; start < q.items.length; start += RENDER_BATCH) {
+        const fragment = document.createDocumentFragment();
+        const end = Math.min(start + RENDER_BATCH, q.items.length);
+        for (let i = start; i < end; i++) {
+          const it = q.items[i];
+          const key = it.text;
+          const existing = !taken.has(key) ? existingRows.get(key) : null;
+          let row = existing;
+          if (existing) {
+            taken.add(key);
+          } else {
+            row = makeResultRow(it.text);
+            row.val.textContent = t("polls.results.votesUnitCount", { n: it.count });
+            fragment.append(row.row);
+          }
+          decorate(qs, row, it);
+          qs.rows.set(it.id, row);
+        }
+        slot.list.append(fragment);
+        renderedRows += end - start;
+        ui.hintEl.textContent = t("polls.tally.loadingRows", { done: renderedRows, total: totalRows });
+        await nextFrame();
       }
+      for (const [key, row] of existingRows) if (!taken.has(key)) row.row.remove();
       reorder(qs);
     }
     for (const qs of states.values()) updateQuestion(qs);
+    ui.hintEl.textContent = t("polls.tally.hintText");
     validity();
     if (restored) ui.onNotice?.(t("polls.tally.restored"));
   }
@@ -344,7 +364,7 @@ export function createTally({ gameId, pollResults, ui }) {
     row.insertBefore(cnt, r.val);
     row.append(actions);
 
-    const findItem = () => qs.q.items.find((x) => x.id === item.id);
+    const findItem = () => qs.itemById.get(item.id);
 
     // edycja tekstu: punkty na żywo, jeden wpis w historii na całą edycję
     let editSnap = null;
@@ -370,7 +390,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (e.key === "Enter") { e.preventDefault(); inp.blur(); }
     });
 
-    del.addEventListener("click", () => mutate(() => {
+    del.addEventListener("click", () => mutate(qs, () => {
       qs.q.items = qs.q.items.filter((x) => x.id !== item.id);
     }));
 
@@ -401,7 +421,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (!drag || drag.qid !== qs.q.question_id || drag.id === item.id) return;
       const from = drag.id;
       drag = null;
-      mutate(() => mergeInto(qs.q, from, item.id));
+      mutate(qs, () => mergeInto(qs.q, from, item.id));
     });
 
     // dotyk: „Połącz z…” — pierwszy dotyk wybiera źródło, drugi cel
@@ -411,7 +431,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (mergeSrc && mergeSrc.qid === qid) {
         const from = mergeSrc.id;
         clearMergeMode();
-        mutate(() => mergeInto(qs.q, from, item.id));
+        mutate(qs, () => mergeInto(qs.q, from, item.id));
         return;
       }
       clearMergeMode();
@@ -497,15 +517,13 @@ export function createTally({ gameId, pollResults, ui }) {
 
   // Zmiana modelu: wpis do historii, nowy porządek (najwięcej głosów na górze),
   // płynne przestawienie wierszy, zapis szkicu.
-  function mutate(fn) {
+  function mutate(qs, fn) {
     undo.push(snapshot());
     if (undo.length > UNDO_LIMIT) undo.shift();
     redo = [];
     fn();
-    for (const qs of states.values()) {
-      qs.q.items.sort((a, b) => b.count - a.count);
-      sync(qs);
-    }
+    qs.q.items.sort((a, b) => b.count - a.count);
+    sync(qs);
     updateHistory();
     validity();
     scheduleSave();
@@ -525,6 +543,7 @@ export function createTally({ gameId, pollResults, ui }) {
   }
 
   function sync(qs) {
+    qs.itemById = new Map(qs.q.items.map((item) => [item.id, item]));
     const ids = new Set(qs.q.items.map((it) => it.id));
     for (const [id, r] of [...qs.rows]) {
       if (ids.has(id)) continue;
@@ -543,18 +562,18 @@ export function createTally({ gameId, pollResults, ui }) {
   }
 
   function queueQuestionUpdate(qs) {
-    clearTimeout(pendingQuestionUpdates.get(qs));
-    pendingQuestionUpdates.set(qs, setTimeout(() => {
+    cancelAnimationFrame(pendingQuestionUpdates.get(qs));
+    pendingQuestionUpdates.set(qs, requestAnimationFrame(() => {
       pendingQuestionUpdates.delete(qs);
       if (mode === "text" && states.get(qs.q.question_id) === qs) {
         updateQuestion(qs);
         validity();
       }
-    }, 80));
+    }));
   }
 
   function flushQuestionUpdate(qs) {
-    clearTimeout(pendingQuestionUpdates.get(qs));
+    cancelAnimationFrame(pendingQuestionUpdates.get(qs));
     pendingQuestionUpdates.delete(qs);
     if (mode === "text" && states.get(qs.q.question_id) === qs) {
       updateQuestion(qs);
@@ -583,6 +602,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (r.inp.value !== it.text && document.activeElement !== r.inp) r.inp.value = it.text;
     });
     const n = analysis.filter((row) => row.scored).length;
+    qs.valid = n >= ANSWERS_MIN;
     const counter = qs.meta.querySelector(".tallyCounter");
     counter.textContent = t("polls.tally.counter", { n });
     counter.classList.toggle("invalid", n < ANSWERS_MIN);
@@ -593,11 +613,7 @@ export function createTally({ gameId, pollResults, ui }) {
   }
 
   function textValid() {
-    for (const qs of states.values()) {
-      const n = textTallyPoints(qs.q.items.map((it) => ({ text: it.text, count: it.count }))).length;
-      if (n < ANSWERS_MIN) return false;
-    }
-    return states.size > 0;
+    return states.size > 0 && [...states.values()].every((qs) => qs.valid);
   }
 
   function validity() {
@@ -657,7 +673,7 @@ export function createTally({ gameId, pollResults, ui }) {
   function cleanupDom() {
     clearMergeMode();
     clearTimeout(saveTimer);
-    for (const timer of pendingQuestionUpdates.values()) clearTimeout(timer);
+    for (const frame of pendingQuestionUpdates.values()) cancelAnimationFrame(frame);
     pendingQuestionUpdates.clear();
     ui.barEl.hidden = true;
     mode = "";

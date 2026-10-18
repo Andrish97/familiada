@@ -1345,7 +1345,9 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 | 2026-10-18 | Ankiety — suma głosów na kaflu pytania | Obok sumy punktów w każdym kaflu pytania pokazujemy łączną liczbę głosów w stonowanym szarym kolorze. W tekstowym podliczaniu liczba odświeża się wraz z edycją, scalaniem i usuwaniem odpowiedzi. | `node --check web/polls/js/poll-tally.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
 
-| 2026-10-18 | Ankiety — widoczny wybór pominiętej odpowiedzi do scalania | Niebieskie obrysy wskazują pozostałe odpowiedzi w tym samym pytaniu jako możliwe cele scalania. Czerwone kafelki pominiętych odpowiedzi pokazują teraz wybór wyraźnym, wewnętrznym obrysem; źródło ma złoty, a możliwy cel niebieski. | `git diff --check`; bez testów aplikacji. Push na `main`. |
+| 2026-10-18 | Ankiety — płynniejsze wejście w podliczanie tekstowe | Odpowiedzi są renderowane w partiach po 40 z postępem, a agregowanie dużych zestawów oddaje czas przeglądarce co 1000 wpisów. Edycja aktualizuje się na klatkę animacji, ważność korzysta z wyniku już policzonego pytania, a scalanie/usuwanie odświeża tylko zmienione pytanie. | `node --check web/polls/js/poll-tally.js`, `node --check web/polls/js/polls.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
+
+| 2026-10-18 | Ankiety — widoczny wybór pominiętej odpowiedzi do scalania | Niebieskie obrysy wskazują pozostałe odpowiedzi w tym samym pytaniu jako możliwe cele scalania. Na czerwonych kafelkach obrys zachowuje standardową grubość i nie zmienia czerwonego tła; źródło ma złoty, a możliwy cel niebieski obrys. | `git diff --check`; bez testów aplikacji. Push na `main`. |
 
 | 2026-10-18 | Ankiety — przywrócenie elementów w tekstowym podliczaniu | Tryb tekstowy nie dodawał bazowej klasy `tally`, przez co CSS ukrywał uchwyt, licznik oraz przyciski scalania i usuwania. Tryb dodaje teraz obie klasy. Przycisk scalania jest ukryty na desktopie, gdzie można przeciągać odpowiedzi, i widoczny na urządzeniach dotykowych. | `node --check web/polls/js/poll-tally.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
 
