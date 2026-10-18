@@ -1,34 +1,18 @@
-# Przekazanie — punkt wznowienia2026-10-13
+# Przekazanie — stan na 2026-10-18
 
 ## Aktualny stan — przeczytaj najpierw
 
-**Punkt wznowienia 2026-10-17:** branch `codex/e19-3`, kontynuacja zmian z
-audytu tras i startu stron. `PAGES` obejmuje teraz wszystkie pliki HTML,
-samodzielne przepływy mają opisane wpisy, a 16 wczesnych redirectów sesji
-zastąpiono samym `page-loading`, żeby decyzję podejmował `initPage()` po
-device guardzie. Punktowy `tests/unit/navMap.test.js` przeszedł 26/26;
-pełnych testów i galerii nie uruchamiano. Szczegóły: `docs/audyt-initpage-trasy.md`.
+Repo Andrish97/familiada, branch main, ostatni commit przed tym porządkowaniem: ace79e8080.
 
-Stała zasada użytkownika jest zapisana w `AGENTS.md` i
-`docs/nawigacja-mapa-plan.md`: każda dodana lub zmieniana strona wymaga
-aktualizacji mapy/inwentarza, dokumentacji oraz związanych testów/generatorów;
-trasy samodzielne muszą mieć jawny wpis z uzasadnieniem.
+- E19 i E19N są zamknięte. E20 poprawki wizualne są wdrażane według bieżących uwag; ostatnie commity na main obejmują wspólny topbar i modal alertu Control.
+- E14 jest **w toku**. Migracje 368 i 387 usunęły część starych ścieżek, ale subscriber_user_id nadal jest używane przez aktywny SQL, tabelę i RLS. Stare RPC urządzeń mają wyłącznie odwołania testowe; użytkownik polecił nie traktować dostosowania testów jako blokady funkcjonalnych porządków.
+- Przed usunięciem kolumny potrzebny jest zagregowany, tylko-odczytowy audyt produkcji obejmujący stare wiersze kont i powiązane poll_tasks. Obecny audyt 352 pomija wiersze z subscriber_user_id IS NOT NULL, więc nie odpowiada na to pytanie. Nie ma jeszcze wyniku tego rozszerzonego audytu.
+- Użytkownik polecił usunąć nie-E2E workflowy testowe, zostawiając E2E. Wdrożenia, migracje bazy i osobny read-only resource-audit są workflowami operacyjnymi, więc pozostają.
+- Artefakty screenshotów bez odwołań w repo oraz prototypy SQL zastąpione wdrożonymi migracjami zostały usunięte. Zasoby i testy używane przez bieżące workflowy pozostają.
 
-Repo `Andrish97/familiada`, branch `codex/e19-3`. Gałąź zawiera teraz
-implementację wysyłania, migrację367 oraz bramki branch i produkcyjne.
-Kod E19C jest w main przez `6dbcbb8cc9`; schema/log DB mają aktualizację
-`3c2c197be0`. Poniżej starszy dziennik;
-jego historyczne „następny krok” nie zastępują niniejszego stanu.
+Następny krok: uzupełnić read-only audyt o stare wiersze i zadania, uzyskać wynik z produkcji, a potem dokończyć E14. Szczegóły etapów i dziennik: docs/wdrozenia.md; plan modelu znajomych/subskrybentów: docs/e19-znajomi-plan.md.
 
-| Etap | Stan teraz |
-|---|---|
-| E19 / graf dotychczasowych zasobów | Zamknięte produkcyjnie. Kolejka/mail/Go/kaskady/anonimowe formularze mają swoje wcześniejsze dowody w Dzienniku. |
-| E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
-| E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
-| E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
-| E19N | **Gotowe produkcyjnie.** Branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte z Control i widoczne z Gier. Main `38369193504` success5/5; test bezpośredniego URL/odświeżenia arkusza main `38370189342` success1/1. Pages38369096986, Worker38369096732. Full unit602/602. E19 zamknięte na main `d847175100`. |
-| E14 | W toku zgodnie z poleceniem użytkownika: migracja368 usuwa potwierdzone stare RPC hubu i bezpośrednie sprzątanie Storage; nadal audyt `subscriber_user_id` i dawnych RPC urządzeń. |
-| E20 → Manual | Wspólny wygląd/mobile/tablet/landscape; instrukcja na końcu. |
+## Archiwum wcześniejszych przekazań
 
 ## Aktualny checkpoint: E19 zamknięte produkcyjnie
 

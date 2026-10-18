@@ -6,6 +6,10 @@ on:
         description: 'Audit current E19 graph counts without modifying data or repeating guest identity checks'
         type: boolean
         default: false
+      e14_subscriptions:
+        description: 'Audit retained legacy account subscriptions and dependent poll tasks (aggregate only)'
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -24,7 +28,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "$AUDIT_SERVER_HOST" >> ~/.ssh/known_hosts
       - name: Audit guest identity counts without changing data
-        if: ${{ !inputs.graph_only }}
+        if: ${{ !inputs.graph_only && !inputs.e14_subscriptions }}
         env:
           AUDIT_SERVER_USER: ${{ secrets.SERVER_USER }}
           AUDIT_SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -41,3 +45,12 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 "$AUDIT_SERVER_USER@$AUDIT_SERVER_HOST" \
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
             < docs/sql/audit-resource-graph-e19.sql
+      - name: Audit retained E14 subscription rows and task dependencies
+        if: ${{ inputs.e14_subscriptions }}
+        env:
+          AUDIT_SERVER_USER: ${{ secrets.SERVER_USER }}
+          AUDIT_SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "$AUDIT_SERVER_USER@$AUDIT_SERVER_HOST" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/audit-subscriber-identity-352.sql
