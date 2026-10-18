@@ -138,10 +138,24 @@ export function createCoverLogoRenderer({ gameId, key, previewOnly = false } = {
       else await renderDefaultLogo(el, dot, current);
       return;
     }
-    // Passive previews only render the payload sent by their parent. They do
-    // not resolve a game, key, logo, or lock state through the database.
+    // Passive previews may receive an unsaved payload from their parent.
+    // Otherwise resolve only the selected logoId through the logged-in
+    // owner's RLS access; no game ID, device key, or lock state is involved.
     if (previewOnly) {
-      await renderDefaultLogo(el, dot, current);
+      if (!el.childElementCount) await renderDefaultLogo(el, dot, current);
+      if (!logoId) return;
+      try {
+        const { data, error } = await sb()
+          .from("user_logos")
+          .select("type,payload")
+          .eq("id", logoId)
+          .maybeSingle();
+        if (error) throw error;
+        if (!current()) return;
+        if (data?.type && data?.payload) await renderCustomLogo(el, data, dot, current, logoMode);
+      } catch (error) {
+        if (current()) console.warn("[host2] preview logo lookup failed:", error);
+      }
       return;
     }
     if (awaitingSummary && !summary) {

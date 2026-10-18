@@ -300,6 +300,23 @@ async function bootPreview() {
     // stare/domyślne z poprzedniej klatki.
     if ("logoPreview" in (row.detail?.display || {})) {
       scene.api.logo.setPreview(row.detail.display.logoPreview);
+    } else {
+      const logoId = row.detail?.display?.logoId;
+      let logoPreview = null;
+      if (logoId) {
+        try {
+          const { data, error } = await sb()
+            .from("user_logos")
+            .select("type,payload")
+            .eq("id", logoId)
+            .maybeSingle();
+          if (error) throw error;
+          if (data?.type && data?.payload) logoPreview = data;
+        } catch (error) {
+          console.warn("[display2] preview logo lookup failed:", error);
+        }
+      }
+      scene.api.logo.setPreview(logoPreview);
     }
     await renderer.renderSnapshot(row);
     // Podgląd formularza jest statyczny; intro prawdziwej gry pozostaje osobne.
