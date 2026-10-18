@@ -269,7 +269,7 @@ export function createTally({ gameId, pollResults, ui }) {
       q.items.sort((a, b) => b.count - a.count);
       const qs = { q, slot, rows: new Map(), meta: null };
       states.set(q.question_id, qs);
-      slot.list.classList.add("tallyText");
+      slot.list.classList.add("tally", "tallyText");
       qs.meta = ensureMeta(slot, { withCounter: true, withMergeDup: true, qs });
 
       // te same wiersze co w widoku surowym: dopasowanie po tekście

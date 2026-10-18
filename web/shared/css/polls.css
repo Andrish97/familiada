@@ -437,10 +437,7 @@
 .resultQ .aList.tally .tcBtn{ width: 40px; height: 40px; max-width: 42px; padding: 0; opacity: 1; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.2); background: linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)) var(--under, #050914); border-radius: 10px; }
 .resultQ .aList.tally .tcBtn:hover{ background: rgba(255,255,255,.1); }
 .resultQ .aList.tally .tcDel:hover{ background: rgba(255,120,120,.18); }
-/* „Połącz z…” tylko na dotyku; na komputerze działa przeciąganie */
-@media (hover: hover) and (pointer: fine){
-  .resultQ .aList.tally .tcMergeBtn{ display: none; }
-}
+/* Scalanie jest dostępne przyciskiem na każdym urządzeniu; przeciąganie jest dodatkową opcją. */
 .resultQ .aList.tallyText .aTxt{ display: none; }
 .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
 .resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
