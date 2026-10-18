@@ -76,6 +76,7 @@ export function createTally({ gameId, pollResults, ui }) {
       meta.innerHTML = `
         <span class="tallyCounter"></span>
         <span class="tallySum"></span>
+        <span class="tallyVotesTotal"></span>
           <button class="btn xs tcMergeDup" type="button">${icon("merge")}<span></span></button>`;
       box.insertBefore(meta, slot.list);
     }
@@ -134,6 +135,7 @@ export function createTally({ gameId, pollResults, ui }) {
         pointRows.push({ r, votes, totalVotes });
       });
       meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: sum });
+      meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.votes", { n: totalVotes });
     }
     ui.onValidity(true);
   }
@@ -585,6 +587,8 @@ export function createTally({ gameId, pollResults, ui }) {
     counter.textContent = t("polls.tally.counter", { n });
     counter.classList.toggle("invalid", n < ANSWERS_MIN);
     qs.meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: sum });
+    const totalVotes = items.reduce((total, item) => total + (Number(item.count) || 0), 0);
+    qs.meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.votes", { n: totalVotes });
     qs.meta.querySelector(".tcMergeDup").textContent = t("polls.tally.mergeDup");
   }
 

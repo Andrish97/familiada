@@ -406,6 +406,7 @@
 .resultQ .tallyMetaInstant{ transition: none; }
 .tallyCounter.invalid{ color: #ff9d9d; font-weight: 900; }
 .tallySum{ color: var(--gold); font-weight: 900; font-variant-numeric: tabular-nums; }
+.tallyVotesTotal{ color: rgba(235,239,248,.62); font-weight: 700; font-variant-numeric: tabular-nums; }
 .tallyMeta .btn{ white-space: nowrap; margin-left: auto; }
 
 .resultQ .tcHandle,
