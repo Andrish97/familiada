@@ -298,6 +298,13 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
   let friendOriginalName = null;
   const captureErrors = [];
   await loginAsTestUser(page, context, { username: USERS[LANGUAGE] });
+  // Game settings can ask for confirmation while leaving after an auto-save.
+  // Accept that navigation prompt so one scene cannot strand later captures.
+  page.removeAllListeners("dialog");
+  page.on("dialog", dialog => {
+    if (dialog.type() === "beforeunload") dialog.accept().catch(() => {});
+    else dialog.dismiss().catch(() => {});
+  });
   try {
   ownerOriginalName = await setFriendlyScreenshotName(page, COPY[LANGUAGE].ownerName);
   await page.evaluate(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
@@ -341,8 +348,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     const editorShotError = await take(page, testInfo, "game-editor", async () => {
       await page.goto(`https://www.familiada.online/games/editor/?id=${games[0].id}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#qText")).toHaveValue(COPY[LANGUAGE].gameplay[0], { timeout: 30_000 });
-      await expect(page.locator("#aList input")).toHaveCount(6, { timeout: 15_000 });
-      await expect(page.locator("#aList input").first()).toHaveValue(COPY[LANGUAGE].gameplay[1][0]);
+      await expect(page.locator("#aList input.qf-text")).toHaveCount(6, { timeout: 15_000 });
+      await expect(page.locator("#aList input.qf-text").first()).toHaveValue(COPY[LANGUAGE].gameplay[1][0]);
     });
     if (editorShotError) captureErrors.push(editorShotError);
     const readyGameError = await take(page, testInfo, "game-ready", async () => {
@@ -429,7 +436,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.locator('.toggle-item:has(input[name="gsHasFinal"][value="yes"])').click({ timeout: 12_000 });
       await page.locator('.toggle-item:has(input[name="gsFinalMode"][value="pick"])').click({ timeout: 12_000 });
       await page.locator('.gs-sidebar-item[data-cat="finale"]').click();
-      await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(9, { timeout: 20_000 });
+      await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(10, { timeout: 20_000 });
       for (let i = 0; i < 5; i++) await page.locator("#gsFinalePool .qRow").first().click();
       await expect(page.locator(".gs-badge-row .tag b")).toHaveText("5");
       await page.waitForTimeout(1200);
