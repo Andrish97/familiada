@@ -301,11 +301,73 @@ async function applyFixtureToFrame(scene, fixture) {
     }
     setInput(doc, "gameName", fixture.game);
     setText(doc, "pageTitle", fixture.game);
+    setText(doc, "hintTop", language === "en" ? "At least 10 questions · 3–6 answers each" : language === "uk" ? "Щонайменше 10 запитань · по 3–6 відповідей" : "Minimum 10 pytań · po 3–6 odpowiedzi");
+    const editorPanel = doc.querySelector(".rightPanel");
+    editorPanel?.classList.add("hasQ");
     setInput(doc, "qText", fixture.question);
     const qList = doc.getElementById("qList");
-    if (qList) qList.innerHTML = [fixture.question, "Co zabierasz na wyjazd?", "Co pijesz rano?", "Co robisz w wolny dzień?", "Jaki smak lodów wybierasz?", "Co pomaga odpocząć?", "Co zabierasz do parku?", "Jaki owoc lubisz?", "Co robisz w weekend?", "Jaki napój podajesz gościom?"].map((text, i) => `<div class="qItem ${i === 0 ? "active" : ""}"><span>${i + 1}. ${escapeHtml(text)}</span></div>`).join("");
+    const localizedQuestions = language === "en" ? [
+      ["What do you pack for a weekend trip?", ["Clothes", "Snacks", "A book", "Charger", "Camera"], [34, 25, 18, 13, 10]],
+      ["What do you drink in the morning?", ["Coffee", "Tea", "Water", "Juice"], [42, 28, 18, 12]],
+      ["What do you do on a day off?", ["Sleep in", "Go for a walk", "Watch a film", "Meet friends"], [35, 25, 22, 18]],
+      ["Which ice cream flavor do you choose?", ["Vanilla", "Chocolate", "Strawberry", "Pistachio"], [34, 28, 22, 16]],
+      ["What helps you relax?", ["Music", "A walk", "A book", "A bath"], [36, 27, 21, 16]],
+      ["What do you take to the park?", ["A ball", "Water", "A blanket", "A book"], [34, 27, 22, 17]],
+      ["Which fruit do you like?", ["Apples", "Bananas", "Strawberries", "Grapes"], [32, 28, 22, 18]],
+      ["What do you do on weekends?", ["Meet friends", "Relax"], [45, 35]],
+      ["What drink do you serve guests?", ["Tea", "Coffee", "Juice"], [80, 40, 10]],
+    ] : language === "uk" ? [
+      ["Що береш у поїздку на вихідні?", ["Одяг", "Перекус", "Книжку", "Зарядку", "Камеру"], [34, 25, 18, 13, 10]],
+      ["Що п’єш уранці?", ["Каву", "Чай", "Воду", "Сік"], [42, 28, 18, 12]],
+      ["Що робиш у вихідний?", ["Висплюся", "Гуляю", "Дивлюся фільм", "Зустрічаю друзів"], [35, 25, 22, 18]],
+      ["Який смак морозива обираєш?", ["Ваніль", "Шоколад", "Полуниця", "Фісташка"], [34, 28, 22, 16]],
+      ["Що допомагає відпочити?", ["Музика", "Прогулянка", "Книжка", "Ванна"], [36, 27, 21, 16]],
+      ["Що береш до парку?", ["М’яч", "Воду", "Плед", "Книжку"], [34, 27, 22, 17]],
+      ["Який фрукт тобі до смаку?", ["Яблука", "Банани", "Полуниця", "Виноград"], [32, 28, 22, 18]],
+      ["Що робиш у вихідні?", ["Зустрічаю друзів", "Відпочиваю"], [45, 35]],
+      ["Що подаєш гостям?", ["Чай", "Каву", "Сік"], [80, 40, 10]],
+    ] : [
+      ["Co zabierasz na weekendowy wyjazd?", ["Ubrania", "Przekąski", "Książkę", "Ładowarkę", "Aparat"], [34, 25, 18, 13, 10]],
+      ["Co pijesz rano?", ["Kawę", "Herbatę", "Wodę", "Sok"], [42, 28, 18, 12]],
+      ["Co robisz w wolny dzień?", ["Dłużej śpię", "Spaceruję", "Oglądam film", "Spotykam znajomych"], [35, 25, 22, 18]],
+      ["Jaki smak lodów wybierasz?", ["Waniliowy", "Czekoladowy", "Truskawkowy", "Pistacjowy"], [34, 28, 22, 16]],
+      ["Co pomaga odpocząć?", ["Muzyka", "Spacer", "Książka", "Kąpiel"], [36, 27, 21, 16]],
+      ["Co zabierasz do parku?", ["Piłkę", "Wodę", "Koc", "Książkę"], [34, 27, 22, 17]],
+      ["Jaki owoc lubisz?", ["Jabłka", "Banany", "Truskawki", "Winogrona"], [32, 28, 22, 18]],
+      ["Co robisz w weekend?", ["Spotykam znajomych", "Odpoczywam"], [45, 35]],
+      ["Jaki napój podajesz gościom?", ["Herbatę", "Kawę", "Sok"], [80, 40, 10]],
+    ];
+    const questions = [
+      { text: fixture.question, answers: (fixture.answers || []).map((text, i) => ({ text, points: fixture.points?.[i] ?? 0 })) },
+      ...localizedQuestions.map(([text, answers, points]) => ({ text, answers: answers.map((answer, i) => ({ text: answer, points: points[i] })) })),
+    ];
+    if (qList) {
+      const addTileLabel = language === "en" ? "Add question" : language === "uk" ? "Додати запитання" : "Dodaj pytanie";
+      const addTileHint = language === "en" ? "At least 10 questions" : language === "uk" ? "Додай щонайменше 10 запитань" : "Dodaj co najmniej 10 pytań";
+      const addTile = `<button type="button" class="qcard addTile"><div class="plus">${icon("plus")}</div><div class="txt">${addTileLabel}</div><div class="sub">${addTileHint}</div></button>`;
+      qList.innerHTML = addTile + questions.map((question, i) => {
+        const answers = question.answers;
+        const sum = answers.reduce((total, answer) => total + (Number(answer.points) || 0), 0);
+        const valid = question.text.trim().length > 0 && answers.length >= 3 && answers.length <= 6
+          && answers.every(answer => answer.text.trim().length > 0) && sum <= 100;
+        const status = valid ? "good" : "bad";
+        const meta = language === "en" ? `${answers.length}/6 answers · ${sum}/100 pts`
+          : language === "uk" ? `${answers.length}/6 відповідей · ${sum}/100 балів`
+            : `${answers.length}/6 odpowiedzi · ${sum}/100 pkt`;
+        return `<div class="qcard ${status} ${i === 0 ? "active" : ""}" data-id="shot-question-${i + 1}"><div class="qord">${language === "en" ? "Question" : language === "uk" ? "Запитання" : "Pytanie"} ${i + 1}</div><div class="qprev">${escapeHtml(question.text)}</div><div class="qmeta">${meta}</div><button type="button" class="x" aria-label="${language === "en" ? "Delete" : language === "uk" ? "Видалити" : "Usuń"}">${icon("trash")}</button></div>`;
+      }).join("");
+    }
     const answers = doc.getElementById("aList");
-    if (answers) answers.innerHTML = (fixture.answers || []).map((text, i) => `<div class="qf-row"><span class="qf-n">${i + 1}</span><input class="inp qf-text" value="${escapeHtml(text)}"><input class="inp qf-points" value="${fixture.points?.[i] ?? 0}" aria-label="Punkty"><button class="btn icon-btn">${icon("trash")}</button></div>`).join("");
+    const selectedAnswers = questions[0].answers;
+    const totalPoints = selectedAnswers.reduce((sum, answer) => sum + (Number(answer.points) || 0), 0);
+    const pointsRemain = doc.getElementById("pointsRemainTop");
+    if (pointsRemain) pointsRemain.innerHTML = `<div class="qf-sum"><span>${language === "en" ? "Total" : language === "uk" ? "Сума" : "Suma"}</span><b>${totalPoints}/100</b></div>`;
+    if (answers) {
+      const addAnswerLabel = language === "en" ? "Add answer" : language === "uk" ? "Додати відповідь" : "Dodaj odpowiedź";
+      const count = selectedAnswers.length;
+      const addAnswerTile = `<button type="button" class="qf-row qf-add" ${count >= 6 ? "disabled" : ""}><span class="qf-addPlus">${icon("plus")}</span><span class="qf-addLbl">${addAnswerLabel}</span><span class="qf-addCnt">${count}/6</span></button>`;
+      answers.innerHTML = addAnswerTile + selectedAnswers.map((answer, i) => `<div class="qf-row"><input class="qf-text" value="${escapeHtml(answer.text)}" aria-label="${language === "en" ? "Answer" : language === "uk" ? "Відповідь" : "Odpowiedź"} ${i + 1}"><input class="qf-pts" value="${Number(answer.points) || 0}" aria-label="${language === "en" ? "Points" : language === "uk" ? "Бали" : "Punkty"}"><button type="button" class="qf-del" aria-label="${language === "en" ? "Delete" : language === "uk" ? "Видалити" : "Usuń"}">${icon("trash")}</button></div>`).join("");
+    }
   } else if (scene.id === "bases") {
     if (grid) grid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">Nowa baza</div></div>${fixture.bases.map((name, i) => `<div class="card tile ${i === 0 ? "selected" : ""}"><div class="name">${escapeHtml(name)}</div><div class="meta">${i ? "8 pytań · 2 kategorie" : "12 pytań · 3 kategorie"}</div><div class="tileTags"><span class="tag ${i ? "tag--muted" : "tag--ok"}">${i ? "Moja baza" : "Właściciel"}</span></div></div>`).join("")}`;
   } else if (scene.id === "base-explorer") {
