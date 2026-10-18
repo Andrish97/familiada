@@ -152,7 +152,7 @@ async function renderSharedDevices() {
   );
 
   if (!items.length) {
-    sharedDevicesList.innerHTML = `<div class="connect-device-empty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
+    sharedDevicesList.innerHTML = `<div class="share-empty-state connect-device-empty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
     return;
   }
 

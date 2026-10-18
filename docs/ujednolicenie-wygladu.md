@@ -1443,11 +1443,12 @@ wspólną powierzchnię `--card` (`#111827`), zagnieżdżone sekcje są od nich
 odróżnione, a kafle/wiersze list pozostają ciemniejsze. Modalne karty mają
 wspólne kryjące tło. Panel admina pozostaje poza przeglądem.
 
-Na `/connect/` główna karta ma układ karty Zadania: jeden zewnętrzny kontener,
-wyśrodkowaną kolumnę do 760 px i jeden przewijany obszar. Dwie wewnętrzne
-karty „Podłącz kodem” i „Udostępnione dla mnie” zostają. Wiersze urządzeń
-mają styl Mails: ikonę rodzaju, nazwę, opis właściciela i typ, subtelny akcent
-po lewej oraz strzałkę akcji.
+Na `/connect/` główna karta wypełnia dostępny obszar jak karta Zadania.
+Wewnątrz pozostają dwie elastyczne karty: „Podłącz kodem” i „Udostępnione dla
+mnie”; ukryta karta jest wyjmowana z układu, a widoczna wypełnia miejsce.
+Lista urządzeń jest pojedynczą, wyśrodkowaną kolumną węższą od karty, z
+wewnętrznym przewijaniem. Wiersze mają styl Mails: ikonę rodzaju, nazwę,
+opis właściciela i typ, subtelny akcent po lewej oraz strzałkę akcji.
 
 Po zmianach należy wykonać punktowy przebieg E20 `games`/MacBook, następnie
 pełną galerię E20 na aktualnym branchu.
