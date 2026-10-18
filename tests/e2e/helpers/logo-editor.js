@@ -64,7 +64,9 @@ async function readLogoByName(page, name) {
 
 /** Czeka, aż strona edytora wczyta logo (pole nazwy odblokowane). */
 async function waitEditorReady(page, mode) {
-  await page.waitForURL(new RegExp(`/logo/editor/${mode.toLowerCase()}/\\?id=`), { timeout: 15000 });
+  // The editor can keep subresources open; the route and its ready markers are
+  // sufficient, so don't wait for the browser's full `load` event here.
+  await page.waitForURL(new RegExp(`/logo/editor/${mode.toLowerCase()}/\\?id=`), { timeout: 15000, waitUntil: "domcontentloaded" });
   await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", mode.toUpperCase());
   await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
   if (mode.toUpperCase() === "DRAW") await page.waitForTimeout(300);

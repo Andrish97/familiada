@@ -185,7 +185,7 @@ const en = {
     narrowMessage: "Make the browser window wider to use this page.",
     back: "Back",
     guestTitle: "Not available for guest account",
-    guestMessage: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and the polls hub.",
+    guestMessage: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and polls.",
     login: "Sign in / Create account",
   },
   resourceLock: {
@@ -310,7 +310,7 @@ const en = {
       q25: { q: "Can one person host and operate the game?", a: "Yes, but running the finale alone can be difficult: you need to enter the players’ answers in the Control Panel while also hosting. It helps to have another person assist." },
       q26: { q: "What should I do if a screen stops updating?", a: "Check that the device is still connected to the game and reopen its view. In the Control Panel, confirm that the device is connected before continuing." },
       q27: { q: "Can I change the board's appearance?", a: "Yes. In game settings, choose an available theme, team colors, sounds and logo. You will see the changes on the Display." },
-      q29: { q: "Is a subscriber poll different from an anonymous poll?", a: "The votes go to the same poll; only the invitation method differs. Anyone with the link or QR code can open it, while you can send subscribers a poll as a task. Before tallying, the Poll Hub shows which invited subscribers have responded; after tallying, that status is less clear." },
+      q29: { q: "Is a subscriber poll different from an anonymous poll?", a: "The votes go to the same poll; only how people access it differs. Anyone with the link or QR code can vote. You can also send a task to selected friends or subscribers and check their response status in the Sharing tab. After tallying, you see the combined poll results." },
       q30: { q: "How can I share materials with friends?", a: "It depends on the item: send a game or logo as a copy, share a Question Base with a selected role, or share a device for use during a game." },
     },
     footer: {
@@ -3107,8 +3107,8 @@ const en = {
     subscribeAdded: "Subscription added.",
     subscriptionInviteActive: "Subscription invitation is active.",
     subscribePrompt: "Enter email if you want to subscribe.",
-    acceptInHub: "To accept, go to the Polls hub.",
-    hubLabel: "Polls hub",
+    acceptInHub: "To accept the invitation, open Friends.",
+    hubLabel: "Open Friends",
     acceptLabel: "Accept",
     declineLabel: "Decline",
     subscribeLabel: "Subscribe",
@@ -3166,9 +3166,9 @@ const en = {
     pollNotFound: "There is no such poll",
   },
   pollsHub: {
-    title: "Familiada — polls hub",
+    title: "Familiada — polls",
     header: {
-      title: "Polls hub",
+      title: "Polls",
       hint: "Manage polls and voting invitations.",
     },
     tabs: {
@@ -3323,7 +3323,7 @@ const en = {
       shareSave: "Failed to save share.",
       loadDetails: "Failed to load details.",
       deleteVote: "Failed to delete vote.",
-      loadHub: "Failed to load polls hub data.",
+      loadHub: "Failed to load polls data.",
     },
     statusMsg: {
       inviteSaved: "Invitation saved.",
@@ -3379,7 +3379,7 @@ const en = {
     pollNameLabel: "“{name}”",
     ownerFallback: "Familiada user",
     mail: {
-      subtitle: "Polls hub",
+      subtitle: "Polls",
       subscriptionTitle: "Subscription invitation from {owner}",
       subscriptionBody:
         "User <strong>{owner}</strong> invites you to subscribe. Click the button to view the invitation.",
@@ -3397,9 +3397,9 @@ const en = {
   },
   pollsHubPolls: {
     dash: "-",
-    title: "Familiada — polls hub",
+    title: "Familiada — polls",
     header: {
-      title: "Polls hub",
+      title: "Polls",
       hint: "Manage polls and voting invitations.",
     },
     tabs: {
@@ -3554,7 +3554,7 @@ const en = {
       shareSave: "Failed to save share.",
       loadDetails: "Failed to load details.",
       deleteVote: "Failed to delete vote.",
-      loadHub: "Failed to load polls hub data.",
+      loadHub: "Failed to load polls data.",
     },
     statusMsg: {
       inviteSaved: "Invitation saved.",
@@ -3610,7 +3610,7 @@ const en = {
     pollNameLabel: "“{name}”",
     ownerFallback: "Familiada user",
     mail: {
-      subtitle: "Polls hub",
+      subtitle: "Polls",
       subscriptionTitle: "Subscription invitation from {owner}",
       subscriptionBody:
         "User <strong>{owner}</strong> invites you to subscribe. Click the button to view the invitation.",
@@ -3683,7 +3683,7 @@ const en = {
     dash: "-",
     title: "Familiada — subscriptions",
     header: {
-      title: "Polls hub",
+      title: "Polls",
       hint: "Manage polls and voting invitations.",
     },
     tabs: {
@@ -3839,7 +3839,7 @@ const en = {
       shareSave: "Failed to save share.",
       loadDetails: "Failed to load details.",
       deleteVote: "Failed to delete vote.",
-      loadHub: "Failed to load polls hub data.",
+      loadHub: "Failed to load polls data.",
     },
     statusMsg: {
       inviteSaved: "Invitation saved.",

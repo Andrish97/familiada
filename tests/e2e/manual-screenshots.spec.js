@@ -536,9 +536,14 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       const ready = page.getByRole("button", { name: /^(Gotowe — przejdź do rozgrywki|Done — start the game|Готово — почати гру)$/ });
       await expect(ready).toBeEnabled({ timeout: 20_000 });
       await ready.click();
-      await page.getByRole("button", { name: /^(Rozpocznij grę|Start game|Розпочати гру)$/ }).click();
+      await expect(devices.pages.display.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
+      const startGame = page.getByRole("button", { name: /^(Rozpocznij grę|Start game|Розпочати гру)$/ });
+      await expect(startGame).toBeEnabled({ timeout: 30_000 });
+      await startGame.click();
       await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", /Runda 1|Round 1|Раунд 1/, { timeout: 30_000 });
-      await page.getByRole("button", { name: /^(Rozpocznij rundę|Start|Розпочати)$/ }).click();
+      const startRound = page.getByRole("button", { name: /^(Rozpocznij rundę|Start|Розпочати)$/ });
+      await expect(startRound).toBeEnabled({ timeout: 30_000 });
+      await startRound.click();
       await expect(page.locator(".c2-stepper-question")).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 20_000 });
       await devices.pages.buzzer.getByRole("button", { name: /Przycisk A|Button A|Кнопка A/ }).click();
       const winner = page.getByRole("button", { name: /Zatwierdź:/ });
