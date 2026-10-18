@@ -444,10 +444,11 @@
 .resultQ .aList.tallyText .aTxt{ display: none; }
 .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
 .resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
-.resultQ .aRow.tallySkipped{ opacity: .56; border-color: rgba(190,196,208,.19); background: rgba(190,196,208,.075); }
-.resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, rgba(190,196,208,.08), rgba(190,196,208,.18)); }
+.resultQ .aRow.tallySkipped,
+.resultQ .aRow.tallySkipped.out{ opacity: 1; border-color: rgba(255,112,122,.38); background: rgba(255,92,104,.09); }
+.resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, rgba(255,112,122,.08), rgba(255,112,122,.2)); }
 .resultQ .aRow.tallySkipped .aTxt,
-.resultQ .aRow.tallySkipped .aVal{ color: #aab0bd; }
+.resultQ .aRow.tallySkipped .aVal{ color: #ffc0c4; }
 .resultQ .aRow.merge-src .tcMergeBtn,
 .resultQ .tcMergeBtn[aria-pressed="true"]{ border-color: rgba(255,234,166,.95); background: rgba(255,234,166,.2); color: var(--gold); box-shadow: 0 0 0 2px rgba(255,234,166,.16); }
 .resultQ .tcMergeBtn[aria-pressed="true"]{ transform: scale(1.06); }
