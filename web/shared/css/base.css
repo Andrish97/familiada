@@ -1578,34 +1578,40 @@ html.showA2HS .a2hs {
 .lang-menu{
   position: fixed;              /* ✅ portal overlay */
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  min-width: 170px;
+  gap: 4px;
+  padding: 8px;
+  min-width: 180px;
   /* kryjące tła menu i opcji: półprzezroczyste tła w Chrome na Androidzie
      potrafią się nakładać przy kolejnych przerysowaniach (przyciski robią
      się coraz jaśniejsze, każdy inaczej) */
-  background: #050914;
-  border: 1px solid var(--line2);
-  border-radius: 12px;
+  background: #111827;
+  --under: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
   z-index: 1000;                /* nad topbarem */
-  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
   max-width: calc(100vw - 24px);
 }
 
 .lang-option {
-    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 14px;
     border-radius: 10px;
     border: 1px solid var(--line2);
-    background: #141822; /* = .06 bieli na tle .lang-menu */
+    background: #1b2332;
     color: #fff;
     text-align: left;
     cursor: pointer;
     font-weight: 800;
-    letter-spacing: .02em;
+    font-size: 13px;
+    letter-spacing: .04em;
 }
 
 .lang-option:hover {
-    filter: brightness(1.08);
+    background: #292f3d;
 }
 
 [hidden], .hidden {
@@ -2168,7 +2174,7 @@ body{
   width: 100%;
   padding: 10px 14px;
   text-align: left;
-  background: rgba(255,255,255,.06);
+  background: #1b2332;
   border: 1px solid var(--line2);
   border-radius: 10px;
   color: #fff;
