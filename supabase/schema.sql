@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XEQsqdym1fyCSbdEXFqrbt7BElMH5pdUIfS8Z0j6ILsQAONJUE6vcKld1fPEV4o
+\restrict hPQn3DhZeieOq7N0DpHgylQ7lq2i6eZgNX3eBzHxhqgXHAQyOVECIeAcc2WIc6a
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4323,16 +4323,33 @@ CREATE FUNCTION "public"."badges_get"() RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE uid uuid:=auth.uid(); identity jsonb; polls integer; bases integer; friends integer;
+DECLARE
+  uid uuid := auth.uid();
+  identity jsonb;
+  polls integer;
+  bases integer;
+  friends integer;
 BEGIN
- SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=uid;
- IF NOT public._account_is_registered(uid,identity) THEN RETURN jsonb_build_object('tasks_pending',0,'friends_pending',0); END IF;
- PERFORM public.poll_claim_email_records();
- SELECT count(*) INTO polls FROM public.poll_tasks t WHERE t.recipient_user_id=uid AND t.done_at IS NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL;
- SELECT count(*) INTO bases FROM public.base_share_tasks bt WHERE bt.recipient_user_id=uid AND bt.status IN('pending','opened');
- SELECT count(*) INTO friends FROM public.friendships f WHERE f.addressee_id=uid AND f.status='pending';
- RETURN jsonb_build_object('tasks_pending',polls+bases,'friends_pending',friends);
-END $$;
+  SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id = uid;
+  IF NOT public._account_is_registered(uid, identity) THEN
+    RETURN jsonb_build_object('tasks_pending', 0, 'friends_pending', 0);
+  END IF;
+
+  PERFORM public.poll_claim_email_records();
+  SELECT count(*) INTO polls
+  FROM public.poll_tasks t
+  WHERE t.recipient_user_id = uid
+    AND t.done_at IS NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL;
+  SELECT count(*) INTO bases
+  FROM public.base_share_tasks bt
+  WHERE bt.recipient_user_id = uid AND bt.status IN ('pending', 'opened');
+  SELECT count(*) INTO friends
+  FROM public.friendships f
+  WHERE f.decision_user_id = uid AND f.status = 'pending' AND f.cancelled_at IS NULL;
+
+  RETURN jsonb_build_object('tasks_pending', polls + bases, 'friends_pending', friends);
+END;
+$$;
 
 
 --
@@ -24846,5 +24863,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XEQsqdym1fyCSbdEXFqrbt7BElMH5pdUIfS8Z0j6ILsQAONJUE6vcKld1fPEV4o
+\unrestrict hPQn3DhZeieOq7N0DpHgylQ7lq2i6eZgNX3eBzHxhqgXHAQyOVECIeAcc2WIc6a
 
