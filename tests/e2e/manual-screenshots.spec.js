@@ -386,6 +386,33 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.waitForTimeout(1_000);
       const controlSound = page.locator('.toggle-item:has(input[name="soundSource"][value="control"])');
       if (await controlSound.count() && !(await controlSound.locator("input").isChecked())) await controlSound.click();
+      // Reset first as the normal Control flow requires, then paint a matching
+      // round fixture so this screenshot shows the actual gameplay controls.
+      await page.evaluate(async ({ language, question, answers }) => {
+        const { createUI } = await import("/control/js/ui.js?v=v2026-10-14T23162");
+        const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-14T23162");
+        const state = makeDefaultState("manual-control-preview");
+        state.step = "r_play";
+        state.topCard = "rounds";
+        state.phase = "PLAY";
+        state.controlTeam = "A";
+        state.locks = { gameStarted: true, finalActive: false, gameEnded: false };
+        state.teams = { teamA: language === "pl" ? "FAMILIADA" : language === "en" ? "FAMILY" : "РОДИНА", teamB: language === "pl" ? "ONLINE" : language === "en" ? "ONLINE" : "ОНЛАЙН" };
+        state.settings.uiLang = language;
+        state.rounds.roundNo = 1;
+        state.rounds.question = { id: "manual-round", text: question };
+        state.rounds.answers = answers.map(([text, fixed_points], index) => ({ id: `manual-answer-${index + 1}`, ord: index + 1, text, fixed_points }));
+        state.rounds.revealed = [1, 3, 5];
+        state.rounds.bankPts = 62;
+        state.rounds.totals = { A: 111, B: 111 };
+        state.rounds.xA = 3;
+        state.rounds.xB = 3;
+        state.rounds.allowPass = true;
+        const ui = createUI({ root: document.querySelector("#app"), emit: () => {} });
+        ui.render(state, { presenceFlags: { display: true, host: true, buzzer: false }, busy: false, typingPending: false, devicesBlocked: false });
+      }, { language: LANGUAGE, question: COPY[LANGUAGE].gameplay[0], answers: COPY[LANGUAGE].gameplay[1].map((text, index) => [text, [39, 24, 16, 9, 7, 5][index]]) });
+      await expect(page.locator(".c2-tilegrid .c2-tile")).toHaveCount(9, { timeout: 15_000 });
+      await expect(page.locator(".c2-stepper-question")).toContainText(COPY[LANGUAGE].gameplay[0]);
     });
     if (gameplayControlError) captureErrors.push(gameplayControlError);
 

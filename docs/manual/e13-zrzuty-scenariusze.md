@@ -45,7 +45,7 @@ Zwykłe kadry mają rozmiar **1365×768 px**. Głosowanie na telefonie ma **390�
 | **Kolejność rund** (`game-settings-rounds`) | Przełącza tryb rund na ręczny i pokazuje pytanie Control jako pierwszą pozycję. |
 | **Wygląd gry** (`game-settings-display`) | Otwiera **Wygląd**, wybiera przygotowane logo i czeka, aż wybór jest widoczny oraz zaznaczony. |
 | **Dźwięk gry** (`game-settings-sound`) | Otwiera **Dźwięk** i czeka na widoczną listę ustawień dźwięków. |
-| **Panel sterowania** (`gameplay-control`) | Otwiera Control na grze preparowanej, zaczyna od **Zacznij od nowa** i pokazuje przygotowanie urządzeń z wybranym źródłem dźwięku Control. |
+| **Panel sterowania** (`gameplay-control`) | Otwiera Control na grze preparowanej, zaczyna od **Zacznij od nowa**, ustawia źródło dźwięku na Control i pokazuje symulowany widok rundy z tym samym pytaniem, odkrytymi odpowiedziami i wynikiem co na ekranach urządzeń. |
 | **Prowadzący** (`gameplay-host`) | Pokazuje ekran Prowadzącego z przykładowym pytaniem i odpowiedziami, wyrenderowany z przygotowanego stanu podglądu. |
 | **Wyświetlacz** (`gameplay-display`) | Pokazuje planszę z tym samym przygotowanym stanem co ujęcie Prowadzącego; pytanie, odkryte odpowiedzi, X i wynik są spójne. To podgląd, bez sesji na żywo. |
 | **Wpisywanie finału** (`gameplay-finale`) | Pokazuje ekran Control z pięcioma finałowymi pytaniami i przykładowymi wpisami odpowiedzi. To samodzielny stan widoku, bez uruchamiania finału ani urządzeń. |
