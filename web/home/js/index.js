@@ -1,12 +1,12 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-18T16521";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-18T16543";
 guardViewportWidth({ minWidth: 0 });
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-18T16521";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T16521";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-18T16521";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T16521";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T16521";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T16521";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T16521";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-18T16543";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T16543";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-18T16543";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T16543";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T16543";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T16543";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T16543";
 
 async function redirectIfSession() {
   try {
