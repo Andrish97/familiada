@@ -1,7 +1,7 @@
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
-//  - Mobile: panel boczny z section-2 i section-4 płasko (bez dropdown, bez overflow)
+//  - Mobile (do 760 px): panel boczny z section-2 i section-4 płasko (bez dropdown, bez overflow)
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
@@ -132,7 +132,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     moreDropdownEl.innerHTML = '';
 
     const section2Width = section2.getBoundingClientRect().width;
-    const gap = 8;
+    const gap = Number.parseFloat(getComputedStyle(section2).columnGap) || 0;
     const btnWidths = btns.map(btn => btn.getBoundingClientRect().width);
 
     moreEl.style.display = '';
@@ -404,7 +404,7 @@ function initTopbarController() {
 
   topbar.dataset.mobileMenuControllerReady = '1';
 
-  const mobileMq = window.matchMedia('(max-width: 980px)');
+  const mobileMq = window.matchMedia('(max-width: 760px)');
   const section2Placeholder = document.createComment('topbar-section-2-restore');
   const section4Placeholder = document.createComment('topbar-section-4-restore');
   const tabsPlaceholder = document.createComment('topbar-tabs-restore');
