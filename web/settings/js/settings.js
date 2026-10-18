@@ -286,6 +286,9 @@ function showPanel() {
   document.body.classList.remove("no-footer-line");
   moveLangSwitcher(false);
   syncTopbarHeight();
+  // Ustawienia startują z ukrytym topbarem, więc dopiero teraz można
+  // wiarygodnie zmierzyć miejsce na przyciski i zdecydować o „Więcej”.
+  window.dispatchEvent(new Event("nav:visibilitychange"));
   document.querySelector("main[data-skel-step]")?.classList.remove("skel-step-ready");
 }
 

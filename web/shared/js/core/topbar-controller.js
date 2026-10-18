@@ -120,18 +120,32 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   });
 
   function getVisibleBtns() {
-    return getButtons().filter(btn => btn && btn.dataset.navHidden !== 'true');
+    return getButtons().filter(btn => {
+      if (!btn || btn.dataset.navHidden === 'true') return false;
+      const computed = getComputedStyle(btn);
+      // Nie licz przycisków wyłączonych przez breakpoint (np. „Gry
+      // Producenta”). Nadal uwzględniaj elementy schowane przez poprzedni
+      // pomiar overflow — ich display:none jest ustawione inline.
+      if (btn.classList.contains('hidden-on-mobile') && computed.display === 'none') return false;
+      return computed.display !== 'none' || _hiddenBtns.includes(btn);
+    });
   }
 
   function recalc() {
     if (_mobileActive) return;
 
+    const section2Width = section2.getBoundingClientRect().width;
+    // Topbar Ustawień jest początkowo display:none pod ekranem logowania.
+    // Pomiar zerowej szerokości błędnie uruchamiał hamburger i zostawiał go
+    // po późniejszym odblokowaniu panelu.
+    if (!section2.isConnected || section2Width <= 0) return;
+
     const btns = getVisibleBtns();
     btns.forEach(btn => { btn.style.display = ''; });
+    _hiddenBtns = [];
     moreEl.style.display = 'none';
     moreDropdownEl.innerHTML = '';
 
-    const section2Width = section2.getBoundingClientRect().width;
     const gap = Number.parseFloat(getComputedStyle(section2).columnGap) || 0;
     const btnWidths = btns.map(btn => btn.getBoundingClientRect().width);
     const totalWidth = btnWidths.reduce((sum, width, i) => sum + width + (i > 0 ? gap : 0), 0);
