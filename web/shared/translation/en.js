@@ -26,6 +26,7 @@ const en = {
   resourceSend: {
   "action": "Send",
   "title": "Send to friends",
+  "selectFriends": "Choose friends",
   "received": "Received copies",
   "receivedFilter": "Received",
   "history": "Send history",

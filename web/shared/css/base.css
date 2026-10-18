@@ -2276,6 +2276,31 @@ body{
   background:rgba(255,255,255,.015);
 }
 
+/* Wysyłanie kopii: wspólny modal i sekcje w stylu udostępniania Baz/Control. */
+.resource-send-modal{
+  width:min(680px,94vw);
+  max-height:90dvh;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.resource-send-modal .mHead{margin:0;}
+.resource-send-modal .resource-send-name{margin:0;overflow-wrap:anywhere;font-weight:800;}
+.resource-send-modal .shareSection{margin:0;}
+.resource-send-friends-section{min-width:0;}
+.resource-send-friends{max-height:none;overflow:visible;}
+.resource-send-friend{justify-content:flex-start;cursor:pointer;}
+.resource-send-friend input{flex:0 0 auto;margin:0;}
+.resource-send-friend-name{min-width:0;overflow-wrap:anywhere;}
+.resource-send-history{min-width:0;}
+.resource-send-history summary{cursor:pointer;}
+.resource-send-history-list{max-height:none;overflow:visible;}
+.resource-send-history-row{overflow-wrap:anywhere;}
+.resource-send-error{margin:0;color:var(--danger,#ff7777);font-size:.9rem;}
+.resource-send-error:empty{display:none;}
+.resource-send-actions{margin-top:0;}
+.resource-send-empty{width:100%;}
+
 /* ===== Edytory: nazwa strony w topbarze (sekcja 2) =====
    Tytuł = jaki to edytor, wielkimi literami; podtytuł = nazwa zasobu tylko
    tam, gdzie strona nie ma pola nazwy (docs/ujednolicenie-wygladu.md, 4).

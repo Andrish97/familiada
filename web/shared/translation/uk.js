@@ -26,6 +26,7 @@ const uk = {
   resourceSend: {
   "action": "Надіслати",
   "title": "Надіслати друзям",
+  "selectFriends": "Виберіть друзів",
   "received": "Отримані копії",
   "receivedFilter": "Отримані",
   "history": "Історія надсилань",

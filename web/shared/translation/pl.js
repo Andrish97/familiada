@@ -26,6 +26,7 @@ const pl = {
   resourceSend: {
   "action": "Wyślij",
   "title": "Wyślij znajomym",
+  "selectFriends": "Wybierz znajomych",
   "received": "Otrzymane kopie",
   "receivedFilter": "Otrzymano",
   "history": "Historia wysyłek",
