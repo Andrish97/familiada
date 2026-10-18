@@ -307,7 +307,18 @@ test("wysłanie gry tworzy dokładnie jedno pending i sprząta cały stan", asyn
     }, name);
     expect(rows).toHaveLength(1);
     expect(rows[0].status).toBe("pending");
-    await expect(page.locator("#mySentList", { hasText: name })).toContainText("Oczekuje na weryfikację");
+    const sentRow = page.locator(".mkt-sent-row", { hasText: name });
+    await expect(sentRow).toContainText("Oczekuje na weryfikację");
+    await sentRow.locator("[data-preview]").click();
+    await expect(page.locator("#gameDetailOverlay")).toBeVisible();
+    await expect(page.locator("#detailTitle")).toHaveText(name);
+    await expect(page).toHaveURL(/\/marketplace\/game\/[^/?]+/);
+    const refreshResponse = await page.reload({ waitUntil: "domcontentloaded" });
+    expect(refreshResponse?.status()).toBe(200);
+    await expect(page.locator("#gameDetailOverlay")).toBeVisible();
+    await expect(page.locator("#detailTitle")).toHaveText(name);
+    await page.keyboard.press("Escape");
+
     const duplicate = await rpc(page, "market_submit_game", {
       p_game_id: await page.evaluate(async (gameName) => {
         const { data } = await window.__sbClient.from("games").select("id").eq("name", gameName).single();
