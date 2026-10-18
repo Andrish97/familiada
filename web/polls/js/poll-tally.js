@@ -27,7 +27,6 @@ import {
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;
 const PAGE = 1000;
-const RENDER_BATCH = 40;
 
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(resolve));
@@ -274,9 +273,6 @@ export function createTally({ gameId, pollResults, ui }) {
     setSave("");
 
     const slots = pollResults.slots();
-    const totalRows = model.reduce((n, q) => n + q.items.length, 0);
-    let renderedRows = 0;
-    ui.hintEl.textContent = t("polls.tally.loadingRows", { done: 0, total: totalRows });
     for (const q of model) {
       const slot = slots.get(q.question_id);
       if (!slot) continue;
@@ -286,39 +282,30 @@ export function createTally({ gameId, pollResults, ui }) {
       slot.list.classList.add("tally", "tallyText");
       qs.meta = ensureMeta(slot, { withCounter: true, withMergeDup: true, qs });
 
-      // Zachowaj już widoczne wiersze, a resztę twórz w porcjach, żeby
-      // przeglądarka mogła odmalować ekran podczas przejścia do podliczania.
+      // Zachowaj widoczne wiersze; nowe dodaj jednym fragmentem DOM.
       const existingRows = new Map(slot.rows);
       slot.rows.clear();
       const taken = new Set();
-      for (let start = 0; start < q.items.length; start += RENDER_BATCH) {
-        const fragment = document.createDocumentFragment();
-        const end = Math.min(start + RENDER_BATCH, q.items.length);
-        for (let i = start; i < end; i++) {
-          const it = q.items[i];
-          const key = it.text;
-          const existing = !taken.has(key) ? existingRows.get(key) : null;
-          let row = existing;
-          if (existing) {
-            taken.add(key);
-          } else {
-            row = makeResultRow(it.text);
-            row.val.textContent = t("polls.results.votesUnitCount", { n: it.count });
-            fragment.append(row.row);
-          }
-          decorate(qs, row, it);
-          qs.rows.set(it.id, row);
+      const fragment = document.createDocumentFragment();
+      for (const it of q.items) {
+        const key = it.text;
+        const existing = !taken.has(key) ? existingRows.get(key) : null;
+        let row = existing;
+        if (existing) {
+          taken.add(key);
+        } else {
+          row = makeResultRow(it.text);
+          row.val.textContent = t("polls.results.votesUnitCount", { n: it.count });
+          fragment.append(row.row);
         }
-        slot.list.append(fragment);
-        renderedRows += end - start;
-        ui.hintEl.textContent = t("polls.tally.loadingRows", { done: renderedRows, total: totalRows });
-        await nextFrame();
+        decorate(qs, row, it);
+        qs.rows.set(it.id, row);
       }
+      slot.list.append(fragment);
       for (const [key, row] of existingRows) if (!taken.has(key)) row.row.remove();
       reorder(qs);
     }
     for (const qs of states.values()) updateQuestion(qs);
-    ui.hintEl.textContent = t("polls.tally.hintText");
     validity();
     if (restored) ui.onNotice?.(t("polls.tally.restored"));
   }

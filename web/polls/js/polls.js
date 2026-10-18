@@ -452,9 +452,6 @@ async function enterTally() {
   if (!game || game.status !== STATUS.POLL_STOPPED || tallyActive) return;
   busy = true;
   setActiveTab("results");
-  tallyBar.hidden = false;
-  tallyHint.textContent = t("polls.tally.loading");
-  tallyTools.hidden = true;
   renderBar();
   try {
     // świeże dane, ta sama lista wierszy co w widoku surowym

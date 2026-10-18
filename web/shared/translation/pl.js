@@ -1058,7 +1058,6 @@ const pl = {
     },
     tally: {
       loading: "Ładuję odpowiedzi…",
-      loadingRows: "Przygotowuję kafelki: {done}/{total}",
       hintText: "Udział liczony od wszystkich głosów. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz). Przeciągnij odpowiedź na inną, żeby je połączyć; kliknij tekst, żeby poprawić literówkę. Maks. 17 znaków.",
       hintPoints: "Głosy przeliczone na punkty od wszystkich głosów. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz).",
       counter: "Odpowiedzi: {n} (wymagane 3–6)",
