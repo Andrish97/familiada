@@ -5,17 +5,10 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-10-18T08040';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-18T08040';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-18T08040';
-import { icon } from './icons.js?v=v2026-10-18T08040';
-
-// Android browsers expose their retractable browser chrome through dynamic
-// viewport units. Mark the document so that this positioning stays scoped to
-// that behavior and does not move the header around iOS/mobile desktop views.
-if (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '')) {
-  document.documentElement.classList.add('android-dynamic-browser-ui');
-}
+import { signOut } from './auth.js?v=v2026-10-18T08104';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-18T08104';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-18T08104';
+import { icon } from './icons.js?v=v2026-10-18T08104';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
@@ -389,7 +382,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-18T08040');
+  const { getUser } = await import('./auth.js?v=v2026-10-18T08104');
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
   if (btn.dataset.topbarAuthReady === '1') return;

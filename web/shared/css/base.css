@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-18T08040");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-18T08104");
 
 /* css/base.css */
 :root {
@@ -307,12 +307,13 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     border-bottom: 1px solid rgba(255,255,255,.12);
 }
 
-/* Android Chrome zmienia dynamiczny viewport podczas chowania paska
-   przeglądarki, ale fixed top:0 pozostaje przy starym początku layoutu.
-   Przesuwamy sam topbar o różnicę small i dynamic viewportu, wypełniając
-   odsłonięty pas u góry bez zmiany wysokości zarezerwowanej dla treści. */
+/* Przeglądarki mobilne zmieniają dynamiczny viewport, gdy ich paski
+   chowają się lub wracają. Przesuwamy topbar o różnicę między małym i
+   dynamicznym viewportem niezależnie od systemu/przeglądarki. --topbar-h
+   nadal opisuje samą wysokość paska, więc rezerwacja miejsca w treści się
+   nie zmienia. Na urządzeniach ze stałym viewportem różnica wynosi zero. */
 @supports (height: 100dvh) {
-    html.android-dynamic-browser-ui .topbar {
+    html .topbar {
         top: calc(100svh - 100dvh);
     }
 }
