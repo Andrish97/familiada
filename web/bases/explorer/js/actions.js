@@ -2343,7 +2343,9 @@ async function afterTagsModalClose(state, result) {
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
   const listEl = document.getElementById("list");
-  const tagsEl = document.getElementById("tags");
+  // Wspólny obszar zdarzeń dla dwóch niezależnie przewijanych sekcji:
+  // pasujących kategorii i tagów.
+  const tagsEl = document.getElementById("leftFilters");
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
 

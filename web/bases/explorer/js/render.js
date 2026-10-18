@@ -10,6 +10,7 @@ const elBaseName = document.getElementById("baseName");
 const elToolbar = document.getElementById("toolbar");
 const elTree = document.getElementById("tree");
 const elTags = document.getElementById("tags");
+const elMatchedCategories = document.getElementById("matchedCategories");
 const elBreadcrumbs = document.getElementById("breadcrumbs");
 const elList = document.getElementById("list");
 
@@ -545,7 +546,7 @@ export function renderTree(state) {
 }
 
 export function renderTags(state) {
-  if (!elTags) return;
+  if (!elTags || !elMatchedCategories) return;
 
   const tags = Array.isArray(state.tags) ? state.tags : [];
 
@@ -566,29 +567,20 @@ export function renderTags(state) {
       </div>`;
   }).join("");
 
-  const header = `<div style="opacity:.75; margin-bottom:6px;">${t("baseExplorer.tags.header")}</div>`;
-  const metaHeader = `<div style="opacity:.75; margin-bottom:6px; margin-top:4px;">${t("baseExplorer.tags.metaHeader")}</div>`;
+  const header = `<div class="left-panel-heading">${t("baseExplorer.tags.header")}</div>`;
+  const metaHeader = `<div class="left-panel-heading">${t("baseExplorer.tags.metaHeader")}</div>`;
   const addBtn = `
     <button id="btnAddTag" class="btn" type="button" style="width:100%; margin-top:10px;">
       ${icon("plus")} ${t("baseExplorer.tags.addTag")}
     </button>
   `;
 
-  if (!tags.length) {
-    elTags.innerHTML = `  
-      <div class="tagList">
-        ${metaHeader}
-        ${metaRows}
-  
-        <div style="height:10px;"></div>
-  
-        ${header}
-        ${addBtn}
-        <div style="opacity:.75; padding:6px 8px;">${t("baseExplorer.tags.empty")}</div>
-      </div>
-    `;
-    return;
-  }
+  elMatchedCategories.innerHTML = `
+    <div class="tagList">
+      ${metaHeader}
+      ${metaRows || `<div class="left-panel-empty">${t("baseExplorer.tags.empty")}</div>`}
+    </div>
+  `;
 
   const rows = tags
     .slice()
@@ -608,14 +600,9 @@ export function renderTags(state) {
 
 elTags.innerHTML = `
   <div class="tagList">
-    ${metaHeader}
-    ${metaRows}
-
-    <div style="height:10px;"></div>
-
     ${header}
     ${addBtn}
-    ${rows}
+    ${tags.length ? rows : `<div class="left-panel-empty">${t("baseExplorer.tags.empty")}</div>`}
   </div>
 `;
 }

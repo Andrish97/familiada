@@ -1102,7 +1102,7 @@ function cardMarket(g) {
   el.dataset.marketId = g.market_game_id;
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
-    <div class="meta">${t("games.market.typeLabel")} · ${(g.lang || "").toUpperCase()}</div>
+    <div class="meta">${(g.lang || "").toUpperCase()}</div>
     <div class="x" title="${t("games.market.removeFromLibrary")}">${icon("trash")}</div>
   `;
   el.addEventListener("click", () => selectMarketGame(g.market_game_id));

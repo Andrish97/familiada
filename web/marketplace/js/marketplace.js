@@ -387,7 +387,10 @@ async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
   renderDetail(g);
   if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "ready";
 
-  if (updateUrl) setDetailUrl(g.slug || id);
+  // ID działa także dla gier z biblioteki, które nie są już publiczne.
+  // Po odświeżeniu modal może pobrać dokładnie ten sam rekord przez
+  // market_game_detail, zamiast szukać wyłącznie publicznego sluga.
+  if (updateUrl) setDetailUrl(id);
   els.btnDetailClose?.focus();
 }
 
