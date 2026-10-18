@@ -1,7 +1,7 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17131";
-import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17131";
-import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T17131";
-import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-18T17131";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17200";
+import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17200";
+import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T17200";
+import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-18T17200";
 await initI18n();
 const profile = getDeviceProfile();
 const isTv = profile.formFactor === "tv";
