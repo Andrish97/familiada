@@ -866,6 +866,7 @@ body.games-body > main.wrap{
 }
 .list-search .searchBox{width:auto;flex:1 1 auto;min-width:0;height:36px;box-sizing:border-box;padding:0 5px 0 10px;margin:0}
 .list-search .searchText{height:100%;padding:0 4px}
+.list-search .searchText::-webkit-search-cancel-button{display:none}
 .list-search .btn{ padding: 0; min-height: 36px; }
 .list-search-open{ display: inline-flex; align-items:center; justify-content:center; width: 36px; height: 36px; min-height: 36px !important; flex: 0 0 36px; border-radius: 10px; }
 .list-search-open .ico{width:18px;height:18px}

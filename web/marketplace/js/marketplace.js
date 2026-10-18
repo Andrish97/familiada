@@ -176,18 +176,18 @@ function syncBrowseControlStates() {
 function initBrowseUiSelects() {
   els.btnSearchFocus?.addEventListener("click", async () => {
     const input = els.searchInput;
+    if (String(input?.value || "").trim()) {
+      input.value = "";
+      syncSearchButton();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
     const inputVisible = !!input
       && getComputedStyle(input).display !== "none"
       && getComputedStyle(input).visibility !== "hidden"
       && input.getClientRects().length > 0;
     if (inputVisible) {
       input.focus();
-      return;
-    }
-    if (String(input?.value || "").trim()) {
-      input.value = "";
-      syncSearchButton();
-      input.dispatchEvent(new Event("input", { bubbles: true }));
       return;
     }
     const value = await promptModal({
