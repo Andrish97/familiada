@@ -1,6 +1,7 @@
 // Dedicated fixtures for the manual/landing screenshots. These accounts are
 // deliberately outside the regular E2E pool (test16 PL, test17 EN, test18 UK).
 const { test, expect } = require("@playwright/test");
+const { randomUUID } = require("node:crypto");
 const { loginAsTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 const Logo = require("./helpers/logo-editor");
@@ -72,7 +73,7 @@ async function seedGames(page, copy) {
           if (index === 0 || index === 1) {
             const isBoardQuestion = ord === 0;
             const answers = isBoardQuestion ? copy.gameplay[1] : (index === 1 ? copy.pollAnswers : copy.fillerAnswers);
-            const points = isBoardQuestion ? [39, 24, 16, 9, 7, 5] : [40, 30, 20, 10];
+            const points = index === 1 ? answers.map(() => 0) : (isBoardQuestion ? [39, 24, 16, 9, 7, 5] : [40, 30, 20, 10]);
             const { error: aError } = await sb.from("answers").insert(answers.map((text, i) => ({ question_id: question.id, ord: i + 1, text, fixed_points: points[i] })));
             if (aError) throw aError;
           }
@@ -218,6 +219,40 @@ async function completeRealTasks(ownerPage, friendPage, anonymousPage, taskSets,
       if (completion !== "ok") throw new Error(`Could not complete screenshot poll task: ${completion}`);
     }
   }
+}
+
+// A points poll collects raw votes first and converts their proportions to a
+// total of 100 points only after tallying. Add an anonymous audience large
+// enough to make that distinction visible in the live results screenshot.
+async function addAnonymousPollAudience(ownerPage, anonymousPage, game, counts = [60, 35, 20, 5]) {
+  const ballot = await ownerPage.evaluate(async gameId => {
+    const sb = window.__sbClient;
+    const { data: questions, error } = await sb.from("questions").select("id,ord").eq("game_id", gameId).order("ord");
+    if (error) throw error;
+    const { data: answers, error: answerError } = await sb.from("answers").select("id,question_id,ord").in("question_id", questions.map(question => question.id)).order("ord");
+    if (answerError) throw answerError;
+    return questions.map(question => ({
+      question_id: question.id,
+      answer_ids: answers.filter(answer => answer.question_id === question.id).map(answer => answer.id),
+    }));
+  }, game.id);
+  const voters = counts.reduce((total, count) => total + count, 0);
+  if (ballot.length !== 10 || ballot.some(question => question.answer_ids.length !== counts.length)) {
+    throw new Error("The points poll needs ten questions with matching answer choices before adding anonymous votes");
+  }
+  for (let answerIndex = 0; answerIndex < counts.length; answerIndex++) {
+    for (let vote = 0; vote < counts[answerIndex]; vote++) {
+      const result = await rpc(anonymousPage, "poll_anonymous_submit", {
+        p_game_id: game.id,
+        p_key: game.share_key_poll,
+        p_browser_token: randomUUID(),
+        p_voter_token: randomUUID(),
+        p_items: ballot.map(question => ({ question_id: question.question_id, answer_id: question.answer_ids[answerIndex] })),
+      });
+      if (!result?.ok) throw new Error(`Could not add anonymous screenshot vote: ${result?.error || "unknown error"}`);
+    }
+  }
+  return voters;
 }
 
 test.beforeEach(async ({ context }) => {
@@ -700,6 +735,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     if (anonymousDoneError) captureErrors.push(anonymousDoneError);
 
     await completeRealTasks(page, friendPage, anonymousPage, taskSets, COPY[LANGUAGE]);
+    const anonymousAudience = await addAnonymousPollAudience(page, anonymousPage, games[1]);
+    expect(anonymousAudience).toBe(120);
     const tasksDoneError = await take(friendPage, testInfo, "tasks-done", async () => {
       await friendPage.goto(`https://www.familiada.online/tasks/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(friendPage.locator("#tasksHost .rowsRow")).toHaveCount(2, { timeout: 30_000 });
@@ -713,6 +750,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await expect(page.locator("#tabResults")).toBeVisible({ timeout: 30_000 });
       await page.locator("#tabResults").click();
       await expect(page.locator("#resultsList")).toContainText(COPY[LANGUAGE].pollAnswers[0], { timeout: 20_000 });
+      await expect(page.locator("#resultsList .aVal").first()).toHaveText("65", { timeout: 30_000 });
     });
     if (resultsError) captureErrors.push(resultsError);
     const textResultsError = await take(page, testInfo, "poll-text-votes", async () => {
