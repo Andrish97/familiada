@@ -801,6 +801,7 @@ export async function initHomepageScreenshots() {
       value: els.scene.value,
       onChange: value => { els.scene.value = value; els.scene.dispatchEvent(new Event("change")); },
     });
+    setStatus("Przykłady wczytane. Możesz edytować dane wybranego widoku.");
     els.scene.addEventListener("change", async () => {
       if (!await flushEditor()) { els.scene.value = editorSceneId; sceneSelectUI?.setValue(editorSceneId, { silent: true }); return; }
       updateEditor();
