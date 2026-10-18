@@ -274,7 +274,7 @@ async function hydrateInviteIdentity(data) {
   if (!data) return data;
 
   // Email-only: możemy dociągnąć label do UI, ale NIE ustawiamy *_user_id
-  if (data.kind === "sub" && !data.subscriber_user_id && data.subscriber_email) {
+  if (data.kind === "sub" && !data.registered_user_id && data.subscriber_email) {
     const match = await resolveProfileByEmail(data.subscriber_email);
     if (match?.id) {
       return {
@@ -462,7 +462,7 @@ function showSubInviteAnonEmail(head, subscriberEmail) {
 async function handleSubInvite(data, user) {
   const head = buildSubHeading(data);
   const expectedEmail = normalizeEmail(data.subscriber_email);
-  const expectedUserId = data.registered_user_id || data.subscriber_user_id;
+  const expectedUserId = data.registered_user_id;
   const hasAccountInvite = Boolean(expectedUserId);
   const userEmail = normalizeEmail(user?.email);
 
@@ -636,7 +636,7 @@ async function handleUnsubOwner() {
     resolvedInviteData = data;
     const user = await getUser();
     if (data.kind === "friend") { handleFriendInvite(data, user); return; }
-    if (data.friend_conversion_required || data.registered_user_id || data.subscriber_user_id || data.cancelled_at) {
+    if (data.friend_conversion_required || data.registered_user_id || data.cancelled_at) {
       await handleSubInvite(data, user); return;
     }
     if (!["pending", "active"].includes(data.status)) {
