@@ -306,8 +306,9 @@ async function createGameplayDevices(browser, ownerPage, gameId) {
     await devicePage.goto(`https://www.familiada.online/go/?d=${type}&id=${gameId}&key=${keys[type]}`, { waitUntil: "domcontentloaded" });
     pages[type] = devicePage;
   }
-  await expect(pages.display.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
-  await expect(pages.host.locator("body")).not.toBeEmpty({ timeout: 30_000 });
+  await pages.display.waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
+  await expect(pages.display.locator("#blackScreen")).toBeVisible({ timeout: 30_000 });
+  await expect(pages.host.locator("#paperText2")).toBeAttached({ timeout: 30_000 });
   return { contexts, pages };
 }
 
