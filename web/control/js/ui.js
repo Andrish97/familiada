@@ -478,9 +478,8 @@ export function createUI({ root, emit }) {
   // Wiersz-atrapa "rundy w toku" do podglądu D3 — patrz web/js/gameplay/previewRow.js
   // (ta sama funkcja, którą używa też js/pages/game-settings.js's modal
   // ustawień, żeby oba miejsca nie rozjechały się osobnymi implementacjami).
-  // BEZ logoPreview — logo tej JUŻ ZAPISANEJ gry pokazuje się przez
-  // scene.js's bindGame(id), wołane w control/display/js/main.js's bootPreview()
-  // wprost z ?id= w URL-u iframe'a (patrz previewSrc niżej).
+  // Podgląd dostaje wyłącznie ustawienia z bieżącego wiersza; iframe nie
+  // dostaje identyfikatora gry ani klucza urządzenia.
   function buildPreviewRow(state) {
     return buildDisplayPreviewRow({ teams: state.teams, display: state.display });
   }
@@ -498,7 +497,7 @@ export function createUI({ root, emit }) {
       try {
         const url = new URL(goUrl);
         const device = url.searchParams.get("d");
-        url.searchParams.delete("d");
+        url.search = "";
         url.pathname = `/control/${device}/`;
         url.searchParams.set("preview", "1");
         url.searchParams.set("lang", getUiLang());

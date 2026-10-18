@@ -246,14 +246,9 @@ function instrumentSceneApi(api) {
 // game_state — Control (jedyne, co go osadza) sam zna aktualne ustawienia i
 // przesyła gotowy, spreparowany wiersz przez postMessage; nie ma potrzeby
 // przekazywać do iframe klucza dostępu do prawdziwej gry.
-async function bootPreview(params) {
+async function bootPreview() {
   const scene = await createScene();
   scene.api = instrumentSceneApi(scene.api);
-  // Logo prawdziwej gry (jeśli jest) — jedyna rzecz w podglądzie wymagająca
-  // realnego id+key (Control i tak już je zna i pokazuje w kodach QR/modalu
-  // kopiowania, więc to nie jest nowy wyciek danych).
-  const previewGameId = params.get("id");
-  if (previewGameId) { try { await scene.api.logo.bindGame(previewGameId); } catch {} }
   const qrCtrl = createQRController({
     qrScreen: $("qrScreen"), gameScreen: $("gameScreen"),
     hostCard: $("qrHostCard"), buzzerCard: $("qrBuzzerCard"),
@@ -265,6 +260,9 @@ async function bootPreview(params) {
 
   $("blackScreen")?.classList.add("hidden");
   $("qrScreen")?.classList.add("hidden");
+  // Preview is a passive renderer, not a device session: reveal its surface
+  // directly instead of waiting for the live-game skeleton/auth flow.
+  $("gameScreen")?.classList.add("skel-step-ready");
   $("gameScreen")?.classList.remove("hidden");
 
   // ZAWSZE renderSnapshot, nigdy renderDiff — w odróżnieniu od prawdziwej
@@ -333,13 +331,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   const deviceGate = preview || controlTestFrame ? null : guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
   document.documentElement.removeAttribute("data-device-guard-pending");
   if (deviceGate && deviceGate.state() !== "ok") await deviceGate.ready;
-  startKeepAlive();
-  initFullscreenButton();
 
   if (preview) {
-    await bootPreview(params);
+    await bootPreview();
     return;
   }
+  startKeepAlive();
+  initFullscreenButton();
   enterFullscreen();
   document.addEventListener("keydown", (event) => {
     const screen = $("audioUnlockScreen");

@@ -101,7 +101,7 @@ async function renderCustomLogo(el, logo, dotColor, shouldPaint = () => true, mo
 
 // ===== Publiczny wejściowy punkt: wywoływany przy każdym wierszu =====
 
-export function createCoverLogoRenderer({ gameId, key }) {
+export function createCoverLogoRenderer({ gameId, key, previewOnly = false } = {}) {
   const el = document.getElementById("cover2Logo");
   let lastDot = null;
   let lastLogoId;
@@ -136,6 +136,12 @@ export function createCoverLogoRenderer({ gameId, key }) {
     if (hasPreviewLogo) {
       if (previewLogo?.type && previewLogo?.payload) await renderCustomLogo(el, previewLogo, dot, current, logoMode);
       else await renderDefaultLogo(el, dot, current);
+      return;
+    }
+    // Passive previews only render the payload sent by their parent. They do
+    // not resolve a game, key, logo, or lock state through the database.
+    if (previewOnly) {
+      await renderDefaultLogo(el, dot, current);
       return;
     }
     if (awaitingSummary && !summary) {

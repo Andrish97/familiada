@@ -234,26 +234,43 @@ async function main() {
   });
   document.documentElement.removeAttribute("data-touch-guard-pending");
   if (deviceGate && deviceGate.state() !== "ok") await deviceGate.ready;
-  setupFullscreenButton();
   setupOrientationClass();
   setupResponsivePaper();
   document.documentElement.classList.remove("page-loading");
 
   if (preview) {
     const renderer = createHostRenderer();
-    const coverLogo = createCoverLogoRenderer({ gameId, key });
-    const hostTheme = await createHostThemeApplier();
-    window.addEventListener("message", async event => {
+    const coverLogo = createCoverLogoRenderer({ previewOnly: true });
+    let latestRow = null;
+    const hostThemePromise = createHostThemeApplier().catch(error => {
+      console.warn("[host2] preview theme unavailable:", error);
+      return null;
+    });
+    window.addEventListener("message", event => {
       if (event.origin !== location.origin || event.source !== window.parent || event.data?.type !== "familiada:preview-row") return;
       const row = event.data.row;
       if (!row?.detail?.display) return;
-      await hostTheme.apply(row);
+      // The preview only paints the supplied snapshot. Show the paper as soon
+      // as its text is rendered; optional theme/logo work must not keep the
+      // preview surface (or the parent page) waiting.
+      latestRow = row;
       renderer.render(row);
-      await coverLogo.apply(row);
+      document.getElementById("paper")?.classList.add("skel-step-ready");
+      void (async () => {
+        try {
+          const hostTheme = await hostThemePromise;
+          if (latestRow !== row) return;
+          await hostTheme?.apply(row);
+          await coverLogo.apply(row);
+        } catch (error) {
+          console.warn("[host2] preview decoration failed:", error);
+        }
+      })();
     });
     if (window.parent !== window) window.parent.postMessage({ type: "familiada:host-preview-ready" }, location.origin);
     return;
   }
+  setupFullscreenButton();
 
   const loadError = document.getElementById("deviceLoadError");
   document.querySelector("[data-retry-device]")?.addEventListener("click", () => location.reload());
