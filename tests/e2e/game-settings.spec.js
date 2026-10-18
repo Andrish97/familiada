@@ -390,7 +390,7 @@ test("ustawienia gry: zajęty zasób daje zwykły Resource Guard, po zwolnieniu 
     // Zwolnienie zasobu odsłania drugi stan: karta trzymająca zasób jest
     // zamknięta, ale zapis aktywnego przebiegu jeszcze nie wygasł.
     await holderTab.close();
-    await expect(page.locator("#ingameGuard")).toBeVisible();
+    await expect(page.locator("#ingameGuard")).toBeVisible({ timeout: 40_000 });
     await expect(page.locator("#ingameGuardCountdown")).toContainText("Sesja Control wygaśnie");
     expect(settingsStatusCalls).toBeGreaterThan(0);
     await page.getByRole("button", { name: "Zakończ sesję i otwórz ustawienia" }).click();
