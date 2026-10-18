@@ -389,6 +389,31 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     });
     if (gameplayControlError) captureErrors.push(gameplayControlError);
 
+    const finaleError = await take(page, testInfo, "gameplay-finale", async () => {
+      // Render a representative finale entry screen from a local state fixture.
+      // This is a visual manual screenshot, not a simulated live match.
+      await page.evaluate(async ({ language, prompts, answers }) => {
+        const { createUI } = await import("/control/js/ui.js?v=v2026-10-14T23162");
+        const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-14T23162");
+        const state = makeDefaultState("manual-finale-preview");
+        state.step = "f_p1_entry";
+        state.topCard = "final";
+        state.phase = "FINAL";
+        state.locks = { gameStarted: true, finalActive: true, gameEnded: false };
+        state.teams = { teamA: language === "pl" ? "FAMILIADA" : language === "en" ? "FAMILY" : "РОДИНА", teamB: language === "pl" ? "ONLINE" : language === "en" ? "ONLINE" : "ОНЛАЙН" };
+        state.settings.uiLang = language;
+        state.settings.hasFinal = true;
+        state.final.questions = prompts.map((text, index) => ({ id: `final-${index + 1}`, text, answers: [] }));
+        state.final.runtime.timer = { running: false, phase: null, endsAt: 0, usedP1: true, usedP2: false };
+        state.final.runtime.p1 = answers.map(text => ({ text }));
+        const ui = createUI({ root: document.querySelector("#app"), emit: () => {} });
+        ui.render(state, { presenceFlags: { display: true, host: true, buzzer: false }, busy: false, typingPending: false, devicesBlocked: false });
+      }, { language: LANGUAGE, prompts: COPY[LANGUAGE].questions.slice(1, 6), answers: COPY[LANGUAGE].finalAnswers });
+      await expect(page.locator(".c2-entryrows .c2-entryrow")).toHaveCount(5, { timeout: 15_000 });
+      await expect(page.locator(".c2-entryrows .c2-entryrow").first()).toContainText(COPY[LANGUAGE].questions[1]);
+    });
+    if (finaleError) captureErrors.push(finaleError);
+
     for (const device of ["host", "display"]) {
       try {
         const fixture = await prepareDevicePreviewFixture(browser, LANGUAGE, device);
@@ -476,12 +501,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     if (logoError) captureErrors.push(logoError);
 
     const logoDrawError = await take(page, testInfo, "logo-draw-editor", async () => {
-      await page.locator("#tabLogoDraw").click();
-      await page.locator("#grid .addCard").click();
-      await page.fill("#renameInput", logoNames[1]);
-      await page.locator("#btnRenameOk").click();
-      await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW", { timeout: 30_000 });
-      await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15_000 });
+      await Logo.createNew(page, "Draw", logoNames[1]);
       await page.keyboard.press("p");
       const stage = await Logo.stage(page);
       for (const [x, y] of [[0.2, 0.25], [0.75, 0.25], [0.5, 0.75]]) await page.mouse.click(stage.x + stage.width * x, stage.y + stage.height * y);
@@ -520,7 +540,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       const browse = page.locator("#btnBrowse");
       await expect(browse).toBeEnabled({ timeout: 10_000 });
       await browse.click();
-      await page.waitForURL(url => url.pathname.includes("/bases/explorer"), { timeout: 30_000 });
+      await page.waitForURL(url => url.pathname.includes("/bases/explorer") && url.searchParams.get("id") === screenshotBaseId, { timeout: 30_000 });
+      await expect(page.locator(".explorer")).toBeVisible({ timeout: 30_000 });
       await expect(page.locator("body")).toContainText("Co zabierasz na weekendowy wyjazd?", { timeout: 30_000 });
     });
     if (explorerError) captureErrors.push(explorerError);

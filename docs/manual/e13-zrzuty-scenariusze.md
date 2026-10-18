@@ -23,7 +23,7 @@ Ustawienia kolejności zapisujemy na stałej grze preparowanej. Jej identyfikato
 1. Zaloguj konto językowe i poczekaj na gotowość strony.
 2. Odśwież treść stałej gry preparowanej i utwórz dwie nowe gry ankietowe. Poprzednie gry ankietowe wraz z ich głosami i zadaniami usuń.
 3. Na grze preparowanej otwórz Control i jako pierwszą czynność wybierz **Zacznij od nowa**. Jeśli źródłem dźwięku jest przypadkowo Wyświetlacz, przełącz je na Control.
-4. Zapisz kadr Control. Dla Prowadzącego i Wyświetlacza wstaw ten sam symulowany stan planszy; nie uruchamiaj połączeń urządzeń ani rzeczywistej partii.
+4. Zapisz kadr Control, a następnie osobny kadr formularza finału z przykładowymi pytaniami i wpisanymi odpowiedziami. Dla Prowadzącego i Wyświetlacza wstaw ten sam symulowany stan planszy; nie uruchamiaj połączeń urządzeń ani rzeczywistej partii.
 5. Przygotuj dane znajomych, subskrybentów, zadań i głosów. Otwórz widoki gier, ankiet, zadań, baz, logo i ustawień, czekając na gotowość każdej strony.
 6. Oddzielnie zapisz główny, symulowany kadr Wyświetlacza dla PL.
 7. Usuń bazę i logo utworzone na potrzeby przebiegu oraz przywróć pierwotne nazwy profili. Gra preparowana pozostaje i jest odnawiana; poprzednie gry ankietowe są zastępowane przy kolejnym przebiegu. Zrzuty pozostają artefaktami, nie zapisujemy ich w bazie.
@@ -48,6 +48,7 @@ Zwykłe kadry mają rozmiar **1365×768 px**. Głosowanie na telefonie ma **390�
 | **Panel sterowania** (`gameplay-control`) | Otwiera Control na grze preparowanej, zaczyna od **Zacznij od nowa** i pokazuje przygotowanie urządzeń z wybranym źródłem dźwięku Control. |
 | **Prowadzący** (`gameplay-host`) | Pokazuje ekran Prowadzącego z przykładowym pytaniem i odpowiedziami, wyrenderowany z przygotowanego stanu podglądu. |
 | **Wyświetlacz** (`gameplay-display`) | Pokazuje planszę z tym samym przygotowanym stanem co ujęcie Prowadzącego; pytanie, odkryte odpowiedzi, X i wynik są spójne. To podgląd, bez sesji na żywo. |
+| **Wpisywanie finału** (`gameplay-finale`) | Pokazuje ekran Control z pięcioma finałowymi pytaniami i przykładowymi wpisami odpowiedzi. To samodzielny stan widoku, bez uruchamiania finału ani urządzeń. |
 | **Znajomi** (`friends`) | Pokazuje listę przykładowego znajomego na stronie **Znajomi**. |
 | **Subskrybenci** (`subscribers`) | Pokazuje trzy testowe aktywne wpisy subskrybentów. |
 | **Udostępnianie ankiety punktowej** (`poll-sharing`) | Pokazuje sekcję anonimową z linkiem/QR oraz listę odbiorców, w tym subskrybentów. Gdy QR nie da się wyrenderować, automat ukrywa wyłącznie pusty element QR dla tego kadru i nadal robi pozostałe zrzuty. Później kod QR w tym kadrze podmienimy linkiem do mini-stronki po jej otrzymaniu. |
