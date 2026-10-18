@@ -10,7 +10,7 @@
 // game_state przy każdym (re)connect). Ten moduł robi wyłącznie to, co jest
 // realnie faktem obecności: kto jest online, od kiedy.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T07491";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T07511";
 
 const STATUS_READ_TIMEOUT_MS = 6_500;
 const POLL_MS = 750;
