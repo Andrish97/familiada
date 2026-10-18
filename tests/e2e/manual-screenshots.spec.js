@@ -598,15 +598,25 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         await devices.pages[type].reload({ waitUntil: "domcontentloaded" });
         await devices.pages[type].waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
       }
+      const legacyDisplayKey = await page.evaluate(async gameId => {
+        const { data, error } = await window.__sbClient.from("games").select("share_key_display").eq("id", gameId).single();
+        if (error) throw error;
+        return data.share_key_display;
+      }, games[0].id);
       const displayState = await devices.pages.display.evaluate(async ({ gameId, key }) => {
         const urlKey = new URL(location.href).searchParams.get("key");
         const { data: resolved, error: resolveError } = await window.__sbClient.rpc("control_device_share_resolve", { p_token: urlKey });
+        const { data: authData, error: authError } = await window.__sbClient.rpc("display_auth", { p_game_id: gameId, p_key: urlKey });
         const { data, error } = await window.__sbClient.rpc("game_state_get", {
           p_game_id: gameId, p_device_type: "display", p_key: urlKey,
         });
-        return { keyMatchesControl: urlKey === key, resolveState: resolved?.state, resolvedType: resolved?.device_type, resolveError: resolveError?.message,
-          stateError: error?.message, step: data?.step, mode: data?.detail?.display?.mode, rev: data?.rev };
-      }, { gameId: games[0].id, key: deviceKeys.display });
+        const { data: legacyData, error: legacyError } = await window.__sbClient.rpc("game_state_get", {
+          p_game_id: gameId, p_device_type: "display", p_key: key.legacy,
+        });
+        return { keyMatchesControl: urlKey === key.current, resolveState: resolved?.state, resolvedType: resolved?.device_type, resolveError: resolveError?.message,
+          authOk: Boolean(authData?.length), authError: authError?.message, stateError: error?.message, step: data?.step, mode: data?.detail?.display?.mode, rev: data?.rev,
+          legacyStateError: legacyError?.message, legacyStep: legacyData?.step };
+      }, { gameId: games[0].id, key: { current: deviceKeys.display, legacy: legacyDisplayKey } });
       console.log(`[manual-screenshot] display gameplay state ${JSON.stringify(displayState)}`);
       await expect(devices.pages.display.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
       const startGame = page.getByRole("button", { name: /^(Rozpocznij grę|Start game|Розпочати гру)$/ });
