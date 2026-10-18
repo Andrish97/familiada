@@ -1,16 +1,16 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T14094";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T14094";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T14094";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T14094";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T14094";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-18T14094";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T14094";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T14094";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T14094";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T14094";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T14094";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T14124";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T14124";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T14124";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T14124";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T14124";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-18T14124";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T14124";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T14124";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T14124";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T14124";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T14124";
 
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");
