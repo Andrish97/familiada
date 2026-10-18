@@ -1,0 +1,85 @@
+name: Manual screenshots
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "web/**"
+  # Ręczny przebieg pozwala odświeżyć zrzuty bez zmiany strony.
+  workflow_dispatch:
+    inputs:
+      flow:
+        description: Który zestaw ekranów przygotować?
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - pl
+          - en
+          - uk
+
+# Zrzuty korzystają z produkcyjnych kont testowych i tworzą tymczasową grę.
+# Na tym etapie zapisujemy je wyłącznie jako artefakty przebiegu; ewentualne
+# zapisanie do bazy będzie osobnym, później podłączonym krokiem.
+# Zestawy w macierzy mają osobne konta, a osobne uruchomienia są szeregowane.
+concurrency:
+  group: manual-screenshots-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    name: Screenshots (${{ matrix.lang }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: ${{ github.event_name == 'push' || inputs.flow == 'all' || inputs.flow == matrix.lang }}
+    strategy:
+      fail-fast: false
+      # Test16–18 also serve as each other's friend recipients; serialize the
+      # three language scenes so relationship cleanup cannot overlap.
+      max-parallel: 1
+      matrix:
+        lang: [pl, en, uk]
+    env:
+      # Render the checked-out website version even when the workflow follows a main push.
+      TEST_BRANCH_CODE: "1"
+      SCREENSHOT_LANG: ${{ matrix.lang }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Prepare three localized games and capture screens
+        env:
+          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        working-directory: tests
+        run: npx playwright test e2e/manual-screenshots.spec.js --workers=1
+
+      - name: Upload screenshot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manual-screenshots-${{ matrix.lang }}-${{ github.run_id }}
+          path: tests/test-results/**/shot-*.png
+          if-no-files-found: error
+          retention-days: 14

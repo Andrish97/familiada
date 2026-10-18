@@ -171,6 +171,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+| 2026-10-18 | E13 / zrzuty jako artefakty przebiegu | Osobny workflow przygotowuje obrazy i dołącza je do danego przebiegu GitHub Actions jako artefakt PNG z retencją 14 dni. Brak/nieudane renderowanie QR nie blokuje kadru udostępniania ankiety; pozostałe widoki nadal są przechwytywane niezależnie. | Na tym etapie brak zapisu obrazów do bazy i brak publikacji do galerii. Integrację z bazą podłączymy osobno po dostarczeniu docelowego linku QR. Lokalnego przebiegu nie uruchomiono: środowisko nie ma sekretów wymaganych do logowania testowego. |
+
 | 2026-10-12 | Ustawienia — poprawka ikon AI opublikowana | Commit bb21b37327 na main; Pages38277746816 success. Kryjące podłoże i poprawka dotykowego hover/active wdrożone. Zrzuty z przykładowymi danymi390/1400 w docs/img/settings-ai-providers. | Testy pominięte na wyraźną prośbę; brak potwierdzenia na fizycznym Androidzie. |
 
 | 2026-10-12 | Ustawienia — ikony kolejności AI / Android | Użytkownik zezwolił na bezpośredni main bez testów. Sekcja AI otrzymała kryjące podłoże zgodne z --under przycisków; numerki bez półprzezroczystego tła, dotykowe strzałki bez filter/transform jak menu mobilne. Logika kolejności bez zmiany. Lokalny podgląd rzeczywistego renderera z przykładowymi danymi: aktywny/cooldown/wyłączony, 390/1400 px w docs/img/settings-ai-providers; oba stany przycisków opacity1 i kryjące tło. | Push main i Pages; E2E/unit pominięte na prośbę użytkownika. Fizyczny Android nie był dostępny do weryfikacji. |

@@ -9,7 +9,7 @@ test.use({ serviceWorkers: "block" });
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ context }) => {
-  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["polls"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["polls"] });
 });
 
 async function rpc(page, name, args) {
@@ -410,17 +410,18 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
   await loginAsPooledTestUser(page, context, 0);
   const game = await seedPoll(page);
   const future = new Date(Date.now() + 12 * 3600000).toISOString();
+  const samplePeople = ["Alicja Nowak", "Bartek Zieliński", "Celina Maj", "Dawid Król", "Emilia Wójcik", "Filip Kaczmarek"];
   const panel = { ok: true,
-    friends: Array.from({ length: 20 }, (_, n) => ({ user_id: `f${n}`, label: `Znajomy ${n}`, email: `f${n}@example.net`, email_enabled: true, cooldown_until: n === 0 ? future : null })),
-    subscribers: Array.from({ length: 20 }, (_, n) => ({ id: `s${n}`, email: `s${n}@example.net`, email_enabled: true, cooldown_until: n === 0 ? future : null })),
+    friends: Array.from({ length: 20 }, (_, n) => ({ user_id: `f${n}`, label: samplePeople[n] || `Gość ${n + 1}`, email: `osoba${n + 1}@example.net`, email_enabled: true, cooldown_until: n === 0 ? future : null })),
+    subscribers: Array.from({ length: 20 }, (_, n) => ({ id: `s${n}`, email: `uczestnik${n + 1}@example.net`, email_enabled: true, cooldown_until: n === 0 ? future : null })),
     tasks: [
-      { id: "pending", label: "Alicja", recipient_user_id: "r1", status: "pending", email_enabled: true, cooldown_until: future },
-      { id: "opened", label: "Bartek", recipient_user_id: "r2", status: "opened", email_enabled: true, reminder_count: 0 },
-      { id: "muted", label: "Cezary", recipient_user_id: "r3", status: "pending", email_enabled: false },
-      { id: "done", label: "Dorota", recipient_user_id: "r4", status: "done", email_enabled: true },
-      { id: "declined", label: "Ewa", recipient_user_id: "r5", status: "declined", email_enabled: true },
-      { id: "limited", label: "Filip", recipient_user_id: "r6", status: "pending", email_enabled: true, reminder_count: 2 },
-      { id: "hidden", label: "Grzegorz", recipient_user_id: "f19", status: "declined", email_enabled: true, hidden: true },
+      { id: "pending", label: "Alicja Nowak", recipient_user_id: "r1", status: "pending", email_enabled: true, cooldown_until: future },
+      { id: "opened", label: "Bartek Zieliński", recipient_user_id: "r2", status: "opened", email_enabled: true, reminder_count: 0 },
+      { id: "muted", label: "Celina Maj", recipient_user_id: "r3", status: "pending", email_enabled: false },
+      { id: "done", label: "Dawid Król", recipient_user_id: "r4", status: "done", email_enabled: true },
+      { id: "declined", label: "Emilia Wójcik", recipient_user_id: "r5", status: "declined", email_enabled: true },
+      { id: "limited", label: "Filip Kaczmarek", recipient_user_id: "r6", status: "pending", email_enabled: true, reminder_count: 2 },
+      { id: "hidden", label: "Gość 20", recipient_user_id: "f19", status: "declined", email_enabled: true, hidden: true },
       ...Array.from({ length: 20 }, (_, n) => ({ id: `t${n}`, label: `Odbiorca ${n}`, recipient_user_id: `r${n + 10}`, status: "pending", email_enabled: false })),
     ] };
   await page.route("**/rest/v1/rpc/poll_share_panel", route => route.fulfill({ json: panel }));
@@ -458,9 +459,9 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
         return lists.map(e => e.scrollTop);
       });
       expect(scroll).toEqual([70, 120]);
-      await page.screenshot({ path: test.info().outputPath(`shot-poll-recipients-${width}.png`), fullPage: true });
+      await page.screenshot({ path: test.info().outputPath(`shot-poll-recipients-${width}.png`), animations: "disabled" });
       await page.locator('#pollRecipientsCancel').click();
-      await page.screenshot({ path: test.info().outputPath(`shot-poll-sharing-${width}.png`), fullPage: true });
+      await page.screenshot({ path: test.info().outputPath(`shot-poll-sharing-${width}.png`), animations: "disabled" });
     }
     await rpc(page, "poll_stop", { p_game_id: game.id });
     await page.reload(); await expect(page.locator('#btnAddRecipients')).toBeDisabled();

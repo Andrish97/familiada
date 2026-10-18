@@ -1353,12 +1353,20 @@ test.describe("editor: audyt -- zrzuty ekranu", () => {
     test(`zrzut: edytor i modal pytania (${label})`, async ({ browser }, testInfo) => {
       test.setTimeout(90_000);
       const { ctx, page } = await newUserContext(browser, testAccountUsername(1), opts);
-      const gameId = await createGame(page, { type: "prepared", name: `E2E-SHOT-${Date.now()}` });
-      const baseId = await createBase(page, `E2E-SHOT-${Date.now()}`);
+      const gameId = await createGame(page, { type: "prepared", name: "Wieczór nad morzem" });
+      const baseId = await createBase(page, "Pytania na wspólny wieczór");
       try {
         await seedPrepared(page, gameId, [
-          ["Co zabierasz na plażę?", [["Ręcznik", 35], ["Parasol", 25], ["Krem", 20], ["Książkę", 10]]],
-          ["Najpopularniejsze zwierzę domowe?", [["Pies", 50], ["Kot", 40], ["Rybki", 20]]],
+          ["Co zabierasz na plażę?", [["Ręcznik", 35], ["Parasol", 25], ["Krem z filtrem", 20], ["Książkę", 10]]],
+          ["Co najchętniej jemy na pikniku?", [["Kanapki", 32], ["Owoce", 25], ["Sałatkę", 18], ["Ciasto", 12]]],
+          ["Jaki napój kojarzy się z latem?", [["Lemoniada", 34], ["Woda", 28], ["Mrożona herbata", 20], ["Sok", 12]]],
+          ["Co robimy nad jeziorem?", [["Pływamy", 38], ["Opalamy się", 24], ["Wędkujemy", 16], ["Wiosłujemy", 12]]],
+          ["Co warto spakować na wycieczkę?", [["Wodę", 36], ["Mapę", 22], ["Przekąski", 18], ["Aparat", 14]]],
+          ["Jaki dźwięk słychać latem wieczorem?", [["Świerszcze", 31], ["Żaby", 24], ["Muzykę", 20], ["Ognisko", 15]]],
+          ["Co robimy, gdy pada na wakacjach?", [["Gramy w planszówki", 33], ["Czytamy", 24], ["Oglądamy film", 21], ["Gotujemy", 12]]],
+          ["Jaki smak lodów wybieramy najczęściej?", [["Czekoladowy", 30], ["Waniliowy", 26], ["Truskawkowy", 23], ["Pistacjowy", 14]]],
+          ["Co przywozimy z podróży?", [["Zdjęcia", 34], ["Pamiątki", 29], ["Magnes", 18], ["Nowe historie", 13]]],
+          ["Jak najlepiej zakończyć letni dzień?", [["Spacerem", 31], ["Kolacją z bliskimi", 27], ["Zachodem słońca", 22], ["Ogniskiem", 15]]],
         ]);
         await openEditor(page, gameId);
         if (label === "mobile") await qCard(page, 0).click();

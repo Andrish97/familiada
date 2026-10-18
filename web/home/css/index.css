@@ -271,6 +271,14 @@ body.home-body {
   font-size: 13px;
 }
 
+.tiles-more {
+  max-width: 780px;
+  margin: 16px auto 0;
+  opacity: .76;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .tile-shot {
   position: relative;
   border-radius: 18px;

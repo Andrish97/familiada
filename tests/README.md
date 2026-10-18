@@ -176,11 +176,46 @@ jakaś globalna alokacja:
    po indeksie workera — każdy równoległy worker loguje się na **inne**
    konto, więc nikt nie czeka w kolejce za cudzym logowaniem.
 
-Konta test4 i test5 są zarezerwowane: testy równoległe nie dostają ich
-automatycznie. W razie potrzeby izolowanego przebiegu wybiera się je jawnie
-wejściem workflow `test_accounts=4,5`; wtedy `loginAsPooledTestUser` przydziela
-je workerom po indeksie. Nie przypisujemy tych kont na stałe do testów.
-test9 i test10 są wyłączone bez wyjątków.
+Test4 i test5 nie mają obecnie stałego przypisania do konkretnego speca, ale
+wchodzą do zwykłej puli i mogą być użyte automatycznie przez testy z
+`loginAsPooledTestUser`. Nie traktuj ich jako wolnych do równoległych zrzutów.
+Test9 i test10 są wyłączone ze zwykłej puli; testy drugiej sesji mogą ich
+używać wyłącznie w jawnie odizolowanych scenariuszach.
+
+### Stałe zastosowania poszczególnych kont
+
+Numery 1–8 nie są rezerwacjami wyłącznymi: kilka testów loguje się na stałe
+do wskazanego konta, a testy równoległe mogą dodatkowo wybrać dowolne konto z
+tej puli. Tabela pokazuje jawne, ważne role zapisane w kodzie; przed
+przypisaniem konta nowemu workflow sprawdź też pulę `TEST_ACCOUNT_NUMBERS`.
+
+| Konto | Użycie zapisane w testach | Można zarezerwować do zrzutów? |
+| --- | --- | --- |
+| `test1` | Domyślne konto dla testów jednoosobowych: gry, edytor, bazy i eksplorator baz, index, marketplace, blokady zasobów, wiele testów responsywnych. Używane też przez recorder Control i jako pierwsze konto puli równoległej. | Nie. Najbardziej współdzielone konto. |
+| `test2` | Drugie konto w testach dwóch użytkowników (m.in. bazy i eksplorator baz); odbiorca wysyłki gry/logo; edytor logo; test oceny; może być kontem puli. | Nie. |
+| `test3` | Konto edytora logo i drugie konto w wybranych testach współdzielenia/odbioru; może być kontem puli. | Nie. |
+| `test4` | Bez stałej roli w jednym specu; wchodzi do zwykłej puli i może zostać wybrane przez testy używające `loginAsPooledTestUser`. | Nie przy równoległych workflow. |
+| `test5` | Jak `test4`: bez stałej roli w jednym specu, ale dostępne dynamicznie z puli. | Nie przy równoległych workflow. |
+| `test6` | Konto edytora logo; może też trafić do testu korzystającego z puli. | Nie. |
+| `test7` | Właściciel w testach Znajomych/Subskrypcji i konto edytora logo; używane także przez testy blokad i jako odbiorca w wybranych przepływach mailowych. | Nie. |
+| `test8` | Odbiorca w testach Znajomych, Subskrypcji i wysyłki bazy; używane przez test blokad zasobów i edytor logo. `clearMailbox(test8)` czyści całą skrzynkę tego konta. | Nie. |
+| `test9` | Wyłączone ze zwykłej puli; jawnie używane w audytach logo Hosta/Ustawień Hosta. | Nie przypisywać nowym przebiegom. |
+| `test10` | Wyłączone ze zwykłej puli; jawnie używane w izolowanym teście równoległego Przycisku do pojedynku. | Nie przypisywać nowym przebiegom. |
+| `test11` | Test odzyskiwania hasła przez e-mail i odtwarzania stanu konta. | Nie. |
+| `test12` | Test zmiany nazwy i zmiany adresu e-mail konta. | Nie. |
+| `test13` | Zapasowy adres odbiorczy w teście zmiany adresu konta `test12`; nie jest odrębnym kontem logowania przypisanym do zwykłej puli. | Nie. |
+| `test14` | Prywatna skrzynka mailowa bez konta. Używana jako odbiorca bez konta (m.in. subskrypcje, znajomi, treści maili) oraz jako adres testowy, który nie powinien zostać rozpoznany jako konto użytkownika. Nie zakładać tu konta. | Nie; ma pozostać skrzynką bez konta. |
+| `test15` | Konto specjalne odtwarzane przez E2E API. Używane w testach tożsamości odbiorcy ankiety, źródła kontaktu, kaskadowego usuwania konta i przywracania kont specjalnych. | Nie; testy mogą je odtwarzać lub usuwać. |
+| `test16` | Dedykowane konto screenów PL. W osobnym workflow dostaje trzy tymczasowe gry i trzy odnawiane wpisy testowych subskrybentów e-mailowych. | Tak, tylko w workflow `manual-screenshots`. Nie używać jako adresu skrzynki. |
+| `test17` | Dedykowane konto screenów EN; te same trzy rodzaje gier z angielskimi danymi i trzy testowe subskrypcje e-mailowe. | Tak, tylko w workflow `manual-screenshots`. Nie używać jako adresu skrzynki. |
+| `test18` | Dedykowane konto screenów UK; te same trzy rodzaje gier z ukraińskimi danymi i trzy testowe subskrypcje e-mailowe. | Tak, tylko w workflow `manual-screenshots`. Nie używać jako adresu skrzynki. |
+
+Testy z `loginAsPooledTestUser` nie mają trwałego przypisania do konkretnego
+numeru. Przy domyślnym `TEST_ACCOUNT_COUNT=8` pula obejmuje test1–test8, a
+Playwright przypisuje konta workerom według indeksu. Dlatego brak wzmianki o
+koncie w tabeli nie oznacza, że jest wolne dla drugiego workflow. Logowanie
+do `test16`–`test18` w screenshot workflow ma wskazywać jawne nazwy kont;
+nie rozszerzać przez nie zwykłej puli E2E.
 
 Domyślne konto (gdy test nie podaje jawnego `username`) to zawsze
 `test1@familiada.online` — reszta testów (game-deletion, editor,

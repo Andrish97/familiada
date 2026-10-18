@@ -318,7 +318,10 @@ function initImageViewer() {
   const openShot = (shot) => {
     if (!shot) return;
     const img = shot.querySelector(".shot-img");
-    if (img) open(img.currentSrc || img.src, img.getAttribute("alt") || "");
+    if (!img) return;
+    const fullFile = img.dataset.fullFile;
+    const fullImage = fullFile ? buildLangImgUrl(getUiLang(), fullFile) : (img.currentSrc || img.src);
+    open(fullImage, img.getAttribute("alt") || "");
   };
 
   document.querySelectorAll(".tile-shot").forEach((shot) => {
@@ -388,9 +391,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await initI18n({ withSwitcher: true });
   } catch (e) {
     console.error("[index] i18n init failed:", e);
-  } finally {
-    // Awaria sesji lub tłumaczeń nie może zostawić pustej strony.
-    document.documentElement.classList.remove('page-loading');
   }
   document.querySelector('.topbar')?.classList.add('topbar-ready');
   applyTranslations();
