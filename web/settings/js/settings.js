@@ -121,6 +121,7 @@ const els = {
   toolsSelect: document.getElementById("toolsSelect"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
+  btnTabScreenshots: document.getElementById("btnTabScreenshots"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
   btnTabRatings: document.getElementById("btnTabRatings"),
   btnTabStats: document.getElementById("btnTabStats"),
@@ -137,6 +138,7 @@ const els = {
   reportsPanel: document.getElementById("reportsPanel"),
   marketingPanel: document.getElementById("marketingPanel"),
   marketingContactsPanel: document.getElementById("marketingContactsPanel"),
+  homepageScreenshotsPanel: document.getElementById("homepageScreenshotsPanel"),
   btnTabMarketing: document.getElementById("btnTabMarketing"),
   btnTabMarketingContacts: document.getElementById("btnTabMarketingContacts"),
   btnRatingsRefresh: document.getElementById("btnRatingsRefresh"),
@@ -5044,7 +5046,7 @@ function closeTools() {
 // Strona administratora (poza mapą PAGES): lista kart lokalnie, pierwsza = domyślna.
 const SETTINGS_TABS = [
   "maintenance", "mail", "marketplace", "ratings", "stats", "generator",
-  "reports", "marketing", "marketingContacts",
+  "reports", "marketing", "marketingContacts", "homepageScreenshots",
 ];
 const DEFAULT_SETTINGS_TAB = SETTINGS_TABS[0];
 
@@ -5068,6 +5070,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   const btnReports = document.getElementById("btnTabReports");
   const btnMarketing = document.getElementById("btnTabMarketing");
   const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
+  const btnScreenshots = document.getElementById("btnTabScreenshots");
   const tools = document.getElementById("toolsSelect");
 
   if (btn) btn.classList.toggle("active", tab === "maintenance");
@@ -5079,6 +5082,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (btnMarketing) btnMarketing.classList.toggle("active", tab === "marketing");
   if (btnMarketingContacts) btnMarketingContacts.classList.toggle("active", tab === "marketingContacts");
+  if (btnScreenshots) btnScreenshots.classList.toggle("active", tab === "homepageScreenshots");
   if (tools) tools.classList.toggle("active", tab === "tools");
 
   // Hide/show panels
@@ -5091,6 +5095,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
   if (els.marketingContactsPanel) els.marketingContactsPanel.hidden = tab !== "marketingContacts";
+  if (els.homepageScreenshotsPanel) els.homepageScreenshotsPanel.hidden = tab !== "homepageScreenshots";
 
   // Force display style for panels (mobile compatibility)
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
@@ -5130,6 +5135,7 @@ function activateSettingsTabFromUrl() {
     reports: els.btnTabReports,
     marketing: els.btnTabMarketing,
     marketingContacts: els.btnTabMarketingContacts,
+    homepageScreenshots: els.btnTabScreenshots,
   };
   const button = buttons[tab];
   if (button) button.click();
@@ -6410,6 +6416,15 @@ function wireEvents() {
     els.btnTabMarketingContacts.addEventListener("click", () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("marketingContacts");
+    });
+  }
+
+  if (els.btnTabScreenshots) {
+    els.btnTabScreenshots.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("homepageScreenshots");
+      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-18T370");
+      await initHomepageScreenshots();
     });
   }
 

@@ -1,7 +1,7 @@
 // src/lib/storage.js -- Supabase Storage (message-attachments bucket) helpers.
 import { getSupabaseConfig } from "./supabase.js";
 
-export async function uploadToStorage(env, bucketPath, data_b64, mimeType) {
+export async function uploadToStorage(env, bucketPath, data_b64, mimeType, { upsert = false } = {}) {
   const cfg = getSupabaseConfig(env);
   if (!cfg) throw new Error("storage_upload_failed:missing_supabase_config");
   // bucketPath format: "message-attachments/{path}" or just "{bucket}/{path}"
@@ -11,7 +11,11 @@ export async function uploadToStorage(env, bucketPath, data_b64, mimeType) {
   for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Authorization": `Bearer ${cfg.serviceRoleKey}`, "Content-Type": mimeType },
+    headers: {
+      "Authorization": `Bearer ${cfg.serviceRoleKey}`,
+      "Content-Type": mimeType,
+      ...(upsert ? { "x-upsert": "true" } : {}),
+    },
     body: bytes,
   });
   if (!res.ok) {

@@ -1,0 +1,27 @@
+{
+  "kind": "GLYPH",
+  "name": "DEMO - Logo Tekst",
+  "payload": {
+    "layers": [
+      {
+        "color": "main",
+        "rows": [
+          "                              ",
+          "                              ",
+          "        █  ◢█◣ ◢█◣ ◢█◣        ",
+          "        █  █ █ █   █ █        ",
+          "        █  █ █ █⌟▃ █ █        ",
+          "        █  █ █ █⌝█ █ █        ",
+          "        ██ ◥█◤ ◥█◤ ◥█◤        ",
+          "                              ",
+          "                              ",
+          "                              "
+        ]
+      }
+    ],
+    "source": {
+      "mode": "TEXT",
+      "text": "LOGO"
+    }
+  }
+}
