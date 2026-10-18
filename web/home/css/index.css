@@ -478,8 +478,6 @@ details[open] .faq-q .faq-caret {
        topbar, przez co nagłówek zachodził na niego, a Wstecz nie klikał. */
     z-index: auto !important;
     padding: 0;
-    margin-left: calc(-1 * max(15px, env(safe-area-inset-left)));
-    margin-right: calc(-1 * max(15px, env(safe-area-inset-right)));
   }
   .imgv-overlay.sheet-active .imgv-panel { padding: 0; }
   .imgv-overlay.sheet-active .sheet-modal-head {
