@@ -435,7 +435,9 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
       for (const id of ["pending", "limited"]) await expect(page.locator(`#subsGrid [data-id="${id}"] [data-act=remind]`)).toBeDisabled();
       await expect(page.locator('#subsGrid [data-id=hidden]')).toHaveCount(0);
       const geometry = await page.evaluate(() => {
-        const sections = [...document.querySelectorAll('#secShare .pollSec')].map(e => Math.round(e.getBoundingClientRect().width));
+        const sections = [...document.querySelectorAll('#secShare .pollSec')]
+          .filter(e => e.getClientRects().length)
+          .map(e => Math.round(e.getBoundingClientRect().width));
         const buttons = [...document.querySelectorAll('#subsGrid [data-id=pending] .shareRowActions button')].map(e => [Math.round(e.getBoundingClientRect().width), Math.round(e.getBoundingClientRect().height)]);
         const actions = [...document.querySelectorAll('#pollActions .btn')].filter(e => e.getBoundingClientRect().height).map(e => e.getBoundingClientRect().height);
         return { sections, buttons, actions, overflow: document.documentElement.scrollWidth > innerWidth };
