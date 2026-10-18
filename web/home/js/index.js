@@ -5,6 +5,7 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T07140";
 import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-18T07140";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T07140";
 import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T07140";
+import { enterModalSheet, exitModalSheet, handleSheetBack, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T07140";
 
 async function redirectIfSession() {
   try {
@@ -244,20 +245,26 @@ function initFaqCarets() {
 
 function initImageViewer() {
   const overlay = document.createElement("div");
-  overlay.className = "imgv-overlay";
+  overlay.id = "imgvOverlay";
+  overlay.className = "overlay modal--sheet imgv-overlay";
+  overlay.style.display = "none";
+  overlay.setAttribute("aria-hidden", "true");
   overlay.innerHTML = `
-    <div class="imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvTitle">
-      <div class="imgv-top">
-        <div class="imgv-title" id="imgvTitle"></div>
-        <button class="imgv-close btn" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}" data-i18n-aria-label="common.modal.closeLabel">${icon("close")}</button>
+    <div class="modal imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvTitle">
+      <div class="imgv-top mHead">
+        <div class="imgv-title mTitle" id="imgvTitle"></div>
+        <button class="btn sm" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}" data-i18n-aria-label="common.modal.closeLabel">${icon("close")}</button>
       </div>
       <div class="imgv-stage" id="imgvStage"></div>
     </div>
   `;
-  document.body.appendChild(overlay);
-
+  const main = document.querySelector("main.wrap");
+  const footer = main?.querySelector(":scope > .footer");
+  if (main) main.insertBefore(overlay, footer || null);
+  else document.body.appendChild(overlay);
   const stage = overlay.querySelector("#imgvStage");
   const closeBtn = overlay.querySelector("#imgvClose");
+  const backBtn = document.getElementById("btnImageViewerBack");
   const titleEl = overlay.querySelector("#imgvTitle");
 
   let currentImg = null;
@@ -289,16 +296,18 @@ function initImageViewer() {
       img.className = "imgv-img"; img.src = src; img.alt = title || "";
       stage.appendChild(img); currentImg = img;
     }
+    overlay.style.display = "";
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
-    document.body.classList.add("topbar-mobile-lock");
-    closeBtn.focus();
+    enterModalSheet(overlay, { backBtn, onClose: close });
+    (isSheetViewport() ? backBtn : closeBtn)?.focus();
   };
 
   const close = () => {
     overlay.classList.remove("is-open");
+    overlay.style.display = "none";
     overlay.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("topbar-mobile-lock");
+    exitModalSheet(overlay);
     stage.innerHTML = ""; currentImg = null;
     pointers.clear(); startDist = 0; lastPan = null;
     previousFocus?.focus?.();
@@ -306,6 +315,7 @@ function initImageViewer() {
   };
 
   closeBtn.addEventListener("click", close);
+  backBtn?.addEventListener("click", () => { handleSheetBack(); });
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
   window.addEventListener("keydown", (e) => {
     if (!overlay.classList.contains("is-open")) return;
@@ -313,7 +323,7 @@ function initImageViewer() {
     if (e.key === "Tab") {
       // W tym prostym dialogu jedynym elementem interaktywnym jest zamknięcie.
       e.preventDefault();
-      closeBtn.focus();
+      (isSheetViewport() ? backBtn : closeBtn)?.focus();
     }
   });
 

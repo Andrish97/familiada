@@ -396,76 +396,41 @@ details[open] .faq-q .faq-caret {
    IMAGE VIEWER
 ===================== */
 .imgv-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.80);
   z-index: 9999;
-  display: none;
-  align-items: center;
-  justify-content: center;
+  background: var(--modal-scrim);
   padding: 18px;
 }
-.imgv-overlay.is-open { display: flex; }
+.imgv-overlay.is-open { display: grid; }
 
 .imgv-panel {
-  position: relative;
-  width: 100%;
   max-width: min(1200px, 92vw);
   max-height: min(82vh, 900px);
-  border-radius: 16px;
-  background: rgba(20,20,24,.94);
-  border: 1px solid rgba(255,255,255,.12);
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  padding: 12px;
 }
 
 @media (max-width: 980px) {
   .imgv-overlay { padding: 0; }
-  .imgv-panel { max-width: 100vw; max-height: 100vh; height: 100vh; border-radius: 0; }
+  .imgv-panel { max-width: 100vw; max-height: 100vh; height: 100%; }
 }
 
 .imgv-top {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
-  z-index: 2;
-  pointer-events: none;
+  margin-bottom: 10px;
 }
 
 .imgv-title {
-  pointer-events: none;
-  font-size: 13px;
-  color: rgba(255,255,255,.78);
-  padding-left: 6px;
   max-width: 78%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.imgv-close {
-  pointer-events: all;
-  width: 40px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.35);
-  color: rgba(255,255,255,.95);
-  font-size: 18px;
-  line-height: 1;
-}
-
 .imgv-stage {
   width: 100%;
-  height: 100%;
+  height: min(72vh, 800px);
+  min-height: 280px;
   display: grid;
   place-items: center;
-  padding-top: 52px;
+  overflow: hidden;
 }
 
 .imgv-img {
@@ -478,7 +443,7 @@ details[open] .faq-q .faq-caret {
 
 .imgv-zoom {
   width: 100%;
-  height: calc(100% - 52px);
+  height: 100%;
   touch-action: none;
   overflow: hidden;
   position: relative;
@@ -487,4 +452,21 @@ details[open] .faq-q .faq-caret {
 .imgv-zoom > img {
   transform-origin: 50% 50%;
   will-change: transform;
+}
+
+@media (max-width: 600px) {
+  .imgv-overlay.sheet-active .imgv-panel { padding: 0; }
+  .imgv-overlay.sheet-active .imgv-top {
+    position: static;
+    height: auto;
+    padding: 0 0 12px;
+    margin: 0;
+    background: none;
+    pointer-events: auto;
+  }
+  .imgv-overlay.sheet-active .imgv-stage {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+  }
 }
