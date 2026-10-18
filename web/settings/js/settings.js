@@ -32,14 +32,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-18T20242";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-18T20260";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-18T20242";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-18T20242";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-18T20242";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-18T20260";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-18T20260";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-18T20260";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-18T20242";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-18T20260";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -1046,8 +1046,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T20242"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-18T20242"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T20260"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-18T20260"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -6424,7 +6424,7 @@ function wireEvents() {
     els.btnTabScreenshots.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("homepageScreenshots");
-      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-18T20242");
+      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-18T20260");
       await initHomepageScreenshots();
     });
   }
@@ -6621,7 +6621,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-18T20242");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-18T20260");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;

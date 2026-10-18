@@ -1,27 +1,27 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T20242";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T20242";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-18T20242";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T20242";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-18T20242";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-18T20242";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-18T20242";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T20242";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-18T20242";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-18T20242";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T20260";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T20260";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-18T20260";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T20260";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-18T20260";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-18T20260";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-18T20260";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T20260";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-18T20260";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-18T20260";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-18T20242";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-18T20260";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-18T20242";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T20242";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T20242";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-18T20242";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-18T20260";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T20260";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T20260";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-18T20260";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
