@@ -1,18 +1,19 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T21060";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T21060";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T21060";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T21060";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-18T21060";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T21060";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T21060";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T21060";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T21060";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T21060";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T21060";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T21060";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T21060";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T21281";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T21281";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T21281";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T21281";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-18T21281";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T21281";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T21281";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T21281";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T21281";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T21281";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T21281";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T21281";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T21281";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-18T21281";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
@@ -414,7 +415,7 @@ function renderDetail(g) {
       els.detailQuestions.innerHTML = `<p class="mkt-no-q">${esc(t("marketplace.detail.noQuestions"))}</p>`;
     } else {
       els.detailQuestions.innerHTML = qs.map((q, i) => {
-        const answers = (q.answers ?? []).map(a =>
+        const answers = sortAnswersByPoints(q.answers).map(a =>
           `<li>${esc(a.text)} <span class="mkt-pts">(${esc(t("marketplace.detail.points", { count: a.fixed_points ?? 0 }))})</span></li>`
         ).join("");
         return `<div class="mkt-q-block">

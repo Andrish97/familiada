@@ -2,9 +2,10 @@
 // i podglądu na liście gier.
 //
 // Lista budowana raz; potem tylko liczby i szerokości pasków (przejście CSS).
-// Punktacja: kolejność odpowiedzi z gry. Tekst: kolejność pojawienia się,
-// nowe na końcu. Sortowanie wg głosów dopiero przy zamykaniu.
-import { t } from "../../translation/translation.js?v=v2026-10-18T21060";
+// Gotowe odpowiedzi punktowane są pokazywane malejąco według punktów;
+// otwarte wyniki zachowują kolejność źródłową albo pojawiania się wpisów.
+import { t } from "../../translation/translation.js?v=v2026-10-18T21281";
+import { sortAnswersByPoints } from "./answer-order.js?v=v2026-10-18T21281";
 
 // poll_stopped: te same surowe wiersze co na żywo (głosy już się nie zmieniają)
 function resultsMode(status, type) {
@@ -60,7 +61,8 @@ export function createPollResults(listEl) {
 
       const rows = new Map();
       if (mode === "points" || mode === "final") {
-        for (const a of q.answers || []) {
+        const answers = mode === "final" ? sortAnswersByPoints(q.answers) : (q.answers || []);
+        for (const a of answers) {
           const r = makeResultRow(a.text);
           list.appendChild(r.row);
           rows.set(a.id, r);

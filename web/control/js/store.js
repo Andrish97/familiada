@@ -14,11 +14,12 @@
 // wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T21060";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T21060";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-18T21060";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-18T21060";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-18T21060";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T21281";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T21281";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-18T21281";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-18T21281";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-18T21281";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-18T21281";
 
 // Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
 // ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes
@@ -71,6 +72,15 @@ export function createStore(gameId) {
     const d = row.detail || {};
     for (const key of PERSISTED_KEYS) {
       if (d[key] !== undefined) state[key] = d[key];
+    }
+    // Stare game_state wiersze mogą nadal mieć odpowiedzi w kolejności ord.
+    // Uporządkujemy wyłącznie tablice do prezentacji; zapisane ord zostaje
+    // bez zmian i nadal identyfikuje akcje odsłaniania oraz dopasowania.
+    if (Array.isArray(state.rounds?.answers)) {
+      state.rounds.answers = sortAnswersByPoints(state.rounds.answers);
+    }
+    for (const question of state.final?.questions || []) {
+      if (Array.isArray(question?.answers)) question.answers = sortAnswersByPoints(question.answers);
     }
   }
 

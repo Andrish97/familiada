@@ -21,7 +21,7 @@
 // to wcześniej na sztywno po polsku, więc zmiana języka w Control (patrz
 // web/js/gameplay/gameStateShape.js's settings.uiLang) nie miała żadnego wpływu na
 // treść, którą prowadzący faktycznie czyta.
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-18T21060";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-18T21281";
 
 const $ = (id) => document.getElementById(id);
 const rh = (key, vars) => t(`control.roundsHost.${key}`, vars);
@@ -162,9 +162,7 @@ export function createHostRenderer() {
     const r = row.detail.rounds;
     const title = roundTitle(row);
     const answerLines = (r.answers || [])
-      .slice()
-      .sort((a, b) => a.ord - b.ord)
-      .map((a) => answerLine(a.ord, a.text, a.fixed_points, (r.revealed || []).includes(a.ord)));
+      .map((a, i) => answerLine(i + 1, a.text, a.fixed_points, (r.revealed || []).includes(a.ord)));
 
     // Pytanie jest tajemnicą TYLKO w kroku przycisku (DUEL, łącznie z próbą
     // pierwszej/najwyżej punktowanej odpowiedzi — to wciąż ta sama faza) —
@@ -218,7 +216,7 @@ export function createHostRenderer() {
     else { status = fh("statusMissing"); statusCls = "hostYellow"; }
     lines.push([`${fh("statusLabel")}: `, { text: status, cls: statusCls }], "");
     lines.push(fh("answersListLabel"));
-    const sorted = (question?.answers || []).slice().sort((a, b) => b.fixed_points - a.fixed_points);
+    const sorted = question?.answers || [];
     for (const a of sorted) {
       const text = `${a.text} (${a.fixed_points})`;
       const isMatch = row1.kind === "MATCH" && row1.matchId === a.id;

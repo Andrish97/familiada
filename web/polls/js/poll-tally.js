@@ -13,16 +13,17 @@
 //
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T21060";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-18T21060";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-18T21060";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-18T21060";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T21281";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-18T21281";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-18T21281";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-18T21281";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-18T21281";
 import {
   pointsPollAnalysis,
   textTallyAnalysis,
   ANSWERS_MIN,
   TEXT_MAX_LEN,
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-18T21060";
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-18T21281";
 
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;
@@ -115,10 +116,16 @@ export function createTally({ gameId, pollResults, ui }) {
       let sum = 0;
       const totalVotes = answers.reduce((s, answer) => s + (Number(answer.votes) || 0), 0);
       slot.list.classList.add("tally", "tallyPoints");
-      answers.forEach((a, i) => {
-        const r = slot.rows.get(a.id);
-        if (!r) return;
+      const ranked = answers.map((a, i) => ({
+        ...a,
+        _sourceIndex: i,
+        fixed_points: analysis[i]?.skipped ? 0 : analysis[i]?.points,
+      }));
+      for (const a of sortAnswersByPoints(ranked)) {
+        const i = a._sourceIndex;
         const result = analysis[i];
+        const r = slot.rows.get(a.id);
+        if (!r) continue;
         const votes = Math.max(0, Number(a.votes) || 0);
         let voteLabel = r.row.querySelector(".tallyVotes");
         if (!voteLabel) {
@@ -136,7 +143,8 @@ export function createTally({ gameId, pollResults, ui }) {
         }
         setPct(r, result.points);
         pointRows.push({ r, votes, totalVotes });
-      });
+        slot.list.appendChild(r.row);
+      }
       meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: sum });
       meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.votes", { n: totalVotes });
     }
@@ -597,6 +605,15 @@ export function createTally({ gameId, pollResults, ui }) {
     const totalVotes = items.reduce((total, item) => total + (Number(item.count) || 0), 0);
     qs.meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.votes", { n: totalVotes });
     qs.meta.querySelector(".tcMergeDup").textContent = t("polls.tally.mergeDup");
+    const ranked = items.map((it, i) => ({
+      ...it,
+      ord: i,
+      fixed_points: byIdx.get(i)?.scored ? byIdx.get(i).points : 0,
+    }));
+    for (const item of sortAnswersByPoints(ranked)) {
+      const row = qs.rows.get(item.id)?.row;
+      if (row) qs.slot.list.appendChild(row);
+    }
   }
 
   function textValid() {

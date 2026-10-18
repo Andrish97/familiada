@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-18T21060";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T21060";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-18T21060";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-18T21060";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-18T21060";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T21060";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-18T21281";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T21281";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-18T21281";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-18T21281";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-18T21281";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T21281";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-18T21060";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-18T21281";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -1050,7 +1050,7 @@ export function createUI({ root, emit }) {
     // wynik/przebieg rundy, więc każdy dostaje ten sam bufor przeciwko
     // przypadkowemu kliknięciu na żywej transmisji.
     const tiles = [];
-    const sortedAnswers = r.answers.slice().sort((a, b) => a.ord - b.ord).slice(0, 6);
+    const sortedAnswers = r.answers.slice(0, 6);
     sortedAnswers.forEach((a, i) => {
       const revealed = r.revealed.includes(a.ord);
       // Punkty w nawiasie, TAK SAMO jak Finał-mapowanie (control/js/ui.js's

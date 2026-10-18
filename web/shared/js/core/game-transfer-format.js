@@ -11,7 +11,15 @@ export function gameExportSnapshot(game, questions, fallbackName) {
     game: { name: game?.name ?? fallbackName, type: exportType },
     questions: (questions || []).map(question => ({
       text: question.text,
-      answers: exportType === 'poll_text' ? [] : (question.answers || []).map(answer => ({
+      answers: exportType === 'poll_text' ? [] : (question.answers || [])
+        .map((answer, index) => ({ answer, index }))
+        .sort((a, b) => {
+          const ao = Number(a.answer?.ord);
+          const bo = Number(b.answer?.ord);
+          return Number.isFinite(ao) && Number.isFinite(bo) && ao !== bo
+            ? ao - bo : a.index - b.index;
+        })
+        .map(({ answer }) => ({
         text: answer.text,
         fixed_points: exportType === 'poll_points' && status === 'draft' ? 0 : Number(answer.fixed_points) || 0,
       })),

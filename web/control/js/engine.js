@@ -17,7 +17,8 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-18T21060";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-18T21281";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-18T21281";
 
 const STRIKE_LIMIT = 3;
 const TIMER_SECONDS = { P1: 15, P2: 20 };
@@ -203,7 +204,7 @@ const REDUCERS = {
       return { step: "r_gameEnd", phase: null, controlTeam: null, topCard: "rounds" };
     }
     const q = r._questionPool.shift();
-    const answers = (await deps.loadAnswers(q.id)).slice().sort((a, b) => a.ord - b.ord);
+    const answers = sortAnswersByPoints(await deps.loadAnswers(q.id));
 
     r.question = { id: q.id, ord: q.ord, text: q.text };
     r.answers = answers;
@@ -508,7 +509,7 @@ const REDUCERS = {
     for (const id of f.picked || []) {
       const q = byId.get(String(id));
       if (!q) continue;
-      const answers = await deps.loadAnswers(q.id);
+      const answers = sortAnswersByPoints(await deps.loadAnswers(q.id));
       questions.push({
         id: q.id,
         text: q.text,
