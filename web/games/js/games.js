@@ -937,8 +937,6 @@ function statusTagClass(g) {
 }
 
 function cardGame(g) {
-  const uiType = uiTypeFromRow(g);
-
   const el = document.createElement("div");
   el.className = "card tile";
   el.dataset.gameId = g.id;
@@ -950,13 +948,11 @@ function cardGame(g) {
   el.innerHTML = `
     <div class="x" title="${t("games.card.delete")}">${icon("trash")}</div>
     <div class="name"></div>
-    <div class="meta"></div>
     <div class="rules"></div>
     <div class="tileTags"></div>
   `;
 
   el.querySelector(".name").textContent = g.name || t("control.dash");
-  el.querySelector(".meta").textContent = typeLabel(uiType);
 
   // Rząd oznaczeń: stan zawsze (ta sama wysokość i odstęp na każdym kaflu),
   // obok plakietka ankiety — OTWARTA: liczba głosów, ZATRZYMANA: „do podliczenia”.
@@ -1010,13 +1006,23 @@ function selectMarketGame(marketId) {
   setMarketButtonsState();
 }
 
+grid?.addEventListener("click", (event) => {
+  if (event.target !== grid) return;
+  if (activeTab === TYPES.MARKET) selectMarketGame(null);
+  else selectGame(null);
+});
+grid?.closest(".games-card")?.addEventListener("click", (event) => {
+  if (event.target !== event.currentTarget) return;
+  if (activeTab === TYPES.MARKET) selectMarketGame(null);
+  else selectGame(null);
+});
+
 function cardAdd(uiType) {
   const el = document.createElement("div");
   el.className = "addCard";
   el.innerHTML = `
     <div class="plus">${icon("plus")}</div>
     <div class="txt">${t("games.card.newGame")}</div>
-    <div class="sub">${typeLabel(uiType)}</div>
   `;
     el.addEventListener("click", () => {
       openCreateModal(uiType);
@@ -1237,7 +1243,7 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   const i18nP = initI18n({ withSwitcher: true });
   // initPage: dostęp, topbar i konto wg mapy (auth startuje równolegle z i18n)
-  const userP = initPage("games", { ready: i18nP, account: { withAccountSettings: true } });
+  const userP = initPage("games", { ready: i18nP });
   await i18nP;
   initListHeaderLayout();
   // Typ to zakładki (preparowana/tekstowa/punktowa/rynek); filtr obejmuje stan i odebrane kopie.

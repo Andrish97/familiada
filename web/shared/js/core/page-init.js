@@ -149,6 +149,7 @@ function wireAccount(user, opts, d) {
   const apply = () => d.setTopbarAccount(user, {
     loginHref: loginUrl(),
     accountHref: linkTo("account"),
+    withAccountSettings: true,
     ...(opts.account || {}),
   });
   apply();

@@ -20,6 +20,15 @@ osobno przez `dialogs`/`GLOBAL_DIALOGS`. Pominięcie trasy bez wpisu jest
 błędem kompletności. Aktualne wpisy i kontrola pokrycia HTML są
 opisane w `docs/audyt-initpage-trasy.md` i `tests/unit/navMap.test.js`.
 
+## Decyzja 2026-10-18: ustawienia konta z każdej zwykłej strony
+
+Menu rozwijane nazwy użytkownika zawiera „Ustawienia konta” na każdej stronie
+zwykłego topbara, która pokazuje nazwę. `account.from` wymienia te strony
+jawnie, aby `ret` wracał do bieżącego widoku (w tym Control z identyfikatorem
+gry), a trasy logowania, głosowania i połączonych urządzeń nie stały się
+przypadkowymi celami powrotu. Dostęp do samej strony konta nadal wynika z jej
+reguły `access: "guest"`.
+
 ---
 
 ## 1. Co dziś jest niespójne (znalezione w kodzie)
@@ -56,7 +65,9 @@ opisane w `docs/audyt-initpage-trasy.md` i `tests/unit/navMap.test.js`.
 
 **Topbar**
 
-- „Ustawienia konta” w menu konta jest tylko na games (`withAccountSettings`).
+- „Ustawienia konta” w menu nazwy użytkownika były włączone tylko na Games;
+  decyzja z 2026-10-18: pokazywać je na każdej zwykłej stronie korzystającej
+  ze wspólnego topbara i zachować powrót przez `ret`.
 - Wylogowanie ma 3 różne klucze i18n (`control.logout`,
   `logoEditor.topbar.logout`, `baseExplorer.logout`) obok `common.logout`.
 - account nie ma sekcji 4 (konta), privacy nie ma „Instrukcji”,
@@ -117,7 +128,7 @@ export const PAGES = {
   gameSettings:  { path: "/game-settings/", access: "guest",  parent: "games",     manual: "control",  device: "wide" },
   marketplace:   { path: "/marketplace/",   access: "public", parent: "games",     manual: "community" },
   connectDevice: { path: "/connect-device/",access: "public", parent: "games",     manual: "connect" },
-  account:       { path: "/account/",       access: "guest",  parent: "games",     manual: "general" },
+  account:       { path: "/account/", access: "guest", parent: "games", from: ["games", "editor", "polls", "friends", "subscribers", "tasks", "bases", "baseExplorer", "logoEditor", "logoText", "logoDraw", "logoImage", "control", "gameSettings", "marketplace", "connectDevice", "manual", "privacy"], manual: "general" },
   manual:        { path: "/manual/",        access: "guest",  parent: "games" },  // decyzja: tylko z kontem/gościem
   privacy:       { path: "/privacy/",       access: "public", parent: "manual" },
 };
@@ -457,7 +468,8 @@ flowchart LR
 | `/control/` `/game-settings/` `/logos/` `/logos/editor-<typ>/` | jak w C1 | — |
 | `/polls-hub/` `/subscriptions/` | okno „Tylko dla konta”: Wstecz → `/games/`, Załóż konto → `/login/?force_auth=1` | — |
 
-**⚠ dziś:** „Ustawienia konta” w menu tylko na `/games/`; connect-device ↩
+Menu z „Ustawieniami konta” jest wspólne dla zwykłych stron z nazwą
+użytkownika; powrót określa `account.from` w mapie. Connect-device ↩
 prowadzi gościa na `/` (landing) zamiast na `/games/`; okno „tylko dla konta”
 wygląda inaczej niż okno blokady urządzenia; gość na `/` zostaje na landingu
 (`home/js/index.js:10`).
@@ -869,8 +881,7 @@ flowchart LR
 | 3 | narzędzia strony + **„?” Instrukcja zawsze ostatnia** | hamburger tu |
 | 4 | konto: `nazwa ▾` → Ustawienia konta, Wyloguj · gość: `Gość ▾` → Załóż konto, Ustawienia konta · niezalogowany: „Zaloguj / Załóż konto” | do hamburgera |
 
-Do ujednolicenia przy okazji: jeden klucz `common.logout`, menu konta z
-„Ustawieniami konta” wszędzie (nie tylko games), sekcja 4 także na account,
+Do ujednolicenia przy okazji: jeden klucz `common.logout`, sekcja 4 także na account,
 „?” także na privacy, w marketplace „Moje gry” → zwykłe „← Wróć do”.
 
 ---

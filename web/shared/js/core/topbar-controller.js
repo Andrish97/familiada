@@ -240,7 +240,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
  * @param {object}  [opts]
  * @param {string}  [opts.loginHref='/login/']
  * @param {string}  [opts.accountHref='/account/']
- * @param {boolean} [opts.withAccountSettings=false]  tylko strona gier
+ * @param {boolean} [opts.withAccountSettings=true]  pokaż ustawienia konta w menu nazwy
  * @param {boolean} [opts.showAuthEntry=true]  false → ukryj dla niezalogowanego
  * @param {function} [opts.onLogout]  callback przed wylogowaniem (może zwrócić Promise)
  * @returns {{ guestMode: boolean }}
@@ -248,7 +248,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
 export function setTopbarAccount(user, {
   loginHref = '/login/',
   accountHref = '/account/',
-  withAccountSettings = false,
+  withAccountSettings = true,
   showAuthEntry = true,
   onLogout = null,
 } = {}) {

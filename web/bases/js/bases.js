@@ -1234,6 +1234,16 @@ function selectBase(id) {
   setButtonsState();
 }
 
+for (const grid of [mineGrid, sharedGrid]) {
+  grid?.addEventListener("click", (event) => {
+    if (event.target === grid) selectBase(null);
+  });
+  const section = grid?.closest(".bases-section");
+  section?.addEventListener("click", (event) => {
+    if (event.target === section) selectBase(null);
+  });
+}
+
 function escapeHtml(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")

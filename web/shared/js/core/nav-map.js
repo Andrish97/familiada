@@ -108,7 +108,11 @@ export const PAGES = {
   pollVotePoints:{ path: "/polls/vote/points/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania punktowego identyfikowany tokenem ankiety." },
   pollVoteText:  { path: "/polls/vote/text/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania tekstowego identyfikowany tokenem ankiety." },
   pollVoteQr:    { path: "/polls/vote/qr/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny ekran QR dla głosowania, z własnym guardem urządzenia." },
-  account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
+  account: {
+    path: "/account/", access: "guest", parent: "games",
+    from: ["games", "editor", "polls", "friends", "subscribers", "tasks", "bases", "baseExplorer", "logoEditor", "logoText", "logoDraw", "logoImage", "control", "gameSettings", "marketplace", "connectDevice", "manual", "privacy"],
+    manual: "general",
+  },
   manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
     btnLegal: { to: "privacy" },
   } },

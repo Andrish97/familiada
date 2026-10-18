@@ -274,6 +274,13 @@ function selectTile(id) {
   updateListButtons();
 }
 
+el.grid?.addEventListener("click", (event) => {
+  if (event.target === el.grid) selectTile(null);
+});
+el.grid?.closest(".logoCard")?.addEventListener("click", (event) => {
+  if (event.target === event.currentTarget) selectTile(null);
+});
+
 function updateListButtons() {
   const has = !!selectedId;
   const guest = isGuestUser(currentUser);
