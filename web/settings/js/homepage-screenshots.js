@@ -188,10 +188,76 @@ async function applyFixtureToFrame(scene, fixture) {
   const { icon, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-18T20002");
   const grid = doc.getElementById("grid");
   if (scene.id === "games") {
+    const language = currentLanguage();
+    const words = language === "en" ? {
+      hint: "Select a game to use its actions. Double-click a game name to rename it.", search: "Search…", filter: "All statuses",
+      updated: "Recently updated", created: "Recently added", byName: "Name A–Z", draft: "DRAFT", ready: "Ready", open: "OPEN", stopped: "STOPPED",
+      account: "Marta Nowak", language: "Polski", community: "Community games", logo: "Logos", bases: "Question banks", friends: "Friends",
+      connect: "Connect a device", subscribers: "Subscribers", tasks: "Tasks", more: "More", logout: "Sign out",
+    } : language === "uk" ? {
+      hint: "Виберіть гру, щоб скористатися її діями. Двічі натисніть назву, щоб перейменувати.", search: "Пошук…", filter: "Усі стани",
+      updated: "Нещодавно змінені", created: "Нещодавно додані", byName: "Назва А–Я", draft: "ЧЕРНЕТКА", ready: "Готова", open: "ВІДКРИТА", stopped: "ЗУПИНЕНА",
+      account: "Олена Коваль", language: "Polski", community: "Ігри спільноти", logo: "Логотипи", bases: "Бази запитань", friends: "Друзі",
+      connect: "Підключити пристрій", subscribers: "Підписники", tasks: "Завдання", more: "Ще", logout: "Вийти",
+    } : {
+      hint: "Zaznacz grę, aby włączyć jej akcje. Dwukrotne kliknięcie nazwy pozwala ją zmienić.", search: "Szukaj…", filter: "Wszystkie",
+      updated: "Ostatnio zmienione", created: "Najnowsze", byName: "Nazwa A–Z", draft: "Szkic", ready: "Gotowe", open: "OTWARTA", stopped: "ZATRZYMANA",
+      account: "Marta Nowak", language: "Polski", community: "Gry Społeczności", logo: "Logo", bases: "Bazy pytań", friends: "Znajomi",
+      connect: "Podłącz urządzenie", subscribers: "Subskrybenci", tasks: "Zadania", more: "Więcej", logout: "Wyloguj",
+    };
+    const headingHint = doc.getElementById("hint");
+    if (headingHint) headingHint.textContent = words.hint;
+
+    // Odtwórz ikony nawigacji, które zwykle dodaje warstwa tłumaczeń.
+    const navIcons = { btnMarketplace: "gamepad", btnLogoEditor: "display", btnBases: "drawer", btnFriends: "people", btnConnectDevice: "phone", btnSubscribers: "envelope", btnTasks: "bell" };
+    for (const [id, iconName] of Object.entries(navIcons)) {
+      const button = doc.getElementById(id);
+      const label = button?.querySelector("[data-i18n]");
+      if (label) label.innerHTML = `${icon(iconName)} ${escapeHtml(words[id === "btnMarketplace" ? "community" : id === "btnLogoEditor" ? "logo" : id === "btnBases" ? "bases" : id === "btnFriends" ? "friends" : id === "btnConnectDevice" ? "connect" : id === "btnSubscribers" ? "subscribers" : "tasks"])}`;
+    }
+    const section3 = doc.querySelector(".topbar-section-3");
+    if (section3 && !section3.querySelector(".lang-switcher")) {
+      const lang = doc.createElement("div");
+      lang.className = "lang-switcher";
+      lang.innerHTML = `<button type="button" class="btn lang-btn" aria-label="Język">${icon("flag-pl")}<span>${escapeHtml(words.language)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button>`;
+      section3.prepend(lang);
+    }
+    const login = doc.getElementById("btnLogout");
+    if (login) login.style.display = "none";
+    const who = doc.getElementById("whoStatic");
+    if (who) {
+      who.className = "who account-btn btn";
+      who.innerHTML = `<span class="account-who">${escapeHtml(words.account)}</span><span class="account-chevron">${icon("caret-down")}</span>`;
+      const accountMenu = doc.createElement("div");
+      accountMenu.id = "topbarAccountMenu";
+      accountMenu.className = "account-menu";
+      accountMenu.hidden = true;
+      accountMenu.innerHTML = `<button class="btn account-menu-item" type="button">${icon("settings")} ${language === "pl" ? "Ustawienia konta" : language === "en" ? "Account settings" : "Налаштування облікового запису"}</button><button class="btn account-menu-item" type="button">${icon("logout")} ${escapeHtml(words.logout)}</button>`;
+      who.after(accountMenu);
+    }
+    const more = doc.getElementById("navMore");
+    const moreBtn = doc.getElementById("btnMore");
+    const moreDropdown = doc.getElementById("navMoreDropdown");
+    if (more && moreBtn && moreDropdown) {
+      more.style.display = "";
+      moreBtn.innerHTML = `${escapeHtml(words.more)} ${icon("caret-down")}`;
+      moreDropdown.hidden = false;
+      moreDropdown.innerHTML = [
+        ["btnConnectDevice", "phone", words.connect], ["btnSubscribers", "envelope", words.subscribers], ["btnTasks", "bell", words.tasks],
+      ].map(([id, glyph, label]) => `<button type="button" class="btn nav-more-item" id="shot-${id}">${icon(glyph)} ${escapeHtml(label)}</button>`).join("");
+      for (const id of ["btnConnectDevice", "btnSubscribers", "btnTasks"]) { const button = doc.getElementById(id); if (button) button.style.display = "none"; }
+    }
+    for (const id of ["btnPlay", "btnSettings", "btnEdit", "btnPreview", "btnDuplicate", "btnExport", "btnExportBase", "btnImport", "btnSendCopy"]) {
+      const button = doc.getElementById(id); if (button) button.disabled = false;
+    }
+    const pollButton = doc.getElementById("btnPoll"); if (pollButton) pollButton.disabled = true;
     doc.querySelectorAll(".tab-label").forEach(button => button.classList.toggle("active", button.id === "tabPrepared"));
     const names = fixture.games || [];
-    if (grid) grid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">Nowa gra</div></div>${names.map((name, i) => `<div class="card tile ${i === 0 ? "selected" : ""}"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="meta">Gra preparowana</div><div class="tileTags"><span class="tag ${i === 0 ? "tag--ok" : "tag--muted"}">${i === 0 ? "Gotowa do gry" : "Szkic"}</span></div></div>`).join("")}`;
-    const button = doc.getElementById("btnSettings"); if (button) button.disabled = false;
+    if (grid) grid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">${language === "en" ? "New game" : language === "uk" ? "Нова гра" : "Nowa gra"}</div></div>${names.map((name, i) => `<div class="card tile ${i === 0 ? "selected" : ""}" data-status="${i === 0 ? "ready" : "draft"}" data-updated="2026-10-${String(18 - i).padStart(2, "0")}T12:00:00Z"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="meta">${language === "en" ? "Prepared game" : language === "uk" ? "Підготовлена гра" : "Gra preparowana"}</div><div class="tileTags"><span class="tag ${i === 0 ? "tag--ok" : "tag--muted"}">${i === 0 ? words.ready : words.draft}</span></div></div>`).join("")}`;
+    const searchSlot = doc.querySelector(".games-bottom-left");
+    if (searchSlot) {
+      searchSlot.innerHTML = `<div class="ui-select list-filter"><button class="btn sm ui-select-btn" type="button" aria-label="Filtruj wg stanu"><span class="ui-select-icon">${icon("filter")}</span><span class="ui-select-label">${escapeHtml(words.filter)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><div class="ui-select list-sort"><button class="btn sm ui-select-btn" type="button" aria-label="Sortowanie"><span class="ui-select-icon">${icon("sort")}</span><span class="ui-select-label">${escapeHtml(words.updated)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><div class="list-search"><div class="searchBox"><input class="searchText" type="text" placeholder="${escapeHtml(words.search)}" aria-label="${escapeHtml(words.search)}"></div><button class="btn list-search-open" type="button" aria-label="${escapeHtml(words.search)}">${icon("search")}</button></div>`;
+    }
   } else if (scene.id === "game-editor") {
     setInput(doc, "gameName", fixture.game);
     setText(doc, "pageTitle", fixture.game);
