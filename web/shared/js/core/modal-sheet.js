@@ -19,6 +19,7 @@ const sheetMql = typeof window !== "undefined" && window.matchMedia
   : { matches: false, addEventListener() {}, addListener() {} };
 
 let activeClose = null;
+let activeBack = null;
 let activeBackBtn = null;
 let backBtnOrigText = null;
 let activeOverlay = null;
@@ -219,7 +220,7 @@ sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.
 //   ekran zmieni szerokość podczas gdy modal jest otwarty).
 // opts.onClose: funkcja zamykająca TEN modal — wywoływana przez
 //   handleSheetBack() gdy użytkownik kliknie przycisk wstecz w topbarze.
-export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
+export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
   if (!isSheetViewport()) return;
   prepareSheetLayout(overlayEl);
   if (!historyKey || !dialogAllowed(currentPageId, historyKey)) historyKey = null;
@@ -241,7 +242,8 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
   if (activeDialogKey && currentKey !== activeDialogKey) {
     setUrlDialog(activeDialogKey, !restore);
   }
-  if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, keepBackBtnText } });
+  activeBack = typeof onBack === "function" ? onBack : null;
+  if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, onBack, keepBackBtnText } });
 
   if (backBtn) {
     activeBackBtn = backBtn;
@@ -261,6 +263,7 @@ export function exitModalSheet(overlayEl) {
   activeBackBtn = null;
   backBtnOrigText = null;
   activeClose = null;
+  activeBack = null;
   activeKeepBackBtnText = false;
   activeDialogKey = null;
 
@@ -285,6 +288,7 @@ export function exitModalSheet(overlayEl) {
 // Zwraca true, gdy przejęło kliknięcie (był otwarty sheet modal).
 export function handleSheetBack() {
   if (activeClose) {
+    if (activeBack?.() === true) return true;
     if (activeDialogKey && urlDialog() === activeDialogKey) history.back();
     else activeClose();
     return true;

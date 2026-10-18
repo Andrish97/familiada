@@ -722,7 +722,15 @@ export async function openTagsModal(state, opts = {}) {
 
   // OPEN
   E.overlay.style.display = "grid";
-  enterModalSheet(E.overlay, { backBtn: btnBack, onClose: () => close(false) });
+  enterModalSheet(E.overlay, {
+    backBtn: btnBack,
+    onClose: () => close(false),
+    onBack: () => {
+      if (m.layer <= 1) return false;
+      go(m.layer - 1);
+      return true;
+    },
+  });
   document.addEventListener("keydown", onKey);
 
   // X wszędzie zamyka modal
