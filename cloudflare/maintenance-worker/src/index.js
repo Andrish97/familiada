@@ -265,9 +265,11 @@ export default {
       if (isBot(request)) {
         return serveGameDetailSsr(request, env, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
-      // Ludzie widzą marketplace z otwartym modalem gry
+      // Ludzie dostają statyczny dokument SPA pod czystym adresem gry;
+      // przeglądarka zachowuje oryginalną ścieżkę /marketplace/game/<slug>,
+      // więc aplikacja odtworzy modal także po bezpośrednim wejściu i refreshu.
       const mpUrl = new URL(url);
-      mpUrl.pathname = "/marketplace";
+      mpUrl.pathname = "/marketplace/index.html";
       return fetchFromOrigin(request, mpUrl, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 

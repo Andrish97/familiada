@@ -601,6 +601,19 @@ body.settings-body:has(.topbar) {
   z-index: 80;
 }
 
+/* Panel admina ma dużo sekcji: nawigacja pozostaje w jednym rzędzie,
+   a kontroler przenosi nadmiar przycisków do menu „Więcej”. */
+.settings-body .topbar-section-2{
+  min-width: 0;
+  flex-wrap: nowrap;
+  align-content: center;
+}
+.settings-body .topbar-section-2 > .btn,
+.settings-body .topbar-section-2 > .nav-more,
+.settings-body .topbar-section-2 > .ui-select{
+  flex: 0 0 auto;
+}
+
 .btn-external{
   border-color: rgba(120,200,255,.35);
   --btn-tint: rgba(80,130,200,.12); /* kryjące tło: css/base.css */

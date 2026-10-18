@@ -350,7 +350,7 @@ async function openDetailBySlug(slug) {
   await openDetail(data.id, { updateUrl: false });
 }
 
-async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
+async function openDetail(id, { updateUrl = true, replaceUrl = false, trigger = null } = {}) {
   const requestId = ++detailRequest;
   detailGameId = id;
   detailGame = null;
@@ -387,10 +387,9 @@ async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
   renderDetail(g);
   if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "ready";
 
-  // ID działa także dla gier z biblioteki, które nie są już publiczne.
-  // Po odświeżeniu modal może pobrać dokładnie ten sam rekord przez
-  // market_game_detail, zamiast szukać wyłącznie publicznego sluga.
-  if (updateUrl) setDetailUrl(id);
+  // Slug pozostaje adresem szczegółów. RPC po slugu obejmuje gry publiczne
+  // oraz niepubliczne zgłoszenia widoczne wyłącznie dla ich autora.
+  if (updateUrl) setDetailUrl(g.slug || id, { replace: replaceUrl });
   els.btnDetailClose?.focus();
 }
 
@@ -458,10 +457,12 @@ function marketplaceUrl() {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-function setDetailUrl(gameId) {
+function setDetailUrl(slug, { replace = false } = {}) {
   const url = new URL(marketplaceUrl(), location.origin);
-  url.searchParams.set("game", gameId);
-  history.pushState({ gameId }, "", `${url.pathname}${url.search}${url.hash}`);
+  url.pathname = `/marketplace/game/${encodeURIComponent(String(slug))}`;
+  const state = { gameSlug: String(slug) };
+  if (replace) history.replaceState(state, "", `${url.pathname}${url.search}${url.hash}`);
+  else history.pushState(state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 function updateLibraryButtons(inLibrary, withdrawn = false) {
@@ -926,13 +927,13 @@ function wireEvents() {
   // Przycisk wstecz w przeglądarce
   const UUID_RE_NAV = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   window.addEventListener("popstate", e => {
-    const gameParam = new URL(location.href).searchParams.get("game");
-    if (gameParam && UUID_RE_NAV.test(gameParam)) {
-      openDetail(gameParam, { updateUrl: false });
+    const legacyGameId = new URL(location.href).searchParams.get("game");
+    if (legacyGameId && UUID_RE_NAV.test(legacyGameId)) {
+      openDetail(legacyGameId, { replaceUrl: true });
     } else if (location.pathname.startsWith("/marketplace/game/")) {
       const param = location.pathname.split("/")[3];
       if (param) {
-        if (UUID_RE_NAV.test(param)) openDetail(param, { updateUrl: false });
+        if (UUID_RE_NAV.test(param)) openDetail(param, { replaceUrl: true });
         else openDetailBySlug(decodeURIComponent(param));
       }
     } else {
@@ -1018,22 +1019,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadBrowse({ reset: true });
   document.getElementById('browseGrid')?.classList.add('skel-step-ready');
 
-  // Podgląd aplikacji używa query parametru na statycznej stronie Marketplace.
-  // Stare, indeksowane adresy ze slugiem nadal otwierają się przez Worker.
-  const gameParam = new URL(location.href).searchParams.get("game");
+  // Ten sam czysty adres gry obsługuje kliknięcie, wejście bezpośrednie,
+  // odświeżenie oraz indeksowanie. Worker podaje SPA ludziom, a SSR botom.
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (gameParam && UUID_RE.test(gameParam)) {
-    await openDetail(gameParam, { updateUrl: false });
-  } else {
-    // Otwórz modal dla istniejącego, SEO-friendly adresu /marketplace/game/[slug-or-uuid].
-    const pathParts = location.pathname.split("/");
-    if (pathParts[1] === "marketplace" && pathParts[2] === "game" && pathParts[3]) {
-      const param = pathParts[3];
-      if (UUID_RE.test(param)) {
-        await openDetail(param, { updateUrl: false });
-      } else {
-        await openDetailBySlug(param);
-      }
+  const pathParts = location.pathname.split("/");
+  const legacyGameId = new URL(location.href).searchParams.get("game");
+  if (legacyGameId && UUID_RE.test(legacyGameId)) {
+    // Stare linki query zachowują działanie, ale od razu kanonizujemy URL
+    // na ten sam slug, który tworzy kliknięcie karty.
+    await openDetail(legacyGameId, { replaceUrl: true });
+  } else if (pathParts[1] === "marketplace" && pathParts[2] === "game" && pathParts[3]) {
+    const param = decodeURIComponent(pathParts[3]);
+    if (UUID_RE.test(param)) {
+      await openDetail(param, { replaceUrl: true });
+    } else {
+      await openDetailBySlug(param);
     }
   }
 
