@@ -283,7 +283,7 @@ function initImageViewer() {
       const img = document.createElement("img");
       img.className = "imgv-img"; img.src = src; img.alt = title || "";
       zoom.appendChild(img); stage.appendChild(zoom);
-      previewZoom = initPinchZoom(zoom, img, { maxScale: 4 });
+      previewZoom = initPinchZoom(zoom, img);
       lockPageZoomForPreview();
     } else {
       const img = document.createElement("img");
