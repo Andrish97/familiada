@@ -247,9 +247,9 @@ test("@mailbox subskrybenci: globalne wypisanie, mail-off bez kolejki i nalicze�
     const invitePage = await anonymous.newPage();
     await invitePage.goto(unsub);
     await invitePage.locator("#actions button").click();
-    await expect(invitePage.locator("#message")).toContainText("Nie będziesz już otrzymywać żadnych maili");
+    await expect(invitePage.locator("#message")).toContainText("Gotowe. Nie będziesz już otrzymywać powiadomień mailem.");
     await invitePage.reload();
-    await expect(invitePage.locator("#message")).toContainText("Już jesteś wypisany");
+    await expect(invitePage.locator("#message")).toContainText("Powiadomienia mailem są już wyłączone.");
     await page.reload();
     const refused = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
     await expect(refused).toContainText("Odrzucono");

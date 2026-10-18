@@ -231,7 +231,7 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     const info = await owner.page.evaluate(async token => (await window.__sbClient.rpc("friends_token_info", { p_token: token })).data, token);
     expect(info.status).toBe("declined");
     await recipient.page.goto(link);
-    await expect(recipient.page.locator("#title")).toHaveText("Odrzucono");
+    await expect(recipient.page.locator("#title")).toHaveText("Zaproszenie odrzucone");
     await recipient.page.getByRole("button", { name: "Otwórz Znajomych" }).click();
     await refusal.locator('[data-act="undo_reject"]').click();
     await expect(incoming.locator('[data-act="accept"]')).toBeEnabled();
