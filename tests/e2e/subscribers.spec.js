@@ -89,7 +89,9 @@ for (const withdrawal of [false, true]) test(`@mailbox subskrybenci: e-mail bez 
     await page.locator(".uni-foot .btn.gold").click();
     await expect(active).toHaveCount(0);
     await invitePage.reload();
-    await expect(invitePage.locator(".poll-go-title")).toContainText(withdrawal ? "Odrzucono" : "To zaproszenie wygasło");
+    // Owner removal cancels the source record and invalidates its old token,
+    // including after the subscriber previously declined it.
+    await expect(invitePage.locator(".poll-go-title")).toContainText("To zaproszenie wygasło");
     await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toHaveCount(0);
     await expect(invitePage.locator("#emailInput")).toBeHidden();
     const closed = await invitePage.evaluate(async ({ token, email }) => ({

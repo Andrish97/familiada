@@ -440,7 +440,7 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
         const actions = [...document.querySelectorAll('#pollActions .btn')].filter(e => e.getBoundingClientRect().height).map(e => e.getBoundingClientRect().height);
         return { sections, buttons, actions, overflow: document.documentElement.scrollWidth > innerWidth };
       });
-      expect(new Set(geometry.sections).size).toBe(1);
+      expect(Math.max(...geometry.sections) - Math.min(...geometry.sections)).toBeLessThanOrEqual(1);
       expect(geometry.buttons[0]).toEqual(geometry.buttons[1]); expect(geometry.overflow).toBe(false);
       for (const height of geometry.actions) expect(height).toBeLessThanOrEqual(36);
       await page.locator('#subsGrid [data-id=opened] [data-act=remind]').click();

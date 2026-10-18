@@ -238,7 +238,7 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await incoming.locator('[data-act="accept"]').click();
     await expect(recipient.page.locator(`.rowsSection--friend [data-id="${id}"]`)).toBeVisible();
     await recipient.page.goto(link);
-    await expect(recipient.page.locator("#title")).toHaveText("Zaakceptowano");
+    await expect(recipient.page.locator("#title")).toHaveText("Jesteście znajomymi");
     // Drugi przypadek bez wysyłki: fixture RPC dla sprawdzenia cofania odmowy.
     await cleanup(owner.page, recipient.id);
     const next = await owner.page.evaluate(async handle => (await window.__sbClient.rpc("friends_invite", { p_handle: handle })).data, testAccountUsername(8));
