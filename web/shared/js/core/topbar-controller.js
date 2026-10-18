@@ -633,10 +633,27 @@ function initTopbarController() {
   });
 }
 
+let topbarViewportBaseline = null;
+
 function updateTopbarHeight() {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
-  const viewportTop = Math.max(0, Math.round(window.visualViewport?.offsetTop || 0));
+  const viewport = window.visualViewport;
+  let viewportTop = Math.round(viewport?.offsetTop || 0);
+  if (viewport) {
+    const width = Math.round(viewport.width);
+    const height = viewport.height;
+    if (!topbarViewportBaseline || Math.abs(width - topbarViewportBaseline.width) > 80) {
+      topbarViewportBaseline = { width, height };
+    } else {
+      // Chrome na Androidzie zwiększa visualViewport.height po schowaniu
+      // pasków przeglądarki, ale offsetTop często pozostaje równy zero.
+      // Przesuwamy wtedy fixed topbar w górę o odzyskaną wysokość, zamiast
+      // zostawiać pusty pas nad aplikacją. Przy ponownym pokazaniu pasków
+      // różnica wraca do zera.
+      viewportTop -= Math.max(0, Math.round(height - topbarViewportBaseline.height));
+    }
+  }
   document.body.style.setProperty('--visual-viewport-top', `${viewportTop}px`);
   // Liczymy do dolnej krawędzi widocznego paska: gdy Chrome przesuwa
   // visual viewport, odstęp treści musi przesunąć się razem z topbarem.
