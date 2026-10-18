@@ -4479,8 +4479,6 @@ function mailViewBack() {
 
 function initMobileMailNav() {
   const btnMailBack = document.getElementById("btnMailBackTopbar");
-  // Znacznik dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
-  if (btnMailBack) btnMailBack.dataset.sheetBack = "1";
   btnMailBack?.addEventListener("click", () => {
     if (handleSheetBack()) return;
     mailViewBack();
