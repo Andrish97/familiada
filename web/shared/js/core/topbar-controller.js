@@ -633,6 +633,8 @@ function initTopbarController() {
   });
 }
 
+let topbarViewportBaseline = null;
+
 function updateTopbarHeight() {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
@@ -646,10 +648,20 @@ function updateTopbarHeight() {
   // zmienną, używaną wyłącznie przez fixed topbar.
   document.body.style.setProperty('--topbar-h', `${height}px`);
   if (viewport) {
-    const rawTop = Math.round(viewport.offsetTop || 0);
-    // Trzymaj pasek przy górnej krawędzi widocznego viewportu, ale nie
-    // pozwól, by błędna/krótkotrwała wartość przeglądarki schowała go
-    // całkowicie podczas animacji pasków Chrome lub klawiatury.
+    const width = Math.round(viewport.width);
+    const viewportHeight = Math.round(viewport.height);
+    if (!topbarViewportBaseline || Math.abs(width - topbarViewportBaseline.width) > 80) {
+      topbarViewportBaseline = { width, height: viewportHeight };
+    }
+
+    // Android Chrome często zmienia wysokość visual viewportu przy chowaniu
+    // paska przeglądarki, ale zostawia offsetTop bez zmian. Różnica wysokości
+    // daje brakujący sygnał do przesunięcia fixed topbara ku górze. Zmiana
+    // jest ograniczona do wysokości paska Chrome i do rozmiaru topbara, aby
+    // nietypowy viewport/klawiatura nie wypchnęły go całkiem poza ekran.
+    const viewportGrowth = Math.max(0, viewportHeight - topbarViewportBaseline.height);
+    const collapseShift = Math.min(viewportGrowth, 120, Math.max(0, height - 12));
+    const rawTop = Math.round(viewport.offsetTop || 0) - collapseShift;
     const minTop = -Math.max(0, height - 12);
     const maxTop = Math.max(0, Math.floor(viewport.height - height));
     const top = Math.max(minTop, Math.min(maxTop, rawTop));
