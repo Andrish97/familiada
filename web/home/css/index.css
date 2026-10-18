@@ -467,13 +467,21 @@ details[open] .faq-q .faq-caret {
 }
 
 @media (max-width: 600px) {
+  /* initPipeline zostawia padding inline liczony dla topbara i pipeline.
+     W arkuszu pipeline jest ukryty, więc zachowujemy wyłącznie odstęp
+     topbara — inaczej pod nim zostaje pusty pasek z podwójnymi liniami. */
+  body.home-body.sheet-open { padding-top: var(--topbar-h) !important; }
   body.sheet-open .pipeline-wrap { display: none !important; }
-  .imgv-overlay.sheet-active { padding: 0; }
   .imgv-overlay.sheet-active {
+    padding: 0;
     margin-left: calc(-1 * max(15px, env(safe-area-inset-left)));
     margin-right: calc(-1 * max(15px, env(safe-area-inset-right)));
   }
   .imgv-overlay.sheet-active .imgv-panel { padding: 0; }
+  .imgv-overlay.sheet-active .sheet-modal-head {
+    flex: 0 0 auto;
+    width: 100%;
+  }
   .imgv-overlay.sheet-active .imgv-top {
     position: static;
     height: auto;
@@ -482,10 +490,16 @@ details[open] .faq-q .faq-caret {
     background: none;
     pointer-events: auto;
   }
+  .imgv-overlay.sheet-active .sheet-modal-body {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
   .imgv-overlay.sheet-active .imgv-stage {
     flex: 1 1 auto;
     width: 100%;
-    height: auto;
+    height: 100%;
     min-height: 0;
   }
   .imgv-overlay.sheet-active .imgv-zoom {

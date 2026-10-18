@@ -253,7 +253,7 @@ function initImageViewer() {
   overlay.innerHTML = `
     <div class="modal imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvTitle">
       <div class="imgv-top mHead">
-        <div class="imgv-title mTitle" id="imgvTitle"></div>
+        <h2 class="imgv-title mTitle" id="imgvTitle"></h2>
         <button class="btn sm" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}" data-i18n-aria-label="common.modal.closeLabel">${icon("close")}</button>
       </div>
       <div class="imgv-stage" id="imgvStage"></div>
