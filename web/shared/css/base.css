@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-18T08110");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-18T08140");
 
 /* css/base.css */
 :root {
@@ -305,17 +305,6 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     background: #03060d;
     --under: #03060d;
     border-bottom: 1px solid rgba(255,255,255,.12);
-}
-
-/* Przeglądarki mobilne zmieniają dynamiczny viewport, gdy ich paski
-   chowają się lub wracają. Przesuwamy topbar o różnicę między małym i
-   dynamicznym viewportem niezależnie od systemu/przeglądarki. --topbar-h
-   nadal opisuje samą wysokość paska, więc rezerwacja miejsca w treści się
-   nie zmienia. Na urządzeniach ze stałym viewportem różnica wynosi zero. */
-@supports (height: 100dvh) {
-    html .topbar {
-        top: calc(100svh - 100dvh);
-    }
 }
 
 /* Krótki viewport: kompaktowy topbar niezależnie od typu urządzenia. */
