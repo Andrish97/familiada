@@ -1218,6 +1218,9 @@ main{
     body.sheet-open .contact-footer-entry {
         display: none !important;
     }
+    body.sheet-open .footer a[href^="/privacy"] {
+        display: none !important;
+    }
 
     /* Strony bez naturalnego przycisku wstecz w topbarze na mobile
        (games.html, settings.html) dostają dedykowany przycisk tylko na
