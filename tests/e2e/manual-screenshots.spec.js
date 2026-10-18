@@ -47,49 +47,65 @@ async function seedGames(page, copy) {
     const sb = window.__sbClient;
     const { data: auth, error: authError } = await sb.auth.getUser();
     if (authError) throw authError;
-    // These three accounts are reserved for screenshots; remove leftovers from
-    // an interrupted run without touching any other account's games.
-    const { error: cleanupError } = await sb.from("games").delete().eq("owner_id", auth.user.id).in("name", copy.names);
-    if (cleanupError) throw cleanupError;
+    // Keep one stable prepared game and separate stable polls per language.
+    // Rebuild their contents in place so IDs and fixture ownership persist.
     const games = [];
     const definitions = [
       { type: "prepared", title: copy.names[0] },
       { type: "poll_points", title: copy.names[1] },
       { type: "poll_text", title: copy.names[2] }
     ];
-    try {
-      for (const [index, def] of definitions.entries()) {
-      const { data: game, error } = await sb.from("games").insert({
-        owner_id: auth.user.id, name: def.title, type: def.type, status: "draft"
-      }).select("id,name,type,share_key_poll").single();
-      if (error) throw error;
-        // Each game has ten questions total. Put the question from the old
-        // Control screenshot first so every screenshot scenario can use it.
-        const prompts = [copy.gameplay[0], ...copy.questions.slice(0, 9)];
-        for (let ord = 0; ord < prompts.length; ord++) {
-          const { data: question, error: qError } = await sb.from("questions")
-            .insert({ game_id: game.id, ord: ord + 1, text: prompts[ord] }).select("id").single();
-          if (qError) throw qError;
-          if (index === 0 || index === 1) {
-            const isBoardQuestion = ord === 0;
-            const answers = index === 1 ? copy.pollAnswers : (isBoardQuestion ? copy.gameplay[1] : copy.fillerAnswers);
-            const points = index === 1 ? answers.map(() => 0) : (isBoardQuestion ? [39, 24, 16, 9, 7, 5] : [40, 30, 20, 10]);
-            const { error: aError } = await sb.from("answers").insert(answers.map((text, i) => ({ question_id: question.id, ord: i + 1, text, fixed_points: points[i] })));
-            if (aError) throw aError;
-          }
-        }
-        if (index > 0) {
-          const { error: openError } = await sb.rpc("poll_open", { p_game_id: game.id, p_key: game.share_key_poll });
-          if (openError) throw openError;
-          const { data: opened, error: keyError } = await sb.from("games").select("share_key_poll").eq("id", game.id).single();
-          if (keyError) throw keyError;
-          game.share_key_poll = opened.share_key_poll;
-        }
-        games.push(game);
+    for (const [index, def] of definitions.entries()) {
+      const { data: existing, error: lookupError } = await sb.from("games")
+        .select("id,name,type,status,share_key_poll")
+        .eq("owner_id", auth.user.id).eq("name", def.title).maybeSingle();
+      if (lookupError) throw lookupError;
+      let game = existing;
+      if (game && game.type !== def.type) throw new Error(`Screenshot fixture has unexpected type: ${def.title}`);
+      if (game && index > 0 && ["poll_open", "poll_stopped", "ready"].includes(game.status)) {
+        const { data: aborted, error: abortError } = await sb.rpc("poll_abort", { p_game_id: game.id });
+        if (abortError || !aborted?.ok) throw abortError || new Error(`Could not reset screenshot poll: ${def.title}`);
+        game.share_key_poll = aborted.share_key_poll;
       }
-    } catch (error) {
-      await sb.from("games").delete().eq("owner_id", auth.user.id).in("name", copy.names);
-      throw error;
+      if (!game) {
+        const { data: created, error } = await sb.from("games").insert({
+          owner_id: auth.user.id, name: def.title, type: def.type, status: "draft"
+        }).select("id,name,type,share_key_poll").single();
+        if (error) throw error;
+        game = created;
+      } else {
+        const { error: statusError } = await sb.from("games").update({ status: "draft" }).eq("id", game.id);
+        if (statusError) throw statusError;
+        const { error: questionCleanupError } = await sb.from("questions").delete().eq("game_id", game.id);
+        if (questionCleanupError) throw questionCleanupError;
+      }
+
+      // The old Control screenshot's question stays first in all three games.
+      const prompts = [copy.gameplay[0], ...copy.questions.slice(0, 9)];
+      for (let ord = 0; ord < prompts.length; ord++) {
+        const { data: question, error: qError } = await sb.from("questions")
+          .insert({ game_id: game.id, ord: ord + 1, text: prompts[ord] }).select("id").single();
+        if (qError) throw qError;
+        if (index === 0 || index === 1) {
+          const isBoardQuestion = ord === 0;
+          const answers = index === 1 ? copy.pollAnswers : (isBoardQuestion ? copy.gameplay[1] : copy.fillerAnswers);
+          const points = index === 1 ? answers.map(() => 0) : (isBoardQuestion ? [39, 24, 16, 9, 7, 5] : [40, 30, 20, 10]);
+          const { error: aError } = await sb.from("answers").insert(answers.map((text, i) => ({ question_id: question.id, ord: i + 1, text, fixed_points: points[i] })));
+          if (aError) throw aError;
+        }
+      }
+      if (index === 0) {
+        const { error: readyError } = await sb.from("games").update({ status: "ready" }).eq("id", game.id);
+        if (readyError) throw readyError;
+      }
+      if (index > 0) {
+        const { error: openError } = await sb.rpc("poll_open", { p_game_id: game.id, p_key: game.share_key_poll });
+        if (openError) throw openError;
+        const { data: opened, error: keyError } = await sb.from("games").select("share_key_poll").eq("id", game.id).single();
+        if (keyError) throw keyError;
+        game.share_key_poll = opened.share_key_poll;
+      }
+      games.push(game);
     }
     return games;
   }, copy);
@@ -273,78 +289,52 @@ async function take(page, testInfo, name, ready) {
   }
 }
 
-async function prepareMainDisplayFixture(browser, language) {
+async function prepareDevicePreviewFixture(browser, language, device = "display") {
   const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1600, height: 900 } });
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["control/display"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: [`control/${device}`] });
   const page = await context.newPage();
   try {
-    await page.goto(`https://www.familiada.online/control/display/?preview=1&lang=${language}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
-    await page.evaluate(() => {
+    await page.goto("https://www.familiada.online/", { waitUntil: "domcontentloaded" });
+    await page.setContent(`<!doctype html><html><head><style>html,body{margin:0;width:100%;height:100%;overflow:hidden}iframe{display:block;width:100%;height:100%;border:0}</style></head><body><iframe id="devicePreview" title="${device}" src="/control/${device}/?preview=1&lang=${language}"></iframe><script>window.previewReady=false;addEventListener('message',event=>{if(event.source===document.getElementById('devicePreview').contentWindow&&['familiada:preview-ready','familiada:host-preview-ready'].includes(event.data?.type))window.previewReady=true})<\/script></body></html>`);
+    await page.waitForFunction(() => window.previewReady === true, null, { timeout: 30_000 });
+    const frame = page.frames().find(item => item.url().includes(`/control/${device}/`) && item.url().includes("preview=1"));
+    if (!frame) throw new Error(`Could not load ${device} preview frame`);
+    await frame.evaluate(() => {
       window.__manualDisplayDone = false;
       window.addEventListener("familiada:preview-rendered", () => { window.__manualDisplayDone = true; }, { once: true });
     });
-  const row = {
-    rev: 1, step: "r_play", phase: "PLAY", top_card: "rounds", control_team: null,
-    detail: {
-      display: {
-        mode: "GAME", suppressLogoDraw: true,
-        previewNumbers: { left: "111", top: "999", right: "111" },
-        previewXPositions: { A: [1, 3], B: [1, 3] }
-      },
-      teams: { teamA: "FAMILIADA", teamB: "ONLINE", defaultA: false, defaultB: false },
-      settings: { uiLang: language },
-      rounds: {
-        roundNo: 1, question: COPY.pl.gameplay[0], bankPts: 62, totals: { A: 111, B: 111 },
-        revealed: [1, 3, 5], xA: 3, xB: 3,
-        answers: [
-          { ord: 1, text: "TWÓRZ", fixed_points: 39 },
-          { ord: 2, text: "ŁĄCZ", fixed_points: 0 },
-          { ord: 3, text: "GŁOSUJ", fixed_points: 16 },
-          { ord: 4, text: "BAW SIĘ", fixed_points: 0 },
-          { ord: 5, text: "GRAJ", fixed_points: 7 }
-        ]
+    const row = {
+      rev: 1, step: "r_play", phase: "PLAY", top_card: "rounds", control_team: null,
+      detail: {
+        display: {
+          mode: "GAME", suppressLogoDraw: true,
+          previewNumbers: { left: "111", top: "999", right: "111" },
+          previewXPositions: { A: [1, 3], B: [1, 3] }
+        },
+        teams: { teamA: language === "pl" ? "FAMILIADA" : language === "en" ? "FAMILY" : "РОДИНА", teamB: language === "pl" ? "ONLINE" : language === "en" ? "ONLINE" : "ОНЛАЙН", defaultA: false, defaultB: false },
+        settings: { uiLang: language },
+        rounds: {
+          roundNo: 1, question: COPY[language].gameplay[0], bankPts: 62, totals: { A: 111, B: 111 },
+          revealed: [1, 3, 5], xA: 3, xB: 3,
+          answers: [
+            { ord: 1, text: language === "pl" ? "TWÓRZ" : language === "en" ? "CREATE" : "СТВОРЮЙ", fixed_points: 39 },
+            { ord: 2, text: language === "pl" ? "ŁĄCZ" : language === "en" ? "CONNECT" : "ЄДНАЙ", fixed_points: 0 },
+            { ord: 3, text: language === "pl" ? "GŁOSUJ" : language === "en" ? "VOTE" : "ГОЛОСУЙ", fixed_points: 16 },
+            { ord: 4, text: language === "pl" ? "BAW SIĘ" : language === "en" ? "HAVE FUN" : "ГРАЙ", fixed_points: 0 },
+            { ord: 5, text: language === "pl" ? "GRAJ" : language === "en" ? "PLAY" : "ГРАЙ", fixed_points: 7 }
+          ]
+        },
+        host: { covered: false }
       }
-    }
-  };
-  await page.evaluate(row => window.postMessage({ type: "familiada:preview-row", row }, "*"), row);
-    await page.waitForFunction(() => window.__manualDisplayDone === true, null, { timeout: 30_000 });
-    return { context, page };
+    };
+    await page.evaluate(row => document.getElementById("devicePreview").contentWindow.postMessage({ type: "familiada:preview-row", row }, location.origin), row);
+    if (device === "display") await frame.waitForFunction(() => window.__manualDisplayDone === true, null, { timeout: 30_000 });
+    else await expect(frame.locator("#paperText2")).toContainText(COPY[language].gameplay[0], { timeout: 30_000 });
+    return { context, page, frame };
   } catch (error) {
     await context.close();
     throw error;
   }
-}
-
-async function createGameplayDevices(browser, gameId, keys) {
-  const contexts = [];
-  const pages = {};
-  for (const type of ["display", "host", "buzzer"]) {
-    const deviceContext = await browser.newContext({ serviceWorkers: "block", locale: LANGUAGE === "uk" ? "uk-UA" : LANGUAGE === "en" ? "en-US" : "pl-PL", viewport: type === "display" ? { width: 1600, height: 900 } : { width: 1365, height: 768 } });
-    contexts.push(deviceContext);
-    await deviceContext.addInitScript(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
-    if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(deviceContext, { pages: ["go", `control/${type}`] });
-    const devicePage = await deviceContext.newPage();
-    devicePage.setDefaultTimeout(20_000);
-    // Use the same link the Control screen gives to a player. `/go/` resolves
-    // the one-time session token and forwards the browser to the live device.
-    await devicePage.goto(`https://www.familiada.online/go/?d=${type}&id=${gameId}&key=${keys[type]}`, { waitUntil: "domcontentloaded" });
-    pages[type] = devicePage;
-  }
-  await pages.display.waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
-  await expect(pages.display.locator("#blackScreen")).toBeVisible({ timeout: 30_000 });
-  await pages.host.waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
-  await pages.buzzer.waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
-  await expect(pages.host.locator("#paperText2")).toBeAttached({ timeout: 30_000 });
-  return { contexts, pages };
-}
-
-async function confirmGameplayTile(page, locator) {
-  await locator.click();
-  const write = page.waitForResponse(response => /\/rpc\/(?:control_runtime|game_state|control_v2)/.test(response.url()), { timeout: 20_000 }).catch(() => null);
-  await locator.click();
-  await write;
-  await page.waitForTimeout(250);
 }
 
 test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, context, browser }, testInfo) => {
@@ -357,7 +347,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
   let anonymousContext;
   let mobileContext;
   let displayFixtureContext;
-  let gameplayDeviceContexts = [];
+  let gameplayPreviewContexts = [];
   let games = [];
   let screenshotBaseId = null;
   let friendId = null;
@@ -370,6 +360,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
   page.removeAllListeners("dialog");
   page.on("dialog", dialog => {
     if (dialog.type() === "beforeunload") dialog.accept().catch(() => {});
+    else if (dialog.type() === "confirm") dialog.accept().catch(() => {});
     else dialog.dismiss().catch(() => {});
   });
   try {
@@ -378,6 +369,38 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
   await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
   games = await seedGames(page, COPY[LANGUAGE]);
+    // Capture a clean Control setup, then the matching pre-rendered device views.
+    // Screenshots describe the interface; they do not need live device sessions.
+    const gameplayControlError = await take(page, testInfo, "gameplay-control", async () => {
+      await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
+      const reset = page.locator("#btnStartOver");
+      if (await reset.isVisible().catch(() => false)) {
+        await reset.click();
+        const confirmReset = page.getByRole("button", { name: /^(Tak|Yes|Так|Да)$/ });
+        if (await confirmReset.count()) await confirmReset.click();
+      }
+      await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 15_000 });
+      const controlSound = page.locator('.toggle-item:has(input[name="soundSource"][value="control"])');
+      if (await controlSound.count() && !(await controlSound.locator("input").isChecked())) await controlSound.click();
+    });
+    if (gameplayControlError) captureErrors.push(gameplayControlError);
+
+    for (const device of ["host", "display"]) {
+      try {
+        const fixture = await prepareDevicePreviewFixture(browser, LANGUAGE, device);
+        gameplayPreviewContexts.push(fixture.context);
+        const previewError = await take(fixture.page, testInfo, `gameplay-${device}`, async () => {
+          if (device === "display") await expect(fixture.frame.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
+          else await expect(fixture.frame.locator("#paperText2")).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 30_000 });
+        });
+        if (previewError) captureErrors.push(previewError);
+      } catch (error) {
+        console.error(`[manual-screenshot] failed ${LANGUAGE}/gameplay-${device}: ${error.message}`);
+        captureErrors.push(error);
+      }
+    }
+
     friendContext = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1365, height: 768 } });
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(friendContext, { pages: ["tasks", "friends", "subscribers", "polls"] });
     const friendPage = await friendContext.newPage();
@@ -539,137 +562,6 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     });
     if (settingsSoundError) captureErrors.push(settingsSoundError);
 
-    // For this temporary screenshot game, make one completed round enough to
-    // reach the finale. These are ordinary per-game settings and are removed
-    // with the fixture after the run.
-    const gameplayError = await take(page, testInfo, "gameplay-control", async () => {
-      await page.locator('.gs-sidebar-item[data-cat="game"]').click();
-      await expect(page.locator("#gsFinalMinPts")).toBeVisible({ timeout: 15_000 });
-      await page.locator("#gsFinalMinPts").fill("1");
-      await page.locator("#gsFinalMinPts").dispatchEvent("change");
-      await page.locator("#gsFinalTarget").fill("50");
-      await page.locator("#gsFinalTarget").dispatchEvent("change");
-      await page.locator("#btnSaveAll").click();
-      await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30_000 });
-
-      const deviceKeys = {};
-      const captureDeviceKey = async response => {
-        if (!response.url().includes("/rpc/control_runtime_device_link")) return;
-        try {
-          const type = response.request().postDataJSON()?.p_device_type;
-          const result = await response.json();
-          if (result?.ok && result.token && ["display", "host", "buzzer"].includes(type)) deviceKeys[type] = result.token;
-        } catch { /* ignore unrelated/aborted responses */ }
-      };
-      page.on("response", captureDeviceKey);
-      await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
-      await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
-      // Reset through the same Control action an operator uses before a fresh
-      // run. This also clears a leftover state if a previous capture stopped
-      // midway through a game.
-      await page.locator("#btnStartOver").click();
-      await page.getByRole("button", { name: /^(Tak|Yes|Так)$/ }).click();
-      await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 15_000 });
-      // Keep this fixture on the Control sound source. The separate Display
-      // remains a real device in the scene, while it avoids a second audio
-      // gesture when the test later reloads it into the active game state.
-      const controlSound = page.locator('.toggle-item:has(input[name="soundSource"][value="control"])');
-      if (!(await controlSound.locator("input").isChecked())) await controlSound.click();
-      await expect(controlSound.locator('input')).toBeChecked();
-      // Let Control create its runtime session first, then open its linked
-      // devices and wait until they report as available to the setup screen.
-      await expect.poll(() => Object.keys(deviceKeys).length, { timeout: 30_000 }).toBe(3);
-      page.off("response", captureDeviceKey);
-      const devices = await createGameplayDevices(browser, games[0].id, deviceKeys);
-      gameplayDeviceContexts = devices.contexts;
-      // With sound on Control, Display must not ask for an audio gesture.
-      await expect(devices.pages.display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 15_000 });
-      const nextSetup = page.getByRole("button", { name: /^(Dalej|Next|Далі)$/ });
-      await expect(nextSetup).toBeEnabled({ timeout: 30_000 });
-      await nextSetup.click();
-      await expect(page.locator(".stepTitle")).toContainText(/Podsumowanie|Summary|Підсумок/, { timeout: 30_000 });
-      const ready = page.getByRole("button", { name: /^(Gotowe — przejdź do rozgrywki|Done — start the game|Готово — почати гру)$/ });
-      await expect(ready).toBeEnabled({ timeout: 20_000 });
-      await ready.click();
-      // The setup screens must stay live while devices are connected; reload
-      // each already-linked view once the game starts so it initializes from
-      // the active round state before we capture the synchronized scene.
-      for (const type of ["display", "host", "buzzer"]) {
-        await devices.pages[type].reload({ waitUntil: "domcontentloaded" });
-        await devices.pages[type].waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
-      }
-      const legacyDisplayKey = await page.evaluate(async gameId => {
-        const { data, error } = await window.__sbClient.from("games").select("share_key_display").eq("id", gameId).single();
-        if (error) throw error;
-        return data.share_key_display;
-      }, games[0].id);
-      const displayState = await devices.pages.display.evaluate(async ({ gameId, key }) => {
-        const urlKey = new URL(location.href).searchParams.get("key");
-        const { data: resolved, error: resolveError } = await window.__sbClient.rpc("control_device_share_resolve", { p_token: urlKey });
-        const { data: authData, error: authError } = await window.__sbClient.rpc("display_auth", { p_game_id: gameId, p_key: urlKey });
-        const { data, error } = await window.__sbClient.rpc("game_state_get", {
-          p_game_id: gameId, p_device_type: "display", p_key: urlKey,
-        });
-        const { data: legacyData, error: legacyError } = await window.__sbClient.rpc("game_state_get", {
-          p_game_id: gameId, p_device_type: "display", p_key: key.legacy,
-        });
-        return { keyMatchesControl: urlKey === key.current, resolveState: resolved?.state, resolvedType: resolved?.device_type, resolveError: resolveError?.message,
-          authOk: Boolean(authData?.length), authError: authError?.message, stateError: error?.message, step: data?.step, mode: data?.detail?.display?.mode, rev: data?.rev,
-          legacyStateError: legacyError?.message, legacyStep: legacyData?.step };
-      }, { gameId: games[0].id, key: { current: deviceKeys.display, legacy: legacyDisplayKey } });
-      console.log(`[manual-screenshot] display gameplay state ${JSON.stringify(displayState)}`);
-      await expect(devices.pages.display.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
-      const startGame = page.getByRole("button", { name: /^(Rozpocznij grę|Start game|Розпочати гру)$/ });
-      await expect(startGame).toBeEnabled({ timeout: 30_000 });
-      await startGame.click();
-      await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", /Runda 1|Round 1|Раунд 1/, { timeout: 30_000 });
-      const startRound = page.getByRole("button", { name: /^(Rozpocznij rundę|Start|Розпочати)$/ });
-      await expect(startRound).toBeEnabled({ timeout: 30_000 });
-      await startRound.click();
-      await expect(page.locator(".c2-stepper-question")).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 20_000 });
-      await devices.pages.buzzer.getByRole("button", { name: /Przycisk A|Button A|Кнопка A/ }).click();
-      const winner = page.getByRole("button", { name: /Zatwierdź:/ });
-      await expect(winner).toBeEnabled({ timeout: 20_000 });
-      await confirmGameplayTile(page, winner);
-      const answerTiles = page.locator(".c2-tilegrid button");
-      await confirmGameplayTile(page, answerTiles.nth(0));
-      await confirmGameplayTile(page, answerTiles.nth(2));
-      const strike = page.getByRole("button", { name: "X", exact: true });
-      if (await strike.count()) await confirmGameplayTile(page, strike);
-      await expect(devices.pages.display.locator("#gameScreen")).toBeVisible();
-      await expect(devices.pages.host.locator("#paperText2")).toContainText(COPY[LANGUAGE].gameplay[0]);
-      await expect(page.locator(".c2-gameplay-nav .c2-statusbar")).toBeVisible();
-    });
-    if (gameplayError) captureErrors.push(gameplayError);
-    const gameplayHostError = await take(gameplayDeviceContexts.length ? await gameplayDeviceContexts[1].pages()[0] : page, testInfo, "gameplay-host", async () => {
-      await expect(gameplayDeviceContexts[1].pages()[0].locator("#paperText2")).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 20_000 });
-    });
-    if (gameplayHostError) captureErrors.push(gameplayHostError);
-    const gameplayDisplayError = await take(gameplayDeviceContexts.length ? await gameplayDeviceContexts[0].pages()[0] : page, testInfo, "gameplay-display", async () => {
-      await expect(gameplayDeviceContexts[0].pages()[0].locator("#gameScreen")).toBeVisible({ timeout: 20_000 });
-    });
-    if (gameplayDisplayError) captureErrors.push(gameplayDisplayError);
-    const gameplayFinaleError = await take(page, testInfo, "gameplay-finale", async () => {
-      const answerTiles = page.locator(".c2-tilegrid button");
-      for (let i = 1; i < 6; i++) {
-        const tile = answerTiles.nth(i);
-        if (await tile.isEnabled().catch(() => false)) await confirmGameplayTile(page, tile);
-      }
-      const endRound = page.getByRole("button", { name: /^(Zakończ rundę|End round|Завершити раунд|Przejdź do zakończenia gry|Go to game end|Перейти до завершення гри)$/ });
-      if (await endRound.isEnabled().catch(() => false)) await endRound.click();
-      const next = page.getByRole("button", { name: /^(Przejdź do finału|Go to the final|Перейти до фіналу)$/ });
-      await expect(next).toBeEnabled({ timeout: 25_000 });
-      await next.click();
-      const startFinal = page.getByRole("button", { name: /^(Rozpocznij finał|Start|Старт)$/ });
-      await expect(startFinal).toBeEnabled({ timeout: 30_000 });
-      await startFinal.click();
-      await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", /Finał|Final|Фінал/, { timeout: 30_000 });
-      const finalAnswers = page.locator("#app input[type=text]");
-      await expect(finalAnswers).toHaveCount(5, { timeout: 20_000 });
-      for (let i = 0; i < 5; i++) await finalAnswers.nth(i).fill(COPY[LANGUAGE].finalAnswers[i]);
-    });
-    if (gameplayFinaleError) captureErrors.push(gameplayFinaleError);
-
     const friendsShotError = await take(page, testInfo, "friends", async () => {
       await page.goto(`https://www.familiada.online/friends/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#contactsHost")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
@@ -774,11 +666,11 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
 
     if (LANGUAGE === "pl") {
       try {
-        const fixture = await prepareMainDisplayFixture(browser, LANGUAGE);
+        const fixture = await prepareDevicePreviewFixture(browser, LANGUAGE, "display");
         displayFixtureContext = fixture.context;
         const mainDisplayError = await take(fixture.page, testInfo, "main-display", async () => {
-          await expect(fixture.page.locator("#gameScreen")).toBeVisible();
-          await fixture.page.waitForFunction(() => window.__manualDisplayDone === true, null, { timeout: 30_000 });
+          await expect(fixture.frame.locator("#gameScreen")).toBeVisible();
+          await fixture.frame.waitForFunction(() => window.__manualDisplayDone === true, null, { timeout: 30_000 });
         });
         if (mainDisplayError) captureErrors.push(mainDisplayError);
       } catch (error) {
@@ -787,15 +679,11 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       }
     }
   } finally {
-    for (const deviceContext of gameplayDeviceContexts) await deviceContext.close().catch(() => {});
+    for (const previewContext of gameplayPreviewContexts) await previewContext.close().catch(() => {});
     await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" }).catch(() => {});
     await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 10_000 }).catch(() => {});
-    if (games.length) {
-      await page.evaluate(async ids => {
-        const { error } = await window.__sbClient.from("games").delete().in("id", ids);
-        if (error) throw error;
-      }, games.map(game => game.id)).catch(error => console.error("[manual-screenshot] game cleanup failed:", error.message));
-    }
+    // The named game fixtures persist between runs. seedGames rebuilds the
+    // prepared game and calls poll_abort before reseeding each open poll.
     if (screenshotBaseId) await page.evaluate(async id => {
       const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id);
       if (error) throw error;
