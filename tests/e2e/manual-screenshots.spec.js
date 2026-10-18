@@ -222,7 +222,7 @@ async function completeRealTasks(ownerPage, friendPage, anonymousPage, taskSets,
 
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE !== "0") {
-    await serveBranchCode(context, { pages: ["games", "games/editor", "games/settings", "polls", "polls/vote/points", "polls/vote/text", "tasks", "friends", "subscribers", "bases", "base-explorer", "logo", "logo/editor"] });
+    await serveBranchCode(context, { pages: ["games", "games/editor", "games/settings", "polls", "polls/vote/points", "polls/vote/text", "tasks", "friends", "subscribers", "bases", "base-explorer", "logo", "logo/editor", "control"] });
   }
 });
 
@@ -281,6 +281,44 @@ async function prepareMainDisplayFixture(browser, language) {
   }
 }
 
+async function createGameplayDevices(browser, ownerPage, gameId) {
+  const keys = await ownerPage.evaluate(async gameId => {
+    const { data: session, error: sessionError } = await window.__sbClient.rpc("control_runtime_session_touch", {
+      p_game_id: gameId, p_session_id: null
+    });
+    if (sessionError || !session?.ok) throw new Error(sessionError?.message || session?.error || "Could not start screenshot game session");
+    const result = {};
+    for (const type of ["display", "host", "buzzer"]) {
+      const { data, error } = await window.__sbClient.rpc("control_runtime_device_link", { p_game_id: gameId, p_device_type: type });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || `Could not link screenshot ${type}`);
+      result[type] = data.token;
+    }
+    return result;
+  }, gameId);
+  const contexts = [];
+  const pages = {};
+  for (const type of ["display", "host", "buzzer"]) {
+    const deviceContext = await browser.newContext({ serviceWorkers: "block", viewport: type === "display" ? { width: 1600, height: 900 } : { width: 1365, height: 768 } });
+    contexts.push(deviceContext);
+    if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(deviceContext, { pages: [`control/${type}`] });
+    const devicePage = await deviceContext.newPage();
+    devicePage.setDefaultTimeout(20_000);
+    await devicePage.goto(`https://www.familiada.online/go/?d=${type}&id=${gameId}&key=${keys[type]}`, { waitUntil: "domcontentloaded" });
+    pages[type] = devicePage;
+  }
+  await expect(pages.display.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
+  await expect(pages.host.locator("body")).not.toBeEmpty({ timeout: 30_000 });
+  return { contexts, pages };
+}
+
+async function confirmGameplayTile(page, locator) {
+  await locator.click();
+  const write = page.waitForResponse(response => /\/rpc\/(?:control_runtime|game_state|control_v2)/.test(response.url()), { timeout: 20_000 }).catch(() => null);
+  await locator.click();
+  await write;
+  await page.waitForTimeout(250);
+}
+
 test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, context, browser }, testInfo) => {
   test.setTimeout(600_000);
   page.setDefaultTimeout(15_000);
@@ -291,6 +329,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
   let anonymousContext;
   let mobileContext;
   let displayFixtureContext;
+  let gameplayDeviceContexts = [];
   let games = [];
   let screenshotBaseId = null;
   let friendId = null;
@@ -454,6 +493,70 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     });
     if (settingsRoundsError) captureErrors.push(settingsRoundsError);
 
+    // For this temporary screenshot game, make one completed round enough to
+    // reach the finale. These are ordinary per-game settings and are removed
+    // with the fixture after the run.
+    const gameplayError = await take(page, testInfo, "gameplay-control", async () => {
+      await page.locator('.gs-sidebar-item[data-cat="game"]').click();
+      await expect(page.locator("#gsFinalMinPts")).toBeVisible({ timeout: 15_000 });
+      await page.locator("#gsFinalMinPts").fill("1");
+      await page.locator("#gsFinalMinPts").dispatchEvent("change");
+      await page.locator("#gsFinalTarget").fill("50");
+      await page.locator("#gsFinalTarget").dispatchEvent("change");
+      await page.waitForTimeout(2_000);
+
+      const devices = await createGameplayDevices(browser, page, games[0].id);
+      gameplayDeviceContexts = devices.contexts;
+      await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
+      await page.getByRole("button", { name: /^(Dalej|Next|Далі)$/ }).click();
+      const ready = page.getByRole("button", { name: /^(Gotowe — przejdź do rozgrywki|Done — start the game|Готово — почати гру)$/ });
+      await expect(ready).toBeEnabled({ timeout: 20_000 });
+      await ready.click();
+      await page.getByRole("button", { name: /^(Rozpocznij grę|Start game|Розпочати гру)$/ }).click();
+      await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", /Runda 1|Round 1|Раунд 1/, { timeout: 30_000 });
+      await page.getByRole("button", { name: /^(Rozpocznij rundę|Start|Розпочати)$/ }).click();
+      await expect(page.locator(".c2-stepper-question")).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 20_000 });
+      await devices.pages.buzzer.getByRole("button", { name: /Przycisk A|Button A|Кнопка A/ }).click();
+      const winner = page.getByRole("button", { name: /Zatwierdź:/ });
+      await expect(winner).toBeEnabled({ timeout: 20_000 });
+      await confirmGameplayTile(page, winner);
+      const answerTiles = page.locator(".c2-tilegrid button");
+      await confirmGameplayTile(page, answerTiles.nth(0));
+      await confirmGameplayTile(page, answerTiles.nth(2));
+      const strike = page.getByRole("button", { name: "X", exact: true });
+      if (await strike.count()) await confirmGameplayTile(page, strike);
+      await expect(devices.pages.display.locator("#gameScreen")).toBeVisible();
+      await expect(devices.pages.host.locator("#paperText2")).toContainText(COPY[LANGUAGE].gameplay[0]);
+      await expect(page.locator(".c2-gameplay-nav .c2-statusbar")).toBeVisible();
+    });
+    if (gameplayError) captureErrors.push(gameplayError);
+    const gameplayHostError = await take(gameplayDeviceContexts.length ? await gameplayDeviceContexts[1].pages()[0] : page, testInfo, "gameplay-host", async () => {
+      await expect(gameplayDeviceContexts[1].pages()[0].locator("#paperText2")).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 20_000 });
+    });
+    if (gameplayHostError) captureErrors.push(gameplayHostError);
+    const gameplayDisplayError = await take(gameplayDeviceContexts.length ? await gameplayDeviceContexts[0].pages()[0] : page, testInfo, "gameplay-display", async () => {
+      await expect(gameplayDeviceContexts[0].pages()[0].locator("#gameScreen")).toBeVisible({ timeout: 20_000 });
+    });
+    if (gameplayDisplayError) captureErrors.push(gameplayDisplayError);
+    const gameplayFinaleError = await take(page, testInfo, "gameplay-finale", async () => {
+      const answerTiles = page.locator(".c2-tilegrid button");
+      for (let i = 1; i < 6; i++) {
+        const tile = answerTiles.nth(i);
+        if (await tile.isEnabled().catch(() => false)) await confirmGameplayTile(page, tile);
+      }
+      const endRound = page.getByRole("button", { name: /^(Zakończ rundę|End round|Завершити раунд|Przejdź do zakończenia gry|Go to game end|Перейти до завершення гри)$/ });
+      if (await endRound.isEnabled().catch(() => false)) await endRound.click();
+      const next = page.getByRole("button", { name: /^(Przejdź do finału|Continue to finale|Перейти до фіналу)$/ });
+      await expect(next).toBeEnabled({ timeout: 25_000 });
+      await next.click();
+      const startFinal = page.getByRole("button", { name: /^(Rozpocznij finał|Start|Старт)$/ });
+      await expect(startFinal).toBeEnabled({ timeout: 30_000 });
+      await startFinal.click();
+      await expect(page.locator("#c2TopbarProgress")).toContainText(/Finał|Finale|Фінал/, { timeout: 30_000 });
+    });
+    if (gameplayFinaleError) captureErrors.push(gameplayFinaleError);
+
     const friendsShotError = await take(page, testInfo, "friends", async () => {
       await page.goto(`https://www.familiada.online/friends/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#contactsHost")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
@@ -568,6 +671,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       }
     }
   } finally {
+    for (const deviceContext of gameplayDeviceContexts) await deviceContext.close().catch(() => {});
     await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" }).catch(() => {});
     await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 10_000 }).catch(() => {});
     if (games.length) {

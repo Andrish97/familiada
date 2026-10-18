@@ -4,8 +4,11 @@ on:
   push:
     branches:
       - main
+      - codex/e13-manual
     paths:
       - "web/**"
+      - "tests/e2e/manual-screenshots.spec.js"
+      - ".github/workflows/manual-screenshots.yml"
   # Ręczny przebieg odświeża zrzuty we wszystkich językach bez zmiany strony.
   workflow_dispatch:
 
