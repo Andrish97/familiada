@@ -398,15 +398,15 @@ details[open] .faq-q .faq-caret {
 .imgv-overlay {
   z-index: 9999;
   background: var(--modal-scrim);
-  padding: 18px;
+  padding: 2vw;
 }
 .imgv-overlay.is-open { display: grid; }
 
 .imgv-panel {
   width: fit-content;
-  max-width: min(1200px, 92vw);
+  max-width: 96vw;
   max-height: min(82vh, 900px);
-  padding: 12px;
+  padding: 16px;
 }
 
 @media (max-width: 980px) {
