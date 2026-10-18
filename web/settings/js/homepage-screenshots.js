@@ -153,6 +153,8 @@ async function applyFixtureToFrame(scene, fixture) {
   const doc = frame.contentDocument;
   if (!doc?.body) throw new Error("brak treści widoku");
   await translateFrame(doc, currentLanguage());
+  const footerCopy = doc.querySelector('[data-i18n="common.footer.left"]');
+  if (footerCopy) footerCopy.textContent = footerCopy.textContent.replace(/©\s*(?:\{?year\}?|\d{4})/i, `© ${new Date().getFullYear()}`);
   doc.documentElement.lang = currentLanguage();
   doc.documentElement.style.width = `${scene.width}px`;
   doc.documentElement.style.height = `${scene.height}px`;
@@ -192,17 +194,17 @@ async function applyFixtureToFrame(scene, fixture) {
     const words = language === "en" ? {
       hint: "Select a game to use its actions. Double-click a game name to rename it.", search: "Search…", filter: "All statuses",
       updated: "Recently updated", created: "Recently added", byName: "Name A–Z", draft: "DRAFT", ready: "Ready", open: "OPEN", stopped: "STOPPED",
-      account: "Account", community: "Community games", logo: "Logos", bases: "Question banks", friends: "Friends",
+      account: "John Smith", community: "Community games", logo: "Logos", bases: "Question banks", friends: "Friends",
       connect: "Connect a device", subscribers: "Subscribers", tasks: "Tasks", more: "More", logout: "Sign out",
     } : language === "uk" ? {
       hint: "Виберіть гру, щоб скористатися її діями. Двічі натисніть назву, щоб перейменувати.", search: "Пошук…", filter: "Усі стани",
       updated: "Нещодавно змінені", created: "Нещодавно додані", byName: "Назва А–Я", draft: "ЧЕРНЕТКА", ready: "Готова", open: "ВІДКРИТА", stopped: "ЗУПИНЕНА",
-      account: "Олена Коваль", language: "Polski", community: "Ігри спільноти", logo: "Логотипи", bases: "Бази запитань", friends: "Друзі",
+      account: "Іван Петренко", community: "Ігри спільноти", logo: "Логотипи", bases: "Бази запитань", friends: "Друзі",
       connect: "Підключити пристрій", subscribers: "Підписники", tasks: "Завдання", more: "Ще", logout: "Вийти",
     } : {
       hint: "Zaznacz grę, aby włączyć jej akcje. Dwukrotne kliknięcie nazwy pozwala ją zmienić.", search: "Szukaj…", filter: "Wszystkie",
       updated: "Ostatnio zmienione", created: "Najnowsze", byName: "Nazwa A–Z", draft: "Szkic", ready: "Gotowe", open: "OTWARTA", stopped: "ZATRZYMANA",
-      account: "Konto", community: "Gry Społeczności", logo: "Logo", bases: "Bazy pytań", friends: "Znajomi",
+      account: "Jan Kowalski", community: "Gry Społeczności", logo: "Logo", bases: "Bazy pytań", friends: "Znajomi",
       connect: "Podłącz urządzenie", subscribers: "Subskrybenci", tasks: "Zadania", more: "Więcej", logout: "Wyloguj",
     };
     const headingHint = doc.getElementById("hint");
@@ -216,11 +218,12 @@ async function applyFixtureToFrame(scene, fixture) {
       if (label) label.innerHTML = `${icon(iconName)} ${escapeHtml(words[id === "btnMarketplace" ? "community" : id === "btnLogoEditor" ? "logo" : id === "btnBases" ? "bases" : id === "btnFriends" ? "friends" : id === "btnConnectDevice" ? "connect" : id === "btnSubscribers" ? "subscribers" : "tasks"])}`;
     }
     const section3 = doc.querySelector(".topbar-section-3");
-    if (section3 && !section3.querySelector(".lang-switcher")) {
-      const lang = doc.createElement("div");
-      lang.className = "lang-switcher";
-      lang.innerHTML = `<button type="button" class="btn lang-btn" aria-label="Język">${icon("flag-pl")}</button>`;
-      section3.prepend(lang);
+    if (section3) {
+      let lang = section3.querySelector(".lang-switcher");
+      if (!lang) { lang = doc.createElement("div"); lang.className = "lang-switcher"; section3.prepend(lang); }
+      const flag = { pl: "flag-pl", en: "lang-en", uk: "flag-ua" }[language] || "flag-pl";
+      const languageLabel = language === "en" ? "Language" : language === "uk" ? "Мова" : "Język";
+      lang.innerHTML = `<button type="button" class="btn lang-btn" aria-label="${languageLabel}">${icon(flag)}</button>`;
     }
     const login = doc.getElementById("btnLogout");
     if (login) login.style.display = "none";
