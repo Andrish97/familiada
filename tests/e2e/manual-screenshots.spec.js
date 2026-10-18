@@ -392,7 +392,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       if (await controlSound.count() && !(await controlSound.locator("input").isChecked())) await controlSound.click();
       // Reset first as the normal Control flow requires, then paint a matching
       // round fixture so this screenshot shows the actual gameplay controls.
-      await page.evaluate(async ({ language, question, answers }) => {
+      await page.evaluate(async ({ language, question, answers, teamNames }) => {
         const { createUI } = await import("/control/js/ui.js?v=v2026-10-14T23162");
         const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-14T23162");
         const state = makeDefaultState("manual-control-preview");
@@ -401,7 +401,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         state.phase = "PLAY";
         state.controlTeam = "A";
         state.locks = { gameStarted: true, finalActive: false, gameEnded: false };
-        state.teams = { teamA: TEAM_NAMES[language][0], teamB: TEAM_NAMES[language][1] };
+        state.teams = { teamA: teamNames[0], teamB: teamNames[1] };
         state.settings.uiLang = language;
         state.rounds.roundNo = 1;
         state.rounds.question = { id: "manual-round", text: question };
@@ -414,7 +414,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         state.rounds.allowPass = true;
         const ui = createUI({ root: document.querySelector("#app"), emit: () => {} });
         ui.render(state, { presenceFlags: { display: true, host: true, buzzer: false }, busy: false, typingPending: false, devicesBlocked: false });
-      }, { language: LANGUAGE, question: COPY[LANGUAGE].gameplay[0], answers: COPY[LANGUAGE].gameplay[1].map((text, index) => [text, [39, 24, 16, 9, 7, 5][index]]) });
+      }, { language: LANGUAGE, question: COPY[LANGUAGE].gameplay[0], answers: COPY[LANGUAGE].gameplay[1].map((text, index) => [text, [39, 24, 16, 9, 7, 5][index]]), teamNames: TEAM_NAMES[LANGUAGE] });
       await expect(page.locator(".c2-tilegrid .c2-tile")).toHaveCount(9, { timeout: 15_000 });
       await expect(page.locator(".c2-stepper-question")).toContainText(COPY[LANGUAGE].gameplay[0]);
     });
@@ -423,7 +423,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     const finaleError = await take(page, testInfo, "gameplay-finale", async () => {
       // Render a representative finale entry screen from a local state fixture.
       // This is a visual manual screenshot, not a simulated live match.
-      await page.evaluate(async ({ language, prompts, answers }) => {
+      await page.evaluate(async ({ language, prompts, answers, teamNames }) => {
         const { createUI } = await import("/control/js/ui.js?v=v2026-10-14T23162");
         const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-14T23162");
         const state = makeDefaultState("manual-finale-preview");
@@ -431,7 +431,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         state.topCard = "final";
         state.phase = "FINAL";
         state.locks = { gameStarted: true, finalActive: true, gameEnded: false };
-        state.teams = { teamA: TEAM_NAMES[language][0], teamB: TEAM_NAMES[language][1] };
+        state.teams = { teamA: teamNames[0], teamB: teamNames[1] };
         state.settings.uiLang = language;
         state.settings.hasFinal = true;
         state.final.questions = prompts.map((text, index) => ({ id: `final-${index + 1}`, text, answers: [] }));
@@ -439,7 +439,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         state.final.runtime.p1 = answers.map(text => ({ text }));
         const ui = createUI({ root: document.querySelector("#app"), emit: () => {} });
         ui.render(state, { presenceFlags: { display: true, host: true, buzzer: false }, busy: false, typingPending: false, devicesBlocked: false });
-      }, { language: LANGUAGE, prompts: COPY[LANGUAGE].questions.slice(1, 6), answers: COPY[LANGUAGE].finalAnswers });
+      }, { language: LANGUAGE, prompts: COPY[LANGUAGE].questions.slice(1, 6), answers: COPY[LANGUAGE].finalAnswers, teamNames: TEAM_NAMES[LANGUAGE] });
       await expect(page.locator(".c2-entryrows .c2-entryrow")).toHaveCount(5, { timeout: 15_000 });
       await expect(page.locator(".c2-entryrows .c2-entryrow").first()).toContainText(COPY[LANGUAGE].questions[1]);
     });
