@@ -10,6 +10,13 @@ import { isGuestUser } from './guest-mode.js?v=v2026-10-18T07592';
 import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-18T07592';
 import { icon } from './icons.js?v=v2026-10-18T07592';
 
+// Android browsers expose their retractable browser chrome through dynamic
+// viewport units. Mark the document so that this positioning stays scoped to
+// that behavior and does not move the header around iOS/mobile desktop views.
+if (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '')) {
+  document.documentElement.classList.add('android-dynamic-browser-ui');
+}
+
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
   if (!anchorEl || !dropdownEl) return;
@@ -636,25 +643,10 @@ function initTopbarController() {
 function updateTopbarHeight() {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
-  const rect = topbar.getBoundingClientRect();
-  const height = Math.ceil(rect.height);
-  const viewport = window.visualViewport;
-
-  // `--topbar-h` opisuje wyłącznie wysokość paska. Nie może zawierać jego
-  // położenia na ekranie, bo body używa tej wartości do paddingu i wysokości
-  // mobilnych arkuszy. Pozycja względem widocznego viewportu jest osobną
-  // zmienną, używaną wyłącznie przez fixed topbar.
+  // `--topbar-h` opisuje wyłącznie wysokość paska, nigdy jego położenie.
+  // Body używa jej do paddingu i wysokości mobilnych arkuszy.
+  const height = Math.ceil(topbar.getBoundingClientRect().height);
   document.body.style.setProperty('--topbar-h', `${height}px`);
-  if (viewport) {
-    const rawTop = Math.round(viewport.offsetTop || 0);
-    // Trzymaj pasek przy górnej krawędzi widocznego viewportu, ale nie
-    // pozwól, by błędna/krótkotrwała wartość przeglądarki schowała go
-    // całkowicie podczas animacji pasków Chrome lub klawiatury.
-    const minTop = -Math.max(0, height - 12);
-    const maxTop = Math.max(0, Math.floor(viewport.height - height));
-    const top = Math.max(minTop, Math.min(maxTop, rawTop));
-    document.body.style.setProperty('--visual-viewport-top', `${top}px`);
-  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -666,7 +658,6 @@ window.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('load', updateTopbarHeight);
 window.addEventListener('resize', updateTopbarHeight);
 window.visualViewport?.addEventListener('resize', updateTopbarHeight, { passive: true });
-window.visualViewport?.addEventListener('scroll', updateTopbarHeight, { passive: true });
 window.addEventListener('DOMContentLoaded', () => {
   const topbar = document.querySelector('.topbar');
   if (topbar && typeof ResizeObserver !== 'undefined') {
