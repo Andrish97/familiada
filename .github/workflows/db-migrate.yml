@@ -12,112 +12,26 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  verify-control-statistics:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: test-only-password
-          POSTGRES_DB: statistics_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check additive migration and statistics lifecycle in isolated database
-        env:
-          PGPASSWORD: test-only-password
-        run: psql -h localhost -U postgres -d statistics_test -v ON_ERROR_STOP=1 -f tests/sql/control2-sessions.sql
-      - name: Check concurrent telemetry and gameplay preserve events
-        env:
-          PGPASSWORD: test-only-password
-        run: python3 tests/sql/control2-sessions-concurrency.py
-      - name: Check device lease migration and lifecycle
-        env:
-          PGPASSWORD: test-only-password
-        run: |
-          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE device_leases_test'
-          psql -h localhost -U postgres -d device_leases_test -v ON_ERROR_STOP=1 -f tests/sql/control2-device-leases.sql
-          python3 tests/sql/control2-device-leases-concurrency.py
-      - name: Check device lease RPC fencing
-        env:
-          PGPASSWORD: test-only-password
-        run: |
-          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE device_lease_fencing_test'
-          psql -h localhost -U postgres -d device_lease_fencing_test -v ON_ERROR_STOP=1 -f tests/sql/control2-device-lease-fencing.sql
-      - name: Check cleanup migration preserves session history
-        env:
-          PGPASSWORD: test-only-password
-        run: |
-          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE cleanup_test'
-          psql -h localhost -U postgres -d cleanup_test -v ON_ERROR_STOP=1 -f tests/sql/control-cleanup.sql
-      - name: Check Host2 logo keys and active editing locks
-        env:
-          PGPASSWORD: test-only-password
-        run: psql -h localhost -U postgres -d statistics_test -v ON_ERROR_STOP=1 -f tests/sql/host2-logo.sql
-      - name: Check maintenance activity and shared exclusions
-        env:
-          PGPASSWORD: test-only-password
-        run: |
-          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE activity_test'
-          psql -h localhost -U postgres -d activity_test -v ON_ERROR_STOP=1 -f tests/sql/maintenance-activity.sql
-      - name: Check Display completion guards
-        env:
-          PGPASSWORD: test-only-password
-        run: |
-          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE display_completion_test'
-          psql -h localhost -U postgres -d display_completion_test -v ON_ERROR_STOP=1 -f tests/sql/display-completion.sql
-      - name: Check durable Display audio unlock sessions
-        env:
-          PGPASSWORD: test-only-password
-        run: |
-          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE display_audio_unlock_test'
-          psql -h localhost -U postgres -d display_audio_unlock_test -v ON_ERROR_STOP=1 -f tests/sql/display-audio-unlock.sql
-      - name: Check shared demo DRAW PNG updates only untouched copies
-        env:
-          PGPASSWORD: test-only-password
-        run: |
-          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE demo_draw_test'
-          psql -h localhost -U postgres -d demo_draw_test -v ON_ERROR_STOP=1 -f tests/sql/demo-draw-shared-png.sql
-      - name: Check removal of DRAW Host PNG references and Storage queueing
-        env:
-          PGPASSWORD: test-only-password
-        run: |
-          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE draw_raster_removal_test'
-          psql -h localhost -U postgres -d draw_raster_removal_test -v ON_ERROR_STOP=1 -f tests/sql/remove-draw-host-png.sql
   migrate:
-    needs: verify-control-statistics
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
-      # 1️⃣ Checkout (z możliwością push)
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: true
           fetch-depth: 0
 
-      # 2️⃣ Zadbaj o strukturę katalogów (jeśli nie istnieją)
       - name: Ensure local folders exist
-        run: |
-          mkdir -p supabase
-          mkdir -p supabase/migration_logs
+        run: mkdir -p supabase/migration_logs
 
-      # 3️⃣ Install SSH + rsync
-      - name: Install rsync + ssh
+      - name: Install rsync and SSH
         run: |
           sudo apt-get update
           sudo apt-get install -y rsync openssh-client
 
-      # 4️⃣ Setup SSH
-      - name: Setup SSH key
+      - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -125,7 +39,6 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
 
-      # 5️⃣ Sync migrations to server
       - name: Sync migrations to server staging
         run: |
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
@@ -142,189 +55,36 @@ jobs:
             scripts/apply-migrations.sh \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/apply-migrations.sh"
 
-      - name: Back up retired Control snapshots before cleanup
+      - name: Apply database migrations and dump schema (server-side)
         run: |
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "bash -s -- \"$STAGING\"" < scripts/backup-legacy-control.sh
+            "export GITHUB_SHA='${{ github.sha }}'; bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
 
-      # 6️⃣ Run migrations on server
-      - name: Run migrations (server-side)
+      - name: Fetch schema.sql and migration log
         run: |
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "export GITHUB_SHA='${{ github.sha }}'; \
-             bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
-
-      - name: Verify global mail preference before queue insert (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < tests/sql/mail-preference-queue-323.sql
-
-      - name: Verify DRAW Host PNG references and Storage objects are removed
-        run: |
-          for attempt in $(seq 1 30); do
-            remaining=$(ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-              "docker exec supabase-db psql -U supabase_admin -d postgres -Atc \"SELECT count(*) FROM storage.objects WHERE bucket_id = 'user-logos' AND name LIKE '%-draw-host.png'\"")
-            if [ "$remaining" = "0" ]; then break; fi
-            if [ "$attempt" = "30" ]; then echo "DRAW Host PNG cleanup timed out ($remaining objects remain)"; exit 1; fi
-            sleep 10
-          done
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < tests/sql/remove-draw-png-production.sql
-
-      - name: Verify activity writes and exclusions on production database
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < tests/sql/maintenance-activity-production.sql
-
-      - name: Verify legacy Control cleanup and preserve current game tables
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < tests/sql/control-cleanup-production.sql
-
-      - name: Verify Control runtime expiration (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < tests/sql/control-runtime-expiry-325.sql
-
-      - name: Verify physical base task cascade (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-base-task-cascade-345.sql
-
-      - name: Verify recipient account cascades and anonymous completed aggregates (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1'             < docs/sql/test-recipient-account-cascade-348.sql
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-dedicated-account-mail-cleanup-349.sql
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-dedicated-account-mail-cleanup-350.sql
-
-      - name: Verify poll recipient identity and canonical account email (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-poll-recipient-identity-351.sql
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-poll-recipient-test-cleanup-351.sql
-
-      - name: Verify guest conversion requires confirmed canonical email (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-guest-conversion-identity-352.sql
-
-      - name: Verify recorded poll sources and sticky subscriber identity (rollback)
-        run: |
-          for fixture in test-poll-contact-sources-353.sql test-contact-identity-entrypoints-353.sql test-subscriber-identity-cooldowns-353.sql test-independent-contact-grants-353.sql test-poll-closed-contact-source-353.sql; do
-            ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-              'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-              < "docs/sql/$fixture"
-          done
-
-      - name: Verify guest metadata identity and genuine conversion (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-guest-metadata-354.sql
-
-      - name: Verify derived friend proposal cascades and retained budgets (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-friend-proposal-sources-355.sql
-
-      - name: Verify base invitation sources and canonical identity (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-base-share-sources-357.sql
-
-      - name: Verify admin inbox technical sender isolation (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-admin-inbound-359.sql
-
-      - name: Verify Control identity and resource mail preferences (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-control-identity-358.sql
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-resource-mail-preference-358.sql
-
-      - name: Verify Go canonical recipient after address change (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-go-canonical-recipient-363.sql
-
-      - name: Verify atomic game import and private receipts (rollback)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-game-import-atomic-364.sql
-
-      - name: Audit legacy subscriber identities and expired task scopes (read-only)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/audit-subscriber-identity-352.sql
-
-      - name: Verify E14 legacy paths are removed and replacements remain (read-only)
-        run: |
-          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < docs/sql/test-e14-legacy-cleanup.sql
-
-      # 7️⃣ Fetch schema + logs (bez wywalania się)
-      - name: Fetch schema.sql + logs from server
-        run: |
-          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
-          mkdir -p supabase/migration_logs
-      
           rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/schema.sql" \
-            "supabase/schema.sql"
-      
+            supabase/schema.sql
           rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/latest.log" \
-            "supabase/migration_logs/latest.log"
-      
-      # 8️⃣ Keep only last 30 logs (jeśli istnieją)
-      - name: Keep only last 30 run logs
-        run: |
-          if [ -d "supabase/migration_logs" ]; then
-            cd supabase/migration_logs
-            ls -1t *.log 2>/dev/null | tail -n +31 | xargs -r rm -f
-            cd -
-          fi
+            supabase/migration_logs/latest.log
 
-      # 9️⃣ Commit tylko jeśli coś się zmieniło
-      - name: Commit schema.sql + logs
+      - name: Keep only the 30 latest migration logs
+        run: |
+          cd supabase/migration_logs
+          ls -1t *.log 2>/dev/null | tail -n +31 | xargs -r rm -f
+
+      - name: Commit schema and logs when changed
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-
-          git add supabase/schema.sql supabase/migration_logs || true
-
+          git add supabase/schema.sql supabase/migration_logs
           if git diff --cached --quiet; then
-            echo "No changes to commit."
+            echo "No schema or log changes to commit."
             exit 0
           fi
-
-          git commit -m "db: update schema + logs [skip ci]" || true
-          git pull --rebase --strategy-option=theirs || true
+          git commit -m "db: update schema + logs [skip ci]"
+          git pull --rebase --strategy-option=theirs
           git push

@@ -8,7 +8,7 @@ Repo Andrish97/familiada, branch `main`; stan po E14 i porządkowaniu repo.
 - E14 jest zamknięte: migracje 388–390 usunęły `subscriber_user_id` i stare RPC urządzeń, zachowały widoczność emailowych subskrypcji przypisanych do konta oraz odpowiedź `has_account` dla starych linków. `schema.sql` nie zawiera już starej kolumny, a read-only audyt E14 i kontrola usuniętych ścieżek przeszły.
 - Read-only audyt produkcji (workflow 39113771174 i 39113860983) znalazł 4 stare wiersze `subscriber_user_id`: 1 active, 2 pending, 1 declined; wszystkie bez emaila i `registered_user_id`, żaden bez powiązanych `poll_tasks`. Audyt przyczyn wykazał, że active oraz jeden pending to samo-zaproszenia pominięte przez migrację 320; drugi pending jest już przeniesiony do friendship z tym samym tokenem. Brak równoległych nowych subskrypcji email. Wiersze źródłowe można bezpiecznie usunąć, gdy migracja zastąpi odwołania do kolumny; zadania nie utracą źródła.
 - Workflow `db-migrate.yml` 39115618243 zakończył się sukcesem: smoke’y, read-only audyt E14, kontrola usuniętych ścieżek i synchronizacja `schema.sql`/logów przeszły. Auto-commit schematu to `f34e403c93`; drzewo jest czyste.
-- Użytkownik polecił usunąć nie-E2E workflowy testowe, zostawiając E2E. Wdrożenia, migracje bazy i osobny read-only resource-audit są workflowami operacyjnymi, więc pozostają.
+- Użytkownik doprecyzował listę workflowów: mają zostać deploye, `Apply DB migrations` i `E2E Tests`. `db-migrate.yml` został ograniczony do nakładania migracji oraz synchronizacji schematu/logów; usunięto z niego kontrole punktowe. Osobne recorder Control E2E i read-only `resource-audit` usunięto jako wyspecjalizowane workflowy.
 - Artefakty screenshotów bez odwołań w repo oraz prototypy SQL zastąpione wdrożonymi migracjami zostały usunięte. Zasoby i testy używane przez bieżące workflowy pozostają.
 
 Testy aplikacji, które użytkownik uznał za wadliwe, nie są blokadą dalszych prac. Szczegóły etapów i dziennik: `docs/wdrozenia.md`; plan modelu znajomych/subskrybentów: `docs/e19-znajomi-plan.md`.
@@ -1148,9 +1148,9 @@ aktualnych screenów; nie powtarzać Go/Control/pełnego362/SMTP.
 Nowy audit-resource-graph-e19.sql: 11 agregatowych kontroli w READ ONLY,
 bez ujawniania tożsamości/adresów/tokenów/głosów. Lokalne0; izolowany
 negative test wykrywa nieprawidłowy licznik i grant kolumny, potwierdza
-brak zapisu przez audyt. Nowe graph_only w resource-audit.yml uruchomi
-wyłącznie ten audyt zamiast ponawiać zamknięte guest354. Jeszcze bez
-wyniku produkcji. Później wspólna macierz rodzaj linku×stan×komunikat×akcje
+brak zapisu przez audyt. Audyt graph-only był wtedy uruchamiany osobnym,
+później usuniętym workflowem resource-audit. Jeszcze bez wyniku produkcji.
+Później wspólna macierz rodzaj linku×stan×komunikat×akcje
 w Go dla wszystkich rodzin, zgodnie z ostatnią odpowiedzią użytkownikowi.
 E19C/E19N/E14/E20/E13 dalej kolejka; manual ostatni.
 
