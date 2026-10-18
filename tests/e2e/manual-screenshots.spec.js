@@ -503,7 +503,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.locator("#gsFinalMinPts").dispatchEvent("change");
       await page.locator("#gsFinalTarget").fill("50");
       await page.locator("#gsFinalTarget").dispatchEvent("change");
-      await page.waitForTimeout(2_000);
+      await page.locator("#btnSaveAll").click();
+      await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30_000 });
 
       const devices = await createGameplayDevices(browser, page, games[0].id);
       gameplayDeviceContexts = devices.contexts;
