@@ -78,6 +78,16 @@ export function deviceGuardState(minWidth = MIN_WORK_WIDTH, { formFactors = null
   if (formFactors && !formFactors.includes(profile.formFactor)) return "unsupported";
   if (!allowPhoneLandscape && profile.formFactor === "phone" && profile.orientation === "landscape") return "rotate";
   if (requirePhoneLandscape && profile.formFactor === "phone" && profile.orientation === "portrait") return "rotate";
+  // W widoku dzielonym tabletu viewport może zajmować tylko górną lub boczną
+  // część ekranu. Taki obszar nie powinien być traktowany jak pełny tablet;
+  // telefon w landscape pozostaje osobną regułą powyżej.
+  if (profile.formFactor === "tablet") {
+    const shortSide = profile.screenShortSide;
+    const splitHeight = profile.viewportHeight < shortSide * 0.7;
+    const splitWidth = profile.orientation === "landscape"
+      && profile.viewportWidth < shortSide * 0.85;
+    if (splitHeight || splitWidth) return "narrow";
+  }
   if (profile.viewportWidth >= minWidth) return "ok";
   // Consider rotation only for a full-width portrait phone/tablet viewport.
   // A split-view tablet has a substantially reduced width; rotating its pane

@@ -175,7 +175,8 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       apply();
       return;
     }
-    if (!window.matchMedia("(max-width: 600px), (max-width: 980px) and (orientation: landscape)").matches) {
+    const searchFieldVisible = getComputedStyle(box).display !== "none" && box.getClientRects().length > 0;
+    if (searchFieldVisible) {
       input.focus();
       return;
     }
