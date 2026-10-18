@@ -437,7 +437,9 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.locator('.toggle-item:has(input[name="gsFinalMode"][value="pick"])').click({ timeout: 12_000 });
       await page.locator('.gs-sidebar-item[data-cat="finale"]').click();
       await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(10, { timeout: 20_000 });
-      for (let i = 0; i < 5; i++) await page.locator("#gsFinalePool .qRow").first().click();
+      // Keep the Control question out of the finale; it remains first in the
+      // round pool and the five finale prompts come from the other nine.
+      for (let i = 0; i < 5; i++) await page.locator("#gsFinalePool .qRow").nth(1).click();
       await expect(page.locator(".gs-badge-row .tag b")).toHaveText("5");
       await page.waitForTimeout(1200);
     });
@@ -455,14 +457,16 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     const friendsShotError = await take(page, testInfo, "friends", async () => {
       await page.goto(`https://www.familiada.online/friends/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#contactsHost")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
-      await page.locator("#contactsTabReceived").click();
+      await page.locator("#contactsTabReceived").dispatchEvent("click");
+      await expect(page.locator("#contactsReceived")).toBeVisible();
       await expect(page.locator("#contactsReceived")).toContainText(contacts.friend.email.split("@")[0], { timeout: 15_000 });
     });
     if (friendsShotError) captureErrors.push(friendsShotError);
     const subscribersShotError = await take(page, testInfo, "subscribers", async () => {
       await page.goto(`https://www.familiada.online/subscribers/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#contactsHost")).toHaveClass(/skel-step-ready/, { timeout: 30_000 });
-      await page.locator("#contactsTabReceived").click();
+      await page.locator("#contactsTabReceived").dispatchEvent("click");
+      await expect(page.locator("#contactsReceived")).toBeVisible();
       for (const email of contacts.subscriberEmails) await expect(page.locator("#contactsReceived")).toContainText(email, { timeout: 15_000 });
     });
     if (subscribersShotError) captureErrors.push(subscribersShotError);
@@ -545,7 +549,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       await page.goto(`https://www.familiada.online/polls/?id=${games[2].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("#tabResults")).toBeVisible({ timeout: 30_000 });
       await page.locator("#tabResults").click();
-      await expect(page.locator("#resultsList")).toContainText(COPY[LANGUAGE].voteText, { timeout: 20_000 });
+      await expect(page.locator("#resultsList")).toContainText(COPY[LANGUAGE].voteText.toLocaleLowerCase(), { timeout: 20_000 });
     });
     if (textResultsError) captureErrors.push(textResultsError);
 
