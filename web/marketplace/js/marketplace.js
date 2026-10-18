@@ -1,18 +1,18 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T07140";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T07140";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T07140";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T07140";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-18T07140";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T07140";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T07140";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T07140";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T07140";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T07140";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T07140";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T07140";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T07140";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T07202";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T07202";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T07202";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T07202";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-18T07202";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T07202";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T07202";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T07202";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T07202";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T07202";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T07202";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T07202";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T07202";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
