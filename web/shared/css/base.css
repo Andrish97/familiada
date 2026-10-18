@@ -2386,9 +2386,9 @@ body{
   font-weight: 900;
 }
 
-/* ===== Pole szukania — jedno dla menedżera bazy i list (gry, bazy, logo) =====
-   .searchBox > input.searchText + button.btn (✕ czyści). Szerokość
-   i dodatki (chipy w menedżerze bazy) ustawia strona. */
+/* ===== Pole szukania — menedżer bazy i list (gry, bazy, logo) =====
+   Pole ma osobny przycisk obok, który zmienia lupę na X i czyści tekst.
+   Szerokość i dodatki (chipy w Explorerze) ustawia strona. */
 .searchBox{
   display: flex;
   align-items: center;

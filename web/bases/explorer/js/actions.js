@@ -2509,7 +2509,6 @@ export function wireActions({ state }) {
 
   // Blokada fokusa w search, gdy mamy aktywne Tagi/Kategorie (FILTER)
   const searchInput = document.getElementById("searchText");
-  document.getElementById("searchSubmitBtn")?.addEventListener("click", () => searchInput?.focus());
   if (searchInput) {
     searchInput.addEventListener("mousedown", () => {
       if (!isSearchLockedByLeftSelection(state)) return;
@@ -2868,25 +2867,25 @@ export function wireActions({ state }) {
         return;
       }
 
-      // 1) Najpierw X (bo jest wewnątrz #searchBox)
-      if (t.id === "searchClearBtn") {
+      // Przycisk przy polu przełącza lupę na X; X czyści tekst i tagi,
+      // a lupa ustawia fokus w polu.
+      if (t.closest?.("#searchSubmitBtn")) {
         e.preventDefault?.();
         e.stopPropagation?.();
       
-        const alreadyEmpty =
-          !String(state.searchTokens?.text || "").trim() &&
-          !(Array.isArray(state.searchTokens?.tagIds) && state.searchTokens.tagIds.length) &&
-          !String(document.getElementById("searchText")?.value || "").trim();
+        const hasSearch = !!String(state.searchTokens?.text || "").trim()
+          || !!state.searchTokens?.tagIds?.length
+          || !!String(searchInput?.value || "").trim();
+        if (!hasSearch) {
+          searchInput?.focus();
+          return;
+        }
       
-        if (alreadyEmpty && state.view !== VIEW.SEARCH) return;
-      
-        const inp = document.getElementById("searchText");
-        if (inp) inp.value = "";
-      
+        if (searchInput) searchInput.value = "";
         state.searchTokens = { text: "", tagIds: [] };
         state.searchQuery = "";
       
-        if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
+        if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) restoreBrowseLocation(state);
         selectionClear(state);
         await refreshList(state);
       

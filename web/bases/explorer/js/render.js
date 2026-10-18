@@ -199,7 +199,6 @@ export function renderToolbar(state) {
       <div class="searchBox" id="searchBox">
         <div id="searchChips" class="searchChips"></div>
         <input id="searchText" class="searchText" placeholder="${t("baseExplorer.search.placeholder")}" />
-        <button id="searchClearBtn" class="btn" type="button" title="${t("baseExplorer.search.clear")}" aria-label="${t("baseExplorer.search.clear")}">${icon("close")}</button>
       </div>
       <button id="searchSubmitBtn" class="btn search-submit" type="button" title="${t("common.searchByName")}" aria-label="${t("common.searchByName")}">${icon("search")}</button>
       </div>
@@ -336,6 +335,15 @@ export function renderToolbar(state) {
     if (!active && inp.value !== nextVal) {
       inp.value = nextVal;
     }
+  }
+  const searchButton = document.getElementById("searchSubmitBtn");
+  const hasSearch = !!String(tokens.text || "").trim() || !!tokens.tagIds?.length;
+  if (searchButton) {
+    searchButton.innerHTML = icon(hasSearch ? "close" : "search");
+    const label = t(hasSearch ? "baseExplorer.search.clear" : "common.searchByName");
+    searchButton.title = label;
+    searchButton.setAttribute("aria-label", label);
+    searchButton.classList.toggle("is-active", hasSearch);
   }
 
   // 3) Disable przycisków toolbar – spójnie z actions/context-menu + reguły selekcji (0/1/wiele)

@@ -287,7 +287,9 @@ input,textarea {
 
 .searchBox {
   --under: #131723; /* podłoże dla kryjących teł przycisków (css/base.css) */
-    width: 300px;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
     flex-wrap: wrap;
 }
 
@@ -303,9 +305,10 @@ input,textarea {
     min-width: 140px;
 }
 
-.search-row{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0}
-.search-submit{ width:36px; height:36px; min-height:36px; flex:0 0 36px; display:grid; place-items:center; padding:0; }
-#searchClearBtn{ width:26px; height:26px; min-height:26px; flex:0 0 26px; display:grid; place-items:center; padding:0; border-radius:8px; }
+.search-row{display:flex;align-items:center;gap:6px;flex:0 1 240px;width:min(240px,100%);min-width:0}
+.search-submit{ width:36px; height:36px; min-height:36px; flex:0 0 36px; display:grid; place-items:center; padding:0; border-radius:10px; }
+.search-submit .ico{width:18px;height:18px}
+.search-submit.is-active{color:var(--gold);border-color:var(--gold);background:rgba(255,215,0,.12)}
 
 .chip,.tag-dots {
     display: inline-flex;

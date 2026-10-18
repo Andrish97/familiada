@@ -46,7 +46,8 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   const box = document.createElement("div");
   box.className = "searchBox";
   const input = document.createElement("input");
-  input.type = "search";
+  input.type = "text";
+  input.setAttribute("enterkeyhint", "search");
   input.className = "searchText";
   const mobileSearch = document.createElement("button");
   mobileSearch.type = "button";
