@@ -329,7 +329,7 @@ async function prepareDevicePreviewFixture(browser, language, device = "display"
     };
     await page.evaluate(row => document.getElementById("devicePreview").contentWindow.postMessage({ type: "familiada:preview-row", row }, location.origin), row);
     if (device === "display") await frame.waitForFunction(() => window.__manualDisplayDone === true, null, { timeout: 30_000 });
-    else await expect(frame.locator("#paperText2")).toContainText(COPY[language].gameplay[0], { timeout: 30_000 });
+    else await expect(frame.locator("#paperText1")).toContainText(COPY[language].gameplay[0], { timeout: 30_000 });
     return { context, page, frame };
   } catch (error) {
     await context.close();
@@ -392,7 +392,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         gameplayPreviewContexts.push(fixture.context);
         const previewError = await take(fixture.page, testInfo, `gameplay-${device}`, async () => {
           if (device === "display") await expect(fixture.frame.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
-          else await expect(fixture.frame.locator("#paperText2")).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 30_000 });
+          else await expect(fixture.frame.locator("#paperText1")).toContainText(COPY[LANGUAGE].gameplay[0], { timeout: 30_000 });
         });
         if (previewError) captureErrors.push(previewError);
       } catch (error) {
@@ -474,7 +474,11 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
 
     const logoDrawError = await take(page, testInfo, "logo-draw-editor", async () => {
       await page.locator("#tabLogoDraw").click();
-      await Logo.createNew(page, "Draw", logoNames[1]);
+      await page.locator("#grid .addCard").click();
+      await page.fill("#renameInput", logoNames[1]);
+      await page.locator("#btnRenameOk").click();
+      await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW", { timeout: 30_000 });
+      await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15_000 });
       await page.keyboard.press("p");
       const stage = await Logo.stage(page);
       for (const [x, y] of [[0.2, 0.25], [0.75, 0.25], [0.5, 0.75]]) await page.mouse.click(stage.x + stage.width * x, stage.y + stage.height * y);
