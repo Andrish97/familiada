@@ -533,13 +533,20 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
 
       await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
-      await page.getByRole("button", { name: /^(Dalej|Next|Далі)$/ }).click();
-      await expect(page.locator(".stepTitle")).toContainText(/Podsumowanie|Summary|Підсумок/, { timeout: 30_000 });
-      // The Control setup wizard issues its own device links while building
-      // the summary. Create/open the linked devices only after that step, so
-      // their runtime keys are the current ones when gameplay starts.
+      // Let Control create its runtime session first, then open its linked
+      // devices. The live Display may ask for a click to enable its audio;
+      // completing that prompt is part of the normal setup flow.
       const devices = await createGameplayDevices(browser, page, games[0].id);
       gameplayDeviceContexts = devices.contexts;
+      const audioUnlock = devices.pages.display.locator("#btnAudioUnlock");
+      if (await audioUnlock.isVisible().catch(() => false)) {
+        await audioUnlock.click();
+        await expect(audioUnlock).toBeHidden({ timeout: 15_000 });
+      }
+      const nextSetup = page.getByRole("button", { name: /^(Dalej|Next|Далі)$/ });
+      await expect(nextSetup).toBeEnabled({ timeout: 30_000 });
+      await nextSetup.click();
+      await expect(page.locator(".stepTitle")).toContainText(/Podsumowanie|Summary|Підсумок/, { timeout: 30_000 });
       const ready = page.getByRole("button", { name: /^(Gotowe — przejdź do rozgrywki|Done — start the game|Готово — почати гру)$/ });
       await expect(ready).toBeEnabled({ timeout: 20_000 });
       await ready.click();
