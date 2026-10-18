@@ -217,7 +217,7 @@
   .pollSec{ padding: 12px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 14px; }
 }
 .pollSecHead{ display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-/* Link: pole z ikoną kopiowania w środku, pod nim Otwórz · QR na wyświetlaczu */
+/* Link ankiety jest dostępny akcjami, bez wyświetlania długiego adresu. */
 .pollLinkPlaceholder{
   margin-top: 10px;
   padding: 14px 10px;
@@ -227,36 +227,14 @@
   font-size: 13px;
   opacity: .75;
 }
-.linkField{ position: relative; margin-top: 10px; }
-.pollLinkInp{
-  width: 100%;
-  box-sizing: border-box;
-  padding-right: 46px;
-  font-weight: 900;
-  font-size: 13px;
-  letter-spacing: .02em;
-  text-overflow: ellipsis;
-}
-.linkCopyBtn{
-  position: absolute;
-  right: 6px;
-  top: 0;
-  bottom: 0;
-  margin: auto 0;
-  height: 30px;
-  width: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
 .pollLinkActions{
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
 }
-/* szersza kolumna dla dłuższej etykiety; w ostateczności tekst się zawija, nigdy nie jest obcinany */
-.pollLinkActions .btn{ white-space: normal; width: 100%; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+/* Przyciski układają się w jednym rzędzie, a na wąskim ekranie mogą zejść niżej. */
+.pollLinkActions .btn{ white-space: normal; flex: 1 1 105px; min-width: 0; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .pollLinkActions .btn .ico{ flex: 0 0 auto; width: 16px; height: 16px; }
 
 /* QR: na jasnym kafelku (strefa ciszy) w spokojnej, obramowanej „scenie”

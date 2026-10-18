@@ -5,6 +5,17 @@ pierwszy do wdrożenia. Ten plik jest źródłem prawdy dla tego etapu.
 
 ---
 
+## Decyzje — szybkie udostępnianie i ikony akcji (2026-10-18)
+
+W modalach Ankiet, Baz i Control listy odbiorców mają kompaktowe akcje
+„Zaznacz wszystkich” i „Odznacz wszystkich” w nagłówku listy. Akcje dotyczą
+wyłącznie dostępnych osób, chowają się przy pustej liście i na telefonie mają
+krótsze etykiety. W anonimowej sekcji ankiety adres głosowania nie jest
+wyświetlany; dostępne są trzy przyciski Kopiuj link, Otwórz i QR na
+wyświetlaczu. W Control akcje parowania/kodów mają ikony zgodne z funkcją;
+strzałka Dalej jest po prawej stronie tekstu, Wstecz po lewej, a zmiana
+ustawień używa ikony zębatki.
+
 ## Decyzje — Powiel na stronach zasobów (2026-10-13)
 
 Gry, Bazy i Logo otrzymują wspólną akcję Powiel z ikoną duplikowania,

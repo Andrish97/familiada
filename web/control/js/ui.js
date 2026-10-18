@@ -40,6 +40,18 @@ function h(tag, attrs = {}, children = []) {
   return el;
 }
 
+function iconNode(name) {
+  const template = document.createElement("template");
+  template.innerHTML = icon(name);
+  return template.content.firstElementChild;
+}
+
+function iconLabel(iconName, label, { after = false } = {}) {
+  const mark = iconNode(iconName);
+  const text = document.createTextNode(label);
+  return after ? [text, mark].filter(Boolean) : [mark, text].filter(Boolean);
+}
+
 export function createUI({ root, emit }) {
   function clear() { root.innerHTML = ""; }
   function setTopbarProgress(label) {
@@ -185,22 +197,22 @@ export function createUI({ root, emit }) {
       const code = connectCodes[kind];
       const row2 = [
         h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
-        h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, [document.createTextNode(t("common.copy"))]),
+        h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, iconLabel("copy", t("common.copy"))),
       ];
       if (withQr) {
         const shown = !!state.display.qr[kind].show;
-        row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, [document.createTextNode(t("control.qrCodeBtn"))]));
+        row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, iconLabel("qr-code", t("control.qrCodeBtn"))));
         row2.push(h("button", {
           class: `btn ${shown ? "primary" : ""}`, type: "button",
           onclick: () => emit(kind === "host" ? "qr.host.toggle" : "qr.buzzer.toggle"),
-        }, [document.createTextNode(shown ? t("control.qrHide") : t("control.qrOnDisplayToggle"))]));
+        }, iconLabel(shown ? "eye-off" : "qr-code", shown ? t("control.qrHide") : t("control.qrOnDisplayToggle"))));
       } else {
         // "Otwórz" ma sens WYŁĄCZNIE dla Wyświetlacza — Prowadzący/Przycisk
         // otwiera się na CUDZYM urządzeniu (tablet/telefon), nie w karcie
         // operatora, więc stare Control (control.html) nigdy nie dawało im
         // tego przycisku (patrz device-row markup: btnOpenDisplay istnieje,
         // analogów dla host/buzzer nie ma).
-        row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, [document.createTextNode(t("common.open"))]));
+        row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, iconLabel("display", t("common.open"))));
       }
       // Licznik udostępnień — ten sam .badge co w topbarach (base.css).
       const shared = Number(shareBadges[kind]) || 0;
@@ -208,7 +220,7 @@ export function createUI({ root, emit }) {
         class: "btn", type: "button",
         onclick: () => emit("devices.shareOpen", kind),
       }, [
-        document.createTextNode(`${t("control.shareDevice")} `),
+        ...iconLabel("people", t("control.shareDevice")),
         h("span", { class: "badge", "aria-hidden": "true", text: shared > 99 ? "99+" : (shared > 0 ? String(shared) : "") }),
       ]));
       return h("div", { class: "device-row", "data-device": kind }, [
@@ -651,16 +663,17 @@ export function createUI({ root, emit }) {
     // (disabled, bez pulsowania), boardBusy() to realne oczekiwanie na sieć
     // (busy, pulsuje).
     const start = navButton(t("control.setupDoneBtn"), {
+      iconName: "arrow-right", iconAfter: true,
       disabled: finalIncomplete || displaySoundNeedsUnlock,
       busy: boardBusy(),
       onclick: () => { stopSummarySoundPreview(); emit("setup.start"); },
     });
-    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => { stopSummarySoundPreview(); emit("setup.openSettings"); } }, [document.createTextNode(t("control.summarySettingsLink"))]);
+    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => { stopSummarySoundPreview(); emit("setup.openSettings"); } }, iconLabel("settings", t("control.summarySettingsLink")));
     // "Wstecz" (jak stare control.html's btnSetupFinishBack) — swobodny
     // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
     // lewej krawędzi stopki (patrz control2.html: .stepFootButtons ma
     // justify-content:flex-end, ten jeden dostaje margin-right:auto).
-    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: boardBusy() ? undefined : () => { stopSummarySoundPreview(); emit("setup.back"); } }, [document.createTextNode(t("common.back"))]);
+    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: boardBusy() ? undefined : () => { stopSummarySoundPreview(); emit("setup.back"); } }, iconLabel("arrow-left", t("common.back")));
 
     // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
@@ -775,9 +788,13 @@ export function createUI({ root, emit }) {
   // odliczania gracza), nie tylko podczas realnego oczekiwania na sieć/
   // dźwięk. Rozdzielenie na dwa parametry naprawia to raz, w jednym miejscu,
   // zamiast w każdym z 11 wywołań osobno.
-  function navButton(label, { shortcut = "n", cls = "c2-btn primary c2-intro-btn", onclick, disabled = false, busy = false } = {}) {
+  function navButton(label, { shortcut = "n", cls = "c2-btn primary c2-intro-btn", onclick, disabled = false, busy = false, iconName = null, iconAfter = false } = {}) {
     const isDisabled = disabled || busy;
-    const el = h("button", { class: cls, type: "button", onclick: isDisabled ? undefined : onclick }, [document.createTextNode(label)]);
+    const isNext = label === t("common.next");
+    const children = iconName
+      ? iconLabel(iconName, label, { after: iconAfter })
+      : isNext ? iconLabel("arrow-right", label, { after: true }) : [document.createTextNode(label)];
+    const el = h("button", { class: cls, type: "button", onclick: isDisabled ? undefined : onclick }, children);
     if (isDisabled) el.disabled = true;
     if (/^f_p[12]_entry$/.test(currentState?.step || "") && shortcut === "n") el.dataset.entryNext = "true";
     return bindShortcut(el, shortcut, onclick);

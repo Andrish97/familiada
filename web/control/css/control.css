@@ -2045,6 +2045,10 @@
 
 .device-row-2 .btn {
   font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .device-name {

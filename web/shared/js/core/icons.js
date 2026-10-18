@@ -85,6 +85,7 @@ export const ICONS = Object.freeze({
   buzzer: "/assets/icons/devices/buzzer.svg?v=v2026-10-18T12314",
   display: "/assets/icons/devices/display.svg?v=v2026-10-18T12314",
   phone: "/assets/icons/devices/phone.svg?v=v2026-10-18T12314",
+  "qr-code": "/assets/icons/devices/qr-code.svg?v=v2026-10-18T12314",
 
   // Multimedia i oceny
   "speaker-on": "/assets/icons/media/speaker-on.svg?v=v2026-10-18T12314",

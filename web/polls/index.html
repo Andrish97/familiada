@@ -127,13 +127,11 @@
                     <button class="qrBox img" id="qr" type="button" data-i18n-aria-label="polls.share.enlargeQr" data-i18n-title="polls.share.enlargeQr" aria-label="Powiększ kod QR" title="Powiększ kod QR"></button>
                     <div class="pollQrHint" data-i18n="polls.share.scanHint">Zeskanuj telefonem, żeby zagłosować</div>
                   </div>
-                  <div class="linkField">
-                    <input class="inp pollLinkInp" id="pollLink" readonly />
-                    <button class="btn xs linkCopyBtn" id="btnCopy" type="button" disabled data-i18n-aria-label="polls.share.copyLink" data-i18n-title="polls.share.copyLink" aria-label="Kopiuj link" title="Kopiuj link"><i class="ico" data-icon="copy"></i></button>
-                  </div>
+                  <input id="pollLink" type="hidden" />
                   <div class="pollLinkActions">
+                    <button class="btn sm" id="btnCopy" type="button" disabled data-i18n="polls.share.copyLink" data-i18n-icon="copy">Kopiuj link</button>
                     <button class="btn sm" id="btnOpen" type="button" disabled><i class="ico" data-icon="eye"></i><span data-i18n="polls.actions.openShort">Otwórz</span></button>
-                    <button class="btn sm" id="btnOpenQr" type="button" disabled><i class="ico" data-icon="display"></i><span data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</span></button>
+                    <button class="btn sm" id="btnOpenQr" type="button" disabled><i class="ico" data-icon="qr-code"></i><span data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</span></button>
                   </div>
                 </div>
               </section>
