@@ -4,7 +4,9 @@
 // Generuje sześć diagramów (mermaid) z PAGES (web/shared/js/core/nav-map.js)
 // i wstawia je do docs/nawigacja-mapa-plan.md między znaczniki
 // <!-- nav-maps:start --> i <!-- nav-maps:end -->. Mapy A1–C2 (sekcja 3
-// dokumentu): rola (niezalogowany / gość / konto) × urządzenie (komputer / telefon).
+// dokumentu): rola (niezalogowany / gość / konto) × przykładowa szerokość
+// (komputer 1280 px / telefon 390 px). Ukrywanie wynika z progu strony,
+// a nie z samej etykiety urządzenia.
 // Mapy nie są pisane ręcznie — te same dane (buttons, parent, access, device)
 // czyta initPage() i test e2e.
 //
@@ -31,19 +33,18 @@ export const MAPS = [
   { id: "C2", role: "user",  phone: true,  title: "Konto, telefon" },
 ];
 
-const restricted = (p) => p.device === "wide" || p.device === "noPhone";
-
 /** Strony i przejścia mapy: węzły dla roli i urządzenia, strzałki z przycisków i ↩. */
 export function mapGraph({ role, phone }) {
+  const viewportWidth = phone ? 390 : 1280;
   const nodes = Object.keys(PAGES)
     .filter((id) => pageRoles(id).includes(role))
-    .filter((id) => !(phone && restricted(PAGES[id])));
+    .filter((id) => !PAGES[id].minViewportWidth || viewportWidth >= PAGES[id].minViewportWidth);
   const set = new Set(nodes);
   const buttons = [];
   const blocked = [];
   for (const id of nodes) {
     for (const [bid, spec] of Object.entries(PAGES[id].buttons || {})) {
-      if (set.has(spec.to) && buttonVisible(id, spec, role, phone)) {
+      if (set.has(spec.to) && buttonVisible(id, spec, role, { viewportWidth, formFactor: phone ? "phone" : "desktop" })) {
         const entry = { from: id, to: spec.to, label: spec.custom ? `${bid}*` : bid };
         if (buttonBlocked(spec)) blocked.push({ ...entry, dependency: spec.blockedUntil });
         else buttons.push(entry);

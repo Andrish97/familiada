@@ -26,6 +26,8 @@ INSERT INTO game_sessions(game_id,status,team_a_score) VALUES
 \ir ../../supabase/migrations/2026-10-06_300_control2_sessions.sql
 \ir ../../supabase/migrations/2026-10-06_301_control2_session_event_serialization.sql
 \ir ../../supabase/migrations/2026-10-12_356_control2_incident_diagnostics.sql
+\ir ../../supabase/migrations/2026-10-16_381_control2_sync_diagnostics.sql
+\ir ../../supabase/migrations/2026-10-17_383_preserve_realtime_start_diagnostics.sql
 
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
@@ -74,6 +76,23 @@ UPDATE game_state SET rev=17,detail=jsonb_set(jsonb_set(detail,'{rounds,totals,A
 SELECT pg_temp.assert_true((SELECT rounds_score_a=300 AND team_a_score=510 AND final_points=210 AND stats_detail->>'prize'='26530' AND stats_detail->>'end_reason'='final_target' FROM game_sessions WHERE start_rev=14),'split final scores and prize');
 SELECT control2_session_ping('00000000-0000-0000-0000-000000000001','{"kind":"diagnostic","category":"connectivity","message":"Incydent domknięty przy końcu gry","devices":["display"],"metrics":{"blocked_duration_ms":900}}');
 SELECT pg_temp.assert_true((SELECT stats_detail#>>'{events,0,message}'='Incydent domknięty przy końcu gry' FROM game_sessions WHERE start_rev=14),'final incident can be flushed after game end');
+SELECT control2_session_ping('00000000-0000-0000-0000-000000000001','{"kind":"diagnostic","category":"state_sync","message":"ACK Displaya","devices":["display"],"metrics":{"phase":"acknowledged","revision":16,"ack_source":"fallback_read","latency_ms":3200}}');
+SELECT control2_session_ping('00000000-0000-0000-0000-000000000001','{"kind":"diagnostic","category":"realtime","message":"Realtime odłączony","devices":["control","display"],"metrics":{"channel":"display_completion","state":"disconnected","fallback":true}}');
+SELECT pg_temp.assert_true((SELECT stats_detail#>>'{events,1,category}'='state_sync' AND stats_detail#>>'{events,1,metrics,ack_source}'='fallback_read' AND stats_detail#>>'{events,2,category}'='realtime' FROM game_sessions WHERE start_rev=14),'correlated state sync and realtime diagnostics persist after end');
+DO $$ DECLARE i integer; BEGIN
+  PERFORM control2_session_ping('00000000-0000-0000-0000-000000000001',
+    '{"kind":"diagnostic","category":"realtime","message":"ACK kanału na starcie","metrics":{"phase":"game_start","channel":"display_completion","state":"connected"}}');
+  PERFORM control2_session_ping('00000000-0000-0000-0000-000000000001',
+    '{"kind":"diagnostic","category":"realtime","message":"Broadcast kanału na starcie","metrics":{"phase":"game_start","channel":"display_transition_started","state":"connected"}}');
+  FOR i IN 1..120 LOOP
+    PERFORM control2_session_ping('00000000-0000-0000-0000-000000000001',
+      jsonb_build_object('kind','diagnostic','category','state_sync','message','późna zmiana stanu',
+        'metrics',jsonb_build_object('phase','requested','revision',i)));
+  END LOOP;
+END $$;
+SELECT pg_temp.assert_true((SELECT jsonb_array_length(stats_detail->'events')=100 FROM game_sessions WHERE start_rev=14),'diagnostic event history remains bounded');
+SELECT pg_temp.assert_true((SELECT count(*)=2 FROM game_sessions s, jsonb_array_elements(s.stats_detail->'events') e WHERE s.start_rev=14 AND e->>'category'='realtime' AND e#>>'{metrics,phase}'='game_start'),'both initial realtime channel snapshots survive event retention');
+SELECT pg_temp.assert_true((SELECT stats_detail#>>'{events,99,metrics,revision}'='120' FROM game_sessions WHERE start_rev=14),'newest diagnostics remain in the bounded history');
 SELECT set_config('test.user_id','00000000-0000-0000-0000-000000000003',false);
 DO $$ BEGIN
   BEGIN PERFORM control2_session_ping('00000000-0000-0000-0000-000000000001');

@@ -6,7 +6,7 @@ test.use({serviceWorkers:'block'});test.describe.configure({retries:0});
 
 async function newUserContext(browser,username){
  const ctx=await browser.newContext({serviceWorkers:'block'});
- if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(ctx,{pages:['games','logo','go']});
+ if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(ctx,{pages:['games','logos','go']});
  const page=await ctx.newPage();await loginAsTestUser(page,ctx,{username});return {ctx,page};
 }
 async function getUser(page){return page.evaluate(async()=>{const {data,error}=await window.__sbClient.auth.getUser();if(error)throw error;return data.user;});}
@@ -22,7 +22,7 @@ async function sendFromUi(page,path,selector,name,recipientId,{testInfo,captureS
 }
 test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',async({page,context,browser},testInfo)=>{
  test.setTimeout(240000);const name=`E2E-SEND-${Date.now()}`;let recipientContext,recipientPage,recipientId,senderId,previousFlag;const sourceGames=[],sourceLogos=[],receivedGames=[],receivedLogos=[];
- if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','logo','go']});
+ if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','logos','go']});
  await loginAsTestUser(page,context,{username:testAccountUsername(1)});senderId=(await getUser(page)).id;
  try{
   ({ctx:recipientContext,page:recipientPage}=await newUserContext(browser,testAccountUsername(2)));const recipient=await getUser(recipientPage);recipientId=recipient.id;
@@ -47,7 +47,7 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
   const logoSend=await sendFromUi(page,'logo','.logoTile',logo.name,recipientId);expect(logoSend.ok).toBeTruthy();
   const logoMail=await waitForEmail({recipient:testAccountUsername(2),after:new Date(Date.parse(gameMail.received_at)+1).toISOString(),subject:/kopię|copy/i,timeout:120000});
   expect(extractHttpLinks(logoMail).some(value=>new URL(value).searchParams.has('c'))).toBeTruthy();
-  await recipientPage.goto('https://www.familiada.online/logo/');await expect(recipientPage.locator('#receivedCopies')).toContainText(logo.name,{timeout:20000});
+  await recipientPage.goto('https://www.familiada.online/logos/');await expect(recipientPage.locator('#receivedCopies')).toContainText(logo.name,{timeout:20000});
   const logoRow=recipientPage.locator('#receivedCopies .resource-copy-inbox-row').filter({hasText:logo.name});
   await logoRow.locator('button').filter({hasText:/akceptuj|accept/i}).click();
   await expect(recipientPage.locator('#receivedCopies')).toBeHidden({timeout:20000});

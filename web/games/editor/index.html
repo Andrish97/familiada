@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,33 +14,23 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="editor.title">Familiada — edytor gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/games/editor/css/editor.css?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/games/editor/css/editor.css?v=v2026-10-18T17375"/>
 
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('/login/');
-    } catch(_e) {}
-  </script>
+  <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/games/editor/js/editor.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/games/editor/js/editor.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="editor-body editor skel-body topbar-title-mobile">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <div class="topbar-title"><div class="title" data-i18n="editor.pageTitlePrefix">Edytor gry</div><div class="subtitle" id="pageTitle"></div></div>
@@ -50,7 +40,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -78,7 +68,7 @@
           <div class="hint">
             <span data-i18n="editor.importHint">Import działa z pliku TXT albo z wklejonej treści.</span>
           </div>
-          <button class="btn" id="btnImportTxt" type="button" data-i18n="editor.importBtn">Importuj</button>
+          <button class="btn" id="btnImportTxt" type="button" data-i18n="editor.importBtn" data-i18n-icon="upload">Importuj</button>
         </div>
       </aside>
 
@@ -115,14 +105,9 @@
       <div id="msg" class="msg"></div>
     </div>
 
-    <div class="footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
-  </main>
 
   <!-- Modal: import TXT -->
-  <div class="overlay" id="txtImportOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="txtImportOverlay" style="display:none;">
     <div class="modal">
       <div class="mHead">
         <div class="mTitle" data-i18n="editor.importModal.title">Import pytań</div>
@@ -137,9 +122,10 @@
         </span>
       </div>
 
-      <div class="importRow" style="margin-top:12px;">
-        <input id="txtFile" class="inp" type="file" accept=".txt,text/plain">
-        <button class="btn sm" id="btnTxtLoadFile" type="button" data-i18n="editor.importModal.loadFile">Wczytaj plik</button>
+      <div class="importRow import-file-picker" style="margin-top:12px;">
+        <input id="txtFile" type="file" accept=".txt,text/plain" hidden>
+        <button class="btn sm" id="btnTxtLoadFile" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
+        <span class="import-file-name" id="txtFileName" aria-live="polite">Nie wybrano pliku</span>
       </div>
 
       <textarea id="txtTa" class="importTa" spellcheck="false" placeholder="@Moja gra
@@ -153,6 +139,11 @@
 2 Odpowiedź 2
 3 Odpowiedź 3" data-i18n-placeholder="editor.importModal.placeholder"></textarea>
 
+      <section class="txt-preview" id="txtPreview" aria-live="polite" aria-label="Podgląd importu" data-i18n-aria-label="editor.importModal.previewLabel">
+        <div class="txt-preview-title" data-i18n="editor.importModal.previewTitle">Podgląd na żywo</div>
+        <div id="txtPreviewBody" class="txt-preview-body" data-i18n="editor.importModal.previewEmpty">Wpisz pytania, aby zobaczyć podgląd.</div>
+      </section>
+
       <div class="mSub" style="margin-top:10px;">
         <span data-i18n="editor.importModal.formatHint">
           Działa też format bez numerów (po prostu linie z odpowiedziami).
@@ -162,11 +153,18 @@
       </div>
 
       <div class="importRow modal-actions">
-        <button class="btn sm gold" id="btnTxtImport" type="button" data-i18n="editor.importModal.confirm">Importuj</button>
+        <button class="btn sm" id="btnTxtCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+        <button class="btn sm gold" id="btnTxtImport" type="button" data-i18n="editor.importModal.confirm" data-i18n-icon="upload">Importuj</button>
         <div class="importMsg" id="txtMsg"></div>
       </div>
     </div>
   </div>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

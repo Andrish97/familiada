@@ -1,15 +1,15 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-18T17330";
-import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-18T17330";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-18T17330";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T17330";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-18T17375";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-18T17375";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-18T17375";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T17375";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
 
 
 
@@ -871,9 +871,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
-  await loadProfile(await userP).finally(() => {
-    document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
-  });
+  try {
+    await loadProfile(await userP);
+  } catch (error) {
+    console.error("[account] initial profile load failed:", error);
+    setErr(niceAuthError(error));
+  }
 
   saveUsername?.addEventListener("click", handleUsernameSave);
   saveEmail?.addEventListener("click", handleEmailSave);
@@ -916,4 +919,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.preventDefault();
     deleteAccount?.click();
   });
+
+  // Odsłoń konto dopiero po danych i po podpięciu wszystkich akcji formularzy.
+  document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
 });

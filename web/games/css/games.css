@@ -38,6 +38,7 @@ body.games-body{
 
 /* main.wrap musi być flex-kolumną, żeby bar + shell weszły w viewport */
 body.games-body > main.wrap{
+  width: 100%;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -45,58 +46,56 @@ body.games-body > main.wrap{
   overflow: hidden;               /* 🔑 scroll tylko w środku karty */
 }
 
-/* Mobile landscape: allow full-page scroll and let cards stretch (prevents "trapped" UI) */
-@media (max-width: 980px) and (orientation: landscape){
-  body.games-body{
-    height: auto;
-    min-height: 100dvh;
-    overflow: auto;
-  }
-
-  body.games-body > main.wrap{
-    overflow: visible;
-  }
-
-  .games-card,
-  .games-shell,
-  .grid{
-    max-height: none !important;
-  }
-}
-
 /* W games.css masz własną .wrap – przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
 .wrap{
   margin: 0 auto;
-  padding: 4px 18px 18px;
+  padding: 20px 18px 18px;
   box-sizing: border-box;
 }
 
 
 @media (max-width: 980px){
   .wrap{
-    padding: 15px;
+    padding: 20px 15px 15px;
+  }
+  .bar{ gap: 8px; }
+  .bar > .actions{ gap: 4px; flex-wrap: wrap; }
+}
+@media (max-width: 600px){
+  .bar > .actions{ align-content: start; }
+  .bar .btn{ min-width: 38px; min-height: 38px; padding: 9px; }
+  .bar .action-label{
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
   }
 }
 
 /* --- BAR (nagłówek listy) nie może rozpychać wysokości --- */
 .bar{
   flex: 0 0 auto;
-
   display: flex;
-  align-items: flex-end;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 16px;
-
+  align-items: flex-start;
+  gap: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line2);
   margin-bottom: 0;
 }
 
-@media (max-width: 980px) and (orientation: portrait){
-  .bar{
-    display: block;
-  }
+.bar > :first-child{ flex: 1 1 0; min-width: 0; text-align: left; }
+.bar > .actions{
+  flex: 0 0 auto; min-width: 0; max-width: 100%;
+  justify-content: flex-end; margin: 0; overflow: visible; flex-wrap: nowrap;
 }
+.bar > .actions > *{flex:0 0 auto}
+.bar.has-actions-below > :first-child{ flex: 1 1 100%; }
+.bar.has-actions-below > .actions{ flex: 1 1 100%; justify-content: flex-start; }
+.bar .title{ overflow-wrap: break-word; hyphens: auto; text-wrap: pretty; }
+.bar .hint{ overflow-wrap: normal; hyphens: auto; text-wrap: pretty; }
+.bar .hint .list-hint-phrase{ display: inline-block; max-width: 100%; white-space: normal; vertical-align: top; }
+.bar .btn{ display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.bar .btn .ico{ width: 17px; height: 17px; flex: 0 0 auto; }
 
 .title{
   font-size: 18px;
@@ -200,9 +199,14 @@ body.games-body > main.wrap{
   pointer-events: none;
 }
 
+/* Licznik nie może po pojawieniu się zmieniać szerokości wypustki. */
+#tabs-root .tab-slot[data-copy-kind][data-copy-count]:not([data-copy-count=""]) :is(.tab-label,.tab-active){ padding-right:32px; }
+
+#tabs-root .tab-slot,
 .tab-slot{
-  width: var(--tab-width);
-  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  flex: 1 1 max-content;
   align-items: stretch;
 }
 
@@ -461,15 +465,17 @@ body.games-body > main.wrap{
   border-top: 1px solid rgba(255,255,255,.12);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 8px 10px;
-  flex-wrap: wrap; /* cały blok przycisków spada pod wyszukiwanie dopiero, gdy się nie mieści */
+  flex-wrap: nowrap; /* sekcje zostają obok siebie; zawijają się ich przyciski */
 }
 
 .games-bottom-left{
-  flex: 1 1 0;
-  min-width: 300px; /* filtr + wyszukiwanie w jednym rzędzie; węziej: zawija się w środku */
+  flex: 0 1 auto;
+  min-width: 0;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 8px;
   align-items: center;
 }
@@ -480,9 +486,18 @@ body.games-body > main.wrap{
   justify-content: flex-end;
   gap: 8px;
   flex: 0 1 auto;
-  margin-left: auto;
+  min-width: 0;
+  margin-left: 0;
 }
-.games-bottom-right .btn{ white-space: nowrap; }
+.games-bottom-right .btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  white-space:nowrap;
+}
+.games-bottom:has(.games-bottom-left):has(.games-bottom-right){justify-content:space-between}
+.games-bottom .only-desktop{ display: inline !important; }
 
 /* =========================================================
    MODALS (jak było)
@@ -565,85 +580,23 @@ body.games-body > main.wrap{
 }
 
 /* =========================================================
-   ACCOUNT DROPDOWN
-========================================================= */
-.account-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.account-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 900;
-  white-space: nowrap;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.account-btn #who {
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: inline-block;
-}
-
-.account-chevron {
-  font-size: 11px;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
-.account-menu {
-  position: fixed;
-  z-index: 1000;
-  display: grid;
-  gap: 4px;
-  padding: 8px;
-  min-width: 180px;
-  background: #111827; /* kryjące (--card jest półprzezroczyste) */
-  --under: #111827;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
-}
-
-.account-menu[hidden] {
-  display: none;
-}
-
-.account-menu-item {
-  display: block;
-  width: 100%;
-  padding: 10px 14px;
-  text-align: left;
-  background: transparent;
-  border: 0;
-  border-radius: 10px;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: background 0.12s;
-}
-
-.account-menu-item:hover {
-  background: #292f3d;
-}
-
-/* =========================================================
    OVERFLOW NAV (nav-more)
 ========================================================= */
 .nav-more {
   position: relative;
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
+}
+
+/* Licznik nie może zawijać się pod etykietę, gdy pasek robi się ciasny. */
+.nav-more > #btnMore {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .nav-more-dropdown {
@@ -690,8 +643,7 @@ body.games-body > main.wrap{
   }
 
   .tabs-strip{
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
     gap: 0;
   }
 
@@ -700,8 +652,8 @@ body.games-body > main.wrap{
   .tabs-strip .only-mobile  { display: inline !important; }
 
   .tab-slot{
-    width: 100%;
-    flex: none;
+    width: auto;
+    flex: 1 1 max-content;
     justify-content: center;
   }
 
@@ -846,8 +798,16 @@ body.games-body > main.wrap{
   flex: 1 1 140px;
   min-width: 140px;
   max-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.list-search .btn{ padding: 2px 6px; min-height: 0; }
+.list-search .searchBox{width:auto;flex:1 1 auto;min-width:0;height:36px;box-sizing:border-box;padding:0 5px 0 10px;margin:0}
+.list-search .searchText{height:100%;padding:0 4px}
+.list-search .btn{ padding: 0; min-height: 36px; }
+.list-search-open{ display: inline-flex; align-items:center; justify-content:center; width: 36px; height: 36px; min-height: 36px !important; flex: 0 0 36px; border-radius: 10px; }
+.list-search-open .ico{width:18px;height:18px}
+.list-search-open.is-active{ color: var(--gold); border-color: var(--gold); background: rgba(255,215,0,.12); }
 @media (max-width: 600px){
   .list-search{ width: auto; flex: 1 1 auto; max-width: none; }
   .list-search .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
@@ -857,16 +817,96 @@ body.games-body > main.wrap{
 .games-bottom-left{ flex-wrap: wrap; }
 .list-filter.ui-select, .list-sort.ui-select{ min-width: 150px; width: 150px; flex: 0 0 auto; }
 .list-filter .ui-select-btn, .list-sort .ui-select-btn{ min-height: 0; }
+.list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{
+  border-color: var(--gold); background: rgba(255, 215, 0, .12);
+}
 @media (max-width: 600px){
-  .list-filter.ui-select, .list-sort.ui-select{ flex: 1 1 0; width: auto; min-width: 0; }
-  .games-bottom-left .list-search{ flex: 1 1 100%; width: 100%; max-width: none; order: 3; }
+  .games-bottom-left{ flex: 0 1 auto; min-width: 0; gap: 4px; }
+  .games-bottom-left > #btnReceivedFilter{ width: 36px; height: 36px; padding: 0; display: inline-flex; align-items:center; justify-content:center; }
+  .games-bottom-left > #btnReceivedFilter[aria-pressed="true"]{ color: var(--gold); border-color: var(--gold); background: rgba(255, 215, 0, .12); }
+  .list-filter.is-active .ui-select-btn, .list-sort.is-active .ui-select-btn{ color: var(--gold); }
+  .list-filter .ui-select-menu, .list-sort .ui-select-menu{ max-height: min(55dvh, 420px); }
+  .list-filter .ui-select-item, .list-sort .ui-select-item{ min-height: 44px; }
+  .games-bottom-right{ flex: 0 1 auto; min-width: 0; gap: 4px; }
+  .games-bottom-left > #btnReceivedFilter .ico{ width: 18px; height: 18px; }
+  .games-bottom-left .list-search{ flex: 0 0 auto; width: auto; max-width: none; order: 3; padding: 0; border: 0; background: transparent; }
+  .list-search .searchBox{ display:none; }
+  .list-search .list-search-open{ display: inline-flex; width: 36px; height: 36px; padding: 0; border-radius: 10px; }
 }
 .list-empty{
-  opacity: .55;
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 18px;
+  background: #070b16;
+  opacity: .76;
   text-align: center;
-  padding: 16px 0;
+  cursor: default;
 }
+.logoGridBig > .list-empty{ min-height: 230px; border-radius: var(--radius-lg); }
 .list-empty[hidden]{ display: none; }
+
+/* Układ wspólny dla Gier, Baz i Logo. Najpierw pełny pojedynczy rząd; klasy
+   włącza pomiar naturalnej szerokości z list-header-layout.js dopiero wtedy,
+   gdy wszystkie kontrolki faktycznie przekraczają szerokość paska. */
+.games-bottom.is-single-row > .games-bottom-left,
+.games-bottom.is-single-row > .games-bottom-right{
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  width: max-content;
+  max-width: none;
+}
+.games-bottom.is-balanced-wrap > .games-bottom-left,
+.games-bottom.is-balanced-wrap > .games-bottom-right{
+  display: flex;
+  flex-wrap: wrap;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  align-content: start;
+}
+.games-bottom.is-balanced-wrap > .games-bottom-left{ justify-content: flex-start; }
+.games-bottom.is-balanced-wrap > .games-bottom-right{ justify-content: flex-end; }
+.games-bottom.is-compact-icons .only-desktop{ display:none !important; }
+.games-bottom.is-compact-icons .games-bottom-right .btn,
+.games-bottom.is-compact-icons .list-filter .ui-select-btn,
+.games-bottom.is-compact-icons .list-sort .ui-select-btn{
+  width:36px;
+  height:36px;
+  min-height:36px;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+}
+.games-bottom.is-compact-icons .list-filter,
+.games-bottom.is-compact-icons .list-sort{
+  width:36px;
+  min-width:36px;
+  max-width:36px;
+  flex:0 0 36px;
+}
+.games-bottom.is-compact-icons .games-bottom-left .list-search{
+  width:36px;
+  min-width:36px;
+  max-width:36px;
+  flex:0 0 36px;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.games-bottom.is-compact-icons .list-search .searchBox{ display:none !important; }
+.games-bottom.is-compact-icons .list-filter .ui-select-label,
+.games-bottom.is-compact-icons .list-filter .ui-select-caret,
+.games-bottom.is-compact-icons .list-sort .ui-select-label,
+.games-bottom.is-compact-icons .list-sort .ui-select-caret{ display:none !important; }
+.games-bottom.is-compact-icons .games-bottom-right .btn .ico,
+.games-bottom.is-compact-icons .list-filter .ui-select-icon .ico,
+.games-bottom.is-compact-icons .list-sort .ui-select-icon .ico{ width:18px;height:18px; }
 .resource-copy-inbox{margin:12px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
 .resource-copy-inbox h3{margin:0 0 8px;font-size:14px}
 .resource-copy-inbox-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line2)}

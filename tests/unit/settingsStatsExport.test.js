@@ -22,6 +22,17 @@ test("eksport dzisiejszy wybiera wyłącznie Control 2 z lokalnego dnia", () => 
   assert.equal(result.sessions[0].stats_detail.id, "today");
 });
 
+test("JSON statystyk zachowuje zwięzłe podsumowania transportu i błędów synchronizacji", () => {
+  const now = new Date(2026, 9, 13, 12, 0, 0);
+  const events = [
+    { kind: "diagnostic", category: "device_transport", at: now.toISOString(), devices: ["display"], metrics: { phase: "recovered", duration_ms: 6200, catchup_count: 2, missed_revisions: 4, hidden_duration_ms: 5100 } },
+    { kind: "diagnostic", category: "device_state_sync", at: now.toISOString(), devices: ["buzzer"], metrics: { phase: "read_error", error_class: "TimeoutError" } },
+  ];
+  const result = buildControl2StatsExport([{ ...session("sync", now), stats_detail: { events } }], "today", { now });
+
+  assert.deepEqual(result.sessions[0].stats_detail.events, events);
+});
+
 test("zakres 7 dni i 30 dni obejmuje granicę przedziału", () => {
   const now = new Date(2026, 9, 13, 12, 0, 0);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

@@ -9,7 +9,7 @@ let stage='login';
 test.afterEach(async({},info)=>{if(info.status!==info.expectedStatus)console.error('::error title=Resource duplicate stage::'+stage);});
 test('common duplicate API: three game types, complete base tree, all logo modes, replay, source removal and own files',async({page,context},info)=>{
  test.setTimeout(240000);const resources=[],files=[];
- if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','bases','logo']});
+ if(process.env.GITHUB_REF_NAME!=='main')await serveBranchCode(context,{pages:['games','bases','logos']});
  await loginAsPooledTestUser(page,context,info.parallelIndex);
  const e2e=generateE2EToken(process.env.E2E_BYPASS_SECRET);
  const duplicate=async(kind,id,request)=>page.evaluate(async({kind,id,request,e2e})=>{

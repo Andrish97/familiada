@@ -76,12 +76,47 @@ test.describe("tasks: baza udostępniona drugiemu kontu", () => {
   });
 });
 
+test("E20 zadania pokazują ładowanie, błąd i pozwalają ponowić odczyt", async ({ browser }, testInfo) => {
+  const { ctx, page } = await newUserContext(browser, testAccountUsername(2));
+  let allowRetry = false;
+  await ctx.route("**/rest/v1/rpc/tasks_list", async route => {
+    if (!allowRetry) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E20 controlled tasks read failure" }) });
+      return;
+    }
+    await route.fulfill({ json: tasksPreview });
+  });
+  try {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const navigation = page.goto(TASKS_URL);
+    await expect(page.locator("#tasksLoadMessage")).toHaveText("Wczytuję zadania…");
+    await navigation;
+    await expect(page.locator("#tasksLoadMessage")).toHaveText(/Nie udało się wczytać zadań/, { timeout: 20000 });
+    await expect(page.locator("#tasksLoadRetry")).toBeVisible();
+    await expect(page.locator(".tasks-scroll")).not.toHaveClass(/skel-step-ready/);
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-tasks-error-390.png"), fullPage: true });
+    allowRetry = true;
+    await page.locator("#tasksLoadRetry").click();
+    await expect(page.locator("#tasksLoadState")).toBeHidden();
+    await expect(page.locator(".tasks-scroll")).toHaveClass(/skel-step-ready/);
+    await expect(page.locator(".rowsRow")).toHaveCount(4);
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-tasks-ready-1400.png"), fullPage: true });
+  } finally { await ctx.close(); }
+});
+
 // Kontrolowane dane RPC; prawdziwy HTML, moduły, CSS i logowanie.
-for (const width of [1400, 390]) {
-  test(`tasks: wszystkie kafelki i odstępy — ${width}`, async ({ browser }) => {
+for (const viewport of [
+  { width: 1400, height: 1100, label: "1400" },
+  { width: 390, height: 844, label: "390" },
+  { width: 844, height: 390, label: "844x390" },
+  { width: 667, height: 375, label: "667x375" },
+]) {
+  test(`tasks: wszystkie kafelki i odstępy — ${viewport.label}`, async ({ browser }) => {
     const { ctx, page } = await newUserContext(browser, testAccountUsername(2));
     try {
-      await page.setViewportSize({ width, height: width === 390 ? 844 : 1100 });
+      await page.setViewportSize(viewport);
       let fixture = tasksPreview;
       await page.route("**/rest/v1/rpc/tasks_list", (route) => route.fulfill({ json: fixture }));
       await page.goto(TASKS_URL);
@@ -104,11 +139,17 @@ for (const width of [1400, 390]) {
           await expect(row.locator(note)).not.toContainText(/Ankieta tekstowa|Punktacja|Ankieta punktowa/);
           await expect(row.locator(note)).toContainText(task.owner_label);
         }
-        if (width === 390) {
+        if (viewport.width <= 980) {
           await expect(row.locator(".rowsNote--desktop")).toBeHidden();
           await expect(row.locator(".rowsNote--mobile")).toBeVisible();
           await expect(row.locator(".rowsNote--mobile")).not.toContainText("11.10.2026");
           expect((await row.boundingBox()).height).toBeLessThanOrEqual(104);
+          if (task.state !== "done") {
+            const allActionLabelsHidden = await row.locator(".rowsActText").evaluateAll((labels) =>
+              labels.every((label) => getComputedStyle(label).display === "none"));
+            expect(allActionLabelsHidden).toBe(true);
+            await expect(row.locator(".rowsActIcon").first()).toBeVisible();
+          }
         } else {
           await expect(row.locator(".rowsNote--desktop")).toBeVisible();
           await expect(row.locator(".rowsNote--mobile")).toBeHidden();
@@ -132,7 +173,7 @@ for (const width of [1400, 390]) {
       expect(metrics.rowGap).toBeGreaterThanOrEqual(12);
       expect(metrics.overflow).toBe(false);
       expect(metrics.noteWrap).toBe("normal");
-      await page.screenshot({ path: test.info().outputPath(`tasks-${width}.png`), fullPage: true });
+      await page.screenshot({ path: test.info().outputPath(`shot-e20-tasks-${viewport.label}.png`), fullPage: true });
       fixture = [];
       await page.goto(TASKS_URL);
       await expect(page.locator(".rowsEmpty")).toBeVisible();

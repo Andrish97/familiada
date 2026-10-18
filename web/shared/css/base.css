@@ -1,11 +1,37 @@
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-18T17375");
+
 /* css/base.css */
 :root {
     --bg: #050914;
-    --card: rgba(255,255,255,.06);
+    --card: #111827; /* powierzchnia zewnętrznej karty */
     --card2: rgba(0,0,0,.18);
     --line: rgba(255,255,255,.14);
     --line2: rgba(255,255,255,.18);
-    --gold: #ffeaa6
+    --gold: #ffeaa6;
+    --tab-label-font-size: 12px;
+    --tab-label-letter-spacing: .08em;
+}
+
+.tabs-strip :is(.tab-label,.tab-active){
+    font-size: var(--tab-label-font-size);
+    letter-spacing: var(--tab-label-letter-spacing);
+}
+.tabs-strip > .tab-slot{
+    width: auto;
+    min-width: 0;
+    flex: 1 1 max-content;
+}
+.tabs-strip .tab-label > .badge{
+    min-width: 30px;
+}
+.tabs-strip .tab-label > .badge:empty{
+    display: none;
+}
+@media (max-width: 600px){
+    :root{
+        --tab-label-font-size: 10px;
+        --tab-label-letter-spacing: .015em;
+    }
 }
 
 /* Bez niebieskiej poświaty przy dotknięciu elementu (Chrome/Safari mobilne).
@@ -244,10 +270,14 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
 ──────────────────────────────────────────────────────────── */
 [data-skel-step] {
     opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
     transition: opacity .3s ease;
 }
 [data-skel-step].skel-step-ready {
     opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 /* ─────────────────────────────────────────────────────────────────────────── */
 
@@ -269,6 +299,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     flex-wrap: wrap;
 
     padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+    transition: top .18s ease-out;
     /* Kryjące tło: półprzezroczysty, rozmyty pasek przepuszczał treść strony
        przewijaną pod spodem, więc każdy (też półprzezroczysty) przycisk miał
        inny odcień — wyglądało to jak jeden gradient na wszystkich przyciskach. */
@@ -277,8 +308,8 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     border-bottom: 1px solid rgba(255,255,255,.12);
 }
 
-/* Mobile landscape: topbar fixed, ale pomniejszony żeby nie zabierać za dużo miejsca */
-@media (max-height: 500px) and (orientation: landscape) {
+/* Krótki viewport: kompaktowy topbar niezależnie od typu urządzenia. */
+@media (max-height: 500px) {
     .topbar {
         padding-top: max(4px, env(safe-area-inset-top));
         padding-bottom: 4px;
@@ -405,6 +436,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     /* Lekkie przyciemnienie WOKÓŁ okien modalnych / menu — jedno dla całej
        aplikacji. Samo okno jest zawsze kryjące. */
     --scrim: rgba(2,6,23,.5);
+    --modal-scrim: rgba(0,0,0,.75);
 }
 
 .btn {
@@ -477,11 +509,14 @@ main{
     position: relative;
     margin: 16px 0 8px;
     padding-top: 20px;
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-left: max(16px, env(safe-area-inset-left));
     display: flex;
-    align-items: center;
+    flex-wrap: nowrap;
     justify-content: space-between;
+    align-items: start;
     gap: 8px;
-    flex-wrap: wrap;
     opacity: .85;
     font-size: 12px;
     margin-top: auto;
@@ -489,6 +524,24 @@ main{
     justify-self: stretch;
     align-self: stretch;
 }
+/* .wrap z gier/urządzeń ma własny padding (także dolne 15px), który
+   nie może odbierać stopce odstępu safe area po załadowaniu obu arkuszy. */
+.footer.wrap{
+    padding-top: 20px;
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-left: max(16px, env(safe-area-inset-left));
+}
+.footer > *{ min-width:0; max-width:100%; flex:0 1 auto; overflow-wrap:break-word; hyphens:auto; text-wrap:pretty; }
+.footer > :first-child{ text-align:left; }
+.footer > :last-child{ text-align:right; }
+.footer:has(> :nth-child(3)){
+    display:flex;
+    flex-wrap:nowrap;
+    justify-content:space-between;
+    gap:8px 12px;
+}
+.footer:has(> :nth-child(3)) > :nth-child(2){ margin-inline:auto; text-align:center; }
 .footer::before{
     content: "";
     position: absolute;
@@ -519,6 +572,9 @@ main{
 }
 .btn-contact-footer:hover { filter: brightness(1.08); }
 
+.orientation-suggestion{position:fixed;z-index:9;top:calc(var(--topbar-h, 0px) + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid var(--line2);border-radius:12px;background:#111827;box-shadow:0 8px 28px rgba(0,0,0,.35);font-size:12px;pointer-events:none}
+.orientation-suggestion .btn{pointer-events:auto}
+
 @media (max-width: 600px){
     .footer{
         margin: 12px 0 6px;
@@ -548,8 +604,8 @@ main{
 }
 .btn.gold:disabled {
     --btn-tint: rgba(255,234,166,.04);
-    color: #77705a;
-    border-color: #3a3629;
+    color: rgba(255,234,166,.7);
+    border-color: rgba(255,234,166,.28);
 }
 .btn.danger:disabled {
     color: #7a5a62;
@@ -645,7 +701,7 @@ main{
 .wrap {
     width: 90%;
     margin: 0 auto;
-    padding: 18px
+    padding: 24px 18px 18px
 }
 
 .row,.stack {
@@ -686,8 +742,14 @@ main{
     z-index: 50
 }
 
+.overlay.contact-modal-overlay {
+    background: var(--modal-scrim);
+}
+
 .modal {
+    box-sizing: border-box;
     width: min(860px,94vw);
+    margin-inline: auto;
     border-radius: 22px;
     border: 1px solid var(--line);
     /* kryjące (= --card na zaciemnionym tle nakładki) */
@@ -722,6 +784,8 @@ main{
     margin-top: 6px
 }
 
+.mSub:empty{ display: none; }
+
 .importRow {
     display: flex;
     gap: 10px;
@@ -732,6 +796,22 @@ main{
 
 .importRow > .inp:only-child {
     width: 100%
+}
+
+.import-file-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+    width: 100%;
+}
+
+.import-file-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    opacity: .75;
+    font-size: .9rem;
 }
 
 .importMsg {
@@ -786,6 +866,7 @@ main{
 }
 
 .uni-modal > .uni-head,
+.uni-modal > .mHead,
 .uni-modal > .mSub,
 .uni-modal > .uni-foot {
     flex: 0 0 auto
@@ -876,6 +957,14 @@ main{
     margin-left: 0;
     margin-right: auto
 }
+
+/* Neutralne poza arkuszem; ułatwia wspólną kolejność mobilną bez zmian
+   w wyglądzie okienek desktopowych. */
+.sheet-modal-head,
+.sheet-modal-actions,
+.sheet-modal-body { display: contents; }
+.sheet-modal-head[hidden],
+.sheet-modal-actions[hidden] { display: none; }
 
 /* ===== Modal sheet (mobile) =====
    Rozbudowane modale (nie confirm/alert/prompt — te mają klasę .uni-modal
@@ -968,13 +1057,101 @@ main{
         margin: 0 !important; /* settings.css: .overlay .modal{margin-top:20px!important} */
         display: flex;
         flex-direction: column;
-        overflow-y: auto; /* własny, samodzielny obszar przewijania */
+        overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
         -webkit-overflow-scrolling: touch;
         /* Modal ma wyglądać jak treść strony, nie jak karta na tle strony */
         background: transparent;
         --under: #050914; /* arkusz leży na tle strony */
         border: 0;
         box-shadow: none;
+    }
+
+    .modal--sheet.sheet-active .sheet-modal-head,
+    .modal--sheet.sheet-active .sheet-modal-actions,
+    .modal--sheet.sheet-active .sheet-modal-body {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head {
+        flex: 0 0 auto;
+        padding-bottom: 12px;
+    }
+    .modal--sheet.sheet-active .sheet-modal-actions {
+        flex: 0 0 auto;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--line2);
+    }
+    .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup,.baseShareFooter,.shareSectionActions,.shareSection--mail) {
+        margin-top: 0 !important;
+    }
+    /* Separator rysuje pasek akcji arkusza; stopka nie dodaje drugiej linii. */
+    .modal--sheet.sheet-active .sheet-modal-actions > .uni-foot {
+        padding-top: 0;
+        border-top: 0;
+    }
+    .contact-modal-overlay.modal--sheet.sheet-active .sheet-modal-actions > .uni-foot {
+        padding-top: 0;
+        border-top: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-actions[hidden] {
+        display: none !important;
+        padding: 0;
+        margin: 0;
+        border: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-actions:has(> .modal-actions):not(:has(> .modal-actions > :not([hidden]))) {
+        display: none !important;
+        padding: 0;
+        margin: 0;
+        border: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .modal--sheet.sheet-active .sheet-modal-body > .uni-body {
+        display: block;
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
+    }
+    /* Zwykle przewija się cała treść jedną warstwą. Odbiorcy ankiety to
+       wyjątek: nagłówek i akcje są stałe, a przewijają się wyłącznie listy. */
+    .modal--sheet.sheet-active .sheet-modal-body:has(.pollRecipientGroup) {
+        overflow: hidden;
+    }
+    .modal--sheet.sheet-active .sheet-modal-body:has(.pollRecipientGroup) > .uni-body {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+    .modal--sheet.sheet-active .pollRecipientsModal .shareList {
+        max-height: none;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head > :is(.uni-head,.mHead,.tagsHead,.bld-preview-head,.mkt-detail-head,.previewModalTitle) {
+        position: static;
+        border: 0 !important;
+        padding-bottom: 0;
+        margin-bottom: 8px !important;
+        background: transparent !important;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head > .mSub {
+        margin: 0;
+        padding: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head > .mTitle {
+        text-transform: uppercase;
+        letter-spacing: .1em;
+    }
+    .modal--sheet.sheet-active .sheet-modal-head:not(:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden]))):not(:has(+ .sheet-modal-actions > .modal-actions > :not([hidden]))) {
+        border-bottom: 1px solid var(--line2);
+        margin-bottom: 12px;
     }
 
     /* Nagłówek modala w trybie sheet ma wyglądać jak nagłówek strony "Moje
@@ -997,6 +1174,13 @@ main{
         padding-bottom: 14px;
         margin-bottom: 12px !important;
         z-index: 1;
+    }
+
+    /* Gdy arkusz ma pasek akcji, jedyny separator znajduje się pod nim.
+       Nie rysuj drugiej kreski na wewnętrznym nagłówku. */
+    .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > :not(.modal-actions):not([hidden])) > :is(.uni-head,.mHead,.tagsHead,.bld-preview-head,.mkt-detail-head,.previewModalTitle),
+    .modal--sheet.sheet-active .sheet-modal-head:has(+ .sheet-modal-actions > .modal-actions > :not([hidden])) > :is(.uni-head,.mHead,.tagsHead,.bld-preview-head,.mkt-detail-head,.previewModalTitle) {
+        border-bottom: 0 !important;
     }
 
     .modal--sheet.sheet-active .uni-head .mTitle,
@@ -1030,8 +1214,13 @@ main{
         display: none !important;
     }
 
-    body.sheet-open .footer .btn-contact-footer {
-        display: none;
+    /* W trybie strony stopka zostaje, ale Kontakt nie należy do widoku modala. */
+    body.sheet-open .footer .btn-contact-footer,
+    body.sheet-open .contact-footer-entry {
+        display: none !important;
+    }
+    body.sheet-open .footer a[href^="/privacy"] {
+        display: none !important;
     }
 
     /* Strony bez naturalnego przycisku wstecz w topbarze na mobile
@@ -1071,6 +1260,22 @@ main{
         min-height: 0;
     }
 
+    /* Podgląd Gry przewija jedną zawartość pod stałym nagłówkiem i
+       przełącznikiem Gra/Ankieta; pytania nie tworzą drugiego scrolla. */
+    .modal--sheet.sheet-active .sheet-modal-body > .bld-preview-questions {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
+    }
+
+    /* Szczegóły Marketplace przewijają jedną treść arkusza; lista pytań
+       rośnie naturalnie i nie tworzy drugiego scrolla. */
+    .modal--sheet.sheet-active .sheet-modal-body > .mkt-detail-questions {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
+    }
+
     /* base-explorer.css ma własną, starszą regułę mobilną (@media
        max-width:900px) na .tags-modal/.export-modal/.question-modal/
        .rename-modal z width:...!important, węższą niż pełna szerokość —
@@ -1078,6 +1283,62 @@ main{
        tamtej reguły, więc trzeba przebić tym samym. */
     .modal--sheet .tags-modal {
         width: 100% !important;
+    }
+    .modal--sheet.sheet-active .tags-modal:has(> .sheet-modal-body > .tags-layer) {
+        overflow: hidden;
+    }
+    .modal--sheet.sheet-active .tags-modal > .sheet-modal-body:has(> .tags-layer) {
+        overflow: hidden;
+    }
+    .modal--sheet.sheet-active .tags-modal .tags-layer {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        flex-direction: column;
+    }
+    /* Warstwy Eksploratora zawierają własny nagłówek i stopkę wewnątrz
+       sekcji. Na telefonie przenieś pasek akcji przed listę/pola, ale
+       zostaw samą listę jako jedyny przewijany element. */
+    .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsHead {
+        order: 0;
+        border-bottom: 0 !important;
+        padding-bottom: 0;
+        margin-bottom: 0 !important;
+    }
+    .modal--sheet.sheet-active .tags-modal .tags-layer > .tagsFoot {
+        order: 1;
+        flex: 0 0 auto;
+        margin: 0 0 10px !important;
+        padding: 0 0 10px;
+        border-top: 0;
+        border-bottom: 1px solid var(--line2);
+    }
+    .modal--sheet.sheet-active .tags-modal .tags-layer > :not(.tagsHead):not(.tagsFoot) { order: 2; }
+    .modal--sheet.sheet-active .tags-modal .tagsPickList,
+    .modal--sheet.sheet-active .tags-modal .qBody,
+    .modal--sheet.sheet-active .tags-modal .xBody,
+    .modal--sheet.sheet-active .tags-modal .colorModalBody {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .modal--sheet.sheet-active .tags-modal .tagsPickList { max-height: none; }
+    /* W mobilnym eksporcie gry przewija się cała treść arkusza. Nie
+       zagnieżdżaj pod nią scrolla formularza ani listy pytań. */
+    .modal--sheet.sheet-active .export-modal .xBody {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
+    }
+    .modal--sheet.sheet-active .export-modal .xPickList {
+        max-height: none;
+        overflow: visible;
+    }
+    .modal--sheet.sheet-active .tags-modal .tagsFoot {
+        flex: 0 0 auto;
+        margin-top: 10px;
     }
 }
 
@@ -1317,34 +1578,40 @@ html.showA2HS .a2hs {
 .lang-menu{
   position: fixed;              /* ✅ portal overlay */
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  min-width: 170px;
+  gap: 4px;
+  padding: 8px;
+  min-width: 180px;
   /* kryjące tła menu i opcji: półprzezroczyste tła w Chrome na Androidzie
      potrafią się nakładać przy kolejnych przerysowaniach (przyciski robią
      się coraz jaśniejsze, każdy inaczej) */
-  background: #050914;
-  border: 1px solid var(--line2);
-  border-radius: 12px;
+  background: #111827;
+  --under: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
   z-index: 1000;                /* nad topbarem */
-  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
   max-width: calc(100vw - 24px);
 }
 
 .lang-option {
-    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 14px;
     border-radius: 10px;
     border: 1px solid var(--line2);
-    background: #141822; /* = .06 bieli na tle .lang-menu */
+    background: #1b2332;
     color: #fff;
     text-align: left;
     cursor: pointer;
     font-weight: 800;
-    letter-spacing: .02em;
+    font-size: 13px;
+    letter-spacing: .04em;
 }
 
 .lang-option:hover {
-    filter: brightness(1.08);
+    background: #292f3d;
 }
 
 [hidden], .hidden {
@@ -1465,9 +1732,9 @@ html.showA2HS .a2hs {
 
 
 
-@media (max-width: 980px){
+@media (max-width: 760px){
   .topbar{
-    transition: transform .22s ease, opacity .22s ease;
+    transition: top .18s ease-out, transform .22s ease, opacity .22s ease;
     /* BEZ will-change: transform — stała warstwa jest rasteryzowana raz,
        w jednej skali, i przy powiększeniu strony / innej skali ekranu
        przeglądarka tylko ją rozciąga: wektorowe ikony i tekst w topbarze
@@ -1482,7 +1749,7 @@ html.showA2HS .a2hs {
 }
 
 
-@media (max-width: 980px) {
+@media (max-width: 760px) {
   .topbar-menu-toggle {
     position: relative;
     padding: 10px 12px;
@@ -1514,6 +1781,8 @@ html.showA2HS .a2hs {
     z-index: 10050;
     background: var(--scrim);
     display: none;
+    box-sizing: border-box;
+    overflow: auto;
     padding: 10px;
     padding-left: max(10px, env(safe-area-inset-left));
     padding-right: max(10px, env(safe-area-inset-right));
@@ -1526,16 +1795,17 @@ html.showA2HS .a2hs {
 
   .topbar-mobile-panel {
     /* kryjące — przez przyciski menu nie może prześwitywać strona */
-    background: #080c14;
-    --under: #080c14;
-    border: 1px solid rgba(255,255,255,.16);
+    background: #111827;
+    --under: #111827;
+    border: 1px solid rgba(255,255,255,.14);
     border-radius: 14px;
     padding: 10px;
     max-width: 560px;
     margin: 0 auto;
     display: grid;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
     gap: 10px;
+    box-shadow: 0 12px 36px rgba(0,0,0,.7);
 
     /* nie wychodź poza ekran (iOS/Android) */
     max-height: calc(100dvh - var(--topbar-h, 60px) - 20px);
@@ -1605,7 +1875,21 @@ html.showA2HS .a2hs {
   max-width:100%;
 }
 
-@media (max-width: 980px){
+@media (max-width: 760px){
+  /* Games ma trzy stany nawigacji (pełny pasek, „Więcej”, hamburger),
+     dlatego sam rozmiar telefonu nie może od razu chować przycisków. */
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced){
+    grid-template-columns:max-content minmax(0,1fr) max-content max-content;
+    grid-template-areas:none;
+  }
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-1,
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2,
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-3,
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-4{ grid-area:auto; }
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2,
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-4{ display:flex; }
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2{ flex-wrap:nowrap; }
+
   .topbar-layout-4{
     grid-template-columns:minmax(0,1fr) auto;
     grid-template-areas:
@@ -1691,6 +1975,11 @@ html.showA2HS .a2hs {
     justify-content: center;
   }
 
+  .topbar-mobile-group .btn{
+    justify-content: flex-start;
+    text-align: left;
+  }
+
   .topbar-mobile-group .who:not(.account-btn),
   .topbar-mobile-group .user-btn .user-name{
     background: transparent;
@@ -1704,8 +1993,63 @@ html.showA2HS .a2hs {
   .topbar-mobile-panel .only-mobile  { display: none !important; }
 }
 
-@media (max-width: 980px){
+/* Ikony w etykietach hamburgera muszą być wyrównane razem z tekstem, a nie
+   układać się według bazowej linii inline wewnątrz przycisku. */
+.topbar-mobile-group .btn{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+  text-align:left;
+}
+.topbar-mobile-group .btn > span[data-i18n]{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+}
+.topbar-mobile-group .btn > .badge{ margin-left:auto; }
+.topbar-mobile-group .btn svg.ico{ display:block; vertical-align:middle; }
+
+@media (max-width: 760px){
   .topbar-mobile-hidden{ display:none !important; }
+}
+
+/* Tryb hamburgera włączany przez kontroler wtedy, gdy w sekcji nawigacji
+   nie mieści się nawet najważniejszy przycisk razem z „Więcej”. */
+@media (min-width: 761px){
+  .topbar-layout-4.topbar-mobile-forced{
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"s1 s3";
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+  }
+  .topbar-layout-4.topbar-mobile-forced .topbar-section-1{ grid-area:s1; flex-wrap:nowrap; min-width:0; }
+  .topbar-layout-4.topbar-mobile-forced .topbar-section-3{ grid-area:s3; justify-content:flex-end; align-items:center; }
+  .topbar-layout-4.topbar-mobile-forced .topbar-section-2,
+  .topbar-layout-4.topbar-mobile-forced .topbar-section-4{ display:none; }
+  .topbar-layout-4.topbar-mobile-forced:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand{ display:none; }
+  .topbar-layout-4.topbar-mobile-forced.topbar-mobile-keep-brand .topbar-section-1 .brand{
+    display:block; font-size:12px; letter-spacing:.1em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .topbar-mobile-forced .topbar-menu-toggle{ position:relative; padding:10px 12px; border-radius:12px; }
+  .topbar-mobile-forced .topbar-menu-toggle .badge{
+    position:absolute; top:-6px; right:-6px; margin-left:0; transform:translate(0,0); pointer-events:none;
+  }
+  .topbar-mobile-overlay.topbar-mobile-forced{
+    position:fixed; top:var(--topbar-h,60px); left:0; right:0; bottom:0; z-index:10050;
+    background:var(--scrim); display:none; box-sizing:border-box; overflow:auto; padding:10px;
+  }
+  .topbar-mobile-overlay.topbar-mobile-forced.is-open{ display:block; }
+  .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-panel{
+    background:#111827; --under:#111827; border:1px solid rgba(255,255,255,.14); border-radius:14px;
+    padding:10px; max-width:560px; margin:0 auto; display:grid; grid-template-rows:auto minmax(0,1fr);
+    gap:10px; box-shadow:0 12px 36px rgba(0,0,0,.7); max-height:calc(100dvh - var(--topbar-h,60px) - 20px); overflow:hidden;
+  }
+  .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-mount{ display:grid; gap:10px; overflow:auto; -webkit-overflow-scrolling:touch; }
+  .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-close{ justify-self:end; padding:6px 9px; border-radius:10px; }
+  .topbar-mobile-overlay.topbar-mobile-forced .topbar-mobile-group .btn{ justify-content:flex-start; text-align:left; }
 }
 
 /* ===============================
@@ -1719,6 +2063,9 @@ html.showA2HS .a2hs {
 html{
   background: var(--bg);
 }
+
+/* Zachowaj szerokość layoutu, gdy wysuwane menu blokuje przewijanie body. */
+html:has(body.topbar-mobile-lock, body.explorer-drawer-open) { scrollbar-gutter: stable; }
 
 /* gasi biały bounce (zwłaszcza gdy scroll jest w kontenerach) */
 body{
@@ -1847,12 +2194,13 @@ body{
 }
 
 .account-menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   padding: 10px 14px;
   text-align: left;
-  background: transparent;
-  border: 0;
+  background: #1b2332;
+  border: 1px solid var(--line2);
   border-radius: 10px;
   color: #fff;
   font-size: 13px;
@@ -1864,7 +2212,7 @@ body{
 }
 
 .account-menu-item:hover {
-  background: #292f3d; /* = .10 bieli na #111827 */
+  background: #292f3d;
 }
 
 .account-menu--inline {
@@ -2003,12 +2351,45 @@ body{
 
 /* Wspólny pusty stan list udostępniania (bazy i Control). */
 .share-empty-state{
+  min-height:84px;
+  display:grid;
+  place-items:center;
   border:1px dashed var(--line2);
   border-radius:12px;
-  padding:12px;
+  padding:16px;
   font-size:.85rem;
   opacity:.7;
+  text-align:center;
+  align-self:start;
+  justify-self:stretch;
+  box-sizing:border-box;
+  background:rgba(255,255,255,.015);
 }
+
+/* Wysyłanie kopii: wspólny modal i sekcje w stylu udostępniania Baz/Control. */
+.resource-send-modal{
+  width:min(680px,94vw);
+  max-height:90dvh;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.resource-send-modal .mHead{margin:0;}
+.resource-send-modal .resource-send-name{margin:0;overflow-wrap:anywhere;font-weight:800;}
+.resource-send-modal .shareSection{margin:0;}
+.resource-send-friends-section{min-width:0;}
+.resource-send-friends{max-height:none;overflow:visible;}
+.resource-send-friend{justify-content:flex-start;cursor:pointer;}
+.resource-send-friend input{flex:0 0 auto;margin:0;}
+.resource-send-friend-name{min-width:0;overflow-wrap:anywhere;}
+.resource-send-history{min-width:0;}
+.resource-send-history summary{cursor:pointer;}
+.resource-send-history-list{max-height:none;overflow:visible;}
+.resource-send-history-row{overflow-wrap:anywhere;}
+.resource-send-error{margin:0;color:var(--danger,#ff7777);font-size:.9rem;}
+.resource-send-error:empty{display:none;}
+.resource-send-actions{margin-top:0;}
+.resource-send-empty{width:100%;}
 
 /* ===== Edytory: nazwa strony w topbarze (sekcja 2) =====
    Tytuł = jaki to edytor, wielkimi literami; podtytuł = nazwa zasobu tylko
@@ -2044,8 +2425,8 @@ body{
    ją pokazać, dodaje do <body> klasę topbar-title-mobile (ankieta, edytor gry,
    edytory logo, menedżer bazy, ustawienia gry). Tytuł zajmuje wolne
    miejsce między „Wstecz” a ikonami, w dwóch krótkich liniach (tytuł + szara
-   linijka) z wielokropkiem. Szerokość 980 px = próg układu telefonicznego. */
-@media (max-width: 980px){
+   linijka) z wielokropkiem. Szerokość 760 px = próg układu telefonicznego. */
+@media (max-width: 760px){
   body.topbar-title-mobile .topbar-layout-4{
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: "s1 s2 s3";
@@ -2069,6 +2450,13 @@ body{
     font-size: 11px;
     line-height: 1.2;
   }
+}
+
+/* Na tabletach zostaw więcej miejsca dla przycisków nawigacji; menu „Więcej”
+   pojawia się dopiero, gdy rzeczywista szerokość przycisków tego wymaga. */
+@media (min-width: 761px) and (max-width: 1200px){
+  .topbar-layout-4{ column-gap:8px; }
+  .topbar-layout-4 .topbar-section-2{ column-gap:5px; }
 }
 
 /* ===== Pole nazwy edytora — jedno dla edytora gier i edytorów logo ===== */
@@ -2095,9 +2483,9 @@ body{
   font-weight: 900;
 }
 
-/* ===== Pole szukania — jedno dla menedżera bazy i list (gry, bazy, logo) =====
-   .searchBox > input.searchText + button.btn (✕ czyści). Szerokość
-   i dodatki (chipy w menedżerze bazy) ustawia strona. */
+/* ===== Pole szukania — menedżer bazy i list (gry, bazy, logo) =====
+   Pole ma osobny przycisk obok, który zmienia lupę na X i czyści tekst.
+   Szerokość i dodatki (chipy w Explorerze) ustawia strona. */
 .searchBox{
   display: flex;
   align-items: center;
@@ -2178,7 +2566,7 @@ body{
 .app-toast.app-toast--inline[hidden]{ display: none; }
 
 /* =========================================================
-   Wspólny kafel zasobu (gry, bazy, rynek): nazwa, linia opisu (.meta),
+   Wspólny kafel zasobu (gry, bazy, rynek; Logo używa tego samego tła): nazwa, linia opisu (.meta),
    uwaga (.rules), rząd oznaczeń .tag przy dole (.tileTags, margin-top:auto),
    małe ikony w rogu (.x kosz, .x-bell dzwonek). Kafel dodatkowo ma klasę
    .card (hooki testów e2e). Przeniesione z games.css.
@@ -2231,6 +2619,7 @@ body{
 }
 
 .grid .tile .name{
+  min-width: 0;
   font-weight: 900;
   font-size: 14px;
   letter-spacing: .06em;
@@ -2240,7 +2629,7 @@ body{
   line-height: 1.3;
 
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2316,16 +2705,25 @@ body{
 .shareSection{
   --under: #202331; /* podłoże przycisków (css/base.css) */
   margin-top: 16px;
-  padding: 10px;
+  padding: 12px;
   border-radius: 14px;
-  background: rgba(255,255,255,.06);
+  background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.10);
 }
 .shareSection:first-child{ margin-top: 0; }
 .shareSectionTitle{ margin: 0; font-size: inherit; font-weight: 800; letter-spacing: .2px; }
+.shareSectionHeading{ display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.shareSectionHeading > .shareSectionTitle{ flex: 1 1 auto; min-width: 0; }
+.shareSectionTitle.shareSectionHeading{ flex-wrap: wrap; }
+.shareBulkActions{ display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; flex: 0 0 auto; }
+.shareBulkAction{ appearance: none; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: 0; background: rgba(255,255,255,.035); color: var(--gold, #ffeaa6); cursor: pointer; }
+.shareBulkAction .ico{ display: block; width: 17px; height: 17px; flex: 0 0 auto; }
+.shareBulkAction:hover:not(:disabled){ border-color: rgba(255,234,166,.55); background: rgba(255,234,166,.08); }
+.shareBulkAction:focus-visible{ outline: 2px solid var(--gold, #ffeaa6); outline-offset: 2px; }
+.shareBulkAction:disabled{ opacity: .45; cursor: default; }
 .shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
 .shareList[hidden]{ display: none; }
-.shareList{ display: grid; gap: 8px; margin-top: 8px; }
+.shareList{ display: grid; align-content: start; gap: 8px; margin-top: 8px; }
 .shareHost{ grid-column: 1 / -1; }
 .shareList--grid{ grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .shareRow{
@@ -2409,22 +2807,143 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 .rowsChannel{ font-weight: 700; }
 .rowsActions{ display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-.rowsAct .rowsActIcon{ display: none; width: 16px; height: 16px; }
+.rowsAct .rowsActIcon{ display: inline-flex; width: 16px; height: 16px; }
 .rowsAct .rowsActIcon svg{ width: 100%; height: 100%; }
 .rowsAct--icon .rowsActIcon{ display: inline-flex; }
 .rowsAct:disabled{ opacity: .4; cursor: not-allowed; }
-.rowsEmpty{ text-align: center; opacity: .7; padding: 24px 8px; }
+.rowsEmpty,.shareEmpty{
+    display:flex;
+    min-height:84px;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    text-align:center;
+    align-self:start;
+    justify-self:stretch;
+    box-sizing:border-box;
+    opacity:.76;
+    border:1px dashed var(--line2, rgba(255,255,255,.2));
+    border-radius:12px;
+    background:rgba(255,255,255,.015);
+}
 @media (max-width: 640px){
   .rowsAct .rowsActText{ display: none; }
   .rowsAct .rowsActIcon{ display: inline-flex; }
   .rowsRow{ gap: 10px; padding: 9px 10px; }
 }
-
+@media (max-width: 720px){
+  /* Let row content wrap normally; truncate only long status badges so they
+     stay inside the tile without forcing the tile beyond its available width. */
+  .shareRow--compact .shareMain{ display: block; }
+  .shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
+  .shareRow--compact .shareTags{ width: max-content; max-width: 100%; margin-top: 6px; flex-wrap: nowrap; overflow: hidden; }
+  .shareRow--compact .shareTags > *{ min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
 .shareList--scroll{ max-height: 240px; overflow-y: auto; overscroll-behavior: contain; }
-.shareEmpty{ padding: 12px 4px; font-size: 13px; color: var(--muted); }
-.shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
-.shareRow--compact .shareNote{ flex-basis: 100%; margin-top: 0; }
+
+/* W zwykłym (nie arkuszowym) widoku modali udostępniania pusta sekcja listy
+   nie może zmniejszyć karty do samego kafla braku. Na arkuszu mobile wysokość
+   kart przydzielają już jawne wiersze siatki poniżej. Sam kafel pozostaje
+   naturalnej wysokości. */
+#shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="friends"],
+#shareOverlay:not(.sheet-active) .baseShareSections > .shareSection[data-section="shared"],
+#shareDeviceOverlay:not(.sheet-active) .shareModal > .shareSection--friends,
+#shareDeviceOverlay:not(.sheet-active) .shareModal > .shareSection--shared {
+  min-height: 180px;
+  box-sizing: border-box;
+}
+
+.modal--sheet.sheet-active #shareDeviceSubsList,
+.modal--sheet.sheet-active #shareDeviceCurrentContent {
+    max-height: min(32dvh, 260px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+.shareEmpty{ font-size:13px; color:var(--muted); }
+
+@media (max-width: 600px) {
+  .shareBulkActions{ gap: 5px; }
+  .shareBulkAction{ width: 30px; height: 30px; }
+  .shareBulkAction .ico{ width: 16px; height: 16px; }
+  /* W pickerze odbiorców przewijają się same listy, a tytuł i licznik
+     pozostają dostępne na ekranie. */
+  .pollRecipientsModal .shareList--scroll {
+    max-height: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pollRecipientsModal .pollRecipientGroup { display: flex; flex: 1 1 0; min-height: 0; }
+  .pollRecipientsModal .pollRecipientGroup > .shareSection {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+  }
+  .pollRecipientsModal .uni-hint { flex: 0 0 auto; }
+  .baseShareLookup .btn .only-desktop,
+  .baseShareFooter .btn .only-desktop { display: none !important; }
+
+  /* Udostępnianie bazy: formularz ma własny wiersz, a obie listy są
+     jednocześnie widoczne i dzielą pozostałą wysokość arkusza. */
+  #shareOverlay.sheet-active .shareModal { overflow: hidden; }
+  #shareOverlay.sheet-active .sheet-modal-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  #shareOverlay.sheet-active .baseShareSections {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #shareOverlay.sheet-active .baseShareSections > .shareSection { min-height: 0; overflow: hidden; }
+  #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="friends"],
+  #shareOverlay.sheet-active .baseShareSections > .shareSection[data-section="shared"] {
+    display: flex;
+    flex-direction: column;
+  }
+  #shareOverlay.sheet-active .baseShareSections .shareList--scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Udostępnianie urządzenia: formularz i dwie sekcje list zajmują osobne
+     wiersze; przewijają się wyłącznie listy znajomych i udostępnionych. */
+  #shareDeviceOverlay.sheet-active .shareModal { overflow: hidden; }
+  #shareDeviceOverlay.sheet-active .sheet-modal-body {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 8px;
+    overflow: hidden;
+  }
+  #shareDeviceOverlay.sheet-active .sheet-modal-body > .shareSection {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  #shareDeviceOverlay.sheet-active .shareList {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 
 /* Touch menus: avoid hover/pressed compositing while navigating on tablets. */
 @media (hover: none) and (pointer: coarse) {

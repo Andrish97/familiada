@@ -4,7 +4,7 @@
 // Lista budowana raz; potem tylko liczby i szerokości pasków (przejście CSS).
 // Punktacja: kolejność odpowiedzi z gry. Tekst: kolejność pojawienia się,
 // nowe na końcu. Sortowanie wg głosów dopiero przy zamykaniu.
-import { t } from "../../translation/translation.js?v=v2026-10-18T17330";
+import { t } from "../../translation/translation.js?v=v2026-10-18T17375";
 
 // poll_stopped: te same surowe wiersze co na żywo (głosy już się nie zmieniają)
 function resultsMode(status, type) {
@@ -21,8 +21,8 @@ export function makeResultRow(text) {
   return { row, bar: row.querySelector(".aBar"), val: row.querySelector(".aVal") };
 }
 
-export function setRowValue(r, value, pct) {
-  const next = String(value);
+export function setRowValue(r, value, pct, unitKey = "polls.results.votesUnitCount") {
+  const next = t(unitKey, { n: value });
   if (r.val.textContent !== next) r.val.textContent = next;
   const w = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
   if (r.bar.style.width !== w) r.bar.style.width = w;
@@ -103,7 +103,7 @@ export function createPollResults(listEl) {
     for (const key of order) {
       const r = slot.rows.get(key);
       const v = incoming.get(key) || 0;
-      if (r) setRowValue(r, v, total ? (100 * v) / total : 0);
+      if (r) setRowValue(r, v, total ? (100 * v) / total : 0, "polls.results.votesUnitCount");
     }
   }
 
@@ -136,7 +136,11 @@ export function createPollResults(listEl) {
       if (mode === "final") {
         for (const a of q.answers || []) {
           const r = slot.rows.get(a.id);
-          if (r) setRowValue(r, Number(a.fixed_points) || 0, Number(a.fixed_points) || 0);
+          if (r) {
+            const points = Number(a.fixed_points) || 0;
+            setRowValue(r, points, points, "polls.results.pointsUnitCount");
+            r.row.classList.toggle("tallySkipped", points === 0);
+          }
         }
       } else if (mode === "points") {
         const answers = q.answers || [];
@@ -144,7 +148,7 @@ export function createPollResults(listEl) {
         for (const a of answers) {
           const r = slot.rows.get(a.id);
           const v = Number(a.votes) || 0;
-          if (r) setRowValue(r, v, total ? (100 * v) / total : 0);
+          if (r) setRowValue(r, v, total ? (100 * v) / total : 0, "polls.results.votesUnitCount");
         }
       } else {
         renderTextRows(q, slot);

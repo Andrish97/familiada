@@ -1,5 +1,5 @@
 // familiada/logo/js/editor-page.js
-// Wspólna logika trzech stron edytora logo (/logo/editor/<tryb>/?id=).
+// Wspólna logika trzech stron edytora logo (/logos/editor/<tryb>/?id=).
 // Strona ma jeden tryb i jedno logo (id w adresie). Zmiany zapisują się
 // SAME: bez przycisku „Zapisz”, bez pytań przy wyjściu -- do pracy można
 // wrócić w każdej chwili, także po zamknięciu karty.
@@ -18,23 +18,23 @@
 //     samo guardResourceLock, przy każdym zapisie RPC update_logo_checked:
 //     komunikat z powrotem na listę.
 
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-18T17330";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T17330";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-18T17330";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T17330";
-import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-18T17375";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T17375";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T17375";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
 
-import { renderPreview } from "./render.js?v=v2026-10-18T17330";
-import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-18T17330";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-18T17330";
-import { cannotEditReason } from "./text.js?v=v2026-10-18T17330";
-import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-10-18T17330";
+import { renderPreview } from "./render.js?v=v2026-10-18T17375";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-18T17375";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T17375";
+import { cannotEditReason } from "./text.js?v=v2026-10-18T17375";
+import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-10-18T17375";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-18T17330";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-18T17330";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-18T17375";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-18T17375";
 
 const DEBOUNCE_MS = 700;
 const RETRY_MS = 5000;
@@ -228,12 +228,14 @@ export async function bootEditorPage({ mode, initEditor }) {
 
   /* ---------- podgląd ---------- */
   let previewZoom = null;
+  let latestPreview = null;
   function openPreview(preview) {
+    if (!preview) return;
     renderPreview(preview, el.previewCanvas, GLYPH_5x7);
     // Tablety z Chrome przedstawiają się jak desktop -- sprawdzamy też dotyk.
     const touch = isMobileDevice() || navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)").matches;
     el.previewOverlay.querySelector(".modal")?.classList.toggle("is-touch", !!touch);
-    previewZoom ??= initPreviewPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
+    previewZoom ??= initPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
     previewZoom.reset();
     lockPageZoomForPreview();
     el.previewOverlay.style.display = "";
@@ -247,8 +249,25 @@ export async function bootEditorPage({ mode, initEditor }) {
   }
 
   function onEditorPreview(preview) {
-    if (preview && el.bigPreview) renderPreview(preview, el.bigPreview, GLYPH_5x7);
+    if (!preview) return;
+    latestPreview = preview;
+    if (el.bigPreview) renderPreview(preview, el.bigPreview, GLYPH_5x7);
   }
+
+  // Tryb tekstowy nie miał żadnej akcji otwierającej istniejący modal
+  // powiększonego podglądu. Kliknięcie podglądu działa teraz tak samo jak w
+  // edytorach rysowania i obrazu.
+  if (el.bigPreview) {
+    el.bigPreview.tabIndex = 0;
+    el.bigPreview.setAttribute("role", "button");
+    el.bigPreview.setAttribute("aria-label", "Otwórz powiększony podgląd");
+  }
+  el.bigPreview?.addEventListener("click", () => openPreview(latestPreview));
+  el.bigPreview?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openPreview(latestPreview);
+  });
 
   function renderHeader() {
     el.brandTitle.textContent = modeLabel();
@@ -257,6 +276,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   /** Strona nie może edytować -- komunikat z jedynym wyjściem: lista logo. */
   function block(message) {
     showBlockingOverlay({ message, backHref: listBackUrl(mode) });
+    document.querySelector("main.logoWrap[data-skel-step]")?.classList.add("skel-step-ready");
   }
 
   /* ---------- UI (działa od razu, także w trakcie wczytywania) ---------- */
@@ -346,4 +366,5 @@ export async function bootEditorPage({ mode, initEditor }) {
   el.logoName.disabled = false;
   await editor.open(logo.payload || null);
   ready = true;
+  document.querySelector("main.logoWrap[data-skel-step]")?.classList.add("skel-step-ready");
 }

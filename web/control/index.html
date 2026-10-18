@@ -12,31 +12,21 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-18T17330"/>
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('/login/');
-    } catch(_e) {}
-  </script>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-18T17375"/>
+  <script>document.documentElement.classList.add('page-loading')</script>
 
   <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-18T17330";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-18T17375";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-18T17330");
+    import("/control/js/app.js?v=v2026-10-18T17375");
   </script>
 
   <style>
@@ -191,10 +181,9 @@
     .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
     .c2-roundlayout-side { flex:0 0 240px; min-width:0; min-height:0; display:flex; flex-direction:column; }
     .c2-roundlayout-side .c2-hint { flex:1; }
-    /* Urządzenia (renderDevicesStep) reużywa ten sam c2-roundlayout — lista
-       urządzeń po lewej, hint o wpisywaniu kodu po prawej, zamiast dawnego
-       paska na całą szerokość pod spodem. Z powrotem pojedynczy słupek 1x4
-       (zgłoszone: wariant 2x2 się nie sprawdził) — gap grida zastępuje
+    /* Urządzenia (renderDevicesStep) reużywa c2-roundlayout — cztery karty
+       urządzeń i karta testu są u góry, a krótka podpowiedź pod nimi. Na
+       szerokim ekranie karty układają się w siatce 2x2. Gap grida zastępuje
        .device-row's własny margin-bottom (control.css, reużywane też przez
        stary, jednokolumnowy control.html — tam margin ma sens, tu dublowałby
        się z gapem), zmniejszony (zgłoszone: za duży odstęp między kaflami).
@@ -206,6 +195,9 @@
     .topbar .top-status .dotRow { padding:10px 12px; min-height:37px; box-sizing:border-box; border-radius:14px; font-size:13px; line-height:1; }
     .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:1fr; gap:8px; align-content:start; }
     .c2-devicerows .device-row { margin-bottom:0; align-content:start; padding:10px; gap:6px; }
+    .c2-devicerows .control-test-choice { grid-column:1 / -1; display:flex; flex-direction:row; align-items:center; gap:16px !important; }
+    .c2-devicerows .control-test-choice > .device-opt-check { flex:0 0 auto; }
+    .c2-devicerows .control-test-choice > .device-opt-check-hint { flex:1 1 auto; min-width:0; }
     .c2-devicerows .device-row-2 { gap:6px; }
     .c2-devicerows .device-row-2 .btn { padding:7px 9px; }
     .c2-devicerows .device-row-opt { margin-top:0; padding-top:5px; }
@@ -384,10 +376,6 @@
     @media (min-width:981px) {
       .c2-devicerows { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .c2-devices-layout { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:8px; }
-      /* .c2-roundlayout-main ma width:0 dla bazowego układu flex z kolumną
-         podpowiedzi. Tutaj staje się elementem grida, więc musi rozciągnąć
-         się na szerokość swojego toru; inaczej lista urządzeń zapada się i
-         przechwytuje kliknięcia mimo że jej elementy są w DOM. */
       .c2-devices-layout > .c2-roundlayout-main { width:100%; }
       .c2-devices-layout .c2-roundlayout-divider { display:none; }
       .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }
@@ -510,13 +498,13 @@
     #c2DisplayPreview iframe, #c2HostPreview iframe { width:100%; height:100%; border:0; display:block; }
     @media (max-width:760px) { #c2DevicePreviews { grid-template-columns:1fr; } }
   </style>
-<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-18T17330"/>
+<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-18T17375"/>
 </head>
 <body class="control-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <!-- Klikalne przez cały czas gry (nie tylko na kroku Urządzenia) — po
@@ -545,12 +533,21 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="control.logout">Wyloguj</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="control.logout" data-i18n-icon="close">Wyloguj</button>
     </div>
   </header>
 
+  <main class="wrap wide" data-skel-step>
+    <div class="shell">
+      <div class="control-tabs-card">
+        <section class="main control-main-card">
+          <div id="app"><!-- renderowane przez control/js/ui.js --></div>
+        </section>
+      </div>
+    </div>
+
   <!-- Modal QR urządzeń z top bara -->
-  <div class="overlay hidden" id="qrModalOverlay">
+  <div class="overlay modal--sheet hidden" id="qrModalOverlay">
     <div class="modal uni-modal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
       <div class="uni-head">
         <div class="mTitle" id="qrModalTitle" data-i18n="control.qrModalTitle">Urządzenie</div>
@@ -570,8 +567,8 @@
       </div>
 
       <div class="uni-foot modal-actions">
-        <a class="btn sm hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
-        <button class="btn sm gold" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
+        <a class="btn sm hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open" data-i18n-icon="display">Otwórz</a>
+        <button class="btn sm gold" id="qrModalCopy" type="button" data-i18n="common.copy" data-i18n-icon="copy">Kopiuj</button>
       </div>
     </div>
   </div>
@@ -585,11 +582,11 @@
         <button class="btn sm" id="deviceLostX" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <p id="deviceLostText" style="white-space:pre-line;line-height:1.5"></p>
-      <div class="modal-actions"><button class="btn gold" id="deviceLostClose" type="button" data-i18n="common.a2hsOk">OK</button></div>
+      <div class="modal-actions"><button class="btn gold" id="deviceLostClose" type="button" data-i18n="common.a2hsOk" data-i18n-icon="check">OK</button></div>
     </div>
   </div>
-  <div class="overlay" id="shareDeviceOverlay" role="dialog" aria-modal="true" aria-labelledby="shareDeviceTitle" style="display:none;">
-    <div class="modal shareModal">
+  <div class="overlay modal--sheet" id="shareDeviceOverlay" role="dialog" aria-modal="true" aria-labelledby="shareDeviceTitle" style="display:none;">
+    <div class="modal shareModal" data-sheet-local-actions>
       <div class="mHead">
         <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij</div>
         <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
@@ -601,15 +598,15 @@
           <input id="shareDeviceEmail" class="inp" type="text"
                  placeholder="Nazwa użytkownika lub e-mail..."
                  data-i18n-placeholder="bases.shareModal.placeholder"/>
-          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="control.shareDevice">Udostępnij</button>
+          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n-title="control.shareDevice" data-i18n-aria-label="control.shareDevice" aria-label="Udostępnij"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDevice">Udostępnij</span></button>
         </div>
       </section>
 
       <section class="shareSection shareSection--friends">
-        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionFriends">Znajomi, którym możesz udostępnić</div>
-        <div id="shareDeviceSubsList" class="shareList"></div>
+        <div class="shareSectionHeading"><div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionFriends">Znajomi, którym możesz udostępnić</div><div id="shareDeviceBulkActions"></div></div>
+        <div id="shareDeviceSubsList" class="shareList shareList--scroll"></div>
         <div class="shareSectionActions">
-          <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled data-i18n="control.shareDeviceModal.shareSelected">Udostępnij zaznaczonym</button>
+          <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled data-i18n-title="control.shareDeviceModal.shareSelected" data-i18n-aria-label="control.shareDeviceModal.shareSelected" aria-label="Udostępnij zaznaczonym"><i class="ico" data-icon="people" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDeviceModal.shareSelected">Udostępnij zaznaczonym</span></button>
         </div>
       </section>
 
@@ -620,20 +617,12 @@
     </div>
   </div>
 
-  <main class="wrap wide">
-    <div class="shell">
-      <div class="control-tabs-card">
-        <section class="main control-main-card">
-          <div id="app"><!-- renderowane przez control/js/ui.js --></div>
-        </section>
-      </div>
-    </div>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

@@ -203,3 +203,15 @@ body {
 svg circle,svg rect {
     transition: none!important
 }
+/* Powolne odsłanianie ekranu po pierwszym stanie gry/renderze. */
+[data-skel-step] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+[data-skel-step].skel-step-ready {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}

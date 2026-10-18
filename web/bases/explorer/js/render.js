@@ -1,9 +1,9 @@
 // base-explorerjs/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
-import { VIEW, META, META_ORDER } from "./state.js?v=v2026-10-18T17330";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-18T17330";
+import { VIEW, META, META_ORDER } from "./state.js?v=v2026-10-18T17375";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-18T17375";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");
@@ -195,10 +195,12 @@ export function renderToolbar(state) {
   // Renderuj "szkielet" TYLKO raz, potem aktualizuj wnętrze (żeby nie tracić fokusu w input)
   if (elToolbar.dataset.ready !== "1") {
     elToolbar.innerHTML = `
+      <div class="search-row">
       <div class="searchBox" id="searchBox">
         <div id="searchChips" class="searchChips"></div>
         <input id="searchText" class="searchText" placeholder="${t("baseExplorer.search.placeholder")}" />
-        <button id="searchClearBtn" class="btn" type="button" title="${t("baseExplorer.search.clear")}" aria-label="${t("baseExplorer.search.clear")}">${icon("close")}</button>
+      </div>
+      <button id="searchSubmitBtn" class="btn search-submit" type="button" title="${t("common.searchByName")}" aria-label="${t("common.searchByName")}">${icon("search")}</button>
       </div>
 
       <div class="toolbar-btns-row">
@@ -333,6 +335,15 @@ export function renderToolbar(state) {
     if (!active && inp.value !== nextVal) {
       inp.value = nextVal;
     }
+  }
+  const searchButton = document.getElementById("searchSubmitBtn");
+  const hasSearch = !!String(tokens.text || "").trim() || !!tokens.tagIds?.length;
+  if (searchButton) {
+    searchButton.innerHTML = icon(hasSearch ? "close" : "search");
+    const label = t(hasSearch ? "baseExplorer.search.clear" : "common.searchByName");
+    searchButton.title = label;
+    searchButton.setAttribute("aria-label", label);
+    searchButton.classList.toggle("is-active", hasSearch);
   }
 
   // 3) Disable przycisków toolbar – spójnie z actions/context-menu + reguły selekcji (0/1/wiele)
@@ -559,7 +570,7 @@ export function renderTags(state) {
   const metaHeader = `<div style="opacity:.75; margin-bottom:6px; margin-top:4px;">${t("baseExplorer.tags.metaHeader")}</div>`;
   const addBtn = `
     <button id="btnAddTag" class="btn" type="button" style="width:100%; margin-top:10px;">
-      ${t("baseExplorer.tags.addTag")}
+      ${icon("plus")} ${t("baseExplorer.tags.addTag")}
     </button>
   `;
 

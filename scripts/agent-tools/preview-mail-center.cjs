@@ -24,7 +24,7 @@ try{
     if(endpoint==='exchange'){exchanges++;data={...active,csrf:'fixture-csrf'};}
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
    });
-   await page.goto(`http://127.0.0.1:${port}/mail/?lang=pl${state==='confirm'?'&m='+ 'c'.repeat(64):''}`);await page.waitForFunction(()=>document.getElementById('mailTitle').textContent!=='Ładuję…');await page.evaluate(()=>document.fonts.ready);
+   await page.goto(`http://127.0.0.1:${port}/mails/?lang=pl${state==='confirm'?'&m='+ 'c'.repeat(64):''}`);await page.waitForFunction(()=>document.getElementById('mailTitle').textContent!=='Ładuję…');await page.evaluate(()=>document.fonts.ready);
    if(state==='sent'){await page.locator('#mailInput').fill(active.email);await page.locator('#mailForm button').click();await page.getByRole('heading',{name:'Sprawdź swoją skrzynkę'}).waitFor();}
    if(state==='entry'||state==='expired')await page.locator('#mailInput').fill(state==='entry'?'':'anna@example.net');
    await page.screenshot({path:`${out}/${state}-${size.name}.png`});
@@ -69,5 +69,5 @@ try{
    await page.close();console.log(state,size.name,'OK');
   }
  }
- const page=await browser.newPage({viewport:{width:844,height:390}});await page.route('**/_api/mail/**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(active)}));await page.goto(`http://127.0.0.1:${port}/mail/?lang=pl`);await page.getByRole('heading',{name:'Moje powiadomienia'}).waitFor();await page.screenshot({path:`${out}/active-landscape.png`});await page.close();
+ const page=await browser.newPage({viewport:{width:844,height:390}});await page.route('**/_api/mail/**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(active)}));await page.goto(`http://127.0.0.1:${port}/mails/?lang=pl`);await page.getByRole('heading',{name:'Moje powiadomienia'}).waitFor();await page.screenshot({path:`${out}/active-landscape.png`});await page.close();
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);server.close();process.exitCode=1;});

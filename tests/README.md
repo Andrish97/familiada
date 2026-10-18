@@ -149,6 +149,12 @@ plik, to inaczej". Lokalnie to samo bez żadnego dodatkowego ustawienia:
 
 ## Pula kont testX (`test1@familiada.online` … `test10@…`)
 
+`test17@familiada.online` jest dedykowane ręcznemu workflow galerii E20 i nie
+należy do puli zwykłych workerów. Workflow odtwarza je z tym samym sekretem
+`TEST_PASSWORD`, zachowuje stałe ID oraz używa własnych, oznaczonych danych.
+Skrzynka test17 jest dostępna wyłącznie w tym workflow; nie czyści on całej
+skrzynki, tylko odczytuje wiadomości potrzebne do zrzutów.
+
 > **test14@familiada.online** — skrzynka pocztowa **bez konta** (Worker zapisuje maile w prywatnej skrzynce `e2e_emails`, dostępnej przez podpisane API testowe tak jak test1–test13), do scenariuszy „odbiorca bez konta” (subskrybent tylko e-mail, urządzenie na e-mail); nie zakładać na nim konta.
 >
 > **Zwykła pula pomija** test9 i test10 (druga sesja — całkowicie wykluczone). test4/test5 wróciły do puli 2026-10-10.
@@ -348,7 +354,7 @@ Pliki aplikacji są w `web/`: strona `<nazwa>/index.html`, jej skrypty w
 odpowiadają ścieżkom względem `web/`. Skrypt wersjonowania obejmuje tylko
 frontend. Scenariusze E2E pozostają testami produkcyjnymi.
 
-### Usuwanie dedykowanego konta15
+### Dedykowane konta testowe
 
 Do usuwania używać15, poza zwykłą pulą.11 testuje hasło,12 profil i zmianę
 adresu na13;14 pozostaje skrzynką bez konta,9/10 wyłączone.
@@ -360,3 +366,7 @@ sprawdzać logowanie w świeżym kontekście. Dane i dawne dostępy nie wracają
 usunięcie15 przez UI, rzeczywiste maile, oba typy głosów i stare linki.
 Skrzynka15 wymaga reguły Cloudflare kierującej ją do Workera `familiada`.
 Punktowo, jeden przebieg naraz, bez retry. Nie logować haseł ani tokenów.
+
+`test17` jest stałym kontem galerii E20, poza testami konta15 i zwykłą pulą.
+Odtworzenie odbywa się przez chroniony endpoint Workera przy użyciu wspólnego
+`TEST_PASSWORD`; nie usuwa zasobów galerii ani całej poczty.

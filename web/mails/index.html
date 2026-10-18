@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <link rel="canonical" href="https://www.familiada.online/mails/"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="referrer" content="no-referrer"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
+  <title data-i18n="mailCenter.pageTitle">Familiada — centrum maili</title>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/go/css/go.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/mail/css/mail.css?v=v2026-10-18T17375"/>
+  <script type="module" src="/mail/js/mail.js?v=v2026-10-18T17375"></script>
+</head>
+<body class="poll-go-body mail-body">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+    <div class="topbar-section topbar-section-1"><a class="brand" href="/">FAMILIADA</a></div>
+    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-3"></div>
+    <div class="topbar-section topbar-section-4"></div>
+  </header>
+  <main class="mail-wrap">
+    <section class="mail-summary" id="mailSummary" data-skel-step hidden>
+      <section class="mail-preference" id="mailPreference" aria-labelledby="mailPreferenceTitle">
+        <div><h2 id="mailPreferenceTitle"></h2><p id="mailPreferenceText"></p></div><button id="mailPreferenceButton" class="btn sm" type="button"></button>
+      </section>
+    </section>
+    <section class="card poll-go-card mail-entry" id="mailEntry" data-skel-step aria-labelledby="mailTitle">
+      <div class="mail-heading" id="mailHeading"><h1 class="poll-go-title" id="mailTitle" data-i18n="mailCenter.loading">Ładuję…</h1><span id="mailAddress" hidden></span></div>
+      <p class="poll-go-sub" id="mailMessage" role="status"></p>
+      <form id="mailForm" class="mail-form" hidden>
+        <div class="mail-form-row"><input id="mailInput" class="inp" type="email" autocomplete="email" maxlength="320" required data-i18n-placeholder="mailCenter.emailPlaceholder" data-i18n-aria-label="mailCenter.emailLabel" placeholder="Wpisz swój adres e-mail" aria-label="Twój adres e-mail"/><button class="btn gold" type="submit" data-i18n="mailCenter.sendLink" data-i18n-icon="envelope-out">Wyślij link</button></div>
+      </form>
+      <div id="mailActions" class="poll-go-actions"></div>
+    </section>
+    <section class="games-shell mail-list-shell" id="mailLists" data-skel-step hidden>
+      <div class="tabs-card hub-tabs polls-tabs-card mail-tabs-card">
+        <div class="tabs-strip" role="tablist">
+          <div class="tab-slot slot-share active">
+            <button class="tab-label active" id="subscriptionTab" type="button" role="tab" aria-controls="subscriptionPanel" aria-selected="true" data-tab="subscriptions"><span data-i18n="mailCenter.subscriptions">Subskrypcje</span><span class="badge" id="subscriptionBadge" hidden></span></button>
+            <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+          <div class="tab-slot slot-results">
+            <button class="tab-label" id="itemsTab" type="button" role="tab" aria-controls="itemsPanel" aria-selected="false" data-tab="items"><span data-i18n="mailCenter.tasksTab">Zadania</span><span class="badge" id="itemsBadge" hidden></span></button>
+            <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+        </div>
+        <div class="card mail-panels-card">
+        <section class="card mail-panel active" id="subscriptionPanel" data-panel="subscriptions" aria-labelledby="subscriptionTitle subscriptionTab" role="tabpanel">
+          <h2 class="shareSectionTitle mail-panel-title" id="subscriptionTitle"><span data-i18n="mailCenter.subscriptions">Subskrypcje</span></h2>
+          <div class="shareList" id="subscriptionList"></div>
+        </section>
+        <section class="card mail-panel" id="itemsPanel" data-panel="items" aria-labelledby="itemsTitle itemsTab" role="tabpanel">
+          <h2 class="shareSectionTitle mail-panel-title" id="itemsTitle"><span data-i18n="mailCenter.tasksTab">Zadania</span></h2>
+          <div class="shareList" id="itemsList"></div>
+        </section>
+        </div>
+      </div>
+    </section>
+    <aside class="mail-discover"><span data-i18n="mailCenter.discover">Familiada na Twoje spotkania i wydarzenia.</span><a href="/" data-i18n="mailCenter.explore">Poznaj system</a><a href="/login/" data-i18n="mailCenter.register">Logowanie i rejestracja</a></aside>
+  </main>
+  <footer class="footer mail-footer"><div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div><button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button></footer>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
+</body>
+</html>

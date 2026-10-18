@@ -1,16 +1,18 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-18T17330";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T17330";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T17330";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-18T17375";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T17375";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T17375";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T17375";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17375";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
@@ -19,6 +21,8 @@ const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "
    Constants
 ========================================================= */
 const PAGE_SIZE = 20;
+const MARKETPLACE_TABS = ["browse", "mine"];
+const DEFAULT_MARKETPLACE_TAB = "browse";
 
 /* =========================================================
    State
@@ -63,6 +67,7 @@ const els = {
   browseGrid:  document.getElementById("browseGrid"),
   browseInfo:  document.getElementById("browseInfo"),
   searchInput: document.getElementById("searchInput"),
+  btnSearchFocus: document.getElementById("btnSearchFocus"),
   langFilter: document.getElementById("langFilter"),
   sortSelect: document.getElementById("sortSelect"),
   loadMoreWrap:document.getElementById("loadMoreWrap"),
@@ -119,6 +124,14 @@ function showView(name) {
   if (els.btnBackBrowse) els.btnBackBrowse.hidden = name !== "mine";
 }
 
+function switchMarketplaceTab(name) {
+  const next = name === "mine" && (isGuest || !currentUser) ? DEFAULT_MARKETPLACE_TAB : name;
+  setTab(next, DEFAULT_MARKETPLACE_TAB);
+  showView(next);
+  if (next === "mine") void loadMySent();
+  else void loadBrowse({ reset: true });
+}
+
 function langFilterOptions() {
   return [
     { value: "all", label: t("marketplace.filterAll") },
@@ -143,13 +156,57 @@ function refreshBrowseSelectLabels() {
   sortUiSelect?.setOptions(sortOptions());
 }
 
+function syncSearchButton() {
+  const active = !!String(els.searchInput?.value || "").trim();
+  if (els.btnSearchFocus) {
+    els.btnSearchFocus.innerHTML = icon(active ? "close" : "search");
+    els.btnSearchFocus.classList.toggle("is-active", active);
+    const label = t(active ? "marketplace.searchClear" : "marketplace.searchLabel");
+    els.btnSearchFocus.setAttribute("aria-label", label);
+    els.btnSearchFocus.title = label;
+  }
+}
+
+function syncBrowseControlStates() {
+  els.langFilter?.classList.toggle("is-active", currentLangFilter !== "all");
+  els.sortSelect?.classList.toggle("is-active", currentSort !== "recommended");
+  syncSearchButton();
+}
+
 function initBrowseUiSelects() {
+  els.btnSearchFocus?.addEventListener("click", async () => {
+    const input = els.searchInput;
+    if (String(input?.value || "").trim()) {
+      input.value = "";
+      syncSearchButton();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+    const inputVisible = !!input
+      && getComputedStyle(input).display !== "none"
+      && getComputedStyle(input).visibility !== "hidden"
+      && input.getClientRects().length > 0;
+    if (inputVisible) {
+      input.focus();
+      return;
+    }
+    const value = await promptModal({
+      title: t("marketplace.searchLabel"),
+      value: currentSearch,
+      placeholder: t("marketplace.searchPlaceholder"),
+    });
+    if (value === null) return;
+    els.searchInput.value = value;
+    syncSearchButton();
+    els.searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+  });
   langFilterUiSelect = initUiSelect(els.langFilter, {
     options: langFilterOptions(),
     value: currentLangFilter,
     onChange: async (value) => {
       if (value === currentLangFilter) return;
       currentLangFilter = value;
+      syncBrowseControlStates();
       syncBrowseParams();
       await loadBrowse({ reset: true });
     },
@@ -161,6 +218,7 @@ function initBrowseUiSelects() {
     onChange: async (value) => {
       if (value === currentSort) return;
       currentSort = value;
+      syncBrowseControlStates();
       syncBrowseParams();
       await loadBrowse({ reset: true });
     },
@@ -217,6 +275,7 @@ async function loadBrowse({ reset = false } = {}) {
   browseRows = rows;
 
   if (reset && rows.length === 0) {
+    if (els.browseInfo) els.browseInfo.textContent = "";
     if (els.browseGrid) els.browseGrid.innerHTML =
       `<div class="mkt-empty">${esc(t("marketplace.empty"))}</div>`;
     if (els.loadMoreWrap) els.loadMoreWrap.hidden = true;
@@ -298,6 +357,7 @@ async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
   lastDetailTrigger = trigger || document.activeElement;
 
   // Show modal immediately with loading state
+  if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "loading";
   if (els.detailTitle) els.detailTitle.textContent = "…";
   if (els.detailMeta) els.detailMeta.textContent = "";
   if (els.detailDesc) els.detailDesc.textContent = "";
@@ -314,6 +374,7 @@ async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
   if (requestId !== detailRequest) return;
   if (error || !data) {
     console.error("[marketplace] openDetail error:", error);
+    if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "error";
     if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
     exitModalSheet(els.gameDetailOverlay);
     detailGameId = null;
@@ -324,6 +385,7 @@ async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
   const g = data;
   detailGame = g;
   renderDetail(g);
+  if (els.gameDetailOverlay) els.gameDetailOverlay.dataset.detailState = "ready";
 
   if (updateUrl) setDetailUrl(g.slug || id);
   els.btnDetailClose?.focus();
@@ -498,7 +560,7 @@ async function loadMySent() {
   const rows = Array.isArray(data) ? data : [];
   if (els.mySentInfo) els.mySentInfo.textContent = "";
   if (!rows.length) {
-    els.mySentList.innerHTML = `<p class="mkt-empty">${esc(t("marketplace.mySent.empty"))}</p>`;
+    els.mySentList.innerHTML = `<div class="mkt-empty">${esc(t("marketplace.mySent.empty"))}</div>`;
     return;
   }
 
@@ -515,7 +577,7 @@ async function loadMySent() {
       ? `<div class="mkt-sent-note">${esc(t("marketplace.mySent.reasonLabel").replace("{note}", g.moderation_note))}</div>`
       : "";
     const withdrawBtn = g.status === "published"
-      ? `<button class="btn sm" data-withdraw="${esc(g.id)}" type="button">${esc(t("marketplace.mySent.btnWithdraw"))}</button>`
+      ? `<button class="btn sm" data-withdraw="${esc(g.id)}" type="button">${icon("close")}<span>${esc(t("marketplace.mySent.btnWithdraw"))}</span></button>`
       : "";
     const ratingInfo = g.rating_count
       ? `<span class="mkt-sent-rating">${starsDisplay(g.avg_rating, g.rating_count)}</span>`
@@ -529,7 +591,7 @@ async function loadMySent() {
         ${note}
       </div>
       <div class="mkt-sent-actions">
-        <button class="btn sm" data-preview="${esc(g.id)}" type="button">${esc(t("marketplace.mySent.btnPreview"))}</button>
+        <button class="btn sm" data-preview="${esc(g.id)}" type="button">${icon("eye")}<span>${esc(t("marketplace.mySent.btnPreview"))}</span></button>
         ${withdrawBtn}
       </div>
     </div>`;
@@ -795,15 +857,15 @@ function wireEvents() {
   // Browse
   els.btnMySent?.addEventListener("click", async () => {
     if (isGuest || !currentUser) return;
-    showView("mine");
-    await loadMySent();
+    switchMarketplaceTab("mine");
   });
   els.btnBackBrowse?.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    showView("browse");
+    switchMarketplaceTab(DEFAULT_MARKETPLACE_TAB);
   });
 
   els.searchInput?.addEventListener("input", () => {
+    syncSearchButton();
     clearTimeout(searchTimer);
     searchTimer = setTimeout(async () => {
       currentSearch = els.searchInput.value;
@@ -868,7 +930,18 @@ function wireEvents() {
     } else {
       closeDetail({ updateUrl: false });
       restoreBrowseParams();
-      loadBrowse({ reset: true });
+      const tab = tabFromUrl(MARKETPLACE_TABS, DEFAULT_MARKETPLACE_TAB);
+      if (tab === "mine" && (isGuest || !currentUser)) {
+        setTab(DEFAULT_MARKETPLACE_TAB, DEFAULT_MARKETPLACE_TAB);
+        showView(DEFAULT_MARKETPLACE_TAB);
+        loadBrowse({ reset: true });
+      } else if (tab === "mine") {
+        showView("mine");
+        loadMySent();
+      } else {
+        showView(DEFAULT_MARKETPLACE_TAB);
+        loadBrowse({ reset: true });
+      }
     }
   });
 }
@@ -889,6 +962,7 @@ function restoreBrowseParams() {
   currentLangFilter = ["pl", "en", "uk"].includes(filter) ? filter : "all";
   currentSort = ["recommended", "rating", "popular", "newest", "title"].includes(sort) ? sort : "recommended";
   if (els.searchInput) els.searchInput.value = currentSearch;
+  syncBrowseControlStates();
   langFilterUiSelect?.setValue(currentLangFilter, { silent: true });
   sortUiSelect?.setValue(currentSort, { silent: true });
 }
@@ -898,18 +972,26 @@ function restoreBrowseParams() {
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
   const i18nP = initI18n({ withSwitcher: true });
-  // Strona publiczna: user albo null. Anonim wraca na Stronę główną (mapa), bez „Wskazówek”.
-  const userP = initPage("marketplace", { ready: i18nP, back: els.btnGoGames, account: { showAuthEntry: false } });
+  const requestedTab = tabFromUrl(MARKETPLACE_TABS, DEFAULT_MARKETPLACE_TAB);
+  const userP = initPage("marketplace", {
+    ready: i18nP,
+    back: els.btnGoGames,
+    account: { showAuthEntry: false },
+  });
   await i18nP;
   document.documentElement.classList.remove('page-loading');
+  initListHeaderLayout(".mkt-head");
   initBrowseUiSelects();
   window.addEventListener("i18n:lang", refreshBrowseSelectLabels);
 
   currentUser = await userP;
   isGuest = !currentUser || isGuestUser(currentUser);
-
   // "Moje wysłane" button — only for logged-in non-guests
   if (els.btnMySent) els.btnMySent.hidden = isGuest || !currentUser;
+  const initialTab = requestedTab === "mine" && (isGuest || !currentUser)
+    ? DEFAULT_MARKETPLACE_TAB
+    : requestedTab;
+  if (initialTab !== requestedTab) setTab(initialTab, DEFAULT_MARKETPLACE_TAB);
 
   // init ui-select for game picker in submit modal
   submitGameUiSelect = initUiSelect(els.submitGameSelectEl, {
@@ -923,7 +1005,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   restoreBrowseParams();
 
 
-  showView("browse");
+  showView(initialTab);
+  if (initialTab === "mine") await loadMySent();
   await loadBrowse({ reset: true });
   document.getElementById('browseGrid')?.classList.add('skel-step-ready');
 

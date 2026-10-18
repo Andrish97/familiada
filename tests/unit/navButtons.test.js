@@ -24,13 +24,24 @@ test("są strony z przyciskami (games, bases, manual, gameSettings)", () => {
   for (const id of ["games", "bases", "manual", "gameSettings"]) assert.ok(PAGES[id].buttons, id);
 });
 
+test("wymagania szerokości stron są jawne i odróżniają edytory od Control", () => {
+  assert.equal(PAGES.logoText.minViewportWidth, 700);
+  assert.equal(PAGES.logoDraw.minViewportWidth, 700);
+  assert.equal(PAGES.logoImage.minViewportWidth, 700);
+  assert.equal(PAGES.control.minViewportWidth, 980);
+  assert.equal(PAGES.gameSettings.minViewportWidth, 600);
+  for (const page of Object.values(PAGES)) {
+    if (page.minViewportWidth) assert.ok(Number.isFinite(page.minViewportWidth));
+  }
+});
+
 test("każdy cel przycisku istnieje w PAGES, a karta celu na jego liście tabs", () => {
   for (const [id, p] of withButtons) {
     for (const [bid, spec] of Object.entries(p.buttons)) {
       assert.ok(PAGES[spec.to], `${id}.${bid}.to = ${spec.to}`);
       if (spec.tab) assert.ok(PAGES[spec.to].tabs?.includes(spec.tab), `${id}.${bid}.tab = ${spec.tab}`);
       if (spec.roles) for (const r of spec.roles) assert.ok(ROLES.includes(r), `${id}.${bid} rola ${r}`);
-      if (spec.device) assert.ok(["wide", "noPhone"].includes(spec.device), `${id}.${bid}.device`);
+      if (spec.minViewportWidth) assert.ok(Number.isFinite(spec.minViewportWidth) && spec.minViewportWidth > 0, `${id}.${bid}.minViewportWidth`);
       assert.ok(buttonRoles(id, spec).length > 0, `${id}.${bid}: żadna rola nie widzi przycisku`);
     }
   }
@@ -99,14 +110,20 @@ test("w kodzie stron nie ma twardych przejść na adresy z mapy", () => {
   }
 });
 
-test("widoczność przycisków: rola i urządzenie", () => {
+test("widoczność przycisków: rola i wymagany viewport, niezależnie od formatu urządzenia", () => {
   const connect = PAGES.games.buttons.btnConnectDevice;
-  assert.equal(buttonVisible("games", connect, "user", false), true);
-  assert.equal(buttonVisible("games", connect, "guest", false), false);
+  assert.equal(buttonVisible("games", connect, "user", { viewportWidth: 390, formFactor: "phone" }), true);
+  assert.equal(buttonVisible("games", connect, "guest", { viewportWidth: 390, formFactor: "phone" }), false);
   const play = PAGES.games.buttons.btnPlay;
-  assert.equal(buttonVisible("games", play, "guest", false), true);
-  assert.equal(buttonVisible("games", play, "guest", true), false, "device wide: ukryty na telefonie");
-  assert.equal(buttonVisible("games", PAGES.games.buttons.btnBases, "guest", true), true);
+  assert.equal(buttonVisible("games", play, "guest", { viewportWidth: 1280, formFactor: "desktop" }), true);
+  assert.equal(buttonVisible("games", play, "guest", { viewportWidth: 844, formFactor: "phone" }), false, "telefon landscape nadal nie mieści Control");
+  assert.equal(buttonVisible("games", play, "guest", { viewportWidth: 1200, formFactor: "phone" }), true, "szeroki viewport telefonu spełnia wymaganie strony");
+  assert.equal(buttonVisible("games", PAGES.games.buttons.btnBases, "guest", { viewportWidth: 390, formFactor: "phone" }), true);
+  for (const [id, page] of Object.entries(PAGES)) {
+    if (page.minViewportWidth !== 700) continue;
+    assert.equal(buttonVisible("games", { to: id, minViewportWidth: page.minViewportWidth }, "guest", { viewportWidth: 844, formFactor: "phone" }), true, `${id} dostępny na telefonie poziomo`);
+    assert.equal(buttonVisible("games", { to: id, minViewportWidth: page.minViewportWidth }, "guest", { viewportWidth: 390, formFactor: "phone" }), false, `${id} ukryty przy zbyt wąskim viewportcie`);
+  }
   assert.deepEqual(buttonRoles("games", PAGES.games.buttons.btnBases), ["guest", "user"]);
 });
 

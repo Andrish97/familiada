@@ -7,13 +7,13 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T17330";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-18T17330";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T17375";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-18T17375";
 
 const btnBack = document.getElementById("btnBack");
 
@@ -404,8 +404,8 @@ export async function openTagsModal(state, opts = {}) {
         const ui = triToUi(tri);
 
         return `
-          <label class="tags-row" data-tag-id="${tag.id}" style="opacity:${editor ? "1" : "0.75"}; cursor:${editor ? "pointer" : "default"};">
-            <input type="checkbox" data-tag-id="${tag.id}" ${ui.checked ? "checked" : ""} ${editor ? "" : "disabled"} />
+          <label class="tags-row" data-tag-id="${tag.id}" data-state="${tri}" style="opacity:${editor ? "1" : "0.75"}; cursor:${editor ? "pointer" : "default"};">
+            <input type="checkbox" data-tag-id="${tag.id}" aria-checked="${tri === "some" ? "mixed" : ui.checked}" ${ui.checked ? "checked" : ""} ${editor ? "" : "disabled"} />
             <span class="tag-dot" style="background:${tag.color || "#777"}"></span>
             <span class="m-p">#${String(tag.name || "")}</span>
             ${tri === "some" ? `<span class="m-note">${t("baseExplorer.tags.partial")}</span>` : `<span class="m-note" style="visibility:hidden;">.</span>`}
@@ -722,7 +722,22 @@ export async function openTagsModal(state, opts = {}) {
 
   // OPEN
   E.overlay.style.display = "grid";
-  enterModalSheet(E.overlay, { backBtn: btnBack, onClose: () => close(false) });
+  enterModalSheet(E.overlay, {
+    backBtn: btnBack,
+    onClose: () => close(false),
+    onBack: () => {
+      if (m.layer === 3) {
+        go(2);
+        return true;
+      }
+      if (m.layer === 2 && mode === "assign") {
+        go(1);
+        return true;
+      }
+      // Tryby create/edit zaczynają się od warstwy 2; nie mają warstwy 1.
+      return false;
+    },
+  });
   document.addEventListener("keydown", onKey);
 
   // X wszędzie zamyka modal

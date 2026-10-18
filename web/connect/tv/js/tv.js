@@ -1,6 +1,26 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-18T17375";
 await initI18n();
+const profile = getDeviceProfile();
+const isTv = profile.formFactor === "tv";
+const screenTooSmall = isTv && (
+  Math.max(profile.screenPixelWidth, profile.screenPixelHeight) < TV_HD_RESOLUTION.width
+  || Math.min(profile.screenPixelWidth, profile.screenPixelHeight) < TV_HD_RESOLUTION.height
+);
+const tvGuardBlocked = !isTv || screenTooSmall;
+if (tvGuardBlocked) {
+  document.documentElement.removeAttribute("data-tv-guard-pending");
+  if (screenTooSmall) {
+    showPageGuard({ kind: "device", state: "screen", iconName: "fullscreen-enter", titleKey: "pageGuard.screenTitle", messageKey: "pageGuard.screenMessage", backHref: "/connect/" });
+  } else {
+    showPageGuard({ kind: "device", state: "tv-only", iconName: "display", titleKey: "pageGuard.tvOnlyTitle", messageKey: "pageGuard.tvOnlyMessage", backHref: "/connect/" });
+  }
+} else {
+  document.documentElement.removeAttribute("data-tv-guard-pending");
+}
+if (!tvGuardBlocked) {
 const form = document.getElementById("tvConnectForm");
 const input = document.getElementById("tvCode");
 const button = document.getElementById("tvConnect");
@@ -74,3 +94,5 @@ form.addEventListener("submit", async (event) => {
 input.disabled = false;
 button.disabled = false;
 input.focus();
+document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
+}

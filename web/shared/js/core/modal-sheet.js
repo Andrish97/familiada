@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-18T17330";
-import { icon, iconText } from "./icons.js?v=v2026-10-18T17330";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-18T17330";
+import { t } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { icon, iconText } from "./icons.js?v=v2026-10-18T17375";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-18T17375";
 
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = typeof window !== "undefined" && window.matchMedia
@@ -19,6 +19,7 @@ const sheetMql = typeof window !== "undefined" && window.matchMedia
   : { matches: false, addEventListener() {}, addListener() {} };
 
 let activeClose = null;
+let activeBack = null;
 let activeBackBtn = null;
 let backBtnOrigText = null;
 let activeOverlay = null;
@@ -28,6 +29,7 @@ let activeDialogKey = null;
 let handlingPopstate = false;
 const sheetRoutes = new Map();
 let currentPageId = null;
+const sheetLayouts = new WeakMap();
 
 function urlDialog() {
   const href = typeof location !== "undefined" && location.href ? location.href : "/";
@@ -87,7 +89,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-18T17330").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-18T17375").then((module) => module.openContactModal());
     }, 0);
     return;
   }
@@ -114,6 +116,66 @@ export function setModalSheetPage(pageId) {
 
 export function isSheetViewport() {
   return sheetMql.matches;
+}
+
+// Arkusze mają wspólny szkielet tylko w prezentacji mobilnej: sam nagłówek,
+// pasek akcji oraz osobno przewijaną treść z podpowiedziami. Wrappery są display:contents
+// poza trybem sheet, więc układ desktopowy i istniejące selektory pozostają.
+function prepareSheetLayout(overlayEl) {
+  const modal = overlayEl?.querySelector(":scope > .modal, :scope > .market-preview-card");
+  if (!modal || modal.dataset.sheetLayoutReady === "1") return;
+  const children = [...modal.children];
+  const headerSelectors = [".uni-head", ".mHead", ".tagsHead", ".bld-preview-head", ".bld-preview-switch", ".mkt-detail-head", ".previewModalTitle", ".mTitle"];
+  const actionSelectors = [".uni-foot", ".modal-actions", ".tagsFoot", ".mkt-detail-actions"];
+  const nestedActionSelectors = [".baseShareLookup", ".baseShareFooter", ".shareSection--mail", ".shareSectionActions"];
+  const isHeader = el => headerSelectors.some(sel => el.matches(sel));
+  const isAction = el => actionSelectors.some(sel => el.matches(sel));
+  const hintNodes = [...modal.querySelectorAll(".mSub, .uni-hint, .hint, .field-hint")]
+    .filter(el => el.textContent.trim() && el.getClientRects().length > 0);
+  const onlyHint = hintNodes.length === 1 ? hintNodes[0] : null;
+  const isGlobalHint = onlyHint?.matches(".mSub")
+    || (onlyHint?.matches(".uni-hint") && onlyHint.parentElement?.matches(".uni-body"));
+  const movableHint = isGlobalHint ? onlyHint : null;
+  const headerChildren = children.filter(isHeader);
+  const actionChildren = children.filter(isAction);
+  const nestedActions = modal.hasAttribute("data-sheet-local-actions")
+    ? []
+    : [...modal.querySelectorAll(nestedActionSelectors.join(","))]
+      .filter(el => !children.includes(el) && !el.parentElement?.closest(".sheet-modal-actions"));
+  const relocated = [...nestedActions, ...(movableHint && !children.includes(movableHint) ? [movableHint] : [])];
+  sheetLayouts.set(modal, {
+    childNodes: [...modal.childNodes],
+    nested: relocated.map(el => ({ el, parent: el.parentNode, next: el.nextSibling })),
+  });
+  const header = document.createElement("div");
+  header.className = "sheet-modal-head";
+  const actions = document.createElement("div");
+  actions.className = "sheet-modal-actions";
+  const body = document.createElement("div");
+  body.className = "sheet-modal-body";
+  for (const child of children) {
+    if (headerChildren.includes(child)) header.append(child);
+    else if (actionChildren.includes(child)) actions.append(child);
+    else body.append(child);
+  }
+  if (movableHint && !header.contains(movableHint)) header.append(movableHint);
+  for (const action of nestedActions) actions.append(action);
+  if (!header.childElementCount) header.hidden = true;
+  if (!actions.childElementCount) actions.hidden = true;
+  modal.replaceChildren(header, actions, body);
+  modal.dataset.sheetLayoutReady = "1";
+}
+
+function restoreSheetLayout(overlayEl) {
+  const modal = overlayEl?.querySelector(":scope > .modal, :scope > .market-preview-card");
+  const original = modal && sheetLayouts.get(modal);
+  if (!original) return;
+  for (const { el, parent, next } of original.nested) {
+    if (parent) parent.insertBefore(el, next?.parentNode === parent ? next : null);
+  }
+  modal.replaceChildren(...original.childNodes);
+  delete modal.dataset.sheetLayoutReady;
+  sheetLayouts.delete(modal);
 }
 
 // Modal zostaje otwarty niezależnie od szerokości ekranu (np. tablet
@@ -146,6 +208,8 @@ function applyPresentation(matches) {
 
 function onSheetMqChange(e) {
   if (!activeClose) return; // żaden sheet modal aktualnie otwarty
+  if (e.matches) prepareSheetLayout(activeOverlay);
+  else restoreSheetLayout(activeOverlay);
   applyPresentation(e.matches);
 }
 sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.(onSheetMqChange);
@@ -156,8 +220,9 @@ sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.
 //   ekran zmieni szerokość podczas gdy modal jest otwarty).
 // opts.onClose: funkcja zamykająca TEN modal — wywoływana przez
 //   handleSheetBack() gdy użytkownik kliknie przycisk wstecz w topbarze.
-export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
-  if (!isSheetViewport()) return;
+export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
+  if (!isSheetViewport() || overlayEl?.classList.contains("modal--keep-dialog")) return;
+  prepareSheetLayout(overlayEl);
   if (!historyKey || !dialogAllowed(currentPageId, historyKey)) historyKey = null;
 
   // Wymuszone main.wrap{overflow:hidden;height:calc(100dvh - topbar-h)} w
@@ -177,7 +242,8 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
   if (activeDialogKey && currentKey !== activeDialogKey) {
     setUrlDialog(activeDialogKey, !restore);
   }
-  if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, keepBackBtnText } });
+  activeBack = typeof onBack === "function" ? onBack : null;
+  if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, onBack, keepBackBtnText } });
 
   if (backBtn) {
     activeBackBtn = backBtn;
@@ -185,16 +251,19 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
   }
 
   applyPresentation(true);
+  document.dispatchEvent(new CustomEvent("modal-sheet:enter", { detail: { overlay: overlayEl } }));
 }
 
 export function exitModalSheet(overlayEl) {
   const key = activeDialogKey;
   applyPresentation(false);
+  restoreSheetLayout(overlayEl || activeOverlay);
 
   activeOverlay = null;
   activeBackBtn = null;
   backBtnOrigText = null;
   activeClose = null;
+  activeBack = null;
   activeKeepBackBtnText = false;
   activeDialogKey = null;
 
@@ -219,6 +288,7 @@ export function exitModalSheet(overlayEl) {
 // Zwraca true, gdy przejęło kliknięcie (był otwarty sheet modal).
 export function handleSheetBack() {
   if (activeClose) {
+    if (activeBack?.() === true) return true;
     if (activeDialogKey && urlDialog() === activeDialogKey) history.back();
     else activeClose();
     return true;

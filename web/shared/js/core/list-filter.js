@@ -36,9 +36,12 @@ export function gameStateKey(status, { isPrepared = false, playOk = false } = {}
   return "draft";
 }
 
-/** Czy pokazać komunikat „brak wyników”: coś jest filtrowane/szukane, kafle są, żaden nie pasuje. */
+/** Czy pokazać kafel „brak wyników”: aktywne wyszukiwanie/filtr nie zwróciły kafli.
+ * `total` może wynosić zero, np. gdy bieżąca zakładka nie ma jeszcze żadnych
+ * elementów poza kaflem dodawania — aktywne kryterium nadal powinno pokazać pusty stan.
+ */
 export function showEmptyResult({ hasQuery, filterValue, total, visible }) {
-  return (!!hasQuery || !!filterValue) && total > 0 && visible === 0;
+  return (!!hasQuery || !!filterValue) && visible === 0;
 }
 
 /** Wspólne sortowanie list gier i baz (list-search.js, opcja sort); ustawienie w adresie (?sort=). */

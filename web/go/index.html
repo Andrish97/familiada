@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,14 +14,14 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="pollGo.title">Familiada — zaproszenie do ankiety</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/go/css/go.css?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/go/css/go.css?v=v2026-10-18T17375"/>
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/go/js/go.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/go/js/go.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="poll-go-body skel-body">
@@ -34,7 +34,7 @@
     <div class="topbar-section topbar-section-4"></div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" data-skel-step>
     <section class="card poll-go-card">
       <div class="poll-go-title" id="title" data-i18n="pollGo.loadingTitle">Ładuję zaproszenie…</div>
       <div class="poll-go-sub" id="message" data-i18n="pollGo.loadingText">Proszę czekać.</div>
@@ -47,11 +47,11 @@
       <div class="poll-go-hint" id="hint"></div>
     </section>
 
-    <div class="footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <footer class="footer wrap">
+    <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+    <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+  </footer>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

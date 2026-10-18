@@ -1,8 +1,7 @@
 // control/js/presence.js
-// Obecność urządzeń (kto jest online) — fakt, nie stan gry (plan, sekcja 2
-// punkt "0."), więc zostaje CAŁKOWICIE poza public.game_state, dokładnie
-// jak dziś: tabela public.device_presence, reużyta bez zmian, pollowana
-// przez Control.
+// Status dozwolonego urządzenia pochodzi z serwerowego lease primary.
+// device_presence pozostaje osobną telemetrią stanu karty i dźwięku; nie
+// rozstrzyga, czy urządzenie może brać udział w grze.
 //
 // W odróżnieniu od control/js/presence.js: brak jakiegokolwiek wysyłania
 // komend przy przejściu offline->online ("okno inicjalizacji" dzisiejszego
@@ -11,9 +10,9 @@
 // game_state przy każdym (re)connect). Ten moduł robi wyłącznie to, co jest
 // realnie faktem obecności: kto jest online, od kiedy.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
 
-const ONLINE_MS = 6_500; // Two missed 3s heartbeats, with a small margin.
+const STATUS_READ_TIMEOUT_MS = 6_500;
 const POLL_MS = 750;
 
 export function createPresence({ gameId, onChange }) {
@@ -29,6 +28,7 @@ export function createPresence({ gameId, onChange }) {
   let lastPageVisibility = { display: null, host: null, buzzer: null };
   let pageVisibilityChangedAt = { display: null, host: null, buzzer: null };
   let readUnavailable = false;
+  let metadataReadUnavailable = false;
   // Zgłoszone: "cały panel jest zlagowany, przewijanie też" — onChange()
   // (control/js/app.js's renderCurrent(), pełny root.innerHTML="" +
   // odbudowa dla większości ekranów) leciał na KAŻDY tick (co 1.5s), NAWET
@@ -40,11 +40,6 @@ export function createPresence({ gameId, onChange }) {
   // onChange() wyłącznie do realnych zmian obecności.
   let lastReported = null;
 
-  function isOnline(lastSeen) {
-    if (!lastSeen) return false;
-    return Date.now() - new Date(lastSeen).getTime() < ONLINE_MS;
-  }
-
   function pickNewest(rows, deviceType) {
     return rows
       .filter((r) => String(r.device_type || "").toLowerCase() === deviceType)
@@ -55,30 +50,44 @@ export function createPresence({ gameId, onChange }) {
     if (inFlight) return;
     inFlight = true;
     try {
-    const [presenceResult, unlockResult] = await Promise.all([
-      sb().from("device_presence")
+    const asResult = (promise) => Promise.resolve(promise).then(
+      (result) => result,
+      (error) => ({ data: null, error }),
+    );
+    const [presenceResult, unlockResult, leaseResult] = await Promise.all([
+      asResult(sb().from("device_presence")
         .select("device_type,last_seen_at,meta")
         .eq("game_id", gameId)
-        .abortSignal(AbortSignal.timeout(ONLINE_MS)),
-      sb().from("display_audio_unlock")
+        .abortSignal(AbortSignal.timeout(STATUS_READ_TIMEOUT_MS))),
+      asResult(sb().from("display_audio_unlock")
         .select("request_nonce,acknowledged_nonce")
         .eq("game_id", gameId)
         .maybeSingle()
-        .abortSignal(AbortSignal.timeout(ONLINE_MS)),
+        .abortSignal(AbortSignal.timeout(STATUS_READ_TIMEOUT_MS))),
+      asResult(sb().rpc("control_device_slots_for_owner", { p_game_id: gameId })
+        .abortSignal(AbortSignal.timeout(STATUS_READ_TIMEOUT_MS))),
     ]);
     const { data, error } = presenceResult;
+    const { data: leaseRows, error: leaseError } = leaseResult;
 
-    if (error) {
-      // A failed read says nothing about device connectivity. Keep the last
-      // observed status; Control separately blocks actions until reads recover.
+    if (leaseError) {
+      // The lease RPC is authoritative for game actions. If it fails, keep the
+      // last flags and block actions until primary ownership can be verified.
       readUnavailable = true;
-      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error });
+      reportIfChanged({
+        flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce,
+        error: leaseError,
+        errorSource: "lease_status",
+      });
       return;
     }
 
     readUnavailable = false;
+    metadataReadUnavailable = !!error;
 
-    const rows = data || [];
+    // device_presence is supplemental UI metadata. A failure there must not
+    // block game actions when the authoritative lease read succeeded.
+    const rows = error ? [] : (data || []);
     const d = pickNewest(rows, "display");
     const h = pickNewest(rows, "host");
     const b = pickNewest(rows, "buzzer");
@@ -92,14 +101,16 @@ export function createPresence({ gameId, onChange }) {
       displayAudioUnlockNonce = displayAudioUnlockStatus.requestNonce;
       displayAudioUnlocked = !!displayAudioUnlockNonce
         && displayAudioUnlockStatus.acknowledgedNonce === displayAudioUnlockNonce;
-    } else {
+    } else if (!error) {
       displayAudioUnlockStatus = { requestNonce: null, acknowledgedNonce: null };
       displayAudioUnlocked = d?.meta?.audio_unlocked === true;
       displayAudioUnlockNonce = typeof d?.meta?.audio_unlock_nonce === "string" ? d.meta.audio_unlock_nonce : null;
     }
 
-    lastSeenAt = { display: d?.last_seen_at ?? null, host: h?.last_seen_at ?? null, buzzer: b?.last_seen_at ?? null };
-    deviceMeta = { display: d?.meta || {}, host: h?.meta || {}, buzzer: b?.meta || {} };
+    if (!error) {
+      lastSeenAt = { display: d?.last_seen_at ?? null, host: h?.last_seen_at ?? null, buzzer: b?.last_seen_at ?? null };
+      deviceMeta = { display: d?.meta || {}, host: h?.meta || {}, buzzer: b?.meta || {} };
+    }
     for (const kind of ["display", "host", "buzzer"]) {
       const visibility = deviceMeta[kind]?.page_visibility || null;
       if (lastPageVisibility[kind] != null && visibility != null && visibility !== lastPageVisibility[kind]) {
@@ -107,15 +118,18 @@ export function createPresence({ gameId, onChange }) {
       }
       if (visibility != null) lastPageVisibility[kind] = visibility;
     }
-    // isOnline() liczy się od Date.now() — flags może się zmienić (online
-    // -> offline) samym upływem czasu, BEZ żadnej zmiany w bazie, więc
-    // porównanie musi patrzeć na WYLICZONE flags, nie na surowe lastSeenAt.
-    flags = { display: isOnline(lastSeenAt.display), host: isOnline(lastSeenAt.host), buzzer: isOnline(lastSeenAt.buzzer) };
+    // Lease RPC jest źródłem prawdy: obecność transportowa karty nie oznacza,
+    // że dana instancja ma prawo obsługiwać grę.
+    const primaryByType = Object.fromEntries((leaseRows || []).map(row => [row.device_type, row.primary_online === true]));
+    flags = { display: !!primaryByType.display, host: !!primaryByType.host, buzzer: !!primaryByType.buzzer };
 
-    reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, displayAudioUnlockStatus, error: null });
+    reportIfChanged({
+      flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, displayAudioUnlockStatus,
+      error: error || null, errorSource: error ? "device_presence" : null,
+    });
     } catch (error) {
       readUnavailable = true;
-      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error });
+      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error, errorSource: "status_read" });
     } finally {
       inFlight = false;
     }
@@ -146,7 +160,7 @@ export function createPresence({ gameId, onChange }) {
       displayAudioUnlockNonce: payload.displayAudioUnlockNonce ?? displayAudioUnlockNonce,
       displayAudioUnlockStatus: payload.displayAudioUnlockStatus ?? displayAudioUnlockStatus,
     };
-    const fp = JSON.stringify({ flags: reported.flags, readUnavailable: !!reported.error, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce, displayAudioUnlockStatus: reported.displayAudioUnlockStatus, deviceVisibility: Object.fromEntries(Object.entries(deviceDiagnostics).map(([kind, item]) => [kind, [item.visibility, item.focused, item.browserContextId]])), displayAudioDiagnosticId: deviceDiagnostics.display.audioDiagnostic?.id || null, displayRenderDiagnosticId: deviceDiagnostics.display.renderDiagnostic?.id || null });
+    const fp = JSON.stringify({ flags: reported.flags, readUnavailable, errorSource: reported.errorSource || null, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce, displayAudioUnlockStatus: reported.displayAudioUnlockStatus, deviceVisibility: Object.fromEntries(Object.entries(deviceDiagnostics).map(([kind, item]) => [kind, [item.visibility, item.focused, item.browserContextId]])), displayAudioDiagnosticId: deviceDiagnostics.display.audioDiagnostic?.id || null, displayRenderDiagnosticId: deviceDiagnostics.display.renderDiagnostic?.id || null });
     if (fp === lastReported) return;
     lastReported = fp;
     onChange?.(reported);
@@ -158,8 +172,10 @@ export function createPresence({ gameId, onChange }) {
     // Przeliczaj czas tylko przy dostępnym odczycie. W trakcie żądania
     // (także ponowień HTTP) brak świeżego wyniku nie dowodzi rozłączenia.
     expiryTimer = setInterval(() => {
-      if (inFlight || readUnavailable) return;
-      flags = Object.fromEntries(Object.entries(lastSeenAt).map(([kind, at]) => [kind, isOnline(at)]));
+      if (inFlight || readUnavailable || metadataReadUnavailable) return;
+      // The lease RPC, not the older device_presence timestamp, decides
+      // whether the fenced primary is still valid. Time alone can't recreate
+      // that server-side ownership proof.
       reportIfChanged({ flags, lastSeenAt, error: null });
     }, 250);
   }

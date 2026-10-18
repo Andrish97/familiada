@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,33 +14,23 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="contacts.subscribers.title">Familiada — subscribers</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/contacts.css?v=v2026-10-18T17330"/>
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('/login/');
-    } catch(_e) {}
-  </script>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/contacts.css?v=v2026-10-18T17375"/>
+  <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/subscribers/js/subscribers.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/subscribers/js/subscribers.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="contacts-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnFriends" type="button" data-nav-hidden="true" style="display:none;"><span data-i18n="games.nav.friends" data-i18n-icon-after="people">Znajomi</span></button>
@@ -50,7 +40,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -73,6 +63,10 @@
           <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
         </div>
       </div>
+      <div class="card" id="contactsLoadState" role="status" aria-live="polite">
+        <div class="name" id="contactsLoadMessage" data-i18n="contacts.load.loading">Wczytuję kontakty…</div>
+        <button class="btn sm" id="contactsLoadRetry" type="button" data-i18n="contacts.load.retry" hidden data-i18n-icon="refresh">Ponów</button>
+      </div>
       <div class="contacts-layout" id="contactsHost" data-skel-step>
       <div class="card contacts-card" id="contactsInvite" data-contact-panel="invite">
         <section class="shareSection contacts-add">
@@ -81,7 +75,7 @@
             <label class="shareSectionSub" for="inviteInput" data-i18n="contacts.email"></label>
             <div class="contacts-invite-row">
               <input class="inp" id="inviteInput" type="email" required autocomplete="off" data-i18n-placeholder="contacts.email"/>
-              <button class="btn sm gold" id="btnInvite" type="submit" data-i18n="contacts.invite">+ Zaproś</button>
+              <button class="btn sm gold" id="btnInvite" type="submit" data-i18n-title="contacts.invite" data-i18n-aria-label="contacts.invite" title="Zaproś" aria-label="Zaproś"><i class="ico contacts-invite-icon" data-icon="plus" aria-hidden="true"></i><span class="contacts-invite-label" data-i18n="contacts.invite">Zaproś</span></button>
             </div>
           </form>
         </section>
@@ -97,6 +91,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

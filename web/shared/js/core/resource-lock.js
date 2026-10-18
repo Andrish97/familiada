@@ -5,9 +5,10 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-18T17330";
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-18T17330";
-import { rt } from "./realtime.js?v=v2026-10-18T17330";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-18T17375";
+import { rt } from "./realtime.js?v=v2026-10-18T17375";
+import { icon } from "./icons.js?v=v2026-10-18T17375";
 
 const TAB_ID_KEY = "familiada:tabId";
 const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (120 s, edit_lock_ttl() w bazie)
@@ -108,45 +109,19 @@ function ensureOverlay() {
   overlay = document.createElement("div");
   overlay.id = "resourceLockGuard";
 
-  Object.assign(overlay.style, {
-    position: "fixed",
-    inset: "0",
-    width: "100vw",
-    height: "100vh",
-    fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
-    background: "rgba(0,0,0,.78)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    color: "#fff",
-    zIndex: "2147483647",
-    display: "none",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "16px",
-    boxSizing: "border-box",
-    overscrollBehavior: "none",
-  });
+  overlay.className = "blocking-overlay";
 
   overlay.innerHTML = `
-    <div style="
-      width:100%;max-width:560px;box-sizing:border-box;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.18);
-      border-radius:18px;
-      padding:18px;
-      text-align:left;
-    ">
-      <div id="resourceLockGuardTitle" data-i18n="resourceLock.title"
-        style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;"
-      >${t("resourceLock.title")}</div>
+    <div class="blocking-card" role="alertdialog" aria-labelledby="resourceLockGuardTitle" aria-describedby="resourceLockGuardMsg">
+      <div class="blocking-heading">
+        <span id="resourceLockGuardIcon" class="blocking-icon" aria-hidden="true">${icon("warning")}</span>
+        <h2 id="resourceLockGuardTitle" class="blocking-title" data-i18n="resourceLock.title">${t("resourceLock.title")}</h2>
+      </div>
 
-      <div id="resourceLockGuardMsg" style="opacity:.9;line-height:1.4;word-wrap:break-word;"></div>
+      <div id="resourceLockGuardMsg" class="blocking-message"></div>
 
-      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
-        <button id="resourceLockGuardBack" type="button" data-i18n="resourceLock.back" style="
-          appearance:none;border:0;border-radius:12px;padding:10px 14px;
-          font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;
-        ">${t("resourceLock.back")}</button>
+      <div class="blocking-actions">
+        <button id="resourceLockGuardBack" class="blocking-action" type="button" data-i18n="resourceLock.back" data-i18n-icon="arrow-left">${icon("arrow-left")} ${t("resourceLock.back")}</button>
       </div>
     </div>
   `;
@@ -162,12 +137,17 @@ function showOverlay({ title, message, backHref }) {
   overlay.querySelector("#resourceLockGuardMsg").textContent = message || "";
 
   const backBtn = overlay.querySelector("#resourceLockGuardBack");
-  backBtn.onclick = () => {
+  backBtn.onclick = async () => {
     if (backHref) { location.href = withLangParam(backHref); return; }
     try {
       if (window.history.length > 1) { history.back(); return; }
     } catch {}
-    location.href = "/";
+    let target = "/";
+    try {
+      const { data, error } = await sb().auth.getUser();
+      if (!error && data?.user) target = "/games/";
+    } catch {}
+    location.replace(withLangParam(target));
   };
 
   overlay.style.display = "flex";

@@ -1,5 +1,6 @@
-import { sb } from "./supabase.js?v=v2026-10-18T17330";
-import { t } from "../../translation/translation.js?v=v2026-10-18T17330";
+import { sb } from "./supabase.js?v=v2026-10-18T17375";
+import { t } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { icon } from "./icons.js?v=v2026-10-18T17375";
 
 const HEARTBEAT_MS = 3_000;
 const makeConnectionId = () => globalThis.crypto?.randomUUID?.()
@@ -17,18 +18,21 @@ export function updateDeviceLeaseOverlay(state) {
     return;
   }
   const waiting = state === "waiting";
+  const iconEl = document.getElementById("deviceLeaseIcon");
   const title = document.getElementById("deviceLeaseTitle");
   const text = document.getElementById("deviceLeaseText");
+  if (iconEl) iconEl.innerHTML = icon(waiting ? "hourglass" : "refresh");
   if (title) title.textContent = t(waiting ? "deviceLease.waitingTitle" : "deviceLease.reconnectingTitle");
   if (text) text.textContent = t(waiting ? "deviceLease.waitingText" : "deviceLease.reconnectingText");
   overlay.hidden = false;
 }
 
 export function createDeviceLease({ gameId, deviceType, key, onState }) {
-  const connectionId = makeConnectionId();
+  let connectionId = makeConnectionId();
   let mode = "starting";
   let state = "starting";
   let epoch = null;
+  let registerNext = true;
   let inFlight = false;
   let timer = null;
   let stopped = false;
@@ -58,15 +62,28 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
     if (stopped || inFlight) return null;
     inFlight = true;
     try {
-      const params = {
+      let shouldRegister = register || registerNext || mode !== "lease";
+      const params = () => ({
         p_game_id: gameId, p_device_type: deviceType, p_key: key,
         p_connection_id: connectionId, p_meta: meta(),
-      };
-      const data = await call(register ? "control_device_instance_register" : "control_device_instance_heartbeat",
-        register ? params : { ...params, p_epoch: epoch });
+      });
+      let data = await call(shouldRegister ? "control_device_instance_register" : "control_device_instance_heartbeat",
+        shouldRegister ? params() : { ...params(), p_epoch: epoch });
+      if (!shouldRegister && data?.mode === "lease" && data?.state === "expired") {
+        // Another connection may have promoted while this tab was suspended.
+        // An expired connection can never heartbeat back into the queue, so
+        // register a fresh instance instead of leaving this tab stuck forever.
+        publish(data);
+        connectionId = makeConnectionId();
+        registerNext = true;
+        shouldRegister = true;
+        data = await call("control_device_instance_register", params());
+      }
       publish(data || {});
+      registerNext = false;
       return data;
     } catch (error) {
+      if (register || registerNext || mode !== "lease") registerNext = true;
       if (mode === "lease") {
         state = "unavailable";
         onState?.({ mode, state, epoch, queuePosition: null, waitingCount: 0, error });
@@ -76,6 +93,9 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   }
 
   function onVisibility() {
+    void heartbeat();
+  }
+  function onResume() {
     void heartbeat();
   }
   function onPageShow() { void heartbeat(mode !== "lease"); }
@@ -95,6 +115,8 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
     await heartbeat(true);
     timer = setInterval(() => void heartbeat(false), HEARTBEAT_MS);
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onResume);
+    window.addEventListener("online", onResume);
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("pagehide", onPageHide, { once: true });
     return { mode, state, epoch };
@@ -104,6 +126,8 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
     stopped = true;
     clearInterval(timer);
     document.removeEventListener("visibilitychange", onVisibility);
+    window.removeEventListener("focus", onResume);
+    window.removeEventListener("online", onResume);
     window.removeEventListener("pageshow", onPageShow);
     window.removeEventListener("pagehide", onPageHide);
     if (mode === "lease") void call("control_device_instance_release", {

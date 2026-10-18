@@ -1086,7 +1086,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
   /* Ensure mobile menu starts strictly below topbar */
   .topbar-mobile-overlay {
-    top: calc(max(12px, env(safe-area-inset-top)) + 64px) !important;
+    top: var(--topbar-h, 60px) !important;
   }
   
   /* Reports panel on mobile — fixed height within viewport */

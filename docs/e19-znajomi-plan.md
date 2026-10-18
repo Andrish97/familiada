@@ -53,7 +53,7 @@ sprzed E12).
 | Subskrybenci | `subscribers_invite(email)` (konto → `has_account`), `subscribers_list()` (+`friend_user_id`) | `poll_claim_email_records`, `poll_go_resolve` | kolumna `subscriber_user_id`, CHECK, indeks — po refaktorze aktywnych funkcji, które nadal odczytują tę kolumnę |
 | Ankieta | `poll_share_send(game, friend_ids[], subscriber_ids[])` | — | E14/368: `polls_hub_share_poll` |
 | Bazy | — | `base_share_by_user` wyszukuje konto (znajomość nie jest wymagana); linki `go?b=` zamiast `/bases?share=` | `bases_count_incoming_share_invites` (jeśli zbędne) |
-| Urządzenia | `control_device_share_create`, `control_device_share_revoke`, `device_shares_list_mine()` | `e2e_shared_devices_cleanup` | `share_device`, `unshare_device`, `list_my_device_shares` — E14 po dostosowaniu historycznych testów nagrywania/Control |
+| Urządzenia | `control_device_share_create`, `control_device_share_revoke`, `device_shares_list_mine()` | `e2e_shared_devices_cleanup` | `share_device`, `unshare_device`, `list_my_device_shares` — usuwane w E14; historyczne testy E2E mogą wymagać osobnej aktualizacji i nie blokują migracji (decyzja użytkownika 2026-10-18) |
 | Zadania | `tasks_list()` (ankiety, bazy do akceptacji, aktywne urządzenia), `badges_get()` | `site_activity_ping` (+friends/subscribers/tasks) | E14/368: `polls_badge_get`, `polls_hub_overview`, `polls_hub_list_tasks` |
 | Testy | `e2e_friendships_cleanup` | `294_e2e_cleanup_mail_cooldowns` (+`friend:*`) | — |
 
@@ -1478,7 +1478,7 @@ Implementacja następnej paczki: dodające referencje źródeł, walidacja nadaw
 
 ### Pkt7 — rozszerzenie centrum powiadomień mail-only (2026-10-12)
 
-Użytkownik rozszerzył zakres o `/mail/`: aktualne subskrypcje, zaproszenia/ankiety i granty urządzeń przypisane do potwierdzonego adresu; globalne przywrócenie powiadomień, konto→login/ustawienia. Źródło kontraktu: maile-granice.md, ostatnia podsekcja. Nie odkładać do manuala ani traktować stopki jako wystarczającego zamknięcia. Powiązać z globalną flagą, Go, tokenami, źródłami/kaskadami i wspólnymi elementami UI. Nadal część E19/pkt7, nie nowy nadrzędny etap. Najpierw domknąć main358, potem globalna stopka/preferencja/centrum i dalsza kolejka zgodnie z bramkami.
+Użytkownik rozszerzył zakres o `/mails/`: aktualne subskrypcje, zaproszenia/ankiety i granty urządzeń przypisane do potwierdzonego adresu; globalne przywrócenie powiadomień, konto→login/ustawienia. Źródło kontraktu: maile-granice.md, ostatnia podsekcja. Nie odkładać do manuala ani traktować stopki jako wystarczającego zamknięcia. Powiązać z globalną flagą, Go, tokenami, źródłami/kaskadami i wspólnymi elementami UI. Nadal część E19/pkt7, nie nowy nadrzędny etap. Najpierw domknąć main358, potem globalna stopka/preferencja/centrum i dalsza kolejka zgodnie z bramkami.
 
 ### Pkt7 /362 — anonimowy formularz i odstęp, wykonanie 2026-10-12
 

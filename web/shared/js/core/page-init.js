@@ -1,23 +1,23 @@
 // js/core/page-init.js
 // Jedno wywołanie na starcie strony zamiast requireAuth + showGuestBlockedOverlay
-// + guardDesktopOnly + ręcznego podpinania #btnBack / #btnManual / konta.
+// + guardViewportWidth + ręcznego podpinania #btnBack / #btnManual / konta.
 // Wszystko wynika z wpisu strony w PAGES (nav-map.js):
 //
-//   1. dostęp   public — bez wymuszania logowania (user albo null),
+//   1. urządzenie — blokada przed odsłonięciem strony i sprawdzaniem konta,
+//   2. dostęp   public — bez wymuszania logowania (user albo null),
 //               guest  — wymaga sesji (konto albo gość), inaczej loginUrl(),
 //               user   — tylko konto; gość dostaje wspólną nakładkę (page-overlay.js),
-//   2. urządzenie  "wide" — guardDesktopOnly (na żywo), "noPhone" — blokada telefonu,
 //   3. topbar   #btnBack (etykieta + cel z backHref, najpierw handleSheetBack()),
 //               #btnManual (linkTo("manual", { tab: wpis.manual })), konto, topbar-ready,
 //   4. przyciski  PAGES[id].buttons: niedostępne dla roli (anon / gość / konto)
-//               albo urządzenia (device wide / noPhone na telefonie) są chowane,
+//               albo zbyt wąskiego viewportu są chowane i aktualizowane po obrocie,
 //               pozostałe dostają przejście przez linkTo() — chyba że opis ma
 //               custom: true (strona coś sprawdza przed przejściem; cel daje strona),
 //   5. zwraca użytkownika (null dla niezalogowanego, zablokowanego albo przekierowanego).
 //
 // Odstępstwa strony przekazujemy przez opts, nie przez zapasowe ścieżki:
-//   ready          Promise (np. initI18n), na który czekamy przed pokazaniem czegokolwiek
-//                  — auth startuje od razu, równolegle z nim
+//   ready          Promise (np. initI18n), na który czekamy przed pokazaniem czegokolwiek;
+//                  inicjalizacja może biec równolegle z guardem, auth dopiero po nim
 //   back           id przycisku „Wstecz” (domyślnie "btnBack"); false — strona go nie ma
 //   backLabel      false — etykietę ustawia sama strona
 //   onBack         (href, ev) => … zamiast przejścia na href (np. zapis przed wyjściem);
@@ -28,26 +28,25 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-18T17330";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-18T17330";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-18T17330";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-18T17330";
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-18T17375";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-18T17375";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-18T17375";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-18T17375";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-18T17330"),
-    import("./topbar-controller.js?v=v2026-10-18T17330"),
-    import("./modal-sheet.js?v=v2026-10-18T17330"),
-    import("./device-guard.js?v=v2026-10-18T17330"),
+    import("./auth.js?v=v2026-10-18T17375"),
+    import("./topbar-controller.js?v=v2026-10-18T17375"),
+    import("./modal-sheet.js?v=v2026-10-18T17375"),
+    import("./device-guard.js?v=v2026-10-18T17375"),
   ]);
   return {
     getUser: auth.getUser,
     requireAuth: auth.requireAuth,
     setTopbarAccount: topbar.setTopbarAccount,
     handleSheetBack: sheet.handleSheetBack,
-    guardDesktopOnly: device.guardDesktopOnly,
-    blockPhone: device.blockPhone,
-    isPhoneScreen: device.isPhoneScreen,
+    guardViewportWidth: device.guardViewportWidth,
+    getDeviceProfile: device.getDeviceProfile,
   };
 }
 
@@ -101,13 +100,36 @@ function wireButtons(id, user, d) {
   const buttons = PAGES[id].buttons;
   if (!buttons) return;
   const role = roleOf(user, isGuestUser(user));
-  const phone = d.isPhoneScreen();
   for (const [bid, spec] of Object.entries(buttons)) {
     const btn = document.getElementById(bid);
     if (!btn) continue;
-    if (!buttonVisible(id, spec, role, phone)) { hideButton(btn); continue; }
-    // HTML startuje z ukrytym przyciskiem, gdy dostępność zależy od roli.
-    if (btn.dataset.navHidden === "true") { delete btn.dataset.navHidden; btn.hidden = false; btn.style.display = ""; }
+    if (!buttonRoles(id, spec).includes(role)) { hideButton(btn); continue; }
+    // Przyciski zależne od roli startują ukryte w HTML. Rola jest już
+    // rozstrzygnięta, więc dopiero teraz oceniamy wymaganą szerokość.
+    if (btn.dataset.navHidden === "true") {
+      delete btn.dataset.navHidden;
+      btn.hidden = false;
+      btn.style.display = "";
+    }
+    const updateDeviceVisibility = () => {
+      const visible = buttonVisible(id, spec, role, d.getDeviceProfile());
+      const wasHidden = btn.dataset.navHidden === "true";
+      if (visible === !wasHidden) return;
+      if (!visible) hideButton(btn);
+      else {
+        delete btn.dataset.navHidden;
+        btn.hidden = false;
+        btn.style.display = "";
+      }
+      if (spec.minViewportWidth) {
+        window.dispatchEvent?.(new Event("nav:visibilitychange"));
+      }
+    };
+    updateDeviceVisibility();
+    if (spec.minViewportWidth) {
+      window.addEventListener("resize", updateDeviceVisibility, { passive: true });
+      window.addEventListener("orientationchange", updateDeviceVisibility, { passive: true });
+    }
     if (spec.blockedUntil) {
       btn.disabled = buttonBlocked(spec);
       if (btn.disabled) {
@@ -138,7 +160,12 @@ export async function initPage(id, opts = {}) {
   if (!p) throw new Error(`initPage: nieznana strona "${id}"`);
   const d = opts.deps || await loadDeps();
 
-  // Auth startuje od razu, równolegle z i18n (opts.ready).
+  // Guard jest pierwszą bramką. Nie pytamy o sesję ani nie odsłaniamy strony,
+  // dopóki urządzenie i viewport nie spełniają warunków tej trasy.
+  const guard = d.guardViewportWidth({ minWidth: p.minViewportWidth || 0, backHref: backHref(id, { anon: true }), ...(p.deviceGuard || {}), ...opts.deviceGuard });
+  if (!(await guard.ready)) return null;
+
+  // Auth startuje dopiero po przejściu guarda; może biec równolegle z i18n.
   const userP = p.access === "public"
     ? Promise.resolve(d.getUser()).catch(() => null)
     : Promise.resolve(d.requireAuth(loginUrl()));
@@ -150,14 +177,6 @@ export async function initPage(id, opts = {}) {
   if (!user && p.access !== "public") return null;
   setModalSheetPage(id);
 
-  // Urządzenie: guard stoi przed wszystkim, co strona zrobi dalej.
-  let blockedByDevice = false;
-  if (p.device === "wide") {
-    d.guardDesktopOnly({ backHref: backHref(id, { anon: !user }), ...opts.deviceGuard });
-  } else if (p.device === "noPhone") {
-    blockedByDevice = d.blockPhone({ backHref: backHref(id, { anon: !user }) });
-  }
-
   // Topbar działa także pod nakładką — „Wstecz” jest wtedy wyjściem.
   wireBack(id, user, opts, d);
   wireManual(id, user, opts);
@@ -165,9 +184,11 @@ export async function initPage(id, opts = {}) {
   wireAccount(user, opts, d);
   document.querySelector(".topbar")?.classList.add("topbar-ready");
 
-  if (blockedByDevice) return null;
-
   if (p.access === "user" && isGuestUser(user)) {
+    if (p.guestRedirect) {
+      location.replace(linkTo(p.guestRedirect));
+      return null;
+    }
     showPageGuard({
       kind: "guest",
       state: "guest",
@@ -185,10 +206,10 @@ export async function initPage(id, opts = {}) {
   // don't miss a one-time notice while the page continues initializing.
   if (!new Set(["login", "privacy", "mailCenter", "connectDevice"]).has(id)) {
     if (isGuestUser(user)) {
-      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-18T17330");
+      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-18T17375");
       await maybeShowGuestInfoModal(user);
     } else if (user) {
-      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-18T17330");
+      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-18T17375");
       await initRatingSystem(user);
     }
   }

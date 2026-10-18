@@ -1,28 +1,90 @@
-# Przekazanie — punkt wznowienia2026-10-13
+# Przekazanie — stan na 2026-10-18
 
 ## Aktualny stan — przeczytaj najpierw
 
-Repo `Andrish97/familiada`, branch `codex/e19-3`. Gałąź zawiera teraz
-implementację wysyłania, migrację367 oraz bramki branch i produkcyjne.
-Kod E19C jest w main przez `6dbcbb8cc9`; schema/log DB mają aktualizację
-`3c2c197be0`. Poniżej starszy dziennik;
-jego historyczne „następny krok” nie zastępują niniejszego stanu.
+Repo Andrish97/familiada, branch `main`; stan po E14 i porządkowaniu repo.
 
-| Etap | Stan teraz |
-|---|---|
-| E19 / graf dotychczasowych zasobów | Zamknięte produkcyjnie. Kolejka/mail/Go/kaskady/anonimowe formularze mają swoje wcześniejsze dowody w Dzienniku. |
-| E19C / Powiel Gry/Baza/Logo | Wdrożone i sprawdzone: main38347856610 success2/2, potem regresja38348612550 success2/2. Własne zasoby zalogowanego konta; pełna definicja Bazy z nowymi ID bez shares. Dopisek kopia tylko w nazwie.9 zrzutów docs/img/transfer/duplicate. |
-| E19C / usuwanie konta z oczekującymi kopiami |366 wdrożone, DB38348223853/log04:50:12 UTC, isolated38348144953/main38348223900 green. Kontrola38348612550: UI kasowania jednorazowego gościa/oba buckety i Powiel. |
-| E19C / Wyślij Gry/Logo | **Gotowe produkcyjnie.** DB38361036623/log OK367, main DB smoke38363272981 success, Pages38363273053, Worker38363272935, Edge Functions38363273241. Branch38362616613 i main po Pages38363398680 success1/1: realne Gry i Logo, dwa maile, Go i akceptacja. Unit601/601. |
-| E19N | **Gotowe produkcyjnie.** Branch `38368774633` success: Control→Znajomi→ta sama gra, „Graj” ukryte z Control i widoczne z Gier. Main `38369193504` success5/5; test bezpośredniego URL/odświeżenia arkusza main `38370189342` success1/1. Pages38369096986, Worker38369096732. Full unit602/602. E19 zamknięte na main `d847175100`. |
-| E14 | W toku zgodnie z poleceniem użytkownika: migracja368 usuwa potwierdzone stare RPC hubu i bezpośrednie sprzątanie Storage; nadal audyt `subscriber_user_id` i dawnych RPC urządzeń. |
-| E20 → Manual | Wspólny wygląd/mobile/tablet/landscape; instrukcja na końcu. |
+- E19 i E19N są zamknięte. E20 poprawki wizualne są wdrażane według bieżących uwag; ostatnie commity na main obejmują wspólny topbar i modal alertu Control.
+- E14 jest zamknięte: migracje 388–390 usunęły `subscriber_user_id` i stare RPC urządzeń, zachowały widoczność emailowych subskrypcji przypisanych do konta oraz odpowiedź `has_account` dla starych linków. `schema.sql` nie zawiera już starej kolumny, a read-only audyt E14 i kontrola usuniętych ścieżek przeszły.
+- Read-only audyt produkcji (workflow 39113771174 i 39113860983) znalazł 4 stare wiersze `subscriber_user_id`: 1 active, 2 pending, 1 declined; wszystkie bez emaila i `registered_user_id`, żaden bez powiązanych `poll_tasks`. Audyt przyczyn wykazał, że active oraz jeden pending to samo-zaproszenia pominięte przez migrację 320; drugi pending jest już przeniesiony do friendship z tym samym tokenem. Brak równoległych nowych subskrypcji email. Wiersze źródłowe można bezpiecznie usunąć, gdy migracja zastąpi odwołania do kolumny; zadania nie utracą źródła.
+- Workflow `db-migrate.yml` 39115618243 zakończył się sukcesem: smoke’y, read-only audyt E14, kontrola usuniętych ścieżek i synchronizacja `schema.sql`/logów przeszły. Auto-commit schematu to `f34e403c93`; drzewo jest czyste.
+- Użytkownik doprecyzował listę workflowów: mają zostać deploye, `Apply DB migrations` i `E2E Tests`. `db-migrate.yml` został ograniczony do nakładania migracji oraz synchronizacji schematu/logów; usunięto z niego kontrole punktowe. Osobne recorder Control E2E i read-only `resource-audit` usunięto jako wyspecjalizowane workflowy.
+- Artefakty screenshotów bez odwołań w repo oraz prototypy SQL zastąpione wdrożonymi migracjami zostały usunięte. Zasoby i testy używane przez bieżące workflowy pozostają.
+
+Testy aplikacji, które użytkownik uznał za wadliwe, nie są blokadą dalszych prac. Szczegóły etapów i dziennik: `docs/wdrozenia.md`; plan modelu znajomych/subskrybentów: `docs/e19-znajomi-plan.md`.
+
+## Archiwum wcześniejszych przekazań
 
 ## Aktualny checkpoint: E19 zamknięte produkcyjnie
 
+**Kontynuacja E20 (2026-10-15):** poprawki są prowadzone pojedynczo według
+`docs/e20-uwagi-do-korekty.md`; punkty sprawdzone i zamknięte pozostają
+zapisane w kolumnie statusu. Ostatnie domknięte sprawdzenia: 25 (guard
+`rotate` bez „Wróć”), 28 (pusty kafel Connect bez rozciągania), 29 (wspólny
+układ nagłówka Connect), 30 (etapy ładowania na 35 trasach) i 31
+(sekwencyjna galeria, wąska izolacja locków). Nie wracać do tych decyzji
+bez nowej uwagi użytkownika. Konto 17 nie jest potrzebne: galeria loguje
+istniejące konta 1–3, przygotowuje fixture’y osobno dla każdego, przypisuje
+profile do kont, a strony i urządzenia na jednym koncie fotografuje kolejno.
+Równolegle pracują tylko różne konta. Nie tworzy ani nie resetuje kont; nie
+audytuje guarda gościa. Następny krok: krótki przebieg `games`/MacBook na
+koncie 1, naprawa każdego wykrytego błędu, a potem pełna galeria 35
+tras × 5 profili oraz TV tylko dla Connect TV. Wynik pełnej galerii i jej
+artefakt wpisać poniżej po zakończeniu.
+
+**Wznowienie E20 po uwagach do galerii (2026-10-14):** poprzednia galeria
+`38599567526` (210 ujęć, 5/5 profili) nie zamyka przeglądu — użytkownik
+zgłosił widoki zablokowane przez równoległe użycie zasobów i poprawki wyglądu
+urządzeń, wspólnych pasków/stopki oraz stron. Checklista i status poprawek są
+w `docs/ujednolicenie-wygladu.md`, podsekcja „E20 — uwagi użytkownika do
+galerii i następna paczka poprawek”. Implementacja jest na gałęzi roboczej,
+unity619/619 przeszły, nowa galeria jeszcze się nie uruchomiła. Najpierw
+krótki test punktowy; potem pełny, sekwencyjny przebieg, pięć profili na
+każdą stronę oraz dodatkowy prawdziwy profil TV wyłącznie dla `/connect/tv/`.
+
+Aktualny test punktowy `38619471614` zatrzymał się na pierwszym profilu iPada:
+asercja galerii błędnie wymagała dolnego safe area od topbara. Poprawka
+sprawdza wszystkie cztery rzeczywiste wartości insetów, trzy krawędzie
+topbara i dolną krawędź stopki osobno. Lokalny zestaw guarda, mapy, punktów
+wejścia i stopniowego ładowania przeszedł 59/59. Poprawka oczekuje teraz na
+krótki przebieg produkcyjny; po nim uruchomić całą galerię. Run
+`38619899573` przeszedł sześć profili dla Gier, ale filtr stron w wejściu
+został podany ścieżkami zamiast ID. Poprawiony run `38620324946` potwierdził
+rzeczywistą lukę: strażnik Connect TV na iPadzie otrzymał tylko 12 px
+górnego odstępu zamiast 24 px. Reguła `.tv-topbar` nadpisywała safe area
+z `base.css`; poprawka w `tv.css` uwzględnia górny i boczne insety również
+w wąskim landscape. Poprawiony test `38620721900` przeszedł 6/6 profili;
+przechwycił 46 widoków wybranych stron/stanów, w tym właściwe guardy i TV.
+Artefakt: `e20-gallery-853` (ID `11921422585`). Pełny run `38621309630`
+zatrzymał się na asercji stopki Eksploratora bazy: pływający przycisk
+kontaktu ma bezpieczne położenie `bottom: 8px + inset`, ale test sprawdzał
+jego wewnętrzny padding. Asercję rozdzielono dla stopki w przepływie i
+pływającej. Kolejny test znalazł realny problem na Connect: `.wrap` nadpisywał
+padding stopki 15 px zamiast 20 px. Reguła `.footer.wrap` w `base.css`
+zachowuje teraz safe area. Zrzuty są
+zapisywane do folderów stron, nie folderów urządzeń. Generator galerii
+przerobiono tak, by osadził PNG bezpośrednio w `index.html` (do otwarcia na
+Androidzie) i odrzucał pełny wynik bez dokładnie 211 ujęć. Ta wersja czeka na
+push i świeży pełny przebieg.
+
+Krótki test `38623213005` zakończył się sukcesem 5/5 profili dla Connect i
+Eksploratora bazy; zapisał 10 ujęć w artefakcie `e20-gallery-856`
+([11923290238](https://github.com/Andrish97/familiada/actions/runs/38623213005/artifacts/11923290238)). Test używał commitu `b7418fdcd3`, więc
+nie obejmuje kolejnych zmian układu Connect ani Host/Buzzer. Po uwagach
+użytkownika dopisano do checklisty: Connect jako jedną kartę z dwoma
+wewnętrznymi panelami, usunięcie etykiet wyszukiwania/sortowania, obrót
+wyłącznie jako sugestię Buzzer, wyjątek Host tylko od blokady dotyku oraz
+pominięcie blokady dotyku w iframe testowym Control. W audycie statycznych
+markerów `data-skel-step` znaleziono 12 z 35 stron; to nie jest pełny audyt
+logiki, bo strony statyczne mogą nie potrzebować etapów, a pozostałe wymagają
+oceny danych i stanów. Zmiany są lokalne i przeszły 19/19 wskazanych unitów;
+czekają na commit/push i nowy test punktowy.
+
 E19C i E19N są wdrożone i zweryfikowane po Pages. Produkcyjne przebiegi
 Control/znajomi/ustawienia oraz arkusza z Back/Forward, bezpośrednim URL i
-refresh przeszły. E19 jest zamknięte; następny etap według kolejki to E14.
+refresh przeszły. W audycie wywołań arkuszy nie znaleziono przypadku
+pełnoekranowy arkusz→pełnoekranowy arkusz. Potwierdzenia i alerty pozostają
+zwykłymi modalami, bez wpisywania do URL. E19 jest zamknięte.
 
 Początkowy prototyp367 i jego prywatne SQL/testy są zachowane jako
 artefakty rozwoju. Zostały zastąpione migracją produkcyjną
@@ -41,7 +103,10 @@ Dalej odtwarza go. Unit po korekcie globalnego stanu `dialog`:602/602.
 Branch Control/settings38368774633 green; produkcyjne E2E38369193504 5/5,
 test arkusza z bezpośrednim URL/refresh38370189342 1/1; Pages38369096986,
 Worker38369096732. Przy promocji CI dopisał wersje cache-busterów
-`1a97df0938`, zintegrowane w merge commit `d847175100`.
+`1a97df0938`, zintegrowane w merge commit `d847175100`. Audyt repozytorium
+nie znalazł przepływu otwierającego arkusz nad innym pełnoekranowym arkuszem.
+Potwierdzenia, alerty i zwykłe okna wewnątrz formularzy nie są stanami strony
+i nie powinny być wpisywane do URL.
 
 E19C zostało wdrożone i zweryfikowane produkcyjnie zgodnie z wymaganym
 cyklem. Worker/Edge/Pages są wdrożone, migracja367 jest zastosowana,
@@ -461,7 +526,7 @@ plan; rozmowa nim nie jest**. Decyzje użytkownika zapisuj od razu w sekcji
 | E12, E12b | usuwanie gry i konta; pliki w Storage usuwa baza (`storage_cleanup_queue`, migracje 313, 317, 318) | `usuwanie-danych.md` |
 | E2 | blokady wg mapy docelowej (`logos`, `base:B`, keepalive przy zamknięciu karty) | `blokady-zasobow.md` |
 | E4 | `nav-map.js` (`PAGES`, `linkTo`, `backHref`, łańcuch `ret`) | `nawigacja-mapa-plan.md` |
-| E5 | nowe adresy (`/go/`, `/polls/vote/*`, `/games/{editor,settings}/`, `/control/{display,host,buzzer}/`, `/connect/`, `/logo/editor/*`, `/login/{reset,confirm}/`), migracja 319 | `nawigacja-mapa-plan.md` sekcja 8 |
+| E5 | nowe adresy (`/go/`, `/polls/vote/*`, `/games/{editor,settings}/`, `/control/{display,host,buzzer}/`, `/connect/`, `/logos/editor/*`, `/login/{reset,confirm}/`), migracja 319 | `nawigacja-mapa-plan.md` sekcja 8 |
 | E6 | `initPage()` (`page-init.js`), wspólna nakładka gość/urządzenie (`page-overlay.js`) | j.w. 6.4 |
 | E7 | bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, Control → ustawienia/instrukcja zwykłym przejściem, bez `?modal=` | j.w. 6.5 |
 | E8 | jeden moduł kart `tabs.js` (`?tab=`), stan eksploratora w `localStorage` | j.w. 6.6 |
@@ -828,7 +893,7 @@ Gotowy lokalny plik control-identity-preferences-draft.sql; przed przeniesieniem
 
 **358 zakończone:** main38261432758 success2/2 --retries=0/unit459,2 real SMTP, Pages38260925626, branch38260515251 (test14) i38258380406 (konto), SQL38257393434 OK13:42:37Z/isolated38256954899. Root scala mainfed93b0a91; code Control canonical/flags completed. Nie powtarzać358.
 
-**Nowy zakres /mail/ — ostateczna korekta:** maile-granice.md ostatnie sekcje + navmap. Subskrypcje oraz Zadania (ankiety+urządzenia) w jednej karcie z wypustkami Ankiet, globalny stan nad kartą; Go→centrum, dane/mutacje po potwierdzeniu, konto→login/account. Mail-only global-off zamyka wszystkie anonimowe źródła, ukrywa listy i nie odtwarza ich po przywróceniu. Starszy lokalny wariant /tmp/e19-359 zachowujący subskrypcje jest zastąpiony — nie wdrażać. Dotychczasowy sender-visible token u daje tylko wypisanie, nie odczyt centrum. Pełna stopka ma osobny prywatnie wydany token.360 jeszcze poza produkcją;359 to już zakończona naprawa skrzynki, nie numer centrum. Zakres konta pozostaje mail-only do odpowiedzi na jedyne pytanie architektoniczne o cofanie dostępów.
+**Nowy zakres /mails/ — ostateczna korekta:** maile-granice.md ostatnie sekcje + navmap. Subskrypcje oraz Zadania (ankiety+urządzenia) w jednej karcie z wypustkami Ankiet, globalny stan nad kartą; Go→centrum, dane/mutacje po potwierdzeniu, konto→login/account. Mail-only global-off zamyka wszystkie anonimowe źródła, ukrywa listy i nie odtwarza ich po przywróceniu. Starszy lokalny wariant /tmp/e19-359 zachowujący subskrypcje jest zastąpiony — nie wdrażać. Dotychczasowy sender-visible token u daje tylko wypisanie, nie odczyt centrum. Pełna stopka ma osobny prywatnie wydany token.360 jeszcze poza produkcją;359 to już zakończona naprawa skrzynki, nie numer centrum. Zakres konta pozostaje mail-only do odpowiedzi na jedyne pytanie architektoniczne o cofanie dostępów.
 
 ### 2026-10-12 — pilna skrzynka admina
 
@@ -839,7 +904,7 @@ pozostają dostępne. Stan wdrożenia i przebiegi w dzienniku wdrożeń.
 Zamknięte na produkcji: **13** kopii usuniętych; Worker38267398689 i
 baza38267398627 zielone. SMTP38267524680: zaproszenie odebrane przez test7,
 po nim SQL potwierdził brak technicznych kopii w skrzynce. Unit463/463.
-Następny krok: wrócić do grafu/centrum `/mail/`; nie powtarzać naprawy359.
+Następny krok: wrócić do grafu/centrum `/mails/`; nie powtarzać naprawy359.
 
 ### 2026-10-12 — centrum360 na branchu, dalsza kontynuacja
 
@@ -873,7 +938,7 @@ nie podlegają fladze konta, globalnej rezygnacji ani odmowom zasobów.
 
 Otwarte: pięć trwałych źródeł zaproszeń queue/claim/requeue/fresh delivery;
 DDL/nowe wyścigi, finalna migracja360, rzeczywiste SMTP+UI branch/main.
-Nie ogłaszać zamkniętego grafu ani produkcji `/mail/`. Sześć etapów głównych
+Nie ogłaszać zamkniętego grafu ani produkcji `/mails/`. Sześć etapów głównych
 w kolejce wdrożeń, manual ostatni. Aktualizacje około30–60s, po statusie
 pracować dalej bez następnego „kontynuuj”. Konta9/10 nie używać,14 bez
 konta,15 tylko bezpieczne usuwanie z odtworzeniem,11/12 nie kasować.
@@ -929,7 +994,7 @@ krawędzie i sześć etapów głównych, manual ostatni. Auth już zamknięte.
 
 ### 2026-10-12 —360/361 oraz wyjątki Kontakt zakończone
 
-Centrum `/mail/` i graf źródło→kolejka→dostarczenie są na produkcji.
+Centrum `/mails/` i graf źródło→kolejka→dostarczenie są na produkcji.
 Main38308851386 success7/7 bez retry/unit510:2 scenariusze centrum i5
 rodzin maili, rzeczywiste SMTP, Go, akceptacja/cofnięcie i partial,
 prywatne cookie/CSRF, preview/one-use/global-off i przywrócenie bez
@@ -1083,9 +1148,9 @@ aktualnych screenów; nie powtarzać Go/Control/pełnego362/SMTP.
 Nowy audit-resource-graph-e19.sql: 11 agregatowych kontroli w READ ONLY,
 bez ujawniania tożsamości/adresów/tokenów/głosów. Lokalne0; izolowany
 negative test wykrywa nieprawidłowy licznik i grant kolumny, potwierdza
-brak zapisu przez audyt. Nowe graph_only w resource-audit.yml uruchomi
-wyłącznie ten audyt zamiast ponawiać zamknięte guest354. Jeszcze bez
-wyniku produkcji. Później wspólna macierz rodzaj linku×stan×komunikat×akcje
+brak zapisu przez audyt. Audyt graph-only był wtedy uruchamiany osobnym,
+później usuniętym workflowem resource-audit. Jeszcze bez wyniku produkcji.
+Później wspólna macierz rodzaj linku×stan×komunikat×akcje
 w Go dla wszystkich rodzin, zgodnie z ostatnią odpowiedzią użytkownikowi.
 E19C/E19N/E14/E20/E13 dalej kolejka; manual ostatni.
 
@@ -1189,3 +1254,36 @@ wymagają późniejszego przeglądu. Manual nadal ostatni.
 **366 zamknięte:** isolated38348144953/main38348223900 green, DB38348223853/log366 OK04:50:12 UTC, main38348612550 success2/2 bez retry/593 unit: UI kasowania jednorazowego gościa/oba buckety + Powiel3. Kontynuacja E19C: docs/sql/draft-resource-clone-send-367.sql i test-resource-clone-send-367.sql lokalnie green Games3/Logo3, własne manifesty plików, retry/odmowa/expiry/obie kaskady i18 guardów realnych tabel potomnych. To prywatny prototyp bez migracji/endpointu/grantów. Dalej izolowane CI, race/read-access, wspólny Worker send, queue/alokacja/SMTP/Go/GUI/plakietki, dopiero cykl DB→branch→Pages→main. Manual ostatni.
 
 **Aktualna kontynuacja:** na dirty branchu endpoint `/_api/resource-send`, UI wyboru aktywnych znajomych, inbox/accept/decline, historia30 dni, mail przez istniejący send-mail, Go `?c=`, filtr Otrzymane, lekkie oznaczenie nadawcy i badge RPC per typ. Migration367 rozszerza graph mail allocations/source binding i source-live oraz dodaje resolver/badges. Punktowe JS + unit: składnia 5 plików OK, 24/24 testów Go/clone/API. Niedokończone: badge w przyciskach nawigacji, E2E/Pages/main/prod i screenshoty. Migracja 367 niezweryfikowana na produkcji i nieuruchomiona; środowisko lokalne nie ma Supabase CLI/DB credentials. Przed prod przejrzeć kontrakty DB w branch workflow; manual ostatni.
+
+**E20 / etapy ładowania — aktualizacja 2026-10-14:** dodano jawne
+`data-skel-step` na wszystkich 35 trasach aplikacji (bez tools). Eksplorator
+odsłania toolbar i treść po pobraniu, renderze i podpięciu akcji; Ankieta
+punktowa/tekstowa pokazuje przetłumaczony stan oczekiwania, a pytanie lub
+komunikat zamknięcia dopiero po odpowiedzi; Mails pokazuje stan wejścia przed
+odpowiedzią sesji i listy po niej; Settings ponownie chowa panel na czas
+pierwszego odczytu. Host/Buzzer dostają widoczny błąd z odświeżeniem, jeśli
+nie przyjdzie pierwszy stan. Statyczne strony odsłaniają treść po inicjalizacji;
+guard urządzenia pozostaje przed treścią i pobraniem danych. Testy punktowe
+`progressiveLoading` + `controlDeviceGuard`: 21/21; składnia 21 zmienionych
+JS i `git diff --check` przechodzą. Wdrożenie czeka na push i kontrolę etapów
+w sekwencyjnej galerii; samo dodanie markerów nie zamyka E20.
+
+## Bieżąca runda E20 — audyt mobilnego scrolla (2026-10-17)
+
+Wspólny wzorzec strony i modala — mobilnego arkusza i zwykłego okna: strona
+nie przewija się jako całość, a modal mieści się w dostępnym obszarze. Nagłówek
+i akcje pozostają dostępne; przewija się obszar roboczy strony albo treść
+wewnątrz modala. Jedna lista ma własny scroll; dwie równorzędne listy mogą
+być widoczne jednocześnie i każda przewija się wewnętrznie. Nie zagnieżdżać
+list w przewijanym body ani nie przewijać całego okna wraz z nagłówkiem i
+akcjami. W modalu bez listy przewija się jeden obszar treści. Przy wielu
+listach, które się nie mieszczą, rozważyć przełączane sekcje, bez ucinania
+treści.
+
+Landscape jest wyłączone z tej rundy; panel admina `/settings/` pozostaje poza
+zakresem. Najwyższy priorytet miały trzy modale Base Explorer: tagi (3 warstwy),
+dodawanie gry z bazy i edycja pytania. Wdrożono: przewijanie listy taga/pytania
+i odpowiedzi wewnątrz nieruchomego arkusza, stałe akcje oraz układ odpowiedzi zgodny z mobilnym Edytorem gry. `git diff --check` przechodzi; bez galerii/testów.
+Szczegóły i powiązania z wcześniejszymi uwagami są w
+`docs/e20-uwagi-do-korekty.md`. Pozostałe miejsca z audytu czekają na dalsze
+wdrożenie; pełnych testów ani galerii nie uruchamiano.

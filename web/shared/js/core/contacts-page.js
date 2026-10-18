@@ -1,15 +1,15 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-import { sb } from "./supabase.js?v=v2026-10-18T17330";
-import { initPage } from "./page-init.js?v=v2026-10-18T17330";
-import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-18T17330";
-import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-18T17330";
-import { toast } from "./toast.js?v=v2026-10-18T17330";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-18T17330";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-18T17330";
-import { createCooldownTicker } from "./cooldown.js?v=v2026-10-18T17330";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-18T17330";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-18T17330";
-import "./contact-modal.js?v=v2026-10-18T17330";
+import { sb } from "./supabase.js?v=v2026-10-18T17375";
+import { initPage } from "./page-init.js?v=v2026-10-18T17375";
+import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-18T17375";
+import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-18T17375";
+import { toast } from "./toast.js?v=v2026-10-18T17375";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-18T17375";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-18T17375";
+import { createCooldownTicker } from "./cooldown.js?v=v2026-10-18T17375";
+import { sendInviteMail } from "./invite-mail.js?v=v2026-10-18T17375";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-10-18T17375";
+import "./contact-modal.js?v=v2026-10-18T17375";
 
 export async function initContactsPage(pageId) {
   const friends = pageId === "friends";
@@ -17,11 +17,15 @@ export async function initContactsPage(pageId) {
   const user = await initPage(pageId, { ready, back: document.getElementById("btnBack") });
   if (!user) return;
   const host = document.getElementById("contactsHost");
+  const loadState = document.getElementById("contactsLoadState");
+  const loadMessage = document.getElementById("contactsLoadMessage");
+  const loadRetry = document.getElementById("contactsLoadRetry");
   const cooldowns = createCooldownTicker();
   let rows = [];
   let inFlight = null;
+  let contactsLoaded = false;
   let declinedCollapsed = true;
-  const mobile = matchMedia("(max-width: 720px)");
+  const mobile = matchMedia("(max-width: 720px), (max-width: 980px) and (orientation: landscape)");
   const allowedTabs = PAGES[pageId].tabs;
   let activeTab = tabFromUrl(allowedTabs, allowedTabs[0]);
   const tabButtons = [...document.querySelectorAll("[data-contact-tab]")];
@@ -170,11 +174,26 @@ export async function initContactsPage(pageId) {
         await call("friend_invites_from_subscriptions");
         const data = await call("contacts_list", { p_kind: friends ? "friends" : "subscribers" });
         rows = Array.isArray(data) ? data : [];
+        // Najpierw zbuduj wiersze i podepnij ich akcje; dopiero gotowy widok
+        // zastępuje komunikat ładowania.
         render();
-      } catch (error) { await report(error); }
+        contactsLoaded = true;
+        if (loadState) loadState.hidden = true;
+        host?.classList.add("skel-step-ready");
+      } catch (error) {
+        if (!contactsLoaded) {
+          if (loadMessage) loadMessage.textContent = t("contacts.load.failed");
+          if (loadRetry) loadRetry.hidden = false;
+        } else await report(error);
+      }
     })();
     try { await inFlight; } finally { inFlight = null; }
   }
+  loadRetry?.addEventListener("click", () => {
+    if (loadMessage) loadMessage.textContent = t("contacts.load.loading");
+    loadRetry.hidden = true;
+    void refresh();
+  });
   document.getElementById("inviteForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (document.getElementById("btnInvite").disabled) return;
@@ -217,5 +236,4 @@ export async function initContactsPage(pageId) {
       focusRow(resolved.id);
     } catch (error) { await report(error); }
   }
-  document.querySelectorAll("[data-skel-step]").forEach(el => el.classList.add("skel-step-ready"));
 }

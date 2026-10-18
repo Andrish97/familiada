@@ -71,7 +71,7 @@ body.poll-qr-body {
     .qr-box { padding: 14px; }
 }
 
-@media (max-height: 500px) and (orientation: landscape) {
+@media (max-height: 500px) {
     .qr-container {
         flex-direction: row;
         gap: 30px;

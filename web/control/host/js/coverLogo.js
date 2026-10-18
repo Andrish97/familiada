@@ -17,9 +17,9 @@
 //
 // settings.display.colors.A/B/BACKGROUND nie mają tu wpływu.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-18T17330";
-import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-18T17330";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-18T17375";
+import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-18T17375";
 
 const DOT_W = 150, DOT_H = 70;
 const DEFAULT_DOT_COLOR = "#d7ff3d"; // web/js/gameplay/gameStateShape.js's default
@@ -101,7 +101,7 @@ async function renderCustomLogo(el, logo, dotColor, shouldPaint = () => true, mo
 
 // ===== Publiczny wejściowy punkt: wywoływany przy każdym wierszu =====
 
-export function createCoverLogoRenderer({ gameId, key }) {
+export function createCoverLogoRenderer({ gameId, key, previewOnly = false } = {}) {
   const el = document.getElementById("cover2Logo");
   let lastDot = null;
   let lastLogoId;
@@ -136,6 +136,26 @@ export function createCoverLogoRenderer({ gameId, key }) {
     if (hasPreviewLogo) {
       if (previewLogo?.type && previewLogo?.payload) await renderCustomLogo(el, previewLogo, dot, current, logoMode);
       else await renderDefaultLogo(el, dot, current);
+      return;
+    }
+    // Passive previews may receive an unsaved payload from their parent.
+    // Otherwise resolve only the selected logoId through the logged-in
+    // owner's RLS access; no game ID, device key, or lock state is involved.
+    if (previewOnly) {
+      if (!el.childElementCount) await renderDefaultLogo(el, dot, current);
+      if (!logoId) return;
+      try {
+        const { data, error } = await sb()
+          .from("user_logos")
+          .select("type,payload")
+          .eq("id", logoId)
+          .maybeSingle();
+        if (error) throw error;
+        if (!current()) return;
+        if (data?.type && data?.payload) await renderCustomLogo(el, data, dot, current, logoMode);
+      } catch (error) {
+        if (current()) console.warn("[host2] preview logo lookup failed:", error);
+      }
       return;
     }
     if (awaitingSummary && !summary) {

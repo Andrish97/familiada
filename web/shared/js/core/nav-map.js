@@ -5,9 +5,9 @@
 // Decyzje: docs/nawigacja-mapa-plan.md (sekcje 2 i 7).
 //
 // Pola wpisu w PAGES:
-//   path          adres strony (pasuje dokładnie; subpaths: true — także podścieżki)
+//   path          adres strony (pasuje dokładnie; subpaths — jawne podścieżki)
 //   access        "public" | "guest" (gość + konto) | "user" (tylko konto)
-//   device        "any" | "wide" (Control, ustawienia gry) | "noPhone"
+//   minViewportWidth  minimalna szerokość viewportu wymagana przez stronę
 //   parent        dokąd „Wstecz”, gdy nie ma poprawnego ?ret= (null — brak)
 //   parentAnon    to samo dla niezalogowanego (strony publiczne)
 //   parentParams  parametry adresu, które parent dostaje z bieżącej strony
@@ -22,7 +22,7 @@
 //                   roles   kto widzi przycisk: podzbiór ["anon", "guest", "user"]
 //                           (anon — niezalogowany, guest — gość, user — konto);
 //                           brak pola — każdy, kto ma wstęp na stronę
-//                   device  "wide" albo "noPhone" — na telefonie przycisk jest ukryty
+//                   minViewportWidth  szerokość viewportu wymagana przez cel
 //                   tab     karta strony docelowej (?tab=)
 //                   custom  true — przed przejściem strona coś sprawdza (wybrana
 //                           gra, validateGame…); initPage tylko chowa przycisk wg
@@ -38,8 +38,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-18T17330";
-import { iconText } from "./icons.js?v=v2026-10-18T17330";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { iconText } from "./icons.js?v=v2026-10-18T17375";
 
 export const MAX_RET_DEPTH = 4;
 
@@ -55,7 +55,9 @@ export function buttonBlocked(spec) {
 export const PAGES = {
   home:          { path: "/",                   access: "public", parent: null },
   login:         { path: "/login/",             access: "public", parent: "home" },
-  games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab", "dialog"], dialogs: ["exportBaseOverlay", "importOverlay", "previewOverlay", "nameOverlay", "exportJsonOverlay"], buttons: {
+  loginConfirm:  { path: "/login/confirm/",     access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy callback potwierdzenia e-mail; nie jest celem zwykłego powrotu." },
+  loginReset:    { path: "/login/reset/",       access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Przepływ resetu hasła oparty na tokenie z wiadomości." },
+  games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab", "dialog"], dialogs: ["exportBaseOverlay", "importOverlay", "previewOverlay"], buttons: {
     btnMarketplace:      { to: "marketplace" },
     btnLogoEditor:       { to: "logoEditor" },
     btnConnectDevice:    { to: "connectDevice", roles: ["user"] },
@@ -63,8 +65,8 @@ export const PAGES = {
     btnSubscribers:      { to: "subscribers", roles: ["user"] },
     btnTasks:            { to: "tasks", roles: ["user"] },
     btnBases:            { to: "bases" },
-    btnPlay:             { to: "control", device: "wide", custom: true },
-    btnSettings:         { to: "gameSettings", device: "wide", custom: true },
+    btnPlay:             { to: "control", minViewportWidth: 980, custom: true },
+    btnSettings:         { to: "gameSettings", minViewportWidth: 980, custom: true },
     btnEdit:             { to: "editor", custom: true },
     btnPoll:             { to: "polls", custom: true },
   } },
@@ -80,30 +82,47 @@ export const PAGES = {
     btnFriends: { to: "friends", roles: ["user"] },
   } },
   tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "polls", state: ["t"] },
-  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["nameOverlay", "shareOverlay", "importOverlay", "exportJsonOverlay"], buttons: {
+  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["shareOverlay", "importOverlay"], buttons: {
     btnGoAlt:  { to: "friends", roles: ["user"] },
     btnSubscribers: { to: "subscribers", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
-  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay", "renameModal"], locks: [{ type: "base", id: "id", mode: "shared" }] },
-  logoEditor:    { path: "/logo/",              access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["renameOverlay", "logoImportOverlay", "previewOverlay", "logoExportOverlay"] },
-  logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
-  logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
-  logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
-  control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"], buttons: {
+  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay"], locks: [{ type: "base", id: "id", mode: "shared" }] },
+  logoEditor:    { path: "/logos/",                    access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["logoImportOverlay", "previewOverlay"] },
+  logoText:      { path: "/logos/editor/text/",        access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
+  logoDraw:      { path: "/logos/editor/draw/",        access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
+  logoImage:     { path: "/logos/editor/image/",       access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
+  control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", minViewportWidth: 980, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id"], buttons: {
     btnFriends: { to: "friends", roles: ["user"], custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
-  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"], buttons: {
+  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", minViewportWidth: 600, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id"], buttons: {
     btnPlay: { to: "control", custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
-  marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort", "dialog"], dialogs: ["submitOverlay", "gameDetailOverlay"] },
+  marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: ["game/"], from: ["home", "games"], manual: "community", tabs: ["browse", "mine"], state: ["q", "filter", "sort", "tab", "dialog"], dialogs: ["gameDetailOverlay"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect", state: ["share"] },
+  connectTv:     { path: "/connect/tv/", access: "public", parent: "connectDevice", parentAnon: "connectDevice", from: ["connectDevice"], deviceGuard: { formFactors: ["tv"] } },
+  controlDisplay:{ path: "/control/display/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Odbiornik ekranu uruchamiany kodem parowania; osobna sesja urządzenia." },
+  controlHost:   { path: "/control/host/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok hosta sterowania otwierany przez połączone urządzenie." },
+  controlBuzzer: { path: "/control/buzzer/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok buzzera otwierany przez połączone urządzenie." },
+  go:            { path: "/go/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy link odbioru/akcji z tokenem; powrót nie może go ponownie uruchamiać." },
+  pollVotePoints:{ path: "/polls/vote/points/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania punktowego identyfikowany tokenem ankiety." },
+  pollVoteText:  { path: "/polls/vote/text/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania tekstowego identyfikowany tokenem ankiety." },
+  pollVoteQr:    { path: "/polls/vote/qr/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny ekran QR dla głosowania, z własnym guardem urządzenia." },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
   manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
     btnLegal: { to: "privacy" },
   } },
-  mailCenter:    { path: "/mail/", access: "public", parent: "home", from: ["home"], tabs: ["subscriptions","items"], state: ["tab","m"] },
+  mailCenter:    { path: "/mails/", access: "public", parent: "home", from: ["home"], tabs: ["subscriptions","items"], state: ["tab","m"] },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
+  notFound:      { path: "/404.html", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Dokument serwowany przez fallback 404; rzeczywisty nieznany URL pozostaje w pasku adresu." },
+  maintenance:   { path: "/maintenance/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Strona serwisowa zwracana przez bramkę Maintenance zamiast żądanej strony." },
+  admin:         { path: "/settings/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Panel administracyjny z osobną autoryzacją i powłoką." },
+  adminToolEditor: { path: "/settings/tools/editor_5x7.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolExporter: { path: "/settings/tools/exporterandeditor.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolHostLogo: { path: "/settings/tools/host-logo-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
+  adminToolKora: { path: "/settings/tools/kora-builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
+  adminToolLogoBackground: { path: "/settings/tools/logo-background-lab/", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie laboratoryjne panelu administracyjnego." },
+  adminToolTheme: { path: "/settings/tools/theme_builder.html", access: "user", parent: null, from: [], kind: "standalone", standaloneReason: "Narzędzie administracyjne otwierane bezpośrednim adresem." },
 };
 
 // Wspólny kontakt jest budowany dynamicznie, więc nie należy do statycznych
@@ -124,7 +143,7 @@ for (const pageId of new Set(Object.values(GLOBAL_DIALOGS).flat())) {
 // Z instrukcji i prywatności wracamy na każdą stronę z topbarem; do samej
 // instrukcji, prywatności, landingu i logowania nie.
 const MANUAL_EXCLUDED = new Set(["manual", "privacy", "home", "login", "mailCenter"]);
-PAGES.manual.from = Object.keys(PAGES).filter((id) => !MANUAL_EXCLUDED.has(id));
+PAGES.manual.from = Object.keys(PAGES).filter((id) => !MANUAL_EXCLUDED.has(id) && PAGES[id].kind !== "standalone");
 
 export const ROLES = ["anon", "guest", "user"];
 
@@ -151,10 +170,11 @@ export function buttonRoles(pageId, spec) {
   return spec.roles ? spec.roles.filter((r) => allowed.includes(r)) : allowed;
 }
 
-/** Czy przycisk jest widoczny dla roli i urządzenia (phone: true — telefon). */
-export function buttonVisible(pageId, spec, role, phone) {
+/** Widoczność wynika z roli i minimalnej szerokości celu, nie z typu urządzenia. */
+export function buttonVisible(pageId, spec, role, deviceProfile = null) {
   if (!buttonRoles(pageId, spec).includes(role)) return false;
-  if (phone && (spec.device === "wide" || spec.device === "noPhone")) return false;
+  const viewportWidth = typeof deviceProfile === "number" ? deviceProfile : deviceProfile?.viewportWidth ?? Infinity;
+  if (spec.minViewportWidth && viewportWidth < spec.minViewportWidth) return false;
   return true;
 }
 
@@ -201,11 +221,14 @@ function parseInternal(raw) {
 // Strona jest serwowana także bez końcowego "/" (np. /game-settings), więc
 // adres bieżącej strony porównujemy z tym "/" dopisanym.
 export function pageIdForPath(pathname) {
-  const withSlash = pathname.endsWith("/") ? pathname : `${pathname}/`;
+  const withSlash = pathname.endsWith("/") || /\.[a-z0-9]+$/i.test(pathname) ? pathname : `${pathname}/`;
   let sub = null;
   for (const [id, p] of Object.entries(PAGES)) {
     if (p.path === withSlash) return id;
-    if (p.subpaths && withSlash.startsWith(p.path)) sub = id;
+    const matchesSubpath = Array.isArray(p.subpaths)
+      ? p.subpaths.some((prefix) => withSlash.startsWith(`${p.path}${prefix}`))
+      : p.subpaths && withSlash.startsWith(p.path);
+    if (matchesSubpath) sub = id;
   }
   return sub;
 }

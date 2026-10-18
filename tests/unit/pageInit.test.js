@@ -1,5 +1,5 @@
-// Testy initPage() (js/core/page-init.js): dostęp wg PAGES, guard urządzenia,
-// podpięcie #btnBack / #btnManual / konta, wspólna nakładka (gość, telefon).
+// Testy initPage() (js/core/page-init.js): dostęp wg PAGES, guard viewportu,
+// podpięcie #btnBack / #btnManual / konta, wspólna nakładka gościa.
 // Zależności z sieci i przeglądarki (auth, topbar, modal-sheet, device-guard)
 // podstawiamy przez opts.deps; DOM to minimalna atrapa.
 
@@ -35,7 +35,7 @@ beforeEach(() => {
   // lang=pl w adresie: getUiLang() czyta go przed navigator.language.
   loc = { pathname: "/games/editor/", search: "?id=1&lang=pl", hash: "", href: "" };
   globalThis.location = loc;
-  globalThis.window = { addEventListener() {}, removeEventListener() {} };
+  globalThis.window = { listeners: {}, addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); }, removeEventListener() {}, dispatchEvent() {} };
   globalThis.document = {
     getElementById: (id) => els[id] || null,
     querySelector: (sel) => (sel === ".topbar" ? topbar : null),
@@ -43,15 +43,14 @@ beforeEach(() => {
 });
 
 function makeDeps(over = {}) {
-  const calls = { requireAuth: [], getUser: 0, account: [], sheet: 0, wide: [], phone: [] };
+  const calls = { requireAuth: [], getUser: 0, account: [], sheet: 0, width: [] };
   const deps = {
     requireAuth: async (to) => { calls.requireAuth.push(to); return over.user === undefined ? { id: "u1" } : over.user; },
     getUser: async () => { calls.getUser++; return over.user === undefined ? null : over.user; },
     setTopbarAccount: (u, o) => { calls.account.push({ u, o }); return { guestMode: false }; },
     handleSheetBack: () => { calls.sheet++; return over.sheetOpen === true; },
-    guardDesktopOnly: (o) => { calls.wide.push(o); return { refresh() {} }; },
-    blockPhone: (o) => { calls.phone.push(o); return over.phone === true; },
-    isPhoneScreen: () => over.phoneScreen === true,
+    guardViewportWidth: (o) => { calls.width.push(o); return { ready: Promise.resolve(true), refresh() {} }; },
+    getDeviceProfile: () => ({ viewportWidth: over.viewportWidth ?? 1280, formFactor: over.formFactor ?? "desktop", orientation: over.orientation ?? "landscape" }),
   };
   return { deps, calls };
 }
@@ -141,32 +140,50 @@ test("onManual dostaje adres instrukcji", async () => {
   assert.match(got, /^\/manual\/\?tab=edit&ret=/);
 });
 
-test("device wide: guardDesktopOnly z backHref, użytkownik wraca", async () => {
+test("Control: jawny próg viewportu i backHref, użytkownik wraca", async () => {
   const { deps, calls } = makeDeps();
   loc.pathname = "/control/";
   loc.search = "?id=g1&lang=pl";
   const user = await initPage("control", { deps, manual: false });
   assert.deepEqual(user, { id: "u1" });
-  assert.equal(calls.wide.length, 1);
-  assert.equal(calls.wide[0].backHref, "/games/");
+  assert.equal(calls.width.length, 1);
+  assert.equal(calls.width[0].minWidth, 980);
+  assert.equal(calls.width[0].backHref, "/games/");
 });
 
-test("device noPhone: telefon dostaje nakładkę i null, topbar nadal działa", async () => {
-  const { deps, calls } = makeDeps({ phone: true });
-  loc.pathname = "/logo/editor/draw/";
+test("edytor Logo: jawny próg viewportu, topbar nadal działa", async () => {
+  const { deps, calls } = makeDeps({ viewportWidth: 390, formFactor: "phone" });
+  loc.pathname = "/logos/editor/draw/";
   loc.search = "?id=3&lang=pl";
   const user = await initPage("logoDraw", { deps });
-  assert.equal(user, null);
-  assert.equal(calls.phone.length, 1);
-  assert.equal(calls.phone[0].backHref, "/logo/");
+  assert.deepEqual(user, { id: "u1" });
+  assert.equal(calls.width.length, 1);
+  assert.equal(calls.width[0].minWidth, 700);
+  assert.equal(calls.width[0].backHref, "/logos/");
   assert.ok(els.btnBack.listeners.click, "„Wstecz” w topbarze zostaje");
   assert.deepEqual(topbar.classList.added, ["topbar-ready"]);
 });
 
-test("device noPhone: szeroki ekran przechodzi", async () => {
-  const { deps } = makeDeps({ phone: false });
-  loc.pathname = "/logo/editor/draw/";
+test("edytor Logo: przekazuje twardy wymóg tabletu/desktopu do guarda", async () => {
+  const { deps, calls } = makeDeps({ viewportWidth: 390, formFactor: "phone", orientation: "portrait" });
+  loc.pathname = "/logos/editor/draw/";
   assert.deepEqual(await initPage("logoDraw", { deps }), { id: "u1" });
+  assert.deepEqual(calls.width[0].formFactors, ["tablet", "desktop"]);
+});
+
+test("nie pyta o sesję, dopóki device guard nie zezwoli na stronę", async () => {
+  const { deps, calls } = makeDeps();
+  let releaseGuard;
+  deps.guardViewportWidth = (o) => {
+    calls.width.push(o);
+    return { ready: new Promise((resolve) => { releaseGuard = resolve; }), refresh() {} };
+  };
+  const pending = initPage("editor", { deps });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(calls.requireAuth.length, 0);
+  releaseGuard(true);
+  assert.deepEqual(await pending, { id: "u1" });
+  assert.equal(calls.requireAuth.length, 1);
 });
 
 test("konto: loginHref i accountHref z mapy, opcje strony nadpisują", async () => {
@@ -210,7 +227,7 @@ test("device-guard, page-overlay i page-init nie cofają przez historię ani ref
 });
 
 test("klucze pageGuard są w pl/en/uk, stare deviceGuard i guestGuard zniknęły", async () => {
-  const keys = ["phoneTitle", "phoneMessage", "rotateTitle", "rotateMessage", "narrowTitle", "narrowMessage", "back", "guestTitle", "guestMessage", "login"];
+  const keys = ["rotateTitle", "rotateMessage", "narrowTitle", "narrowMessage", "back", "guestTitle", "guestMessage", "login"];
   for (const lang of ["pl", "en", "uk"]) {
     const mod = await import(`../../web/shared/translation/${lang}.js`);
     const dict = mod.default || Object.values(mod)[0];
@@ -262,9 +279,10 @@ test("przyciski: gość nie dostaje przycisków dla konta (roles: user)", async 
   assert.ok(els.btnBases.listeners.click);
 });
 
-test("przyciski: device wide jest ukryty na telefonie, na komputerze zostaje", async () => {
+test("przyciski wymagające szerokości reagują na viewport i zmianę orientacji", async () => {
   gamesButtons();
-  await initPage("games", { deps: makeDeps({ phoneScreen: true }).deps });
+  const phone = makeDeps({ viewportWidth: 390, formFactor: "phone" });
+  await initPage("games", { deps: phone.deps });
   for (const id of ["btnPlay", "btnSettings"]) {
     assert.equal(els[id].hidden, true, id);
     assert.equal(els[id].style.display, "none", id);
@@ -272,8 +290,15 @@ test("przyciski: device wide jest ukryty na telefonie, na komputerze zostaje", a
   assert.equal(els.btnEdit.hidden, false);
   assert.equal(els.btnMarketplace.hidden, false);
 
+  phone.deps.getDeviceProfile = () => ({ viewportWidth: 844, formFactor: "phone", orientation: "landscape" });
+  for (const update of window.listeners.resize || []) update();
+  assert.equal(els.btnPlay.hidden, true, "844 px nie spełnia progu Control 980 px");
+  phone.deps.getDeviceProfile = () => ({ viewportWidth: 1024, formFactor: "tablet", orientation: "landscape" });
+  for (const update of window.listeners.orientationchange || []) update();
+  assert.equal(els.btnPlay.hidden, false, "tablet landscape ujawnia akcję po spełnieniu progu");
+
   gamesButtons();
-  await initPage("games", { deps: makeDeps({ phoneScreen: false }).deps });
+  await initPage("games", { deps: makeDeps({ viewportWidth: 1280 }).deps });
   assert.equal(els.btnPlay.hidden, false);
   assert.equal(els.btnSettings.hidden, false);
 });

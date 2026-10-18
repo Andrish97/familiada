@@ -9,15 +9,27 @@ body.pollpub-body {
     flex-direction: column;
 }
 
+.poll-vote-topbar{
+    justify-content:flex-start;
+    min-height:var(--topbar-h);
+}
+.poll-vote-topbar .brand{ color:var(--gold); }
+
 body.pollpub-body .card {
     margin-top: auto;
     margin-bottom: auto;
     border-radius: 22px;
     border: 1px solid var(--line);
     background: var(--card);
-    --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
+    --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
     padding: 18px;
     box-shadow: 0 24px 60px rgba(0,0,0,.45)
+}
+
+body.pollpub-body > main.wrap > .card {
+    width: min(680px, 100%);
+    align-self: center;
+    box-sizing: border-box;
 }
 
 body.pollpub-body .brand {
@@ -42,7 +54,8 @@ body.pollpub-body .sub {
 }
 
 .qbox {
-    margin-top: 14px
+    margin-top: 14px;
+    scroll-margin-top: calc(var(--topbar-h, 0px) + 14px)
 }
 
 .qtext {

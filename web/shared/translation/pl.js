@@ -2,6 +2,7 @@ const pl = {
   pollSharePanel: {
     "anonymous": "Anonimowo",
     "recipients": "Odbiorcy",
+    "recipientList": "Lista odbiorców",
     "opened": "Otwarto",
     "empty": "Brak osób na liście",
     "mailDisabled": "Powiadomienia mailowe są wyłączone"
@@ -25,8 +26,9 @@ const pl = {
   resourceSend: {
   "action": "Wyślij",
   "title": "Wyślij znajomym",
+  "selectFriends": "Wybierz znajomych",
   "received": "Otrzymane kopie",
-  "receivedFilter": "Otrzymane",
+  "receivedFilter": "Otrzymano",
   "history": "Historia wysyłek",
   "from": "Od: {name}",
   "accept": "Akceptuj",
@@ -56,6 +58,7 @@ const pl = {
     filterAll: "Wszystkie",
     noResults: "Brak wyników.",
     genericError: "Wystąpił błąd.",
+    filePicker: { choose: "Wybierz plik", none: "Nie wybrano pliku" },
     manualLabel: "Wskazówki",
     contactBtn: "Kontakt",
     modalBack: "Wstecz",
@@ -68,6 +71,10 @@ const pl = {
     no: "Nie",
     open: "Otwórz",
     copy: "Kopiuj",
+    selectAll: "Zaznacz wszystkich",
+    selectAllShort: "Wszyscy",
+    deselectAll: "Odznacz wszystkich",
+    deselectAllShort: "Odznacz",
     done: "Gotowe",
     loading: "Ładowanie…",
     authEntry: "Zaloguj / Załóż konto",
@@ -88,11 +95,11 @@ const pl = {
       closeLabel: "Zamknij",
     },
     fullscreen: "Pełny ekran",
-    a2hsTitle: "Pełny ekran na iPhone",
+    a2hsTitle: "Pełny ekran na iPhonie i iPadzie",
     a2hsHost:
       "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom jako aplikację.",
     a2hsBuzzer:
-      "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.",
+      "W Safari na iPhonie i iPadzie nie da się wymusić pełnego ekranu. Wybierz <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom aplikację z ekranu początkowego.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
     rating: {
@@ -143,7 +150,7 @@ const pl = {
       subscriptions: "Subskrypcje",
       bases: "Moje bazy",
       baseExplorer: "Menedżer bazy",
-      logoEditor: "Moje logo",
+      logoEditor: "Moje loga",
       logoText: "Edytor logo",
       logoDraw: "Edytor logo",
       logoImage: "Edytor logo",
@@ -178,11 +185,19 @@ const pl = {
   // Wspólna nakładka blokady strony (page-overlay.js): urządzenie i gość.
   pageGuard: {
     phoneTitle: "Niedostępne na telefonie",
-    phoneMessage: "Ta strona potrzebuje większego ekranu. Przełącz się na komputer albo tablet.",
-    rotateTitle: "Obróć tablet",
-    rotateMessage: "Ta strona działa w poziomie. Obróć tablet — strona pojawi się sama.",
+    phoneMessage: "Ta strona jest niedostępna na telefonie.",
+    screenTitle: "Wymagany większy ekran",
+    screenMessage: "Ten ekran jest za mały. Użyj urządzenia z większym ekranem.",
+    touchTitle: "Wymagany ekran dotykowy",
+    touchMessage: "Otwórz tę stronę na telefonie lub tablecie z ekranem dotykowym.",
+    tvOnlyTitle: "Ta strona jest przeznaczona dla telewizora",
+    tvOnlyMessage: "Podłącz wyświetlacz na telewizorze. Na tym urządzeniu użyj strony Podłącz urządzenie.",
+    tvUnsupportedTitle: "Niedostępne na telewizorze",
+    tvUnsupportedMessage: "Ta strona nie jest dostępna na telewizorze. Za chwilę wrócisz do ekranu Podłącz wyświetlacz.",
+    rotateTitle: "Obróć urządzenie",
+    rotateMessage: "Obróć urządzenie, aby uzyskać właściwy widok.",
     narrowTitle: "Za wąskie okno",
-    narrowMessage: "Poszerz okno przeglądarki, żeby korzystać z tej strony.",
+    narrowMessage: "Poszerz okno przeglądarki lub wyjdź z widoku podzielonego ekranu.",
     back: "Wróć",
     guestTitle: "Niedostępne w koncie gościa",
     guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i Centrum ankiet.",
@@ -262,7 +277,7 @@ const pl = {
       ctaConnectTitle: "Podłącz urządzenie do rozgrywki",
       note: "Dostępny tryb gościa — darmowa Familiada bez rejestracji.",
     },
-    imageViewer: { open: "Powiększ obraz: {title}" },
+    imageViewer: { title: "Podgląd", open: "Powiększ obraz: {title}" },
     about: {
       title: "Familiada Online — darmowy generator pytań i gra na żywo",
       p1: "Nasz system pozwala zorganizować własną grę w stylu Familiada od początku do końca. To idealne rozwiązanie jako atrakcja na wesele, urodziny czy integrację. Generator pytań pozwala na tworzenie własnych baz lub korzystanie z gotowych zestawów.",
@@ -648,13 +663,14 @@ const pl = {
   },
   buzzer: {
     title: "Familiada — Przycisk do pojedynku",
+    rotateMessage: "Obróć telefon poziomo, aby korzystać z przycisku do pojedynku.",
     btnA: "Przycisk A",
     btnB: "Przycisk B",
     rotateHint: "Obróć urządzenie do poziomu",
   },
   bases: {
     title: "Familiada — bazy pytań",
-    headerTitle: "Twoje bazy pytań",
+    headerTitle: "Moje bazy pytań",
     headerHint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
     headerHintShared: "Naciśnij kafelek, żeby go zaznaczyć.",
     actions: {
@@ -693,17 +709,21 @@ const pl = {
       loadFile: "Wczytaj plik",
       placeholder: "Wklej JSON tutaj...",
       confirm: "Importuj",
+      done: "Gotowe",
       cancel: "Zamknij",
     },
     exportModal: {
       title: "EKSPORT…",
       subtitle: "Nie zamykaj strony. Trwa przygotowanie pliku.",
+      close: "Gotowe",
     },
     shareModal: {
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
-      roleEditor: "Edycja",
-      roleViewer: "Przeglądanie",
+      roleEditor: "Może edytować",
+      roleViewer: "Tylko podgląd",
+      roleEditorShort: "Edycja",
+      roleViewerShort: "Podgląd",
       add: "Dodaj",
       close: "Zamknij",
       cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
@@ -790,8 +810,8 @@ const pl = {
     },
     share: {
       empty: "Brak udostępnień.",
-      roleEditor: "Edycja",
-      roleViewer: "Przeglądanie",
+      roleEditor: "Może edytować",
+      roleViewer: "Tylko podgląd",
       remove: "Usuń",
       failed: "Nie udało się",
       invalidEmail: "Niepoprawny e-mail",
@@ -857,6 +877,7 @@ const pl = {
       points: "punktowa",
     },
     pageSubtitle: "{type} · {name}",
+    load: { loading: "Wczytuję ankietę…", failed: "Nie udało się wczytać ankiety.", retry: "Ponów" },
     tabs: {
       share: "Udostępnianie",
       results: "Głosy",
@@ -956,6 +977,8 @@ const pl = {
       leaveTally: "Wyjdź z podliczania",
     },
     results: {
+      votesUnitCount: "{n} gł.",
+      pointsUnitCount: "{n} pkt",
       noQuestions: "Brak pytań.",
       title: "Wyniki",
       final: "Wynik:",
@@ -999,12 +1022,12 @@ const pl = {
       },
       tallyPoints: {
         title: "Podliczyć głosy?",
-        text: "Punkty zostaną przeliczone do sumy 100 w każdym pytaniu, a linki i zaproszenia wygasną. Gra będzie gotowa.",
+        text: "Punkty będą liczone od wszystkich głosów. Odpowiedzi z udziałem poniżej 3% po zaokrągleniu zostaną pominięte. Linki i zaproszenia wygasną.",
         ok: "Zatwierdź",
       },
       tallyText: {
         title: "Zatwierdzić odpowiedzi?",
-        text: "Zostaną zapisane odpowiedzi z punktami (suma 100 w każdym pytaniu), a linki i zaproszenia wygasną. Gra będzie gotowa.",
+        text: "Zostaną zapisane odpowiedzi z punktami. Udział liczymy od wszystkich głosów; odpowiedzi poniżej 3% po zaokrągleniu są pomijane.",
         ok: "Zatwierdź",
       },
       reopen: {
@@ -1035,11 +1058,13 @@ const pl = {
     },
     tally: {
       loading: "Ładuję odpowiedzi…",
-      hintText: "Przeciągnij odpowiedź na inną, żeby je połączyć. Kliknij tekst, żeby poprawić literówkę. Odpowiedzi mają maksymalnie 17 znaków.",
-      hintPoints: "Głosy przeliczone na punkty (suma 100 w każdym pytaniu). Zatwierdź, żeby zakończyć ankietę.",
+      hintText: "Udział liczony od wszystkich głosów. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz). Przeciągnij odpowiedź na inną, żeby je połączyć; kliknij tekst, żeby poprawić literówkę. Maks. 17 znaków.",
+      hintPoints: "Głosy przeliczone na punkty od wszystkich głosów. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz).",
       counter: "Odpowiedzi: {n} (wymagane 3–6)",
-      sum: "suma: {n}",
+      sum: "suma pkt: {n}",
       votes: "{n} gł.",
+      votesPercent: "{n} gł. · {pct}%",
+      skippedTitle: "Pominięta: {pct}% wszystkich głosów (poniżej 3%).",
       mergeDup: "Scal identyczne",
       mergeWith: "Połącz z…",
       remove: "Usuń",
@@ -2636,14 +2661,14 @@ const pl = {
       subscribers: "Subskrybenci",
       tasks: "Zadania",
       bases: "Bazy pytań",
-      logo: "Logo",
+      logo: "Loga",
       marketplace: "Gry Społeczności",
       connectDevice: "Podłącz urządzenie",
       account: "Ustawienia konta",
       more: "Więcej",
     },
     header: {
-      title: "Twoje gry",
+      title: "Moje gry",
       hint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
     },
     actions: {
@@ -2668,12 +2693,13 @@ const pl = {
     },
     tabs: {
       pollText: "Ankieta tekstowa",
-      pollTextMobile: "Ankieta",
+      pollTextMobile: "Tekst",
       pollPoints: "Punktacja",
       pollPointsMobile: "Punkty",
       prepared: "Preparowana",
+      preparedMobile: "Prepar.",
       market: "Gry Społeczności",
-      marketMobile: "Społ.",
+      marketMobile: "Społeczność",
     },
     iosWebapp: {
       title: "Dodaj Familiadę do ekranu głównego",
@@ -2742,6 +2768,7 @@ const pl = {
     exportFile: {
       title: "EKSPORT…",
       subtitle: "Nie zamykaj strony. Trwa przygotowanie pliku.",
+      close: "Gotowe",
       progress: {
         start: "Eksportuję…",
         fetch: "Pobieram dane…",
@@ -2860,6 +2887,12 @@ const pl = {
         "@Moja gra\n#Zwierzeta w Afryce\n1 Słoń /29\n2 Lew /19\n3 Małpa /16\n\n#Drugie pytanie\n1 Odpowiedź 1\n2 Odpowiedź 2\n3 Odpowiedź 3",
       formatHint:
         "Działa też format bez numerów (po prostu linie z odpowiedziami). Import toleruje spacje/taby, „1.”, „2)” itp. Jeśli odpowiedź ma więcej niż 17 znaków, zostanie ucięta.",
+      previewLabel: "Podgląd importu",
+      previewTitle: "Podgląd na żywo",
+      previewEmpty: "Wpisz pytania, aby zobaczyć podgląd.",
+      previewSummary: "{questions} pytań · {answers} odpowiedzi",
+      previewError: "Popraw format, aby zobaczyć podgląd: {error}",
+      previewMore: "i {count} kolejnych pytań",
       confirm: "Importuj",
       cancel: "Zamknij",
     },
@@ -3590,6 +3623,7 @@ const pl = {
   },
 
   tasks: {
+    load: { loading: "Wczytuję zadania…", failed: "Nie udało się wczytać zadań.", retry: "Ponów" },
     title: "Familiada — zadania",
     bar: {
       title: "Zadania",
@@ -3876,14 +3910,14 @@ const pl = {
     shareCooldownAlert: "Ponowne zaproszenie do ankiety możliwe za {hours} godz.",
   },
   logoEditor: {
-    title: "Familiada — logo",
+    title: "Familiada — moje loga",
     titles: {
       text: "Familiada — logo tekstowe",
       draw: "Familiada — logo rysunkowe",
       image: "Familiada — logo z obrazu",
     },
     list: {
-      title: "Twoje logo",
+      title: "Moje loga",
       hint: "Kliknij kafelek, żeby go zaznaczyć. Dwuklik (albo przytrzymanie na dotyku) zmienia nazwę.",
       preview: "Podgląd",
       edit: "Edytuj",
@@ -4071,7 +4105,10 @@ const pl = {
     },
     import: {
       title: "Import logo",
+      chooseFile: "Wybierz plik",
+      noFileSelected: "Nie wybrano pliku",
       confirm: "Importuj",
+      done: "Gotowe",
       steps: {
         uploadImage: "Wysyłam obraz do magazynu…",
         saveDb: "Zapisuję w bazie…",
@@ -4080,6 +4117,8 @@ const pl = {
     export: {
       title: "Eksport…",
       subtitle: "Nie zamykaj strony — trwa przygotowanie pliku.",
+      close: "Gotowe",
+      success: "Plik logo został pobrany.",
     },
     errors: {
       exportIncomplete: "Nie udało się dołączyć obrazu do logo. Spróbuj ponownie.",
@@ -4154,7 +4193,7 @@ const pl = {
     },
     tags: {
       modalTitle: "Tagi",
-      addTag: "+ Dodaj tag",
+      addTag: "Dodaj tag",
       editTitle: "Tag",
       namePlaceholder: "Nazwa taga…",
       pickColor: "Wybierz kolor",
@@ -4851,6 +4890,7 @@ const pl = {
     loading: "Ładowanie…",
     searchPlaceholder: "Szukaj gry…",
     searchLabel: "Szukaj gier",
+    searchClear: "Wyczyść wyszukiwanie",
     filterLabel: "Język",
     filterAll: "Wszystkie",
     sortLabel: "Sortowanie",
@@ -4950,8 +4990,11 @@ const pl = {
     messageText:
       "Tego adresu nie ma lub został przeniesiony. Sprawdź poprawność linku.",
     redirectHint: "Za chwilę wrócisz na stronę główną.",
+    authRedirectHint: "Za chwilę wrócisz do Moich gier.",
+    tvRedirectHint: "Za chwilę wrócisz do ekranu Podłącz wyświetlacz.",
     homeBtn: "Strona główna",
     marketplaceBtn: "Przeglądaj Gry Społeczności",
+    myGamesBtn: "Wróć do Moich gier",
     footerLeft: "Familiada",
     footerRight: "Jeśli to błąd — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
@@ -5002,7 +5045,7 @@ const pl = {
       desktopOnly: "Ta strona działa najlepiej na komputerze lub TV. Możesz kontynuować.",
     },
     enterCode: {
-      title: "Wprowadź kod urządzenia",
+      title: "Podłącz kodem",
       placeholder: "000000",
       btn: "Podłącz",
       connectBtn: "Połącz",
@@ -5018,6 +5061,7 @@ const pl = {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
   },
   contacts: {
+    load: { loading: "Wczytuję kontakty…", failed: "Nie udało się wczytać kontaktów.", retry: "Ponów" },
     tabs: { invite: "Zaproszenia" },
     "friends": {
         "add": "Dodaj znajomego",
@@ -5031,7 +5075,7 @@ const pl = {
         "hint": "Osoby bez konta, które chcą otrzymywać Twoje ankiety.",
         "empty": "Nie masz jeszcze subskrybentów."
     },
-    "invite": "+ Zaproś",
+    "invite": "Zaproś",
     "handle": "E-mail lub nazwa użytkownika",
     "email": "Adres e-mail",
     "go": "Przejdź →",
@@ -5103,6 +5147,7 @@ const pl = {
     pageTitle: "Ustawienia gry",
     defaultGameName: "Gra",
     categories: {
+      open: "Pokaż sekcje ustawień",
       teams: "Drużyny",
       display: "Wygląd",
       sound: "Dźwięk",
@@ -5300,6 +5345,7 @@ pl.mailCenter = {
   "loading": "Ładuję…",
   "centerTitle": "Moje powiadomienia",
   "emailLabel": "Twój adres e-mail",
+  "emailPlaceholder": "Wpisz swój adres e-mail",
   "sendLink": "Wyślij link",
   "subscriptions": "Subskrypcje",
   "items": "Zadania i udostępnienia",

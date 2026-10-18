@@ -15,6 +15,17 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   dokumentu (`docs/nawigacja-mapa-plan.md`, `docs/blokady-zasobow.md`,
   `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
   Kopie Gier/Logo: `docs/udostepnianie-kopii-plan.md` (E19C).
+- **Kompletna mapa stron i nawigacji (decyzja 2026-10-17):** dodanie,
+  usunięcie, zmiana adresu albo zachowania dowolnej strony wymaga równoczesnej
+  aktualizacji centralnej mapy nawigacji `web/shared/js/core/nav-map.js`
+  (`PAGES` i `pageIdForPath`), dokumentacji tras oraz powiązanych testów i
+  generatorów, jeśli ich dotyczy. Dotyczy to także auth/sesji, przekierowań,
+  urządzeń, powrotu, deep linków i stanów strony. Każda istniejąca trasa HTML
+  musi być ujęta w inwentarzu mapy. Trasy techniczne, tokenowe, serwisowe,
+  administracyjne i urządzeń, które nie należą do zwykłej nawigacji, wpisuj
+  jawnie jako samodzielne z opisem ich roli i powodem wyłączenia z nawigacji;
+  nie pomijaj ich po cichu. Zasada i audyt: `docs/nawigacja-mapa-plan.md`,
+  `docs/audyt-initpage-trasy.md`.
 
 ## Cykl wdrożenia (decyzja 2026-10-10) — każda zmiana potwierdzona testem na produkcji
 

@@ -5,10 +5,11 @@
 // tekst + przyciski. „Wróć” prowadzi na adres z mapy nawigacji (backHref),
 // nigdy przez history.back() ani referrer. i18n: pageGuard.*.
 
-import { applyTranslations, t } from "../../translation/translation.js?v=v2026-10-18T17330";
-import { icon } from "./icons.js?v=v2026-10-18T17330";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { icon } from "./icons.js?v=v2026-10-18T17375";
 
 export const PAGE_GUARD_ID = "pageGuard";
+let redirectTimer = null;
 
 function ensureOverlay() {
   let overlay = document.getElementById(PAGE_GUARD_ID);
@@ -16,50 +17,20 @@ function ensureOverlay() {
 
   overlay = document.createElement("div");
   overlay.id = PAGE_GUARD_ID;
-  Object.assign(overlay.style, {
-    position: "fixed",
-    inset: "0",
-    width: "100vw",
-    height: "100vh",
-    fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
-    background: "rgba(0,0,0,.78)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    color: "#fff",
-    zIndex: "2147483647",
-    display: "none",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "16px",
-    boxSizing: "border-box",
-    overscrollBehavior: "none",
-  });
+  overlay.className = "blocking-overlay";
 
   overlay.innerHTML = `
-    <div role="alertdialog" aria-labelledby="pageGuardTitle" aria-describedby="pageGuardMsg" style="
-      width:100%;max-width:560px;box-sizing:border-box;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.18);
-      border-radius:18px;
-      padding:18px;
-      text-align:left;
-    ">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <span id="pageGuardIcon" aria-hidden="true" style="display:inline-flex;width:26px;height:26px;flex:none;color:var(--gold, #ffeaa6);"></span>
-        <div id="pageGuardTitle" style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;"></div>
+    <div class="blocking-card" role="alertdialog" aria-labelledby="pageGuardTitle" aria-describedby="pageGuardMsg">
+      <div class="blocking-heading">
+        <span id="pageGuardIcon" class="blocking-icon" aria-hidden="true"></span>
+        <h2 id="pageGuardTitle" class="blocking-title"></h2>
       </div>
 
-      <div id="pageGuardMsg" style="opacity:.9;line-height:1.4;word-wrap:break-word;"></div>
+      <div id="pageGuardMsg" class="blocking-message"></div>
 
-      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button id="pageGuardBack" type="button" data-i18n="pageGuard.back" style="
-          appearance:none;border:0;border-radius:12px;padding:10px 14px;
-          font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;
-        ">${t("pageGuard.back")}</button>
-        <button id="pageGuardLogin" type="button" data-i18n="pageGuard.login" style="
-          appearance:none;border:0;border-radius:12px;padding:10px 14px;
-          font-weight:800;cursor:pointer;background:rgba(255,220,120,.24);color:#fff;
-        ">${t("pageGuard.login")}</button>
+      <div class="blocking-actions">
+        <button id="pageGuardBack" class="blocking-action" type="button" data-i18n="pageGuard.back" data-i18n-icon="arrow-left">${icon("arrow-left")} ${t("pageGuard.back")}</button>
+        <button id="pageGuardLogin" class="blocking-action is-accent" type="button" data-i18n="pageGuard.login" data-i18n-icon="person">${icon("person")} ${t("pageGuard.login")}</button>
       </div>
     </div>
   `;
@@ -88,8 +59,17 @@ function lockScroll(on) {
  *   backHref    adres „Wróć” (null — bez przycisku)
  *   loginHref   adres „Zaloguj” (null — bez przycisku)
  */
-export function showPageGuard({ kind, state = "", iconName = "info", titleKey, messageKey, backHref = null, loginHref = null }) {
+export function showPageGuard({ kind, state = "", iconName = "info", titleKey, messageKey, backHref = null, loginHref = null, redirectHref = null, redirectDelayMs = 0 }) {
   const overlay = ensureOverlay();
+  if (redirectTimer) {
+    clearTimeout(redirectTimer);
+    redirectTimer = null;
+  }
+  if (kind === "device" && document.body && !overlay.dataset.hidesBody) {
+    overlay.dataset.bodyVisibility = document.body.style.visibility;
+    document.body.style.visibility = "hidden";
+    overlay.dataset.hidesBody = "true";
+  }
   const title = overlay.querySelector("#pageGuardTitle");
   const msg = overlay.querySelector("#pageGuardMsg");
   title.setAttribute("data-i18n", titleKey);
@@ -112,6 +92,12 @@ export function showPageGuard({ kind, state = "", iconName = "info", titleKey, m
   overlay.dataset.kind = kind;
   overlay.dataset.state = state;
   overlay.style.display = "flex";
+  if (redirectHref) {
+    const target = withLangParam(redirectHref);
+    redirectTimer = setTimeout(() => {
+      if (overlay.style.display !== "none") window.location.replace(target);
+    }, Math.max(0, redirectDelayMs));
+  }
   lockScroll(true);
   applyTranslations(overlay);
   return overlay;
@@ -119,7 +105,18 @@ export function showPageGuard({ kind, state = "", iconName = "info", titleKey, m
 
 /** Chowa nakładkę (np. po obrocie tabletu albo poszerzeniu okna). */
 export function hidePageGuard() {
+  if (redirectTimer) {
+    clearTimeout(redirectTimer);
+    redirectTimer = null;
+  }
   const overlay = document.getElementById(PAGE_GUARD_ID);
-  if (overlay) overlay.style.display = "none";
+  if (overlay) {
+    overlay.style.display = "none";
+    if (overlay.dataset.hidesBody === "true" && document.body) {
+      document.body.style.visibility = overlay.dataset.bodyVisibility || "";
+      delete overlay.dataset.bodyVisibility;
+      delete overlay.dataset.hidesBody;
+    }
+  }
   lockScroll(false);
 }

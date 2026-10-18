@@ -1,22 +1,22 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { VIEW, createState, setRole, pruneTreeOpen } from "./state.js?v=v2026-10-18T17330";
-import { renderAll } from "./render.js?v=v2026-10-18T17330";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { VIEW, createState, setRole, pruneTreeOpen } from "./state.js?v=v2026-10-18T17375";
+import { renderAll } from "./render.js?v=v2026-10-18T17375";
 import {
   getBaseMeta,
   getBaseRole,
   listCategories,
   listTags,
   listAllQuestions,
-} from "./repo.js?v=v2026-10-18T17330";
-import { wireActions } from "./actions.js?v=v2026-10-18T17330";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-18T17330";
+} from "./repo.js?v=v2026-10-18T17375";
+import { wireActions } from "./actions.js?v=v2026-10-18T17375";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-18T17375";
 
 /* ================= DOM ================= */
 const baseNameEl = document.getElementById("baseName");
@@ -115,18 +115,24 @@ function getBaseIdFromUrl() {
 
     // refresh (żeby search/filter działały od razu spójnie)
     await api.refreshList();
+    document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
+      .forEach((step) => step.classList.add("skel-step-ready"));
 
   } catch (e) {
     console.error(e);
 
     // brak dostępu – wracamy do baz
     if (e?.code === "NO_ACCESS") {
+      document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
+        .forEach((step) => step.classList.add("skel-step-ready"));
       void alertModal({ text: t("baseExplorer.errors.noAccess") });
       //location.href = "../bases";
       return;
     }
 
     void alertModal({ text: t("baseExplorer.errors.loadFailed") });
+    document.querySelectorAll(".toolbar[data-skel-step], .explorer[data-skel-step]")
+      .forEach((step) => step.classList.add("skel-step-ready"));
     //location.href = "../bases";
   }
 })();

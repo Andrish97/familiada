@@ -1,8 +1,12 @@
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-18T17330";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+guardViewportWidth({ minWidth: 0 });
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-18T17375";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T17375";
 
 async function redirectIfSession() {
   try {
@@ -154,12 +158,16 @@ function initPipeline() {
   // Ustaw top rury śledząc dolną krawędź topbara
   function syncTop() {
     if (!topbar) { wrap.style.top = "0px"; return; }
-    const bottom = topbar.getBoundingClientRect().bottom;
-    wrap.style.top = Math.max(0, bottom) + "px";
-    // Body padding musi uwzględniać topbar + pipeline żeby treść nie wchodziła pod pipeline
+    const topbarBottom = topbar.getBoundingClientRect().bottom;
+    wrap.style.top = Math.max(0, topbarBottom) + "px";
+    // Body rezerwuje wysokość elementów, nie ich współrzędne ekranowe.
+    // Dzięki temu zmiana visualViewport nie dodaje/odejmuje pustego pasa
+    // w dokumencie, a po zamknięciu arkusza wraca miejsce na pipeline.
     requestAnimationFrame(() => {
-      const pipelineBottom = wrap.getBoundingClientRect().bottom;
-      document.body.style.paddingTop = Math.max(0, pipelineBottom) + "px";
+      const topbarHeight = topbar.getBoundingClientRect().height;
+      const pipelineHeight = wrap.getBoundingClientRect().height;
+      const sheetOpen = document.body.classList.contains("sheet-open");
+      document.body.style.paddingTop = Math.max(0, topbarHeight + (sheetOpen ? 0 : pipelineHeight)) + "px";
     });
   }
 
@@ -211,6 +219,10 @@ function initPipeline() {
 
   window.addEventListener("scroll", update, { passive: true });
   window.addEventListener("resize", update, { passive: true });
+  window.visualViewport?.addEventListener("resize", syncTop, { passive: true });
+  window.visualViewport?.addEventListener("scroll", syncTop, { passive: true });
+  const sheetObserver = new MutationObserver(() => syncTop());
+  sheetObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
   // Śledź animację chowania topbara (klasa is-hidden-mobile, transition ~0.22s)
   if (topbar) {
@@ -242,32 +254,31 @@ function initFaqCarets() {
 
 function initImageViewer() {
   const overlay = document.createElement("div");
-  overlay.className = "imgv-overlay";
+  overlay.id = "imgvOverlay";
+  overlay.className = "overlay modal--sheet imgv-overlay";
+  overlay.style.display = "none";
+  overlay.setAttribute("aria-hidden", "true");
   overlay.innerHTML = `
-    <div class="imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvTitle">
-      <div class="imgv-top">
-        <div class="imgv-title" id="imgvTitle"></div>
-        <button class="imgv-close btn" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}" data-i18n-aria-label="common.modal.closeLabel">${icon("close")}</button>
+    <div class="modal imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvHeading">
+      <div class="imgv-top mHead">
+        <h2 class="imgv-title mTitle" id="imgvHeading">${t("home.imageViewer.title")}</h2>
+        <button class="btn sm" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}" data-i18n-aria-label="common.modal.closeLabel">${icon("close")}</button>
       </div>
+      <p class="imgv-name mSub" id="imgvName"></p>
       <div class="imgv-stage" id="imgvStage"></div>
     </div>
   `;
-  document.body.appendChild(overlay);
-
+  const main = document.querySelector("main.wrap");
+  const footer = main?.querySelector(":scope > .footer");
+  if (main) main.insertBefore(overlay, footer || null);
+  else document.body.appendChild(overlay);
   const stage = overlay.querySelector("#imgvStage");
   const closeBtn = overlay.querySelector("#imgvClose");
-  const titleEl = overlay.querySelector("#imgvTitle");
+  const backBtn = document.getElementById("btnImageViewerBack");
+  const titleEl = overlay.querySelector("#imgvName");
 
-  let currentImg = null;
+  let previewZoom = null;
   let previousFocus = null;
-  let scale = 1, tx = 0, ty = 0;
-  let startDist = 0, startScale = 1;
-  let pointers = new Map();
-  let lastPan = null;
-
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const setTransform = () => currentImg && (currentImg.style.transform = `translate3d(${tx}px,${ty}px,0) scale(${scale})`);
-  const resetZoom = () => { scale = 1; tx = 0; ty = 0; setTransform(); };
 
   const open = (src, title) => {
     if (overlay.classList.contains("is-open")) return;
@@ -281,29 +292,38 @@ function initImageViewer() {
       const img = document.createElement("img");
       img.className = "imgv-img"; img.src = src; img.alt = title || "";
       zoom.appendChild(img); stage.appendChild(zoom);
-      currentImg = img; resetZoom(); bindMobileZoom(zoom);
+      previewZoom = initPinchZoom(zoom, img);
+      lockPageZoomForPreview();
     } else {
       const img = document.createElement("img");
       img.className = "imgv-img"; img.src = src; img.alt = title || "";
-      stage.appendChild(img); currentImg = img;
+      stage.appendChild(img);
     }
+    overlay.style.display = "";
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
-    document.body.classList.add("topbar-mobile-lock");
-    closeBtn.focus();
+    enterModalSheet(overlay, { backBtn, onClose: close });
+    (isSheetViewport() ? backBtn : closeBtn)?.focus();
   };
 
   const close = () => {
     overlay.classList.remove("is-open");
+    overlay.style.display = "none";
     overlay.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("topbar-mobile-lock");
-    stage.innerHTML = ""; currentImg = null;
-    pointers.clear(); startDist = 0; lastPan = null;
+    exitModalSheet(overlay);
+    previewZoom?.reset();
+    previewZoom = null;
+    unlockPageZoomAfterPreview();
+    stage.innerHTML = "";
     previousFocus?.focus?.();
     previousFocus = null;
   };
 
   closeBtn.addEventListener("click", close);
+  backBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    close();
+  });
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
   window.addEventListener("keydown", (e) => {
     if (!overlay.classList.contains("is-open")) return;
@@ -311,7 +331,7 @@ function initImageViewer() {
     if (e.key === "Tab") {
       // W tym prostym dialogu jedynym elementem interaktywnym jest zamknięcie.
       e.preventDefault();
-      closeBtn.focus();
+      (isSheetViewport() ? backBtn : closeBtn)?.focus();
     }
   });
 
@@ -339,46 +359,6 @@ function initImageViewer() {
     openShot(shot);
   });
 
-  function bindMobileZoom(root) {
-    pointers.clear(); lastPan = null; startDist = 0; startScale = scale;
-
-    root.onpointerdown = (e) => {
-      root.setPointerCapture?.(e.pointerId);
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    };
-
-    root.onpointermove = (e) => {
-      if (!pointers.has(e.pointerId)) return;
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      const pts = [...pointers.values()];
-      if (pts.length === 1 && scale > 1) {
-        const p = pts[0];
-        if (!lastPan) lastPan = { x: p.x, y: p.y };
-        tx += p.x - lastPan.x; ty += p.y - lastPan.y;
-        lastPan = { x: p.x, y: p.y }; setTransform(); return;
-      }
-      if (pts.length === 2) {
-        const [a, b] = pts;
-        const dist = Math.hypot(a.x - b.x, a.y - b.y);
-        if (!startDist) { startDist = dist; startScale = scale; lastPan = null; return; }
-        scale = clamp(startScale * (dist / startDist), 1, 4); setTransform();
-      }
-    };
-
-    root.onpointerup = (e) => {
-      pointers.delete(e.pointerId);
-      if (pointers.size < 2) startDist = 0;
-      if (pointers.size === 0) lastPan = null;
-    };
-    root.onpointercancel = root.onpointerup;
-
-    let lastTap = 0;
-    root.ontouchend = () => {
-      const now = Date.now();
-      if (now - lastTap < 280) resetZoom();
-      lastTap = now;
-    };
-  }
 }
 
 /* ---------- boot ---------- */
@@ -412,6 +392,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initPipeline();
   initImageViewer();
   initFaqCarets();
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 
   // Te zapytania są niekrytyczne: landing pozostaje gotowy także przy wolnym
   // lub niedostępnym backendzie, a każde odrzucenie jest jawnie obsłużone.

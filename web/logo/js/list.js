@@ -1,10 +1,10 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-18T17330";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-18T17330";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-18T17330";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-18T17375";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-18T17375";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-18T17375";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
 // familiada/logo/js/list.js
-// Lista logo (/logo/): kafelki w trzech kartach, modale (nowe / nazwa /
-// import / podgląd), eksport. Edycja to osobne strony /logo/editor/<tryb>/
+// Lista logo (/logos/): kafelki w trzech kartach, modale (nowe / nazwa /
+// import / podgląd), eksport. Edycja to osobne strony /logos/editor/<tryb>/
 // (editor-page.js) -- „Nowe logo” od razu zakłada wiersz w bazie i otwiera
 // edytor z jego id w adresie.
 //
@@ -12,33 +12,35 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17
 //   render.js       – format bitów i podgląd „jak na wyświetlaczu”
 //   db.js           – tabela user_logos + pliki w Storage
 //   transfer.js     – eksport/import .famlogo
-//   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
+//   core/pinch-zoom.js – wspólny pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-18T17330";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-18T17330";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17330";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T17330";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-18T17330";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T17330";
-import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-18T17375";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-18T17375";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17375";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T17375";
+import { getDeviceProfile, isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T17375";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T17375";
 
-import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-18T17330";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-18T17330";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-18T17330";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-18T17330";
-import { cannotEditReason } from "./text.js?v=v2026-10-18T17330";
-import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-18T17330";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-18T17330";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-18T17375";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-18T17375";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-18T17375";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-18T17375";
+import { cannotEditReason } from "./text.js?v=v2026-10-18T17375";
+import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-18T17375";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-18T17375";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-18T17375";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-18T17330";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-18T17330";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-18T17375";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-18T17375";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
 // i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły
@@ -74,6 +76,8 @@ const el = {
 
   importOverlay: $("logoImportOverlay"),
   importFile: $("inpImportLogoFile"),
+  importChoose: $("btnImportLogoChoose"),
+  importFileName: $("logoImportFileName"),
   importPreviewWrap: $("logoImportPreviewWrap"),
   importPreviewCanvas: $("logoImportPreviewCanvas"),
   importErr: $("logoImportErr"),
@@ -82,13 +86,23 @@ const el = {
   importBar: $("logoImportBar"),
   btnImportConfirm: $("btnLogoImportConfirm"),
   btnImportCancel: $("btnLogoImportCancel"),
+  btnImportCancelAction: $("btnLogoImportCancelAction"),
+  btnImportDone: $("btnLogoImportDone"),
 
   exportOverlay: $("logoExportOverlay"),
   exportBar: $("logoExportBar"),
+  exportMsg: $("logoExportMsg"),
+  btnExportClose: $("btnLogoExportClose"),
 
   previewOverlay: $("previewOverlay"),
   previewCanvas: $("bigPreviewFull"),
 };
+const importFilePicker = bindLocalizedFilePicker({
+  input: el.importFile,
+  button: el.importChoose,
+  fileName: el.importFileName,
+  t,
+});
 
 /* =========================================================
    STAN
@@ -111,8 +125,11 @@ function show(node, on) {
 }
 
 const setMsg = (text) => { if (el.msg) el.msg.textContent = text || ""; };
-const isPhone = isPhoneScreen;
-document.documentElement.classList.toggle("le-phone", isPhone());
+const isCompactViewport = () => getDeviceProfile().viewportWidth < 700;
+const refreshViewportClass = () => document.documentElement.classList.toggle("le-compact", isCompactViewport());
+refreshViewportClass();
+window.addEventListener("resize", refreshViewportClass, { passive: true });
+window.addEventListener("orientationchange", refreshViewportClass, { passive: true });
 const defaultName = () => t("logoEditor.defaults.logoName");
 
 function esc(s) {
@@ -227,7 +244,7 @@ function openPreview(preview) {
   // Tablety z Chrome przedstawiają się jak desktop -- sprawdzamy też dotyk.
   const touch = isMobileDevice() || navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)").matches;
   el.previewOverlay.querySelector(".modal")?.classList.toggle("is-touch", !!touch);
-  previewZoom ??= initPreviewPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
+  previewZoom ??= initPinchZoom(el.previewOverlay.querySelector(".previewModalCanvas"), el.previewCanvas);
   previewZoom.reset();
   lockPageZoomForPreview();
   openOverlay(el.previewOverlay, closePreview);
@@ -259,11 +276,15 @@ function selectTile(id) {
 
 function updateListButtons() {
   const has = !!selectedId;
+  const guest = isGuestUser(currentUser);
   el.btnPreview.disabled = !has;
   el.btnEdit.disabled = !has;
   el.btnExport.disabled = !has;
-  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || isGuestUser(currentUser);
-  el.btnSendCopy.disabled = !!el.btnSendCopy.dataset.sendBusy || !has || isGuestUser(currentUser);
+  el.btnDuplicate.hidden = guest;
+  el.btnDuplicate.disabled = !!el.btnDuplicate.dataset.duplicateBusy || !has || guest;
+  el.btnSendCopy.hidden = guest;
+  el.btnSendCopy.disabled = !!el.btnSendCopy.dataset.sendBusy || !has || guest;
+  if (el.receivedCopies && guest) el.receivedCopies.hidden = true;
 }
 
 function makeTile(logo) {
@@ -429,7 +450,7 @@ async function confirmNameModal() {
 }
 
 /* =========================================================
-   Edycja: osobne strony /logo/editor/<tryb>/?id=
+   Edycja: osobne strony /logos/editor/<tryb>/?id=
 ========================================================= */
 /** Pusty payload nowego logo danego trybu -- wiersz powstaje od razu, żeby
  *  edytor miał id w adresie od pierwszej chwili. */
@@ -475,7 +496,7 @@ async function createAndOpen(mode, name) {
 }
 
 async function editSelected() {
-  if (!selectedId || isPhone()) return;
+  if (!selectedId || isCompactViewport()) return;
   let logo;
   try {
     logo = await fetchLogo(selectedId);
@@ -505,17 +526,27 @@ function resetImportModal() {
   show(el.importProg, false);
   el.importErr.textContent = "";
   el.btnImportConfirm.disabled = true;
+  el.btnImportConfirm.hidden = false;
+  el.btnImportDone.hidden = true;
+  el.btnImportCancelAction.hidden = false;
+  if (el.importFileName) el.importFileName.textContent = el.importFile?.files?.[0]?.name || t("common.filePicker.none");
+}
+
+function updateImportFileName() {
+  if (!el.importFileName) return;
+  el.importFileName.textContent = el.importFile?.files?.[0]?.name || t("common.filePicker.none");
 }
 
 function openImportModal() {
   resetImportModal();
-  el.importFile.value = "";
+  importFilePicker.reset();
   openOverlay(el.importOverlay, () => closeOverlay(el.importOverlay));
 }
 
 async function onImportFileChosen() {
   resetImportModal();
   const file = el.importFile.files?.[0];
+  updateImportFileName();
   if (!file) return;
   try {
     importParsed = parseImport(await file.text(), defaultName());
@@ -535,6 +566,7 @@ async function confirmImport() {
   if (!importParsed || el.btnImportConfirm.disabled) return;
   el.btnImportConfirm.disabled = true;
   el.btnImportCancel.disabled = true;
+  el.btnImportCancelAction.disabled = true;
   el.importStep.textContent = t("logoEditor.import.steps.saveDb");
   el.importBar.style.width = "60%";
   show(el.importProg, true);
@@ -563,8 +595,13 @@ async function confirmImport() {
     setActiveListMode(listModeForLogo(importParsed));
     await refresh();
     selectTile(id);
-    closeOverlay(el.importOverlay);
-    setMsg(t("logoEditor.status.imported"));
+    show(el.importProg, false);
+    el.importErr.style.color = "";
+    el.importErr.textContent = t("logoEditor.status.imported");
+    show(el.importErr, true);
+    el.btnImportConfirm.hidden = true;
+    el.btnImportDone.hidden = false;
+    el.btnImportCancelAction.hidden = true;
   } catch (e) {
     console.error(e);
     if (uploadedImageUrl) await removeLogoImageUrl(uploadedImageUrl, currentUser.id);
@@ -574,24 +611,39 @@ async function confirmImport() {
     el.btnImportConfirm.disabled = false;
   } finally {
     el.btnImportCancel.disabled = false;
+    el.btnImportCancelAction.disabled = false;
   }
 }
 
 async function exportSelected() {
   if (!selectedId) return;
   el.exportBar.style.width = "30%";
+  el.exportBar.style.background = "rgba(255,255,255,.85)";
+  el.exportMsg.textContent = "";
+  el.btnExportClose.hidden = true;
   show(el.exportOverlay, true);
+  enterModalSheet(el.exportOverlay, {
+    backBtn: el.btnBack,
+    onClose: () => {
+      if (!el.btnExportClose.hidden) {
+        show(el.exportOverlay, false);
+        exitModalSheet(el.exportOverlay);
+      }
+    },
+  });
   try {
     const logo = await fetchLogo(selectedId);
     const fileName = `${safeFileName(logo.name, t("logoEditor.defaults.logoFileName"))}.famlogo`;
     const out = await buildExport(logo, defaultName());
     el.exportBar.style.width = "100%";
     downloadJson(out, fileName);
+    el.exportMsg.textContent = t("logoEditor.export.success");
   } catch (e) {
     console.error(e);
-    void alertModal({ text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }) });
+    el.exportMsg.textContent = t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e });
+    el.exportBar.style.background = "#dc3545";
   } finally {
-    setTimeout(() => show(el.exportOverlay, false), 300);
+    el.btnExportClose.hidden = false;
   }
 }
 
@@ -606,6 +658,12 @@ async function loadFonts() {
 }
 
 function bindUi() {
+  el.btnImportDone.addEventListener("click", () => closeOverlay(el.importOverlay));
+  el.btnExportClose.addEventListener("click", () => {
+    show(el.exportOverlay, false);
+    exitModalSheet(el.exportOverlay);
+    el.btnExportClose.hidden = true;
+  });
   bindResourceDuplicate({button:el.btnDuplicate,kind:"logo",getSource:()=>logos.find(l=>l.id===selectedId),onDone:async id=>{await refresh();const logo=logos.find(l=>l.id===id);if(logo)setActiveListMode(listModeForLogo(logo));selectTile(id);},onState:updateListButtons});
   bindResourceSend({button:el.btnSendCopy,kind:"logo",getSource:()=>logos.find(l=>l.id===selectedId),onDone:async()=>refresh(),onState:updateListButtons});
   // lista
@@ -635,6 +693,7 @@ function bindUi() {
   el.importFile.addEventListener("change", () => void onImportFileChosen());
   el.btnImportConfirm.addEventListener("click", () => void confirmImport());
   el.btnImportCancel.addEventListener("click", () => closeOverlay(el.importOverlay));
+  el.btnImportCancelAction.addEventListener("click", () => closeOverlay(el.importOverlay));
   closeOnBackdrop(el.importOverlay, () => closeOverlay(el.importOverlay));
 
   // podgląd
@@ -642,6 +701,7 @@ function bindUi() {
   closeOnBackdrop(el.previewOverlay, closePreview);
 
   window.addEventListener("i18n:lang", () => {
+    if (!el.importFile?.files?.length) updateImportFileName();
     setActiveListMode(activeListMode, { updateUrl: false });
   });
 
@@ -663,6 +723,7 @@ async function boot() {
   const userP = initPage("logoEditor", { ready: i18nP }); // auth startuje równolegle z i18n
   await i18nP;
   document.documentElement.classList.remove("page-loading");
+  initListHeaderLayout();
   initListSearch({ grids: "#grid", tile: ".logoTile", name: ".logoName" });
 
   currentUser = await userP;
@@ -677,7 +738,15 @@ async function boot() {
 
   bindUi();
   setActiveListMode(listModeFromUrl(), { updateUrl: false });
-  await refresh();
+  try {
+    await refresh();
+  } catch (e) {
+    console.error("[logo] initial list load failed:", e);
+    setMsg(t("logoEditor.errors.loadFailed", { error: String(e?.message || "") }));
+  } finally {
+    // Keep the grid hidden until its first result; errors still reveal their message.
+    document.querySelector(".logoShell")?.classList.add("skel-step-ready");
+  }
 }
 
 boot();

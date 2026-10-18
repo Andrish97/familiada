@@ -68,7 +68,7 @@ trzymana.
 | Ustawienia gry `/game-settings/?id=G` (`game-settings.js:1690`) | `game:G` (`settings`) | `logo` swojej gry (`:1711`) | — |
 | Ankieta gry `/polls/?id=G` (`polls/js/polls.js:1298`) | `game:G` (`polls`) | — | — |
 | Control `/control/?id=G` (`control/js/app.js:195`) | `game:G` (`control`) | `logo` swojej gry (`:214`) | — |
-| Edytor logo `/logo/editor-*/?id=L` (`logo/js/editor-page.js`) | `logo:L` (`logo-editor`) | — | **pula**: `findBusyContext("game", ["settings","control"])` przy wejściu; odrzucony zapis (`update_logo_checked`) → komunikat i koniec edycji |
+| Edytor logo `/logos/editor-*/?id=L` (`logo/js/editor-page.js`) | `logo:L` (`logo-editor`) | — | **pula**: `findBusyContext("game", ["settings","control"])` przy wejściu; odrzucony zapis (`update_logo_checked`) → komunikat i koniec edycji |
 | Eksplorator bazy `/base-explorer/?base=B` | — (brak blokady strony) | — | blokady **okna** (zmiana nazwy, okno pytania, okno tagów) i **akcji** (usuń, przenieś, przypisz tag, kolejność, zapis tagów) na elementach: `base_question` / `base_folder` / `base_tag` (`actions.js:955–4415`, `tags-modal.js:235–553`, konteksty `base-explorer:*`) |
 | Host (urządzenie) | — | — | `host2_logo_get_public`: logo w edycji (`logo:L` zajęte) → Host pokazuje „zajęte” zamiast logo |
 | Głosowanie, QR, `poll-go` | — | — | celowo bez blokad (wielu naraz / tylko odczyt) |
@@ -143,7 +143,7 @@ w regułach i bez wiedzy, która strona trzyma.
 |---|---|
 | `/games/editor/?id=G`, `/polls/editor/?id=G` | `game:G` wyłącznie |
 | `/games/settings/?id=G`, `/control/?id=G` | `game:G` wyłącznie **+ `logos` współdzielone** (cała pula logo użytkownika) |
-| `/logo/editor/<typ>/?id=L` | `logo:L` wyłącznie |
+| `/logos/editor/<typ>/?id=L` | `logo:L` wyłącznie |
 | `/bases/explorer/?id=B` | **`base:B` współdzielone** (obecność — współpracownicy mogą mieć bazę otwartą naraz) + jak dziś elementy (`base_question` / `base_folder` / `base_tag`) wyłącznie w oknach i akcjach |
 | okno zmiany nazwy (lista gier / logo / baz, eksplorator) | zasób, którego nazwę zmienia, wyłącznie — do zamknięcia okna |
 | akcje całej bazy (zmiana nazwy, usunięcie) | `base:B` wyłącznie |
@@ -209,9 +209,9 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
   przebieg Control2 jest osobnym, trwałym stanem: `game_session_active`
   wskazuje sesję `game_sessions`, która pozostaje niezakończona aż do końca
   gry, restartu lub godzinnego wygaśnięcia sesji Control.
-- Ustawienia zajmują zwykłą dzierżawę `game:G`, a potem pytają bazę o ten
-  aktywny przebieg. Jeśli trwa, Resource Guard pokazuje odliczanie do
-  wygaśnięcia oraz przyciski „Wróć” i „Zakończ sesję i otwórz ustawienia”.
+- Po udanym zajęciu wolnego `game:G` ustawienia pytają bazę o aktywny
+  przebieg. Jeśli trwa, osobny ekran informuje o grze i pokazuje odliczanie
+  do wygaśnięcia oraz przyciski „Wróć” i „Zakończ sesję i otwórz ustawienia”.
   Zakończenie jest atomowym RPC: zapisuje porzucenie w statystykach, usuwa
   wskaźnik aktywnego przebiegu, resetuje stan Control i unieważnia połączenia
   urządzeń. Samo zamknięcie karty Control nie usuwa tej blokady logicznej.

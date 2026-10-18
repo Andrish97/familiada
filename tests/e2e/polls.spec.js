@@ -47,6 +47,51 @@ const QN_COUNT = 10; // RULES.QN_MIN
 const TOTAL_VOTERS = 100;
 const REAL_UI_VOTERS = 1; // jedno prawdziwe kliknięcie na typ ankiety wystarczy — reszta (99) głosuje bezpośrednim RPC, patrz komentarz na górze pliku
 
+test("E20 ankieta pokazuje ładowanie i pozwala ponowić nieudany pierwszy odczyt", async ({ page, context }) => {
+  await loginAsTestUser(page, context);
+  const fixture = await seedPollGame(page, "poll_text");
+  let allowPollRetry = false;
+  await page.route("**/rest/v1/games?*", async (route) => {
+    const requestUrl = new URL(route.request().url());
+    const isPollLoad = requestUrl.searchParams.get("select") === "id,name,type,status,share_key_poll,poll_opened_at,poll_closed_at";
+    if (isPollLoad && !allowPollRetry) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E20 controlled first read failure" }) });
+      return;
+    }
+    await route.continue();
+  });
+
+  try {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const navigation = page.goto(`https://www.familiada.online/polls?id=${fixture.gameId}`);
+    await expect(page.locator("#pollLoadMessage")).toHaveText("Wczytuję ankietę…");
+    await navigation;
+    await expect(page.locator("#pollLoadState")).toBeVisible();
+    await expect(page.locator("#pollLoadMessage")).toHaveText(/Nie udało się wczytać ankiety/, { timeout: 20000 });
+    await expect(page.locator("#pollLoadRetry")).toBeVisible();
+    await page.screenshot({ path: "test-results/shot-e20-polls-error-390.png", fullPage: true });
+    allowPollRetry = true;
+    await page.locator("#pollLoadRetry").click();
+    await expect(page.locator("#pollLoadState")).toBeHidden();
+    await expect(page.locator("#pollBar")).toBeVisible();
+    await expect(page.locator("#cardMain")).toBeVisible();
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await page.screenshot({ path: "test-results/shot-e20-polls-ready-1400.png", fullPage: true });
+    await page.setViewportSize({ width: 844, height: 390 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.locator("#pollTabs")).toBeVisible();
+    await page.locator("#tabResults").click();
+    await expect(page.locator("#secResults")).toHaveClass(/active/);
+    await page.locator("#tabShare").click();
+    await expect(page.locator("#secShare")).toHaveClass(/active/);
+    await expect(page.locator("#pollBar")).toBeVisible();
+    await page.screenshot({ path: "test-results/shot-e20-polls-landscape-844x390.png", fullPage: true });
+  } finally {
+    await deleteGame(page, fixture.gameId);
+  }
+});
+
 // Nierówny rozkład głosów zamiast idealnie równego — realniej odwzorowuje
 // prawdziwe głosowanie (kilka popularnych opcji, nie identyczny podział).
 const POINTS_WEIGHTS = [45, 30, 15, 10]; // suma = TOTAL_VOTERS, po jednej wadze na 4 predefiniowane odpowiedzi

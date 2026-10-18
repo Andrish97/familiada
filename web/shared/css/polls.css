@@ -4,7 +4,7 @@
     border-radius: 20px;
     border: 1px solid var(--line);
     background: var(--card);
-    --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
+    --under: var(--card); /* podłoże zgodne z kartą; podłoże przycisków (css/base.css) */
     padding: 14px;
     box-shadow: 0 24px 60px rgba(0,0,0,.45);
 }
@@ -95,6 +95,7 @@
 }
 /* przyciski stanu: jedna wysokość, tekst nie zawija się w środku przycisku */
 .pollBarActions .btn{ white-space: nowrap; flex: 0 0 auto; }
+.pollBarActions .ico{ width: 16px; height: 16px; flex: 0 0 16px; }
 /* Przerwij: .btn.danger (czerwony obrys, base.css), zawsze ostatni */
 
 /* Stan i akcje stanowią osobną sekcję nad kartami; rozmiar przycisków z Gier. */
@@ -111,6 +112,11 @@
   .pollBarActions .btn{ flex: 0 0 auto; }
   .pollBarHint{ flex-basis: 100%; max-width: none; }
 }
+@media (max-width: 600px){
+  .pollBarActions .pollActionLabel{ display: none; }
+  .pollBarActions .btn{ width: 38px; min-width: 38px; height: 36px; padding: 0; justify-content: center; }
+  .pollBarActions .ico{ width: 18px; height: 18px; flex-basis: 18px; }
+}
 
 /* B. Karta z wypustkami (2 × 50%), wzór: bases.css */
 .tabs-card.hub-tabs.polls-tabs-card{
@@ -122,7 +128,9 @@
   overflow: hidden;
 }
 .polls-tabs-card .tabs-strip{ display: flex; gap: 0; }
-.polls-tabs-card .tab-slot{ width: auto; flex: 1 1 0; min-width: 0; }
+.polls-tabs-card .tab-slot{ width: auto; flex: 1 1 max-content; min-width: 0; }
+.polls-tabs-card .slot-recipients{ display: none; }
+.pollShareLabelMobile{ display: none; }
 .polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }
 .polls-tabs-card .tab-label::before{ opacity: 0 !important; }
 @media (hover: hover) and (pointer: fine){
@@ -143,14 +151,20 @@
 .polls-tabs-card:has(.slot-share.active) .polls-card{ border-top-left-radius: 0; }
 .polls-tabs-card:has(.slot-results.active) .polls-card{ border-top-right-radius: 0; }
 
+/* Sekcje z wypustkami zajmują całą szerokość obszaru treści, jak w Games.
+   Węższe karty wpisywania maila i Go mają osobne reguły w swoich stylach. */
+#pollTabsCard{
+  width: 100%;
+  align-self: stretch;
+}
+
 .polls-section{ display: none; }
 .polls-section.active{
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 .pollsEmpty{
   margin: auto;
@@ -162,18 +176,32 @@
 }
 .pollsEmpty a{ color: var(--gold); }
 
-/* Udostępnianie: dwie kolumny wyrównane do góry — Link (lewa), Subskrybenci (prawa) */
+/* Udostępnianie: dwie pełnej wysokości karty — Anonimowo (lewa), Odbiorcy (prawa). */
 .shareCols{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
+  align-content: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 @media (max-width: 980px){
+  .polls-tabs-card .slot-recipients{ display: flex; }
+  .pollShareLabelDesktop{ display: none; }
+  .pollShareLabelMobile{ display: inline; }
   .shareCols{ grid-template-columns: minmax(0, 1fr); }
+  .shareCols > .pollRecipientsSec{ display: none; }
+  .polls-tabs-card.mobile-recipients-active .shareCols > .pollLinkSec{ display: none; }
+  .polls-tabs-card.mobile-recipients-active .shareCols > .pollRecipientsSec{ display: flex; }
   /* równe marginesy: sekcje bez własnej ramki (karta ma już swój margines),
      przewijanie nie odejmuje pasa od jednej strony */
   .card.games-card.polls-card{ padding: 12px 12px 8px; }
+  /* Mobilna wypustka już nazywa aktywną sekcję. Jej treść nie potrzebuje
+     powtórzonego tytułu ani drugiej ramki wewnątrz głównej karty. */
+  .polls-card .pollSec{ padding: 0; background: none; border: 0; border-radius: 0; }
+  .polls-card .pollLinkSec > .pollSecTitle,
+  .polls-card .pollRecipientsSec > .pollSecHead{ display: none; }
 }
 .pollSec{
   --under: #0b1020;
@@ -183,20 +211,13 @@
   border: 1px solid rgba(255,255,255,.10);
   min-width: 0;
 }
+.pollRecipientsSec{ display: flex; flex-direction: column; min-height: 0; }
+.pollRecipientsSec .subsGrid{ flex: 1 1 auto; min-height: 0; }
 @media (max-width: 980px){
-  .pollSec{ padding: 4px 0 8px; background: none; border: 0; border-radius: 0; }
+  .pollSec{ padding: 12px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 14px; }
 }
 .pollSecHead{ display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.pollSecTitle{
-  margin: 0;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  opacity: .85;
-}
-
-/* Link: pole z ikoną kopiowania w środku, pod nim Otwórz · QR na wyświetlaczu */
+/* Link ankiety jest dostępny akcjami, bez wyświetlania długiego adresu. */
 .pollLinkPlaceholder{
   margin-top: 10px;
   padding: 14px 10px;
@@ -206,36 +227,14 @@
   font-size: 13px;
   opacity: .75;
 }
-.linkField{ position: relative; margin-top: 10px; }
-.pollLinkInp{
-  width: 100%;
-  box-sizing: border-box;
-  padding-right: 46px;
-  font-weight: 900;
-  font-size: 13px;
-  letter-spacing: .02em;
-  text-overflow: ellipsis;
-}
-.linkCopyBtn{
-  position: absolute;
-  right: 6px;
-  top: 0;
-  bottom: 0;
-  margin: auto 0;
-  height: 30px;
-  width: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
 .pollLinkActions{
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
 }
-/* szersza kolumna dla dłuższej etykiety; w ostateczności tekst się zawija, nigdy nie jest obcinany */
-.pollLinkActions .btn{ white-space: normal; width: 100%; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+/* Przyciski układają się w jednym rzędzie, a na wąskim ekranie mogą zejść niżej. */
+.pollLinkActions .btn{ white-space: normal; flex: 1 1 105px; min-width: 0; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .pollLinkActions .btn .ico{ flex: 0 0 auto; width: 16px; height: 16px; }
 
 /* QR: na jasnym kafelku (strefa ciszy) w spokojnej, obramowanej „scenie”
@@ -279,7 +278,7 @@
 .qrBox.img:empty{ display: none; }
 .qrBox.img:empty + .pollQrHint{ display: none; }
 .qrBox.img:disabled{ cursor: default; }
-.qrFrameBig{ width: min(340px, 100%); margin: 0 auto; padding: 14px; border-radius: 16px; }
+.qrFrameBig{ width: min(480px, 100%); margin: 0 auto; padding: 14px; border-radius: 16px; }
 .pollQrVote{ display: flex; justify-content: center; }
 @media (max-width: 980px){
   .qrBox.img{ width: min(100%, 320px); }
@@ -287,7 +286,7 @@
 
 /* Subskrybenci: nagłówek z podsumowaniem, „Zaznacz wszystkich”, kafle, wyślij na dole */
 .subsSummary{ font-size: 12px; opacity: .85; }
-.subsTools{ display: flex; justify-content: flex-start; margin-top: 8px; }
+.subsTools{ display: flex; justify-content: flex-end; margin-top: 8px; }
 .subsFoot{
   display: flex;
   align-items: center;
@@ -317,10 +316,36 @@
 .pollRecipientsModal .shareList{ max-height: min(240px, 25dvh); }
 .pollRecipientsModal .uni-foot{ align-items: center; justify-content: flex-end; }
 .pollRecipientsModal #pollRecipientsCount{ margin-right: auto; }
-.pollSubsSec .shareList{ max-height: min(360px, 45dvh); }
+.pollRecipientsSec .shareList{ max-height: min(360px, 45dvh); }
+
+@media (max-width: 600px){
+  /* Układ QR taki sam jak w mobilnym modalu urządzenia w Control. */
+  #pollQrModalOverlay.sheet-active .sheet-modal-body > .uni-body{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  /* W arkuszu odbiorców listy przewijają się osobno, ale kafelki zachowują
+     swoją naturalną wysokość zamiast rozciągać się na całą wysokość listy. */
+  .pollRecipientsModal .shareList--scroll{
+    align-content: start;
+    grid-auto-rows: max-content;
+  }
+  .pollRecipientsModal .shareRow{ align-self: start; }
+}
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
 #resultsList{ display: grid; gap: 12px; }
+#secResults.active #resultsList{
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-auto-rows: max-content;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  align-content: start;
+}
 #resultsMeta{ margin: 0 0 8px; }
 #resultsMeta:empty{ display: none; }
 .resultQ .aList{ display: grid; gap: 6px; }
@@ -378,8 +403,10 @@
   transition: max-height .4s ease, opacity .4s ease, margin .4s ease;
 }
 .resultQ .tallyMeta.on{ max-height: 60px; opacity: 1; margin: -2px 0 8px; }
+.resultQ .tallyMetaInstant{ transition: none; }
 .tallyCounter.invalid{ color: #ff9d9d; font-weight: 900; }
 .tallySum{ color: var(--gold); font-weight: 900; font-variant-numeric: tabular-nums; }
+.tallyVotesTotal{ color: rgba(235,239,248,.62); font-weight: 700; font-variant-numeric: tabular-nums; }
 .tallyMeta .btn{ white-space: nowrap; margin-left: auto; }
 
 .resultQ .tcHandle,
@@ -398,18 +425,35 @@
   pointer-events: none;
   transition: max-width .45s ease, opacity .35s ease;
 }
-.resultQ .aList.tally .aRow{ padding-left: 6px; padding-right: 6px; }
+.resultQ .aList.tally .aRow{ min-height: 46px; height: auto; gap: 6px; padding: 3px 8px; }
+.resultQ .aList.tally .aRow,
+.resultQ .aList.tally .aBar,
+.resultQ .aList.tally .tcHandle,
+.resultQ .aList.tally .tcCnt,
+.resultQ .aList.tally .tcBtn{ transition: none; }
 .resultQ .aList.tally .tcHandle{ max-width: 24px; opacity: .65; pointer-events: auto; cursor: grab; display: inline-flex; align-items: center; justify-content: center; }
 .resultQ .aList.tally .tcHandle:active{ cursor: grabbing; }
-.resultQ .aList.tally .tcCnt{ max-width: 80px; opacity: .6; font-size: 11px; white-space: nowrap; text-align: right; }
-.resultQ .aList.tally .tcBtn{ max-width: 34px; opacity: .85; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 28px; border-radius: 8px; }
+.resultQ .aList.tally .tcCnt{ max-width: 112px; opacity: .82; font-size: 11px; white-space: nowrap; text-align: right; margin-left: auto; }
+.resultQ .aList.tally .tcActionGroup{ flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; margin-left: 7px; padding: 3px; border: 1px solid var(--line2); border-radius: 13px; background: linear-gradient(rgba(255,255,255,.035), rgba(255,255,255,.035)) var(--under, #050914); box-shadow: 0 2px 7px rgba(0,0,0,.2); }
+.resultQ .aList.tally .tcBtn{ width: 40px; height: 40px; max-width: 42px; padding: 0; opacity: 1; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.2); background: linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)) var(--under, #050914); border-radius: 10px; }
 .resultQ .aList.tally .tcBtn:hover{ background: rgba(255,255,255,.1); }
 .resultQ .aList.tally .tcDel:hover{ background: rgba(255,120,120,.18); }
-/* „Połącz z…” tylko na dotyku; na komputerze działa przeciąganie */
+/* Scalanie jest dostępne przyciskiem na każdym urządzeniu; przeciąganie jest dodatkową opcją. */
 @media (hover: hover) and (pointer: fine){
-  .resultQ .aList.tally .tcMergeBtn{ max-width: 0; opacity: 0; pointer-events: none; }
+  .resultQ .aList.tally .tcMergeBtn{ display: none; }
 }
-.resultQ .aList.tally .aTxt{ display: none; }
+.resultQ .aList.tallyText .aTxt{ display: none; }
+.resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
+.resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
+.resultQ .aRow.tallySkipped,
+.resultQ .aRow.tallySkipped.out{ opacity: 1; border-color: rgba(255,112,122,.38); background: rgba(255,92,104,.09); }
+.resultQ .aRow.tallySkipped .aBar{ background: linear-gradient(90deg, rgba(255,112,122,.08), rgba(255,112,122,.2)); }
+.resultQ .aRow.tallySkipped .aTxt,
+.resultQ .aRow.tallySkipped .aVal{ color: #ffc0c4; }
+.resultQ .aRow.merge-src .tcMergeBtn,
+.resultQ .tcMergeBtn[aria-pressed="true"]{ border-color: rgba(255,234,166,.95); background: rgba(255,234,166,.2); color: var(--gold); box-shadow: 0 0 0 2px rgba(255,234,166,.16); }
+.resultQ .tcMergeBtn[aria-pressed="true"]{ transform: scale(1.06); }
+.resultQ .aList.tally .tcBtn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 .resultQ .aTxtInp{
   position: relative;
   flex: 1 1 auto;
@@ -433,9 +477,11 @@
 .resultQ .aRow.drop-target{ border-color: var(--gold); background: rgba(255,234,166,.14); }
 .resultQ .aRow.merge-src{ border-color: rgba(255,234,166,.7); background: rgba(255,234,166,.14); }
 .resultQ .aRow.merge-target{ border-color: rgba(120,200,255,.5); }
-/* wiersz znika / pojawia się płynnie */
-.resultQ .aRow.leaving{ height: 0; opacity: 0; margin-top: -6px; border-width: 0; pointer-events: none; }
-.resultQ .aRow.entering{ opacity: 0; }
+.resultQ .aRow.tallySkipped.merge-src{
+  border-color: rgba(255,234,166,.8);
+  background: linear-gradient(rgba(255,234,166,.16), rgba(255,234,166,.16)), rgba(255,92,104,.09);
+}
+.resultQ .aRow.tallySkipped.merge-target{ border-color: rgba(120,200,255,.75); }
 @media (prefers-reduced-motion: reduce){
   .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tcBtn, .resultQ .tallyMeta{ transition: none; }
 }

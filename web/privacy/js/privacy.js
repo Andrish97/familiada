@@ -5,9 +5,9 @@
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 //   (initPage: konto, „Wstecz” i etykieta wg mapy nawigacji)
 
-import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
+import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
 
 window.dispatchEvent(new Event("resize"));
 
@@ -20,4 +20,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.documentElement.classList.remove('page-loading');
 
   await pageP;
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 });

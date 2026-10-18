@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,24 +14,24 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="pollText.title">Familiada — ankieta tekstowa</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/poll.css?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/poll.css?v=v2026-10-18T17375"/>
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/polls/vote/text/js/poll-text.js?v=v2026-10-18T17330" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/polls/vote/text/js/poll-text.js?v=v2026-10-18T17375" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="pollpub-body is-text skel-body">
-  <main class="wrap">
+  <header class="topbar poll-vote-topbar"><div class="brand brand-static">FAMILIADA</div></header>
+  <main class="wrap" data-skel-step>
     <div class="card">
-      <div class="brand">FAMILIADA</div>
       <div class="title" id="title" data-i18n="pollText.pollTitle">Ankieta</div>
       <div class="sub" id="sub" data-i18n="pollText.loading">Ładuję…</div>
 
-      <div class="qbox" id="qbox" style="display:none;">
+      <div class="qbox" id="qbox" data-skel-step style="display:none;">
         <div class="qtext" id="qtext">—</div>
 
         <div class="trow">
@@ -40,7 +40,7 @@
              data-i18n-placeholder="pollText.placeholder"
              autocomplete="off"
              maxlength="17" />
-          <button class="btn gold full" id="btnSend" type="button">
+          <button class="btn gold full" id="btnSend" type="button" data-i18n-icon="arrow-right">
             <span class="only-desktop" data-i18n="pollText.send">Wyślij</span>
             <span class="only-mobile" data-i18n="pollText.sendMobile">OK</span>
           </button>
@@ -56,7 +56,7 @@
         </div>
       </div>
 
-      <div class="closed" id="closed" style="display:none;">-</div>
+      <div class="closed" id="closed" data-skel-step style="display:none;">-</div>
     </div>
 
     <div class="footer">
@@ -64,6 +64,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

@@ -8,10 +8,11 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-18T17330";
-import { icon } from "./icons.js?v=v2026-10-18T17330";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-18T17330";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-18T17330";
+import { t } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { promptModal } from "./modal.js?v=v2026-10-18T17375";
+import { icon } from "./icons.js?v=v2026-10-18T17375";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-18T17375";
+import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-18T17375";
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -37,25 +38,31 @@ const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace
 export function initListSearch({ grids, tile, name, filter, sort }) {
   const slot = document.querySelector(".games-bottom-left");
   if (!slot) return;
-  // Ten sam komponent co w menedżerze bazy (.searchBox, base.css).
+  // Zewnętrzny wrapper odpowiada za szerokość/grupowanie. Przycisk po prawej
+  // stronie pola przełącza lupę na X, który czyści wyszukiwanie — tak jak w
+  // mobilnym wyszukiwaniu Gier Społeczności.
+  const search = document.createElement("div");
+  search.className = "list-search";
   const box = document.createElement("div");
-  box.className = "searchBox list-search";
+  box.className = "searchBox";
   const input = document.createElement("input");
-  input.type = "search";
+  input.type = "text";
+  input.setAttribute("enterkeyhint", "search");
   input.className = "searchText";
-  const clear = document.createElement("button");
-  clear.type = "button";
-  clear.className = "btn";
-  clear.innerHTML = icon("close");
+  const mobileSearch = document.createElement("button");
+  mobileSearch.type = "button";
+  mobileSearch.className = "btn list-search-open";
+  mobileSearch.innerHTML = icon("search");
   const label = () => {
     input.placeholder = t("common.searchByName");
     input.setAttribute("aria-label", t("common.searchByName"));
-    clear.title = t("baseExplorer.search.clear");
-    clear.setAttribute("aria-label", t("baseExplorer.search.clear"));
+    mobileSearch.title = input.value ? t("baseExplorer.search.clear") : t("common.searchByName");
+    mobileSearch.setAttribute("aria-label", mobileSearch.title);
   };
   label();
-  box.append(input, clear);
-  slot.appendChild(box);
+  box.append(input);
+  search.append(box, mobileSearch);
+  slot.append(search);
 
   let filterValue = "";
   let filterApi = null;
@@ -63,8 +70,8 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     filterValue = filterFromSearch(location.search, filter.param, filter.options.map((o) => o.value));
     const wrap = document.createElement("div");
     wrap.className = "ui-select list-filter";
-    wrap.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
-    slot.insertBefore(wrap, box);
+    wrap.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="filter"></i></span><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
+    slot.insertBefore(wrap, search);
     const opts = () => [{ value: "", label: t(filter.allKey) }, ...filter.options.map((o) => ({ value: o.value, label: t(o.labelKey) }))];
     const aria = () => wrap.querySelector(".ui-select-btn")?.setAttribute("aria-label", t(filter.ariaKey));
     aria();
@@ -74,6 +81,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       onChange: (val) => {
         filterValue = String(val || "");
         history.replaceState(history.state, "", filterToHref(location.href, filter.param, filterValue));
+        wrap.classList.toggle("is-active", !!filterValue);
         apply();
       },
     });
@@ -85,7 +93,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     sortValue = filterFromSearch(location.search, sort.param, sort.options.map((o) => o.value));
     const wrapS = document.createElement("div");
     wrapS.className = "ui-select list-sort";
-    wrapS.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
+    wrapS.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="sort"></i></span><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
     slot.insertBefore(wrapS, slot.firstChild);
     const optsS = () => [{ value: "", label: t(sort.defaultKey) }, ...sort.options.map((o) => ({ value: o.value, label: t(o.labelKey) }))];
     const ariaS = () => wrapS.querySelector(".ui-select-btn")?.setAttribute("aria-label", t(sort.ariaKey));
@@ -96,6 +104,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       onChange: (val) => {
         sortValue = String(val || "");
         history.replaceState(history.state, "", filterToHref(location.href, sort.param, sortValue));
+        wrapS.classList.toggle("is-active", !!sortValue);
         apply();
       },
     });
@@ -106,7 +115,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   // Dotyka DOM tylko, gdy kolejność się zmienia (MutationObserver nie zapętla się).
   const sortGrid = (grid) => {
     if (!sort) return;
-    const tiles = [...grid.querySelectorAll(tile)].filter((el) => !el.classList.contains("addCard") && el.parentElement === grid);
+    const tiles = [...grid.querySelectorAll(tile)].filter((el) => !el.classList.contains("addCard") && !el.classList.contains("list-empty") && el.parentElement === grid);
     if (tiles.length < 2 || tiles.some((el) => !el.dataset.updated && !el.dataset.created)) return;
     const stamp = (el, k) => Date.parse(el.dataset[k] || el.dataset.created || "") || 0;
     const nm = (el) => norm(el.querySelector(name)?.textContent);
@@ -125,23 +134,33 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       el = document.createElement("div");
       el.className = "list-empty";
       el.hidden = true;
-      grid.after(el);
+      grid.append(el);
       emptyEls.set(grid, el);
     }
-    el.textContent = t("common.noResults");
+    const message = t("common.noResults");
+    if (el.textContent !== message) el.textContent = message;
     return el;
   };
 
   const apply = () => {
     const q = norm(input.value);
+    const selectedFilterOption = filter?.options.find((option) => option.value === filterValue);
+    mobileSearch.innerHTML = icon(q ? "close" : "search");
+    mobileSearch.classList.toggle("is-active", !!q);
+    mobileSearch.title = q ? t("baseExplorer.search.clear") : t("common.searchByName");
+    mobileSearch.setAttribute("aria-label", mobileSearch.title);
+    if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
+    if (sort) document.querySelector(".list-sort")?.classList.toggle("is-active", !!sortValue);
     for (const grid of document.querySelectorAll(grids)) {
       sortGrid(grid);
       let total = 0, visible = 0;
       for (const el of grid.querySelectorAll(tile)) {
-        if (el.classList.contains("addCard")) continue;
+        if (el.classList.contains("addCard") || el.classList.contains("list-empty")) continue;
         total++;
         const hit = (!q || norm(el.querySelector(name)?.textContent).includes(q))
-          && (!filter || matchesFilter(el.dataset[filter.attr], filterValue));
+          && (!filterValue || (selectedFilterOption?.matches
+            ? selectedFilterOption.matches(el)
+            : matchesFilter(el.dataset[filter.attr], filterValue)));
         el.hidden = !hit;
         if (hit) visible++;
       }
@@ -153,9 +172,42 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
     }
   };
   input.addEventListener("input", apply);
-  clear.addEventListener("click", () => { input.value = ""; apply(); input.focus(); });
-  const mo = new MutationObserver(() => { if (input.value || filterValue || sortValue || sort) apply(); });
+  mobileSearch.addEventListener("click", async () => {
+    if (input.value) {
+      input.value = "";
+      apply();
+      return;
+    }
+    const searchFieldVisible = getComputedStyle(box).display !== "none" && box.getClientRects().length > 0;
+    if (searchFieldVisible) {
+      input.focus();
+      return;
+    }
+    const value = await promptModal({
+      title: t("common.searchByName"),
+      value: input.value,
+      placeholder: t("common.searchByName"),
+      onReady: ({ overlay, okBtn }) => overlay.querySelector(".uni-inp")?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); okBtn.click(); }
+      }),
+    });
+    if (value !== null) {
+      input.value = value;
+      apply();
+    }
+  });
+  const mo = new MutationObserver((records) => {
+    const listChanged = records.some((record) => {
+      if (record.target.closest?.(".list-empty")) return false;
+      return [...record.addedNodes, ...record.removedNodes].some((node) =>
+        !(node.nodeType === Node.ELEMENT_NODE && (node.matches?.(".list-empty") || node.closest?.(".list-empty")))
+      );
+    });
+    if (listChanged && (input.value || filterValue || sortValue || sort)) apply();
+  });
   for (const grid of document.querySelectorAll(grids)) mo.observe(grid, { childList: true, subtree: true });
   window.addEventListener("i18n:lang", () => { label(); apply(); });
+  if (filter) document.querySelector(".list-filter")?.classList.toggle("is-active", !!filterValue);
+  if (sort) document.querySelector(".list-sort")?.classList.toggle("is-active", !!sortValue);
   apply();
 }

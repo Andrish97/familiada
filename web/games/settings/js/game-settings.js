@@ -1,27 +1,27 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-18T17330";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-18T17330";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-18T17330";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-18T17330";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-18T17330";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-18T17375";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-18T17375";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-18T17375";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-18T17375";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-18T17375";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-18T17330";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-18T17375";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-18T17330";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T17330";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-18T17330";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-18T17375";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T17375";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-18T17375";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -129,22 +129,10 @@ const btnResetAll = document.getElementById("btnResetAll");
 const btnPlay = document.getElementById("btnPlay");
 const content = document.getElementById("gsContentInner");
 const sidebar = document.getElementById("gsSidebar");
+const sidebarToggle = document.getElementById("gsSidebarToggle");
+const sidebarBackdrop = document.getElementById("gsSidebarBackdrop");
 const sidebarFinale = document.getElementById("sidebarFinale");
 const sidebarRounds = document.getElementById("sidebarRounds");
-
-// Color modal elements
-const colorModal = document.getElementById("gsColorModal");
-const colorModalTitleEl = document.getElementById("gsColorModalTitle");
-const colorR = document.getElementById("gsColorR");
-const colorG = document.getElementById("gsColorG");
-const colorB = document.getElementById("gsColorB");
-const colorRVal = document.getElementById("gsColorRVal");
-const colorGVal = document.getElementById("gsColorGVal");
-const colorBVal = document.getElementById("gsColorBVal");
-const colorHex = document.getElementById("gsColorHex");
-const colorPreviewEl = document.getElementById("gsColorPreview");
-const colorModalClose = document.getElementById("gsColorModalClose");
-const colorModalDone = document.getElementById("gsColorModalDone");
 
 // ===== DIRTY / SAVE =====
 let ready = false;        // ustawienia wczytane, zmiany się liczą
@@ -414,26 +402,66 @@ function getColorLabels() {
   };
 }
 
-function openColorModal(key) {
+function buildColorModalBody() {
+  const body = document.createElement("div");
+  body.className = "colorModalControls";
+  body.innerHTML = `
+    <div class="colorTopRow">
+      <div class="colorPreview" id="gsColorPreview"></div>
+      <label class="colorHexField"><span class="lbl2">HEX</span><input class="inp" id="gsColorHex" autocomplete="off" spellcheck="false" inputmode="text" placeholder="#RRGGBB"/></label>
+    </div>
+    <div class="sliders">
+      <label class="sliderRow"><span class="sLbl">R</span><input class="rng" id="gsColorR" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorRVal">0</span></label>
+      <label class="sliderRow"><span class="sLbl">G</span><input class="rng" id="gsColorG" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorGVal">0</span></label>
+      <label class="sliderRow"><span class="sLbl">B</span><input class="rng" id="gsColorB" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorBVal">0</span></label>
+    </div>`;
+  return body;
+}
+
+async function openColorModal(key) {
   colorModalTarget = key;
   const hex = localSettings.display.colors[key] || "#000000";
   const { r, g, b } = hexToRgb(hex);
   colorModalR = r; colorModalG = g; colorModalB = b;
-  if (colorModalTitleEl) colorModalTitleEl.textContent = getColorLabels()[key] || key;
-  syncColorModalUI();
-  colorModal?.classList.remove("hidden");
+  const body = buildColorModalBody();
+  const refs = {
+    r: body.querySelector("#gsColorR"), g: body.querySelector("#gsColorG"), b: body.querySelector("#gsColorB"),
+    rVal: body.querySelector("#gsColorRVal"), gVal: body.querySelector("#gsColorGVal"), bVal: body.querySelector("#gsColorBVal"),
+    hex: body.querySelector("#gsColorHex"), preview: body.querySelector("#gsColorPreview"),
+  };
+  syncColorModalUI(refs);
+  const confirmed = await confirmModal({
+    title: getColorLabels()[key] || key,
+    text: "",
+    okText: t("common.done") || "Gotowe",
+    cancelText: t("common.cancel") || "Anuluj",
+    body,
+    initialFocus: refs.hex,
+    onReady: () => {
+      refs.r.addEventListener("input", () => { colorModalR = Number(refs.r.value); syncColorModalUI(refs); });
+      refs.g.addEventListener("input", () => { colorModalG = Number(refs.g.value); syncColorModalUI(refs); });
+      refs.b.addEventListener("input", () => { colorModalB = Number(refs.b.value); syncColorModalUI(refs); });
+      refs.hex.addEventListener("change", () => {
+        const normalized = normHex(refs.hex.value);
+        if (!normalized) return;
+        ({ r: colorModalR, g: colorModalG, b: colorModalB } = hexToRgb(normalized));
+        syncColorModalUI(refs);
+      });
+    },
+  });
+  if (confirmed) applyColorModal();
 }
 
-function syncColorModalUI() {
-  if (colorR) { colorR.value = colorModalR; if (colorRVal) colorRVal.textContent = colorModalR; }
-  if (colorG) { colorG.value = colorModalG; if (colorGVal) colorGVal.textContent = colorModalG; }
-  if (colorB) { colorB.value = colorModalB; if (colorBVal) colorBVal.textContent = colorModalB; }
+function syncColorModalUI(refs) {
+  if (refs.r) { refs.r.value = colorModalR; if (refs.rVal) refs.rVal.textContent = colorModalR; }
+  if (refs.g) { refs.g.value = colorModalG; if (refs.gVal) refs.gVal.textContent = colorModalG; }
+  if (refs.b) { refs.b.value = colorModalB; if (refs.bVal) refs.bVal.textContent = colorModalB; }
   const hex = rgbToHex(colorModalR, colorModalG, colorModalB);
-  if (colorHex) colorHex.value = hex;
-  if (colorPreviewEl) colorPreviewEl.style.background = hex;
-  updateSliderTrack(colorR, colorModalG, colorModalB, "r");
-  updateSliderTrack(colorG, colorModalR, colorModalB, "g");
-  updateSliderTrack(colorB, colorModalR, colorModalG, "b");
+  if (refs.hex) refs.hex.value = hex;
+  if (refs.preview) refs.preview.style.background = hex;
+  updateSliderTrack(refs.r, colorModalG, colorModalB, "r");
+  updateSliderTrack(refs.g, colorModalR, colorModalB, "g");
+  updateSliderTrack(refs.b, colorModalR, colorModalG, "b");
 }
 
 function updateSliderTrack(el, v1, v2, ch) {
@@ -452,34 +480,6 @@ function applyColorModal() {
     el.style.background = hex;
   });
   postPreviewRow();
-  colorModal?.classList.add("hidden");
-}
-
-function initColorModal() {
-  colorR?.addEventListener("input", () => {
-    colorModalR = parseInt(colorR.value, 10);
-    syncColorModalUI();
-  });
-  colorG?.addEventListener("input", () => {
-    colorModalG = parseInt(colorG.value, 10);
-    syncColorModalUI();
-  });
-  colorB?.addEventListener("input", () => {
-    colorModalB = parseInt(colorB.value, 10);
-    syncColorModalUI();
-  });
-  colorHex?.addEventListener("change", () => {
-    const h = normHex(colorHex.value);
-    if (!h) return;
-    const { r, g, b } = hexToRgb(h);
-    colorModalR = r; colorModalG = g; colorModalB = b;
-    syncColorModalUI();
-  });
-  colorModalClose?.addEventListener("click", () => colorModal?.classList.add("hidden"));
-  colorModalDone?.addEventListener("click", applyColorModal);
-  colorModal?.addEventListener("click", e => {
-    if (e.target === colorModal) colorModal.classList.add("hidden");
-  });
 }
 
 // ===== STRING HELPERS =====
@@ -674,7 +674,7 @@ function renderDisplay() {
       <div class="gs-hint">${t("gameSettings.display.hostLogoHint")}</div>
     </div>
     <div class="sfx-foot">
-      <button class="btn" id="btnDisplayReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+      <button class="btn" id="btnDisplayReset" type="button">${icon("refresh")} ${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
     </div>
   `;
 
@@ -802,7 +802,7 @@ async function renderSound() {
       <div class="sfx-table" id="sfxTableGs"></div>
     </div>
     <div class="sfx-foot">
-      <button class="btn" id="btnSoundReset" type="button">${t("control.sfxResetAll") || "Przywróć domyślne"}</button>
+      <button class="btn" id="btnSoundReset" type="button">${icon("refresh")} ${t("control.sfxResetAll") || "Przywróć domyślne"}</button>
     </div>
   `;
 
@@ -855,7 +855,7 @@ async function renderSound() {
 
     // Przycisk "Wybierz plik" — widoczny tylko gdy wybrany "Własny" i nie ma jeszcze pliku
     const showUploadBtn = !custom && activeVariant === VARIANT_CUSTOM;
-    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${t("control.sfxChooseFile") || "Wybierz plik"}</button>`;
+    const uploadBtnHtml = `<button class="btn sfx-add-btn" type="button" data-sfx-file="${escAttr(key)}"${showUploadBtn ? "" : " hidden"}>${icon("upload")} ${t("control.sfxChooseFile") || "Wybierz plik"}</button>`;
 
     // Przycisk odtwarzania — zablokowany gdy Własny bez pliku
     const previewDisabled = activeVariant === VARIANT_CUSTOM && !custom;
@@ -1539,7 +1539,7 @@ function renderGame() {
       </div>
     </div>
     <div class="sfx-foot">
-      <button class="btn" id="btnGameReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
+      <button class="btn" id="btnGameReset" type="button">${icon("refresh")} ${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
     </div>
   `;
 
@@ -1748,8 +1748,8 @@ async function main() {
   if (!lock.ok) return;
   pageLock = lock;
 
-  // A running match remains protected after Control closes. The two-button
-  // guard can end that match explicitly, or wait for the normal idle expiry.
+  // The resource guard above handles an open Control tab with game:G held.
+  // Only a released card can reach the persistent active-session guard.
   if (!(await guardActiveGameSession())) return;
 
   // Blokada stanu: ustawienia gry tylko dla gry, którą da się grać.
@@ -1823,7 +1823,18 @@ async function main() {
     if (!btn || btn.classList.contains("gs-sidebar-item-disabled")) return;
     const cat = btn.dataset.cat;
     if (cat) setActiveCat(cat);
+    sidebar?.classList.remove("is-open");
+    sidebarBackdrop?.classList.remove("is-open");
+    sidebarToggle?.setAttribute("aria-expanded", "false");
   });
+  const toggleSidebar = (open = !sidebar?.classList.contains("is-open")) => {
+    sidebar?.classList.toggle("is-open", open);
+    sidebarBackdrop?.classList.toggle("is-open", open);
+    sidebarToggle?.setAttribute("aria-expanded", String(open));
+  };
+  sidebarToggle?.addEventListener("click", () => toggleSidebar());
+  sidebarBackdrop?.addEventListener("click", () => toggleSidebar(false));
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
 
   // Save button
   btnSaveAll?.addEventListener("click", saveAll);
@@ -1849,8 +1860,6 @@ async function main() {
     updateSubTabStates();
     setActiveCat(activeCat);
   });
-
-  initColorModal();
 
   // Podgląd Wyświetlacza — ta strona sama osadza /control/display?preview=1 i
   // przesyła mu postMessage (patrz postPreviewRow() wyżej).

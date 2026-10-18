@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,33 +14,23 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="tasks.title">Familiada — zadania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/tasks/css/tasks.css?v=v2026-10-18T17330"/>
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('/login/');
-    } catch(_e) {}
-  </script>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/tasks/css/tasks.css?v=v2026-10-18T17375"/>
+  <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/tasks/js/tasks.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/tasks/js/tasks.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="games-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2"></div>
     <div class="topbar-section topbar-section-3">
@@ -48,7 +38,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -62,6 +52,10 @@
 
     <section class="games-shell">
       <div class="card games-card tasks-card">
+        <div class="card" id="tasksLoadState" role="status" aria-live="polite">
+          <div class="name" id="tasksLoadMessage" data-i18n="tasks.load.loading">Wczytuję zadania…</div>
+          <button class="btn sm" id="tasksLoadRetry" type="button" data-i18n="tasks.load.retry" hidden data-i18n-icon="refresh">Ponów</button>
+        </div>
         <div class="tasks-scroll" data-skel-step>
           <div class="rowsPage" id="tasksHost"></div>
         </div>
@@ -73,6 +67,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

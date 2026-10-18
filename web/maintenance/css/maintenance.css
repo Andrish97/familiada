@@ -1,14 +1,12 @@
 :root {
-  --maint-card: rgba(8, 12, 24, 0.72);
+  --maint-card: #111827;
   --maint-card-strong: rgba(255, 255, 255, 0.08);
   --maint-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
 }
 
 .maintenance-body {
   min-height: 100vh;
-  background: radial-gradient(1200px 600px at 20% -10%, rgba(255, 234, 166, 0.08), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(86, 164, 255, 0.08), transparent 55%),
-    var(--bg);
+  background: var(--bg);
   color: #fff;
 }
 
@@ -79,4 +77,19 @@
   .maintenance-card {
     padding: 24px 18px;
   }
+}
+
+/* Na niskim ekranie landscape karta ma własny dostępny scroll zamiast
+   wchodzić pod dolny obszar bezpieczny lub stopkę. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .maintenance-body { min-height: 100dvh; height: 100dvh; overflow: hidden; }
+  .maintenance-main {
+    flex: 1 1 0;
+    min-height: 0;
+    align-items: flex-start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  .maintenance-card { padding: 16px 18px; }
 }

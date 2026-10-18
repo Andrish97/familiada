@@ -1,41 +1,43 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-18T17330";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-18T17330";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-18T17330";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-18T17330";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T17330";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-18T17330";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-18T17375";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-18T17375";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-18T17375";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-18T17375";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T17375";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-18T17375";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T17330";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T17375";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-18T17330";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-18T17330';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-18T17375";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-18T17375';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-18T17330";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-18T17330";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-18T17330";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-18T17375";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-18T17375";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-18T17375";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T17375";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-18T17375";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -146,14 +148,20 @@ const tabPollText = document.getElementById("tabPollText");
 const tabPollPoints = document.getElementById("tabPollPoints");
 const tabPrepared = document.getElementById("tabPrepared");
 const tabMarket = document.getElementById("tabMarket");
-const btnReceivedFilter = document.getElementById("btnReceivedFilter");
 const connectDeviceBadge = document.getElementById("connectDeviceBadge");
 
 // Modal importu JSON
 const importOverlay = document.getElementById("importOverlay");
 const importFile = document.getElementById("importFile");
+const importFilePicker = bindLocalizedFilePicker({
+  input: importFile,
+  button: document.getElementById("btnChooseImportFile"),
+  fileName: document.getElementById("importFileName"),
+  t,
+});
 const btnImportJson = document.getElementById("btnImportJson");
 const btnCancelImport = document.getElementById("btnCancelImport");
+const btnImportCancelAction = document.getElementById("btnImportCancelAction");
 const importPreview = document.getElementById("importPreview");
 const importErr = document.getElementById("importErr");
 const importMsg = document.getElementById("importMsg");
@@ -167,6 +175,7 @@ const importProgMsg = document.getElementById("importProgMsg");
 
 // Export do pliku progress (osobny overlay)
 const exportJsonOverlay = document.getElementById("exportJsonOverlay");
+const btnExportJsonClose = document.getElementById("btnExportJsonClose");
 const exportJsonSub = document.getElementById("exportJsonSub");
 const exportJsonStep = document.getElementById("exportJsonStep");
 const exportJsonCount = document.getElementById("exportJsonCount");
@@ -243,7 +252,6 @@ function stopAutoRefresh() {
 
 // DOMYŚLNIE: PREPAROWANA
 let activeTab = TYPES.PREPARED;
-let receivedOnly = false;
 
 
 /* ================= UI helpers ================= */
@@ -342,8 +350,10 @@ function importResetPreview() {
   importCompleted = false;
   if (btnImportJson) {
     btnImportJson.setAttribute("data-i18n", "games.import.confirm");
-    btnImportJson.textContent = t("games.import.confirm");
+    btnImportJson.setAttribute("data-i18n-icon", "upload");
+    btnImportJson.innerHTML = iconText("upload", t("games.import.confirm"));
   }
+  if (btnImportCancelAction) btnImportCancelAction.hidden = false;
   setImportMsg("");
   showProgBlock(importProg, false);
   if (importPreview) { importPreview.style.display = "none"; importPreview.innerHTML = ""; }
@@ -353,7 +363,7 @@ function importResetPreview() {
 
 function openImportModal() {
   importResetPreview();
-  if (importFile) importFile.value = "";
+  importFilePicker.reset();
   setImportMsg("");
   showProgBlock(importProg, false);
   show(importOverlay, true);
@@ -735,6 +745,7 @@ function statusLabel(st, g) {
 }
 
 function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
+  const guest = isGuestUser(currentUser);
   if (btnEdit) btnEdit.disabled = !hasSel || !canEdit;
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
@@ -742,8 +753,16 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnSettings) btnSettings.disabled = !hasSel;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
-  if (btnDuplicate) btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canExport || isGuestUser(currentUser);
-  if (btnSendCopy) btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canExport || isGuestUser(currentUser);
+  if (btnDuplicate) {
+    btnDuplicate.hidden = guest;
+    btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canExport || guest;
+  }
+  if (btnSendCopy) {
+    btnSendCopy.hidden = guest;
+    btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canExport || guest;
+  }
+  const receivedCopies = document.getElementById("receivedCopies");
+  if (receivedCopies && guest) receivedCopies.hidden = true;
 }
 /* ================= Tabs ================= */
 // Karty i domyślna (pierwsza) z mapy stron; nazwy kart = wartości TYPES.
@@ -757,7 +776,6 @@ function gameTabFromUrl() {
 function setActiveTab(type, { updateUrl = true } = {}) {
   type = GAME_TABS.includes(type) ? type : DEFAULT_GAME_TAB;
   activeTab = type;
-  if (btnReceivedFilter) btnReceivedFilter.hidden = type === TYPES.MARKET;
 
   if (updateUrl) setTab(type, DEFAULT_GAME_TAB);
 
@@ -926,6 +944,7 @@ function cardGame(g) {
   el.dataset.gameId = g.id;
   el.dataset.created = g.created_at || "";
   el.dataset.updated = g.updated_at || "";
+  el.dataset.received = g.received_from_identity ? (g.created_at || "") : "";
   el.dataset.status = statusKey(g.status, g);
 
   el.innerHTML = `
@@ -1014,10 +1033,9 @@ function render() {
     return;
   }
 
-  const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab && (!receivedOnly || !!g.received_from_identity));
+  const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab);
 
-  // W filtrze „Otrzymane” lista pokazuje wyłącznie kopie od znajomych.
-  if (!receivedOnly) grid.appendChild(cardAdd(activeTab));
+  grid.appendChild(cardAdd(activeTab));
 
   for (const g of games) {
     const el = cardGame(g);
@@ -1034,7 +1052,6 @@ function render() {
   });
 
   setHint(MSG.hintSelectPlus());
-  if (btnReceivedFilter) btnReceivedFilter.setAttribute("aria-pressed", String(receivedOnly));
 }
 
 function renderMarket() {
@@ -1222,13 +1239,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   // initPage: dostęp, topbar i konto wg mapy (auth startuje równolegle z i18n)
   const userP = initPage("games", { ready: i18nP, account: { withAccountSettings: true } });
   await i18nP;
-  // Typ to zakładki (preparowana/tekstowa/punktowa/rynek) — filtr tylko po stanie.
+  initListHeaderLayout();
+  // Typ to zakładki (preparowana/tekstowa/punktowa/rynek); filtr obejmuje stan i odebrane kopie.
   initListSearch({
     grids: "#grid", tile: ".card", name: ".name",
-    sort: SORT_LIST,
+    sort: {
+      ...SORT_LIST,
+    },
     filter: {
       param: "status", attr: "status",
-      options: ["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
+      options: [
+        ...["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
+        { value: "received", labelKey: "resourceSend.receivedFilter", matches: (tile) => !!tile.dataset.received },
+      ],
       allKey: "common.filterAll", ariaKey: "games.filter.label",
     },
   });
@@ -1441,7 +1464,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
   tabPollPoints?.addEventListener("click", () => setActiveTab(TYPES.POLL_POINTS));
   tabPrepared?.addEventListener("click", () => setActiveTab(TYPES.PREPARED));
-  btnReceivedFilter?.addEventListener("click", () => { receivedOnly = !receivedOnly; render(); });
   tabMarket?.addEventListener("click", async () => {
     if (activeTab !== TYPES.MARKET) {
       await loadMarketGames();
@@ -1729,7 +1751,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (exportJsonSub) exportJsonSub.textContent = MSG.exportJsonSub();
+    if (btnExportJsonClose) btnExportJsonClose.hidden = true;
     show(exportJsonOverlay, true);
+    enterModalSheet(exportJsonOverlay, {
+      backBtn: btnBackSheet,
+      onClose: () => {
+        if (!btnExportJsonClose?.hidden) {
+          show(exportJsonOverlay, false);
+          exitModalSheet(exportJsonOverlay);
+        }
+      },
+    });
     setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step: MSG.exportStart(), i: 0, n: 0, msg: "" });
     if (btnExport) btnExport.disabled = true;
 
@@ -1738,16 +1770,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step: step || MSG.exportFetch(), i, n, msg });
       });
       downloadJson(safeDownloadName(obj?.game?.name), obj);
-      show(exportJsonOverlay, false);
+      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
     } catch (e) {
       console.error(e);
       setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
         step: MSG.exportErrorLabel(), i: 0, n: 1, msg: e?.message || MSG.exportFailed(), isError: true,
       });
-      setTimeout(() => show(exportJsonOverlay, false), 1200);
+      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
     } finally {
       if (btnExport) btnExport.disabled = false;
     }
+  });
+
+  btnExportJsonClose?.addEventListener("click", () => {
+    show(exportJsonOverlay, false);
+    exitModalSheet(exportJsonOverlay);
+    btnExportJsonClose.hidden = true;
   });
 
   btnExportBase?.addEventListener("click", async () => {
@@ -1839,6 +1877,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
   btnCancelImport?.addEventListener("click", closeImportModal);
+  btnImportCancelAction?.addEventListener("click", closeImportModal);
 
   // RENAME (modal)
   btnNameCancel?.addEventListener("click", closeRenameModal);
@@ -1952,6 +1991,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     if (btnImportJson) btnImportJson.disabled = true;
     if (btnCancelImport) btnCancelImport.disabled = true;
+    if (btnImportCancelAction) btnImportCancelAction.disabled = true;
     if (importFile) importFile.disabled = true;
 
     try {
@@ -1967,8 +2007,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       importCompleted = true;
       if (btnImportJson) {
         btnImportJson.setAttribute("data-i18n", "games.import.done");
-        btnImportJson.textContent = t("games.import.done");
+        btnImportJson.setAttribute("data-i18n-icon", "check");
+        btnImportJson.innerHTML = iconText("check", t("games.import.done"));
       }
+      if (btnImportCancelAction) btnImportCancelAction.hidden = true;
     } catch (e) {
       console.error("IMPORT ERROR:", e);
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
@@ -1979,6 +2021,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showProgBlock(importProg, importCompleted);
       if (btnImportJson) btnImportJson.disabled = !importParsed;
       if (btnCancelImport) btnCancelImport.disabled = false;
+      if (btnImportCancelAction) btnImportCancelAction.disabled = false;
       if (importFile) importFile.disabled = false;
     }
   });
@@ -1995,6 +2038,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // słowa wyjaśnienia (jakby użytkownik nie miał żadnych gier).
     console.error("[games] initial load failed:", e);
     setHint(t("games.alert.loadFailed"));
+  } finally {
+    // Nie pokazuj listy jako pustej przed pierwszą odpowiedzią; nawet przy
+    // błędzie odsłoń komunikat zamiast pozostawić niewidoczną sekcję.
+    document.querySelector(".games-shell")?.classList.add("skel-step-ready");
   }
 
   // Treść kafelków (typ, status, "Nowa gra", podpowiedź) jest składana w JS,

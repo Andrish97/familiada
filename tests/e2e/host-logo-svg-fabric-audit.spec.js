@@ -21,13 +21,13 @@ function makeShapeSource(canvasInfo) {
 }
 
 test("DRAW: każda figura i nakładanie warstw — Canvas Fabric kontra przezroczysty SVG Hosta", async ({ page, context }, testInfo) => {
-  await serveBranchCode(context, { pages: ["logo", "host"] });
+  await serveBranchCode(context, { pages: ["logos", "host"] });
   await loginAsTestUser(page, context, { username: "test9@familiada.online" });
   const name = `E2E-SVG-FABRIC-${Date.now()}`;
   let logoId;
   try {
     logoId = await L.insertLogo(page, { name, type: "PIX_150x70", payload: { w: 150, h: 70, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64: Buffer.alloc(19 * 70).toString("base64"), source: { mode: "DRAW" } } });
-    await page.goto(`${ORIGIN}/logo/editor/draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${ORIGIN}/logos/editor/draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW");
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 20_000 });
     const width = await page.evaluate(() => window.__drawFabric?.getWidth());

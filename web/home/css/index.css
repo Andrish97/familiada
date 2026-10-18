@@ -18,7 +18,7 @@ body.home-body {
   border-radius: 22px;
   border: 1px solid var(--line2);
   background: var(--card);
-  --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
+  --under: var(--card); /* podłoże przycisków (css/base.css) */
   box-shadow: 0 18px 46px rgba(0,0,0,.55);
   display: grid;
   justify-items: center;
@@ -240,7 +240,7 @@ body.home-body {
   padding: 18px;
   border-radius: 22px;
   border: 1px solid var(--line2);
-  background: rgba(255,255,255,.05);
+  background: var(--card);
   display: grid;
   grid-template-columns: .95fr 1.05fr;
   gap: 18px;
@@ -321,7 +321,7 @@ body.home-body {
   padding: 20px;
   border-radius: 18px;
   border: 1px solid var(--line2);
-  background: rgba(255,255,255,.04);
+  background: var(--card);
 }
 
 .forwhom-card h3 {
@@ -396,95 +396,125 @@ details[open] .faq-q .faq-caret {
    IMAGE VIEWER
 ===================== */
 .imgv-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.80);
   z-index: 9999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
+  background: var(--modal-scrim);
+  padding: 2vw;
 }
-.imgv-overlay.is-open { display: flex; }
+.imgv-overlay.is-open { display: grid; }
 
 .imgv-panel {
-  position: relative;
-  width: 100%;
-  max-width: min(1200px, 92vw);
+  width: fit-content;
+  max-width: 92vw;
   max-height: min(82vh, 900px);
-  border-radius: 16px;
-  background: rgba(20,20,24,.94);
-  border: 1px solid rgba(255,255,255,.12);
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 980px) {
-  .imgv-overlay { padding: 0; }
-  .imgv-panel { max-width: 100vw; max-height: 100vh; height: 100vh; border-radius: 0; }
+  /* Tabletowy widok nadal jest zwykłym modalem, więc zostają widoczne
+     marginesy po bokach. Pełnoekranowy układ dotyczy tylko arkusza telefonu. */
+  .imgv-overlay { padding: 3vw; }
+  .imgv-panel { max-width: 94vw; max-height: 90vh; }
 }
 
 .imgv-top {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
-  z-index: 2;
-  pointer-events: none;
+  margin-bottom: 10px;
 }
 
 .imgv-title {
-  pointer-events: none;
-  font-size: 13px;
-  color: rgba(255,255,255,.78);
-  padding-left: 6px;
   max-width: 78%;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.imgv-close {
-  pointer-events: all;
-  width: 40px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.35);
-  color: rgba(255,255,255,.95);
-  font-size: 18px;
-  line-height: 1;
+.imgv-name {
+  margin: 0 0 10px;
 }
 
 .imgv-stage {
-  width: 100%;
-  height: 100%;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
   display: grid;
   place-items: center;
-  padding-top: 52px;
+  overflow: hidden;
 }
 
 .imgv-img {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: min(88vw, 1400px);
+  max-height: min(72vh, 800px);
   display: block;
   user-select: none;
   -webkit-user-drag: none;
 }
 
 .imgv-zoom {
-  width: 100%;
-  height: calc(100% - 52px);
+  width: fit-content;
+  height: fit-content;
+  max-width: 90vw;
+  max-height: min(72vh, 800px);
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
   touch-action: none;
   overflow: hidden;
   position: relative;
 }
 
 .imgv-zoom > img {
-  transform-origin: 50% 50%;
+  /* pinch-zoom.js wylicza przesunięcie względem lewego-górnego rogu */
+  transform-origin: 0 0;
   will-change: transform;
+}
+
+@media (max-width: 600px) {
+  body.sheet-open .pipeline-wrap { display: none !important; }
+  .imgv-overlay.sheet-active {
+    /* Jako element flex nie może zachować z-indexu nakładki: przykrywał
+       topbar, przez co nagłówek zachodził na niego, a Wstecz nie klikał. */
+    z-index: auto !important;
+    padding: 0;
+  }
+  .imgv-overlay.sheet-active .imgv-panel { padding: 0; }
+  .imgv-overlay.sheet-active .sheet-modal-head {
+    flex: 0 0 auto;
+    width: auto;
+    margin-inline: 8px;
+  }
+  .imgv-overlay.modal--sheet.sheet-active .imgv-top {
+    position: static;
+    height: auto;
+    padding: 0 0 8px;
+    margin: 0;
+    background: none !important;
+    border: 0 !important;
+    pointer-events: auto;
+  }
+  .imgv-overlay.sheet-active .sheet-modal-body {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .imgv-overlay.sheet-active .imgv-stage {
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+  .imgv-overlay.sheet-active .imgv-zoom {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+  }
+  .imgv-overlay.sheet-active .imgv-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
 }

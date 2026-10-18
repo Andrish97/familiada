@@ -6,8 +6,8 @@
 // i ten sam wiersz (.shareRow). Puste sekcje są ukryte.
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
-import { t } from "../../translation/translation.js?v=v2026-10-18T17330";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-18T17330";
+import { t } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-18T17375";
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
 
@@ -23,6 +23,38 @@ export function shareCooldownEl() {
   labelEl.className = "shareCountdown";
   element.append(labelEl);
   return { element, labelEl };
+}
+
+/** Zwarte akcje zaznaczania listy odbiorców, wspólne dla modali udostępniania. */
+export function shareBulkActionsEl({ onSelectAll, onDeselectAll }) {
+  const element = document.createElement("div");
+  element.className = "shareBulkActions";
+  element.setAttribute("role", "group");
+  const makeButton = (key, onClick) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "shareBulkAction";
+    button.setAttribute("aria-label", t(`common.${key}`));
+    button.title = t(`common.${key}`);
+    const actionIcon = key === "selectAll" ? "select-all" : "clear-selection";
+    button.innerHTML = icon(actionIcon);
+    button.addEventListener("click", onClick);
+    element.append(button);
+    return button;
+  };
+  const selectAll = makeButton("selectAll", onSelectAll);
+  const deselectAll = makeButton("deselectAll", onDeselectAll);
+  return {
+    element,
+    update(inputs) {
+      const available = [...inputs].filter((input) => !input.disabled);
+      const checked = available.filter((input) => input.checked).length;
+      element.hidden = available.length === 0;
+      selectAll.disabled = available.length === 0 || checked === available.length;
+      deselectAll.hidden = checked === 0;
+      deselectAll.disabled = checked === 0;
+    },
+  };
 }
 
 /**

@@ -1,11 +1,11 @@
-import { controlLayoutGeometry, DEVICE_VIEWPORT } from './layoutGeometry.js?v=v2026-10-18T17330';
-import { t } from '../../shared/translation/translation.js?v=v2026-10-18T17330';
-import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-18T17330';
-import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-18T17330';
+import { controlLayoutGeometry, DEVICE_VIEWPORT } from './layoutGeometry.js?v=v2026-10-18T17375';
+import { t } from '../../shared/translation/translation.js?v=v2026-10-18T17375';
+import { backHref } from '../../shared/js/core/nav-map.js?v=v2026-10-18T17375';
+import { showPageGuard, hidePageGuard } from '../../shared/js/core/page-overlay.js?v=v2026-10-18T17375';
 
-export function currentControlGeometry(testMode = false) {
+export function currentControlGeometry(testMode = false, { width = innerWidth, height = innerHeight } = {}) {
   const topbarHeight = document.querySelector('.topbar')?.offsetHeight || 68;
-  return controlLayoutGeometry({ width: innerWidth, height: innerHeight, topbarHeight, testMode });
+  return controlLayoutGeometry({ width, height, topbarHeight, testMode });
 }
 
 export function createControlTestMode({ urls, onActivity, onResize }) {
@@ -31,6 +31,7 @@ export function createControlTestMode({ urls, onActivity, onResize }) {
       slot.className = 'control-test-device';
       const frame = document.createElement('iframe');
       frame.dataset.testDevice = kind;
+      frame.dataset.controlTestMode = 'true';
       frame.title = t(`control.device${kind[0].toUpperCase()}${kind.slice(1)}`);
       frame.width = String(DEVICE_VIEWPORT.width);
       frame.height = String(DEVICE_VIEWPORT.height);

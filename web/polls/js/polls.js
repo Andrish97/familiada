@@ -6,26 +6,27 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T17330";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-18T17330";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T17375";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-18T17375";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17330";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-18T17330";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-18T17330";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-18T17330";
-import { createTally } from "./poll-tally.js?v=v2026-10-18T17330";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17375";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-18T17375";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-18T17375";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-18T17375";
+import { createTally } from "./poll-tally.js?v=v2026-10-18T17375";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-18T17330";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-18T17375";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -54,10 +55,17 @@ const pollActions = $("pollActions");
 // treść
 const cardMain = $("cardMain");
 const cardEmpty = $("cardEmpty");
+const pollLoadState = $("pollLoadState");
+const pollLoadMessage = $("pollLoadMessage");
+const pollLoadRetry = $("pollLoadRetry");
 const tabShare = $("tabShare");
+const tabRecipients = $("tabRecipients");
 const tabResults = $("tabResults");
 const secShare = $("secShare");
 const secResults = $("secResults");
+const pollTabsCard = $("pollTabsCard");
+const recipientShareTab = tabRecipients?.closest(".tab-slot");
+const recipientShareSection = document.querySelector(".pollRecipientsSec");
 
 // Udostępnianie
 const shareEmpty = $("shareEmpty");
@@ -110,6 +118,8 @@ const btnRedo = $("btnRedo");
 
 let game = null;
 let currentUser = null;
+let guestMode = false;
+let initialLoadFailed = false;
 let busy = false; // trwa akcja stanu (uruchom / zatrzymaj / podlicz / przerwij)
 let lastCheck = null; // wynik validateGame() z ostatniego odświeżenia
 let lastPreview = null; // ostatnia odpowiedź get_poll_preview
@@ -440,7 +450,9 @@ async function refreshVotes() {
 
 async function enterTally() {
   if (!game || game.status !== STATUS.POLL_STOPPED || tallyActive) return;
+  busy = true;
   setActiveTab("results");
+  renderBar();
   try {
     // świeże dane, ta sama lista wierszy co w widoku surowym
     tallyActive = false;
@@ -459,6 +471,7 @@ async function enterTally() {
     resetResultsDom();
     await previewResults().catch(() => {});
   }
+  busy = false;
   renderBar();
 }
 
@@ -509,17 +522,25 @@ async function approveTallyFlow() {
 const POLL_TABS = PAGES.polls.tabs;
 const DEFAULT_POLL_TAB = POLL_TABS[0];
 let activeTab = tabFromUrl(POLL_TABS, DEFAULT_POLL_TAB);
+let activeShareSide = "anonymous";
 let tabTouchedByUser = new URLSearchParams(location.search).has("tab");
 let urlTabPending = tabTouchedByUser;
 
 function setActiveTab(tab, { byUser = false } = {}) {
-  activeTab = POLL_TABS.includes(tab) ? tab : DEFAULT_POLL_TAB;
+  const selected = tab === "recipients" && !guestMode ? "recipients" : tab === "results" ? "results" : "share";
+  activeTab = selected === "results" ? "results" : "share";
+  activeShareSide = selected === "recipients" ? "recipients" : "anonymous";
   if (byUser) tabTouchedByUser = true;
   setTab(activeTab, DEFAULT_POLL_TAB);
   const shareOn = activeTab === "share";
   secShare?.classList.toggle("active", shareOn);
   secResults?.classList.toggle("active", !shareOn);
-  for (const [btn, on] of [[tabShare, shareOn], [tabResults, !shareOn]]) {
+  pollTabsCard?.classList.toggle("mobile-recipients-active", shareOn && activeShareSide === "recipients");
+  for (const [btn, on] of [
+    [tabShare, shareOn && activeShareSide === "anonymous"],
+    [tabRecipients, shareOn && activeShareSide === "recipients"],
+    [tabResults, !shareOn],
+  ]) {
     btn?.classList.toggle("active", on);
     btn?.closest(".tab-slot")?.classList.toggle("active", on);
     btn?.setAttribute("aria-selected", on ? "true" : "false");
@@ -527,11 +548,13 @@ function setActiveTab(tab, { byUser = false } = {}) {
 }
 
 function setShareTabEnabled(on) {
-  if (tabShare) {
-    tabShare.disabled = !on;
-    tabShare.setAttribute("aria-disabled", on ? "false" : "true");
+  for (const btn of [tabShare, tabRecipients]) {
+    if (!btn) continue;
+    btn.disabled = !on;
+    btn.setAttribute("aria-disabled", on ? "false" : "true");
   }
   tabShare?.closest(".tab-slot")?.classList.toggle("is-disabled", !on);
+  tabRecipients?.closest(".tab-slot")?.classList.toggle("is-disabled", !on);
   if (!on && activeTab === "share") setActiveTab("results");
 }
 
@@ -572,6 +595,7 @@ function sharingAvailable(st = game?.status) {
 
 async function loadTasks() {
   if (!game || !currentUser) { tasks = []; return; }
+  if (guestMode) { friendsAll = []; subsAll = []; tasks = []; return; }
   const { data, error } = await sb().rpc("poll_share_panel", { p_game_id: gameId });
   if (error || !data?.ok) throw new Error(error?.message || data?.err || "poll_share_panel");
   friendsAll = data.friends || [];
@@ -738,6 +762,24 @@ function renderRecipientGroup(host, rows, kind, title) {
   const section = shareSectionEl({ key: `poll-${kind}`, title, emptyText: rows.length ? "" : t("pollSharePanel.empty") });
   const list = section.querySelector(".shareList");
   const selectedIds = kind === "friend" ? selectedFriendIds : selectedSubIds;
+  const heading = section.querySelector(".shareSectionTitle");
+  heading.classList.add("shareSectionHeading");
+  const bulkActions = shareBulkActionsEl({
+    onSelectAll: () => {
+      for (const input of list.querySelectorAll('input[type="checkbox"]:not(:disabled)')) selectedIds.add(input.value);
+      list.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach((input) => { input.checked = true; });
+      recipientSelectionChanged();
+      syncBulkActions();
+    },
+    onDeselectAll: () => {
+      for (const input of list.querySelectorAll('input[type="checkbox"]')) selectedIds.delete(input.value);
+      list.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
+      recipientSelectionChanged();
+      syncBulkActions();
+    },
+  });
+  heading.append(bulkActions.element);
+  const syncBulkActions = () => bulkActions.update(list.querySelectorAll('input[type="checkbox"]'));
   for (const recipient of rows) {
     const row = shareRowEl({ id: recipient.id, label: recipient.label, title: recipient.email, compact: true });
     const checkbox = document.createElement("input");
@@ -747,6 +789,7 @@ function renderRecipientGroup(host, rows, kind, title) {
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) selectedIds.add(recipient.id); else selectedIds.delete(recipient.id);
       recipientSelectionChanged();
+      syncBulkActions();
     });
     row.prepend(checkbox);
     row.addEventListener("click", event => {
@@ -759,10 +802,12 @@ function renderRecipientGroup(host, rows, kind, title) {
       element.hidden = !cooling; row.classList.toggle("is-cooling-down", cooling); row.classList.toggle("pick", !cooling);
       if (cooling) { checkbox.checked = false; selectedIds.delete(recipient.id); }
       recipientSelectionChanged();
+      syncBulkActions();
     }});
     pickerTicker.setEndMs(key, Date.parse(recipient.cooldown_until) || 0);
     list.append(row);
   }
+  syncBulkActions();
   host.replaceChildren(section);
 }
 
@@ -777,7 +822,7 @@ function renderRecipientPicker() {
 }
 
 async function openRecipientPicker() {
-  if (!game || busy || recipientPickerLoading || !sharingAvailable() || game.status === STATUS.POLL_STOPPED || game.status === STATUS.READY) return;
+  if (guestMode || !game || busy || recipientPickerLoading || !sharingAvailable() || game.status === STATUS.POLL_STOPPED || game.status === STATUS.READY) return;
   recipientPickerLoading = true;
   if (btnAddRecipients) btnAddRecipients.disabled = true;
   try { await loadTasks(); }
@@ -988,18 +1033,38 @@ function renderShareSection(st, link) {
 async function refresh() {
   if (!currentUser) return; // initPage jeszcze nie wpuścił (albo pokazał nakładkę gościa)
   const seq = ++refreshSeq;
+  if (!game && !initialLoadFailed && pollLoadState) {
+    pollLoadState.hidden = false;
+    if (pollLoadMessage) pollLoadMessage.textContent = t("polls.load.loading");
+    if (pollLoadRetry) pollLoadRetry.hidden = true;
+  }
   if (!gameId) {
     if (pollBar) pollBar.style.display = "none";
     if (cardMain) cardMain.style.display = "none";
+    if (pollLoadState) pollLoadState.hidden = true;
     if (cardEmpty) cardEmpty.style.display = "";
     setMsg(t("polls.missingId"), "error");
     return;
   }
 
   const prev = game;
-  game = await loadGame();
+  try {
+    game = await loadGame();
+  } catch (error) {
+    console.warn("[polls] initial game load failed", error);
+    if (!game) {
+      initialLoadFailed = true;
+      if (pollLoadState) pollLoadState.hidden = false;
+      if (pollLoadMessage) pollLoadMessage.textContent = t("polls.load.failed");
+      if (pollLoadRetry) pollLoadRetry.hidden = false;
+    } else {
+      setMsg(t("polls.load.failed"), "error");
+    }
+    return;
+  }
   if (seq !== refreshSeq) return;
 
+  if (pollLoadState) pollLoadState.hidden = true;
   if (cardEmpty) cardEmpty.style.display = "none";
   if (pollBar) pollBar.style.display = "";
   if (cardMain) cardMain.style.display = "";
@@ -1030,7 +1095,9 @@ async function refresh() {
     votesText = "";
   }
   // Wypustka z adresu / wybrana przez użytkownika zostaje; inaczej wg stanu ankiety.
-  setActiveTab(tabTouchedByUser ? activeTab : (st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results"));
+  setActiveTab(tabTouchedByUser
+    ? (activeTab === "share" && activeShareSide === "recipients" ? "recipients" : activeTab)
+    : (st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results"));
 
   const nameEl = $("pollGameName");
   if (nameEl) {
@@ -1042,6 +1109,10 @@ async function refresh() {
 
   renderShareSection(st, st === STATUS.DRAFT ? "" : pollLink(game));
   renderBar();
+  // Podstawowe dane gry, zakładki i obsługa akcji są gotowe; wyniki pozostają
+  // w osobnym etapie do czasu odczytu odpowiedzi.
+  pollBar?.classList.add("skel-step-ready");
+  cardMain?.classList.add("skel-step-ready");
 
   try {
     const [chk] = await Promise.all([
@@ -1057,6 +1128,7 @@ async function refresh() {
     if (resultsMeta) resultsMeta.textContent = t("polls.results.refreshFailed");
     lastCheck = null;
   }
+  resultsList?.classList.add("skel-step-ready");
   renderBar();
 }
 
@@ -1246,11 +1318,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   const u = await userP;
   if (!u) return; // przekierowanie na logowanie albo nakładka gościa
   currentUser = u;
+  guestMode = isGuestUser(u);
+  if (guestMode) {
+    if (recipientShareTab) recipientShareTab.hidden = true;
+    if (recipientShareSection) recipientShareSection.hidden = true;
+    if (btnAddRecipients) btnAddRecipients.hidden = true;
+  }
+  pollLoadRetry?.addEventListener("click", () => {
+    initialLoadFailed = false;
+    void refresh();
+  });
 
   window.addEventListener("pagehide", () => { void tally.flush(); });
 
   tabShare?.addEventListener("click", () => { if (!tabShare.disabled) setActiveTab("share", { byUser: true }); });
+  tabRecipients?.addEventListener("click", () => { if (!tabRecipients.disabled) setActiveTab("recipients", { byUser: true }); });
   tabResults?.addEventListener("click", () => setActiveTab("results", { byUser: true }));
+  const mobilePollTabs = window.matchMedia("(max-width: 980px)");
+  mobilePollTabs.addEventListener?.("change", (event) => {
+    if (!event.matches && activeShareSide === "recipients") setActiveTab("share");
+  });
 
   [pollRecipientsClose, pollRecipientsCancel].forEach((button) => button?.addEventListener("click", closeRecipientPicker));
   pollRecipientsAdd?.addEventListener("click", () => void acceptRecipientSelection());

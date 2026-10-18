@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, follow">
@@ -15,10 +15,10 @@
   <title data-i18n="index.title">Familiada — logowanie</title>
   <link rel="canonical" href="https://www.familiada.online/login">
   
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
   
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/login/css/login.css?v=v2026-10-18T17330"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/login/css/login.css?v=v2026-10-18T17375"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -30,13 +30,17 @@
           var _s = JSON.parse(localStorage.getItem(_k));
           var _u = _s && (_s.user || (_s.currentSession && _s.currentSession.user));
           var _exp = _s && (_s.expires_at || (_s.currentSession && _s.currentSession.expires_at));
-          if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
+          var _username = _u && ((_u.user_metadata && _u.user_metadata.username) || _u.username || '');
+          var _needsUsername = !_username || String(_username).toLowerCase().startsWith('guest_');
+          if (_u && !_u.is_anonymous && !_needsUsername && (!_exp || Date.now() / 1000 < _exp + 60)) {
             var _next = _p.get('next');
             var _dest;
             if (_next === 'tasks') {
               _dest = '/tasks/' + (_p.get('t') ? '?t=' + _p.get('t') : '');
             } else if (_next === 'friends') {
               _dest = '/friends/' + (_p.get('f') ? '?f=' + _p.get('f') : '');
+            } else if (_next === 'bases') {
+              _dest = '/bases/' + (_p.get('b') ? '?b=' + _p.get('b') : '');
             } else {
               _dest = '/games/';
             }
@@ -47,15 +51,15 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/login/js/login.js?v=v2026-10-18T17330" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/login/js/login.js?v=v2026-10-18T17375" defer></script>
 </head>
 <body class="login-body mode-login no-footer-line skel-body" data-confirm-url="/login/confirm/" data-reset-url="/login/reset/" data-games-url="/games/" data-captcha-provider="turnstile" data-captcha-site-key="0x4AAAAAACgSBNCEZ9064to_">
   <a href="/"
      class="login-back-fixed"
      id="btnBackHome"
      data-i18n="index.backHome" data-i18n-icon="arrow-left">Strona główna</a>
-  <div class="login-shell">
+  <div class="login-shell" data-skel-step>
     <div class="login-card" id="loginCard">
       <div class="login-header">
         <div class="login-brand">FAMILIADA</div>
@@ -70,13 +74,13 @@
         <div class="hint" id="pwdHint"></div>
 
         <div class="row">
-          <button class="btn gold" id="btnPrimary" type="button" data-i18n="index.btnLogin">Zaloguj</button>
-          <button class="btn" id="btnToggle" type="button" data-i18n="index.btnToggleRegister">Załóż konto</button>
-          <button class="btn" id="btnGuest" type="button" data-i18n="index.btnGuest">Wejdź jako gość</button>
+          <button class="btn gold" id="btnPrimary" type="button" data-i18n="index.btnLogin" data-i18n-icon="arrow-right">Zaloguj</button>
+          <button class="btn" id="btnToggle" type="button" data-i18n="index.btnToggleRegister" data-i18n-icon="plus">Załóż konto</button>
+          <button class="btn" id="btnGuest" type="button" data-i18n="index.btnGuest" data-i18n-icon="person">Wejdź jako gość</button>
         </div>
 
         <div class="meta">
-          <button class="link" id="btnForgot" type="button" data-i18n="index.btnForgot">Przypomnij hasło</button>
+          <button class="link" id="btnForgot" type="button" data-i18n="index.btnForgot" data-i18n-icon="envelope">Przypomnij hasło</button>
           <span class="cooldown" id="forgotCooldown" hidden></span>
           <span class="err" id="err"></span>
         </div>
@@ -93,7 +97,7 @@
         <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username"  enterkeyhint="done" data-i18n-placeholder="index.placeholderUsername"/>
         <div class="modal-err" id="usernameErr"></div>
         <div class="modal-actions">
-          <button class="btn gold" id="btnUsernameSave" type="submit" data-i18n="index.btnUsernameSave">Zapisz nazwę</button>
+          <button class="btn gold" id="btnUsernameSave" type="submit" data-i18n="index.btnUsernameSave" data-i18n-icon="save">Zapisz nazwę</button>
         </div>
       </form>
     </div>
@@ -103,6 +107,6 @@
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

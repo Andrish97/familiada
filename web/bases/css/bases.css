@@ -13,23 +13,53 @@
    SHARE MODAL + tile badges
 ========================================================= */
 
+.export-json-modal{ box-sizing:border-box; min-width:0; max-width:100%; }
+.export-json-progress{ min-width:0; width:100%; box-sizing:border-box; }
+.export-json-progress .importRow{ min-width:0; gap:10px; }
+.export-json-progress #exportJsonStep,
+.export-json-progress #exportJsonMsg{ min-width:0; overflow-wrap:anywhere; }
+.export-json-progress #exportJsonCount{ flex:0 0 auto; white-space:nowrap; }
+.export-json-progress > div:nth-child(2){ width:100%; box-sizing:border-box; }
+@media (max-width: 600px){
+  #exportJsonOverlay.sheet-active .export-json-modal{ width:100%; max-width:100%; min-width:0; }
+  #exportJsonOverlay.sheet-active .sheet-modal-body,
+  #exportJsonOverlay.sheet-active .export-json-progress,
+  #exportJsonOverlay.sheet-active .export-json-progress > *{ min-width:0; width:100%; box-sizing:border-box; }
+  #exportJsonOverlay.sheet-active .sheet-modal-body{ overflow-x:hidden; }
+  #exportJsonOverlay.sheet-active .export-json-progress .importRow{ flex-wrap:nowrap; }
+}
+
 .modal.shareModal{ width: min(820px, 94vw); max-height: 90dvh; overflow-y: auto; }
 .baseShareSections{ display: grid; gap: 16px; min-width: 0; }
 .baseShareSections .shareSection{ margin-top: 0; }
-.baseShareLookup{ display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin-top: 10px; }
+.baseShareLookup{ display: flex; flex-wrap: nowrap; align-items: stretch; gap: 8px; margin-top: 10px; }
 .baseShareLookup .inp{ flex: 1 1 220px; min-width: 0; }
 .baseShareLookup .btn{ height: 40px; }
-.baseShareRole{ width: 40px; min-width: 40px; height: 40px; padding: 6px; }
-.shareRowActions .baseShareRole{ height: auto; }
+.baseShareRole{ width: auto; min-width: 40px; height: 40px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.baseShareRoleLabel{ font-size: 12px; line-height: 1.1; letter-spacing: 0; }
+.baseShareRoleShort{ display:none; }
+.shareRowActions .baseShareRole{ height: auto; min-height: 34px; }
+/* Wspólne compact rows zwężają każde .btn do przycisku ikonowego. Rola
+   „Może edytować” ma też etykietę, więc zachowuje szerokość tekstu. */
+.shareRow--compact .shareRowActions .baseShareRole{
+  width: auto;
+  min-width: max-content;
+  min-height: 44px;
+  padding: 6px 8px;
+}
+@media (max-width: 600px){
+  .baseShareRoleFull{ display:none; }
+  .baseShareRoleShort{ display:inline; }
+}
 .baseShareFooter{ display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
+.baseShareFooter > .btn{ height: 40px; }
 #baseDeclinesHost{ flex: 0 0 auto; min-height: 0; }
 #baseDeclinesHost .shareSection{ margin-top: 8px; }
 #baseDeclinesHost .shareList--scroll{ max-height: min(240px, 32dvh); }
 #baseDeclinesHost .shareNote{ flex-basis: 100%; margin: 0; }
 @media (max-width: 600px){
   .modal.shareModal{ max-height: none; }
-  .baseShareLookup .inp{ flex-basis: calc(100% - 56px); }
-  #btnShareAdd{ margin-left: auto; }
+  .baseShareLookup .inp{ flex: 1 1 0; }
   .baseShareSections .shareList--scroll{ max-height: 180px; }
 }
 
@@ -57,10 +87,10 @@
 
 .bases-tabs-card .tabs-strip{ display: flex; gap: 0; }
 
-/* 50/50, ignoruj --tab-width z games.css */
+/* Szerokości wypustek wynikają z ich etykiet i plakietek. */
 .bases-tabs-card .tab-slot{
   width: auto;
-  flex: 1 1 0;
+  flex: 1 1 max-content;
   min-width: 0;
 }
 
@@ -125,23 +155,4 @@
 
 @media (max-width: 980px){
   .tabs-card.hub-tabs.bases-tabs-card{ --tab-height: 44px; }
-}
-
-/* =========================================================
-   Mobile landscape — scroll strony, bez wewnętrznych scrolli
-========================================================= */
-
-@media (max-width: 980px) and (orientation: landscape){
-  /* games.css odblokowuje scroll strony — my tylko zdejmujemy "trapped" scroll w gridach */
-  .games-shell{ overflow: visible; }
-
-  .tabs-card.bases-tabs-card,
-  .bases-card,
-  .bases-layout,
-  .bases-section.active{
-    flex: 0 0 auto;
-    min-height: auto;
-  }
-
-  .bases-section .grid{ overflow: visible; }
 }

@@ -1,5 +1,5 @@
-import {sb} from './supabase.js?v=v2026-10-18T17330';
-import {t} from '../../translation/translation.js?v=v2026-10-18T17330';
+import {sb} from './supabase.js?v=v2026-10-18T17375';
+import {t} from '../../translation/translation.js?v=v2026-10-18T17375';
 
 export async function refreshResourceCopyInbox({kind,variant,host,onChanged}){
  if(!host)return;
@@ -42,7 +42,7 @@ export async function refreshResourceCopyBadges(){
    const n=counts.filter(item=>item.kind===slot.dataset.copyKind&&item.variant===slot.dataset.copyVariant&&(!slot.dataset.copyMode||item.mode===slot.dataset.copyMode)).reduce((sum,item)=>sum+Number(item.count||0),0);
    slot.dataset.copyCount=n?String(n>99?99:n):'';
   }
-  const pageKind=location.pathname.startsWith('/logo/')?'logo':'game';
+  const pageKind=location.pathname.startsWith('/logos/')?'logo':'game';
   const navBadge=document.getElementById(pageKind==='logo'?'gamesCopiesNavBadge':'logoCopiesNavBadge');
   if(navBadge)navBadge.textContent=total(pageKind==='logo'?'game':'logo')>99?'99+':String(total(pageKind==='logo'?'game':'logo')||'');
  }catch{

@@ -603,8 +603,9 @@
 }
 
 .tab-slot {
-    width: 220px;
-    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    flex: 1 1 max-content;
     display: flex;
     align-items: stretch
 }
@@ -616,9 +617,9 @@
     width: 100%;
     height: var(--tab-height);
     line-height: var(--tab-height);
-    font-size: 11px;
+    font-size: var(--tab-label-font-size,12px);
     font-weight: 900;
-    letter-spacing: .06em;
+    letter-spacing: var(--tab-label-letter-spacing,.08em);
     text-transform: uppercase;
     cursor: pointer;
     white-space: nowrap;
@@ -813,7 +814,7 @@
 .card {
     border-radius: 18px;
     border: 1px solid rgba(255,255,255,.14);
-    background: rgba(0,0,0,.18);
+    background: var(--card, #111827);
     padding: 14px;
     box-shadow: 0 18px 45px rgba(0,0,0,.45);
     width: 100%;
@@ -828,7 +829,7 @@
 .card-soft,.twoCol>.card {
     box-shadow: none;
     border-color: rgba(255,255,255,.1);
-    background: rgba(0,0,0,.16)
+    background: rgba(255,255,255,.04)
 }
 
 .card-noShadow {
@@ -846,7 +847,7 @@
 .card {
     border-radius: 18px;
     border: 1px solid rgba(255,255,255,.14);
-    background: rgba(0,0,0,.18);
+    background: var(--card, #111827);
     padding: 14px;
     box-shadow: 0 18px 45px rgba(0,0,0,.45);
     width: 100%;
@@ -1351,6 +1352,16 @@
     display: flex;
     justify-content: center;
     padding: 8px 0
+}
+
+@media (max-width: 600px) {
+    /* Arkusz mobilny spłaszcza .uni-body do bloku; w modalu QR przywróć
+       układ kolumnowy i czytelne odstępy między QR, kodem i podpowiedzią. */
+    #qrModalOverlay.sheet-active .sheet-modal-body > .uni-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
 }
 
 .qrBlock img,.qrBox img,.uni-qr img,.qrSlim img {
@@ -1898,6 +1909,8 @@
 .shareModal > .shareSection { margin: 0; padding: 12px; flex: 0 0 auto; }
 .shareModal .shareSectionTitle { line-height: 1.3; }
 .shareModal .importRow { margin-top: 10px; gap: 10px; }
+.shareModal .importRow > .btn,
+.shareModal .shareSectionActions > .btn { min-width: 40px; height: 40px; }
 .shareModal .shareList { display: grid; gap: 8px; margin-top: 9px; }
 .shareModal .shareRow { gap: 10px; padding: 9px 10px; }
 .shareModal .shareMain { min-width: 0; }
@@ -2032,6 +2045,10 @@
 
 .device-row-2 .btn {
   font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .device-name {

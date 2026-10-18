@@ -9,7 +9,6 @@ const LOGIN_URL = "https://www.familiada.online/login";
 // TEST_PASSWORD. Loginy (test1@…, test2@…, ...) same w sobie niczego nie
 // odsłaniają bez prawdziwego hasła.
 const TEST_ACCOUNT_DOMAIN = "familiada.online";
-
 // Znany, nieszkodliwy szum widoczny w KAŻDYM przebiegu każdego testu --
 // zgłoszone: zalewa logi CI, utrudniając wyłowienie prawdziwego failu.
 // Odfiltrowane tu i w control2.spec.js's instrumentAnon() (ten sam wzorzec,
@@ -74,6 +73,10 @@ function instrumentPage(page) {
       if (res.status() >= 400 && res.url().includes("/rpc/control_device_shares_list")) {
         res.text().then((body) => console.log("[e2e-diag] control_device_shares_list error body:", body.slice(0, 1000)))
           .catch((e) => console.log("[e2e-diag] control_device_shares_list body read failed:", e.message));
+      }
+      if (res.status() >= 400 && res.url().includes("/rpc/control_device_slots_for_owner")) {
+        res.json().then(({ code, message, details, hint }) => console.log("[e2e-diag] control_device_slots_for_owner error:", JSON.stringify({ code, message, details, hint })))
+          .catch(() => console.log("[e2e-diag] control_device_slots_for_owner error body unavailable"));
       }
     }
     // game_state_write: 200 NIE dowodzi, że zwrócony wiersz faktycznie ma
@@ -193,14 +196,18 @@ async function loginAsTestUser(page, context, opts = {}) {
   instrumentPage(page);
   await withE2EBypass(context, { suppressRating: opts.suppressRating !== false });
   const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
-  // login.js attaches #btnPrimary/#btnGuest click listeners only after an
-  // async initI18n()+getUser() chain inside its DOMContentLoaded handler.
-  // "domcontentloaded" fires before that chain resolves, so a click right
-  // after goto can land before the listener exists — silently doing
-  // nothing (no error, no navigation), which then times out at
-  // waitForURL below looking like an unexplained login hang. Same root
-  // cause as the #demoRestoreBtn race fixed earlier for account.js.
-  await page.waitForLoadState("networkidle");
+  // login.js attaches #btnPrimary's listener only after its async
+  // initI18n()+getUser() chain inside DOMContentLoaded. Don't wait for
+  // networkidle here: the app polls production RPCs in the background, so
+  // the network may never become idle. The status leaving its initial
+  // "checking session" state signals that getUser() completed; listener
+  // setup follows immediately in the same initialization function.
+  await page.waitForFunction(() => {
+    const status = document.querySelector("#status")?.textContent?.trim() || "";
+    return !document.documentElement.classList.contains("page-loading")
+      && !!status
+      && !/checking|sprawdzam|перевіряю/i.test(status);
+  }, null, { timeout: 20000 });
   try {
     await page.fill("#email", username, { timeout: 15000 });
   } catch (e) {
@@ -339,6 +346,7 @@ async function loginAsPooledTestUser(page, context, workerIndex) {
 }
 
 module.exports = {
+  withE2EBypass,
   loginAsTestUser,
   loginAsGuest,
   loginAsPooledTestUser,

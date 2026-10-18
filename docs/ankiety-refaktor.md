@@ -58,9 +58,9 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
 
     „Uruchom ponownie” tylko po podliczeniu (nowy klucz, głosy od zera).
   - **Podliczanie w karcie Wyniki — płynna zmiana widoku (2026-10-09).**
-    Stan dziś: punktowa — baza (`_poll_points_close_unchecked`) liczy głosy
-    z ostatniej sesji, 0 głosów = 1, procent z sumą 100 (największe
-    reszty, min. 1 pkt); tekstowa — przeglądarka bierze zdjęcie
+    Stan dziś: oba typy liczą udział na podstawie wszystkich oddanych
+    głosów; procent jest zaokrąglany do pełnej liczby, a odpowiedzi poniżej
+    3% są pomijane w punktacji. Tekstowa — przeglądarka bierze zdjęcie
     `poll_text_entries`, grupuje po `answer_norm`, ręczne łączenie/edycja,
     `normalizeTo100Int` + przycięcie do 17 znaków, min. 3 odpowiedzi,
     zapis `poll_text_close_apply`.
@@ -75,6 +75,9 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
     - wyjście bez zatwierdzenia → zwykły widok wyników, ankieta ZATRZYMANA.
     Przeliczenie tekstowej na punkty przeniesione do bazy (jedno miejsce dla
     obu typów).
+    - **Zasada 2026-10-18:** w podglądzie podliczania odpowiedzi poniżej
+      progu nadal są widoczne na szaro wraz z liczbą głosów i procentem;
+      reguła w bazie i na froncie jest taka sama.
   - **Karta Udostępnianie — nowy układ (2026-10-09).** Komputer: dwie
     kolumny wyrównane do góry. Lewa „Link”: pole linku z ikoną kopiowania
     w środku, pod nim w rzędzie „Otwórz” · „QR na wyświetlaczu”, niżej mały

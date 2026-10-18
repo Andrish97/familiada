@@ -8,7 +8,7 @@ let stage='login',failureStage='';
 test.afterEach(async({},testInfo)=>{if(testInfo.status!==testInfo.expectedStatus)console.error('::error title=Logo transfer stage::'+(failureStage||stage));});
 test('standalone logo package: TEXT IMAGE DRAW, own imported image, nested source independence and incomplete export rejection',async({page,context},testInfo)=>{
  test.setTimeout(180000);const ids=[],files=[];
- if(branch)await serveBranchCode(context,{pages:['games','logo']});
+ if(branch)await serveBranchCode(context,{pages:['games','logos']});
  await context.addInitScript(()=>localStorage.setItem('uiLang','pl'));
  await loginAsPooledTestUser(page,context,testInfo.parallelIndex);
  let originalUrl;

@@ -10,19 +10,17 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-18T17330";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-18T17330";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-18T17330";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T17330";
-import { createPressController } from "./press.js?v=v2026-10-18T17330";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-18T17330";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-18T17330";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-18T17330";
-
-// Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
-startKeepAlive();
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-18T17375";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-18T17375";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-18T17375";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T17375";
+import { createPressController } from "./press.js?v=v2026-10-18T17375";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-18T17375";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-18T17375";
 
 function parseParams() {
   const u = new URL(location.href);
@@ -135,11 +133,36 @@ function setupFullscreenButton() {
 
 async function main() {
   await initI18n({ withSwitcher: false });
+  const controlTestFrame = window.parent !== window
+    && window.frameElement?.dataset.controlTestMode === "true";
+  const deviceGate = guardViewportWidth({
+    minWidth: 0,
+    formFactors: controlTestFrame ? null : ["phone", "tablet"],
+    requiresTouch: !controlTestFrame,
+    allowPhoneLandscape: true,
+    requirePhoneLandscape: !controlTestFrame,
+    rotateMessageKey: "buzzer.rotateMessage",
+  });
+  document.documentElement.removeAttribute("data-touch-guard-pending");
+  if (deviceGate.state() !== "ok") await deviceGate.ready;
+  // Utrzymujemy ekran aktywny dopiero po przejściu wspólnego guarda.
+  startKeepAlive();
   setupFullscreenButton();
   document.documentElement.classList.remove("page-loading");
 
   const { gameId, key } = parseParams();
-  if (!gameId) return;
+  const loadError = document.getElementById("deviceLoadError");
+  const offScreen = document.getElementById("offScreen");
+  const revealStep = (element) => {
+    if (!element) return;
+    element.hidden = false;
+    element.classList.add("skel-step-ready");
+  };
+  document.querySelector("[data-retry-device]")?.addEventListener("click", () => location.reload());
+  if (!gameId || !key) {
+    revealStep(loadError);
+    return;
+  }
 
   let subscription = null;
   const lease = createDeviceLease({ gameId, deviceType: "buzzer", key, onState: ({ state }) => {
@@ -181,7 +204,10 @@ async function main() {
     } finally { if (displayCheckPendingKey === requestKey) displayCheckPendingKey = null; }
   }
   setInterval(() => {
-    if (!subscription?.isDirectConnected()) void checkDisplayReady();
+    // A live Realtime channel does not prove this client received every ACK.
+    // Retry while the current transition is pending so one dropped
+    // display_rendered_rev event cannot leave the Buzzer disabled indefinitely.
+    if (lastRow && !isDisplayReady(lastRow)) void checkDisplayReady();
   }, 500);
 
   // Migracja 264 -- game_state_set_lock (control/js/store.js) NIE dzwoni
@@ -199,6 +225,7 @@ async function main() {
     lockTimer = setTimeout(() => presses.render(lastRow), Math.max(0, msLeft) + 20);
   }
 
+  let initialStateReady = false;
   subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
     getLeaseArgs: () => lease.actionArgs(),
@@ -223,10 +250,17 @@ async function main() {
       lastRow = row;
       presses.render(row);
       lease.setProgress({ renderedRev: Number(row.rev) || 0 });
+      initialStateReady = true;
+      if (loadError) loadError.hidden = true;
+      document.getElementById("arena")?.classList.add("skel-step-ready");
+      offScreen?.classList.add("skel-step-ready");
       void checkDisplayReady();
       scheduleUnlockRerender(row);
     },
-    onError: (error) => console.warn("[buzzer2] game_state_get failed:", error),
+    onError: (error) => {
+      console.warn("[buzzer2] game_state_get failed:", error);
+      if (!initialStateReady) revealStep(loadError);
+    },
   });
 
   const presses = createPressController({
@@ -255,7 +289,6 @@ async function main() {
   document.getElementById("btnA")?.addEventListener("touchstart", (e) => { e.preventDefault(); press("A"); }, { passive: false });
   document.getElementById("btnB")?.addEventListener("touchstart", (e) => { e.preventDefault(); press("B"); }, { passive: false });
 
-  if (!key) return;
   startPresenceHeartbeat({ gameId, key });
   if (lease.state === "primary") await subscription.start();
 }

@@ -35,7 +35,7 @@ export async function serveNotFoundPage(request, originBase, originHost, resolve
 
   return withHeaders(base, {
     "Content-Security-Policy":
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
+      "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.familiada.online",
     "X-Content-Type-Options": "nosniff"
   });
 }
@@ -82,11 +82,20 @@ const PAGE_ROUTES = new Set([
   "account", "bases", "bases/explorer",
   "connect", "connect/tv", "control", "control/buzzer", "control/display", "control/host",
   "games", "games/editor", "games/settings", "login", "login/confirm", "login/reset",
-  "logo", "logo/editor/draw", "logo/editor/image", "logo/editor/text",
-  "maintenance", "manual", "marketplace", "go", "mail",
+  "logos", "logos/editor/draw", "logos/editor/image", "logos/editor/text",
+  "maintenance", "manual", "marketplace", "go", "mails",
   "polls", "polls/vote/points", "polls/vote/qr", "polls/vote/text",
   "privacy", "friends", "subscribers", "tasks",
 ]);
+
+export function isKnownPagePath(pathname) {
+  if (pathname === "/" || pathname === "/index.html") return true;
+  const route = String(pathname || "")
+    .replace(/^\/+/, "")
+    .replace(/\/index\.html$/, "")
+    .replace(/\/$/, "");
+  return PAGE_ROUTES.has(route) || route.startsWith("marketplace/game/");
+}
 
 export function pageIndexPath(pathname) {
   if (pathname === "/") return "/index.html";

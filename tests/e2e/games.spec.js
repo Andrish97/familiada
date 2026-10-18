@@ -95,7 +95,160 @@ function tileByName(page, name) {
 
 /* ================= 1) Kafelki: zaznaczanie, tworzenie, zmiana nazwy, usuwanie ================= */
 
+test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openGames(page);
+  const open = page.locator(".list-search-open");
+  await expect(open).toBeVisible();
+  await open.click();
+  await page.locator(".uni-modal input[type=search]").fill("zachowaj po anulowaniu");
+  await page.getByRole("button", { name: "Nie", exact: true }).click();
+  await expect(page.locator(".uni-modal")).toHaveCount(0);
+  await expect(open).not.toHaveClass(/is-active/);
+
+  await open.click();
+  await page.locator(".uni-modal input[type=search]").fill(`E20_BRAK_${Date.now()}`);
+  await page.getByRole("button", { name: "OK", exact: true }).click();
+  await expect(page.locator(".list-search-open")).toHaveClass(/is-active/);
+  await expect(open).toHaveAttribute("title", "Wyczyść");
+  const clearButton = await open.boundingBox();
+  expect(clearButton.width).toBe(36);
+  expect(clearButton.height).toBe(36);
+  await expect(page.locator(".list-empty").first()).toBeVisible();
+  await open.click();
+  await expect(open).not.toHaveClass(/is-active/);
+  await expect(page.locator(".list-empty").first()).toBeHidden();
+});
+
+test("E20: mobilne menu filtra i sortowania pozostają czytelne, dostępne i zapamiętują wybór", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openGames(page);
+
+  const filter = page.locator(".list-filter");
+  const filterButton = filter.locator(".ui-select-btn");
+  await expect(filter.locator(".ui-select-icon .ico")).toBeVisible();
+  await expect(filterButton).toHaveAttribute("aria-label", /.+/);
+  await filterButton.click();
+  await expect(filterButton).toHaveAttribute("aria-expanded", "true");
+  const openOption = filter.locator('.ui-select-item[data-value="open"]');
+  const filterMenu = await filter.locator(".ui-select-menu").boundingBox();
+  expect(filterMenu.width).toBeGreaterThanOrEqual(220);
+  expect(filterMenu.height).toBeGreaterThanOrEqual(44);
+  await openOption.click();
+  await expect(filter).toHaveClass(/is-active/);
+  await expect(page).toHaveURL(/status=open/);
+  await expect(filter.locator('.ui-select-item[data-value="open"]')).toHaveAttribute("aria-selected", "true");
+
+  const sort = page.locator(".list-sort");
+  const sortButton = sort.locator(".ui-select-btn");
+  await expect(sort.locator(".ui-select-icon .ico")).toBeVisible();
+  await expect(sortButton).toHaveAttribute("aria-label", /.+/);
+  await sortButton.click();
+  await expect(sortButton).toHaveAttribute("aria-expanded", "true");
+  const nameOption = sort.locator('.ui-select-item[data-value="name"]');
+  const sortMenu = await sort.locator(".ui-select-menu").boundingBox();
+  expect(sortMenu.width).toBeGreaterThanOrEqual(220);
+  expect(sortMenu.height).toBeGreaterThanOrEqual(44);
+  await nameOption.click();
+  await expect(sort).toHaveClass(/is-active/);
+  await expect(page).toHaveURL(/sort=name/);
+  await expect(sort.locator('.ui-select-item[data-value="name"]')).toHaveAttribute("aria-selected", "true");
+});
+
+test("E20: lista Gier czeka na pierwszy odczyt i ujawnia komunikat przy błędzie", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  let releaseRequest;
+  const requestGate = new Promise((resolve) => { releaseRequest = resolve; });
+  await page.route("**/rest/v1/games*", async (route) => {
+    await requestGate;
+    await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "E20 test load failure" }) });
+  });
+
+  await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
+  const list = page.locator(".games-shell");
+  await expect(list).toHaveCSS("opacity", "0");
+  releaseRequest();
+  await expect(list).toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#hint")).not.toBeEmpty();
+});
+
+test("E20: lista Logo ujawnia błąd pierwszego odczytu zamiast pustej siatki", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await serveBranchCode(context, { pages: ["logos"] });
+  await page.route("**/rest/v1/user_logos*", (route) => route.fulfill({
+    status: 500, contentType: "application/json", body: JSON.stringify({ message: "E20 test logo load failure" }),
+  }));
+  await page.goto("https://www.familiada.online/logos/", { waitUntil: "domcontentloaded" });
+  const list = page.locator(".logoShell");
+  await expect(list).toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#msg")).not.toBeEmpty();
+});
+
+test("E20: Bazy ujawniają błąd pierwszego odczytu po odsłonięciu sekcji", async ({ page, context }) => {
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  await serveBranchCode(context, { pages: ["bases"] });
+  await page.route("**/rest/v1/question_bases*", (route) => route.fulfill({
+    status: 500, contentType: "application/json", body: JSON.stringify({ message: "E20 test base load failure" }),
+  }));
+  await page.goto("https://www.familiada.online/bases/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#basesSectionMine")).toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#hint")).not.toBeEmpty();
+});
+
 test.describe("games: audyt -- kafelki", () => {
+
+  test("E20: telefon landscape zachowuje wyszukiwanie i zaznaczoną grę po obrocie", async ({ browser }, testInfo) => {
+    test.setTimeout(90_000);
+    const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
+      viewport: { width: 390, height: 844 }, screen: { width: 390, height: 844 }, hasTouch: true, isMobile: true,
+    });
+    const name = `E20-GM-ROTATE-${Date.now()}`;
+    try {
+      await seedPreparedGame(page, name);
+      await openGames(page);
+      const search = page.locator(".list-search-open");
+      await expect(search).toBeVisible();
+      await search.tap();
+      const searchInput = page.locator(".uni-modal input[type=search]");
+      await searchInput.fill(name);
+      await page.getByRole("button", { name: "OK", exact: true }).tap();
+
+      const tile = tileByName(page, name);
+      await expect(tile).toBeVisible();
+      await tile.tap();
+      await expect(tile).toHaveClass(/selected/);
+      const assertNoHorizontalOverflow = async (label) => {
+        const widths = await page.evaluate(() => ({
+          viewport: document.documentElement.clientWidth,
+          document: document.documentElement.scrollWidth,
+          body: document.body.scrollWidth,
+        }));
+        expect(widths.document, `${label}: document overflows horizontally`).toBeLessThanOrEqual(widths.viewport + 1);
+        expect(widths.body, `${label}: body overflows horizontally`).toBeLessThanOrEqual(widths.viewport + 1);
+      };
+      await assertNoHorizontalOverflow("portrait before rotate");
+      await page.screenshot({ path: testInfo.outputPath("shot-e20-games-rotation-390x844.png"), fullPage: true });
+
+      await page.setViewportSize({ width: 844, height: 390 });
+      await expect(tile).toBeVisible();
+      await expect(tile).toHaveClass(/selected/);
+      await expect(search).toHaveClass(/is-active/);
+      await assertNoHorizontalOverflow("landscape");
+      await page.screenshot({ path: testInfo.outputPath("shot-e20-games-rotation-844x390.png"), fullPage: true });
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect(tile).toBeVisible();
+      await expect(tile).toHaveClass(/selected/);
+      await expect(search).toHaveClass(/is-active/);
+      await assertNoHorizontalOverflow("portrait after rotate");
+      await page.screenshot({ path: testInfo.outputPath("shot-e20-games-rotation-back-390x844.png"), fullPage: true });
+    } finally {
+      await deleteGamesByName(page, name);
+      await ctx.close();
+    }
+  });
 
   test("telefon: tapnięcie zaznacza bez przebudowy listy, podwójne otwiera zmianę nazwy", async ({ browser }) => {
     test.setTimeout(90_000);
@@ -266,6 +419,12 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       expect(json.game).toMatchObject({ name, type: "prepared" });
       expect(json.questions).toHaveLength(10);
 
+      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.screenshot({ path: testInfo.outputPath("shot-e20-export-success-390.png"), fullPage: true });
+      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator("#exportJsonOverlay")).toBeHidden();
+
       await page.locator("#btnImport").click();
       await page.locator("#importFile").setInputFiles(file);
       await expect(page.locator("#importPreview")).toContainText(name);
@@ -279,6 +438,38 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       for (const g of games) expect(await countQA(page, g.id)).toEqual({ q: 10, a: 30 });
       await expect(page.locator("#grid .card.selected .name")).toHaveText(name);
     } finally {
+      await deleteGamesByName(page, name);
+    }
+  });
+
+  test("E20 eksport gry: błąd pozostaje widoczny, eksport można ponowić", async ({ page, context }) => {
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-GM-EXPORT-RETRY-${Date.now()}`;
+    const gameId = await seedPreparedGame(page, name, { questions: 1 });
+    try {
+      await openGames(page);
+      await tileByName(page, name).click();
+      await page.route("**/rest/v1/games**", (route) => {
+        const req = route.request();
+        const url = new URL(req.url());
+        if (req.method() === "GET" && url.searchParams.get("id") === `eq.${gameId}`) {
+          return route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ code: "E20_TEST", message: "E20 controlled export error" }) });
+        }
+        return route.continue();
+      });
+      await page.locator("#btnExport").click();
+      await expect(page.locator("#exportJsonMsg")).toContainText("E20 controlled export error");
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.waitForTimeout(1300);
+      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+      await page.unroute("**/rest/v1/games**");
+      const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
+      expect(download.suggestedFilename()).toBe(`${name}.famgame`);
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+    } finally {
+      await page.unroute("**/rest/v1/games**");
       await deleteGamesByName(page, name);
     }
   });

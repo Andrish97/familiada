@@ -1,19 +1,21 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T17330";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-18T17375";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T17375";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
 
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");
 const sharedDevicesCard   = document.getElementById("sharedDevicesCard");
 const sharedDevicesList   = document.getElementById("sharedDevicesList");
-const msg                 = document.getElementById("msg");
 const pageHint            = document.getElementById("pageHint");
 const connectCodeInput    = document.getElementById("connectCodeInput");
 const btnConnectCode      = document.getElementById("btnConnectCode");
@@ -26,7 +28,6 @@ const btnDevicePreviewConnect = document.getElementById("btnDevicePreviewConnect
 const btnDevicePreviewCancel  = document.getElementById("btnDevicePreviewCancel");
 const btnDevicePreviewClose   = document.getElementById("btnDevicePreviewClose");
 
-function setMsg(text)     { if (msg) msg.textContent = text || ""; }
 function setCodeMsg(text) { if (connectCodeMsg) connectCodeMsg.textContent = text || ""; }
 
 function escapeHtml(s) {
@@ -52,7 +53,10 @@ function deviceTypeIcon(type) {
   return icon(deviceTypeIconName(type));
 }
 
-const _isMobile = isMobileDevice();
+const _isMobile = isMobileDevice() || navigator.maxTouchPoints > 0 || !!window.matchMedia?.("(pointer: coarse)").matches;
+// Pokaż skaner od razu: nie uzależniaj jego dostępności na iPhonie od
+// zakończenia pobierania tłumaczeń ani odpowiedzi strony po logowaniu.
+if (_isMobile && btnScanQr) btnScanQr.style.display = "";
 
 // ── Device preview modal ───────────────────────────────────────────────────────
 let _previewDeviceInfo = null;
@@ -71,17 +75,22 @@ function showDevicePreview(info) {
     devicePreviewSub.textContent = `${gameLabel} ${gameName}\n${ownerLabel} ${owner}`;
   }
   if (devicePreviewOverlay) devicePreviewOverlay.style.display = "";
+  enterModalSheet(devicePreviewOverlay, {
+    backBtn: document.getElementById("btnBack"),
+    onClose: hideDevicePreview,
+  });
 }
 
 function hideDevicePreview() {
   if (devicePreviewOverlay) devicePreviewOverlay.style.display = "none";
+  exitModalSheet(devicePreviewOverlay);
   _previewDeviceInfo = null;
 }
 
 btnDevicePreviewClose?.addEventListener("click", hideDevicePreview);
 btnDevicePreviewCancel?.addEventListener("click", hideDevicePreview);
 devicePreviewOverlay?.addEventListener("click", (e) => {
-  if (e.target === devicePreviewOverlay) hideDevicePreview();
+  if (e.target === devicePreviewOverlay && !(devicePreviewOverlay.classList.contains("modal--sheet") && isSheetViewport())) hideDevicePreview();
 });
 
 btnDevicePreviewConnect?.addEventListener("click", () => {
@@ -143,16 +152,14 @@ async function renderSharedDevices() {
   );
 
   if (!items.length) {
-    sharedDevicesList.classList.add("is-empty");
-    sharedDevicesList.innerHTML = `<div class="connect-device-empty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
+    sharedDevicesList.innerHTML = `<div class="share-empty-state connect-device-empty">${t("connectDevice.shared.empty") || "Brak udostępnionych urządzeń."}</div>`;
     return;
   }
-  sharedDevicesList.classList.remove("is-empty");
 
   sharedDevicesList.innerHTML = "";
   for (const item of items) {
     const row = document.createElement("div");
-    row.className = "connect-device-tile";
+    row.className = "shareRow mail-row mail-row--device connect-device-tile";
     row.dataset.shareId = String(item.share_id);
 
     const ownerLabel = escapeHtml(item.owner_username || item.owner_email || "—");
@@ -160,21 +167,17 @@ async function renderSharedDevices() {
     const typeLabel  = deviceTypeLabel(item.device_type);
 
     row.innerHTML = `
-      <div class="connect-device-tile-icon">${deviceTypeIcon(item.device_type)}</div>
-      <div class="connect-device-tile-body">
-        <div class="connect-device-tile-name">${gameName}</div>
-        <div class="connect-device-tile-meta">
-          <span>${typeLabel}</span>
-          <span class="connect-device-tile-meta-dot">•</span>
-          <span class="connect-device-tile-meta-owner">${ownerLabel}</span>
-        </div>
+      <span class="mail-kind connect-device-tile-icon">${deviceTypeIcon(item.device_type)}</span>
+      <div class="mail-row-copy connect-device-tile-body">
+        <div class="shareEmail connect-device-tile-name">${gameName}</div>
+        <div class="shareNote connect-device-tile-meta">${typeLabel} · ${ownerLabel}</div>
       </div>
-      <div class="connect-device-tile-arrow">${icon("arrow-right")}</div>
+      <div class="shareRowActions connect-device-tile-arrow">${icon("arrow-right")}</div>
     `;
 
     row.addEventListener("click", async () => {
       if (!item.game_id || !item.share_key) {
-        setMsg(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry.");
+        toast(t("connectDevice.shared.gameNotFound") || "Nie znaleziono gry.", { kind: "error" });
         return;
       }
       const isMobileType = item.device_type === "host" || item.device_type === "buzzer";
@@ -183,12 +186,11 @@ async function renderSharedDevices() {
       } else if (!_isMobile && isMobileType) {
         alertModal({ text: t("connectDevice.warning.mobileOnly") });
       }
-      setMsg(t("connectDevice.shared.opening") || "Otwieranie…");
       try {
         const device = item.device_type === "poll_qr" ? "qr" : item.device_type;
         window.location.href = `/go/?d=${device}&id=${item.game_id}&key=${item.share_key}`;
       } catch (e) {
-        setMsg(e?.message || "Błąd.");
+        toast(e?.message || "Błąd.", { kind: "error" });
       }
     });
 
@@ -290,7 +292,7 @@ async function startQrScan() {
       }
       return;
     } catch {
-      setMsg(t("connectDevice.scan.cameraError") || "Brak dostępu do kamery.");
+      toast(t("connectDevice.scan.cameraError") || "Brak dostępu do kamery.", { kind: "error" });
       return;
     }
   }
@@ -337,7 +339,7 @@ async function startQrScan() {
     if (code?.data?.startsWith("http")) {
       window.location.href = code.data;
     } else {
-      setMsg(t("connectDevice.scan.noQr") || "Nie znaleziono kodu QR.");
+      toast(t("connectDevice.scan.noQr") || "Nie znaleziono kodu QR.", { kind: "error" });
     }
   });
 
@@ -368,9 +370,11 @@ async function startQrScan() {
     btnScanQr.style.display = "";
     btnScanQr.addEventListener("click", startQrScan);
   }
+  initListHeaderLayout(".connect-device-body > main.wrap > .bar");
 
   if (isLoggedIn && !guestMode) {
-    if (sharedDevicesCard) sharedDevicesCard.style.display = "";
+    if (sharedDevicesCard) sharedDevicesCard.hidden = false;
     await renderSharedDevices();
   }
+  document.querySelector(".games-shell[data-skel-step]")?.classList.add("skel-step-ready");
 })();

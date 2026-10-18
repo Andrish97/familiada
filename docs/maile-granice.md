@@ -301,7 +301,7 @@ nowym funkcjonalnym E2E tej paczki. Audyt atomowości queue/historia pkt7.
 **Korekta zakresu:** maile rejestracji, odzyskiwania hasła, potwierdzenia
 zmiany adresu i konwersji konta gościa korzystają z osobnej funkcji
 uwierzytelniania i bezpośredniej wysyłki. Nie dodawać do nich stopki
-centrum `/mail/` ani rezygnacji z powiadomień. Native linki logowania
+centrum `/mails/` ani rezygnacji z powiadomień. Native linki logowania
 i potwierdzenia pozostają ich własną ścieżką. Poniższa zasada „każdy mail”
 dotyczy powiadomień systemowych, nie korespondencji uwierzytelniającej.
 Treść tych maili podstawia Edge `send-email`/`email-templates.ts`;
@@ -332,13 +332,13 @@ Stopka globalnego wypisania ma być w każdym mailu, także do odbiorcy z kontem
 
 Audyt aktualnego Go: przed potwierdzeniem „zablokować wszystkie powiadomienia mailowe”, po nim „Nie będziesz już otrzymywać żadnych maili”, brak instrukcji przywrócenia i brak anonimowego cofnięcia. Ustawienia konta zapisują user_flags, ale nie czyszczą globalnego suppressed_at; niespójność do naprawienia. Dla konta przywrócenie powinno być świadomą akcją właściciela w ustawieniach. Sposób przywrócenia adresu bez konta pozostaje do uzgodnienia; nie ogłaszać bezwarunkowo nieodwracalności ani dodawać samodzielnie anonimowego włączania przez nadawcę. Dopiąć opis skutków i drogi powrotu w Go, wspólną stopkę i macierz flag/zmiany maila/rejestracji/kolejki.
 
-### Decyzja użytkownika — centrum adresu bez konta `/mail/` (2026-10-12)
+### Decyzja użytkownika — centrum adresu bez konta `/mails/` (2026-10-12)
 
-Strona domyka lukę powrotu do powiadomień i zbiera aktualne powiązania adresu bez przeszukiwania skrzynki. Po globalnym wypisaniu Go przedstawia dwie drogi: zarejestrować konto i świadomie włączyć maile w ustawieniach albo wejść na `/mail/`, podać adres i przywrócić powiadomienia. Dla adresu z kontem komunikat „Masz konto w systemie. Zaloguj się, żeby zarządzać swoimi powiadomieniami” i logowanie; stan ustalany przez kanoniczny Auth.
+Strona domyka lukę powrotu do powiadomień i zbiera aktualne powiązania adresu bez przeszukiwania skrzynki. Po globalnym wypisaniu Go przedstawia dwie drogi: zarejestrować konto i świadomie włączyć maile w ustawieniach albo wejść na `/mails/`, podać adres i przywrócić powiadomienia. Dla adresu z kontem komunikat „Masz konto w systemie. Zaloguj się, żeby zarządzać swoimi powiadomieniami” i logowanie; stan ustalany przez kanoniczny Auth.
 
 Potwierdzenie właściciela adresu: przed pokazaniem danych, zdjęciem blokady lub anulowaniem relacji wymagany link potwierdzający wysłany na podany adres. Sam wpis adresu nie stanowi uprawnienia. To mail żądany do zarządzania adresem, dostępny również przy wyłączonych powiadomieniach; nie włącza ich samoczynnie. Potwierdzenie prowadzi przez Go, ma termin ważności i nie ujawnia danych osobie wpisującej cudzy adres. Dopiero po potwierdzeniu następuje świadome włączenie. Zwykłe powiadomienia nadal podlegają nadrzędnej globalnej fladze. Limitowanie żądań potwierdzenia współdzielone, jawny cooldown, bez resetowania limitów zaproszeń/odmów.
 
-| Sekcja `/mail/` po potwierdzeniu | Dane i akcje |
+| Sekcja `/mails/` po potwierdzeniu | Dane i akcje |
 |---|---|
 | Powiadomienia | Prawdziwy globalny stan adresu, włącz/wyłącz; sam podgląd i odświeżenie nie zmieniają zgody. |
 | Subskrypcje | Wszystkie aktualne aktywne subskrypcje, nazwa nadawcy, wypisz się; wypisanie od konkretnego nadawcy zachowuje odmowę30 dni. |
@@ -349,7 +349,7 @@ Znajomości, Bazy i kopie Gier/Logo wymagają konta, nie są dokładane sztuczni
 
 Dopiąć graf: adres/preferencja → żądanie potwierdzenia → czasowa sesja centrum → akcja na aktualnym źródle. Rejestracja/zmiana adresu/usunięcie rodzica/wygaśnięcie źródła nie pozwala wykorzystać starej sesji do zarządzania nieaktualnymi danymi. Sesja centrum nie jest kontem Auth, nie tworzy profilu ani gościa. Publiczne wejście ujawnia tylko decyzję o logowaniu wymaganą przez użytkownika; listy i tokeny dostępu dopiero po potwierdzeniu. Tests: konto vs mail-only, global-off, realny mail potwierdzający, brak zgody przed potwierdzeniem, termin/jednorazowość, cudzy/niepoprawny token, wszystkie źródła/statusy, kaskady i wyścigi; potem branch/main.
 
-### Doprecyzowanie użytkownika — dwie sekcje i rodzaje kafli `/mail/` (2026-10-12)
+### Doprecyzowanie użytkownika — dwie sekcje i rodzaje kafli `/mails/` (2026-10-12)
 
 Dwie sekcje główne: **Subskrypcje** oraz **Zadania i udostępnienia**. Wcześniejsza tabela zakresu opisuje rodzaje danych, nie cztery odrębne karty. Globalny stan/przełącznik powiadomień w pasku nad sekcjami. Na komputerze równy podział na dwie kolumny; na telefonie wspólny wzorzec dwóch zakładek z niskimi wypustkami, pełna wysokość i przewijanie w środku.
 
@@ -360,15 +360,15 @@ Dwie sekcje główne: **Subskrypcje** oraz **Zadania i udostępnienia**. Wcześn
 
 Wspólne stany puste, kafelki/akcje i mobilne skrócenie informacji; żadnego zbędnego filtra typu/wyszukiwania. Zwykła strona Zadania dla kont pozostaje tylko ankietowa zgodnie z wcześniejszą decyzją; rozszerzona lista dotyczy centrum mail-only.
 
-Mechanizm potwierdzenia: nowy jednorazowy link z tokenem przez Go, zamiast obowiązku przepisywania kodu. Po potwierdzeniu otwiera czasową sesję centrum dla tego adresu. Nie zastępuje tokenów zadań, subskrypcji ani grantów urządzeń; kolejne przejście do zasobu używa jego istniejącego tokenu i sprawdza aktualną ważność. Wydanie potwierdzenia/sesji nie włącza powiadomień ani nie akceptuje propozycji samoistnie. Zastępuje wcześniejsze „anonymousundo do uzgodnienia” dla globalnych maili: przywrócenie przez potwierdzone `/mail/` albo ustawienia konta. Pozostałe kontrakty odmów pozostają zgodne z E19.
+Mechanizm potwierdzenia: nowy jednorazowy link z tokenem przez Go, zamiast obowiązku przepisywania kodu. Po potwierdzeniu otwiera czasową sesję centrum dla tego adresu. Nie zastępuje tokenów zadań, subskrypcji ani grantów urządzeń; kolejne przejście do zasobu używa jego istniejącego tokenu i sprawdza aktualną ważność. Wydanie potwierdzenia/sesji nie włącza powiadomień ani nie akceptuje propozycji samoistnie. Zastępuje wcześniejsze „anonymousundo do uzgodnienia” dla globalnych maili: przywrócenie przez potwierdzone `/mails/` albo ustawienia konta. Pozostałe kontrakty odmów pozostają zgodne z E19.
 
 Wariant lokalnego prototypu rozważany przed ostatnią decyzją: globalne wyłączenie zachowywało widoczne subskrypcje/zadania. **Zastąpiony decyzją poniżej**; nie wdrażać lokalnego global-unsubscribe-prototype.sql/test oczekujących zachowania subskrypcji.
 
 ### Najnowsza decyzja — nadrzędna rezygnacja, anulowanie i token w stopce (2026-10-12)
 
-W `/mail/` nadrzędna sekcja **globalnej rezygnacji**. Jeśli adres zrezygnował, pozostałe listy nie są wyświetlane, a jego zaproszenia, subskrypcje, zadania i udostępnienia są odrzucone/anulowane/unieważnione zgodnie z rodzajem. Ponowne włączenie nie przywraca automatycznie dawnych źródeł ani nie resetuje odmów/cooldownów. Zakończone głosy i wymagane agregaty zachowują dotychczasowy kontrakt grafu; nie udawać, że wygasła sesja Control znów daje dostęp. Osobne akcje konkretnych źródeł pozostają dostępne podczas aktywnego stanu adresu.
+W `/mails/` nadrzędna sekcja **globalnej rezygnacji**. Jeśli adres zrezygnował, pozostałe listy nie są wyświetlane, a jego zaproszenia, subskrypcje, zadania i udostępnienia są odrzucone/anulowane/unieważnione zgodnie z rodzajem. Ponowne włączenie nie przywraca automatycznie dawnych źródeł ani nie resetuje odmów/cooldownów. Zakończone głosy i wymagane agregaty zachowują dotychczasowy kontrakt grafu; nie udawać, że wygasła sesja Control znów daje dostęp. Osobne akcje konkretnych źródeł pozostają dostępne podczas aktywnego stanu adresu.
 
-**Link w stopce każdego maila zawiera token dostępu do centrum tego adresu.** Kliknięcie przechodzi przez Go bezpośrednio do `/mail/`; rezygnacja i reszta zarządzania wykonywane tam. Posiadanie poprawnego tokenu ze stopki jest potwierdzeniem dostępu — nie żądać dodatkowego maila, żeby otworzyć centrum z tej ścieżki. Wejście ręczne na `/mail/` i samo wpisanie adresu nadal wymagają nowego jednorazowego linku potwierdzającego. Link/footer nie wyłącza automatycznie w czasie GET, na podglądzie poczty ani przy odświeżeniu. Token centrum nie zastępuje tokenów ankiet i urządzeń. Adres z kontem nadal→login/account.
+**Link w stopce każdego maila zawiera token dostępu do centrum tego adresu.** Kliknięcie przechodzi przez Go bezpośrednio do `/mails/`; rezygnacja i reszta zarządzania wykonywane tam. Posiadanie poprawnego tokenu ze stopki jest potwierdzeniem dostępu — nie żądać dodatkowego maila, żeby otworzyć centrum z tej ścieżki. Wejście ręczne na `/mails/` i samo wpisanie adresu nadal wymagają nowego jednorazowego linku potwierdzającego. Link/footer nie wyłącza automatycznie w czasie GET, na podglądzie poczty ani przy odświeżeniu. Token centrum nie zastępuje tokenów ankiet i urządzeń. Adres z kontem nadal→login/account.
 
 Zmiana zastępuje wcześniejszy wariant „tylko mail, źródła pozostają widoczne” dla centrum adresu bez konta. **Otwarta kluczowa granica:** czy ma również zmienić istniejący przełącznik powiadomień konta, odwołując dostępy do Baz i innych zasobów, czy tam pozostaje wyłączeniem maili. Zadano jedno pytanie; do odpowiedzi nie wdrażać automatycznego usuwania dostępów zarejestrowanych. Kontynuować niezależną implementację centrum mail-only i wspólnego footer/token/Go.
 
@@ -409,7 +409,7 @@ Kontrakt bazowy, ACL,24 wyścigi i rezygnacja przez potwierdzoną sesję
 sprawdzone lokalnie. Brakuje list/akcji, ochrony nowych źródeł w czasie
 blokady, żądania potwierdzenia i dostarczenia pełnej stopki oraz UI/Go.
 
-### Ostatnia korekta wyglądu `/mail/` — 2026-10-12
+### Ostatnia korekta wyglądu `/mails/` — 2026-10-12
 
 Sekcja globalnej rezygnacji **nad** kartą list. Karta ma rzeczywiste
 wypustki jak Ankiety: ten sam HTML/CSS, dwie zakładki Subskrypcje oraz

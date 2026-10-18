@@ -1,11 +1,14 @@
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-18T17330';
-import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-18T17330';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-18T17330';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-18T17330';
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+guardViewportWidth({ minWidth: 0 });
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-18T17375';
+import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-18T17375';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-18T17375';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-18T17375';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-18T17375';
 
 const $ = id => document.getElementById(id);
 const text = (key, vars) => t(`mailCenter.${key}`, vars);
-let model = { state: 'entry' }, selectedTab = 'subscriptions', csrf = '', busy = false;
+let model = { state: 'entry' }, selectedTab = tabFromUrl(['subscriptions', 'items'], 'subscriptions'), csrf = '', busy = false;
 let requestUntil = 0, cooldownTimer = null, pendingAccess = '';
 async function exchangeAccess() { model = stateFrom(await api('exchange', { token: pendingAccess })); pendingAccess = ''; }
 
@@ -37,14 +40,19 @@ function stateFrom(data) {
   if (['expired_token','expired_session','invalid_token','invalid_session','invalid_request'].includes(data.error)) return { state: 'expired' };
   return { state: 'entry' };
 }
+function badge(id, count) {
+  const node = $(id); node.textContent = String(count); node.hidden = count === 0;
+}
 function setTab(value) {
   selectedTab = value;
+  setUrlTab(value, 'subscriptions');
   document.querySelectorAll('[data-tab]').forEach(node => {
-    const active = node.dataset.tab === value; node.classList.toggle('active', active); node.closest('.tab-slot').classList.toggle('active',active); node.setAttribute('aria-selected', String(active));
+    const active = node.dataset.tab === value;
+    node.classList.toggle('active', active); node.closest('.tab-slot').classList.toggle('active', active);
+    node.setAttribute('aria-selected', String(active));
   });
-  document.querySelectorAll('[data-panel]').forEach(node => { node.classList.toggle('active', node.dataset.panel === value); });
+  document.querySelectorAll('[data-panel]').forEach(node => node.classList.toggle('active', node.dataset.panel === value));
 }
-function badge(id, count) { $(id).textContent = String(count); $(id).hidden = count === 0; }
 function empty(id, key) { const node = document.createElement('div'); node.className = 'mail-empty'; node.textContent = text(key); $(id).replaceChildren(node); }
 function actionIcon(name, label, act, href) {
   const node = document.createElement(href ? 'a' : 'button'); node.className = 'btn sm';
@@ -123,8 +131,10 @@ function render() {
   $('mailMessage').hidden = !$('mailMessage').textContent;
   $('mailActions').hidden = !$('mailActions').children.length;
   if (!enabled) { $('subscriptionList').replaceChildren(); $('itemsList').replaceChildren(); }
-  document.querySelector('[data-tab="items"]').setAttribute('aria-label', text('items'));
   updateCooldown();
+  if (active) $('mailSummary').classList.add('skel-step-ready');
+  else $('mailEntry').classList.add('skel-step-ready');
+  if (enabled) $('mailLists').classList.add('skel-step-ready');
 }
 function updateCooldown() {
   const remaining = Math.max(0, Math.ceil((requestUntil - Date.now()) / 1000));
@@ -149,11 +159,12 @@ $('mailPreferenceButton').addEventListener('click', () => perform(async () => {
   if (!result.ok) { model = stateFrom(result); return; }
   model = stateFrom(await api('session'));
 }));
-document.querySelectorAll('[data-tab]').forEach(node => node.addEventListener('click', () => setTab(node.dataset.tab)));
 window.addEventListener('i18n:lang', () => { if (document.querySelector('.topbar-ready')) render(); });
+document.querySelectorAll('[data-tab]').forEach(node => node.addEventListener('click', () => setTab(node.dataset.tab)));
 
 await initI18n({ withSwitcher: true });
 document.querySelector('.topbar').classList.add('topbar-ready');
+document.getElementById('mailEntry')?.classList.add('skel-step-ready');
 try {
   const url = new URL(location.href), access = url.searchParams.get('m');
   // Session bootstrap issues the nonce; peeking never consumes a one-time proof.

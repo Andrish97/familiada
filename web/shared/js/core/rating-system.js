@@ -1,8 +1,8 @@
 // js/core/rating-system.js
-import { sb } from "./supabase.js?v=v2026-10-18T17330";
-import { t } from "../../translation/translation.js?v=v2026-10-18T17330";
-import { alertModal } from "./modal.js?v=v2026-10-18T17330";
-import { icon } from "./icons.js?v=v2026-10-18T17330";
+import { sb } from "./supabase.js?v=v2026-10-18T17375";
+import { t } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { alertModal } from "./modal.js?v=v2026-10-18T17375";
+import { icon } from "./icons.js?v=v2026-10-18T17375";
 
 const RATING_LS_PREFIX = "fam:app_rated:";
 const RATING_DISMISSED_PREFIX = "fam:app_rating_dismissed_at:";
@@ -102,10 +102,10 @@ function showRatingModal(userId, storageKeys) {
             <textarea class="inp rating-comment" id="ratingComment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>
 
             <div class="modal-actions-v">
-                <button class="btn sm gold full" id="btnRatingSend" disabled>${t("common.rating.modal.send")}</button>
+                <button class="btn sm gold full" id="btnRatingSend" disabled>${icon("envelope-out")}<span>${t("common.rating.modal.send")}</span></button>
                 <div class="modal-actions-row">
-                    <button class="btn sm" id="btnRatingLater">${t("common.rating.modal.later")}</button>
-                    <button class="btn sm danger" id="btnRatingNever">${t("common.rating.modal.never")}</button>
+                    <button class="btn sm" id="btnRatingLater">${icon("hourglass")}<span>${t("common.rating.modal.later")}</span></button>
+                    <button class="btn sm danger" id="btnRatingNever">${icon("cancel")}<span>${t("common.rating.modal.never")}</span></button>
                 </div>
             </div>
         </div>
@@ -175,7 +175,7 @@ function showRatingModal(userId, storageKeys) {
                     </div>
                     <div class="mSub">${t("common.rating.modal.thanksSub")}</div>
                     <div class="modal-actions">
-                        <button class="btn sm gold" id="btnRatingClose">${t("common.done")}</button>
+                        <button class="btn sm gold" id="btnRatingClose">${icon("check")}<span>${t("common.done")}</span></button>
                     </div>
                 </div>
             `;

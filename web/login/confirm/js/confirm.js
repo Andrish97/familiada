@@ -1,10 +1,12 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-18T17330";
-import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-18T17330";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+guardViewportWidth({ minWidth: 0 });
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-18T17375";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-18T17375";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -12,7 +14,7 @@ const go = document.getElementById("go");
 const back = document.getElementById("back");
 let sessionInfo = "";
 
-function setStatus(m){ status.textContent = m; }
+function setStatus(m){ status.textContent = m; document.querySelector(".landing-shell[data-skel-step]")?.classList.add("skel-step-ready"); }
 function setErr(m=""){ err.textContent = m || sessionInfo; }
 
 function qp(name){

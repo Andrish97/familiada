@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="utf-8" />
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -15,29 +15,19 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17330" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-18T17330" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-18T17330" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17375" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-18T17375" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-18T17375" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('/login/');
-    } catch(_e) {}
-  </script>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-18T17375"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="skel-body topbar-title-mobile">
@@ -46,7 +36,7 @@
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button id="btnBack" class="btn" type="button">Wstecz</button>
+      <button id="btnBack" class="btn" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
 
     <div class="topbar-section topbar-section-2">
@@ -62,17 +52,18 @@
 
     <div class="topbar-section topbar-section-4">
       <div id="who" class="who">—</div>
-      <button id="btnLogout" class="btn" data-i18n="common.logout">Wyloguj</button>
+      <button id="btnLogout" class="btn" data-i18n="common.logout" data-i18n-icon="close">Wyloguj</button>
     </div>
   </header>
 
+  <main class="wrap explorer-page">
   <!-- TOOLBAR -->
-  <section id="toolbar" class="toolbar">
+  <section id="toolbar" class="toolbar" data-skel-step>
     <!-- wypełniane dynamicznie w JS -->
   </section>
 
   <!-- GŁÓWNY LAYOUT: drzewo + zawartość -->
-  <main class="explorer">
+  <div class="explorer" data-skel-step>
 
     <!-- OVERLAY do zamykania drawera na mobile -->
     <div id="drawerOverlay" class="drawer-overlay" hidden aria-hidden="true"></div>
@@ -102,6 +93,8 @@
     </section>
 
 
+  </div>
+
   <!-- Modal: tagi (3 warstwy) — styl jak bases (overlay/modal) -->
   <div class="overlay modal--sheet" id="tagsOverlay" style="display:none;">
     <div class="modal tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
@@ -113,14 +106,14 @@
           <button class="btn sm" id="tagsL1Close" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
   
-        <div class="mSub" id="tagsAssignInfo">—</div>
+        <div class="tagsAssignInfo" id="tagsAssignInfo">—</div>
   
         <div id="tagsAssignList" class="tagsPickList"></div>
   
         <div class="tagsFoot">
-          <button class="btn sm" id="tagsAddNew" type="button" data-i18n="baseExplorer.tags.addTag">+ Dodaj tag</button>
+          <button class="btn sm" id="tagsAddNew" type="button" data-i18n="baseExplorer.tags.addTag" data-i18n-icon="plus">Dodaj tag</button>
           <div class="tagsFootSpacer"></div>
-          <button class="btn sm gold" id="tagsL1Save" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+          <button class="btn sm gold" id="tagsL1Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
         </div>
   
         <div id="tagsAssignErr" class="importMsg" style="display:none;"></div>
@@ -146,7 +139,7 @@
   
         <div class="tagsFoot">
           <div class="tagsFootSpacer"></div>
-          <button class="btn sm gold" id="tagsL2Save" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+          <button class="btn sm gold" id="tagsL2Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
         </div>
   
         <div id="tagsEditErr" class="importMsg" style="display:none;"></div>
@@ -194,7 +187,7 @@
   
         <div class="tagsFoot">
           <div class="tagsFootSpacer"></div>
-          <button class="btn sm gold" id="tagsL3Save" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+          <button class="btn sm gold" id="tagsL3Save" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
         </div>
       </section>
       
@@ -278,7 +271,7 @@
           <div id="xProgMsg" class="xProgMsg"></div>
         </div>
 
-        <button class="btn sm gold" id="xCreate" type="button" disabled data-i18n="baseExplorer.export.create">Utwórz</button>
+        <button class="btn sm gold" id="xCreate" type="button" disabled data-i18n="baseExplorer.export.create" data-i18n-icon="file-plus">Utwórz</button>
       </div>
 
     </div>
@@ -328,14 +321,14 @@
 
         <div id="qErr" class="importMsg" style="display:none;"></div>
 
-        <button class="btn sm gold" id="qSave" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+        <button class="btn sm gold" id="qSave" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
       </div>
 
     </div>
   </div>
 
   <!-- Rename modal (spójny z tagsOverlay: overlay + modal) -->
-  <div class="overlay modal--sheet" id="renameModal" hidden>
+  <div class="overlay modal--keep-dialog" id="renameModal" hidden>
     <div class="modal tags-modal rename-modal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
 
       <div class="tagsHead">
@@ -351,7 +344,7 @@
 
       <div class="tagsFoot">
         <div class="tagsFootSpacer"></div>
-        <button class="btn sm gold" id="renameModalSave" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+        <button class="btn sm gold" id="renameModalSave" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
       </div>
 
       <div id="renameModalErr" class="importMsg" style="display:none;"></div>
@@ -359,6 +352,10 @@
     </div>
   </div>
 
+  <footer class="footer">
+    <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+    <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+  </footer>
   </main>
 
   <!-- KONTEKST MENU (prawy klik) -->
@@ -368,6 +365,6 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

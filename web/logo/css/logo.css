@@ -33,7 +33,7 @@
 .logoGridBig{
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   align-items: stretch;
 }
 .logoGridBig .addCard{ min-height: 230px; }
@@ -45,15 +45,15 @@
 .logoTileTop > :first-child{ flex: 1 1 auto; min-width: 0; }
 
 .logoTile{
-  --under: #0f1522; /* podłoże kryjących przycisków (css/base.css) */
+  --under: #070b16; /* podłoże kryjących przycisków (css/base.css) */
   position: relative;
   border-radius: var(--radius-lg);
   border: 1px solid var(--bd-mid);
-  background: var(--bg-mid);
-  padding: 12px;
+  background: #070b16;
+  padding: 14px;
   cursor: pointer;
   display: grid;
-  gap: 10px;
+  gap: 6px;
   min-height: 230px;
   transition: transform .08s ease, border-color .12s ease, background .12s ease, box-shadow .12s ease;
 }
@@ -76,7 +76,7 @@
   align-items:flex-start;
   justify-content:space-between;
   gap:10px;
-  min-height: 40px;
+  min-height: 0;
 }
 .logoActions{
   display: flex;
@@ -103,9 +103,9 @@
   font-size: 14px;
 }
 
-/* Edycja niedostępna na telefonie (klasa z main.js: krótszy bok ekranu < 700 px) */
-.le-phone #btnEdit,
-.le-phone .le-edit-only{ display: none !important; }
+/* Edycja wymaga miejsca; próg zależy od viewportu, a nie od formatu urządzenia. */
+.le-compact #btnEdit,
+.le-compact .le-edit-only{ display: none !important; }
 .logoX:hover{
   border-color: var(--gold);
   --btn-tint: rgba(0,0,0,.32);
@@ -937,6 +937,15 @@
   margin-bottom: 12px;
 }
 
+/* W trybie mobilnego arkusza modal.js opakowuje nagłówek i treść we
+   własne sekcje. Nie pozwól, by desktopowe centrowanie zawężało te sekcje:
+   nagłówek podglądu ma zajmować pełną szerokość jak w pozostałych arkuszach. */
+@media (max-width: 600px){
+  #previewOverlay.modal--sheet.sheet-active .modal.previewModal{
+    align-items: stretch;
+  }
+}
+
 #previewOverlay .previewModalTitle .mTitle{
   font-weight: 1000;
   letter-spacing: .04em;
@@ -1040,8 +1049,7 @@ body.games-body.logo-body > main.logoWrap{
 
 .logo-tabs-card .tabs-strip{
   flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
 }
 
 .logo-tabs-card .tab-slot,
@@ -1087,7 +1095,7 @@ body.games-body.logo-body > main.logoWrap{
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable both-edges; /* rezerwuje miejsce symetrycznie po obu stronach — brak zmiany szerokości kolumn i brak asymetrii */
+  scrollbar-gutter: stable; /* nie zabiera dodatkowej szerokości kaflom na małym ekranie */
   padding-right: 2px;
 }
 

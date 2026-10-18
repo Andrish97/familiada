@@ -1,9 +1,9 @@
 // Podliczanie głosów w karcie Wyniki — płynna zmiana TYCH SAMYCH wierszy
 // (docs/ankiety-refaktor.md, „Podliczanie w karcie Wyniki”).
 //
-// Ankieta punktowa: liczba głosów zamienia się w punkty (podgląd liczony tu tym
-// samym algorytmem co baza: poll-tally-math.js), słupki w skali 0–100, pod
-// pytaniem „suma: 100”. Bez edycji. „Zatwierdź” -> poll_points_tally (strona).
+// Ankieta punktowa: głosy i procent zamieniają się w punkty (podgląd liczony tu
+// tym samym algorytmem co baza: poll-tally-math.js); odpowiedzi <3% są szare.
+// „Zatwierdź” -> poll_points_tally (strona).
 //
 // Ankieta tekstowa: wiersze dostają uchwyt (przeciągnij na inny = połącz), pole
 // edycji tekstu, kosz; punkty na żywo (algorytm bazy), licznik „3–6 odpowiedzi”
@@ -13,42 +13,23 @@
 //
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-18T17330";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-18T17375";
 import {
-  pointsPollPreview,
-  textTallyPoints,
+  pointsPollAnalysis,
+  textTallyAnalysis,
   ANSWERS_MIN,
   TEXT_MAX_LEN,
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-18T17330";
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-18T17375";
 
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;
-const ROW_LEAVE_MS = 320;
 const PAGE = 1000;
 
-// Liczba w elemencie płynnie przechodzi do nowej wartości (albo wstawia "—").
-function tweenText(el, to, ms = 650) {
-  if (el._raf) cancelAnimationFrame(el._raf);
-  if (typeof to !== "number") {
-    el.textContent = String(to);
-    return;
-  }
-  const from = Number.parseFloat(el.textContent);
-  if (!Number.isFinite(from) || from === to || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-    el.textContent = String(to);
-    return;
-  }
-  const t0 = performance.now();
-  const step = (now) => {
-    const k = Math.min(1, (now - t0) / ms);
-    const eased = 1 - Math.pow(1 - k, 3);
-    el.textContent = String(Math.round(from + (to - from) * eased));
-    if (k < 1) el._raf = requestAnimationFrame(step);
-  };
-  el._raf = requestAnimationFrame(step);
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(resolve));
 }
 
 function mk(tag, cls, html) {
@@ -83,6 +64,8 @@ export function createTally({ gameId, pollResults, ui }) {
   let savingChain = Promise.resolve();
   let drag = null; // { qid, id }
   let mergeSrc = null; // { qid, id } — tryb łączenia na dotyku
+  let pointRows = [];
+  const pendingQuestionUpdates = new Map();
 
   const isActive = () => !!mode;
 
@@ -92,19 +75,19 @@ export function createTally({ gameId, pollResults, ui }) {
     const box = slot.list.parentElement;
     let meta = box.querySelector(":scope > .tallyMeta");
     if (!meta) {
-      meta = mk("div", "tallyMeta");
+      meta = mk("div", "tallyMeta on tallyMetaInstant");
       meta.innerHTML = `
         <span class="tallyCounter"></span>
+        <span class="tallyVotesTotal"></span>
         <span class="tallySum"></span>
-        <button class="btn xs tcMergeDup" type="button"></button>`;
+          <button class="btn xs tcMergeDup" type="button">${icon("merge")}<span></span></button>`;
       box.insertBefore(meta, slot.list);
-      requestAnimationFrame(() => requestAnimationFrame(() => meta.classList.add("on")));
     }
     meta.querySelector(".tallyCounter").hidden = !withCounter;
     const dup = meta.querySelector(".tcMergeDup");
     dup.hidden = !withMergeDup;
-    dup.textContent = t("polls.tally.mergeDup");
-    dup.onclick = withMergeDup && qs ? () => mutate(() => mergeDuplicates(qs.q)) : null;
+      dup.querySelector("span").textContent = t("polls.tally.mergeDup");
+    dup.onclick = withMergeDup && qs ? () => mutate(qs, () => mergeDuplicates(qs.q)) : null;
     return meta;
   }
 
@@ -117,6 +100,7 @@ export function createTally({ gameId, pollResults, ui }) {
 
   async function enterPoints(data) {
     mode = "points";
+    pointRows = [];
     ui.hintEl.textContent = t("polls.tally.hintPoints");
     ui.barEl.hidden = false;
     ui.toolsEl.hidden = true;
@@ -126,27 +110,54 @@ export function createTally({ gameId, pollResults, ui }) {
       const slot = slots.get(q.id);
       if (!slot) continue;
       const answers = q.answers || [];
-      const pts = pointsPollPreview(answers.map((a) => Number(a.votes) || 0));
+      const analysis = pointsPollAnalysis(answers.map((a) => Number(a.votes) || 0));
       const meta = ensureMeta(slot, { withCounter: false, withMergeDup: false });
-      meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: pts.reduce((s, x) => s + x, 0) });
-      slot.list.classList.add("tally");
+      let sum = 0;
+      const totalVotes = answers.reduce((s, answer) => s + (Number(answer.votes) || 0), 0);
+      slot.list.classList.add("tally", "tallyPoints");
       answers.forEach((a, i) => {
         const r = slot.rows.get(a.id);
         if (!r) return;
+        const result = analysis[i];
+        const votes = Math.max(0, Number(a.votes) || 0);
+        let voteLabel = r.row.querySelector(".tallyVotes");
+        if (!voteLabel) {
+          voteLabel = mk("span", "tcCnt tallyVotes");
+          r.val.before(voteLabel);
+        }
+        voteLabel.textContent = t("polls.tally.votesPercent", { n: votes, pct: result.percent });
         r.row.classList.add("tallyRow");
-        tweenText(r.val, pts[i]);
-        setPct(r, pts[i]);
+        r.row.classList.toggle("tallySkipped", result.skipped);
+        r.row.title = result.skipped ? t("polls.tally.skippedTitle", { pct: result.percent }) : "";
+        if (result.skipped) r.val.textContent = t("polls.results.pointsUnitCount", { n: "—" });
+        else {
+          sum += result.points;
+          r.val.textContent = t("polls.results.pointsUnitCount", { n: result.points });
+        }
+        setPct(r, result.points);
+        pointRows.push({ r, votes, totalVotes });
       });
+      meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: sum });
+      meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.votes", { n: totalVotes });
     }
     ui.onValidity(true);
   }
 
   function leavePoints() {
     for (const slot of pollResults.slots().values()) {
-      slot.list.classList.remove("tally");
-      slot.list.querySelectorAll(".tallyRow").forEach((el) => el.classList.remove("tallyRow"));
+      slot.list.classList.remove("tally", "tallyPoints");
+      slot.list.querySelectorAll(".tallyRow, .tallySkipped").forEach((el) => {
+        el.classList.remove("tallyRow", "tallySkipped");
+        el.removeAttribute("title");
+      });
+      slot.list.querySelectorAll(".tallyVotes").forEach((el) => el.remove());
       dropMeta(slot);
     }
+    for (const { r, votes, totalVotes } of pointRows) {
+      r.val.textContent = t("polls.results.votesUnitCount", { n: votes });
+      setPct(r, totalVotes ? (100 * votes) / totalVotes : 0);
+    }
+    pointRows = [];
   }
 
   /* ---------- ankieta tekstowa: wczytanie ---------- */
@@ -189,14 +200,19 @@ export function createTally({ gameId, pollResults, ui }) {
 
     const counts = new Map(); // question_id -> Map(norm -> n)
     let total = 0;
-    for (const e of entries) {
-      if (latest.get(e.question_id) !== e.poll_session_id) continue;
-      const k = String(e.answer_norm || "").trim();
-      if (!k) continue;
-      if (!counts.has(e.question_id)) counts.set(e.question_id, new Map());
-      const m = counts.get(e.question_id);
-      m.set(k, (m.get(k) || 0) + 1);
-      total++;
+    for (let start = 0; start < entries.length; start += PAGE) {
+      const end = Math.min(start + PAGE, entries.length);
+      for (let i = start; i < end; i++) {
+        const e = entries[i];
+        if (latest.get(e.question_id) !== e.poll_session_id) continue;
+        const k = String(e.answer_norm || "").trim();
+        if (!k) continue;
+        if (!counts.has(e.question_id)) counts.set(e.question_id, new Map());
+        const m = counts.get(e.question_id);
+        m.set(k, (m.get(k) || 0) + 1);
+        total++;
+      }
+      if (end < entries.length) await nextFrame();
     }
 
     let n = 1;
@@ -261,38 +277,34 @@ export function createTally({ gameId, pollResults, ui }) {
       const slot = slots.get(q.question_id);
       if (!slot) continue;
       q.items.sort((a, b) => b.count - a.count);
-      const qs = { q, slot, rows: new Map(), meta: null };
+      const qs = { q, slot, rows: new Map(), itemById: new Map(q.items.map((item) => [item.id, item])), meta: null, valid: false };
       states.set(q.question_id, qs);
+      slot.list.classList.add("tally", "tallyText");
       qs.meta = ensureMeta(slot, { withCounter: true, withMergeDup: true, qs });
 
-      // te same wiersze co w widoku surowym: dopasowanie po tekście
+      // Zachowaj widoczne wiersze; nowe dodaj jednym fragmentem DOM.
+      const existingRows = new Map(slot.rows);
+      slot.rows.clear();
       const taken = new Set();
+      const fragment = document.createDocumentFragment();
       for (const it of q.items) {
         const key = it.text;
-        const existing = !taken.has(key) ? slot.rows.get(key) : null;
+        const existing = !taken.has(key) ? existingRows.get(key) : null;
+        let row = existing;
         if (existing) {
           taken.add(key);
-          slot.rows.delete(key);
-          decorate(qs, existing, it);
-          qs.rows.set(it.id, existing);
+        } else {
+          row = makeResultRow(it.text);
+          row.val.textContent = t("polls.results.votesUnitCount", { n: it.count });
+          fragment.append(row.row);
         }
+        decorate(qs, row, it);
+        qs.rows.set(it.id, row);
       }
-      // wiersze, których nie ma w modelu (np. spoza TOP 12 przy innym widoku)
-      for (const [, r] of slot.rows) r.row.remove();
-      slot.rows.clear();
-      for (const it of q.items) {
-        if (qs.rows.has(it.id)) continue;
-        const r = makeResultRow(it.text);
-        r.val.textContent = String(it.count);
-        decorate(qs, r, it);
-        qs.rows.set(it.id, r);
-        slot.list.appendChild(r.row);
-      }
-      reorder(qs, false);
+      slot.list.append(fragment);
+      for (const [key, row] of existingRows) if (!taken.has(key)) row.row.remove();
+      reorder(qs);
     }
-    // jedna klatka na rozłożenie uchwytów, potem klasa włącza przejścia CSS
-    await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
-    for (const qs of states.values()) qs.slot.list.classList.add("tally");
     for (const qs of states.values()) updateQuestion(qs);
     validity();
     if (restored) ui.onNotice?.(t("polls.tally.restored"));
@@ -319,12 +331,15 @@ export function createTally({ gameId, pollResults, ui }) {
     const cnt = mk("span", "tcCnt");
     const mergeBtn = mk("button", "tcBtn tcMergeBtn", icon("merge"));
     mergeBtn.type = "button";
+    mergeBtn.setAttribute("aria-pressed", "false");
     mergeBtn.title = t("polls.tally.mergeWith");
     mergeBtn.setAttribute("aria-label", t("polls.tally.mergeWith"));
     const del = mk("button", "tcBtn tcDel", icon("trash"));
     del.type = "button";
     del.title = t("polls.tally.remove");
     del.setAttribute("aria-label", t("polls.tally.remove"));
+    const actions = mk("span", "tcActionGroup");
+    actions.append(mergeBtn, del);
 
     r.txt = row.querySelector(".aTxt");
     r.inp = inp;
@@ -334,9 +349,9 @@ export function createTally({ gameId, pollResults, ui }) {
     row.insertBefore(handle, r.bar.nextSibling);
     r.txt.after(inp);
     row.insertBefore(cnt, r.val);
-    row.append(mergeBtn, del);
+    row.append(actions);
 
-    const findItem = () => qs.q.items.find((x) => x.id === item.id);
+    const findItem = () => qs.itemById.get(item.id);
 
     // edycja tekstu: punkty na żywo, jeden wpis w historii na całą edycję
     let editSnap = null;
@@ -345,11 +360,11 @@ export function createTally({ gameId, pollResults, ui }) {
       const it = findItem();
       if (!it) return;
       it.text = inp.value;
-      updateQuestion(qs);
-      validity();
+      queueQuestionUpdate(qs);
       scheduleSave();
     });
     inp.addEventListener("blur", () => {
+      flushQuestionUpdate(qs);
       if (editSnap && editSnap !== snapshot()) {
         undo.push(editSnap);
         if (undo.length > UNDO_LIMIT) undo.shift();
@@ -362,7 +377,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (e.key === "Enter") { e.preventDefault(); inp.blur(); }
     });
 
-    del.addEventListener("click", () => mutate(() => {
+    del.addEventListener("click", () => mutate(qs, () => {
       qs.q.items = qs.q.items.filter((x) => x.id !== item.id);
     }));
 
@@ -393,7 +408,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (!drag || drag.qid !== qs.q.question_id || drag.id === item.id) return;
       const from = drag.id;
       drag = null;
-      mutate(() => mergeInto(qs.q, from, item.id));
+      mutate(qs, () => mergeInto(qs.q, from, item.id));
     });
 
     // dotyk: „Połącz z…” — pierwszy dotyk wybiera źródło, drugi cel
@@ -403,14 +418,16 @@ export function createTally({ gameId, pollResults, ui }) {
       if (mergeSrc && mergeSrc.qid === qid) {
         const from = mergeSrc.id;
         clearMergeMode();
-        mutate(() => mergeInto(qs.q, from, item.id));
+        mutate(qs, () => mergeInto(qs.q, from, item.id));
         return;
       }
       clearMergeMode();
       mergeSrc = { qid, id: item.id };
       qs.slot.list.querySelectorAll(".aRow").forEach((el) => {
-        el.classList.toggle("merge-src", el.dataset.itemId === item.id);
+        const isSource = el.dataset.itemId === item.id;
+        el.classList.toggle("merge-src", isSource);
         el.classList.toggle("merge-target", el.dataset.itemId !== item.id);
+        el.querySelector(".tcMergeBtn")?.setAttribute("aria-pressed", String(isSource));
       });
     });
   }
@@ -418,7 +435,10 @@ export function createTally({ gameId, pollResults, ui }) {
   function clearMergeMode() {
     mergeSrc = null;
     for (const qs of states.values()) {
-      qs.slot.list.querySelectorAll(".aRow").forEach((el) => el.classList.remove("merge-src", "merge-target"));
+      qs.slot.list.querySelectorAll(".aRow").forEach((el) => {
+        el.classList.remove("merge-src", "merge-target");
+        el.querySelector(".tcMergeBtn")?.setAttribute("aria-pressed", "false");
+      });
     }
   }
 
@@ -484,15 +504,13 @@ export function createTally({ gameId, pollResults, ui }) {
 
   // Zmiana modelu: wpis do historii, nowy porządek (najwięcej głosów na górze),
   // płynne przestawienie wierszy, zapis szkicu.
-  function mutate(fn) {
+  function mutate(qs, fn) {
     undo.push(snapshot());
     if (undo.length > UNDO_LIMIT) undo.shift();
     redo = [];
     fn();
-    for (const qs of states.values()) {
-      qs.q.items.sort((a, b) => b.count - a.count);
-      sync(qs);
-    }
+    qs.q.items.sort((a, b) => b.count - a.count);
+    sync(qs);
     updateHistory();
     validity();
     scheduleSave();
@@ -500,84 +518,89 @@ export function createTally({ gameId, pollResults, ui }) {
 
   /* ---------- DOM wierszy: synchronizacja, kolejność, wartości ---------- */
 
-  function reorder(qs, animate = true) {
+  function reorder(qs) {
     const list = qs.slot.list;
     const want = qs.q.items.map((it) => qs.rows.get(it.id)?.row).filter(Boolean);
-    const have = [...list.children].filter((el) => el.classList.contains("aRow") && !el.classList.contains("leaving"));
+    const have = [...list.children].filter((el) => el.classList.contains("aRow"));
     if (want.length === have.length && want.every((el, i) => el === have[i])) return;
 
-    const before = new Map();
-    if (animate) for (const el of have) before.set(el, el.getBoundingClientRect().top);
-    for (const el of want) list.appendChild(el);
-    if (!animate) return;
-    for (const el of want) {
-      const prev = before.get(el);
-      if (prev == null) continue;
-      const dy = prev - el.getBoundingClientRect().top;
-      if (!dy) continue;
-      el.style.transition = "none";
-      el.style.transform = `translateY(${dy}px)`;
-      requestAnimationFrame(() => {
-        el.style.transition = "transform .35s ease";
-        el.style.transform = "";
-        setTimeout(() => { el.style.transition = ""; }, 380);
-      });
-    }
+    const fragment = document.createDocumentFragment();
+    for (const el of want) fragment.appendChild(el);
+    list.appendChild(fragment);
   }
 
   function sync(qs) {
+    qs.itemById = new Map(qs.q.items.map((item) => [item.id, item]));
     const ids = new Set(qs.q.items.map((it) => it.id));
     for (const [id, r] of [...qs.rows]) {
       if (ids.has(id)) continue;
       qs.rows.delete(id);
-      r.row.classList.add("leaving");
-      setTimeout(() => r.row.remove(), ROW_LEAVE_MS);
+      r.row.remove();
     }
     for (const it of qs.q.items) {
       if (qs.rows.has(it.id)) continue;
       const r = makeResultRow(it.text);
-      r.val.textContent = String(it.count);
-      r.row.classList.add("entering");
+      r.val.textContent = t("polls.results.votesUnitCount", { n: it.count });
       decorate(qs, r, it);
       qs.rows.set(it.id, r);
-      qs.slot.list.appendChild(r.row);
-      requestAnimationFrame(() => requestAnimationFrame(() => r.row.classList.remove("entering")));
     }
-    reorder(qs, true);
+    reorder(qs);
     updateQuestion(qs);
+  }
+
+  function queueQuestionUpdate(qs) {
+    cancelAnimationFrame(pendingQuestionUpdates.get(qs));
+    pendingQuestionUpdates.set(qs, requestAnimationFrame(() => {
+      pendingQuestionUpdates.delete(qs);
+      if (mode === "text" && states.get(qs.q.question_id) === qs) {
+        updateQuestion(qs);
+        validity();
+      }
+    }));
+  }
+
+  function flushQuestionUpdate(qs) {
+    cancelAnimationFrame(pendingQuestionUpdates.get(qs));
+    pendingQuestionUpdates.delete(qs);
+    if (mode === "text" && states.get(qs.q.question_id) === qs) {
+      updateQuestion(qs);
+      validity();
+    }
   }
 
   function updateQuestion(qs) {
     const items = qs.q.items;
-    const calc = textTallyPoints(items.map((it) => ({ text: it.text, count: it.count })));
-    const byIdx = new Map(calc.map((c) => [c.idx, c.points]));
+    const analysis = textTallyAnalysis(items.map((it) => ({ text: it.text, count: it.count })));
+    const byIdx = new Map(analysis.map((row) => [row.idx, row]));
     let sum = 0;
     items.forEach((it, i) => {
       const r = qs.rows.get(it.id);
       if (!r) return;
-      const pts = byIdx.get(i);
-      const included = pts != null;
+      const result = byIdx.get(i);
+      const included = !!result?.scored;
+      const pts = included ? result.points : null;
       if (included) sum += pts;
       r.row.classList.toggle("out", !included);
-      tweenText(r.val, included ? pts : "—");
+      r.row.classList.toggle("tallySkipped", !!result?.belowThreshold);
+      r.val.textContent = t("polls.results.pointsUnitCount", { n: included ? pts : "—" });
       setPct(r, included ? pts : 0);
-      r.cnt.textContent = t("polls.tally.votes", { n: it.count });
+      r.cnt.textContent = t("polls.tally.votesPercent", { n: it.count, pct: result?.percent || 0 });
+      r.row.title = result?.belowThreshold ? t("polls.tally.skippedTitle", { pct: result.percent }) : "";
       if (r.inp.value !== it.text && document.activeElement !== r.inp) r.inp.value = it.text;
     });
-    const n = calc.length;
+    const n = analysis.filter((row) => row.scored).length;
+    qs.valid = n >= ANSWERS_MIN;
     const counter = qs.meta.querySelector(".tallyCounter");
     counter.textContent = t("polls.tally.counter", { n });
     counter.classList.toggle("invalid", n < ANSWERS_MIN);
     qs.meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: sum });
+    const totalVotes = items.reduce((total, item) => total + (Number(item.count) || 0), 0);
+    qs.meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.votes", { n: totalVotes });
     qs.meta.querySelector(".tcMergeDup").textContent = t("polls.tally.mergeDup");
   }
 
   function textValid() {
-    for (const qs of states.values()) {
-      const n = textTallyPoints(qs.q.items.map((it) => ({ text: it.text, count: it.count }))).length;
-      if (n < ANSWERS_MIN) return false;
-    }
-    return states.size > 0;
+    return states.size > 0 && [...states.values()].every((qs) => qs.valid);
   }
 
   function validity() {
@@ -637,6 +660,8 @@ export function createTally({ gameId, pollResults, ui }) {
   function cleanupDom() {
     clearMergeMode();
     clearTimeout(saveTimer);
+    for (const frame of pendingQuestionUpdates.values()) cancelAnimationFrame(frame);
+    pendingQuestionUpdates.clear();
     ui.barEl.hidden = true;
     mode = "";
     model = [];

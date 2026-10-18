@@ -17,9 +17,51 @@
     }
 }
 
+/* Na telefonie w portrecie przewija się tylko tabela. Kontener .explorer
+   zajmuje stałą przestrzeń między toolbarem a stopką i nie przechwytuje
+   gestów pionowych listy. */
+@media (max-width: 900px) and (orientation: portrait) {
+  main.explorer-page > .explorer {
+    overflow: hidden;
+  }
+
+  main.explorer-page > .explorer .list {
+    overflow-x: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 body,html {
     height: 100dvh;
     overflow: hidden;
+}
+
+/* Toolbar, Eksplorator, modale i stopka muszą być w jednym main.wrap.
+   Dzięki temu arkusz zastępuje toolbar, a nie zaczyna się dopiero pod nim. */
+main.explorer-page.wrap {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+main.explorer-page > .explorer {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+@media (max-width: 600px) {
+    body.sheet-open main.explorer-page > .toolbar,
+    body.sheet-open main.explorer-page > .explorer {
+        display: none !important;
+    }
+    body.sheet-open #contextMenu { display: none !important; }
 }
 
 .explorer {
@@ -245,7 +287,9 @@ input,textarea {
 
 .searchBox {
   --under: #131723; /* podłoże dla kryjących teł przycisków (css/base.css) */
-    width: 300px;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
     flex-wrap: wrap;
 }
 
@@ -260,6 +304,11 @@ input,textarea {
     flex: 1 1 140px;
     min-width: 140px;
 }
+
+.search-row{display:flex;align-items:center;gap:6px;flex:0 1 240px;width:min(240px,100%);min-width:0}
+.search-submit{ width:36px; height:36px; min-height:36px; flex:0 0 36px; display:grid; place-items:center; padding:0; border-radius:10px; }
+.search-submit .ico{width:18px;height:18px}
+.search-submit.is-active{color:var(--gold);border-color:var(--gold);background:rgba(255,215,0,.12)}
 
 .chip,.tag-dots {
     display: inline-flex;
@@ -435,7 +484,7 @@ input,textarea {
     position: relative;
     width: min(560px,calc(100vw - 24px));
     margin: 10vh auto 0;
-    background: #141418;
+    background: #121524;
     border: 1px solid rgba(255,255,255,.12);
     border-radius: 14px;
     overflow: hidden;
@@ -678,6 +727,42 @@ input,textarea {
     padding: 8px;
     max-height: 320px;
     overflow: auto
+}
+
+/* Aktualny modal używa #tagsOverlay (a nie dawnego #tagsModal). Każdy tag
+   ma własny, czytelny wiersz; indeterminate jest natywnym trzecim stanem
+   checkboxa ustawianym w tags-modal.js. */
+.tags-modal .tags-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.tags-modal .tags-row:hover { background: rgba(255,255,255,.06); }
+.tags-modal .tags-row input[type="checkbox"] {
+  flex: 0 0 auto;
+  accent-color: var(--gold);
+}
+.tags-modal .tags-row .tag-dot { flex: 0 0 12px; }
+.tags-modal .tags-row .m-p {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tags-modal .tags-row .m-note {
+  flex: 0 0 auto;
+  margin-left: auto;
+  opacity: .75;
+}
+.tagsAssignInfo {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: .75;
 }
 
 .tagsPickItem {
@@ -1263,6 +1348,7 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .xTypeBox {
+    min-width: 0;
     border: 1px solid rgba(255,255,255,.12);
     border-radius: 12px;
     padding: 12px;
@@ -1271,6 +1357,7 @@ tr.row .tag-dot[data-tip]::before {
 
 .xTypeTop {
     display: flex;
+    min-width: 0;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
@@ -1289,6 +1376,7 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .xTypeHint {
+    min-width: 0;
     opacity: .75;
     font-size: 12px
 }
@@ -1318,7 +1406,13 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .xTypeLbl {
-    padding: 8px 10px;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 7px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,.12);
     background: rgba(255,255,255,.03);
@@ -1329,9 +1423,13 @@ tr.row .tag-dot[data-tip]::before {
 
 .xTypeLbl b {
     display: block;
-    letter-spacing: .06em;
-    margin-bottom: 4px;
-    font-size: 11px
+    width: 100%;
+    margin: 0;
+    letter-spacing: .015em;
+    font-size: 10px;
+    line-height: 1.15;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .xCountPill,.xTypeLbl.active {
@@ -1405,6 +1503,7 @@ tr.row .tag-dot[data-tip]::before {
   justify-content:space-between;
   gap:14px;
 }
+.cm-item > .ico{ width:16px; height:16px; flex:0 0 16px; opacity:.8; }
 .cm-kbd{
   opacity:.65;
   font-size:12px;
@@ -1666,8 +1765,10 @@ tr.row .tag-dot[data-tip]::before {
   }
 
   /* SearchBox — pełna szerokość, wiersz 1 */
+  .search-row { width:100%; min-width:0; flex:0 0 100%; }
   .searchBox {
-    width: 100%;
+    width: auto;
+    flex:1 1 auto;
     min-width: 0;
     flex-shrink: 0;
     margin-right: 0;
@@ -1724,7 +1825,7 @@ tr.row .tag-dot[data-tip]::before {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Modale nad drawerem */
+  /* Modale nad drawerem; tryb sheet przełącza je do przepływu strony. */
   .overlay { z-index: 1100; }
   .tags-modal,
   .export-modal,
@@ -1738,7 +1839,325 @@ tr.row .tag-dot[data-tip]::before {
 
   /* Export modal — jedna kolumna */
   .xGrid2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
   }
 
+  .export-modal .xField,
+  .export-modal .xPickList {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .export-modal .xPickItem {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    min-width: 0;
+  }
+
+  .export-modal .xNm {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+
+  .export-modal .xTypeLabels {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .export-modal .xTypeLbl {
+    min-width: 0;
+    padding: 6px 4px;
+  }
+
+  .export-modal .xTypeTop {
+    align-items: flex-start;
+    gap: 4px 8px;
+  }
+
+  .export-modal .xTypeHint {
+    min-width: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+}
+
+/* E20: trzy ważne modale mają ograniczony arkusz i przewijają tylko
+   właściwy panel. Nagłówki oraz akcje nie jadą razem z długą listą. */
+.tags-modal,
+.question-modal,
+.export-modal {
+  min-height: 0;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tags-modal .tags-layer {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.tags-modal .tagsHead,
+.tags-modal .tagsFoot {
+  flex: 0 0 auto;
+}
+
+.tags-modal .tagsPickList {
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: min(320px, 42vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tags-modal .colorModalBody {
+  min-height: 0;
+  max-height: min(520px, 55vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.question-modal > .qBody,
+.question-modal > .sheet-modal-body > .qBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.question-modal .qAnswersBlock {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.question-modal .qAnswersBlock .qf-listShell {
+  flex: 1 1 auto;
+  min-height: 100px;
+  max-height: min(540px, 48vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.export-modal > .xBody,
+.export-modal > .sheet-modal-body > .xBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.export-modal .xGrid2 {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.export-modal .xField:has(.xPickList) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.export-modal .xPickList {
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: min(340px, 46vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  /* .sheet-modal-actions rysuje jedyny separator; nie dubluj go linią
+     stopki Base Explorer. Stopki wewnątrz warstw tagów mają własną linię
+     poniżej akcji i nie są objęte tym selektorem. */
+  .modal--sheet.sheet-active .sheet-modal-actions > .tagsFoot {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .tags-modal,
+  .question-modal,
+  .export-modal {
+    max-height: none;
+  }
+
+  /* Warstwy tagów mają własne nagłówki i stopki. Ich arkusz jest
+     nieruchomy, a aktywna lista/picker dostaje dostępną wysokość. */
+  .modal--sheet.sheet-active .tags-modal > .sheet-modal-body:has(> .tags-layer) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .tags-modal .tagsPickList,
+  .modal--sheet.sheet-active .tags-modal .colorModalBody {
+    max-height: none;
+    min-height: 0;
+  }
+
+  /* Formularz pytania naśladuje Edytor gry: treść pytania zostaje
+     nieruchoma, a przewija się wyłącznie lista odpowiedzi. */
+  .modal--sheet.sheet-active .question-modal > .sheet-modal-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .question-modal > .sheet-modal-body > .mSub {
+    flex: 0 0 auto;
+  }
+
+  .modal--sheet.sheet-active .question-modal .qBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .modal--sheet.sheet-active .question-modal .qAnswersBlock .qf-listShell {
+    max-height: none;
+    min-height: 0;
+  }
+
+  /* Przy dodawaniu gry nagłówek i akcje zostają nieruchome. Lista pytań
+     przewija się w swoim polu, a typ gry zajmuje osobny wiersz pod listą. */
+  .modal--sheet.sheet-active .export-modal > .sheet-modal-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .export-modal > .sheet-modal-body > .mSub {
+    flex: 0 0 auto;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xGrid2 {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) {
+    flex: 1 1 0;
+    min-height: 72px;
+    overflow: hidden;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) .xPickList {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xField:not(:has(.xPickList)) {
+    flex: 0 0 auto;
+  }
+
+  /* Typ gry ma własny, nieprzezroczysty panel. Lista pytań kończy się
+     przed nim, a jej kafelki nie prześwitują pod przyciskami typów. */
+  .modal--sheet.sheet-active .export-modal .xTypeBox {
+    min-width: 0;
+    padding: 8px;
+    border-color: rgba(255,255,255,.18);
+    background: #111827;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeTop {
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeHint {
+    text-align: right;
+    font-size: 11px;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xRange {
+    margin-top: 4px;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeLabels {
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 10px;
+    opacity: 1;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeLbl {
+    min-height: 40px;
+    padding: 4px 2px;
+    background: #182131;
+  }
+
+  .modal--sheet.sheet-active .export-modal .xTypeLbl.active {
+    background: #3a3424;
+    border-color: rgba(255,234,166,.55);
+  }
+
+  .modal--sheet.sheet-active .export-modal .xPickList {
+    max-height: none;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+
+@media (max-width: 600px) and (orientation: portrait) and (max-height: 720px) {
+  /* Na niskim ekranie skraca się pole listy; panel typu nadal zostaje
+     pod nim i w całości widoczny. */
+  .modal--sheet.sheet-active .export-modal .xField:has(.xPickList) {
+    min-height: 48px;
+  }
+}
+
+/* Drawer portraitowy jest nieruchomy; drzewo i tagi są dwiema równorzędnymi,
+   widocznymi sekcjami i przewijają się niezależnie w przydzielonej połowie. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .explorer-left {
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .explorer-left > .tree,
+  .explorer-left > .tags {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .explorer-left > .left-sep {
+    flex: 0 0 1px;
+  }
 }

@@ -221,7 +221,11 @@ async function checkState(page, testInfo, state, tabs, all) {
       console.log(`[polls-layout] ${label} ${JSON.stringify(dump)}`);
       if (violations.length) console.log(`[polls-layout] VIOLATIONS ${label} ${JSON.stringify(violations)}`);
       for (const v of violations) all.push({ state: label, ...v });
-      const shot = await page.screenshot({ fullPage: true });
+      const screenshotOptions = { fullPage: true };
+      if (state.endsWith("-tally")) {
+        screenshotOptions.path = testInfo.outputPath(`shot-${state}-${vp.name}.png`);
+      }
+      const shot = await page.screenshot(screenshotOptions);
       await testInfo.attach(`${label}.png`, { body: shot, contentType: "image/png" });
     }
   }

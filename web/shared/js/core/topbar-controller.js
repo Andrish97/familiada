@@ -1,14 +1,14 @@
 // js/core/topbar-controller.js
 // Zarządza całym topbarem:
 //  - Desktop: overflow nav ("Więcej") w section-2, dropdown .account-wrap w section-4
-//  - Mobile: panel boczny z section-2 i section-4 płasko (bez dropdown, bez overflow)
+//  - Mobile (do 760 px): panel boczny z section-2 i section-4 płasko (bez dropdown, bez overflow)
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-10-18T17330';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-18T17330';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-18T17330';
-import { icon } from './icons.js?v=v2026-10-18T17330';
+import { signOut } from './auth.js?v=v2026-10-18T17375';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-18T17375';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-18T17375';
+import { icon } from './icons.js?v=v2026-10-18T17375';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
@@ -132,16 +132,27 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     moreDropdownEl.innerHTML = '';
 
     const section2Width = section2.getBoundingClientRect().width;
-    const gap = 8;
+    const gap = Number.parseFloat(getComputedStyle(section2).columnGap) || 0;
     const btnWidths = btns.map(btn => btn.getBoundingClientRect().width);
+    const totalWidth = btnWidths.reduce((sum, width, i) => sum + width + (i > 0 ? gap : 0), 0);
 
     moreEl.style.display = '';
     const moreWidth = moreEl.getBoundingClientRect().width;
     moreEl.style.display = 'none';
 
-    let totalWidth = 0;
-    for (let i = 0; i < btnWidths.length; i++) {
-      totalWidth += btnWidths[i] + (i > 0 ? gap : 0);
+    // Jeśli nawet najważniejszy przycisk razem z „Więcej” nie mieszczą się,
+    // przełącz cały pasek na hamburger. Nie używamy stałego progu viewportu:
+    // decyzję podejmujemy z faktycznych szerokości elementów i dostępnej sekcji.
+    const primaryButtonWidth = btnWidths[0] || 0;
+    const needsHamburger = totalWidth > section2Width && btns.length > 0 &&
+      primaryButtonWidth + moreWidth + gap > section2Width;
+    window.dispatchEvent(new CustomEvent('topbar:mobile-required', {
+      detail: { required: needsHamburger },
+    }));
+    if (needsHamburger) {
+      _hiddenBtns = btns;
+      updateMoreBadge(btns);
+      return;
     }
 
     if (totalWidth <= section2Width) {
@@ -189,6 +200,9 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     if (!moreDropdownEl.hidden) repositionDropdown(moreEl, moreDropdownEl);
     if (!_mobileActive) recalc();
   }, { passive: true });
+  window.addEventListener('nav:visibilitychange', () => {
+    if (!_mobileActive) recalc();
+  });
 
   if (typeof ResizeObserver !== 'undefined') {
     new ResizeObserver(() => { if (!_mobileActive) recalc(); }).observe(section2);
@@ -379,7 +393,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-18T17330');
+  const { getUser } = await import('./auth.js?v=v2026-10-18T17375');
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
   if (btn.dataset.topbarAuthReady === '1') return;
@@ -401,7 +415,10 @@ function initTopbarController() {
 
   topbar.dataset.mobileMenuControllerReady = '1';
 
-  const mobileMq = window.matchMedia('(max-width: 980px)');
+  const hasOverflowNav = !!document.getElementById('navMore');
+  if (hasOverflowNav) topbar.classList.add('topbar-has-overflow-nav');
+  const mobileMq = window.matchMedia('(max-width: 760px)');
+  const useMediaMobileMode = () => mobileMq.matches && !hasOverflowNav;
   const section2Placeholder = document.createComment('topbar-section-2-restore');
   const section4Placeholder = document.createComment('topbar-section-4-restore');
   const tabsPlaceholder = document.createComment('topbar-tabs-restore');
@@ -411,6 +428,7 @@ function initTopbarController() {
 
   let overlay, panel, closeBtn, mount, tabGroup, group2, group4, sep, toggleBtn, toggleBadge, badgeObserver;
   let isMobileMounted = false;
+  let navRequiresMobile = false;
 
   // Suma liczników przycisków WIDOCZNYCH w panelu (schowane, np. „Więcej”
   // albo przycisk ukryty dla gościa, nie mogą podbijać licznika hamburgera).
@@ -467,9 +485,11 @@ function initTopbarController() {
     if (isMobileMounted) return;
     if (!hasMenuContent()) return;
     isMobileMounted = true;
+    topbar.classList.add('topbar-mobile-forced');
 
     overlay = document.createElement('div');
     overlay.className = 'topbar-mobile-overlay';
+    if (!useMediaMobileMode()) overlay.classList.add('topbar-mobile-forced');
 
     panel = document.createElement('div');
     panel.className = 'topbar-mobile-panel';
@@ -575,6 +595,7 @@ function initTopbarController() {
   const unmountMobile = () => {
     if (!isMobileMounted) return;
     isMobileMounted = false;
+    topbar.classList.remove('topbar-mobile-forced');
     close();
 
     // Przywróć account slot i overflow przed przeniesieniem elementów
@@ -607,9 +628,14 @@ function initTopbarController() {
   };
 
   const syncMode = () => {
-    if (mobileMq.matches) mountMobile();
+    if (useMediaMobileMode() || navRequiresMobile) mountMobile();
     else unmountMobile();
   };
+
+  window.addEventListener('topbar:mobile-required', (event) => {
+    navRequiresMobile = !!event.detail?.required;
+    syncMode();
+  });
 
   syncMode();
 
@@ -628,16 +654,28 @@ function initTopbarController() {
     syncMode();
     setTimeout(syncMode, 300);
   });
+
+  // Gdy hamburger włączono z powodu braku miejsca, po zmianie rozmiaru
+  // przywróć na chwilę układ zwykły i ponownie zmierz rzeczywiste szerokości.
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    if (!navRequiresMobile || useMediaMobileMode()) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      navRequiresMobile = false;
+      unmountMobile();
+      requestAnimationFrame(() => _overflowState?.recalc());
+    }, 120);
+  }, { passive: true });
 }
 
 function updateTopbarHeight() {
   const topbar = document.querySelector('.topbar');
   if (!topbar) return;
-  const h = Math.ceil(topbar.getBoundingClientRect().height);
-  document.body.style.setProperty('--topbar-h', `${h}px`);
-  // Ustawiamy --topbar-h na body (inline style bije CSS).
-  // CSS: body:has(.topbar) { padding-top: var(--topbar-h) } aktualizuje się automatycznie.
-  document.body.style.setProperty('--topbar-h', `${h}px`);
+  // `--topbar-h` opisuje wyłącznie wysokość paska, nigdy jego położenie.
+  // Body używa jej do paddingu i wysokości mobilnych arkuszy.
+  const height = Math.ceil(topbar.getBoundingClientRect().height);
+  document.body.style.setProperty('--topbar-h', `${height}px`);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -648,3 +686,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('load', updateTopbarHeight);
 window.addEventListener('resize', updateTopbarHeight);
+window.visualViewport?.addEventListener('resize', updateTopbarHeight, { passive: true });
+window.addEventListener('DOMContentLoaded', () => {
+  const topbar = document.querySelector('.topbar');
+  if (topbar && typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(updateTopbarHeight).observe(topbar);
+  }
+}, { once: true });

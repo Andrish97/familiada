@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3uHZ9YtUsCuBf8u1dhr02YCBkoowvxtnhZPeB8GqybA6uUugdLXiEdY5V9tBHcl
+\restrict ufJsGxIbNumVLaYVgxWDgTbdhCRUdqc8sdJDGaP5UoXwvYu4goeMDB0ZHDj3iK4
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -192,6 +192,24 @@ $$;
 
 
 --
+-- Name: _account_is_registered("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_account_is_registered"("p_uid" "uuid", "p_identity" "jsonb") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT p_uid IS NOT NULL AND p_identity IS NOT NULL
+   AND NOT coalesce((SELECT p.is_guest FROM public.profiles p WHERE p.id=p_uid),
+     coalesce(p_identity->>'is_anonymous','false')='true'
+       OR coalesce(p_identity->'raw_user_meta_data'->>'is_guest','false')='true')
+   AND NOT (coalesce(p_identity->>'is_anonymous','false')='true'
+     AND ((p_identity->>'email_confirmed_at') IS NULL
+       OR public._norm_email(p_identity->>'email') IS NULL));
+$$;
+
+
+--
 -- Name: _base_friend_source_close(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -366,9 +384,9 @@ DECLARE
   v_from text;
   v_epoch bigint;
   v_event_id text;
+  v_game_rev bigint;
 BEGIN
   IF TG_OP='INSERT' THEN
-    -- Only log a queue insertion if another live instance already owns the slot.
     IF NEW.state<>'waiting' OR NOT EXISTS (
       SELECT 1 FROM public.control_device_slots s
       WHERE s.session_id=NEW.session_id AND s.device_type=NEW.device_type
@@ -390,6 +408,7 @@ BEGIN
   WHERE a.game_id=NEW.game_id AND s.control_version=2 AND s.ended_at IS NULL
   LIMIT 1;
   IF v_session_id IS NULL THEN RETURN NEW; END IF;
+  SELECT rev INTO v_game_rev FROM public.game_state WHERE game_id=NEW.game_id;
 
   BEGIN
     INSERT INTO public.control2_device_events(
@@ -403,7 +422,14 @@ BEGIN
         'epoch',v_epoch,
         'connection_id',NEW.id,
         'visibility',NEW.page_visibility,
-        'focused',NEW.focused
+        'focused',NEW.focused,
+        'received_revision',NEW.received_rev,
+        'rendered_revision',NEW.rendered_rev,
+        'started_sound_cue_seq',NEW.started_sound_cue_seq,
+        'game_revision',v_game_rev,
+        'last_seen_age_ms',least(3600000,greatest(0,
+          extract(epoch FROM clock_timestamp()-NEW.last_seen_at)*1000
+        ))::integer
       )
     ) ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
 
@@ -414,7 +440,6 @@ BEGIN
         WHERE game_id=NEW.game_id ORDER BY created_at DESC,id DESC OFFSET 500
       ));
   EXCEPTION WHEN OTHERS THEN
-    -- A diagnostic write must not break device registration or lease renewal.
     RAISE WARNING 'Control 2 lease event was not recorded: %',SQLERRM;
   END;
   RETURN NEW;
@@ -764,9 +789,9 @@ BEGIN
   FOR r IN SELECT s.id,s.owner_id,p.id AS peer FROM public.poll_subscriptions s
    JOIN public.profiles p ON (s.owner_id=NEW.requester_id AND p.id=NEW.addressee_id)
       OR (s.owner_id=NEW.addressee_id AND p.id=NEW.requester_id)
-   WHERE s.status IN ('pending','active') AND s.cancelled_at IS NULL AND s.declined_at IS NULL AND (s.registered_user_id=p.id OR s.subscriber_user_id=p.id
+   WHERE s.status IN ('pending','active') AND s.cancelled_at IS NULL AND s.declined_at IS NULL AND (s.registered_user_id=p.id OR s.registered_user_id=p.id
     OR EXISTS(SELECT 1 FROM public.poll_tasks t WHERE t.source_subscription_id=s.id AND t.recipient_user_id=p.id)
-    OR (s.identity_tracking_enabled AND s.registered_user_id IS NULL AND s.subscriber_user_id IS NULL AND public._norm_email(s.subscriber_email)=(SELECT public._norm_email(email) FROM auth.users WHERE id=p.id)
+    OR (s.identity_tracking_enabled AND s.registered_user_id IS NULL AND s.registered_user_id IS NULL AND public._norm_email(s.subscriber_email)=(SELECT public._norm_email(email) FROM auth.users WHERE id=p.id)
       AND NOT EXISTS(SELECT 1 FROM public.poll_tasks t WHERE t.source_subscription_id=s.id AND t.recipient_user_id IS NOT NULL AND t.recipient_user_id<>p.id))
    ) ORDER BY s.owner_id,s.id LOOP
    UPDATE public.poll_tasks SET source_subscription_id=NULL,source_friendship_id=NEW.id,source_kind='friend',recipient_user_id=r.peer,recipient_email=NULL
@@ -1117,7 +1142,7 @@ BEGIN
    after_ids:=public._mail_anon_source_owners(p_email);
    IF after_ids IS DISTINCT FROM before_ids THEN RAISE EXCEPTION 'mail parents changed' USING ERRCODE='55P03'; END IF;
    FOR owner_id IN SELECT s.owner_id FROM public.poll_subscriptions s WHERE public._norm_email(s.subscriber_email)=p_email
-     AND s.subscriber_user_id IS NULL AND s.registered_user_id IS NULL AND s.status IN('pending','active') ORDER BY s.owner_id,s.id LOOP
+     AND s.registered_user_id IS NULL AND s.registered_user_id IS NULL AND s.status IN('pending','active') ORDER BY s.owner_id,s.id LOOP
     IF NOT pg_try_advisory_xact_lock(hashtextextended(owner_id::text||':email:'||p_email,333)) THEN
      RAISE EXCEPTION 'contact pair busy' USING ERRCODE='55P03';
     END IF;
@@ -1148,7 +1173,7 @@ CREATE FUNCTION "public"."_mail_anon_source_owners"("p_email" "text") RETURNS "u
     AS $$
  SELECT coalesce(array_agg(DISTINCT id ORDER BY id),'{}'::uuid[]) FROM (
   SELECT owner_id AS id FROM public.poll_subscriptions WHERE public._norm_email(subscriber_email)=p_email
-    AND subscriber_user_id IS NULL AND registered_user_id IS NULL AND status IN('pending','active')
+    AND registered_user_id IS NULL AND registered_user_id IS NULL AND status IN('pending','active')
   UNION SELECT owner_id FROM public.poll_tasks WHERE public._norm_email(recipient_email)=p_email
     AND recipient_user_id IS NULL AND status IN('pending','opened')
   UNION SELECT owner_id FROM public.control_device_shares WHERE public._norm_email(recipient_email)=p_email
@@ -1173,7 +1198,7 @@ BEGIN
   IF NEW.recipient_user_id IS NOT NULL OR NEW.status NOT IN('pending','opened') THEN RETURN NEW; END IF;
   mailbox:=public._norm_email(NEW.recipient_email); owner:=NEW.owner_id;
  ELSIF TG_TABLE_NAME='poll_subscriptions' THEN
-  IF NEW.subscriber_user_id IS NOT NULL OR NEW.registered_user_id IS NOT NULL OR NEW.status NOT IN('pending','active') THEN RETURN NEW; END IF;
+  IF NEW.registered_user_id IS NOT NULL OR NEW.registered_user_id IS NOT NULL OR NEW.status NOT IN('pending','active') THEN RETURN NEW; END IF;
   mailbox:=public._norm_email(NEW.subscriber_email); owner:=NEW.owner_id;
  ELSE
   IF NEW.recipient_id IS NOT NULL OR NEW.revoked_at IS NOT NULL THEN RETURN NEW; END IF;
@@ -1452,12 +1477,12 @@ BEGIN
    'recipient_id',f.decision_user_id,'email',public._norm_email(u.email),'friendship_id',f.id,'subscription_id',f.source_subscription_id,
    'active',f.status='pending' AND f.cancelled_at IS NULL AND (f.source_subscription_id IS NULL OR EXISTS(
     SELECT 1 FROM public.poll_subscriptions s WHERE s.id=f.source_subscription_id AND s.owner_id=f.requester_id
-     AND coalesce(s.registered_user_id,s.subscriber_user_id)=f.addressee_id AND s.status IN('pending','active') AND s.cancelled_at IS NULL AND s.declined_at IS NULL)),
+     AND coalesce(s.registered_user_id,s.registered_user_id)=f.addressee_id AND s.status IN('pending','active') AND s.cancelled_at IS NULL AND s.declined_at IS NULL)),
    'snapshot',jsonb_build_object('source_subscription_id',f.source_subscription_id)) INTO info
   FROM public.friendships f JOIN auth.users u ON u.id=f.decision_user_id WHERE f.id=q.notification_friendship_id AND f.token=q.notification_source_token;
  WHEN 'subscription' THEN
-  SELECT jsonb_build_object('owner_id',s.owner_id,'recipient_id',coalesce(s.registered_user_id,s.subscriber_user_id),'email',public._norm_email(s.subscriber_email),
-   'subscription_id',s.id,'active',s.status='pending' AND s.cancelled_at IS NULL AND s.declined_at IS NULL AND s.subscriber_user_id IS NULL
+  SELECT jsonb_build_object('owner_id',s.owner_id,'recipient_id',coalesce(s.registered_user_id,s.registered_user_id),'email',public._norm_email(s.subscriber_email),
+   'subscription_id',s.id,'active',s.status='pending' AND s.cancelled_at IS NULL AND s.declined_at IS NULL AND s.registered_user_id IS NULL
     AND s.registered_user_id IS NULL AND public._poll_registered_uid(s.subscriber_email) IS NULL,
    'snapshot',jsonb_build_object('subscriber_email',public._norm_email(s.subscriber_email))) INTO info
   FROM public.poll_subscriptions s WHERE s.id=q.notification_subscription_id AND s.token=q.notification_source_token;
@@ -1534,7 +1559,7 @@ BEGIN
    SELECT * INTO f FROM public.friendships WHERE id=(before_info->>'friendship_id')::uuid;
    SELECT * INTO s FROM public.poll_subscriptions WHERE id=(before_info->>'subscription_id')::uuid;
    SELECT array_agg(DISTINCT id ORDER BY id) INTO ids FROM unnest(ARRAY[q.created_by,(before_info->>'owner_id')::uuid,(before_info->>'recipient_id')::uuid,
-     public._poll_registered_uid(before_info->>'email'),f.requester_id,f.addressee_id,s.owner_id,s.registered_user_id,s.subscriber_user_id]) AS roots(id) WHERE id IS NOT NULL;
+     public._poll_registered_uid(before_info->>'email'),f.requester_id,f.addressee_id,s.owner_id,s.registered_user_id,s.registered_user_id]) AS roots(id) WHERE id IS NOT NULL;
    PERFORM 1 FROM auth.users WHERE id=ANY(ids) ORDER BY id FOR SHARE NOWAIT;
    PERFORM 1 FROM public.profiles WHERE id=ANY(ids) ORDER BY id FOR SHARE NOWAIT;
    PERFORM 1 FROM public.user_flags WHERE user_id=ANY(ids) ORDER BY user_id FOR SHARE NOWAIT;
@@ -2044,7 +2069,7 @@ BEGIN
     UNION
     SELECT NULL::uuid,lower(trim(s.subscriber_email)),s.id AS source_subscription_id FROM public.poll_subscriptions s
       WHERE s.id=ANY(coalesce(p_subscriber_ids,'{}'::uuid[])) AND s.owner_id=v_uid
-        AND s.subscriber_user_id IS NULL AND s.registered_user_id IS NULL AND s.status='active'
+        AND s.registered_user_id IS NULL AND s.registered_user_id IS NULL AND s.status='active'
         AND public._poll_registered_uid(s.subscriber_email) IS NULL
   LOOP
     IF EXISTS(SELECT 1 FROM public.poll_tasks t WHERE t.owner_id=v_uid AND t.game_id=p_game_id
@@ -2087,10 +2112,10 @@ BEGIN
  IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
  SELECT * INTO s FROM public.poll_subscriptions WHERE id=p_id AND owner_id=v_uid;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not found'); END IF;
- PERFORM public._poll_identity_email_refs(ARRAY[s.subscriber_email],ARRAY[v_uid,s.subscriber_user_id,s.registered_user_id]);
+ PERFORM public._poll_identity_email_refs(ARRAY[s.subscriber_email],ARRAY[v_uid,s.registered_user_id,s.registered_user_id]);
  v_to:=public._norm_email(s.subscriber_email);
- IF v_to IS NULL AND s.subscriber_user_id IS NOT NULL THEN
-   SELECT public._norm_email(email) INTO v_to FROM auth.users WHERE id=s.subscriber_user_id;
+ IF v_to IS NULL AND s.registered_user_id IS NOT NULL THEN
+   SELECT public._norm_email(email) INTO v_to FROM auth.users WHERE id=s.registered_user_id;
  END IF;
  IF v_to IS NULL THEN RETURN jsonb_build_object('ok',false,'err','no email for this subscriber'); END IF;
  -- Serialize the budget across separate historical rows for this same pair.
@@ -2100,7 +2125,7 @@ BEGIN
  IF s.status<>'pending' OR s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL THEN
    RETURN jsonb_build_object('ok',false,'err','only pending can be resent');
  END IF;
- IF s.registered_user_id IS NOT NULL OR s.subscriber_user_id IS NOT NULL OR public._poll_registered_uid(v_to) IS NOT NULL THEN
+ IF s.registered_user_id IS NOT NULL OR s.registered_user_id IS NOT NULL OR public._poll_registered_uid(v_to) IS NOT NULL THEN
    RETURN jsonb_build_object('ok',false,'err','has_account');
  END IF;
  v_until:=public._subscriber_refusal_until(v_uid,v_to);
@@ -2252,12 +2277,12 @@ BEGIN
  IF EXISTS(SELECT 1 FROM auth.users WHERE id<>p_uid AND public._norm_email(email)=public._norm_email(p_email)) THEN RETURN; END IF;
  -- Identity precedes contact locks, contact rows precede task rows.
  FOR s IN SELECT DISTINCT owner_id FROM public.poll_subscriptions
-  WHERE registered_user_id IS NULL AND identity_tracking_enabled AND subscriber_user_id IS NULL
+  WHERE registered_user_id IS NULL AND identity_tracking_enabled AND registered_user_id IS NULL
    AND public._norm_email(subscriber_email)=public._norm_email(p_email) ORDER BY owner_id LOOP
   PERFORM public._subscriber_pair_lock(s.owner_id,p_email);
  END LOOP;
  UPDATE public.poll_subscriptions SET registered_user_id=p_uid
-  WHERE registered_user_id IS NULL AND identity_tracking_enabled AND subscriber_user_id IS NULL
+  WHERE registered_user_id IS NULL AND identity_tracking_enabled AND registered_user_id IS NULL
    AND public._norm_email(subscriber_email)=public._norm_email(p_email);
  FOR r IN SELECT id FROM public.poll_tasks WHERE recipient_user_id IS NULL
   AND public._norm_email(recipient_email)=public._norm_email(p_email) ORDER BY game_id,id FOR UPDATE LOOP
@@ -2421,10 +2446,7 @@ CREATE FUNCTION "public"."_poll_identity_regular"("p_uid" "uuid", "p_identity" "
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
- SELECT NOT coalesce((SELECT p.is_guest FROM public.profiles p WHERE p.id=p_uid),
-   coalesce(p_identity->>'is_anonymous','false')='true' OR coalesce(p_identity->'raw_user_meta_data'->>'is_guest','false')='true')
- AND NOT(coalesce(p_identity->>'is_anonymous','false')='true' AND
-   ((p_identity->>'email_confirmed_at') IS NULL OR public._norm_email(p_identity->>'email') IS NULL));
+ SELECT public._account_is_registered(p_uid,p_identity);
 $$;
 
 
@@ -2442,7 +2464,7 @@ BEGIN
  IF NEW.source_subscription_id IS NOT NULL THEN
   SELECT * INTO src FROM public.poll_subscriptions WHERE id=NEW.source_subscription_id FOR SHARE;
   IF NOT FOUND OR src.owner_id IS DISTINCT FROM NEW.owner_id OR src.status<>'active' OR src.cancelled_at IS NOT NULL OR src.declined_at IS NOT NULL THEN RAISE EXCEPTION 'Invalid contact source'; END IF;
-  holder:=coalesce(src.registered_user_id,src.subscriber_user_id,public._poll_registered_uid(src.subscriber_email));
+  holder:=coalesce(src.registered_user_id,src.registered_user_id,public._poll_registered_uid(src.subscriber_email));
   IF NEW.recipient_user_id IS NOT NULL AND holder IS DISTINCT FROM NEW.recipient_user_id THEN RAISE EXCEPTION 'Wrong contact recipient'; END IF;
   IF NEW.recipient_email IS NOT NULL AND (public._norm_email(NEW.recipient_email) IS DISTINCT FROM public._norm_email(src.subscriber_email)
     OR(holder IS NOT NULL AND holder IS DISTINCT FROM public._poll_registered_uid(NEW.recipient_email))) THEN RAISE EXCEPTION 'Wrong contact recipient'; END IF;
@@ -2578,100 +2600,56 @@ CREATE FUNCTION "public"."_poll_points_normalize"("p_game_id" "uuid") RETURNS "v
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-begin
-  -- policz głosy z ostatniej sesji per pytanie i ustaw fixed_points w answers
-  with last_sess as (
-    select distinct on (ps.question_id)
-      ps.question_id, ps.id as poll_session_id
-    from public.poll_sessions ps
-    where ps.game_id = p_game_id
-    order by ps.question_id, ps.created_at desc
-  ),
-  a as (
-    select q.id as question_id, an.id as answer_id, an.ord as aord
-    from public.questions q
-    join public.answers an on an.question_id = q.id
-    where q.game_id = p_game_id
-  ),
-  c as (
-    select
-      a.question_id,
-      a.answer_id,
-      a.aord,
-      coalesce(count(v.id), 0)::int as cnt
-    from a
-    left join last_sess ls on ls.question_id = a.question_id
-    left join public.poll_votes v
-      on v.poll_session_id = ls.poll_session_id
-     and v.answer_id = a.answer_id
-    group by a.question_id, a.answer_id, a.aord
-  ),
-  c_fixed as (
-    select question_id, answer_id, aord,
-      case when cnt = 0 then 1 else cnt end as cnt1
-    from c
-  ),
-  tot as (
-    select question_id, sum(cnt1)::int as total
-    from c_fixed
-    group by question_id
-  ),
-  raw as (
-    select
-      cf.question_id,
-      cf.answer_id,
-      cf.aord,
-      (100.0 * cf.cnt1 / nullif(t.total, 0)) as raw_p,
-      floor(100.0 * cf.cnt1 / nullif(t.total, 0))::int as base_floor,
-      (100.0 * cf.cnt1 / nullif(t.total, 0)) - floor(100.0 * cf.cnt1 / nullif(t.total, 0)) as frac
-    from c_fixed cf
-    join tot t on t.question_id = cf.question_id
-  ),
-  base as (
-    select question_id, answer_id, aord,
-      greatest(1, base_floor) as p0,
-      frac
-    from raw
-  ),
-  sum_base as (
-    select question_id, sum(p0)::int as s0
-    from base
-    group by question_id
-  ),
-  need as (
-    select b.*, (100 - sb.s0)::int as diff
-    from base b
-    join sum_base sb on sb.question_id = b.question_id
-  ),
-  ranked_plus as (
-    select n.*,
-      row_number() over (partition by question_id order by frac desc, aord asc) as rn_plus
-    from need n
-  ),
-  ranked_minus as (
-    select n.*,
-      row_number() over (partition by question_id order by p0 desc, frac asc, aord desc) as rn_minus
-    from need n
-    where p0 > 1
-  ),
-  final as (
-    select
-      n.question_id,
-      n.answer_id,
-      case
-        when n.diff > 0 then n.p0 + case when rp.rn_plus <= n.diff then 1 else 0 end
-        when n.diff < 0 then n.p0 - case when rm.rn_minus is not null and rm.rn_minus <= abs(n.diff) then 1 else 0 end
-        else n.p0
-      end as p_final
-    from need n
-    left join ranked_plus rp on rp.question_id = n.question_id and rp.answer_id = n.answer_id
-    left join ranked_minus rm on rm.question_id = n.question_id and rm.answer_id = n.answer_id
+BEGIN
+  WITH last_sess AS (
+    SELECT DISTINCT ON (ps.question_id)
+      ps.question_id, ps.id AS poll_session_id
+    FROM public.poll_sessions ps
+    WHERE ps.game_id = p_game_id
+    ORDER BY ps.question_id, ps.created_at DESC
+  ), answers AS (
+    SELECT q.id AS question_id, an.id AS answer_id, an.ord AS aord
+    FROM public.questions q
+    JOIN public.answers an ON an.question_id = q.id
+    WHERE q.game_id = p_game_id
+  ), counts AS (
+    SELECT a.question_id, a.answer_id, a.aord,
+      count(v.id)::bigint AS votes
+    FROM answers a
+    LEFT JOIN last_sess ls ON ls.question_id = a.question_id
+    LEFT JOIN public.poll_votes v
+      ON v.poll_session_id = ls.poll_session_id
+     AND v.answer_id = a.answer_id
+    GROUP BY a.question_id, a.answer_id, a.aord
+  ), totals AS (
+    SELECT question_id, sum(votes)::bigint AS total
+    FROM counts
+    GROUP BY question_id
+  ), shares AS (
+    SELECT c.question_id, c.answer_id, c.aord, c.votes, t.total,
+      CASE WHEN t.total > 0 THEN floor(100.0 * c.votes / t.total)::int ELSE 0 END AS base_points,
+      CASE WHEN t.total > 0 THEN (100 * c.votes) % t.total ELSE 0 END AS remainder,
+      CASE WHEN t.total > 0 THEN round(100.0 * c.votes / t.total)::int ELSE 0 END AS rounded_percent
+    FROM counts c
+    JOIN totals t USING (question_id)
+  ), ranked AS (
+    SELECT s.*,
+      100 - sum(s.base_points) OVER (PARTITION BY s.question_id) AS points_left,
+      row_number() OVER (PARTITION BY s.question_id ORDER BY s.remainder DESC, s.aord ASC) AS remainder_rank
+    FROM shares s
+  ), final_points AS (
+    SELECT question_id, answer_id,
+      CASE
+        WHEN total = 0 OR rounded_percent < 3 THEN 0
+        ELSE base_points + CASE WHEN remainder_rank <= points_left THEN 1 ELSE 0 END
+      END AS points
+    FROM ranked
   )
-  update public.answers aup
-  set fixed_points = f.p_final
-  from final f
-  where aup.id = f.answer_id;
-end;
+  UPDATE public.answers a
+  SET fixed_points = f.points
+  FROM final_points f
+  WHERE a.id = f.answer_id;
+END;
 $$;
 
 
@@ -2729,7 +2707,7 @@ CREATE FUNCTION "public"."_poll_sub_mail_limit_until"("p_owner" "uuid", "p_user"
               THEN max(s.email_sent_at) + interval '30 days' END
   FROM public.poll_subscriptions s
   WHERE s.owner_id = p_owner
-    AND ((p_user IS NOT NULL AND s.subscriber_user_id = p_user)
+    AND ((p_user IS NOT NULL AND s.registered_user_id = p_user)
       OR (p_email IS NOT NULL AND lower(s.subscriber_email) = lower(p_email)))
     AND s.email_sent_at > now() - interval '30 days'
 $$;
@@ -2890,8 +2868,8 @@ CREATE FUNCTION "public"."_poll_task_source_active"("p_task" "public"."poll_task
  WHEN 'subscriber' THEN EXISTS(SELECT 1 FROM public.poll_subscriptions s
   WHERE s.id=p_task.source_subscription_id AND s.owner_id=p_task.owner_id
   AND s.status='active' AND s.cancelled_at IS NULL AND s.declined_at IS NULL
-  AND ((p_task.recipient_user_id IS NOT NULL AND coalesce(s.registered_user_id,s.subscriber_user_id)=p_task.recipient_user_id)
-   OR (p_task.recipient_user_id IS NULL AND s.registered_user_id IS NULL AND s.subscriber_user_id IS NULL AND public._norm_email(s.subscriber_email)=public._norm_email(p_task.recipient_email))))
+  AND ((p_task.recipient_user_id IS NOT NULL AND coalesce(s.registered_user_id,s.registered_user_id)=p_task.recipient_user_id)
+   OR (p_task.recipient_user_id IS NULL AND s.registered_user_id IS NULL AND s.registered_user_id IS NULL AND public._norm_email(s.subscriber_email)=public._norm_email(p_task.recipient_email))))
  WHEN 'friend' THEN EXISTS(SELECT 1 FROM public.friendships f WHERE f.id=p_task.source_friendship_id
   AND f.status='active' AND f.cancelled_at IS NULL
   AND LEAST(f.requester_id,f.addressee_id)=LEAST(p_task.owner_id,p_task.recipient_user_id)
@@ -3011,55 +2989,124 @@ CREATE FUNCTION "public"."_poll_text_tally_points"("p_answers" "jsonb") RETURNS 
     AS $$
 DECLARE
   r record;
-  v_used integer[] := ARRAY[]::integer[];
-  v_p integer;
-  v_n integer := 0;
+  used_points integer[] := ARRAY[]::integer[];
+  p integer;
+  n integer := 0;
 BEGIN
   IF jsonb_typeof(p_answers) IS DISTINCT FROM 'array' THEN
     RETURN;
   END IF;
 
   FOR r IN
-    WITH c AS (
-      SELECT min(s.idx) AS idx,
-             (array_agg(s.txt ORDER BY s.idx))[1] AS txt,
-             sum(s.cnt)::bigint AS cnt
+    WITH grouped AS (
+      SELECT min(src.idx) AS idx,
+        (array_agg(src.txt ORDER BY src.idx))[1] AS txt,
+        sum(src.cnt)::bigint AS cnt
       FROM (
         SELECT x.i::integer AS idx,
-               left(btrim(coalesce(x.v->>'text', '')), 17) AS txt,
-               CASE WHEN jsonb_typeof(x.v->'count') = 'number'
-                    THEN greatest(0, floor((x.v->>'count')::numeric))::bigint ELSE 0 END AS cnt
+          left(btrim(coalesce(x.v->>'text', '')), 17) AS txt,
+          CASE WHEN jsonb_typeof(x.v->'count') = 'number'
+            THEN greatest(0, floor((x.v->>'count')::numeric))::bigint ELSE 0 END AS cnt
         FROM jsonb_array_elements(p_answers) WITH ORDINALITY AS x(v, i)
-      ) s
-      WHERE s.txt <> '' AND s.cnt > 0
-      GROUP BY lower(s.txt)
-    ),
-    f AS (
-      SELECT c.idx, c.txt,
-             ((100 * c.cnt) / t.total)::integer AS fl,
-             (100 * c.cnt) % t.total AS rem
-      FROM c CROSS JOIN (SELECT sum(cnt) AS total FROM c) t
-    ),
-    d AS (
-      SELECT f.*, 100 - sum(f.fl) OVER () AS diff,
-             row_number() OVER (ORDER BY f.rem DESC, f.idx) AS fidx
-      FROM f
+      ) src
+      WHERE src.txt <> '' AND src.cnt > 0
+      GROUP BY lower(src.txt)
+    ), shares AS (
+      SELECT g.idx, g.txt, g.cnt,
+        floor(100.0 * g.cnt / totals.total)::integer AS base_points,
+        (100 * g.cnt) % totals.total AS remainder,
+        round(100.0 * g.cnt / totals.total)::integer AS rounded_percent
+      FROM grouped g
+      CROSS JOIN (SELECT sum(cnt) AS total FROM grouped) totals
+    ), ranked AS (
+      SELECT shares.*,
+        100 - sum(base_points) OVER () AS points_left,
+        row_number() OVER (ORDER BY remainder DESC, idx ASC) AS remainder_rank
+      FROM shares
     )
-    SELECT d.txt, d.fl + CASE WHEN d.fidx <= d.diff THEN 1 ELSE 0 END AS pts, d.fidx
-    FROM d
-    WHERE d.fl + CASE WHEN d.fidx <= d.diff THEN 1 ELSE 0 END >= 3
-    ORDER BY 2 DESC, d.fidx
+    SELECT txt,
+      base_points + CASE WHEN remainder_rank <= points_left THEN 1 ELSE 0 END AS pts,
+      remainder_rank
+    FROM ranked
+    WHERE rounded_percent >= 3
+    ORDER BY 2 DESC, remainder_rank
     LIMIT 6
   LOOP
-    v_p := r.pts;
-    WHILE v_p > 0 AND v_p = ANY(v_used) LOOP
-      v_p := v_p - 1;
+    p := r.pts;
+    WHILE p > 0 AND p = ANY(used_points) LOOP
+      p := p - 1;
     END LOOP;
-    v_used := v_used || v_p;
-    v_n := v_n + 1;
-    ord := v_n; atext := r.txt; points := v_p;
+    used_points := used_points || p;
+    n := n + 1;
+    ord := n;
+    atext := r.txt;
+    points := p;
     RETURN NEXT;
   END LOOP;
+END;
+$$;
+
+
+--
+-- Name: _registered_sharing_rows_guard(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_registered_sharing_rows_guard"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+DECLARE owner_id uuid; recipient_id uuid; other_id uuid; identity jsonb;
+BEGIN
+  -- Zaufane operacje serwerowe i migracje mogą porządkować starsze dane.
+  IF auth.uid() IS NULL THEN
+    IF TG_OP='DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
+  END IF;
+
+  IF TG_OP='DELETE' THEN
+    IF TG_TABLE_NAME='friendships' THEN owner_id:=OLD.requester_id; other_id:=OLD.addressee_id;
+    ELSIF TG_TABLE_NAME='poll_subscriptions' THEN owner_id:=OLD.owner_id; recipient_id:=coalesce(OLD.registered_user_id,OLD.registered_user_id);
+    ELSIF TG_TABLE_NAME='poll_tasks' THEN owner_id:=OLD.owner_id; recipient_id:=OLD.recipient_user_id;
+    ELSIF TG_TABLE_NAME='base_share_tasks' THEN owner_id:=OLD.owner_id; recipient_id:=OLD.recipient_user_id;
+    ELSIF TG_TABLE_NAME='control_device_shares' THEN owner_id:=OLD.owner_id; recipient_id:=OLD.recipient_id;
+    END IF;
+  ELSE
+    IF TG_TABLE_NAME='friendships' THEN owner_id:=NEW.requester_id; other_id:=NEW.addressee_id;
+    ELSIF TG_TABLE_NAME='poll_subscriptions' THEN owner_id:=NEW.owner_id; recipient_id:=coalesce(NEW.registered_user_id,NEW.registered_user_id);
+    ELSIF TG_TABLE_NAME='poll_tasks' THEN owner_id:=NEW.owner_id; recipient_id:=NEW.recipient_user_id;
+    ELSIF TG_TABLE_NAME='base_share_tasks' THEN owner_id:=NEW.owner_id; recipient_id:=NEW.recipient_user_id;
+    ELSIF TG_TABLE_NAME='control_device_shares' THEN owner_id:=NEW.owner_id; recipient_id:=NEW.recipient_id;
+    ELSIF TG_TABLE_NAME='market_games' THEN
+      owner_id:=NEW.author_user_id;
+      IF owner_id IS DISTINCT FROM auth.uid() THEN RAISE EXCEPTION 'registered_account_required'; END IF;
+    END IF;
+  END IF;
+
+  -- FK cascades may run while another account is authenticated. If a party in
+  -- the row no longer exists in auth.users, allow only this cleanup DELETE.
+  IF TG_OP='DELETE' AND (
+       (owner_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM auth.users u WHERE u.id=owner_id))
+    OR (recipient_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM auth.users u WHERE u.id=recipient_id))
+    OR (other_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM auth.users u WHERE u.id=other_id))
+  ) THEN
+    RETURN OLD;
+  END IF;
+
+  IF owner_id IS NOT NULL THEN
+    SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=owner_id;
+    IF NOT public._account_is_registered(owner_id,identity) THEN
+      RAISE EXCEPTION 'registered_account_required' USING ERRCODE='42501';
+    END IF;
+  END IF;
+  FOREACH recipient_id IN ARRAY ARRAY[recipient_id,other_id] LOOP
+    IF recipient_id IS NOT NULL THEN
+      SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=recipient_id;
+      IF NOT public._account_is_registered(recipient_id,identity) THEN
+        RAISE EXCEPTION 'registered_account_required' USING ERRCODE='42501';
+      END IF;
+    END IF;
+  END LOOP;
+  IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+  RETURN NEW;
 END $$;
 
 
@@ -3686,10 +3733,10 @@ BEGIN
  SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token;
  IF NOT FOUND THEN RETURN false; END IF;
  SELECT public._norm_email(coalesce(s.subscriber_email,p.email)) INTO e
- FROM (SELECT 1) x LEFT JOIN auth.users p ON p.id=s.subscriber_user_id;
+ FROM (SELECT 1) x LEFT JOIN auth.users p ON p.id=s.registered_user_id;
  IF e IS NULL THEN RETURN false; END IF;
  IF s.registered_user_id IS NOT NULL AND auth.uid() IS DISTINCT FROM s.registered_user_id THEN RETURN false; END IF;
- PERFORM public._poll_identity_email_refs(ARRAY[e],ARRAY[auth.uid(),s.owner_id,s.subscriber_user_id,s.registered_user_id]);
+ PERFORM public._poll_identity_email_refs(ARRAY[e],ARRAY[auth.uid(),s.owner_id,s.registered_user_id,s.registered_user_id]);
  PERFORM public._subscriber_pair_lock(s.owner_id,e);
  SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token FOR UPDATE;
  IF NOT FOUND OR s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL
@@ -3699,7 +3746,7 @@ BEGIN
  PERFORM public.mail_cooldown_reserve('poll:invite_after_reject','pair:'||s.owner_id::text||CASE WHEN s.registered_user_id IS NULL THEN ':email:'||md5(e) ELSE ':user:'||s.registered_user_id::text END);
  UPDATE public.poll_tasks SET status='cancelled',cancelled_at=now()
  WHERE owner_id=s.owner_id AND status IN ('pending','opened')
- AND (source_subscription_id=s.id OR (source_kind='game' AND ((s.subscriber_user_id IS NOT NULL AND recipient_user_id=s.subscriber_user_id) OR public._norm_email(recipient_email)=e)));
+ AND (source_subscription_id=s.id OR (source_kind='game' AND ((s.registered_user_id IS NOT NULL AND recipient_user_id=s.registered_user_id) OR public._norm_email(recipient_email)=e)));
  RETURN true;
 END; $$;
 
@@ -3728,8 +3775,8 @@ CREATE FUNCTION "public"."_subscriber_identity_insert"() RETURNS "trigger"
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 BEGIN
- PERFORM public._poll_identity_email_refs(ARRAY[NEW.subscriber_email],ARRAY[NEW.owner_id,NEW.subscriber_user_id,auth.uid()]);
- NEW.registered_user_id:=coalesce(NEW.subscriber_user_id,public._poll_registered_uid(NEW.subscriber_email));
+ PERFORM public._poll_identity_email_refs(ARRAY[NEW.subscriber_email],ARRAY[NEW.owner_id,NEW.registered_user_id,auth.uid()]);
+ NEW.registered_user_id:=coalesce(NEW.registered_user_id,public._poll_registered_uid(NEW.subscriber_email));
  RETURN NEW;
 END $$;
 
@@ -3742,7 +3789,7 @@ CREATE FUNCTION "public"."_subscriber_identity_refusal"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE holder uuid:=coalesce(NEW.registered_user_id,NEW.subscriber_user_id); old_key text; new_key text; deadline timestamptz;
+DECLARE holder uuid:=coalesce(NEW.registered_user_id,NEW.registered_user_id); old_key text; new_key text; deadline timestamptz;
 BEGIN
  IF holder IS NULL THEN RETURN NEW; END IF;
  old_key:='pair:'||NEW.owner_id::text||':email:'||md5(public._norm_email(NEW.subscriber_email));
@@ -3754,7 +3801,7 @@ BEGIN
   VALUES('poll:invite_after_reject',new_key,deadline)
   ON CONFLICT(action_key,target_key) DO UPDATE SET next_allowed_at=greatest(public.mail_cooldowns.next_allowed_at,excluded.next_allowed_at),updated_at=now();
   IF NOT EXISTS(SELECT 1 FROM public.poll_subscriptions s WHERE s.owner_id=NEW.owner_id
-    AND s.registered_user_id IS NULL AND s.subscriber_user_id IS NULL
+    AND s.registered_user_id IS NULL AND s.registered_user_id IS NULL
     AND public._norm_email(s.subscriber_email)=public._norm_email(NEW.subscriber_email)
     AND s.declined_at>now()-interval '30 days') THEN
    DELETE FROM public.mail_cooldowns WHERE action_key='poll:invite_after_reject' AND target_key=old_key;
@@ -3786,8 +3833,8 @@ CREATE FUNCTION "public"."_subscriber_refusal_until"("p_owner" "uuid", "p_email"
     AS $$
  WITH recipient AS (SELECT public._poll_registered_uid(p_email) AS id), relevant AS (
   SELECT s.* FROM public.poll_subscriptions s,recipient r WHERE s.owner_id=p_owner
-  AND (s.registered_user_id=r.id OR s.subscriber_user_id=r.id
-    OR(s.registered_user_id IS NULL AND s.subscriber_user_id IS NULL AND public._norm_email(s.subscriber_email)=public._norm_email(p_email)))
+  AND (s.registered_user_id=r.id OR s.registered_user_id=r.id
+    OR(s.registered_user_id IS NULL AND s.registered_user_id IS NULL AND public._norm_email(s.subscriber_email)=public._norm_email(p_email)))
  ) SELECT greatest((SELECT max(declined_at)+interval '30 days' FROM relevant WHERE declined_at>now()-interval '30 days'),
   (SELECT max(c.next_allowed_at) FROM public.mail_cooldowns c,recipient r WHERE c.action_key='poll:invite_after_reject' AND c.next_allowed_at>now()
    AND(c.target_key='pair:'||p_owner::text||':email:'||md5(public._norm_email(p_email))
@@ -4236,28 +4283,33 @@ $_$;
 
 CREATE FUNCTION "public"."badges_get"() RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
 DECLARE
-  v_uid     uuid := auth.uid();
-  v_polls   integer;
-  v_friends integer;
+  uid uuid := auth.uid();
+  identity jsonb;
+  polls integer;
+  bases integer;
+  friends integer;
 BEGIN
-  IF v_uid IS NULL THEN
+  SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id = uid;
+  IF NOT public._account_is_registered(uid, identity) THEN
     RETURN jsonb_build_object('tasks_pending', 0, 'friends_pending', 0);
   END IF;
+
   PERFORM public.poll_claim_email_records();
-
-  SELECT count(*) INTO v_polls
+  SELECT count(*) INTO polls
   FROM public.poll_tasks t
-  WHERE t.recipient_user_id = v_uid
+  WHERE t.recipient_user_id = uid
     AND t.done_at IS NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL;
-
-  SELECT count(*) INTO v_friends
+  SELECT count(*) INTO bases
+  FROM public.base_share_tasks bt
+  WHERE bt.recipient_user_id = uid AND bt.status IN ('pending', 'opened');
+  SELECT count(*) INTO friends
   FROM public.friendships f
-  WHERE f.decision_user_id = v_uid AND f.status = 'pending' AND f.cancelled_at IS NULL;
+  WHERE f.decision_user_id = uid AND f.status = 'pending' AND f.cancelled_at IS NULL;
 
-  RETURN jsonb_build_object('tasks_pending', v_polls, 'friends_pending', v_friends);
+  RETURN jsonb_build_object('tasks_pending', polls + bases, 'friends_pending', friends);
 END;
 $$;
 
@@ -4991,6 +5043,152 @@ END; $$;
 
 
 --
+-- Name: control2_device_transport_event("uuid", "text", "text", "jsonb", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control2_device_transport_event"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_event" "jsonb", "p_connection_id" "uuid", "p_epoch" bigint) RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+DECLARE
+  v_session_id uuid;
+  v_event_type text;
+  v_phase text;
+  v_transport text;
+  v_status text;
+  v_trigger text;
+  v_details jsonb;
+  v_event_id text;
+  v_rev bigint;
+  v_previous_rev bigint;
+BEGIN
+  IF p_device_type NOT IN ('display','host','buzzer')
+     OR NOT public._control_device_action_valid(
+       p_game_id,p_device_type,p_key,p_connection_id,p_epoch
+     ) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  IF p_event IS NULL OR octet_length(p_event::text)>2000 THEN
+    RAISE EXCEPTION 'invalid event';
+  END IF;
+
+  v_event_type := p_event->>'event_type';
+  v_phase := p_event->>'phase';
+  v_transport := p_event->>'transport';
+  v_status := p_event->>'status';
+  v_trigger := p_event->>'trigger';
+  IF v_event_type NOT IN ('transport_state','state_sync')
+     OR v_event_type IS NULL
+     OR v_phase IS NULL
+     OR v_phase NOT IN (
+       'connected','disconnected','recovered','auth_error',
+       'fallback_catchup','read_error','read_recovered','render_error','render_recovered'
+     )
+     OR v_transport IS NULL
+     OR v_transport NOT IN ('postgres_changes','rpc_fallback') THEN
+    RAISE EXCEPTION 'invalid event';
+  END IF;
+  IF (v_event_type='transport_state' AND v_phase IN ('fallback_catchup','read_error','read_recovered','render_error','render_recovered'))
+     OR (v_event_type='state_sync' AND v_phase NOT IN ('fallback_catchup','read_error','read_recovered','render_error','render_recovered')) THEN
+    RAISE EXCEPTION 'invalid event phase';
+  END IF;
+  IF v_status IS NOT NULL AND v_status NOT IN (
+    'SUBSCRIBED','CHANNEL_ERROR','TIMED_OUT','CLOSED','TOKEN_ERROR','FETCH_ERROR'
+  ) THEN
+    RAISE EXCEPTION 'invalid status';
+  END IF;
+  IF v_trigger IS NOT NULL AND v_trigger NOT IN (
+    'poll','broadcast','bootstrap','resume','channel_recovery','channel_failure',
+    'delete_recovery','doorbell_ready','other'
+  ) THEN RAISE EXCEPTION 'invalid trigger'; END IF;
+
+  SELECT a.session_id INTO v_session_id
+  FROM public.game_session_active a
+  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
+  WHERE a.game_id=p_game_id AND s.control_version=2 AND s.ended_at IS NULL;
+  IF v_session_id IS NULL THEN RETURN false; END IF;
+
+  IF coalesce(p_event->>'revision','') ~ '^[0-9]{1,18}$' THEN
+    v_rev := (p_event->>'revision')::bigint;
+  END IF;
+  IF coalesce(p_event->>'previous_revision','') ~ '^[0-9]{1,18}$' THEN
+    v_previous_rev := (p_event->>'previous_revision')::bigint;
+  END IF;
+
+  v_details := jsonb_build_object(
+    'device_type',p_device_type,
+    'phase',v_phase,
+    'transport',v_transport,
+    'status',v_status,
+    'trigger',v_trigger,
+    'revision',v_rev,
+    'previous_revision',v_previous_rev,
+    'rendered_revision',CASE
+      WHEN coalesce(p_event->>'rendered_revision','') ~ '^[0-9]{1,18}$'
+        THEN (p_event->>'rendered_revision')::bigint ELSE NULL END,
+    'duration_ms',CASE
+      WHEN jsonb_typeof(p_event->'duration_ms')='number'
+        THEN least(3600000,greatest(0,(p_event->>'duration_ms')::numeric))::integer ELSE NULL END,
+    'transition_count',CASE WHEN jsonb_typeof(p_event->'transition_count')='number'
+      THEN least(1000,greatest(0,(p_event->>'transition_count')::numeric))::integer ELSE NULL END,
+    'catchup_count',CASE WHEN jsonb_typeof(p_event->'catchup_count')='number'
+      THEN least(10000,greatest(0,(p_event->>'catchup_count')::numeric))::integer ELSE NULL END,
+    'missed_revisions',CASE WHEN jsonb_typeof(p_event->'missed_revisions')='number'
+      THEN least(1000000,greatest(0,(p_event->>'missed_revisions')::numeric))::integer ELSE NULL END,
+    'latest_revision',CASE WHEN coalesce(p_event->>'latest_revision','') ~ '^[0-9]{1,18}$'
+      THEN (p_event->>'latest_revision')::bigint ELSE NULL END,
+    'max_fetch_ms',CASE WHEN jsonb_typeof(p_event->'max_fetch_ms')='number'
+      THEN least(60000,greatest(0,(p_event->>'max_fetch_ms')::numeric))::integer ELSE NULL END,
+    'max_render_ms',CASE WHEN jsonb_typeof(p_event->'max_render_ms')='number'
+      THEN least(60000,greatest(0,(p_event->>'max_render_ms')::numeric))::integer ELSE NULL END,
+    'first_status',CASE WHEN p_event->>'first_status' IN ('CHANNEL_ERROR','TIMED_OUT','CLOSED','TOKEN_ERROR')
+      THEN p_event->>'first_status' ELSE NULL END,
+    'start_visibility',CASE WHEN p_event->>'start_visibility' IN ('visible','hidden')
+      THEN p_event->>'start_visibility' ELSE 'unknown' END,
+    'start_online',CASE WHEN jsonb_typeof(p_event->'start_online')='boolean'
+      THEN (p_event->>'start_online')::boolean ELSE NULL END,
+    'hidden_duration_ms',CASE WHEN jsonb_typeof(p_event->'hidden_duration_ms')='number'
+      THEN least(86400000,greatest(0,(p_event->>'hidden_duration_ms')::numeric))::integer ELSE NULL END,
+    'fetch_ms',CASE
+      WHEN jsonb_typeof(p_event->'fetch_ms')='number'
+        THEN least(60000,greatest(0,(p_event->>'fetch_ms')::numeric))::integer ELSE NULL END,
+    'render_ms',CASE
+      WHEN jsonb_typeof(p_event->'render_ms')='number'
+        THEN least(60000,greatest(0,(p_event->>'render_ms')::numeric))::integer ELSE NULL END,
+    'visibility',CASE WHEN p_event->>'visibility' IN ('visible','hidden')
+      THEN p_event->>'visibility' ELSE 'unknown' END,
+    'focused',CASE WHEN jsonb_typeof(p_event->'focused')='boolean'
+      THEN (p_event->>'focused')::boolean ELSE NULL END,
+    'online',CASE WHEN jsonb_typeof(p_event->'online')='boolean'
+      THEN (p_event->>'online')::boolean ELSE NULL END,
+    'was_discarded',CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean'
+      THEN (p_event->>'was_discarded')::boolean ELSE NULL END,
+    'error_class',CASE WHEN v_status IN ('TOKEN_ERROR','FETCH_ERROR')
+        OR (v_event_type='state_sync' AND v_phase='render_error')
+        OR (v_event_type='transport_state' AND p_event->>'error_class' IS NOT NULL)
+      THEN left(coalesce(p_event->>'error_class','Error'),80) ELSE NULL END
+  );
+
+  v_event_id := left(coalesce(p_event->>'event_id',''),80);
+  IF v_event_id='' THEN RAISE EXCEPTION 'event_id_required'; END IF;
+  INSERT INTO public.control2_device_events(
+    game_id,session_id,device_type,event_type,event_id,details
+  ) VALUES (
+    p_game_id,v_session_id,p_device_type,v_event_type,v_event_id,v_details
+  ) ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
+
+  DELETE FROM public.control2_device_events e
+  WHERE e.game_id=p_game_id
+    AND (e.created_at<now()-interval '30 days' OR e.id IN (
+      SELECT id FROM public.control2_device_events
+      WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500
+    ));
+  RETURN true;
+END;
+$_$;
+
+
+--
 -- Name: control2_display_event("uuid", "text", "jsonb", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5059,7 +5257,7 @@ BEGIN
     IF octet_length(p_event::text)>6000 THEN RAISE EXCEPTION 'event too large'; END IF;
     IF event_kind='diagnostic' THEN
       category:=p_event->>'category';
-      IF category IS NULL OR category NOT IN ('connectivity','audio_start','display_delay') THEN RAISE EXCEPTION 'invalid diagnostic category'; END IF;
+      IF category IS NULL OR category NOT IN ('connectivity','audio_start','display_delay','state_sync','realtime') THEN RAISE EXCEPTION 'invalid diagnostic category'; END IF;
       item:=jsonb_build_object('kind',event_kind,'category',category,'at',now(),
         'message',left(coalesce(p_event->>'message',''),300),
         'devices',CASE WHEN jsonb_typeof(p_event->'devices')='array' THEN p_event->'devices' ELSE '[]'::jsonb END,
@@ -5068,10 +5266,29 @@ BEGIN
       item:=jsonb_build_object('kind',event_kind,'at',now(),
         'message',left(coalesce(p_event->>'message',''),1000),'devices',p_event->'devices');
     END IF;
+
     events:=events || jsonb_build_array(item);
-    SELECT coalesce(jsonb_agg(value ORDER BY ord),'[]') INTO events
+    WITH expanded AS (
+      SELECT value,ord,
+        CASE WHEN value->>'kind'='diagnostic'
+          AND value->>'category'='realtime'
+          AND value#>>'{metrics,phase}'='game_start'
+          AND value#>>'{metrics,channel}' IN ('display_completion','display_transition_started')
+          THEN value#>>'{metrics,channel}' END AS pinned_channel
       FROM jsonb_array_elements(events) WITH ORDINALITY e(value,ord)
-      WHERE ord>jsonb_array_length(events)-100;
+    ), pinned AS (
+      SELECT value,ord,row_number() OVER (PARTITION BY pinned_channel ORDER BY ord DESC) AS channel_rank
+      FROM expanded WHERE pinned_channel IS NOT NULL
+    ), regular AS (
+      SELECT value,ord,row_number() OVER (ORDER BY ord DESC) AS recent_rank
+      FROM expanded WHERE pinned_channel IS NULL
+    ), kept AS (
+      SELECT value,ord FROM pinned WHERE channel_rank=1
+      UNION ALL
+      SELECT r.value,r.ord FROM regular r
+      WHERE r.recent_rank <= greatest(0,100-(SELECT count(*) FROM pinned WHERE channel_rank=1))
+    )
+    SELECT coalesce(jsonb_agg(value ORDER BY ord),'[]') INTO events FROM kept;
   END IF;
   UPDATE public.game_sessions SET last_seen_at=CASE WHEN ended_at IS NULL THEN now() ELSE last_seen_at END,
     stats_detail=jsonb_set(stats_detail,'{events}',events),
@@ -6247,7 +6464,7 @@ begin
   delete from public.friendships where requester_id=p_user_id OR addressee_id=p_user_id;
   delete from public.shared_devices where recipient_id=p_user_id;
 
-  delete from public.poll_subscriptions where subscriber_user_id = p_user_id;
+  delete from public.poll_subscriptions where registered_user_id = p_user_id;
   delete from public.poll_subscriptions where owner_id = p_user_id;
 
   delete from public.poll_tasks where recipient_user_id = p_user_id;
@@ -6500,8 +6717,8 @@ BEGIN
   GET DIAGNOSTICS v_tasks_deleted = ROW_COUNT;
 
   DELETE FROM public.poll_subscriptions
-  WHERE (owner_id = v_uid AND subscriber_user_id = p_other_user_id)
-     OR (owner_id = p_other_user_id AND subscriber_user_id = v_uid);
+  WHERE (owner_id = v_uid AND registered_user_id = p_other_user_id)
+     OR (owner_id = p_other_user_id AND registered_user_id = v_uid);
   GET DIAGNOSTICS v_subscriptions_deleted = ROW_COUNT;
 
   DELETE FROM public.email_cooldowns
@@ -6545,7 +6762,7 @@ BEGIN
    SELECT 1 FROM public.profiles WHERE id=recipient AND NOT is_guest)) THEN
    RETURN jsonb_build_object('ok',false,'err','recipient test account missing'); END IF;
  DELETE FROM public.poll_subscriptions WHERE owner_id=uid
- AND (subscriber_user_id=recipient OR public._norm_email(subscriber_email)='test8@familiada.online');
+ AND (registered_user_id=recipient OR public._norm_email(subscriber_email)='test8@familiada.online');
  IF coalesce(p_remove,false) THEN RETURN jsonb_build_object('ok',true,'removed',true); END IF;
  INSERT INTO public.poll_subscriptions(owner_id,subscriber_email,status,accepted_at)
  VALUES(uid,'test8@familiada.online','active',now()) RETURNING id INTO sid;
@@ -7004,7 +7221,7 @@ BEGIN
     FROM public.poll_subscriptions s
     WHERE s.status IN ('pending', 'active')
       AND s.owner_id <> v_uid
-      AND (s.registered_user_id = v_uid OR s.subscriber_user_id = v_uid
+      AND (s.registered_user_id = v_uid OR s.registered_user_id = v_uid
         OR (s.registered_user_id IS NULL AND s.identity_tracking_enabled AND v_email IS NOT NULL AND v_email <> ''
             AND lower(trim(s.subscriber_email)) = v_email))
     ORDER BY s.owner_id));
@@ -7014,7 +7231,7 @@ BEGIN
     FROM public.poll_subscriptions s
     WHERE s.status IN ('pending', 'active')
       AND s.owner_id <> v_uid
-      AND (s.registered_user_id = v_uid OR s.subscriber_user_id = v_uid
+      AND (s.registered_user_id = v_uid OR s.registered_user_id = v_uid
         OR (s.registered_user_id IS NULL AND s.identity_tracking_enabled AND v_email IS NOT NULL AND v_email <> ''
             AND lower(trim(s.subscriber_email)) = v_email))
     ORDER BY s.owner_id
@@ -7025,7 +7242,7 @@ BEGIN
     SELECT s.id INTO source_id FROM public.poll_subscriptions s
     WHERE s.owner_id=r.owner_id AND s.status IN ('pending','active')
       AND s.cancelled_at IS NULL AND s.declined_at IS NULL
-      AND (s.registered_user_id=v_uid OR s.subscriber_user_id=v_uid
+      AND (s.registered_user_id=v_uid OR s.registered_user_id=v_uid
         OR (s.registered_user_id IS NULL AND s.identity_tracking_enabled
           AND public._norm_email(s.subscriber_email)=v_email))
     ORDER BY s.created_at,s.id LIMIT 1 FOR SHARE;
@@ -7130,35 +7347,23 @@ END $$;
 
 CREATE FUNCTION "public"."friends_list"() RETURNS TABLE("id" "uuid", "user_id" "uuid", "label" "text", "email" "text", "status" "text", "direction" "text", "created_at" timestamp with time zone, "accepted_at" timestamp with time zone, "email_sent_at" timestamp with time zone, "email_send_count" integer)
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-#variable_conflict use_column
-DECLARE
-  v_uid uuid := auth.uid();
+DECLARE uid uuid:=auth.uid(); identity jsonb;
 BEGIN
-  IF v_uid IS NULL THEN
-    RETURN;
-  END IF;
-  RETURN QUERY
-  SELECT f.id,
-         p.id,
-         coalesce(nullif(p.username, ''), public._norm_email(u.email)),
-         public._norm_email(u.email),
-         f.status,
-         CASE WHEN f.status = 'active' THEN 'friend'
-              WHEN f.decision_user_id = v_uid THEN 'incoming'
-              ELSE 'outgoing' END,
-         f.created_at, f.accepted_at, f.email_sent_at, f.email_send_count
-  FROM public.friendships f
-  JOIN public.profiles p
-    ON p.id = CASE WHEN f.requester_id = v_uid THEN f.addressee_id ELSE f.requester_id END
-  JOIN auth.users u ON u.id=p.id
-  WHERE f.cancelled_at IS NULL AND (f.requester_id=v_uid OR f.addressee_id=v_uid)
-    AND (f.status<>'declined' OR (f.declined_at>now()-interval '30 days'
-      AND (f.decision_user_id=v_uid OR f.declined_at>now()-interval '5 days')))
-  ORDER BY f.created_at DESC;
-END;
-$$;
+ SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=uid;
+ IF NOT public._account_is_registered(uid,identity) THEN RETURN; END IF;
+ RETURN QUERY
+ SELECT f.id,p.id,coalesce(nullif(p.username,''),public._norm_email(u.email)),public._norm_email(u.email),f.status,
+   CASE WHEN f.status='active' THEN 'friend' WHEN f.decision_user_id=uid THEN 'incoming' ELSE 'outgoing' END,
+   f.created_at,f.accepted_at,f.email_sent_at,f.email_send_count
+ FROM public.friendships f JOIN public.profiles p ON p.id=CASE WHEN f.requester_id=uid THEN f.addressee_id ELSE f.requester_id END
+ JOIN auth.users u ON u.id=p.id
+ WHERE f.cancelled_at IS NULL AND (f.requester_id=uid OR f.addressee_id=uid)
+   AND (f.status<>'declined' OR (f.declined_at>now()-interval '30 days'
+     AND (f.decision_user_id=uid OR f.declined_at>now()-interval '5 days')))
+ ORDER BY f.created_at DESC;
+END $$;
 
 
 --
@@ -9045,19 +9250,36 @@ CREATE FUNCTION "public"."get_control2_display_events"("p_session_ids" "uuid"[])
     SELECT e.session_id,jsonb_agg(
       jsonb_build_object(
         'kind','diagnostic',
-        'category',CASE WHEN e.event_type='lease_state' THEN 'device_lease' ELSE 'display_state' END,
+        'category',CASE
+          WHEN e.event_type='lease_state' THEN 'device_lease'
+          WHEN e.event_type='transport_state' THEN 'device_transport'
+          WHEN e.event_type='state_sync' THEN 'device_state_sync'
+          ELSE 'display_state' END,
         'at',e.created_at,
         'message',CASE
-          WHEN e.event_type<>'lease_state' THEN 'Zdarzenie urządzenia Wyświetlacz.'
-          WHEN e.details->>'to_state'='waiting' THEN 'Urządzenie oczekuje na zwolnienie blokady.'
-          WHEN e.details->>'to_state'='primary' THEN 'Urządzenie zostało aktywowane jako główne.'
-          WHEN e.details->>'to_state'='released' THEN 'Urządzenie zwolniło blokadę.'
-          WHEN e.details->>'to_state'='expired' THEN 'Blokada urządzenia wygasła.'
-          WHEN e.details->>'to_state'='revoked' THEN 'Połączenie urządzenia zostało cofnięte.'
-          ELSE 'Zmienił się stan blokady urządzenia.' END,
-        'devices',CASE WHEN e.event_type='lease_state'
-          THEN jsonb_build_array(e.device_type) ELSE jsonb_build_array('display') END,
-        'metrics',e.details||jsonb_build_object('reason',e.event_type)
+          WHEN e.event_type='lease_state' AND e.details->>'to_state'='waiting' THEN 'Urządzenie oczekuje na zwolnienie blokady.'
+          WHEN e.event_type='lease_state' AND e.details->>'to_state'='primary' THEN 'Urządzenie zostało aktywowane jako główne.'
+          WHEN e.event_type='lease_state' AND e.details->>'to_state'='released' THEN 'Urządzenie zwolniło blokadę.'
+          WHEN e.event_type='lease_state' AND e.details->>'to_state'='expired' THEN 'Blokada urządzenia wygasła.'
+          WHEN e.event_type='lease_state' AND e.details->>'to_state'='revoked' THEN 'Połączenie urządzenia zostało cofnięte.'
+          WHEN e.event_type='transport_state' AND e.details->>'phase'='recovered' THEN 'Zakończyła się przerwa w bezpośrednim kanale urządzenia.'
+          WHEN e.event_type='transport_state' AND e.details->>'phase'='auth_error' THEN 'Nie udało się uruchomić bezpośredniego kanału urządzenia.'
+          WHEN e.event_type='state_sync' AND e.details->>'phase'='fallback_catchup' THEN 'Odczyt awaryjny nadrobił zmianę stanu gry.'
+          WHEN e.event_type='state_sync' AND e.details->>'phase'='read_error' THEN 'Odczyt stanu gry z bazy nie powiódł się.'
+          WHEN e.event_type='state_sync' AND e.details->>'phase'='read_recovered' THEN 'Odczyt stanu gry z bazy wrócił.'
+          WHEN e.event_type='state_sync' AND e.details->>'phase'='render_error' THEN 'Urządzenie odebrało stan gry, ale jego obsługa renderu zgłosiła błąd.'
+          WHEN e.event_type='state_sync' AND e.details->>'phase'='render_recovered' THEN 'Renderowanie stanu gry wróciło do działania.'
+          WHEN e.event_type='transport_state' THEN 'Zmienił się stan bezpośredniego kanału urządzenia.'
+          WHEN e.event_type='state_sync' THEN 'Urządzenie zsynchronizowało stan gry.'
+          ELSE 'Zdarzenie urządzenia Wyświetlacz.' END,
+        'devices',jsonb_build_array(e.device_type),
+        'metrics',e.details||jsonb_build_object('reason',e.event_type,'impact',CASE
+          WHEN e.event_type='transport_state' AND coalesce((e.details->>'catchup_count')::integer,0)>0 THEN 'fallback_catchup'
+          WHEN e.event_type='transport_state' THEN 'transport_recovered'
+          WHEN e.event_type='state_sync' AND e.details->>'phase'='render_error' THEN 'render_failure'
+          WHEN e.event_type='state_sync' AND e.details->>'phase'='render_recovered' THEN 'render_recovered'
+          WHEN e.event_type='state_sync' AND e.details->>'phase'='read_error' THEN 'database_read_failure'
+          ELSE NULL END)
       ) ORDER BY e.created_at,e.id
     ) AS events
     FROM public.control2_device_events e
@@ -10744,24 +10966,6 @@ $$;
 
 
 --
--- Name: list_my_device_shares(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."list_my_device_shares"() RETURNS TABLE("share_id" "uuid", "device_type" "text", "recipient_id" "uuid", "recipient_username" "text", "recipient_email" "text", "game_id" "uuid", "game_name" "text", "expires_at" timestamp with time zone)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-  RETURN QUERY
-  SELECT sd.id, sd.device_type, sd.recipient_id, p.username, p.email, sd.game_id, sd.game_name, sd.expires_at
-  FROM public.shared_devices sd
-  JOIN public.profiles p ON p.id = sd.recipient_id
-  WHERE sd.owner_id = auth.uid();
-END;
-$$;
-
-
---
 -- Name: list_reports("text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10910,7 +11114,7 @@ BEGIN
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
  UPDATE public.email_unsub_tokens SET suppressed_at=coalesce(suppressed_at,now()) WHERE token=root_token;
  FOR item IN SELECT token FROM public.poll_subscriptions WHERE public._norm_email(subscriber_email)=mailbox
-   AND subscriber_user_id IS NULL AND registered_user_id IS NULL AND status IN('pending','active') ORDER BY owner_id,id LOOP
+   AND registered_user_id IS NULL AND registered_user_id IS NULL AND status IN('pending','active') ORDER BY owner_id,id LOOP
   IF public._subscriber_close(item.token,true) THEN closed:=closed+1; END IF;
  END LOOP;
  UPDATE public.poll_tasks SET status='cancelled',cancelled_at=coalesce(cancelled_at,now())
@@ -10948,7 +11152,7 @@ BEGIN
  IF scope->>'notifications_enabled' IS DISTINCT FROM 'true' THEN RETURN jsonb_build_object('ok',false,'error','notifications_disabled'); END IF;
  IF p_kind='subscription' THEN
   SELECT s.token INTO tok FROM public.poll_subscriptions s WHERE s.id=p_id
-   AND public._norm_email(s.subscriber_email)=mailbox AND s.subscriber_user_id IS NULL AND s.registered_user_id IS NULL
+   AND public._norm_email(s.subscriber_email)=mailbox AND s.registered_user_id IS NULL AND s.registered_user_id IS NULL
    AND s.cancelled_at IS NULL AND s.declined_at IS NULL AND s.status IN('pending','active');
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','source_unavailable'); END IF;
   IF p_action='accept' THEN RETURN public.poll_sub_accept_email(tok,mailbox); END IF;
@@ -11083,7 +11287,7 @@ BEGIN
    'owner_label',p.username,'created_at',s.created_at,'link','/go/?s='||s.token) item
   FROM public.poll_subscriptions s JOIN auth.users u ON u.id=s.owner_id
   LEFT JOIN public.profiles p ON p.id=s.owner_id
-  WHERE public._norm_email(s.subscriber_email)=mailbox AND s.subscriber_user_id IS NULL AND s.registered_user_id IS NULL
+  WHERE public._norm_email(s.subscriber_email)=mailbox AND s.registered_user_id IS NULL AND s.registered_user_id IS NULL
    AND s.status IN('pending','active') AND s.cancelled_at IS NULL AND s.declined_at IS NULL
    AND public._poll_identity_regular(u.id,to_jsonb(u))
  ) rows;
@@ -11601,7 +11805,7 @@ BEGIN
   revoke_children:=NEW.status<>'active' OR NEW.cancelled_at IS NOT NULL OR NEW.declined_at IS NOT NULL
    OR public._mail_notification_fields(old_row,fields) IS DISTINCT FROM public._mail_notification_fields(new_row,fields);
  WHEN 'poll_subscriptions' THEN
-  kind:='subscription';fields:=ARRAY['owner_id','subscriber_email','subscriber_user_id','registered_user_id','token','cancelled_at','declined_at'];
+  kind:='subscription';fields:=ARRAY['owner_id','subscriber_email','registered_user_id','registered_user_id','token','cancelled_at','declined_at'];
   revoke_children:=NEW.status NOT IN('pending','active') OR NEW.cancelled_at IS NOT NULL OR NEW.declined_at IS NOT NULL
    OR public._mail_notification_fields(old_row,fields) IS DISTINCT FROM public._mail_notification_fields(new_row,fields);
  WHEN 'poll_tasks' THEN
@@ -13612,14 +13816,14 @@ BEGIN
   SELECT
     ps.id, ps.status, ps.owner_id,
     p.username AS owner_label,
-    ps.subscriber_user_id, ps.subscriber_email, ps.opened_at,ps.registered_user_id,ps.cancelled_at,ps.declined_at
+    ps.registered_user_id, ps.subscriber_email, ps.opened_at,ps.registered_user_id,ps.cancelled_at,ps.declined_at
   INTO s
   FROM public.poll_subscriptions ps
   LEFT JOIN public.profiles p ON p.id = ps.owner_id
   WHERE ps.token = p_token AND (ps.declined_at IS NULL OR ps.declined_at>now()-interval '30 days') LIMIT 1;
 
   IF found THEN
-    IF s.subscriber_user_id IS NULL AND s.registered_user_id IS NULL AND NOT public._contact_mail_enabled(s.subscriber_email) THEN RETURN jsonb_build_object('ok',false,'error','revoked'); END IF;
+    IF s.registered_user_id IS NULL AND s.registered_user_id IS NULL AND NOT public._contact_mail_enabled(s.subscriber_email) THEN RETURN jsonb_build_object('ok',false,'error','revoked'); END IF;
     IF s.opened_at IS NULL THEN
       UPDATE public.poll_subscriptions SET opened_at = now() WHERE id = s.id;
     END IF;
@@ -13627,11 +13831,11 @@ BEGIN
       'ok', true, 'kind', 'sub',
       'sub_id', s.id, 'status', s.status,
       'owner_id', s.owner_id, 'owner_label', s.owner_label,
-      'subscriber_user_id', s.subscriber_user_id,
+      'registered_user_id', s.registered_user_id,
       'registered_user_id', s.registered_user_id,
       'cancelled_at', s.cancelled_at, 'declined_at', s.declined_at,
       'subscriber_email', s.subscriber_email,
-      'friend_conversion_required', s.registered_user_id IS NOT NULL OR s.subscriber_user_id IS NOT NULL OR public._poll_registered_uid(s.subscriber_email) IS NOT NULL
+      'friend_conversion_required', s.registered_user_id IS NOT NULL OR s.registered_user_id IS NOT NULL OR public._poll_registered_uid(s.subscriber_email) IS NOT NULL
     );
   END IF;
 
@@ -14155,34 +14359,32 @@ END $$;
 
 CREATE FUNCTION "public"."poll_share_panel"("p_game_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE uid uuid:=auth.uid(); g public.games%rowtype; fs jsonb; ss jsonb; ts jsonb;
+DECLARE uid uuid:=auth.uid(); identity jsonb; g public.games%rowtype; fs jsonb; ss jsonb; ts jsonb;
 BEGIN
+ SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=uid;
+ IF NOT public._account_is_registered(uid,identity) THEN RETURN jsonb_build_object('ok',false,'err','registered_account_required'); END IF;
  SELECT * INTO g FROM public.games WHERE id=p_game_id AND owner_id=uid;
- IF uid IS NULL OR NOT FOUND OR g.type::text NOT IN ('poll_text','poll_points') THEN
-  RETURN jsonb_build_object('ok',false,'err','not_owner'); END IF;
- SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',f.user_id,'label',f.label,'email',f.email,
-  'email_enabled',public._contact_mail_enabled(f.email),
-  'cooldown_until',public._poll_mail_cooldown_until(uid,f.user_id,f.email,p_game_id)) ORDER BY f.label),'[]'::jsonb)
- INTO fs FROM public.friends_list() f WHERE f.status='active' AND f.direction='friend';
- SELECT coalesce(jsonb_agg(jsonb_build_object('id',s.id,'email',s.subscriber_email,
-  'email_enabled',public._contact_mail_enabled(s.subscriber_email),
-  'cooldown_until',public._poll_mail_cooldown_until(uid,NULL,s.subscriber_email,p_game_id)) ORDER BY s.subscriber_email),'[]'::jsonb)
- INTO ss FROM public.poll_subscriptions s WHERE s.owner_id=uid AND s.status='active' AND s.subscriber_user_id IS NULL
+ IF NOT FOUND OR g.type::text NOT IN('poll_text','poll_points') THEN RETURN jsonb_build_object('ok',false,'err','not_owner'); END IF;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',f.user_id,'label',f.label,'email',f.email,'email_enabled',public._contact_mail_enabled(f.email),
+   'cooldown_until',public._poll_mail_cooldown_until(uid,f.user_id,f.email,p_game_id)) ORDER BY f.label),'[]'::jsonb) INTO fs
+ FROM public.friends_list() f WHERE f.status='active' AND f.direction='friend';
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',s.id,'email',s.subscriber_email,'email_enabled',public._contact_mail_enabled(s.subscriber_email),
+   'cooldown_until',public._poll_mail_cooldown_until(uid,NULL,s.subscriber_email,p_game_id)) ORDER BY s.subscriber_email),'[]'::jsonb) INTO ss
+ FROM public.poll_subscriptions s WHERE s.owner_id=uid AND s.status='active' AND s.registered_user_id IS NULL
   AND s.registered_user_id IS NULL AND public._poll_registered_uid(s.subscriber_email) IS NULL;
  SELECT coalesce(jsonb_agg(jsonb_build_object('id',t.id,'recipient_user_id',t.recipient_user_id,'recipient_email',t.recipient_email,
-  'label',coalesce(nullif(p.username,''),public._norm_email(u.email),t.recipient_email),'status',t.status,'share_key_poll',t.share_key_poll,
-  'reminder_count',t.reminder_count,'declined_at',t.declined_at,'cancelled_at',t.cancelled_at,
-  'hidden',t.status='cancelled' OR (t.status='declined' AND t.declined_at<=now()-interval '5 days'),
-  'email_enabled',public._contact_mail_enabled(coalesce(public._norm_email(u.email),t.recipient_email)),
-  'cooldown_until',public._poll_mail_cooldown_until(uid,t.recipient_user_id,coalesce(public._norm_email(u.email),t.recipient_email),p_game_id))
- ORDER BY t.created_at DESC),'[]'::jsonb) INTO ts
+   'label',coalesce(nullif(p.username,''),public._norm_email(u.email),t.recipient_email),'status',t.status,'share_key_poll',t.share_key_poll,
+   'reminder_count',t.reminder_count,'declined_at',t.declined_at,'cancelled_at',t.cancelled_at,
+   'hidden',t.status='cancelled' OR (t.status='declined' AND t.declined_at<=now()-interval '5 days'),
+   'email_enabled',public._contact_mail_enabled(coalesce(public._norm_email(u.email),t.recipient_email)),
+   'cooldown_until',public._poll_mail_cooldown_until(uid,t.recipient_user_id,coalesce(public._norm_email(u.email),t.recipient_email),p_game_id))
+   ORDER BY t.created_at DESC),'[]'::jsonb) INTO ts
  FROM public.poll_tasks t LEFT JOIN public.profiles p ON p.id=t.recipient_user_id LEFT JOIN auth.users u ON u.id=t.recipient_user_id
- WHERE t.game_id=p_game_id AND t.owner_id=uid AND t.share_key_poll=g.share_key_poll
-  AND (t.status<>'cancelled' OR t.declined_at IS NOT NULL);
+ WHERE t.game_id=p_game_id AND t.owner_id=uid AND t.share_key_poll=g.share_key_poll AND (t.status<>'cancelled' OR t.declined_at IS NOT NULL);
  RETURN jsonb_build_object('ok',true,'friends',fs,'subscribers',ss,'tasks',ts);
-END; $$;
+END $$;
 
 
 --
@@ -14193,16 +14395,20 @@ CREATE FUNCTION "public"."poll_share_remind"("p_game_id" "uuid", "p_task_id" "uu
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE result jsonb; item jsonb;
+DECLARE identity jsonb; result jsonb; item jsonb;
 BEGIN
+ SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=auth.uid();
+ IF NOT public._account_is_registered(auth.uid(),identity) THEN RETURN jsonb_build_object('ok',false,'err','registered_account_required'); END IF;
  FOR attempt IN 1..1000 LOOP
   BEGIN
- result:=public._mail_original361_poll_share_remind(p_game_id,p_task_id);
- IF result->>'ok'='true' THEN FOR item IN SELECT value FROM jsonb_array_elements(coalesce(result->'mail','[]'::jsonb)) LOOP PERFORM public._mail_allocate_notification('poll',(item->>'task_id')::uuid,'poll:share'); END LOOP; END IF;
- RETURN result;
-  EXCEPTION WHEN lock_not_available THEN
-   IF attempt=1000 THEN RAISE; END IF;
-  END;
+   result:=public._mail_original361_poll_share_remind(p_game_id,p_task_id);
+   IF result->>'ok'='true' THEN
+    FOR item IN SELECT value FROM jsonb_array_elements(coalesce(result->'mail','[]'::jsonb)) LOOP
+     PERFORM public._mail_allocate_notification('poll',(item->>'task_id')::uuid,'poll:share');
+    END LOOP;
+   END IF;
+   RETURN result;
+  EXCEPTION WHEN lock_not_available THEN IF attempt=1000 THEN RAISE; END IF; END;
   PERFORM pg_sleep(.01);
  END LOOP;
 END $$;
@@ -14214,21 +14420,22 @@ END $$;
 
 CREATE FUNCTION "public"."poll_share_remove"("p_game_id" "uuid", "p_task_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE t public.poll_tasks%rowtype; g public.games%rowtype; uid uuid:=auth.uid(); voter text;
+DECLARE uid uuid:=auth.uid(); identity jsonb; t public.poll_tasks%rowtype; g public.games%rowtype; voter text;
 BEGIN
+ SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=uid;
+ IF NOT public._account_is_registered(uid,identity) THEN RETURN jsonb_build_object('ok',false,'err','registered_account_required'); END IF;
  SELECT * INTO g FROM public.games WHERE id=p_game_id AND owner_id=uid FOR UPDATE;
- IF uid IS NULL OR NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_owner'); END IF;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_owner'); END IF;
  SELECT * INTO t FROM public.poll_tasks WHERE id=p_task_id AND game_id=p_game_id AND owner_id=uid FOR UPDATE;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','task_not_found'); END IF;
  voter:=public.poll_task_voter_token(t.id);
  DELETE FROM public.poll_votes WHERE game_id=p_game_id AND voter_token=voter;
  DELETE FROM public.poll_text_entries WHERE game_id=p_game_id AND voter_token=voter;
- -- Keep refusal history for this run, even after sender removes its visible row.
  UPDATE public.poll_tasks SET status='cancelled',cancelled_at=coalesce(cancelled_at,now()) WHERE id=t.id;
  RETURN jsonb_build_object('ok',true);
-END; $$;
+END $$;
 
 
 --
@@ -14239,16 +14446,20 @@ CREATE FUNCTION "public"."poll_share_send"("p_game_id" "uuid", "p_friend_ids" "u
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE result jsonb; item jsonb;
+DECLARE identity jsonb; result jsonb; item jsonb;
 BEGIN
+ SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=auth.uid();
+ IF NOT public._account_is_registered(auth.uid(),identity) THEN RETURN jsonb_build_object('ok',false,'err','registered_account_required'); END IF;
  FOR attempt IN 1..1000 LOOP
   BEGIN
- result:=public._mail_original361_poll_share_send(p_game_id,p_friend_ids,p_subscriber_ids);
- IF result->>'ok'='true' THEN FOR item IN SELECT value FROM jsonb_array_elements(coalesce(result->'mail','[]'::jsonb)) LOOP PERFORM public._mail_allocate_notification('poll',(item->>'task_id')::uuid,'poll:share'); END LOOP; END IF;
- RETURN result;
-  EXCEPTION WHEN lock_not_available THEN
-   IF attempt=1000 THEN RAISE; END IF;
-  END;
+   result:=public._mail_original361_poll_share_send(p_game_id,p_friend_ids,p_subscriber_ids);
+   IF result->>'ok'='true' THEN
+    FOR item IN SELECT value FROM jsonb_array_elements(coalesce(result->'mail','[]'::jsonb)) LOOP
+     PERFORM public._mail_allocate_notification('poll',(item->>'task_id')::uuid,'poll:share');
+    END LOOP;
+   END IF;
+   RETURN result;
+  EXCEPTION WHEN lock_not_available THEN IF attempt=1000 THEN RAISE; END IF; END;
   PERFORM pg_sleep(.01);
  END LOOP;
 END $$;
@@ -14333,44 +14544,39 @@ CREATE FUNCTION "public"."poll_sub_accept_email"("p_token" "uuid", "p_email" "te
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 DECLARE
-  e text := public._norm_email(p_email);
+  e text:=public._norm_email(p_email);
   s public.poll_subscriptions%rowtype;
   deadline timestamptz;
 BEGIN
-  IF e IS NULL THEN
-    RETURN jsonb_build_object('ok',false,'error','missing_email');
-  END IF;
+  IF e IS NULL THEN RETURN jsonb_build_object('ok',false,'error','missing_email'); END IF;
   SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token;
   IF FOUND THEN
-    PERFORM public._poll_identity_email_refs(ARRAY[s.subscriber_email],ARRAY[s.owner_id,s.subscriber_user_id,s.registered_user_id,auth.uid()]);
+    PERFORM public._poll_identity_email_refs(
+      ARRAY[s.subscriber_email],ARRAY[s.owner_id,s.registered_user_id,auth.uid()]);
     PERFORM public._subscriber_pair_lock(s.owner_id,s.subscriber_email);
   END IF;
   SELECT * INTO s FROM public.poll_subscriptions WHERE token=p_token FOR UPDATE;
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('ok',false,'error','invalid_token');
-  END IF;
-  IF s.subscriber_user_id IS NOT NULL THEN
-    RETURN jsonb_build_object('ok',false,'error','registered_invite_requires_login');
-  END IF;
-  IF s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL OR s.status NOT IN ('pending','active') THEN
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','invalid_token'); END IF;
+  IF s.cancelled_at IS NOT NULL OR s.declined_at IS NOT NULL
+     OR s.status NOT IN ('pending','active') THEN
     RETURN jsonb_build_object('ok',false,'error','already_closed');
   END IF;
-  -- Match the address also on idempotent acceptance of an active invitation.
   IF public._norm_email(s.subscriber_email) IS DISTINCT FROM e THEN
     RETURN jsonb_build_object('ok',false,'error','email_mismatch');
   END IF;
   IF s.registered_user_id IS NOT NULL OR public._poll_registered_uid(e) IS NOT NULL THEN
     RETURN jsonb_build_object('ok',false,'error','has_account');
   END IF;
-  IF NOT public._contact_mail_enabled(e) THEN RETURN jsonb_build_object('ok',false,'error','notifications_disabled'); END IF;
   deadline:=public._subscriber_refusal_until(s.owner_id,e);
-  IF deadline IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'error','cooldown','cooldown_until',deadline); END IF;
+  IF deadline IS NOT NULL THEN
+    RETURN jsonb_build_object('ok',false,'error','cooldown','cooldown_until',deadline);
+  END IF;
   IF s.status='active' THEN
     RETURN jsonb_build_object('ok',true,'kind','sub','action','accept','note','already_active');
   END IF;
   UPDATE public.poll_subscriptions SET status='active',
-    accepted_at=coalesce(accepted_at,now()), opened_at=coalesce(opened_at,now())
-    WHERE id=s.id;
+    accepted_at=coalesce(accepted_at,now()),opened_at=coalesce(opened_at,now())
+   WHERE id=s.id;
   RETURN jsonb_build_object('ok',true,'kind','sub','action','accept');
 END;
 $$;
@@ -15570,49 +15776,6 @@ $$;
 
 
 --
--- Name: polls_hub_list_my_subscribers(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_hub_list_my_subscribers"() RETURNS TABLE("sub_id" "uuid", "subscriber_user_id" "uuid", "subscriber_email" "text", "subscriber_label" "text", "status" "text", "created_at" timestamp with time zone, "token" "uuid", "email_sent_at" timestamp with time zone, "email_send_count" integer, "is_expired" boolean)
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-begin
-  return query
-  with base as (
-    select
-      s.*,
-      greatest(
-        coalesce(s.declined_at,  '-infinity'::timestamptz),
-        coalesce(s.cancelled_at, '-infinity'::timestamptz),
-        coalesce(s.created_at,   '-infinity'::timestamptz)
-      ) as last_action_at
-    from public.poll_subscriptions s
-    where s.owner_id = auth.uid()
-  )
-  select
-    b.id as sub_id,
-    b.subscriber_user_id,
-    b.subscriber_email,
-    case
-      when b.subscriber_user_id is not null then coalesce(p.username, p.email, '—')
-      else coalesce(b.subscriber_email, '—')
-    end as subscriber_label,
-    b.status,
-    b.created_at,
-    b.token,
-    b.email_sent_at,
-    b.email_send_count,
-    (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days') as is_expired
-  from base b
-  left join public.profiles p on p.id = b.subscriber_user_id
-  where not (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days')
-  order by b.created_at desc;
-end;
-$$;
-
-
---
 -- Name: polls_hub_list_open_polls(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -15701,7 +15864,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'not found');
   end if;
 
-  PERFORM public._poll_identity_email_refs(ARRAY[v_sub.subscriber_email],ARRAY[v_uid,v_sub.subscriber_user_id,v_sub.registered_user_id]);
+  PERFORM public._poll_identity_email_refs(ARRAY[v_sub.subscriber_email],ARRAY[v_uid,v_sub.registered_user_id,v_sub.registered_user_id]);
   PERFORM public._subscriber_pair_lock(v_uid,v_sub.subscriber_email);
   SELECT * INTO v_sub FROM public.poll_subscriptions WHERE id=p_id AND owner_id=v_uid FOR UPDATE;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not found'); END IF;
@@ -15715,7 +15878,7 @@ begin
   delete from public.poll_tasks pt
   where pt.owner_id = v_uid
     and pt.status in ('pending', 'opened')
-    and (pt.source_subscription_id=v_sub.id OR (pt.source_kind='game' AND ((v_sub.subscriber_user_id is not null and pt.recipient_user_id=v_sub.subscriber_user_id) OR (v_sub.subscriber_email is not null and public._norm_email(pt.recipient_email)=public._norm_email(v_sub.subscriber_email)))));
+    and (pt.source_subscription_id=v_sub.id OR (pt.source_kind='game' AND ((v_sub.registered_user_id is not null and pt.recipient_user_id=v_sub.registered_user_id) OR (v_sub.subscriber_email is not null and public._norm_email(pt.recipient_email)=public._norm_email(v_sub.subscriber_email)))));
 
   return jsonb_build_object('ok', true);
 end;
@@ -16127,7 +16290,14 @@ CREATE FUNCTION "public"."resource_copy_decide"("p_offer" "uuid", "p_decision" "
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-BEGIN RETURN public._copy_decide(p_offer,p_decision); END $$;
+DECLARE identity jsonb;
+BEGIN
+ SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=auth.uid();
+ IF NOT public._account_is_registered(auth.uid(),identity) THEN
+  RETURN jsonb_build_object('ok',false,'error','auth_required');
+ END IF;
+ RETURN public._copy_decide(p_offer,p_decision);
+END $$;
 
 
 --
@@ -16163,9 +16333,12 @@ CREATE FUNCTION "public"."resource_copy_history"("p_kind" "text", "p_source" "uu
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-DECLARE actor uuid:=auth.uid(); items jsonb;
+DECLARE actor uuid:=auth.uid(); identity jsonb; items jsonb;
 BEGIN
- IF actor IS NULL THEN RETURN jsonb_build_object('ok',false,'error','auth_required','items','[]'::jsonb); END IF;
+ SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=actor;
+ IF NOT public._account_is_registered(actor,identity) THEN
+  RETURN jsonb_build_object('ok',false,'error','auth_required','items','[]'::jsonb);
+ END IF;
  IF p_kind='game' AND NOT EXISTS(SELECT 1 FROM public.games WHERE id=p_source AND owner_id=actor)
   OR p_kind='logo' AND NOT EXISTS(SELECT 1 FROM public.user_logos WHERE id=p_source AND user_id=actor)
   OR p_kind NOT IN('game','logo') THEN RAISE EXCEPTION 'not_found'; END IF;
@@ -16750,54 +16923,6 @@ $$;
 
 
 --
--- Name: share_device("uuid", "text", "uuid", "text", timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."share_device"("p_recipient_user_id" "uuid", "p_device_type" "text", "p_game_id" "uuid" DEFAULT NULL::"uuid", "p_game_name" "text" DEFAULT NULL::"text", "p_expires_at" timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-DECLARE
-  v_owner uuid := auth.uid();
-  v_created boolean;
-  v_mail_allowed boolean := false;
-  v_cooldown_until timestamptz;
-  v_target text;
-BEGIN
-  IF v_owner IS NULL THEN RETURN jsonb_build_object('ok', false, 'err', 'not_authenticated'); END IF;
-  IF v_owner = p_recipient_user_id THEN RETURN jsonb_build_object('ok', false, 'err', 'self_share'); END IF;
-  IF p_device_type NOT IN ('host', 'buzzer', 'display') THEN RETURN jsonb_build_object('ok', false, 'err', 'invalid_type'); END IF;
-
-  v_created := NOT EXISTS (
-    SELECT 1 FROM public.shared_devices
-    WHERE owner_id = v_owner AND recipient_id = p_recipient_user_id AND device_type = p_device_type
-      AND game_id IS NOT DISTINCT FROM p_game_id
-  );
-
-  INSERT INTO public.shared_devices (owner_id, recipient_id, device_type, game_id, game_name, expires_at)
-  VALUES (v_owner, p_recipient_user_id, p_device_type, p_game_id, p_game_name, p_expires_at)
-  ON CONFLICT (owner_id, recipient_id, device_type)
-  DO UPDATE SET game_id = EXCLUDED.game_id, game_name = EXCLUDED.game_name, expires_at = EXCLUDED.expires_at;
-
-  IF v_created THEN
-    v_target := 'pair:' || v_owner::text || ':' || p_recipient_user_id::text
-      || ':device:' || p_device_type || ':game:' || coalesce(p_game_id::text, 'none');
-
-    SELECT ok, next_allowed_at INTO v_mail_allowed, v_cooldown_until
-    FROM public.mail_cooldown_reserve('device:share', v_target);
-  END IF;
-
-  RETURN jsonb_build_object(
-    'ok', true,
-    'created', v_created,
-    'mail_allowed', v_mail_allowed,
-    'cooldown_until', v_cooldown_until
-  );
-END;
-$$;
-
-
---
 -- Name: site_activity_ping("uuid", "text", "uuid", boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -17206,7 +17331,7 @@ BEGIN
  IF NOT public._contact_mail_enabled(v_email) THEN RETURN jsonb_build_object('ok',false,'err','notifications_disabled','mail_allowed',false); END IF;
  PERFORM public._subscriber_pair_lock(v_uid,v_email);
  SELECT id,token INTO v_id,v_token FROM public.poll_subscriptions
-   WHERE owner_id=v_uid AND subscriber_user_id IS NULL AND registered_user_id IS NULL AND lower(trim(subscriber_email))=v_email
+   WHERE owner_id=v_uid AND registered_user_id IS NULL AND registered_user_id IS NULL AND lower(trim(subscriber_email))=v_email
      AND status IN ('pending','active') LIMIT 1;
  IF FOUND THEN RETURN jsonb_build_object('ok',true,'already',true,'id',v_id,'token',v_token); END IF;
  v_until:=public._subscriber_refusal_until(v_uid,v_email);
@@ -17234,15 +17359,24 @@ END; $_$;
 --
 
 CREATE FUNCTION "public"."subscribers_list"() RETURNS TABLE("id" "uuid", "email" "text", "status" "text", "created_at" timestamp with time zone, "token" "uuid", "email_sent_at" timestamp with time zone, "email_send_count" integer, "friend_user_id" "uuid")
-    LANGUAGE "sql" STABLE SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-  SELECT s.id,coalesce((SELECT email FROM auth.users WHERE id=s.registered_user_id),s.subscriber_email),s.status,s.created_at,s.token,s.email_sent_at,s.email_send_count,
-    coalesce(s.registered_user_id,public._poll_registered_uid(s.subscriber_email))
+DECLARE uid uuid:=auth.uid(); identity jsonb;
+BEGIN
+  SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=uid;
+  IF NOT public._account_is_registered(uid,identity) THEN RETURN; END IF;
+
+  RETURN QUERY
+  SELECT s.id,
+         coalesce((SELECT u.email FROM auth.users u WHERE u.id=s.registered_user_id),s.subscriber_email)::text,
+         s.status,s.created_at,s.token,s.email_sent_at,s.email_send_count,
+         coalesce(s.registered_user_id,public._poll_registered_uid(s.subscriber_email))
   FROM public.poll_subscriptions s
-  WHERE s.owner_id=auth.uid() AND s.subscriber_user_id IS NULL AND (s.status IN ('pending','active') OR (s.status='declined' AND s.declined_at>now()-interval '5 days'))
+  WHERE s.owner_id=uid AND s.subscriber_email IS NOT NULL
+    AND (s.status IN('pending','active') OR (s.status='declined' AND s.declined_at>now()-interval '5 days'))
   ORDER BY s.created_at DESC;
-$$;
+END $$;
 
 
 --
@@ -17271,36 +17405,40 @@ $$;
 
 CREATE FUNCTION "public"."tasks_list"("p_kind" "text" DEFAULT NULL::"text") RETURNS TABLE("kind" "text", "id" "uuid", "state" "text", "title" "text", "owner_label" "text", "created_at" timestamp with time zone, "done_at" timestamp with time zone, "token" "uuid", "poll_type" "text", "role" "text", "device_type" "text", "game_id" "uuid", "expires_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
 #variable_conflict use_column
-DECLARE
-  v_uid uuid := auth.uid();
+DECLARE uid uuid:=auth.uid(); identity jsonb;
 BEGIN
-  IF v_uid IS NULL THEN
-    RETURN;
-  END IF;
-  PERFORM public.poll_claim_email_records();
-
-  IF p_kind IS NULL OR p_kind = 'poll' THEN
-    RETURN QUERY
-    SELECT 'poll'::text, t.id,
-           CASE WHEN t.done_at IS NOT NULL THEN 'done' ELSE 'todo' END,
-           coalesce(g.name, ('Sondaż ' || left(t.game_id::text, 8))::text),
-           coalesce(nullif(p.username, ''), p.email),
-           t.created_at, t.done_at, t.token,
-           t.poll_type, NULL::text, NULL::text, t.game_id, NULL::timestamptz
-    FROM public.poll_tasks t
-    LEFT JOIN public.games g ON g.id = t.game_id
-    LEFT JOIN public.profiles p ON p.id = t.owner_id
-    WHERE t.recipient_user_id = v_uid
-      AND t.declined_at IS NULL AND t.cancelled_at IS NULL
-      AND (t.done_at IS NULL OR t.done_at > now() - interval '5 days')
-    ORDER BY t.created_at DESC;
-  END IF;
-
-END;
-$$;
+ SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id=uid;
+ IF NOT public._account_is_registered(uid,identity) THEN RETURN; END IF;
+ PERFORM public.poll_claim_email_records();
+ IF p_kind IS NULL OR p_kind='poll' THEN
+  RETURN QUERY SELECT 'poll'::text,t.id,CASE WHEN t.done_at IS NOT NULL THEN 'done' ELSE 'todo' END,
+   coalesce(g.name,'Sondaż '||left(t.game_id::text,8)),coalesce(nullif(p.username,''),p.email),t.created_at,t.done_at,t.token,
+   t.poll_type,NULL::text,NULL::text,t.game_id,NULL::timestamptz
+  FROM public.poll_tasks t LEFT JOIN public.games g ON g.id=t.game_id LEFT JOIN public.profiles p ON p.id=t.owner_id
+  WHERE t.recipient_user_id=uid AND t.declined_at IS NULL AND t.cancelled_at IS NULL
+    AND (t.done_at IS NULL OR t.done_at>now()-interval '5 days') ORDER BY t.created_at DESC;
+ END IF;
+ IF p_kind IS NULL OR p_kind='base' THEN
+  RETURN QUERY SELECT 'base'::text,bt.id,
+   CASE WHEN bt.status IN('pending','opened') THEN 'todo' ELSE 'done' END,
+   coalesce(b.name,'Baza pytań'),coalesce(nullif(p.username,''),p.email),bt.created_at,
+   CASE WHEN bt.status='done' THEN bt.accepted_at END,bt.token,NULL::text,bt.role::text,NULL::text,NULL::uuid,NULL::timestamptz
+  FROM public.base_share_tasks bt LEFT JOIN public.question_bases b ON b.id=bt.base_id
+   LEFT JOIN public.profiles p ON p.id=bt.owner_id
+  WHERE bt.recipient_user_id=uid AND (bt.status IN('pending','opened') OR (bt.status='done' AND bt.accepted_at>now()-interval '5 days'))
+  ORDER BY bt.created_at DESC;
+ END IF;
+ IF p_kind IS NULL OR p_kind='device' THEN
+  RETURN QUERY SELECT 'device'::text,sd.id,'todo'::text,coalesce(nullif(sd.game_name,''),sd.device_type),
+   coalesce(nullif(p.username,''),p.email),sd.created_at,NULL::timestamptz,NULL::uuid,NULL::text,NULL::text,
+   sd.device_type,sd.game_id,sd.expires_at
+  FROM public.shared_devices sd LEFT JOIN public.profiles p ON p.id=sd.owner_id
+  WHERE sd.recipient_id=uid AND (sd.expires_at IS NULL OR sd.expires_at>now()) ORDER BY sd.created_at DESC;
+ END IF;
+END $$;
 
 
 --
@@ -17679,24 +17817,6 @@ $$;
 
 
 --
--- Name: unshare_device("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."unshare_device"("p_recipient_user_id" "uuid", "p_device_type" "text") RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-  DELETE FROM public.shared_devices
-  WHERE owner_id = auth.uid()
-    AND recipient_id = p_recipient_user_id
-    AND device_type = p_device_type;
-  RETURN true;
-END;
-$$;
-
-
---
 -- Name: update_base_share_role("uuid", "uuid", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -17915,7 +18035,7 @@ CREATE TABLE "public"."control2_device_events" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "event_id" "text",
     CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"]))),
-    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text", 'lease_state'::"text"])))
+    CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text", 'lease_state'::"text", 'transport_state'::"text", 'state_sync'::"text"])))
 );
 
 
@@ -18786,8 +18906,7 @@ CREATE TABLE "public"."poll_sessions" (
 CREATE TABLE "public"."poll_subscriptions" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "owner_id" "uuid" NOT NULL,
-    "subscriber_user_id" "uuid",
-    "subscriber_email" "text",
+    "subscriber_email" "text" NOT NULL,
     "token" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "status" "text" DEFAULT 'pending'::"text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
@@ -18799,7 +18918,6 @@ CREATE TABLE "public"."poll_subscriptions" (
     "email_send_count" integer DEFAULT 0 NOT NULL,
     "registered_user_id" "uuid",
     "identity_tracking_enabled" boolean DEFAULT true NOT NULL,
-    CONSTRAINT "poll_subscriptions_one_subscriber_chk" CHECK (((("subscriber_user_id" IS NOT NULL) AND ("subscriber_email" IS NULL)) OR (("subscriber_user_id" IS NULL) AND ("subscriber_email" IS NOT NULL)))),
     CONSTRAINT "poll_subscriptions_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'declined'::"text", 'cancelled'::"text"])))
 );
 
@@ -21013,13 +21131,6 @@ CREATE INDEX "poll_subscriptions_sub_email_idx" ON "public"."poll_subscriptions"
 
 
 --
--- Name: poll_subscriptions_sub_user_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "poll_subscriptions_sub_user_idx" ON "public"."poll_subscriptions" USING "btree" ("subscriber_user_id");
-
-
---
 -- Name: poll_subscriptions_token_uq; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -21619,6 +21730,48 @@ CREATE TRIGGER "poll_tasks_cleanup_partial_votes" BEFORE DELETE OR UPDATE OF "st
 --
 
 CREATE TRIGGER "profiles_reserve_test_username" BEFORE INSERT OR UPDATE OF "username" ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."profiles_reserve_test_username"();
+
+
+--
+-- Name: base_share_tasks registered_base_share_parties; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "registered_base_share_parties" BEFORE INSERT OR DELETE OR UPDATE ON "public"."base_share_tasks" FOR EACH ROW EXECUTE FUNCTION "public"."_registered_sharing_rows_guard"();
+
+
+--
+-- Name: control_device_shares registered_device_share_parties; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "registered_device_share_parties" BEFORE INSERT OR DELETE OR UPDATE ON "public"."control_device_shares" FOR EACH ROW EXECUTE FUNCTION "public"."_registered_sharing_rows_guard"();
+
+
+--
+-- Name: friendships registered_friendship_parties; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "registered_friendship_parties" BEFORE INSERT OR DELETE OR UPDATE ON "public"."friendships" FOR EACH ROW EXECUTE FUNCTION "public"."_registered_sharing_rows_guard"();
+
+
+--
+-- Name: market_games registered_market_submission_author; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "registered_market_submission_author" BEFORE INSERT ON "public"."market_games" FOR EACH ROW EXECUTE FUNCTION "public"."_registered_sharing_rows_guard"();
+
+
+--
+-- Name: poll_tasks registered_poll_task_parties; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "registered_poll_task_parties" BEFORE INSERT OR DELETE OR UPDATE ON "public"."poll_tasks" FOR EACH ROW EXECUTE FUNCTION "public"."_registered_sharing_rows_guard"();
+
+
+--
+-- Name: poll_subscriptions registered_subscription_parties; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "registered_subscription_parties" BEFORE INSERT OR DELETE OR UPDATE ON "public"."poll_subscriptions" FOR EACH ROW EXECUTE FUNCTION "public"."_registered_sharing_rows_guard"();
 
 
 --
@@ -22674,14 +22827,6 @@ ALTER TABLE ONLY "public"."poll_subscriptions"
 
 ALTER TABLE ONLY "public"."poll_subscriptions"
     ADD CONSTRAINT "poll_subscriptions_registered_user_id_fkey" FOREIGN KEY ("registered_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
---
--- Name: poll_subscriptions poll_subscriptions_subscriber_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."poll_subscriptions"
-    ADD CONSTRAINT "poll_subscriptions_subscriber_user_id_fkey" FOREIGN KEY ("subscriber_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 --
@@ -24044,7 +24189,7 @@ CREATE POLICY "poll_sessions_select_owner" ON "public"."poll_sessions" FOR SELEC
 -- Name: poll_subscriptions poll_subs_select_owner_or_subscriber; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "poll_subs_select_owner_or_subscriber" ON "public"."poll_subscriptions" FOR SELECT USING ((("auth"."uid"() = "owner_id") OR ("auth"."uid"() = "subscriber_user_id")));
+CREATE POLICY "poll_subs_select_owner_or_subscriber" ON "public"."poll_subscriptions" FOR SELECT USING ((("auth"."uid"() = "owner_id") OR ("auth"."uid"() = "registered_user_id")));
 
 
 --
@@ -24680,5 +24825,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3uHZ9YtUsCuBf8u1dhr02YCBkoowvxtnhZPeB8GqybA6uUugdLXiEdY5V9tBHcl
+\unrestrict ufJsGxIbNumVLaYVgxWDgTbdhCRUdqc8sdJDGaP5UoXwvYu4goeMDB0ZHDj3iK4
 

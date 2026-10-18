@@ -2,9 +2,9 @@ const { test, expect } = require("@playwright/test");
 const { restoreTestAccount } = require("./helpers/mailbox");
 const { loginAsTestUser } = require("./helpers/login");
 
-test("@mailbox konta11/12/15: odtworzenie i potwierdzone logowanie", async ({ browser }) => {
+test("@mailbox konta11/12/15/17: odtworzenie i potwierdzone logowanie", async ({ browser }) => {
   test.setTimeout(120000);
-  for (const account of ["test11", "test12", "test15"]) {
+  for (const account of ["test11", "test12", "test15", "test17"]) {
     const restored = await restoreTestAccount(account);
     expect(restored).toMatchObject({ ok: true, account, email: account + "@familiada.online" });
     if (account === "test15") expect(restored.admin_excluded).toBe(true);

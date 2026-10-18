@@ -1,12 +1,15 @@
 // js/pages/poll-text.js
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-18T17330";
-import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-18T17330";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-18T17330";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+guardViewportWidth({ minWidth: 0 });
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-18T17375";
+import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-18T17375";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-18T17375";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 });
 
 const MSG = {
@@ -64,7 +67,9 @@ let outbox = [];
 
 function redirectToRoot() {
   setTimeout(() => {
-    location.href = "/";
+    void getUser().then((user) => {
+      location.replace(withLangParam(user ? "/games/" : "/"));
+    });
   }, 5000);
 }
 
@@ -102,6 +107,7 @@ function showClosed(on) {
   if (qbox) qbox.style.display = on ? "none" : "";
   if (on && subEl) subEl.style.display = "none"; // Hide loading sub when showing closed/error msg
   else if (!on && subEl) subEl.style.display = "";
+  if (on) document.getElementById("closed")?.classList.add("skel-step-ready");
 }
 
 // Komunikat stanu (zamknięta / wygasła / brak): zawsze widoczny w bloku #closed.
@@ -109,6 +115,7 @@ function showStatus(msg) {
   showClosed(true);
   setSub("");
   setClosedMsg(msg);
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }
 
 // Stan ankiety względem klucza z linku (poll_state, anon): zatrzymana / zakończona /
@@ -301,6 +308,7 @@ let payload = null;
 let idx = 0;
 
 function render() {
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
   const game = payload?.game || {};
   const questions = payload?.questions || [];
   const q = questions[idx];
@@ -352,6 +360,7 @@ function render() {
 
   if (qtext) qtext.textContent = q.text || t("common.dash");
   if (prog) prog.textContent = MSG.questionProgress(q.ord, questions.length);
+  qbox?.classList.add("skel-step-ready");
   setSub(""); // zdejmujemy “Ładuję…”
 
   if (answerInput) {
@@ -471,6 +480,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         idx++;
         render();
+        requestAnimationFrame(() => qbox?.scrollIntoView({ behavior: "smooth", block: "start" }));
       } catch (e) {
         console.error("[poll-text] pack error:", e);
         setSub(MSG.error(e?.message || e));

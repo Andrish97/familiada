@@ -27,8 +27,11 @@ INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES
 ('bbbbbbbb-3534-0000-0000-000000000002','recipient353independent@example.invalid','{"username":"recipient353independent"}');
 INSERT INTO public.friendships(id,requester_id,addressee_id,status) VALUES('ffffffff-3534-0000-0000-000000000007','aaaaaaaa-3534-0000-0000-000000000001','bbbbbbbb-3534-0000-0000-000000000002','active');
 INSERT INTO public.games(id,owner_id,name,type,status,share_key_poll) VALUES('dddddddd-3534-0000-0000-000000000004','aaaaaaaa-3534-0000-0000-000000000001','Independent friend353','poll_text','poll_open','independent353');
--- Legacy UID source alongside a separate, explicitly recorded friend grant.
-INSERT INTO public.poll_subscriptions(id,owner_id,subscriber_user_id,status) VALUES('eeeeeeee-3534-0000-0000-000000000005','aaaaaaaa-3534-0000-0000-000000000001','bbbbbbbb-3534-0000-0000-000000000002','active');
+-- Email-origin source bound to an account, alongside a separate, explicitly
+-- recorded friend grant. Direct account subscriptions now live in friendships.
+INSERT INTO public.poll_subscriptions(id,owner_id,registered_user_id,subscriber_email,status)
+VALUES('eeeeeeee-3534-0000-0000-000000000005','aaaaaaaa-3534-0000-0000-000000000001',
+       'bbbbbbbb-3534-0000-0000-000000000002','recipient353independent@example.invalid','active');
 DO $$ DECLARE token uuid; BEGIN
  PERFORM set_config('request.jwt.claim.sub','aaaaaaaa-3534-0000-0000-000000000001',true);
  IF public.poll_share_send('dddddddd-3534-0000-0000-000000000004',ARRAY['bbbbbbbb-3534-0000-0000-000000000002'::uuid],'{}')->>'created' IS DISTINCT FROM '1' THEN RAISE EXCEPTION 'friend grant fixture'; END IF;

@@ -19,8 +19,20 @@ on:
         description: 'Opcjonalna, odizolowana pula kont, np. 4,5. Pusta wartość używa zwykłej puli bez kont zarezerwowanych.'
         required: false
         default: ""
+      e20_gallery_pages:
+        description: 'Opcjonalnie: ID stron galerii E20 rozdzielone przecinkami. Puste = wszystkie strony.'
+        required: false
+        default: ""
+      e20_gallery_profiles:
+        description: 'Opcjonalnie: profile galerii E20 rozdzielone przecinkami. Puste = wszystkie urządzenia.'
+        required: false
+        default: ""
+      e20_gallery_accounts:
+        description: 'Istniejące konta testowe do galerii E20, np. 1,2,3. Widoki jednego konta są sekwencyjne; konta pracują równolegle.'
+        required: false
+        default: "2"
       publish_mail_screenshots:
-        description: 'Publikuj zrzuty /mail/ w docs po udanym punktowym teście.'
+        description: 'Publikuj zrzuty /mails/ w docs po udanym punktowym teście.'
         type: boolean
         required: false
         default: false
@@ -124,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         group:
           - name: konto-glowne
@@ -193,7 +205,7 @@ jobs:
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-        run: npx playwright test ${{ matrix.group.files }} --workers="$TEST_WORKERS"
+        run: npx playwright test ${{ matrix.group.files }} --workers="$TEST_WORKERS" --retries=0 --max-failures=1
         working-directory: tests
 
       - name: Upload failure screenshots
@@ -259,13 +271,38 @@ jobs:
             node --test --test-concurrency=1 unit/*.test.js
           fi
 
+      - name: Prepare E20 session and read existing account data
+        if: ${{ success() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        env:
+          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '2' }}
+        run: node e2e/helpers/prepare-e20-gallery.js
+        working-directory: tests
+
       - name: Run E2E tests (spec_filter)
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           KEEP_STATISTICS_GAMES: ${{ inputs.retain_statistics_games && '1' || '0' }}
-        run: npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
+          E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
+          E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
+          E20_GALLERY_ACCOUNTS: ${{ inputs.e20_gallery_accounts || '2' }}
+          IS_E20_GALLERY: ${{ contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') && '1' || '0' }}
+        run: |
+          if [ "$IS_E20_GALLERY" = "1" ]; then
+            npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS" --retries=0 --max-failures=1
+          else
+            npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS" --retries=0 --max-failures=1
+          fi
         working-directory: tests
+
+      - name: Validate E20 screenshot folders
+        if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        env:
+          E20_GALLERY_PAGES: ${{ inputs.e20_gallery_pages || '' }}
+          E20_GALLERY_PROFILES: ${{ inputs.e20_gallery_profiles || '' }}
+        run: node scripts/agent-tools/build-e20-gallery.cjs
 
       - name: Upload production statistics evidence
         if: always()
@@ -294,6 +331,19 @@ jobs:
           path: tests/test-results/**/shot-*.png
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Upload E20 gallery
+        if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e20-gallery-${{ github.run_number }}
+          path: tests/test-results/e20-gallery/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Remove temporary E20 authentication state
+        if: ${{ always() && contains(inputs.spec_filter, 'e2e/e20-gallery.spec.js') }}
+        run: rm -f "$RUNNER_TEMP"/familiada-e20-gallery-test*-auth.json "$RUNNER_TEMP"/familiada-e20-gallery-test*-data.json
 
       - name: Publish requested anonymous poll screenshots
         if: ${{ success() && inputs.publish_anonymous_screenshots && (contains(inputs.spec_filter, 'e2e/poll-anonymous.spec.js') || contains(inputs.spec_filter, 'e2e/poll-anonymous-layout.spec.js') || contains(inputs.spec_filter, 'e2e/poll-go.spec.js') || contains(inputs.spec_filter, 'e2e/go-states.spec.js')) }}

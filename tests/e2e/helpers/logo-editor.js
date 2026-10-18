@@ -1,6 +1,6 @@
 // tests/e2e/helpers/logo-editor.js
-// Wspólne kroki testów logo (logo-editor.spec.js): lista /logo/ i trzy
-// strony edytorów /logo/editor/<tryb>/?id= z autozapisem.
+// Wspólne kroki testów logo (logo-editor.spec.js): lista /logos/ i trzy
+// strony edytorów /logos/editor/<tryb>/?id= z autozapisem.
 
 const { expect } = require("@playwright/test");
 const { isKnownNoiseText } = require("./login");
@@ -18,7 +18,7 @@ function collectPageErrors(page) {
   return errors;
 }
 
-async function openList(page, site, path = "/logo/") {
+async function openList(page, site, path = "/logos/") {
   await page.goto(`${site.origin}${path}`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#grid .addCard")).toBeAttached({ timeout: 20000 });
   await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 20000 });
@@ -64,7 +64,7 @@ async function readLogoByName(page, name) {
 
 /** Czeka, aż strona edytora wczyta logo (pole nazwy odblokowane). */
 async function waitEditorReady(page, mode) {
-  await page.waitForURL(new RegExp(`/logo/editor/${mode.toLowerCase()}/\\?id=`), { timeout: 15000 });
+  await page.waitForURL(new RegExp(`/logos/editor/${mode.toLowerCase()}/\\?id=`), { timeout: 15000 });
   await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", mode.toUpperCase());
   await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
   if (mode.toUpperCase() === "DRAW") await page.waitForTimeout(300);
@@ -87,15 +87,15 @@ async function editLogo(page, site, id) {
   const row = await readLogo(page, id);
   const sourceMode = String(row?.payload?.source?.mode || "").toUpperCase();
   const tab = row?.type === "GLYPH_30x10" ? "text" : sourceMode === "IMAGE" || row?.payload?.source?.imageUrl || row?.payload?.source?.imageData ? "image" : "draw";
-  await openList(page, site, `/logo/${tab === "text" ? "" : `?tab=${tab}`}`);
+  await openList(page, site, `/logos/${tab === "text" ? "" : `?tab=${tab}`}`);
   await page.locator(`.logoTile[data-key="${id}"]`).click();
   await page.locator("#btnEdit").click();
   // Edycja zablokowana na liście (alert) zostawia stronę -- wtedy nie czekamy na edytor.
   await Promise.race([
-    page.waitForURL(/\/logo\/editor\//, { timeout: 15000 }),
+    page.waitForURL(/\/logos\/editor\//, { timeout: 15000 }),
     page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15000 }),
   ]);
-  if (/\/logo\/editor\//.test(page.url()) && !(await page.locator("#resourceLockGuard").isVisible().catch(() => false))) {
+  if (/\/logos\/editor\//.test(page.url()) && !(await page.locator("#resourceLockGuard").isVisible().catch(() => false))) {
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 }).catch(() => {});
   }
 }
@@ -127,7 +127,7 @@ async function isDirty(page) {
 /** „Wstecz” z edytora: zapis i powrót na listę logo. */
 async function close(page) {
   await page.locator("#btnBack").click();
-  await page.waitForURL(/\/logo\/(\?|$)/, { timeout: 20000 });
+  await page.waitForURL(/\/logos\/(\?|$)/, { timeout: 20000 });
   await expect(page.locator("#grid .addCard")).toBeAttached({ timeout: 20000 });
 }
 

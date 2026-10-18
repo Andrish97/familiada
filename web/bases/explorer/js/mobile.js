@@ -29,6 +29,7 @@ export function initDrawer() {
     panel.classList.add("is-open");
     overlay.hidden = false;
     btn.setAttribute("aria-expanded", "true");
+    document.body.classList.add("explorer-drawer-open");
     document.body.style.overflow = "hidden";
   }
 
@@ -36,6 +37,7 @@ export function initDrawer() {
     panel.classList.remove("is-open");
     overlay.hidden = true;
     btn.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("explorer-drawer-open");
     document.body.style.overflow = "";
   }
 
@@ -44,6 +46,7 @@ export function initDrawer() {
   });
 
   overlay.addEventListener("click", close);
+  document.addEventListener("modal-sheet:enter", close);
 
   // Na życzenie: zaznaczenie/nawigacja (klik ani dblclick) w drzewie/tagach
   // NIE zamyka już drawera automatycznie -- lista po prawej i tak aktualizuje

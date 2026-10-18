@@ -1,32 +1,35 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-18T17330";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-18T17375";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-18T17330";
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-18T17375";
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-18T17330";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-18T17375";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-18T17330";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17330";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-18T17330";
-import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T17330";
-import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-18T17330";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-18T17330";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-18T17330";
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-18T17330";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-18T17375";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17375";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-18T17375";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-18T17375";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T17375";
+import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-18T17375";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-18T17375";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-18T17375";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-18T17375";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-18T17375";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
+  initListHeaderLayout();
   // Moje/udostępnione to zakładki — filtr po roli (własna / edycja / odczyt).
   initListSearch({
     grids: "#mineGrid, #sharedGrid", tile: ".card", name: ".name",
@@ -74,8 +77,16 @@ const nameMsg = document.getElementById("nameMsg");
 // Modal importu
 const importOverlay = document.getElementById("importOverlay");
 const importFile = document.getElementById("importFile");
+const importFilePicker = bindLocalizedFilePicker({
+  input: importFile,
+  button: document.getElementById("btnChooseImportFile"),
+  fileName: document.getElementById("importFileName"),
+  t,
+});
 const btnImportJson = document.getElementById("btnImportJson");
+const btnImportDone = document.getElementById("btnImportDone");
 const btnCancelImport = document.getElementById("btnCancelImport");
+const btnImportCancelAction = document.getElementById("btnImportCancelAction");
 const importErr = document.getElementById("importErr");
 const importMsg = document.getElementById("importMsg");
 
@@ -88,6 +99,7 @@ const importProgMsg = document.getElementById("importProgMsg");
 
 // Export progress (overlay eksportu do pliku)
 const exportJsonOverlay = document.getElementById("exportJsonOverlay");
+const btnExportJsonClose = document.getElementById("btnExportJsonClose");
 const exportJsonSub = document.getElementById("exportJsonSub");
 const exportJsonStep = document.getElementById("exportJsonStep");
 const exportJsonCount = document.getElementById("exportJsonCount");
@@ -101,6 +113,7 @@ const shareSectionsHost = document.getElementById("shareSectionsHost");
 const shareEmail = document.getElementById("shareEmail");
 const shareRole = document.getElementById("shareRole");
 const baseShareFriends = document.getElementById("baseShareFriends");
+const baseShareBulkHost = document.getElementById("baseShareBulkActions");
 const baseShareFriendsRole = document.getElementById("baseShareFriendsRole");
 const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
@@ -206,8 +219,10 @@ function baseRoleButton(value, onChange) {
   button.className = "btn xsm baseShareRole";
   const update = () => {
     const editor = value === "editor";
-    button.innerHTML = icon(editor ? "edit-paper" : "eye");
-    button.title = t(editor ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");
+    const label = t(editor ? "bases.shareModal.roleEditor" : "bases.shareModal.roleViewer");
+    const shortLabel = t(editor ? "bases.shareModal.roleEditorShort" : "bases.shareModal.roleViewerShort");
+    button.innerHTML = `${icon(editor ? "edit-paper" : "eye")}<span class="baseShareRoleLabel baseShareRoleFull">${label}</span><span class="baseShareRoleLabel baseShareRoleShort" aria-hidden="true">${shortLabel}</span>`;
+    button.title = label;
     button.setAttribute("aria-label", button.title);
     button.dataset.role = value;
   };
@@ -850,12 +865,25 @@ async function renderShareModal() {
   if (version !== shareRenderVersion) return;
   if (error || !data?.ok) { showShareMessage(t("bases.share.failed")); return; }
   baseShareFriends.replaceChildren();
+  baseShareBulkHost?.replaceChildren();
   shareSectionsHost.replaceChildren();
   const empty = host => {
     const el = document.createElement("div"); el.className = "shareEmpty";
     el.textContent = t("baseSharePanel.empty"); host.append(el);
   };
   if (!data.friends.length) empty(baseShareFriends);
+  const bulkActions = shareBulkActionsEl({
+    onSelectAll: () => {
+      baseShareFriends.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach((input) => { input.checked = true; });
+      updateBaseShareSelection();
+    },
+    onDeselectAll: () => {
+      baseShareFriends.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
+      updateBaseShareSelection();
+    },
+  });
+  baseShareBulkHost?.replaceChildren(bulkActions.element);
+  baseShareBulkActions = bulkActions;
   for (const friend of data.friends) {
     const row = shareRowEl({ id: friend.user_id, label: friend.label || friend.email, compact: true });
     const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.value = friend.user_id;
@@ -934,8 +962,11 @@ async function renderShareModal() {
     shareSectionsHost.append(row);
   }
 }
+let baseShareBulkActions = null;
 function updateBaseShareSelection() {
+  const inputs = baseShareFriends?.querySelectorAll('input[type="checkbox"]') || [];
   btnBaseShareFriends.disabled = shareAddInFlight || !baseShareFriends?.querySelector('input:checked:not(:disabled)');
+  baseShareBulkActions?.update(inputs);
 }
 function baseShareError(row) {
   if (row?.cooldown_until) return t("baseSharePanel.cooldown", { time: formatCooldownRemaining(Math.max(0, Date.parse(row.cooldown_until) - Date.now())) });
@@ -1293,11 +1324,15 @@ function importResetState() {
   importParsed = null;
   if (importErr) { importErr.style.display = "none"; importErr.textContent = ""; }
   if (btnImportJson) btnImportJson.disabled = true;
+  if (btnImportJson) btnImportJson.hidden = false;
+  if (btnImportDone) btnImportDone.hidden = true;
+  if (btnImportCancelAction) btnImportCancelAction.hidden = false;
+  setMsg(importMsg, "");
 }
 
 function openImportModal() {
   importResetState();
-  if (importFile) importFile.value = "";
+  importFilePicker.reset();
   setMsg(importMsg, "");
   showProgBlock(importProg, false);
   show(importOverlay, true);
@@ -1337,6 +1372,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!b || btnExport?.disabled) return;
 
     show(exportJsonOverlay, true);
+    enterModalSheet(exportJsonOverlay, {
+      backBtn,
+      onClose: () => {
+        if (!btnExportJsonClose?.hidden) {
+          show(exportJsonOverlay, false);
+          exitModalSheet(exportJsonOverlay);
+        }
+      },
+    });
+    if (btnExportJsonClose) btnExportJsonClose.hidden = true;
     if (exportJsonSub) exportJsonSub.textContent = t("bases.exportModal.subtitle");
     setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
       step: t("bases.export.steps.start"), i: 0, n: 6, msg: "",
@@ -1348,16 +1393,22 @@ document.addEventListener("DOMContentLoaded", () => {
         setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step, i, n, msg });
       });
       downloadJson(safeDownloadName(b.name), out);
-      show(exportJsonOverlay, false);
+      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
     } catch (e) {
       console.warn("[bases] export error:", e);
       setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
         step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"), isError: true,
       });
-      setTimeout(() => show(exportJsonOverlay, false), 3000);
+      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
     } finally {
       if (btnExport) btnExport.disabled = false;
     }
+  });
+
+  btnExportJsonClose?.addEventListener("click", () => {
+    show(exportJsonOverlay, false);
+    exitModalSheet(exportJsonOverlay);
+    btnExportJsonClose.hidden = true;
   });
 
   btnImport?.addEventListener("click", () => openImportModal());
@@ -1389,6 +1440,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     if (btnImportJson) btnImportJson.disabled = true;
     if (btnCancelImport) btnCancelImport.disabled = true;
+    if (btnImportCancelAction) btnImportCancelAction.disabled = true;
     if (importFile) importFile.disabled = true;
 
     try {
@@ -1399,8 +1451,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       selectedId = newId;
       setActiveTab("mine");
-      closeImportModal();
       await refreshView();
+      showProgBlock(importProg, false);
+      setMsg(importMsg, t("bases.import.success"));
+      if (btnImportJson) btnImportJson.hidden = true;
+      if (btnImportDone) btnImportDone.hidden = false;
+      if (btnImportCancelAction) btnImportCancelAction.hidden = true;
     } catch (e) {
       console.warn("[bases] import error:", e);
       setMsg(importMsg, t("bases.import.failed"));
@@ -1411,11 +1467,14 @@ document.addEventListener("DOMContentLoaded", () => {
       showProgBlock(importProg, false);
       if (btnImportJson) btnImportJson.disabled = !importParsed;
       if (btnCancelImport) btnCancelImport.disabled = false;
+      if (btnImportCancelAction) btnImportCancelAction.disabled = false;
       if (importFile) importFile.disabled = false;
     }
   });
 
   btnCancelImport?.addEventListener("click", () => closeImportModal());
+  btnImportCancelAction?.addEventListener("click", () => closeImportModal());
+  btnImportDone?.addEventListener("click", () => closeImportModal());
 
   btnNameCancel?.addEventListener("click", () => closeNameModal());
   document.getElementById("btnNameClose")?.addEventListener("click", () => closeNameModal());

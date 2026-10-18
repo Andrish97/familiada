@@ -231,14 +231,14 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     const info = await owner.page.evaluate(async token => (await window.__sbClient.rpc("friends_token_info", { p_token: token })).data, token);
     expect(info.status).toBe("declined");
     await recipient.page.goto(link);
-    await expect(recipient.page.locator("#title")).toHaveText("Odrzucono");
+    await expect(recipient.page.locator("#title")).toHaveText("Zaproszenie odrzucone");
     await recipient.page.getByRole("button", { name: "Otwórz Znajomych" }).click();
     await refusal.locator('[data-act="undo_reject"]').click();
     await expect(incoming.locator('[data-act="accept"]')).toBeEnabled();
     await incoming.locator('[data-act="accept"]').click();
     await expect(recipient.page.locator(`.rowsSection--friend [data-id="${id}"]`)).toBeVisible();
     await recipient.page.goto(link);
-    await expect(recipient.page.locator("#title")).toHaveText("Zaakceptowano");
+    await expect(recipient.page.locator("#title")).toHaveText("Jesteście znajomymi");
     // Drugi przypadek bez wysyłki: fixture RPC dla sprawdzenia cofania odmowy.
     await cleanup(owner.page, recipient.id);
     const next = await owner.page.evaluate(async handle => (await window.__sbClient.rpc("friends_invite", { p_handle: handle })).data, testAccountUsername(8));
@@ -370,6 +370,7 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
       await expect(owner.page).toHaveURL(/tab=received/);
       await expect(owner.page.locator("#contactsInvite")).toBeHidden();
       await expect(owner.page.locator("#contactsReceived")).toBeVisible();
+      await owner.page.setViewportSize({ width: 390, height: 844 });
       await owner.page.reload();
       await expect(received).toHaveAttribute("aria-selected", "true");
       await owner.page.setViewportSize({ width: 1400, height: 900 });
@@ -409,5 +410,35 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
     await owner.page.goto("https://www.familiada.online/friends/?f=preview");
     await expect(owner.page.locator('[data-contact-tab="received"]')).toHaveAttribute("aria-selected", "true");
     await expect(owner.page.locator('[data-id="incoming"]')).toHaveClass(/rowsFocus/);
+  } finally { await owner.context.close(); }
+});
+
+test("E20 kontakty pokazują ładowanie, błąd i pozwalają ponowić odczyt", async ({ browser }, testInfo) => {
+  const owner = await user(browser, 7);
+  let allowRetry = false;
+  await owner.context.route("**/rest/v1/rpc/contacts_list", async route => {
+    if (!allowRetry) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E20 controlled contacts read failure" }) });
+      return;
+    }
+    await route.continue();
+  });
+  try {
+    await owner.page.setViewportSize({ width: 390, height: 844 });
+    const navigation = owner.page.goto("https://www.familiada.online/friends/");
+    await expect(owner.page.locator("#contactsLoadMessage")).toHaveText("Wczytuję kontakty…");
+    await navigation;
+    await expect(owner.page.locator("#contactsLoadMessage")).toHaveText(/Nie udało się wczytać kontaktów/, { timeout: 20000 });
+    await expect(owner.page.locator("#contactsLoadRetry")).toBeVisible();
+    await expect(owner.page.locator("#contactsHost")).not.toHaveClass(/skel-step-ready/);
+    await owner.page.screenshot({ path: testInfo.outputPath("shot-e20-contacts-error-390.png"), fullPage: true });
+    allowRetry = true;
+    await owner.page.locator("#contactsLoadRetry").click();
+    await expect(owner.page.locator("#contactsLoadState")).toBeHidden();
+    await expect(owner.page.locator("#contactsHost")).toHaveClass(/skel-step-ready/);
+    await expect(owner.page.locator("#inviteForm")).toBeVisible();
+    await owner.page.setViewportSize({ width: 1400, height: 900 });
+    await owner.page.screenshot({ path: testInfo.outputPath("shot-e20-contacts-ready-1400.png"), fullPage: true });
   } finally { await owner.context.close(); }
 });

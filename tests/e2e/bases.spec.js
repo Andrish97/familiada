@@ -94,6 +94,61 @@ async function getUserId(page) {
 }
 
 
+test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", async ({ browser }, testInfo) => {
+  test.setTimeout(90_000);
+  const portrait = { width: 390, height: 844 };
+  const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
+    viewport: portrait, screen: portrait, isMobile: true, hasTouch: true,
+  });
+  const name = `E20-BS-ROTATE-${Date.now()}`;
+  let baseId;
+  try {
+    baseId = await createBaseDirect(page, name);
+    await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    const tile = page.locator("#mineGrid .card", { hasText: name });
+    await expect(tile).toBeVisible();
+    await tile.tap();
+    await page.locator("#btnShare").tap();
+
+    const overlay = page.locator("#shareOverlay");
+    await expect(overlay).toBeVisible();
+    await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
+    const assertSheetFits = async (label) => {
+      const sizes = await page.evaluate(() => ({
+        viewport: document.documentElement.clientWidth,
+        document: document.documentElement.scrollWidth,
+        modal: document.querySelector("#shareOverlay .modal").getBoundingClientRect(),
+      }));
+      expect(sizes.document, `${label}: document overflow`).toBeLessThanOrEqual(sizes.viewport + 1);
+      expect(sizes.modal.left, `${label}: modal is outside viewport`).toBeGreaterThanOrEqual(-1);
+      expect(sizes.modal.right, `${label}: modal is outside viewport`).toBeLessThanOrEqual(sizes.viewport + 1);
+    };
+    await assertSheetFits("portrait");
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-portrait-390x844.png"), fullPage: true });
+
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(overlay).toBeVisible();
+    await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
+    await expect(page.locator("#shareEmail")).toBeVisible();
+    await assertSheetFits("landscape");
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-landscape-844x390.png"), fullPage: true });
+
+    await page.setViewportSize(portrait);
+    await expect(overlay).toBeVisible();
+    await expect(page.locator("#shareEmail")).toBeVisible();
+    await assertSheetFits("portrait after rotate");
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-back-390x844.png"), fullPage: true });
+    await page.locator("#btnBack").tap();
+    await expect(overlay).toBeHidden();
+    await expect.poll(() => new URL(page.url()).searchParams.has("dialog")).toBe(false);
+  } finally {
+    if (baseId) await deleteBaseDirect(page, baseId);
+    await ctx.close();
+  }
+});
+
+
 // Symuluje "ktoś inny właśnie edytuje coś w środku tej bazy" -- to samo RPC
 // co acquireResourceLock()/acquireResourceLocks() w przeglądarce
 // (js/core/resource-lock.js), z jednorazowym tab_id.
@@ -674,6 +729,10 @@ test.describe("bases: audyt -- eksport / import", () => {
       const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
       const file = testInfo.outputPath("export.fambase");
       await download.saveAs(file);
+      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator("#exportJsonOverlay")).toBeHidden();
       const json = JSON.parse(fs.readFileSync(file, "utf8"));
       expect(json.categories).toHaveLength(2);
       expect(json.question_tags).toHaveLength(1);
@@ -683,7 +742,11 @@ test.describe("bases: audyt -- eksport / import", () => {
       await page.locator("#importFile").setInputFiles(file);
       await expect(page.locator("#btnImportJson")).toBeEnabled();
       await page.locator("#btnImportJson").click();
-      await expect(page.locator("#importOverlay")).toBeHidden({ timeout: 30000 });
+      await expect(page.locator("#importOverlay")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator("#btnImportDone")).toBeVisible();
+      await expect(page.locator("#importMsg")).toContainText("Zaimportowano");
+      await page.locator("#btnImportDone").click();
+      await expect(page.locator("#importOverlay")).toBeHidden();
 
       const summary = await page.evaluate(async ({ name, baseId }) => {
         const sb = window.__sbClient;
@@ -707,6 +770,39 @@ test.describe("bases: audyt -- eksport / import", () => {
       expect(summary).toMatchObject({ cats: 2, nested: 1, qs: 1, qInFolder: 1, tags: 1, qtags: 1, ctags: 1 });
     } finally {
       for (const id of createdIds) await deleteBaseDirect(page, id);
+    }
+  });
+
+  test("E20 eksport Bazy: błąd pozostaje widoczny i eksport da się ponowić", async ({ page, context }) => {
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-BS-EXPORT-RETRY-${Date.now()}`;
+    const baseId = await createBaseDirect(page, name);
+    try {
+      await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      await page.locator("#mineGrid .card", { hasText: name }).locator(".name").click();
+      await page.route("**/rest/v1/question_bases**", (route) => {
+        const req = route.request();
+        const url = new URL(req.url());
+        if (req.method() === "GET" && url.searchParams.get("id") === `eq.${baseId}`) {
+          return route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ code: "E20_TEST", message: "E20 controlled export error" }) });
+        }
+        return route.continue();
+      });
+      await page.locator("#btnExport").click();
+      await expect(page.locator("#exportJsonMsg")).toContainText("E20 controlled export error");
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.waitForTimeout(3100);
+      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+      await page.unroute("**/rest/v1/question_bases**");
+      const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
+      expect(download.suggestedFilename()).toContain("E2E-BS-EXPORT-RETRY");
+      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await page.locator("#btnExportJsonClose").click();
+    } finally {
+      await page.unroute("**/rest/v1/question_bases**");
+      await deleteBaseDirect(page, baseId);
     }
   });
 

@@ -1,6 +1,6 @@
-import { icon } from "./icons.js?v=v2026-10-18T17330";
-import { t } from "../../translation/translation.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-18T17330";
+import { icon } from "./icons.js?v=v2026-10-18T17375";
+import { t } from "../../translation/translation.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-18T17375";
 let modalSeq = 0;
 
 function modalText(key, fallback) {
@@ -22,7 +22,7 @@ function buildModal({
 
   const overlay = document.createElement("div");
   overlay.className = "overlay";
-  overlay.style.background = "rgba(0,0,0,.75)";
+  overlay.style.background = "var(--modal-scrim)";
   // sheet: rozbudowana treść (np. szczegóły statystyki, podgląd
   // wiadomości) przekazana przez wywołującego — na telefonie zastępuje
   // treść strony zamiast być małym oknem, patrz js/core/modal-sheet.js.
@@ -74,12 +74,14 @@ function buildModal({
   const okBtn = document.createElement("button");
   okBtn.className = "btn sm gold";
   okBtn.type = "button";
-  okBtn.textContent = okText;
+  okBtn.innerHTML = `${icon("check")}<span></span>`;
+  okBtn.querySelector("span").textContent = okText;
 
   const cancelBtn = document.createElement("button");
   cancelBtn.className = "btn sm";
   cancelBtn.type = "button";
-  cancelBtn.textContent = cancelText;
+  cancelBtn.innerHTML = `${icon("close")}<span></span>`;
+  cancelBtn.querySelector("span").textContent = cancelText;
 
   const msg = document.createElement("div");
   msg.className = "importMsg";

@@ -126,3 +126,45 @@ test("renderowanie wierszy Realtime jest serializowane i scala kolejkę do najno
   await tick(20);
   assert.deepEqual(seen, [1, 2, 4]);
 });
+
+
+test("postęp synchronizacji rozróżnia źródło i raportuje błąd renderowania bez zatrzymania odbioru", async () => {
+  const progress = [];
+  const seen = [];
+  const origWarn = console.warn;
+  console.warn = () => {};
+  try {
+    const sync = createRowSync({
+      fetchRow: async () => ({ data: row(4) }),
+      onRow: (value) => { seen.push(value.rev); if (value.rev === 4) throw Object.assign(new Error("render"), { name: "RenderError" }); },
+      onProgress: (event) => progress.push(event),
+      now: (() => { let time = 10; return () => ++time; })(),
+    });
+    await sync.fetchGuarded();
+    sync.applyRow(row(5));
+    await tick();
+  } finally { console.warn = origWarn; }
+  assert.deepEqual(seen, [4, 5]);
+  assert.equal(progress.length, 2);
+  assert.equal(progress[0].source, "rpc");
+  assert.equal(progress[0].previousRev, -1);
+  assert.equal(progress[0].renderError.name, "RenderError");
+  assert.equal(progress[1].source, "postgres_changes");
+  assert.equal(progress[1].previousRev, 4);
+  assert.equal(progress[1].renderError, null);
+});
+
+test("status odczytu rejestruje pojedynczy wynik RPC z rewizją i czasem", async () => {
+  const statuses = [];
+  const sync = createRowSync({
+    fetchRow: async () => ({ data: row(12) }),
+    onRow: () => {},
+    onReadStatus: (status) => statuses.push(status),
+    now: (() => { let time = 100; return () => ++time; })(),
+  });
+  await sync.fetchGuarded();
+  assert.equal(statuses.length, 1);
+  assert.equal(statuses[0].ok, true);
+  assert.equal(statuses[0].revision, 12);
+  assert.equal(typeof statuses[0].fetchMs, "number");
+});

@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+  <style>html[data-touch-guard-pending] body{visibility:hidden}</style><script>document.documentElement.dataset.touchGuardPending="true"</script>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
   <title data-i18n="buzzer.title">Familiada — Przycisk do pojedynku</title>
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/device-lease.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/control/buzzer/css/buzzer.css?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/control/buzzer/css/buzzer.css?v=v2026-10-18T17375"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/control/buzzer/js/main.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/control/buzzer/js/main.js?v=v2026-10-18T17375" defer></script>
 </head>
-<body class="buzzer-body" data-device-screen>
-  <section id="deviceLeaseOverlay" class="device-lease-overlay" hidden aria-live="polite" aria-atomic="true"><div class="device-lease-card"><h1 id="deviceLeaseTitle"></h1><p id="deviceLeaseText"></p></div></section>
+<body class="buzzer-body" data-device-screen data-device-form-factors="phone,tablet" data-requires-touch="true">
+  <section id="deviceLeaseOverlay" class="blocking-overlay" hidden role="alertdialog" aria-labelledby="deviceLeaseTitle" aria-describedby="deviceLeaseText" aria-live="polite" aria-atomic="true"><div class="blocking-card"><div class="blocking-heading"><span id="deviceLeaseIcon" class="blocking-icon" aria-hidden="true"></span><h2 id="deviceLeaseTitle" class="blocking-title"></h2></div><p id="deviceLeaseText" class="blocking-message"></p></div></section>
   <div class="a2hs" id="buzzerA2HS" role="dialog" aria-modal="true" aria-labelledby="buzzerA2HSTitle" aria-hidden="true">
   <div class="a2hsCard">
     <h2 class="a2hsTitle" id="buzzerA2HSTitle" data-i18n="common.a2hsTitle">Pełny ekran na iPhone</h2>
@@ -22,7 +22,7 @@
       W Safari nie da się wymusić prawdziwego pełnego ekranu.
       Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.
     </p>
-    <button class="btn a2hsClose" id="buzzerA2HSClose" type="button" data-i18n="common.a2hsOk">OK</button>
+    <button class="btn a2hsClose" id="buzzerA2HSClose" type="button" data-i18n="common.a2hsOk" data-i18n-icon="check">OK</button>
   </div>
 </div>
 
@@ -30,11 +30,15 @@
     <span class="ico" id="fsIco" aria-hidden="true"><i class="ico" data-icon="fullscreen-enter"></i></span>
   </button>
 
-  <div class="off" id="offScreen" hidden></div>
+  <div class="off" id="offScreen" data-skel-step hidden></div>
 
-  <div class="arena" id="arena" hidden>
+  <div class="arena" id="arena" data-skel-step hidden>
     <button class="btnRing red" id="btnA" type="button" aria-label="Przycisk A" data-i18n-aria-label="buzzer.btnA"></button>
     <button class="btnRing blue" id="btnB" type="button" aria-label="Przycisk B" data-i18n-aria-label="buzzer.btnB"></button>
+  </div>
+  <div class="device-load-error" id="deviceLoadError" role="alert" data-skel-step hidden>
+    <span data-i18n="common.genericError">Wystąpił błąd.</span>
+    <button class="btn" type="button" data-retry-device data-i18n="common.refresh" data-i18n-icon="refresh">Odśwież</button>
   </div>
 </body>
 </html>

@@ -1,1 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" id="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H6a3 3 0 0 0-3 3v9"/><rect x="8" y="8" width="13" height="13" rx="2.5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" id="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <!-- Tylna kartka urywa się przed obrysem przedniej, tak jak w ikonach zaznaczania. -->
+    <mask id="behind-front-card" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24" mask-type="luminance">
+      <rect width="24" height="24" fill="white"/>
+      <rect x="7.1" y="7.1" width="14.8" height="14.8" rx="3.2" fill="black"/>
+    </mask>
+  </defs>
+  <g mask="url(#behind-front-card)">
+    <rect x="3" y="3" width="13" height="13" rx="3"/>
+  </g>
+  <rect x="8" y="8" width="13" height="13" rx="2.5"/>
+</svg>

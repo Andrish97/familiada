@@ -8,8 +8,10 @@
     color: #fff
 }
 
+.manual-body > main.wrap{ padding-top: 24px; }
+
 .page-title {
-    margin: 20px 0 12px;
+    margin: 0 0 12px;
     font-size: 20px;
     font-weight: 900;
     letter-spacing: .08em;

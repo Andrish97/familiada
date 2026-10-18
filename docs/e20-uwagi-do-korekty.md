@@ -1,0 +1,262 @@
+# E20 — uwagi użytkownika do korekty
+
+Stan roboczy na 2026-10-14. Tabela rozbija każdą uwagę na osobny wiersz. „Jak to rozumiem” opisuje oczekiwane zachowanie; „Zmiana w kodzie” zapisuje to, co jest obecnie wdrożone; status nie oznacza automatycznej akceptacji wyglądu. Sprostowania użytkownika są zapisane osobno, by wdrażać je bez zamiany na moje wcześniejsze interpretacje.
+
+## Lista do ponownego przejścia — 2026-10-17
+
+Poniższe punkty są otwarte do ponownego przeglądu. Wcześniejsze zmiany kodu i
+historyczne statusy w dalszej części pliku nie zamykają tych uwag.
+
+1. Sprawdzić brakujące ikony na przyciskach i ujednolicić ikony tych samych akcji.
+2. Ponownie przejrzeć dostępność stron na TV, przekierowania i komunikat guarda dla telewizora.
+3. Ponownie sprawdzić długie listy oraz pojedynczy pionowy scroll na mobile.
+4. Marketplace: szczegóły gry nie zdążyły się wczytać.
+5. Ankiety: powiększyć QR w modalu; poprawić podwójne separatory, odstępy, listy odbiorców, wypustki i położenie przycisku „Dodaj odbiorców”.
+6. Logo: nagłówek modala podglądu ma mieć taką samą szerokość jak pozostałe.
+7. Gry: długie nazwy na kafelkach mają kończyć się wielokropkiem.
+8. Base Explorer: separatory w modalach, mobilny widok pytania zgodny z Edytorem gry oraz lista przypisanych tagów z trzema stanami checkboxa.
+9. Bazy: ponownie sprawdzić mobilny eksport gry, modal udostępniania i rozmiar przycisku „Może edytować”.
+10. Ankiety głosowania: podkarta na telefonie i dużym tablecie nie powinna nadmiernie rozciągać się na boki.
+11. Ustawienia gry: sprawdzić, dlaczego na MacBooku otwiera się niewłaściwa gra.
+12. Control: modal udostępniania ma pokazywać kafel pustego stanu.
+13. Mails: ponownie sprawdzić szerokość podkarty „Twoje maile”.
+14. Go: ponownie sprawdzić szerokość podkarty.
+
+Punkt 4 zatwierdzony do poprawki; po wdrożeniu pozostaje otwarty do ponownego
+przeglądu. Nie oznaczać punktów tej listy jako zakończonych bez ponownego
+przejścia z użytkownikiem.
+
+Punkt 12 — Control już renderuje wspólny pusty kafel dla listy „Udostępnione
+w tej sesji”. W `tests/e2e/e20-gallery.spec.js` modal jest otwierany po
+prawdziwym „Zacznij od nowa”; test czeka na rzeczywisty wiersz albo pusty
+kafelek i wymaga kafelka, gdy lista jest pusta. Nie wstrzykuje atrap ani nie
+zmienia danych listy. Potwierdzenie ekranu pozostaje częścią następnej galerii.
+
+Punkt 4 — test galerii Marketplace: po kliknięciu prawdziwej karty czeka do
+45 sekund na stan `ready` lub `error`, a przed zrzutem potwierdza zgodność
+tytułu szczegółów z kartą i obecność pierwszego wczytanego pytania. W razie
+błędu komunikat zawiera tytuł/ID gry i stan DOM. Testu jeszcze nie uruchamiano.
+
+Punkt 6 — w mobilnym arkuszu podglądu Logo wyłączono centrowanie
+elementów w poprzek, które zwężało opakowania nagłówka i treści.
+Nagłówek rozciąga się teraz na pełną szerokość jak w pozostałych
+mobilnych modalach. Reguła działa wyłącznie dla aktywnego arkusza na
+ekranach do 600 px; widok desktopowy nie zmienia się. Zaktualizowano
+cache-buster wspólnego CSS na czterech stronach Logo. Do wizualnego
+potwierdzenia w galerii; nie uruchamiano testów ani galerii.
+
+Punkt 7 — wspólne kafle Gry i Baz skracają długie nazwy do dwóch wierszy,
+z wielokropkiem; wymuszone `min-width: 0` zapobiega wypychaniu tytułu
+poza kolumnę. Ten sam limit dwóch wierszy dodano do tytułów kafli
+Marketplace. Logo i Connect już miały wielokropek, a w Zadaniach
+tytuły wierszy także są skracane, więc tam nie zmieniano wyglądu.
+Odświeżono cache-bustery zmienionych arkuszy. Do wizualnego
+potwierdzenia; testów ani galerii nie uruchamiano.
+
+Punkt 8 — naprawiono style wierszy listy tagów (stare reguły celowały w
+nieistniejący już `#tagsModal`, zamiast aktualnego `.tags-modal`). Każdy
+tag ma teraz własny wiersz, nazwę i widoczny checkbox. Zachowano trzy
+stany z wyliczeń dla zaznaczonych pytań/folderów (`none`, `some`,
+`all`); stan częściowy ma natywny checkbox mieszany oraz
+`aria-checked="mixed"`. Podsumowanie zaznaczenia nie jest już
+przenoszone ponad tytuł warstwy. W mobilnych arkuszach Base Explorer
+stopka nie dodaje drugiego separatora obok linii paska akcji. Widok
+pytania nadal korzysta ze wspólnego formularza i kontrolek Edytora
+gry; lista odpowiedzi przewija się wewnętrznie. Odświeżono cache
+CSS i modułu tagów. Do wizualnego potwierdzenia; bez testów/galerii.
+
+Punkt 9 — mobilny eksport gry w Base Explorer ma już ograniczenia
+`min-width: 0`, elastyczne kolumny i zawijanie długich nazw wierszy;
+aktywny cache-buster jego arkusza został odświeżony w punkcie 8. W
+modalu udostępniania obie listy nadal są widoczne jednocześnie i każda
+przewija się wewnętrznie. Poprawiono przycisk roli w wierszu: przestał
+dziedziczyć stałą szerokość przycisku ikonowego, a etykieta „Może
+edytować” ma 12 px jak pozostałe przyciski xsm. Do wizualnego
+potwierdzenia; nie uruchamiano testów ani galerii.
+
+Punkt 10 — w widoku ankiety ograniczono szerokość całej karty z wypustkami
+razem z jej treścią do 760 px i wyśrodkowano ją na szerszych ekranach.
+Na telefonie zachowuje ona dostępną szerokość. Reguła jest przypięta
+wyłącznie do `#pollTabsCard`; nie obejmuje żadnego z dwóch układów Mails. Odświeżono cache-buster arkusza ankiet.
+Do wizualnego potwierdzenia; bez testów i galerii.
+
+Doprecyzowanie użytkownika dla Mails (punkt 13): są dwa różne układy.
+Karta wpisywania adresu (`#mailEntry`) ma być węższa. Po przejściu do
+zwykłej strony z linkiem/listami normalny układ Mails ma zachować
+szerokość strony podobną do Znajomych lub Ankiet. Nie stosować
+ograniczenia karty ankiety ani węższej szerokości formularza do
+normalnego widoku Mails.
+
+### Ankiety — poprawki punktu 5 na branchu
+
+Zwiększono mobilny QR do głosowania (ramka do 480 px), ustawiono odstęp 20 px
+w mobilnym modalu QR zgodnie z układem z Control, a wspólna stopka arkusza nie
+rysuje już drugiego separatora. Kafelki w obu wewnętrznie przewijanych listach
+odbiorców zachowują naturalną wysokość; „Dodaj odbiorców” jest wyrównane do
+prawej, a ikona `people` była już podłączona przez i18n. W mobilnym układzie
+trzech wypustek środkowa „Odbiorcy” zachowuje oba kąciki i zaokrąglenia karty;
+układ desktopowy nadal ma dwie wypustki.
+
+Audyt pozostałych miejsc ze zmienną liczbą wypustek: Bazy mają dwie dla konta
+zwykłego i żadnej dla gościa (resetują wtedy promienie karty); Gry mają stale
+cztery, Logo trzy, Znajomi/Subskrybenci i Mails po dwie. Ich kąciki i promienie
+odpowiadają pozycji zakładek. Reguły Control odnoszą się do nieobecnych w
+aktualnym HTML/JS `#navDevices`/`#navFinal` i nie sterują działającym widokiem.
+Punkt 5 pozostaje otwarty do ponownego przeglądu wizualnego.
+
+## Korekta galerii TV — 2026-10-17
+
+| Uwaga | Zmiana | Status |
+|---|---|---|
+| Zrzuty TV pokazywały komunikat „niedostępna na telefonie”; strony takie jak Login powinny przejść przez prawdziwe przekierowanie Workera na ekran TV. Jeśli na innej stronie zadziała guard, komunikat ma mówić o telewizorze. | Profil TV galerii nie przechwytuje już lokalnych Home/Connect, więc Worker może wykonać prawdziwe przekierowanie. Dla TV galeria obejmuje Home, Login, Connect TV, Maintenance i 404; walidator nie wymaga widoków aplikacji, do których TV jest przekierowywany. Guard ma osobny komunikat „Niedostępne na telewizorze”. Worker kieruje znane strony do Connect TV, ale pozostawia Maintenance, 404 i nieznane ścieżki ich właściwej obsłudze. | Wdrożone i wypchnięte w `a736ed8d6e`; poprawione dalej w `d527870567`. Testów i galerii nie uruchamiano. |
+
+## Dostosowanie widoków dostępnych na TV — 2026-10-17
+
+| Uwaga | Zmiana | Status |
+|---|---|---|
+| Topbar i stopka na widokach dostępnych na TV mają mieć skalę jak ekran Podłącz wyświetlacz; komunikat guarda ma być bez przycisków i kierować z powrotem do Connect TV. | Maintenance i 404 rozpoznają TV, dostają większy topbar oraz stopkę. 404 ukrywa przyciski do zwykłych stron i zapowiada powrót do ekranu Podłącz wyświetlacz. Po wyłączeniu konserwacji oraz po 404 TV wraca na `/connect/?tv=1`; TV-guard nie pokazuje przycisków i po 3 sekundach wraca do tego ekranu. Inne urządzenia zachowują dotychczasowe przekierowanie na `/`. | Wdrożone i wypchnięte w `d527870567`; `git diff --check` i `node --check` przeszły. E2E i galerii nie uruchamiano. |
+
+## Sprostowania użytkownika i wdrożenie
+
+| # | Sprostowanie | Jak zmieniam zachowanie/kod | Stan |
+|---:|---|---|---|
+| 1 | Ramki i safe area mają być widoczne bezpośrednio na obrazach. Nie potrzeba HTML — artefakt ma zawierać tylko foldery stron i obrazy. | E2E składa ramkę urządzenia, notch i zaokrąglenia w samo PNG; artefakt z workflow obejmuje tylko foldery PNG. Walidacyjne manifesty zostają w katalogu tymczasowym runnera. | Kod poprawiony; do potwierdzenia krótkim przebiegiem i artefaktem PNG. |
+| 2 | Sprawdzić i odizolować tylko strony, które rzeczywiście mogą pokazać resource lock. | Przechwytywanie edit-lock API przeniesiono z całego kontekstu na konkretne ujęcia Control, Eksploratora, edytora Gry, Ustawień gry, edytorów Logo i Ankiet. Pozostałe widoki korzystają z prawdziwego API. Fixture ma osobne logo dla każdego trybu edycji. | Kod poprawiony; do potwierdzenia punktem E2E. |
+| 3 | Potwierdzone. | Wspólny pusty stan listy pozostaje kaflem z przerywaną ramką. | Potwierdzone przez użytkownika. |
+| 4 | Potwierdzone. | Zachowany zwiększony odstęp topbar–nagłówek. | Potwierdzone przez użytkownika. |
+| 5 | Potwierdzone. | Zachowany odstęp Privacy/Manual od topbara. | Potwierdzone przez użytkownika. |
+| 6 | Poprzednich screenów nie akceptuje; następny przebieg ma potwierdzić nową zasadę paska. | Zostawiam wszystkie elementy w jednym wierszu, jeśli mieszczą się; przy braku miejsca dzielę grupy proporcjonalnie, lewa zostaje przy lewej krawędzi, prawa przy prawej. | Usunięto wspólne ograniczenie `.wrap { width:90% }` z trzech przeglądarek zasobów. Poprawiono też pomiar paska: kopia kontrolek jest teraz mierzona poza układem, ale wewnątrz `.games-bottom`, więc zachowuje reguły responsywne i warianty ikon/etykiet bieżącego profilu. | Kod sprawdzony i poprawiony; screeny odkładam do końca listy poprawek, zgodnie z ustaleniem. |
+| 7 | Podpowiedź preferuje naturalny podział po przecinku/kropce; podział nagłówka jest preferowany przed przeniesieniem przycisków do drugiego rzędu. | Najpierw zawijają się tytuł (preferując granice słów) i podpowiedź (preferując przecinki/kropki). Przyciski pozostają po prawej, jeśli obok nich mieści się minimalna szerokość nagłówka; schodzą niżej dopiero, gdy nie mieszczą się nawet w takim układzie. | `initListHeaderLayout()` porównuje szerokość akcji z minimalną szerokością najdłuższego słowa tytułu. CSS pozwala zawinąć tytuł i frazy podpowiedzi, bez przenoszenia akcji tylko dlatego, że pełny tytuł/podpowiedź jest długi. Dotyczy wspólnych nagłówków Gier, Baz i Logo. Screenów odkładam do końca listy. |
+| 8 | Lewa stopka zawija się w lewej części, prawa w prawej. Nie mogą się mieszać ani spadać jedna pod drugą, jak na starym mobilnym 404. Przy trzech sekcjach skrajne trzymają krawędzie, środkowa środek. Kolumny mają dopasowywać się do treści, z możliwie małą liczbą wierszy. Przy zawijaniu preferowane są naturalne podzielniki: myślnik, kropka, przecinek — zamiast samotnego słowa w osobnym wierszu. | Szerokość sekcji wynika z jej naturalnej szerokości, a przy braku miejsca sekcje kurczą się proporcjonalnie do treści. Pozostają w jednym rzędzie i zawijają tekst we własnym obszarze; lewa i prawa krawędź są zachowane, a środkowa sekcja pozostaje wycentrowana między skrajnymi. Zawijanie preferuje naturalne granice interpunkcyjne i unika wdów. | Wspólny `.footer` w `web/shared/css/base.css` używa elastycznego wiersza bez równych kolumn (`flex: 0 1 auto`, `flex-wrap: nowrap`). Długość treści steruje udziałem w szerokości i zawijaniem; `text-wrap: pretty` preferuje naturalny skład wierszy, zaś zwykłe łamanie po spacjach wykorzystuje myślniki, kropki i przecinki. Przy trzech sekcjach środkowa ma automatyczne marginesy. Screeny 404 i stopek odkładam do końca listy. |
+| 9 | Ustawienia rozgrywki mają być złote i używać ikony `settings.svg` z `main`. | Użyć istniejącego rysunku settings z głównego repo; przycisk zachowuje złoty styl również w stanie disabled. | Potwierdzono w kodzie po synchronizacji z `main`: `web/games/index.html` ustawia `class="btn sm gold"` i `data-icon="settings"`; `web/shared/js/core/icons.js` wskazuje `web/assets/icons/navigation/settings.svg`, którego treść jest identyczna z wersją na `origin/main`. Nie tworzę drugiego rysunku. Screen odkładam do końca listy. |
+| 10 | Wszystkie wypustki, nie tylko w Grach, mają wspólny rozmiar napisów. Szerokości nie muszą być równe: mają wynikać proporcjonalnie z długości dostępnych napisów, z miejscem na plakietki. Niektóre mobilne zapisy trzeba skrócić, jeśli mogą się nie zmieścić. | Wspólna typografia obejmuje wszystkie paski wypustek. Każda szerokość zaczyna się od naturalnej szerokości etykiety i plakietki; przy braku miejsca elementy kurczą się proporcjonalnie. Liczniki inline rezerwują miejsce także wtedy, gdy są puste, a liczniki nakładane nie zmieniają szerokości po pojawieniu się. W Grach mobile używa krótszych etykiet „Tekst” i „Prepar.”; „Społeczność” pozostaje pełne. | `web/shared/css/base.css` daje wspólny rozmiar 12 px / 10 px mobile i bazę `flex: 1 1 max-content`. Wyjątki równych kolumn usunięto z Gier, Baz, Ankiet, Kontaktów i Logo; Control korzysta z tych samych zmiennych typograficznych. `web/games/index.html` oraz tłumaczenia PL/EN/UK mają jawne mobilne warianty. Plakietki w Friends, Subscribers i Mail zachowują miejsce, a liczniki Gier/Logo rezerwują szerokość przed załadowaniem. | Kod poprawiony i sprawdzony statycznie; nie uruchamiałem zrzutów/testów, zgodnie z ustaleniem — wrócimy do nich po całej liście. |
+| 11 | Ikona eksportu ma bazować na istniejącej ikonie Bazy pytań i mieć strzałkę w jej kierunku. | Zachować ten sam rysunek szafki i dodać z lewej strzałkę skierowaną do niej. | `drawer-export.svg` zawiera geometrię szafki z `drawer.svg` w tych samych wymiarach, przesuniętą o 2 px, oraz strzałkę z lewej. Zmieniono wersję URL w `web/shared/js/core/icons.js`, by odświeżyć cache. | Kod poprawiony; zrzuty sprawdzimy po zakończeniu listy. |
+| 12 | „Otrzymano” ma być filtrem, a nie sortowaniem ani osobnym przyciskiem. | Dodać „Otrzymano” do menu filtra statusu, tak aby pokazywał wyłącznie gry otrzymane jako kopie. | `web/games/js/games.js` dodaje filtr `received` z predykatem opartym o `data-received`; `web/shared/js/core/list-search.js` obsługuje predykaty opcji filtra. Usunięto `received` z sortowania. | Kod poprawiony; nie uruchamiałem testów ani zrzutów. |
+
+| # | Oryginalna uwaga | Jak to rozumiem | Zmiana w kodzie / gdzie | Status i dowód |
+|---:|---|---|---|---|
+| 1 | iPhone i iPad mają pokazywać notch i zaokrąglenia; safe area ma być konsekwentna. | Ramka galerii ma realistycznie pokazywać obudowę i wycięcie, a CSS strony dostaje insety zgodne z profilem urządzenia. iPhone: portrait 47/0/34/0, landscape 0/47/21/47. iPad mini: portrait i landscape 24/0/20/0. | Profile urządzeń i insety w `tests/e2e/e20-gallery.spec.js`; podstawianie `env(safe-area-inset-*)` w `tests/e2e/helpers/branch-code.js`; wizualna ramka w `scripts/agent-tools/build-e20-gallery.cjs`; poprawka Connect TV w `web/connect/tv.css`. | Wcześniejszy krótki run `38620721900` przechodził profile; pełny aktualny run przerwał się na błędnym typie logo w fixture, więc nie potwierdza całej macierzy. Zrzutów z aktualnego pełnego runu nie uznaję za galerię. |
+| 2 | Niektóre widoki otwierają równolegle strony i pojawia się blokada zasobów. | Ten test ma wykonywać widoki po kolei i zamykać poprzedni kontekst. Blokada edycji ma pozostać prawdziwą funkcją aplikacji, ale nie może przypadkowa współbieżność testu fałszować zdjęć. | Sekwencyjne otwieranie i zamykanie stron w `tests/e2e/e20-gallery.spec.js`; izolacja wyłącznie API `edit_locks` w kontekście galerii, bez przechwytywania pozostałych danych. | Krótki run `38643551060` przeszedł 7/7 ujęć na MacBooku. Pełny run wykrył odrębny błąd: jeden fixture Logo był typu TEXT, a otwierano go w edytorze DRAW. |
+| 3 | „Nie masz”, „Brak” itd. na listach kafelkowych mają wyglądać jak kafel z przerywaną obwódką. | Pusty stan listy ma zajmować miejsce kafla i mieć ten sam kształt/styl pustego kafla, a nie być zwykłym tekstem. Nie dotyczy ładowania, błędu ani celowo ukrytej sekcji. | Wspólne style pustych stanów zasobów, Connect i udostępnień: `web/shared/css/` oraz `web/connect/css/`. | Zmiana jest wdrożona według dokumentacji E20; niepotwierdzona wizualnie na nowej pełnej galerii. |
+| 4 | Odstęp między nagłówkiem a topbarem jest za mały na większości stron. | Po topbarze ma być czytelny, wspólny oddech przed nagłówkiem strony. | Wspólne style układu w `web/shared/css/base.css` i style wybranych rodzin stron. | Wdrożone według checklisty; nowy pełny przegląd wizualny nieukończony. |
+| 5 | Privacy i Manual mają za mały odstęp od topbara. | Obie strony powinny mieć ten sam czytelny odstęp jak pozostałe strony, bez przyklejonego tytułu. | `web/manual/css/manual.css`, reguła `.manual-body > main.wrap` z paddingiem u góry; Privacy korzysta ze wspólnego układu. | Zmiana w kodzie; nowa galeria przerwała się przed tymi stronami. |
+| 6 | W pasku filtrów/eksportów pokaż wszystkie elementy w jednym wierszu, jeżeli się mieszczą; zawijaj dopiero po braku miejsca. | Liczyć rzeczywistą szerokość wszystkich kontrolek, a nie przenosić ich wcześniej przez arbitralny próg. Przy zawinięciu lewa grupa dochodzi do lewej krawędzi, prawa do prawej; podział wierszy ma być proporcjonalny i mieć możliwie mało rzędów. | Pomiar i układ w `web/shared/js/core/list-header-layout.js`; style pasków w `web/games/css/games.css`. Jeśli zawartość się mieści, helper wymusza jeden wiersz; jeśli nie, rozdziela miejsce grupom proporcjonalnie. | Krótki run `38643551060`: asercja jednego wiersza przeszła dla Gier/Baz/Logo przy szerokości MacBooka. Zawijanie na wąskich profilach wymaga oglądu. |
+| 7 | W pasku nagłówka podpowiedź ma się zawijać lepiej, np. zdaniami, zamiast niepotrzebnie przenosić przyciski. | Najpierw wykorzystać szerokość wspólnego wiersza: tytuł i akcje pozostają po swoich stronach, a podpowiedź może zajmować dodatkowy wiersz tekstu. Przyciski przenieść pod nagłówek dopiero, gdy układ mimo zawinięcia podpowiedzi się nie mieści. | Pomiar akcji nagłówka w `web/shared/js/core/list-header-layout.js` nie traktuje minimalnej szerokości podpowiedzi jako warunku przeniesienia akcji; style podpowiedzi używają `text-wrap: pretty`, `hyphens: auto`, bez łamania w każdym miejscu. Usunięto wymuszające pozycję reguły Logo w `web/logo/css/logo.css`. | Krótki run `38643551060`: na MacBooku akcje Gier/Baz/Logo pozostały w wierszu nagłówka. Zawijanie długich podpowiedzi na różnych szerokościach nie jest jeszcze zaakceptowane wizualnie. |
+| 8 | Stopka: prawa treść przy prawej krawędzi, lewa przy lewej; po braku miejsca zawijają się rozsądnie. Przy trzech sekcjach ta sama zasada. W zawijaniu preferować naturalne podzielniki (`–`, `.`, `,`) przed pozostawieniem samotnego słowa. | Wyrównanie krawędziowe, szerokości wynikają z treści, a wiersz pozostaje pojedynczy nawet przy zawijaniu tekstu. Naturalne granice tekstu mają dawać czytelne, zwarte wiersze. | Wspólny CSS stopki używa elastycznego wiersza bez równych kolumn i `text-wrap: pretty`, które wspiera naturalne łamanie i ogranicza samotne słowa. Safe area zachowana. | Kod poprawiony; wymaga oceny zrzutów wszystkich typów stopek. |
+| 9 | Games: „Ustawienia rozgrywki” mają być złote i mieć ikonę zębatki. | Złoty przycisk akcji z ikoną ustawień, nie ikoną dźwięku. | `web/games/index.html`: przycisk ma klasę złotego stylu i `data-icon="settings"`. | Wdrożone; nowa pełna galeria nie doszła do końca. |
+| 10 | Games: nazwy wypustek Społeczności/Preparowana na mobile są niezrozumiałe lub za duże. Użytkownik doprecyzował, że reguła dotyczy wszystkich wypustek, szczególnie tych z plakietkami; ich szerokości mają wynikać z tekstu, a mobilne etykiety należy skrócić, gdy trzeba. | Wszystkie paski wypustek mają wspólny rozmiar pisma, proporcjonalne szerokości wynikające z treści oraz miejsce na liczniki. Mobile Gier używa etykiet „Tekst”, „Punkty”, „Prepar.”, „Społeczność”. | Wspólny układ w `web/shared/css/base.css`; wyjątki równych kolumn usunięte w CSS Gier/Baz/Ankiet/Kontaktów/Logo, Control używa wspólnych zmiennych; etykiety w `web/games/index.html` i `web/shared/translation/`. | Kod poprawiony statycznie; wygląd sprawdzimy dopiero po zakończeniu listy. |
+| 11 | Games: eksport do bazy ma używać ikony baz z dodaną strzałką, nie nowej ikony. | Zachować istniejącą ikonę Bazy jako bazę wizualną i dodać oznaczenie eksportu. | Ikona akcji eksportu w `web/games/` i wspólnym zestawie ikon. | Zmiana opisana jako wdrożona; wizualnie niepotwierdzona nową galerią. |
+| 12 | Games: „Otrzymano” miało być filtrem. Poprzednio błędnie przeniesiono tę opcję do sortowania. | Opcja „Otrzymano” filtruje listę gier według kopii otrzymanych od innych; nie jest sortowaniem. | `web/games/js/games.js` oraz obsługa predykatu filtra w `web/shared/js/core/list-search.js`. | Poprawiono po sprostowaniu użytkownika; nie uruchamiałem testów ani zrzutów. |
+| 13 | 404: zbędny przycisk Wróć w topbarze. | 404 ma zachować brand/topbar, ale nie pokazywać tam akcji powrotu. | `web/404.html`: topbar bez przycisku powrotu. | Wdrożone; nowy pełny run nie doszedł do strony 404. |
+| 14 | Polls vote (punkty i tekst) mają zawsze widoczny topbar z brandem, także mobile. | Brand nie może znikać na wąskim ekranie ani w trybie głosowania. | `web/shared/css/poll.css` i topbar wariantów `web/polls/vote/points/`, `web/polls/vote/text/`. | Wdrożone według checklisty; brak aktualnego potwierdzenia pełnym zestawem zrzutów. |
+| 15 | Polls QR nie może mieć stopki z przyciskiem kontaktu. Guard ma dopuszczać komputer/TV, blokować małe ekrany. | QR dopuszcza komputer, TV co najmniej HD i odpowiednio duży tablet. Za mały ekran otrzymuje wspólny komunikat guarda; kontakt nie jest pokazywany. | `web/polls/vote/qr/index.html` i `poll-qr.js`: `desktop`, `tablet`, `tv`; szerokość widoku 980 px; krótszy bok ekranu dotykowego 800 px; dla TV wymagane zgłoszone HD 1280 × 720. Usunięto import `contact-modal.js`, który dodawał pływający przycisk kontaktu. | Kod poprawiony; bez testów i zrzutów w tym kroku. |
+| 16 | Ankiety: na telefonie trzy karty; anonimowość i odbiorcy mają być rozdzieleni. | Desktop zachowuje dwie wypustki: „Udostępnianie” (układ lewo/prawo) i „Głosy”. Mobile ma trzy wypustki: „Anonimowo”, „Odbiorcy”, „Głosy”; środkowa prawa karta zawiera akcje i listę. Jedyny scroll w stronie jest wewnątrz listy odbiorców. | `web/polls/index.html`, `web/polls/js/polls.js`, `web/shared/css/polls.css`: mobilna zakładka Odbiorcy pokazuje prawą część bez duplikowania danych; desktop ukrywa tę wypustkę i pokazuje obie strony razem. Karty wypełniają obszar roboczy; panel zakładki nie przewija się. | Kod poprawiony; bez zrzutów/testów do końcowego przebiegu. |
+| 17 | Mail ma mieć publiczny URL `/mails`, nie `/mail`; zmienić precyzyjnie wszędzie. | Trasa strony i wszystkie wejścia prowadzą do `/mails/`; nie tworzyć aliasu `/mail/`. Ścieżki assetów `/mail/css`, `/mail/js` oraz endpointy `/_api/mail` zostają techniczne. | `web/mails/index.html` canonical i `web/shared/js/core/nav-map.js` używają `/mails/`; `tests/e2e/mail-center.spec.js` oraz skrypty podglądu używają `/mails/`. Link do zarządzania pocztą z wiadomości ma token `/go/?m=...`, który Worker przekierowuje do `/mails/`; linki zaproszeń/subskrypcji nadal przechodzą przez resolver `/go/?s=...`. W migracjach/seedach nie znaleziono starego publicznego URL-a `/mail/`. Poprawiono opis publikowania zrzutów w `.github/workflows/e2e-tests.yml`. `tests/unit/navMap.test.js` sprawdza, że `/mail/` nie mapuje się na stronę. | Sprawdzono kod generujący stopkę maila, linki resolvera, Worker oraz pliki migracji/seedów; nie wykonywałem zapytania do działającej bazy produkcyjnej. Punktowy test mapy tras: 25/25. |
+| 18 | Logo ma mieć publiczny URL `/logos`, nie `/logo`; zmienić precyzyjnie wszędzie. | Zmienić adres strony i odnośniki; nie zmieniać bez potrzeby ścieżek katalogów zasobów/API. | `web/logos/`, odnośniki, PWA i mapa tras; edytory pozostają pod `/logos/editor/...`. W `scripts/agent-tools/capture-layout-screenshots.cjs` znaleziono stare adresy listy i trzech edytorów; poprawiono je na `/logos/...`. W migracjach historyczne `/logo-editor/` i `/logo/` występuje w komentarzach/przenoszeniu assetów, nie jako link do strony. Pozostałe `/logo/assets/` i `/logo/js/` to ścieżki zasobów modułów. | Audyt linków Workera, migracji i skryptów: stare wejścia do strony występowały tylko w konfiguracji zrzutów i zostały poprawione. `git diff --check` przechodzi; nie uruchamiałem całej galerii. |
+| 19 | Pierwotna uwaga: „Podgląd” Logo na mobile nie może trafić do drugiego wiersza. Późniejsze doprecyzowanie: nie dodawać dla niego specjalnej reguły; wystarcza ogólna zasada układu nagłówka. | Tytuł i podpowiedź zawijają się, zanim akcje zostaną przeniesione; jeśli akcjom zabraknie miejsca obok nagłówka, cała ich grupa schodzi razem. Nie przypinamy „Podglądu” osobno ani nie zmieniamy kolejności akcji. | Wspólny układ w `web/shared/js/core/list-header-layout.js` oraz `.bar` w `web/games/css/games.css` stosują tę samą zasadę do nagłówka Logo. Akcje nie zawijają się niezależnie od siebie. Nie potrzeba zmiany specyficznej dla Logo/mobile. | Sprawdzone w kodzie. Punkt zamknięty bez dodatkowej reguły; wizualne screeny pozostają częścią końcowego przebiegu. |
+| 20 | Gry społeczności: etykiety „Szukaj gier” i „Sortowanie” mają zniknąć; zostać same pola i przyciski. | Pasek ma pokazywać pola/przyciski bez osobnych widocznych etykiet. Nazwy dostępności i tekst podpowiedzi w polu mogą zostać. | W `web/marketplace/index.html` nie ma osobnych elementów tekstowych „Szukaj gier” ani „Sortowanie”: te ciągi służą wyłącznie jako `aria-label`/`title`; pole zachowuje placeholder, a sortowanie pokazuje wybraną opcję. Na mobile CSS ukrywa tekstową zawartość przycisków filtrów i zostawia ikony. | Sprawdzone w HTML, CSS i inicjalizacji mobilnego pola wyszukiwania. Nie ma widocznych etykiet do usunięcia; punkt spełniony bez zmian w kodzie. |
+| 21 | Gry społeczności: ikona języka jest brzydka; poprawić. | Użyć czytelnej, spójnej ikony języka, zamiast niezrozumiałego/glifowego symbolu. | Wspólna ikona języka/globusa używana przez filtr w `web/games/` i zasoby ikon. | Zmiana opisana jako wdrożona; do oceny wizualnej. |
+| 22 | Gry społeczności: „Moje wysłane” nigdy nie może być w drugim wierszu. | Stosujemy wspólną zasadę nagłówka; tekst nagłówka ma się zawinąć przed przeniesieniem akcji. W razie rzeczywistego braku miejsca cała grupa akcji przechodzi razem pod nagłówek. Nie pozycjonujemy przycisku osobno. | Nagłówki Gier Społeczności mają strukturę `.mkt-head` + bezpośrednią grupę `.actions`; `web/marketplace/js/marketplace.js` uruchamia `initListHeaderLayout(".mkt-head")`. Lokalny `flex-wrap: nowrap` usunięto; wspólny helper ustala klasę `has-actions-below` według zmierzonego minimum tytułu i szerokości akcji. | Poprawiono, by korzystał z ogólnej reguły zamiast lokalnego wyjątku. `node --check` i `git diff --check` przechodzą; bez przebiegu wizualnego. |
+| 23 | Ustawienia rozgrywki: iPad mini portrait ma działać; boczny pasek schować pod przycisk, jak w modalnej wersji. | Tablet portrait jest dopuszczony. Poniżej progu 980 px przycisk otwiera wysuwany panel kategorii; nie blokujemy strony. | `web/shared/js/core/nav-map.js`: minimum 600 px i `formFactors: ["tablet", "desktop"]`. `web/shared/css/game-settings.css`: do 980 px układ staje się jednokolumnowy, hamburger pokazuje panel z boku. Wczesne `data-mobile-guard` jest zdejmowane przez wspólny guard w `device-guard.js` po rozstrzygnięciu dostępu. | Test profilu iPada mini 744×1133: `formFactor=tablet`, stan `ok`. `navButtons.test.js` 17/17. Szerszy zestaw z `controlDeviceGuard.test.js` i `pageInit.test.js` ma niepowiązane awarie istniejących mocków (`hover`/Supabase i `buttonRoles`); nie traktuję go jako potwierdzenia ani obalenia tego punktu. |
+| 24 | Display: guard podobny do Polls QR — komputer lub TV, blokada małych ekranów. | Display dopuszcza komputer, TV co najmniej HD i odpowiednio duży tablet. Za mały ekran otrzymuje wspólny komunikat guarda, taki sam jak Polls QR. | `web/control/display/index.html` i `web/control/display/js/main.js` mają te same kryteria co `web/polls/vote/qr/index.html` i `poll-qr.js`: `desktop`, `tablet`, `tv`; viewport 980 px; krótszy bok dotykowego ekranu 800 px; HD dla TV. Obie strony używają wspólnego komunikatu `pageGuard.screenMessage`; treść jest ukryta przed rozstrzygnięciem guarda. | Potwierdzone porównaniem konfiguracji i komunikatów w PL/EN/UK. Sprawdzenie punktowe przechodzi; bez zmian w kodzie. |
+| 25 | Host i Buzzer są wyjątkami od globalnej blokady telefonu landscape. Tylko Buzzer ma sugerować obrót w portrait. Host ma blokować urządzenia niedotykowe. | Host działa w obu orientacjach; blokuje tylko brak dotyku. Buzzer wymaga dotyku i telefonu/tabletu, blokuje telefon w portrait komunikatem obrotu, a działa w landscape. Każdy komunikat guarda `rotate` nie ma przycisku „Wróć”. W Control testowym iframe obie blokady urządzeń są wyłączone. | Konfiguracja Host w `web/control/host/js/main.js`: `minWidth: 0`, bez ograniczenia form factorów, tylko `requiresTouch`. Buzzer w `web/control/buzzer/js/main.js`: `phone/tablet`, dotyk, `requirePhoneLandscape`; ma wspólny nagłówek/ikonę obrotu i treść `buzzer.rotateMessage`. `web/shared/js/core/device-guard.js` pomija `backHref` dla stanu `rotate`; globalny guard landscape też nie przekazuje go do nakładki. Oba pliki wyłączają blokady dotyku w `controlTestFrame`; Buzzer wyłącza też blokadę orientacji. | Punktowe asercje stanów: Host portrait/landscape touch `ok`, non-touch `touch`; Buzzer phone portrait `rotate`, phone landscape/tablet portrait `ok`; guard `rotate` bez przycisku „Wróć”; tryb testowy ma bypass. Potwierdzone kodem. |
+| 26 | Control: tryb testowy ma być pod kartami, nie nad nimi. | Tryb testowy ma być piątą kartą, bezpośrednio pod czterema kartami: Wyświetlacz, Prowadzący, Przycisk i Dźwięk. Krótka podpowiedź ma być zwykłym tekstem na dole, pod kartą testu — bez bocznego panelu i separatora. W samym kaflu testu etykieta i opis są obok siebie. Niżej zostaje poziomy separator i nawigacja kroku. | `web/control/js/ui.js`, `renderDevicesStep()`: `testChoice` jest dodawany jako ostatni element `.c2-devicerows`, a podpowiedź trafia do osobnego elementu niżej. `web/control/index.html`: karty układają się w siatkę 2×2; boczny panel/rozdzielacz są wyłączone, podpowiedź jest poniżej listy, a separator stopki w `.stepFoot`. Kafel testu ma układ poziomy z 16 px odstępem. | Potwierdzone na rzeczywistym DOM-ie/CSS z przykładowymi danymi. Podpowiedź jest zwykłym tekstem pod kartą testową; nie ma panelu bocznego ani separatora przy podpowiedzi. Zrzut: `docs/img/e20-control/control-test-mode-rzeczywisty-uklad.png`. |
+| 27 | Connect TV ma działać tylko na TV; na pozostałych urządzeniach guard ma mieć Wróć do Connect. | UI podłączenia telewizora widzi tylko rozpoznany TV o co najmniej HD; komputer i inne urządzenia widzą guard z powrotem do `/connect/`. TV poniżej HD dostaje komunikat o za małym ekranie. | `web/connect/tv/js/tv.js`: typ TV rozpoznawany przez `getDeviceProfile()`, rozdzielczość TV sprawdzana względem HD, `backHref: "/connect/"` dla obu stanów blokady. `data-tv-guard-pending` ukrywa body do rozstrzygnięcia; `showPageGuard()` ukrywa treść strony po pokazaniu blokady. | Punktowa weryfikacja Playwright: desktop → `tv-only`, body i formularz ukryte, przycisk powrotu widoczny; TV 1920×1080 → formularz odblokowany; TV 1280×600 → guard `screen` i przycisk powrotu. |
+| 28 | Connect: brak udostępnionych urządzeń ma mieć wspólny styl pustego kafla. | Pusta lista udostępnień ma wyglądać jak pusty kafel na pozostałych listach. | `web/connect/js/connect-device.js` używa wspólnej klasy `.share-empty-state` z `web/shared/css/base.css`; Connect nie nadpisuje jej rozmiaru ani rozciągania. | Poprawione w kodzie; wspólny styl daje przerywaną obwódkę, zaokrąglenie, tło i wyśrodkowany tekst. |
+| 29 | Connect: gdy Skanuj QR spada do drugiego rzędu, ma być bliżej nagłówka; separator ma mieć odstęp i być pod nagłówkiem/przyciskiem jak na innych stronach. | Użyć tej samej zasady nagłówka co w Marketplace: akcja zostaje obok nagłówka, gdy się mieści; gdy schodzi niżej, jest przy lewej krawędzi bez dużego odstępu, a separator znajduje się pod obiema częściami z oddechem od zawartości. | `web/connect/js/connect-device.js` uruchamia wspólne `initListHeaderLayout()` po ustawieniu tekstu i widoczności Skanuj QR. Klasa `has-actions-below` aktywuje istniejące style nagłówka; odstęp separatora i margines dolny działają wtedy dla całego bloku. | Poprawione w kodzie; do potwierdzenia punktowym zrzutem przy zawiniętym przycisku. |
+| 30 | Czy wszystkie strony mają stopniowe ładowanie? | Każda strona ma etap gotowości; guard rozstrzyga się przed odsłonięciem treści, a sekcje z niezależnymi danymi pokazują się po renderze wyniku lub błędu. Nowe strony mają być objęte automatycznym przeglądem. | `data-skel-step` na wszystkich 35 trasach aplikacji; wspólne ukrywanie etapów i kolejność guarda w `web/shared/css/base.css` oraz `web/shared/js/core/page-init.js`. Test `tests/unit/progressiveLoading.test.js` sprawdza kompletność markerów i krytyczne przepływy list, Ankiet, Konta, Connect, urządzeń i guarda. Naprawiono w nim nieaktualną asercję obrotu, by sprawdzała obecny kontrakt Buzera. | Audyt kodu: etap treści jest na każdej trasie, a niezależne sekcje mają własne etapy tam, gdzie mają niezależne dane. Testy punktowe 14/14; `git diff --check` przechodzi. Pełna macierz wolnej sieci i błędów API nie jest potwierdzona samym testem statycznym. |
+| 31 | Widoki nie mogą uruchamiać równoległych stron, które wywołują blokady zasobów. | Strony i profile korzystające z danych jednego konta są fotografowane kolejno w jednej karcie. Równoległość jest dozwolona między różnymi kontami, bo każde ma własne fixture’y. Nie audytujemy guarda gościa. | `tests/e2e/e20-gallery.spec.js` przypisuje profile do istniejących kont 1–3; w obrębie każdego testu profil i jego widoki lecą sekwencyjnie. Publiczne Home/Login są fotografowane i zamykane przed otwarciem zalogowanej sesji. `prepare-e20-gallery.js` przygotowuje raz osobne, idempotentne fixture’y każdego konta. Izolacja obejmuje tylko `acquire_edit_lock_mode`, `release_edit_lock` i odczyt `edit_locks` na głównych stronach oraz dodatkowych stanach tych samych edytorów (np. wyniki Ankiety). | Konto 17 nie jest potrzebne bez osobnego workflow. Nie tworzymy ani nie resetujemy kont. Współbieżność między kontami 1–3 jest kontrolowana workerami; strony z tego samego konta nie działają równolegle. Sesje publiczne nie testują guarda gościa. |
+| 32 | Akcje ankiety: Zatrzymaj, Przerwij i pozostałe akcje mogą dostać ikony; na mobile mogą być bez napisów. | Każda akcja ma czytelną ikonę i etykietę dla większego widoku; na wąskim widoku telefonu można zostawić samą ikonę, zachowując nazwę dla czytnika ekranu i tooltip. | `web/polls/index.html`: ikony oraz etykiety dostępności w pasku akcji; `web/shared/css/polls.css`: etykiety wizualne ukrywane do 600 px. | Kod poprawiony; bez zrzutów/testów do końcowego przebiegu. |
+
+## Ostatni przebieg po zmianach paska
+
+- Commit `c2cf325e93` wdraża wspólny pomiar nagłówka i dolnego paska oraz usuwa specjalne absolutne pozycjonowanie akcji Logo.
+- Krótki workflow `38643551060` przeszedł: 7/7 ujęć dla Gier, Baz i Logo na MacBooku; asercje potwierdziły, że akcje nagłówka nie spadły pod tytuł, a dolny pasek został w jednym wierszu.
+- Pełny workflow `38643769954` przerwał się na `logo-draw`: fixture `E20-GALLERY-LOGO` jest typu TEXT, a ścieżka otwiera edytor DRAW. Wygenerowane 19 ujęć MacBooka to część niekompletna, nie gotowa galeria.
+- Uwaga o paskach jest więc potwierdzona punktowo tylko dla szerokiego MacBooka. Nie deklaruję jeszcze potwierdzenia telefonów, zawijania ani wszystkich stron.
+
+## Nowa runda uwag użytkownika — 2026-10-15
+
+Pracować po kolei. Po zakończeniu każdej uwagi zatrzymać się przed następną. To jest bieżąca lista; wcześniejsze tabele pozostają historią. Nie uruchamiać pełnej galerii ani pełnych testów bez uzgodnienia.
+
+| # | Uwaga | Status |
+|---:|---|---|
+| 1 | Znajomi i Subskrybenci: przycisk „Zaproś” pokazuje dwa plusy. | Naprawione lokalnie: usunięto „+” z etykiet PL/EN/UK, SVG plus jest jedynym znakiem; zachowano ikonę-only na telefonie. Cache assetów odświeżony. |
+| 2 | Widoki 404 i przerwy technicznej: karta w iPhone landscape wchodzi pod safe area. | Naprawione lokalnie: wspólny `.maintenance-main` na niskim landscape uwzględnia bezpieczne insety lewo/prawo oraz góra/dół; dotyczy Maintenance i 404. Kodowo sprawdzone, bez testów/galerii. |
+| 3 | Subskrybenci: plakietki „Odrzucono”/„Oczekuje” czasem wychodzą poza kafelki na mobile; sprawdzić podobne widoki. | Naprawione lokalnie po zrzucie: tytuł/adres może łamać się na wiele linii i zwiększać wysokość kafelka; tylko długie plakietki statusu pozostają jednoliniowe i są skracane wielokropkiem. Zmiana obejmuje wspólne wiersze Znajomych, Subskrybentów, Baz i Ankiet. |
+| 4 | W mobilnych modalach widać po dwie linie rozdzielające. | Naprawione lokalnie we wspólnym arkuszu modalnym: gdy widoczny jest pasek akcji, pozostaje separator pod nim, a separator wewnętrznego nagłówka jest wyłączony. Bez paska akcji nagłówek zachowuje separator. |
+| 5 | Modal QR na Display: odstępy między sekcjami są zbyt małe. | Naprawione lokalnie: w mobilnym modalu QR w Control przywrócono pionowy układ `.uni-body` i odstęp 20 px między widocznymi sekcjami. |
+| 6 | Ankiety mobile: karty są zagnieżdżone/powielone, np. anonimowość w drugiej karcie. | Naprawione lokalnie: wewnętrzne sekcje Udostępniania nie rysują drugiej karty wewnątrz `.polls-card`; mobilne wypustki „Anonimowo” i „Odbiorcy” identyfikują aktywną sekcję, więc powtórzone nagłówki są ukryte. Ramki konkretnych elementów, np. sceny QR, pozostają. |
+| 7 | Zwykłe modale są przesunięte w lewo względem środka. | Naprawione lokalnie: `.modal` otrzymał wspólne poziome auto-marginesy, które centrują okna także wtedy, gdy skrypt pokazuje overlay jako flex lub block zamiast grid. Mobilne arkusze zachowują własne marginesy. |
+| 8 | Mail: pole e-mail ma pokazywać sugerowany tekst zamiast hinta nad polem. | Naprawione na stronie Mails: usunięto widoczną etykietę nad polem, dodano tłumaczony placeholder, a nazwę pola dla czytników ekranu zachowano przez `aria-label`. Panel admina pozostał bez zmian. |
+| 9 | Import pytań w edytorze gier ma stary styl. | Naprawione lokalnie w zakresie wskazanym przez użytkownika: usunięto półprzezroczyste tło okna desktopowego, ustawiając kryjący kolor taki jak we wspólnych modalach. Mobilny arkusz zachowuje transparentne tło strony. |
+| 10 | Modal wyboru koloru w Game Settings ma niespójny styl. | Przeniesiono do wspólnego `confirmModal`: standardowe nagłówek, stopka, przyciski i tło; suwaki RGB oraz pole HEX pozostają w treści, a zmiana koloru zatwierdza się dopiero przy „Gotowe”. |
+| 11 | Control, modal Udostępnij: sekcja „Udostępnione w tej sesji” nie ma pustego kafla. | Render aplikacji dodaje kafel `.share-empty-state`, gdy sesja nie ma udostępnień. Poprawiono też E20 capture, który wcześniej tylko odsłaniał HTML i pomijał render list; teraz pokazuje reprezentatywny kafel pustego stanu. |
+| 12 | Connect: separator jest za daleko od nagłówka i zbyt blisko karty. | Usunięto pusty i zbędny komunikat z nagłówka, a błędy skanowania QR i udostępnionych urządzeń trafiają do wspólnego toastu. Zmniejsza to odstęp przed separatorem; dodano 12 px oddechu między separatorem a kartą. | Poprawione w kodzie; bez galerii zgodnie z bieżącym ustaleniem. |
+| 13 | Manager baz: modal eksportu gry na telefonie lekko wypycha treść poza prawą krawędź. | W mobilnym eksporcie ograniczono minimalne szerokości siatek i pól, a nazwy gier mogą zawijać się zamiast wymuszać poszerzenie wiersza. Siatka etykiet typów gry również mieści się w dostępnej szerokości. Układ desktopowy bez zmian. | Poprawione w kodzie; bez galerii/testów. |
+| 14 | Bazy, modal udostępniania mobile: układ się miesza; zwykły modal ma nierówne przyciski, przycisk obok Znajomych spada pod niego (to samo w Control), a sekcja Udostępnione nie ma pustego kafla. | Mobilny szkielet arkusza nie wyciąga już akcji z tych sekcji do wspólnego paska: dodawanie pozostaje przy adresie, udostępnianie znajomym przy ich liście, a treść ma jeden scroll. Role w Bazach mają widoczną etykietę obok ikony, a przyciski głównych akcji wyrównaną wysokość. E20 capture pokazuje kafle pustych list i centruje modal desktopowy. |
+| 15 | Modale importu pokazują angielskie teksty („Choose File”, „File not chosen”). | Widoczne natywne pola zastąpiono wspólnym, tłumaczonym przyciskiem „Wybierz plik” i nazwą/stanem wybranego pliku w Grach, Bazach i imporcie pytań Edytora. Logo już korzystało z własnego selektora. Wewnętrzny język systemowego okna wyboru pozostaje ustawieniem przeglądarki/systemu. | Poprawione w kodzie; bez testów/galerii. |
+| 16 | Potwierdzić działanie mobilnych modalów tagów i tworzenia gry w Base Explorer. | Sprawdzone są wszystkie trzy warstwy modala tagów: przypisywanie, tworzenie/edycja oraz wybór koloru. Lista tagów przewija się niezależnie, akcje pozostają dostępne, a przepływ tworzenia wraca do przypisywania; modal tworzenia gry używa jednego obszaru przewijania i poprawnie tworzy grę. | E2E `38819249841` potwierdziło listę tagów i tworzenie gry; rozszerzony test wszystkich warstw `38819760977` przeszedł, w tym widoczność kontrolek koloru na telefonie i zapis nowego taga. Zmiana przewijania eksportu jest w `1f1bee4566`; testy w `e4bd13f826`, `6ae4616ef6`, `82e6d69f15`. |
+| 17 | Ujednolicić modale importu; w jednym z nich ikony Wczytaj plik i Import były takie same. | We wszystkich czterech importerach wspólny selektor pliku używa przycisku i komunikatu o wybranym pliku w tym samym stylu. „Wybierz plik” ma ikonę `file-doc`, „Importuj” ikonę `upload`; stopki mają wspólny układ z „Anuluj” oraz główną akcją „Importuj”. Po udanym imporcie pojawia się „Gotowe” z ikoną potwierdzenia. Zachowano właściwe dla każdego typu importu pola i podglądy. | Zmiany w Grach, Bazach, Logo i Edytorze gier wypchnięte w `71b338255f`. Logo używa wspólnego `bindLocalizedFilePicker`; zniknęło powtórzenie ikony `upload` przy wyborze i imporcie. `git diff --check` i `node --check` zmienionych skryptów przeszły; bez testów E2E/galerii. |
+
+## Dopisek do bieżącej rundy — jeden pionowy scroll na mobile (2026-10-17)
+
+**Wspólny wzorzec stron i modalów (doprecyzowanie użytkownika 2026-10-17):**
+strona nie przewija się jako całość; przewija się jej obszar roboczy/lista.
+Modal — mobilny arkusz i zwykłe wyśrodkowane okno — mieści się w dostępnym
+obszarze. Nagłówek i akcje pozostają dostępne, a przy długiej treści przewija
+się wyznaczony obszar wewnątrz modala. Przy jednej liście przewija się lista;
+przy dwóch równorzędnych, potrzebnych listach obie są widoczne i każda
+przewija się wewnętrznie. Nie zagnieżdżać list w przewijanym body ani nie
+przewijać całego okna razem z jego nagłówkiem/akcjami. Jeśli kilka list nie
+mieści się czytelnie, rozważyć przełączane sekcje z jedną aktywną listą; nic
+nie może zostać ucięte ani ukryte. W modalu bez listy przewija się pojedynczy
+obszar treści pod stałym nagłówkiem/akcjami. Mobile landscape pozostaje poza
+tą rundą.
+Tabela łączy status audytu i wdrożenia. „Wdrożono” oznacza zmianę w kodzie na
+branchu; dopasowanie wizualne czeka na uzgodnioną galerię.
+
+| Miejsce | Co powoduje lub może powodować podwójny scroll | Proponowana poprawa | Powiązane uwagi z rundy |
+|---|---|---|---|
+| Base Explorer — główna strona i lista elementów | `.explorer` przewijał się (`base-explorer.css`), a `.list` miał też `overflow:auto`; zewnętrzny obszar mógł więc przewijać razem z listą. | W mobilnym portrecie strona i `.explorer` pozostają nieruchome; przewija się sama lista elementów, jak na pozostałych stronach list zasobów. Zachowano poziomy scroll tabeli. | Wdrożono w `web/bases/explorer/css/base-explorer.css`: `.explorer` ma `overflow:hidden`, `.list` pozostaje jedynym przewijanym obszarem tabeli. Landscape poza zakresem. |
+| Base Explorer — drawer lewego panelu | Drawer `.explorer-left` miał `overflow-y:auto`, a jego `.tags` i `.tree` również przewijały się wewnętrznie (`base-explorer.css`). | Drawer nie przewija się razem z drzewem/tagami. Obie sekcje są widoczne równocześnie i dzielą dostępną wysokość; każda ma własny scroll. | Wdrożono w `web/bases/explorer/css/base-explorer.css`: drawer portraitowy ma `overflow:hidden`; drzewo i tagi dzielą wysokość (`flex:1 1 0`) i przewijają się osobno. Landscape poza zakresem. |
+| Base Explorer — modal edycji pytania | Wdrożono wzorzec Game Editora: arkusz i treść pytania są nieruchome, a lista odpowiedzi jest ograniczonym panelem przewijania. | `web/bases/explorer/css/base-explorer.css`, wspólny formularz w `question-form.css`; zachowano sumę punktów i limit odpowiedzi. Kodowo sprawdzone; bez galerii. | Priorytet użytkownika: edycja pytania ma odpowiadać sprawdzonemu wzorcowi Game Editor. |
+| Base Explorer — modal dodawania gry z bazy (eksportu gry) | Wdrożono jeden wewnętrzny scroll listy pytań. Nazwa gry, typ oraz akcja Utwórz pozostają dostępne. | `web/bases/explorer/css/base-explorer.css`; kodowo sprawdzone; bez galerii. Na małej wysokości wizualną liczbę widocznych pytań potwierdzić w galerii. | Priorytet użytkownika: modal dodawania gry z bazy i wcześniejsza uwaga o mobilnym rozjeździe eksportu. |
+| Base Explorer — modal tagów (3 warstwy) | Wdrożono wspólny układ trzech warstw: przy przypisywaniu przewija się sama lista tagów; edycja tagu i picker koloru przewijają własny obszar treści, gdy jest potrzebny. | Arkusz i aktywne nagłówki/akcje pozostają nieruchome. Wdrożono w `web/bases/explorer/css/base-explorer.css`; kodowo sprawdzone; bez galerii. | Priorytet użytkownika: modal tagów i jego trzy widoki. |
+| Gry — modal podglądu gry | Przełącznik Gra/Ankieta trafiał do `.sheet-modal-body`, który przewija cały arkusz; aktywne `.bld-preview-questions` miało własny `overflow-y:auto`, tworząc drugi scroll (`games.css`, `modal-sheet.js`, `base.css`). | Nagłówek modala i przełącznik między dwoma typami podglądu są stale widoczne. Przewija się wyłącznie aktywna zawartość pod nimi; przełączenie typu nie przewija nagłówka poza ekran. | Wdrożono: `.bld-preview-switch` jest częścią stałego nagłówka, a aktywny widok pytań/wyników nie tworzy własnego scrolla wewnątrz przewijanego body. |
+| Edytor gry — podgląd importu tekstowego | Lista podglądu ma wewnętrzny scroll, choć renderuje maksymalnie trzy pytania; modal importu ma już własny scroll treści. | Usunięto limit wysokości i wewnętrzne przewijanie z `.txt-preview-list`; przewija się treść modala. Zmieniono `web/games/editor/css/editor.css`. |
+| Marketplace — modal szczegółów gry | Treść arkusza przewijała się razem z `.mkt-detail-questions`, które miało `overflow-y:auto` (`marketplace.css`). | Jeden scroll całej treści arkusza; lista pytań bez własnego scrolla i limitu wysokości. | Wdrożono w `web/shared/css/base.css`: `.mkt-detail-questions` ma naturalną wysokość i nie tworzy scrolla wewnątrz body. Problem gotowości szczegółów gry jest osobny. |
+| Bazy i Control — modale udostępniania | Zrobione na branchu `codex/e19-3`: nieruchome body arkusza, formularz w osobnym wierszu, obie sekcje list widoczne równocześnie, a lista znajomych i lista udostępnionych przewijają się niezależnie wewnątrz sekcji. Nagłówki i akcje pozostają poza przewijanymi listami. | CSS w `web/shared/css/base.css`; zachowano puste stany i istniejące akcje. `git diff --check` przechodzi; bez testów i galerii. Do sprawdzenia wizualnego w kolejnej uzgodnionej galerii, szczególnie ilość widocznych kafelków na niskim telefonie. | E20 #11 i #14: pusty kafel w Control oraz chaos/rozjazd modalów udostępniania Baz i Control; wcześniejsze uwagi o kaflach i przyciskach. |
+| Ankiety — modal dodawania odbiorców | Już zgodny z ustaloną regułą: body arkusza jest nieruchome, dwie grupy odbiorców dzielą przestrzeń, a każda lista przewija się osobno (`base.css`, `polls.css`). | Obie listy są widoczne jednocześnie; nagłówek modala i pasek akcji pozostają stałe. Logika odbiorców bez zmian. | Sprawdzone w kodzie; brak dodatkowej zmiany. Użyteczną wysokość list na iPhonie potwierdzić w uzgodnionej galerii. |
+| Ustawienia gry — lista pytań w kolumnie końcowej na iPadzie pionowo | `.gs-content` przewija stronę ustawień, a `.finalCol .qList` miała własne `max-height:60vh` i `overflow-y:auto` (`game-settings.css`). | W wąskim układzie `.gs-content` jest jedynym pionowym scrollem; listy pytań rosną naturalnie. | Zrobione w `web/shared/css/game-settings.css` dla szerokości do 900 px. Panel administracyjny `/settings/` pozostaje poza tą rundą i poza audytem galerii. |
+
+**Sprawdzone jako pojedynczy scroll lub bez potwierdzonego zagnieżdżenia:**
+strony Gry, Bazy, Zadania i Logo mają listę jako jedyny scroll obszaru roboczego;
+Znajomi i Subskrybenci blokują scroll kart, przewijają widoczne listy, a na
+telefonie pokazują aktywną kartę zakładki; lista odrzuconych znajomych jest
+domyślnie zwinięta. Connect ogranicza scroll do listy urządzeń wewnątrz
+nieruchomej karty. Ankiety mają nieruchomy obszar roboczy i przewijaną listę
+odbiorców; widoki głosowania nie dodają własnego scrolla listy. W Control
+podsumowanie jest pojedynczym `.c2-scroll-area`; lista na Host przewija się
+w obrębie nieruchomej planszy. Mails pokazuje albo kartę wiadomości, albo
+centrum list — nie oba naraz; body jest zablokowane, a lista ma jeden scroll.
+Go i Instrukcja nie zawierają przewijanych list. Dla tych miejsc audyt kodu
+nie wskazał dodatkowych zagnieżdżonych pionowych scrolli. Eksport gry i
+warstwy modala tagów w Base Explorer mają już opisane wyżej reguły.
+
+**Wyłączone:** mobilne landscape (jak uzgodniono) oraz panel administracyjny
+`/settings/` (użytkownik wcześniej wyłączył go z tej pracy). Wskazane zmiany
+scrolla są wdrożone na branchu; przed zamknięciem rundy trzeba jeszcze ocenić
+układy na uzgodnionej galerii. Nie uruchamiano pełnych testów ani galerii.
+
+
+### Wdrożenie priorytetowych modalów Base Explorer — 2026-10-17
+
+Wdrożono na branchu `codex/e19-3`: przypisywanie tagów przewija samą listę,
+a aktywne nagłówki/akcje są nieruchome; edycja taga i wybór koloru mają
+wewnętrzny obszar treści bez przewijania arkusza. Modal dodawania gry z bazy
+przewija samą listę pytań, pozostawiając nazwę, wybór typu i akcję Utwórz
+dostępne. Modal edycji pytania przewija wyłącznie listę odpowiedzi i zachowuje
+wzorzec współdzielonego formularza z Edytora gry. Zaktualizowano cache-buster
+arkusza Base Explorer. `git diff --check` przechodzi; bez testów i galerii
+zgodnie z ustaleniem.

@@ -1,11 +1,21 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-18T17330";
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-18T17330";
+import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-18T17375";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-18T17375";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
+const deviceGate = guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
+document.documentElement.removeAttribute("data-device-guard-pending");
+// Guard musi być widoczny od razu na niedozwolonym urządzeniu. Nie czekaj
+// z odsłonięciem dokumentu na zmianę szerokości — ready rozwiązuje się dopiero
+// po wejściu w dozwolony widok.
+if (deviceGate.state() !== "ok") {
+  document.documentElement.classList.remove("page-loading");
+  await deviceGate.ready;
+}
 
 const qs = new URLSearchParams(location.search);
 let url = qs.get("url");
@@ -45,6 +55,7 @@ function showEnded(msgKey) {
   if (renderAbortController) renderAbortController.abort();
   if (pollLangInterval) clearInterval(pollLangInterval);
   document.querySelector(".qr-container")?.classList.add("is-ended");
+  document.querySelector(".qr-container[data-skel-step]")?.classList.add("skel-step-ready");
   if (qr) qr.textContent = t(msgKey);
   document.documentElement.classList.remove("page-loading");
 }
@@ -222,7 +233,11 @@ window.addEventListener("beforeunload", () => {
 
 updateFsIcon();
 if (!deviceInitFailed) {
-  render(url).finally(() => document.documentElement.classList.remove('page-loading'));
+  render(url).finally(() => {
+    document.querySelector(".qr-container[data-skel-step]")?.classList.add("skel-step-ready");
+    document.documentElement.classList.remove('page-loading');
+  });
 } else {
+  document.querySelector(".qr-container[data-skel-step]")?.classList.add("skel-step-ready");
   document.documentElement.classList.remove('page-loading');
 }

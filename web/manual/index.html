@@ -3,7 +3,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8" />
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -15,33 +15,23 @@
   <meta name="robots" content="noindex, nofollow" />
   <title data-i18n="manual.title">Familiada — wskazówki</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330" />
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375" />
 
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330" />
-  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-18T17330" />
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('/login/');
-    } catch(_e) {}
-  </script>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375" />
+  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-18T17375" />
+  <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/manual/js/manual.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/manual/js/manual.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="manual-body skel-body">
   <header class="topbar topbar-layout-4" id="mainTopbar">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
@@ -51,11 +41,11 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who"></span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
-  <main class="wrap m-wrap">
+  <main class="wrap m-wrap" data-skel-step>
     <h1 class="page-title" data-i18n="manual.pageTitle">Wskazówki dla użytkownika</h1>
     <div class="page-subtitle mobile-only-tab-subtitle" id="manualTabSubtitle" aria-live="polite"></div>
 
@@ -86,6 +76,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

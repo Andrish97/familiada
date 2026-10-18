@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,27 +14,17 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
   <!-- Reużywamy stylu strony gier, żeby było spójnie -->
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-18T17330"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-18T17375"/>
 
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('/login/');
-    } catch(_e) {}
-  </script>
+  <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/bases/js/bases.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/bases/js/bases.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="games-body skel-body">
@@ -42,7 +32,7 @@
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnGoAlt" type="button"><span data-i18n="games.nav.friends" data-i18n-icon-after="people">Znajomi</span> <span class="badge" id="altBadge" aria-hidden="true"></span></button>
@@ -53,7 +43,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -65,8 +55,8 @@
       </div>
 
       <div class="actions">
-        <button class="btn sm gold" id="btnBrowse" type="button" disabled data-i18n="bases.actions.browse">Przeglądaj</button>
-        <button class="btn sm" id="btnShare" type="button" disabled data-i18n="bases.actions.share">Udostępnij</button>
+        <button class="btn sm gold" id="btnBrowse" type="button" disabled><i class="ico" data-icon="folder" aria-hidden="true"></i><span class="action-label" data-i18n="bases.actions.browse">Przeglądaj</span></button>
+        <button class="btn sm" id="btnShare" type="button" disabled><i class="ico" data-icon="envelope" aria-hidden="true"></i><span class="action-label" data-i18n="bases.actions.share">Udostępnij</span></button>
       </div>
     </div>
 
@@ -114,9 +104,9 @@
           <div class="games-bottom">
             <div class="games-bottom-left"></div>
             <div class="games-bottom-right">
-              <button class="btn sm" id="btnExport" type="button" disabled data-i18n="bases.actions.export">Eksport</button>
               <button class="btn sm" id="btnDuplicate" type="button" disabled data-i18n-title="resourceDuplicate.action" data-i18n-aria-label="resourceDuplicate.action"><i class="ico" data-icon="duplicate" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceDuplicate.action">Powiel</span></button>
-              <button class="btn sm" id="btnImport" type="button" data-i18n="bases.actions.import">Import</button>
+              <button class="btn sm" id="btnExport" type="button" disabled data-i18n-title="bases.actions.export" data-i18n-aria-label="bases.actions.export"><i class="ico" data-icon="download" aria-hidden="true"></i><span class="only-desktop" data-i18n="bases.actions.export">Eksport</span></button>
+              <button class="btn sm" id="btnImport" type="button" data-i18n-title="bases.actions.import" data-i18n-aria-label="bases.actions.import"><i class="ico" data-icon="upload" aria-hidden="true"></i><span class="only-desktop" data-i18n="bases.actions.import">Import</span></button>
             </div>
           </div>
         </div>
@@ -125,7 +115,7 @@
     </section>
 
     <!-- Modal: nowa baza / zmiana nazwy -->
-    <div class="overlay modal--sheet" id="nameOverlay" style="display:none;">
+    <div class="overlay modal--keep-dialog" id="nameOverlay" style="display:none;">
       <div class="modal">
         <div class="mHead">
           <div class="mTitle" id="nameTitle" data-i18n="bases.nameModal.titleCreate">Nowa baza</div>
@@ -138,8 +128,8 @@
         </div>
 
         <div class="importRow modal-actions">
-          <button class="btn sm" id="btnNameCancel" type="button" data-i18n="bases.common.cancel">Anuluj</button>
-          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="bases.common.save">Zapisz</button>
+          <button class="btn sm" id="btnNameCancel" type="button" data-i18n="bases.common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="bases.common.save" data-i18n-icon="save">Zapisz</button>
           <div class="importMsg" id="nameMsg"></div>
         </div>
       </div>
@@ -147,7 +137,7 @@
 
     <!-- Modal: udostępnienia -->
     <div class="overlay modal--sheet" id="shareOverlay" style="display:none;">
-      <div class="modal shareModal">
+      <div class="modal shareModal" data-sheet-local-actions>
         <div class="mHead">
           <div class="mTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
           <button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
@@ -160,13 +150,15 @@
             <div class="baseShareLookup">
               <input id="shareEmail" class="inp" type="text" data-i18n-placeholder="bases.shareModal.placeholder" autocomplete="off"/>
               <div id="shareRole"></div>
-              <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n="baseSharePanel.share">Udostępnij</button>
+              <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n-title="baseSharePanel.share" data-i18n-aria-label="baseSharePanel.share" aria-label="Udostępnij">
+                <i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="baseSharePanel.share">Udostępnij</span>
+              </button>
             </div>
           </section>
           <section class="shareSection" data-section="friends">
-            <h2 class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</h2>
+            <div class="shareSectionHeading"><h2 class="shareSectionTitle" data-i18n="contacts.sections.friend">Znajomi</h2><div id="baseShareBulkActions"></div></div>
             <div id="baseShareFriends" class="shareList shareList--scroll"></div>
-            <div class="baseShareFooter"><div id="baseShareFriendsRole"></div><button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n="control.shareDeviceModal.shareSelected" disabled>Udostępnij zaznaczonym</button></div>
+            <div class="baseShareFooter"><div id="baseShareFriendsRole"></div><button class="btn sm gold" id="btnBaseShareFriends" type="button" data-i18n-title="control.shareDeviceModal.shareSelected" data-i18n-aria-label="control.shareDeviceModal.shareSelected" aria-label="Udostępnij zaznaczonym" disabled><i class="ico" data-icon="people" aria-hidden="true"></i><span class="only-desktop" data-i18n="control.shareDeviceModal.shareSelected">Udostępnij zaznaczonym</span></button></div>
           </section>
           <section class="shareSection" data-section="shared">
             <h2 class="shareSectionTitle" data-i18n="bases.sections.shared">Udostępnione</h2>
@@ -184,8 +176,10 @@
           <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
-        <div class="importRow" style="margin-top:8px">
-          <input id="importFile" class="inp" type="file" accept=".fambase,.json,application/json">
+        <div class="importRow import-file-picker" style="margin-top:8px">
+          <input id="importFile" type="file" accept=".fambase,.json,application/json" hidden>
+          <button class="btn sm" id="btnChooseImportFile" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
+          <span class="import-file-name" id="importFileName" aria-live="polite">Nie wybrano pliku</span>
         </div>
 
         <!-- Błąd walidacji -->
@@ -204,25 +198,21 @@
         </div>
 
         <div class="importRow modal-actions" style="margin-top:12px">
-          <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="bases.importModal.confirm">Importuj</button>
+          <button class="btn sm" id="btnImportCancelAction" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="bases.importModal.confirm" data-i18n-icon="upload">Importuj</button>
+          <button class="btn sm gold" id="btnImportDone" type="button" data-i18n="bases.importModal.done" data-i18n-icon="check" hidden>Gotowe</button>
           <div class="importMsg" id="importMsg"></div>
         </div>
       </div>
     </div>
 
-    <div class="footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
-  </main>
-
   <!-- Progres eksportu do pliku (blokujący) -->
-  <div class="overlay" id="exportJsonOverlay" style="display:none;">
-    <div class="modal" style="width:min(640px,94vw)">
+  <div class="overlay modal--keep-dialog" id="exportJsonOverlay" style="display:none;">
+    <div class="modal export-json-modal" style="width:min(640px,94vw)">
       <div class="mTitle" data-i18n="bases.exportModal.title">EKSPORT…</div>
       <div class="mSub" id="exportJsonSub" data-i18n="bases.exportModal.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
 
-      <div style="margin-top:12px;display:grid;gap:10px">
+      <div class="export-json-progress" style="margin-top:12px;display:grid;gap:10px">
         <div class="importRow" style="align-items:center">
           <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em" data-i18n="bases.progress.placeholder">—</div>
           <div id="exportJsonCount" style="margin-left:auto;opacity:.8">0/0</div>
@@ -234,9 +224,18 @@
 
         <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
       </div>
+      <div class="importRow modal-actions" style="margin-top:12px;justify-content:flex-end">
+        <button class="btn sm gold" id="btnExportJsonClose" type="button" data-i18n="bases.exportModal.close" data-i18n-icon="check" hidden>Gotowe</button>
+      </div>
     </div>
   </div>
-  
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

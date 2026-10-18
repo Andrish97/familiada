@@ -1,4 +1,6 @@
 // js/pages/login.js
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+guardViewportWidth({ minWidth: 0 });
 import {
   getUser,
   signIn,
@@ -18,15 +20,15 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-18T17330";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17330";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
+} from "../../shared/js/core/auth.js?v=v2026-10-18T17375";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T17375";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
 
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-18T17330";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17330";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-18T17375";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T17375";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -795,6 +797,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   applyMode();
   initPasswordToggles();
   setStatus(t("index.statusChecking"));
+  // Pierwszy etap logowania: szkielet formularza jest gotowy po i18n i
+  // przygotowaniu trybu, bez czekania na późniejsze żądania auth/captcha.
+  document.querySelector(".login-shell[data-skel-step]")?.classList.add("skel-step-ready");
   if (guestExpired) {
     void alertModal({ text: t("index.guestExpired") });
   }

@@ -41,8 +41,9 @@ INSERT INTO public.base_share_tasks(owner_id,base_id,recipient_user_id,recipient
 INSERT INTO public.question_base_shares(base_id,user_id,role) VALUES
  ('eeeeeeee-3480-0000-0000-000000000006','bbbbbbbb-3480-0000-0000-000000000002','viewer'),
  ('eeeeeeee-3480-0000-0000-000000000006','cccccccc-3480-0000-0000-000000000003','viewer');
-INSERT INTO public.poll_subscriptions(owner_id,subscriber_user_id,subscriber_email,status)
-SELECT 'aaaaaaaa-3480-0000-0000-000000000001','bbbbbbbb-3480-0000-0000-000000000002',NULL,s FROM unnest(ARRAY['pending','active','declined','cancelled']) s;
+INSERT INTO public.poll_subscriptions(owner_id,registered_user_id,subscriber_email,status)
+SELECT 'aaaaaaaa-3480-0000-0000-000000000001','bbbbbbbb-3480-0000-0000-000000000002','recipient348@example.invalid',s
+FROM unnest(ARRAY['pending','active','declined','cancelled']) s;
 INSERT INTO public.poll_subscriptions(owner_id,subscriber_email,status) VALUES ('aaaaaaaa-3480-0000-0000-000000000001','anonymous348@example.invalid','active');
 DELETE FROM auth.users WHERE id='bbbbbbbb-3480-0000-0000-000000000002';
 DO $$ DECLARE t record; n integer; BEGIN

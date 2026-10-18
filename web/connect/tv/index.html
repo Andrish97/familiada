@@ -1,30 +1,30 @@
 <!doctype html>
 <html lang="pl">
 <head>
+  <style>html[data-tv-guard-pending] body{visibility:hidden}</style><script>document.documentElement.dataset.tvGuardPending="true"</script>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title data-i18n="connectDevice.tv.pageTitle">Familiada — Podłącz wyświetlacz</title>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330">
-  <link rel="stylesheet" href="/connect/tv/css/tv.css?v=v2026-10-18T17330">
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375">
+  <link rel="stylesheet" href="/connect/tv/css/tv.css?v=v2026-10-18T17375">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/connect/tv/js/tv.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/connect/tv/js/tv.js?v=v2026-10-18T17375"></script>
 </head>
-<body class="tv-body">
+<body class="tv-body" data-device-screen>
   <header class="topbar tv-topbar">
     <div class="brand">FAMILIADA</div>
     <div class="topbar-section topbar-section-3 tv-language"></div>
   </header>
-  <main>
+  <main data-skel-step>
     <h1 data-i18n="connectDevice.tv.title">Podłącz wyświetlacz</h1>
     <form id="tvConnectForm" novalidate>
       <label for="tvCode" data-i18n="connectDevice.tv.codeLabel">Wpisz kod z panelu sterowania</label>
       <input class="inp tv-code" id="tvCode" disabled type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" autofocus required aria-describedby="tvMessage">
-      <button class="btn gold tv-connect" id="tvConnect" disabled type="submit" data-i18n="connectDevice.enterCode.btn">Podłącz</button>
+      <button class="btn gold tv-connect" id="tvConnect" disabled type="submit" data-i18n="connectDevice.enterCode.btn" data-i18n-icon="phone">Podłącz</button>
       <p id="tvMessage" role="status" aria-live="polite"></p>
     </form>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
 </body>
 </html>

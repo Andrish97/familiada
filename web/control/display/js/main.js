@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-18T17330";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-18T17375";
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,22 +7,21 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-18T17330";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-18T17330";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-18T17330";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { createScene } from "./scene.js?v=v2026-10-18T17330";
-import { createQRController } from "./qr.js?v=v2026-10-18T17330";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-18T17330";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-18T17330";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T17330";
-import { createRenderer } from "./render.js?v=v2026-10-18T17330";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-18T17330";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-18T17330";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-18T17330";
-
-startKeepAlive();
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-18T17375";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-18T17375";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-18T17375";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { createScene } from "./scene.js?v=v2026-10-18T17375";
+import { createQRController } from "./qr.js?v=v2026-10-18T17375";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-18T17375";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-18T17375";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T17375";
+import { createRenderer } from "./render.js?v=v2026-10-18T17375";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-18T17375";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-18T17375";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-18T17375";
 
 const $ = (id) => document.getElementById(id);
 
@@ -95,7 +94,7 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
 }
 
 function createDisplayEventLog(gameId, key, lease) {
-  let lastPageState = "";
+  let initialPageStateReported = false;
   let stopped = false;
   let sessionActive = false;
   let pending = Promise.resolve();
@@ -122,42 +121,24 @@ function createDisplayEventLog(gameId, key, lease) {
       console.warn("[display2 diagnostics] kolejka zapisu przerwana:", error?.message || error);
     });
   };
-  const reportPageState = (reason) => {
-    if (!sessionActive) return;
-    const state = {
-      visibility: document.visibilityState || "unknown",
-      focused: !!document.hasFocus?.(),
-    };
-    const signature = `${state.visibility}:${state.focused}`;
-    if (signature === lastPageState && reason !== "initial") return;
-    lastPageState = signature;
+  const reportInitialPageState = () => {
+    if (!sessionActive || initialPageStateReported) return;
+    initialPageStateReported = true;
     report({
-      event_type: "page_state", reason, ...state,
-      was_discarded: !!document.wasDiscarded,
+      event_type: "page_state", reason: "initial",
+      visibility: document.visibilityState || "unknown",
+      focused: !!document.hasFocus?.(), was_discarded: !!document.wasDiscarded,
+      online: navigator.onLine !== false,
     });
   };
-  const onVisibility = () => reportPageState("visibilitychange");
-  const onFocus = () => reportPageState("focus");
-  const onBlur = () => reportPageState("blur");
-  const onNetwork = () => report({ event_type: "network_state", online: navigator.onLine !== false });
-  document.addEventListener("visibilitychange", onVisibility);
-  window.addEventListener("focus", onFocus);
-  window.addEventListener("blur", onBlur);
-  window.addEventListener("online", onNetwork);
-  window.addEventListener("offline", onNetwork);
   return {
     report,
     setSessionActive(active) {
       sessionActive = !!active;
-      if (sessionActive) reportPageState("initial");
+      if (sessionActive) reportInitialPageState();
     },
     stop() {
       stopped = true;
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("blur", onBlur);
-      window.removeEventListener("online", onNetwork);
-      window.removeEventListener("offline", onNetwork);
     },
   };
 }
@@ -265,14 +246,9 @@ function instrumentSceneApi(api) {
 // game_state — Control (jedyne, co go osadza) sam zna aktualne ustawienia i
 // przesyła gotowy, spreparowany wiersz przez postMessage; nie ma potrzeby
 // przekazywać do iframe klucza dostępu do prawdziwej gry.
-async function bootPreview(params) {
+async function bootPreview() {
   const scene = await createScene();
   scene.api = instrumentSceneApi(scene.api);
-  // Logo prawdziwej gry (jeśli jest) — jedyna rzecz w podglądzie wymagająca
-  // realnego id+key (Control i tak już je zna i pokazuje w kodach QR/modalu
-  // kopiowania, więc to nie jest nowy wyciek danych).
-  const previewGameId = params.get("id");
-  if (previewGameId) { try { await scene.api.logo.bindGame(previewGameId); } catch {} }
   const qrCtrl = createQRController({
     qrScreen: $("qrScreen"), gameScreen: $("gameScreen"),
     hostCard: $("qrHostCard"), buzzerCard: $("qrBuzzerCard"),
@@ -284,6 +260,9 @@ async function bootPreview(params) {
 
   $("blackScreen")?.classList.add("hidden");
   $("qrScreen")?.classList.add("hidden");
+  // Preview is a passive renderer, not a device session: reveal its surface
+  // directly instead of waiting for the live-game skeleton/auth flow.
+  $("gameScreen")?.classList.add("skel-step-ready");
   $("gameScreen")?.classList.remove("hidden");
 
   // ZAWSZE renderSnapshot, nigdy renderDiff — w odróżnieniu od prawdziwej
@@ -321,6 +300,23 @@ async function bootPreview(params) {
     // stare/domyślne z poprzedniej klatki.
     if ("logoPreview" in (row.detail?.display || {})) {
       scene.api.logo.setPreview(row.detail.display.logoPreview);
+    } else {
+      const logoId = row.detail?.display?.logoId;
+      let logoPreview = null;
+      if (logoId) {
+        try {
+          const { data, error } = await sb()
+            .from("user_logos")
+            .select("type,payload")
+            .eq("id", logoId)
+            .maybeSingle();
+          if (error) throw error;
+          if (data?.type && data?.payload) logoPreview = data;
+        } catch (error) {
+          console.warn("[display2] preview logo lookup failed:", error);
+        }
+      }
+      scene.api.logo.setPreview(logoPreview);
     }
     await renderer.renderSnapshot(row);
     // Podgląd formularza jest statyczny; intro prawdziwej gry pozostaje osobne.
@@ -345,13 +341,20 @@ async function bootPreview(params) {
 
 window.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: false });
-  initFullscreenButton();
-
   const params = new URL(location.href).searchParams;
-  if (params.get("preview") === "1") {
-    await bootPreview(params);
+  const preview = params.get("preview") === "1";
+  const controlTestFrame = window.parent !== window
+    && window.frameElement?.dataset.controlTestMode === "true";
+  const deviceGate = preview || controlTestFrame ? null : guardViewportWidth({ minWidth: 980, minScreenShortSide: 800, minTvResolution: true, formFactors: ["desktop", "tablet", "tv"] });
+  document.documentElement.removeAttribute("data-device-guard-pending");
+  if (deviceGate && deviceGate.state() !== "ok") await deviceGate.ready;
+
+  if (preview) {
+    await bootPreview();
     return;
   }
+  startKeepAlive();
+  initFullscreenButton();
   enterFullscreen();
   document.addEventListener("keydown", (event) => {
     const screen = $("audioUnlockScreen");
@@ -713,6 +716,9 @@ window.addEventListener("DOMContentLoaded", async () => {
             },
             () => token === renderGeneration,
           );
+          if (token === renderGeneration) {
+            document.querySelectorAll("[data-skel-step]").forEach((step) => step.classList.add("skel-step-ready"));
+          }
         }).catch(error => {
           if (error?.name !== "AbortError") {
             displayEventLog.report({ event_type: "runtime_error", phase: "render", error_name: error?.name || "Error", state_rev: row.rev });
@@ -723,6 +729,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       onError: (error) => {
         console.warn("[display2] game_state_get failed:", error);
         showBlack();
+        document.querySelectorAll("[data-skel-step]").forEach((step) => step.classList.add("skel-step-ready"));
       },
     });
 
@@ -731,5 +738,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   } catch (e) {
     console.warn("[display2]", e?.message || e);
     showBlack();
+    document.querySelectorAll("[data-skel-step]").forEach((step) => step.classList.add("skel-step-ready"));
   }
 });

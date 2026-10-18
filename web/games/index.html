@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,38 +14,33 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="games.title">Familiada — moje gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-18T17375"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17330"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17375"/>
 
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      var _has = false;
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-      }
-      if (!_has) location.replace('/login/');
-    } catch(_e) {}
-  </script>
+  <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/games/js/games.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/games/js/games.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="games-body skel-body">
-  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand topbar-has-overflow-nav">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn topbar-sheet-back" id="btnBackSheet" type="button">Wstecz</button>
+      <button class="btn topbar-sheet-back" id="btnBackSheet" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnMarketplace">
         <span data-i18n="games.nav.marketplace" data-i18n-icon-after="gamepad">Gry Społeczności</span>
+      </button>
+
+      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
+        <span data-i18n="games.nav.connectDevice" data-i18n-icon-after="phone">Podłącz urządzenie</span>
+        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnLogoEditor">
@@ -53,9 +48,9 @@
         <span class="badge" id="logoCopiesNavBadge" aria-hidden="true"></span>
       </button>
 
-      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
-        <span data-i18n="games.nav.connectDevice" data-i18n-icon-after="phone">Podłącz urządzenie</span>
-        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
+      <button class="btn" id="btnBases">
+        <span data-i18n="games.nav.bases" data-i18n-icon-after="drawer">Bazy pytań</span>
+        <span class="badge" id="basesBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnFriends">
@@ -72,11 +67,6 @@
         <span class="badge" id="tasksBadge" aria-hidden="true"></span>
       </button>
 
-      <button class="btn" id="btnBases">
-        <span data-i18n="games.nav.bases" data-i18n-icon-after="drawer">Bazy pytań</span>
-        <span class="badge" id="basesBadge" aria-hidden="true"></span>
-      </button>
-
       <div class="nav-more" id="navMore" style="display:none;">
         <button class="btn" id="btnMore" type="button"><span data-i18n="games.nav.more">Więcej</span> <i class="ico" data-icon="caret-down"></i><span class="badge" id="moreBadge" aria-hidden="true"></span></button>
         <div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>
@@ -88,7 +78,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <div class="who" id="whoStatic">—</div>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -102,20 +92,20 @@
       <div class="actions">
         <!-- góra: główna akcja (złota) z lewej, reszta neutralna; pełne napisy także na telefonie -->
         <div class="btn-group">
-          <button class="btn sm gold" id="btnPlay" type="button" disabled data-i18n="games.actions.play">Graj</button>
-          <button class="btn sm" id="btnSettings" type="button" disabled data-i18n="games.actions.settings">Ustawienia gry</button>
+          <button class="btn sm gold" id="btnPlay" type="button" disabled><i class="ico" data-icon="gamepad" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.play">Graj</span></button>
+          <button class="btn sm gold" id="btnSettings" type="button" disabled><i class="ico" data-icon="settings" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.settings">Ustawienia gry</span></button>
         </div>
 
-        <button class="btn sm" id="btnEdit" type="button" disabled data-i18n="games.actions.edit">Edytuj</button>
+        <button class="btn sm" id="btnEdit" type="button" disabled><i class="ico" data-icon="edit-paper" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.edit">Edytuj</span></button>
 
-        <button class="btn sm" id="btnPreview" type="button" disabled data-i18n="games.actions.preview">Podgląd</button>
+        <button class="btn sm" id="btnPreview" type="button" disabled><i class="ico" data-icon="eye" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.preview">Podgląd</span></button>
 
-        <button class="btn sm" id="btnPoll" type="button" disabled data-i18n="games.actions.poll">Ankieta</button>
+        <button class="btn sm" id="btnPoll" type="button" disabled><i class="ico" data-icon="polls" aria-hidden="true"></i><span class="action-label" data-i18n="games.actions.poll">Ankieta</span></button>
       </div>
     </div>
 
     <!-- Karty z wypustką (kształt jak w Twoim pliku) -->
-    <section class="games-shell">
+    <section class="games-shell" data-skel-step>
       <div class="tabs-card" id="tabs-root">
         <!-- PASEK ZAKŁADEK -->
         <div class="tabs-strip">
@@ -154,11 +144,13 @@
           <!-- SLOT 3: preparowana -->
           <div class="tab-slot slot-prepared" data-copy-kind="game" data-copy-variant="prepared">
             <button class="tab-label" id="tabPrepared" type="button">
-              <span data-i18n="games.tabs.prepared">Preparowana</span>
+              <span class="only-desktop" data-i18n="games.tabs.prepared">Preparowana</span>
+              <span class="only-mobile" data-i18n="games.tabs.preparedMobile">Prepar.</span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
-                <span data-i18n="games.tabs.prepared">Preparowana</span>
+                <span class="only-desktop" data-i18n="games.tabs.prepared">Preparowana</span>
+                <span class="only-mobile" data-i18n="games.tabs.preparedMobile">Prepar.</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -169,12 +161,12 @@
           <div class="tab-slot slot-market">
             <button class="tab-label" id="tabMarket" type="button">
               <span class="only-desktop" data-i18n="games.tabs.market">Gry Społeczności</span>
-              <span class="only-mobile" data-i18n="games.tabs.marketMobile">Społ.</span>
+              <span class="only-mobile" data-i18n="games.tabs.marketMobile">Społeczność</span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
                 <span class="only-desktop" data-i18n="games.tabs.market">Gry Społeczności</span>
-                <span class="only-mobile" data-i18n="games.tabs.marketMobile">Społ.</span>
+                <span class="only-mobile" data-i18n="games.tabs.marketMobile">Społeczność</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -188,13 +180,13 @@
           <div class="grid" id="grid"></div>
 
           <div class="games-bottom">
-          <div class="games-bottom-left"><button class="btn sm" id="btnReceivedFilter" type="button" aria-pressed="false" data-i18n="resourceSend.receivedFilter">Otrzymane</button></div>
+          <div class="games-bottom-left"></div>
             <div class="games-bottom-right">
-              <button class="btn sm" id="btnExport" type="button" disabled data-i18n="games.actions.exportFile">Eksportuj do pliku</button>
-              <button class="btn sm" id="btnExportBase" type="button" disabled data-i18n="games.actions.exportBase">Eksportuj do bazy</button>
               <button class="btn sm" id="btnDuplicate" type="button" disabled data-i18n-title="resourceDuplicate.action" data-i18n-aria-label="resourceDuplicate.action"><i class="ico" data-icon="duplicate" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceDuplicate.action">Powiel</span></button>
+              <button class="btn sm" id="btnExport" type="button" disabled data-i18n-title="games.actions.exportFile" data-i18n-aria-label="games.actions.exportFile"><i class="ico" data-icon="download" aria-hidden="true"></i><span class="only-desktop" data-i18n="games.actions.exportFile">Eksportuj do pliku</span></button>
+              <button class="btn sm" id="btnExportBase" type="button" disabled data-i18n-title="games.actions.exportBase" data-i18n-aria-label="games.actions.exportBase"><i class="ico" data-icon="drawer-export" aria-hidden="true"></i><span class="only-desktop" data-i18n="games.actions.exportBase">Eksportuj do bazy</span></button>
+              <button class="btn sm" id="btnImport" type="button" data-i18n-title="games.actions.import" data-i18n-aria-label="games.actions.import"><i class="ico" data-icon="upload" aria-hidden="true"></i><span class="only-desktop" data-i18n="games.actions.import">Importuj</span></button>
               <button class="btn sm" id="btnSendCopy" type="button" disabled data-i18n-title="resourceSend.action" data-i18n-aria-label="resourceSend.action"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="only-desktop" data-i18n="resourceSend.action">Wyślij</span></button>
-              <button class="btn sm" id="btnImport" type="button" data-i18n="games.actions.import">Importuj</button>
             </div>
           </div>
         </div>
@@ -235,7 +227,7 @@
         </div>
 
         <div class="importRow modal-actions" style="margin-top:10px;">
-          <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="games.exportBase.confirm">Eksportuj</button>
+          <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="games.exportBase.confirm" data-i18n-icon="download">Eksportuj</button>
           <div class="importMsg" id="exportBaseMsg"></div>
         </div>
       </div>
@@ -249,8 +241,10 @@
           <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
-        <div class="importRow" style="margin-top:8px">
-          <input id="importFile" class="inp" type="file" accept=".famgame,.json,application/json">
+        <div class="importRow import-file-picker" style="margin-top:8px">
+          <input id="importFile" type="file" accept=".famgame,.json,application/json" hidden>
+          <button class="btn sm" id="btnChooseImportFile" type="button" data-i18n="common.filePicker.choose" data-i18n-icon="file-doc">Wybierz plik</button>
+          <span class="import-file-name" id="importFileName" aria-live="polite">Nie wybrano pliku</span>
         </div>
 
         <!-- Podgląd / błąd po wczytaniu pliku -->
@@ -270,7 +264,8 @@
         </div>
 
         <div class="importRow modal-actions" style="margin-top:12px">
-          <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="games.import.confirm">Importuj</button>
+          <button class="btn sm" id="btnImportCancelAction" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="games.import.confirm" data-i18n-icon="upload">Importuj</button>
           <div class="importMsg" id="importMsg"></div>
         </div>
       </div>
@@ -284,8 +279,8 @@
           <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="bld-preview-switch" id="previewSwitch" role="group" aria-label="Podgląd" data-i18n-aria-label="games.preview.switchLabel" hidden>
-          <button class="btn sm gold" id="btnPreviewModeGame" type="button" data-i18n="games.preview.modeGame" aria-pressed="true">Gra</button>
-          <button class="btn sm" id="btnPreviewModePoll" type="button" data-i18n="games.preview.modePoll" aria-pressed="false">Ankieta</button>
+          <button class="btn sm gold" id="btnPreviewModeGame" type="button" data-i18n="games.preview.modeGame" data-i18n-icon="gamepad" aria-pressed="true">Gra</button>
+          <button class="btn sm" id="btnPreviewModePoll" type="button" data-i18n="games.preview.modePoll" data-i18n-icon="polls" aria-pressed="false">Ankieta</button>
         </div>
         <div class="bld-preview-questions" id="previewQuestions"></div>
         <div class="bld-preview-questions bld-preview-poll" id="previewPoll" hidden>
@@ -296,7 +291,7 @@
     </div>
 
     <!-- Modal: zmiana nazwy -->
-    <div class="overlay modal--sheet" id="nameOverlay" style="display:none;">
+    <div class="overlay modal--keep-dialog" id="nameOverlay" style="display:none;">
       <div class="modal">
         <div class="mHead">
           <div class="mTitle" id="nameTitle" data-i18n="games.nameModal.title">Zmień nazwę</div>
@@ -309,21 +304,15 @@
         </div>
 
         <div class="importRow modal-actions">
-          <button class="btn sm" id="btnNameCancel" type="button" data-i18n="games.common.cancel">Anuluj</button>
-          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="games.common.save">Zapisz</button>
+          <button class="btn sm" id="btnNameCancel" type="button" data-i18n="games.common.cancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="games.common.save" data-i18n-icon="save">Zapisz</button>
           <div class="importMsg" id="nameMsg"></div>
         </div>
       </div>
     </div>
 
-    <div class="footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
-  </main>
-
   <!-- EXPORT DO PLIKU: PROGRES -->
-  <div class="overlay" id="exportJsonOverlay" style="display:none;">
+  <div class="overlay modal--keep-dialog" id="exportJsonOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
       <div class="mTitle" data-i18n="games.exportFile.title">EKSPORT…</div>
       <div class="mSub" id="exportJsonSub" data-i18n="games.exportFile.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
@@ -340,9 +329,18 @@
 
         <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
       </div>
+      <div class="importRow modal-actions" style="margin-top:12px;justify-content:flex-end">
+        <button class="btn sm gold" id="btnExportJsonClose" type="button" data-i18n="games.exportFile.close" data-i18n-icon="check" hidden>Gotowe</button>
+      </div>
     </div>
   </div>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

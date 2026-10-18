@@ -12,16 +12,16 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T17330";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T17330";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T17330";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17330";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-18T17330";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T17375";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T17375";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T17375";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17375";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-18T17375";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -31,14 +31,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-18T17330";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-18T17375";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-18T17330";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-18T17330";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-18T17330";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-18T17375";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-18T17375";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-18T17375";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-18T17330";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-18T17375";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -273,6 +273,7 @@ function showAuth(statusText) {
   document.body.classList.add("no-footer-line");
   moveLangSwitcher(true);
   setText(els.authStatus, statusText);
+  document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
 }
 
 function showPanel() {
@@ -282,6 +283,7 @@ function showPanel() {
   document.body.classList.remove("no-footer-line");
   moveLangSwitcher(false);
   syncTopbarHeight();
+  document.querySelector("main[data-skel-step]")?.classList.remove("skel-step-ready");
 }
 
 function stopPolling() {
@@ -1041,8 +1043,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-18T17330"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-18T17375"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -4477,8 +4479,6 @@ function mailViewBack() {
 
 function initMobileMailNav() {
   const btnMailBack = document.getElementById("btnMailBackTopbar");
-  // Znacznik dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
-  if (btnMailBack) btnMailBack.dataset.sheetBack = "1";
   btnMailBack?.addEventListener("click", () => {
     if (handleSheetBack()) return;
     mailViewBack();
@@ -5311,6 +5311,7 @@ function buildSessionRunDetails(r) {
     rounds_target: "Zakończono grę po osiągnięciu progu rund.",
     questions_exhausted: "Zakończono grę po wykorzystaniu pytań.",
     control_idle_expired: "Gra została przerwana po godzinie bezczynności panelu sterowania.",
+    settings_cancelled: "Aktywną rozgrywkę zakończono z poziomu ustawień gry.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
   const deviceEventLog = r.device_event_log || r.display_event_log;
@@ -5378,6 +5379,32 @@ function buildSessionRunDetails(r) {
       const metrics = event.metrics || {};
       const devices = (event.devices || []).map(kind => names[kind] || kind).join(", ") || "Urządzenie";
       if (event.category === "connectivity") {
+        if (metrics.phase === "metadata_read_error") {
+          const error = metrics.error_code || metrics.http_status || metrics.error_name;
+          return {
+            title: "Dodatkowe dane obecności niedostępne",
+            detail: `Control nie odczytał device_presence${error ? ` (${error})` : ""}; lease urządzeń działał, akcje gry nie były blokowane.`,
+          };
+        }
+        if (metrics.phase === "metadata_recovered") {
+          return {
+            title: "Dodatkowe dane obecności wróciły",
+            detail: `Odczyt device_presence wznowił się po ${formatDuration(metrics.duration_ms)}; akcje gry nie były blokowane.`,
+          };
+        }
+        if (metrics.phase === "read_error") {
+          const error = metrics.error_code || metrics.http_status || metrics.error_name;
+          return {
+            title: "Control nie może potwierdzić statusu lease",
+            detail: `Odczyt ${metrics.source === "lease_status" ? "control_device_slots_for_owner" : "statusu urządzeń"} nie powiódł się${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu.`,
+          };
+        }
+        if (metrics.phase === "recovered") {
+          return {
+            title: "Control odzyskał status lease",
+            detail: `Odczyt statusu wrócił po ${formatDuration(metrics.duration_ms)}; akcje gry mogą być kontynuowane.`,
+          };
+        }
         const details = [`Blokada: ${formatDuration(metrics.blocked_duration_ms)}`];
         if (metrics.repeated_drops) details.push(`ponowne zaniki: ${metrics.repeated_drops}`);
         if (metrics.blocked_action_attempts) details.push(`próby akcji podczas blokady: ${metrics.blocked_action_attempts}`);
@@ -5429,6 +5456,9 @@ function buildSessionRunDetails(r) {
         }
       }
       if (event.category === "display_delay") {
+        if (metrics.reason === "ack_read_recovered") {
+          return { title: "Odczyt potwierdzenia planszy wrócił", detail: `Po ${formatDuration(metrics.duration_ms)}` };
+        }
         if (metrics.reason === "ack_read_error") {
           const errorNames = { AbortError: "przekroczono limit czasu odczytu", TimeoutError: "przekroczono limit czasu odczytu", TypeError: "błąd sieci podczas odczytu" };
           const cause = errorNames[metrics.error_code] || (metrics.error_code && metrics.error_code !== "read_error" ? `kod: ${metrics.error_code}` : "nieznana przyczyna");
@@ -5441,12 +5471,55 @@ function buildSessionRunDetails(r) {
           return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)}; dźwięk ruszył po limicie.` };
         }
         if (metrics.reason === "ack_timeout") {
-          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
+          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",
           detail: `Display: ${formatDuration(metrics.actual_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}; opóźnienie ${formatDuration(metrics.extra_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}`,
         };
+      }
+      if (event.category === "device_transport") {
+        const duration = metrics.duration_ms != null ? ` · przerwa ${formatDuration(metrics.duration_ms)}` : "";
+        const catchups = Number(metrics.catchup_count) > 0
+          ? ` · nadrobiono ${metrics.catchup_count} odczytami, ${metrics.missed_revisions || 0} rewizji` : " · bez nadrobienia przez odczyt awaryjny";
+        const visibility = metrics.start_visibility === "hidden" ? " · karta była w tle" : metrics.start_visibility === "visible" ? " · karta była widoczna" : "";
+        const background = Number(metrics.hidden_duration_ms) > 0 ? `, w tym ${formatDuration(metrics.hidden_duration_ms)} w tle` : "";
+        const network = metrics.start_online === false ? " · przeglądarka zgłaszała brak sieci" : "";
+        const cause = metrics.first_status ? ` · status ${metrics.first_status}` : "";
+        return { title: `Przerwa kanału: ${devices}`, detail: `${duration}${cause}${catchups}${visibility}${background}${network}${metrics.was_discarded ? " · karta została odtworzona po odrzuceniu" : ""}`.trim() };
+      }
+      if (event.category === "device_state_sync") {
+        const revision = metrics.revision != null ? ` · rewizja ${metrics.revision}` : "";
+        if (metrics.phase === "read_error") return { title: `Błąd odczytu bazy: ${devices}`, detail: `Odczyt awaryjny nie powiódł się${metrics.fetch_ms != null ? ` po ${formatDuration(metrics.fetch_ms)}` : ""}${metrics.error_class ? ` · ${metrics.error_class}` : ""}${revision}` };
+        if (metrics.phase === "read_recovered") return { title: `Odczyt bazy wrócił: ${devices}`, detail: `${metrics.fetch_ms != null ? `Odczyt trwał ${formatDuration(metrics.fetch_ms)}` : "Odczyt działa"}${revision}` };
+        if (metrics.phase === "render_error") return { title: `Błąd renderowania: ${devices}`, detail: `${metrics.error_class || "Błąd urządzenia"}${revision}` };
+        if (metrics.phase === "render_recovered") return { title: `Renderowanie wróciło: ${devices}`, detail: `Nowy stan został zastosowany${revision}` };
+        if (metrics.phase === "fallback_catchup") return { title: `Odczyt awaryjny nadrobił stan: ${devices}`, detail: `Pominięto ${metrics.previous_revision ?? "?"} → ${metrics.revision ?? "?"}${metrics.fetch_ms != null ? ` · odczyt ${formatDuration(metrics.fetch_ms)}` : ""}` };
+      }
+      if (event.category === "state_sync") {
+        if (metrics.phase === "requested") {
+          const from = metrics.from_step || "?";
+          const to = metrics.to_step || "?";
+          const cue = metrics.sound ? ` · ${metrics.sound}` : "";
+          const expected = metrics.expected_ms != null && Number.isFinite(Number(metrics.expected_ms)) ? ` · oczekiwano ${formatDuration(metrics.expected_ms)}` : "";
+          const previous = metrics.previous_revision != null ? `r${metrics.previous_revision} → ` : "";
+          return { title: `Wysłano stan r${metrics.revision ?? "—"}`, detail: `${previous}${from} → ${to}${cue}${expected}` };
+        }
+        if (metrics.phase === "acknowledged") {
+          const source = metrics.ack_source === "realtime" ? "Realtime" : "odczyt awaryjny";
+          const expected = metrics.expected_ms != null && Number.isFinite(Number(metrics.expected_ms)) ? `; oczekiwano ${formatDuration(metrics.expected_ms)}` : "";
+          return { title: `Display potwierdził r${metrics.acknowledged_revision ?? metrics.revision ?? "—"}`, detail: `ACK przez ${source} po ${formatDuration(metrics.latency_ms)}${expected}${metrics.control_visibility === "hidden" ? " · Control było w tle" : ""}` };
+        }
+      }
+      if (event.category === "realtime") {
+        const state = metrics.state === "connected" ? "połączony" : "rozłączony; działa odpytywanie awaryjne";
+        const channels = {
+          display_completion: "Kanał potwierdzeń ACK Displaya",
+          display_transition_started: "Kanał sygnału startu animacji Displaya",
+        };
+        const phase = metrics.phase === "game_start" ? " · stan przy starcie gry" : "";
+        const raw = metrics.raw_status && metrics.raw_status !== metrics.state ? ` (${metrics.raw_status})` : "";
+        return { title: channels[metrics.channel] || "Kanał Realtime", detail: `${state}${raw}${phase}` };
       }
       return { title: "Problem podczas rozgrywki", detail: String(event.message || "") };
     };
@@ -6528,7 +6601,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-18T17330");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-18T17375");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;
@@ -7247,6 +7320,7 @@ function wireEvents() {
     startActivityPanel();
     activateSettingsTabFromUrl();
     await loadState();
+    document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");
     if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
   } else {
     showAuth("Wymagane logowanie przez Cloudflare Access.");

@@ -19,7 +19,7 @@ test("każda ikona używa właściwego, osobnego pliku SVG", () => {
     assert.ok(svg.includes(`<use href="${ICONS[name]}#icon"></use>`), name);
     assert.match(svg, /<\/svg>$/, name);
     assert.match(svg, /aria-hidden="true"/, name);
-    const assetPath = path.join(ROOT, ICONS[name].replace(/^\//, ""));
+    const assetPath = path.join(ROOT, ICONS[name].split("?")[0].replace(/^\//, ""));
     assert.ok(fs.existsSync(assetPath), `${name}: brakuje ${assetPath}`);
     assert.match(fs.readFileSync(assetPath, "utf8"), /<svg[^>]*\bid="icon"[^>]*\bviewBox=/, name);
   }
@@ -35,7 +35,7 @@ test("nieznana nazwa daje pusty string, etykieta jest escapowana", () => {
 });
 
 test("ustalone rysunki: anuluj ≠ błąd, info i „!” bez kółka, telefon z falami, buzzer i host", () => {
-  const svg = (name) => fs.readFileSync(path.join(ROOT, ICONS[name].slice(1)), "utf8");
+  const svg = (name) => fs.readFileSync(path.join(ROOT, ICONS[name].split("?")[0].slice(1)), "utf8");
   assert.notEqual(svg("cancel"), svg("error"));
   assert.doesNotMatch(svg("info"), /r="[89]/, "info bez kółka");
   assert.doesNotMatch(svg("error"), /r="[89]/, "„!” bez kółka");
@@ -93,9 +93,9 @@ test("moduł importujący icon nie przesłania go zmienną ani parametrem o tej 
 
 test("pliki ikon językowych i połowy gwiazdki są osobnymi źródłami SVG", () => {
   for (const name of ["flag-pl", "flag-ua", "star-half"]) {
-    const file = path.join(ROOT, ICONS[name].slice(1));
+    const file = path.join(ROOT, ICONS[name].split("?")[0].slice(1));
     const svg = fs.readFileSync(file, "utf8");
     assert.match(svg, /<svg[^>]*\bid="icon"/, name);
-    assert.match(icon(name), new RegExp(`${ICONS[name]}#icon`), name);
+    assert.ok(icon(name).includes(`${ICONS[name]}#icon`), name);
   }
 });

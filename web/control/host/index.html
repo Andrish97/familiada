@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+  <style>html[data-touch-guard-pending] body{visibility:hidden}</style><script>document.documentElement.dataset.touchGuardPending="true"</script>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
   <title data-i18n="host.title">Familiada — prowadzący</title>
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/device-lease.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/control/host/css/host.css?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/control/host/css/host.css?v=v2026-10-18T17375"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/control/host/js/main.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/control/host/js/main.js?v=v2026-10-18T17375" defer></script>
 </head>
-<body class="host-body" data-device-screen>
-  <section id="deviceLeaseOverlay" class="device-lease-overlay" hidden aria-live="polite" aria-atomic="true"><div class="device-lease-card"><h1 id="deviceLeaseTitle"></h1><p id="deviceLeaseText"></p></div></section>
+<body class="host-body" data-device-screen data-requires-touch="true">
+  <section id="deviceLeaseOverlay" class="blocking-overlay" hidden role="alertdialog" aria-labelledby="deviceLeaseTitle" aria-describedby="deviceLeaseText" aria-live="polite" aria-atomic="true"><div class="blocking-card"><div class="blocking-heading"><span id="deviceLeaseIcon" class="blocking-icon" aria-hidden="true"></span><h2 id="deviceLeaseTitle" class="blocking-title"></h2></div><p id="deviceLeaseText" class="blocking-message"></p></div></section>
   <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran" data-i18n-aria-label="common.fullscreen" data-i18n-title="common.fullscreen">
     <span class="ico" id="fsIco" aria-hidden="true"><i class="ico" data-icon="fullscreen-enter"></i></span>
   </button>
@@ -23,11 +23,11 @@
     <div class="a2hsCard">
       <h2 class="a2hsTitle" id="hostA2HSTitle" data-i18n="common.a2hsTitle">Pełny ekran na iPhone</h2>
       <p class="a2hsText" data-i18n-html="common.a2hsHost">W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom jako aplikację.</p>
-      <button class="btn a2hsClose" id="hostA2HSClose" type="button" data-i18n="common.a2hsOk">OK</button>
+      <button class="btn a2hsClose" id="hostA2HSClose" type="button" data-i18n="common.a2hsOk" data-i18n-icon="check">OK</button>
     </div>
   </div>
 
-  <main class="paper paperSplit" id="paper">
+  <main class="paper paperSplit" id="paper" data-skel-step>
     <i class="redMargin" aria-hidden="true"></i>
     <section class="pane pane1" aria-label="Tekst 1">
       <div class="lineGrid" id="lineGrid1" aria-hidden="true"></div>
@@ -46,5 +46,9 @@
       <div class="p2Hint" id="p2Hint" aria-hidden="true">—</div>
     </section>
   </main>
+  <div class="device-load-error" id="deviceLoadError" role="alert" hidden>
+    <span data-i18n="common.genericError">Wystąpił błąd.</span>
+    <button class="btn" type="button" data-retry-device data-i18n="common.refresh" data-i18n-icon="refresh">Odśwież</button>
+  </div>
 </body>
 </html>

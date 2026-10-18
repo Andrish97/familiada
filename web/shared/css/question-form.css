@@ -59,7 +59,7 @@
     --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
     border-radius: 18px;
     border: 1px solid var(--line);
-    background: rgba(255,255,255,.03);
+    background: rgba(255,255,255,.04);
     padding: 8px;
     min-height: 0;
     overflow: auto

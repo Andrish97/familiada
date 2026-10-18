@@ -7,16 +7,17 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-18T17330";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-18T17330";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-18T17330";
-import { createHostRenderer } from "./render.js?v=v2026-10-18T17330";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-18T17330";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-18T17330";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-18T17330";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-18T17330";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-18T17375";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T17375";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-18T17375";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-18T17375";
+import { createHostRenderer } from "./render.js?v=v2026-10-18T17375";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-18T17375";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-18T17375";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-18T17375";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-18T17375";
 
 function parseParams() {
   const u = new URL(location.href);
@@ -222,29 +223,62 @@ function setupPeekSwipe(renderer) {
 
 async function main() {
   await initI18n({ withSwitcher: false });
-  setupFullscreenButton();
+  const controlTestFrame = window.parent !== window
+    && window.frameElement?.dataset.controlTestMode === "true";
+  const { gameId, key, preview } = parseParams();
+  const deviceGate = preview || controlTestFrame ? null : guardViewportWidth({
+    minWidth: 0,
+    formFactors: null,
+    requiresTouch: !controlTestFrame,
+    allowPhoneLandscape: true,
+  });
+  document.documentElement.removeAttribute("data-touch-guard-pending");
+  if (deviceGate && deviceGate.state() !== "ok") await deviceGate.ready;
   setupOrientationClass();
   setupResponsivePaper();
   document.documentElement.classList.remove("page-loading");
 
-  const { gameId, key, preview } = parseParams();
   if (preview) {
     const renderer = createHostRenderer();
-    const coverLogo = createCoverLogoRenderer({ gameId, key });
-    const hostTheme = await createHostThemeApplier();
-    window.addEventListener("message", async event => {
+    const coverLogo = createCoverLogoRenderer({ previewOnly: true });
+    let latestRow = null;
+    const hostThemePromise = createHostThemeApplier().catch(error => {
+      console.warn("[host2] preview theme unavailable:", error);
+      return null;
+    });
+    window.addEventListener("message", event => {
       if (event.origin !== location.origin || event.source !== window.parent || event.data?.type !== "familiada:preview-row") return;
       const row = event.data.row;
       if (!row?.detail?.display) return;
-      await hostTheme.apply(row);
+      // The preview only paints the supplied snapshot. Show the paper as soon
+      // as its text is rendered; optional theme/logo work must not keep the
+      // preview surface (or the parent page) waiting.
+      latestRow = row;
       renderer.render(row);
-      await coverLogo.apply(row);
+      document.getElementById("paper")?.classList.add("skel-step-ready");
+      void (async () => {
+        try {
+          const hostTheme = await hostThemePromise;
+          if (latestRow !== row) return;
+          await hostTheme?.apply(row);
+          await coverLogo.apply(row);
+        } catch (error) {
+          console.warn("[host2] preview decoration failed:", error);
+        }
+      })();
     });
     if (window.parent !== window) window.parent.postMessage({ type: "familiada:host-preview-ready" }, location.origin);
     return;
   }
+  setupFullscreenButton();
 
-  if (!gameId || !key) return;
+  const loadError = document.getElementById("deviceLoadError");
+  document.querySelector("[data-retry-device]")?.addEventListener("click", () => location.reload());
+  if (!gameId || !key) {
+    if (loadError) loadError.hidden = false;
+    document.getElementById("paper")?.classList.add("skel-step-ready");
+    return;
+  }
 
   // Wszystkie trzy urządzenia utrzymują ekran aktywny przez Wake Lock
   // oraz zapasowy, wyciszony strumień wideo. Podgląd w ustawieniach nie.
@@ -275,6 +309,7 @@ async function main() {
   setupPeekSwipe(renderer);
 
   let appliedLang = null;
+  let initialStateReady = false;
   subscription = createSubscription({
     gameId, deviceType: "host", key,
     getLeaseArgs: () => lease.actionArgs(),
@@ -306,8 +341,15 @@ async function main() {
       renderer.render(row);
       coverLogo.apply(row);
       lease.setProgress({ renderedRev: Number(row.rev) || 0 });
+      initialStateReady = true;
+      if (loadError) loadError.hidden = true;
+      document.getElementById("paper")?.classList.add("skel-step-ready");
     },
-    onError: (error) => console.warn("[host2] game_state_get failed:", error),
+    onError: (error) => {
+      console.warn("[host2] game_state_get failed:", error);
+      if (!initialStateReady && loadError) loadError.hidden = false;
+      document.getElementById("paper")?.classList.add("skel-step-ready");
+    },
   });
   if (lease.state === "primary") await subscription.start();
 }

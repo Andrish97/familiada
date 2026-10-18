@@ -2,6 +2,7 @@ const en = {
   pollSharePanel: {
     "anonymous": "Anonymous",
     "recipients": "Recipients",
+    "recipientList": "Recipient list",
     "opened": "Opened",
     "empty": "No people on this list",
     "mailDisabled": "Email notifications are disabled"
@@ -25,6 +26,7 @@ const en = {
   resourceSend: {
   "action": "Send",
   "title": "Send to friends",
+  "selectFriends": "Choose friends",
   "received": "Received copies",
   "receivedFilter": "Received",
   "history": "Send history",
@@ -56,6 +58,7 @@ const en = {
     filterAll: "All",
     noResults: "No results.",
     genericError: "Something went wrong.",
+    filePicker: { choose: "Choose file", none: "No file chosen" },
     manualLabel: "Help",
     contactBtn: "Contact",
     modalBack: "Back",
@@ -68,6 +71,10 @@ const en = {
     no: "No",
     open: "Open",
     copy: "Copy",
+    selectAll: "Select all",
+    selectAllShort: "Everyone",
+    deselectAll: "Deselect all",
+    deselectAllShort: "Clear",
     done: "Done",
     loading: "Loading…",
     authEntry: "Sign in / Create account",
@@ -88,7 +95,7 @@ const en = {
       closeLabel: "Close",
     },
     fullscreen: "Fullscreen",
-    a2hsTitle: "Fullscreen on iPhone",
+    a2hsTitle: "Fullscreen on iPhone and iPad",
     a2hsHost:
       "Safari can't force true fullscreen. Use <b>Share</b> → <b>Add to Home Screen</b>, then launch it like an app.",
     a2hsBuzzer:
@@ -178,11 +185,19 @@ const en = {
   // Wspólna nakładka blokady strony (page-overlay.js): urządzenie i gość.
   pageGuard: {
     phoneTitle: "Not available on a phone",
-    phoneMessage: "This page needs a bigger screen. Switch to a computer or a tablet.",
-    rotateTitle: "Rotate your tablet",
-    rotateMessage: "This page works in landscape. Rotate your tablet — the page will appear on its own.",
+    phoneMessage: "This page is not available on phones.",
+    screenTitle: "A larger screen is required",
+    screenMessage: "This screen is too small. Use a device with a larger screen.",
+    touchTitle: "Touchscreen required",
+    touchMessage: "Open this page on a phone or tablet with a touchscreen.",
+    tvOnlyTitle: "This page is for TVs",
+    tvOnlyMessage: "Connect a display on a TV. On this device, use the Connect device page.",
+    tvUnsupportedTitle: "Not available on a TV",
+    tvUnsupportedMessage: "This page is not available on a TV. You will return to the Connect display screen shortly.",
+    rotateTitle: "Rotate your device",
+    rotateMessage: "Rotate your device to get the right view.",
     narrowTitle: "Window too narrow",
-    narrowMessage: "Make the browser window wider to use this page.",
+    narrowMessage: "Make the browser window wider or leave split-screen view.",
     back: "Back",
     guestTitle: "Not available for guest account",
     guestMessage: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and the polls hub.",
@@ -249,7 +264,7 @@ const en = {
       ctaConnectTitle: "Connect a device to a game",
       note: "Guest mode available — free Familiada without registration.",
     },
-    imageViewer: { open: "Enlarge image: {title}" },
+    imageViewer: { title: "Preview", open: "Enlarge image: {title}" },
     about: {
       title: "Familiada Online — free question generator and live game",
       p1: "Our system allows you to organize your own Familiada-style game from start to finish. It's an ideal solution as an attraction for weddings, birthdays or team building. The question generator allows you to create your own bases or use ready-made sets.",
@@ -640,13 +655,14 @@ const en = {
   },
   buzzer: {
     title: "Familiada — buzzer",
+    rotateMessage: "Turn your phone sideways to use the buzzer.",
     btnA: "Buzzer A",
     btnB: "Buzzer B",
     rotateHint: "Rotate device to landscape",
   },
   bases: {
     title: "Familiada — question bases",
-    headerTitle: "Your question bases",
+    headerTitle: "My question bases",
     headerHint: "Press a tile to select it. Double-tap to rename.",
     headerHintShared: "Press a tile to select it.",
     actions: {
@@ -685,17 +701,21 @@ const en = {
       loadFile: "Load file",
       placeholder: "Paste JSON here...",
       confirm: "Import",
+      done: "Done",
       cancel: "Close",
     },
     exportModal: {
       title: "EXPORT…",
       subtitle: "Do not close the page. Preparing the file.",
+      close: "Done",
     },
     shareModal: {
       title: "Share base",
       placeholder: "Username or email...",
-      roleEditor: "Edit",
-      roleViewer: "View",
+      roleEditor: "Can edit",
+      roleViewer: "View only",
+      roleEditorShort: "Edit",
+      roleViewerShort: "View",
       add: "Add",
       close: "Close",
       cooldown: "You can't add the same user again for 24h (anti-spam).",
@@ -782,8 +802,8 @@ const en = {
     },
     share: {
       empty: "No shares.",
-      roleEditor: "Edit",
-      roleViewer: "View",
+      roleEditor: "Can edit",
+      roleViewer: "View only",
       remove: "Remove",
       failed: "Failed",
       invalidEmail: "Invalid email",
@@ -849,6 +869,7 @@ const en = {
       points: "points",
     },
     pageSubtitle: "{type} · {name}",
+    load: { loading: "Loading poll…", failed: "Could not load the poll.", retry: "Retry" },
     tabs: {
       share: "Sharing",
       results: "Votes",
@@ -942,6 +963,8 @@ const en = {
       leaveTally: "Leave counting",
     },
     results: {
+      votesUnitCount: "{n} votes",
+      pointsUnitCount: "{n} pts",
       noQuestions: "No questions.",
       title: "Results",
       final: "Result:",
@@ -985,12 +1008,12 @@ const en = {
       },
       tallyPoints: {
         title: "Count the votes?",
-        text: "Points will be normalized to a sum of 100 in each question, and links and invitations will expire. The game will be ready.",
+        text: "Points are based on all votes. Answers below 3% after rounding will be skipped. Links and invitations will expire.",
         ok: "Approve",
       },
       tallyText: {
         title: "Approve the answers?",
-        text: "The answers will be saved with points (sum of 100 in each question), and links and invitations will expire. The game will be ready.",
+        text: "Answers will be saved with points. Shares are based on all votes; answers below 3% after rounding are skipped.",
         ok: "Approve",
       },
       reopen: {
@@ -1021,11 +1044,13 @@ const en = {
     },
     tally: {
       loading: "Loading answers…",
-      hintText: "Drag an answer onto another to merge them. Click the text to fix a typo. Answers are at most 17 characters.",
-      hintPoints: "Votes converted to points (sum of 100 in each question). Approve to finish the poll.",
+      hintText: "Share is based on all votes. Below 3% after rounding is skipped (gray row). Drag an answer onto another to merge; click its text to fix a typo. Max 17 characters.",
+        hintPoints: "Votes converted to points from all votes. Below 3% after rounding is skipped (gray row).",
       counter: "Answers: {n} (3–6 required)",
-      sum: "sum: {n}",
+      sum: "total points: {n}",
       votes: "{n} v.",
+      votesPercent: "{n} v. · {pct}%",
+      skippedTitle: "Skipped: {pct}% of all votes (below 3%).",
       mergeDup: "Merge duplicates",
       mergeWith: "Merge with…",
       remove: "Remove",
@@ -2741,14 +2766,14 @@ const en = {
       subscribers: "Subscribers",
       tasks: "Tasks",
       bases: "Question bases",
-      logo: "Logo",
+      logo: "Logos",
       marketplace: "Community Games",
       connectDevice: "Connect device",
       account: "Account settings",
       more: "More",
     },
     header: {
-      title: "Your games",
+      title: "My games",
       hint: "Press a tile to select it. Double-tap to rename.",
     },
     actions: {
@@ -2777,6 +2802,7 @@ const en = {
       pollPoints: "Points",
       pollPointsMobile: "Points",
       prepared: "Prepared",
+      preparedMobile: "Prep.",
       market: "Community Games",
       marketMobile: "Community",
     },
@@ -2847,6 +2873,7 @@ const en = {
     exportFile: {
       title: "EXPORT…",
       subtitle: "Do not close the page. Preparing the file.",
+      close: "Done",
       progress: {
         start: "Exporting…",
         fetch: "Loading data…",
@@ -2959,6 +2986,12 @@ const en = {
         "@My game\n#Animals in Africa\n1 Elephant /29\n2 Lion /19\n3 Monkey /16\n\n#Second question\n1 Answer 1\n2 Answer 2\n3 Answer 3",
       formatHint:
         "The format also works without numbers (just answer lines). Import tolerates spaces/tabs, “1.”, “2)” etc. Answers longer than 17 characters will be trimmed.",
+      previewLabel: "Import preview",
+      previewTitle: "Live preview",
+      previewEmpty: "Enter questions to see a preview.",
+      previewSummary: "{questions} questions · {answers} answers",
+      previewError: "Fix the format to see a preview: {error}",
+      previewMore: "and {count} more questions",
       confirm: "Import",
       cancel: "Close",
     },
@@ -3689,6 +3722,7 @@ const en = {
   },
 
   tasks: {
+    load: { loading: "Loading tasks…", failed: "Could not load tasks.", retry: "Retry" },
     title: "Familiada — tasks",
     bar: {
       title: "Tasks",
@@ -3982,7 +4016,7 @@ const en = {
       image: "Familiada — image logo",
     },
     list: {
-      title: "Your logos",
+      title: "My logos",
       hint: "Click a tile to select it. Double-click (or long-press on touch) to rename.",
       preview: "Preview",
       edit: "Edit",
@@ -4170,7 +4204,10 @@ const en = {
     },
     import: {
       title: "Import logo",
+      chooseFile: "Choose file",
+      noFileSelected: "No file selected",
       confirm: "Import",
+      done: "Done",
       steps: {
         uploadImage: "Uploading image to storage…",
         saveDb: "Saving to database…",
@@ -4179,6 +4216,8 @@ const en = {
     export: {
       title: "Exporting…",
       subtitle: "Don't close the page — preparing the file.",
+      close: "Done",
+      success: "The logo file has been downloaded.",
     },
     errors: {
       exportIncomplete: "Could not include the image in the logo. Please try again.",
@@ -4253,7 +4292,7 @@ const en = {
     },
     tags: {
       modalTitle: "Tags",
-      addTag: "+ Add tag",
+      addTag: "Add tag",
       editTitle: "Tag",
       namePlaceholder: "Tag name…",
       pickColor: "Pick color",
@@ -4460,6 +4499,7 @@ const en = {
     loading: "Loading…",
     searchPlaceholder: "Search games…",
     searchLabel: "Search games",
+    searchClear: "Clear search",
     filterLabel: "Language",
     filterAll: "All",
     sortLabel: "Sort",
@@ -4559,8 +4599,11 @@ const en = {
     messageText:
       "This address does not exist or has been moved. Check the link.",
     redirectHint: "You will be redirected to the home page shortly.",
+    authRedirectHint: "You will return to My Games shortly.",
+    tvRedirectHint: "You will return to the Connect display screen shortly.",
     homeBtn: "Home",
     marketplaceBtn: "Browse Community Games",
+    myGamesBtn: "Back to My Games",
     footerLeft: "Familiada",
     footerRight: "If this is a mistake, <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
@@ -4606,7 +4649,7 @@ const en = {
       desktopOnly: "This page works best on a desktop or TV. You may continue.",
     },
     enterCode: {
-      title: "Enter device code",
+      title: "Connect by code",
       placeholder: "000000",
       btn: "Connect",
       connectBtn: "Connect",
@@ -5109,6 +5152,7 @@ const en = {
     selfXssWarning: "Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS. Do not enter or paste code that you do not understand.",
   },
   contacts: {
+    load: { loading: "Loading contacts…", failed: "Could not load contacts.", retry: "Retry" },
     tabs: { invite: "Invitations" },
     "friends": {
         "add": "Add a friend",
@@ -5122,7 +5166,7 @@ const en = {
         "hint": "People without an account who want to receive your polls.",
         "empty": "No subscribers yet."
     },
-    "invite": "+ Invite",
+    "invite": "Invite",
     "handle": "Email or username",
     "email": "Email address",
     "go": "Go →",
@@ -5194,6 +5238,7 @@ const en = {
     pageTitle: "Game settings",
     defaultGameName: "Game",
     categories: {
+      open: "Show settings sections",
       teams: "Teams",
       display: "Display",
       sound: "Sound",
@@ -5390,6 +5435,7 @@ en.mailCenter = {
   "loading": "Loading…",
   "centerTitle": "My notifications",
   "emailLabel": "Your email address",
+  "emailPlaceholder": "Enter your email address",
   "sendLink": "Send link",
   "subscriptions": "Subscriptions",
   "items": "Tasks and shared devices",

@@ -12,11 +12,11 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-10-18T17330";
+} from "./state.js?v=v2026-10-18T17375";
 
-import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-18T17330";
+import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-18T17375";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-18T17330";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-18T17375";
 
 import {
   listQuestionsByCategory,
@@ -24,20 +24,20 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-10-18T17330";
+} from "./repo.js?v=v2026-10-18T17375";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-18T17330";
-import { openTagsModal } from "./tags-modal.js?v=v2026-10-18T17330";
-import { initExportModal } from "./export-modal.js?v=v2026-10-18T17330";
-import { initQuestionModal } from "./question-modal.js?v=v2026-10-18T17330";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17330";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T17330";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17330";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17330";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-18T17330";
-import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T17330";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-18T17330";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-18T17330";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-18T17375";
+import { openTagsModal } from "./tags-modal.js?v=v2026-10-18T17375";
+import { initExportModal } from "./export-modal.js?v=v2026-10-18T17375";
+import { initQuestionModal } from "./question-modal.js?v=v2026-10-18T17375";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17375";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T17375";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17375";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17375";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-18T17375";
+import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T17375";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-18T17375";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-18T17375";
 
 const btnBack = document.getElementById("btnBack");
 
@@ -2867,25 +2867,25 @@ export function wireActions({ state }) {
         return;
       }
 
-      // 1) Najpierw X (bo jest wewnątrz #searchBox)
-      if (t.id === "searchClearBtn") {
+      // Przycisk przy polu przełącza lupę na X; X czyści tekst i tagi,
+      // a lupa ustawia fokus w polu.
+      if (t.closest?.("#searchSubmitBtn")) {
         e.preventDefault?.();
         e.stopPropagation?.();
       
-        const alreadyEmpty =
-          !String(state.searchTokens?.text || "").trim() &&
-          !(Array.isArray(state.searchTokens?.tagIds) && state.searchTokens.tagIds.length) &&
-          !String(document.getElementById("searchText")?.value || "").trim();
+        const hasSearch = !!String(state.searchTokens?.text || "").trim()
+          || !!state.searchTokens?.tagIds?.length
+          || !!String(searchInput?.value || "").trim();
+        if (!hasSearch) {
+          searchInput?.focus();
+          return;
+        }
       
-        if (alreadyEmpty && state.view !== VIEW.SEARCH) return;
-      
-        const inp = document.getElementById("searchText");
-        if (inp) inp.value = "";
-      
+        if (searchInput) searchInput.value = "";
         state.searchTokens = { text: "", tagIds: [] };
         state.searchQuery = "";
       
-        if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
+        if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) restoreBrowseLocation(state);
         selectionClear(state);
         await refreshList(state);
       

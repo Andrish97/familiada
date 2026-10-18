@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8"/>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -26,22 +26,22 @@
   <meta property="og:image" content="https://www.familiada.online/img/og/og-image.webp"/>
 
   <base href="/"/>
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330"/>
-  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-18T17330"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375"/>
+  <link rel="stylesheet" href="/marketplace/css/marketplace.css?v=v2026-10-18T17375"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/marketplace/js/marketplace.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
 </head>
 <body class="mkt-body skel-body">
 
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnGoGames" type="button">Wstecz</button>
+      <button class="btn" id="btnGoGames" type="button" data-i18n-icon="arrow-left">Wstecz</button>
       <button class="btn" id="btnBackBrowse" type="button" hidden
               data-i18n="marketplace.btnBackBrowse" data-i18n-icon="arrow-left">Przeglądaj</button>
     </div>
@@ -52,7 +52,7 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <div class="who" id="whoStatic">—</div>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
@@ -67,26 +67,32 @@
           <h1 class="mkt-title" data-i18n="marketplace.title">Gry Społeczności</h1>
           <p class="mkt-subtitle" data-i18n="marketplace.subtitle">Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.</p>
         </div>
-        <button class="btn sm" id="btnMySent" type="button" data-i18n="marketplace.btnMySent">Moje wysłane</button>
+        <div class="actions mkt-head-actions">
+          <button class="btn sm" id="btnMySent" type="button" data-i18n-title="marketplace.btnMySent" data-i18n-aria-label="marketplace.btnMySent" aria-label="Moje wysłane" title="Moje wysłane"><i class="ico" data-icon="envelope-out" aria-hidden="true"></i><span class="mkt-action-label" data-i18n="marketplace.btnMySent">Moje wysłane</span></button>
+        </div>
       </div>
 
       <div class="mkt-search-bar">
-        <label class="sr-only" for="searchInput" data-i18n="marketplace.searchLabel">Szukaj gier</label>
-        <input class="inp mkt-search-input" id="searchInput" type="search"
-          data-i18n-placeholder="marketplace.searchPlaceholder"
-          placeholder="Szukaj gry…"
-          autocomplete="off"/>
-        <label class="mkt-control-label" id="langFilterLabel" data-i18n="marketplace.filterLabel">Język</label>
+        <div class="mkt-search-field">
+          <input class="inp mkt-search-input" id="searchInput" type="text" enterkeyhint="search"
+            data-i18n-aria-label="marketplace.searchLabel" aria-label="Szukaj gier"
+            data-i18n-placeholder="marketplace.searchPlaceholder"
+            placeholder="Szukaj gry…"
+            autocomplete="off"/>
+          <button class="btn mkt-search-button" id="btnSearchFocus" type="button" data-i18n-title="marketplace.searchLabel" data-i18n-aria-label="marketplace.searchLabel" aria-label="Szukaj gier" title="Szukaj gier"><i class="ico" data-icon="search" aria-hidden="true"></i></button>
+        </div>
         <div class="ui-select mkt-filter" id="langFilter">
           <button class="btn inp ui-select-btn mkt-filter-btn" type="button" aria-labelledby="langFilterLabel langFilterValue" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="globe"></i></span>
+            <span class="ui-select-name" id="langFilterLabel" data-i18n="marketplace.filterLabel">Język</span>
             <span class="ui-select-label" id="langFilterValue">Wszystkie</span>
             <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
           </button>
           <div class="ui-select-menu" role="listbox"></div>
         </div>
-        <label class="mkt-control-label" id="sortSelectLabel" data-i18n="marketplace.sortLabel">Sortowanie</label>
         <div class="ui-select mkt-filter" id="sortSelect">
-          <button class="btn inp ui-select-btn mkt-filter-btn" type="button" aria-labelledby="sortSelectLabel sortSelectValue" aria-haspopup="listbox" aria-expanded="false">
+          <button class="btn inp ui-select-btn mkt-filter-btn" type="button" data-i18n-aria-label="marketplace.sortLabel" aria-label="Sortowanie" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-icon" aria-hidden="true"><i class="ico" data-icon="sort"></i></span>
             <span class="ui-select-label" id="sortSelectValue">Polecane</span>
             <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
           </button>
@@ -96,7 +102,7 @@
 
       <div class="mkt-grid" id="browseGrid" data-skel-step></div>
       <div class="mkt-load-more-wrap" id="loadMoreWrap" hidden>
-        <button class="btn sm" id="btnLoadMore" type="button" data-i18n="marketplace.loadMore">Pokaż więcej</button>
+        <button class="btn sm" id="btnLoadMore" type="button" data-i18n="marketplace.loadMore" data-i18n-icon="arrow-down">Pokaż więcej</button>
       </div>
       <div class="hint mkt-info" id="browseInfo"></div>
     </section>
@@ -109,8 +115,8 @@
         <div>
           <h1 class="mkt-title" data-i18n="marketplace.mySent.title">Moje wysłane gry</h1>
         </div>
-        <div class="mkt-head-actions">
-          <button class="btn sm gold" id="btnSubmitNew" type="button" data-i18n="marketplace.mySent.btnAdd">Dodaj nową do Gier Społeczności</button>
+        <div class="actions mkt-head-actions">
+          <button class="btn sm gold" id="btnSubmitNew" type="button" data-i18n="marketplace.mySent.btnAdd" data-i18n-icon="plus">Dodaj nową do Gier Społeczności</button>
         </div>
       </div>
 
@@ -176,8 +182,8 @@
         <div class="hint mkt-submit-error" id="submitError" hidden></div>
 
         <div class="modal-actions" style="margin-top:14px">
-          <button class="btn sm" id="btnSubmitCancel" type="button" data-i18n="marketplace.submit.btnCancel">Anuluj</button>
-          <button class="btn sm gold" id="btnSubmitConfirm" type="button" data-i18n="marketplace.submit.btnSubmit">Wyślij do Gier Społeczności</button>
+          <button class="btn sm" id="btnSubmitCancel" type="button" data-i18n="marketplace.submit.btnCancel" data-i18n-icon="close">Anuluj</button>
+          <button class="btn sm gold" id="btnSubmitConfirm" type="button" data-i18n="marketplace.submit.btnSubmit" data-i18n-icon="envelope-out">Wyślij do Gier Społeczności</button>
         </div>
       </div>
     </div>
@@ -204,8 +210,8 @@
         <div class="mkt-detail-raters" id="detailRaters" hidden></div>
 
         <div class="mkt-detail-actions">
-          <button class="btn sm gold" id="btnAddLibrary" type="button" data-i18n="marketplace.btnAddToLibrary">Dodaj do moich gier</button>
-          <button class="btn sm" id="btnRemoveLibrary" type="button" data-i18n="marketplace.btnRemoveFromLibrary" hidden>Usuń z moich gier</button>
+          <button class="btn sm gold" id="btnAddLibrary" type="button" data-i18n="marketplace.btnAddToLibrary" data-i18n-icon="plus">Dodaj do moich gier</button>
+          <button class="btn sm" id="btnRemoveLibrary" type="button" data-i18n="marketplace.btnRemoveFromLibrary" data-i18n-icon="trash" hidden>Usuń z moich gier</button>
           <span class="mkt-added-badge" id="addedBadge" hidden data-i18n="marketplace.addedBadge" data-i18n-icon="check">W Twoich grach</span>
         </div>
       </div>
@@ -218,6 +224,6 @@
   </main>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

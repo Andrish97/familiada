@@ -5,6 +5,17 @@ pierwszy do wdrożenia. Ten plik jest źródłem prawdy dla tego etapu.
 
 ---
 
+## Decyzje — szybkie udostępnianie i ikony akcji (2026-10-18)
+
+W modalach Ankiet, Baz i Control listy odbiorców mają kompaktowe akcje
+„Zaznacz wszystkich” i „Odznacz wszystkich” w nagłówku listy. Akcje dotyczą
+wyłącznie dostępnych osób, chowają się przy pustej liście i na telefonie mają
+krótsze etykiety. W anonimowej sekcji ankiety adres głosowania nie jest
+wyświetlany; dostępne są trzy przyciski Kopiuj link, Otwórz i QR na
+wyświetlaczu. W Control akcje parowania/kodów mają ikony zgodne z funkcją;
+strzałka Dalej jest po prawej stronie tekstu, Wstecz po lewej, a zmiana
+ustawień używa ikony zębatki.
+
 ## Decyzje — Powiel na stronach zasobów (2026-10-13)
 
 Gry, Bazy i Logo otrzymują wspólną akcję Powiel z ikoną duplikowania,
@@ -26,7 +37,7 @@ na `main` bez uruchamiania testów. Zrzuty z przykładowymi danymi: 390/1400 px.
 
 ## 1. Strony list — wspólny układ
 
-Dotyczy: `/games/`, `/bases/`, `/logo/`, `/polls-hub/`, `/subscriptions/`.
+Dotyczy: `/games/`, `/bases/`, `/logos/`, `/polls-hub/`, `/subscriptions/`.
 Wzór: gry i bazy (pasek `.bar`, karty `.tabs-card`, `.card.games-card`,
 siatka `.grid` kafli `.card`, dolny pasek `.games-bottom`).
 
@@ -84,7 +95,7 @@ nazwę użytkownika.
 ## 4. Edytory — nazwa strony i informacja w topbarze
 
 Dotyczy: edytor pytań `/editor/`, ankieta gry `/polls/`, ustawienia gry
-`/game-settings/`, edytory logo `/logo/editor-*/`, eksplorator bazy
+`/game-settings/`, edytory logo `/logos/editor-*/`, eksplorator bazy
 `/base-explorer/`. W edytorach liczy się miejsce, więc nazwa strony
 i informacja nie mogą stać pod topbarem — idą **do topbaru**, tak jak dziś
 w eksploratorze bazy.
@@ -754,10 +765,23 @@ wyszukiwarek do Zadań/Znajomych/Subskrybentów. Manual zawsze ostatni.
 
 ### Mobile landscape — wszystkie strony (2026-10-11)
 
-Użytkownik wymaga zbadania i dopuszczenia telefonu w poziomie na każdej
-stronie. Osobny przegląd całej mapy PAGES przed manualem, w etapie UI/E20.
-Obejmuje także strony dotychczas ograniczone guardem małego ekranu
-(Control/edytory); sam obrót nie może pozostawić nieuzasadnionej blokady.
+**Korekta zakresu 2026-10-13:** obowiązującą regułą jest globalna blokada
+telefonu w landscape. Nie dopasowujemy każdej strony do używania poziomego
+telefonu; sprawdzamy poprawny guard i brak nieosiągalnej, przymglonej treści.
+Jeśli strona w ogóle nie obsługuje telefonu, jej komunikat o niedostępności
+ma pierwszeństwo przed sugestią obrotu. Nadrzędność guardów i przykłady
+zapisano w `docs/e20-kategorie-stron.md`, sekcja „Nadrzędność guardów”.
+
+Pierwotna decyzja poniżej wymagała zbadania i dopuszczenia telefonu poziomo
+na każdej stronie. Została zastąpiona korektą powyżej: osobny przegląd mapy
+PAGES nadal jest wymagany, ale telefon landscape ma wspólny guard poza
+jawnym wyjątkiem. Nie wolno odblokowywać stron tylko po to, by spełnić
+pierwotną decyzję.
+
+**Ujednolicenie uruchamiania guarda (2026-10-17):** strony bez `initPage()`
+podpinają bezpośrednio `guardViewportWidth()` z `device-guard.js`. Obrót oraz
+zmiana visual viewportu odświeżają wspólny stan i zdejmują nakładkę po
+powrocie do dozwolonego widoku; nie utrzymujemy osobnej logiki blokady.
 
 Dla każdej strony sprawdzić dostęp do funkcji, niewielką wysokość
 viewportu, topbar/wypustki/akcje/narzędzia, formularze i klawiaturę,
@@ -775,6 +799,13 @@ ujednolicenia; bieżąca kolejność E19 pozostaje zachowana.
 
 #### Zakres i kryteria zakończenia przeglądu landscape
 
+**Moje Gry (2026-10-13):** dotykowy kontekst telefonu obraca się portrait390×844 → landscape844×390 → portrait; filtrowanie i zaznaczenie pozostają, bez poziomego przepełnienia. E2E `38403253632` success1/1, 3 zrzuty artefaktu11816088611.
+
+**Marketplace (2026-10-13):** test dotykowy844×390 przechodzi listę,
+wyszukiwanie, szczegóły gry i zamknięcie arkusza bez utraty filtra;
+`38385343907`, success1/1. Pozostałe strony mapy i rzeczywistego urządzenia
+nie są tym testem objęte.
+
 Lista kontrolna obejmuje PAGES **oraz wszystkie rzeczywiste strony HTML**
 w `web/` (także podstrony i strony techniczne poza mapą). Na początku
 wdrożenia porównać obie listy ponownie, żeby uwzględnić nowe strony.
@@ -789,13 +820,12 @@ wdrożenia porównać obie listy ponownie, żeby uwzględnić nowe strony.
 | Strona główna, prywatność, 404, maintenance, settings i narzędzia settings (również pliki HTML bez index.html) | Czytelność, nawigacja, komunikaty i osiągalne akcje również przy małej wysokości. |
 | Manual | Układ poziomy sprawdzić podczas ostatniego etapu aktualizacji manuala, po zakończeniu zmian produktu. |
 
-Stan zastany: `device-guard.js` rozpoznaje telefon po krótszym boku
-ekranu <700 px; `deviceGuardState()` zwraca phone przed sprawdzeniem
-szerokości. Dlatego obrót obecnie nie odblokowuje Control/ustawień gry,
-a `blockPhone()` blokuje edytory logo w obu orientacjach. Przegląd musi
-objąć również `buttonVisible()` i reguły device w mapie, żeby dostępna
-strona nie miała ukrytego przycisku wejścia. Nie oznaczać tych stron jako
-obsługujących landscape na podstawie samej istniejącej reguły CSS.
+Wstępny przegląd wykazał, że jedna etykieta „telefon” blokowała funkcję
+niezależnie od obrotu. Model E20 rozdziela format urządzenia (telefon,
+tablet, desktop), orientację viewportu i szerokość dostępną stronie.
+Mapa stron określa minimalną szerokość funkcji; obrót nie zmienia formatu,
+ale może spełnić wymaganie szerokości i odsłonić wejście. Sama reguła CSS
+ani emulowane szerokie okno nie są dowodem obsługi landscape.
 
 Minimum pomiarów: dotykowe 844×390 i 667×375 px, pary pionowe
 390×844 i 375×667 px oraz obrót w obu kierunkach. Rozmiar screen
@@ -831,11 +861,11 @@ Audyt kodu (nie jest to jeszcze wdrożenie ani pomiar wizualny):
 
 | Strona | Obecne podpięcie | Zakres ujednolicenia |
 |---|---|---|
-| Konto, Bazy, edytor gry, ustawienia gry | Wspólne `skel-body`, topbar i `data-skel-step`; odsłonięcie po danych. | Zachować wzorzec i sprawdzić gotowość akcji; Konto podpina kliknięcia dopiero po `loadProfile`. |
-| Znajomi i Subskrybenci | Topbar ma wspólny wzorzec; cały `contactsHost` odsłaniany jednocześnie po odczytach. | Osobno odsłaniać gotowe sekcje/karty, zgodnie z ich zależnościami, także zakładki telefonu. |
-| Zadania | Topbar i zbiorcze odsłonięcie `tasks-scroll` po `refresh`; reszta karty nie ma własnych etapów. | Spójnie odsłonić stan, kartę i listę; nie pokazywać pustego stanu przed wynikiem odczytu. |
-| Ankiety | `skel-body` i topbar; w głównym HTML brak etapów `data-skel-step` dla kart. | Etapy dla nazwy/statusu/akcji oraz kart Udostępnianie i Głosy; karty zależne od faktycznego stanu ankiety. |
-| Gry | Wspólne odsłonięcie body/topbara; główna lista bez `data-skel-step`. | Przejrzeć także ten ekran; nie traktować częściowego podpięcia jako wzorca kompletnej gotowości. |
+| Konto, Bazy, edytor gry, ustawienia gry | Wspólne `skel-body`, topbar i `data-skel-step`; odsłonięcie po danych. | Zachować wzorzec i odsłonić Konto po `loadProfile` oraz podpięciu wszystkich akcji. |
+| Znajomi i Subskrybenci | `contactsHost` pojawia się dopiero po odczycie i zbudowaniu wierszy. Obie zakładki korzystają z jednego wyniku `contacts_list`. | Nie rozdzielać etapów bez rozdzielenia źródeł danych; błąd renderowania ma pozostać błędem pierwszego ładowania z retry. |
+| Zadania | Widoczny stan ładowania/błędu/retry; `tasks-scroll` po wyniku i wyrenderowaniu wierszy z akcjami. | Utrzymać wspólną kolejność przy każdym odświeżeniu; stan pusty wyświetlać dopiero po odpowiedzi. |
+| Ankiety | `pollBar` i główna karta po danych gry; lista Głosów w osobnym etapie po odczycie wyników. | Weryfikować stany niepowodzenia każdej sekcji oraz zależność kart od stanu ankiety. |
+| Gry | `.games-shell` jest etapem `data-skel-step`; lista odsłania się po `refresh`, stanie akcji i przygotowaniu sekcji kopii. | Zachować wzorzec; weryfikować również błąd odczytu oraz aktywność akcji podczas startu. |
 
 Źródło: `shared/css/base.css` (body, topbar, etapy sekcji),
 `shared/js/core/page-init.js` (`topbar-ready`), bootstrapping poszczególnych
@@ -844,6 +874,8 @@ kolejki wymuszającej opóźnienie każdej karty.
 
 Przy wdrożeniu:
 - Przejrzeć całą mapę stron, a także wspólne modale i sekcje udostępniania.
+- Każda nowa strona lub sekcja dodana później musi stosować te same etapy
+  gotowości; dodać ją do przeglądu i testu, zanim uzna się E20 za zamknięte.
 - Każda sekcja ma widoczny stan ładowania, wyniku lub błędu; błąd nie może
   pozostawić na stałe niewidocznej zawartości. Pusty kafelek dopiero po odczycie.
 - Widoczne akcje odblokować po podpięciu obsługi i ustaleniu uprawnień;
@@ -856,6 +888,202 @@ Przy wdrożeniu:
 
 Realizacja w UI/E20 po bieżącym grafie zależności; manual nadal ostatni.
 
+**Postęp E20 (2026-10-13):** Gry/Bazy/Logo mają odsłanianie list po
+odczycie i widoczny błąd; punktowe E2E `38378348674`, 6/6. Strona
+Ankiety pokazuje stan pierwszego ładowania, zachowuje komunikat błędu mimo
+nakładających się odświeżeń i pozwala ponowić odczyt; `38381649291`, 1/1,
+zrzuty390/1400 w artefakcie11803369573. Znajomi/Subskrybenci mają stan
+ładowania/błędu/retry hosta (`38382033831`, 1/1, artefakt11803776686), a
+Zadania osobny stan listy (`38382324509`, 1/1, artefakt11804131090).
+Zadania i kontakty mają też testy landscape z obrotem. Pozostałe etapy
+kart Ankiet, Kontaktów, Zadań i całej mapy PAGES wciąż wymagają przeglądu.
+
+**Stopniowe ładowanie — poprawki 2026-10-14:** device guard jest pierwszą
+bramką przed auth, topbarem i logiką danych. Po pokazaniu guarda znika klasa
+startowego ukrycia, ale wspólny overlay ukrywa całe `body`; dotyczy to także
+globalnego guarda telefonu w poziomie i stron z własnym progiem urządzenia.
+Etapy `data-skel-step` nie przyjmują fokusu ani kliknięć przed `skel-step-ready`.
+QR odsłania guard przed oczekiwaniem na dozwoloną szerokość. Konto, Kontakty i
+Zadania oznaczają dane jako gotowe dopiero po zbudowaniu widoku; Ankiety
+odsłaniają dane bazowe i wyniki osobno. Kontrakt unit
+`progressiveLoading.test.js` sprawdza kolejność i stany: 6/6, razem z testami
+device guard/page init: 40/40.
+Pełny przegląd ładowania wszystkich podstron i błędów sieciowych pozostaje
+częścią E20.
+
+**Galeria E20 (2026-10-14):** pełny Playwright z frontem brancha
+`codex/e19-3` i prawdziwymi danymi produkcyjnymi zakończony powodzeniem:
+workflow [38640316467](https://github.com/Andrish97/familiada/actions/runs/38640316467),
+5/5 profili oraz TV dla Connect TV. Artefakt
+[e20-gallery-873.zip](https://github.com/Andrish97/familiada/actions/runs/38640316467/artifacts/11930421040)
+zawiera 211 zrzutów: 35 tras i 7 dodatkowych stanów na MacBooku, iPadzie
+portrait/landscape, iPhonie portrait/landscape oraz widok TV. Foldery są pogrupowane
+według stron, a wewnątrz znajdują się pliki nazwane profilem urządzenia.
+Artefakt zawiera wyłącznie foldery stron z plikami PNG. Ramka iPhone'a/iPada,
+wycięcie lub zaokrąglenia oraz wskaźnik systemowy są już narysowane na każdym
+obrazie; nie wymaga to otwierania HTML ani dodatkowego podglądu. Metadane do
+walidacji trzymane są poza artefaktem. Zrzuty czekają na bezczynność sieci,
+stabilny DOM, gotowe fonty i zdekodowane widoczne obrazy.
+
+Settings jest serwowane z badanego brancha, a test symuluje wyłącznie
+odpowiedzi API Cloudflare Access, ponieważ panel jest za tą bramką. Asercje
+sprawdzają, że widoczny jest właściwy panel administratora, a ekran logowania
+jest ukryty. W kontekście galerii wyciszony jest prompt instalacji PWA, a ekran
+maintenance ma stabilny stan wizualny, bo produkcja przekierowuje przy
+wyłączonych pracach; nie zmienia to produkcyjnego konta ani stanu usługi.
+Na profilach blokowanych dodatkowe stany interaktywne pokazują właściwy guard.
+Poprzednia galeria nie zawierała pewnej kontroli gotowości treści i została
+zastąpiona powyższym artefaktem.
+
+### E20 — uwagi użytkownika do galerii i następna paczka poprawek (2026-10-14)
+
+**Decyzja modalowa (2026-10-15):** w mobilnym widoku strony modal ma nagłówek
+z tytułem i opcjonalnie jedną podpowiedzią wspólną dla całego modala,
+następnie akcje, separator i przewijaną treść. Kilka podpowiedzi kontekstowych
+zostaje przy swoich sekcjach. Treść przewija się jednym obszarem; osobne
+przewijanie zostaje tylko tam, gdzie lista ma pozostać dostępna pod stałym
+nagłówkiem i akcjami. Zwykła stopka strony pozostaje widoczna pod arkuszem.
+W zwykłym widoku modal
+pozostaje oknem na tle strony. Ujednolicenie obejmuje wskazane modale Gier,
+Baz, Ankiet, Control, Eksploratora baz, edytora Gier, Marketplace i Settings,
+oraz ich ikony, puste stany i przyczepione do viewportu menu. Menu i drawer
+nie mogą zmieniać geometrii pozostałej strony; w Eksploratorze modal zastępuje
+również toolbar i ma tę samą stopkę co reszta strony.
+
+**Kontynuacja (2026-10-15):** użytkownik polecił po poprawkach modalowych
+kontynuować pozostałe uwagi z listy bez zatrzymywania się po każdej z nich
+i wrócić z nową galerią. Wcześniejsze ograniczenie galerii nie obowiązuje;
+galerię uruchomić po wdrożeniu całej bieżącej paczki.
+
+Poprzednia galeria jest punktem odniesienia, nie akceptacją wyglądu. Niektóre
+widoki blokowały zasoby, gdy pięć profili otwierało równocześnie ten sam
+fixture. Kolejny przebieg ma być sekwencyjny: jeden profil/strona naraz,
+zamknięcie kontekstu przed następnym użyciem wspólnych zasobów. Ramki urządzeń
+mają wyraźnie pokazywać zaokrąglone ekrany, notch i wskaźniki systemowe, a
+macierz safe area musi odpowiadać profilowi i być używana jednolicie przez
+wszystkie strony.
+
+| Zakres | Wymaganie | Status |
+|---|---|---|
+| Galeria i safe area | iPhone: wyraźny notch i zaokrąglone narożniki na samym PNG; iPad: zaokrąglone narożniki i wskaźnik systemowy. Insety: iPhone portrait 47/0/34/0, landscape 0/47/21/47; iPad portrait/landscape 24/0/20/0. Artefakt ma być wyłącznie folderami stron i obrazami, bez HTML. | E2E składa ramkę urządzenia bezpośrednio w PNG w tym samym tabie; katalogi są grupowane według stron. Test sprawdza safe area, ładowanie i sekwencyjny przebieg. Pełny run `38643769954` wykrył błędne fixture logo-draw i nie jest dowodem kompletnej galerii. |
+| Puste listy | Komunikaty „Nie masz…”, „Brak…” i równoważne stany pustych list, które używają kafelków, mają być kaflem o wspólnym wyglądzie i przerywanej obwódce. Dotyczy m.in. Connect i list zasobów. Nie zmieniać stanów ładowania, błędów ani pustych sekcji celowo ukrytych. | Wspólne puste kafle dodane dla list zasobów, Connect i udostępnień; sprawdzić w galerii. |
+| Topbar | Zwiększyć odstęp między topbarem a nagłówkiem na większości stron; Privacy i Manual wymagają tej samej korekty. Topbar polls vote (punkty i tekst) ma zawsze widoczny brand, również na telefonie. Strona 404 nie ma przycisku „Wróć” w topbarze. | Odstęp, oba topbary vote i 404 poprawione; sprawdzić w galerii. |
+| Nagłówek i paski akcji | Nie zawijać przedwcześnie. Podpowiedź ma preferować naturalne granice zdań (kropkę/przecinek); można ją złamać w innym miejscu, jeżeli poprawia to układ przycisków. Dolny pasek ma zostać w jednym wierszu, gdy się mieści; po zawinięciu lewa grupa trzyma lewą, prawa trzyma prawą krawędź i obie rozkładają się proporcjonalnie z możliwie małą liczbą wierszy. | Pomiar nagłówka nie używa minimum szerokości podpowiedzi jako progu dla akcji. CSS podpowiedzi ma `text-wrap: pretty` i hyphenację. Dolny pasek mierzy naturalną szerokość i dzieli przestrzeń proporcjonalnie. Krótki test `38643551060` potwierdził stan jednowierszowy na MacBooku dla Gier/Baz/Logo; zawijanie mobilne czeka na nowy przebieg. |
+| Stopki | Lewa treść zawija się wyłącznie po lewej, prawa wyłącznie po prawej; sekcje nigdy nie spadają jedna pod drugą ani nie mieszają się. Przy trzech sekcjach skrajne trzymają krawędzie, środkowa środek. | Stopka ma stałą siatkę dwóch lub trzech kolumn; tekst może zawijać się tylko wewnątrz własnej kolumny i zachowuje wyrównanie do swojej krawędzi. Nowa galeria ma sprawdzić szczególnie 404 na telefonie. |
+| Games | „Ustawienia rozgrywki” zawsze złote i z czytelną zębatką. Wszystkie wypustki mają ten sam rozmiar pisma i mają pomieścić licznik; na mobile nazwy nie mogą być niezrozumiałymi skrótami. Eksport do bazy używa ikony szafki/baz z istniejącego przycisku i strzałki skierowanej w jej stronę. „Otrzymano” pozostaje kryterium sortowania, bez osobnego przycisku. | Złoty styl ustawień wzmocniono również w stanie disabled, ikonę settings przerysowano jako czytelny trybik. Wszystkie mobilne zakładki mają wspólną typografię i rezerwę na licznik; eksport używa nowej kompozycji istniejącej ikony drawer z grotkiem strzałki. „Otrzymano” już jest w selektorze sortowania; osobnego przycisku nie ma. |
+| Gry społeczności | Usunąć etykiety „Szukaj gier” i „Sortowanie” z widoku; pola i przyciski zachowują dostępne nazwy przez `aria-label`. Poprawić ikonę języka. „Moje wysłane” nie może trafić do drugiego wiersza. | Etykiety widokowe usunięte z HTML, nazwy dostępności są na kontrolkach; ikona globusa i przypięcie „Moje wysłane” do nagłówka pozostają. Sprawdzić w galerii. |
+| Ankiety | Na telefonie pokazać trzy karty. Kartę anonimowości oraz odbiorców podzielić zgodnie z funkcją, zachowując czytelną grupę. | Udostępnianie podzielone na trzy karty; sprawdzić na telefonie i komputerze w nowym przebiegu. |
+| Logo | Używać publicznego adresu strony `/logos/` we wszystkich linkach, mapach, testach i dokumentacji; nie utrzymywać aliasów starych tras. Przycisk Podgląd na mobile zawsze pozostaje w pierwszym wierszu. | Mapę, PWA, dokumentację i URL zrzutów ujednolicono; Podgląd przypięty do pierwszego wiersza. Sprawdzić w galerii. |
+| Mail | Publiczny adres strony to `/mails/` we wszystkich linkach, mapach, testach i dokumentacji; nie utrzymywać aliasów starych tras. Ścieżki plików JS/CSS i endpointów API nie są trasą strony i mają pozostać bez zmian. | Mapę, dokumentację i canonical URL ujednolicono; ścieżki assetów/API pozostały. Sprawdzić w galerii. |
+| Polls QR i Display | Wspólny kierunek blokady dla komputera/TV, ale z odmiennym wymaganiem rozmiaru: mały tablet, w tym iPad mini, jest blokowany dla QR i Display. Każdy typ otrzymuje precyzyjny komunikat zamiast ogólnego „komputer lub telewizor”. Polls QR nie pokazuje stopki ani przycisku kontaktu. | iPad mini ma próg krótszego boku 800 px i osobne komunikaty; kontakt usunięty z QR. Czeka na sprawdzenie stanu guarda w galerii. |
+| Connect TV | Dostępny wyłącznie na TV. Inne urządzenia dostają guard z przyciskiem „Wróć” prowadzącym bezpośrednio do `/connect/`. Bez odsłaniania pod spodem TV UI. | Smart TV only i pełnoekranowy guard z powrotem do Connect. Po wykryciu błędu safe area w `38620324946` topbar poprawiono; `38620721900` przeszedł MacBook, tablet/iPhone w obu orientacjach i TV. Pełna galeria jeszcze do przejrzenia. |
+| Connect | Jedna karta główna na całą dostępną wysokość, wewnątrz dwie karty: „Podłącz” i „Udostępnione dla mnie”. Gdy jedna jest ukryta, druga wypełnia kartę główną. Zachować pusty kafel i odstępy separatora/skanera. | Zmieniono HTML/CSS na kartę główną i dwie elastyczne karty wewnętrzne; ukryta karta jest wyjmowana z układu, widoczna zajmuje dostępną przestrzeń. Skaner i pusty stan zachowane. Wymaga punktowego sprawdzenia widoku anonimowego i zalogowanego. |
+| Ustawienia gry | iPad mini portrait jest obsługiwany. Ukrywać boczny pasek pod przyciskiem, jak w poprzednim modalnym układzie; nie pokazywać guarda. | Próg mapy obniżony do 600 px dla tabletów; wysuwany panel sekcji dodany. Czeka na sprawdzenie zawartości w iPad portrait. |
+| Control | Karta trybu testowego znajduje się pod kartami głównych trybów. | Karta trybu testowego przeniesiona pod karty urządzeń; sprawdzić w galerii. |
+| Host i Buzzer | Wyjątki od globalnego guarda mobile landscape. Tylko Buzzer na telefonie portrait pokazuje sugestię obrotu do landscape. Host nie pokazuje sugestii ani blokad poza blokadą niedotykowego urządzenia. W widoku testowym Control wymaganie dotyku jest pomijane. | Sugestię ograniczono do Buzzer; Host zachowuje wyłącznie guard dotyku. Iframe testu Control ma jawny znacznik, który pomija ograniczenia dotyku i form factor. Wymaga testu punktowego. |
+| Podgląd Logo | Na mobile przycisk Podgląd nigdy nie może znaleźć się w drugim wierszu. | Do wdrożenia razem z paskiem akcji Logo. |
+
+#### Audyt stopniowego ładowania — stan na 2026-10-14
+
+`page-loading` ukrywa całą stronę do startu aplikacji. `data-skel-step` to
+osobny etap: konkretna sekcja pozostaje niewidoczna i nieaktywna do chwili,
+gdy ma gotowy stan lub widoczny komunikat błędu. Statyczne strony odsłaniają
+treść po tłumaczeniach i inicjalizacji obsługi; strony z danymi zachowują
+osobne etapy dla list/kart, jeśli ich źródła gotowości są niezależne. Nie
+dodawać sztucznych opóźnień.
+
+**Wdrożenie 2026-10-14:** jawny etap jest teraz obecny na wszystkich 35
+stronach aplikacji (bez narzędzi wewnętrznych). Dodano brakujące etapy m.in.
+na Eksploratorze bazy, Control, Go, stronie głównej, Loginie, potwierdzeniu
+i resecie logowania, trzech edytorach Logo, Mails, Maintenance, Manual,
+Privacy, Settings, trzech wariantach głosowania, Host/Buzzer/Display oraz
+Connect TV. Strony statyczne odsłaniają treść po inicjalizacji; dynamiczne
+po gotowym renderze lub stanie błędu/odmowy. Vote punkty/tekst pokazują
+przetłumaczony nagłówek i stan oczekiwania przed pobraniem payloadu, a pytanie
+lub komunikat zamknięcia dopiero po odpowiedzi. Mails najpierw pokazuje stan
+wejścia, a podsumowanie/listy odsłania po odpowiedzi sesji. Settings najpierw
+pokazuje ekran Access, po autoryzacji ponownie ukrywa panel na czas pierwszego
+odczytu. Guard urządzenia pozostaje przed odsłonięciem treści i przed
+pobraniem danych.
+
+Po wygenerowaniu pełnej galerii poprawiono również fixture HTML dla stron
+potwierdzenia/resetu logowania (routing wcześniej pomijał `?lang=pl`) oraz
+etapy Buz zera: widok `offScreen` i stan błędu mają oddzielne znaczniki
+gotowości. Punktowy test etapów ładowania przeszedł 14/14, a run 38640316467
+wygenerował kompletną galerię 211 zrzutów. Pozostaje ręczny przegląd ujęć i
+zamknięcie pozostałych uwag; E20 nadal jest otwarte.
+
+| Grupa tras | Etapy widoku | Moment gotowości |
+|---|---|---|
+| Strony zasobów: Gry, Bazy, Logo, Marketplace, Zadania, Znajomi, Subskrybenci, Konto, Connect | Topbar/szkielet → sekcje/listy; niezależne karty pozostają osobnymi etapami, jeśli mają osobne dane | Po odpowiedzi API, renderze pustego/wypełnionego stanu i podpięciu akcji; przy błędzie widoczny retry/komunikat |
+| Edytory: Eksplorator, Edytor gry, Ustawienia gry, trzy edytory Logo | Topbar → edytor/lista po danych i sprawdzeniu dostępu | Po danych, guardzie zasobu i zamontowaniu edytora; blokada/odmowa ma własny komunikat |
+| Ustawienia administratora | Ekran Cloudflare Access → panel ukryty na czas pobrania → panel | Po potwierdzeniu Access i pierwszym `loadState`; przy braku Access ekran statusu jest widoczny |
+| Control oraz urządzenia Host/Buzzer/Display i Connect TV | Guard urządzenia → oczekiwanie → pierwsza odpowiedź/render; Control renderuje po hydratacji | Dopiero po przejściu guarda i pierwszym stanie; błędna odpowiedź odsłania jawny stan końcowy |
+| Polls vote: punkty, tekst, QR | Tłumaczony ekran/stanu oczekiwania → pytanie, QR lub komunikat zamknięcia | Po payloadzie/API albo zakończonym generowaniu QR; urządzeniowy guard QR przed odczytem |
+| Go i Mails | Tłumaczony komunikat startowy → wynik rozpoznania linku/sesji → akcje/listy | Po rozwiązaniu linku lub odpowiedzi sesji; błąd API daje wynik błędu, nie pustą kartę |
+| Strona główna, Manual, Privacy, 404, Maintenance, Login i landingi auth | Tłumaczona struktura → treść z podpiętą obsługą; Maintenance dodatkowo czeka na status serwera | Po tłumaczeniach i inicjalizacji interakcji, a dla Maintenance po odpowiedzi lub fallbacku |
+
+Szybki test strukturalny potwierdza marker na wszystkich 35 trasach; testy
+punktowe obejmują kolejność guarda, gotowość Kontaktu/Zadań/Konta/Ankiet,
+Eksploratora i urządzeń. To potwierdza implementację etapów, nie zastępuje
+jeszcze wizualnego sprawdzenia każdej trasy przy wolnej sieci i błędzie API.
+Przed zamknięciem E20 nadal należy sprawdzić te stany w sekwencyjnej galerii
+oraz dopisać test dla nowej strony/sekcji do macierzy.
+
+Kolejność realizacji: (1) zapisać kryteria galerii i wyłączyć równoległe
+użycie zasobów, (2) naprawić profile urządzeń/safe area i wspólne puste stany,
+topbar, paski oraz stopki, (3) dopracować wskazane strony, (4) audytować
+publiczne trasy `/mails/` i `/logos/`, (5) puścić krótkie testy dla każdej
+paczki, a po ich powodzeniu pełną galerię. Każdy wiersz powyżej pozostaje
+otwarty, dopóki rzeczywista strona i odpowiednie stany nie zostaną sprawdzone.
+
+**Galeria na telefonie (2026-10-14):** artefakt ma zawierać wyłącznie foldery
+według stron i pliki PNG, bez galerii HTML ani manifestów. Każde PNG ma mieć
+już widoczną ramkę urządzenia, notch/zaokrąglenia i wskaźnik systemowy.
+Walidacja kompletności pozostaje poza artefaktem i odrzuca niepełny pełny
+przebieg: oczekiwane jest 211 ujęć (42 na każdym z pięciu standardowych
+profili i 1 na TV dla Connect TV). Aktualny pełny run `38643769954` przerwał
+się na złym typie fixture Logo, więc nie spełnia tego kontraktu.
+
+**Ankieta landscape (2026-10-13):** po retry listy przełączenie Udostępnianie
+↔ Głosy w widoku844×390 nie powoduje poziomego przepełnienia i zachowuje
+pasek stanu; `38387014627`, success1/1, artefakt11806951789. Pozostałe strony i urządzenia nadal
+wymagają osobnych testów.
+
+**Import TXT edytora (2026-10-13):** podgląd używa `parseQaText` z finalnej
+ścieżki importu, aktualizuje się podczas wpisywania, pokazuje błąd parsowania,
+a plik TXT nadal trafia do jednego pola tekstowego. Punktowe E2E
+`38382791836`, 1/1; zrzuty390/1400 w artefakcie11804730840. Pozostałe
+operacje importu/eksportu wymagają osobnego przeglądu.
+
+**Eksport JSON gry (2026-10-13):** pobranie uruchamia się od razu po
+przygotowaniu pliku. Okno pozostaje z wynikiem widocznym do kliknięcia
+„Gotowe”; przycisk tylko zamyka okno i nie powtarza pobierania. Błąd też
+pozostaje widoczny do zamknięcia. Branch E2E `38383237666`, 1/1, w tym
+eksport z polskimi znakami i import pobranego pliku; kontrolowany błąd/retry
+`38385655794`, 1/1; pełny unit602/602.
+
+**Eksport JSON Bazy (2026-10-13):** identyczny stan pozostaje po
+pobraniu i po błędzie; „Gotowe” zamyka wyłącznie okno. Round-trip Bazy z
+folderami, tagami pytań i tagami folderów przeszedł w E2E
+`38383626341`, 1/1; kontrolowany HTTP500 pozostaje widoczny po3,1 s, a
+ponowny eksport działa (`38385776085`, 1/1); unit602/602.
+
+**Eksport Logo (2026-10-13):** po pobraniu okno pokazuje trwały wynik i
+„Gotowe”; błąd też wyświetla się w oknie. E2E `38383911498`, 1/1,
+sprawdza nazwę z polskimi znakami i jawne zamknięcie okna; pełny unit602/602.
+Kontrolowany HTTP500 pozostał widoczny ponad sekundę, a następnie eksport
+zadziałał po ponowieniu: `38385034279`, 1/1, unit602/602. Importy
+Gier/Baz/Logo i pozostałe błędy/retry w starych ścieżkach nadal wymagają
+przeglądu.
+
+**Sukces importu Logo/Bazy (2026-10-13):** po zapisie okno nie znika;
+pokazuje wynik i przycisk „Gotowe”, który wyłącznie zamyka okno. Wybór
+nowego pliku resetuje wynik importu Logo. E2E Logo `38386121426`, 2/2
+(rysunek i obraz, pełny round-trip); Baza `38386612386`, 1/1 (foldery,
+tagi pytań/folderów oraz import pliku). Unity602/602. Import Gier i
+pozostałe błędy/retry nadal do przeglądu.
+
 ### E20 — wspólne typy stron i nagłówek list zasobów (2026-10-12)
 
 Każdy typ strony ma wspólny układ i wspólne style na wszystkich stronach
@@ -864,15 +1092,83 @@ wyglądu. E20 dopracowuje je razem według jednego wzorca.
 
 | Element | Docelowa zasada dla Gier, Baz i Logo |
 |---|---|
-| Górna część strony | Dwie niewidoczne kolumny: **akcje po lewej**, **tytuł i podpowiedź po prawej**. Tytuł i podpowiedź tworzą jedną grupę. |
-| Zawijanie | Elementy zawijają się w obrębie swojej kolumny; nie tworzą jednej mieszanej kolejki tytułu, podpowiedzi i przycisków. |
-| Wyszukiwanie i filtrowanie na telefonie | Przemyśleć wspólny, bardziej kompaktowy układ, żeby zajmował mniej miejsca i zostawiał więcej wysokości na listę; funkcje pozostają dostępne. Szczegółowy układ dopracować podczas wdrożenia E20. |
+| Górna część strony | Tytuł i podpowiedź zaczynają się od lewej, akcje są wyrównane do prawej, jeśli układ mieści się czytelnie. Krótka podpowiedź pozostaje w jednym wierszu. |
+| Zawijanie | Dłuższa podpowiedź może zawinąć się obok akcji, jeśli nie tworzy pustej, wysokiej kolumny. Gdy podpowiedź razem z całą grupą przycisków robi ciasny układ, przenieść wszystkie akcje do następnego wiersza i wyrównać je do lewej. Nie przewijać nagłówka poziomo. |
+| Wyszukiwanie | Pole ma wysokość 36 px jak sąsiednie akcje. Lupa jest osobnym przyciskiem po prawej stronie pola, a mały X wewnątrz pola czyści wpis. Na wąskim telefonie dolny pasek może pokazywać samą lupę otwierającą modal. |
+| Wyszukiwanie i filtrowanie na telefonie | Kompaktowe ikony filtra/sortowania i lupy; po otwarciu lupy modal z zatwierdzeniem OK. Zostawić przestrzeń listy i zachować dostępne etykiety dla czytników. |
 | Pozostałe typy stron | Ujednolicać w ramach ich własnego typu (np. edytory oraz strony kontaktów), zgodnie z ustalonym dla nich podziałem. |
-| Weryfikacja | Te same reguły na trzech stronach; telefon pionowo i poziomo oraz komputer, krótkie/długie tytuły i podpowiedzi, PL/EN/UK. Zrzuty z przykładowymi danymi po wykonaniu. |
+| Weryfikacja | Każda strona osobno: pięć zrzutów — MacBook, iPad portrait, iPad landscape, iPhone portrait, iPhone landscape. Zrzuty mają pokazywać różnicę układu lub właściwy stan guarda; przy stronie z istotnymi, różnymi stanami ująć te stany zamiast powielać niemal identyczne obrazy. Wszystkie wykonane po poprawkach, z danymi z rzeczywistej bazy. |
 
-Ta decyzja zmienia docelowe strony nagłówka list zasobów względem
-wcześniejszego opisu „tytuł po lewej, akcje po prawej”. Wykonanych etapów
-nie otwiera ponownie; zmianę wdrożyć w E20. Manual pozostaje ostatni.
+Ta reguła zastępuje wcześniejsze stałe kolumny nagłówka. Tytuł zawsze
+zaczyna się od lewej, a wyrównanie akcji zależy od tego, czy mieszczą się
+obok bez ścisku. Manual pozostaje ostatni.
+
+### E20 — model urządzeń i macierz układów (decyzja 2026-10-13)
+
+Rozpoznawanie urządzenia nie wybiera samo układu strony. Wspólny profil
+oddziela `formFactor` (phone/tablet/desktop), orientację viewportu oraz
+jego bieżące wymiary. Ekran dotykowy z krótszym bokiem poniżej700 CSS px
+jest telefonem; pozostałe dotykowe ekrany są tabletami. Klasyfikacja służy
+opisowi formatu i wyjątków interakcji. Układ, zwijanie nawigacji i widoczność
+akcji wynikają z dostępnej szerokości oraz wysokości.
+
+| Rodzaj widoku | Telefon pionowo (np.390×844) | Telefon poziomo (np.844×390; także667×375) | Tablet pionowo (np.820×1180) | Tablet poziomo / szerokie okno |
+|---|---|---|---|---|
+| Listy zasobów: Gry, Bazy, Logo, Marketplace | Jedna kolumna; wspólny kompaktowy pasek ikon; wyszukiwanie przez modal; lista dostaje pozostałą wysokość. | Nadal telefonowy pasek ikon; ograniczyć opis karty, zachować najważniejsze akcje i przewijanie listy; uwzględnić małą wysokość. | Nie stosować wariantu telefonu z samego dotyku. Zachować pełne etykiety i szerszy układ, jeśli mieszczą się; lista może użyć dodatkowej kolumny. | Pełne etykiety i przestrzeń; kolumny listy/filtrów tylko tam, gdzie poprawiają porównywanie. |
+| Edytory: Gra, Baza, Logo | Pionowe sekcje/panele; akcje w zasięgu, bez poziomego przewijania całej strony. | Wykorzystać szerokość dla narzędzi obok podglądu, ale bez obcinania formularzy; własne progi wejścia edytora Logo są niezależne od progów Control. | Pełniejszy formularz, możliwy podział formularz/podgląd; bez telefonu tylko dlatego, że ekran jest dotykowy. | Pełny układ roboczy, stabilne panele i lokalne przewijanie długich narzędzi. |
+| Kontakty i Zadania | Jedna karta/kolumna na raz, wypustki przełączają zawartość; wspólne karty i akcje. | Ten sam model jednej aktywnej karty; skrócić drugorzędne metadane, nie zwężać pól i przycisków dotykowych. | Dwie karty/kolumny mogą być widoczne równocześnie, gdy szerokość daje czytelne wiersze; pełne nazwy. | Dwie kolumny lub pełne karty zależnie od typu; niezależne przewijanie tylko gdy jest wyraźny podział treści. |
+| Ankiety, formularze i okna | Pojedyncza kolumna; dialog ekranowy; pełne etykiety pól i przycisków. | Zachować jedną czytelną kolumnę; w dialogu użyć małej wysokości bez zasłaniania zatwierdzenia/klawiatury. | Formularz może użyć dodatkowej szerokości; okna nie muszą zajmować całego ekranu, jeśli pozostają wygodne dotykiem. | Szersze formularze lub podział podsumowanie/treść; nie rozciągać tekstowych pól bez potrzeby. |
+| Control i ustawienia gry | Blokada z instrukcją obrotu, jeśli dłuższy bok pozwoli uzyskać próg980 px; w przeciwnym razie jasny komunikat o wymaganym miejscu. | Telefon pozostaje telefonem; wejście do funkcji dopiero przy viewport co najmniej980 px. Nie zakładać, że typ urządzenia oznacza brak możliwości. | Tablet nie staje się telefonem. Portrait prosi o obrót tylko jeśli landscape spełni próg980 px. | W pełnym widoku zachować główny panel i sterowanie; dopasować po pomiarze rzeczywistego obszaru. |
+
+To macierz kierunkowa dla przeglądu, nie dowód, że każdy układ już tak
+działa. Każda rodzina wymaga sprawdzenia wszystkich rzeczywistych stron
+HTML, obu orientacji i małej wysokości. Progi funkcji zapisuje się jawnie
+przy stronie/przycisku; inne zachowania CSS opierają się na miejscu,
+nie na formFactor. Przy obrocie zachować zaznaczenie, wyszukiwanie, kartę,
+scroll i stan otwartego dialogu. Punktowa weryfikacja zrzutami obejmuje
+telefon pion/poziom, tablet pion/poziom i desktop; emulacja tabletu nie
+zamyka obowiązkowej kontroli fizycznego Lenovo.
+
+### E20 — lista poprawek z przeglądu użytkownika (2026-10-13)
+
+Status oznacza stan kodu na branchu `codex/e19-3`; „w kodzie, bez dowodu”
+nie jest zamknięciem. Każdą pozycję uznać za gotową dopiero po sprawdzeniu
+rzeczywistej strony w pełnej galerii i punktowym teście właściwego zachowania.
+
+| Poprawka | Stan |
+|---|---|
+| Wyszukiwarka na wszystkich listach: wysokość jak sąsiednie przyciski, lupa po prawej, przycisk X taki sam jak w Grach Społeczności. W Grach/Bazach/Logo przycisk po prawej zmienia lupę na X i czyści frazę; bez małego X wewnątrz pola. | Wdrożone przez wspólny `list-search.js` i CSS list; **niezweryfikowane w galerii**. |
+| Górny pasek list: tytuł/podpowiedź od lewej, akcje od prawej; zostają w jednym wierszu, jeśli czytelnie się mieszczą; przy długiej podpowiedzi mogą zostać po prawej; gdy cała grupa się nie mieści, wszystkie akcje przechodzą pod nagłówek i wyrównują się do lewej. | Wspólny `list-header-layout.js` mierzy szerokość i zawijanie na Grach/Bazach/Logo; **reguła w kodzie, wymaga kontroli zrzutem**. |
+| Dolny pasek list: lewa grupa od lewej, akcje od prawej, bez sztywnego podziału na dwa rzędy; zawijać proporcjonalnie i z najmniejszą liczbą wierszy. | Zmienione flexy Gier/Baz/Logo; **niezweryfikowane** na rzeczywistych stronach. |
+| Kolejność akcji: Powiel, Eksport, Eksport bazy, Import, Wyślij; pomijać brakujące akcje bez zmiany kolejności pozostałych. | HTML Gier/Baz/Logo poprawiony; **niezweryfikowane** wizualnie i funkcjonalnie. |
+| Ustawienia gry mają ikonę zębatki; przycisk Ustawienia i „Graj” są złote. | Przycisk Ustawienia ma klasę `gold`; także jego stan disabled zachowuje złotą barwę. Ikonę settings poprawiono na czytelny trybik. **Sprawdzić w nowym PNG**. |
+| `/connect/`: poprawić odstępy, zwłaszcza separator oddzielający kartę. | Stopkę przeniesiono poza główną kartę, z zachowaniem wspólnej linii i Safe Area; **do sprawdzenia zrzutem**. |
+| Manual i prywatność: zmniejszyć nadmierny dostęp/odstęp od górnej krawędzi. | Wspólny `manual.css` zeruje górny padding `main` oraz górny margines tytułu; **sprawdzić oba routy w galerii**. |
+| Wspólny device guard: jednakowy wygląd i poprawne rozróżnienie braku dotyku, nieobsługiwanego urządzenia, landscape telefonu, fizycznie za małego ekranu i za wąskiego okna. Nie sugerować obrotu dla niedostępnego typu urządzenia. | Nadrzędność i wspólne teksty są w kodzie; **wymaga testów** na wszystkich profilach. |
+| Guard blokuje odsłonięcie strony i pobieranie danych, zanim zostanie spełniony warunek urządzenia/viewportu. | Zmieniono kolejność w `page-init`; **wymaga sprawdzenia** oraz audytu stron bez `page-init`. |
+| Kolory tła: sprawdzić i ujednolicić miejsca, gdzie granat wygląda na czarny. | **Otwarte; ustalić strony w galerii.** |
+| TV: usunąć błędny kontakt ze strony połączenia TV; zablokować `/connect/tv/` na telefonie. | Strona nie ma elementu kontaktu; `data-device-screen` oraz osobny guard blokują telefon przed odsłonięciem formularza. **Wymaga jeszcze zrzutu kontrolnego**. |
+| Gry społeczności: na telefonie ikony narzędzi oraz wyszukiwanie/filtrowanie oparte na zasadach Gier, z układem właściwym dla tej strony. Ikona filtra języka ma znak tłumaczenia „A 文”, a jego nazwa znajduje się wewnątrz przycisku. | Wdrożone: przycisk ikony lupy/X, filtr i sortowanie; etykieta Język przeniesiona do przycisku, ikona `translate` w zestawie. Punktowy E2E obejmuje wyszukiwanie, filtr, sortowanie i detal; **sprawdzić układ w galerii**. |
+| Kafle Logo: zrównać szerokość z kaflami Gier/Baz na telefonie i zmniejszyć odstęp nazwa–podgląd. | Gap i scrollbar gutter poprawione; **szerokość niezweryfikowana**. |
+| Edytory tekstu Logo na iPhone portrait nie mogą pokazywać komunikatu „Obróć”; mają wyświetlić właściwą blokadę niedostępnego urządzenia. | Reguła form factor jest w mapie; **niezweryfikowane**. |
+| `/connect/`: skaner QR ma być widoczny na iPhonie z dotykiem także przy braku rozpoznania UA. | Wykrywanie touch/coarse pointer jest w kodzie; **niezweryfikowane na stronie**. |
+| Stopki Go, Mail, `/404.html` i Maintenance: prawidłowa standardowa treść; w 404/Maintenance kontakt przez e-mail, po lewej standardowy tekst Familiada 2026. | Treść i rodzaj kontaktu są ustawione w HTML/tłumaczeniach; Go ma stopkę poza kartą. **Sprawdzić wszystkie cztery ujęcia i Safe Area**. |
+| Safe Area: tło topbara rozciąga się pod wycięcie, zawartość pozostaje poniżej; stopka i pozostałe elementy odsuwają się od wszystkich krawędzi Safe Area i zaokrągleń iPhone/iPad. | Dodano padding stopki i ramki galerii; **wymaga sprawdzenia** w pięciu profilach. |
+| Zachować istniejące style TV oraz osobne zasady Control/edytorów; nie wprowadzać globalnych zmian CSS, które psują ich układ. | Zasada obowiązuje; **regresje sprawdzić w pełnej galerii**. |
+
+**Galeria całości:** każdy rzeczywisty HTML aplikacji z wyłączeniem
+`/settings/tools/**` ma wystąpić w galerii na MacBooku, iPadzie portrait i
+landscape oraz iPhonie portrait i landscape. Daje to co najmniej pięć ujęć
+na stronę; dla odmiennych stanów funkcjonalnych dodać osobne ujęcia zamiast
+powielać podobny ekran. Każdy wpis manifestu łączy stronę, profil, stan guarda,
+wynik/stan danych i PNG. Screeny mają pochodzić z kodu brancha, rzeczywistych
+stron Playwright i produkcyjnej bazy. Nie tworzyć ani nie publikować galerii,
+aż lista powyżej będzie naprawiona i sprawdzona.
+
+Workflow galerii używa prawdziwego konta test17 i produkcyjnej bazy. Obejście
+Turnstile dotyczy tylko odpowiedzi formularza logowania w kontekście Playwrighta;
+żądania strony mogą użyć podpisanego bypassu konserwacji. Nie omija to device
+guardów ani ograniczeń viewportu — ich stany są częścią sprawdzenia.
 
 ### E20 — ikony akcji i kompaktowe narzędzia telefonu (2026-10-12)
 
@@ -1005,7 +1301,7 @@ uzgodnioną historię wysyłek, bez plakietek śledzących decyzje odbiorcy.
 Zweryfikować telefon, tablet i powrót na stronę; istniejące Bazy objąć
 regresją wspólnego mechanizmu, bez ponownego wdrażania go.
 
-### `/mail/` — lekki wzorzec Go (2026-10-12)
+### `/mails/` — lekki wzorzec Go (2026-10-12)
 
 Centrum maili: lekki topbar jak Go i jedna karta obejmująca nadrzędną
 sekcję globalnej rezygnacji oraz listy Subskrypcji i Zadań/udostępnień.
@@ -1014,7 +1310,7 @@ karty. Opcjonalna krótka zachęta do obejrzenia systemu i rejestracji,
 bez rozbudowanego nagłówka zasobów. Zrzuty po wykonaniu z danymi.
 Źródło zakresu i zachowania: maile-granice.md.
 
-### Ostatnia korekta wyglądu `/mail/` — 2026-10-12
+### Ostatnia korekta wyglądu `/mails/` — 2026-10-12
 
 Sekcja globalnej rezygnacji **nad** kartą list. Karta ma rzeczywiste
 wypustki jak Ankiety: ten sam HTML/CSS, dwie zakładki Subskrypcje oraz
@@ -1034,7 +1330,7 @@ Zastępuje przejściową interpretację „śmietnik przy każdej rezygnacji”.
 ### Kontakt w stopce — decyzja użytkownika 2026-10-12
 
 Formularz Kontakt jest dostępny na każdej stronie, również bez logowania.
-W `/mail/` wspólny przycisk data-contact-modal i istniejący formularz,
+W `/mails/` wspólny przycisk data-contact-modal i istniejący formularz,
 bez drugiej implementacji. „Poznaj system” prowadzi do `/` (strona główna),
 „Logowanie i rejestracja” do `/login/`. Audyt pozostałych stron obejmuje
 obecność przycisku, otwarcie anonimowe i zachowanie pełnego ekranu/landscape.
@@ -1042,17 +1338,17 @@ Nie wysyłać prawdziwego zgłoszenia podczas podglądu/testów — wywołuje
 powiadomienie admina; transport zastąpić kontrolowanym testowym odbiorem.
 
 Korekta podglądu Kontakt: na pełnym ekranie telefonu Wstecz w topbarze zamiast X,
-także na stronach bez przycisku Wstecz w topbarze (np. `/mail/`). Nagłówek
+także na stronach bez przycisku Wstecz w topbarze (np. `/mails/`). Nagłówek
 ma tło zgodne z treścią modala, bez jaśniejszego prostokąta. Na stronach
 z istniejącym wspólnym trybem sheet nadal przejmowany jest przycisk
 topbara. Zwykłe okno na komputerze zachowuje zamknięcie X.
 Gdy strona nie ma przejmowanego przycisku, pełnoekranowy Kontakt ma
-dedykowany przycisk we wspólnym topbarze. W `/mail/` wspólny sheet mieści
+dedykowany przycisk we wspólnym topbarze. W `/mails/` wspólny sheet mieści
 się w mail-wrap; topbar ze zmianą języka i stopka strony pozostają widoczne.
 Wstecz nie ląduje w nagłówku formularza. Własny topbar pełnoekranowy
 dotyczy wyłącznie stron, na których nie istnieje wspólna struktura strony.
 
-Stopka `/mail/`: wspólna `.footer`, linia oddzielająca, podpis Familiada
+Stopka `/mails/`: wspólna `.footer`, linia oddzielająca, podpis Familiada
 i Kontakt; bez dodatkowych zachęt w stopce. „Poznaj system” oraz logowanie
 pozostają małą sekcją treści centrum, niewidoczną podczas Kontakt.
 Wspólne Wstecz topbara: ikona i napis wyśrodkowane pionowo, jawny odstęp6px,
@@ -1089,6 +1385,8 @@ i przycisk Gotowe (tylko zamknięcie, bez ponowienia zapisu/pobrania).
 Bez sztucznego opóźnienia. Wybór innego pliku resetuje stan sukcesu.
 Pierwsze wdrożenie: import gry; pozostałe ścieżki w tym samym przeglądzie.
 
+**Wynik E20 (2026-10-13):** kontrolowane niepowodzenie importu Gier `38387894274` i Baz `38387645962` success1/1; brak niepełnych rekordów, unity602/602. Test importu Gier z błędnym i poprawnym plikiem `38388086960` success1/1; nieprawidłowy plik Logo `38388238433` success1/1, blokada potwierdzenia. Pozostałe ścieżki wciąż otwarte.
+
 Pytanie użytkownika o edytor pytań: obecny edytor gry ma import TXT
 lub wklejonej treści, bez osobnego eksportu TXT. Ten import także objąć
 wspólnym czytelnym zakończeniem. Eksport całej gry pozostaje na liście
@@ -1118,3 +1416,61 @@ punkty/opcjonalna nazwa, kilka jednoczesnych błędów, korekty na żywo,
 zgodność podglądu z zapisem, brak zapisu podczas edycji, potwierdzenie
 zastąpienia oraz błędny zapis zachowujący dotychczasowe pytania. Zrzuty
 po wykonaniu, bez zatrzymywania kolejki na ocenę wyglądu.
+
+### Kontynuacja poprawek UI (decyzja użytkownika 2026-10-15)
+
+Po wdrożeniu uzgodnionej paczki mobilnych modalów kontynuować wszystkie
+pozostałe punkty aktualnej listy bez zatrzymywania się po każdej poprawce.
+Po zakończeniu przygotować i udostępnić nową pełną galerię E20. Poprzednia
+prośba o uzgodnienie galerii nie obowiązuje dla tej kontynuacji.
+
+### E20 — doprecyzowanie: jeden pionowy scroll na mobile (2026-10-17)
+
+Wspólny wzorzec stron i modalów — mobilnych arkuszy oraz zwykłych okien:
+zewnętrzna strona nie przewija się, a modal mieści się w dostępnym obszarze.
+Topbar, nagłówek i akcje zostają dostępne. Przewija się obszar roboczy strony
+albo wyznaczona treść wewnątrz modala. Przy jednej liście przewija się lista;
+przy dwóch równorzędnych listach obie są widoczne i każda przewija się osobno.
+Nie zagnieżdżać list w przewijanym body ani nie przewijać całego okna razem
+z nagłówkiem/akcjami. W modalu bez listy przewija się jeden obszar treści pod
+stałym nagłówkiem i akcjami.
+Gdy wiele list nie mieści się czytelnie, rozważyć przełączane sekcje; nie
+ucinać ani nie ukrywać treści. Mobile landscape i panel administracyjny `/settings/`
+pozostają poza zakresem tej rundy.
+
+Audyt i propozycje dla konkretnych miejsc — Base Explorer (strona, drawer,
+modal pytania i warstwy taga), podgląd gry, Marketplace, udostępnianie Baz oraz
+Control, odbiorcy Ankiet oraz lista pytań Ustawień gry — są zapisane w
+[`docs/e20-uwagi-do-korekty.md`](e20-uwagi-do-korekty.md), w tabeli „Dopisek do
+bieżącej rundy”. Wcześniejsze punkty o modalach, listach, kaflach pustego stanu
+i zgodności pytania Base Explorer z edytorem pozostają powiązane z tym audytem.
+To jest propozycja do wdrożenia, nie informacja o zmianie kodu.
+
+### E20 — tło stron, poziomy kart i Connect (2026-10-17)
+
+Zwykłe strony używają jednolitego `--bg` (`#050914`); gradient zostaje tylko
+na loginie. Nie mieszamy tła strony z tłem kart: główne karty zachowują
+wspólną powierzchnię `--card` (`#111827`), zagnieżdżone sekcje są od nich
+odróżnione, a kafle/wiersze list pozostają ciemniejsze. Modalne karty mają
+wspólne kryjące tło. Panel admina pozostaje poza przeglądem.
+
+Na `/connect/` główna karta wypełnia dostępny obszar jak karta Zadania.
+Wewnątrz pozostają dwie elastyczne karty: „Podłącz kodem” i „Udostępnione dla
+mnie”; ukryta karta jest wyjmowana z układu, a widoczna wypełnia miejsce.
+Lista urządzeń jest pojedynczą, wyśrodkowaną kolumną węższą od karty, z
+wewnętrznym przewijaniem. Wiersze mają styl Mails: ikonę rodzaju, nazwę,
+opis właściciela i typ, subtelny akcent po lewej oraz strzałkę akcji.
+
+W zwykłych modalach udostępniania Baz i Control puste karty list mają
+minimalną wysokość 180 px; pusty kafel pozostaje naturalnej wysokości. W
+mobilnym arkuszu miejsce kart nadal wynika z układu dwóch list i ich scrolla.
+
+Po zmianach należy wykonać punktowy przebieg E20 `games`/MacBook, następnie
+pełną galerię E20 na aktualnym branchu.
+
+### Szerokość kart sekcji Mails i Ankiet (2026-10-17)
+
+Karty z wypustkami na `/mails/` i `/polls/` mają zajmować pełną szerokość
+obszaru treści, tak jak karta w Games. Nie dziedziczą ograniczenia 760 px.
+Węższa karta wpisywania adresu e-mail (`#mailEntry`) oraz karty strony Go
+pozostają niezależne i zachowują swoje dotychczasowe ograniczenia.

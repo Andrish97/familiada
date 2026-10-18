@@ -1,120 +1,101 @@
-.grid.is-empty {
+.connect-device-body .bar { margin-bottom: 12px; }
+.connect-device-body .bar.has-actions-below{row-gap:6px;padding-bottom:12px;margin-bottom:12px}
+.connect-device-body .bar.has-actions-below > .actions{margin-top:0;justify-content:flex-start}
+
+.connect-device-main-card { min-height: 0; overflow: hidden; }
+.connect-device-main-card .tasks-scroll {
   display: flex;
   flex-direction: column;
-}
-
-.connect-device-empty {
+  gap: 12px;
   flex: 1 1 auto;
-  min-height: 120px;
+  min-height: 0;
+  overflow: hidden;
+}
+.connect-device-inner-card {
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: .88rem;
-  opacity: .35;
-  border: 1px dashed rgba(255,255,255,.12);
-  border-radius: 16px;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
 }
-
-.connect-device-msg {
-  font-size: .85rem;
-  min-height: 18px;
-  margin-top: 4px;
-  opacity: .7;
-}
-
+.connect-device-inner-card[hidden] { display: none !important; }
 .connect-device-card-header {
   flex: 0 0 auto;
+  margin: 0 0 8px;
+  font-size: 1rem;
   font-weight: 800;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  font-size: .85rem;
-  opacity: .7;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  line-height: 1.3;
+  letter-spacing: .2px;
 }
-
+#enterCodeCard {
+  flex: 0 0 auto;
+  min-height: max-content;
+}
 .connect-device-tile {
-  height: 72px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 0 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.05);
-  transition: background .2s, border-color .2s;
+  min-height: 64px;
   cursor: pointer;
-  box-sizing: border-box;
-  overflow: hidden;
+  transition: background .2s, border-color .2s;
 }
 .connect-device-tile:hover {
-  background: rgba(255,255,255,.08);
-  border-color: rgba(255,255,255,.2);
+  background: rgba(255,255,255,.06);
+  border-color: var(--gold);
 }
-
-.connect-device-tile-icon {
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(255,234,166,.1);
-  display: grid;
-  place-items: center;
-  font-size: 1.5rem;
-  color: #ffeaa6;
+.connect-device-tile.mail-row--device {
+  border-left: 3px solid #799eb7;
+  background: rgba(121,158,183,.045);
 }
-
-.connect-device-tile-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.connect-device-tile-name {
-  font-weight: 900;
-  font-size: 1.05rem;
-  letter-spacing: .02em;
-  margin-bottom: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.connect-device-tile-meta {
-  font-size: .85rem;
-  opacity: .6;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.connect-device-tile-meta-owner {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+.connect-device-tile .mail-kind { width: 18px; flex: 0 0 18px; opacity: .8; }
+.connect-device-tile .mail-row-copy { min-width: 0; flex: 1 1 auto; }
+.connect-device-tile .shareEmail { min-width: 0; }
+.connect-device-tile .shareNote { color: var(--text); opacity: .65; font-size: 12px; margin-top: 5px; }
+.connect-device-tile-meta { overflow-wrap: anywhere; }
 .connect-device-tile-arrow {
-  font-size: 1.2rem;
-  opacity: .4;
+  width: 36px;
+  min-width: 36px;
+  height: 38px;
+  border: 1px solid var(--line2, rgba(255,255,255,.10));
+  border-radius: 10px;
   display: grid;
   place-items: center;
+  opacity: .75;
 }
-
-.games-shell > .games-card {
-  flex: 0 0 auto;
-}
-
-.games-shell > .games-card + .games-card {
-  margin-top: 16px;
-}
-
 .connect-device-enter-code-row {
   display: flex;
+  justify-content: center;
   gap: 10px;
   align-items: center;
-  margin-top: 12px;
 }
+.connect-device-inner-card .connect-device-enter-code-row { margin-top: 0; }
+.connect-device-msg { text-align: center; }
+.connect-device-inner-card .shareList {
+  width: calc(100% - 20px);
+  max-width: 720px;
+  align-self: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: max-content;
+  align-content: start;
+  overflow: auto;
+  margin: 8px auto 0;
+  padding: 2px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+  .connect-device-inner-card { padding: 12px; }
+  .connect-device-inner-card .shareList { width: calc(100% - 12px); gap: 12px; }
+  .connect-device-tile { gap: 8px; }
+  .connect-device-tile .shareNote { font-size: 11px; }
+}
+
+.connect-device-tile.mail-row--device:hover { background: rgba(121,158,183,.09); }
+.connect-device-empty { width: 100%; }
 
 .connect-device-code-input {
   flex: 1;

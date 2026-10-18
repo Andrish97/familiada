@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17330"/>
+  <meta name="app-version" content="v2026-10-18T17375"/>
 
   <meta charset="UTF-8" />
   <meta name="robots" content="index, follow">
@@ -19,23 +19,23 @@
   <link rel="alternate" hreflang="en" href="https://www.familiada.online/privacy?lang=en" />
   <link rel="alternate" hreflang="uk" href="https://www.familiada.online/privacy?lang=uk" />
   <link rel="alternate" hreflang="x-default" href="https://www.familiada.online/privacy" />
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17330" />
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17375" />
 
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17330" />
-  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-18T17330" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17375" />
+  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-18T17375" />
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/privacy/js/privacy.js?v=v2026-10-18T17330" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17330" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17330" defer></script>
+  <script type="module" src="/privacy/js/privacy.js?v=v2026-10-18T17375" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17375" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17375" defer></script>
 </head>
 
 <body class="manual-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button">Wstecz</button>
+      <button class="btn" id="btnBack" type="button" data-i18n-icon="arrow-left">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2"></div>
     <div class="topbar-section topbar-section-3">
@@ -43,11 +43,11 @@
     </div>
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who"></span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry" data-i18n-icon="person">Zaloguj / Załóż konto</button>
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" data-skel-step>
     <h1 class="page-title" data-i18n="privacy.pageTitle">Familiada Online — Polityka Prywatności</h1>
 
     <section class="m-doc" data-i18n-html="privacy.content">
@@ -133,6 +133,6 @@
     </div>
 
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17330"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-18T17375"></script>
 </body>
 </html>

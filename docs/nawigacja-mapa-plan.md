@@ -5,6 +5,21 @@ Cel: każda strona deklaruje w JEDNYM miejscu kto może na nią wejść
 i jak się nazywa. Strony przestają same składać `?ret=`, `?from=`, etykiety
 „← Wróć do …”, overlaye gościa i przekierowania na logowanie.
 
+## Decyzja 2026-10-17: mapa obejmuje każdą trasę
+
+Przy dodaniu, usunięciu lub zmianie strony zawsze aktualizujemy `PAGES` oraz
+`pageIdForPath` w tym samym pakiecie. Aktualizujemy też inwentarz tras,
+dokumentację i zależne testy/generatory. Dotyczy to zmian adresu, sesji,
+uwierzytelniania, przekierowań, ograniczeń urządzeń, powrotu i deep linków.
+
+Mapa ma zawierać każdą rzeczywistą trasę HTML, również taką, która nie jest
+elementem zwykłego menu. Przepływy tokenowe, urządzeniowe, administracyjne i
+techniczne oznaczamy `kind: "standalone"`, opisujemy w `standaloneReason` i
+wyłączamy z automatycznych powrotów. Obsługa dialogów pozostaje określona
+osobno przez `dialogs`/`GLOBAL_DIALOGS`. Pominięcie trasy bez wpisu jest
+błędem kompletności. Aktualne wpisy i kontrola pokrycia HTML są
+opisane w `docs/audyt-initpage-trasy.md` i `tests/unit/navMap.test.js`.
+
 ---
 
 ## 1. Co dziś jest niespójne (znalezione w kodzie)
@@ -97,7 +112,7 @@ export const PAGES = {
   subscriptions: { path: "/subscriptions/", access: "user",   parent: "games",     manual: "subscriptions" },
   bases:         { path: "/bases/",         access: "guest",  parent: "games",     manual: "bases" },
   baseExplorer:  { path: "/base-explorer/", access: "guest",  parent: "bases",     manual: "bases" },
-  logoEditor:    { path: "/logo/",   access: "guest",  parent: "games",     manual: "logo" },
+  logoEditor:    { path: "/logos/",   access: "guest",  parent: "games",     manual: "logo" },
   control:       { path: "/control/",       access: "guest",  parent: "games",     manual: "control",  device: "wide" },
   gameSettings:  { path: "/game-settings/", access: "guest",  parent: "games",     manual: "control",  device: "wide" },
   marketplace:   { path: "/marketplace/",   access: "public", parent: "games",     manual: "community" },
@@ -215,13 +230,13 @@ karty:
 
 | Dziś | Po podziale | ↩ |
 |---|---|---|
-| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logo/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logo/editor-text/?id=…`, `/logo/editor-draw/?id=…`, `/logo/editor-image/?id=…` | „← Wróć do: Logo” → `ret` (lista na karcie, z której wszedł) |
+| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logos/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logos/editor-text/?id=…`, `/logos/editor-draw/?id=…`, `/logos/editor-image/?id=…` | „← Wróć do: Logo” → `ret` (lista na karcie, z której wszedł) |
 | Control → ustawienia gry w `iframe` | `/game-settings/?id=…&ret=/control/?id=…` | „← Wróć do: Control” |
 | Control / game-settings / logo-editor → instrukcja, prywatność w `iframe` | `/manual/?ret=…`, `/privacy/?ret=…` | „← Wróć do: {strona}” |
 | `/editor/` — wybrane pytanie tylko w pamięci (`activeQId`, `editor.js:362`) | `/editor/?id=<gra>&q=<pytanie>` — po powrocie (z instrukcji, odświeżeniu, linku) otwiera się to samo pytanie | telefon: ↩ zamyka pytanie (`?q=` znika z adresu); bez pytania: ↩ → `ret` albo `/games/` |
 
-**Adresy (decyzja):** lista `/logo/`, edytory `/logo/editor-text/`,
-`/logo/editor-draw/`, `/logo/editor-image/` (`?id=<logo>`); w mapie skrótowo `/logo/editor-<typ>/`. Stary
+**Adresy (decyzja):** lista `/logos/`, edytory `/logos/editor-text/`,
+`/logos/editor-draw/`, `/logos/editor-image/` (`?id=<logo>`); w mapie skrótowo `/logos/editor-<typ>/`. Stary
 `/logo-editor/` znika (bez przekierowania); linki w kodzie i instrukcji
 zmieniane w tym samym kroku.
 
@@ -229,7 +244,7 @@ W mapie trzy wpisy `logoText`, `logoDraw`, `logoImage` (`access: "guest"`,
 `parent: "logoEditor"`, `device: "noPhone"`, `resource: "logo"`) — na
 telefonie „Edytuj” i „Nowe logo” są ukryte (ta sama reguła co „Graj”).
 Link do edytora zawsze buduje lista z typu logo; logo innego typu niż
-strona (np. rysowane pod `/logo/editor-text/`) → komunikat błędu, bez
+strona (np. rysowane pod `/logos/editor-text/`) → komunikat błędu, bez
 przekierowania. Edytor logo staje się
 4 lekkimi stronami zamiast jednej 871-liniowej `main.js` z trzema trybami:
 wspólny kod (zapis, kopia robocza, podgląd, topbar) w module, każda strona
@@ -246,18 +261,18 @@ wspólny kod (zapis, kopia robocza, podgląd, topbar) w module, każda strona
 |---|---|
 | `/editor/` | `id` (gra), `q` (pytanie) |
 | `/control/`, `/game-settings/`, `/polls/` | `id` (gra) |
-| `/logo/editor-<typ>/` | `id` (logo) |
+| `/logos/editor-<typ>/` | `id` (logo) |
 | `/base-explorer/` | `id` (baza; dziś `?base=` — zamieniane na `id`, bez aliasu), `folder` |
-| `/games/`, `/logo/`, `/bases/`, `/polls-hub/`, `/subscriptions/`, `/marketplace/`, `/manual/` | `tab` (+ w marketplace `q`, `filter`, `sort`, jak dziś) |
+| `/games/`, `/logos/`, `/bases/`, `/polls-hub/`, `/subscriptions/`, `/marketplace/`, `/manual/` | `tab` (+ w marketplace `q`, `filter`, `sort`, jak dziś) |
 
 ```js
 editor:       { path: "/editor/",            resource: "game", parent: "games",      state: ["id", "q"] },
 control:      { path: "/control/",           resource: "game", parent: "games",      state: ["id"] },
 gameSettings: { path: "/game-settings/",     resource: "game", parent: "control",    state: ["id"] },
-logoDraw:     { path: "/logo/editor-draw/",  resource: "logo", parent: "logoEditor", state: ["id"] },
+logoDraw:     { path: "/logos/editor-draw/",  resource: "logo", parent: "logoEditor", state: ["id"] },
 baseExplorer: { path: "/base-explorer/",     resource: "base", parent: "bases",      state: ["id", "folder"] },
 games:        { path: "/games/",   tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab"] },
-logoEditor:   { path: "/logo/",    tabs: ["text", "draw", "image"],                       state: ["tab"] },
+logoEditor:   { path: "/logos/",    tabs: ["text", "draw", "image"],                       state: ["tab"] },
 ```
 
 - Karta wraca tylko przez `ret` (karta, z której się wyszło). Bez `ret`
@@ -351,7 +366,7 @@ Wspólne dla wszystkich map (nie powtarzam w każdej):
   w instrukcji „Prywatność” → `/privacy/` → `↩` do instrukcji.
 - **Bez stron modalnych** (sekcja 2): `?`, „Prywatność” i ustawienia gry
   to zawsze przejście z `ret`. Edytor logo to osobna strona
-  `/logo/editor-<typ>/`. Nigdzie nie ma ✕ w topbarze — tylko ↩.
+  `/logos/editor-<typ>/`. Nigdzie nie ma ✕ w topbarze — tylko ↩.
 - Strony urządzeń (`/display/`, `/host/`, `/buzzer/`, `/poll-*`,
   `/connect-device/tv/`) otwierane z klucza w adresie — bez topbaru,
   bez ról, poza mapami.
@@ -418,7 +433,7 @@ gdy sam kliknął „Załóż konto”).
 flowchart LR
   games["/games/"]
   games -->|Społeczność| market["/marketplace/<br/>bez oceniania i wysyłania"]
-  games -->|Logo| logo["/logo/"]
+  games -->|Logo| logo["/logos/"]
   games -->|Bazy| bases["/bases/<br/>bez udostępniania"]
   bases -->|otwórz bazę| explorer["/base-explorer/"]
   games -->|Edytuj| editor["/editor/"]
@@ -439,7 +454,7 @@ flowchart LR
 | `/marketplace/` | ↩ Gry · przeglądanie · podgląd | Oceń · Moje wysłane |
 | `/account/` | ↩ Gry · Zamień na konto · Usuń | nazwa, e-mail, hasło, powiadomienia, ocena, demo |
 | `/connect-device/` | ↩ Gry | moje urządzenia |
-| `/control/` `/game-settings/` `/logo/` `/logo/editor-<typ>/` | jak w C1 | — |
+| `/control/` `/game-settings/` `/logos/` `/logos/editor-<typ>/` | jak w C1 | — |
 | `/polls-hub/` `/subscriptions/` | okno „Tylko dla konta”: Wstecz → `/games/`, Załóż konto → `/login/?force_auth=1` | — |
 
 **⚠ dziś:** „Ustawienia konta” w menu tylko na `/games/`; connect-device ↩
@@ -455,10 +470,10 @@ Te same strony co B1. Różnice:
 |---|---|---|
 | topbar `/games/` | przyciski w pasku, nadmiar w „Więcej ▾” | wszystko w `☰` (licznik na `☰`) |
 | „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** ukryte (decyzja); **tablet w pionie:** widoczne, po wejściu okno „Obróć tablet” |
-| `/logo/` | lista + edycja | telefon: tylko lista (podgląd, import/eksport, nazwa) |
+| `/logos/` | lista + edycja | telefon: tylko lista (podgląd, import/eksport, nazwa) |
 | `/editor/` | lista pytań + edycja obok | edycja pytania na pełnym ekranie, ↩ najpierw zamyka pytanie |
 | modale | okno | pełny ekran, ↩ zamyka modal |
-| `/logo/` | Nowe logo · Edytuj | telefon: ukryte (tylko lista: podgląd, import/eksport, nazwa) |
+| `/logos/` | Nowe logo · Edytuj | telefon: ukryte (tylko lista: podgląd, import/eksport, nazwa) |
 | `/games/` | — | „Zainstaluj” (PWA), jeśli nie jest zainstalowana |
 
 **⚠ dziś:** na telefonie „Graj” i „Ustawienia gry” prowadzą na stronę,
@@ -476,8 +491,8 @@ Start: `/games/`; wejście na `/` lub `/login/` z sesją → `/games/`.
 flowchart LR
   games["/games/"]
   games -->|Społeczność| market["/marketplace/"]
-  games -->|Logo| logo["/logo/"]
-  logo -->|Nowe / Edytuj| logoEdit["/logo/editor-<typ>/?id="]
+  games -->|Logo| logo["/logos/"]
+  logo -->|Nowe / Edytuj| logoEdit["/logos/editor-<typ>/?id="]
   control -->|Ustawienia gry| gs
   logoEdit -->|↩ ret| logo
   gs -->|↩ ret| control
@@ -514,8 +529,8 @@ flowchart LR
 | `/marketplace/`, `/connect-device/`, `/account/` | `ret` / Gry | — |
 | `/control/?id=G` | `ret` / `/games/` (z ostrzeżeniem w trakcie gry) | Ustawienia gry → `/game-settings/?id=…&ret=<control>` · `?` → `/manual/?ret=<control>` |
 | `/game-settings/?id=G` | `ret` / Control tej gry | Graj → `/control/?id=…` (ukryte, gdy `ret` to Control — ↩ robi to samo) · `?` |
-| `/logo/?tab=T` | Gry | Nowe logo → utworzenie + `/logo/editor-<typ>/?id=…`; Edytuj → `/logo/editor-<typ>/?id=L` · `?` |
-| `/logo/editor-<typ>/?id=L` | `ret` / `/logo/` (autozapis przed wyjściem, bez pytań) | `?` → `/manual/?ret=<edytor>#logo` |
+| `/logos/?tab=T` | Gry | Nowe logo → utworzenie + `/logos/editor-<typ>/?id=…`; Edytuj → `/logos/editor-<typ>/?id=L` · `?` |
+| `/logos/editor-<typ>/?id=L` | `ret` / `/logos/` (autozapis przed wyjściem, bez pytań) | `?` → `/manual/?ret=<edytor>#logo` |
 
 **⚠ dziś:** z `/games/` wychodzi `?from=games`, którego nikt nie czyta;
 bases → base-explorer bez `ret` (powrót gubi zakładkę); editor, logo-editor,
@@ -531,7 +546,7 @@ Te same strony co C1. Różnice:
 | topbar pozostałych stron | ↩ · sekcja 2 · `?` · Nazwa ▾ | ↩ w pasku; sekcja 2, `?`, konto płasko w `☰` |
 | „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** ukryte; **tablet w pionie:** „Obróć tablet”; **wąskie okno komputera:** „Poszerz okno” |
 | `/connect-device/` | kod ręcznie, kamera rzadko | skan QR kamerą jako główna akcja |
-| `/logo/`, `/editor/`, modale | jak w B2 | jak w B2 |
+| `/logos/`, `/editor/`, modale | jak w B2 | jak w B2 |
 | `/control/` (tablet) | — | operator na tablecie w poziomie |
 
 ---
@@ -587,11 +602,13 @@ flowchart LR
   login["/login/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
-  mailCenter["/mail/"]
+  connectTv["/connect/tv/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   login -.->|↩| home
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
+  connectTv -.->|↩| connectDevice
   mailCenter -.->|↩| home
   privacy -.->|↩| home
 ```
@@ -604,11 +621,13 @@ flowchart LR
   login["/login/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
-  mailCenter["/mail/"]
+  connectTv["/connect/tv/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   login -.->|↩| home
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
+  connectTv -.->|↩| connectDevice
   mailCenter -.->|↩| home
   privacy -.->|↩| home
 ```
@@ -624,17 +643,18 @@ flowchart LR
   polls["/polls/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
-  logoEditor["/logo/"]
-  logoText["/logo/editor/text/"]
-  logoDraw["/logo/editor/draw/"]
-  logoImage["/logo/editor/image/"]
+  logoEditor["/logos/"]
+  logoText["/logos/editor/text/"]
+  logoDraw["/logos/editor/draw/"]
+  logoImage["/logos/editor/image/"]
   control["/control/"]
   gameSettings["/games/settings/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
+  connectTv["/connect/tv/"]
   account["/account/"]
   manual["/manual/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -659,6 +679,7 @@ flowchart LR
   gameSettings -.->|↩| control
   marketplace -.->|↩| games
   connectDevice -.->|↩| games
+  connectTv -.->|↩| connectDevice
   account -.->|↩| games
   manual -.->|↩| games
   mailCenter -.->|↩| home
@@ -676,12 +697,13 @@ flowchart LR
   polls["/polls/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
-  logoEditor["/logo/"]
+  logoEditor["/logos/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
+  connectTv["/connect/tv/"]
   account["/account/"]
   manual["/manual/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -698,6 +720,7 @@ flowchart LR
   logoEditor -.->|↩| games
   marketplace -.->|↩| games
   connectDevice -.->|↩| games
+  connectTv -.->|↩| connectDevice
   account -.->|↩| games
   manual -.->|↩| games
   mailCenter -.->|↩| home
@@ -718,17 +741,18 @@ flowchart LR
   tasks["/tasks/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
-  logoEditor["/logo/"]
-  logoText["/logo/editor/text/"]
-  logoDraw["/logo/editor/draw/"]
-  logoImage["/logo/editor/image/"]
+  logoEditor["/logos/"]
+  logoText["/logos/editor/text/"]
+  logoDraw["/logos/editor/draw/"]
+  logoImage["/logos/editor/image/"]
   control["/control/"]
   gameSettings["/games/settings/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
+  connectTv["/connect/tv/"]
   account["/account/"]
   manual["/manual/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -767,6 +791,7 @@ flowchart LR
   gameSettings -.->|↩| control
   marketplace -.->|↩| games
   connectDevice -.->|↩| games
+  connectTv -.->|↩| connectDevice
   account -.->|↩| games
   manual -.->|↩| games
   mailCenter -.->|↩| home
@@ -787,12 +812,13 @@ flowchart LR
   tasks["/tasks/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
-  logoEditor["/logo/"]
+  logoEditor["/logos/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
+  connectTv["/connect/tv/"]
   account["/account/"]
   manual["/manual/"]
-  mailCenter["/mail/"]
+  mailCenter["/mails/"]
   privacy["/privacy/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
@@ -822,6 +848,7 @@ flowchart LR
   logoEditor -.->|↩| games
   marketplace -.->|↩| games
   connectDevice -.->|↩| games
+  connectTv -.->|↩| connectDevice
   account -.->|↩| games
   manual -.->|↩| games
   mailCenter -.->|↩| home
@@ -880,7 +907,7 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
    overlayu gość/urządzenie.
 5. Rezygnacja ze stron modalnych (każdy punkt osobno):
    a) **zrobione** — refaktor edytora logo: wspólny moduł
-      `web/logo/js/editor-page.js` (autozapis, stan, blokady) + 3 strony `/logo/editor-<typ>/?id=`,
+      `web/logo/js/editor-page.js` (autozapis, stan, blokady) + 3 strony `/logos/editor-<typ>/?id=`,
       lista tylko listą, usunięcie ✕, `topbar-no-menu` i okien pomocy,
    b) `/editor/?id=&q=` — pytanie w adresie,
    c) autozapis w game-settings, Control → zwykłe przejście do ustawień,
@@ -926,13 +953,13 @@ właściciel zmienia zasób (`games/editor`, `polls/editor`, `logo/editor`,
 | `/poll-go/?t=|s=` | `/go/` | **wspólne wejście z zewnątrz** (niżej) |
 | `/bases/` | `/bases/` | |
 | `/base-explorer/?base=` | `/bases/explorer/?id=&folder=` | |
-| `/logo/`, `/logo/editor-<typ>/` | `/logo/`, `/logo/editor/<typ>/` | jak `games/editor/` i `polls/vote/text/` — podfoldery zamiast myślnika (decyzja) |
+| `/logos/`, `/logos/editor-<typ>/` | `/logos/`, `/logos/editor/<typ>/` | jak `games/editor/` i `polls/vote/text/` — podfoldery zamiast myślnika (decyzja) |
 | `/login/`, `/reset/`, `/confirm/` | `/login/`, `/login/reset/`, `/login/confirm/` | reset i potwierdzenie to kroki logowania; linki z maili żyją godzinę |
 | `/account/`, `/marketplace/`, `/manual/`, `/privacy/` | bez zmian | `/privacy/` celowo stały (adres polityki bywa podawany na zewnątrz) |
 | `/settings/` (admin), `/maintenance/`, `/404` | bez zmian | |
 
 Na najwyższym poziomie zostaje: `/`, `/login/`, `/games/`, `/control/`,
-`/polls/`, `/subscriptions/`, `/bases/`, `/logo/`, `/marketplace/`, `/connect/`, `/go/`,
+`/polls/`, `/subscriptions/`, `/bases/`, `/logos/`, `/marketplace/`, `/connect/`, `/go/`,
 `/account/`, `/manual/`, `/privacy/` (+ admin i techniczne).
 
 **Korekta 2026-10-09 (E5):** hub ankiet zniknął (E11), więc strona ankiety
@@ -989,7 +1016,7 @@ i zakładki `/display/` na telewizorach po zmianie przestają działać —
 2. Ankiety: `/polls/` (hub), `/polls/editor/`, `/polls/vote/…`.
 3. Gry: `/games/editor/`, `/games/settings/`.
 4. Rozgrywka: `/control/display|host|buzzer/`, `/connect/`.
-5. Bazy: `/bases/explorer/`. Logo: ewentualnie `/logo/editor/<typ>/`.
+5. Bazy: `/bases/explorer/`. Logo: ewentualnie `/logos/editor/<typ>/`.
 6. Logowanie: `/login/reset/`, `/login/confirm/`.
 
 ## 9. Mapa blokad
@@ -1030,7 +1057,7 @@ Podjęte (2026-10-07):
 - **Edytor logo**: refaktor na 3 osobne strony (tekst / rysunek / obraz)
   otwierane jak edytor pytań, `id` logo w adresie, autozapis bez pytań,
   można wrócić do pracy po zamknięciu.
-- **Adresy logo**: `/logo/` (lista) i `/logo/editor-text|draw|image/?id=`;
+- **Adresy logo**: `/logos/` (lista) i `/logos/editor-text|draw|image/?id=`;
   `/logo-editor/` znika.
 - **Bez fallbacków** (sekcja 2): żadnych aliasów starych adresów i
   parametrów, przekierowań ze starych ścieżek, zapasów w `sessionStorage`,
@@ -1047,7 +1074,7 @@ Podjęte (2026-10-07):
   `replaceState`; wyjątek: pełnoekranowe dialogi mobilne dostają własny
   wpis historii zgodnie z doprecyzowaniem 2026-10-12 poniżej).
 - **Kolejność wdrażania**: zaczynamy od edytora logo (sekcja 6, krok 5a).
-- **Adresy (sekcja 8)**: `/games/settings/`, `/logo/editor/<typ>/`,
+- **Adresy (sekcja 8)**: `/games/settings/`, `/logos/editor/<typ>/`,
   `/connect/`, `/go/` jako jedyne wejście z zewnątrz; stare linki
   (maile, zakładki TV) bez fallbacków.
 - **Blokady** (`docs/blokady-zasobow.md`, sekcja 6): zasobem edytora logo
@@ -1057,6 +1084,16 @@ Podjęte (2026-10-07):
   bazę współdzielenie (zmiana nazwy / udostępnianie / usunięcie całej
   bazy zablokowane), elementy jak dziś; opis według „kto trzyma — kto
   rozpoznaje”, nie według czasu trzymania.
+
+### Marketplace — „Moje wysłane” jako karta (2026-10-17)
+
+„Moje wysłane” jest sekcją tej samej strony `/marketplace/`, pod adresem
+`?tab=mine`; katalog używa karty domyślnej bez parametru. Nie utrzymujemy
+osobnej ścieżki `/marketplace/sent/`. Dostęp do `mine` wymaga zalogowanego
+konta bez statusu gościa. Niezalogowany użytkownik i gość, którzy otworzą
+`?tab=mine`, wracają do katalogu, a lista zgłoszeń nie jest pobierana.
+Worker nie ma osobnej reguły dla tej sekcji. Podścieżki Marketplace w mapie
+obejmują wyłącznie `/marketplace/game/...`.
 
 ### Skróty kontaktów — decyzja 2026-10-11
 
@@ -1121,12 +1158,12 @@ zajmują całą stronę (np. udostępnianie, import/eksport, wybór/wyszukiwanie
 | Otwarcie modala jako ekranu | Jeden własny wpis `history.pushState`, z jawnym stanem dialogu w URL strony (np. `?dialog=share`) i identyfikatorem zasobu, gdy wymagany. Dozwolone dialogi i ich parametry określa mapa danej strony. Wspólna obsługa, bez osobnych obejść dla każdej strony. |
 | Wstecz przeglądarki / systemowe Wstecz Androida | `popstate` zamyka najwyższy dialog; strona, zaznaczenie, karta i przewinięcie zostają. Kolejne Wstecz działa według zwykłej mapy powrotów. |
 | Wstecz w modalu / X / inne zamknięcie | Korzysta z tej samej ścieżki i usuwa własny bieżący wpis historii. Nie pozostawia pustego kroku wymagającego kolejnego Wstecz. Nie cofa historii, jeśli dialog nie ma własnego wpisu. |
-| Dialog na dialogu | Cofanie zamyka po jednym poziomie, bez opuszczania strony spod stosu okien. Zamknięcie rodzica sprząta jego dzieci i ich stan. |
+| Pełnoekranowy arkusz na pełnoekranowym arkuszu | W aktualnym UI nie znaleziono takiego przepływu. Nie tworzyć obsługi URL dla potencjalnego przypadku bez rzeczywistego ekranu. Standardowe potwierdzenia i alerty nad arkuszem zostają zwykłymi oknami; nie dostają `?dialog=` ani własnego wpisu jako strona. Jeśli pojawi się rzeczywisty arkusz otwierający kolejny arkusz, dopisać jego kontrakt i test. |
 | Dalej, odświeżenie, wejście z linku | Dalej ponownie otwiera dialog zapisany w URL, odświeżenie i bezpośredni link także go odtwarzają; tylko dla nadal dostępnego zasobu i ważnej ścieżki. Brak modala/własnego wpisu nie może powodować wyjścia na obcą stronę, pętli ani automatycznego powtarzania wysyłki, importu lub akceptacji. |
 | Obrót/zmiana rozmiaru | Bez dodatkowych wpisów od samej zmiany układu i bez utraty możliwości zamknięcia. Uwzględnić tablet i telefon landscape. |
 | Formularz i trwająca operacja | Zachować istniejącą ochronę niezapisanych zmian i operacji; Wstecz nie obchodzi potwierdzenia ani nie wykonuje działania drugi raz. Dialog nadal nie zwalnia blokad strony tylko przez zamknięcie okna. |
 
-W E19N wdrożono wspólną obsługę dla arkuszy jawnie wymienionych w `PAGES`
+W E19N wdrożono wspólną obsługę pojedynczego arkusza dla stron jawnie wymienionych w `PAGES`
 (Gry, Bazy, eksplorator Baz, Logo, Ankiety i Marketplace). `dialog` trafia
 do URL, Back zamyka aktywny arkusz, Forward odtwarza go, a nieznany dialog
 jest odrzucany. Zakładki nadal używają `replaceState`. Punktowy test Bazy
@@ -1136,9 +1173,13 @@ Test obejmuje wyłącznie odtworzenie UI; nie wykonuje operacji biznesowej.
 Pomiary urządzeń i zrzuty wyglądu pozostają w E20; historycznego E7 nie
 oznaczać ponownie jako niewykonanego.
 
-Testy: oba przyciski Wstecz, Android, X, ponowne otwieranie, kilka
-dialogów, Dalej, wejście Go i bezpośredni link, odświeżenie, zmiana
-dostępności zasobu, obrót oraz brak zbędnych wpisów i powtórnych operacji.
+**Status E19N: wdrożone produkcyjnie; E19 zamknięte.** Audyt wszystkich
+wywołań `enterModalSheet` nie znalazł przepływu pełnoekranowy arkusz→arkusz.
+Zagnieżdżone `confirmModal`/`alertModal` (np. pytanie o porzucenie zmian
+formularza) pozostają zwykłymi oknami i nie mają stanu strony w URL.
+Pojedynczy arkusz Bazy ma produkcyjny test Back/Forward, bezpośredniego URL
+i refresh (`38370189342`, 1/1). Kontrola Androida, obrotu i rzeczywistego
+tabletu jest powiązana z E20.
 Kontrola przeglądarkowa i pomiary na rzeczywistym tablecie zgodnie z E20;
 zrzuty po zmianach wyglądu.
 
@@ -1146,10 +1187,11 @@ zrzuty po zmianach wyglądu.
 ekrany mają jawny stan w URL, nie wyłącznie w pamięci `history.state`.
 Wstecz wraca do adresu rodzica/strony bez tego dialogu, Dalej otwiera go
 ponownie. Nazwy i wymagane identyfikatory walidować w źródle mapy; zachować
-parametry zakładki, zasobu, języka i powrotu. Dla stosu okien adres i stan
-historii muszą pozwalać odtworzyć rodzica i najwyższy dialog. Dialog
-nieznany, zasób usunięty lub dostęp cofnięty: spójny komunikat i bezpieczne
-przywrócenie poprawnego adresu, bez pętli historii.
+parametry zakładki, zasobu, języka i powrotu. Jeśli aplikacja doda przepływ
+pełnoekranowy arkusz→pełnoekranowy arkusz, adres i historia muszą wtedy
+odtwarzać rodzica i aktywny arkusz. Zwykłe potwierdzenia i alerty pozostają
+poza URL. Dialog nieznany, zasób usunięty lub dostęp cofnięty: spójny
+komunikat i bezpieczne przywrócenie poprawnego adresu, bez pętli historii.
 
 Nie wprowadza to ponownie starego `?modal=` ani stron osadzanych w iframe.
 Zwykłe strony pozostają stronami; `dialog` opisuje istniejące okno na
@@ -1158,13 +1200,13 @@ Odtwarzanie URL tylko pokazuje stan interfejsu — nie wysyła maila, nie
 importuje, nie akceptuje i nie zapisuje danych samodzielnie. Dokładny
 katalog wartości/parametrów dopracować w audycie mapy przed implementacją.
 
-### Decyzja2026-10-12 — `/mail/`, centrum adresu bez konta
+### Decyzja2026-10-12 — `/mails/`, centrum adresu bez konta
 
-Dodać zwykłą publiczną stronę `/mail/` do PAGES/Worker/mapy, bez aliasów i modalnej strony. Go po globalnym wypisaniu wskazuje `/mail/` oraz rejestrację→ustawienia konta. Adres z regularnym kontem → jawny komunikat i login→account; brak konta → potwierdzenie maila przez link Go i centrum adresu. Szczegółowe kontrakty i zakres: maile-granice.md, „centrum adresu bez konta”. Link potwierdzenia również przez Go; konkretny parametr bez kolizji z t/s/f/b/u/d i walidacja typów w mapie. Forward/refresh nie powtarza włączenia, wypisania ani wysyłki potwierdzenia. Sesja potwierdzonego adresu nie tworzy Auth/profilu i po rejestracji nie daje anonimowego obejścia logowania.
+Dodać zwykłą publiczną stronę `/mails/` do PAGES/Worker/mapy, bez aliasów i modalnej strony. Go po globalnym wypisaniu wskazuje `/mails/` oraz rejestrację→ustawienia konta. Adres z regularnym kontem → jawny komunikat i login→account; brak konta → potwierdzenie maila przez link Go i centrum adresu. Szczegółowe kontrakty i zakres: maile-granice.md, „centrum adresu bez konta”. Link potwierdzenia również przez Go; konkretny parametr bez kolizji z t/s/f/b/u/d i walidacja typów w mapie. Forward/refresh nie powtarza włączenia, wypisania ani wysyłki potwierdzenia. Sesja potwierdzonego adresu nie tworzy Auth/profilu i po rejestracji nie daje anonimowego obejścia logowania.
 
-Potwierdzenie centrum `/mail/`: wybrany jednorazowy link tokenowy przez Go (zamiast kodu do wpisania); Go tworzy/otwiera czasową sesję adresu, a następne przejście do ankiety lub urządzenia używa dotychczasowego tokenu źródła. Dwie sekcje centrum: Subskrypcje oraz Zadania i udostępnienia (ankiety+urządzenia); na telefonie dwie zakładki. Konto nadal login→account.
+Potwierdzenie centrum `/mails/`: wybrany jednorazowy link tokenowy przez Go (zamiast kodu do wpisania); Go tworzy/otwiera czasową sesję adresu, a następne przejście do ankiety lub urządzenia używa dotychczasowego tokenu źródła. Dwie sekcje centrum: Subskrypcje oraz Zadania i udostępnienia (ankiety+urządzenia); na telefonie dwie zakładki. Konto nadal login→account.
 
-Najnowsze doprecyzowanie2026-10-12: token w stopce jest tokenem dostępu do `/mail/`, Go przekazuje do centrum bez dodatkowego potwierdzenia. Ręczne wpisanie adresu w centrum wymaga osobnego jednorazowego maila potwierdzającego. Globalna rezygnacja oraz pozostałe akcje wykonywane na `/mail/`; samo otwarcie/Forward/GET nie zmienia flagi. Przy rezygnacji widoczna jedynie nadrzędna sekcja flagi, pozostałe źródła są unieważnione i listy ukryte. Konto→login/account według dotychczasowej mapy; zakres anulowania dostępów konta oczekuje doprecyzowania.
+Najnowsze doprecyzowanie2026-10-12: token w stopce jest tokenem dostępu do `/mails/`, Go przekazuje do centrum bez dodatkowego potwierdzenia. Ręczne wpisanie adresu w centrum wymaga osobnego jednorazowego maila potwierdzającego. Globalna rezygnacja oraz pozostałe akcje wykonywane na `/mails/`; samo otwarcie/Forward/GET nie zmienia flagi. Przy rezygnacji widoczna jedynie nadrzędna sekcja flagi, pozostałe źródła są unieważnione i listy ukryte. Konto→login/account według dotychczasowej mapy; zakres anulowania dostępów konta oczekuje doprecyzowania.
 
 ### E19N — Ustawienia rozgrywki otwarte z Control (decyzja 2026-10-12)
 
