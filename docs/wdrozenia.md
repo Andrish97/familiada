@@ -214,6 +214,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+| 2026-10-18 | Panel admina — kompaktowanie nawigacji | Podpięto panel admina pod wspólny przycisk „Więcej”; mniej ważne karty paska chowają się w rozwijanym menu przy braku miejsca, a selektor Narzędzi pozostaje widoczny i jego szerokość jest uwzględniana. Działanie jest po stronie frontendu i nie wymaga zmian Workera. | `node --check` dla zmienionych modułów JS, `git diff --check`; bez E2E. |
+
 | 2026-10-18 | Base Explorer, podgląd Gier Społeczności i kafelki gier | W Base Explorerze lista po prawej oraz drzewo, pasujące kategorie i tagi po lewej mają osobne przewijanie; lewy panel dzieli wysokość w proporcji 2:1:1. Podgląd aplikacji używa teraz `/marketplace/?game=<id>`, czyli statycznej strony z parametrem; czyste adresy `/marketplace/game/<slug>` nadal służą sitemapie i Google. Kafelki pozwalają tytułowi zająć do trzech wierszy, a kopie Gier Społeczności pokazują w metadanych sam język. | `git diff --check`, składnia zmienionych modułów JS; bez E2E i galerii. |
 
 | 2026-10-18 | Gry, menu konta i odznaczanie kafelków | Usunięto etykietę typu z kafelków własnych gier oraz kafla „Nowa gra”; typ nadal widać w wypustce. Sprawdzono analogiczne kafle Baz: nie mają etykiety typu, więc ich nie zmieniano. Ustawienia konta są teraz w menu nazwy na wszystkich stronach ze wspólnym topbarem i nazwą użytkownika; mapa `account.from` zachowuje powrót do bieżącej strony i jej stan, w tym identyfikator gry w Control. Kliknięcie pustego tła list Gier, Baz lub Logo usuwa zaznaczenie. | `git diff --check`; testów nie uruchamiano. Commit `1cd0a7ce0b`; przy synchronizacji zachowano 23 commity, które wcześniej weszły na `origin/main`. |

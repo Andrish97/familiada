@@ -135,6 +135,15 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     const gap = Number.parseFloat(getComputedStyle(section2).columnGap) || 0;
     const btnWidths = btns.map(btn => btn.getBoundingClientRect().width);
     const totalWidth = btnWidths.reduce((sum, width, i) => sum + width + (i > 0 ? gap : 0), 0);
+    const buttonSet = new Set(btns);
+    const fixedItems = Array.from(section2.children).filter(el => {
+      if (buttonSet.has(el) || el === moreEl || el.hidden) return false;
+      return getComputedStyle(el).display !== 'none';
+    });
+    const fixedWidth = fixedItems.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0);
+    // Stałe elementy sekcji (np. selektor Narzędzi w panelu admina) nie
+    // trafiają do menu Więcej, ale muszą zmniejszać miejsce dla przycisków.
+    const availableWidth = Math.max(0, section2Width - fixedWidth - fixedItems.length * gap);
 
     moreEl.style.display = '';
     const moreWidth = moreEl.getBoundingClientRect().width;
@@ -144,8 +153,8 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     // przełącz cały pasek na hamburger. Nie używamy stałego progu viewportu:
     // decyzję podejmujemy z faktycznych szerokości elementów i dostępnej sekcji.
     const primaryButtonWidth = btnWidths[0] || 0;
-    const needsHamburger = totalWidth > section2Width && btns.length > 0 &&
-      primaryButtonWidth + moreWidth + gap > section2Width;
+    const needsHamburger = totalWidth > availableWidth && btns.length > 0 &&
+      primaryButtonWidth + moreWidth + gap > availableWidth;
     window.dispatchEvent(new CustomEvent('topbar:mobile-required', {
       detail: { required: needsHamburger },
     }));
@@ -155,7 +164,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
       return;
     }
 
-    if (totalWidth <= section2Width) {
+    if (totalWidth <= availableWidth) {
       _hiddenBtns = [];
       updateMoreBadge([]);
       return;
@@ -164,7 +173,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
     const hidden = [];
     let remaining = totalWidth;
     for (let i = btns.length - 1; i >= 0; i--) {
-      if (remaining + moreWidth + gap <= section2Width) break;
+      if (remaining + moreWidth + gap <= availableWidth) break;
       btns[i].style.display = 'none';
       hidden.unshift(btns[i]);
       remaining -= btnWidths[i] + gap;

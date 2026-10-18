@@ -21,6 +21,7 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T20242";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T20242";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T20242";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T20242";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-18T20242";
 import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-18T20242";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -6552,6 +6553,10 @@ function wireEvents() {
   // nadal jest potrzebne, bo t() jest używane w openMaintenancePreview() do
   // podglądu treści publicznej strony maintenance (ta zostaje wielojęzyczna).
   await initI18n({ withSwitcher: false, apply: true });
+  setTopbarNavPriority({
+    moreEl: document.getElementById("navMore"),
+    moreDropdownEl: document.getElementById("navMoreDropdown"),
+  });
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
