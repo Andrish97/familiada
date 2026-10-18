@@ -42,6 +42,12 @@ const COPY = {
   }
 };
 
+const TEAM_NAMES = {
+  pl: ["Króliczki", "Zajączki"],
+  en: ["Bunnies", "Rabbits"],
+  uk: ["Зайчики", "Кролики"]
+};
+
 async function seedGames(page, copy) {
   return page.evaluate(async copy => {
     const sb = window.__sbClient;
@@ -312,14 +318,12 @@ async function prepareDevicePreviewFixture(browser, language, device = "display"
       detail: {
         display: {
           mode: "GAME", suppressLogoDraw: true,
-          previewNumbers: { left: "111", top: "999", right: "111" },
-          previewXPositions: { A: [1, 3], B: [1, 3] }
         },
-        teams: { teamA: language === "pl" ? "FAMILIADA" : language === "en" ? "FAMILY" : "РОДИНА", teamB: language === "pl" ? "ONLINE" : language === "en" ? "ONLINE" : "ОНЛАЙН", defaultA: false, defaultB: false },
+        teams: { teamA: TEAM_NAMES[language][0], teamB: TEAM_NAMES[language][1], defaultA: false, defaultB: false },
         settings: { uiLang: language },
         rounds: {
-          roundNo: 1, question: { text: COPY[language].gameplay[0] }, bankPts: 62, totals: { A: 111, B: 111 },
-          revealed: [1, 3, 5], xA: 3, xB: 3,
+          roundNo: 1, question: { text: COPY[language].gameplay[0] }, bankPts: 38, totals: { A: 62, B: 47 },
+          revealed: [1, 3], xA: 1, xB: 0,
           answers: [
             { ord: 1, text: language === "pl" ? "TWÓRZ" : language === "en" ? "CREATE" : "СТВОРЮЙ", fixed_points: 39 },
             { ord: 2, text: language === "pl" ? "ŁĄCZ" : language === "en" ? "CONNECT" : "ЄДНАЙ", fixed_points: 0 },
@@ -397,16 +401,16 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         state.phase = "PLAY";
         state.controlTeam = "A";
         state.locks = { gameStarted: true, finalActive: false, gameEnded: false };
-        state.teams = { teamA: language === "pl" ? "FAMILIADA" : language === "en" ? "FAMILY" : "РОДИНА", teamB: language === "pl" ? "ONLINE" : language === "en" ? "ONLINE" : "ОНЛАЙН" };
+        state.teams = { teamA: TEAM_NAMES[language][0], teamB: TEAM_NAMES[language][1] };
         state.settings.uiLang = language;
         state.rounds.roundNo = 1;
         state.rounds.question = { id: "manual-round", text: question };
         state.rounds.answers = answers.map(([text, fixed_points], index) => ({ id: `manual-answer-${index + 1}`, ord: index + 1, text, fixed_points }));
-        state.rounds.revealed = [1, 3, 5];
-        state.rounds.bankPts = 62;
-        state.rounds.totals = { A: 111, B: 111 };
-        state.rounds.xA = 3;
-        state.rounds.xB = 3;
+        state.rounds.revealed = [1, 3];
+        state.rounds.bankPts = 38;
+        state.rounds.totals = { A: 62, B: 47 };
+        state.rounds.xA = 1;
+        state.rounds.xB = 0;
         state.rounds.allowPass = true;
         const ui = createUI({ root: document.querySelector("#app"), emit: () => {} });
         ui.render(state, { presenceFlags: { display: true, host: true, buzzer: false }, busy: false, typingPending: false, devicesBlocked: false });
@@ -427,7 +431,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
         state.topCard = "final";
         state.phase = "FINAL";
         state.locks = { gameStarted: true, finalActive: true, gameEnded: false };
-        state.teams = { teamA: language === "pl" ? "FAMILIADA" : language === "en" ? "FAMILY" : "РОДИНА", teamB: language === "pl" ? "ONLINE" : language === "en" ? "ONLINE" : "ОНЛАЙН" };
+        state.teams = { teamA: TEAM_NAMES[language][0], teamB: TEAM_NAMES[language][1] };
         state.settings.uiLang = language;
         state.settings.hasFinal = true;
         state.final.questions = prompts.map((text, index) => ({ id: `final-${index + 1}`, text, answers: [] }));

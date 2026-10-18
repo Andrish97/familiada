@@ -10,7 +10,7 @@ Na koncie właściciela jest jedna stała gra preparowana oraz dwie osobne gry a
 
 Do widoków Ankiet workflow przygotowuje aktywnego znajomego, trzy wpisy subskrybentów oraz zadania dla obu ankiet. Workflow przygotowuje przykładowe głosy i zadania do zrzutów; nie musi ręcznie odgrywać każdego głosowania. Dla ankiety punktowej przygotowuje 125 głosów na pytanie, niezależnie od późniejszego rozdzielenia punktów na planszy. Na ekranie wyników widać głosy przed podliczeniem, a wartości punktowe pozostają zerowe.
 
-Dane gier, pytań, odpowiedzi, baz, logo, zadań i głosów workflow przygotowuje jako fixture’y. Control zaczyna od **Zacznij od nowa**. Ujęcia Prowadzącego i Wyświetlacza dostają ten sam przygotowany wiersz wbudowanego podglądu, więc nie tworzą sesji urządzeń ani nie zależą od połączenia na żywo. Główny kadr Wyświetlacza jest osobnym, symulowanym stanem planszy.
+Dane gier, pytań, odpowiedzi, baz, logo, zadań i głosów workflow przygotowuje jako fixture’y. Control zaczyna od **Zacznij od nowa**. Ujęcia Control, Prowadzącego i Wyświetlacza pokazują spójny, realistyczny stan rundy: drużyny Króliczki i Zajączki, zwykły wynik i kilka odkrytych odpowiedzi. Nie zawierają specjalnych oznaczeń kadru podglądu. Prowadzący i Wyświetlacz dostają ten sam przygotowany wiersz podglądu, więc nie tworzą sesji urządzeń ani nie zależą od połączenia na żywo. Główny kadr Wyświetlacza jest osobnym, symulowanym stanem planszy z wyróżniającymi wartościami i układem odpowiedzi.
 
 ## Kolejność pytań i szybkie przejście do finału
 
@@ -45,7 +45,7 @@ Zwykłe kadry mają rozmiar **1365×768 px**. Głosowanie na telefonie ma **390�
 | **Kolejność rund** (`game-settings-rounds`) | Przełącza tryb rund na ręczny i pokazuje pytanie Control jako pierwszą pozycję. |
 | **Wygląd gry** (`game-settings-display`) | Otwiera **Wygląd**, wybiera przygotowane logo i czeka, aż wybór jest widoczny oraz zaznaczony. |
 | **Dźwięk gry** (`game-settings-sound`) | Otwiera **Dźwięk** i czeka na widoczną listę ustawień dźwięków. |
-| **Panel sterowania** (`gameplay-control`) | Otwiera Control na grze preparowanej, zaczyna od **Zacznij od nowa**, ustawia źródło dźwięku na Control i pokazuje symulowany widok rundy z tym samym pytaniem, odkrytymi odpowiedziami i wynikiem co na ekranach urządzeń. |
+| **Panel sterowania** (`gameplay-control`) | Otwiera Control na grze preparowanej, zaczyna od **Zacznij od nowa**, ustawia źródło dźwięku na Control i pokazuje realistyczny stan rundy spójny z kadrami urządzeń. |
 | **Prowadzący** (`gameplay-host`) | Pokazuje ekran Prowadzącego z przykładowym pytaniem i odpowiedziami, wyrenderowany z przygotowanego stanu podglądu. |
 | **Wyświetlacz** (`gameplay-display`) | Pokazuje planszę z tym samym przygotowanym stanem co ujęcie Prowadzącego; pytanie, odkryte odpowiedzi, X i wynik są spójne. To podgląd, bez sesji na żywo. |
 | **Wpisywanie finału** (`gameplay-finale`) | Pokazuje ekran Control z pięcioma finałowymi pytaniami i przykładowymi wpisami odpowiedzi. To samodzielny stan widoku, bez uruchamiania finału ani urządzeń. |
@@ -59,7 +59,7 @@ Zwykłe kadry mają rozmiar **1365×768 px**. Głosowanie na telefonie ma **390�
 | **Zadania ukończone** (`tasks-done`) | Otwiera jako znajomy listę dwóch wykonanych zadań. Głosy w tych zadaniach istnieją w bazie testowej, ale są wprowadzone przez funkcje aplikacji, a nie przez ekran Zadania. |
 | **Wynik ankiety punktowej** (`poll-votes`) | Otwiera **Głosy** i przechwytuje 125 przygotowanych głosów na pytanie. Odpowiedzi mają jeszcze zero punktów; punkty zostaną wyliczone dopiero przy podliczeniu ankiety. |
 | **Wynik ankiety tekstowej** (`poll-text-votes`) | Otwiera **Głosy** dla ankiety tekstowej i przechwytuje zebrane wpisy. |
-| **Główny obraz Wyświetlacza** (`main-display`, tylko PL) | W trybie podglądu aktualny renderer pokazuje pytanie „Podaj coś, co można zjeść na szybko”, odsłonięte pozycje 1, 3 i 5, iksy na pozycjach 1 i 3 po obu stronach, wynik 111:111, 999 u góry oraz napisy FAMILIADA i ONLINE. To osobny symulowany kadr planszy. |
+| **Główny obraz Wyświetlacza** (`main-display`, tylko PL) | W trybie podglądu aktualny renderer pokazuje pytanie „Podaj coś, co można zjeść na szybko”, odsłonięte pozycje 1, 3 i 5, iksy na pozycjach 1 i 3 po obu stronach, wynik 111:111, 999 u góry oraz napisy FAMILIADA i ONLINE. To jedyny kadr z tym specjalnym układem planszy. |
 
 ## Co trafia do artefaktu, a co zostaje w danych testowych
 
