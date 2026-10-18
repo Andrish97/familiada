@@ -6,19 +6,8 @@ on:
       - main
     paths:
       - "web/**"
-  # Ręczny przebieg pozwala odświeżyć zrzuty bez zmiany strony.
+  # Ręczny przebieg odświeża zrzuty we wszystkich językach bez zmiany strony.
   workflow_dispatch:
-    inputs:
-      flow:
-        description: Który zestaw ekranów przygotować?
-        type: choice
-        required: true
-        default: all
-        options:
-          - all
-          - pl
-          - en
-          - uk
 
 # Zrzuty korzystają z produkcyjnych kont testowych i tworzą tymczasową grę.
 # Na tym etapie zapisujemy je wyłącznie jako artefakty przebiegu; ewentualne
@@ -36,7 +25,6 @@ jobs:
     name: Screenshots (${{ matrix.lang }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: ${{ github.event_name == 'push' || inputs.flow == 'all' || inputs.flow == matrix.lang }}
     strategy:
       fail-fast: false
       # Test16–18 also serve as each other's friend recipients; serialize the
