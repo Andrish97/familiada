@@ -304,7 +304,10 @@ async function createGameplayDevices(browser, ownerPage, gameId) {
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(deviceContext, { pages: [`control/${type}`] });
     const devicePage = await deviceContext.newPage();
     devicePage.setDefaultTimeout(20_000);
-    await devicePage.goto(`https://www.familiada.online/go/?d=${type}&id=${gameId}&key=${keys[type]}`, { waitUntil: "domcontentloaded" });
+    // These are already linked devices for this active game session, so open
+    // their live Control views directly. `/go/` is the invitation/claim flow
+    // and can remain on its confirmation screen without attaching the device.
+    await devicePage.goto(`https://www.familiada.online/control/${type}?id=${gameId}&key=${keys[type]}`, { waitUntil: "domcontentloaded" });
     pages[type] = devicePage;
   }
   await pages.display.waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
