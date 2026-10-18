@@ -4,8 +4,8 @@
 // ?ret= do listy z kartą, z której wszedł; bez ret — na /logos/.
 // Patrz docs/nawigacja-mapa-plan.md.
 
-import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17200";
-import { TYPE_GLYPH } from "./render.js?v=v2026-10-18T17200";
+import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-18T17232";
+import { TYPE_GLYPH } from "./render.js?v=v2026-10-18T17232";
 
 /** Id strony w mapie nawigacji dla trybu edytora. */
 export const EDITOR_PAGE_IDS = {
