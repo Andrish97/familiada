@@ -2163,12 +2163,13 @@ body{
 }
 
 .account-menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   padding: 10px 14px;
   text-align: left;
-  background: transparent;
-  border: 0;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--line2);
   border-radius: 10px;
   color: #fff;
   font-size: 13px;
@@ -2180,7 +2181,7 @@ body{
 }
 
 .account-menu-item:hover {
-  background: #292f3d; /* = .10 bieli na #111827 */
+  background: #292f3d;
 }
 
 .account-menu--inline {

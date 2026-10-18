@@ -1353,6 +1353,8 @@ odpowiedzi po zapisie. Dalej CI→sprzężona362+frontend→kontrola produkcji.
 
 | 2026-10-18 | Topbar Games — plakietka przy „Więcej” | Przycisk i kontener „Więcej” nie kurczą się ani nie zawijają; plakietka pozostaje w jednej linii z etykietą i strzałką. | `git diff --check`; bez testów aplikacji. Push na `main`. |
 
+| 2026-10-18 | Topbar — przyciski menu konta | Pozycje „Ustawienia konta” i „Wyloguj” dostają widoczne tło i obramowanie jak opcje języka oraz akcje w menu „Więcej”. Usunięto duplikat stylów menu konta z `games.css`; wspólny styl jest teraz w `base.css`. | `git diff --check`; bez testów aplikacji. Push na `main`. |
+
 | 2026-10-18 | Ankiety — przywrócenie elementów w tekstowym podliczaniu | Tryb tekstowy nie dodawał bazowej klasy `tally`, przez co CSS ukrywał uchwyt, licznik oraz przyciski scalania i usuwania. Tryb dodaje teraz obie klasy. Przycisk scalania jest ukryty na desktopie, gdzie można przeciągać odpowiedzi, i widoczny na urządzeniach dotykowych. | `node --check web/polls/js/poll-tally.js`, `git diff --check`; bez testów aplikacji. Push na `main`. |
 
 | 2026-10-18 | Control 2 / błędy odczytu obecności | Rozdzielono błąd odczytu pomocniczego `device_presence` od błędu odczytu autorytatywnego lease. Jeśli lease działa, chwilowy błąd metadanych nie blokuje akcji; oba typy błędów i odzyskanie są rejestrowane ze źródłem/statusami. Dodano test jednostkowy oraz scenariusz E2E dla HTTP 503 metadanych. | PR branch run 39138969217: E2E 2/2 i unit `controlPresence` 1/1. Pełny test utraty połączenia i ponownego przejęcia hosta nadal ujawnia osobny przejściowy `P0001 forbidden` przy `control_device_slots_for_owner`; kolejne odczyty lease wracają do HTTP 200. To wymaga osobnej diagnozy i nie jest uznane za naprawione. |
