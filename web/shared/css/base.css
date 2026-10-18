@@ -1869,6 +1869,20 @@ html.showA2HS .a2hs {
 }
 
 @media (max-width: 760px){
+  /* Games ma trzy stany nawigacji (pełny pasek, „Więcej”, hamburger),
+     dlatego sam rozmiar telefonu nie może od razu chować przycisków. */
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced){
+    grid-template-columns:max-content minmax(0,1fr) max-content max-content;
+    grid-template-areas:none;
+  }
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-1,
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2,
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-3,
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-4{ grid-area:auto; }
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2,
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-4{ display:flex; }
+  .topbar-layout-4.topbar-has-overflow-nav:not(.topbar-mobile-forced) .topbar-section-2{ flex-wrap:nowrap; }
+
   .topbar-layout-4{
     grid-template-columns:minmax(0,1fr) auto;
     grid-template-areas:

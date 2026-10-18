@@ -28,7 +28,7 @@
 </head>
 
 <body class="games-body skel-body">
-  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand topbar-has-overflow-nav">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
       <button class="btn topbar-sheet-back" id="btnBackSheet" type="button" data-i18n-icon="arrow-left">Wstecz</button>
@@ -38,14 +38,19 @@
         <span data-i18n="games.nav.marketplace" data-i18n-icon-after="gamepad">Gry Społeczności</span>
       </button>
 
+      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
+        <span data-i18n="games.nav.connectDevice" data-i18n-icon-after="phone">Podłącz urządzenie</span>
+        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
+      </button>
+
       <button class="btn" id="btnLogoEditor">
         <span data-i18n="games.nav.logo" data-i18n-icon-after="display">Logo</span>
         <span class="badge" id="logoCopiesNavBadge" aria-hidden="true"></span>
       </button>
 
-      <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
-        <span data-i18n="games.nav.connectDevice" data-i18n-icon-after="phone">Podłącz urządzenie</span>
-        <span class="badge" id="connectDeviceBadge" aria-hidden="true"></span>
+      <button class="btn" id="btnBases">
+        <span data-i18n="games.nav.bases" data-i18n-icon-after="drawer">Bazy pytań</span>
+        <span class="badge" id="basesBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnFriends">
@@ -60,11 +65,6 @@
       <button class="btn" id="btnTasks" data-nav-hidden="true" style="display:none;">
         <span data-i18n="games.nav.tasks" data-i18n-icon-after="bell">Zadania</span>
         <span class="badge" id="tasksBadge" aria-hidden="true"></span>
-      </button>
-
-      <button class="btn" id="btnBases">
-        <span data-i18n="games.nav.bases" data-i18n-icon-after="drawer">Bazy pytań</span>
-        <span class="badge" id="basesBadge" aria-hidden="true"></span>
       </button>
 
       <div class="nav-more" id="navMore" style="display:none;">

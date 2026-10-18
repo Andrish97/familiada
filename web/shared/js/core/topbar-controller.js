@@ -415,7 +415,10 @@ function initTopbarController() {
 
   topbar.dataset.mobileMenuControllerReady = '1';
 
+  const hasOverflowNav = !!document.getElementById('navMore');
+  if (hasOverflowNav) topbar.classList.add('topbar-has-overflow-nav');
   const mobileMq = window.matchMedia('(max-width: 760px)');
+  const useMediaMobileMode = () => mobileMq.matches && !hasOverflowNav;
   const section2Placeholder = document.createComment('topbar-section-2-restore');
   const section4Placeholder = document.createComment('topbar-section-4-restore');
   const tabsPlaceholder = document.createComment('topbar-tabs-restore');
@@ -486,7 +489,7 @@ function initTopbarController() {
 
     overlay = document.createElement('div');
     overlay.className = 'topbar-mobile-overlay';
-    if (!mobileMq.matches) overlay.classList.add('topbar-mobile-forced');
+    if (!useMediaMobileMode()) overlay.classList.add('topbar-mobile-forced');
 
     panel = document.createElement('div');
     panel.className = 'topbar-mobile-panel';
@@ -625,7 +628,7 @@ function initTopbarController() {
   };
 
   const syncMode = () => {
-    if (mobileMq.matches || navRequiresMobile) mountMobile();
+    if (useMediaMobileMode() || navRequiresMobile) mountMobile();
     else unmountMobile();
   };
 
@@ -656,7 +659,7 @@ function initTopbarController() {
   // przywróć na chwilę układ zwykły i ponownie zmierz rzeczywiste szerokości.
   let resizeTimer;
   window.addEventListener('resize', () => {
-    if (!navRequiresMobile || mobileMq.matches) return;
+    if (!navRequiresMobile || useMediaMobileMode()) return;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       navRequiresMobile = false;
