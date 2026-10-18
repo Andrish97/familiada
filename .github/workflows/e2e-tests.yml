@@ -242,6 +242,7 @@ jobs:
         working-directory: tests
 
       - name: Unit tests (pointwise when selected)
+        if: ${{ !contains(inputs.spec_filter, 'manual-screenshots.spec.js') }}
         env:
           UNIT_FILTER: ${{ inputs.unit_filter }}
         working-directory: tests
