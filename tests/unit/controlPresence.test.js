@@ -6,7 +6,7 @@ import vm from "node:vm";
 const source = fs.readFileSync(new URL("../../web/control/js/presence.js", import.meta.url), "utf8")
   .replace(/^import .*;$/m, "").replace("export function", "function");
 
-test("odczyt w toku i jego awaria nie zmieniają urządzeń na offline; poprawny odczyt wykrywa rozłączenie", async () => {
+test("błąd metadanych nie blokuje lease; błąd lease blokuje do skutecznej weryfikacji", async () => {
   let now = Date.now();
   let pendingResolve;
   let pending = false;
@@ -15,20 +15,22 @@ test("odczyt w toku i jego awaria nie zmieniają urządzeń na offline; poprawny
   const fresh = () => ["display", "host", "buzzer"].map(device_type => ({ device_type, last_seen_at: new Date(now).toISOString() }));
   let rows = fresh();
   let leaseRows = ["display", "host", "buzzer"].map(device_type => ({ device_type, primary_online: true }));
+  let leaseError = null;
+  const promiseLike = promise => ({ then: (resolve, reject) => promise.then(resolve, reject) });
   const client = { from(table) {
     const query = {
       select() { return this; }, eq() { return this; }, maybeSingle() { return this; },
       abortSignal() {
-        if (table === "display_audio_unlock") return Promise.resolve({ data: null });
-        if (pending) return new Promise(resolve => { pendingResolve = resolve; });
-        return Promise.resolve({ data: rows });
+        if (table === "display_audio_unlock") return promiseLike(Promise.resolve({ data: null }));
+        if (pending) return promiseLike(new Promise(resolve => { pendingResolve = resolve; }));
+        return promiseLike(Promise.resolve({ data: rows, error: table === "device_presence" ? null : undefined }));
       },
     };
     return query;
   }, rpc(name, params) {
     assert.equal(name, "control_device_slots_for_owner");
     assert.equal(params.p_game_id, "test");
-    return { abortSignal: async () => ({ data: leaseRows, error: null }) };
+    return { abortSignal: async () => ({ data: leaseRows, error: leaseError }) };
   } };
   const context = {
     sb: () => client, AbortSignal,
@@ -69,6 +71,9 @@ test("odczyt w toku i jego awaria nie zmieniają urządzeń na offline; poprawny
   pendingResolve({ error: { message: "HTTP 503" } });
   await settle();
   assert.equal(changes.at(-1).error.message, "HTTP 503");
+  assert.equal(changes.at(-1).errorSource, "device_presence");
+  assert.equal(changes.at(-1).errorSource === "lease_status", false,
+    "awaria metadanych obecności nie powinna blokować lease ani akcji gry");
   assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true });
   timers.get(250)();
   assert.equal(changes.length, beforePending + 1, "TTL nie kasuje informacji o błędzie");
@@ -79,6 +84,13 @@ test("odczyt w toku i jego awaria nie zmieniają urządzeń na offline; poprawny
   await presence.refresh();
   assert.equal(changes.at(-1).error, null);
   assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true });
+  leaseError = { code: "57014", message: "lease timeout" };
+  await presence.refresh();
+  assert.equal(changes.at(-1).errorSource, "lease_status");
+  assert.deepEqual(changes.at(-1).flags, { display: true, host: true, buzzer: true },
+    "przy awarii autorytatywnego odczytu zachowujemy ostatni stan i wymagamy ponownej weryfikacji");
+  leaseError = null;
+  await presence.refresh();
   rows = [];
   leaseRows = [];
   await presence.refresh();
