@@ -430,6 +430,7 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
     for (const width of [1400, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await page.goto(`https://www.familiada.online/polls/?id=${game.id}`);
+      await page.locator("#tabRecipients").click();
       await expect(page.locator('#subsGrid .shareRow')).toHaveCount(26, { timeout: 30_000 });
       for (const id of ["muted", "done", "declined"]) await expect(page.locator(`#subsGrid [data-id="${id}"] [data-act=remind]`)).toHaveCount(0);
       for (const id of ["pending", "limited"]) await expect(page.locator(`#subsGrid [data-id="${id}"] [data-act=remind]`)).toBeDisabled();
