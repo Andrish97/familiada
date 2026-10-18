@@ -290,7 +290,8 @@ async function take(page, testInfo, name, ready) {
 }
 
 async function prepareDevicePreviewFixture(browser, language, device = "display") {
-  const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1600, height: 900 } });
+  const viewport = device === "display" ? { width: 1600, height: 900 } : { width: 1365, height: 768 };
+  const context = await browser.newContext({ serviceWorkers: "block", viewport });
   if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: [`control/${device}`] });
   const page = await context.newPage();
   try {
@@ -373,13 +374,11 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     // Screenshots describe the interface; they do not need live device sessions.
     const gameplayControlError = await take(page, testInfo, "gameplay-control", async () => {
       await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
-      await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
       const reset = page.locator("#btnStartOver");
-      if (await reset.isVisible().catch(() => false)) {
-        await reset.click();
-        const confirmReset = page.getByRole("button", { name: /^(Tak|Yes|Так|Да)$/ });
-        if (await confirmReset.count()) await confirmReset.click();
-      }
+      await expect(reset).toBeVisible({ timeout: 30_000 });
+      await reset.click();
+      const confirmReset = page.getByRole("button", { name: /^(Tak|Yes|Так|Да)$/ });
+      if (await confirmReset.count()) await confirmReset.click();
       await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 15_000 });
       const controlSound = page.locator('.toggle-item:has(input[name="soundSource"][value="control"])');
       if (await controlSound.count() && !(await controlSound.locator("input").isChecked())) await controlSound.click();
