@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - codex/e13-manual
     paths:
       - "web/**"
       - "tests/e2e/manual-screenshots.spec.js"
@@ -12,9 +11,8 @@ on:
   # Ręczny przebieg odświeża zrzuty we wszystkich językach bez zmiany strony.
   workflow_dispatch:
 
-# Zrzuty korzystają z wydzielonych kont testowych, odnawiają grę preparowaną
-# i tworzą odrębne gry ankietowe. PNG pozostają artefaktami przebiegu.
-# Zestawy w macierzy mają osobne konta, a osobne uruchomienia są szeregowane.
+# Zrzuty pokazują strony z main; przykładowe dane powstają lokalnie w przeglądarce.
+# Nie logują się na konta ani nie zapisują danych w bazie. PNG są artefaktami.
 concurrency:
   group: manual-screenshots-production
   cancel-in-progress: false
@@ -29,14 +27,11 @@ jobs:
     timeout-minutes: 30
     strategy:
       fail-fast: false
-      # Each language uses its own screenshot account and local visual fixtures,
-      # so captures can run independently.
+      # Local fixtures keep the language captures independent.
       max-parallel: 3
       matrix:
         lang: [pl, en, uk]
     env:
-      # Render the checked-out website version even when the workflow follows a main push.
-      TEST_BRANCH_CODE: "1"
       SCREENSHOT_LANG: ${{ matrix.lang }}
 
     steps:
@@ -58,10 +53,7 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: tests
 
-      - name: Prepare three localized games and capture screens
-        env:
-          E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+      - name: Capture localized pages from main with local visual data
         working-directory: tests
         run: npx playwright test e2e/manual-screenshots.spec.js --workers=1
 
