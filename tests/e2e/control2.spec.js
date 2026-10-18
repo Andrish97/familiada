@@ -739,6 +739,8 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
       unknownEndReason: render({ game_name: "E2E", stats_detail: { end_reason: "unknown_internal_reason", events: [] } }).textContent,
       outage: inspect([event("disconnect", { devices: ["display"], message: "presence:display=offline,host=online,buzzer=online" }), event("reconnect")]),
       diagnostic: inspect([event("diagnostic", { category: "connectivity", devices: ["display"], metrics: { blocked_duration_ms: 2400, repeated_drops: 2, blocked_action_attempts: 1, device_context: { display: { profile: "same_profile", visibility: "hidden" } } } })]),
+      transportDiagnostic: inspect([event("diagnostic", { category: "device_transport", devices: ["display"], metrics: { duration_ms: 6200, first_status: "CHANNEL_ERROR", catchup_count: 2, missed_revisions: 4, start_visibility: "hidden", hidden_duration_ms: 5100, start_online: true } })]),
+      stateSyncDiagnostic: inspect([event("diagnostic", { category: "device_state_sync", devices: ["buzzer"], metrics: { phase: "read_error", error_class: "TimeoutError", fetch_ms: 8000, revision: 15 } })]),
       leaseDiagnostic: inspect([event("diagnostic", { category: "device_lease", devices: ["buzzer"], metrics: { from_state: "waiting", to_state: "primary", epoch: 4 } })]),
       audioDiagnostic: inspect([event("diagnostic", { category: "audio_start", devices: ["control"], metrics: { sound: "reveal", start_delay_ms: 850, failed: false } })]),
       frameDiagnostic: inspect([event("diagnostic", { category: "display_delay", devices: ["display"], metrics: { reason: "frame_stall", max_frame_gap_ms: 320, stalled_frames: 2, display_visibility: "visible" } })]),
@@ -766,6 +768,13 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.outage.rows).toHaveLength(1);
   expect(result.outage.rows[0]).toContain("Przerwa: Wyświetlacz");
   expect(result.outage.rows[0]).toContain("Prowadzący: online");
+  expect(result.transportDiagnostic.sections).toBe(1);
+  expect(result.transportDiagnostic.rows[0]).toContain("Przerwa kanału: Wyświetlacz");
+  expect(result.transportDiagnostic.rows[0]).toContain("nadrobiono 2 odczytami, 4 rewizji");
+  expect(result.transportDiagnostic.rows[0]).toContain("5,1 s w tle");
+  expect(result.stateSyncDiagnostic.sections).toBe(1);
+  expect(result.stateSyncDiagnostic.rows[0]).toContain("Błąd odczytu bazy: Przycisk");
+  expect(result.stateSyncDiagnostic.rows[0]).toContain("TimeoutError");
   expect(result.diagnostic.sections).toBe(1);
   expect(result.diagnostic.rows).toHaveLength(1);
   expect(result.diagnostic.rows[0]).toContain("ten sam profil przeglądarki");
@@ -850,9 +859,17 @@ function instrumentAnon(p, label) {
   p.on("console", (msg) => {
     if ((msg.type() === "error" || msg.type() === "warning") && !isKnownNoiseText(msg.text())) {
       console.log(`[e2e-diag:${label}] console:${msg.type()}`, msg.text());
+    } else if (msg.type() === "info" && msg.text().startsWith("[device-realtime]")) {
+      console.log(`[e2e-diag:${label}]`, msg.text().slice(0, 400));
     }
   });
   p.on("response", (res) => {
+    if (res.url().includes("/functions/v1/device-realtime-token")) {
+      if (res.status() >= 400) {
+        res.json().then(({ code, message, details }) => console.log(`[e2e-diag:${label}] realtime-token error:`, JSON.stringify({ status: res.status(), code, message, details })))
+          .catch(() => console.log(`[e2e-diag:${label}] realtime-token error body unavailable`, res.status()));
+      } else console.log(`[e2e-diag:${label}] realtime-token HTTP`, res.status());
+    }
     if (res.url().includes("/rpc/")) {
       console.log(`[e2e-diag:${label}] rpc ${res.status()}`, res.url());
     }
@@ -876,7 +893,13 @@ async function openAnon(browser, contexts, path, label, errors, { onPage } = {})
     parsed.searchParams.set("d", deviceType);
     path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
   }
-  const ctx = await controlContext(browser, );
+  // Host and Buzzer require touch-capable devices. Simulate a large tablet
+  // for device pages so the shared viewport guard exercises the actual app,
+  // instead of leaving those pages behind the desktop/touch warning overlay.
+  const ctx = await controlContext(browser, deviceType ? {
+    hasTouch: true,
+    viewport: { width: 1366, height: 1024 },
+  } : {});
   contexts.push(ctx);
   const p = await ctx.newPage();
   onPage?.(p);
@@ -3084,15 +3107,11 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     // od tempa odtworzenia trzech kart, więc sprawdzamy sam fakt blokady.
     expect(outage.metrics.blocked_duration_ms).toBeGreaterThan(0);
     expect(outageEvents.filter(event => ["disconnect", "reconnect"].includes(event.kind))).toHaveLength(0);
-    await expect.poll(async () => {
-      const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.kind === "diagnostic"
-        && event.category === "state_sync" && event.metrics?.phase === "acknowledged").length;
-    }, { timeout: 15_000 }).toBeGreaterThan(0);
     const syncSessions = await readControl2Sessions(page, game.id);
-    const syncEvents = syncSessions[0].stats_detail.events.filter(event => event.kind === "diagnostic" && event.category === "state_sync");
-    expect(syncEvents.some(event => event.metrics?.phase === "requested" && Number.isFinite(event.metrics?.revision))).toBe(true);
-    expect(syncEvents.some(event => event.metrics?.phase === "acknowledged" && ["realtime", "fallback_read"].includes(event.metrics?.ack_source))).toBe(true);
+    const syncEvents = syncSessions[0].stats_detail.events.filter(event => event.kind === "diagnostic"
+      && ["state_sync", "device_state_sync"].includes(event.category));
+    expect(syncEvents.some(event => ["requested", "acknowledged"].includes(event.metrics?.phase))).toBe(false);
+    expect(syncEvents.length).toBeLessThan(10);
     await attachStatistics(testInfo, "reconnect", syncSessions);
     expect(syncSessions).toHaveLength(1);
     expect(syncSessions[0].rounds_played).toBe(1);

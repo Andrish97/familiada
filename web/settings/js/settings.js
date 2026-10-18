@@ -5429,6 +5429,9 @@ function buildSessionRunDetails(r) {
         }
       }
       if (event.category === "display_delay") {
+        if (metrics.reason === "ack_read_recovered") {
+          return { title: "Odczyt potwierdzenia planszy wrócił", detail: `Po ${formatDuration(metrics.duration_ms)}` };
+        }
         if (metrics.reason === "ack_read_error") {
           const errorNames = { AbortError: "przekroczono limit czasu odczytu", TimeoutError: "przekroczono limit czasu odczytu", TypeError: "błąd sieci podczas odczytu" };
           const cause = errorNames[metrics.error_code] || (metrics.error_code && metrics.error_code !== "read_error" ? `kod: ${metrics.error_code}` : "nieznana przyczyna");
@@ -5441,12 +5444,30 @@ function buildSessionRunDetails(r) {
           return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)}; dźwięk ruszył po limicie.` };
         }
         if (metrics.reason === "ack_timeout") {
-          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
+          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",
           detail: `Display: ${formatDuration(metrics.actual_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}; opóźnienie ${formatDuration(metrics.extra_ms)}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}`,
         };
+      }
+      if (event.category === "device_transport") {
+        const duration = metrics.duration_ms != null ? ` · przerwa ${formatDuration(metrics.duration_ms)}` : "";
+        const catchups = Number(metrics.catchup_count) > 0
+          ? ` · nadrobiono ${metrics.catchup_count} odczytami, ${metrics.missed_revisions || 0} rewizji` : " · bez nadrobienia przez odczyt awaryjny";
+        const visibility = metrics.start_visibility === "hidden" ? " · karta była w tle" : metrics.start_visibility === "visible" ? " · karta była widoczna" : "";
+        const background = Number(metrics.hidden_duration_ms) > 0 ? `, w tym ${formatDuration(metrics.hidden_duration_ms)} w tle` : "";
+        const network = metrics.start_online === false ? " · przeglądarka zgłaszała brak sieci" : "";
+        const cause = metrics.first_status ? ` · status ${metrics.first_status}` : "";
+        return { title: `Przerwa kanału: ${devices}`, detail: `${duration}${cause}${catchups}${visibility}${background}${network}${metrics.was_discarded ? " · karta została odtworzona po odrzuceniu" : ""}`.trim() };
+      }
+      if (event.category === "device_state_sync") {
+        const revision = metrics.revision != null ? ` · rewizja ${metrics.revision}` : "";
+        if (metrics.phase === "read_error") return { title: `Błąd odczytu bazy: ${devices}`, detail: `Odczyt awaryjny nie powiódł się${metrics.fetch_ms != null ? ` po ${formatDuration(metrics.fetch_ms)}` : ""}${metrics.error_class ? ` · ${metrics.error_class}` : ""}${revision}` };
+        if (metrics.phase === "read_recovered") return { title: `Odczyt bazy wrócił: ${devices}`, detail: `${metrics.fetch_ms != null ? `Odczyt trwał ${formatDuration(metrics.fetch_ms)}` : "Odczyt działa"}${revision}` };
+        if (metrics.phase === "render_error") return { title: `Błąd renderowania: ${devices}`, detail: `${metrics.error_class || "Błąd urządzenia"}${revision}` };
+        if (metrics.phase === "render_recovered") return { title: `Renderowanie wróciło: ${devices}`, detail: `Nowy stan został zastosowany${revision}` };
+        if (metrics.phase === "fallback_catchup") return { title: `Odczyt awaryjny nadrobił stan: ${devices}`, detail: `Pominięto ${metrics.previous_revision ?? "?"} → ${metrics.revision ?? "?"}${metrics.fetch_ms != null ? ` · odczyt ${formatDuration(metrics.fetch_ms)}` : ""}` };
       }
       if (event.category === "state_sync") {
         if (metrics.phase === "requested") {

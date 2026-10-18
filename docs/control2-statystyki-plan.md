@@ -62,6 +62,15 @@ Dowody odczytano z artefaktu `production-statistics-records` w powyższym przebi
 
 ## Decyzje
 
+- 2026-10-18: diagnostyka połączenia zapisuje tylko istotne zdarzenia. Nie
+  zapisujemy zwykłych żądań stanu, potwierdzeń ACK, przełączeń fokusu ani
+  samego ukrycia/wznowienia karty. Krótkie przerwy w bezpośrednim kanale są
+  agregowane w pamięci; po powrocie zapisujemy pojedyncze podsumowanie czasu,
+  statusu kanału, nadrobionych rewizji oraz czasu działania karty w tle.
+  Osobnymi zdarzeniami są tylko epizody błędu i powrotu odczytu bazy/renderu,
+  przekroczenie czasu ACK oraz zauważalne opóźnienie planszy. Diagnostyka jest
+  best-effort i nie może blokować akcji gry. JSON zachowuje te zwięzłe wpisy.
+
 - 2026-10-10: poprawiony opis logo w manualu PL/EN/UK: Piksele oraz Źródło
   z zachowaniem właściwym dla tekstu, rysunku i obrazu. Użytkownik polecił
   opublikować opis od razu, a kontrolę produkcji wykonać po publikacji.

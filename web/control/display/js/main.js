@@ -94,7 +94,7 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
 }
 
 function createDisplayEventLog(gameId, key, lease) {
-  let lastPageState = "";
+  let initialPageStateReported = false;
   let stopped = false;
   let sessionActive = false;
   let pending = Promise.resolve();
@@ -121,42 +121,24 @@ function createDisplayEventLog(gameId, key, lease) {
       console.warn("[display2 diagnostics] kolejka zapisu przerwana:", error?.message || error);
     });
   };
-  const reportPageState = (reason) => {
-    if (!sessionActive) return;
-    const state = {
-      visibility: document.visibilityState || "unknown",
-      focused: !!document.hasFocus?.(),
-    };
-    const signature = `${state.visibility}:${state.focused}`;
-    if (signature === lastPageState && reason !== "initial") return;
-    lastPageState = signature;
+  const reportInitialPageState = () => {
+    if (!sessionActive || initialPageStateReported) return;
+    initialPageStateReported = true;
     report({
-      event_type: "page_state", reason, ...state,
-      was_discarded: !!document.wasDiscarded,
+      event_type: "page_state", reason: "initial",
+      visibility: document.visibilityState || "unknown",
+      focused: !!document.hasFocus?.(), was_discarded: !!document.wasDiscarded,
+      online: navigator.onLine !== false,
     });
   };
-  const onVisibility = () => reportPageState("visibilitychange");
-  const onFocus = () => reportPageState("focus");
-  const onBlur = () => reportPageState("blur");
-  const onNetwork = () => report({ event_type: "network_state", online: navigator.onLine !== false });
-  document.addEventListener("visibilitychange", onVisibility);
-  window.addEventListener("focus", onFocus);
-  window.addEventListener("blur", onBlur);
-  window.addEventListener("online", onNetwork);
-  window.addEventListener("offline", onNetwork);
   return {
     report,
     setSessionActive(active) {
       sessionActive = !!active;
-      if (sessionActive) reportPageState("initial");
+      if (sessionActive) reportInitialPageState();
     },
     stop() {
       stopped = true;
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("blur", onBlur);
-      window.removeEventListener("online", onNetwork);
-      window.removeEventListener("offline", onNetwork);
     },
   };
 }

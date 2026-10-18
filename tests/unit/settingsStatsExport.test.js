@@ -22,12 +22,11 @@ test("eksport dzisiejszy wybiera wyłącznie Control 2 z lokalnego dnia", () => 
   assert.equal(result.sessions[0].stats_detail.id, "today");
 });
 
-test("JSON statystyk zachowuje skorelowane zdarzenia synchronizacji i ACK", () => {
+test("JSON statystyk zachowuje zwięzłe podsumowania transportu i błędów synchronizacji", () => {
   const now = new Date(2026, 9, 13, 12, 0, 0);
   const events = [
-    { kind: "diagnostic", category: "state_sync", at: now.toISOString(), metrics: { phase: "requested", revision: 42, to_step: "r_duel" } },
-    { kind: "diagnostic", category: "state_sync", at: now.toISOString(), metrics: { phase: "acknowledged", revision: 42, ack_source: "realtime", latency_ms: 810 } },
-    { kind: "diagnostic", category: "realtime", at: now.toISOString(), metrics: { channel: "display_completion", state: "connected" } },
+    { kind: "diagnostic", category: "device_transport", at: now.toISOString(), devices: ["display"], metrics: { phase: "recovered", duration_ms: 6200, catchup_count: 2, missed_revisions: 4, hidden_duration_ms: 5100 } },
+    { kind: "diagnostic", category: "device_state_sync", at: now.toISOString(), devices: ["buzzer"], metrics: { phase: "read_error", error_class: "TimeoutError" } },
   ];
   const result = buildControl2StatsExport([{ ...session("sync", now), stats_detail: { events } }], "today", { now });
 
