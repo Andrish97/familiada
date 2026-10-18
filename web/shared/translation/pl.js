@@ -977,6 +977,8 @@ const pl = {
       leaveTally: "Wyjdź z podliczania",
     },
     results: {
+      votesUnitCount: "{n} gł.",
+      pointsUnitCount: "{n} pkt",
       noQuestions: "Brak pytań.",
       title: "Wyniki",
       final: "Wynik:",
@@ -1057,9 +1059,9 @@ const pl = {
     tally: {
       loading: "Ładuję odpowiedzi…",
       hintText: "Udział liczony od wszystkich głosów. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz). Przeciągnij odpowiedź na inną, żeby je połączyć; kliknij tekst, żeby poprawić literówkę. Maks. 17 znaków.",
-      hintPoints: "Głosy przeliczone na punkty od wszystkich odpowiedzi. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz).",
+      hintPoints: "Głosy przeliczone na punkty od wszystkich głosów. Poniżej 3% po zaokrągleniu — pominięte (szary wiersz).",
       counter: "Odpowiedzi: {n} (wymagane 3–6)",
-      sum: "suma: {n}",
+      sum: "suma pkt: {n}",
       votes: "{n} gł.",
       votesPercent: "{n} gł. · {pct}%",
       skippedTitle: "Pominięta: {pct}% wszystkich głosów (poniżej 3%).",

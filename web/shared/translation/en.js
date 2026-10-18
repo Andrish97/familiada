@@ -963,6 +963,8 @@ const en = {
       leaveTally: "Leave counting",
     },
     results: {
+      votesUnitCount: "{n} votes",
+      pointsUnitCount: "{n} pts",
       noQuestions: "No questions.",
       title: "Results",
       final: "Result:",
@@ -1045,7 +1047,7 @@ const en = {
       hintText: "Share is based on all votes. Below 3% after rounding is skipped (gray row). Drag an answer onto another to merge; click its text to fix a typo. Max 17 characters.",
         hintPoints: "Votes converted to points from all votes. Below 3% after rounding is skipped (gray row).",
       counter: "Answers: {n} (3–6 required)",
-      sum: "sum: {n}",
+      sum: "total points: {n}",
       votes: "{n} v.",
       votesPercent: "{n} v. · {pct}%",
       skippedTitle: "Skipped: {pct}% of all votes (below 3%).",

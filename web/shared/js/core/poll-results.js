@@ -21,8 +21,8 @@ export function makeResultRow(text) {
   return { row, bar: row.querySelector(".aBar"), val: row.querySelector(".aVal") };
 }
 
-export function setRowValue(r, value, pct) {
-  const next = String(value);
+export function setRowValue(r, value, pct, unitKey = "polls.results.votesUnitCount") {
+  const next = t(unitKey, { n: value });
   if (r.val.textContent !== next) r.val.textContent = next;
   const w = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
   if (r.bar.style.width !== w) r.bar.style.width = w;
@@ -103,7 +103,7 @@ export function createPollResults(listEl) {
     for (const key of order) {
       const r = slot.rows.get(key);
       const v = incoming.get(key) || 0;
-      if (r) setRowValue(r, v, total ? (100 * v) / total : 0);
+      if (r) setRowValue(r, v, total ? (100 * v) / total : 0, "polls.results.votesUnitCount");
     }
   }
 
@@ -138,7 +138,7 @@ export function createPollResults(listEl) {
           const r = slot.rows.get(a.id);
           if (r) {
             const points = Number(a.fixed_points) || 0;
-            setRowValue(r, points, points);
+            setRowValue(r, points, points, "polls.results.pointsUnitCount");
             r.row.classList.toggle("tallySkipped", points === 0);
           }
         }
@@ -148,7 +148,7 @@ export function createPollResults(listEl) {
         for (const a of answers) {
           const r = slot.rows.get(a.id);
           const v = Number(a.votes) || 0;
-          if (r) setRowValue(r, v, total ? (100 * v) / total : 0);
+          if (r) setRowValue(r, v, total ? (100 * v) / total : 0, "polls.results.votesUnitCount");
         }
       } else {
         renderTextRows(q, slot);

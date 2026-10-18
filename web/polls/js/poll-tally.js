@@ -125,10 +125,10 @@ export function createTally({ gameId, pollResults, ui }) {
         r.row.classList.add("tallyRow");
         r.row.classList.toggle("tallySkipped", result.skipped);
         r.row.title = result.skipped ? t("polls.tally.skippedTitle", { pct: result.percent }) : "";
-        if (result.skipped) r.val.textContent = "—";
+        if (result.skipped) r.val.textContent = t("polls.results.pointsUnitCount", { n: "—" });
         else {
           sum += result.points;
-          r.val.textContent = String(result.points);
+          r.val.textContent = t("polls.results.pointsUnitCount", { n: result.points });
         }
         setPct(r, result.points);
         pointRows.push({ r, votes, totalVotes });
@@ -149,7 +149,7 @@ export function createTally({ gameId, pollResults, ui }) {
       dropMeta(slot);
     }
     for (const { r, votes, totalVotes } of pointRows) {
-      r.val.textContent = String(votes);
+      r.val.textContent = t("polls.results.votesUnitCount", { n: votes });
       setPct(r, totalVotes ? (100 * votes) / totalVotes : 0);
     }
     pointRows = [];
@@ -290,7 +290,7 @@ export function createTally({ gameId, pollResults, ui }) {
       for (const it of q.items) {
         if (qs.rows.has(it.id)) continue;
         const r = makeResultRow(it.text);
-        r.val.textContent = String(it.count);
+        r.val.textContent = t("polls.results.votesUnitCount", { n: it.count });
         decorate(qs, r, it);
         qs.rows.set(it.id, r);
       }
@@ -532,7 +532,7 @@ export function createTally({ gameId, pollResults, ui }) {
     for (const it of qs.q.items) {
       if (qs.rows.has(it.id)) continue;
       const r = makeResultRow(it.text);
-      r.val.textContent = String(it.count);
+      r.val.textContent = t("polls.results.votesUnitCount", { n: it.count });
       decorate(qs, r, it);
       qs.rows.set(it.id, r);
     }
@@ -574,7 +574,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (included) sum += pts;
       r.row.classList.toggle("out", !included);
       r.row.classList.toggle("tallySkipped", !!result?.belowThreshold);
-      r.val.textContent = included ? String(pts) : "—";
+      r.val.textContent = t("polls.results.pointsUnitCount", { n: included ? pts : "—" });
       setPct(r, included ? pts : 0);
       r.cnt.textContent = t("polls.tally.votesPercent", { n: it.count, pct: result?.percent || 0 });
       r.row.title = result?.belowThreshold ? t("polls.tally.skippedTitle", { pct: result.percent }) : "";
