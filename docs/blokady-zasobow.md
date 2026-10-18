@@ -200,6 +200,12 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
   logicznie przebiegu: po zamknięciu Control blokada karty znika, ale aktywna
   rozgrywka pozostaje. W tym stanie pokazuje się licznik wygaśnięcia oraz
   „Wróć” / „Zakończ sesję i otwórz ustawienia”.
+- Podsumowanie urządzeń (`setup_finish`) nie tworzy aktywnego przebiegu.
+  Tracker pomija również ekran `r_intro`; sesja i długotrwała blokada
+  zaczynają się przy przejściu do `r_roundStart`. Dlatego zamknięcie Control
+  na podsumowaniu zwalnia `game:G` i nie pokazuje ekranu „Gra w toku”. Jeśli
+  Control nadal jest otwarty, zwykły Resource Guard blokuje drugą kartę
+  niezależnie od tego, czy operator jest na podsumowaniu, czy już gra.
 - `edit_locks` jest krótką dzierżawą karty (TTL 120 s), która chroni przed
   równoczesną edycją. Jej wygaśnięcie pozwala innej karcie automatycznie
   zająć zasób; nie ma przycisku ręcznego wymuszenia przejęcia aktywnej
