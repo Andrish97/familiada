@@ -24,7 +24,18 @@
   background: rgba(255,255,255,.04);
 }
 .connect-device-inner-card[hidden] { display: none !important; }
-.connect-device-card-header { margin: 0 0 8px; }
+.connect-device-card-header {
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: .2px;
+}
+#enterCodeCard {
+  flex: 0 0 auto;
+  min-height: max-content;
+}
 .connect-device-tile {
   min-height: 64px;
   cursor: pointer;
@@ -53,8 +64,14 @@
   place-items: center;
   opacity: .75;
 }
-.connect-device-enter-code-row { display: flex; gap: 10px; align-items: center; }
+.connect-device-enter-code-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+}
 .connect-device-inner-card .connect-device-enter-code-row { margin-top: 0; }
+.connect-device-msg { text-align: center; }
 .connect-device-inner-card .shareList {
   width: calc(100% - 20px);
   max-width: 720px;
