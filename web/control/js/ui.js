@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-16T17041";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-16T17041";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-16T17041";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-16T17041";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-16T17041";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-16T17041";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-18T17330";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T17330";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-18T17330";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-18T17330";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-18T17330";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17330";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-16T17041";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-18T17330";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -423,13 +423,13 @@ export function createUI({ root, emit }) {
       const volPct = Math.round((state.settings.sound?.volumes?.[key] ?? 100));
 
       const playBtn = h("button", { class: "btn sm summarySoundPlay sound-preview-btn", type: "button" });
-      playBtn.innerHTML = SVG_PLAY;
+      playBtn.innerHTML = isSfxPlaying(key) ? SVG_STOP : SVG_PLAY;
       on(playBtn, "click", () => {
+        document.querySelectorAll(".summarySoundPlay").forEach((button) => { button.innerHTML = SVG_PLAY; });
         if (isSfxPlaying(key)) {
-          stopSfx(key);
-          playBtn.innerHTML = SVG_PLAY;
+          stopSfxPreview(key);
         } else {
-          playSfx(key);
+          playSfxPreview(key);
           playBtn.innerHTML = SVG_STOP;
           onSfxEnd(key, () => { playBtn.innerHTML = SVG_PLAY; });
         }

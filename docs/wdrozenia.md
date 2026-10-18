@@ -171,6 +171,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Dziennik
 
+| 2026-10-18 | Settings / Control — blokada aktywnej rozgrywki i podglądu dźwięku | Branch `codex/active-game-settings-guard`: nowa bramka trwałej sesji po zwykłym `game:G`; zajęty zasób zatrzymuje standardowy Resource Guard bez przycisku anulowania, a po zamknięciu Control i zwolnieniu zasobu pozostaje licznik oraz jawne zakończenie gry. Podglądy dźwięków w Control i Settings zatrzymują poprzedni dźwięk przed uruchomieniem kolejnego. Migracja 381 i rollback smoke SQL dodane. Lokalny SQL smoke oraz punktowe testy SFX zielone; pełny unit ma istniejące awarie `pageInit.test.js` (brak `supabase-js v2` w środowisku testowym). | W toku: punktowe E2E branch, następnie migracja i wdrożenie zgodnie z cyklem repo. |
+
 | 2026-10-12 | Ustawienia — poprawka ikon AI opublikowana | Commit bb21b37327 na main; Pages38277746816 success. Kryjące podłoże i poprawka dotykowego hover/active wdrożone. Zrzuty z przykładowymi danymi390/1400 w docs/img/settings-ai-providers. | Testy pominięte na wyraźną prośbę; brak potwierdzenia na fizycznym Androidzie. |
 
 | 2026-10-12 | Ustawienia — ikony kolejności AI / Android | Użytkownik zezwolił na bezpośredni main bez testów. Sekcja AI otrzymała kryjące podłoże zgodne z --under przycisków; numerki bez półprzezroczystego tła, dotykowe strzałki bez filter/transform jak menu mobilne. Logika kolejności bez zmiany. Lokalny podgląd rzeczywistego renderera z przykładowymi danymi: aktywny/cooldown/wyłączony, 390/1400 px w docs/img/settings-ai-providers; oba stany przycisków opacity1 i kryjące tło. | Push main i Pages; E2E/unit pominięte na prośbę użytkownika. Fizyczny Android nie był dostępny do weryfikacji. |

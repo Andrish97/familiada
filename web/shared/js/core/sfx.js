@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-16T17041";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-18T17330";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -46,6 +46,7 @@ function getCategoryMeta(key) {
 
 const cache = new Map();     // key → Audio
 let globalMuted = false;
+let previewSfxKey = null;
 
 // Wyciszenie nie zmienia zegara audio, głośności ani zaplanowanych dźwięków.
 export function setSfxMuted(muted) {
@@ -422,6 +423,20 @@ export function playSfx(key) {
   }
 }
 
+// Sound previews are mutually exclusive, while gameplay cues may still
+// intentionally overlap. Keep this policy separate from playSfx().
+export function playSfxPreview(key) {
+  if (previewSfxKey && previewSfxKey !== key) stopSfx(previewSfxKey);
+  previewSfxKey = key;
+  playSfx(key);
+}
+
+export function stopSfxPreview(key = null) {
+  if (!previewSfxKey || (key && previewSfxKey !== key)) return;
+  stopSfx(previewSfxKey);
+  previewSfxKey = null;
+}
+
 export function createSfxMixer() {
   let audio = null;
   let raf = null;
@@ -521,7 +536,7 @@ export async function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-16T17041";
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-18T17330";
     // Call play() synchronously in the gesture handler, then trust its
     // promise. Previously a rejected autoplay attempt still returned true,
     // allowing Display to report an unlock the browser had refused.
@@ -564,7 +579,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-16T17041" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-18T17330" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   // Brak wpisu oznacza 100%, tak jak suwak ustawień. Nie dziedziczymy
