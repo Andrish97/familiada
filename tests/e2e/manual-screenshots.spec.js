@@ -458,8 +458,12 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     const explorerError = await take(page, testInfo, "base-explorer", async () => {
       const card = page.locator(`.card[data-base-id="${screenshotBaseId}"]`);
       await expect(card).toBeVisible({ timeout: 20_000 });
-      await card.click();
-      await page.locator("#btnBrowse").click();
+      if (!(await card.evaluate(element => element.classList.contains("selected")))) await card.click();
+      await expect(card).toHaveClass(/selected/, { timeout: 10_000 });
+      const browse = page.locator("#btnBrowse");
+      await expect(browse).toBeEnabled({ timeout: 10_000 });
+      await browse.click();
+      await page.waitForURL(url => url.pathname.includes("/bases/explorer"), { timeout: 30_000 });
       await expect(page.locator("body")).toContainText("Co zabierasz na weekendowy wyjazd?", { timeout: 30_000 });
     });
     if (explorerError) captureErrors.push(explorerError);
