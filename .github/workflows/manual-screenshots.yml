@@ -12,8 +12,8 @@ on:
   # Ręczny przebieg odświeża zrzuty we wszystkich językach bez zmiany strony.
   workflow_dispatch:
 
-# Zrzuty korzystają z wydzielonych kont testowych i odnawiają trzy nazwane
-# fixture'y gier na każdym koncie. PNG pozostają artefaktami przebiegu.
+# Zrzuty korzystają z wydzielonych kont testowych, odnawiają grę preparowaną
+# i tworzą odrębne gry ankietowe. PNG pozostają artefaktami przebiegu.
 # Zestawy w macierzy mają osobne konta, a osobne uruchomienia są szeregowane.
 concurrency:
   group: manual-screenshots-production

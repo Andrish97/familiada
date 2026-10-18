@@ -6,7 +6,7 @@ Workflow przygotowuje przykładowe dane, otwiera widoki aplikacji i zapisuje ka�
 
 Każdy język ma właściciela na wydzielonym koncie: `test16` — PL, `test17` — EN, `test18` — UK. Joby idą po kolei, bo następne konto językowe jest odbiorcą zaproszeń do znajomych. Subskrybentów tworzy się jako testowe wpisy adresowe i aktywuje przepływem aplikacji; workflow nie zakłada do tego nowych kont ani nie wysyła prawdziwych wiadomości.
 
-Na koncie właściciela są trzy stałe gry zrzutowe po 10 pytań: jedna preparowana, osobna ankieta punktowa i osobna ankieta tekstowa. Workflow zachowuje ich identyfikatory, a przed zrzutami odnawia pytania, odpowiedzi i dane ankiet. Pierwsze pytanie w każdej grze to pytanie ze starego zrzutu Control: „Podaj coś, co można zjeść na szybko” (w odpowiednim języku). W grze preparowanej odpowiedzi mają wartości: kanapka 39, pizza 24, hot-dog 16, zupa 9, jogurt 7, baton 5. Dziewięć pozostałych pytań ma zwykłą, zróżnicowaną treść. Druga gra to ankieta punktowa z odpowiedziami bez przypisanych jeszcze punktów; trzecia to ankieta tekstowa.
+Na koncie właściciela jest jedna stała gra preparowana oraz dwie osobne gry ankietowe po 10 pytań. Przy każdym przebiegu workflow odnawia pytania gry preparowanej i tworzy od nowa otwartą ankietę punktową oraz otwartą ankietę tekstową pod tymi samymi nazwami. Pierwsza gra zachowuje ID; ankiety dostają nowe ID, aby można było ponownie wysłać zadania zgodnie z limitami aplikacji. Pierwsze pytanie w każdej grze to pytanie ze starego zrzutu Control: „Podaj coś, co można zjeść na szybko” (w odpowiednim języku). W grze preparowanej odpowiedzi mają wartości: kanapka 39, pizza 24, hot-dog 16, zupa 9, jogurt 7, baton 5. Dziewięć pozostałych pytań ma zwykłą, zróżnicowaną treść. Druga gra to ankieta punktowa z odpowiedziami bez przypisanych jeszcze punktów; trzecia to ankieta tekstowa.
 
 Do widoków Ankiet workflow przygotowuje aktywnego znajomego, trzy wpisy subskrybentów oraz zadania dla obu ankiet. Workflow przygotowuje przykładowe głosy i zadania do zrzutów; nie musi ręcznie odgrywać każdego głosowania. Dla ankiety punktowej przygotowuje 125 głosów na pytanie, niezależnie od późniejszego rozdzielenia punktów na planszy. Na ekranie wyników widać głosy przed podliczeniem, a wartości punktowe pozostają zerowe.
 
@@ -21,12 +21,12 @@ Ustawienia kolejności zapisujemy na stałej grze preparowanej. Jej identyfikato
 ## Przebieg jednego językowego joba
 
 1. Zaloguj konto językowe i poczekaj na gotowość strony.
-2. Odśwież treść trzech stałych gier po nazwach. Przed ponownym przygotowaniem ankiet wyczyść ich poprzednie głosy i zadania.
+2. Odśwież treść stałej gry preparowanej i utwórz dwie nowe gry ankietowe. Poprzednie gry ankietowe wraz z ich głosami i zadaniami usuń.
 3. Na grze preparowanej otwórz Control i jako pierwszą czynność wybierz **Zacznij od nowa**. Jeśli źródłem dźwięku jest przypadkowo Wyświetlacz, przełącz je na Control.
 4. Zapisz kadr Control. Dla Prowadzącego i Wyświetlacza wstaw ten sam symulowany stan planszy; nie uruchamiaj połączeń urządzeń ani rzeczywistej partii.
 5. Przygotuj dane znajomych, subskrybentów, zadań i głosów. Otwórz widoki gier, ankiet, zadań, baz, logo i ustawień, czekając na gotowość każdej strony.
 6. Oddzielnie zapisz główny, symulowany kadr Wyświetlacza dla PL.
-7. Usuń bazę i logo utworzone na potrzeby przebiegu oraz przywróć pierwotne nazwy profili. Trzy gry pozostają i są odnawiane przy kolejnym przebiegu. Zrzuty pozostają artefaktami, nie zapisujemy ich w bazie.
+7. Usuń bazę i logo utworzone na potrzeby przebiegu oraz przywróć pierwotne nazwy profili. Gra preparowana pozostaje i jest odnawiana; poprzednie gry ankietowe są zastępowane przy kolejnym przebiegu. Zrzuty pozostają artefaktami, nie zapisujemy ich w bazie.
 
 ## Kadry
 
@@ -62,4 +62,4 @@ Zwykłe kadry mają rozmiar **1365×768 px**. Głosowanie na telefonie ma **390�
 
 ## Co trafia do artefaktu, a co zostaje w danych testowych
 
-Pliki PNG są artefaktami wykonania GitHub Actions i zachowują ustawione rozdzielczości. Nie są automatycznie kopiowane do `/web` ani zapisywane w bazie. Trzy nazwane gry pozostają na kontach i są odnawiane; głosy i zadania ankiet są czyszczone przed ponownym przygotowaniem. Baza i logo utworzone na potrzeby przebiegu są usuwane. Stabilne relacje testowe znajomych i subskrybentów pozostają. Zrzut ankiety nadal pokazuje obecny QR ankiety; po ustaleniu adresu mini-stronki podmienimy cel kodu wyłącznie w ujęciu zrzutowym.
+Pliki PNG są artefaktami wykonania GitHub Actions i zachowują ustawione rozdzielczości. Nie są automatycznie kopiowane do `/web` ani zapisywane w bazie. Stała gra preparowana pozostaje na koncie. Gry ankietowe, ich głosy i zadania są usuwane, a przy kolejnym przebiegu powstają nowe ankiety pod tymi samymi nazwami. Baza i logo utworzone na potrzeby przebiegu są usuwane. Stabilne relacje testowe znajomych i subskrybentów pozostają. Zrzut ankiety nadal pokazuje obecny QR ankiety; po ustaleniu adresu mini-stronki podmienimy cel kodu wyłącznie w ujęciu zrzutowym.

@@ -47,8 +47,7 @@ async function seedGames(page, copy) {
     const sb = window.__sbClient;
     const { data: auth, error: authError } = await sb.auth.getUser();
     if (authError) throw authError;
-    // Keep one stable prepared game and separate stable polls per language.
-    // Rebuild their contents in place so IDs and fixture ownership persist.
+    // Reuse the prepared game; rebuild poll fixtures to allow clean sharing.
     const games = [];
     const definitions = [
       { type: "prepared", title: copy.names[0] },
@@ -56,16 +55,20 @@ async function seedGames(page, copy) {
       { type: "poll_text", title: copy.names[2] }
     ];
     for (const [index, def] of definitions.entries()) {
-      const { data: existing, error: lookupError } = await sb.from("games")
-        .select("id,name,type,status,share_key_poll")
-        .eq("owner_id", auth.user.id).eq("name", def.title).maybeSingle();
-      if (lookupError) throw lookupError;
-      let game = existing;
-      if (game && game.type !== def.type) throw new Error(`Screenshot fixture has unexpected type: ${def.title}`);
-      if (game && index > 0 && ["poll_open", "poll_stopped", "ready"].includes(game.status)) {
-        const { data: aborted, error: abortError } = await sb.rpc("poll_abort", { p_game_id: game.id });
-        if (abortError || !aborted?.ok) throw abortError || new Error(`Could not reset screenshot poll: ${def.title}`);
-        game.share_key_poll = aborted.share_key_poll;
+      let game = null;
+      if (index === 0) {
+        const { data: existing, error: lookupError } = await sb.from("games")
+          .select("id,name,type,status,share_key_poll")
+          .eq("owner_id", auth.user.id).eq("name", def.title).maybeSingle();
+        if (lookupError) throw lookupError;
+        game = existing;
+        if (game && game.type !== def.type) throw new Error(`Screenshot fixture has unexpected type: ${def.title}`);
+      } else {
+        // Poll sharing has a per-game resend cooldown. Start each capture with
+        // fresh poll IDs while keeping the same visible names and content.
+        const { error: removeOldPollError } = await sb.from("games").delete()
+          .eq("owner_id", auth.user.id).eq("name", def.title);
+        if (removeOldPollError) throw removeOldPollError;
       }
       if (!game) {
         const { data: created, error } = await sb.from("games").insert({
@@ -686,8 +689,8 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     for (const previewContext of gameplayPreviewContexts) await previewContext.close().catch(() => {});
     await page.goto(`https://www.familiada.online/games/?lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" }).catch(() => {});
     await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 10_000 }).catch(() => {});
-    // The named game fixtures persist between runs. seedGames rebuilds the
-    // prepared game and calls poll_abort before reseeding each open poll.
+    // The prepared game persists; the next run replaces its two poll fixtures
+    // to keep task sharing repeatable under the app's resend limits.
     if (screenshotBaseId) await page.evaluate(async id => {
       const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id);
       if (error) throw error;
@@ -698,7 +701,7 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     // The accepted friendship and subscriber are stable fixtures, reused
     // instead of creating declined rows/cooldowns on every run.
     // Keep one active friend and subscriber per dedicated account. Reuse them
-    // on later runs; games and their per-poll tasks are deleted below.
+    // on later runs; the two poll fixtures are replaced at the next run.
     await restoreScreenshotName(friendContext?.pages()[0], friendOriginalName).catch(error => console.error("[manual-screenshot] friend name restore failed:", error.message));
     await restoreScreenshotName(page, ownerOriginalName).catch(error => console.error("[manual-screenshot] owner name restore failed:", error.message));
     await friendContext?.close();
