@@ -451,15 +451,17 @@ function renderDetail(g) {
   if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
 }
 
-function marketplaceUrl(pathname = "/marketplace/") {
+function marketplaceUrl() {
   const url = new URL(location.href);
-  url.pathname = pathname;
+  url.pathname = "/marketplace/";
   url.searchParams.delete("game");
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-function setDetailUrl(segment) {
-  history.pushState({ gameId: detailGameId }, "", marketplaceUrl(`/marketplace/game/${encodeURIComponent(segment)}`));
+function setDetailUrl(gameId) {
+  const url = new URL(marketplaceUrl(), location.origin);
+  url.searchParams.set("game", gameId);
+  history.pushState({ gameId }, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 function updateLibraryButtons(inLibrary, withdrawn = false) {
@@ -484,8 +486,8 @@ function closeDetail({ updateUrl = true } = {}) {
   exitModalSheet(els.gameDetailOverlay);
   detailGameId = null;
   detailGame = null;
-  // Przywróć URL → /marketplace
-  if (updateUrl && location.pathname.startsWith("/marketplace/game/")) {
+  // Usuń identyfikator modala bez zmiany karty, wyszukiwania ani filtrów.
+  if (updateUrl && (new URL(location.href).searchParams.has("game") || location.pathname.startsWith("/marketplace/game/"))) {
     // Zamknięcie nie może dopisywać kolejnego wpisu: sekwencja
     // otwórz → zamknij → otwórz → Wstecz wracałaby do starego detail URL.
     history.replaceState(null, "", marketplaceUrl());
@@ -924,7 +926,10 @@ function wireEvents() {
   // Przycisk wstecz w przeglądarce
   const UUID_RE_NAV = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   window.addEventListener("popstate", e => {
-    if (location.pathname.startsWith("/marketplace/game/")) {
+    const gameParam = new URL(location.href).searchParams.get("game");
+    if (gameParam && UUID_RE_NAV.test(gameParam)) {
+      openDetail(gameParam, { updateUrl: false });
+    } else if (location.pathname.startsWith("/marketplace/game/")) {
       const param = location.pathname.split("/")[3];
       if (param) {
         if (UUID_RE_NAV.test(param)) openDetail(param, { updateUrl: false });
@@ -1013,15 +1018,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadBrowse({ reset: true });
   document.getElementById('browseGrid')?.classList.add('skel-step-ready');
 
-  // Otwórz modal jeśli URL to /marketplace/game/[slug-or-uuid]
-  const pathParts = location.pathname.split("/");
-  if (pathParts[1] === "marketplace" && pathParts[2] === "game" && pathParts[3]) {
-    const param = pathParts[3];
-    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (UUID_RE.test(param)) {
-      await openDetail(param, { updateUrl: false });
-    } else {
-      await openDetailBySlug(param);
+  // Podgląd aplikacji używa query parametru na statycznej stronie Marketplace.
+  // Stare, indeksowane adresy ze slugiem nadal otwierają się przez Worker.
+  const gameParam = new URL(location.href).searchParams.get("game");
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (gameParam && UUID_RE.test(gameParam)) {
+    await openDetail(gameParam, { updateUrl: false });
+  } else {
+    // Otwórz modal dla istniejącego, SEO-friendly adresu /marketplace/game/[slug-or-uuid].
+    const pathParts = location.pathname.split("/");
+    if (pathParts[1] === "marketplace" && pathParts[2] === "game" && pathParts[3]) {
+      const param = pathParts[3];
+      if (UUID_RE.test(param)) {
+        await openDetail(param, { updateUrl: false });
+      } else {
+        await openDetailBySlug(param);
+      }
     }
   }
 
