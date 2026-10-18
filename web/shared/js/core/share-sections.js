@@ -36,13 +36,9 @@ export function shareBulkActionsEl({ onSelectAll, onDeselectAll }) {
     button.className = "shareBulkAction";
     button.setAttribute("aria-label", t(`common.${key}`));
     button.title = t(`common.${key}`);
-    const full = document.createElement("span");
-    full.className = "shareBulkActionFull";
-    full.textContent = t(`common.${key}`);
-    const short = document.createElement("span");
-    short.className = "shareBulkActionShort";
-    short.textContent = t(`common.${key}Short`);
-    button.append(full, short);
+    const label = esc(t(`common.${key}Short`));
+    const actionIcon = key === "selectAll" ? "check" : "cancel";
+    button.innerHTML = icon(actionIcon) + `<span class="shareBulkActionLabel">${label}</span>`;
     button.addEventListener("click", onClick);
     element.append(button);
     return button;
