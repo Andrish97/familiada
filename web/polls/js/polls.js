@@ -6,27 +6,27 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T16185";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-18T16185";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T16185";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T16185";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T16185";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T16185";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-18T16215";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-18T16215";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T16215";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-18T16215";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-18T16215";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-18T16215";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T16185";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T16185";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T16185";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T16185";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-18T16185";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-18T16185";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-18T16185";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-18T16185";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T16185";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T16185";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-18T16185";
-import { createTally } from "./poll-tally.js?v=v2026-10-18T16185";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T16215";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-18T16215";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T16215";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-18T16215";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-18T16215";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-18T16215";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-18T16215";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-18T16215";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T16215";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T16215";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-18T16215";
+import { createTally } from "./poll-tally.js?v=v2026-10-18T16215";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-18T16185";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-18T16215";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
