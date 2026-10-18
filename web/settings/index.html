@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-18T17200"/>
+  <meta name="app-version" content="v2026-10-18T20075"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -15,18 +15,18 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-18T17200"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17200"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T17200"/>
-  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-18T17200"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-18T20075"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T20075"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-18T20075"/>
+  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-18T20075"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T17200" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T17200" defer></script>
-  <script type="module" src="/settings/js/settings.js?v=v2026-10-18T17200" defer></script>
-  <script type="module" src="/settings/js/generator.js?v=v2026-10-18T17200" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-18T20075" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-18T20075" defer></script>
+  <script type="module" src="/settings/js/settings.js?v=v2026-10-18T20075" defer></script>
+  <script type="module" src="/settings/js/generator.js?v=v2026-10-18T20075" defer></script>
 </head>
 <body class="games-body settings-body settings-locked no-footer-line skel-body">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -46,6 +46,7 @@
       <button class="btn sm tab-btn" id="btnTabStats" type="button">Statystyki</button>
       <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button">Ustawienia maili</button>
+      <button class="btn sm tab-btn" id="btnTabScreenshots" type="button">Zrzuty strony</button>
       <button class="btn sm tab-btn" id="btnTabReports" type="button">Poczta Familiada</button>
       <button class="btn sm tab-btn" id="btnTabMarketing" type="button">Marketing</button>
       <button class="btn sm tab-btn" id="btnTabMarketingContacts" type="button">Kontakty Marketingowe</button>
@@ -67,6 +68,49 @@
   </header>
 
   <main class="wrap" data-skel-step>
+    <section class="settings-panel homepage-screenshots-panel" id="homepageScreenshotsPanel" hidden>
+      <div class="settings-card">
+        <div class="panel-head">
+          <div class="panel-title">Zrzuty strony głównej</div>
+          <div class="panel-sub">Przejrzyj przykładowe widoki po kolei, popraw dane i odśwież obrazy galerii.</div>
+        </div>
+        <div class="homepage-shot-toolbar">
+          <label class="field-label" for="homepageShotLanguage">Język</label>
+          <select id="homepageShotLanguage"><option value="pl">Polski</option><option value="en">English</option><option value="uk">Українська</option></select>
+          <label class="field-label" for="homepageShotScene">Widok</label>
+          <select id="homepageShotScene"></select>
+          <button class="btn sm" id="homepageShotPrevious" type="button">Poprzedni</button>
+          <button class="btn sm" id="homepageShotNext" type="button">Następny</button>
+        </div>
+        <div class="homepage-shot-toolbar">
+          <label class="field-label" for="homepageShotQrUrl">Link dla kodu QR ankiety</label>
+          <input id="homepageShotQrUrl" type="url" placeholder="Wklej adres mini strony, gdy będzie gotowy" style="min-width:min(440px,100%)"/>
+        </div>
+        <div class="homepage-shot-workspace">
+          <div class="homepage-shot-editor">
+            <div class="field-label">Przykładowe dane widoku</div>
+            <div id="homepageShotFields" class="homepage-shot-fields"></div>
+            <details class="homepage-shot-advanced">
+              <summary>Pełne dane widoku (JSON)</summary>
+              <textarea id="homepageShotFixture" rows="18" spellcheck="false" aria-label="Pełne przykładowe dane w formacie JSON"></textarea>
+            </details>
+            <div class="homepage-shot-actions">
+              <button class="btn sm" id="homepageShotSave" type="button">Zapisz przykłady</button>
+              <button class="btn sm gold" id="homepageShotCaptureOne" type="button">Zrób ten zrzut</button>
+              <button class="btn sm gold" id="homepageShotCaptureAll" type="button">Odśwież wszystkie zrzuty</button>
+            </div>
+            <div class="homepage-shot-status" id="homepageShotStatus" role="status" aria-live="polite">Wczytywanie przykładów…</div>
+            <div class="homepage-shot-results" id="homepageShotResults"></div>
+          </div>
+          <div class="homepage-shot-preview">
+            <div class="homepage-shot-preview-title" id="homepageShotPreviewTitle"></div>
+            <div class="homepage-shot-frame-wrap" id="homepageShotFrameWrap">
+              <iframe id="homepageShotFrame" title="Podgląd przykładowego widoku" tabindex="-1" sandbox="allow-same-origin"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
     <div class="settings-panel maintenance-panel" id="panelScreen" hidden>
       <div class="settings-card">
         <div class="panel-head">

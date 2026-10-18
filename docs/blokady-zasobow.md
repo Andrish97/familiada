@@ -188,23 +188,44 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
   dostaje `forbidden` → pełnoekranowy komunikat „Odebrano Ci dostęp do tej
   bazy” z wyjściem do listy baz.
 
-### Blokady są trwałe — bez „przejmij kontrolę” (decyzja 2026-10-07)
+### Blokady kart i aktywna rozgrywka (decyzja 2026-10-18)
 
-- Blokada trwa, dopóki karta, która ją trzyma, jest otwarta. Nigdzie nie
-  ma „przejmij kontrolę”, wymuszenia ani pomijania blokady — także przy
-  usuwaniu gry. **Jedyny wyjątek: usunięcie konta** jest nadrzędne
-  (`usuwanie-danych.md`); strony trzymające usunięte zasoby dostają `gone`.
-- Dziś w kodzie nie ma przejmowania; jedyna droga utraty blokady to
-  wygaśnięcie po 25 s bez odnowienia.
-- **Luka do naprawy**: odnowienie (`resource-lock.js:232`) obsługuje
-  tylko `gone` i `forbidden`, a ignoruje `locked`. Gdy karta w tle
-  przestanie odnawiać (przeglądarka zwalnia liczniki ukrytych kart nawet
-  do 1 na minutę; uśpiony komputer), blokada wygasa, inna karta ją bierze,
-  a pierwsza po wybudzeniu dalej edytuje — dwie edycje naraz.
-- Naprawa: odnowienie zwracające `locked` → pełna blokada strony;
-  odnowienie od razu przy powrocie karty na wierzch; TTL dłuższy niż
-  spowolnione liczniki w tle (np. 2 min) — zamknięta karta i tak zwalnia
-  blokadę od razu (`pagehide`), TTL dotyczy tylko awarii.
+- Kolejność w ustawieniach jest istotna: najpierw `guardResourceLocks`
+  próbuje zająć `game:G`. Jeśli otwarta karta Control (lub inna karta
+  ustawień/edycji używająca tego samego zasobu) nadal go trzyma, działa
+  wyłącznie zwykły Resource Guard: blokuje stronę i czeka na zwolnienie.
+  Nie pokazuje przycisku kończenia sesji ani opcji jej przejęcia.
+- Dopiero gdy zasób `game:G` jest wolny, ustawienia sprawdzają
+  `game_session_active`. To rozróżnia zamkniętą kartę Control od trwającego
+  logicznie przebiegu: po zamknięciu Control blokada karty znika, ale aktywna
+  rozgrywka pozostaje. W tym stanie pokazuje się licznik wygaśnięcia oraz
+  „Wróć” / „Zakończ sesję i otwórz ustawienia”.
+- Podsumowanie urządzeń (`setup_finish`) nie tworzy aktywnego przebiegu.
+  Tracker pomija również ekran `r_intro`; sesja i długotrwała blokada
+  zaczynają się przy przejściu do `r_roundStart`. Dlatego zamknięcie Control
+  na podsumowaniu zwalnia `game:G` i nie pokazuje ekranu „Gra w toku”. Jeśli
+  Control nadal jest otwarty, zwykły Resource Guard blokuje drugą kartę
+  niezależnie od tego, czy operator jest na podsumowaniu, czy już gra.
+- `edit_locks` jest krótką dzierżawą karty (TTL 120 s), która chroni przed
+  równoczesną edycją. Jej wygaśnięcie pozwala innej karcie automatycznie
+  zająć zasób; nie ma przycisku ręcznego wymuszenia przejęcia aktywnej
+  dzierżawy. Karta, która po wznowieniu wykryje utratę dzierżawy, blokuje
+  swoją stronę.
+- Dzierżawa `game:G` nie oznacza, że rozgrywka się skończyła. Aktywny
+  przebieg Control2 jest osobnym, trwałym stanem: `game_session_active`
+  wskazuje sesję `game_sessions`, która pozostaje niezakończona aż do końca
+  gry, restartu lub godzinnego wygaśnięcia sesji Control.
+- Po udanym zajęciu wolnego `game:G` ustawienia pytają bazę o aktywny
+  przebieg. Jeśli trwa, osobny ekran informuje o grze i pokazuje odliczanie
+  do wygaśnięcia oraz przyciski „Wróć” i „Zakończ sesję i otwórz ustawienia”.
+  Zakończenie jest atomowym RPC: zapisuje porzucenie w statystykach, usuwa
+  wskaźnik aktywnego przebiegu, resetuje stan Control i unieważnia połączenia
+  urządzeń. Samo zamknięcie karty Control nie usuwa tej blokady logicznej.
+- Kontrola statusu przy wejściu obsługuje również zaległe wygaśnięcie: jeśli
+  termin minął, najpierw wykonuje dotychczasowe czyszczenie sesji, a dopiero
+  potem wpuszcza do ustawień. Reguła dotyczy wyłącznie niezakończonej gry;
+  zakończony przebieg nie blokuje ustawień, nawet gdy ekran końcowy Control
+  i jego runtime nadal istnieją.
 
 ### Blokady stanu i akcji — tak samo twarde jak blokady zasobów (decyzja 2026-10-07)
 

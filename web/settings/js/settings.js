@@ -12,16 +12,16 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T17200";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T17200";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T17200";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T17200";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T17200";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17200";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T17200";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T17200";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T17200";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-18T17200";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-18T20075";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-18T20075";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-18T20075";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-18T20075";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-18T20075";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T20075";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-18T20075";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-18T20075";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-18T20075";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-18T20075";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -31,14 +31,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-18T17200";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-18T20075";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-18T17200";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-18T17200";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-18T17200";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-18T20075";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-18T20075";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-18T20075";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-18T17200";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-18T20075";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -121,6 +121,7 @@ const els = {
   toolsSelect: document.getElementById("toolsSelect"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
+  btnTabScreenshots: document.getElementById("btnTabScreenshots"),
   btnTabMarketplace: document.getElementById("btnTabMarketplace"),
   btnTabRatings: document.getElementById("btnTabRatings"),
   btnTabStats: document.getElementById("btnTabStats"),
@@ -137,6 +138,7 @@ const els = {
   reportsPanel: document.getElementById("reportsPanel"),
   marketingPanel: document.getElementById("marketingPanel"),
   marketingContactsPanel: document.getElementById("marketingContactsPanel"),
+  homepageScreenshotsPanel: document.getElementById("homepageScreenshotsPanel"),
   btnTabMarketing: document.getElementById("btnTabMarketing"),
   btnTabMarketingContacts: document.getElementById("btnTabMarketingContacts"),
   btnRatingsRefresh: document.getElementById("btnRatingsRefresh"),
@@ -1043,8 +1045,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T17200"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-18T17200"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-18T20075"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-18T20075"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -5044,7 +5046,7 @@ function closeTools() {
 // Strona administratora (poza mapą PAGES): lista kart lokalnie, pierwsza = domyślna.
 const SETTINGS_TABS = [
   "maintenance", "mail", "marketplace", "ratings", "stats", "generator",
-  "reports", "marketing", "marketingContacts",
+  "reports", "marketing", "marketingContacts", "homepageScreenshots",
 ];
 const DEFAULT_SETTINGS_TAB = SETTINGS_TABS[0];
 
@@ -5068,6 +5070,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   const btnReports = document.getElementById("btnTabReports");
   const btnMarketing = document.getElementById("btnTabMarketing");
   const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
+  const btnScreenshots = document.getElementById("btnTabScreenshots");
   const tools = document.getElementById("toolsSelect");
 
   if (btn) btn.classList.toggle("active", tab === "maintenance");
@@ -5079,6 +5082,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (btnReports) btnReports.classList.toggle("active", tab === "reports");
   if (btnMarketing) btnMarketing.classList.toggle("active", tab === "marketing");
   if (btnMarketingContacts) btnMarketingContacts.classList.toggle("active", tab === "marketingContacts");
+  if (btnScreenshots) btnScreenshots.classList.toggle("active", tab === "homepageScreenshots");
   if (tools) tools.classList.toggle("active", tab === "tools");
 
   // Hide/show panels
@@ -5091,6 +5095,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   if (els.reportsPanel) els.reportsPanel.hidden = tab !== "reports";
   if (els.marketingPanel) els.marketingPanel.hidden = tab !== "marketing";
   if (els.marketingContactsPanel) els.marketingContactsPanel.hidden = tab !== "marketingContacts";
+  if (els.homepageScreenshotsPanel) els.homepageScreenshotsPanel.hidden = tab !== "homepageScreenshots";
 
   // Force display style for panels (mobile compatibility)
   if (els.mailPanel) els.mailPanel.style.display = tab === "mail" ? "" : "none";
@@ -5130,6 +5135,7 @@ function activateSettingsTabFromUrl() {
     reports: els.btnTabReports,
     marketing: els.btnTabMarketing,
     marketingContacts: els.btnTabMarketingContacts,
+    homepageScreenshots: els.btnTabScreenshots,
   };
   const button = buttons[tab];
   if (button) button.click();
@@ -5311,6 +5317,7 @@ function buildSessionRunDetails(r) {
     rounds_target: "Zakończono grę po osiągnięciu progu rund.",
     questions_exhausted: "Zakończono grę po wykorzystaniu pytań.",
     control_idle_expired: "Gra została przerwana po godzinie bezczynności panelu sterowania.",
+    settings_cancelled: "Aktywną rozgrywkę zakończono z poziomu ustawień gry.",
   };
   if (info.end_reason) line(reasons[info.end_reason] || "Przyczyna zakończenia nie jest rozpoznana.");
   const deviceEventLog = r.device_event_log || r.display_event_log;
@@ -6412,6 +6419,15 @@ function wireEvents() {
     });
   }
 
+  if (els.btnTabScreenshots) {
+    els.btnTabScreenshots.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("homepageScreenshots");
+      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-18T20075");
+      await initHomepageScreenshots();
+    });
+  }
+
   wireMarketplaceEvents();
   wireReportsEvents();
   loadFolderBadges();
@@ -6600,7 +6616,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-18T17200");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-18T20075");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;

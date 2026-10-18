@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-18T17200";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-18T20075";
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,21 +7,21 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-18T17200";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-18T17200";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-18T17200";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T17200";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-18T17200";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17200";
-import { createScene } from "./scene.js?v=v2026-10-18T17200";
-import { createQRController } from "./qr.js?v=v2026-10-18T17200";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-18T17200";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-18T17200";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T17200";
-import { createRenderer } from "./render.js?v=v2026-10-18T17200";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-18T17200";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-18T17200";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-18T17200";
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-18T20075";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-18T20075";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-18T20075";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-18T20075";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-18T20075";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T20075";
+import { createScene } from "./scene.js?v=v2026-10-18T20075";
+import { createQRController } from "./qr.js?v=v2026-10-18T20075";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-18T20075";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-18T20075";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-18T20075";
+import { createRenderer } from "./render.js?v=v2026-10-18T20075";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-18T20075";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-18T20075";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-18T20075";
 
 const $ = (id) => document.getElementById(id);
 
@@ -320,7 +320,7 @@ async function bootPreview() {
     }
     await renderer.renderSnapshot(row);
     // Podgląd formularza jest statyczny; intro prawdziwej gry pozostaje osobne.
-    scene.api.logo.draw();
+    if (!row.detail?.display?.suppressLogoDraw) scene.api.logo.draw();
     previewAppearance = appearance;
     previewTeams = { ...teams };
     // Reszta tego układu (plan podglądu: prawo/góra/lewo = przykładowe
@@ -328,10 +328,25 @@ async function bootPreview() {
     // gry — to czysto demonstracyjne wypełnienie "small" (płótno niezależne
     // od "big", gdzie jest logo), więc idzie bezpośrednio przez scene.api,
     // nie przez wspólny (z prawdziwą grą) render.js's paintForStep.
-    scene.api.small.rightDigits("123");
-    scene.api.small.topDigits("456");
-    scene.api.small.leftDigits("789");
+    const previewNumbers = row.detail?.display?.previewNumbers;
+    if (previewNumbers) {
+      scene.api.small.rightDigits(String(previewNumbers.right ?? ""));
+      scene.api.small.topDigits(String(previewNumbers.top ?? ""));
+      scene.api.small.leftDigits(String(previewNumbers.left ?? ""));
+      const xPositions = row.detail?.display?.previewXPositions || {};
+      for (const side of ["A", "B"]) {
+        const active = new Set(xPositions[side] || []);
+        for (let position = 1; position <= 3; position++) {
+          scene.api.rounds.setX(`${position}${side}`, active.has(position));
+        }
+      }
+    } else {
+      scene.api.small.rightDigits("123");
+      scene.api.small.topDigits("456");
+      scene.api.small.leftDigits("789");
+    }
     scene.api.indicator.set("OFF");
+    window.dispatchEvent(new CustomEvent("familiada:preview-rendered", { detail: { rev: row.rev } }));
     }).catch((error) => console.warn("[display2] preview render failed", error));
   });
 

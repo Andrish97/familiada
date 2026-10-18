@@ -1,27 +1,27 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T17200";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T17200";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-18T17200";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T17200";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-18T17200";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-18T17200";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-18T17200";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T17200";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-18T17200";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-18T17200";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-18T20075";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-18T20075";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-18T20075";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-18T20075";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-18T20075";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-18T20075";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-18T20075";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-18T20075";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-18T20075";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-18T20075";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-18T17200";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-18T20075";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-18T17200";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T17200";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T17200";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-18T17200";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-18T20075";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-18T20075";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-18T20075";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-18T20075";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -1592,43 +1592,120 @@ function renderGame() {
   });
 }
 
-// ===== control.ingameGuard: overlay dedykowany, gdy Control ma aktywną grę =====
-function showIngameGuard() {
-  let overlay = document.getElementById("ingameGuard");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "ingameGuard";
-    Object.assign(overlay.style, {
-      position: "fixed", inset: "0", width: "100vw", height: "100vh",
-      fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
-      background: "rgba(0,0,0,.78)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-      color: "#fff", zIndex: "2147483647", display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "16px", boxSizing: "border-box", overscrollBehavior: "none",
-    });
-    overlay.innerHTML = `
-      <div style="width:100%;max-width:560px;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:18px;text-align:left;">
-        <div style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">${escText(t("control.ingameGuard.title"))}</div>
-        <div style="opacity:.9;line-height:1.4;word-wrap:break-word;">${escText(t("control.ingameGuard.message"))}</div>
-        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
-          <button id="ingameGuardBack" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;">${icon("arrow-left")} ${escText(t("control.ingameGuard.back"))}</button>
-          <button id="ingameGuardUnlock" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,234,166,.85);color:#3a2c00;">${icon("refresh")} ${escText(t("control.ingameGuard.unlock"))}</button>
-        </div>
+// Persisted gameplay session guard. The resource lease protects simultaneous
+// page edits; this separate database record protects an in-progress match even
+// after the Control tab has been closed.
+async function guardActiveGameSession() {
+  const requestStatus = async () => {
+    const { data, error } = await sb().rpc("control_game_settings_status", { p_game_id: gameId });
+    if (error) throw error;
+    if (!data?.ok) throw new Error(data?.error || t("control.ingameGuard.statusError"));
+    return data;
+  };
+
+  let status = await requestStatus();
+  if (!status.in_progress) return true;
+
+  const overlay = document.createElement("div");
+  overlay.id = "ingameGuard";
+  Object.assign(overlay.style, {
+    position: "fixed", inset: "0", width: "100vw", height: "100vh",
+    fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
+    background: "rgba(0,0,0,.78)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+    color: "#fff", zIndex: "2147483647", display: "flex", alignItems: "center", justifyContent: "center",
+    padding: "16px", boxSizing: "border-box", overscrollBehavior: "none",
+  });
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:560px;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:18px;text-align:left;">
+      <div style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">${escText(t("control.ingameGuard.title"))}</div>
+      <div style="opacity:.9;line-height:1.4;word-wrap:break-word;">${escText(t("control.ingameGuard.message"))}</div>
+      <div id="ingameGuardCountdown" aria-live="polite" style="margin-top:12px;font-weight:700;"></div>
+      <div id="ingameGuardError" role="alert" style="margin-top:10px;color:#ffd1d1;display:none;"></div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button id="ingameGuardBack" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;">${escText(t("control.ingameGuard.back"))}</button>
+        <button id="ingameGuardCancel" type="button" style="appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:rgba(255,234,166,.9);color:#3a2c00;">${escText(t("control.ingameGuard.cancel"))}</button>
       </div>
-    `;
-    document.documentElement.appendChild(overlay);
-    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = backHref("gameSettings"); });
-    overlay.querySelector("#ingameGuardUnlock").addEventListener("click", async () => {
-      // "Odblokuj ustawienia" — nie jest to wymuszenie: acquire_edit_lock
-      // i tak sam zwolni blokadę po ~120 s bez odnowienia (Control naprawdę
-      // zamknięty). To tylko ręczne "sprawdź teraz" zamiast czekać na
-      // automatyczny recheck — bezpieczne, bo jeśli Control WCIĄŻ jest
-      // otwarty, poniższe po prostu przeładuje i trafi w ten sam guard.
-      location.reload();
-    });
-  }
-  overlay.style.display = "flex";
+    </div>
+  `;
+  document.documentElement.appendChild(overlay);
   document.documentElement.style.overflow = "hidden";
   document.body.style.overflow = "hidden";
+
+  return new Promise((resolve) => {
+    let done = false;
+    let refreshing = false;
+    let cancelling = false;
+    const countdown = overlay.querySelector("#ingameGuardCountdown");
+    const errorEl = overlay.querySelector("#ingameGuardError");
+    const backButton = overlay.querySelector("#ingameGuardBack");
+    const cancelButton = overlay.querySelector("#ingameGuardCancel");
+    let deadline = Date.parse(status.expires_at || "");
+
+    const finish = (allowed) => {
+      if (done) return;
+      done = true;
+      clearInterval(timer);
+      overlay.remove();
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      resolve(allowed);
+    };
+    const updateCountdown = () => {
+      if (!Number.isFinite(deadline)) {
+        countdown.textContent = t("control.ingameGuard.noDeadline");
+        return 0;
+      }
+      const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      const minutes = Math.floor(seconds / 60);
+      const remainder = seconds % 60;
+      countdown.textContent = t("control.ingameGuard.expiresIn", {
+        time: `${minutes}:${String(remainder).padStart(2, "0")}`,
+      });
+      return seconds;
+    };
+    const timer = setInterval(async () => {
+      if (updateCountdown() > 0 || refreshing || done) return;
+      refreshing = true;
+      try {
+        status = await requestStatus();
+        if (!status.in_progress) finish(true);
+        else deadline = Date.parse(status.expires_at || "");
+      } catch (error) {
+        errorEl.textContent = error?.message || t("control.ingameGuard.statusError");
+        errorEl.style.display = "block";
+      } finally {
+        refreshing = false;
+      }
+    }, 1000);
+    updateCountdown();
+
+    backButton.addEventListener("click", async () => {
+      backButton.disabled = true;
+      cancelButton.disabled = true;
+      await pageLock?.release?.().catch(() => {});
+      location.href = backHref("gameSettings");
+      finish(false);
+    });
+    cancelButton.addEventListener("click", async () => {
+      if (cancelling || done) return;
+      cancelling = true;
+      backButton.disabled = true;
+      cancelButton.disabled = true;
+      errorEl.style.display = "none";
+      try {
+        const { data, error } = await sb().rpc("control_game_cancel_for_settings", { p_game_id: gameId });
+        if (error) throw error;
+        if (!data?.ok) throw new Error(data?.error || t("control.ingameGuard.cancelError"));
+        finish(true);
+      } catch (error) {
+        errorEl.textContent = error?.message || t("control.ingameGuard.cancelError");
+        errorEl.style.display = "block";
+        backButton.disabled = false;
+        cancelButton.disabled = false;
+        cancelling = false;
+      }
+    });
+  });
 }
 
 // ===== MAIN =====
@@ -1660,28 +1737,6 @@ async function main() {
     return;
   }
 
-  // control.ingameGuard (dokończone — docs/plan-testy-i-poprawki.md, sekcja
-  // "Control", punkt 3): gdy Control ma dla TEJ gry aktywną, świeżą blokadę
-  // (kontekst "control"), pokaż dedykowany komunikat "Gra w toku" zamiast
-  // ogólnego resourceLock — inny tekst, bo tu przyczyna jest konkretna i
-  // znana (rozgrywka jest prowadzona na żywo), nie "ktoś inny edytuje".
-  // Control zwalnia blokadę przed przejściem tutaj (app.js), więc świeża
-  // blokada "control" oznacza prawdziwą rozgrywkę w innej karcie.
-  {
-    const { data: controlLock } = await sb()
-      .from("edit_locks")
-      .select("holder_context")
-      .eq("resource_type", "game")
-      .eq("resource_id", gameId)
-      .eq("holder_context", "control")
-      .gt("heartbeat_at", new Date(Date.now() - 120000).toISOString())
-      .maybeSingle();
-    if (controlLock) {
-      showIngameGuard();
-      return;
-    }
-  }
-
   // Blokady strony (docs/blokady-zasobow.md, sekcja 6): game:G wyłącznie
   // (wspólny klucz z edytorem, ankietą i Control) + logos współdzielone (cała
   // pula logo użytkownika; id = użytkownik). Najpierw gra, potem pula logo.
@@ -1692,6 +1747,10 @@ async function main() {
   ], { context: "settings", backHref: backHref("gameSettings") });
   if (!lock.ok) return;
   pageLock = lock;
+
+  // The resource guard above handles an open Control tab with game:G held.
+  // Only a released card can reach the persistent active-session guard.
+  if (!(await guardActiveGameSession())) return;
 
   // Blokada stanu: ustawienia gry tylko dla gry, którą da się grać.
   if (!(await guardGameState(gameId, "play"))) return;
@@ -1824,5 +1883,6 @@ async function main() {
 
 main().catch(err => {
   console.error("[game-settings]", err);
+  void pageLock?.release?.().catch(() => {});
   if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.errorPrefix"))}${escText(String(err?.message || err))}</p>`;
 });

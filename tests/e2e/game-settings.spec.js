@@ -128,9 +128,15 @@ test("ustawienia gry: dwie karty — druga karta jest blokowana overlayem, wchod
   await loginAsTestUser(page, context);
 
   const gameId = await createGame(page);
+  await page.route("**/rest/v1/rpc/control_game_settings_status", route => route.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, in_progress: false }),
+  }));
   try {
     const pageA = await context.newPage(); // trzyma blokadę, zostanie zamknięta żeby ją zwolnić
     const pageB = page; // fixture page — druga karta, też służy do końcowego sprzątania
+    await pageA.route("**/rest/v1/rpc/control_game_settings_status", route => route.fulfill({
+      status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, in_progress: false }),
+    }));
 
     await openSettings(pageA, gameId);
     await openSettings(pageB, gameId);
@@ -343,6 +349,78 @@ test("ustawienia gry: dźwięk — wybranie 'Własny' bez pliku resetuje wariant
     await expect(firstRow.locator("[data-sfx-file]")).toBeHidden();
     await expect(firstRow.locator("[data-sfx-preview]")).toBeEnabled();
 
+  } finally {
+    await deleteGame(page, gameId);
+  }
+});
+
+test("ustawienia gry: zajęty zasób daje zwykły Resource Guard, po zwolnieniu aktywna rozgrywka ma osobny guard", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+  const gameId = await createGame(page);
+  const holderTab = await context.newPage();
+  let cancelCalled = false;
+  let settingsStatusCalls = 0;
+  await holderTab.route("**/rest/v1/rpc/control_game_settings_status", route => route.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, in_progress: false }),
+  }));
+  await page.route("**/rest/v1/rpc/control_game_settings_status", async route => {
+    settingsStatusCalls++;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, in_progress: true, expires_at: new Date(Date.now() + 90_000).toISOString() }),
+    });
+  });
+  await page.route("**/rest/v1/rpc/control_game_cancel_for_settings", async route => {
+    cancelCalled = true;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, cancelled: true, in_progress: false }) });
+  });
+  try {
+    // Control i ustawienia używają tego samego wyłącznego zasobu game:G.
+    // Karta-holder symuluje zajęcie tego zasobu przez aktywną kartę Control.
+    await openSettings(holderTab, gameId);
+    await openSettings(page, gameId);
+    await expect(page.locator("#resourceLockGuard")).toBeVisible();
+    await expect(page.locator("#ingameGuard")).toHaveCount(0);
+    await expect(page.locator("#resourceLockGuardBack")).toBeVisible();
+    await expect(page.locator("#resourceLockGuard button")).toHaveCount(1);
+    expect(settingsStatusCalls).toBe(0);
+
+    // Zwolnienie zasobu odsłania drugi stan: karta trzymająca zasób jest
+    // zamknięta, ale zapis aktywnego przebiegu jeszcze nie wygasł.
+    await holderTab.close();
+    await expect(page.locator("#ingameGuard")).toBeVisible({ timeout: 40_000 });
+    await expect(page.locator("#ingameGuardCountdown")).toContainText("Blokada rozgrywki wygaśnie");
+    expect(settingsStatusCalls).toBeGreaterThan(0);
+    await page.getByRole("button", { name: "Zakończ rozgrywkę i otwórz ustawienia" }).click();
+    await expect(page.locator("#ingameGuard")).toHaveCount(0);
+    await expect(page.locator("#gsSidebar")).toBeVisible();
+    expect(cancelCalled).toBe(true);
+  } finally {
+    await holderTab.close().catch(() => {});
+    await deleteGame(page, gameId);
+  }
+});
+
+test("ustawienia gry: podgląd kolejnego dźwięku zatrzymuje poprzedni", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameId = await createGame(page);
+  await page.route("**/rest/v1/rpc/control_game_settings_status", route => route.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, in_progress: false }),
+  }));
+  try {
+    await openSettings(page, gameId);
+    await switchTab(page, "sound");
+    const previews = page.locator("[data-sfx-preview]");
+    await expect(previews.nth(1)).toBeEnabled({ timeout: 10000 });
+    await previews.nth(0).click();
+    await expect(previews.nth(0).locator(".ico")).toHaveClass(/ico-stop/);
+    await previews.nth(1).click();
+    await expect(previews.nth(0).locator(".ico")).toHaveClass(/ico-play/);
+    await expect(previews.nth(1).locator(".ico")).toHaveClass(/ico-stop/);
   } finally {
     await deleteGame(page, gameId);
   }

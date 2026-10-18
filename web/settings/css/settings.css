@@ -106,6 +106,31 @@ body.settings-body > main.wrap{
   gap: 14px;
 }
 
+.homepage-screenshots-panel{margin-top:16px}
+.homepage-shot-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0}
+.homepage-shot-toolbar select{min-width:145px}
+.homepage-shot-workspace{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(520px, 1.5fr);gap:16px;align-items:start}
+.homepage-shot-editor{display:grid;gap:8px;min-width:0}
+.homepage-shot-editor textarea{width:100%;min-height:340px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical;white-space:pre}
+.homepage-shot-fields{display:grid;gap:10px;max-height:510px;overflow:auto;padding-right:3px}
+.homepage-shot-field{display:grid;gap:5px}
+.homepage-shot-field label{font-size:11px;font-weight:700;opacity:.78}
+.homepage-shot-field input,.homepage-shot-field textarea{width:100%;min-height:38px}
+.homepage-shot-field textarea{min-height:82px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+.homepage-shot-advanced{font-size:12px;opacity:.8}
+.homepage-shot-advanced summary{cursor:pointer;padding:6px 0}
+.homepage-shot-actions{display:flex;gap:8px;flex-wrap:wrap}
+.homepage-shot-status{font-size:12px;min-height:18px;opacity:.8}
+.homepage-shot-results{display:grid;gap:5px;font-size:12px}
+.homepage-shot-result{display:flex;justify-content:space-between;gap:10px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.04)}
+.homepage-shot-result[data-state="error"]{color:#ff9d9d}
+.homepage-shot-result[data-state="ok"]{color:#a9e6b5}
+.homepage-shot-preview{min-width:0;border:1px solid rgba(255,255,255,.14);border-radius:12px;overflow:hidden;background:#050914}
+.homepage-shot-preview-title{font-size:12px;opacity:.75;padding:8px 10px}
+.homepage-shot-frame-wrap{position:relative;max-width:100%;overflow:hidden}
+.homepage-shot-frame-wrap iframe{position:absolute;left:0;top:0;display:block;border:0;background:#050914;transform-origin:top left;pointer-events:none;user-select:none}
+@media(max-width:900px){.homepage-shot-workspace{grid-template-columns:1fr}.homepage-shot-preview iframe{height:64vh}}
+
 .panel-head{
   display: grid;
   gap: 4px;

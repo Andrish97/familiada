@@ -1033,6 +1033,18 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await expect(page.locator(".c2-audio-gate-hint")).toHaveCount(0);
     await revealPreview.click();
     await expect(revealPreview.locator(".ico")).toHaveClass(/ico-stop/);
+    const introPreview = page.locator('.summarySoundRow:has(input[data-sfx-vol="show_intro"]) .summarySoundPlay');
+    await introPreview.click();
+    await expect(revealPreview.locator(".ico")).toHaveClass(/ico-play/);
+    await expect(introPreview.locator(".ico")).toHaveClass(/ico-stop/);
+    const previewState = await page.evaluate(async () => {
+      const resource = performance.getEntriesByType("resource").find((entry) => new URL(entry.name).pathname.endsWith("/shared/js/core/sfx.js"));
+      const sfx = await import(resource.name);
+      return { reveal: sfx.isSfxPlaying("reveal"), intro: sfx.isSfxPlaying("show_intro") };
+    });
+    expect(previewState).toEqual({ reveal: false, intro: true });
+    await introPreview.click();
+    await expect(introPreview.locator(".ico")).toHaveClass(/ico-play/);
     await expect(beginGame).toBeEnabled();
     await beginGame.click();
     // Po "Gotowe" jest ekran wstępu (r_intro): .stepTitle znika (istnieje tylko
