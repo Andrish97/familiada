@@ -1213,7 +1213,11 @@ main{
         display: none !important;
     }
 
-    /* Pełnoekranowy modal zachowuje zwykłą stopkę strony wraz z Kontaktem. */
+    /* W trybie strony stopka zostaje, ale Kontakt nie należy do widoku modala. */
+    body.sheet-open .footer .btn-contact-footer,
+    body.sheet-open .contact-footer-entry {
+        display: none !important;
+    }
 
     /* Strony bez naturalnego przycisku wstecz w topbarze na mobile
        (games.html, settings.html) dostają dedykowany przycisk tylko na
