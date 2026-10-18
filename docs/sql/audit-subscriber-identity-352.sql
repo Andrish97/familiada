@@ -84,4 +84,29 @@ WHERE old.subscriber_user_id IS NOT NULL
       AND current.owner_id=old.owner_id
       AND current.registered_user_id=old.subscriber_user_id
   );
+
+-- Explain rows that the 320/321 migration could not visibly carry into
+-- friendships, using aggregate reason buckets only.
+SELECT s.status AS subscription_status,
+       count(*) AS legacy_rows,
+       count(*) FILTER (WHERE s.owner_id=s.subscriber_user_id) AS self_rows,
+       count(*) FILTER (WHERE NOT EXISTS (
+         SELECT 1 FROM public.profiles p WHERE p.id=s.owner_id
+       )) AS missing_owner_profile,
+       count(*) FILTER (WHERE NOT EXISTS (
+         SELECT 1 FROM public.profiles p WHERE p.id=s.subscriber_user_id
+       )) AS missing_recipient_profile,
+       count(*) FILTER (WHERE EXISTS (
+         SELECT 1 FROM public.friendships f
+          WHERE LEAST(f.requester_id,f.addressee_id)=LEAST(s.owner_id,s.subscriber_user_id)
+            AND GREATEST(f.requester_id,f.addressee_id)=GREATEST(s.owner_id,s.subscriber_user_id)
+       )) AS any_friendship_for_pair,
+       count(*) FILTER (WHERE EXISTS (
+         SELECT 1 FROM public.friendships f
+          WHERE f.token=s.token
+       )) AS friendship_with_same_token
+FROM public.poll_subscriptions s
+WHERE s.subscriber_user_id IS NOT NULL
+  AND s.status IN ('active','pending')
+GROUP BY s.status ORDER BY s.status;
 ROLLBACK;
