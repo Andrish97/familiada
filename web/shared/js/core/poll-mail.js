@@ -1,10 +1,10 @@
 // Maile z zaproszeniem do ankiety / przypomnieniem — wspólne dla strony ankiety
 // (i, do czasu usunięcia, Centrum ankiet). Baza rezerwuje cooldown "poll:share"
 // przed wysyłką; tu budujemy treść, wysyłamy i oznaczamy zaproszenia jako wysłane.
-import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-18T07271";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-18T07271";
+import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-18T07283";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-18T07283";
 
-import { renderMailDocument } from "./mail-document.js?v=v2026-10-18T07271";
+import { renderMailDocument } from "./mail-document.js?v=v2026-10-18T07283";
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 export function mailLink(path) {
