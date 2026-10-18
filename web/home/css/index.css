@@ -482,7 +482,8 @@ details[open] .faq-q .faq-caret {
   .imgv-overlay.sheet-active .imgv-panel { padding: 0; }
   .imgv-overlay.sheet-active .sheet-modal-head {
     flex: 0 0 auto;
-    width: 100%;
+    width: auto;
+    margin-inline: 8px;
   }
   .imgv-overlay.modal--sheet.sheet-active .imgv-top {
     position: static;
