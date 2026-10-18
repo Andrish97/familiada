@@ -529,9 +529,14 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       page.on("response", captureDeviceKey);
       await page.goto(`https://www.familiada.online/control/?id=${games[0].id}&lang=${LANGUAGE}`, { waitUntil: "domcontentloaded" });
       await expect(page.locator(".stepTitle")).toContainText(/Urządzenia|Devices|Пристрої/, { timeout: 30_000 });
+      // Keep this fixture on the Control sound source. The separate Display
+      // remains a real device in the scene, while it avoids a second audio
+      // gesture when the test later reloads it into the active game state.
+      const controlSound = page.locator('.toggle-item:has(input[name="soundSource"][value="control"])');
+      await controlSound.click();
+      await expect(controlSound.locator('input')).toBeChecked();
       // Let Control create its runtime session first, then open its linked
-      // devices. The live Display may ask for a click to enable its audio;
-      // completing that prompt is part of the normal setup flow.
+      // devices and wait until they report as available to the setup screen.
       await expect.poll(() => Object.keys(deviceKeys).length, { timeout: 30_000 }).toBe(3);
       page.off("response", captureDeviceKey);
       const devices = await createGameplayDevices(browser, games[0].id, deviceKeys);
@@ -548,6 +553,13 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       const ready = page.getByRole("button", { name: /^(Gotowe — przejdź do rozgrywki|Done — start the game|Готово — почати гру)$/ });
       await expect(ready).toBeEnabled({ timeout: 20_000 });
       await ready.click();
+      // The setup screens must stay live while devices are connected; reload
+      // each already-linked view once the game starts so it initializes from
+      // the active round state before we capture the synchronized scene.
+      for (const type of ["display", "host", "buzzer"]) {
+        await devices.pages[type].reload({ waitUntil: "domcontentloaded" });
+        await devices.pages[type].waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
+      }
       await expect(devices.pages.display.locator("#gameScreen")).toBeVisible({ timeout: 30_000 });
       const startGame = page.getByRole("button", { name: /^(Rozpocznij grę|Start game|Розпочати гру)$/ });
       await expect(startGame).toBeEnabled({ timeout: 30_000 });
