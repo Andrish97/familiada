@@ -15,7 +15,7 @@ const COPY = {
   pl: {
     names: ["Wieczór z Familiadą", "Pytania dla znajomych", "Szybka ankieta"],
     ownerName: "Marta_Nowak", friendName: "Alex_Morgan", subscriberEmails: ["anna.nowak@example.com", "piotr.zielinski@example.com", "kasia.maj@example.com"],
-    gameplay: ["Podaj coś, co można zjeść na szybko", ["kanapka", "pizza", "hot-dog", "zupa", "jogurt", "baton"]],
+    gameplay: ["Podaj coś, co można zjeść na szybko", ["kanapka", "pizza", "hot-dog", "zupa", "jogurt", "baton"]], finalAnswers: ["Ubrania", "Herbata", "Spacer", "Mapa", "Wanilia"],
     fillerAnswers: ["Przyjaciele", "Rodzina", "Dobra zabawa", "Odpoczynek"],
     pollAnswers: ["Zdecydowanie tak", "Raczej tak", "Raczej nie", "Jeszcze nie wiem"],
     voteText: "Świetny pomysł",
@@ -24,7 +24,7 @@ const COPY = {
   en: {
     names: ["Family Game Night", "Questions for Friends", "Quick Survey"],
     ownerName: "Jamie_Taylor", friendName: "Olena_Koval", subscriberEmails: ["alex.morgan@example.com", "sam.taylor@example.com", "chris.parker@example.com"],
-    gameplay: ["Name something you can eat on the go", ["sandwich", "pizza", "hot dog", "soup", "yogurt", "candy bar"]],
+    gameplay: ["Name something you can eat on the go", ["sandwich", "pizza", "hot dog", "soup", "yogurt", "candy bar"]], finalAnswers: ["Clothes", "Tea", "A walk", "A map", "Vanilla"],
     fillerAnswers: ["Friends", "Family", "Good fun", "A break"],
     pollAnswers: ["Definitely", "Probably", "Probably not", "Not sure yet"],
     voteText: "Sounds like a great idea",
@@ -33,7 +33,7 @@ const COPY = {
   uk: {
     names: ["Вечір родинної гри", "Запитання для друзів", "Швидке опитування"],
     ownerName: "Olena_Koval", friendName: "Jan_Kowalski", subscriberEmails: ["oksana.koval@example.com", "andrii.shevchenko@example.com", "marta.bondar@example.com"],
-    gameplay: ["Назвіть щось, що можна швидко з’їсти", ["бутерброд", "піца", "хот-дог", "суп", "йогурт", "батончик"]],
+    gameplay: ["Назвіть щось, що можна швидко з’їсти", ["бутерброд", "піца", "хот-дог", "суп", "йогурт", "батончик"]], finalAnswers: ["Одяг", "Чай", "Прогулянка", "Мапа", "Ваніль"],
     fillerAnswers: ["Друзі", "Родина", "Гарна розвага", "Відпочинок"],
     pollAnswers: ["Однозначно так", "Скоріше так", "Скоріше ні", "Ще не знаю"],
     voteText: "Чудова ідея",
@@ -298,8 +298,9 @@ async function createGameplayDevices(browser, ownerPage, gameId) {
   const contexts = [];
   const pages = {};
   for (const type of ["display", "host", "buzzer"]) {
-    const deviceContext = await browser.newContext({ serviceWorkers: "block", viewport: type === "display" ? { width: 1600, height: 900 } : { width: 1365, height: 768 } });
+    const deviceContext = await browser.newContext({ serviceWorkers: "block", locale: LANGUAGE === "uk" ? "uk-UA" : LANGUAGE === "en" ? "en-US" : "pl-PL", viewport: type === "display" ? { width: 1600, height: 900 } : { width: 1365, height: 768 } });
     contexts.push(deviceContext);
+    await deviceContext.addInitScript(lang => localStorage.setItem("uiLang", lang), LANGUAGE);
     if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(deviceContext, { pages: [`control/${type}`] });
     const devicePage = await deviceContext.newPage();
     devicePage.setDefaultTimeout(20_000);
@@ -308,6 +309,8 @@ async function createGameplayDevices(browser, ownerPage, gameId) {
   }
   await pages.display.waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
   await expect(pages.display.locator("#blackScreen")).toBeVisible({ timeout: 30_000 });
+  await pages.host.waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
+  await pages.buzzer.waitForFunction(() => !!window.__sbClient, null, { timeout: 30_000 });
   await expect(pages.host.locator("#paperText2")).toBeAttached({ timeout: 30_000 });
   return { contexts, pages };
 }
@@ -498,6 +501,20 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
     });
     if (settingsRoundsError) captureErrors.push(settingsRoundsError);
 
+    const settingsDisplayError = await take(page, testInfo, "game-settings-display", async () => {
+      await page.locator('.gs-sidebar-item[data-cat="display"]').click();
+      const wordmark = page.locator(`.gs-logo-tile[data-logo-id]`).filter({ hasText: `E13-${LANGUAGE}-wordmark` });
+      await expect(wordmark).toBeVisible({ timeout: 30_000 });
+      await wordmark.click();
+      await expect(wordmark).toHaveClass(/selected/);
+    });
+    if (settingsDisplayError) captureErrors.push(settingsDisplayError);
+    const settingsSoundError = await take(page, testInfo, "game-settings-sound", async () => {
+      await page.locator('.gs-sidebar-item[data-cat="sound"]').click();
+      await expect(page.locator("#sfxTableGs .sfx-row").first()).toBeVisible({ timeout: 30_000 });
+    });
+    if (settingsSoundError) captureErrors.push(settingsSoundError);
+
     // For this temporary screenshot game, make one completed round enough to
     // reach the finale. These are ordinary per-game settings and are removed
     // with the fixture after the run.
@@ -559,7 +576,10 @@ test(`manual screenshot fixtures and scenes (${LANGUAGE})`, async ({ page, conte
       const startFinal = page.getByRole("button", { name: /^(Rozpocznij finał|Start|Старт)$/ });
       await expect(startFinal).toBeEnabled({ timeout: 30_000 });
       await startFinal.click();
-      await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", /Finał|Finale|Фінал/, { timeout: 30_000 });
+      await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", /Finał|Final|Фінал/, { timeout: 30_000 });
+      const finalAnswers = page.locator("#app input[type=text]");
+      await expect(finalAnswers).toHaveCount(5, { timeout: 20_000 });
+      for (let i = 0; i < 5; i++) await finalAnswers.nth(i).fill(COPY[LANGUAGE].finalAnswers[i]);
     });
     if (gameplayFinaleError) captureErrors.push(gameplayFinaleError);
 

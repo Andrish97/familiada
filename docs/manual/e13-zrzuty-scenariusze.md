@@ -1,108 +1,68 @@
-# E13 — pełny scenariusz przygotowania i robienia zrzutów
+# E13 — automatyczny przebieg zrzutów
 
-To jest scenariusz do przejrzenia przed rozbudową automatu. Rozróżnia kliknięcia wykonywane na ekranach, rekordy przygotowywane w danych testowych oraz widoki symulowane. Zrzut zapisujemy dopiero po potwierdzeniu, że właściwy tekst i stan są widoczne.
+Workflow przygotowuje przykładowe dane, przechodzi przez widoki aplikacji i zapisuje każdy zrzut jako osobny artefakt przebiegu. Sceny są od siebie odizolowane: nieudane oczekiwanie na jeden ekran zapisuje błąd tej sceny i pozwala kontynuować pozostałe.
 
-## Konta i języki
+## Konta i przykładowe dane
 
-Każdy przebieg językowy loguje się na osobne konto właściciela: `test16` — polski, `test17` — angielski, `test18` — ukraiński. Język tych kont pozostaje zgodny z językiem ujęć. Workflow uruchamia języki kolejno, bo konta są używane także jako odbiorcy u znajomych.
+Każdy język ma właściciela na wydzielonym koncie: `test16` — PL, `test17` — EN, `test18` — UK. Joby idą po kolei, bo następne konto językowe jest odbiorcą zaproszeń do znajomych. Subskrybentów tworzy się jako testowe wpisy adresowe i aktywuje przepływem aplikacji; workflow nie zakłada do tego nowych kont ani nie wysyła prawdziwych wiadomości.
 
-W obecnym kodzie znajomym jest następne konto językowe: PL → EN, EN → UK, UK → PL. Zaproszenie jest rekordem aplikacji; przyjęcie wykonuje konto odbiorcy przez funkcję aplikacji.
+Na koncie właściciela powstają trzy dodatkowe gry po 10 pytań. Pierwsze pytanie w każdej to pytanie ze starego zrzutu Control: „Podaj coś, co można zjeść na szybko” (w odpowiednim języku). W grze preparowanej odpowiedzi mają wartości: kanapka 39, pizza 24, hot-dog 16, zupa 9, jogurt 7, baton 5. Dziewięć pozostałych pytań ma zwykłą, zróżnicowaną treść. Druga gra to Punktacja, a trzecia Ankieta tekstowa.
 
-**Rekomendacja dla tych kadrów:** zasymulować odbiorców, a zostawić prawdziwy interfejs. Zrzut ma pokazać, jak wygląda lista i jak używa się jej w ankiecie; nie musi dowodzić, że konkretna osoba odebrała wiadomość. Obecny sposób — trzy testowe wpisy subskrypcji utworzone przez `subscribers_invite` i aktywowane przez `poll_sub_accept_email` — daje poprawne rekordy i stany, bez skrzynek, dodatkowych kont ani wysyłania wiadomości. To testowe osoby i symulowane akceptacje, ale strona Subskrybentów, lista odbiorców i Zadania pokazują prawdziwy UI aplikacji. Znajomego również można przygotować jako relację testową między kontami zrzutowymi. Nie potrzeba zakładać kolejnych kont tylko po to, by uzyskać statyczne kadry.
+Do widoków Ankiet workflow przygotowuje aktywnego znajomego, trzy wpisy subskrybentów oraz zadania dla obu ankiet. Głos anonimowy oddaje się na telefonie przez rzeczywiste kliknięcia w odpowiedzi. Głosy z zadań i ukończenie tych zadań przygotowuje się funkcjami aplikacji, a nie wpisywaniem odpowiedzi w widoku odbiorcy. Są to prawdziwe rekordy głosów/zadań na kontach testowych; ich wprowadzenie jest w tym scenariuszu przygotowaniem danych.
 
-Rozróżnienie zależy od tego, co ma udowadniać obraz: dla list i widoków wynikowych wystarczą stabilne dane testowe; gdy kadr ma pokazywać samą czynność, np. odbiorca otwiera zaproszenie albo oddaje głos, automat powinien przejść tę czynność w UI na dedykowanym koncie. Żaden wariant nie używa prawdziwych osób ani prywatnej poczty.
+Dane gry, pytań i odpowiedzi, bazy oraz wybranych przykładów logo workflow przygotowuje w fixture’ach. Widoki, które są tematem zrzutu, otwiera i obsługuje w aplikacji. Osobny główny kadr Wyświetlacza jest symulowany w trybie podglądu: pokazuje aktualny renderer i przygotowany wiersz planszy, nie udaje sesji na żywo.
 
-## Dane przygotowywane przed ekranami
+## Kolejność pytań i szybkie przejście do finału
 
-Każdy przebieg usuwa pozostałości poprzedniego uruchomienia wyłącznie dla trzech nazw zarezerwowanych na zrzuty, a potem tworzy na koncie właściciela trzy nowe gry. To dodatkowe gry obok demo.
+W **Ustawieniach gry** automat włącza finał, wybiera ręczny wybór finałowych pytań, wskazuje pięć pytań i przełącza kolejność rund z losowej na wybraną ręcznie. Pytanie ze starego Control pozostaje poza finałem i na początku listy rund. Ustawienia są zapisywane przyciskiem **Zapisz wszystko**.
 
-| Gra | Dane |
+W tymczasowej grze do zrzutów automat ustawia też niski próg wejścia do finału i cel finału, zapisuje je w ustawieniach, po czym rozgrywa jedną rundę w Control. Dzięki temu może dojść do rzeczywistego ekranu finału bez odgrywania kilku pełnych rund. Te wartości dotyczą wyłącznie kasowanej gry testowej.
+
+## Przebieg jednego językowego joba
+
+1. Zaloguj konto właściwego języka, ustaw język i poczekaj, aż widok pokaże treść potrzebną do następnej czynności.
+2. Usuń ewentualne pozostałości tylko po zarezerwowanych nazwach zrzutowych. Utwórz trzy gry i dziesięć pytań w każdej.
+3. Przygotuj znajomego, trzy aktywne wpisy subskrybentów i zadania do ankiet. Akceptacja zaproszeń subskrybentów odbywa się testowym przepływem aplikacji; nie tworzy kolejnych kont.
+4. Przejdź przez widoki gier, edytora, logo, baz i ustawień. Zmiany wyglądu i wybór kolejności wykonaj na ekranie, zapisz i sprawdź w UI.
+5. Dla gry preparowanej otwórz jedną sesję Control, podłącz do niej Wyświetlacz, Prowadzącego i Przycisk do pojedynku. Zaczekaj na ekran gotowości urządzeń. Rozpocznij grę i rundę, naciśnij przycisk drużyny A, zatwierdź jej udział, odkryj pierwszą i trzecią odpowiedź oraz dodaj jeden błąd X.
+6. Zapisz Control, Prowadzącego i Wyświetlacz bez zmiany stanu między tymi trzema ujęciami. Dalsze czynności w tej samej grze odkrywają pozostałe odpowiedzi, kończą rundę, przechodzą do finału i wpisują pięć przykładowych odpowiedzi pierwszego gracza. Zrzut finału obejmuje tylko Control.
+7. Przejdź do Znajomych i Subskrybentów, potem do udostępniania obu ankiet. Oddaj anonimowe głosy na telefonie. Uzupełnij zadaniowe głosy funkcjami aplikacji, otwórz Zadania jako odbiorca i przejrzyj wyniki obu ankiet.
+8. Oddzielnie otwórz podgląd głównego kadru Wyświetlacza dla PL.
+9. Na końcu zamknij sesję gry i okna urządzeń, usuń trzy gry, bazę i logo utworzone na potrzeby przebiegu oraz przywróć pierwotne nazwy profili. Zaakceptowane połączenie znajomych i testowe subskrypcje pozostają do ponownego wykorzystania. Nie zapisuj zrzutów do bazy.
+
+## Kadry
+
+Zwykłe kadry mają rozmiar **1365×768 px**. Głosowanie na telefonie ma **390×844 px**. Główny, symulowany Wyświetlacz ma **1600×900 px**. Ekrany gier, bazy, edytora i ustawień są przechwytywane bez pełnostronicowego pomniejszania.
+
+| Kadr (PL; EN i UK używają tego samego przebiegu) | Co robi automat i jaki stan przechwytuje |
 | --- | --- |
-| Wieczór z Familiadą / Family Game Night / Вечір родинної гри | Gra preparowana, 10 pytań. Pierwsze to dokładnie pytanie ze starego zrzutu Control: „Podaj coś, co można zjeść na szybko” (odpowiednia wersja językowa na koncie). Ma sześć odpowiedzi jak na zrzucie: kanapka 39, pizza 24, hot-dog 16, zupa 9, jogurt 7, baton 5. Kolejne dziewięć pytań to lokalne przykłady. |
-| Pytania dla znajomych / Questions for Friends / Запитання для друзів | Ankieta punktowa, 10 pytań. Pytanie z Control jest pierwsze, a kolejne dziewięć to pytania ankiety. Ankieta jest otwarta i gotowa do anonimowego głosowania oraz wysłania zadań. |
-| Szybka ankieta / Quick Survey / Швидке опитування | Ankieta tekstowa, 10 pytań. To samo pytanie z Control jest pierwsze, potem dziewięć pytań do ankietowania. Ankieta jest otwarta i gotowa do wysłania zadań. |
+| **Moje gry** (`games`) | Otwiera listę trzech przykładowych gier; nazwy i typy są widoczne razem. |
+| **Edytor gry** (`game-editor`) | Otwiera pierwsze pytanie gry preparowanej, sześć odpowiedzi z punktami oraz listę pozostałych pytań. |
+| **Gra gotowa** (`game-ready`) | Otwiera tę samą grę po przygotowaniu do prowadzenia; na liście widać jej stan gotowości. |
+| **Logo** (`logos`) | Pokazuje nazwaną bibliotekę logo z przykładowymi zapisami. |
+| **Edytor rysunku** (`logo-draw-editor`) | Wchodzi do edytora rysunku, wybiera narzędzie, rysuje i zapisuje znak. |
+| **Bazy pytań** (`bases`) | Pokazuje przykładową bazę z kategorią i wpisanymi pytaniami. |
+| **Eksplorator bazy** (`base-explorer`) | Wybiera przygotowaną bazę, klika **Przeglądaj** i czeka na widoczną treść w Eksploratorze. |
+| **Ustawienia finału** (`game-settings-finale`) | Włącza finał, przełącza na wybór ręczny i wskazuje pięć pytań innych niż pytanie Control. |
+| **Kolejność rund** (`game-settings-rounds`) | Przełącza tryb rund na ręczny i pokazuje pytanie Control jako pierwszą pozycję. |
+| **Wygląd gry** (`game-settings-display`) | Otwiera **Wygląd**, wybiera przygotowane logo i czeka, aż wybór jest widoczny oraz zaznaczony. |
+| **Dźwięk gry** (`game-settings-sound`) | Otwiera **Dźwięk** i czeka na widoczną listę ustawień dźwięków. |
+| **Panel sterowania** (`gameplay-control`) | W jednej sesji gry prowadzi pierwszy pojedynek, odkrywa odpowiedzi 1 i 3, dodaje X. Kadr przedstawia właściwą planszę, pytanie i wynik rundy. |
+| **Prowadzący** (`gameplay-host`) | Bez zmiany stanu przechwytuje Prowadzącego dla tego samego pytania i rundy; widoczne są pytanie oraz pełna lista odpowiedzi dla prowadzącego. |
+| **Wyświetlacz na żywo** (`gameplay-display`) | Bez zmiany stanu przechwytuje Wyświetlacz po tych samych odkryciach. Jego plansza i wynik muszą odpowiadać temu, co pokazuje Control. |
+| **Finał** (`gameplay-finale`) | W tej samej partii kończy rundę, przechodzi do finału i wpisuje pięć przykładowych odpowiedzi. Zrzut pokazuje wypełniane pola Control bez osobnego ujęcia urządzeń. |
+| **Znajomi** (`friends`) | Pokazuje listę przykładowego znajomego na stronie **Znajomi**. |
+| **Subskrybenci** (`subscribers`) | Pokazuje trzy testowe aktywne wpisy subskrybentów. |
+| **Udostępnianie ankiety punktowej** (`poll-sharing`) | Pokazuje sekcję anonimową z linkiem/QR oraz listę odbiorców, w tym subskrybentów. Gdy QR nie da się wyrenderować, automat ukrywa wyłącznie pusty element QR dla tego kadru i nadal robi pozostałe zrzuty. Później kod QR w tym kadrze podmienimy linkiem do mini-stronki po jej otrzymaniu. |
+| **Udostępnianie ankiety tekstowej** (`poll-text-sharing`) | Pokazuje ten sam przebieg udostępniania dla ankiety tekstowej. |
+| **Zadania oczekujące** (`tasks-pending`) | Otwiera jako znajomy listę dwóch nieukończonych zadań — po jednym do każdej ankiety. |
+| **Głosowanie anonimowe na telefonie** (`anonymous-voting-mobile`) | Otwiera ankietę punktową w szerokości telefonu; pierwsze pytanie to pytanie ze starego zrzutu Control. |
+| **Głosowanie po ostatniej odpowiedzi** (`anonymous-voting-done-mobile`) | Odpowiada kliknięciem na wszystkie dziesięć pytań i przechwytuje stan końcowy mobilnej ankiety. |
+| **Zadania ukończone** (`tasks-done`) | Otwiera jako znajomy listę dwóch wykonanych zadań. Głosy w tych zadaniach istnieją w bazie testowej, ale są wprowadzone przez funkcje aplikacji, a nie przez ekran Zadania. |
+| **Wynik ankiety punktowej** (`poll-votes`) | Otwiera **Głosy** i przechwytuje wspólny wynik anonimowych oraz zadaniowych odpowiedzi. |
+| **Wynik ankiety tekstowej** (`poll-text-votes`) | Otwiera **Głosy** dla ankiety tekstowej i przechwytuje zebrane wpisy. |
+| **Główny obraz Wyświetlacza** (`main-display`, tylko PL) | W trybie podglądu aktualny renderer pokazuje pytanie „Podaj coś, co można zjeść na szybko”, odsłonięte pozycje 1, 3 i 5, iksy na pozycjach 1 i 3 po obu stronach, wynik 111:111, 999 u góry oraz napisy FAMILIADA i ONLINE. To jedyne symulowane ujęcie. |
 
-W grach preparowanej i punktowej wpisujemy odpowiedzi przez bezpośrednie utworzenie rekordów pytań i odpowiedzi w bazie aplikacji — nie przez wpisywanie ich w edytorze. Dzięki temu wszystkie przebiegi językowe startują z powtarzalnymi danymi. Zrzut Edytora nadal pokazuje prawdziwy ekran aplikacji i gotową zawartość.
+## Co trafia do artefaktu, a co zostaje w danych testowych
 
-Pozostałych dziewięciu pytań nie zastępujemy wariantami tego samego pytania. Mają zwykłą, różną treść, aby lista i ankiety wyglądały jak kompletne materiały, a głosowanie miało sens.
-
-## Ustalona kolejność rund i pytań finałowych
-
-Pytanie z Control musi być pierwszą pozycją w rundach. Nie wolno zostawić losowania, bo obraz nie będzie powtarzalny. W grze preparowanej konfigurujemy to przez ekran **Ustawienia gry**:
-
-1. W **Moich grach** zaznacz przygotowaną grę i otwórz **Ustawienia gry**.
-2. Wejdź w **Pytania — Ustawienia**. Włącz finał i wybierz **Wybrane ręcznie** dla pytań finałowych oraz dla pytań rund.
-3. W **Pytania — Finał** wybierz pięć pytań spośród pozostałych dziewięciu. Pytania finałowe i rundowe nie mogą się powtarzać.
-4. W **Pytania — Rundy** ustaw pytanie „Podaj coś, co można zjeść na szybko” na pierwszym miejscu, a za nim wybierz cztery pytania rundowe. Zapisz ustawienia.
-5. Wróć do listy. Dopiero teraz przejdź do **Graj**. Panel sterowania ma rozpocząć rundy od dokładnie tego pytania; nie losuje go z puli.
-
-Te czynności trzeba wykonać w automacie przez widoczne zakładki i przyciski, żeby kadr ustawień pokazywał prawdziwy wybór i kolejność. Pozostałe dane gier tworzy przygotowanie fixture’ów; nie ma potrzeby klikać edytora, by ręcznie wpisywać dziesięć kompletnych pytań.
-
-## Przebieg każdego językowego joba
-
-1. Zaloguj właściciela właściwego języka, ustaw język strony i poczekaj na gotowość widoku. Nie przechwytuj ekranu na samym `domcontentloaded`; wymagaj widocznej treści właściwej dla sceny.
-2. Utwórz trzy gry i pytania opisane powyżej. Przy przerwanym wcześniejszym jobie usuń tylko własne gry o zarezerwowanych nazwach.
-3. Zaloguj konto znajomego w osobnym oknie przeglądarki. Utwórz/odnajdź znajomość i doprowadź ją do aktywnego stanu.
-4. Utwórz/odnajdź trzy aktywne testowe subskrypcje. Dla kadrów listy i udostępniania aktywuj je funkcją aplikacji, bez tworzenia nowych kont i skrzynek. Jeśli później potrzebny będzie kadr, który wyjaśnia samo przyjmowanie zaproszenia, dodaj osobny przepływ UI na dedykowanym koncie; nie jest potrzebny do statycznego widoku aktywnej puli.
-5. Dla obu ankiet wybierz znajomego i subskrybenta jako odbiorców zadań. Obecny automat tworzy zadania przez `poll_share_send`, czyli bez klikania przycisku wysyłki na ekranie. Sam ekran udostępniania jest później otwierany w interfejsie i czeka na widoczny QR oraz odbiorcę. Jeśli obraz ma dokumentować samą czynność wysyłania, automat musi dodatkowo wykonać wybór odbiorców i kliknąć **Wyślij** w interfejsie.
-6. Oddaj anonimowe głosy na stronie głosowania telefonu przez klikanie odpowiedzi. Dla zadań obecny automat wywołuje funkcje głosowania i ukończenia zadania jako właściwy odbiorca; rekordy głosów i zadań są prawdziwe, ale wpisanie odpowiedzi nie odbywa się w ekranie Zadania. Dla zrzutu pokazującego samą czynność należy w przyszłości kliknąć odpowiedzi z widoku odbiorcy.
-7. Przejdź kolejno po kadrach poniżej. Każdy kadr ma własny warunek gotowości i własny zapis. Błąd jednego ujęcia nie przerywa pozostałych.
-8. Na końcu usuń trzy świeże gry; powiązane z nimi zadania i głosy znikają wraz z grami. Zachowaj jedną zaakceptowaną znajomość i trzy subskrypcje do ponownego użycia. Przywróć pierwotne nazwy profili i zamknij wszystkie okna, szczególnie przed innym jobem językowym.
-
-## Kadry — czynności i warunek zrzutu
-
-### Przygotowanie gry
-
-| Kadr | Co robi przeglądarka | Co musi być widoczne przed zapisem |
-| --- | --- | --- |
-| **Lista gier** — 1365×768 | Otwiera **Moje gry**; niczego nie tworzy kliknięciem, bo trzy gry zostały wcześniej przygotowane w bazie aplikacji. | Wszystkie trzy tytuły i typy. |
-| **Edytor gry** — 1365×768 | Otwiera edytor przygotowanej gry i pierwsze pytanie. | Dokładne pytanie ze starego Control, sześć odpowiedzi z punktami oraz informacja, że gra ma komplet pytań. |
-| **Gra gotowa** — 1365×768 | Wraca do **Moich gier**. Obecny kod ustawia stan gry `ready` bezpośrednio w bazie, nie przez akcję w edytorze. | Ta sama gra ma stan gotowy i nadal jest na liście. |
-| **Ustawienia — kolejność rund** — 1365×768 | Otwiera **Ustawienia gry**, klika **Pytania — Ustawienia**, włącza ręczny wybór rund, następnie **Pytania — Rundy**; przesuwa pytanie Control na pozycję 1 i zapisuje. | Lista pokazuje pytanie Control jako pierwsze i zapisany wybór. |
-| **Ustawienia — finał** — 1365×768 | W tej samej grze włącza finał, wybiera ręczny tryb, wskazuje pięć pytań z pozostałych dziewięciu i zapisuje. | Pięć wybranych pytań finału. Żadne z nich nie jest pytaniem rundy. |
-| **Bazy i Eksplorator** — 1365×768 | Otwiera istniejącą przykładową bazę, wchodzi do Eksploratora, wyszukuje lub wybiera kategorię i otwiera pytanie. Nie wpisuje danych produkcyjnych. | Czytelna kategoria, pytania i wybrany podgląd pytania. |
-| **Gry Społeczności** — 1365×768 | Otwiera katalog, wybiera grę i otwiera podgląd; nie publikuje nowej gry. | Tytuł, opis i zawartość wybranej gry oraz dostępne działanie dla użytkownika. |
-
-### Znajomi, subskrybenci i ankiety
-
-| Kadr | Co robi przeglądarka | Co musi być widoczne przed zapisem |
-| --- | --- | --- |
-| **Znajomi** — 1365×768 | Otwiera **Znajomi** i klika zakładkę aktywnych/otrzymanych znajomych. | Aktywna przykładowa osoba, bez pustego stanu i bez danych prawdziwego użytkownika. |
-| **Subskrybenci** — 1365×768 | Otwiera **Subskrybenci** i przechodzi do aktywnych wpisów. | Trzy aktywne przykładowe subskrypcje. Adresy są testowe, akceptacje automatyczne; nie przedstawiamy ich jako realnych kont. |
-| **Udostępnianie ankiety punktowej** — 1365×768 | Otwiera Ankiety dla gry punktowej. Pokazuje wybór odbiorców oraz część anonimową z linkiem/QR ankiety. Obecny kod bezpośrednio tworzy zadania RPC; automatyczne kliknięcie **Wyślij** jest osobnym brakującym krokiem. | Nazwa ankiety, trzy wybrane wpisy subskrybentów i powiązane zadania. Docelowy QR podmienimy po otrzymaniu linku do mini-strony. Do tego czasu brak lub błąd renderowania samego QR nie przerywa tego ani pozostałych zrzutów; w takim przypadku automat ukrywa pusty/nieudany kod tylko na obrazie. Zrzut Wyświetlacza nie zawiera QR. |
-| **Udostępnianie ankiety tekstowej** — 1365×768 | Otwiera analogiczny ekran gry tekstowej. | Właściwy tytuł ankiety i wybrani odbiorcy. |
-| **Zadania oczekujące** — 1365×768 | Loguje konto znajomego, otwiera **Zadania**. | Dwa zadania w oczekiwaniu, jedno z każdej ankiety. Są rzeczywistymi rekordami, obecnie utworzonymi przez RPC. |
-| **Anonimowe głosowanie na telefonie** — 390×844 | Otwiera link ankiety punktowej i klika pierwszą odpowiedź dla każdego pytania, czekając po każdym wyborze na następne pytanie. | Na pierwszym ekranie pytanie Control i jego odpowiedzi; po ostatniej odpowiedzi ekran potwierdzenia. Głosy zapisuje prawdziwa funkcja głosowania. |
-| **Zadania wykonane** — 1365×768 | W bieżącym przebiegu zadania głosowane są przez batch RPC, a nie przez klikanie odpowiedzi w widoku **Zadania**. Potem konto znajomego otwiera tę stronę i rozwija wykonane. | Oba zadania w wykonanych. Wiersze i głosy są realnymi rekordami, lecz obecnie czynność wypełnienia zadania jest zasymulowana funkcją aplikacji. |
-| **Wyniki ankiety punktowej** — 1365×768 | Właściciel otwiera zakładkę wyników. | Głosy anonimowe i zadaniowe zapisane wcześniej w aplikacji. |
-| **Wyniki ankiety tekstowej** — 1365×768 | Właściciel otwiera wyniki ankiety tekstowej. | Kilka czytelnych odpowiedzi tekstowych z prawdziwych wpisów głosów. |
-
-### Logo i rozgrywka
-
-| Kadr | Co robi przeglądarka | Co musi być widoczne przed zapisem |
-| --- | --- | --- |
-| **Logo** — 1365×768 | Otwiera bibliotekę, wybiera istniejące logo. | Kilka nazwanych przykładów i wybrane logo. |
-| **Edytor rysunku** — 1365×768 | Klika utworzenie logo rysunkowego, wybiera narzędzie i rysuje widoczny prosty znak. | Płótno z ukończonym znakiem i narzędzia; zapisane logo wraca do biblioteki. |
-| **Ustawienia wyglądu/dźwięku** — 1365×768 | Otwiera ustawienia przygotowanej gry, wybiera zapisane logo i ustawienie dźwięku. Zapisuje przez **Zapisz**. | Podgląd rzeczywistej zmiany oraz wybrana opcja dźwięku. |
-| **Panel sterowania i Wyświetlacz — runda 1** — Control 1365×768, Display 1600×900 | Z listy otwiera **Graj** dla przygotowanej gry. W Ustawieniach gry wybiera ręcznie rundy i finał, zapisuje i rozpoczyna grę. W Control wykonuje pierwszy pojedynek, a następnie klika odsłonięcia odpowiedzi. Display pozostaje podłączony do tej samej sesji. Zrzuty robi po wspólnym stanie renderu, bez otwierania drugiej gry. | Pytanie Control jako pierwsze w rundach, odpowiedzi/iksy i wyniki zsynchronizowane na obu ekranach. Konkretny moment odsłonięcia ustalamy z kadrem docelowym; nie odtwarzamy go przez podłożenie innego game_state. |
-| **Prowadzący** — 1365×768 | W tej samej sesji otwiera lub podłącza **Prowadzącego** i czeka na aktualne pytanie. | Widok Host pokazuje pytanie i pełne odpowiedzi dla prowadzącego; zgodność z Control/Display. |
-| **Finał** — 1365×768 | Kontynuuje tę samą grę. Kończy rundy, aż panel sam przejdzie do finału według wybranych ustawień; wpisuje przykładowe odpowiedzi obu graczy, a następnie pokazuje ekran przed odsłonięciem lub stan odsłaniania. | Wybrane pięć pytań finałowych i rzeczywisty stan finału. Nie tworzymy równoległego urządzenia tylko dla kadru finału. |
-
-### Oddzielny główny obraz Wyświetlacza
-
-Ten kadr jest **symulowany**, bo pokazuje nietypowe, wcześniej wskazane ułożenie planszy, którego nie należy uzyskiwać przez otwieranie dodatkowej rozgrywki i blokowanie zasobów. Uruchamiamy aktualny renderer Wyświetlacza w trybie podglądu, przekazujemy mu przygotowany stan i czekamy na zdarzenie gotowości. Stan: odkryte pozycje 1, 3, 5; iksy na pozycjach 1 i 3 po obu stronach; 111 punktów po obu stronach; 999 u góry; podpisy FAMILIADA i ONLINE. Ten obraz nie udaje prawdziwej sesji Control/Display i nie zastępuje zsynchronizowanej pary powyżej.
-
-## Rozdzielczość i zapisywanie
-
-- Zwykłe widoki desktop: **1365×768 px**.
-- Anonimowe głosowanie telefonu: **390×844 px**.
-- Główny, symulowany Display: **1600×900 px**.
-- Zrzut pełnego ekranu tylko wtedy, gdy konkretna strona wymaga pokazania całego długiego zestawu. Nie zmniejszać później obrazu tak, by tekst był nieczytelny.
-- Każdy obraz ma osobny warunek gotowości i osobny zapis. Błąd jednego obrazu nie kasuje ani nie pomija pozostałych.
-- Workflow uruchamia się po zmianach `web/**` na `main` albo ręcznie, osobno dla wszystkich języków lub wybranego języka. Wyniki są artefaktami do obejrzenia; nie podmieniają automatycznie grafik strony.
-
-## Co automat robi dziś, a co jest jeszcze planem
-
-Obecny kod tworzy trzy gry, przygotowuje znajomego i trzy e-mailowe wpisy subskrybentów, tworzy zadania, głosuje anonimowo przez ekran telefonu, zapisuje zadaniowe głosy funkcjami RPC i przechwytuje listę gier, edytor, stan gotowy, Znajomych, Subskrybentów, udostępnianie, Zadania, wyniki oraz osobny symulowany obraz Display. W kilku miejscach dane/akcje są przygotowane przez bezpośrednie wywołanie funkcji lub zapis bazy zamiast kliknięcia UI — opisano to w tabelach.
-
-Ręczny wybór kolejności rund i pytań finału, kadry obu zakładek ustawień, rzeczywisty przepływ od **Graj** do rundy, zsynchronizowana para Control/Display, Host oraz finał są kolejnym krokiem automatu. Trzeba je dodać jako odrębny scenariusz, ustawić konkretne pytanie na pierwszej pozycji rund i pięć innych pytań w finale, a potem przejść grę w panelu. Nie należy zakładać, że obecny zrzut listy „Gra gotowa” dowodzi przeprowadzenia tej rozgrywki.
+Pliki PNG są artefaktami wykonania GitHub Actions i zachowują ustawione rozdzielczości. Nie są automatycznie kopiowane do `/web` ani zapisywane w bazie. Fixture’y gier, głosów, zadań, bazy i logo są usuwane w sprzątaniu. Stabilne relacje testowe znajomych i subskrybentów pozostają, bo służą kolejnym przebiegom. Zrzut ankiety nadal pokazuje obecny QR ankiety; po ustaleniu adresu mini-stronki podmienimy cel kodu wyłącznie w ujęciu zrzutowym.
