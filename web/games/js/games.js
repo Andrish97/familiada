@@ -1,21 +1,21 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-19T18573";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-19T18573";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-19T18573";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T18573";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-19T18573";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T18573";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T18573";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-19T18573";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T18573";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T18573";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T18573";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T18573";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-19T18573";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-19T18583";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-19T18583";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-19T18583";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T18583";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-19T18583";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T18583";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T18583";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-19T18583";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T18583";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T18583";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T18583";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T18583";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-19T18583";
 
-import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-19T18573";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-19T18573";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T18573";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T18573";
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-19T18583";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-19T18583";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T18583";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T18583";
 
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -23,10 +23,10 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-19T18573";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-19T18573';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-19T18583";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-19T18583';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T18573";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T18583";
 
 import {
   TYPES,
@@ -34,13 +34,13 @@ import {
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-19T18573";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T18573";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T18573";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-19T18573";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-19T18573";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-19T18573";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-19T18573";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-19T18583";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T18583";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T18583";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-19T18583";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-19T18583";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-19T18583";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-19T18583";
 
 
 const MSG = {
