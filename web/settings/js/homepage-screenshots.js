@@ -275,7 +275,7 @@ function normalizeSharedFixture(shared, defaults) {
   result.subscribers = Array.isArray(shared.subscribers) ? shared.subscribers.map(value => String(value ?? "").trim()) : [];
   result.friends = Array.isArray(shared.friends) ? shared.friends.map(person => typeof person === "string"
     ? { username: person.trim(), email: "" }
-    : { username: String(person?.username || person?.name || "").trim(), email: String(person?.email || "").trim() }) : (Object.hasOwn(shared, "friends") ? [] : structuredClone(defaults.friends));
+    : { username: String(person?.username || person?.name || "").trim().replace(/\s+/g, "_"), email: String(person?.email || "").trim() }) : (Object.hasOwn(shared, "friends") ? [] : structuredClone(defaults.friends));
   result.pollQuestions = Array.isArray(shared.pollQuestions) ? shared.pollQuestions : (() => {
     const oldAnswers = shared.pollAnswers || defaults.pollQuestions[0].answers.map(answer => answer.text);
     const oldResults = shared.pollResults || [];
@@ -316,10 +316,10 @@ function defaultSharedFixture(language) {
       ? ["anna.melnyk@example.com", "petro.shevchenko@example.com", "kateryna.bondar@example.com"]
       : ["anna.nowak@example.com", "piotr.zielinski@example.com", "kasia.maj@example.com"];
   const friends = language === "en"
-    ? [{ username: "Alex Morgan", email: "alex.morgan@example.com" }, { username: "Jamie Lee", email: "jamie.lee@example.com" }]
+    ? [{ username: "alex_morgan", email: "alex.morgan@example.com" }, { username: "jamie_lee", email: "jamie.lee@example.com" }]
     : language === "uk"
-      ? [{ username: "Олександра Новак", email: "oleksandra.novak@example.com" }, { username: "Ян Ковальський", email: "yan.kovalskyi@example.com" }]
-      : [{ username: "Aleksandra Nowak", email: "aleksandra.nowak@example.com" }, { username: "Jan Kowalski", email: "jan.kowalski@example.com" }];
+      ? [{ username: "oleksandra_novak", email: "oleksandra.novak@example.com" }, { username: "yan_kovalskyi", email: "yan.kovalskyi@example.com" }]
+      : [{ username: "aleksandra_nowak", email: "aleksandra.nowak@example.com" }, { username: "jan_kowalski", email: "jan.kowalski@example.com" }];
   const oldResults = resultsFixture.answers || [];
   return {
     username: language === "en" ? "John Smith" : language === "uk" ? "Іван Петренко" : "Jan Kowalski",
@@ -636,7 +636,7 @@ function renderResourceList(language = currentLanguage()) {
   const friends = sharedGroup(sharedRoot, "Znajomi");
   (shared.friends || []).forEach((person, index) => {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--contact";
-    sharedField(row, `Nazwa użytkownika ${index + 1}`, person.username, { required: true, autocomplete: "name", dataset: { sharedFriendName: index } });
+    sharedField(row, `Nazwa użytkownika ${index + 1}`, person.username, { required: true, autocomplete: "username", pattern: "\\S+", dataset: { sharedFriendName: index } });
     sharedField(row, `E-mail ${index + 1}`, person.email, { type: "email", required: true, autocomplete: "email", dataset: { sharedFriendEmail: index } });
     sharedButton(row, "Usuń", "remove-friend", index); friends.append(row);
   });
@@ -656,7 +656,7 @@ function readResourceList(language = currentLanguage()) {
   if ([...shared.subscribers, ...shared.friends.map(person => person.email)].some(email => !isValidEmail(email))) {
     throw new Error("Wpisz poprawny adres e-mail każdego aktywnego subskrybenta i znajomego.");
   }
-  if (shared.friends.some(person => !person.username)) throw new Error("Wpisz nazwę użytkownika każdego znajomego.");
+  if (shared.friends.some(person => !person.username || /\s/.test(person.username))) throw new Error("Nazwa użytkownika znajomego nie może zawierać spacji.");
 }
 
 function resourceChoiceSpec(scene) {
@@ -771,6 +771,7 @@ function sharedField(parent, labelText, value, attrs = {}) {
   if (attrs.max !== undefined) input.max = attrs.max;
   if (attrs.required) input.required = true;
   if (attrs.autocomplete) input.autocomplete = attrs.autocomplete;
+  if (attrs.pattern) input.pattern = attrs.pattern;
   input.value = value ?? "";
   if (attrs.dataset) Object.assign(input.dataset, attrs.dataset);
   wrapper.append(input); parent.append(wrapper);
@@ -1906,7 +1907,7 @@ async function importConfigJson(file) {
         && entry.shared.teams.every(name => typeof name === "string")
         && (entry.shared.username == null || typeof entry.shared.username === "string")
         && Array.isArray(entry.shared.subscribers) && entry.shared.subscribers.every(isValidEmail)
-        && Array.isArray(entry.shared.friends) && entry.shared.friends.every(person => person && typeof person.username === "string" && person.username.trim() && isValidEmail(person.email))
+        && Array.isArray(entry.shared.friends) && entry.shared.friends.every(person => person && typeof person.username === "string" && person.username.trim() && !/\s/.test(person.username) && isValidEmail(person.email))
         && (entry.shared.qrUrl == null || typeof entry.shared.qrUrl === "string")
         && entry.resources && Array.isArray(entry.resources.games) && entry.resources.games.every(item => validResource(item, "game"))
         && Array.isArray(entry.resources.bases) && entry.resources.bases.every(item => validResource(item, "base"))
