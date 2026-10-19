@@ -231,6 +231,11 @@ body.settings-body > main.wrap{
 .homepage-shot-question{border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 10px}
 .homepage-shot-question summary{font-size:12px}
 .homepage-shot-question-body{display:grid;gap:9px;padding:10px 0 4px}
+.homepage-shot-poll-question-options{display:grid;gap:6px;margin-top:10px}
+.homepage-shot-poll-question-options-title{font-size:12px;font-weight:800}
+.homepage-shot-poll-question-option{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:rgba(255,255,255,.035);font-size:12px;line-height:1.4;cursor:pointer}
+.homepage-shot-poll-question-option input{flex:0 0 auto;margin:1px 0 0}
+.homepage-shot-poll-question-option span{min-width:0}
 .homepage-shot-answer-list{display:grid;gap:5px}
 .homepage-shot-answer-head{display:grid;grid-template-columns:minmax(0,1fr) 92px auto;gap:7px}
 .homepage-shot-shared-actions{display:flex;flex-wrap:wrap;gap:7px}

@@ -119,7 +119,7 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.activeSubscriberEmails = selectedEmails.filter(email => (shared.subscribers || []).includes(email));
     fixture.people = (shared.subscribers || []).filter(email => fixture.activeSubscriberEmails.includes(email)).map(email => ({ email, name: email, state: "active" }));
   }
-  if (scene.id === "poll-share") {
+  if (scene.id === "poll-share" || scene.id === "poll-results") {
     const votes = Number(fixture.votesReceived);
     fixture.votesReceived = Number.isFinite(votes) && votes >= 0 ? Math.floor(votes) : 18;
   }
@@ -165,7 +165,7 @@ function langFixture(scene, language = currentLanguage()) {
   const selection = config.viewResources?.[language]?.[selectionScene] || {};
   let resource = scene.id === "tasks" ? null : selectedResource(scene.id, language, "game");
   if (scene.id === "poll-vote-mobile" && !canUseAnonymousPollResource(resource)) resource = null;
-  if (scene.id === "poll-results" && !canOpenPollResource(resource)) resource = null;
+  if (scene.id === "poll-results" && !canUsePollResultsResource(resource)) resource = null;
   if (scene.id === "game-editor") fixture.activeQuestionIndex = Number(selection.questionIndex) || 0;
   if (scene.id === "games") {
     const loadedPrepared = ensureResourceData(language).filter(item => item.type === "game" && gameResourceType(item) === "prepared");
@@ -202,9 +202,9 @@ function langFixture(scene, language = currentLanguage()) {
     const game = resource.data || {};
     const questions = Array.isArray(game.questions) ? game.questions : [];
     fixture.game = resource.name;
-    if (scene.id === "poll-share" || scene.id === "poll-vote-mobile") {
+    if (scene.id === "poll-share") {
       fixture.poll = resource.name;
-      fixture.pollType = scene.id === "poll-vote-mobile" ? "poll_points" : gameResourceType(resource);
+      fixture.pollType = gameResourceType(resource);
     }
     if (scene.id === "game-editor") fixture.gameQuestions = questions.map(question => ({
       text: question.text || "", answers: (question.answers || []).map(answer => ({ text: answer.text || "", points: Number(answer.fixed_points ?? answer.points) || 0 })),
@@ -220,10 +220,10 @@ function langFixture(scene, language = currentLanguage()) {
       fixture.answers = (activeQuestion.answers || []).map(answer => answer.text || "");
       fixture.points = (activeQuestion.answers || []).map(answer => Number(answer.fixed_points ?? answer.points) || 0);
     }
-    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && (scene.id === "poll-share" || scene.id === "poll-vote-mobile" || gameResourceType(resource) !== "prepared")) {
+    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) {
       fixture.poll = resource.name;
-      fixture.pollType = gameResourceType(resource);
-      if (scene.id === "poll-results" && !Array.isArray(fixture.pollVotes)) fixture.pollVotes = questions.map(question => (question.answers || []).map(() => 0));
+      if (scene.id !== "poll-vote-mobile") fixture.pollType = "poll_points";
+      if (scene.id === "poll-results" && !Array.isArray(fixture.pollVotes)) fixture.pollVotes = defaultPollVotes(questions);
       const pollQuestions = questions.map((question, questionIndex) => ({
         text: question.text || "", answers: (question.answers || []).map((answer, answerIndex) => ({
           text: answer.text || "",
@@ -237,7 +237,13 @@ function langFixture(scene, language = currentLanguage()) {
         fixture.pollQuestionNumber = pollQuestionIndex + 1;
         fixture.pollQuestionCount = pollQuestions.length;
       }
-      if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
+      if (scene.id === "poll-results") {
+        const eligible = pollResultQuestionIndexes(resource);
+        const selectedIndexes = Array.isArray(selection.questionIndexes)
+          ? selection.questionIndexes.map(Number).filter(index => eligible.includes(index)).slice(0, 3)
+          : eligible.slice(0, 3);
+        fixture.pollQuestions = selectedIndexes.map(index => ({ ...pollQuestions[index], ord: index + 1, sourceIndex: index }));
+      }
     }
   }
   if (!resource && ["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
@@ -247,6 +253,7 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.poll = ""; fixture.pollType = ""; fixture.question = ""; fixture.answers = []; fixture.pollQuestions = [];
     if (scene.id !== "poll-share") { fixture.pollRecipients = []; fixture.subscribers = []; fixture.subscriberStates = []; }
   }
+  if (scene.id === "poll-vote-mobile") delete fixture.pollType;
   if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = shared.teams || [];
   if (scene.id === "base-explorer") {
     const base = selectedResource(scene.id, language, "base");
@@ -487,7 +494,12 @@ function ensureResourceData(language = currentLanguage()) {
         const questionIndexes = anonymousPollQuestionIndexes(eligible.find(item => item.id === selection.resourceId));
         if (questionIndexes.length && !questionIndexes.includes(Number(selection.questionIndex))) selection.questionIndex = questionIndexes[0];
       } else {
-        selection.resourceId = "";
+        const eligible = available.filter(canUsePollResultsResource);
+        if (!eligible.some(item => item.id === selection.resourceId)) selection.resourceId = eligible[0]?.id || "";
+        const questionIndexes = pollResultQuestionIndexes(eligible.find(item => item.id === selection.resourceId));
+        selection.questionIndexes = Array.isArray(selection.questionIndexes)
+          ? selection.questionIndexes.map(Number).filter(index => questionIndexes.includes(index)).slice(0, 3)
+          : questionIndexes.slice(0, 3);
       }
       continue;
     }
@@ -601,15 +613,22 @@ function logoResourceMode(item) {
   return logoModeFromData(item?.data);
 }
 
-function canOpenPollResource(item) {
-  const type = gameResourceType(item);
-  if (!type?.startsWith("poll") || String(item?.status || item?.data?.game?.status || "draft") !== "draft") return false;
+function pollResultQuestionIndexes(item) {
   const questions = Array.isArray(item?.data?.questions) ? item.data.questions : [];
-  if (questions.length < 10) return false;
-  return type !== "poll_points" || questions.every(question => {
+  return questions.reduce((indexes, question, index) => {
     const count = Array.isArray(question.answers) ? question.answers.length : 0;
-    return count >= 3 && count <= 6;
-  });
+    if (count >= 3 && count <= 6) indexes.push(index);
+    return indexes;
+  }, []);
+}
+
+function canUsePollResultsResource(item) {
+  return item?.type === "game" && pollResultQuestionIndexes(item).length > 0;
+}
+
+function defaultPollVotes(questions = []) {
+  const samples = { 3: [9, 6, 3], 4: [8, 5, 3, 2], 5: [7, 5, 3, 2, 1], 6: [6, 4, 3, 2, 2, 1] };
+  return questions.map(question => samples[question.answers?.length] || (question.answers || []).map(() => 0));
 }
 
 function anonymousPollQuestionIndexes(item) {
@@ -746,7 +765,7 @@ function resourceChoiceSpec(scene) {
   if (scene.id === "logo-draw") return { type: "logo" };
   if (scene.id === "poll-share") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
   if (scene.id === "poll-vote-mobile") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
-  if (scene.id === "poll-results") return { type: "game", filter: canOpenPollResource, label: "Gra ankietowa" };
+  if (scene.id === "poll-results") return { type: "game", filter: canUsePollResultsResource, label: "Gra" };
   if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
   if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
   return null;
@@ -820,6 +839,29 @@ function renderResourceChoices(scene = currentScene()) {
     if (["poll-share", "poll-vote-mobile"].includes(scene.id) && !selection.resourceId) selection.resourceId = resources[0]?.id || "";
     const options = resources.map(item => ({ value: item.id, label: item.name }));
     addSelect(spec.label || "Zasób", "resourceId", options, selection.resourceId);
+    if (scene.id === "poll-results") {
+      const game = resources.find(item => item.id === selection.resourceId);
+      const questions = game?.data?.questions || [];
+      const availableIndexes = pollResultQuestionIndexes(game);
+      if (!Array.isArray(selection.questionIndexes)) selection.questionIndexes = availableIndexes.slice(0, 3);
+      selection.questionIndexes = selection.questionIndexes.map(Number).filter(index => availableIndexes.includes(index)).slice(0, 3);
+      const questionGroup = document.createElement("div"); questionGroup.className = "homepage-shot-poll-question-options";
+      const title = document.createElement("div"); title.className = "homepage-shot-poll-question-options-title"; title.textContent = "Pytania na karcie wyników (maks. 3)";
+      questionGroup.append(title);
+      if (!availableIndexes.length) {
+        const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "Ta gra nie ma pytań z 3–6 odpowiedziami."; questionGroup.append(empty);
+      } else {
+        const selected = new Set(selection.questionIndexes);
+        availableIndexes.forEach(index => {
+          const row = document.createElement("label"); row.className = "homepage-shot-poll-question-option";
+          const check = document.createElement("input"); check.type = "checkbox"; check.checked = selected.has(index); check.dataset.pollResultQuestion = String(index);
+          check.disabled = !check.checked && selected.size >= 3;
+          const label = document.createElement("span"); label.textContent = `${index + 1}. ${questions[index]?.text || "Pytanie bez treści"}`;
+          row.append(check, label); questionGroup.append(row);
+        });
+      }
+      root.append(questionGroup);
+    }
     if (spec.question) {
       const game = resources.find(item => item.id === selection.resourceId);
       const questions = game?.data?.questions || [];
@@ -833,6 +875,8 @@ function renderResourceChoices(scene = currentScene()) {
       note.setAttribute("role", spec.filter ? "alert" : "status");
       note.textContent = scene.id === "poll-share" || scene.id === "poll-vote-mobile"
         ? "Brak gry z co najmniej jednym pytaniem zawierającym od 3 do 6 odpowiedzi."
+        : scene.id === "poll-results"
+        ? "Brak gry z pytaniem zawierającym od 3 do 6 odpowiedzi."
         : spec.filter
         ? "Brak wczytanej gry ankietowej w szkicu, którą można otworzyć. Wczytaj eksport szkicu z co najmniej 10 pytaniami; ankieta punktowa musi mieć po 3–6 odpowiedzi."
         : `Brak wczytanych zasobów typu ${spec.type}. Dodaj je na karcie „Lista zasobów”.`;
@@ -902,7 +946,7 @@ function sharedKeysForScene(sceneId) {
   if (sceneId === "friends") return ["people"];
   if (sceneId === "poll-share") return ["poll", "pollType", "question", "answers", "subscribers", "subscriberStates", "pollRecipients", "link"];
   if (sceneId === "poll-vote-mobile") return ["poll", "question", "answers"];
-  if (sceneId === "poll-results") return ["poll", "question", "answers", "pollQuestions"];
+  if (sceneId === "poll-results") return ["poll", "pollType", "question", "answers", "pollQuestions", "votesReceived"];
   return [];
 }
 function localizeFixture(source, language) {
@@ -1910,14 +1954,14 @@ async function paintPoll(doc, scene, fixture) {
   const typeLabel = fixture.pollType === "poll_text"
     ? (currentLanguage() === "en" ? "text" : currentLanguage() === "uk" ? "текстове" : "tekstowa")
     : (currentLanguage() === "en" ? "points" : currentLanguage() === "uk" ? "з балами" : "punktowa");
-  setText(doc, "pollGameName", scene.id === "poll-share" ? fixture.poll : `${typeLabel} · ${fixture.poll}`);
+  setText(doc, "pollGameName", ["poll-share", "poll-vote-mobile"].includes(scene.id) ? fixture.poll : `${typeLabel} · ${fixture.poll}`);
   if (main) main.style.display = "";
   if (empty) empty.style.display = "none";
   const bar = doc.getElementById("pollBar"); if (bar) { bar.style.display = ""; bar.dataset.state = "poll_open"; }
   setText(doc, "pollStateWord", currentLanguage() === "en" ? "OPEN" : currentLanguage() === "uk" ? "ВІДКРИТА" : "OTWARTA");
   const { votes: votesLabel } = await getStrings(currentLanguage(), { votes: "polls.bar.votes" });
   setText(doc, "pollStateInfo", typeof votesLabel === "function" ? votesLabel({ n: fixture.votesReceived }) : String(fixture.votesReceived));
-  setText(doc, "hintTop", scene.id === "poll-share" ? "" : fixture.question);
+  setText(doc, "hintTop", "");
   const recipients = (fixture.pollRecipients || []).filter(recipient => !recipient.hidden);
   const invited = recipients.length;
   const voted = recipients.filter(recipient => recipient.status === "done").length;
@@ -1967,11 +2011,11 @@ async function paintPoll(doc, scene, fixture) {
   if (scene.id === "poll-results") {
     const shareTab = doc.getElementById("tabShare"); if (shareTab) shareTab.classList.remove("active");
     const resultTab = doc.getElementById("tabResults"); if (resultTab) resultTab.classList.add("active");
-    setText(doc, "resultsMeta", currentLanguage() === "en" ? "18 votes · live results" : currentLanguage() === "uk" ? "18 голосів · результати наживо" : "18 głosów · wyniki na żywo");
+    setText(doc, "resultsMeta", "");
     const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T19011");
 
     const questions = (fixture.pollQuestions || []).map((question, questionIndex) => ({
-      id: `shot-poll-${questionIndex + 1}`, ord: questionIndex + 1, text: question.text,
+      id: `shot-poll-${question.sourceIndex ?? questionIndex}`, ord: question.ord || questionIndex + 1, text: question.text,
       answers: question.answers.map((answer, answerIndex) => ({ id: `shot-answer-${questionIndex + 1}-${answerIndex + 1}`, text: answer.text, votes: answer.votes })),
     }));
     createPollResults(doc.getElementById("resultsList")).render({ status: "poll_open", type: "poll_points", questions });
@@ -2173,7 +2217,10 @@ function readEditorIntoConfig() {
     const friendEmails = new Set((sharedFixture(editorLanguage).friends || []).map(person => person.email));
     if (fixture.tasks.some(task => !task.game || !friendEmails.has(task.friendEmail))) throw new Error("Każde zadanie musi mieć nazwę gry i przypisanego znajomego z listy wspólnej.");
   }
-  if (scene.id === "poll-results") fixture.pollVotes = readPollVotes();
+  if (scene.id === "poll-results") {
+    fixture.pollVotes = readPollVotes(fixture.pollVotes || []);
+    fixture.votesReceived = readPollTotalVotes(fixture.votesReceived);
+  }
   for (const key of sharedKeysForScene(scene.id)) delete fixture[key];
   config.localeFixtures ||= {};
   config.localeFixtures[editorLanguage] ||= {};
@@ -2193,8 +2240,8 @@ function readPollActions() {
   }));
 }
 
-function readPollVotes() {
-  const votes = [];
+function readPollVotes(previous = []) {
+  const votes = previous.map(row => Array.isArray(row) ? [...row] : []);
   for (const input of byId("homepageShotCategoryActions").querySelectorAll("[data-poll-vote]")) {
     const questionIndex = Number(input.dataset.questionIndex);
     const answerIndex = Number(input.dataset.answerIndex);
@@ -2202,6 +2249,11 @@ function readPollVotes() {
     votes[questionIndex][answerIndex] = Math.max(0, Number(input.value) || 0);
   }
   return votes;
+}
+
+function readPollTotalVotes(fallback = 18) {
+  const input = byId("homepageShotCategoryActions").querySelector("[data-poll-total-votes]");
+  return input ? Math.max(0, Math.floor(Number(input.value) || 0)) : Math.max(0, Math.floor(Number(fallback) || 0));
 }
 
 function readFriendGroupActions(fixture = {}) {
@@ -2449,16 +2501,23 @@ function renderCategoryActions(fixture) {
   }
   if (sceneId === "poll-results") {
     const resource = selectedResource(sceneId, currentLanguage(), "game");
-    if (!canOpenPollResource(resource)) return;
+    if (!canUsePollResultsResource(resource)) return;
     const questions = resource.data?.questions || [];
-    fixture.pollVotes ||= questions.map(question => (question.answers || []).map(() => 0));
+    const selection = config.viewResources?.[currentLanguage()]?.[sceneId] || {};
+    const questionIndexes = Array.isArray(selection.questionIndexes) ? selection.questionIndexes.slice(0, 3) : pollResultQuestionIndexes(resource).slice(0, 3);
+    fixture.pollVotes ||= defaultPollVotes(questions);
     const group = sharedGroup(root, "Głosy w tym podglądzie");
     const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note";
-    note.textContent = "Wpisz przykładowe głosy dla odpowiedzi. Są zapisane tylko dla tego widoku.";
+    note.textContent = "Ustaw łączną liczbę głosów i wynik dla odpowiedzi. Dane służą tylko temu widokowi.";
     group.append(note);
-    questions.forEach((question, questionIndex) => {
+    const totalRow = document.createElement("div"); totalRow.className = "homepage-shot-shared-row homepage-shot-answer-row";
+    const totalLabel = document.createElement("span"); totalLabel.textContent = "Łączna liczba głosów";
+    const totalInput = document.createElement("input"); totalInput.type = "number"; totalInput.min = "0"; totalInput.step = "1"; totalInput.className = "inp"; totalInput.value = String(fixture.votesReceived ?? 18); totalInput.dataset.pollTotalVotes = ""; totalInput.setAttribute("aria-label", "Łączna liczba głosów");
+    totalRow.append(totalLabel, totalInput); group.append(totalRow);
+    questionIndexes.forEach(questionIndex => {
+      const question = questions[questionIndex]; if (!question) return;
       const questionCard = document.createElement("details"); questionCard.className = "homepage-shot-question";
-      questionCard.open = questionIndex === 0;
+      questionCard.open = questionIndexes[0] === questionIndex;
       const summary = document.createElement("summary"); summary.textContent = `${questionIndex + 1}. ${question.text || "Pytanie bez treści"}`;
       const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
       (question.answers || []).forEach((answer, answerIndex) => {
@@ -3005,7 +3064,7 @@ export async function initHomepageScreenshots() {
     });
     byId("homepageShotResourceChoiceFields").addEventListener("change", async event => {
       const input = event.target;
-      if (!(input.matches("[data-resource-selection]") || input.matches("[data-resource-include]"))) return;
+    if (!(input.matches("[data-resource-selection]") || input.matches("[data-resource-include]") || input.matches("[data-poll-result-question]"))) return;
       if (!await flushEditor() || !await flushSharedEditor()) return;
       const language = currentLanguage();
       const scene = currentScene();
@@ -3014,9 +3073,23 @@ export async function initHomepageScreenshots() {
         const key = input.dataset.resourceSelection;
         selection[key] = key === "questionIndex" ? Number(input.value) : input.value;
         if (key === "resourceId") selection.questionIndex = 0;
+        if (key === "resourceId" && scene.id === "poll-results") {
+          const game = ensureResourceData(language).find(item => item.id === selection.resourceId);
+          selection.questionIndexes = pollResultQuestionIndexes(game).slice(0, 3);
+          config.localeFixtures ||= {}; config.localeFixtures[language] ||= {};
+          const fixture = config.localeFixtures[language][scene.id] ||= {};
+          fixture.pollVotes = defaultPollVotes(game?.data?.questions || []);
+          fixture.votesReceived = 18;
+        }
+      } else if (input.matches("[data-poll-result-question]")) {
+        const questionIndex = Number(input.dataset.pollResultQuestion);
+        const selected = selection.questionIndexes || (selection.questionIndexes = []);
+        selection.questionIndexes = input.checked
+          ? [...selected, questionIndex].slice(0, 3)
+          : selected.filter(index => Number(index) !== questionIndex);
       } else {
         const id = input.dataset.resourceInclude;
-        const ids = selection.resourceIds || (selection.resourceIds = []);
+      const ids = selection.resourceIds || (selection.resourceIds = []);
         if (input.checked && !ids.includes(id)) ids.push(id);
         if (!input.checked) selection.resourceIds = ids.filter(value => value !== id);
         if (["games", "bases"].includes(scene.id)) {
@@ -3116,9 +3189,10 @@ export async function initHomepageScreenshots() {
         config.localeFixtures[currentLanguage()]["poll-share-actions"] = readPollActions();
         els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
         scheduleFixtureSave();
-      } else if (event.target.matches("[data-poll-vote]")) {
+      } else if (event.target.matches("[data-poll-vote], [data-poll-total-votes]")) {
         const fixture = JSON.parse(els.fixture.value);
-        fixture.pollVotes = readPollVotes();
+        fixture.pollVotes = readPollVotes(fixture.pollVotes || []);
+        fixture.votesReceived = readPollTotalVotes(fixture.votesReceived);
         els.fixture.value = JSON.stringify(fixture, null, 2);
         scheduleFixtureSave();
       } else if (event.target.matches("[data-task-friend], [data-task-state]")) {
