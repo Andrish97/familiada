@@ -146,6 +146,29 @@ body.settings-body > main.wrap{
 .homepage-shot-reference-question strong{font-size:12px}
 .homepage-shot-reference-question ul{margin-top:4px}
 .homepage-shot-shared-fields{display:grid;gap:12px;margin:12px 0}
+.homepage-shot-resource-imports{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.homepage-shot-resource-list{display:grid;gap:12px}
+.homepage-shot-resource-group{display:grid;gap:8px;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(0,0,0,.1)}
+.homepage-shot-resource-group h3{margin:0;font-size:14px}
+.homepage-shot-resource-card{padding:9px 11px;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(255,255,255,.025)}
+.homepage-shot-resource-card summary{cursor:pointer;font-weight:750}
+.homepage-shot-resource-card-body{display:grid;gap:9px;padding-top:10px}
+.homepage-shot-resource-card-body>p{margin:0}
+.homepage-shot-resource-card textarea{min-height:180px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+.homepage-shot-resource-open-poll{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.homepage-shot-resource-question-order{display:flex;gap:6px;margin:6px 0}
+.homepage-shot-resource-question-order .btn{min-width:34px;padding:5px}
+.homepage-shot-resource-choices{margin:0 0 12px}
+.homepage-shot-resource-choices[hidden]{display:none}
+.homepage-shot-resource-choice{display:grid;gap:5px;min-width:0}
+.homepage-shot-resource-choice>span{font-size:11px;font-weight:700;opacity:.78}
+.homepage-shot-resource-choice select{width:100%}
+.homepage-shot-resource-order{display:grid;gap:6px}
+.homepage-shot-resource-order-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:7px;min-height:36px;padding:4px 7px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(0,0,0,.12)}
+.homepage-shot-resource-order-row>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.homepage-shot-resource-order-row .btn{min-width:34px;padding:5px}
+.homepage-shot-resource-order-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--gold,#d7ff3d)}
+.homepage-shot-resource-choices #homepageShotResourceChoiceFields{display:grid;gap:8px}
 .homepage-shot-shared-group{display:grid;gap:9px;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(0,0,0,.1)}
 .homepage-shot-shared-group h3{margin:0;font-size:14px}
 .homepage-shot-shared-field{display:grid;gap:4px;min-width:0}

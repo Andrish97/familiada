@@ -5,6 +5,7 @@ let initialized = false;
 let dirty = false;
 let sharedDirty = false;
 let sharedEditorLanguage = "pl";
+let defaultLogoItems = [];
 let lastFrameKey = "";
 let deviceReadyPromise = null;
 let deviceReadyResolve = null;
@@ -14,6 +15,8 @@ let saveTimer = 0;
 let previewTimer = 0;
 let languageSelectUI = null;
 let sceneSelectUI = null;
+let initUiSelectFn = null;
+let resourceChoiceSelectUIs = [];
 let previewResizeObserver = null;
 const FIELD_LABELS = {
   game: "Nazwa gry", games: "Gry na liście", question: "Pytanie", answers: "Odpowiedzi i wyniki",
@@ -110,16 +113,87 @@ function langFixture(scene, language = currentLanguage()) {
     if (scene.id === "poll-vote-mobile") fixture.answers = pollQuestions[0]?.answers.map(answer => answer.text) || fixture.answers;
     if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
     if (scene.id === "poll-share") {
-      const recipients = (config.localeFixtures?.[language]?.["poll-share-actions"] || (shared.subscribers || []).map((_, index) => ({ subscriberIndex: index, responded: index === 0 })))
-        .filter(recipient => Number.isInteger(recipient.subscriberIndex) && recipient.subscriberIndex >= 0 && recipient.subscriberIndex < (shared.subscribers || []).length);
+      const names = subscriberNames(language);
+      const recipients = (config.localeFixtures?.[language]?.["poll-share-actions"] || names.map((_, index) => ({ subscriberIndex: index, responded: index === 0 })))
+        .filter(recipient => Number.isInteger(recipient.subscriberIndex) && recipient.subscriberIndex >= 0 && recipient.subscriberIndex < names.length);
       fixture.pollRecipients = structuredClone(recipients);
-      fixture.subscribers = recipients.map(recipient => shared.subscribers[recipient.subscriberIndex]).filter(Boolean);
+      fixture.subscribers = recipients.map(recipient => names[recipient.subscriberIndex]).filter(Boolean);
       fixture.subscriberStates = recipients.map(recipient => !!recipient.responded);
     }
   }
   if (scene.id === "friends" && !fixture.friendGroups) fixture.friendGroups = defaultFriendGroups(language);
   if (scene.id === "subscribers") {
     fixture.outgoing ||= defaultSubscriberInvitations(language);
+  }
+
+  const selection = config.viewResources?.[language]?.[scene.id] || {};
+  const resource = selectedResource(scene.id, language, "game");
+  if (scene.id === "game-editor") fixture.activeQuestionIndex = Number(selection.questionIndex) || 0;
+  if (scene.id === "games") fixture.games = orderedResources(scene.id, language, "game").map(item => item.name);
+  if (scene.id === "bases") fixture.bases = orderedResources(scene.id, language, "base").map(item => item.name);
+  if (scene.id === "logos") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ name: item.name, data: item.data }));
+  if (resource?.type === "game") {
+    const game = resource.data || {};
+    const questions = Array.isArray(game.questions) ? game.questions : [];
+    fixture.game = resource.name;
+    if (scene.id === "game-editor") fixture.gameQuestions = questions.map(question => ({
+      text: question.text || "", answers: (question.answers || []).map(answer => ({ text: answer.text || "", points: Number(answer.fixed_points ?? answer.points) || 0 })),
+    }));
+    if (scene.id === "control-finale" && questions.length) {
+      const previous = fixture.finale || [];
+      fixture.finale = (previous.length ? previous : questions.slice(0, 5).map(question => question.text)).map((text, index) =>
+        questions.find(question => question.text === text)?.text || questions[index % questions.length].text || text);
+    }
+    if (scene.id === "tasks") fixture.tasks = (fixture.tasks || []).map(task => ({ ...task, game: resource.name }));
+    const activeQuestion = questions[Math.min(Number(selection.questionIndex) || 0, Math.max(0, questions.length - 1))];
+    if (activeQuestion && ["game-editor", "control-round", "host-round", "display-round"].includes(scene.id)) {
+      fixture.question = activeQuestion.text || fixture.question;
+      fixture.answers = (activeQuestion.answers || []).map(answer => answer.text || "");
+      fixture.points = (activeQuestion.answers || []).map(answer => Number(answer.fixed_points ?? answer.points) || 0);
+    }
+    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && String(game.game?.type || "").startsWith("poll") && resource.openPoll !== false) {
+      fixture.poll = resource.name;
+      const pollQuestions = questions.map(question => ({
+        text: question.text || "", answers: (question.answers || []).map(answer => ({ text: answer.text || "", votes: Number(answer.fixed_points ?? answer.votes) || 0 })),
+      }));
+      const pollQuestionIndex = Math.min(Number(selection.questionIndex) || 0, Math.max(0, pollQuestions.length - 1));
+      fixture.question = pollQuestions[pollQuestionIndex]?.text || "";
+      if (scene.id === "poll-vote-mobile") fixture.answers = pollQuestions[pollQuestionIndex]?.answers.map(answer => answer.text) || [];
+      if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
+      if (scene.id === "poll-share") {
+        const names = subscriberNames(language);
+        const recipients = (config.localeFixtures?.[language]?.["poll-share-actions"] || names.map((_, index) => ({ subscriberIndex: index, responded: index === 0 })))
+          .filter(item => Number.isInteger(item.subscriberIndex) && item.subscriberIndex >= 0 && item.subscriberIndex < names.length);
+        fixture.pollRecipients = structuredClone(recipients);
+        fixture.subscribers = recipients.map(item => names[item.subscriberIndex]).filter(Boolean);
+        fixture.subscriberStates = recipients.map(item => !!item.responded);
+      }
+    }
+  }
+  if (!resource && ["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale", "tasks"].includes(scene.id)) {
+    fixture.game = ""; fixture.question = ""; fixture.answers = []; fixture.points = []; fixture.gameQuestions = []; fixture.finale = [];
+  }
+  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && (!resource || !String(resource.data?.game?.type || "").startsWith("poll") || resource.openPoll === false)) {
+    fixture.poll = ""; fixture.question = ""; fixture.answers = []; fixture.pollQuestions = []; fixture.pollRecipients = []; fixture.subscribers = []; fixture.subscriberStates = [];
+  }
+  const teamResourceId = selection.teamResourceId;
+  const teamResource = ensureResourceData(language).find(item => item.id === teamResourceId && item.type === "teams");
+  if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = teamResource?.data?.teams || [];
+  if (scene.id === "base-explorer") {
+    const base = selectedResource(scene.id, language, "base");
+    const data = base?.data || {};
+    fixture.base = base?.name || "";
+    fixture.folders = (data.categories || []).map(item => item.name).filter(Boolean);
+    fixture.questions = (data.questions || []).map(item => item.payload?.text || item.text).filter(Boolean);
+  }
+  if (scene.id === "logo-draw") {
+    const logo = selectedResource(scene.id, language, "logo");
+    fixture.logo = logo?.name || "";
+    fixture.logoData = logo?.data || null;
+  }
+  if (scene.id === "subscribers") {
+    const subscribers = selectedResource(scene.id, language, "subscribers");
+    fixture.people = (subscribers?.data?.people || []).map(name => ({ name, state: "active" }));
   }
   return fixture;
 }
@@ -202,6 +276,275 @@ function sharedFixture(language = currentLanguage()) {
   return config.sharedFixtures[language];
 }
 
+function subscriberNames(language = currentLanguage()) {
+  const resource = ensureResourceData(language).find(item => item.type === "subscribers");
+  return resource?.data?.people || config.sharedFixtures?.[language]?.subscribers || [];
+}
+
+function ensureResourceData(language = currentLanguage()) {
+  config.resourceData ||= {};
+  config.viewResources ||= {};
+  const shared = config.sharedFixtures[language];
+  const resources = config.resourceData[language] ||= (() => {
+    const gameNames = [shared.gameName, ...(shared.otherGames || [])].filter(Boolean);
+    const baseScene = config.scenes.find(scene => scene.id === "base-explorer");
+    const baseFixture = localizeFixture(baseScene?.fixture || {}, language);
+    const categories = (baseFixture.folders || []).map((name, i) => ({ id: `${language}-category-${i}`, name, parent_id: null, ord: i + 1 }));
+    const base = { base: { name: baseFixture.base || "Baza demonstracyjna" }, categories, tags: [],
+      questions: (baseFixture.questions || []).map((text, i) => ({ id: `${language}-base-question-${i}`, category_id: categories[0]?.id || null, ord: i + 1, payload: { text } })), question_tags: [], category_tags: [] };
+    const games = gameNames.map((name, i) => ({ id: `${language}-game-${i}`, type: "game", name,
+      data: { game: { name, type: "prepared" }, questions: structuredClone(shared.gameQuestions || []) } }));
+    games.push({ id: `${language}-poll-game`, type: "game", openPoll: true, name: shared.pollName,
+      data: { game: { name: shared.pollName, type: "poll_points" }, questions: (shared.pollQuestions || []).map(q => ({ text: q.text, answers: q.answers.map(a => ({ text: a.text, fixed_points: a.votes })) })) } });
+    return [
+      ...games,
+      { id: `${language}-teams`, type: "teams", name: (shared.teams || []).join(" / "), data: { teams: structuredClone(shared.teams || []) } },
+      { id: `${language}-base`, type: "base", name: base.base.name, data: base },
+      { id: `${language}-subscribers`, type: "subscribers", name: "Aktywni subskrybenci", data: { people: structuredClone(shared.subscribers || []) } },
+      ...defaultLogoItems.map((item, i) => ({ id: `${language}-logo-${i}`, type: "logo", name: item.name, data: structuredClone(item.data) })),
+    ];
+  })();
+  const views = config.viewResources[language] ||= {};
+  const ids = type => resources.filter(item => item.type === type).map(item => item.id);
+  const firstPoll = resources.find(item => item.type === "game" && String(item.data?.game?.type || "").startsWith("poll"))?.id || "";
+  for (const scene of config.scenes) {
+    if (views[scene.id]) continue;
+    if (scene.id === "games") views[scene.id] = { resourceIds: ids("game") };
+    else if (scene.id === "bases") views[scene.id] = { resourceIds: ids("base") };
+    else if (scene.id === "logos") views[scene.id] = { resourceIds: ids("logo") };
+    else if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) views[scene.id] = { resourceId: firstPoll };
+    else if (scene.id === "base-explorer") views[scene.id] = { resourceId: ids("base")[0] || "" };
+    else if (scene.id === "logo-draw") views[scene.id] = { resourceId: ids("logo")[0] || "" };
+    else if (scene.id === "subscribers") views[scene.id] = { resourceId: ids("subscribers")[0] || "" };
+    else if (["control-round", "host-round", "display-round"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", teamResourceId: ids("teams")[0] || "", questionIndex: 0 };
+    else if (["game-editor", "appearance", "sound", "control-finale", "tasks"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
+  }
+  return resources;
+}
+
+function selectedResource(sceneId, language = currentLanguage(), type = null) {
+  const resources = ensureResourceData(language);
+  const selection = config.viewResources?.[language]?.[sceneId] || {};
+  return resources.find(item => item.id === selection.resourceId && (!type || item.type === type)) || null;
+}
+
+function orderedResources(sceneId, language = currentLanguage(), type = null) {
+  const resources = ensureResourceData(language);
+  const ids = config.viewResources?.[language]?.[sceneId]?.resourceIds || [];
+  return ids.map(id => resources.find(item => item.id === id)).filter(item => item && (!type || item.type === type));
+}
+
+async function loadDefaultLogoExamples() {
+  const files = ["/settings/data/screenshots/logo-draw.json", "/settings/data/screenshots/logo-text.json"];
+  return Promise.all(files.map(async (file, index) => {
+    const response = await fetch(file, { cache: "force-cache" });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return { id: `default-logo-${index + 1}`, type: "logo", name: data.name || `Logo ${index + 1}`, data };
+  })).then(items => items.filter(Boolean)).catch(() => []);
+}
+
+function renderResourceList(language = currentLanguage()) {
+  const root = byId("homepageShotResourceList");
+  if (!root) return;
+  const resources = ensureResourceData(language);
+  const labels = { game: "Gry (pytania należą do gry)", teams: "Drużyny", base: "Bazy pytań", logo: "Logotypy", subscribers: "Subskrybenci" };
+  root.replaceChildren();
+  for (const type of ["game", "teams", "base", "logo", "subscribers"]) {
+    const items = resources.filter(item => item.type === type);
+    const group = document.createElement("section"); group.className = "homepage-shot-resource-group";
+    const heading = document.createElement("h3"); heading.textContent = `${labels[type]} · ${items.length}`; group.append(heading);
+    if (!items.length) {
+      const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "Brak wczytanych zasobów."; group.append(empty);
+    }
+    for (const [index, item] of items.entries()) {
+      const details = document.createElement("details"); details.className = "homepage-shot-resource-card";
+      const summary = document.createElement("summary");
+      const count = type === "game" ? ` · ${item.data?.questions?.length || 0} pytań` : type === "base" ? ` · ${item.data?.questions?.length || 0} pytań` : "";
+      summary.textContent = `${item.name || "Bez nazwy"}${count}`; details.append(summary);
+      const body = document.createElement("div"); body.className = "homepage-shot-resource-card-body";
+      sharedField(body, "Nazwa", item.name, { dataset: { resourceName: item.id } });
+      if (type === "game") {
+        const typeLabel = item.data?.game?.type?.startsWith("poll") ? "Gra ankietowa" : "Gra przygotowana";
+        const kind = document.createElement("p"); kind.className = "muted"; kind.textContent = typeLabel; body.append(kind);
+        (item.data?.questions || []).forEach((question, questionIndex) => {
+          const q = document.createElement("details"); q.className = "homepage-shot-question";
+          const qSummary = document.createElement("summary"); qSummary.textContent = `Pytanie ${questionIndex + 1}`;
+          const order = document.createElement("div"); order.className = "homepage-shot-resource-question-order";
+          const up = sharedButton(order, "↑", "question-up", questionIndex); up.dataset.resourceId = item.id; up.setAttribute("aria-label", "Przenieś pytanie wyżej"); up.disabled = questionIndex === 0;
+          const down = sharedButton(order, "↓", "question-down", questionIndex); down.dataset.resourceId = item.id; down.setAttribute("aria-label", "Przenieś pytanie niżej"); down.disabled = questionIndex === item.data.questions.length - 1;
+          const qBody = document.createElement("div"); qBody.className = "homepage-shot-question-body";
+          sharedField(qBody, "Treść pytania", question.text, { dataset: { resourceQuestion: item.id, questionIndex } });
+          (question.answers || []).forEach((answer, answerIndex) => {
+            const row = document.createElement("div"); row.className = "homepage-shot-shared-row";
+            sharedField(row, "Odpowiedź", answer.text, { dataset: { resourceAnswer: item.id, questionIndex, answerIndex } });
+            sharedField(row, item.data?.game?.type?.startsWith("poll") ? "Głosy" : "Punkty", answer.fixed_points ?? answer.points ?? 0, { type: "number", min: 0, dataset: { resourcePoints: item.id, questionIndex, answerIndex } });
+            qBody.append(row);
+          });
+          q.append(qSummary, order, qBody); body.append(q);
+        });
+        if (String(item.data?.game?.type || "").startsWith("poll")) {
+          const open = document.createElement("label"); open.className = "homepage-shot-resource-open-poll";
+          const toggle = document.createElement("input"); toggle.type = "checkbox"; toggle.checked = item.openPoll !== false; toggle.dataset.resourceOpenPoll = item.id;
+          open.append(toggle, document.createTextNode(" Ankieta jest otwarta")); body.append(open);
+        }
+      } else if (type === "teams") {
+        (item.data?.teams || []).forEach((team, teamIndex) => sharedField(body, `Drużyna ${teamIndex + 1}`, team, { dataset: { resourceTeam: item.id, teamIndex } }));
+      } else if (type === "logo") {
+        sharedField(body, "JSON logo", JSON.stringify(item.data, null, 2), { tag: "textarea", dataset: { resourceJson: item.id } });
+      } else if (type === "base") {
+        const baseSummary = document.createElement("p"); baseSummary.className = "muted"; baseSummary.textContent = `${item.data?.categories?.length || 0} kategorii · ${item.data?.questions?.length || 0} wpisów`; body.append(baseSummary);
+        (item.data?.categories || []).forEach((category, categoryIndex) => sharedField(body, `Kategoria ${categoryIndex + 1}`, category.name, { dataset: { resourceCategory: item.id, categoryIndex } }));
+        (item.data?.questions || []).forEach((question, questionIndex) => sharedField(body, `Wpis ${questionIndex + 1}`, question.payload?.text || question.text, { dataset: { resourceBaseQuestion: item.id, questionIndex } }));
+      } else if (type === "subscribers") {
+        (item.data?.people || []).forEach((person, personIndex) => sharedField(body, `Osoba ${personIndex + 1}`, person, { dataset: { resourcePerson: item.id, personIndex } }));
+      }
+      const remove = sharedButton(document.createElement("div"), "Usuń zasób", "delete-resource");
+      remove.dataset.resourceId = item.id; body.append(remove.parentElement);
+      details.append(body); group.append(details);
+    }
+    root.append(group);
+  }
+}
+
+function readResourceList(language = currentLanguage()) {
+  const resources = ensureResourceData(language);
+  const root = byId("homepageShotResourceList");
+  for (const input of root.querySelectorAll("[data-resource-name]")) {
+    const item = resources.find(resource => resource.id === input.dataset.resourceName);
+    if (item) { item.name = input.value.trim(); if (item.data?.game) item.data.game.name = item.name; if (item.data?.base) item.data.base.name = item.name; }
+  }
+  for (const input of root.querySelectorAll("[data-resource-question]")) {
+    const question = resources.find(resource => resource.id === input.dataset.resourceQuestion)?.data?.questions?.[Number(input.dataset.questionIndex)];
+    if (question) question.text = input.value.trim();
+  }
+  for (const input of root.querySelectorAll("[data-resource-answer]")) {
+    const answer = resources.find(resource => resource.id === input.dataset.resourceAnswer)?.data?.questions?.[Number(input.dataset.questionIndex)]?.answers?.[Number(input.dataset.answerIndex)];
+    if (answer) answer.text = input.value.trim();
+  }
+  for (const input of root.querySelectorAll("[data-resource-points]")) {
+    const answer = resources.find(resource => resource.id === input.dataset.resourcePoints)?.data?.questions?.[Number(input.dataset.questionIndex)]?.answers?.[Number(input.dataset.answerIndex)];
+    if (answer) { if (answer.fixed_points !== undefined || answer.points === undefined) answer.fixed_points = Number(input.value) || 0; else answer.points = Number(input.value) || 0; }
+  }
+  for (const input of root.querySelectorAll("[data-resource-team]")) {
+    const teams = resources.find(resource => resource.id === input.dataset.resourceTeam)?.data?.teams;
+    if (teams) teams[Number(input.dataset.teamIndex)] = input.value.trim();
+  }
+  for (const input of root.querySelectorAll("[data-resource-person]")) {
+    const people = resources.find(resource => resource.id === input.dataset.resourcePerson)?.data?.people;
+    if (people) people[Number(input.dataset.personIndex)] = input.value.trim();
+  }
+  for (const input of root.querySelectorAll("[data-resource-category]")) {
+    const category = resources.find(resource => resource.id === input.dataset.resourceCategory)?.data?.categories?.[Number(input.dataset.categoryIndex)];
+    if (category) category.name = input.value.trim();
+  }
+  for (const input of root.querySelectorAll("[data-resource-base-question]")) {
+    const question = resources.find(resource => resource.id === input.dataset.resourceBaseQuestion)?.data?.questions?.[Number(input.dataset.questionIndex)];
+    if (question?.payload) question.payload.text = input.value.trim();
+    else if (question) question.text = input.value.trim();
+  }
+  for (const input of root.querySelectorAll("[data-resource-json]")) {
+    const item = resources.find(resource => resource.id === input.dataset.resourceJson);
+    if (item) item.data = JSON.parse(input.value);
+  }
+  for (const input of root.querySelectorAll("[data-resource-open-poll]")) {
+    const item = resources.find(resource => resource.id === input.dataset.resourceOpenPoll);
+    if (item) item.openPoll = input.checked;
+  }
+}
+
+function resourceChoiceSpec(scene) {
+  if (["games", "bases", "logos"].includes(scene.id)) return { multi: true, type: ({ games: "game", bases: "base", logos: "logo" })[scene.id] };
+  if (scene.id === "base-explorer") return { type: "base" };
+  if (scene.id === "logo-draw") return { type: "logo" };
+  if (scene.id === "subscribers") return { type: "subscribers" };
+  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) return { type: "game", filter: item => String(item.data?.game?.type || "").startsWith("poll") && item.openPoll !== false, label: "Otwarta ankieta", question: true };
+  if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", team: true, question: true };
+  if (["game-editor", "appearance", "sound", "control-finale", "tasks"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
+  return null;
+}
+
+function renderResourceChoices(scene = currentScene()) {
+  const section = byId("homepageShotResourceChoices");
+  const root = byId("homepageShotResourceChoiceFields");
+  if (!section || !root) return;
+  resourceChoiceSelectUIs.forEach(select => select.destroy());
+  resourceChoiceSelectUIs = [];
+  root.replaceChildren();
+  const spec = resourceChoiceSpec(scene);
+  section.hidden = !spec;
+  if (!spec) return;
+  const resources = ensureResourceData(currentLanguage()).filter(item => item.type === spec.type && (!spec.filter || spec.filter(item)));
+  const selection = config.viewResources[currentLanguage()][scene.id] ||= {};
+  const addSelect = (label, key, choices, value) => {
+    const wrap = document.createElement("label"); wrap.className = "homepage-shot-resource-choice";
+    const caption = document.createElement("span"); caption.textContent = label;
+    const widget = document.createElement("div"); widget.className = "ui-select homepage-shot-select";
+    widget.innerHTML = '<button class="btn sm ui-select-btn" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>';
+    widget.dataset.resourceSelectionWidget = key;
+    const select = document.createElement("select"); select.hidden = true; select.dataset.resourceSelection = key;
+    const empty = document.createElement("option"); empty.value = ""; empty.textContent = choices.length ? "Wybierz…" : "Brak wczytanych zasobów"; select.append(empty);
+    choices.forEach(item => { const option = document.createElement("option"); option.value = item.value; option.textContent = item.label; select.append(option); });
+    select.value = value || "";
+    wrap.append(caption, widget, select); root.append(wrap);
+    const ui = initUiSelectFn?.(widget, {
+      options: [{ value: "", label: empty.textContent }, ...choices], value: value || "", placeholder: empty.textContent,
+      onChange: next => { select.value = next; select.dispatchEvent(new Event("change", { bubbles: true })); },
+    });
+    if (ui) resourceChoiceSelectUIs.push(ui);
+  };
+  if (spec.multi) {
+    if (!Array.isArray(selection.resourceIds)) selection.resourceIds = resources.map(item => item.id);
+    const selected = selection.resourceIds;
+    const available = new Set(resources.map(item => item.id));
+    selection.resourceIds = selected.filter(id => available.has(id));
+    if (!resources.length) {
+      const note = document.createElement("p"); note.className = "muted"; note.textContent = `Brak wczytanych zasobów typu ${spec.type}. Dodaj je na karcie „Lista zasobów”.`; root.append(note); return;
+    }
+    const list = document.createElement("div"); list.className = "homepage-shot-resource-order";
+    selection.resourceIds.forEach((id, index) => {
+      const item = resources.find(resource => resource.id === id); if (!item) return;
+      const row = document.createElement("div"); row.className = "homepage-shot-resource-order-row";
+      const check = document.createElement("input"); check.type = "checkbox"; check.checked = true; check.dataset.resourceInclude = id; check.setAttribute("aria-label", `Pokaż ${item.name}`);
+      const name = document.createElement("span"); name.textContent = item.name;
+      const up = sharedButton(document.createElement("span"), "↑", "resource-up", index); up.setAttribute("aria-label", "Przenieś wyżej"); up.disabled = index === 0;
+      const down = sharedButton(document.createElement("span"), "↓", "resource-down", index); down.setAttribute("aria-label", "Przenieś niżej"); down.disabled = index === selection.resourceIds.length - 1;
+      row.append(check, name, up, down); list.append(row);
+    });
+    resources.filter(item => !selection.resourceIds.includes(item.id)).forEach(item => {
+      const row = document.createElement("div"); row.className = "homepage-shot-resource-order-row";
+      const check = document.createElement("input"); check.type = "checkbox"; check.checked = false; check.dataset.resourceInclude = item.id; check.setAttribute("aria-label", `Pokaż ${item.name}`);
+      const name = document.createElement("span"); name.textContent = item.name; row.append(check, name); list.append(row);
+    });
+    root.append(list);
+    if (!selection.resourceIds.length) {
+      const note = document.createElement("p"); note.className = "muted";
+      note.textContent = `Nie wybrano żadnych ${spec.type === "game" ? "gier" : spec.type === "base" ? "baz" : "logotypów"} do pokazania.`;
+      root.append(note);
+    }
+  } else {
+    const options = resources.map(item => ({ value: item.id, label: item.name }));
+    addSelect(spec.label || "Zasób", "resourceId", options, selection.resourceId);
+    if (spec.team) {
+      const teams = ensureResourceData(currentLanguage()).filter(item => item.type === "teams");
+      addSelect("Drużyny", "teamResourceId", teams.map(item => ({ value: item.id, label: item.name })), selection.teamResourceId);
+    }
+    if (spec.question) {
+      const game = resources.find(item => item.id === selection.resourceId);
+      const questions = game?.data?.questions || [];
+      addSelect("Pytanie widoczne w edytorze lub podglądzie", "questionIndex", questions.map((item, index) => ({ value: String(index), label: `${index + 1}. ${item.text || "Pytanie bez treści"}` })), String(selection.questionIndex ?? 0));
+    }
+    if (!resources.length) {
+      const note = document.createElement("p"); note.className = "muted"; note.textContent = spec.filter ? "Brak wczytanej otwartej ankiety. Oznacz grę ankietową jako otwartą na karcie „Lista zasobów”." : `Brak wczytanych zasobów typu ${spec.type}. Dodaj je na karcie „Lista zasobów”.`;
+      root.append(note);
+    } else if (!selection.resourceId) {
+      const note = document.createElement("p"); note.className = "muted";
+      note.textContent = spec.filter ? "Nie wybrano gry otwartej jako ankieta dla tego widoku." : "Nie wybrano zasobu dla tego widoku.";
+      root.append(note);
+    }
+  }
+}
+
 function sharedField(parent, labelText, value, attrs = {}) {
   const wrapper = document.createElement("label"); wrapper.className = "homepage-shot-shared-field";
   if (labelText) { const label = document.createElement("span"); label.textContent = labelText; wrapper.append(label); }
@@ -231,110 +574,25 @@ function sharedGroup(parent, title) {
   group.append(heading); parent.append(group); return group;
 }
 
-function renderSharedEditor(shared) {
-  const root = byId("homepageShotSharedFields");
-  root.replaceChildren();
-
-  const game = sharedGroup(root, "Gra");
-  sharedField(game, "Nazwa gry", shared.gameName, { dataset: { sharedValue: "gameName" } });
-  const gamesList = document.createElement("div"); gamesList.className = "homepage-shot-shared-rows"; game.append(gamesList);
-  (shared.otherGames || []).forEach((name, index) => {
-    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
-    sharedField(row, `Pozostała gra ${index + 1}`, name, { dataset: { otherGame: "" } });
-    sharedButton(row, "Usuń", "remove-other-game", index); gamesList.append(row);
-  });
-  const gameActions = document.createElement("div"); gameActions.className = "homepage-shot-shared-actions";
-  sharedButton(gameActions, "Dodaj grę do listy", "add-other-game"); game.append(gameActions);
-  const teams = document.createElement("div"); teams.className = "homepage-shot-shared-teams"; game.append(teams);
-  (shared.teams || []).slice(0, 2).forEach((name, index) => sharedField(teams, `Drużyna ${index + 1}`, name, { dataset: { team: String(index) } }));
-
-  const questions = sharedGroup(root, "Pytania gry");
-  (shared.gameQuestions || []).forEach((question, questionIndex) => {
-    const details = document.createElement("details"); details.className = "homepage-shot-question"; details.dataset.questionIndex = String(questionIndex);
-    if (questionIndex === 0) details.open = true;
-    const summary = document.createElement("summary"); summary.textContent = `Pytanie ${questionIndex + 1} · ${question.answers?.length || 0} odpowiedzi`;
-    const body = document.createElement("div"); body.className = "homepage-shot-question-body";
-    sharedField(body, "Treść pytania", question.text, { dataset: { questionText: "" } });
-    const answerHead = document.createElement("div"); answerHead.className = "homepage-shot-answer-head";
-    answerHead.innerHTML = "<span>Odpowiedź</span><span>Punkty</span><span></span>";
-    const answerList = document.createElement("div"); answerList.className = "homepage-shot-answer-list";
-    (question.answers || []).forEach((answer, answerIndex) => {
-      const row = document.createElement("div"); row.className = "homepage-shot-shared-row"; row.dataset.answerIndex = String(answerIndex);
-      sharedField(row, "", answer.text, { dataset: { answerText: "" } });
-      sharedField(row, "", answer.points, { type: "number", min: 0, max: 100, dataset: { answerPoints: "" } });
-      sharedButton(row, "Usuń", "remove-game-answer", questionIndex); answerList.append(row);
-    });
-    const actions = document.createElement("div"); actions.className = "homepage-shot-shared-actions";
-    sharedButton(actions, "Dodaj odpowiedź", "add-game-answer", questionIndex);
-    sharedButton(actions, "Usuń pytanie", "remove-question", questionIndex);
-    body.append(answerHead, answerList, actions); details.append(summary, body); questions.append(details);
-  });
-  sharedButton(questions, "Dodaj pytanie", "add-question");
-
-  const poll = sharedGroup(root, "Ankieta");
-  sharedField(poll, "Nazwa ankiety", shared.pollName, { dataset: { sharedValue: "pollName" } });
-  (shared.pollQuestions || []).forEach((question, questionIndex) => {
-    const details = document.createElement("details"); details.className = "homepage-shot-question homepage-shot-poll-question"; details.dataset.pollQuestionIndex = String(questionIndex);
-    if (questionIndex === 0) details.open = true;
-    const summary = document.createElement("summary"); summary.textContent = `Pytanie ankiety ${questionIndex + 1} · ${question.answers?.length || 0} odpowiedzi`;
-    const body = document.createElement("div"); body.className = "homepage-shot-question-body";
-    sharedField(body, "Treść pytania", question.text, { dataset: { pollQuestionText: "" } });
-    const answerHead = document.createElement("div"); answerHead.className = "homepage-shot-answer-head";
-    answerHead.innerHTML = "<span>Odpowiedź</span><span>Głosy</span><span></span>";
-    const answerRows = document.createElement("div"); answerRows.className = "homepage-shot-answer-list";
-    (question.answers || []).forEach((answer, answerIndex) => {
-      const row = document.createElement("div"); row.className = "homepage-shot-shared-row"; row.dataset.pollAnswerIndex = String(answerIndex);
-      sharedField(row, "", answer.text, { dataset: { pollAnswer: "" } });
-      sharedField(row, "", answer.votes, { type: "number", min: 0, dataset: { pollVotes: "" } });
-      sharedButton(row, "Usuń", "remove-poll-answer", questionIndex); answerRows.append(row);
-    });
-    const actions = document.createElement("div"); actions.className = "homepage-shot-shared-actions";
-    sharedButton(actions, "Dodaj odpowiedź", "add-poll-answer", questionIndex);
-    sharedButton(actions, "Usuń pytanie", "remove-poll-question", questionIndex);
-    body.append(answerHead, answerRows, actions); details.append(summary, body); poll.append(details);
-  });
-  sharedButton(poll, "Dodaj pytanie ankiety", "add-poll-question");
-
-  const subscribers = sharedGroup(root, "Subskrybenci");
-  const subscriberNote = document.createElement("p"); subscriberNote.className = "muted"; subscriberNote.textContent = "Lista aktywnych subskrybentów. Informacja o odpowiedzi jest zapisywana osobno dla każdej ankiety."; subscribers.append(subscriberNote);
-  const subscriberRows = document.createElement("div"); subscriberRows.className = "homepage-shot-shared-rows";
-  (shared.subscribers || []).forEach((name, index) => {
-    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
-    sharedField(row, `Osoba ${index + 1}`, name, { dataset: { subscriber: "" } });
-    sharedButton(row, "Usuń", "remove-subscriber", index); subscriberRows.append(row);
-  });
-  subscribers.append(subscriberRows);
-  sharedButton(subscribers, "Dodaj subskrybenta", "add-subscriber");
+function renderSharedEditor() {
+  renderResourceList(sharedEditorLanguage);
 }
 
 function readSharedEditor() {
-  const root = byId("homepageShotSharedFields");
-  const shared = structuredClone(config.sharedFixtures[sharedEditorLanguage]);
-  for (const input of root.querySelectorAll("[data-shared-value]")) shared[input.dataset.sharedValue] = input.value.trim();
-  shared.otherGames = [...root.querySelectorAll("[data-other-game]")].map(input => input.value.trim()).filter(Boolean);
-  shared.teams = [...root.querySelectorAll("[data-team]")].map(input => input.value.trim());
-  shared.gameQuestions = [...root.querySelectorAll(".homepage-shot-question")].map(card => ({
-    text: card.querySelector("[data-question-text]").value.trim(),
-    answers: [...card.querySelectorAll("[data-answer-text]")].map(input => {
-      const row = input.closest(".homepage-shot-shared-row");
-      return { text: input.value.trim(), points: Number(row.querySelector("[data-answer-points]").value) || 0 };
-    }),
-  }));
-  shared.pollQuestions = [...root.querySelectorAll(".homepage-shot-poll-question")].map(card => ({
-    text: card.querySelector("[data-poll-question-text]").value.trim(),
-    answers: [...card.querySelectorAll("[data-poll-answer]")].map(input => ({
-      text: input.value.trim(), votes: Number(input.closest(".homepage-shot-shared-row").querySelector("[data-poll-votes]").value) || 0,
-    })),
-  }));
-  shared.subscribers = [...root.querySelectorAll("[data-subscriber]")].map(input => input.value.trim());
-  return shared;
+  readResourceList(sharedEditorLanguage);
+  return config.sharedFixtures[sharedEditorLanguage];
 }
 
 function sharedKeysForScene(sceneId) {
   if (sceneId === "games") return ["games"];
-  if (sceneId === "game-editor") return ["game", "question", "answers", "points", "gameQuestions"];
+  if (sceneId === "bases") return ["bases"];
+  if (sceneId === "base-explorer") return ["base", "folders", "questions"];
+  if (sceneId === "logos") return ["logos"];
+  if (sceneId === "logo-draw") return ["logo", "logoData", "logoFile"];
+  if (sceneId === "game-editor") return ["game", "question", "answers", "points", "gameQuestions", "activeQuestionIndex"];
   if (["appearance", "sound"].includes(sceneId)) return ["game"];
   if (sceneId === "control-finale") return ["game", "finale"];
+  if (sceneId === "tasks") return ["game"];
   if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
   if (sceneId === "subscribers") return ["people"];
   if (sceneId === "poll-share") return ["poll", "question", "subscribers", "subscriberStates", "pollRecipients"];
@@ -405,8 +663,8 @@ function updateEditor() {
   const scene = currentScene();
   const qrToolbar = byId("homepageShotQrToolbar");
   if (qrToolbar) qrToolbar.hidden = scene.id !== "poll-share";
-  if (!sharedDirty) renderSharedEditor(sharedFixture());
   sharedEditorLanguage = currentLanguage();
+  if (!sharedDirty) renderSharedEditor();
   languageSelectUI?.setValue(currentLanguage(), { silent: true });
   sceneSelectUI?.setValue(scene.id, { silent: true });
   editorSceneId = scene.id;
@@ -655,10 +913,12 @@ async function applyFixtureToFrame(scene, fixture) {
     const questions = fixture.gameQuestions || [
       { text: fixture.question, answers: (fixture.answers || []).map((text, i) => ({ text, points: fixture.points?.[i] ?? 0 })) },
     ];
+    const selectedQuestionIndex = Math.min(Number(fixture.activeQuestionIndex) || 0, Math.max(0, questions.length - 1));
+    const selectedQuestion = questions[selectedQuestionIndex] || { text: "", answers: [] };
     if (qList) {
       const addTileLabel = language === "en" ? "Add question" : language === "uk" ? "Додати запитання" : "Dodaj pytanie";
       const addTileHint = language === "en" ? "At least 10 questions" : language === "uk" ? "Додай щонайменше 10 запитань" : "Dodaj co najmniej 10 pytań";
-      const addTile = `<button type="button" class="qcard addTile"><div class="plus">${icon("plus")}</div><div class="txt">${addTileLabel}</div><div class="sub">${addTileHint}</div></button>`;
+      const addTile = questions.length ? `<button type="button" class="qcard addTile"><div class="plus">${icon("plus")}</div><div class="txt">${addTileLabel}</div><div class="sub">${addTileHint}</div></button>` : `<div class="qcard"><div class="qprev">${language === "en" ? "No game selected" : language === "uk" ? "Гру не вибрано" : "Nie wybrano gry"}</div></div>`;
       qList.innerHTML = addTile + questions.map((question, i) => {
         const answers = question.answers;
         const sum = answers.reduce((total, answer) => total + (Number(answer.points) || 0), 0);
@@ -668,19 +928,23 @@ async function applyFixtureToFrame(scene, fixture) {
         const meta = language === "en" ? `${answers.length}/6 answers · ${sum}/100 pts`
           : language === "uk" ? `${answers.length}/6 відповідей · ${sum}/100 балів`
             : `${answers.length}/6 odpowiedzi · ${sum}/100 pkt`;
-        return `<div class="qcard ${status} ${i === 0 ? "active" : ""}" data-id="shot-question-${i + 1}"><div class="qord">${language === "en" ? "Question" : language === "uk" ? "Запитання" : "Pytanie"} ${i + 1}</div><div class="qprev">${escapeHtml(question.text)}</div><div class="qmeta">${meta}</div><button type="button" class="x" aria-label="${language === "en" ? "Delete" : language === "uk" ? "Видалити" : "Usuń"}">${icon("trash")}</button></div>`;
+        return `<div class="qcard ${status} ${i === selectedQuestionIndex ? "active" : ""}" data-id="shot-question-${i + 1}"><div class="qord">${language === "en" ? "Question" : language === "uk" ? "Запитання" : "Pytanie"} ${i + 1}</div><div class="qprev">${escapeHtml(question.text)}</div><div class="qmeta">${meta}</div><button type="button" class="x" aria-label="${language === "en" ? "Delete" : language === "uk" ? "Видалити" : "Usuń"}">${icon("trash")}</button></div>`;
       }).join("");
     }
     const answers = doc.getElementById("aList");
-    const selectedAnswers = questions[0].answers;
+    const selectedAnswers = selectedQuestion.answers || [];
     const totalPoints = selectedAnswers.reduce((sum, answer) => sum + (Number(answer.points) || 0), 0);
     const pointsRemain = doc.getElementById("pointsRemainTop");
     if (pointsRemain) pointsRemain.innerHTML = `<div class="qf-sum"><span>${language === "en" ? "Total" : language === "uk" ? "Сума" : "Suma"}</span><b>${totalPoints}/100</b></div>`;
     if (answers) {
+      if (!questions.length) {
+        answers.innerHTML = `<div class="qf-row">${language === "en" ? "Choose a game to edit its answers." : language === "uk" ? "Виберіть гру, щоб редагувати відповіді." : "Wybierz grę, aby zobaczyć jej odpowiedzi."}</div>`;
+      } else {
       const addAnswerLabel = language === "en" ? "Add answer" : language === "uk" ? "Додати відповідь" : "Dodaj odpowiedź";
       const count = selectedAnswers.length;
       const addAnswerTile = `<button type="button" class="qf-row qf-add" ${count >= 6 ? "disabled" : ""}><span class="qf-addPlus">${icon("plus")}</span><span class="qf-addLbl">${addAnswerLabel}</span><span class="qf-addCnt">${count}/6</span></button>`;
       answers.innerHTML = addAnswerTile + selectedAnswers.map((answer, i) => `<div class="qf-row"><input class="qf-text" value="${escapeHtml(answer.text)}" aria-label="${language === "en" ? "Answer" : language === "uk" ? "Відповідь" : "Odpowiedź"} ${i + 1}"><input class="qf-pts" value="${Number(answer.points) || 0}" aria-label="${language === "en" ? "Points" : language === "uk" ? "Бали" : "Punkty"}"><button type="button" class="qf-del" aria-label="${language === "en" ? "Delete" : language === "uk" ? "Видалити" : "Usuń"}">${icon("trash")}</button></div>`).join("");
+      }
     }
   } else if (scene.id === "bases") {
     if (grid) grid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">Nowa baza</div></div>${fixture.bases.map((name, i) => `<div class="card tile ${i === 0 ? "selected" : ""}"><div class="name">${escapeHtml(name)}</div><div class="meta">${i ? "8 pytań · 2 kategorie" : "12 pytań · 3 kategorie"}</div><div class="tileTags"><span class="tag ${i ? "tag--muted" : "tag--ok"}">${i ? "Moja baza" : "Właściciel"}</span></div></div>`).join("")}`;
@@ -701,12 +965,13 @@ async function applyFixtureToFrame(scene, fixture) {
   } else if (scene.id === "poll-share" || scene.id === "poll-results") {
     await paintPoll(doc, scene, fixture);
   } else if (scene.id === "poll-vote-mobile") {
-    setText(doc, "title", fixture.poll || "Ankieta");
-    setText(doc, "sub", currentLanguage() === "en" ? "One question · one vote" : currentLanguage() === "uk" ? "Одне запитання · один голос" : "Jedno pytanie · jeden głos");
-    setText(doc, "qtext", fixture.question);
+    const noPoll = !fixture.poll;
+    setText(doc, "title", noPoll ? (currentLanguage() === "en" ? "No open poll" : currentLanguage() === "uk" ? "Немає відкритого опитування" : "Brak otwartej ankiety") : fixture.poll);
+    setText(doc, "sub", noPoll ? "" : currentLanguage() === "en" ? "One question · one vote" : currentLanguage() === "uk" ? "Одне запитання · один голос" : "Jedno pytanie · jeden głos");
+    setText(doc, "qtext", noPoll ? (currentLanguage() === "en" ? "Choose a game opened as a poll." : currentLanguage() === "uk" ? "Виберіть гру, відкриту як опитування." : "Wybierz grę otwartą jako ankietę.") : fixture.question);
     const list = doc.getElementById("alist");
     if (list) list.innerHTML = fixture.answers.map(text => `<button class="btn voteOption">${escapeHtml(text)}</button>`).join("");
-    const box = doc.getElementById("qbox"); if (box) box.style.display = "";
+    const box = doc.getElementById("qbox"); if (box) box.style.display = noPoll ? "none" : "";
     setText(doc, "prog", "1 / 1");
   } else if (scene.id === "appearance" || scene.id === "sound") {
     setText(doc, "gsTitle", fixture.game);
@@ -748,14 +1013,18 @@ async function applyFixtureToFrame(scene, fixture) {
     const list = doc.getElementById("grid");
     if (list) {
       list.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">Utwórz logo</div></div>${fixture.logos.map((logo, i) => `<div class="logoTile ${i === 0 ? "is-selected" : ""}"><div class="logoTileTop"><div><div class="logoName">${escapeHtml(logo.name)}</div><div class="logoMeta">Logo demonstracyjne</div></div></div><div class="logoPrev" data-logo-preview="${i}"></div></div>`).join("")}`;
-      const previews = await Promise.all(fixture.logos.map(logo => logoCanvasFromFile(logo.file, 260, 100)));
+      const previews = await Promise.all(fixture.logos.map(logo => logo.data
+        ? logoCanvasFromStored(logo.data, 260, 100)
+        : logoCanvasFromFile(logo.file, 260, 100)));
       list.querySelectorAll("[data-logo-preview]").forEach(node => node.append(previews[Number(node.dataset.logoPreview)]));
     }
   } else if (scene.id === "logo-draw") {
     setInput(doc, "logoName", fixture.logo);
     const canvas = doc.querySelector("canvas");
     if (canvas) {
-      const logo = await logoCanvasFromFile(fixture.logoFile, 520, 245);
+      const logo = fixture.logoData
+        ? await logoCanvasFromStored(fixture.logoData, 520, 245)
+        : await logoCanvasFromFile(fixture.logoFile, 520, 245);
       canvas.width = 520; canvas.height = 245;
       canvas.style.width = "520px"; canvas.style.height = "245px";
       canvas.getContext("2d").drawImage(logo, 0, 0, 520, 245);
@@ -799,16 +1068,17 @@ async function getStrings(language, keys) {
 }
 
 async function logoCanvasFromFile(file, width, height) {
-  const logoRequest = fetch(file || "/shared/data/logo_familiada.json", { cache: "force-cache" });
-  const [{ buildLogoPreviewCanvas, loadFont5x7 }, response] = await Promise.all([
-    import("/shared/js/core/logo-preview.js?v=v2026-10-19T10311"), logoRequest,
-
-  ]);
+  const response = await fetch(file || "/shared/data/logo_familiada.json", { cache: "force-cache" });
   if (!response.ok) throw new Error("nie udało się wczytać przykładowego logo");
   const stored = await response.json();
+  return logoCanvasFromStored(stored, width, height);
+}
+
+async function logoCanvasFromStored(stored, width, height) {
+  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T10311");
   const logo = stored.kind === "GLYPH" ? { type: "GLYPH_30x10", payload: stored.payload }
     : stored.kind === "PIX" ? { type: "PIX_150x70", payload: stored.payload }
-      : { type: "GLYPH_30x10", payload: stored };
+      : stored.type ? stored : { type: "GLYPH_30x10", payload: stored.payload || stored };
   const glyphs = await loadFont5x7();
   return buildLogoPreviewCanvas(logo, glyphs, width, height);
 }
@@ -889,9 +1159,23 @@ async function paintTasks(doc, fixture) {
 }
 
 async function paintPoll(doc, scene, fixture) {
+  const main = doc.getElementById("cardMain");
+  const empty = doc.getElementById("cardEmpty");
+  if (!fixture.poll) {
+    if (main) main.style.display = "none";
+    if (empty) {
+      empty.style.display = "";
+      const title = empty.querySelector(".name");
+      const meta = empty.querySelector(".meta");
+      if (title) title.textContent = currentLanguage() === "en" ? "No open poll" : currentLanguage() === "uk" ? "Немає відкритого опитування" : "Brak otwartej ankiety";
+      if (meta) meta.textContent = currentLanguage() === "en" ? "Choose a game opened as a poll in the screenshot settings." : currentLanguage() === "uk" ? "Виберіть гру, відкриту як опитування, у налаштуваннях знімка." : "Wybierz grę otwartą jako ankietę w ustawieniach zrzutu.";
+    }
+    const bar = doc.getElementById("pollBar"); if (bar) bar.style.display = "none";
+    return;
+  }
   setText(doc, "pollGameName", fixture.poll);
-  const main = doc.getElementById("cardMain"); if (main) main.style.display = "";
-  const empty = doc.getElementById("cardEmpty"); if (empty) empty.style.display = "none";
+  if (main) main.style.display = "";
+  if (empty) empty.style.display = "none";
   const bar = doc.getElementById("pollBar"); if (bar) { bar.style.display = ""; bar.dataset.state = "open"; }
   setText(doc, "pollStateWord", currentLanguage() === "en" ? "Voting open" : currentLanguage() === "uk" ? "Голосування триває" : "Głosowanie trwa");
   setText(doc, "pollStateInfo", currentLanguage() === "en" ? "18 votes received" : currentLanguage() === "uk" ? "Отримано 18 голосів" : "Oddano 18 głosów");
@@ -1033,6 +1317,7 @@ function readPollActions() {
 }
 
 function renderEditorFields(fixture) {
+  renderResourceChoices(currentScene());
   els.fields.replaceChildren();
   const hasSharedData = renderSharedSourceData(currentScene(), fixture);
   byId("homepageShotFieldsTitle").textContent = hasSharedData ? "Dane dodatkowe widoku" : "Dane widoku";
@@ -1060,54 +1345,84 @@ function renderSharedSourceData(scene, fixture) {
   const section = byId("homepageShotSharedSource");
   const root = byId("homepageShotSharedSourceFields");
   root.replaceChildren();
-  const shared = sharedFixture(currentLanguage());
   const entries = [];
   const add = (label, value) => {
     if (value === undefined || value === null || value === "" || (Array.isArray(value) && !value.length)) return;
     entries.push({ label, value });
   };
-  const gameName = shared.gameName || fixture.game;
-  const gameQuestions = shared.gameQuestions || [];
-  const pollQuestions = shared.pollQuestions || [];
-  const pollQuestion = pollQuestions[0];
+  const candidateGame = selectedResource(scene.id, currentLanguage(), "game");
+  const isPollScene = ["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id);
+  const selectedGame = isPollScene && (!String(candidateGame?.data?.game?.type || "").startsWith("poll") || candidateGame.openPoll === false)
+    ? null : candidateGame;
+  const rawQuestions = selectedGame?.data?.questions || [];
+  const gameQuestions = rawQuestions.map(question => ({
+    text: question.text || "",
+    answers: (question.answers || []).map(answer => ({ text: answer.text || "", points: answer.fixed_points ?? answer.points ?? answer.votes ?? 0 })),
+  }));
+  const pollQuestions = rawQuestions.map(question => ({
+    text: question.text || "",
+    answers: (question.answers || []).map(answer => ({ text: answer.text || "", votes: answer.fixed_points ?? answer.votes ?? 0 })),
+  }));
+  const selection = config.viewResources?.[currentLanguage()]?.[scene.id] || {};
+  const pollQuestion = pollQuestions[Number(selection.questionIndex) || 0];
+  const teamResource = ensureResourceData(currentLanguage()).find(item => item.id === selection.teamResourceId && item.type === "teams");
+  const subscriberResource = selectedResource(scene.id, currentLanguage(), "subscribers");
 
   switch (scene.id) {
     case "games":
-      add("Gry", [shared.gameName, ...(shared.otherGames || [])].filter(Boolean));
+      add("Gry", orderedResources(scene.id, currentLanguage(), "game").map(item => item.name));
+      break;
+    case "bases":
+      add("Bazy pytań", orderedResources(scene.id, currentLanguage(), "base").map(item => item.name));
+      break;
+    case "base-explorer": {
+      const base = selectedResource(scene.id, currentLanguage(), "base");
+      add("Baza z listy zasobów", base?.name);
+      add("Kategorie i wpisy bazy", [
+        ...(base?.data?.categories || []).map(category => ({ text: category.name, answers: [] })),
+        ...(base?.data?.questions || []).map(question => ({ text: question.payload?.text || question.text || "", answers: [] })),
+      ]);
+      break;
+    }
+    case "logos":
+      add("Logotypy", orderedResources(scene.id, currentLanguage(), "logo").map(item => item.name));
+      break;
+    case "logo-draw":
+      add("Logo wybrane z listy zasobów", selectedResource(scene.id, currentLanguage(), "logo")?.name);
       break;
     case "game-editor":
-      add("Gra", gameName);
+      add("Gra z listy zasobów", selectedGame?.name);
       add("Pytania, odpowiedzi i punkty", gameQuestions);
       break;
     case "appearance": case "sound": case "control-finale":
-      add("Gra", gameName);
+      add("Gra z listy zasobów", selectedGame?.name);
       if (scene.id === "control-finale") {
         const finaleQuestions = (fixture.finale || []).map(text => gameQuestions.find(question => question.text === text) || { text, answers: [] });
         add("Pytania finału", finaleQuestions);
       }
       break;
     case "control-round": case "host-round": case "display-round":
-      add("Gra", gameName);
-      add("Pytanie, odpowiedzi i punkty", gameQuestions.slice(0, 1));
-      add("Drużyny", shared.teams);
+      add("Gra z listy zasobów", selectedGame?.name);
+      add("Pytanie, odpowiedzi i punkty", gameQuestions.slice(Number(selection.questionIndex) || 0, (Number(selection.questionIndex) || 0) + 1));
+      add("Drużyny z listy zasobów", teamResource?.data?.teams);
       break;
     case "tasks":
       add("Zadania i przypisane gry", (fixture.tasks || []).filter(task => task.game).map((task, index) => ({ text: `Zadanie ${index + 1} · ${task.game}`, answers: [] })));
       break;
     case "subscribers":
-      add("Subskrybenci", shared.subscribers);
+      add("Subskrybenci z listy zasobów", subscriberResource?.data?.people);
       break;
     case "poll-share":
-      add("Ankieta", shared.pollName);
-      add("Pytania ankiety", pollQuestions);
-      add("Subskrybenci z listy ogólnej", fixture.subscribers || shared.subscribers);
+      add("Gra otwarta jako ankieta", selectedGame?.name);
+      add("Pytania ankiety z gry", pollQuestions);
+      add("Subskrybenci z listy ogólnej", fixture.subscribers || []);
       break;
     case "poll-vote-mobile":
-      add("Ankieta", shared.pollName);
+      add("Gra otwarta jako ankieta", selectedGame?.name);
       add("Pytanie i odpowiedzi", pollQuestion ? [pollQuestion] : []);
       break;
     case "poll-results":
-      add("Ankieta", shared.pollName);
+      add("Gra otwarta jako ankieta", selectedGame?.name);
       add("Pytania i wyniki", pollQuestions);
       break;
     default:
@@ -1174,14 +1489,14 @@ function renderCategoryActions(fixture) {
     group.append(rows);
     return;
   }
-  const shared = sharedFixture(currentLanguage());
+  const subscribers = subscriberNames(currentLanguage());
   const group = sharedGroup(root, "Zaproszeni subskrybenci");
   const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note";
   note.textContent = "Osoby są pobrane z listy ogólnej. Tutaj ustawiasz tylko ich udział w tej ankiecie.";
   group.append(note);
   const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
   (fixture.pollRecipients || []).forEach((recipient, index) => {
-    const name = shared.subscribers?.[recipient.subscriberIndex];
+    const name = subscribers[recipient.subscriberIndex];
     if (!name) return;
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row";
     row.dataset.pollActionRow = ""; row.dataset.subscriberIndex = String(recipient.subscriberIndex);
@@ -1203,7 +1518,7 @@ function renderCategoryActions(fixture) {
   group.append(rows);
   const addRow = document.createElement("div"); addRow.className = "homepage-shot-action-add";
   const selector = document.createElement("select"); selector.className = "inp"; selector.dataset.pollActionAdd = "";
-  for (const [index, name] of (shared.subscribers || []).entries()) {
+  for (const [index, name] of subscribers.entries()) {
     if ((fixture.pollRecipients || []).some(item => item.subscriberIndex === index)) continue;
     const option = document.createElement("option"); option.value = String(index); option.textContent = name; selector.append(option);
   }
@@ -1268,16 +1583,68 @@ async function flushEditor() {
 
 async function flushSharedEditor() {
   if (!sharedDirty) return true;
-  const shared = readSharedEditor();
-  if (!shared || typeof shared !== "object" || !Array.isArray(shared.gameQuestions) || !Array.isArray(shared.subscribers)) {
-    setStatus("Wspólne dane muszą zawierać listę pytań gry i subskrybentów."); return false;
+  try {
+    readResourceList(sharedEditorLanguage);
+    await saveConfig();
+    sharedDirty = false;
+    renderSharedEditor();
+    renderEditorFields(langFixture(currentScene()));
+    await loadScenePreview(currentScene(), true);
+    return true;
   }
-  if (!shared.gameName || !shared.pollName || !shared.pollQuestions.length || shared.pollQuestions.some(question => !question.text || !question.answers.length || question.answers.some(answer => !answer.text)) || shared.gameQuestions.some(question => !question.text || question.answers.some(answer => !answer.text))) {
-    setStatus("Uzupełnij nazwę gry i ankiety oraz teksty pytań i odpowiedzi."); return false;
-  }
-  config.sharedFixtures[sharedEditorLanguage] = shared;
-  try { await saveConfig(); sharedDirty = false; renderSharedEditor(shared); return true; }
   catch (error) { setStatus(`Nie udało się zapisać wspólnych danych: ${error.message}`); return false; }
+}
+
+function newResourceId() {
+  return globalThis.crypto?.randomUUID?.() || `resource-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function importResourceFile(file, type) {
+  const data = JSON.parse(await file.text());
+  let resource;
+  if (type === "game") {
+    if (!data?.game || !Array.isArray(data.questions)) throw new Error("Plik nie zawiera eksportu gry.");
+    data.questions = data.questions.map(question => ({
+      ...question,
+      text: String(question.text || ""),
+      answers: (question.answers || []).map(answer => ({ ...answer, text: String(answer.text || ""), fixed_points: Number(answer.fixed_points ?? answer.points) || 0 })),
+    }));
+    resource = { id: newResourceId(), type, name: data.game.name || file.name.replace(/\.famgame$/i, ""), data, openPoll: false };
+  } else if (type === "base") {
+    if (!data?.base || !Array.isArray(data.questions) || !Array.isArray(data.categories)) throw new Error("Plik nie zawiera eksportu bazy pytań.");
+    resource = { id: newResourceId(), type, name: data.base.name || file.name.replace(/\.fambase$/i, ""), data };
+  } else {
+    if (!(data?.kind === "GLYPH" || data?.kind === "PIX" || data?.type === "GLYPH_30x10" || data?.type === "PIX_150x70") || !data?.payload) throw new Error("Plik nie zawiera eksportu logo.");
+    resource = { id: newResourceId(), type, name: data.name || file.name.replace(/\.famlogo$/i, ""), data };
+  }
+  const language = currentLanguage();
+  const resources = ensureResourceData(language);
+  resources.push(resource);
+  const scenes = type === "game" ? ["games"] : type === "base" ? ["bases"] : ["logos"];
+  for (const sceneId of scenes) {
+    const selection = config.viewResources[language][sceneId] ||= { resourceIds: [] };
+    selection.resourceIds ||= [];
+    selection.resourceIds.push(resource.id);
+  }
+  sharedDirty = true;
+  renderResourceList(language);
+  renderEditorFields(langFixture(currentScene()));
+  await flushSharedEditor();
+  setStatus(`${resource.name} dodano do listy zasobów.`);
+}
+
+async function handleResourceImportInput(event, type) {
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+  if (!file) return;
+  try {
+    if (!await flushEditor() || !await flushSharedEditor()) return;
+    await importResourceFile(file, type);
+  } catch (error) {
+    setStatus(`Nie udało się wczytać zasobu: ${error.message}`);
+  } finally {
+    input.value = "";
+  }
 }
 
 async function flushAllEditors() {
@@ -1430,6 +1797,7 @@ export async function initHomepageScreenshots() {
   try {
     config = await readConfig();
     config.scenes = Array.isArray(config.scenes) ? config.scenes : [];
+    defaultLogoItems = await loadDefaultLogoExamples();
     let initializeSharedFixtures = false;
     config.sharedFixtures ||= {};
     for (const language of ["pl", "en", "uk"]) {
@@ -1456,10 +1824,19 @@ export async function initHomepageScreenshots() {
       if (!subscribersFixture.outgoing) { subscribersFixture.outgoing = defaultSubscriberInvitations(language); initializeSharedFixtures = true; }
       config.localeFixtures[language].subscribers = subscribersFixture;
     }
+    config.resourceData ||= {};
+    config.viewResources ||= {};
+    for (const language of ["pl", "en", "uk"]) {
+      const hadResources = Array.isArray(config.resourceData[language]);
+      const hadViews = !!config.viewResources[language];
+      ensureResourceData(language);
+      if (!hadResources || !hadViews) initializeSharedFixtures = true;
+    }
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     if (initializeSharedFixtures) await saveConfig();
     renderSceneList();
     const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T10311");
+    initUiSelectFn = initUiSelect;
 
     const languageSelect = byId("homepageShotLanguageSelect");
     const sceneSelect = byId("homepageShotSceneSelect");
@@ -1481,7 +1858,7 @@ export async function initHomepageScreenshots() {
       value: els.scene.value,
       onChange: value => { els.scene.value = value; els.scene.dispatchEvent(new Event("change")); },
     });
-    setStatus("Przykłady wczytane. Możesz edytować dane wybranego widoku.");
+    setStatus("");
     els.scene.addEventListener("change", async () => {
       if (!await flushAllEditors()) { els.scene.value = editorSceneId; sceneSelectUI?.setValue(editorSceneId, { silent: true }); return; }
       updateEditor();
@@ -1503,7 +1880,72 @@ export async function initHomepageScreenshots() {
       if (!await flushEditor() || !await flushSharedEditor()) return;
       renderEditorFields(langFixture(currentScene()));
       await loadScenePreview(currentScene(), true);
-      setStatus("Wspólne dane zapisane. Widoki korzystają teraz z tych samych przykładów.");
+      setStatus("Zasoby zapisane.");
+    });
+    byId("homepageShotResourceList").addEventListener("input", () => {
+      sharedDirty = true;
+      setStatus("Niezapisane zmiany zasobów.");
+    });
+    byId("homepageShotResourceList").addEventListener("change", () => { sharedDirty = true; });
+    byId("homepageShotResourceList").addEventListener("click", async event => {
+      const button = event.target.closest("[data-shared-action]");
+      if (!button) return;
+      if (!await flushSharedEditor()) return;
+      const resources = ensureResourceData(sharedEditorLanguage);
+      const id = button.dataset.resourceId;
+      const index = resources.findIndex(item => item.id === id);
+      if (["question-up", "question-down"].includes(button.dataset.sharedAction) && index >= 0) {
+        const questions = resources[index].data?.questions || [];
+        const questionIndex = Number(button.dataset.index);
+        const target = questionIndex + (button.dataset.sharedAction === "question-up" ? -1 : 1);
+        if (target < 0 || target >= questions.length) return;
+        [questions[questionIndex], questions[target]] = [questions[target], questions[questionIndex]];
+      } else if (button.dataset.sharedAction === "delete-resource" && index >= 0) {
+        resources.splice(index, 1);
+        for (const views of Object.values(config.viewResources[sharedEditorLanguage] || {})) {
+          views.resourceIds = (views.resourceIds || []).filter(resourceId => resourceId !== id);
+          if (views.resourceId === id) views.resourceId = "";
+        }
+      } else return;
+      await saveConfig();
+      renderResourceList(sharedEditorLanguage);
+      renderEditorFields(langFixture(currentScene()));
+      await loadScenePreview(currentScene(), true);
+    });
+    byId("homepageShotImportGame").addEventListener("change", event => handleResourceImportInput(event, "game"));
+    byId("homepageShotImportBase").addEventListener("change", event => handleResourceImportInput(event, "base"));
+    byId("homepageShotImportLogo").addEventListener("change", event => handleResourceImportInput(event, "logo"));
+    byId("homepageShotResourceChoiceFields").addEventListener("change", async event => {
+      const input = event.target;
+      if (!(input.matches("[data-resource-selection]") || input.matches("[data-resource-include]"))) return;
+      if (!await flushEditor() || !await flushSharedEditor()) return;
+      const language = currentLanguage();
+      const scene = currentScene();
+      const selection = config.viewResources[language][scene.id] ||= {};
+      if (input.matches("[data-resource-selection]")) {
+        const key = input.dataset.resourceSelection;
+        selection[key] = key === "questionIndex" ? Number(input.value) : input.value;
+        if (key === "resourceId") selection.questionIndex = 0;
+      } else {
+        const id = input.dataset.resourceInclude;
+        const ids = selection.resourceIds || (selection.resourceIds = []);
+        if (input.checked && !ids.includes(id)) ids.push(id);
+        if (!input.checked) selection.resourceIds = ids.filter(value => value !== id);
+      }
+      await saveConfig();
+      updateEditor();
+    });
+    byId("homepageShotResourceChoiceFields").addEventListener("click", async event => {
+      const button = event.target.closest('[data-shared-action="resource-up"], [data-shared-action="resource-down"]');
+      if (!button) return;
+      const selection = config.viewResources[currentLanguage()][currentScene().id];
+      const ids = selection?.resourceIds || [];
+      const index = Number(button.dataset.index);
+      const target = index + (button.dataset.sharedAction === "resource-up" ? -1 : 1);
+      if (target < 0 || target >= ids.length) return;
+      [ids[index], ids[target]] = [ids[target], ids[index]];
+      await saveConfig();
+      updateEditor();
     });
     byId("homepageShotSharedFields").addEventListener("input", () => {
       sharedDirty = true;
@@ -1587,6 +2029,7 @@ export async function initHomepageScreenshots() {
       try { if (!await flushAllEditors()) return; selectScreenshotTab("category"); readEditorIntoConfig(); await saveConfig(); setStatus("Odświeżam zrzuty po kolei…"); await captureMany(config.scenes); }
       catch (error) { setStatus(`Nie udało się rozpocząć: ${error.message}`); }
     });
+    updateEditor();
     initialized = true;
   } catch (error) {
     setStatus(`Nie udało się wczytać przykładów: ${error.message}`);

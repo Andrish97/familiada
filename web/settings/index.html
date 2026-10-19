@@ -93,7 +93,7 @@
           <div class="homepage-shot-toolbar-actions">
             <div class="homepage-shot-action-group" aria-label="Zapisywanie danych">
               <span class="homepage-shot-action-label">Dane przykładowe</span>
-              <button class="btn sm" id="homepageShotSaveShared" type="button">Zapisz listę ogólną</button>
+              <button class="btn sm" id="homepageShotSaveShared" type="button">Zapisz zasoby</button>
               <button class="btn sm" id="homepageShotSave" type="button">Zapisz widok</button>
             </div>
             <div class="homepage-shot-action-group homepage-shot-action-group--capture" aria-label="Zrzuty strony głównej">
@@ -107,8 +107,8 @@
       <div class="tabs-card homepage-shot-tabs-card" id="homepageShotTabsCard">
         <div class="tabs-strip" role="tablist" aria-label="Dane przykładowe">
           <div class="tab-slot homepage-shot-tab-slot is-active">
-            <button class="tab-label homepage-shot-tab active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista ogólna</button>
-            <div class="tab-wrapper" aria-hidden="true"><div class="tab-active">Lista ogólna</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+            <button class="tab-label homepage-shot-tab active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista zasobów</button>
+            <div class="tab-wrapper" aria-hidden="true"><div class="tab-active">Lista zasobów</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
           </div>
           <div class="tab-slot homepage-shot-tab-slot">
             <button class="tab-label homepage-shot-tab" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii</button>
@@ -117,10 +117,20 @@
         </div>
         <div class="homepage-shot-tabs-content">
         <section class="homepage-shot-tab-panel" id="homepageShotSharedPanel" role="tabpanel" aria-labelledby="homepageShotSharedTab">
-          <p class="muted homepage-shot-tab-note">Tutaj zmieniasz wspólne przykłady. Kategorie korzystają z tych samych wpisów, a własne akcje i statusy są przypisane w danych danej kategorii.</p>
+          <p class="muted homepage-shot-tab-note">Tutaj zarządzasz zasobami wielokrotnego użytku. Gra zawiera pytania; ankieta jest grą otwartą jako ankieta. Widoki wybierają zasoby z tej listy.</p>
+          <div class="homepage-shot-resource-imports">
+            <label class="btn sm">Wczytaj grę <input id="homepageShotImportGame" type="file" accept=".famgame,.json,application/json" hidden></label>
+            <label class="btn sm">Wczytaj bazę pytań <input id="homepageShotImportBase" type="file" accept=".fambase,.json,application/json" hidden></label>
+            <label class="btn sm">Wczytaj logo <input id="homepageShotImportLogo" type="file" accept=".famlogo,.json,application/json" hidden></label>
+          </div>
+          <div id="homepageShotResourceList" class="homepage-shot-resource-list"></div>
           <div id="homepageShotSharedFields" class="homepage-shot-shared-fields"></div>
         </section>
         <section class="homepage-shot-tab-panel" id="homepageShotCategoryPanel" role="tabpanel" aria-labelledby="homepageShotCategoryTab" hidden>
+        <section class="homepage-shot-reference homepage-shot-resource-choices" id="homepageShotResourceChoices" hidden>
+          <div class="field-label">Wybierz zasoby dla tego widoku</div>
+          <div id="homepageShotResourceChoiceFields"></div>
+        </section>
         <div class="homepage-shot-toolbar" id="homepageShotQrToolbar" hidden>
           <label class="field-label" for="homepageShotQrUrl">Link dla kodu QR ankiety</label>
           <input class="inp homepage-shot-qr" id="homepageShotQrUrl" type="url" placeholder="Wklej adres mini strony, gdy będzie gotowy"/>
