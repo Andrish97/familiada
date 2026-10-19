@@ -612,11 +612,22 @@ Linia bez strzałki: widoczny, zablokowany przycisk; podpis wskazuje zależnoś�
 flowchart LR
   home["/"]
   login["/login/"]
+  loginConfirm["/login/confirm/"]
+  loginReset["/login/reset/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
+  controlDisplay["/control/display/"]
+  controlHost["/control/host/"]
+  controlBuzzer["/control/buzzer/"]
+  go["/go/"]
+  pollVotePoints["/polls/vote/points/"]
+  pollVoteText["/polls/vote/text/"]
+  pollVoteQr["/polls/vote/qr/"]
   mailCenter["/mails/"]
   privacy["/privacy/"]
+  notFound["/404.html"]
+  maintenance["/maintenance/"]
   login -.->|↩| home
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
@@ -631,11 +642,22 @@ flowchart LR
 flowchart LR
   home["/"]
   login["/login/"]
+  loginConfirm["/login/confirm/"]
+  loginReset["/login/reset/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
+  controlDisplay["/control/display/"]
+  controlHost["/control/host/"]
+  controlBuzzer["/control/buzzer/"]
+  go["/go/"]
+  pollVotePoints["/polls/vote/points/"]
+  pollVoteText["/polls/vote/text/"]
+  pollVoteQr["/polls/vote/qr/"]
   mailCenter["/mails/"]
   privacy["/privacy/"]
+  notFound["/404.html"]
+  maintenance["/maintenance/"]
   login -.->|↩| home
   marketplace -.->|↩| home
   connectDevice -.->|↩| home
@@ -650,6 +672,8 @@ flowchart LR
 flowchart LR
   home["/"]
   login["/login/"]
+  loginConfirm["/login/confirm/"]
+  loginReset["/login/reset/"]
   games["/games/"]
   editor["/games/editor/"]
   polls["/polls/"]
@@ -664,10 +688,19 @@ flowchart LR
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
+  controlDisplay["/control/display/"]
+  controlHost["/control/host/"]
+  controlBuzzer["/control/buzzer/"]
+  go["/go/"]
+  pollVotePoints["/polls/vote/points/"]
+  pollVoteText["/polls/vote/text/"]
+  pollVoteQr["/polls/vote/qr/"]
   account["/account/"]
   manual["/manual/"]
   mailCenter["/mails/"]
   privacy["/privacy/"]
+  notFound["/404.html"]
+  maintenance["/maintenance/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnBases| bases
@@ -704,6 +737,8 @@ flowchart LR
 flowchart LR
   home["/"]
   login["/login/"]
+  loginConfirm["/login/confirm/"]
+  loginReset["/login/reset/"]
   games["/games/"]
   editor["/games/editor/"]
   polls["/polls/"]
@@ -713,10 +748,19 @@ flowchart LR
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
+  controlDisplay["/control/display/"]
+  controlHost["/control/host/"]
+  controlBuzzer["/control/buzzer/"]
+  go["/go/"]
+  pollVotePoints["/polls/vote/points/"]
+  pollVoteText["/polls/vote/text/"]
+  pollVoteQr["/polls/vote/qr/"]
   account["/account/"]
   manual["/manual/"]
   mailCenter["/mails/"]
   privacy["/privacy/"]
+  notFound["/404.html"]
+  maintenance["/maintenance/"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnBases| bases
@@ -745,6 +789,8 @@ flowchart LR
 flowchart LR
   home["/"]
   login["/login/"]
+  loginConfirm["/login/confirm/"]
+  loginReset["/login/reset/"]
   games["/games/"]
   editor["/games/editor/"]
   polls["/polls/"]
@@ -762,10 +808,26 @@ flowchart LR
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
+  controlDisplay["/control/display/"]
+  controlHost["/control/host/"]
+  controlBuzzer["/control/buzzer/"]
+  go["/go/"]
+  pollVotePoints["/polls/vote/points/"]
+  pollVoteText["/polls/vote/text/"]
+  pollVoteQr["/polls/vote/qr/"]
   account["/account/"]
   manual["/manual/"]
   mailCenter["/mails/"]
   privacy["/privacy/"]
+  notFound["/404.html"]
+  maintenance["/maintenance/"]
+  admin["/settings/"]
+  adminToolEditor["/settings/tools/editor_5x7.html"]
+  adminToolExporter["/settings/tools/exporterandeditor.html"]
+  adminToolHostLogo["/settings/tools/host-logo-lab/"]
+  adminToolKora["/settings/tools/kora-builder.html"]
+  adminToolLogoBackground["/settings/tools/logo-background-lab/"]
+  adminToolTheme["/settings/tools/theme_builder.html"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
@@ -779,11 +841,9 @@ flowchart LR
   games -->|btnPoll*| polls
   polls -->|btnFriends| friends
   polls -->|btnSubscribers| subscribers
-  friends -->|btnSubscribers| subscribers
-  subscribers -->|btnFriends| friends
-  bases -->|btnGoAlt| friends
-  bases -->|btnSubscribers| subscribers
+  bases -->|btnFriends| friends
   bases -->|btnBrowse*| baseExplorer
+  logoEditor -->|btnFriends| friends
   control -->|btnFriends*| friends
   gameSettings -->|btnPlay*| control
   manual -->|btnLegal| privacy
@@ -816,6 +876,8 @@ flowchart LR
 flowchart LR
   home["/"]
   login["/login/"]
+  loginConfirm["/login/confirm/"]
+  loginReset["/login/reset/"]
   games["/games/"]
   editor["/games/editor/"]
   polls["/polls/"]
@@ -828,10 +890,26 @@ flowchart LR
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
+  controlDisplay["/control/display/"]
+  controlHost["/control/host/"]
+  controlBuzzer["/control/buzzer/"]
+  go["/go/"]
+  pollVotePoints["/polls/vote/points/"]
+  pollVoteText["/polls/vote/text/"]
+  pollVoteQr["/polls/vote/qr/"]
   account["/account/"]
   manual["/manual/"]
   mailCenter["/mails/"]
   privacy["/privacy/"]
+  notFound["/404.html"]
+  maintenance["/maintenance/"]
+  admin["/settings/"]
+  adminToolEditor["/settings/tools/editor_5x7.html"]
+  adminToolExporter["/settings/tools/exporterandeditor.html"]
+  adminToolHostLogo["/settings/tools/host-logo-lab/"]
+  adminToolKora["/settings/tools/kora-builder.html"]
+  adminToolLogoBackground["/settings/tools/logo-background-lab/"]
+  adminToolTheme["/settings/tools/theme_builder.html"]
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
@@ -843,11 +921,9 @@ flowchart LR
   games -->|btnPoll*| polls
   polls -->|btnFriends| friends
   polls -->|btnSubscribers| subscribers
-  friends -->|btnSubscribers| subscribers
-  subscribers -->|btnFriends| friends
-  bases -->|btnGoAlt| friends
-  bases -->|btnSubscribers| subscribers
+  bases -->|btnFriends| friends
   bases -->|btnBrowse*| baseExplorer
+  logoEditor -->|btnFriends| friends
   manual -->|btnLegal| privacy
   login -.->|↩| home
   editor -.->|↩| games

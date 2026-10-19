@@ -76,20 +76,17 @@ export const PAGES = {
     btnFriends: { to: "friends", roles: ["user"] },
     btnSubscribers: { to: "subscribers", roles: ["user"] },
   }, locks: [{ type: "game", id: "id" }] },
-  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "subscribers", "bases", "polls", "control"], manual: "polls", tabs: ["invite", "received"], state: ["f", "tab"], buttons: {
-    btnSubscribers: { to: "subscribers", roles: ["user"] },
-  } },
-  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "friends", "polls", "bases"], manual: "polls", tabs: ["invite", "received"], state: ["tab"], buttons: {
-    btnFriends: { to: "friends", roles: ["user"] },
-  } },
+  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "bases", "polls", "logoEditor", "control"], manual: "polls", tabs: ["invite", "received"], state: ["f", "tab"] },
+  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "polls"], manual: "polls", tabs: ["invite", "received"], state: ["tab"] },
   tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "polls", state: ["t"] },
   bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab", "b", "dialog"], dialogs: ["shareOverlay", "importOverlay"], buttons: {
-    btnGoAlt:  { to: "friends", roles: ["user"] },
-    btnSubscribers: { to: "subscribers", roles: ["user"] },
+    btnFriends: { to: "friends", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
   baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder", "dialog"], dialogs: ["drawerOverlay", "tagsOverlay", "exportOverlay", "questionOverlay"], locks: [{ type: "base", id: "id", mode: "shared" }] },
-  logoEditor:    { path: "/logos/",                    access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["logoImportOverlay", "previewOverlay"] },
+  logoEditor:    { path: "/logos/",                    access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab", "dialog"], dialogs: ["logoImportOverlay", "previewOverlay"], buttons: {
+    btnFriends: { to: "friends", roles: ["user"] },
+  } },
   logoText:      { path: "/logos/editor/text/",        access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
   logoDraw:      { path: "/logos/editor/draw/",        access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },
   logoImage:     { path: "/logos/editor/image/",       access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", minViewportWidth: 700, deviceGuard: { formFactors: ["tablet", "desktop"] }, state: ["id", "dialog"], dialogs: ["previewOverlay"], locks: [{ type: "logo", id: "id" }] },

@@ -24,6 +24,14 @@ test("są strony z przyciskami (games, bases, manual, gameSettings)", () => {
   for (const id of ["games", "bases", "manual", "gameSettings"]) assert.ok(PAGES[id].buttons, id);
 });
 
+test("skróty Znajomi i Subskrybenci są tylko na stronach współdzielenia", () => {
+  const pagesWith = (target) => Object.entries(PAGES)
+    .filter(([, page]) => Object.values(page.buttons || {}).some((spec) => spec.to === target))
+    .map(([id]) => id).sort();
+  assert.deepEqual(pagesWith("friends"), ["bases", "control", "games", "logoEditor", "polls"]);
+  assert.deepEqual(pagesWith("subscribers"), ["games", "polls"]);
+});
+
 test("wymagania szerokości stron są jawne i odróżniają edytory od Control", () => {
   assert.equal(PAGES.logoText.minViewportWidth, 700);
   assert.equal(PAGES.logoDraw.minViewportWidth, 700);

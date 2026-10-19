@@ -63,7 +63,7 @@ const btnShare = document.getElementById("btnShare");
 const btnDuplicate = document.getElementById("btnDuplicate");
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
-const btnGoAlt = document.getElementById("btnGoAlt");
+const btnFriends = document.getElementById("btnFriends");
 const altBadgeEl = document.getElementById("altBadge");
 
 // Modal nazwy
@@ -1524,7 +1524,7 @@ async function refreshAltBadge() {
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
     const n = Number(row?.friends_pending || 0);
-    if (!altBadgeEl || !btnGoAlt) return;
+    if (!altBadgeEl || !btnFriends) return;
     altBadgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
   } catch {}
 }

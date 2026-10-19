@@ -33,7 +33,7 @@ test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ 
 test("zalogowany: Bazy → Znajomi → Bazy oraz powrót do gier", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   await page.goto("/bases/", { waitUntil: "networkidle" });
-  await page.locator("#btnGoAlt").click();
+  await page.locator("#btnFriends").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/friends/");
   expect(new URL(page.url()).searchParams.get("ret")).toBe("/bases/");
   // Adres zmienia się przed wykonaniem modułu strony — „Wstecz” podpina
@@ -167,10 +167,9 @@ for (const [device, viewport] of Object.entries(VIEWPORTS)) {
     await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
     const origins = [
       ["/games/", ["btnFriends", "btnSubscribers"]],
-      ["/bases/", ["btnGoAlt", "btnSubscribers"]],
+      ["/bases/", ["btnFriends"]],
+      ["/logos/", ["btnFriends"]],
       ["/polls/", ["btnFriends", "btnSubscribers"]],
-      ["/friends/", ["btnSubscribers"]],
-      ["/subscribers/", ["btnFriends"]],
       ...device === "desktop" ? [["/control/", ["btnFriends"]]] : [],
     ];
     for (const [source, ids] of origins) for (const id of ids) {
