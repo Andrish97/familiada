@@ -5,6 +5,8 @@ const els = {};
 let config = null;
 let initialized = false;
 let dirty = false;
+let sharedDirty = false;
+let categoryDirty = false;
 let sharedEditorLanguage = "pl";
 let lastFrameKey = "";
 let deviceReadyPromise = null;
@@ -790,19 +792,31 @@ function localizeFixture(source, language) {
   return fixture;
 }
 function setStatus(message) { els.status.textContent = message; }
+function markDirty(scope) {
+  if (scope === "shared" || scope === "all") sharedDirty = true;
+  if (scope === "category" || scope === "all") categoryDirty = true;
+  dirty = sharedDirty || categoryDirty;
+  updateDirtyIndicators();
+}
+function clearDirty() {
+  sharedDirty = false;
+  categoryDirty = false;
+  dirty = false;
+  updateDirtyIndicators();
+}
 function updateDirtyIndicators() {
   const states = [
-    ["homepageShotSharedTabDirty", "homepageShotSharedSaveDirty", "homepageShotSaveAll", dirty],
-    ["homepageShotCategoryTabDirty", "homepageShotViewSaveDirty", "homepageShotSaveAll", dirty],
+    ["homepageShotSharedTabDirty", sharedDirty],
+    ["homepageShotCategoryTabDirty", categoryDirty],
   ];
-  for (const [tabId, buttonLabelId, buttonId, hasChanges] of states) {
+  for (const [tabId, hasChanges] of states) {
     const tabIndicator = byId(tabId);
-    const buttonIndicator = byId(buttonLabelId);
-    const button = byId(buttonId);
     if (tabIndicator) tabIndicator.hidden = !hasChanges;
-    if (buttonIndicator) buttonIndicator.hidden = !hasChanges;
-    if (button) button.dataset.unsaved = String(hasChanges);
   }
+  const buttonIndicator = byId("homepageShotSharedSaveDirty");
+  if (buttonIndicator) buttonIndicator.hidden = !dirty;
+  const button = byId("homepageShotSaveAll");
+  if (button) button.dataset.unsaved = String(dirty);
 }
 function escapeHtml(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
@@ -1612,8 +1626,7 @@ async function importConfigJson(file) {
   }
   config.qrUrl = String(imported.languages.pl.shared.qrUrl || config.qrUrl || "");
   byId("homepageShotQrUrl").value = config.qrUrl;
-  dirty = true;
-  updateDirtyIndicators();
+  markDirty("all");
   renderSharedEditor();
   updateEditor();
   setStatus("Zaimportowano dane do edycji. Zapisz wszystkie dane, aby je zachować.");
@@ -1799,8 +1812,7 @@ function syncFieldsToJson() {
 }
 
 function scheduleFixtureSave() {
-  dirty = true;
-  updateDirtyIndicators();
+  markDirty("category");
   setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
   clearTimeout(previewTimer);
   previewTimer = setTimeout(async () => {
@@ -1839,15 +1851,15 @@ async function saveAllEditors() {
   try {
     config.qrUrl = byId("homepageShotQrUrl").value.trim();
     await saveConfig();
-    dirty = false;
-    updateDirtyIndicators();
+    clearDirty();
     renderSharedEditor();
     renderEditorFields(langFixture(currentScene()));
     await loadScenePreview(currentScene(), true);
     setStatus("Wszystkie dane zapisane.");
     return true;
   } catch (error) {
-    dirty = true;
+    // Zachowaj rozdział wskaźników, jeśli zapis nie powiedzie się.
+    dirty = sharedDirty || categoryDirty;
     updateDirtyIndicators();
     setStatus(`Nie udało się zapisać zmian: ${error.message}`);
     return false;
@@ -1900,8 +1912,7 @@ async function importResourceFile(file, type) {
     selection.resourceIds ||= [];
     selection.resourceIds.push(resource.id);
   }
-  dirty = true;
-  updateDirtyIndicators();
+  markDirty("all");
   renderResourceList(language);
   renderEditorFields(langFixture(currentScene()));
   setStatus(`${resource.name} dodano do listy zasobów. Zapisz wszystkie dane, aby zachować zmianę.`);
@@ -2173,8 +2184,7 @@ export async function initHomepageScreenshots() {
     els.fields.addEventListener("input", syncFieldsToJson);
     byId("homepageShotQrUrl").addEventListener("change", async () => {
       config.qrUrl = byId("homepageShotQrUrl").value.trim();
-      dirty = true;
-      updateDirtyIndicators();
+      markDirty("category");
       if (currentScene().id === "poll-share") await loadScenePreview(currentScene(), true);
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
@@ -2214,8 +2224,7 @@ export async function initHomepageScreenshots() {
         if (selection.resourceId === id) selection.resourceId = "";
         if (Array.isArray(selection.resourceIds)) selection.resourceIds = selection.resourceIds.filter(value => value !== id);
       }
-      dirty = true;
-      updateDirtyIndicators();
+      markDirty("all");
       renderResourceList(language);
       updateEditor();
       setStatus("Zasób usunięty z listy. Zapisz wszystkie dane, aby zachować zmianę.");
@@ -2242,8 +2251,7 @@ export async function initHomepageScreenshots() {
           selection.resourceId = selection.resourceIds[0] || "";
         }
       }
-      dirty = true;
-      updateDirtyIndicators();
+      markDirty("category");
       updateEditor();
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
@@ -2258,17 +2266,15 @@ export async function initHomepageScreenshots() {
       if (target < 0 || target >= ids.length) return;
       [ids[index], ids[target]] = [ids[target], ids[index]];
       if (isGames) selection.resourceId = ids.find(id => (selection.resourceIds || []).includes(id)) || "";
-      dirty = true;
-      updateDirtyIndicators();
+      markDirty("category");
       updateEditor();
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
     byId("homepageShotSharedFields").addEventListener("input", () => {
-      dirty = true;
-      updateDirtyIndicators();
+      markDirty("shared");
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
-    byId("homepageShotSharedFields").addEventListener("change", () => { dirty = true; updateDirtyIndicators(); });
+    byId("homepageShotSharedFields").addEventListener("change", () => markDirty("shared"));
     byId("homepageShotSharedFields").addEventListener("click", event => {
       const button = event.target.closest("[data-shared-action]");
       if (!button) return;
@@ -2299,8 +2305,7 @@ export async function initHomepageScreenshots() {
         default: return;
       }
       renderSharedEditor(shared);
-      dirty = true;
-      updateDirtyIndicators();
+      markDirty("shared");
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
     byId("homepageShotCategoryActions").addEventListener("change", event => {
@@ -2335,7 +2340,6 @@ export async function initHomepageScreenshots() {
       config.localeFixtures[currentLanguage()]["poll-share-actions"] = fixture.pollRecipients;
       renderEditorFields(fixture);
       els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
-      dirty = true;
       scheduleFixtureSave();
     });
     byId("homepageShotPrevious").addEventListener("click", () => moveScene(-1));
