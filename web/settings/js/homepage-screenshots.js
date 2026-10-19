@@ -90,6 +90,8 @@ function renderSceneList() {
 
 function updateEditor() {
   const scene = currentScene();
+  const qrToolbar = byId("homepageShotQrToolbar");
+  if (qrToolbar) qrToolbar.hidden = scene.id !== "poll-share";
   languageSelectUI?.setValue(currentLanguage(), { silent: true });
   sceneSelectUI?.setValue(scene.id, { silent: true });
   editorSceneId = scene.id;
