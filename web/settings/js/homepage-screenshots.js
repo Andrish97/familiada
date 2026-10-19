@@ -222,8 +222,11 @@ function langFixture(scene, language = currentLanguage()) {
     const base = selectedResource(scene.id, language, "base");
     const data = base?.data || {};
     fixture.base = base?.name || "";
-    fixture.folders = (data.categories || []).map(item => item.name).filter(Boolean);
-    fixture.questions = (data.questions || []).map(item => item.payload?.text || item.text).filter(Boolean);
+    fixture.folders = Array.isArray(data.categories) ? data.categories : [];
+    fixture.questions = Array.isArray(data.questions) ? data.questions : [];
+    fixture.baseTags = Array.isArray(data.tags) ? data.tags : [];
+    fixture.questionTags = Array.isArray(data.question_tags) ? data.question_tags : [];
+    fixture.categoryTags = Array.isArray(data.category_tags) ? data.category_tags : [];
   }
   if (scene.id === "logo-draw") {
     const logo = selectedResource(scene.id, language, "logo");
@@ -760,7 +763,7 @@ function readSharedEditor() {
 function sharedKeysForScene(sceneId) {
   if (sceneId === "games") return ["games", "gameStatuses"];
   if (sceneId === "bases") return ["bases"];
-  if (sceneId === "base-explorer") return ["base", "folders", "questions"];
+  if (sceneId === "base-explorer") return ["base", "folders", "questions", "baseTags", "questionTags", "categoryTags"];
   if (sceneId === "logos") return ["logos"];
   if (sceneId === "logo-draw") return ["logo", "logoData", "logoFile"];
   if (sceneId === "game-editor") return ["game", "question", "answers", "points", "gameQuestions", "activeQuestionIndex"];
@@ -1046,11 +1049,57 @@ function waitForFrameReady(frame, timeout) {
   });
 }
 
+async function normalizeScreenshotTopbar(doc, language, icon, hydrateIcons) {
+  const topbar = doc.querySelector("header.topbar");
+  if (!topbar) return;
+
+  const username = config.sharedFixtures?.[language]?.username || (language === "en" ? "Jan Kowalski" : language === "uk" ? "Ян Ковальський" : "Jan Kowalski");
+  const labels = language === "en" ? { language: "Language", account: "Account settings", logout: "Sign out" }
+    : language === "uk" ? { language: "Мова", account: "Налаштування облікового запису", logout: "Вийти" }
+      : { language: "Język", account: "Ustawienia konta", logout: "Wyloguj" };
+
+  const languageSection = topbar.querySelector(".topbar-section-3");
+  if (languageSection) {
+    let switcher = languageSection.querySelector(".lang-switcher");
+    if (!switcher) {
+      switcher = doc.createElement("div");
+      switcher.className = "lang-switcher";
+      languageSection.prepend(switcher);
+    }
+    const flag = ({ pl: "flag-pl", en: "lang-en", uk: "flag-ua" })[language] || "flag-pl";
+    switcher.innerHTML = `<button type="button" class="btn lang-btn" aria-label="${escapeHtml(labels.language)}" title="${escapeHtml(labels.language)}">${icon(flag)}</button>`;
+  }
+
+  const who = topbar.querySelector("#who, #whoStatic");
+  if (who) {
+    who.className = "who account-btn btn";
+    who.setAttribute("role", "button");
+    who.setAttribute("aria-haspopup", "menu");
+    who.setAttribute("aria-expanded", "false");
+    who.tabIndex = 0;
+    who.innerHTML = `<span class="account-who">${escapeHtml(username)}</span><span class="account-chevron">${icon("caret-down")}</span>`;
+    topbar.querySelector("#topbarAccountMenu")?.remove();
+    const menu = doc.createElement("div");
+    menu.id = "topbarAccountMenu";
+    menu.className = "account-menu";
+    menu.setAttribute("role", "menu");
+    menu.hidden = true;
+    menu.innerHTML = `<button class="btn account-menu-item" type="button" role="menuitem">${icon("settings")} ${escapeHtml(labels.account)}</button><button class="btn account-menu-item" type="button" role="menuitem">${icon("close")} ${escapeHtml(labels.logout)}</button>`;
+    who.after(menu);
+  }
+
+  // Podglądy pokazują stan zalogowany; nie dublujemy go przyciskiem logowania.
+  topbar.querySelectorAll("#btnLogout, #btnLogin, .auth-entry").forEach(button => { button.style.display = "none"; });
+  await hydrateIcons(doc);
+}
+
 async function applyFixtureToFrame(scene, fixture) {
   const frame = els.frame;
   const doc = frame.contentDocument;
   if (!doc?.body) throw new Error("brak treści widoku");
   await translateFrame(doc, currentLanguage());
+  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T14353");
+  await normalizeScreenshotTopbar(doc, currentLanguage(), icon, hydrateIcons);
   const footerCopy = doc.querySelector('[data-i18n="common.footer.left"]');
   if (footerCopy) footerCopy.textContent = footerCopy.textContent.replace(/©\s*(?:\{?year\}?|\d{4})/i, `© ${new Date().getFullYear()}`);
   doc.documentElement.lang = currentLanguage();
@@ -1065,7 +1114,7 @@ async function applyFixtureToFrame(scene, fixture) {
   doc.documentElement.classList.remove("page-loading");
   doc.querySelectorAll("[data-skel-step]").forEach(node => node.classList.add("skel-step-ready"));
   const requiredByScene = {
-    games: ["#grid"], "game-editor": ["#qList", "#aList", "#qText"], bases: ["#mineGrid", "#btnBrowse", "#btnShare", "#btnDuplicate", "#btnExport", "#btnImport", ".footer"], "base-explorer": ["#tree", "#list"],
+    games: ["#grid"], "game-editor": ["#qList", "#aList", "#qText"], bases: ["#mineGrid", "#btnBrowse", "#btnShare", "#btnDuplicate", "#btnExport", "#btnImport", ".footer"], "base-explorer": ["#toolbar", "#tree", "#list", ".footer"],
     friends: ["#contactsReceived"], subscribers: ["#contactsReceived"], tasks: ["#tasksHost"], "poll-share": ["#cardMain", "#secShare", "#subsGrid"],
     "poll-vote-mobile": ["#qtext", "#alist"], "poll-results": ["#cardMain", "#resultsList"],
     appearance: ["#gsContentInner"], sound: ["#gsContentInner"], logos: ["#grid"], "logo-draw": ["#drawStage"],
@@ -1073,7 +1122,7 @@ async function applyFixtureToFrame(scene, fixture) {
   }[scene.id] || [];
   for (const selector of requiredByScene) if (!doc.querySelector(selector)) throw new Error(`brakuje elementu ${selector} na widoku`);
   const who = doc.querySelector("#who, #whoStatic");
-  if (who) who.textContent = config.sharedFixtures?.[currentLanguage()]?.username || "Jan Kowalski";
+  if (who && !who.classList.contains("account-btn")) who.textContent = config.sharedFixtures?.[currentLanguage()]?.username || (currentLanguage() === "en" ? "Jan Kowalski" : currentLanguage() === "uk" ? "Ян Ковальський" : "Jan Kowalski");
 
   if (["host-round", "display-round", "main-display"].includes(scene.id)) {
     await prepareDeviceScene(scene, fixture);
@@ -1085,28 +1134,25 @@ async function applyFixtureToFrame(scene, fixture) {
     doc.body.dataset.fixtureReady = "true";
     return;
   }
-  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T14353");
-
   const grid = doc.getElementById("grid");
   if (scene.id === "games") {
     const language = currentLanguage();
     const words = language === "en" ? {
       hint: "Select a game to use its actions. Double-click a game name to rename it.", search: "Search…", filter: "All statuses",
       updated: "Recently updated", created: "Recently added", byName: "Name A–Z", draft: "DRAFT", ready: "Ready", open: "OPEN", stopped: "STOPPED",
-      account: "John Smith", community: "Community games", logo: "Logos", bases: "Question banks", friends: "Friends",
-      connect: "Connect a device", subscribers: "Subscribers", tasks: "Tasks", more: "More", logout: "Sign out",
+      community: "Community games", logo: "Logos", bases: "Question banks", friends: "Friends",
+      connect: "Connect a device", subscribers: "Subscribers", tasks: "Tasks", more: "More",
     } : language === "uk" ? {
       hint: "Виберіть гру, щоб скористатися її діями. Двічі натисніть назву, щоб перейменувати.", search: "Пошук…", filter: "Усі стани",
       updated: "Нещодавно змінені", created: "Нещодавно додані", byName: "Назва А–Я", draft: "ЧЕРНЕТКА", ready: "Готова", open: "ВІДКРИТА", stopped: "ЗУПИНЕНА",
-      account: "Іван Петренко", community: "Ігри спільноти", logo: "Логотипи", bases: "Бази запитань", friends: "Друзі",
-      connect: "Підключити пристрій", subscribers: "Підписники", tasks: "Завдання", more: "Ще", logout: "Вийти",
+      community: "Ігри спільноти", logo: "Логотипи", bases: "Бази запитань", friends: "Друзі",
+      connect: "Підключити пристрій", subscribers: "Підписники", tasks: "Завдання", more: "Ще",
     } : {
       hint: "Zaznacz grę, aby włączyć jej akcje. Dwukrotne kliknięcie nazwy pozwala ją zmienić.", search: "Szukaj…", filter: "Wszystkie",
       updated: "Ostatnio zmienione", created: "Najnowsze", byName: "Nazwa A–Z", draft: "Szkic", ready: "Gotowe", open: "OTWARTA", stopped: "ZATRZYMANA",
-      account: "Jan Kowalski", community: "Gry Społeczności", logo: "Logo", bases: "Bazy pytań", friends: "Znajomi",
-      connect: "Podłącz urządzenie", subscribers: "Subskrybenci", tasks: "Zadania", more: "Więcej", logout: "Wyloguj",
+      community: "Gry Społeczności", logo: "Logo", bases: "Bazy pytań", friends: "Znajomi",
+      connect: "Podłącz urządzenie", subscribers: "Subskrybenci", tasks: "Zadania", more: "Więcej",
     };
-    words.account = config.sharedFixtures?.[language]?.username || words.account;
     const headingHint = doc.getElementById("hint");
     if (headingHint) headingHint.textContent = words.hint;
 
@@ -1116,27 +1162,6 @@ async function applyFixtureToFrame(scene, fixture) {
       const button = doc.getElementById(id);
       const label = button?.querySelector("[data-i18n]");
       if (label) label.innerHTML = `${icon(iconName)} ${escapeHtml(words[id === "btnMarketplace" ? "community" : id === "btnLogoEditor" ? "logo" : id === "btnBases" ? "bases" : id === "btnFriends" ? "friends" : id === "btnConnectDevice" ? "connect" : id === "btnSubscribers" ? "subscribers" : "tasks"])}`;
-    }
-    const section3 = doc.querySelector(".topbar-section-3");
-    if (section3) {
-      let lang = section3.querySelector(".lang-switcher");
-      if (!lang) { lang = doc.createElement("div"); lang.className = "lang-switcher"; section3.prepend(lang); }
-      const flag = { pl: "flag-pl", en: "lang-en", uk: "flag-ua" }[language] || "flag-pl";
-      const languageLabel = language === "en" ? "Language" : language === "uk" ? "Мова" : "Język";
-      lang.innerHTML = `<button type="button" class="btn lang-btn" aria-label="${languageLabel}">${icon(flag)}</button>`;
-    }
-    const login = doc.getElementById("btnLogout");
-    if (login) login.style.display = "none";
-    const who = doc.getElementById("whoStatic");
-    if (who) {
-      who.className = "who account-btn btn";
-      who.innerHTML = `<span class="account-who">${escapeHtml(words.account)}</span><span class="account-chevron">${icon("caret-down")}</span>`;
-      const accountMenu = doc.createElement("div");
-      accountMenu.id = "topbarAccountMenu";
-      accountMenu.className = "account-menu";
-      accountMenu.hidden = true;
-      accountMenu.innerHTML = `<button class="btn account-menu-item" type="button">${icon("settings")} ${language === "pl" ? "Ustawienia konta" : language === "en" ? "Account settings" : "Налаштування облікового запису"}</button><button class="btn account-menu-item" type="button">${icon("logout")} ${escapeHtml(words.logout)}</button>`;
-      who.after(accountMenu);
     }
     // Ukaż komplet nawigacji; ten sam układ priorytetów co na żywej stronie
     // sam schowa najmniej ważne przyciski do „Więcej” tylko przy braku miejsca.
@@ -1322,13 +1347,93 @@ async function applyFixtureToFrame(scene, fixture) {
     }
     await hydrateIcons(doc);
   } else if (scene.id === "base-explorer") {
-    setText(doc, "baseName", fixture.base);
+    const language = currentLanguage();
+    const strings = await getStrings(language, {
+      search: "baseExplorer.search.placeholder", root: "baseExplorer.tree.root", folders: "baseExplorer.tree.folders", emptyFolders: "baseExplorer.tree.empty",
+      tags: "baseExplorer.tags.header", metaTags: "baseExplorer.tags.metaHeader", addTag: "baseExplorer.tags.addTag", emptyTags: "baseExplorer.tags.empty",
+      prepared: "baseExplorer.meta.prepared", pollPoints: "baseExplorer.meta.pollPoints", pollText: "baseExplorer.meta.pollText",
+      number: "baseExplorer.list.colNumber", name: "baseExplorer.list.colName", type: "baseExplorer.list.colType", date: "baseExplorer.list.colDate", info: "baseExplorer.list.colInfo",
+      folder: "baseExplorer.list.folderType", question: "baseExplorer.list.questionType", folderCount: "baseExplorer.list.folderCount", answerCount: "baseExplorer.list.answerCount", emptyList: "baseExplorer.list.empty",
+      groupCreate: "baseExplorer.toolbar.groupCreate", newFolder: "baseExplorer.toolbar.newFolder", newQuestion: "baseExplorer.toolbar.newQuestion",
+      groupEdit: "baseExplorer.toolbar.groupEdit", editQuestion: "baseExplorer.toolbar.editQuestion", editTags: "baseExplorer.toolbar.editTags", rename: "baseExplorer.toolbar.rename", delete: "baseExplorer.toolbar.delete",
+      groupClipboard: "baseExplorer.toolbar.groupClipboard", copy: "baseExplorer.toolbar.copy", cut: "baseExplorer.toolbar.cut", paste: "baseExplorer.toolbar.paste", duplicate: "baseExplorer.toolbar.duplicate",
+      groupGame: "baseExplorer.toolbar.groupGame", createGame: "baseExplorer.toolbar.createGame", groupView: "baseExplorer.toolbar.groupView", refresh: "baseExplorer.toolbar.refreshView", searchByName: "common.searchByName",
+      dash: "baseExplorer.common.dash", defaultFolder: "baseExplorer.defaults.folder", defaultQuestion: "baseExplorer.defaults.question", defaultTag: "baseExplorer.defaults.tag",
+    });
+    const baseName = fixture.base || strings.dash;
+    setText(doc, "baseName", baseName);
+
+    const actions = [
+      ["newFolder", "folder-plus", strings.newFolder], ["newQuestion", "file-plus", strings.newQuestion],
+      ["editQuestion", "edit-paper", strings.editQuestion], ["editTags", "tag", strings.editTags], ["rename", "pencil", strings.rename], ["delete", "trash", strings.delete],
+      ["copy", "copy", strings.copy], ["cut", "cut", strings.cut], ["paste", "paste", strings.paste], ["duplicate", "duplicate", strings.duplicate],
+      ["createGame", "gamepad", strings.createGame], ["refreshView", "refresh", strings.refresh],
+    ];
+    const disabled = new Set(["editQuestion", "editTags", "rename", "delete", "copy", "cut", "paste", "duplicate", "createGame"]);
+    const toolbar = doc.getElementById("toolbar");
+    if (toolbar) {
+      const groups = [["groupCreate", actions.slice(0, 2)], ["groupEdit", actions.slice(2, 6)], ["groupClipboard", actions.slice(6, 10)], ["groupGame", actions.slice(10, 11)], ["groupView", actions.slice(11)]];
+      toolbar.innerHTML = `<div class="search-row"><div class="searchBox" id="searchBox"><div id="searchChips" class="searchChips"></div><input id="searchText" class="searchText" placeholder="${escapeHtml(strings.search)}"></div><button id="searchSubmitBtn" class="btn search-submit" type="button" title="${escapeHtml(strings.searchByName)}" aria-label="${escapeHtml(strings.searchByName)}">${icon("search")}</button></div><div class="toolbar-btns-row"><button id="btnDrawerToggle" class="tbBtn mobile-only" type="button" aria-label="${escapeHtml(strings.folders)}" aria-expanded="false" aria-controls="explorerLeft">${icon("hamburger", { className: "tbIco" })}</button><div class="tbSep mobile-only" aria-hidden="true"></div>${groups.map(([label, buttons]) => `<div class="tbGroup" role="group" aria-label="${escapeHtml(strings[label])}">${buttons.map(([act, ico, title]) => `<button class="tbBtn${act === "createGame" ? " primary" : act === "delete" ? " danger" : ""}" type="button" data-act="${act}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}" ${!fixture.base || disabled.has(act) ? "disabled" : ""}>${icon(ico, { className: "tbIco" })}</button>`).join("")}</div>${label === "groupView" ? "" : `<div class="tbSep" aria-hidden="true"></div>`}`).join("")}</div>`;
+    }
+
+    const categories = Array.isArray(fixture.folders) ? fixture.folders : [];
+    const questions = Array.isArray(fixture.questions) ? fixture.questions : [];
+    const tags = Array.isArray(fixture.baseTags) ? fixture.baseTags : [];
+    const categoryByParent = new Map();
+    categories.forEach(category => {
+      const parent = category.parent_id || null;
+      if (!categoryByParent.has(parent)) categoryByParent.set(parent, []);
+      categoryByParent.get(parent).push(category);
+    });
+    for (const rows of categoryByParent.values()) rows.sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
+    const topCategories = categoryByParent.get(null) || [];
     const tree = doc.getElementById("tree");
-    if (tree) tree.innerHTML = `<button class="row tree-row is-selected" data-kind="cat"><span class="col-main"><span class="title-text">Wszystkie pytania</span></span><span class="col-num">12</span></button>${fixture.folders.map((folder, i) => `<button class="row tree-row" data-kind="cat"><span class="col-main"><span class="title-text">${escapeHtml(folder)}</span></span><span class="col-num">${[4,5,3][i] || 2}</span></button>`).join("")}`;
-    setText(doc, "breadcrumbs", `${fixture.base} / Wszystkie pytania`);
+    if (tree) tree.innerHTML = `<div style="opacity:.75;margin-bottom:6px;">${escapeHtml(strings.folders)}</div><div class="treeList"><div class="row tree-row" data-kind="root" style="cursor:pointer"><div class="col-main" style="padding-left:6px;display:flex;align-items:center;gap:6px;font-weight:700"><button type="button" class="tree-toggle" aria-label="${escapeHtml(strings.folders)}" style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;opacity:.9">${topCategories.length ? icon("caret-down") : ""}</button><div class="title-line"><span class="title-text">${icon("home", { className: "list-ico" })} ${escapeHtml(strings.root)}</span></div></div></div>${topCategories.map(category => {
+      const children = categoryByParent.get(category.id) || [];
+      return `<div class="row tree-row" data-kind="cat" data-id="${escapeHtml(category.id)}" draggable="true" style="cursor:pointer"><div class="col-main" style="padding-left:6px;display:flex;align-items:center;gap:6px"><button type="button" class="tree-toggle" aria-label="${escapeHtml(strings.folders)}" style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;opacity:.9">${children.length ? icon("caret-right") : ""}</button><div class="title-line"><span class="title-text">${icon("folder", { className: "list-ico" })} ${escapeHtml(category.name || strings.defaultFolder)}</span></div></div></div>`;
+    }).join("")}${topCategories.length ? "" : `<div style="opacity:.75;padding:6px 8px;">${escapeHtml(strings.emptyFolders)}</div>`}</div>`;
+
+    const meta = [ ["prepared", strings.prepared, "rgba(77, 163, 255, .95)"], ["poll_points", strings.pollPoints, "rgba(255, 200, 77, .95)"], ["poll_text", strings.pollText, "rgba(160, 160, 160, .95)"] ];
+    const matched = doc.getElementById("matchedCategories");
+    if (matched) matched.innerHTML = `<div class="tagList"><div class="left-panel-heading">${escapeHtml(strings.metaTags)}</div>${meta.map(([id, label, color]) => `<div class="row" data-kind="meta" data-id="${id}" style="padding:6px 8px;display:flex;align-items:center;gap:8px;opacity:.85"><span class="meta-dot" style="--c:${color}"></span><div class="title-text">${escapeHtml(label)}</div></div>`).join("")}</div>`;
+    const tagRoot = doc.getElementById("tags");
+    if (tagRoot) tagRoot.innerHTML = `<div class="tagList"><div class="left-panel-heading">${escapeHtml(strings.tags)}</div><button id="btnAddTag" class="btn" type="button" style="width:100%;margin-top:10px" ${!fixture.base ? "disabled" : ""}>${icon("plus")} ${escapeHtml(strings.addTag)}</button>${tags.length ? tags.slice().sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0)).map(tag => `<div class="row" data-kind="tag" data-id="${escapeHtml(tag.id)}" style="padding:6px 8px;display:flex;align-items:center;gap:8px"><span class="tag-dot" style="background:${escapeHtml(tag.color || "rgba(255,255,255,.35)")}"></span><div class="title-text">#${escapeHtml(tag.name || strings.defaultTag)}</div></div>`).join("") : `<div class="left-panel-empty">${escapeHtml(strings.emptyTags)}</div>`}</div>`;
+
+    setText(doc, "breadcrumbs", strings.root);
     const list = doc.getElementById("list");
-    if (list) list.innerHTML = fixture.questions.map((question, i) => `<div class="row" data-kind="q"><span class="col-num">${String(i + 1).padStart(2, "0")}</span><div class="col-main"><span class="title-line"><span class="title-text">${escapeHtml(question)}</span></span></div><span class="col-type">Pytanie</span><span class="col-meta">Odpowiedzi: 6</span></div>`).join("");
+    if (list) {
+      const rootItems = [
+        ...topCategories.map(category => ({ kind: "cat", raw: category, name: category.name || strings.defaultFolder })),
+        ...questions.filter(question => !question.category_id).map(question => ({ kind: "q", raw: question, name: question.payload?.text || question.text || strings.defaultQuestion })),
+      ].sort((a, b) => a.name.localeCompare(b.name, language === "uk" ? "uk" : language, { sensitivity: "base" }));
+      const width = list.clientWidth || 900;
+      const typeWidth = 120, dateWidth = 140, infoWidth = 90;
+      const nameWidth = Math.max(160, width - 44 - typeWidth - dateWidth - infoWidth - 2);
+      const tagMap = new Map(tags.map(tag => [tag.id, tag]));
+      const tagLinks = [...(fixture.questionTags || []), ...(fixture.categoryTags || [])];
+      const dates = value => {
+        const dateValue = value?.updated_at || value?.created_at;
+        if (!dateValue || !Number.isFinite(Date.parse(dateValue))) return strings.dash;
+        const date = new Date(dateValue);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+      };
+      const dotsFor = (id, kind) => {
+        const links = tagLinks.filter(link => (kind === "q" ? link.question_id : link.category_id) === id);
+        const selectedTags = links.map(link => tagMap.get(link.tag_id)).filter(Boolean).slice(0, 3);
+        return selectedTags.length ? `<span class="tag-dots">${selectedTags.map(tag => `<span class="tag-dot" style="background:${escapeHtml(tag.color || "rgba(255,255,255,.35)")}" data-tip="#${escapeHtml(tag.name)}"></span>`).join("")}</span>` : "";
+      };
+      const directCount = category => categories.filter(item => (item.parent_id || null) === category.id).length + questions.filter(item => item.category_id === category.id).length;
+      const rows = rootItems.map((item, index) => {
+        const raw = item.raw;
+        const isFolder = item.kind === "cat";
+        const count = isFolder ? `${strings.folderCount}`.replace("{count}", directCount(raw)) : `${strings.answerCount}`.replace("{count}", Array.isArray(raw.payload?.answers) ? raw.payload.answers.length : 0);
+        const type = isFolder ? strings.folder : strings.question;
+        return `<tr class="row" draggable="true" data-kind="${item.kind}" data-id="${escapeHtml(raw.id)}"><td class="col-num">${index + 1}</td><td class="col-main"><div class="title-line"><span class="title-text">${isFolder ? icon("folder", { className: "list-ico" }) + " " : ""}${escapeHtml(item.name)}</span>${dotsFor(raw.id, item.kind)}</div></td><td class="col-type"><span style="opacity:.85">${escapeHtml(type)}</span></td><td class="col-date">${escapeHtml(dates(raw))}</td><td class="col-meta">${escapeHtml(count)}</td></tr>`;
+      }).join("");
+      list.innerHTML = rootItems.length ? `<table class="list-table"><colgroup><col style="width:44px"><col style="width:${nameWidth}px"><col style="width:${typeWidth}px"><col style="width:${dateWidth}px"><col style="width:${infoWidth}px"></colgroup><thead><tr class="list-head"><th class="h-num">${escapeHtml(strings.number)}</th><th class="h-main active" data-sort-key="name" data-dir="asc">${escapeHtml(strings.name)}${icon("caret-up", { className: "sort-caret" })}</th><th class="h-type" data-sort-key="type" data-dir="asc">${escapeHtml(strings.type)}</th><th class="h-date" data-sort-key="date" data-dir="asc">${escapeHtml(strings.date)}</th><th class="h-meta">${escapeHtml(strings.info)}</th></tr></thead><tbody>${rows}</tbody></table>` : `<div style="opacity:.75;padding:16px">${escapeHtml(strings.emptyList)}</div>`;
+    }
     doc.querySelector(".explorer")?.classList.add("skel-step-ready");
+    await hydrateIcons(doc);
   } else if (scene.id === "friends") {
     await paintPeople(doc, fixture);
   } else if (scene.id === "subscribers") {
