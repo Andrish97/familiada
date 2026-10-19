@@ -4,7 +4,7 @@
 
 ### 1) settings.familiada.online
 - `/` and `/index.html` internally serve `/settings/index.html` from Pages.
-- The installable panel runs at `/` with its own manifest identity and root scope. Its manifest, install icons, and service worker are stored under `/settings/` and explicitly served here; the worker grants `/` scope only to `/settings/sw.js`.
+- The installable panel runs at `/` with its own manifest identity and root scope. Its credentialed manifest is served at `/manifest-admin.webmanifest`; install icons and service worker are under `/settings/`. The worker grants `/` scope only to `/settings/sw.js`.
 - Panel assets are in `/settings/js/`, `/settings/css/`, `/settings/data/`; tools are in `/settings/tools/`. Shared assets retain their public paths.
 - Everything else is 404.
 - Admin API lives here: `/_admin_api/*` (Cloudflare Access).
