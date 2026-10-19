@@ -32,7 +32,7 @@ const FIELD_LABELS = {
   points: "Punkty odpowiedzi", bases: "Bazy na liście", base: "Nazwa bazy", folders: "Foldery bazy",
   questions: "Wpisy bazy", people: "Znajomi lub subskrybenci", tasks: "Zadania", poll: "Nazwa ankiety",
   question: "Pytanie ankiety", subscribers: "Zaproszeni subskrybenci", link: "Link do ankiety",
-  votesReceived: "Liczba głosów w statusie",
+  votesReceived: "Liczba głosów",
   teams: "Nazwy drużyn", revealed: "Odsłonięte odpowiedzi (numery)",
   scores: "Wyniki drużyn", crosses: "Iksy drużyn", bank: "Punkty na planszy", finale: "Pytania finału",
   logos: "Logo na liście", logo: "Nazwa logo", words: "Hasła na planszy",
@@ -470,7 +470,12 @@ function ensureResourceData(language = currentLanguage()) {
   };
   for (const [sceneId, selection] of Object.entries(views)) {
     if (["poll-share", "poll-vote-mobile", "poll-results"].includes(sceneId)) {
-      selection.resourceId = "";
+      const available = resources.filter(item => item.type === "game");
+      if (sceneId === "poll-share") {
+        if (!available.some(item => item.id === selection.resourceId)) selection.resourceId = available[0]?.id || "";
+      } else {
+        selection.resourceId = "";
+      }
       continue;
     }
     const expectedType = resourceTypeByScene[sceneId];
@@ -785,6 +790,7 @@ function renderResourceChoices(scene = currentScene()) {
     }
   } else {
     if (!resources.some(item => item.id === selection.resourceId)) selection.resourceId = "";
+    if (scene.id === "poll-share" && !selection.resourceId) selection.resourceId = resources[0]?.id || "";
     const options = resources.map(item => ({ value: item.id, label: item.name }));
     addSelect(spec.label || "Zasób", "resourceId", options, selection.resourceId);
     if (spec.question) {
@@ -862,7 +868,7 @@ function sharedKeysForScene(sceneId) {
   if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
   if (sceneId === "subscribers") return ["people"];
   if (sceneId === "friends") return ["people"];
-  if (sceneId === "poll-share") return ["poll", "pollType", "question", "subscribers", "subscriberStates", "pollRecipients"];
+  if (sceneId === "poll-share") return ["poll", "pollType", "question", "subscribers", "subscriberStates", "pollRecipients", "link"];
   if (sceneId === "poll-vote-mobile") return ["poll", "question", "answers"];
   if (sceneId === "poll-results") return ["poll", "question", "answers", "pollQuestions"];
   return [];
@@ -2079,7 +2085,7 @@ function readPollActions() {
     type: row.dataset.pollRecipientType,
     email: row.dataset.pollRecipientEmail,
     status: row.querySelector("[data-poll-action-status]:checked")?.value || "pending",
-    hidden: row.querySelector("[data-poll-action-hidden]")?.checked || false,
+    hidden: !row.querySelector("[data-poll-action-visible]")?.checked,
   }));
 }
 
@@ -2365,13 +2371,13 @@ function renderCategoryActions(fixture) {
   const language = currentLanguage();
   const words = language === "en" ? {
     subscribers: "Subscribers · shared list", friends: "Friends · shared list", hint: "Everyone comes from the shared lists. Choose each person's status and whether to hide them in this preview.",
-    hide: "Hide in preview", pending: "Awaiting response", opened: "Opened", done: "Voted", declined: "Declined",
+    hide: "Show in preview", pending: "Awaiting response", opened: "Opened", done: "Voted", declined: "Declined",
   } : language === "uk" ? {
     subscribers: "Підписники · спільний список", friends: "Друзі · спільний список", hint: "Усі люди взяті зі спільних списків. Виберіть статус і чи приховувати людину в цьому попередньому перегляді.",
-    hide: "Приховати в перегляді", pending: "Очікує відповіді", opened: "Відкрив", done: "Проголосував", declined: "Відхилив",
+    hide: "Показувати в перегляді", pending: "Очікує відповіді", opened: "Відкрив", done: "Проголосував", declined: "Відхилив",
   } : {
     subscribers: "Subskrybenci · lista wspólna", friends: "Znajomi · lista wspólna", hint: "Osoby pochodzą ze wspólnych list. Ustaw status i zdecyduj, czy ukryć osobę w tym podglądzie.",
-    hide: "Ukryj w podglądzie", pending: "Oczekuje na odpowiedź", opened: "Otworzył ankietę", done: "Oddał głos", declined: "Odrzucił",
+    hide: "Pokazuj w podglądzie", pending: "Oczekuje na odpowiedź", opened: "Otworzył ankietę", done: "Oddał głos", declined: "Odrzucił",
   };
   const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note"; note.textContent = words.hint; root.append(note);
   const recipients = fixture.pollRecipients || [];
@@ -2381,6 +2387,9 @@ function renderCategoryActions(fixture) {
     recipients.filter(recipient => recipient.type === type).forEach((recipient, index) => {
       const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row homepage-shot-poll-recipient-row";
       row.dataset.pollActionRow = ""; row.dataset.pollRecipientType = type; row.dataset.pollRecipientEmail = recipient.email;
+      const visibility = document.createElement("input"); visibility.type = "checkbox"; visibility.className = "homepage-shot-poll-recipient-visibility";
+      visibility.dataset.pollActionVisible = "true"; visibility.checked = !recipient.hidden; visibility.title = words.hide;
+      visibility.setAttribute("aria-label", words.hide);
       const identity = document.createElement("div"); identity.className = "homepage-shot-poll-recipient-identity";
       const value = document.createElement("strong"); value.textContent = recipient.username ? `${recipient.username} · ${recipient.email}` : recipient.email;
       identity.append(value);
@@ -2391,10 +2400,7 @@ function renderCategoryActions(fixture) {
         const glyphEl = document.createElement("span"); glyphEl.className = "homepage-shot-friend-status-icon"; glyphEl.setAttribute("aria-hidden", "true"); glyphEl.textContent = glyph;
         option.append(radio, glyphEl); statuses.append(option);
       }
-      const hideLabel = document.createElement("label"); hideLabel.className = "homepage-shot-poll-hide";
-      const hide = document.createElement("input"); hide.type = "checkbox"; hide.dataset.pollActionHidden = "true"; hide.checked = !!recipient.hidden;
-      const hideText = document.createElement("span"); hideText.textContent = words.hide;
-      hideLabel.append(hide, hideText); row.append(identity, statuses, hideLabel); rows.append(row);
+      row.append(visibility, identity, statuses); rows.append(row);
     });
     if (!rows.children.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = language === "en" ? "No entries in the shared list." : language === "uk" ? "У спільному списку немає записів." : "Brak wpisów na liście wspólnej."; rows.append(empty); }
     group.append(rows);
