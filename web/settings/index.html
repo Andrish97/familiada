@@ -79,25 +79,40 @@
   </header>
   <main class="wrap" data-skel-step>
     <section class="settings-panel homepage-screenshots-panel" id="homepageScreenshotsPanel" hidden>
-      <div class="settings-card">
+      <div class="settings-card homepage-shot-control-card">
         <div class="panel-head">
           <div class="panel-title">Zrzuty strony głównej</div>
           <div class="panel-sub">Przejrzyj przykładowe widoki po kolei, popraw dane i odśwież obrazy galerii.</div>
         </div>
         <div class="homepage-shot-toolbar homepage-shot-toolbar--global">
-          <div class="homepage-shot-choice homepage-shot-choice--scene"><span class="field-label">Kategoria</span><div class="ui-select homepage-shot-select" id="homepageShotSceneSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Kategoria"><span class="ui-select-label">—</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotScene" hidden aria-hidden="true" tabindex="-1"></select></div>
-          <div class="homepage-shot-choice"><span class="field-label">Język</span><div class="ui-select homepage-shot-select" id="homepageShotLanguageSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Język"><span class="ui-select-label">Polski</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotLanguage" hidden aria-hidden="true" tabindex="-1"><option value="pl">Polski</option><option value="en">English</option><option value="uk">Українська</option></select></div>
-          <button class="btn sm" id="homepageShotPrevious" type="button">Poprzednia kategoria</button>
-          <button class="btn sm" id="homepageShotNext" type="button">Następna kategoria</button>
-          <button class="btn sm" id="homepageShotSaveShared" type="button">Zapisz listę ogólną</button>
-          <button class="btn sm" id="homepageShotSave" type="button">Zapisz kategorię</button>
-          <button class="btn sm gold" id="homepageShotCaptureOne" type="button">Zrób ten zrzut</button>
-          <button class="btn sm gold" id="homepageShotCaptureAll" type="button">Odśwież wszystkie zrzuty</button>
+          <div class="homepage-shot-toolbar-main">
+            <div class="homepage-shot-choice homepage-shot-choice--scene"><span class="field-label">Widok</span><div class="ui-select homepage-shot-select" id="homepageShotSceneSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Widok"><span class="ui-select-label">—</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotScene" hidden aria-hidden="true" tabindex="-1"></select></div>
+            <div class="homepage-shot-choice homepage-shot-choice--language"><span class="field-label">Język</span><div class="ui-select homepage-shot-select" id="homepageShotLanguageSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Język"><span class="ui-select-label">Polski</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotLanguage" hidden aria-hidden="true" tabindex="-1"><option value="pl">Polski</option><option value="en">English</option><option value="uk">Українська</option></select></div>
+            <div class="homepage-shot-nav-actions" aria-label="Nawigacja między widokami">
+              <button class="btn sm" id="homepageShotPrevious" type="button" aria-label="Poprzedni widok">‹ <span>Poprzedni</span></button>
+              <button class="btn sm" id="homepageShotNext" type="button" aria-label="Następny widok"><span>Następny</span> ›</button>
+            </div>
+          </div>
+          <div class="homepage-shot-toolbar-actions">
+            <div class="homepage-shot-action-group" aria-label="Zapisywanie danych">
+              <span class="homepage-shot-action-label">Dane przykładowe</span>
+              <button class="btn sm" id="homepageShotSaveShared" type="button">Zapisz listę ogólną</button>
+              <button class="btn sm" id="homepageShotSave" type="button">Zapisz widok</button>
+            </div>
+            <div class="homepage-shot-action-group homepage-shot-action-group--capture" aria-label="Zrzuty strony głównej">
+              <span class="homepage-shot-action-label">Zrzuty</span>
+              <button class="btn sm gold" id="homepageShotCaptureOne" type="button">Zrób ten zrzut</button>
+              <button class="btn sm gold" id="homepageShotCaptureAll" type="button">Odśwież wszystkie zrzuty</button>
+            </div>
+          </div>
         </div>
+      </div>
+      <div class="homepage-shot-tabs-card" id="homepageShotTabsCard">
         <div class="homepage-shot-tabs" role="tablist" aria-label="Dane przykładowe">
-          <button class="btn sm homepage-shot-tab is-active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista ogólna</button>
-          <button class="btn sm homepage-shot-tab" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii</button>
+          <div class="homepage-shot-tab-slot is-active"><button class="homepage-shot-tab is-active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista ogólna</button></div>
+          <div class="homepage-shot-tab-slot"><button class="homepage-shot-tab" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii</button></div>
         </div>
+        <div class="homepage-shot-tabs-content">
         <section class="homepage-shot-tab-panel" id="homepageShotSharedPanel" role="tabpanel" aria-labelledby="homepageShotSharedTab">
           <p class="muted homepage-shot-tab-note">Tutaj zmieniasz wspólne przykłady. Kategorie korzystają z tych samych wpisów, a własne akcje i statusy są przypisane w danych danej kategorii.</p>
           <div id="homepageShotSharedFields" class="homepage-shot-shared-fields"></div>
@@ -128,6 +143,7 @@
           </div>
         </div>
         </section>
+        </div>
       </div>
     </section>
     <div class="settings-panel maintenance-panel" id="panelScreen" hidden>

@@ -436,6 +436,7 @@ function selectScreenshotTab(name) {
     ["homepageShotCategoryTab", "homepageShotCategoryPanel", !isShared],
   ]) {
     const tab = byId(tabId);
+    tab.closest(".homepage-shot-tab-slot")?.classList.toggle("is-active", active);
     tab.classList.toggle("is-active", active);
     tab.setAttribute("aria-selected", String(active));
     byId(panelId).hidden = !active;
@@ -1342,7 +1343,11 @@ export async function initHomepageScreenshots() {
       selectScreenshotTab(tab.dataset.shotTab);
     }));
     languageSelectUI = initUiSelect(languageSelect, {
-      options: [...els.language.options].map(option => ({ value: option.value, label: option.textContent })),
+      options: [...els.language.options].map(option => ({
+        value: option.value,
+        label: option.textContent,
+        icon: ({ pl: "flag-pl", en: "lang-en", uk: "flag-ua" })[option.value],
+      })),
       value: els.language.value,
       onChange: value => { els.language.value = value; els.language.dispatchEvent(new Event("change")); },
     });
