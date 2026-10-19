@@ -86,6 +86,14 @@ function langFixture(scene, language = currentLanguage()) {
   if (["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
     fixture.game = shared.gameName || fixture.game;
   }
+  if (scene.id === "control-finale" && shared.gameQuestions?.length) {
+    const selected = fixture.finale || [];
+    fixture.finale = selected.map((text, index) =>
+      shared.gameQuestions.find(question => question.text === text)?.text
+      || shared.gameQuestions[index % shared.gameQuestions.length].text
+      || text
+    );
+  }
   if (scene.id === "games") fixture.games = [shared.gameName, ...(shared.otherGames || fixture.games?.slice(1) || [])];
   if (scene.id === "tasks") fixture.tasks = (fixture.tasks || []).map((task, index) => ({ ...task, game: shared.otherGames?.[index % Math.max(1, shared.otherGames.length)] || shared.gameName }));
   if (["game-editor", "control-round", "host-round", "display-round"].includes(scene.id) && firstQuestion) {
@@ -325,12 +333,13 @@ function readSharedEditor() {
 function sharedKeysForScene(sceneId) {
   if (sceneId === "games") return ["games"];
   if (sceneId === "game-editor") return ["game", "question", "answers", "points", "gameQuestions"];
-  if (["appearance", "sound", "control-finale"].includes(sceneId)) return ["game"];
+  if (["appearance", "sound"].includes(sceneId)) return ["game"];
+  if (sceneId === "control-finale") return ["game", "finale"];
   if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
   if (sceneId === "subscribers") return ["people"];
   if (sceneId === "poll-share") return ["poll", "question", "subscribers", "subscriberStates", "pollRecipients"];
   if (sceneId === "poll-vote-mobile") return ["poll", "question", "answers"];
-  if (sceneId === "poll-results") return ["poll", "question", "answers"];
+  if (sceneId === "poll-results") return ["poll", "question", "answers", "pollQuestions"];
   return [];
 }
 function localizeFixture(source, language) {
@@ -394,27 +403,6 @@ function renderSceneList() {
 
 function updateEditor() {
   const scene = currentScene();
-  const sourceNote = byId("homepageShotSourceNote");
-  if (sourceNote) {
-    const sharedLabels = {
-      games: "nazwy gier z listy ogólnej",
-      "game-editor": "wybraną grę i jej pytania z listy ogólnej",
-      tasks: "nazwy gier z listy ogólnej",
-      appearance: "wybraną grę z listy ogólnej",
-      sound: "wybraną grę z listy ogólnej",
-      "control-round": "wybraną grę, pytanie i drużyny z listy ogólnej",
-      "control-finale": "wybraną grę z listy ogólnej",
-      "host-round": "wybraną grę, pytanie i drużyny z listy ogólnej",
-      "display-round": "wybraną grę, pytanie i drużyny z listy ogólnej",
-      subscribers: "aktywnych subskrybentów z listy ogólnej",
-      "poll-share": "nazwę ankiety i zaproszonych subskrybentów z listy ogólnej",
-      "poll-vote-mobile": "nazwę ankiety, pytanie i odpowiedzi z listy ogólnej",
-      "poll-results": "nazwę ankiety i pytania z listy ogólnej",
-    };
-    const source = sharedLabels[scene.id];
-    sourceNote.textContent = source ? `Źródło wspólnych danych: ${source}.` : "Ta kategoria korzysta z własnych danych przykładowych.";
-    sourceNote.dataset.shared = source ? "true" : "false";
-  }
   const qrToolbar = byId("homepageShotQrToolbar");
   if (qrToolbar) qrToolbar.hidden = scene.id !== "poll-share";
   if (!sharedDirty) renderSharedEditor(sharedFixture());
@@ -1021,6 +1009,12 @@ async function saveConfig() {
 function readEditorIntoConfig() {
   const scene = config.scenes.find(item => item.id === editorSceneId) || currentScene();
   const fixture = JSON.parse(els.fixture.value);
+  if (scene.id === "tasks") {
+    fixture.tasks = (fixture.tasks || []).map((task, index) => ({
+      ...task,
+      state: byId("homepageShotCategoryActions").querySelector(`[data-task-action-state="${index}"]`)?.value || task.state,
+    }));
+  }
   for (const key of sharedKeysForScene(scene.id)) delete fixture[key];
   config.localeFixtures ||= {};
   config.localeFixtures[editorLanguage] ||= {};
@@ -1040,10 +1034,12 @@ function readPollActions() {
 
 function renderEditorFields(fixture) {
   els.fields.replaceChildren();
+  const hasSharedData = renderSharedSourceData(currentScene(), fixture);
+  byId("homepageShotFieldsTitle").textContent = hasSharedData ? "Dane dodatkowe widoku" : "Dane widoku";
   renderCategoryActions(fixture);
   const sharedKeys = new Set(sharedKeysForScene(currentScene().id));
   for (const [key, value] of Object.entries(fixture)) {
-    if (key === "logoFile" || sharedKeys.has(key)) continue;
+    if (key === "logoFile" || key === "tasks" || sharedKeys.has(key)) continue;
     const wrapper = document.createElement("div"); wrapper.className = "homepage-shot-field";
     const label = document.createElement("label"); label.textContent = FIELD_LABELS[key] || key; label.htmlFor = `homepage-shot-field-${key}`;
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
@@ -1056,14 +1052,128 @@ function renderEditorFields(fixture) {
     if (input.tagName === "TEXTAREA") { input.rows = Array.isArray(value) ? Math.min(8, Math.max(3, value.length)) : 4; wrapper.classList.add("homepage-shot-field--wide"); }
     wrapper.append(label, input); els.fields.append(wrapper);
   }
+  const hasAdditionalData = els.fields.children.length > 0 || !byId("homepageShotCategoryActions").hidden;
+  byId("homepageShotFieldsTitle").hidden = !hasAdditionalData;
+}
+
+function renderSharedSourceData(scene, fixture) {
+  const section = byId("homepageShotSharedSource");
+  const root = byId("homepageShotSharedSourceFields");
+  root.replaceChildren();
+  const shared = sharedFixture(currentLanguage());
+  const entries = [];
+  const add = (label, value) => {
+    if (value === undefined || value === null || value === "" || (Array.isArray(value) && !value.length)) return;
+    entries.push({ label, value });
+  };
+  const gameName = shared.gameName || fixture.game;
+  const gameQuestions = shared.gameQuestions || [];
+  const pollQuestions = shared.pollQuestions || [];
+  const pollQuestion = pollQuestions[0];
+
+  switch (scene.id) {
+    case "games":
+      add("Gry", [shared.gameName, ...(shared.otherGames || [])].filter(Boolean));
+      break;
+    case "game-editor":
+      add("Gra", gameName);
+      add("Pytania, odpowiedzi i punkty", gameQuestions);
+      break;
+    case "appearance": case "sound": case "control-finale":
+      add("Gra", gameName);
+      if (scene.id === "control-finale") {
+        const finaleQuestions = (fixture.finale || []).map(text => gameQuestions.find(question => question.text === text) || { text, answers: [] });
+        add("Pytania finału", finaleQuestions);
+      }
+      break;
+    case "control-round": case "host-round": case "display-round":
+      add("Gra", gameName);
+      add("Pytanie, odpowiedzi i punkty", gameQuestions.slice(0, 1));
+      add("Drużyny", shared.teams);
+      break;
+    case "tasks":
+      add("Zadania i przypisane gry", (fixture.tasks || []).filter(task => task.game).map((task, index) => ({ text: `Zadanie ${index + 1} · ${task.game}`, answers: [] })));
+      break;
+    case "subscribers":
+      add("Subskrybenci", shared.subscribers);
+      break;
+    case "poll-share":
+      add("Ankieta", shared.pollName);
+      add("Pytania ankiety", pollQuestions);
+      add("Subskrybenci z listy ogólnej", fixture.subscribers || shared.subscribers);
+      break;
+    case "poll-vote-mobile":
+      add("Ankieta", shared.pollName);
+      add("Pytanie i odpowiedzi", pollQuestion ? [pollQuestion] : []);
+      break;
+    case "poll-results":
+      add("Ankieta", shared.pollName);
+      add("Pytania i wyniki", pollQuestions);
+      break;
+    default:
+      break;
+  }
+
+  section.hidden = entries.length === 0;
+  for (const entry of entries) {
+    const group = document.createElement("div"); group.className = "homepage-shot-reference-group";
+    const label = document.createElement("div"); label.className = "homepage-shot-reference-label"; label.textContent = entry.label;
+    group.append(label);
+    if (Array.isArray(entry.value) && entry.value.some(item => item && typeof item === "object")) {
+      const questions = document.createElement("div"); questions.className = "homepage-shot-reference-questions";
+      for (const [index, question] of entry.value.entries()) {
+        const item = document.createElement("div"); item.className = "homepage-shot-reference-question";
+        const heading = document.createElement("strong"); heading.textContent = question.text || `Pytanie ${index + 1}`; item.append(heading);
+        if (Array.isArray(question.answers)) {
+          const answers = document.createElement("ul");
+          for (const answer of question.answers) {
+            const row = document.createElement("li");
+            const points = answer.points ?? answer.votes;
+            row.textContent = `${answer.text}${points != null ? ` · ${points} ${answer.votes != null ? "głosów" : "pkt"}` : ""}`;
+            answers.append(row);
+          }
+          item.append(answers);
+        }
+        questions.append(item);
+      }
+      group.append(questions);
+    } else {
+      const list = document.createElement("ul");
+      const values = Array.isArray(entry.value) ? entry.value : [entry.value];
+      values.forEach(value => { const row = document.createElement("li"); row.textContent = String(value); list.append(row); });
+      group.append(list);
+    }
+    root.append(group);
+  }
+  return entries.length > 0;
 }
 
 function renderCategoryActions(fixture) {
   const root = byId("homepageShotCategoryActions");
   root.replaceChildren();
-  const visible = currentScene().id === "poll-share";
+  const sceneId = currentScene().id;
+  const visible = ["poll-share", "tasks"].includes(sceneId);
   root.hidden = !visible;
   if (!visible) return;
+  if (sceneId === "tasks") {
+    const group = sharedGroup(root, "Stan zadań");
+    const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
+    (fixture.tasks || []).forEach((task, index) => {
+      const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row";
+      const name = document.createElement("strong"); name.textContent = `Zadanie ${index + 1}`;
+      const statusField = document.createElement("label"); statusField.className = "homepage-shot-shared-field";
+      const statusLabel = document.createElement("span"); statusLabel.textContent = "Stan";
+      const status = document.createElement("select"); status.className = "inp"; status.dataset.taskActionState = String(index);
+      for (const [value, label] of [["pending", "Do wykonania"], ["done", "Wykonane"]]) {
+        const option = document.createElement("option"); option.value = value; option.textContent = label; status.append(option);
+      }
+      status.value = task.state === "done" ? "done" : "pending";
+      statusField.append(statusLabel, status);
+      row.append(name, statusField); rows.append(row);
+    });
+    group.append(rows);
+    return;
+  }
   const shared = sharedFixture(currentLanguage());
   const group = sharedGroup(root, "Zaproszeni subskrybenci");
   const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note";
@@ -1434,10 +1544,17 @@ export async function initHomepageScreenshots() {
       setStatus("Wspólne dane zmienione — zapisz albo przejdź dalej, aby je zachować.");
     });
     byId("homepageShotCategoryActions").addEventListener("change", event => {
-      if (!event.target.matches("[data-poll-action-status]")) return;
-      config.localeFixtures[currentLanguage()]["poll-share-actions"] = readPollActions();
-      els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
-      scheduleFixtureSave();
+      if (event.target.matches("[data-poll-action-status]")) {
+        config.localeFixtures[currentLanguage()]["poll-share-actions"] = readPollActions();
+        els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
+        scheduleFixtureSave();
+      } else if (event.target.matches("[data-task-action-state]")) {
+        const fixture = JSON.parse(els.fixture.value);
+        const index = Number(event.target.dataset.taskActionState);
+        if (fixture.tasks?.[index]) fixture.tasks[index].state = event.target.value;
+        els.fixture.value = JSON.stringify(fixture, null, 2);
+        scheduleFixtureSave();
+      }
     });
     byId("homepageShotCategoryActions").addEventListener("click", event => {
       const button = event.target.closest("[data-shared-action]");

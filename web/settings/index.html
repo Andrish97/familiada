@@ -128,10 +128,13 @@
           <label class="field-label" for="homepageShotQrUrl">Link dla kodu QR ankiety</label>
           <input class="inp homepage-shot-qr" id="homepageShotQrUrl" type="url" placeholder="Wklej adres mini strony, gdy będzie gotowy"/>
         </div>
-        <div class="homepage-shot-source-note" id="homepageShotSourceNote" aria-live="polite"></div>
         <div class="homepage-shot-workspace">
           <div class="homepage-shot-editor">
-            <div class="field-label">Przykładowe dane widoku</div>
+            <section class="homepage-shot-reference" id="homepageShotSharedSource" hidden>
+              <div class="field-label">Używane dane z listy ogólnej</div>
+              <div id="homepageShotSharedSourceFields" class="homepage-shot-reference-fields"></div>
+            </section>
+            <div class="field-label" id="homepageShotFieldsTitle">Dane dodatkowe widoku</div>
             <div id="homepageShotCategoryActions" hidden></div>
             <div id="homepageShotFields" class="homepage-shot-fields"></div>
             <textarea id="homepageShotFixture" hidden aria-hidden="true" tabindex="-1"></textarea>
