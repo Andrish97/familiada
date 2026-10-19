@@ -1150,7 +1150,7 @@ function sizeScenePreview(scene) {
   if (scene.id === "poll-vote-mobile") {
     const board = screenshotBoardSize();
     const boardScale = Math.min(1, Math.max(0.1, (availableWidth - 2) / board.width));
-    const bezel = 10, screenScale = (board.height - 2 * bezel) / scene.height;
+    const bezel = 12, screenScale = (board.height - 2 * bezel) / scene.height;
     const screenWidth = scene.width * screenScale;
     const screenLeft = (board.width - screenWidth) / 2;
     els.frameWrap.classList.add("is-phone");
@@ -1158,7 +1158,7 @@ function sizeScenePreview(scene) {
     els.frameWrap.style.height = `${board.height * boardScale}px`;
     els.frameWrap.style.setProperty("--screen-left", `${screenLeft * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-top", `${bezel * boardScale}px`);
-    els.frameWrap.style.setProperty("--screen-radius", `${42 * screenScale * boardScale}px`);
+    els.frameWrap.style.setProperty("--screen-radius", `${52 * screenScale * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-width", `${screenWidth * 0.323 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-height", `${scene.height * screenScale * 0.0427 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-radius", `${22 * screenScale * boardScale}px`);
@@ -2704,14 +2704,14 @@ async function captureScene(scene) {
 }
 
 function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900) {
-  const bezel = 10;
+  const bezel = 12;
   const screenScale = (outputHeight - 2 * bezel) / screenCanvas.height;
   const screenWidth = screenCanvas.width * screenScale;
   const screenHeight = screenCanvas.height * screenScale;
   const deviceWidth = screenWidth + 2 * bezel;
   const deviceX = (outputWidth - deviceWidth) / 2;
   const deviceY = 0;
-  const radius = 42 * screenScale;
+  const radius = 52 * screenScale;
   const cornerRadius = radius + bezel;
   const output = document.createElement("canvas");
   output.width = outputWidth;

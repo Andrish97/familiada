@@ -262,7 +262,7 @@ body.settings-body > main.wrap{
 .homepage-shot-frame-wrap{position:relative;max-width:100%;overflow:hidden}
 .homepage-shot-frame-wrap iframe{position:absolute;left:0;top:0;display:block;border:0;background:#050914;transform-origin:top left;pointer-events:none;user-select:none}
 .homepage-shot-frame-wrap.is-phone{background:#000}
-.homepage-shot-frame-wrap.is-phone iframe{z-index:1;left:var(--screen-left);top:var(--screen-top);border-radius:var(--screen-radius);box-shadow:0 0 0 9px #030407,0 0 0 10px #d7d9df;}
+.homepage-shot-frame-wrap.is-phone iframe{z-index:1;left:var(--screen-left);top:var(--screen-top);border-radius:var(--screen-radius);box-shadow:0 0 0 11px #030407,0 0 0 12px #d7d9df;}
 .homepage-shot-frame-wrap.is-phone::after{position:absolute;z-index:2;top:var(--screen-top);left:50%;width:var(--notch-width);height:var(--notch-height);content:"";transform:translateX(-50%);border-radius:0 0 var(--notch-radius) var(--notch-radius);background:#030407}
 .homepage-shot-phone-gesture{display:none}
 .homepage-shot-frame-wrap.is-phone .homepage-shot-phone-gesture{position:absolute;z-index:3;left:50%;bottom:var(--gesture-bottom);display:block;width:var(--gesture-width);height:var(--gesture-height);transform:translateX(-50%);border-radius:99px;background:#ffffffa8}
