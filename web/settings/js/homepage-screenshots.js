@@ -33,6 +33,7 @@ const FIELD_LABELS = {
   questions: "Wpisy bazy", people: "Znajomi lub subskrybenci", tasks: "Zadania", poll: "Nazwa ankiety",
   question: "Pytanie ankiety", subscribers: "Zaproszeni subskrybenci", link: "Link do ankiety",
   votesReceived: "Liczba głosów",
+  invitedCount: "Zaproszono", votedCount: "Oddali głos", declinedCount: "Odrzucili",
   teams: "Nazwy drużyn", revealed: "Odsłonięte odpowiedzi (numery)",
   scores: "Wyniki drużyn", crosses: "Iksy drużyn", bank: "Punkty na planszy", finale: "Pytania finału",
   logos: "Logo na liście", logo: "Nazwa logo", words: "Hasła na planszy",
@@ -122,6 +123,11 @@ function langFixture(scene, language = currentLanguage()) {
   if (scene.id === "poll-share" || scene.id === "poll-results") {
     const votes = Number(fixture.votesReceived);
     fixture.votesReceived = Number.isFinite(votes) && votes >= 0 ? Math.floor(votes) : 18;
+  }
+  if (scene.id === "poll-results") {
+    fixture.invitedCount = Number.isFinite(Number(fixture.invitedCount)) ? Math.max(0, Math.floor(Number(fixture.invitedCount))) : 24;
+    fixture.votedCount = Number.isFinite(Number(fixture.votedCount)) ? Math.max(0, Math.floor(Number(fixture.votedCount))) : 18;
+    fixture.declinedCount = Number.isFinite(Number(fixture.declinedCount)) ? Math.max(0, Math.floor(Number(fixture.declinedCount))) : 2;
   }
   if (scene.id === "tasks") {
     const friends = shared.friends || [];
@@ -1965,9 +1971,9 @@ async function paintPoll(doc, scene, fixture) {
   setText(doc, "pollStateInfo", typeof votesLabel === "function" ? votesLabel({ n: fixture.votesReceived }) : String(fixture.votesReceived));
   setText(doc, "hintTop", "");
   const recipients = (fixture.pollRecipients || []).filter(recipient => !recipient.hidden);
-  const invited = recipients.length;
-  const voted = recipients.filter(recipient => recipient.status === "done").length;
-  const declined = recipients.filter(recipient => recipient.status === "declined").length;
+  const invited = scene.id === "poll-results" ? fixture.invitedCount : recipients.length;
+  const voted = scene.id === "poll-results" ? fixture.votedCount : recipients.filter(recipient => recipient.status === "done").length;
+  const declined = scene.id === "poll-results" ? fixture.declinedCount : recipients.filter(recipient => recipient.status === "declined").length;
   setText(doc, "subsSummary", currentLanguage() === "en" ? `Invited ${invited} · Voted ${voted} · Declined ${declined}` : currentLanguage() === "uk" ? `Запрошено: ${invited} · Проголосували: ${voted} · Відхилили: ${declined}` : `Zaproszono ${invited} · Zagłosowali ${voted} · Odrzucili ${declined}`);
   const shareBody = doc.getElementById("shareBody"); if (shareBody) shareBody.style.display = "";
   const shareEmpty = doc.getElementById("shareEmpty"); if (shareEmpty) shareEmpty.style.display = "none";
@@ -2343,6 +2349,7 @@ function renderEditorFields(fixture) {
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
     input.id = label.htmlFor; input.dataset.field = key;
     if (input.type !== "checkbox") input.classList.add("inp");
+    if (typeof value === "number") { input.type = "number"; input.min = "0"; input.step = "1"; }
     if (typeof value === "boolean") { input.type = "checkbox"; input.checked = value; }
     else if (Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object")) input.value = JSON.stringify(value, null, 2);
     else if (Array.isArray(value)) input.value = value.join(value.every(item => typeof item === "number") ? ", " : "\n");
