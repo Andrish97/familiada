@@ -1879,7 +1879,6 @@ async function applyFixtureToFrame(scene, fixture) {
       }));
     }
   } else if (scene.id === "logo-draw") {
-    setInput(doc, "logoName", fixture.logo);
     const stored = fixture.logoData || await fetch(fixture.logoFile || "/shared/data/logo_familiada.json", { cache: "force-cache" }).then(response => response.json());
     const candidates = [];
     const visit = (value, depth = 0) => {
@@ -1893,13 +1892,50 @@ async function applyFixtureToFrame(scene, fixture) {
       || candidates.find(value => value.fabricData)
       || candidates.find(value => value.bits_b64)
       || stored?.payload || stored;
-    await hydrateIcons(doc);
-    const renderScene = doc.defaultView?.__familiadaScreenshotRenderLogo;
-    if (typeof renderScene !== "function") throw new Error("rzeczywisty edytor rysunku nie uruchomił się w podglądzie");
+    // The document can reach readyState=complete before the module graph
+    // (draw.js + its dependencies) has finished evaluating. Wait for the
+    // actual editor bridge instead of racing it and leaving the blank canvas.
+    const renderScene = await waitForLogoDrawRenderer(doc.defaultView, 12000);
     await renderScene(payload);
+    setInput(doc, "logoName", fixture.logo);
+    // draw.js creates the toolbar SVGs during initialization. Hydrate after
+    // that initialization too, then give Fabric a paint frame before the
+    // parent marks this iframe ready for preview/capture.
+    await hydrateIcons(doc);
+    await waitForLogoDrawPaint(doc, 5000);
   }
   hydrateIcons(doc);
   doc.body.dataset.fixtureReady = "true";
+}
+
+function waitForLogoDrawRenderer(view, timeout) {
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    const poll = () => {
+      const render = view?.__familiadaScreenshotRenderLogo;
+      if (typeof render === "function") return resolve(render);
+      if (Date.now() - started >= timeout) return reject(new Error("edytor rysunku nie zgłosił gotowości"));
+      setTimeout(poll, 50);
+    };
+    poll();
+  });
+}
+
+function waitForLogoDrawPaint(doc, timeout) {
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    const frame = () => {
+      const canvas = doc.getElementById("drawStage");
+      const fabricCanvas = doc.defaultView?.__drawFabric;
+      const buttons = [...doc.querySelectorAll("#toolsDraw .toolGrid button")];
+      const toolbarReady = buttons.length > 0 && buttons.every(button => button.querySelector("svg"));
+      const sceneReady = fabricCanvas && canvas?.width > 1 && canvas?.height > 1;
+      if (toolbarReady && sceneReady) return requestAnimationFrame(() => resolve());
+      if (Date.now() - started >= timeout) return reject(new Error("plansza lub pasek narzędzi nie zdążyły się wyrenderować"));
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  });
 }
 
 async function paintSoundSettings(doc) {
