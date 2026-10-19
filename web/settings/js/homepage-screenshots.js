@@ -134,9 +134,12 @@ function langFixture(scene, language = currentLanguage()) {
     config.viewResources ||= {};
     config.viewResources[language] ||= {};
     const selection = config.viewResources[language][scene.id] ||= {};
-    selection.resourceIds = loadedPrepared.map(item => item.id);
-    selection.resourceId = loadedPrepared[0]?.id || "";
-    const preparedGames = loadedPrepared;
+    const availableIds = new Set(loadedPrepared.map(item => item.id));
+    const savedOrder = Array.isArray(selection.resourceIds) ? selection.resourceIds : [];
+    selection.resourceIds = [...savedOrder.filter(id => availableIds.has(id)), ...loadedPrepared.map(item => item.id).filter(id => !savedOrder.includes(id))];
+    selection.resourceId = selection.resourceIds[0] || "";
+    const orderedIds = new Map(selection.resourceIds.map((id, index) => [id, index]));
+    const preparedGames = [...loadedPrepared].sort((a, b) => orderedIds.get(a.id) - orderedIds.get(b.id));
     fixture.games = preparedGames.map(item => item.name);
     fixture.gameStatuses = preparedGames.map(gameResourceStatus);
   }
@@ -577,9 +580,13 @@ function renderResourceChoices(scene = currentScene()) {
   };
   if (spec.multi) {
     if (!Array.isArray(selection.resourceIds)) selection.resourceIds = resources.map(item => item.id);
-    const selected = selection.resourceIds;
     const available = new Set(resources.map(item => item.id));
-    selection.resourceIds = selected.filter(id => available.has(id));
+    const selected = selection.resourceIds.filter(id => available.has(id));
+    if (scene.id === "games") {
+      selection.resourceIds = [...selected, ...resources.map(item => item.id).filter(id => !selected.includes(id))];
+    } else {
+      selection.resourceIds = selected;
+    }
     if (spec.keepOne && resources.length && !selection.resourceIds.length) selection.resourceIds = [resources[0].id];
     if (!resources.length) {
       const note = document.createElement("p"); note.className = "muted"; note.textContent = `Brak wczytanych zasobów typu ${spec.type}. Dodaj je na karcie „Lista zasobów”.`; root.append(note); return;
@@ -589,13 +596,14 @@ function renderResourceChoices(scene = currentScene()) {
       const item = resources.find(resource => resource.id === id); if (!item) return;
       const row = document.createElement("div"); row.className = "homepage-shot-resource-order-row";
       const check = document.createElement("input"); check.type = "checkbox"; check.checked = true; check.dataset.resourceInclude = id; check.setAttribute("aria-label", `Pokaż ${item.name}`);
-      if (spec.keepOne && index === 0) { check.disabled = true; check.title = "Co najmniej jedna gra musi pozostać wybrana."; }
+      if (scene.id === "games") { check.disabled = true; check.title = "Wszystkie wczytane gry są pokazywane. Zmień ich kolejność przyciskami obok."; }
+      else if (spec.keepOne && index === 0) { check.disabled = true; check.title = "Co najmniej jedna gra musi pozostać wybrana."; }
       const name = document.createElement("span"); name.textContent = item.name;
       const up = sharedButton(document.createElement("span"), "↑", "resource-up", index); up.setAttribute("aria-label", "Przenieś wyżej"); up.disabled = index === 0;
       const down = sharedButton(document.createElement("span"), "↓", "resource-down", index); down.setAttribute("aria-label", "Przenieś niżej"); down.disabled = index === selection.resourceIds.length - 1;
       row.append(check, name, up, down); list.append(row);
     });
-    resources.filter(item => !selection.resourceIds.includes(item.id)).forEach(item => {
+    (scene.id === "games" ? [] : resources.filter(item => !selection.resourceIds.includes(item.id))).forEach(item => {
       const row = document.createElement("div"); row.className = "homepage-shot-resource-order-row";
       const check = document.createElement("input"); check.type = "checkbox"; check.checked = false; check.dataset.resourceInclude = item.id; check.setAttribute("aria-label", `Pokaż ${item.name}`);
       const name = document.createElement("span"); name.textContent = item.name; row.append(check, name); list.append(row);
@@ -964,7 +972,15 @@ async function applyFixtureToFrame(scene, fixture) {
       nav.recalc();
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
-    const gameResources = ensureResourceData(language).filter(item => item.type === "game" && gameResourceType(item) === "prepared");
+    const availableGameResources = ensureResourceData(language).filter(item => item.type === "game" && gameResourceType(item) === "prepared");
+    const gameSelection = config.viewResources?.[language]?.[scene.id] || {};
+    const savedGameOrder = Array.isArray(gameSelection.resourceIds) ? gameSelection.resourceIds : [];
+    const availableGameIds = new Set(availableGameResources.map(item => item.id));
+    const gameOrder = [...savedGameOrder.filter(id => availableGameIds.has(id)), ...availableGameResources.map(item => item.id).filter(id => !savedGameOrder.includes(id))];
+    gameSelection.resourceIds = gameOrder;
+    gameSelection.resourceId = gameOrder[0] || "";
+    const gameById = new Map(availableGameResources.map(item => [item.id, item]));
+    const gameResources = gameOrder.map(id => gameById.get(id)).filter(Boolean);
     const selectedGame = gameResources[0] || null;
     const statusLabels = { draft: words.draft, ready: words.ready, open: words.open, stopped: words.stopped };
     const sampleRules = item => {
@@ -2123,6 +2139,7 @@ export async function initHomepageScreenshots() {
         if (key === "resourceId") selection.questionIndex = 0;
       } else {
         const id = input.dataset.resourceInclude;
+        if (scene.id === "games") return;
         const ids = selection.resourceIds || (selection.resourceIds = []);
         if (input.checked && !ids.includes(id)) ids.push(id);
         if (!input.checked) selection.resourceIds = ids.filter(value => value !== id);
@@ -2145,6 +2162,7 @@ export async function initHomepageScreenshots() {
       const target = index + (button.dataset.sharedAction === "resource-up" ? -1 : 1);
       if (target < 0 || target >= ids.length) return;
       [ids[index], ids[target]] = [ids[target], ids[index]];
+      if (currentScene().id === "games") selection.resourceId = ids[0] || "";
       dirty = true;
       updateDirtyIndicators();
       try {
