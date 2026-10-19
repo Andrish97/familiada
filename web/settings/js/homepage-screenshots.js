@@ -2046,11 +2046,14 @@ function readFriendGroupActions(fixture = {}) {
   for (const key of ["outgoing", "incoming", "declined"]) {
     const group = root.querySelector(`[data-friend-list="${key}"]`);
     if (!group) continue;
-    friendGroups[key] = [...group.querySelectorAll("[data-friend-row]")].map(row => ({
-      username: row.querySelector("[data-friend-username]").value.trim(),
-      email: normalizeEmail(row.querySelector("[data-friend-email]").value),
-      status: row.querySelector("[data-friend-status]:checked")?.value || "pending",
-    }));
+    friendGroups[key] = [...group.querySelectorAll("[data-friend-row]")].map(row => {
+      const person = {
+        username: row.querySelector("[data-friend-username]").value.trim(),
+        email: normalizeEmail(row.querySelector("[data-friend-email]").value),
+      };
+      if (key === "outgoing") person.status = row.querySelector("[data-friend-status]:checked")?.value || "pending";
+      return person;
+    });
   }
   const sharedFriends = sharedFixture().friends || [];
   friendGroups.friends = sharedFriends.filter(person => activeFriendEmails.includes(person.email));
@@ -2115,27 +2118,29 @@ function renderCategoryActions(fixture) {
     if (!sharedFriends.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = labels.noFriends; activeRows.append(empty); }
     active.append(activeRows);
 
-    for (const [key, statuses] of [["outgoing", ["pending", "declined"]], ["incoming", ["pending"]], ["declined", ["declined"]]]) {
+    for (const [key, statuses] of [["outgoing", ["pending", "declined"]], ["incoming", []], ["declined", []]]) {
       const group = sharedGroup(root, labels[key]);
       group.dataset.friendList = key;
       const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
       (groups[key] || []).forEach((person, index) => {
-        const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row homepage-shot-friend-action-row"; row.dataset.friendRow = String(index);
+        const row = document.createElement("div"); row.className = `homepage-shot-shared-row homepage-shot-action-row homepage-shot-friend-action-row${statuses.length ? "" : " homepage-shot-friend-action-row--no-status"}`; row.dataset.friendRow = String(index);
         const username = sharedField(row, "", person.username || "", { required: true, autocomplete: "off", pattern: "\\S+", dataset: { friendUsername: "true" } });
         username.placeholder = labels.username; username.setAttribute("aria-label", labels.username);
         const email = sharedField(row, "", person.email || "", { type: "email", required: true, autocomplete: "off", dataset: { friendEmail: "true" } });
         email.placeholder = labels.email; email.setAttribute("aria-label", labels.email);
-        const statusField = document.createElement("div"); statusField.className = "homepage-shot-friend-status-radios";
-        statusField.setAttribute("role", "radiogroup"); statusField.setAttribute("aria-label", labels.status);
-        for (const value of statuses) {
-          const option = document.createElement("label"); option.className = "homepage-shot-friend-status-option";
-          const status = document.createElement("input"); status.type = "radio"; status.name = `friend-status-${key}-${index}`;
-          status.value = value; status.dataset.friendStatus = "true"; status.checked = (statuses.includes(person.status) ? person.status : statuses[0]) === value;
-          const glyph = document.createElement("span"); glyph.className = "homepage-shot-friend-status-icon"; glyph.setAttribute("aria-hidden", "true"); glyph.textContent = value === "pending" ? "◷" : "×";
-          const text = value === "pending" ? labels.pending : labels.declinedStatus;
-          option.title = text; option.setAttribute("aria-label", text); option.append(status, glyph); statusField.append(option);
+        if (statuses.length) {
+          const statusField = document.createElement("div"); statusField.className = "homepage-shot-friend-status-radios";
+          statusField.setAttribute("role", "radiogroup"); statusField.setAttribute("aria-label", labels.status);
+          for (const value of statuses) {
+            const option = document.createElement("label"); option.className = "homepage-shot-friend-status-option";
+            const status = document.createElement("input"); status.type = "radio"; status.name = `friend-status-${key}-${index}`;
+            status.value = value; status.dataset.friendStatus = "true"; status.checked = (statuses.includes(person.status) ? person.status : statuses[0]) === value;
+            const glyph = document.createElement("span"); glyph.className = "homepage-shot-friend-status-icon"; glyph.setAttribute("aria-hidden", "true"); glyph.textContent = value === "pending" ? "◷" : "×";
+            const text = value === "pending" ? labels.pending : labels.declinedStatus;
+            option.title = text; option.setAttribute("aria-label", text); option.append(status, glyph); statusField.append(option);
+          }
+          row.append(statusField);
         }
-        row.append(statusField);
         const remove = sharedButton(row, "×", "remove-friend-action", index); remove.title = labels.remove; remove.setAttribute("aria-label", labels.remove); remove.classList.add("homepage-shot-row-remove");
         rows.append(row);
       });
