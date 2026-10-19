@@ -1895,6 +1895,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Start rundy jest zablokowany, dopóki Display nie zakończy planszy intro
+    // i dźwięku. Ten krok może trwać ok. 21 s, więc nie klikaj w trakcie gate.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     // ===== Runda jedyna: A wygrywa próg finału (300 pkt) =====
