@@ -6482,7 +6482,7 @@ function wireEvents() {
     els.btnTabScreenshots.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("homepageScreenshots");
-      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-19T11341");
+      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-19T170000");
 
       await initHomepageScreenshots();
     });

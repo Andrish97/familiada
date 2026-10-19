@@ -5,7 +5,6 @@ let initialized = false;
 let dirty = false;
 let sharedDirty = false;
 let sharedEditorLanguage = "pl";
-let defaultLogoItems = [];
 let lastFrameKey = "";
 let deviceReadyPromise = null;
 let deviceReadyResolve = null;
@@ -314,23 +313,7 @@ function ensureResourceData(language = currentLanguage()) {
     config.resourceData[language] = resources;
   }
   if (!resources) {
-    resources = (() => {
-      const gameNames = [shared.gameName, ...(shared.otherGames || [])].filter(Boolean);
-      const baseScene = config.scenes.find(scene => scene.id === "base-explorer");
-      const baseFixture = localizeFixture(baseScene?.fixture || {}, language);
-      const categories = (baseFixture.folders || []).map((name, i) => ({ id: `${language}-category-${i}`, name, parent_id: null, ord: i + 1 }));
-      const base = { base: { name: baseFixture.base || "Baza demonstracyjna" }, categories, tags: [],
-        questions: (baseFixture.questions || []).map((text, i) => ({ id: `${language}-base-question-${i}`, category_id: categories[0]?.id || null, ord: i + 1, payload: { text } })), question_tags: [], category_tags: [] };
-      const games = gameNames.map((name, i) => ({ id: `${language}-game-${i}`, type: "game", name, status: name === shared.gameName ? "ready" : "draft",
-        data: { game: { name, type: "prepared" }, questions: structuredClone(shared.gameQuestions || []) } }));
-      games.push({ id: `${language}-poll-game`, type: "game", status: "draft", openPoll: false, name: shared.pollName,
-        data: { game: { name: shared.pollName, type: "poll_points" }, questions: (shared.pollQuestions || []).map(q => ({ text: q.text, answers: q.answers.map(a => ({ text: a.text, fixed_points: a.votes })) })) } });
-      return [
-        ...games,
-        { id: `${language}-base`, type: "base", name: base.base.name, data: base },
-        ...defaultLogoItems.map((item, i) => ({ id: `${language}-logo-${i}`, type: "logo", name: item.name, data: structuredClone(item.data) })),
-      ];
-    })();
+    resources = [];
     config.resourceData[language] = resources;
   }
   const legacyTeams = resources.find(item => item.type === "teams")?.data?.teams;
@@ -341,33 +324,57 @@ function ensureResourceData(language = currentLanguage()) {
   for (let index = resources.length - 1; index >= 0; index -= 1) {
     if (["teams", "subscribers"].includes(resources[index].type)) resources.splice(index, 1);
   }
+  for (let index = resources.length - 1; index >= 0; index -= 1) {
+    const item = resources[index];
+    const allowed = item.type === "base"
+      || item.type === "game" && gameResourceType(item) === "prepared"
+      || item.type === "logo" && logoResourceMode(item) === "DRAW";
+    if (!allowed) resources.splice(index, 1);
+  }
   for (const item of resources) {
     if (item.type !== "game") continue;
     item.data ||= {};
     item.data.game ||= {};
-    item.data.game.type ||= "prepared";
+    if (item.data.game.type === "fixed") item.data.game.type = "prepared";
     const savedStatusRaw = String(item.status || item.data.game.status || "").toLowerCase();
     const savedStatus = ({ poll_open: "open", poll_stopped: "stopped" })[savedStatusRaw] || savedStatusRaw;
-    const allowedStatuses = String(item.data.game.type).startsWith("poll")
-      ? ["draft", "ready", "open", "stopped"]
-      : ["draft", "ready"];
-    item.status = allowedStatuses.includes(savedStatus)
-      ? savedStatus
-      : item.name === shared.gameName && item.data.game.type === "prepared" ? "ready" : "draft";
+    item.status = ["draft", "ready"].includes(savedStatus) ? savedStatus : "draft";
   }
   const views = config.viewResources[language] ||= {};
   const ids = type => resources.filter(item => item.type === type).map(item => item.id);
-  const firstPoll = resources.find(item => item.type === "game" && String(item.data?.game?.type || "").startsWith("poll"))?.id || "";
+  const firstPreparedGame = resources.find(item => item.type === "game")?.id || "";
+  const firstBase = resources.find(item => item.type === "base")?.id || "";
+  const firstLogo = resources.find(item => item.type === "logo")?.id || "";
   for (const scene of config.scenes) {
     if (views[scene.id]) continue;
     if (scene.id === "games") views[scene.id] = { resourceIds: ids("game") };
     else if (scene.id === "bases") views[scene.id] = { resourceIds: ids("base") };
     else if (scene.id === "logos") views[scene.id] = { resourceIds: ids("logo") };
-    else if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) views[scene.id] = { resourceId: firstPoll };
+    else if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) views[scene.id] = { resourceId: "" };
     else if (scene.id === "base-explorer") views[scene.id] = { resourceId: ids("base")[0] || "" };
     else if (scene.id === "logo-draw") views[scene.id] = { resourceId: ids("logo")[0] || "" };
     else if (["control-round", "host-round", "display-round"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
     else if (["game-editor", "appearance", "sound", "control-finale", "tasks"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
+  }
+  const resourceTypeByScene = {
+    games: "game", bases: "base", logos: "logo", "base-explorer": "base", "logo-draw": "logo",
+    "control-round": "game", "host-round": "game", "display-round": "game", "game-editor": "game",
+    appearance: "game", sound: "game", "control-finale": "game", tasks: "game",
+  };
+  for (const [sceneId, selection] of Object.entries(views)) {
+    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(sceneId)) {
+      selection.resourceId = "";
+      continue;
+    }
+    const expectedType = resourceTypeByScene[sceneId];
+    const matches = id => resources.some(item => item.id === id && (!expectedType || item.type === expectedType));
+    if (Array.isArray(selection.resourceIds)) selection.resourceIds = selection.resourceIds.filter(matches);
+    if (selection.resourceId && !matches(selection.resourceId)) selection.resourceId = "";
+    if (!selection.resourceId) {
+      if (["control-round", "host-round", "display-round", "game-editor", "appearance", "sound", "control-finale", "tasks"].includes(sceneId)) selection.resourceId = firstPreparedGame;
+      else if (sceneId === "base-explorer") selection.resourceId = firstBase;
+      else if (sceneId === "logo-draw") selection.resourceId = firstLogo;
+    }
   }
   for (const selection of Object.values(views)) delete selection.teamResourceId;
   return resources;
@@ -388,33 +395,36 @@ function gameResourceType(item) {
 }
 
 function gameResourceReadiness(item) {
-  const type = gameResourceType(item);
   const questions = Array.isArray(item?.data?.questions) ? item.data.questions : [];
   const enoughQuestions = questions.length >= 10;
-  const hasQuestionText = questions.every(question => typeof question?.text === "string" && question.text.trim());
   const answersValid = questions.every(question => {
     const answers = Array.isArray(question?.answers) ? question.answers : [];
-    if (type === "poll_text") return true;
-    if (answers.length < 3 || answers.length > 6 || answers.some(answer => !String(answer?.text || "").trim())) return false;
-    const points = answers.map(answer => Number(answer.fixed_points ?? answer.points ?? 0));
-    return points.every(point => Number.isFinite(point) && point >= 0 && point <= 100)
-      && (type !== "prepared" || points.reduce((sum, point) => sum + point, 0) <= 100);
+    if (answers.length < 3 || answers.length > 6) return false;
+    const points = answers.map(answer => Number(answer.fixed_points ?? answer.points) || 0);
+    return points.every(point => point >= 0 && point <= 100)
+      && points.reduce((sum, point) => sum + point, 0) <= 100;
   });
-  return { ok: enoughQuestions && hasQuestionText && answersValid, count: questions.length, type };
+  return { ok: enoughQuestions && answersValid, count: questions.length };
 }
 
 function gameResourceStatus(item) {
-  const { ok, type } = gameResourceReadiness(item);
+  const { ok } = gameResourceReadiness(item);
   if (!ok) return "draft";
   const raw = String(item?.status || item?.data?.game?.status || "draft").toLowerCase();
-  const status = ({ poll_open: "open", poll_stopped: "stopped" })[raw] || raw;
-  if (type.startsWith("poll")) return ["draft", "ready", "open", "stopped"].includes(status) ? status : "draft";
-  return ["ready", "draft"].includes(status) ? status : "draft";
+  return ["ready", "draft"].includes(raw) ? raw : "draft";
+}
+
+function logoModeFromData(data) {
+  const kind = String(data?.kind || data?.type || "").toUpperCase();
+  if (kind === "GLYPH" || kind.includes("GLYPH")) return "TEXT";
+  const source = data?.payload?.source || data?.source || {};
+  if (source.mode === "IMAGE") return "IMAGE";
+  if (kind === "PIX" || kind.includes("PIX")) return "DRAW";
+  return null;
 }
 
 function logoResourceMode(item) {
-  const mode = String(item?.data?.source?.mode || item?.data?.mode || "").toUpperCase();
-  return ["TEXT", "DRAW", "IMAGE"].includes(mode) ? mode : "DRAW";
+  return logoModeFromData(item?.data);
 }
 
 function canOpenPollResource(item) {
@@ -434,28 +444,18 @@ function orderedResources(sceneId, language = currentLanguage(), type = null) {
   return ids.map(id => resources.find(item => item.id === id)).filter(item => item && (!type || item.type === type));
 }
 
-async function loadDefaultLogoExamples() {
-  const files = ["/settings/data/screenshots/logo-draw.json", "/settings/data/screenshots/logo-text.json"];
-  return Promise.all(files.map(async (file, index) => {
-    const response = await fetch(file, { cache: "force-cache" });
-    if (!response.ok) return null;
-    const data = await response.json();
-    return { id: `default-logo-${index + 1}`, type: "logo", name: data.name || `Logo ${index + 1}`, data };
-  })).then(items => items.filter(Boolean)).catch(() => []);
-}
-
 function renderResourceList(language = currentLanguage()) {
   const root = byId("homepageShotResourceList");
   if (!root) return;
   const resources = ensureResourceData(language);
   const labels = { game: "Gry", base: "Bazy pytań", logo: "Logo" };
-  const gameLabels = { prepared: "Gry preparowane", poll_text: "Ankiety tekstowe", poll_points: "Ankiety punktowe" };
+  const gameLabels = { prepared: "Gry preparowane" };
   const gameStatusLabels = { draft: "Szkic", ready: "Gotowe", open: "Otwarte", stopped: "Zatrzymane" };
   const gameStatusClasses = { draft: "tag--muted", ready: "tag--ok", open: "tag--info", stopped: "tag--gold" };
-  const logoLabels = { TEXT: "Tekst", DRAW: "Rysunek", IMAGE: "Obraz" };
+  const logoLabels = { DRAW: "Rysunek" };
   root.replaceChildren();
   for (const type of ["game", "base", "logo"]) {
-    const items = resources.filter(item => item.type === type && (type !== "game" || ["prepared", "poll_text", "poll_points"].includes(gameResourceType(item))));
+    const items = resources.filter(item => item.type === type && (type !== "game" || gameResourceType(item) === "prepared"));
     const group = document.createElement("section"); group.className = "homepage-shot-resource-group";
     const heading = document.createElement("h3"); heading.textContent = `${labels[type]} · ${items.length}`; group.append(heading);
     if (!items.length) {
@@ -467,7 +467,7 @@ function renderResourceList(language = currentLanguage()) {
       if (!categories.has(key)) categories.set(key, []);
       categories.get(key).push(item);
     }
-    const orderedKeys = type === "game" ? ["prepared", "poll_text", "poll_points"] : type === "logo" ? ["TEXT", "DRAW", "IMAGE"] : ["all"];
+    const orderedKeys = type === "game" ? ["prepared"] : type === "logo" ? ["DRAW"] : ["all"];
     for (const key of orderedKeys) {
       const categoryItems = categories.get(key) || [];
       if (type !== "base") {
@@ -491,16 +491,12 @@ function renderResourceList(language = currentLanguage()) {
         if (type === "game") {
           const readiness = gameResourceReadiness(item);
           const status = gameResourceStatus(item);
-          addTag(gameLabels[key]); addTag(`${readiness.count} ${readiness.count === 1 ? "pytanie" : "pytań"}`);
+          addTag(`${readiness.count} ${readiness.count === 1 ? "pytanie" : "pytań"}`);
           const statusTag = document.createElement("span"); statusTag.className = `homepage-shot-resource-meta-tag ${gameStatusClasses[status]}`; statusTag.textContent = gameStatusLabels[status]; metadata.append(statusTag);
         } else if (type === "base") {
           const categoriesCount = Array.isArray(item.data?.categories) ? item.data.categories.length : 0;
           const entriesCount = Array.isArray(item.data?.questions) ? item.data.questions.length : 0;
           addTag(`${categoriesCount} ${categoriesCount === 1 ? "kategoria" : "kategorii"}`); addTag(`${entriesCount} ${entriesCount === 1 ? "wpis" : "wpisów"}`);
-        } else {
-          addTag(`Logo · ${logoLabels[key]}`);
-          const dims = item.data?.payload?.w && item.data?.payload?.h ? `${item.data.payload.w} × ${item.data.payload.h}` : "";
-          if (dims) addTag(dims);
         }
         main.append(name, metadata);
         const remove = document.createElement("button"); remove.type = "button"; remove.className = "btn sm homepage-shot-resource-remove";
@@ -1469,13 +1465,23 @@ async function exportConfigJson() {
   await saveConfig();
   const bundle = {
     format: "familiada-screenshots-shared-data",
-    version: 1,
+    version: 2,
     languages: Object.fromEntries(["pl", "en", "uk"].map(language => [language, {
       shared: {
         teams: structuredClone(config.sharedFixtures[language].teams || []).slice(0, 2),
         subscribers: structuredClone(config.sharedFixtures[language].subscribers || []),
+        qrUrl: config.qrUrl || "",
       },
-      resources: structuredClone(config.resourceData[language] || []),
+      resources: {
+        games: structuredClone(config.resourceData[language].filter(item => item.type === "game")),
+        bases: structuredClone(config.resourceData[language].filter(item => item.type === "base")),
+        logos: structuredClone(config.resourceData[language].filter(item => item.type === "logo")),
+      },
+      views: {
+        fixtures: structuredClone(config.localeFixtures?.[language] || {}),
+        selections: structuredClone(config.viewResources?.[language] || {}),
+        sectionDefaults: Object.fromEntries(Object.entries(config.sharedFixtures[language] || {}).filter(([key]) => !["teams", "subscribers"].includes(key))),
+      },
     }])),
   };
   const content = JSON.stringify(bundle, null, 2);
@@ -1494,34 +1500,50 @@ async function importConfigJson(file) {
   if (!await flushAllEditors()) return;
   const imported = JSON.parse(await file.text());
   const languages = ["pl", "en", "uk"];
-  const validResource = item => {
-    if (!item || typeof item.id !== "string" || !item.id || !["game", "base", "logo"].includes(item.type)
-      || typeof item.name !== "string" || !item.data || typeof item.data !== "object") return false;
-    if (item.type === "game") return !!item.data.game && ["prepared", "fixed", "poll_text", "poll_points", "poll"].includes(item.data.game.type) && Array.isArray(item.data.questions);
-    if (item.type === "base") return !!item.data.base && Array.isArray(item.data.categories) && Array.isArray(item.data.questions);
-    return !!item.data.payload && (["PIX", "GLYPH"].includes(item.data.kind) || ["PIX_150x70", "GLYPH_30x10"].includes(item.data.type));
+  const validResource = (item, type) => {
+    if (!item || typeof item.id !== "string" || !item.id || typeof item.name !== "string" || !item.data || typeof item.data !== "object") return false;
+    if (type === "game") return item.type === "game" && gameResourceType(item) === "prepared" && Array.isArray(item.data.questions);
+    if (type === "base") return item.type === "base" && !!item.data.base && Array.isArray(item.data.categories) && Array.isArray(item.data.questions);
+    return item.type === "logo" && logoResourceMode(item) === "DRAW" && !!item.data.payload;
   };
-  const valid = imported?.format === "familiada-screenshots-shared-data" && imported.version === 1 && imported.languages
+  const valid = imported?.format === "familiada-screenshots-shared-data" && imported.version === 2 && imported.languages
     && languages.every(language => {
       const entry = imported.languages[language];
       return entry?.shared && Array.isArray(entry.shared.teams) && entry.shared.teams.length === 2
         && entry.shared.teams.every(name => typeof name === "string")
         && Array.isArray(entry.shared.subscribers) && entry.shared.subscribers.every(name => typeof name === "string")
-        && Array.isArray(entry.resources) && entry.resources.every(validResource)
-        && new Set(entry.resources.map(item => item.id)).size === entry.resources.length;
+        && (entry.shared.qrUrl == null || typeof entry.shared.qrUrl === "string")
+        && entry.resources && Array.isArray(entry.resources.games) && entry.resources.games.every(item => validResource(item, "game"))
+        && Array.isArray(entry.resources.bases) && entry.resources.bases.every(item => validResource(item, "base"))
+        && Array.isArray(entry.resources.logos) && entry.resources.logos.every(item => validResource(item, "logo"))
+        && new Set([...entry.resources.games, ...entry.resources.bases, ...entry.resources.logos].map(item => item.id)).size
+          === entry.resources.games.length + entry.resources.bases.length + entry.resources.logos.length
+        && entry.views && entry.views.fixtures && typeof entry.views.fixtures === "object"
+        && entry.views.sectionDefaults && typeof entry.views.sectionDefaults === "object"
+        && entry.views.selections && typeof entry.views.selections === "object";
     });
-  if (!valid) throw new Error("Plik nie zawiera poprawnego wspólnego JSON-a dla języków PL, EN i UK.");
+  if (!valid) throw new Error("Plik nie zawiera poprawnego wspólnego JSON-a z zasobami i ustawieniami widoków dla języków PL, EN i UK.");
   const { confirmModal } = await import("/shared/js/core/modal.js?v=v2026-10-19T11341");
-  if (!await confirmModal({ text: "Import zastąpi wspólne dane i listy zasobów we wszystkich językach. Dodatkowe dane widoków pozostaną bez zmian. Kontynuować?" })) return;
+  if (!await confirmModal({ text: "Import zastąpi wspólne dane, listy zasobów i dodatkowe dane wszystkich widoków we wszystkich językach. Kontynuować?" })) return;
+  config.localeFixtures ||= {};
+  config.viewResources ||= {};
   for (const language of languages) {
     const entry = imported.languages[language];
     config.sharedFixtures[language] = {
-      ...config.sharedFixtures[language],
+      ...structuredClone(entry.views.sectionDefaults),
       teams: structuredClone(entry.shared.teams),
       subscribers: structuredClone(entry.shared.subscribers),
     };
-    config.resourceData[language] = structuredClone(entry.resources);
+    config.resourceData[language] = [
+      ...structuredClone(entry.resources.games),
+      ...structuredClone(entry.resources.bases),
+      ...structuredClone(entry.resources.logos),
+    ];
+    config.localeFixtures[language] = structuredClone(entry.views.fixtures);
+    config.viewResources[language] = structuredClone(entry.views.selections);
   }
+  config.qrUrl = String(imported.languages.pl.shared.qrUrl || config.qrUrl || "");
+  byId("homepageShotQrUrl").value = config.qrUrl;
   sharedDirty = true;
   updateDirtyIndicators();
   try {
@@ -1530,7 +1552,7 @@ async function importConfigJson(file) {
     updateDirtyIndicators();
     renderSharedEditor();
     updateEditor();
-    setStatus("Zaimportowano wspólne dane i zasoby. Dodatkowe dane widoków zachowano.");
+    setStatus("Zaimportowano wspólne dane, zasoby i ustawienia widoków.");
   } catch (error) {
     setStatus(`Nie udało się zapisać importowanego JSON-a: ${error.message}`);
   }
@@ -1772,6 +1794,8 @@ async function importResourceFile(file, type) {
   let resource;
   if (type === "game") {
     if (!data?.game || !Array.isArray(data.questions)) throw new Error("Plik nie zawiera eksportu gry.");
+    if (!["prepared", "fixed"].includes(data.game.type)) throw new Error("Można wczytać tylko grę preparowaną.");
+    if (data.game.type === "fixed") data.game.type = "prepared";
     data.questions = data.questions.map(question => ({
       ...question,
       text: String(question.text || ""),
@@ -1782,7 +1806,8 @@ async function importResourceFile(file, type) {
     if (!data?.base || !Array.isArray(data.questions) || !Array.isArray(data.categories)) throw new Error("Plik nie zawiera eksportu bazy pytań.");
     resource = { id: newResourceId(), type, name: data.base.name || file.name.replace(/\.fambase$/i, ""), data };
   } else {
-    if (!(data?.kind === "GLYPH" || data?.kind === "PIX" || data?.type === "GLYPH_30x10" || data?.type === "PIX_150x70") || !data?.payload) throw new Error("Plik nie zawiera eksportu logo.");
+    if (!(data?.kind === "PIX" || data?.type === "PIX_150x70") || !data?.payload) throw new Error("Można wczytać tylko eksport logo rysunkowego.");
+    if (logoModeFromData(data) !== "DRAW") throw new Error("Można wczytać tylko logo z rysowaniem.");
     resource = { id: newResourceId(), type, name: data.name || file.name.replace(/\.famlogo$/i, ""), data };
   }
   const language = currentLanguage();
@@ -1966,7 +1991,6 @@ export async function initHomepageScreenshots() {
   try {
     config = await readConfig();
     config.scenes = Array.isArray(config.scenes) ? config.scenes : [];
-    defaultLogoItems = await loadDefaultLogoExamples();
     let initializeSharedFixtures = false;
     config.sharedFixtures ||= {};
     for (const language of ["pl", "en", "uk"]) {
@@ -2007,10 +2031,16 @@ export async function initHomepageScreenshots() {
     config.viewResources ||= {};
     for (const language of ["pl", "en", "uk"]) {
       const hadResources = Array.isArray(config.resourceData[language]);
+      const oldResourceCount = hadResources ? config.resourceData[language].length : null;
       const hadViews = !!config.viewResources[language];
       const hadLegacyLists = Array.isArray(config.resourceData[language]) && config.resourceData[language].some(item => ["teams", "subscribers"].includes(item.type));
-      ensureResourceData(language);
-      if (!hadResources || !hadViews || hadLegacyLists) initializeSharedFixtures = true;
+      const resources = ensureResourceData(language);
+      if (!hadResources || !hadViews || hadLegacyLists || oldResourceCount !== resources.length) initializeSharedFixtures = true;
+    }
+    if (Number(config.resourcePoolResetVersion) < 2) {
+      for (const language of ["pl", "en", "uk"]) ensureResourceData(language);
+      config.resourcePoolResetVersion = 2;
+      initializeSharedFixtures = true;
     }
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     if (initializeSharedFixtures) await saveConfig();
