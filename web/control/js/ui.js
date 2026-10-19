@@ -197,44 +197,42 @@ export function createUI({ root, emit }) {
     const deviceRow = (label, kind, url, { withQr = false } = {}) => {
       const online = !!presenceFlags[kind];
       const code = connectCodes[kind];
-      const row2 = [];
+      const row2 = state.settings.testMode ? [] : [
+        h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
+        h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, iconLabel("copy", t("common.copy"))),
+      ];
       if (!state.settings.testMode) {
-        row2.push(
-          h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
-          h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, iconLabel("copy", t("common.copy"))),
-        );
-      }
-      if (withQr) {
-        const shown = !!state.display.qr[kind].show;
-        row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, iconLabel("qr-code", t("control.qrCodeBtn"))));
+        if (withQr) {
+          const shown = !!state.display.qr[kind].show;
+          row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, iconLabel("qr-code", t("control.qrCodeBtn"))));
+          row2.push(h("button", {
+            class: `btn ${shown ? "primary" : ""}`, type: "button",
+            onclick: () => emit(kind === "host" ? "qr.host.toggle" : "qr.buzzer.toggle"),
+          }, iconLabel(shown ? "eye-off" : "qr-code", shown ? t("control.qrHide") : t("control.qrOnDisplayToggle"))));
+        } else {
+          // "Otwórz" ma sens WYŁĄCZNIE dla Wyświetlacza — Prowadzący/Przycisk
+          // otwiera się na CUDZYM urządzeniu (tablet/telefon), nie w karcie
+          // operatora.
+          row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, iconLabel("display", t("common.open"))));
+        }
+        // Licznik udostępnień — ten sam .badge co w topbarach (base.css).
+        const shared = Number(shareBadges[kind]) || 0;
         row2.push(h("button", {
-          class: `btn ${shown ? "primary" : ""}`, type: "button",
-          onclick: () => emit(kind === "host" ? "qr.host.toggle" : "qr.buzzer.toggle"),
-        }, iconLabel(shown ? "eye-off" : "qr-code", shown ? t("control.qrHide") : t("control.qrOnDisplayToggle"))));
-      } else {
-        // "Otwórz" ma sens WYŁĄCZNIE dla Wyświetlacza — Prowadzący/Przycisk
-        // otwiera się na CUDZYM urządzeniu (tablet/telefon), nie w karcie
-        // operatora, więc stare Control (control.html) nigdy nie dawało im
-        // tego przycisku (patrz device-row markup: btnOpenDisplay istnieje,
-        // analogów dla host/buzzer nie ma).
-        row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, iconLabel("display", t("common.open"))));
+          class: "btn", type: "button",
+          onclick: () => emit("devices.shareOpen", kind),
+        }, [
+          ...iconLabel("people", t("control.shareDevice")),
+          h("span", { class: "badge", "aria-hidden": "true", text: shared > 99 ? "99+" : (shared > 0 ? String(shared) : "") }),
+        ]));
       }
-      // Licznik udostępnień — ten sam .badge co w topbarach (base.css).
-      const shared = Number(shareBadges[kind]) || 0;
-      row2.push(h("button", {
-        class: "btn", type: "button",
-        onclick: () => emit("devices.shareOpen", kind),
-      }, [
-        ...iconLabel("people", t("control.shareDevice")),
-        h("span", { class: "badge", "aria-hidden": "true", text: shared > 99 ? "99+" : (shared > 0 ? String(shared) : "") }),
-      ]));
-      return h("div", { class: "device-row", "data-device": kind }, [
+      const children = [
         h("div", { class: "device-row-1" }, [
           h("div", { class: "device-name", text: label }),
           h("div", { class: `conn-status ${online ? "conn-status--connected" : "conn-status--disconnected"}`, text: online ? t("control.deviceStatusOk") : t("control.deviceStatusDisconnected") }),
         ]),
-        h("div", { class: "device-row-2" }, row2),
-      ]);
+      ];
+      if (!state.settings.testMode) children.push(h("div", { class: "device-row-2" }, row2));
+      return h("div", { class: "device-row", "data-device": kind }, children);
     };
 
     // Jeden ekran, wszystkie 3 urządzenia naraz — dokładnie jak dzisiejsze
@@ -364,8 +362,10 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-roundlayout-main" }, [
           h("div", { class: "c2-scroll-area" }, [h("div", { class: "c2-devicerows" }, rows)]),
         ]),
-        h("div", { class: "c2-roundlayout-divider" }),
-        h("div", { class: "c2-roundlayout-side" }, state.settings.testMode ? [] : [hintBlock(t("control.deviceCodeHint"))]),
+        ...(state.settings.testMode ? [] : [
+          h("div", { class: "c2-roundlayout-divider" }),
+          h("div", { class: "c2-roundlayout-side" }, [hintBlock(t("control.deviceCodeHint"))]),
+        ]),
       ]),
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
     ]));
