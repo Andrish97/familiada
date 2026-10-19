@@ -1893,6 +1893,20 @@ async function applyFixtureToFrame(scene, fixture) {
       || candidates.find(value => value.fabricData)
       || candidates.find(value => value.bits_b64)
       || stored?.payload || stored;
+    const { icon } = await import("/shared/js/core/icons.js?v=v2026-10-19T21325");
+    const toolIcons = {
+      tSelect: ["cursor", "select"], tPan: ["hand", "pan"], tZoomIn: ["zoom-in", "zoomIn"], tZoomOut: ["zoom-out", "zoomOut"],
+      tBg: ["swatch-black", "background"], tBrush: ["brush", "brush"], tEraser: ["eraser", "eraser"], tShapes: ["shapes", "shapes"],
+      tText: ["text", "text"], tUndo: ["undo", "undo"], tRedo: ["redo", "redo"], tDuplicate: ["duplicate", "duplicate"],
+      tClear: ["trash", "clear"], tEye: ["eye", "preview"],
+    };
+    for (const [id, [name, label]] of Object.entries(toolIcons)) {
+      const button = doc.getElementById(id);
+      if (!button) continue;
+      button.innerHTML = icon(name);
+      button.classList.toggle("on", id === "tBrush");
+      button.setAttribute("aria-label", label);
+    }
     await hydrateIcons(doc);
     const renderScene = doc.defaultView?.__familiadaScreenshotRenderLogo;
     let rendered = false;
@@ -1915,17 +1929,19 @@ async function applyFixtureToFrame(scene, fixture) {
       const saved = payload.source.fabricData;
       const width = Number(payload.source.world?.w || saved.clipPath?.width) || 1040;
       const height = Number(payload.source.world?.h || saved.clipPath?.height) || 440;
-      canvas.width = width;
-      canvas.height = height;
-      canvas.style.width = "100%";
-      canvas.style.height = "100%";
+      const stageWidth = Math.max(1, host.clientWidth || width);
+      const stageHeight = Math.max(1, host.clientHeight || height);
+      canvas.width = stageWidth;
+      canvas.height = stageHeight;
       const scene = new fabric.StaticCanvas(canvas, {
-        width, height,
+        width: stageWidth, height: stageHeight,
         backgroundColor: payload.source.bg === "WHITE" ? "#fff" : "#000",
         enableRetinaScaling: false,
       });
       await new Promise(resolve => scene.loadFromJSON(saved, () => {
         scene.backgroundColor = payload.source.bg === "WHITE" ? "#fff" : "#000";
+        const scale = Math.min(stageWidth / width, stageHeight / height);
+        scene.setViewportTransform([scale, 0, 0, scale, (stageWidth - width * scale) / 2, (stageHeight - height * scale) / 2]);
         scene.renderAll();
         resolve();
       }));
