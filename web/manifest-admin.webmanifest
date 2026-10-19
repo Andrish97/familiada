@@ -11,25 +11,25 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/settings/icons/admin-1024.png?v=v2026-10-19T13143",
+      "src": "/settings/icons/admin-1024.png?v=v2026-10-19T13263",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/settings/icons/admin-1024.png?v=v2026-10-19T13143",
+      "src": "/settings/icons/admin-1024.png?v=v2026-10-19T13263",
       "sizes": "256x256",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/settings/icons/admin-1024.png?v=v2026-10-19T13143",
+      "src": "/settings/icons/admin-1024.png?v=v2026-10-19T13263",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/settings/icons/admin-1024.png?v=v2026-10-19T13143",
+      "src": "/settings/icons/admin-1024.png?v=v2026-10-19T13263",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
