@@ -2900,9 +2900,13 @@ async function importResourceFile(file, type) {
   const language = currentLanguage();
   const resources = ensureResourceData(language);
   resources.push(resource);
-  const scenes = type === "game" ? ["games"] : type === "base" ? ["bases"] : ["logos"];
+  const scenes = type === "game" ? ["games"] : type === "base" ? ["bases"] : ["logos", "logo-draw"];
   for (const sceneId of scenes) {
     const selection = config.viewResources[language][sceneId] ||= { resourceIds: [] };
+    if (sceneId === "logo-draw") {
+      selection.resourceId = resource.id;
+      continue;
+    }
     selection.resourceIds ||= [];
     if (sceneId === "bases") selection.resourceOrder ||= [...selection.resourceIds];
     if (sceneId === "bases") selection.resourceOrder.push(resource.id);
@@ -2911,7 +2915,10 @@ async function importResourceFile(file, type) {
   }
   markDirty("shared", scenes);
   renderResourceList(language);
-  renderEditorFields(langFixture(currentScene()));
+  const fixture = langFixture(currentScene());
+  els.fixture.value = JSON.stringify(fixture, null, 2);
+  renderEditorFields(fixture);
+  if (currentScene().id === "logo-draw") void loadScenePreview(currentScene(), true);
   setStatus(`${resource.name} dodano do listy zasobów. Zapisz wszystkie dane, aby zachować zmianę.`);
 }
 
