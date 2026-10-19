@@ -1,6 +1,6 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T09245";
-import { initPwa, isStandalone } from "/shared/js/core/pwa.js?v=v2026-10-19T09245";
-import { t } from "/shared/translation/translation.js?v=v2026-10-19T09245";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T09353";
+import { initPwa, isStandalone } from "/shared/js/core/pwa.js?v=v2026-10-19T09353";
+import { t } from "/shared/translation/translation.js?v=v2026-10-19T09353";
 
 const button = document.getElementById("btnInstallAdmin");
 const pwaApi = initPwa({ registerServiceWorker: false });
