@@ -1604,7 +1604,7 @@ async function applyFixtureToFrame(scene, fixture) {
         <div class="gs-section"><div class="gs-label">${escapeHtml(text.theme)}</div><div class="ui-select" id="gsThemeSelect" style="margin-top:8px;width:100%"><button class="btn inp ui-select-btn" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div></div>
         <div class="gs-section"><div class="gs-label">${escapeHtml(text.logo)}</div><div id="gsLogoGrid" class="gs-logo-grid"></div></div>
         <div class="gs-section"><div class="gs-label">${escapeHtml(text.hostLogo)}</div><div class="toggle-group gs-host-logo-mode" role="radiogroup"><label class="toggle-item"><input type="radio" name="gsHostLogoMode" value="pixel" checked/><span class="toggle-slider" data-text="${escapeHtml(text.pixel)}"></span></label><label class="toggle-item"><input type="radio" name="gsHostLogoMode" value="source"/><span class="toggle-slider" data-text="${escapeHtml(text.source)}"></span></label></div><div class="gs-hint">${escapeHtml(text.hint)}</div></div>
-        <div class="sfx-foot"><button class="btn" id="btnDisplayReset" type="button">${escapeHtml(text.reset)}</button></div>`;
+        <div class="sfx-foot"><button class="btn" id="btnDisplayReset" type="button">${icon("refresh")} ${escapeHtml(text.reset)}</button></div>`;
       const grid = doc.getElementById("gsLogoGrid");
       if (grid) {
         const tile = doc.createElement("div"); tile.className = "gs-logo-tile selected";
@@ -1618,7 +1618,7 @@ async function applyFixtureToFrame(scene, fixture) {
       const themeLabel = doc.querySelector("#gsThemeSelect .ui-select-label"); if (themeLabel) themeLabel.textContent = firstTheme;
     } else if (content) {
       const title = await getStrings(currentLanguage(), { category: "gameSettings.categories.sound", reset: "control.sfxResetAll" });
-      content.innerHTML = `<div class="gs-cat-title">${escapeHtml(title.category)}</div><div class="gs-section"><div class="sfx-table" id="shotSfxTable"></div></div><div class="sfx-foot"><button class="btn" id="btnSoundReset" type="button">${escapeHtml(title.reset)}</button></div>`;
+      content.innerHTML = `<div class="gs-cat-title">${escapeHtml(title.category)}</div><div class="gs-section"><div class="sfx-table" id="shotSfxTable"></div></div><div class="sfx-foot"><button class="btn" id="btnSoundReset" type="button">${icon("refresh")} ${escapeHtml(title.reset)}</button></div>`;
     }
     if (scene.id === "sound") await paintSoundSettings(doc);
   } else if (scene.id === "logos") {
@@ -1659,7 +1659,7 @@ async function paintSoundSettings(doc) {
   table.innerHTML = sounds.categories.map(category => {
     const label = lookup(`control.sfxDesc.${category.key}`) || category.key;
     const variant = category.sounds?.[0]?.label?.[currentLanguage()] || "Classic";
-    return `<div class="sfx-row" data-sound="${escapeHtml(category.key)}"><div class="sfx-row-desc">${escapeHtml(label)}</div><div class="ui-select sfx-variant-select"><button class="btn sm ui-select-btn" type="button"><span class="ui-select-label">${escapeHtml(variant)}</span><span class="ui-select-caret">⌄</span></button></div><button class="sfx-preview-btn sound-preview-btn" type="button" title="Podgląd" aria-label="Podgląd">${icon("play")}</button><div class="sfx-vol-wrap"><input class="sfx-vol" type="range" min="0" max="100" value="100"><span class="sfx-vol-label">100%</span></div><div class="sfx-file-wrap"><button class="btn sfx-add-btn" type="button" disabled>Wybierz plik</button></div></div>`;
+    return `<div class="sfx-row" data-sound="${escapeHtml(category.key)}"><div class="sfx-row-desc">${escapeHtml(label)}</div><div class="ui-select sfx-variant-select"><button class="btn sm ui-select-btn" type="button"><span class="ui-select-label">${escapeHtml(variant)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><button class="sfx-preview-btn sound-preview-btn" type="button" title="Podgląd" aria-label="Podgląd">${icon("play")}</button><div class="sfx-vol-wrap"><input class="sfx-vol" type="range" min="0" max="100" value="100"><span class="sfx-vol-label">100%</span></div><div class="sfx-file-wrap"><button class="btn sfx-add-btn" type="button" disabled>${icon("upload")} Wybierz plik</button></div></div>`;
   }).join("");
   table.querySelectorAll(".sfx-row").forEach(row => {
     const slider = row.querySelector(".sfx-vol");
