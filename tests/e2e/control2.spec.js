@@ -1959,12 +1959,17 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       if (i === 0) {
         await expectMappingFieldFits(page, testInfo, "p1");
         const field = page.locator(".c2-mapinput input");
+        await page.keyboard.press("i");
+        await expect(field).toBeFocused();
         await field.fill("");
         await expect(page.getByRole("button", { name: "Odp. finałowa (15)" })).toBeDisabled();
         await expect(page.getByRole("button", { name: "Nie ma na liście (0 pkt)" })).toBeDisabled();
         await expect(page.getByRole("button", { name: "Brak odpowiedzi", exact: true })).toBeEnabled();
         await field.fill("Odp. finałowa");
+        await expect(field).toBeFocused();
         await expect(page.getByRole("button", { name: "Brak odpowiedzi", exact: true })).toBeDisabled();
+        await page.keyboard.press("Enter");
+        await expect(field).not.toBeFocused();
       }
       // Zgłoszone: wybór dopasowania w finale też idzie przez zaznacz ->
       // potwierdź (armableTile), jak reszta konsekwentnych kafli.
@@ -1972,8 +1977,25 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       // Klawisz podczas przejścia planszy ma być ignorowany; poczekaj na
       // faktyczne odblokowanie kafla, zamiast wyprzedzać dźwięk testem.
       await expect(page.locator('[data-shortcut="1"]')).toBeEnabled({ timeout: 22000 });
+      const mappingRevBefore = await page.evaluate(async (id) =>
+        (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);
+      await page.locator("#app .c2-tile").evaluateAll((tiles) => { window.__mappingTilesBefore = tiles; });
       await page.keyboard.press("1");
       await expect(page.locator('[data-shortcut="1"]')).toHaveClass(/c2-tile-primary/);
+      await expect.poll(async () => page.evaluate(async (id) =>
+        (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id)).toBeGreaterThan(mappingRevBefore);
+      expect(await page.locator("#app .c2-tile").evaluateAll((tiles) =>
+        tiles.length === window.__mappingTilesBefore.length && tiles.every((tile, i) => tile === window.__mappingTilesBefore[i]))
+      ).toBe(true);
+      if (i === 0) {
+        const activeMappingRev = await page.evaluate(async (id) =>
+          (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);
+        await page.locator('[data-shortcut="1"]').click();
+        await page.waitForTimeout(300);
+        expect(await page.evaluate(async (id) =>
+          (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id)
+        ).toBe(activeMappingRev);
+      }
       if (i === 0) {
         await expect(hostPage.locator("#paperText2 .hostGreen:not(.hostStrike)")).toHaveText("z listy");
         await expect(hostPage.locator("#paperText2 .hostStrike")).toHaveText("Odp. finałowa (15)");

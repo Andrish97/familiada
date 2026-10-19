@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-19T15242";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T15242";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-19T15242";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-19T15242";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-19T15242";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T15242";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-19T17064";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T17064";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-19T17064";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-19T17064";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-19T17064";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T17064";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-19T15242";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-19T17064";
 
 
 const $ = (id) => document.getElementById(id);
@@ -1625,7 +1625,14 @@ export function createUI({ root, emit }) {
     const inp = h("input", { type: "text", value: inputText, placeholder: t("control.finalUi.playerAnswer"), autocomplete: "off" });
     if (locked || devicesBlocked) inp.disabled = true;
     on(inp, "input", (e) => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: e.currentTarget.value }));
-    const wpisanoTile = h("div", { class: "c2-mapinput" }, [
+    on(inp, "keydown", async (e) => {
+      if (e.key !== "Enter" || e.isComposing) return;
+      e.preventDefault();
+      await emit("ui.flushTyping");
+      if (inp.isConnected) inp.blur();
+    });
+    bindShortcut(inp, "i", () => inp.focus());
+    const wpisanoTile = h("div", { class: "c2-mapinput", "data-i": idx }, [
       h("div", { class: "c2-mapinput-labelcol" }, [h("div", { class: "c2-field-label", text: t("control.finalUi.mapInputLabel") })]),
       h("div", { class: "c2-entrytile-input" }, [inp]),
     ]);
@@ -1689,7 +1696,10 @@ export function createUI({ root, emit }) {
       text: `${a.text} (${a.fixed_points})`,
       active: !p2IsRepeat && effective.kind === "MATCH" && effective.matchId === a.id,
       disabled: locked || !hasTyped || revealLocked(),
-      onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
+      onclick: () => {
+        if (effective.kind === "MATCH" && effective.matchId === a.id && !p2IsRepeat) return;
+        emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points });
+      },
     }));
     const missOption = {
       // Pod nazwą przycisku, w nawiasie, DOSŁOWNIE stała etykieta
@@ -1706,14 +1716,20 @@ export function createUI({ root, emit }) {
       active: !p2IsRepeat && effective.kind === "MISS",
       disabled: locked || !hasTyped || revealLocked(),
       danger: true,
-      onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }),
+      onclick: () => {
+        if (effective.kind === "MISS" && !p2IsRepeat) return;
+        emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 });
+      },
     };
     const skipOption = {
       key: `map-skip:${round}:${idx}`,
       text: t("control.finalUi.mapBtnSkip"),
       active: !p2IsRepeat && effective.kind === "SKIP",
       disabled: locked || hasTyped || revealLocked(),
-      onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 }),
+      onclick: () => {
+        if (effective.kind === "SKIP" && !p2IsRepeat) return;
+        emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 });
+      },
     };
     const options = [...matchOptions, missOption, skipOption];
     // Powtórzenie (tylko runda 2) — control/js/gameFinal.js's data-kind="repeat":
@@ -1868,33 +1884,24 @@ export function createUI({ root, emit }) {
     // przekazywane osobno do każdego renderXxx() — te dwie funkcje je już i
     // tak czytają z domknięcia.
     if (root.dataset.step !== state.step) keyboardTarget = null;
-    const oldEntry = /^f_p[12]_entry$/.test(state.step) && root.dataset.step === state.step ? root.firstElementChild : null;
+    const existingScreen = root.dataset.step === state.step ? root.firstElementChild : null;
     currentState = state;
     keyboardActions.clear();
     busy = !!ctx.busy;
     typingPending = !!ctx.typingPending;
     devicesBlocked = !!ctx.devicesBlocked;
     outroReturnReady = !!ctx.outroReturnReady;
-    // Każdy renderXxx() woła clear() (root.innerHTML="") i buduje CAŁE #app
-    // od zera — .c2-scroll-area dostaje więc świeży element przy KAŻDYM
-    // renderze, nie tylko przy realnej zmianie ekranu (np. presence ping z
-    // innego urządzenia, albo teraz też dispatchGated()'s wymuszone
-    // przerysowanie) — nowy element zaczyna od scrollTop:0, więc operator
-    // scrollujący listę (Urządzenia/Podsumowanie) był bez przerwy odrzucany
-    // na górę (zgłoszone). Zapisz pozycję przed przebudową, przywróć po —
-    // działa dla wszystkich ekranów jednym miejscem, bez dotykania każdego
-    // renderXxx() osobno.
+    // Dla ponownego renderu tego samego kroku budujemy drzewo obok i
+    // uzgadniamy je z żywym DOM. Dzięki temu zachowują się elementy, których
+    // stan się nie zmienił (w tym animacje, fokus i scroll); przy zmianie
+    // kroku ekran jest montowany od nowa. Pozycję scrolla zachowujemy też
+    // jako zabezpieczenie, jeśli przebudowa zmieni strukturę.
     const scrollBefore = root.querySelector(".c2-scroll-area")?.scrollTop ?? 0;
-    // Zgłoszone: "wpisywanie nie ma blokować licznika" — dopóki timer
-    // gracza (finał) leci, SET_ENTRY_TEXT (każde naciśnięcie klawisza w
-    // polu odpowiedzi) i tak przechodzi przez pełny dispatchGated()/
-    // render() (tickTimers() z control/js/app.js NIE dotyczy tej ścieżki —
-    // to osobny, lżejszy tik tylko dla samych cyfr). Pełny render() tworzy
-    // świeży <input> (renderFinalEntry) — bez zapisania/przywrócenia fokusu
-    // operator traciłby kursor w polu po KAŻDYM wciśniętym znaku. Dotyczy
-    // wyłącznie pól w .c2-entryrow[data-i] (finał-wpisywanie) — jedyne
-    // miejsce w tej appce, gdzie operator w ogóle pisze tekst w trakcie
-    // renderów wywołanych z zewnątrz (presence, timer, inne urządzenie).
+    // Zgłoszone: wpisywanie odpowiedzi nie może gubić fokusu przy zapisach,
+    // odświeżeniu obecności ani zmianach stanu. Zapisujemy pozycję kursora
+    // dla każdego pola w wierszu [data-i]; przy renderze tego samego kroku
+    // zachowuje je uzgadnianie DOM, a przy wymianie elementu można odtworzyć
+    // fokus i zaznaczenie.
     const focused = document.activeElement;
     const focusedRow = focused && root.contains(focused) ? focused.closest("[data-i]") : null;
     const savedFocus = focusedRow ? {
@@ -1908,7 +1915,7 @@ export function createUI({ root, emit }) {
     else if (s === "setup_finish") setTopbarProgress(t("control.summaryStepperTitle"));
     else setTopbarProgress("");
     const liveRoot = root;
-    if (oldEntry) root = document.createElement("div");
+    if (existingScreen) root = document.createElement("div");
     let freshEntry;
     try {
     if (s === "devices_display") renderDevicesStep(state, ctx);
@@ -1930,8 +1937,8 @@ export function createUI({ root, emit }) {
     freshEntry = root.firstElementChild;
     } finally { root = liveRoot; }
     root.dataset.step = s;
-    if (oldEntry && freshEntry) {
-      reconcileEntry(oldEntry, freshEntry);
+    if (existingScreen && freshEntry) {
+      reconcileEntry(existingScreen, freshEntry);
       for (const binding of keyboardActions.values()) {
         if (binding.el.dataset.shortcut) binding.el = root.querySelector(`[data-shortcut="${binding.el.dataset.shortcut}"]`) || binding.el;
       }
@@ -1945,7 +1952,7 @@ export function createUI({ root, emit }) {
       ]);
       const mapping = /^f_p[12]_map_q/.test(s);
       const codes = mapping
-        ? ["mappingAnswers", "w", "o", ...(s.startsWith("f_p2_") ? ["r"] : []), "reveal", "n", "b", "m"]
+        ? ["mappingAnswers", "i", "w", "o", ...(s.startsWith("f_p2_") ? ["r"] : []), "reveal", "n", "b", "m"]
         : [...new Set([...keyboardActions].filter(([key]) => key !== "reveal" && !/^[2-6]$/.test(key)).map(([key]) => key === "1" ? "answers" : key)), "m"];
       for (const code of codes) list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
       hint.append(list);
