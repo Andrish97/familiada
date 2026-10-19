@@ -1152,13 +1152,16 @@ function sizeScenePreview(scene) {
     const boardScale = Math.min(1, Math.max(0.1, (availableWidth - 2) / board.width));
     const bezel = 12, screenScale = (board.height - 2 * bezel) / scene.height;
     const screenWidth = scene.width * screenScale;
+    const phoneWidth = screenWidth + 2 * bezel;
+    const phoneRadius = phoneWidth * 0.14;
+    const screenRadius = phoneRadius - bezel;
     const screenLeft = (board.width - screenWidth) / 2;
     els.frameWrap.classList.add("is-phone");
     els.frameWrap.style.width = `${board.width * boardScale}px`;
     els.frameWrap.style.height = `${board.height * boardScale}px`;
     els.frameWrap.style.setProperty("--screen-left", `${screenLeft * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-top", `${bezel * boardScale}px`);
-    els.frameWrap.style.setProperty("--screen-radius", `${52 * screenScale * boardScale}px`);
+    els.frameWrap.style.setProperty("--screen-radius", `${screenRadius * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-width", `${screenWidth * 0.323 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-height", `${scene.height * screenScale * 0.0427 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-radius", `${22 * screenScale * boardScale}px`);
@@ -2711,8 +2714,8 @@ function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900
   const deviceWidth = screenWidth + 2 * bezel;
   const deviceX = (outputWidth - deviceWidth) / 2;
   const deviceY = 0;
-  const radius = 52 * screenScale;
-  const cornerRadius = radius + bezel;
+  const cornerRadius = deviceWidth * 0.14;
+  const radius = cornerRadius - bezel;
   const output = document.createElement("canvas");
   output.width = outputWidth;
   output.height = outputHeight;
