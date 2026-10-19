@@ -1,10 +1,10 @@
 const LANG_LOADERS = {
-  pl: async () => (await import('./pl.js?v=v2026-10-19T12095')).default,
-  en: async () => (await import('./en.js?v=v2026-10-19T12095')).default,
-  uk: async () => (await import('./uk.js?v=v2026-10-19T12095')).default,
+  pl: async () => (await import('./pl.js?v=v2026-10-19T12153')).default,
+  en: async () => (await import('./en.js?v=v2026-10-19T12153')).default,
+  uk: async () => (await import('./uk.js?v=v2026-10-19T12153')).default,
 };
 
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-19T12095";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-19T12153";
 
 
 const LANG_ORDER = ["pl", "en", "uk"];
