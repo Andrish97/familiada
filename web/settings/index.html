@@ -88,6 +88,12 @@
           <label class="field-label" for="homepageShotQrUrl">Link dla kodu QR ankiety</label>
           <input class="inp homepage-shot-qr" id="homepageShotQrUrl" type="url" placeholder="Wklej adres mini strony, gdy będzie gotowy"/>
         </div>
+        <details class="homepage-shot-shared">
+          <summary>Wspólne przykładowe dane</summary>
+          <p class="muted">Dane gry, ankiety i subskrybentów są współdzielone między widokami w wybranym języku.</p>
+          <textarea id="homepageShotSharedFixture" rows="12" spellcheck="false" aria-label="Wspólne przykładowe dane w formacie JSON"></textarea>
+          <button class="btn sm" id="homepageShotSaveShared" type="button">Zapisz wspólne dane</button>
+        </details>
         <div class="homepage-shot-workspace">
           <div class="homepage-shot-editor">
             <div class="field-label">Przykładowe dane widoku</div>

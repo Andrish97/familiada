@@ -3,6 +3,8 @@ const els = {};
 let config = null;
 let initialized = false;
 let dirty = false;
+let sharedDirty = false;
+let sharedEditorLanguage = "pl";
 let lastFrameKey = "";
 let deviceReadyPromise = null;
 let deviceReadyResolve = null;
@@ -22,12 +24,114 @@ const FIELD_LABELS = {
   logos: "Logo na liście", logo: "Nazwa logo", words: "Hasła na planszy",
 };
 
+function extraGameQuestions(language) {
+  return language === "en" ? [
+    ["What do you pack for a weekend trip?", ["Clothes", "Snacks", "A book", "Charger", "Camera"], [34, 25, 18, 13, 10]],
+    ["What do you drink in the morning?", ["Coffee", "Tea", "Water", "Juice"], [42, 28, 18, 12]],
+    ["What do you do on a day off?", ["Sleep in", "Go for a walk", "Watch a film", "Meet friends"], [35, 25, 22, 18]],
+    ["Which ice cream flavor do you choose?", ["Vanilla", "Chocolate", "Strawberry", "Pistachio"], [34, 28, 22, 16]],
+    ["What helps you relax?", ["Music", "A walk", "A book", "A bath"], [36, 27, 21, 16]],
+    ["What do you take to the park?", ["A ball", "Water", "A blanket", "A book"], [34, 27, 22, 17]],
+    ["Which fruit do you like?", ["Apples", "Bananas", "Strawberries", "Grapes"], [32, 28, 22, 18]],
+    ["What do you do on weekends?", ["Meet friends", "Relax"], [45, 35]],
+    ["What drink do you serve guests?", ["Tea", "Coffee", "Juice"], [80, 40, 10]],
+  ] : language === "uk" ? [
+    ["Що береш у поїздку на вихідні?", ["Одяг", "Перекус", "Книжку", "Зарядку", "Камеру"], [34, 25, 18, 13, 10]],
+    ["Що п’єш уранці?", ["Каву", "Чай", "Воду", "Сік"], [42, 28, 18, 12]],
+    ["Що робиш у вихідний?", ["Висплюся", "Гуляю", "Дивлюся фільм", "Зустрічаю друзів"], [35, 25, 22, 18]],
+    ["Який смак морозива обираєш?", ["Ваніль", "Шоколад", "Полуниця", "Фісташка"], [34, 28, 22, 16]],
+    ["Що допомагає відпочити?", ["Музика", "Прогулянка", "Книжка", "Ванна"], [36, 27, 21, 16]],
+    ["Що береш до парку?", ["М’яч", "Воду", "Плед", "Книжку"], [34, 27, 22, 17]],
+    ["Який фрукт тобі до смаку?", ["Яблука", "Банани", "Полуниця", "Виноград"], [32, 28, 22, 18]],
+    ["Що робиш у вихідні?", ["Зустрічаю друзів", "Відпочиваю"], [45, 35]],
+    ["Що подаєш гостям?", ["Чай", "Каву", "Сік"], [80, 40, 10]],
+  ] : [
+    ["Co zabierasz na weekendowy wyjazd?", ["Ubrania", "Przekąski", "Książkę", "Ładowarkę", "Aparat"], [34, 25, 18, 13, 10]],
+    ["Co pijesz rano?", ["Kawę", "Herbatę", "Wodę", "Sok"], [42, 28, 18, 12]],
+    ["Co robisz w wolny dzień?", ["Dłużej śpię", "Spaceruję", "Oglądam film", "Spotykam znajomych"], [35, 25, 22, 18]],
+    ["Jaki smak lodów wybierasz?", ["Waniliowy", "Czekoladowy", "Truskawkowy", "Pistacjowy"], [34, 28, 22, 16]],
+    ["Co pomaga odpocząć?", ["Muzyka", "Spacer", "Książka", "Kąpiel"], [36, 27, 21, 16]],
+    ["Co zabierasz do parku?", ["Piłkę", "Wodę", "Koc", "Książkę"], [34, 27, 22, 17]],
+    ["Jaki owoc lubisz?", ["Jabłka", "Banany", "Truskawki", "Winogrona"], [32, 28, 22, 18]],
+    ["Co robisz w weekend?", ["Spotykam znajomych", "Odpoczywam"], [45, 35]],
+    ["Jaki napój podajesz gościom?", ["Herbatę", "Kawę", "Sok"], [80, 40, 10]],
+  ];
+}
+
 function byId(id) { return document.getElementById(id); }
 function currentLanguage() { return byId("homepageShotLanguage").value; }
 function currentScene() { return config.scenes.find(scene => scene.id === byId("homepageShotScene").value) || config.scenes[0]; }
 function langFixture(scene, language = currentLanguage()) {
   const override = config.localeFixtures?.[language]?.[scene.id];
-  return structuredClone(override || localizeFixture(scene.fixture || {}, language));
+  const fixture = structuredClone(override || localizeFixture(scene.fixture || {}, language));
+  const shared = config.sharedFixtures?.[language];
+  if (!shared) return fixture;
+  const firstQuestion = shared.gameQuestions?.[0];
+  if (scene.id === "game-editor") fixture.gameQuestions = structuredClone(shared.gameQuestions || []);
+  if (["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
+    fixture.game = shared.gameName || fixture.game;
+  }
+  if (scene.id === "games") fixture.games = [shared.gameName, ...(shared.otherGames || fixture.games?.slice(1) || [])];
+  if (scene.id === "tasks") fixture.tasks = (fixture.tasks || []).map(task => ({ ...task, game: task.game === localizeFixture({ game: "Rodzinny pojedynek" }, language).game ? shared.gameName : task.game }));
+  if (["game-editor", "control-round", "host-round", "display-round"].includes(scene.id) && firstQuestion) {
+    fixture.question = firstQuestion.text;
+    fixture.answers = firstQuestion.answers.map(answer => answer.text);
+    fixture.points = firstQuestion.answers.map(answer => answer.points);
+  }
+  if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = shared.teams || fixture.teams;
+  if (scene.id === "subscribers" && shared.subscribers) {
+    fixture.people = shared.subscribers.map((name, index) => ({ name, state: index < shared.activeSubscribers ? "active" : "pending" }));
+  }
+  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) {
+    fixture.poll = shared.pollName || fixture.poll;
+    fixture.question = shared.pollQuestion || fixture.question;
+    if (scene.id === "poll-vote-mobile") fixture.answers = shared.pollAnswers || fixture.answers;
+    if (scene.id === "poll-results" && shared.pollResults) fixture.answers = shared.pollResults;
+    if (scene.id === "poll-share" && shared.subscribers) fixture.subscribers = shared.subscribers;
+  }
+  return fixture;
+}
+
+function defaultSharedFixture(language) {
+  const editor = config.scenes.find(scene => scene.id === "game-editor");
+  const editorFixture = localizeFixture(editor?.fixture || {}, language);
+  const pollShare = config.scenes.find(scene => scene.id === "poll-share");
+  const pollVote = config.scenes.find(scene => scene.id === "poll-vote-mobile");
+  const pollResults = config.scenes.find(scene => scene.id === "poll-results");
+  const pollFixture = localizeFixture(pollShare?.fixture || {}, language);
+  const voteFixture = localizeFixture(pollVote?.fixture || {}, language);
+  const resultsFixture = localizeFixture(pollResults?.fixture || {}, language);
+  return {
+    gameName: editorFixture.game || "Rodzinny pojedynek",
+    otherGames: localizeFixture({ games: config.scenes.find(scene => scene.id === "games")?.fixture?.games?.slice(1) || [] }, language).games,
+    gameQuestions: [
+      { text: editorFixture.question, answers: (editorFixture.answers || []).map((text, index) => ({ text, points: editorFixture.points?.[index] ?? 0 })) },
+      ...extraGameQuestions(language).map(([text, answers, points]) => ({ text, answers: answers.map((answer, index) => ({ text: answer, points: points[index] })) })),
+    ],
+    teams: localizeFixture({ teams: ["Króliczki", "Zajączki"] }, language).teams,
+    subscribers: localizeFixture({ subscribers: ["Anna Nowak", "Piotr Zieliński", "Kasia Maj"] }, language).subscribers,
+    activeSubscribers: 2,
+    pollName: pollFixture.poll,
+    pollQuestion: pollFixture.question,
+    pollAnswers: voteFixture.answers || [],
+    pollResults: resultsFixture.answers || [],
+  };
+}
+
+function sharedFixture(language = currentLanguage()) {
+  return config.sharedFixtures[language];
+}
+
+function sharedKeysForScene(sceneId) {
+  if (sceneId === "games") return ["games"];
+  if (sceneId === "game-editor") return ["game", "question", "answers", "points", "gameQuestions"];
+  if (["appearance", "sound", "control-finale"].includes(sceneId)) return ["game"];
+  if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
+  if (sceneId === "subscribers") return ["people"];
+  if (sceneId === "poll-share") return ["poll", "question", "subscribers"];
+  if (sceneId === "poll-vote-mobile") return ["poll", "question", "answers"];
+  if (sceneId === "poll-results") return ["poll", "question", "answers"];
+  return [];
 }
 function localizeFixture(source, language) {
   const fixture = structuredClone(source);
@@ -92,6 +196,8 @@ function updateEditor() {
   const scene = currentScene();
   const qrToolbar = byId("homepageShotQrToolbar");
   if (qrToolbar) qrToolbar.hidden = scene.id !== "poll-share";
+  if (!sharedDirty) byId("homepageShotSharedFixture").value = JSON.stringify(sharedFixture(), null, 2);
+  sharedEditorLanguage = currentLanguage();
   languageSelectUI?.setValue(currentLanguage(), { silent: true });
   sceneSelectUI?.setValue(scene.id, { silent: true });
   editorSceneId = scene.id;
@@ -308,40 +414,8 @@ async function applyFixtureToFrame(scene, fixture) {
     editorPanel?.classList.add("hasQ");
     setInput(doc, "qText", fixture.question);
     const qList = doc.getElementById("qList");
-    const localizedQuestions = language === "en" ? [
-      ["What do you pack for a weekend trip?", ["Clothes", "Snacks", "A book", "Charger", "Camera"], [34, 25, 18, 13, 10]],
-      ["What do you drink in the morning?", ["Coffee", "Tea", "Water", "Juice"], [42, 28, 18, 12]],
-      ["What do you do on a day off?", ["Sleep in", "Go for a walk", "Watch a film", "Meet friends"], [35, 25, 22, 18]],
-      ["Which ice cream flavor do you choose?", ["Vanilla", "Chocolate", "Strawberry", "Pistachio"], [34, 28, 22, 16]],
-      ["What helps you relax?", ["Music", "A walk", "A book", "A bath"], [36, 27, 21, 16]],
-      ["What do you take to the park?", ["A ball", "Water", "A blanket", "A book"], [34, 27, 22, 17]],
-      ["Which fruit do you like?", ["Apples", "Bananas", "Strawberries", "Grapes"], [32, 28, 22, 18]],
-      ["What do you do on weekends?", ["Meet friends", "Relax"], [45, 35]],
-      ["What drink do you serve guests?", ["Tea", "Coffee", "Juice"], [80, 40, 10]],
-    ] : language === "uk" ? [
-      ["Що береш у поїздку на вихідні?", ["Одяг", "Перекус", "Книжку", "Зарядку", "Камеру"], [34, 25, 18, 13, 10]],
-      ["Що п’єш уранці?", ["Каву", "Чай", "Воду", "Сік"], [42, 28, 18, 12]],
-      ["Що робиш у вихідний?", ["Висплюся", "Гуляю", "Дивлюся фільм", "Зустрічаю друзів"], [35, 25, 22, 18]],
-      ["Який смак морозива обираєш?", ["Ваніль", "Шоколад", "Полуниця", "Фісташка"], [34, 28, 22, 16]],
-      ["Що допомагає відпочити?", ["Музика", "Прогулянка", "Книжка", "Ванна"], [36, 27, 21, 16]],
-      ["Що береш до парку?", ["М’яч", "Воду", "Плед", "Книжку"], [34, 27, 22, 17]],
-      ["Який фрукт тобі до смаку?", ["Яблука", "Банани", "Полуниця", "Виноград"], [32, 28, 22, 18]],
-      ["Що робиш у вихідні?", ["Зустрічаю друзів", "Відпочиваю"], [45, 35]],
-      ["Що подаєш гостям?", ["Чай", "Каву", "Сік"], [80, 40, 10]],
-    ] : [
-      ["Co zabierasz na weekendowy wyjazd?", ["Ubrania", "Przekąski", "Książkę", "Ładowarkę", "Aparat"], [34, 25, 18, 13, 10]],
-      ["Co pijesz rano?", ["Kawę", "Herbatę", "Wodę", "Sok"], [42, 28, 18, 12]],
-      ["Co robisz w wolny dzień?", ["Dłużej śpię", "Spaceruję", "Oglądam film", "Spotykam znajomych"], [35, 25, 22, 18]],
-      ["Jaki smak lodów wybierasz?", ["Waniliowy", "Czekoladowy", "Truskawkowy", "Pistacjowy"], [34, 28, 22, 16]],
-      ["Co pomaga odpocząć?", ["Muzyka", "Spacer", "Książka", "Kąpiel"], [36, 27, 21, 16]],
-      ["Co zabierasz do parku?", ["Piłkę", "Wodę", "Koc", "Książkę"], [34, 27, 22, 17]],
-      ["Jaki owoc lubisz?", ["Jabłka", "Banany", "Truskawki", "Winogrona"], [32, 28, 22, 18]],
-      ["Co robisz w weekend?", ["Spotykam znajomych", "Odpoczywam"], [45, 35]],
-      ["Jaki napój podajesz gościom?", ["Herbatę", "Kawę", "Sok"], [80, 40, 10]],
-    ];
-    const questions = [
+    const questions = fixture.gameQuestions || [
       { text: fixture.question, answers: (fixture.answers || []).map((text, i) => ({ text, points: fixture.points?.[i] ?? 0 })) },
-      ...localizedQuestions.map(([text, answers, points]) => ({ text, answers: answers.map((answer, i) => ({ text: answer, points: points[i] })) })),
     ];
     if (qList) {
       const addTileLabel = language === "en" ? "Add question" : language === "uk" ? "Додати запитання" : "Dodaj pytanie";
@@ -660,6 +734,7 @@ async function saveConfig() {
 function readEditorIntoConfig() {
   const scene = config.scenes.find(item => item.id === editorSceneId) || currentScene();
   const fixture = JSON.parse(els.fixture.value);
+  for (const key of sharedKeysForScene(scene.id)) delete fixture[key];
   config.localeFixtures ||= {};
   config.localeFixtures[editorLanguage] ||= {};
   config.localeFixtures[editorLanguage][scene.id] = fixture;
@@ -669,8 +744,9 @@ function readEditorIntoConfig() {
 
 function renderEditorFields(fixture) {
   els.fields.replaceChildren();
+  const sharedKeys = new Set(sharedKeysForScene(currentScene().id));
   for (const [key, value] of Object.entries(fixture)) {
-    if (key === "logoFile") continue;
+    if (key === "logoFile" || sharedKeys.has(key)) continue;
     const wrapper = document.createElement("div"); wrapper.className = "homepage-shot-field";
     const label = document.createElement("label"); label.textContent = FIELD_LABELS[key] || key; label.htmlFor = `homepage-shot-field-${key}`;
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
@@ -736,6 +812,24 @@ async function flushEditor() {
     setStatus(`Nie zapisano zmian: ${error.message}`);
     return false;
   }
+}
+
+async function flushSharedEditor() {
+  if (!sharedDirty) return true;
+  let shared;
+  try { shared = JSON.parse(byId("homepageShotSharedFixture").value); }
+  catch { setStatus("Popraw JSON wspólnych przykładowych danych."); return false; }
+  if (!shared || typeof shared !== "object" || !Array.isArray(shared.gameQuestions) || !Array.isArray(shared.subscribers)) {
+    setStatus("Wspólne dane muszą zawierać listę pytań gry i subskrybentów."); return false;
+  }
+  config.sharedFixtures[sharedEditorLanguage] = shared;
+  try { await saveConfig(); sharedDirty = false; return true; }
+  catch (error) { setStatus(`Nie udało się zapisać wspólnych danych: ${error.message}`); return false; }
+}
+
+async function flushAllEditors() {
+  if (!await flushEditor()) return false;
+  return flushSharedEditor();
 }
 
 async function captureScene(scene) {
@@ -878,7 +972,13 @@ export async function initHomepageScreenshots() {
   try {
     config = await readConfig();
     config.scenes = Array.isArray(config.scenes) ? config.scenes : [];
+    let initializeSharedFixtures = false;
+    config.sharedFixtures ||= {};
+    for (const language of ["pl", "en", "uk"]) {
+      if (!config.sharedFixtures[language]) { config.sharedFixtures[language] = defaultSharedFixture(language); initializeSharedFixtures = true; }
+    }
     byId("homepageShotQrUrl").value = config.qrUrl || "";
+    if (initializeSharedFixtures) await saveConfig();
     renderSceneList();
     const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T07290");
     const languageSelect = byId("homepageShotLanguageSelect");
@@ -895,11 +995,11 @@ export async function initHomepageScreenshots() {
     });
     setStatus("Przykłady wczytane. Możesz edytować dane wybranego widoku.");
     els.scene.addEventListener("change", async () => {
-      if (!await flushEditor()) { els.scene.value = editorSceneId; sceneSelectUI?.setValue(editorSceneId, { silent: true }); return; }
+      if (!await flushAllEditors()) { els.scene.value = editorSceneId; sceneSelectUI?.setValue(editorSceneId, { silent: true }); return; }
       updateEditor();
     });
     els.language.addEventListener("change", async () => {
-      if (!await flushEditor()) { els.language.value = editorLanguage; languageSelectUI?.setValue(editorLanguage, { silent: true }); return; }
+      if (!await flushAllEditors()) { els.language.value = editorLanguage; languageSelectUI?.setValue(editorLanguage, { silent: true }); return; }
       updateEditor();
     });
     els.fixture.addEventListener("input", scheduleFixtureSave);
@@ -911,18 +1011,28 @@ export async function initHomepageScreenshots() {
         if (currentScene().id === "poll-share") await loadScenePreview(currentScene(), true);
       } catch (error) { setStatus(`Nie udało się zapisać linku QR: ${error.message}`); }
     });
+    byId("homepageShotSaveShared").addEventListener("click", async () => {
+      if (!await flushSharedEditor()) return;
+      updateEditor();
+      await loadScenePreview(currentScene(), true);
+      setStatus("Wspólne dane zapisane. Widoki korzystają teraz z tych samych przykładów.");
+    });
+    byId("homepageShotSharedFixture").addEventListener("input", () => {
+      sharedDirty = true;
+      setStatus("Wspólne dane zmienione — zapisz albo przejdź dalej, aby je zachować.");
+    });
     byId("homepageShotPrevious").addEventListener("click", () => moveScene(-1));
     byId("homepageShotNext").addEventListener("click", () => moveScene(1));
     byId("homepageShotSave").addEventListener("click", async () => {
-      try { readEditorIntoConfig(); await saveConfig(); await loadScenePreview(); setStatus("Przykłady zapisane."); }
+      try { if (!await flushAllEditors()) return; readEditorIntoConfig(); await saveConfig(); await loadScenePreview(); setStatus("Przykłady zapisane."); }
       catch (error) { setStatus(`Nie udało się zapisać: ${error.message}`); }
     });
     byId("homepageShotCaptureOne").addEventListener("click", async () => {
-      try { readEditorIntoConfig(); await saveConfig(); setStatus("Przygotowuję zrzut…"); await captureMany([currentScene()]); }
+      try { if (!await flushAllEditors()) return; readEditorIntoConfig(); await saveConfig(); setStatus("Przygotowuję zrzut…"); await captureMany([currentScene()]); }
       catch (error) { setStatus(`Nie udało się zrobić zrzutu: ${error.message}`); }
     });
     byId("homepageShotCaptureAll").addEventListener("click", async () => {
-      try { readEditorIntoConfig(); await saveConfig(); setStatus("Odświeżam zrzuty po kolei…"); await captureMany(config.scenes); }
+      try { if (!await flushAllEditors()) return; readEditorIntoConfig(); await saveConfig(); setStatus("Odświeżam zrzuty po kolei…"); await captureMany(config.scenes); }
       catch (error) { setStatus(`Nie udało się rozpocząć: ${error.message}`); }
     });
     initialized = true;
@@ -932,7 +1042,7 @@ export async function initHomepageScreenshots() {
 }
 
 async function moveScene(delta) {
-  if (!await flushEditor()) return;
+  if (!await flushAllEditors()) return;
   const index = config.scenes.findIndex(scene => scene.id === els.scene.value);
   const next = (index + delta + config.scenes.length) % config.scenes.length;
   els.scene.value = config.scenes[next].id;

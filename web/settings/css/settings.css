@@ -113,6 +113,11 @@ body.settings-body > main.wrap{
 .homepage-shot-choice--scene{flex:1 1 260px;max-width:480px}
 .homepage-shot-select{width:100%}
 .homepage-shot-qr{width:min(520px,100%);min-height:40px}
+.homepage-shot-shared{display:grid;gap:8px;margin:12px 0;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:12px}
+.homepage-shot-shared summary{cursor:pointer;font-weight:700}
+.homepage-shot-shared p{margin:0;font-size:12px;opacity:.75}
+.homepage-shot-shared textarea{width:100%;min-height:220px;box-sizing:border-box;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
+.homepage-shot-shared button{justify-self:start}
 .homepage-shot-workspace{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(520px, 1.5fr);gap:16px;align-items:start}
 .homepage-shot-editor{display:grid;gap:12px;min-width:0;padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.025)}
 .homepage-shot-editor textarea{width:100%;min-height:340px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical;white-space:pre}
