@@ -86,7 +86,7 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.game = shared.gameName || fixture.game;
   }
   if (scene.id === "games") fixture.games = [shared.gameName, ...(shared.otherGames || fixture.games?.slice(1) || [])];
-  if (scene.id === "tasks") fixture.tasks = (fixture.tasks || []).map(task => ({ ...task, game: task.game === localizeFixture({ game: "Rodzinny pojedynek" }, language).game ? shared.gameName : task.game }));
+  if (scene.id === "tasks") fixture.tasks = (fixture.tasks || []).map((task, index) => ({ ...task, game: shared.otherGames?.[index % Math.max(1, shared.otherGames.length)] || shared.gameName }));
   if (["game-editor", "control-round", "host-round", "display-round"].includes(scene.id) && firstQuestion) {
     fixture.question = firstQuestion.text;
     fixture.answers = firstQuestion.answers.map(answer => answer.text);
@@ -101,7 +101,9 @@ function langFixture(scene, language = currentLanguage()) {
     if (scene.id === "poll-vote-mobile") fixture.answers = pollQuestions[0]?.answers.map(answer => answer.text) || fixture.answers;
     if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
     if (scene.id === "poll-share") {
-      const recipients = shared.pollRecipients || (shared.subscribers || []).map((_, index) => ({ subscriberIndex: index, responded: index === 0 }));
+      const recipients = (config.localeFixtures?.[language]?.["poll-share-actions"] || (shared.subscribers || []).map((_, index) => ({ subscriberIndex: index, responded: index === 0 })))
+        .filter(recipient => Number.isInteger(recipient.subscriberIndex) && recipient.subscriberIndex >= 0 && recipient.subscriberIndex < (shared.subscribers || []).length);
+      fixture.pollRecipients = structuredClone(recipients);
       fixture.subscribers = recipients.map(recipient => shared.subscribers[recipient.subscriberIndex]).filter(Boolean);
       fixture.subscriberStates = recipients.map(recipient => !!recipient.responded);
     }
@@ -153,12 +155,9 @@ function normalizeSharedFixture(shared, defaults) {
       ...defaults.pollQuestions.slice(1),
     ];
   })();
-  result.pollRecipients = Array.isArray(shared.pollRecipients) ? shared.pollRecipients.map((recipient, index) => ({
-    subscriberIndex: Number.isInteger(recipient.subscriberIndex) ? recipient.subscriberIndex : Math.max(0, result.subscribers.indexOf(recipient.name)),
-    responded: !!recipient.responded,
-  })).filter(recipient => recipient.subscriberIndex < result.subscribers.length) : result.subscribers.map((_, index) => ({ subscriberIndex: index, responded: index === 0 }));
   delete result.pollQuestion; delete result.pollAnswers; delete result.pollResults;
   delete result.activeSubscribers; delete result.subscriberStates;
+  delete result.pollRecipients;
   return result;
 }
 
@@ -187,7 +186,6 @@ function defaultSharedFixture(language) {
       { text: voteFixture.question || pollFixture.question, answers: (voteFixture.answers || []).map((text, index) => ({ text, votes: oldResults[index]?.votes ?? 0 })) },
       ...extraPollQuestions(language),
     ],
-    pollRecipients: generalSubscribers.map((_, index) => ({ subscriberIndex: index, responded: index === 0 })),
   };
 }
 
@@ -288,30 +286,6 @@ function renderSharedEditor(shared) {
   });
   sharedButton(poll, "Dodaj pytanie ankiety", "add-poll-question");
 
-  const recipients = document.createElement("div"); recipients.className = "homepage-shot-shared-group";
-  const recipientsHeading = document.createElement("h3"); recipientsHeading.textContent = "Zaproszeni do tej ankiety"; recipients.append(recipientsHeading);
-  const recipientRows = document.createElement("div"); recipientRows.className = "homepage-shot-shared-rows";
-  (shared.pollRecipients || []).forEach((recipient, index) => {
-    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--subscriber";
-    const recipientField = document.createElement("label"); recipientField.className = "homepage-shot-shared-field";
-    const recipientLabel = document.createElement("span"); recipientLabel.textContent = `Subskrybent ${index + 1}`;
-    const recipientSelect = document.createElement("select"); recipientSelect.className = "inp"; recipientSelect.dataset.pollSubscriber = "";
-    (shared.subscribers || []).forEach((name, subscriberIndex) => {
-      const option = document.createElement("option"); option.value = String(subscriberIndex); option.textContent = name; recipientSelect.append(option);
-    });
-    if (shared.subscribers?.length) recipientSelect.value = String(Math.min(recipient.subscriberIndex ?? index, shared.subscribers.length - 1));
-    recipientField.append(recipientLabel, recipientSelect); row.append(recipientField);
-    const status = document.createElement("label"); status.className = "homepage-shot-shared-field";
-    const statusLabel = document.createElement("span"); statusLabel.textContent = "Odpowiedź";
-    const select = document.createElement("select"); select.className = "inp"; select.dataset.pollResponded = "";
-    for (const [value, label] of [["yes", "Odpowiedział"], ["no", "Oczekuje"]]) {
-      const option = document.createElement("option"); option.value = value; option.textContent = label; select.append(option);
-    }
-    select.value = recipient.responded ? "yes" : "no";
-    status.append(statusLabel, select); row.append(status); sharedButton(row, "Usuń", "remove-poll-recipient", index); recipientRows.append(row);
-  });
-  recipients.append(recipientRows); sharedButton(recipients, "Dodaj osobę", "add-poll-recipient"); poll.append(recipients);
-
   const subscribers = sharedGroup(root, "Subskrybenci");
   const subscriberNote = document.createElement("p"); subscriberNote.className = "muted"; subscriberNote.textContent = "Lista aktywnych subskrybentów. Informacja o odpowiedzi jest zapisywana osobno dla każdej ankiety."; subscribers.append(subscriberNote);
   const subscriberRows = document.createElement("div"); subscriberRows.className = "homepage-shot-shared-rows";
@@ -344,9 +318,6 @@ function readSharedEditor() {
     })),
   }));
   shared.subscribers = [...root.querySelectorAll("[data-subscriber]")].map(input => input.value.trim());
-  shared.pollRecipients = [...root.querySelectorAll("[data-poll-responded]")].map(select => ({
-    subscriberIndex: Number(select.closest(".homepage-shot-shared-row").querySelector("[data-poll-subscriber]").value), responded: select.value === "yes",
-  })).filter(recipient => Number.isInteger(recipient.subscriberIndex));
   return shared;
 }
 
@@ -356,7 +327,7 @@ function sharedKeysForScene(sceneId) {
   if (["appearance", "sound", "control-finale"].includes(sceneId)) return ["game"];
   if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
   if (sceneId === "subscribers") return ["people"];
-  if (sceneId === "poll-share") return ["poll", "question", "subscribers"];
+  if (sceneId === "poll-share") return ["poll", "question", "subscribers", "subscriberStates", "pollRecipients"];
   if (sceneId === "poll-vote-mobile") return ["poll", "question", "answers"];
   if (sceneId === "poll-results") return ["poll", "question", "answers"];
   return [];
@@ -422,6 +393,27 @@ function renderSceneList() {
 
 function updateEditor() {
   const scene = currentScene();
+  const sourceNote = byId("homepageShotSourceNote");
+  if (sourceNote) {
+    const sharedLabels = {
+      games: "nazwy gier z listy ogólnej",
+      "game-editor": "wybraną grę i jej pytania z listy ogólnej",
+      tasks: "nazwy gier z listy ogólnej",
+      appearance: "wybraną grę z listy ogólnej",
+      sound: "wybraną grę z listy ogólnej",
+      "control-round": "wybraną grę, pytanie i drużyny z listy ogólnej",
+      "control-finale": "wybraną grę z listy ogólnej",
+      "host-round": "wybraną grę, pytanie i drużyny z listy ogólnej",
+      "display-round": "wybraną grę, pytanie i drużyny z listy ogólnej",
+      subscribers: "aktywnych subskrybentów z listy ogólnej",
+      "poll-share": "nazwę ankiety i zaproszonych subskrybentów z listy ogólnej",
+      "poll-vote-mobile": "nazwę ankiety, pytanie i odpowiedzi z listy ogólnej",
+      "poll-results": "nazwę ankiety i pytania z listy ogólnej",
+    };
+    const source = sharedLabels[scene.id];
+    sourceNote.textContent = source ? `Źródło wspólnych danych: ${source}.` : "Ta kategoria korzysta z własnych danych przykładowych.";
+    sourceNote.dataset.shared = source ? "true" : "false";
+  }
   const qrToolbar = byId("homepageShotQrToolbar");
   if (qrToolbar) qrToolbar.hidden = scene.id !== "poll-share";
   if (!sharedDirty) renderSharedEditor(sharedFixture());
@@ -435,6 +427,23 @@ function updateEditor() {
   renderEditorFields(langFixture(scene));
   dirty = false;
   loadScenePreview(scene);
+}
+
+function selectScreenshotTab(name) {
+  const isShared = name === "shared";
+  for (const [tabId, panelId, active] of [
+    ["homepageShotSharedTab", "homepageShotSharedPanel", isShared],
+    ["homepageShotCategoryTab", "homepageShotCategoryPanel", !isShared],
+  ]) {
+    const tab = byId(tabId);
+    tab.classList.toggle("is-active", active);
+    tab.setAttribute("aria-selected", String(active));
+    byId(panelId).hidden = !active;
+  }
+  if (!isShared) {
+    if (!dirty) renderEditorFields(langFixture(currentScene()));
+    void loadScenePreview();
+  }
 }
 
 async function loadScenePreview(scene = currentScene(), force = false) {
@@ -529,7 +538,7 @@ async function applyFixtureToFrame(scene, fixture) {
     doc.body.dataset.fixtureReady = "true";
     return;
   }
-  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T08052");
+  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T08470");
   const grid = doc.getElementById("grid");
   if (scene.id === "games") {
     const language = currentLanguage();
@@ -590,7 +599,7 @@ async function applyFixtureToFrame(scene, fixture) {
     const moreBtn = doc.getElementById("btnMore");
     const moreDropdown = doc.getElementById("navMoreDropdown");
     if (more && moreBtn && moreDropdown) {
-      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T08052");
+      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T08470");
       const nav = setTopbarNavPriority({ moreEl: more, moreDropdownEl: moreDropdown });
       nav.recalc();
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -758,8 +767,8 @@ async function applyFixtureToFrame(scene, fixture) {
 async function paintSoundSettings(doc) {
   const [{ default: sounds }, { default: dictionary }, { icon }] = await Promise.all([
     fetch("/shared/data/sounds.json", { cache: "force-cache" }).then(response => response.json()),
-    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T08052`),
-    import("/shared/js/core/icons.js?v=v2026-10-19T08052"),
+    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T08470`),
+    import("/shared/js/core/icons.js?v=v2026-10-19T08470"),
   ]);
   const table = doc.getElementById("shotSfxTable");
   if (!table) return;
@@ -780,7 +789,7 @@ async function paintSoundSettings(doc) {
 }
 
 async function getStrings(language, keys) {
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T08052`);
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T08470`);
   const output = {};
   for (const [name, key] of Object.entries(keys)) output[name] = key.split(".").reduce((value, part) => value?.[part], dictionary) || "";
   return output;
@@ -789,7 +798,7 @@ async function getStrings(language, keys) {
 async function logoCanvasFromFile(file, width, height) {
   const logoRequest = fetch(file || "/shared/data/logo_familiada.json", { cache: "force-cache" });
   const [{ buildLogoPreviewCanvas, loadFont5x7 }, response] = await Promise.all([
-    import("/shared/js/core/logo-preview.js?v=v2026-10-19T08052"), logoRequest,
+    import("/shared/js/core/logo-preview.js?v=v2026-10-19T08470"), logoRequest,
   ]);
   if (!response.ok) throw new Error("nie udało się wczytać przykładowego logo");
   const stored = await response.json();
@@ -802,8 +811,8 @@ async function logoCanvasFromFile(file, width, height) {
 
 async function translateFrame(doc, language) {
   if (language === "pl") return;
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T08052`);
-  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T08052");
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T08470`);
+  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T08470");
   const lookup = key => key.split(".").reduce((value, part) => value?.[part], dictionary);
   const replace = (key, node) => {
     const value = lookup(key);
@@ -825,7 +834,7 @@ function setInput(doc, id, value) { const node = doc.getElementById(id); if (nod
 function setText(doc, id, value) { const node = doc.getElementById(id); if (node) node.textContent = value ?? ""; }
 
 async function paintPeople(doc, fixture) {
-  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T08052");
+  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T08470");
   const received = doc.getElementById("contactsReceived");
   const outgoing = doc.getElementById("contactsOutgoing");
   if (!received || !outgoing) return;
@@ -861,7 +870,7 @@ async function paintPeople(doc, fixture) {
 }
 
 async function paintTasks(doc, fixture) {
-  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T08052");
+  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T08470");
   const host = doc.getElementById("tasksHost");
   if (!host) return;
   const rows = fixture.tasks.map((task, index) => ({
@@ -902,14 +911,14 @@ async function paintPoll(doc, scene, fixture) {
   for (const id of ["btnCopy", "btnOpen", "btnOpenQr"]) { const button = doc.getElementById(id); if (button) button.disabled = false; }
   const subs = doc.getElementById("subsGrid");
   if (subs) {
-    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T08052");
+    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T08470");
     subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: "Zaproszeni subskrybenci", rows: fixture.subscribers.map((name, i) => ({ id: `shot-sub-${i}`, label: name, compact: true, note: fixture.subscriberStates?.[i] ? "Oddano głos" : "Oczekuje na odpowiedź", tags: [{ text: "Subskrybent", cls: "tag--muted" }] })) }));
   }
   if (scene.id === "poll-results") {
     const shareTab = doc.getElementById("tabShare"); if (shareTab) shareTab.classList.remove("active");
     const resultTab = doc.getElementById("tabResults"); if (resultTab) resultTab.classList.add("active");
     setText(doc, "resultsMeta", currentLanguage() === "en" ? "18 votes · live results" : currentLanguage() === "uk" ? "18 голосів · результати наживо" : "18 głosów · wyniki na żywo");
-    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T08052");
+    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T08470");
     const questions = (fixture.pollQuestions || []).map((question, questionIndex) => ({
       id: `shot-poll-${questionIndex + 1}`, ord: questionIndex + 1, text: question.text,
       answers: question.answers.map((answer, answerIndex) => ({ id: `shot-answer-${questionIndex + 1}-${answerIndex + 1}`, text: answer.text, votes: answer.votes })),
@@ -920,11 +929,11 @@ async function paintPoll(doc, scene, fixture) {
 
 async function paintControl(scene, fixture) {
   const doc = els.frame.contentDocument;
-  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T08052");
+  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T08470");
   const restoreLanguage = translation.getUiLang();
   await translation.setUiLang(currentLanguage(), { persist: false, updateUrl: false, apply: false });
-  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T08052");
-  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T08052");
+  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T08470");
+  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T08470");
   const finale = scene.id === "control-finale";
   const state = makeDefaultState("homepage-visual-fixture");
   state.step = finale ? "f_p1_entry" : "r_play"; state.topCard = finale ? "final" : "rounds"; state.phase = finale ? "FINAL" : "PLAY";
@@ -994,12 +1003,22 @@ function readEditorIntoConfig() {
   config.localeFixtures ||= {};
   config.localeFixtures[editorLanguage] ||= {};
   config.localeFixtures[editorLanguage][scene.id] = fixture;
+  if (scene.id === "poll-share") {
+    config.localeFixtures[editorLanguage]["poll-share-actions"] = readPollActions();
+  }
   dirty = false;
   return scene;
 }
 
+function readPollActions() {
+  return [...byId("homepageShotCategoryActions").querySelectorAll("[data-poll-action-status]")].map(select => ({
+    subscriberIndex: Number(select.closest("[data-poll-action-row]").dataset.subscriberIndex), responded: select.value === "yes",
+  }));
+}
+
 function renderEditorFields(fixture) {
   els.fields.replaceChildren();
+  renderCategoryActions(fixture);
   const sharedKeys = new Set(sharedKeysForScene(currentScene().id));
   for (const [key, value] of Object.entries(fixture)) {
     if (key === "logoFile" || sharedKeys.has(key)) continue;
@@ -1015,6 +1034,51 @@ function renderEditorFields(fixture) {
     if (input.tagName === "TEXTAREA") { input.rows = Array.isArray(value) ? Math.min(8, Math.max(3, value.length)) : 4; wrapper.classList.add("homepage-shot-field--wide"); }
     wrapper.append(label, input); els.fields.append(wrapper);
   }
+}
+
+function renderCategoryActions(fixture) {
+  const root = byId("homepageShotCategoryActions");
+  root.replaceChildren();
+  const visible = currentScene().id === "poll-share";
+  root.hidden = !visible;
+  if (!visible) return;
+  const shared = sharedFixture(currentLanguage());
+  const group = sharedGroup(root, "Zaproszeni subskrybenci");
+  const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note";
+  note.textContent = "Osoby są pobrane z listy ogólnej. Tutaj ustawiasz tylko ich udział w tej ankiecie.";
+  group.append(note);
+  const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
+  (fixture.pollRecipients || []).forEach((recipient, index) => {
+    const name = shared.subscribers?.[recipient.subscriberIndex];
+    if (!name) return;
+    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row";
+    row.dataset.pollActionRow = ""; row.dataset.subscriberIndex = String(recipient.subscriberIndex);
+    const identity = document.createElement("div"); identity.className = "homepage-shot-shared-field";
+    const identityLabel = document.createElement("span"); identityLabel.textContent = `Z listy ogólnej · osoba ${index + 1}`;
+    const identityValue = document.createElement("strong"); identityValue.textContent = name;
+    identity.append(identityLabel, identityValue);
+    const actionField = document.createElement("label"); actionField.className = "homepage-shot-shared-field";
+    const actionLabel = document.createElement("span"); actionLabel.textContent = "Akcja w tej ankiecie";
+    const action = document.createElement("select"); action.className = "inp"; action.dataset.pollActionStatus = "";
+    for (const [value, label] of [["yes", "Oddał głos"], ["no", "Jeszcze nie odpowiedział"]]) {
+      const option = document.createElement("option"); option.value = value; option.textContent = label; action.append(option);
+    }
+    action.value = recipient.responded ? "yes" : "no";
+    actionField.append(actionLabel, action);
+    const remove = sharedButton(document.createElement("span"), "Usuń z ankiety", "remove-poll-recipient", index);
+    row.append(identity, actionField, remove); rows.append(row);
+  });
+  group.append(rows);
+  const addRow = document.createElement("div"); addRow.className = "homepage-shot-action-add";
+  const selector = document.createElement("select"); selector.className = "inp"; selector.dataset.pollActionAdd = "";
+  for (const [index, name] of (shared.subscribers || []).entries()) {
+    if ((fixture.pollRecipients || []).some(item => item.subscriberIndex === index)) continue;
+    const option = document.createElement("option"); option.value = String(index); option.textContent = name; selector.append(option);
+  }
+  if (!selector.options.length) { const option = document.createElement("option"); option.value = ""; option.textContent = "Wszystkie osoby z listy już dodane"; selector.append(option); selector.disabled = true; }
+  sharedButton(addRow, "Dodaj osobę do ankiety", "add-poll-recipient");
+  addRow.querySelector("button").dataset.index = "";
+  addRow.prepend(selector); group.append(addRow);
 }
 
 function syncFieldsToJson() {
@@ -1233,12 +1297,19 @@ export async function initHomepageScreenshots() {
     config.sharedFixtures ||= {};
     for (const language of ["pl", "en", "uk"]) {
       const defaults = defaultSharedFixture(language);
+      const legacyPollActions = config.sharedFixtures[language]?.pollRecipients;
       if (!config.sharedFixtures[language]) initializeSharedFixtures = true;
       const normalized = normalizeSharedFixture(config.sharedFixtures[language] || {}, defaults);
       if (JSON.stringify(normalized) !== JSON.stringify(config.sharedFixtures[language] || {})) initializeSharedFixtures = true;
       config.sharedFixtures[language] = normalized;
       config.localeFixtures ||= {};
       config.localeFixtures[language] ||= {};
+      if (!Array.isArray(config.localeFixtures[language]["poll-share-actions"])) {
+        config.localeFixtures[language]["poll-share-actions"] = Array.isArray(legacyPollActions)
+          ? legacyPollActions.map(recipient => ({ subscriberIndex: Number(recipient.subscriberIndex) || 0, responded: !!recipient.responded }))
+          : normalized.subscribers.map((_, index) => ({ subscriberIndex: index, responded: index === 0 }));
+        initializeSharedFixtures = true;
+      }
       const friendsScene = config.scenes.find(scene => scene.id === "friends");
       const friendsFixture = config.localeFixtures[language].friends || localizeFixture(friendsScene?.fixture || {}, language);
       if (!friendsFixture.friendGroups) { friendsFixture.friendGroups = defaultFriendGroups(language); initializeSharedFixtures = true; }
@@ -1251,9 +1322,13 @@ export async function initHomepageScreenshots() {
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     if (initializeSharedFixtures) await saveConfig();
     renderSceneList();
-    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T08052");
+    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T08470");
     const languageSelect = byId("homepageShotLanguageSelect");
     const sceneSelect = byId("homepageShotSceneSelect");
+    document.querySelectorAll("[data-shot-tab]").forEach(tab => tab.addEventListener("click", async () => {
+      if (!await flushAllEditors()) return;
+      selectScreenshotTab(tab.dataset.shotTab);
+    }));
     languageSelectUI = initUiSelect(languageSelect, {
       options: [...els.language.options].map(option => ({ value: option.value, label: option.textContent })),
       value: els.language.value,
@@ -1284,6 +1359,7 @@ export async function initHomepageScreenshots() {
     });
     byId("homepageShotSaveShared").addEventListener("click", async () => {
       if (!await flushEditor() || !await flushSharedEditor()) return;
+      renderEditorFields(langFixture(currentScene()));
       await loadScenePreview(currentScene(), true);
       setStatus("Wspólne dane zapisane. Widoki korzystają teraz z tych samych przykładów.");
     });
@@ -1314,12 +1390,10 @@ export async function initHomepageScreenshots() {
           const answerIndex = Number(button.closest(".homepage-shot-shared-row").dataset.pollAnswerIndex);
           shared.pollQuestions[index]?.answers.splice(answerIndex, 1); break;
         }
-        case "add-poll-recipient": if (shared.subscribers.length) shared.pollRecipients.push({ subscriberIndex: 0, responded: false }); break;
-        case "remove-poll-recipient": shared.pollRecipients.splice(index, 1); break;
         case "add-subscriber": shared.subscribers.push("Nowy subskrybent"); break;
         case "remove-subscriber":
           shared.subscribers.splice(index, 1);
-          shared.pollRecipients = shared.pollRecipients.filter(recipient => recipient.subscriberIndex !== index).map(recipient => ({ ...recipient, subscriberIndex: recipient.subscriberIndex > index ? recipient.subscriberIndex - 1 : recipient.subscriberIndex }));
+          config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] = (config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] || []).filter(recipient => recipient.subscriberIndex !== index).map(recipient => ({ ...recipient, subscriberIndex: recipient.subscriberIndex > index ? recipient.subscriberIndex - 1 : recipient.subscriberIndex }));
           break;
         default: return;
       }
@@ -1327,18 +1401,41 @@ export async function initHomepageScreenshots() {
       sharedDirty = true;
       setStatus("Wspólne dane zmienione — zapisz albo przejdź dalej, aby je zachować.");
     });
+    byId("homepageShotCategoryActions").addEventListener("change", event => {
+      if (!event.target.matches("[data-poll-action-status]")) return;
+      config.localeFixtures[currentLanguage()]["poll-share-actions"] = readPollActions();
+      els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
+      scheduleFixtureSave();
+    });
+    byId("homepageShotCategoryActions").addEventListener("click", event => {
+      const button = event.target.closest("[data-shared-action]");
+      if (!button) return;
+      const fixture = langFixture(currentScene());
+      if (button.dataset.sharedAction === "add-poll-recipient") {
+        const select = byId("homepageShotCategoryActions").querySelector("[data-poll-action-add]");
+        if (!select || select.disabled || select.value === "") return;
+        fixture.pollRecipients.push({ subscriberIndex: Number(select.value), responded: false });
+      } else if (button.dataset.sharedAction === "remove-poll-recipient") {
+        fixture.pollRecipients.splice(Number(button.dataset.index), 1);
+      } else return;
+      config.localeFixtures[currentLanguage()]["poll-share-actions"] = fixture.pollRecipients;
+      renderEditorFields(fixture);
+      els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
+      dirty = true;
+      scheduleFixtureSave();
+    });
     byId("homepageShotPrevious").addEventListener("click", () => moveScene(-1));
     byId("homepageShotNext").addEventListener("click", () => moveScene(1));
     byId("homepageShotSave").addEventListener("click", async () => {
-      try { if (!await flushAllEditors()) return; readEditorIntoConfig(); await saveConfig(); await loadScenePreview(); setStatus("Przykłady zapisane."); }
+      try { if (!await flushAllEditors()) return; selectScreenshotTab("category"); readEditorIntoConfig(); await saveConfig(); await loadScenePreview(); setStatus("Przykłady zapisane."); }
       catch (error) { setStatus(`Nie udało się zapisać: ${error.message}`); }
     });
     byId("homepageShotCaptureOne").addEventListener("click", async () => {
-      try { if (!await flushAllEditors()) return; readEditorIntoConfig(); await saveConfig(); setStatus("Przygotowuję zrzut…"); await captureMany([currentScene()]); }
+      try { if (!await flushAllEditors()) return; selectScreenshotTab("category"); readEditorIntoConfig(); await saveConfig(); setStatus("Przygotowuję zrzut…"); await captureMany([currentScene()]); }
       catch (error) { setStatus(`Nie udało się zrobić zrzutu: ${error.message}`); }
     });
     byId("homepageShotCaptureAll").addEventListener("click", async () => {
-      try { if (!await flushAllEditors()) return; readEditorIntoConfig(); await saveConfig(); setStatus("Odświeżam zrzuty po kolei…"); await captureMany(config.scenes); }
+      try { if (!await flushAllEditors()) return; selectScreenshotTab("category"); readEditorIntoConfig(); await saveConfig(); setStatus("Odświeżam zrzuty po kolei…"); await captureMany(config.scenes); }
       catch (error) { setStatus(`Nie udało się rozpocząć: ${error.message}`); }
     });
     initialized = true;

@@ -1,0 +1,27 @@
+{
+  "id": "/settings/?app=admin",
+  "name": "Familiada — Panel admina",
+  "short_name": "Panel admina",
+  "description": "Zabezpieczony panel administracyjny Familiady",
+  "start_url": "/settings/?app=admin",
+  "scope": "/settings/",
+  "display": "standalone",
+  "background_color": "#050914",
+  "theme_color": "#050914",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/img/icon.png?v=v2026-10-19T08470",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/img/icon.png?v=v2026-10-19T08470",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"]
+}
