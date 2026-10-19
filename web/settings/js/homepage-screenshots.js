@@ -269,7 +269,7 @@ function defaultSubscriberInvitations(language) {
 
 function normalizeSharedFixture(shared, defaults) {
   const result = { ...defaults, ...shared };
-  result.username = String(shared.username || defaults.username || "").trim();
+  result.username = String(shared.username || defaults.username || "").trim().replace(/\s+/g, "_");
   result.gameQuestions = Array.isArray(shared.gameQuestions) ? shared.gameQuestions : defaults.gameQuestions;
   result.teams = (Array.isArray(shared.teams) ? shared.teams : defaults.teams).slice(0, 2);
   result.subscribers = Array.isArray(shared.subscribers) ? shared.subscribers.map(value => String(value ?? "").trim()) : [];
@@ -301,6 +301,22 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 }
 
+function updateSharedFieldValidity(input) {
+  const username = input.matches("[data-shared-username], [data-shared-friend-name]");
+  const loggedInName = input.matches("[data-shared-username]");
+  const invalid = username ? /\s/.test(input.value) : !isValidEmail(input.value);
+  const message = username ? loggedInName ? "Nazwa zalogowanego użytkownika nie może zawierać spacji." : "Nazwa użytkownika nie może zawierać spacji." : "Wpisz poprawny adres e-mail.";
+  input.setCustomValidity(invalid ? message : "");
+  input.setAttribute("aria-invalid", String(invalid));
+  let hint = input.closest(".homepage-shot-shared-field")?.querySelector(".homepage-shot-input-error");
+  if (invalid && !hint) {
+    hint = document.createElement("span");
+    hint.className = "homepage-shot-input-error";
+    hint.textContent = message;
+    input.closest(".homepage-shot-shared-field")?.append(hint);
+  } else if (!invalid && hint) hint.remove();
+}
+
 function defaultSharedFixture(language) {
   const editor = config.scenes.find(scene => scene.id === "game-editor");
   const editorFixture = localizeFixture(editor?.fixture || {}, language);
@@ -322,7 +338,7 @@ function defaultSharedFixture(language) {
       : [{ username: "aleksandra_nowak", email: "aleksandra.nowak@example.com" }, { username: "jan_kowalski", email: "jan.kowalski@example.com" }];
   const oldResults = resultsFixture.answers || [];
   return {
-    username: language === "en" ? "John Smith" : language === "uk" ? "Іван Петренко" : "Jan Kowalski",
+    username: language === "en" ? "john_smith" : language === "uk" ? "ivan_petrenko" : "jan_kowalski",
     gameName: editorFixture.game || "Rodzinny pojedynek",
     otherGames: localizeFixture({ games: config.scenes.find(scene => scene.id === "games")?.fixture?.games?.slice(1) || [] }, language).games,
     gameQuestions: [
@@ -617,7 +633,7 @@ function renderResourceList(language = currentLanguage()) {
   const shared = config.sharedFixtures[language];
   const profile = sharedGroup(sharedRoot, "Konto przykładowe");
   const profileRow = document.createElement("div"); profileRow.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
-  sharedField(profileRow, "Nazwa użytkownika", shared.username || "", { dataset: { sharedUsername: "true" } });
+  sharedField(profileRow, "Nazwa użytkownika", shared.username || "", { required: true, autocomplete: "username", pattern: "\\S+", dataset: { sharedUsername: "true" } });
   profile.append(profileRow);
   const teams = sharedGroup(sharedRoot, "Nazwy drużyn");
   for (let index = 0; index < 2; index += 1) {
@@ -641,6 +657,7 @@ function renderResourceList(language = currentLanguage()) {
     sharedButton(row, "Usuń", "remove-friend", index); friends.append(row);
   });
   sharedButton(friends, "Dodaj znajomego", "add-friend");
+  sharedRoot.querySelectorAll("[data-shared-username], [data-shared-friend-name], [data-shared-subscriber], [data-shared-friend-email]").forEach(updateSharedFieldValidity);
 }
 
 function readResourceList(language = currentLanguage()) {
@@ -656,6 +673,7 @@ function readResourceList(language = currentLanguage()) {
   if ([...shared.subscribers, ...shared.friends.map(person => person.email)].some(email => !isValidEmail(email))) {
     throw new Error("Wpisz poprawny adres e-mail każdego aktywnego subskrybenta i znajomego.");
   }
+  if (!shared.username || /\s/.test(shared.username)) throw new Error("Nazwa zalogowanego użytkownika nie może zawierać spacji.");
   if (shared.friends.some(person => !person.username || /\s/.test(person.username))) throw new Error("Nazwa użytkownika znajomego nie może zawierać spacji.");
 }
 
@@ -2611,19 +2629,8 @@ export async function initHomepageScreenshots() {
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
     byId("homepageShotSharedFields").addEventListener("input", event => {
-      const input = event.target.closest("[data-shared-friend-name]");
-      if (!input) return;
-      const invalid = /\s/.test(input.value);
-      const message = "Nazwa użytkownika nie może zawierać spacji.";
-      input.setCustomValidity(invalid ? message : "");
-      input.setAttribute("aria-invalid", String(invalid));
-      let hint = input.closest(".homepage-shot-shared-field")?.querySelector(".homepage-shot-input-error");
-      if (invalid && !hint) {
-        hint = document.createElement("span");
-        hint.className = "homepage-shot-input-error";
-        hint.textContent = message;
-        input.closest(".homepage-shot-shared-field")?.append(hint);
-      } else if (!invalid && hint) hint.remove();
+      const input = event.target.closest("[data-shared-username], [data-shared-friend-name], [data-shared-subscriber], [data-shared-friend-email]");
+      if (input) updateSharedFieldValidity(input);
     });
     byId("homepageShotSharedFields").addEventListener("change", () => markDirty("shared"));
     byId("homepageShotSharedFields").addEventListener("click", event => {
