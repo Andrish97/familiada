@@ -18,6 +18,7 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T07
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-19T07162";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-19T07162";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T07162";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-19T07162";
 import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T07162";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T07162";
 import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T07162";
@@ -58,7 +59,6 @@ const el = {
   grid: $("grid"),
   receivedCopies: $("receivedCopies"),
   hint: $("hint"),
-  msg: $("msg"),
   btnEdit: $("btnEdit"),
   btnPreview: $("btnPreview"),
   btnDuplicate: $("btnDuplicate"),
@@ -124,7 +124,6 @@ function show(node, on) {
   node.style.display = on ? "" : "none";
 }
 
-const setMsg = (text) => { if (el.msg) el.msg.textContent = text || ""; };
 const isCompactViewport = () => getDeviceProfile().viewportWidth < 700;
 const refreshViewportClass = () => document.documentElement.classList.toggle("le-compact", isCompactViewport());
 refreshViewportClass();
@@ -367,14 +366,11 @@ function renderList() {
 
 async function removeLogo(logo, name) {
   if (!(await confirmModal({ text: t("logoEditor.confirm.deleteLogo", { name }) }))) return;
-  setMsg(t("logoEditor.status.deleting"));
   try {
     await deleteLogo(logo.id);
     await refresh();
-    setMsg(t("logoEditor.status.deleted"));
   } catch (e) {
     console.error(e);
-    setMsg("");
     void alertModal({
       text: e?.code === "RESOURCE_IN_USE" ? busyMessage(e.reason) : t("logoEditor.errors.deleteFailed", { error: e?.message || e }),
     });
@@ -749,9 +745,9 @@ async function boot() {
     await refresh();
   } catch (e) {
     console.error("[logo] initial list load failed:", e);
-    setMsg(t("logoEditor.errors.loadFailed", { error: String(e?.message || "") }));
+    toast(t("logoEditor.errors.loadFailed", { error: String(e?.message || "") }), { kind: "error" });
   } finally {
-    // Keep the grid hidden until its first result; errors still reveal their message.
+    // Odsłoń pusty/wczytany stan listy; błąd ładowania jest przekazany toastem.
     document.querySelector(".logoShell")?.classList.add("skel-step-ready");
   }
 }
