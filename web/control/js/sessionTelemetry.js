@@ -2,9 +2,60 @@
 // aktywność i lokalne obserwacje; telemetryka nie blokuje akcji gry.
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-18T17450";
 
-export function createSessionTelemetry(gameId, getState) {
+export function createSessionTelemetry(gameId, getState, subscribe = () => () => {}) {
+  const pendingVisibility = [];
+  let visibilityFlush = null;
+  let visibilityActive = false;
+  let previousActive = false;
+  const eventId = () => globalThis.crypto?.randomUUID?.()
+    || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  function isVisibilityActive(state = getState()) {
+    return !!state.locks.gameStarted && !state.locks.gameEnded;
+  }
+
+  function queueVisibility(reason) {
+    if (!visibilityActive) return;
+    pendingVisibility.push({
+      event_id: eventId(),
+      reason,
+      visibility: document.visibilityState || "unknown",
+      focused: !!document.hasFocus?.(),
+      was_discarded: !!document.wasDiscarded,
+      online: navigator.onLine !== false,
+    });
+    void flushVisibility();
+  }
+
+  async function flushVisibility() {
+    if (visibilityFlush || !visibilityActive || !pendingVisibility.length) return;
+    visibilityFlush = (async () => {
+      while (pendingVisibility.length && visibilityActive) {
+        const event = pendingVisibility[0];
+        try {
+          const { data, error } = await sb().rpc("control2_control_visibility_event", {
+            p_game_id: gameId, p_event: event,
+          });
+          if (error || data !== true) break;
+          if (pendingVisibility[0]?.event_id === event.event_id) pendingVisibility.shift();
+        } catch { break; }
+      }
+    })().finally(() => { visibilityFlush = null; });
+    await visibilityFlush;
+  }
+
+  function syncVisibilityActive(state = getState()) {
+    const next = isVisibilityActive(state);
+    visibilityActive = next;
+    if (next && !previousActive) queueVisibility("initial");
+    if (!next) pendingVisibility.length = 0;
+    previousActive = next;
+  }
+
   async function report(event = null) {
     const state = getState();
+    syncVisibilityActive(state);
+    void flushVisibility();
     if (!state.locks.gameStarted || (state.locks.gameEnded && event?.kind !== "diagnostic") || (state.step === "r_intro" && event?.kind !== "diagnostic")) return;
     try {
       await sb().rpc("control2_session_ping", {
@@ -13,13 +64,21 @@ export function createSessionTelemetry(gameId, getState) {
     } catch { /* Auxiliary diagnostics never interrupt gameplay or flood console. */ }
   }
   const timer = setInterval(() => { void report(); }, 5 * 60 * 1000);
-  function visible() { if (!document.hidden) void report(); }
-  document.addEventListener("visibilitychange", visible);
+  syncVisibilityActive();
+  const unsubscribe = subscribe(state => syncVisibilityActive(state));
+  function visibilityChanged() {
+    if (visibilityActive) queueVisibility("visibilitychange");
+    if (!document.hidden) void report();
+  }
+  document.addEventListener("visibilitychange", visibilityChanged);
   return {
     report,
     stop() {
       clearInterval(timer);
-      document.removeEventListener("visibilitychange", visible);
+      unsubscribe?.();
+      document.removeEventListener("visibilitychange", visibilityChanged);
+      visibilityActive = false;
+      pendingVisibility.length = 0;
     },
   };
 }

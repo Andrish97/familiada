@@ -306,7 +306,7 @@ async function main() {
   } else {
     sessionStorage.removeItem(outroStartedKey);
   }
-  const sessionTelemetry = createSessionTelemetry(gameId, () => store.state);
+  const sessionTelemetry = createSessionTelemetry(gameId, () => store.state, store.subscribe);
   const realtimeStates = new Map();
   function observeRealtimeState(channel, rawStatus) {
     const state = rawStatus === "SUBSCRIBED" ? "connected" : "disconnected";
