@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gTRybICnXeWUsUA7fgxYq6fUJkRZEs18lrO1QKOhpsFnsbwjU15nApKNLxWT0C7
+\restrict tzlgOLvrBi1L1LSwo3XsteQs145L59umeOU8fOosIAQvcFcp3Bdfo2LwL4lRd7s
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5043,6 +5043,63 @@ END; $$;
 
 
 --
+-- Name: control2_control_visibility_event("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control2_control_visibility_event"("p_game_id" "uuid", "p_event" "jsonb") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_session_id uuid;
+  v_event_id text;
+BEGIN
+  IF auth.uid() IS NULL OR NOT EXISTS (
+    SELECT 1 FROM public.games g WHERE g.id=p_game_id AND g.owner_id=auth.uid()
+  ) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF p_event IS NULL OR octet_length(p_event::text)>2000
+     OR p_event->>'reason' NOT IN ('initial','visibilitychange')
+     OR p_event->>'visibility' NOT IN ('visible','hidden') THEN
+    RAISE EXCEPTION 'invalid page state';
+  END IF;
+  v_event_id:=left(coalesce(p_event->>'event_id',''),80);
+  IF v_event_id='' THEN RAISE EXCEPTION 'event_id_required'; END IF;
+
+  SELECT a.session_id INTO v_session_id
+  FROM public.game_session_active a
+  JOIN public.game_sessions s ON s.id=a.session_id AND s.game_id=a.game_id
+  WHERE a.game_id=p_game_id AND s.control_version=2 AND s.ended_at IS NULL;
+  IF v_session_id IS NULL THEN RETURN false; END IF;
+
+  INSERT INTO public.control2_device_events(
+    game_id,session_id,device_type,event_type,event_id,details
+  ) VALUES (
+    p_game_id,v_session_id,'control','page_state',v_event_id,
+    jsonb_build_object(
+      'device_type','control',
+      'visibility_reason',p_event->>'reason',
+      'visibility',p_event->>'visibility',
+      'focused',CASE WHEN jsonb_typeof(p_event->'focused')='boolean'
+        THEN (p_event->>'focused')::boolean ELSE NULL END,
+      'online',CASE WHEN jsonb_typeof(p_event->'online')='boolean'
+        THEN (p_event->>'online')::boolean ELSE NULL END,
+      'was_discarded',CASE WHEN jsonb_typeof(p_event->'was_discarded')='boolean'
+        THEN (p_event->>'was_discarded')::boolean ELSE NULL END
+    )
+  ) ON CONFLICT (game_id,event_id) WHERE event_id IS NOT NULL DO NOTHING;
+
+  DELETE FROM public.control2_device_events e
+  WHERE e.game_id=p_game_id
+    AND (e.created_at<now()-interval '30 days' OR e.id IN (
+      SELECT id FROM public.control2_device_events
+      WHERE game_id=p_game_id ORDER BY created_at DESC,id DESC OFFSET 500
+    ));
+  RETURN true;
+END;
+$$;
+
+
+--
 -- Name: control2_device_transport_event("uuid", "text", "text", "jsonb", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5077,20 +5134,27 @@ BEGIN
   v_transport := p_event->>'transport';
   v_status := p_event->>'status';
   v_trigger := p_event->>'trigger';
-  IF v_event_type NOT IN ('transport_state','state_sync')
-     OR v_event_type IS NULL
-     OR v_phase IS NULL
-     OR v_phase NOT IN (
-       'connected','disconnected','recovered','auth_error',
-       'fallback_catchup','read_error','read_recovered','render_error','render_recovered'
-     )
-     OR v_transport IS NULL
-     OR v_transport NOT IN ('postgres_changes','rpc_fallback') THEN
-    RAISE EXCEPTION 'invalid event';
-  END IF;
-  IF (v_event_type='transport_state' AND v_phase IN ('fallback_catchup','read_error','read_recovered','render_error','render_recovered'))
-     OR (v_event_type='state_sync' AND v_phase NOT IN ('fallback_catchup','read_error','read_recovered','render_error','render_recovered')) THEN
-    RAISE EXCEPTION 'invalid event phase';
+  IF v_event_type='page_state' THEN
+    IF p_event->>'reason' NOT IN ('initial','visibilitychange')
+       OR p_event->>'visibility' NOT IN ('visible','hidden') THEN
+      RAISE EXCEPTION 'invalid page state';
+    END IF;
+  ELSE
+    IF v_event_type NOT IN ('transport_state','state_sync')
+       OR v_event_type IS NULL
+       OR v_phase IS NULL
+       OR v_phase NOT IN (
+         'connected','disconnected','recovered','auth_error',
+         'fallback_catchup','read_error','read_recovered','render_error','render_recovered'
+       )
+       OR v_transport IS NULL
+       OR v_transport NOT IN ('postgres_changes','rpc_fallback') THEN
+      RAISE EXCEPTION 'invalid event';
+    END IF;
+    IF (v_event_type='transport_state' AND v_phase IN ('fallback_catchup','read_error','read_recovered','render_error','render_recovered'))
+       OR (v_event_type='state_sync' AND v_phase NOT IN ('fallback_catchup','read_error','read_recovered','render_error','render_recovered')) THEN
+      RAISE EXCEPTION 'invalid event phase';
+    END IF;
   END IF;
   IF v_status IS NOT NULL AND v_status NOT IN (
     'SUBSCRIBED','CHANNEL_ERROR','TIMED_OUT','CLOSED','TOKEN_ERROR','FETCH_ERROR'
@@ -5117,6 +5181,7 @@ BEGIN
 
   v_details := jsonb_build_object(
     'device_type',p_device_type,
+    'visibility_reason',CASE WHEN v_event_type='page_state' THEN p_event->>'reason' ELSE NULL END,
     'phase',v_phase,
     'transport',v_transport,
     'status',v_status,
@@ -18138,7 +18203,7 @@ CREATE TABLE "public"."control2_device_events" (
     "details" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "event_id" "text",
-    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"]))),
+    CONSTRAINT "control2_device_events_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text", 'control'::"text"]))),
     CONSTRAINT "control2_device_events_event_type_check" CHECK (("event_type" = ANY (ARRAY['page_state'::"text", 'render_stall'::"text", 'runtime_error'::"text", 'network_state'::"text", 'lease_state'::"text", 'transport_state'::"text", 'state_sync'::"text"])))
 );
 
@@ -24929,5 +24994,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gTRybICnXeWUsUA7fgxYq6fUJkRZEs18lrO1QKOhpsFnsbwjU15nApKNLxWT0C7
+\unrestrict tzlgOLvrBi1L1LSwo3XsteQs145L59umeOU8fOosIAQvcFcp3Bdfo2LwL4lRd7s
 
