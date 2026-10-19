@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-19T07282";
-import { icon, iconText } from "./icons.js?v=v2026-10-19T07282";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-19T07282";
+import { t } from "../../translation/translation.js?v=v2026-10-19T07290";
+import { icon, iconText } from "./icons.js?v=v2026-10-19T07290";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-19T07290";
 
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = typeof window !== "undefined" && window.matchMedia
@@ -89,7 +89,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-19T07282").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-19T07290").then((module) => module.openContactModal());
     }, 0);
     return;
   }
