@@ -10,17 +10,17 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-19T19363";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-19T19363";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T19363";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T19363";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-19T19363";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-19T19363";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-19T19363";
-import { createPressController } from "./press.js?v=v2026-10-19T19363";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T19363";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-19T19363";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-19T19363";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-19T19444";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-19T19444";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T19444";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T19444";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-19T19444";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-19T19444";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-19T19444";
+import { createPressController } from "./press.js?v=v2026-10-19T19444";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T19444";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-19T19444";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-19T19444";
 
 
 function parseParams() {
