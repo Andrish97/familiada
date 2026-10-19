@@ -241,13 +241,13 @@ karty:
 
 | Dziś | Po podziale | ↩ |
 |---|---|---|
-| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logos/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logos/editor-text/?id=…`, `/logos/editor-draw/?id=…`, `/logos/editor-image/?id=…` | „← Wróć do: Logo” → `ret` (lista na karcie, z której wszedł) |
+| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logos/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logos/editor/text/?id=…`, `/logos/editor/draw/?id=…`, `/logos/editor/image/?id=…` | „← Wróć do: Logo” → `ret` (lista na karcie, z której wszedł) |
 | Control → ustawienia gry w `iframe` | `/game-settings/?id=…&ret=/control/?id=…` | „← Wróć do: Control” |
 | Control / game-settings / logo-editor → instrukcja, prywatność w `iframe` | `/manual/?ret=…`, `/privacy/?ret=…` | „← Wróć do: {strona}” |
 | `/editor/` — wybrane pytanie tylko w pamięci (`activeQId`, `editor.js:362`) | `/editor/?id=<gra>&q=<pytanie>` — po powrocie (z instrukcji, odświeżeniu, linku) otwiera się to samo pytanie | telefon: ↩ zamyka pytanie (`?q=` znika z adresu); bez pytania: ↩ → `ret` albo `/games/` |
 
-**Adresy (decyzja):** lista `/logos/`, edytory `/logos/editor-text/`,
-`/logos/editor-draw/`, `/logos/editor-image/` (`?id=<logo>`); w mapie skrótowo `/logos/editor-<typ>/`. Stary
+**Adresy (decyzja):** lista `/logos/`, edytory `/logos/editor/text/`,
+`/logos/editor/draw/`, `/logos/editor/image/` (`?id=<logo>`). Stary
 `/logo-editor/` znika (bez przekierowania); linki w kodzie i instrukcji
 zmieniane w tym samym kroku.
 
@@ -315,7 +315,7 @@ Dziś każda strona robi to inaczej:
 | `/bases/` | `?tab=shared` + zapas w `sessionStorage` (`basesMobileTab`), `pushState` |
 | `/polls-hub/` | `?tab=tasks`, `pushState` |
 | `/subscriptions/` | `?tab=subscriptions`, w kodzie karty to `"a"` / `"b"`, `pushState` |
-| `/logo-editor/` | `?tab=draw\|image` (domyślna `text`), `pushState` |
+| `/logos/` | `?tab=text\|draw\|image` (domyślna `text`), `pushState` |
 | `/manual/` | karta w `#hash` (`#control`), Control dodatkowo `?tab=control` |
 | `/base-explorer/` | folder `?folder=`, `pushState` |
 | `/settings/` (admin) | `?tab=`, `pushState` |
@@ -1144,7 +1144,7 @@ Podjęte (2026-10-07):
 - **Edytor logo**: refaktor na 3 osobne strony (tekst / rysunek / obraz)
   otwierane jak edytor pytań, `id` logo w adresie, autozapis bez pytań,
   można wrócić do pracy po zamknięciu.
-- **Adresy logo**: `/logos/` (lista) i `/logos/editor-text|draw|image/?id=`;
+- **Adresy logo**: `/logos/` (lista) i `/logos/editor/text|draw|image/?id=`;
   `/logo-editor/` znika.
 - **Bez fallbacków** (sekcja 2): żadnych aliasów starych adresów i
   parametrów, przekierowań ze starych ścieżek, zapasów w `sessionStorage`,

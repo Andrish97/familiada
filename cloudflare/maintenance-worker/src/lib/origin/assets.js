@@ -87,7 +87,7 @@ export function isSettingsAsset(pathname) {
   const screenshotFrames = new Set([
     "/games/", "/games/editor/", "/games/settings/", "/bases/", "/bases/explorer/",
     "/friends/", "/tasks/", "/polls/", "/polls/vote/points/", "/subscribers/",
-    "/logo/", "/logo/editor/draw/", "/control/", "/control/display/", "/control/host/",
+    "/logos/", "/logos/editor/draw/", "/control/", "/control/display/", "/control/host/",
   ]);
   return screenshotFrames.has(pathname)
     || isSharedAssetPath(pathname)

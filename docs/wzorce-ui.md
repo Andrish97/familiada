@@ -372,7 +372,7 @@ Tło: szkielet strony bez danych (patrz „Jak wykonano”). Kolejność jak w t
 <tr><td><code>/subscriptions/</code></td><td><img src="img/wzorce/subscriptions-m.png" width="150"></td><td><img src="img/wzorce/subscriptions-d.png" width="420"></td></tr>
 <tr><td><code>/bases/</code></td><td><img src="img/wzorce/bases-m.png" width="150"></td><td><img src="img/wzorce/bases-d.png" width="420"></td></tr>
 <tr><td><code>/bases/explorer/</code></td><td><img src="img/wzorce/bases-explorer-m.png" width="150"></td><td><img src="img/wzorce/bases-explorer-d.png" width="420"></td></tr>
-<tr><td><code>/logo/</code></td><td><img src="img/wzorce/logo-m.png" width="150"></td><td><img src="img/wzorce/logo-d.png" width="420"></td></tr>
+<tr><td><code>/logos/</code></td><td><img src="img/wzorce/logo-m.png" width="150"></td><td><img src="img/wzorce/logo-d.png" width="420"></td></tr>
 <tr><td><code>/logos/editor/text/</code></td><td><img src="img/wzorce/logo-text-m.png" width="150"></td><td><img src="img/wzorce/logo-text-d.png" width="420"></td></tr>
 <tr><td><code>/logos/editor/draw/</code></td><td><img src="img/wzorce/logo-draw-m.png" width="150"></td><td><img src="img/wzorce/logo-draw-d.png" width="420"></td></tr>
 <tr><td><code>/logos/editor/image/</code></td><td><img src="img/wzorce/logo-image-m.png" width="150"></td><td><img src="img/wzorce/logo-image-d.png" width="420"></td></tr>

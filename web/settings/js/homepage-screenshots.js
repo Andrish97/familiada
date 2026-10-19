@@ -91,8 +91,10 @@ function byId(id) { return document.getElementById(id); }
 function currentLanguage() { return byId("homepageShotLanguage").value; }
 function currentScene() { return config.scenes.find(scene => scene.id === byId("homepageShotScene").value) || config.scenes[0]; }
 function scenePagePath(scene) {
-  // Older saved fixture configs used /logo/, but the library is /logos/.
-  return scene?.id === "logos" ? "/logos/" : scene?.path || "/";
+  // Older saved fixture configs used /logo/...; public pages are /logos/...
+  if (scene?.id === "logos") return "/logos/";
+  if (scene?.id === "logo-draw") return "/logos/editor/draw/";
+  return scene?.path || "/";
 }
 function langFixture(scene, language = currentLanguage()) {
   const override = config.localeFixtures?.[language]?.[scene.id];
@@ -3042,8 +3044,9 @@ export async function initHomepageScreenshots() {
     config.scenes = Array.isArray(config.scenes) ? config.scenes : [];
     let initializeSharedFixtures = false;
     for (const scene of config.scenes) {
-      if (scene.id === "logos" && scene.path !== "/logos/") {
-        scene.path = "/logos/";
+      const canonicalPath = scenePagePath(scene);
+      if (["logos", "logo-draw"].includes(scene.id) && scene.path !== canonicalPath) {
+        scene.path = canonicalPath;
         initializeSharedFixtures = true;
       }
     }
