@@ -1531,11 +1531,21 @@ tr.row .tag-dot[data-tip]::before {
 .cm-item{
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:flex-start;
   gap:14px;
 }
 .cm-item > .ico{ width:16px; height:16px; flex:0 0 16px; opacity:.8; }
+.cm-item > span:not(.cm-kbd){
+  flex:1 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-align:left;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 .cm-kbd{
+  flex:0 0 auto;
+  margin-left:auto;
   opacity:.65;
   font-size:12px;
   letter-spacing:.06em;

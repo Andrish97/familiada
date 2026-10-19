@@ -665,6 +665,7 @@ const en = {
     headerTitle: "My question bases",
     headerHint: "Press a tile to select it. Double-tap to rename.",
     headerHintShared: "Press a tile to select it.",
+    requestTimeout: "The operation took too long. Check your connection and try again.",
     actions: {
       browse: "Browse",
       share: "Share",

@@ -274,7 +274,9 @@ function downloadJson(filename, obj) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  // Safari/Android may start reading the blob on the next task. Revoking the
+  // URL immediately can cancel the download before the browser opens it.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 function isOwner(b) {
@@ -418,15 +420,32 @@ async function refreshBases() {
 }
 
 /* ================= DB: CRUD baz ================= */
+const BASE_REQUEST_TIMEOUT_MS = 45_000;
+
+async function awaitBaseRequest(query) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), BASE_REQUEST_TIMEOUT_MS);
+  try {
+    const result = await query.abortSignal(controller.signal);
+    if (controller.signal.aborted) throw new Error(t("bases.requestTimeout"));
+    return result;
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error(t("bases.requestTimeout"));
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function createBase(name) {
-  const { data, error } = await sb()
+  const { data, error } = await awaitBaseRequest(sb()
     .from("question_bases")
     .insert({
       owner_id: currentUser.id,
       name: safeName(name),
     }, { defaultToNull: false })
     .select("id,name,owner_id,created_at,updated_at")
-    .single();
+    .single());
 
   if (error) throw error;
   return data;
@@ -543,7 +562,7 @@ function chunks(arr, size) {
 async function selectIn(table, cols, column, ids) {
   const rows = [];
   for (const part of chunks(ids, IN_CHUNK)) {
-    const { data, error } = await sb().from(table).select(cols).in(column, part);
+    const { data, error } = await awaitBaseRequest(sb().from(table).select(cols).in(column, part));
     if (error) throw error;
     rows.push(...(data || []));
   }
@@ -552,7 +571,7 @@ async function selectIn(table, cols, column, ids) {
 
 async function insertAll(table, rows, onChunk) {
   for (const part of chunks(rows, INSERT_CHUNK)) {
-    const { error } = await sb().from(table).insert(part, { defaultToNull: false });
+    const { error } = await awaitBaseRequest(sb().from(table).insert(part, { defaultToNull: false }));
     if (error) throw error;
     onChunk?.(part.length);
   }
@@ -564,35 +583,35 @@ async function exportBase(baseId, onProgress) {
   const prog = (step, i, msg = "") => {
     if (typeof onProgress === "function") onProgress({ step, i, n: EXPORT_STEPS, msg });
   };
-  const { data: baseRow, error: bErr } = await sb()
+  const { data: baseRow, error: bErr } = await awaitBaseRequest(sb()
     .from("question_bases")
     .select("id,name")
     .eq("id", baseId)
-    .single();
+    .single());
   if (bErr) throw bErr;
   prog(t("bases.export.steps.base"), 1);
 
-  const { data: cats, error: cErr } = await sb()
+  const { data: cats, error: cErr } = await awaitBaseRequest(sb()
     .from("qb_categories")
     .select("id,parent_id,name,ord")
     .eq("base_id", baseId)
-    .order("ord", { ascending: true });
+    .order("ord", { ascending: true }));
   if (cErr) throw cErr;
   prog(t("bases.export.steps.folders"), 2, t("bases.export.count", { count: (cats || []).length }));
 
-  const { data: qs, error: qErr } = await sb()
+  const { data: qs, error: qErr } = await awaitBaseRequest(sb()
     .from("qb_questions")
     .select("id,category_id,ord,payload")
     .eq("base_id", baseId)
-    .order("ord", { ascending: true });
+    .order("ord", { ascending: true }));
   if (qErr) throw qErr;
   prog(t("bases.export.steps.questions"), 3, t("bases.export.count", { count: (qs || []).length }));
 
-  const { data: tags, error: tErr } = await sb()
+  const { data: tags, error: tErr } = await awaitBaseRequest(sb()
     .from("qb_tags")
     .select("id,name,color,ord")
     .eq("base_id", baseId)
-    .order("ord", { ascending: true });
+    .order("ord", { ascending: true }));
   if (tErr) throw tErr;
   prog(t("bases.export.steps.tags"), 4, t("bases.export.count", { count: (tags || []).length }));
 
@@ -637,7 +656,7 @@ async function importBase(payload, onProgress) {
     // Import nie jest atomowy -- bez sprzątania po błędzie zostawałaby
     // na liście pusta/niepełna baza. Usunięcie bazy kasuje (CASCADE)
     // wszystko, co zdążyło się wstawić.
-    const { error: delErr } = await sb().from("question_bases").delete().eq("id", base.id);
+    const { error: delErr } = await awaitBaseRequest(sb().from("question_bases").delete().eq("id", base.id));
     if (delErr) console.warn("[bases] import cleanup failed:", delErr);
     throw e;
   }
