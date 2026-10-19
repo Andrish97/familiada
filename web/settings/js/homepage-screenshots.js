@@ -1,4 +1,4 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T14070";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T14124";
 
 const API = "/_admin_api";
 const els = {};
@@ -1075,7 +1075,7 @@ async function applyFixtureToFrame(scene, fixture) {
     doc.body.dataset.fixtureReady = "true";
     return;
   }
-  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T14070");
+  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T14124");
 
   const grid = doc.getElementById("grid");
   if (scene.id === "games") {
@@ -1138,7 +1138,7 @@ async function applyFixtureToFrame(scene, fixture) {
     const moreBtn = doc.getElementById("btnMore");
     const moreDropdown = doc.getElementById("navMoreDropdown");
     if (more && moreBtn && moreDropdown) {
-      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T14070");
+      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T14124");
 
       const nav = setTopbarNavPriority({ moreEl: more, moreDropdownEl: moreDropdown });
       nav.recalc();
@@ -1166,7 +1166,7 @@ async function applyFixtureToFrame(scene, fixture) {
         export: { ok: !!item },
       };
     };
-    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T14070");
+    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T14124");
     const selectedRules = selectedGame ? sampleRules(selectedGame) : null;
     const tileStatus = item => {
       if (!item) return "draft";
@@ -1245,7 +1245,7 @@ async function applyFixtureToFrame(scene, fixture) {
     editorPanel?.classList.add("hasQ");
     setInput(doc, "qText", fixture.question);
     const qList = doc.getElementById("qList");
-    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T14070");
+    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T14124");
     const questions = fixture.gameQuestions || [
       { text: fixture.question, answers: (fixture.answers || []).map((text, i) => ({ text, points: fixture.points?.[i] ?? 0 })) },
     ];
@@ -1375,8 +1375,8 @@ async function applyFixtureToFrame(scene, fixture) {
 async function paintSoundSettings(doc) {
   const [{ default: sounds }, { default: dictionary }, { icon }] = await Promise.all([
     fetch("/shared/data/sounds.json", { cache: "force-cache" }).then(response => response.json()),
-    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T14070`),
-    import("/shared/js/core/icons.js?v=v2026-10-19T14070"),
+    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T14124`),
+    import("/shared/js/core/icons.js?v=v2026-10-19T14124"),
 
   ]);
   const table = doc.getElementById("shotSfxTable");
@@ -1398,7 +1398,7 @@ async function paintSoundSettings(doc) {
 }
 
 async function getStrings(language, keys) {
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T14070`);
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T14124`);
 
   const output = {};
   for (const [name, key] of Object.entries(keys)) output[name] = key.split(".").reduce((value, part) => value?.[part], dictionary) || "";
@@ -1413,7 +1413,7 @@ async function logoCanvasFromFile(file, width, height) {
 }
 
 async function logoCanvasFromStored(stored, width, height) {
-  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T14070");
+  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T14124");
   const logo = stored.kind === "GLYPH" ? { type: "GLYPH_30x10", payload: stored.payload }
     : stored.kind === "PIX" ? { type: "PIX_150x70", payload: stored.payload }
       : stored.type ? stored : { type: "GLYPH_30x10", payload: stored.payload || stored };
@@ -1423,8 +1423,8 @@ async function logoCanvasFromStored(stored, width, height) {
 
 async function translateFrame(doc, language) {
   if (language === "pl") return;
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T14070`);
-  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T14070");
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T14124`);
+  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T14124");
 
   const lookup = key => key.split(".").reduce((value, part) => value?.[part], dictionary);
   const replace = (key, node) => {
@@ -1447,7 +1447,7 @@ function setInput(doc, id, value) { const node = doc.getElementById(id); if (nod
 function setText(doc, id, value) { const node = doc.getElementById(id); if (node) node.textContent = value ?? ""; }
 
 async function paintPeople(doc, fixture) {
-  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T14070");
+  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T14124");
 
   const received = doc.getElementById("contactsReceived");
   const outgoing = doc.getElementById("contactsOutgoing");
@@ -1484,7 +1484,7 @@ async function paintPeople(doc, fixture) {
 }
 
 async function paintTasks(doc, fixture) {
-  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T14070");
+  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T14124");
 
   const host = doc.getElementById("tasksHost");
   if (!host) return;
@@ -1540,7 +1540,7 @@ async function paintPoll(doc, scene, fixture) {
   for (const id of ["btnCopy", "btnOpen", "btnOpenQr"]) { const button = doc.getElementById(id); if (button) button.disabled = false; }
   const subs = doc.getElementById("subsGrid");
   if (subs) {
-    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T14070");
+    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T14124");
 
     subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: "Zaproszeni subskrybenci", rows: fixture.subscribers.map((name, i) => ({ id: `shot-sub-${i}`, label: name, compact: true, note: fixture.subscriberStates?.[i] ? "Oddano głos" : "Oczekuje na odpowiedź", tags: [{ text: "Subskrybent", cls: "tag--muted" }] })) }));
   }
@@ -1548,7 +1548,7 @@ async function paintPoll(doc, scene, fixture) {
     const shareTab = doc.getElementById("tabShare"); if (shareTab) shareTab.classList.remove("active");
     const resultTab = doc.getElementById("tabResults"); if (resultTab) resultTab.classList.add("active");
     setText(doc, "resultsMeta", currentLanguage() === "en" ? "18 votes · live results" : currentLanguage() === "uk" ? "18 голосів · результати наживо" : "18 głosów · wyniki na żywo");
-    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T14070");
+    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T14124");
 
     const questions = (fixture.pollQuestions || []).map((question, questionIndex) => ({
       id: `shot-poll-${questionIndex + 1}`, ord: questionIndex + 1, text: question.text,
@@ -1560,11 +1560,11 @@ async function paintPoll(doc, scene, fixture) {
 
 async function paintControl(scene, fixture) {
   const doc = els.frame.contentDocument;
-  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T14070");
+  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T14124");
   const restoreLanguage = translation.getUiLang();
   await translation.setUiLang(currentLanguage(), { persist: false, updateUrl: false, apply: false });
-  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T14070");
-  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T14070");
+  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T14124");
+  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T14124");
 
   const finale = scene.id === "control-finale";
   const state = makeDefaultState("homepage-visual-fixture");
@@ -2242,7 +2242,7 @@ export async function initHomepageScreenshots() {
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     if (initializeSharedFixtures) await saveConfig();
     renderSceneList();
-    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T14070");
+    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T14124");
     initUiSelectFn = initUiSelect;
 
     const languageSelect = byId("homepageShotLanguageSelect");
