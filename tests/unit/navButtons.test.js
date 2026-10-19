@@ -30,6 +30,15 @@ test("skróty Znajomi i Subskrybenci są tylko na stronach współdzielenia", ()
     .map(([id]) => id).sort();
   assert.deepEqual(pagesWith("friends"), ["bases", "control", "games", "logoEditor", "polls"]);
   assert.deepEqual(pagesWith("subscribers"), ["games", "polls"]);
+  for (const [id, page] of Object.entries(PAGES)) {
+    for (const [bid, spec] of Object.entries(page.buttons || {})) {
+      if (!["friends", "subscribers"].includes(spec.to)) continue;
+      const html = readFileSync(htmlOf(id), "utf8");
+      const button = html.match(new RegExp(`<button[^>]*id="${bid}"[^>]*>[\\s\\S]*?</button>`))?.[0];
+      assert.ok(button, `${id}: brak #${bid}`);
+      assert.match(button, new RegExp(`data-nav-contact-count="${spec.to}"`), `${id}#${bid}: brak licznika ${spec.to} w przycisku`);
+    }
+  }
 });
 
 test("wymagania szerokości stron są jawne i odróżniają edytory od Control", () => {

@@ -184,6 +184,16 @@ export async function initPage(id, opts = {}) {
   wireManual(id, user, opts);
   wireButtons(id, user, d);
   wireAccount(user, opts, d);
+  if (user && !isGuestUser(user)) {
+    const targets = [...new Set(Object.values(p.buttons || {})
+      .filter((spec) => ["friends", "subscribers"].includes(spec.to))
+      .map((spec) => spec.to))];
+    if (targets.length) {
+      void import("./nav-contact-badges.js?v=v2026-10-19T14272")
+        .then(({ initNavContactBadges }) => initNavContactBadges(targets))
+        .catch((error) => console.warn("[nav] contact badge refresh failed", error));
+    }
+  }
   document.querySelector(".topbar")?.classList.add("topbar-ready");
 
   if (p.access === "user" && isGuestUser(user)) {
