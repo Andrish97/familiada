@@ -1889,11 +1889,18 @@ async function applyFixtureToFrame(scene, fixture) {
       for (const key of ["data", "logo", "payload", "resource", "source"]) visit(value[key], depth + 1);
     };
     visit(stored);
-    const payload = candidates.find(value => value.source?.mode === "DRAW" && value.fabricData)
-      || candidates.find(value => value.source?.mode === "DRAW" && value.bits_b64)
-      || candidates.find(value => value.fabricData)
-      || candidates.find(value => value.bits_b64)
-      || stored?.payload || stored;
+    // draw.js.open() expects the logo payload, whose `source` property holds
+    // Fabric's scene. Do not pass that inner source object by itself: doing so
+    // makes open() look for `source.source` and silently produces a blank
+    // black canvas. Imported .famlogo files wrap the editor payload in
+    // { kind, name, payload }, while saved resources may already be unwrapped.
+    const payload = candidates.find(value => value.source?.mode === "DRAW" && (value.source.fabricData || value.source.bits_b64))
+      || (() => {
+        const source = candidates.find(value => value.mode === "DRAW" && (value.fabricData || value.bits_b64));
+        if (!source) return stored?.payload || stored;
+        const bits = candidates.find(value => typeof value.bits_b64 === "string")?.bits_b64;
+        return { source, ...(bits ? { bits_b64: bits } : {}) };
+      })();
     // The document can reach readyState=complete before the module graph
     // (draw.js + its dependencies) has finished evaluating. Wait for the
     // actual editor bridge instead of racing it and leaving the blank canvas.
