@@ -500,6 +500,7 @@ function ensureResourceData(language = currentLanguage()) {
         selection.questionIndexes = Array.isArray(selection.questionIndexes)
           ? selection.questionIndexes.map(Number).filter(index => questionIndexes.includes(index)).slice(0, 3)
           : questionIndexes.slice(0, 3);
+        if (!selection.questionIndexes.length) selection.questionIndexes = questionIndexes.slice(0, 3);
       }
       continue;
     }
@@ -845,6 +846,7 @@ function renderResourceChoices(scene = currentScene()) {
       const availableIndexes = pollResultQuestionIndexes(game);
       if (!Array.isArray(selection.questionIndexes)) selection.questionIndexes = availableIndexes.slice(0, 3);
       selection.questionIndexes = selection.questionIndexes.map(Number).filter(index => availableIndexes.includes(index)).slice(0, 3);
+      if (!selection.questionIndexes.length) selection.questionIndexes = availableIndexes.slice(0, 3);
       const questionGroup = document.createElement("div"); questionGroup.className = "homepage-shot-poll-question-options";
       const title = document.createElement("div"); title.className = "homepage-shot-poll-question-options-title"; title.textContent = "Pytania na karcie wyników (maks. 3)";
       questionGroup.append(title);
@@ -1969,8 +1971,24 @@ async function paintPoll(doc, scene, fixture) {
   setText(doc, "subsSummary", currentLanguage() === "en" ? `Invited ${invited} · Voted ${voted} · Declined ${declined}` : currentLanguage() === "uk" ? `Запрошено: ${invited} · Проголосували: ${voted} · Відхилили: ${declined}` : `Zaproszono ${invited} · Zagłosowali ${voted} · Odrzucili ${declined}`);
   const shareBody = doc.getElementById("shareBody"); if (shareBody) shareBody.style.display = "";
   const shareEmpty = doc.getElementById("shareEmpty"); if (shareEmpty) shareEmpty.style.display = "none";
-  const share = doc.getElementById("secShare"); if (share) share.hidden = scene.id !== "poll-share";
-  const results = doc.getElementById("secResults"); if (results) results.hidden = scene.id !== "poll-results";
+  const showResults = scene.id === "poll-results";
+  const share = doc.getElementById("secShare");
+  if (share) {
+    share.hidden = showResults;
+    share.classList.toggle("active", !showResults);
+  }
+  const results = doc.getElementById("secResults");
+  if (results) {
+    results.hidden = !showResults;
+    results.classList.toggle("active", showResults);
+  }
+  for (const [id, active] of [["tabShare", !showResults && scene.id === "poll-share"], ["tabRecipients", false], ["tabResults", showResults]]) {
+    const tab = doc.getElementById(id);
+    if (!tab) continue;
+    tab.classList.toggle("active", active);
+    tab.closest(".tab-slot")?.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", active ? "true" : "false");
+  }
   const qr = doc.getElementById("qr");
   const qrUrl = config.qrUrl;
   if (qr && qrUrl) {
@@ -2009,8 +2027,6 @@ async function paintPoll(doc, scene, fixture) {
     subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: words.title, rows, emptyText: words.empty }));
   }
   if (scene.id === "poll-results") {
-    const shareTab = doc.getElementById("tabShare"); if (shareTab) shareTab.classList.remove("active");
-    const resultTab = doc.getElementById("tabResults"); if (resultTab) resultTab.classList.add("active");
     setText(doc, "resultsMeta", "");
     const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T19165");
 
@@ -2018,7 +2034,10 @@ async function paintPoll(doc, scene, fixture) {
       id: `shot-poll-${question.sourceIndex ?? questionIndex}`, ord: question.ord || questionIndex + 1, text: question.text,
       answers: question.answers.map((answer, answerIndex) => ({ id: `shot-answer-${questionIndex + 1}-${answerIndex + 1}`, text: answer.text, votes: answer.votes })),
     }));
-    createPollResults(doc.getElementById("resultsList")).render({ status: "poll_open", type: "poll_points", questions });
+    const list = doc.getElementById("resultsList");
+    const resultsView = createPollResults(list);
+    if (questions.length) resultsView.render({ status: "poll_open", type: "poll_points", questions });
+    else if (list) list.replaceChildren();
   }
 }
 
