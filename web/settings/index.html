@@ -134,12 +134,9 @@
             <div class="field-label">Przykładowe dane widoku</div>
             <div id="homepageShotCategoryActions" hidden></div>
             <div id="homepageShotFields" class="homepage-shot-fields"></div>
-            <details class="homepage-shot-advanced">
-              <summary>Pełne dane widoku (JSON)</summary>
-              <textarea id="homepageShotFixture" rows="18" spellcheck="false" aria-label="Pełne przykładowe dane w formacie JSON"></textarea>
-            </details>
-            <div class="homepage-shot-status" id="homepageShotStatus" role="status" aria-live="polite">Wczytywanie przykładów…</div>
-            <div class="homepage-shot-results" id="homepageShotResults"></div>
+            <textarea id="homepageShotFixture" hidden aria-hidden="true" tabindex="-1"></textarea>
+            <div class="homepage-shot-status" id="homepageShotStatus" role="status" aria-live="polite" hidden></div>
+            <div class="homepage-shot-results" id="homepageShotResults" hidden></div>
           </div>
           <div class="homepage-shot-preview">
             <div class="homepage-shot-preview-title" id="homepageShotPreviewTitle"></div>

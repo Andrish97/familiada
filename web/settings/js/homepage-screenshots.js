@@ -14,6 +14,7 @@ let saveTimer = 0;
 let previewTimer = 0;
 let languageSelectUI = null;
 let sceneSelectUI = null;
+let previewResizeObserver = null;
 const FIELD_LABELS = {
   game: "Nazwa gry", games: "Gry na liście", question: "Pytanie", answers: "Odpowiedzi i wyniki",
   points: "Punkty odpowiedzi", bases: "Bazy na liście", base: "Nazwa bazy", folders: "Foldery bazy",
@@ -451,34 +452,42 @@ function selectScreenshotTab(name) {
 async function loadScenePreview(scene = currentScene(), force = false) {
   const language = currentLanguage();
   const key = `${language}/${scene.id}`;
+  if (!sizeScenePreview(scene)) return;
   if (!force && key === lastFrameKey && els.frame.contentDocument?.readyState === "complete") {
     await applyFixtureToFrame(scene, langFixture(scene, language));
     return;
   }
-  lastFrameKey = key;
   const dynamicPreview = ["host-round", "display-round", "main-display"].includes(scene.id);
   if (dynamicPreview) {
     deviceReadyPromise = new Promise(resolve => { deviceReadyResolve = resolve; });
   }
   els.frame.setAttribute("sandbox", dynamicPreview ? "allow-scripts allow-same-origin" : "allow-same-origin");
-  els.frame.style.width = `${scene.width}px`;
-  els.frame.style.aspectRatio = `${scene.width} / ${scene.height}`;
-  els.frame.style.height = `${scene.height}px`;
-  const scale = Math.min(1, (els.frame.closest(".homepage-shot-preview").clientWidth - 2) / scene.width);
-  els.frame.style.transform = `scale(${scale})`;
-  els.frame.style.transformOrigin = "top left";
-  els.frameWrap.style.width = `${Math.round(scene.width * scale)}px`;
-  els.frameWrap.style.height = `${Math.round(scene.height * scale)}px`;
   els.frame.dataset.sceneId = scene.id;
   els.frame.onload = async () => {
     try {
       await waitForFrameReady(els.frame, 12000);
       await applyFixtureToFrame(scene, langFixture(scene, language));
+      lastFrameKey = key;
     } catch (error) {
       setStatus(`Nie udało się przygotować podglądu „${scene.title}”: ${error.message}`);
     }
   };
   els.frame.src = viewPath(scene, language);
+}
+
+function sizeScenePreview(scene) {
+  const preview = els.frame?.closest(".homepage-shot-preview");
+  const availableWidth = preview?.clientWidth || 0;
+  if (!availableWidth || !scene?.width || !scene?.height) return false;
+  const scale = Math.min(1, Math.max(0.1, (availableWidth - 2) / scene.width));
+  els.frame.style.width = `${scene.width}px`;
+  els.frame.style.aspectRatio = `${scene.width} / ${scene.height}`;
+  els.frame.style.height = `${scene.height}px`;
+  els.frame.style.transform = `scale(${scale})`;
+  els.frame.style.transformOrigin = "top left";
+  els.frameWrap.style.width = `${Math.round(scene.width * scale)}px`;
+  els.frameWrap.style.height = `${Math.round(scene.height * scale)}px`;
+  return true;
 }
 
 window.addEventListener("message", event => {
@@ -1303,6 +1312,11 @@ export async function initHomepageScreenshots() {
   els.fields = byId("homepageShotFields");
   els.frameWrap = byId("homepageShotFrameWrap");
   els.title = byId("homepageShotPreviewTitle"); els.status = byId("homepageShotStatus"); els.results = byId("homepageShotResults");
+  previewResizeObserver = new ResizeObserver(() => {
+    if (byId("homepageShotCategoryPanel").hidden) return;
+    void loadScenePreview();
+  });
+  previewResizeObserver.observe(els.frame.closest(".homepage-shot-preview"));
   try {
     config = await readConfig();
     config.scenes = Array.isArray(config.scenes) ? config.scenes : [];
