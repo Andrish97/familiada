@@ -95,11 +95,11 @@ const en = {
       closeLabel: "Close",
     },
     fullscreen: "Fullscreen",
-    a2hsTitle: "Fullscreen on iPhone and iPad",
+    a2hsTitle: "Add this view to your Home Screen",
     a2hsHost:
-      "Safari can't force true fullscreen. Use <b>Share</b> → <b>Add to Home Screen</b>, then launch it like an app.",
+      "To open the Host view more quickly, tap <b>Share</b> in Safari, choose <b>Add to Home Screen</b>, and add the icon. Then launch Host from that icon.",
     a2hsBuzzer:
-      "Safari can't force true fullscreen. Use <b>Share</b> → <b>Add to Home Screen</b>.",
+      "To open the Buzzer more quickly, tap <b>Share</b> in Safari, choose <b>Add to Home Screen</b>, and add the icon. Then launch Buzzer from that icon.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Fullscreen API unavailable.",
     rating: {
@@ -2807,23 +2807,31 @@ const en = {
       marketMobile: "Community",
     },
     pwaInstall: {
-      title: "Install app",
-      text: "Add Familiada to your home screen for quick access.",
+      title: "Install Familiada",
+      text: "Add Familiada as an app to launch it from your home screen or desktop.",
+      adminTitle: "Install the admin panel",
+      adminText: "Add the admin panel as a separate app. Access sign-in will still be required.",
+      adminStandaloneTitle: "Add the separate admin panel",
+      adminStandaloneText: "The panel is open inside the Familiada app. Open this page in Safari or Chrome to add the admin panel as a separate app.",
+      adminMacTitle: "Add the admin panel to the Dock",
       ok: "Install",
-      cancel: "Don't show",
+      cancel: "Don't show again",
       cancelBtn: "Cancel",
-      manual: "The browser doesn't currently allow automatic installation.\n\nYou can install manually:\n• Chrome/Edge: click the install icon in the address bar and select \"Install\"\n• Or: Menu → Install Familiada",
+      unavailableTitle: "Installation is unavailable right now",
+      unavailableAndroid: "Chrome can't install this app right now. “Create shortcut” only adds a shortcut to the website, not an app.",
+      unavailableText: "This browser hasn't made its installer available. You can use an install option in its menu only if that option is enabled.",
+      macSafari: "In Safari, choose File → “Add to Dock”.",
+      alreadyInstalled: "Familiada is already installed. Launch it from its icon.",
+      manual: "This browser hasn't made its installer available. You can use an install option in its menu only if that option is enabled.",
     },
     iosWebapp: {
       title: "Add Familiada to Home Screen",
       text:
-        "For the best experience, we recommend using the web app. To do this:\n" +
-        "1. Open the Share menu.\n" +
-        "2. Tap “Add to Home Screen”.\n" +
-        "3. Confirm the addition.\n" +
-        "4. Launch Familiada from the new home screen icon.",
-      ok: "OK",
+        "Open Share, choose “Add to Home Screen”, then tap “Add”. Launch Familiada from its new icon.",
+      ok: "Got it",
       never: "Don’t show again",
+      adminTitle: "Add the admin panel to your Home Screen",
+      adminText: "Open Share, choose “Add to Home Screen”, then tap “Add”. Launch the panel from its new icon. Access sign-in will still be required.",
     },
     import: {
       title: "Import",

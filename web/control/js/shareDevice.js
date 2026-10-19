@@ -1,14 +1,26 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-19T12170";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12170";
-import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-19T12170";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-19T12170";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-19T12170";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12170";
+<<<<<<< HEAD
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-19T12172";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-19T12172";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-19T12172";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
 
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-19T12170";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-19T12172";
+=======
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-19T12172";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-19T12172";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-19T12172";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
+
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 function deviceTypeLabel(type) {

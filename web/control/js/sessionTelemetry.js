@@ -1,6 +1,11 @@
 // Wyniki zapisuje baza przy zmianach game_state. Front zgłasza tylko
 // aktywność i lokalne obserwacje; telemetryka nie blokuje akcji gry.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12170";
+<<<<<<< HEAD
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
+=======
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 
 export function createSessionTelemetry(gameId, getState) {
   async function report(event = null) {

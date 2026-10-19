@@ -2,7 +2,12 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-19T12170"/>
+<<<<<<< HEAD
+  <meta name="app-version" content="v2026-10-19T12172"/>
+=======
+  <meta name="app-version" content="v2026-10-19T12172"/>
+
+>>>>>>> origin/main
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -15,18 +20,37 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-19T12170"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-19T12170"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-19T12170"/>
-  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-19T12170"/>
+<<<<<<< HEAD
+  <link rel="icon" href="/favicon.ico?v=v2026-10-19T12172"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-19T12172"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-19T12172"/>
+  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-19T12172"/>
+=======
+  <link rel="icon" href="/favicon.ico?v=v2026-10-19T12172"/>
+  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-19T12172" crossorigin="use-credentials"/>
+  <meta name="theme-color" content="#050914"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-19T12172"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-19T12172"/>
+  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-19T12172"/>
+
+>>>>>>> origin/main
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-19T12170" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-19T12170" defer></script>
-  <script type="module" src="/settings/js/settings.js?v=v2026-10-19T12170" defer></script>
-  <script type="module" src="/settings/js/generator.js?v=v2026-10-19T12170" defer></script>
+<<<<<<< HEAD
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-19T12172" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-19T12172" defer></script>
+  <script type="module" src="/settings/js/settings.js?v=v2026-10-19T12172" defer></script>
+  <script type="module" src="/settings/js/generator.js?v=v2026-10-19T12172" defer></script>
+=======
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-19T12172" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-19T12172" defer></script>
+  <script type="module" src="/settings/js/settings.js?v=v2026-10-19T12172" defer></script>
+  <script type="module" src="/settings/js/admin-pwa.js?v=v2026-10-19T12172" defer></script>
+  <script type="module" src="/settings/js/generator.js?v=v2026-10-19T12172" defer></script>
+
+>>>>>>> origin/main
 </head>
 <body class="games-body settings-body settings-locked no-footer-line skel-body">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -56,53 +80,92 @@
         <button class="btn sm" id="btnMore" type="button"><span>Więcej</span> <i class="ico" data-icon="caret-down"></i><span class="badge" id="moreBadge" aria-hidden="true"></span></button>
         <div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>
       </div>
-      <div class="ui-select" id="toolsSelect">
-        <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-          <span class="ui-select-label">Narzędzia</span>
-          <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-        </button>
-        <div class="ui-select-menu" role="listbox"></div>
+      <div class="nav-more" id="toolsMenu">
+        <button class="btn sm" id="btnTools" type="button" aria-haspopup="true" aria-expanded="false"><span>Narzędzia</span> <i class="ico" data-icon="caret-down"></i></button>
+        <div class="nav-more-dropdown" id="toolsDropdown" hidden></div>
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
+      <button class="btn icon-btn" id="btnInstallAdmin" type="button" style="display:none" title="Zainstaluj panel admina" aria-label="Zainstaluj panel admina"><i class="ico" data-icon="download"></i></button>
     </div>
     <div class="topbar-section topbar-section-4">
       <button class="btn sm" id="btnLogout" type="button" data-topbar-auth-ready="1">Wyloguj Access</button>
     </div>
   </header>
-
   <main class="wrap" data-skel-step>
     <section class="settings-panel homepage-screenshots-panel" id="homepageScreenshotsPanel" hidden>
-      <div class="settings-card">
+      <div class="settings-card homepage-shot-control-card">
         <div class="panel-head">
           <div class="panel-title">Zrzuty strony głównej</div>
           <div class="panel-sub">Przejrzyj przykładowe widoki po kolei, popraw dane i odśwież obrazy galerii.</div>
         </div>
-        <div class="homepage-shot-toolbar">
-          <div class="homepage-shot-choice"><span class="field-label">Język</span><div class="ui-select homepage-shot-select" id="homepageShotLanguageSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Język"><span class="ui-select-label">Polski</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotLanguage" hidden aria-hidden="true" tabindex="-1"><option value="pl">Polski</option><option value="en">English</option><option value="uk">Українська</option></select></div>
-          <div class="homepage-shot-choice homepage-shot-choice--scene"><span class="field-label">Widok</span><div class="ui-select homepage-shot-select" id="homepageShotSceneSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Widok"><span class="ui-select-label">—</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotScene" hidden aria-hidden="true" tabindex="-1"></select></div>
-          <button class="btn sm" id="homepageShotPrevious" type="button">Poprzedni</button>
-          <button class="btn sm" id="homepageShotNext" type="button">Następny</button>
-        </div>
-        <div class="homepage-shot-toolbar">
-          <label class="field-label" for="homepageShotQrUrl">Link dla kodu QR ankiety</label>
-          <input class="inp homepage-shot-qr" id="homepageShotQrUrl" type="url" placeholder="Wklej adres mini strony, gdy będzie gotowy"/>
-        </div>
-        <div class="homepage-shot-workspace">
-          <div class="homepage-shot-editor">
-            <div class="field-label">Przykładowe dane widoku</div>
-            <div id="homepageShotFields" class="homepage-shot-fields"></div>
-            <details class="homepage-shot-advanced">
-              <summary>Pełne dane widoku (JSON)</summary>
-              <textarea id="homepageShotFixture" rows="18" spellcheck="false" aria-label="Pełne przykładowe dane w formacie JSON"></textarea>
-            </details>
-            <div class="homepage-shot-actions">
-              <button class="btn sm" id="homepageShotSave" type="button">Zapisz przykłady</button>
+        <div class="homepage-shot-toolbar homepage-shot-toolbar--global">
+          <div class="homepage-shot-toolbar-main">
+            <div class="homepage-shot-choice homepage-shot-choice--scene"><span class="field-label">Widok</span><div class="ui-select homepage-shot-select" id="homepageShotSceneSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Widok"><span class="ui-select-label">—</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotScene" hidden aria-hidden="true" tabindex="-1"></select></div>
+            <div class="homepage-shot-choice homepage-shot-choice--language"><span class="field-label">Język</span><div class="ui-select homepage-shot-select" id="homepageShotLanguageSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Język"><span class="ui-select-label">Polski</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotLanguage" hidden aria-hidden="true" tabindex="-1"><option value="pl">Polski</option><option value="en">English</option><option value="uk">Українська</option></select></div>
+            <div class="homepage-shot-nav-actions" aria-label="Nawigacja między widokami">
+              <button class="btn sm" id="homepageShotPrevious" type="button" aria-label="Poprzedni widok">‹ <span>Poprzedni</span></button>
+              <button class="btn sm" id="homepageShotNext" type="button" aria-label="Następny widok"><span>Następny</span> ›</button>
+            </div>
+          </div>
+          <div class="homepage-shot-toolbar-actions">
+            <div class="homepage-shot-action-group" aria-label="Zapisywanie danych">
+              <span class="homepage-shot-action-label">Dane przykładowe</span>
+              <button class="btn sm" id="homepageShotSaveShared" type="button">Zapisz dane ogólne<span class="homepage-shot-unsaved-label" id="homepageShotSharedSaveDirty" hidden> · niezapisane</span></button>
+              <button class="btn sm" id="homepageShotSave" type="button">Zapisz widok<span class="homepage-shot-unsaved-label" id="homepageShotViewSaveDirty" hidden> · niezapisane</span></button>
+            </div>
+            <div class="homepage-shot-action-group homepage-shot-action-group--capture" aria-label="Zrzuty strony głównej">
+              <span class="homepage-shot-action-label">Zrzuty</span>
               <button class="btn sm gold" id="homepageShotCaptureOne" type="button">Zrób ten zrzut</button>
               <button class="btn sm gold" id="homepageShotCaptureAll" type="button">Odśwież wszystkie zrzuty</button>
             </div>
-            <div class="homepage-shot-status" id="homepageShotStatus" role="status" aria-live="polite">Wczytywanie przykładów…</div>
-            <div class="homepage-shot-results" id="homepageShotResults"></div>
+          </div>
+        </div>
+      </div>
+      <div class="tabs-card homepage-shot-tabs-card" id="homepageShotTabsCard">
+        <div class="tabs-strip" role="tablist" aria-label="Dane przykładowe">
+          <div class="tab-slot homepage-shot-tab-slot is-active">
+            <button class="tab-label homepage-shot-tab active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista zasobów<span class="homepage-shot-tab-dirty" id="homepageShotSharedTabDirty" hidden aria-label="Niezapisane zmiany">•</span></button>
+            <div class="tab-wrapper" aria-hidden="true"><div class="tab-active">Lista zasobów</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+          <div class="tab-slot homepage-shot-tab-slot">
+            <button class="tab-label homepage-shot-tab" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii<span class="homepage-shot-tab-dirty" id="homepageShotCategoryTabDirty" hidden aria-label="Niezapisane zmiany">•</span></button>
+            <div class="tab-wrapper" aria-hidden="true"><div class="tab-active">Podgląd kategorii</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+        </div>
+        <div class="homepage-shot-tabs-content">
+        <section class="homepage-shot-tab-panel" id="homepageShotSharedPanel" role="tabpanel" aria-labelledby="homepageShotSharedTab">
+          <p class="muted homepage-shot-tab-note">Wczytaj gry preparowane, bazy pytań i logo z rysowaniem. Ankiety oraz logo tekstowe i obrazkowe nie są częścią tej listy. Nazwy drużyn i znajomi pozostają danymi wspólnymi.</p>
+          <div class="homepage-shot-resource-imports">
+            <label class="btn sm">Wczytaj grę preparowaną <input id="homepageShotImportGame" type="file" accept=".famgame,.json,application/json" hidden></label>
+            <label class="btn sm">Wczytaj bazę pytań <input id="homepageShotImportBase" type="file" accept=".fambase,.json,application/json" hidden></label>
+            <label class="btn sm">Wczytaj logo rysunkowe <input id="homepageShotImportLogo" type="file" accept=".famlogo,.json,application/json" hidden></label>
+            <span class="homepage-shot-json-separator" aria-hidden="true"></span>
+            <button class="btn sm" id="homepageShotExportConfig" type="button">Eksportuj wspólny JSON</button>
+            <label class="btn sm">Importuj wspólny JSON <input id="homepageShotImportConfig" type="file" accept=".json,application/json" hidden></label>
+          </div>
+          <div id="homepageShotResourceList" class="homepage-shot-resource-list"></div>
+          <div id="homepageShotSharedFields" class="homepage-shot-shared-fields"></div>
+        </section>
+        <section class="homepage-shot-tab-panel" id="homepageShotCategoryPanel" role="tabpanel" aria-labelledby="homepageShotCategoryTab" hidden>
+        <section class="homepage-shot-reference homepage-shot-resource-choices" id="homepageShotResourceChoices">
+          <div class="field-label">Wybierz zasoby dla tego widoku</div>
+          <div id="homepageShotResourceChoiceFields"></div>
+        </section>
+        <div class="homepage-shot-workspace">
+          <div class="homepage-shot-editor">
+            <section class="homepage-shot-extra-card" id="homepageShotExtraCard">
+              <div class="field-label" id="homepageShotFieldsTitle">Dane dodatkowe widoku</div>
+              <div class="homepage-shot-toolbar" id="homepageShotQrToolbar" hidden>
+                <label class="field-label" for="homepageShotQrUrl">Link dla kodu QR ankiety</label>
+                <input class="inp homepage-shot-qr" id="homepageShotQrUrl" type="url" placeholder="Wklej adres mini strony, gdy będzie gotowy"/>
+              </div>
+              <div id="homepageShotCategoryActions" hidden></div>
+              <div id="homepageShotFields" class="homepage-shot-fields"></div>
+            </section>
+            <textarea id="homepageShotFixture" hidden aria-hidden="true" tabindex="-1"></textarea>
+            <div class="homepage-shot-status" id="homepageShotStatus" role="status" aria-live="polite" hidden></div>
+            <div class="homepage-shot-results" id="homepageShotResults" hidden></div>
           </div>
           <div class="homepage-shot-preview">
             <div class="homepage-shot-preview-title" id="homepageShotPreviewTitle"></div>
@@ -110,6 +173,8 @@
               <iframe id="homepageShotFrame" title="Podgląd przykładowego widoku" tabindex="-1" sandbox="allow-same-origin"></iframe>
             </div>
           </div>
+        </div>
+        </section>
         </div>
       </div>
     </section>

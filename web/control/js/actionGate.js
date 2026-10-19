@@ -1,4 +1,9 @@
-import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12170";
+<<<<<<< HEAD
+import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12172";
+=======
+import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 
 export function createActionGate({ getSfxDuration }) {
   const timing = createTransitionTiming({ getSfxDuration });

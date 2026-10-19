@@ -5,12 +5,20 @@
 
 const LS_KEY = "pwa:install_dismissed";
 
-export function initPwa() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+export function initPwa({ serviceWorkerUrl = "/sw.js?v=v2026-10-19T12172", scope = "/", registerServiceWorker = true } = {}) {
+  if (registerServiceWorker && "serviceWorker" in navigator) {
+    navigator.serviceWorker.register(serviceWorkerUrl, { scope }).catch(() => {});
   }
 
   let deferredPrompt = null;
+  let didNotifyInstalled = false;
+
+  const notifyInstalled = () => {
+    if (didNotifyInstalled) return;
+    didNotifyInstalled = true;
+    localStorage.removeItem(LS_KEY);
+    window.dispatchEvent(new CustomEvent("pwa:installed"));
+  };
 
   window.addEventListener("beforeinstallprompt", (e) => {
     // Zapisz prompt (dla przycisku instalacji)
@@ -24,8 +32,7 @@ export function initPwa() {
 
   window.addEventListener("appinstalled", () => {
     deferredPrompt = null;
-    localStorage.removeItem(LS_KEY);
-    window.dispatchEvent(new CustomEvent("pwa:installed"));
+    notifyInstalled();
   });
 
   return {
@@ -36,7 +43,8 @@ export function initPwa() {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       deferredPrompt = null;
-      if (outcome !== "accepted") localStorage.setItem(LS_KEY, "1");
+      if (outcome === "accepted") notifyInstalled();
+      else localStorage.setItem(LS_KEY, "1");
       return outcome === "accepted";
     },
     dismiss: () => {
@@ -51,6 +59,16 @@ export function isStandalone() {
     window.matchMedia("(display-mode: standalone)").matches ||
     !!window.navigator.standalone
   );
+}
+
+// A single rule for install controls: show them only when the browser can
+// install the PWA or the platform needs manual Add to Home Screen/Dock steps.
+export function canOfferPwaInstall(pwaApi) {
+  const ua = navigator.userAgent || "";
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const iosSafari = ios && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  const macSafari = /Mac/.test(navigator.platform) && /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg/.test(ua);
+  return !!pwaApi?.canInstall() || iosSafari || macSafari;
 }
 
 export function isMobileDevice() {

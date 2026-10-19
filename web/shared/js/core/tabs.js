@@ -9,7 +9,12 @@
 //     wraca do poprzedniej strony, nie przewija kart.
 // Testy: tests/unit/tabs.test.js.
 
-import { filterToHref } from "./list-filter.js?v=v2026-10-19T12170";
+<<<<<<< HEAD
+import { filterToHref } from "./list-filter.js?v=v2026-10-19T12172";
+=======
+import { filterToHref } from "./list-filter.js?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 
 export const TAB_PARAM = "tab";
 

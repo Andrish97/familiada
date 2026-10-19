@@ -8,8 +8,14 @@
         "en": "Classic",
         "uk": "Класична"
       },
-      "module": "./theme_classic.js?v=v2026-10-19T12170",
-      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T12170"
+<<<<<<< HEAD
+      "module": "./theme_classic.js?v=v2026-10-19T12172",
+      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T12172"
+=======
+      "module": "./theme_classic.js?v=v2026-10-19T12172",
+      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T12172"
+
+>>>>>>> origin/main
     },
     {
       "key": "modern",
@@ -18,8 +24,14 @@
         "en": "Modern",
         "uk": "Сучасна"
       },
-      "module": "./theme_modern.js?v=v2026-10-19T12170",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T12170"
+<<<<<<< HEAD
+      "module": "./theme_modern.js?v=v2026-10-19T12172",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T12172"
+=======
+      "module": "./theme_modern.js?v=v2026-10-19T12172",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T12172"
+
+>>>>>>> origin/main
     }
   ]
 }

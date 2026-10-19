@@ -41,6 +41,20 @@ Wspólny przykład gry ma 10 pytań. Jedno z nich to „Podaj coś, co można zj
 
 Rozmiary docelowe: widoki aplikacji **1440×900 px**, telefon **390×844 px**, główny Wyświetlacz **1600×900 px**. Kadry mają pokazywać normalny ekran, bez zmniejszania całej strony do jednego obrazu. W panelu podglądu montowany jest tylko jeden iframe naraz.
 
+## Panel danych przykładowych
+
+- Panel ma dwie zakładki: **Lista ogólna** oraz **Podgląd kategorii**. Wybór kategorii, języka i akcje zapisu lub przechwycenia są zawsze na górze karty.
+- Lista ogólna przechowuje wspólne wpisy używane w kilku kadrach, między innymi grę i jej pytania, nazwy drużyn, ankietę i aktywnych subskrybentów.
+- Podgląd kategorii zestawia edytowane dane po lewej z rzeczywistym widokiem strony po prawej. Nad nimi pokazuje, czy dane pochodzą z listy ogólnej, czy są przykładami tylko tej kategorii.
+- Kategoria może wskazywać osobę z listy ogólnej i dopisywać jej działanie bez kopiowania ani edycji danych osoby. Przykład: zaproszony subskrybent i informacja, czy oddał głos w tej ankiecie. Ta informacja należy do kategorii ankiety; lista ogólna zawiera samą osobę.
+- Zapis kategorii obejmuje jej własne dane i przypisane działania. Zapis listy ogólnej aktualizuje wspólne wpisy we wszystkich powiązanych kadrach.
+
+## Instalacja panelu admina
+
+- Panel ma osobny manifest i zakres aplikacji `/settings/`, dzięki czemu można dodać osobny skrót „Panel admina”, niezależny od aplikacji Familiada.
+- Przycisk instalacji pojawia się po uzyskaniu dostępu do panelu. Cloudflare Access nadal chroni stronę przy każdym otwarciu; instalacja nie zapisuje ani nie omija logowania. Jeśli sesja Access wygaśnie, panel poprosi o ponowne zalogowanie.
+- Panel nie działa offline i nie buforuje danych. Na iPhonie przycisk pokazuje krótką instrukcję dodania strony do ekranu początkowego, a w Safari na Macu instrukcję dodania do Docka; na obsługiwanych przeglądarkach uruchamia natywne okno instalacji.
+
 ## Reguły odświeżania
 
 - Domyślne przykłady są zapisane przy konfiguracji widoków w bazie i można je poprawić przed przechwyceniem.

@@ -1,4 +1,5 @@
 {
+  "id": "/games/",
   "name": "Familiada Online",
   "short_name": "Familiada",
   "description": "System do tworzenia i prowadzenia gry Familiada na żywo",
@@ -10,12 +11,22 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/assets/img/icon.png?v=v2026-10-19T12170",
+<<<<<<< HEAD
+      "src": "/assets/img/icon.png?v=v2026-10-19T12172",
+=======
+      "src": "/assets/img/icon.png?v=v2026-10-19T12172",
+
+>>>>>>> origin/main
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/assets/img/icon.png?v=v2026-10-19T12170",
+<<<<<<< HEAD
+      "src": "/assets/img/icon.png?v=v2026-10-19T12172",
+=======
+      "src": "/assets/img/icon.png?v=v2026-10-19T12172",
+
+>>>>>>> origin/main
       "sizes": "512x512",
       "type": "image/png"
     }

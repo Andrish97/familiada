@@ -12,17 +12,32 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12170";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12170";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-19T12170";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-19T12170";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12170";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12170";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-19T12170";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T12170";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T12170";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-19T12170";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-19T12170";
+<<<<<<< HEAD
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12172";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-19T12172";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-19T12172";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-19T12172";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T12172";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T12172";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-19T12172";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-19T12172";
+=======
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12172";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-19T12172";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-19T12172";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-19T12172";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T12172";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T12172";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-19T12172";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -32,14 +47,26 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-19T12170";
+<<<<<<< HEAD
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-19T12172";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-19T12170";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-19T12170";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-19T12170";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-19T12172";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-19T12172";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-19T12172";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-19T12170";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-19T12172";
+=======
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-19T12172";
+
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-19T12172";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-19T12172";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-19T12172";
+
+const API_BASE = "/_admin_api";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -119,7 +146,9 @@ const els = {
   countdownNow: document.getElementById("countdownNow"),
   toolsShell: document.getElementById("toolsShell"),
   toolsFrame: document.getElementById("toolsFrame"),
-  toolsSelect: document.getElementById("toolsSelect"),
+  toolsMenu: document.getElementById("toolsMenu"),
+  btnTools: document.getElementById("btnTools"),
+  toolsDropdown: document.getElementById("toolsDropdown"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
   btnTabScreenshots: document.getElementById("btnTabScreenshots"),
@@ -217,8 +246,6 @@ const els = {
 
 let currentState = null;
 let currentMode = "message";
-let uiSelect = null;
-let toolsOptions = null;
 let pollTimer = null;
 let countdownTimer = null;
 let formDirty = false;
@@ -1049,8 +1076,14 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-19T12170"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-19T12170"/>
+<<<<<<< HEAD
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-19T12172"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-19T12172"/>
+=======
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-19T12172"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-19T12172"/>
+
+>>>>>>> origin/main
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -5008,25 +5041,69 @@ async function loadToolsManifest() {
 
 async function initToolsSelect() {
   const items = await loadToolsManifest();
-  toolsOptions = [{ value: "", label: "Narzędzia" }, ...items];
+  if (!els.toolsMenu || !els.btnTools || !els.toolsDropdown) return;
 
-  uiSelect = initUiSelect(els.toolsSelect, {
-    options: toolsOptions,
-    value: "",
-    placeholder: "Narzędzia",
-    onChange: (val) => {
-      if (!val) return;
-      openTool(val);
-    },
-  });
+  document.body.appendChild(els.toolsDropdown);
+  els.toolsDropdown.replaceChildren(...items.map((item) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn sm";
+    button.textContent = item.label;
+    button.addEventListener("click", () => {
+      closeToolsMenu();
+      openTool(item.value);
+    });
+    return button;
+  }));
 
-  const syncToolsAvailability = (required = document.querySelector(".topbar")?.classList.contains("topbar-mobile-forced")) => {
-    uiSelect?.setDisabled(Boolean(required));
+  const positionToolsMenu = () => {
+    if (!els.btnTools || !els.toolsDropdown) return;
+    const anchor = els.btnTools.getBoundingClientRect();
+    const menu = els.toolsDropdown;
+    // Ustawiamy pozycję przed odsłonięciem, żeby popup nie mignął w lewym
+    // górnym rogu podczas pierwszego pomiaru.
+    menu.hidden = false;
+    menu.style.visibility = "hidden";
+    menu.style.left = "0px";
+    menu.style.top = "0px";
+    const rect = menu.getBoundingClientRect();
+    const left = Math.max(8, Math.min(anchor.left, window.innerWidth - rect.width - 8));
+    const top = anchor.bottom + 8 + rect.height <= window.innerHeight
+      ? anchor.bottom + 8
+      : Math.max(8, anchor.top - rect.height - 8);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    menu.style.visibility = "";
   };
-  window.addEventListener("topbar:mobile-required", (event) => {
-    syncToolsAvailability(event.detail?.required);
+
+  const toggleToolsMenu = () => {
+    if (els.toolsDropdown.hidden) {
+      positionToolsMenu();
+      els.btnTools.setAttribute("aria-expanded", "true");
+    } else {
+      closeToolsMenu();
+    }
+  };
+  els.btnTools.addEventListener("click", toggleToolsMenu);
+  document.addEventListener("pointerdown", (event) => {
+    if (!els.toolsMenu.contains(event.target) && !els.toolsDropdown.contains(event.target)) closeToolsMenu();
   });
-  syncToolsAvailability();
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeToolsMenu();
+  });
+  window.addEventListener("resize", () => {
+    if (!els.toolsDropdown.hidden) positionToolsMenu();
+  }, { passive: true });
+  window.addEventListener("scroll", () => {
+    if (!els.toolsDropdown.hidden) positionToolsMenu();
+  }, { passive: true, capture: true });
+}
+
+function closeToolsMenu() {
+  if (!els.toolsDropdown || !els.btnTools) return;
+  els.toolsDropdown.hidden = true;
+  els.toolsDropdown.style.visibility = "";
+  els.btnTools.setAttribute("aria-expanded", "false");
 }
 
 function openTool(path) {
@@ -5050,7 +5127,7 @@ function closeTools() {
   if (els.mainWrap) els.mainWrap.classList.remove("is-hidden");
   if (els.footer) els.footer.classList.remove("is-hidden");
   document.body.classList.remove("tools-fullscreen");
-  if (uiSelect) uiSelect.setValue("", { silent: true });
+  closeToolsMenu();
   syncTopbarHeight();
   setActiveTab(previousTabBeforeTools || "maintenance");
 }
@@ -5083,7 +5160,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   const btnMarketing = document.getElementById("btnTabMarketing");
   const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
   const btnScreenshots = document.getElementById("btnTabScreenshots");
-  const tools = document.getElementById("toolsSelect");
+  const tools = document.getElementById("btnTools");
 
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
@@ -6435,7 +6512,12 @@ function wireEvents() {
     els.btnTabScreenshots.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("homepageScreenshots");
-      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-19T12170");
+<<<<<<< HEAD
+      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-19T12172");
+=======
+      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-19T12172");
+
+>>>>>>> origin/main
       await initHomepageScreenshots();
     });
   }
@@ -6632,7 +6714,12 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-19T12170");
+<<<<<<< HEAD
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-19T12172");
+=======
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-19T12172");
+
+>>>>>>> origin/main
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;

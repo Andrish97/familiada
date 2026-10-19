@@ -1,44 +1,85 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-19T12170";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-19T12170";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-19T12170";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T12170";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-19T12170";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12170";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T12170";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-19T12170";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12170";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T12170";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12170";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12170";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-19T12170";
+<<<<<<< HEAD
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-19T12172";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-19T12172";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-19T12172";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T12172";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T12172";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12172";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T12172";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12172";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12172";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-19T12172";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-19T12170";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-19T12170";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12170";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12170";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-19T12172";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-19T12172";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12172";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
+=======
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-19T12172";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-19T12172";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-19T12172";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T12172";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T12172";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12172";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T12172";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12172";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12172";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-19T12172";
+
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-19T12172";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-19T12172";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12172";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-19T12170";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-19T12170';
+<<<<<<< HEAD
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-19T12172";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-19T12172';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12170";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12172";
+=======
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-19T12172";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-19T12172';
+
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-19T12170";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T12170";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T12170";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-19T12170";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-19T12170";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-19T12170";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-19T12170";
+<<<<<<< HEAD
+} from "../../shared/js/core/game-validate.js?v=v2026-10-19T12172";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T12172";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T12172";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-19T12172";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-19T12172";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-19T12172";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-19T12172";
+=======
+} from "../../shared/js/core/game-validate.js?v=v2026-10-19T12172";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T12172";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T12172";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-19T12172";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-19T12172";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-19T12172";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-19T12172";
+
+>>>>>>> origin/main
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -1278,34 +1319,35 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   maybeShowGuestMigrateReminder(currentUser);
 
-  // btnInstall: widoczny gdy pwa:installable odpalił (canInstall) lub iOS Safari — nie standalone
+  // Wspólna reguła z panelem admina: pokazuj tylko przy dostępnej instalacji
+  // albo gdy system wymaga ręcznej instrukcji dodania aplikacji.
   if (btnInstall) {
-    if (isStandalone()) {
-      btnInstall.style.display = "none";
-    } else if (pwaApi.canInstall() || isIOSSafari()) {
-      btnInstall.style.display = "";
-    }
-    // Inaczej zostaje ukryty (Firefox, Safari desktop, lub Chrome zanim odpali beforeinstallprompt)
+    btnInstall.style.display = !isStandalone() && canOfferPwaInstall(pwaApi) ? "" : "none";
   }
+  window.addEventListener("pwa:installed", () => {
+    if (btnInstall) btnInstall.style.display = "none";
+  });
 
   void maybeShowIosWebappPrompt();
 
   // Android/Chrome/Edge/desktop – auto-prompt instalacji PWA (po odrzuceniu LS_KEY jest set → nie odpali)
   window.addEventListener("pwa:installable", () => {
-    if (btnInstall && !isStandalone()) btnInstall.style.display = "";
+    if (btnInstall && !isStandalone() && canOfferPwaInstall(pwaApi)) btnInstall.style.display = "";
     if (!localStorage.getItem("pwa:install_dismissed")) showPwaPrompt();
   }, { once: true });
   if (pwaApi.canInstall() && !localStorage.getItem("pwa:install_dismissed")) showPwaPrompt();
 
   async function showPwaPrompt() {
     if (isStandalone()) return;
+    let installResult = null;
     const ok = await confirmModal({
       title: t("games.pwaInstall.title") || "Zainstaluj aplikację",
       text: t("games.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
       okText: t("games.pwaInstall.ok") || "Zainstaluj",
       cancelText: t("games.pwaInstall.cancel") || "Nie pokazuj",
+      onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
     });
-    if (ok) await pwaApi.install();
+    if (ok && installResult) await installResult;
     else pwaApi.dismiss();
   }
 
@@ -1330,33 +1372,33 @@ document.addEventListener("DOMContentLoaded", async () => {
           okText: tSafe("games.iosWebapp.ok", fallback.ok),
         });
       } else {
-        // Chrome/Edge: beforeinstallprompt jeszcze nie odpalił lub app już zainstalowana
-        // Pokaż instrukcję ręcznej instalacji
-        const fallback = {
-          title: "Zainstaluj aplikację",
-          text:
-            "Przeglądarka nie pozwala obecnie na automatyczną instalację.\n\n" +
-            "Możesz zainstalować ręcznie:\n" +
-            "• Chrome/Edge: kliknij ikonę instalacji w pasku adresu i wybierz \"Zainstaluj\"\n" +
-            "• Lub: Menu → Zainstaluj Familiadę",
-          ok: "OK",
-        };
+        const ua = navigator.userAgent || "";
+        const isAndroidChrome = /Android/i.test(ua) && /Chrome\//i.test(ua) && !/EdgA|OPR\//i.test(ua);
+        const isMacSafari = /Mac/.test(navigator.platform) && /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg/.test(ua);
+        const title = isMacSafari ? "Dodaj Familiadę do Docka" : tSafe("games.pwaInstall.unavailableTitle", "Instalacja jest teraz niedostępna");
+        const text = isMacSafari
+          ? tSafe("games.pwaInstall.macSafari", "W Safari wybierz Plik → Dodaj do Docka.")
+          : isAndroidChrome
+            ? tSafe("games.pwaInstall.unavailableAndroid", "Chrome nie może teraz zainstalować tej aplikacji. „Utwórz skrót” doda tylko skrót do strony, a nie aplikację.")
+            : tSafe("games.pwaInstall.unavailableText", "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.");
         await alertModal({
-          title: tSafe("games.pwaInstall.title", fallback.title),
-          text: tSafe("games.pwaInstall.manual", fallback.text),
-          okText: tSafe("games.pwaInstall.ok", fallback.ok),
+          title,
+          text,
+          okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
         });
         return;
       }
       return;
     }
+    let installResult = null;
     const ok = await confirmModal({
       title: t("games.pwaInstall.title") || "Zainstaluj aplikację",
       text: t("games.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
       okText: t("games.pwaInstall.ok") || "Zainstaluj",
       cancelText: t("games.pwaInstall.cancelBtn") || "Anuluj",
+      onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
     });
-    if (ok) await pwaApi.install();
+    if (ok && installResult) await installResult;
     // Klik Anuluj nie ustawia LS_KEY — celowo bez pwaApi.dismiss()
   });
 
