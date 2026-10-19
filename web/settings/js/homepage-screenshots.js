@@ -90,6 +90,10 @@ function extraPollQuestions(language) {
 function byId(id) { return document.getElementById(id); }
 function currentLanguage() { return byId("homepageShotLanguage").value; }
 function currentScene() { return config.scenes.find(scene => scene.id === byId("homepageShotScene").value) || config.scenes[0]; }
+function scenePagePath(scene) {
+  // Older saved fixture configs used /logo/, but the library is /logos/.
+  return scene?.id === "logos" ? "/logos/" : scene?.path || "/";
+}
 function langFixture(scene, language = currentLanguage()) {
   const override = config.localeFixtures?.[language]?.[scene.id];
   const fixture = structuredClone(override || localizeFixture(scene.fixture || {}, language));
@@ -204,7 +208,7 @@ function langFixture(scene, language = currentLanguage()) {
     baseSelection.resourceId = baseSelection.resourceIds[0] || "";
     fixture.bases = baseSelection.resourceIds.map(id => loadedBases.find(item => item.id === id)).filter(Boolean);
   }
-  if (scene.id === "logos") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ name: item.name, data: item.data }));
+  if (scene.id === "logos") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ id: item.id, name: item.name, data: item.data, updated_at: item.updated_at }));
   if (scene.id === "appearance") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ name: item.name, data: item.data }));
   if (resource?.type === "game") {
     const game = resource.data || {};
@@ -1131,7 +1135,8 @@ function escapeHtml(value) {
 function viewPath(scene, language) {
   const query = new URLSearchParams({ lang: language });
   if (["host-round", "display-round", "main-display"].includes(scene.id)) query.set("preview", "1");
-  return `${scene.path}${scene.path.includes("?") ? "&" : "?"}${query}`;
+  const path = scenePagePath(scene);
+  return `${path}${path.includes("?") ? "&" : "?"}${query}`;
 }
 
 function renderSceneList() {
@@ -1306,7 +1311,8 @@ async function normalizeScreenshotTopbar(doc, language, icon, iconText, hydrateI
   };
   const pageId = pageIdByScene[scene.id] || nav.pageIdForPath(scene.path);
   const route = nav.PAGES[pageId];
-  const routeHref = `${scene.path}${scene.path.includes("?") ? "&" : "?"}lang=${encodeURIComponent(language)}`;
+  const path = scenePagePath(scene);
+  const routeHref = `${path}${path.includes("?") ? "&" : "?"}lang=${encodeURIComponent(language)}`;
   const context = { href: routeHref, lang: language, anon: false };
 
   if (route?.buttons) {
@@ -1843,9 +1849,24 @@ async function applyFixtureToFrame(scene, fixture) {
   } else if (scene.id === "logos") {
     const list = doc.getElementById("grid");
     if (list) {
-      list.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">Utwórz logo</div></div>${fixture.logos.map((logo, i) => `<div class="logoTile ${i === 0 ? "is-selected" : ""}"><div class="logoTileTop"><div><div class="logoName">${escapeHtml(logo.name)}</div><div class="logoMeta">Logo demonstracyjne</div></div></div><div class="logoPrev" data-logo-preview="${i}"></div></div>`).join("")}`;
+      const labels = await getStrings(currentLanguage(), {
+        createTitle: "logoEditor.create.drawCreateTitle", createSubtitle: "logoEditor.create.drawSubtitle",
+        unnamed: "logoEditor.defaults.unnamed", delete: "logoEditor.list.delete",
+      });
+      const logos = Array.isArray(fixture.logos) ? fixture.logos : [];
+      const drawTab = doc.getElementById("tabLogoDraw");
+      if (drawTab) drawTab.classList.add("active");
+      doc.getElementById("tabLogoText")?.classList.remove("active");
+      doc.getElementById("tabLogoImage")?.classList.remove("active");
+      for (const tab of doc.querySelectorAll(".tab-label")) tab.setAttribute("aria-selected", String(tab === drawTab));
+      list.innerHTML = `<div class="addCard le-edit-only"><div class="plus">${icon("plus")}</div><div class="txt">${escapeHtml(labels.createTitle)}</div><div class="sub">${escapeHtml(labels.createSubtitle)}</div></div>${logos.map((logo, i) => `<div class="logoTile ${i === 0 ? "is-selected" : ""}" data-key="${escapeHtml(logo.id || `logo-${i}`)}"><div class="logoTileTop"><div style="min-width:0"><div class="logoName" title="${escapeHtml(logo.name || labels.unnamed)}">${escapeHtml(logo.name || labels.unnamed)}</div><div class="logoMeta">${escapeHtml(logo.updated_at ? new Date(logo.updated_at).toLocaleDateString(currentLanguage()) : "")}</div></div><div class="logoActions"><div class="logoX" aria-hidden="true" title="${escapeHtml(labels.delete)}">${icon("trash")}</div></div></div><div class="logoPrev" data-logo-preview="${i}"></div></div>`).join("")}`;
+      const hasSelection = logos.length > 0;
+      for (const id of ["btnEdit", "btnPreview", "btnDuplicate", "btnExport", "btnSendCopy"]) {
+        const button = doc.getElementById(id);
+        if (button) button.disabled = !hasSelection;
+      }
       await Promise.all([...list.querySelectorAll("[data-logo-preview]")].map(async node => {
-        const logo = fixture.logos[Number(node.dataset.logoPreview)];
+        const logo = logos[Number(node.dataset.logoPreview)];
         try {
           node.append(logo.data ? await logoCanvasFromStored(logo.data, 260, 100, doc) : await logoCanvasFromFile(logo.file, 260, 100, doc));
         } catch {
@@ -3020,6 +3041,12 @@ export async function initHomepageScreenshots() {
     config = await readConfig();
     config.scenes = Array.isArray(config.scenes) ? config.scenes : [];
     let initializeSharedFixtures = false;
+    for (const scene of config.scenes) {
+      if (scene.id === "logos" && scene.path !== "/logos/") {
+        scene.path = "/logos/";
+        initializeSharedFixtures = true;
+      }
+    }
     config.sharedFixtures ||= {};
     for (const language of ["pl", "en", "uk"]) {
       const defaults = defaultSharedFixture(language);
