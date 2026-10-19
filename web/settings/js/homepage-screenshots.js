@@ -1150,8 +1150,12 @@ function sizeScenePreview(scene) {
   if (scene.id === "poll-vote-mobile") {
     const board = screenshotBoardSize();
     const boardScale = Math.min(1, Math.max(0.1, (availableWidth - 2) / board.width));
-    const bezel = 12, screenScale = (board.height - 2 * bezel) / scene.height;
+    const frameRatio = 0.0485;
+    const screenScale = board.height / (scene.height + 2 * scene.width * frameRatio / (1 - 2 * frameRatio) + 2);
     const screenWidth = scene.width * screenScale;
+    const whiteEdge = screenScale;
+    const bezelBlack = screenWidth * frameRatio / (1 - 2 * frameRatio);
+    const bezel = bezelBlack + whiteEdge;
     const phoneWidth = screenWidth + 2 * bezel;
     const phoneRadius = phoneWidth * 0.14;
     const screenRadius = phoneRadius - bezel;
@@ -1162,6 +1166,8 @@ function sizeScenePreview(scene) {
     els.frameWrap.style.setProperty("--screen-left", `${screenLeft * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-top", `${bezel * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-radius", `${screenRadius * boardScale}px`);
+    els.frameWrap.style.setProperty("--bezel-black", `${bezelBlack * boardScale}px`);
+    els.frameWrap.style.setProperty("--bezel-total", `${bezel * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-width", `${screenWidth * 0.323 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-height", `${scene.height * screenScale * 0.0427 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-radius", `${22 * screenScale * boardScale}px`);
@@ -2707,10 +2713,13 @@ async function captureScene(scene) {
 }
 
 function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900) {
-  const bezel = 12;
-  const screenScale = (outputHeight - 2 * bezel) / screenCanvas.height;
+  const frameRatio = 0.0485;
+  const screenScale = outputHeight / (screenCanvas.height + 2 * screenCanvas.width * frameRatio / (1 - 2 * frameRatio) + 2);
   const screenWidth = screenCanvas.width * screenScale;
   const screenHeight = screenCanvas.height * screenScale;
+  const whiteEdge = screenScale;
+  const bezelBlack = screenWidth * frameRatio / (1 - 2 * frameRatio);
+  const bezel = bezelBlack + whiteEdge;
   const deviceWidth = screenWidth + 2 * bezel;
   const deviceX = (outputWidth - deviceWidth) / 2;
   const deviceY = 0;
@@ -2730,13 +2739,12 @@ function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900
   ctx.shadowBlur = 24;
   ctx.shadowOffsetY = 0;
   roundedRect(ctx, deviceX, deviceY, deviceW, deviceH, cornerRadius);
-  ctx.fillStyle = "#030407";
+  ctx.fillStyle = "#d7d9df";
   ctx.fill();
   ctx.restore();
-  roundedRect(ctx, deviceX + 0.5, deviceY + 0.5, deviceW - 1, deviceH - 1, cornerRadius - 0.5);
-  ctx.strokeStyle = "#d7d9df";
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  roundedRect(ctx, deviceX + whiteEdge, deviceY + whiteEdge, deviceW - 2 * whiteEdge, deviceH - 2 * whiteEdge, cornerRadius - whiteEdge);
+  ctx.fillStyle = "#030407";
+  ctx.fill();
 
   const screenX = deviceX + bezel;
   const screenY = deviceY + bezel;
