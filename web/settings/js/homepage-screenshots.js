@@ -159,7 +159,8 @@ function langFixture(scene, language = currentLanguage()) {
 
   const selection = config.viewResources?.[language]?.[scene.id] || {};
   let resource = scene.id === "tasks" ? null : selectedResource(scene.id, language, "game");
-  if (["poll-vote-mobile", "poll-results"].includes(scene.id) && !canOpenPollResource(resource)) resource = null;
+  if (scene.id === "poll-vote-mobile" && !canUseAnonymousPollResource(resource)) resource = null;
+  if (scene.id === "poll-results" && !canOpenPollResource(resource)) resource = null;
   if (scene.id === "game-editor") fixture.activeQuestionIndex = Number(selection.questionIndex) || 0;
   if (scene.id === "games") {
     const loadedPrepared = ensureResourceData(language).filter(item => item.type === "game" && gameResourceType(item) === "prepared");
@@ -214,7 +215,7 @@ function langFixture(scene, language = currentLanguage()) {
       fixture.answers = (activeQuestion.answers || []).map(answer => answer.text || "");
       fixture.points = (activeQuestion.answers || []).map(answer => Number(answer.fixed_points ?? answer.points) || 0);
     }
-    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && gameResourceType(resource) !== "prepared") {
+    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && (scene.id === "poll-vote-mobile" || gameResourceType(resource) !== "prepared")) {
       fixture.poll = resource.name;
       fixture.pollType = gameResourceType(resource);
       if (scene.id === "poll-results" && !Array.isArray(fixture.pollVotes)) fixture.pollVotes = questions.map(question => (question.answers || []).map(() => 0));
@@ -599,6 +600,19 @@ function canOpenPollResource(item) {
   });
 }
 
+function anonymousPollQuestionIndexes(item) {
+  const questions = Array.isArray(item?.data?.questions) ? item.data.questions : [];
+  return questions.reduce((indexes, question, index) => {
+    const answerCount = Array.isArray(question?.answers) ? question.answers.length : 0;
+    if (answerCount >= 3 && answerCount <= 6) indexes.push(index);
+    return indexes;
+  }, []);
+}
+
+function canUseAnonymousPollResource(item) {
+  return item?.type === "game" && anonymousPollQuestionIndexes(item).length > 0;
+}
+
 function orderedResources(sceneId, language = currentLanguage(), type = null) {
   const resources = ensureResourceData(language);
   const selection = config.viewResources?.[language]?.[sceneId] || {};
@@ -719,7 +733,8 @@ function resourceChoiceSpec(scene) {
   if (scene.id === "base-explorer") return { type: "base" };
   if (scene.id === "logo-draw") return { type: "logo" };
   if (scene.id === "poll-share") return { type: "game", label: "Gra" };
-  if (["poll-vote-mobile", "poll-results"].includes(scene.id)) return { type: "game", filter: canOpenPollResource, label: "Gra ankietowa", question: scene.id === "poll-vote-mobile" };
+  if (scene.id === "poll-vote-mobile") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
+  if (scene.id === "poll-results") return { type: "game", filter: canOpenPollResource, label: "Gra ankietowa" };
   if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
   if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
   return null;
@@ -796,19 +811,23 @@ function renderResourceChoices(scene = currentScene()) {
     if (spec.question) {
       const game = resources.find(item => item.id === selection.resourceId);
       const questions = game?.data?.questions || [];
-      addSelect("Pytanie widoczne w edytorze lub podglądzie", "questionIndex", questions.map((item, index) => ({ value: String(index), label: `${index + 1}. ${item.text || "Pytanie bez treści"}` })), String(selection.questionIndex ?? 0));
+      const questionIndexes = scene.id === "poll-vote-mobile" ? anonymousPollQuestionIndexes(game) : questions.map((_, index) => index);
+      if (questionIndexes.length && !questionIndexes.includes(Number(selection.questionIndex))) selection.questionIndex = questionIndexes[0];
+      addSelect(scene.id === "poll-vote-mobile" ? "Pytanie ankiety" : "Pytanie widoczne w edytorze lub podglądzie", "questionIndex", questionIndexes.map(index => ({ value: String(index), label: `${index + 1}. ${questions[index]?.text || "Pytanie bez treści"}` })), String(selection.questionIndex ?? questionIndexes[0] ?? ""));
     }
     if (!resources.length) {
       const note = document.createElement("p"); note.className = spec.filter ? "homepage-shot-resource-error" : "muted";
       note.setAttribute("role", spec.filter ? "alert" : "status");
-      note.textContent = spec.filter
+      note.textContent = scene.id === "poll-vote-mobile"
+        ? "Brak gry z co najmniej jednym pytaniem zawierającym od 3 do 6 odpowiedzi."
+        : spec.filter
         ? "Brak wczytanej gry ankietowej w szkicu, którą można otworzyć. Wczytaj eksport szkicu z co najmniej 10 pytaniami; ankieta punktowa musi mieć po 3–6 odpowiedzi."
         : `Brak wczytanych zasobów typu ${spec.type}. Dodaj je na karcie „Lista zasobów”.`;
       root.append(note);
     } else if (!selection.resourceId) {
       const note = document.createElement("p"); note.className = spec.filter ? "homepage-shot-resource-error" : "muted";
       note.setAttribute("role", spec.filter ? "alert" : "status");
-      note.textContent = spec.filter ? "Nie ma wczytanej pasującej gry ankietowej w szkicu. Ten widok nie jest gotowy." : "Nie wybrano zasobu dla tego widoku.";
+      note.textContent = scene.id === "poll-vote-mobile" ? "Nie wybrano gry do anonimowego głosowania." : spec.filter ? "Nie ma wczytanej pasującej gry ankietowej w szkicu. Ten widok nie jest gotowy." : "Nie wybrano zasobu dla tego widoku.";
       root.append(note);
     }
   }
@@ -2153,7 +2172,7 @@ function readTaskActions() {
 function renderEditorFields(fixture) {
   renderResourceChoices(currentScene());
   els.fields.replaceChildren();
-  byId("homepageShotFieldsTitle").textContent = "Dane dodatkowe widoku";
+  byId("homepageShotFieldsTitle").textContent = "Ustawienia widoku";
   byId("homepageShotFieldsTitle").hidden = false;
   renderCategoryActions(fixture);
   const scene = currentScene();
@@ -2174,7 +2193,7 @@ function renderEditorFields(fixture) {
     else { input.placeholder = label.textContent; input.setAttribute("aria-label", label.textContent); wrapper.append(input); }
     els.fields.append(wrapper);
   }
-  byId("homepageShotExtraCard").hidden = !els.fields.children.length
+  byId("homepageShotFieldsTitle").hidden = !els.fields.children.length
     && byId("homepageShotCategoryActions").hidden
     && byId("homepageShotQrToolbar").hidden
     && byId("homepageShotResourceChoices").hidden;
