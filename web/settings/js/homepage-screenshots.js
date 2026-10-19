@@ -1084,7 +1084,7 @@ async function applyFixtureToFrame(scene, fixture) {
       const rules = sampleRules(resource);
       const blocker = status === "draft" ? gameResourceIssue(resource, language) : "";
       const origin = resource.received_from_label ? `<span class="tag tag--muted">${escapeHtml(resource.received_from_label)}</span>` : "";
-      return `<div class="card tile ${i === 0 ? "selected" : ""} ${blocker ? "not-ready" : ""}" data-status="${status}" data-updated="2026-10-${String(18 - i).padStart(2, "0")}T12:00:00Z"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="rules" style="color:#ffad42">${escapeHtml(blocker)}</div><div class="tileTags"><span class="tag ${statusClass}">${statusLabels[status]}</span>${origin}</div></div>`;
+      return `<div class="card tile ${i === 0 ? "selected" : ""} ${blocker ? "not-ready" : ""}" data-status="${status}" data-updated="2026-10-${String(18 - i).padStart(2, "0")}T12:00:00Z"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="rules">${escapeHtml(blocker)}</div><div class="tileTags"><span class="tag ${statusClass}">${statusLabels[status]}</span>${origin}</div></div>`;
     }).join("")}`;
     const searchSlot = doc.querySelector(".games-bottom-left");
     if (searchSlot) {
