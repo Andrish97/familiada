@@ -129,7 +129,11 @@ function langFixture(scene, language = currentLanguage()) {
   const selection = config.viewResources?.[language]?.[scene.id] || {};
   const resource = selectedResource(scene.id, language, "game");
   if (scene.id === "game-editor") fixture.activeQuestionIndex = Number(selection.questionIndex) || 0;
-  if (scene.id === "games") fixture.games = orderedResources(scene.id, language, "game").map(item => item.name);
+  if (scene.id === "games") {
+    const preparedGames = orderedResources(scene.id, language, "game").filter(item => item.data?.game?.type === "prepared");
+    fixture.games = preparedGames.map(item => item.name);
+    fixture.gameStatuses = preparedGames.map(item => item.status || item.data?.game?.status || "draft");
+  }
   if (scene.id === "bases") fixture.bases = orderedResources(scene.id, language, "base").map(item => item.name);
   if (scene.id === "logos") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ name: item.name, data: item.data }));
   if (resource?.type === "game") {
@@ -292,9 +296,9 @@ function ensureResourceData(language = currentLanguage()) {
     const categories = (baseFixture.folders || []).map((name, i) => ({ id: `${language}-category-${i}`, name, parent_id: null, ord: i + 1 }));
     const base = { base: { name: baseFixture.base || "Baza demonstracyjna" }, categories, tags: [],
       questions: (baseFixture.questions || []).map((text, i) => ({ id: `${language}-base-question-${i}`, category_id: categories[0]?.id || null, ord: i + 1, payload: { text } })), question_tags: [], category_tags: [] };
-    const games = gameNames.map((name, i) => ({ id: `${language}-game-${i}`, type: "game", name,
+    const games = gameNames.map((name, i) => ({ id: `${language}-game-${i}`, type: "game", name, status: name === shared.gameName ? "ready" : "draft",
       data: { game: { name, type: "prepared" }, questions: structuredClone(shared.gameQuestions || []) } }));
-    games.push({ id: `${language}-poll-game`, type: "game", openPoll: true, name: shared.pollName,
+    games.push({ id: `${language}-poll-game`, type: "game", status: "open", openPoll: true, name: shared.pollName,
       data: { game: { name: shared.pollName, type: "poll_points" }, questions: (shared.pollQuestions || []).map(q => ({ text: q.text, answers: q.answers.map(a => ({ text: a.text, fixed_points: a.votes })) })) } });
     return [
       ...games,
@@ -304,6 +308,19 @@ function ensureResourceData(language = currentLanguage()) {
       ...defaultLogoItems.map((item, i) => ({ id: `${language}-logo-${i}`, type: "logo", name: item.name, data: structuredClone(item.data) })),
     ];
   })();
+  for (const item of resources) {
+    if (item.type !== "game") continue;
+    item.data ||= {};
+    item.data.game ||= {};
+    item.data.game.type ||= "prepared";
+    const savedStatus = String(item.status || item.data.game.status || "").toLowerCase();
+    const allowedStatuses = String(item.data.game.type).startsWith("poll")
+      ? ["draft", "ready", "open", "stopped"]
+      : ["draft", "ready"];
+    item.status = allowedStatuses.includes(savedStatus)
+      ? savedStatus
+      : item.name === shared.gameName && item.data.game.type === "prepared" ? "ready" : "draft";
+  }
   const views = config.viewResources[language] ||= {};
   const ids = type => resources.filter(item => item.type === type).map(item => item.id);
   const firstPoll = resources.find(item => item.type === "game" && String(item.data?.game?.type || "").startsWith("poll"))?.id || "";
@@ -367,6 +384,18 @@ function renderResourceList(language = currentLanguage()) {
       if (type === "game") {
         const typeLabel = item.data?.game?.type?.startsWith("poll") ? "Gra ankietowa" : "Gra przygotowana";
         const kind = document.createElement("p"); kind.className = "muted"; kind.textContent = typeLabel; body.append(kind);
+        const statusField = document.createElement("label"); statusField.className = "homepage-shot-shared-field";
+        const statusLabel = document.createElement("span"); statusLabel.textContent = "Stan gry";
+        const status = document.createElement("select"); status.className = "inp"; status.dataset.resourceStatus = item.id;
+        const isPoll = String(item.data?.game?.type || "").startsWith("poll");
+        const options = isPoll
+          ? [["draft", "Szkic"], ["open", "Otwarta"], ["stopped", "Zatrzymana"], ["ready", "Gotowa"]]
+          : [["draft", "Szkic"], ["ready", "Gotowa"]];
+        for (const [value, label] of options) {
+          const option = document.createElement("option"); option.value = value; option.textContent = label; status.append(option);
+        }
+        status.value = item.status || "draft";
+        statusField.append(statusLabel, status); body.append(statusField);
         (item.data?.questions || []).forEach((question, questionIndex) => {
           const q = document.createElement("details"); q.className = "homepage-shot-question";
           const qSummary = document.createElement("summary"); qSummary.textContent = `Pytanie ${questionIndex + 1}`;
@@ -451,10 +480,18 @@ function readResourceList(language = currentLanguage()) {
     const item = resources.find(resource => resource.id === input.dataset.resourceOpenPoll);
     if (item) item.openPoll = input.checked;
   }
+  for (const input of root.querySelectorAll("[data-resource-status]")) {
+    const item = resources.find(resource => resource.id === input.dataset.resourceStatus);
+    if (item) item.status = input.value;
+  }
 }
 
 function resourceChoiceSpec(scene) {
-  if (["games", "bases", "logos"].includes(scene.id)) return { multi: true, type: ({ games: "game", bases: "base", logos: "logo" })[scene.id] };
+  if (["games", "bases", "logos"].includes(scene.id)) return {
+    multi: true,
+    type: ({ games: "game", bases: "base", logos: "logo" })[scene.id],
+    ...(scene.id === "games" ? { filter: item => item.data?.game?.type === "prepared" } : {}),
+  };
   if (scene.id === "base-explorer") return { type: "base" };
   if (scene.id === "logo-draw") return { type: "logo" };
   if (scene.id === "subscribers") return { type: "subscribers" };
@@ -589,7 +626,7 @@ function readSharedEditor() {
 }
 
 function sharedKeysForScene(sceneId) {
-  if (sceneId === "games") return ["games"];
+  if (sceneId === "games") return ["games", "gameStatuses"];
   if (sceneId === "bases") return ["bases"];
   if (sceneId === "base-explorer") return ["base", "folders", "questions"];
   if (sceneId === "logos") return ["logos"];
@@ -868,13 +905,71 @@ async function applyFixtureToFrame(scene, fixture) {
       nav.recalc();
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
-    for (const id of ["btnPlay", "btnSettings", "btnEdit", "btnPreview", "btnDuplicate", "btnExport", "btnExportBase", "btnImport", "btnSendCopy"]) {
-      const button = doc.getElementById(id); if (button) button.disabled = false;
-    }
-    const pollButton = doc.getElementById("btnPoll"); if (pollButton) pollButton.disabled = true;
+    const gameResources = ensureResourceData(language).filter(item => item.type === "game" && item.data?.game?.type === "prepared");
+    const selectedGame = gameResources.find(item => item.name === (fixture.games || [])[0]) || gameResources[0] || null;
+    const statusLabels = { draft: words.draft, ready: words.ready, open: words.open, stopped: words.stopped };
+    const statusOf = item => {
+      const status = String(item?.status || item?.data?.game?.status || "draft").toLowerCase();
+      return ({ poll_open: "open", poll_stopped: "stopped" })[status] || status;
+    };
+    const sampleRules = item => {
+      const game = item?.data?.game || {};
+      const isPoll = String(game.type || "").startsWith("poll");
+      const status = statusOf(item);
+      const questions = Array.isArray(item?.data?.questions) ? item.data.questions : [];
+      const enoughQuestions = questions.length >= 10;
+      const validStructure = questions.every(question => {
+        const answers = Array.isArray(question.answers) ? question.answers : [];
+        return answers.length >= 3 && answers.length <= 6;
+      });
+      const validPoints = questions.every(question => {
+        const answers = Array.isArray(question.answers) ? question.answers : [];
+        const points = answers.map(answer => Number(answer.fixed_points ?? answer.points) || 0);
+        return answers.length >= 3 && answers.length <= 6 && points.every(point => point >= 0 && point <= 100) && points.reduce((sum, point) => sum + point, 0) <= 100;
+      });
+      const contentPollOk = isPoll && enoughQuestions && (game.type !== "poll_points" || validStructure);
+      return {
+        edit: { ok: game.type === "prepared" || !["open", "stopped"].includes(status) },
+        play: { ok: isPoll ? status === "ready" : enoughQuestions && validPoints },
+        poll_entry: { ok: isPoll && (["open", "stopped", "ready"].includes(status) || contentPollOk) },
+        export: { ok: !["open", "stopped"].includes(status) },
+      };
+    };
+    const gameRulesModule = await import("/shared/js/core/game-validate.js?v=v2026-10-19T10562");
+    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T10562");
+    const selectedRules = selectedGame
+      ? gameRulesModule.rulesFromState(selectedGame.data?.rules_state || selectedGame.rules_state) || sampleRules(selectedGame)
+      : null;
+    const playReady = !!selectedGame && !!selectedRules?.play?.ok;
+    const tileStatus = item => {
+      if (!item) return "draft";
+      const rules = gameRulesModule.rulesFromState(item.data?.rules_state || item.rules_state) || sampleRules(item);
+      const type = item.data?.game?.type;
+      return listFilterModule.gameStateKey(
+        ({ open: "poll_open", stopped: "poll_stopped" })[statusOf(item)] || statusOf(item),
+        { isPrepared: type === "prepared", playOk: !!rules?.play?.ok },
+      );
+    };
+    const previewStatus = tileStatus(selectedGame);
+    const setDisabled = (id, disabled) => { const button = doc.getElementById(id); if (button) button.disabled = disabled; };
+    setDisabled("btnPlay", !selectedGame || !selectedRules?.play?.ok);
+    setDisabled("btnSettings", !selectedGame);
+    setDisabled("btnEdit", !selectedGame || !selectedRules?.edit?.ok);
+    setDisabled("btnPreview", !selectedGame);
+    setDisabled("btnPoll", !selectedGame || !selectedRules?.poll_entry?.ok);
+    setDisabled("btnDuplicate", !selectedGame || !selectedRules?.export?.ok);
+    setDisabled("btnExport", !selectedGame || !selectedRules?.export?.ok);
+    setDisabled("btnExportBase", !selectedGame || !selectedRules?.export?.ok);
+    setDisabled("btnSendCopy", !selectedGame || !selectedRules?.export?.ok);
+    setDisabled("btnImport", false);
     doc.querySelectorAll(".tab-label").forEach(button => button.classList.toggle("active", button.id === "tabPrepared"));
-    const names = fixture.games || [];
-    if (grid) grid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">${language === "en" ? "New game" : language === "uk" ? "Нова гра" : "Nowa gra"}</div></div>${names.map((name, i) => `<div class="card tile ${i === 0 ? "selected" : ""}" data-status="${i === 0 ? "ready" : "draft"}" data-updated="2026-10-${String(18 - i).padStart(2, "0")}T12:00:00Z"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="tileTags"><span class="tag ${i === 0 ? "tag--ok" : "tag--muted"}">${i === 0 ? words.ready : words.draft}</span></div></div>`).join("")}`;
+    const names = (fixture.games || []).filter(name => gameResources.some(item => item.name === name));
+    if (grid) grid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">${language === "en" ? "New game" : language === "uk" ? "Нова гра" : "Nowa gra"}</div></div>${names.map((name, i) => {
+      const resource = gameResources.find(item => item.name === name);
+      const status = resource === selectedGame ? previewStatus : tileStatus(resource);
+      const statusClass = status === "ready" ? "tag--ok" : status === "open" ? "tag--info" : status === "stopped" ? "tag--gold" : "tag--muted";
+      return `<div class="card tile ${i === 0 ? "selected" : ""}" data-status="${status}" data-updated="2026-10-${String(18 - i).padStart(2, "0")}T12:00:00Z"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="tileTags"><span class="tag ${statusClass}">${statusLabels[status]}</span></div></div>`;
+    }).join("")}`;
     const searchSlot = doc.querySelector(".games-bottom-left");
     if (searchSlot) {
       searchSlot.innerHTML = `<div class="ui-select list-filter"><button class="btn sm ui-select-btn" type="button" aria-label="Filtruj wg stanu"><span class="ui-select-icon">${icon("filter")}</span><span class="ui-select-label">${escapeHtml(words.filter)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><div class="ui-select list-sort"><button class="btn sm ui-select-btn" type="button" aria-label="Sortowanie"><span class="ui-select-icon">${icon("sort")}</span><span class="ui-select-label">${escapeHtml(words.updated)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><div class="list-search"><div class="searchBox"><input class="searchText" type="text" placeholder="${escapeHtml(words.search)}" aria-label="${escapeHtml(words.search)}"></div><button class="btn list-search-open" type="button" aria-label="${escapeHtml(words.search)}">${icon("search")}</button></div>`;
@@ -1343,6 +1438,9 @@ function renderEditorFields(fixture) {
     if (input.tagName === "TEXTAREA") { input.rows = Array.isArray(value) ? Math.min(8, Math.max(3, value.length)) : 4; wrapper.classList.add("homepage-shot-field--wide"); }
     wrapper.append(label, input); els.fields.append(wrapper);
   }
+  byId("homepageShotExtraCard").hidden = !els.fields.children.length
+    && byId("homepageShotCategoryActions").hidden
+    && byId("homepageShotQrToolbar").hidden;
 }
 
 function renderCategoryActions(fixture) {
