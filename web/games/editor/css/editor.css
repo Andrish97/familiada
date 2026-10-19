@@ -124,12 +124,6 @@ body.editor-body .wrap {
     filter: brightness(1.06)
 }
 
-.qcard.active {
-    border-color: rgba(255,234,166,.35);
-    --btn-tint: rgba(255,234,166,.08);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-}
-
 .qord {
     opacity: .75;
     font-size: 12px
@@ -286,20 +280,11 @@ body.editor-body .wrap {
   background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
-.qcard.active.good {
-    border-color: rgba(120,255,120,.55);
-    --btn-tint: rgba(120,255,120,.14);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-    box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 2px rgba(120,255,120,.14)
-}
-
-.qcard.active.bad {
-    border-color: rgba(255,120,120,.55);
-    --btn-tint: rgba(255,120,120,.14);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-    box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 2px rgba(255,120,120,.14)
+.qcard.active:not(.addTile) {
+    border-color: rgba(255,234,166,.9);
+    --btn-tint: rgba(255,234,166,.10);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    box-shadow: 0 0 0 2px rgba(255,234,166,.55), 0 10px 22px rgba(0,0,0,.35);
 }
 
 .overlay {
