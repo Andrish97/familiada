@@ -1893,60 +1893,10 @@ async function applyFixtureToFrame(scene, fixture) {
       || candidates.find(value => value.fabricData)
       || candidates.find(value => value.bits_b64)
       || stored?.payload || stored;
-    const { icon } = await import("/shared/js/core/icons.js?v=v2026-10-19T21411");
-    const toolIcons = {
-      tSelect: ["cursor", "select"], tPan: ["hand", "pan"], tZoomIn: ["zoom-in", "zoomIn"], tZoomOut: ["zoom-out", "zoomOut"],
-      tBg: ["swatch-black", "background"], tBrush: ["brush", "brush"], tEraser: ["eraser", "eraser"], tShapes: ["shapes", "shapes"],
-      tText: ["text", "text"], tUndo: ["undo", "undo"], tRedo: ["redo", "redo"], tDuplicate: ["duplicate", "duplicate"],
-      tClear: ["trash", "clear"], tEye: ["eye", "preview"],
-    };
-    for (const [id, [name, label]] of Object.entries(toolIcons)) {
-      const button = doc.getElementById(id);
-      if (!button) continue;
-      button.innerHTML = icon(name);
-      button.classList.toggle("on", id === "tBrush");
-      button.setAttribute("aria-label", label);
-    }
     await hydrateIcons(doc);
     const renderScene = doc.defaultView?.__familiadaScreenshotRenderLogo;
-    let rendered = false;
-    if (typeof renderScene === "function") {
-      try {
-        await renderScene(payload);
-        const objects = doc.defaultView?.__drawFabric?.getObjects?.() || [];
-        rendered = objects.length >= (payload?.source?.fabricData?.objects?.length || 1);
-      } catch (error) {
-        console.warn("[homepage screenshots] real draw editor unavailable; using saved Fabric scene:", error);
-      }
-    }
-    if (!rendered && payload?.source?.fabricData) {
-      const fabric = doc.defaultView?.fabric;
-      const host = doc.getElementById("drawStageHost");
-      if (!fabric?.StaticCanvas || !host) throw new Error("nie można wyrenderować zapisanej sceny rysunku");
-      doc.defaultView.__drawFabric?.dispose?.();
-      const canvas = doc.createElement("canvas");
-      host.replaceChildren(canvas);
-      const saved = payload.source.fabricData;
-      const width = Number(payload.source.world?.w || saved.clipPath?.width) || 1040;
-      const height = Number(payload.source.world?.h || saved.clipPath?.height) || 440;
-      const stageWidth = Math.max(1, host.clientWidth || width);
-      const stageHeight = Math.max(1, host.clientHeight || height);
-      canvas.width = stageWidth;
-      canvas.height = stageHeight;
-      const scene = new fabric.StaticCanvas(canvas, {
-        width: stageWidth, height: stageHeight,
-        backgroundColor: payload.source.bg === "WHITE" ? "#fff" : "#000",
-        enableRetinaScaling: false,
-      });
-      await new Promise(resolve => scene.loadFromJSON(saved, () => {
-        scene.backgroundColor = payload.source.bg === "WHITE" ? "#fff" : "#000";
-        const scale = Math.min(stageWidth / width, stageHeight / height);
-        scene.setViewportTransform([scale, 0, 0, scale, (stageWidth - width * scale) / 2, (stageHeight - height * scale) / 2]);
-        scene.renderAll();
-        resolve();
-      }));
-      if (!scene.getObjects().length) throw new Error("zapisana scena rysunku jest pusta");
-    }
+    if (typeof renderScene !== "function") throw new Error("rzeczywisty edytor rysunku nie uruchomił się w podglądzie");
+    await renderScene(payload);
   }
   hydrateIcons(doc);
   doc.body.dataset.fixtureReady = "true";

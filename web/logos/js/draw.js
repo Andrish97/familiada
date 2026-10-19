@@ -1547,6 +1547,11 @@ export function initDrawEditor(ctx) {
   // API
   // =========================================================
   return {
+    selectTool(name) {
+      const next = TOOL[String(name || "").toUpperCase()];
+      if (next) setTool(next);
+    },
+
     async open(payload = null) {
       paneDraw.style.display = "";
       void loadFonts();

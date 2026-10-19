@@ -11,6 +11,11 @@ import { initDrawEditor } from "./draw.js?v=v2026-10-19T21411";
 if (new URLSearchParams(location.search).has("screenshotPreview")) {
   let screenshotEditor = null;
   window.__familiadaScreenshotRenderLogo = async payload => {
+    const host = document.getElementById("drawStageHost");
+    for (let i = 0; i < 30 && (!host?.clientWidth || !host?.clientHeight); i++) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+    }
+    if (!host?.clientWidth || !host?.clientHeight) throw new Error("plansza edytora nie ma jeszcze wymiarów");
     if (!screenshotEditor) {
       screenshotEditor = initDrawEditor({
         getMode: () => "DRAW",
@@ -21,7 +26,7 @@ if (new URLSearchParams(location.search).has("screenshotPreview")) {
     }
     await screenshotEditor.open(payload || null);
     await document.fonts?.ready;
-    document.getElementById("tBrush")?.click();
+    screenshotEditor.selectTool("BRUSH");
     await new Promise(resolve => requestAnimationFrame(resolve));
   };
 } else {
