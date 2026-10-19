@@ -25,6 +25,7 @@ let languageSelectUI = null;
 let sceneSelectUI = null;
 let initUiSelectFn = null;
 let resourceChoiceSelectUIs = [];
+let taskFriendSelectUIs = [];
 let previewResizeObserver = null;
 const FIELD_LABELS = {
   game: "Nazwa gry", games: "Gry na liście", question: "Pytanie", answers: "Odpowiedzi i wyniki",
@@ -106,7 +107,6 @@ function langFixture(scene, language = currentLanguage()) {
     );
   }
   if (scene.id === "games") fixture.games = [shared.gameName, ...(shared.otherGames || fixture.games?.slice(1) || [])];
-  if (scene.id === "tasks") fixture.tasks = (fixture.tasks || []).map((task, index) => ({ ...task, game: shared.otherGames?.[index % Math.max(1, shared.otherGames.length)] || shared.gameName }));
   if (["game-editor", "control-round", "host-round", "display-round"].includes(scene.id) && firstQuestion) {
     fixture.question = firstQuestion.text;
     fixture.answers = firstQuestion.answers.map(answer => answer.text);
@@ -117,6 +117,13 @@ function langFixture(scene, language = currentLanguage()) {
     const selectedEmails = Array.isArray(fixture.activeSubscriberEmails) ? fixture.activeSubscriberEmails : (shared.subscribers || []);
     fixture.activeSubscriberEmails = selectedEmails.filter(email => (shared.subscribers || []).includes(email));
     fixture.people = (shared.subscribers || []).filter(email => fixture.activeSubscriberEmails.includes(email)).map(email => ({ email, name: email, state: "active" }));
+  }
+  if (scene.id === "tasks") {
+    const friends = shared.friends || [];
+    fixture.tasks = (fixture.tasks || []).map((task, index) => ({
+      ...task,
+      friendEmail: friends.some(person => person.email === task.friendEmail) ? task.friendEmail : friends[index % Math.max(1, friends.length)]?.email || "",
+    }));
   }
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) {
     fixture.poll = shared.pollName || fixture.poll;
@@ -147,7 +154,7 @@ function langFixture(scene, language = currentLanguage()) {
   }
 
   const selection = config.viewResources?.[language]?.[scene.id] || {};
-  let resource = selectedResource(scene.id, language, "game");
+  let resource = scene.id === "tasks" ? null : selectedResource(scene.id, language, "game");
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && !canOpenPollResource(resource)) resource = null;
   if (scene.id === "game-editor") fixture.activeQuestionIndex = Number(selection.questionIndex) || 0;
   if (scene.id === "games") {
@@ -193,7 +200,6 @@ function langFixture(scene, language = currentLanguage()) {
       fixture.finale = (previous.length ? previous : questions.slice(0, 5).map(question => question.text)).map((text, index) =>
         questions.find(question => question.text === text)?.text || questions[index % questions.length].text || text);
     }
-    if (scene.id === "tasks") fixture.tasks = (fixture.tasks || []).map(task => ({ ...task, game: resource.name }));
     const activeQuestion = questions[Math.min(Number(selection.questionIndex) || 0, Math.max(0, questions.length - 1))];
     if (activeQuestion && ["game-editor", "control-round", "host-round", "display-round"].includes(scene.id)) {
       fixture.question = activeQuestion.text || fixture.question;
@@ -223,7 +229,7 @@ function langFixture(scene, language = currentLanguage()) {
       }
     }
   }
-  if (!resource && ["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale", "tasks"].includes(scene.id)) {
+  if (!resource && ["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
     fixture.game = ""; fixture.question = ""; fixture.answers = []; fixture.points = []; fixture.gameQuestions = []; fixture.finale = [];
   }
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && !resource) {
@@ -431,12 +437,12 @@ function ensureResourceData(language = currentLanguage()) {
     else if (scene.id === "base-explorer") views[scene.id] = { resourceId: ids("base")[0] || "" };
     else if (scene.id === "logo-draw") views[scene.id] = { resourceId: ids("logo")[0] || "" };
     else if (["control-round", "host-round", "display-round"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
-    else if (["game-editor", "appearance", "sound", "control-finale", "tasks"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
+    else if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
   }
   const resourceTypeByScene = {
     games: "game", bases: "base", logos: "logo", "base-explorer": "base", "logo-draw": "logo",
     "control-round": "game", "host-round": "game", "display-round": "game", "game-editor": "game",
-    appearance: "game", sound: "game", "control-finale": "game", tasks: "game",
+    appearance: "game", sound: "game", "control-finale": "game",
   };
   for (const [sceneId, selection] of Object.entries(views)) {
     if (["poll-share", "poll-vote-mobile", "poll-results"].includes(sceneId)) {
@@ -448,7 +454,7 @@ function ensureResourceData(language = currentLanguage()) {
     if (Array.isArray(selection.resourceIds)) selection.resourceIds = selection.resourceIds.filter(matches);
     if (selection.resourceId && !matches(selection.resourceId)) selection.resourceId = "";
     if (!selection.resourceId) {
-      if (["control-round", "host-round", "display-round", "game-editor", "appearance", "sound", "control-finale", "tasks"].includes(sceneId)) selection.resourceId = firstPreparedGame;
+      if (["control-round", "host-round", "display-round", "game-editor", "appearance", "sound", "control-finale"].includes(sceneId)) selection.resourceId = firstPreparedGame;
       else if (sceneId === "base-explorer") selection.resourceId = firstBase;
       else if (sceneId === "logo-draw") selection.resourceId = firstLogo;
     }
@@ -685,7 +691,7 @@ function resourceChoiceSpec(scene) {
   if (scene.id === "logo-draw") return { type: "logo" };
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) return { type: "game", filter: canOpenPollResource, label: "Ankieta do otwarcia", question: true };
   if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
-  if (["game-editor", "appearance", "sound", "control-finale", "tasks"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
+  if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
   return null;
 }
 
@@ -1742,9 +1748,10 @@ async function paintTasks(doc, fixture) {
 
   const host = doc.getElementById("tasksHost");
   if (!host) return;
+  const friends = sharedFixture(currentLanguage()).friends || [];
   const rows = fixture.tasks.map((task, index) => ({
     id: `shot-task-${index}`, avatarIcon: "polls", title: task.game,
-    note: `${task.state === "done" ? "Oddano głos" : "Oczekuje na głos"} · od Aleksandry Nowak`,
+    note: `${task.state === "done" ? "Oddano głos" : "Oczekuje na głos"} · ${friends.find(person => person.email === task.friendEmail)?.username || task.friendEmail || "Znajomy"}`,
     actions: task.state === "pending" ? [{ key: "vote", text: "Zagłosuj", icon: "polls", gold: true, onClick: () => {} }] : [],
   }));
   renderRowSections(host, [{ key: "sample", title: "Ankiety", rows }]);
@@ -2002,13 +2009,12 @@ function readEditorIntoConfig() {
     applySubscriberActionsToFixture(fixture);
     if (fixture.outgoing.some(person => !isValidEmail(person.email))) throw new Error("Wpisz poprawny adres e-mail każdego zaproszenia.");
   }
-  if (scene.id === "poll-results") fixture.pollVotes = readPollVotes();
   if (scene.id === "tasks") {
-    fixture.tasks = (fixture.tasks || []).map((task, index) => ({
-      ...task,
-      state: byId("homepageShotCategoryActions").querySelector(`[data-task-action-state="${index}"]`)?.value || task.state,
-    }));
+    fixture.tasks = readTaskActions();
+    const friendEmails = new Set((sharedFixture(editorLanguage).friends || []).map(person => person.email));
+    if (fixture.tasks.some(task => !task.game || !friendEmails.has(task.friendEmail))) throw new Error("Każde zadanie musi mieć nazwę gry i przypisanego znajomego z listy wspólnej.");
   }
+  if (scene.id === "poll-results") fixture.pollVotes = readPollVotes();
   for (const key of sharedKeysForScene(scene.id)) delete fixture[key];
   config.localeFixtures ||= {};
   config.localeFixtures[editorLanguage] ||= {};
@@ -2079,6 +2085,14 @@ function applySubscriberActionsToFixture(fixture) {
   return fixture;
 }
 
+function readTaskActions() {
+  return [...byId("homepageShotCategoryActions").querySelectorAll("[data-task-row]")].map(row => ({
+    game: row.querySelector("[data-task-game]").value.trim(),
+    friendEmail: row.querySelector("[data-task-friend]").value,
+    state: row.querySelector("[data-task-state]:checked")?.value === "done" ? "done" : "pending",
+  }));
+}
+
 function renderEditorFields(fixture) {
   renderResourceChoices(currentScene());
   els.fields.replaceChildren();
@@ -2109,6 +2123,8 @@ function renderEditorFields(fixture) {
 }
 
 function renderCategoryActions(fixture) {
+  taskFriendSelectUIs.forEach(ui => ui.destroy());
+  taskFriendSelectUIs = [];
   const root = byId("homepageShotCategoryActions");
   root.replaceChildren();
   const sceneId = currentScene().id;
@@ -2217,22 +2233,53 @@ function renderCategoryActions(fixture) {
     return;
   }
   if (sceneId === "tasks") {
-    const group = sharedGroup(root, "Stan zadań");
+    const language = currentLanguage();
+    const words = language === "en"
+      ? { title: "Game assignments", hint: "Enter a game title that is not in your games, assign a friend, and choose the task status.", game: "Game name (not one of your games)", friend: "Choose a friend", noFriends: "No friends in the shared list", status: "Task status", pending: "Awaiting vote", done: "Vote submitted", add: "Add assignment", remove: "Remove assignment" }
+      : language === "uk"
+        ? { title: "Ігри для друзів", hint: "Введіть назву гри, якої немає серед ваших ігор, призначте її другові та виберіть стан завдання.", game: "Назва гри (не з ваших ігор)", friend: "Виберіть друга", noFriends: "У спільному списку немає друзів", status: "Стан завдання", pending: "Очікує голосу", done: "Голос віддано", add: "Додати завдання", remove: "Видалити завдання" }
+        : { title: "Gry przypisane znajomym", hint: "Wpisz nazwę gry spoza swoich gier, przypisz ją znajomemu i wybierz stan zadania.", game: "Nazwa gry spoza Twoich gier", friend: "Wybierz znajomego", noFriends: "Brak znajomych na liście wspólnej", status: "Stan zadania", pending: "Oczekuje na głos", done: "Oddano głos", add: "Dodaj zadanie", remove: "Usuń zadanie" };
+    const group = sharedGroup(root, words.title);
+    const hint = document.createElement("p"); hint.className = "muted homepage-shot-tab-note"; hint.textContent = words.hint; group.append(hint);
+    const friends = sharedFixture().friends || [];
     const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
     (fixture.tasks || []).forEach((task, index) => {
-      const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row";
-      const name = document.createElement("strong"); name.textContent = `Zadanie ${index + 1}`;
-      const statusField = document.createElement("label"); statusField.className = "homepage-shot-shared-field";
-      const statusLabel = document.createElement("span"); statusLabel.textContent = "Stan";
-      const status = document.createElement("select"); status.className = "inp"; status.dataset.taskActionState = String(index);
-      for (const [value, label] of [["pending", "Do wykonania"], ["done", "Wykonane"]]) {
-        const option = document.createElement("option"); option.value = value; option.textContent = label; status.append(option);
+      const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row homepage-shot-task-assignment-row"; row.dataset.taskRow = String(index);
+      const game = sharedField(row, "", task.game || "", { required: true, autocomplete: "off", dataset: { taskGame: "true" } });
+      game.placeholder = words.game; game.setAttribute("aria-label", words.game);
+      const widget = document.createElement("div"); widget.className = "ui-select homepage-shot-select";
+      widget.innerHTML = '<button class="btn sm ui-select-btn" type="button"><span class="ui-select-label"></span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>';
+      widget.setAttribute("aria-label", words.friend);
+      const select = document.createElement("select"); select.hidden = true; select.dataset.taskFriend = "true";
+      const options = friends.map(person => ({ value: person.email, label: `${person.username} · ${person.email}` }));
+      const selectedEmail = friends.some(person => person.email === task.friendEmail) ? task.friendEmail : friends[0]?.email || "";
+      const emptyOption = document.createElement("option"); emptyOption.value = ""; emptyOption.textContent = words.friend; select.append(emptyOption);
+      options.forEach(optionData => { const option = document.createElement("option"); option.value = optionData.value; option.textContent = optionData.label; select.append(option); });
+      select.value = selectedEmail;
+      row.append(widget, select);
+      const ui = initUiSelectFn?.(widget, {
+        options: options.length ? options : [{ value: "", label: words.noFriends }],
+        value: selectedEmail, placeholder: words.friend, disabled: !friends.length,
+        onChange: value => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); },
+      });
+      if (ui) {
+        taskFriendSelectUIs.push(ui);
+        const selectButton = widget.querySelector(".ui-select-btn");
+        selectButton?.setAttribute("aria-label", words.friend);
       }
-      status.value = task.state === "done" ? "done" : "pending";
-      statusField.append(statusLabel, status);
-      row.append(name, statusField); rows.append(row);
+      const statuses = document.createElement("div"); statuses.className = "homepage-shot-friend-status-radios homepage-shot-task-status-radios"; statuses.setAttribute("role", "radiogroup"); statuses.setAttribute("aria-label", words.status);
+      for (const [value, label, glyph] of [["pending", words.pending, "◷"], ["done", words.done, "✓"]]) {
+        const option = document.createElement("label"); option.className = "homepage-shot-friend-status-option"; option.title = label;
+        const radio = document.createElement("input"); radio.type = "radio"; radio.name = `task-status-${index}`; radio.value = value; radio.dataset.taskState = "true"; radio.checked = (task.state === "done" ? "done" : "pending") === value;
+        const icon = document.createElement("span"); icon.className = "homepage-shot-friend-status-icon"; icon.setAttribute("aria-hidden", "true"); icon.textContent = glyph;
+        option.setAttribute("aria-label", label); option.append(radio, icon); statuses.append(option);
+      }
+      row.append(statuses);
+      const remove = sharedButton(row, "×", "remove-task-assignment", index); remove.title = words.remove; remove.setAttribute("aria-label", words.remove); remove.classList.add("homepage-shot-row-remove");
+      rows.append(row);
     });
     group.append(rows);
+    sharedButton(group, words.add, "add-task-assignment");
     return;
   }
   if (sceneId === "poll-results") {
@@ -2895,15 +2942,21 @@ export async function initHomepageScreenshots() {
         fixture.pollVotes = readPollVotes();
         els.fixture.value = JSON.stringify(fixture, null, 2);
         scheduleFixtureSave();
-      } else if (event.target.matches("[data-task-action-state]")) {
+      } else if (event.target.matches("[data-task-friend], [data-task-state]")) {
         const fixture = JSON.parse(els.fixture.value);
-        const index = Number(event.target.dataset.taskActionState);
-        if (fixture.tasks?.[index]) fixture.tasks[index].state = event.target.value;
+        fixture.tasks = readTaskActions();
         els.fixture.value = JSON.stringify(fixture, null, 2);
         scheduleFixtureSave();
       }
     });
     byId("homepageShotCategoryActions").addEventListener("input", event => {
+      if (event.target.matches("[data-task-game]")) {
+        const fixture = JSON.parse(els.fixture.value);
+        fixture.tasks = readTaskActions();
+        els.fixture.value = JSON.stringify(fixture, null, 2);
+        scheduleFixtureSave();
+        return;
+      }
       if (event.target.matches("[data-subscriber-email]")) {
         const fixture = JSON.parse(els.fixture.value);
         applySubscriberActionsToFixture(fixture);
@@ -2922,6 +2975,16 @@ export async function initHomepageScreenshots() {
     byId("homepageShotCategoryActions").addEventListener("click", event => {
       const button = event.target.closest("[data-shared-action]");
       if (!button) return;
+      if (button.dataset.sharedAction === "add-task-assignment" || button.dataset.sharedAction === "remove-task-assignment") {
+        const fixture = JSON.parse(els.fixture.value);
+        fixture.tasks = readTaskActions();
+        if (button.dataset.sharedAction === "remove-task-assignment") fixture.tasks.splice(Number(button.dataset.index), 1);
+        else fixture.tasks.push({ game: "", friendEmail: sharedFixture(currentLanguage()).friends?.[0]?.email || "", state: "pending" });
+        els.fixture.value = JSON.stringify(fixture, null, 2);
+        renderEditorFields(fixture);
+        scheduleFixtureSave();
+        return;
+      }
       if (button.dataset.sharedAction === "add-subscriber-invitation" || button.dataset.sharedAction === "remove-subscriber-invitation") {
         const fixture = JSON.parse(els.fixture.value);
         applySubscriberActionsToFixture(fixture);
@@ -3009,7 +3072,8 @@ export async function initHomepageScreenshots() {
       "#homepageShotCategoryActions [data-shared-action]",
       "#homepageShotCategoryActions [data-poll-action-status]",
       "#homepageShotCategoryActions [data-poll-vote]",
-      "#homepageShotCategoryActions [data-task-action-state]",
+      "#homepageShotCategoryActions [data-task-state]",
+      "#homepageShotCategoryActions .ui-select-item",
       "#homepageShotFields input", "#homepageShotCategoryActions input", "#homepageShotQrUrl",
       "#homepageShotImportGame", "#homepageShotImportBase", "#homepageShotImportLogo", "#homepageShotImportConfig",
     ].join(",");
