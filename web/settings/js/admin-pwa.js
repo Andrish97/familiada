@@ -32,7 +32,10 @@ function isAdminStandalone() {
   if (new URLSearchParams(location.search).get("app") === "admin") {
     sessionStorage.setItem(ADMIN_APP_SHELL_KEY, "1");
   }
-  if (sessionStorage.getItem(ADMIN_APP_SHELL_KEY) === "1") return true;
+  if (sessionStorage.getItem(ADMIN_APP_SHELL_KEY) === "1") {
+    localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
+    return true;
+  }
 
   // Access may remove the start URL query while returning to the panel. The
   // admin app has its own worker, so use it to identify the installed shell.
@@ -40,7 +43,9 @@ function isAdminStandalone() {
   if (!workerUrl) return false;
   try {
     const worker = new URL(workerUrl);
-    return worker.origin === location.origin && worker.pathname === "/settings/sw.js?v=v2026-10-19T09515";
+    const isAdminWorker = worker.origin === location.origin && worker.pathname === "/settings/sw.js";
+    if (isAdminWorker) localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
+    return isAdminWorker;
   } catch {
     return false;
   }
@@ -48,6 +53,7 @@ function isAdminStandalone() {
 
 function isAdminInstalled() {
   if (isAdminStandalone()) return Promise.resolve(true);
+  if (localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1") return Promise.resolve(true);
   if (!installedCheck) {
     installedCheck = (async () => {
       if (typeof navigator.getInstalledRelatedApps !== "function") {
@@ -62,7 +68,6 @@ function isAdminInstalled() {
           return app.url === manifestUrl || appId === new URL("/?app=admin", location.origin).href;
         });
         if (installed) localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
-        else localStorage.removeItem(ADMIN_APP_INSTALLED_KEY);
         return installed;
       } catch {
         return localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1";

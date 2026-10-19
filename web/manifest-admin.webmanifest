@@ -12,7 +12,8 @@
   "related_applications": [
     {
       "platform": "webapp",
-      "url": "https://settings.familiada.online/manifest-admin.webmanifest"
+      "url": "https://settings.familiada.online/manifest-admin.webmanifest",
+      "id": "https://settings.familiada.online/?app=admin"
     }
   ],
   "icons": [
