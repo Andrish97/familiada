@@ -208,7 +208,7 @@ body.settings-body > main.wrap{
 .homepage-shot-friend-status-option input{position:absolute;width:1px;height:1px;opacity:0}
 .homepage-shot-friend-status-option:focus-within{outline:2px solid var(--gold,#d7ff3d);outline-offset:2px}
 .homepage-shot-friend-status-icon{font-size:21px;line-height:1;font-weight:700}
-.homepage-shot-row-remove{width:36px;min-width:36px;height:36px;padding:0!important;display:grid;place-items:center;font-size:23px;line-height:1}
+.homepage-shot-row-remove{width:32px;min-width:32px;height:32px;padding:0!important;display:grid;place-items:center;border-radius:50%;font-size:20px;line-height:1}
 .homepage-shot-friend-choice{display:flex;align-items:center;gap:9px;padding:5px 2px;font-size:13px;cursor:pointer}
 .homepage-shot-friend-choice input{width:17px;height:17px;accent-color:var(--gold,#d7ff3d)}
 .homepage-shot-action-row strong{font-size:14px}

@@ -573,10 +573,8 @@ function renderResourceList(language = currentLanguage()) {
   if (!root) return;
   const resources = ensureResourceData(language);
   const labels = { game: "Gry", base: "Bazy pytań", logo: "Logo" };
-  const gameLabels = { prepared: "Gry preparowane" };
   const gameStatusLabels = { draft: "Szkic", ready: "Gotowe", open: "Otwarte", stopped: "Zatrzymane" };
   const gameStatusClasses = { draft: "tag--muted", ready: "tag--ok", open: "tag--info", stopped: "tag--gold" };
-  const logoLabels = { DRAW: "Rysunek" };
   root.replaceChildren();
   for (const type of ["game", "base", "logo"]) {
     const items = resources.filter(item => item.type === type && (type !== "game" || gameResourceType(item) === "prepared"));
@@ -594,18 +592,7 @@ function renderResourceList(language = currentLanguage()) {
     const orderedKeys = type === "game" ? ["prepared"] : type === "logo" ? ["DRAW"] : ["all"];
     for (const key of orderedKeys) {
       const categoryItems = categories.get(key) || [];
-      if (type !== "base") {
-        const subheading = document.createElement("h4");
-        subheading.className = "homepage-shot-resource-subheading";
-        subheading.textContent = `${type === "game" ? gameLabels[key] : `Logo · ${logoLabels[key]}`} · ${categoryItems.length}`;
-        group.append(subheading);
-      }
-      if (!categoryItems.length) {
-        if (type !== "base") {
-          const emptyCategory = document.createElement("p"); emptyCategory.className = "muted"; emptyCategory.textContent = "Brak zasobów w tej kategorii."; group.append(emptyCategory);
-        }
-        continue;
-      }
+      if (!categoryItems.length) continue;
       for (const item of categoryItems) {
         const row = document.createElement("div"); row.className = "homepage-shot-resource-card homepage-shot-resource-list-row";
         const main = document.createElement("div"); main.className = "homepage-shot-resource-list-main";
@@ -2094,7 +2081,9 @@ function renderEditorFields(fixture) {
     else if (Array.isArray(value)) input.value = value.join(value.every(item => typeof item === "number") ? ", " : "\n");
     else input.value = String(value ?? "");
     if (input.tagName === "TEXTAREA") { input.rows = Array.isArray(value) ? Math.min(8, Math.max(3, value.length)) : 4; wrapper.classList.add("homepage-shot-field--wide"); }
-    wrapper.append(label, input); els.fields.append(wrapper);
+    if (input.type === "checkbox") wrapper.append(label, input);
+    else { input.placeholder = label.textContent; input.setAttribute("aria-label", label.textContent); wrapper.append(input); }
+    els.fields.append(wrapper);
   }
   byId("homepageShotExtraCard").hidden = !els.fields.children.length
     && byId("homepageShotCategoryActions").hidden
@@ -2236,11 +2225,11 @@ function renderCategoryActions(fixture) {
         const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-answer-row";
         const label = document.createElement("span"); label.textContent = answer.text || `Odpowiedź ${answerIndex + 1}`;
         const count = document.createElement("label"); count.className = "homepage-shot-shared-field";
-        const countLabel = document.createElement("span"); countLabel.textContent = "Głosy";
         const input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = "1"; input.className = "inp";
+        input.placeholder = "Liczba głosów"; input.setAttribute("aria-label", `Liczba głosów: ${answer.text}`);
         input.dataset.pollVote = ""; input.dataset.questionIndex = String(questionIndex); input.dataset.answerIndex = String(answerIndex);
         input.value = String(fixture.pollVotes?.[questionIndex]?.[answerIndex] ?? 0);
-        count.append(countLabel, input); row.append(label, count); rows.append(row);
+        count.append(input); row.append(label, count); rows.append(row);
       });
       questionCard.append(summary, rows); group.append(questionCard);
     });
