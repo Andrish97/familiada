@@ -61,6 +61,16 @@ export function isStandalone() {
   );
 }
 
+// A single rule for install controls: show them only when the browser can
+// install the PWA or the platform needs manual Add to Home Screen/Dock steps.
+export function canOfferPwaInstall(pwaApi) {
+  const ua = navigator.userAgent || "";
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const iosSafari = ios && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  const macSafari = /Mac/.test(navigator.platform) && /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg/.test(ua);
+  return !!pwaApi?.canInstall() || iosSafari || macSafari;
+}
+
 export function isMobileDevice() {
   const ua = navigator.userAgent || "";
   return /Android|iPhone|iPad|iPod/.test(ua) ||

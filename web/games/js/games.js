@@ -12,7 +12,7 @@ import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T10004"
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T10004";
 import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-19T10004";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-19T10004";
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-19T10004";
 import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-19T10004";
 import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T10004";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T10004";
@@ -1281,14 +1281,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   maybeShowGuestMigrateReminder(currentUser);
 
-  // btnInstall: widoczny gdy pwa:installable odpalił (canInstall) lub iOS Safari — nie standalone
+  // Wspólna reguła z panelem admina: pokazuj tylko przy dostępnej instalacji
+  // albo gdy system wymaga ręcznej instrukcji dodania aplikacji.
   if (btnInstall) {
-    if (isStandalone()) {
-      btnInstall.style.display = "none";
-    } else if (pwaApi.canInstall() || isIOSSafari()) {
-      btnInstall.style.display = "";
-    }
-    // Inaczej zostaje ukryty (Firefox, Safari desktop, lub Chrome zanim odpali beforeinstallprompt)
+    btnInstall.style.display = !isStandalone() && canOfferPwaInstall(pwaApi) ? "" : "none";
   }
   window.addEventListener("pwa:installed", () => {
     if (btnInstall) btnInstall.style.display = "none";
@@ -1298,7 +1294,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Android/Chrome/Edge/desktop – auto-prompt instalacji PWA (po odrzuceniu LS_KEY jest set → nie odpali)
   window.addEventListener("pwa:installable", () => {
-    if (btnInstall && !isStandalone()) btnInstall.style.display = "";
+    if (btnInstall && !isStandalone() && canOfferPwaInstall(pwaApi)) btnInstall.style.display = "";
     if (!localStorage.getItem("pwa:install_dismissed")) showPwaPrompt();
   }, { once: true });
   if (pwaApi.canInstall() && !localStorage.getItem("pwa:install_dismissed")) showPwaPrompt();

@@ -1,5 +1,5 @@
 import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T10004";
-import { initPwa, isStandalone } from "/shared/js/core/pwa.js?v=v2026-10-19T10004";
+import { initPwa, isStandalone, canOfferPwaInstall } from "/shared/js/core/pwa.js?v=v2026-10-19T10004";
 import { t } from "/shared/translation/translation.js?v=v2026-10-19T10004";
 
 const button = document.getElementById("btnInstallAdmin");
@@ -51,7 +51,7 @@ function updateButton() {
   if (!button) return;
   const locked = document.body.classList.contains("settings-locked");
   const standaloneAdmin = isAdminStandalone();
-  const installAvailable = pwaApi.canInstall() || isIOSSafari() || isMacSafari();
+  const installAvailable = canOfferPwaInstall(pwaApi);
   button.style.display = locked || standaloneAdmin || adminInstalled || !installAvailable ? "none" : "";
   button.disabled = false;
   button.title = "Zainstaluj panel admina";
