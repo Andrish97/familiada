@@ -21,7 +21,7 @@
   <meta name="theme-color" content="#050914"/>
   <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-19T11212"/>
   <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-19T11212"/>
-  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-19T11212"/>
+  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-19T124500"/>
 
 
   <script>document.documentElement.classList.add('page-loading')</script>
@@ -93,8 +93,8 @@
           <div class="homepage-shot-toolbar-actions">
             <div class="homepage-shot-action-group" aria-label="Zapisywanie danych">
               <span class="homepage-shot-action-label">Dane przykładowe</span>
-              <button class="btn sm" id="homepageShotSaveShared" type="button">Zapisz dane wspólne</button>
-              <button class="btn sm" id="homepageShotSave" type="button">Zapisz widok</button>
+              <button class="btn sm" id="homepageShotSaveShared" type="button">Zapisz dane ogólne<span class="homepage-shot-unsaved-label" id="homepageShotSharedSaveDirty" hidden> · niezapisane</span></button>
+              <button class="btn sm" id="homepageShotSave" type="button">Zapisz widok<span class="homepage-shot-unsaved-label" id="homepageShotViewSaveDirty" hidden> · niezapisane</span></button>
             </div>
             <div class="homepage-shot-action-group homepage-shot-action-group--capture" aria-label="Zrzuty strony głównej">
               <span class="homepage-shot-action-label">Zrzuty</span>
@@ -107,11 +107,11 @@
       <div class="tabs-card homepage-shot-tabs-card" id="homepageShotTabsCard">
         <div class="tabs-strip" role="tablist" aria-label="Dane przykładowe">
           <div class="tab-slot homepage-shot-tab-slot is-active">
-            <button class="tab-label homepage-shot-tab active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista zasobów</button>
+            <button class="tab-label homepage-shot-tab active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista zasobów<span class="homepage-shot-tab-dirty" id="homepageShotSharedTabDirty" hidden aria-label="Niezapisane zmiany">•</span></button>
             <div class="tab-wrapper" aria-hidden="true"><div class="tab-active">Lista zasobów</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
           </div>
           <div class="tab-slot homepage-shot-tab-slot">
-            <button class="tab-label homepage-shot-tab" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii</button>
+            <button class="tab-label homepage-shot-tab" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii<span class="homepage-shot-tab-dirty" id="homepageShotCategoryTabDirty" hidden aria-label="Niezapisane zmiany">•</span></button>
             <div class="tab-wrapper" aria-hidden="true"><div class="tab-active">Podgląd kategorii</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
           </div>
         </div>
