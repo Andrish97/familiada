@@ -144,8 +144,8 @@ export function logoToBits150(logo, glyphs) {
  * @param {number}      width    - canvas px width  (default 300)
  * @param {number}      height   - canvas px height (default 140)
  */
-export function buildLogoPreviewCanvas(logo, glyphs, width = 300, height = 140) {
-  const c = document.createElement("canvas");
+export function buildLogoPreviewCanvas(logo, glyphs, width = 300, height = 140, ownerDocument = document) {
+  const c = ownerDocument.createElement("canvas");
   c.width = width;
   c.height = height;
   drawThumbFlat150x70(c, logoToBits150(logo, glyphs));

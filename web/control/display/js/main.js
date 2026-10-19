@@ -337,6 +337,7 @@ async function bootPreview() {
     }
     scene.api.indicator.set("OFF");
     window.dispatchEvent(new CustomEvent("familiada:preview-rendered", { detail: { rev: row.rev } }));
+    if (window.parent !== window) window.parent.postMessage({ type: "familiada:preview-rendered", rev: row.rev }, location.origin);
     }).catch((error) => console.warn("[display2] preview render failed", error));
   });
 

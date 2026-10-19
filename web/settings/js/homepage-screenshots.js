@@ -1430,11 +1430,13 @@ async function applyFixtureToFrame(scene, fixture) {
 
   if (["host-round", "display-round", "main-display"].includes(scene.id)) {
     await prepareDeviceScene(scene, fixture);
+    await hydrateIcons(doc);
     doc.body.dataset.fixtureReady = "true";
     return;
   }
   if (scene.id === "control-round" || scene.id === "control-finale") {
     await paintControl(scene, fixture);
+    await hydrateIcons(doc);
     doc.body.dataset.fixtureReady = "true";
     return;
   }
@@ -1784,14 +1786,14 @@ async function applyFixtureToFrame(scene, fixture) {
       if (grid) {
         const tile = doc.createElement("div"); tile.className = "gs-logo-tile selected";
         const preview = doc.createElement("div"); preview.className = "gs-logo-prev";
-        try { preview.append(await logoCanvasFromFile(fixture.logoFile || "/shared/data/logo_familiada.json", 180, 84)); }
+        try { preview.append(await logoCanvasFromFile(fixture.logoFile || "/shared/data/logo_familiada.json", 180, 84, doc)); }
         catch { preview.classList.add("is-unavailable"); preview.textContent = "Podgląd niedostępny"; }
         const name = doc.createElement("div"); name.className = "gs-logo-name"; name.textContent = text.defaultLogo;
         tile.append(preview, name); grid.append(tile);
         for (const logo of fixture.logos || []) {
           const option = doc.createElement("div"); option.className = "gs-logo-tile";
           const optionPreview = doc.createElement("div"); optionPreview.className = "gs-logo-prev";
-          try { optionPreview.append(await logoCanvasFromStored(logo.data, 180, 84)); }
+          try { optionPreview.append(await logoCanvasFromStored(logo.data, 180, 84, doc)); }
           catch { optionPreview.classList.add("is-unavailable"); optionPreview.textContent = "Podgląd niedostępny"; }
           const optionName = doc.createElement("div"); optionName.className = "gs-logo-name"; optionName.textContent = logo.name;
           option.append(optionPreview, optionName); grid.append(option);
@@ -1841,7 +1843,7 @@ async function applyFixtureToFrame(scene, fixture) {
       await Promise.all([...list.querySelectorAll("[data-logo-preview]")].map(async node => {
         const logo = fixture.logos[Number(node.dataset.logoPreview)];
         try {
-          node.append(logo.data ? await logoCanvasFromStored(logo.data, 260, 100) : await logoCanvasFromFile(logo.file, 260, 100));
+          node.append(logo.data ? await logoCanvasFromStored(logo.data, 260, 100, doc) : await logoCanvasFromFile(logo.file, 260, 100, doc));
         } catch {
           node.classList.add("is-unavailable");
           node.textContent = "Podgląd niedostępny";
@@ -1853,8 +1855,8 @@ async function applyFixtureToFrame(scene, fixture) {
     const canvas = doc.querySelector("canvas");
     if (canvas) {
       const logo = fixture.logoData
-        ? await logoCanvasFromStored(fixture.logoData, 520, 245)
-        : await logoCanvasFromFile(fixture.logoFile, 520, 245);
+        ? await logoCanvasFromStored(fixture.logoData, 520, 245, doc)
+        : await logoCanvasFromFile(fixture.logoFile, 520, 245, doc);
       canvas.width = 520; canvas.height = 245;
       canvas.style.width = "520px"; canvas.style.height = "245px";
       canvas.getContext("2d").drawImage(logo, 0, 0, 520, 245);
@@ -1902,7 +1904,7 @@ async function paintAppearancePreviews(doc, language) {
   // place their rendered images into the page preview for reliable capture.
   const stage = document.createElement("div");
   stage.setAttribute("aria-hidden", "true");
-  stage.style.cssText = "position:fixed;left:-20000px;top:0;width:1280px;height:360px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;pointer-events:none";
+  stage.style.cssText = "position:fixed;left:0;top:0;width:1280px;height:360px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;opacity:.01;z-index:0;pointer-events:none";
   const displayFrame = document.createElement("iframe");
   displayFrame.title = "Display preview source";
   displayFrame.style.cssText = "width:640px;height:360px;border:0";
@@ -1967,21 +1969,10 @@ async function paintAppearancePreviews(doc, language) {
         image.style.cssText = "display:block;width:100%;height:100%;object-fit:cover";
         holder.append(image);
       } catch {
-        // Keep the real page visible if rasterization is unavailable (for example,
-        // when the image renderer CDN is blocked); the iframe is read-only.
-        const fallback = doc.createElement("iframe");
-        fallback.title = title;
-        fallback.src = frame.src;
-        fallback.setAttribute("sandbox", "allow-scripts allow-same-origin");
-        fallback.style.cssText = "display:block;width:100%;height:100%;border:0;pointer-events:none";
-        const onFallbackReady = event => {
-          if (event.source !== fallback.contentWindow || !["familiada:preview-ready", "familiada:host-preview-ready"].includes(event.data?.type)) return;
-          window.removeEventListener("message", onFallbackReady);
-          fallback.contentWindow?.postMessage(message, location.origin);
-        };
-        window.addEventListener("message", onFallbackReady);
-        holder.append(fallback);
-        fallback.src = frame.src;
+        const unavailable = doc.createElement("div");
+        unavailable.className = "gs-preview-unavailable";
+        unavailable.textContent = language === "en" ? "Preview unavailable" : language === "uk" ? "Попередній перегляд недоступний" : "Nie udało się przygotować podglądu";
+        holder.append(unavailable);
       }
     }
   } finally {
@@ -1997,15 +1988,15 @@ async function getStrings(language, keys) {
   return output;
 }
 
-async function logoCanvasFromFile(file, width, height) {
+async function logoCanvasFromFile(file, width, height, ownerDocument = document) {
   const response = await fetch(file || "/shared/data/logo_familiada.json", { cache: "force-cache" });
   if (!response.ok) throw new Error("nie udało się wczytać przykładowego logo");
   const stored = await response.json();
-  return logoCanvasFromStored(stored, width, height);
+  return logoCanvasFromStored(stored, width, height, ownerDocument);
 }
 
-async function logoCanvasFromStored(stored, width, height) {
-  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T19444");
+async function logoCanvasFromStored(stored, width, height, ownerDocument = document) {
+  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19Tpreview-render-2");
   const source = stored?.data && typeof stored.data === "object" ? stored.data : stored;
   const kind = String(source?.kind || source?.type || "").toUpperCase();
   const payload = source?.payload || source;
@@ -2013,7 +2004,7 @@ async function logoCanvasFromStored(stored, width, height) {
     : kind.includes("GLYPH") ? { type: "GLYPH_30x10", payload }
       : source?.type ? source : { type: "GLYPH_30x10", payload };
   const glyphs = await loadFont5x7();
-  return buildLogoPreviewCanvas(logo, glyphs, width, height);
+  return buildLogoPreviewCanvas(logo, glyphs, width, height, ownerDocument);
 }
 
 async function translateFrame(doc, language) {
@@ -2257,8 +2248,26 @@ async function prepareDeviceScene(scene, fixture) {
         totals: { A: fixture.scores?.[0] ?? 62, B: fixture.scores?.[1] ?? 47 }, revealed: fixture.revealed || [1,3], xA: fixture.crosses?.[0] ?? 1, xB: fixture.crosses?.[1] ?? 0,
         answers: (fixture.words || fixture.answers || ["Kanapka","Owoc","Jogurt","Sałatka","Drożdżówka","Baton"]).map((text, i) => ({ ord: i + 1, text, fixed_points: [39,24,16,9,7,5][i] })) }, host: { covered: false } }
   };
+  const renderAck = scene.id === "host-round" ? null : new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      window.removeEventListener("message", onRendered);
+      reject(new Error("Wyświetlacz nie zdążył narysować podglądu."));
+    }, 20000);
+    function onRendered(event) {
+      if (event.source !== win || event.data?.type !== "familiada:preview-rendered" || Number(event.data.rev) !== row.rev) return;
+      clearTimeout(timeout);
+      window.removeEventListener("message", onRendered);
+      resolve();
+    }
+    window.addEventListener("message", onRendered);
+  });
   win.postMessage({ type: "familiada:preview-row", row }, location.origin);
-  await new Promise(resolve => setTimeout(resolve, 1600));
+  if (scene.id !== "host-round") {
+    await renderAck;
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  } else {
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
   const doc = els.frame.contentDocument;
   if (scene.id === "host-round" && !doc.getElementById("paperText1")?.textContent?.includes(fixture.question)) throw new Error("Prowadzący nie wyświetlił pytania z przykładu");
   if (scene.id !== "host-round" && doc.getElementById("gameScreen")?.classList.contains("hidden")) throw new Error("Wyświetlacz nie pokazał planszy z przykładem");
