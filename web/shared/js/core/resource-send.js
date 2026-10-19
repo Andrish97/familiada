@@ -1,18 +1,10 @@
-<<<<<<< HEAD
 import { sb } from "./supabase.js?v=v2026-10-19T08495";
 import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-19T08495";
 import { toast } from "./toast.js?v=v2026-10-19T08495";
 import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-19T08495";
 import { icon, iconText } from "./icons.js?v=v2026-10-19T08495";
 import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-19T08495";
-=======
-import { sb } from "./supabase.js?v=v2026-10-19T08495";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-19T08495";
-import { toast } from "./toast.js?v=v2026-10-19T08495";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-19T08495";
-import { icon, iconText } from "./icons.js?v=v2026-10-19T08495";
-import { enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const attempts = new Map();
 

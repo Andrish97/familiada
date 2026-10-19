@@ -1,14 +1,8 @@
-<<<<<<< HEAD
 import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
 import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T08495";
 
 const ENDPOINT = "/maintenance-state.json?v=v2026-10-19T08495";
-=======
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T08495";
 
-const ENDPOINT = "/maintenance-state.json?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 const POLL_MS = 30000;
 
 const FALLBACKS = {

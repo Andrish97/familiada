@@ -1,19 +1,11 @@
 const LANG_LOADERS = {
-<<<<<<< HEAD
   pl: async () => (await import('./pl.js?v=v2026-10-19T08495')).default,
   en: async () => (await import('./en.js?v=v2026-10-19T08495')).default,
   uk: async () => (await import('./uk.js?v=v2026-10-19T08495')).default,
 };
 
 import { icon, iconText } from "../js/core/icons.js?v=v2026-10-19T08495";
-=======
-  pl: async () => (await import('./pl.js?v=v2026-10-19T08495')).default,
-  en: async () => (await import('./en.js?v=v2026-10-19T08495')).default,
-  uk: async () => (await import('./uk.js?v=v2026-10-19T08495')).default,
-};
 
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 const LANG_ORDER = ["pl", "en", "uk"];
 

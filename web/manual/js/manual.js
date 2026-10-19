@@ -2,7 +2,6 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
-<<<<<<< HEAD
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08495";
 import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
 import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T08495";
@@ -11,16 +10,7 @@ import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T08495"
 import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
 
 import { decorateManualControls } from "./controls.js?v=v2026-10-19T08495";
-=======
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08495";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T08495";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T08495";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T08495";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
 
-import { decorateManualControls } from "./controls.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 async function initManualI18n() {
   const params = new URLSearchParams(location.search);

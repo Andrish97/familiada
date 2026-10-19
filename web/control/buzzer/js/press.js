@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 import { deriveButtonState, isLockedRow, STATE } from "./render.js?v=v2026-10-19T08495";
-=======
-import { deriveButtonState, isLockedRow, STATE } from "./render.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 export function createPressController({ getRow, render, send, applyRow, refetch, onAccepted, onError }) {
   let pending = null;

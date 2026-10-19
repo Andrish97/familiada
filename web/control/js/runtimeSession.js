@@ -1,11 +1,8 @@
 // Sesja runtime Control jest osobna od telemetryki game_sessions i od
 // krótkiego TTL blokady strony. Aktywność oznacza świadome działanie
 // operatora; heartbeat urządzeń ani animacje nie przesuwają terminu.
-<<<<<<< HEAD
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-=======
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const IDLE_STORAGE_KEY = (gameId) => `fam:control:runtime:${gameId}`;
 const OUTRO_STORAGE_KEY = (gameId) => `control2:outro-started:${gameId}`;

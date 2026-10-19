@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 import { v } from '../core/cache-bust.js?v=v2026-10-19T08495';
-=======
-import { v } from '../core/cache-bust.js?v=v2026-10-19T08495';
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 export const loadJson = async (url) => {
   const res = await fetch(await v(url), { cache: "no-store" });

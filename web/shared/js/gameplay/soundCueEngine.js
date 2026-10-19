@@ -1,12 +1,7 @@
-<<<<<<< HEAD
 import { deriveEvents } from "./deriveEvents.js?v=v2026-10-19T08495";
 
 import { createTransitionTiming } from "./transitionTiming.js?v=v2026-10-19T08495";
-=======
-import { deriveEvents } from "./deriveEvents.js?v=v2026-10-19T08495";
 
-import { createTransitionTiming } from "./transitionTiming.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 export function createSoundCueEngine({ playSfx, getSfxDuration, stopSfx = () => {}, waitForStart = null }) {
   const timing = createTransitionTiming({ getSfxDuration });

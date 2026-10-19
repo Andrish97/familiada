@@ -5,13 +5,9 @@
 // tekst + przyciski. „Wróć” prowadzi na adres z mapy nawigacji (backHref),
 // nigdy przez history.back() ani referrer. i18n: pageGuard.*.
 
-<<<<<<< HEAD
 import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T08495";
 import { icon } from "./icons.js?v=v2026-10-19T08495";
-=======
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T08495";
-import { icon } from "./icons.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 export const PAGE_GUARD_ID = "pageGuard";
 let redirectTimer = null;

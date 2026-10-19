@@ -3,11 +3,8 @@
 // „jak na wyświetlaczu” (30x10 kafli po 5x7 kropek). Zamiana GLYPH ->
 // kropki: js/core/logo-preview.js (ta sama co na wyświetlaczu).
 
-<<<<<<< HEAD
 import { rows30x10ToBits150 } from "../../shared/js/core/logo-preview.js?v=v2026-10-19T08495";
-=======
-import { rows30x10ToBits150 } from "../../shared/js/core/logo-preview.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 export const TILES_X = 30;
 export const TILES_Y = 10;

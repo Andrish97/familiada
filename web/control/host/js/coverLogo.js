@@ -17,15 +17,10 @@
 //
 // settings.display.colors.A/B/BACKGROUND nie mają tu wpływu.
 
-<<<<<<< HEAD
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
 import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-19T08495";
 import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-19T08495";
-=======
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-19T08495";
-import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const DOT_W = 150, DOT_H = 70;
 const DEFAULT_DOT_COLOR = "#d7ff3d"; // web/js/gameplay/gameStateShape.js's default

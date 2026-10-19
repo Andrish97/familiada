@@ -8,11 +8,8 @@
 // pełny nowy wiersz, błąd zawsze rzuca (z rozróżnieniem stale_write, żeby
 // UI mogło pokazać "gra sterowana z innej zakładki" zamiast zgadywać).
 
-<<<<<<< HEAD
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-=======
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 export class StaleWriteError extends Error {
   constructor() {

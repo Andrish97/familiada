@@ -4,13 +4,9 @@
 // ?ret= do listy z kartą, z której wszedł; bez ret — na /logos/.
 // Patrz docs/nawigacja-mapa-plan.md.
 
-<<<<<<< HEAD
 import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-19T08495";
 import { TYPE_GLYPH } from "./render.js?v=v2026-10-19T08495";
-=======
-import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-19T08495";
-import { TYPE_GLYPH } from "./render.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 /** Id strony w mapie nawigacji dla trybu edytora. */
 export const EDITOR_PAGE_IDS = {

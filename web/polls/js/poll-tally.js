@@ -13,29 +13,19 @@
 //
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
-<<<<<<< HEAD
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
 import { t } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-19T08495";
 import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-19T08495";
 import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T08495";
-=======
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-19T08495";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-19T08495";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 import {
   pointsPollAnalysis,
   textTallyAnalysis,
   ANSWERS_MIN,
   TEXT_MAX_LEN,
-<<<<<<< HEAD
 } from "../../shared/js/core/poll-tally-math.js?v=v2026-10-19T08495";
-=======
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;

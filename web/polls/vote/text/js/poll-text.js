@@ -1,5 +1,4 @@
 // js/pages/poll-text.js
-<<<<<<< HEAD
 import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
 guardViewportWidth({ minWidth: 0 });
 import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
@@ -7,15 +6,7 @@ import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-19T08495"
 import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-19T08495";
 import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-19T08495";
 import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-19T08495";
-=======
-import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
-guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-19T08495";
-import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-19T08495";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-19T08495";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');

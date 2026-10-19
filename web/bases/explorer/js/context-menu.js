@@ -1,10 +1,7 @@
 // base-explorerjs/context-menu.js
 
-<<<<<<< HEAD
 import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-19T08495";
-=======
-import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 import {
   createFolderHere,
   createQuestionHere,
@@ -16,19 +13,12 @@ import {
   deleteTags,
   duplicateSelected,
   canDeleteHere,
-<<<<<<< HEAD
 } from "./actions.js?v=v2026-10-19T08495";
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T08495";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
 import { renderAll } from "./render.js?v=v2026-10-19T08495";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T08495";
-=======
-} from "./actions.js?v=v2026-10-19T08495";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T08495";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
-import { renderAll } from "./render.js?v=v2026-10-19T08495";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 
 const IS_MAC = navigator.platform.toLowerCase().includes("mac");

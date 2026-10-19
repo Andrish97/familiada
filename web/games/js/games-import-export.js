@@ -1,13 +1,8 @@
 // js/pages/games-import-export.js
-<<<<<<< HEAD
 import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-19T08495";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
 import { t } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
-=======
-import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-19T08495";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 /* =========================================================
 	 Helpers (bezpieczne skracanie / typy)

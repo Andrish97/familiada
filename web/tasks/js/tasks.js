@@ -1,5 +1,4 @@
 // Zadania: wyłącznie ankiety. Do zrobienia / Zrobione (5 dni).
-<<<<<<< HEAD
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-19T08495";
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08495";
@@ -7,15 +6,7 @@ import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T08495";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
 import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-19T08495";
-=======
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-19T08495";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08495";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T08495";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
-import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[tasks] i18n nieaktywny:", err);

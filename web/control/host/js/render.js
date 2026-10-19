@@ -21,11 +21,8 @@
 // to wcześniej na sztywno po polsku, więc zmiana języka w Control (patrz
 // web/js/gameplay/gameStateShape.js's settings.uiLang) nie miała żadnego wpływu na
 // treść, którą prowadzący faktycznie czyta.
-<<<<<<< HEAD
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
-=======
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const $ = (id) => document.getElementById(id);
 const rh = (key, vars) => t(`control.roundsHost.${key}`, vars);

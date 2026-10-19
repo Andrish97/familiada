@@ -9,11 +9,8 @@
 // czy konkretna funkcja się mieści, wynikają z bieżącego viewportu. Obrót
 // nie zmienia typu urządzenia, ale może udostępnić funkcję wymagającą miejsca.
 
-<<<<<<< HEAD
 import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-19T08495";
-=======
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 export const PHONE_MAX_SHORT_SIDE = 700;
 export const MIN_WORK_WIDTH = 980;

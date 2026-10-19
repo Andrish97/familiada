@@ -1,10 +1,7 @@
 // Loads Host theme factories from the same manifest Display uses. Each
 // entry maps a shared theme key to a Host-specific createTheme(root) module.
-<<<<<<< HEAD
 const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-19T08495";
-=======
-const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 const FALLBACK_KEY = "classic";
 const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", DOT: "#d7ff3d" };
 

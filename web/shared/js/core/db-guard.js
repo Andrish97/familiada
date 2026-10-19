@@ -1,9 +1,6 @@
 // js/core/db-guard.js
-<<<<<<< HEAD
 import { sb } from "./supabase.js?v=v2026-10-19T08495";
-=======
-import { sb } from "./supabase.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 // Supabase/PostgREST UPDATE ... WHERE trafiający w 0 wierszy NIE zwraca
 // błędu — to mechanizm stojący za "cichym sukcesem" przy edycji czegoś,

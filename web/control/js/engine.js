@@ -17,13 +17,9 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-<<<<<<< HEAD
 import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-19T08495";
 import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T08495";
-=======
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-19T08495";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const STRIKE_LIMIT = 3;
 const TIMER_SECONDS = { P1: 15, P2: 20 };

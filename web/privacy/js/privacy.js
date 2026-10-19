@@ -5,15 +5,10 @@
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 //   (initPage: konto, „Wstecz” i etykieta wg mapy nawigacji)
 
-<<<<<<< HEAD
 import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T08495";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
-=======
-import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T08495";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 window.dispatchEvent(new Event("resize"));
 

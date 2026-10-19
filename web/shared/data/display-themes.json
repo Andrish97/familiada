@@ -8,13 +8,9 @@
         "en": "Classic",
         "uk": "Класична"
       },
-<<<<<<< HEAD
       "module": "./theme_classic.js?v=v2026-10-19T08495",
       "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T08495"
-=======
-      "module": "./theme_classic.js?v=v2026-10-19T08495",
-      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T08495"
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
     },
     {
       "key": "modern",
@@ -23,13 +19,9 @@
         "en": "Modern",
         "uk": "Сучасна"
       },
-<<<<<<< HEAD
       "module": "./theme_modern.js?v=v2026-10-19T08495",
       "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T08495"
-=======
-      "module": "./theme_modern.js?v=v2026-10-19T08495",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T08495"
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
     }
   ]
 }

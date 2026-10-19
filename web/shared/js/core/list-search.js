@@ -8,19 +8,12 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-<<<<<<< HEAD
 import { t } from "../../translation/translation.js?v=v2026-10-19T08495";
 import { promptModal } from "./modal.js?v=v2026-10-19T08495";
 import { icon } from "./icons.js?v=v2026-10-19T08495";
 import { initUiSelect } from "./ui-select.js?v=v2026-10-19T08495";
 import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-19T08495";
-=======
-import { t } from "../../translation/translation.js?v=v2026-10-19T08495";
-import { promptModal } from "./modal.js?v=v2026-10-19T08495";
-import { icon } from "./icons.js?v=v2026-10-19T08495";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-19T08495";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 

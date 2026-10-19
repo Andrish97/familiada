@@ -8,11 +8,8 @@
 // control2-full-game.spec.js na żywo (Control nigdy nie widział wciśnięcia
 // Buzzera, bo nic nie ringDoorbell'owało po tamtej stronie).
 
-<<<<<<< HEAD
 import { rt } from "./realtime.js?v=v2026-10-19T08495";
-=======
-import { rt } from "./realtime.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 export function doorbellTopic(gameId) {
   return `familiada-state:${gameId}`;

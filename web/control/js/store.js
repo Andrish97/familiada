@@ -14,21 +14,13 @@
 // wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
-<<<<<<< HEAD
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
 import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-19T08495";
 import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-19T08495";
 import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-19T08495";
 import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-19T08495";
 import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T08495";
-=======
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-19T08495";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-19T08495";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-19T08495";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-19T08495";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 // Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
 // ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes

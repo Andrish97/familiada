@@ -1,15 +1,9 @@
 
-<<<<<<< HEAD
 import { sb as supabase } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08495";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T08495";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T08495";
-=======
-import { sb as supabase } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08495";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T08495";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 let games = [];
 let genLangSelect = null;
@@ -942,11 +936,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-<<<<<<< HEAD
     a.download = 'przykladowa-gra.json?v=v2026-10-19T08495';
-=======
-    a.download = 'przykladowa-gra.json?v=v2026-10-19T08495';
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

@@ -1,9 +1,6 @@
 // The file importer and copy sender use the same canonical logo package.
-<<<<<<< HEAD
 import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-19T08495";
-=======
-import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 function invalid(code, params = {}) {
   const error = new Error(code);

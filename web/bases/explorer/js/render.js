@@ -1,15 +1,10 @@
 // base-explorerjs/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
-<<<<<<< HEAD
 import { VIEW, META, META_ORDER } from "./state.js?v=v2026-10-19T08495";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T08495";
-=======
-import { VIEW, META, META_ORDER } from "./state.js?v=v2026-10-19T08495";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");

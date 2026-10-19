@@ -1,5 +1,4 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-<<<<<<< HEAD
 import { sb } from "./supabase.js?v=v2026-10-19T08495";
 import { initPage } from "./page-init.js?v=v2026-10-19T08495";
 import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-19T08495";
@@ -11,19 +10,7 @@ import { createCooldownTicker } from "./cooldown.js?v=v2026-10-19T08495";
 import { sendInviteMail } from "./invite-mail.js?v=v2026-10-19T08495";
 import { initI18n, t } from "../../translation/translation.js?v=v2026-10-19T08495";
 import "./contact-modal.js?v=v2026-10-19T08495";
-=======
-import { sb } from "./supabase.js?v=v2026-10-19T08495";
-import { initPage } from "./page-init.js?v=v2026-10-19T08495";
-import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-19T08495";
-import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-19T08495";
-import { toast } from "./toast.js?v=v2026-10-19T08495";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-19T08495";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-19T08495";
-import { createCooldownTicker } from "./cooldown.js?v=v2026-10-19T08495";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-19T08495";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-19T08495";
-import "./contact-modal.js?v=v2026-10-19T08495";
->>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
+
 
 export async function initContactsPage(pageId) {
   const friends = pageId === "friends";
