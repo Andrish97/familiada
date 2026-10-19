@@ -11,6 +11,14 @@ export function initPwa({ serviceWorkerUrl = "/sw.js?v=v2026-10-19T09494", scope
   }
 
   let deferredPrompt = null;
+  let didNotifyInstalled = false;
+
+  const notifyInstalled = () => {
+    if (didNotifyInstalled) return;
+    didNotifyInstalled = true;
+    localStorage.removeItem(LS_KEY);
+    window.dispatchEvent(new CustomEvent("pwa:installed"));
+  };
 
   window.addEventListener("beforeinstallprompt", (e) => {
     // Zapisz prompt (dla przycisku instalacji)
@@ -24,8 +32,7 @@ export function initPwa({ serviceWorkerUrl = "/sw.js?v=v2026-10-19T09494", scope
 
   window.addEventListener("appinstalled", () => {
     deferredPrompt = null;
-    localStorage.removeItem(LS_KEY);
-    window.dispatchEvent(new CustomEvent("pwa:installed"));
+    notifyInstalled();
   });
 
   return {
@@ -36,7 +43,8 @@ export function initPwa({ serviceWorkerUrl = "/sw.js?v=v2026-10-19T09494", scope
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       deferredPrompt = null;
-      if (outcome !== "accepted") localStorage.setItem(LS_KEY, "1");
+      if (outcome === "accepted") notifyInstalled();
+      else localStorage.setItem(LS_KEY, "1");
       return outcome === "accepted";
     },
     dismiss: () => {

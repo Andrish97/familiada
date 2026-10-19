@@ -1290,6 +1290,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     // Inaczej zostaje ukryty (Firefox, Safari desktop, lub Chrome zanim odpali beforeinstallprompt)
   }
+  window.addEventListener("pwa:installed", () => {
+    if (btnInstall) btnInstall.style.display = "none";
+  });
 
   void maybeShowIosWebappPrompt();
 

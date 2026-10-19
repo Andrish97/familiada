@@ -10,6 +10,7 @@ const ADMIN_APP_INSTALLED_KEY = "admin-pwa:installed";
 let didRunUnlockedSetup = false;
 let installedCheck;
 let adminInstalled = localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1";
+let installationObserved = false;
 
 function isIOSSafari() {
   const ua = navigator.userAgent || "";
@@ -131,7 +132,7 @@ async function setupAfterAccess() {
   registerAdminWorker();
   if (didRunUnlockedSetup || document.body.classList.contains("settings-locked")) return;
   didRunUnlockedSetup = true;
-  adminInstalled = await isAdminInstalled();
+  adminInstalled = installationObserved || await isAdminInstalled();
   updateButton();
   if (isIOSSafari()) void showIosPrompt();
   else if (pwaApi.canInstall()) void showAutomaticInstallPrompt();
@@ -143,12 +144,13 @@ setupAfterAccess();
 
 window.addEventListener("pwa:installable", () => {
   void isAdminInstalled().then((installed) => {
-    adminInstalled = installed;
+    adminInstalled = installationObserved || installed;
     updateButton();
     if (!installed && !document.body.classList.contains("settings-locked")) void showAutomaticInstallPrompt();
   });
 });
 window.addEventListener("pwa:installed", () => {
+  installationObserved = true;
   adminInstalled = true;
   localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
   updateButton();
