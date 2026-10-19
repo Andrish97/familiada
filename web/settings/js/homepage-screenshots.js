@@ -58,6 +58,20 @@ function extraGameQuestions(language) {
   ];
 }
 
+function extraPollQuestions(language) {
+  const data = language === "en" ? [
+    ["What would you like to do during the trip?", [["Go for a walk", 7], ["See the sights", 5], ["Relax", 4], ["Meet friends", 2]]],
+    ["What makes a weekend trip special?", [["A change of scenery", 8], ["Time together", 6], ["Good food", 4]]],
+  ] : language === "uk" ? [
+    ["Що хочеш робити під час поїздки?", [["Гуляти", 7], ["Оглядати місто", 5], ["Відпочивати", 4], ["Зустрічатися з друзями", 2]]],
+    ["Що робить поїздку на вихідні особливою?", [["Зміна обстановки", 8], ["Час разом", 6], ["Смачна їжа", 4]]],
+  ] : [
+    ["Co chcesz robić podczas wyjazdu?", [["Spacerować", 7], ["Zwiedzać", 5], ["Odpoczywać", 4], ["Spotkać się ze znajomymi", 2]]],
+    ["Co sprawia, że weekendowy wyjazd jest udany?", [["Zmiana otoczenia", 8], ["Wspólny czas", 6], ["Dobre jedzenie", 4]]],
+  ];
+  return data.map(([text, answers]) => ({ text, answers: answers.map(([answer, votes]) => ({ text: answer, votes })) }));
+}
+
 function byId(id) { return document.getElementById(id); }
 function currentLanguage() { return byId("homepageShotLanguage").value; }
 function currentScene() { return config.scenes.find(scene => scene.id === byId("homepageShotScene").value) || config.scenes[0]; }
@@ -79,20 +93,73 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.points = firstQuestion.answers.map(answer => answer.points);
   }
   if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = shared.teams || fixture.teams;
-  if (scene.id === "subscribers" && shared.subscribers) {
-    fixture.people = shared.subscribers.map((name, index) => ({ name, state: (shared.subscriberStates?.[index] ?? index < shared.activeSubscribers) ? "active" : "pending" }));
-  }
+  if (scene.id === "subscribers") fixture.people = (shared.subscribers || []).map(name => ({ name, state: "active" }));
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) {
     fixture.poll = shared.pollName || fixture.poll;
-    fixture.question = shared.pollQuestion || fixture.question;
-    if (scene.id === "poll-vote-mobile") fixture.answers = shared.pollAnswers || fixture.answers;
-    if (scene.id === "poll-results" && shared.pollResults) fixture.answers = shared.pollResults;
-    if (scene.id === "poll-share" && shared.subscribers) {
-      fixture.subscribers = shared.subscribers;
-      fixture.subscriberStates = shared.subscriberStates || shared.subscribers.map((_, index) => index < shared.activeSubscribers);
+    const pollQuestions = shared.pollQuestions || [{ text: shared.pollQuestion || fixture.question, answers: (shared.pollResults || []).map(answer => ({ text: answer.text, votes: answer.votes })) }];
+    fixture.question = pollQuestions[0]?.text || fixture.question;
+    if (scene.id === "poll-vote-mobile") fixture.answers = pollQuestions[0]?.answers.map(answer => answer.text) || fixture.answers;
+    if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
+    if (scene.id === "poll-share") {
+      const recipients = shared.pollRecipients || (shared.subscribers || []).map((_, index) => ({ subscriberIndex: index, responded: index === 0 }));
+      fixture.subscribers = recipients.map(recipient => shared.subscribers[recipient.subscriberIndex]).filter(Boolean);
+      fixture.subscriberStates = recipients.map(recipient => !!recipient.responded);
     }
   }
+  if (scene.id === "friends" && !fixture.friendGroups) fixture.friendGroups = defaultFriendGroups(language);
+  if (scene.id === "subscribers") {
+    fixture.outgoing ||= defaultSubscriberInvitations(language);
+  }
   return fixture;
+}
+
+function defaultFriendGroups(language) {
+  return language === "en" ? {
+    friends: [{ name: "Alex Morgan", email: "alex@example.test" }, { name: "Jamie Lee", email: "jamie@example.test" }],
+    outgoing: [{ name: "Taylor Parker", email: "taylor@example.test" }],
+    incoming: [{ name: "Sam Wilson", email: "sam@example.test" }, { name: "Casey Brown", email: "casey@example.test" }],
+    declined: [{ name: "Jordan Smith", email: "jordan@example.test" }],
+  } : language === "uk" ? {
+    friends: [{ name: "Олександра Новак", email: "oleksandra@example.test" }, { name: "Ян Ковальський", email: "jan@example.test" }],
+    outgoing: [{ name: "Тарас Мельник", email: "taras@example.test" }],
+    incoming: [{ name: "Ірина Шевченко", email: "iryna@example.test" }, { name: "Петро Бондар", email: "petro@example.test" }],
+    declined: [{ name: "Марта Зелінська", email: "marta@example.test" }],
+  } : {
+    friends: [{ name: "Aleksandra Nowak", email: "aleksandra@example.test" }, { name: "Jan Kowalski", email: "jan@example.test" }],
+    outgoing: [{ name: "Tomasz Lewandowski", email: "tomasz@example.test" }],
+    incoming: [{ name: "Kasia Maj", email: "kasia@example.test" }, { name: "Piotr Zieliński", email: "piotr@example.test" }],
+    declined: [{ name: "Marta Zielińska", email: "marta@example.test" }],
+  };
+}
+
+function defaultSubscriberInvitations(language) {
+  return language === "en" ? [{ email: "pat@example.test", status: "pending" }, { email: "lee@example.test", status: "declined" }]
+    : language === "uk" ? [{ email: "olena@example.test", status: "pending" }, { email: "maksym@example.test", status: "declined" }]
+      : [{ email: "ola@example.test", status: "pending" }, { email: "maks@example.test", status: "declined" }];
+}
+
+function normalizeSharedFixture(shared, defaults) {
+  const result = { ...defaults, ...shared };
+  result.gameQuestions = Array.isArray(shared.gameQuestions) ? shared.gameQuestions : defaults.gameQuestions;
+  result.subscribers = Array.isArray(shared.subscribers) ? shared.subscribers : defaults.subscribers;
+  result.pollQuestions = Array.isArray(shared.pollQuestions) ? shared.pollQuestions : (() => {
+    const oldAnswers = shared.pollAnswers || defaults.pollQuestions[0].answers.map(answer => answer.text);
+    const oldResults = shared.pollResults || [];
+    return [
+      { text: shared.pollQuestion || defaults.pollQuestions[0].text, answers: oldAnswers.map((answer, index) => ({
+        text: typeof answer === "string" ? answer : answer.text,
+        votes: oldResults[index]?.votes ?? defaults.pollQuestions[0].answers[index]?.votes ?? 0,
+      })) },
+      ...defaults.pollQuestions.slice(1),
+    ];
+  })();
+  result.pollRecipients = Array.isArray(shared.pollRecipients) ? shared.pollRecipients.map((recipient, index) => ({
+    subscriberIndex: Number.isInteger(recipient.subscriberIndex) ? recipient.subscriberIndex : Math.max(0, result.subscribers.indexOf(recipient.name)),
+    responded: !!recipient.responded,
+  })).filter(recipient => recipient.subscriberIndex < result.subscribers.length) : result.subscribers.map((_, index) => ({ subscriberIndex: index, responded: index === 0 }));
+  delete result.pollQuestion; delete result.pollAnswers; delete result.pollResults;
+  delete result.activeSubscribers; delete result.subscriberStates;
+  return result;
 }
 
 function defaultSharedFixture(language) {
@@ -104,6 +171,8 @@ function defaultSharedFixture(language) {
   const pollFixture = localizeFixture(pollShare?.fixture || {}, language);
   const voteFixture = localizeFixture(pollVote?.fixture || {}, language);
   const resultsFixture = localizeFixture(pollResults?.fixture || {}, language);
+  const generalSubscribers = localizeFixture({ subscribers: ["Anna Nowak", "Piotr Zieliński", "Kasia Maj"] }, language).subscribers;
+  const oldResults = resultsFixture.answers || [];
   return {
     gameName: editorFixture.game || "Rodzinny pojedynek",
     otherGames: localizeFixture({ games: config.scenes.find(scene => scene.id === "games")?.fixture?.games?.slice(1) || [] }, language).games,
@@ -112,13 +181,13 @@ function defaultSharedFixture(language) {
       ...extraGameQuestions(language).map(([text, answers, points]) => ({ text, answers: answers.map((answer, index) => ({ text: answer, points: points[index] })) })),
     ],
     teams: localizeFixture({ teams: ["Króliczki", "Zajączki"] }, language).teams,
-    subscribers: localizeFixture({ subscribers: ["Anna Nowak", "Piotr Zieliński", "Kasia Maj"] }, language).subscribers,
-    activeSubscribers: 2,
-    subscriberStates: [true, true, false],
+    subscribers: generalSubscribers,
     pollName: pollFixture.poll,
-    pollQuestion: pollFixture.question,
-    pollAnswers: voteFixture.answers || [],
-    pollResults: resultsFixture.answers || [],
+    pollQuestions: [
+      { text: voteFixture.question || pollFixture.question, answers: (voteFixture.answers || []).map((text, index) => ({ text, votes: oldResults[index]?.votes ?? 0 })) },
+      ...extraPollQuestions(language),
+    ],
+    pollRecipients: generalSubscribers.map((_, index) => ({ subscriberIndex: index, responded: index === 0 })),
   };
 }
 
@@ -197,33 +266,59 @@ function renderSharedEditor(shared) {
 
   const poll = sharedGroup(root, "Ankieta");
   sharedField(poll, "Nazwa ankiety", shared.pollName, { dataset: { sharedValue: "pollName" } });
-  sharedField(poll, "Pytanie ankiety", shared.pollQuestion, { dataset: { sharedValue: "pollQuestion" } });
-  const pollHead = document.createElement("div"); pollHead.className = "homepage-shot-answer-head";
-  pollHead.innerHTML = "<span>Odpowiedź</span><span>Głosy</span><span></span>"; poll.append(pollHead);
-  const pollRows = document.createElement("div"); pollRows.className = "homepage-shot-shared-rows";
-  (shared.pollAnswers || []).forEach((answer, index) => {
-    const result = shared.pollResults?.[index] || {};
-    const row = document.createElement("div"); row.className = "homepage-shot-shared-row";
-    sharedField(row, "", typeof answer === "string" ? answer : answer.text, { dataset: { pollAnswer: "" } });
-    sharedField(row, "", result.votes ?? 0, { type: "number", min: 0, dataset: { pollVotes: "" } });
-    sharedButton(row, "Usuń", "remove-poll-answer", index); pollRows.append(row);
+  (shared.pollQuestions || []).forEach((question, questionIndex) => {
+    const details = document.createElement("details"); details.className = "homepage-shot-question homepage-shot-poll-question"; details.dataset.pollQuestionIndex = String(questionIndex);
+    if (questionIndex === 0) details.open = true;
+    const summary = document.createElement("summary"); summary.textContent = `Pytanie ankiety ${questionIndex + 1} · ${question.answers?.length || 0} odpowiedzi`;
+    const body = document.createElement("div"); body.className = "homepage-shot-question-body";
+    sharedField(body, "Treść pytania", question.text, { dataset: { pollQuestionText: "" } });
+    const answerHead = document.createElement("div"); answerHead.className = "homepage-shot-answer-head";
+    answerHead.innerHTML = "<span>Odpowiedź</span><span>Głosy</span><span></span>";
+    const answerRows = document.createElement("div"); answerRows.className = "homepage-shot-answer-list";
+    (question.answers || []).forEach((answer, answerIndex) => {
+      const row = document.createElement("div"); row.className = "homepage-shot-shared-row"; row.dataset.pollAnswerIndex = String(answerIndex);
+      sharedField(row, "", answer.text, { dataset: { pollAnswer: "" } });
+      sharedField(row, "", answer.votes, { type: "number", min: 0, dataset: { pollVotes: "" } });
+      sharedButton(row, "Usuń", "remove-poll-answer", questionIndex); answerRows.append(row);
+    });
+    const actions = document.createElement("div"); actions.className = "homepage-shot-shared-actions";
+    sharedButton(actions, "Dodaj odpowiedź", "add-poll-answer", questionIndex);
+    sharedButton(actions, "Usuń pytanie", "remove-poll-question", questionIndex);
+    body.append(answerHead, answerRows, actions); details.append(summary, body); poll.append(details);
   });
-  poll.append(pollRows);
-  sharedButton(poll, "Dodaj odpowiedź", "add-poll-answer");
+  sharedButton(poll, "Dodaj pytanie ankiety", "add-poll-question");
 
-  const subscribers = sharedGroup(root, "Subskrybenci");
-  const subscriberRows = document.createElement("div"); subscriberRows.className = "homepage-shot-shared-rows";
-  (shared.subscribers || []).forEach((name, index) => {
+  const recipients = document.createElement("div"); recipients.className = "homepage-shot-shared-group";
+  const recipientsHeading = document.createElement("h3"); recipientsHeading.textContent = "Zaproszeni do tej ankiety"; recipients.append(recipientsHeading);
+  const recipientRows = document.createElement("div"); recipientRows.className = "homepage-shot-shared-rows";
+  (shared.pollRecipients || []).forEach((recipient, index) => {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--subscriber";
-    sharedField(row, `Osoba ${index + 1}`, name, { dataset: { subscriber: "" } });
+    const recipientField = document.createElement("label"); recipientField.className = "homepage-shot-shared-field";
+    const recipientLabel = document.createElement("span"); recipientLabel.textContent = `Subskrybent ${index + 1}`;
+    const recipientSelect = document.createElement("select"); recipientSelect.className = "inp"; recipientSelect.dataset.pollSubscriber = "";
+    (shared.subscribers || []).forEach((name, subscriberIndex) => {
+      const option = document.createElement("option"); option.value = String(subscriberIndex); option.textContent = name; recipientSelect.append(option);
+    });
+    if (shared.subscribers?.length) recipientSelect.value = String(Math.min(recipient.subscriberIndex ?? index, shared.subscribers.length - 1));
+    recipientField.append(recipientLabel, recipientSelect); row.append(recipientField);
     const status = document.createElement("label"); status.className = "homepage-shot-shared-field";
-    const statusLabel = document.createElement("span"); statusLabel.textContent = "Status";
-    const select = document.createElement("select"); select.className = "inp"; select.dataset.subscriberStatus = "";
-    for (const [value, label] of [["active", "Odpowiedział"], ["pending", "Oczekuje"]]) {
+    const statusLabel = document.createElement("span"); statusLabel.textContent = "Odpowiedź";
+    const select = document.createElement("select"); select.className = "inp"; select.dataset.pollResponded = "";
+    for (const [value, label] of [["yes", "Odpowiedział"], ["no", "Oczekuje"]]) {
       const option = document.createElement("option"); option.value = value; option.textContent = label; select.append(option);
     }
-    select.value = (shared.subscriberStates?.[index] ?? index < shared.activeSubscribers) ? "active" : "pending";
-    status.append(statusLabel, select); row.append(status); sharedButton(row, "Usuń", "remove-subscriber", index); subscriberRows.append(row);
+    select.value = recipient.responded ? "yes" : "no";
+    status.append(statusLabel, select); row.append(status); sharedButton(row, "Usuń", "remove-poll-recipient", index); recipientRows.append(row);
+  });
+  recipients.append(recipientRows); sharedButton(recipients, "Dodaj osobę", "add-poll-recipient"); poll.append(recipients);
+
+  const subscribers = sharedGroup(root, "Subskrybenci");
+  const subscriberNote = document.createElement("p"); subscriberNote.className = "muted"; subscriberNote.textContent = "Lista aktywnych subskrybentów. Informacja o odpowiedzi jest zapisywana osobno dla każdej ankiety."; subscribers.append(subscriberNote);
+  const subscriberRows = document.createElement("div"); subscriberRows.className = "homepage-shot-shared-rows";
+  (shared.subscribers || []).forEach((name, index) => {
+    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
+    sharedField(row, `Osoba ${index + 1}`, name, { dataset: { subscriber: "" } });
+    sharedButton(row, "Usuń", "remove-subscriber", index); subscriberRows.append(row);
   });
   subscribers.append(subscriberRows);
   sharedButton(subscribers, "Dodaj subskrybenta", "add-subscriber");
@@ -242,14 +337,16 @@ function readSharedEditor() {
       return { text: input.value.trim(), points: Number(row.querySelector("[data-answer-points]").value) || 0 };
     }),
   }));
-  const pollRows = [...root.querySelectorAll("[data-poll-answer]")].map(input => ({
-    text: input.value.trim(), votes: Number(input.closest(".homepage-shot-shared-row").querySelector("[data-poll-votes]").value) || 0,
+  shared.pollQuestions = [...root.querySelectorAll(".homepage-shot-poll-question")].map(card => ({
+    text: card.querySelector("[data-poll-question-text]").value.trim(),
+    answers: [...card.querySelectorAll("[data-poll-answer]")].map(input => ({
+      text: input.value.trim(), votes: Number(input.closest(".homepage-shot-shared-row").querySelector("[data-poll-votes]").value) || 0,
+    })),
   }));
-  shared.pollAnswers = pollRows.map(answer => answer.text);
-  shared.pollResults = pollRows.map(answer => ({ text: answer.text, votes: answer.votes }));
   shared.subscribers = [...root.querySelectorAll("[data-subscriber]")].map(input => input.value.trim());
-  shared.subscriberStates = [...root.querySelectorAll("[data-subscriber-status]")].map(select => select.value === "active");
-  shared.activeSubscribers = shared.subscriberStates.filter(Boolean).length;
+  shared.pollRecipients = [...root.querySelectorAll("[data-poll-responded]")].map(select => ({
+    subscriberIndex: Number(select.closest(".homepage-shot-shared-row").querySelector("[data-poll-subscriber]").value), responded: select.value === "yes",
+  })).filter(recipient => Number.isInteger(recipient.subscriberIndex));
   return shared;
 }
 
@@ -729,16 +826,38 @@ function setText(doc, id, value) { const node = doc.getElementById(id); if (node
 
 async function paintPeople(doc, fixture) {
   const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T07532");
-  const host = doc.getElementById("contactsReceived");
-  if (!host) return;
+  const received = doc.getElementById("contactsReceived");
+  const outgoing = doc.getElementById("contactsOutgoing");
+  if (!received || !outgoing) return;
   const friends = els.frame.dataset.sceneId === "friends";
-  const rows = fixture.people.map((person, index) => ({
-    id: `shot-person-${index}`, label: person.name, compact: true,
-    note: friends ? (person.state === "accepted" ? "Znajomy" : person.state === "pending" ? "Oczekuje na odpowiedź" : "Zaproszenie odrzucone") : "Adres na liście odbiorców ankiet",
-    tags: [{ text: person.state === "accepted" || person.state === "active" ? (friends ? "Znajomy" : "Aktywny") : person.state === "pending" ? "Oczekuje" : "Odrzucono", cls: person.state === "accepted" || person.state === "active" ? "tag--ok" : "tag--muted" }],
-    actions: [{ key: "remove", icon: "trash", title: "Usuń", onClick: () => {} }],
-  }));
-  host.replaceChildren(shareSectionEl({ key: "active", title: friends ? "Znajomi" : "Subskrybenci", rows }));
+  const language = currentLanguage();
+  const labels = language === "en"
+    ? { friends: "Friends", outgoing: "Pending and declined", incoming: "Suggestions", declined: "Declined by me", active: "Subscribers", pending: "Pending" }
+    : language === "uk"
+      ? { friends: "Друзі", outgoing: "Очікують та відхилені", incoming: "Пропозиції", declined: "Відхилені мною", active: "Підписники", pending: "Очікують" }
+      : { friends: "Znajomi", outgoing: "Oczekujące i odrzucone", incoming: "Propozycje", declined: "Odrzucone przeze mnie", active: "Subskrybenci", pending: "Oczekujące" };
+  const contactRow = (person, index, kind) => ({
+    id: `shot-contact-${kind}-${index}`, label: person.name || person.email, compact: true,
+    note: friends ? (person.email || "") : "",
+    tags: kind === "friends" || kind === "active" ? [] : [{ text: kind === "declined" || person.status === "declined" ? (language === "en" ? "Declined" : language === "uk" ? "Відхилено" : "Odrzucone") : (language === "en" ? "Pending" : language === "uk" ? "Очікує" : "Oczekuje"), cls: "tag--muted" }],
+    actions: kind === "incoming"
+      ? [{ key: "accept", icon: "check", title: language === "en" ? "Accept" : language === "uk" ? "Прийняти" : "Akceptuj", onClick: () => {} }, { key: "reject", icon: "cancel", title: language === "en" ? "Decline" : language === "uk" ? "Відхилити" : "Odrzuć", onClick: () => {} }]
+      : friends && kind === "declined"
+        ? [{ key: "undo_reject", icon: "undo", title: language === "en" ? "Restore" : language === "uk" ? "Відновити" : "Przywróć", onClick: () => {} }]
+        : [{ key: kind === "outgoing" || person.status === "pending" ? "cancel" : "remove", icon: "trash", title: language === "en" ? "Remove" : language === "uk" ? "Видалити" : "Usuń", onClick: () => {} }],
+  });
+  if (friends) {
+    const groups = fixture.friendGroups || defaultFriendGroups(language);
+    outgoing.replaceChildren(shareSectionEl({ key: "outgoing", title: labels.outgoing, rows: (groups.outgoing || []).map((row, index) => contactRow(row, index, "outgoing")) }));
+    received.replaceChildren(
+      shareSectionEl({ key: "friend", title: labels.friends, rows: (groups.friends || []).map((row, index) => contactRow(row, index, "friends")) }),
+      shareSectionEl({ key: "incoming", title: labels.incoming, rows: (groups.incoming || []).map((row, index) => contactRow(row, index, "incoming")) }),
+      shareSectionEl({ key: "declined", title: labels.declined, rows: (groups.declined || []).map((row, index) => contactRow(row, index, "declined")), collapsed: true }),
+    );
+    return;
+  }
+  outgoing.replaceChildren(shareSectionEl({ key: "pending", title: labels.pending, rows: (fixture.outgoing || []).map((row, index) => contactRow(row, index, row.status === "declined" ? "declined" : "outgoing")) }));
+  received.replaceChildren(shareSectionEl({ key: "active", title: labels.active, rows: (fixture.people || []).map((row, index) => contactRow(row, index, "active")) }));
 }
 
 async function paintTasks(doc, fixture) {
@@ -761,7 +880,9 @@ async function paintPoll(doc, scene, fixture) {
   setText(doc, "pollStateWord", currentLanguage() === "en" ? "Voting open" : currentLanguage() === "uk" ? "Голосування триває" : "Głosowanie trwa");
   setText(doc, "pollStateInfo", currentLanguage() === "en" ? "18 votes received" : currentLanguage() === "uk" ? "Отримано 18 голосів" : "Oddano 18 głosów");
   setText(doc, "hintTop", fixture.question);
-  setText(doc, "subsSummary", currentLanguage() === "en" ? "3 invited · 1 responded" : currentLanguage() === "uk" ? "Запрошено: 3 · відповіли: 1" : "Zaproszono: 3 · odpowiedziała 1 osoba");
+  const invited = fixture.subscribers?.length || 0;
+  const responded = fixture.subscriberStates?.filter(Boolean).length || 0;
+  setText(doc, "subsSummary", currentLanguage() === "en" ? `${invited} invited · ${responded} responded` : currentLanguage() === "uk" ? `Запрошено: ${invited} · відповіли: ${responded}` : `Zaproszono: ${invited} · odpowiedzi: ${responded}`);
   const shareBody = doc.getElementById("shareBody"); if (shareBody) shareBody.style.display = "";
   const shareEmpty = doc.getElementById("shareEmpty"); if (shareEmpty) shareEmpty.style.display = "none";
   const share = doc.getElementById("secShare"); if (share) share.hidden = scene.id !== "poll-share";
@@ -789,7 +910,11 @@ async function paintPoll(doc, scene, fixture) {
     const resultTab = doc.getElementById("tabResults"); if (resultTab) resultTab.classList.add("active");
     setText(doc, "resultsMeta", currentLanguage() === "en" ? "18 votes · live results" : currentLanguage() === "uk" ? "18 голосів · результати наживо" : "18 głosów · wyniki na żywo");
     const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T07532");
-    createPollResults(doc.getElementById("resultsList")).render({ status: "poll_open", type: "poll_points", questions: [{ id: "shot-poll", ord: 1, text: fixture.question, answers: fixture.answers.map((answer, i) => ({ id: `shot-answer-${i}`, text: answer.text, votes: answer.votes })) }] });
+    const questions = (fixture.pollQuestions || []).map((question, questionIndex) => ({
+      id: `shot-poll-${questionIndex + 1}`, ord: questionIndex + 1, text: question.text,
+      answers: question.answers.map((answer, answerIndex) => ({ id: `shot-answer-${questionIndex + 1}-${answerIndex + 1}`, text: answer.text, votes: answer.votes })),
+    }));
+    createPollResults(doc.getElementById("resultsList")).render({ status: "poll_open", type: "poll_points", questions });
   }
 }
 
@@ -951,8 +1076,8 @@ async function flushSharedEditor() {
   if (!shared || typeof shared !== "object" || !Array.isArray(shared.gameQuestions) || !Array.isArray(shared.subscribers)) {
     setStatus("Wspólne dane muszą zawierać listę pytań gry i subskrybentów."); return false;
   }
-  if (!shared.gameName || !shared.pollName || !shared.pollQuestion || shared.gameQuestions.some(question => !question.text || question.answers.some(answer => !answer.text))) {
-    setStatus("Uzupełnij nazwę gry, ankiety, pytanie ankiety oraz teksty pytań i odpowiedzi."); return false;
+  if (!shared.gameName || !shared.pollName || !shared.pollQuestions.length || shared.pollQuestions.some(question => !question.text || !question.answers.length || question.answers.some(answer => !answer.text)) || shared.gameQuestions.some(question => !question.text || question.answers.some(answer => !answer.text))) {
+    setStatus("Uzupełnij nazwę gry i ankiety oraz teksty pytań i odpowiedzi."); return false;
   }
   config.sharedFixtures[sharedEditorLanguage] = shared;
   try { await saveConfig(); sharedDirty = false; renderSharedEditor(shared); return true; }
@@ -1107,7 +1232,21 @@ export async function initHomepageScreenshots() {
     let initializeSharedFixtures = false;
     config.sharedFixtures ||= {};
     for (const language of ["pl", "en", "uk"]) {
-      if (!config.sharedFixtures[language]) { config.sharedFixtures[language] = defaultSharedFixture(language); initializeSharedFixtures = true; }
+      const defaults = defaultSharedFixture(language);
+      if (!config.sharedFixtures[language]) initializeSharedFixtures = true;
+      const normalized = normalizeSharedFixture(config.sharedFixtures[language] || {}, defaults);
+      if (JSON.stringify(normalized) !== JSON.stringify(config.sharedFixtures[language] || {})) initializeSharedFixtures = true;
+      config.sharedFixtures[language] = normalized;
+      config.localeFixtures ||= {};
+      config.localeFixtures[language] ||= {};
+      const friendsScene = config.scenes.find(scene => scene.id === "friends");
+      const friendsFixture = config.localeFixtures[language].friends || localizeFixture(friendsScene?.fixture || {}, language);
+      if (!friendsFixture.friendGroups) { friendsFixture.friendGroups = defaultFriendGroups(language); initializeSharedFixtures = true; }
+      config.localeFixtures[language].friends = friendsFixture;
+      const subscribersScene = config.scenes.find(scene => scene.id === "subscribers");
+      const subscribersFixture = config.localeFixtures[language].subscribers || localizeFixture(subscribersScene?.fixture || {}, language);
+      if (!subscribersFixture.outgoing) { subscribersFixture.outgoing = defaultSubscriberInvitations(language); initializeSharedFixtures = true; }
+      config.localeFixtures[language].subscribers = subscribersFixture;
     }
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     if (initializeSharedFixtures) await saveConfig();
@@ -1168,10 +1307,20 @@ export async function initHomepageScreenshots() {
           const answerIndex = Number(button.closest(".homepage-shot-shared-row").dataset.answerIndex);
           shared.gameQuestions[index]?.answers.splice(answerIndex, 1); break;
         }
-        case "add-poll-answer": shared.pollAnswers.push("Nowa odpowiedź"); shared.pollResults.push({ text: "Nowa odpowiedź", votes: 0 }); break;
-        case "remove-poll-answer": shared.pollAnswers.splice(index, 1); shared.pollResults.splice(index, 1); break;
-        case "add-subscriber": shared.subscribers.push("Nowy subskrybent"); shared.subscriberStates.push(false); break;
-        case "remove-subscriber": shared.subscribers.splice(index, 1); shared.subscriberStates.splice(index, 1); break;
+        case "add-poll-question": shared.pollQuestions.push({ text: "Nowe pytanie ankiety", answers: [] }); break;
+        case "remove-poll-question": shared.pollQuestions.splice(index, 1); break;
+        case "add-poll-answer": shared.pollQuestions[index]?.answers.push({ text: "Nowa odpowiedź", votes: 0 }); break;
+        case "remove-poll-answer": {
+          const answerIndex = Number(button.closest(".homepage-shot-shared-row").dataset.pollAnswerIndex);
+          shared.pollQuestions[index]?.answers.splice(answerIndex, 1); break;
+        }
+        case "add-poll-recipient": if (shared.subscribers.length) shared.pollRecipients.push({ subscriberIndex: 0, responded: false }); break;
+        case "remove-poll-recipient": shared.pollRecipients.splice(index, 1); break;
+        case "add-subscriber": shared.subscribers.push("Nowy subskrybent"); break;
+        case "remove-subscriber":
+          shared.subscribers.splice(index, 1);
+          shared.pollRecipients = shared.pollRecipients.filter(recipient => recipient.subscriberIndex !== index).map(recipient => ({ ...recipient, subscriberIndex: recipient.subscriberIndex > index ? recipient.subscriberIndex - 1 : recipient.subscriberIndex }));
+          break;
         default: return;
       }
       renderSharedEditor(shared);
