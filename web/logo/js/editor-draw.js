@@ -1,8 +1,8 @@
 // familiada/logo/js/editor-draw.js
 // Strona /logos/editor/draw/?id=<logo> -- edytor trybu DRAW (editor-page.js).
 
-import { bootEditorPage } from "./editor-page.js?v=v2026-10-19T20321";
-import { initDrawEditor } from "./draw.js?v=v2026-10-19T20321";
+import { bootEditorPage } from "./editor-page.js?v=v2026-10-19T20352";
+import { initDrawEditor } from "./draw.js?v=v2026-10-19T20352";
 
 
 bootEditorPage({ mode: "DRAW", initEditor: initDrawEditor });
