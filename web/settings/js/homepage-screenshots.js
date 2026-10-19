@@ -80,14 +80,17 @@ function langFixture(scene, language = currentLanguage()) {
   }
   if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = shared.teams || fixture.teams;
   if (scene.id === "subscribers" && shared.subscribers) {
-    fixture.people = shared.subscribers.map((name, index) => ({ name, state: index < shared.activeSubscribers ? "active" : "pending" }));
+    fixture.people = shared.subscribers.map((name, index) => ({ name, state: (shared.subscriberStates?.[index] ?? index < shared.activeSubscribers) ? "active" : "pending" }));
   }
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) {
     fixture.poll = shared.pollName || fixture.poll;
     fixture.question = shared.pollQuestion || fixture.question;
     if (scene.id === "poll-vote-mobile") fixture.answers = shared.pollAnswers || fixture.answers;
     if (scene.id === "poll-results" && shared.pollResults) fixture.answers = shared.pollResults;
-    if (scene.id === "poll-share" && shared.subscribers) fixture.subscribers = shared.subscribers;
+    if (scene.id === "poll-share" && shared.subscribers) {
+      fixture.subscribers = shared.subscribers;
+      fixture.subscriberStates = shared.subscriberStates || shared.subscribers.map((_, index) => index < shared.activeSubscribers);
+    }
   }
   return fixture;
 }
@@ -111,6 +114,7 @@ function defaultSharedFixture(language) {
     teams: localizeFixture({ teams: ["Króliczki", "Zajączki"] }, language).teams,
     subscribers: localizeFixture({ subscribers: ["Anna Nowak", "Piotr Zieliński", "Kasia Maj"] }, language).subscribers,
     activeSubscribers: 2,
+    subscriberStates: [true, true, false],
     pollName: pollFixture.poll,
     pollQuestion: pollFixture.question,
     pollAnswers: voteFixture.answers || [],
@@ -120,6 +124,133 @@ function defaultSharedFixture(language) {
 
 function sharedFixture(language = currentLanguage()) {
   return config.sharedFixtures[language];
+}
+
+function sharedField(parent, labelText, value, attrs = {}) {
+  const wrapper = document.createElement("label"); wrapper.className = "homepage-shot-shared-field";
+  if (labelText) { const label = document.createElement("span"); label.textContent = labelText; wrapper.append(label); }
+  const input = document.createElement(attrs.tag || "input");
+  input.className = "inp";
+  if (attrs.type) input.type = attrs.type;
+  if (attrs.min !== undefined) input.min = attrs.min;
+  if (attrs.max !== undefined) input.max = attrs.max;
+  input.value = value ?? "";
+  if (attrs.dataset) Object.assign(input.dataset, attrs.dataset);
+  wrapper.append(input); parent.append(wrapper);
+  return input;
+}
+
+function sharedButton(parent, text, action, index = "") {
+  const button = document.createElement("button");
+  button.className = "btn sm"; button.type = "button"; button.textContent = text;
+  button.dataset.sharedAction = action;
+  if (index !== "") button.dataset.index = String(index);
+  parent.append(button);
+  return button;
+}
+
+function sharedGroup(parent, title) {
+  const group = document.createElement("section"); group.className = "homepage-shot-shared-group";
+  const heading = document.createElement("h3"); heading.textContent = title;
+  group.append(heading); parent.append(group); return group;
+}
+
+function renderSharedEditor(shared) {
+  const root = byId("homepageShotSharedFields");
+  root.replaceChildren();
+
+  const game = sharedGroup(root, "Gra");
+  sharedField(game, "Nazwa gry", shared.gameName, { dataset: { sharedValue: "gameName" } });
+  const gamesList = document.createElement("div"); gamesList.className = "homepage-shot-shared-rows"; game.append(gamesList);
+  (shared.otherGames || []).forEach((name, index) => {
+    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
+    sharedField(row, `Pozostała gra ${index + 1}`, name, { dataset: { otherGame: "" } });
+    sharedButton(row, "Usuń", "remove-other-game", index); gamesList.append(row);
+  });
+  const gameActions = document.createElement("div"); gameActions.className = "homepage-shot-shared-actions";
+  sharedButton(gameActions, "Dodaj grę do listy", "add-other-game"); game.append(gameActions);
+  const teams = document.createElement("div"); teams.className = "homepage-shot-shared-teams"; game.append(teams);
+  (shared.teams || []).slice(0, 2).forEach((name, index) => sharedField(teams, `Drużyna ${index + 1}`, name, { dataset: { team: String(index) } }));
+
+  const questions = sharedGroup(root, "Pytania gry");
+  (shared.gameQuestions || []).forEach((question, questionIndex) => {
+    const details = document.createElement("details"); details.className = "homepage-shot-question"; details.dataset.questionIndex = String(questionIndex);
+    if (questionIndex === 0) details.open = true;
+    const summary = document.createElement("summary"); summary.textContent = `Pytanie ${questionIndex + 1} · ${question.answers?.length || 0} odpowiedzi`;
+    const body = document.createElement("div"); body.className = "homepage-shot-question-body";
+    sharedField(body, "Treść pytania", question.text, { dataset: { questionText: "" } });
+    const answerHead = document.createElement("div"); answerHead.className = "homepage-shot-answer-head";
+    answerHead.innerHTML = "<span>Odpowiedź</span><span>Punkty</span><span></span>";
+    const answerList = document.createElement("div"); answerList.className = "homepage-shot-answer-list";
+    (question.answers || []).forEach((answer, answerIndex) => {
+      const row = document.createElement("div"); row.className = "homepage-shot-shared-row"; row.dataset.answerIndex = String(answerIndex);
+      sharedField(row, "", answer.text, { dataset: { answerText: "" } });
+      sharedField(row, "", answer.points, { type: "number", min: 0, max: 100, dataset: { answerPoints: "" } });
+      sharedButton(row, "Usuń", "remove-game-answer", questionIndex); answerList.append(row);
+    });
+    const actions = document.createElement("div"); actions.className = "homepage-shot-shared-actions";
+    sharedButton(actions, "Dodaj odpowiedź", "add-game-answer", questionIndex);
+    sharedButton(actions, "Usuń pytanie", "remove-question", questionIndex);
+    body.append(answerHead, answerList, actions); details.append(summary, body); questions.append(details);
+  });
+  sharedButton(questions, "Dodaj pytanie", "add-question");
+
+  const poll = sharedGroup(root, "Ankieta");
+  sharedField(poll, "Nazwa ankiety", shared.pollName, { dataset: { sharedValue: "pollName" } });
+  sharedField(poll, "Pytanie ankiety", shared.pollQuestion, { dataset: { sharedValue: "pollQuestion" } });
+  const pollHead = document.createElement("div"); pollHead.className = "homepage-shot-answer-head";
+  pollHead.innerHTML = "<span>Odpowiedź</span><span>Głosy</span><span></span>"; poll.append(pollHead);
+  const pollRows = document.createElement("div"); pollRows.className = "homepage-shot-shared-rows";
+  (shared.pollAnswers || []).forEach((answer, index) => {
+    const result = shared.pollResults?.[index] || {};
+    const row = document.createElement("div"); row.className = "homepage-shot-shared-row";
+    sharedField(row, "", typeof answer === "string" ? answer : answer.text, { dataset: { pollAnswer: "" } });
+    sharedField(row, "", result.votes ?? 0, { type: "number", min: 0, dataset: { pollVotes: "" } });
+    sharedButton(row, "Usuń", "remove-poll-answer", index); pollRows.append(row);
+  });
+  poll.append(pollRows);
+  sharedButton(poll, "Dodaj odpowiedź", "add-poll-answer");
+
+  const subscribers = sharedGroup(root, "Subskrybenci");
+  const subscriberRows = document.createElement("div"); subscriberRows.className = "homepage-shot-shared-rows";
+  (shared.subscribers || []).forEach((name, index) => {
+    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--subscriber";
+    sharedField(row, `Osoba ${index + 1}`, name, { dataset: { subscriber: "" } });
+    const status = document.createElement("label"); status.className = "homepage-shot-shared-field";
+    const statusLabel = document.createElement("span"); statusLabel.textContent = "Status";
+    const select = document.createElement("select"); select.className = "inp"; select.dataset.subscriberStatus = "";
+    for (const [value, label] of [["active", "Odpowiedział"], ["pending", "Oczekuje"]]) {
+      const option = document.createElement("option"); option.value = value; option.textContent = label; select.append(option);
+    }
+    select.value = (shared.subscriberStates?.[index] ?? index < shared.activeSubscribers) ? "active" : "pending";
+    status.append(statusLabel, select); row.append(status); sharedButton(row, "Usuń", "remove-subscriber", index); subscriberRows.append(row);
+  });
+  subscribers.append(subscriberRows);
+  sharedButton(subscribers, "Dodaj subskrybenta", "add-subscriber");
+}
+
+function readSharedEditor() {
+  const root = byId("homepageShotSharedFields");
+  const shared = structuredClone(config.sharedFixtures[sharedEditorLanguage]);
+  for (const input of root.querySelectorAll("[data-shared-value]")) shared[input.dataset.sharedValue] = input.value.trim();
+  shared.otherGames = [...root.querySelectorAll("[data-other-game]")].map(input => input.value.trim()).filter(Boolean);
+  shared.teams = [...root.querySelectorAll("[data-team]")].map(input => input.value.trim());
+  shared.gameQuestions = [...root.querySelectorAll(".homepage-shot-question")].map(card => ({
+    text: card.querySelector("[data-question-text]").value.trim(),
+    answers: [...card.querySelectorAll("[data-answer-text]")].map(input => {
+      const row = input.closest(".homepage-shot-shared-row");
+      return { text: input.value.trim(), points: Number(row.querySelector("[data-answer-points]").value) || 0 };
+    }),
+  }));
+  const pollRows = [...root.querySelectorAll("[data-poll-answer]")].map(input => ({
+    text: input.value.trim(), votes: Number(input.closest(".homepage-shot-shared-row").querySelector("[data-poll-votes]").value) || 0,
+  }));
+  shared.pollAnswers = pollRows.map(answer => answer.text);
+  shared.pollResults = pollRows.map(answer => ({ text: answer.text, votes: answer.votes }));
+  shared.subscribers = [...root.querySelectorAll("[data-subscriber]")].map(input => input.value.trim());
+  shared.subscriberStates = [...root.querySelectorAll("[data-subscriber-status]")].map(select => select.value === "active");
+  shared.activeSubscribers = shared.subscriberStates.filter(Boolean).length;
+  return shared;
 }
 
 function sharedKeysForScene(sceneId) {
@@ -196,7 +327,7 @@ function updateEditor() {
   const scene = currentScene();
   const qrToolbar = byId("homepageShotQrToolbar");
   if (qrToolbar) qrToolbar.hidden = scene.id !== "poll-share";
-  if (!sharedDirty) byId("homepageShotSharedFixture").value = JSON.stringify(sharedFixture(), null, 2);
+  if (!sharedDirty) renderSharedEditor(sharedFixture());
   sharedEditorLanguage = currentLanguage();
   languageSelectUI?.setValue(currentLanguage(), { silent: true });
   sceneSelectUI?.setValue(scene.id, { silent: true });
@@ -651,7 +782,7 @@ async function paintPoll(doc, scene, fixture) {
   const subs = doc.getElementById("subsGrid");
   if (subs) {
     const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T07445");
-    subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: "Zaproszeni subskrybenci", rows: fixture.subscribers.map((name, i) => ({ id: `shot-sub-${i}`, label: name, compact: true, note: i === 0 ? "Oddano głos" : "Oczekuje na odpowiedź", tags: [{ text: "Subskrybent", cls: "tag--muted" }] })) }));
+    subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: "Zaproszeni subskrybenci", rows: fixture.subscribers.map((name, i) => ({ id: `shot-sub-${i}`, label: name, compact: true, note: fixture.subscriberStates?.[i] ? "Oddano głos" : "Oczekuje na odpowiedź", tags: [{ text: "Subskrybent", cls: "tag--muted" }] })) }));
   }
   if (scene.id === "poll-results") {
     const shareTab = doc.getElementById("tabShare"); if (shareTab) shareTab.classList.remove("active");
@@ -816,14 +947,15 @@ async function flushEditor() {
 
 async function flushSharedEditor() {
   if (!sharedDirty) return true;
-  let shared;
-  try { shared = JSON.parse(byId("homepageShotSharedFixture").value); }
-  catch { setStatus("Popraw JSON wspólnych przykładowych danych."); return false; }
+  const shared = readSharedEditor();
   if (!shared || typeof shared !== "object" || !Array.isArray(shared.gameQuestions) || !Array.isArray(shared.subscribers)) {
     setStatus("Wspólne dane muszą zawierać listę pytań gry i subskrybentów."); return false;
   }
+  if (!shared.gameName || !shared.pollName || !shared.pollQuestion || shared.gameQuestions.some(question => !question.text || question.answers.some(answer => !answer.text))) {
+    setStatus("Uzupełnij nazwę gry, ankiety, pytanie ankiety oraz teksty pytań i odpowiedzi."); return false;
+  }
   config.sharedFixtures[sharedEditorLanguage] = shared;
-  try { await saveConfig(); sharedDirty = false; return true; }
+  try { await saveConfig(); sharedDirty = false; renderSharedEditor(shared); return true; }
   catch (error) { setStatus(`Nie udało się zapisać wspólnych danych: ${error.message}`); return false; }
 }
 
@@ -1012,12 +1144,37 @@ export async function initHomepageScreenshots() {
       } catch (error) { setStatus(`Nie udało się zapisać linku QR: ${error.message}`); }
     });
     byId("homepageShotSaveShared").addEventListener("click", async () => {
-      if (!await flushSharedEditor()) return;
-      updateEditor();
+      if (!await flushEditor() || !await flushSharedEditor()) return;
       await loadScenePreview(currentScene(), true);
       setStatus("Wspólne dane zapisane. Widoki korzystają teraz z tych samych przykładów.");
     });
-    byId("homepageShotSharedFixture").addEventListener("input", () => {
+    byId("homepageShotSharedFields").addEventListener("input", () => {
+      sharedDirty = true;
+      setStatus("Wspólne dane zmienione — zapisz albo przejdź dalej, aby je zachować.");
+    });
+    byId("homepageShotSharedFields").addEventListener("change", () => { sharedDirty = true; });
+    byId("homepageShotSharedFields").addEventListener("click", event => {
+      const button = event.target.closest("[data-shared-action]");
+      if (!button) return;
+      const shared = readSharedEditor();
+      const index = Number(button.dataset.index);
+      switch (button.dataset.sharedAction) {
+        case "add-other-game": shared.otherGames.push("Nowa gra"); break;
+        case "remove-other-game": shared.otherGames.splice(index, 1); break;
+        case "add-question": shared.gameQuestions.push({ text: "Nowe pytanie", answers: [] }); break;
+        case "remove-question": shared.gameQuestions.splice(index, 1); break;
+        case "add-game-answer": shared.gameQuestions[index]?.answers.push({ text: "Nowa odpowiedź", points: 0 }); break;
+        case "remove-game-answer": {
+          const answerIndex = Number(button.closest(".homepage-shot-shared-row").dataset.answerIndex);
+          shared.gameQuestions[index]?.answers.splice(answerIndex, 1); break;
+        }
+        case "add-poll-answer": shared.pollAnswers.push("Nowa odpowiedź"); shared.pollResults.push({ text: "Nowa odpowiedź", votes: 0 }); break;
+        case "remove-poll-answer": shared.pollAnswers.splice(index, 1); shared.pollResults.splice(index, 1); break;
+        case "add-subscriber": shared.subscribers.push("Nowy subskrybent"); shared.subscriberStates.push(false); break;
+        case "remove-subscriber": shared.subscribers.splice(index, 1); shared.subscriberStates.splice(index, 1); break;
+        default: return;
+      }
+      renderSharedEditor(shared);
       sharedDirty = true;
       setStatus("Wspólne dane zmienione — zapisz albo przejdź dalej, aby je zachować.");
     });
