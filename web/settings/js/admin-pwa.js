@@ -48,14 +48,14 @@ async function showIosPrompt() {
   if (!isIOSSafari() || isStandalone() || localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
   const fallback = {
     title: "Dodaj panel admina do ekranu początkowego",
-    text: "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie dodaj panel. Logowanie Access nadal będzie wymagane.",
+    text: "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie „Dodaj”. Uruchom panel z nowej ikony. Logowanie Access nadal będzie wymagane.",
     ok: "Pokaż instrukcję",
     never: "Nie pokazuj więcej",
   };
   let dismissed = false;
   await confirmModal({
-    title: tSafe("games.iosWebapp.title", fallback.title),
-    text: tSafe("games.iosWebapp.text", fallback.text),
+    title: tSafe("games.iosWebapp.adminTitle", fallback.title),
+    text: tSafe("games.iosWebapp.adminText", fallback.text),
     okText: tSafe("games.iosWebapp.ok", fallback.ok),
     cancelText: tSafe("games.iosWebapp.never", fallback.never),
     onReady: ({ cancelBtn }) => cancelBtn?.addEventListener("click", () => { dismissed = true; }, { once: true }),
@@ -65,13 +65,15 @@ async function showIosPrompt() {
 
 async function showAutomaticInstallPrompt() {
   if (isStandalone() || !pwaApi.canInstall() || localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
+  let installResult = null;
   const accepted = await confirmModal({
-    title: tSafe("games.pwaInstall.title", "Zainstaluj aplikację"),
-    text: tSafe("games.pwaInstall.text", "Dodaj panel admina do ekranu głównego, żeby mieć do niego szybki dostęp."),
+    title: tSafe("games.pwaInstall.adminTitle", "Zainstaluj panel admina"),
+    text: tSafe("games.pwaInstall.adminText", "Dodaj osobną aplikację panelu admina. Dostęp nadal chroni logowanie Access."),
     okText: tSafe("games.pwaInstall.ok", "Zainstaluj"),
-    cancelText: tSafe("games.pwaInstall.cancel", "Nie pokazuj"),
+    cancelText: tSafe("games.pwaInstall.cancel", "Nie pokazuj ponownie"),
+    onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
   });
-  if (accepted) await pwaApi.install();
+  if (accepted && installResult) await installResult;
   else pwaApi.dismiss();
 }
 
@@ -97,34 +99,43 @@ window.addEventListener("pwa:installed", updateButton);
 button?.addEventListener("click", async () => {
   if (isStandalone() && !isAdminStandalone()) {
     await alertModal({
-      title: "Zainstaluj osobny panel admina",
-      text: "Panel jest teraz otwarty w aplikacji Familiada. Otwórz tę stronę w Safari lub Chrome, aby dodać osobną ikonę panelu admina.",
-      okText: "Rozumiem",
+      title: tSafe("games.pwaInstall.adminStandaloneTitle", "Dodaj osobny panel admina"),
+      text: tSafe("games.pwaInstall.adminStandaloneText", "Panel jest otwarty w aplikacji Familiada. Otwórz tę stronę w Safari lub Chrome, aby dodać panel jako osobną aplikację."),
+      okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
     });
     return;
   }
   if (!pwaApi.canInstall()) {
     const ios = isIOSDevice();
     const macSafari = /Mac/.test(navigator.platform) && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
-    const title = ios ? "Dodaj panel admina do ekranu początkowego" : "Zainstaluj panel admina";
-    const text = ios
-      ? "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie dodaj panel. Logowanie Access nadal będzie wymagane."
+    const ua = navigator.userAgent || "";
+    const isAndroidChrome = /Android/i.test(ua) && /Chrome\//i.test(ua) && !/EdgA|OPR\//i.test(ua);
+    const title = ios
+      ? tSafe("games.iosWebapp.adminTitle", "Dodaj panel admina do ekranu początkowego")
       : macSafari
-        ? "W Safari wybierz Plik → Dodaj do Docka. Panel admina będzie osobną aplikacją, a logowanie Access nadal będzie wymagane."
-        : "W menu Chrome lub Edge wybierz „Zainstaluj panel admina” albo „Dodaj do ekranu głównego”. Logowanie Access nadal będzie wymagane.";
-    const fallback = { title, text };
+        ? tSafe("games.pwaInstall.adminMacTitle", "Dodaj panel admina do Docka")
+        : tSafe("games.pwaInstall.unavailableTitle", "Instalacja jest teraz niedostępna");
+    const text = ios
+      ? tSafe("games.iosWebapp.adminText", "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie „Dodaj”. Uruchom panel z nowej ikony. Logowanie Access nadal będzie wymagane.")
+      : macSafari
+        ? `${tSafe("games.pwaInstall.macSafari", "W Safari wybierz Plik → Dodaj do Docka.")} Logowanie Access nadal będzie wymagane.`
+        : isAndroidChrome
+          ? tSafe("games.pwaInstall.unavailableAndroid", "Chrome nie może teraz zainstalować tej aplikacji. „Utwórz skrót” doda tylko skrót do strony, a nie aplikację.")
+          : tSafe("games.pwaInstall.unavailableText", "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.");
     await alertModal({
-      title: tSafe(ios ? "games.iosWebapp.title" : "games.pwaInstall.title", fallback.title),
-      text: ios ? tSafe("games.iosWebapp.text", fallback.text) : fallback.text,
-      okText: tSafe("games.pwaInstall.ok", "OK"),
+      title,
+      text,
+      okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
     });
     return;
   }
+  let installResult = null;
   const accepted = await confirmModal({
-    title: tSafe("games.pwaInstall.title", "Zainstaluj panel admina"),
-    text: tSafe("games.pwaInstall.text", "Dodaj osobny skrót do panelu admina. Logowanie Access nadal będzie wymagane."),
+    title: tSafe("games.pwaInstall.adminTitle", "Zainstaluj panel admina"),
+    text: tSafe("games.pwaInstall.adminText", "Dodaj osobną aplikację panelu admina. Dostęp nadal chroni logowanie Access."),
     okText: tSafe("games.pwaInstall.ok", "Zainstaluj"),
-    cancelText: tSafe("games.pwaInstall.cancelBtn", "Anuluj"),
+    cancelText: "Anuluj",
+    onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
   });
-  if (accepted) await pwaApi.install();
+  if (accepted && installResult) await installResult;
 });
