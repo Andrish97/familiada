@@ -151,6 +151,7 @@ body.settings-body > main.wrap{
 .homepage-shot-reference-question ul{margin-top:4px}
 .homepage-shot-shared-fields{display:grid;gap:12px;margin:12px 0}
 .homepage-shot-resource-imports{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.homepage-shot-json-separator{flex:0 0 1px;min-height:30px;margin:0 2px;background:rgba(255,255,255,.16)}
 .homepage-shot-resource-list{display:grid;gap:12px}
 .homepage-shot-resource-group{display:grid;gap:8px;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(0,0,0,.1)}
 .homepage-shot-resource-group h3{margin:0;font-size:14px}
