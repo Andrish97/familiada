@@ -438,6 +438,7 @@ function selectScreenshotTab(name) {
     const tab = byId(tabId);
     tab.closest(".homepage-shot-tab-slot")?.classList.toggle("is-active", active);
     tab.classList.toggle("is-active", active);
+    tab.classList.toggle("active", active);
     tab.setAttribute("aria-selected", String(active));
     byId(panelId).hidden = !active;
   }

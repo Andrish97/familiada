@@ -109,8 +109,14 @@
       </div>
       <div class="homepage-shot-tabs-card" id="homepageShotTabsCard">
         <div class="homepage-shot-tabs" role="tablist" aria-label="Dane przykładowe">
-          <div class="homepage-shot-tab-slot is-active"><button class="homepage-shot-tab is-active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista ogólna</button></div>
-          <div class="homepage-shot-tab-slot"><button class="homepage-shot-tab" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii</button></div>
+          <div class="homepage-shot-tab-slot is-active">
+            <button class="homepage-shot-tab tab-label active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista ogólna</button>
+            <div class="homepage-shot-tab-wrapper tab-wrapper" aria-hidden="true"><div class="homepage-shot-tab-active tab-active">Lista ogólna</div><div class="homepage-shot-tab-corner tab-corner tab-corner-left"></div><div class="homepage-shot-tab-corner tab-corner tab-corner-right"></div></div>
+          </div>
+          <div class="homepage-shot-tab-slot">
+            <button class="homepage-shot-tab tab-label" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii</button>
+            <div class="homepage-shot-tab-wrapper tab-wrapper" aria-hidden="true"><div class="homepage-shot-tab-active tab-active">Podgląd kategorii</div><div class="homepage-shot-tab-corner tab-corner tab-corner-left"></div><div class="homepage-shot-tab-corner tab-corner tab-corner-right"></div></div>
+          </div>
         </div>
         <div class="homepage-shot-tabs-content">
         <section class="homepage-shot-tab-panel" id="homepageShotSharedPanel" role="tabpanel" aria-labelledby="homepageShotSharedTab">
