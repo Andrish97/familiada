@@ -46,6 +46,7 @@ function getCategoryMeta(key) {
 /* ========= CACHE AUDIO ========= */
 
 const cache = new Map();     // key → Audio
+const failedAudio = new WeakSet();
 let globalMuted = false;
 let previewSfxKey = null;
 
@@ -90,6 +91,12 @@ export function createSfxAudio(url) {
   audio.crossOrigin = "anonymous";
   audio.preload = "auto";
   audio.src = url;
+  audio.addEventListener("error", () => {
+    // A failed fetch/decode may leave some browsers with an Audio element
+    // that is neither paused nor ended. It must not hold the gameplay gate.
+    failedAudio.add(audio);
+    stopSfxAudio(audio);
+  });
   const source = context.createMediaElementSource(audio);
   const gain = context.createGain();
   gain.gain.value = 0;
@@ -350,6 +357,7 @@ function scheduleFade(audio) {
 export function playSfxAudio(audio, volume = 1) {
   const context = getAudioContext();
   const nodes = audioNodes.get(audio);
+  failedAudio.delete(audio);
   nodes.generation++;
   const generation = nodes.generation;
   nodes.gain.gain.cancelScheduledValues(context.currentTime);
@@ -376,12 +384,12 @@ export function stopSfx(key) {
 
 export function isSfxPlaying(key) {
   const a = cache.get(key);
-  return !!a && !a.paused && !a.ended;
+  return !!a && !failedAudio.has(a) && !a.error && !a.paused && !a.ended;
 }
 
 // Actual audio state, used in addition to timing estimates for action gates.
 export function isAnySfxPlaying() {
-  return [...cache.values()].some(audio => !audio.paused && !audio.ended);
+  return [...cache.values()].some(audio => !failedAudio.has(audio) && !audio.error && !audio.paused && !audio.ended);
 }
 
 export function debugSfx(key) {
