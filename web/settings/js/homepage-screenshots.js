@@ -1879,14 +1879,67 @@ async function applyFixtureToFrame(scene, fixture) {
     }
   } else if (scene.id === "logo-draw") {
     setInput(doc, "logoName", fixture.logo);
-    const canvas = doc.querySelector("canvas");
+    const canvas = doc.getElementById("drawStage");
+    const host = doc.getElementById("drawStageHost");
     if (canvas) {
-      const logo = fixture.logoData
-        ? await logoCanvasFromStored(fixture.logoData, 520, 245, doc)
-        : await logoCanvasFromFile(fixture.logoFile, 520, 245, doc);
-      canvas.width = 520; canvas.height = 245;
-      canvas.style.width = "520px"; canvas.style.height = "245px";
-      canvas.getContext("2d").drawImage(logo, 0, 0, 520, 245);
+      const { default: dictionary } = await import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T20532`);
+      const { icon } = await import("/shared/js/core/icons.js?v=v2026-10-19T20532");
+      const lookup = key => key.split(".").reduce((value, part) => value?.[part], dictionary) || "";
+      const stored = fixture.logoData || await fetch(fixture.logoFile || "/shared/data/logo_familiada.json", { cache: "force-cache" }).then(response => response.json());
+      const { logoToBits150, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20532");
+      const source = stored?.data && typeof stored.data === "object" ? stored.data : stored;
+      const kind = String(source?.kind || source?.type || "").toUpperCase();
+      const payload = source?.payload || source;
+      const logo = kind.includes("PIX") ? { type: "PIX_150x70", payload }
+        : kind.includes("GLYPH") ? { type: "GLYPH_30x10", payload }
+          : source?.type ? source : { type: "GLYPH_30x10", payload };
+      const bits = logoToBits150(logo, logo.type === "GLYPH_30x10" ? await loadFont5x7() : null);
+      const dots = [];
+      for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
+        if (bits[y * 150 + x]) dots.push(`<rect x="${x * 7}" y="${y * 9}" width="5" height="7"/>`);
+      }
+      const image = doc.createElement("img");
+      image.alt = "";
+      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 208 88" shape-rendering="crispEdges"><rect width="208" height="88" fill="#000"/><g fill="#fff">${dots.join("")}</g></svg>`)}`;
+      await image.decode();
+      canvas.width = 1040;
+      canvas.height = 440;
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      if (host) {
+        host.style.background = "#000";
+        host.style.borderRadius = "16px";
+        host.style.overflow = "hidden";
+      }
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#000";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.imageSmoothingEnabled = false;
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      const tools = {
+        tSelect: ["cursor", "select"], tPan: ["hand", "pan"], tZoomIn: ["zoom-in", "zoomIn"], tZoomOut: ["zoom-out", "zoomOut"],
+        tBg: [null, "background"], tBrush: ["brush", "brush"], tEraser: ["eraser", "eraser"], tShapes: ["shapes", "shapes"],
+        tText: ["text", "text"], tUndo: ["undo", "undo"], tRedo: ["redo", "redo"], tDuplicate: ["duplicate", "duplicate"],
+        tClear: ["trash", "clear"], tEye: ["eye", "preview"],
+      };
+      for (const [id, [iconName, titleKey]] of Object.entries(tools)) {
+        const button = doc.getElementById(id);
+        if (!button) continue;
+        button.innerHTML = iconName ? icon(iconName) : icon("swatch-black");
+        const title = lookup(`logoEditor.draw.tooltips.${titleKey}`).split("\n")[0];
+        button.title = title;
+        button.setAttribute("aria-label", title);
+        button.classList.toggle("on", id === "tBrush");
+      }
+      const settings = doc.getElementById("toolCtxSettings");
+      if (settings) {
+        const stroke = lookup("logoEditor.draw.ui.strokeLabel");
+        const style = lookup("logoEditor.draw.ui.styleLabel");
+        const color = lookup("logoEditor.draw.ui.colorLabel");
+        const solid = lookup("logoEditor.draw.ui.lineStyles.solid");
+        settings.innerHTML = `<div class="ctxGroup"><span class="ctxLabel">${escapeHtml(stroke)}</span><input class="ctxInput" type="number" value="6" min="5" max="100" aria-label="${escapeHtml(stroke)}"></div><div class="ctxGroup"><span class="ctxLabel">${escapeHtml(style)}</span><button class="btn sm ui-select-btn" type="button" aria-label="${escapeHtml(style)}">${escapeHtml(solid)}</button></div><div class="ctxGroup"><span class="ctxLabel">${escapeHtml(color)}</span><button class="ctxColorBtn white" type="button" aria-label="${escapeHtml(color)}"></button></div>`;
+      }
     }
   }
   hydrateIcons(doc);
