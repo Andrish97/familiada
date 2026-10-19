@@ -1,31 +1,31 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-19T14572";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-19T15002";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-19T14572";
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-19T15002";
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-19T14572";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-19T15002";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-19T14572";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-19T14572";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T14572";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T14572";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T14572";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T14572";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T14572";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T14572";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T14572";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T14572";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T14572";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T14572";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-19T14572";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-19T14572";
-import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-19T14572";
-import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-19T14572";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-19T14572";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-19T14572";
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-19T14572";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-19T14572";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-19T15002";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-19T15002";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T15002";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T15002";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T15002";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T15002";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T15002";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T15002";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T15002";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T15002";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T15002";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T15002";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-19T15002";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-19T15002";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-19T15002";
+import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-19T15002";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-19T15002";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-19T15002";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-19T15002";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-19T15002";
 
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
