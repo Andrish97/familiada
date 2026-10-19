@@ -1253,7 +1253,6 @@ async function main() {
       if (!row) continue;
       row.classList.toggle("qr-code-unavailable", disabled);
       row.setAttribute("aria-disabled", String(disabled));
-      row.title = disabled ? t("control.testModeCodesHidden") : t(row.dataset.i18nTitle || "control.statusLabel");
     }
   }
   function showQrModal(kind) {

@@ -1084,6 +1084,7 @@
    connection-code modals. Keep the status visible and remove the click cue. */
 .dotRow.qr-code-unavailable {
     cursor: default !important;
+    opacity: .45;
 }
 
 .dotRow .lbl {
