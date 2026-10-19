@@ -1696,7 +1696,6 @@ async function logoCanvasFromStored(stored, width, height) {
 }
 
 async function translateFrame(doc, language) {
-  if (language === "pl") return;
   const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T17175`);
   const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T17175");
 
