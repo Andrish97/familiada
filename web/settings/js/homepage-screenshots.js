@@ -402,11 +402,62 @@ function gameResourceReadiness(item) {
   const answersValid = questions.every(question => {
     const answers = Array.isArray(question?.answers) ? question.answers : [];
     if (answers.length < 3 || answers.length > 6) return false;
-    const points = answers.map(answer => Number(answer.fixed_points ?? answer.points) || 0);
-    return points.every(point => point >= 0 && point <= 100)
+    const points = answers.map(answer => {
+      const fixedPoints = answer?.fixed_points;
+      const raw = fixedPoints != null && String(fixedPoints).trim() !== "" ? fixedPoints : answer?.points;
+      return raw == null || String(raw).trim() === "" ? null : Number(raw);
+    });
+    return points.every(point => Number.isFinite(point) && point >= 0 && point <= 100)
       && points.reduce((sum, point) => sum + point, 0) <= 100;
   });
   return { ok: enoughQuestions && answersValid, count: questions.length };
+}
+
+function gameResourceIssue(item, language = currentLanguage()) {
+  const questions = Array.isArray(item?.data?.questions) ? item.data.questions : [];
+  const msg = {
+    pl: {
+      questions: count => `Brakuje pytań: ${count}/10.`,
+      fewAnswers: n => `Pytanie ${n}: dodaj co najmniej 3 odpowiedzi.`,
+      manyAnswers: n => `Pytanie ${n}: może mieć najwyżej 6 odpowiedzi.`,
+      missingPoints: n => `Pytanie ${n}: wpisz punkty przy każdej odpowiedzi.`,
+      range: n => `Pytanie ${n}: punkty muszą mieścić się w zakresie 0–100.`,
+      sum: n => `Pytanie ${n}: suma punktów przekracza 100.`,
+    },
+    en: {
+      questions: count => `Add more questions: ${count}/10.`,
+      fewAnswers: n => `Question ${n}: add at least 3 answers.`,
+      manyAnswers: n => `Question ${n}: use no more than 6 answers.`,
+      missingPoints: n => `Question ${n}: enter points for every answer.`,
+      range: n => `Question ${n}: points must be between 0 and 100.`,
+      sum: n => `Question ${n}: the points total is over 100.`,
+    },
+    uk: {
+      questions: count => `Додайте запитання: ${count}/10.`,
+      fewAnswers: n => `Запитання ${n}: додайте щонайменше 3 відповіді.`,
+      manyAnswers: n => `Запитання ${n}: має бути не більше 6 відповідей.`,
+      missingPoints: n => `Запитання ${n}: вкажіть бали для кожної відповіді.`,
+      range: n => `Запитання ${n}: бали мають бути від 0 до 100.`,
+      sum: n => `Запитання ${n}: сума балів перевищує 100.`,
+    },
+  }[language] || {};
+  if (questions.length < 10) return msg.questions?.(questions.length) || `Add more questions: ${questions.length}/10.`;
+  for (let index = 0; index < questions.length; index += 1) {
+    const question = questions[index];
+    const number = Number(question?.ord) || index + 1;
+    const answers = Array.isArray(question?.answers) ? question.answers : [];
+    if (answers.length < 3) return msg.fewAnswers?.(number) || `Question ${number}: add at least 3 answers.`;
+    if (answers.length > 6) return msg.manyAnswers?.(number) || `Question ${number}: use no more than 6 answers.`;
+    const points = answers.map(answer => {
+      const fixed = answer?.fixed_points;
+      const raw = fixed != null && String(fixed).trim() !== "" ? fixed : answer?.points;
+      return raw == null || String(raw).trim() === "" ? null : Number(raw);
+    });
+    if (points.some(point => point == null || !Number.isFinite(point))) return msg.missingPoints?.(number) || `Question ${number}: enter points for every answer.`;
+    if (points.some(point => point < 0 || point > 100)) return msg.range?.(number) || `Question ${number}: points must be between 0 and 100.`;
+    if (points.reduce((sum, point) => sum + point, 0) > 100) return msg.sum?.(number) || `Question ${number}: the points total is over 100.`;
+  }
+  return "";
 }
 
 function gameResourceStatus(item) {
@@ -1027,9 +1078,9 @@ async function applyFixtureToFrame(scene, fixture) {
       const status = resource === selectedGame ? previewStatus : tileStatus(resource);
       const statusClass = status === "ready" ? "tag--ok" : status === "open" ? "tag--info" : status === "stopped" ? "tag--gold" : "tag--muted";
       const rules = sampleRules(resource);
-      const blocker = status === "draft" ? rules.play?.reason || "" : "";
+      const blocker = status === "draft" ? gameResourceIssue(resource, language) : "";
       const origin = resource.received_from_label ? `<span class="tag tag--muted">${escapeHtml(resource.received_from_label)}</span>` : "";
-      return `<div class="card tile ${i === 0 ? "selected" : ""}" data-status="${status}" data-updated="2026-10-${String(18 - i).padStart(2, "0")}T12:00:00Z"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="rules">${escapeHtml(blocker)}</div><div class="tileTags"><span class="tag ${statusClass}">${statusLabels[status]}</span>${origin}</div></div>`;
+      return `<div class="card tile ${i === 0 ? "selected" : ""} ${blocker ? "not-ready" : ""}" data-status="${status}" data-updated="2026-10-${String(18 - i).padStart(2, "0")}T12:00:00Z"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="rules" style="color:#ffad42">${escapeHtml(blocker)}</div><div class="tileTags"><span class="tag ${statusClass}">${statusLabels[status]}</span>${origin}</div></div>`;
     }).join("")}`;
     const searchSlot = doc.querySelector(".games-bottom-left");
     if (searchSlot) {
