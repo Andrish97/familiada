@@ -1,4 +1,4 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T08470";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T08475";
 
 const button = document.getElementById("btnInstallAdmin");
 let installPrompt = null;
