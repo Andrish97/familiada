@@ -1911,7 +1911,6 @@ async function logoCanvasFromFile(file, width, height, ownerDocument = document)
 }
 
 async function logoCanvasFromStored(stored, width, height, ownerDocument = document) {
-  const { logoToBits150, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20312");
   const source = stored?.data && typeof stored.data === "object" ? stored.data : stored;
   const kind = String(source?.kind || source?.type || "").toUpperCase();
   const payload = source?.payload || source;
@@ -1921,12 +1920,24 @@ async function logoCanvasFromStored(stored, width, height, ownerDocument = docum
   const canvas = ownerDocument.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  // Use the site's canonical bit decoder, then draw directly into this
-  // document's canvas. Pixel logos do not need the text font at all.
-  const glyphs = logo.type === "GLYPH_30x10" ? await loadFont5x7() : null;
-  const bits = logoToBits150(logo, glyphs);
+  let bits;
+  if (logo.type === "PIX_150x70") {
+    const encoded = String(payload?.bits_b64 || payload?.bits_base64 || payload?.bitsBase64 || "").replace(/\s+/g, "");
+    const bitmap = new Uint8Array(10500);
+    try {
+      const bytes = atob(encoded);
+      for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
+        const index = y * 19 + (x >> 3);
+        if (index < bytes.length) bitmap[y * 150 + x] = (bytes.charCodeAt(index) >> (7 - (x & 7))) & 1;
+      }
+    } catch {}
+    bits = bitmap;
+  } else {
+    const { logoToBits150, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20273");
+    bits = logoToBits150(logo, await loadFont5x7());
+  }
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas 2D niedostępny");
+  if (!ctx) return logoSvgImage(bits, width, height, ownerDocument);
   const scale = Math.min(width / 150, height / 70);
   const offsetX = (width - 150 * scale) / 2;
   const offsetY = (height - 70 * scale) / 2;
@@ -1942,6 +1953,23 @@ async function logoCanvasFromStored(stored, width, height, ownerDocument = docum
     }
   }
   return canvas;
+}
+
+async function logoSvgImage(bits, width, height, ownerDocument) {
+  const scale = Math.min(width / 150, height / 70);
+  const radius = Math.max(0.55, scale * 0.4);
+  const dots = [];
+  for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
+    if (bits[y * 150 + x]) dots.push(`<circle cx="${((x + 0.5) / 150 * width).toFixed(2)}" cy="${((y + 0.5) / 70 * height).toFixed(2)}" r="${radius.toFixed(2)}"/>`);
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#1f1f23"/><g fill="#d7ff3d">${dots.join("")}</g></svg>`;
+  const image = ownerDocument.createElement("img");
+  image.alt = "";
+  image.style.cssText = "display:block;width:100%;height:100%;object-fit:contain";
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  image.src = url;
+  try { await image.decode(); } finally { URL.revokeObjectURL(url); }
+  return image;
 }
 
 async function translateFrame(doc, language) {
