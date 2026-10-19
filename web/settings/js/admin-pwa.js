@@ -61,12 +61,9 @@ function isAdminInstalled() {
       }
       try {
         const apps = await navigator.getInstalledRelatedApps();
-        const manifestUrl = new URL("/manifest-admin.webmanifest", location.origin).href;
-        const installed = apps.some((app) => {
-          let appId = app.id || "";
-          try { appId = new URL(appId, location.origin).href; } catch {}
-          return app.url === manifestUrl || appId === new URL("/?app=admin", location.origin).href;
-        });
+        // This manifest declares only the admin PWA as a related web app.
+        // Chrome may report a computed id, so don't compare it to the manifest id.
+        const installed = apps.some((app) => app.platform === "webapp");
         if (installed) localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
         return installed;
       } catch {
