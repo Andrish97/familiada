@@ -180,9 +180,7 @@ function langFixture(scene, language = currentLanguage()) {
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && (!resource || !String(resource.data?.game?.type || "").startsWith("poll") || resource.openPoll === false)) {
     fixture.poll = ""; fixture.question = ""; fixture.answers = []; fixture.pollQuestions = []; fixture.pollRecipients = []; fixture.subscribers = []; fixture.subscriberStates = [];
   }
-  const teamResourceId = selection.teamResourceId;
-  const teamResource = ensureResourceData(language).find(item => item.id === teamResourceId && item.type === "teams");
-  if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = teamResource?.data?.teams || [];
+  if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = shared.teams || [];
   if (scene.id === "base-explorer") {
     const base = selectedResource(scene.id, language, "base");
     const data = base?.data || {};
@@ -196,8 +194,7 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.logoData = logo?.data || null;
   }
   if (scene.id === "subscribers") {
-    const subscribers = selectedResource(scene.id, language, "subscribers");
-    fixture.people = (subscribers?.data?.people || []).map(name => ({ name, state: "active" }));
+    fixture.people = (shared.subscribers || []).map(name => ({ name, state: "active" }));
   }
   return fixture;
 }
@@ -281,8 +278,7 @@ function sharedFixture(language = currentLanguage()) {
 }
 
 function subscriberNames(language = currentLanguage()) {
-  const resource = ensureResourceData(language).find(item => item.type === "subscribers");
-  return resource?.data?.people || config.sharedFixtures?.[language]?.subscribers || [];
+  return config.sharedFixtures?.[language]?.subscribers || [];
 }
 
 function ensureResourceData(language = currentLanguage()) {
@@ -302,12 +298,17 @@ function ensureResourceData(language = currentLanguage()) {
       data: { game: { name: shared.pollName, type: "poll_points" }, questions: (shared.pollQuestions || []).map(q => ({ text: q.text, answers: q.answers.map(a => ({ text: a.text, fixed_points: a.votes })) })) } });
     return [
       ...games,
-      { id: `${language}-teams`, type: "teams", name: (shared.teams || []).join(" / "), data: { teams: structuredClone(shared.teams || []) } },
       { id: `${language}-base`, type: "base", name: base.base.name, data: base },
-      { id: `${language}-subscribers`, type: "subscribers", name: "Aktywni subskrybenci", data: { people: structuredClone(shared.subscribers || []) } },
       ...defaultLogoItems.map((item, i) => ({ id: `${language}-logo-${i}`, type: "logo", name: item.name, data: structuredClone(item.data) })),
     ];
   })();
+  const legacyTeams = resources.find(item => item.type === "teams")?.data?.teams;
+  const legacySubscribers = resources.find(item => item.type === "subscribers")?.data?.people;
+  if (Array.isArray(legacyTeams)) shared.teams = structuredClone(legacyTeams);
+  if (Array.isArray(legacySubscribers)) shared.subscribers = structuredClone(legacySubscribers);
+  for (let index = resources.length - 1; index >= 0; index -= 1) {
+    if (["teams", "subscribers"].includes(resources[index].type)) resources.splice(index, 1);
+  }
   for (const item of resources) {
     if (item.type !== "game") continue;
     item.data ||= {};
@@ -332,10 +333,10 @@ function ensureResourceData(language = currentLanguage()) {
     else if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) views[scene.id] = { resourceId: firstPoll };
     else if (scene.id === "base-explorer") views[scene.id] = { resourceId: ids("base")[0] || "" };
     else if (scene.id === "logo-draw") views[scene.id] = { resourceId: ids("logo")[0] || "" };
-    else if (scene.id === "subscribers") views[scene.id] = { resourceId: ids("subscribers")[0] || "" };
-    else if (["control-round", "host-round", "display-round"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", teamResourceId: ids("teams")[0] || "", questionIndex: 0 };
+    else if (["control-round", "host-round", "display-round"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
     else if (["game-editor", "appearance", "sound", "control-finale", "tasks"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
   }
+  for (const selection of Object.values(views)) delete selection.teamResourceId;
   return resources;
 }
 
@@ -365,125 +366,56 @@ function renderResourceList(language = currentLanguage()) {
   const root = byId("homepageShotResourceList");
   if (!root) return;
   const resources = ensureResourceData(language);
-  const labels = { game: "Gry (pytania należą do gry)", teams: "Drużyny", base: "Bazy pytań", logo: "Logotypy", subscribers: "Subskrybenci" };
+  const labels = { game: "Gry", base: "Bazy pytań", logo: "Logo" };
   root.replaceChildren();
-  for (const type of ["game", "teams", "base", "logo", "subscribers"]) {
+  for (const type of ["game", "base", "logo"]) {
     const items = resources.filter(item => item.type === type);
     const group = document.createElement("section"); group.className = "homepage-shot-resource-group";
     const heading = document.createElement("h3"); heading.textContent = `${labels[type]} · ${items.length}`; group.append(heading);
     if (!items.length) {
       const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "Brak wczytanych zasobów."; group.append(empty);
     }
-    for (const [index, item] of items.entries()) {
-      const details = document.createElement("details"); details.className = "homepage-shot-resource-card";
-      const summary = document.createElement("summary");
-      const count = type === "game" ? ` · ${item.data?.questions?.length || 0} pytań` : type === "base" ? ` · ${item.data?.questions?.length || 0} pytań` : "";
-      summary.textContent = `${item.name || "Bez nazwy"}${count}`; details.append(summary);
-      const body = document.createElement("div"); body.className = "homepage-shot-resource-card-body";
-      sharedField(body, "Nazwa", item.name, { dataset: { resourceName: item.id } });
+    for (const item of items) {
+      const row = document.createElement("div"); row.className = "homepage-shot-resource-card";
+      const name = document.createElement("strong"); name.textContent = item.name || "Bez nazwy";
+      const description = document.createElement("span"); description.className = "muted";
       if (type === "game") {
-        const typeLabel = item.data?.game?.type?.startsWith("poll") ? "Gra ankietowa" : "Gra przygotowana";
-        const kind = document.createElement("p"); kind.className = "muted"; kind.textContent = typeLabel; body.append(kind);
-        const statusField = document.createElement("label"); statusField.className = "homepage-shot-shared-field";
-        const statusLabel = document.createElement("span"); statusLabel.textContent = "Stan gry";
-        const status = document.createElement("select"); status.className = "inp"; status.dataset.resourceStatus = item.id;
-        const isPoll = String(item.data?.game?.type || "").startsWith("poll");
-        const options = isPoll
-          ? [["draft", "Szkic"], ["open", "Otwarta"], ["stopped", "Zatrzymana"], ["ready", "Gotowa"]]
-          : [["draft", "Szkic"], ["ready", "Gotowa"]];
-        for (const [value, label] of options) {
-          const option = document.createElement("option"); option.value = value; option.textContent = label; status.append(option);
-        }
-        status.value = item.status || "draft";
-        statusField.append(statusLabel, status); body.append(statusField);
-        (item.data?.questions || []).forEach((question, questionIndex) => {
-          const q = document.createElement("details"); q.className = "homepage-shot-question";
-          const qSummary = document.createElement("summary"); qSummary.textContent = `Pytanie ${questionIndex + 1}`;
-          const order = document.createElement("div"); order.className = "homepage-shot-resource-question-order";
-          const up = sharedButton(order, "↑", "question-up", questionIndex); up.dataset.resourceId = item.id; up.setAttribute("aria-label", "Przenieś pytanie wyżej"); up.disabled = questionIndex === 0;
-          const down = sharedButton(order, "↓", "question-down", questionIndex); down.dataset.resourceId = item.id; down.setAttribute("aria-label", "Przenieś pytanie niżej"); down.disabled = questionIndex === item.data.questions.length - 1;
-          const qBody = document.createElement("div"); qBody.className = "homepage-shot-question-body";
-          sharedField(qBody, "Treść pytania", question.text, { dataset: { resourceQuestion: item.id, questionIndex } });
-          (question.answers || []).forEach((answer, answerIndex) => {
-            const row = document.createElement("div"); row.className = "homepage-shot-shared-row";
-            sharedField(row, "Odpowiedź", answer.text, { dataset: { resourceAnswer: item.id, questionIndex, answerIndex } });
-            sharedField(row, item.data?.game?.type?.startsWith("poll") ? "Głosy" : "Punkty", answer.fixed_points ?? answer.points ?? 0, { type: "number", min: 0, dataset: { resourcePoints: item.id, questionIndex, answerIndex } });
-            qBody.append(row);
-          });
-          q.append(qSummary, order, qBody); body.append(q);
-        });
-        if (String(item.data?.game?.type || "").startsWith("poll")) {
-          const open = document.createElement("label"); open.className = "homepage-shot-resource-open-poll";
-          const toggle = document.createElement("input"); toggle.type = "checkbox"; toggle.checked = item.openPoll !== false; toggle.dataset.resourceOpenPoll = item.id;
-          open.append(toggle, document.createTextNode(" Ankieta jest otwarta")); body.append(open);
-        }
-      } else if (type === "teams") {
-        (item.data?.teams || []).forEach((team, teamIndex) => sharedField(body, `Drużyna ${teamIndex + 1}`, team, { dataset: { resourceTeam: item.id, teamIndex } }));
-      } else if (type === "logo") {
-        sharedField(body, "JSON logo", JSON.stringify(item.data, null, 2), { tag: "textarea", dataset: { resourceJson: item.id } });
+        const kind = String(item.data?.game?.type || "").startsWith("poll") ? "gra ankietowa" : "gra przygotowana";
+        description.textContent = `${kind} · ${item.data?.questions?.length || 0} pytań`;
       } else if (type === "base") {
-        const baseSummary = document.createElement("p"); baseSummary.className = "muted"; baseSummary.textContent = `${item.data?.categories?.length || 0} kategorii · ${item.data?.questions?.length || 0} wpisów`; body.append(baseSummary);
-        (item.data?.categories || []).forEach((category, categoryIndex) => sharedField(body, `Kategoria ${categoryIndex + 1}`, category.name, { dataset: { resourceCategory: item.id, categoryIndex } }));
-        (item.data?.questions || []).forEach((question, questionIndex) => sharedField(body, `Wpis ${questionIndex + 1}`, question.payload?.text || question.text, { dataset: { resourceBaseQuestion: item.id, questionIndex } }));
-      } else if (type === "subscribers") {
-        (item.data?.people || []).forEach((person, personIndex) => sharedField(body, `Osoba ${personIndex + 1}`, person, { dataset: { resourcePerson: item.id, personIndex } }));
+        description.textContent = `${item.data?.categories?.length || 0} kategorii · ${item.data?.questions?.length || 0} wpisów`;
+      } else {
+        description.textContent = "Gotowe do użycia w podglądach";
       }
-      const remove = sharedButton(document.createElement("div"), "Usuń zasób", "delete-resource");
-      remove.dataset.resourceId = item.id; body.append(remove.parentElement);
-      details.append(body); group.append(details);
+      row.append(name, description); group.append(row);
     }
     root.append(group);
   }
+  const sharedRoot = byId("homepageShotSharedFields");
+  sharedRoot.replaceChildren();
+  const shared = config.sharedFixtures[language];
+  const teams = sharedGroup(sharedRoot, "Nazwy drużyn");
+  (shared.teams || []).forEach((name, index) => {
+    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
+    sharedField(row, `Drużyna ${index + 1}`, name, { dataset: { sharedTeam: index } });
+    sharedButton(row, "Usuń", "remove-team", index); teams.append(row);
+  });
+  sharedButton(teams, "Dodaj drużynę", "add-team");
+  const subscribers = sharedGroup(sharedRoot, "Aktywni subskrybenci");
+  (shared.subscribers || []).forEach((name, index) => {
+    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
+    sharedField(row, `Osoba ${index + 1}`, name, { dataset: { sharedSubscriber: index } });
+    sharedButton(row, "Usuń", "remove-subscriber", index); subscribers.append(row);
+  });
+  sharedButton(subscribers, "Dodaj subskrybenta", "add-subscriber");
 }
 
 function readResourceList(language = currentLanguage()) {
-  const resources = ensureResourceData(language);
-  const root = byId("homepageShotResourceList");
-  for (const input of root.querySelectorAll("[data-resource-name]")) {
-    const item = resources.find(resource => resource.id === input.dataset.resourceName);
-    if (item) { item.name = input.value.trim(); if (item.data?.game) item.data.game.name = item.name; if (item.data?.base) item.data.base.name = item.name; }
-  }
-  for (const input of root.querySelectorAll("[data-resource-question]")) {
-    const question = resources.find(resource => resource.id === input.dataset.resourceQuestion)?.data?.questions?.[Number(input.dataset.questionIndex)];
-    if (question) question.text = input.value.trim();
-  }
-  for (const input of root.querySelectorAll("[data-resource-answer]")) {
-    const answer = resources.find(resource => resource.id === input.dataset.resourceAnswer)?.data?.questions?.[Number(input.dataset.questionIndex)]?.answers?.[Number(input.dataset.answerIndex)];
-    if (answer) answer.text = input.value.trim();
-  }
-  for (const input of root.querySelectorAll("[data-resource-points]")) {
-    const answer = resources.find(resource => resource.id === input.dataset.resourcePoints)?.data?.questions?.[Number(input.dataset.questionIndex)]?.answers?.[Number(input.dataset.answerIndex)];
-    if (answer) { if (answer.fixed_points !== undefined || answer.points === undefined) answer.fixed_points = Number(input.value) || 0; else answer.points = Number(input.value) || 0; }
-  }
-  for (const input of root.querySelectorAll("[data-resource-team]")) {
-    const teams = resources.find(resource => resource.id === input.dataset.resourceTeam)?.data?.teams;
-    if (teams) teams[Number(input.dataset.teamIndex)] = input.value.trim();
-  }
-  for (const input of root.querySelectorAll("[data-resource-person]")) {
-    const people = resources.find(resource => resource.id === input.dataset.resourcePerson)?.data?.people;
-    if (people) people[Number(input.dataset.personIndex)] = input.value.trim();
-  }
-  for (const input of root.querySelectorAll("[data-resource-category]")) {
-    const category = resources.find(resource => resource.id === input.dataset.resourceCategory)?.data?.categories?.[Number(input.dataset.categoryIndex)];
-    if (category) category.name = input.value.trim();
-  }
-  for (const input of root.querySelectorAll("[data-resource-base-question]")) {
-    const question = resources.find(resource => resource.id === input.dataset.resourceBaseQuestion)?.data?.questions?.[Number(input.dataset.questionIndex)];
-    if (question?.payload) question.payload.text = input.value.trim();
-    else if (question) question.text = input.value.trim();
-  }
-  for (const input of root.querySelectorAll("[data-resource-json]")) {
-    const item = resources.find(resource => resource.id === input.dataset.resourceJson);
-    if (item) item.data = JSON.parse(input.value);
-  }
-  for (const input of root.querySelectorAll("[data-resource-open-poll]")) {
-    const item = resources.find(resource => resource.id === input.dataset.resourceOpenPoll);
-    if (item) item.openPoll = input.checked;
-  }
-  for (const input of root.querySelectorAll("[data-resource-status]")) {
-    const item = resources.find(resource => resource.id === input.dataset.resourceStatus);
-    if (item) item.status = input.value;
-  }
+  ensureResourceData(language);
+  const shared = config.sharedFixtures[language];
+  const root = byId("homepageShotSharedFields");
+  for (const input of root.querySelectorAll("[data-shared-team]")) shared.teams[Number(input.dataset.sharedTeam)] = input.value.trim();
+  for (const input of root.querySelectorAll("[data-shared-subscriber]")) shared.subscribers[Number(input.dataset.sharedSubscriber)] = input.value.trim();
 }
 
 function resourceChoiceSpec(scene) {
@@ -494,9 +426,8 @@ function resourceChoiceSpec(scene) {
   };
   if (scene.id === "base-explorer") return { type: "base" };
   if (scene.id === "logo-draw") return { type: "logo" };
-  if (scene.id === "subscribers") return { type: "subscribers" };
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) return { type: "game", filter: item => String(item.data?.game?.type || "").startsWith("poll") && item.openPoll !== false, label: "Otwarta ankieta", question: true };
-  if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", team: true, question: true };
+  if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
   if (["game-editor", "appearance", "sound", "control-finale", "tasks"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
   return null;
 }
@@ -509,13 +440,11 @@ function renderResourceChoices(scene = currentScene()) {
   resourceChoiceSelectUIs = [];
   root.replaceChildren();
   const spec = resourceChoiceSpec(scene);
-  section.hidden = false;
   if (!spec) {
-    const note = document.createElement("p"); note.className = "muted";
-    note.textContent = "Ten widok nie korzysta z zasobów.";
-    root.append(note);
+    section.hidden = true;
     return;
   }
+  section.hidden = false;
   const resources = ensureResourceData(currentLanguage()).filter(item => item.type === spec.type && (!spec.filter || spec.filter(item)));
   const selection = config.viewResources[currentLanguage()][scene.id] ||= {};
   const addSelect = (label, key, choices, value) => {
@@ -567,10 +496,6 @@ function renderResourceChoices(scene = currentScene()) {
   } else {
     const options = resources.map(item => ({ value: item.id, label: item.name }));
     addSelect(spec.label || "Zasób", "resourceId", options, selection.resourceId);
-    if (spec.team) {
-      const teams = ensureResourceData(currentLanguage()).filter(item => item.type === "teams");
-      addSelect("Drużyny", "teamResourceId", teams.map(item => ({ value: item.id, label: item.name })), selection.teamResourceId);
-    }
     if (spec.question) {
       const game = resources.find(item => item.id === selection.resourceId);
       const questions = game?.data?.questions || [];
@@ -1809,8 +1734,9 @@ export async function initHomepageScreenshots() {
     for (const language of ["pl", "en", "uk"]) {
       const hadResources = Array.isArray(config.resourceData[language]);
       const hadViews = !!config.viewResources[language];
+      const hadLegacyLists = Array.isArray(config.resourceData[language]) && config.resourceData[language].some(item => ["teams", "subscribers"].includes(item.type));
       ensureResourceData(language);
-      if (!hadResources || !hadViews) initializeSharedFixtures = true;
+      if (!hadResources || !hadViews || hadLegacyLists) initializeSharedFixtures = true;
     }
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     if (initializeSharedFixtures) await saveConfig();
@@ -1860,37 +1786,7 @@ export async function initHomepageScreenshots() {
       if (!await flushEditor() || !await flushSharedEditor()) return;
       renderEditorFields(langFixture(currentScene()));
       await loadScenePreview(currentScene(), true);
-      setStatus("Zasoby zapisane.");
-    });
-    byId("homepageShotResourceList").addEventListener("input", () => {
-      sharedDirty = true;
-      setStatus("Niezapisane zmiany zasobów.");
-    });
-    byId("homepageShotResourceList").addEventListener("change", () => { sharedDirty = true; });
-    byId("homepageShotResourceList").addEventListener("click", async event => {
-      const button = event.target.closest("[data-shared-action]");
-      if (!button) return;
-      if (!await flushSharedEditor()) return;
-      const resources = ensureResourceData(sharedEditorLanguage);
-      const id = button.dataset.resourceId;
-      const index = resources.findIndex(item => item.id === id);
-      if (["question-up", "question-down"].includes(button.dataset.sharedAction) && index >= 0) {
-        const questions = resources[index].data?.questions || [];
-        const questionIndex = Number(button.dataset.index);
-        const target = questionIndex + (button.dataset.sharedAction === "question-up" ? -1 : 1);
-        if (target < 0 || target >= questions.length) return;
-        [questions[questionIndex], questions[target]] = [questions[target], questions[questionIndex]];
-      } else if (button.dataset.sharedAction === "delete-resource" && index >= 0) {
-        resources.splice(index, 1);
-        for (const views of Object.values(config.viewResources[sharedEditorLanguage] || {})) {
-          views.resourceIds = (views.resourceIds || []).filter(resourceId => resourceId !== id);
-          if (views.resourceId === id) views.resourceId = "";
-        }
-      } else return;
-      await saveConfig();
-      renderResourceList(sharedEditorLanguage);
-      renderEditorFields(langFixture(currentScene()));
-      await loadScenePreview(currentScene(), true);
+      setStatus("Dane wspólne zapisane.");
     });
     byId("homepageShotImportGame").addEventListener("change", event => handleResourceImportInput(event, "game"));
     byId("homepageShotImportBase").addEventListener("change", event => handleResourceImportInput(event, "base"));
@@ -1955,6 +1851,8 @@ export async function initHomepageScreenshots() {
           shared.pollQuestions[index]?.answers.splice(answerIndex, 1); break;
         }
         case "add-subscriber": shared.subscribers.push("Nowy subskrybent"); break;
+        case "add-team": shared.teams.push("Nowa drużyna"); break;
+        case "remove-team": shared.teams.splice(index, 1); break;
         case "remove-subscriber":
           shared.subscribers.splice(index, 1);
           config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] = (config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] || []).filter(recipient => recipient.subscriberIndex !== index).map(recipient => ({ ...recipient, subscriberIndex: recipient.subscriberIndex > index ? recipient.subscriberIndex - 1 : recipient.subscriberIndex }));
