@@ -245,8 +245,8 @@ export function createUI({ root, emit }) {
     // Zwijanie przez opt-out: DOKŁADNIE jak dzisiejsze control.html
     // (data-opted-out atrybut na .device-row, control.css's
     // `.device-row[data-opted-out] .device-row-2 { display:none }`) —
-    // wiersz zostaje w DOM cały czas (nazwa + badge + checkbox zawsze
-    // widoczne), tylko kod/przyciski chowają się pod checkboxem. Wcześniejsza
+    // wiersz zostaje w DOM cały czas (nazwa, badge i checkbox w zwykłym trybie),
+    // tylko kod/przyciski chowają się pod checkboxem. Wcześniejsza
     // wersja podmieniała cały wiersz na osobny, ubogi znacznik "pominięty" —
     // zgłoszone jako niezgodne ze starym Control i (w nowej siatce 2x2)
     // powód, dla którego przyciski Prowadzącego/Przycisku się nie mieściły.
@@ -254,7 +254,7 @@ export function createUI({ root, emit }) {
     const noHostChk = h("input", { type: "checkbox" });
     noHostChk.checked = !!state.settings.noHostTablet;
     on(noHostChk, "change", () => emit("devices.noHostTablet", noHostChk.checked));
-    hostRow.appendChild(h("div", { class: "device-row-opt" }, [
+    hostRow.appendChild(h("div", { class: `device-row-opt${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
       h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
         h("span", { class: "device-opt-check-label", text: t("control.noHostTablet") }),
         h("span", { class: "device-opt-check-hint", text: t("control.noHostTabletHint") }),
@@ -267,7 +267,7 @@ export function createUI({ root, emit }) {
     const physBuzzChk = h("input", { type: "checkbox" });
     physBuzzChk.checked = !!state.settings.physicalBuzzer;
     on(physBuzzChk, "change", () => emit("devices.physicalBuzzer", physBuzzChk.checked));
-    buzzerRow.appendChild(h("div", { class: "device-row-opt" }, [
+    buzzerRow.appendChild(h("div", { class: `device-row-opt${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
       h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
         h("span", { class: "device-opt-check-label", text: t("control.physicalBuzzer") }),
         h("span", { class: "device-opt-check-hint", text: t("control.physicalBuzzerHint") }),
