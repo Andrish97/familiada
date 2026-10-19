@@ -282,8 +282,10 @@ body.editor-body .wrap {
 
 .qcard.active:not(.addTile) {
     border-color: rgba(255,234,166,.9);
-    --btn-tint: rgba(255,234,166,.10);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    background-image:
+        linear-gradient(rgba(255,234,166,.10), rgba(255,234,166,.10)),
+        linear-gradient(var(--btn-tint), var(--btn-tint));
+    background-color: var(--under, #050914);
     box-shadow: 0 0 0 2px rgba(255,234,166,.55), 0 10px 22px rgba(0,0,0,.35);
 }
 
