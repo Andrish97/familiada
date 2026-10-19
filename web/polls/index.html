@@ -52,10 +52,7 @@
   </header>
 
   <main class="wrap">
-    <div class="card" id="pollLoadState" role="status" aria-live="polite">
-      <div class="name" id="pollLoadMessage" data-i18n="polls.load.loading">Wczytuję ankietę…</div>
-      <button class="btn sm" id="pollLoadRetry" type="button" data-i18n="polls.load.retry" data-i18n-icon="refresh" hidden>Ponów</button>
-    </div>
+    <div class="poll-load-retry" id="pollLoadRetryWrap" hidden><button class="btn sm" id="pollLoadRetry" type="button" data-i18n="polls.load.retry" data-i18n-icon="refresh">Ponów</button></div>
     <!-- A. Pasek stanu: stan słowem po lewej, WSZYSTKIE akcje po prawej
          (telefon: stan u góry, akcje w dolnym pasku przyklejonym do ekranu) -->
     <div class="pollBar" id="pollBar" data-state="" data-skel-step style="display:none;">

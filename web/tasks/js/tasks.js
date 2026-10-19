@@ -16,8 +16,7 @@ const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
 
 const $ = (id) => document.getElementById(id);
 const host = $("tasksHost");
-const loadState = $("tasksLoadState");
-const loadMessage = $("tasksLoadMessage");
+const loadRetryWrap = $("tasksLoadRetryWrap");
 const loadRetry = $("tasksLoadRetry");
 
 const qs = new URLSearchParams(location.search);
@@ -26,6 +25,7 @@ let focusHandled = false;
 
 let tasks = [];
 let tasksLoaded = false;
+let loadFailureNotified = false;
 
 function fmtDate(value) {
   if (!value) return "";
@@ -98,28 +98,25 @@ function focusFromUrl() {
 let inFlight = null;
 async function refresh() {
   if (inFlight) return inFlight;
-  if (!tasksLoaded && loadState) {
-    loadState.hidden = false;
-    if (loadMessage) loadMessage.textContent = t("tasks.load.loading");
-    if (loadRetry) loadRetry.hidden = true;
-  }
   inFlight = (async () => {
     try {
       const { data, error } = await sb().rpc("tasks_list", { p_kind: null });
       if (error) throw error;
       tasks = Array.isArray(data) ? data.filter(task => task.kind === "poll") : [];
-      // Najpierw renderuj wiersze z działającymi akcjami. Jeśli render się
-      // nie powiedzie, pierwsze ładowanie nadal pokaże błąd i przycisk retry.
+      // Najpierw renderuj wiersze z działającymi akcjami, potem ujawnij listę.
       render();
       tasksLoaded = true;
-      if (loadState) loadState.hidden = true;
+      loadFailureNotified = false;
+      if (loadRetryWrap) loadRetryWrap.hidden = true;
       document.querySelector(".tasks-scroll")?.classList.add("skel-step-ready");
       focusFromUrl();
     } catch (e) {
       console.error("[tasks] tasks_list:", e);
       if (!tasksLoaded) {
-        if (loadMessage) loadMessage.textContent = t("tasks.load.failed");
-        if (loadRetry) loadRetry.hidden = false;
+        loadRetryWrap.hidden = false;
+        document.querySelector(".tasks-scroll")?.classList.add("skel-step-ready");
+        if (!loadFailureNotified) toast(t("tasks.load.failed"), { kind: "error" });
+        loadFailureNotified = true;
       } else toast(t("tasks.errors.load"), { kind: "error" });
     }
   })();
@@ -130,7 +127,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const user = await initPage("tasks", { ready: i18nReady, back: $("btnBack") });
   if (!user) return;
 
-  loadRetry?.addEventListener("click", () => void refresh());
+  loadRetry?.addEventListener("click", () => { loadFailureNotified = false; void refresh(); });
   window.addEventListener("i18n:lang", render);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
   setInterval(() => { if (!document.hidden) refresh(); }, 20000);

@@ -9,6 +9,7 @@ import { loadQuestions, guardGameState } from "../../../shared/js/core/game-vali
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-19T15193";
 import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-19T15193";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T15193";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-19T15193";
 import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-19T15193";
 import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-19T15193";
 
@@ -147,19 +148,18 @@ const invalidInputs = new Map();
 let leaving = false;
 let pageLock = null;      // blokada zasobów strony (release przed wyjściem)
 
-function setSaveStatus(state, text = "") {
+function setDirtyIndicator(isUnsaved) {
   const el = document.getElementById("gsFooterMsg");
   if (!el) return;
-  el.dataset.state = state;
-  el.textContent = text;
-  el.classList.toggle("hidden", !text);
+  el.textContent = isUnsaved ? (t("gameSettings.unsaved") || "Niezapisane zmiany") : "";
+  el.classList.toggle("hidden", !isUnsaved);
 }
 
 function markDirty() {
   if (!ready || stopped) return;
   isDirty = true;
   changeSeq++;
-  setSaveStatus("dirty", t("gameSettings.unsaved") || "Niezapisane zmiany");
+  setDirtyIndicator(true);
 }
 
 function markSoundDirty() {
@@ -268,9 +268,7 @@ async function saveAll() {
       lastSavedSettingsRaw = payload;
       if (changeSeq === seq) isDirty = false;
       ok = true;
-      setSaveStatus(isDirty ? "dirty" : "saved", isDirty
-        ? (t("gameSettings.unsaved") || "Niezapisane zmiany")
-        : (t("gameSettings.saved") || "Zapisano"));
+      setDirtyIndicator(isDirty);
 
       // Synchronizuj custom pliki audio z bucketem (po sukcesie zapisu do DB);
       // tylko gdy dźwięk się zmienił — nie przy każdej literze w nazwie drużyny.
@@ -286,10 +284,10 @@ async function saveAll() {
       if (e?.code === ROW_GONE) {
         // Ktoś zapisał te ustawienia w międzyczasie: nie nadpisujemy.
         stopped = true;
-        setSaveStatus("conflict", t("gameSettings.saveConflict"));
+        toast(t("gameSettings.saveConflict"), { kind: "error" });
         return;
       }
-      setSaveStatus("error", t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)));
+      toast(t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)), { kind: "error" });
     }
   })();
   try {

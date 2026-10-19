@@ -56,8 +56,7 @@ const pollActions = $("pollActions");
 // treść
 const cardMain = $("cardMain");
 const cardEmpty = $("cardEmpty");
-const pollLoadState = $("pollLoadState");
-const pollLoadMessage = $("pollLoadMessage");
+const pollLoadRetryWrap = $("pollLoadRetryWrap");
 const pollLoadRetry = $("pollLoadRetry");
 const tabShare = $("tabShare");
 const tabRecipients = $("tabRecipients");
@@ -1035,15 +1034,10 @@ function renderShareSection(st, link) {
 async function refresh() {
   if (!currentUser) return; // initPage jeszcze nie wpuścił (albo pokazał nakładkę gościa)
   const seq = ++refreshSeq;
-  if (!game && !initialLoadFailed && pollLoadState) {
-    pollLoadState.hidden = false;
-    if (pollLoadMessage) pollLoadMessage.textContent = t("polls.load.loading");
-    if (pollLoadRetry) pollLoadRetry.hidden = true;
-  }
   if (!gameId) {
     if (pollBar) pollBar.style.display = "none";
     if (cardMain) cardMain.style.display = "none";
-    if (pollLoadState) pollLoadState.hidden = true;
+    if (pollLoadRetryWrap) pollLoadRetryWrap.hidden = true;
     if (cardEmpty) cardEmpty.style.display = "";
     setMsg(t("polls.missingId"), "error");
     return;
@@ -1055,10 +1049,10 @@ async function refresh() {
   } catch (error) {
     console.warn("[polls] initial game load failed", error);
     if (!game) {
+      const shouldNotify = !initialLoadFailed;
       initialLoadFailed = true;
-      if (pollLoadState) pollLoadState.hidden = false;
-      if (pollLoadMessage) pollLoadMessage.textContent = t("polls.load.failed");
-      if (pollLoadRetry) pollLoadRetry.hidden = false;
+      if (pollLoadRetryWrap) pollLoadRetryWrap.hidden = false;
+      if (shouldNotify) setMsg(t("polls.load.failed"), "error");
     } else {
       setMsg(t("polls.load.failed"), "error");
     }
@@ -1066,7 +1060,8 @@ async function refresh() {
   }
   if (seq !== refreshSeq) return;
 
-  if (pollLoadState) pollLoadState.hidden = true;
+  initialLoadFailed = false;
+  if (pollLoadRetryWrap) pollLoadRetryWrap.hidden = true;
   if (cardEmpty) cardEmpty.style.display = "none";
   if (pollBar) pollBar.style.display = "";
   if (cardMain) cardMain.style.display = "";

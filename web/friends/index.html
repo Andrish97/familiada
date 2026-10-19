@@ -64,10 +64,6 @@
           <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
         </div>
       </div>
-      <div class="card" id="contactsLoadState" role="status" aria-live="polite">
-        <div class="name" id="contactsLoadMessage" data-i18n="contacts.load.loading">Wczytuję kontakty…</div>
-        <button class="btn sm" id="contactsLoadRetry" type="button" data-i18n="contacts.load.retry" hidden data-i18n-icon="refresh">Ponów</button>
-      </div>
       <div class="contacts-layout" id="contactsHost" data-skel-step>
       <div class="card contacts-card" id="contactsInvite" data-contact-panel="invite">
         <section class="shareSection contacts-add">
@@ -83,6 +79,7 @@
         <div id="contactsOutgoing"></div>
       </div>
       <div class="card contacts-card" id="contactsReceived" data-contact-panel="received"></div>
+      <div class="contacts-load-retry" id="contactsLoadRetryWrap" hidden><button class="btn sm" id="contactsLoadRetry" type="button" data-i18n="contacts.load.retry" data-i18n-icon="refresh">Ponów</button></div>
     </div>
 
     </div>

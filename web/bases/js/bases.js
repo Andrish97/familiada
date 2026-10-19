@@ -21,7 +21,7 @@ import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-19T1519
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-19T15193";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-19T15193";
 import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-19T15193";
-import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-19T15193";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-19T15193";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-19T15193";
 import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-19T15193";
 import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-19T15193";
@@ -120,7 +120,6 @@ const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
 const btnShareAdd = document.getElementById("btnShareAdd");
 const btnShareClose = document.getElementById("btnShareClose");
-const shareMsg = document.getElementById("shareMsg");
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
@@ -190,7 +189,6 @@ let shareRoleValue = "editor";
 let friendsRoleValue = "editor";
 let ownBaseDeclines = [];
 let baseDeclinesCollapsed = true;
-let shareMessageTimer = null;
 let shareRenderVersion = 0;
 
 // modal nazwy – tryb
@@ -240,16 +238,9 @@ function initShareRoleSelect() {
   shareRole?.replaceChildren(baseRoleButton(shareRoleValue, value => { shareRoleValue = value; }));
   baseShareFriendsRole?.replaceChildren(baseRoleButton(friendsRoleValue, value => { friendsRoleValue = value; }));
 }
-function showShareMessage(message) {
-  clearTimeout(shareMessageTimer);
-  if (!shareMsg) return;
-  shareMsg.classList.remove("show");
-  shareMsg.hidden = !message;
-  shareMsg.textContent = message || "";
-  if (message) {
-    requestAnimationFrame(() => shareMsg.classList.add("show"));
-    shareMessageTimer = setTimeout(() => { shareMsg.classList.remove("show"); shareMsg.hidden = true; }, TOAST_DEFAULT_MS);
-  }
+function showShareMessage(message, kind = "info") {
+  if (!message) { hideToast(); return; }
+  toast(message, { kind });
 }
 
 function safeName(s) {
@@ -864,7 +855,7 @@ async function renderShareModal() {
   shareCooldownTicker.resetBindings();
   const { data, error } = await sb().rpc("base_share_panel", { p_base_id: b.id });
   if (version !== shareRenderVersion) return;
-  if (error || !data?.ok) { showShareMessage(t("bases.share.failed")); return; }
+  if (error || !data?.ok) { showShareMessage(t("bases.share.failed"), "error"); return; }
   baseShareFriends.replaceChildren();
   baseShareBulkHost?.replaceChildren();
   shareSectionsHost.replaceChildren();
@@ -916,7 +907,7 @@ async function renderShareModal() {
         ? { p_base_id: b.id, p_user_id: recipient.user_id, p_role: role }
         : { p_task_id: recipient.task_id, p_role: role });
       const response = Array.isArray(result) ? result[0] : result;
-      if (error || !response?.ok) { showShareMessage(t("bases.share.failed")); return false; }
+      if (error || !response?.ok) { showShareMessage(t("bases.share.failed"), "error"); return false; }
 
       return true;
     });
@@ -934,11 +925,11 @@ async function renderShareModal() {
         button.disabled = true;
         try {
           const { data: response, error } = await sb().rpc("base_share_resend", { p_task_id: recipient.task_id });
-          if (error || !response?.ok) { showShareMessage(baseShareError(response)); return; }
+          if (error || !response?.ok) { showShareMessage(baseShareError(response), "error"); return; }
           const queued = response.mail_allowed && await deliverBaseShare(response, b.id, { role: recipient.role, reminder: true });
           await renderShareModal();
           showShareMessage(t(queued ? "bases.share.success" : "control.shareDeviceModal.friendMailDisabled"));
-        } catch { showShareMessage(t("bases.share.emailFailed")); }
+        } catch { showShareMessage(t("bases.share.emailFailed"), "error"); }
         finally { button.disabled = false; }
       },
     });
@@ -946,7 +937,7 @@ async function renderShareModal() {
       button.disabled = true;
       const { data: ok, error } = await sb().rpc(active ? "revoke_base_share" : "base_share_cancel_task", active
         ? { p_base_id: b.id, p_user_id: recipient.user_id } : { p_task_id: recipient.task_id });
-      if (error || !ok) { button.disabled = false; showShareMessage(t("bases.share.failed")); return; }
+      if (error || !ok) { button.disabled = false; showShareMessage(t("bases.share.failed"), "error"); return; }
        await renderShareModal();
     }});
     const row = shareRowEl({ id: recipient.task_id || recipient.user_id, label: recipient.label || recipient.email,
@@ -989,25 +980,26 @@ async function shareAdd(friendIds = null) {
   const b = selectedBase();
   if (!b || !isOwner(b)) return;
   const raw = String(shareEmail.value || "").trim();
-  if (!friendIds && !raw) { showShareMessage(t("bases.share.enterEmail")); return; }
+  if (!friendIds && !raw) { showShareMessage(t("bases.share.enterEmail"), "error"); return; }
   shareAddInFlight = true; btnShareAdd.disabled = true; updateBaseShareSelection();
   let message = t("bases.share.success");
+  let messageKind = "info";
   try {
     for (const id of friendIds || [null]) {
       const { data, error } = await sb().rpc(id ? "base_share_to_friend" : "base_share_by_user", id
         ? { p_base_id: b.id, p_recipient_user_id: id, p_role: friendsRoleValue }
         : { p_base_id: b.id, p_user_lookup: raw, p_role: shareRoleValue });
       const row = Array.isArray(data) ? data[0] : data;
-      if (error || !row?.ok) { message = baseShareError(row); continue; }
+      if (error || !row?.ok) { message = baseShareError(row); messageKind = "error"; continue; }
       try {
         const queued = await deliverBaseShare(row, b.id, { role: id ? friendsRoleValue : shareRoleValue });
         if (queued === false) message = t("control.shareDeviceModal.friendMailDisabled");
       }
-      catch { message = t("bases.share.emailFailed"); }
+      catch { message = t("bases.share.emailFailed"); messageKind = "error"; }
       if (!friendIds) shareEmail.value = "";
     }
-     await renderShareModal(); showShareMessage(message);
-  } catch { showShareMessage(t("bases.share.failed")); }
+     await renderShareModal(); showShareMessage(message, messageKind);
+  } catch { showShareMessage(t("bases.share.failed"), "error"); }
   finally { shareAddInFlight = false; btnShareAdd.disabled = false; updateBaseShareSelection(); }
 }
 btnBaseShareFriends?.addEventListener("click", () => shareAdd([...baseShareFriends.querySelectorAll('input:checked:not(:disabled)')].map(input => input.value)));

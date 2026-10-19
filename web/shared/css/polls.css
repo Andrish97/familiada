@@ -489,3 +489,4 @@
 @media (max-width: 980px){
   .app-toast{ bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }
+.poll-load-retry{ display:flex; justify-content:center; margin: 0 0 12px; }

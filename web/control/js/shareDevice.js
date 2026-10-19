@@ -3,7 +3,7 @@
 
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-19T15193";
 import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T15193";
-import { toast, TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-19T15193";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-19T15193";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-19T15193";
 import { shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-19T15193";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T15193";
@@ -82,7 +82,6 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   const btnShareFriends = document.getElementById("btnShareDeviceFriends");
   const btnAdd = document.getElementById("btnShareDeviceAdd");
   const btnClose = document.getElementById("btnShareDeviceClose");
-  const msgEl = document.getElementById("shareDeviceMsg");
   const currentWrap = document.getElementById("shareDeviceCurrentWrap");
   const currentCont = document.getElementById("shareDeviceCurrentContent");
   const backBtn = document.getElementById("btnBack");
@@ -95,42 +94,15 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   let renderVersion = 0;
   let preflightVersion = 0;
   let bulkActions = null;
-  let messageTimer = null;
-  let messageVersion = 0;
   const cooldownTicker = createCooldownTicker();
   cooldownTicker.start();
 
   function clearMessage() {
-    messageVersion++;
-    if (messageTimer) clearTimeout(messageTimer);
-    messageTimer = null;
-    if (msgEl) {
-      msgEl.classList.remove("show");
-      msgEl.hidden = true;
-      msgEl.textContent = "";
-    }
+    hideToast();
   }
 
-  function showMessage(message, { duration = TOAST_DEFAULT_MS, state = "info" } = {}) {
-    clearMessage();
-    if (!msgEl || !message) return;
-    const version = messageVersion;
-    msgEl.classList.toggle("error", state === "error");
-    msgEl.textContent = message;
-    msgEl.hidden = false;
-    requestAnimationFrame(() => { if (version === messageVersion) msgEl.classList.add("show"); });
-    if (duration > 0) {
-      messageTimer = setTimeout(() => {
-        if (version !== messageVersion) return;
-        msgEl.classList.remove("show");
-        messageTimer = setTimeout(() => {
-          if (version !== messageVersion) return;
-          msgEl.hidden = true;
-          msgEl.textContent = "";
-          messageTimer = null;
-        }, 220);
-      }, duration);
-    }
+  function showMessage(message, { state = "info" } = {}) {
+    if (message) toast(message, { kind: state });
   }
 
   function closeModal() {

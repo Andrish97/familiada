@@ -18,13 +18,13 @@ export async function initContactsPage(pageId) {
   const user = await initPage(pageId, { ready, back: document.getElementById("btnBack") });
   if (!user) return;
   const host = document.getElementById("contactsHost");
-  const loadState = document.getElementById("contactsLoadState");
-  const loadMessage = document.getElementById("contactsLoadMessage");
+  const loadRetryWrap = document.getElementById("contactsLoadRetryWrap");
   const loadRetry = document.getElementById("contactsLoadRetry");
   const cooldowns = createCooldownTicker();
   let rows = [];
   let inFlight = null;
   let contactsLoaded = false;
+  let loadFailureNotified = false;
   let declinedCollapsed = true;
   const mobile = matchMedia("(max-width: 720px), (max-width: 980px) and (orientation: landscape)");
   const allowedTabs = PAGES[pageId].tabs;
@@ -176,23 +176,26 @@ export async function initContactsPage(pageId) {
         const data = await call("contacts_list", { p_kind: friends ? "friends" : "subscribers" });
         rows = Array.isArray(data) ? data : [];
         // Najpierw zbuduj wiersze i podepnij ich akcje; dopiero gotowy widok
-        // zastępuje komunikat ładowania.
+        // ujawni listę kontaktów.
         render();
         contactsLoaded = true;
-        if (loadState) loadState.hidden = true;
+        loadFailureNotified = false;
+        if (loadRetryWrap) loadRetryWrap.hidden = true;
         host?.classList.add("skel-step-ready");
       } catch (error) {
         if (!contactsLoaded) {
-          if (loadMessage) loadMessage.textContent = t("contacts.load.failed");
-          if (loadRetry) loadRetry.hidden = false;
+          host?.classList.add("skel-step-ready");
+          if (loadRetryWrap) loadRetryWrap.hidden = false;
+          if (!loadFailureNotified) toast(t("contacts.load.failed"), { kind: "error" });
+          loadFailureNotified = true;
         } else await report(error);
       }
     })();
     try { await inFlight; } finally { inFlight = null; }
   }
   loadRetry?.addEventListener("click", () => {
-    if (loadMessage) loadMessage.textContent = t("contacts.load.loading");
-    loadRetry.hidden = true;
+    loadFailureNotified = false;
+    if (loadRetryWrap) loadRetryWrap.hidden = true;
     void refresh();
   });
   document.getElementById("inviteForm").addEventListener("submit", async (event) => {

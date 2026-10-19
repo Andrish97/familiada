@@ -13,6 +13,7 @@ body.games-body > main.wrap > .bar{
 .tasks-card .tasks-scroll{
   padding: 2px 2px 12px;
 }
+.tasks-load-retry{ display:flex; justify-content:center; padding: 12px 0; }
 .tasks-card .rowsSection + .rowsSection{
   margin-top: 24px;
 }
