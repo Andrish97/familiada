@@ -647,16 +647,18 @@ function renderResourceList(language = currentLanguage()) {
   (shared.subscribers || []).forEach((email, index) => {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
     sharedField(row, `E-mail ${index + 1}`, email, { type: "email", required: true, autocomplete: "email", dataset: { sharedSubscriber: index } });
-    sharedButton(row, "Usuń", "remove-subscriber", index); subscribers.append(row);
+    const remove = sharedButton(row, "×", "remove-subscriber", index); remove.title = "Usuń subskrybenta"; remove.setAttribute("aria-label", remove.title); remove.classList.add("homepage-shot-row-remove"); subscribers.append(row);
   });
   sharedButton(subscribers, "Dodaj subskrybenta", "add-subscriber");
 
   const friends = sharedGroup(sharedRoot, "Znajomi");
   (shared.friends || []).forEach((person, index) => {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--contact";
-    sharedField(row, `Nazwa użytkownika ${index + 1}`, person.username, { required: true, autocomplete: "username", pattern: "\\S+", dataset: { sharedFriendName: index } });
-    sharedField(row, `E-mail ${index + 1}`, person.email, { type: "email", required: true, autocomplete: "email", dataset: { sharedFriendEmail: index } });
-    sharedButton(row, "Usuń", "remove-friend", index); friends.append(row);
+    const username = sharedField(row, "", person.username, { required: true, autocomplete: "username", pattern: "\\S+", dataset: { sharedFriendName: index } });
+    username.placeholder = "Nazwa użytkownika"; username.setAttribute("aria-label", username.placeholder);
+    const email = sharedField(row, "", person.email, { type: "email", required: true, autocomplete: "email", dataset: { sharedFriendEmail: index } });
+    email.placeholder = "E-mail"; email.setAttribute("aria-label", email.placeholder);
+    const remove = sharedButton(row, "×", "remove-friend", index); remove.title = "Usuń znajomego"; remove.setAttribute("aria-label", remove.title); remove.classList.add("homepage-shot-row-remove"); friends.append(row);
   });
   sharedButton(friends, "Dodaj znajomego", "add-friend");
   sharedRoot.querySelectorAll("[data-shared-username], [data-shared-friend-name], [data-shared-subscriber], [data-shared-friend-email]").forEach(updateSharedFieldValidity);
@@ -2047,7 +2049,7 @@ function readFriendGroupActions(fixture = {}) {
     friendGroups[key] = [...group.querySelectorAll("[data-friend-row]")].map(row => ({
       username: row.querySelector("[data-friend-username]").value.trim(),
       email: normalizeEmail(row.querySelector("[data-friend-email]").value),
-      status: row.querySelector("[data-friend-status]").value,
+      status: row.querySelector("[data-friend-status]:checked")?.value || "pending",
     }));
   }
   const sharedFriends = sharedFixture().friends || [];
@@ -2119,16 +2121,22 @@ function renderCategoryActions(fixture) {
       const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
       (groups[key] || []).forEach((person, index) => {
         const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row homepage-shot-friend-action-row"; row.dataset.friendRow = String(index);
-        sharedField(row, labels.username, person.username || "", { required: true, autocomplete: "off", pattern: "\\S+", dataset: { friendUsername: "true" } });
-        sharedField(row, labels.email, person.email || "", { type: "email", required: true, autocomplete: "off", dataset: { friendEmail: "true" } });
-        const statusField = document.createElement("label"); statusField.className = "homepage-shot-shared-field";
-        const statusLabel = document.createElement("span"); statusLabel.textContent = labels.status;
-        const status = document.createElement("select"); status.className = "inp"; status.dataset.friendStatus = "true";
-        for (const value of statuses) { const option = document.createElement("option"); option.value = value; option.textContent = value === "pending" ? labels.pending : labels.declinedStatus; status.append(option); }
-        status.value = statuses.includes(person.status) ? person.status : statuses[0];
-        statusField.append(statusLabel, status);
+        const username = sharedField(row, "", person.username || "", { required: true, autocomplete: "off", pattern: "\\S+", dataset: { friendUsername: "true" } });
+        username.placeholder = labels.username; username.setAttribute("aria-label", labels.username);
+        const email = sharedField(row, "", person.email || "", { type: "email", required: true, autocomplete: "off", dataset: { friendEmail: "true" } });
+        email.placeholder = labels.email; email.setAttribute("aria-label", labels.email);
+        const statusField = document.createElement("div"); statusField.className = "homepage-shot-friend-status-radios";
+        statusField.setAttribute("role", "radiogroup"); statusField.setAttribute("aria-label", labels.status);
+        for (const value of statuses) {
+          const option = document.createElement("label"); option.className = "homepage-shot-friend-status-option";
+          const status = document.createElement("input"); status.type = "radio"; status.name = `friend-status-${key}-${index}`;
+          status.value = value; status.dataset.friendStatus = "true"; status.checked = (statuses.includes(person.status) ? person.status : statuses[0]) === value;
+          const glyph = document.createElement("span"); glyph.className = "homepage-shot-friend-status-icon"; glyph.setAttribute("aria-hidden", "true"); glyph.textContent = value === "pending" ? "◷" : "×";
+          const text = value === "pending" ? labels.pending : labels.declinedStatus;
+          option.title = text; option.setAttribute("aria-label", text); option.append(status, glyph); statusField.append(option);
+        }
         row.append(statusField);
-        sharedButton(row, labels.remove, "remove-friend-action", index);
+        const remove = sharedButton(row, "×", "remove-friend-action", index); remove.title = labels.remove; remove.setAttribute("aria-label", labels.remove); remove.classList.add("homepage-shot-row-remove");
         rows.append(row);
       });
       group.append(rows);
