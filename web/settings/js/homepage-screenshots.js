@@ -1168,12 +1168,12 @@ function sizeScenePreview(scene) {
     els.frameWrap.style.setProperty("--screen-radius", `${screenRadius * boardScale}px`);
     els.frameWrap.style.setProperty("--bezel-black", `${bezelBlack * boardScale}px`);
     els.frameWrap.style.setProperty("--bezel-total", `${bezel * boardScale}px`);
-    els.frameWrap.style.setProperty("--notch-width", `${screenWidth * 0.323 * boardScale}px`);
-    els.frameWrap.style.setProperty("--notch-height", `${scene.height * screenScale * 0.0427 * boardScale}px`);
+    els.frameWrap.style.setProperty("--notch-width", `${screenWidth * 0.41 * boardScale}px`);
+    els.frameWrap.style.setProperty("--notch-height", `${scene.height * screenScale * 0.04 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-radius", `${22 * screenScale * boardScale}px`);
-    els.frameWrap.style.setProperty("--gesture-width", `${92 * screenScale * boardScale}px`);
-    els.frameWrap.style.setProperty("--gesture-height", `${4 * screenScale * boardScale}px`);
-    els.frameWrap.style.setProperty("--gesture-bottom", `${(bezel + 11 * screenScale) * boardScale}px`);
+    els.frameWrap.style.setProperty("--gesture-width", `${screenWidth * 0.344 * boardScale}px`);
+    els.frameWrap.style.setProperty("--gesture-height", `${5 * screenScale * boardScale}px`);
+    els.frameWrap.style.setProperty("--gesture-bottom", `${(bezel + 8 * screenScale) * boardScale}px`);
     els.frame.style.width = `${scene.width}px`;
     els.frame.style.height = `${scene.height}px`;
     els.frame.style.left = `${screenLeft * boardScale}px`;
@@ -1339,9 +1339,9 @@ async function applyFixtureToFrame(scene, fixture) {
       doc.head.append(safeAreaStyle);
     }
     safeAreaStyle.textContent = `
-      body.pollpub-body { --topbar-h: 103px; padding-top: 103px; }
-      body.pollpub-body .poll-vote-topbar { min-height: 103px; padding: 47px 16px 12px; }
-      body.pollpub-body .lang-switcher.lang-floating { top: 47px; right: 12px; }
+      body.pollpub-body { --topbar-h: 115px; padding-top: 115px; }
+      body.pollpub-body .poll-vote-topbar { min-height: 115px; padding: 59px 16px 12px; }
+      body.pollpub-body .lang-switcher.lang-floating { top: 59px; right: 12px; }
       body.pollpub-body .footer, body.pollpub-body .footer.wrap { padding-right: 16px; padding-bottom: 34px; padding-left: 16px; }
     `;
   }
@@ -2753,9 +2753,9 @@ function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900
   ctx.clip();
   ctx.drawImage(screenCanvas, screenX, screenY, screenWidth, screenHeight);
 
-  const notchHeight = screenHeight * 0.0427;
-  const notchXScaled = screenX + (screenWidth - screenWidth * 0.323) / 2;
-  const scaledNotchWidth = screenWidth * 0.323;
+  const notchHeight = screenHeight * 0.04;
+  const notchXScaled = screenX + (screenWidth - screenWidth * 0.41) / 2;
+  const scaledNotchWidth = screenWidth * 0.41;
   const notchCurve = 22 * screenScale;
   ctx.beginPath();
   ctx.moveTo(notchXScaled, screenY);
@@ -2777,7 +2777,7 @@ function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900
   ctx.fill();
   ctx.fillStyle = "#ffffffa8";
   ctx.beginPath();
-  ctx.roundRect(screenX + (screenWidth - 92 * screenScale) / 2, screenY + screenHeight - 11 * screenScale, 92 * screenScale, 4 * screenScale, 99);
+  ctx.roundRect(screenX + (screenWidth - screenWidth * 0.344) / 2, screenY + screenHeight - 13 * screenScale, screenWidth * 0.344, 5 * screenScale, 99);
   ctx.fill();
   ctx.restore();
   return output;
