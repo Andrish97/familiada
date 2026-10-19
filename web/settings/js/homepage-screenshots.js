@@ -93,11 +93,12 @@ function currentScene() { return config.scenes.find(scene => scene.id === byId("
 function langFixture(scene, language = currentLanguage()) {
   const override = config.localeFixtures?.[language]?.[scene.id];
   const fixture = structuredClone(override || localizeFixture(scene.fixture || {}, language));
+  if (scene.id === "appearance") { delete fixture.game; fixture.logos = []; }
   const shared = config.sharedFixtures?.[language];
   if (!shared) return fixture;
   const firstQuestion = shared.gameQuestions?.[0];
   if (scene.id === "game-editor") fixture.gameQuestions = structuredClone(shared.gameQuestions || []);
-  if (["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
+  if (["game-editor", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
     fixture.game = shared.gameName || fixture.game;
   }
   if (scene.id === "control-finale" && shared.gameQuestions?.length) {
@@ -204,6 +205,7 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.bases = baseSelection.resourceIds.map(id => loadedBases.find(item => item.id === id)).filter(Boolean);
   }
   if (scene.id === "logos") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ name: item.name, data: item.data }));
+  if (scene.id === "appearance") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ name: item.name, data: item.data }));
   if (resource?.type === "game") {
     const game = resource.data || {};
     const questions = Array.isArray(game.questions) ? game.questions : [];
@@ -252,7 +254,7 @@ function langFixture(scene, language = currentLanguage()) {
       }
     }
   }
-  if (!resource && ["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
+  if (!resource && ["game-editor", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
     fixture.game = ""; fixture.question = ""; fixture.answers = []; fixture.points = []; fixture.gameQuestions = []; fixture.finale = [];
   }
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && !resource) {
@@ -479,19 +481,28 @@ function ensureResourceData(language = currentLanguage()) {
     if (views[scene.id]) continue;
     if (scene.id === "games") views[scene.id] = { resourceIds: ids("game") };
     else if (scene.id === "bases") views[scene.id] = { resourceOrder: ids("base"), resourceIds: ids("base") };
-    else if (scene.id === "logos") views[scene.id] = { resourceIds: ids("logo") };
+    else if (scene.id === "logos" || scene.id === "appearance") views[scene.id] = { resourceIds: ids("logo") };
     else if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) views[scene.id] = { resourceId: "" };
     else if (scene.id === "base-explorer") views[scene.id] = { resourceId: ids("base")[0] || "" };
     else if (scene.id === "logo-draw") views[scene.id] = { resourceId: ids("logo")[0] || "" };
     else if (["control-round", "host-round", "display-round"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
-    else if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
+    else if (["game-editor", "sound", "control-finale"].includes(scene.id)) views[scene.id] = { resourceId: ids("game")[0] || "", questionIndex: 0 };
   }
   const resourceTypeByScene = {
-    games: "game", bases: "base", logos: "logo", "base-explorer": "base", "logo-draw": "logo",
+    games: "game", bases: "base", logos: "logo", appearance: "logo", "base-explorer": "base", "logo-draw": "logo",
     "control-round": "game", "host-round": "game", "display-round": "game", "game-editor": "game",
-    appearance: "game", sound: "game", "control-finale": "game",
+    sound: "game", "control-finale": "game",
   };
   for (const [sceneId, selection] of Object.entries(views)) {
+    if (sceneId === "appearance") {
+      const logoIds = ids("logo");
+      selection.resourceIds = Array.isArray(selection.resourceIds)
+        ? selection.resourceIds.filter(id => logoIds.includes(id))
+        : [...logoIds];
+      delete selection.resourceId;
+      delete selection.resourceOrder;
+      continue;
+    }
     if (["poll-share", "poll-vote-mobile", "poll-results"].includes(sceneId)) {
       const available = resources.filter(item => item.type === "game");
       if (sceneId === "poll-share" || sceneId === "poll-vote-mobile") {
@@ -515,7 +526,7 @@ function ensureResourceData(language = currentLanguage()) {
     if (Array.isArray(selection.resourceIds)) selection.resourceIds = selection.resourceIds.filter(matches);
     if (selection.resourceId && !matches(selection.resourceId)) selection.resourceId = "";
     if (!selection.resourceId) {
-      if (["control-round", "host-round", "display-round", "game-editor", "appearance", "sound", "control-finale"].includes(sceneId)) selection.resourceId = firstPreparedGame;
+      if (["control-round", "host-round", "display-round", "game-editor", "sound", "control-finale"].includes(sceneId)) selection.resourceId = firstPreparedGame;
       else if (sceneId === "base-explorer") selection.resourceId = firstBase;
       else if (sceneId === "logo-draw") selection.resourceId = firstLogo;
     }
@@ -768,13 +779,14 @@ function resourceChoiceSpec(scene) {
     type: ({ games: "game", bases: "base", logos: "logo" })[scene.id],
     ...(scene.id === "games" ? { filter: item => gameResourceType(item) === "prepared" } : {}),
   };
+  if (scene.id === "appearance") return { multi: true, type: "logo" };
   if (scene.id === "base-explorer") return { type: "base" };
   if (scene.id === "logo-draw") return { type: "logo" };
   if (scene.id === "poll-share") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
   if (scene.id === "poll-vote-mobile") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
   if (scene.id === "poll-results") return { type: "game", filter: canUsePollResultsResource, label: "Gra" };
   if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
-  if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
+  if (["game-editor", "sound", "control-finale"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
   return null;
 }
 
@@ -831,9 +843,13 @@ function renderResourceChoices(scene = currentScene()) {
       const row = document.createElement("div"); row.className = "homepage-shot-resource-order-row";
       const check = document.createElement("input"); check.type = "checkbox"; check.checked = selection.resourceIds.includes(id); check.dataset.resourceInclude = id; check.setAttribute("aria-label", `Pokaż ${item.name}`);
       const name = document.createElement("span"); name.textContent = item.name;
-      const up = sharedButton(document.createElement("span"), "↑", "resource-up", index); up.setAttribute("aria-label", "Przenieś wyżej"); up.disabled = index === 0;
-      const down = sharedButton(document.createElement("span"), "↓", "resource-down", index); down.setAttribute("aria-label", "Przenieś niżej"); down.disabled = index === orderIds.length - 1;
-      row.append(check, name, up, down); list.append(row);
+      row.append(check, name);
+      if (scene.id !== "appearance") {
+        const up = sharedButton(document.createElement("span"), "↑", "resource-up", index); up.setAttribute("aria-label", "Przenieś wyżej"); up.disabled = index === 0;
+        const down = sharedButton(document.createElement("span"), "↓", "resource-down", index); down.setAttribute("aria-label", "Przenieś niżej"); down.disabled = index === orderIds.length - 1;
+        row.append(up, down);
+      }
+      list.append(row);
     });
     root.append(list);
     if (!selection.resourceIds.length) {
@@ -946,7 +962,8 @@ function sharedKeysForScene(sceneId) {
   if (sceneId === "logos") return ["logos"];
   if (sceneId === "logo-draw") return ["logo", "logoData", "logoFile"];
   if (sceneId === "game-editor") return ["game", "question", "answers", "points", "gameQuestions", "activeQuestionIndex"];
-  if (["appearance", "sound"].includes(sceneId)) return ["game"];
+  if (sceneId === "appearance") return ["logos"];
+  if (sceneId === "sound") return ["game"];
   if (sceneId === "control-finale") return ["game"];
   if (sceneId === "tasks") return ["game"];
   if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
@@ -1753,6 +1770,7 @@ async function applyFixtureToFrame(scene, fixture) {
         theme: "gameSettings.display.theme", logo: "gameSettings.display.logo", defaultLogo: "gameSettings.display.logoDefault",
         hostLogo: "gameSettings.display.hostLogoMode", pixel: "gameSettings.display.hostLogoPixel",
         source: "gameSettings.display.hostLogoSource", hint: "gameSettings.display.hostLogoHint", reset: "gameSettings.resetSection",
+        preview: "gameSettings.display.preview", hostPreview: "gameSettings.display.hostPreview",
       });
       if (content) content.innerHTML = `<div class="gs-cat-title">${escapeHtml(text.category)}</div>
         <div class="gs-section"><div class="gs-label">${escapeHtml(text.colors)}</div><div class="colorRow">
@@ -1769,10 +1787,18 @@ async function applyFixtureToFrame(scene, fixture) {
         preview.append(await logoCanvasFromFile(fixture.logoFile || "/shared/data/logo_familiada.json", 180, 84));
         const name = doc.createElement("div"); name.className = "gs-logo-name"; name.textContent = text.defaultLogo;
         tile.append(preview, name); grid.append(tile);
+        for (const logo of fixture.logos || []) {
+          const option = doc.createElement("div"); option.className = "gs-logo-tile";
+          const optionPreview = doc.createElement("div"); optionPreview.className = "gs-logo-prev";
+          optionPreview.append(await logoCanvasFromStored(logo.data, 180, 84));
+          const optionName = doc.createElement("div"); optionName.className = "gs-logo-name"; optionName.textContent = logo.name;
+          option.append(optionPreview, optionName); grid.append(option);
+        }
       }
       const theme = await fetch("/shared/data/display-themes.json", { cache: "force-cache" }).then(response => response.json()).catch(() => null);
       const firstTheme = theme?.themes?.[0]?.label?.[currentLanguage()] || (currentLanguage() === "en" ? "Classic" : currentLanguage() === "uk" ? "Класична" : "Klasyczny");
       const themeLabel = doc.querySelector("#gsThemeSelect .ui-select-label"); if (themeLabel) themeLabel.textContent = firstTheme;
+      await paintAppearancePreviews(doc, currentLanguage());
     } else if (content) {
       const title = await getStrings(currentLanguage(), { category: "gameSettings.categories.sound", reset: "control.sfxResetAll" });
       content.innerHTML = `<div class="gs-cat-title">${escapeHtml(title.category)}</div><div class="gs-section"><div class="sfx-table" id="shotSfxTable"></div></div><div class="sfx-foot"><button class="btn" id="btnSoundReset" type="button">${icon("refresh")} ${escapeHtml(title.reset)}</button></div>`;
@@ -1826,6 +1852,86 @@ async function paintSoundSettings(doc) {
       void audio.play().catch(() => {});
     });
   });
+}
+
+async function paintAppearancePreviews(doc, language) {
+  const wrap = doc.getElementById("gsLivePreviewWrap");
+  const displayHolder = doc.getElementById("gsDisplayIframeHolder");
+  const hostHolder = doc.getElementById("gsHostIframeHolder");
+  if (!wrap || !displayHolder || !hostHolder) return;
+  wrap.style.display = "grid";
+  displayHolder.replaceChildren();
+  hostHolder.replaceChildren();
+
+  // Stage the real preview pages outside the sandboxed screenshot iframe, then
+  // place their rendered images into the page preview for reliable capture.
+  const stage = document.createElement("div");
+  stage.setAttribute("aria-hidden", "true");
+  stage.style.cssText = "position:fixed;left:-20000px;top:0;width:1280px;height:360px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;pointer-events:none";
+  const displayFrame = document.createElement("iframe");
+  displayFrame.title = "Display preview source";
+  displayFrame.style.cssText = "width:640px;height:360px;border:0";
+  const hostFrame = document.createElement("iframe");
+  hostFrame.title = "Host preview source";
+  hostFrame.style.cssText = "width:640px;height:360px;border:0";
+
+  const readyTypes = new Map([
+    ["familiada:preview-ready", displayFrame],
+    ["familiada:host-preview-ready", hostFrame],
+  ]);
+  const readyPromise = new Promise((resolve, reject) => {
+    const readyFrames = new Set();
+    const timer = setTimeout(() => {
+      window.removeEventListener("message", onMessage);
+      reject(new Error("Podgląd wyświetlacza lub prowadzącego nie zgłosił gotowości."));
+    }, 20000);
+    const onMessage = event => {
+      const frame = readyTypes.get(event.data?.type);
+      if (!frame || event.source !== frame.contentWindow) return;
+      readyFrames.add(frame);
+      if (readyFrames.size === readyTypes.size) {
+        clearTimeout(timer);
+        window.removeEventListener("message", onMessage);
+        resolve();
+      }
+    };
+    window.addEventListener("message", onMessage);
+  });
+  stage.append(displayFrame, hostFrame);
+  document.body.append(stage);
+  const suffix = `?preview=1&lang=${encodeURIComponent(language)}`;
+  displayFrame.src = `/control/display/${suffix}`;
+  hostFrame.src = `/control/host/${suffix}`;
+  try {
+    await readyPromise;
+    const { buildDisplayPreviewRow } = await import("/shared/js/gameplay/previewRow.js?v=v2026-10-19T19245");
+    const teams = sharedFixture(language).teams || [];
+    const row = buildDisplayPreviewRow({
+      teams: { teamA: teams[0] || "Króliczki", teamB: teams[1] || "Zajączki" },
+      display: { colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" }, theme: null, hostLogoMode: "pixel" },
+      logoPreview: null,
+    });
+    const message = { type: "familiada:preview-row", row };
+    displayFrame.contentWindow.postMessage(message, location.origin);
+    hostFrame.contentWindow.postMessage(message, location.origin);
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const { toCanvas } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm");
+    for (const [frame, holder, title] of [
+      [displayFrame, displayHolder, language === "en" ? "Display preview" : language === "uk" ? "Попередній перегляд екрана" : "Podgląd wyświetlacza"],
+      [hostFrame, hostHolder, language === "en" ? "Host preview" : language === "uk" ? "Попередній перегляд ведучого" : "Podgląd prowadzącego"],
+    ]) {
+      const frameDoc = frame.contentDocument;
+      await Promise.race([frameDoc.fonts?.ready || Promise.resolve(), new Promise(resolve => setTimeout(resolve, 5000))]);
+      const canvas = await toCanvas(frameDoc.documentElement, { width: 640, height: 360, pixelRatio: 1, backgroundColor: "#050914", cacheBust: true });
+      const image = doc.createElement("img");
+      image.alt = title;
+      image.src = canvas.toDataURL("image/png");
+      image.style.cssText = "display:block;width:100%;height:100%;object-fit:cover";
+      holder.append(image);
+    }
+  } finally {
+    stage.remove();
+  }
 }
 
 async function getStrings(language, keys) {
