@@ -1,29 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="56" fill="#0b0b0b"/>
-  <g fill="#efff35">
-    <circle cx="160" cy="116" r="28"/>
-    <circle cx="209" cy="116" r="28"/>
-    <circle cx="258" cy="116" r="28"/>
-    <circle cx="307" cy="116" r="28"/>
-    <circle cx="356" cy="116" r="28"/>
-
+  <rect width="512" height="512" rx="100" fill="#0f0f0f"/>
+  <g fill="#e5f34f">
+    <circle cx="160" cy="116" r="28"/><circle cx="209" cy="116" r="28"/><circle cx="258" cy="116" r="28"/><circle cx="307" cy="116" r="28"/><circle cx="356" cy="116" r="28"/>
     <circle cx="160" cy="165" r="28"/>
     <circle cx="160" cy="214" r="28"/>
-    <circle cx="160" cy="263" r="28"/>
+    <circle cx="160" cy="263" r="28"/><circle cx="209" cy="263" r="28"/><circle cx="258" cy="263" r="28"/><circle cx="307" cy="263" r="28"/>
     <circle cx="160" cy="312" r="28"/>
     <circle cx="160" cy="361" r="28"/>
     <circle cx="160" cy="410" r="28"/>
-
-    <circle cx="209" cy="263" r="28"/>
-    <circle cx="258" cy="263" r="28"/>
-    <circle cx="307" cy="263" r="28"/>
   </g>
-  <g fill="none" stroke="#efff35" stroke-linecap="round" stroke-width="20">
+  <g fill="none" stroke="#e5f34f" stroke-linecap="round" stroke-width="20">
     <path d="M246 323h164"/>
     <path d="M246 373h164"/>
     <path d="M246 423h164"/>
   </g>
-  <g fill="#efff35">
+  <g fill="#e5f34f">
     <circle cx="355" cy="323" r="21"/>
     <circle cx="306" cy="373" r="21"/>
     <circle cx="355" cy="423" r="21"/>
