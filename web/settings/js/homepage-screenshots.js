@@ -1049,9 +1049,45 @@ function waitForFrameReady(frame, timeout) {
   });
 }
 
-async function normalizeScreenshotTopbar(doc, language, icon, hydrateIcons) {
+async function normalizeScreenshotTopbar(doc, language, icon, iconText, hydrateIcons, scene) {
   const topbar = doc.querySelector("header.topbar");
   if (!topbar) return;
+
+  const nav = await import("/shared/js/core/nav-map.js?v=v2026-10-19T14430");
+  const pageIdByScene = {
+    games: "games", "game-editor": "editor", bases: "bases", "base-explorer": "baseExplorer", logos: "logoEditor", "logo-draw": "logoDraw",
+    appearance: "gameSettings", sound: "gameSettings", "control-round": "control", "control-finale": "control", friends: "friends", subscribers: "subscribers", tasks: "tasks",
+    "poll-share": "polls", "poll-results": "polls",
+  };
+  const pageId = pageIdByScene[scene.id] || nav.pageIdForPath(scene.path);
+  const route = nav.PAGES[pageId];
+  const routeHref = `${scene.path}${scene.path.includes("?") ? "&" : "?"}lang=${encodeURIComponent(language)}`;
+  const context = { href: routeHref, lang: language, anon: false };
+
+  if (route?.buttons) {
+    for (const [buttonId, spec] of Object.entries(route.buttons)) {
+      const button = topbar.querySelector(`#${buttonId}`);
+      if (!button) continue;
+      const visible = nav.buttonVisible(pageId, spec, "user", scene.width);
+      button.hidden = !visible;
+      button.style.display = visible ? "" : "none";
+      button.dataset.navHidden = String(!visible);
+      if (visible && !spec.custom) button.dataset.previewHref = nav.buttonHref(spec, context);
+    }
+  }
+
+  const backButton = topbar.querySelector("#btnBack, #btnBackBrowse");
+  if (pageId && backButton) {
+    const target = nav.backTarget(pageId, context);
+    if (target) {
+      const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T14430`);
+      const targetName = dictionary.nav?.page?.[target.pageId] || target.pageId;
+      const label = String(dictionary.nav?.backTo || "{page}").replace("{page}", targetName);
+      backButton.dataset.previewHref = target.href;
+      backButton.setAttribute("aria-label", label);
+      backButton.innerHTML = iconText("arrow-left", label);
+    }
+  }
 
   const username = config.sharedFixtures?.[language]?.username || (language === "en" ? "Jan Kowalski" : language === "uk" ? "Ян Ковальський" : "Jan Kowalski");
   const labels = language === "en" ? { language: "Language", account: "Account settings", logout: "Sign out" }
@@ -1099,7 +1135,7 @@ async function applyFixtureToFrame(scene, fixture) {
   if (!doc?.body) throw new Error("brak treści widoku");
   await translateFrame(doc, currentLanguage());
   const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T14430");
-  await normalizeScreenshotTopbar(doc, currentLanguage(), icon, hydrateIcons);
+  await normalizeScreenshotTopbar(doc, currentLanguage(), icon, iconText, hydrateIcons, scene);
   const footerCopy = doc.querySelector('[data-i18n="common.footer.left"]');
   if (footerCopy) footerCopy.textContent = footerCopy.textContent.replace(/©\s*(?:\{?year\}?|\d{4})/i, `© ${new Date().getFullYear()}`);
   doc.documentElement.lang = currentLanguage();
@@ -1388,16 +1424,18 @@ async function applyFixtureToFrame(scene, fixture) {
     for (const rows of categoryByParent.values()) rows.sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
     const topCategories = categoryByParent.get(null) || [];
     const tree = doc.getElementById("tree");
-    if (tree) tree.innerHTML = `<div style="opacity:.75;margin-bottom:6px;">${escapeHtml(strings.folders)}</div><div class="treeList"><div class="row tree-row" data-kind="root" style="cursor:pointer"><div class="col-main" style="padding-left:6px;display:flex;align-items:center;gap:6px;font-weight:700"><button type="button" class="tree-toggle" aria-label="${escapeHtml(strings.folders)}" style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;opacity:.9">${topCategories.length ? icon("caret-down") : ""}</button><div class="title-line"><span class="title-text">${icon("home", { className: "list-ico" })} ${escapeHtml(strings.root)}</span></div></div></div>${topCategories.map(category => {
+    const renderTreeRows = (parentId, depth = 0) => (categoryByParent.get(parentId || null) || []).map(category => {
       const children = categoryByParent.get(category.id) || [];
-      return `<div class="row tree-row" data-kind="cat" data-id="${escapeHtml(category.id)}" draggable="true" style="cursor:pointer"><div class="col-main" style="padding-left:6px;display:flex;align-items:center;gap:6px"><button type="button" class="tree-toggle" aria-label="${escapeHtml(strings.folders)}" style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;opacity:.9">${children.length ? icon("caret-right") : ""}</button><div class="title-line"><span class="title-text">${icon("folder", { className: "list-ico" })} ${escapeHtml(category.name || strings.defaultFolder)}</span></div></div></div>`;
-    }).join("")}${topCategories.length ? "" : `<div style="opacity:.75;padding:6px 8px;">${escapeHtml(strings.emptyFolders)}</div>`}</div>`;
+      const pad = 6 + depth * 10;
+      return `<div class="row tree-row" data-kind="cat" data-id="${escapeHtml(category.id)}" draggable="true"><div class="col-main" style="padding-left:${pad}px;display:flex;align-items:center;gap:6px"><button type="button" class="tree-toggle" aria-label="${escapeHtml(strings.folders)}" style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;opacity:.9">${children.length ? icon("caret-right") : ""}</button><div class="title-line"><span class="title-text">${icon("folder", { className: "list-ico" })} ${escapeHtml(category.name || strings.defaultFolder)}</span></div></div></div>`;
+    }).join("");
+    if (tree) tree.innerHTML = `<div style="opacity:.75;margin-bottom:6px;">${escapeHtml(strings.folders)}</div><div class="treeList"><div class="row tree-row" data-kind="root"><div class="col-main" style="padding-left:6px;display:flex;align-items:center;gap:6px;font-weight:700"><button type="button" class="tree-toggle" aria-label="${escapeHtml(strings.folders)}" style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;opacity:.9">${topCategories.length ? icon("caret-down") : ""}</button><div class="title-line"><span class="title-text">${icon("home", { className: "list-ico" })} ${escapeHtml(strings.root)}</span></div></div></div>${renderTreeRows(null)}${topCategories.length ? "" : `<div style="opacity:.75;padding:6px 8px;">${escapeHtml(strings.emptyFolders)}</div>`}</div>`;
 
     const meta = [ ["prepared", strings.prepared, "rgba(77, 163, 255, .95)"], ["poll_points", strings.pollPoints, "rgba(255, 200, 77, .95)"], ["poll_text", strings.pollText, "rgba(160, 160, 160, .95)"] ];
     const matched = doc.getElementById("matchedCategories");
-    if (matched) matched.innerHTML = `<div class="tagList"><div class="left-panel-heading">${escapeHtml(strings.metaTags)}</div>${meta.map(([id, label, color]) => `<div class="row" data-kind="meta" data-id="${id}" style="padding:6px 8px;display:flex;align-items:center;gap:8px;opacity:.85"><span class="meta-dot" style="--c:${color}"></span><div class="title-text">${escapeHtml(label)}</div></div>`).join("")}</div>`;
+    if (matched) matched.innerHTML = `<div class="tagList"><div class="left-panel-heading">${escapeHtml(strings.metaTags)}</div>${meta.map(([id, label, color]) => `<div class="row" data-kind="meta" data-id="${id}" style="padding:6px 8px;cursor:pointer;display:flex;align-items:center;gap:8px;opacity:.85"><span class="meta-dot" style="--c:${color}"></span><div class="title-text">${escapeHtml(label)}</div></div>`).join("")}</div>`;
     const tagRoot = doc.getElementById("tags");
-    if (tagRoot) tagRoot.innerHTML = `<div class="tagList"><div class="left-panel-heading">${escapeHtml(strings.tags)}</div><button id="btnAddTag" class="btn" type="button" style="width:100%;margin-top:10px" ${!fixture.base ? "disabled" : ""}>${icon("plus")} ${escapeHtml(strings.addTag)}</button>${tags.length ? tags.slice().sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0)).map(tag => `<div class="row" data-kind="tag" data-id="${escapeHtml(tag.id)}" style="padding:6px 8px;display:flex;align-items:center;gap:8px"><span class="tag-dot" style="background:${escapeHtml(tag.color || "rgba(255,255,255,.35)")}"></span><div class="title-text">#${escapeHtml(tag.name || strings.defaultTag)}</div></div>`).join("") : `<div class="left-panel-empty">${escapeHtml(strings.emptyTags)}</div>`}</div>`;
+    if (tagRoot) tagRoot.innerHTML = `<div class="tagList"><div class="left-panel-heading">${escapeHtml(strings.tags)}</div><button id="btnAddTag" class="btn" type="button" style="width:100%;margin-top:10px" ${!fixture.base ? "disabled" : ""}>${icon("plus")} ${escapeHtml(strings.addTag)}</button>${tags.length ? tags.slice().sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0)).map(tag => `<div class="row" data-kind="tag" data-id="${escapeHtml(tag.id)}" style="padding:6px 8px;cursor:pointer;display:flex;align-items:center;gap:8px"><span class="tag-dot" style="background:${escapeHtml(tag.color || "rgba(255,255,255,.35)")}"></span><div class="title-text">#${escapeHtml(tag.name || strings.defaultTag)}</div></div>`).join("") : `<div class="left-panel-empty">${escapeHtml(strings.emptyTags)}</div>`}</div>`;
 
     setText(doc, "breadcrumbs", strings.root);
     const list = doc.getElementById("list");
