@@ -1893,9 +1893,44 @@ async function applyFixtureToFrame(scene, fixture) {
       || candidates.find(value => value.fabricData)
       || candidates.find(value => value.bits_b64)
       || stored?.payload || stored;
+    await hydrateIcons(doc);
     const renderScene = doc.defaultView?.__familiadaScreenshotRenderLogo;
-    if (typeof renderScene !== "function") throw new Error("edytor Fabric nie jest gotowy w podglądzie");
-    await renderScene(payload);
+    let rendered = false;
+    if (typeof renderScene === "function") {
+      try {
+        await renderScene(payload);
+        const objects = doc.defaultView?.__drawFabric?.getObjects?.() || [];
+        rendered = objects.length >= (payload?.source?.fabricData?.objects?.length || 1);
+      } catch (error) {
+        console.warn("[homepage screenshots] real draw editor unavailable; using saved Fabric scene:", error);
+      }
+    }
+    if (!rendered && payload?.source?.fabricData) {
+      const fabric = doc.defaultView?.fabric;
+      const host = doc.getElementById("drawStageHost");
+      if (!fabric?.StaticCanvas || !host) throw new Error("nie można wyrenderować zapisanej sceny rysunku");
+      doc.defaultView.__drawFabric?.dispose?.();
+      const canvas = doc.createElement("canvas");
+      host.replaceChildren(canvas);
+      const saved = payload.source.fabricData;
+      const width = Number(payload.source.world?.w || saved.clipPath?.width) || 1040;
+      const height = Number(payload.source.world?.h || saved.clipPath?.height) || 440;
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      const scene = new fabric.StaticCanvas(canvas, {
+        width, height,
+        backgroundColor: payload.source.bg === "WHITE" ? "#fff" : "#000",
+        enableRetinaScaling: false,
+      });
+      await new Promise(resolve => scene.loadFromJSON(saved, () => {
+        scene.backgroundColor = payload.source.bg === "WHITE" ? "#fff" : "#000";
+        scene.renderAll();
+        resolve();
+      }));
+      if (!scene.getObjects().length) throw new Error("zapisana scena rysunku jest pusta");
+    }
   }
   hydrateIcons(doc);
   doc.body.dataset.fixtureReady = "true";
