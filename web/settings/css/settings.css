@@ -196,6 +196,9 @@ body.settings-body > main.wrap{
 .homepage-shot-shared-row--contact{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
 .homepage-shot-shared-row--subscriber{grid-template-columns:minmax(0,1fr) 170px auto}
 .homepage-shot-action-row{grid-template-columns:minmax(0,1fr) minmax(180px,.7fr) auto;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(0,0,0,.12)}
+.homepage-shot-friend-action-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(105px,.55fr) auto}
+.homepage-shot-friend-choice{display:flex;align-items:center;gap:9px;padding:5px 2px;font-size:13px;cursor:pointer}
+.homepage-shot-friend-choice input{width:17px;height:17px;accent-color:var(--gold,#d7ff3d)}
 .homepage-shot-action-row strong{font-size:14px}
 .homepage-shot-action-add{display:flex;gap:8px;margin-top:9px}
 .homepage-shot-action-add select{flex:1;min-width:0}
@@ -235,7 +238,7 @@ body.settings-body > main.wrap{
 .homepage-shot-frame-wrap{position:relative;max-width:100%;overflow:hidden}
 .homepage-shot-frame-wrap iframe{position:absolute;left:0;top:0;display:block;border:0;background:#050914;transform-origin:top left;pointer-events:none;user-select:none}
 @media(max-width:900px){.homepage-shot-workspace{grid-template-columns:1fr}.homepage-shot-preview iframe{height:64vh}}
-@media(max-width:560px){.homepage-shot-fields{grid-template-columns:1fr}.homepage-shot-field--wide{grid-column:auto}.homepage-shot-editor{padding:10px}.homepage-shot-qr{width:100%}.homepage-shot-action-row{grid-template-columns:1fr}.homepage-shot-action-add{flex-direction:column}.homepage-shot-toolbar--global .homepage-shot-choice{flex:1 1 100%}.homepage-shot-toolbar-actions,.homepage-shot-action-group{width:100%}.homepage-shot-action-group>.btn{flex:1 1 auto}.tabs-card.homepage-shot-tabs-card{--tab-height:52px}.homepage-shot-tabs-card .tab-label{font-size:10px;letter-spacing:.03em}.homepage-shot-tabs-content{padding:12px}}
+@media(max-width:560px){.homepage-shot-fields{grid-template-columns:1fr}.homepage-shot-field--wide{grid-column:auto}.homepage-shot-editor{padding:10px}.homepage-shot-qr{width:100%}.homepage-shot-action-row,.homepage-shot-friend-action-row{grid-template-columns:1fr}.homepage-shot-action-add{flex-direction:column}.homepage-shot-toolbar--global .homepage-shot-choice{flex:1 1 100%}.homepage-shot-toolbar-actions,.homepage-shot-action-group{width:100%}.homepage-shot-action-group>.btn{flex:1 1 auto}.tabs-card.homepage-shot-tabs-card{--tab-height:52px}.homepage-shot-tabs-card .tab-label{font-size:10px;letter-spacing:.03em}.homepage-shot-tabs-content{padding:12px}}
 
 .panel-head{
   display: grid;

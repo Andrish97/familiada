@@ -131,7 +131,12 @@ function langFixture(scene, language = currentLanguage()) {
   }
   if (scene.id === "friends") {
     fixture.friendGroups ||= defaultFriendGroups(language);
-    fixture.friendGroups.friends = structuredClone(shared.friends || []);
+    const loadedFriends = shared.friends || [];
+    const activeEmails = Array.isArray(fixture.friendGroups.activeFriendEmails)
+      ? fixture.friendGroups.activeFriendEmails
+      : loadedFriends.map(person => person.email);
+    fixture.friendGroups.activeFriendEmails = activeEmails.filter(email => loadedFriends.some(person => person.email === email));
+    fixture.friendGroups.friends = loadedFriends.filter(person => fixture.friendGroups.activeFriendEmails.includes(person.email));
   }
   if (scene.id === "subscribers") {
     fixture.outgoing ||= defaultSubscriberInvitations(language);
@@ -244,20 +249,17 @@ function langFixture(scene, language = currentLanguage()) {
 
 function defaultFriendGroups(language) {
   return language === "en" ? {
-    friends: [{ name: "Alex Morgan", email: "alex@example.test" }, { name: "Jamie Lee", email: "jamie@example.test" }],
-    outgoing: [{ name: "Taylor Parker", email: "taylor@example.test" }],
-    incoming: [{ name: "Sam Wilson", email: "sam@example.test" }, { name: "Casey Brown", email: "casey@example.test" }],
-    declined: [{ name: "Jordan Smith", email: "jordan@example.test" }],
+    outgoing: [{ username: "taylor_parker", email: "taylor.parker@example.test", status: "pending" }, { username: "casey_brown", email: "casey.brown@example.test", status: "declined" }],
+    incoming: [{ username: "sam_wilson", email: "sam.wilson@example.test", status: "pending" }, { username: "jordan_smith", email: "jordan.smith@example.test", status: "pending" }],
+    declined: [{ username: "lee_morgan", email: "lee.morgan@example.test", status: "declined" }],
   } : language === "uk" ? {
-    friends: [{ name: "Олександра Новак", email: "oleksandra@example.test" }, { name: "Ян Ковальський", email: "jan@example.test" }],
-    outgoing: [{ name: "Тарас Мельник", email: "taras@example.test" }],
-    incoming: [{ name: "Ірина Шевченко", email: "iryna@example.test" }, { name: "Петро Бондар", email: "petro@example.test" }],
-    declined: [{ name: "Марта Зелінська", email: "marta@example.test" }],
+    outgoing: [{ username: "taras_melnyk", email: "taras.melnyk@example.test", status: "pending" }, { username: "iryna_shevchenko", email: "iryna.shevchenko@example.test", status: "declined" }],
+    incoming: [{ username: "petro_bondar", email: "petro.bondar@example.test", status: "pending" }, { username: "olena_koval", email: "olena.koval@example.test", status: "pending" }],
+    declined: [{ username: "marta_zelinska", email: "marta.zelinska@example.test", status: "declined" }],
   } : {
-    friends: [{ name: "Aleksandra Nowak", email: "aleksandra@example.test" }, { name: "Jan Kowalski", email: "jan@example.test" }],
-    outgoing: [{ name: "Tomasz Lewandowski", email: "tomasz@example.test" }],
-    incoming: [{ name: "Kasia Maj", email: "kasia@example.test" }, { name: "Piotr Zieliński", email: "piotr@example.test" }],
-    declined: [{ name: "Marta Zielińska", email: "marta@example.test" }],
+    outgoing: [{ username: "tomasz_lewandowski", email: "tomasz.lewandowski@example.test", status: "pending" }, { username: "kasia_maj", email: "kasia.maj@example.test", status: "declined" }],
+    incoming: [{ username: "piotr_zielinski", email: "piotr.zielinski@example.test", status: "pending" }, { username: "ewa_wisniewska", email: "ewa.wisniewska@example.test", status: "pending" }],
+    declined: [{ username: "marta_zielinska", email: "marta.zielinska@example.test", status: "declined" }],
   };
 }
 
@@ -302,9 +304,9 @@ function isValidEmail(value) {
 }
 
 function updateSharedFieldValidity(input) {
-  const username = input.matches("[data-shared-username], [data-shared-friend-name]");
+  const username = input.matches("[data-shared-username], [data-shared-friend-name], [data-friend-username]");
   const loggedInName = input.matches("[data-shared-username]");
-  const invalid = username ? /\s/.test(input.value) : !isValidEmail(input.value);
+  const invalid = username ? !input.value.trim() || /\s/.test(input.value) : !isValidEmail(input.value);
   const message = username ? loggedInName ? "Nazwa zalogowanego użytkownika nie może zawierać spacji." : "Nazwa użytkownika nie może zawierać spacji." : "Wpisz poprawny adres e-mail.";
   input.setCustomValidity(invalid ? message : "");
   input.setAttribute("aria-invalid", String(invalid));
@@ -832,6 +834,7 @@ function sharedKeysForScene(sceneId) {
   if (sceneId === "tasks") return ["game"];
   if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
   if (sceneId === "subscribers") return ["people"];
+  if (sceneId === "friends") return ["people"];
   if (sceneId === "poll-share") return ["poll", "question", "subscribers", "subscriberStates", "pollRecipients"];
   if (sceneId === "poll-vote-mobile") return ["poll", "question", "answers"];
   if (sceneId === "poll-results") return ["poll", "question", "answers", "pollQuestions"];
@@ -1211,7 +1214,7 @@ async function applyFixtureToFrame(scene, fixture) {
   doc.querySelectorAll("[data-skel-step]").forEach(node => node.classList.add("skel-step-ready"));
   const requiredByScene = {
     games: ["#grid"], "game-editor": ["#qList", "#aList", "#qText"], bases: ["#mineGrid", "#btnBrowse", "#btnShare", "#btnDuplicate", "#btnExport", "#btnImport", ".footer"], "base-explorer": ["#toolbar", "#tree", "#list", ".footer"],
-    friends: ["#contactsReceived"], subscribers: ["#contactsReceived"], tasks: ["#tasksHost"], "poll-share": ["#cardMain", "#secShare", "#subsGrid"],
+    friends: ["#contactsTabs", "#contactsTabInvite", "#contactsTabReceived", "#contactsOutgoing", "#contactsReceived", "#btnBack", "#who", "#btnManual", "#btnLogout", ".footer"], subscribers: ["#contactsReceived"], tasks: ["#tasksHost"], "poll-share": ["#cardMain", "#secShare", "#subsGrid"],
     "poll-vote-mobile": ["#qtext", "#alist"], "poll-results": ["#cardMain", "#resultsList"],
     appearance: ["#gsContentInner"], sound: ["#gsContentInner"], logos: ["#grid"], "logo-draw": ["#drawStage"],
     "control-round": ["#app"], "control-finale": ["#app"], "host-round": ["#paperText1"], "display-round": ["#gameScreen"], "main-display": ["#gameScreen"],
@@ -1697,24 +1700,41 @@ async function paintPeople(doc, fixture) {
     : language === "uk"
       ? { friends: "Друзі", outgoing: "Очікують та відхилені", incoming: "Пропозиції", declined: "Відхилені мною", active: "Підписники", pending: "Очікують" }
       : { friends: "Znajomi", outgoing: "Oczekujące i odrzucone", incoming: "Propozycje", declined: "Odrzucone przeze mnie", active: "Subskrybenci", pending: "Oczekujące" };
+  const actionTitle = key => ({
+    accept: language === "en" ? "Accept" : language === "uk" ? "Прийняти" : "Przyjmij",
+    reject: language === "en" ? "Decline" : language === "uk" ? "Відхилити" : "Odrzuć",
+    undo_reject: language === "en" ? "Restore" : language === "uk" ? "Відновити" : "Cofnij odmowę",
+    resend: language === "en" ? "Send again" : language === "uk" ? "Надіслати повторно" : "Wyślij ponownie",
+    cancel: language === "en" ? "Cancel" : language === "uk" ? "Скасувати" : "Cofnij",
+    remove: language === "en" ? "Remove" : language === "uk" ? "Видалити" : "Usuń",
+  })[key];
   const contactRow = (person, index, kind) => ({
     id: `shot-contact-${kind}-${index}`, label: person.username || person.name || person.email, compact: true,
     note: friends ? (person.email || "") : "",
     tags: kind === "friends" || kind === "active" ? [] : [{ text: kind === "declined" || person.status === "declined" ? (language === "en" ? "Declined" : language === "uk" ? "Відхилено" : "Odrzucone") : (language === "en" ? "Pending" : language === "uk" ? "Очікує" : "Oczekuje"), cls: "tag--muted" }],
     actions: kind === "incoming"
-      ? [{ key: "accept", icon: "check", title: language === "en" ? "Accept" : language === "uk" ? "Прийняти" : "Akceptuj", onClick: () => {} }, { key: "reject", icon: "cancel", title: language === "en" ? "Decline" : language === "uk" ? "Відхилити" : "Odrzuć", onClick: () => {} }]
+      ? [{ key: "accept", icon: "check", title: actionTitle("accept"), gold: true, onClick: () => {} }, { key: "reject", icon: "cancel", title: actionTitle("reject"), onClick: () => {} }]
       : friends && kind === "declined"
-        ? [{ key: "undo_reject", icon: "undo", title: language === "en" ? "Restore" : language === "uk" ? "Відновити" : "Przywróć", onClick: () => {} }]
-        : [{ key: kind === "outgoing" || person.status === "pending" ? "cancel" : "remove", icon: "trash", title: language === "en" ? "Remove" : language === "uk" ? "Видалити" : "Usuń", onClick: () => {} }],
+        ? [{ key: "undo_reject", icon: "undo", title: actionTitle("undo_reject"), onClick: () => {} }]
+        : friends && kind === "outgoing" && person.status === "pending"
+          ? [{ key: "resend", icon: "refresh", title: actionTitle("resend"), onClick: () => {} }, { key: "cancel", icon: "trash", title: actionTitle("cancel"), onClick: () => {} }]
+          : [{ key: kind === "outgoing" || person.status === "pending" ? "cancel" : "remove", icon: "trash", title: actionTitle(kind === "outgoing" || person.status === "pending" ? "cancel" : "remove"), onClick: () => {} }],
   });
   if (friends) {
     const groups = fixture.friendGroups || defaultFriendGroups(language);
     outgoing.replaceChildren(shareSectionEl({ key: "outgoing", title: labels.outgoing, rows: (groups.outgoing || []).map((row, index) => contactRow(row, index, "outgoing")) }));
-    received.replaceChildren(
+    const sections = [
       shareSectionEl({ key: "friend", title: labels.friends, rows: (groups.friends || []).map((row, index) => contactRow(row, index, "friends")) }),
       shareSectionEl({ key: "incoming", title: labels.incoming, rows: (groups.incoming || []).map((row, index) => contactRow(row, index, "incoming")) }),
-      shareSectionEl({ key: "declined", title: labels.declined, rows: (groups.declined || []).map((row, index) => contactRow(row, index, "declined")), collapsed: true }),
-    );
+    ];
+    const declinedRows = groups.declined || [];
+    if (declinedRows.length) sections.push(shareSectionEl({ key: "declined", title: labels.declined, rows: declinedRows.map((row, index) => contactRow(row, index, "declined")), collapsed: true }));
+    received.replaceChildren(...sections);
+    const outgoingCount = (groups.outgoing || []).filter(row => row.status === "pending").length;
+    const incomingCount = (groups.incoming || []).filter(row => row.status === "pending").length;
+    for (const badge of doc.querySelectorAll("[data-contact-count]")) {
+      badge.textContent = badge.dataset.contactCount === "invite" ? outgoingCount || "" : incomingCount || "";
+    }
     return;
   }
   outgoing.replaceChildren(shareSectionEl({ key: "pending", title: labels.pending, rows: (fixture.outgoing || []).map((row, index) => contactRow(row, index, row.status === "declined" ? "declined" : "outgoing")) }));
@@ -1972,6 +1992,16 @@ async function importConfigJson(file) {
 function readEditorIntoConfig() {
   const scene = config.scenes.find(item => item.id === editorSceneId) || currentScene();
   const fixture = JSON.parse(els.fixture.value);
+  if (scene.id === "friends") {
+    fixture.friendGroups = readFriendGroupActions(fixture);
+    delete fixture.friendGroups.friends;
+    for (const key of ["outgoing", "incoming", "declined"]) {
+      const allowed = key === "outgoing" ? ["pending", "declined"] : key === "incoming" ? ["pending"] : ["declined"];
+      if (fixture.friendGroups[key].some(person => !person.username || /\s/.test(person.username) || !isValidEmail(person.email) || !allowed.includes(person.status))) {
+        throw new Error("Sprawdź nazwy użytkowników, adresy e-mail i statusy na listach znajomych.");
+      }
+    }
+  }
   if (scene.id === "poll-results") fixture.pollVotes = readPollVotes();
   if (scene.id === "tasks") {
     fixture.tasks = (fixture.tasks || []).map((task, index) => ({
@@ -2006,6 +2036,25 @@ function readPollVotes() {
   return votes;
 }
 
+function readFriendGroupActions(fixture = {}) {
+  const root = byId("homepageShotCategoryActions");
+  const prior = fixture.friendGroups || defaultFriendGroups(currentLanguage());
+  const activeFriendEmails = [...root.querySelectorAll("[data-friend-active-email]:checked")].map(input => input.dataset.friendActiveEmail);
+  const friendGroups = { ...prior, activeFriendEmails };
+  for (const key of ["outgoing", "incoming", "declined"]) {
+    const group = root.querySelector(`[data-friend-list="${key}"]`);
+    if (!group) continue;
+    friendGroups[key] = [...group.querySelectorAll("[data-friend-row]")].map(row => ({
+      username: row.querySelector("[data-friend-username]").value.trim(),
+      email: normalizeEmail(row.querySelector("[data-friend-email]").value),
+      status: row.querySelector("[data-friend-status]").value,
+    }));
+  }
+  const sharedFriends = sharedFixture().friends || [];
+  friendGroups.friends = sharedFriends.filter(person => activeFriendEmails.includes(person.email));
+  return friendGroups;
+}
+
 function renderEditorFields(fixture) {
   renderResourceChoices(currentScene());
   els.fields.replaceChildren();
@@ -2015,7 +2064,7 @@ function renderEditorFields(fixture) {
   const scene = currentScene();
   const sharedKeys = new Set(sharedKeysForScene(scene.id));
   for (const [key, value] of Object.entries(fixture)) {
-    if (key === "logoFile" || key === "tasks" || (key === "pollVotes" && scene.id === "poll-results") || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
+    if (key === "logoFile" || key === "tasks" || (key === "pollVotes" && scene.id === "poll-results") || (key === "friendGroups" && scene.id === "friends") || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
     const wrapper = document.createElement("div"); wrapper.className = "homepage-shot-field";
     const label = document.createElement("label"); label.textContent = FIELD_LABELS[key] || key; label.htmlFor = `homepage-shot-field-${key}`;
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
@@ -2037,9 +2086,57 @@ function renderCategoryActions(fixture) {
   const root = byId("homepageShotCategoryActions");
   root.replaceChildren();
   const sceneId = currentScene().id;
-  const visible = ["poll-share", "poll-results", "tasks"].includes(sceneId);
+  const visible = ["friends", "poll-share", "poll-results", "tasks"].includes(sceneId);
   root.hidden = !visible;
   if (!visible) return;
+  if (sceneId === "friends") {
+    const sharedFriends = sharedFixture().friends || [];
+    const groups = fixture.friendGroups || defaultFriendGroups(currentLanguage());
+    const selected = new Set(groups.activeFriendEmails || sharedFriends.map(person => person.email));
+    const language = currentLanguage();
+    const labels = language === "en"
+      ? { activeTitle: "Active friends · shared list", activeHint: "Select people from the shared list. Names and emails are taken from it.", outgoing: "Sent invitations", incoming: "Suggestions", declined: "Declined by me", pending: "Pending", declinedStatus: "Declined", add: "Add person", remove: "Remove", username: "Username", email: "Email", status: "Status", noFriends: "No friends in the shared list." }
+      : language === "uk"
+        ? { activeTitle: "Активні друзі · спільний список", activeHint: "Виберіть людей зі спільного списку. Імена та адреси беруться звідти.", outgoing: "Надіслані запрошення", incoming: "Пропозиції", declined: "Відхилені мною", pending: "Очікує", declinedStatus: "Відхилено", add: "Додати людину", remove: "Видалити", username: "Ім’я користувача", email: "Електронна пошта", status: "Статус", noFriends: "У спільному списку немає друзів." }
+        : { activeTitle: "Aktywni znajomi · lista wspólna", activeHint: "Wybierz osoby z listy wspólnej. Nazwy i e-maile pobierane są z niej.", outgoing: "Wysłane zaproszenia", incoming: "Propozycje", declined: "Odrzucone przeze mnie", pending: "Oczekuje", declinedStatus: "Odrzucono", add: "Dodaj osobę", remove: "Usuń", username: "Nazwa użytkownika", email: "E-mail", status: "Status", noFriends: "Brak znajomych na wspólnej liście." };
+    const active = sharedGroup(root, labels.activeTitle);
+    const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note";
+    note.textContent = labels.activeHint;
+    active.append(note);
+    const activeRows = document.createElement("div"); activeRows.className = "homepage-shot-shared-rows";
+    sharedFriends.forEach((person, index) => {
+      const label = document.createElement("label"); label.className = "homepage-shot-friend-choice";
+      const check = document.createElement("input"); check.type = "checkbox"; check.dataset.friendActiveEmail = person.email; check.checked = selected.has(person.email);
+      const identity = document.createElement("span"); identity.textContent = `${person.username} · ${person.email}`;
+      label.append(check, identity); activeRows.append(label);
+    });
+    if (!sharedFriends.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = labels.noFriends; activeRows.append(empty); }
+    active.append(activeRows);
+
+    for (const [key, statuses] of [["outgoing", ["pending", "declined"]], ["incoming", ["pending"]], ["declined", ["declined"]]]) {
+      const group = sharedGroup(root, labels[key]);
+      group.dataset.friendList = key;
+      const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
+      (groups[key] || []).forEach((person, index) => {
+        const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row homepage-shot-friend-action-row"; row.dataset.friendRow = String(index);
+        sharedField(row, labels.username, person.username || "", { required: true, autocomplete: "off", pattern: "\\S+", dataset: { friendUsername: "true" } });
+        sharedField(row, labels.email, person.email || "", { type: "email", required: true, autocomplete: "off", dataset: { friendEmail: "true" } });
+        const statusField = document.createElement("label"); statusField.className = "homepage-shot-shared-field";
+        const statusLabel = document.createElement("span"); statusLabel.textContent = labels.status;
+        const status = document.createElement("select"); status.className = "inp"; status.dataset.friendStatus = "true";
+        for (const value of statuses) { const option = document.createElement("option"); option.value = value; option.textContent = value === "pending" ? labels.pending : labels.declinedStatus; status.append(option); }
+        status.value = statuses.includes(person.status) ? person.status : statuses[0];
+        statusField.append(statusLabel, status);
+        row.append(statusField);
+        sharedButton(row, labels.remove, "remove-friend-action", index);
+        rows.append(row);
+      });
+      group.append(rows);
+      sharedButton(group, labels.add, "add-friend-action");
+    }
+    root.querySelectorAll("[data-friend-username], [data-friend-email]").forEach(updateSharedFieldValidity);
+    return;
+  }
   if (sceneId === "tasks") {
     const group = sharedGroup(root, "Stan zadań");
     const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
@@ -2452,8 +2549,28 @@ export async function initHomepageScreenshots() {
       }
       const friendsScene = config.scenes.find(scene => scene.id === "friends");
       const friendsFixture = config.localeFixtures[language].friends || localizeFixture(friendsScene?.fixture || {}, language);
-      if (!friendsFixture.friendGroups) { friendsFixture.friendGroups = defaultFriendGroups(language); initializeSharedFixtures = true; }
-      if (Array.isArray(friendsFixture.friendGroups.friends)) { delete friendsFixture.friendGroups.friends; initializeSharedFixtures = true; }
+      const groupDefaults = defaultFriendGroups(language);
+      const friendGroups = friendsFixture.friendGroups || {};
+      const normalizedFriendGroups = { ...groupDefaults, ...friendGroups };
+      for (const key of ["outgoing", "incoming", "declined"]) {
+        const allowed = key === "outgoing" ? ["pending", "declined"] : key === "incoming" ? ["pending"] : ["declined"];
+        const source = Array.isArray(friendGroups[key]) ? friendGroups[key] : groupDefaults[key];
+        normalizedFriendGroups[key] = source.map((person, index) => {
+          const fallback = groupDefaults[key][index % groupDefaults[key].length];
+          const status = allowed.includes(person.status) ? person.status : fallback.status;
+          return {
+            username: String(person.username || person.name || fallback.username).trim().replace(/\s+/g, "_"),
+            email: String(person.email || fallback.email).trim(),
+            status,
+          };
+        });
+      }
+      normalizedFriendGroups.activeFriendEmails = Array.isArray(friendGroups.activeFriendEmails)
+        ? friendGroups.activeFriendEmails.filter(email => normalized.friends.some(person => person.email === email))
+        : normalized.friends.map(person => person.email);
+      delete normalizedFriendGroups.friends;
+      if (JSON.stringify(normalizedFriendGroups) !== JSON.stringify(friendGroups)) initializeSharedFixtures = true;
+      friendsFixture.friendGroups = normalizedFriendGroups;
       config.localeFixtures[language].friends = friendsFixture;
       const subscribersScene = config.scenes.find(scene => scene.id === "subscribers");
       const subscribersFixture = config.localeFixtures[language].subscribers || localizeFixture(subscribersScene?.fixture || {}, language);
@@ -2669,7 +2786,12 @@ export async function initHomepageScreenshots() {
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
     byId("homepageShotCategoryActions").addEventListener("change", event => {
-      if (event.target.matches("[data-poll-action-status]")) {
+      if (event.target.matches("[data-friend-active-email], [data-friend-status]")) {
+        const fixture = JSON.parse(els.fixture.value);
+        fixture.friendGroups = readFriendGroupActions(fixture);
+        els.fixture.value = JSON.stringify(fixture, null, 2);
+        scheduleFixtureSave();
+      } else if (event.target.matches("[data-poll-action-status]")) {
         config.localeFixtures[currentLanguage()]["poll-share-actions"] = readPollActions();
         els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
         scheduleFixtureSave();
@@ -2686,9 +2808,29 @@ export async function initHomepageScreenshots() {
         scheduleFixtureSave();
       }
     });
+    byId("homepageShotCategoryActions").addEventListener("input", event => {
+      if (!event.target.matches("[data-friend-username], [data-friend-email]")) return;
+      const fixture = JSON.parse(els.fixture.value);
+      fixture.friendGroups = readFriendGroupActions(fixture);
+      els.fixture.value = JSON.stringify(fixture, null, 2);
+      scheduleFixtureSave();
+      updateSharedFieldValidity(event.target);
+    });
     byId("homepageShotCategoryActions").addEventListener("click", event => {
       const button = event.target.closest("[data-shared-action]");
       if (!button) return;
+      if (button.dataset.sharedAction === "add-friend-action" || button.dataset.sharedAction === "remove-friend-action") {
+        const fixture = JSON.parse(els.fixture.value);
+        fixture.friendGroups = readFriendGroupActions(fixture);
+        const section = button.closest("[data-friend-list]");
+        const key = section.dataset.friendList;
+        if (button.dataset.sharedAction === "remove-friend-action") fixture.friendGroups[key].splice(Number(button.dataset.index), 1);
+        else fixture.friendGroups[key].push({ username: "", email: "", status: key === "outgoing" ? "pending" : key === "incoming" ? "pending" : "declined" });
+        els.fixture.value = JSON.stringify(fixture, null, 2);
+        renderEditorFields(fixture);
+        scheduleFixtureSave();
+        return;
+      }
       const fixture = langFixture(currentScene());
       if (button.dataset.sharedAction === "add-poll-recipient") {
         const select = byId("homepageShotCategoryActions").querySelector("[data-poll-action-add]");
