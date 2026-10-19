@@ -6,11 +6,8 @@ const button = document.getElementById("btnInstallAdmin");
 const pwaApi = initPwa({ registerServiceWorker: false });
 const INSTALL_DISMISSED_KEY = "pwa:install_dismissed";
 const ADMIN_APP_SHELL_KEY = "admin-pwa:standalone";
-const ADMIN_APP_INSTALLED_KEY = "admin-pwa:installed";
 let didRunUnlockedSetup = false;
-let installedCheck;
-let adminInstalled = localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1";
-let installationObserved = false;
+let adminInstalled = false;
 
 function isIOSSafari() {
   const ua = navigator.userAgent || "";
@@ -20,6 +17,10 @@ function isIOSSafari() {
 
 function isIOSDevice() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent || "") || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function isMacSafari() {
+  return /Mac/.test(navigator.platform) && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
 }
 
 function tSafe(key, fallback) {
@@ -32,10 +33,7 @@ function isAdminStandalone() {
   if (new URLSearchParams(location.search).get("app") === "admin") {
     sessionStorage.setItem(ADMIN_APP_SHELL_KEY, "1");
   }
-  if (sessionStorage.getItem(ADMIN_APP_SHELL_KEY) === "1") {
-    localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
-    return true;
-  }
+  if (sessionStorage.getItem(ADMIN_APP_SHELL_KEY) === "1") return true;
 
   // Access may remove the start URL query while returning to the panel. The
   // admin app has its own worker, so use it to identify the installed shell.
@@ -43,50 +41,21 @@ function isAdminStandalone() {
   if (!workerUrl) return false;
   try {
     const worker = new URL(workerUrl);
-    const isAdminWorker = worker.origin === location.origin && worker.pathname === "/settings/sw.js?v=v2026-10-19T09560";
-    if (isAdminWorker) localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
-    return isAdminWorker;
+    return worker.origin === location.origin && worker.pathname === "/settings/sw.js";
   } catch {
     return false;
   }
-}
-
-function isAdminInstalled() {
-  if (isAdminStandalone()) return Promise.resolve(true);
-  if (localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1") return Promise.resolve(true);
-  if (!installedCheck) {
-    installedCheck = (async () => {
-      if (typeof navigator.getInstalledRelatedApps !== "function") {
-        return localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1";
-      }
-      try {
-        const apps = await navigator.getInstalledRelatedApps();
-        // This manifest declares only the admin PWA as a related web app.
-        // Chrome may report a computed id, so don't compare it to the manifest id.
-        const installed = apps.some((app) => app.platform === "webapp");
-        if (installed) localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
-        return installed;
-      } catch {
-        return localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1";
-      }
-    })();
-  }
-  return installedCheck;
 }
 
 function updateButton() {
   if (!button) return;
   const locked = document.body.classList.contains("settings-locked");
   const standaloneAdmin = isAdminStandalone();
-  button.style.display = locked || standaloneAdmin || adminInstalled ? "none" : "";
-  button.disabled = adminInstalled;
-  button.title = adminInstalled ? "Panel admina jest już zainstalowany" : "Zainstaluj panel admina";
+  const installAvailable = pwaApi.canInstall() || isIOSSafari() || isMacSafari();
+  button.style.display = locked || standaloneAdmin || adminInstalled || !installAvailable ? "none" : "";
+  button.disabled = false;
+  button.title = "Zainstaluj panel admina";
   button.setAttribute("aria-label", button.title);
-  const iconName = adminInstalled ? "check" : "download";
-  if (button.dataset.installIcon !== iconName) {
-    button.dataset.installIcon = iconName;
-    button.innerHTML = `<i class="ico" data-icon="${iconName}" aria-hidden="true"></i>`;
-  }
 }
 
 function registerAdminWorker() {
@@ -116,7 +85,7 @@ async function showIosPrompt() {
 }
 
 async function showAutomaticInstallPrompt() {
-  if (isStandalone() || await isAdminInstalled() || !pwaApi.canInstall() || localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
+  if (isStandalone() || !pwaApi.canInstall() || localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
   let installResult = null;
   const accepted = await confirmModal({
     title: tSafe("games.pwaInstall.adminTitle", "Zainstaluj panel admina"),
@@ -129,13 +98,11 @@ async function showAutomaticInstallPrompt() {
   else pwaApi.dismiss();
 }
 
-async function setupAfterAccess() {
+function setupAfterAccess() {
   updateButton();
   registerAdminWorker();
   if (didRunUnlockedSetup || document.body.classList.contains("settings-locked")) return;
   didRunUnlockedSetup = true;
-  adminInstalled = installationObserved || await isAdminInstalled();
-  updateButton();
   if (isIOSSafari()) void showIosPrompt();
   else if (pwaApi.canInstall()) void showAutomaticInstallPrompt();
 }
@@ -145,31 +112,17 @@ authObserver.observe(document.body, { attributes: true, attributeFilter: ["class
 setupAfterAccess();
 
 window.addEventListener("pwa:installable", () => {
-  void isAdminInstalled().then((installed) => {
-    adminInstalled = installationObserved || installed;
-    updateButton();
-    if (!installed && !document.body.classList.contains("settings-locked")) void showAutomaticInstallPrompt();
-  });
+  updateButton();
+  if (!document.body.classList.contains("settings-locked")) void showAutomaticInstallPrompt();
 });
 window.addEventListener("pwa:installed", () => {
-  installationObserved = true;
   adminInstalled = true;
-  localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
   updateButton();
 });
 navigator.serviceWorker?.addEventListener("controllerchange", updateButton);
 
 button?.addEventListener("click", async () => {
-  if (isAdminStandalone() || adminInstalled || await isAdminInstalled()) {
-    adminInstalled = true;
-    updateButton();
-    await alertModal({
-      title: "Panel admina jest już zainstalowany",
-      text: "Otwórz panel z ikony na ekranie głównym lub w menu aplikacji.",
-      okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
-    });
-    return;
-  }
+  if (isAdminStandalone() || adminInstalled) return;
   if (isStandalone() && !isAdminStandalone()) {
     await alertModal({
       title: tSafe("games.pwaInstall.adminStandaloneTitle", "Dodaj osobny panel admina"),
@@ -180,7 +133,7 @@ button?.addEventListener("click", async () => {
   }
   if (!pwaApi.canInstall()) {
     const ios = isIOSDevice();
-    const macSafari = /Mac/.test(navigator.platform) && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
+    const macSafari = isMacSafari();
     const ua = navigator.userAgent || "";
     const isAndroidChrome = /Android/i.test(ua) && /Chrome\//i.test(ua) && !/EdgA|OPR\//i.test(ua);
     const title = ios
