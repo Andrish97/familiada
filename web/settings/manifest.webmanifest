@@ -1,10 +1,10 @@
 {
-  "id": "/settings/?app=admin",
+  "id": "/?app=admin",
   "name": "Familiada — pulpit admina",
   "short_name": "Panel admina",
   "description": "Zabezpieczony panel administracyjny Familiady",
-  "start_url": "/settings/?app=admin",
-  "scope": "/settings/",
+  "start_url": "/?app=admin",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#050914",
   "theme_color": "#050914",

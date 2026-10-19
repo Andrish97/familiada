@@ -40,7 +40,7 @@ function updateButton() {
 function registerAdminWorker() {
   if (document.body.classList.contains("settings-locked")) return;
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/settings/sw.js", { scope: "/settings/" }).catch(() => {});
+    navigator.serviceWorker.register("/settings/sw.js", { scope: "/" }).catch(() => {});
   }
 }
 

@@ -127,6 +127,9 @@ export default {
         if (url.pathname === "/version.txt") {
           return withHeaders(res, { "Cache-Control": "no-store" });
         }
+        if (url.pathname === "/settings/sw.js") {
+          return withHeaders(res, { "Service-Worker-Allowed": "/" });
+        }
         return res;
       }
 

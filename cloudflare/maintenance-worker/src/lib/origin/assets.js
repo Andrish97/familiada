@@ -91,6 +91,8 @@ export function isSettingsAsset(pathname) {
   ]);
   return screenshotFrames.has(pathname)
     || isSharedAssetPath(pathname)
+    || ["/settings/manifest.webmanifest", "/settings/sw.js"].includes(pathname)
+    || pathname.startsWith("/settings/icons/")
     || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/games/editor/css/", "/bases/css/", "/bases/explorer/css/", "/friends/css/", "/subscribers/css/", "/tasks/css/", "/polls/css/", "/logo/css/", "/control/css/", "/control/js/", "/control/display/css/", "/control/display/js/", "/control/host/css/", "/control/host/js/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
 }
 
