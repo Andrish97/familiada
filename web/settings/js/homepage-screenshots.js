@@ -151,9 +151,16 @@ function langFixture(scene, language = currentLanguage()) {
     const game = resource.data || {};
     const questions = Array.isArray(game.questions) ? game.questions : [];
     fixture.game = resource.name;
-    if (scene.id === "game-editor") fixture.gameQuestions = questions.map(question => ({
+    if (scene.id === "game-editor") {
+      const mappedQuestions = questions.map(question => ({
       text: question.text || "", answers: (question.answers || []).map(answer => ({ text: answer.text || "", points: Number(answer.fixed_points ?? answer.points) || 0 })),
-    }));
+      }));
+      const selectedIndex = Math.min(Number(selection.questionIndex) || 0, Math.max(0, mappedQuestions.length - 1));
+      fixture.gameQuestions = mappedQuestions.length
+        ? [mappedQuestions[selectedIndex], ...mappedQuestions.filter((_, index) => index !== selectedIndex)]
+        : [];
+      fixture.activeQuestionIndex = 0;
+    }
     if (scene.id === "control-finale" && questions.length) {
       const previous = fixture.finale || [];
       fixture.finale = (previous.length ? previous : questions.slice(0, 5).map(question => question.text)).map((text, index) =>
@@ -1126,6 +1133,7 @@ async function applyFixtureToFrame(scene, fixture) {
     editorPanel?.classList.add("hasQ");
     setInput(doc, "qText", fixture.question);
     const qList = doc.getElementById("qList");
+    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T12091");
     const questions = fixture.gameQuestions || [
       { text: fixture.question, answers: (fixture.answers || []).map((text, i) => ({ text, points: fixture.points?.[i] ?? 0 })) },
     ];
@@ -1136,10 +1144,12 @@ async function applyFixtureToFrame(scene, fixture) {
       const addTileHint = language === "en" ? "At least 10 questions" : language === "uk" ? "Додай щонайменше 10 запитань" : "Dodaj co najmniej 10 pytań";
       const addTile = questions.length ? `<button type="button" class="qcard addTile"><div class="plus">${icon("plus")}</div><div class="txt">${addTileLabel}</div><div class="sub">${addTileHint}</div></button>` : `<div class="qcard"><div class="qprev">${language === "en" ? "No game selected" : language === "uk" ? "Гру не вибрано" : "Nie wybrano gry"}</div></div>`;
       qList.innerHTML = addTile + questions.map((question, i) => {
-        const answers = question.answers;
+        const answers = Array.isArray(question.answers) ? question.answers : [];
         const sum = answers.reduce((total, answer) => total + (Number(answer.points) || 0), 0);
-        const valid = question.text.trim().length > 0 && answers.length >= 3 && answers.length <= 6
-          && answers.every(answer => answer.text.trim().length > 0) && sum <= 100;
+        const valid = questionProblems({
+          text: question.text,
+          answers: answers.map(answer => ({ text: answer.text, fixed_points: answer.points })),
+        }, "prepared").length === 0;
         const status = valid ? "good" : "bad";
         const meta = language === "en" ? `${answers.length}/6 answers · ${sum}/100 pts`
           : language === "uk" ? `${answers.length}/6 відповідей · ${sum}/100 балів`
