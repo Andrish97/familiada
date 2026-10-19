@@ -2226,12 +2226,8 @@ export async function initHomepageScreenshots() {
       if (target < 0 || target >= ids.length) return;
       [ids[index], ids[target]] = [ids[target], ids[index]];
       if (isGames) selection.resourceId = ids.find(id => (selection.resourceIds || []).includes(id)) || "";
-      dirty = true;
-      updateDirtyIndicators();
       try {
         await saveConfig();
-        dirty = false;
-        updateDirtyIndicators();
         updateEditor();
       } catch (error) { setStatus(`Nie udało się zapisać kolejności zasobów: ${error.message}`); }
     });
