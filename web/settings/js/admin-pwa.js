@@ -5,6 +5,7 @@ import { t } from "/shared/translation/translation.js?v=v2026-10-19T08531";
 const button = document.getElementById("btnInstallAdmin");
 const pwaApi = initPwa({ registerServiceWorker: false });
 const INSTALL_DISMISSED_KEY = "pwa:install_dismissed";
+const ADMIN_APP_SHELL_KEY = "admin-pwa:standalone";
 let didRunUnlockedSetup = false;
 
 function isIOSSafari() {
@@ -13,15 +14,27 @@ function isIOSSafari() {
   return ios && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
 }
 
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent || "") || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function tSafe(key, fallback) {
   const value = t(key);
   return !value || value === key ? fallback : value;
 }
 
+function isAdminStandalone() {
+  if (!isStandalone()) return false;
+  if (new URLSearchParams(location.search).get("app") === "admin") {
+    sessionStorage.setItem(ADMIN_APP_SHELL_KEY, "1");
+  }
+  return sessionStorage.getItem(ADMIN_APP_SHELL_KEY) === "1";
+}
+
 function updateButton() {
   if (!button) return;
   const locked = document.body.classList.contains("settings-locked");
-  button.style.display = locked || isStandalone() || (!pwaApi.canInstall() && !isIOSSafari()) ? "none" : "";
+  button.style.display = locked || isAdminStandalone() ? "none" : "";
 }
 
 function registerAdminWorker() {
@@ -82,14 +95,27 @@ window.addEventListener("pwa:installable", () => {
 window.addEventListener("pwa:installed", updateButton);
 
 button?.addEventListener("click", async () => {
+  if (isStandalone() && !isAdminStandalone()) {
+    await alertModal({
+      title: "Zainstaluj osobny panel admina",
+      text: "Panel jest teraz otwarty w aplikacji Familiada. Otwórz tę stronę w Safari lub Chrome, aby dodać osobną ikonę panelu admina.",
+      okText: "Rozumiem",
+    });
+    return;
+  }
   if (!pwaApi.canInstall()) {
-    const ios = isIOSSafari();
-    const fallback = ios
-      ? { title: "Dodaj panel admina do ekranu początkowego", text: "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie dodaj panel. Logowanie Access nadal będzie wymagane." }
-      : { title: "Zainstaluj panel admina", text: "W menu przeglądarki wybierz „Zainstaluj panel admina” lub „Dodaj do ekranu głównego”. Logowanie Access nadal będzie wymagane." };
+    const ios = isIOSDevice();
+    const macSafari = /Mac/.test(navigator.platform) && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
+    const title = ios ? "Dodaj panel admina do ekranu początkowego" : "Zainstaluj panel admina";
+    const text = ios
+      ? "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie dodaj panel. Logowanie Access nadal będzie wymagane."
+      : macSafari
+        ? "W Safari wybierz Plik → Dodaj do Docka. Panel admina będzie osobną aplikacją, a logowanie Access nadal będzie wymagane."
+        : "W menu Chrome lub Edge wybierz „Zainstaluj panel admina” albo „Dodaj do ekranu głównego”. Logowanie Access nadal będzie wymagane.";
+    const fallback = { title, text };
     await alertModal({
       title: tSafe(ios ? "games.iosWebapp.title" : "games.pwaInstall.title", fallback.title),
-      text: tSafe(ios ? "games.iosWebapp.text" : "games.pwaInstall.manual", fallback.text),
+      text: ios ? tSafe("games.iosWebapp.text", fallback.text) : fallback.text,
       okText: tSafe("games.pwaInstall.ok", "OK"),
     });
     return;
