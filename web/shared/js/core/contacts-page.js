@@ -110,7 +110,7 @@ export async function initContactsPage(pageId) {
     } catch (error) { await report(error); }
     finally { delete button.dataset.locked; button.disabled = false; cooldowns.tick(); }
   }
-  function rowOf(row) {
+  function rowOf(row, statusIsRedundant = false) {
     const actions = [];
     const add = (kind, icon, gold = false, iconOnly = false) => actions.push({ key: kind, icon, gold, iconOnly,
       title: t(`contacts.actions.${kind}`), onClick: (_, button) => action(row, kind, button),
@@ -132,7 +132,7 @@ export async function initContactsPage(pageId) {
     else add("remove", "trash", false, true);
     const state = friends && row.direction === "friend" ? "active" : row.status;
     return { id: row.id, label: friends ? row.label : row.email, compact: true,
-      tags: state === "active" ? [] : [{ text: t(`contacts.status.${state}`) }],
+      tags: state === "active" || statusIsRedundant ? [] : [{ text: t(`contacts.status.${state}`) }],
       note: friends ? row.email : row.friend_user_id ? t("contacts.accountCreated") : "",
       actions };
   }
@@ -143,7 +143,7 @@ export async function initContactsPage(pageId) {
         ? row.direction === "incoming" && row.status === "declined"
         : (!friends && key === "pending" ? ["pending", "declined"].includes(row.status) : (friends ? row.direction : row.status) === key) && !(friends && key === "incoming" && row.status === "declined"));
       const section = shareSectionEl({ key, title: t(`contacts.sections.${!friends && key === "pending" ? "outgoing" : key}`),
-        rows: selected.map(rowOf),
+        rows: selected.map(row => rowOf(row, friends && (key === "incoming" || key === "declined"))),
         ...(key === "declined" && friends ? { collapsed: declinedCollapsed, onToggle: value => { declinedCollapsed = value; } } : {}),
         emptyText: t(`contacts.empty.${key}`) });
       // Zachowane znaczniki dla wskazania zaproszenia i testów przepływu.
