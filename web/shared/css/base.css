@@ -2637,6 +2637,7 @@ body{
 }
 .grid .tile .meta{
   margin-top: 6px;
+  padding-right: 40px; /* nie wchodź pod przycisk w prawym górnym rogu */
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: .08em;
@@ -2669,6 +2670,7 @@ body{
 /* Czego brakuje do następnego kroku (games.rules_state z bazy) */
 .grid .tile .rules{
   margin-top: 4px;
+  padding-right: 40px; /* wskazówki/statusy mają ten sam bezpieczny obszar co nazwa */
   font-size: 11px;
   line-height: 1.3;
   /* stonowane złoto Familiady (--gold), nie jaskrawy pomarańcz */
