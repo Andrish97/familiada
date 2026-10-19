@@ -32,6 +32,7 @@ const FIELD_LABELS = {
   points: "Punkty odpowiedzi", bases: "Bazy na liście", base: "Nazwa bazy", folders: "Foldery bazy",
   questions: "Wpisy bazy", people: "Znajomi lub subskrybenci", tasks: "Zadania", poll: "Nazwa ankiety",
   question: "Pytanie ankiety", subscribers: "Zaproszeni subskrybenci", link: "Link do ankiety",
+  votesReceived: "Liczba głosów w statusie",
   teams: "Nazwy drużyn", revealed: "Odsłonięte odpowiedzi (numery)",
   scores: "Wyniki drużyn", crosses: "Iksy drużyn", bank: "Punkty na planszy", finale: "Pytania finału",
   logos: "Logo na liście", logo: "Nazwa logo", words: "Hasła na planszy",
@@ -118,6 +119,10 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.activeSubscriberEmails = selectedEmails.filter(email => (shared.subscribers || []).includes(email));
     fixture.people = (shared.subscribers || []).filter(email => fixture.activeSubscriberEmails.includes(email)).map(email => ({ email, name: email, state: "active" }));
   }
+  if (scene.id === "poll-share") {
+    const votes = Number(fixture.votesReceived);
+    fixture.votesReceived = Number.isFinite(votes) && votes >= 0 ? Math.floor(votes) : 18;
+  }
   if (scene.id === "tasks") {
     const friends = shared.friends || [];
     fixture.tasks = (fixture.tasks || []).map((task, index) => ({
@@ -132,12 +137,11 @@ function langFixture(scene, language = currentLanguage()) {
     if (scene.id === "poll-vote-mobile") fixture.answers = pollQuestions[0]?.answers.map(answer => answer.text) || fixture.answers;
     if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
     if (scene.id === "poll-share") {
-      const names = subscriberNames(language);
-      const recipients = (config.localeFixtures?.[language]?.["poll-share-actions"] || names.map((_, index) => ({ subscriberIndex: index, responded: index === 0 })))
-        .filter(recipient => Number.isInteger(recipient.subscriberIndex) && recipient.subscriberIndex >= 0 && recipient.subscriberIndex < names.length);
-      fixture.pollRecipients = structuredClone(recipients);
-      fixture.subscribers = recipients.map(recipient => names[recipient.subscriberIndex]).filter(Boolean);
-      fixture.subscriberStates = recipients.map(recipient => !!recipient.responded);
+      fixture.pollType = "poll_points";
+      fixture.pollRecipients = normalizePollShareActions(shared, config.localeFixtures?.[language]?.["poll-share-actions"]);
+      const visibleRecipients = fixture.pollRecipients.filter(recipient => !recipient.hidden);
+      fixture.subscribers = visibleRecipients.map(recipient => recipient.username || recipient.email);
+      fixture.subscriberStates = visibleRecipients.map(recipient => recipient.status === "done");
     }
   }
   if (scene.id === "friends") {
@@ -155,7 +159,7 @@ function langFixture(scene, language = currentLanguage()) {
 
   const selection = config.viewResources?.[language]?.[scene.id] || {};
   let resource = scene.id === "tasks" ? null : selectedResource(scene.id, language, "game");
-  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && !canOpenPollResource(resource)) resource = null;
+  if (["poll-vote-mobile", "poll-results"].includes(scene.id) && !canOpenPollResource(resource)) resource = null;
   if (scene.id === "game-editor") fixture.activeQuestionIndex = Number(selection.questionIndex) || 0;
   if (scene.id === "games") {
     const loadedPrepared = ensureResourceData(language).filter(item => item.type === "game" && gameResourceType(item) === "prepared");
@@ -192,6 +196,10 @@ function langFixture(scene, language = currentLanguage()) {
     const game = resource.data || {};
     const questions = Array.isArray(game.questions) ? game.questions : [];
     fixture.game = resource.name;
+    if (scene.id === "poll-share") {
+      fixture.poll = resource.name;
+      fixture.pollType = gameResourceType(resource);
+    }
     if (scene.id === "game-editor") fixture.gameQuestions = questions.map(question => ({
       text: question.text || "", answers: (question.answers || []).map(answer => ({ text: answer.text || "", points: Number(answer.fixed_points ?? answer.points) || 0 })),
     }));
@@ -208,6 +216,7 @@ function langFixture(scene, language = currentLanguage()) {
     }
     if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && gameResourceType(resource) !== "prepared") {
       fixture.poll = resource.name;
+      fixture.pollType = gameResourceType(resource);
       if (scene.id === "poll-results" && !Array.isArray(fixture.pollVotes)) fixture.pollVotes = questions.map(question => (question.answers || []).map(() => 0));
       const pollQuestions = questions.map((question, questionIndex) => ({
         text: question.text || "", answers: (question.answers || []).map((answer, answerIndex) => ({
@@ -219,21 +228,14 @@ function langFixture(scene, language = currentLanguage()) {
       fixture.question = pollQuestions[pollQuestionIndex]?.text || "";
       if (scene.id === "poll-vote-mobile") fixture.answers = pollQuestions[pollQuestionIndex]?.answers.map(answer => answer.text) || [];
       if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
-      if (scene.id === "poll-share") {
-        const names = subscriberNames(language);
-        const recipients = (config.localeFixtures?.[language]?.["poll-share-actions"] || names.map((_, index) => ({ subscriberIndex: index, responded: index === 0 })))
-          .filter(item => Number.isInteger(item.subscriberIndex) && item.subscriberIndex >= 0 && item.subscriberIndex < names.length);
-        fixture.pollRecipients = structuredClone(recipients);
-        fixture.subscribers = recipients.map(item => names[item.subscriberIndex]).filter(Boolean);
-        fixture.subscriberStates = recipients.map(item => !!item.responded);
-      }
     }
   }
   if (!resource && ["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale"].includes(scene.id)) {
     fixture.game = ""; fixture.question = ""; fixture.answers = []; fixture.points = []; fixture.gameQuestions = []; fixture.finale = [];
   }
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && !resource) {
-    fixture.poll = ""; fixture.question = ""; fixture.answers = []; fixture.pollQuestions = []; fixture.pollRecipients = []; fixture.subscribers = []; fixture.subscriberStates = [];
+    fixture.poll = ""; fixture.pollType = ""; fixture.question = ""; fixture.answers = []; fixture.pollQuestions = [];
+    if (scene.id !== "poll-share") { fixture.pollRecipients = []; fixture.subscribers = []; fixture.subscriberStates = []; }
   }
   if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = shared.teams || [];
   if (scene.id === "base-explorer") {
@@ -372,8 +374,30 @@ function sharedFixture(language = currentLanguage()) {
   return config.sharedFixtures[language];
 }
 
-function subscriberNames(language = currentLanguage()) {
-  return config.sharedFixtures?.[language]?.subscribers || [];
+function normalizePollShareActions(shared, saved = []) {
+  const friends = Array.isArray(shared?.friends) ? shared.friends : [];
+  const friendEmails = new Set(friends.map(person => normalizeEmail(person.email)));
+  const entries = [
+    ...friends.map(person => ({ type: "friend", email: normalizeEmail(person.email), username: person.username })),
+    ...(shared?.subscribers || []).filter(email => !friendEmails.has(normalizeEmail(email))).map(email => ({ type: "subscriber", email: normalizeEmail(email), username: "" })),
+  ];
+  const byRecipient = new Map();
+  (Array.isArray(saved) ? saved : []).forEach(action => {
+    const type = action.type === "friend" ? "friend" : action.type === "subscriber" ? "subscriber" : Number.isInteger(action.subscriberIndex) ? "subscriber" : "";
+    const email = normalizeEmail(action.email || (type === "subscriber" ? shared?.subscribers?.[action.subscriberIndex] : ""));
+    if (!type || !email) return;
+    const status = ["pending", "opened", "done", "declined"].includes(action.status)
+      ? action.status
+      : action.responded ? "done" : (type === "subscriber" && action.subscriberIndex === 0 ? "done" : "pending");
+    byRecipient.set(`${type}:${email}`, { status, hidden: !!action.hidden });
+  });
+  return entries.map((recipient, index) => ({
+    ...recipient,
+    ...(byRecipient.get(`${recipient.type}:${recipient.email}`) || {
+      status: index === 0 || recipient.type === "subscriber" && index === friends.length ? "done" : index === 1 ? "opened" : "pending",
+      hidden: false,
+    }),
+  }));
 }
 
 function ensureResourceData(language = currentLanguage()) {
@@ -689,7 +713,8 @@ function resourceChoiceSpec(scene) {
   };
   if (scene.id === "base-explorer") return { type: "base" };
   if (scene.id === "logo-draw") return { type: "logo" };
-  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) return { type: "game", filter: canOpenPollResource, label: "Ankieta do otwarcia", question: true };
+  if (scene.id === "poll-share") return { type: "game", label: "Gra" };
+  if (["poll-vote-mobile", "poll-results"].includes(scene.id)) return { type: "game", filter: canOpenPollResource, label: "Gra ankietowa", question: scene.id === "poll-vote-mobile" };
   if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
   if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
   return null;
@@ -837,7 +862,7 @@ function sharedKeysForScene(sceneId) {
   if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
   if (sceneId === "subscribers") return ["people"];
   if (sceneId === "friends") return ["people"];
-  if (sceneId === "poll-share") return ["poll", "question", "subscribers", "subscriberStates", "pollRecipients"];
+  if (sceneId === "poll-share") return ["poll", "pollType", "question", "subscribers", "subscriberStates", "pollRecipients"];
   if (sceneId === "poll-vote-mobile") return ["poll", "question", "answers"];
   if (sceneId === "poll-results") return ["poll", "question", "answers", "pollQuestions"];
   return [];
@@ -1767,21 +1792,27 @@ async function paintPoll(doc, scene, fixture) {
       const title = empty.querySelector(".name");
       const meta = empty.querySelector(".meta");
       if (title) title.textContent = currentLanguage() === "en" ? "No open poll" : currentLanguage() === "uk" ? "Немає відкритого опитування" : "Brak otwartej ankiety";
-      if (meta) meta.textContent = currentLanguage() === "en" ? "Choose a game opened as a poll in the screenshot settings." : currentLanguage() === "uk" ? "Виберіть гру, відкриту як опитування, у налаштуваннях знімка." : "Wybierz grę otwartą jako ankietę w ustawieniach zrzutu.";
+      if (meta) meta.textContent = currentLanguage() === "en" ? "Choose any loaded game in the screenshot settings." : currentLanguage() === "uk" ? "Виберіть будь-яку завантажену гру в налаштуваннях знімка." : "Wybierz dowolną wczytaną grę w ustawieniach zrzutu.";
     }
     const bar = doc.getElementById("pollBar"); if (bar) bar.style.display = "none";
     return;
   }
-  setText(doc, "pollGameName", fixture.poll);
+  const typeLabel = fixture.pollType === "poll_text"
+    ? (currentLanguage() === "en" ? "text" : currentLanguage() === "uk" ? "текстове" : "tekstowa")
+    : (currentLanguage() === "en" ? "points" : currentLanguage() === "uk" ? "з балами" : "punktowa");
+  setText(doc, "pollGameName", scene.id === "poll-share" ? fixture.poll : `${typeLabel} · ${fixture.poll}`);
   if (main) main.style.display = "";
   if (empty) empty.style.display = "none";
   const bar = doc.getElementById("pollBar"); if (bar) { bar.style.display = ""; bar.dataset.state = "open"; }
-  setText(doc, "pollStateWord", currentLanguage() === "en" ? "Voting open" : currentLanguage() === "uk" ? "Голосування триває" : "Głosowanie trwa");
-  setText(doc, "pollStateInfo", currentLanguage() === "en" ? "18 votes received" : currentLanguage() === "uk" ? "Отримано 18 голосів" : "Oddano 18 głosów");
-  setText(doc, "hintTop", fixture.question);
-  const invited = fixture.subscribers?.length || 0;
-  const responded = fixture.subscriberStates?.filter(Boolean).length || 0;
-  setText(doc, "subsSummary", currentLanguage() === "en" ? `${invited} invited · ${responded} responded` : currentLanguage() === "uk" ? `Запрошено: ${invited} · відповіли: ${responded}` : `Zaproszono: ${invited} · odpowiedzi: ${responded}`);
+  setText(doc, "pollStateWord", currentLanguage() === "en" ? "OPEN" : currentLanguage() === "uk" ? "ВІДКРИТА" : "OTWARTA");
+  const { votes: votesLabel } = await getStrings(currentLanguage(), { votes: "polls.bar.votes" });
+  setText(doc, "pollStateInfo", typeof votesLabel === "function" ? votesLabel({ n: fixture.votesReceived }) : String(fixture.votesReceived));
+  setText(doc, "hintTop", scene.id === "poll-share" ? "" : fixture.question);
+  const recipients = (fixture.pollRecipients || []).filter(recipient => !recipient.hidden);
+  const invited = recipients.length;
+  const voted = recipients.filter(recipient => recipient.status === "done").length;
+  const declined = recipients.filter(recipient => recipient.status === "declined").length;
+  setText(doc, "subsSummary", currentLanguage() === "en" ? `Invited ${invited} · Voted ${voted} · Declined ${declined}` : currentLanguage() === "uk" ? `Запрошено: ${invited} · Проголосували: ${voted} · Відхилили: ${declined}` : `Zaproszono ${invited} · Zagłosowali ${voted} · Odrzucili ${declined}`);
   const shareBody = doc.getElementById("shareBody"); if (shareBody) shareBody.style.display = "";
   const shareEmpty = doc.getElementById("shareEmpty"); if (shareEmpty) shareEmpty.style.display = "none";
   const share = doc.getElementById("secShare"); if (share) share.hidden = scene.id !== "poll-share";
@@ -1798,12 +1829,30 @@ async function paintPoll(doc, scene, fixture) {
     } catch { qr.replaceChildren(); qr.hidden = true; }
   } else if (qr) { qr.replaceChildren(); qr.hidden = true; }
   const link = doc.getElementById("pollLink"); if (link) link.value = fixture.link || "https://familiada.online/go/weekend-trip";
-  for (const id of ["btnCopy", "btnOpen", "btnOpenQr"]) { const button = doc.getElementById(id); if (button) button.disabled = false; }
+  for (const id of ["btnOpenPoll", "btnStopPoll", "btnResumePoll", "btnTallyPoll", "btnLeaveTally", "btnApproveTally", "btnReopenPoll", "btnAbort"]) {
+    const button = doc.getElementById(id); if (button) button.hidden = !["btnStopPoll", "btnAbort"].includes(id);
+  }
+  for (const id of ["btnStopPoll", "btnAbort", "btnCopy", "btnOpen", "btnOpenQr"]) { const button = doc.getElementById(id); if (button) button.disabled = false; }
   const subs = doc.getElementById("subsGrid");
   if (subs) {
     const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T15242");
-
-    subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: "Zaproszeni subskrybenci", rows: fixture.subscribers.map((name, i) => ({ id: `shot-sub-${i}`, label: name, compact: true, note: fixture.subscriberStates?.[i] ? "Oddano głos" : "Oczekuje na odpowiedź", tags: [{ text: "Subskrybent", cls: "tag--muted" }] })) }));
+    const words = await getStrings(currentLanguage(), {
+      title: "polls.share.recipientsTitle", friend: "shareSections.channel.friend", subscriber: "shareSections.channel.subscriber",
+      pending: "polls.share.state.waiting", opened: "pollSharePanel.opened", done: "polls.share.state.done", declined: "polls.share.state.declined",
+      remind: "polls.share.remind", remove: "polls.share.remove", empty: "pollSharePanel.empty",
+    });
+    const rows = recipients.map((recipient, index) => {
+      const waiting = ["pending", "opened"].includes(recipient.status);
+      const actions = [];
+      if (waiting) actions.push({ key: "remind", icon: "refresh", title: words.remind, onClick: () => {} });
+      actions.push({ key: "remove", icon: "trash", title: words.remove, onClick: () => {} });
+      return {
+        id: `shot-poll-recipient-${index}`, label: recipient.username ? `${recipient.username} · ${recipient.email}` : recipient.email,
+        compact: true, note: words[recipient.status] || words.pending,
+        tags: [{ text: recipient.type === "friend" ? words.friend : words.subscriber, cls: "tag--muted" }], actions,
+      };
+    });
+    subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: words.title, rows, emptyText: words.empty }));
   }
   if (scene.id === "poll-results") {
     const shareTab = doc.getElementById("tabShare"); if (shareTab) shareTab.classList.remove("active");
@@ -2026,8 +2075,11 @@ function readEditorIntoConfig() {
 }
 
 function readPollActions() {
-  return [...byId("homepageShotCategoryActions").querySelectorAll("[data-poll-action-status]")].map(select => ({
-    subscriberIndex: Number(select.closest("[data-poll-action-row]").dataset.subscriberIndex), responded: select.value === "yes",
+  return [...byId("homepageShotCategoryActions").querySelectorAll("[data-poll-action-row]")].map(row => ({
+    type: row.dataset.pollRecipientType,
+    email: row.dataset.pollRecipientEmail,
+    status: row.querySelector("[data-poll-action-status]:checked")?.value || "pending",
+    hidden: row.querySelector("[data-poll-action-hidden]")?.checked || false,
   }));
 }
 
@@ -2310,44 +2362,43 @@ function renderCategoryActions(fixture) {
     });
     return;
   }
-  const subscribers = subscriberNames(currentLanguage());
-  const group = sharedGroup(root, "Zaproszeni subskrybenci");
-  const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note";
-  note.textContent = "Osoby są pobrane z listy ogólnej. Tutaj ustawiasz tylko ich udział w tej ankiecie.";
-  group.append(note);
-  const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
-  (fixture.pollRecipients || []).forEach((recipient, index) => {
-    const name = subscribers[recipient.subscriberIndex];
-    if (!name) return;
-    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row";
-    row.dataset.pollActionRow = ""; row.dataset.subscriberIndex = String(recipient.subscriberIndex);
-    const identity = document.createElement("div"); identity.className = "homepage-shot-shared-field";
-    const identityLabel = document.createElement("span"); identityLabel.textContent = `Z listy ogólnej · osoba ${index + 1}`;
-    const identityValue = document.createElement("strong"); identityValue.textContent = name;
-    identity.append(identityLabel, identityValue);
-    const actionField = document.createElement("label"); actionField.className = "homepage-shot-shared-field";
-    const actionLabel = document.createElement("span"); actionLabel.textContent = "Akcja w tej ankiecie";
-    const action = document.createElement("select"); action.className = "inp"; action.dataset.pollActionStatus = "";
-    for (const [value, label] of [["yes", "Oddał głos"], ["no", "Jeszcze nie odpowiedział"]]) {
-      const option = document.createElement("option"); option.value = value; option.textContent = label; action.append(option);
-    }
-    action.value = recipient.responded ? "yes" : "no";
-    actionField.append(actionLabel, action);
-    const remove = sharedButton(document.createElement("span"), "×", "remove-poll-recipient", index);
-    remove.title = "Usuń z ankiety"; remove.setAttribute("aria-label", remove.title); remove.classList.add("homepage-shot-row-remove");
-    row.append(identity, actionField, remove); rows.append(row);
-  });
-  group.append(rows);
-  const addRow = document.createElement("div"); addRow.className = "homepage-shot-action-add";
-  const selector = document.createElement("select"); selector.className = "inp"; selector.dataset.pollActionAdd = "";
-  for (const [index, name] of subscribers.entries()) {
-    if ((fixture.pollRecipients || []).some(item => item.subscriberIndex === index)) continue;
-    const option = document.createElement("option"); option.value = String(index); option.textContent = name; selector.append(option);
+  const language = currentLanguage();
+  const words = language === "en" ? {
+    subscribers: "Subscribers · shared list", friends: "Friends · shared list", hint: "Everyone comes from the shared lists. Choose each person's status and whether to hide them in this preview.",
+    hide: "Hide in preview", pending: "Awaiting response", opened: "Opened", done: "Voted", declined: "Declined",
+  } : language === "uk" ? {
+    subscribers: "Підписники · спільний список", friends: "Друзі · спільний список", hint: "Усі люди взяті зі спільних списків. Виберіть статус і чи приховувати людину в цьому попередньому перегляді.",
+    hide: "Приховати в перегляді", pending: "Очікує відповіді", opened: "Відкрив", done: "Проголосував", declined: "Відхилив",
+  } : {
+    subscribers: "Subskrybenci · lista wspólna", friends: "Znajomi · lista wspólna", hint: "Osoby pochodzą ze wspólnych list. Ustaw status i zdecyduj, czy ukryć osobę w tym podglądzie.",
+    hide: "Ukryj w podglądzie", pending: "Oczekuje na odpowiedź", opened: "Otworzył ankietę", done: "Oddał głos", declined: "Odrzucił",
+  };
+  const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note"; note.textContent = words.hint; root.append(note);
+  const recipients = fixture.pollRecipients || [];
+  for (const [type, title] of [["subscriber", words.subscribers], ["friend", words.friends]]) {
+    const group = sharedGroup(root, title);
+    const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
+    recipients.filter(recipient => recipient.type === type).forEach((recipient, index) => {
+      const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row homepage-shot-poll-recipient-row";
+      row.dataset.pollActionRow = ""; row.dataset.pollRecipientType = type; row.dataset.pollRecipientEmail = recipient.email;
+      const identity = document.createElement("div"); identity.className = "homepage-shot-poll-recipient-identity";
+      const value = document.createElement("strong"); value.textContent = recipient.username ? `${recipient.username} · ${recipient.email}` : recipient.email;
+      identity.append(value);
+      const statuses = document.createElement("div"); statuses.className = "homepage-shot-friend-status-radios homepage-shot-poll-status-radios"; statuses.setAttribute("role", "radiogroup"); statuses.setAttribute("aria-label", language === "en" ? "Recipient status" : language === "uk" ? "Статус одержувача" : "Status odbiorcy");
+      for (const [status, glyph] of [["pending", "◷"], ["opened", "◉"], ["done", "✓"], ["declined", "×"]]) {
+        const option = document.createElement("label"); option.className = "homepage-shot-friend-status-option"; option.title = words[status]; option.setAttribute("aria-label", words[status]);
+        const radio = document.createElement("input"); radio.type = "radio"; radio.name = `poll-recipient-status-${type}-${index}`; radio.value = status; radio.dataset.pollActionStatus = "true"; radio.checked = (recipient.status || "pending") === status;
+        const glyphEl = document.createElement("span"); glyphEl.className = "homepage-shot-friend-status-icon"; glyphEl.setAttribute("aria-hidden", "true"); glyphEl.textContent = glyph;
+        option.append(radio, glyphEl); statuses.append(option);
+      }
+      const hideLabel = document.createElement("label"); hideLabel.className = "homepage-shot-poll-hide";
+      const hide = document.createElement("input"); hide.type = "checkbox"; hide.dataset.pollActionHidden = "true"; hide.checked = !!recipient.hidden;
+      const hideText = document.createElement("span"); hideText.textContent = words.hide;
+      hideLabel.append(hide, hideText); row.append(identity, statuses, hideLabel); rows.append(row);
+    });
+    if (!rows.children.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = language === "en" ? "No entries in the shared list." : language === "uk" ? "У спільному списку немає записів." : "Brak wpisów na liście wspólnej."; rows.append(empty); }
+    group.append(rows);
   }
-  if (!selector.options.length) { const option = document.createElement("option"); option.value = ""; option.textContent = "Wszystkie osoby z listy już dodane"; selector.append(option); selector.disabled = true; }
-  sharedButton(addRow, "Dodaj osobę do ankiety", "add-poll-recipient");
-  addRow.querySelector("button").dataset.index = "";
-  addRow.prepend(selector); group.append(addRow);
 }
 
 function syncFieldsToJson() {
@@ -2668,12 +2719,10 @@ export async function initHomepageScreenshots() {
       config.sharedFixtures[language] = normalized;
       config.localeFixtures ||= {};
       config.localeFixtures[language] ||= {};
-      if (!Array.isArray(config.localeFixtures[language]["poll-share-actions"])) {
-        config.localeFixtures[language]["poll-share-actions"] = Array.isArray(legacyPollActions)
-          ? legacyPollActions.map(recipient => ({ subscriberIndex: Number(recipient.subscriberIndex) || 0, responded: !!recipient.responded }))
-          : normalized.subscribers.map((_, index) => ({ subscriberIndex: index, responded: index === 0 }));
-        initializeSharedFixtures = true;
-      }
+      const savedPollActions = config.localeFixtures[language]["poll-share-actions"] || legacyPollActions || [];
+      const normalizedPollActions = normalizePollShareActions(normalized, savedPollActions);
+      if (JSON.stringify(normalizedPollActions) !== JSON.stringify(savedPollActions)) initializeSharedFixtures = true;
+      config.localeFixtures[language]["poll-share-actions"] = normalizedPollActions;
       const friendsScene = config.scenes.find(scene => scene.id === "friends");
       const friendsFixture = config.localeFixtures[language].friends || localizeFixture(friendsScene?.fixture || {}, language);
       const groupDefaults = defaultFriendGroups(language);
@@ -2905,12 +2954,20 @@ export async function initHomepageScreenshots() {
           shared.pollQuestions[index]?.answers.splice(answerIndex, 1); break;
         }
         case "add-subscriber": shared.subscribers.push("nowy.subskrybent@example.com"); break;
-        case "remove-friend": shared.friends.splice(index, 1); break;
+        case "remove-friend": {
+          const email = shared.friends[index]?.email;
+          shared.friends.splice(index, 1);
+          config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] = (config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] || []).filter(recipient => recipient.type !== "friend" || normalizeEmail(recipient.email) !== normalizeEmail(email));
+          break;
+        }
         case "add-friend": shared.friends.push({ username: "Nowy znajomy", email: "nowy.znajomy@example.com" }); break;
         case "remove-subscriber":
+          {
+          const email = shared.subscribers[index];
           shared.subscribers.splice(index, 1);
-          config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] = (config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] || []).filter(recipient => recipient.subscriberIndex !== index).map(recipient => ({ ...recipient, subscriberIndex: recipient.subscriberIndex > index ? recipient.subscriberIndex - 1 : recipient.subscriberIndex }));
+          config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] = (config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] || []).filter(recipient => recipient.type !== "subscriber" || normalizeEmail(recipient.email) !== normalizeEmail(email));
           break;
+          }
         default: return;
       }
       renderSharedEditor(shared);
@@ -2933,7 +2990,7 @@ export async function initHomepageScreenshots() {
         applySubscriberActionsToFixture(fixture);
         els.fixture.value = JSON.stringify(fixture, null, 2);
         scheduleFixtureSave();
-      } else if (event.target.matches("[data-poll-action-status]")) {
+      } else if (event.target.matches("[data-poll-action-status], [data-poll-action-hidden]")) {
         config.localeFixtures[currentLanguage()]["poll-share-actions"] = readPollActions();
         els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
         scheduleFixtureSave();
@@ -3007,18 +3064,7 @@ export async function initHomepageScreenshots() {
         scheduleFixtureSave();
         return;
       }
-      const fixture = langFixture(currentScene());
-      if (button.dataset.sharedAction === "add-poll-recipient") {
-        const select = byId("homepageShotCategoryActions").querySelector("[data-poll-action-add]");
-        if (!select || select.disabled || select.value === "") return;
-        fixture.pollRecipients.push({ subscriberIndex: Number(select.value), responded: false });
-      } else if (button.dataset.sharedAction === "remove-poll-recipient") {
-        fixture.pollRecipients.splice(Number(button.dataset.index), 1);
-      } else return;
-      config.localeFixtures[currentLanguage()]["poll-share-actions"] = fixture.pollRecipients;
-      renderEditorFields(fixture);
-      els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
-      scheduleFixtureSave();
+      return;
     });
     byId("homepageShotPrevious").addEventListener("click", () => moveScene(-1));
     byId("homepageShotNext").addEventListener("click", () => moveScene(1));
