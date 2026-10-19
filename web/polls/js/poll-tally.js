@@ -13,18 +13,18 @@
 //
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T22372";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T22372";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-19T22372";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-19T22372";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T22372";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T22415";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-19T22415";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-19T22415";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-19T22415";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T22415";
 
 import {
   pointsPollAnalysis,
   textTallyAnalysis,
   ANSWERS_MIN,
   TEXT_MAX_LEN,
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-19T22372";
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-19T22415";
 
 
 const SAVE_DEBOUNCE_MS = 900;
