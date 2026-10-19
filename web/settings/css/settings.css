@@ -194,7 +194,9 @@ body.settings-body > main.wrap{
 @media(max-width:560px){.homepage-shot-shared-row,.homepage-shot-answer-head{grid-template-columns:minmax(0,1fr) 74px auto}.homepage-shot-shared-row--subscriber{grid-template-columns:minmax(0,1fr) 132px auto}}
 @media(max-width:760px){.homepage-shot-control-card{padding:13px}.homepage-shot-toolbar--global .homepage-shot-choice--scene{max-width:none}.homepage-shot-toolbar--global .homepage-shot-choice{flex:1 1 180px}.homepage-shot-action-group--capture{margin-left:0}}
 .homepage-shot-workspace{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(520px, 1.5fr);gap:16px;align-items:start}
-.homepage-shot-editor{display:grid;gap:12px;min-width:0;padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.025)}
+.homepage-shot-editor{display:grid;gap:12px;min-width:0;padding:0;border:0;background:transparent}
+.homepage-shot-extra-card{display:grid;gap:10px;min-width:0;padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.025)}
+.homepage-shot-resource-choices{padding:14px;border-radius:14px;background:rgba(255,255,255,.025)}
 .homepage-shot-editor textarea{width:100%;min-height:340px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical;white-space:pre}
 .homepage-shot-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:510px;overflow:auto;padding:2px 4px 2px 0}
 .homepage-shot-field{display:grid;gap:5px;min-width:0;padding:9px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(0,0,0,.12)}
