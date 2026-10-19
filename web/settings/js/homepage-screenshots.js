@@ -1,4 +1,4 @@
-import { confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T13500";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T13500";
 
 const API = "/_admin_api";
 const els = {};
@@ -241,6 +241,7 @@ function defaultSubscriberInvitations(language) {
 
 function normalizeSharedFixture(shared, defaults) {
   const result = { ...defaults, ...shared };
+  result.username = String(shared.username || defaults.username || "").trim();
   result.gameQuestions = Array.isArray(shared.gameQuestions) ? shared.gameQuestions : defaults.gameQuestions;
   result.teams = (Array.isArray(shared.teams) ? shared.teams : defaults.teams).slice(0, 2);
   result.subscribers = Array.isArray(shared.subscribers) ? shared.subscribers : defaults.subscribers;
@@ -273,6 +274,7 @@ function defaultSharedFixture(language) {
   const generalSubscribers = localizeFixture({ subscribers: ["Anna Nowak", "Piotr Zieliński", "Kasia Maj"] }, language).subscribers;
   const oldResults = resultsFixture.answers || [];
   return {
+    username: language === "en" ? "John Smith" : language === "uk" ? "Іван Петренко" : "Jan Kowalski",
     gameName: editorFixture.game || "Rodzinny pojedynek",
     otherGames: localizeFixture({ games: config.scenes.find(scene => scene.id === "games")?.fixture?.games?.slice(1) || [] }, language).games,
     gameQuestions: [
@@ -562,6 +564,10 @@ function renderResourceList(language = currentLanguage()) {
   const sharedRoot = byId("homepageShotSharedFields");
   sharedRoot.replaceChildren();
   const shared = config.sharedFixtures[language];
+  const profile = sharedGroup(sharedRoot, "Konto przykładowe");
+  const profileRow = document.createElement("div"); profileRow.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
+  sharedField(profileRow, "Nazwa użytkownika", shared.username || "", { dataset: { sharedUsername: "true" } });
+  profile.append(profileRow);
   const teams = sharedGroup(sharedRoot, "Nazwy drużyn");
   for (let index = 0; index < 2; index += 1) {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
@@ -581,6 +587,8 @@ function readResourceList(language = currentLanguage()) {
   ensureResourceData(language);
   const shared = config.sharedFixtures[language];
   const root = byId("homepageShotSharedFields");
+  const username = root.querySelector("[data-shared-username]");
+  if (username) shared.username = username.value.trim();
   for (const input of root.querySelectorAll("[data-shared-team]")) shared.teams[Number(input.dataset.sharedTeam)] = input.value.trim();
   for (const input of root.querySelectorAll("[data-shared-subscriber]")) shared.subscribers[Number(input.dataset.sharedSubscriber)] = input.value.trim();
 }
@@ -944,7 +952,7 @@ async function applyFixtureToFrame(scene, fixture) {
   }[scene.id] || [];
   for (const selector of requiredByScene) if (!doc.querySelector(selector)) throw new Error(`brakuje elementu ${selector} na widoku`);
   const who = doc.querySelector("#who, #whoStatic");
-  if (who) who.textContent = currentLanguage() === "en" ? "John Smith" : currentLanguage() === "uk" ? "Іван Петренко" : "Jan Kowalski";
+  if (who) who.textContent = config.sharedFixtures?.[currentLanguage()]?.username || "Jan Kowalski";
 
   if (["host-round", "display-round", "main-display"].includes(scene.id)) {
     await prepareDeviceScene(scene, fixture);
@@ -977,6 +985,7 @@ async function applyFixtureToFrame(scene, fixture) {
       account: "Jan Kowalski", community: "Gry Społeczności", logo: "Logo", bases: "Bazy pytań", friends: "Znajomi",
       connect: "Podłącz urządzenie", subscribers: "Subskrybenci", tasks: "Zadania", more: "Więcej", logout: "Wyloguj",
     };
+    words.account = config.sharedFixtures?.[language]?.username || words.account;
     const headingHint = doc.getElementById("hint");
     if (headingHint) headingHint.textContent = words.hint;
 
@@ -1106,7 +1115,7 @@ async function applyFixtureToFrame(scene, fixture) {
     if (login) login.style.display = "none";
     const account = doc.getElementById("who");
     if (account) {
-      const accountName = language === "en" ? "John Smith" : language === "uk" ? "Іван Петренко" : "Jan Kowalski";
+      const accountName = config.sharedFixtures?.[language]?.username || (language === "en" ? "John Smith" : language === "uk" ? "Іван Петренко" : "Jan Kowalski");
       const logoutLabel = language === "en" ? "Sign out" : language === "uk" ? "Вийти" : "Wyloguj";
       account.className = "who account-btn btn";
       account.innerHTML = `<span class="account-who">${accountName}</span><span class="account-chevron">${icon("caret-down")}</span>`;
@@ -1516,6 +1525,7 @@ async function exportConfigJson() {
     version: 2,
     languages: Object.fromEntries(["pl", "en", "uk"].map(language => [language, {
       shared: {
+        username: config.sharedFixtures[language].username || "",
         teams: structuredClone(config.sharedFixtures[language].teams || []).slice(0, 2),
         subscribers: structuredClone(config.sharedFixtures[language].subscribers || []),
         qrUrl: config.qrUrl || "",
@@ -1528,7 +1538,7 @@ async function exportConfigJson() {
       views: {
         fixtures: structuredClone(config.localeFixtures?.[language] || {}),
         selections: structuredClone(config.viewResources?.[language] || {}),
-        sectionDefaults: Object.fromEntries(Object.entries(config.sharedFixtures[language] || {}).filter(([key]) => !["teams", "subscribers"].includes(key))),
+        sectionDefaults: Object.fromEntries(Object.entries(config.sharedFixtures[language] || {}).filter(([key]) => !["username", "teams", "subscribers"].includes(key))),
       },
     }])),
   };
@@ -1545,6 +1555,10 @@ async function exportConfigJson() {
 }
 
 async function importConfigJson(file) {
+  if (dirty) {
+    await alertModal({ title: "Niezapisane zmiany", text: "Zapisz wszystkie zmiany przed wczytaniem kopii danych." });
+    return;
+  }
   if (!await flushAllEditors()) return;
   const imported = JSON.parse(await file.text());
   const languages = ["pl", "en", "uk"];
@@ -1559,6 +1573,7 @@ async function importConfigJson(file) {
       const entry = imported.languages[language];
       return entry?.shared && Array.isArray(entry.shared.teams) && entry.shared.teams.length === 2
         && entry.shared.teams.every(name => typeof name === "string")
+        && (entry.shared.username == null || typeof entry.shared.username === "string")
         && Array.isArray(entry.shared.subscribers) && entry.shared.subscribers.every(name => typeof name === "string")
         && (entry.shared.qrUrl == null || typeof entry.shared.qrUrl === "string")
         && entry.resources && Array.isArray(entry.resources.games) && entry.resources.games.every(item => validResource(item, "game"))
@@ -1571,14 +1586,19 @@ async function importConfigJson(file) {
         && entry.views.selections && typeof entry.views.selections === "object";
     });
   if (!valid) throw new Error("Plik nie zawiera poprawnego wspólnego JSON-a z zasobami i ustawieniami widoków dla języków PL, EN i UK.");
-  const { confirmModal } = await import("/shared/js/core/modal.js?v=v2026-10-19T13500");
-  if (!await confirmModal({ text: "Import zastąpi wspólne dane, listy zasobów i dodatkowe dane wszystkich widoków we wszystkich językach. Kontynuować?" })) return;
+  if (!await confirmModal({
+    title: "Nadpisanie wszystkich danych",
+    text: "Import nadpisze wszystkie przykładowe dane, zasoby, ich kolejność, wybory, ustawienia widoków i kod QR we wszystkich językach. Tej zmiany nie można cofnąć. Kontynuować?",
+    okText: "Nadpisz wszystko",
+    cancelText: "Anuluj",
+  })) return;
   config.localeFixtures ||= {};
   config.viewResources ||= {};
   for (const language of languages) {
     const entry = imported.languages[language];
     config.sharedFixtures[language] = {
       ...structuredClone(entry.views.sectionDefaults),
+      username: String(entry.shared.username || defaultSharedFixture(language).username || ""),
       teams: structuredClone(entry.shared.teams),
       subscribers: structuredClone(entry.shared.subscribers),
     };
@@ -1892,6 +1912,10 @@ async function handleResourceImportInput(event, type) {
   const file = input.files?.[0];
   if (!file) return;
   try {
+    if (dirty) {
+      await alertModal({ title: "Niezapisane zmiany", text: "Zapisz wszystkie zmiany przed wczytaniem zasobu." });
+      return;
+    }
     if (!await flushAllEditors()) return;
     await importResourceFile(file, type);
   } catch (error) {
@@ -2155,6 +2179,14 @@ export async function initHomepageScreenshots() {
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
     byId("homepageShotSaveAll").addEventListener("click", () => { void saveAllEditors(); });
+    for (const input of ["homepageShotImportGame", "homepageShotImportBase", "homepageShotImportLogo", "homepageShotImportConfig"].map(byId)) {
+      input.addEventListener("click", event => {
+        if (!dirty) return;
+        event.preventDefault();
+        event.stopPropagation();
+        void alertModal({ title: "Niezapisane zmiany", text: "Zapisz wszystkie zmiany przed wczytaniem danych." });
+      });
+    }
     byId("homepageShotImportGame").addEventListener("change", event => handleResourceImportInput(event, "game"));
     byId("homepageShotImportBase").addEventListener("change", event => handleResourceImportInput(event, "base"));
     byId("homepageShotImportLogo").addEventListener("change", event => handleResourceImportInput(event, "logo"));
