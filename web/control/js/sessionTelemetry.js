@@ -6,6 +6,8 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T17582";
 export function createSessionTelemetry(gameId, getState, subscribe = () => () => {}) {
   const pendingVisibility = [];
   let visibilityFlush = null;
+  let visibilityRetryTimer = null;
+  let visibilityRetryIndex = 0;
   let visibilityActive = false;
   let previousActive = false;
   const eventId = () => globalThis.crypto?.randomUUID?.()
@@ -28,6 +30,20 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
     void flushVisibility();
   }
 
+  function scheduleVisibilityRetry() {
+    if (!visibilityActive || !pendingVisibility.length || visibilityRetryTimer) return;
+    // The first visibility snapshot can race the database trigger that creates
+    // game_session_active. Retry quickly when the RPC returns false or fails;
+    // waiting for the five-minute heartbeat could outlast a short game.
+    const delays = [250, 1000, 3000, 10000];
+    const delay = delays[Math.min(visibilityRetryIndex, delays.length - 1)];
+    visibilityRetryIndex = Math.min(visibilityRetryIndex + 1, delays.length - 1);
+    visibilityRetryTimer = setTimeout(() => {
+      visibilityRetryTimer = null;
+      void flushVisibility();
+    }, delay);
+  }
+
   async function flushVisibility() {
     if (visibilityFlush || !visibilityActive || !pendingVisibility.length) return;
     visibilityFlush = (async () => {
@@ -37,19 +53,34 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
           const { data, error } = await sb().rpc("control2_control_visibility_event", {
             p_game_id: gameId, p_event: event,
           });
-          if (error || data !== true) break;
+          if (error || data !== true) {
+            scheduleVisibilityRetry();
+            break;
+          }
           if (pendingVisibility[0]?.event_id === event.event_id) pendingVisibility.shift();
+          visibilityRetryIndex = 0;
         } catch { break; }
       }
     })().finally(() => { visibilityFlush = null; });
     await visibilityFlush;
+    if (pendingVisibility.length) scheduleVisibilityRetry();
+    else {
+      clearTimeout(visibilityRetryTimer);
+      visibilityRetryTimer = null;
+      visibilityRetryIndex = 0;
+    }
   }
 
   function syncVisibilityActive(state = getState()) {
     const next = isVisibilityActive(state);
     visibilityActive = next;
     if (next && !previousActive) queueVisibility("initial");
-    if (!next) pendingVisibility.length = 0;
+    if (!next) {
+      pendingVisibility.length = 0;
+      clearTimeout(visibilityRetryTimer);
+      visibilityRetryTimer = null;
+      visibilityRetryIndex = 0;
+    }
     previousActive = next;
   }
 
@@ -76,6 +107,7 @@ export function createSessionTelemetry(gameId, getState, subscribe = () => () =>
     report,
     stop() {
       clearInterval(timer);
+      clearTimeout(visibilityRetryTimer);
       unsubscribe?.();
       document.removeEventListener("visibilitychange", visibilityChanged);
       visibilityActive = false;
