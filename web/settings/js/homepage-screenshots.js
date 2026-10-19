@@ -1157,7 +1157,7 @@ function sizeScenePreview(scene) {
     const bezelBlack = screenWidth * frameRatio / (1 - 2 * frameRatio);
     const bezel = bezelBlack + whiteEdge;
     const phoneWidth = screenWidth + 2 * bezel;
-    const phoneRadius = phoneWidth * 0.14;
+    const phoneRadius = phoneWidth * 0.16;
     const screenRadius = phoneRadius - bezel;
     const screenLeft = (board.width - screenWidth) / 2;
     els.frameWrap.classList.add("is-phone");
@@ -2723,7 +2723,7 @@ function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900
   const deviceWidth = screenWidth + 2 * bezel;
   const deviceX = (outputWidth - deviceWidth) / 2;
   const deviceY = 0;
-  const cornerRadius = deviceWidth * 0.14;
+  const cornerRadius = deviceWidth * 0.16;
   const radius = cornerRadius - bezel;
   const output = document.createElement("canvas");
   output.width = outputWidth;
