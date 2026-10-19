@@ -3,6 +3,14 @@
 Decyzje 2026-10-07. Etap **E10** w [`wdrozenia.md`](wdrozenia.md) —
 pierwszy do wdrożenia. Ten plik jest źródłem prawdy dla tego etapu.
 
+## Decyzja — komunikaty edytora gry (2026-10-19)
+
+Edytor gry nie pokazuje dolnego pola `#msg`: jego obszar pod kartami ma
+pozostać pusty. Autozapis jest cichy — bez tekstu „Zapisano” i bez toastu.
+Błędy zapisu i operacji pokazuje wspólny toast błędu. Wynik importu i
+walidacja pozostają w samym formularzu importu; dodanie/usunięcie elementu
+jest widoczne na liście i nie wymaga osobnego komunikatu.
+
 ---
 
 ## Decyzje — szybkie udostępnianie i ikony akcji (2026-10-18)
@@ -233,7 +241,7 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
 | Bazy | `bases.share.*` (`#shareMsg`), `importMsg`, `nameMsg`, `hint` | udostępnianie, import, nazwa | tak | zostaje w treści modala |
 | Gry | `importMsg`, `exportBaseMsg`, `exportJsonMsg`, `nameMsg`, `hint` | import / eksport / nazwa | tak | zostaje (pobranie pliku jest widoczne) |
 | Logo | `logoEditor.status.deleting/deleted/imported` (`#msg`) | lista logo | tak | zostaje (kafel znika/pojawia się) |
-| Edytor gry | `#msg` („Zapisano.”, „Import zakończony.”) | autozapis, import | tak | zostaje (autozapis) |
+| Edytor gry | dawny `#msg` („Zapisano.”, „Piszesz…”, potwierdzenia) | autozapis, edycja | usunięte | zapis cichy; błędy przez wspólny toast; import w formularzu |
 | Podłącz urządzenie (`connect`, `connect/tv`) | `connectDevice.*` (`#msg`, `connectCodeMsg`) | błędy kodu, kamery | tak | zostaje w treści strony |
 | Idź do gry (`go`) | `#message`, `#hint` | stan wejścia | tak | zostaje w treści strony |
 | Logowanie (`/login/`, `/reset/`, `/confirm/`) | `#status`, `#err` | instrukcje i wyniki | tak | zostaje (treść strony) |

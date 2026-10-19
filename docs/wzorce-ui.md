@@ -226,7 +226,8 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
 - **Błąd wymagający decyzji / z długą treścią:** `alertModal` / `confirmModal`
   (`modal.js`).
 - **Treść stanu strony** (login: „Sprawdź skrzynkę”, `#err` pod polem,
-  `#msg` autozapisu edytorów, „brak parametru”): zostaje w treści strony.
+  „brak parametru”): zostaje w treści strony. Autozapis edytora gry jest
+  cichy i nie wyświetla „Zapisano” ani w treści, ani w toast.
 - Zakaz: `window.alert()`, pól `#status` pod przyciskami, dymków bez `kind`
   tam, gdzie to błąd.
 

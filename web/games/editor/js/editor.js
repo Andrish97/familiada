@@ -22,6 +22,7 @@ import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-18T2
 import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-18T21281";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-18T21281";
 import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-18T21281";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-18T21281";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
@@ -32,25 +33,18 @@ const MSG = {
   gameNotFound: () => t("editor.alert.gameNotFound"),
   resetFailed: () => t("editor.alert.resetFailed"),
   resetPollConfirm: () => t("editor.confirm.resetPoll"),
-  nameSaved: () => t("editor.status.nameSaved"),
   nameSaveError: () => t("editor.status.nameSaveError"),
   addQuestionError: () => t("editor.status.addQuestionError"),
   deleteQuestionConfirm: () => t("editor.confirm.deleteQuestion"),
-  deleteQuestionDone: () => t("editor.status.questionDeleted"),
   deleteQuestionError: () => t("editor.status.questionDeleteError"),
   deleteAnswerConfirm: () => t("editor.confirm.deleteAnswer"),
-  addedAnswer: () => t("editor.status.answerAdded"),
-  removedAnswer: () => t("editor.status.answerRemoved"),
   addAnswerError: () => t("editor.status.answerAddError"),
   deleteAnswerError: () => t("editor.status.answerDeleteError"),
   saveError: () => t("editor.status.saveError"),
   pointsSaveError: () => t("editor.status.pointsSaveError"),
   loadError: () => t("editor.status.loadError"),
-  saved: () => t("editor.status.saved"),
   rowGone: () => t("editor.status.rowGone"),
-  typing: () => t("editor.status.typing"),
   deleteLabel: () => t("editor.actions.delete"),
-  questionAdded: () => t("editor.status.questionAdded"),
   addQuestionLabel: () => t("editor.actions.addQuestion"),
   questionLabel: (ord) => t("editor.labels.questionNumber", { ord }),
   questionsOnly: () => t("editor.labels.questionsOnly"),
@@ -65,7 +59,6 @@ const MSG = {
   importConfirm: () => t("editor.import.confirm"),
   importCancelled: () => t("editor.import.cancelled"),
   importRunning: () => t("editor.import.running"),
-  importDone: () => t("editor.import.done"),
   importError: (msg) => t("editor.import.error", { error: msg }),
   minQuestions: (min, count) => t("editor.status.minQuestions", { min, count }),
   minQuestionsOk: () => t("editor.status.minQuestionsOk"),
@@ -79,9 +72,8 @@ const SUM_MAX = LIMITS.SUM_MAX; // 100
 /* ================= DOM helpers ================= */
 const $ = (id) => document.getElementById(id);
 
-function setMsg(msg) {
-  const el = $("msg");
-  if (el) el.textContent = msg || "";
+function showError(msg) {
+  if (msg) toast(msg, { kind: "error" });
 }
 
 // Baza odrzuciła zapis, bo zmieniły się reguły gry (np. ankietę właśnie
@@ -439,10 +431,9 @@ async function boot() {
       lastSavedName = cur;
       // pusta nazwa zapisuje się jako domyślna -- pokaż to w polu
       if (document.activeElement !== gameName) gameName.value = cur;
-      setMsg(MSG.nameSaved());
     } catch (e) {
       console.error(e);
-      setMsg(MSG.nameSaveError());
+      showError(MSG.nameSaveError());
     }
   }
   gameName.addEventListener("blur", () => track(saveNameNow()));
@@ -546,7 +537,7 @@ async function boot() {
       renderAnswers();
     } catch (e) {
       console.error(e);
-      if (seq === answersSeq) setMsg(MSG.loadError());
+      if (seq === answersSeq) showError(MSG.loadError());
     }
   }
 
@@ -567,7 +558,7 @@ async function boot() {
       return q;
     } catch (e) {
       console.error(e);
-      setMsg(ruleBlocked(e) || MSG.addQuestionError());
+      showError(ruleBlocked(e) || MSG.addQuestionError());
       return null;
     }
   });
@@ -575,7 +566,6 @@ async function boot() {
   async function addQuestion() {
     const q = await insertQuestion();
     if (!q) return;
-    setMsg(MSG.questionAdded());
     await selectQuestion(q.id);
     // domyślna treść zaznaczona -- od razu można pisać własną
     if (activeQId === q.id) {
@@ -589,11 +579,10 @@ async function boot() {
     if (!ok) return;
     try {
       await deleteQuestionRpc(qId);
-      setMsg(MSG.deleteQuestionDone());
     } catch (e) {
       console.error(e);
-      if (e?.code === ROW_GONE) setMsg(MSG.rowGone());
-      else return setMsg(ruleBlocked(e) || MSG.deleteQuestionError());
+      if (e?.code === ROW_GONE) showError(MSG.rowGone());
+      else return showError(ruleBlocked(e) || MSG.deleteQuestionError());
     }
     await reloadQuestions(activeQId === qId ? defaultActiveQuestionId : null);
   });
@@ -636,22 +625,20 @@ async function boot() {
       if (final && activeQId === qId && qText && document.activeElement !== qText && qText.value !== text) {
         qText.value = text;
       }
-      setMsg(MSG.saved());
     } catch (e) {
       console.error(e);
       if (e?.code === ROW_GONE) {
-        setMsg(MSG.rowGone());
+        showError(MSG.rowGone());
         await reloadQuestions();
         return;
       }
-      setMsg(ruleBlocked(e) || MSG.saveError());
+      showError(ruleBlocked(e) || MSG.saveError());
     }
   }
   const saveQuestionDebounced = debounce((qId, raw) => track(saveQuestionNow(qId, raw)), 350);
 
   wireTextLimit(qText, LIMITS.Q_TEXT, () => {
     if (!activeQId) return;
-    setMsg(MSG.typing());
     saveQuestionDebounced(activeQId, qText.value);
   });
   qText?.addEventListener("blur", () => {
@@ -680,7 +667,7 @@ async function boot() {
     const qId = activeQId;
     if (!qId) return;
     const ord = nextAnswerOrd(answers);
-    if (!ord) return setMsg(MSG.answerLimitReached());
+    if (!ord) return showError(MSG.answerLimitReached());
     try {
       const a = await createAnswer(qId, ord);
       if (activeQId !== qId) return;
@@ -691,10 +678,9 @@ async function boot() {
       const inp = aList?.querySelector(`.qf-row[data-id="${a.id}"] .qf-text`);
       inp?.focus();
       inp?.select();
-      setMsg(MSG.addedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg(ruleBlocked(e) || MSG.addAnswerError());
+      showError(ruleBlocked(e) || MSG.addAnswerError());
     }
   });
 
@@ -704,11 +690,10 @@ async function boot() {
     if (!ok) return;
     try {
       await deleteAnswer(aId);
-      setMsg(MSG.removedAnswer());
     } catch (e) {
       console.error(e);
-      if (e?.code !== ROW_GONE) return setMsg(ruleBlocked(e) || MSG.deleteAnswerError());
-      setMsg(MSG.rowGone());
+      if (e?.code !== ROW_GONE) return showError(ruleBlocked(e) || MSG.deleteAnswerError());
+      showError(MSG.rowGone());
     }
     if (activeQId !== qId) return;
     answers = answers.filter((x) => x.id !== aId);
@@ -721,7 +706,7 @@ async function boot() {
     answers = answers.filter((x) => x.id !== aId);
     refreshActiveStats();
     renderAnswers();
-    setMsg(MSG.rowGone());
+    showError(MSG.rowGone());
   }
 
   function answerRow(a) {
@@ -746,17 +731,15 @@ async function boot() {
           a.text = text;
         }
         if (final && document.activeElement !== iText && iText.value !== text) iText.value = text;
-        setMsg(MSG.saved());
       } catch (e) {
         console.error(e);
         if (e?.code === ROW_GONE) return dropGoneAnswer(a.id);
-        setMsg(ruleBlocked(e) || MSG.saveError());
+        showError(ruleBlocked(e) || MSG.saveError());
       }
     };
     const saveTextDebounced = debounce(() => track(saveText()), 350);
 
     wireTextLimit(iText, LIMITS.A_TEXT, () => {
-      setMsg(MSG.typing());
       saveTextDebounced();
     });
     iText.addEventListener("blur", () => {
@@ -774,11 +757,10 @@ async function boot() {
           await updateChecked("answers", { id: a.id }, { fixed_points: val });
           a.fixed_points = val;
           refreshActiveStats();
-          setMsg(MSG.saved());
         } catch (e) {
           console.error(e);
           if (e?.code === ROW_GONE) return dropGoneAnswer(a.id);
-          setMsg(ruleBlocked(e) || MSG.pointsSaveError());
+          showError(ruleBlocked(e) || MSG.pointsSaveError());
         }
       })()));
     }
@@ -962,7 +944,6 @@ async function boot() {
       await reloadQuestions(defaultActiveQuestionId);
       setImporting(false);
       closeImport();
-      setMsg(MSG.importDone());
     } catch (e) {
       console.error(e);
       // cała operacja jest w jednej transakcji -- przy błędzie gra zostaje
@@ -984,7 +965,6 @@ async function boot() {
   renderQuestions();
   activeQId = undefined;
   await selectQuestion(defaultActiveQuestionId());
-  setMsg("");
   document.querySelectorAll("[data-skel-step]").forEach((el) => el.classList.add("skel-step-ready"));
 
   window.addEventListener("resize", syncMobileEditingState);
@@ -994,7 +974,6 @@ async function boot() {
     renderHeader();
     renderQuestions();
     renderEditor();
-    setMsg("");
   });
 }
 
