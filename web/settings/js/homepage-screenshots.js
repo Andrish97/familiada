@@ -1887,21 +1887,39 @@ async function applyFixtureToFrame(scene, fixture) {
       const lookup = key => key.split(".").reduce((value, part) => value?.[part], dictionary) || "";
       const stored = fixture.logoData || await fetch(fixture.logoFile || "/shared/data/logo_familiada.json", { cache: "force-cache" }).then(response => response.json());
       const { logoToBits150, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T21064");
-      const source = stored?.data && typeof stored.data === "object" ? stored.data : stored;
-      const kind = String(source?.kind || source?.type || "").toUpperCase();
-      const payload = source?.payload || source;
+      // The admin resource may be the exported package, a typed DB payload, or
+      // the payload itself. Normalize these equivalent shapes before using the
+      // same 150×70 renderer used by logo tiles and the display.
+      const candidates = [];
+      const visit = (value, depth = 0) => {
+        if (!value || typeof value !== "object" || depth > 5 || candidates.includes(value)) return;
+        candidates.push(value);
+        for (const key of ["data", "logo", "payload", "resource"]) visit(value[key], depth + 1);
+      };
+      visit(stored);
+      const source = candidates.find(value => value.kind || value.type) || stored;
+      const payload = candidates.find(value => typeof (value.bits_b64 || value.bits_base64 || value.bitsBase64) === "string")
+        || candidates.find(value => Array.isArray(value.layers?.[0]?.rows)) || source?.payload || source;
+      const rawBits = payload?.bits_b64 || payload?.bits_base64 || payload?.bitsBase64;
+      const kind = String(source?.kind || source?.type || (rawBits ? "PIX" : "GLYPH")).toUpperCase();
       const logo = kind.includes("PIX") ? { type: "PIX_150x70", payload }
         : kind.includes("GLYPH") ? { type: "GLYPH_30x10", payload }
-          : source?.type ? source : { type: "GLYPH_30x10", payload };
-      const bits = logoToBits150(logo, logo.type === "GLYPH_30x10" ? await loadFont5x7() : null);
-      const dots = [];
-      for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
-        if (bits[y * 150 + x]) dots.push(`<rect x="${x * 7}" y="${y * 9}" width="5" height="7"/>`);
+          : { type: "PIX_150x70", payload };
+      let bits = logoToBits150(logo, logo.type === "GLYPH_30x10" ? await loadFont5x7() : null);
+      // Some stored resource snapshots wrap the exported payload one extra
+      // level deep. Decode the same row-major bit string directly as a final
+      // fallback so a valid pixel logo can never silently become a blank stage.
+      if (!bits.some(Boolean) && rawBits) {
+        try {
+          const bytes = Uint8Array.from(atob(rawBits.replace(/\s+/g, "")), char => char.charCodeAt(0));
+          const decoded = new Uint8Array(150 * 70);
+          for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
+            const index = y * 19 + (x >> 3);
+            if (index < bytes.length) decoded[y * 150 + x] = (bytes[index] >> (7 - (x & 7))) & 1;
+          }
+          if (decoded.some(Boolean)) bits = decoded;
+        } catch { /* Keep the normal renderer result if this resource is malformed. */ }
       }
-      const image = doc.createElement("img");
-      image.alt = "";
-      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 208 88" shape-rendering="crispEdges"><rect width="208" height="88" fill="#000"/><g fill="#fff">${dots.join("")}</g></svg>`)}`;
-      await image.decode();
       canvas.width = 1040;
       canvas.height = 440;
       canvas.style.width = "100%";
@@ -1914,8 +1932,13 @@ async function applyFixtureToFrame(scene, fixture) {
       const context = canvas.getContext("2d");
       context.fillStyle = "#000";
       context.fillRect(0, 0, canvas.width, canvas.height);
-      context.imageSmoothingEnabled = false;
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      context.fillStyle = "#fff";
+      for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
+        if (!bits[y * 150 + x]) continue;
+        const rasterX = Math.floor(x / 5) * 7 + (x % 5);
+        const rasterY = Math.floor(y / 7) * 9 + (y % 7);
+        context.fillRect(rasterX * 5, rasterY * 5, 5, 5);
+      }
 
       const tools = {
         tSelect: ["cursor", "select"], tPan: ["hand", "pan"], tZoomIn: ["zoom-in", "zoomIn"], tZoomOut: ["zoom-out", "zoomOut"],
