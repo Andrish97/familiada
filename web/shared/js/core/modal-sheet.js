@@ -10,13 +10,13 @@
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
 <<<<<<< HEAD
-import { t } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { icon, iconText } from "./icons.js?v=v2026-10-19T12172";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-19T12172";
+import { t } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { icon, iconText } from "./icons.js?v=v2026-10-19T12182";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-19T12182";
 =======
-import { t } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { icon, iconText } from "./icons.js?v=v2026-10-19T12172";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-19T12172";
+import { t } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { icon, iconText } from "./icons.js?v=v2026-10-19T12182";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 
@@ -97,9 +97,9 @@ export function setModalSheetPage(pageId) {
     setTimeout(() => {
       if (urlDialog() !== key) return;
 <<<<<<< HEAD
-      import("./contact-modal.js?v=v2026-10-19T12172").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-19T12182").then((module) => module.openContactModal());
 =======
-      import("./contact-modal.js?v=v2026-10-19T12172").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-19T12182").then((module) => module.openContactModal());
 
 >>>>>>> origin/main
     }, 0);

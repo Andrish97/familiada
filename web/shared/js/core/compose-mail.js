@@ -1,7 +1,7 @@
 <<<<<<< HEAD
-import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-19T12172";
+import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-19T12182";
 =======
-import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-19T12172";
+import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

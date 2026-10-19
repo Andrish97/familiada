@@ -2,9 +2,9 @@ const PAGE_NAMES = {home:'Strona główna',games:'Moje gry',control:'Panel stero
 const CONTEXT_NAMES = {control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia gry','logo-editor':'Edytor logo','base-explorer':'Edytor bazy'};
 const RESOURCE_NAMES = {game:'Gra',logo:'Logo',base:'Baza',base_question:'Pytanie bazy',base_folder:'Folder bazy',base_tag:'Tag bazy'};
 <<<<<<< HEAD
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12172";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12182";
 =======
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12172";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

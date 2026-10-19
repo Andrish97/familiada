@@ -965,9 +965,9 @@ async function applyFixtureToFrame(scene, fixture) {
     return;
   }
 <<<<<<< HEAD
-  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T12172");
+  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T12182");
 =======
-  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T12172");
+  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T12182");
 
 >>>>>>> origin/main
   const grid = doc.getElementById("grid");
@@ -1031,9 +1031,9 @@ async function applyFixtureToFrame(scene, fixture) {
     const moreDropdown = doc.getElementById("navMoreDropdown");
     if (more && moreBtn && moreDropdown) {
 <<<<<<< HEAD
-      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T12172");
+      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T12182");
 =======
-      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T12172");
+      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T12182");
 
 >>>>>>> origin/main
       const nav = setTopbarNavPriority({ moreEl: more, moreDropdownEl: moreDropdown });
@@ -1062,7 +1062,7 @@ async function applyFixtureToFrame(scene, fixture) {
         export: { ok: !!item },
       };
     };
-    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T12172");
+    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T12182");
     const selectedRules = selectedGame ? sampleRules(selectedGame) : null;
     const tileStatus = item => {
       if (!item) return "draft";
@@ -1141,7 +1141,7 @@ async function applyFixtureToFrame(scene, fixture) {
     editorPanel?.classList.add("hasQ");
     setInput(doc, "qText", fixture.question);
     const qList = doc.getElementById("qList");
-    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T12172");
+    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T12182");
     const questions = fixture.gameQuestions || [
       { text: fixture.question, answers: (fixture.answers || []).map((text, i) => ({ text, points: fixture.points?.[i] ?? 0 })) },
     ];
@@ -1272,11 +1272,11 @@ async function paintSoundSettings(doc) {
   const [{ default: sounds }, { default: dictionary }, { icon }] = await Promise.all([
     fetch("/shared/data/sounds.json", { cache: "force-cache" }).then(response => response.json()),
 <<<<<<< HEAD
-    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T12172`),
-    import("/shared/js/core/icons.js?v=v2026-10-19T12172"),
+    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T12182`),
+    import("/shared/js/core/icons.js?v=v2026-10-19T12182"),
 =======
-    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T12172`),
-    import("/shared/js/core/icons.js?v=v2026-10-19T12172"),
+    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T12182`),
+    import("/shared/js/core/icons.js?v=v2026-10-19T12182"),
 
 >>>>>>> origin/main
   ]);
@@ -1300,9 +1300,9 @@ async function paintSoundSettings(doc) {
 
 async function getStrings(language, keys) {
 <<<<<<< HEAD
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T12172`);
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T12182`);
 =======
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T12172`);
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T12182`);
 
 >>>>>>> origin/main
   const output = {};
@@ -1314,7 +1314,7 @@ async function logoCanvasFromFile(file, width, height) {
 <<<<<<< HEAD
   const logoRequest = fetch(file || "/shared/data/logo_familiada.json", { cache: "force-cache" });
   const [{ buildLogoPreviewCanvas, loadFont5x7 }, response] = await Promise.all([
-    import("/shared/js/core/logo-preview.js?v=v2026-10-19T12172"), logoRequest,
+    import("/shared/js/core/logo-preview.js?v=v2026-10-19T12182"), logoRequest,
   ]);
 =======
   const response = await fetch(file || "/shared/data/logo_familiada.json", { cache: "force-cache" });
@@ -1325,7 +1325,7 @@ async function logoCanvasFromFile(file, width, height) {
 }
 
 async function logoCanvasFromStored(stored, width, height) {
-  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T12172");
+  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T12182");
   const logo = stored.kind === "GLYPH" ? { type: "GLYPH_30x10", payload: stored.payload }
     : stored.kind === "PIX" ? { type: "PIX_150x70", payload: stored.payload }
       : stored.type ? stored : { type: "GLYPH_30x10", payload: stored.payload || stored };
@@ -1336,11 +1336,11 @@ async function logoCanvasFromStored(stored, width, height) {
 async function translateFrame(doc, language) {
   if (language === "pl") return;
 <<<<<<< HEAD
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T12172`);
-  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T12172");
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T12182`);
+  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T12182");
 =======
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T12172`);
-  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T12172");
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T12182`);
+  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T12182");
 
 >>>>>>> origin/main
   const lookup = key => key.split(".").reduce((value, part) => value?.[part], dictionary);
@@ -1365,11 +1365,11 @@ function setText(doc, id, value) { const node = doc.getElementById(id); if (node
 
 async function paintPeople(doc, fixture) {
 <<<<<<< HEAD
-  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12172");
+  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12182");
   const host = doc.getElementById("contactsReceived");
   if (!host) return;
 =======
-  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12172");
+  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12182");
 
   const received = doc.getElementById("contactsReceived");
   const outgoing = doc.getElementById("contactsOutgoing");
@@ -1408,9 +1408,9 @@ async function paintPeople(doc, fixture) {
 
 async function paintTasks(doc, fixture) {
 <<<<<<< HEAD
-  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12172");
+  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12182");
 =======
-  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12172");
+  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12182");
 
 >>>>>>> origin/main
   const host = doc.getElementById("tasksHost");
@@ -1468,10 +1468,10 @@ async function paintPoll(doc, scene, fixture) {
   const subs = doc.getElementById("subsGrid");
   if (subs) {
 <<<<<<< HEAD
-    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12172");
+    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12182");
     subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: "Zaproszeni subskrybenci", rows: fixture.subscribers.map((name, i) => ({ id: `shot-sub-${i}`, label: name, compact: true, note: i === 0 ? "Oddano głos" : "Oczekuje na odpowiedź", tags: [{ text: "Subskrybent", cls: "tag--muted" }] })) }));
 =======
-    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12172");
+    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T12182");
 
     subs.replaceChildren(shareSectionEl({ key: "poll-shared", title: "Zaproszeni subskrybenci", rows: fixture.subscribers.map((name, i) => ({ id: `shot-sub-${i}`, label: name, compact: true, note: fixture.subscriberStates?.[i] ? "Oddano głos" : "Oczekuje na odpowiedź", tags: [{ text: "Subskrybent", cls: "tag--muted" }] })) }));
 >>>>>>> origin/main
@@ -1481,10 +1481,10 @@ async function paintPoll(doc, scene, fixture) {
     const resultTab = doc.getElementById("tabResults"); if (resultTab) resultTab.classList.add("active");
     setText(doc, "resultsMeta", currentLanguage() === "en" ? "18 votes · live results" : currentLanguage() === "uk" ? "18 голосів · результати наживо" : "18 głosów · wyniki na żywo");
 <<<<<<< HEAD
-    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T12172");
+    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T12182");
     createPollResults(doc.getElementById("resultsList")).render({ status: "poll_open", type: "poll_points", questions: [{ id: "shot-poll", ord: 1, text: fixture.question, answers: fixture.answers.map((answer, i) => ({ id: `shot-answer-${i}`, text: answer.text, votes: answer.votes })) }] });
 =======
-    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T12172");
+    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T12182");
 
     const questions = (fixture.pollQuestions || []).map((question, questionIndex) => ({
       id: `shot-poll-${questionIndex + 1}`, ord: questionIndex + 1, text: question.text,
@@ -1498,17 +1498,17 @@ async function paintPoll(doc, scene, fixture) {
 async function paintControl(scene, fixture) {
   const doc = els.frame.contentDocument;
 <<<<<<< HEAD
-  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T12172");
+  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T12182");
   const restoreLanguage = translation.getUiLang();
   await translation.setUiLang(currentLanguage(), { persist: false, updateUrl: false, apply: false });
-  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T12172");
-  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T12172");
+  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T12182");
+  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T12182");
 =======
-  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T12172");
+  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T12182");
   const restoreLanguage = translation.getUiLang();
   await translation.setUiLang(currentLanguage(), { persist: false, updateUrl: false, apply: false });
-  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T12172");
-  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T12172");
+  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T12182");
+  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T12182");
 
 >>>>>>> origin/main
   const finale = scene.id === "control-finale";
@@ -1637,7 +1637,7 @@ async function importConfigJson(file) {
         && entry.views.selections && typeof entry.views.selections === "object";
     });
   if (!valid) throw new Error("Plik nie zawiera poprawnego wspólnego JSON-a z zasobami i ustawieniami widoków dla języków PL, EN i UK.");
-  const { confirmModal } = await import("/shared/js/core/modal.js?v=v2026-10-19T12172");
+  const { confirmModal } = await import("/shared/js/core/modal.js?v=v2026-10-19T12182");
   if (!await confirmModal({ text: "Import zastąpi wspólne dane, listy zasobów i dodatkowe dane wszystkich widoków we wszystkich językach. Kontynuować?" })) return;
   config.localeFixtures ||= {};
   config.viewResources ||= {};
@@ -2160,9 +2160,9 @@ export async function initHomepageScreenshots() {
     if (initializeSharedFixtures) await saveConfig();
     renderSceneList();
 <<<<<<< HEAD
-    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T12172");
+    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T12182");
 =======
-    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T12172");
+    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T12182");
     initUiSelectFn = initUiSelect;
 
 >>>>>>> origin/main

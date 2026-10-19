@@ -5,11 +5,11 @@
 // Gotowe odpowiedzi punktowane są pokazywane malejąco według punktów;
 // otwarte wyniki zachowują kolejność źródłową albo pojawiania się wpisów.
 <<<<<<< HEAD
-import { t } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { sortAnswersByPoints } from "./answer-order.js?v=v2026-10-19T12172";
+import { t } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { sortAnswersByPoints } from "./answer-order.js?v=v2026-10-19T12182";
 =======
-import { t } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { sortAnswersByPoints } from "./answer-order.js?v=v2026-10-19T12172";
+import { t } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { sortAnswersByPoints } from "./answer-order.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

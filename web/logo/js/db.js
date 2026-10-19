@@ -2,15 +2,15 @@
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
 <<<<<<< HEAD
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T12172";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-19T12172";
-import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T12182";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-19T12182";
+import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-19T12182";
 =======
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T12172";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-19T12172";
-import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T12182";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-19T12182";
+import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

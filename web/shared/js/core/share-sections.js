@@ -7,11 +7,11 @@
 // Wygląd: base.css (.shareSection, .shareRow). Komentarz: bez końca komentarza.
 
 <<<<<<< HEAD
-import { t } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-19T12172";
+import { t } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-19T12182";
 =======
-import { t } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-19T12172";
+import { t } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

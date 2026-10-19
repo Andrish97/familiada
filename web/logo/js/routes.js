@@ -5,11 +5,11 @@
 // Patrz docs/nawigacja-mapa-plan.md.
 
 <<<<<<< HEAD
-import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12172";
-import { TYPE_GLYPH } from "./render.js?v=v2026-10-19T12172";
+import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12182";
+import { TYPE_GLYPH } from "./render.js?v=v2026-10-19T12182";
 =======
-import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12172";
-import { TYPE_GLYPH } from "./render.js?v=v2026-10-19T12172";
+import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12182";
+import { TYPE_GLYPH } from "./render.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

@@ -9,9 +9,9 @@
 // wyświetlaczu, a proporcje zgadzają się z tym, co widać na scenie.
 
 <<<<<<< HEAD
-import { DOT_W, DOT_H } from "../render.js?v=v2026-10-19T12172";
+import { DOT_W, DOT_H } from "../render.js?v=v2026-10-19T12182";
 =======
-import { DOT_W, DOT_H } from "../render.js?v=v2026-10-19T12172";
+import { DOT_W, DOT_H } from "../render.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

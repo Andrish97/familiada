@@ -1,7 +1,7 @@
 <<<<<<< HEAD
-import { renderMailDocument, renderRichMailDocument } from "./mail-document.js?v=v2026-10-19T12172";
+import { renderMailDocument, renderRichMailDocument } from "./mail-document.js?v=v2026-10-19T12182";
 =======
-import { renderMailDocument, renderRichMailDocument } from "./mail-document.js?v=v2026-10-19T12172";
+import { renderMailDocument, renderRichMailDocument } from "./mail-document.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

@@ -1,13 +1,13 @@
 <<<<<<< HEAD
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T12172";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T12182";
 
-const ENDPOINT = "/maintenance-state.json?v=v2026-10-19T12172";
+const ENDPOINT = "/maintenance-state.json?v=v2026-10-19T12182";
 =======
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T12172";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T12182";
 
-const ENDPOINT = "/maintenance-state.json?v=v2026-10-19T12172";
+const ENDPOINT = "/maintenance-state.json?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 const POLL_MS = 30000;

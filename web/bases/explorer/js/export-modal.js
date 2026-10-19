@@ -2,17 +2,17 @@
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
 <<<<<<< HEAD
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { TYPES as GAME_TYPES, RULES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T12172";
-import { validateQuestionForType } from "../../../shared/js/core/base-export-validate.js?v=v2026-10-19T12172";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T12172";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { TYPES as GAME_TYPES, RULES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T12182";
+import { validateQuestionForType } from "../../../shared/js/core/base-export-validate.js?v=v2026-10-19T12182";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12182";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T12182";
 =======
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { TYPES as GAME_TYPES, RULES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T12172";
-import { validateQuestionForType } from "../../../shared/js/core/base-export-validate.js?v=v2026-10-19T12172";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T12172";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { TYPES as GAME_TYPES, RULES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T12182";
+import { validateQuestionForType } from "../../../shared/js/core/base-export-validate.js?v=v2026-10-19T12182";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12182";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

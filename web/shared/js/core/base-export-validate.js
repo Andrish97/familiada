@@ -3,9 +3,9 @@
 // oparta o RULES/TYPES z game-validate.js, ale bez odpytywania DB.
 
 <<<<<<< HEAD
-import { TYPES, RULES } from "./game-validate.js?v=v2026-10-19T12172";
+import { TYPES, RULES } from "./game-validate.js?v=v2026-10-19T12182";
 =======
-import { TYPES, RULES } from "./game-validate.js?v=v2026-10-19T12172";
+import { TYPES, RULES } from "./game-validate.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

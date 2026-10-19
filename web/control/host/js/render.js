@@ -22,9 +22,9 @@
 // web/js/gameplay/gameStateShape.js's settings.uiLang) nie miała żadnego wpływu na
 // treść, którą prowadzący faktycznie czyta.
 <<<<<<< HEAD
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
 =======
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

@@ -1,12 +1,12 @@
 // js/pages/games-import-export.js
 <<<<<<< HEAD
-import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-19T12172";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-19T12182";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
 =======
-import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-19T12172";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-19T12182";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

@@ -1,9 +1,9 @@
 // theme_manager.js
 // Menadżer motywów – rejestr z themes.json, dynamiczne ładowanie, THEME command
 <<<<<<< HEAD
-import { t } from "../../translation/translation.js?v=v2026-10-19T12172";
+import { t } from "../../translation/translation.js?v=v2026-10-19T12182";
 =======
-import { t } from "../../translation/translation.js?v=v2026-10-19T12172";
+import { t } from "../../translation/translation.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 
@@ -26,9 +26,9 @@ async function initRegistry() {
   }
   if (Object.keys(THEMES).length === 0) {
 <<<<<<< HEAD
-    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-10-19T12172");
+    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-10-19T12182");
 =======
-    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-10-19T12172");
+    const { createTheme: createThemeClassic } = await import("./theme_classic.js?v=v2026-10-19T12182");
 
 >>>>>>> origin/main
     THEMES.classic = createThemeClassic;

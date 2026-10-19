@@ -10,9 +10,9 @@
 // nie zmienia typu urządzenia, ale może udostępnić funkcję wymagającą miejsca.
 
 <<<<<<< HEAD
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-19T12172";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-19T12182";
 =======
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-19T12172";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

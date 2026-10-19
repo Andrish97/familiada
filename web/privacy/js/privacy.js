@@ -6,13 +6,13 @@
 //   (initPage: konto, „Wstecz” i etykieta wg mapy nawigacji)
 
 <<<<<<< HEAD
-import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12172";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12172";
+import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12182";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12182";
 =======
-import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12172";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12172";
+import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12182";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

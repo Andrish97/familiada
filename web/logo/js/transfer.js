@@ -6,15 +6,15 @@
 //   (B) { type:"GLYPH_30x10"|"PIX_150x70", name, payload }                          -- stary zrzut z bazy
 
 <<<<<<< HEAD
-import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-19T12172";
-import { parseLogoPackage } from "./package.js?v=v2026-10-19T12172";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-19T12172";
+import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-19T12182";
+import { parseLogoPackage } from "./package.js?v=v2026-10-19T12182";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-19T12182";
 =======
-import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-19T12172";
-import { parseLogoPackage } from "./package.js?v=v2026-10-19T12172";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-19T12172";
+import { standaloneLogoSource } from "../../shared/js/core/logo-transfer-source.js?v=v2026-10-19T12182";
+import { parseLogoPackage } from "./package.js?v=v2026-10-19T12182";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

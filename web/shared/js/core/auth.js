@@ -1,12 +1,12 @@
 // js/core/auth.js
 <<<<<<< HEAD
-import { icon } from "./icons.js?v=v2026-10-19T12172";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-19T12172";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12172";
+import { icon } from "./icons.js?v=v2026-10-19T12182";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-19T12182";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12182";
 =======
-import { icon } from "./icons.js?v=v2026-10-19T12172";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-19T12172";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12172";
+import { icon } from "./icons.js?v=v2026-10-19T12182";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-19T12182";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 
@@ -133,9 +133,9 @@ export async function resolveLoginToEmail(loginOrEmail) {
 }
 
 <<<<<<< HEAD
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-19T12172";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-19T12182";
 =======
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-19T12172";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

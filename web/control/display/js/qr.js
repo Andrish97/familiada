@@ -4,7 +4,7 @@
 // komend tekstowych, więc reużywamy dosłownie ten sam plik co dzisiejszy
 // display.html zamiast pisać drugą kopię tej samej logiki.
 <<<<<<< HEAD
-export { createQRController } from "../../../shared/js/display/qr.js?v=v2026-10-19T12172";
+export { createQRController } from "../../../shared/js/display/qr.js?v=v2026-10-19T12182";
 =======
-export { createQRController } from "../../../shared/js/display/qr.js?v=v2026-10-19T12172";
+export { createQRController } from "../../../shared/js/display/qr.js?v=v2026-10-19T12182";
 >>>>>>> origin/main

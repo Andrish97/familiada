@@ -1,18 +1,18 @@
 const LANG_LOADERS = {
 <<<<<<< HEAD
-  pl: async () => (await import('./pl.js?v=v2026-10-19T12172')).default,
-  en: async () => (await import('./en.js?v=v2026-10-19T12172')).default,
-  uk: async () => (await import('./uk.js?v=v2026-10-19T12172')).default,
+  pl: async () => (await import('./pl.js?v=v2026-10-19T12182')).default,
+  en: async () => (await import('./en.js?v=v2026-10-19T12182')).default,
+  uk: async () => (await import('./uk.js?v=v2026-10-19T12182')).default,
 };
 
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-19T12172";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-19T12182";
 =======
-  pl: async () => (await import('./pl.js?v=v2026-10-19T12172')).default,
-  en: async () => (await import('./en.js?v=v2026-10-19T12172')).default,
-  uk: async () => (await import('./uk.js?v=v2026-10-19T12172')).default,
+  pl: async () => (await import('./pl.js?v=v2026-10-19T12182')).default,
+  en: async () => (await import('./en.js?v=v2026-10-19T12182')).default,
+  uk: async () => (await import('./uk.js?v=v2026-10-19T12182')).default,
 };
 
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-19T12172";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

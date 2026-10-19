@@ -2,11 +2,11 @@
 // Strona /logos/editor/text/?id=<logo> -- edytor trybu TEXT (editor-page.js).
 
 <<<<<<< HEAD
-import { bootEditorPage } from "./editor-page.js?v=v2026-10-19T12172";
-import { initTextEditor } from "./text.js?v=v2026-10-19T12172";
+import { bootEditorPage } from "./editor-page.js?v=v2026-10-19T12182";
+import { initTextEditor } from "./text.js?v=v2026-10-19T12182";
 =======
-import { bootEditorPage } from "./editor-page.js?v=v2026-10-19T12172";
-import { initTextEditor } from "./text.js?v=v2026-10-19T12172";
+import { bootEditorPage } from "./editor-page.js?v=v2026-10-19T12182";
+import { initTextEditor } from "./text.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

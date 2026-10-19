@@ -15,19 +15,19 @@
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
 <<<<<<< HEAD
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-19T12172";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-19T12172";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-19T12172";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-19T12172";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-19T12182";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-19T12182";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-19T12182";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-19T12182";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12182";
 =======
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-19T12172";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-19T12172";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-19T12172";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-19T12172";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-19T12182";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-19T12182";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-19T12182";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-19T12182";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

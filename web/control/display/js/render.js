@@ -1,7 +1,7 @@
 <<<<<<< HEAD
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
 =======
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 // control/display/js/render.js
@@ -30,13 +30,13 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T1217
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
 <<<<<<< HEAD
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-19T12172";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-19T12172";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12172";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-19T12182";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-19T12182";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12182";
 =======
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-19T12172";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-19T12172";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12172";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-19T12182";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-19T12182";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 import {
@@ -48,9 +48,9 @@ import {
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
 <<<<<<< HEAD
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-19T12172";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-19T12182";
 =======
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-19T12172";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

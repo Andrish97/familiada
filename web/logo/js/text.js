@@ -4,11 +4,11 @@
 // napis wyśrodkowany.
 
 <<<<<<< HEAD
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-19T12172";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-19T12182";
 =======
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-19T12172";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

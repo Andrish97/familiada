@@ -9,9 +9,9 @@
 // Buzzera, bo nic nie ringDoorbell'owało po tamtej stronie).
 
 <<<<<<< HEAD
-import { rt } from "./realtime.js?v=v2026-10-19T12172";
+import { rt } from "./realtime.js?v=v2026-10-19T12182";
 =======
-import { rt } from "./realtime.js?v=v2026-10-19T12172";
+import { rt } from "./realtime.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

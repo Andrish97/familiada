@@ -6,15 +6,15 @@
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
 <<<<<<< HEAD
-import { signOut } from './auth.js?v=v2026-10-19T12172';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-19T12172';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-19T12172';
-import { icon } from './icons.js?v=v2026-10-19T12172';
+import { signOut } from './auth.js?v=v2026-10-19T12182';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-19T12182';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-19T12182';
+import { icon } from './icons.js?v=v2026-10-19T12182';
 =======
-import { signOut } from './auth.js?v=v2026-10-19T12172';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-19T12172';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-19T12172';
-import { icon } from './icons.js?v=v2026-10-19T12172';
+import { signOut } from './auth.js?v=v2026-10-19T12182';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-19T12182';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-19T12182';
+import { icon } from './icons.js?v=v2026-10-19T12182';
 
 >>>>>>> origin/main
 
@@ -440,9 +440,9 @@ export async function autoInitTopbarAuthButton(btn = document.getElementById('bt
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
 <<<<<<< HEAD
-  const { getUser } = await import('./auth.js?v=v2026-10-19T12172');
+  const { getUser } = await import('./auth.js?v=v2026-10-19T12182');
 =======
-  const { getUser } = await import('./auth.js?v=v2026-10-19T12172');
+  const { getUser } = await import('./auth.js?v=v2026-10-19T12182');
 
 >>>>>>> origin/main
   if (btn.dataset.topbarAuthReady === '1') return;

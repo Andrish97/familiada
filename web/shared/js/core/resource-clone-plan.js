@@ -1,15 +1,15 @@
 // Definition preparation shared by duplicate-to-self and send-to-friend.
 // Authorization, demo provenance and the persisted request ID are server data.
 <<<<<<< HEAD
-import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-19T12172';
-import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-19T12172';
-import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-19T12172';
-import { parseLogoPackage } from '../../../logo/js/package.js?v=v2026-10-19T12172';
+import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-19T12182';
+import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-19T12182';
+import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-19T12182';
+import { parseLogoPackage } from '../../../logo/js/package.js?v=v2026-10-19T12182';
 =======
-import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-19T12172';
-import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-19T12172';
-import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-19T12172';
-import { parseLogoPackage } from '../../../logo/js/package.js?v=v2026-10-19T12172';
+import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-19T12182';
+import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-19T12182';
+import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-19T12182';
+import { parseLogoPackage } from '../../../logo/js/package.js?v=v2026-10-19T12182';
 
 >>>>>>> origin/main
 

@@ -1,7 +1,7 @@
 <<<<<<< HEAD
-import { icon } from "../core/icons.js?v=v2026-10-19T12172";
+import { icon } from "../core/icons.js?v=v2026-10-19T12182";
 =======
-import { icon } from "../core/icons.js?v=v2026-10-19T12172";
+import { icon } from "../core/icons.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 export const initFullscreenButton = () => {

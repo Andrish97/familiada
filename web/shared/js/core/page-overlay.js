@@ -6,11 +6,11 @@
 // nigdy przez history.back() ani referrer. i18n: pageGuard.*.
 
 <<<<<<< HEAD
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { icon } from "./icons.js?v=v2026-10-19T12172";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { icon } from "./icons.js?v=v2026-10-19T12182";
 =======
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { icon } from "./icons.js?v=v2026-10-19T12172";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { icon } from "./icons.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

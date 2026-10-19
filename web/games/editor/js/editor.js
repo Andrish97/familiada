@@ -4,17 +4,17 @@
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
 <<<<<<< HEAD
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-19T12172";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12172";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-19T12172";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T12172";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-19T12182";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12182";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-19T12182";
+import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T12182";
 =======
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-19T12172";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12172";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-19T12172";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T12172";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-19T12182";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12182";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-19T12182";
+import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 import {
@@ -22,29 +22,29 @@ import {
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   buildAnswerRow, buildAddAnswerTile,
 <<<<<<< HEAD
-} from "../../../shared/js/core/question-form.js?v=v2026-10-19T12172";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-19T12172";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-19T12172";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-19T12172";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-19T12172";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T12172";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-19T12172";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
-import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-19T12172";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-19T12172";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-19T12182";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-19T12182";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-19T12182";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-19T12182";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-19T12182";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T12182";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-19T12182";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12182";
+import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-19T12182";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-19T12182";
 =======
-} from "../../../shared/js/core/question-form.js?v=v2026-10-19T12172";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-19T12172";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-19T12172";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-19T12172";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-19T12172";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T12172";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-19T12172";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
-import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-19T12172";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-19T12172";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-19T12182";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-19T12182";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-19T12182";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-19T12182";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-19T12182";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T12182";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-19T12182";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12182";
+import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-19T12182";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi

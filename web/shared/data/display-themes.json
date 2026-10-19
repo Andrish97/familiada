@@ -9,11 +9,11 @@
         "uk": "Класична"
       },
 <<<<<<< HEAD
-      "module": "./theme_classic.js?v=v2026-10-19T12172",
-      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T12172"
+      "module": "./theme_classic.js?v=v2026-10-19T12182",
+      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T12182"
 =======
-      "module": "./theme_classic.js?v=v2026-10-19T12172",
-      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T12172"
+      "module": "./theme_classic.js?v=v2026-10-19T12182",
+      "hostModule": "/control/host/js/themes/classic.js?v=v2026-10-19T12182"
 
 >>>>>>> origin/main
     },
@@ -25,11 +25,11 @@
         "uk": "Сучасна"
       },
 <<<<<<< HEAD
-      "module": "./theme_modern.js?v=v2026-10-19T12172",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T12172"
+      "module": "./theme_modern.js?v=v2026-10-19T12182",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T12182"
 =======
-      "module": "./theme_modern.js?v=v2026-10-19T12172",
-      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T12172"
+      "module": "./theme_modern.js?v=v2026-10-19T12182",
+      "hostModule": "/control/host/js/themes/modern.js?v=v2026-10-19T12182"
 
 >>>>>>> origin/main
     }

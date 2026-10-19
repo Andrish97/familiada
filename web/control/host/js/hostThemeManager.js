@@ -1,9 +1,9 @@
 // Loads Host theme factories from the same manifest Display uses. Each
 // entry maps a shared theme key to a Host-specific createTheme(root) module.
 <<<<<<< HEAD
-const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-19T12172";
+const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-19T12182";
 =======
-const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-19T12172";
+const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 const FALLBACK_KEY = "classic";

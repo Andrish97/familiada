@@ -20,11 +20,11 @@
 // nic nie robi (zero podwójnego odtwarzania).
 
 <<<<<<< HEAD
-import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx, setSfxMuted, applySfxGameSettings } from "../../shared/js/core/sfx.js?v=v2026-10-19T12172";
-import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-19T12172";
+import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx, setSfxMuted, applySfxGameSettings } from "../../shared/js/core/sfx.js?v=v2026-10-19T12182";
+import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-19T12182";
 =======
-import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx, setSfxMuted, applySfxGameSettings } from "../../shared/js/core/sfx.js?v=v2026-10-19T12172";
-import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-19T12172";
+import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx, setSfxMuted, applySfxGameSettings } from "../../shared/js/core/sfx.js?v=v2026-10-19T12182";
+import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

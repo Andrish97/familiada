@@ -9,13 +9,13 @@
 // bazie nie ma jeszcze typu gry).
 
 <<<<<<< HEAD
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12172";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12182";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12182";
 =======
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12172";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12172";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T12182";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 import {
@@ -23,9 +23,9 @@ import {
   sumPoints, renderSumPill, questionProblems, questionMessage,
   buildAnswerRow, buildAddAnswerTile,
 <<<<<<< HEAD
-} from "../../../shared/js/core/question-form.js?v=v2026-10-19T12172";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-19T12182";
 =======
-} from "../../../shared/js/core/question-form.js?v=v2026-10-19T12172";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

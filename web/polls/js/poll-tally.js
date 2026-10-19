@@ -14,17 +14,17 @@
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
 <<<<<<< HEAD
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-19T12172";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-19T12172";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-19T12182";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-19T12182";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12182";
 =======
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12172";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-19T12172";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-19T12172";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T12182";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-19T12182";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-19T12182";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 import {
@@ -33,9 +33,9 @@ import {
   ANSWERS_MIN,
   TEXT_MAX_LEN,
 <<<<<<< HEAD
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-19T12172";
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-19T12182";
 =======
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-19T12172";
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

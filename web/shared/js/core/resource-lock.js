@@ -6,15 +6,15 @@
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
 <<<<<<< HEAD
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T12172";
-import { rt } from "./realtime.js?v=v2026-10-19T12172";
-import { icon } from "./icons.js?v=v2026-10-19T12172";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T12182";
+import { rt } from "./realtime.js?v=v2026-10-19T12182";
+import { icon } from "./icons.js?v=v2026-10-19T12182";
 =======
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12172";
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T12172";
-import { rt } from "./realtime.js?v=v2026-10-19T12172";
-import { icon } from "./icons.js?v=v2026-10-19T12172";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T12182";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T12182";
+import { rt } from "./realtime.js?v=v2026-10-19T12182";
+import { icon } from "./icons.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

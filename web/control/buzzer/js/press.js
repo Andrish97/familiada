@@ -1,7 +1,7 @@
 <<<<<<< HEAD
-import { deriveButtonState, isLockedRow, STATE } from "./render.js?v=v2026-10-19T12172";
+import { deriveButtonState, isLockedRow, STATE } from "./render.js?v=v2026-10-19T12182";
 =======
-import { deriveButtonState, isLockedRow, STATE } from "./render.js?v=v2026-10-19T12172";
+import { deriveButtonState, isLockedRow, STATE } from "./render.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 

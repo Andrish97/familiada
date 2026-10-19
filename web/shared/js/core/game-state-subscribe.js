@@ -14,15 +14,15 @@
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
 <<<<<<< HEAD
-import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T12172";
-import { rt } from "./realtime.js?v=v2026-10-19T12172";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-19T12172";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-19T12172";
+import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T12182";
+import { rt } from "./realtime.js?v=v2026-10-19T12182";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-19T12182";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-19T12182";
 =======
-import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T12172";
-import { rt } from "./realtime.js?v=v2026-10-19T12172";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-19T12172";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-19T12172";
+import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T12182";
+import { rt } from "./realtime.js?v=v2026-10-19T12182";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-19T12182";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-19T12182";
 
 >>>>>>> origin/main
 
