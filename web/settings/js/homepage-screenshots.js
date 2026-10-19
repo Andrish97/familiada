@@ -1871,19 +1871,21 @@ async function applyFixtureToFrame(scene, fixture) {
 }
 
 async function paintSoundSettings(doc) {
-  const [{ default: sounds }, { default: dictionary }, { icon }] = await Promise.all([
-    fetch("/shared/data/sounds.json", { cache: "force-cache" }).then(response => response.json()),
+  const [sounds, { default: dictionary }, { icon }] = await Promise.all([
+    fetch("/shared/data/sounds.json", { cache: "force-cache" }).then(response => {
+      if (!response.ok) throw new Error(`Nie udało się wczytać ustawień dźwięku (${response.status}).`);
+      return response.json();
+    }),
     import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T20393`),
     import("/shared/js/core/icons.js?v=v2026-10-19T20393"),
-
   ]);
   const table = doc.getElementById("shotSfxTable");
   if (!table) return;
   const lookup = key => key.split(".").reduce((value, part) => value?.[part], dictionary);
-  table.innerHTML = sounds.categories.map(category => {
+  table.innerHTML = (Array.isArray(sounds?.categories) ? sounds.categories : []).map(category => {
     const label = lookup(`control.sfxDesc.${category.key}`) || category.key;
-    const variant = category.sounds?.[0]?.label?.[currentLanguage()] || "Classic";
-    return `<div class="sfx-row" data-sound="${escapeHtml(category.key)}"><div class="sfx-row-desc">${escapeHtml(label)}</div><div class="ui-select sfx-variant-select"><button class="btn sm ui-select-btn" type="button"><span class="ui-select-label">${escapeHtml(variant)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><button class="sfx-preview-btn sound-preview-btn" type="button" title="Podgląd" aria-label="Podgląd">${icon("play")}</button><div class="sfx-vol-wrap"><input class="sfx-vol" type="range" min="0" max="100" value="100"><span class="sfx-vol-label">100%</span></div><div class="sfx-file-wrap"><button class="btn sfx-add-btn" type="button" disabled>${icon("upload")} Wybierz plik</button></div></div>`;
+    const variant = category.sounds?.[0]?.label?.[currentLanguage()] || category.sounds?.[0]?.file || "—";
+    return `<div class="sfx-row" data-sound="${escapeHtml(category.key)}"><div class="sfx-row-desc">${escapeHtml(label)}</div><div class="ui-select sfx-variant-select"><button class="btn sm ui-select-btn" type="button"><span class="ui-select-label">${escapeHtml(variant)}</span><span class="ui-select-caret">${icon("caret-down")}</span></button></div><button class="sfx-preview-btn sound-preview-btn" type="button" title="Podgląd" aria-label="Podgląd">${icon("play")}</button><div class="sfx-vol-wrap"><input class="sfx-vol" type="range" min="0" max="100" value="100"><span class="sfx-vol-label">100%</span></div><div class="sfx-file-wrap"></div></div>`;
   }).join("");
   table.querySelectorAll(".sfx-row").forEach(row => {
     const slider = row.querySelector(".sfx-vol");
