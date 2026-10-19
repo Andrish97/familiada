@@ -1150,15 +1150,12 @@ function sizeScenePreview(scene) {
   if (scene.id === "poll-vote-mobile") {
     const board = screenshotBoardSize();
     const boardScale = Math.min(1, Math.max(0.1, (availableWidth - 2) / board.width));
-    const bezel = 10, screenScale = (board.height - 2 * bezel) / scene.height;
-    const screenWidth = scene.width * screenScale, deviceWidth = screenWidth + 2 * bezel;
+    const bezel = 11, screenScale = (board.height - 2 * bezel) / scene.height;
+    const screenWidth = scene.width * screenScale;
     const screenLeft = (board.width - screenWidth) / 2;
     els.frameWrap.classList.add("is-phone");
     els.frameWrap.style.width = `${board.width * boardScale}px`;
     els.frameWrap.style.height = `${board.height * boardScale}px`;
-    els.frameWrap.style.setProperty("--phone-left", `${((board.width - deviceWidth) / 2) * boardScale}px`);
-    els.frameWrap.style.setProperty("--phone-width", `${deviceWidth * boardScale}px`);
-    els.frameWrap.style.setProperty("--phone-radius", `${(42 * screenScale + bezel) * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-left", `${screenLeft * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-top", `${bezel * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-radius", `${42 * screenScale * boardScale}px`);
@@ -2707,7 +2704,7 @@ async function captureScene(scene) {
 }
 
 function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900) {
-  const bezel = 10;
+  const bezel = 11;
   const screenScale = (outputHeight - 2 * bezel) / screenCanvas.height;
   const screenWidth = screenCanvas.width * screenScale;
   const screenHeight = screenCanvas.height * screenScale;
@@ -2734,7 +2731,7 @@ function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900
   ctx.fill();
   ctx.restore();
   roundedRect(ctx, deviceX + 0.5, deviceY + 0.5, deviceW - 1, deviceH - 1, cornerRadius - 0.5);
-  ctx.strokeStyle = "#30343d";
+  ctx.strokeStyle = "#d7d9df";
   ctx.lineWidth = 1;
   ctx.stroke();
 
