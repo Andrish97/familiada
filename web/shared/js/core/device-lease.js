@@ -1,6 +1,6 @@
-import { sb } from "./supabase.js?v=v2026-10-19T19245";
-import { t } from "../../translation/translation.js?v=v2026-10-19T19245";
-import { icon } from "./icons.js?v=v2026-10-19T19245";
+import { sb } from "./supabase.js?v=v2026-10-19T19274";
+import { t } from "../../translation/translation.js?v=v2026-10-19T19274";
+import { icon } from "./icons.js?v=v2026-10-19T19274";
 
 
 const HEARTBEAT_MS = 3_000;
