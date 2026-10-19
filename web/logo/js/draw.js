@@ -1092,25 +1092,6 @@ export function initDrawEditor(ctx) {
     for (const [k, text] of Object.entries(tips)) btn[k]?.setAttribute("data-tip", text);
   }
 
-  let tipEl = null;
-  function showTip(target) {
-    hideTip();
-    const text = target.getAttribute("data-tip");
-    if (!text) return;
-    tipEl = document.createElement("div");
-    tipEl.className = "draw-tip";
-    tipEl.textContent = text;
-    tipEl.style.visibility = "hidden";
-    document.body.appendChild(tipEl);
-    const r = target.getBoundingClientRect();
-    tipEl.style.left = `${Math.max(8, r.left + r.width / 2 - tipEl.offsetWidth / 2)}px`;
-    tipEl.style.top = `${Math.max(8, r.top - tipEl.offsetHeight - 10)}px`;
-    tipEl.style.visibility = "visible";
-    tipEl.style.opacity = "1";
-    tipEl.style.transform = "translateY(0)";
-  }
-  function hideTip() { tipEl?.remove(); tipEl = null; }
-
   const ICONS = {
     select: "cursor", pan: "hand", zoomIn: "zoom-in", zoomOut: "zoom-out", text: "text", brush: "brush",
     eraser: "eraser", shapes: "shapes", undo: "undo", redo: "redo", clear: "trash", duplicate: "duplicate", eye: "eye",
@@ -1119,12 +1100,6 @@ export function initDrawEditor(ctx) {
     if (!btn[k]) continue;
     btn[k].innerHTML = icon(name);
     btn[k].setAttribute("aria-label", t(`logoEditor.draw.tooltips.${k === "eye" ? "preview" : k}`).split("\n")[0]);
-  }
-  for (const b of document.querySelectorAll(".editorToolbar .btn")) {
-    b.addEventListener("mouseenter", () => showTip(b));
-    b.addEventListener("focus", () => showTip(b));
-    b.addEventListener("mouseleave", hideTip);
-    b.addEventListener("blur", hideTip);
   }
   updateTooltips();
   window.addEventListener("i18n:lang", () => { updateTooltips(); syncBgIcon(); renderSettings(); });

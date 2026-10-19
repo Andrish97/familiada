@@ -384,34 +384,6 @@ input,textarea {
     flex: 0 0 auto
 }
 
-.tag-dot[data-tip]:hover::after,.tag-dot[data-tip]:hover::before {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(10,10,12,.95)
-}
-
-.tag-dot[data-tip]:hover::after {
-    content: attr(data-tip);
-    bottom: calc(100% + 8px);
-    white-space: nowrap;
-    padding: 6px 8px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,.14);
-    box-shadow: 0 12px 28px rgba(0,0,0,.55);
-    font-size: 12px
-}
-
-.tag-dot[data-tip]:hover::before {
-    content: "";
-    bottom: calc(100% + 3px);
-    width: 10px;
-    height: 10px;
-    border-left: 1px solid rgba(255,255,255,.14);
-    border-bottom: 1px solid rgba(255,255,255,.14);
-    transform: translateX(-50%) rotate(45deg)
-}
-
 .marquee {
     position: absolute;
     border: 1px dashed rgba(120,160,255,.9);
@@ -893,34 +865,6 @@ input,textarea {
     box-sizing: border-box
 }
 
-.meta-dot[data-tip]:hover::after,.meta-dot[data-tip]:hover::before {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(10,10,12,.95)
-}
-
-.meta-dot[data-tip]:hover::after {
-    content: attr(data-tip);
-    bottom: calc(100% + 8px);
-    white-space: nowrap;
-    padding: 6px 8px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,.14);
-    box-shadow: 0 12px 28px rgba(0,0,0,.55);
-    font-size: 12px
-}
-
-.meta-dot[data-tip]:hover::before {
-    content: "";
-    bottom: calc(100% + 3px);
-    width: 10px;
-    height: 10px;
-    border-left: 1px solid rgba(255,255,255,.14);
-    border-bottom: 1px solid rgba(255,255,255,.14);
-    transform: translateX(-50%) rotate(45deg)
-}
-
 #renameModal[hidden] {
     display: none!important
 }
@@ -1167,33 +1111,6 @@ tr.row.is-drop-after td:last-child::after {
 .meta-dot,.tag-dot {
     position: relative;
     z-index: 5;
-}
-
-/* CSS tooltip wyłączony dla kropek w tabeli — zastąpiony JS tooltip portalem */
-tr.row .meta-dot[data-tip]::after,
-tr.row .meta-dot[data-tip]::before,
-tr.row .tag-dot[data-tip]::after,
-tr.row .tag-dot[data-tip]::before {
-    display: none !important;
-}
-
-[data-tip]:hover::after,[data-tip]:hover::before {
-    z-index: 10000;
-}
-
-/* JS tooltip portal */
-.dot-tooltip {
-    position: fixed;
-    z-index: 20000;
-    padding: 6px 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(10,10,12,.96);
-    box-shadow: 0 14px 34px rgba(0,0,0,.55);
-    color: rgba(255,255,255,.92);
-    font-size: 12px;
-    white-space: nowrap;
-    pointer-events: none;
 }
 
 .tbGroup,.toolbar {
@@ -1590,68 +1507,6 @@ tr.row .tag-dot[data-tip]::before {
     0 10px 24px rgba(120,160,255,.35);
 }
 
-/* === TOOLTIP (toolbar) === */
-.tbBtn{
-  position: relative; /* kotwica dla tooltipa */
-}
-
-.tbBtn[data-tip]::after,
-.tbBtn[data-tip]::before{
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 120ms ease, transform 120ms ease;
-  z-index: 20000;
-}
-
-/* dymek */
-.tbBtn[data-tip]::after{
-  content: attr(data-tip);
-  bottom: calc(100% + 10px);
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(10,10,12,.96);
-  box-shadow: 0 14px 34px rgba(0,0,0,.55);
-  color: rgba(255,255,255,.92);
-  font-size: 12px;
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-
-/* strzałka */
-.tbBtn[data-tip]::before{
-  content: "";
-  bottom: calc(100% + 4px);
-  width: 10px;
-  height: 10px;
-  border-left: 1px solid rgba(255,255,255,.14);
-  border-bottom: 1px solid rgba(255,255,255,.14);
-  background: rgba(10,10,12,.96);
-  transform: translateX(-50%) rotate(45deg);
-}
-
-/* pokazuj */
-.tbBtn[data-tip]:hover::after,
-.tbBtn[data-tip]:hover::before{
-  opacity: 1;
-  transform: translateX(-50%) translateY(-2px);
-}
-
-/* dostępność: focus z klawiatury też pokazuje */
-.tbBtn[data-tip]:focus-visible::after,
-.tbBtn[data-tip]:focus-visible::before{
-  opacity: 1;
-  transform: translateX(-50%) translateY(-2px);
-}
-
-/* nie pokazuj gdy disabled */
-.tbBtn[disabled][data-tip]::after,
-.tbBtn[disabled][data-tip]::before{
-  display: none;
-}
 #btnAddTag{
     margin-bottom: 12px;
     margin-top: 12px;

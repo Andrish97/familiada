@@ -90,20 +90,15 @@ export function startActivityPanel() {
       svg.append(shape('path',{d:path+' L'+points.at(-1).x+','+bottom+' L'+points[0].x+','+bottom+' Z',fill:'url(#activity-line-fill)'}));
       svg.append(shape('path',{d:path,fill:'none',stroke:'#ffeaa6','stroke-width':2.5,'stroke-linejoin':'round','stroke-linecap':'round','vector-effect':'non-scaling-stroke'}));
     }
-    const tooltip=document.createElement('div');tooltip.className='stat-sub activity-chart-tooltip';
     function label(item) {return new Date(item.bucket).toLocaleString('pl-PL',{timeZone:'Europe/Warsaw',day:'2-digit',month:'2-digit',...(period==='hour'?{hour:'2-digit',minute:'2-digit'}:{})});}
-    function describe(item) {tooltip.textContent=label(item)+' · Użytkownicy: '+item.users;}
-    describe(items.at(-1));
     const stride=Math.max(1,Math.ceil((points.length-1)/4));
     for (const [i,point] of points.entries()) {
       const description=label(point.item)+': '+point.item.users+' użytkowników';
-      const dot=shape('circle',{cx:point.x,cy:point.y,r:4,fill:'#10172a',stroke:'#ffeaa6','stroke-width':2,tabindex:0,'aria-label':description});
-      dot.append(shape('title',{},description));
-      for (const event of ['pointerenter','focus','click']) dot.addEventListener(event,()=>describe(point.item));
+      const dot=shape('circle',{cx:point.x,cy:point.y,r:4,fill:'#10172a',stroke:'#ffeaa6','stroke-width':2,tabindex:0,'aria-label':description,'data-tooltip':description});
       svg.append(dot);
       if (i===0||i===points.length-1||i%stride===0) svg.append(shape('text',{x:point.x,y:240,fill:'rgba(255,255,255,.5)','font-size':11,'text-anchor':points.length===1?'middle':i===0?'start':i===points.length-1?'end':'middle'},label(point.item)));
     }
-    chart.append(tooltip,svg);
+    chart.append(svg);
   }
   initUiSelect(document.getElementById('activityChartPeriod'),{options:periods,value:period,onChange(value){period=value;paintChart();}});
   async function load(force=false) {

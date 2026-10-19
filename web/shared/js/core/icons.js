@@ -3,6 +3,9 @@
 // Współdzielony odczyt przez <use> pozwala przeglądarce cache'ować pliki,
 // a kolor currentColor dziedziczy się z elementu wywołującego.
 
+// Jeden system podpowiedzi dla stron korzystających ze wspólnych kontrolek.
+import "./tooltips.js?v=v2026-10-19T15242";
+
 export const ICONS = Object.freeze({
   // Akcje
   close: "/assets/icons/actions/close.svg?v=v2026-10-19T17565",
