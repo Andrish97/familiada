@@ -1911,17 +1911,30 @@ async function logoCanvasFromFile(file, width, height, ownerDocument = document)
 }
 
 async function logoCanvasFromStored(stored, width, height, ownerDocument = document) {
-  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20352");
+  const { logoToBits150, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20352");
   const source = stored?.data && typeof stored.data === "object" ? stored.data : stored;
   const kind = String(source?.kind || source?.type || "").toUpperCase();
   const payload = source?.payload || source;
   const logo = kind.includes("PIX") ? { type: "PIX_150x70", payload }
     : kind.includes("GLYPH") ? { type: "GLYPH_30x10", payload }
       : source?.type ? source : { type: "GLYPH_30x10", payload };
-  // Match the game's logo picker: a clear pixel preview on a dark tile.
-  // Pixel exports already include their bitmap and must not depend on fonts.
+  // Match the game's pixel logo preview. Render as SVG so the small preview
+  // stays crisp inside the fixed-size screenshot iframe.
   const glyphs = logo.type === "GLYPH_30x10" ? await loadFont5x7() : null;
-  return buildLogoPreviewCanvas(logo, glyphs, width, height, ownerDocument);
+  const bits = logoToBits150(logo, glyphs);
+  const on = [];
+  for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
+    if (bits[y * 150 + x]) on.push(`<rect x="${x}" y="${y}" width="1" height="1"/>`);
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 70" shape-rendering="crispEdges"><rect width="150" height="70" fill="#000"/><g fill="#fff">${on.join("")}</g></svg>`;
+  const image = ownerDocument.createElement("img");
+  image.alt = "";
+  image.width = width;
+  image.height = height;
+  image.style.cssText = "display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated";
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  await image.decode();
+  return image;
 }
 
 async function translateFrame(doc, language) {
