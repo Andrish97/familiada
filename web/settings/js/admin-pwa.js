@@ -6,9 +6,10 @@ const button = document.getElementById("btnInstallAdmin");
 const pwaApi = initPwa({ registerServiceWorker: false });
 const INSTALL_DISMISSED_KEY = "pwa:install_dismissed";
 const ADMIN_APP_SHELL_KEY = "admin-pwa:standalone";
+const ADMIN_APP_INSTALLED_KEY = "admin-pwa:installed";
 let didRunUnlockedSetup = false;
 let installedCheck;
-let adminInstalled = false;
+let adminInstalled = localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1";
 
 function isIOSSafari() {
   const ua = navigator.userAgent || "";
@@ -48,17 +49,22 @@ function isAdminInstalled() {
   if (isAdminStandalone()) return Promise.resolve(true);
   if (!installedCheck) {
     installedCheck = (async () => {
-      if (typeof navigator.getInstalledRelatedApps !== "function") return false;
+      if (typeof navigator.getInstalledRelatedApps !== "function") {
+        return localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1";
+      }
       try {
         const apps = await navigator.getInstalledRelatedApps();
         const manifestUrl = new URL("/manifest-admin.webmanifest", location.origin).href;
-        return apps.some((app) => {
+        const installed = apps.some((app) => {
           let appId = app.id || "";
           try { appId = new URL(appId, location.origin).href; } catch {}
           return app.url === manifestUrl || appId === new URL("/?app=admin", location.origin).href;
         });
+        if (installed) localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
+        else localStorage.removeItem(ADMIN_APP_INSTALLED_KEY);
+        return installed;
       } catch {
-        return false;
+        return localStorage.getItem(ADMIN_APP_INSTALLED_KEY) === "1";
       }
     })();
   }
@@ -69,7 +75,7 @@ function updateButton() {
   if (!button) return;
   const locked = document.body.classList.contains("settings-locked");
   const standaloneAdmin = isAdminStandalone();
-  button.style.display = locked || standaloneAdmin ? "none" : "";
+  button.style.display = locked || standaloneAdmin || adminInstalled ? "none" : "";
   button.disabled = adminInstalled;
   button.title = adminInstalled ? "Panel admina jest już zainstalowany" : "Zainstaluj panel admina";
   button.setAttribute("aria-label", button.title);
@@ -144,6 +150,7 @@ window.addEventListener("pwa:installable", () => {
 });
 window.addEventListener("pwa:installed", () => {
   adminInstalled = true;
+  localStorage.setItem(ADMIN_APP_INSTALLED_KEY, "1");
   updateButton();
 });
 navigator.serviceWorker?.addEventListener("controllerchange", updateButton);
