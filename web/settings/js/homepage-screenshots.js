@@ -7,6 +7,13 @@ let initialized = false;
 let dirty = false;
 let sharedDirty = false;
 const dirtySceneIds = new Set();
+const undoHistory = [];
+const redoHistory = [];
+let historyBefore = null;
+let historyCurrent = null;
+let historyTimer = 0;
+let historyReady = false;
+let applyingHistory = false;
 let sharedEditorLanguage = "pl";
 let lastFrameKey = "";
 let deviceReadyPromise = null;
@@ -799,6 +806,7 @@ function markDirty(scope, sceneIds = null) {
   else if (scope === "category") dirtySceneIds.add(currentScene().id);
   dirty = sharedDirty || dirtySceneIds.size > 0;
   updateDirtyIndicators();
+  scheduleHistoryCheckpoint();
 }
 function clearDirty() {
   sharedDirty = false;
@@ -824,6 +832,88 @@ function updateDirtyIndicators() {
     })));
     sceneSelectUI.setValue(selected, { silent: true });
   }
+}
+function captureHistoryState() {
+  if (!config) return null;
+  try { if (els.fixture?.value) readEditorIntoConfig(); } catch {}
+  try { if (sharedEditorLanguage) readSharedEditor(); } catch {}
+  if (byId("homepageShotQrUrl")) config.qrUrl = byId("homepageShotQrUrl").value.trim();
+  return {
+    config: structuredClone(config),
+    language: currentLanguage(),
+    sceneId: currentScene().id,
+    tab: document.querySelector("[data-shot-tab].active")?.dataset.shotTab || "shared",
+    sharedDirty,
+    dirtySceneIds: [...dirtySceneIds],
+  };
+}
+function historyKey(state) {
+  return JSON.stringify({ config: state.config, sharedDirty: state.sharedDirty, dirtySceneIds: state.dirtySceneIds });
+}
+function updateHistoryButtons() {
+  const undo = byId("homepageShotUndo");
+  const redo = byId("homepageShotRedo");
+  if (undo) undo.disabled = undoHistory.length === 0;
+  if (redo) redo.disabled = redoHistory.length === 0;
+}
+function beginHistoryChange() {
+  if (!historyReady || applyingHistory || historyBefore) return;
+  historyBefore = captureHistoryState() || historyCurrent;
+}
+function commitHistoryCheckpoint() {
+  if (!historyReady || applyingHistory) return;
+  clearTimeout(historyTimer);
+  const next = captureHistoryState();
+  const previous = historyBefore || historyCurrent;
+  historyBefore = null;
+  if (!next) return;
+  if (previous && historyKey(previous) !== historyKey(next)) {
+    undoHistory.push(previous);
+    if (undoHistory.length > 60) undoHistory.shift();
+    redoHistory.length = 0;
+  }
+  historyCurrent = next;
+  updateHistoryButtons();
+}
+function scheduleHistoryCheckpoint() {
+  if (!historyReady || applyingHistory) return;
+  if (!historyBefore) historyBefore = historyCurrent || captureHistoryState();
+  clearTimeout(historyTimer);
+  historyTimer = setTimeout(commitHistoryCheckpoint, 500);
+}
+function restoreHistoryState(state, message) {
+  if (!state) return;
+  applyingHistory = true;
+  clearTimeout(historyTimer);
+  historyBefore = null;
+  config = structuredClone(state.config);
+  els.language.value = state.language;
+  els.scene.value = config.scenes.some(scene => scene.id === state.sceneId) ? state.sceneId : config.scenes[0]?.id || "";
+  sharedDirty = !!state.sharedDirty;
+  dirtySceneIds.clear();
+  state.dirtySceneIds.forEach(id => dirtySceneIds.add(id));
+  dirty = sharedDirty || dirtySceneIds.size > 0;
+  selectScreenshotTab(state.tab);
+  renderSceneList();
+  updateDirtyIndicators();
+  historyCurrent = captureHistoryState();
+  applyingHistory = false;
+  updateHistoryButtons();
+  setStatus(message);
+}
+function undoChange() {
+  commitHistoryCheckpoint();
+  const previous = undoHistory.pop();
+  if (!previous) return;
+  redoHistory.push(historyCurrent || captureHistoryState());
+  restoreHistoryState(previous, "Cofnięto zmianę.");
+}
+function redoChange() {
+  commitHistoryCheckpoint();
+  const next = redoHistory.pop();
+  if (!next) return;
+  undoHistory.push(historyCurrent || captureHistoryState());
+  restoreHistoryState(next, "Ponowiono zmianę.");
 }
 function escapeHtml(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
@@ -1855,6 +1945,7 @@ async function flushSharedEditor() {
 
 async function saveAllEditors() {
   if (!await flushAllEditors()) return false;
+  commitHistoryCheckpoint();
   try {
     config.qrUrl = byId("homepageShotQrUrl").value.trim();
     await saveConfig();
@@ -1862,11 +1953,14 @@ async function saveAllEditors() {
     renderSharedEditor();
     renderEditorFields(langFixture(currentScene()));
     await loadScenePreview(currentScene(), true);
+    historyBefore = null;
+    historyCurrent = captureHistoryState();
+    updateHistoryButtons();
     setStatus("Wszystkie dane zapisane.");
     return true;
   } catch (error) {
     // Zachowaj rozdział wskaźników, jeśli zapis nie powiedzie się.
-    dirty = sharedDirty || categoryDirty;
+    dirty = sharedDirty || dirtySceneIds.size > 0;
     updateDirtyIndicators();
     setStatus(`Nie udało się zapisać zmian: ${error.message}`);
     return false;
@@ -2196,6 +2290,8 @@ export async function initHomepageScreenshots() {
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
     byId("homepageShotSaveAll").addEventListener("click", () => { void saveAllEditors(); });
+    byId("homepageShotUndo").addEventListener("click", undoChange);
+    byId("homepageShotRedo").addEventListener("click", redoChange);
     for (const input of ["homepageShotImportGame", "homepageShotImportBase", "homepageShotImportLogo", "homepageShotImportConfig"].map(byId)) {
       input.addEventListener("click", event => {
         if (!dirty) return;
@@ -2392,7 +2488,35 @@ export async function initHomepageScreenshots() {
         if (accepted) location.reload();
       });
     }, true);
+    const historyRoot = byId("homepageScreenshotsPanel");
+    const historyTargets = [
+      "#homepageShotSharedFields [data-shared-action]",
+      "#homepageShotSharedFields input",
+      "#homepageShotResourceList [data-remove-resource]",
+      "#homepageShotResourceChoiceFields [data-shared-action]",
+      "#homepageShotResourceChoiceFields .ui-select-item",
+      "#homepageShotResourceChoiceFields [data-resource-selection]",
+      "#homepageShotResourceChoiceFields [data-resource-include]",
+      "#homepageShotCategoryActions [data-shared-action]",
+      "#homepageShotCategoryActions [data-poll-action-status]",
+      "#homepageShotCategoryActions [data-poll-vote]",
+      "#homepageShotCategoryActions [data-task-action-state]",
+      "#homepageShotFields input", "#homepageShotCategoryActions input", "#homepageShotQrUrl",
+      "#homepageShotImportGame", "#homepageShotImportBase", "#homepageShotImportLogo", "#homepageShotImportConfig",
+    ].join(",");
+    historyRoot.addEventListener("beforeinput", event => {
+      if (event.target.matches("#homepageShotFixture, #homepageShotQrUrl, #homepageShotSharedFields input, #homepageShotCategoryActions input, #homepageShotCategoryActions textarea, #homepageShotFields input, #homepageShotFields textarea")) beginHistoryChange();
+    }, true);
+    historyRoot.addEventListener("pointerdown", event => {
+      if (event.target.closest(historyTargets)) beginHistoryChange();
+    }, true);
+    historyRoot.addEventListener("keydown", event => {
+      if ((event.key === "Enter" || event.key === " ") && event.target.closest(historyTargets)) beginHistoryChange();
+    }, true);
     updateEditor();
+    historyCurrent = captureHistoryState();
+    historyReady = true;
+    updateHistoryButtons();
     initialized = true;
   } catch (error) {
     setStatus(`Nie udało się wczytać przykładów: ${error.message}`);
