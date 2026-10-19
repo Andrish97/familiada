@@ -1,3 +1,5 @@
+import { confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T13430";
+
 const API = "/_admin_api";
 const els = {};
 let config = null;
@@ -1832,6 +1834,18 @@ async function saveAllEditors() {
   }
 }
 
+async function confirmSaveBeforeLeaving(action) {
+  if (!dirty) return true;
+  const accepted = await confirmModal({
+    title: "Niezapisane zmiany",
+    text: `Masz niezapisane zmiany. Czy zapisać je przed ${action}?`,
+    okText: "Zapisz i kontynuuj",
+    cancelText: "Zostań tutaj",
+  });
+  if (!accepted) return false;
+  return saveAllEditors();
+}
+
 function newResourceId() {
   return globalThis.crypto?.randomUUID?.() || `resource-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
@@ -2121,7 +2135,14 @@ export async function initHomepageScreenshots() {
       updateEditor();
     });
     els.language.addEventListener("change", async () => {
+      const requestedLanguage = els.language.value;
+      if (dirty && !await confirmSaveBeforeLeaving("zmianą języka")) {
+        els.language.value = editorLanguage;
+        languageSelectUI?.setValue(editorLanguage, { silent: true });
+        return;
+      }
       if (!await flushAllEditors()) { els.language.value = editorLanguage; languageSelectUI?.setValue(editorLanguage, { silent: true }); return; }
+      els.language.value = requestedLanguage;
       updateEditor();
     });
     els.fixture.addEventListener("input", scheduleFixtureSave);
@@ -2300,6 +2321,31 @@ export async function initHomepageScreenshots() {
       event.preventDefault();
       event.returnValue = "";
     });
+    const leaveTargets = [
+      "#btnTabMaintenance", "#btnTabMail", "#btnTabMarketplace", "#btnTabRatings", "#btnTabStats",
+      "#btnTabGenerator", "#btnTabReports", "#btnTabMarketing", "#btnTabMarketingContacts", "#btnLogout",
+    ].join(",");
+    document.addEventListener("click", event => {
+      const panel = byId("homepageScreenshotsPanel");
+      if (!dirty || !panel || panel.hidden) return;
+      const target = event.target.closest(`${leaveTargets}, a[href], [data-nav-href]`);
+      if (!target || target.disabled || target.classList.contains("active")) return;
+      if (target.matches("a[href]") && (target.target === "_blank" || target.hasAttribute("download") || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      void confirmSaveBeforeLeaving("opuszczeniem widoku zrzutów").then(accepted => {
+        if (accepted) target.click();
+      });
+    }, true);
+    window.addEventListener("keydown", event => {
+      const refresh = event.key === "F5" || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "r");
+      const panel = byId("homepageScreenshotsPanel");
+      if (!refresh || !dirty || !panel || panel.hidden) return;
+      event.preventDefault();
+      void confirmSaveBeforeLeaving("odświeżeniem strony").then(accepted => {
+        if (accepted) location.reload();
+      });
+    }, true);
     updateEditor();
     initialized = true;
   } catch (error) {
