@@ -9,6 +9,12 @@
   "background_color": "#050914",
   "theme_color": "#050914",
   "orientation": "any",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://settings.familiada.online/manifest-admin.webmanifest"
+    }
+  ],
   "icons": [
     {
       "src": "/settings/icons/admin-192.png?v=v2026-10-19T09385",

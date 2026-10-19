@@ -7,6 +7,8 @@ const pwaApi = initPwa({ registerServiceWorker: false });
 const INSTALL_DISMISSED_KEY = "pwa:install_dismissed";
 const ADMIN_APP_SHELL_KEY = "admin-pwa:standalone";
 let didRunUnlockedSetup = false;
+let installedCheck;
+let adminInstalled = false;
 
 function isIOSSafari() {
   const ua = navigator.userAgent || "";
@@ -31,10 +33,40 @@ function isAdminStandalone() {
   return sessionStorage.getItem(ADMIN_APP_SHELL_KEY) === "1";
 }
 
+function isAdminInstalled() {
+  if (isAdminStandalone()) return Promise.resolve(true);
+  if (!installedCheck) {
+    installedCheck = (async () => {
+      if (typeof navigator.getInstalledRelatedApps !== "function") return false;
+      try {
+        const apps = await navigator.getInstalledRelatedApps();
+        const manifestUrl = new URL("/manifest-admin.webmanifest", location.origin).href;
+        return apps.some((app) => {
+          let appId = app.id || "";
+          try { appId = new URL(appId, location.origin).href; } catch {}
+          return app.url === manifestUrl || appId === new URL("/?app=admin", location.origin).href;
+        });
+      } catch {
+        return false;
+      }
+    })();
+  }
+  return installedCheck;
+}
+
 function updateButton() {
   if (!button) return;
   const locked = document.body.classList.contains("settings-locked");
-  button.style.display = locked || isAdminStandalone() ? "none" : "";
+  const standaloneAdmin = isAdminStandalone();
+  button.style.display = locked || standaloneAdmin ? "none" : "";
+  button.disabled = adminInstalled;
+  button.title = adminInstalled ? "Panel admina jest już zainstalowany" : "Zainstaluj panel admina";
+  button.setAttribute("aria-label", button.title);
+  const iconName = adminInstalled ? "check" : "download";
+  if (button.dataset.installIcon !== iconName) {
+    button.dataset.installIcon = iconName;
+    button.innerHTML = `<i class="ico" data-icon="${iconName}" aria-hidden="true"></i>`;
+  }
 }
 
 function registerAdminWorker() {
@@ -64,7 +96,7 @@ async function showIosPrompt() {
 }
 
 async function showAutomaticInstallPrompt() {
-  if (isStandalone() || !pwaApi.canInstall() || localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
+  if (isStandalone() || await isAdminInstalled() || !pwaApi.canInstall() || localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
   let installResult = null;
   const accepted = await confirmModal({
     title: tSafe("games.pwaInstall.adminTitle", "Zainstaluj panel admina"),
@@ -77,11 +109,13 @@ async function showAutomaticInstallPrompt() {
   else pwaApi.dismiss();
 }
 
-function setupAfterAccess() {
+async function setupAfterAccess() {
   updateButton();
   registerAdminWorker();
   if (didRunUnlockedSetup || document.body.classList.contains("settings-locked")) return;
   didRunUnlockedSetup = true;
+  adminInstalled = await isAdminInstalled();
+  updateButton();
   if (isIOSSafari()) void showIosPrompt();
   else if (pwaApi.canInstall()) void showAutomaticInstallPrompt();
 }
@@ -91,12 +125,28 @@ authObserver.observe(document.body, { attributes: true, attributeFilter: ["class
 setupAfterAccess();
 
 window.addEventListener("pwa:installable", () => {
-  updateButton();
-  if (!document.body.classList.contains("settings-locked")) void showAutomaticInstallPrompt();
+  void isAdminInstalled().then((installed) => {
+    adminInstalled = installed;
+    updateButton();
+    if (!installed && !document.body.classList.contains("settings-locked")) void showAutomaticInstallPrompt();
+  });
 });
-window.addEventListener("pwa:installed", updateButton);
+window.addEventListener("pwa:installed", () => {
+  adminInstalled = true;
+  updateButton();
+});
 
 button?.addEventListener("click", async () => {
+  if (adminInstalled || await isAdminInstalled()) {
+    adminInstalled = true;
+    updateButton();
+    await alertModal({
+      title: "Panel admina jest już zainstalowany",
+      text: "Otwórz panel z ikony na ekranie głównym lub w menu aplikacji.",
+      okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
+    });
+    return;
+  }
   if (isStandalone() && !isAdminStandalone()) {
     await alertModal({
       title: tSafe("games.pwaInstall.adminStandaloneTitle", "Dodaj osobny panel admina"),
