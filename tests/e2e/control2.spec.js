@@ -1959,6 +1959,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       if (i === 0) {
         await expectMappingFieldFits(page, testInfo, "p1");
         const field = page.locator(".c2-mapinput input");
+        await page.keyboard.press("i");
+        await expect(field).toBeFocused();
         await field.fill("");
         await expect(page.getByRole("button", { name: "Odp. finałowa (15)" })).toBeDisabled();
         await expect(page.getByRole("button", { name: "Nie ma na liście (0 pkt)" })).toBeDisabled();
@@ -1966,6 +1968,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
         await field.fill("Odp. finałowa");
         await expect(field).toBeFocused();
         await expect(page.getByRole("button", { name: "Brak odpowiedzi", exact: true })).toBeDisabled();
+        await page.keyboard.press("Enter");
+        await expect(field).not.toBeFocused();
       }
       // Zgłoszone: wybór dopasowania w finale też idzie przez zaznacz ->
       // potwierdź (armableTile), jak reszta konsekwentnych kafli.
