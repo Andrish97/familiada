@@ -30,7 +30,18 @@ function isAdminStandalone() {
   if (new URLSearchParams(location.search).get("app") === "admin") {
     sessionStorage.setItem(ADMIN_APP_SHELL_KEY, "1");
   }
-  return sessionStorage.getItem(ADMIN_APP_SHELL_KEY) === "1";
+  if (sessionStorage.getItem(ADMIN_APP_SHELL_KEY) === "1") return true;
+
+  // Access may remove the start URL query while returning to the panel. The
+  // admin app has its own worker, so use it to identify the installed shell.
+  const workerUrl = navigator.serviceWorker?.controller?.scriptURL;
+  if (!workerUrl) return false;
+  try {
+    const worker = new URL(workerUrl);
+    return worker.origin === location.origin && worker.pathname === "/settings/sw.js";
+  } catch {
+    return false;
+  }
 }
 
 function isAdminInstalled() {
@@ -135,9 +146,10 @@ window.addEventListener("pwa:installed", () => {
   adminInstalled = true;
   updateButton();
 });
+navigator.serviceWorker?.addEventListener("controllerchange", updateButton);
 
 button?.addEventListener("click", async () => {
-  if (adminInstalled || await isAdminInstalled()) {
+  if (isAdminStandalone() || adminInstalled || await isAdminInstalled()) {
     adminInstalled = true;
     updateButton();
     await alertModal({
