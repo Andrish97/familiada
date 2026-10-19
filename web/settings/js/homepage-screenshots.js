@@ -134,12 +134,11 @@ function langFixture(scene, language = currentLanguage()) {
     config.viewResources ||= {};
     config.viewResources[language] ||= {};
     const selection = config.viewResources[language][scene.id] ||= {};
-    const validIds = new Set(loadedPrepared.map(item => item.id));
-    selection.resourceIds = (Array.isArray(selection.resourceIds) ? selection.resourceIds : loadedPrepared.map(item => item.id)).filter(id => validIds.has(id));
-    if (loadedPrepared.length && !selection.resourceIds.length) selection.resourceIds = [loadedPrepared[0].id];
-    const preparedGames = orderedResources(scene.id, language, "game").filter(item => gameResourceType(item) === "prepared");
+    selection.resourceIds = loadedPrepared.map(item => item.id);
+    selection.resourceId = loadedPrepared[0]?.id || "";
+    const preparedGames = loadedPrepared;
     fixture.games = preparedGames.map(item => item.name);
-    fixture.gameStatuses = preparedGames.map(item => item.status || item.data?.game?.status || "draft");
+    fixture.gameStatuses = preparedGames.map(gameResourceStatus);
   }
   if (scene.id === "bases") fixture.bases = orderedResources(scene.id, language, "base").map(item => item.name);
   if (scene.id === "logos") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ name: item.name, data: item.data }));
@@ -409,9 +408,7 @@ function gameResourceReadiness(item) {
 
 function gameResourceStatus(item) {
   const { ok } = gameResourceReadiness(item);
-  if (!ok) return "draft";
-  const raw = String(item?.status || item?.data?.game?.status || "draft").toLowerCase();
-  return ["ready", "draft"].includes(raw) ? raw : "draft";
+  return ok ? "ready" : "draft";
 }
 
 function logoModeFromData(data) {
@@ -968,51 +965,30 @@ async function applyFixtureToFrame(scene, fixture) {
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
     const gameResources = ensureResourceData(language).filter(item => item.type === "game" && gameResourceType(item) === "prepared");
-    const selectedGame = gameResources.find(item => item.name === (fixture.games || [])[0]) || gameResources[0] || null;
+    const selectedGame = gameResources[0] || null;
     const statusLabels = { draft: words.draft, ready: words.ready, open: words.open, stopped: words.stopped };
-    const statusOf = item => {
-      const status = String(item?.status || item?.data?.game?.status || "draft").toLowerCase();
-      return ({ poll_open: "open", poll_stopped: "stopped" })[status] || status;
-    };
     const sampleRules = item => {
-      const game = item?.data?.game || {};
-      const isPoll = !!gameResourceType(item)?.startsWith("poll");
-      const status = statusOf(item);
-      const questions = Array.isArray(item?.data?.questions) ? item.data.questions : [];
-      const enoughQuestions = questions.length >= 10;
-      const validStructure = questions.every(question => {
-        const answers = Array.isArray(question.answers) ? question.answers : [];
-        return answers.length >= 3 && answers.length <= 6;
-      });
-      const validPoints = questions.every(question => {
-        const answers = Array.isArray(question.answers) ? question.answers : [];
-        const points = answers.map(answer => Number(answer.fixed_points ?? answer.points) || 0);
-        return answers.length >= 3 && answers.length <= 6 && points.every(point => point >= 0 && point <= 100) && points.reduce((sum, point) => sum + point, 0) <= 100;
-      });
-      const contentPollOk = isPoll && enoughQuestions && (game.type !== "poll_points" || validStructure);
+      const ready = !!item && gameResourceReadiness(item).ok;
       return {
-        edit: { ok: gameResourceType(item) === "prepared" || !["open", "stopped"].includes(status) },
-        play: { ok: isPoll ? status === "ready" : enoughQuestions && validPoints },
-        poll_entry: { ok: isPoll && (["open", "stopped", "ready"].includes(status) || contentPollOk) },
-        export: { ok: !["open", "stopped"].includes(status) },
+        edit: { ok: !!item },
+        play: { ok: ready },
+        poll_entry: { ok: false },
+        export: { ok: !!item },
       };
     };
-    const gameRulesModule = await import("/shared/js/core/game-validate.js?v=v2026-10-19T11560");
     const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T11560");
-    const selectedRules = selectedGame
-      ? gameRulesModule.rulesFromState(selectedGame.data?.rules_state || selectedGame.rules_state) || sampleRules(selectedGame)
-      : null;
+    const selectedRules = selectedGame ? sampleRules(selectedGame) : null;
     const tileStatus = item => {
       if (!item) return "draft";
-      const rules = gameRulesModule.rulesFromState(item.data?.rules_state || item.rules_state) || sampleRules(item);
+      const rules = sampleRules(item);
       return listFilterModule.gameStateKey(
-        ({ open: "poll_open", stopped: "poll_stopped" })[statusOf(item)] || statusOf(item),
+        gameResourceStatus(item),
         { isPrepared: gameResourceType(item) === "prepared", playOk: !!rules?.play?.ok },
       );
     };
     const previewStatus = tileStatus(selectedGame);
     const setDisabled = (id, disabled) => { const button = doc.getElementById(id); if (button) button.disabled = disabled; };
-    setDisabled("btnPlay", !selectedGame || (statusOf(selectedGame) !== "ready" && !selectedRules?.play?.ok));
+    setDisabled("btnPlay", !selectedGame || !selectedRules?.play?.ok);
     setDisabled("btnSettings", !selectedGame);
     setDisabled("btnEdit", !selectedGame || !selectedRules?.edit?.ok);
     setDisabled("btnPreview", !selectedGame);
@@ -1029,12 +1005,12 @@ async function applyFixtureToFrame(scene, fixture) {
     }
     setDisabled("btnImport", false);
     doc.querySelectorAll(".tab-label").forEach(button => button.classList.toggle("active", button.id === "tabPrepared"));
-    const names = (fixture.games || []).filter(name => gameResources.some(item => item.name === name));
+    const names = gameResources.map(item => item.name);
     if (grid) grid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">${language === "en" ? "New game" : language === "uk" ? "Нова гра" : "Nowa gra"}</div></div>${names.map((name, i) => {
-      const resource = gameResources.find(item => item.name === name);
+      const resource = gameResources[i];
       const status = resource === selectedGame ? previewStatus : tileStatus(resource);
       const statusClass = status === "ready" ? "tag--ok" : status === "open" ? "tag--info" : status === "stopped" ? "tag--gold" : "tag--muted";
-      const rules = gameRulesModule.rulesFromState(resource.data?.rules_state || resource.rules_state) || sampleRules(resource);
+      const rules = sampleRules(resource);
       const blocker = status === "draft" ? rules.play?.reason || "" : "";
       const origin = resource.received_from_label ? `<span class="tag tag--muted">${escapeHtml(resource.received_from_label)}</span>` : "";
       return `<div class="card tile ${i === 0 ? "selected" : ""}" data-status="${status}" data-updated="2026-10-${String(18 - i).padStart(2, "0")}T12:00:00Z"><div class="x">${icon("trash")}</div><div class="name">${escapeHtml(name)}</div><div class="rules">${escapeHtml(blocker)}</div><div class="tileTags"><span class="tag ${statusClass}">${statusLabels[status]}</span>${origin}</div></div>`;
