@@ -1784,20 +1784,50 @@ async function applyFixtureToFrame(scene, fixture) {
       if (grid) {
         const tile = doc.createElement("div"); tile.className = "gs-logo-tile selected";
         const preview = doc.createElement("div"); preview.className = "gs-logo-prev";
-        preview.append(await logoCanvasFromFile(fixture.logoFile || "/shared/data/logo_familiada.json", 180, 84));
+        try { preview.append(await logoCanvasFromFile(fixture.logoFile || "/shared/data/logo_familiada.json", 180, 84)); }
+        catch { preview.classList.add("is-unavailable"); preview.textContent = "Podgląd niedostępny"; }
         const name = doc.createElement("div"); name.className = "gs-logo-name"; name.textContent = text.defaultLogo;
         tile.append(preview, name); grid.append(tile);
         for (const logo of fixture.logos || []) {
           const option = doc.createElement("div"); option.className = "gs-logo-tile";
           const optionPreview = doc.createElement("div"); optionPreview.className = "gs-logo-prev";
-          optionPreview.append(await logoCanvasFromStored(logo.data, 180, 84));
+          try { optionPreview.append(await logoCanvasFromStored(logo.data, 180, 84)); }
+          catch { optionPreview.classList.add("is-unavailable"); optionPreview.textContent = "Podgląd niedostępny"; }
           const optionName = doc.createElement("div"); optionName.className = "gs-logo-name"; optionName.textContent = logo.name;
           option.append(optionPreview, optionName); grid.append(option);
         }
       }
       const theme = await fetch("/shared/data/display-themes.json", { cache: "force-cache" }).then(response => response.json()).catch(() => null);
-      const firstTheme = theme?.themes?.[0]?.label?.[currentLanguage()] || (currentLanguage() === "en" ? "Classic" : currentLanguage() === "uk" ? "Класична" : "Klasyczny");
-      const themeLabel = doc.querySelector("#gsThemeSelect .ui-select-label"); if (themeLabel) themeLabel.textContent = firstTheme;
+      const themes = Array.isArray(theme?.themes) ? theme.themes : [];
+      const activeTheme = themes.find(item => item.key === theme?.default) || themes[0];
+      const themeLabelFor = item => item?.label?.[currentLanguage()] || item?.key || "—";
+      const themeRoot = doc.getElementById("gsThemeSelect");
+      const themeLabel = themeRoot?.querySelector(".ui-select-label");
+      const themeMenu = themeRoot?.querySelector(".ui-select-menu");
+      if (themeLabel) themeLabel.textContent = themeLabelFor(activeTheme);
+      if (themeMenu) {
+        themeMenu.replaceChildren(...themes.map(item => {
+          const option = doc.createElement("button");
+          option.type = "button";
+          option.className = "ui-select-item homepage-shot-theme-option";
+          option.setAttribute("role", "option");
+          option.setAttribute("aria-selected", String(item.key === activeTheme?.key));
+          option.dataset.value = item.key;
+          const label = doc.createElement("span"); label.className = "ui-select-item-label"; label.textContent = themeLabelFor(item);
+          const check = doc.createElement("span"); check.className = "homepage-shot-theme-check"; check.setAttribute("aria-hidden", "true"); check.textContent = item.key === activeTheme?.key ? "✓" : "";
+          option.append(label, check);
+          option.addEventListener("click", () => {
+            themeMenu.querySelectorAll(".homepage-shot-theme-option").forEach(node => {
+              const selected = node === option;
+              node.setAttribute("aria-selected", String(selected));
+              const marker = node.querySelector(".homepage-shot-theme-check"); if (marker) marker.textContent = selected ? "✓" : "";
+            });
+            if (themeLabel) themeLabel.textContent = themeLabelFor(item);
+            themeRoot?.classList.remove("open");
+          });
+          return option;
+        }));
+      }
       await paintAppearancePreviews(doc, currentLanguage());
     } else if (content) {
       const title = await getStrings(currentLanguage(), { category: "gameSettings.categories.sound", reset: "control.sfxResetAll" });
@@ -1808,10 +1838,15 @@ async function applyFixtureToFrame(scene, fixture) {
     const list = doc.getElementById("grid");
     if (list) {
       list.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">Utwórz logo</div></div>${fixture.logos.map((logo, i) => `<div class="logoTile ${i === 0 ? "is-selected" : ""}"><div class="logoTileTop"><div><div class="logoName">${escapeHtml(logo.name)}</div><div class="logoMeta">Logo demonstracyjne</div></div></div><div class="logoPrev" data-logo-preview="${i}"></div></div>`).join("")}`;
-      const previews = await Promise.all(fixture.logos.map(logo => logo.data
-        ? logoCanvasFromStored(logo.data, 260, 100)
-        : logoCanvasFromFile(logo.file, 260, 100)));
-      list.querySelectorAll("[data-logo-preview]").forEach(node => node.append(previews[Number(node.dataset.logoPreview)]));
+      await Promise.all([...list.querySelectorAll("[data-logo-preview]")].map(async node => {
+        const logo = fixture.logos[Number(node.dataset.logoPreview)];
+        try {
+          node.append(logo.data ? await logoCanvasFromStored(logo.data, 260, 100) : await logoCanvasFromFile(logo.file, 260, 100));
+        } catch {
+          node.classList.add("is-unavailable");
+          node.textContent = "Podgląd niedostępny";
+        }
+      }));
     }
   } else if (scene.id === "logo-draw") {
     setInput(doc, "logoName", fixture.logo);
@@ -1915,19 +1950,39 @@ async function paintAppearancePreviews(doc, language) {
     displayFrame.contentWindow.postMessage(message, location.origin);
     hostFrame.contentWindow.postMessage(message, location.origin);
     await new Promise(resolve => setTimeout(resolve, 800));
-    const { toCanvas } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm");
+    let toCanvas = null;
+    try { ({ toCanvas } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm")); } catch {}
     for (const [frame, holder, title] of [
       [displayFrame, displayHolder, language === "en" ? "Display preview" : language === "uk" ? "Попередній перегляд екрана" : "Podgląd wyświetlacza"],
       [hostFrame, hostHolder, language === "en" ? "Host preview" : language === "uk" ? "Попередній перегляд ведучого" : "Podgląd prowadzącego"],
     ]) {
       const frameDoc = frame.contentDocument;
       await Promise.race([frameDoc.fonts?.ready || Promise.resolve(), new Promise(resolve => setTimeout(resolve, 5000))]);
-      const canvas = await toCanvas(frameDoc.documentElement, { width: 640, height: 360, pixelRatio: 1, backgroundColor: "#050914", cacheBust: true });
-      const image = doc.createElement("img");
-      image.alt = title;
-      image.src = canvas.toDataURL("image/png");
-      image.style.cssText = "display:block;width:100%;height:100%;object-fit:cover";
-      holder.append(image);
+      try {
+        if (!toCanvas) throw new Error("Renderer niedostępny");
+        const canvas = await toCanvas(frameDoc.documentElement, { width: 640, height: 360, pixelRatio: 1, backgroundColor: "#050914", cacheBust: true });
+        const image = doc.createElement("img");
+        image.alt = title;
+        image.src = canvas.toDataURL("image/png");
+        image.style.cssText = "display:block;width:100%;height:100%;object-fit:cover";
+        holder.append(image);
+      } catch {
+        // Keep the real page visible if rasterization is unavailable (for example,
+        // when the image renderer CDN is blocked); the iframe is read-only.
+        const fallback = doc.createElement("iframe");
+        fallback.title = title;
+        fallback.src = frame.src;
+        fallback.setAttribute("sandbox", "allow-scripts allow-same-origin");
+        fallback.style.cssText = "display:block;width:100%;height:100%;border:0;pointer-events:none";
+        const onFallbackReady = event => {
+          if (event.source !== fallback.contentWindow || !["familiada:preview-ready", "familiada:host-preview-ready"].includes(event.data?.type)) return;
+          window.removeEventListener("message", onFallbackReady);
+          fallback.contentWindow?.postMessage(message, location.origin);
+        };
+        window.addEventListener("message", onFallbackReady);
+        holder.append(fallback);
+        fallback.src = frame.src;
+      }
     }
   } finally {
     stage.remove();
@@ -1951,9 +2006,12 @@ async function logoCanvasFromFile(file, width, height) {
 
 async function logoCanvasFromStored(stored, width, height) {
   const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T19363");
-  const logo = stored.kind === "GLYPH" ? { type: "GLYPH_30x10", payload: stored.payload }
-    : stored.kind === "PIX" ? { type: "PIX_150x70", payload: stored.payload }
-      : stored.type ? stored : { type: "GLYPH_30x10", payload: stored.payload || stored };
+  const source = stored?.data && typeof stored.data === "object" ? stored.data : stored;
+  const kind = String(source?.kind || source?.type || "").toUpperCase();
+  const payload = source?.payload || source;
+  const logo = kind.includes("PIX") ? { type: "PIX_150x70", payload }
+    : kind.includes("GLYPH") ? { type: "GLYPH_30x10", payload }
+      : source?.type ? source : { type: "GLYPH_30x10", payload };
   const glyphs = await loadFont5x7();
   return buildLogoPreviewCanvas(logo, glyphs, width, height);
 }

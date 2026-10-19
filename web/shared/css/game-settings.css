@@ -625,10 +625,14 @@
   overflow:hidden; background:#000; flex-shrink:0;
 }
 .gs-logo-prev canvas{ width:120px; height:56px; display:block; }
+.gs-logo-prev.is-unavailable{ display:grid; place-items:center; color:rgba(255,255,255,.5); font-size:10px; }
 .gs-logo-name{
   font-size:11px; font-weight:600; text-align:center; opacity:.8;
   max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
+.homepage-shot-theme-option{ display:flex; align-items:center; gap:10px; }
+.homepage-shot-theme-option .ui-select-item-label{ flex:1; min-width:0; }
+.homepage-shot-theme-check{ width:1.2em; text-align:center; color:var(--gold); font-weight:900; }
 
 @media (max-width:700px){
   .gs-picker-lists{ grid-template-columns:1fr; }
