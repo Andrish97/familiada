@@ -1,4 +1,4 @@
-import { iconText } from "./icons.js?v=v2026-10-19T15002";
+import { iconText } from "./icons.js?v=v2026-10-19T15012";
 
 
 export function initUiSelect(root, { options = [], value = "", placeholder = "—", onChange, disabled = false } = {}) {
