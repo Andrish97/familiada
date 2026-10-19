@@ -126,7 +126,7 @@ export function createUI({ root, emit }) {
       return;
     }
     const selected = keyboardActions.get(key);
-    if (!selected || selected.el.disabled || boardBusy()) return;
+    if (!selected || selected.el.disabled || (boardBusy() && key !== "i")) return;
     event.preventDefault(); keyboardTarget = key;
     if (selected.select) {
       const mapping = /^f_p[12]_map_q/.test(currentState?.step || "");
