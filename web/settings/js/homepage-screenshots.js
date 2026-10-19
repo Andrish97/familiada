@@ -1170,7 +1170,7 @@ function sizeScenePreview(scene) {
     els.frameWrap.style.setProperty("--gesture-bottom", `${11 * boardScale}px`);
     els.frame.style.width = `${scene.width}px`;
     els.frame.style.height = `${scene.height}px`;
-    els.frame.style.left = `${(screenLeft + bezel + border) * boardScale}px`;
+    els.frame.style.left = `${screenLeft * boardScale}px`;
     els.frame.style.top = `${(bezel + border) * boardScale}px`;
     els.frame.style.transform = `scale(${screenScale * boardScale})`;
     els.frame.style.transformOrigin = "top left";
@@ -1274,6 +1274,15 @@ async function normalizeScreenshotTopbar(doc, language, icon, iconText, hydrateI
     }
     const flag = ({ pl: "flag-pl", en: "lang-en", uk: "flag-ua" })[language] || "flag-pl";
     switcher.innerHTML = `<button type="button" class="btn lang-btn" aria-label="${escapeHtml(labels.language)}" title="${escapeHtml(labels.language)}">${icon(flag)}</button>`;
+  } else if (scene.id === "poll-vote-mobile") {
+    let switcher = topbar.querySelector(".lang-switcher");
+    if (!switcher) {
+      switcher = doc.createElement("div");
+      switcher.className = "lang-switcher lang-floating";
+      doc.body.append(switcher);
+    }
+    const flag = ({ pl: "flag-pl", en: "lang-en", uk: "flag-ua" })[language] || "flag-pl";
+    switcher.innerHTML = `<button type="button" class="btn lang-btn" aria-label="${escapeHtml(labels.language)}" title="${escapeHtml(labels.language)}">${icon(flag)}</button>`;
   }
 
   const who = topbar.querySelector("#who, #whoStatic");
@@ -1326,6 +1335,7 @@ async function applyFixtureToFrame(scene, fixture) {
     safeAreaStyle.textContent = `
       body.pollpub-body { --topbar-h: 103px; padding-top: 103px; }
       body.pollpub-body .poll-vote-topbar { min-height: 103px; padding: 47px 16px 12px; }
+      body.pollpub-body .lang-switcher.lang-floating { top: 47px; right: 12px; }
       body.pollpub-body .footer, body.pollpub-body .footer.wrap { padding-right: 16px; padding-bottom: 34px; padding-left: 16px; }
     `;
   }
