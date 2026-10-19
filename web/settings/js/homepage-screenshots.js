@@ -272,10 +272,10 @@ function normalizeSharedFixture(shared, defaults) {
   result.username = String(shared.username || defaults.username || "").trim();
   result.gameQuestions = Array.isArray(shared.gameQuestions) ? shared.gameQuestions : defaults.gameQuestions;
   result.teams = (Array.isArray(shared.teams) ? shared.teams : defaults.teams).slice(0, 2);
-  result.subscribers = (Array.isArray(shared.subscribers) ? shared.subscribers : defaults.subscribers).map((value, index) => normalizeEmail(value, `subskrybent${index + 1}`));
-  result.friends = (Array.isArray(shared.friends) ? shared.friends : defaults.friends).map((person, index) => typeof person === "string"
-    ? { username: person.trim(), email: normalizeEmail(person, `znajomy${index + 1}`) }
-    : { username: String(person?.username || person?.name || "").trim(), email: normalizeEmail(person?.email, `znajomy${index + 1}`) });
+  result.subscribers = Array.isArray(shared.subscribers) ? shared.subscribers.map(value => String(value ?? "").trim()) : [];
+  result.friends = Array.isArray(shared.friends) ? shared.friends.map(person => typeof person === "string"
+    ? { username: person.trim(), email: "" }
+    : { username: String(person?.username || person?.name || "").trim(), email: String(person?.email || "").trim() }) : (Object.hasOwn(shared, "friends") ? [] : structuredClone(defaults.friends));
   result.pollQuestions = Array.isArray(shared.pollQuestions) ? shared.pollQuestions : (() => {
     const oldAnswers = shared.pollAnswers || defaults.pollQuestions[0].answers.map(answer => answer.text);
     const oldResults = shared.pollResults || [];
@@ -293,11 +293,8 @@ function normalizeSharedFixture(shared, defaults) {
   return result;
 }
 
-function normalizeEmail(value, fallbackName = "uzytkownik") {
-  const raw = String(value ?? "").trim();
-  if (raw.includes("@")) return raw.toLowerCase();
-  const slug = raw.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
-  return `${slug || fallbackName}@example.com`;
+function normalizeEmail(value) {
+  return String(value ?? "").trim().toLowerCase();
 }
 
 function isValidEmail(value) {
@@ -378,7 +375,7 @@ function ensureResourceData(language = currentLanguage()) {
   const legacySubscribers = resources.find(item => item.type === "subscribers")?.data?.people;
   if (Array.isArray(legacyTeams)) shared.teams = structuredClone(legacyTeams.slice(0, 2));
   shared.teams = (Array.isArray(shared.teams) ? shared.teams : []).slice(0, 2);
-  if (Array.isArray(legacySubscribers)) shared.subscribers = legacySubscribers.map((person, index) => normalizeEmail(typeof person === "string" ? person : person?.email || person?.name, `subskrybent${index + 1}`));
+  if (Array.isArray(legacySubscribers)) shared.subscribers = legacySubscribers.map(person => normalizeEmail(typeof person === "string" ? person : person?.email));
   for (let index = resources.length - 1; index >= 0; index -= 1) {
     if (["teams", "subscribers"].includes(resources[index].type)) resources.splice(index, 1);
   }
@@ -1902,14 +1899,14 @@ async function importConfigJson(file) {
     if (type === "base") return item.type === "base" && !!item.data.base && Array.isArray(item.data.categories) && Array.isArray(item.data.questions);
     return item.type === "logo" && logoResourceMode(item) === "DRAW" && !!item.data.payload;
   };
-  const valid = imported?.format === "familiada-screenshots-shared-data" && [2, 3].includes(imported.version) && imported.languages
+  const valid = imported?.format === "familiada-screenshots-shared-data" && imported.version === 3 && imported.languages
     && languages.every(language => {
       const entry = imported.languages[language];
       return entry?.shared && Array.isArray(entry.shared.teams) && entry.shared.teams.length === 2
         && entry.shared.teams.every(name => typeof name === "string")
         && (entry.shared.username == null || typeof entry.shared.username === "string")
-        && Array.isArray(entry.shared.subscribers) && entry.shared.subscribers.every(email => typeof email === "string" && (imported.version === 2 || isValidEmail(email)))
-        && (imported.version === 2 || Array.isArray(entry.shared.friends) && entry.shared.friends.every(person => person && typeof person.username === "string" && person.username.trim() && isValidEmail(person.email)))
+        && Array.isArray(entry.shared.subscribers) && entry.shared.subscribers.every(isValidEmail)
+        && Array.isArray(entry.shared.friends) && entry.shared.friends.every(person => person && typeof person.username === "string" && person.username.trim() && isValidEmail(person.email))
         && (entry.shared.qrUrl == null || typeof entry.shared.qrUrl === "string")
         && entry.resources && Array.isArray(entry.resources.games) && entry.resources.games.every(item => validResource(item, "game"))
         && Array.isArray(entry.resources.bases) && entry.resources.bases.every(item => validResource(item, "base"))
@@ -1935,8 +1932,8 @@ async function importConfigJson(file) {
       ...structuredClone(entry.views.sectionDefaults),
       username: String(entry.shared.username || defaultSharedFixture(language).username || ""),
       teams: structuredClone(entry.shared.teams),
-      subscribers: entry.shared.subscribers.map((email, index) => normalizeEmail(email, `subskrybent${index + 1}`)),
-      friends: structuredClone(entry.shared.friends || defaultSharedFixture(language).friends),
+      subscribers: structuredClone(entry.shared.subscribers),
+      friends: structuredClone(entry.shared.friends),
     };
     config.resourceData[language] = [
       ...structuredClone(entry.resources.games),
@@ -2422,7 +2419,8 @@ export async function initHomepageScreenshots() {
       const defaults = defaultSharedFixture(language);
       const legacyPollActions = config.sharedFixtures[language]?.pollRecipients;
       if (!config.sharedFixtures[language]) initializeSharedFixtures = true;
-      const normalized = normalizeSharedFixture(config.sharedFixtures[language] || {}, defaults);
+      const storedShared = config.sharedFixtures[language];
+      const normalized = storedShared ? normalizeSharedFixture(storedShared, defaults) : structuredClone(defaults);
       if (JSON.stringify(normalized) !== JSON.stringify(config.sharedFixtures[language] || {})) initializeSharedFixtures = true;
       config.sharedFixtures[language] = normalized;
       config.localeFixtures ||= {};
