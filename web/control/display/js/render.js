@@ -1,4 +1,4 @@
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T09494";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T09515";
 
 // control/display/js/render.js
 //
@@ -25,9 +25,9 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T0949
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-19T09494";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-19T09494";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T09494";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-19T09515";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-19T09515";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T09515";
 
 import {
   ROUND_INTRO_ANIM,
@@ -37,7 +37,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-19T09494";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-19T09515";
 
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
