@@ -386,6 +386,7 @@ const tally = createTally({
     redoBtn: btnRedo,
     onValidity: (ok) => { tallyValid = !!ok; renderBar(); },
     onNotice: (text) => setMsg(text),
+    onSaved: (text) => setMsg(text),
   },
 });
 

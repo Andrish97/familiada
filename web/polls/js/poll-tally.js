@@ -50,7 +50,7 @@ function setPct(r, pct) {
  * @param {string} cfg.gameId
  * @param {{slots:()=>Map, reset:()=>void}} cfg.pollResults
  * @param {object} cfg.ui  { barEl, hintEl, toolsEl, saveEl, undoBtn, redoBtn,
- *                           onValidity(boolean), onError(message) }
+ *                           onValidity(boolean), onError(message), onSaved() }
  */
 export function createTally({ gameId, pollResults, ui }) {
   let mode = ""; // "" | "points" | "text"
@@ -630,7 +630,6 @@ export function createTally({ gameId, pollResults, ui }) {
     if (!ui.saveEl) return;
     ui.saveEl.dataset.state = state || "";
     ui.saveEl.textContent = state === "saving" ? t("polls.tally.saving")
-      : state === "saved" ? t("polls.tally.saved")
       : state === "failed" ? t("polls.tally.saveFailed") : "";
   }
 
@@ -662,7 +661,10 @@ export function createTally({ gameId, pollResults, ui }) {
       try {
         const { error } = await sb().rpc("poll_text_tally_draft_save", { p_game_id: gameId, p_draft: payload });
         if (error) throw error;
-        if (!dirty) setSave("saved");
+        if (!dirty) {
+          setSave("");
+          ui.onSaved?.(t("polls.tally.saved"));
+        }
       } catch (e) {
         console.warn("[poll-tally] draft_save failed", e);
         dirty = true;

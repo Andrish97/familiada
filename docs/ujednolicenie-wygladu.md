@@ -11,6 +11,19 @@ Błędy zapisu i operacji pokazuje wspólny toast błędu. Wynik importu i
 walidacja pozostają w samym formularzu importu; dodanie/usunięcie elementu
 jest widoczne na liście i nie wymaga osobnego komunikatu.
 
+## Audyt wspólnego toastu (2026-10-19)
+
+Wspólny `toast()` jest używany na: Koncie (potwierdzenia zmian i błędy),
+Ankietach (kopiowanie linku/QR, udostępnienia, błędy i wynik zapisu szkicu
+podliczania), Control (kopiowanie kodów i wysyłka udostępnień), Connect
+(błędy skanowania/parowania), Znajomych i Subskrybentach (zaproszenia i
+przypomnienia), Zadaniach (błędy), Mails (błędy i cooldown), Marketplace
+(dodanie/wycofanie gry, ocena i błędy), panelu admina oraz wspólnych akcjach
+Powiel/Wyślij w stronach zasobów. Sukces znika po około 3 sekundach; błąd
+pozostaje do kliknięcia. W ankietach etykieta „Zapisano” szkic podliczania
+wchodzi do tego samego toastu. „Zapisywanie…” i błąd szkicu zostają w pasku
+podliczania jako stan bieżącej operacji.
+
 ---
 
 ## Decyzje — szybkie udostępnianie i ikony akcji (2026-10-18)
@@ -228,11 +241,11 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
 | Konto | `statusLoaded`, `statusEmailPending`, `statusMigrating`, `statusMigrateResending`, `statusMigrateCancelling`, `statusSavingEmail`, `statusEmailResending`, `statusEmailCancelling`, `statusDeleting`, `statusError` | ładowanie / „w toku” / błąd (dublował `#err`) | nie | bez (klucze usunięte z pl/en/uk) |
 | Społeczność | `showToast` (dodano do biblioteki, wycofano, wysłano, ocena) | po akcji | lokalny `#toast` | dymek wspólny (lokalna kopia usunięta) |
 | Panel admina (`settings`) | `showToast` | po akcji | lokalny `#toast` | dymek wspólny (lokalna kopia usunięta) |
-| Ankieta | `polls.copy.success/failed`, `polls.qrModal.copied` | kopiowanie linku / kodu | lokalny `.pollToast` | dymek (błąd: czerwony) |
-| Ankieta | `polls.share.invitesSent`, `reminded`, `invitesBlocked` | wysłane zaproszenia / przypomnienia | lokalny `.pollToast` | dymek |
-| Ankieta | `polls.status.opened/stopped/resumed/aborted/reopened/tallied`, `polls.share.removed` | zmiana stanu | lokalny `.pollToast` | bez (stan widać na pasku, wiersz znika) |
-| Ankieta | `polls.missingId`, walidacja otwarcia (`poll_open.reason`), `common.genericError` | błędy | lokalny `.pollToast` | dymek błędu |
-| Ankieta | `onNotice` z liczenia głosów | uwagi edytora wyników | lokalny `.pollToast` | dymek |
+| Ankieta | `polls.copy.success/failed`, `polls.qrModal.copied`, zapis szkicu podliczania | kopiowanie linku / kodu, zapis szkicu | wspólny `toast()` | dymek (błąd: czerwony); „Zapisywanie…” i błąd szkicu pozostają przy pasku podliczania |
+| Ankieta | `polls.share.invitesSent`, `reminded`, `invitesBlocked`, wyłączone powiadomienia, cooldown i limit przypomnień | wysłanie / przypomnienie | wspólny `toast()` | dymek; błędy wysyłki maila z informacją o liczbie nieudanych adresów nadal w modalu |
+| Ankieta | `polls.status.opened/stopped/resumed/aborted/reopened/tallied`, `polls.share.removed` | zmiana stanu | brak | bez (stan widać na pasku, wiersz znika) |
+| Ankieta | `polls.missingId`, walidacja otwarcia (`poll_open.reason`), `common.genericError`, błąd ładowania odbiorców | błędy | wspólny `toast()` | dymek błędu; dłuższe błędy akcji pozostają w modalu |
+| Ankieta | `onNotice` z liczenia głosów | uwagi edytora wyników | wspólny `toast()` | dymek |
 | Panel sterowania | kopiowanie kodu połączenia (modal QR i kafel urządzenia) | dotąd cicho | brak | dymek (`control.copyOk` / `copyFail`) |
 | Panel sterowania | udostępnienie urządzenia e-mailem (`control.shareDeviceModal.mailSent`, nowy) | mail poszedł | `#shareDeviceMsg` tak (błędy) | dymek dla sukcesu, błędy zostają w modalu |
 | Subskrypcje | `statusMsg.inviteSaved` | zaproszenie wysłane | brak (był `alertModal`) | dymek zamiast modala |
