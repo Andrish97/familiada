@@ -2610,6 +2610,21 @@ export async function initHomepageScreenshots() {
       markDirty("shared");
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
     });
+    byId("homepageShotSharedFields").addEventListener("input", event => {
+      const input = event.target.closest("[data-shared-friend-name]");
+      if (!input) return;
+      const invalid = /\s/.test(input.value);
+      const message = "Nazwa użytkownika nie może zawierać spacji.";
+      input.setCustomValidity(invalid ? message : "");
+      input.setAttribute("aria-invalid", String(invalid));
+      let hint = input.closest(".homepage-shot-shared-field")?.querySelector(".homepage-shot-input-error");
+      if (invalid && !hint) {
+        hint = document.createElement("span");
+        hint.className = "homepage-shot-input-error";
+        hint.textContent = message;
+        input.closest(".homepage-shot-shared-field")?.append(hint);
+      } else if (!invalid && hint) hint.remove();
+    });
     byId("homepageShotSharedFields").addEventListener("change", () => markDirty("shared"));
     byId("homepageShotSharedFields").addEventListener("click", event => {
       const button = event.target.closest("[data-shared-action]");

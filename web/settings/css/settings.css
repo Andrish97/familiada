@@ -189,6 +189,7 @@ body.settings-body > main.wrap{
 .homepage-shot-shared-field{display:grid;gap:4px;min-width:0}
 .homepage-shot-shared-field label,.homepage-shot-answer-head{font-size:11px;font-weight:700;opacity:.78}
 .homepage-shot-shared-field input,.homepage-shot-shared-field textarea{box-sizing:border-box;width:100%;min-height:38px}
+.homepage-shot-input-error{color:#ff9d9d;font-size:11px;line-height:1.3}.homepage-shot-shared-field input[aria-invalid="true"]{border-color:#ff7777!important;box-shadow:0 0 0 1px rgba(255,119,119,.2)}
 .homepage-shot-shared-rows{display:grid;gap:7px}
 .homepage-shot-shared-row{display:grid;grid-template-columns:minmax(0,1fr) 92px auto;gap:7px;align-items:center}
 .homepage-shot-shared-row--plain{grid-template-columns:minmax(0,1fr) auto}
