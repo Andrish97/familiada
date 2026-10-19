@@ -673,7 +673,6 @@ const pl = {
     headerTitle: "Moje bazy pytań",
     headerHint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
     headerHintShared: "Naciśnij kafelek, żeby go zaznaczyć.",
-    requestTimeout: "Operacja trwa zbyt długo. Sprawdź połączenie i spróbuj ponownie.",
     actions: {
       browse: "Przeglądaj",
       share: "Udostępnij",
