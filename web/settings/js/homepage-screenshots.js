@@ -1154,8 +1154,8 @@ function sizeScenePreview(scene) {
     const screenWidth = scene.width * screenScale, deviceWidth = screenWidth + 2 * bezel;
     const screenLeft = (board.width - screenWidth) / 2;
     els.frameWrap.classList.add("is-phone");
-    els.frameWrap.style.width = `${Math.round(board.width * boardScale)}px`;
-    els.frameWrap.style.height = `${Math.round(board.height * boardScale)}px`;
+    els.frameWrap.style.width = `${board.width * boardScale}px`;
+    els.frameWrap.style.height = `${board.height * boardScale}px`;
     els.frameWrap.style.setProperty("--phone-left", `${((board.width - deviceWidth) / 2) * boardScale}px`);
     els.frameWrap.style.setProperty("--phone-width", `${deviceWidth * boardScale}px`);
     els.frameWrap.style.setProperty("--phone-radius", `${(42 * screenScale + bezel) * boardScale}px`);
