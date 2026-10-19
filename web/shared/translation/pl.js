@@ -95,11 +95,11 @@ const pl = {
       closeLabel: "Zamknij",
     },
     fullscreen: "Pełny ekran",
-    a2hsTitle: "Pełny ekran na iPhonie i iPadzie",
+    a2hsTitle: "Dodaj ten widok do ekranu początkowego",
     a2hsHost:
-      "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom jako aplikację.",
+      "Aby szybciej otwierać widok Prowadzącego, w Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę. Potem uruchom Prowadzącego z tej ikony.",
     a2hsBuzzer:
-      "W Safari na iPhonie i iPadzie nie da się wymusić pełnego ekranu. Wybierz <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom aplikację z ekranu początkowego.",
+      "Aby szybciej otwierać Przycisk do pojedynku, w Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę. Potem uruchom Przycisk z tej ikony.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
     rating: {
@@ -2704,21 +2704,29 @@ const pl = {
     iosWebapp: {
       title: "Dodaj Familiadę do ekranu głównego",
       text:
-        "Dla najlepszego komfortu użytkowania zalecamy korzystać z aplikacji webowej. Żeby to zrobić:\n" +
-        "1. Otwórz menu Udostępnij.\n" +
-        "2. Wybierz „Do ekranu początkowego”.\n" +
-        "3. Zatwierdź dodanie.\n" +
-        "4. Uruchom Familiadę z nowej ikony na ekranie głównym.",
-      ok: "OK",
+        "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a potem stuknij „Dodaj”. Familiadę uruchomisz z nowej ikony.",
+      ok: "Rozumiem",
       never: "Nie pokazuj więcej",
+      adminTitle: "Dodaj panel admina do ekranu początkowego",
+      adminText: "Otwórz Udostępnij, wybierz „Do ekranu początkowego”, a następnie „Dodaj”. Uruchom panel z nowej ikony. Logowanie Access nadal będzie wymagane.",
     },
     pwaInstall: {
-      title: "Zainstaluj aplikację",
-      text: "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
+      title: "Zainstaluj Familiadę",
+      text: "Dodaj Familiadę jako aplikację, aby uruchamiać ją z ekranu głównego lub pulpitu.",
+      adminTitle: "Zainstaluj panel admina",
+      adminText: "Dodaj osobną aplikację panelu admina. Dostęp nadal chroni logowanie Access.",
+      adminStandaloneTitle: "Dodaj osobny panel admina",
+      adminStandaloneText: "Panel jest otwarty w aplikacji Familiada. Otwórz tę stronę w Safari lub Chrome, aby dodać panel jako osobną aplikację.",
+      adminMacTitle: "Dodaj panel admina do Docka",
       ok: "Zainstaluj",
-      cancel: "Nie pokazuj",
+      cancel: "Nie pokazuj ponownie",
       cancelBtn: "Anuluj",
-      manual: "Przeglądarka nie pozwala obecnie na automatyczną instalację.\n\nMożesz zainstalować ręcznie:\n• Chrome/Edge: kliknij ikonę instalacji w pasku adresu i wybierz \"Zainstaluj\"\n• Lub: Menu → Zainstaluj Familiadę",
+      unavailableTitle: "Instalacja jest teraz niedostępna",
+      unavailableAndroid: "Chrome nie może teraz zainstalować tej aplikacji. „Utwórz skrót” doda tylko skrót do strony, a nie aplikację.",
+      unavailableText: "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.",
+      macSafari: "W Safari wybierz Plik → „Dodaj do Docka”.",
+      alreadyInstalled: "Familiada jest już zainstalowana. Uruchom ją z jej ikony.",
+      manual: "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.",
     },
     import: {
       title: "Importuj",

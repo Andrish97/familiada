@@ -1302,13 +1302,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function showPwaPrompt() {
     if (isStandalone()) return;
+    let installResult = null;
     const ok = await confirmModal({
       title: t("games.pwaInstall.title") || "Zainstaluj aplikację",
       text: t("games.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
       okText: t("games.pwaInstall.ok") || "Zainstaluj",
       cancelText: t("games.pwaInstall.cancel") || "Nie pokazuj",
+      onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
     });
-    if (ok) await pwaApi.install();
+    if (ok && installResult) await installResult;
     else pwaApi.dismiss();
   }
 
@@ -1333,33 +1335,33 @@ document.addEventListener("DOMContentLoaded", async () => {
           okText: tSafe("games.iosWebapp.ok", fallback.ok),
         });
       } else {
-        // Chrome/Edge: beforeinstallprompt jeszcze nie odpalił lub app już zainstalowana
-        // Pokaż instrukcję ręcznej instalacji
-        const fallback = {
-          title: "Zainstaluj aplikację",
-          text:
-            "Przeglądarka nie pozwala obecnie na automatyczną instalację.\n\n" +
-            "Możesz zainstalować ręcznie:\n" +
-            "• Chrome/Edge: kliknij ikonę instalacji w pasku adresu i wybierz \"Zainstaluj\"\n" +
-            "• Lub: Menu → Zainstaluj Familiadę",
-          ok: "OK",
-        };
+        const ua = navigator.userAgent || "";
+        const isAndroidChrome = /Android/i.test(ua) && /Chrome\//i.test(ua) && !/EdgA|OPR\//i.test(ua);
+        const isMacSafari = /Mac/.test(navigator.platform) && /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg/.test(ua);
+        const title = isMacSafari ? "Dodaj Familiadę do Docka" : tSafe("games.pwaInstall.unavailableTitle", "Instalacja jest teraz niedostępna");
+        const text = isMacSafari
+          ? tSafe("games.pwaInstall.macSafari", "W Safari wybierz Plik → Dodaj do Docka.")
+          : isAndroidChrome
+            ? tSafe("games.pwaInstall.unavailableAndroid", "Chrome nie może teraz zainstalować tej aplikacji. „Utwórz skrót” doda tylko skrót do strony, a nie aplikację.")
+            : tSafe("games.pwaInstall.unavailableText", "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.");
         await alertModal({
-          title: tSafe("games.pwaInstall.title", fallback.title),
-          text: tSafe("games.pwaInstall.manual", fallback.text),
-          okText: tSafe("games.pwaInstall.ok", fallback.ok),
+          title,
+          text,
+          okText: tSafe("games.iosWebapp.ok", "Rozumiem"),
         });
         return;
       }
       return;
     }
+    let installResult = null;
     const ok = await confirmModal({
       title: t("games.pwaInstall.title") || "Zainstaluj aplikację",
       text: t("games.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
       okText: t("games.pwaInstall.ok") || "Zainstaluj",
       cancelText: t("games.pwaInstall.cancelBtn") || "Anuluj",
+      onReady: ({ okBtn }) => okBtn.addEventListener("click", () => { installResult = pwaApi.install(); }, { once: true }),
     });
-    if (ok) await pwaApi.install();
+    if (ok && installResult) await installResult;
     // Klik Anuluj nie ustawia LS_KEY — celowo bez pwaApi.dismiss()
   });
 
