@@ -1,4 +1,4 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T18055";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T18113";
 
 const API = "/_admin_api";
 const els = {};
@@ -157,7 +157,8 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.outgoing ||= defaultSubscriberInvitations(language);
   }
 
-  const selection = config.viewResources?.[language]?.[scene.id] || {};
+  const selectionScene = scene.id === "poll-vote-mobile" ? "poll-share" : scene.id;
+  const selection = config.viewResources?.[language]?.[selectionScene] || {};
   let resource = scene.id === "tasks" ? null : selectedResource(scene.id, language, "game");
   if (scene.id === "poll-vote-mobile" && !canUseAnonymousPollResource(resource)) resource = null;
   if (scene.id === "poll-results" && !canOpenPollResource(resource)) resource = null;
@@ -215,7 +216,7 @@ function langFixture(scene, language = currentLanguage()) {
       fixture.answers = (activeQuestion.answers || []).map(answer => answer.text || "");
       fixture.points = (activeQuestion.answers || []).map(answer => Number(answer.fixed_points ?? answer.points) || 0);
     }
-    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && (scene.id === "poll-vote-mobile" || gameResourceType(resource) !== "prepared")) {
+    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && (scene.id === "poll-share" || scene.id === "poll-vote-mobile" || gameResourceType(resource) !== "prepared")) {
       fixture.poll = resource.name;
       fixture.pollType = gameResourceType(resource);
       if (scene.id === "poll-results" && !Array.isArray(fixture.pollVotes)) fixture.pollVotes = questions.map(question => (question.answers || []).map(() => 0));
@@ -473,7 +474,10 @@ function ensureResourceData(language = currentLanguage()) {
     if (["poll-share", "poll-vote-mobile", "poll-results"].includes(sceneId)) {
       const available = resources.filter(item => item.type === "game");
       if (sceneId === "poll-share") {
-        if (!available.some(item => item.id === selection.resourceId)) selection.resourceId = available[0]?.id || "";
+        const eligible = available.filter(canUseAnonymousPollResource);
+        if (!eligible.some(item => item.id === selection.resourceId)) selection.resourceId = eligible[0]?.id || "";
+        const questionIndexes = anonymousPollQuestionIndexes(eligible.find(item => item.id === selection.resourceId));
+        if (questionIndexes.length && !questionIndexes.includes(Number(selection.questionIndex))) selection.questionIndex = questionIndexes[0];
       } else {
         selection.resourceId = "";
       }
@@ -495,7 +499,8 @@ function ensureResourceData(language = currentLanguage()) {
 
 function selectedResource(sceneId, language = currentLanguage(), type = null) {
   const resources = ensureResourceData(language);
-  const selection = config.viewResources?.[language]?.[sceneId] || {};
+  const selectionScene = sceneId === "poll-vote-mobile" ? "poll-share" : sceneId;
+  const selection = config.viewResources?.[language]?.[selectionScene] || {};
   return resources.find(item => item.id === selection.resourceId && (!type || item.type === type)) || null;
 }
 
@@ -732,8 +737,8 @@ function resourceChoiceSpec(scene) {
   };
   if (scene.id === "base-explorer") return { type: "base" };
   if (scene.id === "logo-draw") return { type: "logo" };
-  if (scene.id === "poll-share") return { type: "game", label: "Gra" };
-  if (scene.id === "poll-vote-mobile") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
+  if (scene.id === "poll-share") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
+  if (scene.id === "poll-vote-mobile") return { type: "game", filter: canUseAnonymousPollResource, sharedSelection: true };
   if (scene.id === "poll-results") return { type: "game", filter: canOpenPollResource, label: "Gra ankietowa" };
   if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
   if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
@@ -748,7 +753,7 @@ function renderResourceChoices(scene = currentScene()) {
   resourceChoiceSelectUIs = [];
   root.replaceChildren();
   const spec = resourceChoiceSpec(scene);
-  if (!spec) {
+  if (!spec || spec.sharedSelection) {
     section.hidden = true;
     return;
   }
@@ -811,14 +816,14 @@ function renderResourceChoices(scene = currentScene()) {
     if (spec.question) {
       const game = resources.find(item => item.id === selection.resourceId);
       const questions = game?.data?.questions || [];
-      const questionIndexes = scene.id === "poll-vote-mobile" ? anonymousPollQuestionIndexes(game) : questions.map((_, index) => index);
+      const questionIndexes = scene.id === "poll-share" || scene.id === "poll-vote-mobile" ? anonymousPollQuestionIndexes(game) : questions.map((_, index) => index);
       if (questionIndexes.length && !questionIndexes.includes(Number(selection.questionIndex))) selection.questionIndex = questionIndexes[0];
-      addSelect(scene.id === "poll-vote-mobile" ? "Pytanie ankiety" : "Pytanie widoczne w edytorze lub podglądzie", "questionIndex", questionIndexes.map(index => ({ value: String(index), label: `${index + 1}. ${questions[index]?.text || "Pytanie bez treści"}` })), String(selection.questionIndex ?? questionIndexes[0] ?? ""));
+      addSelect(scene.id === "poll-share" || scene.id === "poll-vote-mobile" ? "Pytanie anonimowej ankiety" : "Pytanie widoczne w edytorze lub podglądzie", "questionIndex", questionIndexes.map(index => ({ value: String(index), label: `${index + 1}. ${questions[index]?.text || "Pytanie bez treści"}` })), String(selection.questionIndex ?? questionIndexes[0] ?? ""));
     }
     if (!resources.length) {
       const note = document.createElement("p"); note.className = spec.filter ? "homepage-shot-resource-error" : "muted";
       note.setAttribute("role", spec.filter ? "alert" : "status");
-      note.textContent = scene.id === "poll-vote-mobile"
+      note.textContent = scene.id === "poll-share" || scene.id === "poll-vote-mobile"
         ? "Brak gry z co najmniej jednym pytaniem zawierającym od 3 do 6 odpowiedzi."
         : spec.filter
         ? "Brak wczytanej gry ankietowej w szkicu, którą można otworzyć. Wczytaj eksport szkicu z co najmniej 10 pytaniami; ankieta punktowa musi mieć po 3–6 odpowiedzi."
@@ -827,7 +832,7 @@ function renderResourceChoices(scene = currentScene()) {
     } else if (!selection.resourceId) {
       const note = document.createElement("p"); note.className = spec.filter ? "homepage-shot-resource-error" : "muted";
       note.setAttribute("role", spec.filter ? "alert" : "status");
-      note.textContent = scene.id === "poll-vote-mobile" ? "Nie wybrano gry do anonimowego głosowania." : spec.filter ? "Nie ma wczytanej pasującej gry ankietowej w szkicu. Ten widok nie jest gotowy." : "Nie wybrano zasobu dla tego widoku.";
+      note.textContent = scene.id === "poll-share" || scene.id === "poll-vote-mobile" ? "Nie wybrano gry do anonimowego głosowania." : spec.filter ? "Nie ma wczytanej pasującej gry ankietowej w szkicu. Ten widok nie jest gotowy." : "Nie wybrano zasobu dla tego widoku.";
       root.append(note);
     }
   }
@@ -887,7 +892,7 @@ function sharedKeysForScene(sceneId) {
   if (["control-round", "host-round", "display-round"].includes(sceneId)) return ["game", "question", "answers", "points", "teams"];
   if (sceneId === "subscribers") return ["people"];
   if (sceneId === "friends") return ["people"];
-  if (sceneId === "poll-share") return ["poll", "pollType", "question", "subscribers", "subscriberStates", "pollRecipients", "link"];
+  if (sceneId === "poll-share") return ["poll", "pollType", "question", "answers", "subscribers", "subscriberStates", "pollRecipients", "link"];
   if (sceneId === "poll-vote-mobile") return ["poll", "question", "answers"];
   if (sceneId === "poll-results") return ["poll", "question", "answers", "pollQuestions"];
   return [];
@@ -1133,6 +1138,40 @@ function sizeScenePreview(scene) {
   const preview = els.frame?.closest(".homepage-shot-preview");
   const availableWidth = preview?.clientWidth || 0;
   if (!availableWidth || !scene?.width || !scene?.height) return false;
+  const gesture = byId("homepageShotPhoneGesture");
+  if (scene.id === "poll-vote-mobile") {
+    const board = screenshotBoardSize();
+    const boardScale = Math.min(1, Math.max(0.1, (availableWidth - 2) / board.width));
+    const bezel = 8, border = 2, screenScale = (board.height - 2 * (bezel + border)) / scene.height;
+    const screenWidth = scene.width * screenScale, deviceWidth = screenWidth + 2 * (bezel + border);
+    const screenLeft = (board.width - screenWidth) / 2;
+    els.frameWrap.classList.add("is-phone");
+    els.frameWrap.style.width = `${Math.round(board.width * boardScale)}px`;
+    els.frameWrap.style.height = `${Math.round(board.height * boardScale)}px`;
+    els.frameWrap.style.setProperty("--phone-left", `${((board.width - deviceWidth) / 2) * boardScale}px`);
+    els.frameWrap.style.setProperty("--phone-width", `${deviceWidth * boardScale}px`);
+    els.frameWrap.style.setProperty("--phone-radius", `${(50 * screenScale + bezel) * boardScale}px`);
+    els.frameWrap.style.setProperty("--screen-left", `${(screenLeft - (screenWidth - scene.width * screenScale) / 2 + bezel + border) * boardScale}px`);
+    els.frameWrap.style.setProperty("--screen-top", `${(bezel + border) * boardScale}px`);
+    els.frameWrap.style.setProperty("--screen-radius", `${42 * screenScale * boardScale}px`);
+    els.frameWrap.style.setProperty("--notch-width", `${screenWidth * 0.323 * boardScale}px`);
+    els.frameWrap.style.setProperty("--notch-height", `${scene.height * screenScale * 0.0427 * boardScale}px`);
+    els.frameWrap.style.setProperty("--notch-radius", `${22 * screenScale * boardScale}px`);
+    els.frameWrap.style.setProperty("--gesture-width", `${92 * screenScale * boardScale}px`);
+    els.frameWrap.style.setProperty("--gesture-height", `${4 * boardScale}px`);
+    els.frameWrap.style.setProperty("--gesture-bottom", `${11 * boardScale}px`);
+    els.frame.style.width = `${scene.width}px`;
+    els.frame.style.height = `${scene.height}px`;
+    els.frame.style.left = `${(screenLeft + bezel + border) * boardScale}px`;
+    els.frame.style.top = `${(bezel + border) * boardScale}px`;
+    els.frame.style.transform = `scale(${screenScale * boardScale})`;
+    els.frame.style.transformOrigin = "top left";
+    if (gesture) gesture.hidden = false;
+    return true;
+  }
+  els.frameWrap.classList.remove("is-phone");
+  els.frameWrap.style.cssText = "";
+  if (gesture) gesture.hidden = true;
   const scale = Math.min(1, Math.max(0.1, (availableWidth - 2) / scene.width));
   els.frame.style.width = `${scene.width}px`;
   els.frame.style.aspectRatio = `${scene.width} / ${scene.height}`;
@@ -1141,7 +1180,15 @@ function sizeScenePreview(scene) {
   els.frame.style.transformOrigin = "top left";
   els.frameWrap.style.width = `${Math.round(scene.width * scale)}px`;
   els.frameWrap.style.height = `${Math.round(scene.height * scale)}px`;
+  els.frame.style.left = "0px";
+  els.frame.style.top = "0px";
   return true;
+}
+
+function screenshotBoardSize() {
+  const board = config.scenes.find(scene => scene.id === "games" && scene.width && scene.height)
+    || config.scenes.find(scene => scene.id !== "poll-vote-mobile" && scene.width >= 1000 && scene.height);
+  return { width: board?.width || 1440, height: board?.height || 900 };
 }
 
 window.addEventListener("message", event => {
@@ -1168,7 +1215,7 @@ async function normalizeScreenshotTopbar(doc, language, icon, iconText, hydrateI
   const topbar = doc.querySelector("header.topbar");
   if (!topbar) return;
 
-  const nav = await import("/shared/js/core/nav-map.js?v=v2026-10-19T18055");
+  const nav = await import("/shared/js/core/nav-map.js?v=v2026-10-19T18113");
   const pageIdByScene = {
     games: "games", "game-editor": "editor", bases: "bases", "base-explorer": "baseExplorer", logos: "logoEditor", "logo-draw": "logoDraw",
     appearance: "gameSettings", sound: "gameSettings", "control-round": "control", "control-finale": "control", friends: "friends", subscribers: "subscribers", tasks: "tasks",
@@ -1195,7 +1242,7 @@ async function normalizeScreenshotTopbar(doc, language, icon, iconText, hydrateI
   if (pageId && backButton) {
     const target = nav.backTarget(pageId, context);
     if (target) {
-      const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18055`);
+      const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18113`);
       const targetName = dictionary.nav?.page?.[target.pageId] || target.pageId;
       const label = String(dictionary.nav?.backTo || "{page}").replace("{page}", targetName);
       backButton.dataset.previewHref = target.href;
@@ -1249,7 +1296,7 @@ async function applyFixtureToFrame(scene, fixture) {
   const doc = frame.contentDocument;
   if (!doc?.body) throw new Error("brak treści widoku");
   await translateFrame(doc, currentLanguage());
-  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T18055");
+  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T18113");
   await normalizeScreenshotTopbar(doc, currentLanguage(), icon, iconText, hydrateIcons, scene);
   const footerCopy = doc.querySelector('[data-i18n="common.footer.left"]');
   if (footerCopy) footerCopy.textContent = footerCopy.textContent.replace(/©\s*(?:\{?year\}?|\d{4})/i, `© ${new Date().getFullYear()}`);
@@ -1324,7 +1371,7 @@ async function applyFixtureToFrame(scene, fixture) {
     const moreBtn = doc.getElementById("btnMore");
     const moreDropdown = doc.getElementById("navMoreDropdown");
     if (more && moreBtn && moreDropdown) {
-      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T18055");
+      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T18113");
 
       const nav = setTopbarNavPriority({ moreEl: more, moreDropdownEl: moreDropdown });
       nav.recalc();
@@ -1352,7 +1399,7 @@ async function applyFixtureToFrame(scene, fixture) {
         export: { ok: !!item },
       };
     };
-    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T18055");
+    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T18113");
     const selectedRules = selectedGame ? sampleRules(selectedGame) : null;
     const tileStatus = item => {
       if (!item) return "draft";
@@ -1431,7 +1478,7 @@ async function applyFixtureToFrame(scene, fixture) {
     editorPanel?.classList.add("hasQ");
     setInput(doc, "qText", fixture.question);
     const qList = doc.getElementById("qList");
-    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T18055");
+    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T18113");
     const questions = fixture.gameQuestions || [
       { text: fixture.question, answers: (fixture.answers || []).map((text, i) => ({ text, points: fixture.points?.[i] ?? 0 })) },
     ];
@@ -1668,8 +1715,8 @@ async function applyFixtureToFrame(scene, fixture) {
 async function paintSoundSettings(doc) {
   const [{ default: sounds }, { default: dictionary }, { icon }] = await Promise.all([
     fetch("/shared/data/sounds.json", { cache: "force-cache" }).then(response => response.json()),
-    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T18055`),
-    import("/shared/js/core/icons.js?v=v2026-10-19T18055"),
+    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T18113`),
+    import("/shared/js/core/icons.js?v=v2026-10-19T18113"),
 
   ]);
   const table = doc.getElementById("shotSfxTable");
@@ -1691,7 +1738,7 @@ async function paintSoundSettings(doc) {
 }
 
 async function getStrings(language, keys) {
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18055`);
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18113`);
 
   const output = {};
   for (const [name, key] of Object.entries(keys)) output[name] = key.split(".").reduce((value, part) => value?.[part], dictionary) || "";
@@ -1706,7 +1753,7 @@ async function logoCanvasFromFile(file, width, height) {
 }
 
 async function logoCanvasFromStored(stored, width, height) {
-  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T18055");
+  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T18113");
   const logo = stored.kind === "GLYPH" ? { type: "GLYPH_30x10", payload: stored.payload }
     : stored.kind === "PIX" ? { type: "PIX_150x70", payload: stored.payload }
       : stored.type ? stored : { type: "GLYPH_30x10", payload: stored.payload || stored };
@@ -1715,8 +1762,8 @@ async function logoCanvasFromStored(stored, width, height) {
 }
 
 async function translateFrame(doc, language) {
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18055`);
-  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T18055");
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18113`);
+  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T18113");
 
   const lookup = key => key.split(".").reduce((value, part) => value?.[part], dictionary);
   const replace = (key, node) => {
@@ -1739,7 +1786,7 @@ function setInput(doc, id, value) { const node = doc.getElementById(id); if (nod
 function setText(doc, id, value) { const node = doc.getElementById(id); if (node) node.textContent = value ?? ""; }
 
 async function paintPeople(doc, fixture) {
-  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18055");
+  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18113");
 
   const received = doc.getElementById("contactsReceived");
   const outgoing = doc.getElementById("contactsOutgoing");
@@ -1793,7 +1840,7 @@ async function paintPeople(doc, fixture) {
 }
 
 async function paintTasks(doc, fixture) {
-  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18055");
+  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18113");
 
   const host = doc.getElementById("tasksHost");
   if (!host) return;
@@ -1859,7 +1906,7 @@ async function paintPoll(doc, scene, fixture) {
   for (const id of ["btnStopPoll", "btnAbort", "btnCopy", "btnOpen", "btnOpenQr"]) { const button = doc.getElementById(id); if (button) button.disabled = false; }
   const subs = doc.getElementById("subsGrid");
   if (subs) {
-    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18055");
+    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18113");
     const words = await getStrings(currentLanguage(), {
       title: "polls.share.recipientsTitle", friend: "shareSections.channel.friend", subscriber: "shareSections.channel.subscriber",
       pending: "polls.share.state.waiting", opened: "pollSharePanel.opened", done: "polls.share.state.done", declined: "polls.share.state.declined",
@@ -1882,7 +1929,7 @@ async function paintPoll(doc, scene, fixture) {
     const shareTab = doc.getElementById("tabShare"); if (shareTab) shareTab.classList.remove("active");
     const resultTab = doc.getElementById("tabResults"); if (resultTab) resultTab.classList.add("active");
     setText(doc, "resultsMeta", currentLanguage() === "en" ? "18 votes · live results" : currentLanguage() === "uk" ? "18 голосів · результати наживо" : "18 głosów · wyniki na żywo");
-    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T18055");
+    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T18113");
 
     const questions = (fixture.pollQuestions || []).map((question, questionIndex) => ({
       id: `shot-poll-${questionIndex + 1}`, ord: questionIndex + 1, text: question.text,
@@ -1894,11 +1941,11 @@ async function paintPoll(doc, scene, fixture) {
 
 async function paintControl(scene, fixture) {
   const doc = els.frame.contentDocument;
-  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T18055");
+  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T18113");
   const restoreLanguage = translation.getUiLang();
   await translation.setUiLang(currentLanguage(), { persist: false, updateUrl: false, apply: false });
-  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T18055");
-  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T18055");
+  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T18113");
+  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T18113");
 
   const finale = scene.id === "control-finale";
   const state = makeDefaultState("homepage-visual-fixture");
@@ -2178,7 +2225,9 @@ function renderEditorFields(fixture) {
   const scene = currentScene();
   const sharedKeys = new Set(sharedKeysForScene(scene.id));
   for (const [key, value] of Object.entries(fixture)) {
-    if (key === "logoFile" || key === "tasks" || (key === "pollVotes" && scene.id === "poll-results") || (key === "friendGroups" && scene.id === "friends") || (key === "outgoing" && scene.id === "subscribers") || (key === "activeSubscriberEmails" && scene.id === "subscribers") || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
+    const containsStructuredData = value !== null && typeof value === "object"
+      && (!Array.isArray(value) || value.some(item => item !== null && typeof item === "object"));
+    if (containsStructuredData || key === "logoFile" || key === "tasks" || (key === "pollVotes" && scene.id === "poll-results") || (key === "friendGroups" && scene.id === "friends") || (key === "outgoing" && scene.id === "subscribers") || (key === "activeSubscriberEmails" && scene.id === "subscribers") || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
     const wrapper = document.createElement("div"); wrapper.className = "homepage-shot-field";
     const label = document.createElement("label"); label.textContent = FIELD_LABELS[key] || key; label.htmlFor = `homepage-shot-field-${key}`;
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
@@ -2607,7 +2656,10 @@ async function captureScene(scene) {
   await Promise.all(Array.from(previewDoc.images || []).map(image => image.decode?.().catch(() => {}) || Promise.resolve()));
   const { toCanvas } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm");
   let canvas = await toCanvas(previewDoc.documentElement, { width: scene.width, height: scene.height, pixelRatio: 1, backgroundColor: "#050914", cacheBust: true });
-  if (scene.id === "poll-vote-mobile") canvas = composeIPhoneFrame(canvas);
+  if (scene.id === "poll-vote-mobile") {
+    const board = screenshotBoardSize();
+    canvas = composeIPhoneFrame(canvas, board.width, board.height);
+  }
   let image = canvas.toDataURL("image/webp", 0.88);
   if (!image.startsWith("data:image/webp")) image = canvas.toDataURL("image/png");
   const mimeType = image.slice(5, image.indexOf(";"));
@@ -2621,66 +2673,71 @@ async function captureScene(scene) {
   return payload;
 }
 
-function composeIPhoneFrame(screenCanvas) {
+function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900) {
   const bezel = 8;
   const border = 2;
-  const margin = 4;
-  const radius = 42;
+  const screenScale = (outputHeight - 2 * (bezel + border)) / screenCanvas.height;
+  const screenWidth = screenCanvas.width * screenScale;
+  const screenHeight = screenCanvas.height * screenScale;
+  const deviceWidth = screenWidth + 2 * (bezel + border);
+  const deviceX = (outputWidth - deviceWidth) / 2;
+  const deviceY = 0;
+  const radius = 42 * screenScale;
+  const cornerRadius = 50 * screenScale + bezel;
   const output = document.createElement("canvas");
-  output.width = screenCanvas.width + bezel * 2 + border * 2 + margin;
-  output.height = screenCanvas.height + bezel * 2 + border * 2 + margin;
+  output.width = outputWidth;
+  output.height = outputHeight;
   const ctx = output.getContext("2d");
-  ctx.fillStyle = "#10131a";
+  ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, output.width, output.height);
 
-  const deviceX = margin / 2;
-  const deviceY = margin / 2;
-  const deviceW = output.width - margin;
-  const deviceH = output.height - margin;
+  const deviceW = deviceWidth;
+  const deviceH = outputHeight;
   ctx.save();
   ctx.shadowColor = "#000b";
-  ctx.shadowBlur = 44;
-  ctx.shadowOffsetY = 12;
-  roundedRect(ctx, deviceX, deviceY, deviceW, deviceH, radius + bezel);
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 0;
+  roundedRect(ctx, deviceX, deviceY, deviceW, deviceH, cornerRadius);
   ctx.fillStyle = "#030407";
   ctx.fill();
   ctx.restore();
-  roundedRect(ctx, deviceX + 1, deviceY + 1, deviceW - 2, deviceH - 2, radius + bezel - 1);
+  roundedRect(ctx, deviceX + 1, deviceY + 1, deviceW - 2, deviceH - 2, cornerRadius - 1);
   ctx.strokeStyle = "#30343d";
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  const screenX = margin / 2 + border + bezel;
-  const screenY = margin / 2 + border + bezel;
+  const screenX = deviceX + border + bezel;
+  const screenY = deviceY + border + bezel;
   ctx.save();
-  roundedRect(ctx, screenX, screenY, screenCanvas.width, screenCanvas.height, radius);
+  roundedRect(ctx, screenX, screenY, screenWidth, screenHeight, radius);
   ctx.clip();
-  ctx.drawImage(screenCanvas, screenX, screenY);
+  ctx.drawImage(screenCanvas, screenX, screenY, screenWidth, screenHeight);
 
-  const notchWidth = screenCanvas.width * 0.323;
-  const notchHeight = screenCanvas.height * 0.0427;
-  const notchX = screenX + (screenCanvas.width - notchWidth) / 2;
+  const notchHeight = screenHeight * 0.0427;
+  const notchXScaled = screenX + (screenWidth - screenWidth * 0.323) / 2;
+  const scaledNotchWidth = screenWidth * 0.323;
+  const notchCurve = 22 * screenScale;
   ctx.beginPath();
-  ctx.moveTo(notchX, screenY);
-  ctx.lineTo(notchX + notchWidth, screenY);
-  ctx.lineTo(notchX + notchWidth, screenY + notchHeight - 22);
-  ctx.quadraticCurveTo(notchX + notchWidth, screenY + notchHeight, notchX + notchWidth - 22, screenY + notchHeight);
-  ctx.lineTo(notchX + 22, screenY + notchHeight);
-  ctx.quadraticCurveTo(notchX, screenY + notchHeight, notchX, screenY + notchHeight - 22);
+  ctx.moveTo(notchXScaled, screenY);
+  ctx.lineTo(notchXScaled + scaledNotchWidth, screenY);
+  ctx.lineTo(notchXScaled + scaledNotchWidth, screenY + notchHeight - notchCurve);
+  ctx.quadraticCurveTo(notchXScaled + scaledNotchWidth, screenY + notchHeight, notchXScaled + scaledNotchWidth - notchCurve, screenY + notchHeight);
+  ctx.lineTo(notchXScaled + notchCurve, screenY + notchHeight);
+  ctx.quadraticCurveTo(notchXScaled, screenY + notchHeight, notchXScaled, screenY + notchHeight - notchCurve);
   ctx.closePath();
   ctx.fillStyle = "#030407";
   ctx.fill();
   ctx.fillStyle = "#111318";
   ctx.beginPath();
-  ctx.roundRect(notchX + notchWidth * 0.72, screenY + notchHeight * 0.34, notchWidth * 0.15, notchHeight * 0.15, 5);
+  ctx.roundRect(notchXScaled + scaledNotchWidth * 0.72, screenY + notchHeight * 0.34, scaledNotchWidth * 0.15, notchHeight * 0.15, 5 * screenScale);
   ctx.fill();
   ctx.fillStyle = "#08090c";
   ctx.beginPath();
-  ctx.arc(notchX + notchWidth * 0.72 - 28, screenY + notchHeight * 0.34 + notchHeight * 0.075, 5, 0, Math.PI * 2);
+  ctx.arc(notchXScaled + scaledNotchWidth * 0.72 - 28 * screenScale, screenY + notchHeight * 0.34 + notchHeight * 0.075, 5 * screenScale, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#ffffffa8";
   ctx.beginPath();
-  ctx.roundRect(screenX + (screenCanvas.width - 92) / 2, screenY + screenCanvas.height - 11, 92, 4, 99);
+  ctx.roundRect(screenX + (screenWidth - 92 * screenScale) / 2, screenY + screenHeight - 11 * screenScale, 92 * screenScale, 4 * screenScale, 99);
   ctx.fill();
   ctx.restore();
   return output;
@@ -2811,7 +2868,7 @@ export async function initHomepageScreenshots() {
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     if (initializeSharedFixtures) await saveConfig();
     renderSceneList();
-    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T18055");
+    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T18113");
     initUiSelectFn = initUiSelect;
 
     const languageSelect = byId("homepageShotLanguageSelect");
