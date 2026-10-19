@@ -1322,9 +1322,10 @@ function renderEditorFields(fixture) {
   const hasSharedData = renderSharedSourceData(currentScene(), fixture);
   byId("homepageShotFieldsTitle").textContent = hasSharedData ? "Dane dodatkowe widoku" : "Dane widoku";
   renderCategoryActions(fixture);
-  const sharedKeys = new Set(sharedKeysForScene(currentScene().id));
+  const scene = currentScene();
+  const sharedKeys = new Set(sharedKeysForScene(scene.id));
   for (const [key, value] of Object.entries(fixture)) {
-    if (key === "logoFile" || key === "tasks" || sharedKeys.has(key)) continue;
+    if (key === "logoFile" || key === "tasks" || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
     const wrapper = document.createElement("div"); wrapper.className = "homepage-shot-field";
     const label = document.createElement("label"); label.textContent = FIELD_LABELS[key] || key; label.htmlFor = `homepage-shot-field-${key}`;
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
@@ -1391,7 +1392,6 @@ function renderSharedSourceData(scene, fixture) {
       add("Logo wybrane z listy zasobów", selectedResource(scene.id, currentLanguage(), "logo")?.name);
       break;
     case "game-editor":
-      add("Gra z listy zasobów", selectedGame?.name);
       add("Pytania, odpowiedzi i punkty", gameQuestions);
       break;
     case "appearance": case "sound": case "control-finale":
