@@ -4691,6 +4691,7 @@ const en = {
     testModeLabel: "Test mode",
     testModeHint: "Display, host and buzzer in this window.",
     testModeTooSmall: "Enlarge the window to fit the panel and three devices.",
+    testModeCodesHidden: "Connection codes are unavailable in test mode.",
     panelTooSmall: "Enlarge the window to fit the whole panel.",
     deviceCodeHint: "Go to familiada.online, click \"Connect device\" and enter the device code.",
     alertOk: "OK",

@@ -1080,6 +1080,12 @@
     font-weight: 900
 }
 
+/* In test mode device presence is still useful, but the rows cannot open
+   connection-code modals. Keep the status visible and remove the click cue. */
+.dotRow.qr-code-unavailable {
+    cursor: default !important;
+}
+
 .dotRow .lbl {
     opacity: .85
 }

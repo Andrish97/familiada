@@ -88,6 +88,7 @@ export function createUI({ root, emit }) {
   let typingPending = false;
   let pendingMappingChoice = null;
   let keyboardTarget = null;
+  const mappingInputsPendingBlur = new WeakSet();
   const keyboardActions = new Map();
   function bindShortcut(el, key, run, select) {
     if (!key || (/^[0-9]+$/.test(key) && !/^[1-6]$/.test(key))) return el;
@@ -1628,8 +1629,17 @@ export function createUI({ root, emit }) {
     on(inp, "keydown", async (e) => {
       if (e.key !== "Enter" || e.isComposing) return;
       e.preventDefault();
-      await emit("ui.flushTyping");
-      if (inp.isConnected) inp.blur();
+      // The queued write can trigger a render that normally restores focus
+      // to an edited mapping field. Enter is an explicit commit-and-exit,
+      // so suppress that restoration until the write has settled.
+      mappingInputsPendingBlur.add(inp);
+      try {
+        await emit("ui.flushTyping");
+      } finally {
+        const currentInput = inp.isConnected ? inp : root.querySelector(`.c2-mapinput[data-i="${idx}"] input`);
+        currentInput?.blur();
+        mappingInputsPendingBlur.delete(inp);
+      }
     });
     bindShortcut(inp, "i", () => inp.focus());
     const wpisanoTile = h("div", { class: "c2-mapinput", "data-i": idx }, [
@@ -1904,7 +1914,7 @@ export function createUI({ root, emit }) {
     // fokus i zaznaczenie.
     const focused = document.activeElement;
     const focusedRow = focused && root.contains(focused) ? focused.closest("[data-i]") : null;
-    const savedFocus = focusedRow ? {
+    const savedFocus = focusedRow && !mappingInputsPendingBlur.has(focused) ? {
       dataI: focusedRow.getAttribute("data-i"),
       selStart: focused.selectionStart,
       selEnd: focused.selectionEnd,

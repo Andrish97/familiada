@@ -1178,6 +1178,7 @@ async function main() {
     // last bootstrap reads. The final render below covers their latest state.
     if (!controlUIReady) return;
     document.body.dataset.controlStep = store.state.step;
+    syncTopbarDeviceCodeButtons();
     reportRealtimeSnapshots();
     if (store.state.locks.gameEnded) connectivityTracker.flush();
     noteDisplayRequest();
@@ -1244,6 +1245,16 @@ async function main() {
     if (kind === "host") return t("control.deviceHost");
     if (kind === "buzzer") return t("control.deviceBuzzer");
     return t("control.qrModalTitle");
+  }
+  function syncTopbarDeviceCodeButtons() {
+    const disabled = store.state.settings.testMode === true;
+    for (const id of ["dotDisplayRow", "dotHostRow", "dotBuzzerRow"]) {
+      const row = document.getElementById(id);
+      if (!row) continue;
+      row.classList.toggle("qr-code-unavailable", disabled);
+      row.setAttribute("aria-disabled", String(disabled));
+      row.title = disabled ? t("control.testModeCodesHidden") : t(row.dataset.i18nTitle || "control.statusLabel");
+    }
   }
   function showQrModal(kind) {
     if (store.state.settings.testMode) return;

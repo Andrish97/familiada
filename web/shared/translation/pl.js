@@ -4403,6 +4403,7 @@ const pl = {
     testModeLabel: "Tryb testowy",
     testModeHint: "Wyświetlacz, prowadzący i przycisk w tym oknie.",
     testModeTooSmall: "Powiększ okno, aby zmieścić panel i trzy urządzenia.",
+    testModeCodesHidden: "Kody podłączenia są niedostępne w trybie testowym.",
     panelTooSmall: "Powiększ okno, aby zmieścić cały panel.",
     deviceCodeHint: "Wejdź na familiada.online, kliknij \"Podłącz urządzenie\" i wprowadź kod urządzenia.",
     qrCodeBtn: "Kod QR",

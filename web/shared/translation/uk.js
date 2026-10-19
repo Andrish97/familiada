@@ -4688,6 +4688,7 @@ const uk = {
     testModeLabel: "Тестовий режим",
     testModeHint: "Табло, ведучий і кнопка в цьому вікні.",
     testModeTooSmall: "Збільш вікно, щоб помістилися панель і три пристрої.",
+    testModeCodesHidden: "Коди підключення недоступні в тестовому режимі.",
     panelTooSmall: "Збільш вікно, щоб помістилася вся панель.",
     deviceCodeHint: "Перейди на familiada.online, натисни «Підключити пристрій» і введи код пристрою.",
     alertOk: "OK",
