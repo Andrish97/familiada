@@ -161,7 +161,7 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.outgoing ||= defaultSubscriberInvitations(language);
   }
 
-  const selectionScene = scene.id === "poll-vote-mobile" ? "poll-share" : scene.id;
+  const selectionScene = scene.id;
   const selection = config.viewResources?.[language]?.[selectionScene] || {};
   let resource = scene.id === "tasks" ? null : selectedResource(scene.id, language, "game");
   if (scene.id === "poll-vote-mobile" && !canUseAnonymousPollResource(resource)) resource = null;
@@ -202,9 +202,9 @@ function langFixture(scene, language = currentLanguage()) {
     const game = resource.data || {};
     const questions = Array.isArray(game.questions) ? game.questions : [];
     fixture.game = resource.name;
-    if (scene.id === "poll-share") {
+    if (scene.id === "poll-share" || scene.id === "poll-vote-mobile") {
       fixture.poll = resource.name;
-      fixture.pollType = gameResourceType(resource);
+      fixture.pollType = scene.id === "poll-vote-mobile" ? "poll_points" : gameResourceType(resource);
     }
     if (scene.id === "game-editor") fixture.gameQuestions = questions.map(question => ({
       text: question.text || "", answers: (question.answers || []).map(answer => ({ text: answer.text || "", points: Number(answer.fixed_points ?? answer.points) || 0 })),
@@ -481,7 +481,7 @@ function ensureResourceData(language = currentLanguage()) {
   for (const [sceneId, selection] of Object.entries(views)) {
     if (["poll-share", "poll-vote-mobile", "poll-results"].includes(sceneId)) {
       const available = resources.filter(item => item.type === "game");
-      if (sceneId === "poll-share") {
+      if (sceneId === "poll-share" || sceneId === "poll-vote-mobile") {
         const eligible = available.filter(canUseAnonymousPollResource);
         if (!eligible.some(item => item.id === selection.resourceId)) selection.resourceId = eligible[0]?.id || "";
         const questionIndexes = anonymousPollQuestionIndexes(eligible.find(item => item.id === selection.resourceId));
@@ -507,8 +507,7 @@ function ensureResourceData(language = currentLanguage()) {
 
 function selectedResource(sceneId, language = currentLanguage(), type = null) {
   const resources = ensureResourceData(language);
-  const selectionScene = sceneId === "poll-vote-mobile" ? "poll-share" : sceneId;
-  const selection = config.viewResources?.[language]?.[selectionScene] || {};
+  const selection = config.viewResources?.[language]?.[sceneId] || {};
   return resources.find(item => item.id === selection.resourceId && (!type || item.type === type)) || null;
 }
 
@@ -746,7 +745,7 @@ function resourceChoiceSpec(scene) {
   if (scene.id === "base-explorer") return { type: "base" };
   if (scene.id === "logo-draw") return { type: "logo" };
   if (scene.id === "poll-share") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
-  if (scene.id === "poll-vote-mobile") return { type: "game", filter: canUseAnonymousPollResource, sharedSelection: true };
+  if (scene.id === "poll-vote-mobile") return { type: "game", filter: canUseAnonymousPollResource, label: "Gra", question: true };
   if (scene.id === "poll-results") return { type: "game", filter: canOpenPollResource, label: "Gra ankietowa" };
   if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
   if (["game-editor", "appearance", "sound", "control-finale"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
@@ -818,7 +817,7 @@ function renderResourceChoices(scene = currentScene()) {
     }
   } else {
     if (!resources.some(item => item.id === selection.resourceId)) selection.resourceId = "";
-    if (scene.id === "poll-share" && !selection.resourceId) selection.resourceId = resources[0]?.id || "";
+    if (["poll-share", "poll-vote-mobile"].includes(scene.id) && !selection.resourceId) selection.resourceId = resources[0]?.id || "";
     const options = resources.map(item => ({ value: item.id, label: item.name }));
     addSelect(spec.label || "Zasób", "resourceId", options, selection.resourceId);
     if (spec.question) {
@@ -826,7 +825,8 @@ function renderResourceChoices(scene = currentScene()) {
       const questions = game?.data?.questions || [];
       const questionIndexes = scene.id === "poll-share" || scene.id === "poll-vote-mobile" ? anonymousPollQuestionIndexes(game) : questions.map((_, index) => index);
       if (questionIndexes.length && !questionIndexes.includes(Number(selection.questionIndex))) selection.questionIndex = questionIndexes[0];
-      addSelect(scene.id === "poll-share" || scene.id === "poll-vote-mobile" ? "Pytanie anonimowej ankiety" : "Pytanie widoczne w edytorze lub podglądzie", "questionIndex", questionIndexes.map(index => ({ value: String(index), label: `${index + 1}. ${questions[index]?.text || "Pytanie bez treści"}` })), String(selection.questionIndex ?? questionIndexes[0] ?? ""));
+      const questionLabel = scene.id === "poll-vote-mobile" ? "Pytanie głosowania" : scene.id === "poll-share" ? "Pytanie anonimowej ankiety" : "Pytanie widoczne w edytorze lub podglądzie";
+      addSelect(questionLabel, "questionIndex", questionIndexes.map(index => ({ value: String(index), label: `${index + 1}. ${questions[index]?.text || "Pytanie bez treści"}` })), String(selection.questionIndex ?? questionIndexes[0] ?? ""));
     }
     if (!resources.length) {
       const note = document.createElement("p"); note.className = spec.filter ? "homepage-shot-resource-error" : "muted";
@@ -1150,28 +1150,28 @@ function sizeScenePreview(scene) {
   if (scene.id === "poll-vote-mobile") {
     const board = screenshotBoardSize();
     const boardScale = Math.min(1, Math.max(0.1, (availableWidth - 2) / board.width));
-    const bezel = 8, border = 2, screenScale = (board.height - 2 * (bezel + border)) / scene.height;
-    const screenWidth = scene.width * screenScale, deviceWidth = screenWidth + 2 * (bezel + border);
+    const bezel = 10, screenScale = (board.height - 2 * bezel) / scene.height;
+    const screenWidth = scene.width * screenScale, deviceWidth = screenWidth + 2 * bezel;
     const screenLeft = (board.width - screenWidth) / 2;
     els.frameWrap.classList.add("is-phone");
     els.frameWrap.style.width = `${Math.round(board.width * boardScale)}px`;
     els.frameWrap.style.height = `${Math.round(board.height * boardScale)}px`;
     els.frameWrap.style.setProperty("--phone-left", `${((board.width - deviceWidth) / 2) * boardScale}px`);
     els.frameWrap.style.setProperty("--phone-width", `${deviceWidth * boardScale}px`);
-    els.frameWrap.style.setProperty("--phone-radius", `${(42 * screenScale + bezel + border) * boardScale}px`);
+    els.frameWrap.style.setProperty("--phone-radius", `${(42 * screenScale + bezel) * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-left", `${screenLeft * boardScale}px`);
-    els.frameWrap.style.setProperty("--screen-top", `${(bezel + border) * boardScale}px`);
+    els.frameWrap.style.setProperty("--screen-top", `${bezel * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-radius", `${42 * screenScale * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-width", `${screenWidth * 0.323 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-height", `${scene.height * screenScale * 0.0427 * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-radius", `${22 * screenScale * boardScale}px`);
     els.frameWrap.style.setProperty("--gesture-width", `${92 * screenScale * boardScale}px`);
-    els.frameWrap.style.setProperty("--gesture-height", `${4 * boardScale}px`);
-    els.frameWrap.style.setProperty("--gesture-bottom", `${11 * boardScale}px`);
+    els.frameWrap.style.setProperty("--gesture-height", `${4 * screenScale * boardScale}px`);
+    els.frameWrap.style.setProperty("--gesture-bottom", `${(bezel + 11 * screenScale) * boardScale}px`);
     els.frame.style.width = `${scene.width}px`;
     els.frame.style.height = `${scene.height}px`;
     els.frame.style.left = `${screenLeft * boardScale}px`;
-    els.frame.style.top = `${(bezel + border) * boardScale}px`;
+    els.frame.style.top = `${bezel * boardScale}px`;
     els.frame.style.transform = `scale(${screenScale * boardScale})`;
     els.frame.style.transformOrigin = "top left";
     if (gesture) gesture.hidden = false;
@@ -2707,16 +2707,15 @@ async function captureScene(scene) {
 }
 
 function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900) {
-  const bezel = 8;
-  const border = 2;
-  const screenScale = (outputHeight - 2 * (bezel + border)) / screenCanvas.height;
+  const bezel = 10;
+  const screenScale = (outputHeight - 2 * bezel) / screenCanvas.height;
   const screenWidth = screenCanvas.width * screenScale;
   const screenHeight = screenCanvas.height * screenScale;
-  const deviceWidth = screenWidth + 2 * (bezel + border);
+  const deviceWidth = screenWidth + 2 * bezel;
   const deviceX = (outputWidth - deviceWidth) / 2;
   const deviceY = 0;
   const radius = 42 * screenScale;
-  const cornerRadius = radius + bezel + border;
+  const cornerRadius = radius + bezel;
   const output = document.createElement("canvas");
   output.width = outputWidth;
   output.height = outputHeight;
@@ -2734,13 +2733,13 @@ function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900
   ctx.fillStyle = "#030407";
   ctx.fill();
   ctx.restore();
-  roundedRect(ctx, deviceX + 1, deviceY + 1, deviceW - 2, deviceH - 2, cornerRadius - 1);
+  roundedRect(ctx, deviceX + 0.5, deviceY + 0.5, deviceW - 1, deviceH - 1, cornerRadius - 0.5);
   ctx.strokeStyle = "#30343d";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1;
   ctx.stroke();
 
-  const screenX = deviceX + border + bezel;
-  const screenY = deviceY + border + bezel;
+  const screenX = deviceX + bezel;
+  const screenY = deviceY + bezel;
   ctx.save();
   roundedRect(ctx, screenX, screenY, screenWidth, screenHeight, radius);
   ctx.clip();
