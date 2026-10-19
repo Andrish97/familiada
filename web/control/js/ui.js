@@ -1625,6 +1625,13 @@ export function createUI({ root, emit }) {
     const inp = h("input", { type: "text", value: inputText, placeholder: t("control.finalUi.playerAnswer"), autocomplete: "off" });
     if (locked || devicesBlocked) inp.disabled = true;
     on(inp, "input", (e) => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: e.currentTarget.value }));
+    on(inp, "keydown", async (e) => {
+      if (e.key !== "Enter" || e.isComposing) return;
+      e.preventDefault();
+      await emit("ui.flushTyping");
+      if (inp.isConnected) inp.blur();
+    });
+    bindShortcut(inp, "i", () => inp.focus());
     const wpisanoTile = h("div", { class: "c2-mapinput", "data-i": idx }, [
       h("div", { class: "c2-mapinput-labelcol" }, [h("div", { class: "c2-field-label", text: t("control.finalUi.mapInputLabel") })]),
       h("div", { class: "c2-entrytile-input" }, [inp]),
@@ -1945,7 +1952,7 @@ export function createUI({ root, emit }) {
       ]);
       const mapping = /^f_p[12]_map_q/.test(s);
       const codes = mapping
-        ? ["mappingAnswers", "w", "o", ...(s.startsWith("f_p2_") ? ["r"] : []), "reveal", "n", "b", "m"]
+        ? ["mappingAnswers", "i", "w", "o", ...(s.startsWith("f_p2_") ? ["r"] : []), "reveal", "n", "b", "m"]
         : [...new Set([...keyboardActions].filter(([key]) => key !== "reveal" && !/^[2-6]$/.test(key)).map(([key]) => key === "1" ? "answers" : key)), "m"];
       for (const code of codes) list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
       hint.append(list);
