@@ -1880,6 +1880,8 @@ async function applyFixtureToFrame(scene, fixture) {
     }
   } else if (scene.id === "logo-draw") {
     const stored = fixture.logoData || await fetch(fixture.logoFile || "/shared/data/logo_familiada.json", { cache: "force-cache" }).then(response => response.json());
+    const logoName = String(fixture.logo || stored?.name || doc.getElementById("logoName")?.value || "");
+    setInput(doc, "logoName", logoName);
     const candidates = [];
     const visit = (value, depth = 0) => {
       if (!value || typeof value !== "object" || depth > 5 || candidates.includes(value)) return;
@@ -1897,7 +1899,7 @@ async function applyFixtureToFrame(scene, fixture) {
     // actual editor bridge instead of racing it and leaving the blank canvas.
     const renderScene = await waitForLogoDrawRenderer(doc.defaultView, 12000);
     await renderScene(payload);
-    setInput(doc, "logoName", fixture.logo);
+    setInput(doc, "logoName", logoName);
     // draw.js creates the toolbar SVGs during initialization. Hydrate after
     // that initialization too, then give Fabric a paint frame before the
     // parent marks this iframe ready for preview/capture.
