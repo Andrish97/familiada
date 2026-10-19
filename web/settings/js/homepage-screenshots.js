@@ -1150,7 +1150,7 @@ function sizeScenePreview(scene) {
   if (scene.id === "poll-vote-mobile") {
     const board = screenshotBoardSize();
     const boardScale = Math.min(1, Math.max(0.1, (availableWidth - 2) / board.width));
-    const bezel = 11, screenScale = (board.height - 2 * bezel) / scene.height;
+    const bezel = 10, screenScale = (board.height - 2 * bezel) / scene.height;
     const screenWidth = scene.width * screenScale;
     const screenLeft = (board.width - screenWidth) / 2;
     els.frameWrap.classList.add("is-phone");
@@ -2704,7 +2704,7 @@ async function captureScene(scene) {
 }
 
 function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900) {
-  const bezel = 11;
+  const bezel = 10;
   const screenScale = (outputHeight - 2 * bezel) / screenCanvas.height;
   const screenWidth = screenCanvas.width * screenScale;
   const screenHeight = screenCanvas.height * screenScale;
