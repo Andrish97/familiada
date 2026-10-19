@@ -154,7 +154,20 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.games = preparedGames.map(item => item.name);
     fixture.gameStatuses = preparedGames.map(gameResourceStatus);
   }
-  if (scene.id === "bases") fixture.bases = orderedResources(scene.id, language, "base").map(item => item.name);
+  if (scene.id === "bases") {
+    const loadedBases = ensureResourceData(language).filter(item => item.type === "base");
+    config.viewResources ||= {};
+    config.viewResources[language] ||= {};
+    const baseSelection = config.viewResources[language][scene.id] ||= {};
+    const availableIds = new Set(loadedBases.map(item => item.id));
+    const savedOrder = Array.isArray(baseSelection.resourceOrder) ? baseSelection.resourceOrder : (baseSelection.resourceOrder = loadedBases.map(item => item.id));
+    baseSelection.resourceOrder = [...savedOrder.filter(id => availableIds.has(id)), ...loadedBases.map(item => item.id).filter(id => !savedOrder.includes(id))];
+    if (!Array.isArray(baseSelection.resourceIds)) baseSelection.resourceIds = [...baseSelection.resourceOrder];
+    const includedIds = new Set(baseSelection.resourceIds.filter(id => availableIds.has(id)));
+    baseSelection.resourceIds = baseSelection.resourceOrder.filter(id => includedIds.has(id));
+    baseSelection.resourceId = baseSelection.resourceIds[0] || "";
+    fixture.bases = baseSelection.resourceIds.map(id => loadedBases.find(item => item.id === id)).filter(Boolean);
+  }
   if (scene.id === "logos") fixture.logos = orderedResources(scene.id, language, "logo").map(item => ({ name: item.name, data: item.data }));
   if (resource?.type === "game") {
     const game = resource.data || {};
@@ -363,7 +376,7 @@ function ensureResourceData(language = currentLanguage()) {
   for (const scene of config.scenes) {
     if (views[scene.id]) continue;
     if (scene.id === "games") views[scene.id] = { resourceIds: ids("game") };
-    else if (scene.id === "bases") views[scene.id] = { resourceIds: ids("base") };
+    else if (scene.id === "bases") views[scene.id] = { resourceOrder: ids("base"), resourceIds: ids("base") };
     else if (scene.id === "logos") views[scene.id] = { resourceIds: ids("logo") };
     else if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) views[scene.id] = { resourceId: "" };
     else if (scene.id === "base-explorer") views[scene.id] = { resourceId: ids("base")[0] || "" };
@@ -504,8 +517,10 @@ function canOpenPollResource(item) {
 
 function orderedResources(sceneId, language = currentLanguage(), type = null) {
   const resources = ensureResourceData(language);
-  const ids = config.viewResources?.[language]?.[sceneId]?.resourceIds || [];
-  return ids.map(id => resources.find(item => item.id === id)).filter(item => item && (!type || item.type === type));
+  const selection = config.viewResources?.[language]?.[sceneId] || {};
+  const ids = selection.resourceOrder || selection.resourceIds || [];
+  const selected = new Set(selection.resourceIds || ids);
+  return ids.filter(id => selected.has(id)).map(id => resources.find(item => item.id === id)).filter(item => item && (!type || item.type === type));
 }
 
 function renderResourceList(language = currentLanguage()) {
@@ -652,7 +667,7 @@ function renderResourceChoices(scene = currentScene()) {
     if (!Array.isArray(selection.resourceIds)) selection.resourceIds = resources.map(item => item.id);
     const available = new Set(resources.map(item => item.id));
     const selected = selection.resourceIds.filter(id => available.has(id));
-    if (scene.id === "games") {
+    if (["games", "bases"].includes(scene.id)) {
       selection.resourceIds = selected;
       const savedOrder = Array.isArray(selection.resourceOrder) ? selection.resourceOrder : [];
       selection.resourceOrder = [...savedOrder.filter(id => available.has(id)), ...resources.map(item => item.id).filter(id => !savedOrder.includes(id))];
@@ -663,7 +678,7 @@ function renderResourceChoices(scene = currentScene()) {
       const note = document.createElement("p"); note.className = "muted"; note.textContent = `Brak wczytanych zasobów typu ${spec.type}. Dodaj je na karcie „Lista zasobów”.`; root.append(note); return;
     }
     const list = document.createElement("div"); list.className = "homepage-shot-resource-order";
-    const orderIds = scene.id === "games" ? selection.resourceOrder : selection.resourceIds;
+    const orderIds = ["games", "bases"].includes(scene.id) ? selection.resourceOrder : selection.resourceIds;
     orderIds.forEach((id, index) => {
       const item = resources.find(resource => resource.id === id); if (!item) return;
       const row = document.createElement("div"); row.className = "homepage-shot-resource-order-row";
@@ -672,11 +687,6 @@ function renderResourceChoices(scene = currentScene()) {
       const up = sharedButton(document.createElement("span"), "↑", "resource-up", index); up.setAttribute("aria-label", "Przenieś wyżej"); up.disabled = index === 0;
       const down = sharedButton(document.createElement("span"), "↓", "resource-down", index); down.setAttribute("aria-label", "Przenieś niżej"); down.disabled = index === orderIds.length - 1;
       row.append(check, name, up, down); list.append(row);
-    });
-    (scene.id === "games" ? [] : resources.filter(item => !selection.resourceIds.includes(item.id))).forEach(item => {
-      const row = document.createElement("div"); row.className = "homepage-shot-resource-order-row";
-      const check = document.createElement("input"); check.type = "checkbox"; check.checked = false; check.dataset.resourceInclude = item.id; check.setAttribute("aria-label", `Pokaż ${item.name}`);
-      const name = document.createElement("span"); name.textContent = item.name; row.append(check, name); list.append(row);
     });
     root.append(list);
     if (!selection.resourceIds.length) {
@@ -1055,7 +1065,7 @@ async function applyFixtureToFrame(scene, fixture) {
   doc.documentElement.classList.remove("page-loading");
   doc.querySelectorAll("[data-skel-step]").forEach(node => node.classList.add("skel-step-ready"));
   const requiredByScene = {
-    games: ["#grid"], "game-editor": ["#qList", "#aList", "#qText"], bases: ["#grid"], "base-explorer": ["#tree", "#list"],
+    games: ["#grid"], "game-editor": ["#qList", "#aList", "#qText"], bases: ["#mineGrid", "#btnBrowse", "#btnShare", "#btnDuplicate", "#btnExport", "#btnImport", ".footer"], "base-explorer": ["#tree", "#list"],
     friends: ["#contactsReceived"], subscribers: ["#contactsReceived"], tasks: ["#tasksHost"], "poll-share": ["#cardMain", "#secShare", "#subsGrid"],
     "poll-vote-mobile": ["#qtext", "#alist"], "poll-results": ["#cardMain", "#resultsList"],
     appearance: ["#gsContentInner"], sound: ["#gsContentInner"], logos: ["#grid"], "logo-draw": ["#drawStage"],
@@ -1285,7 +1295,32 @@ async function applyFixtureToFrame(scene, fixture) {
       }
     }
   } else if (scene.id === "bases") {
-    if (grid) grid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="txt">Nowa baza</div></div>${fixture.bases.map((name, i) => `<div class="card tile ${i === 0 ? "selected" : ""}"><div class="name">${escapeHtml(name)}</div><div class="meta">${i ? "8 pytań · 2 kategorie" : "12 pytań · 3 kategorie"}</div><div class="tileTags"><span class="tag ${i ? "tag--muted" : "tag--ok"}">${i ? "Moja baza" : "Właściciel"}</span></div></div>`).join("")}`;
+    const language = currentLanguage();
+    const newBaseLabel = language === "en" ? "New base" : language === "uk" ? "Нова база" : "Nowa baza";
+    const mineGrid = doc.getElementById("mineGrid");
+    const bases = Array.isArray(fixture.bases) ? fixture.bases : [];
+    const selectedId = bases[0]?.id || "";
+    if (mineGrid) mineGrid.innerHTML = `<div class="addCard"><div class="plus">${icon("plus")}</div><div class="name">${newBaseLabel}</div></div>${bases.map((base, index) => {
+      const shareCount = Number(base.data?.shareCount ?? base.shareCount) || 0;
+      const badge = shareCount
+        ? `<span class="tag tileBadge" data-kind="mine" title="${language === "en" ? "Shared with" : language === "uk" ? "Надано доступ" : "Udostępniono"}"><i class="ico" data-icon="people"></i>${shareCount}</span>`
+        : `<span class="tag tileBadge" data-kind="mine" title="${language === "en" ? "Not shared" : language === "uk" ? "Не надано доступ" : "Nieudostępniona"}"><i class="ico" data-icon="person"></i></span>`;
+      return `<div class="card tile ${index === 0 ? "selected" : ""}" data-base-id="${escapeHtml(base.id)}" data-role="owner"><div class="name">${escapeHtml(base.name)}</div><div class="tileTags">${badge}</div></div>`;
+    }).join("")}`;
+    const mineSection = doc.getElementById("basesSectionMine");
+    const sharedSection = doc.getElementById("basesSectionShared");
+    const mineTab = doc.getElementById("tabBasesMine")?.closest(".tab-slot");
+    const sharedTab = doc.getElementById("tabBasesShared")?.closest(".tab-slot");
+    mineSection?.classList.add("active");
+    sharedSection?.classList.remove("active");
+    mineTab?.classList.add("active");
+    sharedTab?.classList.remove("active");
+    const sharedBadge = doc.getElementById("basesSharedBadge"); if (sharedBadge) sharedBadge.textContent = "";
+    const hasSelectedBase = !!selectedId;
+    for (const [id, disabled] of [["btnBrowse", !hasSelectedBase], ["btnShare", !hasSelectedBase], ["btnDuplicate", !hasSelectedBase], ["btnExport", !hasSelectedBase], ["btnImport", false]]) {
+      const button = doc.getElementById(id); if (button) button.disabled = disabled;
+    }
+    await hydrateIcons(doc);
   } else if (scene.id === "base-explorer") {
     setText(doc, "baseName", fixture.base);
     const tree = doc.getElementById("tree");
@@ -2011,7 +2046,10 @@ async function importResourceFile(file, type) {
   for (const sceneId of scenes) {
     const selection = config.viewResources[language][sceneId] ||= { resourceIds: [] };
     selection.resourceIds ||= [];
+    if (sceneId === "bases") selection.resourceOrder ||= [...selection.resourceIds];
+    if (sceneId === "bases") selection.resourceOrder.push(resource.id);
     selection.resourceIds.push(resource.id);
+    if (sceneId === "bases") selection.resourceId ||= selection.resourceIds[0] || "";
   }
   markDirty("shared", scenes);
   renderResourceList(language);
@@ -2326,9 +2364,11 @@ export async function initHomepageScreenshots() {
         .filter(([, selection]) => selection.resourceId === id || selection.resourceIds?.includes(id))
         .map(([sceneId]) => sceneId);
       config.resourceData[language] = (config.resourceData[language] || []).filter(item => item.id !== id);
-      for (const selection of Object.values(views)) {
+      for (const [sceneId, selection] of Object.entries(views)) {
         if (selection.resourceId === id) selection.resourceId = "";
         if (Array.isArray(selection.resourceIds)) selection.resourceIds = selection.resourceIds.filter(value => value !== id);
+        if (Array.isArray(selection.resourceOrder)) selection.resourceOrder = selection.resourceOrder.filter(value => value !== id);
+        if (["games", "bases"].includes(sceneId) && !selection.resourceId) selection.resourceId = selection.resourceIds?.[0] || "";
       }
       markDirty("shared", affectedScenes);
       renderResourceList(language);
@@ -2351,7 +2391,7 @@ export async function initHomepageScreenshots() {
         const ids = selection.resourceIds || (selection.resourceIds = []);
         if (input.checked && !ids.includes(id)) ids.push(id);
         if (!input.checked) selection.resourceIds = ids.filter(value => value !== id);
-        if (scene.id === "games") {
+        if (["games", "bases"].includes(scene.id)) {
           const order = selection.resourceOrder || (selection.resourceOrder = resources.map(item => item.id));
           selection.resourceIds = order.filter(value => selection.resourceIds.includes(value));
           selection.resourceId = selection.resourceIds[0] || "";
@@ -2365,13 +2405,13 @@ export async function initHomepageScreenshots() {
       const button = event.target.closest('[data-shared-action="resource-up"], [data-shared-action="resource-down"]');
       if (!button) return;
       const selection = config.viewResources[currentLanguage()][currentScene().id];
-      const isGames = currentScene().id === "games";
-      const ids = isGames ? (selection?.resourceOrder || []) : (selection?.resourceIds || []);
+      const hasSavedOrder = ["games", "bases"].includes(currentScene().id);
+      const ids = hasSavedOrder ? (selection?.resourceOrder || []) : (selection?.resourceIds || []);
       const index = Number(button.dataset.index);
       const target = index + (button.dataset.sharedAction === "resource-up" ? -1 : 1);
       if (target < 0 || target >= ids.length) return;
       [ids[index], ids[target]] = [ids[target], ids[index]];
-      if (isGames) selection.resourceId = ids.find(id => (selection.resourceIds || []).includes(id)) || "";
+      if (hasSavedOrder) selection.resourceId = ids.find(id => (selection.resourceIds || []).includes(id)) || "";
       markDirty("category");
       updateEditor();
       setStatus("Zmiany niezapisane — zapisz wszystkie dane.");
