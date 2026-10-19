@@ -1830,7 +1830,11 @@ async function applyFixtureToFrame(scene, fixture) {
           return option;
         }));
       }
-      await paintAppearancePreviews(doc, currentLanguage());
+      // The full display/host previews sit below this page's fixed screenshot
+      // viewport, so they appear as clipped slivers in the admin preview. The
+      // appearance screenshot is about the controls and their logo choices;
+      // omit those off-screen duplicate previews here.
+      doc.getElementById("gsLivePreviewWrap")?.remove();
     } else if (content) {
       const title = await getStrings(currentLanguage(), { category: "gameSettings.categories.sound", reset: "control.sfxResetAll" });
       content.innerHTML = `<div class="gs-cat-title">${escapeHtml(title.category)}</div><div class="gs-section"><div class="sfx-table" id="shotSfxTable"></div></div><div class="sfx-foot"><button class="btn" id="btnSoundReset" type="button">${icon("refresh")} ${escapeHtml(title.reset)}</button></div>`;
@@ -1891,95 +1895,6 @@ async function paintSoundSettings(doc) {
   });
 }
 
-async function paintAppearancePreviews(doc, language) {
-  const wrap = doc.getElementById("gsLivePreviewWrap");
-  const displayHolder = doc.getElementById("gsDisplayIframeHolder");
-  const hostHolder = doc.getElementById("gsHostIframeHolder");
-  if (!wrap || !displayHolder || !hostHolder) return;
-  wrap.style.display = "grid";
-  displayHolder.replaceChildren();
-  hostHolder.replaceChildren();
-
-  // Stage the real preview pages outside the sandboxed screenshot iframe, then
-  // place their rendered images into the page preview for reliable capture.
-  const stage = document.createElement("div");
-  stage.setAttribute("aria-hidden", "true");
-  stage.style.cssText = "position:fixed;left:0;top:0;width:1280px;height:360px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;opacity:.01;z-index:0;pointer-events:none";
-  const displayFrame = document.createElement("iframe");
-  displayFrame.title = "Display preview source";
-  displayFrame.style.cssText = "width:640px;height:360px;border:0";
-  const hostFrame = document.createElement("iframe");
-  hostFrame.title = "Host preview source";
-  hostFrame.style.cssText = "width:640px;height:360px;border:0";
-
-  const readyTypes = new Map([
-    ["familiada:preview-ready", displayFrame],
-    ["familiada:host-preview-ready", hostFrame],
-  ]);
-  const readyPromise = new Promise((resolve, reject) => {
-    const readyFrames = new Set();
-    const timer = setTimeout(() => {
-      window.removeEventListener("message", onMessage);
-      reject(new Error("Podgląd wyświetlacza lub prowadzącego nie zgłosił gotowości."));
-    }, 20000);
-    const onMessage = event => {
-      const frame = readyTypes.get(event.data?.type);
-      if (!frame || event.source !== frame.contentWindow) return;
-      readyFrames.add(frame);
-      if (readyFrames.size === readyTypes.size) {
-        clearTimeout(timer);
-        window.removeEventListener("message", onMessage);
-        resolve();
-      }
-    };
-    window.addEventListener("message", onMessage);
-  });
-  stage.append(displayFrame, hostFrame);
-  document.body.append(stage);
-  const suffix = `?preview=1&lang=${encodeURIComponent(language)}`;
-  displayFrame.src = `/control/display/${suffix}`;
-  hostFrame.src = `/control/host/${suffix}`;
-  try {
-    await readyPromise;
-    const { buildDisplayPreviewRow } = await import("/shared/js/gameplay/previewRow.js?v=v2026-10-19T20052");
-    const teams = sharedFixture(language).teams || [];
-    const row = buildDisplayPreviewRow({
-      teams: { teamA: teams[0] || "Króliczki", teamB: teams[1] || "Zajączki" },
-      display: { colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" }, theme: null, hostLogoMode: "pixel" },
-      logoPreview: null,
-    });
-    const message = { type: "familiada:preview-row", row };
-    displayFrame.contentWindow.postMessage(message, location.origin);
-    hostFrame.contentWindow.postMessage(message, location.origin);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    let toCanvas = null;
-    try { ({ toCanvas } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/+esm")); } catch {}
-    for (const [frame, holder, title] of [
-      [displayFrame, displayHolder, language === "en" ? "Display preview" : language === "uk" ? "Попередній перегляд екрана" : "Podgląd wyświetlacza"],
-      [hostFrame, hostHolder, language === "en" ? "Host preview" : language === "uk" ? "Попередній перегляд ведучого" : "Podgląd prowadzącego"],
-    ]) {
-      const frameDoc = frame.contentDocument;
-      await Promise.race([frameDoc.fonts?.ready || Promise.resolve(), new Promise(resolve => setTimeout(resolve, 5000))]);
-      try {
-        if (!toCanvas) throw new Error("Renderer niedostępny");
-        const canvas = await toCanvas(frameDoc.documentElement, { width: 640, height: 360, pixelRatio: 1, backgroundColor: "#050914", cacheBust: true });
-        const image = doc.createElement("img");
-        image.alt = title;
-        image.src = canvas.toDataURL("image/png");
-        image.style.cssText = "display:block;width:100%;height:100%;object-fit:cover";
-        holder.append(image);
-      } catch {
-        const unavailable = doc.createElement("div");
-        unavailable.className = "gs-preview-unavailable";
-        unavailable.textContent = language === "en" ? "Preview unavailable" : language === "uk" ? "Попередній перегляд недоступний" : "Nie udało się przygotować podglądu";
-        holder.append(unavailable);
-      }
-    }
-  } finally {
-    stage.remove();
-  }
-}
-
 async function getStrings(language, keys) {
   const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T20052`);
 
@@ -1996,15 +1911,22 @@ async function logoCanvasFromFile(file, width, height, ownerDocument = document)
 }
 
 async function logoCanvasFromStored(stored, width, height, ownerDocument = document) {
-  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20052");
+  const { logoToPreview, renderPreview } = await import("/logo/js/render.js?v=v2026-10-19T20052");
+  const { loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20052");
   const source = stored?.data && typeof stored.data === "object" ? stored.data : stored;
   const kind = String(source?.kind || source?.type || "").toUpperCase();
   const payload = source?.payload || source;
   const logo = kind.includes("PIX") ? { type: "PIX_150x70", payload }
     : kind.includes("GLYPH") ? { type: "GLYPH_30x10", payload }
       : source?.type ? source : { type: "GLYPH_30x10", payload };
-  const glyphs = await loadFont5x7();
-  return buildLogoPreviewCanvas(logo, glyphs, width, height, ownerDocument);
+  const canvas = ownerDocument.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  // Pixel logos already contain their complete 150×70 bitmap; don't make
+  // their rendering depend on loading the text-logo font.
+  const glyphs = logo.type === "GLYPH_30x10" ? await loadFont5x7() : null;
+  renderPreview(logoToPreview(logo), canvas, glyphs);
+  return canvas;
 }
 
 async function translateFrame(doc, language) {
