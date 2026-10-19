@@ -151,6 +151,13 @@ body.settings-body > main.wrap{
 .homepage-shot-resource-group{display:grid;gap:8px;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(0,0,0,.1)}
 .homepage-shot-resource-group h3{margin:0;font-size:14px}
 .homepage-shot-resource-card{padding:9px 11px;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(255,255,255,.025)}
+.homepage-shot-resource-subheading{margin:5px 0 0;padding:7px 2px 0;border-top:1px solid rgba(255,255,255,.07);font-size:12px;font-weight:750;opacity:.78}
+.homepage-shot-resource-list-row{display:grid;grid-template-columns:minmax(0,1fr) 34px;align-items:center;gap:10px;padding:9px 10px}
+.homepage-shot-resource-list-main{display:grid;gap:7px;min-width:0}
+.homepage-shot-resource-list-title{overflow-wrap:anywhere;font-size:13px;line-height:1.35}
+.homepage-shot-resource-list-meta{display:flex;flex-wrap:wrap;gap:5px}
+.homepage-shot-resource-meta-tag{display:inline-flex;align-items:center;min-height:21px;padding:2px 7px;border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(255,255,255,.045);font-size:10px;line-height:1.2;opacity:.82}
+.homepage-shot-resource-remove{display:grid;place-items:center;width:32px;min-width:32px;height:32px;padding:0;border-radius:50%;font-size:20px;line-height:1}
 .homepage-shot-resource-card summary{cursor:pointer;font-weight:750}
 .homepage-shot-resource-card-body{display:grid;gap:9px;padding-top:10px}
 .homepage-shot-resource-card-body>p{margin:0}
@@ -212,6 +219,7 @@ body.settings-body > main.wrap{
 .homepage-shot-result{display:flex;justify-content:space-between;gap:10px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.04)}
 .homepage-shot-result[data-state="error"]{color:#ff9d9d}
 .homepage-shot-result[data-state="ok"]{color:#a9e6b5}
+.homepage-shot-resource-error{margin:8px 0;color:#ff9d9d;font-size:13px}
 .homepage-shot-preview{min-width:0;border:1px solid rgba(255,255,255,.14);border-radius:12px;overflow:hidden;background:#050914}
 .homepage-shot-preview-title{font-size:12px;opacity:.75;padding:8px 10px}
 .homepage-shot-frame-wrap{position:relative;max-width:100%;overflow:hidden}

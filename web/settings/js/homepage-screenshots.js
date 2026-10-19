@@ -127,10 +127,11 @@ function langFixture(scene, language = currentLanguage()) {
   }
 
   const selection = config.viewResources?.[language]?.[scene.id] || {};
-  const resource = selectedResource(scene.id, language, "game");
+  let resource = selectedResource(scene.id, language, "game");
+  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && !canOpenPollResource(resource)) resource = null;
   if (scene.id === "game-editor") fixture.activeQuestionIndex = Number(selection.questionIndex) || 0;
   if (scene.id === "games") {
-    const preparedGames = orderedResources(scene.id, language, "game").filter(item => item.data?.game?.type === "prepared");
+    const preparedGames = orderedResources(scene.id, language, "game").filter(item => gameResourceType(item) === "prepared");
     fixture.games = preparedGames.map(item => item.name);
     fixture.gameStatuses = preparedGames.map(item => item.status || item.data?.game?.status || "draft");
   }
@@ -155,10 +156,14 @@ function langFixture(scene, language = currentLanguage()) {
       fixture.answers = (activeQuestion.answers || []).map(answer => answer.text || "");
       fixture.points = (activeQuestion.answers || []).map(answer => Number(answer.fixed_points ?? answer.points) || 0);
     }
-    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && String(game.game?.type || "").startsWith("poll") && resource.openPoll !== false) {
+    if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && gameResourceType(resource) !== "prepared") {
       fixture.poll = resource.name;
-      const pollQuestions = questions.map(question => ({
-        text: question.text || "", answers: (question.answers || []).map(answer => ({ text: answer.text || "", votes: Number(answer.fixed_points ?? answer.votes) || 0 })),
+      if (scene.id === "poll-results" && !Array.isArray(fixture.pollVotes)) fixture.pollVotes = questions.map(question => (question.answers || []).map(() => 0));
+      const pollQuestions = questions.map((question, questionIndex) => ({
+        text: question.text || "", answers: (question.answers || []).map((answer, answerIndex) => ({
+          text: answer.text || "",
+          votes: scene.id === "poll-results" ? Number(fixture.pollVotes?.[questionIndex]?.[answerIndex]) || 0 : Number(answer.votes) || 0,
+        })),
       }));
       const pollQuestionIndex = Math.min(Number(selection.questionIndex) || 0, Math.max(0, pollQuestions.length - 1));
       fixture.question = pollQuestions[pollQuestionIndex]?.text || "";
@@ -177,7 +182,7 @@ function langFixture(scene, language = currentLanguage()) {
   if (!resource && ["game-editor", "appearance", "sound", "control-round", "host-round", "display-round", "control-finale", "tasks"].includes(scene.id)) {
     fixture.game = ""; fixture.question = ""; fixture.answers = []; fixture.points = []; fixture.gameQuestions = []; fixture.finale = [];
   }
-  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && (!resource || !String(resource.data?.game?.type || "").startsWith("poll") || resource.openPoll === false)) {
+  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id) && !resource) {
     fixture.poll = ""; fixture.question = ""; fixture.answers = []; fixture.pollQuestions = []; fixture.pollRecipients = []; fixture.subscribers = []; fixture.subscriberStates = [];
   }
   if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = shared.teams || [];
@@ -227,6 +232,7 @@ function defaultSubscriberInvitations(language) {
 function normalizeSharedFixture(shared, defaults) {
   const result = { ...defaults, ...shared };
   result.gameQuestions = Array.isArray(shared.gameQuestions) ? shared.gameQuestions : defaults.gameQuestions;
+  result.teams = (Array.isArray(shared.teams) ? shared.teams : defaults.teams).slice(0, 2);
   result.subscribers = Array.isArray(shared.subscribers) ? shared.subscribers : defaults.subscribers;
   result.pollQuestions = Array.isArray(shared.pollQuestions) ? shared.pollQuestions : (() => {
     const oldAnswers = shared.pollAnswers || defaults.pollQuestions[0].answers.map(answer => answer.text);
@@ -294,7 +300,7 @@ function ensureResourceData(language = currentLanguage()) {
       questions: (baseFixture.questions || []).map((text, i) => ({ id: `${language}-base-question-${i}`, category_id: categories[0]?.id || null, ord: i + 1, payload: { text } })), question_tags: [], category_tags: [] };
     const games = gameNames.map((name, i) => ({ id: `${language}-game-${i}`, type: "game", name, status: name === shared.gameName ? "ready" : "draft",
       data: { game: { name, type: "prepared" }, questions: structuredClone(shared.gameQuestions || []) } }));
-    games.push({ id: `${language}-poll-game`, type: "game", status: "open", openPoll: true, name: shared.pollName,
+    games.push({ id: `${language}-poll-game`, type: "game", status: "draft", openPoll: false, name: shared.pollName,
       data: { game: { name: shared.pollName, type: "poll_points" }, questions: (shared.pollQuestions || []).map(q => ({ text: q.text, answers: q.answers.map(a => ({ text: a.text, fixed_points: a.votes })) })) } });
     return [
       ...games,
@@ -304,7 +310,8 @@ function ensureResourceData(language = currentLanguage()) {
   })();
   const legacyTeams = resources.find(item => item.type === "teams")?.data?.teams;
   const legacySubscribers = resources.find(item => item.type === "subscribers")?.data?.people;
-  if (Array.isArray(legacyTeams)) shared.teams = structuredClone(legacyTeams);
+  if (Array.isArray(legacyTeams)) shared.teams = structuredClone(legacyTeams.slice(0, 2));
+  shared.teams = (Array.isArray(shared.teams) ? shared.teams : []).slice(0, 2);
   if (Array.isArray(legacySubscribers)) shared.subscribers = structuredClone(legacySubscribers);
   for (let index = resources.length - 1; index >= 0; index -= 1) {
     if (["teams", "subscribers"].includes(resources[index].type)) resources.splice(index, 1);
@@ -314,7 +321,8 @@ function ensureResourceData(language = currentLanguage()) {
     item.data ||= {};
     item.data.game ||= {};
     item.data.game.type ||= "prepared";
-    const savedStatus = String(item.status || item.data.game.status || "").toLowerCase();
+    const savedStatusRaw = String(item.status || item.data.game.status || "").toLowerCase();
+    const savedStatus = ({ poll_open: "open", poll_stopped: "stopped" })[savedStatusRaw] || savedStatusRaw;
     const allowedStatuses = String(item.data.game.type).startsWith("poll")
       ? ["draft", "ready", "open", "stopped"]
       : ["draft", "ready"];
@@ -346,6 +354,25 @@ function selectedResource(sceneId, language = currentLanguage(), type = null) {
   return resources.find(item => item.id === selection.resourceId && (!type || item.type === type)) || null;
 }
 
+function gameResourceType(item) {
+  const type = String(item?.data?.game?.type || "");
+  if (["prepared", "poll_text", "poll_points", "market"].includes(type)) return type;
+  if (type === "fixed") return "prepared";
+  if (type === "poll") return String(item?.name || "").toLowerCase().includes("punkt") ? "poll_points" : "poll_text";
+  return "prepared";
+}
+
+function canOpenPollResource(item) {
+  const type = gameResourceType(item);
+  if (!type.startsWith("poll") || String(item?.status || item?.data?.game?.status || "draft") !== "draft") return false;
+  const questions = Array.isArray(item?.data?.questions) ? item.data.questions : [];
+  if (questions.length < 10) return false;
+  return type !== "poll_points" || questions.every(question => {
+    const count = Array.isArray(question.answers) ? question.answers.length : 0;
+    return count >= 3 && count <= 6;
+  });
+}
+
 function orderedResources(sceneId, language = currentLanguage(), type = null) {
   const resources = ensureResourceData(language);
   const ids = config.viewResources?.[language]?.[sceneId]?.resourceIds || [];
@@ -367,6 +394,7 @@ function renderResourceList(language = currentLanguage()) {
   if (!root) return;
   const resources = ensureResourceData(language);
   const labels = { game: "Gry", base: "Bazy pytań", logo: "Logo" };
+  const gameLabels = { prepared: "Gry przygotowane", poll_text: "Ankiety tekstowe", poll_points: "Ankiety punktowe", market: "Gry społeczności" };
   root.replaceChildren();
   for (const type of ["game", "base", "logo"]) {
     const items = resources.filter(item => item.type === type);
@@ -375,19 +403,45 @@ function renderResourceList(language = currentLanguage()) {
     if (!items.length) {
       const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "Brak wczytanych zasobów."; group.append(empty);
     }
+    const categories = new Map();
     for (const item of items) {
-      const row = document.createElement("div"); row.className = "homepage-shot-resource-card";
-      const name = document.createElement("strong"); name.textContent = item.name || "Bez nazwy";
-      const description = document.createElement("span"); description.className = "muted";
-      if (type === "game") {
-        const kind = String(item.data?.game?.type || "").startsWith("poll") ? "gra ankietowa" : "gra przygotowana";
-        description.textContent = `${kind} · ${item.data?.questions?.length || 0} pytań`;
-      } else if (type === "base") {
-        description.textContent = `${item.data?.categories?.length || 0} kategorii · ${item.data?.questions?.length || 0} wpisów`;
-      } else {
-        description.textContent = "Gotowe do użycia w podglądach";
+      const key = type === "game" ? gameResourceType(item) : type === "logo" ? String(item.data?.kind || "DRAW").toUpperCase() : "all";
+      if (!categories.has(key)) categories.set(key, []);
+      categories.get(key).push(item);
+    }
+    const orderedKeys = type === "game" ? ["prepared", "poll_text", "poll_points", "market"] : type === "logo" ? ["PIX", "GLYPH", "DRAW"] : ["all"];
+    for (const key of orderedKeys.filter(value => categories.has(value))) {
+      const categoryItems = categories.get(key);
+      if (type !== "base") {
+        const subheading = document.createElement("h4");
+        subheading.className = "homepage-shot-resource-subheading";
+        subheading.textContent = `${type === "game" ? (gameLabels[key] || "Pozostałe gry") : `Logo · ${key}`} · ${categoryItems.length}`;
+        group.append(subheading);
       }
-      row.append(name, description); group.append(row);
+      for (const item of categoryItems) {
+        const row = document.createElement("div"); row.className = "homepage-shot-resource-card homepage-shot-resource-list-row";
+        const main = document.createElement("div"); main.className = "homepage-shot-resource-list-main";
+        const name = document.createElement("strong"); name.className = "homepage-shot-resource-list-title"; name.textContent = item.name || "Bez nazwy";
+        const metadata = document.createElement("div"); metadata.className = "homepage-shot-resource-list-meta";
+        const addTag = value => { const tag = document.createElement("span"); tag.className = "homepage-shot-resource-meta-tag"; tag.textContent = value; metadata.append(tag); };
+        if (type === "game") {
+          const questions = Array.isArray(item.data?.questions) ? item.data.questions.length : 0;
+          addTag(gameLabels[key] || "Gra"); addTag(`${questions} ${questions === 1 ? "pytanie" : "pytań"}`);
+          if (key.startsWith("poll") && String(item.status || item.data?.game?.status || "draft").toLowerCase() === "draft") addTag("szkic");
+        } else if (type === "base") {
+          const categoriesCount = Array.isArray(item.data?.categories) ? item.data.categories.length : 0;
+          const entriesCount = Array.isArray(item.data?.questions) ? item.data.questions.length : 0;
+          addTag(`${categoriesCount} ${categoriesCount === 1 ? "kategoria" : "kategorii"}`); addTag(`${entriesCount} ${entriesCount === 1 ? "wpis" : "wpisów"}`);
+        } else {
+          addTag(`Logo Draw · ${key}`);
+          const dims = item.data?.payload?.w && item.data?.payload?.h ? `${item.data.payload.w} × ${item.data.payload.h}` : "";
+          if (dims) addTag(dims);
+        }
+        main.append(name, metadata);
+        const remove = document.createElement("button"); remove.type = "button"; remove.className = "btn sm homepage-shot-resource-remove";
+        remove.dataset.removeResource = item.id; remove.setAttribute("aria-label", `Usuń ${item.name || "zasób"} z listy`); remove.title = "Usuń z listy zasobów"; remove.textContent = "×";
+        row.append(main, remove); group.append(row);
+      }
     }
     root.append(group);
   }
@@ -395,12 +449,11 @@ function renderResourceList(language = currentLanguage()) {
   sharedRoot.replaceChildren();
   const shared = config.sharedFixtures[language];
   const teams = sharedGroup(sharedRoot, "Nazwy drużyn");
-  (shared.teams || []).forEach((name, index) => {
+  for (let index = 0; index < 2; index += 1) {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
-    sharedField(row, `Drużyna ${index + 1}`, name, { dataset: { sharedTeam: index } });
-    sharedButton(row, "Usuń", "remove-team", index); teams.append(row);
-  });
-  sharedButton(teams, "Dodaj drużynę", "add-team");
+    sharedField(row, `Drużyna ${index + 1}`, shared.teams?.[index] || "", { dataset: { sharedTeam: index } });
+    teams.append(row);
+  }
   const subscribers = sharedGroup(sharedRoot, "Aktywni subskrybenci");
   (shared.subscribers || []).forEach((name, index) => {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
@@ -422,11 +475,11 @@ function resourceChoiceSpec(scene) {
   if (["games", "bases", "logos"].includes(scene.id)) return {
     multi: true,
     type: ({ games: "game", bases: "base", logos: "logo" })[scene.id],
-    ...(scene.id === "games" ? { filter: item => item.data?.game?.type === "prepared" } : {}),
+    ...(scene.id === "games" ? { filter: item => gameResourceType(item) === "prepared" } : {}),
   };
   if (scene.id === "base-explorer") return { type: "base" };
   if (scene.id === "logo-draw") return { type: "logo" };
-  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) return { type: "game", filter: item => String(item.data?.game?.type || "").startsWith("poll") && item.openPoll !== false, label: "Otwarta ankieta", question: true };
+  if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) return { type: "game", filter: canOpenPollResource, label: "Ankieta do otwarcia", question: true };
   if (["control-round", "host-round", "display-round"].includes(scene.id)) return { type: "game", question: true };
   if (["game-editor", "appearance", "sound", "control-finale", "tasks"].includes(scene.id)) return { type: "game", question: scene.id === "game-editor" };
   return null;
@@ -494,6 +547,7 @@ function renderResourceChoices(scene = currentScene()) {
       root.append(note);
     }
   } else {
+    if (!resources.some(item => item.id === selection.resourceId)) selection.resourceId = "";
     const options = resources.map(item => ({ value: item.id, label: item.name }));
     addSelect(spec.label || "Zasób", "resourceId", options, selection.resourceId);
     if (spec.question) {
@@ -502,11 +556,16 @@ function renderResourceChoices(scene = currentScene()) {
       addSelect("Pytanie widoczne w edytorze lub podglądzie", "questionIndex", questions.map((item, index) => ({ value: String(index), label: `${index + 1}. ${item.text || "Pytanie bez treści"}` })), String(selection.questionIndex ?? 0));
     }
     if (!resources.length) {
-      const note = document.createElement("p"); note.className = "muted"; note.textContent = spec.filter ? "Brak wczytanej otwartej ankiety. Oznacz grę ankietową jako otwartą na karcie „Lista zasobów”." : `Brak wczytanych zasobów typu ${spec.type}. Dodaj je na karcie „Lista zasobów”.`;
+      const note = document.createElement("p"); note.className = spec.filter ? "homepage-shot-resource-error" : "muted";
+      note.setAttribute("role", spec.filter ? "alert" : "status");
+      note.textContent = spec.filter
+        ? "Brak wczytanej gry ankietowej w szkicu, którą można otworzyć. Wczytaj eksport szkicu z co najmniej 10 pytaniami; ankieta punktowa musi mieć po 3–6 odpowiedzi."
+        : `Brak wczytanych zasobów typu ${spec.type}. Dodaj je na karcie „Lista zasobów”.`;
       root.append(note);
     } else if (!selection.resourceId) {
-      const note = document.createElement("p"); note.className = "muted";
-      note.textContent = spec.filter ? "Nie wybrano gry otwartej jako ankieta dla tego widoku." : "Nie wybrano zasobu dla tego widoku.";
+      const note = document.createElement("p"); note.className = spec.filter ? "homepage-shot-resource-error" : "muted";
+      note.setAttribute("role", spec.filter ? "alert" : "status");
+      note.textContent = spec.filter ? "Nie ma wczytanej pasującej gry ankietowej w szkicu. Ten widok nie jest gotowy." : "Nie wybrano zasobu dla tego widoku.";
       root.append(note);
     }
   }
@@ -1318,6 +1377,7 @@ async function saveConfig() {
 function readEditorIntoConfig() {
   const scene = config.scenes.find(item => item.id === editorSceneId) || currentScene();
   const fixture = JSON.parse(els.fixture.value);
+  if (scene.id === "poll-results") fixture.pollVotes = readPollVotes();
   if (scene.id === "tasks") {
     fixture.tasks = (fixture.tasks || []).map((task, index) => ({
       ...task,
@@ -1341,6 +1401,17 @@ function readPollActions() {
   }));
 }
 
+function readPollVotes() {
+  const votes = [];
+  for (const input of byId("homepageShotCategoryActions").querySelectorAll("[data-poll-vote]")) {
+    const questionIndex = Number(input.dataset.questionIndex);
+    const answerIndex = Number(input.dataset.answerIndex);
+    votes[questionIndex] ||= [];
+    votes[questionIndex][answerIndex] = Math.max(0, Number(input.value) || 0);
+  }
+  return votes;
+}
+
 function renderEditorFields(fixture) {
   renderResourceChoices(currentScene());
   els.fields.replaceChildren();
@@ -1350,7 +1421,7 @@ function renderEditorFields(fixture) {
   const scene = currentScene();
   const sharedKeys = new Set(sharedKeysForScene(scene.id));
   for (const [key, value] of Object.entries(fixture)) {
-    if (key === "logoFile" || key === "tasks" || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
+    if (key === "logoFile" || key === "tasks" || (key === "pollVotes" && scene.id === "poll-results") || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
     const wrapper = document.createElement("div"); wrapper.className = "homepage-shot-field";
     const label = document.createElement("label"); label.textContent = FIELD_LABELS[key] || key; label.htmlFor = `homepage-shot-field-${key}`;
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
@@ -1372,7 +1443,7 @@ function renderCategoryActions(fixture) {
   const root = byId("homepageShotCategoryActions");
   root.replaceChildren();
   const sceneId = currentScene().id;
-  const visible = ["poll-share", "tasks"].includes(sceneId);
+  const visible = ["poll-share", "poll-results", "tasks"].includes(sceneId);
   root.hidden = !visible;
   if (!visible) return;
   if (sceneId === "tasks") {
@@ -1392,6 +1463,34 @@ function renderCategoryActions(fixture) {
       row.append(name, statusField); rows.append(row);
     });
     group.append(rows);
+    return;
+  }
+  if (sceneId === "poll-results") {
+    const resource = selectedResource(sceneId, currentLanguage(), "game");
+    if (!canOpenPollResource(resource)) return;
+    const questions = resource.data?.questions || [];
+    fixture.pollVotes ||= questions.map(question => (question.answers || []).map(() => 0));
+    const group = sharedGroup(root, "Głosy w tym podglądzie");
+    const note = document.createElement("p"); note.className = "muted homepage-shot-tab-note";
+    note.textContent = "Wpisz przykładowe głosy dla odpowiedzi. Są zapisane tylko dla tego widoku.";
+    group.append(note);
+    questions.forEach((question, questionIndex) => {
+      const questionCard = document.createElement("details"); questionCard.className = "homepage-shot-question";
+      questionCard.open = questionIndex === 0;
+      const summary = document.createElement("summary"); summary.textContent = `${questionIndex + 1}. ${question.text || "Pytanie bez treści"}`;
+      const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
+      (question.answers || []).forEach((answer, answerIndex) => {
+        const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-answer-row";
+        const label = document.createElement("span"); label.textContent = answer.text || `Odpowiedź ${answerIndex + 1}`;
+        const count = document.createElement("label"); count.className = "homepage-shot-shared-field";
+        const countLabel = document.createElement("span"); countLabel.textContent = "Głosy";
+        const input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = "1"; input.className = "inp";
+        input.dataset.pollVote = ""; input.dataset.questionIndex = String(questionIndex); input.dataset.answerIndex = String(answerIndex);
+        input.value = String(fixture.pollVotes?.[questionIndex]?.[answerIndex] ?? 0);
+        count.append(countLabel, input); row.append(label, count); rows.append(row);
+      });
+      questionCard.append(summary, rows); group.append(questionCard);
+    });
     return;
   }
   const subscribers = subscriberNames(currentLanguage());
@@ -1791,6 +1890,25 @@ export async function initHomepageScreenshots() {
     byId("homepageShotImportGame").addEventListener("change", event => handleResourceImportInput(event, "game"));
     byId("homepageShotImportBase").addEventListener("change", event => handleResourceImportInput(event, "base"));
     byId("homepageShotImportLogo").addEventListener("change", event => handleResourceImportInput(event, "logo"));
+    byId("homepageShotResourceList").addEventListener("click", async event => {
+      const button = event.target.closest("[data-remove-resource]");
+      if (!button) return;
+      if (!await flushSharedEditor()) return;
+      const language = sharedEditorLanguage;
+      const id = button.dataset.removeResource;
+      config.resourceData[language] = (config.resourceData[language] || []).filter(item => item.id !== id);
+      const views = config.viewResources?.[language] || {};
+      for (const selection of Object.values(views)) {
+        if (selection.resourceId === id) selection.resourceId = "";
+        if (Array.isArray(selection.resourceIds)) selection.resourceIds = selection.resourceIds.filter(value => value !== id);
+      }
+      try {
+        await saveConfig();
+        renderResourceList(language);
+        updateEditor();
+        setStatus("Zasób usunięty z listy.");
+      } catch (error) { setStatus(`Nie udało się usunąć zasobu: ${error.message}`); }
+    });
     byId("homepageShotResourceChoiceFields").addEventListener("change", async event => {
       const input = event.target;
       if (!(input.matches("[data-resource-selection]") || input.matches("[data-resource-include]"))) return;
@@ -1851,8 +1969,6 @@ export async function initHomepageScreenshots() {
           shared.pollQuestions[index]?.answers.splice(answerIndex, 1); break;
         }
         case "add-subscriber": shared.subscribers.push("Nowy subskrybent"); break;
-        case "add-team": shared.teams.push("Nowa drużyna"); break;
-        case "remove-team": shared.teams.splice(index, 1); break;
         case "remove-subscriber":
           shared.subscribers.splice(index, 1);
           config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] = (config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] || []).filter(recipient => recipient.subscriberIndex !== index).map(recipient => ({ ...recipient, subscriberIndex: recipient.subscriberIndex > index ? recipient.subscriberIndex - 1 : recipient.subscriberIndex }));
@@ -1867,6 +1983,11 @@ export async function initHomepageScreenshots() {
       if (event.target.matches("[data-poll-action-status]")) {
         config.localeFixtures[currentLanguage()]["poll-share-actions"] = readPollActions();
         els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
+        scheduleFixtureSave();
+      } else if (event.target.matches("[data-poll-vote]")) {
+        const fixture = JSON.parse(els.fixture.value);
+        fixture.pollVotes = readPollVotes();
+        els.fixture.value = JSON.stringify(fixture, null, 2);
         scheduleFixtureSave();
       } else if (event.target.matches("[data-task-action-state]")) {
         const fixture = JSON.parse(els.fixture.value);
