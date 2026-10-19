@@ -943,7 +943,7 @@ async function applyFixtureToFrame(scene, fixture) {
     };
     const previewStatus = tileStatus(selectedGame);
     const setDisabled = (id, disabled) => { const button = doc.getElementById(id); if (button) button.disabled = disabled; };
-    setDisabled("btnPlay", !selectedGame || !selectedRules?.play?.ok);
+    setDisabled("btnPlay", !selectedGame || (statusOf(selectedGame) !== "ready" && !selectedRules?.play?.ok));
     setDisabled("btnSettings", !selectedGame);
     setDisabled("btnEdit", !selectedGame || !selectedRules?.edit?.ok);
     setDisabled("btnPreview", !selectedGame);
