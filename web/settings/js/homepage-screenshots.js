@@ -27,7 +27,6 @@ let initUiSelectFn = null;
 let resourceChoiceSelectUIs = [];
 let taskFriendSelectUIs = [];
 let previewResizeObserver = null;
-let screenshotFabricPromise = null;
 const FIELD_LABELS = {
   game: "Nazwa gry", games: "Gry na liście", question: "Pytanie", answers: "Odpowiedzi i wyniki",
   points: "Punkty odpowiedzi", bases: "Bazy na liście", base: "Nazwa bazy", folders: "Foldery bazy",
@@ -1138,6 +1137,7 @@ function escapeHtml(value) {
 function viewPath(scene, language) {
   const query = new URLSearchParams({ lang: language });
   if (["host-round", "display-round", "main-display"].includes(scene.id)) query.set("preview", "1");
+  if (scene.id === "logo-draw") query.set("screenshotPreview", "1");
   const path = scenePagePath(scene);
   return `${path}${path.includes("?") ? "&" : "?"}${query}`;
 }
@@ -1201,7 +1201,7 @@ async function loadScenePreview(scene = currentScene(), force = false) {
     await applyFixtureToFrame(scene, langFixture(scene, language));
     return;
   }
-  const dynamicPreview = ["host-round", "display-round", "main-display"].includes(scene.id);
+  const dynamicPreview = ["host-round", "display-round", "main-display", "logo-draw"].includes(scene.id);
   if (dynamicPreview) {
     deviceReadyPromise = new Promise(resolve => { deviceReadyResolve = resolve; });
   }
@@ -1938,7 +1938,8 @@ async function applyFixtureToFrame(scene, fixture) {
       let renderedFabric = false;
       if (drawing?.fabricData) {
         try {
-          const fabric = await loadScreenshotFabric();
+          const fabric = doc.defaultView?.fabric;
+          if (!fabric?.StaticCanvas) throw new Error("Fabric.js is not ready in the preview frame");
           const width = Number(drawingSource.world?.w || drawing.fabricData.clipPath?.width) || 1040;
           const height = Number(drawingSource.world?.h || drawing.fabricData.clipPath?.height) || 440;
           const background = drawingSource.bg === "WHITE" ? "#fff"
@@ -2042,21 +2043,6 @@ async function getStrings(language, keys) {
   const output = {};
   for (const [name, key] of Object.entries(keys)) output[name] = key.split(".").reduce((value, part) => value?.[part], dictionary) || "";
   return output;
-}
-
-function loadScreenshotFabric() {
-  if (window.fabric?.StaticCanvas) return Promise.resolve(window.fabric);
-  if (screenshotFabricPromise) return screenshotFabricPromise;
-  screenshotFabricPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js";
-    script.onload = () => window.fabric?.StaticCanvas
-      ? resolve(window.fabric)
-      : reject(new Error("Fabric did not initialize"));
-    script.onerror = () => reject(new Error("Could not load Fabric.js"));
-    document.head.append(script);
-  });
-  return screenshotFabricPromise;
 }
 
 async function logoCanvasFromFile(file, width, height, ownerDocument = document) {
