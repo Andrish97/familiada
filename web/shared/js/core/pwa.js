@@ -5,9 +5,9 @@
 
 const LS_KEY = "pwa:install_dismissed";
 
-export function initPwa() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+export function initPwa({ serviceWorkerUrl = "/sw.js", scope = "/", registerServiceWorker = true } = {}) {
+  if (registerServiceWorker && "serviceWorker" in navigator) {
+    navigator.serviceWorker.register(serviceWorkerUrl, { scope }).catch(() => {});
   }
 
   let deferredPrompt = null;
