@@ -1,4 +1,4 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T18121";
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T18200";
 
 const API = "/_admin_api";
 const els = {};
@@ -134,7 +134,11 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.poll = shared.pollName || fixture.poll;
     const pollQuestions = shared.pollQuestions || [{ text: shared.pollQuestion || fixture.question, answers: (shared.pollResults || []).map(answer => ({ text: answer.text, votes: answer.votes })) }];
     fixture.question = pollQuestions[0]?.text || fixture.question;
-    if (scene.id === "poll-vote-mobile") fixture.answers = pollQuestions[0]?.answers.map(answer => answer.text) || fixture.answers;
+    if (scene.id === "poll-vote-mobile") {
+      fixture.answers = pollQuestions[0]?.answers.map(answer => answer.text) || fixture.answers;
+      fixture.pollQuestionNumber = 1;
+      fixture.pollQuestionCount = pollQuestions.length;
+    }
     if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
     if (scene.id === "poll-share") {
       fixture.pollType = "poll_points";
@@ -228,7 +232,11 @@ function langFixture(scene, language = currentLanguage()) {
       }));
       const pollQuestionIndex = Math.min(Number(selection.questionIndex) || 0, Math.max(0, pollQuestions.length - 1));
       fixture.question = pollQuestions[pollQuestionIndex]?.text || "";
-      if (scene.id === "poll-vote-mobile") fixture.answers = pollQuestions[pollQuestionIndex]?.answers.map(answer => answer.text) || [];
+      if (scene.id === "poll-vote-mobile") {
+        fixture.answers = pollQuestions[pollQuestionIndex]?.answers.map(answer => answer.text) || [];
+        fixture.pollQuestionNumber = pollQuestionIndex + 1;
+        fixture.pollQuestionCount = pollQuestions.length;
+      }
       if (scene.id === "poll-results") fixture.pollQuestions = pollQuestions;
     }
   }
@@ -1150,8 +1158,8 @@ function sizeScenePreview(scene) {
     els.frameWrap.style.height = `${Math.round(board.height * boardScale)}px`;
     els.frameWrap.style.setProperty("--phone-left", `${((board.width - deviceWidth) / 2) * boardScale}px`);
     els.frameWrap.style.setProperty("--phone-width", `${deviceWidth * boardScale}px`);
-    els.frameWrap.style.setProperty("--phone-radius", `${(50 * screenScale + bezel) * boardScale}px`);
-    els.frameWrap.style.setProperty("--screen-left", `${(screenLeft - (screenWidth - scene.width * screenScale) / 2 + bezel + border) * boardScale}px`);
+    els.frameWrap.style.setProperty("--phone-radius", `${(42 * screenScale + bezel + border) * boardScale}px`);
+    els.frameWrap.style.setProperty("--screen-left", `${screenLeft * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-top", `${(bezel + border) * boardScale}px`);
     els.frameWrap.style.setProperty("--screen-radius", `${42 * screenScale * boardScale}px`);
     els.frameWrap.style.setProperty("--notch-width", `${screenWidth * 0.323 * boardScale}px`);
@@ -1215,7 +1223,7 @@ async function normalizeScreenshotTopbar(doc, language, icon, iconText, hydrateI
   const topbar = doc.querySelector("header.topbar");
   if (!topbar) return;
 
-  const nav = await import("/shared/js/core/nav-map.js?v=v2026-10-19T18121");
+  const nav = await import("/shared/js/core/nav-map.js?v=v2026-10-19T18200");
   const pageIdByScene = {
     games: "games", "game-editor": "editor", bases: "bases", "base-explorer": "baseExplorer", logos: "logoEditor", "logo-draw": "logoDraw",
     appearance: "gameSettings", sound: "gameSettings", "control-round": "control", "control-finale": "control", friends: "friends", subscribers: "subscribers", tasks: "tasks",
@@ -1242,7 +1250,7 @@ async function normalizeScreenshotTopbar(doc, language, icon, iconText, hydrateI
   if (pageId && backButton) {
     const target = nav.backTarget(pageId, context);
     if (target) {
-      const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18121`);
+      const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18200`);
       const targetName = dictionary.nav?.page?.[target.pageId] || target.pageId;
       const label = String(dictionary.nav?.backTo || "{page}").replace("{page}", targetName);
       backButton.dataset.previewHref = target.href;
@@ -1296,7 +1304,7 @@ async function applyFixtureToFrame(scene, fixture) {
   const doc = frame.contentDocument;
   if (!doc?.body) throw new Error("brak treści widoku");
   await translateFrame(doc, currentLanguage());
-  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T18121");
+  const { icon, iconText, hydrateIcons } = await import("/shared/js/core/icons.js?v=v2026-10-19T18200");
   await normalizeScreenshotTopbar(doc, currentLanguage(), icon, iconText, hydrateIcons, scene);
   const footerCopy = doc.querySelector('[data-i18n="common.footer.left"]');
   if (footerCopy) footerCopy.textContent = footerCopy.textContent.replace(/©\s*(?:\{?year\}?|\d{4})/i, `© ${new Date().getFullYear()}`);
@@ -1308,6 +1316,19 @@ async function applyFixtureToFrame(scene, fixture) {
   doc.body.style.height = `${scene.height}px`;
   doc.body.style.minHeight = `${scene.height}px`;
   doc.body.style.overflow = "hidden";
+  if (scene.id === "poll-vote-mobile") {
+    let safeAreaStyle = doc.getElementById("homepageShotPhoneSafeArea");
+    if (!safeAreaStyle) {
+      safeAreaStyle = doc.createElement("style");
+      safeAreaStyle.id = "homepageShotPhoneSafeArea";
+      doc.head.append(safeAreaStyle);
+    }
+    safeAreaStyle.textContent = `
+      body.pollpub-body { --topbar-h: 103px; padding-top: 103px; }
+      body.pollpub-body .poll-vote-topbar { min-height: 103px; padding: 47px 16px 12px; }
+      body.pollpub-body .footer, body.pollpub-body .footer.wrap { padding-right: 16px; padding-bottom: 34px; padding-left: 16px; }
+    `;
+  }
   doc.body.classList.remove("skel-body");
   doc.documentElement.classList.remove("page-loading");
   doc.querySelectorAll("[data-skel-step]").forEach(node => node.classList.add("skel-step-ready"));
@@ -1371,7 +1392,7 @@ async function applyFixtureToFrame(scene, fixture) {
     const moreBtn = doc.getElementById("btnMore");
     const moreDropdown = doc.getElementById("navMoreDropdown");
     if (more && moreBtn && moreDropdown) {
-      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T18121");
+      const { setTopbarNavPriority } = await import("/shared/js/core/topbar-controller.js?v=v2026-10-19T18200");
 
       const nav = setTopbarNavPriority({ moreEl: more, moreDropdownEl: moreDropdown });
       nav.recalc();
@@ -1399,7 +1420,7 @@ async function applyFixtureToFrame(scene, fixture) {
         export: { ok: !!item },
       };
     };
-    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T18121");
+    const listFilterModule = await import("/shared/js/core/list-filter.js?v=v2026-10-19T18200");
     const selectedRules = selectedGame ? sampleRules(selectedGame) : null;
     const tileStatus = item => {
       if (!item) return "draft";
@@ -1478,7 +1499,7 @@ async function applyFixtureToFrame(scene, fixture) {
     editorPanel?.classList.add("hasQ");
     setInput(doc, "qText", fixture.question);
     const qList = doc.getElementById("qList");
-    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T18121");
+    const { questionProblems } = await import("/shared/js/core/question-form.js?v=v2026-10-19T18200");
     const questions = fixture.gameQuestions || [
       { text: fixture.question, answers: (fixture.answers || []).map((text, i) => ({ text, points: fixture.points?.[i] ?? 0 })) },
     ];
@@ -1645,12 +1666,14 @@ async function applyFixtureToFrame(scene, fixture) {
   } else if (scene.id === "poll-vote-mobile") {
     const noPoll = !fixture.poll;
     setText(doc, "title", noPoll ? (currentLanguage() === "en" ? "No open poll" : currentLanguage() === "uk" ? "Немає відкритого опитування" : "Brak otwartej ankiety") : fixture.poll);
-    setText(doc, "sub", noPoll ? "" : currentLanguage() === "en" ? "One question · one vote" : currentLanguage() === "uk" ? "Одне запитання · один голос" : "Jedno pytanie · jeden głos");
+    setText(doc, "sub", "");
     setText(doc, "qtext", noPoll ? (currentLanguage() === "en" ? "Choose a game opened as a poll." : currentLanguage() === "uk" ? "Виберіть гру, відкриту як опитування." : "Wybierz grę otwartą jako ankietę.") : fixture.question);
     const list = doc.getElementById("alist");
     if (list) list.innerHTML = fixture.answers.map(text => `<button class="btn voteOption">${escapeHtml(text)}</button>`).join("");
     const box = doc.getElementById("qbox"); if (box) box.style.display = noPoll ? "none" : "";
-    setText(doc, "prog", "1 / 1");
+    const questionNumber = Math.max(1, Number(fixture.pollQuestionNumber) || 1);
+    const questionCount = Math.max(questionNumber, Number(fixture.pollQuestionCount) || questionNumber);
+    setText(doc, "prog", `${questionNumber} / ${questionCount}`);
   } else if (scene.id === "appearance" || scene.id === "sound") {
     setText(doc, "gsTitle", fixture.game);
     doc.querySelectorAll(".gs-sidebar-item").forEach(item => item.classList.toggle("active", item.dataset.cat === (scene.id === "appearance" ? "display" : "sound")));
@@ -1715,8 +1738,8 @@ async function applyFixtureToFrame(scene, fixture) {
 async function paintSoundSettings(doc) {
   const [{ default: sounds }, { default: dictionary }, { icon }] = await Promise.all([
     fetch("/shared/data/sounds.json", { cache: "force-cache" }).then(response => response.json()),
-    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T18121`),
-    import("/shared/js/core/icons.js?v=v2026-10-19T18121"),
+    import(`/shared/translation/${currentLanguage()}.js?v=v2026-10-19T18200`),
+    import("/shared/js/core/icons.js?v=v2026-10-19T18200"),
 
   ]);
   const table = doc.getElementById("shotSfxTable");
@@ -1738,7 +1761,7 @@ async function paintSoundSettings(doc) {
 }
 
 async function getStrings(language, keys) {
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18121`);
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18200`);
 
   const output = {};
   for (const [name, key] of Object.entries(keys)) output[name] = key.split(".").reduce((value, part) => value?.[part], dictionary) || "";
@@ -1753,7 +1776,7 @@ async function logoCanvasFromFile(file, width, height) {
 }
 
 async function logoCanvasFromStored(stored, width, height) {
-  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T18121");
+  const { buildLogoPreviewCanvas, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T18200");
   const logo = stored.kind === "GLYPH" ? { type: "GLYPH_30x10", payload: stored.payload }
     : stored.kind === "PIX" ? { type: "PIX_150x70", payload: stored.payload }
       : stored.type ? stored : { type: "GLYPH_30x10", payload: stored.payload || stored };
@@ -1762,8 +1785,8 @@ async function logoCanvasFromStored(stored, width, height) {
 }
 
 async function translateFrame(doc, language) {
-  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18121`);
-  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T18121");
+  const { default: dictionary } = await import(`/shared/translation/${language}.js?v=v2026-10-19T18200`);
+  const { iconText } = await import("/shared/js/core/icons.js?v=v2026-10-19T18200");
 
   const lookup = key => key.split(".").reduce((value, part) => value?.[part], dictionary);
   const replace = (key, node) => {
@@ -1786,7 +1809,7 @@ function setInput(doc, id, value) { const node = doc.getElementById(id); if (nod
 function setText(doc, id, value) { const node = doc.getElementById(id); if (node) node.textContent = value ?? ""; }
 
 async function paintPeople(doc, fixture) {
-  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18121");
+  const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18200");
 
   const received = doc.getElementById("contactsReceived");
   const outgoing = doc.getElementById("contactsOutgoing");
@@ -1840,7 +1863,7 @@ async function paintPeople(doc, fixture) {
 }
 
 async function paintTasks(doc, fixture) {
-  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18121");
+  const { renderRowSections } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18200");
 
   const host = doc.getElementById("tasksHost");
   if (!host) return;
@@ -1906,7 +1929,7 @@ async function paintPoll(doc, scene, fixture) {
   for (const id of ["btnStopPoll", "btnAbort", "btnCopy", "btnOpen", "btnOpenQr"]) { const button = doc.getElementById(id); if (button) button.disabled = false; }
   const subs = doc.getElementById("subsGrid");
   if (subs) {
-    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18121");
+    const { shareSectionEl } = await import("/shared/js/core/share-sections.js?v=v2026-10-19T18200");
     const words = await getStrings(currentLanguage(), {
       title: "polls.share.recipientsTitle", friend: "shareSections.channel.friend", subscriber: "shareSections.channel.subscriber",
       pending: "polls.share.state.waiting", opened: "pollSharePanel.opened", done: "polls.share.state.done", declined: "polls.share.state.declined",
@@ -1929,7 +1952,7 @@ async function paintPoll(doc, scene, fixture) {
     const shareTab = doc.getElementById("tabShare"); if (shareTab) shareTab.classList.remove("active");
     const resultTab = doc.getElementById("tabResults"); if (resultTab) resultTab.classList.add("active");
     setText(doc, "resultsMeta", currentLanguage() === "en" ? "18 votes · live results" : currentLanguage() === "uk" ? "18 голосів · результати наживо" : "18 głosów · wyniki na żywo");
-    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T18121");
+    const { createPollResults } = await import("/shared/js/core/poll-results.js?v=v2026-10-19T18200");
 
     const questions = (fixture.pollQuestions || []).map((question, questionIndex) => ({
       id: `shot-poll-${questionIndex + 1}`, ord: questionIndex + 1, text: question.text,
@@ -1941,11 +1964,11 @@ async function paintPoll(doc, scene, fixture) {
 
 async function paintControl(scene, fixture) {
   const doc = els.frame.contentDocument;
-  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T18121");
+  const translation = await import("/shared/translation/translation.js?v=v2026-10-19T18200");
   const restoreLanguage = translation.getUiLang();
   await translation.setUiLang(currentLanguage(), { persist: false, updateUrl: false, apply: false });
-  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T18121");
-  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T18121");
+  const { createUI } = await import("/control/js/ui.js?v=v2026-10-19T18200");
+  const { makeDefaultState } = await import("/shared/js/gameplay/gameStateShape.js?v=v2026-10-19T18200");
 
   const finale = scene.id === "control-finale";
   const state = makeDefaultState("homepage-visual-fixture");
@@ -2683,7 +2706,7 @@ function composeIPhoneFrame(screenCanvas, outputWidth = 1440, outputHeight = 900
   const deviceX = (outputWidth - deviceWidth) / 2;
   const deviceY = 0;
   const radius = 42 * screenScale;
-  const cornerRadius = 50 * screenScale + bezel;
+  const cornerRadius = radius + bezel + border;
   const output = document.createElement("canvas");
   output.width = outputWidth;
   output.height = outputHeight;
@@ -2868,7 +2891,7 @@ export async function initHomepageScreenshots() {
     byId("homepageShotQrUrl").value = config.qrUrl || "";
     if (initializeSharedFixtures) await saveConfig();
     renderSceneList();
-    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T18121");
+    const { initUiSelect } = await import("/shared/js/core/ui-select.js?v=v2026-10-19T18200");
     initUiSelectFn = initUiSelect;
 
     const languageSelect = byId("homepageShotLanguageSelect");
