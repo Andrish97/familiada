@@ -1911,8 +1911,7 @@ async function logoCanvasFromFile(file, width, height, ownerDocument = document)
 }
 
 async function logoCanvasFromStored(stored, width, height, ownerDocument = document) {
-  const { logoToPreview, renderPreview } = await import("/logo/js/render.js?v=v2026-10-19T20273");
-  const { loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20273");
+  const { logoToBits150, loadFont5x7 } = await import("/shared/js/core/logo-preview.js?v=v2026-10-19T20273");
   const source = stored?.data && typeof stored.data === "object" ? stored.data : stored;
   const kind = String(source?.kind || source?.type || "").toUpperCase();
   const payload = source?.payload || source;
@@ -1922,10 +1921,26 @@ async function logoCanvasFromStored(stored, width, height, ownerDocument = docum
   const canvas = ownerDocument.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  // Pixel logos already contain their complete 150×70 bitmap; don't make
-  // their rendering depend on loading the text-logo font.
+  // Use the site's canonical bit decoder, then draw directly into this
+  // document's canvas. Pixel logos do not need the text font at all.
   const glyphs = logo.type === "GLYPH_30x10" ? await loadFont5x7() : null;
-  renderPreview(logoToPreview(logo), canvas, glyphs);
+  const bits = logoToBits150(logo, glyphs);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D niedostępny");
+  const scale = Math.min(width / 150, height / 70);
+  const offsetX = (width - 150 * scale) / 2;
+  const offsetY = (height - 70 * scale) / 2;
+  const radius = Math.max(0.55, scale * 0.4);
+  ctx.fillStyle = "#1f1f23";
+  ctx.fillRect(0, 0, width, height);
+  for (let y = 0; y < 70; y++) {
+    for (let x = 0; x < 150; x++) {
+      ctx.beginPath();
+      ctx.arc(offsetX + (x + 0.5) * scale, offsetY + (y + 0.5) * scale, radius, 0, Math.PI * 2);
+      ctx.fillStyle = bits[y * 150 + x] ? "#d7ff3d" : "#111319";
+      ctx.fill();
+    }
+  }
   return canvas;
 }
 
