@@ -24,12 +24,8 @@ function canvasOf(width, height) {
 function loadWordmarkFont() {
   if (!fontPromise) {
     fontPromise = (async () => {
-<<<<<<< HEAD
-      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-19T12172")', { weight: "200 900" });
-=======
       const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-19T12172")', { weight: "200 900" });
 
->>>>>>> origin/main
       await font.load();
       document.fonts.add(font);
       await document.fonts.load(`900 ${FONT_SIZE}px HostUnbounded`);

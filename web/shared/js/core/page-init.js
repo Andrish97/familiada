@@ -28,19 +28,6 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-<<<<<<< HEAD
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-19T12172";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-19T12172";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-19T12172";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-19T12172";
-
-async function loadDeps() {
-  const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-19T12172"),
-    import("./topbar-controller.js?v=v2026-10-19T12172"),
-    import("./modal-sheet.js?v=v2026-10-19T12172"),
-    import("./device-guard.js?v=v2026-10-19T12172"),
-=======
 import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-19T12172";
 import { isGuestUser } from "./guest-mode.js?v=v2026-10-19T12172";
 import { showPageGuard } from "./page-overlay.js?v=v2026-10-19T12172";
@@ -53,7 +40,6 @@ async function loadDeps() {
     import("./modal-sheet.js?v=v2026-10-19T12172"),
     import("./device-guard.js?v=v2026-10-19T12172"),
 
->>>>>>> origin/main
   ]);
   return {
     getUser: auth.getUser,
@@ -222,18 +208,11 @@ export async function initPage(id, opts = {}) {
   // don't miss a one-time notice while the page continues initializing.
   if (!new Set(["login", "privacy", "mailCenter", "connectDevice"]).has(id)) {
     if (isGuestUser(user)) {
-<<<<<<< HEAD
-      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-19T12172");
-      await maybeShowGuestInfoModal(user);
-    } else if (user) {
-      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-19T12172");
-=======
       const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-19T12172");
       await maybeShowGuestInfoModal(user);
     } else if (user) {
       const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-19T12172");
 
->>>>>>> origin/main
       await initRatingSystem(user);
     }
   }

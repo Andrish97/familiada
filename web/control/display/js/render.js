@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
-=======
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
 
->>>>>>> origin/main
 // control/display/js/render.js
 //
 // Tłumaczy wiersz public.game_state (a dokładniej: różnicę między
@@ -29,16 +25,10 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T1217
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-<<<<<<< HEAD
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-19T12172";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-19T12172";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12172";
-=======
 import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-19T12172";
 import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-19T12172";
 import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T12172";
 
->>>>>>> origin/main
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -47,12 +37,8 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-<<<<<<< HEAD
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-19T12172";
-=======
 } from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-19T12172";
 
->>>>>>> origin/main
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 

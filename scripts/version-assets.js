@@ -129,7 +129,7 @@ fs.writeFileSync(path.join(ROOT, 'version.txt'), version, 'utf8');
 const swPath = path.join(ROOT, 'sw.js');
 if (fs.existsSync(swPath)) {
   let swContent = fs.readFileSync(swPath, 'utf8');
-  swContent = swContent.replace(/\/\/ Version: .*/, '').trim();
+  swContent = swContent.replace(/^\/\/ Version: .*$/gm, '').trim();
   swContent = `// Version: ${version}\n${swContent}`;
   fs.writeFileSync(swPath, swContent, 'utf8');
   console.log(`[Versioner] Updated sw.js`);

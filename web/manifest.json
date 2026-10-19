@@ -11,22 +11,14 @@
   "orientation": "any",
   "icons": [
     {
-<<<<<<< HEAD
-      "src": "/assets/img/icon.png?v=v2026-10-19T12172",
-=======
       "src": "/assets/img/icon.png?v=v2026-10-19T12172",
 
->>>>>>> origin/main
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-<<<<<<< HEAD
-      "src": "/assets/img/icon.png?v=v2026-10-19T12172",
-=======
       "src": "/assets/img/icon.png?v=v2026-10-19T12172",
 
->>>>>>> origin/main
       "sizes": "512x512",
       "type": "image/png"
     }

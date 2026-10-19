@@ -1,11 +1,7 @@
 // base-explorerjs/context-menu.js
 
-<<<<<<< HEAD
-import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-19T12172";
-=======
 import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-19T12172";
 
->>>>>>> origin/main
 import {
   createFolderHere,
   createQuestionHere,
@@ -17,20 +13,12 @@ import {
   deleteTags,
   duplicateSelected,
   canDeleteHere,
-<<<<<<< HEAD
-} from "./actions.js?v=v2026-10-19T12172";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12172";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
-import { renderAll } from "./render.js?v=v2026-10-19T12172";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T12172";
-=======
 } from "./actions.js?v=v2026-10-19T12172";
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T12172";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T12172";
 import { renderAll } from "./render.js?v=v2026-10-19T12172";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T12172";
 
->>>>>>> origin/main
 
 
 const IS_MAC = navigator.platform.toLowerCase().includes("mac");
