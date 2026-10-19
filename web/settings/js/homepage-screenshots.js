@@ -1898,10 +1898,10 @@ async function applyFixtureToFrame(scene, fixture) {
       };
       visit(stored);
       const source = candidates.find(value => value.kind || value.type) || stored;
-      const payload = candidates.find(value => typeof (value.bits_b64 || value.bits_base64 || value.bitsBase64) === "string")
+      const payload = candidates.find(value => Boolean(String(value.bits_b64 || value.bits_base64 || value.bitsBase64 || "").trim()))
         || candidates.find(value => Array.isArray(value.layers?.[0]?.rows)) || source?.payload || source;
       const rawBits = payload?.bits_b64 || payload?.bits_base64 || payload?.bitsBase64;
-      const kind = String(source?.kind || source?.type || (rawBits ? "PIX" : "GLYPH")).toUpperCase();
+      const kind = rawBits ? "PIX" : String(source?.kind || source?.type || "GLYPH").toUpperCase();
       const logo = kind.includes("PIX") ? { type: "PIX_150x70", payload }
         : kind.includes("GLYPH") ? { type: "GLYPH_30x10", payload }
           : { type: "PIX_150x70", payload };
