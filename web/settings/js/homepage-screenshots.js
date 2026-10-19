@@ -152,8 +152,10 @@ function langFixture(scene, language = currentLanguage()) {
     const questions = Array.isArray(game.questions) ? game.questions : [];
     fixture.game = resource.name;
     if (scene.id === "game-editor") {
-      const mappedQuestions = questions.map(question => ({
-      text: question.text || "", answers: (question.answers || []).map(answer => ({ text: answer.text || "", points: Number(answer.fixed_points ?? answer.points) || 0 })),
+      const mappedQuestions = questions.map((question, sourceIndex) => ({
+        sourceIndex,
+        text: question.text || "",
+        answers: (question.answers || []).map(answer => ({ text: answer.text || "", points: Number(answer.fixed_points ?? answer.points) || 0 })),
       }));
       const selectedIndex = Math.min(Number(selection.questionIndex) || 0, Math.max(0, mappedQuestions.length - 1));
       fixture.gameQuestions = mappedQuestions.length
@@ -1154,7 +1156,8 @@ async function applyFixtureToFrame(scene, fixture) {
         const meta = language === "en" ? `${answers.length}/6 answers · ${sum}/100 pts`
           : language === "uk" ? `${answers.length}/6 відповідей · ${sum}/100 балів`
             : `${answers.length}/6 odpowiedzi · ${sum}/100 pkt`;
-        return `<div class="qcard ${status} ${i === selectedQuestionIndex ? "active" : ""}" data-id="shot-question-${i + 1}"><div class="qord">${language === "en" ? "Question" : language === "uk" ? "Запитання" : "Pytanie"} ${i + 1}</div><div class="qprev">${escapeHtml(question.text)}</div><div class="qmeta">${meta}</div><button type="button" class="x" aria-label="${language === "en" ? "Delete" : language === "uk" ? "Видалити" : "Usuń"}">${icon("trash")}</button></div>`;
+        const questionNumber = Number.isInteger(question.sourceIndex) ? question.sourceIndex + 1 : i + 1;
+        return `<div class="qcard ${status} ${i === selectedQuestionIndex ? "active" : ""}" data-id="shot-question-${questionNumber}"><div class="qord">${language === "en" ? "Question" : language === "uk" ? "Запитання" : "Pytanie"} ${questionNumber}</div><div class="qprev">${escapeHtml(question.text)}</div><div class="qmeta">${meta}</div><button type="button" class="x" aria-label="${language === "en" ? "Delete" : language === "uk" ? "Видалити" : "Usuń"}">${icon("trash")}</button></div>`;
       }).join("");
     }
     const answers = doc.getElementById("aList");
