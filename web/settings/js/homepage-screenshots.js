@@ -635,18 +635,21 @@ function renderResourceList(language = currentLanguage()) {
   const shared = config.sharedFixtures[language];
   const profile = sharedGroup(sharedRoot, "Konto przykładowe");
   const profileRow = document.createElement("div"); profileRow.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
-  sharedField(profileRow, "Nazwa użytkownika", shared.username || "", { required: true, autocomplete: "username", pattern: "\\S+", dataset: { sharedUsername: "true" } });
+  const username = sharedField(profileRow, "", shared.username || "", { required: true, autocomplete: "username", pattern: "\\S+", dataset: { sharedUsername: "true" } });
+  username.placeholder = "Nazwa użytkownika"; username.setAttribute("aria-label", username.placeholder);
   profile.append(profileRow);
   const teams = sharedGroup(sharedRoot, "Nazwy drużyn");
   for (let index = 0; index < 2; index += 1) {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
-    sharedField(row, `Drużyna ${index + 1}`, shared.teams?.[index] || "", { dataset: { sharedTeam: index } });
+    const team = sharedField(row, "", shared.teams?.[index] || "", { dataset: { sharedTeam: index } });
+    team.placeholder = `Drużyna ${index + 1}`; team.setAttribute("aria-label", team.placeholder);
     teams.append(row);
   }
   const subscribers = sharedGroup(sharedRoot, "Aktywni subskrybenci");
   (shared.subscribers || []).forEach((email, index) => {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
-    sharedField(row, `E-mail ${index + 1}`, email, { type: "email", required: true, autocomplete: "email", dataset: { sharedSubscriber: index } });
+    const address = sharedField(row, "", email, { type: "email", required: true, autocomplete: "email", dataset: { sharedSubscriber: index } });
+    address.placeholder = "E-mail subskrybenta"; address.setAttribute("aria-label", `${address.placeholder} ${index + 1}`);
     const remove = sharedButton(row, "×", "remove-subscriber", index); remove.title = "Usuń subskrybenta"; remove.setAttribute("aria-label", remove.title); remove.classList.add("homepage-shot-row-remove"); subscribers.append(row);
   });
   sharedButton(subscribers, "Dodaj subskrybenta", "add-subscriber");
@@ -2220,7 +2223,8 @@ function renderCategoryActions(fixture) {
     }
     action.value = recipient.responded ? "yes" : "no";
     actionField.append(actionLabel, action);
-    const remove = sharedButton(document.createElement("span"), "Usuń z ankiety", "remove-poll-recipient", index);
+    const remove = sharedButton(document.createElement("span"), "×", "remove-poll-recipient", index);
+    remove.title = "Usuń z ankiety"; remove.setAttribute("aria-label", remove.title); remove.classList.add("homepage-shot-row-remove");
     row.append(identity, actionField, remove); rows.append(row);
   });
   group.append(rows);
