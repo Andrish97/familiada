@@ -2177,7 +2177,8 @@ function renderEditorFields(fixture) {
   }
   byId("homepageShotExtraCard").hidden = !els.fields.children.length
     && byId("homepageShotCategoryActions").hidden
-    && byId("homepageShotQrToolbar").hidden;
+    && byId("homepageShotQrToolbar").hidden
+    && byId("homepageShotResourceChoices").hidden;
 }
 
 function renderCategoryActions(fixture) {
