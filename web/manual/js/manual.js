@@ -2,14 +2,14 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T12182";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12182";
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12182";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T12182";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12182";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12182";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T12244";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T12244";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T12244";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-19T12244";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-19T12244";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T12244";
 
-import { decorateManualControls } from "./controls.js?v=v2026-10-19T12182";
+import { decorateManualControls } from "./controls.js?v=v2026-10-19T12244";
 
 
 async function initManualI18n() {
