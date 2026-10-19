@@ -5504,8 +5504,8 @@ function buildSessionRunDetails(r) {
         if (metrics.reason === "page_state") {
           const visibility = metrics.visibility === "hidden" ? "karta w tle" : metrics.visibility === "visible" ? "karta widoczna" : "widoczność nieznana";
           const focus = metrics.focused === true ? "okno aktywne" : metrics.focused === false ? "okno bez fokusu" : "fokus nieznany";
-          const reasons = { initial:"stan przy rozpoczęciu", visibilitychange:"zmiana widoczności", focus:"aktywacja okna", blur:"utrata fokusu" };
-          return { title: "Stan Wyświetlacza", detail: `${reasons[metrics.reason] || "zmiana stanu"} · ${visibility} · ${focus}${metrics.was_discarded ? " · karta została wcześniej odtworzona po odrzuceniu" : ""}` };
+          const reasons = { initial:"stan na początku rozgrywki", visibilitychange:"zmiana widoczności" };
+          return { title: `Widoczność: ${devices}`, detail: `${reasons[metrics.visibility_reason || metrics.reason] || "stan karty"} · ${visibility} · ${focus}${metrics.was_discarded ? " · karta została wcześniej odtworzona po odrzuceniu" : ""}` };
         }
         if (metrics.reason === "network_state") {
           return { title: "Sieć Wyświetlacza", detail: metrics.online ? "przeglądarka zgłosiła połączenie z siecią" : "przeglądarka zgłosiła brak połączenia z siecią" };

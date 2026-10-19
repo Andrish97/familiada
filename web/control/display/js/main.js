@@ -96,7 +96,6 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
 }
 
 function createDisplayEventLog(gameId, key, lease) {
-  let initialPageStateReported = false;
   let stopped = false;
   let sessionActive = false;
   let pending = Promise.resolve();
@@ -123,21 +122,10 @@ function createDisplayEventLog(gameId, key, lease) {
       console.warn("[display2 diagnostics] kolejka zapisu przerwana:", error?.message || error);
     });
   };
-  const reportInitialPageState = () => {
-    if (!sessionActive || initialPageStateReported) return;
-    initialPageStateReported = true;
-    report({
-      event_type: "page_state", reason: "initial",
-      visibility: document.visibilityState || "unknown",
-      focused: !!document.hasFocus?.(), was_discarded: !!document.wasDiscarded,
-      online: navigator.onLine !== false,
-    });
-  };
   return {
     report,
     setSessionActive(active) {
       sessionActive = !!active;
-      if (sessionActive) reportInitialPageState();
     },
     stop() {
       stopped = true;
@@ -625,6 +613,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       onRow: async (row) => {
         lease.setProgress({ receivedRev: Number(row.rev) || 0 });
         const gameIsActive = !!row.detail?.locks?.gameStarted && !row.detail?.locks?.gameEnded;
+        lease.setTelemetryActive(gameIsActive);
         if (gameIsActive && !displayWasStarted) {
           displayWasStarted = true;
           displayEventLog.setSessionActive(true);

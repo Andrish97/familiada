@@ -37,6 +37,9 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   let inFlight = false;
   let timer = null;
   let stopped = false;
+  let telemetryActive = false;
+  let pageStateFlush = null;
+  const pendingPageStates = [];
   const progress = { received_rev: 0, rendered_rev: 0, started_sound_cue_seq: 0 };
 
   const meta = () => ({
@@ -46,17 +49,64 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   });
 
   function publish(data = {}) {
+    const wasPrimary = state === "primary";
     mode = data.mode || mode;
     const previous = `${state}:${epoch}`;
     state = data.state || state;
     epoch = state === "primary" ? Number(data.epoch) : null;
     if (`${state}:${epoch}` !== previous) onState?.({ mode, state, epoch, queuePosition: data.queue_position ?? null, waitingCount: data.waiting_count ?? 0 });
+    if (!wasPrimary && state === "primary" && telemetryActive) queueInitialPageState();
   }
 
   async function call(name, params) {
     const { data, error } = await sb().rpc(name, params).abortSignal(AbortSignal.timeout(6500));
     if (error) throw error;
     return data;
+  }
+
+  function queuePageState(reason) {
+    if (!telemetryActive || stopped) return;
+    pendingPageStates.push({
+      event_type: "page_state",
+      event_id: makeConnectionId(),
+      reason,
+      visibility: document.visibilityState || "unknown",
+      focused: !!document.hasFocus?.(),
+      was_discarded: !!document.wasDiscarded,
+      online: navigator.onLine !== false,
+    });
+    void flushPageStates();
+  }
+
+  function queueInitialPageState() {
+    if (pendingPageStates.some(event => event.reason === "initial")) return;
+    queuePageState("initial");
+  }
+
+  async function flushPageStates() {
+    if (pageStateFlush || stopped || !telemetryActive || mode !== "lease" || state !== "primary" || !Number.isFinite(epoch)) return;
+    const connection = connectionId;
+    const currentEpoch = epoch;
+    pageStateFlush = (async () => {
+      while (pendingPageStates.length && !stopped && telemetryActive) {
+        const event = pendingPageStates[0];
+        try {
+          const accepted = await call("control2_device_transport_event", {
+            p_game_id: gameId,
+            p_device_type: deviceType,
+            p_key: key,
+            p_event: event,
+            p_connection_id: connection,
+            p_epoch: currentEpoch,
+          });
+          if (accepted !== true) break;
+          if (pendingPageStates[0]?.event_id === event.event_id) pendingPageStates.shift();
+        } catch {
+          break; // Retry the queued event on the next heartbeat or visibility change.
+        }
+      }
+    })().finally(() => { pageStateFlush = null; });
+    await pageStateFlush;
   }
 
   async function heartbeat(register = false) {
@@ -82,6 +132,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
       }
       publish(data || {});
       registerNext = false;
+      void flushPageStates();
       return data;
     } catch (error) {
       if (register || registerNext || mode !== "lease") registerNext = true;
@@ -94,6 +145,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   }
 
   function onVisibility() {
+    queuePageState("visibilitychange");
     void heartbeat();
   }
   function onResume() {
@@ -139,6 +191,13 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
 
   return {
     start, stop,
+    setTelemetryActive(active) {
+      const next = !!active;
+      if (next === telemetryActive) return;
+      telemetryActive = next;
+      if (next) queueInitialPageState();
+      else pendingPageStates.length = 0;
+    },
     get mode() { return mode; },
     get state() { return state; },
     get epoch() { return epoch; },

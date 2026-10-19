@@ -67,6 +67,12 @@ jobs:
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
             < docs/sql/test-active-game-settings-guard-381.sql
 
+      - name: Verify Control 2 page visibility events (rollback)
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < docs/sql/test-control2-page-visibility-393.sql
+
       - name: Fetch schema.sql and migration log
         run: |
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"

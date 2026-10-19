@@ -1053,6 +1053,27 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("title", progressRe("Runda 1"), { timeout: 22000 });
 
+    const acceptedControlVisibility = [];
+    page.on("response", async (response) => {
+      if (!response.url().includes("/rpc/control2_control_visibility_event") || !response.ok()) return;
+      const payload = response.request().postDataJSON()?.p_event;
+      const result = await response.json().catch(() => null);
+      if (result === true && payload?.reason === "visibilitychange") {
+        acceptedControlVisibility.push(payload.visibility);
+      }
+    });
+    for (const visibility of ["hidden", "visible"]) {
+      await page.evaluate((nextVisibility) => {
+        Object.defineProperty(document, "visibilityState", {
+          configurable: true,
+          get: () => window.__e2eVisibility,
+        });
+        window.__e2eVisibility = nextVisibility;
+        document.dispatchEvent(new Event("visibilitychange"));
+      }, visibility);
+      await expect.poll(() => acceptedControlVisibility.includes(visibility), { timeout: 10000 }).toBe(true);
+    }
+
     // Po utracie i odzyskaniu połączenia Control przy źródle Display
     // ponownie wymaga gestu na Wyświetlaczu. Akcje gry pozostają zablokowane
     // do potwierdzenia, a odpowiedź Display odblokowuje je bez reloadu.
@@ -1072,6 +1093,35 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await displayPage.locator("#btnAudioUnlock").click();
     await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
     await expect(startRound).toBeEnabled({ timeout: 10000 });
+
+    // Każde urządzenie zapisuje snapshot i kolejne przejścia widoczności po
+    // rozpoczęciu rozgrywki. Emulujemy zmianę właściwości i wysyłamy natywne
+    // zdarzenie, a potem czekamy na potwierdzony zapis RPC.
+    const acceptedPageStates = [];
+    const devices = [["display", displayPage], ["host", hostPage], ["buzzer", buzzerPage]];
+    for (const [deviceType, devicePage] of devices) {
+      devicePage.on("response", async (response) => {
+        if (!response.url().includes("/rpc/control2_device_transport_event") || !response.ok()) return;
+        const payload = response.request().postDataJSON()?.p_event;
+        const result = await response.json().catch(() => null);
+        if (result === true && payload?.event_type === "page_state") {
+          acceptedPageStates.push({ deviceType, visibility: payload.visibility, reason: payload.reason });
+        }
+      });
+      for (const visibility of ["hidden", "visible"]) {
+        await devicePage.evaluate((nextVisibility) => {
+          Object.defineProperty(document, "visibilityState", {
+            configurable: true,
+            get: () => window.__e2eVisibility,
+          });
+          window.__e2eVisibility = nextVisibility;
+          document.dispatchEvent(new Event("visibilitychange"));
+        }, visibility);
+        await expect.poll(() => acceptedPageStates.some(event =>
+          event.deviceType === deviceType && event.visibility === visibility && event.reason === "visibilitychange"
+        ), { timeout: 10000 }).toBe(true);
+      }
+    }
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
