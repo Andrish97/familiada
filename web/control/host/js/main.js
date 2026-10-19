@@ -7,17 +7,17 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-19T13464";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-19T13464";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T13464";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-19T13464";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T13464";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-19T13464";
-import { createHostRenderer } from "./render.js?v=v2026-10-19T13464";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-19T13464";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-19T13464";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T13464";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-19T13464";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-19T13500";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-19T13500";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T13500";
+import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-19T13500";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T13500";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-19T13500";
+import { createHostRenderer } from "./render.js?v=v2026-10-19T13500";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-19T13500";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-19T13500";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-19T13500";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-19T13500";
 
 
 function parseParams() {
