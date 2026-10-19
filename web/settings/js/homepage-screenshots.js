@@ -2001,11 +2001,15 @@ function readEditorIntoConfig() {
     fixture.friendGroups = readFriendGroupActions(fixture);
     delete fixture.friendGroups.friends;
     for (const key of ["outgoing", "incoming", "declined"]) {
-      const allowed = key === "outgoing" ? ["pending", "declined"] : key === "incoming" ? ["pending"] : ["declined"];
-      if (fixture.friendGroups[key].some(person => !person.username || /\s/.test(person.username) || !isValidEmail(person.email) || !allowed.includes(person.status))) {
+      const allowed = key === "outgoing" ? ["pending", "declined"] : null;
+      if (fixture.friendGroups[key].some(person => !person.username || /\s/.test(person.username) || !isValidEmail(person.email) || (allowed && !allowed.includes(person.status)))) {
         throw new Error("Sprawdź nazwy użytkowników, adresy e-mail i statusy na listach znajomych.");
       }
     }
+  }
+  if (scene.id === "subscribers") {
+    fixture.outgoing = readSubscriberActions();
+    if (fixture.outgoing.some(person => !isValidEmail(person.email))) throw new Error("Wpisz poprawny adres e-mail każdego zaproszenia.");
   }
   if (scene.id === "poll-results") fixture.pollVotes = readPollVotes();
   if (scene.id === "tasks") {
@@ -2063,6 +2067,13 @@ function readFriendGroupActions(fixture = {}) {
   return friendGroups;
 }
 
+function readSubscriberActions() {
+  return [...byId("homepageShotCategoryActions").querySelectorAll("[data-subscriber-invitation-row]")].map(row => ({
+    email: normalizeEmail(row.querySelector("[data-subscriber-email]").value),
+    status: row.querySelector("[data-subscriber-status]:checked")?.value || "pending",
+  }));
+}
+
 function renderEditorFields(fixture) {
   renderResourceChoices(currentScene());
   els.fields.replaceChildren();
@@ -2072,7 +2083,7 @@ function renderEditorFields(fixture) {
   const scene = currentScene();
   const sharedKeys = new Set(sharedKeysForScene(scene.id));
   for (const [key, value] of Object.entries(fixture)) {
-    if (key === "logoFile" || key === "tasks" || (key === "pollVotes" && scene.id === "poll-results") || (key === "friendGroups" && scene.id === "friends") || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
+    if (key === "logoFile" || key === "tasks" || (key === "pollVotes" && scene.id === "poll-results") || (key === "friendGroups" && scene.id === "friends") || (key === "outgoing" && scene.id === "subscribers") || sharedKeys.has(key) || (key === "game" && resourceChoiceSpec(scene)?.type === "game")) continue;
     const wrapper = document.createElement("div"); wrapper.className = "homepage-shot-field";
     const label = document.createElement("label"); label.textContent = FIELD_LABELS[key] || key; label.htmlFor = `homepage-shot-field-${key}`;
     const input = document.createElement(Array.isArray(value) && value.some(item => item && typeof item === "object") || (value && typeof value === "object") ? "textarea" : typeof value === "boolean" ? "input" : Array.isArray(value) || typeof value === "string" ? (String(value).length > 70 || Array.isArray(value) ? "textarea" : "input") : "input");
@@ -2094,7 +2105,7 @@ function renderCategoryActions(fixture) {
   const root = byId("homepageShotCategoryActions");
   root.replaceChildren();
   const sceneId = currentScene().id;
-  const visible = ["friends", "poll-share", "poll-results", "tasks"].includes(sceneId);
+  const visible = ["friends", "subscribers", "poll-share", "poll-results", "tasks"].includes(sceneId);
   root.hidden = !visible;
   if (!visible) return;
   if (sceneId === "friends") {
@@ -2151,6 +2162,41 @@ function renderCategoryActions(fixture) {
       sharedButton(group, labels.add, "add-friend-action");
     }
     root.querySelectorAll("[data-friend-username], [data-friend-email]").forEach(updateSharedFieldValidity);
+    return;
+  }
+  if (sceneId === "subscribers") {
+    const language = currentLanguage();
+    const labels = language === "en"
+      ? { active: "Active subscribers · shared list", invitations: "Invitations", hint: "Active addresses come from the shared list. Edit invitation addresses and their status here.", email: "Subscriber email", pending: "Pending", declined: "Declined", add: "Add invitation", remove: "Remove invitation", empty: "No active subscribers in the shared list." }
+      : language === "uk"
+        ? { active: "Активні підписники · спільний список", invitations: "Запрошення", hint: "Активні адреси беруться зі спільного списку. Тут можна змінювати адреси запрошень та їхній статус.", email: "Електронна пошта підписника", pending: "Очікує", declined: "Відхилено", add: "Додати запрошення", remove: "Видалити запрошення", empty: "У спільному списку немає активних підписників." }
+        : { active: "Aktywni subskrybenci · lista wspólna", invitations: "Zaproszenia", hint: "Aktywne adresy pochodzą z listy wspólnej. Tutaj edytujesz adresy zaproszeń i ich status.", email: "E-mail subskrybenta", pending: "Oczekuje", declined: "Odrzucono", add: "Dodaj zaproszenie", remove: "Usuń zaproszenie", empty: "Brak aktywnych subskrybentów na liście wspólnej." };
+    const active = sharedGroup(root, labels.active);
+    const hint = document.createElement("p"); hint.className = "muted homepage-shot-tab-note"; hint.textContent = labels.hint; active.append(hint);
+    const addresses = sharedFixture().subscribers || [];
+    if (!addresses.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = labels.empty; active.append(empty); }
+    else for (const email of addresses) { const item = document.createElement("div"); item.className = "homepage-shot-subscriber-shared-email"; item.textContent = email; active.append(item); }
+
+    const invitations = sharedGroup(root, labels.invitations);
+    const rows = document.createElement("div"); rows.className = "homepage-shot-shared-rows";
+    (fixture.outgoing || []).forEach((person, index) => {
+      const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-action-row homepage-shot-subscriber-action-row"; row.dataset.subscriberInvitationRow = String(index);
+      const email = sharedField(row, "", person.email || "", { type: "email", required: true, autocomplete: "off", dataset: { subscriberEmail: "true" } });
+      email.placeholder = labels.email; email.setAttribute("aria-label", labels.email);
+      const statuses = document.createElement("div"); statuses.className = "homepage-shot-friend-status-radios"; statuses.setAttribute("role", "radiogroup"); statuses.setAttribute("aria-label", language === "en" ? "Invitation status" : language === "uk" ? "Статус запрошення" : "Status zaproszenia");
+      for (const [value, text] of [["pending", labels.pending], ["declined", labels.declined]]) {
+        const option = document.createElement("label"); option.className = "homepage-shot-friend-status-option"; option.title = text; option.setAttribute("aria-label", text);
+        const radio = document.createElement("input"); radio.type = "radio"; radio.name = `subscriber-status-${index}`; radio.value = value; radio.dataset.subscriberStatus = "true"; radio.checked = (person.status === "declined" ? "declined" : "pending") === value;
+        const glyph = document.createElement("span"); glyph.className = "homepage-shot-friend-status-icon"; glyph.setAttribute("aria-hidden", "true"); glyph.textContent = value === "pending" ? "◷" : "×";
+        option.append(radio, glyph); statuses.append(option);
+      }
+      row.append(statuses);
+      const remove = sharedButton(row, "×", "remove-subscriber-invitation", index); remove.title = labels.remove; remove.setAttribute("aria-label", labels.remove); remove.classList.add("homepage-shot-row-remove");
+      rows.append(row);
+    });
+    invitations.append(rows);
+    sharedButton(invitations, labels.add, "add-subscriber-invitation");
+    root.querySelectorAll("[data-subscriber-email]").forEach(updateSharedFieldValidity);
     return;
   }
   if (sceneId === "tasks") {
@@ -2574,12 +2620,12 @@ export async function initHomepageScreenshots() {
         const source = Array.isArray(friendGroups[key]) ? friendGroups[key] : groupDefaults[key];
         normalizedFriendGroups[key] = source.map((person, index) => {
           const fallback = groupDefaults[key][index % groupDefaults[key].length];
-          const status = allowed.includes(person.status) ? person.status : fallback.status;
-          return {
+          const normalizedPerson = {
             username: String(person.username || person.name || fallback.username).trim().replace(/\s+/g, "_"),
             email: String(person.email || fallback.email).trim(),
-            status,
           };
+          if (key === "outgoing") normalizedPerson.status = allowed.includes(person.status) ? person.status : fallback.status;
+          return normalizedPerson;
         });
       }
       normalizedFriendGroups.activeFriendEmails = Array.isArray(friendGroups.activeFriendEmails)
@@ -2808,6 +2854,11 @@ export async function initHomepageScreenshots() {
         fixture.friendGroups = readFriendGroupActions(fixture);
         els.fixture.value = JSON.stringify(fixture, null, 2);
         scheduleFixtureSave();
+      } else if (event.target.matches("[data-subscriber-status]")) {
+        const fixture = JSON.parse(els.fixture.value);
+        fixture.outgoing = readSubscriberActions();
+        els.fixture.value = JSON.stringify(fixture, null, 2);
+        scheduleFixtureSave();
       } else if (event.target.matches("[data-poll-action-status]")) {
         config.localeFixtures[currentLanguage()]["poll-share-actions"] = readPollActions();
         els.fixture.value = JSON.stringify(langFixture(currentScene()), null, 2);
@@ -2826,6 +2877,14 @@ export async function initHomepageScreenshots() {
       }
     });
     byId("homepageShotCategoryActions").addEventListener("input", event => {
+      if (event.target.matches("[data-subscriber-email]")) {
+        const fixture = JSON.parse(els.fixture.value);
+        fixture.outgoing = readSubscriberActions();
+        els.fixture.value = JSON.stringify(fixture, null, 2);
+        scheduleFixtureSave();
+        updateSharedFieldValidity(event.target);
+        return;
+      }
       if (!event.target.matches("[data-friend-username], [data-friend-email]")) return;
       const fixture = JSON.parse(els.fixture.value);
       fixture.friendGroups = readFriendGroupActions(fixture);
@@ -2836,13 +2895,23 @@ export async function initHomepageScreenshots() {
     byId("homepageShotCategoryActions").addEventListener("click", event => {
       const button = event.target.closest("[data-shared-action]");
       if (!button) return;
+      if (button.dataset.sharedAction === "add-subscriber-invitation" || button.dataset.sharedAction === "remove-subscriber-invitation") {
+        const fixture = JSON.parse(els.fixture.value);
+        fixture.outgoing = readSubscriberActions();
+        if (button.dataset.sharedAction === "remove-subscriber-invitation") fixture.outgoing.splice(Number(button.dataset.index), 1);
+        else fixture.outgoing.push({ email: "", status: "pending" });
+        els.fixture.value = JSON.stringify(fixture, null, 2);
+        renderEditorFields(fixture);
+        scheduleFixtureSave();
+        return;
+      }
       if (button.dataset.sharedAction === "add-friend-action" || button.dataset.sharedAction === "remove-friend-action") {
         const fixture = JSON.parse(els.fixture.value);
         fixture.friendGroups = readFriendGroupActions(fixture);
         const section = button.closest("[data-friend-list]");
         const key = section.dataset.friendList;
         if (button.dataset.sharedAction === "remove-friend-action") fixture.friendGroups[key].splice(Number(button.dataset.index), 1);
-        else fixture.friendGroups[key].push({ username: "", email: "", status: key === "outgoing" ? "pending" : key === "incoming" ? "pending" : "declined" });
+        else fixture.friendGroups[key].push(key === "outgoing" ? { username: "", email: "", status: "pending" } : { username: "", email: "" });
         els.fixture.value = JSON.stringify(fixture, null, 2);
         renderEditorFields(fixture);
         scheduleFixtureSave();
