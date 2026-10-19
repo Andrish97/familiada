@@ -1882,36 +1882,20 @@ async function applyFixtureToFrame(scene, fixture) {
     const stored = fixture.logoData || await fetch(fixture.logoFile || "/shared/data/logo_familiada.json", { cache: "force-cache" }).then(response => response.json());
     const logoName = String(fixture.logo || stored?.name || doc.getElementById("logoName")?.value || "");
     setInput(doc, "logoName", logoName);
-    const candidates = [];
-    const visit = (value, depth = 0) => {
-      if (!value || typeof value !== "object" || depth > 5 || candidates.includes(value)) return;
-      candidates.push(value);
-      for (const key of ["data", "logo", "payload", "resource", "source"]) visit(value[key], depth + 1);
-    };
-    visit(stored);
-    // draw.js.open() expects the logo payload, whose `source` property holds
-    // Fabric's scene. Do not pass that inner source object by itself: doing so
-    // makes open() look for `source.source` and silently produces a blank
-    // black canvas. Imported .famlogo files wrap the editor payload in
-    // { kind, name, payload }, while saved resources may already be unwrapped.
-    const payload = candidates.find(value => value.source?.mode === "DRAW" && (value.source.fabricData || value.source.bits_b64))
-      || (() => {
-        const source = candidates.find(value => value.mode === "DRAW" && (value.fabricData || value.bits_b64));
-        if (!source) return stored?.payload || stored;
-        const bits = candidates.find(value => typeof value.bits_b64 === "string")?.bits_b64;
-        return { source, ...(bits ? { bits_b64: bits } : {}) };
-      })();
     // The document can reach readyState=complete before the module graph
     // (draw.js + its dependencies) has finished evaluating. Wait for the
     // actual editor bridge instead of racing it and leaving the blank canvas.
     const renderScene = await waitForLogoDrawRenderer(doc.defaultView, 12000);
-    await renderScene(payload);
+    // Pass the stored/exported JSON intact. The real editor unwraps .famlogo
+    // envelopes itself, so the screenshot path cannot accidentally select an
+    // inner `source` object or discard Fabric objects/settings.
+    await renderScene(stored);
     setInput(doc, "logoName", logoName);
     // draw.js creates the toolbar SVGs during initialization. Hydrate after
     // that initialization too, then give Fabric a paint frame before the
     // parent marks this iframe ready for preview/capture.
     await hydrateIcons(doc);
-    await waitForLogoDrawPaint(doc, 5000);
+    await waitForLogoDrawPaint(doc, 5000, stored);
   }
   hydrateIcons(doc);
   doc.body.dataset.fixtureReady = "true";
@@ -1930,7 +1914,13 @@ function waitForLogoDrawRenderer(view, timeout) {
   });
 }
 
-function waitForLogoDrawPaint(doc, timeout) {
+function waitForLogoDrawPaint(doc, timeout, storedLogo) {
+  let source = storedLogo;
+  for (let depth = 0; depth < 5 && source && typeof source === "object"; depth += 1) {
+    if (source.source?.fabricData) break;
+    source = source.data && typeof source.data === "object" ? source.data : source.payload;
+  }
+  const expectedObjects = Array.isArray(source?.source?.fabricData?.objects) ? source.source.fabricData.objects.length : 0;
   return new Promise((resolve, reject) => {
     const started = Date.now();
     const frame = () => {
@@ -1938,9 +1928,16 @@ function waitForLogoDrawPaint(doc, timeout) {
       const fabricCanvas = doc.defaultView?.__drawFabric;
       const buttons = [...doc.querySelectorAll("#toolsDraw .toolGrid button")];
       const toolbarReady = buttons.length > 0 && buttons.every(button => button.querySelector("svg"));
-      const sceneReady = fabricCanvas && canvas?.width > 1 && canvas?.height > 1;
+      const renderedObjects = fabricCanvas?.getObjects?.().length || 0;
+      const sceneReady = fabricCanvas && canvas?.width > 1 && canvas?.height > 1 && renderedObjects >= expectedObjects;
       if (toolbarReady && sceneReady) return requestAnimationFrame(() => resolve());
-      if (Date.now() - started >= timeout) return reject(new Error("plansza lub pasek narzędzi nie zdążyły się wyrenderować"));
+      if (Date.now() - started >= timeout) {
+        if (expectedObjects && renderedObjects < expectedObjects) {
+          return reject(new Error(`logo zawiera ${expectedObjects} elementów, edytor wczytał ${renderedObjects}`));
+        }
+        if (!toolbarReady) return reject(new Error("edytor nie wyrenderował ikon narzędzi"));
+        return reject(new Error("plansza rysunku nie zdążyła się wyrenderować"));
+      }
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
