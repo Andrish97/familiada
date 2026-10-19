@@ -27,6 +27,7 @@ let initUiSelectFn = null;
 let resourceChoiceSelectUIs = [];
 let taskFriendSelectUIs = [];
 let previewResizeObserver = null;
+let screenshotFabricPromise = null;
 const FIELD_LABELS = {
   game: "Nazwa gry", games: "Gry na liście", question: "Pytanie", answers: "Odpowiedzi i wyniki",
   points: "Punkty odpowiedzi", bases: "Bazy na liście", base: "Nazwa bazy", folders: "Foldery bazy",
@@ -1894,10 +1895,12 @@ async function applyFixtureToFrame(scene, fixture) {
       const visit = (value, depth = 0) => {
         if (!value || typeof value !== "object" || depth > 5 || candidates.includes(value)) return;
         candidates.push(value);
-        for (const key of ["data", "logo", "payload", "resource"]) visit(value[key], depth + 1);
+        for (const key of ["data", "logo", "payload", "resource", "source"]) visit(value[key], depth + 1);
       };
       visit(stored);
       const source = candidates.find(value => value.kind || value.type) || stored;
+      const drawing = candidates.find(value => value.fabricData) || null;
+      const drawingSource = drawing ? (drawing.source || candidates.find(value => value.fabricData && (value.bg || value.world || value.toolSettings)) || {}) : {};
       const payload = candidates.find(value => Boolean(String(value.bits_b64 || value.bits_base64 || value.bitsBase64 || "").trim()))
         || candidates.find(value => Array.isArray(value.layers?.[0]?.rows)) || source?.payload || source;
       const rawBits = payload?.bits_b64 || payload?.bits_base64 || payload?.bitsBase64;
@@ -1932,12 +1935,45 @@ async function applyFixtureToFrame(scene, fixture) {
       const context = canvas.getContext("2d");
       context.fillStyle = "#000";
       context.fillRect(0, 0, canvas.width, canvas.height);
-      context.fillStyle = "#fff";
-      for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
-        if (!bits[y * 150 + x]) continue;
-        const rasterX = Math.floor(x / 5) * 7 + (x % 5);
-        const rasterY = Math.floor(y / 7) * 9 + (y % 7);
-        context.fillRect(rasterX * 5, rasterY * 5, 5, 5);
+      let renderedFabric = false;
+      if (drawing?.fabricData) {
+        try {
+          const fabric = await loadScreenshotFabric();
+          const width = Number(drawingSource.world?.w || drawing.fabricData.clipPath?.width) || 1040;
+          const height = Number(drawingSource.world?.h || drawing.fabricData.clipPath?.height) || 440;
+          const background = drawingSource.bg === "WHITE" ? "#fff"
+            : drawingSource.bg === "BLACK" ? "#000"
+              : drawing.fabricData.background || "#000";
+          const vectorCanvas = new fabric.StaticCanvas(canvas, {
+            width: 1040, height: 440, backgroundColor: background,
+            renderOnAddRemove: false, enableRetinaScaling: false,
+          });
+          const scale = Math.min(1040 / width, 440 / height);
+          await new Promise((resolve, reject) => {
+            try {
+              vectorCanvas.loadFromJSON(drawing.fabricData, () => {
+                vectorCanvas.backgroundColor = background;
+                vectorCanvas.setViewportTransform([scale, 0, 0, scale, (1040 - width * scale) / 2, (440 - height * scale) / 2]);
+                vectorCanvas.renderAll();
+                resolve();
+              });
+            }
+            catch (error) { reject(error); }
+          });
+          renderedFabric = vectorCanvas.getObjects().length > 0;
+          if (!renderedFabric) vectorCanvas.dispose();
+        } catch (error) {
+          console.warn("[homepage screenshots] Fabric logo preview could not be rendered:", error);
+        }
+      }
+      if (!renderedFabric) {
+        context.fillStyle = "#fff";
+        for (let y = 0; y < 70; y++) for (let x = 0; x < 150; x++) {
+          if (!bits[y * 150 + x]) continue;
+          const rasterX = Math.floor(x / 5) * 7 + (x % 5);
+          const rasterY = Math.floor(y / 7) * 9 + (y % 7);
+          context.fillRect(rasterX * 5, rasterY * 5, 5, 5);
+        }
       }
 
       const tools = {
@@ -1957,11 +1993,15 @@ async function applyFixtureToFrame(scene, fixture) {
       }
       const settings = doc.getElementById("toolCtxSettings");
       if (settings) {
+        const toolSettings = drawingSource.toolSettings?.BRUSH || {};
+        const strokeWidth = Number(toolSettings.stroke) || 6;
+        const foreground = String(toolSettings.fg || "WHITE").toUpperCase();
         const stroke = lookup("logoEditor.draw.ui.strokeLabel");
         const style = lookup("logoEditor.draw.ui.styleLabel");
         const color = lookup("logoEditor.draw.ui.colorLabel");
         const solid = lookup("logoEditor.draw.ui.lineStyles.solid");
-        settings.innerHTML = `<div class="ctxGroup"><span class="ctxLabel">${escapeHtml(stroke)}</span><input class="ctxInput" type="number" value="6" min="5" max="100" aria-label="${escapeHtml(stroke)}"></div><div class="ctxGroup"><span class="ctxLabel">${escapeHtml(style)}</span><button class="btn sm ui-select-btn" type="button" aria-label="${escapeHtml(style)}">${escapeHtml(solid)}</button></div><div class="ctxGroup"><span class="ctxLabel">${escapeHtml(color)}</span><button class="ctxColorBtn white" type="button" aria-label="${escapeHtml(color)}"></button></div>`;
+        const styleName = lookup(`logoEditor.draw.ui.lineStyles.${toolSettings.lineStyle || "solid"}`) || solid;
+        settings.innerHTML = `<div class="ctxGroup"><span class="ctxLabel">${escapeHtml(stroke)}</span><input class="ctxInput" type="number" value="${escapeHtml(strokeWidth)}" min="5" max="100" aria-label="${escapeHtml(stroke)}"></div><div class="ctxGroup"><span class="ctxLabel">${escapeHtml(style)}</span><button class="btn sm ui-select-btn" type="button" aria-label="${escapeHtml(style)}">${escapeHtml(styleName)}</button></div><div class="ctxGroup"><span class="ctxLabel">${escapeHtml(color)}</span><button class="ctxColorBtn ${foreground === "BLACK" ? "black" : "white"}" type="button" aria-label="${escapeHtml(color)}"></button></div>`;
       }
     }
   }
@@ -2002,6 +2042,21 @@ async function getStrings(language, keys) {
   const output = {};
   for (const [name, key] of Object.entries(keys)) output[name] = key.split(".").reduce((value, part) => value?.[part], dictionary) || "";
   return output;
+}
+
+function loadScreenshotFabric() {
+  if (window.fabric?.StaticCanvas) return Promise.resolve(window.fabric);
+  if (screenshotFabricPromise) return screenshotFabricPromise;
+  screenshotFabricPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js";
+    script.onload = () => window.fabric?.StaticCanvas
+      ? resolve(window.fabric)
+      : reject(new Error("Fabric did not initialize"));
+    script.onerror = () => reject(new Error("Could not load Fabric.js"));
+    document.head.append(script);
+  });
+  return screenshotFabricPromise;
 }
 
 async function logoCanvasFromFile(file, width, height, ownerDocument = document) {
