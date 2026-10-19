@@ -74,6 +74,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
       value: String(opt.value ?? ""),
       label: String(opt.label ?? ""),
       icon: opt.icon || "",
+      dirty: !!opt.dirty,
     }));
     menu.innerHTML = "";
     currentOptions.forEach((opt) => {
@@ -82,7 +83,20 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
       item.className = "ui-select-item";
       item.dataset.value = opt.value;
       if (opt.icon) item.innerHTML = iconText(opt.icon, opt.label);
-      else item.textContent = opt.label || placeholder;
+      else {
+        const text = document.createElement("span");
+        text.className = "ui-select-item-label";
+        text.textContent = opt.label || placeholder;
+        item.appendChild(text);
+      }
+      if (opt.dirty) {
+        item.classList.add("has-unsaved-changes");
+        const marker = document.createElement("span");
+        marker.className = "ui-select-dirty-dot";
+        marker.textContent = "â€¢";
+        marker.setAttribute("aria-label", "Niezapisane zmiany");
+        item.appendChild(marker);
+      }
       item.setAttribute("role", "option");
       if (opt.label) item.title = opt.label;
       item.setAttribute("aria-selected", "false");

@@ -122,6 +122,9 @@ body.settings-body > main.wrap{
 .homepage-shot-choice--scene{flex:1 1 260px;max-width:480px}
 .homepage-shot-choice--language{flex:0 1 190px}
 .homepage-shot-select{width:100%}
+#homepageShotSceneSelect .ui-select-item.has-unsaved-changes{display:flex;align-items:center;justify-content:space-between}
+#homepageShotSceneSelect .ui-select-item-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
+#homepageShotSceneSelect .ui-select-dirty-dot{flex:none;margin-left:12px;color:var(--gold,#d7ff3d);font-size:18px;line-height:1}
 .homepage-shot-qr{width:min(520px,100%);min-height:40px}
 .tabs-card.homepage-shot-tabs-card{--tab-height:44px;--tab-extra:1px;--radius:16px;--surface:rgba(255,255,255,.04);--border-color:rgba(255,255,255,.12);--page-bg:var(--bg,#050914);margin-top:8px;flex:none;overflow:visible}
 .homepage-shot-tabs-card .tabs-strip{background:var(--page-bg)}

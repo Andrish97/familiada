@@ -6,7 +6,7 @@ let config = null;
 let initialized = false;
 let dirty = false;
 let sharedDirty = false;
-let categoryDirty = false;
+const dirtySceneIds = new Set();
 let sharedEditorLanguage = "pl";
 let lastFrameKey = "";
 let deviceReadyPromise = null;
@@ -792,31 +792,38 @@ function localizeFixture(source, language) {
   return fixture;
 }
 function setStatus(message) { els.status.textContent = message; }
-function markDirty(scope) {
+function markDirty(scope, sceneIds = null) {
   if (scope === "shared" || scope === "all") sharedDirty = true;
-  if (scope === "category" || scope === "all") categoryDirty = true;
-  dirty = sharedDirty || categoryDirty;
+  if (Array.isArray(sceneIds)) sceneIds.forEach(id => dirtySceneIds.add(id));
+  else if (scope === "all") config?.scenes?.forEach(scene => dirtySceneIds.add(scene.id));
+  else if (scope === "category") dirtySceneIds.add(currentScene().id);
+  dirty = sharedDirty || dirtySceneIds.size > 0;
   updateDirtyIndicators();
 }
 function clearDirty() {
   sharedDirty = false;
-  categoryDirty = false;
+  dirtySceneIds.clear();
   dirty = false;
   updateDirtyIndicators();
 }
 function updateDirtyIndicators() {
-  const states = [
-    ["homepageShotSharedTabDirty", sharedDirty],
-    ["homepageShotCategoryTabDirty", categoryDirty],
-  ];
-  for (const [tabId, hasChanges] of states) {
-    const tabIndicator = byId(tabId);
-    if (tabIndicator) tabIndicator.hidden = !hasChanges;
-  }
+  const sharedIndicator = byId("homepageShotSharedTabDirty");
+  if (sharedIndicator) sharedIndicator.hidden = !sharedDirty;
+  const categoryIndicator = byId("homepageShotCategoryTabDirty");
+  if (categoryIndicator) categoryIndicator.hidden = !dirtySceneIds.has(currentScene().id);
   const buttonIndicator = byId("homepageShotSharedSaveDirty");
   if (buttonIndicator) buttonIndicator.hidden = !dirty;
   const button = byId("homepageShotSaveAll");
   if (button) button.dataset.unsaved = String(dirty);
+  if (sceneSelectUI && config?.scenes) {
+    const selected = els.scene?.value || currentScene().id;
+    sceneSelectUI.setOptions(config.scenes.map(scene => ({
+      value: scene.id,
+      label: scene.title,
+      dirty: dirtySceneIds.has(scene.id),
+    })));
+    sceneSelectUI.setValue(selected, { silent: true });
+  }
 }
 function escapeHtml(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
@@ -1912,7 +1919,7 @@ async function importResourceFile(file, type) {
     selection.resourceIds ||= [];
     selection.resourceIds.push(resource.id);
   }
-  markDirty("all");
+  markDirty("shared", scenes);
   renderResourceList(language);
   renderEditorFields(langFixture(currentScene()));
   setStatus(`${resource.name} dodano do listy zasobów. Zapisz wszystkie dane, aby zachować zmianę.`);
@@ -2218,13 +2225,16 @@ export async function initHomepageScreenshots() {
       if (!await flushAllEditors()) return;
       const language = sharedEditorLanguage;
       const id = button.dataset.removeResource;
-      config.resourceData[language] = (config.resourceData[language] || []).filter(item => item.id !== id);
       const views = config.viewResources?.[language] || {};
+      const affectedScenes = Object.entries(views)
+        .filter(([, selection]) => selection.resourceId === id || selection.resourceIds?.includes(id))
+        .map(([sceneId]) => sceneId);
+      config.resourceData[language] = (config.resourceData[language] || []).filter(item => item.id !== id);
       for (const selection of Object.values(views)) {
         if (selection.resourceId === id) selection.resourceId = "";
         if (Array.isArray(selection.resourceIds)) selection.resourceIds = selection.resourceIds.filter(value => value !== id);
       }
-      markDirty("all");
+      markDirty("shared", affectedScenes);
       renderResourceList(language);
       updateEditor();
       setStatus("Zasób usunięty z listy. Zapisz wszystkie dane, aby zachować zmianę.");
