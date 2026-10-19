@@ -113,7 +113,7 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.points = firstQuestion.answers.map(answer => answer.points);
   }
   if (["control-round", "host-round", "display-round"].includes(scene.id)) fixture.teams = shared.teams || fixture.teams;
-  if (scene.id === "subscribers") fixture.people = (shared.subscribers || []).map(name => ({ name, state: "active" }));
+  if (scene.id === "subscribers") fixture.people = (shared.subscribers || []).map(email => ({ email, name: email, state: "active" }));
   if (["poll-share", "poll-vote-mobile", "poll-results"].includes(scene.id)) {
     fixture.poll = shared.pollName || fixture.poll;
     const pollQuestions = shared.pollQuestions || [{ text: shared.pollQuestion || fixture.question, answers: (shared.pollResults || []).map(answer => ({ text: answer.text, votes: answer.votes })) }];
@@ -129,7 +129,10 @@ function langFixture(scene, language = currentLanguage()) {
       fixture.subscriberStates = recipients.map(recipient => !!recipient.responded);
     }
   }
-  if (scene.id === "friends" && !fixture.friendGroups) fixture.friendGroups = defaultFriendGroups(language);
+  if (scene.id === "friends") {
+    fixture.friendGroups ||= defaultFriendGroups(language);
+    fixture.friendGroups.friends = structuredClone(shared.friends || []);
+  }
   if (scene.id === "subscribers") {
     fixture.outgoing ||= defaultSubscriberInvitations(language);
   }
@@ -234,7 +237,7 @@ function langFixture(scene, language = currentLanguage()) {
     fixture.logoData = logo?.data || null;
   }
   if (scene.id === "subscribers") {
-    fixture.people = (shared.subscribers || []).map(name => ({ name, state: "active" }));
+    fixture.people = (shared.subscribers || []).map(email => ({ email, name: email, state: "active" }));
   }
   return fixture;
 }
@@ -269,7 +272,10 @@ function normalizeSharedFixture(shared, defaults) {
   result.username = String(shared.username || defaults.username || "").trim();
   result.gameQuestions = Array.isArray(shared.gameQuestions) ? shared.gameQuestions : defaults.gameQuestions;
   result.teams = (Array.isArray(shared.teams) ? shared.teams : defaults.teams).slice(0, 2);
-  result.subscribers = Array.isArray(shared.subscribers) ? shared.subscribers : defaults.subscribers;
+  result.subscribers = (Array.isArray(shared.subscribers) ? shared.subscribers : defaults.subscribers).map((value, index) => normalizeEmail(value, `subskrybent${index + 1}`));
+  result.friends = (Array.isArray(shared.friends) ? shared.friends : defaults.friends).map((person, index) => typeof person === "string"
+    ? { username: person.trim(), email: normalizeEmail(person, `znajomy${index + 1}`) }
+    : { username: String(person?.username || person?.name || "").trim(), email: normalizeEmail(person?.email, `znajomy${index + 1}`) });
   result.pollQuestions = Array.isArray(shared.pollQuestions) ? shared.pollQuestions : (() => {
     const oldAnswers = shared.pollAnswers || defaults.pollQuestions[0].answers.map(answer => answer.text);
     const oldResults = shared.pollResults || [];
@@ -287,6 +293,17 @@ function normalizeSharedFixture(shared, defaults) {
   return result;
 }
 
+function normalizeEmail(value, fallbackName = "uzytkownik") {
+  const raw = String(value ?? "").trim();
+  if (raw.includes("@")) return raw.toLowerCase();
+  const slug = raw.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
+  return `${slug || fallbackName}@example.com`;
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
 function defaultSharedFixture(language) {
   const editor = config.scenes.find(scene => scene.id === "game-editor");
   const editorFixture = localizeFixture(editor?.fixture || {}, language);
@@ -296,7 +313,16 @@ function defaultSharedFixture(language) {
   const pollFixture = localizeFixture(pollShare?.fixture || {}, language);
   const voteFixture = localizeFixture(pollVote?.fixture || {}, language);
   const resultsFixture = localizeFixture(pollResults?.fixture || {}, language);
-  const generalSubscribers = localizeFixture({ subscribers: ["Anna Nowak", "Piotr Zieliński", "Kasia Maj"] }, language).subscribers;
+  const generalSubscribers = language === "en"
+    ? ["anna.miller@example.com", "peter.wilson@example.com", "kate.brown@example.com"]
+    : language === "uk"
+      ? ["anna.melnyk@example.com", "petro.shevchenko@example.com", "kateryna.bondar@example.com"]
+      : ["anna.nowak@example.com", "piotr.zielinski@example.com", "kasia.maj@example.com"];
+  const friends = language === "en"
+    ? [{ username: "Alex Morgan", email: "alex.morgan@example.com" }, { username: "Jamie Lee", email: "jamie.lee@example.com" }]
+    : language === "uk"
+      ? [{ username: "Олександра Новак", email: "oleksandra.novak@example.com" }, { username: "Ян Ковальський", email: "yan.kovalskyi@example.com" }]
+      : [{ username: "Aleksandra Nowak", email: "aleksandra.nowak@example.com" }, { username: "Jan Kowalski", email: "jan.kowalski@example.com" }];
   const oldResults = resultsFixture.answers || [];
   return {
     username: language === "en" ? "John Smith" : language === "uk" ? "Іван Петренко" : "Jan Kowalski",
@@ -308,6 +334,7 @@ function defaultSharedFixture(language) {
     ],
     teams: localizeFixture({ teams: ["Króliczki", "Zajączki"] }, language).teams,
     subscribers: generalSubscribers,
+    friends,
     pollName: pollFixture.poll,
     pollQuestions: [
       { text: voteFixture.question || pollFixture.question, answers: (voteFixture.answers || []).map((text, index) => ({ text, votes: oldResults[index]?.votes ?? 0 })) },
@@ -351,7 +378,7 @@ function ensureResourceData(language = currentLanguage()) {
   const legacySubscribers = resources.find(item => item.type === "subscribers")?.data?.people;
   if (Array.isArray(legacyTeams)) shared.teams = structuredClone(legacyTeams.slice(0, 2));
   shared.teams = (Array.isArray(shared.teams) ? shared.teams : []).slice(0, 2);
-  if (Array.isArray(legacySubscribers)) shared.subscribers = structuredClone(legacySubscribers);
+  if (Array.isArray(legacySubscribers)) shared.subscribers = legacySubscribers.map((person, index) => normalizeEmail(typeof person === "string" ? person : person?.email || person?.name, `subskrybent${index + 1}`));
   for (let index = resources.length - 1; index >= 0; index -= 1) {
     if (["teams", "subscribers"].includes(resources[index].type)) resources.splice(index, 1);
   }
@@ -602,12 +629,21 @@ function renderResourceList(language = currentLanguage()) {
     teams.append(row);
   }
   const subscribers = sharedGroup(sharedRoot, "Aktywni subskrybenci");
-  (shared.subscribers || []).forEach((name, index) => {
+  (shared.subscribers || []).forEach((email, index) => {
     const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--plain";
-    sharedField(row, `Osoba ${index + 1}`, name, { dataset: { sharedSubscriber: index } });
+    sharedField(row, `E-mail ${index + 1}`, email, { type: "email", required: true, autocomplete: "email", dataset: { sharedSubscriber: index } });
     sharedButton(row, "Usuń", "remove-subscriber", index); subscribers.append(row);
   });
   sharedButton(subscribers, "Dodaj subskrybenta", "add-subscriber");
+
+  const friends = sharedGroup(sharedRoot, "Znajomi");
+  (shared.friends || []).forEach((person, index) => {
+    const row = document.createElement("div"); row.className = "homepage-shot-shared-row homepage-shot-shared-row--contact";
+    sharedField(row, `Nazwa użytkownika ${index + 1}`, person.username, { required: true, autocomplete: "name", dataset: { sharedFriendName: index } });
+    sharedField(row, `E-mail ${index + 1}`, person.email, { type: "email", required: true, autocomplete: "email", dataset: { sharedFriendEmail: index } });
+    sharedButton(row, "Usuń", "remove-friend", index); friends.append(row);
+  });
+  sharedButton(friends, "Dodaj znajomego", "add-friend");
 }
 
 function readResourceList(language = currentLanguage()) {
@@ -618,6 +654,12 @@ function readResourceList(language = currentLanguage()) {
   if (username) shared.username = username.value.trim();
   for (const input of root.querySelectorAll("[data-shared-team]")) shared.teams[Number(input.dataset.sharedTeam)] = input.value.trim();
   for (const input of root.querySelectorAll("[data-shared-subscriber]")) shared.subscribers[Number(input.dataset.sharedSubscriber)] = input.value.trim();
+  for (const input of root.querySelectorAll("[data-shared-friend-name]")) shared.friends[Number(input.dataset.sharedFriendName)].username = input.value.trim();
+  for (const input of root.querySelectorAll("[data-shared-friend-email]")) shared.friends[Number(input.dataset.sharedFriendEmail)].email = input.value.trim();
+  if ([...shared.subscribers, ...shared.friends.map(person => person.email)].some(email => !isValidEmail(email))) {
+    throw new Error("Wpisz poprawny adres e-mail każdego aktywnego subskrybenta i znajomego.");
+  }
+  if (shared.friends.some(person => !person.username)) throw new Error("Wpisz nazwę użytkownika każdego znajomego.");
 }
 
 function resourceChoiceSpec(scene) {
@@ -730,6 +772,8 @@ function sharedField(parent, labelText, value, attrs = {}) {
   if (attrs.type) input.type = attrs.type;
   if (attrs.min !== undefined) input.min = attrs.min;
   if (attrs.max !== undefined) input.max = attrs.max;
+  if (attrs.required) input.required = true;
+  if (attrs.autocomplete) input.autocomplete = attrs.autocomplete;
   input.value = value ?? "";
   if (attrs.dataset) Object.assign(input.dataset, attrs.dataset);
   wrapper.append(input); parent.append(wrapper);
@@ -1638,7 +1682,7 @@ async function paintPeople(doc, fixture) {
       ? { friends: "Друзі", outgoing: "Очікують та відхилені", incoming: "Пропозиції", declined: "Відхилені мною", active: "Підписники", pending: "Очікують" }
       : { friends: "Znajomi", outgoing: "Oczekujące i odrzucone", incoming: "Propozycje", declined: "Odrzucone przeze mnie", active: "Subskrybenci", pending: "Oczekujące" };
   const contactRow = (person, index, kind) => ({
-    id: `shot-contact-${kind}-${index}`, label: person.name || person.email, compact: true,
+    id: `shot-contact-${kind}-${index}`, label: person.username || person.name || person.email, compact: true,
     note: friends ? (person.email || "") : "",
     tags: kind === "friends" || kind === "active" ? [] : [{ text: kind === "declined" || person.status === "declined" ? (language === "en" ? "Declined" : language === "uk" ? "Відхилено" : "Odrzucone") : (language === "en" ? "Pending" : language === "uk" ? "Очікує" : "Oczekuje"), cls: "tag--muted" }],
     actions: kind === "incoming"
@@ -1811,12 +1855,13 @@ async function exportConfigJson() {
   for (const language of ["pl", "en", "uk"]) ensureResourceData(language);
   const bundle = {
     format: "familiada-screenshots-shared-data",
-    version: 2,
+    version: 3,
     languages: Object.fromEntries(["pl", "en", "uk"].map(language => [language, {
       shared: {
         username: config.sharedFixtures[language].username || "",
         teams: structuredClone(config.sharedFixtures[language].teams || []).slice(0, 2),
         subscribers: structuredClone(config.sharedFixtures[language].subscribers || []),
+        friends: structuredClone(config.sharedFixtures[language].friends || []),
         qrUrl: config.qrUrl || "",
       },
       resources: {
@@ -1827,7 +1872,7 @@ async function exportConfigJson() {
       views: {
         fixtures: structuredClone(config.localeFixtures?.[language] || {}),
         selections: structuredClone(config.viewResources?.[language] || {}),
-        sectionDefaults: Object.fromEntries(Object.entries(config.sharedFixtures[language] || {}).filter(([key]) => !["username", "teams", "subscribers"].includes(key))),
+        sectionDefaults: Object.fromEntries(Object.entries(config.sharedFixtures[language] || {}).filter(([key]) => !["username", "teams", "subscribers", "friends"].includes(key))),
       },
     }])),
   };
@@ -1857,13 +1902,14 @@ async function importConfigJson(file) {
     if (type === "base") return item.type === "base" && !!item.data.base && Array.isArray(item.data.categories) && Array.isArray(item.data.questions);
     return item.type === "logo" && logoResourceMode(item) === "DRAW" && !!item.data.payload;
   };
-  const valid = imported?.format === "familiada-screenshots-shared-data" && imported.version === 2 && imported.languages
+  const valid = imported?.format === "familiada-screenshots-shared-data" && [2, 3].includes(imported.version) && imported.languages
     && languages.every(language => {
       const entry = imported.languages[language];
       return entry?.shared && Array.isArray(entry.shared.teams) && entry.shared.teams.length === 2
         && entry.shared.teams.every(name => typeof name === "string")
         && (entry.shared.username == null || typeof entry.shared.username === "string")
-        && Array.isArray(entry.shared.subscribers) && entry.shared.subscribers.every(name => typeof name === "string")
+        && Array.isArray(entry.shared.subscribers) && entry.shared.subscribers.every(email => typeof email === "string" && (imported.version === 2 || isValidEmail(email)))
+        && (imported.version === 2 || Array.isArray(entry.shared.friends) && entry.shared.friends.every(person => person && typeof person.username === "string" && person.username.trim() && isValidEmail(person.email)))
         && (entry.shared.qrUrl == null || typeof entry.shared.qrUrl === "string")
         && entry.resources && Array.isArray(entry.resources.games) && entry.resources.games.every(item => validResource(item, "game"))
         && Array.isArray(entry.resources.bases) && entry.resources.bases.every(item => validResource(item, "base"))
@@ -1889,7 +1935,8 @@ async function importConfigJson(file) {
       ...structuredClone(entry.views.sectionDefaults),
       username: String(entry.shared.username || defaultSharedFixture(language).username || ""),
       teams: structuredClone(entry.shared.teams),
-      subscribers: structuredClone(entry.shared.subscribers),
+      subscribers: entry.shared.subscribers.map((email, index) => normalizeEmail(email, `subskrybent${index + 1}`)),
+      friends: structuredClone(entry.shared.friends || defaultSharedFixture(language).friends),
     };
     config.resourceData[language] = [
       ...structuredClone(entry.resources.games),
@@ -2389,6 +2436,7 @@ export async function initHomepageScreenshots() {
       const friendsScene = config.scenes.find(scene => scene.id === "friends");
       const friendsFixture = config.localeFixtures[language].friends || localizeFixture(friendsScene?.fixture || {}, language);
       if (!friendsFixture.friendGroups) { friendsFixture.friendGroups = defaultFriendGroups(language); initializeSharedFixtures = true; }
+      if (Array.isArray(friendsFixture.friendGroups.friends)) { delete friendsFixture.friendGroups.friends; initializeSharedFixtures = true; }
       config.localeFixtures[language].friends = friendsFixture;
       const subscribersScene = config.scenes.find(scene => scene.id === "subscribers");
       const subscribersFixture = config.localeFixtures[language].subscribers || localizeFixture(subscribersScene?.fixture || {}, language);
@@ -2586,7 +2634,9 @@ export async function initHomepageScreenshots() {
           const answerIndex = Number(button.closest(".homepage-shot-shared-row").dataset.pollAnswerIndex);
           shared.pollQuestions[index]?.answers.splice(answerIndex, 1); break;
         }
-        case "add-subscriber": shared.subscribers.push("Nowy subskrybent"); break;
+        case "add-subscriber": shared.subscribers.push("nowy.subskrybent@example.com"); break;
+        case "remove-friend": shared.friends.splice(index, 1); break;
+        case "add-friend": shared.friends.push({ username: "Nowy znajomy", email: "nowy.znajomy@example.com" }); break;
         case "remove-subscriber":
           shared.subscribers.splice(index, 1);
           config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] = (config.localeFixtures[sharedEditorLanguage]["poll-share-actions"] || []).filter(recipient => recipient.subscriberIndex !== index).map(recipient => ({ ...recipient, subscriberIndex: recipient.subscriberIndex > index ? recipient.subscriberIndex - 1 : recipient.subscriberIndex }));

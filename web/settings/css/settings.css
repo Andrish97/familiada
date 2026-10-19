@@ -192,6 +192,7 @@ body.settings-body > main.wrap{
 .homepage-shot-shared-rows{display:grid;gap:7px}
 .homepage-shot-shared-row{display:grid;grid-template-columns:minmax(0,1fr) 92px auto;gap:7px;align-items:center}
 .homepage-shot-shared-row--plain{grid-template-columns:minmax(0,1fr) auto}
+.homepage-shot-shared-row--contact{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
 .homepage-shot-shared-row--subscriber{grid-template-columns:minmax(0,1fr) 170px auto}
 .homepage-shot-action-row{grid-template-columns:minmax(0,1fr) minmax(180px,.7fr) auto;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(0,0,0,.12)}
 .homepage-shot-action-row strong{font-size:14px}
