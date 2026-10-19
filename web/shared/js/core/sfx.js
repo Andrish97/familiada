@@ -1,7 +1,11 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-19T08475";
+<<<<<<< HEAD
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-19T08495";
+=======
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -536,7 +540,11 @@ export async function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-19T08475";
+<<<<<<< HEAD
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-19T08495";
+=======
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
     // Call play() synchronously in the gesture handler, then trust its
     // promise. Previously a rejected autoplay attempt still returned true,
     // allowing Display to report an unlock the browser had refused.
@@ -579,7 +587,11 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-19T08475" }
+<<<<<<< HEAD
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-19T08495" }
+=======
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-19T08495" }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   // Brak wpisu oznacza 100%, tak jak suwak ustawień. Nie dziedziczymy

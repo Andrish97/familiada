@@ -12,8 +12,13 @@
 // 2026-05-30_203) — to czysty lookup "kod -> share_key", niezwiązany z
 // komendami, nie wymaga żadnej zmiany dla v2.
 
-import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T08475";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+=======
+import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 // Linki urządzeń wychodzą z aplikacji (mail, QR, zakładki), więc zawsze przez /go/.
 function makeUrl(device, gameId, key, { lang } = {}) {

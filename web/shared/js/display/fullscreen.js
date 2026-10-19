@@ -1,4 +1,8 @@
-import { icon } from "../core/icons.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { icon } from "../core/icons.js?v=v2026-10-19T08495";
+=======
+import { icon } from "../core/icons.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 export const initFullscreenButton = () => {
   const fsBtn = document.getElementById("fsBtn");
   if (!fsBtn) return;

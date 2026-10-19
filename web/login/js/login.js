@@ -1,5 +1,9 @@
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
+=======
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 guardViewportWidth({ minWidth: 0 });
 import {
   getUser,
@@ -20,15 +24,27 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-19T08475";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T08475";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+} from "../../shared/js/core/auth.js?v=v2026-10-19T08495";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T08495";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08495";
 
-import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T08475";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08475";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-19T08475";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-19T08475";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08475";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T08495";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-19T08495";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
+=======
+} from "../../shared/js/core/auth.js?v=v2026-10-19T08495";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T08495";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-19T08495";
+
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-19T08495";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-19T08495";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");

@@ -1,4 +1,8 @@
-import { sb } from "./supabase.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { sb } from "./supabase.js?v=v2026-10-19T08495";
+=======
+import { sb } from "./supabase.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 function pickRpcRow(data, fnName) {
   const row = Array.isArray(data) ? data[0] : data;

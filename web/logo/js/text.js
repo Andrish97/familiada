@@ -3,8 +3,13 @@
 // fontu 5x7). Glify przycięte do szerokości, stała 1 kolumna przerwy,
 // napis wyśrodkowany.
 
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T08475";
-import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-19T08495";
+=======
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 const GLYPH_W = 3;
 

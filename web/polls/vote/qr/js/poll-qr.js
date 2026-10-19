@@ -1,9 +1,17 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-19T08475";
-import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-19T08475";
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-19T08475";
-import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-19T08475";
-import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-19T08495";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-19T08495";
+=======
+import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-19T08495";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });

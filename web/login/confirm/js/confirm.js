@@ -1,12 +1,24 @@
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T08475";
-import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-19T08475";
-import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-19T08475";
-import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-19T08475";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T08475";
-import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-19T08475";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-19T08475";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-19T08495";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-19T08495";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T08495";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-19T08495";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
+=======
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
+guardViewportWidth({ minWidth: 0 });
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { niceAuthError } from "../../../shared/js/core/auth.js?v=v2026-10-19T08495";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../../../shared/js/core/auth.js?v=v2026-10-19T08495";
+import { initI18n, t, getUiLang, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-19T08495";
+import { isGuestUser } from "../../../shared/js/core/guest-mode.js?v=v2026-10-19T08495";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");

@@ -1,8 +1,11 @@
-import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T08495";
+=======
+import { alertModal, confirmModal } from "/shared/js/core/modal.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 const button = document.getElementById("btnInstallAdmin");
 let installPrompt = null;
-let showHelpOnly = false;
 
 function isStandalone() {
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -18,7 +21,9 @@ function isMacSafari() {
 
 function updateButton() {
   if (!button) return;
-  button.style.display = document.body.classList.contains("settings-locked") || isStandalone() || (!installPrompt && !isIos() && !isMacSafari() && !showHelpOnly) ? "none" : "";
+  // Keep the toolbar affordance available after Access login. If the browser
+  // does not offer the install prompt, clicking it explains the manual path.
+  button.style.display = document.body.classList.contains("settings-locked") || isStandalone() ? "none" : "";
 }
 
 function registerAdminWorker() {
@@ -43,7 +48,6 @@ window.addEventListener("beforeinstallprompt", event => {
 
 window.addEventListener("appinstalled", () => {
   installPrompt = null;
-  showHelpOnly = false;
   updateButton();
 });
 
@@ -67,9 +71,7 @@ button?.addEventListener("click", async () => {
   const prompt = installPrompt;
   installPrompt = null;
   await prompt.prompt();
-  const choice = await prompt.userChoice;
-  if (choice.outcome === "accepted") showHelpOnly = false;
-  else showHelpOnly = !isIos() && !isMacSafari();
+  await prompt.userChoice;
   updateButton();
 });
 updateButton();

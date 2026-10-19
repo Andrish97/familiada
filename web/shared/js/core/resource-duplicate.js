@@ -1,6 +1,12 @@
-import {sb} from './supabase.js?v=v2026-10-19T08475';
-import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-19T08475';
-import {toast} from './toast.js?v=v2026-10-19T08475';
+<<<<<<< HEAD
+import {sb} from './supabase.js?v=v2026-10-19T08495';
+import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-19T08495';
+import {toast} from './toast.js?v=v2026-10-19T08495';
+=======
+import {sb} from './supabase.js?v=v2026-10-19T08495';
+import {getUiLang,t} from '../../translation/translation.js?v=v2026-10-19T08495';
+import {toast} from './toast.js?v=v2026-10-19T08495';
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 const attempts=new Map();
 const messageKey={resource_in_use:'busy',received_copy_pending:'pending',not_exportable:'notExportable',not_found:'missing',previously_removed:'missing',expired:'expired',maintenance:'unavailable',unsupported_copy_image_source:'image',invalid_copy_storage_plan:'image',copy_image_source_changed:'image',copy_image_conflict:'image',unmaterialized_copy_image:'image'};

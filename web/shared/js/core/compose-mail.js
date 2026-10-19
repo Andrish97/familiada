@@ -1,4 +1,8 @@
-import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-19T08495";
+=======
+import { renderRichMailDocument, escapeMailText } from "./mail-document.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 // Podgląd i wysyłka korzystają z tego samego dokumentu oraz podpisu.
 export function buildComposeMailHtml({ lang, subject, bodyHtml, quote = '', greeting = '', farewell = '' }) {

@@ -1,12 +1,24 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
 guardViewportWidth({ minWidth: 0 });
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T08475";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08475";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-19T08475";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T08475";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-19T08475";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T08475";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-19T08475";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T08495";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T08495";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-19T08495";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T08495";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-19T08495";
+=======
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
+guardViewportWidth({ minWidth: 0 });
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-19T08495";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T08495";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-19T08495";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-19T08495";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 async function redirectIfSession() {
   try {

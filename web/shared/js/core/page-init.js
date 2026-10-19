@@ -28,17 +28,31 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-19T08475";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-19T08475";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-19T08475";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-19T08495";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-19T08495";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-19T08495";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-19T08495";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-19T08475"),
-    import("./topbar-controller.js?v=v2026-10-19T08475"),
-    import("./modal-sheet.js?v=v2026-10-19T08475"),
-    import("./device-guard.js?v=v2026-10-19T08475"),
+    import("./auth.js?v=v2026-10-19T08495"),
+    import("./topbar-controller.js?v=v2026-10-19T08495"),
+    import("./modal-sheet.js?v=v2026-10-19T08495"),
+    import("./device-guard.js?v=v2026-10-19T08495"),
+=======
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-19T08495";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-19T08495";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-19T08495";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-19T08495";
+
+async function loadDeps() {
+  const [auth, topbar, sheet, device] = await Promise.all([
+    import("./auth.js?v=v2026-10-19T08495"),
+    import("./topbar-controller.js?v=v2026-10-19T08495"),
+    import("./modal-sheet.js?v=v2026-10-19T08495"),
+    import("./device-guard.js?v=v2026-10-19T08495"),
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
   ]);
   return {
     getUser: auth.getUser,
@@ -207,10 +221,17 @@ export async function initPage(id, opts = {}) {
   // don't miss a one-time notice while the page continues initializing.
   if (!new Set(["login", "privacy", "mailCenter", "connectDevice"]).has(id)) {
     if (isGuestUser(user)) {
-      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-19T08475");
+<<<<<<< HEAD
+      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-19T08495");
       await maybeShowGuestInfoModal(user);
     } else if (user) {
-      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-19T08475");
+      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-19T08495");
+=======
+      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-19T08495");
+      await maybeShowGuestInfoModal(user);
+    } else if (user) {
+      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-19T08495");
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       await initRatingSystem(user);
     }
   }

@@ -5,10 +5,17 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T08475";
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T08475";
-import { rt } from "./realtime.js?v=v2026-10-19T08475";
-import { icon } from "./icons.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T08495";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T08495";
+import { rt } from "./realtime.js?v=v2026-10-19T08495";
+import { icon } from "./icons.js?v=v2026-10-19T08495";
+=======
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T08495";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-19T08495";
+import { rt } from "./realtime.js?v=v2026-10-19T08495";
+import { icon } from "./icons.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 const TAB_ID_KEY = "familiada:tabId";
 const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (120 s, edit_lock_ttl() w bazie)

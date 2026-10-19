@@ -38,8 +38,13 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-19T08475";
-import { iconText } from "./icons.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-19T08495";
+import { iconText } from "./icons.js?v=v2026-10-19T08495";
+=======
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-19T08495";
+import { iconText } from "./icons.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 export const MAX_RET_DEPTH = 4;
 

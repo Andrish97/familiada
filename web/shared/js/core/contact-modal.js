@@ -1,6 +1,12 @@
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-19T08475";
-import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-19T08475";
-import { icon, iconText } from "./icons.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-19T08495";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-19T08495";
+import { icon, iconText } from "./icons.js?v=v2026-10-19T08495";
+=======
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-19T08495";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-10-19T08495";
+import { icon, iconText } from "./icons.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 let modalEl = null;
 let isSubmitting = false;
@@ -240,7 +246,11 @@ function ensureModal() {
 
 async function prefillEmail() {
   try {
-    const { sb } = await import("./supabase.js?v=v2026-10-19T08475");
+<<<<<<< HEAD
+    const { sb } = await import("./supabase.js?v=v2026-10-19T08495");
+=======
+    const { sb } = await import("./supabase.js?v=v2026-10-19T08495");
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
     const { data } = await sb().auth.getSession();
     const user = data?.session?.user;
     const isGuest = user?.user_metadata?.is_guest === true || user?.app_metadata?.is_guest === true;

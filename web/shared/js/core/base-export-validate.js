@@ -2,7 +2,11 @@
 // Walidacja tworzenia/exportu gry na danych z pamięci (np. z bazy pytań),
 // oparta o RULES/TYPES z game-validate.js, ale bez odpytywania DB.
 
-import { TYPES, RULES } from "./game-validate.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { TYPES, RULES } from "./game-validate.js?v=v2026-10-19T08495";
+=======
+import { TYPES, RULES } from "./game-validate.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 function n(v) {
   const x = Number(v);

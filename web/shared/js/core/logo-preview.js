@@ -30,9 +30,15 @@ function resolveGlyph(glyphs, ch) {
   return v;
 }
 
-import { v } from './cache-bust.js?v=v2026-10-19T08475';
+<<<<<<< HEAD
+import { v } from './cache-bust.js?v=v2026-10-19T08495';
 
-export async function loadFont5x7(url = "/shared/fonts/display/font_5x7.json?v=v2026-10-19T08475") {
+export async function loadFont5x7(url = "/shared/fonts/display/font_5x7.json?v=v2026-10-19T08495") {
+=======
+import { v } from './cache-bust.js?v=v2026-10-19T08495';
+
+export async function loadFont5x7(url = "/shared/fonts/display/font_5x7.json?v=v2026-10-19T08495") {
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
   const r = await fetch(await v(url), { cache: "force-cache" });
   if (!r.ok) throw new Error(`Font 5x7: HTTP ${r.status}`);
   const json = await r.json();

@@ -1,7 +1,13 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-19T08475";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-19T08475";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { icon } from "./icons.js?v=v2026-10-19T08495";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-19T08495";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T08495";
+=======
+import { icon } from "./icons.js?v=v2026-10-19T08495";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-19T08495";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
 const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";
@@ -125,7 +131,11 @@ export async function resolveLoginToEmail(loginOrEmail) {
   return await loginToEmail(loginOrEmail);
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-19T08495";
+=======
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
   const v = String(un || "").trim();

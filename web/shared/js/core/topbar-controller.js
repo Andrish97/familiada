@@ -5,10 +5,17 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-10-19T08475';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-19T08475';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-19T08475';
-import { icon } from './icons.js?v=v2026-10-19T08475';
+<<<<<<< HEAD
+import { signOut } from './auth.js?v=v2026-10-19T08495';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-19T08495';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-19T08495';
+import { icon } from './icons.js?v=v2026-10-19T08495';
+=======
+import { signOut } from './auth.js?v=v2026-10-19T08495';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-19T08495';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-19T08495';
+import { icon } from './icons.js?v=v2026-10-19T08495';
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
@@ -431,7 +438,11 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-19T08475');
+<<<<<<< HEAD
+  const { getUser } = await import('./auth.js?v=v2026-10-19T08495');
+=======
+  const { getUser } = await import('./auth.js?v=v2026-10-19T08495');
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
   if (btn.dataset.topbarAuthReady === '1') return;

@@ -1,6 +1,10 @@
 // Otwarte pytanie edytora żyje w adresie: /games/editor/?id=<gra>&q=<pytanie>.
 // Adres jest jedynym źródłem — bez zapasu w sessionStorage.
-import { filterToHref } from "../../../shared/js/core/list-filter.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { filterToHref } from "../../../shared/js/core/list-filter.js?v=v2026-10-19T08495";
+=======
+import { filterToHref } from "../../../shared/js/core/list-filter.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 /** Id pytania z ?q=, tylko jeśli istnieje wśród pytań gry; inaczej null. */
 export function questionFromSearch(search, questions) {

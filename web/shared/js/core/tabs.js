@@ -9,7 +9,11 @@
 //     wraca do poprzedniej strony, nie przewija kart.
 // Testy: tests/unit/tabs.test.js.
 
-import { filterToHref } from "./list-filter.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { filterToHref } from "./list-filter.js?v=v2026-10-19T08495";
+=======
+import { filterToHref } from "./list-filter.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 export const TAB_PARAM = "tab";
 

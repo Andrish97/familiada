@@ -1,4 +1,8 @@
-import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T08495";
+=======
+import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 export function createActionGate({ getSfxDuration }) {
   const timing = createTransitionTiming({ getSfxDuration });

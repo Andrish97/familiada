@@ -1,7 +1,14 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T08475";
-import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-19T08475";
-import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T08475";
-import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
+import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-19T08495";
+=======
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-19T08495";
+import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-19T08495";
+import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 await initI18n();
 const profile = getDeviceProfile();
 const isTv = profile.formFactor === "tv";

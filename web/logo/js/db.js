@@ -1,10 +1,17 @@
 // familiada/logo/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08475";
-import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T08475";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-19T08475";
-import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-19T08475";
+<<<<<<< HEAD
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T08495";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-19T08495";
+import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-19T08495";
+=======
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T08495";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-19T08495";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-19T08495";
+import { decodeImportedLogoImage } from "../../shared/js/core/logo-image-data.js?v=v2026-10-19T08495";
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
 
 /** Błąd „zasób zajęty” z RPC *_checked -- reason: logo (inna karta edytuje to logo)
  *  | control | settings (pula logo trzymana przez grę) | locked. */

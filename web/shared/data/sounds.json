@@ -5,7 +5,11 @@
       "folder": "show_outro",
       "limitSec": 120,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -13,7 +17,11 @@
       "folder": "show_intro",
       "limitSec": 30,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -21,7 +29,11 @@
       "folder": "round_transition",
       "limitSec": 30,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -29,7 +41,11 @@
       "folder": "final_theme",
       "limitSec": 30,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -37,7 +53,11 @@
       "folder": "buzzer_press",
       "limitSec": 5,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -45,7 +65,11 @@
       "folder": "answer_correct",
       "limitSec": 5,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -53,7 +77,11 @@
       "folder": "answer_wrong",
       "limitSec": 5,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -61,7 +89,11 @@
       "folder": "answer_repeat",
       "limitSec": 5,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -69,7 +101,11 @@
       "folder": "time_over",
       "limitSec": 5,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     },
     {
@@ -77,7 +113,11 @@
       "folder": "reveal",
       "limitSec": 5,
       "sounds": [
-        { "file": "classic.mp3?v=v2026-10-19T08475", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+<<<<<<< HEAD
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+=======
+        { "file": "classic.mp3?v=v2026-10-19T08495", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
+>>>>>>> 50dbdcc0b9 (fix(admin): keep install button visible in toolbar)
       ]
     }
   ]
