@@ -96,13 +96,13 @@ test('lost database response replays the completed result without cleaning insta
 });
 test('demo IMAGE bytes come only from the known bundled asset and upload directly without base64 conversion',async()=>{
  const state=begin('logo');state.snapshot.demo_origin=true;
- const reference='https://www.familiada.online/logo/assets/demo-image.png';
+ const reference='https://www.familiada.online/logos/assets/demo-image.png';
  state.snapshot.logo={id:source,name:'Demo',is_demo:true,type:'PIX_150x70',payload:{bits_b64:'AA==',source:{mode:'IMAGE',imageUrl:reference}}};
  const path=`${actor}/copies/${job}/${assetId}.png`;
  await mocked(call=>{
   if(call.url.endsWith('/_resource_clone_begin'))return reply(state);
   if(call.url.includes('?'))return reply([]);
-  if(call.url==='https://familiada.online/logo/assets/demo-image.png')return new Response(new Uint8Array([1,2,3]),{headers:{'Content-Type':'image/png','Content-Length':'3'}});
+  if(call.url==='https://familiada.online/logos/assets/demo-image.png')return new Response(new Uint8Array([1,2,3]),{headers:{'Content-Type':'image/png','Content-Length':'3'}});
   if(call.url.endsWith('/_resource_clone_asset_register')){assert.equal(call.body.p_kind,'demo_asset');assert.equal(call.body.p_reference,reference);return reply({id:assetId,job_id:job,source_kind:'demo_asset',destination_path:path,content_hash:call.body.p_content_hash});}
   if(call.url.endsWith(path)){assert.deepEqual([...call.body],[1,2,3]);return reply({});}
   if(call.url.endsWith('/_resource_clone_finish_duplicate')){assert.equal(call.body.p_demo,true);assert.ok(call.body.p_definition.payload.source.imageUrl.endsWith(path));assert.equal(call.body.p_definition.payload.source.imageData,undefined);return reply({ok:true,id:target});}
@@ -128,7 +128,7 @@ test('Send rejects Base, self, invalid recipients and mismatched verified destin
 });
 test('Send protects private demo provenance before any storage image request',async()=>{
  const state={...begin('logo'),recipient_id:other};state.snapshot.demo_origin=true;
- state.snapshot.logo={id:source,name:'Renamed',type:'PIX_150x70',payload:{bits_b64:'AA==',source:{mode:'IMAGE',imageUrl:'https://www.familiada.online/logo/assets/demo-image.png'}}};
+ state.snapshot.logo={id:source,name:'Renamed',type:'PIX_150x70',payload:{bits_b64:'AA==',source:{mode:'IMAGE',imageUrl:'https://www.familiada.online/logos/assets/demo-image.png'}}};
  await mocked(call=>{if(call.url.endsWith('/_resource_clone_begin'))return reply(state);if(call.url.includes('/resource_clone_assets?'))return reply([]);assert.fail('Demo Send reached materialization');},async()=>await assert.rejects(sendResource(env,actor,{...input('logo'),recipient_id:other}),/demo_not_sendable/));
 });
 test('Send completed replay returns only the existing offer and does not expose the recipient decision',async()=>{

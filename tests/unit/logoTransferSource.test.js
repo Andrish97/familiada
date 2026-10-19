@@ -30,7 +30,7 @@ test('failed or incomplete fetch rejects the whole logo packet instead of retain
 });
 test('the real exporter has one independent source builder and all languages explain incomplete images',async()=>{
  const {readFile}=await import('node:fs/promises');
- const source=await readFile(new URL('../../web/logo/js/transfer.js',import.meta.url),'utf8');
+ const source=await readFile(new URL('../../web/logos/js/transfer.js',import.meta.url),'utf8');
  assert.match(source,/source = await standaloneLogoSource\(p.source, fetchImageAsDataUrl\)/);assert.doesNotMatch(source,/could not embed image|URL zostaje tylko/);
  for(const lang of ['pl','en','uk']){const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);assert.equal(typeof dict.logoEditor.errors.exportIncomplete,'string');}
 });

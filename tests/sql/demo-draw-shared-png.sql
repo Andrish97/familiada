@@ -39,7 +39,7 @@ SELECT false, payload FROM old_draw_payload;
 
 DO $$
 DECLARE
-  v_asset text := 'https://www.familiada.online/logo/assets/demo-draw-host.png?v=20261009-demo-draw';
+  v_asset text := 'https://www.familiada.online/logos/assets/demo-draw-host.png?v=20261009-demo-draw';
 BEGIN
   IF (SELECT count(*) FROM public.demo_template_data
       WHERE slot = 'logo_draw'

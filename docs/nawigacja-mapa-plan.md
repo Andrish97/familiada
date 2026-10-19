@@ -994,7 +994,7 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
    overlayu gość/urządzenie.
 5. Rezygnacja ze stron modalnych (każdy punkt osobno):
    a) **zrobione** — refaktor edytora logo: wspólny moduł
-      `web/logo/js/editor-page.js` (autozapis, stan, blokady) + 3 strony `/logos/editor-<typ>/?id=`,
+      `web/logos/js/editor-page.js` (autozapis, stan, blokady) + 3 strony `/logos/editor-<typ>/?id=`,
       lista tylko listą, usunięcie ✕, `topbar-no-menu` i okien pomocy,
    b) `/editor/?id=&q=` — pytanie w adresie,
    c) autozapis w game-settings, Control → zwykłe przejście do ustawień,

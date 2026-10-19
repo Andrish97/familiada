@@ -1,4 +1,4 @@
-// familiada/logo/js/text.js
+// familiada/logos/js/text.js
 // Tryb TEXT: napis fontem 3x10 -> GLYPH_30x10 (30 kolumn x 10 wierszy znaków
 // fontu 5x7). Glify przycięte do szerokości, stała 1 kolumna przerwy,
 // napis wyśrodkowany.

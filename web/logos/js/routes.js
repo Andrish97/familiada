@@ -1,4 +1,4 @@
-// familiada/logo/js/routes.js
+// familiada/logos/js/routes.js
 // Adresy stron logo: lista /logos/ i trzy edytory /logos/editor/<tryb>/?id=.
 // Cele i powroty liczy mapa nawigacji (core/nav-map.js): edytor wraca przez
 // ?ret= do listy z kartą, z której wszedł; bez ret — na /logos/.

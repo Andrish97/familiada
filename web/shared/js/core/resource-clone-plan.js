@@ -3,7 +3,7 @@
 import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-19T20532';
 import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-19T20532';
 import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-19T20532';
-import { parseLogoPackage } from '../../../logo/js/package.js?v=v2026-10-19T20532';
+import { parseLogoPackage } from '../../../logos/js/package.js?v=v2026-10-19T20532';
 
 
 export function duplicateResourceName(name, names, suffix, maxLength = 80) {

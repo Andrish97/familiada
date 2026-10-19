@@ -1,4 +1,4 @@
-// familiada/logo/js/draw.js
+// familiada/logos/js/draw.js
 // Tryb DRAW: rysunek wektorowy (Fabric.js 5, globalne window.fabric) -> PIX 150x70.
 //
 // Świat sceny ma rozmiar ZAPISANY RAZEM Z LOGO (source.world) -- niezależny

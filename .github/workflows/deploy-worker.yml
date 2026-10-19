@@ -11,8 +11,8 @@ on:
       - "web/shared/js/core/game-transfer-format.js"
       - "web/shared/js/core/logo-transfer-source.js"
       - "web/shared/js/core/logo-image-data.js"
-      - "web/logo/js/package.js"
-      - "web/logo/js/render.js"
+      - "web/logos/js/package.js"
+      - "web/logos/js/render.js"
       - ".github/workflows/deploy-worker.yml"
   workflow_dispatch: {}
 

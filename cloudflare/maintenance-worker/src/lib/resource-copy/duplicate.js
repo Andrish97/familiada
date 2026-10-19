@@ -62,7 +62,7 @@ async function cloneResource(env,actor,input,action,recipient){
  async function loadDemo(image){
   if(demoBytes.has(image))return demoBytes.get(image);
   const url=new URL(image);
-  if(!['https://www.familiada.online','https://familiada.online'].includes(url.origin)||url.pathname!=='/logo/assets/demo-image.png'||url.search||url.hash)throw new Error('unsupported_copy_image_source');
+  if(!['https://www.familiada.online','https://familiada.online'].includes(url.origin)||url.pathname!=='/logos/assets/demo-image.png'||url.search||url.hash)throw new Error('unsupported_copy_image_source');
   const response=await fetchFromOrigin(new Request(image),url,ORIGIN_BASE,ORIGIN_HOST,ORIGIN_RESOLVE);
   if(!response.ok||Number(response.headers.get('Content-Length'))>5*1024*1024)throw new Error('copy_image_source_changed');
   const decoded={bytes:new Uint8Array(await response.arrayBuffer()),mime:response.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase()};

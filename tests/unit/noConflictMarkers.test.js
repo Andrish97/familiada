@@ -1,5 +1,5 @@
 // Żaden plik w repo nie może zawierać znaczników konfliktu scalania
-// (2026-10-09: zatwierdzone znaczniki w web/logo/js zepsuły listę logo na produkcji).
+// (2026-10-09: zatwierdzone znaczniki w web/logos/js zepsuły listę logo na produkcji).
 import test from "node:test";
 import assert from "node:assert";
 import { execSync } from "node:child_process";

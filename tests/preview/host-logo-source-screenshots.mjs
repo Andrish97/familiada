@@ -141,7 +141,7 @@ try {
   if (!(drawResult.width > 0 && drawResult.hasWhite && drawResult.blackCutsThroughWhite && drawResult.whiteTopLayerRestoresDot && drawResult.outsideTransparent)) throw new Error(`DRAW warstwy po zapisie i odczycie nie zgadzają się: ${JSON.stringify(drawResult)}`);
 
   const transferResult = await hostFrame.evaluate(async () => {
-    const { buildExport, parseImport } = await import("/logo/js/transfer.js?v=svg-draw-no-png");
+    const { buildExport, parseImport } = await import("/logos/js/transfer.js?v=svg-draw-no-png");
     const logo = JSON.parse(localStorage.getItem("host-logo-draw-roundtrip"));
     const exported = await buildExport(logo, "DRAW transfer");
     const imported = parseImport(JSON.stringify(exported), "DRAW transfer");

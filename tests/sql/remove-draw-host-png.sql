@@ -44,7 +44,7 @@ INSERT INTO public.user_logos VALUES
 ('00000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000001',
  '{"source":{"mode":"IMAGE","imageUrl":"https://x/user-logos/u/keep-image.png"}}');
 INSERT INTO public.demo_template_data VALUES ('logo_draw',
- '{"payload":{"source":{"mode":"DRAW","hostRasterUrl":"https://x/logo/assets/demo-draw-host.png","fabricData":{"objects":[{"type":"circle"}]}}}}');
+ '{"payload":{"source":{"mode":"DRAW","hostRasterUrl":"https://x/logos/assets/demo-draw-host.png","fabricData":{"objects":[{"type":"circle"}]}}}}');
 INSERT INTO storage.objects VALUES
 ('user-logos','u/old-draw-host.png'),('user-logos','u/keep-image.png'),('user-logos','u/another-draw-host.png');
 

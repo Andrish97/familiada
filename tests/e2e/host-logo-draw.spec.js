@@ -85,7 +85,7 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
     expect(saved.payload.source).not.toHaveProperty("hostRasterData");
 
     const transfer = await page.evaluate(async logo => {
-      const { buildExport, parseImport } = await import("/logo/js/transfer.js?v=svg-draw-no-png");
+      const { buildExport, parseImport } = await import("/logos/js/transfer.js?v=svg-draw-no-png");
       const file = await buildExport(logo, "test");
       const imported = parseImport(JSON.stringify(file), "test");
       return {

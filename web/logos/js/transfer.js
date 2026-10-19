@@ -1,4 +1,4 @@
-// familiada/logo/js/transfer.js
+// familiada/logos/js/transfer.js
 // Eksport/import logo do pliku .famlogo (JSON, bez id i użytkownika).
 //
 // Formaty wejściowe:

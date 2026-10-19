@@ -1,4 +1,4 @@
-// familiada/logo/js/image.js
+// familiada/logos/js/image.js
 // Tryb IMAGE: obraz użytkownika + kadr 26:11 + korekty (jasność, kontrast,
 // gamma, poziomy, dither) -> PIX 150x70.
 //
@@ -457,7 +457,7 @@ export function initImageEditor(ctx) {
   }
 
   // Obraz z assetów strony (demo „Obraz” ma na sztywno
-  // https://www.familiada.online/logo/assets/demo-image.png -- migracja 308)
+  // https://www.familiada.online/logos/assets/demo-image.png -- migracja 308)
   // ładujemy
   // z bieżącego originu: pod familiada.online bez www, na podglądzie czy
   // lokalnie byłby to request cross-origin zależny od nagłówków CORS.
@@ -465,7 +465,7 @@ export function initImageEditor(ctx) {
   function sameSiteSrc(src) {
     try {
       const u = new URL(src);
-      if (/^(www\.)?familiada\.online$/i.test(u.hostname) && u.pathname.startsWith("/logo/assets/")) {
+      if (/^(www\.)?familiada\.online$/i.test(u.hostname) && u.pathname.startsWith("/logos/assets/")) {
         return new URL(u.pathname, location.origin).href;
       }
     } catch {}

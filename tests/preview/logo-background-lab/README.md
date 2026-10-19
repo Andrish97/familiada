@@ -13,7 +13,7 @@ HTML podczas budowania. Przykłady sprawdzają białe, niebieskie, zielone i
 fioletowe jednolite tła, kremowe z cieniem,
 nietypowe i ciemne tła, białe detale oraz celowo postrzępione krawędzie
 głównego obiektu. Kafelek „Obraz z demo” wczytuje istniejący plik
-`web/logo/assets/demo-image.png` bez jego przenoszenia.
+`web/logos/assets/demo-image.png` bez jego przenoszenia.
 Nierówne i ciemne przykłady powinny zostać oznaczone jako niespełniające
 prostych kryteriów. Jasne elementy odcięte od krawędzi pokazują zaletę
 usuwania obszaru połączonego z brzegiem.

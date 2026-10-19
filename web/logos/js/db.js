@@ -1,4 +1,4 @@
-// familiada/logo/js/db.js
+// familiada/logos/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-19T20532";

@@ -1,6 +1,6 @@
 DO $$
 DECLARE
-  v_asset constant text := 'https://www.familiada.online/logo/assets/demo-draw-host.png?v=20261009-demo-draw';
+  v_asset constant text := 'https://www.familiada.online/logos/assets/demo-draw-host.png?v=20261009-demo-draw';
   v_templates integer;
   v_user_logos integer;
 BEGIN

@@ -25,7 +25,7 @@ const { startLocalSite, captureSession, useSession } = require("./helpers/local-
 const { testAccountUsername } = require("./helpers/login");
 const L = require("./helpers/logo-editor");
 
-const DEMO_IMAGE = path.resolve(__dirname, "../../web/logo/assets/demo-image.png");
+const DEMO_IMAGE = path.resolve(__dirname, "../../web/logos/assets/demo-image.png");
 const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon.png");
 
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
@@ -1059,7 +1059,7 @@ test.describe("zgodność ze starymi danymi", () => {
     for (const d of demos) {
       // Adres obrazu demo jak po migracji 308 (/logo-editor/assets -> /logos/assets),
       // także zanim migracja trafi do bazy (testy na branchu przed wdrożeniem).
-      d.payload = JSON.parse(JSON.stringify(d.payload).replaceAll("/logo-editor/assets/demo-image.png", "/logo/assets/demo-image.png"));
+      d.payload = JSON.parse(JSON.stringify(d.payload).replaceAll("/logo-editor/assets/demo-image.png", "/logos/assets/demo-image.png"));
       const id = await L.insertLogo(page, { name: L.uniq(`demo-${d.type}`), type: d.type, payload: d.payload });
       const first = await openAndSave(id);
       const src = d.payload.source || {};

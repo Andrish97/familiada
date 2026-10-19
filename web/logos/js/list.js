@@ -2,7 +2,7 @@ import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.j
 import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-19T20532";
 import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-19T20532";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-19T20532";
-// familiada/logo/js/list.js
+// familiada/logos/js/list.js
 // Lista logo (/logos/): kafelki w trzech kartach, modale (nowe / nazwa /
 // import / podgląd), eksport. Edycja to osobne strony /logos/editor/<tryb>/
 // (editor-page.js) -- „Nowe logo” od razu zakłada wiersz w bazie i otwiera

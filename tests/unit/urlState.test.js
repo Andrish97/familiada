@@ -72,7 +72,7 @@ test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () =
   for (const [mode, file, init] of [["TEXT", "text", "initTextEditor"], ["DRAW", "draw", "initDrawEditor"], ["IMAGE", "image", "initImageEditor"]]) {
     const html = read(`logos/editor/${file}/index.html`);
     const entry = read(`logo/js/editor-${file}.js`);
-    assert.match(html, new RegExp(`src="/logo/js/editor-${file}\\.js`));
+    assert.match(html, new RegExp(`src="/logos/js/editor-${file}\\.js`));
     assert.match(html, new RegExp(`id="editorShell" data-mode="${mode}"`));
     assert.match(html, /id="saveStatus"/);
     assert.doesNotMatch(html, /id="btnCreate"|id="btnCloseEditor"|id="helpOverlay"|id="legalOverlay"|modal=/);

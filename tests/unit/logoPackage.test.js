@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
-import {parseLogoPackage} from '../../web/logo/js/package.js';
+import {parseLogoPackage} from '../../web/logos/js/package.js';
 import {decodeImportedLogoImage} from '../../web/shared/js/core/logo-image-data.js';
 
 test('one pure parser handles TEXT, IMAGE, DRAW and legacy envelopes without retaining record identities',()=>{
@@ -38,7 +38,7 @@ test('embedded images reject remote URLs, unsupported MIME, malformed base64 and
 for(const lang of ['pl','en','uk'])test(`actual file parser uses the shared parser and preserves translated errors in ${lang}`,async()=>{
  const {default:dict}=await import(`../../web/shared/translation/${lang}.js`);
  const t=(key,args={})=>{let value=key.split('.').reduce((item,part)=>item?.[part],dict);assert.equal(typeof value,'string',key);for(const [name,item] of Object.entries(args))value=value.replaceAll('{'+name+'}',item);return value;};
- const source=(await readFile(new URL('../../web/logo/js/transfer.js',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace(/export /g,'');
+ const source=(await readFile(new URL('../../web/logos/js/transfer.js',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace(/export /g,'');
  const context=vm.createContext({parseLogoPackage,t});vm.runInContext(source+'\nglobalThis.parse=parseImport;',context);
  assert.throws(()=>context.parse('not-json','Logo'),error=>error.message===dict.logoEditor.errors.invalidJson);
  for(const [input,key] of [[{kind:'NO'},'unknownImportFormat'],[{kind:'PIX'},'missingBits'],[{kind:'PIX',payload:{w:20,h:10,bits_b64:'AA=='}},'pixSize']])assert.throws(()=>context.parse(JSON.stringify(input),'Logo'),error=>error.message===t('logoEditor.errors.'+key,{expectedW:150,expectedH:70,actualW:20,actualH:10}));

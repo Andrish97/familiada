@@ -32,7 +32,7 @@ test('native logo Storage copy: actual bytes, lost-response retry after source d
  };
  try{
   stage='upload source';
-  const url=await page.evaluate(async image=>{const {uploadImportedLogoImage}=await import('/logo/js/db.js?v='+document.querySelector('meta[name="app-version"]').content);const {data}=await window.__sbClient.auth.getUser();return uploadImportedLogoImage(image,data.user.id);},pixel);
+  const url=await page.evaluate(async image=>{const {uploadImportedLogoImage}=await import('/logos/js/db.js?v='+document.querySelector('meta[name="app-version"]').content);const {data}=await window.__sbClient.auth.getUser();return uploadImportedLogoImage(image,data.user.id);},pixel);
   const sourcePath=new URL(url).pathname.split('/user-logos/')[1];files.push(sourcePath);
   const head=await originalFetch(`${state.url}/storage/v1/object/authenticated/user-logos/${sourcePath}`,{method:'HEAD',headers:{apikey:state.anon,Authorization:'Bearer '+state.token}});
   expect(head.ok).toBe(true);
