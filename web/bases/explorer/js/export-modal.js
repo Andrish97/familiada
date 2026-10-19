@@ -1,11 +1,11 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T13555";
-import { TYPES as GAME_TYPES, RULES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T13555";
-import { validateQuestionForType } from "../../../shared/js/core/base-export-validate.js?v=v2026-10-19T13555";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T13555";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T13555";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-19T13573";
+import { TYPES as GAME_TYPES, RULES } from "../../../shared/js/core/game-validate.js?v=v2026-10-19T13573";
+import { validateQuestionForType } from "../../../shared/js/core/base-export-validate.js?v=v2026-10-19T13573";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-19T13573";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-19T13573";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
