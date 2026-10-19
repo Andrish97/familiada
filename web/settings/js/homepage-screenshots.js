@@ -1809,7 +1809,7 @@ async function paintPoll(doc, scene, fixture) {
   setText(doc, "pollGameName", scene.id === "poll-share" ? fixture.poll : `${typeLabel} · ${fixture.poll}`);
   if (main) main.style.display = "";
   if (empty) empty.style.display = "none";
-  const bar = doc.getElementById("pollBar"); if (bar) { bar.style.display = ""; bar.dataset.state = "open"; }
+  const bar = doc.getElementById("pollBar"); if (bar) { bar.style.display = ""; bar.dataset.state = "poll_open"; }
   setText(doc, "pollStateWord", currentLanguage() === "en" ? "OPEN" : currentLanguage() === "uk" ? "ВІДКРИТА" : "OTWARTA");
   const { votes: votesLabel } = await getStrings(currentLanguage(), { votes: "polls.bar.votes" });
   setText(doc, "pollStateInfo", typeof votesLabel === "function" ? votesLabel({ n: fixture.votesReceived }) : String(fixture.votesReceived));
