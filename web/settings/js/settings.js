@@ -121,7 +121,9 @@ const els = {
   countdownNow: document.getElementById("countdownNow"),
   toolsShell: document.getElementById("toolsShell"),
   toolsFrame: document.getElementById("toolsFrame"),
-  toolsSelect: document.getElementById("toolsSelect"),
+  toolsMenu: document.getElementById("toolsMenu"),
+  btnTools: document.getElementById("btnTools"),
+  toolsDropdown: document.getElementById("toolsDropdown"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
   btnTabScreenshots: document.getElementById("btnTabScreenshots"),
@@ -219,8 +221,6 @@ const els = {
 
 let currentState = null;
 let currentMode = "message";
-let uiSelect = null;
-let toolsOptions = null;
 let pollTimer = null;
 let countdownTimer = null;
 let formDirty = false;
@@ -5011,25 +5011,69 @@ async function loadToolsManifest() {
 
 async function initToolsSelect() {
   const items = await loadToolsManifest();
-  toolsOptions = [{ value: "", label: "Narzędzia" }, ...items];
+  if (!els.toolsMenu || !els.btnTools || !els.toolsDropdown) return;
 
-  uiSelect = initUiSelect(els.toolsSelect, {
-    options: toolsOptions,
-    value: "",
-    placeholder: "Narzędzia",
-    onChange: (val) => {
-      if (!val) return;
-      openTool(val);
-    },
-  });
+  document.body.appendChild(els.toolsDropdown);
+  els.toolsDropdown.replaceChildren(...items.map((item) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn sm";
+    button.textContent = item.label;
+    button.addEventListener("click", () => {
+      closeToolsMenu();
+      openTool(item.value);
+    });
+    return button;
+  }));
 
-  const syncToolsAvailability = (required = document.querySelector(".topbar")?.classList.contains("topbar-mobile-forced")) => {
-    uiSelect?.setDisabled(Boolean(required));
+  const positionToolsMenu = () => {
+    if (!els.btnTools || !els.toolsDropdown) return;
+    const anchor = els.btnTools.getBoundingClientRect();
+    const menu = els.toolsDropdown;
+    // Ustawiamy pozycję przed odsłonięciem, żeby popup nie mignął w lewym
+    // górnym rogu podczas pierwszego pomiaru.
+    menu.hidden = false;
+    menu.style.visibility = "hidden";
+    menu.style.left = "0px";
+    menu.style.top = "0px";
+    const rect = menu.getBoundingClientRect();
+    const left = Math.max(8, Math.min(anchor.left, window.innerWidth - rect.width - 8));
+    const top = anchor.bottom + 8 + rect.height <= window.innerHeight
+      ? anchor.bottom + 8
+      : Math.max(8, anchor.top - rect.height - 8);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    menu.style.visibility = "";
   };
-  window.addEventListener("topbar:mobile-required", (event) => {
-    syncToolsAvailability(event.detail?.required);
+
+  const toggleToolsMenu = () => {
+    if (els.toolsDropdown.hidden) {
+      positionToolsMenu();
+      els.btnTools.setAttribute("aria-expanded", "true");
+    } else {
+      closeToolsMenu();
+    }
+  };
+  els.btnTools.addEventListener("click", toggleToolsMenu);
+  document.addEventListener("pointerdown", (event) => {
+    if (!els.toolsMenu.contains(event.target) && !els.toolsDropdown.contains(event.target)) closeToolsMenu();
   });
-  syncToolsAvailability();
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeToolsMenu();
+  });
+  window.addEventListener("resize", () => {
+    if (!els.toolsDropdown.hidden) positionToolsMenu();
+  }, { passive: true });
+  window.addEventListener("scroll", () => {
+    if (!els.toolsDropdown.hidden) positionToolsMenu();
+  }, { passive: true, capture: true });
+}
+
+function closeToolsMenu() {
+  if (!els.toolsDropdown || !els.btnTools) return;
+  els.toolsDropdown.hidden = true;
+  els.toolsDropdown.style.visibility = "";
+  els.btnTools.setAttribute("aria-expanded", "false");
 }
 
 function openTool(path) {
@@ -5053,7 +5097,7 @@ function closeTools() {
   if (els.mainWrap) els.mainWrap.classList.remove("is-hidden");
   if (els.footer) els.footer.classList.remove("is-hidden");
   document.body.classList.remove("tools-fullscreen");
-  if (uiSelect) uiSelect.setValue("", { silent: true });
+  closeToolsMenu();
   syncTopbarHeight();
   setActiveTab(previousTabBeforeTools || "maintenance");
 }
@@ -5086,7 +5130,7 @@ function setActiveTab(tab, { updateUrl = true } = {}) {
   const btnMarketing = document.getElementById("btnTabMarketing");
   const btnMarketingContacts = document.getElementById("btnTabMarketingContacts");
   const btnScreenshots = document.getElementById("btnTabScreenshots");
-  const tools = document.getElementById("toolsSelect");
+  const tools = document.getElementById("btnTools");
 
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
