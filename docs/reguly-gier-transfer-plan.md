@@ -482,6 +482,21 @@ zapis, podgląd i późniejszą rozgrywkę.
   także dla bezpośrednich wywołań wszystkich RPC oddających głosy tekstowe.
   Przy implementacji ujednolicić liczenie znaków JS/SQL i bezpieczne obcinanie
   Unicode; obecne `slice`/`maxlength` liczą jednostki UTF-16.
+- **Doprecyzowanie 2026-10-20 — oba edytory i finał:** wszystkie powyższe
+  zasady odpowiedzi obowiązują jednakowo **w edytorze pytań baz oraz
+  w edytorze pytań gry**: limit 17 znaków, walidacja według fontu 5×7,
+  blokada zapisu niedozwolonych znaków oraz widoczne podpowiedzi. Dotyczy
+  tworzenia, edycji i wklejania odpowiedzi, nie tylko jednej strony.
+  W obu edytorach przy wpisywaniu odpowiedzi pokazać także komunikat:
+  **„W finale wyświetlacz mieści 11 znaków. Dłuższe odpowiedzi zostaną
+  na nim skrócone.”** Nie jest to nowy limit zapisu odpowiedzi: w bazie
+  i grze zachowujemy do 17 znaków; finał skraca wyłącznie prezentację,
+  zgodnie z istniejącym `displayText.js:clipDisplayText` i polami 11-znakowymi
+  w `control/display/js/scene.js`. Nie zmieniać tożsamości odpowiedzi,
+  trafienia ani punktacji z powodu skrótu. Te same zasady dopuszczalnych
+  znaków objąć walidacją serwerową zapisu pytań/odpowiedzi obu edytorów,
+  a migracyjną inwentaryzacją i oczyszczaniem objąć również istniejące
+  odpowiedzi w bazach pytań. Filtr fontu nadal dotyczy tylko odpowiedzi.
 - Po oczyszczeniu przy podliczaniu jednakowe odpowiedzi grupować ze
   zsumowaniem ich wskazań (np. tekst z emoji i ten sam tekst bez emoji).
   Ponownie przeliczyć ranking, kwalifikację od 4% i wybór szóstki. Odpowiedź
@@ -683,6 +698,13 @@ zapis, podgląd i późniejszą rozgrywkę.
   a pusty wynik nie kwalifikuje się. Przykłady z polskimi/ukraińskimi małymi
   literami i Unicode złożonym; zgodność z fontem 5×7, brak uszkodzonych par
   UTF-16, spójny limit JS/SQL i walidacja wszystkich ścieżek zapisu.
+- Parzystość obu edytorów: identyczne zachowanie w bazach pytań i w grze
+  dla tworzenia, edycji i wklejania; w obu widoczne informacje o limicie 17,
+  dozwolonych znakach z fontu 5×7 i pojemności finału 11. Odpowiedzi długości
+  11, 12 i 17 zachowują zapisany tekst do 17 znaków; finał skraca wyłącznie
+  wyświetlanie do 11 według obecnego algorytmu. Skrót nie zmienia ID,
+  dopasowania/trafienia ani punktów. Migracja obejmuje odpowiedzi baz i gier,
+  nie filtruje treści pytań według fontu.
 - Migracja danych obejmuje wielu różnych właścicieli, zachowuje ich ID gier
   i własność, jest idempotentna i nie zmienia poprawnych szkiców wyłącznie
   z powodu braków grywalności. Niejasny historyczny typ z czytelnymi pytaniami
