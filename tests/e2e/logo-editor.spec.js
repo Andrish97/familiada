@@ -1091,8 +1091,8 @@ for (const lang of ["en", "uk"]) {
     await context.addInitScript((l) => { try { localStorage.setItem("uiLang", l); } catch {} }, lang);
     await open(page);
     const rawKeys = () => page.evaluate(() => {
-      const txt = document.body.innerText + [...document.querySelectorAll("[title],[aria-label],[placeholder],[data-tip]")]
-        .map((e) => `${e.title} ${e.getAttribute("aria-label")} ${e.placeholder || ""} ${e.dataset.tip || ""}`).join(" ");
+      const txt = document.body.innerText + [...document.querySelectorAll("[title],[aria-label],[placeholder],[data-tip],[data-tooltip]")]
+        .map((e) => `${e.title} ${e.getAttribute("aria-label")} ${e.placeholder || ""} ${e.dataset.tip || ""} ${e.dataset.tooltip || ""}`).join(" ");
       return (txt.match(/logoEditor\.[\w.]+/g) || []).slice(0, 5);
     });
     expect(await rawKeys()).toEqual([]);
