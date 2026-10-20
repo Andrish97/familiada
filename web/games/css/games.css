@@ -416,6 +416,14 @@ body.games-body > main.wrap{
   padding: 5px;             /* drobny luz na scrollbar */
   -webkit-overflow-scrolling: touch;
 }
+/* Ramka przewijanej siatki jak lista pytań w edytorze gry (.listShell):
+   kafle chowają się pod zaokrągloną krawędzią z góry i z dołu (Gry, Bazy, Logo). */
+.games-shell .grid:not(.subsGrid){
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.03);
+  padding: 8px;
+}
 
 .addCard:hover{
   transform: translateY(-2px);

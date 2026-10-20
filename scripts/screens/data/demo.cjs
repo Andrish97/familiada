@@ -251,7 +251,12 @@ function buildDb(lang, extras = {}) {
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
     list_shared_bases_ext: [], base_declines_list_mine: [], bases_count_incoming_share_invites: 0,
     resource_copy_inbox_list: [], resource_copy_badges: [],
-    badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [],
+    badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [
+      { share_id: "00000000-0000-4000-9300-000000000001", device_type: "display", owner_username: "aleksandra_nowak", game_name: "Rodzinny pojedynek", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000002", device_type: "host", owner_username: "aleksandra_nowak", game_name: "Rodzinny pojedynek", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000003", device_type: "buzzer", owner_username: "jan_kowalski", game_name: "Wesele Ani i Tomka", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000004", device_type: "display", owner_username: "jan_kowalski", game_name: "Wesele Ani i Tomka", game_id: IDS.game, share_key: "demo-key" },
+    ],
     polls_vote_counts: voteCounts,
     // E21: dane podliczania (N pełnych ankiet, głosy pełnych ankiet, teksty już oczyszczone).
     poll_tally_source: `fn:(args, db) => {

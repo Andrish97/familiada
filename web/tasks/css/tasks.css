@@ -10,8 +10,12 @@
 body.games-body > main.wrap > .bar{
   margin-bottom: 14px;
 }
+/* ramka przewijanej listy jak w edytorze gry (.listShell) */
 .tasks-card .tasks-scroll{
-  padding: 2px 2px 12px;
+  padding: 8px 10px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.03);
 }
 .tasks-load-retry{ display:flex; justify-content:center; padding: 12px 0; }
 .tasks-card .rowsSection + .rowsSection{

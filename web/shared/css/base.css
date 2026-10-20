@@ -2937,8 +2937,10 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 .shareList--scroll:not([hidden]){ display: flex; flex-direction: column; }
 .shareList--scroll > *{ flex-shrink: 0; }
+/* ta sama ramka dla list w kartach (Connect: udostępnione urządzenia) */
+#sharedDevicesList{ padding: 8px; border-radius: 14px; border: 1px solid var(--line); background: rgba(0,0,0,.22); }
 /* pusta lista: sam kafel braku, bez drugiej ramki */
-.shareList--scroll:has(> :is(.shareEmpty, .share-empty-state):only-child){ padding: 0; border: 0; background: none; }
+:is(.shareList--scroll, #sharedDevicesList):has(> :is(.shareEmpty, .share-empty-state):only-child){ padding: 0; border: 0; background: none; }
 
 
 /* W zwykłym (nie arkuszowym) widoku modali udostępniania pusta sekcja listy
