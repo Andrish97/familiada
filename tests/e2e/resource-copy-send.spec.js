@@ -18,7 +18,7 @@ async function sendFromUi(page,path,selector,name,recipientId,{testInfo,captureS
  await dialog.locator(`input[value="${recipientId}"]`).check();
  if(captureScreenshots){for(const [label,width,height] of [['mobile',390,844],['desktop',1400,960],['landscape',844,390]]){await page.setViewportSize({width,height});await page.screenshot({path:testInfo.outputPath(`shot-resource-copy-send-${label}.png`),fullPage:true});}await page.setViewportSize({width:1400,height:960});}
  const response=page.waitForResponse(r=>r.url().endsWith('/_api/resource-send')&&r.request().method()==='POST');
- await dialog.locator('[data-send]').click();const result=await response;expect(result.status()).toBe(200);return result.json();
+ await dialog.locator('[data-send]').click();const result=await response;const body=await result.json().catch(()=>null);expect(result.status(),`[e2e-diag] resource-send: ${JSON.stringify(body)}`).toBe(200);return body;
 }
 test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',async({page,context,browser},testInfo)=>{
  test.setTimeout(240000);const name=`E2E-SEND-${Date.now()}`;let recipientContext,recipientPage,recipientId,senderId,previousFlag;const sourceGames=[],sourceLogos=[],receivedGames=[],receivedLogos=[];
