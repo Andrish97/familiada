@@ -212,6 +212,21 @@ zmiana zaznaczenia przełącza tylko klasy), `ui/list.js`, `ui/tree.js`,
 - Zrzuty: `scripts/screens` sceny `base-explorer`, `-trash`, `-menu`,
   `-filter` (atrapa obsługuje teraz filtr po osadzonej tabeli).
 
+**Cofanie i ponawianie (2026-10-20, lokalnie):** Ctrl+Z, Ctrl+Y i Ctrl+Shift+Z,
+przyciski „Cofnij”/„Ponów” w pasku (grupa Historia) i w menu tła. Jedna
+historia w pamięci karty (`history.js`, 50 kroków); każda operacja w
+`commands.js` zapisuje parę cofnij/ponów z danych zwróconych przez bazę:
+utworzenie i kopia cofają się do kosza (ponowienie = przywrócenie, te same
+id; nowa akcja po cofnięciu czyści taki wpis z kosza), usunięcie ↔ kosz,
+przeniesienie i kolejność przez `qb_restore_positions`, zmiana nazwy i edycja
+pytania przez wartość „przed”, tagi przez `qb_restore_tag_links`, usunięcie
+tagów przez `qb_restore_tags` (429). Trwałe usunięcie z kosza czyści
+historię. Nieudany krok (ktoś zmienił element) czyści historię z komunikatem.
+Także: dymek nie wisi po przebudowie listy (`tooltips.js`), kropki nie
+wchodzą nad nagłówek, kropki tagów obok nazwy (nie ucinane), lista wraca na
+górę po zmianie miejsca, szerokości kolumn po obrocie ekranu, etykiety grup
+paska po zmianie języka, otwarcie folderu z wyników kończy wyszukiwanie.
+
 
 1. **Szkielet bez zmiany zachowania:** `platform.js`, `actions/context.js`,
    `actions/run.js`, rejestr z obecnymi akcjami; pasek, menu i skróty

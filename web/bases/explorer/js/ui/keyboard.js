@@ -26,7 +26,7 @@ function shortcutsBlocked() {
 }
 
 export function wireKeyboard(state) {
-  const withShortcut = ACTIONS.filter((a) => a.shortcut);
+  const withShortcut = ACTIONS.filter((a) => a.shortcut || a.altShortcut);
 
   document.addEventListener("keydown", async (e) => {
     // otwarte menu kontekstowe zamyka Escape (zanim cokolwiek innego)
@@ -38,7 +38,8 @@ export function wireKeyboard(state) {
     }
     if (shortcutsBlocked()) return;
 
-    const action = withShortcut.find((a) => matchShortcut(e, a.shortcut));
+    const action = withShortcut.find((a) => (a.shortcut && matchShortcut(e, a.shortcut))
+      || (a.altShortcut && matchShortcut(e, a.altShortcut)));
     if (action) {
       e.preventDefault();
       // przytrzymany klawisz nie powtarza akcji (np. wiele kopii z Ctrl+V)

@@ -112,3 +112,10 @@ export function trashRestore(baseId, trashIds) {
 export function trashPurge(baseId, trashIds) {
   return call("qb_trash_purge", { p_base_id: baseId, p_trash_ids: trashIds ? ids(trashIds) : null });
 }
+
+// ===== Cofanie usunięcia tagów (migracja 429) =====
+
+// snapshot = wynik deleteTags: {tags, questionLinks, folderLinks}
+export function restoreTags(baseId, snapshot) {
+  return call("qb_restore_tags", { p_base_id: baseId, p_snapshot: snapshot || {} });
+}

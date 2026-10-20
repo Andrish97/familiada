@@ -4315,6 +4315,7 @@ const en = {
       clear: "Clear",
     },
     toolbar: {
+      groupHistory: "History",
       openPanel: "Open panel",
       groupCreate: "Create",
       newFolder: "New folder",
@@ -4373,6 +4374,8 @@ const en = {
       },
     },
     reasons: {
+      nothingToUndo: "Nothing to undo.",
+      nothingToRedo: "Nothing to redo.",
       trashEmpty: "The trash is empty.",
       readOnly: "You can only view this base.",
       notHere: "This action is not available in search and filter results.",
@@ -4489,7 +4492,13 @@ const en = {
       empty: "No items.",
       resizeColumn: "Drag to resize column",
     },
+    history: {
+      move: "Move",
+      tag: "Add tag",
+    },
     menu: {
+      undo: "Undo",
+      redo: "Redo",
       show: "Show",
       addTag: "Add tag…",
       editTag: "Edit tag…",
@@ -4518,6 +4527,7 @@ const en = {
       pollText: "Poll",
     },
     errors: {
+      historyFailed: "Could not undo or redo — something changed in the meantime. The undo history has been cleared.",
       missingBaseId: "Missing base identifier.",
       noAccess: "No access to this base.",
       loadFailed: "Failed to load the base (check console).",

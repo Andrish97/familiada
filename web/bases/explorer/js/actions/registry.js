@@ -12,6 +12,7 @@
 //   menu      cele menu kontekstowego: "root" | "cat" | "q" | "trash" | "trash-folder" | "tag" | "tags-bg" | "type"
 //   menuGroup kolejność grup w menu (separator między grupami)
 //   shortcut  { key: KeyboardEvent.code, mod?, shift?, alt? }
+//   altShortcut drugi skrót tej samej akcji (bez pokazywania w dymku)
 //   visible   (ctx) => bool — „ma sens tu” (nie → przycisk/pozycja znika)
 //   enabled   (ctx) => true | klucz powodu — „można teraz” (nie → szara,
 //             powód w dymku; ze skrótu ten sam powód jako komunikat)
@@ -37,6 +38,33 @@ const onItems = (ctx) => ctx.canEdit && !ctx.inTrash;
 const tagTargets = (ctx) => (ctx.target?.kind === "tag" && ctx.target.id ? [ctx.target.id] : ctx.tagSel);
 
 export const ACTIONS = [
+  // ===== Historia =====
+  {
+    id: "history.undo",
+    label: () => "baseExplorer.menu.undo",
+    icon: "undo",
+    toolbar: { act: "undo", group: "history" },
+    menu: ["root"], menuGroup: "history",
+    shortcut: { key: "KeyZ", mod: true },
+    visible: (ctx) => ctx.canEdit,
+    enabled: (ctx) => (ctx.canUndo ? true : `${R}nothingToUndo`),
+    run: (ctx) => cmd.undo(ctx.state),
+    errorKey: "baseExplorer.errors.historyFailed",
+  },
+  {
+    id: "history.redo",
+    label: () => "baseExplorer.menu.redo",
+    icon: "redo",
+    toolbar: { act: "redo", group: "history" },
+    menu: ["root"], menuGroup: "history",
+    shortcut: { key: "KeyY", mod: true },
+    altShortcut: { key: "KeyZ", mod: true, shift: true },
+    visible: (ctx) => ctx.canEdit,
+    enabled: (ctx) => (ctx.canRedo ? true : `${R}nothingToRedo`),
+    run: (ctx) => cmd.redo(ctx.state),
+    errorKey: "baseExplorer.errors.historyFailed",
+  },
+
   // ===== Tworzenie =====
   {
     id: "folder.create",
@@ -72,7 +100,7 @@ export const ACTIONS = [
     shortcut: { key: "Enter" },
     visible: (ctx) => !ctx.inTrash,
     enabled: (ctx) => (ctx.sel.one && ctx.sel.folderIds.length === 1 ? true : `${R}selectFolder`),
-    run: (ctx) => cmd.openFolder(ctx.state, ctx.sel.folderIds[0]),
+    run: (ctx) => cmd.openFolderFromList(ctx.state, ctx.sel.folderIds[0]),
     errorKey: "baseExplorer.errors.operationFailed",
   },
 
@@ -310,8 +338,8 @@ export const ACTIONS = [
   },
 ];
 
-export const MENU_GROUPS = ["open", "create", "clipboard", "tags", "edit", "game", "danger"];
-export const TOOLBAR_GROUPS = ["create", "edit", "clipboard", "game", "view"];
+export const MENU_GROUPS = ["open", "history", "create", "clipboard", "tags", "edit", "game", "danger"];
+export const TOOLBAR_GROUPS = ["history", "create", "edit", "clipboard", "game", "view"];
 
 const BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));
 export function actionById(id) {

@@ -4215,6 +4215,7 @@ const pl = {
       clear: "Wyczyść",
     },
     toolbar: {
+      groupHistory: "Historia",
       openPanel: "Otwórz panel",
       groupCreate: "Tworzenie",
       newFolder: "Nowy folder",
@@ -4273,6 +4274,8 @@ const pl = {
       },
     },
     reasons: {
+      nothingToUndo: "Nie ma czego cofnąć.",
+      nothingToRedo: "Nie ma czego ponowić.",
       trashEmpty: "Kosz jest pusty.",
       readOnly: "Masz tylko podgląd tej bazy.",
       notHere: "Tej akcji nie ma w wynikach wyszukiwania i filtrów.",
@@ -4389,7 +4392,13 @@ const pl = {
       empty: "Brak elementów.",
       resizeColumn: "Przeciągnij, aby zmienić szerokość kolumny",
     },
+    history: {
+      move: "Przenieś",
+      tag: "Nadaj tag",
+    },
     menu: {
+      undo: "Cofnij",
+      redo: "Ponów",
       show: "Pokaż",
       addTag: "Dodaj tag…",
       editTag: "Edytuj tag…",
@@ -4418,6 +4427,7 @@ const pl = {
       pollText: "Ankieta",
     },
     errors: {
+      historyFailed: "Nie udało się cofnąć ani ponowić — coś zmieniło się w międzyczasie. Historia cofania została wyczyszczona.",
       missingBaseId: "Brak identyfikatora bazy.",
       noAccess: "Brak dostępu do tej bazy.",
       loadFailed: "Nie udało się wczytać bazy (sprawdź konsolę).",

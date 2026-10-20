@@ -750,7 +750,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     // Zgłoszenie użytkownika: na dotyku tapnięcie w kropkę meta ("preparowane"/
     // "punktowane"/"typowe") pokazuje chmurkę, ale ta nigdy nie znika -- zostaje
     // przyklejona w miejscu tapnięcia niezależnie od tego, gdzie klika się
-    // później. Przyczyna: #dot-tooltip w actions.js chowa się WYŁĄCZNIE na
+    // później. Przyczyna (dawniej): #dot-tooltip w actions.js chowa się WYŁĄCZNIE na
     // "mouseout" konkretnej kropki -- prawdziwe urządzenia dotykowe nie
     // generują "mouseout" po odsunięciu palca ani "mousemove" po drodze
     // (tylko syntetyczny "mouseover" przy samym tapnięciu), więc chmurka
@@ -786,7 +786,8 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const dot = row.locator(".meta-dot").first();
       await expect(dot).toBeVisible({ timeout: 10000 });
 
-      const tip = page.locator(".dot-tooltip");
+      // jeden mechanizm dymków na całej stronie (shared/js/core/tooltips.js)
+      const tip = page.locator("#appTooltip");
       await expect(tip).toBeHidden();
 
       await dot.hover();
@@ -1785,7 +1786,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
     }
   });
 
-  test("treść pytania jest ograniczana do 200 znaków (ten sam limit co przy F2)", async ({ page, context }) => {
+  test("treść pytania jest ograniczana do 100 znaków (E21, ten sam limit co przy F2)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-QTXTLEN-${Date.now()}`);
@@ -1805,7 +1806,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
       const qText = page.locator("#qText");
       await qText.fill(long);
-      await expect(qText).toHaveValue("A".repeat(200), { timeout: 5000 });
+      await expect(qText).toHaveValue("A".repeat(100), { timeout: 5000 });
 
       await Promise.all([
         page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
@@ -1814,7 +1815,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
-      expect(fresh?.payload?.text?.length).toBeLessThanOrEqual(200);
+      expect(fresh?.payload?.text?.length).toBeLessThanOrEqual(100);
     } finally {
       await deleteBase(page, baseId);
     }
@@ -2280,7 +2281,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     }
   });
 
-  test("baza z mniej niż 10 pytaniami pokazuje błąd i nie pozwala na eksport", async ({ page, context }) => {
+  test("E21: jedno zaznaczone pytanie — okno otwiera się z tym jednym pytaniem, Utwórz dostępne (szkic)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-TOOFEW-${Date.now()}`);
@@ -2296,10 +2297,11 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       await row.click();
       await pressToolbarShortcut(page, "createGame", "Control+g");
 
+      // E21: liczba pytań nie blokuje, braki pokazuje podsumowanie
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#xErr")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#xErr")).toContainText("Potrzebujesz co najmniej", { timeout: 5000 });
-      await expect(page.locator("#xCreate")).toBeDisabled();
+      await expect(page.locator("#xCountVal")).toHaveText("1");
+      await expect(page.locator("#xCreate")).toBeEnabled();
+      await expect(page.locator("#xSummary")).toContainText("co najmniej 10 pytań");
     } finally {
       await deleteBase(page, baseId);
     }
@@ -2984,9 +2986,11 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       const listBox = await page.locator("#list").boundingBox();
       expect(listBox).toBeTruthy();
 
-      // #list musi kończyć się blisko dołu viewportu (mała tolerancja na
+      // #list musi kończyć się tuż nad stopką strony (mała tolerancja na
       // padding kontenera .explorer), a nie w połowie ekranu.
-      expect(listBox.y + listBox.height).toBeGreaterThan(800 - 40);
+      const footerBox = await page.locator("footer.footer").boundingBox();
+      const bottom = footerBox ? footerBox.y : 800;
+      expect(listBox.y + listBox.height).toBeGreaterThan(bottom - 40);
     } finally {
       await deleteBase(page, baseId);
     }
@@ -3263,6 +3267,121 @@ test.describe("base-explorer: kosz (E22)", () => {
       await expect(page.locator("#qText")).toHaveValue("reść");
       await expect(page.locator(".uni-modal")).toHaveCount(0);
       expect(await getQuestionRow(page, qid)).not.toBeNull();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: cofanie i ponawianie (E22)", () => {
+  test("usunięcie: Ctrl+Z przywraca z kosza, Ctrl+Y usuwa ponownie", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-UNDODEL-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do cofnięcia", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const undoBtn = page.locator('#toolbar button[data-act="undo"]');
+      const redoBtn = page.locator('#toolbar button[data-act="redo"]');
+      await expect(undoBtn).toBeDisabled({ timeout: 15000 });
+      await expect(redoBtn).toBeDisabled();
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await row.click();
+      await page.keyboard.press("Delete");
+      await confirmUniModal(page);
+      await expect(row).toBeHidden({ timeout: 10000 });
+      await expect(undoBtn).toBeEnabled();
+
+      await page.keyboard.press("Control+z");
+      await expect(row).toBeVisible({ timeout: 10000 });
+      expect(await listTrashRows(page, baseId)).toHaveLength(0);
+      await expect(redoBtn).toBeEnabled();
+
+      await page.keyboard.press("Control+y");
+      await expect(row).toBeHidden({ timeout: 10000 });
+      expect(await listTrashRows(page, baseId)).toHaveLength(1);
+
+      // Ctrl+Shift+Z to też „Ponów”: najpierw cofnij, potem ponów drugim skrótem
+      await page.keyboard.press("Control+z");
+      await expect(row).toBeVisible({ timeout: 10000 });
+      await page.keyboard.press("Control+Shift+z");
+      await expect(row).toBeHidden({ timeout: 10000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("przeniesienie (wytnij + wklej) i zmiana nazwy cofają się po kolei przyciskiem w pasku", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-UNDOMOVE-${Date.now()}`);
+
+    try {
+      const target = await createCategory(page, { baseId, name: "Cel", ord: 1 });
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Wędrowiec", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const qRow = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${target}"]`);
+      await qRow.click();
+      await pressToolbarShortcut(page, "cut", "Control+x");
+      // „Wklej” z menu folderu wkleja do niego (pasek wkleja do bieżącego)
+      await catRow.click({ button: "right" });
+      await page.locator(".context-menu .cm-item", { hasText: /^\s*Wklej/ }).click();
+      await expect(qRow).toBeHidden({ timeout: 10000 });
+      expect((await getQuestionRow(page, qid))?.category_id).toBe(target);
+
+      // zmiana nazwy folderu (F2)
+      await catRow.click();
+      await pressToolbarShortcut(page, "rename", "F2");
+      await page.locator("#renameModalInput").fill("Nowa nazwa");
+      await page.locator("#renameModalSave").click();
+      await expect(catRow).toContainText("Nowa nazwa", { timeout: 10000 });
+
+      const undoBtn = page.locator('#toolbar button[data-act="undo"]');
+      await undoBtn.click();
+      await expect(catRow).toContainText("Cel", { timeout: 10000 });
+      await undoBtn.click();
+      await expect(qRow).toBeVisible({ timeout: 10000 });
+      expect((await getQuestionRow(page, qid))?.category_id ?? null).toBeNull();
+      await expect(undoBtn).toBeDisabled();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("cofnięte utworzenie folderu: ponowienie przywraca ten sam folder, nowa akcja czyści go z kosza", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-UNDONEW-${Date.now()}`);
+
+    try {
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      await pressToolbarShortcut(page, "newFolder", "Control+Shift+n");
+      const folderRows = page.locator('#list .row[data-kind="cat"]');
+      await expect(folderRows).toHaveCount(1, { timeout: 10000 });
+      const id = await folderRows.first().getAttribute("data-id");
+
+      await page.keyboard.press("Control+z");
+      await expect(folderRows).toHaveCount(0, { timeout: 10000 });
+      await page.keyboard.press("Control+y");
+      await expect(page.locator(`#list .row[data-kind="cat"][data-id="${id}"]`)).toBeVisible({ timeout: 10000 });
+
+      // cofnij jeszcze raz i zrób coś nowego: ponowienie przepada, wpis kosza znika
+      await page.keyboard.press("Control+z");
+      await expect(folderRows).toHaveCount(0, { timeout: 10000 });
+      expect(await listTrashRows(page, baseId)).toHaveLength(1);
+      await pressToolbarShortcut(page, "newQuestion", "Control+n");
+      await expect(page.locator('#list .row[data-kind="q"]')).toHaveCount(1, { timeout: 10000 });
+      await expect.poll(() => listTrashRows(page, baseId).then((r) => r.length), { timeout: 10000 }).toBe(0);
+      await expect(page.locator('#toolbar button[data-act="redo"]')).toBeDisabled();
     } finally {
       await deleteBase(page, baseId);
     }

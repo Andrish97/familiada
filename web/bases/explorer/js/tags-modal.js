@@ -203,6 +203,7 @@ export async function openTagsModal(state, opts = {}) {
   // tagId: dla edit
   // selection: { qIds, cIds } – jeśli nie podasz, modal pokaże "Brak zaznaczenia" i zapis L1 nic nie zrobi
   // folderDescQIds: Map(folderId -> Set(qid)) (opcjonalnie) – jeśli chcesz, by foldery się rozwijały do pytań
+  // onLinks({ added, removed }) / onTagSaved({ id, before }, { name, color }) – zapis do historii cofania
   const mode = opts.mode || "assign";
   const editTagId = opts.tagId || null;
   const sel = opts.selection || { qIds: [], cIds: [] };
@@ -554,7 +555,8 @@ export async function openTagsModal(state, opts = {}) {
     const on = dirtyTagIds.filter((tid) => (m.tri.get(tid) || "none") === "all");
     const off = dirtyTagIds.filter((tid) => (m.tri.get(tid) || "none") === "none");
     try {
-      await ops.applyTagStates(state.baseId, { questionIds: allQIds }, { on, off });
+      const res = await ops.applyTagStates(state.baseId, { questionIds: allQIds }, { on, off });
+      opts.onLinks?.({ added: res?.added || [], removed: res?.removed || [] });
     } catch (e) {
       if (!e?.userMessage) throw e;
       showErr(E.assignErr, e.userMessage);
@@ -607,7 +609,8 @@ export async function openTagsModal(state, opts = {}) {
       return false;
     }
     try {
-      await ops.saveTag(state.baseId, editId, nameRaw, color);
+      const res = await ops.saveTag(state.baseId, editId, nameRaw, color);
+      opts.onTagSaved?.(res || {}, { name: nameRaw, color });
     } catch (e) {
       if (!e?.userMessage) throw e;
       showErr(E.editErr, e.userMessage);

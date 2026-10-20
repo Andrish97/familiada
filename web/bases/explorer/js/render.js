@@ -311,7 +311,7 @@ export const LIST_COLUMNS = [
   { key: "info", cls: "h-meta", labelKey: "baseExplorer.list.colInfo", width: 120, narrow: 100, min: 80, sort: "desc" },
 ];
 
-const isNarrow = () => typeof window !== "undefined" && window.matchMedia?.("(max-width: 900px)").matches;
+export const isNarrow = () => typeof window !== "undefined" && window.matchMedia?.("(max-width: 900px)").matches;
 const colsKey = () => (isNarrow() ? "base-explorer:cols:narrow:v4" : "base-explorer:cols:v4");
 
 function loadCols() {
@@ -393,8 +393,17 @@ export function currentListing(state) {
   return computeListing(state.store, state.d, { location: state.location, query: isTrash(state) ? {} : state.query });
 }
 
+// Przy zmianie miejsca lista wraca na górę (przewinięcie zostaje tylko
+// w obrębie tego samego folderu / zapytania).
+let shownPlace = "";
+
 export function renderList(state) {
   if (!elList) return;
+  const place = `${state.location.kind}:${state.location.folderId || ""}`;
+  if (place !== shownPlace) {
+    shownPlace = place;
+    elList.scrollTop = 0;
+  }
   const listing = currentListing(state);
   const items = sortItems(listItems(state, listing), state.sort);
   state.visibleListKeys = items.map((it) => keyOf(it.kind, it.id));
@@ -424,23 +433,26 @@ export function renderList(state) {
     const sel = isSelected(state, "list", key) ? " is-selected" : "";
     const cut = state.clipboard.mode === "cut" && state.clipboard.keys.has(key) ? " is-cut" : "";
     let title, type, info;
+    let dots = "";
     if (it.kind === "trash") {
       title = `${icon(it.isFolder ? "folder" : "file-doc", { className: "list-ico" })} ${esc(it.name)}`;
       type = esc(t(it.isFolder ? "baseExplorer.list.folderType" : "baseExplorer.list.questionType"));
       info = `<span class="tag ${it.info <= 3 ? "tag--warn" : "tag--muted"}">${esc(daysLeftText(it.info))}</span>`;
     } else if (it.kind === "cat") {
-      title = `${icon("folder", { className: "list-ico" })} ${esc(it.name)}${tagDotsHtml(state, state.d.folderTags(it.id))}`;
+      title = `${icon("folder", { className: "list-ico" })} ${esc(it.name)}`;
+      dots = tagDotsHtml(state, state.d.folderTags(it.id));
       type = `<span class="type-label">${esc(t("baseExplorer.list.folderType"))}</span>${typeDotHtml(it.type)}`;
       info = esc(t("baseExplorer.list.folderCount", { count: it.info }));
     } else {
-      title = `${esc(it.name)}${tagDotsHtml(state, state.d.tagsOfQuestion(it.id))}`;
+      title = esc(it.name);
+      dots = tagDotsHtml(state, state.d.tagsOfQuestion(it.id));
       type = `<span class="type-label">${esc(t("baseExplorer.list.questionType"))}</span>${typeDotHtml(it.type)}`;
       info = esc(t("baseExplorer.list.answerCount", { count: it.info }));
     }
     return `
       <tr class="row${sel}${cut}"${it.kind === "trash" ? "" : draggable} data-kind="${it.kind}" data-id="${esc(it.id)}" data-key="${esc(key)}">
         <td class="col-num">${i + 1}</td>
-        <td class="col-main"><div class="title-line"><span class="title-text">${title}</span></div></td>
+        <td class="col-main"><div class="title-line"><span class="title-text">${title}</span>${dots}</div></td>
         <td class="col-type">${type}</td>
         <td class="col-date">${esc(fmtDate(it.date))}</td>
         <td class="col-meta">${info}</td>

@@ -10,7 +10,8 @@ import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T19584
 import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T19584";
 import { createState, setRole, goTo } from "./state.js?v=v2026-10-20T19584";
 import { reload } from "./data/store.js?v=v2026-10-20T19584";
-import { renderAll } from "./render.js?v=v2026-10-20T19584";
+import { renderAll, renderToolbar, renderList, isNarrow } from "./render.js?v=v2026-10-20T19584";
+import { createHistory } from "./history.js?v=v2026-10-20T19584";
 import { getBaseMeta, getBaseRole } from "./repo.js?v=v2026-10-20T19584";
 import { openFolder, openTrash } from "./commands.js?v=v2026-10-20T19584";
 import { wireToolbarButtons } from "./ui/toolbar.js?v=v2026-10-20T19584";
@@ -78,6 +79,8 @@ function wireBreadcrumbs(state) {
   const state = createState({ baseId, role: "viewer" });
   state.user = user;
   state.userId = user.id;
+  // cofanie / ponawianie w pamięci karty; zmiana historii odświeża pasek
+  state.history = createHistory({ onChange: () => renderToolbar(state) });
 
   try {
     state.baseMeta = await getBaseMeta(baseId);
@@ -124,6 +127,13 @@ function wireBreadcrumbs(state) {
     wireKeyboard(state);
 
     window.addEventListener("i18n:lang", () => renderAll(state));
+    // telefon ↔ komputer (obrót, zmiana okna): inne szerokości kolumn
+    let narrow = isNarrow();
+    window.addEventListener("resize", () => {
+      if (isNarrow() === narrow) return;
+      narrow = isNarrow();
+      renderList(state);
+    });
     skeletonReady();
   } catch (e) {
     console.error(e);

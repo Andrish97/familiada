@@ -11,6 +11,7 @@ import { icon } from "../../../../shared/js/core/icons.js?v=v2026-10-20T19584";
 import { t } from "../../../../shared/translation/translation.js?v=v2026-10-20T19584";
 
 const GROUP_LABEL = {
+  history: "baseExplorer.toolbar.groupHistory",
   create: "baseExplorer.toolbar.groupCreate",
   edit: "baseExplorer.toolbar.groupEdit",
   clipboard: "baseExplorer.toolbar.groupClipboard",
@@ -58,8 +59,10 @@ export function updateToolbarButtons(root, state) {
     setAttr(btn, "data-tooltip", tip);
   });
 
-  // grupa bez widocznych przycisków znika razem ze swoim separatorem
+  // grupa bez widocznych przycisków znika razem ze swoim separatorem;
+  // etykieta grupy w bieżącym języku (szkielet paska powstaje raz)
   root.querySelectorAll(".tbGroup[data-group]").forEach((group) => {
+    setAttr(group, "aria-label", t(GROUP_LABEL[group.dataset.group] || ""));
     const empty = !group.querySelector("button[data-action]:not([hidden])");
     group.hidden = empty;
     const sep = group.previousElementSibling;

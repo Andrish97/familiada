@@ -5,7 +5,7 @@
 
 import { selectionClear, selectionSetSingle, selectionToggle, selectionRange, setSort } from "../state.js?v=v2026-10-20T19584";
 import { renderList, renderSelection, LIST_COLUMNS } from "../render.js?v=v2026-10-20T19584";
-import { openFolder, editQuestion } from "../commands.js?v=v2026-10-20T19584";
+import { openFolderFromList, editQuestion } from "../commands.js?v=v2026-10-20T19584";
 import { showContextMenu } from "../context-menu.js?v=v2026-10-20T19584";
 import { attachMarquee } from "./marquee.js?v=v2026-10-20T19584";
 import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-20T19584";
@@ -60,7 +60,7 @@ export function wireList(state) {
   async function open(row) {
     if (!row) return;
     const { kind, id } = row.dataset;
-    if (kind === "cat") await openFolder(state, id);
+    if (kind === "cat") await openFolderFromList(state, id);
     else if (kind === "q" && state.canEdit) await editQuestion(state, id);
   }
   listEl.addEventListener("dblclick", (e) => open(e.target.closest(ROW)));

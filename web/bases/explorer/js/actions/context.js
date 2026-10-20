@@ -56,5 +56,7 @@ export function buildContext(state, { source = "toolbar", target = null } = {}) 
     tagSel: [...(state?.query?.tagIds || [])],
     typeSel: [...(state?.query?.types || [])],
     trashEmpty: !(state?.store?.trash || []).length,
+    canUndo: !!state?.history?.info().canUndo,
+    canRedo: !!state?.history?.info().canRedo,
   };
 }

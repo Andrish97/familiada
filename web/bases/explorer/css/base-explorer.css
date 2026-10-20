@@ -1107,12 +1107,6 @@ tr.row.is-drop-after td:last-child::after {
     background: rgba(255,255,255,.55);
 }
 
-/* ── z-index for tooltips ── */
-.meta-dot,.tag-dot {
-    position: relative;
-    z-index: 5;
-}
-
 .tbGroup,.toolbar {
     display: flex;
     align-items: center
@@ -1462,12 +1456,6 @@ tr.row.is-drop-after td:last-child::after {
    przewija się sama lista, "Zapisz" zostaje widoczne */
 .qAnswersBlock .qf-listShell {
     max-height: min(540px, 48vh)
-}
-
-/* Tooltipy kropek: gdy hover na kropce, podnieś wiersz ponad sticky header */
-.row:has(.meta-dot[data-tip]:hover),
-.row:has(.tag-dot[data-tip]:hover){
-  z-index: 10;
 }
 
 .explorer .explorer-left .left-sep{
