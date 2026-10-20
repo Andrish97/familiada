@@ -174,6 +174,16 @@ pozostają zamknięte; ta lista opisuje nowe doprecyzowania.
 
 ## 6. Decyzje użytkownika (do 2026-10-10)
 
+**2026-10-20 — subskrybent z kontem:** subskrypcja znika, gdy osoba przyjmie
+znajomość (już tak działa: `_friend_accept_cleanup` usuwa subskrypcję i
+przepina jej zadania na znajomość). Usunięcie w Subskrybentach **nie kasuje**
+propozycji znajomości, ale kasuje wszystkie czekające zadania tej osoby od
+właściciela — migracja 424 (`polls_hub_subscriber_remove` odpina oczekującą
+propozycję od subskrypcji przed anulowaniem; test
+`tests/sql/subscriber-remove-424.sql`). Osobny tekst potwierdzenia
+`contacts.confirm.removeSubscriber`. Dodanie adresu z kontem do subskrybentów
+nadal blokowane (`has_account`).
+
 Model (z `ujednolicenie-wygladu.md`, E19):
 - **Trzy osobne strony**: `/friends/` (Znajomi — konta, dwustronnie),
   `/subscribers/` (Subskrybenci — tylko e-mail bez konta, jednostronnie, tylko

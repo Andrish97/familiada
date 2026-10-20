@@ -5243,7 +5243,8 @@ const en = {
     "confirm": {
         "reject": "Decline this invitation?",
         "cancel": "Withdraw this invitation?",
-        "remove": "Remove this person? Pending invitations and tasks will be deleted. Accepted bases and devices remain — you can revoke them separately."
+        "remove": "Remove this person? Pending invitations and tasks will be deleted. Accepted bases and devices remain — you can revoke them separately.",
+        "removeSubscriber": "Remove this subscriber? Their pending tasks from you will be deleted. A friend invitation, if they received one, stays."
     },
     "errors": {
         "alreadyFriend": "This person is already your friend.",

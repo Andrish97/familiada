@@ -5151,7 +5151,8 @@ const pl = {
     "confirm": {
         "reject": "Odrzucić zaproszenie?",
         "cancel": "Cofnąć zaproszenie?",
-        "remove": "Usunąć tę osobę? Oczekujące zaproszenia i zadania zostaną usunięte. Przyjęte bazy i urządzenia zostają — można je cofnąć osobno."
+        "remove": "Usunąć tę osobę? Oczekujące zaproszenia i zadania zostaną usunięte. Przyjęte bazy i urządzenia zostają — można je cofnąć osobno.",
+        "removeSubscriber": "Usunąć tego subskrybenta? Jego oczekujące zadania od Ciebie zostaną usunięte. Zaproszenie do znajomych, jeśli je dostał, zostaje."
     },
     "errors": {
         "alreadyFriend": "Ta osoba jest już Twoim znajomym.",
