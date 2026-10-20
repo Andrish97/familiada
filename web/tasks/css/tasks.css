@@ -17,6 +17,9 @@ body.games-body > main.wrap > .bar{
   border: 1px solid var(--line);
   background: rgba(255,255,255,.03);
 }
+@media (max-width: 720px){
+  .tasks-card .tasks-scroll{ border: 0; background: none; padding: 2px 2px 12px; }
+}
 .tasks-load-retry{ display:flex; justify-content:center; padding: 12px 0; }
 .tasks-card .rowsSection + .rowsSection{
   margin-top: 24px;

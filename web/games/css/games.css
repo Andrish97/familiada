@@ -424,6 +424,11 @@ body.games-body > main.wrap{
   background: rgba(255,255,255,.03);
   padding: 8px;
 }
+/* Telefon: bez ramki i wcięcia (lista na pełną szerokość); zostaje samo
+   zaokrąglone przycinanie przewijanych kafli. */
+@media (max-width: 720px){
+  .games-shell .grid:not(.subsGrid){ border: 0; background: none; padding: 5px; }
+}
 
 .addCard:hover{
   transform: translateY(-2px);

@@ -65,6 +65,11 @@ podliczania jako stan bieżącej operacji.
   podtytuły Gier/Logo/Baz w HTML, Connect przed sesją; Społeczność bez
   „Ładowanie…” przy pierwszym odczycie. Taśmy ładowania: atrapa zrzutów
   z `db.latency`.
+- **Ramka przewijanych list (decyzja użytkownika 2026-10-20):** na komputerze
+  przewijane listy (Gry, Bazy, Logo, Zadania, Mails, Connect) mają ramkę jak
+  lista pytań w edytorze gry (18 px; listy w kartach 14 px). Na telefonie bez
+  ramki i dodatkowego wcięcia — lista na pełną szerokość, zostaje samo
+  zaokrąglone przycinanie przewijanych kafli.
 - **Wiersze list w jednej linii (uwaga użytkownika 2026-10-20, zrobione na branchu):**
   gdy nazwa, e-mail, znaczniki i przyciski mieszczą się w jednej linii
   wiersza (Znajomi i pozostałe listy), układać je w jednej linii; łamać pod
