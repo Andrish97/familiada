@@ -688,7 +688,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
 
       // ktoś inny (tu: sam właściciel) z tym samym linkiem
       await page.goto(`/go/?b=${token}`, { waitUntil: "domcontentloaded" });
-      await expect(page.locator("#message")).toContainText("innego konta", { timeout: 15000 });
+      await expect(page.locator("#message")).toContainText("nie jest odbiorcą zaproszenia", { timeout: 15000 });
 
       // cofnięte zaproszenie
       await page.evaluate(async (baseId) => {
