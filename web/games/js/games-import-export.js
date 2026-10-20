@@ -1,7 +1,7 @@
 // js/pages/games-import-export.js
-import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-20T19295";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T19295";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-20T19295";
+import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-20T19410";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T19410";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-20T19410";
 
 
 /* =========================================================
