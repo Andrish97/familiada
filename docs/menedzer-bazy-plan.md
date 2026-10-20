@@ -52,6 +52,14 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     (pozycja, chowanie, telefon). **Decyzja: dymki ujednolicić** — jeden
     mechanizm (`shared/js/core/tooltips.js`) zamiast osobnego
     `.dot-tooltip` menedżera.
+  - **#tag w wyszukiwarce → tabletka (zgłoszenie 2026-10-20, błąd):**
+    zamiana działa tylko na `keydown` spacji/przecinka/Entera i tylko dla
+    pełnej, dokładnej nazwy. Test lokalny (kod `main` i branch): komputer —
+    działa po spacji/Enterze (zostawia spację w polu); telefon (klawiatura
+    ekranowa, `keydown` = „Unidentified”) — **nigdy nie działa**. Naprawa:
+    rozpoznawanie w zdarzeniu `input` (każda klawiatura), podpowiedzi
+    pasujących tagów po wpisaniu `#`, wybór stuknięciem/Enterem, bez
+    pozostawiania spacji; test e2e na komputer i telefon.
   - **Tabela listy:** przeanalizować i ujednolicić szerokości kolumn
     (dziś niespójne) oraz sortowanie klikiem w nagłówek (dziś kilka
     nałożonych warunków). Jedna definicja kolumn (szerokość, porównanie,
