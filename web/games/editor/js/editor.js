@@ -3,27 +3,27 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T04553";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T04553";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T04553";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-20T04553";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T04553";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T06020";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T06020";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T06020";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-20T06020";
+import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T06020";
 
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-20T04553";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T04553";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T04553";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-20T04553";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T04553";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-20T04553";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T04553";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-20T04553";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T04553";
-import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-20T04553";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T04553";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-20T06020";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T06020";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T06020";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-20T06020";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T06020";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-20T06020";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T06020";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-20T06020";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T06020";
+import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-20T06020";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T06020";
 
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 

@@ -5,10 +5,10 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-20T04553";
-import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-20T04553";
-import { rt } from "./realtime.js?v=v2026-10-20T04553";
-import { icon } from "./icons.js?v=v2026-10-20T04553";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-20T06020";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-20T06020";
+import { rt } from "./realtime.js?v=v2026-10-20T06020";
+import { icon } from "./icons.js?v=v2026-10-20T06020";
 
 
 const TAB_ID_KEY = "familiada:tabId";

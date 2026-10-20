@@ -1,4 +1,4 @@
-// Version: v2026-10-20T04553
+// Version: v2026-10-20T06020
 // sw.js – minimalny Service Worker (tylko instalacja PWA, bez offline cache)
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
