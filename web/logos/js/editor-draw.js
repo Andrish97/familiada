@@ -2,12 +2,16 @@
 // Strona /logos/editor/draw/?id=<logo> -- edytor trybu DRAW (editor-page.js).
 
 import { initDrawEditor } from "./draw.js?v=v2026-10-19T22415";
+import { initI18n } from "/shared/translation/translation.js?v=v2026-10-19T22415";
 
 
 // The admin screenshot preview runs the real Fabric runtime but keeps the
 // editor inert: it supplies fixture data itself and must never read or save a
 // user's logo.
 if (new URLSearchParams(location.search).has("screenshotPreview")) {
+  // Keep the same translation and tool-font initialization as the regular
+  // editor page while still bypassing account/database state for fixtures.
+  await initI18n({ withSwitcher: false });
   let screenshotEditor = null;
   window.__familiadaScreenshotRenderLogo = async payload => {
     const host = document.getElementById("drawStageHost");
@@ -32,6 +36,7 @@ if (new URLSearchParams(location.search).has("screenshotPreview")) {
     await screenshotEditor.open(payload || null);
     await document.fonts?.ready;
     screenshotEditor.selectTool("BRUSH");
+    window.__drawFabric?.requestRenderAll();
     await new Promise(resolve => requestAnimationFrame(resolve));
   };
 } else {

@@ -93,7 +93,7 @@ export function isSettingsAsset(pathname) {
     || isSharedAssetPath(pathname)
     || ["/manifest-admin.webmanifest", "/settings/sw.js"].includes(pathname)
     || pathname.startsWith("/settings/icons/")
-    || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/games/editor/css/", "/bases/css/", "/bases/explorer/css/", "/friends/css/", "/subscribers/css/", "/tasks/css/", "/polls/css/", "/logos/css/", "/logos/js/", "/control/css/", "/control/js/", "/control/display/css/", "/control/display/js/", "/control/host/css/", "/control/host/js/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
+    || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/games/editor/css/", "/bases/css/", "/bases/explorer/css/", "/friends/css/", "/subscribers/css/", "/tasks/css/", "/polls/css/", "/logos/css/", "/logos/js/", "/logos/data/", "/control/css/", "/control/js/", "/control/display/css/", "/control/display/js/", "/control/host/css/", "/control/host/js/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
 }
 
 export function isCommonAsset(pathname) {
