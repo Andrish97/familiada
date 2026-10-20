@@ -722,8 +722,25 @@ async function main() {
     observeRealtimeState("display_completion", status);
     if (completionRealtimeConnected) void refreshDisplayCompletion();
   });
+  // Kanał na żywo bywa połączony, a pojedyncze potwierdzenie i tak przepada.
+  // Gdy Control czeka dłużej niż 3 s (albo dłużej niż przewidziany czas
+  // animacji), sprawdza potwierdzenie w bazie co sekundę.
+  let lastStaleCompletionReadAt = 0;
+  function completionWaitIsStale() {
+    if (!waitingForDisplay()) return false;
+    const nowMs = performance.now();
+    for (const item of displayCompletionTimes.values()) {
+      if (item.completedAt != null) continue;
+      if (nowMs - item.requestedAt > Math.max(3000, (item.expectedMs || 0) + 1000)) return true;
+    }
+    return false;
+  }
   setInterval(() => {
-    if (!completionRealtimeConnected) void refreshDisplayCompletion();
+    if (!completionRealtimeConnected) { void refreshDisplayCompletion(); return; }
+    if (completionWaitIsStale() && performance.now() - lastStaleCompletionReadAt >= 1000) {
+      lastStaleCompletionReadAt = performance.now();
+      void refreshDisplayCompletion();
+    }
   }, 500);
   function refreshPendingDisplayCompletionOnResume() {
     if (document.visibilityState === "hidden") return;

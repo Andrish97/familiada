@@ -5604,7 +5604,7 @@ function buildSessionRunDetails(r) {
           return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle (animacja i potwierdzenie czekały na jej powrót)" : ""}.` };
         }
         if (metrics.reason === "late_ack") {
-          return { title: "Spóźnione potwierdzenie planszy", detail: `Display potwierdził zmianę po ${formatDuration(metrics.actual_ms)} (oczekiwano ${formatDuration(metrics.expected_ms)}); do tego czasu akcje Control były zablokowane${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle" : ""}.` };
+          return { title: "Spóźnione potwierdzenie planszy", detail: `Display potwierdził zmianę po ${formatDuration(metrics.actual_ms)} (oczekiwano ${formatDuration(metrics.expected_ms)}); do tego czasu akcje Control były zablokowane${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle" : ""}${metrics.ack_source === "fallback_read" ? " · potwierdzenie odczytane z bazy (kanał na żywo go nie dostarczył)" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",
