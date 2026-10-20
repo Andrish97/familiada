@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict JqRXzlZd1Uq0d5kVvxa5jIGTvIeAKa2Aj5cbNYaUaofkZowjIsK9MdVd1KqVigs
+\restrict r8dcGKelcTdSMUm8w3EoQs0a2DybrIjBLYnJR7VuIi0JC2n1fCCbIo1MfzdIb7p
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9749,6 +9749,52 @@ $$;
 
 
 --
+-- Name: get_admin_snake_stats(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_admin_snake_stats"() RETURNS "jsonb"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  WITH ev AS (
+    SELECT e.*, (e.created_at AT TIME ZONE 'Europe/Warsaw')::date AS day
+    FROM public.snake_events e
+    WHERE e.visitor NOT LIKE 'e2e-%'
+      AND (e.user_id IS NULL OR e.user_id NOT IN (SELECT user_id FROM public.stats_exclusions_effective))
+  ), today AS (SELECT (now() AT TIME ZONE 'Europe/Warsaw')::date AS d),
+  kinds AS (
+    SELECT k.kind, jsonb_build_object(
+      'total', count(ev.id),
+      'today', count(ev.id) FILTER (WHERE ev.day = (SELECT d FROM today)),
+      'last_7d', count(ev.id) FILTER (WHERE ev.day > (SELECT d FROM today) - 7),
+      'visitors', count(DISTINCT ev.visitor)) AS v
+    FROM unnest(ARRAY['scan','enter','start','finish']) AS k(kind)
+    LEFT JOIN ev ON ev.kind = k.kind
+    GROUP BY k.kind
+  ), days AS (
+    SELECT g.d::date AS day FROM generate_series((SELECT d FROM today) - 13, (SELECT d FROM today), interval '1 day') AS g(d)
+  )
+  SELECT jsonb_build_object(
+    'kinds', (SELECT jsonb_object_agg(kind, v) FROM kinds),
+    'scores', (SELECT jsonb_build_object('max', coalesce(max(score), 0), 'avg', coalesce(round(avg(score), 1), 0))
+               FROM ev WHERE kind = 'finish'),
+    'players', (SELECT count(*) FROM public.snake_progress sp
+                WHERE sp.user_id NOT IN (SELECT user_id FROM public.stats_exclusions_effective)),
+    'top', (SELECT coalesce(jsonb_agg(t ORDER BY t.best DESC, t.best_at), '[]'::jsonb) FROM (
+              SELECT p.username, sp.best_score AS best, sp.games, sp.best_at
+              FROM public.snake_progress sp JOIN public.profiles p ON p.id = sp.user_id
+              WHERE sp.user_id NOT IN (SELECT user_id FROM public.stats_exclusions_effective)
+              ORDER BY sp.best_score DESC, sp.best_at LIMIT 10) t),
+    'daily', (SELECT jsonb_agg(jsonb_build_object('day', days.day,
+                'scan', (SELECT count(*) FROM ev WHERE ev.day = days.day AND kind = 'scan'),
+                'enter', (SELECT count(*) FROM ev WHERE ev.day = days.day AND kind = 'enter'),
+                'start', (SELECT count(*) FROM ev WHERE ev.day = days.day AND kind = 'start')) ORDER BY days.day)
+              FROM days)
+  );
+$$;
+
+
+--
 -- Name: get_admin_stats(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -17908,6 +17954,54 @@ $$;
 
 
 --
+-- Name: snake_log("text", "text", integer, "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."snake_log"("p_kind" "text", "p_visitor" "text", "p_score" integer DEFAULT NULL::integer, "p_lang" "text" DEFAULT NULL::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_score integer;
+  v_row public.snake_progress;
+BEGIN
+  IF p_kind NOT IN ('scan','enter','start','finish') OR coalesce(p_visitor, '') !~ '^[A-Za-z0-9_-]{8,64}$' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalid');
+  END IF;
+  IF (SELECT count(*) FROM public.snake_events
+      WHERE visitor = p_visitor AND created_at > now() - interval '10 minutes') >= 120 THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'rate_limited');
+  END IF;
+  IF v_uid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = v_uid) THEN
+    v_uid := NULL;
+  END IF;
+  v_score := CASE WHEN p_kind = 'finish' THEN least(greatest(coalesce(p_score, 0), 0), 300) END;
+  INSERT INTO public.snake_events (kind, visitor, user_id, score, lang)
+  VALUES (p_kind, p_visitor, v_uid, v_score, CASE WHEN p_lang IN ('pl','en','uk') THEN p_lang END);
+
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', true);
+  END IF;
+  IF p_kind = 'finish' THEN
+    INSERT INTO public.snake_progress AS sp (user_id, best_score, games, total_score, best_at)
+    VALUES (v_uid, v_score, 1, v_score, now())
+    ON CONFLICT (user_id) DO UPDATE SET
+      games = sp.games + 1,
+      total_score = sp.total_score + EXCLUDED.total_score,
+      best_at = CASE WHEN EXCLUDED.best_score > sp.best_score THEN now() ELSE sp.best_at END,
+      best_score = greatest(sp.best_score, EXCLUDED.best_score),
+      updated_at = now()
+    RETURNING * INTO v_row;
+  ELSE
+    SELECT * INTO v_row FROM public.snake_progress WHERE user_id = v_uid;
+  END IF;
+  RETURN jsonb_build_object('ok', true, 'best', coalesce(v_row.best_score, 0), 'games', coalesce(v_row.games, 0));
+END;
+$_$;
+
+
+--
 -- Name: stats_exclude_user("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -20295,6 +20389,53 @@ CREATE TABLE "public"."site_activity_hours" (
 
 
 --
+-- Name: snake_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."snake_events" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "kind" "text" NOT NULL,
+    "visitor" "text" NOT NULL,
+    "user_id" "uuid",
+    "score" integer,
+    "lang" "text",
+    CONSTRAINT "snake_events_kind_check" CHECK (("kind" = ANY (ARRAY['scan'::"text", 'enter'::"text", 'start'::"text", 'finish'::"text"]))),
+    CONSTRAINT "snake_events_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
+    CONSTRAINT "snake_events_score_check" CHECK ((("score" >= 0) AND ("score" <= 300))),
+    CONSTRAINT "snake_events_visitor_check" CHECK (("visitor" ~ '^[A-Za-z0-9_-]{8,64}$'::"text"))
+);
+
+
+--
+-- Name: snake_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."snake_events" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME "public"."snake_events_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: snake_progress; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."snake_progress" (
+    "user_id" "uuid" NOT NULL,
+    "best_score" integer DEFAULT 0 NOT NULL,
+    "games" integer DEFAULT 0 NOT NULL,
+    "total_score" bigint DEFAULT 0 NOT NULL,
+    "best_at" timestamp with time zone,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: stats_excluded_users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -21383,6 +21524,22 @@ ALTER TABLE ONLY "public"."site_activity"
 
 
 --
+-- Name: snake_events snake_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."snake_events"
+    ADD CONSTRAINT "snake_events_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: snake_progress snake_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."snake_progress"
+    ADD CONSTRAINT "snake_progress_pkey" PRIMARY KEY ("user_id");
+
+
+--
 -- Name: stats_excluded_users stats_excluded_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -22366,6 +22523,20 @@ CREATE INDEX "resource_copy_history_retention" ON "public"."resource_copy_histor
 --
 
 CREATE INDEX "site_activity_seen_idx" ON "public"."site_activity" USING "btree" ("last_seen_at");
+
+
+--
+-- Name: snake_events_created_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "snake_events_created_idx" ON "public"."snake_events" USING "btree" ("created_at");
+
+
+--
+-- Name: snake_events_visitor_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "snake_events_visitor_idx" ON "public"."snake_events" USING "btree" ("visitor", "created_at");
 
 
 --
@@ -24267,6 +24438,22 @@ ALTER TABLE ONLY "public"."site_activity"
 
 
 --
+-- Name: snake_events snake_events_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."snake_events"
+    ADD CONSTRAINT "snake_events_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: snake_progress snake_progress_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."snake_progress"
+    ADD CONSTRAINT "snake_progress_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: stats_excluded_users stats_excluded_users_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -25657,6 +25844,18 @@ ALTER TABLE "public"."site_activity" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."site_activity_hours" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: snake_events; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."snake_events" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: snake_progress; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."snake_progress" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: storage_cleanup_queue; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -25767,5 +25966,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JqRXzlZd1Uq0d5kVvxa5jIGTvIeAKa2Aj5cbNYaUaofkZowjIsK9MdVd1KqVigs
+\unrestrict r8dcGKelcTdSMUm8w3EoQs0a2DybrIjBLYnJR7VuIi0JC2n1fCCbIo1MfzdIb7p
 
