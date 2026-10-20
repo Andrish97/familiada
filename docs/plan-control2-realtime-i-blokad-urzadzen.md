@@ -6,6 +6,49 @@
 
 **Środowisko wdrożenia:** jedna produkcyjna baza. Branch daje osobny kod do testów E2E, nie osobną bazę. Testy muszą używać przeznaczonych do tego kont i tworzonych przez nie gier/sesji w produkcyjnej bazie, po czym sprawdzać zapis i sprzątać dane zgodnie z workflow. Nie ma osobnej piaskownicy Supabase.
 
+## Atomowy stan urządzeń (decyzja użytkownika 2026-10-20)
+
+Cel: stan urządzeń i odblokowania dźwięku ma być spójny także przy słabszym
+łączu i karcie w tle. Zachowanie dla użytkownika bez zmian; front może się
+zmienić, zgodność ze starym klientem nie jest wymagana.
+
+Stan przed zmianą: Control co 750 ms robił trzy osobne odczyty
+(`device_presence`, `display_audio_unlock`, `control_device_slots_for_owner`) i
+sklejał je u siebie; każde urządzenie co 3 s wysyłało dwa sygnały życia
+(`device_ping` i heartbeat lease); Wyświetlacz przy starcie rejestrował sesję
+dźwięku (`begin_display_audio_session`), a odblokowanie opierało się na nonce
+żądania/potwierdzenia i Broadcastach. Wyścigi tych kroków dawały m.in. zbędne
+żądania gestu po powrocie Control i brak przycisku po przeładowaniu Wyświetlacza.
+
+Decyzje:
+
+1. **Odblokowanie dźwięku jest cechą instancji Wyświetlacza w lease**
+   (`control_device_connections.audio_unlocked`). Ustawia je heartbeat głównej
+   instancji (`p_meta.audio_unlocked`) z fencingiem `connection_id`/`epoch`.
+   Nowa instancja (przeładowanie, inne urządzenie, promocja) zaczyna od `false`,
+   więc stare odblokowanie nie może się „przenieść”. Znika rejestracja sesji
+   dźwięku, nonce, żądania Control i Broadcasty `audio_unlock_*`.
+2. **Wyświetlacz sam wie, czy może grać**: przycisk jest widoczny, gdy dźwięk
+   gra z Wyświetlacza, a ta instancja nie ma działającego odblokowania (także po
+   wstrzymaniu dźwięku przez przeglądarkę — wtedy heartbeat zgłasza `false`).
+   Po geście natychmiastowy heartbeat; nieudany zapis ponawia każdy kolejny
+   heartbeat, bez nowego gestu.
+3. **Control czyta jedną migawkę**: `control_devices_snapshot(game_id)` (jedno
+   zapytanie SQL `STABLE`, jedna migawka bazy) zwraca dla każdego typu lease
+   (główna instancja online, liczba oczekujących), widoczność, postęp i dla
+   Wyświetlacza `audio_unlocked` głównej instancji. Control blokuje grę przy
+   dźwięku z Wyświetlacza, dopóki główny Wyświetlacz nie ma odblokowania.
+4. **Jeden sygnał życia urządzenia**: heartbeat lease zapisuje też
+   `device_presence` (statystyki, aktywność serwisowa) i metadane diagnostyczne;
+   klienci nie wywołują już `device_ping`.
+5. **Karta w tle**: takt heartbeatu pochodzi z Web Workera (timery wątku
+   głównego w ukrytej karcie przeglądarka spowalnia nawet do 1/min), a
+   `visibilitychange`/`pageshow`/`online` wysyłają heartbeat od razu.
+6. Wdrożenie: najpierw migracja dodająca (nowe kolumny/funkcje, stare RPC
+   nietknięte) → testy kodu brancha na produkcyjnej bazie → Pages → testy
+   kontrolne; usunięcie starych RPC i tabeli `display_audio_unlock` osobną
+   migracją po wdrożeniu kodu.
+
 ## Cel
 
 Przyspieszyć i uodpornić synchronizację Control v2, bez zmiany sposobu łączenia dla użytkownika: nadal wybiera urządzenie, wpisuje sześciocyfrowy kod albo otwiera link.
