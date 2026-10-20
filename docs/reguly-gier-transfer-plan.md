@@ -1151,6 +1151,12 @@ Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
   ✓/⚠ z numerami pytań, które warunku nie spełniają; preparowana dodatkowo
   „Każda odpowiedź co najmniej 4 pkt” (kafel pytania i pole punktów
   oznaczone), punktowa — informacja, że punkty policzy ankieta.
+- **Ładna naprawa (411):** pytania >100 cięte na ostatniej spacji (≥60%
+  limitu), bez wiszącego , ; : - na końcu, „?” zachowany; stare długie
+  odpowiedzi baz demo (546, 21 tekstów) zastąpione krótkimi wersjami
+  szablonu z migracji 298 zamiast ucinania.
+- **Odczyt produkcji bez migracji:** `db-read.yml` — wynik tylko liczby,
+  bool, UUID, daty (repo publiczne).
 - **Demo:** każda gra demo zgodna z regułami swojego typu (migracja 409).
   Szablony od razu: preparowana bez odpowiedzi <4 pkt (bez dopisywania
   punktów; suma ≤100, każde pytanie 5–6 odpowiedzi); otwarte ankiety
