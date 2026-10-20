@@ -4,7 +4,9 @@
 --    "meta"; zgodność pilnuje tests/unit/answerText.test.js) i ta sama reguła
 --    co fonts.js:hasDisplayGlyph (NFC, jednoznakowa wielka litera).
 -- 2. game_rules_compute: pełna lista braków (readiness), preparowana wymaga
---    min. 4 pkt na odpowiedź, akcja change_type = edit.
+--    min. 4 pkt na odpowiedź, akcja change_type = edit; transfer: export =
+--    duplicate (także otwarta/zatrzymana ankieta jako szkic, drops_votes),
+--    send tylko szkice, market bez transferu.
 -- 3. Aktywna rozgrywka Control (sesja runtime niewygasła: godzina od ostatniej
 --    aktywności operatora) blokuje edycję, reset, zmianę typu i zapis treści.
 -- 4. Reset przy edycji = pełny reset ankiety (głosy, wpisy, sesje, zaproszenia,
@@ -99,6 +101,7 @@ declare
   v_poll_entry jsonb;
   v_poll_open jsonb;
   v_export jsonb;
+  v_send jsonb;
   v_poll_stop jsonb;
   v_poll_resume jsonb;
 begin
@@ -180,9 +183,20 @@ begin
     else v_content_poll
   end;
 
+  -- Transfer (plik, Powiel): trzy typy źródłowe w każdym stanie; otwarta/
+  -- zatrzymana ankieta przechodzi jako szkic bez bieżących głosów (drops_votes
+  -- -- UI ostrzega). Kopia market -- żadnego transferu. Wyślij: tylko szkice
+  -- (preparowana zawsze jest szkicem treści), bez zamkniętych ankiet.
   v_export := case
-    when p_status = 'poll_open' then jsonb_build_object('ok', false, 'code', 'pollOpenNoExport')
-    when p_status = 'poll_stopped' then jsonb_build_object('ok', false, 'code', 'pollStoppedNoExport')
+    when p_type = 'market' then jsonb_build_object('ok', false, 'code', 'marketNoTransfer')
+    when p_type not in ('prepared', 'poll_text', 'poll_points') then jsonb_build_object('ok', false, 'code', 'unknownType')
+    when v_is_poll and p_status in ('poll_open', 'poll_stopped') then jsonb_build_object('ok', true, 'drops_votes', true)
+    else c_ok
+  end;
+  v_send := case
+    when p_type = 'market' then jsonb_build_object('ok', false, 'code', 'marketNoTransfer')
+    when p_type not in ('prepared', 'poll_text', 'poll_points') then jsonb_build_object('ok', false, 'code', 'unknownType')
+    when v_is_poll and p_status <> 'draft' then jsonb_build_object('ok', false, 'code', 'sendOnlyDraft')
     else c_ok
   end;
 
@@ -208,6 +222,8 @@ begin
     'poll_entry', v_poll_entry,
     'poll_open', v_poll_open,
     'export', v_export,
+    'duplicate', v_export,
+    'send', v_send,
     'poll_stop', v_poll_stop,
     'poll_resume', v_poll_resume
   );

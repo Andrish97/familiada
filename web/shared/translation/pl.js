@@ -45,7 +45,7 @@ const pl = {
   "mailFailed": "Kopia została wysłana, ale e-mail nie został wysłany.",
   "noFriends": "Nie masz jeszcze aktywnych znajomych.",
   "sent": "Wysłano do znajomych: {count}.",
-  "errors": {"failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
+  "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
 },
   common: {
     sort: {
@@ -2605,6 +2605,8 @@ const pl = {
     tallyStale: "Pytanie #{ord}: liczba głosów się zmieniła — wyjdź z podliczania i wejdź ponownie.",
     tallySelection: "Pytanie #{ord}: wybór w remisie nie pasuje do aktualnego wyniku — wybierz ponownie.",
     useTally: "Ankietę zamyka się przez podliczenie głosów.",
+    marketNoTransfer: "Gry ze Społeczności nie można eksportować, powielać ani wysyłać.",
+    sendOnlyDraft: "Wysłać można tylko szkic gry (bez wyników ankiety).",
   },
   gamesImportExport: {
     defaults: {
@@ -2702,6 +2704,11 @@ const pl = {
       manual: "Ta przeglądarka nie udostępniła instalatora. Jeśli w jej menu jest aktywna opcja instalacji, możesz jej użyć.",
     },
     import: {
+      errors: {
+        invalid_payload: "Plik nie zawiera poprawnej gry (pytanie bez treści lub zły format).",
+        unsupported_version: "Ta wersja pliku gry nie jest obsługiwana.",
+        unknown_type: "Nieznany typ gry w pliku.",
+      },
       title: "Importuj",
       confirm: "Importuj",
       done: "Gotowe",
@@ -2714,6 +2721,9 @@ const pl = {
         name: "Nazwa:",
         type: "Typ:",
         questions: "Pytania:",
+        closed: "zamknięta ankieta (z wynikiem)",
+        recovered: "Plik bez rozpoznanego typu gry — zostanie odzyskany jako gra preparowana (szkic).",
+        closedDowngraded: "Wynik ankiety w pliku jest niepełny — gra zostanie zaimportowana jako szkic ankiety.",
       },
       dbFailed: "Błąd bazy podczas importu.",
       progress: {
@@ -2841,6 +2851,12 @@ const pl = {
         toPrepared: "Pytania i odpowiedzi zostaną. Brakujące odpowiedzi i punkty trzeba będzie uzupełnić.",
       },
     },
+    transferDropsVotes: {
+      title: "Bez bieżących głosów",
+      text: "Ankieta jest otwarta lub zatrzymana. Kopia powstanie jako szkic tego samego typu — bieżące głosy nie zostaną zachowane.",
+      ok: "Kontynuuj",
+      cancel: "Anuluj",
+    },
     editAfterPoll: {
       title: "Zresetować ankietę?",
       text: "Ankieta jest zamknięta. Edycja usunie jej wyniki: głosy, odpowiedzi ankietowanych, linki i kody QR. Pytania i odpowiedzi zostaną, punkty zostaną wyzerowane, a gra wróci do szkicu.",
@@ -2848,6 +2864,7 @@ const pl = {
       cancel: "Anuluj",
     },
     market: {
+      archived: "ARCHIWALNA — usunięta ze Społeczności",
       empty: "Twoja biblioteka jest pusta.",
       emptyHint: "Dodaj gry ze Społeczności.",
       hint: "Zaznacz grę, aby włączyć akcje.",

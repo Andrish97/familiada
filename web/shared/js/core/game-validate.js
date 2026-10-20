@@ -48,7 +48,7 @@ export async function loadAnswers(questionId) {
 // RPC game_validate (migracja 273) -- jedno źródło prawdy dla games, editor,
 // polls, subscriptions i control. Tu tylko tłumaczymy kod błędu na tekst.
 // Każda akcja: { ok, reason } (+ needsReset dla edit).
-const ACTIONS = ["edit", "change_type", "play", "poll_entry", "poll_open", "poll_stop", "poll_resume", "poll_close", "export"];
+const ACTIONS = ["edit", "change_type", "duplicate", "send", "play", "poll_entry", "poll_open", "poll_stop", "poll_resume", "poll_close", "export"];
 
 function actionResult(raw) {
   const ok = !!raw?.ok;
@@ -57,6 +57,7 @@ function actionResult(raw) {
     reason: ok ? "" : t(`gameValidate.${raw?.code || "unknownType"}`, raw?.params || {}),
     code: raw?.code || "",
     needsReset: !!raw?.needs_reset,
+    dropsVotes: !!raw?.drops_votes,
   };
 }
 

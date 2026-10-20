@@ -5,11 +5,13 @@ import {toast} from './toast.js?v=v2026-10-20T14100';
 
 const attempts=new Map();
 const messageKey={resource_in_use:'busy',received_copy_pending:'pending',not_exportable:'notExportable',not_found:'missing',previously_removed:'missing',expired:'expired',maintenance:'unavailable',unsupported_copy_image_source:'image',invalid_copy_storage_plan:'image',copy_image_source_changed:'image',copy_image_conflict:'image',unmaterialized_copy_image:'image'};
-export function bindResourceDuplicate({button,kind,getSource,onDone,onState}){
+// confirm(source) -> false przerywa (np. ostrzeżenie o utracie głosów ankiety, E21).
+export function bindResourceDuplicate({button,kind,getSource,onDone,onState,confirm}){
  if(!button)return;
  button.addEventListener('click',async()=>{
   if(button.disabled||button.dataset.duplicateBusy)return;
   const source=getSource();if(!source?.id)return;
+  if(confirm&&!(await confirm(source)))return;
   button.dataset.duplicateBusy='1';button.disabled=true;button.setAttribute('aria-busy','true');
   let key;
   try{

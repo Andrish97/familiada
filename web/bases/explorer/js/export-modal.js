@@ -61,8 +61,11 @@ function buildExportPayload({ name, type, questions }) {
     return Array.isArray(a) ? a : [];
   };
 
+  // Pakiet v2 wspólnego kontraktu transferu (game-transfer-format.js): szkic
+  // wybranego typu; limity i normalizację stosuje baza przy zapisie.
   return {
-    game: { name: name || t("baseExplorer.export.defaultGameName"), type },
+    format_version: 2,
+    game: { name: name || t("baseExplorer.export.defaultGameName"), type, state: "draft" },
     questions: (questions || []).map((q) => {
       const text = normQText(q);
 

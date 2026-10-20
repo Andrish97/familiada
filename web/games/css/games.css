@@ -915,3 +915,11 @@ body.games-body > main.wrap{
 .resource-copy-inbox-actions{display:flex;gap:6px;flex:none}
 .resource-copy-inbox-error{color:var(--danger,#ff7373);font-size:12px}
 @media(max-width:600px){.resource-copy-inbox-row{align-items:flex-start;flex-wrap:wrap}.resource-copy-inbox-row>span{flex:1 1 100%;margin-left:0}.resource-copy-inbox-actions{margin-left:auto}}
+
+/* E21: informacje o normalizacji importu (odzyskany typ, wynik bez zamknięcia) */
+.import-note { margin-top: 6px; font-size: .8rem; color: #ffd86e; }
+
+/* E21: Zmień typ -- wybór typu i opis konwersji */
+.change-type-list { display: grid; gap: 8px; margin: 4px 0 10px; }
+.change-type-option { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.change-type-summary { margin: 0; font-size: .9rem; opacity: .85; }

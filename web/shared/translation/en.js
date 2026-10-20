@@ -45,7 +45,7 @@ const en = {
   "mailFailed": "The copy was sent, but its email was not sent.",
   "noFriends": "You do not have any active friends yet.",
   "sent": "Sent to friends: {count}.",
-  "errors": {"failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Sign in again.","decisionFailed":"Could not save your decision. Try again."}
+  "errors": {"not_sendable":"Only a game draft (without poll results) can be sent.","failed":"Could not send the copy. Try again.","not_friend":"This person is no longer your friend.","already_sent":"This copy was already sent.","declined_cooldown":"You cannot send another copy to this person yet.","auth_required":"Sign in again.","decisionFailed":"Could not save your decision. Try again."}
 },
   common: {
     sort: {
@@ -2711,6 +2711,8 @@ const en = {
     tallyStale: "Question #{ord}: the number of votes changed — leave counting and enter again.",
     tallySelection: "Question #{ord}: the tie choice does not match the current result — choose again.",
     useTally: "A poll is closed by counting the votes.",
+    marketNoTransfer: "A Community game cannot be exported, duplicated or sent.",
+    sendOnlyDraft: "Only a game draft (without poll results) can be sent.",
   },
   gamesImportExport: {
     defaults: {
@@ -2808,6 +2810,11 @@ const en = {
       adminText: "Open Share, choose “Add to Home Screen”, then tap “Add”. Launch the panel from its new icon. Access sign-in will still be required.",
     },
     import: {
+      errors: {
+        invalid_payload: "The file does not contain a valid game (question without text or wrong format).",
+        unsupported_version: "This game file version is not supported.",
+        unknown_type: "Unknown game type in the file.",
+      },
       title: "Import",
       confirm: "Import",
       done: "Done",
@@ -2820,6 +2827,9 @@ const en = {
         name: "Name:",
         type: "Type:",
         questions: "Questions:",
+        closed: "closed poll (with result)",
+        recovered: "File without a recognised game type — it will be recovered as a prepared game (draft).",
+        closedDowngraded: "The poll result in the file is incomplete — the game will be imported as a poll draft.",
       },
       dbFailed: "Database error during import.",
       progress: {
@@ -2941,6 +2951,12 @@ const en = {
         toPrepared: "Questions and answers stay. Missing answers and points need to be filled in.",
       },
     },
+    transferDropsVotes: {
+      title: "Without current votes",
+      text: "The poll is open or stopped. The copy will be a draft of the same type — current votes will not be kept.",
+      ok: "Continue",
+      cancel: "Cancel",
+    },
     editAfterPoll: {
       title: "Reset poll?",
       text: "The poll is closed. Editing removes its results: votes, respondents' answers, links and QR codes. Questions and answers stay, points are reset to zero and the game returns to draft.",
@@ -2948,6 +2964,7 @@ const en = {
       cancel: "Cancel",
     },
     market: {
+      archived: "ARCHIVED — removed from Community",
       empty: "Your library is empty.",
       emptyHint: "Add games from Community Games.",
       hint: "Select a game to enable actions.",
