@@ -987,6 +987,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userP = initPage("marketplace", {
     ready: i18nP,
     back: els.btnGoGames,
+    // Najpierw odtwórz właściwy widok i jego przycisk powrotu z ?tab=.
+    deferTopbarReady: true,
     account: { showAuthEntry: false },
   });
   await i18nP;
@@ -1017,6 +1019,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   showView(initialTab);
+  document.querySelector(".topbar")?.classList.add("topbar-ready");
   if (initialTab === "mine") await loadMySent();
   await loadBrowse({ reset: true });
   document.getElementById('browseGrid')?.classList.add('skel-step-ready');

@@ -32,7 +32,11 @@ function getBaseIdFromUrl() {
 /* ================= Init ================= */
 (async function init() {
   const i18nP = initI18n({ withSwitcher: true });
-  const userP = initPage("baseExplorer", { ready: i18nP }); // auth startuje równolegle z i18n
+  const userP = initPage("baseExplorer", {
+    ready: i18nP,
+    // Nazwa bazy w topbarze jest znana dopiero po pobraniu metadanych.
+    deferTopbarReady: true,
+  }); // auth startuje równolegle z i18n
   await i18nP;
   document.documentElement.classList.remove('page-loading');
 
@@ -42,13 +46,12 @@ function getBaseIdFromUrl() {
   // base id z URL
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
+    if (baseNameEl) baseNameEl.textContent = "";
+    document.querySelector(".topbar")?.classList.add("topbar-ready");
     void alertModal({ text: t("baseExplorer.errors.missingBaseId") });
     location.href = backHref("baseExplorer");
     return;
   }
-
-  // na razie tylko placeholder – właściwe dane w kolejnym etapie
-  if (baseNameEl) baseNameEl.textContent = t("baseExplorer.defaults.baseName");
 
   // ===== state =====
   const state = createState({ baseId, role: "viewer" });
@@ -57,6 +60,8 @@ function getBaseIdFromUrl() {
   try {
     // ===== meta + rola =====
     state.baseMeta = await getBaseMeta(baseId);
+    if (baseNameEl) baseNameEl.textContent = state.baseMeta?.name || t("baseExplorer.defaults.baseName");
+    document.querySelector(".topbar")?.classList.add("topbar-ready");
 
     const r = await getBaseRole(baseId, user.id);
     setRole(state, r.role);
@@ -122,6 +127,10 @@ function getBaseIdFromUrl() {
 
   } catch (e) {
     console.error(e);
+    // Przy błędzie pokaż działające Wstecz, ale bez nazwy zastępczej udającej
+    // nazwę bazy.
+    if (baseNameEl) baseNameEl.textContent = "";
+    document.querySelector(".topbar")?.classList.add("topbar-ready");
 
     // brak dostępu – wracamy do baz
     if (e?.code === "NO_ACCESS") {
