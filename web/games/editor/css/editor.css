@@ -91,12 +91,10 @@ body.editor-body .wrap {
 .rulesList li.ok .ico { color: #7ef0a2 }
 .rulesList li.bad .ico { color: var(--gold) }
 
+/* jak nagłówki sekcji „Treść pytania” / „Odpowiedzi” (.qf-label) */
 .panelTitle {
-    font-weight: 1000;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--gold);
-    font-size: 12px
+    font-weight: 800;
+    letter-spacing: .2px
 }
 
 /* bez ramki: kafle pytań chowają się pod krawędzią zaokrągloną jak same kafle (decyzja 2026-10-20) */
@@ -205,45 +203,6 @@ body.editor-body .wrap {
     min-height: 0;
     height: 100%;
     flex-direction: column;
-}
-
-/* Komputer: prawa kolumna bez wspólnego tła -- treść pytania i odpowiedzi to
-   dwa osobne panele jak „Pytania” po lewej (jak kolumny w Znajomych; uwaga
-   użytkownika 2026-10-20). */
-@media (min-width:1101px) {
-    .rightPanel.hasQ {
-        background: none;
-        border: 0;
-        box-shadow: none;
-        padding: 0;
-        overflow: visible
-    }
-
-    .rightPanel.hasQ .qf-section {
-        border-radius: 20px;
-        border: 1px solid var(--line);
-        background: var(--card);
-        --under: var(--card);
-        box-shadow: 0 24px 60px rgba(0,0,0,.45);
-        padding: 14px
-    }
-
-    .rightPanel.hasQ .block {
-        margin-bottom: 14px
-    }
-
-    /* nagłówki paneli jak „PYTANIA” (.panelTitle) */
-    .rightPanel.hasQ :is(.qf-label,.qf-sumTitle) {
-        font-weight: 1000;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-        color: var(--gold);
-        font-size: 12px
-    }
-
-    .rightPanel.hasQ .qf-label {
-        margin-bottom: 8px
-    }
 }
 
 /* Okno pytania na telefonie (#questionSheetOverlay): treść przewija się
