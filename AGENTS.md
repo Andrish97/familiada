@@ -115,7 +115,10 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - **Odczyt produkcji bez migracji (2026-10-20):** workflow `db-read.yml`
   (`workflow_dispatch`, wejście `sql_file`) z plikiem `scripts/db-read/<nazwa>.sql`
   — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko
-  liczby/bool/UUID/daty (`scripts/db-read.sh` odrzuca tekst i JSON). Repo jest
+  liczby/bool/UUID/daty (`scripts/db-read.sh` odrzuca tekst i JSON), połączenie
+  jako rola `agent_reader` (414: SELECT tylko na tabelach gier/baz/ankiet
+  i aktywności, bez `auth`, profili, poczty; nie superużytkownik; nowa tabela
+  do odczytu = GRANT w migracji). Repo jest
   publiczne: żadnych treści gier, nazw ani e-maili w logach. Migracje
   diagnostyczne już niepotrzebne. Z agenta: `scripts/agent-tools/gh-run.sh
   db-read.yml sql_file=…` (uruchamia, czeka, wypisuje wynik z adnotacji).

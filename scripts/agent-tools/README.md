@@ -20,6 +20,7 @@ Uwagi:
 |---|---|
 | `gh-run.sh <workflow> klucz=wartość…` | Uruchamia workflow (`workflow_dispatch`, `REF=` domyślnie `main`), czeka na koniec i wypisuje adnotacje przebiegu przez API GitHuba — działa także tam, gdzie host z logami Actions jest zablokowany. `LOGS=50` dodatkowo próbuje pobrać koniec logu. Wymaga `GITHUB_TOKEN`. |
 | `gh-run.sh db-read.yml sql_file=scripts/db-read/<nazwa>.sql` | Odczyt produkcji: jedno SELECT bez `;`/`\`, sesja READ ONLY, wynik tylko liczby/bool/UUID/daty (`scripts/db-read.sh`). Repo publiczne — żadnych treści, nazw, e-maili. |
+| `gh-run.sh db-read.yml sql_file=scripts/db-read/whoami.sql` | Kontrola roli: `agent_reader`, nie superużytkownik, bez `auth`/profili, bez zapisu. `check-auth-denied.sql` ma się nie udać. |
 | `gh-run.sh db-read.yml sql_file=scripts/db-read/activity-now.sql` | Kto jest teraz na stronie (liczby) i gry z aktywną sesją Control — sprawdzać przed zmianą danych. |
 | `gh-run.sh maintenance.yml action=status` | Stan przerwy technicznej i aktywność. |
 | `gh-run.sh maintenance.yml action=on minutes=15` | Przerwa z odliczaniem. **Tylko po wyraźnej zgodzie użytkownika na tę konkretną przerwę** (zasada w `CLAUDE.md`). Odmawia, gdy trwa praca: Control, edycja, głosy w ankietach (`scripts/db-read/maintenance-blockers.sql`; `force=true` tylko na polecenie). Po czasie sama się wyłącza (o ile nikt nie zmienił stanu). |

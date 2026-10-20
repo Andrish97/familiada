@@ -4,6 +4,8 @@
 #  * plik tylko z scripts/db-read/, jedno zapytanie SELECT bez ";" i "\"
 #    (owinięte w podzapytanie -- druga instrukcja ani komenda psql nie przejdzie);
 #  * sesja i transakcja READ ONLY, limit 60 s, najwyżej 1000 wierszy;
+#  * w workflow połączenie jako rola agent_reader (migracja 414): SELECT tylko
+#    na wybranych tabelach, bez auth/profili/poczty, nie superużytkownik;
 #  * przed wykonaniem \gdesc: kolumny wyniku tylko liczby, wartości logiczne,
 #    UUID i daty -- tekst/JSON (treści, nazwy, e-maile) przerywa odczyt.
 # Użycie: PSQL_CMD="psql -h ... -d ..." scripts/db-read.sh scripts/db-read/nazwa.sql
@@ -22,7 +24,9 @@ Q=$(python3 -c 'import sys; print(open(sys.argv[1], encoding="utf-8").read().rst
 case "$Q" in
   *';'*|*'\'*) echo "Zapytanie nie może zawierać ';' ani '\\' (jedno zapytanie SELECT)." >&2; exit 2 ;;
 esac
-psql_run() { bash -c "$PSQL_CMD -X -v ON_ERROR_STOP=1 -q $1"; }
+psql_run() { bash -c "$PSQL_CMD -X -v ON_ERROR_STOP=1 -q $1" 2> >(tee /tmp/db-read.err >&2); }
+# W Actions błąd bazy także jako adnotacja (czytelna przez gh-run.sh).
+trap 'rc=$?; if [ $rc -ne 0 ] && [ -n "${GITHUB_ACTIONS:-}" ] && [ -s /tmp/db-read.err ]; then echo "::error title=db-read::$(head -c 500 /tmp/db-read.err | tr "\n" " ")"; fi' EXIT
 
 DESC=$(printf 'SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;\nBEGIN READ ONLY;\nSELECT * FROM (\n%s\n) _q\n\\gdesc\nROLLBACK;\n' "$Q" | psql_run "-At")
 ALLOWED='^(smallint|integer|bigint|numeric(\(.*\))?|real|double precision|boolean|uuid|date|time.*|timestamp.*|interval)(\[\])?$'
