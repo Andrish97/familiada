@@ -7,48 +7,21 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T11473";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T11473";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T11473";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-20T11473";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T11473";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T11473";
-import { createHostRenderer } from "./render.js?v=v2026-10-20T11473";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-20T11473";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-20T11473";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T11473";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T11473";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T13063";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T13063";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T13063";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T13063";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T13063";
+import { createHostRenderer } from "./render.js?v=v2026-10-20T13063";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-20T13063";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-20T13063";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T13063";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T13063";
 
 
 function parseParams() {
   const u = new URL(location.href);
   return { gameId: u.searchParams.get("id") || "", key: u.searchParams.get("key") || "", preview: u.searchParams.get("preview") === "1" };
-}
-
-function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
-  const DEVICE_ID_KEY = "familiada:deviceId:host";
-  let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
-  let pingInFlight = false;
-  const ping = async () => {
-    if (pingInFlight) return;
-    pingInFlight = true;
-    try {
-    const { data, error } = await sb().rpc("device_ping", {
-      p_game_id: gameId, p_device_type: "host", p_key: key, p_device_id: deviceId, p_meta: getDevicePresenceMeta(gameId),
-    });
-    if (!error && data?.device_id && !deviceId) {
-      deviceId = data.device_id;
-      localStorage.setItem(DEVICE_ID_KEY, deviceId);
-    }
-    } catch { /* Presence diagnostics must never interrupt the Host. */ }
-    finally { pingInFlight = false; }
-  };
-  ping();
-  setInterval(ping, pingMs);
-  document.addEventListener("visibilitychange", () => { void ping(); });
-  for (const event of ["focus", "blur", "pageshow", "pagehide"]) {
-    window.addEventListener(event, () => { void ping(); });
-  }
 }
 
 // css/host.css pozycjonuje .text (paperText1/2) jako position:absolute, a
@@ -284,7 +257,6 @@ async function main() {
   // Wszystkie trzy urządzenia utrzymują ekran aktywny przez Wake Lock
   // oraz zapasowy, wyciszony strumień wideo. Podgląd w ustawieniach nie.
   startKeepAlive();
-  startPresenceHeartbeat({ gameId, key });
   let subscription = null;
   const lease = createDeviceLease({ gameId, deviceType: "host", key, onState: ({ state }) => {
     updateDeviceLeaseOverlay(state);

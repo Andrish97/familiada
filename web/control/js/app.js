@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T11473";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T13063";
 
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
@@ -8,20 +8,20 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T11473";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T11473";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-20T11473";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-20T11473";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T11473";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T11473";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T11473";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-20T11473";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-20T11473";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T11473";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T11473";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T11473";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-20T11473";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T11473";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T13063";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T13063";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-20T13063";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-20T13063";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T13063";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T13063";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T13063";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-20T13063";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-20T13063";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T13063";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T13063";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T13063";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-20T13063";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T13063";
 
 
 function qrImgSrc(url) {
@@ -111,22 +111,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-20T11473";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-20T11473";
-import { createEngine } from "./engine.js?v=v2026-10-20T11473";
-import { createActionGate } from "./actionGate.js?v=v2026-10-20T11473";
-import { createDevices } from "./devices.js?v=v2026-10-20T11473";
-import { createPresence } from "./presence.js?v=v2026-10-20T11473";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-20T11473";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-20T11473";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-20T11473";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-20T11473";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-20T11473";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-20T11473";
-import { createUI } from "./ui.js?v=v2026-10-20T11473";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-20T11473";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T11473";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T11473";
+import { createStore } from "./store.js?v=v2026-10-20T13063";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-20T13063";
+import { createEngine } from "./engine.js?v=v2026-10-20T13063";
+import { createActionGate } from "./actionGate.js?v=v2026-10-20T13063";
+import { createDevices } from "./devices.js?v=v2026-10-20T13063";
+import { createPresence } from "./presence.js?v=v2026-10-20T13063";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-20T13063";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-20T13063";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-20T13063";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-20T13063";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-20T13063";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-20T13063";
+import { createUI } from "./ui.js?v=v2026-10-20T13063";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-20T13063";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T13063";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T13063";
 
 
 async function pickQuestionPool(state) {
@@ -430,21 +430,15 @@ async function main() {
   let committing = false;
   let queuedGameAction = false;
   let presenceFlags = {};
+  // Odblokowanie dźwięku głównej instancji Wyświetlacza z migawki
+  // `control_devices_snapshot` (migracja 397). Nowa instancja (przeładowanie,
+  // podmiana) zaczyna od false, więc Control nie musi o nie prosić.
   let displayAudioUnlocked = null;
-  let displayAudioUnlockNonce = null;
-  let requestedDisplayAudioUnlockNonce = null;
-  let displayUnlockRetryTimer = null;
-  let displayUnlockRequestPending = false;
-  // Pierwszy udany odczyt obecności opisuje stan zastany przy starcie Control,
-  // nie ponowne podłączenie Wyświetlacza.
-  let presenceRead = false;
-  let refreshDisplayPresence = null;
   let controlOffline = !navigator.onLine;
   let controlUIReady = false;
   let presenceUnavailable = false;
   let presenceFailureStartedAt = null;
   let presenceFailureSource = null;
-  let presenceMetadataFailureStartedAt = null;
   // renderCurrent can run from early async callbacks before the timer-watch
   // factories below are initialized. Keep those calls safe during bootstrap.
   let scheduleFinalTimerWatch = () => {};
@@ -591,53 +585,57 @@ async function main() {
   }
   function waitingForDisplayAudioUnlock() {
     return store.state.settings.soundSource === "display"
-      && !!requestedDisplayAudioUnlockNonce
-      && (displayAudioUnlocked !== true || displayAudioUnlockNonce !== requestedDisplayAudioUnlockNonce);
+      && !/^(devices_|setup_)/.test(store.state.step)
+      && !store.state.locks.gameEnded
+      && presenceFlags.display === true
+      && displayAudioUnlocked !== true;
   }
-  rt(doorbellTopic(gameId)).onBroadcast("audio_unlock_completed", (message) => {
-    const nonce = message?.payload?.nonce;
-    if (typeof nonce !== "string" || nonce !== requestedDisplayAudioUnlockNonce) return;
-    // Broadcast is only a nudge. The durable database acknowledgment is the
-    // source of truth, so a dropped or duplicated event cannot lose the flag.
-    void refreshDisplayPresence?.();
-  });
-  function requestDisplayAudioUnlock() {
-    if (store.state.settings.soundSource !== "display"
-      || /^(devices_|setup_)/.test(store.state.step)
-      || store.state.locks.gameEnded) return;
-    requestedDisplayAudioUnlockNonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    displayAudioUnlocked = false;
-    const publish = () => {
-      if (!waitingForDisplayAudioUnlock()) {
-        clearInterval(displayUnlockRetryTimer);
-        displayUnlockRetryTimer = null;
-        return;
-      }
-      rt(doorbellTopic(gameId)).sendBroadcast("audio_unlock_required", {
-        nonce: requestedDisplayAudioUnlockNonce,
-      }, { mode: "http" }).catch(() => {});
-    };
-    clearInterval(displayUnlockRetryTimer);
-    const nonce = requestedDisplayAudioUnlockNonce;
-    displayUnlockRequestPending = true;
-    void sb().rpc("request_display_audio_unlock", { p_game_id: gameId, p_nonce: nonce })
-      .then(({ error }) => {
-        // Keep the heartbeat metadata path usable during a rolling deploy.
-        if (error) console.warn("[control2 audio unlock] durable request failed:", error.message);
-        if (nonce !== requestedDisplayAudioUnlockNonce) return;
-        displayUnlockRequestPending = false;
-        publish();
-        displayUnlockRetryTimer = setInterval(publish, 1500);
-        void refreshDisplayPresence?.();
-      }).catch((error) => {
-        displayUnlockRequestPending = false;
-        console.warn("[control2 audio unlock] durable request failed:", error?.message || error);
-      });
-    renderCurrent();
+  // Każde czekanie na gest na Wyświetlaczu trafia do statystyk jednym
+  // zdarzeniem audio_unlock: powód (nowa instancja / przeglądarka wstrzymała
+  // dźwięk), czas blokady, wynik i próby akcji operatora w tym czasie.
+  let audioUnlockWait = null;
+  let lastDeviceDiagnostics = null;
+  function noteAudioUnlockBlockedAction() {
+    if (audioUnlockWait) audioUnlockWait.blockedActions += 1;
+  }
+  function syncAudioUnlockWait() {
+    const waiting = waitingForDisplayAudioUnlock();
+    if (waiting && !audioUnlockWait) {
+      const display = lastDeviceDiagnostics?.display;
+      audioUnlockWait = {
+        startedAt: Date.now(),
+        reason: display?.audioLockReason || "new_instance",
+        detail: display?.audioLockDetail || null,
+        visibility: display?.visibility || null,
+        step: store.state.step,
+        blockedActions: 0,
+      };
+      return;
+    }
+    if (waiting || !audioUnlockWait) return;
+    const wait = audioUnlockWait;
+    audioUnlockWait = null;
+    const outcome = displayAudioUnlocked === true ? "unlocked"
+      : presenceFlags.display !== true ? "display_offline"
+      : store.state.locks.gameEnded ? "game_ended"
+      : "not_required";
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "audio_unlock",
+      message: "Control czekał na odblokowanie dźwięku na Wyświetlaczu.",
+      devices: ["display"],
+      metrics: {
+        reason: wait.reason,
+        detail: wait.detail,
+        outcome,
+        wait_ms: Math.max(0, Date.now() - wait.startedAt),
+        blocked_action_attempts: wait.blockedActions,
+        display_visibility: wait.visibility,
+        step: wait.step,
+      },
+    });
   }
   function onControlReconnect() {
     controlOffline = false;
-    requestDisplayAudioUnlock();
     renderCurrent();
   }
   window.addEventListener("offline", () => {
@@ -728,7 +726,6 @@ async function main() {
     presenceFailureStartedAt = null;
     presenceFailureSource = null;
     presenceUnavailable = false;
-    requestDisplayAudioUnlock();
     return true;
   }
 
@@ -785,7 +782,11 @@ async function main() {
   // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
   async function dispatchGatedNow(action) {
     if (testModePanel?.blocked() && !action.type.startsWith("EXPIRE_")) return null;
-    if (controlOffline || waitingForDisplayAudioUnlock()) return null;
+    if (controlOffline) return null;
+    if (waitingForDisplayAudioUnlock()) {
+      if (!action.type.startsWith("EXPIRE_")) noteAudioUnlockBlockedAction();
+      return null;
+    }
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
     if (!action.type.startsWith("EXPIRE_") && (presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length)) return null;
@@ -929,114 +930,32 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, deviceDiagnostics, error, errorSource }) => {
+    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, deviceDiagnostics, error, errorSource }) => {
       const previous = presenceFlags;
-      let leaseReadRecovered = false;
-      const displayAudioWasUnlocked = displayAudioUnlocked === true;
-      const firstPresenceRead = !presenceRead;
-      if (!error) presenceRead = true;
-      // Powrót Control (np. ze Wskazówek) nie jest ponownym podłączeniem
-      // Wyświetlacza: jego odblokowanie w bazie nadal obowiązuje.
-      const displayReconnected = !firstPresenceRead && !previous.display && flags.display === true;
-      const displayAudioSessionReset = previous.display === true && flags.display === true
-        && displayAudioWasUnlocked && audioUnlocked !== true;
+      if (error) {
+        if (!presenceUnavailable) {
+          presenceFailureStartedAt = Date.now();
+          presenceFailureSource = errorSource || "status_read";
+          void sessionTelemetry.report({
+            kind: "diagnostic", category: "connectivity",
+            message: "Control utracił możliwość odczytu statusu urządzeń; akcje gry są chwilowo blokowane.",
+            devices: ["control"],
+            metrics: {
+              phase: "read_error", source: presenceFailureSource,
+              error_name: String(error?.name || "Error").slice(0, 80),
+              error_code: String(error?.code || "").slice(0, 80) || null,
+              http_status: Number.isFinite(error?.status) ? error.status : null,
+            },
+          });
+        }
+        presenceUnavailable = true;
+        renderCurrent();
+        return;
+      }
       presenceFlags = flags;
       displayAudioUnlocked = audioUnlocked;
-      displayAudioUnlockNonce = audioUnlockNonce;
-      if (displayAudioUnlockStatus?.requestNonce
-        && (!displayUnlockRequestPending || displayAudioUnlockStatus.requestNonce === requestedDisplayAudioUnlockNonce)) {
-        const requestedHere = displayAudioUnlockStatus.requestNonce === requestedDisplayAudioUnlockNonce;
-        requestedDisplayAudioUnlockNonce = displayAudioUnlockStatus.requestNonce;
-        const inGameplayWithDisplaySound = store.state.settings.soundSource === "display"
-          && !/^(devices_|setup_)/.test(store.state.step);
-        if (displayAudioUnlockStatus.acknowledgedNonce === displayAudioUnlockStatus.requestNonce) {
-          clearInterval(displayUnlockRetryTimer);
-          displayUnlockRetryTimer = null;
-        } else if (inGameplayWithDisplaySound && !requestedHere && !displayUnlockRetryTimer) {
-          // Niepotwierdzony nonce, którego ta karta nie wysłała: zwykle nonce
-          // sesji Wyświetlacza po jego przeładowaniu. Wyświetlacz w trakcie gry
-          // nie pokazuje przycisku dla własnego nonce, więc poproś o nowy.
-          requestDisplayAudioUnlock();
-        } else if (inGameplayWithDisplaySound && !displayUnlockRetryTimer) {
-          const nonce = requestedDisplayAudioUnlockNonce;
-          const publish = () => {
-            if (nonce !== requestedDisplayAudioUnlockNonce || !waitingForDisplayAudioUnlock()) {
-              clearInterval(displayUnlockRetryTimer);
-              displayUnlockRetryTimer = null;
-              return;
-            }
-            rt(doorbellTopic(gameId)).sendBroadcast("audio_unlock_required", { nonce }, { mode: "http" }).catch(() => {});
-          };
-          publish();
-          displayUnlockRetryTimer = setInterval(publish, 1500);
-        }
-      }
-      if (error) {
-        if (errorSource === "device_presence") {
-          if (presenceMetadataFailureStartedAt == null) {
-            presenceMetadataFailureStartedAt = Date.now();
-            void sessionTelemetry.report({
-              kind: "diagnostic", category: "connectivity",
-              message: "Control nie może odczytać dodatkowych danych obecności; status lease urządzeń nadal działa.",
-              devices: ["control"],
-              metrics: {
-                phase: "metadata_read_error", source: "device_presence",
-                error_name: String(error?.name || "Error").slice(0, 80),
-                error_code: String(error?.code || "").slice(0, 80) || null,
-                http_status: Number.isFinite(error?.status) ? error.status : null,
-                gameplay_blocked: false,
-              },
-            });
-          }
-          // A successful lease read is enough to restore safe game actions,
-          // even while supplemental presence metadata remains unavailable.
-          leaseReadRecovered = recoverLeaseStatusRead();
-        } else {
-          if (!presenceUnavailable) {
-            presenceFailureStartedAt = Date.now();
-            presenceFailureSource = errorSource || "status_read";
-            void sessionTelemetry.report({
-              kind: "diagnostic", category: "connectivity",
-              message: "Control utracił możliwość odczytu statusu urządzeń; akcje gry są chwilowo blokowane.",
-              devices: ["control"],
-              metrics: {
-                phase: "read_error", source: presenceFailureSource,
-                error_name: String(error?.name || "Error").slice(0, 80),
-                error_code: String(error?.code || "").slice(0, 80) || null,
-                http_status: Number.isFinite(error?.status) ? error.status : null,
-              },
-            });
-          }
-          presenceUnavailable = true;
-          renderCurrent();
-          return;
-        }
-      } else if (presenceMetadataFailureStartedAt != null) {
-        void sessionTelemetry.report({
-          kind: "diagnostic", category: "connectivity",
-          message: "Control odzyskał dodatkowe dane obecności; status lease urządzeń nie przestał działać.",
-          devices: ["control"],
-          metrics: {
-            phase: "metadata_recovered", source: "device_presence",
-            duration_ms: Math.max(0, Date.now() - presenceMetadataFailureStartedAt),
-            gameplay_blocked: false,
-          },
-        });
-        presenceMetadataFailureStartedAt = null;
-      }
-      if (!error && presenceUnavailable) {
-        leaseReadRecovered = recoverLeaseStatusRead();
-      }
-      if (!leaseReadRecovered && !error && !displayUnlockRequestPending && (displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
-        // A Display that reconnects during a game needs a fresh browser gesture
-        // even if it reported an unlock before disconnecting. Send a new nonce
-        // so its button returns and keep Control actions gated until it replies.
-        requestDisplayAudioUnlock();
-      }
-      if (requestedDisplayAudioUnlockNonce && audioUnlocked === true && audioUnlockNonce === requestedDisplayAudioUnlockNonce) {
-        clearInterval(displayUnlockRetryTimer);
-        displayUnlockRetryTimer = null;
-      }
+      lastDeviceDiagnostics = deviceDiagnostics;
+      if (presenceUnavailable) recoverLeaseStatusRead();
       const audioDiagnostic = deviceDiagnostics?.display?.audioDiagnostic;
       if (!hasInitialPresenceSnapshot) {
         hasInitialPresenceSnapshot = true;
@@ -1083,7 +1002,6 @@ async function main() {
       renderCurrent();
     },
   });
-  refreshDisplayPresence = () => presence.refresh();
   presence.start();
   for (const id of ["deviceLostClose", "deviceLostX"]) {
     document.getElementById(id)?.addEventListener("click", () => {
@@ -1218,6 +1136,7 @@ async function main() {
     // Network/audio callbacks may resolve while main() is still awaiting the
     // last bootstrap reads. The final render below covers their latest state.
     if (!controlUIReady) return;
+    syncAudioUnlockWait();
     document.body.dataset.controlStep = store.state.step;
     syncTopbarDeviceCodeButtons();
     reportRealtimeSnapshots();
@@ -1393,7 +1312,8 @@ async function main() {
   // (ta sama liczba, co realnie steruje animacją na Displayu), zamiast
   // zgadywać nowy zestaw stałych.
   async function advance(nextStep, extra = {}, soundCueKey) {
-    if (controlOffline || waitingForDisplayAudioUnlock()) return;
+    if (controlOffline) return;
+    if (waitingForDisplayAudioUnlock()) { noteAudioUnlockBlockedAction(); return; }
     const generation = dispatchGeneration;
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;

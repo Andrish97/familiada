@@ -1,28 +1,26 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T11473";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T13063";
 
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
 // jest jedno wywołanie RPC na start (game_state_get, przez subscribe.js)
-// i "dzwonek" broadcastowy zamiast kanału DISPLAY_CMD. Ping obecności
-// (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
-// niezwiązane z komendami RPC co dziś — reużyte bez zmian.
+// i "dzwonek" broadcastowy zamiast kanału DISPLAY_CMD. Obecność, widoczność
+// karty i odblokowanie dźwięku zapisuje heartbeat lease (device-lease.js).
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-20T11473";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-20T11473";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T11473";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T11473";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-20T11473";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T11473";
-import { createScene } from "./scene.js?v=v2026-10-20T11473";
-import { createQRController } from "./qr.js?v=v2026-10-20T11473";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T11473";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-20T11473";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T11473";
-import { createRenderer } from "./render.js?v=v2026-10-20T11473";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-20T11473";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-20T11473";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T11473";
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-20T13063";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-20T13063";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T13063";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T13063";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T13063";
+import { createScene } from "./scene.js?v=v2026-10-20T13063";
+import { createQRController } from "./qr.js?v=v2026-10-20T13063";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T13063";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-20T13063";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T13063";
+import { createRenderer } from "./render.js?v=v2026-10-20T13063";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-20T13063";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-20T13063";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T13063";
 
 
 const $ = (id) => document.getElementById(id);
@@ -49,50 +47,6 @@ async function authDisplayOrThrow(gameId, key) {
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.id) throw new Error("Zły klucz (display) albo gra nie istnieje.");
   return row;
-}
-
-function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
-  const DEVICE_ID_KEY = "familiada:deviceId:display";
-  let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
-  let meta = getDevicePresenceMeta(gameId, { audio_unlocked: false, audio_unlock_nonce: null });
-  let metaVersion = 0;
-  let pingWork = null;
-  const ping = async () => {
-    // Heartbeaty nie mogą się wyprzedzać: wolna odpowiedź ze starym
-    // audio_unlocked:false nie może nadpisać nowszego potwierdzenia true.
-    if (pingWork) {
-      await pingWork;
-      return ping();
-    }
-    pingWork = (async () => {
-      let version;
-      let ok;
-      do {
-        version = metaVersion;
-        const { data, error } = await sb().rpc("device_ping", {
-          p_game_id: gameId, p_device_type: "display", p_key: key, p_device_id: deviceId, p_meta: getDevicePresenceMeta(gameId, meta),
-        }).abortSignal(AbortSignal.timeout(6500));
-        if (!error && data?.device_id && !deviceId) {
-          deviceId = data.device_id;
-          localStorage.setItem(DEVICE_ID_KEY, deviceId);
-        }
-        ok = !error && !!data?.device_id;
-      } while (version !== metaVersion);
-      return ok;
-    })();
-    try { return await pingWork; }
-    catch { return false; }
-    finally { pingWork = null; }
-  };
-  ping();
-  setInterval(ping, pingMs);
-  document.addEventListener("visibilitychange", () => { void ping(); });
-  for (const event of ["focus", "blur", "pageshow", "pagehide"]) {
-    window.addEventListener(event, () => { void ping(); });
-  }
-  return {
-    setMeta(patch) { meta = { ...meta, ...patch }; metaVersion++; return ping(); },
-  };
 }
 
 function createDisplayEventLog(gameId, key, lease) {
@@ -380,12 +334,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     let subscription = null;
     let rendererInstance = null;
     let soundReactorInstance = null;
-    let audioSessionRegistration = Promise.resolve(false);
     const lease = createDeviceLease({ gameId: game.id, deviceType: "display", key, onState: ({ state }) => {
       updateDeviceLeaseOverlay(state);
       if (subscription) {
         if (state === "primary") {
-          audioSessionRegistration = registerAudioSession();
+          syncAudioUnlockScreen();
           void subscription.start();
         } else {
           subscription.stop();
@@ -401,31 +354,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     updateDeviceLeaseOverlay(lease.state);
     const displayEventLog = createDisplayEventLog(game.id, key, lease);
     window.addEventListener("pagehide", displayEventLog.stop, { once: true });
-    const newAudioNonce = () => globalThis.crypto?.randomUUID?.()
-      || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    let audioSessionNonce = newAudioNonce();
-    // Every Display page load starts a fresh atomic unlock generation. This
-    // catches reloads even when the 6.5 s presence timeout never elapsed.
-    // Rejestracja kasuje w bazie potwierdzenie poprzedniej sesji. Bez niej
-    // Control uznałby stare odblokowanie za ważne, więc ponawiamy do skutku
-    // (dopóki ta karta obsługuje Wyświetlacz i sesja jest aktualna).
-    function registerAudioSession() {
-      const nonce = audioSessionNonce;
-      const attempt = (retryMs) => sb().rpc("begin_display_audio_session", {
-        p_game_id: game.id, p_key: key, p_session_nonce: nonce, ...lease.actionArgs(),
-      }).then(({ error }) => {
-        if (error) throw error;
-        return true;
-      }).catch((error) => {
-        console.warn("[display2 audio unlock] session registration failed:", error?.message || error);
-        if (nonce !== audioSessionNonce || lease.state !== "primary") return false;
-        return new Promise((resolve) => setTimeout(resolve, retryMs))
-          .then(() => attempt(Math.min(retryMs * 2, 10000)));
-      });
-      return attempt(1000);
-    }
-    if (lease.state === "primary") audioSessionRegistration = registerAudioSession();
-    const displayPresence = startPresenceHeartbeat({ gameId: game.id, key });
 
     // Dźwięk "ze źródła Wyświetlacz" (zgłoszone) — ten sam js/core/sfx.js co
     // Control, wczytany niezależnie tutaj. Głośności/warianty (BEZ własnych
@@ -440,8 +368,10 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const audioUnlockScreen = $("audioUnlockScreen");
     const btnAudioUnlock = $("btnAudioUnlock");
-    let audioUnlockReported = false;
-    let audioUnlockRequestNonce = audioSessionNonce;
+    // Odblokowanie dźwięku jest cechą tej instancji Wyświetlacza: baza wiąże je
+    // z połączeniem i generacją lease (migracja 397), więc przeładowanie lub
+    // podmiana urządzenia zawsze zaczyna od zablokowanego dźwięku.
+    let audioUnlockedHere = false;
     let displaySoundSelected = false;
     let activeGameStep = null;
     let lastFrameDiagnosticAt = 0;
@@ -449,7 +379,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!displaySoundSelected || !activeGameStep || /^(devices_|setup_)/.test(activeGameStep)) return;
       if (!event.failed && event.delayMs < 500) return;
       const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      void displayPresence.setMeta({ audio_diagnostic: {
+      lease.setMeta({ audio_diagnostic: {
         id, sound: String(event.key || "unknown").slice(0, 80),
         delayMs: Math.max(0, Number(event.delayMs) || 0), failed: !!event.failed,
         error: String(event.error || "").slice(0, 160),
@@ -465,13 +395,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (typeof row?.step === "string") activeGameStep = row.step;
       // Odblokowanie przeglądarki jest potrzebne tylko wtedy, gdy dźwięk ma
       // grać z tego urządzenia. Nie zasłaniaj Display, gdy gra dźwięk z Control.
-      // Po wejściu Display w trakcie rozgrywki poczekaj na nonce żądania od
-      // Control. Sam nonce sesji powstaje wcześniej przy ładowaniu Display;
-      // pokazanie go od razu ścigałoby się z żądaniem ponownego odblokowania
-      // po powrocie Control. W kroku Urządzenia przycisk pojawia się od razu.
-      const inGameplay = !!activeGameStep && !/^(devices_|setup_)/.test(activeGameStep);
-      const hasCurrentGameplayRequest = !inGameplay || audioUnlockRequestNonce !== audioSessionNonce;
-      const visible = displaySoundSelected && !audioUnlockReported && hasCurrentGameplayRequest;
+      const visible = displaySoundSelected && !audioUnlockedHere && lease.state === "primary";
       const wasHidden = audioUnlockScreen.classList.contains("hidden");
       audioUnlockScreen.classList.toggle("hidden", !visible);
       audioUnlockScreen.setAttribute("aria-hidden", String(!visible));
@@ -481,59 +405,24 @@ window.addEventListener("DOMContentLoaded", async () => {
     btnAudioUnlock?.addEventListener("click", async () => {
       enterFullscreen();
       if (!await unlockAudio()) return;
-      // Nie chowaj przycisku przed potwierdzeniem serwera. Jeśli połączenie
-      // chwilowo nie działa, operator może ponowić kliknięcie zamiast zostać
-      // zablokowanym bez widocznego sposobu odblokowania.
-      btnAudioUnlock.disabled = true;
-      let reported = false;
-      try {
-        const sessionRegistered = await audioSessionRegistration;
-        if (audioUnlockRequestNonce && sessionRegistered) {
-          const { data, error } = await sb().rpc("acknowledge_display_audio_unlock", {
-            p_game_id: game.id, p_key: key, p_nonce: audioUnlockRequestNonce, ...lease.actionArgs(),
-          }).abortSignal(AbortSignal.timeout(6500));
-          if (!error) reported = data === true;
-          else {
-            // Compatibility fallback for a rolling deploy where migration
-            // 312 is not installed yet. Once installed, the dedicated row is
-            // authoritative and heartbeat writes cannot clear this ack.
-            reported = await displayPresence.setMeta({
-              audio_unlocked: true,
-              audio_unlock_nonce: audioUnlockRequestNonce,
-            });
-          }
-        } else {
-          reported = await displayPresence.setMeta({ audio_unlocked: true, audio_unlock_nonce: null });
-        }
-      }
-      catch { /* pozostaw widoczny przycisk, aby można było ponowić */ }
-      if (reported) {
-        audioUnlockReported = true;
-        audioUnlockScreen?.classList.add("hidden");
-        audioUnlockScreen?.setAttribute("aria-hidden", "true");
-        if (audioUnlockRequestNonce) {
-          rt(doorbellTopic(game.id)).sendBroadcast("audio_unlock_completed", {
-            nonce: audioUnlockRequestNonce,
-          }, { mode: "http" }).catch(() => {});
-        }
-      } else {
-        btnAudioUnlock.disabled = false;
-      }
+      // Przeglądarka pozwala już grać. Zapis do bazy jedzie heartbeatem lease:
+      // wysyłany od razu, a przy słabym łączu powtarzany każdym kolejnym
+      // heartbeatem — bez ponownego gestu.
+      audioUnlockedHere = true;
+      lease.setMeta({ audio_unlocked: true, audio_lock_reason: null, audio_lock_detail: null });
+      syncAudioUnlockScreen();
     });
 
-    // Przeglądarka przestała pozwalać na dźwięk bez przeładowania strony:
-    // zachowaj się jak po przeładowaniu — nowa sesja kasuje potwierdzenie
-    // w bazie, Control wstrzymuje grę i prosi o gest, a przycisk wraca.
+    // Przeglądarka przestała pozwalać na dźwięk bez przeładowania strony
+    // (np. uśpienie telewizora): Control wstrzymuje grę, a przycisk wraca.
     const stopUnlockLostWatch = onAudioUnlockLost((reason) => {
-      if (!audioUnlockReported) return;
+      if (!audioUnlockedHere) return;
       console.warn("[display2 audio unlock] browser audio no longer unlocked:", reason);
-      audioUnlockReported = false;
-      audioSessionNonce = newAudioNonce();
-      audioUnlockRequestNonce = audioSessionNonce;
-      if (btnAudioUnlock) btnAudioUnlock.disabled = false;
-      if (lease.state === "primary") audioSessionRegistration = registerAudioSession();
+      audioUnlockedHere = false;
+      // Powód trafia do statystyk Control (zdarzenie audio_unlock); bez niego
+      // blokada oznacza nową instancję Wyświetlacza.
+      lease.setMeta({ audio_unlocked: false, audio_lock_reason: "browser_lost", audio_lock_detail: String(reason || "").slice(0, 40) });
       syncAudioUnlockScreen();
-      void displayPresence.setMeta({ audio_unlocked: false, audio_unlock_nonce: null }).catch(() => {});
     });
     window.addEventListener("pagehide", stopUnlockLostWatch, { once: true });
 
@@ -623,20 +512,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       deviceType: "display",
       key,
       getLeaseArgs: () => lease.actionArgs(),
-      onBroadcast: {
-        audio_unlock_required: (message) => {
-          const nonce = message?.payload?.nonce;
-          if (typeof nonce !== "string" || !nonce || nonce === audioUnlockRequestNonce) return;
-          audioUnlockRequestNonce = nonce;
-          audioUnlockReported = false;
-          // Przycisk został wyłączony na czas potwierdzania poprzedniego
-          // kliknięcia. Nowe żądanie (np. po powrocie Control) musi znów
-          // pozwalać na gest użytkownika.
-          if (btnAudioUnlock) btnAudioUnlock.disabled = false;
-          syncAudioUnlockScreen();
-          void displayPresence.setMeta({ audio_unlocked: false, audio_unlock_nonce: nonce }).catch(() => {});
-        },
-      },
       onRow: async (row) => {
         lease.setProgress({ receivedRev: Number(row.rev) || 0 });
         const gameIsActive = !!row.detail?.locks?.gameStarted && !row.detail?.locks?.gameEnded;

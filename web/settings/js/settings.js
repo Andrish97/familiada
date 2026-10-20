@@ -12,17 +12,17 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T11473";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T11473";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T11473";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T11473";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T11473";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T11473";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T11473";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T11473";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T11473";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T11473";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T11473";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T13063";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T13063";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T13063";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T13063";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T13063";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T13063";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T13063";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T13063";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T13063";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T13063";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T13063";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -33,14 +33,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T11473";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T13063";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T11473";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T11473";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T11473";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T13063";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T13063";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T13063";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T11473";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T13063";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1051,8 +1051,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T11473"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T11473"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T13063"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T13063"/>
 
   <style>
     body{margin:0;padding:0}
@@ -5459,15 +5459,20 @@ function buildSessionRunDetails(r) {
         }
         if (metrics.phase === "read_error") {
           const error = metrics.error_code || metrics.http_status || metrics.error_name;
+          // lease_status: baza odpowiedziała błędem; status_read: brak
+          // odpowiedzi (limit czasu, sieć Control).
+          const cause = metrics.source === "status_read"
+            ? "nie odpowiedział (limit czasu lub sieć po stronie Control)"
+            : "zwrócił błąd bazy";
           return {
-            title: "Control nie może potwierdzić statusu lease",
-            detail: `Odczyt ${metrics.source === "lease_status" ? "control_device_slots_for_owner" : "statusu urządzeń"} nie powiódł się${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu.`,
+            title: "Control nie może potwierdzić stanu urządzeń",
+            detail: `Odczyt stanu urządzeń ${cause}${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu, urządzenia nie są uznawane za rozłączone.`,
           };
         }
         if (metrics.phase === "recovered") {
           return {
-            title: "Control odzyskał status lease",
-            detail: `Odczyt statusu wrócił po ${formatDuration(metrics.duration_ms)}; akcje gry mogą być kontynuowane.`,
+            title: "Control odzyskał stan urządzeń",
+            detail: `Odczyt stanu urządzeń wrócił po ${formatDuration(metrics.duration_ms)}; akcje gry mogą być kontynuowane.`,
           };
         }
         const details = [`Blokada: ${formatDuration(metrics.blocked_duration_ms)}`];
@@ -5483,6 +5488,27 @@ function buildSessionRunDetails(r) {
           details.push(`${names[kind] || kind}: ${relation}, ${visibility}${sinceChange}`);
         });
         return { title: `Połączenie: ${devices}`, detail: details.join(" · ") };
+      }
+      if (event.category === "audio_unlock") {
+        const lostReasons = {
+          context_suspended: "kontekst audio wstrzymany",
+          context_interrupted: "kontekst audio przerwany przez system",
+          context_closed: "kontekst audio zamknięty",
+          not_allowed: "odtworzenie odrzucone (NotAllowedError)",
+        };
+        const reason = metrics.reason === "browser_lost"
+          ? `przeglądarka przestała pozwalać na dźwięk${metrics.detail ? ` — ${lostReasons[metrics.detail] || metrics.detail}` : ""} (np. uśpienie ekranu lub karta w tle)`
+          : "nowa karta Wyświetlacza (przeładowanie, podmiana lub ponowne podłączenie)";
+        const outcomes = {
+          unlocked: "odblokowano gestem po",
+          display_offline: "Wyświetlacz rozłączył się po",
+          game_ended: "gra zakończyła się po",
+          not_required: "odblokowanie przestało być potrzebne po",
+        };
+        const details = [reason, `${outcomes[metrics.outcome] || "czekanie trwało"} ${formatDuration(metrics.wait_ms)}`];
+        if (metrics.blocked_action_attempts) details.push(`próby akcji podczas blokady: ${metrics.blocked_action_attempts}`);
+        if (metrics.display_visibility === "hidden") details.push("karta Wyświetlacza była w tle");
+        return { title: "Czekanie na odblokowanie dźwięku na Wyświetlaczu", detail: details.join(" · ") };
       }
       if (event.category === "device_lease") {
         const states = { waiting:"oczekuje na zwolnienie blokady", primary:"zostało aktywowane jako główne", released:"zwolniło blokadę", expired:"utraciło blokadę po wygaśnięciu lease", revoked:"jego połączenie zostało cofnięte" };
@@ -6677,7 +6703,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T11473");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T13063");
 
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;

@@ -140,3 +140,25 @@ test("atrybut accept pliku nie dostaje ?v= (i traci wpisany przez pomyłkę)", (
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// Regresja 2026-10-20: część plików Control miała ?v= z lokalnego
+// uruchomienia version-assets.js, reszta z ostatniego wdrożenia. Ten sam
+// moduł pod dwoma adresami ładuje się dwa razy (drugi klient Supabase,
+// pusty manifest dźwięków w ui.js), a Control przestaje reagować.
+test("w repo każdy lokalny moduł ma jedną wersję ?v= we wszystkich odwołaniach", () => {
+  const versions = new Map();
+  for (const rel of walk(WEB_ROOT)) {
+    const text = fs.readFileSync(path.join(WEB_ROOT, rel), "utf8");
+    for (const match of text.matchAll(/["'(]([^"'()\s]+?\.(?:js|css|json))\?v=(v[0-9A-Za-z-]+)/g)) {
+      if (/^(https?:)?\/\//.test(match[1])) continue;
+      const target = match[1].startsWith("/")
+        ? path.posix.normalize(match[1].slice(1))
+        : path.posix.normalize(path.posix.join(path.posix.dirname(rel), match[1]));
+      if (!versions.has(target)) versions.set(target, new Map());
+      versions.get(target).set(match[2], rel);
+    }
+  }
+  const mixed = [...versions].filter(([, byVersion]) => byVersion.size > 1)
+    .map(([target, byVersion]) => `${target}: ${[...byVersion].map(([v, rel]) => `${v} (${rel})`).join(", ")}`);
+  assert.deepEqual(mixed, []);
+});

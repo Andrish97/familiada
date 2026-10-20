@@ -10,48 +10,21 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T11473";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T11473";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T11473";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T11473";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T11473";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-20T11473";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T11473";
-import { createPressController } from "./press.js?v=v2026-10-20T11473";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T11473";
-import { getDevicePresenceMeta } from "../../../shared/js/core/device-context.js?v=v2026-10-20T11473";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T11473";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T13063";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T13063";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T13063";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T13063";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T13063";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-20T13063";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T13063";
+import { createPressController } from "./press.js?v=v2026-10-20T13063";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T13063";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T13063";
 
 
 function parseParams() {
   const u = new URL(location.href);
   return { gameId: u.searchParams.get("id") || "", key: u.searchParams.get("key") || "" };
-}
-
-function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
-  const DEVICE_ID_KEY = "familiada:deviceId:buzzer";
-  let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
-  let pingInFlight = false;
-  const ping = async () => {
-    if (pingInFlight) return;
-    pingInFlight = true;
-    try {
-    const { data, error } = await sb().rpc("device_ping", {
-      p_game_id: gameId, p_device_type: "buzzer", p_key: key, p_device_id: deviceId, p_meta: getDevicePresenceMeta(gameId),
-    });
-    if (!error && data?.device_id && !deviceId) {
-      deviceId = data.device_id;
-      localStorage.setItem(DEVICE_ID_KEY, deviceId);
-    }
-    } catch { /* Presence diagnostics must never interrupt the Buzzer. */ }
-    finally { pingInFlight = false; }
-  };
-  ping();
-  setInterval(ping, pingMs);
-  document.addEventListener("visibilitychange", () => { void ping(); });
-  for (const event of ["focus", "blur", "pageshow", "pagehide"]) {
-    window.addEventListener(event, () => { void ping(); });
-  }
 }
 
 // js/pages/buzzer.js's isIOSSafari()/setPseudoFS()/toggleFullscreen() — na
@@ -291,7 +264,6 @@ async function main() {
   document.getElementById("btnA")?.addEventListener("touchstart", (e) => { e.preventDefault(); press("A"); }, { passive: false });
   document.getElementById("btnB")?.addEventListener("touchstart", (e) => { e.preventDefault(); press("B"); }, { passive: false });
 
-  startPresenceHeartbeat({ gameId, key });
   if (lease.state === "primary") await subscription.start();
 }
 

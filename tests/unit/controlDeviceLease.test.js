@@ -38,8 +38,8 @@ test("lease wygasły po wznowieniu karty rejestruje nową instancję i odzyskuje
     },
     crypto: { randomUUID: () => `connection-${++nextId}` },
     AbortSignal,
-    setInterval(fn, ms) { timers.set(ms, fn); return ms; },
-    clearInterval(ms) { timers.delete(ms); },
+    getDevicePresenceMeta: () => ({}),
+    startTicker(fn, ms) { timers.set(ms, fn); return () => timers.delete(ms); },
   };
   const create = vm.runInNewContext(`${source}; createDeviceLease;`, context);
   const lease = create({ gameId: "game", deviceType: "host", key: "key" });

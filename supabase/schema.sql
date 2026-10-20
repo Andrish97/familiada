@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XRtJ6Y6HU5mB8Wri7z8qB5V8rAs6KXbTP0ZOmjSuDjzOWgnTZpyoyTjtXAiaPqK
+\restrict RpR276otZEkHAE0mfUBTgbIqt6yN5tGN47tgQQ5R3vbbtGEy1e5USmZWDTxv1TL
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3843,24 +3843,6 @@ $$;
 
 
 --
--- Name: acknowledge_display_audio_unlock("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."acknowledge_display_audio_unlock"("p_game_id" "uuid", "p_key" "text", "p_nonce" "text", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-DECLARE changed integer;
-BEGIN
-  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
-  UPDATE public.display_audio_unlock SET acknowledged_nonce=request_nonce,acknowledged_at=now()
-    WHERE game_id=p_game_id AND request_nonce=p_nonce;
-  GET DIAGNOSTICS changed=ROW_COUNT;
-  RETURN changed=1;
-END $$;
-
-
---
 -- Name: acquire_edit_lock("text", "uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4757,24 +4739,6 @@ $$;
 
 
 --
--- Name: begin_display_audio_session("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."begin_display_audio_session"("p_game_id" "uuid", "p_key" "text", "p_session_nonce" "text", "p_connection_id" "uuid" DEFAULT NULL::"uuid", "p_epoch" bigint DEFAULT NULL::bigint) RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'pg_temp'
-    AS $$
-BEGIN
-  IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN RAISE EXCEPTION 'forbidden'; END IF;
-  IF p_session_nonce IS NULL OR length(p_session_nonce)<8 OR length(p_session_nonce)>100 THEN RAISE EXCEPTION 'invalid nonce'; END IF;
-  INSERT INTO public.display_audio_unlock(game_id,session_nonce,request_nonce,acknowledged_nonce,requested_at,acknowledged_at)
-    VALUES(p_game_id,p_session_nonce,p_session_nonce,NULL,now(),NULL)
-    ON CONFLICT(game_id) DO UPDATE SET session_nonce=EXCLUDED.session_nonce,request_nonce=EXCLUDED.request_nonce,acknowledged_nonce=NULL,requested_at=now(),acknowledged_at=NULL;
-  RETURN true;
-END $$;
-
-
---
 -- Name: can_access_base("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5324,7 +5288,7 @@ BEGIN
     IF octet_length(p_event::text)>6000 THEN RAISE EXCEPTION 'event too large'; END IF;
     IF event_kind='diagnostic' THEN
       category:=p_event->>'category';
-      IF category IS NULL OR category NOT IN ('connectivity','audio_start','display_delay','state_sync','realtime') THEN RAISE EXCEPTION 'invalid diagnostic category'; END IF;
+      IF category IS NULL OR category NOT IN ('connectivity','audio_start','audio_unlock','display_delay','state_sync','realtime') THEN RAISE EXCEPTION 'invalid diagnostic category'; END IF;
       item:=jsonb_build_object('kind',event_kind,'category',category,'at',now(),
         'message',left(coalesce(p_event->>'message',''),300),
         'devices',CASE WHEN jsonb_typeof(p_event->'devices')='array' THEN p_event->'devices' ELSE '[]'::jsonb END,
@@ -6006,7 +5970,6 @@ BEGIN
 
   DELETE FROM public.device_connect_codes WHERE game_id=p_game_id;
   DELETE FROM public.device_presence WHERE game_id=p_game_id;
-  DELETE FROM public.display_audio_unlock WHERE game_id=p_game_id;
   DELETE FROM public.shared_devices WHERE game_id=p_game_id;
 
   IF v_runtime.id IS NOT NULL THEN
@@ -6148,7 +6111,6 @@ BEGIN
 
   DELETE FROM public.device_connect_codes WHERE game_id = v_session.game_id;
   DELETE FROM public.device_presence WHERE game_id = v_session.game_id;
-  DELETE FROM public.display_audio_unlock WHERE game_id = v_session.game_id;
   DELETE FROM public.shared_devices WHERE game_id = v_session.game_id;
   UPDATE public.control_runtime_sessions
   SET ended_at = now(), end_reason = 'idle'
@@ -6733,29 +6695,6 @@ begin
   delete from auth.users where id = p_user_id;
 end;
 $$;
-
-
---
--- Name: device_ping("uuid", "public"."device_type", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."device_ping"("p_game_id" "uuid", "p_device_type" "public"."device_type", "p_key" "text", "p_device_id" "text" DEFAULT NULL::"text", "p_meta" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'auth'
-    AS $$
-DECLARE did text;
-BEGIN
-  IF NOT public.control_device_key_valid(p_game_id,p_device_type::text,p_key) THEN
-    RAISE EXCEPTION 'forbidden';
-  END IF;
-  did:=nullif(trim(coalesce(p_device_id,'')),'');
-  IF did IS NULL THEN did:=encode(gen_random_bytes(8),'hex'); END IF;
-  INSERT INTO public.device_presence(game_id,device_type,device_id,last_seen_at,meta)
-  VALUES(p_game_id,p_device_type,did,now(),coalesce(p_meta,'{}'::jsonb))
-  ON CONFLICT(game_id,device_type,device_id) DO UPDATE
-    SET last_seen_at=excluded.last_seen_at,meta=excluded.meta;
-  RETURN jsonb_build_object('ok',true,'device_id',did,'ts',now());
-END $$;
 
 
 --
@@ -16374,31 +16313,6 @@ $$;
 
 
 --
--- Name: request_display_audio_unlock("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."request_display_audio_unlock"("p_game_id" "uuid", "p_nonce" "text") RETURNS boolean
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'auth', 'pg_temp'
-    AS $$
-BEGIN
-  IF auth.uid() IS NULL OR NOT EXISTS (
-    SELECT 1 FROM public.games WHERE id=p_game_id AND owner_id=auth.uid()
-  ) THEN RAISE EXCEPTION 'forbidden'; END IF;
-  IF p_nonce IS NULL OR length(p_nonce)<8 OR length(p_nonce)>100 THEN
-    RAISE EXCEPTION 'invalid nonce';
-  END IF;
-  INSERT INTO public.display_audio_unlock(
-    game_id,session_nonce,request_nonce,acknowledged_nonce,requested_at,acknowledged_at
-  ) VALUES(p_game_id,p_nonce,p_nonce,NULL,now(),NULL)
-  ON CONFLICT(game_id) DO UPDATE SET request_nonce=EXCLUDED.request_nonce,
-    acknowledged_nonce=NULL, requested_at=now(), acknowledged_at=NULL;
-  RETURN true;
-END;
-$$;
-
-
---
 -- Name: request_display_completion(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -18434,20 +18348,6 @@ CREATE TABLE "public"."device_presence" (
 
 
 --
--- Name: display_audio_unlock; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."display_audio_unlock" (
-    "game_id" "uuid" NOT NULL,
-    "session_nonce" "text" NOT NULL,
-    "request_nonce" "text" NOT NULL,
-    "acknowledged_nonce" "text",
-    "requested_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "acknowledged_at" timestamp with time zone
-);
-
-
---
 -- Name: e2e_emails; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -19923,14 +19823,6 @@ ALTER TABLE ONLY "public"."device_connect_codes"
 
 ALTER TABLE ONLY "public"."device_presence"
     ADD CONSTRAINT "device_presence_pkey" PRIMARY KEY ("game_id", "device_type", "device_id");
-
-
---
--- Name: display_audio_unlock display_audio_unlock_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."display_audio_unlock"
-    ADD CONSTRAINT "display_audio_unlock_pkey" PRIMARY KEY ("game_id");
 
 
 --
@@ -21781,13 +21673,6 @@ CREATE TRIGGER "copy_pending_device_presence" BEFORE INSERT OR DELETE OR UPDATE 
 
 
 --
--- Name: display_audio_unlock copy_pending_display_audio_unlock; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER "copy_pending_display_audio_unlock" BEFORE INSERT OR DELETE OR UPDATE ON "public"."display_audio_unlock" FOR EACH ROW EXECUTE FUNCTION "public"."_copy_pending_guard"();
-
-
---
 -- Name: games copy_pending_game; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -22680,14 +22565,6 @@ ALTER TABLE ONLY "public"."device_connect_codes"
 
 ALTER TABLE ONLY "public"."device_presence"
     ADD CONSTRAINT "device_presence_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
-
-
---
--- Name: display_audio_unlock display_audio_unlock_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."display_audio_unlock"
-    ADD CONSTRAINT "display_audio_unlock_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
 
 
 --
@@ -23819,21 +23696,6 @@ ALTER TABLE "public"."device_presence" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "device_presence_owner_read" ON "public"."device_presence" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."games" "g"
   WHERE (("g"."id" = "device_presence"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
-
-
---
--- Name: display_audio_unlock; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."display_audio_unlock" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: display_audio_unlock display_audio_unlock_owner_read; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "display_audio_unlock_owner_read" ON "public"."display_audio_unlock" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."games" "g"
-  WHERE (("g"."id" = "display_audio_unlock"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
 
 
 --
@@ -25062,5 +24924,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XRtJ6Y6HU5mB8Wri7z8qB5V8rAs6KXbTP0ZOmjSuDjzOWgnTZpyoyTjtXAiaPqK
+\unrestrict RpR276otZEkHAE0mfUBTgbIqt6yN5tGN47tgQQ5R3vbbtGEy1e5USmZWDTxv1TL
 

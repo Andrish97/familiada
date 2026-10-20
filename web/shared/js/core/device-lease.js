@@ -1,6 +1,8 @@
-import { sb } from "./supabase.js?v=v2026-10-20T11473";
-import { t } from "../../translation/translation.js?v=v2026-10-20T11473";
-import { icon } from "./icons.js?v=v2026-10-20T11473";
+import { sb } from "./supabase.js?v=v2026-10-20T13063";
+import { t } from "../../translation/translation.js?v=v2026-10-20T13063";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-20T13063";
+import { startTicker } from "./background-ticker.js?v=v2026-10-20T13063";
+import { icon } from "./icons.js?v=v2026-10-20T13063";
 
 
 const HEARTBEAT_MS = 3_000;
@@ -14,8 +16,11 @@ export function updateDeviceLeaseOverlay(state) {
   const overlay = document.getElementById("deviceLeaseOverlay");
   if (!overlay) return;
   overlay.dataset.leaseState = state || "starting";
+  // .blocking-overlay jest domyślnie display:none (wspólny styl nakładek),
+  // więc samo zdjęcie `hidden` nie pokazuje komunikatu.
   if (state === "primary") {
     overlay.hidden = true;
+    overlay.style.display = "none";
     return;
   }
   const waiting = state === "waiting";
@@ -26,6 +31,7 @@ export function updateDeviceLeaseOverlay(state) {
   if (title) title.textContent = t(waiting ? "deviceLease.waitingTitle" : "deviceLease.reconnectingTitle");
   if (text) text.textContent = t(waiting ? "deviceLease.waitingText" : "deviceLease.reconnectingText");
   overlay.hidden = false;
+  overlay.style.display = "flex";
 }
 
 export function createDeviceLease({ gameId, deviceType, key, onState }) {
@@ -35,14 +41,20 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   let epoch = null;
   let registerNext = true;
   let inFlight = false;
-  let timer = null;
   let stopped = false;
   let telemetryActive = false;
+  let heartbeatAgain = false;
+  let stopTicker = null;
+  // Metadane strony (diagnostyka, odblokowanie dźwięku Wyświetlacza) jadą
+  // tym samym heartbeatem co lease — jeden zapis, jedna transakcja w bazie.
+  let extraMeta = {};
+  let audioUnlockedOnServer = false;
   let pageStateFlush = null;
   const pendingPageStates = [];
   const progress = { received_rev: 0, rendered_rev: 0, started_sound_cue_seq: 0 };
 
   const meta = () => ({
+    ...getDevicePresenceMeta(gameId, extraMeta),
     visibility: document.visibilityState || "unknown",
     focused: !!document.hasFocus?.(),
     ...progress,
@@ -50,6 +62,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
 
   function publish(data = {}) {
     const wasPrimary = state === "primary";
+    if (typeof data.audio_unlocked === "boolean") audioUnlockedOnServer = data.audio_unlocked;
     mode = data.mode || mode;
     const previous = `${state}:${epoch}`;
     state = data.state || state;
@@ -110,7 +123,13 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   }
 
   async function heartbeat(register = false) {
-    if (stopped || inFlight) return null;
+    if (stopped) return null;
+    if (inFlight) {
+      // Nowsze metadane (np. odblokowanie dźwięku) nie mogą czekać na
+      // kolejny takt — wyślij je zaraz po bieżącym żądaniu.
+      heartbeatAgain = true;
+      return null;
+    }
     inFlight = true;
     try {
       let shouldRegister = register || registerNext || mode !== "lease";
@@ -141,7 +160,13 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
         onState?.({ mode, state, epoch, queuePosition: null, waitingCount: 0, error });
       }
       return null;
-    } finally { inFlight = false; }
+    } finally {
+      inFlight = false;
+      if (heartbeatAgain && !stopped) {
+        heartbeatAgain = false;
+        void heartbeat(false);
+      }
+    }
   }
 
   function onVisibility() {
@@ -155,7 +180,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   function onPageHide(event) {
     if (event?.persisted) return;
     stopped = true;
-    clearInterval(timer);
+    stopTicker?.();
     if (mode === "lease") {
       void call("control_device_instance_release", {
         p_game_id: gameId, p_device_type: deviceType, p_key: key,
@@ -166,7 +191,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
 
   async function start() {
     await heartbeat(true);
-    timer = setInterval(() => void heartbeat(false), HEARTBEAT_MS);
+    stopTicker = startTicker(() => void heartbeat(false), HEARTBEAT_MS);
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("focus", onResume);
     window.addEventListener("online", onResume);
@@ -177,7 +202,7 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
 
   function stop() {
     stopped = true;
-    clearInterval(timer);
+    stopTicker?.();
     document.removeEventListener("visibilitychange", onVisibility);
     window.removeEventListener("focus", onResume);
     window.removeEventListener("online", onResume);
@@ -208,5 +233,12 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
       if (Number.isSafeInteger(startedSoundCueSeq) && startedSoundCueSeq >= 0) progress.started_sound_cue_seq = Math.max(progress.started_sound_cue_seq, startedSoundCueSeq);
     },
     actionArgs() { return state === "primary" ? { p_connection_id: connectionId, p_epoch: epoch } : {}; },
+    /** Zmienia metadane strony i od razu wysyła heartbeat z nimi. */
+    setMeta(patch) {
+      extraMeta = { ...extraMeta, ...patch };
+      void heartbeat(false);
+    },
+    /** Czy baza ma odblokowanie dźwięku dla tej instancji (Wyświetlacz). */
+    get audioUnlockedOnServer() { return state === "primary" && audioUnlockedOnServer; },
   };
 }

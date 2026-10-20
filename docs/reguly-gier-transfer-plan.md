@@ -2,8 +2,8 @@
 
 **Stan:** plan, bez zmian w aplikacji.  
 **Zakres:** jedno źródło reguł dla gotowości i dozwolonych akcji gry, uproszczenie
-modalów tworzenia gry z Base Explorera oraz jawne i bezstratne (albo jawnie
-potwierdzane jako stratne) reguły importu/eksportu.  
+modalów tworzenia gry z Base Explorera oraz jednolite reguły importu/eksportu,
+z uzgodnioną automatyczną normalizacją danych do limitów.
 **Kolejność:** audyt kontraktów → uzgodnienie rozbieżności → centralizacja reguł
 → integracja ekranów i walidacji serwerowej → audyt i poprawa transferu → testy
 punktowe.
@@ -127,8 +127,66 @@ braki informacyjnie i nie blokuje tworzenia szkicu.
   odpowiada punktom. Procent wyświetlany w podliczaniu ma wyjaśniać tę samą
   punktację, nie być drugim, inaczej zaokrąglonym wynikiem. Liczymy całość
   przed odrzuceniem słabych odpowiedzi/wyborem sześciu; pominięcie części
-  odpowiedzi nie zwiększa udziałów pozostałych. Szczegółowe zaokrąglanie
-  niecałkowitych udziałów pozostaje do rozstrzygnięcia na przykładach.
+  odpowiedzi nie zwiększa udziałów pozostałych. **Dalsza decyzja:** przy
+  niecałkowitych udziałach dopuszczamy niedobór punktów, np. 33/33/33 i sumę
+  99. Nie dobijamy do 100 przez arbitralne rozbijanie równych głosów; suma
+  punktów odpowiedzi zapisanych do gry nie może przekroczyć 100.
+- **Zaokrąglanie — decyzja 2026-10-20:** jednakowa liczba głosów w pytaniu
+  zawsze daje jednakowy procent. Dla udziału `100 * liczba_głosów / N`, gdzie
+  N jest liczbą pełnych ankiet w bieżącym uruchomieniu: brak głosów daje 0%;
+  dodatni udział poniżej 1% pokazujemy jako 1%; wszystkie pozostałe udziały
+  ucinamy do pełnej liczby całkowitej (`floor`). Bez rozdzielania reszt
+  i bez odejmowania punktów dla rozbicia remisu. Przykłady: 0,8% → 1%,
+  3,9% → 3%, 4% → 4%, 33⅓% → 33%. Kwalifikacja od 4% dotyczy tak
+  otrzymanej wartości; 3,9% nie kwalifikuje się.
+  Do gry trafiają wyłącznie wybrane, kwalifikujące się odpowiedzi, a ich
+  punkty są równe procentowi. Minimum 1% nie przyznaje punktów odpowiedziom
+  poniżej progu 4%. Suma procentów wszystkich surowych pozycji może przez
+  podnoszenie drobnych udziałów do 1 przekroczyć 100; nie jest to suma punktów
+  gry i nie może być użyta do ponownej normalizacji. Suma punktów wybranych
+  odpowiedzi nadal jest ≤100. JS i SQL stosują ten sam algorytm.
+- **Remis na granicy szóstki — decyzja 2026-10-20:** w podliczaniu tekstowym,
+  gdy szósta i kolejna odpowiedź mają **dokładnie tyle samo głosów**, pojawia
+  się pojedynczy przycisk zmiany wyboru w remisie. Dla dwóch kandydatów
+  zamienia szóstą i siódmą odpowiedź; następne kliknięcie przywraca poprzedni
+  wybór. Widok jasno pokazuje, która odpowiedź wejdzie do gry, a która
+  zostanie pominięta. Nie wymaga to zmiany głosów ani punktów.
+  Kolejność kandydatów w podliczaniu wynika z liczby głosów malejąco,
+  z zapisanym porządkiem jako rozstrzygnięciem identycznych liczebności.
+  Jednakowy procent po ucięciu przy różnych liczbach głosów **nie uprawnia**
+  do pominięcia odpowiedzi z większą liczbą głosów na rzecz mniej popularnej.
+  Np. przy 200 pełnych ankietach 10 i 11 głosów daje po 5%, ale przy
+  wyborze szóstki pierwszeństwo ma 11 głosów, bez przycisku zamiany.
+  Jest to odrębne od rozgrywki: po zatwierdzeniu odpowiedzi zapisane z tą
+  samą punktacją są remisujące, niezależnie od tego, czy równość wynikała
+  z identycznych liczebności, czy z ucięcia procentu. Zgodnie z ustaloną
+  definicją najwyżej punktowanej odpowiedzi liczą się zapisane punkty;
+  sam plik transferu nie przechowuje liczby głosów.
+  Uogólnienie dla większej grupy remisowej: wszystkie odpowiedzi ponad nią
+  pozostają wybrane, a przycisk cyklicznie zmienia zestaw z remisowej grupy
+  w pozostałych miejscach do sześciu. Każdy dopuszczalny zestaw musi być
+  osiągalny; nie wolno ograniczyć się do dwóch pozycji i ukryć innych
+  równorzędnych kandydatów. Domyślny wybór jest widoczny, użytkownik może
+  go zmienić przed zatwierdzeniem. Przycisk nie występuje, jeżeli nie ma
+  remisu przecinającego granicę sześciu kwalifikujących się odpowiedzi.
+  Wybór jest częścią szkicu podliczania i końcowego zapisu. Po scaleniu
+  tekstów przeliczyć liczebności i kwalifikację, zachować wybór, jeśli nadal
+  jest poprawny, a zmianę wymuszoną nowym rankingiem pokazać w podsumowaniu.
+  SQL waliduje wybrany zestaw względem aktualnego rankingu, remisu i limitu
+  sześciu; frontend nie może pozwolić ominąć lepszej odpowiedzi spoza remisu.
+- **Minimalna liczba głosów — ostateczne doprecyzowanie 2026-10-20:**
+  podliczanie ankiety punktowej i tekstowej jest dozwolone od **10 pełnych
+  oddanych ankiet w bieżącym uruchomieniu**. Przy 0–9 akcja „Podlicz” jest
+  zablokowana; próg jest sprawdzany przed rozpoczęciem podliczania, nie
+  dopiero przy zatwierdzaniu wyniku. Oddanie ankiety obejmuje odpowiedź na
+  wszystkie pytania; każde pytanie otrzymuje więc tyle samo głosów. Liczymy
+  pełne wypełnienia, nie sumę wierszy odpowiedzi ani osobne progi pytań.
+  To zmienia wcześniejszy zapis o swobodnym wejściu do podliczania. Bramka
+  liczby głosów jest odrębna od min. 3 odpowiedzi z udziałem ≥4% na pytanie:
+  przy ≥10 pełnych wypełnieniach można wejść do podliczania i scalać teksty,
+  nawet jeśli wynik nie spełnia jeszcze warunków zatwierdzenia. UI i SQL
+  korzystają ze wspólnej reguły; zapis wyniku ponownie sprawdza próg, aby
+  starszy klient lub usunięcie głosów w międzyczasie nie ominęły ograniczenia.
 - **Usuwamy sztuczne obniżanie punktów w celu rozbijania remisów.** Różne
   odpowiedzi mogą mieć tyle samo punktów. **Doprecyzowanie użytkownika:**
   trafienie dowolnej odpowiedzi o maksymalnej wartości oznacza trafienie
@@ -161,9 +219,10 @@ braki informacyjnie i nie blokuje tworzenia szkicu.
   jest zaokrąglany zgodnie z ustaloną regułą, a do zamknięcia wymagane są co
   najmniej 3 kwalifikujące odpowiedzi na pytanie po scaleniu i ponownym
   przeliczeniu. Dla tekstowej listę ogranicza także limit sześciu odpowiedzi;
-  wejście do podliczania pozostaje dozwolone nawet wtedy, gdy wynik nie może
-  jeszcze zostać zamknięty. Szczegółowy porządek progowania/scalania musi
-  wynikać z jednego algorytmu wspólnego dla JS i SQL.
+  wejście do podliczania wymaga ≥10 pełnych oddanych ankiet, ale nie wymaga
+  jeszcze spełnienia kwalifikacji odpowiedzi do zamknięcia. Szczegółowy
+  porządek progowania/scalania musi wynikać z jednego algorytmu wspólnego
+  dla JS i SQL.
 - Eksport i kopiowanie jako odrębne akcje o własnych warunkach, nie utożsamiane
   z gotowością do rozgrywki.
 
@@ -369,10 +428,93 @@ zapis, podgląd i późniejszą rozgrywkę.
   fallbacków ani zgadywania typu po nazwie gry. Niejasne dane historyczne
   obsługuje wyłącznie opisana niżej jawna ścieżka odzyskania do
   `prepared`/`draft`, z informacją o wyniku i odzyskanych danych.
-- Każde obcięcie, usunięcie, wypełnienie placeholderem, wyzerowanie punktów,
-  ograniczenie liczby odpowiedzi lub konwersję typu: albo usunąć z normalizacji
-  (jeśli format może zachować dane), albo pokazać przed importem dokładny
-  raport strat i uzyskać potwierdzenie. Baza nadal waliduje limity bezpieczeństwa.
+- **Decyzja 2026-10-20 — normalizacja bez pytania:** za długie teksty
+  obcinać do docelowych limitów (nazwa 80, pytanie 100, odpowiedź 17
+  znaków). Punkty ujemne, nienumeryczne, nieskończone lub poza zakresem
+  0–100 zamieniać na 0, a nie ograniczać do najbliższej granicy (101 → 0).
+  Przy ponad sześciu odpowiedziach najpierw normalizować punkty, następnie
+  sortować malejąco po punktach i zachować pierwsze sześć; przy remisie
+  zachować kolejność wejściową. Nie usuwać pytań ani zmieniać zaznaczenia.
+  Ta sama polityka obowiązuje we wspólnym kontrakcie transferu i przy
+  odzyskiwaniu historycznego pakietu. Operacje nie wymagają podglądu,
+  ręcznych poprawek ani dodatkowego potwierdzenia; ewentualny raport zmian
+  jest informacyjny. Nie daje to zgody na dopisywanie treści zastępczych,
+  zgadywanie typu ani oznaczanie niepoprawnego wyniku jako zamkniętego.
+  Gotowość po normalizacji nadal wylicza centralny silnik reguł.
+- **Decyzja 2026-10-20 — długość pytania:** limit zmniejszamy z 200 do
+  **100 znaków**. Odpowiedź pozostaje ograniczona do **17 znaków**.
+  Docelowo te same limity obowiązują w edytorze, Base Explorerze, transferze
+  i serwerowych ścieżkach zapisu. Nadmiar treści obcinamy zgodnie z powyższą
+  polityką, bez pytania. Przed zaostrzeniem ograniczenia bazy zinwentaryzować
+  istniejące pytania dłuższe niż 100 znaków, po czym obciąć je migracją
+  bez pytania, również w istniejących ankietach; uwzględnić ochronę sesji
+  Control. Obecny kod nadal
+  stosuje 200/17: `question-form.js` (`LIMITS.Q_TEXT/A_TEXT`, `wireTextLimit`)
+  oraz ograniczenia SQL `questions_text_len`/`answers_text_len`. Limit 17
+  jest więc już egzekwowany w UI i w schemacie bazy; zmiana 100 jest planem.
+- **Decyzja 2026-10-20 — odpowiedzi i podpowiedzi:** w ankiecie tekstowej
+  oraz wszędzie, gdzie edytujemy odpowiedzi (edytor gry, wspólny formularz
+  Base Explorera i korekta przy podliczaniu), egzekwować limit 17 znaków
+  także przy wklejaniu i zapisie. Przy polach pokazać stałą, przetłumaczoną
+  podpowiedź: „Maksymalnie 17 znaków. Dłuższe odpowiedzi zostaną przycięte.
+  Znaki nieobsługiwane przez czcionkę 5×7, np. emoji, zostaną pominięte
+  podczas podliczania ankiety.” W edytorze zamiast zapowiedzi automatycznej
+  korekty ankiety podpowiedź ma informować: „Usuń nieobsługiwane znaki,
+  aby zapisać odpowiedź.”
+  Informacja ma być widoczna przy zwykłym wpisywaniu odpowiedzi, nie tylko
+  w modalu importu. **Późniejsze doprecyzowanie użytkownika:** edytor nie
+  dopuszcza zapisania odpowiedzi zawierającej niedozwolone znaki; walidacja
+  dotyczy także wspólnego formularza Base Explorera i ręcznej korekty wyniku.
+  W ankiecie tekstowej głos jest przyjmowany, a niedozwolone znaki usuwa się
+  automatycznie podczas podliczania, przed grupowaniem odpowiedzi i liczeniem
+  punktacji. Zastępuje to wcześniejsze ustalenie o samym informowaniu
+  i pomijaniu symboli dopiero w rendererze. Surowy wpis pozostaje źródłem
+  audytowym; do zatwierdzonego wyniku trafia oczyszczona treść. Podpowiedź
+  głosującego musi uprzedzać o tej korekcie.
+  Dozwolone znaki wyznacza **`web/shared/fonts/display/font_5x7.json`**:
+  wszystkie kategorie poza `meta`, zgodnie z budowaniem mapy w `fonts.js`.
+  Uwzględnić NFC i zamianę na wielkie litery stosowaną przez renderer,
+  aby nie odrzucać małych liter mających obsługiwany wielki odpowiednik,
+  w tym polskich i ukraińskich. Nie stosować osobnej listy ASCII ani uznawać
+  pustego zastępczego glifu za dowód obsługi nieznanego znaku. JS i SQL
+  korzystają z tego samego zestawu pochodzącego z fontu, bez ręcznego
+  utrzymywania dwóch rozbieżnych list. Limit i walidacja serwerowa mają być spójne
+  także dla bezpośrednich wywołań wszystkich RPC oddających głosy tekstowe.
+  Przy implementacji ujednolicić liczenie znaków JS/SQL i bezpieczne obcinanie
+  Unicode; obecne `slice`/`maxlength` liczą jednostki UTF-16.
+- **Doprecyzowanie 2026-10-20 — oba edytory i finał:** wszystkie powyższe
+  zasady odpowiedzi obowiązują jednakowo **w edytorze pytań baz oraz
+  w edytorze pytań gry**: limit 17 znaków, walidacja według fontu 5×7,
+  blokada zapisu niedozwolonych znaków oraz widoczne podpowiedzi. Dotyczy
+  tworzenia, edycji i wklejania odpowiedzi, nie tylko jednej strony.
+  W obu edytorach przy wpisywaniu odpowiedzi pokazać także komunikat:
+  **„W finale wyświetlacz mieści 11 znaków. Dłuższe odpowiedzi zostaną
+  na nim skrócone.”** Nie jest to nowy limit zapisu odpowiedzi: w bazie
+  i grze zachowujemy do 17 znaków; finał skraca wyłącznie prezentację,
+  zgodnie z istniejącym `displayText.js:clipDisplayText` i polami 11-znakowymi
+  w `control/display/js/scene.js`. Nie zmieniać tożsamości odpowiedzi,
+  trafienia ani punktacji z powodu skrótu. Te same zasady dopuszczalnych
+  znaków objąć walidacją serwerową zapisu pytań/odpowiedzi obu edytorów,
+  a migracyjną inwentaryzacją i oczyszczaniem objąć również istniejące
+  odpowiedzi w bazach pytań. Filtr fontu nadal dotyczy tylko odpowiedzi.
+- Po oczyszczeniu przy podliczaniu jednakowe odpowiedzi grupować ze
+  zsumowaniem ich wskazań (np. tekst z emoji i ten sam tekst bez emoji).
+  Ponownie przeliczyć ranking, kwalifikację od 4% i wybór szóstki. Odpowiedź
+  złożona wyłącznie z usuniętych znaków nie może stać się pustą, kwalifikującą
+  odpowiedzią ani otrzymać placeholdera. Nie usuwać przez to surowych głosów
+  ani zmieniać mianownika wszystkich wskazań/próbki pełnych ankiet; nadal
+  obowiązuje centralna walidacja minimum trzech kwalifikujących odpowiedzi.
+- Audyt powyższej decyzji: ankieta `polls/vote/text/index.html` ma
+  `maxlength=17`, a `poll-text.js` obcina wpis i pakowany tekst do 17;
+  podpowiedź mówi dziś tylko „Maksymalnie 17 znaków”. Edytor i Base Explorer
+  używają `question-form.js:wireTextLimit`; komunikat o obcinaniu istnieje
+  w edytorze w modalu TXT, nie jako wspólna podpowiedź pól. Renderer
+  `shared/js/display/fonts.js:resolveGlyph` zastępuje brakujący glif spacją
+  (lub pustą bitmapą), nie usuwa go z zapisanego tekstu. SQL ma ograniczenie
+  `answers_text_len` dla zapisanych odpowiedzi i kontrolę 17 w anonimowym
+  RPC 362; starsze `poll_text_submit` i `poll_text_submit_batch_owner`
+  nie mają własnej kontroli długości `answer_raw` — uwzględnić te ścieżki
+  przy centralizacji, nie polegać wyłącznie na polu HTML.
 - Eksport zamkniętej ankiety zachowuje typ ankiety i zamknięty wynik. Eksport
   otwartej/zatrzymanej ankiety najpierw informuje o utracie bieżących głosów,
   a po potwierdzeniu zapisuje szkic tego samego typu.
@@ -380,6 +522,25 @@ zapis, podgląd i późniejszą rozgrywkę.
   reguł. Nie ma konwersji gotowej ankiety punktowej/tekstowej na preparowaną.
 - Dane wymagające tajności lub związane z sesją/urządzeniami pozostają poza
   formatem, tak jak obecnie; jawnie dokumentować wyłączenia.
+- Odczytowa kontrola przed migracją limitu pytań (wykonana przez
+  użytkownika w bazie; wynik przekazany 2026-10-20):
+
+  ```sql
+  SELECT
+    count(*) FILTER (WHERE char_length(text) > 100) AS pytania_ponad_100,
+    max(char_length(text)) AS najdluzsze_pytanie
+  FROM public.questions;
+  ```
+
+  Wynik: **11 pytań ponad 100 znaków; najdłuższe ma 197 znaków**.
+  Użytkownik przekazał również podgląd wszystkich 11: jedno pole zawiera
+  pytanie i wklejoną tabelę odpowiedzi z punktacją, pozostałe 10 to pytania
+  długości 101–129. Obcięcie może przerwać słowo lub zdanie; obowiązuje
+  uzgodnione mechaniczne skrócenie do 100, bez parafrazowania ani zgadywania
+  odpowiedzi z treści pytania. Nie kopiujemy treści ani nazw gier do planu.
+  To częściowy audyt danych tabeli pytań gier; nie potwierdza zgodności
+  wszystkich baz pytań i historycznych pakietów/snapshotów. Przed wdrożeniem
+  powtórzyć odczyt, bo liczba rekordów może się zmienić.
 - **Decyzja 2026-10-20:** zamknięta ankieta przenosi pytania, zatwierdzone
   odpowiedzi i punkty oraz swój zamknięty wariant. Nie zachowujemy liczby
   głosów ani historii/tożsamości głosujących; nie tworzymy fikcyjnych głosów
@@ -402,11 +563,37 @@ zapis, podgląd i późniejszą rozgrywkę.
   Poprawnych typów nie zmieniać tylko dlatego, że szkic nie jest jeszcze
   grywalny. Rozpoznany typ kopii `market` pozostaje osobnym typem w bazie.
 - **Doprecyzowanie 2026-10-20:** migrację wykonać w nocnym oknie wdrożenia;
-  rozpoznane ankiety pozostawić bez przebudowy treści, głosów, statusu
-  i istniejących wyników. Nowe reguły podliczania dotyczą przyszłego
+  rozpoznane ankiety pozostawić bez przebudowy głosów, statusu i istniejących
+  wyników. **Późniejsza decyzja użytkownika: pytania obciąć migracją do
+  100 znaków we wszystkich istniejących grach, także ankietach niezależnie
+  od statusu, bez pytania.** Zastępuje to wcześniejszy zakaz zmiany treści
+  ankiet w tym konkretnym zakresie. Celem jest zgodność z Control już przy
+  pierwszym uruchomieniu, bez wymagania ręcznej edycji. Zachować ID, kolejność
+  pytań i powiązania z odpowiedziami/głosami; samo skrócenie nie resetuje
+  ankiety ani nie przelicza punktów. Inwentaryzacja ma również objąć pytania
+  w bazach i zapisanych pakietach/snapshotach, które mogą ponownie dostarczyć
+  dłuższą treść; wszystkie ścieżki tworzenia gry mają respektować 100.
+  Nowe reguły podliczania dotyczą przyszłego
   podliczania. Nie przeliczać automatycznie zamkniętych ankiet starym/nowym
   progiem i nie zmieniać ich na preparowane. Zakaz ten nie znosi jawnej
   obsługi niejednoznacznych, historycznych pakietów.
+- **Późniejsza decyzja 2026-10-20 — migracja znaków odpowiedzi:** z tekstów
+  odpowiedzi istniejących gier usunąć znaki niedozwolone według fontu 5×7,
+  bez pytania i dla wszystkich użytkowników, również w zamkniętych ankietach
+  i kopiach `market`. Ten drugi wyjątek od ochrony istniejącej treści dotyczy
+  **wyłącznie odpowiedzi**. Nie filtrować według fontu pytań, nazw gier ani
+  opisów; skrócenie pytań do 100 pozostaje osobną, wcześniejszą decyzją.
+  Użyć tego samego zestawu glifów i normalizacji co w walidacji edytora
+  i automatycznej korekcie podczas podliczania. Zachować ID i kolejność
+  odpowiedzi, przypisane punkty, status, powiązania i głosy; samo czyszczenie
+  tekstu nie powoduje resetu ani przeliczenia historycznej punktacji.
+  Surowe wpisy ankiety zachowują rolę audytową; do wyniku tekstowego trafia
+  treść oczyszczona podczas podliczania. Inwentaryzacja ma wykazać również
+  odpowiedzi, które po usunięciu znaków byłyby puste, i kolizje tekstów.
+  Nie wstawiać fikcyjnych tekstów ani nie usuwać w ciemno rekordów z punktami
+  i głosami. Jeśli takie przypadki występują, ich konkretna obsługa wymaga
+  rozstrzygnięcia przed wykonaniem migracji (`answers_text_len` nie dopuszcza
+  pustej odpowiedzi). Nadal respektować ochronę aktywnych sesji Control.
 - Sama pora nocna nie gwarantuje braku aktywnej rozgrywki. Zalecenie do
   planu operacyjnego: przed zmianą treści sprawdzić trwałe sesje Control,
   odróżnić wygasłe od niewygasłych; niewygasłe odłożyć do wygaśnięcia zamiast
@@ -419,9 +606,10 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Zachować odczytane pytania i ich kolejność oraz możliwe do odzyskania
   odpowiedzi i punkty. Nie dopisywać pytań/odpowiedzi i nie przydzielać
   wymyślonych punktów w celu sztucznego spełnienia progów grywalności.
-  Braki mają być widoczne jako braki szkicu. Polityka treści przekraczających
-  limity zapisu pozostaje osobnym ustaleniem; konwersja typu nie upoważnia do
-  cichego obcinania lub usuwania danych.
+  Braki mają być widoczne jako braki szkicu. Odzyskiwany pakiet podlega
+  uzgodnionej wyżej normalizacji tekstów, nadmiarowych odpowiedzi i punktów,
+  bez pytania. Dla rozpoznanych ankiet obowiązuje opisany wyżej wyjątek
+  skrócenia pytań do 100, bez przebudowy ich głosów i wyników.
 - Migracja istniejącej gry naprawia ten sam rekord, zachowując właściciela
   i ID. Nie jest powielaniem. Ma być powtarzalna bez kolejnych zmian i dawać
   zestawienie napraw, konwersji, braków oraz przypadków nieodzyskiwalnych.
@@ -441,7 +629,7 @@ zapis, podgląd i późniejszą rozgrywkę.
 | C | Zdefiniowanie wspólnego kontraktu wyników i kodów reguł; SQL pozostaje autorytatywny dla zapisu, JS nie duplikuje progów | Jednoznaczny kontrakt wejścia/wyjścia i przejście stanu; testy jednostkowe kontraktu |
 | D | Przebudowa modalа Base Explorera według §2; poprawa metadanych bazy do roli sugestii | Dokładne zaznaczenie tworzy szkic; oznaczenia informacyjne; brak bramki 10/kompletności/sumy 100 |
 | E | Integracja gier, edytora, ankiet, Control i kafli z centralnym kontraktem | Każdy przycisk pokazuje wynik centralnej reguły; serwer odrzuca niedozwolone przejście tym samym kodem |
-| F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Próg 4% włącznie i min. 3 odpowiedzi w jednym algorytmie; samo wejście w podliczanie nie jest blokowane |
+| F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Podliczanie dopiero od 10 pełnych ankiet, wspólna bramka UI/SQL; zatwierdzenie wymaga dodatkowo progu 4% włącznie i min. 3 odpowiedzi na pytanie w jednym algorytmie |
 | G | Dodanie „Zmień typ” obok powielania; ta sama bramka `edit` i ta sama ścieżka resetu co w edytorze; konwersja tego samego rekordu do szkicu wybranego typu | Ankieta otwarta/zatrzymana blokuje akcję; zamknięta wymaga identycznego potwierdzenia resetu; podgląd strat/braków przed zapisem |
 | H | Wdrożenie wersjonowanego transferu; jawna obsługa kopii `market`; usunięcie cichych fallbacków; ten sam kontrakt dla wysyłania kopii i poprawa bramki zgłoszenia Marketplace | Dokładnie pięć wariantów zwykłego transferu; wysyłka znajomym wyłącznie szkiców tego samego typu; Marketplace przyjmuje gotową `prepared` lub zamkniętą ankietę jako snapshot `prepared` |
 | H1 | Migracja naprawcza historycznych gier wszystkich użytkowników według §4, na podstawie odczytu danych; jawne odzyskiwanie niejasnych plików jako `prepared`/`draft` | Ujednolicony model bez zgadywania; odzyskane pytania/odpowiedzi/punkty, zachowane ID i właściciele istniejących gier, przeliczone reguły i raport napraw; szkice nie muszą być grywalne |
@@ -472,6 +660,17 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Podliczanie: dokładnie 3% i 4% po zaokrągleniu, mniej/więcej niż 6 pozycji,
   mniej niż 3 kwalifikujące odpowiedzi, oraz tekstowe scalanie które zmienia
   ranking/procent i pozwala ponownie spełnić próg.
+- Zaokrąglanie: 0 głosów → 0%; dodatni udział <1% → 1%; 1,9% → 1%,
+  3,9% → 3% (nie kwalifikuje), 4% → 4%; 10/10/10 przy 30 pełnych
+  ankietach → 33/33/33. Równe głosy zawsze dają równe procenty; brak
+  rozdziału reszt i brak przekroczenia 100 punktów w zapisanym wyniku.
+  Liczne surowe pozycje <1% nie mogą sztucznie otrzymać punktów do gry.
+- Granica szóstki: remis dokładnie dwóch kandydatów, remis większej grupy
+  przecinający jedno lub kilka wolnych miejsc, wszystkie dopuszczalne
+  zestawy osiągalne jednym cyklicznym przyciskiem, trwałość wyboru po
+  odświeżeniu oraz walidacja SQL. Równe procenty z różnych liczebności
+  nie dają przycisku zamiany. Po scaleniu lub zmianie liczby głosów
+  przeliczyć ranking i poprawność wyboru; bez remisu przycisk znika.
 - Import/eksport round-trip: wszystkie pięć dozwolonych kombinacji; eksport
   otwartej i zatrzymanej ankiety z ostrzeżeniem o utracie bieżących głosów;
   wysyłka szkicu zachowująca typ; konwersja każdego typu do pozostałych typów;
@@ -484,11 +683,44 @@ zapis, podgląd i późniejszą rozgrywkę.
   jawna zmiana typu ostrzega o ich usunięciu.
 - Sprawdzić, że błąd pojedynczego elementu nie zostawia częściowo utworzonej
   gry, a raport strat odzwierciedla dokładnie pakiet wejściowy.
+- Normalizacja transferu bez potwierdzenia: teksty na granicy i ponad
+  limitami 80/100/17; 7+ odpowiedzi z nierosnącymi i nieuporządkowanymi
+  punktami; remisy rozstrzygane kolejnością wejściową; punkty -1, 101,
+  nienumeryczne i nieskończone → 0 przed sortowaniem. Przy <=6 odpowiedziach
+  nie zmieniać kolejności tylko z powodu normalizacji. To osobna reguła od
+  świadomego wyboru szóstki podczas podliczania ankiety.
+- Pola odpowiedzi: wpisywanie i wklejanie 17/18 znaków w ankiecie tekstowej,
+  edytorze, Base Explorerze i podliczaniu; stała informacja o przycięciu
+  i automatycznej korekcie znaków podczas podliczania. Edytor i serwer
+  odrzucają zapis odpowiedzi z niedozwolonym znakiem. W głosowaniu tekstowym
+  odpowiedź z emoji trafia do podliczania, gdzie jest automatycznie
+  oczyszczana; po połączeniu jednakowych wyników liczby wskazań sumują się,
+  a pusty wynik nie kwalifikuje się. Przykłady z polskimi/ukraińskimi małymi
+  literami i Unicode złożonym; zgodność z fontem 5×7, brak uszkodzonych par
+  UTF-16, spójny limit JS/SQL i walidacja wszystkich ścieżek zapisu.
+- Parzystość obu edytorów: identyczne zachowanie w bazach pytań i w grze
+  dla tworzenia, edycji i wklejania; w obu widoczne informacje o limicie 17,
+  dozwolonych znakach z fontu 5×7 i pojemności finału 11. Odpowiedzi długości
+  11, 12 i 17 zachowują zapisany tekst do 17 znaków; finał skraca wyłącznie
+  wyświetlanie do 11 według obecnego algorytmu. Skrót nie zmienia ID,
+  dopasowania/trafienia ani punktów. Migracja obejmuje odpowiedzi baz i gier,
+  nie filtruje treści pytań według fontu.
 - Migracja danych obejmuje wielu różnych właścicieli, zachowuje ich ID gier
   i własność, jest idempotentna i nie zmienia poprawnych szkiców wyłącznie
   z powodu braków grywalności. Niejasny historyczny typ z czytelnymi pytaniami
   daje preparowaną w szkicu, z odzyskanymi odpowiedziami/punktami; brak
   możliwości odczytu gry/pytań daje raport problemu, nie fikcyjną nową grę.
+- Migracja limitu pytań: treści 100 znaków pozostają bez zmian, treści 101
+  i 200 znaków zostają obcięte do 100 bez pytania; objąć wszystkie typy
+  i statusy, także istniejące ankiety i kopie `market`. Zachować ID, głosy,
+  status i punktację; uwzględnić ochronę aktywnej sesji Control. Ponowne
+  wykonanie nie wprowadza dalszych zmian; po wdrożeniu żadna ścieżka zapisu
+  nie może odtworzyć treści ponad limit.
+- Migracja znaków: oczyszczenie istniejących odpowiedzi wszystkich typów
+  i statusów według fontu 5×7; pytania i nazwy gier nie podlegają temu
+  filtrowi. Zachowane ID, ord, punkty, status i głosy; ponowne wykonanie
+  bez dalszych zmian. Raport przed migracją wykrywa pusty wynik i kolizje,
+  bez automatycznego usuwania rekordów ani arbitralnego sumowania punktów.
 - Remisy w Control: osobno trafienie pierwszej i drugiej odpowiedzi za 40
   w zestawie 40/40/20 kończy pojedynek, daje właściwe punkty i możliwość
   oddania kontroli. Po odświeżeniu i ponownym podłączeniu urządzeń kolejność,
@@ -499,11 +731,20 @@ zapis, podgląd i późniejszą rozgrywkę.
   i kody QR nie mogą działać po resecie; zostaje draft z punktami 0.
   Aktywny przebieg Control blokuje te operacje również po zamknięciu karty,
   do zakończenia lub godzinnego wygaśnięcia.
+- Próg pełnych ankiet: przy 0 i 9 akcja „Podlicz” jest odrzucona, od 10
+  można rozpocząć podliczanie. Nie wystarczy wyłączyć przycisku: bezpośrednie
+  wejście i operacja SQL również muszą przestrzegać progu. Przy 10 wynik
+  nadal wymaga kwalifikacji odpowiedzi na każde pytanie, a scalanie może
+  tę kwalifikację zmienić. Jedno wypełnienie 10-pytaniowej ankiety liczy się
+  jako jeden komplet, nie 10 głosów do progu. Zapis całego kompletu zachowuje
+  atomowość/idempotencję także przy retry i starszych punktach wejścia;
+  usunięcie głosów po wejściu do podliczania wymaga ponownej oceny przy zapisie.
 
-## 7. Decyzje pozostawione do rozstrzygnięcia po audycie
+## 7. Rozstrzygnięcia po audycie
 
-1. Czy eksport ma przechowywać pełne treści ponad obecne limity i import dopiero
-   zgłaszać niezgodność, czy format ma świadomie limitować dane.
+1. **Rozstrzygnięte 2026-10-20:** wspólny kontrakt automatycznie obcina
+   za długie teksty, zeruje niepoprawne punkty i przy nadmiarze odpowiedzi
+   zachowuje sześć najwyżej punktowanych; bez pytania. Szczegóły w §4.
 2. **Polityka rozstrzygnięta 2026-10-20:** migracja naprawcza starych gier
    obejmie wszystkich użytkowników; niejasne, ale odzyskiwalne dane →
    `prepared`/`draft`. Do odczytu pozostają rzeczywiste aliasy, stany i ich
@@ -511,12 +752,17 @@ zapis, podgląd i późniejszą rozgrywkę.
 3. **Rozstrzygnięte 2026-10-20:** maksymalna suma punktów w pytaniu
    „Preparowanej” pozostaje 100 (`<=100`), nie wymagamy dokładnie 100.
    Modal Base Explorera nie egzekwuje tego limitu przy tworzeniu szkicu.
-4. Dokładna kolejność przycinania do sześciu odpowiedzi i liczenia udziału
-   procentowego przy końcowej kwalifikacji; JS i SQL muszą stosować identyczny
-   algorytm.
+4. **Rozstrzygnięte 2026-10-20:** udział liczymy względem wszystkich głosów,
+   przed kwalifikacją i wyborem szóstki; dodatni udział <1% daje 1%, pozostałe
+   wartości ucinamy. Ranking szóstki według liczby głosów, rzeczywisty remis
+   na jej granicy rozstrzyga użytkownik; w rozgrywce liczą się zapisane punkty.
+   Szczegóły w §3; JS i SQL muszą stosować identyczny algorytm.
 
-Powyższe kwestie mają zostać rozstrzygnięte na podstawie wyników audytu przed
-etapem C. Nie są powodem do zatrzymania samej inwentaryzacji.
+Znane reguły gry i transferu są uzgodnione. Po dodaniu oczyszczania znaków
+pozostaje sprawdzić, czy istnieją odpowiedzi puste po korekcie lub kolizje
+tekstów; ich obsługę rozstrzygnąć na podstawie wyniku audytu (§4).
+Odczyt rzeczywistych danych i zakres operacji naprawczych to pozostałe zadania
+audytu danych, a nie ponownie otwarte decyzje o regułach gry.
 
 ## 8. Audyt A — kod na `37830910ab` (2026-10-20)
 
@@ -528,12 +774,14 @@ nie były uruchamiane. Raport dodano przy korekcie błędnego opisu starszej
 bramki Marketplace i miejsca utraty statusu kopii.
 
 **Granica dowodu:** środowisko nie ma skonfigurowanych poświadczeń do bazy.
-Nie odczytano rzeczywistych rekordów użytkowników, pakietów przechowywanych
-w produkcji ani liczebności historycznych wariantów. Przed migracją pozostaje
+Użytkownik wykonał zapytanie o długości pytań i przekazał wynik oraz podgląd
+11 rekordów (§4); jest to częściowy odczyt danych, bez samodzielnego dostępu
+agenta do bazy. Nie odczytano pakietów przechowywanych w produkcji ani
+liczebności historycznych wariantów. Przed migracją pozostaje
 odczyt agregatów typ/status, typów w `market_games.payload` i zapisanych
 snapshotach oraz próbek historycznych plików. Brak próbek nie dowodzi, że
-aliasy nie występują. Część kodowa etapu A jest zakończona; część danych
-produkcyjnych pozostaje niezweryfikowana.
+aliasy nie występują. Część kodowa etapu A jest zakończona; audyt danych
+produkcyjnych poza przekazanym wynikiem długości pytań pozostaje niezweryfikowany.
 
 ### 8.1. Źródła i granice autorytetu
 
@@ -565,7 +813,7 @@ przy zapisie/przejściu i odczytywany przez UI. Nie jest to nowa decyzja o proga
 |---|---|---|---|
 | P / draft, ready / graj | ≥10 pytań; każde 3–6 odpowiedzi; 0–100 pkt; suma ≤100. Zero punktów przechodzi; brak minimum 4 | Wszystkie warunki łącznie: ≥10 pytań; każde pytanie 3–6 odpowiedzi; każda odpowiedź ≥4 pkt; suma odpowiedzi w każdym pytaniu ≤100. Gotowość niezależna od etykiety statusu | R; UI RULES/komentarz wspomina sumę 100 → wspólna gotowość, SQL |
 | AP, AT / draft, open, stopped / graj | Odmowa do `ready` | Rozgrywka po poprawnym zamknięciu | R → wspólna akcja play |
-| AP, AT / ready / graj | Sam status wystarcza; brak ponownej oceny treści/wyniku w `play` | Stan musi pochodzić z autorytatywnie zweryfikowanego zamknięcia; polityka zastanych wyników do ustalenia | R → wspólny kontrakt zamknięcia/play |
+| AP, AT / ready / graj | Sam status wystarcza; brak ponownej oceny treści/wyniku w `play` | Nowe zamknięcie autorytatywnie weryfikuje wynik według wspólnego kontraktu; migracja zachowuje głosy, status i punktację istniejących ankiet; pytania skraca do 100 znaków | R → wspólny kontrakt zamknięcia/play |
 | M / draft, ready / graj | Nowsze R liczy treść jak P; starsze `game_action_state.can_play` zawsze false; lista Marketplace w Grach włącza Graj po samym zaznaczeniu, Control ma guard R | Osobny typ kopii pozostaje; przycisk i strona korzystają z centralnego wyniku | R + E/stała UI, historyczna funkcja → wspólna gotowość |
 | P / draft, ready / edytuj | Tak, bez resetu | Ta sama centralna akcja edit, uprawnienia i locki | R + E/lock → wspólna akcja + SQL |
 | AP, AT / draft / edytuj | Tak, bez resetu | Jak obecnie; nie wymaga gotowości | R + E → wspólna akcja + SQL |
@@ -580,9 +828,9 @@ przy zapisie/przejściu i odczytywany przez UI. Nie jest to nowa decyzja o proga
 | P, M / dowolny / ankieta | R odmawia; `_poll_open_unchecked` jawnie wyklucza tylko P (CHECK statusu blokuje M) | Jawny zakaz obu typów w kontrakcie | R + RPC + CHECK → wspólna akcja + SQL |
 | AP, AT / open / głosuj | Typ, otwarta sesja, aktualny klucz i uprawnienie zadania/anonima; anonim dodatkowo idempotencja i 30 s | Zachować bramki tożsamości/sesji; dozwolenie głosowania z centralnej akcji | RPC/guard głosów, migracje 309/330/362 → wspólna akcja + te zabezpieczenia SQL |
 | AP, AT / open→stopped / zatrzymaj; stopped→open / wznów | R sprawdza stan; RPC idempotentnie przyjmuje też już osiągnięty stan. Zachowuje głosy/klucz | Wspólne przejścia; rozróżnić niedostępny przycisk i bezpieczne retry RPC | R + `poll_stop/resume` → wspólny kontrakt SQL/UI |
-| AP, AT / stopped / wejdź w podliczanie | Przycisk zależy od `poll_close.ok`; zbyt słaby surowy wynik blokuje wejście. Sam handler `enterTally` sprawdza tylko stopped | Wejście dozwolone także bez możliwości zamknięcia; możliwość scalania tekstów | R + T/UI → osobna akcja wejścia |
+| AP, AT / stopped / wejdź w podliczanie | Przycisk zależy od `poll_close.ok`; zbyt słaby surowy wynik blokuje wejście. Sam handler `enterTally` sprawdza tylko stopped; brak osobnego progu 10 pełnych ankiet | Wejście od 10 pełnych ankiet; przy 0–9 „Podlicz” zablokowane. Kwalifikacja odpowiedzi do zamknięcia nie blokuje wejścia przy ≥10, aby umożliwić scalanie tekstów | R + T/UI → osobna akcja wejścia, wspólna bramka UI/SQL |
 | AP / stopped / zatwierdź wynik | R liczy ≥3 odpowiedzi z ≥3 pkt metodą największych reszt; normalizacja 392 zeruje udział zaokrąglony <3%. UI po wejściu ustawia poprawność na true | ≥3 odpowiedzi z zaokrąglonym udziałem ≥4%, jedna matematyka podglądu i SQL | `game_poll_close_check` + T + `poll_points_tally` → wspólna kwalifikacja/zamknięcie SQL |
-| AT / stopped / scal, zatwierdź | R sprawdza ≥3 różne surowe teksty; właściwy zapis przelicza scalony payload, próg ≥3%, top 6, min. 3; remisy punktów obniża | Po każdej zmianie ponowne liczenie; ≥4% i ≥3 kwalifikujące; limit 6; kolejność algorytmu §8.6 | R + T + `poll_text_tally_apply` → wspólna kwalifikacja/zamknięcie SQL |
+| AT / stopped / scal, zatwierdź | R sprawdza ≥3 różne surowe teksty; właściwy zapis przelicza scalony payload, próg ≥3%, top 6, min. 3; remisy punktów obniża | Procent: dodatni <1 → 1, pozostałe floor; równe głosy → równe punkty; ≥4% i ≥3 kwalifikujące; limit 6. Przy remisie głosów na granicy szóstki jawny cykliczny wybór użytkownika; po scaleniu przeliczenie | R + T + `poll_text_tally_apply` → wspólna kwalifikacja/zamknięcie i walidacja wyboru SQL |
 | AP, AT / open, stopped, ready / przerwij-resetuj | `poll_abort` usuwa głosy, teksty, sesje, zadania i kody QR; nowy klucz; draft; punkty 0, treść odpowiedzi zostaje | Osobna jawna akcja; zakres wspólnego resetu §8.6 | RPC 315 → wspólny kontrakt resetu SQL |
 | Trzy źródłowe / draft, ready / eksport pliku | Dozwolony bez bramki gotowości; zamknięta ankieta staje się P; brak statusu/wersji | Dokładnie pięć wariantów; zamknięty poll zachowuje typ/wynik; P jako szkic | R + F → wspólny transfer; SQL autorytatywny dla importu |
 | AP, AT / open, stopped / eksport pliku | Przycisk zablokowany; sama funkcja F umie zrobić pakiet bez głosów, bez ostrzeżenia; AP zeruje punkty tylko dla draft | Ostrzeżenie o utracie bieżących głosów; szkic tego samego typu | R + F → osobna akcja eksportu + transfer |
@@ -606,16 +854,16 @@ na takim sprawdzeniu klienta.
 
 | Pole | Eksport pliku / definicja kopii obecnie | Import 364 / zapis obecnie | Docelowo |
 |---|---|---|---|
-| Nazwa | Zachowana; null/brak → nazwa domyślna, pusty string pozostaje; Powiel dopisuje lokalizowane „kopia” i dobiera unikalną nazwę | Trim, limit 80; pusta/brak → lokalizowany default, bez defaults „Gra”; Send dobiera nazwę w bibliotece odbiorcy | Jawnie opisać zmiany nazwy i limit, bez cichego obcinania |
+| Nazwa | Zachowana; null/brak → nazwa domyślna, pusty string pozostaje; Powiel dopisuje lokalizowane „kopia” i dobiera unikalną nazwę | Trim, limit 80; pusta/brak → lokalizowany default, bez defaults „Gra”; Send dobiera nazwę w bibliotece odbiorcy | Limit 80; za długą nazwę obciąć automatycznie, bez pytania; zachować zasady nazewnictwa kopii |
 | Typ | Trzy kanoniczne; nieznany/market → AT w helperze; każdy nie-P po normalizacji przy ready → P | Tylko trzy typy; reszta → AT, co usuwa odpowiedzi | Rozpoznany typ zachowany; niejasny historyczny pakiet z czytelną grą i pytaniami → jawne odzyskanie P/draft; nieodczytywalny → błąd; M ma osobną politykę |
 | Status / znaczenie zamknięcia | Pominięty; rozpoznanie ready służy tylko konwersji do P | Zawsze draft; wejściowy status jest ignorowany | Pięć kombinacji §4; otwarta/zatrzymana → szkic z ostrzeżeniem; closed poll → zamknięty poll |
 | Wersja | Brak `format_version` | Nie sprawdza wersji; dodatkowe pole jest pomijane | Wersja i nazwane migratory bez zgadywania |
 | Pytania | Zachowana tablica w kolejności wejścia; `exportGame` pobiera po ord, SQL kopii po ord,id | Nowe ID i ord=pozycja w tablicy od 1; nie korzysta z wejściowego ord | Zachować kolejność znaczeniową i dokładny zbiór |
-| Treść pytania | Bez obcinania w F; Base Explorer trimuje | Trim, limit 200, brak/pusta → „Pytanie {ord}” lub lokalizacja; nawet element null staje się placeholderem | Zachować albo pokazać raport każdej zamiany/straty |
-| Odpowiedzi | AT bez ready usuwa wszystkie; AP/draft zachowuje teksty i zeruje punkty; AP/open/stopped nie zeruje istniejących punktów; closed poll jako P zachowuje odpowiedzi/punkty | AT usuwa wszystkie niezależnie od wejścia; inne typy zachowują tylko pierwsze 6; brak tablicy → [] | Różne warianty szkicu/wyniku opisane jawnie; brak cichej utraty |
-| Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Raport obcięć/placeholderów albo zachowanie pełnej treści |
-| Punkty | `Number(x) || 0`; dla AP/draft 0; Base Explorer AP zawsze 0, P tylko istniejące `fixed_points` | `floor`, clamp 0–100, brak/niepoprawne → 0; przyjmuje też liczbowy string/wykładnik i true→1. Normalizator pakietu ignoruje alias `points` | Bez automatycznego uzupełniania braków; jawna normalizacja/raport; osobny kontrakt szkicu i wyniku |
-| Kolejność odpowiedzi | F sortuje po ord, fallback wejście; SQL kopii wcześniej po ord,id | Ord=pozycja w tablicy; zapis nie sortuje po punktach | Oddzielić zachowaną kolejność od kolejności prezentacji |
+| Treść pytania | Bez obcinania w F; Base Explorer trimuje | Trim, limit 200, brak/pusta → „Pytanie {ord}” lub lokalizacja; nawet element null staje się placeholderem | Limit 100; nadmiar obciąć automatycznie bez pytania; nie dopisywać zastępczych pytań |
+| Odpowiedzi | AT bez ready usuwa wszystkie; AP/draft zachowuje teksty i zeruje punkty; AP/open/stopped nie zeruje istniejących punktów; closed poll jako P zachowuje odpowiedzi/punkty | AT usuwa wszystkie niezależnie od wejścia; inne typy zachowują tylko pierwsze 6; brak tablicy → [] | Warianty szkicu/wyniku według §4; przy ponad 6 odpowiedziach po normalizacji punktów sortować malejąco i zostawić 6, bez pytania; remis według wejścia |
+| Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Limit 17; nadmiar obciąć bez pytania; znaki według fontu 5×7: edytor odrzuca niepoprawny zapis, tekstowe oczyszczane przy podliczaniu; istniejące odpowiedzi oczyszcza migracja, bez filtrowania pytań |
+| Punkty | `Number(x) || 0`; dla AP/draft 0; Base Explorer AP zawsze 0, P tylko istniejące `fixed_points` | `floor`, clamp 0–100, brak/niepoprawne → 0; przyjmuje też liczbowy string/wykładnik i true→1. Normalizator pakietu ignoruje alias `points` | Ujemne, nienumeryczne, nieskończone lub poza 0–100 → 0 przed sortowaniem, bez pytania; bez clamp do 100 i bez wymyślania grywalnej punktacji; odrębny kontrakt szkicu/wyniku |
+| Kolejność odpowiedzi | F sortuje po ord, fallback wejście; SQL kopii wcześniej po ord,id | Ord=pozycja w tablicy; zapis nie sortuje po punktach | Przy <=6 zachować wejściową; przy >6 sortować malejąco po znormalizowanych punktach, remis według wejścia, zapisać wybraną szóstkę i jej ord |
 | Wynik zamknięcia | Wyłącznie treść odpowiedzi i `fixed_points`, przez konwersję na P; brak dat/udziałów/liczebności | Brak odtworzenia zamkniętej ankiety/sesji | Zamknięty typ, zatwierdzone odpowiedzi i punkty; bez liczby głosów, głosujących i odtwarzania sesji |
 | Bieżące głosy, surowe teksty, tokeny głosujących, sesje, zadania, klucze urządzeń/ankiety, runtime i statystyki rozgrywki | Pominięte | Nie są przyjmowane; nowe ID/klucze i właściciel z serwera | Nadal poza transferem; jawnie poinformować o utracie głosów aktywnej ankiety |
 | Ustawienia, logo, dźwięki/pliki | Pominięte | Nowa gra `settings={}`, brak powiązań z cudzymi plikami | Nadal poza formatem zgodnie z zakresem |
@@ -674,7 +922,7 @@ zewnętrzne pliki takich ograniczeń nie mają. Historyczne testy
 cichy fallback, konwersję closed→P i próg 3% — przy implementacji wymagają
 zmiany oczekiwań na uzgodniony kontrakt, nie traktowania ich jako decyzji domenowej.
 
-### 8.6. Decyzje rzeczywiście otwarte po audycie
+### 8.6. Stan rozstrzygnięć po audycie
 
 Grywalność preparowanej jest rozstrzygnięta: **≥10 pytań, każde z 3–6
 odpowiedziami, każda odpowiedź ≥4 pkt, suma w każdym pytaniu ≤100**.
@@ -690,22 +938,56 @@ i rozpisanie konkretnych operacji naprawy.
 Rozstrzygnięte w dalszej rozmowie 2026-10-20: całość wskazań mapujemy na
 100, procent i punkty są tym samym wynikiem; bez sztucznego obniżania remisów;
 transfer zamkniętego wyniku bez liczby głosów; M bez transferu, zachowane jako
-archiwalne po usunięciu oryginału; migracja nocą, bez przebudowy ankiet.
+archiwalne po usunięciu oryginału; migracja nocą, bez przebudowy głosów
+i wyników ankiet. Później uzgodniono wyjątek dla treści: także istniejące
+pytania ankietowe obciąć migracją do 100 znaków bez pytania (§4).
 Reset przy edycji/konwersji ma pełny zakres normalnego resetu ankiety:
 usunięte głosy i zależności, unieważnione linki, punkty 0, wynik draft.
 
-1. **Zaokrąglanie udziałów:** jak uzyskać całkowite punkty/procenty przy
-   ułamkach, nie przekroczyć 100 i jak traktować równe udziały przy rozdziale
-   brakującej jednostki. Np. trzy równe udziały to 33⅓%: podział 34/33/33
-   sumuje się do 100, a 33/33/33 zachowuje równość i daje 99. Osobne
-   zaokrąglanie niektórych rozkładów może dać 101. Trzeba też domknąć remis
-   na granicy szóstej odpowiedzi. Próg ≥4% i min. 3 odpowiedzi pozostają.
-2. **Straty treści:** pełne treści ponad limity czy potwierdzane obcięcie;
-   dokładna obsługa nadmiarowych odpowiedzi i niepoprawnych punktów.
-   Występowanie danych jest do odczytania, nie do zgadywania.
+Wyrównywanie jest doprecyzowane: zachowujemy równe punktacje za równe głosy,
+dopuszczamy niedobór i nie przekraczamy 100. Minimalną próbę liczymy pełnymi
+ankietami, bo użytkownik odpowiada na wszystkie pytania. Samo podniesienie
+liczby głosów nie usuwa ułamków, np. 10/10/10 przy 30 pełnych ankietach
+nadal daje po 33⅓%.
+
+Minimum jest rozstrzygnięte: **10 pełnych oddanych ankiet przed rozpoczęciem
+podliczania**; przy 0–9 akcja „Podlicz” jest niedostępna. To odrębna bramka
+od kwalifikacji odpowiedzi potrzebnej do zatwierdzenia wyniku.
+
+Zaokrąglenie i granica szóstki są rozstrzygnięte w §3: dodatni udział <1%
+pokazujemy jako 1%, pozostałe ucinamy; równe liczby głosów mają równy wynik.
+Remis głosów przecinający granicę szóstki daje cykliczny przycisk świadomego
+wyboru odpowiedzi z grupy remisowej, bez zmiany ich punktacji.
+
+**Polityka strat treści rozstrzygnięta 2026-10-20:** za długie teksty
+obcinamy bez pytania; przy ponad sześciu odpowiedziach zostawiamy sześć
+najwyżej punktowanych (remisy stabilnie według wejścia); punkty ujemne,
+nienumeryczne lub poza zakresem zamieniamy na zero przed sortowaniem.
+Nie wymagamy ręcznej korekty ani potwierdzania tych operacji. Jest to
+odrębne od świadomego wyboru szóstki w podliczaniu. Znane decyzje domenowe
+są zamknięte; pozostaje odczyt danych produkcyjnych i plan operacyjny
+migracji. Nadal obowiązuje zatrzymanie przed implementacją.
 
 ### 8.7. Regulamin TVP i dodatkowe ryzyka sprawdzone 2026-10-20
 
+- Audyt historycznego progu głosów: `web/shared/translation/pl.js` w starej
+  treści Instrukcji opisuje zielony kafelek jako zebrane cele (zadania
+  wykonane lub ≥10 głosów); analogiczny zapis jest w EN. To opis wskaźnika,
+  nie dowód walidacji zamknięcia. W przejrzanych funkcjach SQL nie znaleziono
+  osobnego minimum 10 pełnych ankiet: `game_poll_close_check` (273/315)
+  i starsze `polls_hub_can_close_*` wymagają min. 3 różnych tekstów albo
+  min. 3 odpowiedzi z punktacją ≥3 na pytanie. Jeszcze starsze
+  `poll_admin_can_close` wymaga dla punktowej min. 2 odpowiedzi z głosami,
+  dla tekstowej min. 3 różnych tekstów. `poll_text_tally_apply` sprawdza
+  min. 3 odpowiedzi po przeliczeniu, bez odrębnego minimum respondentów.
+  Trzy pełne ankiety z trzema różnymi wyborami mogły zatem spełnić bramkę
+  zamknięcia. Minimum 10 pytań do uruchomienia jest jeszcze inną regułą.
+- Kontrakt pełnego wypełnienia jest widoczny w formularzach i sprawdzaniu
+  kompletnego pakietu w `poll_anonymous_submit` (liczba elementów i różnych
+  pytań musi odpowiadać wszystkim pytaniom gry). Wdrożenie progu musi używać
+  pełnych wypełnień bieżącego uruchomienia i nie zliczać częściowych zapisów
+  ze starszych RPC jako osobnych kompletów. To wymaganie spójności zapisu,
+  nie zmiana decyzji użytkownika o odpowiadaniu na wszystkie pytania.
 - [Regulamin TVP z naboru 2025](https://s.tvp.pl/repository/attachment/3/5/4/354f69c09c8b430588d3c079410afb3d.pdf),
   §2 pkt 2.6/2.12 i §6: punkty odzwierciedlają wskazania stu ankietowanych.
   Nie podaje minimalnej liczby wskazań ani wymogu różnych punktacji;

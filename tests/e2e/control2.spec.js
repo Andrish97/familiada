@@ -747,6 +747,9 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
       stateSyncDiagnostic: inspect([event("diagnostic", { category: "device_state_sync", devices: ["buzzer"], metrics: { phase: "read_error", error_class: "TimeoutError", fetch_ms: 8000, revision: 15 } })]),
       leaseDiagnostic: inspect([event("diagnostic", { category: "device_lease", devices: ["buzzer"], metrics: { from_state: "waiting", to_state: "primary", epoch: 4 } })]),
       audioDiagnostic: inspect([event("diagnostic", { category: "audio_start", devices: ["control"], metrics: { sound: "reveal", start_delay_ms: 850, failed: false } })]),
+      leaseReadTimeout: inspect([event("diagnostic", { category: "connectivity", devices: ["control"], metrics: { phase: "read_error", source: "status_read", error_name: "TimeoutError" } })]),
+      audioUnlockLost: inspect([event("diagnostic", { category: "audio_unlock", devices: ["display"], metrics: { reason: "browser_lost", detail: "context_suspended", outcome: "unlocked", wait_ms: 4200, blocked_action_attempts: 2, display_visibility: "hidden" } })]),
+      audioUnlockNewInstance: inspect([event("diagnostic", { category: "audio_unlock", devices: ["display"], metrics: { reason: "new_instance", outcome: "display_offline", wait_ms: 12000 } })]),
       frameDiagnostic: inspect([event("diagnostic", { category: "display_delay", devices: ["display"], metrics: { reason: "frame_stall", max_frame_gap_ms: 320, stalled_frames: 2, display_visibility: "visible" } })]),
       error: inspect([event("error", { message: "Nie można odczytać statusu urządzeń." })]),
     };
@@ -787,6 +790,14 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.presenceMetadataFailure.rows[0]).toContain("akcje gry nie były blokowane");
   expect(result.presenceMetadataRecovery.rows[0]).toContain("2,5 s");
   expect(result.leaseReadFailure.rows[0]).toContain("akcje gry są blokowane");
+  expect(result.leaseReadFailure.rows[0]).toContain("zwrócił błąd bazy");
+  expect(result.leaseReadTimeout.rows[0]).toContain("limit czasu lub sieć");
+  expect(result.audioUnlockLost.rows[0]).toContain("kontekst audio wstrzymany");
+  expect(result.audioUnlockLost.rows[0]).toContain("odblokowano gestem po 4,2 s");
+  expect(result.audioUnlockLost.rows[0]).toContain("próby akcji podczas blokady: 2");
+  expect(result.audioUnlockLost.rows[0]).toContain("karta Wyświetlacza była w tle");
+  expect(result.audioUnlockNewInstance.rows[0]).toContain("nowa karta Wyświetlacza");
+  expect(result.audioUnlockNewInstance.rows[0]).toContain("Wyświetlacz rozłączył się po 12 s");
   expect(result.leaseReadRecovery.rows[0]).toContain("po 4,0 s");
   expect(result.leaseDiagnostic.sections).toBe(1);
   expect(result.leaseDiagnostic.rows[0]).toContain("Stan blokady urządzenia Przycisk · waiting → zostało aktywowane jako główne");
@@ -1074,9 +1085,8 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
       await expect.poll(() => acceptedControlVisibility.includes(visibility), { timeout: 10000 }).toBe(true);
     }
 
-    // Po utracie i odzyskaniu połączenia Control przy źródle Display
-    // ponownie wymaga gestu na Wyświetlaczu. Akcje gry pozostają zablokowane
-    // do potwierdzenia, a odpowiedź Display odblokowuje je bez reloadu.
+    // Odblokowanie dźwięku należy do instancji Wyświetlacza (migracja 397):
+    // chwilowa utrata sieci w Control nie wymaga nowego gestu na Wyświetlaczu.
     const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
     await expect(startRound).toBeVisible();
     // Źródło dźwięku to Display: przycisk jest zablokowany do końca intro
@@ -1088,11 +1098,10 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
       window.dispatchEvent(new Event("offline"));
       window.dispatchEvent(new Event("online"));
     });
-    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10000 });
-    await expect(startRound).toBeDisabled();
-    await displayPage.locator("#btnAudioUnlock").click();
-    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
     await expect(startRound).toBeEnabled({ timeout: 10000 });
+    await page.waitForTimeout(2000); // kilka odczytów migawki po powrocie sieci
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden();
+    await expect(startRound).toBeEnabled();
 
     // Każde urządzenie zapisuje snapshot i kolejne przejścia widoczności po
     // rozpoczęciu rozgrywki. Emulujemy zmianę właściwości i wysyłamy natywne
@@ -2576,15 +2585,23 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     displayPage = await reconnectViaModal(browser, page, "display", contexts, []);
     await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
     await expect(answerTile(page, 2)).toBeDisabled();
+    // Odblokowanie zapisuje heartbeat głównej instancji lease (migracja 397).
     const reUnlockAck = displayPage.waitForResponse((response) =>
-      response.url().includes("/rpc/acknowledge_display_audio_unlock")
+      response.url().includes("/rpc/control_device_instance_heartbeat")
+      && response.request().postDataJSON()?.p_meta?.audio_unlocked === true
     );
     await displayPage.locator("#btnAudioUnlock").click();
     const reUnlockAckResponse = await reUnlockAck;
-    expect(await reUnlockAckResponse.json(), "reconnected Display's new unlock request must be accepted by the server")
-      .toBe(true);
+    expect((await reUnlockAckResponse.json())?.audio_unlocked,
+      "reconnected Display's unlock must be stored on its lease instance").toBe(true);
     await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 15000 });
+    // Diagnostyka: czekanie na gest trafia do statystyk z powodem i czasem.
+    await expect.poll(async () => {
+      const sessions = await readControl2Sessions(page, game.id);
+      const unlock = (sessions[0]?.stats_detail.events || []).find(event => event.category === "audio_unlock");
+      return unlock ? [unlock.metrics.reason, unlock.metrics.outcome, unlock.metrics.wait_ms > 0] : null;
+    }, { timeout: 15000 }).toEqual(["new_instance", "unlocked", true]);
 
     // ===== Mute na chwilę w tej samej rundzie — odpowiedź #2 podczas wyciszenia =====
     await page.locator("#btnMute").click();
@@ -3069,7 +3086,8 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
   await control.locator(rowId).click();
   const url = await readDeviceUrlFromModal(control, kind);
   if (!url) throw new Error(`modal (${kind}) nie pokazał żadnego URL-a do ponownego podłączenia`);
-  const ctx = await controlContext(browser, );
+  // Prowadzący i Przycisk wymagają ekranu dotykowego (jak w openAnon).
+  const ctx = await controlContext(browser, { hasTouch: true, viewport: { width: 1366, height: 1024 } });
   contexts.push(ctx);
   const p = await ctx.newPage();
   trackErrors(p, kind, errors);
@@ -3080,7 +3098,7 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
   return p;
 }
 
-test("control2: awaria device_presence nie blokuje akcji przy działającym lease", async ({ page, browser }, testInfo) => {
+test("control2: awaria odczytu stanu urządzeń wstrzymuje akcje bez fałszywego rozłączenia", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-PRESENCE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
@@ -3107,27 +3125,33 @@ test("control2: awaria device_presence nie blokuje akcji przy działającym leas
     const confirm = page.getByRole("button", { name: "Zatwierdź: Alfa" });
     await expect(confirm).toBeEnabled({ timeout: 10000 });
 
+    // Migawka control_devices_snapshot jest jedynym źródłem stanu urządzeń:
+    // bez niej Control wstrzymuje akcje, ale nie ogłasza rozłączenia.
     let failedReads = 0;
-    const presenceRoute = "**/rest/v1/device_presence?*";
-    await page.route(presenceRoute, route => {
+    const snapshotRoute = "**/rest/v1/rpc/control_devices_snapshot*";
+    await page.route(snapshotRoute, route => {
       failedReads++;
-      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: presence metadata unavailable" }) });
+      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: device snapshot unavailable" }) });
     });
     await expect.poll(() => failedReads).toBeGreaterThan(0);
-    await expect(confirm).toBeEnabled();
+    await expect(confirm).toBeDisabled({ timeout: 5000 });
     await page.waitForTimeout(7500);
-    await expect(confirm).toBeEnabled();
+    await expect(confirm).toBeDisabled();
     await expect(page.locator("#deviceLostOverlay")).toBeHidden();
+    for (const id of ["dotDisplay", "dotHost", "dotBuzzer"]) {
+      await expect(page.locator(`#${id}`)).toHaveClass(/\bok\b/);
+    }
 
-    await expect.poll(async () => {
+    const connectivityEvents = async (phase) => {
       const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === "metadata_read_error" && event.metrics?.source === "device_presence").length;
-    }).toBe(1);
-    await page.unroute(presenceRoute);
-    await expect.poll(async () => {
-      const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === "metadata_recovered" && event.metrics?.source === "device_presence").length;
-    }).toBe(1);
+      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === phase).length;
+    };
+    await expect.poll(() => connectivityEvents("read_error")).toBe(1);
+    await page.unroute(snapshotRoute);
+    await expect(confirm).toBeEnabled({ timeout: 10000 });
+    await expect.poll(() => connectivityEvents("recovered")).toBe(1);
+    const sessions = await readControl2Sessions(page, game.id);
+    expect((sessions[0].stats_detail.events || []).filter(event => event.kind === "disconnect")).toHaveLength(0);
   } finally {
     for (const context of contexts) await context.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -3155,7 +3179,10 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
-    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    // Bramka intro (dźwięk + animacja) blokuje start rundy przez kilkanaście sekund.
+    const startRoundButton = page.getByRole("button", { name: "Rozpocznij rundę" });
+    await expect(startRoundButton).toBeEnabled({ timeout: 60000 });
+    await startRoundButton.click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
@@ -3165,31 +3192,23 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await revealAnswer(page, 1); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
 
     // Awaria odczytu nie jest dowodem rozłączenia urządzeń.
-    const presenceRoute = "**/rest/v1/device_presence?*";
+    const snapshotRoute = "**/rest/v1/rpc/control_devices_snapshot*";
     let failedReads = 0;
-    await page.route(presenceRoute, route => {
+    await page.route(snapshotRoute, route => {
       failedReads++;
-      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: presence read unavailable" }) });
+      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: device snapshot unavailable" }) });
     });
     await expect.poll(() => failedReads).toBeGreaterThan(0);
-    await expect(answerTile(page, 2)).toBeEnabled();
+    await expect(answerTile(page, 2)).toBeDisabled({ timeout: 5000 });
     await page.waitForTimeout(7500); // Przekrocz TTL urządzeń podczas awarii odczytu.
     for (const id of ["dotDisplay", "dotHost", "dotBuzzer"]) {
       await expect(page.locator(`#${id}`)).toHaveClass(/\bok\b/);
     }
     await expect(page.locator("#deviceLostOverlay")).toBeHidden();
-    await expect.poll(async () => {
-      const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === "metadata_read_error" && event.metrics?.source === "device_presence").length;
-    }).toBe(1);
     const unavailableSessions = await readControl2Sessions(page, game.id);
     expect((unavailableSessions[0].stats_detail.events || []).filter(event => event.kind === "disconnect")).toHaveLength(0);
-    await page.unroute(presenceRoute);
+    await page.unroute(snapshotRoute);
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 10000 });
-    await expect.poll(async () => {
-      const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === "metadata_recovered" && event.metrics?.source === "device_presence").length;
-    }).toBe(1);
 
     // ===== Zerwanie wszystkich trzech naraz =====
     const toClose = contexts.splice(0, contexts.length); // zdejmij z listy sprzątanej w finally -- zamykamy je TU, świadomie
@@ -3249,13 +3268,17 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await revealAnswer(page, 1);
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
+    // Awaria odczytu migawki wyżej zapisuje własne read_error/recovered;
+    // tu liczy się wyłącznie incydent rozłączenia urządzeń.
+    const isDeviceOutage = event => event.kind === "diagnostic" && event.category === "connectivity"
+      && !["read_error", "recovered"].includes(event.metrics?.phase);
     await expect.poll(async () => {
       const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.kind === "diagnostic" && event.category === "connectivity").length;
+      return (sessions[0]?.stats_detail.events || []).filter(isDeviceOutage).length;
     }, { timeout: 20_000 }).toBe(1);
     const reconnectSessions = await readControl2Sessions(page, game.id);
     const outageEvents = reconnectSessions[0].stats_detail.events || [];
-    const outage = outageEvents.find(event => event.kind === "diagnostic" && event.category === "connectivity");
+    const outage = outageEvents.find(isDeviceOutage);
     expect(outage.devices).toEqual(expect.arrayContaining(["display", "host", "buzzer"]));
     console.log(`[statistics-review] reconnect diagnostic: ${JSON.stringify(outage)}`);
     // To czas od wykrycia braku urządzeń do ich ponownego podłączenia; zależy
