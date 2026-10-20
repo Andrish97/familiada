@@ -1,5 +1,5 @@
 // Kształty narzędzia „Kształty”: metadane/geometria; podglądy są w assets.
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T22245";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T23215";
 
 
 // label = klucz tłumaczenia
