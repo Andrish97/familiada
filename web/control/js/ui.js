@@ -724,9 +724,6 @@ export function createUI({ root, emit }) {
         title: question || "",
         "aria-hidden": question ? undefined : "true",
       });
-      if (question) {
-        questionHeader.style.fontSize = question.length > 150 ? ".88rem" : question.length > 100 ? ".98rem" : "1.08rem";
-      }
       cardChildren.push(h("div", { class: "c2-stepper" }, [questionHeader]));
     }
     cardChildren.push(
