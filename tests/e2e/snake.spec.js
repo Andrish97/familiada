@@ -96,11 +96,16 @@ test("wąż: kod QR z kadru prowadzi do gry, zdarzenia trafiają do bazy (bez ko
   }
 });
 
-test("wąż: zalogowany ma zapisany rekord i liczbę gier", async ({ page, context }) => {
+test("wąż: „Zaloguj się” wraca do gry, zalogowany ma zapisany rekord i liczbę gier", async ({ page, context }) => {
   test.setTimeout(180_000);
-  await loginAsPooledTestUser(page, context, 0);
-  const log = recordSnakeLog(page);
   await page.goto(GAME, { waitUntil: "domcontentloaded" });
+  const loginHref = await page.locator("#snakeLogin").getAttribute("href");
+  expect(loginHref).toContain("next=snake");
+  // Logowanie z linku w grze -- po zalogowaniu powrót do węża (mapa: wyjątek next=snake).
+  // Zdarzenia liczone dopiero od powrotu (wcześniejsze „enter” było bez konta).
+  let log = [];
+  page.on("framenavigated", (frame) => { if (frame === page.mainFrame() && /\/snake\//.test(frame.url()) && !log.attached) { log = recordSnakeLog(page); log.attached = true; } });
+  await loginAsPooledTestUser(page, context, 0, { url: `${SITE}${loginHref}`, expectUrl: /\/snake\/\?qr=00000000-0000-4000-8000-000000000103/ });
   await expect(page.locator("#snakeProgress")).toContainText("na koncie", { timeout: 30_000 });
   await expect(page.locator("#snakeLogin")).toBeHidden();
   await expect.poll(() => log.find((e) => e.kind === "enter")?.body?.ok, { timeout: 15_000 }).toBe(true);

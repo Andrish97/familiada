@@ -349,7 +349,8 @@ export function backHref(pageId, ctx) {
 }
 
 /**
- * Adres logowania — po zalogowaniu zawsze /games/ (wyjątek: next= z maila).
+ * Adres logowania — po zalogowaniu zawsze /games/ (wyjątki: next= z maila
+ * oraz next=snake&qr=… z ukrytej gry w węża -- powrót do gry).
  * ctx.forceAuth — gość, który chce przejść do logowania mimo otwartej sesji.
  */
 export function loginUrl(ctx) {

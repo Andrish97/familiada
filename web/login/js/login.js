@@ -26,6 +26,7 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T19
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19420";
 
 import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-20T19420";
+import { isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-20T19420";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T19420";
 import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-20T19420";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-20T19420";
@@ -542,6 +543,11 @@ const nextTask = params.get("t");
 const nextBase = params.get("b");
 const nextFriend = params.get("f");
 const nextTab = params.get("tab");
+// Ukryta gra w węża: powrót tylko z ważnym linkiem z kodu QR (inaczej /snake/ = 404).
+const nextSnakeQr = params.get("qr");
+const NEXT_TARGETS = ["tasks", "friends", "bases"];
+if (isScreenshotPollId(nextSnakeQr)) NEXT_TARGETS.push("snake");
+const hasNextTarget = NEXT_TARGETS.includes(nextTarget);
 const guestUsername = params.get("guest_username") === "1";
 const setupUsername = params.get("setup") === "username";
 const guestExpired = params.get("guest_expired") === "1";
@@ -562,6 +568,12 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
+  if (nextTarget === "snake") {
+    const snake = new URL(PAGES.snake.path, location.origin);
+    snake.searchParams.set("qr", nextSnakeQr);
+    snake.searchParams.set("lang", getUiLang());
+    return snake.toString();
+  }
   const url = new URL(nextTarget === "friends" ? "/friends/" : nextTarget === "bases" ? "/bases/" : "/tasks/", location.origin);
   if (nextTarget === "friends" && nextFriend) url.searchParams.set("f", nextFriend);
   if (nextTarget === "tasks" && nextTask) url.searchParams.set("t", nextTask);
@@ -843,7 +855,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await syncLanguage();
       if (setupUsername || !u.username) {
         openUsernameSetup();
-      } else if (nextTarget === "tasks" || nextTarget === "friends" || nextTarget === "bases") {
+      } else if (hasNextTarget) {
         location.href = buildNextUrl();
       } else {
         location.href = withLangParam(gamesUrl);
@@ -1041,7 +1053,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await syncLanguage();
         if (!authed?.username) {
           openUsernameSetup();
-        } else if (nextTarget === "tasks" || nextTarget === "friends" || nextTarget === "bases") {
+        } else if (hasNextTarget) {
           location.href = buildNextUrl();
         } else {
           location.href = withLangParam(gamesUrl);

@@ -37,7 +37,11 @@ const CRASH = [17, 17, 10, 4, 10, 17, 17];
 const $ = (id) => document.getElementById(id);
 // Telefon i tablet: sama plansza na cały ekran, telefon tylko w poziomie.
 const TOUCH = matchMedia("(pointer: coarse)").matches;
-guardViewportWidth({ minWidth: 0, allowPhoneLandscape: true, requirePhoneLandscape: true, rotateMessageKey: "snake.rotateMessage" });
+// Wąskie okno (komputer, podzielony ekran tabletu) -- prośba o poszerzenie:
+// plansza 16:9 poniżej 640 px jest za mała do gry. Najmniejszy telefon
+// w poziomie ma ok. 667 px.
+const SNAKE_MIN_WIDTH = 640;
+guardViewportWidth({ minWidth: SNAKE_MIN_WIDTH, allowPhoneLandscape: true, requirePhoneLandscape: true, rotateMessageKey: "snake.rotateMessage" });
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove("page-loading");
@@ -180,6 +184,12 @@ async function boot() {
     if (account) progressEl.textContent = t("snake.progressAccount", { best: account.best, games: account.games });
     else progressEl.textContent = t("snake.progressLocal");
     loginEl.hidden = !!user;
+    // Po zalogowaniu powrót do węża (login.js: next=snake z ważnym qr).
+    const login = new URL("/login/", location.origin);
+    login.searchParams.set("next", "snake");
+    login.searchParams.set("qr", new URLSearchParams(location.search).get("qr") || "");
+    login.searchParams.set("lang", getUiLang());
+    loginEl.href = `${login.pathname}${login.search}`;
   };
 
   const drawGame = () => {
@@ -337,6 +347,9 @@ async function boot() {
   });
   // Obrót telefonu do pionu w trakcie gry zasłania planszę prośbą o obrót.
   matchMedia("(orientation: portrait)").addEventListener("change", (e) => { if (TOUCH && e.matches) pause(true); });
+  // Tak samo, gdy okno zwęzi się poniżej minimum (device-guard zasłania planszę).
+  new MutationObserver(() => { if (document.documentElement.dataset.deviceGuard !== "ok") pause(true); })
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-device-guard"] });
 
   showIntro();
   setToggle();

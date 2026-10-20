@@ -195,7 +195,9 @@ async function loginAsTestUser(page, context, opts = {}) {
 
   instrumentPage(page);
   await withE2EBypass(context, { suppressRating: opts.suppressRating !== false });
-  const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
+  // opts.url -- strona logowania z parametrami (np. next=…); opts.expectUrl --
+  // dokąd ma wrócić po zalogowaniu (domyślnie /games/).
+  const res = await page.goto(opts.url || LOGIN_URL, { waitUntil: "domcontentloaded" });
   // login.js attaches #btnPrimary's listener only after its async
   // initI18n()+getUser() chain inside DOMContentLoaded. Don't wait for
   // networkidle here: the app polls production RPCs in the background, so
@@ -217,7 +219,7 @@ async function loginAsTestUser(page, context, opts = {}) {
   await page.fill("#pass", password);
   await page.click("#btnPrimary");
   try {
-    await page.waitForURL(/games/, { timeout: 20000 });
+    await page.waitForURL(opts.expectUrl || /games/, { timeout: 20000 });
   } catch (e) {
     await dumpPageDiagnostics(page, res);
     throw e;
@@ -339,10 +341,10 @@ function getTestAccountPool() {
  * ścigają się o to samo logowanie. Używane dziś przez control2.spec.js,
  * ale nie jest do niego przywiązane -- każdy plik może po to sięgnąć.
  */
-async function loginAsPooledTestUser(page, context, workerIndex) {
+async function loginAsPooledTestUser(page, context, workerIndex, opts = {}) {
   const pool = getTestAccountPool();
   const username = pool[workerIndex % pool.length];
-  return loginAsTestUser(page, context, { username });
+  return loginAsTestUser(page, context, { ...opts, username });
 }
 
 module.exports = {
