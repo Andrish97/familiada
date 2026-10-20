@@ -108,6 +108,12 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
   przy konflikcie (element zmieniony/usunięty gdzie indziej) komunikat
   i wyczyszczenie historii.
 
+## Analiza (2026-10-20)
+
+Dogłębna analiza i plan przebudowy: [`menedzer-bazy/README.md`](menedzer-bazy/README.md)
+(synteza, słownik, docelowa budowa, kolejność prac, pytania) + 4 raporty
+szczegółowe w tym katalogu.
+
 ## Etapy
 
 1. **Porządek zapisów (w toku):**
