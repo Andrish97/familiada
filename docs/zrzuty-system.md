@@ -138,6 +138,13 @@ zadziałać zabezpieczenie `fit-text.js` (czcionka z okna za duża). Wypisuje
 czcionkę bazową dla każdego okna; zrzuty w `out/control-fit/`. Uruchamiać przy
 każdej zmianie wyglądu rozgrywki Control (decyzja: `docs/ujednolicenie-wygladu.md`).
 
+## Adres stron na zrzutach
+
+Strony idą pod `https://www.familiada.online` (pliki z dysku przez
+`context.route`, sieć nieużywana), więc linki i kody QR na kadrach prowadzą do
+serwisu. Kod QR z kadru `poll-share` (ankieta demo) otwiera ukrytą grę w węża
+(`/snake/`). `SCREENS_LOCAL=1` przywraca stary adres `http://127.0.0.1:…`.
+
 ## Uwagi
 
 - Wyświetlacz pokazywał czasem „DISP” zamiast „SUMA”: wyścig w

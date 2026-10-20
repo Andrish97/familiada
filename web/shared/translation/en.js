@@ -100,6 +100,8 @@ const en = {
       "To open the Host view more quickly, tap <b>Share</b> in Safari, choose <b>Add to Home Screen</b>, and add the icon. Then launch Host from that icon.",
     a2hsBuzzer:
       "To open the Buzzer more quickly, tap <b>Share</b> in Safari, choose <b>Add to Home Screen</b>, and add the icon. Then launch Buzzer from that icon.",
+    a2hsSnake:
+      "To play full screen, tap <b>Share</b> in Safari, choose <b>Add to Home Screen</b>, and add the icon. Then launch the snake from that icon.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Fullscreen API unavailable.",
     rating: {
@@ -3175,6 +3177,30 @@ const en = {
     wrongType: "This is not a points poll.",
     openPollFail: "Unable to open poll: {error}",
     answerFallback: "ANS {ord}",
+  },
+  snake: {
+    title: "Familiada — snake",
+    boardLabel: "Display board with a snake game",
+    keysHint: "Arrow keys or WASD, space or a click on the board — pause.",
+    progressAccount: ({ best, games }) => `Your account record: ${best} pts · games played: ${games}.`,
+    progressLocal: "Your record is saved only in this browser. Log in to keep it on your account.",
+    login: "Log in",
+    home: "Familiada",
+    rotateMessage: "Turn your phone sideways — the snake uses the whole Display.",
+    board: {
+      title: "FAMILIADA SNAKE",
+      press: "PRESS AN ARROW",
+      swipe: "SWIPE TO PLAY",
+      click: "CLICK = PAUSE",
+      tap: "TAP = PAUSE",
+      over: "GAME OVER",
+      won: "FULL BOARD!",
+      score: ({ score }) => `SCORE: ${score}`,
+      record: "NEW RECORD!",
+      again: "ARROW = PLAY AGAIN",
+      againTouch: "SWIPE = PLAY AGAIN",
+    },
+    long: { score: "SCORE", best: "RECORD", paused: "PAUSED" },
   },
   pollGo: {
     friendActive: "You are friends",

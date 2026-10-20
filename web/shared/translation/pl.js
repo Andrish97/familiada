@@ -100,6 +100,8 @@ const pl = {
       "Aby szybciej otwierać widok Prowadzącego, w Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę. Potem uruchom Prowadzącego z tej ikony.",
     a2hsBuzzer:
       "Aby szybciej otwierać Przycisk do pojedynku, w Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę. Potem uruchom Przycisk z tej ikony.",
+    a2hsSnake:
+      "Aby grać na pełnym ekranie, w Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę. Potem uruchom węża z tej ikony.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
     rating: {
@@ -3075,6 +3077,30 @@ const pl = {
     wrongType: "To nie jest ankieta punktacji.",
     openPollFail: "Nie można otworzyć ankiety: {error}",
     answerFallback: "ODP {ord}",
+  },
+  snake: {
+    title: "Familiada — wąż",
+    boardLabel: "Plansza Wyświetlacza z grą w węża",
+    keysHint: "Strzałki albo WASD, spacja albo kliknięcie planszy — pauza.",
+    progressAccount: ({ best, games }) => `Twój rekord na koncie: ${best} pkt · rozegrane gry: ${games}.`,
+    progressLocal: "Rekord zapisuje się tylko w tej przeglądarce. Zaloguj się, żeby trzymać go na koncie.",
+    login: "Zaloguj się",
+    home: "Familiada",
+    rotateMessage: "Obróć telefon poziomo — wąż jeździ po całym Wyświetlaczu.",
+    board: {
+      title: "WĄŻ FAMILIADY",
+      press: "NACIŚNIJ STRZAŁKĘ",
+      swipe: "PRZESUŃ PALCEM",
+      click: "KLIK = PAUZA",
+      tap: "STUKNIJ = PAUZA",
+      over: "KONIEC GRY",
+      won: "CAŁA PLANSZA!",
+      score: ({ score }) => `WYNIK: ${score}`,
+      record: "NOWY REKORD!",
+      again: "STRZAŁKA = JESZCZE RAZ",
+      againTouch: "PRZESUŃ = JESZCZE RAZ",
+    },
+    long: { score: "WYNIK", best: "REKORD", paused: "PAUZA" },
   },
   pollGo: {
     friendActive: "Jesteście znajomymi",

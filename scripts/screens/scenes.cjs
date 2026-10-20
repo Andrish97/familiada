@@ -104,11 +104,24 @@ module.exports = [
   { id: "polls-text", category: "Dodatkowe", title: "Ankieta tekstowa — głosy", path: `/polls/?id=${IDS.textPoll}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
   { id: "polls-stopped", category: "Dodatkowe", title: "Ankieta zatrzymana — głosy", path: `/polls/?id=${IDS.pollStopped}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
   { id: "marketplace", category: "Dodatkowe", title: "Społeczność", path: "/marketplace/", sources: page("marketplace"), ready: ".mkt-card" },
+  { id: "snake-iphone", guest: true, category: "Dodatkowe", title: "Ukryta gra w węża — iPhone w poziomie (wcięcie i pasek gestu)", path: "/snake/", devices: ["phone-landscape"], safeArea: { left: 59, right: 59, bottom: 21 },
+    sources: [...page("snake")], ready: "#snakeFrame[data-mode=intro]" },
+  // Okno „Do ekranu początkowego” pokazuje się po przycisku pełnego ekranu w Safari na iPhonie;
+  // Chromium zrzutów nie jest Safari, więc krok otwiera to samo okno tak, jak robi to strona.
+  { id: "snake-a2hs", guest: true, category: "Dodatkowe", title: "Ukryta gra w węża — iPhone: dodaj do ekranu początkowego", path: "/snake/", devices: ["phone-landscape"], safeArea: { left: 59, right: 59, bottom: 21 },
+    sources: [...page("snake")], ready: "#snakeFrame[data-mode=intro]",
+    steps: [async (view) => { await view.evaluate(() => { document.documentElement.classList.add("showA2HS"); document.getElementById("snakeA2HS").setAttribute("aria-hidden", "false"); }); await view.waitForTimeout(200); }] },
+  { id: "admin-stats-snake", category: "Dodatkowe", title: "Panel admina — statystyki węża", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabStats", devices: ["desktop"],
+    steps: [clickTab("#btnTabStats"), async (view) => { await view.locator("#snakeTop tr").first().waitFor(); await view.locator("#snakeFunnel").scrollIntoViewIfNeeded(); await view.waitForTimeout(300); }] },
   { id: "admin-screens", category: "Dodatkowe", title: "Panel admina — zrzuty stron", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabScreenshots", devices: ["desktop"], steps: [clickTab("#btnTabScreenshots")] },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
   { id: "home", guest: true, category: "Dodatkowe", title: "Strona główna", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded", fullPage: true },
   { id: "home-gallery", guest: true, category: "Dodatkowe", title: "Strona główna — karuzela kadrów w kaflu", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
     steps: [async (view) => { const shot = view.locator(".tile-shot").nth(1); await shot.scrollIntoViewIfNeeded(); await view.evaluate(() => window.scrollBy(0, -120)); await shot.locator(".shot-carousel-next").click(); await shot.locator(".shot-carousel-next").click(); await view.waitForFunction(() => document.querySelectorAll(".tile-shot")[1].querySelector("img.is-loaded")); await view.waitForTimeout(400); }] },
+  // Ukryta gra w węża (wejście z kodu QR na kadrze poll-share).
+  { id: "snake", category: "Dodatkowe", title: "Ukryta gra w węża — start (telefon w pionie: prośba o obrót)", path: "/snake/", sources: [...page("snake"), "web/shared/js/core/snake-log.js", "web/shared/js/display/"], ready: () => document.querySelector("#snakeFrame[data-mode]") || document.querySelector("#pageGuard") },
+  { id: "snake-play", guest: true, category: "Dodatkowe", title: "Ukryta gra w węża — rozgrywka (bez konta)", path: "/snake/", devices: ["desktop", "phone-landscape"], sources: [...page("snake"), "web/shared/js/core/snake-log.js"], ready: "#snakeFrame[data-mode=intro]",
+    steps: [async (view) => { await view.locator("body").press("ArrowUp"); await view.waitForTimeout(450); await view.locator("body").press("ArrowRight"); await view.waitForTimeout(1500); }] },
   { id: "home-viewer", guest: true, category: "Dodatkowe", title: "Strona główna — podgląd kadru z przybliżaniem", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
     steps: [async (view) => { const shot = view.locator(".tile-shot").nth(3); await shot.scrollIntoViewIfNeeded(); await shot.locator(".shot-carousel-next").click(); await shot.locator(".shot-img").click(); await view.locator(".imgv-overlay.is-open .imgv-img").waitFor(); await view.waitForTimeout(600); }] },
 ];

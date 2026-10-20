@@ -49,7 +49,7 @@ function pickScenes() {
     const base = args.base || "origin/main";
     const files = changedFiles(base);
     // Zmiana wspólnego kodu albo samych danych/silnika zrzutów dotyczy wszystkich stron.
-    const global = files.filter((f) => /^web\/(shared|assets)\//.test(f) || /^scripts\/screens\/(fake-supabase|data\/)/.test(f));
+    const global = files.filter((f) => /^web\/(shared|assets)\//.test(f) || /^scripts\/screens\/(fake-supabase|lib\.cjs|data\/)/.test(f));
     if (global.length) {
       console.log(`Zmienione pliki wspólne (${global.slice(0, 5).join(", ")}${global.length > 5 ? " …" : ""}) -- wszystkie sceny.`);
       return scenes;

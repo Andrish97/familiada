@@ -38,8 +38,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-20T17100";
-import { iconText } from "./icons.js?v=v2026-10-20T17100";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-20T17171";
+import { iconText } from "./icons.js?v=v2026-10-20T17171";
 
 
 export const MAX_RET_DEPTH = 4;
@@ -102,6 +102,7 @@ export const PAGES = {
   controlDisplay:{ path: "/control/display/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Odbiornik ekranu uruchamiany kodem parowania; osobna sesja urządzenia." },
   controlHost:   { path: "/control/host/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok hosta sterowania otwierany przez połączone urządzenie." },
   controlBuzzer: { path: "/control/buzzer/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Widok buzzera otwierany przez połączone urządzenie." },
+  snake:         { path: "/snake/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Ukryta gra w węża z kodu QR na kadrze strony głównej; nie jest celem zwykłego powrotu." },
   go:            { path: "/go/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Jednorazowy link odbioru/akcji z tokenem; powrót nie może go ponownie uruchamiać." },
   pollVotePoints:{ path: "/polls/vote/points/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania punktowego identyfikowany tokenem ankiety." },
   pollVoteText:  { path: "/polls/vote/text/", access: "public", parent: null, from: [], kind: "standalone", standaloneReason: "Publiczny widok głosowania tekstowego identyfikowany tokenem ankiety." },
