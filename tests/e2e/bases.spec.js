@@ -191,7 +191,7 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     await expect(page.locator("#shareOverlay")).toBeVisible();
     await page.locator("#shareEmail").fill(recipient);
     await page.locator("#btnShareAdd").click();
-    await expect(page.locator("#shareMsg")).toContainText(/udostępn|wysłan|dodano/i, { timeout: 20_000 });
+    await expect(page.locator(".app-toast-text")).toContainText(/udostępn|wysłan|dodano/i, { timeout: 20_000 });
 
     const email = await waitForEmail({ recipient, after, subject: new RegExp(name, "i"), timeout: 150_000 });
     expect(`${email.body || ""}\n${email.body_html || ""}`).toContain(name);
