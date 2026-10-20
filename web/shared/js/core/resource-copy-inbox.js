@@ -1,5 +1,5 @@
-import {sb} from './supabase.js?v=v2026-10-20T17443';
-import {t} from '../../translation/translation.js?v=v2026-10-20T17443';
+import {sb} from './supabase.js?v=v2026-10-20T17525';
+import {t} from '../../translation/translation.js?v=v2026-10-20T17525';
 
 
 export async function refreshResourceCopyInbox({kind,variant,host,onChanged}){
