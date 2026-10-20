@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T17263";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T17374";
 
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
@@ -8,20 +8,20 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T17263";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T17263";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-20T17263";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-20T17263";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T17263";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17263";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T17263";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-20T17263";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-20T17263";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T17263";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17263";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T17263";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-20T17263";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T17263";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T17374";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T17374";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-20T17374";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-20T17374";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T17374";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17374";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T17374";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-20T17374";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-20T17374";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T17374";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17374";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T17374";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-20T17374";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T17374";
 
 
 function qrImgSrc(url) {
@@ -111,22 +111,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-20T17263";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-20T17263";
-import { createEngine } from "./engine.js?v=v2026-10-20T17263";
-import { createActionGate } from "./actionGate.js?v=v2026-10-20T17263";
-import { createDevices } from "./devices.js?v=v2026-10-20T17263";
-import { createPresence } from "./presence.js?v=v2026-10-20T17263";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-20T17263";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-20T17263";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-20T17263";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-20T17263";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-20T17263";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-20T17263";
-import { createUI } from "./ui.js?v=v2026-10-20T17263";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-20T17263";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T17263";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T17263";
+import { createStore } from "./store.js?v=v2026-10-20T17374";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-20T17374";
+import { createEngine } from "./engine.js?v=v2026-10-20T17374";
+import { createActionGate } from "./actionGate.js?v=v2026-10-20T17374";
+import { createDevices } from "./devices.js?v=v2026-10-20T17374";
+import { createPresence } from "./presence.js?v=v2026-10-20T17374";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-20T17374";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-20T17374";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-20T17374";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-20T17374";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-20T17374";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-20T17374";
+import { createUI } from "./ui.js?v=v2026-10-20T17374";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-20T17374";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T17374";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T17374";
 
 
 async function pickQuestionPool(state) {
@@ -502,6 +502,23 @@ async function main() {
     return actionGate.timing.dur(key);
   }
   function evaluateDisplayCompletion(revision, item) {
+    if (item.timedOut && !item.lateReported && item.completedAt != null) {
+      // Po ack_timeout dopisujemy, ile realnie trwała blokada Control.
+      item.lateReported = true;
+      void sessionTelemetry.report({
+        kind: "diagnostic", category: "display_delay",
+        message: "Display potwierdził planszę dopiero po przekroczeniu czasu.",
+        devices: ["display"],
+        metrics: {
+          revision, sound: item.sound, reason: "late_ack",
+          expected_ms: Math.round(item.expectedMs),
+          actual_ms: Math.max(0, Math.round(item.completedAt - item.requestedAt)),
+          ack_source: item.ackSource || null,
+          display_visibility: lastDeviceDiagnostics?.display?.visibility || null,
+        },
+      });
+      return;
+    }
     if (item.reported || item.completedAt == null || item.expectedMs == null) return;
     item.reported = true;
     if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
@@ -525,12 +542,13 @@ async function main() {
   function reportDisplayCompletionTimeout(revision, item) {
     if (item.reported || item.completedAt != null || item.expectedMs == null) return;
     item.reported = true;
+    item.timedOut = true;
     const lowerBoundMs = Math.round(performance.now() - item.requestedAt);
     void sessionTelemetry.report({
       kind: "diagnostic", category: "display_delay",
       message: "Display nie potwierdził ukończenia planszy w oczekiwanym czasie.",
       devices: ["display"],
-      metrics: { revision, sound: item.sound, reason: "ack_timeout", ack_read_error: !!item.ackReadError, completion_realtime_connected: completionRealtimeConnected, wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: document.visibilityState || "unknown", request_visibility: item.controlVisibility, control_focused: item.controlFocused },
+      metrics: { revision, sound: item.sound, reason: "ack_timeout", ack_read_error: !!item.ackReadError, completion_realtime_connected: completionRealtimeConnected, wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: document.visibilityState || "unknown", request_visibility: item.controlVisibility, control_focused: item.controlFocused, display_visibility: lastDeviceDiagnostics?.display?.visibility || null },
     });
   }
   function reportDisplayCompletionReadError(revision, item, error) {
@@ -944,7 +962,8 @@ async function main() {
               phase: "read_error", source: presenceFailureSource,
               error_name: String(error?.name || "Error").slice(0, 80),
               error_code: String(error?.code || "").slice(0, 80) || null,
-              http_status: Number.isFinite(error?.status) ? error.status : null,
+              http_status: Number.isFinite(error?.status) && error.status > 0 ? error.status : null,
+              error_message: String(error?.message || "").slice(0, 120) || null,
             },
           });
         }

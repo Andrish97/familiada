@@ -12,17 +12,17 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T17263";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T17263";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T17263";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17263";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T17263";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17263";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T17263";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T17263";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T17263";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T17263";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T17263";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T17374";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T17374";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T17374";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17374";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T17374";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17374";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T17374";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T17374";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T17374";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T17374";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T17374";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -33,14 +33,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T17263";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T17374";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T17263";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T17263";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T17263";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T17374";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T17374";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T17374";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T17263";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T17374";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1051,8 +1051,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T17263"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T17263"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T17374"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T17374"/>
 
   <style>
     body{margin:0;padding:0}
@@ -5505,7 +5505,7 @@ function buildSessionRunDetails(r) {
             : "zwrócił błąd bazy";
           return {
             title: "Control nie może potwierdzić stanu urządzeń",
-            detail: `Odczyt stanu urządzeń ${cause}${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu, urządzenia nie są uznawane za rozłączone.`,
+            detail: `Odczyt stanu urządzeń ${cause}${error ? ` (${error})` : ""}${metrics.error_message ? ` — ${metrics.error_message}` : ""}; akcje gry są blokowane do odzyskania odczytu, urządzenia nie są uznawane za rozłączone.`,
           };
         }
         if (metrics.phase === "recovered") {
@@ -5601,7 +5601,10 @@ function buildSessionRunDetails(r) {
           return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)}; dźwięk ruszył po limicie.` };
         }
         if (metrics.reason === "ack_timeout") {
-          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
+          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle (animacja i potwierdzenie czekały na jej powrót)" : ""}.` };
+        }
+        if (metrics.reason === "late_ack") {
+          return { title: "Spóźnione potwierdzenie planszy", detail: `Display potwierdził zmianę po ${formatDuration(metrics.actual_ms)} (oczekiwano ${formatDuration(metrics.expected_ms)}); do tego czasu akcje Control były zablokowane${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",
@@ -6743,7 +6746,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T17263");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T17374");
 
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;

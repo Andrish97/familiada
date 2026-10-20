@@ -749,6 +749,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
       audioDiagnostic: inspect([event("diagnostic", { category: "audio_start", devices: ["control"], metrics: { sound: "reveal", start_delay_ms: 850, failed: false } })]),
       leaseReadTimeout: inspect([event("diagnostic", { category: "connectivity", devices: ["control"], metrics: { phase: "read_error", source: "status_read", error_name: "TimeoutError" } })]),
       audioUnlockLost: inspect([event("diagnostic", { category: "audio_unlock", devices: ["display"], metrics: { reason: "browser_lost", detail: "context_suspended", outcome: "unlocked", wait_ms: 4200, blocked_action_attempts: 2, display_visibility: "hidden" } })]),
+      lateAck: inspect([event("diagnostic", { category: "display_delay", devices: ["display"], metrics: { reason: "late_ack", expected_ms: 20689, actual_ms: 25900, display_visibility: "hidden" } })]),
       audioUnlockNewInstance: inspect([event("diagnostic", { category: "audio_unlock", devices: ["display"], metrics: { reason: "new_instance", outcome: "display_offline", wait_ms: 12000 } })]),
       frameDiagnostic: inspect([event("diagnostic", { category: "display_delay", devices: ["display"], metrics: { reason: "frame_stall", max_frame_gap_ms: 320, stalled_frames: 2, display_visibility: "visible" } })]),
       error: inspect([event("error", { message: "Nie można odczytać statusu urządzeń." })]),
@@ -796,6 +797,8 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
   expect(result.audioUnlockLost.rows[0]).toContain("odblokowano gestem po 4,2 s");
   expect(result.audioUnlockLost.rows[0]).toContain("próby akcji podczas blokady: 2");
   expect(result.audioUnlockLost.rows[0]).toContain("karta Wyświetlacza była w tle");
+  expect(result.lateAck.rows[0]).toContain("Spóźnione potwierdzenie planszy");
+  expect(result.lateAck.rows[0]).toContain("karta Wyświetlacza była w tle");
   expect(result.audioUnlockNewInstance.rows[0]).toContain("nowa karta Wyświetlacza");
   expect(result.audioUnlockNewInstance.rows[0]).toContain("Wyświetlacz rozłączył się po 12 s");
   expect(result.leaseReadRecovery.rows[0]).toContain("po 4,0 s");

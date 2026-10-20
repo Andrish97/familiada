@@ -71,3 +71,26 @@ test("restart cancels a matrix animation before it can overwrite the new screen"
   await assert.rejects(animator.inMatrix({}, { c1: 1, c2: 1, r1: 1, r2: 1 }, "down", 100), { name: "AbortError" });
   assert.equal(writes, 5, "only the first pixel row was painted before cancellation");
 });
+
+test("hidden page finishes the animation without waiting for frames", async (t) => {
+  const originalFrame = globalThis.requestAnimationFrame;
+  const originalDocument = globalThis.document;
+  t.after(() => {
+    if (originalFrame) globalThis.requestAnimationFrame = originalFrame; else delete globalThis.requestAnimationFrame;
+    if (originalDocument) globalThis.document = originalDocument; else delete globalThis.document;
+  });
+  let clock = 0;
+  // Karta w tle: przeglądarka nie wywołuje requestAnimationFrame.
+  globalThis.requestAnimationFrame = () => 1;
+  globalThis.cancelAnimationFrame = () => {};
+  globalThis.document = { visibilityState: "hidden", addEventListener() {}, removeEventListener() {} };
+  const tiles = Array.from({ length: 2 }, () => ({ dots: Array.from({ length: 7 }, () => Array.from({ length: 5 }, () => ({ fill: "off", setAttribute(_, fill) { this.fill = fill; } }))) }));
+  const animator = createAnimator({
+    tileAt: (_, col) => tiles[col - 1], clearTileAt() {}, clearArea() {}, dotOff: "off", now: () => clock,
+    snapArea: () => [tiles.map(() => Array.from({ length: 7 }, () => Array(5).fill("on")))],
+  });
+  const done = animator.inMatrix({}, { c1: 1, c2: 2, r1: 1, r2: 1 }, "right", 40);
+  const result = await Promise.race([done.then(() => "done"), new Promise((resolve) => setTimeout(() => resolve("stuck"), 200))]);
+  assert.equal(result, "done", "ukryta karta nie może czekać na klatki, bo Control czeka na potwierdzenie planszy");
+  assert.ok(tiles.every((tile) => tile.dots.flat().every((dot) => dot.fill === "on")));
+});
