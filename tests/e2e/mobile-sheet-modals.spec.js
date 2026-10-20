@@ -481,10 +481,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       expect(scrollState.xBody, "wewnętrzny kontener nie powinien tworzyć drugiego scrolla").toBe(false);
       await expect(page.locator("#xCreate")).toBeInViewport();
 
-      // klik w tło nic nie robi na telefonie (wychodzi tylko przez X)
-      await overlay.click({ position: { x: 5, y: 5 } });
-      await expect(overlay).toBeVisible();
-
+      // (klik w tło zamyka okno od dołu -- sprawdzane w teście importu logo)
       const gameName = `E2E-XB-MOBILE-GAME-${Date.now()}`;
       await page.locator("#lbl0").click();
       await page.locator("#xName").fill(gameName);
@@ -821,10 +818,12 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
     await expectBottomSheet(page, overlay);
     await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
 
-    // klik w tło nic nie robi na telefonie (wychodzi tylko przez X)
+    // klik w tło zamyka okno od dołu (decyzja 2026-10-20), pasek też
     await overlay.click({ position: { x: 5, y: 5 } });
-    await expect(overlay).toBeVisible();
+    await expect(overlay).toBeHidden({ timeout: 5000 });
 
+    await page.locator("#btnImport").click();
+    await expectBottomSheet(page, overlay);
     await closeSheetViaHandle(page);
     await expect(overlay).toBeHidden({ timeout: 5000 });
     await expect(page.locator("#listShell")).toBeVisible();

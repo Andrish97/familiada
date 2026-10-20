@@ -5,45 +5,8 @@ import { icon, iconText } from "./icons.js?v=v2026-10-20T23145";
 
 let modalEl = null;
 let isSubmitting = false;
-// true gdy ostatnie otwarcie użyło wspólnego mechanizmu sheet (modal
-// wstawiony do main.wrap/.explorer) -- fałszywe na stronach spoza tej
-// funkcji (np. index.html/login.html), gdzie zostaje stary, samodzielny
-// fullscreen z ensureMobileStyle().
+// Okno kontaktu zawsze korzysta ze wspólnego okna od dołu (modal-sheet.js).
 let usedSheetMode = false;
-
-// Ten plik jest importowany przez WSZYSTKIE strony (nie tylko te 7 objęte
-// sheet mode) i nie wie z góry, na której się znalazł. Szukanie po samych
-// id ("btnBack" itp.) było błędem -- te id są bardzo częste w całej
-// aplikacji (editor.html, account.html, control.html, poll-*.html...), a
-// tamte strony NIGDY nie dostały strażnika handleSheetBack() w swoim
-// handlerze. Skutek: kliknięcie takiego "przejętego" przycisku realnie
-// nawigowało z powrotem zamiast zamykać modal kontaktu.
-// Każda z 7 stron objętych sheet mode oznacza swój przycisk wstecz
-// atrybutem data-sheet-back="1" dokładnie w miejscu, gdzie dodaje
-// handleSheetBack() do jego handlera (patrz np. js/pages/bases.js) --
-// więc szukamy WYŁĄCZNIE takich, jawnie oznaczonych przycisków.
-function findPageBackBtn() {
-  const candidates = Array.from(document.querySelectorAll('[data-sheet-back="1"]'));
-  // marketplace.html ma DWA takie przyciski (btnGoGames/btnBackBrowse),
-  // widoczny jest zawsze dokładnie jeden -- preferuj ten, który akurat nie
-  // jest ukryty.
-  return candidates.find((el) => !el.hidden && el.style.display !== "none") || candidates[0] || null;
-}
-
-function ensureContactSheetBack() {
-  const slot = document.querySelector('.topbar .topbar-section-1');
-  if (!slot) return null;
-  let button = slot.querySelector('[data-contact-sheet-back]');
-  if (!button) {
-    button = document.createElement('button');
-    button.type = 'button'; button.className = 'btn sm topbar-sheet-back';
-    button.setAttribute('data-contact-sheet-back', '');
-    button.innerHTML = iconText('arrow-left', t('common.modalBack'));
-    button.addEventListener('click', closeContactModal);
-    slot.append(button);
-  }
-  return button;
-}
 
 // Modal kontaktu buduje własny DOM niezależnie od .overlay/.modal ze
 // wspólnych stron (patrz modal-sheet.js / css/base.css "Modal sheet
@@ -61,7 +24,6 @@ function ensureMobileStyle() {
     #contactModalOverlay .contact-modal-topbar[hidden] { display: none !important; }
     #contactModalOverlay .contact-modal-topbar { position: static; width: 100%; }
     @media (max-width: 600px) {
-      #contactModalOverlay.modal--sheet.sheet-active { z-index: auto !important; }
       #contactModalOverlay.overlay:not(.modal--sheet) {
         padding: 0;
         align-items: stretch;
@@ -282,38 +244,16 @@ export async function openContactModal(opts = {}) {
     if (subjectField) subjectField.style.display = "";
   }
 
-  // Na telefonie: jeśli strona ma main.wrap/.explorer ORAZ jawnie
-  // oznaczony przycisk wstecz (data-sheet-back="1" -- patrz
-  // findPageBackBtn()), modal kontaktu dołącza do tego samego mechanizmu
-  // co pozostałe rozbudowane modale (css/base.css "Modal sheet (mobile)")
-  // -- wstawiony do main, przejmuje przycisk wstecz w topbarze -- zamiast
-  // własnego, samodzielnego fullscreena. Bez takiego przycisku NIE wolno
-  // wchodzić w ten tryb: main.wrap/.explorer to bardzo częsty, ogólny
-  // wzorzec layoutu używany też przez strony spoza sheet mode (editor.html,
-  // account.html, control.html, strony ankiet...), których przyciski
-  // wstecz nie sprawdzają handleSheetBack() -- kliknięcie takiego,
-  // "przejętego" na siłę przycisku realnie nawigowałoby z powrotem
-  // zamiast zamykać modal. Ustalane przy KAŻDYM otwarciu (nie raz w
-  // ensureModal), bo strona/main mogły się jeszcze nie wyrenderować przy
-  // pierwszym imporcie.
-  const main = document.querySelector("main.wrap, main.explorer, main.mail-wrap");
-  const backBtn = findPageBackBtn() || (main ? ensureContactSheetBack() : null);
-  usedSheetMode = !!main && !!backBtn;
-  if (usedSheetMode) {
-    modalEl.classList.add("modal--sheet");
-    const footer = main.querySelector(":scope > .footer");
-    if (footer) main.insertBefore(modalEl, footer);
-    else main.appendChild(modalEl);
-  } else {
-    modalEl.classList.remove("modal--sheet");
-    document.body.appendChild(modalEl);
-  }
+  // Okno od dołu (telefon/tablet dotykowy) leży nad całą stroną, jak inne
+  // rozbudowane okna -- zawsze w body, bez przejmowania przycisku wstecz
+  // (wcześniej wstawiane do main z z-index:auto chowało pasek okna pod topbarem).
+  usedSheetMode = true;
+  modalEl.classList.add("modal--sheet");
+  document.body.appendChild(modalEl);
 
   modalEl.style.display = "grid";
   document.body.style.overflow = "hidden";
-  if (usedSheetMode) {
-    enterModalSheet(modalEl, { backBtn, onClose: closeContactModal });
-  }
+  enterModalSheet(modalEl, { onClose: closeContactModal });
   applyLabels();
   await prefillEmail();
   const emailInp = document.getElementById("cModalEmail");
