@@ -37,7 +37,13 @@ Szczegóły i numery przebiegów: Dziennik w [`docs/wdrozenia.md`](docs/wdrozeni
 3. E2E kontrolne na produkcji: `e2e/e21-rules.spec.js`.
 4. Wpis w Dzienniku, krok 14 → ✅, status „ZAKOŃCZONE”.
 
-Przypomnienie w sesji: `send_later` na 02:15 UTC (sprawdzenie raportu).
+## Limit wykorzystania
+
+- Użytkownik (2026-10-20, 23:35 UTC): limit odnawia się o **4:40**. Założenie: czas polski (CEST, UTC+2) → **02:40 UTC**; zapas na wypadek UTC → 04:40 UTC.
+- Wznowienia w sesji (ten sam prompt: przeczytać PROGRESS.md, git status, kroki 12–14):
+  - **02:45 UTC** (`trig_01Y1whFtYtheRkLCKbiDP71E`, 5 min po resecie wg czasu polskiego; wcześniej 02:15 — przesunięte, żeby nie trafić w limit),
+  - **04:45 UTC** (`trig_015iSh7JMLcEy7z32FsEm4wK`, zapas; przy statusie „ZAKOŃCZONE” tylko krótka informacja).
+- Naprawa danych idzie sama w bazie (`pg_cron` 01:30 UTC) — limit agenta jej nie dotyczy.
 
 ## Znane problemy
 
