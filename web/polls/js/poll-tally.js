@@ -108,6 +108,7 @@ export function createTally({ gameId, pollResults, ui }) {
     const dup = meta.querySelector(".tcMergeDup");
     dup.hidden = !withMergeDup;
       dup.querySelector("span").textContent = t("polls.tally.mergeDup");
+    dup.title = t("polls.tally.mergeDup"); // telefon: sama ikona
     dup.onclick = withMergeDup && qs ? () => mutate(qs, () => mergeDuplicates(qs.q)) : null;
     return meta;
   }
@@ -605,6 +606,7 @@ export function createTally({ gameId, pollResults, ui }) {
       const inKeys = analysis.tie.keys.filter((k) => analysis.selectedKeys.includes(k));
       const outKeys = analysis.tie.keys.filter((k) => !analysis.selectedKeys.includes(k));
       tieBtn.querySelector("span").textContent = t("polls.tally.tieSwitch");
+      tieBtn.title = t("polls.tally.tieSwitch");
       tieBtn.onclick = () => mutate(qs, () => { qs.q.selected = nextTieSelection(qs.analysis); });
       tieInfo.textContent = t("polls.tally.tieInfo", { in: inKeys.map(textOf).join(", "), out: outKeys.map(textOf).join(", ") });
     } else if (qs.q.selected) {

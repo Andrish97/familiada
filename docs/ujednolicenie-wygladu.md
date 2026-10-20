@@ -126,8 +126,12 @@ podliczania jako stan bieżącej operacji.
   na wszystkich stronach (`page-init.js`, `base.css`), uchwyty znikają;
   zostają przyciski (scalanie w podliczaniu, strzałki rund, kliknięcie
   w finale, menu w Eksploratorze). Podliczanie ankiety tekstowej na
-  telefonie: tekst odpowiedzi w pierwszej linii, głosy/punkty/przyciski
-  w drugiej; podpowiedź mówi o przycisku scalania.
+  telefonie (uwaga użytkownika „wygląda okrutnie”): w wierszu linia 1 tekst
+  + przyciski 32 px bez ramki grupy, linia 2 głosy + punkty; podpowiedź
+  i cofnij/ponów w jednej linii; „Scal identyczne”/„Zmień wybór w remisie”
+  jako ikony z dymkiem. Podpowiedzi podliczania skrócone (PL/EN/UK) do
+  działania i progu 4% (usuwanie znaków pokazuje licznik pustych, limit 17
+  pilnuje pole).
 - **Edytory logo (uwaga użytkownika 2026-10-20):** ustawienia narzędzia
   rysunku w linii narzędzi (puste znikają — bez pustego pasa); sekcja edytora
   kurczy się nad stopką (edytor tekstu wypychał stopkę); jeden styl etykiet
