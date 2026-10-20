@@ -76,87 +76,16 @@
   </header>
   <main class="wrap" data-skel-step>
     <section class="settings-panel homepage-screenshots-panel" id="homepageScreenshotsPanel" hidden>
-      <div class="settings-card homepage-shot-control-card">
+      <div class="settings-card">
         <div class="panel-head">
-          <div class="panel-title">Zrzuty strony głównej</div>
-          <div class="panel-sub">Przejrzyj przykładowe widoki po kolei, popraw dane i odśwież obrazy galerii.</div>
+          <div class="panel-title">Zrzuty stron</div>
+          <div class="panel-sub">System scripts/screens — bez kont i bazy</div>
         </div>
-        <div class="homepage-shot-toolbar homepage-shot-toolbar--global">
-          <div class="homepage-shot-toolbar-main">
-            <div class="homepage-shot-choice homepage-shot-choice--scene"><span class="field-label">Widok</span><div class="ui-select homepage-shot-select" id="homepageShotSceneSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Widok"><span class="ui-select-label">—</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotScene" hidden aria-hidden="true" tabindex="-1"></select></div>
-            <div class="homepage-shot-choice homepage-shot-choice--language"><span class="field-label">Język</span><div class="ui-select homepage-shot-select" id="homepageShotLanguageSelect"><button class="btn sm ui-select-btn" type="button" aria-label="Język"><span class="ui-select-label">Polski</span><span class="ui-select-caret"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><select id="homepageShotLanguage" hidden aria-hidden="true" tabindex="-1"><option value="pl">Polski</option><option value="en">English</option><option value="uk">Українська</option></select></div>
-            <div class="homepage-shot-nav-actions" aria-label="Nawigacja między widokami">
-              <button class="btn sm" id="homepageShotPrevious" type="button" aria-label="Poprzedni widok">‹ <span>Poprzedni</span></button>
-              <button class="btn sm" id="homepageShotNext" type="button" aria-label="Następny widok"><span>Następny</span> ›</button>
-            </div>
-          </div>
-          <div class="homepage-shot-toolbar-actions">
-            <div class="homepage-shot-action-group homepage-shot-action-group--resources" aria-label="Wczytywanie i eksport danych">
-              <span class="homepage-shot-action-label">Dane</span>
-              <button class="btn sm" id="homepageShotExportConfig" type="button">Eksportuj JSON</button>
-              <label class="btn sm">Importuj JSON <input id="homepageShotImportConfig" type="file" accept=".json,application/json" hidden></label>
-            </div>
-            <div class="homepage-shot-action-group" aria-label="Zapisywanie danych">
-              <span class="homepage-shot-action-label">Dane przykładowe</span>
-              <button class="btn sm" id="homepageShotUndo" type="button" aria-label="Cofnij zmianę" title="Cofnij zmianę" disabled><i class="ico" data-icon="undo"></i></button>
-              <button class="btn sm" id="homepageShotRedo" type="button" aria-label="Ponów zmianę" title="Ponów zmianę" disabled><i class="ico" data-icon="redo"></i></button>
-              <button class="btn sm" id="homepageShotSaveAll" type="button">Zapisz wszystkie dane<span class="homepage-shot-unsaved-label" id="homepageShotSharedSaveDirty" hidden> · niezapisane</span></button>
-            </div>
-            <div class="homepage-shot-action-group homepage-shot-action-group--capture" aria-label="Zrzuty strony głównej">
-              <span class="homepage-shot-action-label">Zrzuty</span>
-              <button class="btn sm gold" id="homepageShotCaptureOne" type="button">Zrób ten zrzut</button>
-              <button class="btn sm gold" id="homepageShotCaptureAll" type="button">Odśwież wszystkie zrzuty</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="tabs-card homepage-shot-tabs-card" id="homepageShotTabsCard">
-        <div class="tabs-strip" role="tablist" aria-label="Dane przykładowe">
-          <div class="tab-slot homepage-shot-tab-slot is-active">
-            <button class="tab-label homepage-shot-tab active" id="homepageShotSharedTab" type="button" role="tab" aria-selected="true" aria-controls="homepageShotSharedPanel" data-shot-tab="shared">Lista zasobów<span class="homepage-shot-tab-dirty" id="homepageShotSharedTabDirty" hidden aria-label="Niezapisane zmiany">•</span></button>
-            <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
-          </div>
-          <div class="tab-slot homepage-shot-tab-slot">
-            <button class="tab-label homepage-shot-tab" id="homepageShotCategoryTab" type="button" role="tab" aria-selected="false" aria-controls="homepageShotCategoryPanel" data-shot-tab="category">Podgląd kategorii<span class="homepage-shot-tab-dirty" id="homepageShotCategoryTabDirty" hidden aria-label="Niezapisane zmiany">•</span></button>
-            <div class="tab-wrapper" aria-hidden="true"><div class="tab-active"></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
-          </div>
-        </div>
-        <div class="homepage-shot-tabs-content">
-        <section class="homepage-shot-tab-panel" id="homepageShotSharedPanel" role="tabpanel" aria-labelledby="homepageShotSharedTab">
-          <p class="muted homepage-shot-tab-note">Wczytaj gry preparowane, bazy pytań i logo z rysowaniem. Ankiety oraz logo tekstowe i obrazkowe nie są częścią tej listy. Nazwy drużyn i znajomi pozostają danymi wspólnymi.</p>
-          <div class="homepage-shot-resource-imports">
-            <label class="btn sm">Wczytaj grę preparowaną <input id="homepageShotImportGame" type="file" accept=".famgame,.json,application/json" hidden></label>
-            <label class="btn sm">Wczytaj bazę pytań <input id="homepageShotImportBase" type="file" accept=".fambase,.json,application/json" hidden></label>
-            <label class="btn sm">Wczytaj logo rysunkowe <input id="homepageShotImportLogo" type="file" accept=".famlogo,.json,application/json" hidden></label>
-          </div>
-          <div id="homepageShotResourceList" class="homepage-shot-resource-list"></div>
-          <div id="homepageShotSharedFields" class="homepage-shot-shared-fields"></div>
-        </section>
-        <section class="homepage-shot-tab-panel" id="homepageShotCategoryPanel" role="tabpanel" aria-labelledby="homepageShotCategoryTab" hidden>
-        <div class="homepage-shot-workspace">
-          <div class="homepage-shot-editor">
-            <div class="field-label" id="homepageShotFieldsTitle">Ustawienia widoku</div>
-            <section class="homepage-shot-resource-choices" id="homepageShotResourceChoices">
-              <div id="homepageShotResourceChoiceFields"></div>
-            </section>
-            <div class="homepage-shot-toolbar" id="homepageShotQrToolbar" hidden>
-              <input class="inp homepage-shot-qr" id="homepageShotQrUrl" type="url" placeholder="Link dla kodu QR ankiety" aria-label="Link dla kodu QR ankiety"/>
-            </div>
-            <div id="homepageShotCategoryActions" hidden></div>
-            <div id="homepageShotFields" class="homepage-shot-fields"></div>
-            <textarea id="homepageShotFixture" hidden aria-hidden="true" tabindex="-1"></textarea>
-            <div class="homepage-shot-status" id="homepageShotStatus" role="status" aria-live="polite" hidden></div>
-            <div class="homepage-shot-results" id="homepageShotResults" hidden></div>
-          </div>
-          <div class="homepage-shot-preview">
-            <div class="homepage-shot-preview-title" id="homepageShotPreviewTitle"></div>
-            <div class="homepage-shot-frame-wrap" id="homepageShotFrameWrap">
-              <iframe id="homepageShotFrame" title="Podgląd przykładowego widoku" tabindex="-1" sandbox="allow-same-origin"></iframe>
-              <span class="homepage-shot-phone-gesture" id="homepageShotPhoneGesture" aria-hidden="true" hidden></span>
-            </div>
-          </div>
-        </div>
-        </section>
+        <p class="field-hint">Zrzuty robi automatycznie system <code>scripts/screens/</code> (prawdziwe strony na danych demo, PL/EN/UK) po każdej zmianie stron. Kadry strony głównej i obraz podglądu linku odświeżają się same po wdrożeniu na <code>main</code>. Instrukcja: <code>docs/zrzuty-system.md</code>.</p>
+        <div class="homepage-screenshots-links">
+          <a class="btn sm gold" href="https://github.com/Andrish97/familiada/actions/workflows/screens.yml" target="_blank" rel="noopener">Uruchom zrzuty (GitHub Actions)</a>
+          <a class="btn sm" href="https://github.com/Andrish97/familiada/tree/screens-gallery" target="_blank" rel="noopener">Galeria zrzutów</a>
+          <a class="btn sm" href="/?lang=pl" target="_blank" rel="noopener">Strona główna</a>
         </div>
       </div>
     </section>

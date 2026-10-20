@@ -84,16 +84,10 @@ export function isMaintenanceAsset(pathname) {
 }
 
 export function isSettingsAsset(pathname) {
-  const screenshotFrames = new Set([
-    "/games/", "/games/editor/", "/games/settings/", "/bases/", "/bases/explorer/",
-    "/friends/", "/tasks/", "/polls/", "/polls/vote/points/", "/subscribers/",
-    "/logos/", "/logos/editor/draw/", "/control/", "/control/display/", "/control/host/",
-  ]);
-  return screenshotFrames.has(pathname)
-    || isSharedAssetPath(pathname)
+  return isSharedAssetPath(pathname)
     || ["/manifest-admin.webmanifest", "/settings/sw.js"].includes(pathname)
     || pathname.startsWith("/settings/icons/")
-    || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/games/editor/css/", "/bases/css/", "/bases/explorer/css/", "/friends/css/", "/subscribers/css/", "/tasks/css/", "/polls/css/", "/logos/css/", "/logos/js/", "/logos/data/", "/control/css/", "/control/js/", "/control/display/css/", "/control/display/js/", "/control/host/css/", "/control/host/js/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
+    || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
 }
 
 export function isCommonAsset(pathname) {

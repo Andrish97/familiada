@@ -262,6 +262,10 @@ function buildDb(lang, extras = {}) {
     localStorage: { "sb-api-auth-token": "screens" },
     http: {
       "/_api/mail/session": { ok: true, email: p.user.email, notifications_enabled: true, subscriptions: [], items: [] },
+      // Panel admina (/settings/): odpowiedzi API Workera za Cloudflare Access.
+      "/_admin_api/me": { ok: true, email: "admin@example.com" },
+      "/_admin_api/activity*": { ok: true, history: { hour: [], day: [], week: [] }, games: [], pages: [], locks: [] },
+      "/_admin_api/state": { enabled: false, mode: "message", message: "" },
     },
   };
 }

@@ -2,8 +2,9 @@
 
 Zrzuty **prawdziwych stron** z `web/` na bogatych danych demo, w trzech
 językach, bez kont, bez bazy i bez ręcznego klikania. Kod: `scripts/screens/`.
-Zastępuje panel admina zrzutów (`/settings/` → homepage-screenshots), który
-zostanie usunięty po przełączeniu strony głównej na nowe kadry.
+Zastąpił dawny panel zrzutów w panelu admina (usunięty 2026-10-20; zakładka
+„Zrzuty strony” w `/settings/` ma już tylko odnośniki: uruchomienie workflow,
+galeria, strona główna).
 
 ## Zasada działania
 
@@ -47,6 +48,10 @@ z CDN (Fabric, opentype…) runner pobiera raz przez `npm pack` do
    (workflow `screens.yml`): sceny zmienionych stron we wszystkich językach,
    galeria na gałęzi `screens-gallery` (link w podsumowaniu przebiegu) i
    artefakt. Commity CI z `[skip ci]` (wersje `?v=`) go nie uruchamiają.
+   **Na `main`** dodatkowo: zmienione kadry strony głównej są odświeżane
+   (`publish-homepage.cjs`), zapisywane commitem `Refresh homepage screenshots`
+   i workflow wywołuje wdrożenie Pages — strona główna i og:image same się
+   aktualizują.
 3. **Ręcznie z telefonu**: Actions → „Zrzuty stron” → Run workflow
    (`changed`, `all` albo lista scen).
 
@@ -65,6 +70,10 @@ z CDN (Fabric, opentype…) runner pobiera raz przez `npm pack` do
 | `devices` / `size` | tylko wybrane urządzenia / własny rozmiar `{ width, height, scale }` |
 | `gameState` | wiersz `game_state` w atrapie (`round`, `finale`, `main`) — Control odtwarza z niego grę |
 | `previewRow` (+ `frame`) | stan wysłany do trybu podglądu urządzenia (`?preview=1`); `frame` — przez ramkę rodzica (Prowadzący) |
+| `guest` | odwiedzający bez konta i sesji (np. strona główna) |
+| `safeArea` | emulacja strefy bezpiecznej `{ top, bottom, … }` — `env(safe-area-inset-*)` w CSS/HTML strony zamieniane na piksele |
+| `deviceFrame` (+ `frameSize`) | `"iphone"`: ekran w ramce iPhone'a na czarnym tle (kadr głosowania na stronie głównej) |
+| `fullPage` | zrzut całej strony (runner przewija, żeby wczytać obrazy `loading="lazy"`) |
 | `settle` | dodatkowe ms przed zrzutem (animacje, płótna) |
 
 Nowy stan strony (zakładka, okno, zaznaczenie) = nowa scena z `steps`.
@@ -102,14 +111,21 @@ Sceny z `homepage: true` w kolejności z `docs/e13-zrzuty-strona-glowna.md`:
 gry i bazy, znajomi/zadania/ankiety, wygląd i logo, rozgrywka. Główny
 Wyświetlacz (1600×900) i `og-image` (1200×630 @2x = 2400×1260, podgląd linku
 przy udostępnianiu) to ta sama plansza FAMILIADA · ONLINE, 999, 111:111,
-hasła w wierszach 1/3/5 i X-y w pozycjach 1 i 3.
+hasła w wierszach 1/3/5, X-y w pozycjach 1 i 3 i zapalona lampka drużyny B.
 
-Kadry nie są jeszcze automatycznie publikowane na stronie głównej (obrazy w
-`web/assets/img/<język>/landing-*.webp` i `web/assets/img/og/og-image.webp`
-albo bucket `homepage-screenshots`) — to osobny krok po decyzji użytkownika.
+Publikacja: `node scripts/screens/publish-homepage.cjs` (po
+`run.cjs --scenes=<homepage> --lang=all`, albo `--changed --homepage`) zapisuje
+`web/assets/img/<język>/shots/<scena>.webp` + `-preview.webp` i
+`web/assets/img/og/og-image.webp`. Strona główna (`web/index.html`) ma cztery
+kafle; każdy pokazuje podgląd jednego kadru (`data-shot`), a kliknięcie
+otwiera galerię kadrów swojej kategorii (`data-gallery`, tytuły
+`home.shots.<scena>` w tłumaczeniach). Nowy kadr strony głównej = scena z
+`homepage: true` + wpis w `data-gallery` właściwego kafla + tytuł w PL/EN/UK.
 
 ## Uwagi
 
-- Wyświetlacz liczy etykietę „SUMA” przy budowie sceny; zdarzyło się, że
-  pokazał klucz tłumaczenia („DISP”). Runner czeka teraz na czcionki i 1,5 s
-  przed wysłaniem stanu; jeśli wróci — to wyścig w aplikacji, nie w atrapie.
+- Wyświetlacz pokazywał czasem „DISP” zamiast „SUMA”: wyścig w
+  `translation.js` (pierwsze `pageshow` wyprzedzało `initI18n`). Naprawione
+  w aplikacji 2026-10-20, test `tests/unit/translationRace.test.js`.
+- Stare obrazy `web/assets/img/<język>/landing-*.webp` zostają, dopóki używa
+  ich mail marketingowy (`web/shared/js/core/marketing-mail.js`).

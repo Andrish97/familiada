@@ -6479,12 +6479,9 @@ function wireEvents() {
   }
 
   if (els.btnTabScreenshots) {
-    els.btnTabScreenshots.addEventListener("click", async () => {
+    els.btnTabScreenshots.addEventListener("click", () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("homepageScreenshots");
-      const { initHomepageScreenshots } = await import("./homepage-screenshots.js?v=v2026-10-20T04553");
-
-      await initHomepageScreenshots();
     });
   }
 
