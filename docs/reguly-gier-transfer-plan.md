@@ -151,10 +151,13 @@ powtórzeń warunku.
 
 ### Ustalony kontrakt typów i stanów
 
-- W bazie i JSON-ie istnieją tylko trzy kanoniczne typy gry: `prepared`,
-  `poll_points`, `poll_text`. Nie tworzymy typu `market`, `ready_prepared` ani
-  osobnych typów „gotowa”/„szkic”. Historyczne rekordy wymagają migracji lub
-  jawnej konwersji do jednego z tych trzech typów.
+- Trzy typy źródłowej treści gry to `prepared`, `poll_points`, `poll_text`.
+  Baza ma ponadto osobny typ `market` dla kopii pochodzących z Gier
+  Społeczności. `market` zostaje w bazie; nie jest czwartym typem źródłowej
+  treści ani jednym z pięciu wariantów pliku.
+- Nie tworzymy typu `ready_prepared` ani osobnych typów „gotowa”/„szkic”.
+  Historyczne typy inne niż te trzy źródłowe i `market` wymagają migracji lub
+  jawnej obsługi. JSON nie może zamieniać `market` po cichu na `poll_text`.
 - Transfer dopuszcza dokładnie pięć kombinacji:
 
   | Typ | Stan transferu | Znaczenie |
@@ -172,8 +175,38 @@ powtórzeń warunku.
   przed utworzeniem pliku wyświetlić jasną informację, że bieżące głosy nie
   zostaną zachowane; potwierdzenie prowadzi do szkicu tego samego typu.
 - Wysyłka gry działa jak transfer przez eksport/import: wysyła wyłącznie szkic,
-  zachowuje jego kanoniczny typ i stosuje te same reguły pól. Zamknięte ankiety
-  nie są wysyłane.
+  zachowuje jego kanoniczny typ i stosuje te same reguły pól. Wysyłanie do
+  Marketplace jest osobnym przepływem opisanym niżej: dopuszcza również
+  zamknięte ankiety i tworzy snapshot preparowany. Zamknięte ankiety nie są
+  wysyłane jako kopie do znajomych.
+
+### Marketplace — obecna bramka wysyłania
+
+- Frontend (`web/marketplace/js/marketplace.js`, `openSubmitModal`) pokazuje
+  własne, nie-demo gry spoza Marketplace. Dla `prepared` sprawdza tylko liczbę
+  pytań ≥10; ankietę tekstową/punktową pokazuje tylko przy `status=ready`.
+  Dlatego lista może pokazać niekompletną preparowaną, którą później odrzuci
+  backend.
+- RPC `market_submit_game` ponownie sprawdza właściciela, brak pochodzenia z
+  Marketplace, `is_demo=false`, duplikat oczekującego/opublikowanego zgłoszenia
+  oraz `game_action_state(...).can_play`. Wymaga też ≥10 pytań i waliduje tytuł
+  (1–120 znaków), opis (do 500) i język (`pl`, `en`, `uk`). To backend jest
+  właściwą bramką bezpieczeństwa.
+- RPC ignoruje przekazane z przeglądarki `p_payload` i buduje snapshot
+  bezpośrednio z rekordu gry. Jeśli źródłem jest zamknięta ankieta, ustawia
+  `payload.game.type = 'prepared'`; `prepared` zostaje `prepared`. Zatem
+  zgłoszenie do Marketplace rzeczywiście pochodzi z gry preparowanej gotowej do
+  gry albo z zamkniętej ankiety, ale sam snapshot Marketplace jest
+  reprezentowany jako preparowany.
+- Po dodaniu opublikowanej gry do biblioteki użytkownika jej lokalny rekord
+  `games.type` jest `market`. To specjalna kopia, zwykle tylko do przeglądania,
+  a nie typ ankiety lub nowy wariant JSON.
+- Istotna rozbieżność do rozwiązania przy centralizacji: `market_submit_game`
+  woła starsze `game_action_state`, a nie `game_validate`. Starsza reguła
+  preparowanej sprawdza ≥10 pytań, 3–6 odpowiedzi, punkty 0–100 i sumę ≤100,
+  ale nie sprawdza minimum 4 punktów na odpowiedź. Bieżący `game_rules_compute`
+  również nie ma progu 4. Nowa reguła minimum 4 musi zostać uwzględniona w
+  centralnym wyniku gotowości i bramce Marketplace; obecnie nie jest egzekwowana.
 
 ### Zmiana typu gry
 
@@ -199,9 +232,11 @@ zostaje opisany w podsumowaniu modalа przed wdrożeniem.
 ### Znalezione obecne zachowania
 
 - `web/shared/js/core/game-transfer-format.js` eksportuje format `.famgame` i
-  kopie wysyłane. `gameTransferType()` dopuszcza tylko trzy typy:
+  kopie wysyłane. `gameTransferType()` dopuszcza tylko trzy źródłowe typy:
   `poll_text`, `poll_points`, `prepared`; `market` i nieznane wartości
-  zamienia po cichu na `poll_text`.
+  zamienia po cichu na `poll_text`. Dla `market` trzeba dodać jawne
+  rozstrzygnięcie (np. blokada generycznego eksportu kopii, z osobną akcją
+  pobrania źródłowej pozycji Marketplace), nie usuwać `market` z bazy.
 - Gotowa ankieta (`status=ready`) jest obecnie eksportowana jako `prepared`, co
   zmienia jej typ. To koliduje z nowym kontraktem pięciu kombinacji i musi
   zostać zastąpione jawną obsługą zamkniętej ankiety tego samego typu.
@@ -214,9 +249,10 @@ zostaje opisany w podsumowaniu modalа przed wdrożeniem.
   domyślnym; dla typów innych niż tekstowy limituje odpowiedzi do 6; punkty
   zaokrągla/ogranicza do 0–100, brakujące ustawia na 0; odpowiedzi ankiety
   tekstowej usuwa. Import tworzy szkic i sam nie wymaga gotowości do gry.
-- Schemat bazy zawiera także typ `market` (dodany historycznie osobną
-  migracją), choć bieżący format transferu go nie zachowuje. To jest
-  rozbieżność kontraktu, nie bezpieczny fallback.
+- Typ bazy `market` jest osobnym typem kopii z Gier Społeczności (migracja
+  `2026-03-11_054_game_type_market.sql`). Nie należy go mylić z nieobsługiwanym
+  aliasem importowym; nie powinien jednak trafiać do generycznego JSON-u jako
+  jeden z pięciu wariantów.
 
 ### Zakres pełnego audytu
 
@@ -271,7 +307,7 @@ zapis, podgląd i późniejszą rozgrywkę.
 | E | Integracja gier, edytora, ankiet, Control i kafli z centralnym kontraktem | Każdy przycisk pokazuje wynik centralnej reguły; serwer odrzuca niedozwolone przejście tym samym kodem |
 | F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Próg 4% włącznie i min. 3 odpowiedzi w jednym algorytmie; samo wejście w podliczanie nie jest blokowane |
 | G | Dodanie „Zmień typ” obok powielania; konwersja przez modal do szkicu wybranego typu według tabeli w §4 | Podgląd strat/braków przed zatwierdzeniem; wyniki zamkniętej ankiety nie znikają bez potwierdzenia |
-| H | Wdrożenie wersjonowanego transferu i usunięcie cichych fallbacków; ten sam kontrakt dla wysyłania kopii | Dokładnie pięć kombinacji transferu; wysyłka wyłącznie szkiców tego samego typu; ostrzeżenie o niezachowaniu bieżących głosów |
+| H | Wdrożenie wersjonowanego transferu; jawna obsługa kopii `market`; usunięcie cichych fallbacków; ten sam kontrakt dla wysyłania kopii i poprawa bramki zgłoszenia Marketplace | Dokładnie pięć wariantów zwykłego transferu; wysyłka znajomym wyłącznie szkiców tego samego typu; Marketplace przyjmuje gotową `prepared` lub zamkniętą ankietę jako snapshot `prepared` |
 | I | Punktowe testy DB/JS/E2E dla reguł, akcji, zmiany typu oraz importu/eksportu/wysyłki | Macierz scenariuszy zielona; brak pełnych przebiegów bez potrzeby; dokumentacja formatu zaktualizowana |
 
 ## 6. Scenariusze kontrolne wymagane przed zamknięciem
@@ -297,7 +333,8 @@ zapis, podgląd i późniejszą rozgrywkę.
   pytanie
   z długą treścią, odpowiedź dłuższa niż limit, puste pole, brak punktów,
   wartości graniczne/poza zakresem, nadmiar odpowiedzi, typ historyczny,
-  `market`, typ nieznany, duplikat i przerwanie importu. Zamknięte wyniki są
+  kopię typu `market` i próbę jej generycznego eksportu, typ nieznany, duplikat
+  i przerwanie importu. Zamknięte wyniki są
   zachowane tylko przy eksporcie/importcie zamkniętej ankiety bez zmiany typu;
   jawna zmiana typu ostrzega o ich usunięciu.
 - Sprawdzić, że błąd pojedynczego elementu nie zostawia częściowo utworzonej
@@ -307,9 +344,9 @@ zapis, podgląd i późniejszą rozgrywkę.
 
 1. Czy eksport ma przechowywać pełne treści ponad obecne limity i import dopiero
    zgłaszać niezgodność, czy format ma świadomie limitować dane.
-2. Jakie dokładnie historyczne aliasy/typy (w tym `market` i zapisy
-   `ready`→`prepared`) nadal występują w produkcyjnych danych/pakietach i
-   jakie migracje jednorazowe sprowadzą je do trzech kanonicznych typów.
+2. Jakie dokładnie historyczne aliasy/typy (poza kanonicznymi typami źródłowymi
+   i kopią `market`) oraz zapisy `ready`→`prepared` występują w produkcyjnych
+   danych/pakietach i jakie migracje sprowadzą je do docelowego modelu.
 3. Jak rozumieć sumę punktów w gotowości „Preparowanej” (obecnie limit SQL
    `<=100`, wcześniejsze założenia edytora mówią o sumie 100). Ta decyzja jest
    osobna od modalа Base Explorera, w którym sumy 100 nie sprawdzamy.
