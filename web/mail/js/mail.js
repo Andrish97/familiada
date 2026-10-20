@@ -1,13 +1,16 @@
 import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T18202";
 guardViewportWidth({ minWidth: 0 });
 import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-20T18202';
-import { icon, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-20T18202';
+import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-20T18202';
 import { toast } from '../../shared/js/core/toast.js?v=v2026-10-20T18202';
 import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-20T18202';
 import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-20T18202';
+import { attachSectionSearch } from '../../shared/js/core/share-sections.js?v=v2026-10-20T18202';
 
 
 const $ = id => document.getElementById(id);
+attachSectionSearch($('subscriptionTitle'), $('subscriptionList'), 'mail-subscriptions');
+attachSectionSearch($('itemsTitle'), $('itemsList'), 'mail-items');
 const text = (key, vars) => t(`mailCenter.${key}`, vars);
 let model = { state: 'entry' }, selectedTab = tabFromUrl(['subscriptions', 'items'], 'subscriptions'), csrf = '', busy = false;
 let requestUntil = 0, cooldownTimer = null, pendingAccess = '';
@@ -24,9 +27,9 @@ async function api(path, body) {
   if (!response.ok && !data.error) throw new Error('request_failed');
   return data;
 }
-function button(label, act, kind = 'btn sm') {
+function button(label, act, kind = 'btn sm', iconName = '') {
   const node = document.createElement('button'); node.type = 'button'; node.className = kind;
-  node.textContent = text(label); node.addEventListener('click', () => perform(act)); return node;
+  node.innerHTML = iconText(iconName, text(label)); node.addEventListener('click', () => perform(act)); return node;
 }
 async function perform(fn) {
   if (busy) return;
@@ -110,7 +113,7 @@ function render() {
     $('mailPreference').classList.toggle('is-disabled', !enabled);
     $('mailPreferenceTitle').textContent = text(enabled ? 'enabledTitle' : 'disabledTitle');
     $('mailPreferenceText').textContent = text(enabled ? 'enabledText' : 'disabledText');
-    $('mailPreferenceButton').textContent = text(enabled ? 'resign' : 'restore');
+    $('mailPreferenceButton').innerHTML = iconText(enabled ? 'close' : 'restore', text(enabled ? 'resign' : 'restore'));
     $('mailPreferenceButton').disabled = false;
     if (enabled) {
       const subscriptions = model.subscriptions || [], items = model.items || [];
@@ -121,12 +124,12 @@ function render() {
     }
   } else {
     $('mailTitle').textContent = text(`${model.state}Title`); $('mailMessage').textContent = text(`${model.state}Text`, { email: model.email || '' });
-    if (model.state === 'confirm') $('mailActions').append(button('openCenter',exchangeAccess,'btn gold sm'));
+    if (model.state === 'confirm') $('mailActions').append(button('openCenter',exchangeAccess,'btn gold sm','arrow-right'));
     if (model.state === 'registered') {
-      const login = document.createElement('a'); login.className = 'btn gold sm'; login.href = '/login/?next=account'; login.textContent = text('login'); $('mailActions').append(login);
+      const login = document.createElement('a'); login.className = 'btn gold sm'; login.href = '/login/?next=account'; login.innerHTML = iconText('person', text('login')); $('mailActions').append(login);
     }
     if (model.state === 'sent') {
-      const change = button('differentEmail', async () => { model = { state: 'entry' }; }); $('mailActions').append(change);
+      const change = button('differentEmail', async () => { model = { state: 'entry' }; }, 'btn sm', 'envelope'); $('mailActions').append(change);
     }
   }
   $('mailMessage').hidden = !$('mailMessage').textContent;

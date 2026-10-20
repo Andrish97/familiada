@@ -122,7 +122,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
 
   const handleKeydown = (e) => {
     if (destroyed) return;
-    if (e.key === "Escape") close();
+    if (e.key === "Escape" && btn.getAttribute("aria-expanded") === "true") { e.preventDefault(); close(); }
   };
 
   btn.addEventListener("click", (e) => {

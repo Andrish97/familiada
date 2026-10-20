@@ -1,5 +1,6 @@
 import {sb} from './supabase.js?v=v2026-10-20T18202';
 import {t} from '../../translation/translation.js?v=v2026-10-20T18202';
+import {iconText} from './icons.js?v=v2026-10-20T18202';
 
 
 export async function refreshResourceCopyInbox({kind,variant,host,onChanged}){
@@ -17,8 +18,8 @@ export async function refreshResourceCopyInbox({kind,variant,host,onChanged}){
   const from=document.createElement('span');from.textContent=t('resourceSend.from',{name:item.sender_label});
   const actions=document.createElement('div');actions.className='resource-copy-inbox-actions';
   const errorNode=document.createElement('span');errorNode.className='resource-copy-inbox-error';errorNode.setAttribute('role','status');
-  const accept=document.createElement('button');accept.type='button';accept.className='btn sm gold';accept.textContent=t('resourceSend.accept');
-  const decline=document.createElement('button');decline.type='button';decline.className='btn sm';decline.textContent=t('resourceSend.decline');
+  const accept=document.createElement('button');accept.type='button';accept.className='btn sm gold';accept.innerHTML=iconText('check',t('resourceSend.accept'));
+  const decline=document.createElement('button');decline.type='button';decline.className='btn sm';decline.innerHTML=iconText('close',t('resourceSend.decline'));
   const decide=async(decision,button)=>{
    if(button.disabled)return;accept.disabled=decline.disabled=true;
    try{

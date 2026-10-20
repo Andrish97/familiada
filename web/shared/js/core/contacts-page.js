@@ -4,6 +4,7 @@ import { initPage } from "./page-init.js?v=v2026-10-20T18202";
 import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-20T18202";
 import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-20T18202";
 import { toast } from "./toast.js?v=v2026-10-20T18202";
+import { iconText } from "./icons.js?v=v2026-10-20T18202";
 import { confirmModal, alertModal } from "./modal.js?v=v2026-10-20T18202";
 import { shareSectionEl } from "./share-sections.js?v=v2026-10-20T18202";
 import { createCooldownTicker } from "./cooldown.js?v=v2026-10-20T18202";
@@ -76,7 +77,7 @@ export async function initContactsPage(pageId) {
       const link = document.createElement("a");
       link.className = "btn sm gold";
       link.href = linkTo(other);
-      link.textContent = t("contacts.go");
+      link.innerHTML = iconText("arrow-right", t("contacts.go"));
       await alertModal({ text: t(`contacts.errors.${other === "friends" ? "hasAccount" : "emailOnly"}`), body: link });
     } else {
       if (friends && result?.err === "already") {

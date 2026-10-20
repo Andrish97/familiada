@@ -7,6 +7,10 @@ Stan roboczy na 2026-10-14. Tabela rozbija każdą uwagę na osobny wiersz. „J
 Poniższe punkty są otwarte do ponownego przeglądu. Wcześniejsze zmiany kodu i
 historyczne statusy w dalszej części pliku nie zamykają tych uwag.
 
+**Zamknięte 2026-10-20 (decyzja użytkownika):** 2–10 i 12–14 potwierdzone;
+1 poprawiony (ikony: Logo, Ustawienia gry, Mails, logowanie, topbar, odbiór
+kopii, kontakty); 11 porzucony (dotyczył galerii E2E).
+
 1. Sprawdzić brakujące ikony na przyciskach i ujednolicić ikony tych samych akcji.
 2. Ponownie przejrzeć dostępność stron na TV, przekierowania i komunikat guarda dla telewizora.
 3. Ponownie sprawdzić długie listy oraz pojedynczy pionowy scroll na mobile.

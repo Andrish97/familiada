@@ -26,6 +26,26 @@ podliczania jako stan bieżącej operacji.
 
 ---
 
+## Decyzje — zamknięcie E20 i reszta E18 (2026-10-20)
+
+- **E20, lista 14 uwag z 2026-10-17:** punkty 2–10 i 12–14 potwierdzone przez
+  użytkownika. Punkt 1 (ikony) poprawiony; punkt 11 (zła gra na MacBooku)
+  dotyczył galerii E2E — porzucony, galerii nie naprawiamy.
+- **Szerokości kart:** 680 px tylko dla karty wpisywania e-maila w Mails,
+  publicznego głosowania i Go. Zwykły widok Mails (listy, zadania,
+  subskrypcje) — normalna szerokość strony.
+- **Kafle (E18 #2):** zostają jak są. Gry i Bazy — identyczny kafel; Logo
+  wyższe przez podgląd; Społeczność — mniejsze przerwy i własna siatka.
+- **Okna (E18 #12):** przegląd i poprawki — wzorzec: małe okna `.uni-modal`,
+  duże `.overlay > .modal` (arkusz na telefonie), proste okna z jednym polem
+  lub krótkim potwierdzeniem `.modal--narrow` (560 px). Wszędzie Esc i X,
+  stopka „Anuluj” + złota akcja po prawej (`btn sm`, z ikonami).
+- **Marginesy (E18 #7):** przegląd i poprawki tylko tam, gdzie odstają, bez
+  zmian na stronach, które już są poprawne.
+- **Wyszukiwanie w listach (zamiast #10):** w nagłówku każdej długiej listy
+  (od 6 wierszy) pole szukania; na telefonie lupa rozwijająca pole pod
+  nagłówkiem. Bez filtrów.
+
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 
 - Jedna czcionka dla całej rozgrywki Control (kafle, pytanie, podpowiedzi,

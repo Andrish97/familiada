@@ -8,7 +8,7 @@
 import { signOut } from './auth.js?v=v2026-10-20T18202';
 import { isGuestUser } from './guest-mode.js?v=v2026-10-20T18202';
 import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-20T18202';
-import { icon } from './icons.js?v=v2026-10-20T18202';
+import { icon, iconText } from './icons.js?v=v2026-10-20T18202';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -316,8 +316,9 @@ export function setTopbarAccount(user, {
     if (btnLoginEl) {
       if (showAuthEntry) {
         btnLoginEl.style.display = '';
-        btnLoginEl.textContent = t('common.authEntry') || 'Zaloguj / Załóż konto';
+        btnLoginEl.innerHTML = iconText('person', t('common.authEntry') || 'Zaloguj / Załóż konto');
         btnLoginEl.dataset.i18n = 'common.authEntry';
+        btnLoginEl.dataset.i18nIcon = 'person';
         btnLoginEl.onclick = () => { location.href = withLangParam(loginHref); };
       } else {
         btnLoginEl.style.display = 'none';

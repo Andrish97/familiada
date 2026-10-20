@@ -14,6 +14,39 @@ import { icon, iconText } from "./icons.js?v=v2026-10-20T18202";
 import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-20T18202";
 
 
+// Esc zamyka najwyższe widoczne okno tak samo jak jego X w nagłówku (jedna
+// obsługa dla wszystkich okien .overlay); „Anuluj” z [data-modal-cancel] też
+// klika ten X. Okna z własną obsługą Esc wołają preventDefault, więc tu ich
+// już nie zamykamy drugi raz. Okna blokujące bez X (np. eksport w toku)
+// zostają otwarte.
+const ESC_CLOSE_SELECTOR = [".mHead", ".uni-head", ".tagsHead", ".bld-preview-head", ".mkt-detail-head", ".previewModalTitle"]
+  .map((head) => `${head} button:has(use[href*="/close.svg"])`).join(", ");
+// Na telefonie (arkusz) X bywa ukryty — wtedy bierzemy pierwszy dostępny.
+const visibleCloseButton = (root) => {
+  const all = [...root.querySelectorAll(ESC_CLOSE_SELECTOR)].filter((btn) => !btn.disabled);
+  return all.find((btn) => btn.getClientRects().length > 0) || all[0] || null;
+};
+// Nasłuch na window: działa po obsługach okien na document.
+if (typeof window !== "undefined" && typeof document !== "undefined") {
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || e.defaultPrevented) return;
+    const open = [...document.querySelectorAll(".overlay")]
+      .filter((el) => !el.hidden && getComputedStyle(el).display !== "none");
+    const closeBtn = open.length ? visibleCloseButton(open.at(-1)) : null;
+    if (!closeBtn) return;
+    e.preventDefault();
+    closeBtn.click();
+  });
+  document.addEventListener("click", (e) => {
+    const cancel = e.target.closest?.("[data-modal-cancel]");
+    if (!cancel) return;
+    for (let el = cancel.parentElement; el && !el.classList.contains("overlay"); el = el.parentElement) {
+      const closeBtn = visibleCloseButton(el);
+      if (closeBtn) { closeBtn.click(); return; }
+    }
+  });
+}
+
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = typeof window !== "undefined" && window.matchMedia
   ? window.matchMedia(SHEET_MQ)

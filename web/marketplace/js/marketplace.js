@@ -919,6 +919,8 @@ function wireEvents() {
   // Keyboard close
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
+      if (e.defaultPrevented) return;
+      e.preventDefault();
       closeDetail();
       closeSubmitModal();
     }

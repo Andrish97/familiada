@@ -1094,7 +1094,7 @@ function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
       // klik w tło zamyka -- ale nie w trybie sheet (mobile), gdzie
       // jedynym wyjściem ma być przycisk wstecz w topbarze.
       if (modal.classList.contains("modal--sheet") && isSheetViewport()) return;
-      if (e.target && e.target.matches?.("[data-close]")) {
+      if (e.target === modal || e.target?.matches?.("[data-close]")) {
         modal._resolver?.(null);
       }
     });

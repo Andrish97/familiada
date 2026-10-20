@@ -20,7 +20,7 @@ import "../../shared/js/core/contact-modal.js?v=v2026-10-20T18202";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T18202";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T18202";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-20T18202";
-import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-20T18202";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachSectionSearch } from "../../shared/js/core/share-sections.js?v=v2026-10-20T18202";
 import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-20T18202";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-20T18202";
 import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-20T18202";
@@ -115,6 +115,8 @@ const shareEmail = document.getElementById("shareEmail");
 const shareRole = document.getElementById("shareRole");
 const baseShareFriends = document.getElementById("baseShareFriends");
 const baseShareBulkHost = document.getElementById("baseShareBulkActions");
+attachSectionSearch(baseShareBulkHost?.parentElement, baseShareFriends, "base-share-friends");
+attachSectionSearch(shareSectionsHost?.previousElementSibling, shareSectionsHost, "base-share-shared");
 const baseShareFriendsRole = document.getElementById("baseShareFriendsRole");
 const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
@@ -1484,7 +1486,7 @@ document.addEventListener("DOMContentLoaded", () => {
   btnNameOk?.addEventListener("click", () => nameOk());
   nameInp?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") nameOk();
-    if (e.key === "Escape") closeNameModal();
+    if (e.key === "Escape") { e.preventDefault(); closeNameModal(); }
   });
 
   btnShareClose?.addEventListener("click", () => closeShareModal());

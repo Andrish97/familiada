@@ -29,6 +29,7 @@ import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-20T18202";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T18202";
 import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-20T18202";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-20T18202";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T18202";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-20T18202";
 
 
@@ -760,10 +761,16 @@ async function saveUsername() {
   }
 }
 
+function setButton(btn, key, iconName) {
+  btn.dataset.i18n = key;
+  btn.dataset.i18nIcon = iconName;
+  btn.innerHTML = iconText(iconName, t(key));
+}
+
 function applyMode() {
   if (mode === "login") {
-    btnPrimary.textContent = t("index.btnLogin");
-    btnToggle.textContent = t("index.btnToggleRegister");
+    setButton(btnPrimary, "index.btnLogin", "arrow-right");
+    setButton(btnToggle, "index.btnToggleRegister", "plus");
     email.placeholder = t("index.placeholderLogin");
     if (pass2) {
       pass2.value = "";
@@ -771,9 +778,9 @@ function applyMode() {
     }
   } else {
     email.placeholder = t("index.placeholderEmail");
-    btnToggle.textContent = t("index.btnToggleLogin");
+    setButton(btnToggle, "index.btnToggleLogin", "person");
     if (pwdHint) pwdHint.textContent = getPasswordRulesText();
-    btnPrimary.textContent = t("index.btnRegister");
+    setButton(btnPrimary, "index.btnRegister", "plus");
     if (pass2) pass2.disabled = false;
   }
 

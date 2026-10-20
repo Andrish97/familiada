@@ -33,8 +33,8 @@ function getDialog() {
       </details>
       <p class="resource-send-error" role="status" aria-live="polite"></p>
       <div class="modal-actions resource-send-actions">
-        <button class="btn" type="button" data-cancel></button>
-        <button class="btn gold" type="button" data-send></button>
+        <button class="btn sm" type="button" data-cancel></button>
+        <button class="btn sm gold" type="button" data-send></button>
       </div>
     </div>`;
 

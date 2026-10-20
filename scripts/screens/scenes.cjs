@@ -89,6 +89,29 @@ module.exports = [
   { id: "logos-image", category: "Dodatkowe", title: "Biblioteka logo — obrazy", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoImage")] },
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
   { id: "logo-text-space", category: "Dodatkowe", title: "Edytor logo — tekst ze spacją (odstęp między słowami)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], devices: ["desktop"], steps: [async (view) => { await view.locator("#textValue").fill("QUIZ 2026"); await view.waitForTimeout(300); }] },
+  { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
+    steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
+  // Wyszukiwanie w nagłówku długich list (share-sections.js, attachSectionSearch)
+  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie w nagłówku listy", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view) => {
+      const tab = view.locator("#contactsTabReceived");
+      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
+      const search = view.locator("#contactsReceived .sectionSearch:visible").first();
+      const toggle = search.locator(".sectionSearchToggle");
+      if (await toggle.isVisible()) await toggle.click();
+      await search.locator(".searchText").fill("k");
+      await view.waitForTimeout(300);
+    }] },
+  { id: "subscribers-search-empty", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie bez wyników", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view) => {
+      const tab = view.locator("#contactsTabReceived");
+      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
+      const search = view.locator("#contactsReceived .sectionSearch:visible").first();
+      const toggle = search.locator(".sectionSearchToggle");
+      if (await toggle.isVisible()) await toggle.click();
+      await search.locator(".searchText").fill("zzz");
+      await view.waitForTimeout(300);
+    }] },
   // E21: reguły gier, edytory i podliczanie
   { id: "game-editor-answer-rules", category: "Dodatkowe", title: "Edycja gry — warunki gotowości, odpowiedź ze znakiem spoza Wyświetlacza i poniżej 4 pkt, podpowiedzi 17/finał 11", path: `/games/editor/?id=${IDS.game}`, sources: [...page("games/editor"), "web/shared/js/core/question-form.js", "web/shared/js/core/game-rules.js", "web/shared/css/question-form.css"], ready: "#qList > *:nth-child(2)",
     steps: [async (view) => { await view.locator("#qList .qcard:not(.addTile)").first().click(); const inp = view.locator("#aList .qf-row:not(.qf-add) .qf-text").first(); await inp.fill("kawa😀"); const pts = view.locator("#aList .qf-row:not(.qf-add) .qf-pts").nth(3); await pts.fill("2"); await pts.blur(); await view.waitForTimeout(600); }] },

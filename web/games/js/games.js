@@ -1388,7 +1388,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // wyświetlacz) — wcześniej liczył wszystkie udostępnienia, więc badge
   // obiecywał więcej pozycji niż było na stronie.
   async function refreshConnectDeviceBadge(){
-    if (!showConnectDevice) return;
+    if (!connectDeviceBadge) return;
     try{
       const { data, error } = await sb().rpc("list_shared_devices_for_me");
       if (error) throw error;
@@ -1880,6 +1880,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
+  importOverlay?.addEventListener("click", (e) => {
+    if (e.target !== importOverlay) return;
+    if (importOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closeImportModal();
+  });
   btnCancelImport?.addEventListener("click", closeImportModal);
   btnImportCancelAction?.addEventListener("click", closeImportModal);
 

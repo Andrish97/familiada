@@ -58,6 +58,101 @@ export function shareBulkActionsEl({ onSelectAll, onDeselectAll }) {
   };
 }
 
+// ===== Wyszukiwanie w nagłówku listy =====
+// Długie listy (od SEARCH_MIN_ROWS wierszy) dostają pole szukania w nagłówku
+// sekcji: komputer — pole obok tytułu, telefon — lupa rozwijająca pole pod
+// nagłówkiem. Szuka po nazwie, adresie i opisie wiersza. Fraza przetrwa
+// odświeżenie listy (ten sam klucz), ale nie przeładowanie strony.
+// Wygląd: base.css (.sectionSearch).
+
+const SEARCH_MIN_ROWS = 6;
+const searchQueries = new Map();
+const normText = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+const ROW_SELECTOR = ":scope > .shareRow, :scope > .rowsRow";
+const rowText = (row) => [...row.querySelectorAll(".shareEmail, .shareNote, .rowsTitle, .rowsNote")]
+  .map((el) => `${el.textContent} ${el.getAttribute("title") || ""}`).join(" ");
+
+/**
+ * Dokleja wyszukiwanie do nagłówka listy i pilnuje go przy każdej zmianie wierszy.
+ * @param {HTMLElement} heading  nagłówek sekcji (flex; pole trafia na jego koniec)
+ * @param {HTMLElement} list     kontener wierszy .shareRow / .rowsRow
+ * @param {string} key           klucz zapamiętanej frazy (np. "contacts-friend")
+ */
+export function attachSectionSearch(heading, list, key) {
+  if (!heading || !list || list._sectionSearch) return list?._sectionSearch;
+  heading.classList.add("sectionSearchHead");
+  const wrap = document.createElement("div");
+  wrap.className = "sectionSearch";
+  const box = document.createElement("div");
+  box.className = "searchBox sectionSearchBox";
+  box.innerHTML = icon("search");
+  const input = document.createElement("input");
+  input.type = "search";
+  input.className = "searchText";
+  input.setAttribute("enterkeyhint", "search");
+  input.autocomplete = "off";
+  box.append(input);
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "shareBulkAction sectionSearchToggle";
+  toggle.innerHTML = icon("search");
+  wrap.append(toggle, box);
+  const bulk = heading.querySelector(":scope > .shareBulkActions, :scope > [id$='BulkActions']");
+  if (bulk) heading.insertBefore(wrap, bulk); else heading.append(wrap);
+  const empty = document.createElement("div");
+  empty.className = "shareEmpty sectionSearchEmpty";
+  empty.hidden = true;
+
+  const label = () => {
+    input.placeholder = t("common.searchByName");
+    input.setAttribute("aria-label", t("common.searchByName"));
+    toggle.title = t("common.searchByName");
+    toggle.setAttribute("aria-label", toggle.title);
+    empty.textContent = t("common.noResults");
+  };
+  const apply = () => {
+    const q = normText(input.value);
+    if (q) searchQueries.set(key, input.value); else searchQueries.delete(key);
+    const rows = [...list.querySelectorAll(ROW_SELECTOR)];
+    wrap.hidden = list.hidden || (rows.length < SEARCH_MIN_ROWS && !q);
+    let visible = 0;
+    for (const row of rows) {
+      const match = !q || normText(rowText(row)).includes(q);
+      row.classList.toggle("is-search-hidden", !match);
+      if (match) visible += 1;
+    }
+    const showEmpty = !!q && visible === 0 && rows.length > 0;
+    if (showEmpty && empty.parentElement !== list) list.append(empty);
+    empty.hidden = !showEmpty;
+    toggle.classList.toggle("is-active", !!q);
+  };
+  const setOpen = (open) => {
+    wrap.classList.toggle("is-open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.innerHTML = icon(open ? "close" : "search");
+  };
+  input.value = searchQueries.get(key) || "";
+  setOpen(!!input.value);
+  label();
+  input.addEventListener("input", apply);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && input.value) { e.preventDefault(); e.stopPropagation(); input.value = ""; apply(); }
+  });
+  input.addEventListener("click", (e) => e.stopPropagation());
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = !wrap.classList.contains("is-open");
+    if (!open && input.value) { input.value = ""; apply(); }
+    setOpen(open);
+    if (open) input.focus();
+  });
+  new MutationObserver(apply).observe(list, { childList: true, attributes: true, attributeFilter: ["hidden"] });
+  window.addEventListener("i18n:lang", label);
+  apply();
+  list._sectionSearch = { apply };
+  return list._sectionSearch;
+}
+
 /**
  * Pojedynczy wiersz (kafel) sekcji.
  * @param {object} row
@@ -160,6 +255,7 @@ export function shareSectionEl({ key, title, rows = [], emptyText = "", collapse
     update();
   }
   section.append(heading, list);
+  if (key) attachSectionSearch(heading, list, key);
   return section;
 }
 
@@ -291,7 +387,11 @@ export function renderRowSections(host, sections, opts = {}) {
         head.querySelector(".rowsSectionCaret").innerHTML = icon(now ? "caret-down" : "caret-up");
       });
     }
-    sec.append(head, list);
+    const headRow = document.createElement("div");
+    headRow.className = "rowsSectionHeadRow";
+    headRow.append(head);
+    sec.append(headRow, list);
+    attachSectionSearch(headRow, list, `rows-${s.key}`);
     frag.append(sec);
   }
   if (!frag.childNodes.length && opts.emptyText) {

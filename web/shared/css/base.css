@@ -769,6 +769,8 @@ main{
     overflow: auto;
     -webkit-overflow-scrolling: touch
 }
+/* Proste okna (nazwa, krótkie potwierdzenie) — węższe, jak zmiana nazwy w Eksploratorze. */
+.modal.modal--narrow { width: min(560px,94vw); }
 
 .mTitle {
     font-weight: 1000;
@@ -2739,6 +2741,30 @@ body{
 .shareBulkAction:focus-visible{ outline: 2px solid var(--gold, #ffeaa6); outline-offset: 2px; }
 .shareBulkAction:disabled{ opacity: .45; cursor: default; }
 .shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
+/* Wyszukiwanie w nagłówku listy (share-sections.js, attachSectionSearch):
+   komputer — pole obok tytułu, telefon — lupa rozwijająca pole pod nagłówkiem. */
+.sectionSearchHead{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.rowsSectionHeadRow > .rowsSectionHead{ flex: 1 1 auto; width: auto; min-width: 0; }
+.sectionSearch{ display: flex; align-items: center; gap: 6px; margin-left: auto; flex: 0 1 220px; min-width: 0; font-weight: 400; letter-spacing: 0; }
+.sectionSearch[hidden]{ display: none; }
+.sectionSearchBox{ flex: 1 1 auto; height: 32px; box-sizing: border-box; padding: 0 6px 0 9px; }
+.sectionSearchBox > svg{ flex: 0 0 auto; width: 15px; height: 15px; opacity: .6; }
+.sectionSearchBox .searchText{ padding: 0 2px; height: 100%; }
+.sectionSearchToggle{ display: none; }
+.sectionSearchToggle.is-active{ border-color: var(--gold, #ffeaa6); background: rgba(255,234,166,.12); }
+.shareRow.is-search-hidden, .rowsRow.is-search-hidden{ display: none; }
+.sectionSearchEmpty{ margin-top: 8px; }
+.sectionSearchEmpty[hidden]{ display: none; }
+@media (max-width: 640px){
+  .sectionSearch{ flex: 0 0 auto; margin-left: auto; }
+  .sectionSearchToggle{ display: inline-flex; }
+  .sectionSearchBox{ display: none; }
+  .sectionSearch.is-open{ flex: 1 1 100%; order: 10; margin-left: 0; }
+  .sectionSearch.is-open .sectionSearchToggle{ order: 2; }
+  .sectionSearch.is-open .sectionSearchBox{ display: flex; }
+  .sectionSearchBox .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
+}
+
 .shareList[hidden]{ display: none; }
 .shareList{ display: grid; align-content: start; gap: 8px; margin-top: 8px; }
 .shareHost{ grid-column: 1 / -1; }

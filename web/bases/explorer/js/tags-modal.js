@@ -11,7 +11,7 @@ import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T18202";
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T18202";
 import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T18202";
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T18202";
-import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T18202";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T18202";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T18202";
 import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-20T18202";
 
@@ -282,6 +282,7 @@ export async function openTagsModal(state, opts = {}) {
     E.overlay.style.display = "none";
     exitModalSheet(E.overlay);
     document.removeEventListener("keydown", onKey);
+    E.overlay?.removeEventListener("click", onBackdrop);
 
     E.l1Close?.removeEventListener("click", onClose);
     E.l2Close?.removeEventListener("click", onClose);
@@ -318,6 +319,12 @@ export async function openTagsModal(state, opts = {}) {
   }
 
   function onClose() {
+    close(false);
+  }
+
+  // Klik w tło zamyka jak X (nie w arkuszu na telefonie — tam wyjściem jest Wstecz).
+  function onBackdrop(e) {
+    if (e.target !== E.overlay || isSheetViewport()) return;
     close(false);
   }
 
@@ -740,6 +747,7 @@ export async function openTagsModal(state, opts = {}) {
     },
   });
   document.addEventListener("keydown", onKey);
+  E.overlay?.addEventListener("click", onBackdrop);
 
   // X wszędzie zamyka modal
   E.l1Close?.addEventListener("click", onClose);
