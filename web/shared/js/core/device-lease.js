@@ -77,8 +77,16 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
     return data;
   }
 
+  // Ramki trybu testowego leżą w karcie Control: ich widoczność jest
+  // widocznością Control (zapisywaną przez Control), więc tylko by ją
+  // czterokrotnie dublowały w statystykach.
+  const insideControlTestFrame = (() => {
+    try { return window.parent !== window && window.frameElement?.dataset?.controlTestMode === "true"; }
+    catch { return false; }
+  })();
+
   function queuePageState(reason) {
-    if (!telemetryActive || stopped) return;
+    if (!telemetryActive || stopped || insideControlTestFrame) return;
     pendingPageStates.push({
       event_type: "page_state",
       event_id: makeConnectionId(),

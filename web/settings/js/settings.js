@@ -5466,7 +5466,7 @@ function buildSessionRunDetails(r) {
             : "zwrócił błąd bazy";
           return {
             title: "Control nie może potwierdzić stanu urządzeń",
-            detail: `Odczyt stanu urządzeń ${cause}${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu, urządzenia nie są uznawane za rozłączone.`,
+            detail: `Odczyt stanu urządzeń ${cause}${error ? ` (${error})` : ""}${metrics.error_message ? ` — ${metrics.error_message}` : ""}; akcje gry są blokowane do odzyskania odczytu, urządzenia nie są uznawane za rozłączone.`,
           };
         }
         if (metrics.phase === "recovered") {
@@ -5562,7 +5562,10 @@ function buildSessionRunDetails(r) {
           return { title: "Opóźniony start planszy", detail: `Display nie potwierdził startu w ${formatDuration(metrics.wait_ms)}; dźwięk ruszył po limicie.` };
         }
         if (metrics.reason === "ack_timeout") {
-          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}.` };
+          return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle (animacja i potwierdzenie czekały na jej powrót)" : ""}.` };
+        }
+        if (metrics.reason === "late_ack") {
+          return { title: "Spóźnione potwierdzenie planszy", detail: `Display potwierdził zmianę po ${formatDuration(metrics.actual_ms)} (oczekiwano ${formatDuration(metrics.expected_ms)}); do tego czasu akcje Control były zablokowane${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",

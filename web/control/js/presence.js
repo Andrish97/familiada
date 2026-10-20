@@ -31,13 +31,17 @@ export function createPresence({ gameId, onChange }) {
     if (inFlight) return;
     inFlight = true;
     try {
-      const { data, error } = await sb().rpc("control_devices_snapshot", { p_game_id: gameId })
+      const { data, error, status } = await sb().rpc("control_devices_snapshot", { p_game_id: gameId })
         .abortSignal(AbortSignal.timeout(STATUS_READ_TIMEOUT_MS));
       if (error || !data?.ok) {
         // Migawka jest źródłem prawdy dla akcji gry: bez niej zostają ostatnie
         // flagi, a Control blokuje akcje do czasu poprawnego odczytu.
+        // lease_status: baza odpowiedziała błędem; status_read: brak
+        // odpowiedzi (sieć, limit czasu) — supabase-js zwraca wtedy status 0.
         readUnavailable = true;
-        report({ error: error || new Error("snapshot_unavailable"), errorSource: "lease_status" });
+        const failure = error || new Error("snapshot_unavailable");
+        if (failure && typeof failure === "object" && failure.status == null) failure.status = status;
+        report({ error: failure, errorSource: Number(status) >= 400 || error?.code ? "lease_status" : "status_read" });
         return;
       }
       readUnavailable = false;

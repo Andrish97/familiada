@@ -502,6 +502,23 @@ async function main() {
     return actionGate.timing.dur(key);
   }
   function evaluateDisplayCompletion(revision, item) {
+    if (item.timedOut && !item.lateReported && item.completedAt != null) {
+      // Po ack_timeout dopisujemy, ile realnie trwała blokada Control.
+      item.lateReported = true;
+      void sessionTelemetry.report({
+        kind: "diagnostic", category: "display_delay",
+        message: "Display potwierdził planszę dopiero po przekroczeniu czasu.",
+        devices: ["display"],
+        metrics: {
+          revision, sound: item.sound, reason: "late_ack",
+          expected_ms: Math.round(item.expectedMs),
+          actual_ms: Math.max(0, Math.round(item.completedAt - item.requestedAt)),
+          ack_source: item.ackSource || null,
+          display_visibility: lastDeviceDiagnostics?.display?.visibility || null,
+        },
+      });
+      return;
+    }
     if (item.reported || item.completedAt == null || item.expectedMs == null) return;
     item.reported = true;
     if (item.timeoutTimer) clearTimeout(item.timeoutTimer);
@@ -525,12 +542,13 @@ async function main() {
   function reportDisplayCompletionTimeout(revision, item) {
     if (item.reported || item.completedAt != null || item.expectedMs == null) return;
     item.reported = true;
+    item.timedOut = true;
     const lowerBoundMs = Math.round(performance.now() - item.requestedAt);
     void sessionTelemetry.report({
       kind: "diagnostic", category: "display_delay",
       message: "Display nie potwierdził ukończenia planszy w oczekiwanym czasie.",
       devices: ["display"],
-      metrics: { revision, sound: item.sound, reason: "ack_timeout", ack_read_error: !!item.ackReadError, completion_realtime_connected: completionRealtimeConnected, wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: document.visibilityState || "unknown", request_visibility: item.controlVisibility, control_focused: item.controlFocused },
+      metrics: { revision, sound: item.sound, reason: "ack_timeout", ack_read_error: !!item.ackReadError, completion_realtime_connected: completionRealtimeConnected, wait_ms: lowerBoundMs, expected_ms: Math.round(item.expectedMs), control_visibility: document.visibilityState || "unknown", request_visibility: item.controlVisibility, control_focused: item.controlFocused, display_visibility: lastDeviceDiagnostics?.display?.visibility || null },
     });
   }
   function reportDisplayCompletionReadError(revision, item, error) {
@@ -944,7 +962,8 @@ async function main() {
               phase: "read_error", source: presenceFailureSource,
               error_name: String(error?.name || "Error").slice(0, 80),
               error_code: String(error?.code || "").slice(0, 80) || null,
-              http_status: Number.isFinite(error?.status) ? error.status : null,
+              http_status: Number.isFinite(error?.status) && error.status > 0 ? error.status : null,
+              error_message: String(error?.message || "").slice(0, 120) || null,
             },
           });
         }

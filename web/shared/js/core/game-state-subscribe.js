@@ -27,6 +27,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   const directTableChannels = new Map();
   const directTableConnected = new Map();
   let tokenTimer = null;
+  // Po wybudzeniu telefonu sieć wraca po chwili: pierwsze pobranie tokenu
+  // zwykle się nie udaje. Krótkie, rosnące odstępy skracają czas bez
+  // bezpośredniego kanału z 15 s do 1–3 s.
+  let tokenRetryMs = 1_000;
   let directUnavailableLogged = false;
   let directStatus = "IDLE";
   let directIncidentAt = null;
@@ -280,6 +284,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
         });
       }
       clearTimeout(tokenTimer);
+      tokenRetryMs = 1_000;
       tokenTimer = setTimeout(() => { if (active) void startDirect(); }, 240_000);
     } catch (error) {
       // No token/config or temporary Realtime failure: RPC + doorbell + poll
@@ -299,7 +304,8 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
           directUnavailableLogged = true;
         }
         clearTimeout(tokenTimer);
-        tokenTimer = setTimeout(() => { if (active) void startDirect(); }, 15_000);
+        tokenTimer = setTimeout(() => { if (active) void startDirect(); }, tokenRetryMs);
+        tokenRetryMs = Math.min(15_000, tokenRetryMs * 2);
       }
     }
   }
