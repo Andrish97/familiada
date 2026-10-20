@@ -11,6 +11,9 @@ name: Maintenance (przerwa techniczna)
 #              ją wyłącza -- chyba że w międzyczasie ktoś zmienił stan;
 #  * off    -- wyłącza przerwę od razu.
 # Worker nie kończy przerwy sam po returnAt, dlatego robi to ten workflow.
+# Job „check” (zawsze) pokazuje aktywność i stan; job „switch” (on/off) działa
+# w środowisku GitHub „maintenance” z wymaganym zatwierdzającym -- czeka na
+# kliknięcie właściciela i po zatwierdzeniu ponownie sprawdza aktywność.
 # Repo jest publiczne: w logu tylko liczby i stan przerwy.
 
 permissions:
@@ -36,7 +39,71 @@ on:
         type: boolean
 
 jobs:
-  maintenance:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: cloudflare/maintenance-worker
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ACTION: ${{ inputs.action }}
+      MINUTES: ${{ inputs.minutes }}
+      FORCE: ${{ inputs.force }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install wrangler
+        run: npm ci
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Activity (liczby)
+        id: activity
+        working-directory: .
+        env:
+          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -h 127.0.0.1 -U agent_reader -d postgres
+          DB_READ_TUPLES: '1'
+          DB_READ_NO_NOTICE: '1'
+        run: |
+          ROW=$(scripts/db-read.sh scripts/db-read/maintenance-blockers.sql | tail -n 1)
+          IFS='|' read -r USERS CONTROL EDIT EDIT_PAGES VOTES NOW <<< "$ROW"
+          BLOCKERS=""
+          [ "${CONTROL:-0}" != 0 ] && BLOCKERS="$BLOCKERS gry w Control: $CONTROL,"
+          [ "${EDIT:-0}" != 0 ] && BLOCKERS="$BLOCKERS blokady edycji: $EDIT,"
+          [ "${EDIT_PAGES:-0}" != 0 ] && BLOCKERS="$BLOCKERS osoby w edytorach/ustawieniach/ankietach: $EDIT_PAGES,"
+          [ "${VOTES:-0}" != 0 ] && BLOCKERS="$BLOCKERS głosy w ankietach (10 min): $VOTES,"
+          echo "blockers=${BLOCKERS%,}" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Aktywność (przed zatwierdzeniem)::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
+
+      - name: Status
+        run: |
+          # błąd odczytu (np. token bez dostępu do KV) przerywa przebieg
+          npx wrangler kv key get state --binding MAINT_KV --remote > /tmp/raw.txt
+          # sam JSON (bez ewentualnego banera wranglera)
+          sed -n '/^{/,$p' /tmp/raw.txt > /tmp/state.json
+          jq -e 'type == "object" and has("enabled")' /tmp/state.json > /dev/null \
+            || { echo "::error title=Przerwa::nie udało się odczytać stanu z KV"; exit 1; }
+          SUMMARY=$(jq -c '{enabled, mode, returnAt}' /tmp/state.json)
+          echo "::notice title=Przerwa (przed zatwierdzeniem)::$SUMMARY"
+
+  switch:
+    needs: check
+    if: inputs.action != 'status'
+    # wymagane zatwierdzenie właściciela (Settings → Environments → maintenance)
+    environment: maintenance
     runs-on: ubuntu-latest
     timeout-minutes: 140
     defaults:
@@ -83,7 +150,7 @@ jobs:
           [ "${EDIT_PAGES:-0}" != 0 ] && BLOCKERS="$BLOCKERS osoby w edytorach/ustawieniach/ankietach: $EDIT_PAGES,"
           [ "${VOTES:-0}" != 0 ] && BLOCKERS="$BLOCKERS głosy w ankietach (10 min): $VOTES,"
           echo "blockers=${BLOCKERS%,}" >> "$GITHUB_OUTPUT"
-          echo "::notice title=Aktywność::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
+          echo "::notice title=Aktywność (po zatwierdzeniu)::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
 
       - name: Status
         run: |
@@ -94,9 +161,9 @@ jobs:
           jq -e 'type == "object" and has("enabled")' /tmp/state.json > /dev/null \
             || { echo "::error title=Przerwa::nie udało się odczytać stanu z KV"; exit 1; }
           SUMMARY=$(jq -c '{enabled, mode, returnAt}' /tmp/state.json)
-          echo "::notice title=Przerwa (przed)::$SUMMARY"
+          echo "::notice title=Przerwa (po zatwierdzeniu)::$SUMMARY"
 
-      - name: On
+      - name: 'On'
         if: inputs.action == 'on'
         env:
           BLOCKERS: ${{ steps.activity.outputs.blockers }}
@@ -127,7 +194,7 @@ jobs:
             echo "::notice title=Przerwa::stan zmieniony w międzyczasie -- bez zmian ($(echo "$CUR" | jq -c '{enabled, mode, returnAt}'))"
           fi
 
-      - name: Off
+      - name: 'Off'
         if: inputs.action == 'off'
         run: |
           jq -c '.enabled = false | .mode = "off" | .returnAt = null' /tmp/state.json > /tmp/off.json

@@ -36,10 +36,14 @@ done
 [ "$RUN" != "$LAST" ] || { echo "Nie znaleziono nowego przebiegu" >&2; exit 1; }
 echo "Przebieg $RUN: https://github.com/$REPO/actions/runs/$RUN" >&2
 
-TIMEOUT="${TIMEOUT:-3600}"; START=$(date +%s)
+TIMEOUT="${TIMEOUT:-3600}"; START=$(date +%s); WAITING_SHOWN=
 while :; do
   ST=$(curl -s "${H[@]}" "$API/actions/runs/$RUN" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r["status"], r.get("conclusion") or "-")')
   [ "${ST%% *}" = completed ] && break
+  # środowisko z wymaganym zatwierdzającym (np. maintenance: on/off)
+  if [ "${ST%% *}" = waiting ] && [ -z "$WAITING_SHOWN" ]; then
+    echo "Czeka na zatwierdzenie właściciela (GitHub → Actions → Review deployments)" >&2; WAITING_SHOWN=1
+  fi
   [ $(( $(date +%s) - START )) -gt "$TIMEOUT" ] && { echo "Przekroczony czas oczekiwania ($ST)" >&2; exit 1; }
   sleep 10
 done

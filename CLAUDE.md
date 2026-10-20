@@ -122,7 +122,10 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   edycja (blokady edycji, osoby w edytorach, ustawieniach gry, Eksploratorze,
   logo, ankietach) albo głosy w ankietach z 10 min
   (`scripts/db-read/maintenance-blockers.sql`); `force` tylko na wyraźne
-  polecenie. Po czasie przerwa wyłącza się sama.
+  polecenie. Po czasie przerwa wyłącza się sama. Technicznie: `on`/`off`
+  działają w środowisku GitHub `maintenance` z wymaganym zatwierdzającym —
+  przebieg czeka na kliknięcie właściciela i po nim ponownie sprawdza
+  aktywność (`status` bez zatwierdzania).
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.
