@@ -1253,6 +1253,8 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Runda 1"), { timeout: 22000 });
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     const questionDuringDuel = page.locator(".c2-stepper-question");
     await expect(questionDuringDuel).toHaveText(/\S/);
@@ -1372,6 +1374,8 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 
     // ===== RUNDA 1 =====
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Runda 1"), { timeout: 22000 });
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
@@ -1501,6 +1505,8 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
@@ -1656,6 +1662,8 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(buzzerPage.locator("#offScreen")).toBeVisible();
     await expect(buzzerPage.locator("#btnA")).toBeDisabled();
@@ -2299,6 +2307,8 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
@@ -2355,6 +2365,8 @@ test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer ot
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     // A naciska pierwszy -- Control pokazuje wspólny kafel "Zatwierdź: Alfa"
@@ -2414,6 +2426,8 @@ test("control2: wyciszenie dźwięku — Mute zeruje wyjście, zachowując zdarz
     // opóźniony "reveal" wystrzeliłby dopiero PO włączeniu Mute niżej,
     // fałszywie wyglądając jak wyciek dźwięku mimo wyciszenia.
     await clearSfxLog(page);
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await waitForSfxKeysAnyOrder(page, ["round_transition", "reveal"], 10000);
 
@@ -2659,6 +2673,8 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(hostPage.locator("#paperText1")).toContainText("PRZYCISK", { timeout: 10000 });
@@ -3417,6 +3433,8 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
@@ -3505,6 +3523,8 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Runda 1"), { timeout: 22000 });
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
