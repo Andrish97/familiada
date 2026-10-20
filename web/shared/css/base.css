@@ -2817,8 +2817,11 @@ body{
 /* Aktywny licznik w wierszu: wszystkie przyciski wiersza nieco wyższe, przycisk
    z licznikiem szerszy o tekst (ikona nad licznikiem mieści się w całości). */
 .shareRow--compact:has(.shareCountdown:not([hidden])) .shareRowActions :is(.btn, .shareActionTimer){ height: 52px; min-height: 52px; }
-.shareRow--compact .shareRowActions .shareActionCountdown:has(.shareCountdown:not([hidden])),
-.shareRow--compact .shareRowActions .shareActionTimer:not([hidden]){ width: auto; min-width: 44px; padding: 4px 6px; gap: 2px; }
+.shareRow--compact:has(.shareCountdown:not([hidden])) .shareRowActions :is(.btn:not(.baseShareRole), .shareActionTimer){ width: 52px; min-width: 52px; padding: 4px 2px; gap: 2px; }
+@media (max-width: 600px){
+  .shareRow--compact:has(.shareCountdown:not([hidden])) .shareRowActions .baseShareRole{ width: 52px; min-width: 52px; }
+}
+.shareRow--compact .shareRowActions .shareCountdown{ min-width: 0; }
 .grid .tile .tileMiniActions{ display: flex; gap: 6px; padding-top: 8px; }
 
 
