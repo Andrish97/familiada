@@ -100,7 +100,9 @@ podliczania jako stan bieżącej operacji.
   2026-10-20):** w edytorze gry i w oknie pytania Eksploratora każda część
   ma otoczkę jak sekcje w innych oknach (`.qf-section` = wygląd
   `.shareSection`), nagłówki „Treść pytania” / „Odpowiedzi” jak
-  `.shareSectionTitle`, suma po prawej w nagłówku odpowiedzi.
+  `.shareSectionTitle`, suma po prawej w nagłówku odpowiedzi. Na komputerze
+  w edytorze gry prawa kolumna bez wspólnego tła: dwa osobne panele jak
+  „Pytania” po lewej (jak kolumny w Znajomych).
 - **Safe area w roletkach (sprawdzone emulacją 2026-10-20):** góra panelu
   12 px pod górnym safe area, ostatnia treść nad dolnym safe area (+14 px).
 - **Przyciski obok podpowiedzi w nagłówku roletki (uwaga użytkownika

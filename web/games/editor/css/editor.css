@@ -207,6 +207,32 @@ body.editor-body .wrap {
     flex-direction: column;
 }
 
+/* Komputer: prawa kolumna bez wspólnego tła -- treść pytania i odpowiedzi to
+   dwa osobne panele jak „Pytania” po lewej (jak kolumny w Znajomych; uwaga
+   użytkownika 2026-10-20). */
+@media (min-width:1101px) {
+    .rightPanel.hasQ {
+        background: none;
+        border: 0;
+        box-shadow: none;
+        padding: 0;
+        overflow: visible
+    }
+
+    .rightPanel.hasQ .qf-section {
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        --under: var(--card);
+        box-shadow: 0 24px 60px rgba(0,0,0,.45);
+        padding: 14px
+    }
+
+    .rightPanel.hasQ .block {
+        margin-bottom: 14px
+    }
+}
+
 /* Okno pytania na telefonie (#questionSheetOverlay): treść przewija się
    jedną warstwą okna, bez wewnętrznego przewijania listy odpowiedzi. */
 .qSheetBody .editorBox {
