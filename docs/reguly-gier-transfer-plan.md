@@ -127,8 +127,19 @@ braki informacyjnie i nie blokuje tworzenia szkicu.
   odpowiada punktom. Procent wyświetlany w podliczaniu ma wyjaśniać tę samą
   punktację, nie być drugim, inaczej zaokrąglonym wynikiem. Liczymy całość
   przed odrzuceniem słabych odpowiedzi/wyborem sześciu; pominięcie części
-  odpowiedzi nie zwiększa udziałów pozostałych. Szczegółowe zaokrąglanie
-  niecałkowitych udziałów pozostaje do rozstrzygnięcia na przykładach.
+  odpowiedzi nie zwiększa udziałów pozostałych. **Dalsza decyzja:** przy
+  niecałkowitych udziałach dopuszczamy niedobór punktów, np. 33/33/33 i sumę
+  99. Nie dobijamy do 100 przez arbitralne rozbijanie równych głosów; suma
+  nie może przekroczyć 100. Szczegółowy algorytm, zwłaszcza granice progu
+  4%, musi realizować te warunki jednakowo w JS i SQL.
+- **Minimalna liczba głosów:** do zatwierdzenia zamknięcia potrzebny będzie
+  osobny próg liczby **pełnych oddanych ankiet**. Użytkownik doprecyzował,
+  że oddanie ankiety obejmuje odpowiedź na wszystkie pytania; każde pytanie
+  otrzymuje więc tyle samo głosów. To jeden próg dla uruchomienia ankiety,
+  nie suma wierszy odpowiedzi ani osobne progi pytań. Wartość **10** padła
+  jako przykład/propozycja i wymaga potwierdzenia; nie jest jeszcze decyzją.
+  Próg zamknięcia nie blokuje podglądu i wejścia w podliczanie. Nadal osobno
+  obowiązuje min. 3 kwalifikujących odpowiedzi na pytanie z udziałem ≥4%.
 - **Usuwamy sztuczne obniżanie punktów w celu rozbijania remisów.** Różne
   odpowiedzi mogą mieć tyle samo punktów. **Doprecyzowanie użytkownika:**
   trafienie dowolnej odpowiedzi o maksymalnej wartości oznacza trafienie
@@ -499,6 +510,11 @@ zapis, podgląd i późniejszą rozgrywkę.
   i kody QR nie mogą działać po resecie; zostaje draft z punktami 0.
   Aktywny przebieg Control blokuje te operacje również po zamknięciu karty,
   do zakończenia lub godzinnego wygaśnięcia.
+- Próg pełnych ankiet: przy ustalonym minimum N zatwierdzenie z N−1 jest
+  odrzucone, z N nadal wymaga kwalifikacji odpowiedzi na każde pytanie.
+  Jedno wypełnienie 10-pytaniowej ankiety liczy się jako jeden komplet,
+  nie 10 głosów do tego progu. Zapis całego kompletu musi zachować atomowość
+  i idempotencję, także przy retry i starszych punktach wejścia.
 
 ## 7. Decyzje pozostawione do rozstrzygnięcia po audycie
 
@@ -694,18 +710,42 @@ archiwalne po usunięciu oryginału; migracja nocą, bez przebudowy ankiet.
 Reset przy edycji/konwersji ma pełny zakres normalnego resetu ankiety:
 usunięte głosy i zależności, unieważnione linki, punkty 0, wynik draft.
 
-1. **Zaokrąglanie udziałów:** jak uzyskać całkowite punkty/procenty przy
-   ułamkach, nie przekroczyć 100 i jak traktować równe udziały przy rozdziale
-   brakującej jednostki. Np. trzy równe udziały to 33⅓%: podział 34/33/33
-   sumuje się do 100, a 33/33/33 zachowuje równość i daje 99. Osobne
-   zaokrąglanie niektórych rozkładów może dać 101. Trzeba też domknąć remis
-   na granicy szóstej odpowiedzi. Próg ≥4% i min. 3 odpowiedzi pozostają.
-2. **Straty treści:** pełne treści ponad limity czy potwierdzane obcięcie;
+Wyrównywanie jest doprecyzowane: zachowujemy równe punktacje za równe głosy,
+dopuszczamy niedobór i nie przekraczamy 100. Minimalną próbę liczymy pełnymi
+ankietami, bo użytkownik odpowiada na wszystkie pytania. Samo podniesienie
+liczby głosów nie usuwa ułamków, np. 10/10/10 przy 30 pełnych ankietach
+nadal daje po 33⅓%.
+
+1. **Wartość minimum pełnych ankiet:** 10 jest propozycją, jeszcze nie
+   zatwierdzonym progiem. Dotyczy zamknięcia, nie wejścia do podliczania.
+2. **Szczegóły zaokrąglenia i wyboru szóstki:** algorytm ma zachować powyższe
+   warunki i jedną wartość punktów/procentu; domknąć przypadki graniczne
+   progu 4% i remis na granicy szóstej odpowiedzi. Nie wracać do wymuszania
+   sumy 100 ani sztucznego różnicowania równych wyników.
+3. **Straty treści:** pełne treści ponad limity czy potwierdzane obcięcie;
    dokładna obsługa nadmiarowych odpowiedzi i niepoprawnych punktów.
    Występowanie danych jest do odczytania, nie do zgadywania.
 
 ### 8.7. Regulamin TVP i dodatkowe ryzyka sprawdzone 2026-10-20
 
+- Audyt historycznego progu głosów: `web/shared/translation/pl.js` w starej
+  treści Instrukcji opisuje zielony kafelek jako zebrane cele (zadania
+  wykonane lub ≥10 głosów); analogiczny zapis jest w EN. To opis wskaźnika,
+  nie dowód walidacji zamknięcia. W przejrzanych funkcjach SQL nie znaleziono
+  osobnego minimum 10 pełnych ankiet: `game_poll_close_check` (273/315)
+  i starsze `polls_hub_can_close_*` wymagają min. 3 różnych tekstów albo
+  min. 3 odpowiedzi z punktacją ≥3 na pytanie. Jeszcze starsze
+  `poll_admin_can_close` wymaga dla punktowej min. 2 odpowiedzi z głosami,
+  dla tekstowej min. 3 różnych tekstów. `poll_text_tally_apply` sprawdza
+  min. 3 odpowiedzi po przeliczeniu, bez odrębnego minimum respondentów.
+  Trzy pełne ankiety z trzema różnymi wyborami mogły zatem spełnić bramkę
+  zamknięcia. Minimum 10 pytań do uruchomienia jest jeszcze inną regułą.
+- Kontrakt pełnego wypełnienia jest widoczny w formularzach i sprawdzaniu
+  kompletnego pakietu w `poll_anonymous_submit` (liczba elementów i różnych
+  pytań musi odpowiadać wszystkim pytaniom gry). Wdrożenie progu musi używać
+  pełnych wypełnień bieżącego uruchomienia i nie zliczać częściowych zapisów
+  ze starszych RPC jako osobnych kompletów. To wymaganie spójności zapisu,
+  nie zmiana decyzji użytkownika o odpowiadaniu na wszystkie pytania.
 - [Regulamin TVP z naboru 2025](https://s.tvp.pl/repository/attachment/3/5/4/354f69c09c8b430588d3c079410afb3d.pdf),
   §2 pkt 2.6/2.12 i §6: punkty odzwierciedlają wskazania stu ankietowanych.
   Nie podaje minimalnej liczby wskazań ani wymogu różnych punktacji;
