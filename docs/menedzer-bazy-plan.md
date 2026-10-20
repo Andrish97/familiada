@@ -62,6 +62,8 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     znika tylko przy zmianie widoku, nie przy każdym kliknięciu, więc pasek
     nie skacze. Np. kosz: Przywróć, Usuń trwale, Opróżnij kosz; wyszukiwanie
     i tagi: bez Nowy folder/pytanie i Wklej; foldery: jak dziś.
+  - **Niebieskie wyróżnienie przycisków w pasku narzędzi zostaje**
+    (użytkownikowi się podoba) — także dla nowych przycisków (kosz, Przywróć).
   - **Wygląd strony zostaje** (użytkownikowi się podoba) — bez zmian
     wizualnych poza tym, czego wymagają nowe funkcje (kosz w drzewie).
   - **Menu kontekstowe do poprawy:** prawy przycisk myszy i długie
