@@ -11,9 +11,12 @@ name: Maintenance (przerwa techniczna)
 #              ją wyłącza -- chyba że w międzyczasie ktoś zmienił stan;
 #  * off    -- wyłącza przerwę od razu.
 # Worker nie kończy przerwy sam po returnAt, dlatego robi to ten workflow.
-# Job „check” (zawsze) pokazuje aktywność i stan; job „switch” (on/off) działa
-# w środowisku GitHub „maintenance” z wymaganym zatwierdzającym -- czeka na
-# kliknięcie właściciela i po zatwierdzeniu ponownie sprawdza aktywność.
+# Job „check” (zawsze) pokazuje aktywność i stan; job „switch” (on/off)
+# działa w środowisku GitHub „maintenance” (zatwierdzenie właściciela) i
+# dodatkowo wymaga jednorazowego kodu TOTP właściciela (wejście „code”, klucz tylko
+# w sekrecie MAINTENANCE_TOTP_SECRET i w aplikacji uwierzytelniającej):
+# ważny 5 minut i tylko raz (ostatnio użyty krok w KV). Agent nie zna klucza,
+# więc nie włączy ani nie wyłączy przerwy bez kodu podanego przez właściciela.
 # Repo jest publiczne: w logu tylko liczby i stan przerwy.
 
 permissions:
@@ -37,6 +40,11 @@ on:
         required: false
         default: false
         type: boolean
+      code:
+        description: 'Jednorazowy kod z aplikacji uwierzytelniającej (wymagany dla on/off)'
+        required: false
+        default: ''
+
 
 jobs:
   check:
@@ -86,7 +94,7 @@ jobs:
           [ "${EDIT_PAGES:-0}" != 0 ] && BLOCKERS="$BLOCKERS osoby w edytorach/ustawieniach/ankietach: $EDIT_PAGES,"
           [ "${VOTES:-0}" != 0 ] && BLOCKERS="$BLOCKERS głosy w ankietach (10 min): $VOTES,"
           echo "blockers=${BLOCKERS%,}" >> "$GITHUB_OUTPUT"
-          echo "::notice title=Aktywność (przed zatwierdzeniem)::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
+          echo "::notice title=Aktywność::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
 
       - name: Status
         run: |
@@ -97,7 +105,7 @@ jobs:
           jq -e 'type == "object" and has("enabled")' /tmp/state.json > /dev/null \
             || { echo "::error title=Przerwa::nie udało się odczytać stanu z KV"; exit 1; }
           SUMMARY=$(jq -c '{enabled, mode, returnAt}' /tmp/state.json)
-          echo "::notice title=Przerwa (przed zatwierdzeniem)::$SUMMARY"
+          echo "::notice title=Przerwa::$SUMMARY"
 
   switch:
     needs: check
@@ -118,6 +126,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Kod jednorazowy
+        working-directory: .
+        env:
+          TOTP_SECRET: ${{ secrets.MAINTENANCE_TOTP_SECRET }}
+          TOTP_CODE: ${{ inputs.code }}
+        run: |
+          echo "::add-mask::$TOTP_CODE"
+          [ -n "$TOTP_SECRET" ] || { echo "::error title=Przerwa::brak sekretu MAINTENANCE_TOTP_SECRET"; exit 1; }
+          [ -n "$TOTP_CODE" ] || { echo "::error title=Przerwa::brak kodu -- on/off wymagają kodu właściciela"; exit 1; }
+          echo ok > /tmp/code_given
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -125,6 +144,27 @@ jobs:
 
       - name: Install wrangler
         run: npm ci
+
+      - name: Sprawdź i zużyj kod
+        env:
+          TOTP_SECRET: ${{ secrets.MAINTENANCE_TOTP_SECRET }}
+          TOTP_CODE: ${{ inputs.code }}
+        run: |
+          echo "::add-mask::$TOTP_CODE"
+          LAST=$(npx wrangler kv key get maintenance_totp_last --binding MAINT_KV --remote 2>/dev/null | grep -E '^[0-9]+$' | tail -n 1 || true)
+          set +e
+          STEP=$(TOTP_LAST="${LAST:-0}" python3 ../../scripts/totp-check.py)
+          RC=$?
+          set -e
+          case $RC in
+            0) ;;
+            4) echo "::error title=Przerwa::kod już użyty"; exit 1 ;;
+            3) echo "::error title=Przerwa::zły albo wygasły kod"; exit 1 ;;
+            *) echo "::error title=Przerwa::kod niepoprawny"; exit 1 ;;
+          esac
+          # zużycie od razu -- ten sam kod nie zadziała drugi raz
+          npx wrangler kv key put maintenance_totp_last "$STEP" --binding MAINT_KV --remote
+          echo "::notice title=Kod::przyjęty"
 
       - name: Set up SSH key
         run: |
@@ -150,7 +190,7 @@ jobs:
           [ "${EDIT_PAGES:-0}" != 0 ] && BLOCKERS="$BLOCKERS osoby w edytorach/ustawieniach/ankietach: $EDIT_PAGES,"
           [ "${VOTES:-0}" != 0 ] && BLOCKERS="$BLOCKERS głosy w ankietach (10 min): $VOTES,"
           echo "blockers=${BLOCKERS%,}" >> "$GITHUB_OUTPUT"
-          echo "::notice title=Aktywność (po zatwierdzeniu)::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
+          echo "::notice title=Aktywność (po kodzie)::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
 
       - name: Status
         run: |
@@ -161,7 +201,7 @@ jobs:
           jq -e 'type == "object" and has("enabled")' /tmp/state.json > /dev/null \
             || { echo "::error title=Przerwa::nie udało się odczytać stanu z KV"; exit 1; }
           SUMMARY=$(jq -c '{enabled, mode, returnAt}' /tmp/state.json)
-          echo "::notice title=Przerwa (po zatwierdzeniu)::$SUMMARY"
+          echo "::notice title=Przerwa (po kodzie)::$SUMMARY"
 
       - name: 'On'
         if: inputs.action == 'on'

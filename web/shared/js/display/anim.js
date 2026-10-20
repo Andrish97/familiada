@@ -27,6 +27,23 @@ export function createAnimator({
     return Math.max(0, base | 0);
   };
 
+  // Karta w tle nie dostaje klatek (requestAnimationFrame stoi), więc
+  // czekanie na klatkę zatrzymałoby animację do powrotu karty, a z nią
+  // potwierdzenie planszy dla Control (przyciski Control zablokowane).
+  // Ukryta karta kończy krok od razu: obrazu i tak nikt nie widzi.
+  const pageHidden = () => typeof document !== "undefined" && document.visibilityState === "hidden";
+  const nextFrame = () => new Promise((resolve) => {
+    if (typeof document === "undefined") { requestAnimationFrame(resolve); return; }
+    let frameId = null;
+    const done = () => {
+      if (frameId != null) cancelAnimationFrame(frameId);
+      document.removeEventListener("visibilitychange", done);
+      resolve();
+    };
+    document.addEventListener("visibilitychange", done);
+    frameId = requestAnimationFrame(done);
+  });
+
   // Każdy krok ma termin w jednej osi czasu. Koszt SVG i opóźnienie
   // wcześniejszego timera nie są dodawane ponownie do kolejnych pauz.
   const stepPacer = (totalMs, steps) => {
@@ -40,10 +57,11 @@ export function createAnimator({
       const deadline = start + duration * (++completed) / (steps || 1);
       while (now() < deadline) {
         check();
+        if (pageHidden()) break;
         // Zmiany SVG grupujemy według klatek, zamiast budzić główny wątek
         // osobnym timerem dla każdego kafelka/paska pikseli.
         if (wait === sleep && typeof requestAnimationFrame === "function") {
-          await new Promise((resolve) => requestAnimationFrame(resolve));
+          await nextFrame();
         } else {
           await wait(Math.max(1, deadline - now()));
         }

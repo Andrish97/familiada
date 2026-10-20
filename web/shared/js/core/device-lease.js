@@ -1,8 +1,8 @@
-import { sb } from "./supabase.js?v=v2026-10-20T17263";
-import { t } from "../../translation/translation.js?v=v2026-10-20T17263";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-20T17263";
-import { startTicker } from "./background-ticker.js?v=v2026-10-20T17263";
-import { icon } from "./icons.js?v=v2026-10-20T17263";
+import { sb } from "./supabase.js?v=v2026-10-20T17440";
+import { t } from "../../translation/translation.js?v=v2026-10-20T17440";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-20T17440";
+import { startTicker } from "./background-ticker.js?v=v2026-10-20T17440";
+import { icon } from "./icons.js?v=v2026-10-20T17440";
 
 
 const HEARTBEAT_MS = 3_000;
@@ -77,8 +77,16 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
     return data;
   }
 
+  // Ramki trybu testowego leżą w karcie Control: ich widoczność jest
+  // widocznością Control (zapisywaną przez Control), więc tylko by ją
+  // czterokrotnie dublowały w statystykach.
+  const insideControlTestFrame = (() => {
+    try { return window.parent !== window && window.frameElement?.dataset?.controlTestMode === "true"; }
+    catch { return false; }
+  })();
+
   function queuePageState(reason) {
-    if (!telemetryActive || stopped) return;
+    if (!telemetryActive || stopped || insideControlTestFrame) return;
     pendingPageStates.push({
       event_type: "page_state",
       event_id: makeConnectionId(),

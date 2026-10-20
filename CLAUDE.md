@@ -125,7 +125,11 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   polecenie. Po czasie przerwa wyłącza się sama. Technicznie: `on`/`off`
   działają w środowisku GitHub `maintenance` z wymaganym zatwierdzającym —
   przebieg czeka na kliknięcie właściciela i po nim ponownie sprawdza
-  aktywność (`status` bez zatwierdzania).
+  aktywność; dodatkowo wymaga jednorazowego kodu TOTP z aplikacji
+  uwierzytelniającej właściciela (wejście `code`; klucz tylko w sekrecie
+  `MAINTENANCE_TOTP_SECRET`, agent go nie zna; kod ważny 5 minut i tylko
+  raz). Agent używa wyłącznie kodu podanego przez użytkownika dla tej jednej
+  akcji (`status` bez zatwierdzania i kodu).
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.
