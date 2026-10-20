@@ -325,13 +325,8 @@
     flex-direction: column;
     gap: 20px;
   }
-  /* W arkuszu odbiorców listy przewijają się osobno, ale kafelki zachowują
-     swoją naturalną wysokość zamiast rozciągać się na całą wysokość listy. */
-  .pollRecipientsModal .shareList--scroll{
-    align-content: start;
-    grid-auto-rows: max-content;
-  }
-  .pollRecipientsModal .shareRow{ align-self: start; }
+  /* Listy przewijają się osobno; kafelki zachowują naturalną wysokość
+     (przewijana lista to kolumna flex bez zwężania wierszy, base.css). */
 }
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */

@@ -183,7 +183,8 @@ test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ 
       await expect(incoming).toBeHidden();
       await owner.page.screenshot({ path: testInfo.outputPath(`shot-friends-declined-collapsed-${width}.png`), fullPage: true });
       await toggle.click();
-      await expect(incoming).toContainText("Odrzucono");
+      // sekcja „Odrzucone przeze mnie” — stan jest w tytule, wiersz nie powtarza znacznika
+      await expect(incoming).toBeVisible();
       await expect(incoming.locator('[data-act="accept"]')).toHaveCount(0);
       await expect(incoming.locator('[data-act="undo_reject"]')).toBeEnabled();
       await expect(incoming.locator('[data-act="reject"]')).toHaveCount(0);

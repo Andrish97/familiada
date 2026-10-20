@@ -92,16 +92,16 @@ module.exports = [
   { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
     steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
   // Narzędzia list w nagłówku (share-sections.js, attachListTools): szukaj · filtr · sortowanie
-  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — przyciski listy i wyszukiwanie (okno)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
-    steps: [async (view) => {
+  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie (komputer: pole w liście, telefon: okno)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view, { device }) => {
       const tab = view.locator("#contactsTabReceived");
       if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
       await view.locator("#contactsReceived .listTools-search:visible").first().click();
-      await view.locator(".uni-inp").fill("k");
-      await view.locator(".uni-modal .btn.gold").click();
+      if (device === "phone") { await view.locator(".uni-inp").fill("k"); await view.locator(".uni-modal .btn.gold").click(); }
+      else await view.locator("#contactsReceived .listToolsInline .searchText").fill("k");
       await view.waitForTimeout(300);
     }] },
-  { id: "subscribers-search-prompt", category: "Dodatkowe", title: "Subskrybenci — okno wyszukiwania", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+  { id: "subscribers-search-prompt", category: "Dodatkowe", title: "Subskrybenci — okno wyszukiwania (telefon)", devices: ["phone"], path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
     steps: [async (view) => {
       const tab = view.locator("#contactsTabReceived");
       if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }

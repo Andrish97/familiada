@@ -36,7 +36,7 @@ export function shareBulkActionsEl({ onSelectAll, onDeselectAll }) {
   const makeButton = (key, onClick) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "shareBulkAction";
+    button.className = "btn shareBulkAction";
     button.setAttribute("aria-label", t(`common.${key}`));
     button.title = t(`common.${key}`);
     const actionIcon = key === "selectAll" ? "select-all" : "clear-selection";
@@ -123,6 +123,29 @@ export function attachListTools(heading, list, key) {
   const empty = document.createElement("div");
   empty.className = "shareEmpty listToolsEmpty";
   empty.hidden = true;
+  // Komputer: pole szukania nad listą (wpisywanie na żywo); telefon: okno.
+  const inline = document.createElement("div");
+  inline.className = "searchBox listToolsInline";
+  inline.hidden = true;
+  inline.innerHTML = icon("search");
+  const inlineInput = document.createElement("input");
+  inlineInput.type = "text";
+  inlineInput.className = "searchText";
+  inlineInput.setAttribute("enterkeyhint", "search");
+  inlineInput.autocomplete = "off";
+  const inlineClear = document.createElement("button");
+  inlineClear.type = "button";
+  inlineClear.className = "listToolsInlineClear";
+  inlineClear.innerHTML = icon("close");
+  inline.append(inlineInput, inlineClear);
+  list.before(inline);
+  const closeInline = () => { inline.hidden = true; inlineInput.value = ""; state.q = ""; apply(); };
+  inlineInput.addEventListener("input", () => { state.q = inlineInput.value; apply(); });
+  inlineInput.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeInline(); searchBtn.focus(); }
+  });
+  inlineClear.addEventListener("click", (e) => { e.stopPropagation(); closeInline(); });
+  const phoneMq = window.matchMedia("(max-width: 600px)");
 
   const sortOptions = () => [
     { value: "", label: t("common.sort.default") },
@@ -143,6 +166,10 @@ export function attachListTools(heading, list, key) {
     searchBtn.title = title;
     searchBtn.setAttribute("aria-label", title);
     empty.textContent = t("common.noResults");
+    inlineInput.placeholder = t("common.searchByName");
+    inlineInput.setAttribute("aria-label", t("common.searchByName"));
+    inlineClear.title = t("baseExplorer.search.clear");
+    inlineClear.setAttribute("aria-label", inlineClear.title);
   };
 
   let applying = false;
@@ -183,8 +210,12 @@ export function attachListTools(heading, list, key) {
       const showEmpty = rows.length > 0 && visible === 0;
       if (showEmpty && empty.parentElement !== list) list.append(empty);
       empty.hidden = !showEmpty;
-      searchBtn.innerHTML = icon(state.q ? "close" : "search");
-      searchBtn.classList.toggle("is-active", !!state.q);
+      if (state.q && phoneMq.matches) inline.hidden = true;
+      if (state.q && !phoneMq.matches && inline.hidden) { inline.hidden = false; inlineInput.value = state.q; }
+      if (list.hidden || rows.length === 0) inline.hidden = true;
+      searchBtn.innerHTML = icon(state.q && phoneMq.matches ? "close" : "search");
+      searchBtn.classList.toggle("is-active", !!state.q || !inline.hidden);
+      searchBtn.setAttribute("aria-expanded", String(!inline.hidden));
       sortEl.classList.toggle("is-active", !!state.sort);
       filterEl.classList.toggle("is-active", !!state.filter);
       label();
@@ -195,7 +226,15 @@ export function attachListTools(heading, list, key) {
 
   searchBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
-    if (state.q) { state.q = ""; apply(); return; }
+    if (!phoneMq.matches) {
+      if (!inline.hidden) { closeInline(); return; }
+      inline.hidden = false;
+      inlineInput.value = state.q;
+      apply();
+      inlineInput.focus();
+      return;
+    }
+    if (state.q) { state.q = ""; inline.hidden = true; inlineInput.value = ""; apply(); return; }
     const value = await promptModal({
       title: t("common.searchByName"),
       value: state.q,

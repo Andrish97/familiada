@@ -945,7 +945,8 @@ async function renderShareModal() {
     const stateKey = active ? "active" : recipient.status === "declined" ? "declined" : "pending";
     const row = shareRowEl({ id: recipient.task_id || recipient.user_id, label: recipient.label || recipient.email,
       title: recipient.email, compact: true, state: { key: stateKey, label: t(`contacts.status.${stateKey}`) },
-      tags: [{ text: t(recipient.is_friend ? "shareSections.channel.friend" : "control.shareDeviceModal.recipientKind.account") },
+      // udostępniamy tylko kontom — znacznik „ma konto” nic nie mówi; zostaje „Znajomy”
+      tags: [...(recipient.is_friend ? [{ text: t("shareSections.channel.friend") }] : []),
         { text: t(active ? "contacts.status.active" : recipient.status === "declined" ? "contacts.status.declined" : "contacts.status.pending") }],
       extras: [roleEl], actions });
     if (recipient.status === "declined") {
