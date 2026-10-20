@@ -52,6 +52,15 @@ main.account-wrap {
   grid-column: 1 / -1;
 }
 
+/* duży ekran: trzy kolumny (nazwa · e-mail · hasło / wiadomości · ocena · usuń konto) */
+@media (min-width: 1400px) {
+  .account-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .account-grid > #deleteSection { order: 1; }
+  .account-grid > .account-panel--demo { order: 2; }
+}
+
 @media (max-width: 980px) {
   .account-grid {
     grid-template-columns: 1fr;

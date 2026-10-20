@@ -116,7 +116,8 @@ test("kontakty: wspólny licznik wygasa na żywo, flaga mailowa ukrywa ponowieni
         const r = button.getBoundingClientRect(); return [r.width,r.height];
       }));
       expect(sizes).toHaveLength(2);
-      expect(sizes[0]).toEqual(sizes[1]);
+      // decyzja 2026-10-20: przy liczniku równa wysokość, szerokość przycisku wg treści
+      expect(sizes[0][1]).toEqual(sizes[1][1]);
       await owner.page.screenshot({path:testInfo.outputPath(`shot-${kind}-countdown.png`),fullPage:true});
       await expect(timed.locator('[data-act="resend"]')).toBeEnabled({timeout:12000});
       await expect(timed.locator('.shareCountdown')).toBeHidden();
