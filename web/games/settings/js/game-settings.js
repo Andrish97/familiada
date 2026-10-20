@@ -148,9 +148,17 @@ const invalidInputs = new Map();
 let leaving = false;
 let pageLock = null;      // blokada zasobów strony (release przed wyjściem)
 
+// data-state (dirty / saved / error / conflict) opisuje wynik ostatniego
+// zapisu niezależnie od widocznego tekstu; błędy pokazuje toast.
+function setSaveState(state) {
+  const el = document.getElementById("gsFooterMsg");
+  if (el) el.dataset.state = state;
+}
+
 function setDirtyIndicator(isUnsaved) {
   const el = document.getElementById("gsFooterMsg");
   if (!el) return;
+  el.dataset.state = isUnsaved ? "dirty" : "saved";
   el.textContent = isUnsaved ? (t("gameSettings.unsaved") || "Niezapisane zmiany") : "";
   el.classList.toggle("hidden", !isUnsaved);
 }
@@ -284,9 +292,11 @@ async function saveAll() {
       if (e?.code === ROW_GONE) {
         // Ktoś zapisał te ustawienia w międzyczasie: nie nadpisujemy.
         stopped = true;
+        setSaveState("conflict");
         toast(t("gameSettings.saveConflict"), { kind: "error" });
         return;
       }
+      setSaveState("error");
       toast(t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)), { kind: "error" });
     }
   })();

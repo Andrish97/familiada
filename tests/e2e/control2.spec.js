@@ -170,8 +170,7 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     // Ustawienia zapisują się jawnie przyciskiem, a czyste wyjście wraca
     // bez ostrzeżenia o niezapisanych zmianach.
     await page.locator("#btnSaveAll").click();
-    // Po udanym zapisie znika „Niezapisane zmiany” (komunikaty błędów idą do toastu).
-    await expect(page.locator("#gsFooterMsg")).toHaveClass(/\bhidden\b/, { timeout: 30000 });
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
     await page.locator("#btnBack").click();
     // Control is intentionally opened by the production link as /control?id=…
     // (without a trailing slash); accept both canonical forms.
@@ -2519,8 +2518,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
     await page.locator("#btnSaveAll").click();
-    // Po udanym zapisie znika „Niezapisane zmiany” (komunikaty błędów idą do toastu).
-    await expect(page.locator("#gsFooterMsg")).toHaveClass(/\bhidden\b/, { timeout: 30000 });
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
     await page.locator("#btnBack").click();
     await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
@@ -2725,8 +2723,7 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
     }, { timeout: 10000 }).toBe(true);
 
     await page.locator("#btnSaveAll").click();
-    // Po udanym zapisie znika „Niezapisane zmiany” (komunikaty błędów idą do toastu).
-    await expect(page.locator("#gsFooterMsg")).toHaveClass(/\bhidden\b/, { timeout: 30000 });
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 30000 });
     await page.locator("#btnBack").click();
     await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 30000 });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });

@@ -118,8 +118,10 @@ async function waitForGamesSave(page, action = async () => {}) {
 }
 
 // Wywoływane PO zmianie ustawienia: czeka na autozapis (debounce < 10 s).
+// Ustawienia zapisują się jawnie przyciskiem „Zapisz” (decyzja 2026-10-14).
 async function saveAndWait(page) {
-  await waitForGamesSave(page);
+  await waitForGamesSave(page, () => page.locator("#btnSaveAll").click());
+  await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 10000 });
 }
 
 /* ================= A: Warstwa 1 — blokada wejścia ================= */
@@ -185,8 +187,10 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
 
     await page.locator("#gsTeamB").fill("Ekipa B");
 
-    // Autozapis trafia w konflikt: komunikat pod paskiem akcji, bez okna.
-    await expect(page.locator("#gsFooterMsg")).toHaveText(
+    // Zapis trafia w konflikt: stan w pasku akcji i komunikat w toaście, bez okna.
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "conflict", { timeout: 10000 });
+    await expect(page.locator(".app-toast-text")).toHaveText(
       "Te ustawienia zostały w międzyczasie zmienione w innym miejscu. Odśwież stronę i wprowadź zmiany ponownie.",
       { timeout: 10000 }
     );
