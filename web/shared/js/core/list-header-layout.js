@@ -248,11 +248,11 @@ function initListBottomToolbarLayout() {
       const iconLayout = chooseLayout(iconLeft, iconRight);
       const textRows = textLayout ? Math.max(textLayout.leftRows.length, textLayout.rightRows.length) : 0;
       const iconRows = iconLayout ? Math.max(iconLayout.leftRows.length, iconLayout.rightRows.length) : 0;
-      // Gdy tekst wymaga zawinięcia, a wariant ikon mieści się w jednym
-      // rzędzie, wybierz kompaktowy układ. Sama różnica jednego rzędu już
-      // wystarcza: jedna linia jest czytelniejsza niż duże przyciski w dwóch.
-      const useIcons = hasTextLabels && textLayout && iconLayout
-        && textRows > iconRows && iconRows === 1;
+      // Gdy wariant ikon daje mniej rzędów niż przyciski z napisami (albo
+      // napisy w ogóle się nie mieszczą), wybierz kompaktowy układ. Sama
+      // różnica jednego rzędu już wystarcza; na wąskim telefonie ikony w dwóch
+      // rzędach są czytelniejsze niż kolumna szerokich przycisków.
+      const useIcons = hasTextLabels && iconLayout && (!textLayout || textRows > iconRows);
       bar.classList.toggle("is-compact-icons", Boolean(useIcons));
       const leftMeasure = useIcons ? iconLeft : textLeft;
       const rightMeasure = useIcons ? iconRight : textRight;
