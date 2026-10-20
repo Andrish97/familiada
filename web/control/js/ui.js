@@ -444,27 +444,31 @@ export function createUI({ root, emit }) {
 
       const playBtn = h("button", { class: "btn sm summarySoundPlay sound-preview-btn", type: "button" });
       playBtn.innerHTML = isSfxPlaying(key) ? SVG_STOP : SVG_PLAY;
-      on(playBtn, "click", () => {
-        document.querySelectorAll(".summarySoundPlay").forEach((button) => { button.innerHTML = SVG_PLAY; });
+      // Handlery działają na żywych elementach z e.currentTarget: po
+      // uzgodnieniu DOM zmienne z tego renderu wskazują odłączone kopie.
+      on(playBtn, "click", (e) => {
+        const button = e.currentTarget;
+        document.querySelectorAll(".summarySoundPlay").forEach((other) => { other.innerHTML = SVG_PLAY; });
         if (isSfxPlaying(key)) {
           stopSfxPreview(key);
         } else {
           playSfxPreview(key);
-          playBtn.innerHTML = SVG_STOP;
-          onSfxEnd(key, () => { playBtn.innerHTML = SVG_PLAY; });
+          button.innerHTML = SVG_STOP;
+          onSfxEnd(key, () => { button.innerHTML = SVG_PLAY; });
         }
       });
 
       const volLabel = h("span", { class: "summarySoundVolLabel", text: `${volPct}%` });
       const slider = h("input", { class: "summarySoundVol sound-volume-slider", type: "range", min: "0", max: "100", step: "1", "data-sfx-vol": key });
       slider.value = String(volPct);
-      on(slider, "input", () => {
-        const pct = parseInt(slider.value, 10);
-        volLabel.textContent = `${pct}%`;
+      on(slider, "input", (e) => {
+        const pct = parseInt(e.currentTarget.value, 10);
+        const label = e.currentTarget.closest(".summarySoundRow")?.querySelector(".summarySoundVolLabel");
+        if (label) label.textContent = `${pct}%`;
         setSfxVolume(key, pct / 100);
       });
-      on(slider, "change", () => {
-        emit("settings.setSoundVolume", { key, pct: parseInt(slider.value, 10) });
+      on(slider, "change", (e) => {
+        emit("settings.setSoundVolume", { key, pct: parseInt(e.currentTarget.value, 10) });
       });
 
       return h("div", { class: "summarySoundRow" }, [
@@ -488,7 +492,31 @@ export function createUI({ root, emit }) {
     return buildDisplayPreviewRow({ teams: state.teams, display: state.display });
   }
 
-  let setupFinishFingerprint = null;
+  // Podglądy obsługują kolejne wiadomości "preview-row" bez przeładowania.
+  // Wysyłamy stan, gdy się zmieni, oraz gdy iframe zgłosi gotowość (pierwsze
+  // załadowanie albo nowy element po zmianie src).
+  const SETUP_PREVIEWS = {
+    "familiada:preview-ready": { selector: "#c2DisplayPreview iframe", origin: "*" },
+    "familiada:host-preview-ready": { selector: "#c2HostPreview iframe", origin: location.origin },
+  };
+  let setupPreviewKey = null;
+  function postSetupPreview({ selector, origin }, row) {
+    root.querySelector(selector)?.contentWindow?.postMessage({ type: "familiada:preview-row", row }, origin);
+  }
+  function syncSetupPreviews(state) {
+    const row = buildPreviewRow(state);
+    const key = JSON.stringify(row);
+    if (key === setupPreviewKey) return;
+    setupPreviewKey = key;
+    for (const preview of Object.values(SETUP_PREVIEWS)) postSetupPreview(preview, row);
+  }
+  window.addEventListener("message", (e) => {
+    const preview = SETUP_PREVIEWS[e.data?.type];
+    if (!preview || currentState?.step !== "setup_finish") return;
+    if (e.source !== root.querySelector(preview.selector)?.contentWindow) return;
+    postSetupPreview(preview, buildPreviewRow(currentState));
+  });
+
   function renderSetupFinish(state, ctx = {}) {
     const s = state.settings;
     const d = state.display;
@@ -511,62 +539,15 @@ export function createUI({ root, emit }) {
     const previewSrc = ctx.urls?.displayUrl ? previewUrl(ctx.urls.displayUrl) : null;
     const hostPreviewSrc = ctx.urls?.hostUrl ? previewUrl(ctx.urls.hostUrl) : null;
 
-    // Podgląd Wyświetlacza żyje w <iframe> — zweryfikowane (lokalny test z
-    // Playwrightem): PRZENIESIENIE/PRZEBUDOWA <iframe> w DOM zawsze
-    // przeładowuje jego zawartość od zera, nawet bez zmiany src, nawet
-    // czystym appendChild bez wcześniejszego removeChild. renderSetupFinish()
-    // leci na KAŻDĄ zmianę store'a (nie tylko realną zmianę TEGO ekranu —
-    // np. presence ping z innych urządzeń co ~3s), a clear()+odbudowa niżej
-    // za każdym razem tworzyła NOWY <iframe> — podgląd nigdy nie zdążył
-    // domalować się do końca zanim leciał kolejny reload (zgłoszone: "mruga,
-    // a tak głównie jest czarny"). Odcisk palca z tego, co faktycznie widać
-    // na tym ekranie — gdy się nie zmienił i ekran już jest zamontowany
-    // (iframe żyje), w ogóle nie przebudowujemy; przebudowa (i tym samym
-    // reload podglądu) dzieje się tylko przy REALNEJ zmianie (np. operator
-    // przelosował pytania albo zmienił ustawienia w innej karcie).
-    const fingerprint = JSON.stringify({
-      previewSrc, hostPreviewSrc,
-      teamA: state.teams.teamA, teamB: state.teams.teamB,
-      colors: d.colors, theme: d.theme, logoId: d.logoId, hostLogoMode: d.hostLogoMode, hasFinal,
-      roundsMode: s.roundsQuestionsMode, roundsPicked: s.roundsPicked, roundsPool: state.rounds._questionPool,
-      finalMode: hasFinal ? s.finalQuestionsMode : null, finalPicked: state.final.picked,
-      finalPreview: state.final.pickedPreview, finalConfirmed: state.final.confirmed,
-      sound: state.settings.sound,
-    });
+    // Podglądy żyją w <iframe>: przeniesienie albo przebudowa elementu
+    // przeładowuje go od zera (zgłoszone: "mruga, a tak głównie jest czarny").
+    // render() uzgadnia ten ekran z żywym DOM, więc iframe z tym samym src
+    // zostaje na miejscu, a nowy stan podglądu dostaje wiadomością
+    // (syncSetupPreviews po uzgodnieniu i przy zgłoszeniu gotowości).
     const finalIncomplete = hasFinal && (state.final.picked?.length !== 5 || !state.final.confirmed);
-    const syncActionState = () => {
-      const startButton = root.querySelector("[data-c2-summary-start]");
-      if (startButton) {
-        const isBusy = boardBusy();
-        startButton.disabled = finalIncomplete || displaySoundNeedsUnlock || isBusy;
-        startButton.classList.toggle("c2-btn-busy", isBusy && !finalIncomplete && !displaySoundNeedsUnlock);
-      }
-      const backButton = root.querySelector("[data-c2-summary-back]");
-      if (backButton) backButton.disabled = boardBusy();
-    };
-    if (fingerprint === setupFinishFingerprint && root.querySelector("#c2DisplayPreview")) {
-      syncActionState();
-      return;
-    }
-    setupFinishFingerprint = fingerprint;
-
-    clear();
     const previewFrame = previewSrc ? h("iframe", { src: previewSrc, title: t("control.displayPreviewTitle") }) : null;
-    if (previewFrame) {
-      window.addEventListener("message", function onReady(e) {
-        if (e.data?.type !== "familiada:preview-ready" || e.source !== previewFrame.contentWindow) return;
-        window.removeEventListener("message", onReady);
-        previewFrame.contentWindow.postMessage({ type: "familiada:preview-row", row: buildPreviewRow(state) }, "*");
-      });
-    }
     const hostPreviewFrame = hostPreviewSrc ? h("iframe", { src: hostPreviewSrc, title: t("control.hostLogoPreviewTitle") }) : null;
-    if (hostPreviewFrame) {
-      window.addEventListener("message", function onHostReady(e) {
-        if (e.data?.type !== "familiada:host-preview-ready" || e.source !== hostPreviewFrame.contentWindow) return;
-        window.removeEventListener("message", onHostReady);
-        hostPreviewFrame.contentWindow.postMessage({ type: "familiada:preview-row", row: buildPreviewRow(state) }, location.origin);
-      });
-    }
+    clear();
 
     const sections = [
       summarySection(t("control.summaryTeams"), h("div", { class: "summarySectionValue", text: t("control.teamsVsFormat", {
@@ -1898,10 +1879,7 @@ export function createUI({ root, emit }) {
     // przekazywane osobno do każdego renderXxx() — te dwie funkcje je już i
     // tak czytają z domknięcia.
     if (root.dataset.step !== state.step) keyboardTarget = null;
-    // Podsumowanie ma własny odcisk palca: przebudowuje żywy DOM (i podglądy
-    // w iframe) tylko przy realnej zmianie. Uzgadnianie budowałoby je w
-    // odłączonym drzewie, więc podgląd nie dostawałby nowego stanu.
-    const existingScreen = root.dataset.step === state.step && state.step !== "setup_finish" ? root.firstElementChild : null;
+    const existingScreen = root.dataset.step === state.step ? root.firstElementChild : null;
     currentState = state;
     keyboardActions.clear();
     busy = !!ctx.busy;
@@ -1960,6 +1938,7 @@ export function createUI({ root, emit }) {
         if (binding.el.dataset.shortcut) binding.el = root.querySelector(`[data-shortcut="${binding.el.dataset.shortcut}"]`) || binding.el;
       }
     }
+    if (s === "setup_finish") syncSetupPreviews(state);
     const editButton = root.querySelector("#btnOpenGsModal");
     if (editButton) bindShortcut(editButton, "e", () => emit("setup.openSettings"));
     const hint = root.querySelector(".c2-hint");
