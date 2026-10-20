@@ -48,6 +48,16 @@ Decyzje:
    nietknięte) → testy kodu brancha na produkcyjnej bazie → Pages → testy
    kontrolne; usunięcie starych RPC i tabeli `display_audio_unlock` osobną
    migracją po wdrożeniu kodu.
+7. **Ta sama przeglądarka przejmuje urządzenie od razu (decyzja użytkownika
+   2026-10-20).** Logi: ponowne skanowanie QR przy starej karcie zamrożonej
+   w tle telefonu wstrzymywało grę na 10–18 s. Pierwsza rejestracja strony
+   (`p_meta.takeover`) z tym samym identyfikatorem przeglądarki co obecna
+   instancja główna dostaje rolę główną od razu (nowa epoka); stara przechodzi
+   w oczekiwanie i wraca, gdy nowa zniknie. Ponowne rejestracje nie przejmują
+   (brak przerzucania między dwiema kartami). Inna przeglądarka nadal czeka.
+   Migracja 423, test `tests/sql/control2-same-browser-takeover-423.sql`.
+   Nie zmieniono (do decyzji): brak Przycisku nadal wstrzymuje wszystkie
+   akcje gry, także kroki bez Przycisku.
 
 ## Cel
 

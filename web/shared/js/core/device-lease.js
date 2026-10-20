@@ -1,8 +1,8 @@
-import { sb } from "./supabase.js?v=v2026-10-20T18202";
-import { t } from "../../translation/translation.js?v=v2026-10-20T18202";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-20T18202";
-import { startTicker } from "./background-ticker.js?v=v2026-10-20T18202";
-import { icon } from "./icons.js?v=v2026-10-20T18202";
+import { sb } from "./supabase.js?v=v2026-10-20T19254";
+import { t } from "../../translation/translation.js?v=v2026-10-20T19254";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-20T19254";
+import { startTicker } from "./background-ticker.js?v=v2026-10-20T19254";
+import { icon } from "./icons.js?v=v2026-10-20T19254";
 
 
 const HEARTBEAT_MS = 3_000;
@@ -40,6 +40,10 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
   let state = "starting";
   let epoch = null;
   let registerNext = true;
+  // Pierwsza rejestracja tej strony może przejąć rolę główną od karty tej
+  // samej przeglądarki (migracja 423). Ponowne rejestracje — np. po
+  // wybudzeniu karty — już nie, żeby dwie karty nie przerzucały się rolą.
+  let firstRegistration = true;
   let inFlight = false;
   let stopped = false;
   let telemetryActive = false;
@@ -145,8 +149,13 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
         p_game_id: gameId, p_device_type: deviceType, p_key: key,
         p_connection_id: connectionId, p_meta: meta(),
       });
+      const registerParams = () => {
+        const base = params();
+        return firstRegistration ? { ...base, p_meta: { ...base.p_meta, takeover: true } } : base;
+      };
       let data = await call(shouldRegister ? "control_device_instance_register" : "control_device_instance_heartbeat",
-        shouldRegister ? params() : { ...params(), p_epoch: epoch });
+        shouldRegister ? registerParams() : { ...params(), p_epoch: epoch });
+      if (shouldRegister) firstRegistration = false;
       if (!shouldRegister && data?.mode === "lease" && data?.state === "expired") {
         // Another connection may have promoted while this tab was suspended.
         // An expired connection can never heartbeat back into the queue, so

@@ -112,25 +112,16 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   publiczne: żadnych treści gier, nazw ani e-maili w logach. Migracje
   diagnostyczne już niepotrzebne. Z agenta: `scripts/agent-tools/gh-run.sh
   db-read.yml sql_file=…` (uruchamia, czeka, wypisuje wynik z adnotacji).
-- **Przerwa techniczna (decyzja użytkownika 2026-10-20):** workflow
-  `maintenance.yml` (`action=status|on|off`, `minutes`, `force`). Agent
-  **nigdy nie włącza przerwy sam**. Najpierw ocenia, czy praca jej wymaga:
-  zmiany jawne i nieszkodliwe dla użytkowników (dodające migracje, odczyty,
-  wdrożenia zgodne wstecz) idą bez przerwy; gdy zmiana może zaszkodzić albo
-  przerwać czyjąś pracę — przedstawia powód i czas, a `on` uruchamia dopiero
-  po wyraźnej zgodzie użytkownika na tę konkretną przerwę (zgoda nie
-  przechodzi na kolejne). `on` sam odmawia, gdy trwa praca: gra w Control,
-  edycja (blokady edycji, osoby w edytorach, ustawieniach gry, Eksploratorze,
-  logo, ankietach) albo głosy w ankietach z 10 min
-  (`scripts/db-read/maintenance-blockers.sql`); `force` tylko na wyraźne
-  polecenie. Po czasie przerwa wyłącza się sama. Technicznie: `on`/`off`
-  działają w środowisku GitHub `maintenance` z wymaganym zatwierdzającym —
-  przebieg czeka na kliknięcie właściciela i po nim ponownie sprawdza
-  aktywność; dodatkowo wymaga jednorazowego kodu TOTP z aplikacji
-  uwierzytelniającej właściciela (wejście `code`; klucz tylko w sekrecie
-  `MAINTENANCE_TOTP_SECRET`, agent go nie zna; kod ważny 5 minut i tylko
-  raz). Agent używa wyłącznie kodu podanego przez użytkownika dla tej jednej
-  akcji (`status` bez zatwierdzania i kodu).
+- **Przerwa techniczna (decyzja użytkownika 2026-10-20):** włącza i wyłącza
+  ją **wyłącznie właściciel w panelu admina**. Agent nie ma do tego narzędzia.
+  Agent ocenia, czy praca wymaga przerwy: zmiany jawne i nieszkodliwe dla
+  użytkowników (dodające migracje, odczyty, wdrożenia zgodne wstecz) idą bez
+  przerwy; gdy zmiana może zaszkodzić albo przerwać czyjąś pracę — prosi
+  użytkownika o przerwę (powód i czas), wcześniej podaje, czy ktoś pracuje
+  (`scripts/db-read/maintenance-blockers.sql`: gra w Control, edycja, osoby
+  w edytorach/ustawieniach/Eksploratorze/logo/ankietach, głosy z 10 min),
+  a pracę zaczyna dopiero, gdy `maintenance.yml` (tylko odczyt: stan przerwy
+  i aktywność) potwierdzi, że przerwa jest włączona.
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.
