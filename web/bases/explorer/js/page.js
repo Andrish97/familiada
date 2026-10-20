@@ -125,6 +125,7 @@ function wireBreadcrumbs(state) {
     wireDnd(state);
     wireBreadcrumbs(state);
     wireKeyboard(state);
+    skeletonReady();
 
     window.addEventListener("i18n:lang", () => renderAll(state));
     // telefon ↔ komputer (obrót, zmiana okna): inne szerokości kolumn
@@ -134,7 +135,6 @@ function wireBreadcrumbs(state) {
       narrow = isNarrow();
       renderList(state);
     });
-    skeletonReady();
   } catch (e) {
     console.error(e);
     // działające Wstecz, ale bez nazwy zastępczej udającej nazwę bazy
