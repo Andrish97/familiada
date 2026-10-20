@@ -253,6 +253,13 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackB
   }
 
   applyPresentation(true);
+  // Arkusz zaczyna się tuż pod topbarem tylko przy przewinięciu 0. Chromium
+  // sam przycina scroll do skróconej strony, ale Safari na iPhonie potrafi
+  // zostawić stare przesunięcie (np. stuknięcie, gdy strona jeszcze sunie po
+  // przewinięciu) -- wtedy nagłówek arkusza wchodzi pod topbar. Pozycja jest
+  // zapamiętana wyżej (savedScrollY) i wraca po zamknięciu.
+  window.scrollTo(0, 0);
+  requestAnimationFrame(() => { if (activeOverlay === overlayEl) window.scrollTo(0, 0); });
   document.dispatchEvent(new CustomEvent("modal-sheet:enter", { detail: { overlay: overlayEl } }));
 }
 
