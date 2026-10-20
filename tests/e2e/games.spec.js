@@ -214,9 +214,9 @@ test.describe("games: audyt -- kafelki", () => {
       const search = page.locator(".list-search-open");
       await expect(search).toBeVisible();
       await search.tap();
-      const searchInput = page.locator(".uni-modal input[type=search]");
+      const searchInput = page.locator(".uni-modal .uni-inp");
       await searchInput.fill(name);
-      await page.getByRole("button", { name: "OK", exact: true }).tap();
+      await page.locator(".uni-modal .uni-foot .btn.gold").tap();
 
       const tile = tileByName(page, name);
       await expect(tile).toBeVisible();
