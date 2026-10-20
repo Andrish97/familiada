@@ -191,7 +191,7 @@ test.describe("lista", () => {
     await page.goto(`${site.origin}/logos/editor/text/`);
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await page.locator("#resourceLockGuardBack").click();
-    await page.waitForURL(/\/logo\/(\?|$)/);
+    await page.waitForURL(/\/logos\/(\?|$)/);
   });
 });
 
