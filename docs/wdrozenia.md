@@ -153,7 +153,7 @@ E13 obejmuje końcową warstwę zapoznawczą całego systemu, nie samą Instrukc
    widocznymi dla użytkownika. Sprawdzić go scenariuszami `privacy-manual`
    i automatycznie utrzymywanymi zrzutami odpowiednich ekranów.
    Materiał do rozpisania, w tym „Rozwiązywanie problemów” z logów
-   rozgrywek: [`manual-plan.md`](manual-plan.md).
+   rozgrywek: [`podrecznik-plan.md`](podrecznik-plan.md).
 
 **Zasady treści manuala (decyzja 2026-10-11):** zero technicznego
 słownictwa; spójne nazwy tych samych funkcji, stanów i czynności w całej

@@ -1,4 +1,4 @@
-# Plan nowego manuala (E13)
+# Plan nowego podręcznika (manual, E13)
 
 Manual pisany na końcu, po ustaleniu działania UI (`wdrozenia.md`, E13).
 Treść dla użytkownika: bez słownictwa technicznego, PL/EN/UK, tylko co
@@ -42,8 +42,9 @@ poprawiono w systemie.
   `waiting`, stare `expired` po ~6–12 s.)
 - **Jak uniknąć (do manuala):** po zgaszeniu ekranu wrócić do tej samej
   karty zamiast skanować kod od nowa; zamykać stare karty urządzeń.
+- **Dotyczy też Prowadzącego** (tablet/telefon) i Wyświetlacza.
 - **System:** decyzja 2026-10-20 — nowa karta w tej samej przeglądarce
-  przejmuje urządzenie od razu (patrz
+  przejmuje urządzenie od razu (Przycisk, Prowadzący, Wyświetlacz) (patrz
   `plan-control2-realtime-i-blokad-urzadzen.md`, „Decyzje”).
 
 ### 3. „Rozpocznij rundę” nieaktywne po intro / plansza się nie zmienia
