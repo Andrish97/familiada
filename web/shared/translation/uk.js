@@ -3196,7 +3196,7 @@ const uk = {
       again: "СТРІЛКА = ЩЕ РАЗ",
       againTouch: "ПРОВЕДИ = ЩЕ РАЗ",
     },
-    long: { score: "РАХУНОК", best: "РЕКОРД", paused: "ПАУЗА" },
+    long: { score: "РАХУНОК", best: "РЕКОРД", paused: "ПАУЗА", bonus: ({ points }) => `БОНУС +${points}` },
   },
   pollGo: {
     friendActive: "Ви друзі",

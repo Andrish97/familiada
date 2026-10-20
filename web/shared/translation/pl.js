@@ -3099,7 +3099,7 @@ const pl = {
       again: "STRZAŁKA = JESZCZE RAZ",
       againTouch: "PRZESUŃ = JESZCZE RAZ",
     },
-    long: { score: "WYNIK", best: "REKORD", paused: "PAUZA" },
+    long: { score: "WYNIK", best: "REKORD", paused: "PAUZA", bonus: ({ points }) => `BONUS +${points}` },
   },
   pollGo: {
     friendActive: "Jesteście znajomymi",
