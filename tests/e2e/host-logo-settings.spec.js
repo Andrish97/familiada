@@ -80,7 +80,7 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await page.locator('.swatchBtn[data-color-key="DOT"]').click();
     await page.locator("#gsColorHex").fill("#33aaff");
     await page.locator("#gsColorHex").press("Tab");
-    await page.locator("#gsColorModalDone").click();
+    await page.getByRole("button", { name: "Gotowe", exact: true }).click();
     await expect(hostPreview.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
     await expect.poll(() => hostPreview.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim().toLowerCase())).toBe("#33aaff");
     await expect(hostPreview.locator("#cover2")).toHaveClass(/coverOn/);
