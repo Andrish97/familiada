@@ -256,7 +256,7 @@ function initListBottomToolbarLayout() {
       bar.classList.toggle("is-compact-icons", Boolean(useIcons));
       const leftMeasure = useIcons ? iconLeft : textLeft;
       const rightMeasure = useIcons ? iconRight : textRight;
-      const chosen = useIcons ? iconLayout : textLayout;
+      let chosen = useIcons ? iconLayout : textLayout;
       const needed = leftMeasure.width + rightMeasure.width + groupGap;
       if (needed <= available + 1) {
         const layoutKey = `single:${useIcons}`;

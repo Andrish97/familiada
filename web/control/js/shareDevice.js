@@ -5,7 +5,7 @@ import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-20
 import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T18202";
 import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-20T18202";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-20T18202";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachSectionSearch } from "../../shared/js/core/share-sections.js?v=v2026-10-20T18202";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-20T18202";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T18202";
 
 import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-20T18202";
@@ -89,8 +89,8 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   if (!overlay || isGuest) {
     return { open: () => {}, isGuest, refreshBadges: async () => ({}) };
   }
-  attachSectionSearch(bulkHost?.parentElement, subsList, "device-share-friends");
-  attachSectionSearch(currentCont?.previousElementSibling, currentCont, "device-share-shared");
+  attachListTools(bulkHost?.parentElement, subsList, "device-share-friends");
+  attachListTools(currentCont?.previousElementSibling, currentCont, "device-share-shared");
 
   let _deviceType = null;
   let renderVersion = 0;

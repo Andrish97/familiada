@@ -2741,29 +2741,25 @@ body{
 .shareBulkAction:focus-visible{ outline: 2px solid var(--gold, #ffeaa6); outline-offset: 2px; }
 .shareBulkAction:disabled{ opacity: .45; cursor: default; }
 .shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
-/* Wyszukiwanie w nagłówku listy (share-sections.js, attachSectionSearch):
-   komputer — pole obok tytułu, telefon — lupa rozwijająca pole pod nagłówkiem. */
-.sectionSearchHead{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+/* Narzędzia listy w nagłówku (share-sections.js, attachListTools): te same
+   przyciski co dolny pasek Gier w wersji ikon — sortowanie, filtr stanu,
+   lupa (okno do wpisania frazy). Aktywne ustawienie — złote. */
+.listToolsHead{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.listToolsHead .shareBulkAction{ width: 36px; height: 36px; border-radius: 10px; }
+.listToolsHead .shareBulkAction .ico{ width: 18px; height: 18px; }
+.listToolsHead .shareBulkActions{ gap: 6px; }
 .rowsSectionHeadRow > .rowsSectionHead{ flex: 1 1 auto; width: auto; min-width: 0; }
-.sectionSearch{ display: flex; align-items: center; gap: 6px; margin-left: auto; flex: 0 1 220px; min-width: 0; font-weight: 400; letter-spacing: 0; }
-.sectionSearch[hidden]{ display: none; }
-.sectionSearchBox{ flex: 1 1 auto; height: 32px; box-sizing: border-box; padding: 0 6px 0 9px; }
-.sectionSearchBox > svg{ flex: 0 0 auto; width: 15px; height: 15px; opacity: .6; }
-.sectionSearchBox .searchText{ padding: 0 2px; height: 100%; }
-.sectionSearchToggle{ display: none; }
-.sectionSearchToggle.is-active{ border-color: var(--gold, #ffeaa6); background: rgba(255,234,166,.12); }
+.listTools{ display: inline-flex; align-items: center; gap: 6px; margin-left: auto; flex: 0 0 auto; font-weight: 400; letter-spacing: 0; }
+.listTools[hidden], .listTools > [hidden]{ display: none; }
+.listTools .btn, .listTools .ui-select-btn{ width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0; border-radius: 10px; }
+.listTools .ico{ width: 18px; height: 18px; }
+.listTools .ui-select.listTools-select{ width: 36px; min-width: 36px; max-width: 36px; flex: 0 0 36px; }
+.listTools .ui-select-label{ display: none; }
+.listTools .ui-select-icon{ display: inline-flex; }
+.listTools .is-active.btn, .listTools .is-active .ui-select-btn{ color: var(--gold, #ffeaa6); border-color: var(--gold, #ffeaa6); --btn-tint: rgba(255,215,0,.12); }
+.listTools .ui-select-item{ min-height: 40px; }
 .shareRow.is-search-hidden, .rowsRow.is-search-hidden{ display: none; }
-.sectionSearchEmpty{ margin-top: 8px; }
-.sectionSearchEmpty[hidden]{ display: none; }
-@media (max-width: 640px){
-  .sectionSearch{ flex: 0 0 auto; margin-left: auto; }
-  .sectionSearchToggle{ display: inline-flex; }
-  .sectionSearchBox{ display: none; }
-  .sectionSearch.is-open{ flex: 1 1 100%; order: 10; margin-left: 0; }
-  .sectionSearch.is-open .sectionSearchToggle{ order: 2; }
-  .sectionSearch.is-open .sectionSearchBox{ display: flex; }
-  .sectionSearchBox .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
-}
+.listToolsEmpty[hidden]{ display: none; }
 
 .shareList[hidden]{ display: none; }
 .shareList{ display: grid; align-content: start; gap: 8px; margin-top: 8px; }

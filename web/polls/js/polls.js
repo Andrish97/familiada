@@ -702,8 +702,10 @@ function renderSubs(force = false) {
     });
     actions.push({ key: "remove", icon: "trash", title: t("polls.share.remove"), disabled: busy,
       onClick: () => void removeShare(tk, { sub_id: tk.recipient_user_id || tk.recipient_email, subscriber_label: label }) });
+    const stateKey = waiting ? "waiting" : tk.status === "done" ? "done" : "declined";
     return {
       id: tk.id, label, compact: true,
+      state: { key: stateKey, label: t(`polls.share.state.${stateKey}`) },
       tags: [{ text: t(`shareSections.channel.${kind}`), cls: "tag--muted" }], actions,
       note: waiting ? (tk.status === "opened" ? t("pollSharePanel.opened") : t("polls.share.state.waiting"))
         : tk.status === "done" ? t("polls.share.state.done") : t("polls.share.state.declined"),

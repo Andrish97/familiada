@@ -8,6 +8,8 @@
 
 import { t } from "../../translation/translation.js?v=v2026-10-20T18202";
 import { icon, sharingActionIcon } from "./icons.js?v=v2026-10-20T18202";
+import { promptModal } from "./modal.js?v=v2026-10-20T18202";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-20T18202";
 
 
 export const SHARE_SECTION_ORDER = ["subscribers", "pending", "active", "declined"];
@@ -58,99 +60,158 @@ export function shareBulkActionsEl({ onSelectAll, onDeselectAll }) {
   };
 }
 
-// ===== Wyszukiwanie w nagłówku listy =====
-// Długie listy (od SEARCH_MIN_ROWS wierszy) dostają pole szukania w nagłówku
-// sekcji: komputer — pole obok tytułu, telefon — lupa rozwijająca pole pod
-// nagłówkiem. Szuka po nazwie, adresie i opisie wiersza. Fraza przetrwa
-// odświeżenie listy (ten sam klucz), ale nie przeładowanie strony.
-// Wygląd: base.css (.sectionSearch).
+// ===== Narzędzia listy w nagłówku: szukaj · filtr stanu · sortowanie =====
+// Każda lista wierszy (.shareRow / .rowsRow) dostaje w nagłówku te same
+// przyciski co dolny pasek Gier w wersji ikon: lupa otwiera okno do wpisania
+// frazy (aktywna — złota; drugie kliknięcie czyści), filtr pojawia się, gdy
+// wiersze mają co najmniej dwa różne stany (data-state), sortowanie: domyślna
+// kolejność / nazwa A–Z / Z–A. Pusta lista — bez przycisków. Ustawienia
+// przetrwają odświeżenie listy (ten sam klucz), ale nie przeładowanie strony.
+// Wygląd: base.css (.listTools).
 
-const SEARCH_MIN_ROWS = 6;
-const searchQueries = new Map();
+const listToolState = new Map();
 const normText = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 const ROW_SELECTOR = ":scope > .shareRow, :scope > .rowsRow";
-const rowText = (row) => [...row.querySelectorAll(".shareEmail, .shareNote, .rowsTitle, .rowsNote")]
-  .map((el) => `${el.textContent} ${el.getAttribute("title") || ""}`).join(" ");
+const ROW_NAME = ".shareEmail, .rowsTitle, .resource-send-friend-name";
+const rowText = (row) => {
+  const parts = [...row.querySelectorAll(`${ROW_NAME}, .shareNote, .rowsNote`)];
+  return parts.length ? parts.map((el) => `${el.textContent} ${el.getAttribute("title") || ""}`).join(" ") : row.textContent;
+};
+const rowName = (row) => normText((row.querySelector(ROW_NAME) || row).textContent);
+let rowSeq = 0;
+
+function toolSelect(kind, iconName) {
+  const wrap = document.createElement("div");
+  wrap.className = `ui-select list-${kind} listTools-select`;
+  wrap.innerHTML = `<button class="btn ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-icon" aria-hidden="true">${icon(iconName)}</span><span class="ui-select-label">—</span></button><div class="ui-select-menu" role="listbox"></div>`;
+  return wrap;
+}
 
 /**
- * Dokleja wyszukiwanie do nagłówka listy i pilnuje go przy każdej zmianie wierszy.
- * @param {HTMLElement} heading  nagłówek sekcji (flex; pole trafia na jego koniec)
+ * Dokleja narzędzia listy do nagłówka i pilnuje ich przy każdej zmianie wierszy.
+ * @param {HTMLElement} heading  nagłówek sekcji (flex; przyciski trafiają na jego koniec,
+ *                               przed ewentualnymi akcjami zaznaczania)
  * @param {HTMLElement} list     kontener wierszy .shareRow / .rowsRow
- * @param {string} key           klucz zapamiętanej frazy (np. "contacts-friend")
+ * @param {string} key           klucz zapamiętanych ustawień (np. "contacts-friend")
  */
-export function attachSectionSearch(heading, list, key) {
-  if (!heading || !list || list._sectionSearch) return list?._sectionSearch;
-  heading.classList.add("sectionSearchHead");
-  const wrap = document.createElement("div");
-  wrap.className = "sectionSearch";
-  const box = document.createElement("div");
-  box.className = "searchBox sectionSearchBox";
-  box.innerHTML = icon("search");
-  const input = document.createElement("input");
-  input.type = "search";
-  input.className = "searchText";
-  input.setAttribute("enterkeyhint", "search");
-  input.autocomplete = "off";
-  box.append(input);
-  const toggle = document.createElement("button");
-  toggle.type = "button";
-  toggle.className = "shareBulkAction sectionSearchToggle";
-  toggle.innerHTML = icon("search");
-  wrap.append(toggle, box);
+export function attachListTools(heading, list, key) {
+  if (!heading || !list) return null;
+  if (list._listTools) return list._listTools;
+  const state = listToolState.get(key) || { q: "", filter: "", sort: "" };
+  listToolState.set(key, state);
+  // Tłumaczenie nagłówka nadpisuje całą jego treść — przenosimy je do
+  // osobnego elementu, żeby przyciski zostały.
+  if (heading.hasAttribute("data-i18n")) {
+    const text = document.createElement("span");
+    text.className = "listToolsTitle";
+    text.dataset.i18n = heading.dataset.i18n;
+    text.textContent = heading.textContent;
+    heading.removeAttribute("data-i18n");
+    heading.replaceChildren(text);
+  }
+  heading.classList.add("listToolsHead");
+  const tools = document.createElement("div");
+  tools.className = "listTools";
+  const sortEl = toolSelect("sort", "sort");
+  const filterEl = toolSelect("filter", "filter");
+  const searchBtn = document.createElement("button");
+  searchBtn.type = "button";
+  searchBtn.className = "btn listTools-search";
+  tools.append(sortEl, filterEl, searchBtn);
   const bulk = heading.querySelector(":scope > .shareBulkActions, :scope > [id$='BulkActions']");
-  if (bulk) heading.insertBefore(wrap, bulk); else heading.append(wrap);
+  if (bulk) heading.insertBefore(tools, bulk); else heading.append(tools);
   const empty = document.createElement("div");
-  empty.className = "shareEmpty sectionSearchEmpty";
+  empty.className = "shareEmpty listToolsEmpty";
   empty.hidden = true;
 
+  const sortOptions = () => [
+    { value: "", label: t("common.sort.default") },
+    { value: "name", label: t("common.sort.name") },
+    { value: "nameDesc", label: t("common.sort.nameDesc") },
+  ];
+  let filterKeys = "";
+  const filterOptions = (states) => [{ value: "", label: t("common.filterAll") }, ...states.map(([value, label]) => ({ value, label }))];
+  const sortApi = initUiSelect(sortEl, { options: sortOptions(), value: state.sort, onChange: (v) => { state.sort = String(v || ""); apply(); } });
+  const filterApi = initUiSelect(filterEl, { options: filterOptions([]), value: "", onChange: (v) => { state.filter = String(v || ""); apply(); } });
+
   const label = () => {
-    input.placeholder = t("common.searchByName");
-    input.setAttribute("aria-label", t("common.searchByName"));
-    toggle.title = t("common.searchByName");
-    toggle.setAttribute("aria-label", toggle.title);
+    sortEl.querySelector(".ui-select-btn").setAttribute("aria-label", t("common.sort.label"));
+    sortEl.querySelector(".ui-select-btn").title = t("common.sort.label");
+    filterEl.querySelector(".ui-select-btn").setAttribute("aria-label", t("common.filterState"));
+    filterEl.querySelector(".ui-select-btn").title = t("common.filterState");
+    const title = state.q ? t("baseExplorer.search.clear") : t("common.searchByName");
+    searchBtn.title = title;
+    searchBtn.setAttribute("aria-label", title);
     empty.textContent = t("common.noResults");
   };
+
+  let applying = false;
   const apply = () => {
-    const q = normText(input.value);
-    if (q) searchQueries.set(key, input.value); else searchQueries.delete(key);
-    const rows = [...list.querySelectorAll(ROW_SELECTOR)];
-    wrap.hidden = list.hidden || (rows.length < SEARCH_MIN_ROWS && !q);
-    let visible = 0;
-    for (const row of rows) {
-      const match = !q || normText(rowText(row)).includes(q);
-      row.classList.toggle("is-search-hidden", !match);
-      if (match) visible += 1;
+    if (applying) return;
+    applying = true;
+    try {
+      const rows = [...list.querySelectorAll(ROW_SELECTOR)];
+      for (const row of rows) if (row._listOrder == null) row._listOrder = ++rowSeq;
+      // filtr: tylko gdy są co najmniej dwa różne stany
+      const states = new Map();
+      for (const row of rows) {
+        const st = row.dataset.state;
+        if (st && !states.has(st)) states.set(st, row.dataset.stateLabel || row.querySelector(".tag")?.textContent?.trim() || st);
+      }
+      const keys = [...states.keys()].join("|");
+      if (keys !== filterKeys) { filterKeys = keys; filterApi?.setOptions(filterOptions([...states])); }
+      if (state.filter && !states.has(state.filter)) state.filter = "";
+      filterApi?.setValue(state.filter, { silent: true });
+      filterEl.hidden = states.size < 2;
+      // sortowanie (dotyka DOM tylko, gdy kolejność się zmienia)
+      const cmp = state.sort === "name" ? (a, b) => rowName(a).localeCompare(rowName(b), "pl")
+        : state.sort === "nameDesc" ? (a, b) => rowName(b).localeCompare(rowName(a), "pl")
+        : (a, b) => a._listOrder - b._listOrder;
+      const sorted = [...rows].sort(cmp);
+      if (sorted.some((el, i) => el !== rows[i])) {
+        const anchor = rows.at(-1).nextSibling;
+        for (const el of sorted) list.insertBefore(el, anchor);
+      }
+      const q = normText(state.q);
+      let visible = 0;
+      for (const row of rows) {
+        const hit = (!q || normText(rowText(row)).includes(q)) && (!state.filter || row.dataset.state === state.filter);
+        row.classList.toggle("is-search-hidden", !hit);
+        if (hit) visible += 1;
+      }
+      tools.hidden = list.hidden || rows.length === 0;
+      const showEmpty = rows.length > 0 && visible === 0;
+      if (showEmpty && empty.parentElement !== list) list.append(empty);
+      empty.hidden = !showEmpty;
+      searchBtn.innerHTML = icon(state.q ? "close" : "search");
+      searchBtn.classList.toggle("is-active", !!state.q);
+      sortEl.classList.toggle("is-active", !!state.sort);
+      filterEl.classList.toggle("is-active", !!state.filter);
+      label();
+    } finally {
+      applying = false;
     }
-    const showEmpty = !!q && visible === 0 && rows.length > 0;
-    if (showEmpty && empty.parentElement !== list) list.append(empty);
-    empty.hidden = !showEmpty;
-    toggle.classList.toggle("is-active", !!q);
   };
-  const setOpen = (open) => {
-    wrap.classList.toggle("is-open", open);
-    toggle.setAttribute("aria-expanded", String(open));
-    toggle.innerHTML = icon(open ? "close" : "search");
-  };
-  input.value = searchQueries.get(key) || "";
-  setOpen(!!input.value);
-  label();
-  input.addEventListener("input", apply);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && input.value) { e.preventDefault(); e.stopPropagation(); input.value = ""; apply(); }
-  });
-  input.addEventListener("click", (e) => e.stopPropagation());
-  toggle.addEventListener("click", (e) => {
+
+  searchBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
-    const open = !wrap.classList.contains("is-open");
-    if (!open && input.value) { input.value = ""; apply(); }
-    setOpen(open);
-    if (open) input.focus();
+    if (state.q) { state.q = ""; apply(); return; }
+    const value = await promptModal({
+      title: t("common.searchByName"),
+      value: state.q,
+      placeholder: t("common.searchByName"),
+      onReady: ({ overlay, okBtn }) => overlay.querySelector(".uni-inp")?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); okBtn.click(); }
+      }),
+    });
+    if (value !== null) { state.q = String(value).trim(); apply(); }
   });
+  tools.addEventListener("click", (e) => e.stopPropagation());
   new MutationObserver(apply).observe(list, { childList: true, attributes: true, attributeFilter: ["hidden"] });
-  window.addEventListener("i18n:lang", label);
+  window.addEventListener("i18n:lang", () => { sortApi?.setOptions(sortOptions()); filterKeys = ""; apply(); });
   apply();
-  list._sectionSearch = { apply };
-  return list._sectionSearch;
+  list._listTools = { apply };
+  return list._listTools;
 }
 
 /**
@@ -172,6 +233,7 @@ export function shareRowEl(row) {
   const el = document.createElement("div");
   el.className = "shareRow" + (row.compact ? " shareRow--compact" : "");
   if (row.id != null) el.dataset.id = String(row.id);
+  if (row.state) { el.dataset.state = String(row.state.key ?? row.state); if (row.state.label) el.dataset.stateLabel = row.state.label; }
   if (row.selected) el.classList.add("selected");
   if (row.disabled) el.classList.add("blocked");
   if (row.onClick && !row.disabled) el.classList.add("pick");
@@ -255,7 +317,7 @@ export function shareSectionEl({ key, title, rows = [], emptyText = "", collapse
     update();
   }
   section.append(heading, list);
-  if (key) attachSectionSearch(heading, list, key);
+  if (key) attachListTools(heading, list, key);
   return section;
 }
 
@@ -315,6 +377,7 @@ export function rowEl(row) {
   const el = document.createElement("div");
   el.className = "rowsRow";
   if (row.id != null) el.dataset.id = String(row.id);
+  if (row.state) { el.dataset.state = String(row.state.key ?? row.state); if (row.state.label) el.dataset.stateLabel = row.state.label; }
   for (const [k, v] of Object.entries(row.data || {})) el.dataset[k] = String(v);
   const initial = Array.from(String(row.avatar || row.title || "?").trim())[0] || "?";
   const channel = ROW_CHANNELS.includes(row.channel) ? row.channel : "";
@@ -391,7 +454,7 @@ export function renderRowSections(host, sections, opts = {}) {
     headRow.className = "rowsSectionHeadRow";
     headRow.append(head);
     sec.append(headRow, list);
-    attachSectionSearch(headRow, list, `rows-${s.key}`);
+    attachListTools(headRow, list, `rows-${s.key}`);
     frag.append(sec);
   }
   if (!frag.childNodes.length && opts.emptyText) {

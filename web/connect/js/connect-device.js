@@ -11,14 +11,14 @@ import "../../shared/js/core/contact-modal.js?v=v2026-10-20T18202";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T18202";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T18202";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T18202";
-import { attachSectionSearch } from "../../shared/js/core/share-sections.js?v=v2026-10-20T18202";
+import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-20T18202";
 
 
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");
 const sharedDevicesCard   = document.getElementById("sharedDevicesCard");
 const sharedDevicesList   = document.getElementById("sharedDevicesList");
-attachSectionSearch(sharedDevicesList?.previousElementSibling, sharedDevicesList, "connect-shared");
+attachListTools(sharedDevicesList?.previousElementSibling, sharedDevicesList, "connect-shared");
 const pageHint            = document.getElementById("pageHint");
 const connectCodeInput    = document.getElementById("connectCodeInput");
 const btnConnectCode      = document.getElementById("btnConnectCode");

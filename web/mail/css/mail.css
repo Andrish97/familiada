@@ -60,8 +60,8 @@
  .mail-panel{display:none;flex:1;padding:0;border:0;background:transparent;box-shadow:none}
  .mail-panel.active{display:flex}
  .mail-panel .mail-panel-title{display:none}
- .mail-panel .mail-panel-title:has(.sectionSearch:not([hidden])){display:flex}
- .mail-panel .mail-panel-title:has(.sectionSearch:not([hidden]))>span{display:none}
+ .mail-panel .mail-panel-title:has(.listTools:not([hidden])){display:flex}
+ .mail-panel .mail-panel-title:has(.listTools:not([hidden]))>span{display:none}
  .mail-row .shareNote{font-size:11px}
  .mail-discover{font-size:11px;gap:6px 12px;padding:12px 14px}
  .mail-discover>span{width:100%}

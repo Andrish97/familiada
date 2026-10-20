@@ -133,6 +133,7 @@ export async function initContactsPage(pageId) {
     else add("remove", "trash", false, true);
     const state = friends && row.direction === "friend" ? "active" : row.status;
     return { id: row.id, label: friends ? row.label : row.email, compact: true,
+      state: { key: state, label: t(`contacts.status.${state}`) },
       tags: state === "active" || statusIsRedundant ? [] : [{ text: t(`contacts.status.${state}`) }],
       note: friends ? row.email : row.friend_user_id ? t("contacts.accountCreated") : "",
       actions };

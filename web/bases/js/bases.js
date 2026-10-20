@@ -20,7 +20,7 @@ import "../../shared/js/core/contact-modal.js?v=v2026-10-20T18202";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T18202";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T18202";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-20T18202";
-import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachSectionSearch } from "../../shared/js/core/share-sections.js?v=v2026-10-20T18202";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-20T18202";
 import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-20T18202";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-20T18202";
 import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-20T18202";
@@ -115,8 +115,8 @@ const shareEmail = document.getElementById("shareEmail");
 const shareRole = document.getElementById("shareRole");
 const baseShareFriends = document.getElementById("baseShareFriends");
 const baseShareBulkHost = document.getElementById("baseShareBulkActions");
-attachSectionSearch(baseShareBulkHost?.parentElement, baseShareFriends, "base-share-friends");
-attachSectionSearch(shareSectionsHost?.previousElementSibling, shareSectionsHost, "base-share-shared");
+attachListTools(baseShareBulkHost?.parentElement, baseShareFriends, "base-share-friends");
+attachListTools(shareSectionsHost?.previousElementSibling, shareSectionsHost, "base-share-shared");
 const baseShareFriendsRole = document.getElementById("baseShareFriendsRole");
 const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
@@ -942,8 +942,9 @@ async function renderShareModal() {
       if (error || !ok) { button.disabled = false; showShareMessage(t("bases.share.failed"), "error"); return; }
        await renderShareModal();
     }});
+    const stateKey = active ? "active" : recipient.status === "declined" ? "declined" : "pending";
     const row = shareRowEl({ id: recipient.task_id || recipient.user_id, label: recipient.label || recipient.email,
-      title: recipient.email, compact: true,
+      title: recipient.email, compact: true, state: { key: stateKey, label: t(`contacts.status.${stateKey}`) },
       tags: [{ text: t(recipient.is_friend ? "shareSections.channel.friend" : "control.shareDeviceModal.recipientKind.account") },
         { text: t(active ? "contacts.status.active" : recipient.status === "declined" ? "contacts.status.declined" : "contacts.status.pending") }],
       extras: [roleEl], actions });

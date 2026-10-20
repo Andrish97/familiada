@@ -91,27 +91,40 @@ module.exports = [
   { id: "logo-text-space", category: "Dodatkowe", title: "Edytor logo — tekst ze spacją (odstęp między słowami)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], devices: ["desktop"], steps: [async (view) => { await view.locator("#textValue").fill("QUIZ 2026"); await view.waitForTimeout(300); }] },
   { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
     steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
-  // Wyszukiwanie w nagłówku długich list (share-sections.js, attachSectionSearch)
-  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie w nagłówku listy", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+  // Narzędzia list w nagłówku (share-sections.js, attachListTools): szukaj · filtr · sortowanie
+  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — przyciski listy i wyszukiwanie (okno)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
     steps: [async (view) => {
       const tab = view.locator("#contactsTabReceived");
       if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
-      const search = view.locator("#contactsReceived .sectionSearch:visible").first();
-      const toggle = search.locator(".sectionSearchToggle");
-      if (await toggle.isVisible()) await toggle.click();
-      await search.locator(".searchText").fill("k");
+      await view.locator("#contactsReceived .listTools-search:visible").first().click();
+      await view.locator(".uni-inp").fill("k");
+      await view.locator(".uni-modal .btn.gold").click();
       await view.waitForTimeout(300);
     }] },
-  { id: "subscribers-search-empty", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie bez wyników", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+  { id: "subscribers-search-prompt", category: "Dodatkowe", title: "Subskrybenci — okno wyszukiwania", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
     steps: [async (view) => {
       const tab = view.locator("#contactsTabReceived");
       if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
-      const search = view.locator("#contactsReceived .sectionSearch:visible").first();
-      const toggle = search.locator(".sectionSearchToggle");
-      if (await toggle.isVisible()) await toggle.click();
-      await search.locator(".searchText").fill("zzz");
+      await view.locator("#contactsReceived .listTools-search:visible").first().click();
+      await view.locator(".uni-inp").fill("klasa");
       await view.waitForTimeout(300);
     }] },
+  { id: "subscribers-filter", category: "Dodatkowe", title: "Subskrybenci — filtr stanu (oczekujące i odrzucone)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view) => {
+      const tab = view.locator("#contactsTabInvite");
+      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
+      await view.locator("#contactsOutgoing .list-filter .ui-select-btn:visible").first().click();
+      await view.waitForTimeout(300);
+    }] },
+  { id: "tasks-tools", category: "Dodatkowe", title: "Zadania — przyciski listy w nagłówku sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *" },
+  { id: "friends-tools", category: "Dodatkowe", title: "Znajomi — przyciski listy w nagłówku sekcji", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
+  { id: "bases-share-tools", category: "Dodatkowe", title: "Bazy — okno udostępniania z przyciskami list", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",
+    steps: [async (view) => { await view.locator("#mineGrid .card:not(.addCard)").first().click(); await view.locator("#btnShare").click(); await view.locator("#shareOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); }] },
+  { id: "poll-recipients-tools", category: "Dodatkowe", title: "Ankieta — okno odbiorców z przyciskami list", path: `/polls/?id=${IDS.poll}`, sources: [...page("polls"), "web/shared/js/core/share-sections.js"], ready: "#cardMain",
+    steps: [async (view) => { const b = view.locator("#btnAddRecipients"); if (!(await b.isVisible())) { const tab = view.locator(".slot-recipients button, #tabRecipients").first(); if (await tab.count()) await tab.click(); } await view.locator("#btnAddRecipients").click(); await view.waitForTimeout(600); }] },
+  { id: "mails-tools", category: "Dodatkowe", title: "Mails — listy subskrypcji i zadań z przyciskami", path: "/mails/", sources: ["web/mails/", "web/mail/", "web/shared/js/core/share-sections.js"], ready: "#subscriptionList > *" },
+  { id: "games-send-tools", category: "Dodatkowe", title: "Moje gry — okno Wyślij kopię (lista znajomych z przyciskami)", path: "/games/", sources: [...page("games"), "web/shared/js/core/resource-send.js", "web/shared/js/core/share-sections.js"], ready: "#grid .card",
+    steps: [selectTile("#grid .card:not(.addCard)"), async (view) => { await view.locator("#btnSendCopy").click(); await view.locator("#resourceSendOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(500); }] },
   // E21: reguły gier, edytory i podliczanie
   { id: "game-editor-answer-rules", category: "Dodatkowe", title: "Edycja gry — warunki gotowości, odpowiedź ze znakiem spoza Wyświetlacza i poniżej 4 pkt, podpowiedzi 17/finał 11", path: `/games/editor/?id=${IDS.game}`, sources: [...page("games/editor"), "web/shared/js/core/question-form.js", "web/shared/js/core/game-rules.js", "web/shared/css/question-form.css"], ready: "#qList > *:nth-child(2)",
     steps: [async (view) => { await view.locator("#qList .qcard:not(.addTile)").first().click(); const inp = view.locator("#aList .qf-row:not(.qf-add) .qf-text").first(); await inp.fill("kawa😀"); const pts = view.locator("#aList .qf-row:not(.qf-add) .qf-pts").nth(3); await pts.fill("2"); await pts.blur(); await view.waitForTimeout(600); }] },

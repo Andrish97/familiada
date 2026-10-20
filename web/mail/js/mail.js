@@ -5,12 +5,12 @@ import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js
 import { toast } from '../../shared/js/core/toast.js?v=v2026-10-20T18202';
 import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-20T18202';
 import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-20T18202';
-import { attachSectionSearch } from '../../shared/js/core/share-sections.js?v=v2026-10-20T18202';
+import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-20T18202';
 
 
 const $ = id => document.getElementById(id);
-attachSectionSearch($('subscriptionTitle'), $('subscriptionList'), 'mail-subscriptions');
-attachSectionSearch($('itemsTitle'), $('itemsList'), 'mail-items');
+attachListTools($('subscriptionTitle'), $('subscriptionList'), 'mail-subscriptions');
+attachListTools($('itemsTitle'), $('itemsList'), 'mail-items');
 const text = (key, vars) => t(`mailCenter.${key}`, vars);
 let model = { state: 'entry' }, selectedTab = tabFromUrl(['subscriptions', 'items'], 'subscriptions'), csrf = '', busy = false;
 let requestUntil = 0, cooldownTimer = null, pendingAccess = '';
@@ -76,6 +76,9 @@ async function sourceAction(item, action) {
 }
 function row(item) {
   const node = document.createElement('div'); node.className = `shareRow mail-row mail-row--${item.kind}`;
+  // stan wiersza dla filtra listy (attachListTools)
+  node.dataset.state = item.kind === 'subscription' ? (item.status === 'pending' ? 'pending' : 'active') : item.kind;
+  node.dataset.stateLabel = item.kind === 'subscription' ? (item.status === 'pending' ? text('pending') : t('shareSections.active')) : t(`tasks.filter.${item.kind === 'poll' ? 'poll' : 'device'}`);
   const kind = document.createElement('span'); kind.className = 'mail-kind'; kind.innerHTML = icon(item.kind === 'subscription' ? 'envelope' : item.kind === 'poll' ? 'bell' : item.device_type || 'display');
   const copy = document.createElement('div'); copy.className = 'mail-row-copy';
   const title = document.createElement('div'); title.className = 'shareEmail';
