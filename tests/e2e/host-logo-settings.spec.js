@@ -120,13 +120,13 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await serveBranchCode(displayContext, { pages: ["display"] });
     const displayPage = await displayContext.newPage();
     displayPage.on("console", (m) => { if (/warn|error/.test(m.type())) console.log(`[e2e-diag:display] console:${m.type()} ${m.text().slice(0, 200)}`); });
-    // Klucz czytany po otwarciu Control — ten z utworzenia gry bywa już nieaktualny.
-    const displayKey = await page.evaluate(async (id) => {
-      const { data, error } = await window.__sbClient.from("games").select("share_key_display").eq("id", id).single();
-      if (error) throw new Error(error.message);
-      return data.share_key_display;
+    // /go/ przyjmuje token linku urządzenia z sesji Control (jak makeGame
+    // w control2.spec.js), nie games.share_key_display.
+    const displayKey = await page.evaluate(async (gameId) => {
+      const { data, error } = await window.__sbClient.rpc("control_runtime_device_link", { p_game_id: gameId, p_device_type: "display" });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || "device link failed");
+      return data.token;
     }, game.id);
-    console.log(`[e2e-diag] display key changed=${displayKey !== game.share_key_display}`);
     await displayPage.goto(`${ORIGIN}/go/?d=display&id=${game.id}&key=${displayKey}`, { waitUntil: "domcontentloaded" });
     try {
       await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 20_000 });
