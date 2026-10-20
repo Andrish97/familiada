@@ -452,6 +452,33 @@ zapis, podgląd i późniejszą rozgrywkę.
   stosuje 200/17: `question-form.js` (`LIMITS.Q_TEXT/A_TEXT`, `wireTextLimit`)
   oraz ograniczenia SQL `questions_text_len`/`answers_text_len`. Limit 17
   jest więc już egzekwowany w UI i w schemacie bazy; zmiana 100 jest planem.
+- **Decyzja 2026-10-20 — odpowiedzi i podpowiedzi:** w ankiecie tekstowej
+  oraz wszędzie, gdzie edytujemy odpowiedzi (edytor gry, wspólny formularz
+  Base Explorera i korekta przy podliczaniu), egzekwować limit 17 znaków
+  także przy wklejaniu i zapisie. Przy polach pokazać stałą, przetłumaczoną
+  podpowiedź: „Maksymalnie 17 znaków. Dłuższe odpowiedzi zostaną przycięte.
+  Znaki nieobsługiwane przez wyświetlacz, np. emoji, będą na nim pomijane.”
+  Informacja ma być widoczna przy zwykłym wpisywaniu odpowiedzi, nie tylko
+  w modalu importu. Użytkownik doprecyzował pomysł usuwania symboli do
+  informowania o ich pomijaniu na wyświetlaczu; nie odrzucać całej odpowiedzi
+  wyłącznie z powodu takiego symbolu. Nie wprowadza to odrębnego kasowania
+  znaków w zapisanej treści ani zakazu polskich/ukraińskich liter.
+  Obsługę znaków odnosić do rzeczywistej mapy glifów planszy, a nie arbitralnej
+  listy ASCII. Limit UI i normalizacja/egzekwowanie serwerowe mają być spójne
+  także dla bezpośrednich wywołań wszystkich RPC oddających głosy tekstowe.
+  Przy implementacji ujednolicić liczenie znaków JS/SQL i bezpieczne obcinanie
+  Unicode; obecne `slice`/`maxlength` liczą jednostki UTF-16.
+- Audyt powyższej decyzji: ankieta `polls/vote/text/index.html` ma
+  `maxlength=17`, a `poll-text.js` obcina wpis i pakowany tekst do 17;
+  podpowiedź mówi dziś tylko „Maksymalnie 17 znaków”. Edytor i Base Explorer
+  używają `question-form.js:wireTextLimit`; komunikat o obcinaniu istnieje
+  w edytorze w modalu TXT, nie jako wspólna podpowiedź pól. Renderer
+  `shared/js/display/fonts.js:resolveGlyph` zastępuje brakujący glif spacją
+  (lub pustą bitmapą), nie usuwa go z zapisanego tekstu. SQL ma ograniczenie
+  `answers_text_len` dla zapisanych odpowiedzi i kontrolę 17 w anonimowym
+  RPC 362; starsze `poll_text_submit` i `poll_text_submit_batch_owner`
+  nie mają własnej kontroli długości `answer_raw` — uwzględnić te ścieżki
+  przy centralizacji, nie polegać wyłącznie na polu HTML.
 - Eksport zamkniętej ankiety zachowuje typ ankiety i zamknięty wynik. Eksport
   otwartej/zatrzymanej ankiety najpierw informuje o utracie bieżących głosów,
   a po potwierdzeniu zapisuje szkic tego samego typu.
@@ -459,8 +486,8 @@ zapis, podgląd i późniejszą rozgrywkę.
   reguł. Nie ma konwersji gotowej ankiety punktowej/tekstowej na preparowaną.
 - Dane wymagające tajności lub związane z sesją/urządzeniami pozostają poza
   formatem, tak jak obecnie; jawnie dokumentować wyłączenia.
-- Odczytowa kontrola przed migracją limitu pytań (do wykonania przez
-  użytkownika w bazie; wynik jeszcze nieznany):
+- Odczytowa kontrola przed migracją limitu pytań (wykonana przez
+  użytkownika w bazie; wynik przekazany 2026-10-20):
 
   ```sql
   SELECT
@@ -469,8 +496,15 @@ zapis, podgląd i późniejszą rozgrywkę.
   FROM public.questions;
   ```
 
-  Wynik 0 oznacza brak treści do obcięcia w tabeli pytań gier, a nie dowód
-  zgodności wszystkich baz pytań i historycznych pakietów/snapshotów.
+  Wynik: **11 pytań ponad 100 znaków; najdłuższe ma 197 znaków**.
+  Użytkownik przekazał również podgląd wszystkich 11: jedno pole zawiera
+  pytanie i wklejoną tabelę odpowiedzi z punktacją, pozostałe 10 to pytania
+  długości 101–129. Obcięcie może przerwać słowo lub zdanie; obowiązuje
+  uzgodnione mechaniczne skrócenie do 100, bez parafrazowania ani zgadywania
+  odpowiedzi z treści pytania. Nie kopiujemy treści ani nazw gier do planu.
+  To częściowy audyt danych tabeli pytań gier; nie potwierdza zgodności
+  wszystkich baz pytań i historycznych pakietów/snapshotów. Przed wdrożeniem
+  powtórzyć odczyt, bo liczba rekordów może się zmienić.
 - **Decyzja 2026-10-20:** zamknięta ankieta przenosi pytania, zatwierdzone
   odpowiedzi i punkty oraz swój zamknięty wariant. Nie zachowujemy liczby
   głosów ani historii/tożsamości głosujących; nie tworzymy fikcyjnych głosów
@@ -602,6 +636,12 @@ zapis, podgląd i późniejszą rozgrywkę.
   nienumeryczne i nieskończone → 0 przed sortowaniem. Przy <=6 odpowiedziach
   nie zmieniać kolejności tylko z powodu normalizacji. To osobna reguła od
   świadomego wyboru szóstki podczas podliczania ankiety.
+- Pola odpowiedzi: wpisywanie i wklejanie 17/18 znaków w ankiecie tekstowej,
+  edytorze, Base Explorerze i podliczaniu; stała informacja o przycięciu
+  i pomijaniu znaków nieobsługiwanych na planszy. Przykłady z emoji,
+  polskimi/ukraińskimi literami i Unicode złożonym; brak odrzucenia całej
+  odpowiedzi z powodu emoji, brak uszkodzonych par UTF-16 i zgodność limitu
+  z SQL. Bezpośrednie RPC nie może zapisać odpowiedzi ponad 17 znaków.
 - Migracja danych obejmuje wielu różnych właścicieli, zachowuje ich ID gier
   i własność, jest idempotentna i nie zmienia poprawnych szkiców wyłącznie
   z powodu braków grywalności. Niejasny historyczny typ z czytelnymi pytaniami
@@ -664,12 +704,14 @@ nie były uruchamiane. Raport dodano przy korekcie błędnego opisu starszej
 bramki Marketplace i miejsca utraty statusu kopii.
 
 **Granica dowodu:** środowisko nie ma skonfigurowanych poświadczeń do bazy.
-Nie odczytano rzeczywistych rekordów użytkowników, pakietów przechowywanych
-w produkcji ani liczebności historycznych wariantów. Przed migracją pozostaje
+Użytkownik wykonał zapytanie o długości pytań i przekazał wynik oraz podgląd
+11 rekordów (§4); jest to częściowy odczyt danych, bez samodzielnego dostępu
+agenta do bazy. Nie odczytano pakietów przechowywanych w produkcji ani
+liczebności historycznych wariantów. Przed migracją pozostaje
 odczyt agregatów typ/status, typów w `market_games.payload` i zapisanych
 snapshotach oraz próbek historycznych plików. Brak próbek nie dowodzi, że
-aliasy nie występują. Część kodowa etapu A jest zakończona; część danych
-produkcyjnych pozostaje niezweryfikowana.
+aliasy nie występują. Część kodowa etapu A jest zakończona; audyt danych
+produkcyjnych poza przekazanym wynikiem długości pytań pozostaje niezweryfikowany.
 
 ### 8.1. Źródła i granice autorytetu
 
