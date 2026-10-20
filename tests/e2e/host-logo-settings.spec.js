@@ -116,11 +116,18 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     // tak jak w control2.spec.js (openAnon).
     await page.goto(`${ORIGIN}/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 20_000 });
-    displayContext = await browser.newContext({ locale: "pl-PL", viewport: { width: 1366, height: 1024 } });
+    displayContext = await browser.newContext({ locale: "pl-PL", viewport: { width: 1366, height: 1024 }, hasTouch: true, serviceWorkers: "block" });
     await serveBranchCode(displayContext, { pages: ["display"] });
     const displayPage = await displayContext.newPage();
     await displayPage.goto(`${ORIGIN}/go/?d=display&id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 20_000 });
+    try {
+      await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 20_000 });
+    } catch (error) {
+      // [e2e-diag] stan Wyświetlacza, gdy Control go nie widzi.
+      await displayPage.screenshot({ path: testInfo.outputPath("diag-display.png") }).catch(() => {});
+      console.log(`[e2e-diag] display url=${displayPage.url()}`);
+      throw error;
+    }
     await page.getByLabel("Przycisk fizyczny").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
     await page.getByRole("button", { name: "Dalej", exact: true }).click();
