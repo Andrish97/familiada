@@ -1,4 +1,4 @@
-@import url("/shared/css/blocking-overlay.css?v=v2026-10-20T18080");
+@import url("/shared/css/blocking-overlay.css?v=v2026-10-20T18202");
 
 
 /* css/base.css */
@@ -1037,7 +1037,10 @@ main{
     body.sheet-open .market-preview-overlay.modal--sheet.sheet-active {
         position: static !important;
         inset: auto !important;
-        background: none;
+        /* !important: okna z modal.js mają przyciemnienie w inline style
+           (background: var(--modal-scrim)) -- jako strona tło ma być tłem
+           strony, nie ciemniejszym panelem */
+        background: none !important;
         padding: 0;
         display: flex !important;
         flex-direction: column; /* jawnie — .modal ma być jedynym, w pełni wysokim dzieckiem */
