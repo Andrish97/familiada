@@ -157,12 +157,14 @@
 .logo-body.is-editor{ overflow: hidden; }
 
 .editorShell{
-  margin-top: 12px;
+  margin-top: 0;
   height: calc(100vh - 74px - 24px); /* topbar + padding wrappera */
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 22px;
 }
+
+body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
 
 /* karta edytora —
    .card.games-card (specificity 0,2,0) ma overflow:hidden, więc

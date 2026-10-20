@@ -9,6 +9,7 @@ body.editor-body {
 
 body.editor-body .wrap {
     height: calc(100dvh - 72px);
+    padding-top: 12px;
     overflow: hidden;
     display: flex;
     flex-direction: column
@@ -27,7 +28,7 @@ body.editor-body .wrap {
     display: grid;
     grid-template-columns: 360px minmax(0,1fr);
     gap: 14px;
-    margin-top: 12px;
+    margin-top: 22px;
     min-height: 0;
     flex: 1
 }
