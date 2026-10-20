@@ -1078,10 +1078,13 @@ main:has(> .footer){
     .modal--sheet.sheet-active.sheet-closing .modal,
     .modal--sheet.sheet-active.sheet-closing .market-preview-card { animation: sheetDown .24s ease-in both; }
 
-    /* Roletka dopasowana do treści (np. zmiana nazwy): wysokość z zawartości,
-       najwyżej do safe area. */
+    /* Roletka z polem tekstowym (np. zmiana nazwy): treść u góry, panel
+       wysoki na 78% ekranu, żeby pole i przyciski zostały nad klawiaturą
+       (uwaga użytkownika 2026-10-20); najwyżej do safe area. */
     .modal--sheet.sheet-active.sheet-fit .modal {
         height: auto !important;
+        min-height: min(78dvh, calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)));
+        justify-content: flex-start;
         max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)) !important;
     }
 

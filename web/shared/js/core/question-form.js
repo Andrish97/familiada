@@ -155,7 +155,7 @@ export function sumPoints(answers) {
   return s;
 }
 
-/** Nagłówek listy odpowiedzi ze znacznikiem „Suma x/100” -- czerwony
+/** Nagłówek listy odpowiedzi z dopiskiem „Suma x/100” -- czerwony
  *  (klasa "over") powyżej puli. Wygląd jak nagłówki list (decyzja 2026-10-20). */
 export function renderSumPill(el, sum) {
   if (!el) return;
@@ -166,7 +166,9 @@ export function renderSumPill(el, sum) {
   label.textContent = t("questionForm.answersHeading");
   const val = document.createElement("span");
   val.className = "qf-sumChip";
-  val.textContent = `${t("questionForm.sumLabel")} ${sum}/${LIMITS.SUM_MAX}`;
+  const num = document.createElement("b");
+  num.textContent = `${sum}/${LIMITS.SUM_MAX}`;
+  val.append(t("questionForm.sumLabel"), num);
   el.append(label, val);
 }
 

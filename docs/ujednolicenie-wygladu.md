@@ -85,12 +85,14 @@ podliczania jako stan bieżącej operacji.
   górne rogi 28 px; pasek u góry nie zasłania nagłówka; panel i pasek nie
   wchodzą wyżej niż safe area (także przy przeciąganiu), dół z safe area.
 - **Zmiana nazwy jako roletka (decyzja użytkownika 2026-10-20):** okno nazwy
-  (`promptModal`) na telefonie/tablecie dotykowym wysuwa się od dołu,
-  z wysokością dopasowaną do treści (`sheet-fit`).
+  (`promptModal`) na telefonie/tablecie dotykowym wysuwa się od dołu
+  (`sheet-fit`): treść u góry, panel na 78% ekranu, żeby pole i przyciski
+  zostały nad klawiaturą (uwaga użytkownika: okno nie może być niskie).
 - **Odpowiedzi w formularzu pytania (uwaga użytkownika 2026-10-20, druga
   wersja):** bez nagłówków kolumn („tabeli”); nad listą nagłówek
-  „ODPOWIEDZI” jak etykiety pól i znacznik „Suma x/100” (czerwony powyżej
-  puli; bez punktów sam nagłówek). Każda odpowiedź to kafel jak wiersze list
+  „ODPOWIEDZI” jak etykiety pól i po prawej cichy dopisek „SUMA x/100”
+  (liczba złotem, czerwony powyżej puli; bez pigułki — uwaga użytkownika;
+  bez punktów sam nagłówek). Każda odpowiedź to kafel jak wiersze list
   (`.shareRow`: promień 12, `--card2`, `--line2`): tekst bez własnej ramki,
   małe pole punktów z dopiskiem „pkt” i kosz `.btn.icon.danger` 36 px.
   Edytor gry i okno pytania w Eksploratorze (`question-form.css`).
