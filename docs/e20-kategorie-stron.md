@@ -165,7 +165,7 @@ Guard urządzenia działa przed odsłonięciem strony i pobraniem jej danych.
 
 | Krok | Sprawdzana rzecz | Wynik |
 |---:|---|---|
-| 1 | Czy ekran fizycznie może osiągnąć próg układu w którejkolwiek orientacji? Dla TV, jeśli strona tego wymaga, sprawdź też zgłoszone HD (co najmniej 1280 × 720 po uwzględnieniu `devicePixelRatio`). | Jeśli nie: `screen` — „Wymagany większy ekran”; „Ten ekran jest za mały. Użyj urządzenia z większym ekranem.” |
+| 1 | Czy ekran fizycznie może osiągnąć próg układu w którejkolwiek orientacji? Dla TV, jeśli strona tego wymaga, sprawdź też zgłoszone HD (co najmniej 1280 × 720 po uwzględnieniu `devicePixelRatio`). | Jeśli nie: `screen` — „Wymagany większy ekran”; „Ten ekran jest za mały. Użyj urządzenia z większym ekranem.” **Telefon:** zamiast tego „Niedostępne na telefonie” (decyzja 2026-10-20, niżej). |
 | 2 | Czy strona wymaga głównego wejścia dotykowego? Rozpoznaj je przez coarse pointer bez hover; sama obecność dodatkowego digitizera dotykowego nie wystarcza. | Jeśli brakuje: `touch` — „Wymagany ekran dotykowy”; „Otwórz tę stronę na telefonie lub tablecie z ekranem dotykowym.” |
 | 3 | Czy wykryta kategoria jest dozwolona przez stronę? Typ wynika z rozmiaru ekranu i głównego wskaźnika; TV dodatkowo z heurystyki User-Agent. | Jeśli kategoria wykluczona: `unsupported`, np. „Niedostępne na telefonie”; komunikat oznacza wykluczenie tej kategorii, nie za mały ekran. |
 | 4 | Czy bieżący viewport ma wymaganą szerokość; jeśli nie, czy obrót telefonu/tabletu ją zapewni? Obrót rozważamy tylko przy pełnej szerokości widoku portrait; zwężony widok tabletu traktujemy jako split view. Komputera ani TV nigdy nie prosimy o obrót. | Obrót rozwiązuje problem: `rotate` — „Obróć urządzenie”; w przeciwnym razie możliwe poszerzenie okna: `narrow` — „Za wąskie okno”. |
@@ -181,7 +181,8 @@ samego komunikatu o za małym ekranie, bez osobnego tekstu o rozdzielczości.
 
 | Przykład | Oczekiwany pierwszy komunikat |
 |---|---|
-| Telefon niedopuszczony przez stronę i za mały, by spełnić jej próg | Wymagany większy ekran |
+| Telefon niedopuszczony przez stronę i za mały, by spełnić jej próg | Niedostępne na telefonie (decyzja 2026-10-20; wcześniej „Wymagany większy ekran”) |
+| Telefon dopuszczony, ale strona wymaga więcej niż jego szerokość, a obrót nie pomoże | Niedostępne na telefonie (decyzja 2026-10-20; wcześniej „Za wąskie okno”) |
 | Telefon niedopuszczony, ale ekran spełnia wymagania rozmiaru | Niedostępne na telefonie |
 | Telefon landscape na zwykłej stronie | Obróć urządzenie |
 | Telefon portrait na Buzzerze | Obróć urządzenie — treść o Buzzerze; ekran strony zablokowany |
@@ -191,3 +192,10 @@ samego komunikatu o za małym ekranie, bez osobnego tekstu o rozdzielczości.
 | TV wykryty, ale poniżej wymaganego HD | Wymagany większy ekran |
 | Telefon lub tablet, którego obrót osiąga próg | Obróć urządzenie |
 | Dopuszczone urządzenie, ale użytkownik nie ma uprawnień | Guard dostępu strony |
+
+**Decyzja użytkownika 2026-10-20 — telefon:** telefon dostaje tylko dwa
+komunikaty guarda urządzenia: „Obróć urządzenie”, gdy obrót pomoże, albo
+„Niedostępne na telefonie” — także wtedy, gdy ekran jest za mały (`screen`)
+albo widok za wąski (`narrow`), bo telefonu nie da się poszerzyć ani wymienić
+ekranu. Tablety, komputery i TV bez zmian. Kod: `phoneGuardState` w
+`web/shared/js/core/device-guard.js`.
