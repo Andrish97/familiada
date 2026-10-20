@@ -1,4 +1,4 @@
-import { hasDisplayGlyph } from "./fonts.js?v=v2026-10-20T15582";
+import { hasDisplayGlyph } from "./fonts.js?v=v2026-10-20T16344";
 
 // Długie pola Wyświetlacza (long1/long2 -- nazwy drużyn): 95 kolumn kropek.
 // Znaki rysujemy proporcjonalnie: każdy zajmuje tylko kolumny ze swoimi

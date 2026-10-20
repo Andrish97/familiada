@@ -1,8 +1,8 @@
 // familiada/logos/js/editor-text.js
 // Strona /logos/editor/text/?id=<logo> -- edytor trybu TEXT (editor-page.js).
 
-import { bootEditorPage } from "./editor-page.js?v=v2026-10-20T15582";
-import { initTextEditor } from "./text.js?v=v2026-10-20T15582";
+import { bootEditorPage } from "./editor-page.js?v=v2026-10-20T16344";
+import { initTextEditor } from "./text.js?v=v2026-10-20T16344";
 
 
 bootEditorPage({ mode: "TEXT", initEditor: initTextEditor });
