@@ -39,6 +39,13 @@ const { acceptBaseShare } = require("./helpers/base-sharing");
 
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// Poza main: strona i wspólny front z plików brancha (baza/konta produkcyjne),
+// inaczej spec sprawdzał nowy wygląd na starym kodzie produkcji.
+test.beforeEach(async ({ context }) => {
+  if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases/explorer"] });
+});
 
 const BASE_URL = "https://www.familiada.online/bases/explorer";
 
