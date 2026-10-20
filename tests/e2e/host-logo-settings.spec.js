@@ -1,5 +1,5 @@
 const { test, expect } = require("./helpers/production-test");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsPooledTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const ORIGIN = "https://www.familiada.online";
@@ -46,12 +46,11 @@ async function deleteHostLogoGame(page, gameId) {
   }, gameId);
 }
 
-test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Control (test9)", async ({ page, browser, context }, testInfo) => {
+test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Control", async ({ page, browser, context }, testInfo) => {
   test.setTimeout(150_000);
-  // Konto 9 jest przeznaczone wyłącznie do tych dedykowanych testów; nie jest
-  // dodawane do puli kont współdzielonej przez przebiegi Control.
+  // Konto z puli (test1–test8); test9/test10 są wyłączone.
   await serveBranchCode(context, { pages: ["games/settings", "control", "host", "display"] });
-  await loginAsTestUser(page, context, { username: "test9@familiada.online" });
+  await loginAsPooledTestUser(page, context, testInfo.workerIndex);
   let game;
   let displayContext;
   try {
