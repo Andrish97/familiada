@@ -3199,7 +3199,7 @@ const en = {
       again: "ARROW = PLAY AGAIN",
       againTouch: "SWIPE = PLAY AGAIN",
     },
-    long: { score: "SCORE", best: "RECORD", paused: "PAUSED" },
+    long: { score: "SCORE", best: "RECORD", paused: "PAUSED", bonus: ({ points }) => `BONUS +${points}` },
   },
   pollGo: {
     friendActive: "You are friends",

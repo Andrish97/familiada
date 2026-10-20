@@ -10,16 +10,16 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T18092";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T18092";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T18092";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T18092";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T18092";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-20T18092";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T18092";
-import { createPressController } from "./press.js?v=v2026-10-20T18092";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T18092";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T18092";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T18202";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T18202";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T18202";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T18202";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T18202";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-20T18202";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T18202";
+import { createPressController } from "./press.js?v=v2026-10-20T18202";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T18202";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T18202";
 
 
 function parseParams() {

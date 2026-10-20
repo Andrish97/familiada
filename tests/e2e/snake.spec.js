@@ -30,13 +30,53 @@ function recordSnakeLog(page) {
   return log;
 }
 
-// Start strzałką w prawo (wąż i tak jedzie w prawo) i czekanie na uderzenie w ścianę.
+// Plansza z kolorów kropek dużego wyświetlacza (30x10 kafli): głowa (kafel
+// z oczami), długość węża i jabłko (czerwone albo w fazie mrugnięcia).
+const readBoard = (page) => page.evaluate(() => {
+  const tiles = [...document.querySelectorAll("#displays > g")[0].children].slice(1);
+  const out = { head: null, apple: null, length: 0 };
+  tiles.forEach((tile, i) => {
+    const fills = [...tile.querySelectorAll("circle")].map((c) => c.getAttribute("fill"));
+    const lit = fills.filter((f) => f === "#d7ff3d").length;
+    const at = { x: i % 30, y: Math.floor(i / 30) };
+    if (fills.includes("#ff4040") || lit === 23) out.apple = at;
+    else if (lit === 35) out.length++;
+    else if (lit === 33) { out.head = at; out.length++; }
+  });
+  return out;
+});
+
+// Ściany są przenikalne, więc grę kończy tylko własny ogon: zjada dwa jabłka
+// (5 pól) i zawraca w siebie (góra, lewo, dół). Klawiatura, przeglądarka komputerowa.
 async function playUntilCrash(page) {
   const frame = page.locator("#snakeFrame");
   await expect(frame).toHaveAttribute("data-mode", "intro", { timeout: 30_000 });
-  await page.locator("body").press("ArrowRight");
+  const key = { up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight" };
+  const opposite = { up: "down", down: "up", left: "right", right: "left" };
+  let dir = "right";
+  await page.locator("body").press("ArrowUp");
+  dir = "up";
   await expect(frame).toHaveAttribute("data-mode", "play");
-  await expect(frame).toHaveAttribute("data-mode", "over", { timeout: 30_000 });
+  const deadline = Date.now() + 60_000;
+  for (;;) {
+    if (Date.now() > deadline) throw new Error("bot nie zjadł dwóch jabłek w 60 s");
+    const b = await readBoard(page);
+    if (await frame.getAttribute("data-mode") !== "play") throw new Error("gra skończyła się przed zawróceniem");
+    if (b.length >= 5 && b.head) break;
+    if (!b.head || !b.apple) { await page.waitForTimeout(20); continue; }
+    const want = b.apple.x !== b.head.x ? (b.apple.x > b.head.x ? "right" : "left") : (b.apple.y > b.head.y ? "down" : "up");
+    const next = want === opposite[dir] ? (dir === "left" || dir === "right" ? "up" : "left") : want;
+    if (next !== dir) { await page.locator("body").press(key[next]); dir = next; }
+    await page.waitForTimeout(30);
+  }
+  // Zawrócenie: trzy skręty w kolejnych krokach.
+  const turns = dir === "up" || dir === "down" ? ["left", opposite[dir], "right"] : ["up", opposite[dir], "down"];
+  for (const turn of turns) {
+    const before = JSON.stringify((await readBoard(page)).head);
+    await page.locator("body").press(key[turn]);
+    await expect.poll(async () => JSON.stringify((await readBoard(page)).head), { timeout: 2_000, intervals: [15] }).not.toBe(before);
+  }
+  await expect(frame).toHaveAttribute("data-mode", "over", { timeout: 5_000 });
 }
 
 test("wąż: kod QR z kadru prowadzi do gry, zdarzenia trafiają do bazy (bez konta)", async ({ page }) => {

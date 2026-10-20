@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict r8dcGKelcTdSMUm8w3EoQs0a2DybrIjBLYnJR7VuIi0JC2n1fCCbIo1MfzdIb7p
+\restrict G2co4eH0eR2Et37ZSeHeJry9gExgVCJCEUODLLT2Z1uxDb6klimcxAmEQawL5kE
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -17976,7 +17976,7 @@ BEGIN
   IF v_uid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = v_uid) THEN
     v_uid := NULL;
   END IF;
-  v_score := CASE WHEN p_kind = 'finish' THEN least(greatest(coalesce(p_score, 0), 0), 300) END;
+  v_score := CASE WHEN p_kind = 'finish' THEN least(greatest(coalesce(p_score, 0), 0), 2000) END;
   INSERT INTO public.snake_events (kind, visitor, user_id, score, lang)
   VALUES (p_kind, p_visitor, v_uid, v_score, CASE WHEN p_lang IN ('pl','en','uk') THEN p_lang END);
 
@@ -20402,7 +20402,7 @@ CREATE TABLE "public"."snake_events" (
     "lang" "text",
     CONSTRAINT "snake_events_kind_check" CHECK (("kind" = ANY (ARRAY['scan'::"text", 'enter'::"text", 'start'::"text", 'finish'::"text"]))),
     CONSTRAINT "snake_events_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
-    CONSTRAINT "snake_events_score_check" CHECK ((("score" >= 0) AND ("score" <= 300))),
+    CONSTRAINT "snake_events_score_check" CHECK ((("score" >= 0) AND ("score" <= 2000))),
     CONSTRAINT "snake_events_visitor_check" CHECK (("visitor" ~ '^[A-Za-z0-9_-]{8,64}$'::"text"))
 );
 
@@ -25966,5 +25966,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict r8dcGKelcTdSMUm8w3EoQs0a2DybrIjBLYnJR7VuIi0JC2n1fCCbIo1MfzdIb7p
+\unrestrict G2co4eH0eR2Et37ZSeHeJry9gExgVCJCEUODLLT2Z1uxDb6klimcxAmEQawL5kE
 
