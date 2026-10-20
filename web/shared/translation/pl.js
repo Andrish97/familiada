@@ -3089,9 +3089,10 @@ const pl = {
     title: "Familiada — wąż",
     boardLabel: "Plansza Wyświetlacza z grą w węża",
     keysHint: "Strzałki albo WASD, spacja albo kliknięcie planszy — pauza.",
-    progressAccount: ({ best, games }) => `Twój rekord na koncie: ${best} pkt · rozegrane gry: ${games}.`,
-    progressLocal: "Rekord zapisuje się tylko w tej przeglądarce. Zaloguj się, żeby trzymać go na koncie.",
+    progressAccount: ({ best, games }) => `Rekord na koncie: ${best} · gry: ${games}`,
+    progressLocal: "Zaloguj się, by zapisać rekord",
     login: "Zaloguj się",
+    accountLabel: "Konto",
     home: "Familiada",
     rotateMessage: "Obróć telefon poziomo — wąż jeździ po całym Wyświetlaczu.",
     board: {

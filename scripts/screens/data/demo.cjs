@@ -290,10 +290,24 @@ function buildDb(lang, extras = {}) {
     game_state_get: `fn:(args, db) => db.tables.game_state.find((r) => r.game_id === args.p_game_id) || null`,
     // Kadry rozgrywki: wszystkie urządzenia połączone, dźwięk Wyświetlacza odblokowany.
     control_device_slots_for_owner: ["display", "host", "buzzer"].map((device_type) => ({ device_type, primary_online: true })),
+    control_devices_snapshot: { ok: true, devices: Object.fromEntries(["display", "host", "buzzer"].map((kind) => [kind, {
+      primary_online: true, waiting_count: 0, visibility: "visible", focused: true, audio_unlocked: true, meta: {},
+    }])) },
+    // Zapis stanu z Control (kroki Urządzenia/Podsumowanie zapisują od razu
+    // po starcie): ten sam wiersz z kolejną rewizją, jak game_state_write.
+    game_state_write: `fn:(args, db) => {
+      const row = db.tables.game_state.find((r) => r.game_id === args.p_game_id);
+      if (!row) return null;
+      Object.assign(row, { rev: (row.rev || 0) + 1, step: args.p_step, top_card: args.p_top_card, phase: args.p_phase,
+        control_team: args.p_control_team, detail: args.p_detail ?? row.detail,
+        sound_cue_key: args.p_sound_cue_key, sound_cue_seq: (row.sound_cue_seq || 0) + (args.p_sound_cue_key ? 1 : 0) });
+      return { ...row };
+    }`,
+    game_state_set_ui_lang: `fn:(args, db) => ({ ...(db.tables.game_state.find((r) => r.game_id === args.p_game_id) || {}) })`,
     control_device_shares_list: [], friends_list: friends.filter((f) => f.direction === "friend").map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, direction: "friend", status: "active" })), resource_copy_history: { ok: true, items: [] },
     control_runtime_session_touch_v2: { ok: true, session_id: id("8e00", 1), device_protocol: 2, expired: false },
     control2_session_ping: { ok: true }, control2_control_visibility_event: { ok: true },
-    control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "4821" },
+    control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "482193" },
     // Głosowanie z linku (anonimowo): stan i treść ankiety.
     poll_state: `fn:(args, db) => { const g = db.tables.games.find((x) => x.id === args.p_game_id); return g ? { ok: true, state: g.status === "poll_open" ? "open" : "ended", type: g.type } : { ok: false, state: "not_found" }; }`,
     poll_get_payload: `fn:(args, db) => {
@@ -326,6 +340,10 @@ function buildDb(lang, extras = {}) {
       "/_admin_api/me": { ok: true, email: "admin@example.com" },
       "/_admin_api/activity*": { ok: true, history: { hour: [], day: [], week: [] }, games: [], pages: [], locks: [] },
       "/_admin_api/state": { enabled: false, mode: "message", message: "" },
+      // Liczniki powiadomień panelu: 3 nieprzeczytane maile, 2 otwarte zgłoszenia, 4 gry do zatwierdzenia.
+      "/_admin_api/messages?filter=inbox*": { ok: true, rows: [1, 2, 3, 4].map((n) => ({ id: `m${n}`, direction: "inbound", is_read: n === 4, report_id: null, subject: `Pytanie ${n}`, created_at: "2026-10-20T10:00:00Z" })) },
+      "/_admin_api/reports?status=all*": { ok: true, rows: [{ id: "r1", status: "open" }, { id: "r2", status: "open" }, { id: "r3", status: "closed" }] },
+      "/_admin_api/marketplace/list?status=pending*": { ok: true, rows: ["Rodzinny quiz", "Wieczór filmowy", "Szkolna Familiada", "Kuchnia świata", "Gra producenta"].map((title, i) => ({ id: `mk${i}`, title, lang: "pl", status: "pending", origin: i === 4 ? "producer" : "user", author_username: "ania.k", created_at: "2026-10-19T18:00:00Z", library_count: 0 })) },
       "/_admin_api/stats/snake": { ok: true, stats: {
         kinds: { scan: { total: 142, today: 6, last_7d: 41, visitors: 118 }, enter: { total: 131, today: 6, last_7d: 38, visitors: 109 },
           start: { total: 388, today: 21, last_7d: 120, visitors: 87 }, finish: { total: 371, today: 19, last_7d: 115, visitors: 85 } },

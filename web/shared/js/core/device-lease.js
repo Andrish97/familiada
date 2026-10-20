@@ -1,8 +1,8 @@
-import { sb } from "./supabase.js?v=v2026-10-20T19254";
-import { t } from "../../translation/translation.js?v=v2026-10-20T19254";
-import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-20T19254";
-import { startTicker } from "./background-ticker.js?v=v2026-10-20T19254";
-import { icon } from "./icons.js?v=v2026-10-20T19254";
+import { sb } from "./supabase.js?v=v2026-10-20T23145";
+import { t } from "../../translation/translation.js?v=v2026-10-20T23145";
+import { getDevicePresenceMeta } from "./device-context.js?v=v2026-10-20T23145";
+import { startTicker } from "./background-ticker.js?v=v2026-10-20T23145";
+import { icon } from "./icons.js?v=v2026-10-20T23145";
 
 
 const HEARTBEAT_MS = 3_000;
@@ -34,7 +34,7 @@ export function updateDeviceLeaseOverlay(state) {
   overlay.style.display = "flex";
 }
 
-export function createDeviceLease({ gameId, deviceType, key, onState }) {
+export function createDeviceLease({ gameId, deviceType, key, onState, onGameRev }) {
   let connectionId = makeConnectionId();
   let mode = "starting";
   let state = "starting";
@@ -73,6 +73,10 @@ export function createDeviceLease({ gameId, deviceType, key, onState }) {
     epoch = state === "primary" ? Number(data.epoch) : null;
     if (`${state}:${epoch}` !== previous) onState?.({ mode, state, epoch, queuePosition: data.queue_position ?? null, waitingCount: data.waiting_count ?? 0 });
     if (!wasPrimary && state === "primary" && telemetryActive) queueInitialPageState();
+    // Heartbeat niesie bieżącą rewizję gry (migracja 424): urządzenie, które
+    // zgubiło zmianę z kanału na żywo, może ją dociągnąć samo.
+    const gameRev = Number(data.game_rev);
+    if (state === "primary" && Number.isSafeInteger(gameRev)) onGameRev?.(gameRev);
   }
 
   async function call(name, params) {

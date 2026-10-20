@@ -1,5 +1,5 @@
 const { test, expect } = require("./helpers/production-test");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsPooledTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const ORIGIN = "https://www.familiada.online";
@@ -19,7 +19,7 @@ async function createHostLogoGame(page) {
       settings: {
         teams: { teamA: "Alfa", teamB: "Beta" },
         game: { hasFinal: false },
-        display: { mode: "GAME", theme: "classic", colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#171923", DOT: "#ffcc00" }, hostLogoMode: "pixel" },
+        display: { mode: "GAME", theme: "classic", colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#171923", DOT: "#ffcc00" } },
       },
     }).select("id,share_key_display,share_key_host,share_key_buzzer").single();
     if (error) throw new Error(`insert game: ${error.message}`);
@@ -46,12 +46,11 @@ async function deleteHostLogoGame(page, gameId) {
   }, gameId);
 }
 
-test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Control (test9)", async ({ page, browser, context }, testInfo) => {
+test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Control", async ({ page, browser, context }, testInfo) => {
   test.setTimeout(150_000);
-  // Konto 9 jest przeznaczone wyłącznie do tych dedykowanych testów; nie jest
-  // dodawane do puli kont współdzielonej przez przebiegi Control.
+  // Konto z puli (test1–test8); test9/test10 są wyłączone.
   await serveBranchCode(context, { pages: ["games/settings", "control", "host", "display"] });
-  await loginAsTestUser(page, context, { username: "test9@familiada.online" });
+  await loginAsPooledTestUser(page, context, testInfo.workerIndex);
   let game;
   let displayContext;
   try {
@@ -68,6 +67,9 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     const hostPreview = page.frameLocator("#gsHostPreview");
     await expect(page.locator("#gsHostPreview")).toBeVisible();
     await expect(page.locator("#gsDisplayPreview")).toBeVisible();
+    // Bez ustawienia domyślny tryb to „Źródło” (decyzja 2026-10-20).
+    await expect(page.locator('input[name="gsHostLogoMode"][value="source"]')).toBeChecked();
+    await page.locator(".gs-host-logo-mode .toggle-item").nth(0).click();
     await expect(page.locator('input[name="gsHostLogoMode"][value="pixel"]')).toBeChecked();
     // Radio inputs are visually hidden behind the designed toggle; click the
     // actual visible control, then assert the input state it drives.
@@ -78,7 +80,7 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await page.locator('.swatchBtn[data-color-key="DOT"]').click();
     await page.locator("#gsColorHex").fill("#33aaff");
     await page.locator("#gsColorHex").press("Tab");
-    await page.locator("#gsColorModalDone").click();
+    await page.getByRole("button", { name: "Gotowe", exact: true }).click();
     await expect(hostPreview.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
     await expect.poll(() => hostPreview.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim().toLowerCase())).toBe("#33aaff");
     await expect(hostPreview.locator("#cover2")).toHaveClass(/coverOn/);
@@ -89,8 +91,10 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await expect.poll(() => settingsDisplay.locator("#displays").evaluate(el => el.innerHTML.length)).toBeGreaterThan(0);
     await page.locator("#gsLivePreviewWrap").screenshot({ path: testInfo.outputPath("shot-host-logo-game-settings.png") });
 
-    // Autozapis (bez przycisku „Zapisz”): zmiany powyżej zapisują się same.
-    const saveResponse = await page.waitForResponse(response => response.url().includes("/rest/v1/games") && response.request().method() === "PATCH");
+    // Zapis przyciskiem „Zapisz” (#btnSaveAll).
+    const saveWait = page.waitForResponse(response => response.url().includes("/rest/v1/games") && response.request().method() === "PATCH");
+    await page.locator("#btnSaveAll").click();
+    const saveResponse = await saveWait;
     expect(saveResponse.ok()).toBeTruthy();
     const persistedMode = await page.evaluate(async id => {
       const { data, error } = await window.__sbClient.from("games").select("settings").eq("id", id).single();
@@ -108,13 +112,21 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await page.locator('.gs-sidebar-item[data-cat="display"]').click();
     await expect(page.locator('input[name="gsHostLogoMode"][value="source"]')).toBeChecked();
 
-    displayContext = await browser.newContext({ locale: "pl-PL" });
-    await serveBranchCode(displayContext, { pages: ["display"] });
-    const displayPage = await displayContext.newPage();
-    await displayPage.goto(`${ORIGIN}/control/display?id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" });
-
+    // Najpierw Control (sesja urządzeń), potem Wyświetlacz przez /go/ —
+    // tak jak w control2.spec.js (openAnon).
     await page.goto(`${ORIGIN}/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 20_000 });
+    displayContext = await browser.newContext({ locale: "pl-PL", viewport: { width: 1366, height: 1024 }, hasTouch: true, serviceWorkers: "block" });
+    await serveBranchCode(displayContext, { pages: ["display"] });
+    const displayPage = await displayContext.newPage();
+    // /go/ przyjmuje token linku urządzenia z sesji Control (jak makeGame
+    // w control2.spec.js), nie games.share_key_display.
+    const displayKey = await page.evaluate(async (gameId) => {
+      const { data, error } = await window.__sbClient.rpc("control_runtime_device_link", { p_game_id: gameId, p_device_type: "display" });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || "device link failed");
+      return data.token;
+    }, game.id);
+    await displayPage.goto(`${ORIGIN}/go/?d=display&id=${game.id}&key=${displayKey}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 20_000 });
     await page.getByLabel("Przycisk fizyczny").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();

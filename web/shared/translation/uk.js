@@ -3186,9 +3186,10 @@ const uk = {
     title: "Familiada — змійка",
     boardLabel: "Табло з грою в змійку",
     keysHint: "Стрілки або WASD, пробіл або клік по табло — пауза.",
-    progressAccount: ({ best, games }) => `Твій рекорд в акаунті: ${best} очк. · зіграно ігор: ${games}.`,
-    progressLocal: "Рекорд зберігається лише в цьому браузері. Увійди, щоб зберегти його в акаунті.",
+    progressAccount: ({ best, games }) => `Рекорд в акаунті: ${best} · ігор: ${games}`,
+    progressLocal: "Увійди, щоб зберегти рекорд",
     login: "Увійти",
+    accountLabel: "Акаунт",
     home: "Familiada",
     rotateMessage: "Поверни телефон горизонтально — змійка повзає по всьому табло.",
     board: {

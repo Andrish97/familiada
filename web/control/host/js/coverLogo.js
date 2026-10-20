@@ -4,7 +4,8 @@
 // zależnie od tego, czy gra ma logo domyślne czy niestandardowe (zgłoszone
 // wprost, nie zgadywane):
 //
-// - Logo DOMYŚLNE (brak logoId): napis FAMILIADA z silnika Unbounded/3D.
+// - Logo DOMYŚLNE (brak logoId): w trybie "source" napis FAMILIADA z
+//   silnika Unbounded/3D, w trybie "pixel" siatka logo_familiada.json.
 //
 // - Logo NIESTANDARDOWE (jest logoId): zamiast oryginalnych kolorów/
 //   przerw logo, rysujemy siatkę PEŁNYCH kwadratów bez przerw (w
@@ -17,15 +18,34 @@
 //
 // settings.display.colors.A/B/BACKGROUND nie mają tu wpływu.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T19254";
-import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T19254";
-import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-20T19254";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T23145";
+import { loadFont5x7, logoToBits150 } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T23145";
+import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-20T23145";
+import { loadJson } from "../../../shared/js/display/fonts.js?v=v2026-10-20T23145";
 
 
 const DOT_W = 150, DOT_H = 70;
 const DEFAULT_DOT_COLOR = "#d7ff3d"; // web/js/gameplay/gameStateShape.js's default
 const DEFAULT_LOGO_FACE = "#fc0";
-async function renderDefaultLogo(el, dotColor, shouldPaint = () => true) {
+// Logo domyślne ma te same dwa tryby co niestandardowe (decyzja 2026-10-20):
+// "source" — napis FAMILIADA, "pixel" — siatka z logo_familiada.json
+// (to samo logo, które pokazuje Wyświetlacz).
+let _defaultGlyphLogo = null;
+function defaultGlyphLogoOnce() {
+  if (!_defaultGlyphLogo) {
+    _defaultGlyphLogo = loadJson("/shared/data/logo_familiada.json")
+      .then((payload) => ({ type: "GLYPH_30x10", payload }))
+      .catch(() => { _defaultGlyphLogo = null; return null; });
+  }
+  return _defaultGlyphLogo;
+}
+
+async function renderDefaultLogo(el, dotColor, shouldPaint = () => true, mode = "source") {
+  if (mode === "pixel") {
+    const logo = await defaultGlyphLogoOnce();
+    if (!shouldPaint()) return;
+    if (logo) return renderCustomLogo(el, logo, dotColor, shouldPaint, "pixel");
+  }
   const wordmark = await renderTextLogo("FAMILIADA", dotColor);
   if (!shouldPaint()) return;
   wordmark.setAttribute("aria-label", "FAMILIADA");
@@ -120,7 +140,7 @@ export function createCoverLogoRenderer({ gameId, key, previewOnly = false } = {
     if (!el) return;
     const dot = row.detail?.display?.colors?.DOT || DEFAULT_DOT_COLOR;
     const logoId = row.detail?.display?.logoId ?? null;
-    const logoMode = row.detail?.display?.hostLogoMode === "source" ? "source" : "pixel";
+    const logoMode = row.detail?.display?.hostLogoMode === "pixel" ? "pixel" : "source";
     const hasPreviewLogo = row.detail?.display && Object.hasOwn(row.detail.display, "logoPreview");
     const previewLogo = row.detail?.display?.logoPreview;
     setCoverAccent(dot);
@@ -136,15 +156,15 @@ export function createCoverLogoRenderer({ gameId, key, previewOnly = false } = {
     const current = () => seq === fetchSeq;
     if (hasPreviewLogo) {
       if (previewLogo?.type && previewLogo?.payload) await renderCustomLogo(el, previewLogo, dot, current, logoMode);
-      else await renderDefaultLogo(el, dot, current);
+      else await renderDefaultLogo(el, dot, current, logoMode);
       return;
     }
     // Passive previews may receive an unsaved payload from their parent.
     // Otherwise resolve only the selected logoId through the logged-in
     // owner's RLS access; no game ID, device key, or lock state is involved.
     if (previewOnly) {
-      if (!el.childElementCount) await renderDefaultLogo(el, dot, current);
-      if (!logoId) return;
+      if (!logoId) return renderDefaultLogo(el, dot, current, logoMode);
+      if (!el.childElementCount) await renderDefaultLogo(el, dot, current, logoMode);
       try {
         const { data, error } = await sb()
           .from("user_logos")
@@ -160,29 +180,29 @@ export function createCoverLogoRenderer({ gameId, key, previewOnly = false } = {
       return;
     }
     if (awaitingSummary && !summary) {
-      await renderDefaultLogo(el, dot, current);
+      await renderDefaultLogo(el, dot, current, logoMode);
       return;
     }
     // A Host opened before Control has no game_state yet. Still resolve the
     // selected game logo; show the default while checking its editing lock.
-    if (!el.childElementCount) await renderDefaultLogo(el, dot, current);
+    if (!el.childElementCount) await renderDefaultLogo(el, dot, current, logoMode);
     try {
       const { data, error } = await sb().rpc("host2_logo_get_public", { p_game_id:gameId, p_key:key });
       if (!current()) return;
       if (error) throw error;
       if (data?.busy) {
         awaitingSummary = true;
-        await renderDefaultLogo(el, dot, current);
+        await renderDefaultLogo(el, dot, current, logoMode);
         return;
       }
       awaitingSummary = false;
       const logo = data?.logo;
       if (logo?.type && logo?.payload) await renderCustomLogo(el, logo, dot, current, logoMode);
-      else await renderDefaultLogo(el, dot, current);
+      else await renderDefaultLogo(el, dot, current, logoMode);
     } catch {
       if (!current()) return;
       lastLogoId = undefined;
-      await renderDefaultLogo(el, dot, current);
+      await renderDefaultLogo(el, dot, current, logoMode);
     }
   }
 

@@ -56,8 +56,25 @@ Decyzje:
    w oczekiwanie i wraca, gdy nowa zniknie. Ponowne rejestracje nie przejmują
    (brak przerzucania między dwiema kartami). Inna przeglądarka nadal czeka.
    Migracja 423, test `tests/sql/control2-same-browser-takeover-423.sql`.
-   Nie zmieniono (do decyzji): brak Przycisku nadal wstrzymuje wszystkie
-   akcje gry, także kroki bez Przycisku.
+8. **Brak wymaganego urządzenia blokuje całą grę (decyzja użytkownika
+   2026-10-20).** Jeśli Przycisk nie został wyłączony w panelu („Przycisk
+   fizyczny”), jego brak wstrzymuje wszystkie akcje gry, także kroki, w których
+   Przycisk nie jest używany. Tak samo Prowadzący (o ile nie zaznaczono „Nie
+   używaj tabletu prowadzącego”) i Wyświetlacz. Bez zmian w `deviceGate.js`.
+9. **Rozgrywka i ekrany Control (decyzje użytkownika 2026-10-20).**
+   - Jedna czcionka bazowa `--c2-fs` (z okna) na wszystkich krokach Control:
+     Urządzenia i Podsumowanie mają ten sam rozmiar co rozgrywka.
+   - Zegarek 3 s nie zmienia Wyświetlacza (małe potrójne wyświetlacze dalej
+     pokazują wyniki) i nie blokuje akcji: każda inna akcja w trakcie
+     odliczania gasi zegarek bez naliczania X.
+   - W trakcie outro po końcu gry „Wróć do moich gier” jest dostępne od razu,
+     jak „Zacznij od nowa”.
+   - Podglądy Wyświetlacza i Prowadzącego (`?preview=1`, Control i Ustawienia
+     gry) nie mają przycisków pełnego ekranu.
+   - Logo domyślne Prowadzącego ma oba tryby: „Piksele” (siatka
+     `logo_familiada.json`) i „Źródło” (napis FAMILIADA). Bez ustawienia
+     domyślny tryb to „Źródło”; gry z zapisanym `hostLogoMode: "pixel"`
+     zostają przy pikselach.
 
 ## Cel
 

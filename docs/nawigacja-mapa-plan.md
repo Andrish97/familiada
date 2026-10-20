@@ -1123,6 +1123,8 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 ## 7. Decyzje
 
+- **2026-10-20 — logowanie z węża wraca do gry** (pytanie użytkownika): wyjątek od „po zalogowaniu zawsze /games/” obok `next=` z maili. Link „Zaloguj się” w `/snake/` to `/login/?next=snake&qr=<id demo>&lang=…`; `login.js` przyjmuje `next=snake` tylko z ważnym `qr` (`isScreenshotPollId`, inaczej strona byłaby 404) i wraca na `/snake/?qr=…`. Strona węża jest `standalone` (mapa: brak „Wstecz”).
+
 - **2026-10-11 (środowisko pracy):** ograniczać ciężkie zadania i testy
   symulacyjne lokalnie (lagi i awarie); punktowe e2e w GitHub Actions,
   wymagane sprawdzenia pojedynczo z ograniczoną współbieżnością lub

@@ -17,12 +17,13 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T19254";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T19254";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T23145";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T23145";
 
 
 const STRIKE_LIMIT = 3;
 const TIMER_SECONDS = { P1: 15, P2: 20 };
+const TIMER3_ACTIONS = new Set(["START_TIMER3", "EXPIRE_TIMER3", "CANCEL_TIMER3"]);
 const FINAL_BLANK = "————";
 
 // Najwyżej punktowana odpowiedź = każda o maksymalnej liczbie punktów (E21):
@@ -760,6 +761,13 @@ export function createEngine({ store, loadQuestionPool, loadQuestions, loadAnswe
     const previousRow = store.state.__row || null;
     const result = await reducer(store.state, action, deps);
     if (!result) return null; // no-op, świadomie — akcja nie miała zastosowania
+    // 3s zegarek nie blokuje innych akcji (zgłoszone 2026-10-20): każda inna
+    // akcja operatora w trakcie odliczania jest decyzją, więc zegarek gaśnie
+    // bez naliczania X — inaczej późniejsze EXPIRE_TIMER3 dokładałoby pudło
+    // (i jego dźwięk z blokadą) po już odsłoniętej odpowiedzi.
+    if (!TIMER3_ACTIONS.has(action.type) && store.state.rounds?.timer3?.running) {
+      store.state.rounds.timer3 = { running: false, endsAt: 0, resolved: null };
+    }
 
     // Tabela stanów jest tu MECHANIZMEM, nie dokumentacją: nielegalny skok
     // (błąd w reducerze, nieuwzględniona gałąź) rzuca zamiast po cichu

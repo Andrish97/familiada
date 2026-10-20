@@ -26,7 +26,6 @@ body.snake-body {
   border-radius: 12px;
   overflow: hidden;
   touch-action: none;
-  cursor: pointer;
   flex: 0 0 auto;
 }
 .snake-frame .layer-bg,
@@ -81,16 +80,14 @@ body.snake-body {
   justify-content: center;
 }
 
-/* Przycisk pełnego ekranu -- jak na Wyświetlaczu (control/display), w strefie bezpiecznej. */
-.fs-btn {
-  position: fixed;
-  top: max(12px, env(safe-area-inset-top, 0px));
-  right: max(12px, env(safe-area-inset-right, 0px));
+/* Przyciski w rogach (pełny ekran, konto) -- jak na Wyświetlaczu (control/display), w strefie bezpiecznej. */
+.snake-corner-btn {
   width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
   padding: 0;
+  box-sizing: border-box;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.28);
   background: rgba(0,0,0,.28);
@@ -99,12 +96,50 @@ body.snake-body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   user-select: none;
+  flex: 0 0 auto;
+}
+.snake-corner-btn:hover { background: rgba(0,0,0,.38); }
+.snake-corner-btn:active { transform: translateY(1px); }
+.snake-corner-btn[hidden] { display: none; }
+.snake-corner-btn .ico { width: 18px; height: 18px; }
+.fs-btn {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
   z-index: 9999;
 }
-.fs-btn:hover { background: rgba(0,0,0,.38); }
-.fs-btn:active { transform: translateY(1px); }
 .fs-btn.on { border-color: rgba(215,255,61,.55); }
-.fs-btn .ico { width: 18px; height: 18px; }
+
+/* Konto: obok pełnego ekranu (34 px przycisku + 8 px odstępu). */
+.snake-account {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: calc(max(12px, env(safe-area-inset-right, 0px)) + 42px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start; /* przyciski równo z pełnym ekranem, gdy komunikat ma dwie linie */
+  gap: 8px;
+}
+.snake-account-note {
+  /* Kończy się przed górnym panelem na środku (najwęższy telefon w poziomie
+     ok. 667 px) -- dłuższy tekst zawija się w dwie linie. */
+  max-width: min(calc(50vw - 150px), 320px);
+  min-height: 34px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255,255,255,.92);
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: right;
+}
+.snake-account-note:empty { display: none; }
 
 /* Zastępczy pełny ekran (przeglądarka bez Fullscreen API). */
 html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden; }
@@ -160,3 +195,6 @@ html.showA2HS .a2hs { display: flex; }
 .lang-floating .btn.lang-btn:hover { --btn-tint: rgba(0,0,0,.38); }
 .lang-floating .lang-btn .ico { width: 22px; height: 22px; }
 .lang-menu { z-index: 10000; }
+
+/* Start/pauza stuknięciem tylko w dużą tablicę (pole gry). */
+.snake-big { cursor: pointer; }

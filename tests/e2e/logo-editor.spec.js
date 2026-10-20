@@ -11,7 +11,7 @@
 // LOGO_E2E_ACCOUNTS (domyślnie 2,3,6,7) -- bez test1@ (na nim działa
 // nagrywanie rozgrywki e2e-record.yml, a trwająca gra blokuje edycję logo:
 // „prowadzisz rozgrywkę”), test4@/test5@ (zarezerwowane dla odizolowanych
-// przebiegów), i test9@/test10@ (Supabase: "Database error querying schema").
+// przebiegów), i test9@/test10@ (wyłączone z puli w CLAUDE.md; logowanie działa — sprawdzone 2026-10-20).
 // Logowanie raz na workera (captureSession). Każdy test
 // sprząta swoje logo i pliki (prefiks).
 //
@@ -1250,22 +1250,24 @@ test.describe("telefon", () => {
     await expect(page.locator("#previewOverlay")).toBeVisible();
   });
 
-  test("edytor telefonu w pionie prosi o obrót, a w poziomie otwiera zapisane logo", async ({ page }, testInfo) => {
+  test("edytor na telefonie jest niedostępny w pionie i w poziomie (bez prośby o obrót)", async ({ page }, testInfo) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("mobile-edit"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
     await page.goto(`${site.origin}/logos/editor/text/?id=${id}`);
     // Wspólna nakładka urządzenia (page-overlay.js), nie blokada zasobu.
+    // Edytory logo: tylko tablet i komputer (nav-map deviceGuard.formFactors).
     await expect(page.locator("#pageGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#pageGuard")).toHaveAttribute("data-kind", "device");
-    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "rotate");
-    await expect(page.locator("#pageGuardMsg")).toContainText(/szerszego widoku/);
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "unsupported");
+    await expect(page.locator("#pageGuardMsg")).toContainText(/niedostępna na telefonie/);
     await expect(page.locator("#logoName")).toBeDisabled();
-    expect((await L.readLogo(page, id)).payload.source.text).toBe("AB");
     await page.screenshot({ path: testInfo.outputPath("shot-e20-logo-editor-phone-portrait-guard.png"), fullPage: true });
     await page.setViewportSize({ width: 800, height: 390 });
-    await expect(page.locator("#pageGuard")).toBeHidden();
-    await expect(page.locator("#logoName")).toBeEnabled({ timeout: 30000 });
-    await page.screenshot({ path: testInfo.outputPath("shot-e20-logo-editor-phone-landscape.png"), fullPage: true });
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "unsupported");
+    await expect(page.locator("#pageGuard")).toBeVisible();
+    await expect(page.locator("#logoName")).toBeDisabled();
+    expect((await L.readLogo(page, id)).payload.source.text).toBe("AB");
+    await page.screenshot({ path: testInfo.outputPath("shot-e20-logo-editor-phone-landscape-guard.png"), fullPage: true });
   });
 });
 
@@ -1273,16 +1275,23 @@ test.describe("telefon w poziomie", () => {
   const LAND = { width: 844, height: 390 };
   test.use({ viewport: LAND, screen: LAND, isMobile: true, hasTouch: true });
 
-  test("poziomy viewport telefonu odsłania listę i pozwala otworzyć edytor", async ({ page }) => {
+  test("telefon w poziomie: lista prosi o obrót do pionu, po obrocie tylko przeglądanie", async ({ page }) => {
+    // Krok 5 tabeli E20: telefon w poziomie domyślnie blokowany (wyjątki: Host, Buzzer, wąż).
+    await page.setViewportSize({ width: 390, height: 844 });
     await open(page);
-    const id = await L.insertLogo(page, { name: L.uniq("landscape-edit"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
+    const id = await L.insertLogo(page, { name: L.uniq("landscape-view"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
     await open(page);
-    await expect(page.locator("#grid")).toBeVisible();
-    await expect(page.locator("#grid .addCard")).toBeVisible();
+    await page.setViewportSize(LAND);
+    await expect(page.locator("#pageGuard")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-kind", "device");
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "rotate");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator("#pageGuard")).toBeHidden();
+    await expect(page.locator(`.logoTile[data-key="${id}"]`)).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("#grid .addCard")).toBeHidden();
     await page.locator(`.logoTile[data-key="${id}"]`).tap();
-    await expect(page.locator("#btnEdit")).toBeEnabled();
-    await page.locator("#btnEdit").tap();
-    await expect(page).toHaveURL(/\/logos\/editor\/text\//);
-    await expect(page.locator("#logoName")).toBeEnabled({ timeout: 30000 });
+    await expect(page.locator("#btnEdit")).toBeHidden();
+    await page.locator("#btnPreview").tap();
+    await expect(page.locator("#previewOverlay")).toBeVisible();
   });
 });

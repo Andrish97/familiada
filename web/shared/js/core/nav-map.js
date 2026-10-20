@@ -38,8 +38,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-20T19254";
-import { iconText } from "./icons.js?v=v2026-10-20T19254";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-20T23145";
+import { iconText } from "./icons.js?v=v2026-10-20T23145";
 
 
 export const MAX_RET_DEPTH = 4;
@@ -349,7 +349,8 @@ export function backHref(pageId, ctx) {
 }
 
 /**
- * Adres logowania — po zalogowaniu zawsze /games/ (wyjątek: next= z maila).
+ * Adres logowania — po zalogowaniu zawsze /games/ (wyjątki: next= z maila
+ * oraz next=snake&qr=… z ukrytej gry w węża -- powrót do gry).
  * ctx.forceAuth — gość, który chce przejść do logowania mimo otwartej sesji.
  */
 export function loginUrl(ctx) {
