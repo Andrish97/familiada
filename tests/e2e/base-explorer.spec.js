@@ -1085,14 +1085,46 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
 
-      // Konwersja "#tag" -> chip dzieje się w handlerze keydown (Spacja/Enter/przecinek),
-      // nie w handlerze input -- .fill() same w sobie by tego nie wyzwoliło.
+      // „#pełna_nazwa” + spacja -> tabletka (rozpoznane w zdarzeniu input)
       await page.locator("#searchText").fill("#e2e-searchtag");
       await page.locator("#searchText").press("Space");
       await expect(page.locator("#searchChips .chip")).toHaveCount(1, { timeout: 10000 });
 
       await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible({ timeout: 10000 });
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("telefon: #tag + spacja z klawiatury ekranowej (bez keydown) zamienia się w tabletkę", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-TAGMOBILE-${Date.now()}`);
+
+    try {
+      const tagId = await createTag(page, { baseId, name: "Łatwe" });
+      const qTagged = await createQuestion(page, { baseId, ord: 1, payload: { text: "Otagowane", answers: [] } });
+      const qPlain = await createQuestion(page, { baseId, ord: 2, payload: { text: "Zwykłe", answers: [] } });
+      await assignTag(page, { questionId: qTagged, tagId });
+
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
+
+      // klawiatura ekranowa: same zdarzenia input (insertText nie wysyła keydown);
+      // bez polskich znaków i małymi literami też pasuje
+      await page.locator("#searchText").click();
+      await page.keyboard.insertText("#latwe ");
+      await expect(page.locator("#searchChips .chip")).toHaveCount(1, { timeout: 10000 });
+      await expect(page.locator("#searchText")).toHaveValue("");
+      await expect(page.locator(`#list .row[data-id="${qTagged}"]`)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toHaveCount(0);
+
+      // klik w tabletkę zdejmuje filtr
+      await page.locator("#searchChips .chip").click();
+      await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 10000 });
     } finally {
       await deleteBase(page, baseId);
     }
@@ -1309,11 +1341,12 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         page.locator("#list tbody tr .title-text").allTextContents()
           .then((arr) => arr.map((s) => s.trim()));
 
-      // domyślnie (name/asc) pytanie "A-pytanie" jest przed folderem "Z-folder"
-      await expect.poll(titles).toEqual(["A-pytanie", "Z-folder"]);
-
+      // foldery zawsze przed pytaniami (decyzja 2026-10-20) -- przy każdym
+      // sortowaniu, także po nazwie i w obu kierunkach
+      await expect.poll(titles).toEqual(["Z-folder", "A-pytanie"]);
+      await page.locator(".list-head .h-main").click();
+      await expect.poll(titles).toEqual(["Z-folder", "A-pytanie"]);
       await page.locator(".list-head .h-type").click();
-      // po typie: folder zawsze przed pytaniem, mimo że nazwą jest "później" alfabetycznie
       await expect.poll(titles).toEqual(["Z-folder", "A-pytanie"]);
     } finally {
       await deleteBase(page, baseId);
@@ -1613,11 +1646,12 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
       const titles = () => page.locator("#list tbody tr .title-text").allTextContents();
 
-      await page.locator(".list-head .h-date").click();
-      await expect.poll(titles).toEqual(["Najstarsze", "Środkowe", "Najnowsze"]);
-
+      // pierwszy klik w Datę: najnowsze na górze (jak w Eksploratorze), drugi odwraca
       await page.locator(".list-head .h-date").click();
       await expect.poll(titles).toEqual(["Najnowsze", "Środkowe", "Najstarsze"]);
+
+      await page.locator(".list-head .h-date").click();
+      await expect.poll(titles).toEqual(["Najstarsze", "Środkowe", "Najnowsze"]);
     } finally {
       await deleteBase(page, baseId);
     }
@@ -3111,7 +3145,13 @@ async function confirmUniModal(page) {
 }
 
 test.describe("base-explorer: kosz (E22)", () => {
-  test("usunięty folder z pytaniem trafia do kosza (licznik), przywrócenie odtwarza folder z pytaniem", async ({ page, context }) => {
+  // Kosz to folder w drzewie, pod wszystkimi folderami (decyzja 2026-10-20):
+  // otwiera się jak folder, „Usuń” w nim usuwa trwale, „Przywróć” w pasku
+  // po zaznaczeniu, „Opróżnij kosz” w pasku.
+  const trashTreeRow = (page) => page.locator('#tree .row[data-kind="trash"]');
+  const trashRows = (page) => page.locator('#list .row[data-kind="trash"]');
+
+  test("usunięty folder z pytaniem trafia do kosza, przywrócenie odtwarza folder z pytaniem", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-TRASH-${Date.now()}`);
@@ -3123,8 +3163,9 @@ test.describe("base-explorer: kosz (E22)", () => {
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      await expect(page.locator("#trashOpen")).toBeVisible({ timeout: 15000 });
-      await expect(page.locator("#trashCount")).toHaveText("");
+      await expect(trashTreeRow(page)).toBeVisible({ timeout: 15000 });
+      // w drzewie zwykły wiersz, bez plakietki z liczbą
+      await expect(trashTreeRow(page).locator(".badge")).toHaveCount(0);
 
       const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
       await catRow.click();
@@ -3132,19 +3173,24 @@ test.describe("base-explorer: kosz (E22)", () => {
       await expect(page.locator(".uni-modal .mSub")).toContainText("kosza", { timeout: 5000 });
       await confirmUniModal(page);
       await expect(catRow).toBeHidden({ timeout: 10000 });
-      await expect(page.locator("#trashCount")).toHaveText("1", { timeout: 10000 });
 
-      await page.locator("#trashOpen").click();
-      const row = page.locator("#trashList .trash-row");
-      await expect(row).toHaveCount(1, { timeout: 10000 });
-      await expect(row).toContainText("Do kosza");
-      await expect(row).toContainText("usunie się za");
+      await trashTreeRow(page).dblclick();
+      await expect(page).toHaveURL(/[?&]trash=1/);
+      await expect(trashRows(page)).toHaveCount(1, { timeout: 10000 });
+      await expect(trashRows(page)).toContainText("Do kosza");
+      await expect(trashRows(page)).toContainText("za ");
 
-      await row.locator('button[data-act="restore"]').click();
-      await expect(page.locator("#trashList .trash-empty")).toBeVisible({ timeout: 10000 });
-      await expect(page.locator("#trashCount")).toHaveText("");
-      await page.locator("#trashClose").click();
+      // „Przywróć” pojawia się w pasku i działa po zaznaczeniu
+      const restoreBtn = page.locator('#toolbar button[data-act="restore"]');
+      await expect(restoreBtn).toBeVisible();
+      await expect(restoreBtn).toBeDisabled();
+      await trashRows(page).first().click();
+      await expect(restoreBtn).toBeEnabled();
+      await restoreBtn.click();
+      await expect(page.locator("#list .list-empty")).toBeVisible({ timeout: 10000 });
 
+      await page.locator('#breadcrumbs .crumb[data-kind="root"]').click();
+      await expect(restoreBtn).toBeHidden();
       await expect(catRow).toBeVisible({ timeout: 10000 });
       const q = await getQuestionRow(page, qid);
       expect(q?.category_id, "pytanie wraca do swojego folderu z tym samym id").toBe(catId);
@@ -3155,7 +3201,7 @@ test.describe("base-explorer: kosz (E22)", () => {
     }
   });
 
-  test("usuń trwale jeden wpis i opróżnij kosz", async ({ page, context }) => {
+  test("w koszu Usuń usuwa trwale, Opróżnij kosz czyści całość", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-PURGE-${Date.now()}`);
@@ -3175,22 +3221,22 @@ test.describe("base-explorer: kosz (E22)", () => {
       await expect(page.locator("#list .row.is-selected")).toHaveCount(3);
       await page.keyboard.press("Delete");
       await confirmUniModal(page);
-      await expect(page.locator("#trashCount")).toHaveText("3", { timeout: 10000 });
+      await expect(page.locator(`#list .row[data-kind="q"]`)).toHaveCount(0, { timeout: 10000 });
 
-      await page.locator("#trashOpen").click();
-      const rows = page.locator("#trashList .trash-row");
-      await expect(rows).toHaveCount(3, { timeout: 10000 });
+      await trashTreeRow(page).dblclick();
+      await expect(trashRows(page)).toHaveCount(3, { timeout: 10000 });
 
-      await rows.filter({ hasText: "Drugie" }).locator('button[data-act="purge"]').click();
+      await trashRows(page).filter({ hasText: "Drugie" }).click();
+      await page.keyboard.press("Delete");
+      await expect(page.locator(".uni-modal .mSub")).toContainText("trwale", { timeout: 5000 });
       await confirmUniModal(page);
-      await expect(rows).toHaveCount(2, { timeout: 10000 });
-      await expect(page.locator("#trashCount")).toHaveText("2");
+      await expect(trashRows(page)).toHaveCount(2, { timeout: 10000 });
       expect(await getQuestionRow(page, q2)).toBeNull();
 
-      await page.locator("#trashEmpty").click();
+      await page.locator('#toolbar button[data-act="emptyTrash"]').click();
       await confirmUniModal(page);
-      await expect(page.locator("#trashList .trash-empty")).toBeVisible({ timeout: 10000 });
-      await expect(page.locator("#trashCount")).toHaveText("");
+      await expect(page.locator("#list .list-empty")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#toolbar button[data-act="emptyTrash"]')).toBeDisabled();
       expect(await listTrashRows(page, baseId)).toHaveLength(0);
     } finally {
       await deleteBase(page, baseId);

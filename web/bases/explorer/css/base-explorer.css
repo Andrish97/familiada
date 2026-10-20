@@ -2113,58 +2113,77 @@ tr.row.is-drop-after td:last-child::after {
   margin: 0 2px;
 }
 
-/* ===== Kosz (trash-modal.js) ===== */
-.trash-open {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    min-height: 36px;
-    padding: 6px 10px;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 10px;
-    background: rgba(255,255,255,.03);
-    color: inherit;
-    font: inherit;
-    cursor: pointer;
-    text-align: left;
+/* ===== Przebudowa E22: style dawniej wpisane w HTML (render.js) ===== */
+.tree-row { cursor: pointer; position: relative; } /* position: linie przed/za przy przeciąganiu */
+.tree-row.is-active .col-main { font-weight: 700; }
+.tree-toggle {
+    width: 18px; height: 18px; flex: 0 0 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; background: transparent; color: inherit; cursor: pointer; opacity: .9;
 }
-.trash-open:hover { background: rgba(255,255,255,.07); }
-.trash-open[hidden] { display: none; }
-.trash-open .badge { margin-left: auto; }
+.tree-toggle:hover { opacity: .75; }
+.tree-toggle-space { display: inline-block; width: 18px; flex: 0 0 18px; }
+#matchedCategories .row,
+#tags .row[data-kind=tag] {
+    padding: 6px 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;
+}
+#matchedCategories .row { opacity: .85; }
+#matchedCategories .row.is-selected { opacity: 1; }
+#btnAddTag { width: 100%; margin-top: 10px; }
+.list-empty { opacity: .75; padding: 16px; }
+.crumb { cursor: pointer; }
+.crumb-sep { opacity: .5; padding: 0 6px; }
+.crumb-results { margin-left: 10px; opacity: .7; }
+.type-label { opacity: .85; margin-right: 6px; }
+.row.is-cut { opacity: .55; }
+.list-head th[data-sort-key] { cursor: pointer; }
 
-.trash-modal { width: min(640px, 94vw); }
-.trash-list { max-height: min(420px, 60vh); }
-.trash-empty {
-    padding: 18px 10px;
-    text-align: center;
-    opacity: .7;
+/* Podpowiedzi tagów po wpisaniu # w wyszukiwarce (ui/search.js) */
+.search-row { position: relative; }
+.search-suggest {
+    position: absolute; z-index: 50; left: 0; top: calc(100% + 4px);
+    min-width: 220px; max-width: min(360px, calc(100vw - 24px));
+    max-height: 260px; overflow-y: auto; padding: 6px;
+    border-radius: 12px; background: #141414;
+    border: 1px solid rgba(255,255,255,.14); box-shadow: 0 12px 30px rgba(0,0,0,.45);
 }
-.trash-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-    padding: 8px 10px;
-    border-radius: 10px;
+.search-suggest[hidden] { display: none; }
+.search-suggest-item {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 9px 10px; border: 0; border-radius: 10px;
+    background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
 }
-.trash-row + .trash-row { border-top: 1px solid rgba(255,255,255,.08); }
-.trash-row:hover { background: rgba(255,255,255,.04); }
-.trash-row .trash-ico { flex: 0 0 auto; opacity: .85; }
-.trash-main { flex: 1 1 auto; min-width: 0; display: grid; gap: 4px; }
-.trash-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-weight: 700;
+.search-suggest-item:hover,
+.search-suggest-item.is-active { background: #272727; }
+
+/* ===== Menu kontekstowe na telefonie: arkusz od dołu (decyzja 2026-10-20) ===== */
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0,0,0,.45);
 }
-.trash-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 8px;
-    font-size: 12px;
-    opacity: .85;
+.context-menu-backdrop[hidden] { display: none; }
+.context-menu.is-sheet {
+  left: 0 !important;
+  right: 0;
+  top: auto !important;
+  bottom: 0;
+  min-width: 0;
+  max-width: none;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 16px 16px 0 0;
+  border-bottom: 0;
+  padding: 10px max(8px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
 }
-.trash-row > .btn { flex: 0 0 auto; }
+.context-menu.is-sheet::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.25);
+}

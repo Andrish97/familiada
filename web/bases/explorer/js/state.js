@@ -1,22 +1,17 @@
 // base-explorerjs/state.js
-// Stan eksploratora bazy pytań (warstwa 2)
+// Stan menedżera bazy: GDZIE jestem (location) i CO filtruję (query) +
+// zaznaczenie, schowek, sortowanie, rozwinięte foldery drzewa. Dane bazy są
+// w state.store (data/store.js), pochodne w state.d (data/derived.js), a „co
+// pokazać” liczy data/listing.js — tu nie ma żadnej pamięci podręcznej.
 
-export const VIEW = {
-  ALL: "all",       // wszystkie pytania (w ramach bazy)
-  FOLDER: "folder", // konkretna kategoria (folder)
-  TAG: "tag",       // filtr tagów (wirtualny widok)
-  SEARCH: "search",
-  META: "meta",     // filtr “meta” (wirtualny widok)
-};
+import { emptyQuery, isQueryEmpty } from "./data/listing.js?v=v2026-10-20T19584";
 
-export const META = {
+// Proponowane kategorie (typy gry, game-rules.js) — etykieta i kolor kropki.
+export const TYPE_DEFS = {
   prepared:    { id: "prepared",    nameKey: "baseExplorer.meta.prepared",    color: "rgba(77, 163, 255, .95)" },
   poll_points: { id: "poll_points", nameKey: "baseExplorer.meta.pollPoints", color: "rgba(255, 200, 77, .95)" },
   poll_text:   { id: "poll_text",   nameKey: "baseExplorer.meta.pollText",   color: "rgba(160, 160, 160, .95)" },
 };
-
-// kolejność wyświetlania
-export const META_ORDER = ["prepared", "poll_points", "poll_text"];
 
 /* ===== Rozwinięte foldery drzewa — localStorage per baza =====
    Stan widoku, za długi do adresu (otwarty folder jest w ?folder=). */
@@ -53,141 +48,145 @@ export function pruneTreeOpen(treeOpen, categories) {
   return treeOpen;
 }
 
+/* ===== Sortowanie listy — localStorage (wspólne dla baz) ===== */
+const SORT_KEY = "base-explorer:sort:v1";
+const SORT_KEYS = new Set(["name", "type", "date", "info"]);
+
+function loadSort() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SORT_KEY) || "null");
+    if (s && SORT_KEYS.has(s.key) && (s.dir === "asc" || s.dir === "desc")) return s;
+  } catch {}
+  return { key: "name", dir: "asc" };
+}
+
+export function setSort(state, key, dir) {
+  if (!SORT_KEYS.has(key)) return;
+  state.sort = { key, dir: dir === "desc" ? "desc" : "asc" };
+  try { localStorage.setItem(SORT_KEY, JSON.stringify(state.sort)); } catch {}
+}
+
 export function createState({ baseId, role = "viewer" }) {
   return {
-    // kontekst
     baseId,
-    role,                  // "owner" | "editor" | "viewer"
+    role,                    // "owner" | "editor" | "viewer"
     canEdit: role !== "viewer",
+    user: null,
+    baseMeta: null,
 
-    // dane (cache w pamięci)
-    baseMeta: null,        // { id, name, ... }
-    categories: [],        // flat: [{id,parent_id,name,ord}]
-    tags: [],              // [{id,name,color,ord}]
-    questions: [],         // aktualnie załadowane do widoku (zależnie od view)
-    // opcjonalnie później: mapy pomocnicze (byId, childrenByParent) – tworzone w renderze lub osobno
+    // Dane: store = wiersze bazy (+ kosz), d = pochodne; ustawia data/store.js.
+    store: null,
+    d: null,
+    tags: [],                // = store.tags (okna tagów czytają state.tags)
 
-    // drzewo folderów: które węzły są rozwinięte. "root" musi tu być od
-    // razu -- inaczej render.js's renderTree() (rootOpen = open.has("root"))
-    // pokazuje świeżo wczytaną stronę z samym zwiniętym "Root ▶" i ŻADNYM
-    // folderem najwyższego poziomu widocznym, dopóki user ręcznie nie
-    // kliknie strzałki. Auto-rozwijanie ścieżki do aktualnego folderu
-    // (refreshList()) i tak nigdy nie dodaje "root" samo z siebie.
+    // GDZIE: folder główny / folder / kosz
+    location: { kind: "root", folderId: null },
+    // CO: jedno zapytanie — pole wyszukiwania i lewy panel to te same dane
+    query: emptyQuery(),
+
+    // drzewo folderów: które węzły są rozwinięte ("root" zawsze)
     treeOpen: loadTreeOpen(baseId),
 
-    // widok
-    view: VIEW.ALL,
-    folderId: null,        // dla VIEW.FOLDER
-    tagIds: [],            // dla VIEW.TAG (multi)
-    searchQuery: "",
-    // search jako "tokeny": zwykły tekst + #tagi jako chipsy (zobacz
-    // tryConsumeHashTagTokenFromInput w actions.js)
-    searchTokens: {
-      text: "",       // zwykły tekst (bez #tagów)
-      tagIds: [],     // resolved do state.tags
-    },
-
-    sort: { key: "name", dir: "asc" },
-
-    // selekcja (jak w explorerze)
-    selection: {
-      // Set kluczy elementów: np. "q:<uuid>" / "c:<uuid>"
-      keys: new Set(),
-      // anchor do shift-zaznaczania (ostatni kliknięty)
-      anchorKey: null,
-    },
-    // selekcja tagów (lewy panel)
-    tagSelection: {
-      ids: new Set(),     // Set(tagId)
-      anchorId: null,     // do shift-range
-    },
-
-    // selekcja meta (stałe “tagi”)
-    metaSelection: {
-      ids: new Set(),   // Set(metaId)
-      anchorId: null,
-    },
+    // zaznaczenie: klucze "c:<id>" (folder), "q:<id>" (pytanie),
+    // "t:<id>" (wpis kosza); pane = panel, do którego należy (lista / drzewo)
+    selection: { keys: new Set(), anchorKey: null, pane: "list" },
 
     // schowek: same klucze; kopię robi baza przy wklejeniu
-    clipboard: {
-      mode: null,      // 'copy' | 'cut' | null
-      keys: new Set(), // Set('q:..' / 'c:..')
-    },
+    clipboard: { mode: null, keys: new Set() },
+
+    sort: loadSort(),
   };
 }
 
 export function setRole(state, role) {
   state.role = role;
-  state.canEdit = role !== "viewer";
+  state.canEdit = role === "owner" || role === "editor";
 }
 
-/* ===== Widok ===== */
-export function setViewAll(state) {
-  state.view = VIEW.ALL;
-  state.folderId = null;
-  state.tagIds = [];
-  syncFolderUrl(state);
+/* ===== Miejsce ===== */
+
+export function isTrash(state) {
+  return state.location.kind === "trash";
 }
 
-export function setViewFolder(state, folderId) {
-  state.view = VIEW.FOLDER;
-  state.folderId = folderId || null;
-  state.tagIds = [];
-  syncFolderUrl(state);
+export function currentFolderId(state) {
+  return state.location.kind === "folder" ? state.location.folderId : null;
 }
 
-function syncFolderUrl(state) {
-  if (!state?._syncFolderUrl || typeof location === "undefined") return;
+export function hasQuery(state) {
+  return !isQueryEmpty(state.query);
+}
+
+// Przejście do miejsca: folder główny (null), folder (id) albo kosz ("trash").
+export function goTo(state, where) {
+  if (where === "trash") state.location = { kind: "trash", folderId: null };
+  else if (where) state.location = { kind: "folder", folderId: where };
+  else state.location = { kind: "root", folderId: null };
+  selectionClear(state);
+  syncLocationUrl(state);
+}
+
+function syncLocationUrl(state) {
+  if (!state?._syncUrl || typeof location === "undefined") return;
   const url = new URL(location.href);
-  if (state.view === VIEW.FOLDER && state.folderId) url.searchParams.set("folder", state.folderId);
+  if (state.location.kind === "folder") url.searchParams.set("folder", state.location.folderId);
   else url.searchParams.delete("folder");
+  if (state.location.kind === "trash") url.searchParams.set("trash", "1");
+  else url.searchParams.delete("trash");
   // replaceState: przeglądarkowe „Wstecz” wraca do poprzedniej STRONY, nie
   // przewija folderów (docs/nawigacja-mapa-plan.md, karty i stan strony).
   if (url.href !== location.href) history.replaceState(history.state, "", url);
 }
 
-export function rememberBrowseLocation(state) {
-  // zapamiętujemy tylko, gdy jesteśmy w „normalnym” przeglądaniu
-  if (state.view === VIEW.ALL || state.view === VIEW.FOLDER) {
-    state._browse = { view: state.view, folderId: state.folderId || null };
-  }
+/* ===== Zapytanie ===== */
+
+export function setQuery(state, patch) {
+  state.query = { ...state.query, ...patch };
+  selectionClear(state);
 }
 
-export function restoreBrowseLocation(state) {
-  // wyjście z widoków wirtualnych zawsze czyści ich parametry
-  state.tagIds = [];
-  // nie ruszam searchTokens (SEARCH ma swój przycisk X), ale jeśli chcesz, też można tu wyczyścić
-
-  const b = state._browse;
-  if (b?.view === VIEW.FOLDER && b.folderId) {
-    state.view = VIEW.FOLDER;
-    state.folderId = b.folderId;
-    syncFolderUrl(state);
-    return;
-  }
-
-  state.view = VIEW.ALL;
-  state.folderId = null;
-  syncFolderUrl(state);
+export function clearQuery(state) {
+  state.query = emptyQuery();
+  selectionClear(state);
 }
 
-/* ===== Selekcja ===== */
+/* ===== Zaznaczenie ===== */
 
 export function selectionClear(state) {
-  state.selection.keys.clear();
+  state.selection.keys = new Set();
   state.selection.anchorKey = null;
 }
 
-export function selectionSetSingle(state, key) {
-  state.selection.keys.clear();
-  if (key) state.selection.keys.add(key);
+export function selectionSetSingle(state, key, pane = state.selection.pane) {
+  state.selection.pane = pane;
+  state.selection.keys = new Set(key ? [key] : []);
   state.selection.anchorKey = key || null;
 }
 
-export function selectionToggle(state, key) {
+export function selectionToggle(state, key, pane = state.selection.pane) {
   if (!key) return;
+  if (pane !== state.selection.pane) { selectionSetSingle(state, key, pane); return; }
   if (state.selection.keys.has(key)) state.selection.keys.delete(key);
   else state.selection.keys.add(key);
   state.selection.anchorKey = key;
 }
 
+// Zakres Shift: od kotwicy do klikniętego, w kolejności wierszy panelu.
+export function selectionRange(state, orderedKeys, key, pane = state.selection.pane) {
+  const a = pane === state.selection.pane ? state.selection.anchorKey : null;
+  const i1 = a ? orderedKeys.indexOf(a) : -1;
+  const i2 = orderedKeys.indexOf(key);
+  if (i1 === -1 || i2 === -1) { selectionSetSingle(state, key, pane); return; }
+  const [from, to] = i1 < i2 ? [i1, i2] : [i2, i1];
+  state.selection.pane = pane;
+  state.selection.keys = new Set(orderedKeys.slice(from, to + 1));
+  // kotwica zostaje (kolejny Shift+klik liczy od tego samego miejsca)
+}
+
+// Po przeładowaniu danych: z zaznaczenia i schowka znikają elementy, których
+// już nie ma (usunięte gdzie indziej) albo nie są widoczne.
+export function pruneSelection(state, visibleKeys) {
+  const keep = new Set([...state.selection.keys].filter((k) => visibleKeys.has(k)));
+  state.selection.keys = keep;
+  if (state.selection.anchorKey && !keep.has(state.selection.anchorKey)) state.selection.anchorKey = null;
+}

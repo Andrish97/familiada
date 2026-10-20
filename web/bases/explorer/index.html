@@ -89,12 +89,6 @@
         </div>
       </div>
 
-      <!-- Kosz bazy (właściciel i edytorzy); okno: trash-modal.js -->
-      <button id="trashOpen" class="trash-open" type="button" hidden>
-        <i class="ico" data-icon="trash"></i>
-        <span data-i18n="baseExplorer.trash.open">Kosz</span>
-        <span id="trashCount" class="badge"></span>
-      </button>
     </aside>
 
     <!-- PRAWY PANEL: lista -->
@@ -342,28 +336,6 @@
         <button class="btn sm gold" id="qSave" type="button" data-i18n="baseExplorer.common.save" data-i18n-icon="save">Zapisz</button>
       </div>
 
-    </div>
-  </div>
-
-  <!-- =======================================================
-       [MODAL: KOSZ] — overlay + modal (wzorzec jak PYTANIE)
-       ======================================================= -->
-  <div class="overlay modal--sheet" id="trashOverlay" style="display:none;">
-    <div class="modal tags-modal trash-modal" role="dialog" aria-modal="true" aria-labelledby="trashTitle">
-      <div class="tagsHead">
-        <div class="mTitle" id="trashTitle" data-i18n="baseExplorer.trash.title">Kosz</div>
-        <button class="btn sm" id="trashClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
-      </div>
-
-      <div class="mSub" data-i18n="baseExplorer.trash.subtitle">Usunięte foldery i pytania. Po 30 dniach znikają na zawsze.</div>
-
-      <div id="trashList" class="tagsPickList trash-list"></div>
-
-      <div class="tagsFoot">
-        <button class="btn sm danger" id="trashEmpty" type="button" data-i18n="baseExplorer.trash.emptyAll" data-i18n-icon="trash-forever">Opróżnij kosz</button>
-        <div class="tagsFootSpacer"></div>
-        <div id="trashErr" class="importMsg" style="display:none;"></div>
-      </div>
     </div>
   </div>
 

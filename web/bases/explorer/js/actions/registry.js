@@ -1,47 +1,40 @@
 // base-explorerjs/actions/registry.js
 // Rejestr akcji menedżera bazy: każda akcja zdefiniowana raz. Pasek narzędzi,
-// menu kontekstowe, skróty klawiszowe (i dalej przeciąganie, gesty) tylko
-// z niego czytają — etykieta, ikona, skrót, widoczność, dostępność, wykonanie
+// menu kontekstowe, skróty klawiszowe, przeciąganie i gesty tylko z niego
+// czytają — etykieta, ikona, skrót, widoczność, dostępność, wykonanie
 // i komunikat błędu są w jednym miejscu.
 //
 // Pola wpisu:
-//   id        nazwa akcji (przestrzenie: folder., question., item., clip., …)
+//   id        nazwa akcji (przestrzenie: folder., question., item., clip., trash., …)
 //   label     (ctx) => klucz tłumaczenia (menu; pasek bierze go do dymka)
 //   icon, danger, primary
 //   toolbar   { act, group } — przycisk paska (act = data-act, grupa = separator)
-//   menu      cele menu kontekstowego: "root" | "cat" | "q" | "tag" | "tags-bg" | "meta"
+//   menu      cele menu kontekstowego: "root" | "cat" | "q" | "trash" | "trash-folder" | "tag" | "tags-bg" | "type"
 //   menuGroup kolejność grup w menu (separator między grupami)
-//   shortcut  { key: KeyboardEvent.code, mod?, shift?, alt? } (+ repeat: true,
-//             jeśli przytrzymanie klawisza może powtarzać akcję)
+//   shortcut  { key: KeyboardEvent.code, mod?, shift?, alt? }
 //   visible   (ctx) => bool — „ma sens tu” (nie → przycisk/pozycja znika)
 //   enabled   (ctx) => true | klucz powodu — „można teraz” (nie → szara,
 //             powód w dymku; ze skrótu ten sam powód jako komunikat)
 //   run       (ctx) => Promise
 //   errorKey  komunikat, gdy wykonanie się nie uda (bez własnego komunikatu)
 
-import {
-  createFolderHere,
-  createQuestionHere,
-  deleteSelected,
-  renameSelectedPrompt,
-  copySelectedToClipboard,
-  cutSelectedToClipboard,
-  pasteClipboardHere,
-  duplicateSelected,
-  deleteTags,
-  untagSelected,
-  openFolder,
-} from "../actions.js?v=v2026-10-20T19584";
+import * as cmd from "../commands.js?v=v2026-10-20T19584";
+import { setQuery } from "../state.js?v=v2026-10-20T19584";
+import { renderAll } from "../render.js?v=v2026-10-20T19584";
 
 const R = "baseExplorer.reasons.";
 
-// Wspólne warunki (jedno miejsce zamiast canWrite/isEditor/canMutateHere…).
 const needEdit = (ctx) => (ctx.canEdit ? true : `${R}readOnly`);
 const needSel = (ctx) => (ctx.sel.count ? true : `${R}selectSomething`);
 const needOne = (ctx) => (ctx.sel.one ? true : `${R}selectOne`);
-// Tworzenie i wklejanie ma sens tylko „gdzieś”: w folderze, nie w wynikach.
-// Menu na konkretnym folderze (albo wierszu „Folder główny”) wskazuje to miejsce.
-const inPlace = (ctx) => !ctx.isFilterView || ctx.target?.kind === "cat" || ctx.target?.id === "root";
+const needTrashSel = (ctx) => (ctx.sel.trashIds.length ? true : `${R}selectSomething`);
+// Tworzenie i wklejanie ma sens tylko „gdzieś”: w folderze (nie w wynikach
+// filtra ani w koszu); menu na konkretnym folderze wskazuje to miejsce.
+const inPlace = (ctx) => !ctx.inTrash && (!ctx.isFilterView || ctx.target?.kind === "cat" || ctx.target?.id === "root");
+// Działania na elementach bazy (nie na wpisach kosza).
+const onItems = (ctx) => ctx.canEdit && !ctx.inTrash;
+// Tag z menu kontekstowego panelu (PPM na tagu), inaczej tagi z filtra.
+const tagTargets = (ctx) => (ctx.target?.kind === "tag" && ctx.target.id ? [ctx.target.id] : ctx.tagSel);
 
 export const ACTIONS = [
   // ===== Tworzenie =====
@@ -54,7 +47,7 @@ export const ACTIONS = [
     shortcut: { key: "KeyN", mod: true, shift: true },
     visible: (ctx) => ctx.canEdit && inPlace(ctx),
     enabled: needEdit,
-    run: (ctx) => createFolderHere(ctx.state, { parentId: ctx.here }),
+    run: (ctx) => cmd.createFolder(ctx.state, ctx.here),
     errorKey: "baseExplorer.errors.createFolderFailed",
   },
   {
@@ -66,7 +59,7 @@ export const ACTIONS = [
     shortcut: { key: "KeyN", mod: true },
     visible: (ctx) => ctx.canEdit && inPlace(ctx),
     enabled: needEdit,
-    run: (ctx) => createQuestionHere(ctx.state, { categoryId: ctx.here }),
+    run: (ctx) => cmd.createQuestion(ctx.state, ctx.here),
     errorKey: "baseExplorer.errors.createQuestionFailed",
   },
 
@@ -77,10 +70,45 @@ export const ACTIONS = [
     icon: "folder",
     menu: ["cat"], menuGroup: "open",
     shortcut: { key: "Enter" },
-    visible: () => true,
+    visible: (ctx) => !ctx.inTrash,
     enabled: (ctx) => (ctx.sel.one && ctx.sel.folderIds.length === 1 ? true : `${R}selectFolder`),
-    run: (ctx) => openFolder(ctx.state, ctx.sel.folderIds[0]),
+    run: (ctx) => cmd.openFolder(ctx.state, ctx.sel.folderIds[0]),
     errorKey: "baseExplorer.errors.operationFailed",
+  },
+
+  // ===== Kosz =====
+  {
+    id: "trash.open",
+    label: () => "baseExplorer.trash.openTrash",
+    icon: "trash",
+    menu: ["trash-folder"], menuGroup: "open",
+    visible: (ctx) => ctx.canEdit && !ctx.inTrash,
+    enabled: () => true,
+    run: (ctx) => cmd.openTrash(ctx.state),
+    errorKey: "baseExplorer.errors.operationFailed",
+  },
+  {
+    id: "trash.restore",
+    label: () => "baseExplorer.trash.restore",
+    icon: "restore",
+    toolbar: { act: "restore", group: "edit" },
+    menu: ["trash"], menuGroup: "edit",
+    visible: (ctx) => ctx.canEdit && ctx.inTrash,
+    enabled: needTrashSel,
+    run: (ctx) => cmd.restoreFromTrash(ctx.state),
+    errorKey: "baseExplorer.trash.actionFailed",
+  },
+  {
+    id: "trash.empty",
+    label: () => "baseExplorer.trash.emptyAll",
+    icon: "trash-forever",
+    danger: true,
+    toolbar: { act: "emptyTrash", group: "edit" },
+    menu: ["root", "trash-folder"], menuGroup: "danger",
+    visible: (ctx) => ctx.canEdit && (ctx.inTrash || ctx.target?.kind === "trash-folder"),
+    enabled: (ctx) => (ctx.trashEmpty ? `${R}trashEmpty` : true),
+    run: (ctx) => cmd.purgeTrash(ctx.state, null),
+    errorKey: "baseExplorer.trash.actionFailed",
   },
 
   // ===== Edycja =====
@@ -91,9 +119,9 @@ export const ACTIONS = [
     toolbar: { act: "editQuestion", group: "edit" },
     menu: ["q"], menuGroup: "edit",
     shortcut: { key: "KeyE", mod: true },
-    visible: (ctx) => ctx.canEdit,
+    visible: onItems,
     enabled: (ctx) => (ctx.sel.oneQuestionId ? true : `${R}selectQuestion`),
-    run: (ctx) => ctx.state._api?.openQuestionModal?.(ctx.sel.oneQuestionId),
+    run: (ctx) => cmd.editQuestion(ctx.state, ctx.sel.oneQuestionId),
     errorKey: "baseExplorer.errors.questionOpenSaveFailed",
   },
   {
@@ -103,10 +131,10 @@ export const ACTIONS = [
     toolbar: { act: "editTags", group: "edit" },
     menu: ["cat", "q"], menuGroup: "tags",
     shortcut: { key: "KeyT", mod: true },
-    visible: (ctx) => ctx.canEdit,
+    visible: onItems,
     enabled: needSel,
-    run: (ctx) => ctx.state._api?.openAssignTagsModal?.(),
-    errorKey: "baseExplorer.errors.operationFailed",
+    run: (ctx) => cmd.openTagsWindow(ctx.state, { mode: "assign" }),
+    errorKey: "baseExplorer.tags.errors.saveAssignFailed",
   },
   {
     id: "item.rename",
@@ -115,9 +143,9 @@ export const ACTIONS = [
     toolbar: { act: "rename", group: "edit" },
     menu: ["cat", "q"], menuGroup: "edit",
     shortcut: { key: "F2" },
-    visible: (ctx) => ctx.canEdit,
+    visible: onItems,
     enabled: needOne,
-    run: (ctx) => renameSelectedPrompt(ctx.state),
+    run: (ctx) => cmd.renameSelected(ctx.state),
     errorKey: "baseExplorer.errors.renameFailed",
   },
   {
@@ -127,22 +155,23 @@ export const ACTIONS = [
     danger: true,
     toolbar: { act: "untag", group: "edit" },
     menu: ["cat", "q"], menuGroup: "danger",
-    visible: (ctx) => ctx.canEdit && ctx.isTagView,
+    visible: (ctx) => onItems(ctx) && ctx.hasTagFilter,
     enabled: needSel,
-    run: (ctx) => untagSelected(ctx.state),
+    run: (ctx) => cmd.untagSelected(ctx.state),
     errorKey: "baseExplorer.errors.removeTagsFailed",
   },
   {
+    // w koszu ten sam przycisk usuwa trwale (decyzja 2026-10-20)
     id: "item.delete",
-    label: () => "baseExplorer.menu.delete",
+    label: (ctx) => (ctx.inTrash ? "baseExplorer.trash.purge" : "baseExplorer.menu.delete"),
     icon: "trash",
     danger: true,
     toolbar: { act: "delete", group: "edit" },
-    menu: ["cat", "q"], menuGroup: "danger",
+    menu: ["cat", "q", "trash"], menuGroup: "danger",
     shortcut: { key: "Delete" },
     visible: (ctx) => ctx.canEdit,
-    enabled: needSel,
-    run: (ctx) => deleteSelected(ctx.state),
+    enabled: (ctx) => (ctx.inTrash ? needTrashSel(ctx) : needSel(ctx)),
+    run: (ctx) => cmd.deleteSelected(ctx.state),
     errorKey: "baseExplorer.errors.deleteFailed",
   },
 
@@ -154,9 +183,9 @@ export const ACTIONS = [
     toolbar: { act: "copy", group: "clipboard" },
     menu: ["cat", "q"], menuGroup: "clipboard",
     shortcut: { key: "KeyC", mod: true },
-    visible: (ctx) => ctx.canEdit,
+    visible: onItems,
     enabled: needSel,
-    run: (ctx) => copySelectedToClipboard(ctx.state),
+    run: (ctx) => cmd.copyToClipboard(ctx.state, "copy"),
     errorKey: "baseExplorer.errors.operationFailed",
   },
   {
@@ -166,9 +195,9 @@ export const ACTIONS = [
     toolbar: { act: "cut", group: "clipboard" },
     menu: ["cat", "q"], menuGroup: "clipboard",
     shortcut: { key: "KeyX", mod: true },
-    visible: (ctx) => ctx.canEdit,
+    visible: onItems,
     enabled: needSel,
-    run: (ctx) => cutSelectedToClipboard(ctx.state),
+    run: (ctx) => cmd.copyToClipboard(ctx.state, "cut"),
     errorKey: "baseExplorer.errors.operationFailed",
   },
   {
@@ -176,12 +205,12 @@ export const ACTIONS = [
     label: () => "baseExplorer.menu.paste",
     icon: "paste",
     toolbar: { act: "paste", group: "clipboard" },
-    menu: ["root", "cat", "q"], menuGroup: "clipboard",
+    menu: ["root", "cat"], menuGroup: "clipboard",
     shortcut: { key: "KeyV", mod: true },
     visible: (ctx) => ctx.canEdit && inPlace(ctx),
     enabled: (ctx) => (ctx.hasClipboard ? true : `${R}clipboardEmpty`),
     // menu na folderze: wklej do tego folderu; inaczej do bieżącego
-    run: (ctx) => pasteClipboardHere(ctx.state, { target: ctx.here }),
+    run: (ctx) => cmd.paste(ctx.state, ctx.here),
     errorKey: "baseExplorer.errors.pasteFailed",
   },
   {
@@ -191,11 +220,10 @@ export const ACTIONS = [
     toolbar: { act: "duplicate", group: "clipboard" },
     menu: ["cat", "q"], menuGroup: "clipboard",
     shortcut: { key: "KeyD", mod: true },
-    // duplikat powstaje „tu”, więc w wynikach go nie ma (do czasu kopii
-    // w folderze źródłowym — etap przeniesienia poleceń)
-    visible: (ctx) => ctx.canEdit && !ctx.isFilterView,
+    // kopia powstaje w bieżącym folderze, więc w wynikach filtra jej nie ma
+    visible: (ctx) => onItems(ctx) && !ctx.isFilterView,
     enabled: needSel,
-    run: (ctx) => duplicateSelected(ctx.state),
+    run: (ctx) => cmd.duplicateSelected(ctx.state),
     errorKey: "baseExplorer.errors.duplicateFailed",
   },
 
@@ -209,14 +237,10 @@ export const ACTIONS = [
     menu: ["cat", "q"], menuGroup: "game",
     shortcut: { key: "KeyG", mod: true },
     // także czytelnik: gra jest kopią pytań w jego własnych grach
-    visible: () => true,
+    visible: (ctx) => !ctx.inTrash,
     enabled: needSel,
-    run: async (ctx) => {
-      const qIds = await ctx.state._api?.selectionToQuestionIds?.();
-      if (!qIds?.length) return;
-      await ctx.state._api?.openExportModal?.({ preselectIds: qIds });
-    },
-    errorKey: "baseExplorer.errors.operationFailed",
+    run: (ctx) => cmd.createGame(ctx.state),
+    errorKey: "baseExplorer.errors.createGameFailed",
   },
 
   // ===== Widok =====
@@ -228,29 +252,29 @@ export const ACTIONS = [
     shortcut: { key: "KeyR", mod: true, alt: true },
     visible: () => true,
     enabled: () => true,
-    run: (ctx) => ctx.state._api?.refreshList?.(),
+    run: (ctx) => cmd.refresh(ctx.state),
     errorKey: "baseExplorer.errors.operationFailed",
   },
 
-  // ===== Tagi (lewy panel) =====
+  // ===== Tagi i proponowane kategorie (lewy panel) =====
   {
     id: "tag.show",
     label: () => "baseExplorer.menu.show",
     icon: "eye",
-    menu: ["tag", "tags-bg"], menuGroup: "open",
+    menu: ["tag"], menuGroup: "open",
     visible: () => true,
-    enabled: (ctx) => (ctx.tagSel.length ? true : `${R}selectTag`),
-    run: (ctx) => ctx.state._api?.openTagView?.(ctx.tagSel),
+    enabled: (ctx) => (tagTargets(ctx).length ? true : `${R}selectTag`),
+    run: (ctx) => { setQuery(ctx.state, { tagIds: tagTargets(ctx) }); renderAll(ctx.state); },
     errorKey: "baseExplorer.errors.operationFailed",
   },
   {
     id: "type.show",
     label: () => "baseExplorer.menu.show",
     icon: "eye",
-    menu: ["meta"], menuGroup: "open",
+    menu: ["type"], menuGroup: "open",
     visible: () => true,
-    enabled: (ctx) => (ctx.typeSel.length ? true : `${R}selectType`),
-    run: (ctx) => ctx.state._api?.openTypeView?.(),
+    enabled: (ctx) => (ctx.target?.id ? true : `${R}selectType`),
+    run: (ctx) => { setQuery(ctx.state, { types: [ctx.target.id] }); renderAll(ctx.state); },
     errorKey: "baseExplorer.errors.operationFailed",
   },
   {
@@ -260,7 +284,7 @@ export const ACTIONS = [
     menu: ["tag", "tags-bg"], menuGroup: "create",
     visible: (ctx) => ctx.canEdit,
     enabled: () => true,
-    run: (ctx) => ctx.state._api?.openTagModal?.({ mode: "create" }),
+    run: (ctx) => cmd.openTagsWindow(ctx.state, { mode: "create" }),
     errorKey: "baseExplorer.tags.errors.saveFailed",
   },
   {
@@ -269,19 +293,19 @@ export const ACTIONS = [
     icon: "pencil",
     menu: ["tag"], menuGroup: "edit",
     visible: (ctx) => ctx.canEdit,
-    enabled: (ctx) => (ctx.tagSel.length === 1 ? true : `${R}selectOneTag`),
-    run: (ctx) => ctx.state._api?.openTagModal?.({ mode: "edit", tagId: ctx.tagSel[0] }),
+    enabled: (ctx) => (tagTargets(ctx).length === 1 ? true : `${R}selectOneTag`),
+    run: (ctx) => cmd.openTagsWindow(ctx.state, { mode: "edit", tagId: tagTargets(ctx)[0] }),
     errorKey: "baseExplorer.tags.errors.saveFailed",
   },
   {
     id: "tag.delete",
-    label: (ctx) => (ctx.tagSel.length > 1 ? "baseExplorer.menu.deleteTags" : "baseExplorer.menu.deleteTag"),
+    label: (ctx) => (tagTargets(ctx).length > 1 ? "baseExplorer.menu.deleteTags" : "baseExplorer.menu.deleteTag"),
     icon: "trash",
     danger: true,
     menu: ["tag"], menuGroup: "danger",
     visible: (ctx) => ctx.canEdit,
-    enabled: (ctx) => (ctx.tagSel.length ? true : `${R}selectTag`),
-    run: (ctx) => deleteTags(ctx.state, ctx.tagSel),
+    enabled: (ctx) => (tagTargets(ctx).length ? true : `${R}selectTag`),
+    run: (ctx) => cmd.deleteTags(ctx.state, tagTargets(ctx)),
     errorKey: "baseExplorer.errors.deleteTagsFailed",
   },
 ];

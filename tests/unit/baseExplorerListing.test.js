@@ -101,3 +101,10 @@ test("uszkodzone dane: cykl folderów nie zawiesza liczenia", () => {
   assert.deepEqual(bad.subtreeQuestionIds("a"), []);
   assert.ok(Array.isArray(bad.ancestorIds("a")));
 });
+
+test("wyszukiwarka: rozpoznanie #tagu przed kursorem i tekst bez #…", async () => {
+  const { hashTokenBeforeCaret, textWithoutHashTokens } = await import("../../web/bases/explorer/js/data/listing.js");
+  assert.deepEqual(hashTokenBeforeCaret("abc #fa", 7), { start: 4, name: "fa" });
+  assert.equal(hashTokenBeforeCaret("abc#fa", 6), null);
+  assert.equal(textWithoutHashTokens("kot #fa pies"), "kot pies");
+});

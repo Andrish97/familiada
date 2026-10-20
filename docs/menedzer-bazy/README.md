@@ -182,6 +182,36 @@ głównego” tworzy w głównym, błędy akcji z paska mają komunikat, powód
 niedostępności w dymku. Przyciski bez sensu w widoku znikają (decyzja 3).
 Lokalny e2e `base-explorer`: 68/72, 4 porażki identyczne jak na `main`.
 
+**Krok 2–6 (2026-10-20, lokalnie, bez produkcji):** nowa budowa strony.
+`state.js` (miejsce `location` root/folder/kosz + jedno zapytanie `query`
+tekst/tagi/kategorie, zaznaczenie z panelem), `data/store.js` (jedno
+`reload()`, starsza odpowiedź nie nadpisuje nowszej), `data/derived.js`
+i `data/listing.js` (czysta funkcja „co pokazać”, testy jednostkowe),
+`commands.js` (wszystkie operacje), `render.js` (rysowanie z modelu;
+zmiana zaznaczenia przełącza tylko klasy), `ui/list.js`, `ui/tree.js`,
+`ui/left.js`, `ui/dnd.js`, `ui/marquee.js`, `ui/search.js`,
+`ui/keyboard.js`, `ui/rename-modal.js`, nowy `page.js`. Usunięte:
+`actions.js` (3837 linii), `trash-modal.js`, przycisk i okno kosza.
+- Kosz: zwykły wiersz pod folderami w drzewie (bez plakietki), otwiera się
+  jak folder (`?trash=1`), kolumna „Usunie się” (za N dni), „Przywróć”
+  i „Opróżnij kosz” w pasku, „Usuń” w koszu = trwale, menu na koszu
+  w drzewie: Otwórz kosz / Opróżnij kosz.
+- Menu kontekstowe na telefonie: arkusz od dołu z `env(safe-area-inset-*)`
+  i tłem zamykającym; pozycja działa tylko po wciśnięciu w menu (puszczony
+  palec po przytrzymaniu niczego nie uruchamia); zamykanie na przewinięcie,
+  zmianę rozmiaru i klik poza menu.
+- Wyszukiwarka: `#pełna_nazwa` + spacja = tabletka (zdarzenie `input`,
+  działa z klawiaturą ekranową), podpowiedzi tagów, Backspace zdejmuje
+  ostatnią tabletkę; tekst bez polskich znaków i w dowolnej kolejności słów.
+- Proponowane kategorie (nagłówek), nazwy jak typy gry: Preparowana /
+  Punktacja / Ankieta (EN Prepared / Points / Poll, UK Підготовлене / Бали /
+  Опитування).
+- Foldery zawsze pierwsze; pierwszy klik w Datę i Info sortuje malejąco.
+- Naprawione przy okazji: daty w liście zawsze pokazywały „—”; hamburger
+  zwężał układ (scrollbar-gutter bez paska przewijania) i pasek „mrugał”.
+- Zrzuty: `scripts/screens` sceny `base-explorer`, `-trash`, `-menu`,
+  `-filter` (atrapa obsługuje teraz filtr po osadzonej tabeli).
+
 
 1. **Szkielet bez zmiany zachowania:** `platform.js`, `actions/context.js`,
    `actions/run.js`, rejestr z obecnymi akcjami; pasek, menu i skróty

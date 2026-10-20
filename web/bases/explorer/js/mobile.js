@@ -29,8 +29,14 @@ export function initDrawer() {
     panel.classList.add("is-open");
     overlay.hidden = false;
     btn.setAttribute("aria-expanded", "true");
-    document.body.classList.add("explorer-drawer-open");
-    document.body.style.overflow = "hidden";
+    // Blokada przewijania tylko, gdy strona się przewija: klasa włącza
+    // scrollbar-gutter (base.css), który bez paska przewijania zwęziłby
+    // układ i pasek narzędzi „mrugnąłby” przy każdym otwarciu.
+    const root = document.documentElement;
+    if (root.scrollHeight > root.clientHeight) {
+      document.body.classList.add("explorer-drawer-open");
+      document.body.style.overflow = "hidden";
+    }
   }
 
   function close() {

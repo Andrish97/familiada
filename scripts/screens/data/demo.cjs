@@ -303,6 +303,7 @@ function buildDb(lang, extras = {}) {
       "games.questions": { fk: "game_id" },
       "questions.answers": { fk: "question_id" },
       "question_base_shares.question_bases": { local: "base_id", one: true },
+      "qb_question_tags.qb_questions": { local: "question_id", one: true },
     },
     localStorage: { "sb-api-auth-token": "screens" },
     http: {

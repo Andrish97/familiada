@@ -123,7 +123,8 @@ test('Eksplorator i strony urządzeń odsłaniają treść po stanie pierwszego 
   const explorerHtml = read('bases/explorer/index.html');
   const explorerJs = read('bases/explorer/js/page.js');
   assert.match(explorerHtml, /id="toolbar"[^>]*data-skel-step/);
-  assert.match(explorerJs, /await api\.refreshList\(\);[\s\S]{0,180}skel-step-ready/);
+  assert.match(explorerJs, /wireKeyboard\(state\);[\s\S]{0,180}skeletonReady\(\);/);
+  assert.match(explorerJs, /function skeletonReady\(\) \{[\s\S]{0,200}skel-step-ready/);
   for (const [htmlPath, jsPath] of [
     ['control/host/index.html', 'control/host/js/main.js'],
     ['control/buzzer/index.html', 'control/buzzer/js/main.js'],

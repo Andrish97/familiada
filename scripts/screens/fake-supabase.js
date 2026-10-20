@@ -97,6 +97,19 @@
         const name = not ? op.slice(4) : op;
         const fn = ops[name];
         if (!fn) { miss("filter", name); return api; }
+        // filtr po osadzonej tabeli: "qb_questions.base_id" (relacja one)
+        const dot = col.indexOf(".");
+        if (dot > 0) {
+          const child = col.slice(0, dot);
+          const ccol = col.slice(dot + 1);
+          const rel = db.relations?.[`${table}.${child}`];
+          if (!rel?.one) { miss("relation", `${table}.${child}`); return api; }
+          state.filters.push((r) => {
+            const c = (db.tables[child] || []).find((x) => x.id === r[rel.local]);
+            return !!c && fn(c[ccol], val) !== not;
+          });
+          return api;
+        }
         state.filters.push((r) => fn(r[col], val) !== not);
         return api;
       },
