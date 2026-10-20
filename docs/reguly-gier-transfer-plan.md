@@ -120,6 +120,30 @@ Suma nie musi wynosić dokładnie 100. Warunki dotyczą grywalności, nie
 możliwości utworzenia lub zapisania szkicu. Modal Base Explorera pokazuje
 braki informacyjnie i nie blokuje tworzenia szkicu.
 
+### Dalsze decyzje dotyczące punktacji i ochrony gry — 2026-10-20
+
+- Punkty ankiety są jej udziałami procentowymi: **całość wskazań na pytanie
+  mapujemy proporcjonalnie na 100**. Przy 100 wskazaniach liczba wskazań
+  odpowiada punktom. Procent wyświetlany w podliczaniu ma wyjaśniać tę samą
+  punktację, nie być drugim, inaczej zaokrąglonym wynikiem. Liczymy całość
+  przed odrzuceniem słabych odpowiedzi/wyborem sześciu; pominięcie części
+  odpowiedzi nie zwiększa udziałów pozostałych. Szczegółowe zaokrąglanie
+  niecałkowitych udziałów pozostaje do rozstrzygnięcia na przykładach.
+- **Usuwamy sztuczne obniżanie punktów w celu rozbijania remisów.** Różne
+  odpowiedzi mogą mieć tyle samo punktów. **Doprecyzowanie użytkownika:**
+  trafienie dowolnej odpowiedzi o maksymalnej wartości oznacza trafienie
+  najwyżej punktowanej. Przy 40/40/20 obie odpowiedzi za 40 kończą pojedynek
+  tak samo. Odpowiedzi sortujemy malejąco po punktach, remisy zachowują
+  zapisany ord; kolejność wyświetlania nie rozstrzyga zwycięstwa. Tożsamość
+  kafli/odsłonięć pozostaje oparta na ID/ord, nie na wartości punktów.
+- Aktywna rozgrywka Control blokuje edycję i pozostałe kolidujące operacje
+  także po zamknięciu karty, do zakończenia/wygaszenia przebiegu. Godzinę
+  liczymy od ostatniej aktywności operatora, nie od samego zamknięcia karty.
+  Nie utożsamiać tego z krótką blokadą strony (120 s). Brak takiej ochrony
+  w innych wejściach/operacjach niż ustawienia jest rozbieżnością do poprawy
+  w centralnej bramce JS/SQL. Istniejący jawny przepływ zakończenia sesji
+  w ustawieniach pozostaje osobną operacją.
+
 ### Reguły do zinwentaryzowania i ujednolicenia
 
 - Typy i aliasy: `poll_text`, `poll_points`, `prepared`, `market` oraz wszystkie
@@ -199,6 +223,12 @@ powtórzeń warunku.
   Zamknięte ankiety odpowiadają wariantom „zamknięta ankieta” z transferu,
   a `prepared` pozostaje szkicem, którego gotowość wynika z reguł. Warunki
   dopuszczenia źródła do „Wyślij znajomemu” pozostają osobną regułą akcji.
+- **Decyzja 2026-10-20 — kopie `market`:** wszystkie akcje transferu takich
+  kopii są zablokowane, również po usunięciu oryginału z Marketplace.
+  Lokalna kopia zachowuje typ `market` i pozostaje widoczna w bibliotece;
+  źródło usunięte oznaczamy jako archiwalne. Usunięcie/wycofanie pozycji
+  Marketplace nie ma tworzyć edytowalnej preparowanej. Etykieta archiwalna
+  jest informacją o dostępności źródła, nie nowym typem gry.
 
 ### Marketplace — obecna bramka wysyłania
 
@@ -264,18 +294,23 @@ akceptacji resetu, której wymaga zwykła edycja. Wyniki i przypisana punktacja
 są wtedy czyszczone zgodnie z kontraktem edytora. Dokładny zakres zachowania
 tekstowych odpowiedzi z zamkniętej ankiety jest już sprawdzony w audycie A
 (§8): obecny reset zachowuje ich treść, zeruje punkty i cofa status do szkicu.
-Nie usuwa jednak surowych głosów ani sesji. Docelowy zakres czyszczenia tych
-danych wymaga doprecyzowania; podsumowanie modalа musi opisywać rzeczywisty
-efekt wspólnego resetu.
+Nie usuwa jednak surowych głosów ani sesji. **Decyzja 2026-10-20:** docelowy
+reset edycji ma działać jak normalny reset ankiety: usuwa głosy, surowe
+odpowiedzi, sesje głosowania i szkic podliczania, unieważnia stare linki,
+zaproszenia i kody QR oraz wszystkie zależne dostępy do tego uruchomienia.
+Gra ma status `draft`, bez aktywnej ankiety i zatwierdzonego wyniku; treść
+pytań i odpowiedzi zostaje, przypisana punktacja jest zerowana. „Zamknięta
+ankieta” oznacza tu brak możliwości głosowania, a nie zachowanie statusu
+`ready`. Ten sam reset obowiązuje w edytorze i przy zmianie typu, po takim
+samym potwierdzeniu i z ochroną aktywnej rozgrywki Control.
 
 ### Znalezione obecne zachowania
 
 - `web/shared/js/core/game-transfer-format.js` eksportuje format `.famgame` i
   kopie wysyłane. `gameTransferType()` dopuszcza tylko trzy źródłowe typy:
   `poll_text`, `poll_points`, `prepared`; `market` i nieznane wartości
-  zamienia po cichu na `poll_text`. Dla `market` trzeba dodać jawne
-  rozstrzygnięcie (np. blokada generycznego eksportu kopii, z osobną akcją
-  pobrania źródłowej pozycji Marketplace), nie usuwać `market` z bazy.
+  zamienia po cichu na `poll_text`. Dla `market` ustalono blokadę wszystkich
+  akcji transferu kopii, także archiwalnej; nie usuwać `market` z bazy.
 - Wspólny mechanizm powielania (`web/shared/js/core/resource-clone-plan.js`,
   `supabase/migrations/2026-10-13_365_resource_clone_common.sql`) obecnie
   odrzuca źródłową grę o statusie innym niż `draft` lub `ready`. Ankiety
@@ -345,6 +380,11 @@ zapis, podgląd i późniejszą rozgrywkę.
   reguł. Nie ma konwersji gotowej ankiety punktowej/tekstowej na preparowaną.
 - Dane wymagające tajności lub związane z sesją/urządzeniami pozostają poza
   formatem, tak jak obecnie; jawnie dokumentować wyłączenia.
+- **Decyzja 2026-10-20:** zamknięta ankieta przenosi pytania, zatwierdzone
+  odpowiedzi i punkty oraz swój zamknięty wariant. Nie zachowujemy liczby
+  głosów ani historii/tożsamości głosujących; nie tworzymy fikcyjnych głosów
+  lub sesji na podstawie punktacji. Importowany wynik pozostaje grywalnym
+  wynikiem, a nie odtworzoną ankietą z tymi samymi respondentami.
 - Import nie może odrzucać gry tylko dlatego, że jest niegotowa do rozgrywki.
   Po imporcie centralny silnik pokazuje braki. Jeżeli z historycznego pliku
   da się odzyskać grę i jej pytania, niejasność typu/stanu prowadzi do jawnego
@@ -361,6 +401,17 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Rozpoznane, jednoznaczne typy i stany normalizować zgodnie z kontraktem.
   Poprawnych typów nie zmieniać tylko dlatego, że szkic nie jest jeszcze
   grywalny. Rozpoznany typ kopii `market` pozostaje osobnym typem w bazie.
+- **Doprecyzowanie 2026-10-20:** migrację wykonać w nocnym oknie wdrożenia;
+  rozpoznane ankiety pozostawić bez przebudowy treści, głosów, statusu
+  i istniejących wyników. Nowe reguły podliczania dotyczą przyszłego
+  podliczania. Nie przeliczać automatycznie zamkniętych ankiet starym/nowym
+  progiem i nie zmieniać ich na preparowane. Zakaz ten nie znosi jawnej
+  obsługi niejednoznacznych, historycznych pakietów.
+- Sama pora nocna nie gwarantuje braku aktywnej rozgrywki. Zalecenie do
+  planu operacyjnego: przed zmianą treści sprawdzić trwałe sesje Control,
+  odróżnić wygasłe od niewygasłych; niewygasłe odłożyć do wygaśnięcia zamiast
+  uszkodzić wznowienie. Dokładna godzina/strefa i sposób dokończenia takiej
+  paczki pozostają do ustalenia przed wdrożeniem, nie są teraz harmonogramem.
 - Gdy historyczny typ/stan jest niejasny, ale można odczytać definicję gry
   i jej pytania, wynik to **`prepared`, `status=draft`**. Nie zgadywać rodzaju
   ankiety po nazwie ani nie wymagać ręcznego wybierania między typami ankiet.
@@ -438,6 +489,16 @@ zapis, podgląd i późniejszą rozgrywkę.
   z powodu braków grywalności. Niejasny historyczny typ z czytelnymi pytaniami
   daje preparowaną w szkicu, z odzyskanymi odpowiedziami/punktami; brak
   możliwości odczytu gry/pytań daje raport problemu, nie fikcyjną nową grę.
+- Remisy w Control: osobno trafienie pierwszej i drugiej odpowiedzi za 40
+  w zestawie 40/40/20 kończy pojedynek, daje właściwe punkty i możliwość
+  oddania kontroli. Po odświeżeniu i ponownym podłączeniu urządzeń kolejność,
+  tożsamość oraz stan odsłonięcia pozostają spójne. Remis punktów nie skleja
+  kafli ani nie nalicza punktów dwukrotnie. Osobno sprawdzić dotychczasową
+  zasadę remisu dwóch odpowiedzi poniżej maksimum w pojedynku.
+- Reset edycji i zmiany typu: stare głosy, sesje ankiet, linki, zadania
+  i kody QR nie mogą działać po resecie; zostaje draft z punktami 0.
+  Aktywny przebieg Control blokuje te operacje również po zamknięciu karty,
+  do zakończenia lub godzinnego wygaśnięcia.
 
 ## 7. Decyzje pozostawione do rozstrzygnięcia po audycie
 
@@ -528,7 +589,7 @@ przy zapisie/przejściu i odczytywany przez UI. Nie jest to nowa decyzja o proga
 | Trzy źródłowe / draft, ready / powiel | UI używa export; SQL pozwala tylko draft/ready; closed poll → P/draft | Wspólny transfer; zamknięty poll zachowuje zamknięty wariant, P szkic | R/UI + C/F → osobna akcja + transfer i SQL |
 | AP, AT / open, stopped / powiel | SQL `_resource_clone_read` odmawia, także UI blokuje | Dozwolone jako szkic tego samego typu bez bieżących głosów; locki/uprawnienia nadal obowiązują | C + R/UI → osobna akcja + transfer i SQL |
 | Trzy źródłowe / draft, ready / wyślij znajomemu | Bramka jak Powiel; zamknięta ankieta też może być wysłana jako P/draft. Konto zwykłe, aktywna znajomość, zakaz demo i pending | Wysyłka wyłącznie źródłowych szkiców; zamknięte ankiety niedopuszczone; reguła odrębna od Powiel | C/367 + R/UI → osobna akcja send + wspólny transfer |
-| M / draft, ready / zwykły transfer | SQL kopii i zakładka Społeczności blokują eksport/kopie; R.export pozwala poza open/stopped; sam helper typu zmienia M na AT, a dla ready eksport kończy jako P | Jawna polityka eksportu M do decyzji; M pozostaje w bazie | C + E kontra R/F → jawna akcja, bez fallbacku |
+| M / draft, ready / zwykły transfer | SQL kopii i zakładka Społeczności blokują eksport/kopie; R.export pozwala poza open/stopped; sam helper typu zmienia M na AT, a dla ready eksport kończy jako P | Wszystkie akcje transferu zablokowane; M pozostaje w bibliotece także po usunięciu oryginału, z oznaczeniem archiwalności | C + E kontra R/F → wspólna odmowa SQL/UI |
 | Dowolne zaznaczenie w bazie / utwórz grę | ≥10 i wszystkie zaznaczone zgodne z typem; pusta preselekcja zaznacza całą pulę; metadane typu heurystyczne | Dokładne zaznaczenie także 0; informacyjne braki; bez bramki gotowości i automatycznego doboru | B → wspólny podgląd gotowości + transfer/import SQL |
 | P / draft, ready; AP, AT / ready / zgłoś Marketplace | UI P tylko ≥10; SQL stary `can_play`, pomija pytania bez odpowiedzi i minimum 4; tytuł/język/opis/właściciel/demo/duplikaty osobno | Grywalna P albo zamknięty poll; wspólna gotowość, bez utraty odrębnych zabezpieczeń; snapshot P | M + stary R → osobna akcja Marketplace + centralna gotowość SQL |
 
@@ -555,7 +616,7 @@ na takim sprawdzeniu klienta.
 | Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Raport obcięć/placeholderów albo zachowanie pełnej treści |
 | Punkty | `Number(x) || 0`; dla AP/draft 0; Base Explorer AP zawsze 0, P tylko istniejące `fixed_points` | `floor`, clamp 0–100, brak/niepoprawne → 0; przyjmuje też liczbowy string/wykładnik i true→1. Normalizator pakietu ignoruje alias `points` | Bez automatycznego uzupełniania braków; jawna normalizacja/raport; osobny kontrakt szkicu i wyniku |
 | Kolejność odpowiedzi | F sortuje po ord, fallback wejście; SQL kopii wcześniej po ord,id | Ord=pozycja w tablicy; zapis nie sortuje po punktach | Oddzielić zachowaną kolejność od kolejności prezentacji |
-| Wynik zamknięcia | Wyłącznie treść odpowiedzi i `fixed_points`, przez konwersję na P; brak dat/udziałów/liczebności | Brak odtworzenia zamkniętej ankiety/sesji | Zamknięty typ i wynik; zakres agregatów §8.6 |
+| Wynik zamknięcia | Wyłącznie treść odpowiedzi i `fixed_points`, przez konwersję na P; brak dat/udziałów/liczebności | Brak odtworzenia zamkniętej ankiety/sesji | Zamknięty typ, zatwierdzone odpowiedzi i punkty; bez liczby głosów, głosujących i odtwarzania sesji |
 | Bieżące głosy, surowe teksty, tokeny głosujących, sesje, zadania, klucze urządzeń/ankiety, runtime i statystyki rozgrywki | Pominięte | Nie są przyjmowane; nowe ID/klucze i właściciel z serwera | Nadal poza transferem; jawnie poinformować o utracie głosów aktywnej ankiety |
 | Ustawienia, logo, dźwięki/pliki | Pominięte | Nowa gra `settings={}`, brak powiązań z cudzymi plikami | Nadal poza formatem zgodnie z zakresem |
 | Język, opis, metadata, source_market_id, is_demo, received_from | Pominięte w zwykłym pliku | Zwykły import nie ufa takim polom; pochodzenie demo/kopii ustalają osobno C/SQL; nie przenosi folderów/tagów bazy | Jawna lista wyłączeń; nie utożsamiać metadanych Marketplace z plikiem |
@@ -600,7 +661,7 @@ regułą od progu 4% ankiety.
 | `fixed` | `games.js:uiTypeFromRow` oraz narzędzie zrzutów `homepage-screenshots.js` traktują jako P. Zwykły importer SQL nie zna aliasu i zmienia go na AT, tracąc odpowiedzi; podgląd importu pokazuje P. Wymaga jawnego migratora formatu, nie dodania enum |
 | `poll` | Te same helpery zgadują AP po fragmencie „punkt” w nazwie, w pozostałych przypadkach AT. Podgląd importu Gier przekazuje tylko type, więc nazwa nie pomaga. Docelowo bez wiarygodnego typu wynik to odzyskana P/draft z odczytanymi pytaniami, odpowiedziami i punktami, bez heurystyki językowej |
 | P z `source_market_id` | Starsze kopie Marketplace były P; 054 dodaje M, 055 backfilluje rekordy z source_market_id do M. To migracja pochodzenia, a nie usuwanie M |
-| M bez `source_market_id` | Migracja 272 przekształca istniejące sieroty do P; trigger robi to przy utracie rodzica Marketplace. To osobna historyczna konwersja; obecne uzgodnienie zachowania M wymaga sprawdzenia tej polityki przed zmianą/pozostawieniem triggera |
+| M bez `source_market_id` | Migracja 272 przekształca istniejące sieroty do P; trigger robi to przy utracie rodzica Marketplace. To rozbieżność: docelowo pozostawić M jako archiwalną kopię na liście, z blokadą transferu; bez konwersji do P |
 | P po eksporcie zamkniętego AP/AT | Pakiet bez wersji/statusu/źródłowego typu jest nierozróżnialny od ręcznie preparowanej gry. Bez zewnętrznego pochodzenia nie odtwarzać typu ankiety automatycznie |
 | `ready` / `poll_stopped` / `*_closed` | `ready` jest statusem, nie historycznym typem; stopped dodano w 315. Sloty demo `poll_text_closed`/`poll_points_closed` nie są wartościami game_type |
 | `ready_prepared`, inne nieznane, brak typu | Nie znaleziono takiego enum ani jawnego migratora w przejrzanym kodzie. Nie tworzyć go. Importer/helper F zamieniają nieznane na AT; UI listy dla nieznanego pokazuje P; przy ready F dodatkowo kończy jako P. Zastąpić te fallbacki jawną migracją/odzyskaniem P/draft, jeśli da się odczytać grę i pytania; w przeciwnym razie zgłosić błąd |
@@ -626,23 +687,73 @@ preparowanej w szkicu. Brak gotowości nie jest powodem do dopisywania treści
 ani sztucznego przydziału punktów. Pozostaje odczyt rzeczywistych danych
 i rozpisanie konkretnych operacji naprawy.
 
-1. **Pełna matematyka zamknięcia:** mianownik i moment top6/odrzucania,
-   rozstrzyganie remisów (w tym obecne obniżanie punktów) oraz wspólna
-   kolejność wyników. Próg zaokrąglonego udziału ≥4% i minimum 3 odpowiedzi
-   są ustalone; decyzja nie dotyczy ich zmiany.
-2. **Zakres zamkniętego wyniku w pliku:** czy wystarczy zatwierdzona lista
-   odpowiedzi/punktów i znacznik zamknięcia, czy zachowujemy także agregaty
-   liczebności/udziałów? Bez tokenów, surowych głosów i sesji. Zastane wyniki
-   podliczone starym progiem obejmie migracja naprawcza; niejednoznacznych
-   wyników nie uznawać automatycznie za poprawnie zamkniętą ankietę.
-3. **Straty i stare pliki:** pełne treści ponad limity czy potwierdzane obcięcie;
-   jawny sposób eksportu M; polityka
-   historycznego M→P po usunięciu pozycji Marketplace. Występowanie danych
-   jest do odczytania, nie do rozstrzygania przez zgadywanie.
-4. **Reset wspólny dla edit/konwersji:** zachowanie treści odpowiedzi jest
-   sprawdzone; do ustalenia, czy poza punktami/statusem usuwać też pozostawione
-   dziś głosy/sesje/zadania i rotować klucz. Wybrany zakres musi być identyczny
-   dla obu akcji; nie budować osobnego resetu konwersji.
+Rozstrzygnięte w dalszej rozmowie 2026-10-20: całość wskazań mapujemy na
+100, procent i punkty są tym samym wynikiem; bez sztucznego obniżania remisów;
+transfer zamkniętego wyniku bez liczby głosów; M bez transferu, zachowane jako
+archiwalne po usunięciu oryginału; migracja nocą, bez przebudowy ankiet.
+Reset przy edycji/konwersji ma pełny zakres normalnego resetu ankiety:
+usunięte głosy i zależności, unieważnione linki, punkty 0, wynik draft.
+
+1. **Zaokrąglanie udziałów:** jak uzyskać całkowite punkty/procenty przy
+   ułamkach, nie przekroczyć 100 i jak traktować równe udziały przy rozdziale
+   brakującej jednostki. Np. trzy równe udziały to 33⅓%: podział 34/33/33
+   sumuje się do 100, a 33/33/33 zachowuje równość i daje 99. Osobne
+   zaokrąglanie niektórych rozkładów może dać 101. Trzeba też domknąć remis
+   na granicy szóstej odpowiedzi. Próg ≥4% i min. 3 odpowiedzi pozostają.
+2. **Straty treści:** pełne treści ponad limity czy potwierdzane obcięcie;
+   dokładna obsługa nadmiarowych odpowiedzi i niepoprawnych punktów.
+   Występowanie danych jest do odczytania, nie do zgadywania.
+
+### 8.7. Regulamin TVP i dodatkowe ryzyka sprawdzone 2026-10-20
+
+- [Regulamin TVP z naboru 2025](https://s.tvp.pl/repository/attachment/3/5/4/354f69c09c8b430588d3c079410afb3d.pdf),
+  §2 pkt 2.6/2.12 i §6: punkty odzwierciedlają wskazania stu ankietowanych.
+  Nie podaje minimalnej liczby wskazań ani wymogu różnych punktacji;
+  przypadek dwóch remisujących odpowiedzi nie jest opisany wprost.
+- [Starszy regulamin TVP](https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf),
+  dział IV pkt 4–5: opisuje pomijanie rzadkich odpowiedzi, w przykładzie
+  również z trzema wskazaniami. Nie nazywa tego uniwersalnym progiem 4.
+  Wybieranie kilku wariantów odpowiedzi jest osobną zasadą. Nasz próg 4
+  pozostaje decyzją aplikacji, nie potwierdzonym ogólnym przepisem teleturnieju.
+- Wniosek dotyczący podliczania: brak podstaw w tych dokumentach do
+  odejmowania punktów tylko po to, żeby każda odpowiedź miała inną wartość.
+  Dwa warianty z 20 wskazaniami na 100 powinny mieć po 20 pkt zgodnie
+  z zasadą punktów za wskazania; to wniosek z tej zasady, nie osobny przepis
+  o remisach. Odrębną sprawą jest dzielenie 100 całkowitych punktów przy
+  niecałkowitych udziałach, gdy liczba respondentów jest inna niż 100.
+- `web/control/js/engine.js:topAnswer` wybiera pojedynczy rekord o największej
+  punktacji, a `isTop` porównuje jego ord. Przy 40/40/20 tylko jedna z dwóch
+  odpowiedzi za 40 kończy dziś pojedynek od razu. Samo usunięcie obniżania
+  remisów w podliczaniu nie wystarczy. Docelowo zgodnie z doprecyzowaniem
+  użytkownika oceniamy wartość wybranej odpowiedzi względem maksimum, a nie
+  zgodność jej ord z jednym rekordem. Dalszy remis w `duelRegisterResult`
+  wygrywa już pierwszy odpowiadający; tej odrębnej zasady nie zmieniono.
+- Sprawdzono też UI Control (`ui.js:renderRounds`), sortowanie wspólne
+  (`answer-order.js`), stan (`store.js`) oraz render Host/Display. Remisy
+  mają już stabilny porządek po ord. Kafle są rozróżniane przez `ans:${ord}`,
+  odsłonięcia przez ord, a finałowe mapowanie przez ID odpowiedzi; punkty
+  nie są identyfikatorem. Nie znaleziono potrzeby sztucznego różnicowania
+  punktacji dla działania panelu. Jest to wniosek z audytu kodu, przed
+  punktowymi testami wykonania; poprawka musi objąć semantykę `isTop`.
+- Sesje ankiety (`poll_sessions`) to uruchomienia głosowania dla pytań,
+  powiązane z głosami; nie oznaczają sesji Control. Ich usuwanie przy resecie
+  nie dotyczy czasu trwania rozgrywki. Reset ma usuwać całe uruchomienie
+  ankiety i unieważniać jego dostępy, zgodnie z doprecyzowaniem w §4.
+- `control_runtime_session_touch` przedłuża termin o godzinę po aktywności
+  operatora. `resource-lock.js` zwalnia blokadę karty przy pagehide, a jej
+  awaryjny TTL to 120 s. Trwały przebieg wskazuje `game_session_active`.
+  `game-settings.js:guardActiveGameSession` i RPC
+  `control_game_settings_status` chronią ustawienia po zamknięciu Control.
+  Edytor nie ma takiej dodatkowej bramki: po zajęciu krótkiego locka sprawdza
+  tylko `edit`, którego `game_rules_compute` nie wiąże z trwałą rozgrywką.
+  Zgodnie z decyzją użytkownika rozszerzyć wspólną ochronę operacji w JS/SQL;
+  na tym etapie stwierdzono lukę kodową, nie wykonano poprawki ani E2E.
+- Archiwalny M wymaga poprawy więcej niż etykiety: trigger 272 zamienia go
+  na P, FK biblioteki do usuniętej pozycji kasuje wpis, a `market_my_library`
+  używa JOIN do istniejącego Marketplace. Trzeba zachować listowanie lokalnej
+  kopii niezależnie od istnienia źródła i korzystać z jej zachowanej treści.
+  Dawne kopie już zamienione na P mogą utracić informację o pochodzeniu;
+  odtwarzać M tylko na podstawie dowodu, nie podobieństwa nazwy/treści.
 
 **Punkt zatrzymania:** raport A, przed implementacją i przed etapem C.
 Nie uruchamiać dalszej kolejki wdrożeń na podstawie samego zakończenia audytu.
