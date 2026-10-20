@@ -14,7 +14,10 @@ export function buildMarketingMailHtml({ template, subject, bodyHtml = '' }) {
     bodyHtml: invitation ? invitationBody : String(bodyHtml || ''),
     actionLabel: invitation ? 'Poznaj system familiada.online' : '',
     actionUrl: invitation ? 'https://familiada.online' : '',
-    ignoreNote: `${invitation ? 'Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. ' : ''}W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.`,
+    ignoreNote: `${invitation ? 'Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. ' : ''}W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną na adres kontakt@familiada.online.`,
+    // Zapasowy link przycisku ma podpis jak w innych mailach -- bez niego ramka
+    // z adresem strony wyglądała na adres do odpowiedzi.
+    linkHint: invitation ? 'Link nie działa? Skopiuj i wklej do przeglądarki:' : '',
     footerText: 'Familiada Online — bezpłatny system.\nWysłano z kontakt@familiada.online',
     footerLinks: [{ label: 'familiada.online', url: 'https://familiada.online' }],
   });
