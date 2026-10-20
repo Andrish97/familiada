@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { pageIndexPath, fetchFromOrigin, isBlockedPath } from "../../cloudflare/maintenance-worker/src/lib/origin/origin.js";
+import { pageIndexPath, fetchFromOrigin, isBlockedPath, isLockedSnake } from "../../cloudflare/maintenance-worker/src/lib/origin/origin.js";
 import { isStaticAssetPath, isSettingsAsset, isMaintenanceAsset } from "../../cloudflare/maintenance-worker/src/lib/origin/assets.js";
 
 const ROOT = fileURLToPath(new URL("../../web/", import.meta.url));
@@ -93,4 +93,14 @@ test("sound manifest and display theme modules point to existing assets", () => 
   assert.doesNotMatch(hostThemeCss, /data-host-theme="modern"/);
   for (const name of ["font_5x7.json", "font_3x10.json", "font_win.json"]) assert.ok(fs.existsSync(path.join(ROOT, "shared/fonts/display", name)));
   assert.doesNotThrow(() => JSON.parse(fs.readFileSync(path.join(ROOT, "shared/data/logo_familiada.json"), "utf8")));
+});
+
+test("ukryty wąż: /snake/ tylko z linkiem z kodu QR (id demo), bez niego 404", () => {
+  const u = (path) => new URL(`https://www.familiada.online${path}`);
+  for (const path of ["/snake", "/snake/", "/snake/index.html", "/snake/?lang=pl", "/snake/?qr=8f14e45f-ceea-467a-9c2b-2f3a1d6e5b10", "/snake/?qr=00000000-0000-4000-8000-0000000001"]) {
+    assert.equal(isLockedSnake(u(path)), true, path);
+  }
+  for (const path of ["/snake/?qr=00000000-0000-4000-8000-000000000103", "/snake/?qr=00000000-0000-4000-8000-000000000103&lang=uk", "/snake/js/snake.js", "/snake/css/snake.css", "/go/"]) {
+    assert.equal(isLockedSnake(u(path)), false, path);
+  }
 });

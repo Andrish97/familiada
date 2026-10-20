@@ -159,6 +159,7 @@ async function handleAnonymousPollGateway() {
     const lang = ["pl","en","uk"].includes(qs.get("lang")) ? qs.get("lang") : null;
     await Promise.race([logSnake("scan", { lang }), new Promise((resolve) => setTimeout(resolve, 1500))]);
     const target = new URL("/snake/", location.origin);
+    target.searchParams.set("qr", qs.get("id"));
     if (lang) target.searchParams.set("lang", lang);
     location.replace(target.toString());
     return;
