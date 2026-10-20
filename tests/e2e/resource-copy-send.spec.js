@@ -44,7 +44,7 @@ test('Wyślij Gier i Logo: mail Go, odbiór i kopia z właściwym pochodzeniem',
   const gameCopy=await recipientPage.evaluate(async name=>{const {data,error}=await window.__sbClient.from('games').select('id,name,received_from_label').eq('name',name).single();if(error)throw error;return data;},game.name);receivedGames.push(gameCopy.id);expect(gameCopy.received_from_label).toBeTruthy();
 
   const logo=await page.evaluate(async prefix=>{const db=window.__sbClient,{data:u}=await db.auth.getUser();const row={user_id:u.user.id,name:prefix+'-LOGO',type:'GLYPH_30x10',payload:{layers:[{color:'main',rows:['10101','01110']}],source:{mode:'TEXT',text:'RODZINA',fontId:'familiada'}}};const {data,error}=await db.from('user_logos').insert(row).select('id,name').single();if(error)throw error;return data;},name);sourceLogos.push(logo.id);
-  const logoSend=await sendFromUi(page,'logo','.logoTile',logo.name,recipientId);expect(logoSend.ok).toBeTruthy();
+  const logoSend=await sendFromUi(page,'logos','.logoTile',logo.name,recipientId);expect(logoSend.ok).toBeTruthy();
   const logoMail=await waitForEmail({recipient:testAccountUsername(2),after:new Date(Date.parse(gameMail.received_at)+1).toISOString(),subject:/kopię|copy/i,timeout:120000});
   expect(extractHttpLinks(logoMail).some(value=>new URL(value).searchParams.has('c'))).toBeTruthy();
   await recipientPage.goto('https://www.familiada.online/logos/');await expect(recipientPage.locator('#receivedCopies')).toContainText(logo.name,{timeout:20000});
