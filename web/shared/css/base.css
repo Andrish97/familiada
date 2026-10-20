@@ -2887,8 +2887,16 @@ button.rowsSectionHead{ cursor: pointer; }
   /* Let row content wrap normally; truncate only long status badges so they
      stay inside the tile without forcing the tile beyond its available width. */
   .shareRow--compact .shareMain{ display: block; }
-  .shareRow--compact .shareEmail{ white-space: normal; overflow-wrap: anywhere; }
-  .shareRow--compact .shareTags{ width: max-content; max-width: 100%; margin-top: 6px; flex-wrap: nowrap; overflow: hidden; }
+  .shareRow--compact .shareRowActions{ gap: 4px; }
+  .shareRow--compact .shareRowActions .btn, .shareRow--compact .shareRowActions .baseShareRole{ width: 36px; min-width: 36px; min-height: 40px; padding: 4px; }
+  .shareRow--compact{ gap: 8px; padding: 8px; }
+  .shareRow--compact .shareRowActions{ align-self: center; }
+  .shareRow--compact .shareRowActions .btn, .shareRow--compact .shareRowActions .baseShareRole{ height: 40px; }
+  .shareRow--compact .shareTags{ gap: 4px; }
+  .shareRow--compact .shareTags .tag{ font-size: 10px; padding: 2px 6px; }
+  /* nazwa w jednej linii z wielokropkiem (pełna w dymku), znaczniki zawijają się zamiast ucinać */
+  .shareRow--compact .shareEmail{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shareRow--compact .shareTags{ width: auto; max-width: 100%; margin-top: 6px; flex-wrap: wrap; overflow: hidden; }
   .shareRow--compact .shareTags > *{ min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
@@ -2901,11 +2909,7 @@ button.rowsSectionHead{ cursor: pointer; }
 .shareList--scroll > *{ flex-shrink: 0; }
 /* pusta lista: sam kafel braku, bez drugiej ramki */
 .shareList--scroll:has(> :is(.shareEmpty, .share-empty-state):only-child){ padding: 0; border: 0; background: none; }
-/* telefon: wiersz z dodatkiem (rola w Bazach) — nazwa i oznaczenia nad przyciskami */
-@media (max-width: 600px){
-  .shareRow--compact:has(.baseShareRole){ display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .shareRow--compact:has(.baseShareRole) > .shareRowActions{ justify-content: flex-end; align-self: auto; }
-}
+
 
 /* W zwykłym (nie arkuszowym) widoku modali udostępniania pusta sekcja listy
    nie może zmniejszyć karty do samego kafla braku. Na arkuszu mobile wysokość
