@@ -1,7 +1,7 @@
 // js/core/rating-system.js
 import { sb } from "./supabase.js?v=v2026-10-20T19254";
 import { t } from "../../translation/translation.js?v=v2026-10-20T19254";
-import { alertModal } from "./modal.js?v=v2026-10-20T19254";
+import { alertModal, confirmModal } from "./modal.js?v=v2026-10-20T19254";
 import { icon } from "./icons.js?v=v2026-10-20T19254";
 
 
@@ -188,74 +188,59 @@ function showRatingModal(userId, storageKeys) {
 }
 
 /**
- * Okno oceny z Konta: wystawienie albo zmiana dotychczasowej oceny.
+ * Okno oceny z Konta: wystawienie albo zmiana dotychczasowej oceny
+ * (wspólne confirmModal z modal.js).
  * @param {string} userId
  * @param {{stars:number, comment:string|null}|null} current
  * @returns {Promise<boolean>} true po zapisaniu
  */
 export function openRatingEditor(userId, current = null) {
-  return new Promise(resolve => {
-    const overlay = document.createElement("div");
-    overlay.className = "overlay rating-overlay";
-    overlay.id = "ratingEditOverlay";
-    overlay.innerHTML = `
-        <div class="modal rating-modal">
-            <div class="mHead">
-                <div class="mTitle">${t(current ? "common.rating.account.editTitle" : "common.rating.modal.title")}</div>
-                <button class="btn sm" data-rating-close type="button" aria-label="${t("common.modal.closeLabel")}">${icon("close")}</button>
-            </div>
-            <div class="mSub">${t("common.rating.modal.sub")}</div>
-            <div class="stars-row">
-                ${[1, 2, 3, 4, 5].map(v => `<button class="star-btn" type="button" data-value="${v}" aria-label="${v}/5">${icon("star")}</button>`).join("")}
-            </div>
-            <textarea class="inp rating-comment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>
-            <div class="modal-actions">
-                <button class="btn sm" data-rating-cancel type="button">${icon("close")}<span>${t("common.cancel")}</span></button>
-                <button class="btn sm gold" data-rating-save type="button">${icon("check")}<span>${t(current ? "common.rating.account.save" : "common.rating.modal.send")}</span></button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
+  const body = document.createElement("div");
+  body.className = "rating-editor";
+  body.innerHTML = `
+      <div class="stars-row">
+          ${[1, 2, 3, 4, 5].map(v => `<button class="star-btn" type="button" data-value="${v}" aria-label="${v}/5">${icon("star")}</button>`).join("")}
+      </div>
+      <textarea class="inp rating-comment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>`;
+  const stars = body.querySelectorAll(".star-btn");
+  const commentEl = body.querySelector(".rating-comment");
+  commentEl.value = current?.comment || "";
+  let selectedStars = Number(current?.stars) || 0;
+  highlightStars(selectedStars, stars);
 
-    let selectedStars = Number(current?.stars) || 0;
-    const stars = overlay.querySelectorAll(".star-btn");
-    const saveBtn = overlay.querySelector("[data-rating-save]");
-    const commentEl = overlay.querySelector(".rating-comment");
-    commentEl.value = current?.comment || "";
-    highlightStars(selectedStars, stars);
-    saveBtn.disabled = !selectedStars;
-
-    stars.forEach(btn => {
+  return confirmModal({
+    title: t(current ? "common.rating.account.editTitle" : "common.rating.modal.title"),
+    text: t("common.rating.modal.sub"),
+    okText: t(current ? "common.rating.account.save" : "common.rating.modal.send"),
+    cancelText: t("common.cancel"),
+    body,
+    modalClass: "rating-modal",
+    onReady: ({ overlay, okBtn }) => {
+      overlay.id = "ratingEditOverlay";
+      okBtn.disabled = !selectedStars;
+      stars.forEach(btn => {
         btn.addEventListener("mouseenter", () => highlightStars(btn.dataset.value, stars));
         btn.addEventListener("mouseleave", () => highlightStars(selectedStars, stars));
         btn.addEventListener("click", () => {
-            selectedStars = parseInt(btn.dataset.value);
-            highlightStars(selectedStars, stars);
-            saveBtn.disabled = false;
+          selectedStars = parseInt(btn.dataset.value);
+          highlightStars(selectedStars, stars);
+          okBtn.disabled = false;
         });
-    });
-
-    const finish = (saved) => { overlay.remove(); resolve(saved); };
-    overlay.querySelector("[data-rating-close]").addEventListener("click", () => finish(false));
-    overlay.querySelector("[data-rating-cancel]").addEventListener("click", () => finish(false));
-    overlay.addEventListener("click", (e) => { if (e.target === overlay) finish(false); });
-
-    saveBtn.addEventListener("click", async () => {
-        saveBtn.disabled = true;
-        const { error } = await sb().from("app_ratings").upsert({
-            user_id: userId,
-            stars: selectedStars,
-            comment: commentEl.value.trim() || null,
-        }, { onConflict: "user_id" });
-        if (error) {
-            console.error("[rating] Error saving rating:", error);
-            alertModal({ text: t("common.rating.modal.error") });
-            saveBtn.disabled = false;
-            return;
-        }
-        writeStorage(`${RATING_LS_PREFIX}${userId}`, "true");
-        finish(true);
-    });
+      });
+    },
+    onOk: async () => {
+      if (!selectedStars) return false;
+      const { error } = await sb().from("app_ratings").upsert({
+        user_id: userId,
+        stars: selectedStars,
+        comment: commentEl.value.trim() || null,
+      }, { onConflict: "user_id" });
+      if (error) {
+        console.error("[rating] Error saving rating:", error);
+        return t("common.rating.modal.error");
+      }
+      writeStorage(`${RATING_LS_PREFIX}${userId}`, "true");
+    },
   });
 }
 

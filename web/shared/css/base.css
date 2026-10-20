@@ -2306,7 +2306,8 @@ body{
   opacity: .8;
 }
 /* css/rating-system.css */
-.rating-overlay .rating-modal {
+.rating-overlay .rating-modal,
+.uni-modal.rating-modal {
     max-width: 400px;
     text-align: center;
 }
@@ -3060,3 +3061,14 @@ button.rowsSectionHead{ cursor: pointer; }
 .contact-footer-entry{ flex:0 0 auto; justify-content:flex-end; }
 .contact-footer-entry--floating{ position:fixed; right:calc(10px + env(safe-area-inset-right,0px)); bottom:calc(8px + env(safe-area-inset-bottom,0px)); width:auto; margin:0; padding:5px 9px; border:1px solid var(--line); border-radius:8px; background:var(--card); z-index:100; }
 .contact-footer-entry--floating .btn-contact-footer{ font-size:11px; }
+
+/* Okno postępu (modal.js progressModal): krok, licznik, pasek, komunikat */
+.uni-progress{ display: grid; gap: 10px; margin-top: 12px; }
+.uni-progress-row{ display: flex; align-items: center; gap: 10px; }
+.uni-progress-step{ font-weight: 800; letter-spacing: .04em; }
+.uni-progress-count{ margin-left: auto; opacity: .8; font-variant-numeric: tabular-nums; }
+.uni-progress-track{ height: 10px; border-radius: 999px; background: rgba(255,255,255,.10); overflow: hidden; }
+.uni-progress-bar{ height: 100%; width: 0; background: rgba(255,255,255,.85); transition: width .2s ease; }
+.uni-progress-msg{ min-height: 18px; }
+.uni-progress-msg[data-kind="error"]{ opacity: 1; }
+.uni-progress-bar[data-kind="error"]{ background: #dc3545; }

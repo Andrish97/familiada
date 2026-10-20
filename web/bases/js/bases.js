@@ -9,7 +9,7 @@ import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-20T19254";
 import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-20T19254";
 import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T19254";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19254";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19254";
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T19254";
 import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-20T19254";
 import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-20T19254";
@@ -67,13 +67,6 @@ const btnFriends = document.getElementById("btnFriends");
 const altBadgeEl = document.getElementById("altBadge");
 
 // Modal nazwy
-const nameOverlay = document.getElementById("nameOverlay");
-const nameTitle = document.getElementById("nameTitle");
-const nameSub = document.getElementById("nameSub");
-const nameInp = document.getElementById("nameInp");
-const btnNameOk = document.getElementById("btnNameOk");
-const btnNameCancel = document.getElementById("btnNameCancel");
-const nameMsg = document.getElementById("nameMsg");
 
 // Modal importu
 const importOverlay = document.getElementById("importOverlay");
@@ -99,13 +92,6 @@ const importProgBar = document.getElementById("importProgBar");
 const importProgMsg = document.getElementById("importProgMsg");
 
 // Export progress (overlay eksportu do pliku)
-const exportJsonOverlay = document.getElementById("exportJsonOverlay");
-const btnExportJsonClose = document.getElementById("btnExportJsonClose");
-const exportJsonSub = document.getElementById("exportJsonSub");
-const exportJsonStep = document.getElementById("exportJsonStep");
-const exportJsonCount = document.getElementById("exportJsonCount");
-const exportJsonBar = document.getElementById("exportJsonBar");
-const exportJsonMsg = document.getElementById("exportJsonMsg");
 
 // Modal share
 const shareOverlay = document.getElementById("shareOverlay");
@@ -142,7 +128,7 @@ let autoRefreshTimer = null;
 let basesRefreshInFlight = null;
 
 function anyOverlayOpen() {
-  const ovs = [nameOverlay, importOverlay, shareOverlay, exportJsonOverlay];
+  const ovs = [importOverlay, shareOverlay];
   if (ovs.some((ov) => ov && ov.style.display !== "none")) return true;
   // confirmModal/alertModal (js/core/modal.js) -- np. potwierdzenie usunięcia
   return !!document.querySelector(".uni-modal");
@@ -193,10 +179,6 @@ let ownBaseDeclines = [];
 let baseDeclinesCollapsed = true;
 let shareRenderVersion = 0;
 
-// modal nazwy – tryb
-let nameMode = "create"; // 'create' | 'rename'
-let nameLease = null; // blokada base:B (wyłączna) na czas otwartego okna zmiany nazwy
-let renameBaseId = null; // która baza jest przemianowywana (niezależnie od zaznaczenia)
 
 /* ================= UI helpers ================= */
 function show(el, on) {
@@ -1185,7 +1167,7 @@ function render() {
       if (!isOwner(b)) return;
       if (e.target?.closest?.(".x")) return;
       selectBase(b.id);
-      openNameModalRename(b);
+      void openNameDialog(b);
     });
 
     hostEl.appendChild(tile);
@@ -1198,7 +1180,7 @@ function render() {
     <div class="plus">${icon("plus")}</div>
     <div class="name">${escapeHtml(t("bases.sections.newBase"))}</div>
   `;
-  tNew.addEventListener("click", () => openNameModalCreate());
+  tNew.addEventListener("click", () => void openNameDialog());
   mineGrid.appendChild(tNew);
 
   for (const b of ownedBases) renderTile(b, mineGrid);
@@ -1252,77 +1234,57 @@ function escapeHtml(s) {
     .replace(/'/g, "&#39;");
 }
 
-/* ================= Modals: nazwa ================= */
-function openNameModalCreate() {
-  nameMode = "create";
-  setMsg(nameMsg, "");
-  nameTitle.textContent = t("bases.nameModal.titleCreate");
-  nameSub.textContent = t("bases.nameModal.subCreate");
-  nameInp.value = "";
-  show(nameOverlay, true);
-  enterModalSheet(nameOverlay, { backBtn: btnBack, onClose: closeNameModal });
-  setTimeout(() => nameInp.focus(), 0);
-}
-
-// Okno zmiany nazwy trzyma base:B wyłącznie do zamknięcia okna -- w tym czasie
+/* ================= Okno nazwy (wspólne promptModal) ================= */
+// Zmiana nazwy trzyma base:B wyłącznie do zamknięcia okna -- w tym czasie
 // nikt nie otworzy eksploratora tej bazy (pełna blokada strony), a otwarty
 // eksplorator nie pozwoli otworzyć okna.
-async function openNameModalRename(base) {
-  let lease;
-  try {
-    lease = await acquireResourceLock({ resourceType: "base", resourceId: base.id, context: "bases-list" });
-  } catch (e) {
-    console.warn("[bases] rename lock error:", e);
-    void alertModal({ text: t("bases.nameModal.failed") });
-    return;
-  }
-  if (!lease?.ok) {
-    void alertModal({ text: baseBusyMessage(lease) });
-    return;
-  }
-  nameLease = lease;
-  nameMode = "rename";
-  renameBaseId = base?.id || null;
-  setMsg(nameMsg, "");
-  nameTitle.textContent = t("bases.nameModal.titleRename");
-  nameSub.textContent = t("bases.nameModal.subRename");
-  nameInp.value = base?.name || "";
-  show(nameOverlay, true);
-  enterModalSheet(nameOverlay, { backBtn: btnBack, onClose: closeNameModal });
-  setTimeout(() => nameInp.select(), 0);
-}
-
-function closeNameModal() {
-  nameLease?.release?.();
-  nameLease = null;
-  show(nameOverlay, false);
-  exitModalSheet(nameOverlay);
-}
-
-async function nameOk() {
-  if (btnNameOk?.disabled) return;
-  if (btnNameOk) btnNameOk.disabled = true;
-  setMsg(nameMsg, "");
-  const val = safeName(nameInp.value);
-  try {
-    if (nameMode === "create") {
-      const b = await createBase(val);
-      selectedId = b.id;
-      setActiveTab("mine");
-    } else {
-      const b = ownedBases.find((x) => x.id === renameBaseId);
-      if (b && isOwner(b)) {
-        await renameBase(b.id, val);
-      }
+async function openNameDialog(base = null) {
+  const create = !base;
+  let lease = null;
+  if (!create) {
+    try {
+      lease = await acquireResourceLock({ resourceType: "base", resourceId: base.id, context: "bases-list" });
+    } catch (e) {
+      console.warn("[bases] rename lock error:", e);
+      void alertModal({ text: t("bases.nameModal.failed") });
+      return;
     }
-    closeNameModal();
-    await refreshView();
-  } catch (e) {
-    console.warn("[bases] name ok error:", e);
-    setMsg(nameMsg, e?.code === ROW_GONE ? t("resourceLock.goneMessage")
-      : e?.code === "RESOURCE_IN_USE" ? t("resourceLock.baseOpenMessage") : t("bases.nameModal.failed"));
+    if (!lease?.ok) {
+      void alertModal({ text: baseBusyMessage(lease) });
+      return;
+    }
+  }
+  try {
+    await promptModal({
+      title: t(create ? "bases.nameModal.titleCreate" : "bases.nameModal.titleRename"),
+      text: t(create ? "bases.nameModal.subCreate" : "bases.nameModal.subRename"),
+      okText: t("bases.common.save"),
+      cancelText: t("bases.common.cancel"),
+      value: create ? "" : (base.name || ""),
+      placeholder: t("bases.nameModal.placeholder"),
+      maxLength: 80,
+      selectAll: !create,
+      onSubmit: async (v) => {
+        const val = safeName(v);
+        try {
+          if (create) {
+            const b = await createBase(val);
+            selectedId = b.id;
+            setActiveTab("mine");
+          } else {
+            const b = ownedBases.find((x) => x.id === base.id);
+            if (b && isOwner(b)) await renameBase(b.id, val);
+          }
+          void refreshView();
+        } catch (e) {
+          console.warn("[bases] name ok error:", e);
+          return e?.code === ROW_GONE ? t("resourceLock.goneMessage")
+            : e?.code === "RESOURCE_IN_USE" ? t("resourceLock.baseOpenMessage") : t("bases.nameModal.failed");
+        }
+      },
+    });
   } finally {
-    if (btnNameOk) btnNameOk.disabled = false;
+    lease?.release?.();
   }
 }
 
@@ -1380,44 +1342,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const b = selectedBase();
     if (!b || btnExport?.disabled) return;
 
-    show(exportJsonOverlay, true);
-    enterModalSheet(exportJsonOverlay, {
-      backBtn: btnBack,
-      onClose: () => {
-        if (!btnExportJsonClose?.hidden) {
-          show(exportJsonOverlay, false);
-          exitModalSheet(exportJsonOverlay);
-        }
-      },
-    });
-    if (btnExportJsonClose) btnExportJsonClose.hidden = true;
-    if (exportJsonSub) exportJsonSub.textContent = t("bases.exportModal.subtitle");
-    setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-      step: t("bases.export.steps.start"), i: 0, n: 6, msg: "",
-    });
+    const progress = progressModal({ title: t("bases.exportModal.title"), text: t("bases.exportModal.subtitle"), doneText: t("bases.exportModal.close") });
+    progress.update({ step: t("bases.export.steps.start"), i: 0, n: 6 });
     if (btnExport) btnExport.disabled = true;
 
     try {
-      const out = await exportBase(b.id, ({ step, i, n, msg } = {}) => {
-        setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step, i, n, msg });
-      });
+      const out = await exportBase(b.id, ({ step, i, n, msg } = {}) => progress.update({ step, i, n, msg }));
       downloadJson(safeDownloadName(b.name), out);
-      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
+      progress.allowClose();
     } catch (e) {
       console.warn("[bases] export error:", e);
-      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-        step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"), isError: true,
-      });
-      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
+      progress.update({ step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"), isError: true });
     } finally {
       if (btnExport) btnExport.disabled = false;
     }
-  });
-
-  btnExportJsonClose?.addEventListener("click", () => {
-    show(exportJsonOverlay, false);
-    exitModalSheet(exportJsonOverlay);
-    btnExportJsonClose.hidden = true;
   });
 
   btnImport?.addEventListener("click", () => openImportModal());
@@ -1485,13 +1423,6 @@ document.addEventListener("DOMContentLoaded", () => {
   btnImportCancelAction?.addEventListener("click", () => closeImportModal());
   btnImportDone?.addEventListener("click", () => closeImportModal());
 
-  btnNameCancel?.addEventListener("click", () => closeNameModal());
-  document.getElementById("btnNameClose")?.addEventListener("click", () => closeNameModal());
-  btnNameOk?.addEventListener("click", () => nameOk());
-  nameInp?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") nameOk();
-    if (e.key === "Escape") { e.preventDefault(); closeNameModal(); }
-  });
 
   btnShareClose?.addEventListener("click", () => closeShareModal());
   btnShareAdd?.addEventListener("click", async () => shareAdd());
@@ -1499,13 +1430,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") shareAdd();
   });
 
-  [nameOverlay, importOverlay, shareOverlay].forEach((ov) => {
+  [importOverlay, shareOverlay].forEach((ov) => {
     ov?.addEventListener("click", (e) => {
       if (e.target !== ov) return;
       // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
       // wyjściem ma być widoczny przycisk zamknięcia/anuluj, nie klik w tło.
       if (ov.classList.contains("modal--sheet") && isSheetViewport()) return;
-      if (ov === nameOverlay) closeNameModal();
       if (ov === importOverlay) closeImportModal();
       if (ov === shareOverlay) closeShareModal();
     });

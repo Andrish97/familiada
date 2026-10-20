@@ -453,6 +453,7 @@ async function main() {
   let scheduleTimer3Watch = () => {};
   let disconnectEpisode = false;
   let lastDisconnectState = "";
+  let deviceLostModal = null; // uchwyt okna „Utracono połączenie” (alertModal: setText, close)
   const browserContextId = getGameBrowserContextId(gameId);
   let lastDisplayAudioDiagnosticId = null;
   let hasInitialPresenceSnapshot = false;
@@ -1013,15 +1014,15 @@ async function main() {
       }
       const missing = missingDevices(store.state, flags);
       updateConnectivityIncident(missing, deviceDiagnostics, missing.some(kind => previous[kind]));
-      const overlay = document.getElementById("deviceLostOverlay");
       if (!missing.length) {
         disconnectEpisode = false;
         lastDisconnectState = "";
-        overlay?.classList.add("hidden");
+        deviceLostModal?.close?.(true);
+        deviceLostModal = null;
       } else {
-        const text = document.getElementById("deviceLostText");
         const labels = { display: t("control.deviceDisplay"), host: t("control.deviceHost"), buzzer: t("control.deviceBuzzer") };
-        if (text) text.textContent = t("control.deviceLostText", { devices: missing.map((kind) => labels[kind]).join(", ") });
+        const lostText = t("control.deviceLostText", { devices: missing.map((kind) => labels[kind]).join(", ") });
+        deviceLostModal?.setText?.(lostText);
         const disconnectState = JSON.stringify(flags);
         if ((missing.some((kind) => previous[kind]) || disconnectEpisode) && disconnectState !== lastDisconnectState) {
           lastDisconnectState = disconnectState;
@@ -1031,8 +1032,13 @@ async function main() {
           // statusu w górnym pasku.
           if (!disconnectEpisode && missing.some((kind) => previous[kind])) {
             disconnectEpisode = true;
-            overlay?.classList.remove("hidden");
-            document.getElementById("deviceLostClose")?.focus();
+            // wspólne alertModal (modal.js); tekst odświeżany przy zmianie listy brakujących
+            const ctl = {};
+            deviceLostModal = ctl;
+            void alertModal({
+              title: t("control.deviceLostTitle"), text: lostText, okText: t("common.a2hsOk"),
+              modalClass: "modal--narrow", overlayId: "deviceLostOverlay", controller: ctl,
+            }).then(() => { if (deviceLostModal === ctl) deviceLostModal = null; });
           }
         }
       }
@@ -1040,11 +1046,6 @@ async function main() {
     },
   });
   presence.start();
-  for (const id of ["deviceLostClose", "deviceLostX"]) {
-    document.getElementById(id)?.addEventListener("click", () => {
-      document.getElementById("deviceLostOverlay")?.classList.add("hidden");
-    });
-  }
 
   // "Udostępnij" per urządzenie (D0/D1) — modal 1:1 ze starym Control
   // (control/js/shareDevice.js). Licznik (badge, liczba udostępnień/puste) na przycisku

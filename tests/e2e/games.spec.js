@@ -280,8 +280,8 @@ test.describe("games: audyt -- kafelki", () => {
       const x = box.x + box.width / 2, y = box.y + box.height / 2;
       await page.touchscreen.tap(x, y);
       await page.touchscreen.tap(x, y);
-      await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#nameInp")).toHaveValue(name);
+      await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator(".uni-modal .uni-inp")).toHaveValue(name);
     } finally {
       await deleteGamesByName(page, name);
       await ctx.close();
@@ -296,24 +296,24 @@ test.describe("games: audyt -- kafelki", () => {
     try {
       await openGames(page);
       await page.locator("#grid .addCard").click();
-      await expect(page.locator("#nameOverlay")).toBeVisible();
+      await expect(page.locator(".uni-modal")).toBeVisible();
 
-      await page.locator("#btnNameOk").click();
-      await expect(page.locator("#nameMsg")).not.toBeEmpty();
-      await expect(page.locator("#nameOverlay")).toBeVisible();
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await expect(page.locator(".uni-modal .uni-foot .importMsg")).not.toBeEmpty();
+      await expect(page.locator(".uni-modal")).toBeVisible();
 
-      await page.locator("#nameInp").fill(name);
-      await page.locator("#nameInp").press("Enter");
-      await expect(page.locator("#nameOverlay")).toBeHidden({ timeout: 15000 });
+      await page.locator(".uni-modal .uni-inp").fill(name);
+      await page.locator(".uni-modal .uni-inp").press("Enter");
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 15000 });
       const tile = tileByName(page, name);
       await expect(tile).toHaveClass(/selected/);
       expect(await gamesByName(page, name)).toMatchObject([{ type: "prepared", status: "draft" }]);
 
       await tile.dblclick();
-      await expect(page.locator("#nameInp")).toHaveValue(name);
-      await page.locator("#nameInp").fill(renamed);
-      await page.locator("#nameInp").press("Enter");
-      await expect(page.locator("#nameOverlay")).toBeHidden({ timeout: 15000 });
+      await expect(page.locator(".uni-modal .uni-inp")).toHaveValue(name);
+      await page.locator(".uni-modal .uni-inp").fill(renamed);
+      await page.locator(".uni-modal .uni-inp").press("Enter");
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 15000 });
       await expect(tileByName(page, renamed)).toBeVisible();
 
       await tileByName(page, renamed).locator(".x").click();
@@ -429,11 +429,11 @@ test.describe("games: audyt -- eksport / import pliku", () => {
       expect(json.game).toMatchObject({ name, type: "prepared" });
       expect(json.questions).toHaveLength(10);
 
-      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
       await page.screenshot({ path: testInfo.outputPath("shot-e20-export-success-390.png"), fullPage: true });
-      await page.locator("#btnExportJsonClose").click();
-      await expect(page.locator("#exportJsonOverlay")).toBeHidden();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeHidden();
 
       await page.locator("#btnImport").click();
       await page.locator("#importFile").setInputFiles(file);
@@ -468,16 +468,16 @@ test.describe("games: audyt -- eksport / import pliku", () => {
         return route.continue();
       });
       await page.locator("#btnExport").click();
-      await expect(page.locator("#exportJsonMsg")).toContainText("E20 controlled export error");
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await expect(page.locator(".uni-progress-msg")).toContainText("E20 controlled export error");
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
       await page.waitForTimeout(1300);
-      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
-      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
       await page.unroute("**/rest/v1/games**");
       const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
       expect(download.suggestedFilename()).toBe(`${name}.famgame`);
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
-      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
     } finally {
       await page.unroute("**/rest/v1/games**");
       await deleteGamesByName(page, name);

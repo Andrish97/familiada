@@ -865,24 +865,6 @@ input,textarea {
     box-sizing: border-box
 }
 
-#renameModal[hidden] {
-    display: none!important
-}
-
-.rename-modal {
-    width: min(560px,94vw)
-}
-
-.renameBody {
-    margin-top: 12px
-}
-
-.renameInput {
-    width: 100%;
-    text-align: center;
-    font-weight: 500;
-    letter-spacing: .04em
-}
 
 /* =========================================================
    List – table layout (Finder-like, fixed columns)
@@ -1737,8 +1719,7 @@ tr.row.is-drop-after td:last-child::after {
   .overlay { z-index: 1100; }
   .tags-modal,
   .export-modal,
-  .question-modal,
-  .rename-modal {
+  .question-modal {
     width: calc(100% - 24px) !important;
     max-height: 90vh;
     overflow-y: auto;

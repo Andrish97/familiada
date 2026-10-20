@@ -480,19 +480,19 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       await row.click();
       await page.keyboard.press("F2");
 
-      const input = page.locator("#renameModalInput");
+      const input = page.locator(".uni-modal .uni-inp");
       await expect(input).toBeVisible({ timeout: 5000 });
       await input.fill("Nowy tekst");
 
-      // renameModal.close() (który chowa #renameModal) jest SYNCHRONICZNY na klik
+      // renameModal.close() (który chowa .uni-modal) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy zapis do qb_questions leci asynchronicznie już PO
       // zamknięciu modala (w renameSelectedPrompt, nie w samym modalu), więc samo
       // "modal się schował" nie gwarantuje, że PATCH już doleciał do bazy.
       await Promise.all([
         page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
-        page.locator("#renameModalSave").click(),
+        page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
-      await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh?.payload?.text).toBe("Nowy tekst");
@@ -729,15 +729,15 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
       await renameItem.click();
 
-      const input = page.locator("#renameModalInput");
+      const input = page.locator(".uni-modal .uni-inp");
       await expect(input).toBeVisible({ timeout: 5000 });
       await input.fill("Zmienione przez PPM");
 
       await Promise.all([
         page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
-        page.locator("#renameModalSave").click(),
+        page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
-      await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh?.payload?.text).toBe("Zmienione przez PPM");
@@ -2710,7 +2710,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
       await row.click();
       await page.keyboard.press("F2");
 
-      const input = page.locator("#renameModalInput");
+      const input = page.locator(".uni-modal .uni-inp");
       await expect(input).toBeVisible({ timeout: 5000 });
       await input.fill("Nowa nazwa");
 
@@ -2720,7 +2720,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
         await window.__sbClient.from("qb_questions").delete().eq("id", id);
       }, qid);
 
-      await page.locator("#renameModalSave").click();
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
       await expect(page.locator(".uni-modal .mSub")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
     } finally {
       await deleteBase(page, baseId);

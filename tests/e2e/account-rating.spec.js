@@ -31,7 +31,7 @@ test("Konto: wystawienie i zmiana oceny systemu", async ({ page, context }) => {
     await expect(modal).toBeVisible();
     await modal.locator('.star-btn[data-value="3"]').click();
     await modal.locator(".rating-comment").fill(comment);
-    await modal.locator("[data-rating-save]").click();
+    await modal.locator(".uni-foot .btn.gold").click();
     await expect(modal).toHaveCount(0);
     await expect(page.locator("#userRatingInfo .rating-comment-box")).toContainText(comment);
     await expect(page.locator("#userRatingInfo .rating-comment-box b")).toHaveCount(0);
@@ -41,12 +41,12 @@ test("Konto: wystawienie i zmiana oceny systemu", async ({ page, context }) => {
     await btn.click();
     await expect(modal.locator(".star-btn.active")).toHaveCount(3);
     await expect(modal.locator(".rating-comment")).toHaveValue(comment);
-    await modal.locator("[data-rating-cancel]").click();
+    await modal.locator(".uni-foot .btn:not(.gold)").click();
     await expect(modal).toHaveCount(0);
 
     await btn.click();
     await modal.locator('.star-btn[data-value="5"]').click();
-    await modal.locator("[data-rating-save]").click();
+    await modal.locator(".uni-foot .btn.gold").click();
     await expect(modal).toHaveCount(0);
     await expect(page.locator("#userRatingInfo .rating-stars .value .ico")).toHaveCount(5);
     const saved = await page.evaluate(async () => {

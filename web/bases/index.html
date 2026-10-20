@@ -115,27 +115,6 @@
 
     </section>
 
-    <!-- Modal: nowa baza / zmiana nazwy -->
-    <div class="overlay modal--keep-dialog" id="nameOverlay" style="display:none;">
-      <div class="modal modal--narrow">
-        <div class="mHead">
-          <div class="mTitle" id="nameTitle" data-i18n="bases.nameModal.titleCreate">Nowa baza</div>
-          <button class="btn sm" id="btnNameClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
-        </div>
-        <div class="mSub" id="nameSub" data-i18n="bases.nameModal.subCreate">Podaj nazwę bazy.</div>
-
-        <div class="importRow">
-          <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="bases.nameModal.placeholder"/>
-        </div>
-
-        <div class="importRow modal-actions">
-          <button class="btn sm" id="btnNameCancel" type="button" data-i18n="bases.common.cancel" data-i18n-icon="close">Anuluj</button>
-          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="bases.common.save" data-i18n-icon="save">Zapisz</button>
-          <div class="importMsg" id="nameMsg"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Modal: udostępnienia -->
     <div class="overlay modal--sheet" id="shareOverlay" style="display:none;">
       <div class="modal shareModal" data-sheet-local-actions>
@@ -206,29 +185,6 @@
       </div>
     </div>
 
-  <!-- Progres eksportu do pliku (blokujący) -->
-  <div class="overlay modal--keep-dialog" id="exportJsonOverlay" style="display:none;">
-    <div class="modal export-json-modal" style="width:min(640px,94vw)">
-      <div class="mTitle" data-i18n="bases.exportModal.title">EKSPORT…</div>
-      <div class="mSub" id="exportJsonSub" data-i18n="bases.exportModal.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
-
-      <div class="export-json-progress" style="margin-top:12px;display:grid;gap:10px">
-        <div class="importRow" style="align-items:center">
-          <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em" data-i18n="bases.progress.placeholder">—</div>
-          <div id="exportJsonCount" style="margin-left:auto;opacity:.8">0/0</div>
-        </div>
-
-        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-          <div id="exportJsonBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
-        </div>
-
-        <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
-      </div>
-      <div class="importRow modal-actions" style="margin-top:12px">
-        <button class="btn sm gold" id="btnExportJsonClose" type="button" data-i18n="bases.exportModal.close" data-i18n-icon="check" hidden>Gotowe</button>
-      </div>
-    </div>
-  </div>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>

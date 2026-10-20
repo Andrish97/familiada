@@ -5,12 +5,11 @@ import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T19
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-20T19254";
 import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T19254";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T19254";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19254";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19254";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T19254";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-20T19254";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T19254";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T19254";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T19254";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T19254";
 import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-20T19254";
 
 
@@ -24,12 +23,6 @@ const connectCodeInput    = document.getElementById("connectCodeInput");
 const btnConnectCode      = document.getElementById("btnConnectCode");
 const connectCodeMsg      = document.getElementById("connectCodeMsg");
 
-const devicePreviewOverlay   = document.getElementById("devicePreviewOverlay");
-const devicePreviewTitle     = document.getElementById("devicePreviewTitle");
-const devicePreviewSub       = document.getElementById("devicePreviewSub");
-const btnDevicePreviewConnect = document.getElementById("btnDevicePreviewConnect");
-const btnDevicePreviewCancel  = document.getElementById("btnDevicePreviewCancel");
-const btnDevicePreviewClose   = document.getElementById("btnDevicePreviewClose");
 
 function setCodeMsg(text) { if (connectCodeMsg) connectCodeMsg.textContent = text || ""; }
 
@@ -61,49 +54,22 @@ const _isMobile = isMobileDevice() || navigator.maxTouchPoints > 0 || !!window.m
 // zakończenia pobierania tłumaczeń ani odpowiedzi strony po logowaniu.
 if (_isMobile && btnScanQr) btnScanQr.style.display = "";
 
-// ── Device preview modal ───────────────────────────────────────────────────────
-let _previewDeviceInfo = null;
-
-function showDevicePreview(info) {
-  _previewDeviceInfo = info;
-  const typeLabel = deviceTypeLabel(info.device_type);
-  if (devicePreviewTitle) {
-    devicePreviewTitle.innerHTML = iconText(deviceTypeIconName(info.device_type), typeLabel);
-  }
-  if (devicePreviewSub) {
-    const gameName = info.game_name || "—";
-    const owner    = info.owner_username || "—";
-    const gameLabel  = t("connectDevice.enterCode.previewGame")  || "Gra:";
-    const ownerLabel = t("connectDevice.enterCode.previewOwner") || "Właściciel:";
-    devicePreviewSub.textContent = `${gameLabel} ${gameName}\n${ownerLabel} ${owner}`;
-  }
-  if (devicePreviewOverlay) devicePreviewOverlay.style.display = "";
-  enterModalSheet(devicePreviewOverlay, {
-    backBtn: document.getElementById("btnBack"),
-    onClose: hideDevicePreview,
+// ── Podgląd urządzenia po kodzie: wspólne confirmModal (modal.js) ─────────────
+async function showDevicePreview(info) {
+  const gameLabel  = t("connectDevice.enterCode.previewGame")  || "Gra:";
+  const ownerLabel = t("connectDevice.enterCode.previewOwner") || "Właściciel:";
+  const ok = await confirmModal({
+    title: deviceTypeLabel(info.device_type),
+    text: `${gameLabel} ${info.game_name || "—"}\n${ownerLabel} ${info.owner_username || "—"}`,
+    okText: t("connectDevice.enterCode.connectBtn"),
+    cancelText: t("common.cancel"),
+    modalClass: "modal--narrow",
   });
-}
-
-function hideDevicePreview() {
-  if (devicePreviewOverlay) devicePreviewOverlay.style.display = "none";
-  exitModalSheet(devicePreviewOverlay);
-  _previewDeviceInfo = null;
-}
-
-btnDevicePreviewClose?.addEventListener("click", hideDevicePreview);
-btnDevicePreviewCancel?.addEventListener("click", hideDevicePreview);
-devicePreviewOverlay?.addEventListener("click", (e) => {
-  if (e.target === devicePreviewOverlay && !(devicePreviewOverlay.classList.contains("modal--sheet") && isSheetViewport())) hideDevicePreview();
-});
-
-btnDevicePreviewConnect?.addEventListener("click", () => {
-  if (!_previewDeviceInfo) return;
-  const info = _previewDeviceInfo;
-  hideDevicePreview();
+  if (!ok) return;
   const lang = getUiLang() || "pl";
   const device = info.device_type === "poll_qr" ? "qr" : info.device_type;
   window.location.href = `/go/?d=${device}&id=${info.game_id}&key=${info.share_key}&lang=${lang}`;
-});
+}
 
 // ── Code input ─────────────────────────────────────────────────────────────────
 async function handleCodeConnect() {
@@ -122,7 +88,7 @@ async function handleCodeConnect() {
       return;
     }
     setCodeMsg("");
-    showDevicePreview(data);
+    void showDevicePreview(data);
   } catch (e) {
     setCodeMsg(e?.message || "Błąd.");
   } finally {

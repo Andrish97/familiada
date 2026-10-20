@@ -2613,7 +2613,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await displayPage.context().close();
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 20000 });
     await expect(page.locator("#deviceLostOverlay")).toBeVisible({ timeout: 10000 });
-    await page.locator("#deviceLostClose").click();
+    await page.locator("#deviceLostOverlay .uni-foot .btn.gold").click();
     displayPage = await reconnectViaModal(browser, page, "display", contexts, []);
     await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
     await expect(answerTile(page, 2)).toBeDisabled();
@@ -3255,9 +3255,9 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await expect(answerTile(page, 2)).toBeDisabled();
     await expect(page.locator(".c2-gameplay .msg-pill")).toHaveCount(0);
     await expect(page.locator("#deviceLostOverlay")).toBeVisible();
-    await expect(page.locator("#deviceLostText")).toContainText("Wyświetlacz");
-    await expect(page.locator("#deviceLostClose")).toHaveText("OK");
-    await page.locator("#deviceLostClose").click();
+    await expect(page.locator("#deviceLostOverlay .mSub")).toContainText("Wyświetlacz");
+    await expect(page.locator("#deviceLostOverlay .uni-foot .btn.gold")).toHaveText("OK");
+    await page.locator("#deviceLostOverlay .uni-foot .btn.gold").click();
     const revBefore = await page.evaluate(async (id) => (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);
     await answerTile(page, 2).evaluate((button) => button.click());
     const revAfter = await page.evaluate(async (id) => (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);

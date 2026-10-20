@@ -170,13 +170,13 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await page.waitForLoadState("networkidle");
 
       await page.locator("#mineGrid .addCard").click();
-      const overlay = page.locator("#nameOverlay");
+      const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
       await expect(overlay).not.toHaveClass(/sheet-active/);
       await expect(page.locator(".bar")).toBeVisible();
       await expect(page.locator(".topbar")).toBeVisible();
 
-      await page.locator("#btnNameCancel").click();
+      await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
 
       // Esc zamyka tak samo jak X / Anuluj
@@ -566,7 +566,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(renameItem).toBeVisible({ timeout: 5000 });
       await renameItem.click();
 
-      const overlay = page.locator("#renameModal");
+      const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
       await expect(overlay).not.toHaveClass(/sheet-active/);
       await expect(page.locator(".topbar")).toBeVisible();
@@ -781,13 +781,13 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
       await expect(tile).toBeVisible({ timeout: 15000 });
       await tile.dblclick();
 
-      const overlay = page.locator("#renameOverlay");
+      const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
       await expect(overlay).not.toHaveClass(/sheet-active/);
       await expect(page.locator("#listShell")).toBeVisible();
       await expect(page.locator(".topbar")).toBeVisible();
 
-      await page.locator("#btnRenameCancel").click();
+      await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
     } finally {
       await deleteLogoDirect(page, logoId);

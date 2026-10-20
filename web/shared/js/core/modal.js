@@ -1,4 +1,4 @@
-import { icon } from "./icons.js?v=v2026-10-20T19254";
+import { icon, iconText } from "./icons.js?v=v2026-10-20T19254";
 import { t } from "../../translation/translation.js?v=v2026-10-20T19254";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-20T19254";
 
@@ -16,6 +16,9 @@ function buildModal({
   showCancel = true,
   body = null,
   sheet = null,
+  modalClass = "",
+  closable = true,
+  overlayId = "",
 } = {}) {
   modalSeq += 1;
   const titleId = `uniTitle${modalSeq}`;
@@ -23,6 +26,7 @@ function buildModal({
 
   const overlay = document.createElement("div");
   overlay.className = "overlay";
+  if (overlayId) overlay.id = overlayId;
   overlay.style.background = "var(--modal-scrim)";
   // sheet: rozbudowana treść (np. szczegóły statystyki, podgląd
   // wiadomości) przekazana przez wywołującego — na telefonie zastępuje
@@ -36,7 +40,7 @@ function buildModal({
   if (sheet) overlay.classList.add("modal--sheet");
 
   const modal = document.createElement("div");
-  modal.className = "modal uni-modal";
+  modal.className = `modal uni-modal${modalClass ? ` ${modalClass}` : ""}`;
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
   modal.setAttribute("aria-labelledby", titleId);
@@ -58,12 +62,14 @@ function buildModal({
 
   head.appendChild(titleEl);
   head.appendChild(closeBtn);
+  closeBtn.hidden = !closable;
 
   const sub = document.createElement("div");
   sub.className = "mSub";
   sub.id = subId;
   sub.style.whiteSpace = "pre-line";
   sub.textContent = text;
+  if (!text) sub.hidden = true;
 
   const bodyWrap = document.createElement("div");
   bodyWrap.className = "uni-body";
@@ -90,20 +96,23 @@ function buildModal({
 
   foot.appendChild(msg);
   if (showCancel) foot.appendChild(cancelBtn);
-  foot.appendChild(okBtn);
+  if (okText !== null) foot.appendChild(okBtn);
 
   modal.appendChild(head);
   modal.appendChild(sub);
   if (body) modal.appendChild(bodyWrap);
-  modal.appendChild(foot);
+  if (foot.querySelector(".btn")) modal.appendChild(foot);
 
   overlay.appendChild(modal);
 
   return {
     overlay,
+    modal,
+    sub,
     okBtn,
     cancelBtn,
     closeBtn,
+    msg,
   };
 }
 
@@ -117,6 +126,11 @@ function openModal({
   initialFocus = null,
   onReady = null,
   sheet = null,
+  modalClass = "",
+  closable = true,
+  onOk = null,
+  controller = null,
+  overlayId = "",
 } = {}) {
   return new Promise((resolve) => {
     const fallbackTitle = showCancel
@@ -129,14 +143,17 @@ function openModal({
       ? modalText("common.modal.confirmOk", "Tak")
       : modalText("common.modal.alertOk", "OK");
     const fallbackCancel = modalText("common.modal.confirmCancel", "Nie");
-    const { overlay, okBtn, cancelBtn, closeBtn } = buildModal({
+    const { overlay, sub, okBtn, cancelBtn, closeBtn, msg } = buildModal({
       title: title ?? fallbackTitle,
       text: text ?? fallbackText,
-      okText: okText ?? fallbackOk,
+      okText: okText === null ? null : (okText ?? fallbackOk),
       cancelText: cancelText ?? fallbackCancel,
       showCancel,
       body,
       sheet,
+      modalClass,
+      closable,
+      overlayId,
     });
 
     try {
@@ -160,8 +177,24 @@ function openModal({
       resolve(value);
     };
 
+    // controller: okno sterowane z zewnątrz (np. postęp eksportu) -- zamyka je
+    // wywołujący albo, po allowClose(), użytkownik (X, Esc, tło, OK).
+    let canClose = closable;
+    if (controller) {
+      controller.allowClose = () => {
+        canClose = true;
+        closeBtn.hidden = false;
+        okBtn.hidden = false;
+        if (okBtn.isConnected) setTimeout(() => okBtn.focus(), 0);
+      };
+      controller.close = (value = true) => finish(value);
+      controller.setText = (value) => { sub.textContent = value || ""; sub.hidden = !value; };
+      controller.setMessage = (value, kind = "") => { msg.textContent = value || ""; msg.dataset.kind = kind; };
+    }
+
     const onKeydown = (e) => {
       if (e.key === "Escape") {
+        if (!canClose) { e.preventDefault(); return; }
         const overlays = [...document.querySelectorAll(".overlay")];
         if (overlays.at(-1) !== overlay) return;
         e.preventDefault();
@@ -170,16 +203,40 @@ function openModal({
     };
 
     overlay.addEventListener("click", (e) => {
-      if (e.target !== overlay) return;
+      if (e.target !== overlay || !canClose) return;
       // W trybie sheet modal zastępuje treść strony — jedynym wyjściem
       // ma być przycisk wstecz w topbarze, nie klik w tło.
       if (sheet && isSheetViewport()) return;
       finish(false);
     });
 
-    okBtn.addEventListener("click", () => finish(true));
+    // onOk: zapis z okna -- zwraca tekst błędu (okno zostaje, błąd w stopce)
+    // albo nic/true (okno się zamyka); przyciski zablokowane na czas zapisu.
+    let busy = false;
+    okBtn.addEventListener("click", async () => {
+      if (typeof onOk !== "function") return finish(true);
+      if (busy) return;
+      busy = true;
+      okBtn.disabled = true;
+      if (cancelBtn) cancelBtn.disabled = true;
+      msg.textContent = "";
+      try {
+        const res = await onOk();
+        if (typeof res === "string" && res) { msg.textContent = res; msg.dataset.kind = "error"; return; }
+        if (res === false) return;
+        finish(true);
+      } catch (err) {
+        msg.textContent = String(err?.message || err || "");
+        msg.dataset.kind = "error";
+      } finally {
+        busy = false;
+        okBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+      }
+    });
     cancelBtn?.addEventListener("click", () => finish(false));
-    closeBtn.addEventListener("click", () => finish(false));
+    // ukryty X (okno postępu) -- globalny Esc z modal-sheet.js też go klika
+    closeBtn.addEventListener("click", () => { if (canClose) finish(false); });
 
     document.addEventListener("keydown", onKeydown, true);
 
@@ -203,7 +260,7 @@ function openModal({
   });
 }
 
-export function confirmModal({ title, text, okText, cancelText, showCancel = true, body = null, initialFocus = null, onReady, sheet = null } = {}) {
+export function confirmModal({ title, text, okText, cancelText, showCancel = true, body = null, initialFocus = null, onReady, sheet = null, modalClass = "", onOk = null } = {}) {
   return openModal({
     title: title ?? modalText("common.modal.confirmTitle", "Potwierdź"),
     text: text ?? modalText("common.modal.confirmText", "Na pewno?"),
@@ -214,10 +271,13 @@ export function confirmModal({ title, text, okText, cancelText, showCancel = tru
     initialFocus,
     onReady,
     sheet,
+    modalClass,
+    onOk,
   });
 }
 
-export function alertModal({ title, text, okText, body = null, onReady, sheet = null } = {}) {
+/** controller (opcjonalny): po otwarciu dostaje setText(), close() -- okno odświeżane z zewnątrz. */
+export function alertModal({ title, text, okText, body = null, onReady, sheet = null, modalClass = "", controller = null, overlayId = "" } = {}) {
   return openModal({
     title: title ?? modalText("common.modal.alertTitle", "Informacja"),
     text: text ?? "—",
@@ -226,9 +286,58 @@ export function alertModal({ title, text, okText, body = null, onReady, sheet = 
     body,
     onReady,
     sheet,
+    modalClass,
+    controller,
+    overlayId,
   });
 }
 
+/**
+ * Okno postępu (eksport, przygotowanie pliku): bez X i bez przycisków,
+ * Esc i klik w tło go nie zamykają. Zamyka je wywołujący.
+ * @returns {{ setText(text:string):void, setMessage(text:string, kind?:string):void, close():void, body:HTMLElement }}
+ */
+export function progressModal({ title, text = "", doneText } = {}) {
+  const body = document.createElement("div");
+  body.className = "uni-progress";
+  body.innerHTML = `<div class="uni-progress-row"><div class="uni-progress-step"></div><div class="uni-progress-count"></div></div>`
+    + `<div class="uni-progress-track"><div class="uni-progress-bar"></div></div><div class="importMsg uni-progress-msg"></div>`;
+  const stepEl = body.querySelector(".uni-progress-step");
+  const countEl = body.querySelector(".uni-progress-count");
+  const barEl = body.querySelector(".uni-progress-bar");
+  const msgEl = body.querySelector(".uni-progress-msg");
+  const rowEl = body.querySelector(".uni-progress-row");
+  const controller = {};
+  controller.closed = openModal({
+    title, text, okText: doneText ?? modalText("common.done", "Gotowe"), showCancel: false, body,
+    closable: false, controller, modalClass: "modal--narrow",
+    onReady: ({ okBtn }) => { okBtn.hidden = true; },
+  });
+  /** Krok, licznik i pasek; isError/done -- ikona przy kroku i przycisk „Gotowe”. */
+  controller.update = ({ step, i = 0, n = 0, msg = "", isError = false, done = false } = {}) => {
+    if (step != null) {
+      if (isError || done) stepEl.innerHTML = iconText(isError ? "error" : "check", String(step));
+      else stepEl.textContent = String(step);
+    }
+    // bez kroku i liczby elementów (np. jeden plik) wiersz z licznikiem znika
+    countEl.textContent = Number(n) > 0 ? `${Number(i) || 0}/${Number(n)}` : "";
+    rowEl.hidden = !stepEl.textContent && !countEl.textContent;
+    const pct = Number(n) > 0 ? Math.round((Number(i) / Number(n)) * 100) : 0;
+    barEl.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    msgEl.textContent = msg ? String(msg) : "";
+    msgEl.dataset.kind = isError ? "error" : "";
+    if (isError || done) controller.allowClose();
+  };
+  // komunikat pod paskiem (nie w stopce okna)
+  controller.setMessage = (value, kind = "") => { msgEl.textContent = value || ""; msgEl.dataset.kind = kind; };
+  /** Sam pasek (0–100) bez licznika, np. eksport jednego pliku. */
+  controller.setPercent = (pct, { isError = false } = {}) => {
+    barEl.style.width = `${Math.max(0, Math.min(100, Number(pct) || 0))}%`;
+    barEl.dataset.kind = isError ? "error" : "";
+    rowEl.hidden = !stepEl.textContent && !countEl.textContent;
+  };
+  return controller;
+}
 
 export function promptModal({
   title,
@@ -238,12 +347,26 @@ export function promptModal({
   value = "",
   placeholder = "",
   onReady = null,
+  maxLength = null,
+  selectAll = false,
+  validate = null,
+  onSubmit = null,
 } = {}) {
   const input = document.createElement("input");
   input.type = "text";
   input.className = "inp uni-inp";
   input.value = value;
   input.placeholder = placeholder;
+  if (maxLength) input.maxLength = maxLength;
+
+  // validate(value) -> tekst błędu albo nic; onSubmit(value) -> zapis,
+  // zwraca tekst błędu (okno zostaje) albo nic (okno się zamyka).
+  const onOk = (validate || onSubmit) ? async () => {
+    const v = input.value;
+    const err = validate ? await validate(v) : null;
+    if (err) return err;
+    return onSubmit ? onSubmit(v) : true;
+  } : null;
 
   return openModal({
     title: title ?? modalText("common.modal.promptTitle", "Wpisz"),
@@ -253,6 +376,13 @@ export function promptModal({
     showCancel: true,
     body: input,
     initialFocus: input,
-    onReady,
+    modalClass: "modal--narrow",
+    onOk,
+    onReady: (ctx) => {
+      // Enter = Zapisz
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); ctx.okBtn.click(); } });
+      if (selectAll) setTimeout(() => input.select(), 0);
+      onReady?.({ ...ctx, input });
+    },
   }).then((ok) => (ok ? input.value : null));
 }
