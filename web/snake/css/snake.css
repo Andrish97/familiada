@@ -41,12 +41,26 @@ body.snake-body {
 .snake-frame .layer-displays { z-index: 3; }
 .snake-frame svg circle { transition: none !important; }
 
-/* Telefon i tablet: jak zwykły Wyświetlacz -- sama plansza na cały ekran,
-   sterowanie przesunięciem palca (telefon w pionie blokuje device-guard). */
+/* Telefon i tablet: jak zwykły Wyświetlacz -- tło motywu na cały ekran
+   (także pod wcięciem i zaokrąglonymi rogami), plansza 16:9 jak największa
+   w strefie bezpiecznej (iPhone z notchem/Dynamic Island, pasek gestu).
+   Sterowanie przesunięciem palca; telefon w pionie blokuje device-guard. */
 @media (pointer: coarse) {
   body.snake-body { overflow: hidden; touch-action: none; }
-  .snake-wrap { padding: 0; height: 100dvh; }
-  .snake-frame { width: min(100vw, 177.78dvh); border-radius: 0; }
+  .snake-wrap {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    height: 100dvh;
+    padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  }
+  .snake-frame {
+    width: min(100%, calc((100dvh - var(--safe-top) - var(--safe-bottom)) * 16 / 9));
+    border-radius: 0;
+    overflow: visible;
+  }
+  .snake-frame .layer-bg { position: fixed; inset: 0; width: auto; height: auto; }
   .snake-desktop { display: none !important; }
 }
 

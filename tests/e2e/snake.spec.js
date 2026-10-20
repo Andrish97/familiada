@@ -49,7 +49,8 @@ test("wąż: kod QR z kadru prowadzi do gry, zdarzenia trafiają do bazy (bez ko
   await expect.poll(() => log.map((e) => e.kind).join(","), { timeout: 15_000 }).toBe("scan,enter,start,finish");
   for (const e of log) {
     expect(e.status, `${e.kind}: HTTP`).toBe(200);
-    expect(e.body, `${e.kind}: odpowiedź`).toEqual({ ok: true });
+    // Treści odpowiedzi na „scan” nie da się odczytać -- /go/ od razu przechodzi do gry.
+    if (e.kind !== "scan") expect(e.body, `${e.kind}: odpowiedź`).toEqual({ ok: true });
   }
 });
 
