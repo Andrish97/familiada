@@ -59,6 +59,8 @@ E2E na branchu (spec | przebieg | wynik):
 
 ## Dalej
 
+0. Nazwa w edytorach (gra, logo) w stylu górnego kafla ankiet, lepiej
+   wyważona (uwaga użytkownika 2026-10-21) — w toku.
 1. Wyniki seq14–seq17 → poprawki → powtórki punktowe aż do zielonych.
 2. Push na `main` (scalić świeży `origin/main`, `resolve-version-conflicts.py`,
    `version-assets.js`, unit), potem te same spece kontrolnie na produkcji.
@@ -73,6 +75,10 @@ E2E na branchu (spec | przebieg | wynik):
   w edytorze rysunku; stopka lekko ucięta w edytorze tekstu logo.
 
 ## Limit wykorzystania
+
+- 2026-10-21: użytkownik podał odnowienie limitu o 4:40 — przyjęto czas
+  polski (CEST = UTC+2), czyli 02:40 UTC. Przypomnienie ustawione na
+  02:45 UTC (`send_later`, trig_0156YD1TXiVDnAnp66EUs5NW).
 
 Przy trafieniu na limit: zapisać tu krok i czas odnowienia (bez komunikatu:
 +5 h od błędu), budziki co ≤3600 s do odnowienia +5 min z tym samym promptem.
