@@ -1,6 +1,7 @@
-// Logika węża (bez DOM): plansza cols x rows pól, ściany i własny ogon kończą
-// grę, jabłko wydłuża węża o jedno pole i daje punkt. Strona rysuje stan
-// na kafelkach dużej planszy Wyświetlacza (30x10).
+// Logika węża (bez DOM): plansza cols x rows pól; ściany są przenikalne jak
+// w starych telefonach (wąż wychodzi jedną krawędzią i wraca przeciwną),
+// grę kończy tylko własny ogon. Jabłko wydłuża węża o jedno pole i daje punkt.
+// Strona rysuje stan na kafelkach dużej planszy Wyświetlacza (30x10).
 
 export const DIRS = {
   up: { x: 0, y: -1 },
@@ -54,12 +55,11 @@ export function createSnakeGame({ cols = 30, rows = 10, rng = Math.random } = {}
     if (state.dead) return { ate: false, dead: true };
     if (state.queue.length) state.dir = state.queue.shift();
     const d = DIRS[state.dir];
-    const head = { x: state.snake[0].x + d.x, y: state.snake[0].y + d.y };
+    const head = { x: (state.snake[0].x + d.x + cols) % cols, y: (state.snake[0].y + d.y + rows) % rows };
     const ate = !!state.food && head.x === state.food.x && head.y === state.food.y;
     // Ogon odsuwa się w tym samym kroku, więc wolno wejść na jego pole (chyba że rośniemy).
     const body = ate ? state.snake : state.snake.slice(0, -1);
-    const hitWall = head.x < 0 || head.y < 0 || head.x >= cols || head.y >= rows;
-    if (hitWall || body.some((s) => s.x === head.x && s.y === head.y)) {
+    if (body.some((s) => s.x === head.x && s.y === head.y)) {
       state.dead = true;
       return { ate: false, dead: true };
     }

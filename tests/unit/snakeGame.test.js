@@ -24,12 +24,16 @@ test("nie da się zawrócić w miejscu, kolejka trzyma dwa skręty", () => {
   assert.deepEqual(game.state.snake[0], { x: 3, y: 1 });
 });
 
-test("ściana kończy grę", () => {
+test("ściany są przenikalne: wąż wraca z przeciwnej strony", () => {
   const game = createSnakeGame({ cols: 6, rows: 3 });
   game.state.food = null;
   game.step();
-  assert.equal(game.step().dead, true);
-  assert.equal(game.state.dead, true);
+  assert.equal(game.step().dead, false);
+  assert.deepEqual(game.state.snake[0], { x: 0, y: 1 });
+  game.turn("up");
+  game.step(); game.step();
+  assert.deepEqual(game.state.snake[0], { x: 0, y: 2 });
+  assert.equal(game.state.dead, false);
 });
 
 test("własny ogon kończy grę, pole ogona w tym samym kroku jest wolne", () => {
