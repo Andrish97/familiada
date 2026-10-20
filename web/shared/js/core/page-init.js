@@ -49,7 +49,20 @@ async function loadDeps() {
     handleSheetBack: sheet.handleSheetBack,
     guardViewportWidth: device.guardViewportWidth,
     getDeviceProfile: device.getDeviceProfile,
+    showAccountNotices,
   };
+}
+
+// Jednorazowe komunikaty konta (informacja dla gościa albo prośba o ocenę),
+// wspólne dla stron z kontem. Ładowane leniwie; w testach podmieniane w deps.
+async function showAccountNotices(user) {
+  if (isGuestUser(user)) {
+    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-20T04553");
+    await maybeShowGuestInfoModal(user);
+  } else if (user) {
+    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-20T04553");
+    await initRatingSystem(user);
+  }
 }
 
 function elementOf(ref, defaultId) {
@@ -218,14 +231,7 @@ export async function initPage(id, opts = {}) {
   // Games library. Await the same blocking modal flow everywhere so users
   // don't miss a one-time notice while the page continues initializing.
   if (!new Set(["login", "privacy", "mailCenter", "connectDevice"]).has(id)) {
-    if (isGuestUser(user)) {
-      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-20T04553");
-      await maybeShowGuestInfoModal(user);
-    } else if (user) {
-      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-20T04553");
-
-      await initRatingSystem(user);
-    }
+    await d.showAccountNotices(user);
   }
 
   return user;

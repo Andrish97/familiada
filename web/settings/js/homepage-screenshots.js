@@ -1585,7 +1585,7 @@ async function applyFixtureToFrame(scene, fixture) {
       menu.className = "account-menu";
       menu.hidden = true;
       const settingsLabel = language === "en" ? "Account settings" : language === "uk" ? "Налаштування облікового запису" : "Ustawienia konta";
-      menu.innerHTML = `<button class="btn account-menu-item" type="button">${icon("settings")} ${settingsLabel}</button><button class="btn account-menu-item" type="button">${icon("logout")} ${logoutLabel}</button>`;
+      menu.innerHTML = `<button class="btn account-menu-item" type="button">${icon("settings")} ${settingsLabel}</button><button class="btn account-menu-item" type="button">${icon("close")} ${logoutLabel}</button>`;
       account.after(menu);
     }
     setInput(doc, "gameName", fixture.game);
@@ -3312,7 +3312,7 @@ export async function initHomepageScreenshots() {
         if (input.checked && !ids.includes(id)) ids.push(id);
         if (!input.checked) selection.resourceIds = ids.filter(value => value !== id);
         if (["games", "bases"].includes(scene.id)) {
-          const order = selection.resourceOrder || (selection.resourceOrder = resources.map(item => item.id));
+          const order = selection.resourceOrder || (selection.resourceOrder = [...selection.resourceIds]);
           selection.resourceIds = order.filter(value => selection.resourceIds.includes(value));
           selection.resourceId = selection.resourceIds[0] || "";
         }
