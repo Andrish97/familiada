@@ -644,9 +644,9 @@ punktowy test na produkcji (cykl z `CLAUDE.md`).
 | 8 | Control | Każda odpowiedź o maksymalnej punktacji kończy pojedynek | 2 | ✓ |
 | 9 | Transfer | Pakiet v2: import, eksport, Powiel, Wyślij; normalizacja bez pytania | 2, 7 | ✓ 406 |
 | 10 | Marketplace | Zgłoszenie przez `play`, typ `market`, kopie archiwalne | 2, 9 | ✓ 404, 406 |
-| 11 | Szablony demo | Każda gra demo zgodna z regułami swojego typu i statusu (§9.6) | 2, 7 | 409 — od razu po wdrożeniu |
+| 11 | Szablony demo | Każda gra demo zgodna z regułami swojego typu i statusu (§9.6) | 2, 7 | ✓ 409 (szablony), 413 (kopie po treści) |
 | 12 | Nocna naprawa danych | Teksty pytań gier i baz, znaki odpowiedzi, nieedytowane kopie demo, `rules_state`; pomija gry z niewygasłą sesją Control | 1–11 | 407 + 409, `pg_cron` 01:30 UTC |
-| 13 | Ograniczenia bazy | `questions_text_len` (≤100) i `answers_text_chars` — zakładane przez naprawę, gdy dane są czyste | 12, decyzja §9.5 | czeka na naprawę i decyzję o 5 odpowiedziach |
+| 13 | Ograniczenia bazy | `questions_text_len` (≤100) i `answers_text_chars` — zakładane przez naprawę, gdy dane są czyste | 12 | czeka na naprawę (5 odpowiedzi z emotek → słowa, 412) |
 | 14 | Kontrola i zamknięcie | Raport naprawy (`e21_repair_runs`), punktowe e2e na produkcji, wpis w Dzienniku | 12, 13 | — |
 
 ## 6. Scenariusze kontrolne wymagane przed zamknięciem
