@@ -1,6 +1,6 @@
-import { icon } from "./icons.js?v=v2026-10-20T15492";
-import { t } from "../../translation/translation.js?v=v2026-10-20T15492";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-20T15492";
+import { icon } from "./icons.js?v=v2026-10-20T15582";
+import { t } from "../../translation/translation.js?v=v2026-10-20T15582";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-20T15582";
 
 let modalSeq = 0;
 
