@@ -1089,10 +1089,30 @@ Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
 - Godzina nocnego okna nie była zapisana: przyjęto 01:30 UTC (03:30 czasu
   polskiego letniego).
 
+### 9.5. Wdrożenie i kontrola produkcji (2026-10-20)
+
+- Push na `main`: kod i migracje 404–407 (ostatni commit wdrożenia
+  `4107f8a`, wcześniej `f21133e`, `5b20b11`); log migracji: 404–407 `OK`
+  (14:54–14:58 UTC); Worker i Pages zielone (`39443347173`, `39443346949`).
+- Raport progu 4 pkt (404, odczyt): 180 gier preparowanych/market przestało
+  być grywalnych przez `answerMinPoints`, w tym 125 kopii demo; szablon demo
+  „prepared” (pl/en/uk) ma w każdym języku 4 odpowiedzi poniżej 4 pkt
+  (szóste odpowiedzi za 2–3 pkt).
+- E2E kontrolne na produkcji (punktowo): `39445535857` ✓ (`e21-rules`,
+  `game-transfer-format`), `39446237907` (Podlicz punktowa/tekstowa,
+  Base Explorer E21 ✓; zapis szkicu — test poprawiony), `39446733012` ✓
+  (literówki/scalanie, cofnij, wyjście z podliczania, DOKŁADNIE),
+  `39447096936` ✓ (`control2` „próg w rundzie”).
+- Nocna naprawa danych (cron 01:30 UTC 2026-10-21) — wynik do dopisania
+  z `e21_repair_runs`.
+
 ### 9.4. Otwarte
 
 - **Decyzja użytkownika:** 5 odpowiedzi jednej gry (preparowana, szkic,
   bez głosów), które po oczyszczeniu byłyby puste — naprawa ich nie zmienia
   i wykazuje w raporcie; do czasu decyzji ograniczenie `answers_text_chars`
   nie jest zakładane. Użytkownik poprosił o SQL podglądu (przekazany w rozmowie).
-
+- **Decyzja użytkownika:** szablon demo „prepared” i 125 kopii demo
+  niegrywalnych po progu 4 pkt. Rekomendacja: usunąć z szablonu (i kopii bez
+  zmian użytkownika) odpowiedzi poniżej 4 pkt — bez dopisywania punktów;
+  pytania zostają z ≥3 odpowiedziami.
