@@ -36,6 +36,13 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     w różnych miejscach (widoki, pamięci podręczne, liczniki, sortowanie,
     filtry). Cel: jedno źródło stanu i jedna prosta, niezawodna ścieżka
     „stan → co pokazać → render” dla drzewa, listy i lewego panelu.
+  - **Spójne nazewnictwo:** w kodzie są nazwy niezgodne z tym, co znaczą
+    i co widzi użytkownik — np. „meta” (`VIEW.META`, `metaSelection`,
+    `_allQuestionMetaMap`) dla „pasujących kategorii”, czyli typów gry,
+    do których pytanie się nadaje: odpowiedzi + punkty → preparowana,
+    same odpowiedzi → punktowana, samo pytanie → ankieta tekstowa.
+    Analiza ma zawierać słownik pojęć (UI ↔ kod ↔ baza) i listę nazw do
+    zmiany; nazwy w kodzie zgodne ze słownikiem i z `game-rules.js`.
   - **Tabela listy:** przeanalizować i ujednolicić szerokości kolumn
     (dziś niespójne) oraz sortowanie klikiem w nagłówek (dziś kilka
     nałożonych warunków). Jedna definicja kolumn (szerokość, porównanie,
