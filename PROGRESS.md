@@ -53,7 +53,9 @@ E2E na branchu (spec | przebieg | wynik):
   powtórka + polls --grep podliczania (seq18); editor --grep suma
   39515701683 padł na nieistniejącym `#msg` (stare od E16, także na main) —
   9 asercji przepisanych na stan w bazie (`5e56647`), cały editor.spec (seq19);
-  base-explorer (seq15); marketplace
+  base-explorer 39515808766: 65/68 — tooltip/limit/<10 pytań/lista OK; 3 testy
+  zmiany nazwy padały, bo spec chodził po kodzie produkcji (stare okno
+  `#renameModal`) — dodany `serveBranchCode` (`40476083`), powtórka grep w seq17; marketplace
   (gość zamyka okno informacyjne, seq16); base-explorer --grep F2|PPM|chmurka|
   znaków|rozciąga, logo-editor, poll-share, polls-layout (seq17).
 
