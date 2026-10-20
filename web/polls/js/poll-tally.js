@@ -30,6 +30,9 @@ import {
   nextTieSelection,
 } from "../../shared/js/core/poll-tally-math.js?v=v2026-10-20T23145";
 
+// Dotyk: bez przeciągania (page-init.js), scalanie tylko przyciskiem.
+const TOUCH = !!globalThis.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches;
+
 
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;
@@ -248,7 +251,7 @@ export function createTally({ gameId, pollResults, ui }) {
     dirty = false;
     states = new Map();
     updateHistory();
-    ui.hintEl.textContent = t("polls.tally.hintText");
+    ui.hintEl.textContent = t(TOUCH ? "polls.tally.hintTextTouch" : "polls.tally.hintText");
     ui.barEl.hidden = false;
     ui.toolsEl.hidden = false;
     setSave("");
@@ -299,7 +302,7 @@ export function createTally({ gameId, pollResults, ui }) {
     row.dataset.itemId = item.id;
 
     const handle = mk("span", "tcHandle", icon("grip"));
-    handle.draggable = true;
+    handle.draggable = !TOUCH; // dotyk: tylko przycisk scalania
     handle.title = t("polls.tally.dragHandle");
     handle.setAttribute("aria-label", t("polls.tally.dragHandle"));
 
@@ -729,7 +732,7 @@ export function createTally({ gameId, pollResults, ui }) {
       if (mode === "points") {
         ui.hintEl.textContent = t("polls.tally.hintPoints");
       } else if (mode === "text") {
-        ui.hintEl.textContent = t("polls.tally.hintText");
+        ui.hintEl.textContent = t(TOUCH ? "polls.tally.hintTextTouch" : "polls.tally.hintText");
         for (const qs of states.values()) updateQuestion(qs);
       }
     },

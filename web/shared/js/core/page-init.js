@@ -34,6 +34,14 @@ import { isGuestUser } from "./guest-mode.js?v=v2026-10-20T23145";
 import { showPageGuard } from "./page-overlay.js?v=v2026-10-20T23145";
 import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-20T23145";
 
+// Dotyk (telefon, tablet): bez chwytania i przeciągania elementów (decyzja
+// użytkownika 2026-10-20). Każde przeciąganie ma odpowiednik w przyciskach
+// (scalanie w podliczaniu, strzałki rund, kliknięcie w finale, menu w Eksploratorze).
+const TOUCH_ONLY = "(hover: none) and (pointer: coarse)";
+if (globalThis.matchMedia?.(TOUCH_ONLY)?.matches) {
+  globalThis.document?.addEventListener("dragstart", (e) => e.preventDefault(), true);
+}
+
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
     import("./auth.js?v=v2026-10-20T23145"),

@@ -443,6 +443,16 @@
   .resultQ .aList.tally .tcMergeBtn{ display: none; }
 }
 .resultQ .aList.tallyText .aTxt{ display: none; }
+/* Telefon: tekst odpowiedzi w pierwszej linii na całą szerokość, głosy,
+   punkty i przyciski w drugiej -- tekst nie jest ucinany (2026-10-20). */
+@media (max-width: 600px){
+  .resultQ .aList.tallyText .aRow{ flex-wrap: wrap; row-gap: 2px; padding: 6px 8px; }
+  .resultQ .aList.tallyText .aTxtInp{ flex: 1 1 100%; }
+  .resultQ .aList.tallyText .tcCnt{ margin-left: 6px; }
+  .resultQ .aList.tallyText .aVal{ margin-left: auto; }
+  .resultQ .aList.tallyText .tcActionGroup{ margin-left: 4px; }
+}
+
 .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
 .resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
 .resultQ .aRow.tallySkipped,

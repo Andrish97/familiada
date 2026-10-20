@@ -17,7 +17,7 @@ import {
   listAllQuestions,
 } from "./repo.js?v=v2026-10-20T23145";
 import { wireActions } from "./actions.js?v=v2026-10-20T23145";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-20T23145";
+import { initDrawer } from "./mobile.js?v=v2026-10-20T23145";
 
 
 /* ================= DOM ================= */
@@ -106,7 +106,6 @@ function getBaseIdFromUrl() {
 
     // ===== mobile =====
     initDrawer();
-    disableDragOnTouch();
 
     // ===== akcje UI (klik folder, search, selekcja) =====
     const api = wireActions({ state });

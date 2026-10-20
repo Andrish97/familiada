@@ -1021,6 +1021,7 @@ const pl = {
     tally: {
       loading: "Ładuję odpowiedzi…",
       hintText: "Udział liczony od wszystkich pełnych ankiet. Poniżej 4% — pominięte (szary wiersz). Znaki, których nie ma Wyświetlacz (np. emoji), są usuwane przed liczeniem. Przeciągnij odpowiedź na inną, żeby je połączyć; kliknij tekst, żeby poprawić literówkę. Maks. 17 znaków.",
+      hintTextTouch: "Udział liczony od wszystkich pełnych ankiet. Poniżej 4% — pominięte (szary wiersz). Znaki, których nie ma Wyświetlacz (np. emoji), są usuwane przed liczeniem. Żeby połączyć odpowiedzi, stuknij przycisk scalania przy jednej, potem przy drugiej; kliknij tekst, żeby poprawić literówkę. Maks. 17 znaków.",
       hintPoints: "Punkty = udział od wszystkich pełnych ankiet. Poniżej 4% — pominięte (szary wiersz).",
       counter: "Odpowiedzi: {n} (wymagane 3–6)",
       sum: "suma pkt: {n}",

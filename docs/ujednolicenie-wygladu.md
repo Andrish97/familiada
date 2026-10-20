@@ -121,6 +121,13 @@ podliczania jako stan bieżącej operacji.
   przycisków, choć mieszczą się w linii) nie znalazł innych takich miejsc.
 - **Roletka pytania w edytorze gry:** przewija się sama lista odpowiedzi,
   sekcja kończy się nad dolnym safe area (jak w Eksploratorze).
+- **Dotyk bez przeciągania (decyzja użytkownika 2026-10-20):** na telefonie
+  i tablecie dotykowym chwytanie i przeciąganie elementów jest zablokowane
+  na wszystkich stronach (`page-init.js`, `base.css`), uchwyty znikają;
+  zostają przyciski (scalanie w podliczaniu, strzałki rund, kliknięcie
+  w finale, menu w Eksploratorze). Podliczanie ankiety tekstowej na
+  telefonie: tekst odpowiedzi w pierwszej linii, głosy/punkty/przyciski
+  w drugiej; podpowiedź mówi o przycisku scalania.
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /

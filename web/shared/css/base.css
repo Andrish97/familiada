@@ -3102,3 +3102,10 @@ button.rowsSectionHead{ cursor: pointer; }
 
 /* Przyciski stopki wspólnego okna (modal.js): ikona i napis z odstępem */
 .uni-foot .btn{ display: inline-flex; align-items: center; justify-content: center; gap: .4em; }
+
+/* Dotyk: bez chwytania i przeciągania (page-init.js blokuje dragstart);
+   uchwyty przeciągania znikają, zostają przyciski (decyzja 2026-10-20). */
+@media (hover: none) and (pointer: coarse) {
+    [draggable="true"] { -webkit-user-drag: none; }
+    .tcHandle, .roundsOrderHandle { display: none !important; }
+}
