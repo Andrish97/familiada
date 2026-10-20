@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-20T06332";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-20T06332";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-20T06332";
+import { icon } from "./icons.js?v=v2026-10-20T12063";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-20T12063";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-20T12063";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -126,7 +126,7 @@ export async function resolveLoginToEmail(loginOrEmail) {
   return await loginToEmail(loginOrEmail);
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-20T06332";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-20T12063";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
