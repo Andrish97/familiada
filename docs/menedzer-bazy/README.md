@@ -186,7 +186,11 @@ reszta ukryta. Menu kontekstowe to samo z rejestru. Dzisiejsze okno
 7. Zrzuty (telefon 390 px, komputer 1400 px), pełny lokalny e2e, zestawienie
    dla użytkownika — dopiero wtedy decyzja o wdrożeniu.
 
-## 5. Do decyzji użytkownika (domyślny wybór agenta w nawiasie)
+## 5. Decyzje użytkownika (2026-10-20)
+
+Odpowiedzi: 1 tak, 2 tak („może być”), 3 tak, 4 tak, 5 tak, 6 tak („to raczej
+było źródłem problemów”), 7 — **do pokazania** (użytkownik prosi o prezentację),
+8 tak. Pytania (domyślny wybór agenta w nawiasie):
 
 1. Proponowane kategorie rozłączne: odpowiedzi + punkty → preparowana,
    same odpowiedzi → punktowana, samo pytanie → tekstowa (**tak** — tak
