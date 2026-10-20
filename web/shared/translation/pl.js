@@ -5122,8 +5122,10 @@ const pl = {
       restoreDefaults: "Przywróć domyślne",
       defaultA: "Drużyna A",
       defaultB: "Drużyna B",
-      placeholderA: "np. Rodzina Kowalskich",
-      placeholderB: "np. Rodzina Nowaków",
+      placeholderA: "np. Kowalscy",
+      placeholderB: "np. Nowakowie",
+      displayCount: "Na Wyświetlaczu: {n}/{max} znaków",
+      displayInvalid: "Wyświetlacz nie pokaże znaków: {chars}",
       defaultHint: "Jeśli nie wpiszesz nazw drużyn, zostaną pokazane domyślne wartości: {a} i {b}",
     },
     display: {

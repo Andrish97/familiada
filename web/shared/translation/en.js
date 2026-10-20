@@ -5213,8 +5213,10 @@ const en = {
       restoreDefaults: "Restore defaults",
       defaultA: "Team A",
       defaultB: "Team B",
-      placeholderA: "e.g. The Smith Family",
-      placeholderB: "e.g. The Johnson Family",
+      placeholderA: "e.g. The Smiths",
+      placeholderB: "e.g. The Johnsons",
+      displayCount: "On the Display: {n}/{max} characters",
+      displayInvalid: "The Display cannot show: {chars}",
       defaultHint: "If you don't enter team names, the default values will be shown: {a} and {b}",
     },
     display: {

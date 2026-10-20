@@ -5212,8 +5212,10 @@ const uk = {
       restoreDefaults: "Відновити за замовчуванням",
       defaultA: "Команда А",
       defaultB: "Команда Б",
-      placeholderA: "напр. Сім'я Коваленків",
-      placeholderB: "напр. Сім'я Петренків",
+      placeholderA: "напр. Коваленки",
+      placeholderB: "напр. Петренки",
+      displayCount: "На Дисплеї: {n}/{max} символів",
+      displayInvalid: "Дисплей не покаже символів: {chars}",
       defaultHint: "Якщо не введеш назви команд, будуть показані типові значення: {a} і {b}",
     },
     display: {

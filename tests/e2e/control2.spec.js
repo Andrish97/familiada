@@ -2717,11 +2717,11 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
     }, { timeout: 10000 }).toBe(true);
 
     await previewFrame().evaluate(() => { window.__displayLog = []; });
-    await page.locator("#gsTeamA").fill("Testowi Mistrzowie");
+    await page.locator("#gsTeamA").fill("Testowi Mistrzy");
 
     await expect.poll(async () => {
       const log = await previewFrame().evaluate(() => window.__displayLog || []);
-      return log.some((e) => e.call === "api.small.long1" && e.args?.[0] === "Testowi Mistrzowie");
+      return log.some((e) => e.call === "api.small.long1" && e.args?.[0] === "Testowi Mistrzy");
     }, { timeout: 10000 }).toBe(true);
 
     await page.locator("#btnSaveAll").click();
@@ -2729,7 +2729,7 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
     await page.locator("#btnBack").click();
     await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 30000 });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
-    await expect(page.locator(".c2-summary-teams .summarySectionValue")).toContainText("Testowi Mistrzowie");
+    await expect(page.locator(".c2-summary-teams .summarySectionValue")).toContainText("Testowi Mistrzy");
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
