@@ -571,7 +571,10 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w trybie podli
     mark("merge-test: manual merge done");
 
     // Poprawki same zapisują się w bazie (szkic) ...
-    await expect(page.locator("#tallySave")).toHaveAttribute("data-state", "saved", { timeout: 20000 });
+    // (zapis udany = pole statusu znika z „Zapisuję…”, szkic jest w bazie)
+    await expect(page.locator("#tallySave")).toHaveAttribute("data-state", "", { timeout: 20000 });
+    await expect.poll(async () => page.evaluate(async (id) =>
+      !!(await window.__sbClient.rpc("poll_text_tally_draft_get", { p_game_id: id })).data?.draft, game.gameId), { timeout: 15000 }).toBe(true);
 
     // ... więc po przeładowaniu strony tryb podliczania wraca z tym samym stanem.
     await gotoOwnerPage(page, game.gameId);
