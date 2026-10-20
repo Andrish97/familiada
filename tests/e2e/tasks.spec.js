@@ -93,7 +93,9 @@ test("E20 zadania pokazują ładowanie, błąd i pozwalają ponowić odczyt", as
     await page.goto(TASKS_URL);
     await expect(page.locator(".app-toast-text")).toHaveText(/Nie udało się wczytać zadań/, { timeout: 20000 });
     await expect(page.locator("#tasksLoadRetry")).toBeVisible();
-    await expect(page.locator(".tasks-scroll")).not.toHaveClass(/skel-step-ready/);
+    // przy błędzie szkielet znika (lista odsłonięta), żeby „Ponów” był widoczny
+    await expect(page.locator(".tasks-scroll")).toHaveClass(/skel-step-ready/);
+    await expect(page.locator(".rowsRow")).toHaveCount(0);
     await page.screenshot({ path: testInfo.outputPath("shot-e20-tasks-error-390.png"), fullPage: true });
     allowRetry = true;
     await page.locator("#tasksLoadRetry").click();
