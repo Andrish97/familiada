@@ -493,6 +493,8 @@ test("ustawienia gry: niepełny finał w trybie wyboru blokuje zapis komunikatem
     await expect(page.locator(".uni-modal")).toContainText("Wybierz 5 pytań finałowych (wybrano 1/5).");
     await page.locator(".uni-foot .btn.gold:visible").click();
     await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "dirty");
+    // Komunikat przenosi na zakładkę Finał; wybór trybu zostaje bez zmian.
+    await switchTab(page, "questions");
     await expect(page.locator('input[name="gsFinalMode"][value="pick"]')).toBeChecked();
     const game = await getGameRow(page, gameId);
     expect(game.settings?.game?.hasFinal).not.toBe(true);
