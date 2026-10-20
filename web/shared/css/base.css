@@ -2466,7 +2466,8 @@ body{
   align-items: center;
   gap: 10px;
   min-width: 0;
-  width: 100%; /* także jako element flex (.rowTop edytora gry): ta sama szerokość pola co w edytorach logo */
+  width: min(100%, 820px);
+  align-self: flex-start;
 }
 .name-field-label{
   font-weight: 900;
@@ -2477,9 +2478,9 @@ body{
   flex: 0 0 auto;
 }
 .name-field .inp{
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
-  max-width: 680px;
+  max-width: none;
   font-size: 16px;
   font-weight: 900;
 }
