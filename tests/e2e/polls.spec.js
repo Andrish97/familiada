@@ -392,11 +392,19 @@ test("ankieta punktowa i tekstowa: głosy, Zatrzymaj, Wznów, Podlicz", async ({
     expect(await page.inputValue("#pollLink")).toBe(pointsLink);
     await stopPoll(page, pointsGame.gameId);
 
-    // Podlicz: te same wiersze, głosy -> punkty, suma 100 przy każdym pytaniu
+    // Podlicz (E21): punkty = udział pełnych ankiet (floor, ≥4%), suma ≤100 --
+    // ta sama wartość co z poll_tally_source wyliczona tym samym wzorem.
     await startTally(page);
     const sums = page.locator("#resultsList .resultQ .tallySum");
     await expect(sums).toHaveCount(QN_COUNT, { timeout: 15000 });
-    await expect(sums.first()).toContainText("100");
+    const src = await page.evaluate(async (id) => (await window.__sbClient.rpc("poll_tally_source", { p_game_id: id })).data, pointsGame.gameId);
+    const q1 = src.questions.find((q) => q.ord === 1);
+    const share = (v) => (v > 0 ? Math.max(1, Math.floor((100 * v) / src.n)) : 0);
+    const expected = q1.answers.map((a) => share(a.votes)).filter((p) => p >= 4).reduce((x, y) => x + y, 0);
+    console.log(`[e2e-diag] tally n=${src.n} votes=${q1.answers.map((a) => a.votes).join("/")} expected=${expected}`);
+    expect(src.n).toBeGreaterThanOrEqual(10);
+    expect(expected).toBeLessThanOrEqual(100);
+    await expect(sums.first()).toContainText(String(expected));
     await approveTally(page, pointsGame.gameId);
     mark("points poll tallied successfully");
   } finally {
