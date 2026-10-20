@@ -2550,6 +2550,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 
     await clearSfxLog(page);
     await clearSfxLog(displayPage);
+    // Start rundy czeka, aż Display skończy planszę intro z dźwiękiem (ok. 21 s).
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await waitForSfxSequence(displayPage, ["round_transition"], 10000);
     // Control ma soundSource="control" domyślnie wyłączone — zero dźwięku
