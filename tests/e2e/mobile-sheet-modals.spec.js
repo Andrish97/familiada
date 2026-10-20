@@ -107,6 +107,13 @@ async function deleteBaseDirect(page, baseId) {
   }, baseId);
 }
 
+// Cały spec sprawdza wygląd okien z kodu brancha (strony i wspólny front).
+test.beforeEach(async ({ context }) => {
+  if (process.env.GITHUB_REF_NAME !== "main") {
+    await serveBranchCode(context, { pages: ["bases", "bases/explorer", "games", "marketplace", "logos", "settings"] });
+  }
+});
+
 test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
@@ -153,6 +160,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
   // (modal--keep-dialog, decyzja 2026-10-20): treść strony zostaje pod spodem.
   test("modal nazwy (tworzenie) na telefonie jest zwykłym okienkiem nad stroną", async ({ page, context }) => {
     test.setTimeout(60_000);
+    if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     let baseId = null;
