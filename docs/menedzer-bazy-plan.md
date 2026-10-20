@@ -27,6 +27,11 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     zaznaczanie (klik, Ctrl, Shift, Ctrl+A, zaznaczanie ramką /
     „marquee”), przeciąganie, menu kontekstowe, gesty na telefonie,
     skróty i podobne. Nic z działających funkcji nie może zniknąć.
+  - **Telefon:** obecne gesty zostają (przytrzymanie = menu, podwójne
+    stuknięcie itd.), a do przemyślenia są dodatkowe gesty dotykowe,
+    np. dwoma palcami, jako odpowiedniki akcji z myszy i klawiatury
+    (zaznaczanie wielu, ramka, cofanie). Gest = kolejne wejście do tego
+    samego rejestru akcji.
   - **Przemyśleć wyszukiwanie i filtrowanie** (tekst, #tagi w polu
     wyszukiwania, filtr tagów i kategorii w lewym panelu, blokady akcji
     w widokach wyszukiwania/tagów), żeby działało dobrze i spójnie.
