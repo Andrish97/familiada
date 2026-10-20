@@ -1,0 +1,111 @@
+name: Zrzuty stron (dane demo)
+
+# Zrzuty prawdziwych stron z web/ na danych demo (scripts/screens/) -- bez kont,
+# bez produkcyjnej bazy. Do uruchomienia z telefonu: Actions → „Zrzuty stron”.
+# Wynik: artefakt z galerią (index.html + README.md) oraz, przy publish=true,
+# galeria na gałęzi screens-gallery (podgląd w przeglądarce przez GitHub).
+on:
+  workflow_dispatch:
+    inputs:
+      scenes:
+        description: "Sceny: changed (zmienione względem main), all albo lista po przecinku (np. games,logos)"
+        default: "changed"
+        required: true
+      lang:
+        description: "Języki: pl, en, uk, all albo lista"
+        default: "pl"
+        required: true
+      devices:
+        description: "Urządzenia: desktop,phone,tablet,phone-landscape"
+        default: "desktop,phone"
+        required: true
+      publish:
+        description: "Opublikuj galerię na gałęzi screens-gallery"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screens-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "version=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+        working-directory: tests
+
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Zrzuty
+        env:
+          SCENES: ${{ inputs.scenes }}
+          LANGS: ${{ inputs.lang }}
+          DEVICES: ${{ inputs.devices }}
+        run: |
+          case "$SCENES" in
+            changed) pick="--changed --base=origin/main" ;;
+            all) pick="--all" ;;
+            *) pick="--scenes=$SCENES" ;;
+          esac
+          node scripts/screens/run.cjs $pick --lang="$LANGS" --devices="$DEVICES" --out=screens-out
+
+      - name: Artefakt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens-${{ github.run_number }}
+          path: screens-out
+          if-no-files-found: ignore
+
+      - name: Publikacja na screens-gallery
+        if: inputs.publish && hashFiles('screens-out/README.md') != ''
+        env:
+          RUN_DIR: ${{ github.ref_name }}/${{ github.run_number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf /tmp/gallery && mkdir -p /tmp/gallery
+          if git ls-remote --exit-code origin screens-gallery >/dev/null; then
+            git clone --depth 1 --branch screens-gallery "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" /tmp/gallery
+          else
+            git -C /tmp/gallery init -b screens-gallery
+            git -C /tmp/gallery remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"
+          fi
+          mkdir -p "/tmp/gallery/$RUN_DIR"
+          cp -r screens-out/. "/tmp/gallery/$RUN_DIR/"
+          cd /tmp/gallery
+          git add -A
+          git commit -m "Zrzuty $RUN_DIR [skip ci]"
+          git push origin screens-gallery
+          echo "### Galeria: https://github.com/${{ github.repository }}/blob/screens-gallery/$RUN_DIR/README.md" >> "$GITHUB_STEP_SUMMARY"

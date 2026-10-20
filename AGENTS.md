@@ -57,6 +57,15 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - **Zrzuty po wykonaniu (decyzja użytkownika 2026-10-11):** zmiany wyglądu
   dokumentować zrzutami z przykładowymi danymi (telefon 390 px i komputer
   1400 px). Kontynuować bez czekania na ocenę lub zatwierdzenie użytkownika.
+- **System zrzutów `scripts/screens/` (decyzja użytkownika 2026-10-20):**
+  każda zmiana strony w `web/` kończy się zrzutem tej strony. Najpierw
+  dopasować scenę w `scripts/screens/scenes.cjs` (nowa strona/stan/okno =
+  nowa scena) i dane w `scripts/screens/data/`, gdy strona potrzebuje nowych
+  danych lub RPC (runner wypisuje „brak danych: rpc:…/table:…”). Potem
+  `node scripts/screens/run.cjs --changed` (albo `--scenes=…`), obejrzeć
+  zrzuty i pokazać je użytkownikowi. Prawdziwy kod strony, atrapa tylko
+  warstwy Supabase; nigdy gałęzi „tylko dla zrzutów” w kodzie aplikacji.
+  Szczegóły: `scripts/screens/README.md`.
 
 ## Tok pracy
 
