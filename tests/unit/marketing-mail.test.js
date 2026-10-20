@@ -17,7 +17,7 @@ test('marketing templates share document, escaped title and withdrawal/footer wh
     assert.equal((html.match(/<!doctype html>/gi)||[]).length,1);
     if (template === 'invitation') {
       assert.ok(html.includes('Gotowe gry w Grach Społeczności'));
-      assert.ok(html.includes('Niezależny widok prowadzącego'));
+      assert.ok(html.includes('Widok prowadzącego i Przycisk do pojedynku'));
       assert.equal((html.match(/<img /g)||[]).length,4);
       // Kadry systemu zrzutów (scripts/screens), wersje podglądu.
       for (const image of ['poll-vote-mobile','control-round','display-round','host-round']) {
