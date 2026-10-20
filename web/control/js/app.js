@@ -188,9 +188,6 @@ async function main() {
   let runtimeSession = null;
   let testModePanel = null;
   let testModeChanging = false;
-  // TYMCZASOWE (diagnoza wolnego startu po powrocie): czas od nawigacji.
-  const diagStartup = (label) => console.log(`[e2e-diag-state] startup ${label} at=${Math.round(performance.now())}`);
-  diagStartup("main");
   const i18nP = initI18n({ withSwitcher: true });
   // Blokady strony (guardResourceLocks): zwalniane przed przejściem do
   // instrukcji / ustawień gry, żeby tamta strona mogła je od razu zająć.
@@ -216,14 +213,12 @@ async function main() {
     onManual: (href) => leaveTo(href),
   });
   await i18nP;
-  diagStartup("i18n");
 
   const params = new URLSearchParams(location.search);
   const gameId = params.get("id");
   const root = document.getElementById("app");
 
   const user = await userP;
-  diagStartup("user");
   if (!user) return; // initPage przekierował na logowanie
   document.getElementById("btnFriends")?.addEventListener("click", async (event) => {
     if (event.currentTarget.disabled) return;
@@ -256,7 +251,6 @@ async function main() {
     { type: "logos", id: user.id, mode: "shared", message: t("resourceLock.logoEditBlocksControl") },
   ], { context: "control", backHref: backHref("control") });
   const { data: game, error: gameError } = await gameP;
-  diagStartup("game");
   if (gameError || !game) {
     void lockP.then((acquired) => acquired?.ok && acquired.release?.()).catch(() => {});
     root.textContent = "Nie znaleziono gry.";
@@ -265,12 +259,10 @@ async function main() {
   const lock = await lockP;
   if (!lock.ok) return;
   pageLock = lock;
-  diagStartup("locks");
 
   // Blokada stanu: gra, która nie nadaje się do rozgrywki (np. ankieta
   // otwarta, za mało pytań), blokuje Control w całości.
   if (!(await guardGameState(gameId, "play"))) return;
-  diagStartup("gameState");
 
   runtimeSession = createRuntimeSession({
     gameId,
@@ -291,7 +283,6 @@ async function main() {
     return;
   }
   if (runtimeSessionResult.expired) return;
-  diagStartup("runtimeSession");
 
   // Linki i kody urządzeń wymagają tylko aktywnej sesji Control. Pobierz je
   // równolegle z odczytem stanu gry zamiast po nim.
@@ -337,7 +328,6 @@ async function main() {
   void Promise.all(listSfx().map(getSfxDuration));
   const store = createStore(gameId);
   const [expiredTimer] = await Promise.all([store.hydrate(), sfxInitP]);
-  diagStartup("hydrate");
   const outroStartedKey = `control2:outro-started:${gameId}`;
   let outroStartedAt = null;
   let outroUnlockTimer = null;
@@ -934,10 +924,8 @@ async function main() {
   });
 
   const urls = await urlsP;
-  diagStartup("urls");
   testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
   const connectCodes = await connectCodesP;
-  diagStartup("codes");
 
   const presence = createPresence({
     gameId,
@@ -1829,7 +1817,6 @@ async function main() {
   btnStartOver?.addEventListener("click", () => { handle("game.restart"); });
 
   controlUIReady = true;
-  diagStartup("uiReady");
   store.subscribe(renderCurrent);
   completionUIReady = true;
   void refreshDisplayCompletion();
