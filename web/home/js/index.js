@@ -107,16 +107,41 @@ function setImgLoaded(img) {
   img.addEventListener("error", () => img.classList.add("is-loaded"), { once: true });
 }
 
+// Kadr już widoczny zostaje na ekranie, dopóki następny nie jest pobrany
+// i zdekodowany -- bez mignięcia pustym tłem przy przełączaniu karuzeli.
+function swapShot(img, url) {
+  img.dataset.pendingSrc = url;
+  const next = new Image();
+  next.src = url;
+  next.decode().catch(() => {}).then(() => {
+    if (img.dataset.pendingSrc !== url) return;
+    img.src = url;
+    setImgLoaded(img);
+  });
+}
+
 function switchLandingImages(lang) {
   document.querySelectorAll(".shot-img").forEach((img) => {
     const file = img.dataset.file;
     if (!file) return;
     const next = buildLangImgUrl(lang, file);
     if (img.src === next) { setImgLoaded(img); return; }
-    img.classList.remove("is-loaded");
+    if (img.classList.contains("is-loaded")) { swapShot(img, next); return; }
     img.src = next;
     setImgLoaded(img);
   });
+}
+
+// Pobranie kadrów z wyprzedzeniem (sąsiednie w karuzeli), żeby przełączenie
+// było natychmiastowe.
+const preloaded = new Set();
+function preloadShot(lang, file) {
+  const url = buildLangImgUrl(lang, file);
+  if (preloaded.has(url)) return;
+  preloaded.add(url);
+  const img = new Image();
+  img.decoding = "async";
+  img.src = url;
 }
 
 /* ---------- pipeline nav ---------- */
@@ -263,6 +288,13 @@ function initShotCarousels() {
     if (!img || ids.length < 2) return;
     img.removeAttribute("data-i18n-alt");
     let index = Math.max(0, ids.indexOf(img.dataset.shot));
+    // Ta sama wersja (?v=, przepisywana przez CI) dla wszystkich kadrów kafla.
+    const version = (img.dataset.file || "").match(/\?v=[^&]*/)?.[0] || "";
+    const fileOf = (id, suffix = "-preview") => `shots/${id}${suffix}.webp${version}`;
+    const preloadNeighbours = () => {
+      const lang = getUiLang();
+      for (const step of [1, -1, 2]) preloadShot(lang, fileOf(ids[(index + step + ids.length) % ids.length]));
+    };
 
     const nav = (dir, label, iconName) => {
       const btn = document.createElement("button");
@@ -290,8 +322,8 @@ function initShotCarousels() {
       const id = ids[index];
       const title = t(`home.shots.${id}`);
       img.dataset.shot = id;
-      img.dataset.file = `shots/${id}-preview.webp`;
-      img.dataset.fullFile = `shots/${id}.webp`;
+      img.dataset.file = fileOf(id);
+      img.dataset.fullFile = fileOf(id, "");
       img.alt = title;
       shot.setAttribute("aria-label", t("home.imageViewer.open", { title }));
       dotButtons.forEach((dot, i) => {
@@ -305,6 +337,7 @@ function initShotCarousels() {
       index = (next + ids.length) % ids.length;
       render();
       switchLandingImages(getUiLang());
+      preloadNeighbours();
     };
 
     shot.addEventListener("keydown", (e) => {
@@ -314,6 +347,14 @@ function initShotCarousels() {
     });
     window.addEventListener("i18n:lang", render);
     render();
+    // Sąsiednie kadry dopiero, gdy kafel zbliża się do ekranu (lazy jak obraz).
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      const start = () => preloadNeighbours();
+      if (img.complete) start(); else img.addEventListener("load", start, { once: true });
+    }, { rootMargin: "300px" });
+    io.observe(shot);
   });
 }
 
@@ -436,6 +477,8 @@ function initImageViewer() {
 /* ---------- boot ---------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Kadry zaczynają się pobierać od razu, nie czekając na tłumaczenia.
+  switchLandingImages(getUiLang());
   try {
     await initI18n({ withSwitcher: true });
   } catch (e) {
