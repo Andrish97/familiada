@@ -256,6 +256,10 @@ export function questionProblems(q, type) {
   if (type !== "base" && answers.length < LIMITS.AN_MIN) {
     out.push({ code: "answersMin", params: { min: LIMITS.AN_MIN, count: answers.length } });
   }
+  if (type === TYPES.PREPARED) {
+    const low = answers.findIndex((a) => !(Number(a?.fixed_points) >= RULES.PTS_MIN));
+    if (low >= 0) out.push({ code: "answerMinPoints", params: { min: RULES.PTS_MIN, ord: low + 1 } });
+  }
   if (type !== TYPES.POLL_POINTS) {
     const sum = sumPoints(answers);
     if (sum > LIMITS.SUM_MAX) out.push({ code: "sumOver", params: { sum, max: LIMITS.SUM_MAX } });

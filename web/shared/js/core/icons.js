@@ -38,6 +38,8 @@ export const ICONS = Object.freeze({
   brush: "/assets/icons/editing/brush.svg?v=v2026-10-20T15014",
   eraser: "/assets/icons/editing/eraser.svg?v=v2026-10-20T15014",
   shapes: "/assets/icons/editing/shapes.svg?v=v2026-10-20T15014",
+  "change-type": "/assets/icons/editing/change-type.svg",
+  "tie-switch": "/assets/icons/editing/tie-switch.svg",
   "rotate-left": "/assets/icons/editing/rotate-left.svg?v=v2026-10-20T15014",
   "rotate-right": "/assets/icons/editing/rotate-right.svg?v=v2026-10-20T15014",
   grip: "/assets/icons/editing/grip.svg?v=v2026-10-20T15014",

@@ -17,18 +17,17 @@ export function conversionKey(from, to) {
   if (from === to) return null;
   if (to === TYPES.POLL_TEXT) return "toText";
   if (to === TYPES.POLL_POINTS) return from === TYPES.POLL_TEXT ? "textToPoints" : "preparedToPoints";
-  return "toPrepared";
+  return from === TYPES.POLL_TEXT ? "textToPrepared" : "toPrepared";
 }
 
+// Karta na typ: nazwa jak na zakładce Gier i skutek zmiany; obecny typ
+// wyłączony, domyślnie wybrany pierwszy inny.
 function buildBody(current) {
   const box = document.createElement("div");
   box.className = "change-type";
-  const list = document.createElement("div");
-  list.className = "change-type-list";
-  list.setAttribute("role", "radiogroup");
-  const summary = document.createElement("p");
-  summary.className = "change-type-summary";
-  summary.setAttribute("aria-live", "polite");
+  box.setAttribute("role", "radiogroup");
+  box.setAttribute("aria-label", t("games.changeType.title"));
+  const first = SOURCE_TYPES.find((type) => type !== current);
   for (const type of SOURCE_TYPES) {
     const label = document.createElement("label");
     label.className = "change-type-option";
@@ -36,20 +35,18 @@ function buildBody(current) {
     input.type = "radio";
     input.name = "changeType";
     input.value = type;
-    input.checked = type === current;
-    const span = document.createElement("span");
-    span.textContent = t(`games.tabs.${TAB_KEY[type]}`) + (type === current ? " " + t("games.changeType.current") : "");
-    label.append(input, span);
-    list.append(label);
+    input.checked = type === first;
+    input.disabled = type === current;
+    const name = document.createElement("span");
+    name.className = "change-type-name";
+    name.textContent = t(`games.tabs.${TAB_KEY[type]}`);
+    const desc = document.createElement("span");
+    desc.className = "change-type-desc";
+    const key = conversionKey(current, type);
+    desc.textContent = t(`games.changeType.summary.${key || "same"}`);
+    label.append(input, name, desc);
+    box.append(label);
   }
-  const update = () => {
-    const to = box.querySelector("input:checked")?.value;
-    const key = conversionKey(current, to);
-    summary.textContent = key ? t(`games.changeType.summary.${key}`) : t("games.changeType.summary.same");
-  };
-  list.addEventListener("change", update);
-  box.append(list, summary);
-  update();
   return { box, picked: () => box.querySelector("input:checked")?.value };
 }
 
@@ -71,7 +68,7 @@ export async function changeGameType(game) {
     body: box,
   });
   const to = picked();
-  if (!ok || !to || (to === game.type && !gate.reset)) return null;
+  if (!ok || !to || to === game.type) return null;
 
   if (await isResourceBusy("game", game.id)) {
     void alertModal({ text: t("resourceLock.gameMessage") });

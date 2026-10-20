@@ -70,3 +70,32 @@ export function evaluateReadiness(type, questions) {
   }
   return { ok: issues.length === 0, issues };
 }
+
+/**
+ * Lista warunków gotowości do podpowiedzi w edytorze -- te same reguły co
+ * evaluateReadiness, ale każdy warunek osobno, z numerami pytań, które go
+ * nie spełniają (jedno pytanie może łamać kilka warunków naraz).
+ * prepared/market: pytania, odpowiedzi, próg punktów, suma; poll_points:
+ * pytania, odpowiedzi; poll_text: pytania.
+ * @returns {Array<{ key: "questions"|"answers"|"minPoints"|"sum", ok: boolean, ords: number[], params: object }>}
+ */
+export function readinessChecklist(type, questions) {
+  const qs = Array.isArray(questions) ? questions : [];
+  const scored = type === TYPES.PREPARED || type === TYPES.MARKET;
+  const items = [{ key: "questions", ok: qs.length >= RULES.QN_MIN, ords: [], params: { min: RULES.QN_MIN, n: qs.length } }];
+  if (type === TYPES.POLL_TEXT) return items;
+  const bad = { answers: [], minPoints: [], sum: [] };
+  qs.forEach((q, i) => {
+    const ans = Array.isArray(q?.answers) ? q.answers : [];
+    const pts = ans.map((a) => Math.trunc(Number(a?.fixed_points) || 0));
+    if (ans.length < RULES.AN_MIN || ans.length > RULES.AN_MAX) bad.answers.push(i + 1);
+    if (scored && pts.some((p) => p < RULES.PTS_MIN || p > 100)) bad.minPoints.push(i + 1);
+    if (scored && pts.reduce((s, p) => s + p, 0) > RULES.SUM_PREPARED) bad.sum.push(i + 1);
+  });
+  items.push({ key: "answers", ok: !bad.answers.length, ords: bad.answers, params: { min: RULES.AN_MIN, max: RULES.AN_MAX } });
+  if (scored) {
+    items.push({ key: "minPoints", ok: !bad.minPoints.length, ords: bad.minPoints, params: { min: RULES.PTS_MIN } });
+    items.push({ key: "sum", ok: !bad.sum.length, ords: bad.sum, params: { max: RULES.SUM_PREPARED } });
+  }
+  return items;
+}

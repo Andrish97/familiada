@@ -48,7 +48,7 @@ async function answersOf(page, questionId) {
   }, questionId);
 }
 
-test("E21 edytor: emoji blokuje zapis odpowiedzi, limit 17 przy wklejaniu, pytanie ≤100, podpowiedzi z finałem 11", async ({ page, context }, testInfo) => {
+test("E21 edytor: emoji blokuje zapis odpowiedzi, limit 17 przy wklejaniu, pytanie ≤100, podpowiedzi z finałem 11, lista warunków", async ({ page, context }, testInfo) => {
   test.setTimeout(120_000);
   await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
   const game = await seedGame(page, { name: `E2E-E21-EDITOR-${Date.now()}` });
@@ -61,6 +61,18 @@ test("E21 edytor: emoji blokuje zapis odpowiedzi, limit 17 przy wklejaniu, pytan
 
     await expect(page.locator("#aList .qf-hints")).toContainText("W finale wyświetlacz mieści 11 znaków. Dłuższe odpowiedzi zostaną na nim skrócone.");
     await expect(page.locator("#aList .qf-hints")).toContainText("Maksymalnie 17 znaków.");
+
+    // warunki gotowości na żywo: 1 pytanie z 3 odpowiedziami
+    await expect(page.locator("#rulesList li.bad")).toContainText("Co najmniej 10 pytań (jest 1)");
+    await expect(page.locator("#rulesList li.ok")).toHaveCount(3);
+    const pts = page.locator("#aList .qf-row:not(.qf-add) .qf-pts").nth(2);
+    await pts.fill("2");
+    await expect(pts).toHaveClass(/qf-invalid/);
+    await pts.blur();
+    await expect(page.locator("#rulesList li.bad", { hasText: "Każda odpowiedź co najmniej 4 pkt" })).toContainText("pytania: 1", { timeout: 10000 });
+    await pts.fill("20");
+    await pts.blur();
+    await expect(page.locator("#rulesList li.bad")).toHaveCount(1, { timeout: 10000 });
 
     // znak spoza czcionki: pole oznaczone, zapis wstrzymany
     await first.fill("kawa😀");
@@ -139,8 +151,10 @@ test("E21 Zmień typ: preparowana -> ankieta tekstowa na tym samym rekordzie (UI
     await expect(page.locator("#btnChangeType")).toBeEnabled({ timeout: 15000 });
     await page.locator("#btnChangeType").click();
     await expect(page.locator(".change-type")).toBeVisible();
-    await page.locator('.change-type input[value="poll_text"]').check();
-    await expect(page.locator(".change-type-summary")).toContainText("Odpowiedzi i punkty zostaną usunięte");
+    await expect(page.locator('.change-type input[value="prepared"]')).toBeDisabled();
+    const option = page.locator(".change-type-option", { has: page.locator('input[value="poll_text"]') });
+    await option.click();
+    await expect(option.locator(".change-type-desc")).toContainText("odpowiedzi i punkty zostaną usunięte");
     await page.locator(".uni-foot .btn.gold:visible").click();
 
     await expect.poll(async () => page.evaluate(async (id) => {

@@ -30,3 +30,16 @@ test("ankiety: punktowa 3–6 odpowiedzi bez progu punktów, tekstowa bez odpowi
   assert.equal(evaluateReadiness("poll_text", ten(() => q())).ok, true);
   assert.deepEqual(codes(evaluateReadiness("market", ten(() => q(40, 30, 3)))).length, 10);
 });
+
+test("lista warunków edytora: każdy warunek osobno, zgodna z evaluateReadiness", async () => {
+  const { readinessChecklist } = await import("../../web/shared/js/core/game-rules.js");
+  const state = (list) => list.map((i) => `${i.key}:${i.ok ? "ok" : i.ords.join(",") || "x"}`);
+  // pytanie 2 łamie naraz próg 4 pkt i sumę
+  const qs = ten((i) => (i === 1 ? q(90, 10, 3) : i === 4 ? q(40, 30) : q(40, 30, 30)));
+  assert.deepEqual(state(readinessChecklist("prepared", qs)), ["questions:ok", "answers:5", "minPoints:2", "sum:2"]);
+  assert.equal(readinessChecklist("prepared", qs).every((i) => i.ok), evaluateReadiness("prepared", qs).ok);
+  assert.deepEqual(state(readinessChecklist("prepared", ten(() => q(40, 30, 30)))), ["questions:ok", "answers:ok", "minPoints:ok", "sum:ok"]);
+  assert.deepEqual(state(readinessChecklist("poll_points", [q(0, 0, 0)])), ["questions:x", "answers:ok"]);
+  assert.deepEqual(state(readinessChecklist("poll_text", ten(() => q()))), ["questions:ok"]);
+  assert.equal(readinessChecklist("poll_text", []).at(0).params.n, 0);
+});

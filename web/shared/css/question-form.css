@@ -101,7 +101,8 @@
 }
 
 /* E21: odpowiedź ze znakami spoza czcionki Wyświetlacza -- nie zapisze się */
-.qf-text.qf-invalid,.qf-text.qf-invalid:focus {
+.qf-text.qf-invalid,.qf-text.qf-invalid:focus,
+.qf-pts.qf-invalid,.qf-pts.qf-invalid:focus {
     border-color: rgba(255,120,120,.75);
     background: rgba(255,120,120,.10)
 }

@@ -7,9 +7,10 @@ przed implementacją” są nieaktualne.
 **Zakres:** jedno źródło reguł dla gotowości i dozwolonych akcji gry, uproszczenie
 modalów tworzenia gry z Base Explorera oraz jednolite reguły importu/eksportu,
 z uzgodnioną automatyczną normalizacją danych do limitów.
-**Kolejność:** audyt kontraktów → uzgodnienie rozbieżności → centralizacja reguł
-→ integracja ekranów i walidacji serwerowej → audyt i poprawa transferu → testy
-punktowe.
+**Kolejność wdrożenia:** odczyt danych → silnik reguł → bramki zapisu →
+ekrany (edytory, Zmień typ, Base Explorer, ankiety, Control) → transfer i
+Marketplace → szablony demo → nocna naprawa danych → ograniczenia bazy →
+kontrola produkcji (tabela w §5).
 
 ## 1. Uzgodniony cel
 
@@ -623,20 +624,30 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Zakres wykonany w E21 (migracja 407, §9). Zatrzymanie przed implementacją
   zniesione przez użytkownika 2026-10-20.
 
-## 5. Plan prac
+## 5. Plan prac — kolejność wdrożenia (porządek 2026-10-20)
 
-| Etap | Praca | Rezultat / kryterium zakończenia |
-|---|---|---|
-| A | Inwentaryzacja typów, statusów, akcji, warunków w JS/SQL oraz wszystkich ścieżek transferu; próbki starych typów i rzeczywistych pakietów | Tabele obecne → docelowe, przykłady strat/konwersji i lista rozbieżności; bez zmian aplikacji |
-| B | Uzgodnienie tabeli reguł dla gotowości, akcji, edycji po ankiecie, podliczania oraz polityki historycznych/nieznanych typów | Zamknięte decyzje domenowe; rozdzielenie twardych blokad od rekomendacji |
-| C | Zdefiniowanie wspólnego kontraktu wyników i kodów reguł; SQL pozostaje autorytatywny dla zapisu, JS nie duplikuje progów | Jednoznaczny kontrakt wejścia/wyjścia i przejście stanu; testy jednostkowe kontraktu |
-| D | Przebudowa modalа Base Explorera według §2; poprawa metadanych bazy do roli sugestii | Dokładne zaznaczenie tworzy szkic; oznaczenia informacyjne; brak bramki 10/kompletności/sumy 100 |
-| E | Integracja gier, edytora, ankiet, Control i kafli z centralnym kontraktem | Każdy przycisk pokazuje wynik centralnej reguły; serwer odrzuca niedozwolone przejście tym samym kodem |
-| F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Podliczanie dopiero od 10 pełnych ankiet, wspólna bramka UI/SQL; zatwierdzenie wymaga dodatkowo progu 4% włącznie i min. 3 odpowiedzi na pytanie w jednym algorytmie |
-| G | Dodanie „Zmień typ” obok powielania; ta sama bramka `edit` i ta sama ścieżka resetu co w edytorze; konwersja tego samego rekordu do szkicu wybranego typu | Ankieta otwarta/zatrzymana blokuje akcję; zamknięta wymaga identycznego potwierdzenia resetu; podgląd strat/braków przed zapisem |
-| H | Wdrożenie wersjonowanego transferu; jawna obsługa kopii `market`; usunięcie cichych fallbacków; ten sam kontrakt dla wysyłania kopii i poprawa bramki zgłoszenia Marketplace | Dokładnie pięć wariantów zwykłego transferu; wysyłka znajomym wyłącznie szkiców tego samego typu; Marketplace przyjmuje gotową `prepared` lub zamkniętą ankietę jako snapshot `prepared` |
-| H1 | Migracja naprawcza historycznych gier wszystkich użytkowników według §4, na podstawie odczytu danych; jawne odzyskiwanie niejasnych plików jako `prepared`/`draft` | Ujednolicony model bez zgadywania; odzyskane pytania/odpowiedzi/punkty, zachowane ID i właściciele istniejących gier, przeliczone reguły i raport napraw; szkice nie muszą być grywalne |
-| I | Punktowe testy DB/JS/E2E dla reguł, akcji, zmiany typu oraz importu/eksportu/wysyłki | Macierz scenariuszy zielona; brak pełnych przebiegów bez potrzeby; dokumentacja formatu zaktualizowana |
+Każdy krok opiera się tylko na wcześniejszych: najpierw wspólne źródło reguł,
+potem wszystko, co z niego korzysta, na końcu zmiany danych i ograniczenia
+bazy, które zakładają, że cały kod już stosuje te same reguły. Każda migracja
+zmieniająca dane poprzedzona odczytem (same liczby i ID); każdy krok kończy
+punktowy test na produkcji (cykl z `CLAUDE.md`).
+
+| # | Krok | Zawartość | Zależy od | Stan |
+|---|---|---|---|---|
+| 1 | Odczyt danych | Pytania >100, odpowiedzi >17 i znaki spoza fontu, kolizje, sesje Control, szablony demo i ich kopie — tylko NOTICE | — | ✓ 403, 408 |
+| 2 | Silnik reguł | Znaki fontu 5×7 (`fam_*`, `hasDisplayGlyph`), `game_rules_compute` z `readiness` i akcjami; JS `game-rules.js` z tymi samymi progami i kodami | 1 | ✓ 404 |
+| 3 | Bramki zapisu | Teksty (`guard_game_text`, `guard_qb_question_text`), blokada treści przy aktywnym Control, wspólna bramka edycji/resetu (`editGate`, `_game_poll_reset`) | 2 | ✓ 404 |
+| 4 | Edytory gry i baz | Pytanie 100, odpowiedź 17, znaki, podpowiedzi (17 / finał 11), lista warunków gotowości na żywo, pole punktów <4 oznaczone | 2, 3 | ✓ 404; lista warunków — 2026-10-20 (2) |
+| 5 | Zmień typ | Ten sam rekord przez bramkę `edit`/reset; modal z kartą każdego typu i opisem skutków; ikona strzałek w kole z padem | 3 | ✓ 404; modal i ikona — 2026-10-20 (2) |
+| 6 | Base Explorer | Gra z dokładnego zaznaczenia, braki informacyjnie z silnika, pakiet v2 | 2 | ✓ |
+| 7 | Ankiety | Podliczanie od 10 pełnych ankiet, udział/4%, remis szóstki, czyszczenie znaków przed grupowaniem, podpowiedź głosującego; ikony „Scal identyczne” i „Zmień wybór w remisie” | 2 | ✓ 405; ikony — 2026-10-20 (2) |
+| 8 | Control | Każda odpowiedź o maksymalnej punktacji kończy pojedynek | 2 | ✓ |
+| 9 | Transfer | Pakiet v2: import, eksport, Powiel, Wyślij; normalizacja bez pytania | 2, 7 | ✓ 406 |
+| 10 | Marketplace | Zgłoszenie przez `play`, typ `market`, kopie archiwalne | 2, 9 | ✓ 404, 406 |
+| 11 | Szablony demo | Każda gra demo zgodna z regułami swojego typu i statusu (§9.6) | 2, 7 | 409 — od razu po wdrożeniu |
+| 12 | Nocna naprawa danych | Teksty pytań gier i baz, znaki odpowiedzi, nieedytowane kopie demo, `rules_state`; pomija gry z niewygasłą sesją Control | 1–11 | 407 + 409, `pg_cron` 01:30 UTC |
+| 13 | Ograniczenia bazy | `questions_text_len` (≤100) i `answers_text_chars` — zakładane przez naprawę, gdy dane są czyste | 12, decyzja §9.5 | czeka na naprawę i decyzję o 5 odpowiedziach |
+| 14 | Kontrola i zamknięcie | Raport naprawy (`e21_repair_runs`), punktowe e2e na produkcji, wpis w Dzienniku | 12, 13 | — |
 
 ## 6. Scenariusze kontrolne wymagane przed zamknięciem
 
@@ -1088,8 +1099,14 @@ Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
   i nie gra) — bez usuwania odpowiedzi z głosami.
 - Godzina nocnego okna nie była zapisana: przyjęto 01:30 UTC (03:30 czasu
   polskiego letniego).
+- **Wielkość liter zostaje (decyzja użytkownika 2026-10-20):** odpowiedzi
+  i pytania nie są zamieniane na wielkie litery — ani przy zapisie, ani
+  w migracji, ani przy podliczaniu. Małe litery są poprawne; wielka litera
+  służy tylko do sprawdzenia, czy znak ma glif (renderer i tak wyświetla
+  wielkie), oraz do łączenia „kawa”/„KAWA” w jedną grupę ankiety — zapisany
+  zostaje pierwszy wpis w oryginalnej postaci.
 
-### 9.5. Wdrożenie i kontrola produkcji (2026-10-20)
+### 9.4. Wdrożenie i kontrola produkcji (2026-10-20)
 
 - Push na `main`: kod i migracje 404–407 (ostatni commit wdrożenia
   `4107f8a`, wcześniej `f21133e`, `5b20b11`); log migracji: 404–407 `OK`
@@ -1106,13 +1123,39 @@ Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
 - Nocna naprawa danych (cron 01:30 UTC 2026-10-21) — wynik do dopisania
   z `e21_repair_runs`.
 
-### 9.4. Otwarte
+### 9.5. Otwarte
 
 - **Decyzja użytkownika:** 5 odpowiedzi jednej gry (preparowana, szkic,
   bez głosów), które po oczyszczeniu byłyby puste — naprawa ich nie zmienia
   i wykazuje w raporcie; do czasu decyzji ograniczenie `answers_text_chars`
   nie jest zakładane. Użytkownik poprosił o SQL podglądu (przekazany w rozmowie).
-- **Decyzja użytkownika:** szablon demo „prepared” i 125 kopii demo
-  niegrywalnych po progu 4 pkt. Rekomendacja: usunąć z szablonu (i kopii bez
-  zmian użytkownika) odpowiedzi poniżej 4 pkt — bez dopisywania punktów;
-  pytania zostają z ≥3 odpowiedziami.
+- Kopie demo czekające na koniec sesji Control wracają w kolejną noc
+  (zadanie cron usuwa się dopiero, gdy nic nie czeka).
+
+### 9.6. Decyzje użytkownika po wdrożeniu (2026-10-20, druga paczka)
+
+- **Kolejność:** plan prac (§5) jako sekwencja wdrożenia — każdy krok
+  zależy tylko od wcześniejszych; ustalenia bez zmian.
+- **Wielkość liter:** bez zamiany na wielkie (zapis w §9.3).
+- **Ikony:** „Zmień typ” — dwie strzałki w kształcie koła, w środku pad
+  (`change-type.svg`); „Zmień wybór w remisie” — te same strzałki ze znakiem
+  procentu (`tie-switch.svg`); „Scal identyczne” — ikona scalania (wcześniej
+  znikała przez nadpisanie tekstu przycisku).
+- **Modal „Zmień typ”:** karta na każdy typ (nazwa jak na zakładkach Gier
+  i opis skutków), obecny typ wyłączony; zamiast niejasnego „odpowiedzi
+  zbierze ankieta tekstowa” — „Widzowie wpiszą własne odpowiedzi, a po
+  podliczeniu do gry trafi do 6 najczęstszych”. Osobny opis dla
+  tekstowa → preparowana (dopisać odpowiedzi z punktami).
+- **Edytor gry — warunki:** pod nagłówkiem „Pytania” lista warunków
+  gotowości liczona na żywo (`readinessChecklist`, te same progi co baza):
+  ✓/⚠ z numerami pytań, które warunku nie spełniają; preparowana dodatkowo
+  „Każda odpowiedź co najmniej 4 pkt” (kafel pytania i pole punktów
+  oznaczone), punktowa — informacja, że punkty policzy ankieta.
+- **Demo:** każda gra demo zgodna z regułami swojego typu (migracja 409).
+  Szablony od razu: preparowana bez odpowiedzi <4 pkt (bez dopisywania
+  punktów; suma ≤100, każde pytanie 5–6 odpowiedzi); otwarte ankiety
+  dopełnione do 10 pełnych ankiet powtórzeniami istniejących głosów (punktowa
+  tak, by każde pytanie miało głosy na ≥3 odpowiedzi). Zamknięte ankiety były
+  zgodne; szkice zostają niepełne (stan „szkic”). Nieedytowane kopie demo
+  u wszystkich (treść identyczna z szablonem sprzed poprawki; ankiety tylko
+  z samymi głosami demo) — w nocnym oknie razem z naprawą danych.

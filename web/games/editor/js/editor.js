@@ -8,6 +8,7 @@ import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T150
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T15014";
 import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-20T15014";
 import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T15014";
+import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-20T15014";
 
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
@@ -231,7 +232,7 @@ function cfgFromGameType(type) {
     return {
       type,
       title: t("editor.config.pollText.title"),
-      hintTop: t("editor.config.pollText.hintTop", { min: QN_MIN }),
+      hintTop: t("editor.config.pollText.hintTop"),
       hintBottom: t("editor.config.pollText.hintBottom"),
       allowAnswers: false,
       allowPoints: false,
@@ -241,7 +242,7 @@ function cfgFromGameType(type) {
     return {
       type,
       title: t("editor.config.pollPoints.title"),
-      hintTop: t("editor.config.pollPoints.hintTop", { min: QN_MIN, answersMin: LIMITS.AN_MIN, answersMax: AN_MAX }),
+      hintTop: t("editor.config.pollPoints.hintTop"),
       hintBottom: t("editor.config.pollPoints.hintBottom"),
       allowAnswers: true,
       allowPoints: false,
@@ -250,8 +251,8 @@ function cfgFromGameType(type) {
   return {
     type,
     title: t("editor.config.prepared.title"),
-    hintTop: t("editor.config.prepared.hintTop", { min: QN_MIN, answersMin: LIMITS.AN_MIN, answersMax: AN_MAX }),
-    hintBottom: t("editor.config.prepared.hintBottom", { sum: SUM_MAX }),
+    hintTop: t("editor.config.prepared.hintTop"),
+    hintBottom: t("editor.config.prepared.hintBottom", { min: GV_RULES.PTS_MIN, sum: SUM_MAX }),
     allowAnswers: true,
     allowPoints: true,
   };
@@ -410,6 +411,7 @@ async function boot() {
     cfg = cfgFromGameType(game.type);
     $("pageTitle").textContent = cfg.title;
     $("hintTop").textContent = cfg.hintTop;
+    renderRules();
     $("hintBottom").textContent = cfg.hintBottom;
     document.body.classList.toggle("only-questions", !cfg.allowAnswers);
     document.body.classList.toggle("no-points", !cfg.allowPoints);
@@ -467,9 +469,26 @@ async function boot() {
     const ok = cardOk(q);
     card.classList.toggle("good", ok === true);
     card.classList.toggle("bad", ok === false);
+    renderRules();
+  }
+
+  // Warunki gotowości na żywo (ten sam silnik co baza: readinessChecklist).
+  function renderRules() {
+    const box = $("rulesList");
+    if (!box || !cfg) return;
+    box.innerHTML = "";
+    for (const item of readinessChecklist(cfg.type, questions)) {
+      const li = document.createElement("li");
+      li.className = item.ok ? "ok" : "bad";
+      const where = item.ok || !item.ords.length ? "" : " — " + t("editor.rules.where", { list: item.ords.join(", ") });
+      li.innerHTML = icon(item.ok ? "check" : "warning");
+      li.append(t(`editor.rules.${item.key}`, item.params) + where);
+      box.appendChild(li);
+    }
   }
 
   function renderAddQuestionTile() {
+    renderRules();
     const sub = qList?.querySelector(".addTile .sub");
     if (sub) sub.textContent = questions.length >= QN_MIN ? MSG.minQuestionsOk() : MSG.minQuestions(QN_MIN, questions.length);
   }
@@ -665,7 +684,13 @@ async function boot() {
   function updateSumFromInputs() {
     if (!cfg.allowPoints || !pointsRemainTop) return;
     let sum = 0;
-    aList?.querySelectorAll("input.qf-pts").forEach((inp) => { sum += parsePoints(inp.value) ?? 0; });
+    const minPts = cfg.type === TYPES.PREPARED ? GV_RULES.PTS_MIN : 0;
+    aList?.querySelectorAll("input.qf-pts").forEach((inp) => {
+      const pts = parsePoints(inp.value) ?? 0;
+      sum += pts;
+      // preparowana: odpowiedź poniżej progu punktów (gra nie będzie gotowa)
+      inp.classList.toggle("qf-invalid", pts < minPts);
+    });
     renderSumPill(pointsRemainTop.querySelector(".qf-sum"), sum);
   }
 

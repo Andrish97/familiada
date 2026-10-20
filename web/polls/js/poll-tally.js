@@ -97,7 +97,7 @@ export function createTally({ gameId, pollResults, ui }) {
         <span class="tallyVotesTotal"></span>
         <span class="tallySum"></span>
           <button class="btn xs tcMergeDup" type="button">${icon("merge")}<span></span></button>
-          <button class="btn xs tcTieBtn" type="button" hidden><span></span></button>
+          <button class="btn xs tcTieBtn" type="button" hidden>${icon("tie-switch")}<span></span></button>
         <span class="tallyTieInfo" hidden></span>`;
       box.insertBefore(meta, slot.list);
     }
@@ -590,7 +590,7 @@ export function createTally({ gameId, pollResults, ui }) {
     qs.meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: sum });
     const dropped = qs.q.dropped ? " " + t("polls.tally.dropped", { n: qs.q.dropped }) : "";
     qs.meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.fullSubmissions", { n: fullN }) + dropped;
-    qs.meta.querySelector(".tcMergeDup").textContent = t("polls.tally.mergeDup");
+    qs.meta.querySelector(".tcMergeDup span").textContent = t("polls.tally.mergeDup");
 
     // remis głosów na granicy szóstki: jawny, cykliczny wybór
     const tieBtn = qs.meta.querySelector(".tcTieBtn");
