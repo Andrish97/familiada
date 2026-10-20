@@ -149,13 +149,62 @@ powtórzeń warunku.
 
 ## 4. Audyt importu i eksportu
 
+### Ustalony kontrakt typów i stanów
+
+- W bazie i JSON-ie istnieją tylko trzy kanoniczne typy gry: `prepared`,
+  `poll_points`, `poll_text`. Nie tworzymy typu `market`, `ready_prepared` ani
+  osobnych typów „gotowa”/„szkic”. Historyczne rekordy wymagają migracji lub
+  jawnej konwersji do jednego z tych trzech typów.
+- Transfer dopuszcza dokładnie pięć kombinacji:
+
+  | Typ | Stan transferu | Znaczenie |
+  |---|---|---|
+  | `prepared` | szkic | Preparowana; gotowość wynika z reguł zawartości |
+  | `poll_points` | szkic | Ankieta punktowa bez wyników zamknięcia |
+  | `poll_text` | szkic | Ankieta tekstowa bez wyników zamknięcia |
+  | `poll_points` | zamknięta | Zamknięta ankieta punktowa z wynikiem |
+  | `poll_text` | zamknięta | Zamknięta ankieta tekstowa z wynikiem |
+
+- „Gotowa preparowana” nie jest typem ani osobnym stanem transferu: to
+  `prepared`, które spełnia centralne warunki gotowości. Nie dodajemy jej
+  osobnej wartości enum ani wariantu JSON.
+- Głosy z ankiety otwartej lub zatrzymanej nie są przenoszone. Eksport musi
+  przed utworzeniem pliku wyświetlić jasną informację, że bieżące głosy nie
+  zostaną zachowane; potwierdzenie prowadzi do szkicu tego samego typu.
+- Wysyłka gry działa jak transfer przez eksport/import: wysyła wyłącznie szkic,
+  zachowuje jego kanoniczny typ i stosuje te same reguły pól. Zamknięte ankiety
+  nie są wysyłane.
+
+### Zmiana typu gry
+
+Obok akcji powielania należy dodać akcję „Zmień typ”. Otwiera ona modal wyboru
+jednego z trzech typów kanonicznych. Zatwierdzenie tworzy/zmienia grę jako szkic
+wybranego typu; nie wymaga gotowości do gry i nie kopiuje wyników ani bieżących
+głosów. Modal pokazuje podsumowanie konwersji przed zatwierdzeniem.
+
+| Zmiana | Konwersja szkicu |
+|---|---|
+| Preparowana → punktowa | Zachować pytania i odpowiedzi, usunąć przypisane punkty stałe; ankieta zbiera nowe głosy |
+| Preparowana/punktowa → tekstowa | Zachować pytania, usunąć odpowiedzi i punkty; odpowiedzi będą zbierane tekstowo |
+| Tekstowa → punktowa | Zachować pytania; brak odpowiedzi oznaczyć jako braki do uzupełnienia |
+| Tekstowa/punktowa → preparowana | Zachować pytania i istniejące odpowiedzi, jeśli są częścią źródła; brakujące punkty oznaczyć jako braki, bez automatycznego przydziału |
+| Ten sam typ | Bez konwersji treści; wynik to szkic zgodny z wybraną operacją |
+
+Konwersja zamkniętej ankiety także prowadzi do szkicu i musi ostrzec, że
+zamknięte wyniki/głosy zostaną utracone. Nie wolno zmieniać typu ani usuwać
+wyników bez jawnego zatwierdzenia przez użytkownika. Dokładny zakres zachowania
+tekstowych odpowiedzi z zamkniętej ankiety wymaga sprawdzenia implementacji i
+zostaje opisany w podsumowaniu modalа przed wdrożeniem.
+
 ### Znalezione obecne zachowania
 
 - `web/shared/js/core/game-transfer-format.js` eksportuje format `.famgame` i
   kopie wysyłane. `gameTransferType()` dopuszcza tylko trzy typy:
   `poll_text`, `poll_points`, `prepared`; `market` i nieznane wartości
   zamienia po cichu na `poll_text`.
-- Gotowa ankieta (`status=ready`) jest eksportowana jako `prepared`.
+- Gotowa ankieta (`status=ready`) jest obecnie eksportowana jako `prepared`, co
+  zmienia jej typ. To koliduje z nowym kontraktem pięciu kombinacji i musi
+  zostać zastąpione jawną obsługą zamkniętej ankiety tego samego typu.
 - Eksport `poll_text` usuwa odpowiedzi. Eksport szkicu `poll_points` zeruje
   `fixed_points`. Pozostałe eksportowane odpowiedzi są sortowane po `ord` z
   kolejnością wejściową jako fallback.
@@ -187,8 +236,10 @@ przekształcane, pomijane, domyślne, limitowane i odrzucane dane. Należy też
 sprawdzić, czy porządkowanie odpowiedzi jest tylko w eksporcie, czy wpływa na
 zapis, podgląd i późniejszą rozgrywkę.
 
-### Docelowa polityka transferu do uzgodnienia na podstawie audytu
+### Docelowa polityka transferu
 
+- Plik zawiera wyłącznie trzy kanoniczne typy oraz pięć kombinacji wskazanych
+  wyżej. `ready` preparowanej jest wynikiem reguł, nie osobnym typem/etykietą.
 - Dodać jawne `format_version`; wersje historyczne konwertować przez osobne,
   nazwane migratory formatu, a nie fallback na typ tekstowy.
 - Typ rozpoznany zachować zgodnie z mapą wersji. Typ nieznany/nieobsługiwany
@@ -198,10 +249,11 @@ zapis, podgląd i późniejszą rozgrywkę.
   ograniczenie liczby odpowiedzi lub konwersję typu: albo usunąć z normalizacji
   (jeśli format może zachować dane), albo pokazać przed importem dokładny
   raport strat i uzyskać potwierdzenie. Baza nadal waliduje limity bezpieczeństwa.
-- Eksport domyślnie odtwarza wierny snapshot treści. Jeśli eksport ma celowo
-  tworzyć wariant (np. gotową ankietę jako „Preparowana”), nazwa akcji i
-  podsumowanie muszą jasno uprzedzić o zmianie. W przeciwnym razie zachować
-  pierwotny typ i status/pochodzenie zgodnie z nowym kontraktem.
+- Eksport zamkniętej ankiety zachowuje typ ankiety i zamknięty wynik. Eksport
+  otwartej/zatrzymanej ankiety najpierw informuje o utracie bieżących głosów,
+  a po potwierdzeniu zapisuje szkic tego samego typu.
+- Eksport preparowanej zachowuje typ `prepared`; jej gotowość wylicza silnik
+  reguł. Nie ma konwersji gotowej ankiety punktowej/tekstowej na preparowaną.
 - Dane wymagające tajności lub związane z sesją/urządzeniami pozostają poza
   formatem, tak jak obecnie; jawnie dokumentować wyłączenia.
 - Import nie może odrzucać gry tylko dlatego, że jest niegotowa do rozgrywki.
@@ -218,8 +270,9 @@ zapis, podgląd i późniejszą rozgrywkę.
 | D | Przebudowa modalа Base Explorera według §2; poprawa metadanych bazy do roli sugestii | Dokładne zaznaczenie tworzy szkic; oznaczenia informacyjne; brak bramki 10/kompletności/sumy 100 |
 | E | Integracja gier, edytora, ankiet, Control i kafli z centralnym kontraktem | Każdy przycisk pokazuje wynik centralnej reguły; serwer odrzuca niedozwolone przejście tym samym kodem |
 | F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Próg 4% włącznie i min. 3 odpowiedzi w jednym algorytmie; samo wejście w podliczanie nie jest blokowane |
-| G | Wdrożenie wersjonowanego transferu, jawnych konwersji i raportu strat; usunięcie cichych fallbacków | Przykłady round-trip dla każdego typu/wersji; nieznane typy nie ulegają zmianie bez informacji |
-| H | Punktowe testy DB/JS/E2E dla reguł, akcji i importu/eksportu; ręczny przegląd komunikatów | Macierz scenariuszy zielona; brak pełnych przebiegów bez potrzeby; dokumentacja formatu zaktualizowana |
+| G | Dodanie „Zmień typ” obok powielania; konwersja przez modal do szkicu wybranego typu według tabeli w §4 | Podgląd strat/braków przed zatwierdzeniem; wyniki zamkniętej ankiety nie znikają bez potwierdzenia |
+| H | Wdrożenie wersjonowanego transferu i usunięcie cichych fallbacków; ten sam kontrakt dla wysyłania kopii | Dokładnie pięć kombinacji transferu; wysyłka wyłącznie szkiców tego samego typu; ostrzeżenie o niezachowaniu bieżących głosów |
+| I | Punktowe testy DB/JS/E2E dla reguł, akcji, zmiany typu oraz importu/eksportu/wysyłki | Macierz scenariuszy zielona; brak pełnych przebiegów bez potrzeby; dokumentacja formatu zaktualizowana |
 
 ## 6. Scenariusze kontrolne wymagane przed zamknięciem
 
@@ -238,25 +291,29 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Podliczanie: dokładnie 3% i 4% po zaokrągleniu, mniej/więcej niż 6 pozycji,
   mniej niż 3 kwalifikujące odpowiedzi, oraz tekstowe scalanie które zmienia
   ranking/procent i pozwala ponownie spełnić próg.
-- Import/eksport round-trip: każdy wspierany typ, szkic i wynik ankiety, pytanie
+- Import/eksport round-trip: wszystkie pięć dozwolonych kombinacji; eksport
+  otwartej i zatrzymanej ankiety z ostrzeżeniem o utracie bieżących głosów;
+  wysyłka szkicu zachowująca typ; konwersja każdego typu do pozostałych typów;
+  pytanie
   z długą treścią, odpowiedź dłuższa niż limit, puste pole, brak punktów,
   wartości graniczne/poza zakresem, nadmiar odpowiedzi, typ historyczny,
-  `market`, typ nieznany, duplikat i przerwanie importu.
+  `market`, typ nieznany, duplikat i przerwanie importu. Zamknięte wyniki są
+  zachowane tylko przy eksporcie/importcie zamkniętej ankiety bez zmiany typu;
+  jawna zmiana typu ostrzega o ich usunięciu.
 - Sprawdzić, że błąd pojedynczego elementu nie zostawia częściowo utworzonej
   gry, a raport strat odzwierciedla dokładnie pakiet wejściowy.
 
 ## 7. Decyzje pozostawione do rozstrzygnięcia po audycie
 
-1. Czy eksport gotowej ankiety ma nadal zmieniać jej typ na `prepared`, czy
-   zachowywać źródłowy typ; i czy ma to być osobna akcja „eksportuj jako…”.
-2. Czy eksport ma przechowywać pełne treści ponad obecne limity i import dopiero
+1. Czy eksport ma przechowywać pełne treści ponad obecne limity i import dopiero
    zgłaszać niezgodność, czy format ma świadomie limitować dane.
-3. Jakie dokładnie historyczne aliasy typów nadal występują w produkcyjnych
-   danych/pakietach i które z nich otrzymają jawny konwerter.
-4. Jak rozumieć sumę punktów w gotowości „Preparowanej” (obecnie limit SQL
+2. Jakie dokładnie historyczne aliasy/typy (w tym `market` i zapisy
+   `ready`→`prepared`) nadal występują w produkcyjnych danych/pakietach i
+   jakie migracje jednorazowe sprowadzą je do trzech kanonicznych typów.
+3. Jak rozumieć sumę punktów w gotowości „Preparowanej” (obecnie limit SQL
    `<=100`, wcześniejsze założenia edytora mówią o sumie 100). Ta decyzja jest
    osobna od modalа Base Explorera, w którym sumy 100 nie sprawdzamy.
-5. Dokładna kolejność przycinania do sześciu odpowiedzi i liczenia udziału
+4. Dokładna kolejność przycinania do sześciu odpowiedzi i liczenia udziału
    procentowego przy końcowej kwalifikacji; JS i SQL muszą stosować identyczny
    algorytm.
 
