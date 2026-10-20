@@ -762,7 +762,7 @@ async function dismissBlockingModal(page, profile, id) {
   if (!hasRatingModal && !hasGenericModal) return;
 
   if (hasRatingModal) {
-    await page.locator("#btnRatingLater").click({ timeout: 5_000 });
+    await page.locator("#ratingOverlay .uni-foot .btn[data-value=\"later\"]").click({ timeout: 5_000 });
     await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
     return;
   }

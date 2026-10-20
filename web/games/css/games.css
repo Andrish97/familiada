@@ -416,19 +416,13 @@ body.games-body > main.wrap{
   padding: 5px;             /* drobny luz na scrollbar */
   -webkit-overflow-scrolling: touch;
 }
-/* Ramka przewijanej siatki jak lista pytań w edytorze gry (.listShell):
-   kafle chowają się pod zaokrągloną krawędzią z góry i z dołu (Gry, Bazy, Logo). */
+/* Przewijana siatka bez ramki: kafle chowają się pod krawędzią zaokrągloną
+   tak jak same kafle (decyzja 2026-10-20) -- Gry, Bazy, Logo. */
 .games-shell .grid:not(.subsGrid){
-  border-radius: 18px;
-  border: 1px solid var(--line);
-  background: rgba(255,255,255,.03);
-  padding: 8px;
+  border-radius: var(--radius);
+  padding: 0;
 }
-/* Telefon: bez ramki i wcięcia (lista na pełną szerokość); zostaje samo
-   zaokrąglone przycinanie przewijanych kafli. */
-@media (max-width: 720px){
-  .games-shell .grid:not(.subsGrid){ border: 0; background: none; padding: 5px; }
-}
+.games-shell .grid.logoGridBig{ border-radius: var(--radius-lg, var(--radius)); }
 
 .addCard:hover{
   transform: translateY(-2px);

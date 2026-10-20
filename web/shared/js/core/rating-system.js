@@ -1,7 +1,7 @@
 // js/core/rating-system.js
 import { sb } from "./supabase.js?v=v2026-10-20T19254";
 import { t } from "../../translation/translation.js?v=v2026-10-20T19254";
-import { alertModal, confirmModal } from "./modal.js?v=v2026-10-20T19254";
+import { alertModal, choiceModal, confirmModal } from "./modal.js?v=v2026-10-20T19254";
 import { icon } from "./icons.js?v=v2026-10-20T19254";
 
 
@@ -78,111 +78,73 @@ async function showRatingIfEligible(user) {
     await showRatingModal(user.id, { ratedKey, dismissedKey, suppressedKey });
 }
 
-function showRatingModal(userId, storageKeys) {
-  return new Promise(resolve => {
-    const overlay = document.createElement("div");
-    overlay.className = "overlay rating-overlay";
-    overlay.id = "ratingOverlay";
-    
-    overlay.innerHTML = `
-        <div class="modal rating-modal">
-            <div class="mHead">
-                <div class="mTitle">${t("common.rating.modal.title")}</div>
-                <button class="btn sm" id="btnRatingX" type="button" aria-label="${t("common.modal.closeLabel")}">${icon("close")}</button>
-            </div>
-            <div class="mSub">${t("common.rating.modal.sub")}</div>
+// Prośba o ocenę: wspólne choiceModal (modal.js) z trzema przyciskami.
+// X / Esc / klik w tło działa jak „Później” (wróci za 7 dni).
+async function showRatingModal(userId, storageKeys) {
+  const { body, stars, commentEl, selected } = ratingBody();
+  const result = await choiceModal({
+    title: t("common.rating.modal.title"),
+    text: t("common.rating.modal.sub"),
+    body,
+    modalClass: "rating-modal",
+    overlayId: "ratingOverlay",
+    buttons: [
+      { value: "never", text: t("common.rating.modal.never"), icon: "cancel", kind: "danger" },
+      { value: "later", text: t("common.rating.modal.later"), icon: "hourglass" },
+      { value: "send", text: t("common.rating.modal.send"), icon: "envelope-out", kind: "gold", disabled: true },
+    ],
+    onReady: ({ buttons }) => wireStars(stars, selected, () => { buttons.send.disabled = false; }),
+    onChoice: async (value) => {
+      if (value !== "send") return;
+      const { error } = await sb().from("app_ratings").insert({
+        user_id: userId,
+        stars: selected.value,
+        comment: commentEl.value.trim() || null,
+      });
+      if (error) {
+        console.error("[rating] Error saving rating:", error);
+        return t("common.rating.modal.error");
+      }
+    },
+  });
+  if (result === "send") {
+    writeStorage(storageKeys.ratedKey, "true");
+    await alertModal({ title: t("common.rating.modal.thanksTitle"), text: t("common.rating.modal.thanksSub"), okText: t("common.done") });
+    return "rated";
+  }
+  if (result === "never") {
+    writeStorage(storageKeys.suppressedKey, "true");
+    return "never";
+  }
+  writeStorage(storageKeys.dismissedKey, Date.now().toString());
+  return "later";
+}
 
-            <div class="stars-row" id="starsRow">
-                <button class="star-btn" data-value="1" aria-label="1/5">${icon("star")}</button>
-                <button class="star-btn" data-value="2" aria-label="2/5">${icon("star")}</button>
-                <button class="star-btn" data-value="3" aria-label="3/5">${icon("star")}</button>
-                <button class="star-btn" data-value="4" aria-label="4/5">${icon("star")}</button>
-                <button class="star-btn" data-value="5" aria-label="5/5">${icon("star")}</button>
-            </div>
+// Gwiazdki i komentarz -- wspólne dla prośby o ocenę i okna z Konta.
+function ratingBody(current = null) {
+  const body = document.createElement("div");
+  body.className = "rating-editor";
+  body.innerHTML = `
+      <div class="stars-row">
+          ${[1, 2, 3, 4, 5].map(v => `<button class="star-btn" type="button" data-value="${v}" aria-label="${v}/5">${icon("star")}</button>`).join("")}
+      </div>
+      <textarea class="inp rating-comment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>`;
+  const stars = body.querySelectorAll(".star-btn");
+  const commentEl = body.querySelector(".rating-comment");
+  commentEl.value = current?.comment || "";
+  const selected = { value: Number(current?.stars) || 0 };
+  highlightStars(selected.value, stars);
+  return { body, stars, commentEl, selected };
+}
 
-            <textarea class="inp rating-comment" id="ratingComment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>
-
-            <div class="modal-actions-v">
-                <button class="btn sm gold full" id="btnRatingSend" disabled>${icon("envelope-out")}<span>${t("common.rating.modal.send")}</span></button>
-                <div class="modal-actions-row">
-                    <button class="btn sm" id="btnRatingLater">${icon("hourglass")}<span>${t("common.rating.modal.later")}</span></button>
-                    <button class="btn sm danger" id="btnRatingNever">${icon("cancel")}<span>${t("common.rating.modal.never")}</span></button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    let selectedStars = 0;
-    const stars = overlay.querySelectorAll(".star-btn");
-    const sendBtn = overlay.querySelector("#btnRatingSend");
-    const laterBtn = overlay.querySelector("#btnRatingLater");
-    const neverBtn = overlay.querySelector("#btnRatingNever");
-
-    stars.forEach(btn => {
-        btn.addEventListener("mouseenter", () => highlightStars(btn.dataset.value, stars));
-        btn.addEventListener("mouseleave", () => highlightStars(selectedStars, stars));
-        btn.addEventListener("click", () => {
-            selectedStars = parseInt(btn.dataset.value);
-            highlightStars(selectedStars, stars);
-            sendBtn.disabled = false;
-        });
-    });
-
-    // X działa jak "Później" — zamknięcie bez oceny wraca za 7 dni.
-    let finished = false;
-    const finish = (value) => {
-        if (finished) return;
-        finished = true;
-        overlay.remove();
-        resolve(value);
-    };
-    const dismissLater = () => {
-        // Zapisz datę odrzucenia - wróci za 7 dni
-        writeStorage(storageKeys.dismissedKey, Date.now().toString());
-        finish("later");
-    };
-    laterBtn.addEventListener("click", dismissLater);
-    overlay.querySelector("#btnRatingX").addEventListener("click", dismissLater);
-
-    neverBtn.addEventListener("click", () => {
-        // Zablokuj na stałe
-        writeStorage(storageKeys.suppressedKey, "true");
-        finish("never");
-    });
-
-    sendBtn.addEventListener("click", async () => {
-        const comment = overlay.querySelector("#ratingComment").value.trim();
-        sendBtn.disabled = true;
-        
-        const { error } = await sb().from("app_ratings").insert({
-            user_id: userId,
-            stars: selectedStars,
-            comment: comment || null
-        });
-
-        if (error) {
-            console.error("[rating] Error saving rating:", error);
-            alertModal({ text: t("common.rating.modal.error") });
-            sendBtn.disabled = false;
-        } else {
-            writeStorage(storageKeys.ratedKey, "true");
-            overlay.innerHTML = `
-                <div class="modal rating-modal">
-                    <div class="mHead">
-                        <div class="mTitle">${t("common.rating.modal.thanksTitle")}</div>
-                        <button class="btn sm" id="btnRatingThanksX" type="button" aria-label="${t("common.modal.closeLabel")}">${icon("close")}</button>
-                    </div>
-                    <div class="mSub">${t("common.rating.modal.thanksSub")}</div>
-                    <div class="modal-actions">
-                        <button class="btn sm gold" id="btnRatingClose">${icon("check")}<span>${t("common.done")}</span></button>
-                    </div>
-                </div>
-            `;
-            overlay.querySelector("#btnRatingClose").onclick = () => finish("rated");
-            overlay.querySelector("#btnRatingThanksX").onclick = () => finish("rated");
-        }
+function wireStars(stars, selected, onPick) {
+  stars.forEach(btn => {
+    btn.addEventListener("mouseenter", () => highlightStars(btn.dataset.value, stars));
+    btn.addEventListener("mouseleave", () => highlightStars(selected.value, stars));
+    btn.addEventListener("click", () => {
+      selected.value = parseInt(btn.dataset.value);
+      highlightStars(selected.value, stars);
+      onPick?.();
     });
   });
 }
@@ -195,19 +157,7 @@ function showRatingModal(userId, storageKeys) {
  * @returns {Promise<boolean>} true po zapisaniu
  */
 export function openRatingEditor(userId, current = null) {
-  const body = document.createElement("div");
-  body.className = "rating-editor";
-  body.innerHTML = `
-      <div class="stars-row">
-          ${[1, 2, 3, 4, 5].map(v => `<button class="star-btn" type="button" data-value="${v}" aria-label="${v}/5">${icon("star")}</button>`).join("")}
-      </div>
-      <textarea class="inp rating-comment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>`;
-  const stars = body.querySelectorAll(".star-btn");
-  const commentEl = body.querySelector(".rating-comment");
-  commentEl.value = current?.comment || "";
-  let selectedStars = Number(current?.stars) || 0;
-  highlightStars(selectedStars, stars);
-
+  const { body, stars, commentEl, selected } = ratingBody(current);
   return confirmModal({
     title: t(current ? "common.rating.account.editTitle" : "common.rating.modal.title"),
     text: t("common.rating.modal.sub"),
@@ -217,22 +167,14 @@ export function openRatingEditor(userId, current = null) {
     modalClass: "rating-modal",
     onReady: ({ overlay, okBtn }) => {
       overlay.id = "ratingEditOverlay";
-      okBtn.disabled = !selectedStars;
-      stars.forEach(btn => {
-        btn.addEventListener("mouseenter", () => highlightStars(btn.dataset.value, stars));
-        btn.addEventListener("mouseleave", () => highlightStars(selectedStars, stars));
-        btn.addEventListener("click", () => {
-          selectedStars = parseInt(btn.dataset.value);
-          highlightStars(selectedStars, stars);
-          okBtn.disabled = false;
-        });
-      });
+      okBtn.disabled = !selected.value;
+      wireStars(stars, selected, () => { okBtn.disabled = false; });
     },
     onOk: async () => {
-      if (!selectedStars) return false;
+      if (!selected.value) return false;
       const { error } = await sb().from("app_ratings").upsert({
         user_id: userId,
-        stars: selectedStars,
+        stars: selected.value,
         comment: commentEl.value.trim() || null,
       }, { onConflict: "user_id" });
       if (error) {

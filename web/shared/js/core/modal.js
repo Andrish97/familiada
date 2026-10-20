@@ -19,6 +19,7 @@ function buildModal({
   modalClass = "",
   closable = true,
   overlayId = "",
+  buttons = null,
 } = {}) {
   modalSeq += 1;
   const titleId = `uniTitle${modalSeq}`;
@@ -95,8 +96,25 @@ function buildModal({
   msg.textContent = "";
 
   foot.appendChild(msg);
-  if (showCancel) foot.appendChild(cancelBtn);
-  if (okText !== null) foot.appendChild(okBtn);
+  // buttons: własny zestaw przycisków (np. trzy) zamiast Anuluj/OK --
+  // [{ value, text, icon?, kind?: "gold"|"danger" }]; kolejność jak w tablicy.
+  const choiceBtns = [];
+  if (Array.isArray(buttons) && buttons.length) {
+    for (const b of buttons) {
+      const btn = document.createElement("button");
+      btn.className = `btn sm${b.kind ? ` ${b.kind}` : ""}`;
+      btn.type = "button";
+      btn.dataset.value = String(b.value);
+      btn.innerHTML = `${b.icon ? icon(b.icon) : ""}<span></span>`;
+      btn.querySelector("span").textContent = b.text;
+      if (b.disabled) btn.disabled = true;
+      foot.appendChild(btn);
+      choiceBtns.push({ btn, value: b.value });
+    }
+  } else {
+    if (showCancel) foot.appendChild(cancelBtn);
+    if (okText !== null) foot.appendChild(okBtn);
+  }
 
   modal.appendChild(head);
   modal.appendChild(sub);
@@ -113,6 +131,7 @@ function buildModal({
     cancelBtn,
     closeBtn,
     msg,
+    choiceBtns,
   };
 }
 
@@ -131,6 +150,8 @@ function openModal({
   onOk = null,
   controller = null,
   overlayId = "",
+  buttons = null,
+  onChoice = null,
 } = {}) {
   return new Promise((resolve) => {
     const fallbackTitle = showCancel
@@ -143,7 +164,7 @@ function openModal({
       ? modalText("common.modal.confirmOk", "Tak")
       : modalText("common.modal.alertOk", "OK");
     const fallbackCancel = modalText("common.modal.confirmCancel", "Nie");
-    const { overlay, sub, okBtn, cancelBtn, closeBtn, msg } = buildModal({
+    const { overlay, sub, okBtn, cancelBtn, closeBtn, msg, choiceBtns } = buildModal({
       title: title ?? fallbackTitle,
       text: text ?? fallbackText,
       okText: okText === null ? null : (okText ?? fallbackOk),
@@ -154,10 +175,11 @@ function openModal({
       modalClass,
       closable,
       overlayId,
+      buttons,
     });
 
     try {
-      if (typeof onReady === "function") onReady({ overlay, okBtn, cancelBtn, closeBtn });
+      if (typeof onReady === "function") onReady({ overlay, okBtn, cancelBtn, closeBtn, buttons: Object.fromEntries(choiceBtns.map(({ btn, value }) => [value, btn])) });
     } catch {
       // ignore
     }
@@ -235,6 +257,30 @@ function openModal({
       }
     });
     cancelBtn?.addEventListener("click", () => finish(false));
+    // Własne przyciski: wynik = value klikniętego; onChoice(value) może zapisać
+    // w oknie (tekst błędu -> okno zostaje, false -> zostaje bez komunikatu).
+    for (const { btn, value } of choiceBtns) {
+      btn.addEventListener("click", async () => {
+        if (typeof onChoice !== "function") return finish(value);
+        if (busy) return;
+        busy = true;
+        choiceBtns.forEach(({ btn: b }) => { b.dataset.wasDisabled = b.disabled ? "1" : ""; b.disabled = true; });
+        msg.textContent = "";
+        try {
+          const res = await onChoice(value);
+          if (typeof res === "string" && res) { msg.textContent = res; msg.dataset.kind = "error"; return; }
+          if (res === false) return;
+          finish(value);
+        } catch (err) {
+          msg.textContent = String(err?.message || err || "");
+          msg.dataset.kind = "error";
+        } finally {
+          busy = false;
+          choiceBtns.forEach(({ btn: b }) => { b.disabled = b.dataset.wasDisabled === "1"; });
+        }
+      });
+    }
+
     // ukryty X (okno postępu) -- globalny Esc z modal-sheet.js też go klika
     closeBtn.addEventListener("click", () => { if (canClose) finish(false); });
 
@@ -290,6 +336,17 @@ export function alertModal({ title, text, okText, body = null, onReady, sheet = 
     controller,
     overlayId,
   });
+}
+
+/**
+ * Okno z własnym zestawem przycisków (np. trzy). Wynik: value klikniętego
+ * przycisku albo false (X, Esc, klik w tło).
+ * @param {{ title?:string, text?:string, body?:HTMLElement|null,
+ *   buttons: {value:any, text:string, icon?:string, kind?:string, disabled?:boolean}[],
+ *   onChoice?: (value:any) => any, onReady?: Function, modalClass?: string, overlayId?: string }} opts
+ */
+export function choiceModal({ title, text = "", body = null, buttons, onChoice = null, onReady = null, modalClass = "", overlayId = "" } = {}) {
+  return openModal({ title, text, body, buttons, onChoice, onReady, modalClass, overlayId, showCancel: false });
 }
 
 /**

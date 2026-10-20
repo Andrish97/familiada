@@ -1055,13 +1055,13 @@ main:has(> .footer){
         min-height: 0;
         max-height: none !important;
         margin: 0 !important;
-        border-radius: 22px 22px 0 0;
-        border: 1px solid var(--line);
-        border-bottom: 0;
+        border-radius: 28px 28px 0 0;
+        border: 0;
+        border-top: 1px solid var(--line);
         background: #121524;
         --under: #121524;
         box-shadow: 0 -18px 60px rgba(0,0,0,.6);
-        padding: 22px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+        padding: 32px 16px calc(14px + env(safe-area-inset-bottom, 0px));
         padding-left: calc(16px + env(safe-area-inset-left, 0px));
         padding-right: calc(16px + env(safe-area-inset-right, 0px));
         display: flex;
@@ -1083,7 +1083,7 @@ main:has(> .footer){
         position: absolute;
         top: 0; left: 50%;
         transform: translateX(-50%);
-        width: 120px; height: 22px;
+        width: 140px; height: 30px;
         padding: 0; border: 0; background: none;
         cursor: grab; touch-action: none;
         display: grid; place-items: center;
@@ -1095,11 +1095,13 @@ main:has(> .footer){
     }
     .modal--sheet:not(.sheet-active) .sheet-handle { display: none; }
 
-    /* Tablet: niższy panel (nie musi sięgać pod sam topbar). */
+    /* Tablet: niższy i węższy panel z bocznymi krawędziami. */
     @media (min-width: 601px) {
         .modal--sheet.sheet-active .modal,
         .modal--sheet.sheet-active .market-preview-card {
             height: min(88dvh, 920px) !important;
+            border: 1px solid var(--line);
+            border-bottom: 0;
         }
     }
 }
@@ -2309,9 +2311,8 @@ body{
   opacity: .8;
 }
 /* css/rating-system.css */
-.rating-overlay .rating-modal,
 .uni-modal.rating-modal {
-    max-width: 400px;
+    max-width: 460px;
     text-align: center;
 }
 
@@ -2355,20 +2356,8 @@ body{
     font-family: inherit;
 }
 
-.modal-actions-v {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
 
-.modal-actions-row {
-    display: flex;
-    gap: 10px;
-}
 
-.modal-actions-row > .btn {
-    flex: 1;
-}
 
 /* Badge on index */
 .rating-badge-index {
@@ -2941,16 +2930,13 @@ button.rowsSectionHead{ cursor: pointer; }
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
 .shareList--scroll{
   max-height: 240px; overflow-y: auto; overscroll-behavior: contain;
-  /* ramka listy jak w edytorze gry: przewijane wiersze chowają się pod zaokrągloną krawędzią */
-  padding: 8px; border-radius: 14px; border: 1px solid var(--line); background: rgba(0,0,0,.22);
+  /* bez ramki: przewijane wiersze chowają się pod krawędzią zaokrągloną jak same wiersze (decyzja 2026-10-20) */
+  border-radius: 12px;
 }
 .shareList--scroll:not([hidden]){ display: flex; flex-direction: column; }
 .shareList--scroll > *{ flex-shrink: 0; }
-/* ta sama ramka dla list w kartach (Connect: udostępnione urządzenia) */
-#sharedDevicesList{ padding: 8px; border-radius: 14px; border: 1px solid var(--line); background: rgba(0,0,0,.22); }
-@media (max-width: 720px){ #sharedDevicesList{ padding: 2px; border: 0; background: none; } }
-/* pusta lista: sam kafel braku, bez drugiej ramki */
-:is(.shareList--scroll, #sharedDevicesList):has(> :is(.shareEmpty, .share-empty-state):only-child){ padding: 0; border: 0; background: none; }
+/* to samo przycinanie dla list w kartach (Connect: udostępnione urządzenia) */
+#sharedDevicesList{ border-radius: 12px; }
 
 
 /* W zwykłym (nie arkuszowym) widoku modali udostępniania pusta sekcja listy
@@ -3075,3 +3061,6 @@ button.rowsSectionHead{ cursor: pointer; }
 .uni-progress-msg{ min-height: 18px; }
 .uni-progress-msg[data-kind="error"]{ opacity: 1; }
 .uni-progress-bar[data-kind="error"]{ background: #dc3545; }
+
+/* Przyciski stopki wspólnego okna (modal.js): ikona i napis z odstępem */
+.uni-foot .btn{ display: inline-flex; align-items: center; justify-content: center; gap: .4em; }

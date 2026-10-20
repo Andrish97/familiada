@@ -25,10 +25,8 @@
 .mail-panels-card{margin:0;min-height:0;flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;overflow:hidden;padding:18px}
 .mail-panel{min-width:0;min-height:0;margin:0;display:flex;flex-direction:column;overflow:hidden;padding:14px}
 .mail-panel .mail-panel-title{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:4px 2px}
-.mail-panel .shareList{overflow:auto;min-height:0;flex:1;margin:0;padding:8px;align-content:start;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.22)}
-@media (max-width:720px){.mail-panel .shareList{padding:0 2px 2px;border:0;background:none}}
-/* ramka listy jak .shareList--scroll; pusta lista bez ramki */
-.mail-panel .shareList:has(> :is(.shareEmpty,.share-empty-state):only-child){padding:0;border:0;background:none}
+/* lista bez ramki, przycinana z zaokrągleniem jak wiersze (decyzja 2026-10-20) */
+.mail-panel .shareList{overflow:auto;min-height:0;flex:1;margin:0;padding:0;align-content:start;border-radius:12px}
 .mail-row .mail-row-copy{min-width:0;flex:1}
 .mail-row .shareEmail{white-space:normal;overflow-wrap:anywhere;font-size:13.5px}
 .mail-row .shareNote{color:var(--text);opacity:.65;font-size:12px;margin-top:5px}

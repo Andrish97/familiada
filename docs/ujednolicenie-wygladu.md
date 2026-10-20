@@ -75,11 +75,19 @@ podliczania jako stan bieżącej operacji.
   (potwierdzenia, komunikaty, wpisywanie nazwy) zostają okienkami także na
   telefonie. Okien niedostępnych w widoku mobilnym nie przerabiamy. Na
   komputerze bez zmian (zwykłe okna).
-- **Ramka przewijanych list (decyzja użytkownika 2026-10-20):** na komputerze
-  przewijane listy (Gry, Bazy, Logo, Zadania, Mails, Connect) mają ramkę jak
-  lista pytań w edytorze gry (18 px; listy w kartach 14 px). Na telefonie bez
-  ramki i dodatkowego wcięcia — lista na pełną szerokość, zostaje samo
-  zaokrąglone przycinanie przewijanych kafli.
+- **Przewijane listy bez ramek (decyzja użytkownika 2026-10-20, zastępuje
+  wcześniejszą ramkę):** nigdzie wewnętrznej ramki listy (także w edytorze
+  gry i w oknach); przewijany obszar jest tylko przycinany z zaokrągleniem
+  takim jak same kafle/wiersze (kafle Gier/Baz 16 px, Logo 18 px, pytania
+  w edytorze 18 px, wiersze list 12 px).
+- **Okno od dołu — doprecyzowanie 2026-10-20:** na telefonie na całą
+  szerokość (bez bocznych krawędzi), na tablecie węższe (do 760 px);
+  górne rogi 28 px; pasek u góry nie zasłania nagłówka; panel i pasek nie
+  wchodzą wyżej niż safe area (także przy przeciąganiu), dół z safe area.
+- **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
+  `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
+  w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /
+  Później / Wyślij ocenę).
 - **Wiersze list w jednej linii (uwaga użytkownika 2026-10-20, zrobione na branchu):**
   gdy nazwa, e-mail, znaczniki i przyciski mieszczą się w jednej linii
   wiersza (Znajomi i pozostałe listy), układać je w jednej linii; łamać pod

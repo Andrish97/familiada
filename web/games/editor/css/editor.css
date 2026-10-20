@@ -99,13 +99,11 @@ body.editor-body .wrap {
     font-size: 12px
 }
 
+/* bez ramki: kafle pytań chowają się pod krawędzią zaokrągloną jak same kafle (decyzja 2026-10-20) */
 .listShell {
   --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
     margin-top: 10px;
     border-radius: 18px;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,.03);
-    padding: 8px;
     min-height: 0;
     flex: 1;
     overflow: auto;
