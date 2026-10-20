@@ -5,14 +5,37 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
 
 ## Decyzje
 
+- **2026-10-20 22:35 (użytkownik) — NADRZĘDNE, zastępują wcześniejsze ustalenia niżej:**
+  - Tylko symulowana (lokalna) baza: zmiany i testy na lokalnym Postgresie
+    (`scripts/agent-tools/local-e2e/`), **nic na produkcję**, dopóki
+    użytkownik nie zdecyduje — ludziom nie może nic przestać działać.
+  - Menedżer przeanalizować **dogłębnie** (nie pobieżnie) i wyklarować.
+  - Podział na mniejsze moduły.
+  - **Jeden rodzaj akcji** odpalany z trzech miejsc (pasek narzędzi, menu
+    kontekstowe, skrót klawiszowy); dostępność, blokady i komunikaty
+    przycisków/akcji z **jednego miejsca**.
+  - Agent ma też zaproponować inne ulepszenia i ujednolicenia.
+  - **Kosz = folder w drzewie** w lewym górnym obszarze, pod wszystkimi
+    folderami. Otwarty pokazuje usunięte foldery i pojedyncze pytania (jeśli
+    usuwano je pojedynczo) — jak zwykły folder na liście.
+  - W koszu zwykły przycisk „Usuń” z paska usuwa **trwale**. Przywracanie:
+    po kliknięciu (zaznaczeniu) elementu pojawia się przycisk „Przywróć”;
+    jeśli się zmieści — w pasku narzędzi.
+  - Obecne okno kosza (`trash-modal.js`, wiersz na dole lewego panelu) jest
+    do zastąpienia tym modelem.
+
 - **2026-10-20 (użytkownik):** uporządkować cały kod menedżera bazy na branchu
   (kod pisany przez przepisywanie podpowiedzi z czatu — niespójny, „działa
   niby”). Potem kosz i cofanie/przywracanie (Ctrl+Z, Ctrl+Y / Ctrl+Shift+Z).
-- **Kosz (propozycja, czeka na potwierdzenie):** osobny dla każdej bazy;
-  osobna tabela ze zrzutem usuniętego poddrzewa (odczyty `qb_*` bez zmian);
-  automatyczne usuwanie po 30 dniach (cron), licznik dni na wierszu,
-  przywróć / usuń trwale / opróżnij kosz. Otwarte: czy usuwanie całej bazy
-  z listy baz też idzie do kosza.
+- **Kosz (domyślny wariant agenta, bez sprzeciwu użytkownika):** osobny dla
+  każdej bazy; osobna tabela `qb_trash` ze zrzutem usuniętego elementu
+  najwyższego poziomu (pytanie albo folder z poddrzewem i tagami pytań) —
+  odczyty `qb_*` bez zmian; automatyczne usuwanie po 30 dniach (cron
+  `qb-trash-cleanup` 02:17 UTC), licznik dni na wierszu (≤ 3 dni ostrzegawczo),
+  przywróć (te same id; brak folderu nadrzędnego → korzeń) / usuń trwale /
+  opróżnij kosz. Widzą go właściciel i edytorzy. Wejście: wiersz „Kosz”
+  z licznikiem na dole lewego panelu → okno (telefon: arkusz).
+  Otwarte: czy usuwanie całej bazy z listy baz też idzie do kosza (na razie nie).
 - **Cofanie (plan):** historia w pamięci karty (do przeładowania), każda
   akcja przez `ops.js`, odwrotność z danych „przed” zwracanych przez bazę;
   przy konflikcie (element zmieniony/usunięty gdzie indziej) komunikat
@@ -35,7 +58,20 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
      folderu, więc folder dalej był widoczny); nazwy „Nowy folder” /
      „Nowe pytanie” z tłumaczeń; wklejenie kopii, gdy źródło usunięto
      po skopiowaniu, kończy się komunikatem „element zniknął”.
-2. **Kosz** — po potwierdzeniu decyzji wyżej.
+2. **Kosz (gotowe na branchu):** migracja 428 (`qb_trash`, `qb_delete_items`
+   do kosza, `qb_trash_list/restore/purge`, `qb_trash_cleanup` + cron),
+   test `tests/sql/qb-trash-428.sql`; `trash-modal.js`, wiersz w lewym
+   panelu, tłumaczenia PL/EN/UK, scena zrzutów `base-explorer-trash`,
+   e2e „base-explorer: kosz (E22)”. Przy okazji: jedna bramka skrótów
+   klawiszowych (Delete w polu okna pytania usuwał zaznaczenie,
+   Ctrl+Shift+N tworzył pytanie zamiast folderu), komunikaty potwierdzeń
+   bez polskich wstawek w EN/UK.
 3. **Cofanie / przywracanie** — na `ops.js`.
 4. **Dalsze porządki** (`wireActions` ~2000 linii obsługi zdarzeń:
    podział na moduły drzewo/lista/klawiatura/przeciąganie).
+
+**Testy lokalne bez produkcji:** e2e z kodem brancha na lokalnym Postgresie
++ PostgREST (atrapa `/auth/v1`, strony z dysku) — `scripts/agent-tools/local-e2e/README.md`;
+spec `base-explorer` na kodzie z `main` i z brancha daje ten sam wynik
+(15 błędów niezależnych od zmian: brak konfiguracji maili lokalnie i stare
+asercje — m.in. limit 200 znaków pytania, tooltip kropki meta).

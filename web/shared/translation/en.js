@@ -4369,6 +4369,24 @@ const en = {
         saveFailed: "Failed to save tag.",
       },
     },
+    trash: {
+      open: "Trash",
+      title: "Trash",
+      subtitle: "Deleted folders and questions. They are gone for good after 30 days.",
+      empty: "The trash is empty.",
+      restore: "Restore",
+      purge: "Delete permanently",
+      emptyAll: "Empty trash",
+      daysLeft: "deleted in {n} days",
+      dayLeft: "deleted in 1 day",
+      today: "deleted today",
+      folderSummary: "folder · questions: {q}",
+      questionSummary: "question",
+      confirmPurge: "Delete permanently? This cannot be undone.",
+      confirmEmpty: "Empty the trash? All items will be deleted for good.",
+      loadFailed: "Could not load the trash.",
+      actionFailed: "The trash operation failed.",
+    },
     rename: {
       title: "Rename",
       help: "Enter a new name and save.",
@@ -4518,11 +4536,16 @@ const en = {
         "You have Tags/Categories selected — search is locked. Clear the selection on the left (click the panel background) to search.",
     },
     confirm: {
-      deleteItems: "Delete {label}? This cannot be undone.",
-      deleteTags:
-        "Delete {label}?\n\nThis will also remove tag assignments from questions (and possibly folders).",
-      removeTagsInTagView:
-        "You are in tag view.\n\nWe will remove tags (without deleting items) on {label}.\n\nContinue?",
+      deleteOne: "Delete this item? It goes to the trash for 30 days.",
+      deleteMany: "Delete the selected items ({n})? They go to the trash for 30 days.",
+      deleteTagsOne:
+        "Delete this tag?\n\nThis will also remove tag assignments from questions (and possibly folders).",
+      deleteTagsMany:
+        "Delete the selected tags ({n})?\n\nThis will also remove tag assignments from questions (and possibly folders).",
+      removeTagsOne:
+        "You are in tag view.\n\nWe will remove tags (without deleting items) on this item.\n\nContinue?",
+      removeTagsMany:
+        "You are in tag view.\n\nWe will remove tags (without deleting items) on the selected items ({n}).\n\nContinue?",
     },
   },
   maintenance: {

@@ -1269,7 +1269,7 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
       await mRows(page).nth(1).locator(".qf-del").click();
       await page.locator("#qAdd").click();
       await mRows(page).nth(2).locator(".qf-text").fill("A4");
-      await Promise.all([page.waitForResponse(isPatch("qb_questions")), page.locator("#qSave").click()]);
+      await Promise.all([page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")), page.locator("#qSave").click()]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
 
       const payload = await getBaseQuestion(page, qid);

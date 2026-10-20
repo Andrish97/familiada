@@ -4269,6 +4269,24 @@ const pl = {
         saveFailed: "Nie udało się zapisać taga.",
       },
     },
+    trash: {
+      open: "Kosz",
+      title: "Kosz",
+      subtitle: "Usunięte foldery i pytania. Po 30 dniach znikają na zawsze.",
+      empty: "Kosz jest pusty.",
+      restore: "Przywróć",
+      purge: "Usuń trwale",
+      emptyAll: "Opróżnij kosz",
+      daysLeft: "usunie się za {n} dni",
+      dayLeft: "usunie się za 1 dzień",
+      today: "usunie się dziś",
+      folderSummary: "folder · pytań: {q}",
+      questionSummary: "pytanie",
+      confirmPurge: "Usunąć trwale? Tego nie da się cofnąć.",
+      confirmEmpty: "Opróżnić kosz? Wszystkie elementy zostaną usunięte na zawsze.",
+      loadFailed: "Nie udało się wczytać kosza.",
+      actionFailed: "Nie udało się wykonać operacji w koszu.",
+    },
     rename: {
       title: "Zmień nazwę",
       help: "Wpisz nową nazwę i zapisz.",
@@ -4418,11 +4436,16 @@ const pl = {
         "Masz zaznaczone Tagi/Kategorie — wyszukiwarka jest zablokowana. Wyczyść zaznaczenie po lewej (klik w tło panelu), aby szukać.",
     },
     confirm: {
-      deleteItems: "Usunąć {label}? Tego nie da się cofnąć.",
-      deleteTags:
-        "Usunąć {label}?\n\nTo usunie też przypisania tagów do pytań (i ewentualnie folderów).",
-      removeTagsInTagView:
-        "Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na {label}.\n\nKontynuować?",
+      deleteOne: "Usunąć ten element? Trafi do kosza na 30 dni.",
+      deleteMany: "Usunąć zaznaczone elementy ({n})? Trafią do kosza na 30 dni.",
+      deleteTagsOne:
+        "Usunąć ten tag?\n\nTo usunie też przypisania tagów do pytań (i ewentualnie folderów).",
+      deleteTagsMany:
+        "Usunąć zaznaczone tagi ({n})?\n\nTo usunie też przypisania tagów do pytań (i ewentualnie folderów).",
+      removeTagsOne:
+        "Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na tym elemencie.\n\nKontynuować?",
+      removeTagsMany:
+        "Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na zaznaczonych elementach ({n}).\n\nKontynuować?",
     },
   },
   control: {

@@ -487,9 +487,9 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       // renameModal.close() (który chowa #renameModal) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy zapis do qb_questions leci asynchronicznie już PO
       // zamknięciu modala (w renameSelectedPrompt, nie w samym modalu), więc samo
-      // "modal się schował" nie gwarantuje, że PATCH już doleciał do bazy.
+      // "modal się schował" nie gwarantuje, że zapis (rpc) już doleciał do bazy.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_set_question_text")),
         page.locator("#renameModalSave").click(),
       ]);
       await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
@@ -734,7 +734,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await input.fill("Zmienione przez PPM");
 
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_set_question_text")),
         page.locator("#renameModalSave").click(),
       ]);
       await expect(page.locator("#renameModal")).toBeHidden({ timeout: 10000 });
@@ -831,9 +831,9 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
-      // na realny PATCH, nie tylko na zniknięcie overlay.
+      // na realny zapis (rpc qb_save_question), nie tylko na zniknięcie overlay.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -1554,7 +1554,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       // asynchronicznie po kliknięciu -- run #77 złapał to jako flaky
       // (sprawdzenie DB, zanim żądanie realnie doleciało)
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "DELETE"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_delete_items")),
         page.locator(".uni-modal .uni-foot .btn.gold").click(),
       ]);
 
@@ -1654,9 +1654,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
-      // na realny PATCH, nie tylko na zniknięcie overlay.
+      // na realny zapis (rpc qb_save_question), nie tylko na zniknięcie overlay.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -1697,9 +1697,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
-      // na realny PATCH, nie tylko na zniknięcie overlay.
+      // na realny zapis (rpc qb_save_question), nie tylko na zniknięcie overlay.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -1737,9 +1737,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
-      // na realny PATCH, nie tylko na zniknięcie overlay.
+      // na realny zapis (rpc qb_save_question), nie tylko na zniknięcie overlay.
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -1774,7 +1774,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await expect(qText).toHaveValue("A".repeat(200), { timeout: 5000 });
 
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -2329,7 +2329,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       // sprzed chwili (bez odpowiedzi editora)
       await page.locator("#qText").fill("Wersja finalna właściciela");
       await Promise.all([
-        page.waitForResponse((res) => res.url().includes("/rest/v1/qb_questions") && res.request().method() === "PATCH"),
+        page.waitForResponse((res) => res.url().includes("/rest/v1/rpc/qb_save_question")),
         page.locator("#qSave").click(),
       ]);
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
@@ -3093,3 +3093,132 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
 // Mobile "sheet" modal testy (tagi/eksport/pytanie) zostały przeniesione
 // do tests/e2e/mobile-sheet-modals.spec.js -- tam są zebrane testy tego
 // mechanizmu dla wszystkich stron w jednym pliku.
+
+/* ================= Kosz i skróty (E22) ================= */
+
+async function listTrashRows(page, baseId) {
+  return await page.evaluate(async (id) => {
+    const { data, error } = await window.__sbClient.from("qb_trash").select("id,kind,item_id").eq("base_id", id);
+    if (error) throw new Error(error.message);
+    return data || [];
+  }, baseId);
+}
+
+async function confirmUniModal(page) {
+  await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+  await page.locator(".uni-modal .uni-foot .btn.gold").click();
+  await expect(page.locator(".uni-modal")).toHaveCount(0, { timeout: 5000 });
+}
+
+test.describe("base-explorer: kosz (E22)", () => {
+  test("usunięty folder z pytaniem trafia do kosza (licznik), przywrócenie odtwarza folder z pytaniem", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-TRASH-${Date.now()}`);
+
+    try {
+      const catId = await createCategory(page, { baseId, name: "Do kosza", ord: 1 });
+      const qid = await createQuestion(page, { baseId, categoryId: catId, ord: 1, payload: { text: "W koszu", answers: [{ text: "A", fixed_points: 3 }] } });
+
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.locator("#trashOpen")).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#trashCount")).toHaveText("");
+
+      const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
+      await catRow.click();
+      await page.keyboard.press("Delete");
+      await expect(page.locator(".uni-modal .mSub")).toContainText("kosza", { timeout: 5000 });
+      await confirmUniModal(page);
+      await expect(catRow).toBeHidden({ timeout: 10000 });
+      await expect(page.locator("#trashCount")).toHaveText("1", { timeout: 10000 });
+
+      await page.locator("#trashOpen").click();
+      const row = page.locator("#trashList .trash-row");
+      await expect(row).toHaveCount(1, { timeout: 10000 });
+      await expect(row).toContainText("Do kosza");
+      await expect(row).toContainText("usunie się za");
+
+      await row.locator('button[data-act="restore"]').click();
+      await expect(page.locator("#trashList .trash-empty")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator("#trashCount")).toHaveText("");
+      await page.locator("#trashClose").click();
+
+      await expect(catRow).toBeVisible({ timeout: 10000 });
+      const q = await getQuestionRow(page, qid);
+      expect(q?.category_id, "pytanie wraca do swojego folderu z tym samym id").toBe(catId);
+      expect(q?.payload?.answers?.length).toBe(1);
+      expect(await listTrashRows(page, baseId)).toHaveLength(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("usuń trwale jeden wpis i opróżnij kosz", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-PURGE-${Date.now()}`);
+
+    try {
+      const q1 = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pierwsze", answers: [] } });
+      const q2 = await createQuestion(page, { baseId, ord: 2, payload: { text: "Drugie", answers: [] } });
+      const q3 = await createQuestion(page, { baseId, ord: 3, payload: { text: "Trzecie", answers: [] } });
+
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      // trzy pytania naraz (Ctrl+A) = trzy wpisy w koszu
+      await expect(page.locator(`#list .row[data-kind="q"][data-id="${q3}"]`)).toBeVisible({ timeout: 15000 });
+      await page.locator(`#list .row[data-kind="q"][data-id="${q1}"]`).click();
+      await page.keyboard.press("Control+a");
+      await expect(page.locator("#list .row.is-selected")).toHaveCount(3);
+      await page.keyboard.press("Delete");
+      await confirmUniModal(page);
+      await expect(page.locator("#trashCount")).toHaveText("3", { timeout: 10000 });
+
+      await page.locator("#trashOpen").click();
+      const rows = page.locator("#trashList .trash-row");
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
+
+      await rows.filter({ hasText: "Drugie" }).locator('button[data-act="purge"]').click();
+      await confirmUniModal(page);
+      await expect(rows).toHaveCount(2, { timeout: 10000 });
+      await expect(page.locator("#trashCount")).toHaveText("2");
+      expect(await getQuestionRow(page, q2)).toBeNull();
+
+      await page.locator("#trashEmpty").click();
+      await confirmUniModal(page);
+      await expect(page.locator("#trashList .trash-empty")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator("#trashCount")).toHaveText("");
+      expect(await listTrashRows(page, baseId)).toHaveLength(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Delete w polu treści otwartego okna pytania nie usuwa zaznaczenia", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-DELKEY-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Treść", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await row.click();
+      await pressToolbarShortcut(page, "editQuestion", "Control+e");
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+      await page.locator("#qText").press("Home");
+      await page.locator("#qText").press("Delete");
+
+      await expect(page.locator("#qText")).toHaveValue("reść");
+      await expect(page.locator(".uni-modal")).toHaveCount(0);
+      expect(await getQuestionRow(page, qid)).not.toBeNull();
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});

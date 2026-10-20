@@ -36,6 +36,7 @@ import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-2
 import { openTagsModal } from "./tags-modal.js?v=v2026-10-20T19584";
 import { initExportModal } from "./export-modal.js?v=v2026-10-20T19584";
 import { initQuestionModal } from "./question-modal.js?v=v2026-10-20T19584";
+import { initTrashModal } from "./trash-modal.js?v=v2026-10-20T19584";
 import * as ops from "./ops.js?v=v2026-10-20T19584";
 import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T19584";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T19584";
@@ -829,6 +830,7 @@ export async function deleteItems(state, keys) {
   }
 
   await afterMutation(state, { categories: cIds.length > 0 });
+  void state._api?.refreshTrash?.(); // licznik kosza
   return true;
 }
 
@@ -841,8 +843,10 @@ export async function deleteSelected(state) {
     return false;
   }
 
-  const label = (keys.size === 1) ? "ten element" : `te elementy (${keys.size})`;
-  const ok = await confirmModal({ text: t("baseExplorer.confirm.deleteItems", { label }) });
+  const text = keys.size === 1
+    ? t("baseExplorer.confirm.deleteOne")
+    : t("baseExplorer.confirm.deleteMany", { n: keys.size });
+  const ok = await confirmModal({ text });
   if (!ok) return false;
 
   return await deleteItems(state, keys);
@@ -1042,8 +1046,10 @@ export async function deleteTags(state, tagIds) {
   const ids = uniqIds(tagIds);
   if (!ids.length) return false;
 
-  const label = (ids.length === 1) ? "ten tag" : `te tagi (${ids.length})`;
-  const ok = await confirmModal({ text: t("baseExplorer.confirm.deleteTags", { label }) });
+  const text = ids.length === 1
+    ? t("baseExplorer.confirm.deleteTagsOne")
+    : t("baseExplorer.confirm.deleteTagsMany", { n: ids.length });
+  const ok = await confirmModal({ text });
   if (!ok) return false;
 
   const lease = await acquireResourceLocks(
@@ -1540,8 +1546,10 @@ async function untagSelectedInTagView(state) {
     return false;
   }
 
-  const label = (keys.size === 1) ? "tym elemencie" : `tych elementach (${keys.size})`;
-  const ok = await confirmModal({ text: t("baseExplorer.confirm.removeTagsInTagView", { label }) });
+  const text = keys.size === 1
+    ? t("baseExplorer.confirm.removeTagsOne")
+    : t("baseExplorer.confirm.removeTagsMany", { n: keys.size });
+  const ok = await confirmModal({ text });
   if (!ok) return false;
 
   // folder w widoku tagu pokazuje się przez tagi pytań w poddrzewie,
@@ -3645,6 +3653,17 @@ export function wireActions({ state }) {
     }
   };
 
+  // ---------- Kosz ----------
+  // Przywrócenie dokłada foldery i pytania (z tagami) — pełne odświeżenie.
+  const trashModal = initTrashModal({
+    state,
+    onChange: async (kind) => {
+      if (kind === "restore") await afterMutation(state, { categories: true });
+    },
+  });
+  state._api.refreshTrash = () => trashModal?.refresh();
+  void trashModal?.refresh();
+
   // ---------- Export modal ----------
   if (!exportModal) {
     exportModal = initExportModal({ state });
@@ -3860,231 +3879,131 @@ export function wireActions({ state }) {
     hideContextMenu();
   });
 
+  // ================== Skróty klawiszowe ==================
+  // Jedna bramka: przy otwartym oknie (pytanie, tagi, eksport, kosz, zmiana
+  // nazwy, potwierdzenie) albo pisaniu w polu skróty menedżera nie działają
+  // -- wcześniej Delete w polu treści pytania odpalał usuwanie zaznaczenia.
+  const MODAL_IDS = ["questionOverlay", "tagsOverlay", "exportOverlay", "trashOverlay", "renameModal"];
+  function shortcutsBlocked() {
+    const tag = String(document.activeElement?.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || document.activeElement?.isContentEditable) return true;
+    if (document.querySelector(".uni-modal")) return true;
+    return MODAL_IDS.some((id) => {
+      const el = document.getElementById(id);
+      return !!el && !el.hidden && el.style.display !== "none";
+    });
+  }
+
+  function clickToolbar(act) {
+    const btn = document.querySelector(`#toolbar button[data-act="${act}"]`);
+    if (btn && !btn.disabled) btn.click();
+  }
+
+  async function tryAction(fn, errKey) {
+    try {
+      await fn();
+    } catch (err) {
+      console.error(err);
+      void alertModal({ text: t(errKey) });
+    }
+  }
+
+  async function onDeleteKey() {
+    if (!canDeleteHere(state)) {
+      void alertModal({ text: t("baseExplorer.errors.deleteInSearch") });
+      return;
+    }
+    // TAG: zdejmowanie tagów (z ostrzeżeniem), nie usuwanie elementów
+    if (state.view === VIEW.TAG) {
+      await tryAction(() => untagSelectedInTagView(state), "baseExplorer.errors.removeTagsFailed");
+      return;
+    }
+    await tryAction(() => deleteSelected(state), "baseExplorer.errors.deleteFailed");
+  }
+
+  async function onPasteKey() {
+    if (state.view === VIEW.SEARCH) return void alertModal({ text: t("baseExplorer.errors.pasteInSearch") });
+    if (state.view === VIEW.TAG) return void alertModal({ text: t("baseExplorer.errors.pasteInTag") });
+    if (!canMutateHere(state)) return;
+    await tryAction(() => pasteClipboardHere(state), "baseExplorer.errors.pasteFailed");
+  }
+
+  function selectAllInList() {
+    // Wiersze mają data-kind+data-id, nie data-key -- currentRowKeys()
+    // buduje z nich prawdziwe klucze selekcji ("q:"/"c:").
+    const keys = currentRowKeys(document.getElementById("list"));
+    if (!keys.length) return;
+    state.selection.keys = new Set(keys);
+    renderList(state);
+  }
+
+  // Skróty z modyfikatorem (Ctrl / ⌘): klucz = litera + ":shift" / ":alt".
+  const MOD_SHORTCUTS = {
+    "c": () => { if (canWrite(state)) copySelectedToClipboard(state); },
+    "x": () => { cutSelectedToClipboard(state); },
+    "v": onPasteKey,
+    "a": selectAllInList,
+    "n": () => canMutateHere(state) && tryAction(() => createQuestionHere(state, { categoryId: currentParentId(state) }), "baseExplorer.errors.createQuestionFailed"),
+    "n:shift": () => canMutateHere(state) && tryAction(() => createFolderHere(state, { parentId: currentParentId(state) }), "baseExplorer.errors.createFolderFailed"),
+    "r:alt": () => clickToolbar("refreshView"),
+    "t": () => canWrite(state) && state._api?.openAssignTagsModal?.(),
+    "e": () => clickToolbar("editQuestion"),
+    "g": () => clickToolbar("createGame"),
+    "d": () => clickToolbar("duplicate"),
+    "z": () => state._api?.undo?.(),
+    "z:shift": () => state._api?.redo?.(),
+    "y": () => state._api?.redo?.(),
+  };
+
   document.addEventListener("keydown", async (e) => {
+    if (shortcutsBlocked()) return;
+
+    const isMac = navigator.platform.toLowerCase().includes("mac");
+    const mod = isMac ? e.metaKey : e.ctrlKey;
+
+    if (mod) {
+      const letter = String(e.key || "").toLowerCase();
+      const id = letter + (e.shiftKey ? ":shift" : e.altKey ? ":alt" : "");
+      const fn = MOD_SHORTCUTS[id];
+      if (!fn) return;
+      e.preventDefault();
+      await fn();
+      return;
+    }
+
     if (e.key === "Escape") {
       selectionClear(state);
       renderList(state);
       return;
     }
-  
+
     if (e.key === "Delete") {
-      // C: SEARCH – blokada
-      if (!canDeleteHere(state)) {
-        void alertModal({ text: t("baseExplorer.errors.deleteInSearch") });
-        return;
-      }
-    
-      // C: TAG – zdejmowanie tagów (z ostrzeżeniem)
-      if (state.view === VIEW.TAG) {
-        e.preventDefault();
-        try {
-          await untagSelectedInTagView(state);
-        } catch (err) {
-          console.error(err);
-          void alertModal({ text: t("baseExplorer.errors.removeTagsFailed") });
-        }
-        return;
-      }
-    
-      // normalnie (FOLDER/ALL/SEARCH -- canDeleteHere już przepuściło SEARCH wyżej;
-      // canMutateHere by je tu ponownie zablokowało, bo wyklucza WSZYSTKIE widoki
-      // wirtualne, nie tylko META jak canDeleteHere)
-      try {
-        await deleteSelected(state);
-      } catch (err) {
-        console.error(err);
-        void alertModal({ text: t("baseExplorer.errors.deleteFailed") });
-      }
+      e.preventDefault();
+      await onDeleteKey();
+      return;
     }
 
-      if (e.key === "F2") {
-        if (!canMutateHere(state)) return;
-        // nie rename'uj kiedy user pisze w inpucie/textarea
-        const tag = String(document.activeElement?.tagName || "").toLowerCase();
-        if (tag === "input" || tag === "textarea") return;
-    
-        await renameSelectedPrompt(state);
-      }
-    
-      const isMac = navigator.platform.toLowerCase().includes("mac");
-      const mod = isMac ? e.metaKey : e.ctrlKey;
-    
-      // nie rób skrótów, gdy user pisze w inpucie/textarea
-      const tag = String(document.activeElement?.tagName || "").toLowerCase();
-      const typing = (tag === "input" || tag === "textarea");
-      if (typing) return;
-  
-      if (mod && (e.key === "c" || e.key === "C")) {
+    if (e.key === "F2") {
+      if (!canMutateHere(state)) return;
+      e.preventDefault();
+      await renameSelectedPrompt(state);
+      return;
+    }
+
+    if (e.key === "Enter") {
+      const key = onlyOneSelectedKey(state);
+      if (key && key.startsWith("c:")) {
         e.preventDefault();
-        if (!canWrite(state)) return;
-        copySelectedToClipboard(state);
-        return;
+        await openFolderById(state, key.slice(2));
       }
-  
-      if (mod && (e.key === "x" || e.key === "X")) {
-        e.preventDefault();
-        cutSelectedToClipboard(state);
-        return;
-      }
-  
-      if (mod && (e.key === "v" || e.key === "V")) {
-        // C: w SEARCH/TAG wklejanie zablokowane
-        if (state.view === VIEW.SEARCH) {
-          e.preventDefault();
-          void alertModal({ text: t("baseExplorer.errors.pasteInSearch") });
-          return;
-        }
-        if (state.view === VIEW.TAG) {
-          e.preventDefault();
-          void alertModal({ text: t("baseExplorer.errors.pasteInTag") });
-          return;
-        }
-      
-        if (!canMutateHere(state)) {
-          e.preventDefault();
-          return;
-        }
-      
-        e.preventDefault();
-        try {
-          await pasteClipboardHere(state);
-        } catch (err) {
-          console.error(err);
-          void alertModal({ text: t("baseExplorer.errors.pasteFailed") });
-        }
-        return;
-      }
+      return;
+    }
 
-      // Ctrl+A / Cmd+A = (jak w eksploratorze)
-      // - gdy fokus w input/textarea: zostaw domyślne zaznaczanie tekstu
-      // - w innym przypadku: zaznacz wszystko w liście
-      if (mod && (e.key === "a" || e.key === "A")) {
-      
-        e.preventDefault();
-      
-        const listEl = document.getElementById("list");
-        if (!listEl) return;
-
-        // Wiersze mają data-kind+data-id, nie data-key -- currentRowKeys()
-        // buduje z nich prawdziwe klucze selekcji ("q:"/"c:").
-        const keys = currentRowKeys(listEl);
-        if (!keys.length) return;
-
-        if (!state.selection) state.selection = {};
-        if (!(state.selection.keys instanceof Set)) state.selection.keys = new Set();
-
-        state.selection.keys.clear();
-        for (const key of keys) state.selection.keys.add(key);
-
-        renderList(state);
-        return;
-      }
-
-      // Ctrl+N / Cmd+N = nowe pytanie
-      if (mod && (e.key === "n" || e.key === "N")) {
-
-        if (!canMutateHere(state)) return;
-        e.preventDefault();
-        try {
-          const categoryId = currentParentId(state);
-          await createQuestionHere(state, { categoryId });
-        } catch (err) {
-          console.error(err);
-          void alertModal({ text: t("baseExplorer.errors.createQuestionFailed") });
-        }
-        return;
-      }
-
-      // Ctrl+Shift+N / Cmd+Shift+N = nowy folder (w bieżącym folderze / root)
-      if (mod && e.shiftKey && (e.key === "n" || e.key === "N")) {
-        if (!canMutateHere(state)) return;
-        e.preventDefault();
-        try {
-          const parentId = currentParentId(state);
-          await createFolderHere(state, { parentId });
-        } catch (err) {
-          console.error(err);
-          void alertModal({ text: t("baseExplorer.errors.createFolderFailed") });
-        }
-        return;
-      }
-
-      // Ctrl+Alt+R / Cmd+Option+R = odśwież widok (soft refresh)
-      if (mod && e.altKey && (e.key === "r" || e.key === "R")) {
-        e.preventDefault();
-      
-        const tb = (typeof toolbarEl !== "undefined" && toolbarEl) 
-                 || document.getElementById("toolbar");
-      
-        const btn = tb?.querySelector?.('button[data-act="refreshView"]');
-        if (btn && !btn.disabled) btn.click();
-      
-        return;
-      }
-
-      if (mod && (e.key === "t" || e.key === "T")) {
-        e.preventDefault();
-        if (!canWrite(state)) return;
-
-        // state._api.openAssignTagsModal() sam liczy selectionSplitIds() i
-        // przekazuje je jako opts.selection -- wcześniej ten handler wołał
-        // openTagsModal() bezpośrednio BEZ selection, więc modal zawsze
-        // startował z pustym zaznaczeniem (tri-state zawsze "none" mimo
-        // realnych przypisań). Toolbar ("editTags") już korzysta z tej
-        // samej, poprawnej ścieżki.
-        await state._api?.openAssignTagsModal?.();
-        return;
-      }
-
-          // Ctrl+E / Cmd+E = Edytuj pytanie (jak kliknięcie toolbar: editQuestion)
-      if (mod && (e.key === "e" || e.key === "E")) {
-        e.preventDefault();
-        const tb = (typeof toolbarEl !== "undefined" && toolbarEl) || document.getElementById("toolbar");
-        const btn = tb?.querySelector?.('button[data-act="editQuestion"]');
-        if (btn && !btn.disabled) btn.click();
-        return;
-      }
-
-      // Ctrl+G / Cmd+G = Utwórz grę (jak kliknięcie toolbar: createGame)
-      if (mod && (e.key === "g" || e.key === "G")) {
-        e.preventDefault();
-        const tb = (typeof toolbarEl !== "undefined" && toolbarEl) || document.getElementById("toolbar");
-        const btn = tb?.querySelector?.('button[data-act="createGame"]');
-        if (btn && !btn.disabled) btn.click();
-        return;
-      }
-
-      // Ctrl+D / Cmd+D = Duplikuj zaznaczenie
-      if (mod && (e.key === "d" || e.key === "D")) {
-        e.preventDefault();
-      
-        const tb = (typeof toolbarEl !== "undefined" && toolbarEl) 
-                 || document.getElementById("toolbar");
-      
-        const btn = tb?.querySelector?.('button[data-act="duplicate"]');
-        if (btn && !btn.disabled) btn.click();
-      
-        return;
-      }
-    
-      if (!typing && e.key === "Enter") {
-        const key = onlyOneSelectedKey(state);
-        if (key && key.startsWith("c:")) {
-          e.preventDefault();
-          const folderId = key.slice(2);
-          await openFolderById(state, folderId);
-          return;
-        }
-      }
-    
-      if (!typing && e.key === "Backspace") {
-        // Backspace w eksploratorze: w górę
-        if (state.view === VIEW.FOLDER) {
-          e.preventDefault();
-          await goUp(state);
-          return;
-        }
-      }
+    // Backspace w eksploratorze: w górę
+    if (e.key === "Backspace" && state.view === VIEW.FOLDER) {
+      e.preventDefault();
+      await goUp(state);
+    }
   });
 
   return api;

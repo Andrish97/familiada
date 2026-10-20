@@ -2089,3 +2089,59 @@ tr.row.is-drop-after td:last-child::after {
   flex: 0 0 1px;
   margin: 0 2px;
 }
+
+/* ===== Kosz (trash-modal.js) ===== */
+.trash-open {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 10px;
+    background: rgba(255,255,255,.03);
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+.trash-open:hover { background: rgba(255,255,255,.07); }
+.trash-open[hidden] { display: none; }
+.trash-open .badge { margin-left: auto; }
+
+.trash-modal { width: min(640px, 94vw); }
+.trash-list { max-height: min(420px, 60vh); }
+.trash-empty {
+    padding: 18px 10px;
+    text-align: center;
+    opacity: .7;
+}
+.trash-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+}
+.trash-row + .trash-row { border-top: 1px solid rgba(255,255,255,.08); }
+.trash-row:hover { background: rgba(255,255,255,.04); }
+.trash-row .trash-ico { flex: 0 0 auto; opacity: .85; }
+.trash-main { flex: 1 1 auto; min-width: 0; display: grid; gap: 4px; }
+.trash-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+.trash-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    font-size: 12px;
+    opacity: .85;
+}
+.trash-row > .btn { flex: 0 0 auto; }

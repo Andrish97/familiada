@@ -97,3 +97,18 @@ export function applyTagStates(baseId, { questionIds, folderIds }, { on, off }) 
 export function restoreTagLinks(baseId, { add, remove }) {
   return call("qb_restore_tag_links", { p_base_id: baseId, p_add: add || [], p_remove: remove || [] });
 }
+
+// ===== Kosz (migracja 428) =====
+
+export function trashList(baseId) {
+  return call("qb_trash_list", { p_base_id: baseId });
+}
+
+export function trashRestore(baseId, trashIds) {
+  return call("qb_trash_restore", { p_base_id: baseId, p_trash_ids: ids(trashIds) });
+}
+
+// trashIds null = opróżnij kosz
+export function trashPurge(baseId, trashIds) {
+  return call("qb_trash_purge", { p_base_id: baseId, p_trash_ids: trashIds ? ids(trashIds) : null });
+}
