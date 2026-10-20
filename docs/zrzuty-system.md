@@ -143,5 +143,6 @@ każdej zmianie wyglądu rozgrywki Control (decyzja: `docs/ujednolicenie-wygladu
 - Wyświetlacz pokazywał czasem „DISP” zamiast „SUMA”: wyścig w
   `translation.js` (pierwsze `pageshow` wyprzedzało `initI18n`). Naprawione
   w aplikacji 2026-10-20, test `tests/unit/translationRace.test.js`.
-- Stare obrazy `web/assets/img/<język>/landing-*.webp` zostają, dopóki używa
-  ich mail marketingowy (`web/shared/js/core/marketing-mail.js`).
+- Jedyne obrazy strony to kadry tego systemu: `web/assets/img/<język>/shots/`
+  (+ `og/og-image.webp`). Mail marketingowy (`web/shared/js/core/marketing-mail.js`)
+  też używa tych kadrów (wersje `-preview`); stare `landing-*.webp` usunięte 2026-10-20.

@@ -19,8 +19,9 @@ test('marketing templates share document, escaped title and withdrawal/footer wh
       assert.ok(html.includes('Gotowe gry w Grach Społeczności'));
       assert.ok(html.includes('Niezależny widok prowadzącego'));
       assert.equal((html.match(/<img /g)||[]).length,4);
-      for (const image of ['polls','control','display','host']) {
-        const file = `assets/img/pl/landing-${image}.webp`;
+      // Kadry systemu zrzutów (scripts/screens), wersje podglądu.
+      for (const image of ['poll-vote-mobile','control-round','display-round','host-round']) {
+        const file = `assets/img/pl/shots/${image}-preview.webp`;
         assert.ok(html.includes(`https://familiada.online/${file}`));
         assert.ok(fs.existsSync(new URL('../../web/' + file, import.meta.url)));
       }
