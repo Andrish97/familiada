@@ -227,7 +227,7 @@ body.editor-body .qSheetBody .qf-listShell {
 }
 
 .answersBlock {
-    margin-top: 10px;
+    margin-top: 0;
     display: grid;
     gap: 10px;
     min-height: 0;

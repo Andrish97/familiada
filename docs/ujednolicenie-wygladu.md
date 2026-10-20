@@ -96,6 +96,11 @@ podliczania jako stan bieżącej operacji.
   (`.shareRow`: promień 12, `--card2`, `--line2`): tekst bez własnej ramki,
   małe pole punktów z dopiskiem „pkt” i kosz `.btn.icon.danger` 36 px.
   Edytor gry i okno pytania w Eksploratorze (`question-form.css`).
+- **Treść pytania i odpowiedzi jako dwie sekcje (uwaga użytkownika
+  2026-10-20):** w edytorze gry i w oknie pytania Eksploratora każda część
+  ma otoczkę jak sekcje w innych oknach (`.qf-section` = wygląd
+  `.shareSection`), nagłówki „Treść pytania” / „Odpowiedzi” jak
+  `.shareSectionTitle`, suma po prawej w nagłówku odpowiedzi.
 - **Safe area w roletkach (sprawdzone emulacją 2026-10-20):** góra panelu
   12 px pod górnym safe area, ostatnia treść nad dolnym safe area (+14 px).
 - **Przyciski obok podpowiedzi w nagłówku roletki (uwaga użytkownika

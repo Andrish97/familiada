@@ -6,12 +6,22 @@
    Bez punktów (typowa ankieta / punktacja): klasa .no-points na dowolnym
    przodku. */
 
+/* Treść pytania i odpowiedzi jako dwie sekcje z otoczką, jak sekcje w innych
+   oknach (.shareSection w base.css; uwaga użytkownika 2026-10-20). */
+.qf-section {
+    --under: #202331; /* podłoże kryjących przycisków (css/base.css) */
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    min-width: 0
+}
+
+/* nagłówek sekcji jak .shareSectionTitle */
 .qf-label {
-    opacity: .8;
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    margin-bottom: 8px
+    font-weight: 800;
+    letter-spacing: .2px;
+    margin-bottom: 10px
 }
 
 .qf-qtext {
@@ -42,7 +52,6 @@
 
 /* bez ramki: wiersze odpowiedzi chowają się pod krawędzią zaokrągloną jak same wiersze (decyzja 2026-10-20) */
 .qf-listShell {
-    --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
     border-radius: 12px;
     min-height: 0;
     overflow: auto
@@ -196,7 +205,7 @@
     border-color: rgba(255,255,255,.32)
 }
 
-/* Nagłówek listy „ODPOWIEDZI” (jak .qf-label) z dopiskiem „Suma 60/100”
+/* Nagłówek sekcji „Odpowiedzi” (jak .qf-label) z dopiskiem „Suma 60/100”
    -- czerwonym powyżej puli; bez punktów sam nagłówek. */
 .qf-sum {
     display: flex;
@@ -207,10 +216,8 @@
 }
 
 .qf-sumTitle {
-    opacity: .8;
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase
+    font-weight: 800;
+    letter-spacing: .2px
 }
 
 /* suma jako cichy dopisek nagłówka (jak meta list), liczba złotem */
