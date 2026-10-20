@@ -87,10 +87,15 @@ podliczania jako stan bieżącej operacji.
 - **Zmiana nazwy jako roletka (decyzja użytkownika 2026-10-20):** okno nazwy
   (`promptModal`) na telefonie/tablecie dotykowym wysuwa się od dołu,
   z wysokością dopasowaną do treści (`sheet-fit`).
-- **Odpowiedzi w formularzu pytania (2026-10-20):** wiersz odpowiedzi bez
-  własnej ramki — pole odpowiedzi, punkty i kosz w jednym równym rzędzie
-  (44 px; telefon 40 px), nagłówki kolumn dokładnie nad polami (edytor gry
-  i okno pytania w Eksploratorze).
+- **Odpowiedzi w formularzu pytania (uwaga użytkownika 2026-10-20, druga
+  wersja):** bez nagłówków kolumn („tabeli”); nad listą nagłówek
+  „ODPOWIEDZI” jak etykiety pól i znacznik „Suma x/100” (czerwony powyżej
+  puli; bez punktów sam nagłówek). Każda odpowiedź to kafel jak wiersze list
+  (`.shareRow`: promień 12, `--card2`, `--line2`): tekst bez własnej ramki,
+  małe pole punktów z dopiskiem „pkt” i kosz `.btn.icon.danger` 36 px.
+  Edytor gry i okno pytania w Eksploratorze (`question-form.css`).
+- **Safe area w roletkach (sprawdzone emulacją 2026-10-20):** góra panelu
+  12 px pod górnym safe area, ostatnia treść nad dolnym safe area (+14 px).
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /

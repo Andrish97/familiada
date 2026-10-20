@@ -217,7 +217,7 @@ body.editor-body .wrap {
     gap: 10px;
     min-height: 0;
     flex: 1;
-    grid-template-rows: auto auto 1fr auto; /* remainTop, head, list, hintBottom */align-content: start; /* nie rozciągaj wierszy */
+    grid-template-rows: auto 1fr auto; /* nagłówek z sumą, lista, hintBottom */align-content: start; /* nie rozciągaj wierszy */
 }
 
 .answersTop {

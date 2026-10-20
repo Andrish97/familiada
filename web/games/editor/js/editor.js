@@ -819,10 +819,12 @@ async function boot() {
     addA.addEventListener("click", addAnswer);
     aList.appendChild(addA);
 
-    if (cfg.allowPoints && pointsRemainTop) {
+    if (pointsRemainTop) {
+      // nagłówek „Odpowiedzi” zawsze; znacznik sumy tylko z punktami
       const box = document.createElement("div");
       box.className = "qf-sum";
       pointsRemainTop.appendChild(box);
+      renderSumPill(box, 0);
     }
 
     for (const a of answers) aList.appendChild(answerRow(a));

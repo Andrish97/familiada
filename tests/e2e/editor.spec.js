@@ -404,7 +404,7 @@ test("edytor: suma punktów >100 dla 'prepared' to tylko wizualne ostrzeżenie, 
     await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
 
     await expect(page.locator(".qf-sum")).toHaveClass(/over/, { timeout: 5000 });
-    await expect(page.locator(".qf-sum b")).toHaveText("130/100");
+    await expect(page.locator(".qf-sum .qf-sumChip")).toHaveText(/130\/100/);
 
     // „Zapisano.” zostaje po pierwszym zapisie, więc nie potwierdza drugiego —
     // czekamy na stan w bazie.

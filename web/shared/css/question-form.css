@@ -34,77 +34,94 @@
     border-color: rgba(255,234,166,.45)
 }
 
-.qf-head,.qf-list,.qf-row {
+.qf-list {
     display: grid;
-    gap: 10px
-}
-
-.qf-head,.qf-row {
-    grid-template-columns: minmax(0,1fr) 96px 44px
-}
-
-/* nagłówki kolumn dokładnie nad polami (tekst pola zaczyna się 13 px od krawędzi) */
-.qf-head {
-    font-size: 11px;
-    opacity: .75;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    padding: 0
-}
-
-.qf-head > :first-child {
-    padding-left: 13px
-}
-
-.qf-head .c-pts {
-    text-align: center
+    grid-template-columns: 1fr;
+    gap: 8px
 }
 
 /* bez ramki: wiersze odpowiedzi chowają się pod krawędzią zaokrągloną jak same wiersze (decyzja 2026-10-20) */
 .qf-listShell {
     --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
-    border-radius: 18px;
+    border-radius: 12px;
     min-height: 0;
     overflow: auto
 }
 
-.qf-list {
-    grid-template-columns: 1fr
-}
-
-/* Wiersz odpowiedzi bez własnej ramki (decyzja 2026-10-20): pole odpowiedzi,
-   punkty i kosz w jednym równym rzędzie tej samej wysokości. */
+/* Kafel odpowiedzi jak wiersze list (.shareRow, decyzja 2026-10-20):
+   tekst odpowiedzi bez własnej ramki, punkty z dopiskiem „pkt”, kosz. */
 .qf-row {
-    align-items: center
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 4px;
+    border-radius: 12px;
+    border: 1px solid var(--line2);
+    background: var(--card2);
+    min-width: 0
 }
 
-.qf-text,.qf-pts {
+.qf-row:not(.qf-add):focus-within {
+    border-color: rgba(255,234,166,.45)
+}
+
+.qf-text {
     width: 100%;
     min-width: 0;
-    height: 44px;
+    height: 38px;
     box-sizing: border-box;
-    padding: 0 12px;
-    border-radius: 14px;
-    border: 1px solid var(--line2);
-    background: rgba(255,255,255,.06);
+    padding: 0 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
     color: #fff;
     outline: 0;
     font: inherit;
     font-size: 16px; /* mniej -> iOS powiększa stronę przy focusie */
-    font-weight: 900
+    font-weight: 800
 }
 
-.qf-text:focus,.qf-pts:focus {
-    border-color: rgba(255,234,166,.45)
+.qf-ptsWrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0 10px 0 6px;
+    border-radius: 10px;
+    border: 1px solid var(--line2);
+    background: rgba(0,0,0,.25);
+    cursor: text
+}
+
+.qf-ptsWrap:focus-within {
+    border-color: rgba(255,234,166,.55)
 }
 
 .qf-pts {
-    text-align: center
+    width: 3.2ch;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--gold);
+    outline: 0;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    text-align: right;
+    font-variant-numeric: tabular-nums
+}
+
+.qf-ptsSuffix {
+    font-size: 12px;
+    font-weight: 800;
+    opacity: .65
 }
 
 /* E21: odpowiedź ze znakami spoza czcionki Wyświetlacza -- nie zapisze się */
-.qf-text.qf-invalid,.qf-text.qf-invalid:focus,
-.qf-pts.qf-invalid,.qf-pts.qf-invalid:focus {
+.qf-row:has(.qf-text.qf-invalid),.qf-ptsWrap:has(.qf-invalid) {
     border-color: rgba(255,120,120,.75);
     background: rgba(255,120,120,.10)
 }
@@ -123,41 +140,23 @@
     opacity: .72
 }
 
-.qf-del {
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border-radius: 14px;
-    border: 1px solid rgba(255,120,120,.35);
-    --btn-tint: rgba(255,120,120,.12);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-    color: #fff;
-    cursor: pointer
+.btn.icon.qf-del {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px
 }
 
-.qf-del:hover {
-    --btn-tint: rgba(255,120,120,.18)
-}
-
-.no-points .qf-head,.no-points .qf-row {
-    grid-template-columns: minmax(0,1fr) 44px
-}
-
-.no-points .qf-pts,.no-points .qf-head .c-pts {
+.no-points .qf-ptsWrap {
     display: none
 }
 
 /* "+ Dodaj odpowiedź 3/6" -- pierwszy wiersz listy */
 .qf-row.qf-add {
-    display: grid;
     grid-template-columns: 36px minmax(0,1fr) auto;
     gap: 10px;
-    min-height: 48px;
+    min-height: 50px;
     padding: 6px 12px 6px 0;
     border: 1px dashed rgba(255,234,166,.35);
-    border-radius: 14px;
     --btn-tint: rgba(255,234,166,.06);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
     color: #fff;
@@ -197,60 +196,41 @@
     border-color: rgba(255,255,255,.32)
 }
 
-/* "SUMA 60/100" -- czerwone powyżej puli */
+/* Nagłówek listy „ODPOWIEDZI” (jak .qf-label) ze znacznikiem „Suma 60/100”
+   -- czerwonym powyżej puli; bez punktów sam nagłówek. */
 .qf-sum {
     display: flex;
     gap: 10px;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,234,166,.28);
-    background: rgba(255,234,166,.1);
-    color: var(--gold);
-    font-weight: 1000;
+    min-height: 28px
+}
+
+.qf-sumTitle {
+    opacity: .8;
+    font-size: 12px;
     letter-spacing: .12em;
     text-transform: uppercase
 }
 
-.qf-sum.over {
+.qf-sumChip {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,234,166,.28);
+    background: rgba(255,234,166,.1);
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap
+}
+
+.qf-sum.over .qf-sumChip {
     border-color: rgba(255,120,120,.4);
     background: rgba(255,120,120,.1);
     color: rgba(255,180,180,.95)
 }
 
-.no-points .qf-sum {
+.no-points .qf-sumChip {
     display: none
-}
-
-@media (max-width: 600px) {
-    .qf-head,.qf-row {
-        grid-template-columns: minmax(0,1fr) 72px 40px;
-        gap: 8px
-    }
-
-    .qf-head > :first-child {
-        padding-left: 11px
-    }
-
-    .qf-text,.qf-pts {
-        height: 40px;
-        padding: 0 10px;
-        border-radius: 12px
-    }
-
-    .qf-del {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px
-    }
-
-    .qf-row.qf-add {
-        min-height: 44px;
-        border-radius: 12px
-    }
-
-    .no-points .qf-head,.no-points .qf-row {
-        grid-template-columns: minmax(0,1fr) 40px
-    }
 }
