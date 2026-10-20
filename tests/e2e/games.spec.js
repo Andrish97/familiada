@@ -768,7 +768,8 @@ test.describe("games: audyt -- game_validate", () => {
       expect(res.pt.edit).toMatchObject({ ok: false, code: "pollOpenNoEdit" });
       // E21 (migracja 405): zamknięcie wymaga najpierw 10 pełnych ankiet
       expect(res.pt.poll_close).toMatchObject({ ok: false, code: "tallyMinVotes", params: { min: 10, n: 0 } });
-      expect(res.pt.export).toMatchObject({ ok: false });
+      // E21 (migracja 404): otwartą ankietę można wyeksportować jako szkic, bez głosów
+      expect(res.pt.export).toMatchObject({ ok: true, drops_votes: true });
       expect(res.missing).toMatchObject({ ok: false, error: "not_found" });
     } finally {
       for (const n of names) await deleteGamesByName(page, n);
