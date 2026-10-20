@@ -2312,6 +2312,7 @@ async function loadMarketplace({ silent = false } = {}) {
   if (!tbody) return;
   if (!silent && info) info.textContent = "Ładowanie…";
 
+  void loadMarketPendingBadge();
   let data;
   try {
     const res = await adminFetch(`/marketplace/list?status=${marketActiveStatus}`);
@@ -2677,6 +2678,37 @@ function updateFolderBadges(inboxUnread, reportsOpen) {
   if (badgeReports) {
     badgeReports.textContent = reportsOpen > 99 ? "99+" : String(reportsOpen || "");
   }
+  // Zakładka „Poczta Familiada” w topbarze: nieprzeczytane + otwarte zgłoszenia
+  // (licznik trafia też na „Więcej” i do menu na telefonie -- topbar-controller).
+  setCountBadge("tabBadgeReports", inboxUnread + reportsOpen);
+}
+
+function setCountBadge(id, count) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = count > 99 ? "99+" : String(count || "");
+}
+
+// Gry Społeczności czekające na zatwierdzenie: zakładka w topbarze
+// i „Do zatwierdzenia” (bez gier producenta, jak lista).
+async function loadMarketPendingBadge() {
+  try {
+    const res = await adminFetch("/marketplace/list?status=pending");
+    if (!res.ok) return;
+    const json = await res.json();
+    const count = (json.rows || []).filter((r) => r.origin !== "producer").length;
+    setCountBadge("tabBadgeMarketplace", count);
+    setCountBadge("badgeMarketPending", count);
+  } catch (e) {
+    console.error("[loadMarketPendingBadge] error:", e);
+  }
+}
+
+// Liczniki powiadomień odświeżane w tle (karta widoczna), jak na innych stronach.
+function startAdminBadges() {
+  const refresh = () => { loadFolderBadges(); loadMarketPendingBadge(); };
+  refresh();
+  setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 60_000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
 }
 
 // Load unread counts on initial load and after folder changes
@@ -6556,7 +6588,7 @@ function wireEvents() {
 
   wireMarketplaceEvents();
   wireReportsEvents();
-  loadFolderBadges();
+  startAdminBadges();
   wireMarketingEvents();
   wireRatingsEvents();
   wireStatsEvents();
