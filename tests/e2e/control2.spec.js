@@ -3890,3 +3890,58 @@ test("E19N: Control otwiera Znajomych i Wstecz wraca do tej samej gry", async ({
     await deleteGame(page, game.id);
   }
 });
+
+test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy dźwięku z Wyświetlacza", async ({ page, browser }, testInfo) => {
+  test.setTimeout(240000);
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-RETURN-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    const displayPage = await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
+    await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
+    await page.getByRole("button", { name: "Dalej" }).click({ timeout: 10000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
+    await expect(startRound).toBeEnabled({ timeout: 60000 });
+
+    // Kilka powrotów z rzędu: każdy mierzy czas do gotowego ekranu i sprawdza,
+    // że ewentualna prośba o ponowne odblokowanie dźwięku dociera do Display.
+    for (let round = 1; round <= 3; round++) {
+      await page.locator("#btnManual").click();
+      await page.waitForURL(/\/manual\//, { timeout: 15000 });
+      const startedAt = Date.now();
+      await page.locator("#btnBack").click();
+      await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
+      await expect(startRound).toBeVisible({ timeout: 30000 });
+      console.log(`[e2e-diag] control-return round=${round} visibleMs=${Date.now() - startedAt}`);
+      const unlockScreen = displayPage.locator("#audioUnlockScreen");
+      const outcome = await Promise.race([
+        expect(startRound).toBeEnabled({ timeout: 20000 }).then(() => "enabled"),
+        expect(unlockScreen).not.toHaveClass(/\bhidden\b/, { timeout: 20000 }).then(() => "unlock"),
+      ]).catch(() => "stuck");
+      console.log(`[e2e-diag] control-return round=${round} outcome=${outcome} afterMs=${Date.now() - startedAt}`);
+      expect(outcome, "po powrocie Control nie może czekać na odblokowanie, którego Display nie pokazuje").not.toBe("stuck");
+      if (outcome === "unlock") {
+        await displayPage.locator("#btnAudioUnlock").click();
+        await expect(unlockScreen).toHaveClass(/\bhidden\b/, { timeout: 10000 });
+      }
+      await expect(startRound).toBeEnabled({ timeout: 15000 });
+      console.log(`[e2e-diag] control-return round=${round} readyMs=${Date.now() - startedAt}`);
+    }
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});

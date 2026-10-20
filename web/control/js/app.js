@@ -188,6 +188,9 @@ async function main() {
   let runtimeSession = null;
   let testModePanel = null;
   let testModeChanging = false;
+  // TYMCZASOWE (diagnoza wolnego startu po powrocie): czas od nawigacji.
+  const diagStartup = (label) => console.log(`[e2e-diag-state] startup ${label} at=${Math.round(performance.now())}`);
+  diagStartup("main");
   const i18nP = initI18n({ withSwitcher: true });
   // Blokady strony (guardResourceLocks): zwalniane przed przejściem do
   // instrukcji / ustawień gry, żeby tamta strona mogła je od razu zająć.
@@ -213,12 +216,14 @@ async function main() {
     onManual: (href) => leaveTo(href),
   });
   await i18nP;
+  diagStartup("i18n");
 
   const params = new URLSearchParams(location.search);
   const gameId = params.get("id");
   const root = document.getElementById("app");
 
   const user = await userP;
+  diagStartup("user");
   if (!user) return; // initPage przekierował na logowanie
   document.getElementById("btnFriends")?.addEventListener("click", async (event) => {
     if (event.currentTarget.disabled) return;
@@ -238,6 +243,7 @@ async function main() {
   );
 
   const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
+  diagStartup("game");
   if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
 
   // Blokady strony (docs/blokady-zasobow.md, sekcja 6): game:G wyłącznie (wspólny
@@ -253,10 +259,12 @@ async function main() {
   ], { context: "control", backHref: backHref("control") });
   if (!lock.ok) return;
   pageLock = lock;
+  diagStartup("locks");
 
   // Blokada stanu: gra, która nie nadaje się do rozgrywki (np. ankieta
   // otwarta, za mało pytań), blokuje Control w całości.
   if (!(await guardGameState(gameId, "play"))) return;
+  diagStartup("gameState");
 
   runtimeSession = createRuntimeSession({
     gameId,
@@ -277,6 +285,7 @@ async function main() {
     return;
   }
   if (runtimeSessionResult.expired) return;
+  diagStartup("runtimeSession");
 
   const sfxManifestResult = await sfxManifestP;
   if (sfxManifestResult.error) throw sfxManifestResult.error;
@@ -310,6 +319,7 @@ async function main() {
   void Promise.all(listSfx().map(getSfxDuration));
   const store = createStore(gameId);
   const [expiredTimer] = await Promise.all([store.hydrate(), sfxInitP]);
+  diagStartup("hydrate");
   const outroStartedKey = `control2:outro-started:${gameId}`;
   let outroStartedAt = null;
   let outroUnlockTimer = null;
@@ -904,6 +914,7 @@ async function main() {
 
   const devices = createDevices({ game });
   const urls = await devices.buildUrls(getUiLang());
+  diagStartup("urls");
   testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
   // buildUrls() już równolegle przygotował klucze sesji wszystkich urządzeń.
   // Pobierz kody równolegle, żeby skrócić czas do pierwszego renderu Control.
@@ -913,6 +924,7 @@ async function main() {
       await devices.generateConnectCode(kind).catch(() => null),
     ]),
   ));
+  diagStartup("codes");
 
   const presence = createPresence({
     gameId,
@@ -1793,6 +1805,7 @@ async function main() {
   btnStartOver?.addEventListener("click", () => { handle("game.restart"); });
 
   controlUIReady = true;
+  diagStartup("uiReady");
   store.subscribe(renderCurrent);
   completionUIReady = true;
   void refreshDisplayCompletion();
