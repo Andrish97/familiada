@@ -85,7 +85,7 @@ test("wąż: kod QR z kadru prowadzi do gry, zdarzenia trafiają do bazy (bez ko
   await page.goto(QR, { waitUntil: "domcontentloaded" });
   await page.waitForURL(GAME, { timeout: 30_000 });
   await expect(page.locator("#displays circle").first()).toBeAttached({ timeout: 30_000 });
-  await expect(page.locator("#snakeProgress")).toContainText("tylko w tej przeglądarce");
+  await expect(page.locator("#snakeProgress")).toContainText("by zapisać rekord");
   await expect(page.locator("#snakeLogin")).toBeVisible();
   await playUntilCrash(page);
   await expect.poll(() => log.map((e) => e.kind).join(","), { timeout: 15_000 }).toBe("scan,enter,start,finish");
@@ -114,7 +114,7 @@ test("wąż: „Zaloguj się” wraca do gry, zalogowany ma zapisany rekord i li
   await playUntilCrash(page);
   await expect.poll(() => log.find((e) => e.kind === "finish")?.body?.games, { timeout: 15_000 }).toBe(before + 1);
   const finish = log.find((e) => e.kind === "finish").body;
-  await expect(page.locator("#snakeProgress")).toContainText(`rozegrane gry: ${before + 1}`);
+  await expect(page.locator("#snakeProgress")).toContainText(`gry: ${before + 1}`);
   expect(finish.best).toBeGreaterThanOrEqual(0);
 });
 

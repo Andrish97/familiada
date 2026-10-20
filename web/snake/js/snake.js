@@ -180,10 +180,14 @@ async function boot() {
   const user = await getUser();
   const progressEl = $("snakeProgress");
   const loginEl = $("snakeLogin");
+  const accountEl = $("snakeAccount");
+  // Prawy górny róg (obok pełnego ekranu): bez konta zachęta i logowanie,
+  // z kontem rekord i liczba gier z konta oraz przycisk konta.
   const showProgress = () => {
     if (account) progressEl.textContent = t("snake.progressAccount", { best: account.best, games: account.games });
-    else progressEl.textContent = t("snake.progressLocal");
+    else progressEl.textContent = user ? "" : t("snake.progressLocal");
     loginEl.hidden = !!user;
+    accountEl.hidden = !user;
     // Po zalogowaniu powrót do węża (login.js: next=snake z ważnym qr).
     const login = new URL("/login/", location.origin);
     login.searchParams.set("next", "snake");
