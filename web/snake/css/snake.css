@@ -80,3 +80,58 @@ body.snake-body {
   flex-wrap: wrap;
   justify-content: center;
 }
+
+/* Przycisk pełnego ekranu -- jak na Wyświetlaczu (control/display), w strefie bezpiecznej. */
+.fs-btn {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.28);
+  background: rgba(0,0,0,.28);
+  color: rgba(255,255,255,.92);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  user-select: none;
+  z-index: 9999;
+}
+.fs-btn:hover { background: rgba(0,0,0,.38); }
+.fs-btn:active { transform: translateY(1px); }
+.fs-btn.on { border-color: rgba(215,255,61,.55); }
+.fs-btn .ico { width: 18px; height: 18px; }
+
+/* Zastępczy pełny ekran (przeglądarka bez Fullscreen API). */
+html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden; }
+
+/* Okno „Do ekranu początkowego” (iPhone, Safari) -- jak w Przycisku do pojedynku. */
+.a2hs {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) calc(env(safe-area-inset-right, 0px) + 20px)
+    calc(env(safe-area-inset-bottom, 0px) + 20px) calc(env(safe-area-inset-left, 0px) + 20px);
+  background: rgba(0,0,0,.85);
+}
+.a2hsCard {
+  width: min(100%, 400px);
+  padding: 24px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 16px;
+  background: #1a1a1a;
+  color: #fff;
+  text-align: center;
+}
+.a2hsTitle { margin: 0 0 12px; font-size: 20px; font-weight: 700; }
+.a2hsText { margin: 0 0 20px; color: rgba(255,255,255,.8); font-size: 15px; line-height: 1.5; }
+.a2hsText b { color: #fff; font-weight: 600; }
+.a2hsClose { min-height: 44px; padding: 12px 24px; border-radius: 10px; }
+html.showA2HS .a2hs { display: flex; }

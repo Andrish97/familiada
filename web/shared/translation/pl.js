@@ -100,6 +100,8 @@ const pl = {
       "Aby szybciej otwierać widok Prowadzącego, w Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę. Potem uruchom Prowadzącego z tej ikony.",
     a2hsBuzzer:
       "Aby szybciej otwierać Przycisk do pojedynku, w Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę. Potem uruchom Przycisk z tej ikony.",
+    a2hsSnake:
+      "Aby grać na pełnym ekranie, w Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę. Potem uruchom węża z tej ikony.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
     rating: {

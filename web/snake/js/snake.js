@@ -4,7 +4,7 @@
 // Zdarzenia (enter/start/finish) trafiają do statystyk admina (snake-log.js);
 // zalogowanym baza zapisuje rekord i liczbę gier.
 import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T17123";
-import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-20T17123";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-20T17123";
 import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T17123";
 import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T17123";
 import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T17123";
@@ -40,6 +40,61 @@ const i18nReady = initI18n({ withSwitcher: false }).then(() => {
   hydrateIcons();
 });
 
+// Pełny ekran jak w Przycisku do pojedynku: iPhone/iPad w Safari nie ma
+// Fullscreen API -- zamiast tego okno z instrukcją „Do ekranu początkowego”
+// (z ikony strona działa jak aplikacja pełnoekranowa). Inne przeglądarki:
+// prawdziwy pełny ekran z blokadą poziomu, a gdy się nie da -- zastępczy.
+const isIOSSafari = () => {
+  const ua = navigator.userAgent || "";
+  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return iOS && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+};
+const isStandalone = () => !!(navigator.standalone || matchMedia("(display-mode: standalone)").matches);
+
+function setupFullscreen() {
+  const btn = $("fsBtn");
+  const hint = $("snakeA2HS");
+  const close = $("snakeA2HSClose");
+  let pseudoFS = false;
+  const sync = () => {
+    const on = !!(document.fullscreenElement || document.webkitFullscreenElement) || pseudoFS;
+    btn.innerHTML = icon(on ? "fullscreen-exit" : "fullscreen-enter");
+    btn.classList.toggle("on", on);
+  };
+  const showHint = (on) => {
+    document.documentElement.classList.toggle("showA2HS", on);
+    hint.setAttribute("aria-hidden", on ? "false" : "true");
+    (on ? close : btn).focus();
+  };
+  close.addEventListener("click", () => showHint(false));
+  hint.addEventListener("click", (e) => { if (e.target === hint) showHint(false); });
+  btn.addEventListener("click", async () => {
+    if (isIOSSafari() && !isStandalone()) { showHint(true); return; }
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        await (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else if (pseudoFS) {
+        pseudoFS = false;
+        document.documentElement.classList.remove("pseudoFS");
+      } else {
+        const el = document.documentElement;
+        const req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (!req) throw new Error("fullscreen unavailable");
+        await req.call(el, { navigationUI: "hide" });
+        await screen.orientation?.lock?.("landscape").catch(() => {});
+      }
+    } catch (e) {
+      pseudoFS = true;
+      document.documentElement.classList.add("pseudoFS");
+      console.warn("[snake] fullscreen fallback:", e?.message || e);
+    }
+    sync();
+  });
+  document.addEventListener("fullscreenchange", sync);
+  document.addEventListener("webkitfullscreenchange", sync);
+  sync();
+}
+
 function readLocalBest() {
   try { return Math.max(0, Number(localStorage.getItem(BEST_KEY)) || 0); } catch { return 0; }
 }
@@ -49,6 +104,7 @@ function writeLocalBest(value) {
 
 async function boot() {
   await i18nReady;
+  setupFullscreen();
   const lang = getUiLang();
   const themeMgr = await createThemeManager($("baseSvg"), document.querySelector("#snakeFrame .layer-bg"));
   const displays = createDisplays({ svgGroup: $("displays"), theme: themeMgr.getActiveTheme() });
@@ -224,14 +280,15 @@ async function boot() {
   const KEYS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", s: "down", a: "left", d: "right", W: "up", S: "down", A: "left", D: "right" };
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (document.documentElement.classList.contains("showA2HS")) { if (e.key === "Escape") $("snakeA2HSClose").click(); return; }
     if (KEYS[e.key]) { e.preventDefault(); steer(KEYS[e.key]); }
-    else if (e.key === " " || e.key === "Enter") { if (e.target?.closest?.("a")) return; e.preventDefault(); toggle(); }
+    else if (e.key === " " || e.key === "Enter") { if (e.target?.closest?.("a, button")) return; e.preventDefault(); toggle(); }
   });
   // Dotyk: jak zwykły Wyświetlacz -- przesunięcie palcem skręca (i zaczyna
   // grę), stuknięcie w planszę to start/pauza. Bez przycisków na ekranie.
   let touch = null;
   document.addEventListener("touchstart", (e) => {
-    if (e.target.closest("a")) return;
+    if (e.target.closest("a, button, .a2hs")) return;
     const p = e.touches[0];
     touch = { x: p.clientX, y: p.clientY };
   }, { passive: true });

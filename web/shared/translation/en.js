@@ -100,6 +100,8 @@ const en = {
       "To open the Host view more quickly, tap <b>Share</b> in Safari, choose <b>Add to Home Screen</b>, and add the icon. Then launch Host from that icon.",
     a2hsBuzzer:
       "To open the Buzzer more quickly, tap <b>Share</b> in Safari, choose <b>Add to Home Screen</b>, and add the icon. Then launch Buzzer from that icon.",
+    a2hsSnake:
+      "To play full screen, tap <b>Share</b> in Safari, choose <b>Add to Home Screen</b>, and add the icon. Then launch the snake from that icon.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Fullscreen API unavailable.",
     rating: {

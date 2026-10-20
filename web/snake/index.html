@@ -5,7 +5,10 @@
   <meta name="app-version" content="v2026-10-20T17123"/>
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="snake.title">Familiada — wąż</title>
@@ -21,6 +24,17 @@
 <!-- Ukryta gra (wejście z kodu QR na kadrze strony ankiet): wąż na kopii
      planszy Wyświetlacza -- ten sam motyw i te same kropki. -->
 <body class="snake-body">
+  <!-- Pełny ekran jak na Wyświetlaczu; na iPhonie w Safari (bez Fullscreen API)
+       okno z instrukcją „Do ekranu początkowego” -- jak w Przycisku do pojedynku. -->
+  <button class="fs-btn" id="fsBtn" type="button" title="Pełny ekran" aria-label="Pełny ekran" data-i18n-title="common.fullscreen" data-i18n-aria-label="common.fullscreen"><i class="ico" data-icon="fullscreen-enter"></i></button>
+  <div class="a2hs" id="snakeA2HS" role="dialog" aria-modal="true" aria-labelledby="snakeA2HSTitle" aria-hidden="true">
+    <div class="a2hsCard">
+      <h2 class="a2hsTitle" id="snakeA2HSTitle" data-i18n="common.a2hsTitle">Dodaj ten widok do ekranu początkowego</h2>
+      <p class="a2hsText" data-i18n-html="common.a2hsSnake">W Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę.</p>
+      <button class="btn a2hsClose" id="snakeA2HSClose" type="button" data-i18n="common.a2hsOk" data-i18n-icon="check">OK</button>
+    </div>
+  </div>
+
   <main class="snake-wrap" data-skel-step>
     <div class="snake-frame" id="snakeFrame" aria-label="Wąż" data-i18n-aria-label="snake.boardLabel" role="img">
       <div class="layer-bg"></div>
