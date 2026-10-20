@@ -459,8 +459,8 @@ zapis, podgląd i późniejszą rozgrywkę.
   reguł. Nie ma konwersji gotowej ankiety punktowej/tekstowej na preparowaną.
 - Dane wymagające tajności lub związane z sesją/urządzeniami pozostają poza
   formatem, tak jak obecnie; jawnie dokumentować wyłączenia.
-- Odczytowa kontrola przed migracją limitu pytań (do wykonania przez
-  użytkownika w bazie; wynik jeszcze nieznany):
+- Odczytowa kontrola przed migracją limitu pytań (wykonana przez
+  użytkownika w bazie; wynik przekazany 2026-10-20):
 
   ```sql
   SELECT
@@ -469,8 +469,15 @@ zapis, podgląd i późniejszą rozgrywkę.
   FROM public.questions;
   ```
 
-  Wynik 0 oznacza brak treści do obcięcia w tabeli pytań gier, a nie dowód
-  zgodności wszystkich baz pytań i historycznych pakietów/snapshotów.
+  Wynik: **11 pytań ponad 100 znaków; najdłuższe ma 197 znaków**.
+  Użytkownik przekazał również podgląd wszystkich 11: jedno pole zawiera
+  pytanie i wklejoną tabelę odpowiedzi z punktacją, pozostałe 10 to pytania
+  długości 101–129. Obcięcie może przerwać słowo lub zdanie; obowiązuje
+  uzgodnione mechaniczne skrócenie do 100, bez parafrazowania ani zgadywania
+  odpowiedzi z treści pytania. Nie kopiujemy treści ani nazw gier do planu.
+  To częściowy audyt danych tabeli pytań gier; nie potwierdza zgodności
+  wszystkich baz pytań i historycznych pakietów/snapshotów. Przed wdrożeniem
+  powtórzyć odczyt, bo liczba rekordów może się zmienić.
 - **Decyzja 2026-10-20:** zamknięta ankieta przenosi pytania, zatwierdzone
   odpowiedzi i punkty oraz swój zamknięty wariant. Nie zachowujemy liczby
   głosów ani historii/tożsamości głosujących; nie tworzymy fikcyjnych głosów
@@ -664,12 +671,14 @@ nie były uruchamiane. Raport dodano przy korekcie błędnego opisu starszej
 bramki Marketplace i miejsca utraty statusu kopii.
 
 **Granica dowodu:** środowisko nie ma skonfigurowanych poświadczeń do bazy.
-Nie odczytano rzeczywistych rekordów użytkowników, pakietów przechowywanych
-w produkcji ani liczebności historycznych wariantów. Przed migracją pozostaje
+Użytkownik wykonał zapytanie o długości pytań i przekazał wynik oraz podgląd
+11 rekordów (§4); jest to częściowy odczyt danych, bez samodzielnego dostępu
+agenta do bazy. Nie odczytano pakietów przechowywanych w produkcji ani
+liczebności historycznych wariantów. Przed migracją pozostaje
 odczyt agregatów typ/status, typów w `market_games.payload` i zapisanych
 snapshotach oraz próbek historycznych plików. Brak próbek nie dowodzi, że
-aliasy nie występują. Część kodowa etapu A jest zakończona; część danych
-produkcyjnych pozostaje niezweryfikowana.
+aliasy nie występują. Część kodowa etapu A jest zakończona; audyt danych
+produkcyjnych poza przekazanym wynikiem długości pytań pozostaje niezweryfikowany.
 
 ### 8.1. Źródła i granice autorytetu
 
