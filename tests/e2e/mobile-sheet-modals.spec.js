@@ -475,9 +475,10 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
           list: overflows(list),
         };
       });
-      expect(scrollState.body, "na telefonie ma przewijać się treść arkusza").toBe(true);
+      // E20 (2026-10-17): nazwa, typ i stopka stoją, przewija się tylko lista pytań
+      expect(scrollState.list, "lista pytań ma jedyny wewnętrzny scroll").toBe(true);
+      expect(scrollState.body, "treść arkusza nie tworzy drugiego scrolla").toBe(false);
       expect(scrollState.xBody, "wewnętrzny kontener nie powinien tworzyć drugiego scrolla").toBe(false);
-      expect(scrollState.list, "lista pytań nie powinna tworzyć trzeciego scrolla").toBe(false);
       await expect(page.locator("#xCreate")).toBeInViewport();
 
       // klik w tło nic nie robi na telefonie (wychodzi tylko przez X)
