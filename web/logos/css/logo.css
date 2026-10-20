@@ -159,6 +159,7 @@
 .editorShell{
   margin-top: 0;
   height: calc(100vh - 74px - 24px); /* topbar + padding wrappera */
+  min-height: 0; /* kurczy się do miejsca nad stopką (podgląd tekstu wypychał stopkę za ekran) */
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -219,14 +220,15 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
 /* =========================================================
    DRAW SETTINGS (drugi rząd, POZIOMY z scroll)
 ========================================================= */
-.toolRowSep{
-  width: 100%;
-  height: 1px;
-  background: rgba(255,255,255,.1);
-  margin: 2px 0;
-}
+/* Ustawienia narzędzia w tej samej linii co narzędzia (zawijają się pod
+   spód, gdy brakuje miejsca); puste -- znikają, bez pustego pasa (2026-10-20). */
+.toolRowSep{ display: none; }
+
+#toolCtxSettings:empty{ display: none; }
 
 #toolCtxSettings{
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -260,13 +262,12 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   width: 1px;
   background: rgba(255,255,255,.12);
 }
+/* etykiety jak w przyciskach ustawień obrazu („Jasność:”) -- jeden styl edytorów logo */
 .ctxLabel{
   white-space: nowrap;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  opacity: .7;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: .8;
   color: #fff;
   flex-shrink: 0;
 }
@@ -630,13 +631,21 @@ body.games-body.logo-body.is-editor > main.logoWrap{ padding-top:12px; }
   flex-direction: column;
   min-height: 0;
 }
+/* tytuł panelu jak nagłówki sekcji w innych miejscach (.shareSectionTitle);
+   wspólny dla edytora obrazu i podglądu w edytorze tekstu */
 .imgCardTitle{
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  font-size: 12px;
-  opacity: .86;
+  font-weight: 800;
+  letter-spacing: .2px;
   margin-bottom: 8px;
+}
+
+#paneText{
+  display: flex;
+  flex-direction: column;
+}
+#paneText .prevFull{
+  flex: 1 1 auto;
+  height: auto;
 }
 
 .imgStage{

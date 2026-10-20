@@ -128,6 +128,11 @@ podliczania jako stan bieżącej operacji.
   w finale, menu w Eksploratorze). Podliczanie ankiety tekstowej na
   telefonie: tekst odpowiedzi w pierwszej linii, głosy/punkty/przyciski
   w drugiej; podpowiedź mówi o przycisku scalania.
+- **Edytory logo (uwaga użytkownika 2026-10-20):** ustawienia narzędzia
+  rysunku w linii narzędzi (puste znikają — bez pustego pasa); sekcja edytora
+  kurczy się nad stopką (edytor tekstu wypychał stopkę); jeden styl etykiet
+  (jak „Jasność:”) i tytułów paneli (jak nagłówki sekcji); edytor tekstu ma
+  tytuł „Podgląd jak na wyświetlaczu” jak edytor obrazu.
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /
