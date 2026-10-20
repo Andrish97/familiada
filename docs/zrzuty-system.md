@@ -88,10 +88,10 @@ Nowy stan strony (zakładka, okno, zaznaczenie) = nowa scena z `steps`.
 | `data/game-state.mjs` | wiersze `game_state` z `makeDefaultState()` aplikacji |
 | `data/logo-sources.cjs` → `bake-logos.cjs` → `data/logos.baked.json` | dodatkowe logo wypalone prawdziwym edytorem (autozapis przechwycony z `update_logo_checked`) |
 
-Logo: jedno w pełni zrobione logo rysunkowe (DEMO – Rysunek ze sceną Fabric,
-`web/settings/data/screenshots/logo-draw.json`) dla edytora rysunku; pozostałe
-(FAMILIADA, DEMO Tekst, DEMO Obraz, napisy) potrzebują tylko poprawnego układu
-kropek/znaków.
+Logo: jedno w pełni zrobione logo rysunkowe („Gwiazdy wieczoru”, scena Fabric,
+`IDS.logoDraw`) dla edytora rysunku; pozostałe (klasyczne FAMILIADA, napisy,
+rysunki, obrazy z `logo-sources.cjs`) potrzebują tylko poprawnego układu kropek.
+Na zrzutach nie pojawiają się materiały DEMO.
 
 Wszystko w PL/EN/UK. Nowe teksty dopisuj we wszystkich trzech językach.
 
@@ -122,9 +122,10 @@ Publikacja: `node scripts/screens/publish-homepage.cjs` (po
 `run.cjs --scenes=<homepage> --lang=all`, albo `--changed --homepage`) zapisuje
 `web/assets/img/<język>/shots/<scena>.webp` + `-preview.webp` i
 `web/assets/img/og/og-image.webp`. Strona główna (`web/index.html`) ma cztery
-kafle; każdy pokazuje podgląd jednego kadru (`data-shot`), a kliknięcie
-otwiera galerię kadrów swojej kategorii (`data-gallery`, tytuły
-`home.shots.<scena>` w tłumaczeniach). Nowy kadr strony głównej = scena z
+kafle; każdy jest karuzelą kadrów swojej kategorii (`data-gallery`, tytuły
+`home.shots.<scena>` w tłumaczeniach): przyciski po bokach podglądu, kropki na
+dole pokazują bieżący kadr, a kliknięcie obrazu otwiera podgląd z
+przybliżaniem bieżącego kadru (sceny `home-gallery` i `home-viewer`). Nowy kadr strony głównej = scena z
 `homepage: true` + wpis w `data-gallery` właściwego kafla + tytuł w PL/EN/UK.
 
 ## Uwagi
