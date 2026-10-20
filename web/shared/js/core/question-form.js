@@ -10,11 +10,11 @@
 // game_validate) -- tu tylko do pilnowania pól i podpowiedzi w UI; o tym,
 // czy grę wolno otworzyć / grać, decyduje baza (js/core/game-validate.js).
 
-import { RULES, TYPES } from "./game-rules.js?v=v2026-10-20T17440";
-import { t } from "../../translation/translation.js?v=v2026-10-20T17440";
-import { icon } from "./icons.js?v=v2026-10-20T17440";
-import { loadFont5x7 } from "./logo-preview.js?v=v2026-10-20T17440";
-import { QUESTION_MAX, ANSWER_MAX, FINAL_DISPLAY_MAX, clipChars, nfc, answerInvalidChars } from "./answer-text.js?v=v2026-10-20T17440";
+import { RULES, TYPES } from "./game-rules.js?v=v2026-10-20T17443";
+import { t } from "../../translation/translation.js?v=v2026-10-20T17443";
+import { icon } from "./icons.js?v=v2026-10-20T17443";
+import { loadFont5x7 } from "./logo-preview.js?v=v2026-10-20T17443";
+import { QUESTION_MAX, ANSWER_MAX, FINAL_DISPLAY_MAX, clipChars, nfc, answerInvalidChars } from "./answer-text.js?v=v2026-10-20T17443";
 
 
 export const LIMITS = {
