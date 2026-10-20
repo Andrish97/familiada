@@ -443,8 +443,9 @@ export function rowEl(row) {
     b.title = label;
     b.setAttribute("aria-label", label);
     if (a.disabled) b.disabled = true;
-    b.innerHTML = (a.text && !iconOnly ? `<span class="rowsActText">${esc(a.text)}</span>` : "")
-      + (actionIcon ? `<span class="rowsActIcon">${icon(actionIcon)}</span>` : "");
+    // ikona przed napisem, jak w pozostałych przyciskach aplikacji
+    b.innerHTML = (actionIcon ? `<span class="rowsActIcon">${icon(actionIcon)}</span>` : "")
+      + (a.text && !iconOnly ? `<span class="rowsActText">${esc(a.text)}</span>` : "");
     b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e, b); });
     acts.append(b);
   }

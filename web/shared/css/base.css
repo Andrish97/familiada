@@ -2888,6 +2888,8 @@ button.rowsSectionHead{ cursor: pointer; }
 }
 .rowsChannel{ font-weight: 700; }
 .rowsActions{ display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+/* napis i ikona wyśrodkowane w jednej linii (bez przesunięcia napisu w dół) */
+.rowsAct{ display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1; }
 .rowsAct .rowsActIcon{ display: inline-flex; width: 16px; height: 16px; }
 .rowsAct .rowsActIcon svg{ width: 100%; height: 100%; }
 .rowsAct--icon .rowsActIcon{ display: inline-flex; }
