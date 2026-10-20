@@ -182,15 +182,18 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await expect(page).toHaveURL(/sort=title/);
 });
 
-test("wolny prawdziwy backend pokazuje loading, a nieistniejący UUID konkretny błąd", async ({ page }) => {
+test("wolny prawdziwy backend: siatka ukryta do pierwszej odpowiedzi, nieistniejący UUID konkretny błąd", async ({ page }) => {
   await page.route("**/rest/v1/rpc/market_browse", async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     await route.continue();
   });
-  const navigation = page.goto(URL, { waitUntil: "domcontentloaded" });
-  await navigation;
-  await expect(page.locator("#browseInfo")).toHaveText("Ładowanie…");
+  // stopniowe ładowanie (decyzja 2026-10-20): przy pierwszym odczycie bez napisu „Ładowanie…",
+  // siatka odsłania się razem z kartami
+  await page.goto(URL, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#browseGrid")).not.toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#browseInfo")).not.toHaveText("Ładowanie…");
   await expect(page.locator("#browseGrid .mkt-card").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator("#browseGrid")).toHaveClass(/skel-step-ready/);
 
   await page.goto(`${URL}/game/00000000-0000-0000-0000-000000000000`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#appToast")).toContainText("Nie udało się załadować gier.", { timeout: 20_000 });

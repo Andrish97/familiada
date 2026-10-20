@@ -393,13 +393,14 @@ test.describe("games: audyt -- kafelki", () => {
     try {
       await seedPreparedGame(page, name, { questions: 1 });
       await openGames(page, "?lang=pl");
-      const meta = tileByName(page, name).locator(".meta");
-      await expect(meta).toContainText("PREPAROWANA", { timeout: 15000 });
+      // kafel nie pokazuje już typu (zakładki), tylko stan -- gra z 1 pytaniem to szkic
+      const status = tileByName(page, name).locator(".cardStatus");
+      await expect(status).toContainText("SZKIC", { timeout: 15000 });
 
       await page.locator(".lang-btn").click();
       await page.locator('.lang-option[data-lang="en"]').click();
-      await expect(meta).toContainText("PREPARED", { timeout: 5000 });
-      await expect(meta).not.toContainText("PREPAROWANA");
+      await expect(status).toContainText("DRAFT", { timeout: 5000 });
+      await expect(status).not.toContainText("SZKIC");
     } finally {
       await deleteGamesByName(page, name);
     }
@@ -765,7 +766,8 @@ test.describe("games: audyt -- game_validate", () => {
       expect(res.pp.poll_open).toMatchObject({ ok: false, code: "answersRange", params: { ord: 1, n: 2 } });
       expect(res.pp.play).toMatchObject({ ok: false, code: "playAfterPoll" });
       expect(res.pt.edit).toMatchObject({ ok: false, code: "pollOpenNoEdit" });
-      expect(res.pt.poll_close).toMatchObject({ ok: false, code: "noSession", params: { ord: 1 } });
+      // E21 (migracja 405): zamknięcie wymaga najpierw 10 pełnych ankiet
+      expect(res.pt.poll_close).toMatchObject({ ok: false, code: "tallyMinVotes", params: { min: 10, n: 0 } });
       expect(res.pt.export).toMatchObject({ ok: false });
       expect(res.missing).toMatchObject({ ok: false, error: "not_found" });
     } finally {

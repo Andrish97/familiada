@@ -476,7 +476,10 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     max-width: 100%;
     text-decoration: none;
     user-select: none;
-    -webkit-tap-highlight-color: transparent
+    -webkit-tap-highlight-color: transparent;
+    /* przyciski z układem flex gubią spację między ikoną a napisem (iconText) --
+       ten odstęp ją zastępuje; w zwykłych przyciskach nie działa */
+    column-gap: .4em
 }
 
 .btn:hover {
