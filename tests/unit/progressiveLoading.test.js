@@ -27,7 +27,8 @@ test('strony bez initPage używają wspólnego guarda orientacji', () => {
   assert.match(deviceGuard, /profile\.formFactor === "phone" && profile\.orientation === "landscape"/);
   assert.match(deviceGuard, /if \(state !== "ok"\)[\s\S]*?hidePageGuard\(\)/);
   assert.match(deviceGuard, /visualViewport\?\.addEventListener\("resize", refresh/);
-  assert.match(deviceGuard, /backHref:\s*state\s*===\s*"rotate"\s*\?\s*null\s*:\s*backHref/);
+  // Obrót i nieobsługiwany TV nie dostają „Wróć” — rozwiązaniem nie jest wyjście ze strony.
+  assert.match(deviceGuard, /backHref:\s*state\s*===\s*"rotate"\s*\|\|\s*tvUnsupported\s*\?\s*null\s*:\s*backHref/);
   assert.match(overlay, /document\.body\.style\.visibility\s*=\s*"hidden"/);
 });
 
@@ -75,8 +76,8 @@ test('galeria czeka na gotowe widoczne etapy, a widoczny device guard jest końc
   assert.match(source, /overlay\?\.style\.display === "flex" && Boolean\(overlay\.dataset\.state\)/);
   assert.match(source, /getElementById\("resourceLockGuard"\)/);
   assert.match(source, /step\.classList\.contains\("skel-step-ready"\) \|\| step\.getClientRects\(\)\.length > 0/);
-  assert.match(source, /serveBranchLoginHtml/);
-  assert.ok(source.includes("(?:\\?.*)?$"));
+  // Od bb11511 (2026-10-16) galeria nie podmienia już osobno HTML logowania;
+  // helper serveBranchLoginHtml zostaje dla innych speców.
   const branchCode = fs.readFileSync(path.join(here, '../e2e/helpers/branch-code.js'), 'utf8');
   assert.match(branchCode, /loginPage !== "login" && pages\.includes\(loginPage\)/);
   assert.match(branchCode, /async function serveBranchLoginHtml/);
@@ -111,7 +112,7 @@ test('Connect ma pełnowysokościową kartę główną z dwiema kartami etapowym
   const html = read('connect/index.html');
   const js = read('connect/js/connect-device.js');
   assert.match(html, /class="games-shell" data-skel-step/);
-  assert.match(html, /class="card games-card connect-device-main-card"/);
+  assert.match(html, /class="card games-card tasks-card connect-device-main-card"/);
   assert.match(html, /id="enterCodeCard"/);
   assert.match(html, /id="sharedDevicesCard" hidden/);
   assert.match(js, /sharedDevicesCard\.hidden = false/);

@@ -5,6 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   PAGES, MAX_RET_DEPTH, linkTo, backHref, backTarget, loginUrl, pageIdForPath,
 } from "../../web/shared/js/core/nav-map.js";
@@ -33,7 +34,7 @@ test("ścieżki stron są unikalne i rozpoznawane", () => {
 });
 
 test("każdy plik HTML ma wpis w mapie, a trasy standalone są jawnie opisane", () => {
-  const webRoot = path.resolve("web");
+  const webRoot = fileURLToPath(new URL("../../web", import.meta.url));
   const htmlFiles = [];
   const walk = (dir) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

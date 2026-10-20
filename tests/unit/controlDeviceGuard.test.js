@@ -7,7 +7,7 @@ const source = fs.readFileSync(new URL('../../web/shared/js/core/device-guard.js
   .replace(/export /g, '');
 const load = ({ screenWidth, screenHeight, width = screenWidth, height = screenHeight, touch = false, userAgent = '' }) => {
   const api = new Function('window', 'navigator', `${source}; return {getDeviceProfile, deviceGuardState, isPhoneScreen};`)(
-    { innerWidth: width, innerHeight: height, screen: { width: screenWidth, height: screenHeight }, matchMedia: () => ({ matches: touch }) },
+    { innerWidth: width, innerHeight: height, screen: { width: screenWidth, height: screenHeight }, matchMedia: (query) => ({ matches: query.includes('hover') ? !touch : touch }) },
     { maxTouchPoints: touch ? 1 : 0, userAgent },
   );
   return api;
@@ -17,7 +17,8 @@ test('tablet portrait jest tabletem; obrót wystarcza dla progu 980 px', () => {
   const api = load({ screenWidth: 820, screenHeight: 1180, touch: true });
   assert.deepEqual(api.getDeviceProfile(), {
     formFactor: 'tablet', orientation: 'portrait', viewportWidth: 820, viewportHeight: 1180,
-    screenShortSide: 820, screenLongSide: 1180, touch: true,
+    screenShortSide: 820, screenLongSide: 1180, screenPixelWidth: 820, screenPixelHeight: 1180,
+    touch: true, hasTouch: true, isTv: false,
   });
   assert.equal(api.isPhoneScreen(), false);
   assert.equal(api.deviceGuardState(980), 'rotate');

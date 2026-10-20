@@ -1,29 +1,29 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T04553";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T04553";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T04553";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T04553";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T04553";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T04553";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-20T04553";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T04553";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T04553";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T04553";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T04553";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T11473";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T11473";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T11473";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T11473";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T11473";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T11473";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-20T11473";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T11473";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T11473";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T11473";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T11473";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-20T04553";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-20T11473";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-20T04553";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T04553";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T04553";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T04553";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-20T11473";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T11473";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T11473";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T11473";
 
 
 const qs = new URLSearchParams(location.search);
@@ -148,9 +148,17 @@ const invalidInputs = new Map();
 let leaving = false;
 let pageLock = null;      // blokada zasobów strony (release przed wyjściem)
 
+// data-state (dirty / saved / error / conflict) opisuje wynik ostatniego
+// zapisu niezależnie od widocznego tekstu; błędy pokazuje toast.
+function setSaveState(state) {
+  const el = document.getElementById("gsFooterMsg");
+  if (el) el.dataset.state = state;
+}
+
 function setDirtyIndicator(isUnsaved) {
   const el = document.getElementById("gsFooterMsg");
   if (!el) return;
+  el.dataset.state = isUnsaved ? "dirty" : "saved";
   el.textContent = isUnsaved ? (t("gameSettings.unsaved") || "Niezapisane zmiany") : "";
   el.classList.toggle("hidden", !isUnsaved);
 }
@@ -284,9 +292,11 @@ async function saveAll() {
       if (e?.code === ROW_GONE) {
         // Ktoś zapisał te ustawienia w międzyczasie: nie nadpisujemy.
         stopped = true;
+        setSaveState("conflict");
         toast(t("gameSettings.saveConflict"), { kind: "error" });
         return;
       }
+      setSaveState("error");
       toast(t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)), { kind: "error" });
     }
   })();

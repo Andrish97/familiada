@@ -111,7 +111,7 @@ test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści
   await page.locator(".uni-modal input[type=search]").fill(`E20_BRAK_${Date.now()}`);
   await page.getByRole("button", { name: "OK", exact: true }).click();
   await expect(page.locator(".list-search-open")).toHaveClass(/is-active/);
-  await expect(open).toHaveAttribute("title", "Wyczyść");
+  await expect(open).toHaveAttribute("data-tooltip", "Wyczyść");
   const clearButton = await open.boundingBox();
   expect(clearButton.width).toBe(36);
   expect(clearButton.height).toBe(36);
@@ -774,12 +774,12 @@ test.describe("games: audyt -- game_validate", () => {
       await tileByName(page, name).click();
       await expect(page.locator("#btnPreview")).toBeEnabled();
       await expect(page.locator("#btnPlay")).toBeDisabled();
-      await expect(page.locator("#btnPlay")).toHaveAttribute("title", /10.*9/, { timeout: 10000 });
-      await expect(page.locator("#btnPlay")).toHaveAttribute("title", /pytań/);
+      await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /10.*9/, { timeout: 10000 });
+      await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /pytań/);
 
       await page.locator(".lang-btn").click();
       await page.locator('.lang-option[data-lang="en"]').click();
-      await expect(page.locator("#btnPlay")).toHaveAttribute("title", /questions/, { timeout: 10000 });
+      await expect(page.locator("#btnPlay")).toHaveAttribute("data-tooltip", /questions/, { timeout: 10000 });
     } finally {
       await deleteGamesByName(page, name);
     }

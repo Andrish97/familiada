@@ -103,9 +103,8 @@ async function switchTab(page, cat) {
   await page.locator(`.gs-sidebar-item[data-cat="${cat}"]`).click();
 }
 
-// Ustawienia zapisują się same (autozapis ~0,8 s po zmianie, bez przycisku
-// „Zapisz”). Czekamy na sam network response zapisu — Playwright nie może
-// „przegapić” response, który przechwytuje na poziomie stosu sieciowego.
+// Czekamy na sam network response zapisu — Playwright nie może „przegapić”
+// response, który przechwytuje na poziomie stosu sieciowego.
 async function waitForGamesSave(page, action = async () => {}) {
   const [response] = await Promise.all([
     page.waitForResponse(
@@ -117,9 +116,10 @@ async function waitForGamesSave(page, action = async () => {}) {
   expect(response.ok(), `zapis powinien się udać (status ${response.status()})`).toBe(true);
 }
 
-// Wywoływane PO zmianie ustawienia: czeka na autozapis (debounce < 10 s).
+// Ustawienia zapisują się jawnie przyciskiem „Zapisz” (decyzja 2026-10-14).
 async function saveAndWait(page) {
-  await waitForGamesSave(page);
+  await waitForGamesSave(page, () => page.locator("#btnSaveAll").click());
+  await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "saved", { timeout: 10000 });
 }
 
 /* ================= A: Warstwa 1 — blokada wejścia ================= */
@@ -185,8 +185,10 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
 
     await page.locator("#gsTeamB").fill("Ekipa B");
 
-    // Autozapis trafia w konflikt: komunikat pod paskiem akcji, bez okna.
-    await expect(page.locator("#gsFooterMsg")).toHaveText(
+    // Zapis trafia w konflikt: stan w pasku akcji i komunikat w toaście, bez okna.
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "conflict", { timeout: 10000 });
+    await expect(page.locator(".app-toast-text")).toHaveText(
       "Te ustawienia zostały w międzyczasie zmienione w innym miejscu. Odśwież stronę i wprowadź zmiany ponownie.",
       { timeout: 10000 }
     );
@@ -233,8 +235,8 @@ test("ustawienia gry: Warstwa 2 — zapis filtruje pytanie finału usunięte w m
     }, q2Id);
 
     await openSettings(page, gameId);
-    // Samo otwarcie niczego nie zapisuje — drobna zmiana uruchamia autozapis,
-    // który przed zapisem odświeża listę pytań i filtruje martwe id.
+    // Samo otwarcie niczego nie zapisuje — zapis po drobnej zmianie przed
+    // wysłaniem odświeża listę pytań i filtruje martwe id.
     await page.locator("#gsTeamA").fill("Ekipa");
     await saveAndWait(page);
 
@@ -285,12 +287,15 @@ test("ustawienia gry: wygląd — zmiana koloru przez modal zapisuje się do set
     await openSettings(page, gameId);
     await switchTab(page, "display");
     await page.locator('.swatchBtn[data-color-key="A"]').click();
-    await expect(page.locator("#gsColorModal")).toBeVisible();
+    // Wybór koloru to wspólne okno (.uni-modal) z polem HEX i „Gotowe”.
+    const colorModal = page.locator(".uni-modal:has(#gsColorHex)");
+    await expect(colorModal).toBeVisible();
 
     await page.locator("#gsColorHex").fill("00FF00");
     await page.locator("#gsColorHex").press("Tab"); // wymusza 'change' na polu hex
-    await page.locator("#gsColorModalDone").click();
-    await expect(page.locator("#gsColorModal")).toBeHidden();
+    await colorModal.locator(".uni-foot .btn.gold").click();
+    await expect(colorModal).toHaveCount(0);
+    await expect(page.locator('.swatchBtn[data-color-key="A"]')).toHaveCSS("background-color", "rgb(0, 255, 0)");
 
     await saveAndWait(page);
 
@@ -328,7 +333,7 @@ test("ustawienia gry: wygląd — reset sekcji przywraca domyślne kolory", asyn
   }
 });
 
-test("ustawienia gry: dźwięk — wybranie 'Własny' bez pliku resetuje wariant przy autozapisie", async ({ page, context }) => {
+test("ustawienia gry: dźwięk — 'Własny' bez pliku blokuje zapis komunikatem, baza bez zmian", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -340,14 +345,18 @@ test("ustawienia gry: dźwięk — wybranie 'Własny' bez pliku resetuje wariant
 
     const firstRow = page.locator(".sfx-row").first();
     const key = await firstRow.getAttribute("data-key");
-    await waitForGamesSave(page, async () => {
-      await firstRow.locator(".sfx-variant-select .ui-select-btn").click();
-      await firstRow.locator('.ui-select-item[data-value="__custom__"]').click();
-    });
+    await firstRow.locator(".sfx-variant-select .ui-select-btn").click();
+    await firstRow.locator('.ui-select-item[data-value="__custom__"]').click();
+    await expect(firstRow.locator("[data-sfx-preview]")).toBeDisabled();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "dirty");
+
+    // Zapis z „Własnym” bez pliku: okno z powodem, bez zapisu do bazy.
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator(".uni-modal")).toContainText("Wybrano własny dźwięk ale nie wgrano pliku");
+    await page.locator(".uni-foot .btn.gold:visible").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "dirty");
     const game = await getGameRow(page, gameId);
-    expect(game.settings.sound.variants[key]).toBeUndefined();
-    await expect(firstRow.locator("[data-sfx-file]")).toBeHidden();
-    await expect(firstRow.locator("[data-sfx-preview]")).toBeEnabled();
+    expect(game.settings?.sound?.variants?.[key]).toBeUndefined();
 
   } finally {
     await deleteGame(page, gameId);
@@ -454,7 +463,7 @@ test("ustawienia gry: dźwięk — zmiana głośności zapisuje się do settings
   }
 });
 
-test("ustawienia gry: niepełny finał resetuje się do losowania i zapisuje pozostałe zmiany", async ({ page, context }) => {
+test("ustawienia gry: niepełny finał w trybie wyboru blokuje zapis komunikatem, baza bez zmian", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -479,12 +488,16 @@ test("ustawienia gry: niepełny finał resetuje się do losowania i zapisuje poz
     await switchTab(page, "finale");
     await page.locator("#gsFinalePool .qRow").first().click(); // wybierz tylko 1 z 2
 
-    await saveAndWait(page);
+    // Tryb „wybierz” wymaga dokładnie 5 pytań: zapis pokazuje powód i nic nie zapisuje.
+    await page.locator("#btnSaveAll").click();
+    await expect(page.locator(".uni-modal")).toContainText("Wybierz 5 pytań finałowych (wybrano 1/5).");
+    await page.locator(".uni-foot .btn.gold:visible").click();
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "dirty");
+    // Komunikat przenosi na zakładkę Finał; wybór trybu zostaje bez zmian.
+    await switchTab(page, "questions");
+    await expect(page.locator('input[name="gsFinalMode"][value="pick"]')).toBeChecked();
     const game = await getGameRow(page, gameId);
-    expect(game.settings.game.hasFinal).toBe(true);
-    expect(game.settings.game.finalQuestionsMode).toBe("random");
-    expect(game.settings.questions.final).toEqual([]);
-    await expect(page.locator('input[name="gsFinalMode"][value="random"]')).toBeChecked();
+    expect(game.settings?.game?.hasFinal).not.toBe(true);
 
   } finally {
     await deleteGame(page, gameId);
@@ -630,11 +643,10 @@ test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje z
     await switchTab(page, "game");
     await expect(page.locator("#gsMultipliers")).toHaveValue("1, 1, 1, 2, 3");
 
-    // Najpierw poprawna wartość — autozapis ją utrwala (nowa gra ma puste settings).
-    await waitForGamesSave(page, async () => {
-      await page.locator("#gsMultipliers").fill("1, 2, 3, 4, 5");
-      await page.locator("#gsMultipliers").press("Tab");
-    });
+    // Najpierw poprawna wartość, zapisana jawnie (nowa gra ma puste settings).
+    await page.locator("#gsMultipliers").fill("1, 2, 3, 4, 5");
+    await page.locator("#gsMultipliers").press("Tab");
+    await saveAndWait(page);
 
     await page.locator("#gsMultipliers").fill("abc, xyz");
     await page.locator("#gsMultipliers").press("Tab"); // wymusza 'change'
@@ -652,7 +664,7 @@ test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje z
   }
 });
 
-test("ustawienia gry: reset wszystkich ustawień przywraca domyślne i zapisuje natychmiast", async ({ page, context }) => {
+test("ustawienia gry: reset wszystkich ustawień przywraca domyślne, zapis po kliknięciu Zapisz", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -663,9 +675,13 @@ test("ustawienia gry: reset wszystkich ustawień przywraca domyślne i zapisuje 
     await saveAndWait(page);
 
     await page.locator("#btnResetAll").click();
-    // resetAll() zapisuje od razu po potwierdzeniu (flush) — ten sam
-    // network-response wait co saveAndWait(), wyzwolony kliknięciem w modal.
-    await waitForGamesSave(page, () => page.locator(".uni-foot .btn.gold:visible").click());
+    await expect(page.locator(".uni-modal")).toContainText("Przywrócić ustawienia domyślne?");
+    await page.locator(".uni-foot .btn.gold:visible").click();
+    // Reset zmienia formularz; do bazy trafia dopiero po „Zapisz”.
+    await expect(page.locator("#gsTeamA")).toHaveValue("");
+    await expect(page.locator("#gsFooterMsg")).toHaveAttribute("data-state", "dirty");
+    expect((await getGameRow(page, gameId)).settings.teams.teamA).toBe("Do skasowania");
+    await saveAndWait(page);
 
     const game = await getGameRow(page, gameId);
     expect(game.settings.teams.teamA).toBe("");
@@ -674,16 +690,22 @@ test("ustawienia gry: reset wszystkich ustawień przywraca domyślne i zapisuje 
   }
 });
 
-test("ustawienia gry: przycisk Wstecz zapisuje zmiany bez pytania i wraca na ret", async ({ page, context }) => {
+test("ustawienia gry: Wstecz z niezapisanymi zmianami pyta; po zapisie wraca na ret bez pytania", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
   const gameId = await createGame(page);
   try {
     await openSettings(page, gameId, "&ret=%2Fgames%2F");
-    // Zmiana i natychmiastowe „Wstecz” (przed końcem debounce): zapis idzie
-    // przy wyjściu, bez okna o niezapisanych zmianach.
+    // Niezapisana zmiana: „Wstecz” pyta, anulowanie zostawia stronę i zmianę.
     await page.locator("#gsTeamA").fill("Coś nowego");
+    await page.locator("#btnBack").click();
+    await expect(page.locator(".uni-modal")).toContainText("Masz niezapisane zmiany.");
+    await page.locator(".uni-foot .btn:not(.gold):visible").click();
+    await expect(page).toHaveURL(/games\/settings/);
+    await expect(page.locator("#gsTeamA")).toHaveValue("Coś nowego");
+    // Po zapisie „Wstecz” wraca bez okna.
+    await saveAndWait(page);
     await page.locator("#btnBack").click();
     await expect(page.locator(".uni-modal")).toHaveCount(0);
     await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 10000 });
@@ -701,22 +723,17 @@ test("ustawienia gry: przycisk Wstecz zapisuje zmiany bez pytania i wraca na ret
 });
 
 
-test("ustawienia gry: niepoprawny stan — Wstecz ostrzega, anulowanie zostawia stronę, potwierdzenie zapisuje", async ({ page, context }) => {
+test("ustawienia gry: niepoprawny stan — Wstecz ostrzega, anulowanie zostawia stronę, potwierdzenie wychodzi bez zapisu", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
   const gameId = await createGame(page);
   try {
     await openSettings(page, gameId, "&ret=%2Fgames%2F");
     await switchTab(page, "game");
-    // Wstrzymaj tylko timer autozapisu, by okno było sprawdzane bez wyścigu
-    // z debounce. Pozostałe timery (UI, lock) działają normalnie.
-    await page.evaluate(() => {
-      const original = window.setTimeout;
-      window.setTimeout = (fn, delay, ...args) => delay === 800 ? original(fn, 60000, ...args) : original(fn, delay, ...args);
-    });
     await page.locator("#gsMultipliers").fill("abc, 2");
+    await page.locator("#gsMultipliers").press("Tab");
     await page.locator("#btnBack").click();
-    await expect(page.locator(".uni-modal .mSub")).toContainText("niepoprawne wartości");
+    await expect(page.locator(".uni-modal")).toContainText("Masz niezapisane zmiany.");
     await page.locator(".uni-foot .btn:not(.gold)").click();
     await expect(page).toHaveURL(/games\/settings/);
     await expect(page.locator("#gsMultipliers")).toHaveValue("abc, 2");
@@ -724,8 +741,9 @@ test("ustawienia gry: niepoprawny stan — Wstecz ostrzega, anulowanie zostawia 
     await page.locator(".uni-foot .btn.gold").click();
     await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/);
     await page.waitForLoadState("networkidle");
+    // Wyjście bez zapisu: w bazie nie ma ani niepoprawnej, ani żadnej nowej wartości.
     const game = await getGameRow(page, gameId);
-    expect(game.settings.game.advanced.roundMultipliers).toEqual([1, 1, 1, 2, 3]);
+    expect(game.settings?.game?.advanced?.roundMultipliers ?? [1, 1, 1, 2, 3]).toEqual([1, 1, 1, 2, 3]);
   } finally {
     await deleteGame(page, gameId);
   }
@@ -750,6 +768,7 @@ test("ustawienia gry: własny dźwięk z chmury zostaje po zapisie i wyjściu be
     }, gameId);
     await openSettings(page, gameId, "&ret=%2Fgames%2F");
     await page.locator("#gsTeamA").fill("Zachowany dźwięk");
+    await saveAndWait(page);
     await page.locator("#btnBack").click();
     await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/);
     await page.waitForLoadState("networkidle");

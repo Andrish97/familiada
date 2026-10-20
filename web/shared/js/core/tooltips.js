@@ -1,4 +1,4 @@
-const STYLE_URL = new URL("../../css/tooltips.css?v=v2026-10-20T04553", import.meta.url).href;
+const STYLE_URL = new URL("../../css/tooltips.css?v=v2026-10-20T11473", import.meta.url).href;
 
 function install() {
   if (typeof document === "undefined" || document.documentElement.dataset.tooltipSystem) return;
@@ -27,9 +27,17 @@ function install() {
   function normalizeTitle(node) {
     if (!(node instanceof Element) || node.tagName === "IFRAME") return;
     const title = node.getAttribute("title");
-    if (!title) return;
-    if (!node.hasAttribute("data-tooltip") && !node.hasAttribute("data-tip")) {
+    if (title === null) return;
+    // Strony zmieniają title w trakcie działania (np. postęp w topbarze
+    // Control). Podpowiedź przejętą z title aktualizujemy przy każdej zmianie;
+    // jawne data-tooltip/data-tip ustawione przez stronę zostają.
+    const fromTitle = node.hasAttribute("data-tooltip-from-title");
+    if (fromTitle || (!node.hasAttribute("data-tooltip") && !node.hasAttribute("data-tip"))) {
       node.setAttribute("data-tooltip", title);
+      node.setAttribute("data-tooltip-from-title", "");
+      if (node === active) {
+        if (title) { tip.textContent = title; schedulePosition(); } else hide();
+      }
     }
     node.removeAttribute("title");
   }
@@ -124,5 +132,8 @@ function install() {
   window.addEventListener("resize", schedulePosition, { passive: true });
 }
 
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", install, { once: true });
-else install();
+// Testy jednostkowe importują moduły pośrednio w Node, bez DOM.
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", install, { once: true });
+  else install();
+}

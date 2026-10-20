@@ -51,6 +51,7 @@ function makeDeps(over = {}) {
     handleSheetBack: () => { calls.sheet++; return over.sheetOpen === true; },
     guardViewportWidth: (o) => { calls.width.push(o); return { ready: Promise.resolve(true), refresh() {} }; },
     getDeviceProfile: () => ({ viewportWidth: over.viewportWidth ?? 1280, formFactor: over.formFactor ?? "desktop", orientation: over.orientation ?? "landscape" }),
+    showAccountNotices: async () => {},
   };
   return { deps, calls };
 }
@@ -191,7 +192,8 @@ test("konto: loginHref i accountHref z mapy, opcje strony nadpisują", async () 
   await initPage("games", { deps, account: { withAccountSettings: true } });
   const o = calls.account[0].o;
   assert.equal(o.loginHref, "/login/");
-  assert.equal(o.accountHref, "/account/");
+  // Ustawienia konta wracają na stronę, z której je otwarto.
+  assert.equal(o.accountHref, `/account/?ret=${encodeURIComponent("/games/editor/?id=1")}`);
   assert.equal(o.withAccountSettings, true);
 });
 

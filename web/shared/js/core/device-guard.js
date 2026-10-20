@@ -9,7 +9,7 @@
 // czy konkretna funkcja się mieści, wynikają z bieżącego viewportu. Obrót
 // nie zmienia typu urządzenia, ale może udostępnić funkcję wymagającą miejsca.
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-20T04553";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-20T11473";
 
 
 export const PHONE_MAX_SHORT_SIDE = 700;
@@ -93,8 +93,11 @@ export function deviceGuardState(minWidth = MIN_WORK_WIDTH, { formFactors = null
   // Consider rotation only for a full-width portrait phone/tablet viewport.
   // A split-view tablet has a substantially reduced width; rotating its pane
   // is not a reliable way to obtain the full physical screen width.
+  // Telefon w poziomie blokuje reguła wyżej, chyba że strona go dopuszcza —
+  // bez tego obrót prowadziłby do kolejnej prośby o obrót.
   const fullPortraitViewport = profile.viewportWidth >= profile.screenShortSide * 0.85;
-  if (["phone", "tablet"].includes(profile.formFactor)
+  const canRotate = profile.formFactor === "tablet" || (profile.formFactor === "phone" && allowPhoneLandscape);
+  if (canRotate
       && profile.orientation === "portrait"
       && fullPortraitViewport
       && profile.viewportHeight >= minWidth) return "rotate";
@@ -136,7 +139,7 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null,
   const currentState = () => {
     let state = deviceGuardState(minWidth, { formFactors, requiresTouch, minScreenShortSide, minTvResolution, allowPhoneLandscape, requirePhoneLandscape });
     const profile = getDeviceProfile();
-    const rotationCanHelp = ["phone", "tablet"].includes(profile.formFactor)
+    const rotationCanHelp = (profile.formFactor === "tablet" || (profile.formFactor === "phone" && allowPhoneLandscape))
       && profile.orientation === "portrait"
       && profile.viewportWidth >= profile.screenShortSide * 0.85
       && typeof fitsAfterRotate === "function"

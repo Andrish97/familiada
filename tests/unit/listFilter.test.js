@@ -48,7 +48,8 @@ test("showEmptyResult: komunikat tylko gdy szukanie/filtr wycięły wszystkie ka
   assert.equal(showEmptyResult({ hasQuery: false, filterValue: "open", total: 3, visible: 0 }), true);
   assert.equal(showEmptyResult({ hasQuery: true, filterValue: "", total: 3, visible: 1 }), false);
   assert.equal(showEmptyResult({ hasQuery: false, filterValue: "", total: 3, visible: 0 }), false);
-  assert.equal(showEmptyResult({ hasQuery: true, filterValue: "", total: 0, visible: 0 }), false);
+  // Od 2026-10-18 (c00c5bd) kafel „brak wyników” pokazuje się także na pustej liście.
+  assert.equal(showEmptyResult({ hasQuery: true, filterValue: "", total: 0, visible: 0 }), true);
 });
 
 test("filtr podpięty na stronach gier i baz, tłumaczenia w pl/en/uk", () => {

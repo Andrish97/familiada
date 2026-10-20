@@ -339,7 +339,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
 
       const tile = page2.locator("#sharedGrid .card", { hasText: name });
       await expect(tile).toBeVisible({ timeout: 15000 });
-      await expect(tile.locator('.tileBadge[data-kind="role"]')).toHaveAttribute("title", "Masz dostęp z edycją");
+      await expect(tile.locator('.tileBadge[data-kind="role"]')).toHaveAttribute("data-tooltip", "Masz dostęp z edycją");
     } finally {
       if (context2) await context2.close();
       await deleteBaseDirect(page, baseId);
@@ -643,7 +643,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
       const tile = page2.locator("#sharedGrid .card[data-proposed]", { hasText: name });
       await expect(tile).toBeVisible({ timeout: 15000 });
       await expect(tile.locator('.tileBadge[data-kind="from"]')).toBeVisible();
-      await expect(tile.locator('.tileBadge[data-kind="role"]')).toHaveAttribute("title", "Masz dostęp z edycją");
+      await expect(tile.locator('.tileBadge[data-kind="role"]')).toHaveAttribute("data-tooltip", "Masz dostęp z edycją");
       await expect(tile.locator('.tileBadge[data-kind="mine"]')).toHaveCount(0);
 
       await tile.locator(".name").click();

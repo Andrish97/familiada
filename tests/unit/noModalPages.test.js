@@ -31,11 +31,13 @@ test("Control otwiera ustawienia i instrukcję zwykłym przejściem, bez iframe"
   assert.doesNotMatch(app, /postMessage|gsFrame|helpFrame|legalFrame/);
 });
 
-test("ustawienia gry zapisują się same: bez przycisku Zapisz; ostrzeżenie chroni niepoprawny stan", () => {
+// Decyzja 2026-10-14 (78bf809): ręczny zapis wrócił; wyjście z niezapisanymi
+// zmianami wymaga potwierdzenia. Strona nadal nie jest modalem.
+test("ustawienia gry: jawny przycisk Zapisz i potwierdzenie wyjścia bez zapisu, bez elementów modala", () => {
   const html = read("games/settings/index.html");
   const js = read("games/settings/js/game-settings.js");
-  assert.doesNotMatch(html, /btnSaveAll|btnGsModalClose|btnToggleSidebar|helpOverlay/);
-  assert.doesNotMatch(js, /unsavedConfirm|btnSaveAll/);
-  assert.match(js, /visibilitychange/);
-  assert.match(js, /pagehide/);
+  assert.doesNotMatch(html, /btnGsModalClose|btnToggleSidebar|helpOverlay/);
+  assert.match(html, /id="btnSaveAll"/);
+  assert.match(js, /btnSaveAll\?\.addEventListener\("click", saveAll\)/);
+  assert.match(js, /unsavedConfirm/);
 });

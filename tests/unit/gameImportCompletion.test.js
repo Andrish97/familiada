@@ -10,9 +10,9 @@ async function setup(){
  let callback;let imports=0;let closes=0;let fail=false;const progress=[];const visible=[];
  const btn={disabled:false,textContent:'',attrs:{},setAttribute(key,value){this.attrs[key]=value;},addEventListener(_event,handler){callback=handler;}};
  const context=vm.createContext({importCompleted:false,importParsed:{game:{name:'Wakacje'},questions:[{text:'Co?'}]},btnImportJson:btn,
-  currentUser:{id:'owner'},btnCancelImport:{disabled:false},importFile:{disabled:false},importProg:{},importProgStep:{},importProgCount:{},importProgBar:{},importProgMsg:{},
+  currentUser:{id:'owner'},btnCancelImport:{disabled:false},btnImportCancelAction:{disabled:false,hidden:false},importFile:{disabled:false},importProg:{},importProgStep:{},importProgCount:{},importProgBar:{},importProgMsg:{},
   importPreview:{style:{},innerHTML:''},importErr:{style:{},textContent:''},
-  t:key=>key,MSG:Object.fromEntries(['importStart','importSave','importDone','importErrorLabel','importFailed','importDbFailed'].map(key=>[key,()=>key])),
+  t:key=>key,iconText:(_icon,text)=>text,MSG:Object.fromEntries(['importStart','importSave','importDone','importErrorLabel','importFailed','importDbFailed'].map(key=>[key,()=>key])),
   importGame:async()=>{imports++;if(fail)throw new Error('network lost');return 'new-game';},
   loadGameBasic:async()=>({type:'prepared'}),uiTypeFromRow:row=>row.type,setActiveTab(){},refresh:async()=>{},
   setImportMsg(){},showProgBlock:(_node,value)=>visible.push(value),setProgUi:(_a,_b,_c,_d,event)=>progress.push(event),closeImportModal:()=>closes++,console:{error(){}}});

@@ -29,17 +29,17 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-20T04553";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-20T04553";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-20T04553";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-20T04553";
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-20T11473";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-20T11473";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-20T11473";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-20T11473";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-20T04553"),
-    import("./topbar-controller.js?v=v2026-10-20T04553"),
-    import("./modal-sheet.js?v=v2026-10-20T04553"),
-    import("./device-guard.js?v=v2026-10-20T04553"),
+    import("./auth.js?v=v2026-10-20T11473"),
+    import("./topbar-controller.js?v=v2026-10-20T11473"),
+    import("./modal-sheet.js?v=v2026-10-20T11473"),
+    import("./device-guard.js?v=v2026-10-20T11473"),
 
   ]);
   return {
@@ -49,7 +49,20 @@ async function loadDeps() {
     handleSheetBack: sheet.handleSheetBack,
     guardViewportWidth: device.guardViewportWidth,
     getDeviceProfile: device.getDeviceProfile,
+    showAccountNotices,
   };
+}
+
+// Jednorazowe komunikaty konta (informacja dla gościa albo prośba o ocenę),
+// wspólne dla stron z kontem. Ładowane leniwie; w testach podmieniane w deps.
+async function showAccountNotices(user) {
+  if (isGuestUser(user)) {
+    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-20T11473");
+    await maybeShowGuestInfoModal(user);
+  } else if (user) {
+    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-20T11473");
+    await initRatingSystem(user);
+  }
 }
 
 function elementOf(ref, defaultId) {
@@ -190,7 +203,7 @@ export async function initPage(id, opts = {}) {
       .filter((spec) => ["friends", "subscribers"].includes(spec.to))
       .map((spec) => spec.to))];
     if (targets.length) {
-      void import("./nav-contact-badges.js?v=v2026-10-20T04553")
+      void import("./nav-contact-badges.js?v=v2026-10-20T11473")
         .then(({ initNavContactBadges }) => initNavContactBadges(targets))
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }
@@ -218,14 +231,7 @@ export async function initPage(id, opts = {}) {
   // Games library. Await the same blocking modal flow everywhere so users
   // don't miss a one-time notice while the page continues initializing.
   if (!new Set(["login", "privacy", "mailCenter", "connectDevice"]).has(id)) {
-    if (isGuestUser(user)) {
-      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-20T04553");
-      await maybeShowGuestInfoModal(user);
-    } else if (user) {
-      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-20T04553");
-
-      await initRatingSystem(user);
-    }
+    await d.showAccountNotices(user);
   }
 
   return user;

@@ -7,7 +7,7 @@ test("new gameplay measures decoded audio instead of provisional MP3 metadata, c
   const saved = { Audio: globalThis.Audio, AudioContext: globalThis.AudioContext, OfflineAudioContext: globalThis.OfflineAudioContext, localStorage: globalThis.localStorage, fetch: globalThis.fetch };
   let decodes = 0;
   globalThis.AudioContext = AudioContextStub;
-  globalThis.Audio = class { constructor(src) { this.src = src; this.duration = 4.5; } pause() {} };
+  globalThis.Audio = class { constructor(src) { this.src = src; this.duration = 4.5; } pause() {} addEventListener() {} };
   globalThis.localStorage = { setItem() {}, getItem() { return null; } };
   globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(1), json: async () => ({ categories: [{ key: "answer_correct", folder: "answer_correct" }] }) });
   globalThis.OfflineAudioContext = class { async decodeAudioData() { decodes++; return { duration: 1.824 }; } };
