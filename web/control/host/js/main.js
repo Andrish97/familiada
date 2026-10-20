@@ -258,7 +258,7 @@ async function main() {
   // oraz zapasowy, wyciszony strumień wideo. Podgląd w ustawieniach nie.
   startKeepAlive();
   let subscription = null;
-  const lease = createDeviceLease({ gameId, deviceType: "host", key, onState: ({ state }) => {
+  const lease = createDeviceLease({ onGameRev: (rev) => subscription?.noteServerRevision?.(rev), gameId, deviceType: "host", key, onState: ({ state }) => {
     updateDeviceLeaseOverlay(state);
     if (subscription) {
       if (state === "primary") void subscription.start();

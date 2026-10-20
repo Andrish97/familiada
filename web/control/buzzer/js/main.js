@@ -139,7 +139,7 @@ async function main() {
   }
 
   let subscription = null;
-  const lease = createDeviceLease({ gameId, deviceType: "buzzer", key, onState: ({ state }) => {
+  const lease = createDeviceLease({ onGameRev: (rev) => subscription?.noteServerRevision?.(rev), gameId, deviceType: "buzzer", key, onState: ({ state }) => {
     updateDeviceLeaseOverlay(state);
     if (subscription) {
       if (state === "primary") void subscription.start();

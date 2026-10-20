@@ -334,7 +334,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     let subscription = null;
     let rendererInstance = null;
     let soundReactorInstance = null;
-    const lease = createDeviceLease({ gameId: game.id, deviceType: "display", key, onState: ({ state }) => {
+    const lease = createDeviceLease({ onGameRev: (rev) => subscription?.noteServerRevision?.(rev), gameId: game.id, deviceType: "display", key, onState: ({ state }) => {
       updateDeviceLeaseOverlay(state);
       if (subscription) {
         if (state === "primary") {

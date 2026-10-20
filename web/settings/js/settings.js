@@ -5627,6 +5627,7 @@ function buildSessionRunDetails(r) {
         if (metrics.phase === "read_recovered") return { title: `Odczyt bazy wrócił: ${devices}`, detail: `${metrics.fetch_ms != null ? `Odczyt trwał ${formatDuration(metrics.fetch_ms)}` : "Odczyt działa"}${revision}` };
         if (metrics.phase === "render_error") return { title: `Błąd renderowania: ${devices}`, detail: `${metrics.error_class || "Błąd urządzenia"}${revision}` };
         if (metrics.phase === "render_recovered") return { title: `Renderowanie wróciło: ${devices}`, detail: `Nowy stan został zastosowany${revision}` };
+        if (metrics.phase === "fallback_catchup" && metrics.trigger === "lease_heartbeat") return { title: `Urządzenie samo nadrobiło zgubiony stan: ${devices}`, detail: `Kanał na żywo nie dostarczył zmiany; sygnał życia wykrył zaległość (rewizja ${metrics.latest_revision ?? "?"}${metrics.missed_revisions ? `, brakowało ${metrics.missed_revisions}` : ""}) i stan pobrano z bazy.` };
         if (metrics.phase === "fallback_catchup") return { title: `Odczyt awaryjny nadrobił stan: ${devices}`, detail: `Pominięto ${metrics.previous_revision ?? "?"} → ${metrics.revision ?? "?"}${metrics.fetch_ms != null ? ` · odczyt ${formatDuration(metrics.fetch_ms)}` : ""}` };
       }
       if (event.category === "state_sync") {

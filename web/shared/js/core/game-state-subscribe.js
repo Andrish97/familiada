@@ -403,7 +403,23 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // nie czekamy na własny dzwonek, tylko dociągamy od razu.
   function refetchNow() { return fetchGuarded(); }
 
-    return { start, stop, applyRow, refetchNow,
+  // Rewizja z heartbeatu lease. Jeśli dwa kolejne heartbeaty (~3 s) widzą
+  // nowszą rewizję niż ta, którą urządzenie ma, zmiana z kanału na żywo
+  // przepadła: dociągamy stan i zapisujemy to w diagnostyce.
+  let behindRevision = null;
+  function noteServerRevision(revision) {
+    if (!active || !Number.isSafeInteger(revision)) return;
+    if (revision <= sync.lastRev) { behindRevision = null; return; }
+    if (behindRevision == null || revision < behindRevision) { behindRevision = revision; return; }
+    const missed = revision - Math.max(0, sync.lastRev);
+    behindRevision = null;
+    sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
+      trigger: "lease_heartbeat", latest_revision: revision, missed_revisions: missed,
+    });
+    void fetchGuarded("rpc_fallback");
+  }
+
+    return { start, stop, applyRow, refetchNow, noteServerRevision,
     isDirectConnected() { return directConnected; },
     isDirectTableConnected(table) { return directTableConnected.get(table) === true; } };
 }
