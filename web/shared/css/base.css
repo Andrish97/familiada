@@ -1006,109 +1006,112 @@ main:has(> .footer){
 .sheet-modal-head[hidden],
 .sheet-modal-actions[hidden] { display: none; }
 
-/* ===== Modal sheet (mobile) =====
-   Rozbudowane modale (nie confirm/alert/prompt — te mają klasę .uni-modal
-   i zostają małe) dostają na telefonie znacznik .modal--sheet. W tym
-   trybie modal nie jest już fixed-overlayem na wierzchu strony, tylko
-   zastępuje treść strony w normalnym przepływie dokumentu (tuż nad
-   stopką), analogicznie do "mobile-editing" w editor.js/editor.css.
-   Wymaga, by dany .overlay.modal--sheet był w HTML dzieckiem
-   <main class="wrap">/.explorer, umieszczonym przed .footer. Modal nie
-   musi mieć klasy .overlay — settings.html ma jeden modal (#assignReportModal)
-   na klasach .market-preview-overlay/.market-preview-card zamiast
-   .overlay/.modal, więc wykluczenie z reguły "ukryj resztę" opiera się na
-   samej klasie .modal--sheet, nie na .overlay. */
-@media (max-width: 600px) {
-    /* !important: niektóre strony mają dla swoich sekcji reguły na
-       selektorze ID (np. logo.css: #listShell{display:flex}) —
-       specyficzność ID bije dowolną liczbę klas, więc bez !important ta
-       reguła by przegrywała i dana sekcja zostawałaby widoczna obok
-       modala, ściskając go do resztki miejsca zamiast go zastąpić. */
-    body.sheet-open main.wrap > *:not(.footer):not(.modal--sheet),
-    body.sheet-open main.explorer > *:not(.footer):not(.modal--sheet),
-    body.sheet-open main.mail-wrap > *:not(.modal--sheet) {
-        display: none !important;
-    }
+/* ===== Okno od dołu (telefon i tablet dotykowy) =====
+   Rozbudowane okna (.modal--sheet; nie confirm/alert/prompt -- te mają
+   .uni-modal i zostają małe) na telefonie i ekranach dotykowych wysuwają
+   się od dołu nad całą stroną (decyzja 2026-10-20): przyciemnione tło,
+   panel z zaokrąglonymi górnymi rogami i paskiem do przeciągania
+   (.sheet-handle, js/core/modal-sheet.js), stopka ukryta, safe area
+   z góry i z dołu. Treść okna bez zmian -- tylko nagłówek/akcje/treść
+   ułożone w kolumnę z przewijaną treścią. Warunek musi być taki sam jak
+   SHEET_MQ w modal-sheet.js. */
+@media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
+    body.sheet-open { overflow: hidden; }
+    body.sheet-open .footer { visibility: hidden; }
 
-    /* height (nie min-height!) + overflow:hidden wymuszone tutaj,
-       NIEZALEŻNIE od tego, co dana strona robi z overflow/height poza
-       trybem sheet (np. games.css daje body.games-body/main.wrap
-       overflow:hidden bezwarunkowo, inne strony wcale go nie ograniczają)
-       — inaczej łańcuch niżej (.overlay -> .modal) nie dostaje
-       zdefiniowanej, ograniczonej wysokości, więc .modal's overflow:auto
-       nigdy nie tworzy realnego obszaru przewijania (element bez
-       ograniczonej wysokości rośnie zamiast się przewijać) i treść,
-       która nie mieści się na ekranie, jest ucięta i nieosiągalna. */
-    body.sheet-open main.wrap,
-    body.sheet-open main.explorer,
-    body.sheet-open main.mail-wrap {
-        display: flex;
-        flex-direction: column;
-        height: calc(100dvh - var(--topbar-h));
-        overflow: hidden;
-    }
-
-    /* tylko aktualnie otwarty modal (.sheet-active) wchodzi w treść strony;
-       pozostałe .modal--sheet na tej samej stronie zostają ukryte, nawet
-       gdy body.sheet-open jest ustawione przez inny modal. Druga część
-       selektora (.market-preview-overlay) obsługuje #assignReportModal w
-       settings.html, który nie używa klas .overlay/.modal. */
     body.sheet-open .overlay.modal--sheet:not(.sheet-active),
     body.sheet-open .market-preview-overlay.modal--sheet:not(.sheet-active) {
         display: none !important;
     }
 
-    /* !important na position/inset: css/settings.css ma globalną regułę
-       .overlay{position:fixed!important;top:60px!important;...;z-index:9999!important}
-       (dobraną pod małe, wyśrodkowane okno na desktopie) — bez !important
-       tutaj ta reguła by wygrywała mimo niższej specyficzności (sama też ma
-       !important), więc modal renderował się jako fixed na wierzchu strony,
-       poza normalnym układem flex main.wrap, a stopka (zwykły element flex)
-       lądowała POD nim zamiast pod modalem w przepływie dokumentu. */
+    /* !important na position/inset/z-index: css/settings.css ma globalną
+       regułę .overlay{position:fixed!important;top:60px!important;...}. */
     body.sheet-open .overlay.modal--sheet.sheet-active,
     body.sheet-open .market-preview-overlay.modal--sheet.sheet-active {
-        position: static !important;
-        inset: auto !important;
-        /* !important: okna z modal.js mają przyciemnienie w inline style
-           (background: var(--modal-scrim)) -- jako strona tło ma być tłem
-           strony, nie ciemniejszym panelem */
-        background: none !important;
-        padding: 0;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 1200 !important;
         display: flex !important;
-        flex-direction: column; /* jawnie — .modal ma być jedynym, w pełni wysokim dzieckiem */
-        flex: 1;
-        min-height: 0;
-        overflow: hidden; /* scroll ma być w .modal, nie tutaj */
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 0 !important;
+        background: var(--modal-scrim, rgba(0,0,0,.55)) !important;
+        overflow: hidden;
+        animation: sheetScrimIn .28s ease both;
+    }
+    body.sheet-open .modal--sheet.sheet-active.sheet-closing {
+        animation: sheetScrimOut .24s ease both;
     }
 
-    /* !important na width/max-width/height/max-height: niektóre modale mają
-       te własności w inline style="" (np. #maintenancePreviewOverlay .modal
-       ma style="max-width:720px;width:94vw;max-height:90vh" — dobrane pod
-       małe, wyśrodkowane okno na desktopie) — inline style bije zwykłe
-       reguły w arkuszu niezależnie od ich specyficzności, więc bez
-       !important modal zostawał ucięty do 90vh zamiast wypełnić całą
-       dostępną wysokość, a stopka strony (.footer) było widać pod nim. */
-    .modal--sheet .modal,
-    .modal--sheet .market-preview-card {
+    /* !important na wymiarach: część okien ma je w inline style
+       (dobrane pod wyśrodkowane okno na komputerze). */
+    .modal--sheet.sheet-active .modal,
+    .modal--sheet.sheet-active .market-preview-card {
+        position: relative;
         width: 100% !important;
-        max-width: none !important;
-        height: auto !important;
+        max-width: 760px !important;
+        height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px)) !important;
         min-height: 0;
-        flex: 1; /* wypełnia dokładnie tyle, ile zostawi .overlay (flex column) */
         max-height: none !important;
-        border-radius: 0;
-        margin: 0 !important; /* settings.css: .overlay .modal{margin-top:20px!important} */
+        margin: 0 !important;
+        border-radius: 22px 22px 0 0;
+        border: 1px solid var(--line);
+        border-bottom: 0;
+        background: #121524;
+        --under: #121524;
+        box-shadow: 0 -18px 60px rgba(0,0,0,.6);
+        padding: 22px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+        padding-left: calc(16px + env(safe-area-inset-left, 0px));
+        padding-right: calc(16px + env(safe-area-inset-right, 0px));
         display: flex;
         flex-direction: column;
         overflow: hidden; /* przewija się tylko treść między nagłówkiem i akcjami */
-        -webkit-overflow-scrolling: touch;
-        /* Modal ma wyglądać jak treść strony, nie jak karta na tle strony */
-        background: transparent;
-        --under: #050914; /* arkusz leży na tle strony */
-        border: 0;
-        box-shadow: none;
+        transform: translateY(var(--sheet-drag, 0px));
+        animation: sheetUp .34s cubic-bezier(.2,.8,.2,1) both;
+        will-change: transform;
     }
+    .modal--sheet.sheet-active.sheet-dragging .modal,
+    .modal--sheet.sheet-active.sheet-dragging .market-preview-card { animation: none; transition: none; }
+    .modal--sheet.sheet-active.sheet-settling .modal,
+    .modal--sheet.sheet-active.sheet-settling .market-preview-card { animation: none; transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+    .modal--sheet.sheet-active.sheet-closing .modal,
+    .modal--sheet.sheet-active.sheet-closing .market-preview-card { animation: sheetDown .24s ease-in both; }
 
+    /* Pasek do przeciągania (zamyka okno: przeciągnięcie w dół albo stuknięcie). */
+    .sheet-handle {
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 120px; height: 22px;
+        padding: 0; border: 0; background: none;
+        cursor: grab; touch-action: none;
+        display: grid; place-items: center;
+    }
+    .sheet-handle::before {
+        content: "";
+        width: 44px; height: 5px; border-radius: 999px;
+        background: rgba(255,255,255,.28);
+    }
+    .modal--sheet:not(.sheet-active) .sheet-handle { display: none; }
+
+    /* Tablet: niższy panel (nie musi sięgać pod sam topbar). */
+    @media (min-width: 601px) {
+        .modal--sheet.sheet-active .modal,
+        .modal--sheet.sheet-active .market-preview-card {
+            height: min(88dvh, 920px) !important;
+        }
+    }
+}
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--sheet-drag, 0px)); } }
+@keyframes sheetDown { from { transform: translateY(var(--sheet-drag, 0px)); } to { transform: translateY(100%); } }
+@keyframes sheetScrimIn { from { background-color: rgba(0,0,0,0); } }
+@keyframes sheetScrimOut { to { background-color: rgba(0,0,0,0); } }
+@media (prefers-reduced-motion: reduce) {
+    .modal--sheet.sheet-active .modal, .modal--sheet.sheet-active .market-preview-card,
+    .modal--sheet.sheet-active.sheet-closing .modal, .modal--sheet.sheet-active.sheet-closing .market-preview-card { animation-duration: 1ms !important; }
+}
+@media (max-width: 600px), (hover: none) and (pointer: coarse) and (max-width: 1366px) {
     .modal--sheet.sheet-active .sheet-modal-head,
     .modal--sheet.sheet-active .sheet-modal-actions,
     .modal--sheet.sheet-active .sheet-modal-body {

@@ -65,6 +65,16 @@ podliczania jako stan bieżącej operacji.
   podtytuły Gier/Logo/Baz w HTML, Connect przed sesją; Społeczność bez
   „Ładowanie…” przy pierwszym odczycie. Taśmy ładowania: atrapa zrzutów
   z `db.latency`.
+- **Okna od dołu na telefonie i tablecie (decyzja użytkownika 2026-10-20):**
+  na telefonie i ekranach dotykowych tabletów duże okna (dziś `modal--sheet`,
+  zastępujące treść strony) wysuwają się od dołu (styl menu kontekstowego
+  Eksploratora): na telefonie prawie na całą wysokość, pasek u góry do
+  zamykania przeciągnięciem, płynna animacja; przycisk „Wstecz” w topbarze
+  nie przejmuje już zamykania; treść okna bez zmian; okno nad wszystkim
+  (także nad stopką, która się chowa), z uwzględnieniem safe area. Małe okna
+  (potwierdzenia, komunikaty, wpisywanie nazwy) zostają okienkami także na
+  telefonie. Okien niedostępnych w widoku mobilnym nie przerabiamy. Na
+  komputerze bez zmian (zwykłe okna).
 - **Ramka przewijanych list (decyzja użytkownika 2026-10-20):** na komputerze
   przewijane listy (Gry, Bazy, Logo, Zadania, Mails, Connect) mają ramkę jak
   lista pytań w edytorze gry (18 px; listy w kartach 14 px). Na telefonie bez

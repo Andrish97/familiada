@@ -425,7 +425,7 @@ function initImageViewer() {
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
     enterModalSheet(overlay, { backBtn, onClose: close });
-    (isSheetViewport() ? backBtn : closeBtn)?.focus();
+    (isSheetViewport() ? overlay.querySelector(".sheet-handle") : closeBtn)?.focus();
   };
 
   const close = () => {
@@ -453,7 +453,7 @@ function initImageViewer() {
     if (e.key === "Tab") {
       // W tym prostym dialogu jedynym elementem interaktywnym jest zamknięcie.
       e.preventDefault();
-      (isSheetViewport() ? backBtn : closeBtn)?.focus();
+      (isSheetViewport() ? overlay.querySelector(".sheet-handle") : closeBtn)?.focus();
     }
   });
 

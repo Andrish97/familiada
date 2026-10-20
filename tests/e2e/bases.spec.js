@@ -141,7 +141,7 @@ test("E20: arkusz udostępniania Bazy przetrwa obrót telefonu (w poziomie osło
     await expect(page.locator("#shareEmail")).toBeVisible();
     await assertSheetFits("portrait after rotate");
     await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-back-390x844.png"), fullPage: true });
-    await page.locator("#btnBack").tap();
+    await overlay.locator(".sheet-handle").tap(); // okno od dołu zamyka pasek
     await expect(overlay).toBeHidden();
     await expect.poll(() => new URL(page.url()).searchParams.has("dialog")).toBe(false);
   } finally {

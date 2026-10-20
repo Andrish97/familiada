@@ -10,7 +10,6 @@
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
 import { t } from "../../translation/translation.js?v=v2026-10-20T19254";
-import { icon, iconText } from "./icons.js?v=v2026-10-20T19254";
 import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-20T19254";
 
 
@@ -37,6 +36,10 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     e.preventDefault();
     closeBtn.click();
   });
+  // Okno od dołu: klik w przyciemnione tło zamyka z animacją.
+  document.addEventListener("click", (e) => {
+    if (activeOverlay && e.target === activeOverlay && activeOverlay.classList.contains("sheet-active")) closeSheetAnimated();
+  });
   document.addEventListener("click", (e) => {
     const cancel = e.target.closest?.("[data-modal-cancel]");
     if (!cancel) return;
@@ -47,18 +50,16 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
   });
 }
 
-const SHEET_MQ = "(max-width:600px)";
+// Telefon albo tablet dotykowy -- ten sam warunek co w css/base.css
+// („Okno od dołu”).
+const SHEET_MQ = "(max-width:600px), (hover:none) and (pointer:coarse) and (max-width:1366px)";
 const sheetMql = typeof window !== "undefined" && window.matchMedia
   ? window.matchMedia(SHEET_MQ)
   : { matches: false, addEventListener() {}, addListener() {} };
 
 let activeClose = null;
 let activeBack = null;
-let activeBackBtn = null;
-let backBtnOrigText = null;
 let activeOverlay = null;
-let activeKeepBackBtnText = false;
-let savedScrollY = 0;
 let activeDialogKey = null;
 let handlingPopstate = false;
 const sheetRoutes = new Map();
@@ -197,8 +198,62 @@ function prepareSheetLayout(overlayEl) {
   for (const action of nestedActions) actions.append(action);
   if (!header.childElementCount) header.hidden = true;
   if (!actions.childElementCount) actions.hidden = true;
-  modal.replaceChildren(header, actions, body);
+  modal.replaceChildren(sheetHandle(overlayEl), header, actions, body);
   modal.dataset.sheetLayoutReady = "1";
+}
+
+// Pasek u góry okna od dołu: przeciągnięcie w dół (albo stuknięcie) zamyka.
+function sheetHandle(overlayEl) {
+  const handle = document.createElement("button");
+  handle.type = "button";
+  handle.className = "sheet-handle";
+  handle.setAttribute("aria-label", t("common.modal.closeLabel"));
+  let startY = null, lastY = 0, lastT = 0, velocity = 0, moved = false;
+  const setDrag = (px) => overlayEl.style.setProperty("--sheet-drag", `${Math.max(0, px)}px`);
+  handle.addEventListener("pointerdown", (e) => {
+    startY = e.clientY; lastY = e.clientY; lastT = e.timeStamp; velocity = 0; moved = false;
+    handle.setPointerCapture?.(e.pointerId);
+    overlayEl.classList.add("sheet-dragging");
+  });
+  handle.addEventListener("pointermove", (e) => {
+    if (startY === null) return;
+    const dy = e.clientY - startY;
+    if (Math.abs(dy) > 4) moved = true;
+    const dt = Math.max(1, e.timeStamp - lastT);
+    velocity = (e.clientY - lastY) / dt;
+    lastY = e.clientY; lastT = e.timeStamp;
+    setDrag(dy);
+  });
+  const end = () => {
+    if (startY === null) return;
+    const dy = lastY - startY;
+    startY = null;
+    overlayEl.classList.remove("sheet-dragging");
+    const panel = overlayEl.querySelector(":scope > .modal, :scope > .market-preview-card");
+    const limit = Math.min(160, (panel?.offsetHeight || 600) * 0.25);
+    if (!moved || dy > limit || velocity > 0.6) { closeSheetAnimated(); return; }
+    overlayEl.classList.add("sheet-settling");
+    setDrag(0);
+    setTimeout(() => overlayEl.classList.remove("sheet-settling"), 240);
+  };
+  handle.addEventListener("pointerup", end);
+  handle.addEventListener("pointercancel", end);
+  return handle;
+}
+
+// Zamknięcie z animacją zjazdu w dół (pasek, klik w tło); potem zwykłe
+// zamknięcie okna (historia ?dialog= albo onClose strony).
+let closingTimer = null;
+function closeSheetAnimated() {
+  const overlay = activeOverlay;
+  if (!overlay || closingTimer) return;
+  overlay.classList.add("sheet-closing");
+  closingTimer = setTimeout(() => {
+    closingTimer = null;
+    overlay.classList.remove("sheet-closing");
+    overlay.style.removeProperty("--sheet-drag");
+    if (activeOverlay === overlay) handleSheetBack();
+  }, 230);
 }
 
 function restoreSheetLayout(overlayEl) {
@@ -224,21 +279,6 @@ function restoreSheetLayout(overlayEl) {
 function applyPresentation(matches) {
   document.body.classList.toggle("sheet-open", matches);
   activeOverlay?.classList.toggle("sheet-active", matches);
-
-  if (!activeBackBtn) return;
-  // Niektóre przyciski (np. #btnMailBackTopbar w podglądzie maila) to sama
-  // strzałka "←" — dla nich pomijamy dopisywanie "Wstecz", bo dublowałoby
-  // się z ich naturalnym, już oczywistym znaczeniem w kontekście wątku.
-  if (!activeKeepBackBtnText) {
-    activeBackBtn.innerHTML = matches ? iconText("arrow-left", t("common.modalBack")) : backBtnOrigText;
-  }
-  // Znacznik "to JEST aktywny przycisk wstecz teraz" — potrzebny bo np.
-  // games.html/settings.html mają dodatkowy, dedykowany #btnBackSheet
-  // (klasa .topbar-sheet-back) pokazywany WYŁĄCZNIE gdy jest aktywny —
-  // inaczej pokazywałby się zawsze przy body.sheet-open, nawet gdy dany
-  // modal (np. podgląd maila w settings) faktycznie przejął INNY,
-  // istniejący przycisk (#btnMailBackTopbar) — dwa widoczne "wstecz" naraz.
-  activeBackBtn.classList.toggle("sheet-back-active", matches);
 }
 
 function onSheetMqChange(e) {
@@ -250,11 +290,10 @@ function onSheetMqChange(e) {
 sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.(onSheetMqChange);
 
 // overlayEl: element .overlay (lub .market-preview-overlay) danego modala.
-// opts.backBtn: istniejący przycisk wstecz w topbarze strony — dostaje
-//   tekst "← Wstecz" na czas otwarcia modala (i z powrotem, żywo, jeśli
-//   ekran zmieni szerokość podczas gdy modal jest otwarty).
-// opts.onClose: funkcja zamykająca TEN modal — wywoływana przez
-//   handleSheetBack() gdy użytkownik kliknie przycisk wstecz w topbarze.
+// opts.onClose: funkcja zamykająca TEN modal (pasek, klik w tło, Wstecz
+//   przeglądarki). opts.backBtn / keepBackBtnText -- dawne przejęcie
+//   przycisku wstecz w topbarze; okno od dołu leży nad topbarem, więc
+//   przycisk nie jest już przejmowany (parametry zostają dla zgodności).
 export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackBtnText = false, historyKey = overlayEl?.id, restore = false } = {}) {
   if (!isSheetViewport() || overlayEl?.classList.contains("modal--keep-dialog")) return;
   prepareSheetLayout(overlayEl);
@@ -267,11 +306,8 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackB
   // pozycja scrolla jest tracona NA ZAWSZE, jeszcze zanim modal się zamknie.
   // Zapamiętujemy ją tutaj i przywracamy w exitModalSheet(), żeby strona po
   // zamknięciu modala wróciła w to samo miejsce, a nie na sam początek.
-  savedScrollY = window.scrollY;
-
   activeOverlay = overlayEl || null;
   activeClose = onClose || null;
-  activeKeepBackBtnText = keepBackBtnText;
   activeDialogKey = historyKey || null;
   const currentKey = urlDialog();
   if (activeDialogKey && currentKey !== activeDialogKey) {
@@ -280,19 +316,9 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackB
   activeBack = typeof onBack === "function" ? onBack : null;
   if (activeDialogKey) sheetRoutes.set(activeDialogKey, { overlay: overlayEl, options: { backBtn, onClose, onBack, keepBackBtnText } });
 
-  if (backBtn) {
-    activeBackBtn = backBtn;
-    backBtnOrigText = backBtn.innerHTML;
-  }
-
+  overlayEl?.style.removeProperty("--sheet-drag");
+  overlayEl?.classList.remove("sheet-closing", "sheet-dragging", "sheet-settling");
   applyPresentation(true);
-  // Arkusz zaczyna się tuż pod topbarem tylko przy przewinięciu 0. Chromium
-  // sam przycina scroll do skróconej strony, ale Safari na iPhonie potrafi
-  // zostawić stare przesunięcie (np. stuknięcie, gdy strona jeszcze sunie po
-  // przewinięciu) -- wtedy nagłówek arkusza wchodzi pod topbar. Pozycja jest
-  // zapamiętana wyżej (savedScrollY) i wraca po zamknięciu.
-  window.scrollTo(0, 0);
-  requestAnimationFrame(() => { if (activeOverlay === overlayEl) window.scrollTo(0, 0); });
   document.dispatchEvent(new CustomEvent("modal-sheet:enter", { detail: { overlay: overlayEl } }));
 }
 
@@ -302,23 +328,14 @@ export function exitModalSheet(overlayEl) {
   restoreSheetLayout(overlayEl || activeOverlay);
 
   activeOverlay = null;
-  activeBackBtn = null;
-  backBtnOrigText = null;
   activeClose = null;
   activeBack = null;
-  activeKeepBackBtnText = false;
   activeDialogKey = null;
 
   if (key && urlDialog() === key) {
     if (!handlingPopstate) history.back();
   }
 
-  // Poczekaj na przeliczenie layoutu (main.wrap wraca do swojej normalnej,
-  // przewijalnej wysokości) zanim przywrócimy scroll — w tej samej klatce
-  // co zdjęcie klasy sheet-open przeglądarka może jeszcze nie mieć
-  // odtworzonego pełnego, oryginalnego zakresu przewijania.
-  const y = savedScrollY;
-  requestAnimationFrame(() => window.scrollTo(0, y));
 }
 
 // Wywoływane na początku handlera kliknięcia przycisku wstecz w

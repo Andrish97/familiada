@@ -56,13 +56,8 @@ main.explorer-page > .explorer {
     min-height: 0;
 }
 
-@media (max-width: 600px) {
-    body.sheet-open main.explorer-page > .toolbar,
-    body.sheet-open main.explorer-page > .explorer {
-        display: none !important;
-    }
-    body.sheet-open #contextMenu { display: none !important; }
-}
+/* okno od dołu leży nad stroną -- menu kontekstowe chowa się pod nim */
+body.sheet-open #contextMenu { display: none !important; }
 
 .explorer {
     display: grid;

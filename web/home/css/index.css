@@ -546,14 +546,8 @@ details[open] .faq-q .faq-caret {
 }
 
 @media (max-width: 600px) {
-  body.sheet-open .pipeline-wrap { display: none !important; }
-  .imgv-overlay.sheet-active {
-    /* Jako element flex nie może zachować z-indexu nakładki: przykrywał
-       topbar, przez co nagłówek zachodził na niego, a Wstecz nie klikał. */
-    z-index: auto !important;
-    padding: 0;
-  }
-  .imgv-overlay.sheet-active .imgv-panel { padding: 0; }
+  .imgv-overlay.sheet-active { padding: 0; }
+  .imgv-overlay.sheet-active .imgv-panel { padding: 24px 0 env(safe-area-inset-bottom, 0px); }  /* miejsce na pasek okna od dołu */
   .imgv-overlay.sheet-active .sheet-modal-head {
     flex: 0 0 auto;
     width: auto;
