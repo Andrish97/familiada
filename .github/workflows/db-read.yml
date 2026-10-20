@@ -39,5 +39,7 @@ jobs:
       - name: Read
         env:
           SQL_FILE: ${{ inputs.sql_file }}
-          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -U supabase_admin -d postgres
+          # rola agent_reader (migracja 414): tylko odczyt wybranych tabel,
+          # bez auth/profili/poczty, bez uprawnień superużytkownika
+          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -h 127.0.0.1 -U agent_reader -d postgres
         run: scripts/db-read.sh "$SQL_FILE"

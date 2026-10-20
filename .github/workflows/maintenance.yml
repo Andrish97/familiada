@@ -71,7 +71,7 @@ jobs:
         id: activity
         working-directory: .
         env:
-          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -U supabase_admin -d postgres
+          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -h 127.0.0.1 -U agent_reader -d postgres
           DB_READ_TUPLES: '1'
           DB_READ_NO_NOTICE: '1'
         run: |
