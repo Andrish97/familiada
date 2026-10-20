@@ -2802,6 +2802,7 @@ body{
 .shareRow--compact{ min-height: 64px; box-sizing: border-box; }
 .shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .shareRow--compact .shareTags{ margin-top: 0; }
+.shareRow--compact .shareNote{ max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shareRow--compact .shareRowActions{ align-self: stretch; align-items: stretch; flex-wrap: nowrap; }
 .shareRow--compact .shareRowActions .btn{ width: 40px; min-width: 40px; min-height: 44px; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
 .shareRowActions .shareActionCountdown{ flex-direction: column; gap: 3px; }
@@ -2895,7 +2896,7 @@ button.rowsSectionHead{ cursor: pointer; }
   .shareRow--compact .shareTags{ gap: 4px; }
   .shareRow--compact .shareTags .tag{ font-size: 10px; padding: 2px 6px; }
   /* nazwa w jednej linii z wielokropkiem (pełna w dymku), znaczniki zawijają się zamiast ucinać */
-  .shareRow--compact .shareEmail{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shareRow--compact .shareEmail, .shareRow--compact .shareNote{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .shareRow--compact .shareTags{ width: auto; max-width: 100%; margin-top: 6px; flex-wrap: wrap; overflow: hidden; }
   .shareRow--compact .shareTags > *{ min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }

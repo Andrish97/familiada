@@ -50,6 +50,7 @@
 @media (max-width: 600px){
   .baseShareRoleFull{ display:none; }
   .baseShareRoleShort{ display:inline; }
+  .shareRow--compact .shareRowActions .baseShareRole{ min-height: 40px; height: 40px; }
   /* w wierszu listy rola jako sama ikona (oko/ołówek, opis w dymku) —
      kafel mieści się w jednym rzędzie jak pozostałe listy */
   .shareRow--compact .shareRowActions .baseShareRole .baseShareRoleLabel{ display: none; }

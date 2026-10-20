@@ -235,7 +235,9 @@ function buildDb(lang, extras = {}) {
       friends: friends.filter((f) => f.direction === "friend").slice(2).map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, cooldown_until: null })),
       outgoing: friends.filter((f) => f.direction === "friend").slice(0, 1).map((f, i) => ({ task_id: id("8e00", i + 1), user_id: f.friend_user_id, label: f.label, email: f.email, status: "pending", role: "viewer", is_friend: true, email_enabled: true, cooldown_until: null }))
         .concat(friends.filter((f) => f.direction === "outgoing").slice(0, 1).map((f, i) => ({ task_id: id("8e00", i + 5), user_id: f.friend_user_id, label: f.label, email: f.email, status: "declined", role: "viewer", is_friend: false, email_enabled: true, cooldown_until: null }))),
-      active: friends.filter((f) => f.direction === "friend").slice(1, 2).map((f, i) => ({ task_id: id("8e00", i + 9), user_id: f.friend_user_id, label: f.label, email: f.email, status: "done", role: "editor", is_friend: true, email_enabled: true })),
+      active: friends.filter((f) => f.direction === "friend").slice(1, 2).map((f, i) => ({ task_id: id("8e00", i + 9), user_id: f.friend_user_id, label: f.label, email: f.email, status: "done", role: "editor", is_friend: true, email_enabled: true }))
+        // długa nazwa: sprawdza wielokropek i stałą wysokość kafla
+        .concat([{ task_id: id("8e00", 12), user_id: id("8810", 99), label: "bardzo_dluga_nazwa_uzytkownika_do_testu", email: "bardzo.dluga.nazwa.uzytkownika@example.test", status: "pending", role: "editor", is_friend: true, email_enabled: true, cooldown_until: null }]),
     },
     tasks_list: tasks,
     resource_copy_inbox: [],
