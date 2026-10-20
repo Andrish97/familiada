@@ -36,6 +36,12 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     w różnych miejscach (widoki, pamięci podręczne, liczniki, sortowanie,
     filtry). Cel: jedno źródło stanu i jedna prosta, niezawodna ścieżka
     „stan → co pokazać → render” dla drzewa, listy i lewego panelu.
+  - **Wygląd strony zostaje** (użytkownikowi się podoba) — bez zmian
+    wizualnych poza tym, czego wymagają nowe funkcje (kosz w drzewie).
+  - **Menu kontekstowe do poprawy:** prawy przycisk myszy i długie
+    przytrzymanie na telefonie — ma się ładnie mieścić i być wygodnie
+    dostępne w widoku mobilnym (dziś „nie do końca”). Pozycje menu z tego
+    samego rejestru akcji.
   - **Przemyśleć wyszukiwanie i filtrowanie** (tekst, #tagi w polu
     wyszukiwania, filtr tagów i kategorii w lewym panelu, blokady akcji
     w widokach wyszukiwania/tagów), żeby działało dobrze i spójnie.
