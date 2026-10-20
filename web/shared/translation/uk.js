@@ -5214,7 +5214,7 @@ const uk = {
       defaultB: "Команда Б",
       placeholderA: "напр. Коваленки",
       placeholderB: "напр. Петренки",
-      displayCount: "На Дисплеї: {n}/{max} символів",
+      displayFull: "Довша назва не вміститься на Дисплеї",
       displayInvalid: "Дисплей не покаже символів: {chars}",
       defaultHint: "Якщо не введеш назви команд, будуть показані типові значення: {a} і {b}",
     },

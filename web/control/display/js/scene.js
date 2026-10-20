@@ -25,7 +25,7 @@
 // ryzyko niezgodności z tym, jak wygląda dziś (ustalone wprost).
 
 import { loadJson, buildGlyphMap, resolveGlyph } from "../../../shared/js/display/fonts.js?v=v2026-10-20T11473";
-import { LONG_CHAR_W, LONG_GAP, LONG_MAX_CHARS, longTextChars } from "../../../shared/js/display/long-text.js?v=v2026-10-20T11473";
+import { LONG_GAP, layoutLongText } from "../../../shared/js/display/long-text.js?v=v2026-10-20T11473";
 import { createAnimator } from "../../../shared/js/display/anim.js?v=v2026-10-20T11473";
 import { createDisplays } from "../../../shared/js/display/displays.js?v=v2026-10-20T11473";
 import { createThemeManager } from "../../../shared/js/display/theme_manager.js?v=v2026-10-20T11473";
@@ -335,26 +335,21 @@ export async function createScene() {
     for (let i=0;i<3;i++) renderCharToTile(GLYPHS, tripleTiles[i], s[i], onColor, COLORS.dotOff);
   };
 
-  // Nazwy drużyn: tyle znaków, ile mieści pole (long-text.js -- ta sama reguła
-  // co licznik w ustawieniach gry).
+  // Nazwy drużyn: znaki proporcjonalnie, wyśrodkowane (long-text.js -- ten
+  // sam układ co pomiar w ustawieniach gry). Co się nie mieści, jest pomijane.
   const setLongTextCentered = (GLYPHS, panel, text, onColor) => {
-    const chars = longTextChars(text).slice(0, LONG_MAX_CHARS);
     for (let y=0;y<panel.Y;y++) for (let x=0;x<panel.X;x++) panel.dots[y][x].setAttribute("fill", COLORS.dotOff);
-    const glyphs = chars.map(ch => resolveGlyph(GLYPHS, ch));
-    const charW = LONG_CHAR_W, gapCol = LONG_GAP;
-    const totalW = glyphs.length === 0 ? 0 : (glyphs.length * charW + (glyphs.length-1) * gapCol);
-    let xCursor = Math.max(0, Math.floor((panel.X - totalW) / 2));
-    for (const glyph of glyphs) {
-      for (let row=0;row<7;row++) {
-        const bits = glyph[row] | 0;
-        for (let col=0;col<5;col++) {
-          const mask = 1 << (4-col);
-          const on = (bits & mask) !== 0;
-          const px = xCursor + col;
-          if (px >= 0 && px < panel.X) panel.dots[row][px].setAttribute("fill", on ? onColor : COLORS.dotOff);
+    const { items, width } = layoutLongText(text, GLYPHS);
+    let xCursor = Math.max(0, Math.floor((panel.X - width) / 2));
+    for (const item of items) {
+      if (xCursor + item.width > panel.X) break;
+      for (let row=0; item.glyph && row<7; row++) {
+        const bits = item.glyph[row] | 0;
+        for (let col=0; col<item.width; col++) {
+          if (bits & (1 << (4 - (item.from + col)))) panel.dots[row][xCursor + col].setAttribute("fill", onColor);
         }
       }
-      xCursor += charW + gapCol;
+      xCursor += item.width + LONG_GAP;
     }
   };
 

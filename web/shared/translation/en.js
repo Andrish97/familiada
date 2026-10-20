@@ -5215,7 +5215,7 @@ const en = {
       defaultB: "Team B",
       placeholderA: "e.g. The Smiths",
       placeholderB: "e.g. The Johnsons",
-      displayCount: "On the Display: {n}/{max} characters",
+      displayFull: "A longer name will not fit on the Display",
       displayInvalid: "The Display cannot show: {chars}",
       defaultHint: "If you don't enter team names, the default values will be shown: {a} and {b}",
     },

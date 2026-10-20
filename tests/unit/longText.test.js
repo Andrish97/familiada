@@ -1,26 +1,33 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { LONG_MAX_CHARS, measureLongText, clipLongText } from "../../web/shared/js/display/long-text.js";
+import { LONG_COLS, layoutLongText, measureLongText, clipLongText } from "../../web/shared/js/display/long-text.js";
 import { buildGlyphMap } from "../../web/shared/js/display/fonts.js";
 
-// Długie pole Wyświetlacza (nazwy drużyn): 95 kolumn, znak 5 + przerwa 1.
-test("long display field holds exactly 16 characters", () => {
-  assert.equal(LONG_MAX_CHARS, 16);
-  assert.equal(LONG_MAX_CHARS * 5 + (LONG_MAX_CHARS - 1), 95);
+const glyphs = buildGlyphMap(JSON.parse(readFileSync(new URL("../../web/shared/fonts/display/font_5x7.json", import.meta.url))));
+
+// Długie pole Wyświetlacza (nazwy drużyn): 95 kolumn, znaki proporcjonalnie
+// z rzeczywistej czcionki, 1 kolumna przerwy, spacja 3 kolumny.
+test("width comes from the real glyphs, not from the number of characters", () => {
+  assert.equal(LONG_COLS, 95);
+  assert.equal(layoutLongText("W", glyphs).width, 5);
+  assert.equal(layoutLongText(".", glyphs).width, 2);
+  assert.equal(layoutLongText("!", glyphs).width, 1);
+  assert.equal(layoutLongText("A B", glyphs).width, 5 + 1 + 3 + 1 + 5);
+  // 16 × „W” = 95 kolumn -- dokładnie pełne pole.
+  assert.equal(measureLongText("W".repeat(16), glyphs).fits, true);
+  assert.equal(measureLongText("W".repeat(17), glyphs).fits, false);
 });
 
-test("team names are measured and clipped as the Display draws them", () => {
-  assert.equal(clipLongText("Wesołe Króliczki z Wąchocka"), "Wesołe Króliczki");
-  assert.equal(clipLongText("Kowalscy"), "Kowalscy");
-  // ß rośnie do SS po zamianie na wielkie litery -- liczy się to, co narysuje Wyświetlacz.
-  assert.equal(clipLongText("ß".repeat(10)), "ß".repeat(8));
-  const m = measureLongText("Króliczki", null);
-  assert.deepEqual([m.count, m.max, m.fits], [9, 16, true]);
+test("narrow characters leave room for more text", () => {
+  const dots = ".".repeat(16);
+  assert.equal(measureLongText(`${dots}KOT`, glyphs).fits, true);
+  assert.ok(clipLongText(`${dots}KOTY I PSY`, glyphs).length > 16);
+  assert.equal(clipLongText("W".repeat(20), glyphs), "W".repeat(16));
+  assert.ok(layoutLongText(clipLongText("Wesołe Króliczki z Wąchocka", glyphs), glyphs).width <= LONG_COLS);
 });
 
 test("characters without a Display glyph are reported", () => {
-  const glyphs = buildGlyphMap(JSON.parse(readFileSync(new URL("../../web/shared/fonts/display/font_5x7.json", import.meta.url))));
   assert.deepEqual(measureLongText("Króliczki", glyphs).invalid, []);
   assert.deepEqual(measureLongText("Drużyna 😀", glyphs).invalid, ["😀"]);
 });

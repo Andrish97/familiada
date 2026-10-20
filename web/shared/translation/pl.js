@@ -5124,7 +5124,7 @@ const pl = {
       defaultB: "Drużyna B",
       placeholderA: "np. Kowalscy",
       placeholderB: "np. Nowakowie",
-      displayCount: "Na Wyświetlaczu: {n}/{max} znaków",
+      displayFull: "Dłuższa nazwa nie zmieści się na Wyświetlaczu",
       displayInvalid: "Wyświetlacz nie pokaże znaków: {chars}",
       defaultHint: "Jeśli nie wpiszesz nazw drużyn, zostaną pokazane domyślne wartości: {a} i {b}",
     },

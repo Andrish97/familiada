@@ -12,7 +12,7 @@ import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v20
 import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T11473";
 import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T11473";
 import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T11473";
-import { LONG_MAX_CHARS, measureLongText, clipLongText } from "../../../shared/js/display/long-text.js?v=v2026-10-20T11473";
+import { LONG_MAX_INPUT, measureLongText, clipLongText } from "../../../shared/js/display/long-text.js?v=v2026-10-20T11473";
 
 import {
   loadSfxManifest, getSfxCategories,
@@ -535,12 +535,12 @@ function renderTeams() {
     <div class="gs-section">
       <div class="gs-field">
         <div class="gs-label">${t("gameSettings.teams.nameA")}</div>
-        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="${LONG_MAX_CHARS}" placeholder="${escAttr(t("gameSettings.teams.placeholderA"))}"/>
+        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderA"))}"/>
         <div class="gs-hint gs-team-measure" id="gsTeamAMeasure" aria-live="polite"></div>
       </div>
       <div class="gs-field">
         <div class="gs-label">${t("gameSettings.teams.nameB")}</div>
-        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="${LONG_MAX_CHARS}" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
+        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
         <div class="gs-hint gs-team-measure" id="gsTeamBMeasure" aria-live="polite"></div>
       </div>
       <div class="gs-hint" style="margin-top:10px">${t("gameSettings.teams.defaultHint").replace("{a}", t("gameSettings.teams.defaultA")).replace("{b}", t("gameSettings.teams.defaultB"))}</div>
@@ -548,21 +548,26 @@ function renderTeams() {
   `;
 
   // Nazwa drużyny ma się zmieścić w długim polu Wyświetlacza (long-text.js):
-  // pole przyjmuje tyle znaków, ile pole pokaże, licznik i ostrzeżenie o
-  // znakach bez glifu -- jak w edytorze napisów logo.
+  // liczy się rzeczywista szerokość znaków z czcionki Wyświetlacza (kropka
+  // węższa niż „W”). Pole nie przyjmie więcej, niż Wyświetlacz pokaże; bez
+  // liczników -- komunikat tylko, gdy coś odcięto albo znak nie ma glifu.
+  const clippedKeys = new Set();
   const measure = (key) => {
     const box = document.getElementById(`gsTeam${key}Measure`);
     if (!box) return;
     const m = measureLongText(localSettings.teams[`team${key}`], _logoFont);
-    const lines = [t("gameSettings.teams.displayCount", { n: m.count, max: m.max })];
+    const lines = [];
+    if (clippedKeys.has(key)) lines.push(t("gameSettings.teams.displayFull"));
     if (m.invalid.length) lines.push(t("gameSettings.teams.displayInvalid", { chars: m.invalid.join(" ") }));
     box.textContent = lines.join(" · ");
-    box.classList.toggle("is-warn", m.invalid.length > 0);
+    box.hidden = lines.length === 0;
+    box.classList.toggle("is-warn", lines.length > 0);
   };
   for (const key of ["A", "B"]) {
     document.getElementById(`gsTeam${key}`)?.addEventListener("input", e => {
-      const clipped = clipLongText(e.target.value);
-      if (clipped !== e.target.value) e.target.value = clipped;
+      const clipped = clipLongText(e.target.value, _logoFont);
+      if (clipped !== e.target.value) { e.target.value = clipped; clippedKeys.add(key); }
+      else if (measureLongText(clipped, _logoFont).fits) clippedKeys.delete(key);
       localSettings.teams[`team${key}`] = clipped;
       measure(key);
       markDirty();
