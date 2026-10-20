@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fGvOMsxWHwBuU0yj905jfGmHPctBFuUCkiZe7tENqua0nbTrmMDg1v3srgSqoUO
+\restrict fLG80V1L7BhGDd75ntthk12Mwj33S2AcTcuK7WWUu0UcRKghWdh0GMdsqVVIAcN
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5383,7 +5383,7 @@ BEGIN
   END IF;
   IF v_trigger IS NOT NULL AND v_trigger NOT IN (
     'poll','broadcast','bootstrap','resume','channel_recovery','channel_failure',
-    'delete_recovery','doorbell_ready','other'
+    'delete_recovery','doorbell_ready','lease_heartbeat','other'
   ) THEN RAISE EXCEPTION 'invalid trigger'; END IF;
 
   SELECT a.session_id INTO v_session_id
@@ -5645,7 +5645,8 @@ BEGIN
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
     || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id,
-      'audio_unlocked',(SELECT c.audio_unlocked FROM public.control_device_connections c WHERE c.id=p_connection_id));
+      'audio_unlocked',(SELECT c.audio_unlocked FROM public.control_device_connections c WHERE c.id=p_connection_id),
+      'game_rev',(SELECT g.rev FROM public.game_state g WHERE g.game_id=p_game_id));
 END;
 $_$;
 
@@ -25988,5 +25989,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fGvOMsxWHwBuU0yj905jfGmHPctBFuUCkiZe7tENqua0nbTrmMDg1v3srgSqoUO
+\unrestrict fLG80V1L7BhGDd75ntthk12Mwj33S2AcTcuK7WWUu0UcRKghWdh0GMdsqVVIAcN
 
