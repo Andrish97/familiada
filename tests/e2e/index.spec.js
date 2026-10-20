@@ -121,7 +121,8 @@ test("klawiatura, focus, historia i mobilny viewport", async ({ page }) => {
   await expect(shot).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator(".imgv-overlay")).toHaveClass(/is-open/);
-  await expect(page.locator("#imgvClose")).toBeFocused();
+  // Telefon: podgląd jest arkuszem, fokus trafia na „Wstecz” w topbarze.
+  await expect(page.locator("#btnImageViewerBack")).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page.locator(".imgv-overlay")).not.toHaveClass(/is-open/);
   await expect(shot).toBeFocused();
