@@ -14,7 +14,7 @@ async function setMailFlag(page,id,enabled){await page.evaluate(async({id,enable
 async function cleanCopyFixtures(page){await page.evaluate(async()=>{const db=window.__sbClient;for(const kind of ['game','logo']){const {data,error}=await db.rpc('resource_copy_inbox',{p_kind:kind});if(error)throw error;for(const item of data.items||[]){if(String(item.name).startsWith('E2E-SEND-')){const {error:e}=await db.rpc('resource_copy_decide',{p_offer:item.id,p_decision:'decline'});if(e)throw e;}}}for(const [table,ownerColumn] of [['games','owner_id'],['user_logos','user_id']]){const {data:rows,error}=await db.from(table).select('id').like('name','E2E-SEND-%');if(error)throw error;for(const row of rows||[]){const {error:e}=await db.from(table).delete().eq('id',row.id);if(e)throw e;}}});}
 async function sendFromUi(page,path,selector,name,recipientId,{testInfo,captureScreenshots=false}={}){
  await page.goto(`https://www.familiada.online/${path}/`);await page.locator(selector).filter({hasText:name}).click();
- await page.locator('#btnSendCopy').click();const dialog=page.locator('#resourceSendDialog');await expect(dialog).toBeVisible();
+ await page.locator('#btnSendCopy').click();const dialog=page.locator('#resourceSendOverlay');await expect(dialog).toBeVisible();
  await dialog.locator(`input[value="${recipientId}"]`).check();
  if(captureScreenshots){for(const [label,width,height] of [['mobile',390,844],['desktop',1400,960],['landscape',844,390]]){await page.setViewportSize({width,height});await page.screenshot({path:testInfo.outputPath(`shot-resource-copy-send-${label}.png`),fullPage:true});}await page.setViewportSize({width:1400,height:960});}
  const response=page.waitForResponse(r=>r.url().endsWith('/_api/resource-send')&&r.request().method()==='POST');

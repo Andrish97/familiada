@@ -84,9 +84,11 @@ async function countQA(page, gameId) {
   }, gameId);
 }
 
+// Strona Gier odświeża liczniki w tle, więc „networkidle” bywa nieosiągalne —
+// czekamy na wyrenderowaną siatkę (kafel „Nowa gra” jest zawsze).
 async function openGames(page, query = "") {
   await page.goto(GAMES_URL + query, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle");
+  await page.locator("#grid > :is(.card, .addCard)").first().waitFor({ state: "visible", timeout: 30_000 });
 }
 
 function tileByName(page, name) {

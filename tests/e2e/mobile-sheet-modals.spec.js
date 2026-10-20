@@ -149,7 +149,9 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
     }
   });
 
-  test("modal nazwy (tworzenie) na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  // Proste okno z jednym polem jest zwykłym okienkiem także na telefonie
+  // (modal--keep-dialog, decyzja 2026-10-20): treść strony zostaje pod spodem.
+  test("modal nazwy (tworzenie) na telefonie jest zwykłym okienkiem nad stroną", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -162,24 +164,18 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await page.locator("#mineGrid .addCard").click();
       const overlay = page.locator("#nameOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
-
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-      await expect(page.locator(".bar")).toBeHidden();
-      await expect(page.locator(".footer")).toBeVisible();
-      await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
+      await expect(overlay).not.toHaveClass(/sheet-active/);
+      await expect(page.locator(".bar")).toBeVisible();
       await expect(page.locator(".topbar")).toBeVisible();
-
-      // klik w tło (poza .modal) nic nie robi na telefonie -- jedynym
-      // wyjściem jest widoczny przycisk Anuluj
-      await overlay.click({ position: { x: 5, y: 5 } });
-      await expect(overlay).toBeVisible();
 
       await page.locator("#btnNameCancel").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
-      await expect(page.locator(".bar")).toBeVisible();
-      await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
+
+      // Esc zamyka tak samo jak X / Anuluj
+      await page.locator("#mineGrid .addCard").click();
+      await expect(overlay).toBeVisible({ timeout: 5000 });
+      await page.keyboard.press("Escape");
+      await expect(overlay).toBeHidden({ timeout: 5000 });
     } finally {
       if (baseId) await deleteBaseDirect(page, baseId);
     }
@@ -539,7 +535,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
     }
   });
 
-  test("modal zmiany nazwy (renameModal) na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal zmiany nazwy (renameModal) na telefonie jest zwykłym okienkiem nad stroną", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -563,20 +559,12 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
 
       const overlay = page.locator("#renameModal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
-
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-      expect(await overlay.evaluate(el => getComputedStyle(el.querySelector(".modal")).boxShadow)).toBe("none");
-
-      await expect(page.locator("#explorerLeft")).toBeHidden();
+      await expect(overlay).not.toHaveClass(/sheet-active/);
       await expect(page.locator(".topbar")).toBeVisible();
 
-      const btnBack = page.locator("#btnBack");
-      await expect(btnBack).toHaveText("Wstecz");
-
-      await btnBack.click();
+      // „Anuluj” w stopce zamyka okno bez zmian
+      await overlay.locator("[data-modal-cancel]").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
-      await expect(page.locator("#explorerLeft")).toBeVisible();
       expect(page.url()).toContain("bases/explorer");
     } finally {
       await deleteBase(page, baseId);
@@ -769,7 +757,7 @@ async function deleteLogoDirect(page, logoId) {
 test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("modal zmiany nazwy logo na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
+  test("modal zmiany nazwy logo na telefonie jest zwykłym okienkiem nad stroną", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -786,19 +774,12 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
 
       const overlay = page.locator("#renameOverlay");
       await expect(overlay).toBeVisible({ timeout: 5000 });
-
-      const box = await overlay.locator(".modal").boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(await contentWidth(page) - 1);
-
-      await expect(page.locator("#listShell")).toBeHidden();
-      await expect(page.locator(".footer")).toBeVisible();
-      await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
+      await expect(overlay).not.toHaveClass(/sheet-active/);
+      await expect(page.locator("#listShell")).toBeVisible();
       await expect(page.locator(".topbar")).toBeVisible();
 
       await page.locator("#btnRenameCancel").click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
-      await expect(page.locator("#listShell")).toBeVisible();
-      await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
     } finally {
       await deleteLogoDirect(page, logoId);
     }

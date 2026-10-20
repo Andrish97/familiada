@@ -94,7 +94,7 @@ async function getUserId(page) {
 }
 
 
-test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", async ({ browser }, testInfo) => {
+test("E20: arkusz udostępniania Bazy przetrwa obrót telefonu (w poziomie osłona obrotu)", async ({ browser }, testInfo) => {
   test.setTimeout(90_000);
   const portrait = { width: 390, height: 844 };
   const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
@@ -127,14 +127,16 @@ test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", 
     await assertSheetFits("portrait");
     await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-portrait-390x844.png"), fullPage: true });
 
+    // Telefon w poziomie: Bazy pokazują osłonę „obróć telefon” (poziom na
+    // telefonie nie jest jeszcze dopuszczony — przegląd landscape E20). Okno
+    // i parametr ?dialog= muszą przetrwać obrót tam i z powrotem.
     await page.setViewportSize({ width: 844, height: 390 });
-    await expect(overlay).toBeVisible();
+    await expect(page.locator("#pageGuard")).toBeVisible();
     await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
-    await expect(page.locator("#shareEmail")).toBeVisible();
-    await assertSheetFits("landscape");
     await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-landscape-844x390.png"), fullPage: true });
 
     await page.setViewportSize(portrait);
+    await expect(page.locator("#pageGuard")).toBeHidden();
     await expect(overlay).toBeVisible();
     await expect(page.locator("#shareEmail")).toBeVisible();
     await assertSheetFits("portrait after rotate");
@@ -520,14 +522,16 @@ test.describe("bases: audyt -- układ i gesty", () => {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator("#sharedGrid")).toBeVisible();
 
-    // wypustki 50/50 na całą szerokość karty
+    // wypustki na całą szerokość karty
     const [a, b, card] = await Promise.all([
       page.locator(".slot-mine").boundingBox(),
       page.locator(".slot-shared").boundingBox(),
       page.locator(".bases-card").boundingBox(),
     ]);
-    expect(Math.abs(a.width - b.width)).toBeLessThan(2);
+    // wypustki zajmują razem całą szerokość karty; szerokość każdej zależy od
+    // długości napisu (flex: 1 1 max-content), więc nie muszą być równe
     expect(Math.abs(a.width + b.width - card.width)).toBeLessThan(3);
+    expect(Math.min(a.width, b.width)).toBeGreaterThan(card.width * 0.4);
   });
 
   test("telefon: podwójne tapnięcie w kafelek otwiera zmianę nazwy", async ({ browser }) => {

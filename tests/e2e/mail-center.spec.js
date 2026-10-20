@@ -92,12 +92,14 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await expect(center.locator('#itemsList .mail-row--device')).toHaveCount(1);
     const devices = (await state(center)).items.filter(item => item.kind === 'device');
     expect(devices[0].link).toMatch(/^\/go\/\?d=host&id=[a-f0-9-]+&key=[a-f0-9-]+$/);
-    const device = await anonymous.newPage();
+    // Ekran prowadzącego wymaga dotyku — link otwieramy jak na telefonie.
+    const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block' });
+    const device = await phone.newPage();
     try {
       await device.goto(new globalThis.URL(devices[0].link, URL).href);
       await expect(device).toHaveURL(/\/control\/host\//);
       await expect(device.locator('#paper')).toBeVisible({ timeout: 15000 });
-    } finally { await device.close(); }
+    } finally { await phone.close(); }
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-1400.png'), fullPage: true });
     await center.setViewportSize({ width: 390, height: 844 });
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-390.png'), fullPage: true });
