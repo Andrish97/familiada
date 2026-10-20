@@ -9,10 +9,10 @@ WITH t AS (
 ), b AS (
   SELECT b.id,
     (SELECT jsonb_agg(q.payload ORDER BY q.ord) FROM public.qb_questions q WHERE q.base_id = b.id) AS qs,
-    (SELECT jsonb_agg(CASE WHEN jsonb_typeof(q.payload->'answers') = 'array' THEN jsonb_set(q.payload, '{answers}', (
+    (SELECT jsonb_agg(CASE WHEN jsonb_typeof(q.payload->'answers') = 'array' THEN jsonb_set(q.payload, '{answers}', coalesce((
         SELECT jsonb_agg(CASE WHEN public.e21_demo_answer_map() ? (a->>'text')
                               THEN jsonb_set(a, '{text}', public.e21_demo_answer_map()->(a->>'text')) ELSE a END ORDER BY i)
-        FROM jsonb_array_elements(q.payload->'answers') WITH ORDINALITY AS z(a, i))) ELSE q.payload END ORDER BY q.ord)
+        FROM jsonb_array_elements(q.payload->'answers') WITH ORDINALITY AS z(a, i)), '[]'::jsonb)) ELSE q.payload END ORDER BY q.ord)
      FROM public.qb_questions q WHERE q.base_id = b.id) AS qs_mapped,
     (SELECT jsonb_agg(c.name ORDER BY c.name) FROM public.qb_categories c WHERE c.base_id = b.id) AS cats,
     (SELECT jsonb_agg(x.name ORDER BY x.name) FROM public.qb_tags x WHERE x.base_id = b.id) AS tags
