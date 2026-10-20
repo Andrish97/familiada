@@ -106,7 +106,13 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko
   liczby/bool/UUID/daty (`scripts/db-read.sh` odrzuca tekst i JSON). Repo jest
   publiczne: żadnych treści gier, nazw ani e-maili w logach. Migracje
-  diagnostyczne już niepotrzebne.
+  diagnostyczne już niepotrzebne. Z agenta: `scripts/agent-tools/gh-run.sh
+  db-read.yml sql_file=…` (uruchamia, czeka, wypisuje wynik z adnotacji).
+- **Przerwa techniczna (decyzja użytkownika 2026-10-20):** workflow
+  `maintenance.yml` (`action=status|on|off`, `minutes`, `force`); `on`
+  odmawia przy grze w Control i sam wyłącza przerwę po czasie. Włączać
+  wyłącznie za wyraźną zgodą użytkownika przy każdym użyciu
+  (`scripts/agent-tools/README.md`).
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.

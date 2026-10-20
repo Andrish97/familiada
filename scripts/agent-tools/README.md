@@ -13,3 +13,18 @@ Uwagi:
   zostaje pusta albo za nakładką.
 - Nakładkę blokady (`#resourceLockGuard`) można usunąć przed zrzutem.
 - Lokalny Postgres do migracji: `docs/sql/local-db.md` (port 5499).
+
+## Baza produkcyjna, przerwa techniczna i workflow z poziomu agenta
+
+| Narzędzie | Do czego |
+|---|---|
+| `gh-run.sh <workflow> klucz=wartość…` | Uruchamia workflow (`workflow_dispatch`, `REF=` domyślnie `main`), czeka na koniec i wypisuje adnotacje przebiegu przez API GitHuba — działa także tam, gdzie host z logami Actions jest zablokowany. `LOGS=50` dodatkowo próbuje pobrać koniec logu. Wymaga `GITHUB_TOKEN`. |
+| `gh-run.sh db-read.yml sql_file=scripts/db-read/<nazwa>.sql` | Odczyt produkcji: jedno SELECT bez `;`/`\`, sesja READ ONLY, wynik tylko liczby/bool/UUID/daty (`scripts/db-read.sh`). Repo publiczne — żadnych treści, nazw, e-maili. |
+| `gh-run.sh db-read.yml sql_file=scripts/db-read/activity-now.sql` | Kto jest teraz na stronie (liczby) i gry z aktywną sesją Control — sprawdzać przed zmianą danych. |
+| `gh-run.sh maintenance.yml action=status` | Stan przerwy technicznej i aktywność. |
+| `gh-run.sh maintenance.yml action=on minutes=15` | Przerwa z odliczaniem; odmawia przy grze w Control (`force=true` wymusza); po czasie sama się wyłącza (o ile nikt nie zmienił stanu). **Tylko za wyraźną zgodą użytkownika, za każdym razem.** |
+| `gh-run.sh maintenance.yml action=off` | Wyłącza przerwę od razu. |
+
+Lokalnie odczyt na testowej bazie:
+`PSQL_CMD="psql -h /var/tmp/pgfam -p 5499 -U postgres -d fam" scripts/db-read.sh scripts/db-read/<nazwa>.sql`.
+

@@ -1,0 +1,127 @@
+name: Maintenance (przerwa techniczna)
+
+# Przerwa techniczna dla agentów i właściciela, bez panelu admina.
+#  * status -- stan przerwy (Cloudflare KV „state”) i aktywność (liczby);
+#  * on     -- odmawia, gdy trwa gra w Control (chyba że force); włącza przerwę
+#              z odliczaniem na N minut i po czasie sama ją wyłącza -- chyba że
+#              w międzyczasie ktoś zmienił stan (panel admina albo „off”);
+#  * off    -- wyłącza przerwę od razu.
+# Worker nie kończy przerwy sam po returnAt, dlatego robi to ten workflow.
+# Repo jest publiczne: w logu tylko liczby i stan przerwy.
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'status | on | off'
+        required: true
+        default: status
+        type: choice
+        options: [status, on, off]
+      minutes:
+        description: 'Czas przerwy w minutach (1–120), tylko dla on'
+        required: false
+        default: '15'
+      force:
+        description: 'Włącz mimo aktywnej gry w Control'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 140
+    defaults:
+      run:
+        working-directory: cloudflare/maintenance-worker
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ACTION: ${{ inputs.action }}
+      MINUTES: ${{ inputs.minutes }}
+      FORCE: ${{ inputs.force }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install wrangler
+        run: npm ci
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Activity (liczby)
+        id: activity
+        working-directory: .
+        env:
+          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -U supabase_admin -d postgres
+          DB_READ_TUPLES: '1'
+          DB_READ_NO_NOTICE: '1'
+        run: |
+          ROW=$(scripts/db-read.sh scripts/db-read/activity-now.sql | tail -n 1)
+          IFS='|' read -r USERS TABS VISIBLE USERS15 CONTROL NOW <<< "$ROW"
+          echo "users=$USERS" >> "$GITHUB_OUTPUT"
+          echo "control=$CONTROL" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Aktywność::użytkownicy (2 min): $USERS, karty: $TABS (widoczne $VISIBLE), użytkownicy (15 min): $USERS15, gry w Control: $CONTROL"
+
+      - name: Status
+        run: |
+          # błąd odczytu (np. token bez dostępu do KV) przerywa przebieg
+          npx wrangler kv key get state --binding MAINT_KV --remote > /tmp/raw.txt
+          # sam JSON (bez ewentualnego banera wranglera)
+          sed -n '/^{/,$p' /tmp/raw.txt > /tmp/state.json
+          jq -e 'type == "object" and has("enabled")' /tmp/state.json > /dev/null \
+            || { echo "::error title=Przerwa::nie udało się odczytać stanu z KV"; exit 1; }
+          SUMMARY=$(jq -c '{enabled, mode, returnAt}' /tmp/state.json)
+          echo "::notice title=Przerwa (przed)::$SUMMARY"
+
+      - name: On
+        if: inputs.action == 'on'
+        env:
+          CONTROL: ${{ steps.activity.outputs.control }}
+        run: |
+          [[ "$MINUTES" =~ ^[0-9]+$ ]] && [ "$MINUTES" -ge 1 ] && [ "$MINUTES" -le 120 ] \
+            || { echo "::error title=Przerwa::minutes musi być liczbą 1–120"; exit 1; }
+          if [ "${CONTROL:-0}" != 0 ] && [ "$FORCE" != true ]; then
+            echo "::error title=Przerwa::trwa gra w Control ($CONTROL) -- przerwa nie włączona (force=true, żeby wymusić)"
+            exit 1
+          fi
+          RETURN_AT=$(date -u -d "+$MINUTES minutes" +%Y-%m-%dT%H:%M:%SZ)
+          jq -c --arg r "$RETURN_AT" '.enabled = true | .mode = "countdown" | .returnAt = $r' /tmp/state.json > /tmp/on.json
+          npx wrangler kv key put state "$(cat /tmp/on.json)" --binding MAINT_KV --remote
+          echo "::notice title=Przerwa włączona::do $RETURN_AT ($MINUTES min)"
+          echo "$RETURN_AT" > /tmp/return_at
+
+      - name: Wait and turn off
+        if: inputs.action == 'on'
+        run: |
+          RETURN_AT=$(cat /tmp/return_at)
+          sleep $(( MINUTES * 60 ))
+          CUR=$(npx wrangler kv key get state --binding MAINT_KV --remote | sed -n '/^{/,$p')
+          if [ "$(echo "$CUR" | jq -r '.enabled')" = true ] && [ "$(echo "$CUR" | jq -r '.returnAt')" = "$RETURN_AT" ]; then
+            echo "$CUR" | jq -c '.enabled = false | .mode = "off" | .returnAt = null' > /tmp/off.json
+            npx wrangler kv key put state "$(cat /tmp/off.json)" --binding MAINT_KV --remote
+            echo "::notice title=Przerwa wyłączona::po $MINUTES min"
+          else
+            echo "::notice title=Przerwa::stan zmieniony w międzyczasie -- bez zmian ($(echo "$CUR" | jq -c '{enabled, mode, returnAt}'))"
+          fi
+
+      - name: Off
+        if: inputs.action == 'off'
+        run: |
+          jq -c '.enabled = false | .mode = "off" | .returnAt = null' /tmp/state.json > /tmp/off.json
+          npx wrangler kv key put state "$(cat /tmp/off.json)" --binding MAINT_KV --remote
+          echo "::notice title=Przerwa wyłączona::od razu"
