@@ -1074,9 +1074,8 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
       await expect.poll(() => acceptedControlVisibility.includes(visibility), { timeout: 10000 }).toBe(true);
     }
 
-    // Po utracie i odzyskaniu połączenia Control przy źródle Display
-    // ponownie wymaga gestu na Wyświetlaczu. Akcje gry pozostają zablokowane
-    // do potwierdzenia, a odpowiedź Display odblokowuje je bez reloadu.
+    // Odblokowanie dźwięku należy do instancji Wyświetlacza (migracja 397):
+    // chwilowa utrata sieci w Control nie wymaga nowego gestu na Wyświetlaczu.
     const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
     await expect(startRound).toBeVisible();
     // Źródło dźwięku to Display: przycisk jest zablokowany do końca intro
@@ -1088,11 +1087,10 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
       window.dispatchEvent(new Event("offline"));
       window.dispatchEvent(new Event("online"));
     });
-    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10000 });
-    await expect(startRound).toBeDisabled();
-    await displayPage.locator("#btnAudioUnlock").click();
-    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
     await expect(startRound).toBeEnabled({ timeout: 10000 });
+    await page.waitForTimeout(2000); // kilka odczytów migawki po powrocie sieci
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden();
+    await expect(startRound).toBeEnabled();
 
     // Każde urządzenie zapisuje snapshot i kolejne przejścia widoczności po
     // rozpoczęciu rozgrywki. Emulujemy zmianę właściwości i wysyłamy natywne
