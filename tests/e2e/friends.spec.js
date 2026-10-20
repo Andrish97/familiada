@@ -429,16 +429,15 @@ test("E20 kontakty pokazują ładowanie, błąd i pozwalają ponowić odczyt", a
   });
   try {
     await owner.page.setViewportSize({ width: 390, height: 844 });
-    const navigation = owner.page.goto("https://www.familiada.online/friends/");
-    await expect(owner.page.locator("#contactsLoadMessage")).toHaveText("Wczytuję kontakty…");
-    await navigation;
-    await expect(owner.page.locator("#contactsLoadMessage")).toHaveText(/Nie udało się wczytać kontaktów/, { timeout: 20000 });
+    // Ładowanie: szkielet strony; błąd: dymek + „Ponów” (lista odsłonięta, bez wierszy)
+    await owner.page.goto("https://www.familiada.online/friends/");
+    await expect(owner.page.locator(".app-toast-text")).toHaveText(/Nie udało się wczytać kontaktów/, { timeout: 20000 });
     await expect(owner.page.locator("#contactsLoadRetry")).toBeVisible();
-    await expect(owner.page.locator("#contactsHost")).not.toHaveClass(/skel-step-ready/);
+    await expect(owner.page.locator("#contactsHost")).toHaveClass(/skel-step-ready/);
     await owner.page.screenshot({ path: testInfo.outputPath("shot-e20-contacts-error-390.png"), fullPage: true });
     allowRetry = true;
     await owner.page.locator("#contactsLoadRetry").click();
-    await expect(owner.page.locator("#contactsLoadState")).toBeHidden();
+    await expect(owner.page.locator("#contactsLoadRetry")).toBeHidden();
     await expect(owner.page.locator("#contactsHost")).toHaveClass(/skel-step-ready/);
     await expect(owner.page.locator("#inviteForm")).toBeVisible();
     await owner.page.setViewportSize({ width: 1400, height: 900 });
