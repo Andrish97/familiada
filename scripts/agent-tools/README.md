@@ -23,9 +23,9 @@ Uwagi:
 | `gh-run.sh db-read.yml sql_file=scripts/db-read/whoami.sql` | Kontrola roli: `agent_reader`, nie superużytkownik, bez `auth`/profili, bez zapisu. `check-auth-denied.sql` ma się nie udać. |
 | `gh-run.sh db-read.yml sql_file=scripts/db-read/activity-now.sql` | Kto jest teraz na stronie (liczby) i gry z aktywną sesją Control — sprawdzać przed zmianą danych. |
 | `gh-run.sh maintenance.yml action=status` | Stan przerwy technicznej i aktywność. |
-| `gh-run.sh maintenance.yml action=on minutes=15` | Przerwa z odliczaniem. **Tylko po wyraźnej zgodzie użytkownika na tę konkretną przerwę** (zasada w `CLAUDE.md`). Odmawia, gdy trwa praca: Control, edycja, głosy w ankietach (`scripts/db-read/maintenance-blockers.sql`; `force=true` tylko na polecenie). Po czasie sama się wyłącza (o ile nikt nie zmienił stanu). Przebieg czeka na zatwierdzenie właściciela (środowisko `maintenance`), po nim ponownie sprawdza aktywność. |
+| `gh-run.sh maintenance.yml action=on minutes=15 code=123456` | Przerwa z odliczaniem. **Tylko po wyraźnej zgodzie użytkownika na tę konkretną przerwę** (zasada w `CLAUDE.md`). Odmawia, gdy trwa praca: Control, edycja, głosy w ankietach (`scripts/db-read/maintenance-blockers.sql`; `force=true` tylko na polecenie). Po czasie sama się wyłącza (o ile nikt nie zmienił stanu). Przebieg czeka na zatwierdzenie właściciela (środowisko `maintenance`) i wymaga jednorazowego kodu TOTP od użytkownika (5 min, tylko raz; `scripts/totp-check.py`); po zatwierdzeniu ponownie sprawdza aktywność. |
 | `gh-run.sh db-read.yml sql_file=scripts/db-read/maintenance-blockers.sql` | Co przerwałaby przerwa teraz (liczby, źródła jak panel admina, bez kont testowych/admina). |
-| `gh-run.sh maintenance.yml action=off` | Wyłącza przerwę od razu (też po zatwierdzeniu właściciela). |
+| `gh-run.sh maintenance.yml action=off code=123456` | Wyłącza przerwę od razu (zatwierdzenie i kod jak przy `on`). |
 
 Lokalnie odczyt na testowej bazie:
 `PSQL_CMD="psql -h /var/tmp/pgfam -p 5499 -U postgres -d fam" scripts/db-read.sh scripts/db-read/<nazwa>.sql`.
