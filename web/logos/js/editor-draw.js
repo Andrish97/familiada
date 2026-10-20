@@ -1,8 +1,8 @@
 // familiada/logos/js/editor-draw.js
 // Strona /logos/editor/draw/?id=<logo> -- edytor trybu DRAW (editor-page.js).
 
-import { initDrawEditor } from "./draw.js?v=v2026-10-20T04281";
-import { initI18n } from "/shared/translation/translation.js?v=v2026-10-20T04281";
+import { initDrawEditor } from "./draw.js?v=v2026-10-20T04295";
+import { initI18n } from "/shared/translation/translation.js?v=v2026-10-20T04295";
 
 
 // The admin screenshot preview runs the real Fabric runtime but keeps the
@@ -40,6 +40,6 @@ if (new URLSearchParams(location.search).has("screenshotPreview")) {
     await new Promise(resolve => requestAnimationFrame(resolve));
   };
 } else {
-  const { bootEditorPage } = await import("./editor-page.js?v=v2026-10-20T04281");
+  const { bootEditorPage } = await import("./editor-page.js?v=v2026-10-20T04295");
   bootEditorPage({ mode: "DRAW", initEditor: initDrawEditor });
 }
