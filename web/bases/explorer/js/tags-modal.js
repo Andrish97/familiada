@@ -7,12 +7,12 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import * as ops from "./ops.js?v=v2026-10-20T19584";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T19584";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T19584";
-import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T19584";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T19584";
-import { listQuestionTags, listTags } from "./repo.js?v=v2026-10-20T19584";
+import * as ops from "./ops.js?v=v2026-10-20T23220";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T23220";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T23220";
+import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T23220";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T23220";
+import { listQuestionTags, listTags } from "./repo.js?v=v2026-10-20T23220";
 
 
 const btnBack = document.getElementById("btnBack");

@@ -16,15 +16,15 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-20T19584";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T19584";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-20T19584";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-20T19584";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T19584";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T19584";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-20T23220";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T23220";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-20T23220";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-20T23220";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T23220";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T23220";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-20T19584";
-import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-20T19584";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-20T23220";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-20T23220";
 
 
 const $ = (id) => document.getElementById(id);
@@ -159,7 +159,6 @@ export function createUI({ root, emit }) {
   // store'a/silnika wprost... zero logiki gry tutaj").
   let busy = false;
   let devicesBlocked = false;
-  let outroReturnReady = false;
   function boardBusy() { return busy; }
   function revealLocked() { return busy; }
 
@@ -199,10 +198,13 @@ export function createUI({ root, emit }) {
     const deviceRow = (label, kind, url, { withQr = false } = {}) => {
       const online = !!presenceFlags[kind];
       const code = connectCodes[kind];
-      const row2 = [
+      // Dwie stałe linie we wszystkich kaflach (zgłoszone: większe przyciski
+      // zawijały się nierówno): kod, Kopiuj, Udostępnij / akcje urządzenia.
+      const codeLine = [
         h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
         h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, iconLabel("copy", t("common.copy"))),
       ];
+      const row2 = [];
       if (withQr) {
         const shown = !!state.display.qr[kind].show;
         row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, iconLabel("qr-code", t("control.qrCodeBtn"))));
@@ -219,7 +221,7 @@ export function createUI({ root, emit }) {
       // Zachowaj stałą geometrię karty w trybie testowym. Zawartość wiersza
       // jest niewidoczna i nieaktywna, ale jego miejsce pozostaje zarezerwowane.
       const shared = Number(shareBadges[kind]) || 0;
-      row2.push(h("button", {
+      codeLine.push(h("button", {
         class: "btn", type: "button",
         onclick: () => emit("devices.shareOpen", kind),
       }, [
@@ -232,7 +234,10 @@ export function createUI({ root, emit }) {
           h("div", { class: `conn-status ${online ? "conn-status--connected" : "conn-status--disconnected"}`, text: online ? t("control.deviceStatusOk") : t("control.deviceStatusDisconnected") }),
         ]),
       ];
-      children.push(h("div", { class: `device-row-2${state.settings.testMode ? " test-mode-reserved" : ""}` }, row2));
+      children.push(h("div", { class: `device-row-2${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
+        h("div", { class: "device-row-line" }, codeLine),
+        h("div", { class: "device-row-line" }, row2),
+      ]));
       return h("div", { class: "device-row", "data-device": kind }, children);
     };
 
@@ -560,7 +565,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryColors")}: ` }), colorDots(d.colors)]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryTheme")}: ` }), document.createTextNode(displayThemeLabel(d.theme))]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryLogo")}: ` }), document.createTextNode(d.logoId ? t("control.summaryLogoCustom") : t("control.summaryDefault"))]),
-        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryHostLogo")}: ` }), document.createTextNode(d.hostLogoMode === "source" ? t("gameSettings.display.hostLogoSource") : t("gameSettings.display.hostLogoPixel"))]),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryHostLogo")}: ` }), document.createTextNode(d.hostLogoMode === "pixel" ? t("gameSettings.display.hostLogoPixel") : t("gameSettings.display.hostLogoSource"))]),
         h("div", { id: "c2DevicePreviews" }, [
           h("div", { class: "c2-device-preview-card" }, [h("div", { class: "c2-device-preview-title", text: t("control.displayPreviewTitle") }), h("div", { id: "c2DisplayPreview" }, previewFrame ? [previewFrame] : [])]),
           h("div", { class: "c2-device-preview-card" }, [h("div", { class: "c2-device-preview-title", text: t("control.hostLogoPreviewTitle") }), h("div", { id: "c2HostPreview" }, hostPreviewFrame ? [hostPreviewFrame] : [])]),
@@ -1260,12 +1265,8 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
-      // Zgłoszone: "po zakończeniu gry od razu wychodzi, nie czeka na
-      // koniec dźwięku — ten dźwięk ma też blokować akcje" — GAME_END_SHOW/
-      // FINISH_FINAL grają "show_intro"/"final_end" (control/js/actionGate.js),
-      // a boardBusy() już poprawnie odzwierciedla ich czas trwania — tym
-      // dwóm przyciskom brakowało tylko podpięcia pod tę samą blokadę, którą
-      // ma każde inne duże przejście planszy (navButton wyżej).
+      // Gra już zakończona: outro nie blokuje ani "Zacznij od nowa", ani
+      // "Wróć do moich gier" (zgłoszone 2026-10-20).
       nav: [
         navButton(t("control.restartGame"), {
           shortcut: null,
@@ -1274,7 +1275,7 @@ export function createUI({ root, emit }) {
           onclick: () => emit("game.restart"),
         }),
         navButton(t("control.returnToMyGames"), {
-          busy: boardBusy() && !outroReturnReady,
+          busy: false,
           onclick: () => emit("session.finish"),
         }),
       ],
@@ -1884,7 +1885,6 @@ export function createUI({ root, emit }) {
     busy = !!ctx.busy;
     typingPending = !!ctx.typingPending;
     devicesBlocked = !!ctx.devicesBlocked;
-    outroReturnReady = !!ctx.outroReturnReady;
     // Dla ponownego renderu tego samego kroku budujemy drzewo obok i
     // uzgadniamy je z żywym DOM. Dzięki temu zachowują się elementy, których
     // stan się nie zmienił (w tym animacje, fokus i scroll); przy zmianie

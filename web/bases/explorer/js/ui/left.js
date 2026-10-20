@@ -5,13 +5,13 @@
 // dołóż / zdejmij, Shift: zakres, ramka: zakres przeciągnięciem, klik w tło:
 // wyczyść. Działa w każdym miejscu — filtr obejmuje bieżący folder.
 
-import { setQuery } from "../state.js?v=v2026-10-20T19584";
-import { renderAll } from "../render.js?v=v2026-10-20T19584";
-import { openTagsWindow } from "../commands.js?v=v2026-10-20T19584";
-import { showContextMenu } from "../context-menu.js?v=v2026-10-20T19584";
-import { attachMarquee } from "./marquee.js?v=v2026-10-20T19584";
-import { addLongPress, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-20T19584";
-import { isModKey } from "../platform.js?v=v2026-10-20T19584";
+import { setQuery } from "../state.js?v=v2026-10-20T23220";
+import { renderAll } from "../render.js?v=v2026-10-20T23220";
+import { openTagsWindow } from "../commands.js?v=v2026-10-20T23220";
+import { showContextMenu } from "../context-menu.js?v=v2026-10-20T23220";
+import { attachMarquee } from "./marquee.js?v=v2026-10-20T23220";
+import { addLongPress, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-20T23220";
+import { isModKey } from "../platform.js?v=v2026-10-20T23220";
 
 const ROW = '.row[data-kind="tag"], .row[data-kind="meta"]';
 const field = (kind) => (kind === "meta" ? "types" : "tagIds");

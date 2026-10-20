@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T19584";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T23220";
 
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
@@ -8,20 +8,20 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T19584";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T19584";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-20T19584";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-20T19584";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T19584";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T19584";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T19584";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-20T19584";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-20T19584";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T19584";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19584";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T19584";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-20T19584";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T19584";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T23220";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T23220";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-20T23220";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-20T23220";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T23220";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T23220";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T23220";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-20T23220";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-20T23220";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T23220";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T23220";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T23220";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-20T23220";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T23220";
 
 
 function qrImgSrc(url) {
@@ -62,7 +62,7 @@ function applyGameSettingsToState(settings, state) {
     if (display.colors) state.display.colors = { ...state.display.colors, ...display.colors };
     if (display.theme !== undefined) state.display.theme = display.theme;
     if (display.logoId !== undefined) state.display.logoId = display.logoId;
-    if (display.hostLogoMode !== undefined) state.display.hostLogoMode = display.hostLogoMode === "source" ? "source" : "pixel";
+    if (display.hostLogoMode !== undefined) state.display.hostLogoMode = display.hostLogoMode === "pixel" ? "pixel" : "source";
   }
 
   if (game) {
@@ -111,22 +111,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-20T19584";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-20T19584";
-import { createEngine } from "./engine.js?v=v2026-10-20T19584";
-import { createActionGate } from "./actionGate.js?v=v2026-10-20T19584";
-import { createDevices } from "./devices.js?v=v2026-10-20T19584";
-import { createPresence } from "./presence.js?v=v2026-10-20T19584";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-20T19584";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-20T19584";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-20T19584";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-20T19584";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-20T19584";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-20T19584";
-import { createUI } from "./ui.js?v=v2026-10-20T19584";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-20T19584";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T19584";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T19584";
+import { createStore } from "./store.js?v=v2026-10-20T23220";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-20T23220";
+import { createEngine } from "./engine.js?v=v2026-10-20T23220";
+import { createActionGate } from "./actionGate.js?v=v2026-10-20T23220";
+import { createDevices } from "./devices.js?v=v2026-10-20T23220";
+import { createPresence } from "./presence.js?v=v2026-10-20T23220";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-20T23220";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-20T23220";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-20T23220";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-20T23220";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-20T23220";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-20T23220";
+import { createUI } from "./ui.js?v=v2026-10-20T23220";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-20T23220";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T23220";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T23220";
 
 
 async function pickQuestionPool(state) {
@@ -328,18 +328,6 @@ async function main() {
   void Promise.all(listSfx().map(getSfxDuration));
   const store = createStore(gameId);
   const [expiredTimer] = await Promise.all([store.hydrate(), sfxInitP]);
-  const outroStartedKey = `control2:outro-started:${gameId}`;
-  let outroStartedAt = null;
-  let outroUnlockTimer = null;
-  let outroWasEnded = !!store.state.locks.gameEnded;
-  if (outroWasEnded) {
-    const savedStart = Number(sessionStorage.getItem(outroStartedKey));
-    const persistedStart = Date.parse(store.state.__row?.updated_at || "");
-    outroStartedAt = savedStart || (Number.isFinite(persistedStart) ? persistedStart : Date.now());
-    sessionStorage.setItem(outroStartedKey, String(outroStartedAt));
-  } else {
-    sessionStorage.removeItem(outroStartedKey);
-  }
   const sessionTelemetry = createSessionTelemetry(gameId, () => store.state, store.subscribe);
   const realtimeStates = new Map();
   // Wyjście z Control (ustawienia, zamknięcie karty) przerywa zapytania
@@ -1167,23 +1155,7 @@ async function main() {
   scheduleTimer3Watch();
 
   function renderCtx() {
-    const ended = !!store.state.locks.gameEnded;
-    if (!ended) {
-      outroWasEnded = false;
-      outroStartedAt = null;
-      if (outroUnlockTimer) clearTimeout(outroUnlockTimer);
-      outroUnlockTimer = null;
-      sessionStorage.removeItem(outroStartedKey);
-    } else if (!outroWasEnded) {
-      outroWasEnded = true;
-      outroStartedAt = Date.now();
-      sessionStorage.setItem(outroStartedKey, String(outroStartedAt));
-    }
-    const outroReturnReady = ended && Date.now() - (outroStartedAt || Date.now()) >= 30_000;
-    if (ended && !outroReturnReady && !outroUnlockTimer) {
-      outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
-    }
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, outroReturnReady, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {

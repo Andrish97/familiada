@@ -2,8 +2,8 @@
 // Okno zmiany nazwy folderu / treści pytania (#renameModal z index.html).
 // Zwraca Promise z nową wartością albo null (anulowano).
 
-import { t } from "../../../../shared/translation/translation.js?v=v2026-10-20T19584";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-20T19584";
+import { t } from "../../../../shared/translation/translation.js?v=v2026-10-20T23220";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../../shared/js/core/modal-sheet.js?v=v2026-10-20T23220";
 
 const btnBack = document.getElementById("btnBack");
 

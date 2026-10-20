@@ -7,16 +7,16 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T19584";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T19584";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T19584";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T19584";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T19584";
-import { createHostRenderer } from "./render.js?v=v2026-10-20T19584";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-20T19584";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-20T19584";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T19584";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T19584";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T23220";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T23220";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T23220";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T23220";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T23220";
+import { createHostRenderer } from "./render.js?v=v2026-10-20T23220";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-20T23220";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-20T23220";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T23220";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T23220";
 
 
 function parseParams() {
@@ -213,6 +213,8 @@ async function main() {
   document.documentElement.classList.remove("page-loading");
 
   if (preview) {
+    // Podgląd w Control/ustawieniach gry — bez przycisku pełnego ekranu.
+    document.getElementById("btnFS")?.remove();
     const renderer = createHostRenderer();
     const coverLogo = createCoverLogoRenderer({ previewOnly: true });
     let latestRow = null;

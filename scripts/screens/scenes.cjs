@@ -27,6 +27,11 @@ const openModal = (selector, modal = ".overlay:visible") => async (view) => {
   await view.locator(modal).first().waitFor({ state: "visible", timeout: 5000 });
   await view.waitForTimeout(250);
 };
+const scrollPreview = async (view) => {
+  await view.locator('.gs-logo-tile[data-logo-id="default"]').click();
+  await view.locator("#gsLivePreviewWrap").scrollIntoViewIfNeeded();
+  await view.waitForTimeout(1500);
+};
 const selectTile = (selector) => async (view) => {
   await view.locator(selector).first().click();
   await view.waitForTimeout(250);
@@ -68,6 +73,8 @@ module.exports = [
   { ...H, id: "host-round", category: "Rozgrywka", title: "Prowadzący — runda", path: "/control/host/?preview=1", sources: ["web/control/host/", "web/shared/js/gameplay/"], previewRow: "round", frame: true, ready: "#paper.skel-step-ready", devices: ["desktop"] },
   { ...H, id: "display-round", category: "Rozgrywka", title: "Wyświetlacz — runda", path: "/control/display/?preview=1", sources: DISPLAY, previewRow: "round", ready: "#gameScreen:not(.hidden)", devices: ["desktop"], settle: 1500 },
   { ...H, id: "control-finale", category: "Rozgrywka", title: "Panel sterowania — finał", path: `/control/?id=${IDS.game}`, sources: page("control"), gameState: "finale", ready: "#app", devices: ["desktop"], settle: 1200 },
+  { id: "control-devices", category: "Rozgrywka", title: "Panel sterowania — urządzenia", path: `/control/?id=${IDS.game}`, sources: page("control"), gameState: "devices", ready: ".device-row", devices: ["desktop"], settle: 1200 },
+  { id: "control-summary", category: "Rozgrywka", title: "Panel sterowania — podsumowanie", path: `/control/?id=${IDS.game}`, sources: [...page("control"), "web/control/host/", "web/control/display/"], gameState: "summary", ready: ".c2-summary-display", devices: ["desktop"], settle: 2500 },
   { id: "control-finale-p2", category: "Rozgrywka", title: "Panel sterowania — finał, gracz 2", path: `/control/?id=${IDS.game}`, sources: page("control"), gameState: "finale2", ready: "#app", devices: ["desktop"], settle: 1200 },
   { ...H, id: "main-display", category: "Rozgrywka", title: "Główny Wyświetlacz", path: "/control/display/?preview=1", sources: DISPLAY, previewRow: "main", ready: "#gameScreen:not(.hidden)", size: { width: 1600, height: 900 }, settle: 1500 },
   { ...H, id: "og-image", category: "Rozgrywka", title: "Podgląd linku (og:image)", path: "/control/display/?preview=1", sources: DISPLAY, previewRow: "main", ready: "#gameScreen:not(.hidden)", size: { width: 1200, height: 630, scale: 2 }, settle: 1500 },
@@ -85,6 +92,10 @@ module.exports = [
       await view.locator("#gsTeamB").fill("Zajączki 😀");
       await view.waitForFunction(() => ["A", "B"].every((k) => document.getElementById(`gsTeam${k}Measure`)?.classList.contains("is-warn")));
     }] },
+  { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
+    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), scrollPreview] },
+  { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
+    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },
   { id: "logos-image", category: "Dodatkowe", title: "Biblioteka logo — obrazy", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoImage")] },
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
