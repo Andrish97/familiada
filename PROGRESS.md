@@ -43,7 +43,7 @@ Zrobione na branchu (commity do `8f56a45`, scalony `origin/main` w `ea17f7a`):
 - okno kontaktu: roletka nad całą stroną (pasek był pod topbarem, `1bfa63e`).
 
 E2E na branchu (spec | przebieg | wynik):
-- zielone: resource-copy-send 39515536963, index 39514953878, bases 39515082379, tasks 39507687171, friends 39507853751, subscribers 39508279725,
+- zielone: marketplace 39517512161, resource-copy-send 39515536963, index 39514953878, bases 39515082379, tasks 39507687171, friends 39507853751, subscribers 39508279725,
   bases 39508596228, mail-center 39509657900, poll-share 39509815512,
   account-rating 39510298864, games 39510547581, cross-resource-locks
   39513616617, control2 --grep zerwanie 39514174761;
