@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YC1A7fbe3VBBfpaWdW8xs7GOHqcMqhPyfrSfFpbJO7Ua1iFEfe8wR3YlBcohYZZ
+\restrict JqRXzlZd1Uq0d5kVvxa5jIGTvIeAKa2Aj5cbNYaUaofkZowjIsK9MdVd1KqVigs
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7219,14 +7219,16 @@ DECLARE
   v_prepared int := 0; v_answers int := 0; v_points int := 0; v_text int := 0; v_skipped int := 0;
 BEGIN
   FOR r IN
-    SELECT g.id, g.type::text AS type, g.status::text AS status, b.slot, b.payload AS old_payload
+    -- nieedytowana = ta sama treść co szablon (typ, pytania, odpowiedzi,
+    -- punkty); nazwa gry bez znaczenia (413)
+    SELECT DISTINCT ON (g.id) g.id, g.type::text AS type, g.status::text AS status, b.slot, b.payload AS old_payload
     FROM public.games g
-    JOIN public.e21_demo_templates_before b
-      ON b.payload->'game'->>'name' = g.name AND b.payload->'game'->>'type' = g.type::text
+    JOIN public.e21_demo_templates_before b ON b.payload->'game'->>'type' = g.type::text
     WHERE g.is_demo
       AND ((b.slot = 'prepared' AND g.status = 'draft')
         OR (b.slot IN ('poll_points_open', 'poll_text_open') AND g.status IN ('poll_open', 'poll_stopped')))
       AND public.e21_demo_game_content(g.id) = public.e21_demo_template_content(b.payload)
+    ORDER BY g.id, b.lang
   LOOP
     IF r.id = ANY (p_skip) THEN v_skipped := v_skipped + 1; CONTINUE; END IF;
 
@@ -25765,5 +25767,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YC1A7fbe3VBBfpaWdW8xs7GOHqcMqhPyfrSfFpbJO7Ua1iFEfe8wR3YlBcohYZZ
+\unrestrict JqRXzlZd1Uq0d5kVvxa5jIGTvIeAKa2Aj5cbNYaUaofkZowjIsK9MdVd1KqVigs
 
