@@ -1011,6 +1011,16 @@ export function initDrawEditor(ctx) {
     }
   }
 
+  async function loadSceneFonts() {
+    const textObjects = canvas?.getObjects?.().filter(isTextObj) || [];
+    const families = new Set(textObjects.map(obj => {
+      const style = [obj.fontStyle, obj.fontWeight].filter(value => value && value !== "normal").join(" ");
+      return `${style ? `${style} ` : ""}${Math.max(1, Number(obj.fontSize) || 16)}px ${obj.fontFamily || "sans-serif"}`;
+    }));
+    await Promise.all([...families].map(font => document.fonts?.load(font, "Familiada").catch(() => [])));
+    await document.fonts?.ready;
+  }
+
   function renderFontList() {
     const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const q = norm(fontSearch?.value || "");
@@ -1580,7 +1590,7 @@ export function initDrawEditor(ctx) {
     async open(payload = null) {
       payload = editorPayload(payload);
       paneDraw.style.display = "";
-      void loadFonts();
+      await loadFonts();
       if (!canvas) installCanvas();
 
       const source = payload?.source || {};
@@ -1595,6 +1605,7 @@ export function initDrawEditor(ctx) {
 
       resizeStage();
       await loadSource(payload);
+      await loadSceneFonts();
       canvas.backgroundColor = hex(bg);
       syncBgIcon();
       applyToolBehavior();
