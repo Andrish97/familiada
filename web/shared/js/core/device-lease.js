@@ -16,8 +16,11 @@ export function updateDeviceLeaseOverlay(state) {
   const overlay = document.getElementById("deviceLeaseOverlay");
   if (!overlay) return;
   overlay.dataset.leaseState = state || "starting";
+  // .blocking-overlay jest domyślnie display:none (wspólny styl nakładek),
+  // więc samo zdjęcie `hidden` nie pokazuje komunikatu.
   if (state === "primary") {
     overlay.hidden = true;
+    overlay.style.display = "none";
     return;
   }
   const waiting = state === "waiting";
@@ -28,6 +31,7 @@ export function updateDeviceLeaseOverlay(state) {
   if (title) title.textContent = t(waiting ? "deviceLease.waitingTitle" : "deviceLease.reconnectingTitle");
   if (text) text.textContent = t(waiting ? "deviceLease.waitingText" : "deviceLease.reconnectingText");
   overlay.hidden = false;
+  overlay.style.display = "flex";
 }
 
 export function createDeviceLease({ gameId, deviceType, key, onState }) {
