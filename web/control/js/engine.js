@@ -17,16 +17,20 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T12384";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T12384";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-20T17305";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T17305";
 
 
 const STRIKE_LIMIT = 3;
 const TIMER_SECONDS = { P1: 15, P2: 20 };
 const FINAL_BLANK = "————";
 
-function topAnswer(answers) {
-  return answers.reduce((best, a) => (!best || a.fixed_points > best.fixed_points ? a : best), null);
+// Najwyżej punktowana odpowiedź = każda o maksymalnej liczbie punktów (E21):
+// przy 40/40/20 trafienie dowolnej „40” kończy pojedynek tak samo. Tożsamość
+// odpowiedzi (kafle, odsłonięcia) zostaje po ord; punkty jej nie wyznaczają.
+function isTopAnswer(answers, ans) {
+  const max = answers.reduce((m, a) => Math.max(m, Number(a.fixed_points) || 0), 0);
+  return max > 0 && (Number(ans?.fixed_points) || 0) === max;
 }
 function mapKey(round) {
   return round === 1 ? "map1" : "map2";
@@ -280,8 +284,7 @@ const REDUCERS = {
       // odsłonić DOWOLNĄ odpowiedź, nie tylko #1 — jej punkty zawsze trafiają
       // do banku, a wynik (trafienie/nie-topowa) idzie przez
       // duelRegisterResult tak samo jak pudło z ADD_X.
-      const top = topAnswer(r.answers);
-      const isTop = !!top && action.ord === top.ord;
+      const isTop = isTopAnswer(r.answers, ans);
       const team = r.duel.currentTeam || r.duel.firstTeam || "A";
       r.revealed.push(action.ord);
       r.bankPts += ans.fixed_points;

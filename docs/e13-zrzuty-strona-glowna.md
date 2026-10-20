@@ -1,4 +1,10 @@
-# Zrzuty strony głównej — zestaw do panelu admina
+# Zrzuty strony głównej — zestaw kadrów
+
+> **Stan 2026-10-20:** kadry robi system `scripts/screens/` (instrukcja:
+> `docs/zrzuty-system.md`), dawny panel admina zrzutów usunięto. Strona główna
+> czyta kadry z `web/assets/img/<język>/shots/`, odświeżane automatycznie po
+> pushu na `main`. Sekcje „Panel danych przykładowych”, „Instalacja panelu” i
+> „Reguły odświeżania” poniżej opisują poprzednie rozwiązanie (archiwum).
 
 Zrzuty pokazują aktualne widoki aplikacji z czytelnymi, przygotowanymi przykładami. Admin otwiera i edytuje dane danego widoku, przegląda jeden widok naraz w iframe i uruchamia odświeżenie całego zestawu. Każdy kadr czeka na gotową treść; błąd pojedynczego kadru nie zatrzymuje pozostałych. Gotowe pliki trafiają do bucketa. Na razie strona główna nadal korzysta ze starych obrazów; pobieranie nowych kadrów z bucketa zostanie podłączone osobno. Nie używamy kont ani danych puli E2E do przygotowania galerii.
 

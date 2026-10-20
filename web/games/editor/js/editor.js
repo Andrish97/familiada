@@ -3,27 +3,29 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T12384";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T12384";
-import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-20T12384";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T12384";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T17305";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T17305";
+import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-20T17305";
+import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T17305";
+import { readinessChecklist } from "../../../shared/js/core/game-rules.js?v=v2026-10-20T17305";
 
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
+  wireAnswerInput, answerFieldProblem, buildAnswerHints, loadAnswerGlyphs,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-20T12384";
-import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T12384";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T12384";
-import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T12384";
-import "../../../shared/js/core/contact-modal.js?v=v2026-10-20T12384";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T12384";
-import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-20T12384";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T12384";
-import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-20T12384";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T12384";
+} from "../../../shared/js/core/question-form.js?v=v2026-10-20T17305";
+import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T17305";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T17305";
+import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T17305";
+import "../../../shared/js/core/contact-modal.js?v=v2026-10-20T17305";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T17305";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-20T17305";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T17305";
+import { bindLocalizedFilePicker } from "../../../shared/js/core/file-picker.js?v=v2026-10-20T17305";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T17305";
 
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
@@ -33,8 +35,6 @@ const MSG = {
   answerDefault: (ord) => t("editor.defaults.answer", { ord }),
   cannotEdit: () => t("editor.alert.cannotEdit"),
   gameNotFound: () => t("editor.alert.gameNotFound"),
-  resetFailed: () => t("editor.alert.resetFailed"),
-  resetPollConfirm: () => t("editor.confirm.resetPoll"),
   nameSaveError: () => t("editor.status.nameSaveError"),
   addQuestionError: () => t("editor.status.addQuestionError"),
   deleteQuestionConfirm: () => t("editor.confirm.deleteQuestion"),
@@ -84,6 +84,8 @@ function showError(msg) {
 // zasobu, z powrotem do listy gier. Zwraca komunikat (albo "").
 function ruleBlocked(e) {
   const msg = gameRuleErrorMessage(e);
+  // Odrzucona treść (limit / znaki, migracja 404) -- do poprawy w polu, bez blokady strony.
+  if (msg && String(e?.message || "").includes("content_invalid:")) return msg;
   if (msg) {
     showBlockingOverlay({ title: t("gameValidate.lockedTitle"), message: msg, backHref: backHref("editor") });
   }
@@ -205,13 +207,6 @@ async function deleteAnswer(aId) {
   }
 }
 
-async function resetPollForEditing(gameId) {
-  // Jedno RPC = jedna transakcja (migracja 272, wspólne z games.js).
-  const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
-  if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || "reset_failed");
-}
-
 // RPC z migracji 276: wyczyszczenie gry i wgranie pytań w jednej
 // transakcji. Wcześniej ~80 osobnych zapytań po skasowaniu starej treści --
 // błąd w połowie zostawiał grę pustą albo z połową pytań.
@@ -237,7 +232,7 @@ function cfgFromGameType(type) {
     return {
       type,
       title: t("editor.config.pollText.title"),
-      hintTop: t("editor.config.pollText.hintTop", { min: QN_MIN }),
+      hintTop: t("editor.config.pollText.hintTop"),
       hintBottom: t("editor.config.pollText.hintBottom"),
       allowAnswers: false,
       allowPoints: false,
@@ -247,7 +242,7 @@ function cfgFromGameType(type) {
     return {
       type,
       title: t("editor.config.pollPoints.title"),
-      hintTop: t("editor.config.pollPoints.hintTop", { min: QN_MIN, answersMin: LIMITS.AN_MIN, answersMax: AN_MAX }),
+      hintTop: t("editor.config.pollPoints.hintTop"),
       hintBottom: t("editor.config.pollPoints.hintBottom"),
       allowAnswers: true,
       allowPoints: false,
@@ -256,8 +251,8 @@ function cfgFromGameType(type) {
   return {
     type,
     title: t("editor.config.prepared.title"),
-    hintTop: t("editor.config.prepared.hintTop", { min: QN_MIN, answersMin: LIMITS.AN_MIN, answersMax: AN_MAX }),
-    hintBottom: t("editor.config.prepared.hintBottom", { sum: SUM_MAX }),
+    hintTop: t("editor.config.prepared.hintTop"),
+    hintBottom: t("editor.config.prepared.hintBottom", { min: GV_RULES.PTS_MIN, sum: SUM_MAX }),
     allowAnswers: true,
     allowPoints: true,
   };
@@ -273,6 +268,19 @@ function importPayload(items, cfg) {
       points: cfg.allowPoints ? (parsePoints(a.points) ?? 0) : 0,
     })),
   }));
+}
+
+// Pierwsza importowana odpowiedź ze znakami spoza czcionki Wyświetlacza --
+// import TXT zapisuje odpowiedzi tak jak ręczna edycja, więc ich nie przyjmie.
+function invalidImportAnswer(items, cfg) {
+  if (!cfg.allowAnswers) return null;
+  for (const [qi, it] of items.entries()) {
+    for (const [ai, a] of (it.answers || []).slice(0, AN_MAX).entries()) {
+      const problem = answerFieldProblem(a.text);
+      if (problem) return { q: qi + 1, ord: ai + 1, chars: problem.params.chars };
+    }
+  }
+  return null;
 }
 
 /* ================= Boot ================= */
@@ -356,15 +364,10 @@ async function boot() {
   if (!editInfo) return;
 
   if (editInfo.needsReset) {
-    const ok = await confirmModal({ text: MSG.resetPollConfirm() });
-    if (!ok) return leaveTo("");
-    try {
-      await resetPollForEditing(gameId);
-      game = await loadGame(gameId);
-    } catch (e) {
-      console.error("[editor] reset error:", e);
-      return leaveTo(MSG.resetFailed());
-    }
+    // To samo potwierdzenie i pełny reset co lista Gier i „Zmień typ”.
+    const gate = await editGate(gameId);
+    if (!gate.ok) return leaveTo("");
+    game = await loadGame(gameId);
     if (!game) return leaveTo(MSG.gameNotFound());
   }
 
@@ -408,6 +411,7 @@ async function boot() {
     cfg = cfgFromGameType(game.type);
     $("pageTitle").textContent = cfg.title;
     $("hintTop").textContent = cfg.hintTop;
+    renderRules();
     $("hintBottom").textContent = cfg.hintBottom;
     document.body.classList.toggle("only-questions", !cfg.allowAnswers);
     document.body.classList.toggle("no-points", !cfg.allowPoints);
@@ -465,9 +469,26 @@ async function boot() {
     const ok = cardOk(q);
     card.classList.toggle("good", ok === true);
     card.classList.toggle("bad", ok === false);
+    renderRules();
+  }
+
+  // Warunki gotowości na żywo (ten sam silnik co baza: readinessChecklist).
+  function renderRules() {
+    const box = $("rulesList");
+    if (!box || !cfg) return;
+    box.innerHTML = "";
+    for (const item of readinessChecklist(cfg.type, questions)) {
+      const li = document.createElement("li");
+      li.className = item.ok ? "ok" : "bad";
+      const where = item.ok || !item.ords.length ? "" : " — " + t("editor.rules.where", { list: item.ords.join(", ") });
+      li.innerHTML = icon(item.ok ? "check" : "warning");
+      li.append(t(`editor.rules.${item.key}`, item.params) + where);
+      box.appendChild(li);
+    }
   }
 
   function renderAddQuestionTile() {
+    renderRules();
     const sub = qList?.querySelector(".addTile .sub");
     if (sub) sub.textContent = questions.length >= QN_MIN ? MSG.minQuestionsOk() : MSG.minQuestions(QN_MIN, questions.length);
   }
@@ -663,7 +684,13 @@ async function boot() {
   function updateSumFromInputs() {
     if (!cfg.allowPoints || !pointsRemainTop) return;
     let sum = 0;
-    aList?.querySelectorAll("input.qf-pts").forEach((inp) => { sum += parsePoints(inp.value) ?? 0; });
+    const minPts = cfg.type === TYPES.PREPARED ? GV_RULES.PTS_MIN : 0;
+    aList?.querySelectorAll("input.qf-pts").forEach((inp) => {
+      const pts = parsePoints(inp.value) ?? 0;
+      sum += pts;
+      // preparowana: odpowiedź poniżej progu punktów (gra nie będzie gotowa)
+      inp.classList.toggle("qf-invalid", pts < minPts);
+    });
     renderSumPill(pointsRemainTop.querySelector(".qf-sum"), sum);
   }
 
@@ -728,6 +755,13 @@ async function boot() {
     // pola, do którego przeszło się Tabem, a klik w kosz innego wiersza
     // (który zdejmował focus z punktów) trafiał w usunięty element.
     const saveText = async ({ final } = {}) => {
+      // Znaki spoza czcionki Wyświetlacza: odpowiedź się nie zapisuje (baza
+      // też by ją odrzuciła); pole zostaje oznaczone, komunikat przy wyjściu.
+      const problem = answerFieldProblem(iText.value);
+      if (problem) {
+        if (final) showError(t("gameValidate.answerChars", problem.params));
+        return;
+      }
       const text = normAnswerText(iText.value) || MSG.answerDefault(a.ord);
       try {
         if (text !== a.text) {
@@ -743,8 +777,9 @@ async function boot() {
     };
     const saveTextDebounced = debounce(() => track(saveText()), 350);
 
-    wireTextLimit(iText, LIMITS.A_TEXT, () => {
-      saveTextDebounced();
+    wireAnswerInput(iText, (_v, problem) => {
+      if (problem) saveTextDebounced.cancel();
+      else saveTextDebounced();
     });
     iText.addEventListener("blur", () => {
       saveTextDebounced.cancel();
@@ -778,6 +813,8 @@ async function boot() {
     aList.innerHTML = "";
     if (pointsRemainTop) pointsRemainTop.innerHTML = "";
 
+    // podpowiedzi nad kafelkiem dodawania (jak warunki nad „Dodaj pytanie”)
+    aList.appendChild(buildAnswerHints());
     const addA = buildAddAnswerTile(answers.length);
     addA.addEventListener("click", addAnswer);
     aList.appendChild(addA);
@@ -846,6 +883,12 @@ async function boot() {
       });
       return;
     }
+    const bad = invalidImportAnswer(parsed.items, cfg);
+    if (bad) {
+      txtPreviewBody.classList.add("is-error");
+      txtPreviewBody.textContent = t("editor.importModal.invalidChars", bad);
+      return;
+    }
     txtPreviewBody.classList.remove("is-error");
     const summary = document.createElement("div");
     summary.className = "txt-preview-summary";
@@ -893,6 +936,7 @@ async function boot() {
   }
 
   $("btnImportTxt")?.addEventListener("click", () => {
+    void loadAnswerGlyphs().then(renderTxtPreview);
     txtTa.value = "";
     txtFilePicker.reset();
     setTxtMsg("");
@@ -930,6 +974,9 @@ async function boot() {
 
     const parsed = parseQaText(raw);
     if (!parsed.ok) return setTxtMsg(MSG.importParseError(parsed.code, parsed.params));
+    await loadAnswerGlyphs();
+    const bad = invalidImportAnswer(parsed.items, cfg);
+    if (bad) return setTxtMsg(t("editor.importModal.invalidChars", bad));
 
     setImporting(true);
     try {

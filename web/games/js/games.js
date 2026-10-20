@@ -1,21 +1,23 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-20T12384";
-import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-20T12384";
-import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-20T12384";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T12384";
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-20T12384";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T12384";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-20T12384";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T12384";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T12384";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T12384";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-20T12384";
+import { changeGameType } from "./change-type.js?v=v2026-10-20T17305";
+import { gameTransferDropsVotes, normalizeGamePackage } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-20T17305";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-20T17305";
+import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-20T17305";
+import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-20T17305";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T17305";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-20T17305";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17305";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-20T17305";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T17305";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T17305";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T17305";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-20T17305";
 
-import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-20T12384";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-20T12384";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T12384";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T12384";
+import { initPwa, isStandalone, isMobileDevice, canOfferPwaInstall } from "../../shared/js/core/pwa.js?v=v2026-10-20T17305";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-20T17305";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T17305";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T17305";
 
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -23,10 +25,10 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-20T12384";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-20T12384';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-20T17305";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-20T17305';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-20T12384";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-20T17305";
 
 import {
   TYPES,
@@ -34,13 +36,14 @@ import {
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-20T12384";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T12384";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T12384";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-20T12384";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-20T12384";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T12384";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-20T12384";
+  editGate,
+} from "../../shared/js/core/game-validate.js?v=v2026-10-20T17305";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T17305";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T17305";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-20T17305";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-20T17305";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T17305";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-20T17305";
 
 
 const MSG = {
@@ -72,7 +75,6 @@ const MSG = {
   alertCreateFailed: () => t("games.alert.createFailed"),
   hintSelect: () => t("games.hint.select"),
   hintSelectPlus: () => t("games.hint.selectPlus"),
-  alertResetPollFailed: () => t("games.alert.resetPollFailed"),
   alertCheckFailed: () => t("games.alert.checkFailed"),
   alertOpenPollFailed: () => t("games.alert.openPollFailed"),
   exportJsonSub: () => t("games.exportFile.subtitle"),
@@ -125,6 +127,7 @@ const btnMore = document.getElementById("btnMore");
 const navMoreDropdown = document.getElementById("navMoreDropdown");
 
 const btnDuplicate = document.getElementById("btnDuplicate");
+const btnChangeType = document.getElementById("btnChangeType");
 const btnSendCopy = document.getElementById("btnSendCopy");
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
@@ -705,22 +708,10 @@ function safeDownloadName(name) {
   return `${base}.famgame`;
 }
 
-/**
- * UI-type (3 zakładki) vs DB-type (często tylko fixed/poll).
- * - Jeśli masz nową bazę z type = poll_text/poll_points/prepared -> działa wprost.
- * - Jeśli masz starą bazę z type = fixed/poll ->:
- *    fixed => prepared
- *    poll  => poll_text albo poll_points (wnioskujemy po nazwie)
- */
+// Typ gry z bazy = zakładka (prepared/poll_points/poll_text/market; CHECK
+// games_type_check innych nie dopuszcza). Bez zgadywania starych aliasów.
 function uiTypeFromRow(g) {
-  const k = String(g?.type || "");
-  if (k === TYPES.POLL_TEXT || k === TYPES.POLL_POINTS || k === TYPES.PREPARED || k === TYPES.MARKET) return k;
-  if (k === "fixed") return TYPES.PREPARED;
-  if (k === "poll") {
-    const nm = String(g?.name || "").toLowerCase();
-    return nm.includes("punkt") ? TYPES.POLL_POINTS : TYPES.POLL_TEXT;
-  }
-  return TYPES.PREPARED;
+  return String(g?.type || "");
 }
 
 function typeLabel(uiType) {
@@ -748,9 +739,10 @@ function statusLabel(st, g) {
   return MSG.statusDraft();
 }
 
-function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
+function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport, canChangeType = false, canDuplicate = false, canSend = false }) {
   const guest = isGuestUser(currentUser);
   if (btnEdit) btnEdit.disabled = !hasSel || !canEdit;
+  if (btnChangeType) btnChangeType.disabled = !hasSel || !canChangeType || !!btnChangeType.dataset.busy;
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
@@ -759,11 +751,11 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
   if (btnDuplicate) {
     btnDuplicate.hidden = guest;
-    btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canExport || guest;
+    btnDuplicate.disabled = !!btnDuplicate.dataset.duplicateBusy || !hasSel || !canDuplicate || guest;
   }
   if (btnSendCopy) {
     btnSendCopy.hidden = guest;
-    btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canExport || guest;
+    btnSendCopy.disabled = !!btnSendCopy.dataset.sendBusy || !hasSel || !canSend || guest;
   }
   const receivedCopies = document.getElementById("receivedCopies");
   if (receivedCopies && guest) receivedCopies.hidden = true;
@@ -807,7 +799,7 @@ async function listGames() {
   const { data, error } = await sb()
     .from("games")
     .select("id,name,created_at,updated_at,type,status,rules_state,received_from_label,received_from_identity")
-    .is("source_market_id", null)
+    .neq("type", TYPES.MARKET)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -875,24 +867,6 @@ async function deleteGame(game) {
     return;
   }
   // Folder dźwięków gry usuwa baza (migracja 313, kolejka storage_cleanup_queue).
-}
-
-async function resetPollForEditing(gameId) {
-  // Zeruje answers.fixed_points i cofa games.status na draft -- te same
-  // dane, które edytor/ustawienia/ankieta trzymają pod swoim lockiem
-  // "game". Jednorazowa akcja bez własnej sesji, więc alert modal
-  // zamiast overlayu -- patrz "Model: zasób ma stan busy/free".
-  if (await isResourceBusy("game", gameId)) {
-    void alertModal({ text: t("resourceLock.gameMessage") });
-    return false;
-  }
-
-  // Jedno RPC = jedna transakcja (migracja 272): wcześniej status i punkty
-  // szły osobnymi zapisami i błąd pomiędzy zostawiał szkic z punktami.
-  const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
-  if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || "reset_failed");
-  return true;
 }
 
 /* ================= Render ================= */
@@ -1082,7 +1056,7 @@ function renderMarket() {
 
   for (const g of marketGamesAll) {
     const el = cardMarket(g);
-    if (g.market_game_id === selectedMarketId) el.classList.add("selected");
+    if (g.key === selectedMarketId) el.classList.add("selected");
     grid.appendChild(el);
   }
 
@@ -1103,13 +1077,13 @@ function setMarketButtonsState() {
 function cardMarket(g) {
   const el = document.createElement("div");
   el.className = "card tile";
-  el.dataset.marketId = g.market_game_id;
+  el.dataset.marketId = g.key;
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
-    <div class="meta">${(g.lang || "").toUpperCase()}</div>
+    <div class="meta">${g.archived ? escapeHtml(t("games.market.archived")) : (g.lang || "").toUpperCase()}</div>
     <div class="x" title="${t("games.market.removeFromLibrary")}">${icon("trash")}</div>
   `;
-  el.addEventListener("click", () => selectMarketGame(g.market_game_id));
+  el.addEventListener("click", () => selectMarketGame(g.key));
   el.querySelector(".x").addEventListener("click", async (e) => {
     e.stopPropagation();
     await removeFromLibrary(g);
@@ -1136,7 +1110,9 @@ async function removeFromLibrary(g) {
       void alertModal({ text: t("resourceLock.gameMessage") });
       return;
     }
-    const { data, error } = await sb().rpc("market_remove_from_library", { p_market_game_id: g.market_game_id });
+    const { data, error } = g.archived
+      ? await sb().rpc("market_remove_archived_copy", { p_game_id: g.game_id })
+      : await sb().rpc("market_remove_from_library", { p_market_game_id: g.market_game_id });
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
     if (row && row.ok === false) throw new Error(row.err || "remove_failed");
@@ -1146,8 +1122,8 @@ async function removeFromLibrary(g) {
     return;
   }
 
-  if (selectedMarketId === g.market_game_id) selectedMarketId = null;
-  marketGamesAll = marketGamesAll.filter(x => x.market_game_id !== g.market_game_id);
+  if (selectedMarketId === g.key) selectedMarketId = null;
+  marketGamesAll = marketGamesAll.filter(x => x.key !== g.key);
   if (activeTab === TYPES.MARKET) renderMarket();
 }
 
@@ -1155,7 +1131,9 @@ async function loadMarketGames() {
   try {
     const { data, error } = await sb().rpc("market_my_library");
     if (error) throw error;
-    marketGamesAll = data || [];
+    // Archiwalna kopia (pozycja Marketplace usunięta) nie ma market_game_id --
+    // kluczem jest wtedy jej lokalna gra.
+    marketGamesAll = (data || []).map((g) => ({ ...g, key: g.market_game_id || `g:${g.game_id}` }));
   } catch (e) {
     console.error("[games] loadMarketGames error:", e);
     marketGamesAll = [];
@@ -1172,7 +1150,7 @@ async function selectionRules(g) {
 
 // Wyłączony przycisk mówi w podpowiedzi, czego brakuje (tekst z bazy).
 function setButtonReasons(v) {
-  const pairs = [[btnEdit, v?.edit], [btnPlay, v?.play], [btnPoll, v?.poll_entry], [btnExport, v?.export], [btnExportBase, v?.export]];
+  const pairs = [[btnEdit, v?.edit], [btnChangeType, v?.change_type], [btnPlay, v?.play], [btnPoll, v?.poll_entry], [btnExport, v?.export], [btnExportBase, v?.export], [btnDuplicate, v?.duplicate], [btnSendCopy, v?.send]];
   for (const [btn, a] of pairs) {
     if (!btn) continue;
     if (a && !a.ok && a.reason) btn.title = a.reason;
@@ -1203,6 +1181,9 @@ async function updateActionState() {
     setButtonsState({
       hasSel: true,
       canEdit: v.edit.ok,
+      canChangeType: v.change_type.ok,
+      canDuplicate: v.duplicate.ok,
+      canSend: v.send.ok,
       canPlay: v.play.ok,
       canPoll: v.poll_entry.ok,
       canExport: v.export.ok,
@@ -1218,6 +1199,18 @@ async function updateActionState() {
 
 
 /* ================= Import/Export ================= */
+// Otwarta/zatrzymana ankieta przechodzi do pliku/kopii jako szkic -- bieżące
+// głosy nie zostaną zachowane (E21); bez zgody nic się nie dzieje.
+async function confirmTransferDropsVotes(g) {
+  if (!gameTransferDropsVotes(g)) return true;
+  return confirmModal({
+    title: t("games.transferDropsVotes.title"),
+    text: t("games.transferDropsVotes.text"),
+    okText: t("games.transferDropsVotes.ok"),
+    cancelText: t("games.transferDropsVotes.cancel"),
+  });
+}
+
 async function readFileAsText(file) {
   return await new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -1236,7 +1229,7 @@ async function refresh() {
 
   if (activeTab === TYPES.MARKET) {
     await loadMarketGames();
-    if (selectedMarketId && !marketGamesAll.some(g => g.market_game_id === selectedMarketId)) selectedMarketId = null;
+    if (selectedMarketId && !marketGamesAll.some(g => g.key === selectedMarketId)) selectedMarketId = null;
   }
 
   render();
@@ -1276,7 +1269,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.documentElement.classList.remove('page-loading'); // translations ready — show skeleton
   currentUser = await userP;
   if (!currentUser) return; // initPage przekierował na logowanie
-  bindResourceDuplicate({button:btnDuplicate,kind:"game",getSource:()=>gamesAll.find(g=>g.id===selectedId),onDone:async id=>{selectedId=id;const g=await loadGameBasic(id);setActiveTab(uiTypeFromRow(g));await refresh();},onState:()=>void updateActionState()});
+  bindResourceDuplicate({button:btnDuplicate,kind:"game",getSource:()=>gamesAll.find(g=>g.id===selectedId),confirm:confirmTransferDropsVotes,onDone:async id=>{selectedId=id;const g=await loadGameBasic(id);setActiveTab(uiTypeFromRow(g));await refresh();},onState:()=>void updateActionState()});
   bindResourceSend({button:btnSendCopy,kind:"game",getSource:()=>gamesAll.find(g=>g.id===selectedId),onDone:async()=>refresh(),onState:()=>void updateActionState()});
 
   maybeShowGuestMigrateReminder(currentUser);
@@ -1558,14 +1551,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnPreview?.addEventListener("click", async () => {
     let gameName = "—";
     let marketId = null;
+    let archivedId = null;
     const gameId = selectedId;
 
     // Ustal nazwę i źródło danych
     if (activeTab === TYPES.MARKET && selectedMarketId) {
-      const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
+      const mg = marketGamesAll.find(g => g.key === selectedMarketId);
       if (!mg) return;
       gameName = mg.title || "—";
       marketId = mg.market_game_id;
+      archivedId = mg.archived ? mg.game_id : null;
     } else if (gameId) {
       const g = gamesAll.find(x => x.id === gameId);
       gameName = g?.name || "—";
@@ -1591,7 +1586,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let questions = [];
     try {
-      if (marketId) {
+      if (archivedId) {
+        // archiwalna kopia: treść tylko w lokalnej grze (bez transferu -- odczyt wprost)
+        const { data, error } = await sb().from("questions").select("ord,text,answers(ord,text,fixed_points)")
+          .eq("game_id", archivedId).order("ord", { ascending: true });
+        if (error) throw error;
+        questions = data || [];
+      } else if (marketId) {
         // market_my_library nie zwraca treści gry (payload) -- wcześniej
         // podgląd gry ze Społeczności zawsze pokazywał "Brak pytań".
         const { data, error } = await sb().rpc("market_game_detail", { p_id: marketId });
@@ -1635,47 +1636,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     const g = gamesAll.find(x => x.id === selectedId);
     if (!g) return;
 
-    let info;
-    try {
-      info = (await validateGame(g.id)).edit;
-    } catch (e) {
-      console.error("[games] game_validate error:", e);
-      void alertModal({ text: MSG.alertCheckFailed() });
-      return;
-    }
-    if (!info.ok) {
-      void alertModal({ text: info.reason });
-      return;
-    }
-
-    if (info.needsReset) {
-      const ok = await confirmModal({
-        title: t("games.editAfterPoll.title"),
-        text: t("games.editAfterPoll.text"),
-        okText: t("games.editAfterPoll.ok"),
-        cancelText: t("games.editAfterPoll.cancel"),
-      });
-      if (!ok) return;
-
-      try {
-        const resetOk = await resetPollForEditing(g.id);
-        if (!resetOk) return;
-        await refresh();
-      } catch (e) {
-        console.error("[games] resetPollForEditing error:", e);
-        void alertModal({ text: MSG.alertResetPollFailed() });
-        return;
-      }
-    }
+    // Wspólna bramka edycji (game-validate.js): ta sama reguła, potwierdzenie
+    // i pełny reset zamkniętej ankiety co edytor i „Zmień typ”.
+    const gate = await editGate(g.id, { checkBusy: true });
+    if (!gate.ok) return;
+    if (gate.reset) await refresh();
 
     location.href = linkTo("editor", { id: g.id });
+  });
+
+  // ZMIEŃ TYP (E21): ta sama gra, bramka edit, wynik -- szkic wybranego typu
+  btnChangeType?.addEventListener("click", async () => {
+    const g = gamesAll.find(x => x.id === selectedId);
+    if (!g || btnChangeType.dataset.busy) return;
+    btnChangeType.dataset.busy = "1";
+    btnChangeType.disabled = true;
+    try {
+      const type = await changeGameType(g);
+      if (type) {
+        setActiveTab(type);
+        await refresh();
+      }
+    } finally {
+      delete btnChangeType.dataset.busy;
+      void updateActionState();
+    }
   });
 
   // PLAY
   btnPlay?.addEventListener("click", async () => {
     // Gra z marketu: każdy user ma własną kopię games z własnym UUID
     if (activeTab === TYPES.MARKET && selectedMarketId) {
-      const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
+      const mg = marketGamesAll.find(g => g.key === selectedMarketId);
       if (!mg) return;
 
       let gameId = mg.game_id;
@@ -1684,7 +1676,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (btnPlay) btnPlay.disabled = true;
         try {
           const { error } = await sb().rpc("market_add_to_library", {
-            p_market_game_id: selectedMarketId,
+            p_market_game_id: mg.market_game_id,
           });
           if (error) {
             console.error("[games] market_add_to_library:", error);
@@ -1692,7 +1684,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
           }
           await loadMarketGames();
-          gameId = marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id;
+          gameId = marketGamesAll.find(g => g.key === selectedMarketId)?.game_id;
         } finally {
           if (btnPlay) btnPlay.disabled = false;
         }
@@ -1740,7 +1732,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // SETTINGS
   btnSettings?.addEventListener("click", () => {
     const gameId = activeTab === TYPES.MARKET
-      ? marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id
+      ? marketGamesAll.find(g => g.key === selectedMarketId)?.game_id
       : selectedId;
     if (!gameId) return;
     location.href = linkTo("gameSettings", { id: gameId });
@@ -1760,6 +1752,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       void alertModal({ text: t("resourceLock.gameMessage") });
       return;
     }
+    if (!(await confirmTransferDropsVotes(gamesAll.find((g) => g.id === selectedId)))) return;
 
     if (exportJsonSub) exportJsonSub.textContent = MSG.exportJsonSub();
     if (btnExportJsonClose) btnExportJsonClose.hidden = true;
@@ -1952,11 +1945,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (e instanceof SyntaxError) throw new Error(MSG.importInvalidJson());
         throw e;
       }
-      if (!obj?.game || !Array.isArray(obj?.questions)) throw new Error(MSG.importInvalidJson());
+      // Podgląd = to, co zapisze baza (ten sam kontrakt co _game_package_normalize):
+      // limity, punkty, nadmiar odpowiedzi; plik bez wersji -- jawny migrator v1.
+      let norm;
+      try {
+        norm = normalizeGamePackage(obj, { defaultName: t("gamesImportExport.defaults.gameName") });
+      } catch (e) {
+        throw new Error(t(`games.import.errors.${e?.code || "invalid_payload"}`));
+      }
       importParsed = obj;
-      const gameName = obj.game.name || "—";
-      const gameType = typeLabel(uiTypeFromRow({ type: obj.game.type }));
-      const qs = obj.questions;
+      const gameName = norm.game.name || "—";
+      const gameType = typeLabel(norm.game.type) + (norm.game.state === "closed" ? ` · ${t("games.import.preview.closed")}` : "");
+      const qs = norm.questions;
+      const notes = [norm.recovered && t("games.import.preview.recovered"), norm.closed_downgraded && t("games.import.preview.closedDowngraded")].filter(Boolean);
 
       const qRows = qs.map((q, i) => {
         const answers = sortAnswersByPoints(q.answers);
@@ -1980,6 +1981,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <span><span style="opacity:.6">${t("games.import.preview.type")}</span> <strong>${escapeHtml(gameType)}</strong></span>
             <span><span style="opacity:.6">${t("games.import.preview.questions")}</span> <strong>${qs.length}</strong></span>
           </div>
+          ${notes.map((note) => `<div class="import-note">${escapeHtml(note)}</div>`).join("")}
           <div style="max-height:220px;overflow-y:auto;margin-top:4px">${qRows}</div>`;
         importPreview.style.display = "grid";
       }

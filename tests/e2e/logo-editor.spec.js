@@ -26,7 +26,7 @@ const { testAccountUsername } = require("./helpers/login");
 const L = require("./helpers/logo-editor");
 
 const DEMO_IMAGE = path.resolve(__dirname, "../../web/logos/assets/demo-image.png");
-const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon.png");
+const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon-1024.png");
 
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 test.describe.configure({ mode: "parallel" });
@@ -191,7 +191,7 @@ test.describe("lista", () => {
     await page.goto(`${site.origin}/logos/editor/text/`);
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await page.locator("#resourceLockGuardBack").click();
-    await page.waitForURL(/\/logo\/(\?|$)/);
+    await page.waitForURL(/\/logos\/(\?|$)/);
   });
 });
 
@@ -958,7 +958,7 @@ test.describe("blokady", () => {
       await L.openList(tabB, site);
       await tabB.locator(`.logoTile[data-key="${id}"]`).click();
       await tabB.locator("#btnEdit").click();
-      await tabB.waitForURL(/\/logo\/editor\/text\/\?id=/);
+      await tabB.waitForURL(/\/logos\/editor\/text\/\?id=/);
       await expect(tabB.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
       await expect(tabB.locator("#logoName")).toBeDisabled();
     } finally {
@@ -1282,7 +1282,7 @@ test.describe("telefon w poziomie", () => {
     await page.locator(`.logoTile[data-key="${id}"]`).tap();
     await expect(page.locator("#btnEdit")).toBeEnabled();
     await page.locator("#btnEdit").tap();
-    await expect(page).toHaveURL(/\/logo\/editor\/text\//);
+    await expect(page).toHaveURL(/\/logos\/editor\/text\//);
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 30000 });
   });
 });

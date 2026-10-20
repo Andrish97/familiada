@@ -13,7 +13,7 @@ function collectPageErrors(page) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => {
-    if (m.type() === "error" && /\/logo\//.test(m.location()?.url || "") && !isKnownNoiseText(m.text())) errors.push(m.text());
+    if (m.type() === "error" && /\/logos\//.test(m.location()?.url || "") && !isKnownNoiseText(m.text())) errors.push(m.text());
   });
   return errors;
 }

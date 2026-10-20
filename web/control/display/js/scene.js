@@ -24,13 +24,14 @@
 // matematyki animacji/fontów od zera nie dałoby żadnej korzyści, tylko
 // ryzyko niezgodności z tym, jak wygląda dziś (ustalone wprost).
 
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../../shared/js/display/fonts.js?v=v2026-10-20T12384";
-import { createAnimator } from "../../../shared/js/display/anim.js?v=v2026-10-20T12384";
-import { createDisplays } from "../../../shared/js/display/displays.js?v=v2026-10-20T12384";
-import { createThemeManager } from "../../../shared/js/display/theme_manager.js?v=v2026-10-20T12384";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { clipDisplayText } from "../../../shared/js/gameplay/displayText.js?v=v2026-10-20T12384";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../../shared/js/display/fonts.js?v=v2026-10-20T17305";
+import { LONG_GAP, layoutLongText } from "../../../shared/js/display/long-text.js?v=v2026-10-20T17305";
+import { createAnimator } from "../../../shared/js/display/anim.js?v=v2026-10-20T17305";
+import { createDisplays } from "../../../shared/js/display/displays.js?v=v2026-10-20T17305";
+import { createThemeManager } from "../../../shared/js/display/theme_manager.js?v=v2026-10-20T17305";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { clipDisplayText } from "../../../shared/js/gameplay/displayText.js?v=v2026-10-20T17305";
 
 
 export async function createScene() {
@@ -334,25 +335,21 @@ export async function createScene() {
     for (let i=0;i<3;i++) renderCharToTile(GLYPHS, tripleTiles[i], s[i], onColor, COLORS.dotOff);
   };
 
-  const setLongTextCenteredMax15 = (GLYPHS, panel, text, onColor) => {
-    let s = (text ?? "").toString().toUpperCase();
-    if (s.length > 15) s = s.slice(0,15);
+  // Nazwy drużyn: znaki proporcjonalnie, wyśrodkowane (long-text.js -- ten
+  // sam układ co pomiar w ustawieniach gry). Co się nie mieści, jest pomijane.
+  const setLongTextCentered = (GLYPHS, panel, text, onColor) => {
     for (let y=0;y<panel.Y;y++) for (let x=0;x<panel.X;x++) panel.dots[y][x].setAttribute("fill", COLORS.dotOff);
-    const glyphs = Array.from(s).map(ch => resolveGlyph(GLYPHS, ch));
-    const charW = 5, gapCol = 1;
-    const totalW = glyphs.length === 0 ? 0 : (glyphs.length * charW + (glyphs.length-1) * gapCol);
-    let xCursor = Math.max(0, Math.floor((panel.X - totalW) / 2));
-    for (const glyph of glyphs) {
-      for (let row=0;row<7;row++) {
-        const bits = glyph[row] | 0;
-        for (let col=0;col<5;col++) {
-          const mask = 1 << (4-col);
-          const on = (bits & mask) !== 0;
-          const px = xCursor + col;
-          if (px >= 0 && px < panel.X) panel.dots[row][px].setAttribute("fill", on ? onColor : COLORS.dotOff);
+    const { items, width } = layoutLongText(text, GLYPHS);
+    let xCursor = Math.max(0, Math.floor((panel.X - width) / 2));
+    for (const item of items) {
+      if (xCursor + item.width > panel.X) break;
+      for (let row=0; item.glyph && row<7; row++) {
+        const bits = item.glyph[row] | 0;
+        for (let col=0; col<item.width; col++) {
+          if (bits & (1 << (4 - (item.from + col)))) panel.dots[row][xCursor + col].setAttribute("fill", onColor);
         }
       }
-      xCursor += charW + gapCol;
+      xCursor += item.width + LONG_GAP;
     }
   };
 
@@ -509,9 +506,9 @@ export async function createScene() {
       topDigits: (ddd) => setTripleDigits(GLYPHS, topTriple, ddd, LIT.top),
       leftDigits: (ddd) => setTripleDigits(GLYPHS, leftTriple, ddd, LIT.left),
       rightDigits: (ddd) => setTripleDigits(GLYPHS, rightTriple, ddd, LIT.right),
-      long1: (txt) => setLongTextCenteredMax15(GLYPHS, long1, txt, LIT.bottom),
-      long2: (txt) => setLongTextCenteredMax15(GLYPHS, long2, txt, LIT.bottom),
-      clearAll: () => { setTripleDigits(GLYPHS, topTriple, "   ", LIT.top); setTripleDigits(GLYPHS, leftTriple, "   ", LIT.left); setTripleDigits(GLYPHS, rightTriple, "   ", LIT.right); setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main); setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main); },
+      long1: (txt) => setLongTextCentered(GLYPHS, long1, txt, LIT.bottom),
+      long2: (txt) => setLongTextCentered(GLYPHS, long2, txt, LIT.bottom),
+      clearAll: () => { setTripleDigits(GLYPHS, topTriple, "   ", LIT.top); setTripleDigits(GLYPHS, leftTriple, "   ", LIT.left); setTripleDigits(GLYPHS, rightTriple, "   ", LIT.right); setLongTextCentered(GLYPHS, long1, "", LIT.main); setLongTextCentered(GLYPHS, long2, "", LIT.main); },
     },
     indicator: { get: () => indicatorState, set: setIndicator },
     snapshotAll, restoreSnapshot,
@@ -700,8 +697,8 @@ export async function createScene() {
   setTripleDigits(GLYPHS, topTriple, "   ", LIT.top);
   setTripleDigits(GLYPHS, leftTriple, "   ", LIT.left);
   setTripleDigits(GLYPHS, rightTriple, "   ", LIT.right);
-  setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main);
-  setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
+  setLongTextCentered(GLYPHS, long1, "", LIT.main);
+  setLongTextCentered(GLYPHS, long2, "", LIT.main);
 
   return { api, themeMgr, cancelAnimations() { animationGeneration++; } };
 }

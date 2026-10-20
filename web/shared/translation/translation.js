@@ -1,10 +1,10 @@
 const LANG_LOADERS = {
-  pl: async () => (await import('./pl.js?v=v2026-10-20T12384')).default,
-  en: async () => (await import('./en.js?v=v2026-10-20T12384')).default,
-  uk: async () => (await import('./uk.js?v=v2026-10-20T12384')).default,
+  pl: async () => (await import('./pl.js?v=v2026-10-20T17305')).default,
+  en: async () => (await import('./en.js?v=v2026-10-20T17305')).default,
+  uk: async () => (await import('./uk.js?v=v2026-10-20T17305')).default,
 };
 
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-20T12384";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-20T17305";
 
 
 const LANG_ORDER = ["pl", "en", "uk"];
@@ -12,6 +12,9 @@ const LANG_ORDER = ["pl", "en", "uk"];
 let currentLang = "pl";
 let translations = null;
 let languageRequestId = 0;
+// Ostatnie rozpoczęte setUiLang. Starsze, wyprzedzone wywołanie czeka na nie,
+// żeby wołający (np. initI18n) nie ruszył dalej bez wczytanego słownika.
+let latestLanguageLoad = Promise.resolve(false);
 
 let switcherEl = null; // container w topbarze
 let menuEl = null;     // portal w body
@@ -54,7 +57,13 @@ export function getUiLang() {
   return "pl";
 }
 
-export async function setUiLang(
+export function setUiLang(lang, options = {}) {
+  const load = loadUiLang(lang, options);
+  latestLanguageLoad = load.catch(() => false);
+  return load;
+}
+
+async function loadUiLang(
   lang,
   { persist = true, updateUrl = true, apply = true } = {}
 ) {
@@ -64,8 +73,12 @@ export async function setUiLang(
 
   const loaded = await loader();
   // Przy szybkim PL -> EN -> UK wolniejszy, starszy import nie może
-  // nadpisać języka wybranego później.
-  if (requestId !== languageRequestId) return false;
+  // nadpisać języka wybranego później. Wraca dopiero, gdy nowszy wybór
+  // wczytał słownik -- inaczej t() zaraz po await zwracałoby klucze.
+  if (requestId !== languageRequestId) {
+    await latestLanguageLoad;
+    return false;
+  }
   translations = loaded;
   currentLang = translations?.meta?.lang || next;
 
@@ -338,7 +351,10 @@ function updateSwitcherLabel() {
 // -----------------------------------------------------------------------------
 
 if (typeof window !== "undefined") {
-  window.addEventListener("pageshow", async () => {
+  window.addEventListener("pageshow", async (event) => {
+    // Pierwsze wczytanie strony też wysyła pageshow; język ustawia wtedy
+    // initI18n strony. Tu tylko powrót z BFCache.
+    if (!event.persisted) return;
     try {
       // setUiLang robi:
       // - load właściwego słownika

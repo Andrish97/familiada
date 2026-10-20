@@ -1,0 +1,152 @@
+name: Zrzuty stron (dane demo)
+
+# Zrzuty prawdziwych stron z web/ na danych demo (scripts/screens/) -- bez kont,
+# bez produkcyjnej bazy. Automatycznie po każdym pushu zmieniającym strony albo
+# system zrzutów (sceny zmienionych stron), ręcznie z Actions → „Zrzuty stron”.
+# Wynik: artefakt z galerią (index.html + README.md) i galeria na gałęzi
+# screens-gallery (link w podsumowaniu przebiegu, działa też na telefonie).
+# Commity CI z [skip ci] (np. wersje ?v=) nie uruchamiają workflowu.
+on:
+  push:
+    branches-ignore: [screens-gallery]
+    paths: ["web/**", "scripts/screens/**", ".github/workflows/screens.yml"]
+  workflow_dispatch:
+    inputs:
+      scenes:
+        description: "Sceny: changed (zmienione względem main), all albo lista po przecinku (np. games,logos)"
+        default: "changed"
+        required: true
+      lang:
+        description: "Języki: pl, en, uk, all albo lista"
+        default: "pl"
+        required: true
+      devices:
+        description: "Urządzenia: desktop,phone,tablet,phone-landscape"
+        default: "desktop,phone"
+        required: true
+      publish:
+        description: "Opublikuj galerię na gałęzi screens-gallery"
+        type: boolean
+        default: true
+      homepage:
+        description: "Odśwież wszystkie kadry strony głównej i wdróż (tylko z main)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: screens-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "version=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+        working-directory: tests
+
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Zrzuty
+        env:
+          SCENES: ${{ inputs.scenes || 'changed' }}
+          LANGS: ${{ inputs.lang || 'all' }}
+          DEVICES: ${{ inputs.devices || 'desktop,phone' }}
+          # Push na main: zmiany tego pushu; inne gałęzie i ręcznie: względem main.
+          BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.before || 'origin/main' }}
+        run: |
+          case "$SCENES" in
+            changed) pick="--changed --base=$BASE" ;;
+            all) pick="--all" ;;
+            *) pick="--scenes=$SCENES" ;;
+          esac
+          node scripts/screens/run.cjs $pick --lang="$LANGS" --devices="$DEVICES" --out=screens-out
+
+      - name: Artefakt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens-${{ github.run_number }}
+          path: screens-out
+          if-no-files-found: ignore
+
+      - name: Publikacja na screens-gallery
+        if: (github.event_name == 'push' || inputs.publish) && hashFiles('screens-out/README.md') != ''
+        env:
+          RUN_DIR: ${{ github.ref_name }}/${{ github.run_number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf /tmp/gallery && mkdir -p /tmp/gallery
+          if git ls-remote --exit-code origin screens-gallery >/dev/null; then
+            git clone --depth 1 --branch screens-gallery "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" /tmp/gallery
+          else
+            git -C /tmp/gallery init -b screens-gallery
+            git -C /tmp/gallery remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"
+          fi
+          mkdir -p "/tmp/gallery/$RUN_DIR"
+          cp -r screens-out/. "/tmp/gallery/$RUN_DIR/"
+          cd /tmp/gallery
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Zrzuty $RUN_DIR [skip ci]"
+          git push origin screens-gallery
+          echo "### Galeria: https://github.com/${{ github.repository }}/blob/screens-gallery/$RUN_DIR/README.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # Strona główna czyta kadry z web/assets/img/<język>/shots/ i og-image.
+      # Push na main zmieniający te kadry: odświeżyć je, zapisać na main i
+      # wywołać wdrożenie Pages (push z tokenem CI sam go nie uruchamia).
+      - name: Kadry strony głównej (main)
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.homepage)
+        env:
+          BASE: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
+          ALL: ${{ inputs.homepage && '1' || '' }}
+        run: |
+          if [ -n "$ALL" ]; then pick="--all"; else pick="--changed --base=$BASE"; fi
+          node scripts/screens/run.cjs $pick --homepage --lang=all --out=home-out || true
+          [ -d home-out ] || { echo "Brak zmienionych kadrów strony głównej."; exit 0; }
+          node scripts/screens/publish-homepage.cjs --out=home-out
+          git add web/assets/img
+          if git diff --cached --quiet; then echo "Kadry bez zmian."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh homepage screenshots [skip ci]"
+          # Inne sesje pushują na main równolegle -- kilka prób rebase + push.
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && break
+            [ "$attempt" = 5 ] && exit 1
+            sleep $((attempt * 5))
+          done
+          gh workflow run deploy-pages.yml --ref main

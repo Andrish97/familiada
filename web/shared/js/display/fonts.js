@@ -1,4 +1,4 @@
-import { v } from '../core/cache-bust.js?v=v2026-10-20T12384';
+import { v } from '../core/cache-bust.js?v=v2026-10-20T17305';
 
 
 export const loadJson = async (url) => {
@@ -21,6 +21,26 @@ export const buildGlyphMap = (FONT) => {
   }
 
   return map;
+};
+
+/**
+ * Czy Wyświetlacz narysuje znak: glif dla znaku po NFC albo dla jego
+ * jednoznakowej wielkiej litery (renderer rysuje wielkimi literami). Jedno
+ * źródło dla pól wpisu (nazwy drużyn, odpowiedzi -- E21); SQL ma tę samą regułę
+ * (public.fam_display_has_glyph). Białe znaki nie mają glifu -- sprawdza wołający.
+ */
+export const hasDisplayGlyph = (GLYPHS, ch) => {
+  if (!GLYPHS) return false;
+  const glyphOf = (c) => {
+    let v = GLYPHS.get(c);
+    for (let i = 0; i < 4 && typeof v === "string" && v.startsWith("@"); i++) v = GLYPHS.get(v.slice(1));
+    return Array.isArray(v);
+  };
+  const base = String(ch ?? "").normalize("NFC");
+  if (Array.from(base).length !== 1) return false;
+  if (glyphOf(base)) return true;
+  const upper = base.toUpperCase();
+  return Array.from(upper).length === 1 && glyphOf(upper);
 };
 
 export const resolveGlyph = (GLYPHS, ch) => {

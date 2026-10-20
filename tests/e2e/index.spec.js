@@ -43,7 +43,7 @@ test.afterEach(async ({ page }, testInfo) => {
 test("anonim: pełny render, kontrakt statystyk i bezpieczna obsługa parametrów", async ({ page }) => {
   await openIndex(page, "?lang=pl&next=https%3A%2F%2Fevil.example");
   await expect(page).toHaveTitle("Familiada Online — system do prowadzenia gry na żywo");
-  await expect(page.locator(".hero-card h1")).toContainText("Darmowa Familiada Online");
+  await expect(page.locator(".hero-card h1")).toContainText("przygotuj pytania i poprowadź grę");
   await expect(page).toHaveURL(/next=https%3A%2F%2Fevil\.example/);
 
   const stats = await page.evaluate(async () => {
@@ -96,9 +96,9 @@ test("wolny backend nie blokuje strony, a wielokrotne kliknięcie nie duplikuje 
 test("PL/EN/UK: cały zależny interfejs, tytuły, obrazy i linki zmieniają język", async ({ page }) => {
   await openIndex(page);
   const cases = [
-    { lang: "en", title: /live game hosting system/, heading: /Free Familiada Online/, image: "/assets/img/en/", query: "en" },
-    { lang: "uk", title: /система для проведення гри наживо/, heading: /Безкоштовна Familiada Online/, image: "/assets/img/uk/", query: "uk" },
-    { lang: "pl", title: /system do prowadzenia gry na żywo/, heading: /Darmowa Familiada Online/, image: "/assets/img/pl/", query: null },
+    { lang: "en", title: /live game hosting system/, heading: /prepare questions and run the game/, image: "/assets/img/en/", query: "en" },
+    { lang: "uk", title: /система для проведення гри наживо/, heading: /підготуй питання та проведи гру/, image: "/assets/img/uk/", query: "uk" },
+    { lang: "pl", title: /system do prowadzenia gry na żywo/, heading: /przygotuj pytania i poprowadź grę/, image: "/assets/img/pl/", query: null },
   ];
 
   for (const item of cases) {
@@ -121,7 +121,8 @@ test("klawiatura, focus, historia i mobilny viewport", async ({ page }) => {
   await expect(shot).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator(".imgv-overlay")).toHaveClass(/is-open/);
-  await expect(page.locator("#imgvClose")).toBeFocused();
+  // Telefon: podgląd jest arkuszem, fokus trafia na „Wstecz” w topbarze.
+  await expect(page.locator("#btnImageViewerBack")).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page.locator(".imgv-overlay")).not.toHaveClass(/is-open/);
   await expect(shot).toBeFocused();

@@ -69,6 +69,28 @@ body.editor-body .wrap {
     min-width: 0
 }
 
+/* Warunki gotowości gry (readinessChecklist) */
+.rulesList {
+    list-style: none;
+    margin: 6px 0 8px;
+    padding: 0;
+    display: grid;
+    gap: 3px;
+    font-size: 12px
+}
+
+.rulesList li {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.35
+}
+
+.rulesList li .ico { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 1px }
+.rulesList li.ok { opacity: .7 }
+.rulesList li.ok .ico { color: #7ef0a2 }
+.rulesList li.bad .ico { color: var(--gold) }
+
 .panelTitle {
     font-weight: 1000;
     letter-spacing: .12em;

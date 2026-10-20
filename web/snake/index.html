@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-20T17305"/>
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="snake.title">Familiada — wąż</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-20T17305"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T17305"/>
+  <link rel="stylesheet" href="/snake/css/snake.css?v=v2026-10-20T17305"/>
+  <script>document.documentElement.classList.add('page-loading')</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="/snake/js/snake.js?v=v2026-10-20T17305" defer></script>
+</head>
+
+<!-- Ukryta gra (wejście z kodu QR na kadrze strony ankiet): wąż na kopii
+     planszy Wyświetlacza -- ten sam motyw i te same kropki. -->
+<body class="snake-body">
+  <!-- Pełny ekran jak na Wyświetlaczu; na iPhonie w Safari (bez Fullscreen API)
+       okno z instrukcją „Do ekranu początkowego” -- jak w Przycisku do pojedynku. -->
+  <button class="fs-btn" id="fsBtn" type="button" title="Pełny ekran" aria-label="Pełny ekran" data-i18n-title="common.fullscreen" data-i18n-aria-label="common.fullscreen"><i class="ico" data-icon="fullscreen-enter"></i></button>
+  <div class="a2hs" id="snakeA2HS" role="dialog" aria-modal="true" aria-labelledby="snakeA2HSTitle" aria-hidden="true">
+    <div class="a2hsCard">
+      <h2 class="a2hsTitle" id="snakeA2HSTitle" data-i18n="common.a2hsTitle">Dodaj ten widok do ekranu początkowego</h2>
+      <p class="a2hsText" data-i18n-html="common.a2hsSnake">W Safari stuknij <b>Udostępnij</b>, wybierz <b>Do ekranu początkowego</b> i dodaj ikonę.</p>
+      <button class="btn a2hsClose" id="snakeA2HSClose" type="button" data-i18n="common.a2hsOk" data-i18n-icon="check">OK</button>
+    </div>
+  </div>
+
+  <main class="snake-wrap" data-skel-step>
+    <div class="snake-frame" id="snakeFrame" aria-label="Wąż" data-i18n-aria-label="snake.boardLabel" role="img">
+      <div class="layer-bg"></div>
+      <svg class="layer-base" id="baseSvg" viewBox="0 0 1280 720" overflow="visible"></svg>
+      <svg class="layer-displays" id="displaysSvg" viewBox="0 0 1280 720"><g id="displays"></g></svg>
+    </div>
+
+    <p class="snake-note snake-desktop" id="snakeKeysHint" data-i18n="snake.keysHint">Strzałki albo WASD, spacja albo kliknięcie planszy — pauza.</p>
+    <p class="snake-note snake-desktop" id="snakeProgress"></p>
+    <div class="snake-links snake-desktop">
+      <a class="btn sm" id="snakeLogin" href="/login/" hidden data-i18n="snake.login">Zaloguj się</a>
+      <a class="btn sm" href="/" data-i18n="snake.home">Familiada</a>
+    </div>
+  </main>
+</body>
+</html>

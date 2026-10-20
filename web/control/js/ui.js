@@ -16,14 +16,15 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-20T12384";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-20T12384";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-20T12384";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T12384";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T12384";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-20T17305";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxPreview, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-20T17305";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-20T17305";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-20T17305";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T17305";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-20T12384";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-20T17305";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-20T17305";
 
 
 const $ = (id) => document.getElementById(id);
@@ -54,6 +55,7 @@ function iconLabel(iconName, label, { after = false } = {}) {
 }
 
 export function createUI({ root, emit }) {
+  watchGameplayText(root);
   function clear() { root.innerHTML = ""; }
   function setTopbarProgress(label) {
     const el = document.getElementById("c2TopbarProgress");
@@ -724,9 +726,6 @@ export function createUI({ root, emit }) {
         title: question || "",
         "aria-hidden": question ? undefined : "true",
       });
-      if (question) {
-        questionHeader.style.fontSize = question.length > 150 ? ".88rem" : question.length > 100 ? ".98rem" : "1.08rem";
-      }
       cardChildren.push(h("div", { class: "c2-stepper" }, [questionHeader]));
     }
     cardChildren.push(
@@ -1963,6 +1962,7 @@ export function createUI({ root, emit }) {
         try { input.setSelectionRange(savedFocus.selStart, savedFocus.selEnd); } catch {}
       }
     }
+    fitGameplayText(root);
   }
 
   function reconcileEntry(existing, fresh) {

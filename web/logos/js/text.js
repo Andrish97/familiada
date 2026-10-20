@@ -3,8 +3,8 @@
 // fontu 5x7). Glify przycięte do szerokości, stała 1 kolumna przerwy,
 // napis wyśrodkowany.
 
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-20T12384";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-20T17305";
 
 
 const GLYPH_W = 3;
@@ -37,11 +37,13 @@ export function compileText(text, font) {
     glyphs.push(cropGlyph(Array.from({ length: TILES_Y }, (_, i) => String(g[i] ?? "").padEnd(GLYPH_W, " ").slice(0, GLYPH_W))));
   }
 
-  // szerokość: spacja = 1 kolumna, między dwoma glifami 1 kolumna przerwy
+  // szerokość: między dwoma glifami 1 kolumna przerwy, każda spacja dokłada
+  // 1 kolumnę do tej przerwy (decyzja 2026-10-20: słowa wyraźnie rozdzielone,
+  // „A B” szersze niż „AB”); spacje na brzegach -- po 1 kolumnie.
   const layout = [];
   let x = 0, prevGlyph = false;
   for (const g of glyphs) {
-    if (!g) { x += 1; prevGlyph = false; continue; }
+    if (!g) { x += 1; continue; }
     if (prevGlyph) x += 1;
     layout.push({ g, x });
     x += g.w;
@@ -70,8 +72,7 @@ export function compileText(text, font) {
  * tylko wtedy, gdy jego ponowna kompilacja daje DOKŁADNIE te same wiersze;
  * inaczej null (edytor nie otworzy się, żeby nie zniszczyć logo).
  *
- * Uwaga: pojedyncza spacja między literami daje ten sam odstęp co jej brak,
- * więc odtworzony napis może różnić się spacjami -- ale nie wyglądem.
+ * Odstęp między glifami: 1 kolumna = brak spacji, każda kolejna = 1 spacja.
  */
 export function decompileRows(rows, font) {
   const grid = Array.from({ length: TILES_Y }, (_, i) => String(rows?.[i] ?? "").padEnd(TILES_X, " ").slice(0, TILES_X));
@@ -101,8 +102,8 @@ export function decompileRows(rows, font) {
       if (next === TILES_X) { out = g.ch; break; }
       if (gap === 0) continue; // między glifami zawsze jest przerwa
       const rest = solve(next);
-      // spacja ZASTĘPUJE odstęp między glifami: k spacji = k kolumn, 0 spacji = 1 kolumna
-      if (rest != null) { out = g.ch + (gap > 1 ? " ".repeat(gap) : "") + rest; break; }
+      // k spacji między glifami = 1 + k kolumn odstępu
+      if (rest != null) { out = g.ch + " ".repeat(gap - 1) + rest; break; }
     }
     memo.set(pos, out);
     return out;

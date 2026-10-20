@@ -8,15 +8,15 @@
 // autozapis edytora), liczba odpowiedzi 0–6 i punkty opcjonalne (pytanie w
 // bazie nie ma jeszcze typu gry).
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T12384";
-import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T12384";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T17305";
+import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T17305";
 
 import {
   LIMITS, normQuestionText, normAnswerText, wireTextLimit, wirePointsInput,
   sumPoints, renderSumPill, questionProblems, questionMessage,
-  buildAnswerRow, buildAddAnswerTile,
-} from "../../../shared/js/core/question-form.js?v=v2026-10-20T12384";
+  buildAnswerRow, buildAddAnswerTile, wireAnswerInput, buildAnswerHints, loadAnswerGlyphs,
+} from "../../../shared/js/core/question-form.js?v=v2026-10-20T17305";
 
 
 const $ = (id) => document.getElementById(id);
@@ -85,7 +85,8 @@ export function initQuestionModal() {
       pointsPlaceholder: t("baseExplorer.question.pointsPlaceholder"),
     });
 
-    wireTextLimit(inpText, LIMITS.A_TEXT, (v) => { a.text = v; });
+    // limit 17 i znaki Wyświetlacza -- jak w edytorze gry
+    wireAnswerInput(inpText, (v) => { a.text = v; });
     // puste pole = brak punktów (w bazie pytań są opcjonalne)
     wirePointsInput(inpPts, (val) => {
       if (val === null) delete a.fixed_points;
@@ -107,6 +108,7 @@ export function initQuestionModal() {
     const add = buildAddAnswerTile(answers.length);
     add.id = "qAdd";
     add.addEventListener("click", addAnswer);
+    qAnswers.appendChild(buildAnswerHints()); // jak w edytorze gry: nad kafelkiem dodawania
     qAnswers.appendChild(add);
     answers.forEach((a, i) => qAnswers.appendChild(answerRow(a, i)));
     updateSumUI();
@@ -196,6 +198,7 @@ export function initQuestionModal() {
     setErr("");
 
     const payload = cleanPayload(current.draft);
+    await loadAnswerGlyphs(); // walidacja znaków odpowiedzi potrzebuje czcionki
     const problems = questionProblems(payload, "base");
     if (problems.length) return setErr(questionMessage(problems[0]));
 

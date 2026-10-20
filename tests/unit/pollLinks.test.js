@@ -42,3 +42,11 @@ test('Go dynamic states are protected from a later static language initializatio
  const setView=source.slice(source.indexOf('function setView('),source.indexOf('function clearActions('));
  for(const element of ['title','message','hint'])assert.match(setView,new RegExp(element+'\\.removeAttribute\\("data-i18n"\\)'));
 });
+
+test("kod QR z kadru strony głównej (id demo) prowadzi do węża", async () => {
+  const { isScreenshotPollId } = await import("../../web/shared/js/core/poll-links.js");
+  assert.equal(isScreenshotPollId("00000000-0000-4000-8000-000000000103"), true);
+  assert.equal(isScreenshotPollId("8f14e45f-ceea-467a-9c2b-2f3a1d6e5b10"), false);
+  assert.equal(isScreenshotPollId("00000000-0000-4000-8000-0000000001"), false);
+  assert.equal(isScreenshotPollId(null), false);
+});

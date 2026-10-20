@@ -614,9 +614,9 @@ async function makeGameRaw(page, name, { settings = {}, roundQuestions = [], fin
     if (gErr) throw new Error("insert games failed: " + gErr.message);
 
     for (const q of roundQuestions) {
-      // reguła play: min. 3 odpowiedzi — dopełnienie zerowymi punktami
+      // reguła play (E21): min. 3 odpowiedzi po ≥4 pkt, suma ≤100 — dopełnienie po 4 pkt
       q.answers = [...q.answers];
-      while (q.answers.length < 3) q.answers.push({ ord: q.answers.length + 1, text: `Pusta ${q.answers.length + 1}`, fixed_points: 0 });
+      while (q.answers.length < 3) q.answers.push({ ord: q.answers.length + 1, text: `Pusta ${q.answers.length + 1}`, fixed_points: 4 });
       const { data: qRow, error: qErr } = await sb
         .from("questions").insert({ game_id: g.id, ord: q.ord, text: clip200(q.text) }).select("id").single();
       if (qErr) throw new Error("insert questions failed: " + qErr.message);
@@ -634,9 +634,9 @@ async function makeGameRaw(page, name, { settings = {}, roundQuestions = [], fin
         if (fqErr) throw new Error("insert final question failed: " + fqErr.message);
         const { error: faErr } = await sb.from("answers").insert([
           { question_id: fq.id, ord: 1, text: clip17("Odp. finałowa"), fixed_points: finalAnswerPts },
-          // reguła play: min. 3 odpowiedzi na każde pytanie (także finałowe)
-          { question_id: fq.id, ord: 2, text: clip17("Pusta 2"), fixed_points: 0 },
-          { question_id: fq.id, ord: 3, text: clip17("Pusta 3"), fixed_points: 0 },
+          // reguła play (E21): min. 3 odpowiedzi po ≥4 pkt na każde pytanie (także finałowe)
+          { question_id: fq.id, ord: 2, text: clip17("Pusta 2"), fixed_points: 4 },
+          { question_id: fq.id, ord: 3, text: clip17("Pusta 3"), fixed_points: 4 },
         ]);
         if (faErr) throw new Error("insert final answer failed: " + faErr.message);
         finalPicked.push({ id: fq.id });
@@ -1256,6 +1256,8 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Runda 1"), { timeout: 22000 });
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     const questionDuringDuel = page.locator(".c2-stepper-question");
     await expect(questionDuringDuel).toHaveText(/\S/);
@@ -1375,6 +1377,8 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 
     // ===== RUNDA 1 =====
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Runda 1"), { timeout: 22000 });
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
@@ -1486,9 +1490,9 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
   test.setTimeout(300000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINAL-${Date.now()}`, {
-    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 100 }] }],
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 276", fixed_points: 92 }] }],
     finalAnswerPts: 50,
-    settings: { game: { advanced: { endScreenMode: "money", roundMultipliers: [3] } } },
+    settings: { game: { advanced: { endScreenMode: "money", roundMultipliers: [3], finalMinPoints: 276 } } },
   });
   const contexts = [];
   const errors = [];
@@ -1504,20 +1508,22 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
-    await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> bank 300
+    await revealAnswer(page, 1); // jedyna prawdziwa odpowiedź, 92 × 3 -> bank 276 (próg 276)
 
     // Jedyna prawdziwa odpowiedź odsłonięta, "Pusta 2/3" nie: 3 X otwierają
     // kradzież, a dopiero jej pudło (4. X) pozwala zakończyć rundę.
     await strikeOutAndLoseSteal(page);
     await endRoundAndRevealRest(page, "Przejdź do finału");
 
-    // Próg (300) trafiony, hasFinal=true, finalQuestionsMode="pick" + 5
+    // Próg (276) trafiony, hasFinal=true, finalQuestionsMode="pick" + 5
     // potwierdzonych pytań -> prosto do finału.
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Finał"), { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij finał" }).click();
@@ -1567,22 +1573,22 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     // finalStatusBar (ui.js's renderFinalMapping) istnieje tylko na
     // ekranach mapowania — tu już zeszliśmy na f_end, gdzie go nie ma.
     // Realna weryfikacja sumy (200): FINISH_FINAL wtapia ją w rounds.totals
-    // (bank rundy 300×1 + suma finału 200 = 500), widoczne dopiero po
+    // (bank rundy 276 + suma finału 200 = 476), widoczne dopiero po
     // "Zakończ grę" jako gameEndSummary (ta sama funkcja co w teście
     // "reset pojedynku...", tam już sprawdzona dla remisu).
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
-    await expect(page.getByText("Wygrała drużyna Alfa wynikiem 500:0")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Wygrała drużyna Alfa wynikiem 476:0")).toBeVisible({ timeout: 10000 });
     // The UI renders optimistically before the final RPC is committed.
     await expect.poll(async () => (await readControl2Sessions(page, game.id))[0]?.status, { timeout: 15000 }).toBe("final");
     const earlyFinalSessions = await readControl2Sessions(page, game.id);
     expect(earlyFinalSessions).toHaveLength(1);
-    expect(earlyFinalSessions[0]).toMatchObject({ status: "final", rounds_score_a: 300, team_a_score: 500, final_points: 200 });
+    expect(earlyFinalSessions[0]).toMatchObject({ status: "final", rounds_score_a: 276, team_a_score: 476, final_points: 200 });
     expect(earlyFinalSessions[0].stats_detail.end_reason).toBe("final_target");
-    expect(earlyFinalSessions[0].stats_detail.prize).toBe(26500);
+    expect(earlyFinalSessions[0].stats_detail.prize).toBe(26428);
     expect(earlyFinalSessions[0].stats_detail.final.mapping1.filter(row => row.revealedPoints)).toHaveLength(4);
     expect(earlyFinalSessions[0].stats_detail.final.mapping2.filter(row => row.revealedPoints)).toHaveLength(0);
     await attachStatistics(testInfo, "early-final", earlyFinalSessions);
-    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(26500);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(26428);
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await expect(finishBtn).toBeEnabled({ timeout: 150000 });
@@ -1659,6 +1665,8 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(buzzerPage.locator("#offScreen")).toBeVisible();
     await expect(buzzerPage.locator("#btnA")).toBeDisabled();
@@ -1889,9 +1897,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
   test.setTimeout(240_000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
-    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 100 }] }],
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 276", fixed_points: 92 }] }],
     finalAnswerPts: 15,
-    settings: { game: { advanced: { endScreenMode: "money", roundMultipliers: [3] } } },
+    settings: { game: { advanced: { endScreenMode: "money", roundMultipliers: [3], finalMinPoints: 276 } } },
   });
   const contexts = [];
   const errors = [];
@@ -1912,7 +1920,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
-    // ===== Runda jedyna: A wygrywa próg finału (300 pkt) =====
+    // ===== Runda jedyna: A wygrywa próg finału (276 pkt) =====
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
@@ -2188,7 +2196,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await waitForSfxKeysAnyOrder(page, ["show_outro"], 15000);
     expect(await getSfxKeys(page)).not.toContain("round_transition");
     expect(await getSfxKeys(page)).not.toContain("reveal");
-    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1305);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1233);
     const finalSessions = await readControl2Sessions(page, game.id);
     expect(finalSessions).toHaveLength(1);
     expect(finalSessions[0]).toMatchObject({ status: "final", final_points: 135 });
@@ -2196,7 +2204,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     expect(finalSessions[0].stats_detail.final.mapping1).toHaveLength(5);
     expect(finalSessions[0].stats_detail.final.mapping2).toHaveLength(5);
     expect(finalSessions[0].stats_detail.end_reason).toBe("final_complete");
-    expect(finalSessions[0].stats_detail.prize).toBe(1305);
+    expect(finalSessions[0].stats_detail.prize).toBe(1233);
     await attachStatistics(testInfo, "full-final", finalSessions);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
@@ -2302,6 +2310,8 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
@@ -2358,6 +2368,8 @@ test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer ot
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     // A naciska pierwszy -- Control pokazuje wspólny kafel "Zatwierdź: Alfa"
@@ -2417,6 +2429,8 @@ test("control2: wyciszenie dźwięku — Mute zeruje wyjście, zachowując zdarz
     // opóźniony "reveal" wystrzeliłby dopiero PO włączeniu Mute niżej,
     // fałszywie wyglądając jak wyciek dźwięku mimo wyciszenia.
     await clearSfxLog(page);
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await waitForSfxKeysAnyOrder(page, ["round_transition", "reveal"], 10000);
 
@@ -2662,6 +2676,8 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(hostPage.locator("#paperText1")).toContainText("PRZYCISK", { timeout: 10000 });
@@ -2737,11 +2753,11 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
     }, { timeout: 10000 }).toBe(true);
 
     await previewFrame().evaluate(() => { window.__displayLog = []; });
-    await page.locator("#gsTeamA").fill("Testowi Mistrzowie");
+    await page.locator("#gsTeamA").fill("Testowi Mistrzy");
 
     await expect.poll(async () => {
       const log = await previewFrame().evaluate(() => window.__displayLog || []);
-      return log.some((e) => e.call === "api.small.long1" && e.args?.[0] === "Testowi Mistrzowie");
+      return log.some((e) => e.call === "api.small.long1" && e.args?.[0] === "Testowi Mistrzy");
     }, { timeout: 10000 }).toBe(true);
 
     await page.locator("#btnSaveAll").click();
@@ -2749,7 +2765,7 @@ test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgl�
     await page.locator("#btnBack").click();
     await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 30000 });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
-    await expect(page.locator(".c2-summary-teams .summarySectionValue")).toContainText("Testowi Mistrzowie");
+    await expect(page.locator(".c2-summary-teams .summarySectionValue")).toContainText("Testowi Mistrzy");
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -3405,9 +3421,9 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
 test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (usedP1 cofnięte), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINALTIMERREVERT-${Date.now()}`, {
-    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 100 }] }],
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 276", fixed_points: 92 }] }],
     finalAnswerPts: 50,
-    settings: { game: { advanced: { roundMultipliers: [3] } } },
+    settings: { game: { advanced: { roundMultipliers: [3], finalMinPoints: 276 } } },
   });
   const contexts = [];
   try {
@@ -3420,13 +3436,15 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
-    await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> próg trafiony
+    await revealAnswer(page, 1); // jedyna prawdziwa odpowiedź, 92 × 3 = 276 -> próg trafiony
     await strikeOutAndLoseSteal(page);
     await endRoundAndRevealRest(page, "Przejdź do finału");
 
@@ -3508,6 +3526,8 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator("#c2TopbarProgress")).toHaveAttribute("data-tooltip", progressRe("Runda 1"), { timeout: 22000 });
+    // Bramka intro (dźwięk + plansza Wyświetlacza) trwa ok. 21 s -- czekaj, zamiast klikać w trakcie.
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });

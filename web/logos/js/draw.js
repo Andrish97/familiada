@@ -14,14 +14,14 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T12384";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T12384";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T12384";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T12384";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-20T12384";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-20T12384";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-20T12384";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17305";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T17305";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T17305";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T17305";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-20T17305";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-20T17305";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-20T17305";
 
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
@@ -1553,42 +1553,11 @@ export function initDrawEditor(ctx) {
     await loadScene(source.fabricData);
   }
 
-  // Eksport .famlogo zapisuje dane edytora wewnątrz koperty { kind, name,
-  // payload }. Zwykła strona edytora przekazuje payload, a panel zrzutów
-  // przekazuje cały zasób. Przyjmujemy oba formaty w tym samym miejscu,
-  // żeby po drodze nie kopiować ani nie gubić danych sceny Fabric.
-  function editorPayload(value) {
-    let current = value;
-    for (let depth = 0; depth < 4 && current && typeof current === "object"; depth += 1) {
-      if (current.source || current.bits_b64) return current;
-      if (current.kind === "PIX" || current.type === "PIX_150x70") {
-        current = current.payload;
-        continue;
-      }
-      if (current.data && typeof current.data === "object") {
-        current = current.data;
-        continue;
-      }
-      if (current.payload && typeof current.payload === "object") {
-        current = current.payload;
-        continue;
-      }
-      break;
-    }
-    return current || null;
-  }
-
   // =========================================================
   // API
   // =========================================================
   return {
-    selectTool(name) {
-      const next = TOOL[String(name || "").toUpperCase()];
-      if (next) setTool(next);
-    },
-
     async open(payload = null) {
-      payload = editorPayload(payload);
       paneDraw.style.display = "";
       await loadFonts();
       if (!canvas) installCanvas();

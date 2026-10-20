@@ -1,19 +1,20 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T12384";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T12384";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-20T12384";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T12384";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T12384";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T12384";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T12384";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-20T12384";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-20T12384";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T12384";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T12384";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T12384";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T17305";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T17305";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-20T17305";
+import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T17305";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T17305";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T17305";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17305";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T17305";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-20T17305";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-20T17305";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T17305";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T17305";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T17305";
 
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
@@ -637,14 +638,16 @@ async function withdrawGame(id) {
    Submit modal
 ========================================================= */
 async function openSubmitModal() {
-  // Załaduj kwalifikujące się gry (własne, nie z marketplace, min 10 pytań)
+  // Kwalifikujące się gry: własne, nie z Marketplace, nie demo -- i grywalne
+  // według centralnych reguł (rules_state.play: gotowa preparowana albo
+  // zamknięta ankieta). Tę samą regułę sprawdza market_submit_game (E21).
   const { data: games, error } = await sb()
     .from("games")
-    .select("id,name,type,status,questions(count)")
+    .select("id,name,type,status,rules_state")
     .eq("owner_id", currentUser.id)
     .is("source_market_id", null)
     .eq("is_demo", false)
-    .neq("type", "market")
+    .in("type", ["prepared", "poll_text", "poll_points"])
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -653,12 +656,7 @@ async function openSubmitModal() {
     return;
   }
 
-  const eligible = (games || []).filter(g => {
-    const qCount = g.questions?.[0]?.count ?? 0;
-    if (g.type === "prepared") return qCount >= 10;
-    return g.status === "ready";
-  });
-
+  const eligible = (games || []).filter((g) => !!rulesFromState(g.rules_state)?.play?.ok);
 
   const hasEligible = eligible.length > 0;
 

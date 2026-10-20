@@ -1,29 +1,30 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T12384";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T12384";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T12384";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T12384";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-20T12384";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T12384";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T12384";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T12384";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T12384";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T17305";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T17305";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T17305";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T17305";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-20T17305";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T17305";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T17305";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T17305";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T17305";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-20T17305";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-20T12384";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-20T17305";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-20T12384";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T12384";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T12384";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T12384";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-20T17305";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T17305";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T17305";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T17305";
 
 
 const qs = new URLSearchParams(location.search);
@@ -534,26 +535,55 @@ function renderTeams() {
     <div class="gs-section">
       <div class="gs-field">
         <div class="gs-label">${t("gameSettings.teams.nameA")}</div>
-        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="40" placeholder="${escAttr(t("gameSettings.teams.placeholderA"))}"/>
+        <input class="inp" id="gsTeamA" value="${escAttr(localSettings.teams.teamA)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderA"))}"/>
+        <div class="gs-hint gs-team-measure" id="gsTeamAMeasure" aria-live="polite"></div>
       </div>
       <div class="gs-field">
         <div class="gs-label">${t("gameSettings.teams.nameB")}</div>
-        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="40" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
+        <input class="inp" id="gsTeamB" value="${escAttr(localSettings.teams.teamB)}" maxlength="${LONG_MAX_INPUT}" placeholder="${escAttr(t("gameSettings.teams.placeholderB"))}"/>
+        <div class="gs-hint gs-team-measure" id="gsTeamBMeasure" aria-live="polite"></div>
       </div>
       <div class="gs-hint" style="margin-top:10px">${t("gameSettings.teams.defaultHint").replace("{a}", t("gameSettings.teams.defaultA")).replace("{b}", t("gameSettings.teams.defaultB"))}</div>
     </div>
   `;
 
-  document.getElementById("gsTeamA")?.addEventListener("input", e => {
-    localSettings.teams.teamA = e.target.value;
-    markDirty();
-    postPreviewRow();
-  });
-  document.getElementById("gsTeamB")?.addEventListener("input", e => {
-    localSettings.teams.teamB = e.target.value;
-    markDirty();
-    postPreviewRow();
-  });
+  // Nazwa drużyny ma się zmieścić w długim polu Wyświetlacza (long-text.js):
+  // liczy się rzeczywista szerokość znaków z czcionki Wyświetlacza (puste
+  // kolumny glifów są pomijane, jak w edytorze napisów logo). Znaki, których
+  // Wyświetlacz nie ma, są pomijane razem ze spacją za nimi (jak na
+  // Wyświetlaczu), a pole nie przyjmie więcej, niż Wyświetlacz pokaże;
+  // bez liczników -- komunikat mówi tylko, co i dlaczego nie zostało przyjęte.
+  const rejected = { A: { clipped: false, chars: [] }, B: { clipped: false, chars: [] } };
+  const measure = (key) => {
+    const box = document.getElementById(`gsTeam${key}Measure`);
+    if (!box) return;
+    const m = measureLongText(localSettings.teams[`team${key}`], _logoFont);
+    const chars = [...new Set([...rejected[key].chars, ...m.invalid])];
+    const lines = [];
+    if (rejected[key].clipped || !m.fits) lines.push(t("gameSettings.teams.displayFull"));
+    if (chars.length) lines.push(t("gameSettings.teams.displayRejected", { chars: chars.join(" ") }));
+    box.textContent = lines.join(" ");
+    box.hidden = lines.length === 0;
+    box.classList.toggle("is-warn", lines.length > 0);
+  };
+  for (const key of ["A", "B"]) {
+    document.getElementById(`gsTeam${key}`)?.addEventListener("input", e => {
+      const typed = e.target.value;
+      const supported = dropUnsupported(typed, _logoFont);
+      const clipped = clipLongText(supported, _logoFont);
+      rejected[key] = {
+        clipped: clipped !== supported,
+        chars: [...new Set(Array.from(typed).filter((ch) => ch.trim() && !Array.from(supported).includes(ch)))],
+      };
+      if (clipped !== typed) e.target.value = clipped;
+      localSettings.teams[`team${key}`] = clipped;
+      measure(key);
+      markDirty();
+      postPreviewRow();
+    });
+    measure(key);
+  }
+  if (!_logoFont) loadFont5x7().then((font) => { _logoFont = font; measure("A"); measure("B"); }).catch(() => {});
 }
 
 // --- WYGLĄD ---

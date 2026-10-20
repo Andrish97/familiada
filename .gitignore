@@ -27,3 +27,4 @@ node_modules/
 tests/test-results/
 tests/recordings/
 .claude/worktrees/
+screens-out/

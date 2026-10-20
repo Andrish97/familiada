@@ -1,15 +1,16 @@
 // web/go/js/go.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T12384";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T17305";
 guardViewportWidth({ minWidth: 0 });
-import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-20T12384";
-import { anonymousPollDestination, validAnonymousPollParams } from "../../shared/js/core/poll-links.js?v=v2026-10-20T12384";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T12384";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-20T12384";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-20T12384";
+import { parseGoLink, goKindMatches, goErrorKey, baseStateKey, matchesGoRecipient } from "../../shared/js/core/go-contract.js?v=v2026-10-20T17305";
+import { anonymousPollDestination, validAnonymousPollParams, isScreenshotPollId } from "../../shared/js/core/poll-links.js?v=v2026-10-20T17305";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T17305";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { icon, sharingActionIcon } from "../../shared/js/core/icons.js?v=v2026-10-20T17305";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17305";
 
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-20T12384";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T17305";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-20T17305";
 
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
@@ -153,6 +154,15 @@ async function handleAnonymousPollGateway() {
     return;
   }
   setView({ head:t("pollGo.anonymousLinkTitle"), text:t("pollGo.anonymousLinkChecking") });
+  if (isScreenshotPollId(qs.get("id"))) {
+    // Ktoś zeskanował kod z kadru na stronie głównej -- niespodzianka.
+    const lang = ["pl","en","uk"].includes(qs.get("lang")) ? qs.get("lang") : null;
+    await Promise.race([logSnake("scan", { lang }), new Promise((resolve) => setTimeout(resolve, 1500))]);
+    const target = new URL("/snake/", location.origin);
+    if (lang) target.searchParams.set("lang", lang);
+    location.replace(target.toString());
+    return;
+  }
   try {
     const {data,error}=await sb().rpc("poll_state", {p_game_id:qs.get("id"),p_key:qs.get("key")});
     if(error || !data?.ok) throw error || new Error("invalid poll state");

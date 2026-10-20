@@ -1,18 +1,17 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { TYPES as GAME_TYPES, RULES } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T12384";
-import { validateQuestionForType } from "../../../shared/js/core/base-export-validate.js?v=v2026-10-20T12384";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T12384";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T12384";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { TYPES as GAME_TYPES, evaluateReadiness, readinessText } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T17305";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T17305";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T17305";
 
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
 // to obiekt nazwa->wartość, nie tablica, więc kolejność zostaje jawna tutaj
 // -- ale WARTOŚCI biorą z kanonicznego źródła (game-validate.js), nie z
 // osobno wpisanych literałów, które mogłyby z czasem rozjechać się od
-// reguł używanych gdzie indziej (RULES analogicznie).
+// reguł używanych gdzie indziej (gotowość: evaluateReadiness z game-rules.js).
 const TYPES = [GAME_TYPES.POLL_TEXT, GAME_TYPES.POLL_POINTS, GAME_TYPES.PREPARED];
 
 const $ = (id) => document.getElementById(id);
@@ -62,8 +61,11 @@ function buildExportPayload({ name, type, questions }) {
     return Array.isArray(a) ? a : [];
   };
 
+  // Pakiet v2 wspólnego kontraktu transferu (game-transfer-format.js): szkic
+  // wybranego typu; limity i normalizację stosuje baza przy zapisie.
   return {
-    game: { name: name || t("baseExplorer.export.defaultGameName"), type },
+    format_version: 2,
+    game: { name: name || t("baseExplorer.export.defaultGameName"), type, state: "draft" },
     questions: (questions || []).map((q) => {
       const text = normQText(q);
 
@@ -109,6 +111,7 @@ export function initExportModal({ state } = {}) {
   const xTypeHint = $("xTypeHint");
   const xCountPill = $("xCountPill");
   const xCountVal = $("xCountVal");
+  const xSummary = $("xSummary");
 
   const xProg = $("xProg");
   const xProgStep = $("xProgStep");
@@ -141,24 +144,32 @@ export function initExportModal({ state } = {}) {
     renderList();
   }
 
-  // Podtytuł modala mówi wprost "czerwone nie spełniają warunków wybranego
-  // typu -- odhacz je albo popraw dane", ale nic tego nie egzekwowało:
-  // buildExportPayload() bierze WSZYSTKO co jest w selectedIds bez względu
-  // na validateQuestionForType(), więc zaznaczone-a-czerwone pytanie i tak
-  // trafiało do utworzonej gry. "Utwórz" musi być zablokowane dopóki
-  // którekolwiek zaznaczone pytanie jest czerwone dla aktualnie wybranego
-  // typu.
-  function hasBadSelected() {
-    const type = TYPES[typeIndex] || GAME_TYPES.PREPARED;
-    return allQuestions.some((q) => selectedIds.has(q.id) && !validateQuestionForType(q, type));
+  // E21 (plan §2): zaznaczenie to dokładny zestaw pytań nowej gry. Typ nie
+  // filtruje ani nie blokuje -- braki (ten sam silnik co gra: game-rules.js)
+  // są informacją, czego zabraknie do gotowości. „Utwórz” jest wyłączone
+  // tylko w trakcie zapisu.
+  const picked = () => allQuestions.filter((q) => selectedIds.has(q.id));
+  const asGameQuestion = (q) => ({ answers: qAnswers(q) });
+
+  function questionIssue(q, type) {
+    const issue = evaluateReadiness(type, [asGameQuestion(q)]).issues.find((i) => i.code !== "minQuestions");
+    return issue || null;
+  }
+
+  function renderSummary(type) {
+    if (!xSummary) return;
+    const res = evaluateReadiness(type, picked().map(asGameQuestion));
+    const issues = res.issues.slice(0, 4).map(readinessText);
+    if (res.issues.length > 4) issues.push(t("baseExplorer.export.summaryMore", { count: res.issues.length - 4 }));
+    xSummary.textContent = res.ok ? t("baseExplorer.export.summaryReady") : t("baseExplorer.export.summaryMissing", { list: issues.join(" ") });
+    xSummary.classList.toggle("is-ready", res.ok);
   }
 
   function updateCountUI() {
     const c = selectedIds.size;
     if (xCountVal) xCountVal.textContent = String(c);
-    const ok = c >= RULES.QN_MIN && !hasBadSelected();
-    if (xCountPill) xCountPill.classList.toggle("bad", !ok);
-    if (xCreate) xCreate.disabled = !ok;
+    if (xCreate) xCreate.disabled = running;
+    renderSummary(TYPES[typeIndex] || GAME_TYPES.PREPARED);
   }
 
   function metaText(q, type) {
@@ -184,19 +195,22 @@ export function initExportModal({ state } = {}) {
 
     for (const q of allQuestions) {
 
-      const ok = validateQuestionForType(q, type);
+      const issue = questionIssue(q, type);
       const label = qText(q) || t("baseExplorer.common.dash");
       const checked = selectedIds.has(q.id);
 
       const row = document.createElement("label");
-      row.className = "xPickItem " + (ok ? "ok" : "bad");
+      row.className = "xPickItem " + (issue ? "bad" : "ok");
       row.dataset.qid = q.id;
 
+      // powód braku bez numeru pytania (numer zależy od zaznaczenia)
+      const why = issue ? t(`baseExplorer.export.issue.${issue.code}`, issue.params) : "";
       row.innerHTML = `
         <input type="checkbox" ${checked ? "checked" : ""}/>
         <div class="xNm">${escapeHtml(label)}</div>
-        <div class="xMeta">${metaText(q, type)}</div>
+        <div class="xMeta">${metaText(q, type)}${why ? ` • ${escapeHtml(why)}` : ""}</div>
       `;
+      if (why) row.title = why;
 
       row.addEventListener("click", (e) => {
         const cb = row.querySelector("input");
@@ -244,7 +258,7 @@ export function initExportModal({ state } = {}) {
     overlay?.querySelector?.(".export-modal")?.classList.toggle("is-running", running);
 
     if (xClose) xClose.disabled = running;
-    if (xCreate) xCreate.disabled = running || selectedIds.size < RULES.QN_MIN || hasBadSelected();
+    if (xCreate) xCreate.disabled = running;
   }
 
   function close(result = { ok: false }) {
@@ -276,29 +290,14 @@ export function initExportModal({ state } = {}) {
 
     allQuestions = src.slice();
 
-    if (allQuestions.length < RULES.QN_MIN) {
-      setErr(t("baseExplorer.export.errors.minQuestions", { count: RULES.QN_MIN }));
-      // nadal otwieramy, ale przycisk będzie zablokowany
-    }
-
+    // Dokładnie to, co użytkownik zaznaczył (pytania/foldery rozwinięte do
+    // pytań); bez zaznaczenia -- nic. Bez dobierania i bez progu 10.
     const pre = Array.isArray(opts.preselectIds) ? opts.preselectIds.filter(Boolean) : [];
-    if (pre.length) {
-      // Dokładnie to, co user faktycznie wybrał (pytania/folder rozwinięty
-      // do pytań) -- bez dopełniania losowo dobranymi resztkami z całej
-      // bazy do progu QN_MIN. Jeśli to mniej niż 10, "Utwórz" zostaje
-      // wyłączone, dopóki user sam nie doda więcej -- uczciwiej niż ciche
-      // dorzucanie obcych pytań, których nigdy nie wybrał.
-      selectedIds = new Set(pre);
-    } else {
-      // Brak jakiegokolwiek kontekstu wyboru (np. Ctrl+G bez zaznaczenia) --
-      // zaznacz WSZYSTKIE dostępne pytania zamiast arbitralnych pierwszych
-      // 10 z tablicy. User odznacza to, czego nie chce, zamiast zgadywać
-      // dlaczego akurat te zostały wybrane za niego.
-      selectedIds = new Set(allQuestions.map((q) => q.id));
-    }
+    selectedIds = new Set(pre);
 
-    // typ startowy z UI (range), ale możesz nadpisać przez opts.type
-    typeIndex = Number(xTypeRange?.value ?? 2) || 2;
+    // typ startowy z suwaka (0 = ankieta tekstowa to poprawna wartość), opts.type nadpisuje
+    const rangeIdx = Number.parseInt(xTypeRange?.value ?? "2", 10);
+    typeIndex = TYPES[rangeIdx] ? rangeIdx : 2;
     if (opts.type) {
       const idx = TYPES.indexOf(opts.type);
       if (idx >= 0) {
@@ -339,7 +338,8 @@ export function initExportModal({ state } = {}) {
   });
 
   xTypeRange?.addEventListener("input", () => {
-    typeIndex = Number(xTypeRange.value) || 0;
+    const idx = Number.parseInt(xTypeRange.value, 10);
+    typeIndex = TYPES[idx] ? idx : 2;
     updateTypeUI();
   });
 
@@ -350,25 +350,10 @@ export function initExportModal({ state } = {}) {
   xCreate?.addEventListener("click", async () => {
     setErr("");
 
-    const picked = allQuestions.filter((q) => selectedIds.has(q.id));
-    if (picked.length < RULES.QN_MIN) {
-      setErr(t("baseExplorer.export.errors.pickMin", { count: RULES.QN_MIN }));
-      return;
-    }
-
-    // Powielone tu na wszelki wypadek (disabled na przycisku już to
-    // egzekwuje przez updateCountUI()/lockUi()) -- podtytuł modala wprost
-    // mówi że czerwone trzeba odznaczyć albo poprawić, więc export nie może
-    // po cichu przepuścić pytania, które nie spełnia warunków typu.
-    if (hasBadSelected()) {
-      setErr(t("baseExplorer.export.errors.pickBad"));
-      return;
-    }
-
     const payload = buildExportPayload({
       name: String(xName?.value || t("baseExplorer.export.defaultGameName")),
       type: TYPES[typeIndex] || GAME_TYPES.PREPARED,
-      questions: picked,
+      questions: picked(),
     });
 
     // Tryb B: jeśli caller dał runnera, robimy progres w tym samym modalu

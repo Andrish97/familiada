@@ -1,12 +1,12 @@
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T12384";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T17305";
 guardViewportWidth({ minWidth: 0 });
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T12384";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T12384";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-20T12384";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T12384";
-import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-20T12384";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T17305";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T17305";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-20T17305";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T17305";
+import { initPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "../../shared/js/core/pinch-zoom.js?v=v2026-10-20T17305";
 
 
 async function redirectIfSession() {
@@ -107,16 +107,41 @@ function setImgLoaded(img) {
   img.addEventListener("error", () => img.classList.add("is-loaded"), { once: true });
 }
 
+// Kadr już widoczny zostaje na ekranie, dopóki następny nie jest pobrany
+// i zdekodowany -- bez mignięcia pustym tłem przy przełączaniu karuzeli.
+function swapShot(img, url) {
+  img.dataset.pendingSrc = url;
+  const next = new Image();
+  next.src = url;
+  next.decode().catch(() => {}).then(() => {
+    if (img.dataset.pendingSrc !== url) return;
+    img.src = url;
+    setImgLoaded(img);
+  });
+}
+
 function switchLandingImages(lang) {
   document.querySelectorAll(".shot-img").forEach((img) => {
     const file = img.dataset.file;
     if (!file) return;
     const next = buildLangImgUrl(lang, file);
     if (img.src === next) { setImgLoaded(img); return; }
-    img.classList.remove("is-loaded");
+    if (img.classList.contains("is-loaded")) { swapShot(img, next); return; }
     img.src = next;
     setImgLoaded(img);
   });
+}
+
+// Pobranie kadrów z wyprzedzeniem (sąsiednie w karuzeli), żeby przełączenie
+// było natychmiastowe.
+const preloaded = new Set();
+function preloadShot(lang, file) {
+  const url = buildLangImgUrl(lang, file);
+  if (preloaded.has(url)) return;
+  preloaded.add(url);
+  const img = new Image();
+  img.decoding = "async";
+  img.src = url;
 }
 
 /* ---------- pipeline nav ---------- */
@@ -251,6 +276,88 @@ function initFaqCarets() {
   });
 }
 
+/* ---------- shot carousels ---------- */
+
+// Kafel z data-gallery przewija kadry swojej kategorii (scripts/screens):
+// przyciski po bokach podglądu, kropki na dole. Kliknięcie obrazu otwiera
+// podgląd z przybliżaniem bieżącego kadru.
+function initShotCarousels() {
+  document.querySelectorAll(".tile-shot").forEach((shot) => {
+    const img = shot.querySelector(".shot-img[data-gallery]");
+    const ids = (img?.dataset.gallery || "").split(",").filter(Boolean);
+    if (!img || ids.length < 2) return;
+    img.removeAttribute("data-i18n-alt");
+    let index = Math.max(0, ids.indexOf(img.dataset.shot));
+    // Ta sama wersja (?v=, przepisywana przez CI) dla wszystkich kadrów kafla.
+    const version = (img.dataset.file || "").match(/\?v=[^&]*/)?.[0] || "";
+    const fileOf = (id, suffix = "-preview") => `shots/${id}${suffix}.webp${version}`;
+    const preloadNeighbours = () => {
+      const lang = getUiLang();
+      for (const step of [1, -1, 2]) preloadShot(lang, fileOf(ids[(index + step + ids.length) % ids.length]));
+    };
+
+    const nav = (dir, label, iconName) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `btn sm shot-carousel-nav shot-carousel-${label}`;
+      btn.dataset.i18nAriaLabel = `home.imageViewer.${label}`;
+      btn.setAttribute("aria-label", t(`home.imageViewer.${label}`));
+      btn.innerHTML = icon(iconName);
+      btn.addEventListener("click", () => go(index + dir));
+      return btn;
+    };
+    const dots = document.createElement("div");
+    dots.className = "shot-carousel-dots";
+    const dotButtons = ids.map((id, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "shot-carousel-dot";
+      dot.addEventListener("click", () => go(i));
+      dots.appendChild(dot);
+      return dot;
+    });
+    shot.append(nav(-1, "prev", "arrow-left"), nav(1, "next", "arrow-right"), dots);
+
+    const render = () => {
+      const id = ids[index];
+      const title = t(`home.shots.${id}`);
+      img.dataset.shot = id;
+      img.dataset.file = fileOf(id);
+      img.dataset.fullFile = fileOf(id, "");
+      img.alt = title;
+      shot.setAttribute("aria-label", t("home.imageViewer.open", { title }));
+      dotButtons.forEach((dot, i) => {
+        const active = i === index;
+        dot.classList.toggle("is-active", active);
+        dot.setAttribute("aria-current", active ? "true" : "false");
+        dot.setAttribute("aria-label", `${t(`home.shots.${ids[i]}`)} · ${t("home.imageViewer.counter", { n: i + 1, total: ids.length })}`);
+      });
+    };
+    const go = (next) => {
+      index = (next + ids.length) % ids.length;
+      render();
+      switchLandingImages(getUiLang());
+      preloadNeighbours();
+    };
+
+    shot.addEventListener("keydown", (e) => {
+      if (e.target !== shot || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+      e.preventDefault();
+      go(index + (e.key === "ArrowLeft" ? -1 : 1));
+    });
+    window.addEventListener("i18n:lang", render);
+    render();
+    // Sąsiednie kadry dopiero, gdy kafel zbliża się do ekranu (lazy jak obraz).
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      const start = () => preloadNeighbours();
+      if (img.complete) start(); else img.addEventListener("load", start, { once: true });
+    }, { rootMargin: "300px" });
+    io.observe(shot);
+  });
+}
+
 /* ---------- image viewer ---------- */
 
 function initImageViewer() {
@@ -339,7 +446,10 @@ function initImageViewer() {
   const openShot = (shot) => {
     if (!shot) return;
     const img = shot.querySelector(".shot-img");
-    if (img) open(img.currentSrc || img.src, img.getAttribute("alt") || "");
+    if (!img) return;
+    const fullFile = img.dataset.fullFile;
+    const fullImage = fullFile ? buildLangImgUrl(getUiLang(), fullFile) : (img.currentSrc || img.src);
+    open(fullImage, img.getAttribute("alt") || "");
   };
 
   document.querySelectorAll(".tile-shot").forEach((shot) => {
@@ -350,10 +460,12 @@ function initImageViewer() {
   });
 
   document.addEventListener("click", (e) => {
+    if (e.target.closest(".shot-carousel-nav, .shot-carousel-dots")) return;
     openShot(e.target.closest(".tile-shot"));
   });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target.closest(".shot-carousel-nav, .shot-carousel-dots")) return;
     const shot = e.target.closest(".tile-shot");
     if (!shot) return;
     e.preventDefault();
@@ -365,6 +477,8 @@ function initImageViewer() {
 /* ---------- boot ---------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Kadry zaczynają się pobierać od razu, nie czekając na tłumaczenia.
+  switchLandingImages(getUiLang());
   try {
     await initI18n({ withSwitcher: true });
   } catch (e) {
@@ -391,6 +505,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   initPipeline();
+  initShotCarousels();
   initImageViewer();
   initFaqCarets();
   document.querySelector("main[data-skel-step]")?.classList.add("skel-step-ready");

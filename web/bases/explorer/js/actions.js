@@ -12,11 +12,13 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-10-20T12384";
+} from "./state.js?v=v2026-10-20T17305";
 
-import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-20T12384";
+import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-20T17305";
+import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-20T17305";
+import { normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-20T17305";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-20T12384";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-20T17305";
 
 
 import {
@@ -25,20 +27,20 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-10-20T12384";
+} from "./repo.js?v=v2026-10-20T17305";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-20T12384";
-import { openTagsModal } from "./tags-modal.js?v=v2026-10-20T12384";
-import { initExportModal } from "./export-modal.js?v=v2026-10-20T12384";
-import { initQuestionModal } from "./question-modal.js?v=v2026-10-20T12384";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T12384";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T12384";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T12384";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T12384";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-20T12384";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T12384";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-20T17305";
+import { openTagsModal } from "./tags-modal.js?v=v2026-10-20T17305";
+import { initExportModal } from "./export-modal.js?v=v2026-10-20T17305";
+import { initQuestionModal } from "./question-modal.js?v=v2026-10-20T17305";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T17305";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T17305";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T17305";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T17305";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-20T17305";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T17305";
 
 
 const btnBack = document.getElementById("btnBack");
@@ -247,33 +249,17 @@ function collectDescendantFolderIds(categories, rootFolderId) {
 
 /* ================= META (stałe "tagi" bez DB) ================= */
 
+// Sugestia typu dla pytania (E21): ten sam silnik co gra (game-rules.js),
+// bez progu liczby pytań. To klasyfikacja do filtrów, nie zakaz -- modal
+// tworzenia gry przyjmuje każde zaznaczone pytanie.
 function metaForQuestionPayload(payload) {
   const p = (payload && typeof payload === "object") ? payload : {};
-  const answers = Array.isArray(p.answers) ? p.answers : [];
-  const n = answers.length;
-
+  const q = { answers: Array.isArray(p.answers) ? p.answers : [] };
   const out = new Set();
-
-  // poll_text: traktujemy jako "kompatybilne zawsze"
-  out.add("poll_text");
-
-  // poll_points: 3–6 odpowiedzi
-  const inRange = (n >= 3 && n <= 6);
-  if (!inRange) return out;
-
-  out.add("poll_points");
-
-  // prepared: wszystkie fixed_points liczbowe, 0..100, suma <= 100
-  let sum = 0;
-  for (const a of answers) {
-    const v = a?.fixed_points;
-    if (!Number.isFinite(v)) return out;
-    if (v < 0 || v > 100) return out;
-    sum += v;
-    if (sum > 100) return out;
+  for (const type of ["poll_text", "poll_points", "prepared"]) {
+    const issues = evaluateReadiness(type, [q]).issues.filter((i) => i.code !== "minQuestions");
+    if (!issues.length) out.add(type);
   }
-
-  out.add("prepared");
   return out;
 }
 
@@ -1013,8 +999,9 @@ function safeName80(s) {
   return String(s ?? "").trim().slice(0, 80);
 }
 
+// Ten sam limit pytania co edytory (100 znaków, E21).
 function safeQuestionText(s) {
-  return String(s ?? "").trim().slice(0, 200); // na razie limit UI, potem możemy zmienić
+  return normQuestionText(s);
 }
 
 export async function renameByKey(state, key, newValueRaw) {
@@ -4502,11 +4489,8 @@ export function wireActions({ state }) {
           answers: Array.isArray(r.payload?.answers) ? r.payload.answers : (Array.isArray(r.answers) ? r.answers : []),
         });
 
-        // opts.questions musi być CAŁĄ pulą pytań bazy, nie tylko zaznaczeniem --
-        // export-modal.js's open() dopełnia selekcję do QN_MIN(10) z tej właśnie
-        // listy. Zawężenie jej do samego zaznaczenia (jak poprzednio) uniemożliwiało
-        // dopełnienie: przy zaznaczeniu < 10 przycisk "Utwórz" zostawał trwale
-        // wyłączony, bo nie było skąd dobrać brakujących pytań.
+        // Lista modala = cała pula bazy (można dozaznaczyć/odznaczyć), a
+        // zaznaczenie = dokładnie wybrane pytania; modal niczego nie dobiera.
         questionsForModal = (state._allQuestions || []).map(normalize);
         const preselectRows = qids.map(id => byId.get(id)).filter(Boolean).map(normalize);
 

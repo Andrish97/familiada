@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T12384";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T17305";
 
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
@@ -7,20 +7,20 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // i "dzwonek" broadcastowy zamiast kanału DISPLAY_CMD. Obecność, widoczność
 // karty i odblokowanie dźwięku zapisuje heartbeat lease (device-lease.js).
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-20T12384";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-20T12384";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T12384";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T12384";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T12384";
-import { createScene } from "./scene.js?v=v2026-10-20T12384";
-import { createQRController } from "./qr.js?v=v2026-10-20T12384";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T12384";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-20T12384";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T12384";
-import { createRenderer } from "./render.js?v=v2026-10-20T12384";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-20T12384";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-20T12384";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T12384";
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-20T17305";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-20T17305";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T17305";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T17305";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T17305";
+import { createScene } from "./scene.js?v=v2026-10-20T17305";
+import { createQRController } from "./qr.js?v=v2026-10-20T17305";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T17305";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-20T17305";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T17305";
+import { createRenderer } from "./render.js?v=v2026-10-20T17305";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-20T17305";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-20T17305";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T17305";
 
 
 const $ = (id) => document.getElementById(id);
@@ -289,7 +289,9 @@ async function bootPreview() {
       scene.api.small.topDigits("456");
       scene.api.small.leftDigits("789");
     }
-    scene.api.indicator.set("OFF");
+    // Lampki kontroli jak w grze: drużyna z control_team (podglądy ustawień
+    // jej nie mają, więc tam zostają zgaszone).
+    scene.api.indicator.set(row.control_team === "A" ? "ON_A" : row.control_team === "B" ? "ON_B" : "OFF");
     window.dispatchEvent(new CustomEvent("familiada:preview-rendered", { detail: { rev: row.rev } }));
     if (window.parent !== window) window.parent.postMessage({ type: "familiada:preview-rendered", rev: row.rev }, location.origin);
     }).catch((error) => console.warn("[display2] preview render failed", error));

@@ -26,6 +26,24 @@ podliczania jako stan bieżącej operacji.
 
 ---
 
+## Decyzje — czcionka rozgrywki Control (2026-10-20)
+
+- Jedna czcionka dla całej rozgrywki Control (kafle, pytanie, podpowiedzi,
+  pasek stanu, finał, mapowanie). Nie wolno powiększyć jednego miejsca, a
+  drugie zostawić — rośnie wszystko albo nic.
+- Wielkość zależy wyłącznie od okna (szerokość i wysokość, więc też
+  proporcje): `--c2-fs = clamp(14px, min((100vh − 223px) · 0,031, 1,6vw), 28px)`
+  w `web/control/index.html`, napisy rozgrywki w `em`.
+- Przy żadnym oknie od minimum Control (980×600) nie może być przewijania ani
+  ukrytej treści; pytań nie skracamy „…” (prowadzący czasem czyta je sam).
+  Ucinanie odpowiedzi ponad 17 znaków jest naturalne i nie jest tu brane pod uwagę.
+- Wzór dobrany pod limit pytania 100 znaków (decyzja E21): przy 200 znakach
+  czcionka musiałaby być o około 25–30% mniejsza, przy 80 nie rośnie
+  zauważalnie. Pomiar i kontrola: `node scripts/screens/check-control-fit.cjs`.
+- Zabezpieczenie (`web/control/js/fit-text.js`): gdy treść mimo to się nie
+  mieści (starsze pytania ponad 100 znaków, skrajne nazwy drużyn), cała karta
+  rozgrywki zmniejsza się jednakowo — nigdy jeden kafel.
+
 ## Decyzje — szybkie udostępnianie i ikony akcji (2026-10-18)
 
 W modalach Ankiet, Baz i Control listy odbiorców mają kompaktowe akcje

@@ -401,12 +401,17 @@
   font-size: 12px;
   transition: max-height .4s ease, opacity .4s ease, margin .4s ease;
 }
-.resultQ .tallyMeta.on{ max-height: 60px; opacity: 1; margin: -2px 0 8px; }
+.resultQ .tallyMeta.on{ max-height: 120px; opacity: 1; margin: -2px 0 8px; }
 .resultQ .tallyMetaInstant{ transition: none; }
 .tallyCounter.invalid{ color: #ff9d9d; font-weight: 900; }
 .tallySum{ color: var(--gold); font-weight: 900; font-variant-numeric: tabular-nums; }
 .tallyVotesTotal{ color: rgba(235,239,248,.62); font-weight: 700; font-variant-numeric: tabular-nums; }
 .tallyMeta .btn{ white-space: nowrap; margin-left: auto; }
+.tallyMeta .tcTieBtn{ margin-left: 0; }
+.tallyMeta .tcMergeDup, .tallyMeta .tcTieBtn{ display: inline-flex; align-items: center; gap: 6px; }
+/* E21: remis na granicy szóstki -- kto wchodzi, kto zostaje pominięty */
+.tallyTieInfo{ flex-basis: 100%; color: #ffd86e; font-weight: 700; }
+.resultQ .aRow.tallyTie{ border-style: dashed; }
 
 .resultQ .tcHandle,
 .resultQ .tcCnt,

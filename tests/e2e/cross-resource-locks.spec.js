@@ -743,7 +743,7 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
     await tileA.evaluate((el) => el.click());
     await expect(tabA.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
     await tabA.locator("#btnEdit").click();
-    await tabA.waitForURL(/\/logo\/editor\/text\/\?id=/, { timeout: 10000 });
+    await tabA.waitForURL(/\/logos\/editor\/text\/\?id=/, { timeout: 10000 });
     await waitForLock(tabA, "logo", logoId);
 
     await page.goto("https://www.familiada.online/logos/", { waitUntil: "domcontentloaded" });
@@ -753,7 +753,7 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
     await tileB.evaluate((el) => el.click());
     await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
     await page.locator("#btnEdit").click();
-    await page.waitForURL(/\/logo\/editor\/text\/\?id=/, { timeout: 10000 });
+    await page.waitForURL(/\/logos\/editor\/text\/\?id=/, { timeout: 10000 });
 
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
     // Edytor się nie wczytał: nazwa zostaje zablokowana, pole tekstu puste.
@@ -799,14 +799,14 @@ test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-se
     await tile.evaluate((el) => el.click());
     await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
     await page.locator("#btnEdit").click();
-    await page.waitForURL(/\/logo\/editor\/text\/\?id=/, { timeout: 10000 });
+    await page.waitForURL(/\/logos\/editor\/text\/\?id=/, { timeout: 10000 });
 
     // Strona edytora pokazuje blokadę z jedynym wyjściem: powrót na listę.
     // Wejście do edytora: logo:L wyklucza się z `logos` trzymanym przez ustawienia gry.
     await expect(page.locator("#resourceLockGuardMsg")).toContainText("ustawienia gry", { timeout: 10000 });
     await expect(page.locator("#logoName")).toBeDisabled();
     await page.locator("#resourceLockGuardBack").click();
-    await page.waitForURL(/\/logo\/(\?|$)/, { timeout: 10000 });
+    await page.waitForURL(/\/logos\/(\?|$)/, { timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
     await expect(tile).toBeVisible({ timeout: 10000 });
