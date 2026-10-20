@@ -45,12 +45,13 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     zmiany; nazwy w kodzie zgodne ze słownikiem i z `game-rules.js`.
   - **Nagłówek sekcji w lewym panelu** (dziś „Pasujące kategorie”) ma
     mówić, że to dopasowanie/propozycja, nie przypisanie — np.
-    „Dopasowane kategorie” / „Proponowane kategorie” (PL/EN/UK; wybór
-    w analizie, do akceptacji).
+    **decyzja 2026-10-20: „Proponowane kategorie”** (EN „Suggested
+    categories”, UK „Запропоновані категорії”).
   - **Dymki (tooltipy):** czasem nakładały się na siebie albo były słabo
     widoczne — przeanalizować kropek kategorii/tagów i przycisków
-    (pozycja, chowanie, telefon); jeden mechanizm, wspólny z
-    `shared/js/core/tooltips.js`.
+    (pozycja, chowanie, telefon). **Decyzja: dymki ujednolicić** — jeden
+    mechanizm (`shared/js/core/tooltips.js`) zamiast osobnego
+    `.dot-tooltip` menedżera.
   - **Tabela listy:** przeanalizować i ujednolicić szerokości kolumn
     (dziś niespójne) oraz sortowanie klikiem w nagłówek (dziś kilka
     nałożonych warunków). Jedna definicja kolumn (szerokość, porównanie,
