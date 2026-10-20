@@ -135,9 +135,10 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
       el = document.createElement("div");
       el.className = "list-empty";
       el.hidden = true;
-      grid.append(el);
       emptyEls.set(grid, el);
     }
+    // ponowny render siatki (innerHTML) usuwa komunikat — dopinamy go z powrotem
+    if (el.parentElement !== grid) grid.append(el);
     const message = t("common.noResults");
     if (el.textContent !== message) el.textContent = message;
     return el;
