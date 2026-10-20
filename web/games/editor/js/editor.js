@@ -289,6 +289,8 @@ async function boot() {
   let flushHook = async () => {};
   const userP = initPage("editor", {
     ready: i18nP,
+    // Wstecz zależy od trybu edycji, który znamy dopiero po wczytaniu gry.
+    deferTopbarReady: true,
     // Etykietę „Wstecz” ustawia syncMobileEditingState (tryb edycji pytania).
     backLabel: false,
     // Oczekujące zapisy przed wyjściem; na telefonie „Wstecz” zamyka pytanie.
@@ -967,6 +969,7 @@ async function boot() {
   renderQuestions();
   activeQId = undefined;
   await selectQuestion(defaultActiveQuestionId());
+  document.querySelector(".topbar")?.classList.add("topbar-ready");
   document.querySelectorAll("[data-skel-step]").forEach((el) => el.classList.add("skel-step-ready"));
 
   window.addEventListener("resize", syncMobileEditingState);
@@ -982,6 +985,9 @@ async function boot() {
 document.addEventListener("DOMContentLoaded", () => {
   boot().catch((e) => {
     console.error(e);
+    const back = $("btnBack");
+    if (back) back.innerHTML = iconText("arrow-left", backLabel("editor"));
+    document.querySelector(".topbar")?.classList.add("topbar-ready");
     void alertModal({ text: MSG.editorError() });
   });
 });

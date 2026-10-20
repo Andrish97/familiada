@@ -731,6 +731,9 @@ async function boot() {
 
   currentUser = await userP;
   if (!currentUser) return; // initPage przekierował na logowanie
+  // Ustaw właściwą podpowiedź od razu po auth; ładowanie fontów nie powinno
+  // zostawiać pustego nagłówka ani pokazywać tekstu z innego trybu.
+  setActiveListMode(listModeFromUrl(), { updateUrl: false });
 
   try {
     await loadFonts();
@@ -740,7 +743,6 @@ async function boot() {
   }
 
   bindUi();
-  setActiveListMode(listModeFromUrl(), { updateUrl: false });
   try {
     await refresh();
   } catch (e) {

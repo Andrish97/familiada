@@ -26,6 +26,7 @@
 //   onManual       (href, ev) => … zamiast przejścia na href
 //   account        opcje setTopbarAccount (withAccountSettings, showAuthEntry, onLogout)
 //   accountOnLang  true — odśwież menu konta po zmianie języka
+//   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
 import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-20T04295";
@@ -194,7 +195,7 @@ export async function initPage(id, opts = {}) {
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }
   }
-  document.querySelector(".topbar")?.classList.add("topbar-ready");
+  if (!opts.deferTopbarReady) document.querySelector(".topbar")?.classList.add("topbar-ready");
 
   if (p.access === "user" && isGuestUser(user)) {
     if (p.guestRedirect) {

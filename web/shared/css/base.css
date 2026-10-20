@@ -256,6 +256,13 @@ body:has(.topbar) {
 body.skel-body .topbar {
     min-height: var(--topbar-h);
 }
+/* Nie pokazuj zapasowej etykiety „Wstecz” ani nawigacji, zanim page-init
+   ustawi ich właściwy stan (rola, trasa i kontekst strony). visibility
+   zachowuje miejsce, więc odsłonięcie nie przesuwa pozostałych przycisków. */
+body.skel-body .topbar:not(.topbar-ready) .topbar-section-1 > :not(.brand),
+body.skel-body .topbar:not(.topbar-ready) .topbar-section-2 {
+    visibility: hidden;
+}
 body.skel-body .topbar-section-3,
 body.skel-body .topbar-section-4 {
     opacity: 0;
