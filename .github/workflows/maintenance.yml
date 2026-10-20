@@ -18,9 +18,9 @@ on:
       action:
         description: 'status | on | off'
         required: true
-        default: status
+        default: 'status'
         type: choice
-        options: [status, on, off]
+        options: ['status', 'on', 'off']
       minutes:
         description: 'Czas przerwy w minutach (1–120), tylko dla on'
         required: false
