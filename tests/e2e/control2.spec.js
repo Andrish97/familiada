@@ -3082,7 +3082,7 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
   return p;
 }
 
-test("control2: awaria device_presence nie blokuje akcji przy działającym lease", async ({ page, browser }, testInfo) => {
+test("control2: awaria odczytu stanu urządzeń wstrzymuje akcje bez fałszywego rozłączenia", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-PRESENCE-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
@@ -3109,27 +3109,33 @@ test("control2: awaria device_presence nie blokuje akcji przy działającym leas
     const confirm = page.getByRole("button", { name: "Zatwierdź: Alfa" });
     await expect(confirm).toBeEnabled({ timeout: 10000 });
 
+    // Migawka control_devices_snapshot jest jedynym źródłem stanu urządzeń:
+    // bez niej Control wstrzymuje akcje, ale nie ogłasza rozłączenia.
     let failedReads = 0;
-    const presenceRoute = "**/rest/v1/device_presence?*";
-    await page.route(presenceRoute, route => {
+    const snapshotRoute = "**/rest/v1/rpc/control_devices_snapshot*";
+    await page.route(snapshotRoute, route => {
       failedReads++;
-      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: presence metadata unavailable" }) });
+      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: device snapshot unavailable" }) });
     });
     await expect.poll(() => failedReads).toBeGreaterThan(0);
-    await expect(confirm).toBeEnabled();
+    await expect(confirm).toBeDisabled({ timeout: 5000 });
     await page.waitForTimeout(7500);
-    await expect(confirm).toBeEnabled();
+    await expect(confirm).toBeDisabled();
     await expect(page.locator("#deviceLostOverlay")).toBeHidden();
+    for (const id of ["dotDisplay", "dotHost", "dotBuzzer"]) {
+      await expect(page.locator(`#${id}`)).toHaveClass(/\bok\b/);
+    }
 
-    await expect.poll(async () => {
+    const connectivityEvents = async (phase) => {
       const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === "metadata_read_error" && event.metrics?.source === "device_presence").length;
-    }).toBe(1);
-    await page.unroute(presenceRoute);
-    await expect.poll(async () => {
-      const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === "metadata_recovered" && event.metrics?.source === "device_presence").length;
-    }).toBe(1);
+      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === phase).length;
+    };
+    await expect.poll(() => connectivityEvents("read_error")).toBe(1);
+    await page.unroute(snapshotRoute);
+    await expect(confirm).toBeEnabled({ timeout: 10000 });
+    await expect.poll(() => connectivityEvents("recovered")).toBe(1);
+    const sessions = await readControl2Sessions(page, game.id);
+    expect((sessions[0].stats_detail.events || []).filter(event => event.kind === "disconnect")).toHaveLength(0);
   } finally {
     for (const context of contexts) await context.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -3167,31 +3173,23 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await revealAnswer(page, 1); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
 
     // Awaria odczytu nie jest dowodem rozłączenia urządzeń.
-    const presenceRoute = "**/rest/v1/device_presence?*";
+    const snapshotRoute = "**/rest/v1/rpc/control_devices_snapshot*";
     let failedReads = 0;
-    await page.route(presenceRoute, route => {
+    await page.route(snapshotRoute, route => {
       failedReads++;
-      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: presence read unavailable" }) });
+      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: device snapshot unavailable" }) });
     });
     await expect.poll(() => failedReads).toBeGreaterThan(0);
-    await expect(answerTile(page, 2)).toBeEnabled();
+    await expect(answerTile(page, 2)).toBeDisabled({ timeout: 5000 });
     await page.waitForTimeout(7500); // Przekrocz TTL urządzeń podczas awarii odczytu.
     for (const id of ["dotDisplay", "dotHost", "dotBuzzer"]) {
       await expect(page.locator(`#${id}`)).toHaveClass(/\bok\b/);
     }
     await expect(page.locator("#deviceLostOverlay")).toBeHidden();
-    await expect.poll(async () => {
-      const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === "metadata_read_error" && event.metrics?.source === "device_presence").length;
-    }).toBe(1);
     const unavailableSessions = await readControl2Sessions(page, game.id);
     expect((unavailableSessions[0].stats_detail.events || []).filter(event => event.kind === "disconnect")).toHaveLength(0);
-    await page.unroute(presenceRoute);
+    await page.unroute(snapshotRoute);
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 10000 });
-    await expect.poll(async () => {
-      const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.category === "connectivity" && event.metrics?.phase === "metadata_recovered" && event.metrics?.source === "device_presence").length;
-    }).toBe(1);
 
     // ===== Zerwanie wszystkich trzech naraz =====
     const toClose = contexts.splice(0, contexts.length); // zdejmij z listy sprzątanej w finally -- zamykamy je TU, świadomie
