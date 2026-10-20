@@ -119,7 +119,6 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     displayContext = await browser.newContext({ locale: "pl-PL", viewport: { width: 1366, height: 1024 }, hasTouch: true, serviceWorkers: "block" });
     await serveBranchCode(displayContext, { pages: ["display"] });
     const displayPage = await displayContext.newPage();
-    displayPage.on("console", (m) => { if (/warn|error/.test(m.type())) console.log(`[e2e-diag:display] console:${m.type()} ${m.text().slice(0, 200)}`); });
     // /go/ przyjmuje token linku urządzenia z sesji Control (jak makeGame
     // w control2.spec.js), nie games.share_key_display.
     const displayKey = await page.evaluate(async (gameId) => {
@@ -128,15 +127,7 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
       return data.token;
     }, game.id);
     await displayPage.goto(`${ORIGIN}/go/?d=display&id=${game.id}&key=${displayKey}`, { waitUntil: "domcontentloaded" });
-    try {
-      await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 20_000 });
-    } catch (error) {
-      // [e2e-diag] stan Wyświetlacza, gdy Control go nie widzi.
-      await displayPage.screenshot({ path: testInfo.outputPath("diag-display.png") }).catch(() => {});
-      console.log(`[e2e-diag] display url=${displayPage.url()}`);
-      console.log(`[e2e-diag] display text=${(await displayPage.locator("body").innerText().catch(() => "")).replace(/\s+/g, " ").slice(0, 300)}`);
-      throw error;
-    }
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 20_000 });
     await page.getByLabel("Przycisk fizyczny").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
     await page.getByRole("button", { name: "Dalej", exact: true }).click();
