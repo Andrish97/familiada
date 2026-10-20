@@ -6,6 +6,7 @@ import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-20T14100"
 import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-20T14100";
 import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-20T14100";
 import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-20T14100";
+import { ANSWER_MAX, clipChars, charLength, nfc } from "../../../../shared/js/core/answer-text.js?v=v2026-10-20T14100";
 
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
@@ -189,7 +190,9 @@ async function loadPayload() {
 }
 
 function validateAndPack(questionId, rawText) {
-  const raw = String(rawText ?? "").trim().slice(0, 17);
+  // 17 pełnych znaków jak w bazie; znaki spoza czcionki Wyświetlacza przyjmujemy
+  // (usuwa je podliczanie -- podpowiedź uprzedza głosującego)
+  const raw = clipChars(nfc(rawText).trim(), ANSWER_MAX).trim();
   const normalized = norm(raw);
 
   if (!raw || !normalized) throw new Error(MSG.enterAnswer());
@@ -383,8 +386,7 @@ window.addEventListener("i18n:lang", () => {
 
 function updateCount() {
   if (!answerInput || !countEl) return;
-  const len = (answerInput.value || "").length;
-  countEl.textContent = `${len}/17`;
+  countEl.textContent = `${charLength(answerInput.value)}/${ANSWER_MAX}`;
 }
 
 function setupBeforeUnloadWarn() {
@@ -451,8 +453,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
 
     answerInput?.addEventListener("input", () => {
-      // twardy limit 17
-      if (answerInput.value.length > 17) answerInput.value = answerInput.value.slice(0, 17);
+      // twardy limit 17 pełnych znaków (także przy wklejaniu)
+      const clipped = clipChars(nfc(answerInput.value), ANSWER_MAX);
+      if (clipped !== answerInput.value) answerInput.value = clipped;
       updateCount();
     });
 

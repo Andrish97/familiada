@@ -112,6 +112,7 @@ export function gameRuleErrorMessage(err) {
   if (/\bpoll_not_open\b/.test(m)) return t("gameValidate.stopOnlyOpen");
   if (/\bpoll_not_stopped\b/.test(m)) return t("gameValidate.resumeOnlyStopped");
   const close = m.match(/poll_close_blocked:(\w+):(\d*)/);
+  if (close?.[1] === "tallyMinVotes") return t("gameValidate.tallyMinVotes", { min: 10, n: close[2] || "0" });
   if (close) return t(`gameValidate.${close[1]}`, { ord: close[2] || "?" });
   return "";
 }
