@@ -29,17 +29,17 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-20T04295";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-20T04295";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-20T04295";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-20T04295";
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-20T04394";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-20T04394";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-20T04394";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-20T04394";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-20T04295"),
-    import("./topbar-controller.js?v=v2026-10-20T04295"),
-    import("./modal-sheet.js?v=v2026-10-20T04295"),
-    import("./device-guard.js?v=v2026-10-20T04295"),
+    import("./auth.js?v=v2026-10-20T04394"),
+    import("./topbar-controller.js?v=v2026-10-20T04394"),
+    import("./modal-sheet.js?v=v2026-10-20T04394"),
+    import("./device-guard.js?v=v2026-10-20T04394"),
 
   ]);
   return {
@@ -190,7 +190,7 @@ export async function initPage(id, opts = {}) {
       .filter((spec) => ["friends", "subscribers"].includes(spec.to))
       .map((spec) => spec.to))];
     if (targets.length) {
-      void import("./nav-contact-badges.js?v=v2026-10-20T04295")
+      void import("./nav-contact-badges.js?v=v2026-10-20T04394")
         .then(({ initNavContactBadges }) => initNavContactBadges(targets))
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }
@@ -219,10 +219,10 @@ export async function initPage(id, opts = {}) {
   // don't miss a one-time notice while the page continues initializing.
   if (!new Set(["login", "privacy", "mailCenter", "connectDevice"]).has(id)) {
     if (isGuestUser(user)) {
-      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-20T04295");
+      const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-20T04394");
       await maybeShowGuestInfoModal(user);
     } else if (user) {
-      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-20T04295");
+      const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-20T04394");
 
       await initRatingSystem(user);
     }
