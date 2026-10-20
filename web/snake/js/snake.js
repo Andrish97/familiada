@@ -3,16 +3,16 @@
 // Lewy panel -- wynik, prawy -- rekord, górny -- tempo; long1/long2 -- podpisy.
 // Zdarzenia (enter/start/finish) trafiają do statystyk admina (snake-log.js);
 // zalogowanym baza zapisuje rekord i liczbę gier.
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T19584";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-20T19584";
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T19584";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T19584";
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T19584";
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-20T19584";
-import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-20T19584";
-import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-20T19584";
-import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-20T19584";
-import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-20T19584";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T21451";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-20T21451";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T21451";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T21451";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T21451";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-20T21451";
+import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-20T21451";
+import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-20T21451";
+import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-20T21451";
+import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-20T21451";
 
 const OFF = "#2e2e32";
 const LIT = "#d7ff3d";
@@ -180,10 +180,14 @@ async function boot() {
   const user = await getUser();
   const progressEl = $("snakeProgress");
   const loginEl = $("snakeLogin");
+  const accountEl = $("snakeAccount");
+  // Prawy górny róg (obok pełnego ekranu): bez konta zachęta i logowanie,
+  // z kontem rekord i liczba gier z konta oraz przycisk konta.
   const showProgress = () => {
     if (account) progressEl.textContent = t("snake.progressAccount", { best: account.best, games: account.games });
-    else progressEl.textContent = t("snake.progressLocal");
+    else progressEl.textContent = user ? "" : t("snake.progressLocal");
     loginEl.hidden = !!user;
+    accountEl.hidden = !user;
     // Po zalogowaniu powrót do węża (login.js: next=snake z ważnym qr).
     const login = new URL("/login/", location.origin);
     login.searchParams.set("next", "snake");

@@ -9,7 +9,7 @@
 // czy konkretna funkcja się mieści, wynikają z bieżącego viewportu. Obrót
 // nie zmienia typu urządzenia, ale może udostępnić funkcję wymagającą miejsca.
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-20T19584";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-20T21451";
 
 
 export const PHONE_MAX_SHORT_SIDE = 700;
@@ -63,7 +63,18 @@ export function isPhoneScreen() {
  * dozwolona kategoria → szerokość viewportu i obrót, jeśli ten rozwiązuje brak
  * miejsca. Komputery i TV nigdy nie dostają sugestii obrotu.
  */
-export function deviceGuardState(minWidth = MIN_WORK_WIDTH, { formFactors = null, requiresTouch = false, minScreenShortSide = 0, minTvResolution = false, allowPhoneLandscape = false, requirePhoneLandscape = false } = {}) {
+export function deviceGuardState(minWidth = MIN_WORK_WIDTH, options = {}) {
+  return phoneGuardState(rawGuardState(minWidth, options), getDeviceProfile());
+}
+
+// Telefon (decyzja użytkownika 2026-10-20): albo obrót, jeśli pomoże, albo
+// „Niedostępne na telefonie” -- także gdy ekran jest za mały („screen”) lub
+// widok za wąski („narrow”): telefonu nie da się poszerzyć ani wymienić ekranu.
+function phoneGuardState(state, profile) {
+  return profile.formFactor === "phone" && (state === "screen" || state === "narrow") ? "unsupported" : state;
+}
+
+function rawGuardState(minWidth, { formFactors = null, requiresTouch = false, minScreenShortSide = 0, minTvResolution = false, allowPhoneLandscape = false, requirePhoneLandscape = false } = {}) {
   const profile = getDeviceProfile();
   // Physical screen limits take precedence over category exclusions. The
   // short-side threshold is for touch-first devices only (for example, a
@@ -146,7 +157,7 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, backHref = null,
       && fitsAfterRotate();
     if (state === "rotate" && fitsAfterRotate && !rotationCanHelp) state = "narrow";
     if (state === "ok" && fits && !fits()) state = rotationCanHelp ? "rotate" : "narrow";
-    return state;
+    return phoneGuardState(state, profile);
   };
   function apply() {
     const state = currentState();
