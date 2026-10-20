@@ -108,8 +108,8 @@ export function initQuestionModal() {
     const add = buildAddAnswerTile(answers.length);
     add.id = "qAdd";
     add.addEventListener("click", addAnswer);
+    qAnswers.appendChild(buildAnswerHints()); // jak w edytorze gry: nad kafelkiem dodawania
     qAnswers.appendChild(add);
-    qAnswers.appendChild(buildAnswerHints()); // jak w edytorze gry: pod kafelkiem dodawania
     answers.forEach((a, i) => qAnswers.appendChild(answerRow(a, i)));
     updateSumUI();
   }

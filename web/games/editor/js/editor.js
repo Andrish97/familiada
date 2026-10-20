@@ -813,6 +813,8 @@ async function boot() {
     aList.innerHTML = "";
     if (pointsRemainTop) pointsRemainTop.innerHTML = "";
 
+    // podpowiedzi nad kafelkiem dodawania (jak warunki nad „Dodaj pytanie”)
+    aList.appendChild(buildAnswerHints());
     const addA = buildAddAnswerTile(answers.length);
     addA.addEventListener("click", addAnswer);
     aList.appendChild(addA);
@@ -823,7 +825,6 @@ async function boot() {
       pointsRemainTop.appendChild(box);
     }
 
-    aList.appendChild(buildAnswerHints()); // na górze listy -- widoczne bez przewijania
     for (const a of answers) aList.appendChild(answerRow(a));
     updateSumFromInputs();
   }
