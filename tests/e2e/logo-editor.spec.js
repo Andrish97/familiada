@@ -958,7 +958,7 @@ test.describe("blokady", () => {
       await L.openList(tabB, site);
       await tabB.locator(`.logoTile[data-key="${id}"]`).click();
       await tabB.locator("#btnEdit").click();
-      await tabB.waitForURL(/\/logo\/editor\/text\/\?id=/);
+      await tabB.waitForURL(/\/logos\/editor\/text\/\?id=/);
       await expect(tabB.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
       await expect(tabB.locator("#logoName")).toBeDisabled();
     } finally {
@@ -1282,7 +1282,7 @@ test.describe("telefon w poziomie", () => {
     await page.locator(`.logoTile[data-key="${id}"]`).tap();
     await expect(page.locator("#btnEdit")).toBeEnabled();
     await page.locator("#btnEdit").tap();
-    await expect(page).toHaveURL(/\/logo\/editor\/text\//);
+    await expect(page).toHaveURL(/\/logos\/editor\/text\//);
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 30000 });
   });
 });
