@@ -429,7 +429,7 @@ zapis, podgląd i późniejszą rozgrywkę.
   obsługuje wyłącznie opisana niżej jawna ścieżka odzyskania do
   `prepared`/`draft`, z informacją o wyniku i odzyskanych danych.
 - **Decyzja 2026-10-20 — normalizacja bez pytania:** za długie teksty
-  obcinać do obowiązujących limitów (nazwa 80, pytanie 200, odpowiedź 17
+  obcinać do docelowych limitów (nazwa 80, pytanie 100, odpowiedź 17
   znaków). Punkty ujemne, nienumeryczne, nieskończone lub poza zakresem
   0–100 zamieniać na 0, a nie ograniczać do najbliższej granicy (101 → 0).
   Przy ponad sześciu odpowiedziach najpierw normalizować punkty, następnie
@@ -441,6 +441,16 @@ zapis, podgląd i późniejszą rozgrywkę.
   jest informacyjny. Nie daje to zgody na dopisywanie treści zastępczych,
   zgadywanie typu ani oznaczanie niepoprawnego wyniku jako zamkniętego.
   Gotowość po normalizacji nadal wylicza centralny silnik reguł.
+- **Decyzja 2026-10-20 — długość pytania:** limit zmniejszamy z 200 do
+  **100 znaków**. Odpowiedź pozostaje ograniczona do **17 znaków**.
+  Docelowo te same limity obowiązują w edytorze, Base Explorerze, transferze
+  i serwerowych ścieżkach zapisu. Nadmiar treści obcinamy zgodnie z powyższą
+  polityką, bez pytania. Przed zaostrzeniem ograniczenia bazy zinwentaryzować
+  istniejące pytania dłuższe niż 100 znaków; uwzględnić ochronę sesji Control
+  i wcześniejsze ustalenia o migracji istniejących ankiet. Obecny kod nadal
+  stosuje 200/17: `question-form.js` (`LIMITS.Q_TEXT/A_TEXT`, `wireTextLimit`)
+  oraz ograniczenia SQL `questions_text_len`/`answers_text_len`. Limit 17
+  jest więc już egzekwowany w UI i w schemacie bazy; zmiana 100 jest planem.
 - Eksport zamkniętej ankiety zachowuje typ ankiety i zamknięty wynik. Eksport
   otwartej/zatrzymanej ankiety najpierw informuje o utracie bieżących głosów,
   a po potwierdzeniu zapisuje szkic tego samego typu.
@@ -564,7 +574,7 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Sprawdzić, że błąd pojedynczego elementu nie zostawia częściowo utworzonej
   gry, a raport strat odzwierciedla dokładnie pakiet wejściowy.
 - Normalizacja transferu bez potwierdzenia: teksty na granicy i ponad
-  limitami 80/200/17; 7+ odpowiedzi z nierosnącymi i nieuporządkowanymi
+  limitami 80/100/17; 7+ odpowiedzi z nierosnącymi i nieuporządkowanymi
   punktami; remisy rozstrzygane kolejnością wejściową; punkty -1, 101,
   nienumeryczne i nieskończone → 0 przed sortowaniem. Przy <=6 odpowiedziach
   nie zmieniać kolejności tylko z powodu normalizacji. To osobna reguła od
@@ -708,7 +718,7 @@ na takim sprawdzeniu klienta.
 | Status / znaczenie zamknięcia | Pominięty; rozpoznanie ready służy tylko konwersji do P | Zawsze draft; wejściowy status jest ignorowany | Pięć kombinacji §4; otwarta/zatrzymana → szkic z ostrzeżeniem; closed poll → zamknięty poll |
 | Wersja | Brak `format_version` | Nie sprawdza wersji; dodatkowe pole jest pomijane | Wersja i nazwane migratory bez zgadywania |
 | Pytania | Zachowana tablica w kolejności wejścia; `exportGame` pobiera po ord, SQL kopii po ord,id | Nowe ID i ord=pozycja w tablicy od 1; nie korzysta z wejściowego ord | Zachować kolejność znaczeniową i dokładny zbiór |
-| Treść pytania | Bez obcinania w F; Base Explorer trimuje | Trim, limit 200, brak/pusta → „Pytanie {ord}” lub lokalizacja; nawet element null staje się placeholderem | Limit 200; nadmiar obciąć automatycznie bez pytania; nie dopisywać zastępczych pytań |
+| Treść pytania | Bez obcinania w F; Base Explorer trimuje | Trim, limit 200, brak/pusta → „Pytanie {ord}” lub lokalizacja; nawet element null staje się placeholderem | Limit 100; nadmiar obciąć automatycznie bez pytania; nie dopisywać zastępczych pytań |
 | Odpowiedzi | AT bez ready usuwa wszystkie; AP/draft zachowuje teksty i zeruje punkty; AP/open/stopped nie zeruje istniejących punktów; closed poll jako P zachowuje odpowiedzi/punkty | AT usuwa wszystkie niezależnie od wejścia; inne typy zachowują tylko pierwsze 6; brak tablicy → [] | Warianty szkicu/wyniku według §4; przy ponad 6 odpowiedziach po normalizacji punktów sortować malejąco i zostawić 6, bez pytania; remis według wejścia |
 | Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Limit 17; nadmiar obciąć automatycznie bez pytania; nie dopisywać zastępczych odpowiedzi |
 | Punkty | `Number(x) || 0`; dla AP/draft 0; Base Explorer AP zawsze 0, P tylko istniejące `fixed_points` | `floor`, clamp 0–100, brak/niepoprawne → 0; przyjmuje też liczbowy string/wykładnik i true→1. Normalizator pakietu ignoruje alias `points` | Ujemne, nienumeryczne, nieskończone lub poza 0–100 → 0 przed sortowaniem, bez pytania; bez clamp do 100 i bez wymyślania grywalnej punktacji; odrębny kontrakt szkicu/wyniku |
