@@ -105,17 +105,29 @@ Nie oznacza to przeniesienia autorytetu z bazy do przeglądarki. Klient może
 liczyć podgląd z tego samego snapshotu/kontraktu, lecz RPC i ograniczenia bazy
 ponownie weryfikują operację przed zapisem.
 
+### Ustalona grywalność preparowanej — decyzja 2026-10-20
+
+Gra typu `prepared` jest grywalna, gdy spełnia **wszystkie cztery warunki
+jednocześnie**:
+
+1. Ma co najmniej **10 pytań**.
+2. Każde pytanie ma **od 3 do 6 odpowiedzi włącznie**.
+3. Każda odpowiedź ma **co najmniej 4 punkty**.
+4. Suma punktów wszystkich odpowiedzi **w każdym pytaniu osobno nie
+   przekracza 100**.
+
+Suma nie musi wynosić dokładnie 100. Warunki dotyczą grywalności, nie
+możliwości utworzenia lub zapisania szkicu. Modal Base Explorera pokazuje
+braki informacyjnie i nie blokuje tworzenia szkicu.
+
 ### Reguły do zinwentaryzowania i ujednolicenia
 
 - Typy i aliasy: `poll_text`, `poll_points`, `prepared`, `market` oraz wszystkie
   typy/aliasy znalezione w schemacie, danych, plikach transferu, migracjach,
   testach i kodzie stron.
-- Gotowość do rozgrywki: obecny próg 10 pytań, 3–6 odpowiedzi na pytanie,
-  dozwolone zakresy i suma punktów; dla „Preparowane” uwzględnić ustaloną
-  regułę minimum **4 punktów na każdą odpowiedź**. Próg 4 dotyczy przygotowania
-  gry, a nie modalа Base Explorera. **Decyzja 2026-10-20:** maksymalna suma
-  punktów w pytaniu preparowanej pozostaje **100** (`<=100`), bez wymagania
-  dokładnie 100.
+- Gotowość do rozgrywki: dla „Preparowanej” obowiązuje pełna reguła czterech
+  warunków powyżej. Pozostałe typy oceniamy według ich własnego kontraktu;
+  nie przenosimy wymagań grywalności do bramki tworzenia szkicu.
 - Gotowość do ankiety tekstowej i punktowej oraz osobne akcje otwarcia,
   głosowania, stop/wznów i podliczenia.
 - Edycja gry i wyniki ankiety: kiedy edycja jest zablokowana, kiedy dozwolona
@@ -450,7 +462,7 @@ przy zapisie/przejściu i odczytywany przez UI. Nie jest to nowa decyzja o proga
 
 | Typ / status / akcja | Obecne warunki i rozbieżność | Docelowa reguła | Źródło prawdy: obecnie → docelowo |
 |---|---|---|---|
-| P / draft, ready / graj | ≥10 pytań; każde 3–6 odpowiedzi; 0–100 pkt; suma ≤100. Zero punktów przechodzi; brak minimum 4 | Minimum 4 pkt na każdą odpowiedź; suma ≤100 (decyzja 2026-10-20); gotowość niezależna od etykiety statusu | R; UI RULES/komentarz wspomina sumę 100 → wspólna gotowość, SQL |
+| P / draft, ready / graj | ≥10 pytań; każde 3–6 odpowiedzi; 0–100 pkt; suma ≤100. Zero punktów przechodzi; brak minimum 4 | Wszystkie warunki łącznie: ≥10 pytań; każde pytanie 3–6 odpowiedzi; każda odpowiedź ≥4 pkt; suma odpowiedzi w każdym pytaniu ≤100. Gotowość niezależna od etykiety statusu | R; UI RULES/komentarz wspomina sumę 100 → wspólna gotowość, SQL |
 | AP, AT / draft, open, stopped / graj | Odmowa do `ready` | Rozgrywka po poprawnym zamknięciu | R → wspólna akcja play |
 | AP, AT / ready / graj | Sam status wystarcza; brak ponownej oceny treści/wyniku w `play` | Stan musi pochodzić z autorytatywnie zweryfikowanego zamknięcia; polityka zastanych wyników do ustalenia | R → wspólny kontrakt zamknięcia/play |
 | M / draft, ready / graj | Nowsze R liczy treść jak P; starsze `game_action_state.can_play` zawsze false; lista Marketplace w Grach włącza Graj po samym zaznaczeniu, Control ma guard R | Osobny typ kopii pozostaje; przycisk i strona korzystają z centralnego wyniku | R + E/stała UI, historyczna funkcja → wspólna gotowość |
@@ -563,8 +575,10 @@ zmiany oczekiwań na uzgodniony kontrakt, nie traktowania ich jako decyzji domen
 
 ### 8.6. Decyzje rzeczywiście otwarte po audycie
 
-Suma preparowanej jest rozstrzygnięta: **najwyżej 100 w pytaniu**, minimum
-4 pkt na odpowiedź; modal tworzenia szkicu nie egzekwuje gotowości.
+Grywalność preparowanej jest rozstrzygnięta: **≥10 pytań, każde z 3–6
+odpowiedziami, każda odpowiedź ≥4 pkt, suma w każdym pytaniu ≤100**.
+Wszystkie warunki obowiązują jednocześnie; modal tworzenia szkicu nie
+egzekwuje gotowości.
 
 1. **Pełna matematyka zamknięcia:** mianownik i moment top6/odrzucania,
    rozstrzyganie remisów (w tym obecne obniżanie punktów) oraz wspólna
