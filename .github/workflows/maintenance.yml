@@ -1,50 +1,17 @@
-name: Maintenance (przerwa techniczna)
+name: Maintenance status (przerwa techniczna — tylko odczyt)
 
-# Przerwa techniczna dla agentów i właściciela, bez panelu admina.
-#  * status -- stan przerwy (Cloudflare KV „state”) i aktywność (liczby);
-#  * on     -- tylko na wyraźne polecenie użytkownika (CLAUDE.md); odmawia,
-#              gdy trwa praca: gra w Control, edycja (blokady edycji, osoby
-#              w edytorach, ustawieniach gry, Eksploratorze, logo, ankietach)
-#              albo głosy w ankietach z 10 min -- scripts/db-read/
-#              maintenance-blockers.sql, źródła jak panel admina (chyba że
-#              force); włącza przerwę z odliczaniem na N minut i po czasie sama
-#              ją wyłącza -- chyba że w międzyczasie ktoś zmienił stan;
-#  * off    -- wyłącza przerwę od razu.
-# Worker nie kończy przerwy sam po returnAt, dlatego robi to ten workflow.
-# Job „check” (zawsze) pokazuje aktywność i stan; job „switch” (on/off)
-# działa w środowisku GitHub „maintenance” (zatwierdzenie właściciela) i
-# dodatkowo wymaga jednorazowego kodu TOTP właściciela (wejście „code”, klucz tylko
-# w sekrecie MAINTENANCE_TOTP_SECRET i w aplikacji uwierzytelniającej):
-# ważny 5 minut i tylko raz (ostatnio użyty krok w KV). Agent nie zna klucza,
-# więc nie włączy ani nie wyłączy przerwy bez kodu podanego przez właściciela.
-# Repo jest publiczne: w logu tylko liczby i stan przerwy.
+# Stan przerwy technicznej (Cloudflare KV „state”) i aktywność użytkowników
+# (liczby, rola agent_reader) — tylko odczyt. Przerwę włącza i wyłącza
+# wyłącznie właściciel w panelu admina (decyzja użytkownika 2026-10-20);
+# agent prosi o nią i sprawdza tu stan oraz to, czy ktoś pracuje
+# (scripts/db-read/maintenance-blockers.sql). Repo publiczne: w logu tylko
+# liczby i stan przerwy.
 
 permissions:
   contents: read
 
 on:
-  workflow_dispatch:
-    inputs:
-      action:
-        description: 'status | on | off'
-        required: true
-        default: 'status'
-        type: choice
-        options: ['status', 'on', 'off']
-      minutes:
-        description: 'Czas przerwy w minutach (1–120), tylko dla on'
-        required: false
-        default: '15'
-      force:
-        description: 'Włącz mimo trwającej pracy użytkowników (Control, edycja, głosy)'
-        required: false
-        default: false
-        type: boolean
-      code:
-        description: 'Jednorazowy kod z aplikacji uwierzytelniającej (wymagany dla on/off)'
-        required: false
-        default: ''
-
+  workflow_dispatch: {}
 
 jobs:
   check:
@@ -55,9 +22,6 @@ jobs:
         working-directory: cloudflare/maintenance-worker
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      ACTION: ${{ inputs.action }}
-      MINUTES: ${{ inputs.minutes }}
-      FORCE: ${{ inputs.force }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -106,137 +70,3 @@ jobs:
             || { echo "::error title=Przerwa::nie udało się odczytać stanu z KV"; exit 1; }
           SUMMARY=$(jq -c '{enabled, mode, returnAt}' /tmp/state.json)
           echo "::notice title=Przerwa::$SUMMARY"
-
-  switch:
-    needs: check
-    if: inputs.action != 'status'
-    # wymagane zatwierdzenie właściciela (Settings → Environments → maintenance)
-    environment: maintenance
-    runs-on: ubuntu-latest
-    timeout-minutes: 140
-    defaults:
-      run:
-        working-directory: cloudflare/maintenance-worker
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      ACTION: ${{ inputs.action }}
-      MINUTES: ${{ inputs.minutes }}
-      FORCE: ${{ inputs.force }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Kod jednorazowy
-        working-directory: .
-        env:
-          TOTP_SECRET: ${{ secrets.MAINTENANCE_TOTP_SECRET }}
-          TOTP_CODE: ${{ inputs.code }}
-        run: |
-          echo "::add-mask::$TOTP_CODE"
-          [ -n "$TOTP_SECRET" ] || { echo "::error title=Przerwa::brak sekretu MAINTENANCE_TOTP_SECRET"; exit 1; }
-          [ -n "$TOTP_CODE" ] || { echo "::error title=Przerwa::brak kodu -- on/off wymagają kodu właściciela"; exit 1; }
-          echo ok > /tmp/code_given
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install wrangler
-        run: npm ci
-
-      - name: Sprawdź i zużyj kod
-        env:
-          TOTP_SECRET: ${{ secrets.MAINTENANCE_TOTP_SECRET }}
-          TOTP_CODE: ${{ inputs.code }}
-        run: |
-          echo "::add-mask::$TOTP_CODE"
-          LAST=$(npx wrangler kv key get maintenance_totp_last --binding MAINT_KV --remote 2>/dev/null | grep -E '^[0-9]+$' | tail -n 1 || true)
-          set +e
-          STEP=$(TOTP_LAST="${LAST:-0}" python3 ../../scripts/totp-check.py)
-          RC=$?
-          set -e
-          case $RC in
-            0) ;;
-            4) echo "::error title=Przerwa::kod już użyty"; exit 1 ;;
-            3) echo "::error title=Przerwa::zły albo wygasły kod"; exit 1 ;;
-            *) echo "::error title=Przerwa::kod niepoprawny"; exit 1 ;;
-          esac
-          # zużycie od razu -- ten sam kod nie zadziała drugi raz
-          npx wrangler kv key put maintenance_totp_last "$STEP" --binding MAINT_KV --remote
-          echo "::notice title=Kod::przyjęty"
-
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
-
-      - name: Activity (liczby)
-        id: activity
-        working-directory: .
-        env:
-          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -h 127.0.0.1 -U agent_reader -d postgres
-          DB_READ_TUPLES: '1'
-          DB_READ_NO_NOTICE: '1'
-        run: |
-          ROW=$(scripts/db-read.sh scripts/db-read/maintenance-blockers.sql | tail -n 1)
-          IFS='|' read -r USERS CONTROL EDIT EDIT_PAGES VOTES NOW <<< "$ROW"
-          BLOCKERS=""
-          [ "${CONTROL:-0}" != 0 ] && BLOCKERS="$BLOCKERS gry w Control: $CONTROL,"
-          [ "${EDIT:-0}" != 0 ] && BLOCKERS="$BLOCKERS blokady edycji: $EDIT,"
-          [ "${EDIT_PAGES:-0}" != 0 ] && BLOCKERS="$BLOCKERS osoby w edytorach/ustawieniach/ankietach: $EDIT_PAGES,"
-          [ "${VOTES:-0}" != 0 ] && BLOCKERS="$BLOCKERS głosy w ankietach (10 min): $VOTES,"
-          echo "blockers=${BLOCKERS%,}" >> "$GITHUB_OUTPUT"
-          echo "::notice title=Aktywność (po kodzie)::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
-
-      - name: Status
-        run: |
-          # błąd odczytu (np. token bez dostępu do KV) przerywa przebieg
-          npx wrangler kv key get state --binding MAINT_KV --remote > /tmp/raw.txt
-          # sam JSON (bez ewentualnego banera wranglera)
-          sed -n '/^{/,$p' /tmp/raw.txt > /tmp/state.json
-          jq -e 'type == "object" and has("enabled")' /tmp/state.json > /dev/null \
-            || { echo "::error title=Przerwa::nie udało się odczytać stanu z KV"; exit 1; }
-          SUMMARY=$(jq -c '{enabled, mode, returnAt}' /tmp/state.json)
-          echo "::notice title=Przerwa (po kodzie)::$SUMMARY"
-
-      - name: 'On'
-        if: inputs.action == 'on'
-        env:
-          BLOCKERS: ${{ steps.activity.outputs.blockers }}
-        run: |
-          [[ "$MINUTES" =~ ^[0-9]+$ ]] && [ "$MINUTES" -ge 1 ] && [ "$MINUTES" -le 120 ] \
-            || { echo "::error title=Przerwa::minutes musi być liczbą 1–120"; exit 1; }
-          if [ -n "$BLOCKERS" ] && [ "$FORCE" != true ]; then
-            echo "::error title=Przerwa::trwa praca użytkowników --$BLOCKERS -- przerwa nie włączona (force=true, żeby wymusić)"
-            exit 1
-          fi
-          RETURN_AT=$(date -u -d "+$MINUTES minutes" +%Y-%m-%dT%H:%M:%SZ)
-          jq -c --arg r "$RETURN_AT" '.enabled = true | .mode = "countdown" | .returnAt = $r' /tmp/state.json > /tmp/on.json
-          npx wrangler kv key put state "$(cat /tmp/on.json)" --binding MAINT_KV --remote
-          echo "::notice title=Przerwa włączona::do $RETURN_AT ($MINUTES min)"
-          echo "$RETURN_AT" > /tmp/return_at
-
-      - name: Wait and turn off
-        if: inputs.action == 'on'
-        run: |
-          RETURN_AT=$(cat /tmp/return_at)
-          sleep $(( MINUTES * 60 ))
-          CUR=$(npx wrangler kv key get state --binding MAINT_KV --remote | sed -n '/^{/,$p')
-          if [ "$(echo "$CUR" | jq -r '.enabled')" = true ] && [ "$(echo "$CUR" | jq -r '.returnAt')" = "$RETURN_AT" ]; then
-            echo "$CUR" | jq -c '.enabled = false | .mode = "off" | .returnAt = null' > /tmp/off.json
-            npx wrangler kv key put state "$(cat /tmp/off.json)" --binding MAINT_KV --remote
-            echo "::notice title=Przerwa wyłączona::po $MINUTES min"
-          else
-            echo "::notice title=Przerwa::stan zmieniony w międzyczasie -- bez zmian ($(echo "$CUR" | jq -c '{enabled, mode, returnAt}'))"
-          fi
-
-      - name: 'Off'
-        if: inputs.action == 'off'
-        run: |
-          jq -c '.enabled = false | .mode = "off" | .returnAt = null' /tmp/state.json > /tmp/off.json
-          npx wrangler kv key put state "$(cat /tmp/off.json)" --binding MAINT_KV --remote
-          echo "::notice title=Przerwa wyłączona::od razu"
