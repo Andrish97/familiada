@@ -15,7 +15,7 @@ import { confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T141
 import {
   LIMITS, normQuestionText, normAnswerText, wireTextLimit, wirePointsInput,
   sumPoints, renderSumPill, questionProblems, questionMessage,
-  buildAnswerRow, buildAddAnswerTile,
+  buildAnswerRow, buildAddAnswerTile, wireAnswerInput, buildAnswerHints, loadAnswerGlyphs,
 } from "../../../shared/js/core/question-form.js?v=v2026-10-20T14100";
 
 
@@ -85,7 +85,8 @@ export function initQuestionModal() {
       pointsPlaceholder: t("baseExplorer.question.pointsPlaceholder"),
     });
 
-    wireTextLimit(inpText, LIMITS.A_TEXT, (v) => { a.text = v; });
+    // limit 17 i znaki Wyświetlacza -- jak w edytorze gry
+    wireAnswerInput(inpText, (v) => { a.text = v; });
     // puste pole = brak punktów (w bazie pytań są opcjonalne)
     wirePointsInput(inpPts, (val) => {
       if (val === null) delete a.fixed_points;
@@ -109,6 +110,7 @@ export function initQuestionModal() {
     add.addEventListener("click", addAnswer);
     qAnswers.appendChild(add);
     answers.forEach((a, i) => qAnswers.appendChild(answerRow(a, i)));
+    qAnswers.appendChild(buildAnswerHints());
     updateSumUI();
   }
 
@@ -196,6 +198,7 @@ export function initQuestionModal() {
     setErr("");
 
     const payload = cleanPayload(current.draft);
+    await loadAnswerGlyphs(); // walidacja znaków odpowiedzi potrzebuje czcionki
     const problems = questionProblems(payload, "base");
     if (problems.length) return setErr(questionMessage(problems[0]));
 

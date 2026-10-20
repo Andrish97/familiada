@@ -2655,12 +2655,17 @@ const en = {
     keepEditing: "Keep editing",
     discard: "Discard",
     saveFailed: "Could not save the question. Try again.",
+    hints: {
+      answerLimit: "At most {max} characters. Longer answers will be cut. Remove unsupported characters to save the answer.",
+      finalDisplay: "In the final the display fits {final} characters. Longer answers will be shortened there.",
+    },
     errors: {
       textEmpty: "Question text cannot be empty.",
       answerEmpty: "Answer {ord} cannot be empty.",
       answersMin: "A question needs at least {min} answers (has {count}).",
       answersMax: "Max {max} answers.",
       sumOver: "Points total cannot exceed {max} (is {sum}).",
+      answerChars: "Answer {ord} contains characters the Display does not have: {chars}. Remove them to save the answer.",
     },
   },
   gameValidate: {
@@ -2958,6 +2963,7 @@ const en = {
     answerLabel: "Answer",
     pointsLabel: "Pts",
     importModal: {
+      invalidChars: "Question {q}, answer {ord}: characters the Display does not have: {chars}. Remove them to import.",
       title: "Import questions",
       subtitle:
         "You can <b>paste text</b> or <b>load a TXT file</b>. Optionally start with <b>@Game name</b>. Questions start with <b>#</b>. Answers can include numbers. Points after <b>/</b> are optional (polls may ignore them).",

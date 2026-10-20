@@ -10,14 +10,16 @@
 // game_validate) -- tu tylko do pilnowania pól i podpowiedzi w UI; o tym,
 // czy grę wolno otworzyć / grać, decyduje baza (js/core/game-validate.js).
 
-import { RULES, TYPES } from "./game-validate.js?v=v2026-10-20T14100";
+import { RULES, TYPES } from "./game-rules.js?v=v2026-10-20T14100";
 import { t } from "../../translation/translation.js?v=v2026-10-20T14100";
 import { icon } from "./icons.js?v=v2026-10-20T14100";
+import { loadFont5x7 } from "./logo-preview.js?v=v2026-10-20T14100";
+import { QUESTION_MAX, ANSWER_MAX, FINAL_DISPLAY_MAX, clipChars, nfc, answerInvalidChars } from "./answer-text.js?v=v2026-10-20T14100";
 
 
 export const LIMITS = {
-  Q_TEXT: 200,   // questions_text_len
-  A_TEXT: 17,    // answers_text_len
+  Q_TEXT: QUESTION_MAX, // questions_text_len (E21: 100)
+  A_TEXT: ANSWER_MAX,   // answers_text_len
   AN_MIN: RULES.AN_MIN,
   AN_MAX: RULES.AN_MAX, // answers_ord_range
   PTS_MAX: 100,
@@ -26,26 +28,83 @@ export const LIMITS = {
 
 /* ================= Tekst ================= */
 
+// Znaki liczymy jak baza (char_length: pełne znaki Unicode po NFC), nie
+// jednostki UTF-16 -- emoji to 1 znak, para zastępcza nie jest rozcinana.
 // W trakcie pisania: tylko twardy limit, bez trim -- inaczej spacja na końcu
 // znika przy każdej pauzie i słowa się sklejają.
-export const clipQuestionText = (s) => String(s ?? "").slice(0, LIMITS.Q_TEXT);
-export const clipAnswerText = (s) => String(s ?? "").slice(0, LIMITS.A_TEXT);
+export const clipQuestionText = (s) => clipChars(nfc(s), LIMITS.Q_TEXT);
+export const clipAnswerText = (s) => clipChars(nfc(s), LIMITS.A_TEXT);
 
 // Do zapisu.
-export const normQuestionText = (s) => String(s ?? "").trim().slice(0, LIMITS.Q_TEXT);
-export const normAnswerText = (s) => String(s ?? "").trim().slice(0, LIMITS.A_TEXT);
+export const normQuestionText = (s) => clipChars(nfc(s).trim(), LIMITS.Q_TEXT).trim();
+export const normAnswerText = (s) => clipChars(nfc(s).trim(), LIMITS.A_TEXT).trim();
 
 /**
- * Twardy limit znaków w polu (także przy wklejaniu -- maxlength nie działa
- * przy programowym .value). onInput dostaje już przyciętą wartość.
+ * Twardy limit znaków w polu, także przy wklejaniu (maxlength liczy jednostki
+ * UTF-16 i nie działa przy programowym .value). onInput dostaje przyciętą wartość.
  */
 export function wireTextLimit(el, max, onInput) {
   if (!el) return;
-  el.maxLength = max;
   el.addEventListener("input", () => {
-    if (el.value.length > max) el.value = el.value.slice(0, max);
+    const clipped = clipChars(nfc(el.value), max);
+    if (clipped !== el.value) el.value = clipped;
     onInput?.(el.value);
   });
+}
+
+/* ================= Znaki odpowiedzi (czcionka Wyświetlacza) ================= */
+
+// Czcionka 5x7 Wyświetlacza (jak w ustawieniach gry) -- raz na stronę.
+let glyphsPromise = null;
+let glyphs = null;
+export function loadAnswerGlyphs() {
+  if (!glyphsPromise) {
+    glyphsPromise = loadFont5x7().then((g) => { glyphs = g; return g; }).catch((e) => {
+      console.warn("[question-form] font 5x7:", e);
+      glyphsPromise = null;
+      return null;
+    });
+  }
+  return glyphsPromise;
+}
+
+/** Problem pola odpowiedzi albo null -- odpowiedź z takim problemem się nie zapisuje. */
+export function answerFieldProblem(value) {
+  const chars = answerInvalidChars(value, glyphs);
+  return chars.length ? { code: "answerChars", params: { chars: chars.join(" ") } } : null;
+}
+
+/**
+ * Pole odpowiedzi w obu edytorach (gra i baza pytań): limit 17 także przy
+ * wklejaniu, a znaki spoza czcionki Wyświetlacza oznaczają pole jako błędne
+ * (klasa qf-invalid + podpowiedź). onInput(value, problem).
+ */
+export function wireAnswerInput(el, onInput) {
+  if (!el) return;
+  const mark = () => {
+    const problem = answerFieldProblem(el.value);
+    el.classList.toggle("qf-invalid", !!problem);
+    el.setAttribute("aria-invalid", problem ? "true" : "false");
+    if (problem) el.title = t("gameValidate.answerChars", problem.params);
+    else el.removeAttribute("title");
+    return problem;
+  };
+  wireTextLimit(el, LIMITS.A_TEXT, (v) => onInput?.(v, mark()));
+  if (glyphs) mark();
+  else void loadAnswerGlyphs().then(() => mark());
+}
+
+/** Stałe podpowiedzi pod listą odpowiedzi (oba edytory). */
+export function buildAnswerHints() {
+  const box = document.createElement("div");
+  box.className = "qf-hints";
+  for (const key of ["answerLimit", "finalDisplay"]) {
+    const p = document.createElement("p");
+    p.className = "qf-hint";
+    p.textContent = t(`questionForm.hints.${key}`, { max: LIMITS.A_TEXT, final: FINAL_DISPLAY_MAX });
+    box.appendChild(p);
+  }
+  return box;
 }
 
 /* ================= Punkty ================= */
@@ -175,8 +234,8 @@ export function buildAddAnswerTile(count) {
  * pytań, gdzie liczba odpowiedzi jest dowolna 0–6, a punkty opcjonalne).
  * Zwraca listę { code, params }; tekst: questionMessage(problem).
  *
- *   textEmpty, answerEmpty {ord}, answersMin {min,count}, answersMax {max},
- *   sumOver {sum,max}
+ *   textEmpty, answerEmpty {ord}, answerChars {ord, chars}, answersMin
+ *   {min,count}, answersMax {max}, sumOver {sum,max}
  */
 export function questionProblems(q, type) {
   const out = [];
@@ -187,6 +246,8 @@ export function questionProblems(q, type) {
 
   answers.forEach((a, i) => {
     if (!normAnswerText(a?.text)) out.push({ code: "answerEmpty", params: { ord: i + 1 } });
+    const bad = answerFieldProblem(a?.text);
+    if (bad) out.push({ code: "answerChars", params: { ord: i + 1, chars: bad.params.chars } });
   });
 
   if (answers.length > LIMITS.AN_MAX) {

@@ -12,6 +12,7 @@ import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as 
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
+  wireAnswerInput, answerFieldProblem, buildAnswerHints, loadAnswerGlyphs,
   buildAnswerRow, buildAddAnswerTile,
 } from "../../../shared/js/core/question-form.js?v=v2026-10-20T14100";
 import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T14100";
@@ -82,6 +83,8 @@ function showError(msg) {
 // zasobu, z powrotem do listy gier. Zwraca komunikat (albo "").
 function ruleBlocked(e) {
   const msg = gameRuleErrorMessage(e);
+  // Odrzucona treść (limit / znaki, migracja 404) -- do poprawy w polu, bez blokady strony.
+  if (msg && String(e?.message || "").includes("content_invalid:")) return msg;
   if (msg) {
     showBlockingOverlay({ title: t("gameValidate.lockedTitle"), message: msg, backHref: backHref("editor") });
   }
@@ -264,6 +267,19 @@ function importPayload(items, cfg) {
       points: cfg.allowPoints ? (parsePoints(a.points) ?? 0) : 0,
     })),
   }));
+}
+
+// Pierwsza importowana odpowiedź ze znakami spoza czcionki Wyświetlacza --
+// import TXT zapisuje odpowiedzi tak jak ręczna edycja, więc ich nie przyjmie.
+function invalidImportAnswer(items, cfg) {
+  if (!cfg.allowAnswers) return null;
+  for (const [qi, it] of items.entries()) {
+    for (const [ai, a] of (it.answers || []).slice(0, AN_MAX).entries()) {
+      const problem = answerFieldProblem(a.text);
+      if (problem) return { q: qi + 1, ord: ai + 1, chars: problem.params.chars };
+    }
+  }
+  return null;
 }
 
 /* ================= Boot ================= */
@@ -714,6 +730,13 @@ async function boot() {
     // pola, do którego przeszło się Tabem, a klik w kosz innego wiersza
     // (który zdejmował focus z punktów) trafiał w usunięty element.
     const saveText = async ({ final } = {}) => {
+      // Znaki spoza czcionki Wyświetlacza: odpowiedź się nie zapisuje (baza
+      // też by ją odrzuciła); pole zostaje oznaczone, komunikat przy wyjściu.
+      const problem = answerFieldProblem(iText.value);
+      if (problem) {
+        if (final) showError(t("gameValidate.answerChars", problem.params));
+        return;
+      }
       const text = normAnswerText(iText.value) || MSG.answerDefault(a.ord);
       try {
         if (text !== a.text) {
@@ -729,8 +752,9 @@ async function boot() {
     };
     const saveTextDebounced = debounce(() => track(saveText()), 350);
 
-    wireTextLimit(iText, LIMITS.A_TEXT, () => {
-      saveTextDebounced();
+    wireAnswerInput(iText, (_v, problem) => {
+      if (problem) saveTextDebounced.cancel();
+      else saveTextDebounced();
     });
     iText.addEventListener("blur", () => {
       saveTextDebounced.cancel();
@@ -775,6 +799,7 @@ async function boot() {
     }
 
     for (const a of answers) aList.appendChild(answerRow(a));
+    aList.appendChild(buildAnswerHints());
     updateSumFromInputs();
   }
 
@@ -832,6 +857,12 @@ async function boot() {
       });
       return;
     }
+    const bad = invalidImportAnswer(parsed.items, cfg);
+    if (bad) {
+      txtPreviewBody.classList.add("is-error");
+      txtPreviewBody.textContent = t("editor.importModal.invalidChars", bad);
+      return;
+    }
     txtPreviewBody.classList.remove("is-error");
     const summary = document.createElement("div");
     summary.className = "txt-preview-summary";
@@ -879,6 +910,7 @@ async function boot() {
   }
 
   $("btnImportTxt")?.addEventListener("click", () => {
+    void loadAnswerGlyphs().then(renderTxtPreview);
     txtTa.value = "";
     txtFilePicker.reset();
     setTxtMsg("");
@@ -916,6 +948,9 @@ async function boot() {
 
     const parsed = parseQaText(raw);
     if (!parsed.ok) return setTxtMsg(MSG.importParseError(parsed.code, parsed.params));
+    await loadAnswerGlyphs();
+    const bad = invalidImportAnswer(parsed.items, cfg);
+    if (bad) return setTxtMsg(t("editor.importModal.invalidChars", bad));
 
     setImporting(true);
     try {

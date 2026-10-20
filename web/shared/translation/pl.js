@@ -2550,12 +2550,17 @@ const pl = {
     keepEditing: "Edytuj",
     discard: "Porzuć",
     saveFailed: "Nie udało się zapisać pytania. Spróbuj ponownie.",
+    hints: {
+      answerLimit: "Maksymalnie {max} znaków. Dłuższe odpowiedzi zostaną przycięte. Usuń nieobsługiwane znaki, aby zapisać odpowiedź.",
+      finalDisplay: "W finale wyświetlacz mieści {final} znaków. Dłuższe odpowiedzi zostaną na nim skrócone.",
+    },
     errors: {
       textEmpty: "Treść pytania nie może być pusta.",
       answerEmpty: "Odpowiedź {ord} nie może być pusta.",
       answersMin: "Pytanie musi mieć co najmniej {min} odpowiedzi (jest {count}).",
       answersMax: "Max {max} odpowiedzi.",
       sumOver: "Suma punktów nie może przekroczyć {max} (jest {sum}).",
+      answerChars: "Odpowiedź {ord} zawiera znaki, których nie ma Wyświetlacz: {chars}. Usuń je, aby zapisać odpowiedź.",
     },
   },
   gameValidate: {
@@ -2859,6 +2864,7 @@ const pl = {
     answerLabel: "Odpowiedź",
     pointsLabel: "Pkt",
     importModal: {
+      invalidChars: "Pytanie {q}, odpowiedź {ord}: znaki, których nie ma Wyświetlacz: {chars}. Usuń je, aby zaimportować.",
       title: "Import pytań",
       subtitle:
         "Możesz <b>wkleić treść</b> albo <b>wczytać plik TXT</b>. Opcjonalnie na początku dodaj linię <b>@Nazwa gry</b>. Pytania zaczynają się od <b>#</b>. Odpowiedzi mogą mieć numer. Punkty po <b>/</b> są opcjonalne (w ankietach mogą być ignorowane).",

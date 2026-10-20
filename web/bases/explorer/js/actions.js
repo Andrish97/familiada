@@ -16,6 +16,7 @@ import {
 
 import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-20T14100";
 import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-20T14100";
+import { normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-20T14100";
 
 import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-20T14100";
 
@@ -998,8 +999,9 @@ function safeName80(s) {
   return String(s ?? "").trim().slice(0, 80);
 }
 
+// Ten sam limit pytania co edytory (100 znaków, E21).
 function safeQuestionText(s) {
-  return String(s ?? "").trim().slice(0, 200); // na razie limit UI, potem możemy zmienić
+  return normQuestionText(s);
 }
 
 export async function renameByKey(state, key, newValueRaw) {
