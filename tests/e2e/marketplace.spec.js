@@ -272,8 +272,9 @@ test("gość może dodać i usunąć kopię, ale nie ocenia ani nie wysyła gry"
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   const game = await publishedGame(page);
   try {
-    await page.locator(`#browseGrid .mkt-card[data-id="${game.id}"]`).click();
-    await expect(page.locator("#btnAddLibrary")).toBeVisible();
+    // bezpośredni link do gry: siatka pokazuje 20 kart naraz, a kolejność zależy od katalogu
+    await page.goto(`${URL}/game/${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#btnAddLibrary")).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".mkt-star-input")).toHaveCount(0);
     await expect(page.locator("#btnMySent")).toBeHidden();
     await page.locator("#btnAddLibrary").click();
