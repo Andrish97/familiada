@@ -43,6 +43,14 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     same odpowiedzi → punktowana, samo pytanie → ankieta tekstowa.
     Analiza ma zawierać słownik pojęć (UI ↔ kod ↔ baza) i listę nazw do
     zmiany; nazwy w kodzie zgodne ze słownikiem i z `game-rules.js`.
+  - **Nagłówek sekcji w lewym panelu** (dziś „Pasujące kategorie”) ma
+    mówić, że to dopasowanie/propozycja, nie przypisanie — np.
+    „Dopasowane kategorie” / „Proponowane kategorie” (PL/EN/UK; wybór
+    w analizie, do akceptacji).
+  - **Dymki (tooltipy):** czasem nakładały się na siebie albo były słabo
+    widoczne — przeanalizować kropek kategorii/tagów i przycisków
+    (pozycja, chowanie, telefon); jeden mechanizm, wspólny z
+    `shared/js/core/tooltips.js`.
   - **Tabela listy:** przeanalizować i ujednolicić szerokości kolumn
     (dziś niespójne) oraz sortowanie klikiem w nagłówek (dziś kilka
     nałożonych warunków). Jedna definicja kolumn (szerokość, porównanie,
