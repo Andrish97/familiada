@@ -36,6 +36,10 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     w różnych miejscach (widoki, pamięci podręczne, liczniki, sortowanie,
     filtry). Cel: jedno źródło stanu i jedna prosta, niezawodna ścieżka
     „stan → co pokazać → render” dla drzewa, listy i lewego panelu.
+  - **Tabela listy:** przeanalizować i ujednolicić szerokości kolumn
+    (dziś niespójne) oraz sortowanie klikiem w nagłówek (dziś kilka
+    nałożonych warunków). Jedna definicja kolumn (szerokość, porównanie,
+    domyślny kierunek) i jeden stan sortowania używany przez render.
   - **Pasek narzędzi zależny od widoku (do decyzji, propozycja agenta):**
     każda akcja w rejestrze ma dwa warunki: „ma sens w tym widoku”
     (nie → przycisk znika) i „można teraz” (nie → wyszarzony). Przycisk
