@@ -597,7 +597,7 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     await expect(page.locator("#shareOverlay")).toBeVisible();
     await page.locator(`#baseShareFriends [data-id="${recipientId}"] input`).check();
     const shareResponsePromise = page.waitForResponse((response) =>
-      response.url().includes("/rpc/base_share_by_user") && response.request().method() === "POST"
+      response.url().includes("/rpc/base_share_to_friend") && response.request().method() === "POST"
     );
     await page.locator("#btnBaseShareFriends").click();
     const shareResponse = await shareResponsePromise;
