@@ -75,14 +75,15 @@ export function createPresence({ gameId, onChange }) {
         focused: typeof device.focused === "boolean" ? device.focused : null,
         waitingCount: Number(device.waiting_count) || 0,
         audioDiagnostic: meta.audio_diagnostic || null,
-        renderDiagnostic: meta.render_diagnostic || null,
+        audioLockReason: typeof meta.audio_lock_reason === "string" ? meta.audio_lock_reason : null,
+        audioLockDetail: typeof meta.audio_lock_detail === "string" ? meta.audio_lock_detail : null,
       }];
     }));
     const fp = JSON.stringify({
       flags, readUnavailable, errorSource: errorSource || null, displayAudioUnlocked,
       deviceVisibility: Object.fromEntries(Object.entries(deviceDiagnostics).map(([kind, item]) => [kind, [item.visibility, item.focused, item.browserContextId, item.waitingCount]])),
       displayAudioDiagnosticId: deviceDiagnostics.display.audioDiagnostic?.id || null,
-      displayRenderDiagnosticId: deviceDiagnostics.display.renderDiagnostic?.id || null,
+      displayAudioLock: [deviceDiagnostics.display.audioLockReason, deviceDiagnostics.display.audioLockDetail],
     });
     if (fp === lastReported) return;
     lastReported = fp;

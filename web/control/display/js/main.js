@@ -407,7 +407,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       // wysyłany od razu, a przy słabym łączu powtarzany każdym kolejnym
       // heartbeatem — bez ponownego gestu.
       audioUnlockedHere = true;
-      lease.setMeta({ audio_unlocked: true });
+      lease.setMeta({ audio_unlocked: true, audio_lock_reason: null, audio_lock_detail: null });
       syncAudioUnlockScreen();
     });
 
@@ -417,7 +417,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!audioUnlockedHere) return;
       console.warn("[display2 audio unlock] browser audio no longer unlocked:", reason);
       audioUnlockedHere = false;
-      lease.setMeta({ audio_unlocked: false });
+      // Powód trafia do statystyk Control (zdarzenie audio_unlock); bez niego
+      // blokada oznacza nową instancję Wyświetlacza.
+      lease.setMeta({ audio_unlocked: false, audio_lock_reason: "browser_lost", audio_lock_detail: String(reason || "").slice(0, 40) });
       syncAudioUnlockScreen();
     });
     window.addEventListener("pagehide", stopUnlockLostWatch, { once: true });

@@ -5459,15 +5459,20 @@ function buildSessionRunDetails(r) {
         }
         if (metrics.phase === "read_error") {
           const error = metrics.error_code || metrics.http_status || metrics.error_name;
+          // lease_status: baza odpowiedziała błędem; status_read: brak
+          // odpowiedzi (limit czasu, sieć Control).
+          const cause = metrics.source === "status_read"
+            ? "nie odpowiedział (limit czasu lub sieć po stronie Control)"
+            : "zwrócił błąd bazy";
           return {
-            title: "Control nie może potwierdzić statusu lease",
-            detail: `Odczyt ${metrics.source === "lease_status" ? "control_device_slots_for_owner" : "statusu urządzeń"} nie powiódł się${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu.`,
+            title: "Control nie może potwierdzić stanu urządzeń",
+            detail: `Odczyt stanu urządzeń ${cause}${error ? ` (${error})` : ""}; akcje gry są blokowane do odzyskania odczytu, urządzenia nie są uznawane za rozłączone.`,
           };
         }
         if (metrics.phase === "recovered") {
           return {
-            title: "Control odzyskał status lease",
-            detail: `Odczyt statusu wrócił po ${formatDuration(metrics.duration_ms)}; akcje gry mogą być kontynuowane.`,
+            title: "Control odzyskał stan urządzeń",
+            detail: `Odczyt stanu urządzeń wrócił po ${formatDuration(metrics.duration_ms)}; akcje gry mogą być kontynuowane.`,
           };
         }
         const details = [`Blokada: ${formatDuration(metrics.blocked_duration_ms)}`];
@@ -5483,6 +5488,27 @@ function buildSessionRunDetails(r) {
           details.push(`${names[kind] || kind}: ${relation}, ${visibility}${sinceChange}`);
         });
         return { title: `Połączenie: ${devices}`, detail: details.join(" · ") };
+      }
+      if (event.category === "audio_unlock") {
+        const lostReasons = {
+          context_suspended: "kontekst audio wstrzymany",
+          context_interrupted: "kontekst audio przerwany przez system",
+          context_closed: "kontekst audio zamknięty",
+          not_allowed: "odtworzenie odrzucone (NotAllowedError)",
+        };
+        const reason = metrics.reason === "browser_lost"
+          ? `przeglądarka przestała pozwalać na dźwięk${metrics.detail ? ` — ${lostReasons[metrics.detail] || metrics.detail}` : ""} (np. uśpienie ekranu lub karta w tle)`
+          : "nowa karta Wyświetlacza (przeładowanie, podmiana lub ponowne podłączenie)";
+        const outcomes = {
+          unlocked: "odblokowano gestem po",
+          display_offline: "Wyświetlacz rozłączył się po",
+          game_ended: "gra zakończyła się po",
+          not_required: "odblokowanie przestało być potrzebne po",
+        };
+        const details = [reason, `${outcomes[metrics.outcome] || "czekanie trwało"} ${formatDuration(metrics.wait_ms)}`];
+        if (metrics.blocked_action_attempts) details.push(`próby akcji podczas blokady: ${metrics.blocked_action_attempts}`);
+        if (metrics.display_visibility === "hidden") details.push("karta Wyświetlacza była w tle");
+        return { title: "Czekanie na odblokowanie dźwięku na Wyświetlaczu", detail: details.join(" · ") };
       }
       if (event.category === "device_lease") {
         const states = { waiting:"oczekuje na zwolnienie blokady", primary:"zostało aktywowane jako główne", released:"zwolniło blokadę", expired:"utraciło blokadę po wygaśnięciu lease", revoked:"jego połączenie zostało cofnięte" };

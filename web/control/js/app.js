@@ -590,6 +590,50 @@ async function main() {
       && presenceFlags.display === true
       && displayAudioUnlocked !== true;
   }
+  // Każde czekanie na gest na Wyświetlaczu trafia do statystyk jednym
+  // zdarzeniem audio_unlock: powód (nowa instancja / przeglądarka wstrzymała
+  // dźwięk), czas blokady, wynik i próby akcji operatora w tym czasie.
+  let audioUnlockWait = null;
+  let lastDeviceDiagnostics = null;
+  function noteAudioUnlockBlockedAction() {
+    if (audioUnlockWait) audioUnlockWait.blockedActions += 1;
+  }
+  function syncAudioUnlockWait() {
+    const waiting = waitingForDisplayAudioUnlock();
+    if (waiting && !audioUnlockWait) {
+      const display = lastDeviceDiagnostics?.display;
+      audioUnlockWait = {
+        startedAt: Date.now(),
+        reason: display?.audioLockReason || "new_instance",
+        detail: display?.audioLockDetail || null,
+        visibility: display?.visibility || null,
+        step: store.state.step,
+        blockedActions: 0,
+      };
+      return;
+    }
+    if (waiting || !audioUnlockWait) return;
+    const wait = audioUnlockWait;
+    audioUnlockWait = null;
+    const outcome = displayAudioUnlocked === true ? "unlocked"
+      : presenceFlags.display !== true ? "display_offline"
+      : store.state.locks.gameEnded ? "game_ended"
+      : "not_required";
+    void sessionTelemetry.report({
+      kind: "diagnostic", category: "audio_unlock",
+      message: "Control czekał na odblokowanie dźwięku na Wyświetlaczu.",
+      devices: ["display"],
+      metrics: {
+        reason: wait.reason,
+        detail: wait.detail,
+        outcome,
+        wait_ms: Math.max(0, Date.now() - wait.startedAt),
+        blocked_action_attempts: wait.blockedActions,
+        display_visibility: wait.visibility,
+        step: wait.step,
+      },
+    });
+  }
   function onControlReconnect() {
     controlOffline = false;
     renderCurrent();
@@ -738,7 +782,11 @@ async function main() {
   // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
   async function dispatchGatedNow(action) {
     if (testModePanel?.blocked() && !action.type.startsWith("EXPIRE_")) return null;
-    if (controlOffline || waitingForDisplayAudioUnlock()) return null;
+    if (controlOffline) return null;
+    if (waitingForDisplayAudioUnlock()) {
+      if (!action.type.startsWith("EXPIRE_")) noteAudioUnlockBlockedAction();
+      return null;
+    }
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
     if (!action.type.startsWith("EXPIRE_") && (presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length)) return null;
@@ -906,6 +954,7 @@ async function main() {
       }
       presenceFlags = flags;
       displayAudioUnlocked = audioUnlocked;
+      lastDeviceDiagnostics = deviceDiagnostics;
       if (presenceUnavailable) recoverLeaseStatusRead();
       const audioDiagnostic = deviceDiagnostics?.display?.audioDiagnostic;
       if (!hasInitialPresenceSnapshot) {
@@ -1087,6 +1136,7 @@ async function main() {
     // Network/audio callbacks may resolve while main() is still awaiting the
     // last bootstrap reads. The final render below covers their latest state.
     if (!controlUIReady) return;
+    syncAudioUnlockWait();
     document.body.dataset.controlStep = store.state.step;
     syncTopbarDeviceCodeButtons();
     reportRealtimeSnapshots();
@@ -1262,7 +1312,8 @@ async function main() {
   // (ta sama liczba, co realnie steruje animacją na Displayu), zamiast
   // zgadywać nowy zestaw stałych.
   async function advance(nextStep, extra = {}, soundCueKey) {
-    if (controlOffline || waitingForDisplayAudioUnlock()) return;
+    if (controlOffline) return;
+    if (waitingForDisplayAudioUnlock()) { noteAudioUnlockBlockedAction(); return; }
     const generation = dispatchGeneration;
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;
