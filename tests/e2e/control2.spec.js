@@ -1690,7 +1690,9 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await expect.poll(async () => buzzerPage.evaluate(async ({ id, key }) => {
       const { error } = await window.__sbClient.rpc("game_state_buzzer_press", { p_game_id: id, p_key: key, p_team: "A" });
       return error?.message;
-    }, { id: game.id, key: game.share_key_buzzer }), { timeout: 30000 }).toBe("device_disabled");
+    }, { id: game.id, key: game.share_key_buzzer }), { timeout: 30000 }).toMatch(/^(device_disabled|forbidden)$/);
+    // Od migracji 380 wywołanie bez połączenia/epoki urządzenia kończy się
+    // "forbidden" przed sprawdzeniem physicalBuzzer — liczy się samo odrzucenie.
 
     await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
     await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
