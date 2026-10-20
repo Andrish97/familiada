@@ -1280,6 +1280,7 @@ test.describe("telefon w poziomie", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("landscape-view"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
+    await open(page);
     await page.setViewportSize(LAND);
     await expect(page.locator("#pageGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#pageGuard")).toHaveAttribute("data-kind", "device");
