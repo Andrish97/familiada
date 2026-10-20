@@ -207,6 +207,21 @@ body.editor-body .wrap {
     flex-direction: column;
 }
 
+/* Okno pytania na telefonie (#questionSheetOverlay): treść przewija się
+   jedną warstwą okna, bez wewnętrznego przewijania listy odpowiedzi. */
+.qSheetBody .editorBox {
+    display: flex;
+    height: auto
+}
+
+body.editor-body .qSheetBody .qf-listShell {
+    overflow: visible
+}
+
+.qSheetBody .answersBlock {
+    flex: 0 0 auto
+}
+
 .block {
     margin-bottom: 12px
 }

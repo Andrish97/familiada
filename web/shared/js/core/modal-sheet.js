@@ -198,8 +198,28 @@ function prepareSheetLayout(overlayEl) {
   for (const action of nestedActions) actions.append(action);
   if (!header.childElementCount) header.hidden = true;
   if (!actions.childElementCount) actions.hidden = true;
-  modal.replaceChildren(sheetHandle(overlayEl), header, actions, body);
+  // Nagłówek i akcje we wspólnym pasku: fitSheetTop() stawia przyciski obok
+  // podpowiedzi, gdy tak zajmują mniej miejsca (uwaga użytkownika 2026-10-20).
+  const top = document.createElement("div");
+  top.className = "sheet-modal-top";
+  top.append(header, actions);
+  modal.replaceChildren(sheetHandle(overlayEl), top, body);
   modal.dataset.sheetLayoutReady = "1";
+}
+
+// Przyciski obok tytułu i podpowiedzi zamiast pod nimi -- tylko gdy pasek
+// wyraźnie się obniża, a podpowiedź zostaje szeroka (inaczej układ pionowy).
+function fitSheetTop(overlayEl) {
+  const top = overlayEl?.querySelector(".sheet-modal-top");
+  if (!top) return;
+  top.classList.remove("is-inline");
+  const head = top.querySelector(":scope > .sheet-modal-head");
+  const actions = top.querySelector(":scope > .sheet-modal-actions");
+  if (!head || !actions || head.hidden || actions.hidden || !head.offsetHeight || !actions.offsetHeight) return;
+  const stacked = head.offsetHeight + actions.offsetHeight;
+  top.classList.add("is-inline");
+  const inline = top.offsetHeight;
+  if (inline >= stacked - 8 || head.offsetWidth < top.clientWidth * 0.45) top.classList.remove("is-inline");
 }
 
 // Pasek u góry okna od dołu: przeciągnięcie w dół (albo stuknięcie) zamyka.
@@ -286,8 +306,10 @@ function onSheetMqChange(e) {
   if (e.matches) prepareSheetLayout(activeOverlay);
   else restoreSheetLayout(activeOverlay);
   applyPresentation(e.matches);
+  if (e.matches) fitSheetTop(activeOverlay);
 }
 sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.(onSheetMqChange);
+globalThis.addEventListener?.("resize", () => { if (activeClose) fitSheetTop(activeOverlay); });
 
 // overlayEl: element .overlay (lub .market-preview-overlay) danego modala.
 // opts.onClose: funkcja zamykająca TEN modal (pasek, klik w tło, Wstecz
@@ -319,6 +341,8 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackB
   overlayEl?.style.removeProperty("--sheet-drag");
   overlayEl?.classList.remove("sheet-closing", "sheet-dragging", "sheet-settling");
   applyPresentation(true);
+  fitSheetTop(overlayEl);
+  requestAnimationFrame(() => { if (activeOverlay === overlayEl) fitSheetTop(overlayEl); });
   document.dispatchEvent(new CustomEvent("modal-sheet:enter", { detail: { overlay: overlayEl } }));
 }
 

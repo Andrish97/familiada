@@ -619,6 +619,42 @@ test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
   });
 });
 
+test.describe("games/editor: pytanie na telefonie w oknie od dołu", () => {
+  test.use({ viewport: MOBILE_VIEWPORT });
+
+  test("kliknięcie pytania otwiera roletkę z edycją; pasek zamyka i zapisuje treść", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-EDITOR-SHEET-${Date.now()}`;
+    const gameId = await createGameDirect(page, { name, type: "prepared", status: "draft" });
+    try {
+      await addQuestionDirect(page, gameId, 1, "Pytanie testowe 1");
+      await addQuestionDirect(page, gameId, 2, "Pytanie testowe 2");
+      await page.goto(`https://www.familiada.online/games/editor/?id=${gameId}`, { waitUntil: "domcontentloaded" });
+      const card = page.locator("#qList .qcard[data-id]").nth(1);
+      await card.waitFor({ timeout: 30000 });
+      await card.click();
+
+      const overlay = page.locator("#questionSheetOverlay");
+      await expectBottomSheet(page, overlay);
+      await expect(overlay.locator("#qSheetTitle")).toHaveText(/2/);
+      await expect(page.locator("body")).not.toHaveClass(/mobile-editing/);
+      await overlay.locator("#qText").fill("Zmienione w roletce");
+
+      await closeSheetViaHandle(page);
+      await expect(overlay).toBeHidden({ timeout: 5000 });
+      await expect(page.locator(".rightPanel #editor")).toHaveCount(1);
+      await expect(page).not.toHaveURL(/[?&]q=/);
+      await expect.poll(async () => page.evaluate(async (id) => {
+        const { data } = await window.__sbClient.from("questions").select("text").eq("game_id", id).eq("ord", 2).single();
+        return data?.text;
+      }, gameId), { timeout: 10000 }).toBe("Zmienione w roletce");
+    } finally {
+      await deleteGameDirect(page, gameId);
+    }
+  });
+});
+
 /* =====================================================================
    4) marketplace.html -- modal zgłoszenia gry do marketplace
 ===================================================================== */

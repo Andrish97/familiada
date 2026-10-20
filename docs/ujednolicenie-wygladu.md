@@ -98,6 +98,15 @@ podliczania jako stan bieżącej operacji.
   Edytor gry i okno pytania w Eksploratorze (`question-form.css`).
 - **Safe area w roletkach (sprawdzone emulacją 2026-10-20):** góra panelu
   12 px pod górnym safe area, ostatnia treść nad dolnym safe area (+14 px).
+- **Przyciski obok podpowiedzi w nagłówku roletki (uwaga użytkownika
+  2026-10-20):** tytuł i podpowiedź po lewej, przyciski po prawej w jednym
+  pasku (`fitSheetTop` w `modal-sheet.js`), gdy pasek wyraźnie się obniża,
+  a podpowiedź zostaje szeroka (≥45%); inaczej przyciski pod podpowiedzią.
+- **Edycja pytania w edytorze gry na telefonie (decyzja użytkownika
+  2026-10-20):** kliknięcie pytania otwiera roletkę „PYTANIE n” z tą samą
+  treścią (pytanie, odpowiedzi), zamykaną paskiem/tłem — bez trybu
+  „Wstecz”. Węższe okno komputera (601–1100 px bez dotyku) zostaje przy
+  widoku pytania z „Wstecz”.
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /

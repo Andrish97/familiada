@@ -417,8 +417,34 @@ async function boot() {
     document.body.classList.toggle("no-points", !cfg.allowPoints);
   }
 
+  // Telefon i tablet dotykowy: pytanie edytuje się w oknie od dołu (jak okno
+  // pytania w Eksploratorze; decyzja użytkownika 2026-10-20). Węższe okno
+  // komputera zostaje przy widoku pytania z „Wstecz”.
+  const editorBox = $("editor");
+  const sheetOverlay = $("questionSheetOverlay");
+  let sheetOpen = false;
+  const useQuestionSheet = () => isMobileLayout() && isSheetViewport() && !!activeQId;
+
+  function openQuestionSheet() {
+    sheetOpen = true;
+    $("qSheetBody").append(editorBox);
+    sheetOverlay.style.display = "grid";
+    enterModalSheet(sheetOverlay, { onClose: leaveQuestionEditor });
+  }
+
+  function closeQuestionSheet() {
+    sheetOpen = false;
+    sheetOverlay.style.display = "none";
+    exitModalSheet(sheetOverlay);
+    rightPanel?.append(editorBox);
+  }
+
   function syncMobileEditingState() {
-    const on = isMobileLayout() && !!activeQId;
+    const sheet = useQuestionSheet();
+    if (sheet && !sheetOpen) openQuestionSheet();
+    else if (!sheet && sheetOpen) closeQuestionSheet();
+    if (sheetOpen) $("qSheetTitle").textContent = MSG.questionLabel(activeQuestion()?.ord ?? "");
+    const on = isMobileLayout() && !!activeQId && !sheet;
     document.body.classList.toggle("mobile-editing", on);
     if (btnBack) btnBack.innerHTML = iconText("arrow-left", on ? t("editor.backToQuestions") : backLabel("editor"));
   }

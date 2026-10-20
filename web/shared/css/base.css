@@ -1000,6 +1000,7 @@ main:has(> .footer){
 
 /* Neutralne poza arkuszem; ułatwia wspólną kolejność mobilną bez zmian
    w wyglądzie okienek desktopowych. */
+.sheet-modal-top,
 .sheet-modal-head,
 .sheet-modal-actions,
 .sheet-modal-body { display: contents; }
@@ -1140,6 +1141,33 @@ main:has(> .footer){
         padding-bottom: 12px;
         margin-bottom: 12px;
         border-bottom: 1px solid var(--line2);
+    }
+    /* Przyciski obok tytułu i podpowiedzi (fitSheetTop w modal-sheet.js):
+       jedna linia oddzielająca pod całym paskiem. */
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: flex-end;
+        gap: 12px;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--line2);
+    }
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-head {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-bottom: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions {
+        flex: 0 0 auto;
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-bottom: 0;
+    }
+    .modal--sheet.sheet-active .sheet-modal-top.is-inline > .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot) {
+        flex-wrap: nowrap;
     }
     .modal--sheet.sheet-active .sheet-modal-actions > :is(.modal-actions,.uni-foot,.tagsFoot,.baseShareLookup,.baseShareFooter,.shareSectionActions,.shareSection--mail) {
         margin-top: 0 !important;

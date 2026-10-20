@@ -404,7 +404,7 @@ function additionalStates(data) {
           const question = page.locator("#qList .qcard[data-id]").first();
           await question.waitFor({ state: "visible", timeout: 20_000 });
           await question.click();
-          await expect(page.locator("body")).toHaveClass(/mobile-editing/);
+          await expect(page.locator("#questionSheetOverlay")).toHaveClass(/sheet-active/);
           await page.locator("#qText").scrollIntoViewIfNeeded();
         },
       },
@@ -415,7 +415,7 @@ function additionalStates(data) {
           const question = page.locator("#qList .qcard[data-id]").first();
           await question.waitFor({ state: "visible", timeout: 20_000 });
           await question.click();
-          await expect(page.locator("body")).toHaveClass(/mobile-editing/);
+          await expect(page.locator("#questionSheetOverlay")).toHaveClass(/sheet-active/);
           await page.locator("#aList").scrollIntoViewIfNeeded();
         },
       },
