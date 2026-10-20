@@ -1125,10 +1125,9 @@ Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
 
 ### 9.5. Otwarte
 
-- **Decyzja użytkownika:** 5 odpowiedzi jednej gry (preparowana, szkic,
-  bez głosów), które po oczyszczeniu byłyby puste — naprawa ich nie zmienia
-  i wykazuje w raporcie; do czasu decyzji ograniczenie `answers_text_chars`
-  nie jest zakładane. Użytkownik poprosił o SQL podglądu (przekazany w rozmowie).
+- ~~5 odpowiedzi pustych po oczyszczeniu~~ — rozstrzygnięte 2026-10-20:
+  emotki zamienione na słowa opisujące (migracja 412); nocna naprawa może
+  założyć `answers_text_chars`.
 - Kopie demo czekające na koniec sesji Control wracają w kolejną noc
   (zadanie cron usuwa się dopiero, gdy nic nie czeka).
 
