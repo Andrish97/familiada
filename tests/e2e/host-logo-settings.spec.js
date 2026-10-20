@@ -19,7 +19,7 @@ async function createHostLogoGame(page) {
       settings: {
         teams: { teamA: "Alfa", teamB: "Beta" },
         game: { hasFinal: false },
-        display: { mode: "GAME", theme: "classic", colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#171923", DOT: "#ffcc00" }, hostLogoMode: "pixel" },
+        display: { mode: "GAME", theme: "classic", colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#171923", DOT: "#ffcc00" } },
       },
     }).select("id,share_key_display,share_key_host,share_key_buzzer").single();
     if (error) throw new Error(`insert game: ${error.message}`);
