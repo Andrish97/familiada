@@ -1,6 +1,7 @@
 // src/lib/origin.js -- proxying to the GitHub Pages origin, maintenance/404
 // pages, and host/path classification.
 import { withHeaders } from "../core/http.js";
+import { isScreenshotPollId } from "../../../../../web/shared/js/core/poll-links.js";
 
 // Fetch from apex origin but resolve directly to GitHub Pages to avoid recursion.
 export const ORIGIN_BASE = "https://familiada.online";
@@ -55,6 +56,13 @@ const BLOCKED_PATHS = [
     paths: ["/settings", "/settings/", "/settings.html", "/tools", "/tools/", "/settings-tools", "/settings-tools/"],
   },
 ];
+
+// Ukryta gra w węża otwiera się tylko z linku z kodu QR na kadrze strony
+// głównej (/go/ przekierowuje na /snake/?qr=<id demo>); bez niego -- 404.
+const SNAKE_PAGES = ["/snake", "/snake/", "/snake/index.html"];
+export function isLockedSnake(url) {
+  return SNAKE_PAGES.includes(url.pathname) && !isScreenshotPollId(url.searchParams.get("qr"));
+}
 
 export function isKnownHost(host) {
   return KNOWN_HOSTS.includes(host);

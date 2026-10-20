@@ -6,7 +6,9 @@ const { loginAsPooledTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 
 const SITE = "https://www.familiada.online";
-const QR = `${SITE}/go/?p=anon&id=00000000-0000-4000-8000-000000000103&key=poll103KEY&lang=pl`;
+const DEMO_ID = "00000000-0000-4000-8000-000000000103";
+const QR = `${SITE}/go/?p=anon&id=${DEMO_ID}&key=poll103KEY&lang=pl`;
+const GAME = `${SITE}/snake/?qr=${DEMO_ID}&lang=pl`;
 const branch = process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0";
 test.use({ serviceWorkers: "block" });
 
@@ -41,7 +43,7 @@ test("wąż: kod QR z kadru prowadzi do gry, zdarzenia trafiają do bazy (bez ko
   test.setTimeout(120_000);
   const log = recordSnakeLog(page);
   await page.goto(QR, { waitUntil: "domcontentloaded" });
-  await page.waitForURL(/\/snake\/\?lang=pl$/, { timeout: 30_000 });
+  await page.waitForURL(GAME, { timeout: 30_000 });
   await expect(page.locator("#displays circle").first()).toBeAttached({ timeout: 30_000 });
   await expect(page.locator("#snakeProgress")).toContainText("tylko w tej przeglądarce");
   await expect(page.locator("#snakeLogin")).toBeVisible();
@@ -58,7 +60,7 @@ test("wąż: zalogowany ma zapisany rekord i liczbę gier", async ({ page, conte
   test.setTimeout(180_000);
   await loginAsPooledTestUser(page, context, 0);
   const log = recordSnakeLog(page);
-  await page.goto(`${SITE}/snake/?lang=pl`, { waitUntil: "domcontentloaded" });
+  await page.goto(GAME, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#snakeProgress")).toContainText("na koncie", { timeout: 30_000 });
   await expect(page.locator("#snakeLogin")).toBeHidden();
   await expect.poll(() => log.find((e) => e.kind === "enter")?.body?.ok, { timeout: 15_000 }).toBe(true);
@@ -68,4 +70,15 @@ test("wąż: zalogowany ma zapisany rekord i liczbę gier", async ({ page, conte
   const finish = log.find((e) => e.kind === "finish").body;
   await expect(page.locator("#snakeProgress")).toContainText(`rozegrane gry: ${before + 1}`);
   expect(finish.best).toBeGreaterThanOrEqual(0);
+});
+
+// Blokadę robi Worker, więc sprawdzamy ją tylko na produkcji (kod brancha
+// podaje stronę z plików z pominięciem Workera).
+test("wąż: bez linku z kodu QR /snake/ to zwykłe 404", async ({ page }) => {
+  test.skip(branch, "blokada w Workerze -- test kontrolny na produkcji");
+  for (const path of ["/snake/", "/snake/?lang=pl", "/snake/?qr=8f14e45f-ceea-467a-9c2b-2f3a1d6e5b10"]) {
+    const res = await page.goto(`${SITE}${path}`, { waitUntil: "domcontentloaded" });
+    expect(res.status(), path).toBe(404);
+    await expect(page.locator("#snakeFrame")).toHaveCount(0);
+  }
 });

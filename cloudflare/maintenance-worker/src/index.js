@@ -23,6 +23,7 @@ import {
   fetchWith404,
   isKnownHost,
   isBlockedPath,
+  isLockedSnake,
   serveMaintenance,
   serveNotFoundPage,
 } from "./lib/origin/origin.js";
@@ -293,7 +294,7 @@ export default {
     }
 
     // Block settings on public hosts (serve custom 404)
-    if (isBlockedPath(host, url.pathname)) {
+    if (isBlockedPath(host, url.pathname) || isLockedSnake(url)) {
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
