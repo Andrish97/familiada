@@ -82,7 +82,7 @@ CONF
 if curl -s -o /dev/null localhost:3555/; then
   psql -h "$P" -p 5499 -U postgres -d fam -qc "notify pgrst, 'reload schema'"
 else
-  (cd "$CACHE" && nohup ./postgrest pgrst.conf > pgrst.log 2>&1 &)
+  (cd "$CACHE" && setsid nohup ./postgrest pgrst.conf > pgrst.log 2>&1 < /dev/null &)
   sleep 2
 fi
 echo "gotowe: Postgres :5499, PostgREST :3555"
