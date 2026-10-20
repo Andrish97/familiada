@@ -712,7 +712,9 @@ main{
 }
 
 .wrap {
-    width: 90%;
+    /* treść od krawędzi okna: --page-gutter (18 px, ≤980 px 15 px) — wszędzie tak samo */
+    width: 100%;
+    box-sizing: border-box;
     margin: 0 auto;
     padding: 24px var(--page-gutter) 18px
 }
