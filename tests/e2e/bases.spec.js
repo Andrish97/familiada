@@ -696,7 +696,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
         for (const r of data || []) await window.__sbClient.rpc("base_share_cancel_task", { p_task_id: r.task_id });
       }, baseId);
       await page2.goto(`/go/?b=${token}`, { waitUntil: "domcontentloaded" });
-      await expect(page2.locator("#message")).toContainText("zostało cofnięte", { timeout: 15000 });
+      await expect(page2.locator("#title")).toContainText("zostało cofnięte", { timeout: 15000 });
     } finally {
       if (ctx2) await ctx2.close();
       await deleteBaseDirect(page, baseId);
