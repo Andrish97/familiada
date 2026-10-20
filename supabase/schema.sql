@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict c2VwoL9lOLhQU6PfyRSMdvHDuhH7SJyvVK1aTWs2lQCezc0gsEWiNRu5RNejlRw
+\restrict PwfhtWZd3n6BwxBmN2NChJpF7f6xdVp0ld73nc2eJsuXq43DcK2cGvvM4wAj0N3
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7001,12 +7001,17 @@ DECLARE
   v_active uuid[];
   v_q int; v_a int; v_bq int; v_ba int;
   v_left_q int; v_left_a int; v_empty uuid[];
+  v_demo jsonb;
   v_report jsonb;
   v_job bigint;
 BEGIN
   -- Gry z niewygasłą sesją Control: bez zmian treści do jej końca/wygaśnięcia.
   SELECT coalesce(array_agg(DISTINCT game_id), '{}') INTO v_active
   FROM public.control_runtime_sessions WHERE ended_at IS NULL AND expires_at > now();
+
+  -- Kopie demo (409): zwykły tryb -- usunięcie odpowiedzi i dopisanie głosów
+  -- z wyzwalaczami i kluczami obcymi.
+  v_demo := public.e21_demo_repair(v_active);
 
   -- Bez wyzwalaczy (oczekujące kopie, cache reguł, updated_at): zmiana samego
   -- tekstu tych samych wierszy; rules_state przeliczany niżej.
@@ -7046,10 +7051,7 @@ BEGIN
   FROM bad WHERE bad.id = q.id;
   GET DIAGNOSTICS v_ba = ROW_COUNT;
 
-  PERFORM set_config('session_replication_role', 'origin', true);
-
-  -- Cache reguł po naprawie (bez zmiany updated_at -- znów bez wyzwalaczy).
-  PERFORM set_config('session_replication_role', 'replica', true);
+  -- Cache reguł po naprawie (bez zmiany updated_at -- nadal bez wyzwalaczy).
   UPDATE public.games g SET rules_state = public.game_rules_compute(g.id, g.type::text, g.status::text)
   WHERE g.id <> ALL (v_active);
   PERFORM set_config('session_replication_role', 'origin', true);
@@ -7076,17 +7078,195 @@ BEGIN
     'skipped_active_control_games', to_jsonb(v_active),
     'questions_over_100_left', v_left_q, 'answers_invalid_left', v_left_a,
     'answers_empty_after_clean', to_jsonb(v_empty),
-    'questions_constraint', v_left_q = 0, 'answers_constraint', v_left_a = 0);
+    'questions_constraint', v_left_q = 0, 'answers_constraint', v_left_a = 0) || v_demo;
   INSERT INTO public.e21_repair_runs(report) VALUES (v_report);
   RAISE NOTICE 'e21_data_repair: %', v_report;
 
-  -- Koniec: zostały co najwyżej odpowiedzi czekające na decyzję -> zadanie nie wraca.
-  IF v_left_q = 0 AND v_left_a = cardinality(v_empty) AND to_regclass('cron.job') IS NOT NULL THEN
+  -- Koniec: zostały co najwyżej odpowiedzi czekające na decyzję i żadna kopia
+  -- demo nie czekała na koniec sesji Control -> zadanie nie wraca.
+  IF v_left_q = 0 AND v_left_a = cardinality(v_empty) AND coalesce((v_demo->>'demo_skipped_active_control')::int, 0) = 0
+     AND to_regclass('cron.job') IS NOT NULL THEN
     EXECUTE 'SELECT jobid FROM cron.job WHERE jobname = ''e21-data-repair'' LIMIT 1' INTO v_job;
     IF v_job IS NOT NULL THEN PERFORM cron.unschedule(v_job); END IF;
   END IF;
   RETURN v_report;
 END $$;
+
+
+--
+-- Name: e21_demo_fixed_payload("text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e21_demo_fixed_payload"("p_slot" "text", "p_payload" "jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql" IMMUTABLE
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  c_votes constant int := 10;
+  c_min_answers constant int := 3;
+  v_out jsonb := p_payload;
+  v_votes jsonb := coalesce(p_payload->'votes', '[]');
+  v_n int := jsonb_array_length(coalesce(p_payload->'votes', '[]'));
+  v_qn int := jsonb_array_length(coalesce(p_payload->'questions', '[]'));
+  v_new jsonb;
+  v_picks jsonb;
+  v_counts int[];
+  v_pick int;
+  v_an int;
+  j int; q int; i int;
+BEGIN
+  IF p_slot = 'prepared' THEN
+    RETURN jsonb_set(v_out, '{questions}', coalesce((
+      SELECT jsonb_agg(jsonb_set(qv, '{answers}', coalesce((
+        SELECT jsonb_agg(a ORDER BY an) FROM jsonb_array_elements(coalesce(qv->'answers', '[]')) WITH ORDINALITY AS x(a, an)
+        WHERE coalesce((a->>'fixed_points')::int, 0) >= 4), '[]')) ORDER BY qn)
+      FROM jsonb_array_elements(p_payload->'questions') WITH ORDINALITY AS t(qv, qn)), '[]'));
+  END IF;
+
+  IF p_slot = 'poll_text_open' AND v_n > 0 AND v_n < c_votes THEN
+    -- powtórzenia pierwszych ankiet: te same wpisy, bez nowych tekstów
+    FOR j IN 1..(c_votes - v_n) LOOP
+      v_votes := v_votes || jsonb_build_array(v_votes->((j - 1) % v_n));
+    END LOOP;
+    RETURN jsonb_set(v_out, '{votes}', v_votes);
+  END IF;
+
+  IF p_slot = 'poll_points_open' AND v_n > 0 AND v_n < c_votes THEN
+    FOR j IN 1..(c_votes - v_n) LOOP
+      v_picks := '[]';
+      FOR q IN 1..v_qn LOOP
+        v_an := jsonb_array_length(coalesce(p_payload->'questions'->(q - 1)->'answers', '[]'));
+        -- liczba głosów na każdą odpowiedź pytania q (także dopisanych)
+        v_counts := array_fill(0, ARRAY[greatest(v_an, 1)]);
+        FOR i IN 0..(jsonb_array_length(v_votes) - 1) LOOP
+          v_pick := (v_votes->i->'picks'->>(q - 1))::int;
+          IF v_pick BETWEEN 0 AND v_an - 1 THEN v_counts[v_pick + 1] := v_counts[v_pick + 1] + 1; END IF;
+        END LOOP;
+        -- za mało odpowiedzi z głosami -> pierwsza bez głosów; inaczej powtórzenie
+        IF (SELECT count(*) FROM unnest(v_counts) c WHERE c > 0) < least(c_min_answers, v_an) THEN
+          SELECT min(k) - 1 INTO v_pick FROM generate_subscripts(v_counts, 1) k WHERE v_counts[k] = 0;
+        ELSE
+          v_pick := (v_votes->((j - 1) % v_n)->'picks'->>(q - 1))::int;
+        END IF;
+        v_picks := v_picks || to_jsonb(v_pick);
+      END LOOP;
+      v_new := jsonb_set(v_votes->((j - 1) % v_n), '{picks}', v_picks);
+      v_votes := v_votes || jsonb_build_array(v_new);
+    END LOOP;
+    RETURN jsonb_set(v_out, '{votes}', v_votes);
+  END IF;
+
+  RETURN v_out;
+END $$;
+
+
+--
+-- Name: e21_demo_game_content("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e21_demo_game_content"("p_game_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT coalesce(jsonb_agg(jsonb_build_object('ord', q.ord, 'text', q.text, 'answers', coalesce((
+    SELECT jsonb_agg(jsonb_build_object('ord', a.ord, 'text', a.text, 'fixed_points', a.fixed_points) ORDER BY a.ord)
+    FROM public.answers a WHERE a.question_id = q.id), '[]'::jsonb)) ORDER BY q.ord), '[]'::jsonb)
+  FROM public.questions q WHERE q.game_id = p_game_id
+$$;
+
+
+--
+-- Name: e21_demo_repair("uuid"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e21_demo_repair"("p_skip" "uuid"[]) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  r record;
+  v_new jsonb;
+  v_n_old int;
+  v_vote jsonb;
+  v_qid uuid;
+  v_sid uuid;
+  v_aid uuid;
+  v_pick int;
+  v_raw text;
+  v_tok text;
+  j int; q int;
+  v_prepared int := 0; v_answers int := 0; v_points int := 0; v_text int := 0; v_skipped int := 0;
+BEGIN
+  FOR r IN
+    SELECT g.id, g.type::text AS type, g.status::text AS status, b.slot, b.payload AS old_payload
+    FROM public.games g
+    JOIN public.e21_demo_templates_before b
+      ON b.payload->'game'->>'name' = g.name AND b.payload->'game'->>'type' = g.type::text
+    WHERE g.is_demo
+      AND ((b.slot = 'prepared' AND g.status = 'draft')
+        OR (b.slot IN ('poll_points_open', 'poll_text_open') AND g.status IN ('poll_open', 'poll_stopped')))
+      AND public.e21_demo_game_content(g.id) = public.e21_demo_template_content(b.payload)
+  LOOP
+    IF r.id = ANY (p_skip) THEN v_skipped := v_skipped + 1; CONTINUE; END IF;
+
+    IF r.slot = 'prepared' THEN
+      DELETE FROM public.answers a USING public.questions qq
+      WHERE qq.id = a.question_id AND qq.game_id = r.id AND a.fixed_points < 4;
+      GET DIAGNOSTICS j = ROW_COUNT;
+      v_answers := v_answers + j;
+      v_prepared := v_prepared + 1;
+      CONTINUE;
+    END IF;
+
+    -- ankiety: tylko głosy demo, wszystkie pełne w bieżącym uruchomieniu
+    v_n_old := jsonb_array_length(coalesce(r.old_payload->'votes', '[]'));
+    IF v_n_old = 0
+       OR EXISTS (SELECT 1 FROM public.poll_votes v WHERE v.game_id = r.id AND v.voter_token NOT LIKE 'demo_seed_v%')
+       OR EXISTS (SELECT 1 FROM public.poll_text_entries e WHERE e.game_id = r.id AND e.voter_token NOT LIKE 'demo_seed_v%')
+       OR public._poll_full_submissions(r.id) <> v_n_old THEN
+      CONTINUE;
+    END IF;
+    v_new := public.e21_demo_fixed_payload(r.slot, r.old_payload);
+    FOR j IN (v_n_old + 1)..jsonb_array_length(v_new->'votes') LOOP
+      v_vote := v_new->'votes'->(j - 1);
+      v_tok := 'demo_seed_v' || lpad(j::text, 4, '0');
+      FOR q IN 1..jsonb_array_length(v_new->'questions') LOOP
+        SELECT qq.id INTO v_qid FROM public.questions qq WHERE qq.game_id = r.id AND qq.ord = q;
+        SELECT ls.poll_session_id INTO v_sid FROM public._poll_latest_sessions(r.id) ls WHERE ls.question_id = v_qid;
+        IF r.slot = 'poll_points_open' THEN
+          v_pick := (v_vote->'picks'->>(q - 1))::int;
+          SELECT a.id INTO v_aid FROM public.answers a WHERE a.question_id = v_qid AND a.ord = v_pick + 1;
+          INSERT INTO public.poll_votes (game_id, question_ord, answer_ord, voter_token, poll_session_id, question_id, answer_id)
+          VALUES (r.id, q, v_pick + 1, v_tok, v_sid, v_qid, v_aid);
+        ELSE
+          v_raw := v_vote->'answers_raw'->>(q - 1);
+          INSERT INTO public.poll_text_entries (game_id, poll_session_id, question_id, voter_token, answer_raw, answer_norm)
+          VALUES (r.id, v_sid, v_qid, v_tok, v_raw, lower(regexp_replace(trim(v_raw), '\s+', ' ', 'g')));
+        END IF;
+      END LOOP;
+    END LOOP;
+    IF r.slot = 'poll_points_open' THEN v_points := v_points + 1; ELSE v_text := v_text + 1; END IF;
+  END LOOP;
+
+  RETURN jsonb_build_object('demo_prepared_games', v_prepared, 'demo_prepared_answers_removed', v_answers,
+    'demo_points_polls_filled', v_points, 'demo_text_polls_filled', v_text, 'demo_skipped_active_control', v_skipped);
+END $$;
+
+
+--
+-- Name: e21_demo_template_content("jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e21_demo_template_content"("p_payload" "jsonb") RETURNS "jsonb"
+    LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT coalesce(jsonb_agg(jsonb_build_object('ord', qn, 'text', q->>'text', 'answers', coalesce((
+    SELECT jsonb_agg(jsonb_build_object('ord', an, 'text', left(trim(a->>'text'), 17),
+      'fixed_points', coalesce((a->>'fixed_points')::int, 0)) ORDER BY an)
+    FROM jsonb_array_elements(coalesce(q->'answers', '[]')) WITH ORDINALITY AS aa(a, an)), '[]'::jsonb)) ORDER BY qn), '[]'::jsonb)
+  FROM jsonb_array_elements(coalesce(p_payload->'questions', '[]')) WITH ORDINALITY AS qq(q, qn)
+$$;
 
 
 --
@@ -18886,6 +19066,17 @@ CREATE TABLE "public"."device_presence" (
 
 
 --
+-- Name: e21_demo_templates_before; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."e21_demo_templates_before" (
+    "lang" "text" NOT NULL,
+    "slot" "text" NOT NULL,
+    "payload" "jsonb" NOT NULL
+);
+
+
+--
 -- Name: e21_repair_runs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -20398,6 +20589,14 @@ ALTER TABLE ONLY "public"."device_connect_codes"
 
 ALTER TABLE ONLY "public"."device_presence"
     ADD CONSTRAINT "device_presence_pkey" PRIMARY KEY ("game_id", "device_type", "device_id");
+
+
+--
+-- Name: e21_demo_templates_before e21_demo_templates_before_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."e21_demo_templates_before"
+    ADD CONSTRAINT "e21_demo_templates_before_pkey" PRIMARY KEY ("lang", "slot");
 
 
 --
@@ -25521,5 +25720,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict c2VwoL9lOLhQU6PfyRSMdvHDuhH7SJyvVK1aTWs2lQCezc0gsEWiNRu5RNejlRw
+\unrestrict PwfhtWZd3n6BwxBmN2NChJpF7f6xdVp0ld73nc2eJsuXq43DcK2cGvvM4wAj0N3
 
