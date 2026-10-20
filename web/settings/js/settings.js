@@ -12,17 +12,17 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T19035";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T19035";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T19035";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19035";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T19035";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T19035";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T19035";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T19035";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T19035";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T19035";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T19035";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T19410";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T19410";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T19410";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19410";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T19410";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T19410";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T19410";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T19410";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T19410";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T19410";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T19410";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -33,14 +33,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T19035";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T19410";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T19035";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T19035";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T19035";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T19410";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T19410";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T19410";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T19035";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T19410";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1051,8 +1051,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T19035"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T19035"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T19410"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T19410"/>
 
   <style>
     body{margin:0;padding:0}
@@ -2312,6 +2312,7 @@ async function loadMarketplace({ silent = false } = {}) {
   if (!tbody) return;
   if (!silent && info) info.textContent = "Ładowanie…";
 
+  void loadMarketPendingBadge();
   let data;
   try {
     const res = await adminFetch(`/marketplace/list?status=${marketActiveStatus}`);
@@ -2677,6 +2678,37 @@ function updateFolderBadges(inboxUnread, reportsOpen) {
   if (badgeReports) {
     badgeReports.textContent = reportsOpen > 99 ? "99+" : String(reportsOpen || "");
   }
+  // Zakładka „Poczta Familiada” w topbarze: nieprzeczytane + otwarte zgłoszenia
+  // (licznik trafia też na „Więcej” i do menu na telefonie -- topbar-controller).
+  setCountBadge("tabBadgeReports", inboxUnread + reportsOpen);
+}
+
+function setCountBadge(id, count) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = count > 99 ? "99+" : String(count || "");
+}
+
+// Gry Społeczności czekające na zatwierdzenie: zakładka w topbarze
+// i „Do zatwierdzenia” (bez gier producenta, jak lista).
+async function loadMarketPendingBadge() {
+  try {
+    const res = await adminFetch("/marketplace/list?status=pending");
+    if (!res.ok) return;
+    const json = await res.json();
+    const count = (json.rows || []).filter((r) => r.origin !== "producer").length;
+    setCountBadge("tabBadgeMarketplace", count);
+    setCountBadge("badgeMarketPending", count);
+  } catch (e) {
+    console.error("[loadMarketPendingBadge] error:", e);
+  }
+}
+
+// Liczniki powiadomień odświeżane w tle (karta widoczna), jak na innych stronach.
+function startAdminBadges() {
+  const refresh = () => { loadFolderBadges(); loadMarketPendingBadge(); };
+  refresh();
+  setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 60_000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
 }
 
 // Load unread counts on initial load and after folder changes
@@ -6557,7 +6589,7 @@ function wireEvents() {
 
   wireMarketplaceEvents();
   wireReportsEvents();
-  loadFolderBadges();
+  startAdminBadges();
   wireMarketingEvents();
   wireRatingsEvents();
   wireStatsEvents();
@@ -6747,7 +6779,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T19035");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T19410");
 
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;

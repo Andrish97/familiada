@@ -26,7 +26,6 @@ body.snake-body {
   border-radius: 12px;
   overflow: hidden;
   touch-action: none;
-  cursor: pointer;
   flex: 0 0 auto;
 }
 .snake-frame .layer-bg,
@@ -160,3 +159,6 @@ html.showA2HS .a2hs { display: flex; }
 .lang-floating .btn.lang-btn:hover { --btn-tint: rgba(0,0,0,.38); }
 .lang-floating .lang-btn .ico { width: 22px; height: 22px; }
 .lang-menu { z-index: 10000; }
+
+/* Start/pauza stuknięciem tylko w dużą tablicę (pole gry). */
+.snake-big { cursor: pointer; }

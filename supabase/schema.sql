@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fGvOMsxWHwBuU0yj905jfGmHPctBFuUCkiZe7tENqua0nbTrmMDg1v3srgSqoUO
+\restrict xWZpmNM8Wt4yAVAuXhvIajWVW6z51eG67qQTNY2ENXbimiMF4UlbHzcdTJEjJF8
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4527,7 +4527,6 @@ DECLARE
   uid uuid := auth.uid();
   identity jsonb;
   polls integer;
-  bases integer;
   friends integer;
 BEGIN
   SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id = uid;
@@ -4540,14 +4539,11 @@ BEGIN
   FROM public.poll_tasks t
   WHERE t.recipient_user_id = uid
     AND t.done_at IS NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL;
-  SELECT count(*) INTO bases
-  FROM public.base_share_tasks bt
-  WHERE bt.recipient_user_id = uid AND bt.status IN ('pending', 'opened');
   SELECT count(*) INTO friends
   FROM public.friendships f
   WHERE f.decision_user_id = uid AND f.status = 'pending' AND f.cancelled_at IS NULL;
 
-  RETURN jsonb_build_object('tasks_pending', polls + bases, 'friends_pending', friends);
+  RETURN jsonb_build_object('tasks_pending', polls, 'friends_pending', friends);
 END;
 $$;
 
@@ -5383,7 +5379,7 @@ BEGIN
   END IF;
   IF v_trigger IS NOT NULL AND v_trigger NOT IN (
     'poll','broadcast','bootstrap','resume','channel_recovery','channel_failure',
-    'delete_recovery','doorbell_ready','other'
+    'delete_recovery','doorbell_ready','lease_heartbeat','other'
   ) THEN RAISE EXCEPTION 'invalid trigger'; END IF;
 
   SELECT a.session_id INTO v_session_id
@@ -5645,7 +5641,8 @@ BEGIN
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
     || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id,
-      'audio_unlocked',(SELECT c.audio_unlocked FROM public.control_device_connections c WHERE c.id=p_connection_id));
+      'audio_unlocked',(SELECT c.audio_unlocked FROM public.control_device_connections c WHERE c.id=p_connection_id),
+      'game_rev',(SELECT g.rev FROM public.game_state g WHERE g.game_id=p_game_id));
 END;
 $_$;
 
@@ -16874,7 +16871,14 @@ begin
   PERFORM public._subscriber_pair_lock(v_uid,v_sub.subscriber_email);
   SELECT * INTO v_sub FROM public.poll_subscriptions WHERE id=p_id AND owner_id=v_uid FOR UPDATE;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not found'); END IF;
-  -- ✅ zamiast DELETE: oznacz jako cancelled i ustaw timestamp
+
+  -- 424: oczekująca propozycja znajomości z tej subskrypcji zostaje
+  update public.friendships
+  set source_subscription_id = null
+  where source_subscription_id = v_sub.id
+    and status = 'pending'
+    and cancelled_at is null;
+
   update public.poll_subscriptions
   set status = 'cancelled',
       cancelled_at = now()
@@ -25988,5 +25992,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fGvOMsxWHwBuU0yj905jfGmHPctBFuUCkiZe7tENqua0nbTrmMDg1v3srgSqoUO
+\unrestrict xWZpmNM8Wt4yAVAuXhvIajWVW6z51eG67qQTNY2ENXbimiMF4UlbHzcdTJEjJF8
 
