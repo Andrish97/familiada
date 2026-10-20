@@ -130,8 +130,50 @@ braki informacyjnie i nie blokuje tworzenia szkicu.
   odpowiedzi nie zwiększa udziałów pozostałych. **Dalsza decyzja:** przy
   niecałkowitych udziałach dopuszczamy niedobór punktów, np. 33/33/33 i sumę
   99. Nie dobijamy do 100 przez arbitralne rozbijanie równych głosów; suma
-  nie może przekroczyć 100. Szczegółowy algorytm, zwłaszcza granice progu
-  4%, musi realizować te warunki jednakowo w JS i SQL.
+  punktów odpowiedzi zapisanych do gry nie może przekroczyć 100.
+- **Zaokrąglanie — decyzja 2026-10-20:** jednakowa liczba głosów w pytaniu
+  zawsze daje jednakowy procent. Dla udziału `100 * liczba_głosów / N`, gdzie
+  N jest liczbą pełnych ankiet w bieżącym uruchomieniu: brak głosów daje 0%;
+  dodatni udział poniżej 1% pokazujemy jako 1%; wszystkie pozostałe udziały
+  ucinamy do pełnej liczby całkowitej (`floor`). Bez rozdzielania reszt
+  i bez odejmowania punktów dla rozbicia remisu. Przykłady: 0,8% → 1%,
+  3,9% → 3%, 4% → 4%, 33⅓% → 33%. Kwalifikacja od 4% dotyczy tak
+  otrzymanej wartości; 3,9% nie kwalifikuje się.
+  Do gry trafiają wyłącznie wybrane, kwalifikujące się odpowiedzi, a ich
+  punkty są równe procentowi. Minimum 1% nie przyznaje punktów odpowiedziom
+  poniżej progu 4%. Suma procentów wszystkich surowych pozycji może przez
+  podnoszenie drobnych udziałów do 1 przekroczyć 100; nie jest to suma punktów
+  gry i nie może być użyta do ponownej normalizacji. Suma punktów wybranych
+  odpowiedzi nadal jest ≤100. JS i SQL stosują ten sam algorytm.
+- **Remis na granicy szóstki — decyzja 2026-10-20:** w podliczaniu tekstowym,
+  gdy szósta i kolejna odpowiedź mają **dokładnie tyle samo głosów**, pojawia
+  się pojedynczy przycisk zmiany wyboru w remisie. Dla dwóch kandydatów
+  zamienia szóstą i siódmą odpowiedź; następne kliknięcie przywraca poprzedni
+  wybór. Widok jasno pokazuje, która odpowiedź wejdzie do gry, a która
+  zostanie pominięta. Nie wymaga to zmiany głosów ani punktów.
+  Kolejność kandydatów w podliczaniu wynika z liczby głosów malejąco,
+  z zapisanym porządkiem jako rozstrzygnięciem identycznych liczebności.
+  Jednakowy procent po ucięciu przy różnych liczbach głosów **nie uprawnia**
+  do pominięcia odpowiedzi z większą liczbą głosów na rzecz mniej popularnej.
+  Np. przy 200 pełnych ankietach 10 i 11 głosów daje po 5%, ale przy
+  wyborze szóstki pierwszeństwo ma 11 głosów, bez przycisku zamiany.
+  Jest to odrębne od rozgrywki: po zatwierdzeniu odpowiedzi zapisane z tą
+  samą punktacją są remisujące, niezależnie od tego, czy równość wynikała
+  z identycznych liczebności, czy z ucięcia procentu. Zgodnie z ustaloną
+  definicją najwyżej punktowanej odpowiedzi liczą się zapisane punkty;
+  sam plik transferu nie przechowuje liczby głosów.
+  Uogólnienie dla większej grupy remisowej: wszystkie odpowiedzi ponad nią
+  pozostają wybrane, a przycisk cyklicznie zmienia zestaw z remisowej grupy
+  w pozostałych miejscach do sześciu. Każdy dopuszczalny zestaw musi być
+  osiągalny; nie wolno ograniczyć się do dwóch pozycji i ukryć innych
+  równorzędnych kandydatów. Domyślny wybór jest widoczny, użytkownik może
+  go zmienić przed zatwierdzeniem. Przycisk nie występuje, jeżeli nie ma
+  remisu przecinającego granicę sześciu kwalifikujących się odpowiedzi.
+  Wybór jest częścią szkicu podliczania i końcowego zapisu. Po scaleniu
+  tekstów przeliczyć liczebności i kwalifikację, zachować wybór, jeśli nadal
+  jest poprawny, a zmianę wymuszoną nowym rankingiem pokazać w podsumowaniu.
+  SQL waliduje wybrany zestaw względem aktualnego rankingu, remisu i limitu
+  sześciu; frontend nie może pozwolić ominąć lepszej odpowiedzi spoza remisu.
 - **Minimalna liczba głosów — ostateczne doprecyzowanie 2026-10-20:**
   podliczanie ankiety punktowej i tekstowej jest dozwolone od **10 pełnych
   oddanych ankiet w bieżącym uruchomieniu**. Przy 0–9 akcja „Podlicz” jest
@@ -489,6 +531,17 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Podliczanie: dokładnie 3% i 4% po zaokrągleniu, mniej/więcej niż 6 pozycji,
   mniej niż 3 kwalifikujące odpowiedzi, oraz tekstowe scalanie które zmienia
   ranking/procent i pozwala ponownie spełnić próg.
+- Zaokrąglanie: 0 głosów → 0%; dodatni udział <1% → 1%; 1,9% → 1%,
+  3,9% → 3% (nie kwalifikuje), 4% → 4%; 10/10/10 przy 30 pełnych
+  ankietach → 33/33/33. Równe głosy zawsze dają równe procenty; brak
+  rozdziału reszt i brak przekroczenia 100 punktów w zapisanym wyniku.
+  Liczne surowe pozycje <1% nie mogą sztucznie otrzymać punktów do gry.
+- Granica szóstki: remis dokładnie dwóch kandydatów, remis większej grupy
+  przecinający jedno lub kilka wolnych miejsc, wszystkie dopuszczalne
+  zestawy osiągalne jednym cyklicznym przyciskiem, trwałość wyboru po
+  odświeżeniu oraz walidacja SQL. Równe procenty z różnych liczebności
+  nie dają przycisku zamiany. Po scaleniu lub zmianie liczby głosów
+  przeliczyć ranking i poprawność wyboru; bez remisu przycisk znika.
 - Import/eksport round-trip: wszystkie pięć dozwolonych kombinacji; eksport
   otwartej i zatrzymanej ankiety z ostrzeżeniem o utracie bieżących głosów;
   wysyłka szkicu zachowująca typ; konwersja każdego typu do pozostałych typów;
@@ -607,7 +660,7 @@ przy zapisie/przejściu i odczytywany przez UI. Nie jest to nowa decyzja o proga
 | AP, AT / open→stopped / zatrzymaj; stopped→open / wznów | R sprawdza stan; RPC idempotentnie przyjmuje też już osiągnięty stan. Zachowuje głosy/klucz | Wspólne przejścia; rozróżnić niedostępny przycisk i bezpieczne retry RPC | R + `poll_stop/resume` → wspólny kontrakt SQL/UI |
 | AP, AT / stopped / wejdź w podliczanie | Przycisk zależy od `poll_close.ok`; zbyt słaby surowy wynik blokuje wejście. Sam handler `enterTally` sprawdza tylko stopped; brak osobnego progu 10 pełnych ankiet | Wejście od 10 pełnych ankiet; przy 0–9 „Podlicz” zablokowane. Kwalifikacja odpowiedzi do zamknięcia nie blokuje wejścia przy ≥10, aby umożliwić scalanie tekstów | R + T/UI → osobna akcja wejścia, wspólna bramka UI/SQL |
 | AP / stopped / zatwierdź wynik | R liczy ≥3 odpowiedzi z ≥3 pkt metodą największych reszt; normalizacja 392 zeruje udział zaokrąglony <3%. UI po wejściu ustawia poprawność na true | ≥3 odpowiedzi z zaokrąglonym udziałem ≥4%, jedna matematyka podglądu i SQL | `game_poll_close_check` + T + `poll_points_tally` → wspólna kwalifikacja/zamknięcie SQL |
-| AT / stopped / scal, zatwierdź | R sprawdza ≥3 różne surowe teksty; właściwy zapis przelicza scalony payload, próg ≥3%, top 6, min. 3; remisy punktów obniża | Po każdej zmianie ponowne liczenie; ≥4% i ≥3 kwalifikujące; limit 6; kolejność algorytmu §8.6 | R + T + `poll_text_tally_apply` → wspólna kwalifikacja/zamknięcie SQL |
+| AT / stopped / scal, zatwierdź | R sprawdza ≥3 różne surowe teksty; właściwy zapis przelicza scalony payload, próg ≥3%, top 6, min. 3; remisy punktów obniża | Procent: dodatni <1 → 1, pozostałe floor; równe głosy → równe punkty; ≥4% i ≥3 kwalifikujące; limit 6. Przy remisie głosów na granicy szóstki jawny cykliczny wybór użytkownika; po scaleniu przeliczenie | R + T + `poll_text_tally_apply` → wspólna kwalifikacja/zamknięcie i walidacja wyboru SQL |
 | AP, AT / open, stopped, ready / przerwij-resetuj | `poll_abort` usuwa głosy, teksty, sesje, zadania i kody QR; nowy klucz; draft; punkty 0, treść odpowiedzi zostaje | Osobna jawna akcja; zakres wspólnego resetu §8.6 | RPC 315 → wspólny kontrakt resetu SQL |
 | Trzy źródłowe / draft, ready / eksport pliku | Dozwolony bez bramki gotowości; zamknięta ankieta staje się P; brak statusu/wersji | Dokładnie pięć wariantów; zamknięty poll zachowuje typ/wynik; P jako szkic | R + F → wspólny transfer; SQL autorytatywny dla importu |
 | AP, AT / open, stopped / eksport pliku | Przycisk zablokowany; sama funkcja F umie zrobić pakiet bez głosów, bez ostrzeżenia; AP zeruje punkty tylko dla draft | Ostrzeżenie o utracie bieżących głosów; szkic tego samego typu | R + F → osobna akcja eksportu + transfer |
@@ -729,13 +782,15 @@ Minimum jest rozstrzygnięte: **10 pełnych oddanych ankiet przed rozpoczęciem
 podliczania**; przy 0–9 akcja „Podlicz” jest niedostępna. To odrębna bramka
 od kwalifikacji odpowiedzi potrzebnej do zatwierdzenia wyniku.
 
-1. **Szczegóły zaokrąglenia i wyboru szóstki:** algorytm ma zachować powyższe
-   warunki i jedną wartość punktów/procentu; domknąć przypadki graniczne
-   progu 4% i remis na granicy szóstej odpowiedzi. Nie wracać do wymuszania
-   sumy 100 ani sztucznego różnicowania równych wyników.
-2. **Straty treści:** pełne treści ponad limity czy potwierdzane obcięcie;
-   dokładna obsługa nadmiarowych odpowiedzi i niepoprawnych punktów.
-   Występowanie danych jest do odczytania, nie do zgadywania.
+Zaokrąglenie i granica szóstki są rozstrzygnięte w §3: dodatni udział <1%
+pokazujemy jako 1%, pozostałe ucinamy; równe liczby głosów mają równy wynik.
+Remis głosów przecinający granicę szóstki daje cykliczny przycisk świadomego
+wyboru odpowiedzi z grupy remisowej, bez zmiany ich punktacji.
+
+**Pozostaje polityka strat treści:** pełne treści ponad limity czy
+potwierdzane obcięcie; dokładna obsługa nadmiarowych odpowiedzi i niepoprawnych
+punktów przy transferze. Występowanie danych jest do odczytania, nie do
+zgadywania. To jest odrębne od świadomego wyboru szóstki w podliczaniu.
 
 ### 8.7. Regulamin TVP i dodatkowe ryzyka sprawdzone 2026-10-20
 
