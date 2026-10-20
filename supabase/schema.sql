@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fLG80V1L7BhGDd75ntthk12Mwj33S2AcTcuK7WWUu0UcRKghWdh0GMdsqVVIAcN
+\restrict QwwKlJi1goKp5wmCw58tLB4m3ZoZFxD21Eu5efuBcNoxEO8k4THkrAybdBVZTsV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -16875,7 +16875,14 @@ begin
   PERFORM public._subscriber_pair_lock(v_uid,v_sub.subscriber_email);
   SELECT * INTO v_sub FROM public.poll_subscriptions WHERE id=p_id AND owner_id=v_uid FOR UPDATE;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not found'); END IF;
-  -- ✅ zamiast DELETE: oznacz jako cancelled i ustaw timestamp
+
+  -- 424: oczekująca propozycja znajomości z tej subskrypcji zostaje
+  update public.friendships
+  set source_subscription_id = null
+  where source_subscription_id = v_sub.id
+    and status = 'pending'
+    and cancelled_at is null;
+
   update public.poll_subscriptions
   set status = 'cancelled',
       cancelled_at = now()
@@ -25989,5 +25996,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fLG80V1L7BhGDd75ntthk12Mwj33S2AcTcuK7WWUu0UcRKghWdh0GMdsqVVIAcN
+\unrestrict QwwKlJi1goKp5wmCw58tLB4m3ZoZFxD21Eu5efuBcNoxEO8k4THkrAybdBVZTsV
 
