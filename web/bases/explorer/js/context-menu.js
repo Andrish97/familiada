@@ -191,7 +191,28 @@ function menuItems(ctx) {
   return items;
 }
 
-export async function showContextMenu({ state, x, y, target }) {
+// Klawiatura w otwartym menu: strzałki / Home / End po dostępnych
+// pozycjach, Enter i spacja wykonują (przycisk), Tab zamyka.
+function onMenuKeydown(e) {
+  const cm = e.currentTarget;
+  const items = [...cm.querySelectorAll(".cm-item:not(.disabled)")];
+  if (!items.length) return;
+  const i = items.indexOf(document.activeElement);
+  let next = null;
+  if (e.key === "ArrowDown") next = items[(i + 1) % items.length];
+  else if (e.key === "ArrowUp") next = items[(i - 1 + items.length) % items.length];
+  else if (e.key === "Home") next = items[0];
+  else if (e.key === "End") next = items[items.length - 1];
+  else if (e.key === "Tab") { e.preventDefault(); hideContextMenu(); return; }
+  if (!next) return;
+  e.preventDefault();
+  e.stopPropagation();
+  next.focus({ preventScroll: false });
+}
+
+// fromKeyboard: otwarte klawiszem (Shift+F10 / klawisz menu) — fokus od
+// razu na pierwszej dostępnej pozycji.
+export async function showContextMenu({ state, x, y, target, fromKeyboard = false }) {
   const cm = document.getElementById("contextMenu");
   if (!cm) return;
   wireClose();
@@ -219,6 +240,7 @@ export async function showContextMenu({ state, x, y, target }) {
   pressedInside = false;
   openedAt = performance.now();
   cm.onpointerdown = () => { pressedInside = true; };
+  cm.onkeydown = onMenuKeydown;
 
   if (isSheet()) {
     cm.classList.add("is-sheet");
@@ -230,4 +252,5 @@ export async function showContextMenu({ state, x, y, target }) {
   } else {
     place(cm, x, y);
   }
+  if (fromKeyboard) cm.querySelector(".cm-item:not(.disabled)")?.focus({ preventScroll: true });
 }

@@ -3388,6 +3388,42 @@ test.describe("base-explorer: cofanie i ponawianie (E22)", () => {
   });
 });
 
+test.describe("base-explorer: cofanie a blokady (E22)", () => {
+  test("cofnięcie na elemencie zajętym w innej karcie: komunikat, krok zostaje w historii; po zwolnieniu działa", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-UNDOLOCK-${Date.now()}`);
+
+    try {
+      const catId = await createCategory(page, { baseId, name: "Stara", ord: 1 });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+
+      const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
+      await catRow.click();
+      await pressToolbarShortcut(page, "rename", "F2");
+      await page.locator("#renameModalInput").fill("Nowa");
+      await page.locator("#renameModalSave").click();
+      await expect(catRow).toContainText("Nowa", { timeout: 10000 });
+
+      // folder edytowany w innej karcie (inna blokada)
+      const lock = await acquireLockDirect(page, "base_folder", catId);
+      expect(lock.ok).toBe(true);
+      await page.keyboard.press("Control+z");
+      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+      await confirmUniModal(page);
+      await expect(catRow).toContainText("Nowa");
+      await expect(page.locator('#toolbar button[data-act="undo"]')).toBeEnabled();
+
+      await releaseLockDirect(page, "base_folder", catId, lock.tabId);
+      await page.keyboard.press("Control+z");
+      await expect(catRow).toContainText("Stara", { timeout: 10000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
 test.describe("base-explorer: menu kontekstowe na telefonie (okno od dołu)", () => {
   test("menu otwiera się od dołu jak inne okna; pasek i tło je zamykają", async ({ page, context }) => {
     test.setTimeout(60_000);
@@ -3419,6 +3455,45 @@ test.describe("base-explorer: menu kontekstowe na telefonie (okno od dołu)", ()
       await expect(menu).toBeVisible();
       await page.mouse.click(195, 100); // tło nad oknem
       await expect(menu).toBeHidden({ timeout: 2000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+test.describe("base-explorer: menu kontekstowe z klawiatury (E22)", () => {
+  test("Shift+F10 otwiera menu zaznaczenia z fokusem; strzałki, End i Enter działają, skróty strony nie przechwytują klawiszy", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-KBMENU-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Klawiatura", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await row.click();
+
+      await page.keyboard.press("Shift+F10");
+      const menu = page.locator("#contextMenu");
+      await expect(menu).toBeVisible();
+      const focused = () => page.evaluate(() => document.activeElement?.textContent?.trim() || "");
+      await expect.poll(focused).toContain("Kopiuj"); // pierwsza pozycja
+      await page.keyboard.press("ArrowDown");
+      await expect.poll(focused).toContain("Wytnij");
+      await page.keyboard.press("ArrowUp");
+      await page.keyboard.press("ArrowUp"); // z pierwszej na ostatnią
+      await expect.poll(focused).toContain("Usuń");
+      await page.keyboard.press("Home");
+      await expect.poll(focused).toContain("Kopiuj");
+      await page.keyboard.press("End");
+      await page.keyboard.press("Enter");
+      await expect(menu).toBeHidden();
+      // Enter wykonał „Usuń” (potwierdzenie), a nie skrót strony „Otwórz”
+      await expect(page.locator(".uni-modal .mSub")).toContainText("kosza", { timeout: 5000 });
+      await page.keyboard.press("Escape");
+      await expect(page.locator(".uni-modal")).toHaveCount(0, { timeout: 5000 });
+      await expect(row).toBeVisible();
     } finally {
       await deleteBase(page, baseId);
     }

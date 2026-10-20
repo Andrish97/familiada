@@ -62,6 +62,12 @@ export function createHistory({ limit = 50, onChange = null } = {}) {
       to().push(cmd);
       return cmd;
     } catch (e) {
+      // element chwilowo zajęty (blokada): krok wraca na swoje miejsce,
+      // historia zostaje — można spróbować później
+      if (e?.keepHistory) {
+        from().push(cmd);
+        throw e;
+      }
       // ten krok się nie udał — reszta historii mogłaby dotyczyć innego stanu
       running = false;
       dropAll(redoStack, "redo");

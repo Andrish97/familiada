@@ -242,6 +242,19 @@ function buildDb(lang, extras = {}) {
       [c.bases.folders[5], "folder", 2, 4, 1], [p.gameQuestions[0][0], "question", 12, 1, 0], [c.bases.folders[6], "folder", 27, 7, 2],
     ].map(([label, kind, age, nq, nf], i) => ({ id: id("8800", i + 1), kind, label, item_id: id("8801", i + 1), origin_id: null, n_questions: nq, n_folders: nf, age })))}
       .map(({ age, ...it }) => ({ ...it, deleted_at: new Date(Date.now() - age * 864e5 - 36e5).toISOString(), expires_at: new Date(Date.now() + (30 - age) * 864e5 - 36e5).toISOString() }))`,
+    // E22 (430): cała zawartość bazy menedżera jednym zapytaniem
+    qb_base_content: `fn:(args, db) => {
+      const id = args.p_base_id;
+      const byOrd = (a, b) => (a.ord || 0) - (b.ord || 0) || String(a.id).localeCompare(String(b.id));
+      const questions = db.tables.qb_questions.filter((q) => q.base_id === id).sort(byOrd);
+      const qids = new Set(questions.map((q) => q.id));
+      return {
+        categories: db.tables.qb_categories.filter((c) => c.base_id === id).sort(byOrd),
+        tags: db.tables.qb_tags.filter((t) => t.base_id === id).sort(byOrd),
+        questions,
+        questionTags: db.tables.qb_question_tags.filter((l) => qids.has(l.question_id)).map(({ question_id, tag_id }) => ({ question_id, tag_id })),
+      };
+    }`,
     reserved_username_prefixes_list: [], site_activity_ping: null,
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
     list_shared_bases_ext: [], base_declines_list_mine: [], bases_count_incoming_share_invites: 0,

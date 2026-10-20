@@ -4,7 +4,7 @@ Plan (źródło prawdy): [`docs/menedzer-bazy/README.md`](docs/menedzer-bazy/REA
 „Kolejność prac” + decyzje w [`docs/menedzer-bazy-plan.md`](docs/menedzer-bazy-plan.md).
 Branch: `ccr-ac709a92-0mcpyq`. Dziennik szczegółowy: `docs/wdrozenia.md`.
 
-**Status: W TOKU** — plan 1–7 gotowy lokalnie (nie na produkcji); trwa etap 8 (dopracowanie, lokalnie). Wdrożenie (7d) czeka na decyzję użytkownika.
+**Status: W TOKU** — plan 1–7 gotowy lokalnie (nie na produkcji); trwa etap 8 (dopracowanie, lokalnie). Wdrożenie (7d, teraz z migracjami 427–430) czeka na decyzję użytkownika.
 
 Zasada nadrzędna użytkownika (2026-10-20): wszystko tylko na lokalnej,
 symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
@@ -29,7 +29,7 @@ symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
 - [x] 7a. Scalono `origin/main` (na main w plikach menedżera tylko hashe wersji; `actions.js` zostaje usunięty; konflikt w Dzienniku połączony). Unit 690/690.
 - [x] 7b. Kosz na telefonie: bez kolumny Typ, kolumna „Zniknie” (za N dni) zaraz za nazwą — widoczna bez przewijania (`render.js` `columnsFor`). Zrzut `docs/menedzer-bazy/img/kosz-telefon.png`.
 - [x] 7c. Lokalny e2e `base-explorer` po scaleniu: 77/77; po poprawce kosza ponownie kosz + cofanie 6/6; unit 690/690.
-- [ ] 7d. Wdrożenie (migracje 427–429 → e2e brancha na produkcji → Pages → testy kontrolne) — **poza zakresem agenta do czasu decyzji użytkownika** (zasada „nic na produkcję”). Przygotowanie gotowe: branch scalony z `main`, migracje tylko dodające.
+- [ ] 7d. Wdrożenie (migracje 427–430 → e2e brancha na produkcji → Pages → testy kontrolne) — **poza zakresem agenta do czasu decyzji użytkownika** (zasada „nic na produkcję”). Przygotowanie gotowe: branch scalony z `main`, migracje tylko dodające.
 
 ## Co dalej
 
@@ -37,9 +37,9 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 ## Etap 8 — dopracowanie (lokalnie, polecenie użytkownika 2026-10-20: „kontynuujesz pracę nad edytorem baz”)
 
-- [ ] 8a. Duża baza: lokalnie kilka tysięcy pytań i folderów — czas wczytania, rysowania, filtra; poprawić, jeśli wolno.
-- [ ] 8b. Menu kontekstowe z klawiatury: strzałki, Home/End, Enter, Escape; fokus na pierwszej pozycji przy otwarciu z klawiatury (Shift+F10 / klawisz menu).
-- [ ] 8c. Cofanie/ponawianie z blokadami (te same co przy zwykłej akcji), komunikat zamiast czyszczenia historii, gdy element jest zajęty.
+- [x] 8a. Duża baza (`tests/e2e/base-explorer-perf.spec.js`, `LOCAL_PERF=1`): przy 20 000 pytań wczytanie 24,5 s → 2,9 s dzięki **migracji 430 `qb_base_content`** (cała baza jednym zapytaniem, RLS; test `tests/sql/qb-base-content-430.sql`). Wyszukiwanie: tekst znormalizowany raz na wersję danych (`computeListing` 8–28 ms przy 20 000). Naprawiony wyścig: klik w lewym panelu zatwierdza oczekujący tekst (wcześniej wyczyszczenie pola + szybki klik w tag dawało 0 wyników).
+- [x] 8b. Menu z klawiatury: Shift+F10 / klawisz menu otwiera menu zaznaczenia z fokusem; strzałki (w kółko), Home/End, Enter, Tab zamyka; skróty strony nie przechwytują klawiszy w menu. Test e2e.
+- [x] 8c. Cofanie/ponawianie z blokadami jak przy zwykłej akcji (tylko elementy istniejące); zajęty element → komunikat, krok zostaje w historii (`keepHistory`). Test jednostkowy + e2e.
 - [ ] 8d. Okna tagów / eksportu / pytania: przegląd i uporządkowanie (stary kod), spójność z rejestrem akcji.
 - [ ] 8e. Przegląd pozostałych niespójności z raportów (`docs/menedzer-bazy/1-4*.md`) wobec nowego kodu.
 - [ ] 8f. Pełny lokalny e2e + zrzuty + zestawienie.
@@ -48,7 +48,7 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - Gesty i arkusz menu sprawdzone tylko w emulacji, nie na prawdziwym telefonie.
 - Historia cofania znika po odświeżeniu strony (w pamięci karty — świadomie).
-- Strona ładuje całą bazę naraz — wydajność na dużych bazach do sprawdzenia (8a).
+- Strona ładuje całą bazę naraz (jedno zapytanie 430); przy 20 000 pytań ~3 s lokalnie.
 - Wzorzec „okno od dołu” nie jest jeszcze na `main` (branch `claude/new-session-ay1h9t`);
   menu ma te same wartości w `base-explorer.css` — po scaleniu można przenieść do wspólnego CSS.
 

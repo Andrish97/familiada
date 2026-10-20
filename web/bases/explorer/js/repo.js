@@ -253,42 +253,19 @@ export async function getQuestion(id) {
   return data;
 }
 
-// PostgREST oddaje najwyżej 1000 wierszy na zapytanie: pobieranie stronami.
-const PAGE = 1000;
-async function fetchAllPages(makeQuery) {
-  const out = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await makeQuery().range(from, from + PAGE - 1);
-    if (error) throw error;
-    out.push(...(data || []));
-    if (!data || data.length < PAGE) return out;
-  }
-}
-
 /**
  * Cała baza do magazynu menedżera (data/store.js): foldery, tagi, pytania
- * z treścią i przypisania tagów — każda tabela jednym (stronicowanym)
- * zapytaniem, bez list id w adresie.
+ * z treścią i przypisania tagów — jedną funkcją SQL (migracja 430), jedno
+ * zapytanie zamiast stron po 1000 wierszy (duża baza wczytywała się
+ * kilkanaście sekund). RLS jak przy zwykłych odczytach.
  */
 export async function loadBaseContent(baseId) {
-  const [categories, tags, questions, questionTags] = await Promise.all([
-    fetchAllPages(() => sb().from("qb_categories")
-      .select("id,base_id,parent_id,name,ord,created_at,updated_at")
-      .eq("base_id", baseId).order("ord", { ascending: true }).order("id")),
-    fetchAllPages(() => sb().from("qb_tags")
-      .select("id,base_id,name,color,ord")
-      .eq("base_id", baseId).order("ord", { ascending: true }).order("id")),
-    fetchAllPages(() => sb().from("qb_questions")
-      .select("id,base_id,category_id,ord,payload,created_at,updated_at")
-      .eq("base_id", baseId).order("ord", { ascending: true }).order("id")),
-    fetchAllPages(() => sb().from("qb_question_tags")
-      .select("question_id,tag_id,qb_questions!inner(base_id)")
-      .eq("qb_questions.base_id", baseId).order("question_id").order("tag_id")),
-  ]);
+  const { data, error } = await sb().rpc("qb_base_content", { p_base_id: baseId });
+  if (error) throw error;
   return {
-    categories,
-    tags,
-    questions,
-    questionTags: questionTags.map(({ question_id, tag_id }) => ({ question_id, tag_id })),
+    categories: data?.categories || [],
+    tags: data?.tags || [],
+    questions: data?.questions || [],
+    questionTags: data?.questionTags || [],
   };
 }

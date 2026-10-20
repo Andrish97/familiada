@@ -102,15 +102,46 @@ export function selectionQuestionIds(state) {
 // (ops.js), odświeżenie robi undo()/redo() niżej. Utworzenie i kopia cofają
 // się przez kosz (ponowienie = przywrócenie z kosza), więc id elementów się
 // nie zmieniają i dalsze kroki historii nadal wskazują właściwe elementy.
-function remember(state, labelKey, entry) {
-  state.history?.push({ labelKey, ...entry });
+// locks: () => zasoby do zablokowania na czas kroku (jak przy zwykłej
+// akcji). Blokuje się tylko to, co jest w bazie — wpisów kosza nikt nie
+// edytuje, a blokada nieistniejącego elementu kończy się „gone”.
+function remember(state, labelKey, { locks = null, undo, redo, drop }) {
+  const guarded = (fn) => async () => {
+    const resources = (locks ? locks() : []).filter((r) => resourceExists(state, r));
+    const lease = resources.length ? await acquireResourceLocks(resources, { context: "base-explorer:history" }) : null;
+    if (lease && !lease.ok) {
+      const e = new Error(lease.error || "locked");
+      if (lease.error !== "gone") {
+        e.keepHistory = true;
+        e.userMessage = t("resourceLock.baseItemMessage");
+      }
+      throw e;
+    }
+    try {
+      await fn();
+    } finally {
+      lease?.release();
+    }
+  };
+  state.history?.push({ labelKey, undo: guarded(undo), redo: guarded(redo), drop });
 }
+
+function resourceExists(state, { resourceType, resourceId }) {
+  if (resourceType === "base_question") return state.d.questionById.has(resourceId);
+  if (resourceType === "base_folder") return state.d.folderById.has(resourceId);
+  if (resourceType === "base_tag") return (state.store?.tags || []).some((tg) => tg.id === resourceId);
+  return true;
+}
+
+const tagLocks = (ids) => ids.map((resourceId) => ({ resourceType: "base_tag", resourceId }));
+const questionLocks = (ids) => ids.map((resourceId) => ({ resourceType: "base_question", resourceId }));
 
 // Cofnięte utworzenie / kopia: wpis w koszu, z którego ponowienie przywraca.
 // Gdy ponowienie przepada (nowa akcja po cofnięciu), wpis znika z kosza.
 function rememberCreated(state, labelKey, items) {
   let trashIds = [];
   remember(state, labelKey, {
+    locks: () => locksFor(state, items),
     undo: async () => { trashIds = (await ops.deleteItems(state.baseId, items))?.trash || []; },
     redo: async () => { await ops.trashRestore(state.baseId, trashIds); trashIds = []; },
     drop: (where) => {
@@ -132,9 +163,9 @@ async function historyStep(state, dir) {
     await state.history[dir]();
   } catch (e) {
     console.error(e);
-    // historia jest już wyczyszczona (history.js) — dalsze kroki dotyczyłyby
-    // innego stanu niż ten, który widać
-    void alertModal({ text: t("baseExplorer.errors.historyFailed") });
+    // zajęte: krok został w historii; inaczej historia jest już wyczyszczona
+    // (history.js) — dalsze kroki dotyczyłyby innego stanu niż ten, który widać
+    void alertModal({ text: e?.keepHistory ? e.userMessage : t("baseExplorer.errors.historyFailed") });
   }
   selectionClear(state);
   await refresh(state);
@@ -227,6 +258,7 @@ export async function renameSelected(state) {
       const set = isFolder ? ops.renameFolder : ops.setQuestionText;
       const old = await set(state.baseId, id, value);
       remember(state, "baseExplorer.toolbar.rename", {
+        locks: () => [{ resourceType: isFolder ? "base_folder" : "base_question", resourceId: id }],
         undo: () => set(state.baseId, id, old),
         redo: () => set(state.baseId, id, value),
       });
@@ -259,6 +291,7 @@ export async function deleteSelected(state) {
   if (done === false) return false;
   let trashIds = done?.trash || [];
   remember(state, "baseExplorer.toolbar.delete", {
+    locks: () => locksFor(state, items),
     undo: async () => { await ops.trashRestore(state.baseId, trashIds); },
     redo: async () => { trashIds = (await ops.deleteItems(state.baseId, items))?.trash || []; },
   });
@@ -275,6 +308,7 @@ export async function restoreFromTrash(state) {
     const items = { questionIds: restored?.questions || [], folderIds: restored?.folders || [] };
     let trashIds = [];
     remember(state, "baseExplorer.trash.restore", {
+      locks: () => locksFor(state, items),
       undo: async () => { trashIds = (await ops.deleteItems(state.baseId, items))?.trash || []; },
       redo: async () => { await ops.trashRestore(state.baseId, trashIds); },
     });
@@ -343,6 +377,7 @@ export async function moveItems(state, keys, targetFolderId) {
     () => ops.moveItems(state.baseId, items, targetFolderId));
   if (done === false) return false;
   remember(state, "baseExplorer.history.move", {
+    locks: () => locksFor(state, items, target),
     undo: () => ops.restorePositions(state.baseId, done),
     redo: () => ops.moveItems(state.baseId, items, targetFolderId),
   });
@@ -390,6 +425,7 @@ export async function reorderFolders(state, movedIds, targetId, mode) {
     () => ops.reorderFolders(state.baseId, parentId, ordered));
   if (done === false) return false;
   remember(state, "baseExplorer.history.move", {
+    locks: () => locksFor(state, { folderIds: movedIds }, parentLock),
     undo: () => ops.restorePositions(state.baseId, done),
     redo: () => ops.reorderFolders(state.baseId, parentId, ordered),
   });
@@ -402,7 +438,12 @@ export async function reorderFolders(state, movedIds, targetId, mode) {
 // Nadane / zdjęte przypisania pytań → wpis historii.
 export function rememberTagLinks(state, labelKey, { added = [], removed = [] }) {
   if (!added.length && !removed.length) return;
+  const links = [...added, ...removed];
   remember(state, labelKey, {
+    locks: () => [
+      ...questionLocks([...new Set(links.map((l) => l.question_id))]),
+      ...tagLocks([...new Set(links.map((l) => l.tag_id))]),
+    ],
     undo: () => ops.restoreTagLinks(state.baseId, { add: removed, remove: added }),
     redo: () => ops.restoreTagLinks(state.baseId, { add: added, remove: removed }),
   });
@@ -415,12 +456,14 @@ export function rememberTagSave(state, { id, before }, { name, color }) {
   if (!before) {
     let snapshot = null;
     remember(state, "baseExplorer.tags.addTag", {
+      locks: () => tagLocks([id]),
       undo: async () => { snapshot = await ops.deleteTags(state.baseId, [id]); },
       redo: () => ops.restoreTags(state.baseId, snapshot),
     });
     return;
   }
   remember(state, "baseExplorer.menu.editTag", {
+    locks: () => tagLocks([id]),
     undo: () => ops.saveTag(state.baseId, id, before.name, before.color),
     redo: () => ops.saveTag(state.baseId, id, name, color),
   });
@@ -468,6 +511,7 @@ export async function deleteTags(state, tagIds) {
     "base-explorer:delete-tags", () => ops.deleteTags(state.baseId, ids));
   if (done === false) return false;
   remember(state, "baseExplorer.menu.deleteTag", {
+    locks: () => tagLocks(ids),
     undo: () => ops.restoreTags(state.baseId, done),
     redo: () => ops.deleteTags(state.baseId, ids),
   });
@@ -517,6 +561,7 @@ export async function editQuestion(state, qid) {
       }
       const old = await ops.saveQuestion(state.baseId, qid, payload);
       remember(state, "baseExplorer.menu.editQuestion", {
+        locks: () => questionLocks([qid]),
         undo: () => ops.saveQuestion(state.baseId, qid, old),
         redo: () => ops.saveQuestion(state.baseId, qid, payload),
       });

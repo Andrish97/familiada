@@ -44,10 +44,10 @@ function words(text) {
   return normalizeText(text).split(/\s+/).filter(Boolean);
 }
 
+// hay: tekst już znormalizowany (derived.js: questionSearchText / folderSearchText)
 function hasAllWords(hay, ws) {
   if (!ws.length) return true;
-  const h = normalizeText(hay);
-  return ws.every((w) => h.includes(w));
+  return ws.every((w) => hay.includes(w));
 }
 
 /**
@@ -71,7 +71,7 @@ export function computeListing(store, d, { location, query }) {
   const tagIds = query.tagIds || [];
   const types = query.types || [];
 
-  const questionMatches = (q) => hasAllWords(q?.payload?.text, ws)
+  const questionMatches = (q) => hasAllWords(d.questionSearchText(q.id), ws)
     && tagIds.every((t) => d.tagsOfQuestion(q.id).has(t))
     && (!types.length || types.includes(d.typeOfQuestion(q.id)));
 
@@ -87,7 +87,7 @@ export function computeListing(store, d, { location, query }) {
     matchCount.set(fid, n);
     const full = ids.length > 0 && n === ids.length;
     const folderFitsFilters = (!tagIds.length && !types.length) || full;
-    const byName = ws.length > 0 && hasAllWords(d.folderById.get(fid)?.name, ws) && folderFitsFilters;
+    const byName = ws.length > 0 && hasAllWords(d.folderSearchText(fid), ws) && folderFitsFilters;
     if (full || byName) shown.add(fid);
   }
 

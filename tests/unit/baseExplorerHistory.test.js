@@ -64,3 +64,16 @@ test("onChange po każdej zmianie", async () => {
   await h.undo();
   assert.ok(n >= 3); // push + start kroku + koniec kroku
 });
+
+test("element zajęty (keepHistory): krok wraca na miejsce, historia zostaje", async () => {
+  const h = createHistory();
+  let busy = true;
+  const log = [];
+  h.push({ labelKey: "a", undo: async () => { if (busy) { const e = new Error("locked"); e.keepHistory = true; throw e; } log.push("undo"); }, redo: async () => {} });
+  await assert.rejects(() => h.undo());
+  assert.equal(h.info().canUndo, true);
+  busy = false;
+  await h.undo();
+  assert.deepEqual(log, ["undo"]);
+  assert.equal(h.info().canRedo, true);
+});

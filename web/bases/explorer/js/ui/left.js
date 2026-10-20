@@ -12,6 +12,7 @@ import { showContextMenu } from "../context-menu.js?v=v2026-10-20T23220";
 import { attachMarquee } from "./marquee.js?v=v2026-10-20T23220";
 import { addLongPress, isTouchContextMenuWindow } from "../mobile.js?v=v2026-10-20T23220";
 import { isModKey } from "../platform.js?v=v2026-10-20T23220";
+import { commitPendingSearch } from "./search.js?v=v2026-10-20T23220";
 
 const ROW = '.row[data-kind="tag"], .row[data-kind="meta"]';
 const field = (kind) => (kind === "meta" ? "types" : "tagIds");
@@ -52,6 +53,7 @@ export function wireLeft(state) {
   });
   panel.addEventListener("click", async (e) => {
     if (marquee.consumeClick()) return;
+    commitPendingSearch();
 
     if (e.target.closest("#btnAddTag")) {
       await openTagsWindow(state, { mode: "create" });

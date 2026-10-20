@@ -10,7 +10,7 @@ import { matchShortcut } from "../platform.js?v=v2026-10-20T23220";
 import { selectionClear } from "../state.js?v=v2026-10-20T23220";
 import { renderSelection } from "../render.js?v=v2026-10-20T23220";
 import { goUp } from "../commands.js?v=v2026-10-20T23220";
-import { hideContextMenu } from "../context-menu.js?v=v2026-10-20T23220";
+import { hideContextMenu, showContextMenu } from "../context-menu.js?v=v2026-10-20T23220";
 
 const MODAL_IDS = ["questionOverlay", "tagsOverlay", "exportOverlay", "renameModal"];
 
@@ -18,11 +18,29 @@ function shortcutsBlocked() {
   const el = document.activeElement;
   const tag = String(el?.tagName || "").toLowerCase();
   if (tag === "input" || tag === "textarea" || tag === "select" || el?.isContentEditable) return true;
+  if (el?.closest?.("#contextMenu")) return true; // klawisze należą do menu
   if (document.querySelector(".uni-modal")) return true;
   return MODAL_IDS.some((id) => {
     const m = document.getElementById(id);
     return !!m && !m.hidden && m.style.display !== "none";
   });
+}
+
+// Menu z klawiatury: przy pierwszym zaznaczonym wierszu jego panelu.
+function openMenuFromKeyboard(state) {
+  const pane = state.selection.pane === "tree" ? "tree" : "list";
+  const root = document.getElementById(pane);
+  const row = [...(root?.querySelectorAll(".row.is-selected[data-key]") || [])][0];
+  const box = (row || document.getElementById("list"))?.getBoundingClientRect();
+  if (!box) return;
+  let target = { kind: "root", id: null, pane: "list" };
+  if (row) {
+    const { kind, id } = row.dataset;
+    if (kind === "trash" && pane === "tree") target = { kind: "trash-folder", id: "trash", pane };
+    else if (kind === "root" && pane === "tree") target = { kind: "root", id: "root", pane };
+    else target = { kind, id, pane };
+  }
+  void showContextMenu({ state, x: box.left + 24, y: row ? box.bottom : box.top + 24, target, fromKeyboard: true });
 }
 
 export function wireKeyboard(state) {
@@ -37,6 +55,13 @@ export function wireKeyboard(state) {
       return;
     }
     if (shortcutsBlocked()) return;
+
+    // Shift+F10 / klawisz menu: menu kontekstowe zaznaczenia (albo tła listy)
+    if (e.key === "ContextMenu" || (e.key === "F10" && e.shiftKey)) {
+      e.preventDefault();
+      openMenuFromKeyboard(state);
+      return;
+    }
 
     const action = withShortcut.find((a) => (a.shortcut && matchShortcut(e, a.shortcut))
       || (a.altShortcut && matchShortcut(e, a.altShortcut)));

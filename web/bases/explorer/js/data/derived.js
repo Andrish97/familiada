@@ -3,6 +3,7 @@
 // folderów, pytania w poddrzewach, tagi pytań, proponowana kategoria pytania
 // i folderu, liczniki. Czyste funkcje — bez DOM i bez bazy.
 
+import { normalizeText } from "./listing.js?v=v2026-10-20T23220";
 import { evaluateReadiness, TYPES } from "../../../../shared/js/core/game-rules.js?v=v2026-10-20T23220";
 
 // Proponowane kategorie (typy gry) w kolejności panelu.
@@ -110,6 +111,15 @@ export function deriveStore(store) {
     folderType.set(f.id, types.size === 1 ? [...types][0] : null);
   }
 
+  // Tekst do wyszukiwania (małe litery, bez polskich znaków) — liczony raz
+  // na wersję danych, nie przy każdym wpisanym znaku.
+  const searchText = new Map();
+  const textOf = (map, id, raw) => {
+    if (!map.has(id)) map.set(id, normalizeText(raw));
+    return map.get(id);
+  };
+  const folderSearchText = new Map();
+
   // Bezpośrednia zawartość folderu (kolumna Info).
   const childCount = (folderId) => (childFolders.get(folderId)?.length || 0) + (folderQuestions.get(folderId)?.length || 0);
 
@@ -126,5 +136,7 @@ export function deriveStore(store) {
     descendantFolderIds,
     ancestorIds,
     childCount,
+    questionSearchText: (id) => textOf(searchText, id, questionById.get(id)?.payload?.text),
+    folderSearchText: (id) => textOf(folderSearchText, id, folderById.get(id)?.name),
   };
 }

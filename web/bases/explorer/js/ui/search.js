@@ -13,6 +13,14 @@ import { normalizeText, hashTokenBeforeCaret, textWithoutHashTokens } from "../d
 const TEXT_DELAY_MS = 200;
 const MAX_SUGGESTIONS = 8;
 
+// Wpisany tekst czeka 200 ms; zmiana filtra z innego miejsca (lewy panel)
+// najpierw go zatwierdza — inaczej klik w tag tuż po wyczyszczeniu pola
+// łączyłby się jeszcze ze starym tekstem.
+let commitPending = () => {};
+export function commitPendingSearch() {
+  commitPending();
+}
+
 export function wireSearch(state) {
   const toolbarEl = document.getElementById("toolbar");
   const inp = () => document.getElementById("searchText");
@@ -25,14 +33,23 @@ export function wireSearch(state) {
 
   const tags = () => state.store?.tags || [];
 
+  function commitText(value) {
+    clearTimeout(textTimer);
+    textTimer = null;
+    const text = textWithoutHashTokens(value);
+    if (text === state.query.text) return;
+    setQuery(state, { text });
+    renderAll(state);
+  }
+
+  commitPending = () => {
+    const el = inp();
+    if (textTimer && el) commitText(el.value);
+  };
+
   function applyText(value) {
     clearTimeout(textTimer);
-    textTimer = setTimeout(() => {
-      const text = textWithoutHashTokens(value);
-      if (text === state.query.text) return;
-      setQuery(state, { text });
-      renderAll(state);
-    }, TEXT_DELAY_MS);
+    textTimer = setTimeout(() => commitText(value), TEXT_DELAY_MS);
   }
 
   function addTag(tagId, el, tok) {
