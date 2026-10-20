@@ -1634,13 +1634,15 @@ export function createUI({ root, emit }) {
       // The queued write can trigger a render that normally restores focus
       // to an edited mapping field. Enter is an explicit commit-and-exit,
       // so suppress that restoration until the write has settled.
-      mappingInputsPendingBlur.add(inp);
+      // Po uzgodnieniu DOM `inp` jest odłączoną kopią; render sprawdza żywe pole.
+      const liveInput = e.currentTarget;
+      mappingInputsPendingBlur.add(liveInput);
       try {
         await emit("ui.flushTyping");
       } finally {
-        const currentInput = inp.isConnected ? inp : root.querySelector(`.c2-mapinput[data-i="${idx}"] input`);
+        const currentInput = liveInput.isConnected ? liveInput : root.querySelector(`.c2-mapinput[data-i="${idx}"] input`);
         currentInput?.blur();
-        mappingInputsPendingBlur.delete(inp);
+        mappingInputsPendingBlur.delete(liveInput);
       }
     });
     bindShortcut(inp, "i", () => inp.focus());
@@ -1896,7 +1898,10 @@ export function createUI({ root, emit }) {
     // przekazywane osobno do każdego renderXxx() — te dwie funkcje je już i
     // tak czytają z domknięcia.
     if (root.dataset.step !== state.step) keyboardTarget = null;
-    const existingScreen = root.dataset.step === state.step ? root.firstElementChild : null;
+    // Podsumowanie ma własny odcisk palca: przebudowuje żywy DOM (i podglądy
+    // w iframe) tylko przy realnej zmianie. Uzgadnianie budowałoby je w
+    // odłączonym drzewie, więc podgląd nie dostawałby nowego stanu.
+    const existingScreen = root.dataset.step === state.step && state.step !== "setup_finish" ? root.firstElementChild : null;
     currentState = state;
     keyboardActions.clear();
     busy = !!ctx.busy;
