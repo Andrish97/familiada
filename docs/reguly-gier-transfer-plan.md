@@ -179,6 +179,12 @@ powtórzeń warunku.
   Marketplace jest osobnym przepływem opisanym niżej: dopuszcza również
   zamknięte ankiety i tworzy snapshot preparowany. Zamknięte ankiety nie są
   wysyłane jako kopie do znajomych.
+- Powielenie do własnej biblioteki korzysta z tego samego formatu i normalizacji
+  transferu. Może przyjąć jako źródło także ankietę otwartą lub zatrzymaną;
+  kopia ma wtedy ten sam typ ankiety w stanie szkicu, bez bieżących głosów.
+  Zamknięte ankiety odpowiadają wariantom „zamknięta ankieta” z transferu,
+  a `prepared` pozostaje szkicem, którego gotowość wynika z reguł. Warunki
+  dopuszczenia źródła do „Wyślij znajomemu” pozostają osobną regułą akcji.
 
 ### Marketplace — obecna bramka wysyłania
 
@@ -211,9 +217,23 @@ powtórzeń warunku.
 ### Zmiana typu gry
 
 Obok akcji powielania należy dodać akcję „Zmień typ”. Otwiera ona modal wyboru
-jednego z trzech typów kanonicznych. Zatwierdzenie tworzy/zmienia grę jako szkic
-wybranego typu; nie wymaga gotowości do gry i nie kopiuje wyników ani bieżących
-głosów. Modal pokazuje podsumowanie konwersji przed zatwierdzeniem.
+jednego z trzech typów źródłowych. To jest edycja istniejącej gry, a nie
+powielenie ani utworzenie nowej gry: konwersja aktualizuje ten sam rekord.
+
+- Używa dokładnie tej samej reguły `edit`, co przycisk „Edytuj”, zarówno w UI,
+  jak i w bazie. Nie tworzy własnej, luźniejszej bramki.
+- Ankieta `poll_open` jest zablokowana dla zmiany typu tak samo jak dla edycji.
+  `poll_stopped` również pozostaje zablokowana, jeśli wspólna reguła edycji ją
+  blokuje. Typ `market` nie podlega edycji.
+- Dla zamkniętej ankiety (`ready`) modal korzysta z tego samego
+  `needs_reset`/potwierdzenia co edytor. Bez potwierdzenia nic się nie zmienia;
+  po potwierdzeniu resetuje wyniki i przypisaną punktację tak jak zwykła edycja,
+  a następnie zmienia typ i ustawia grę jako szkic docelowego typu.
+- Dla szkicu zmiana typu może przejść bez resetu wyników ankiety, bo ich nie ma;
+  nadal wykonuje konwersję danych z tabeli poniżej.
+- Modal pokazuje podsumowanie konwersji i utraconych danych przed
+  zatwierdzeniem. Reguły gotowości nie blokują zapisu konwersji; wynikowy szkic
+  może wymagać dalszego uzupełnienia.
 
 | Zmiana | Konwersja szkicu |
 |---|---|
@@ -223,9 +243,9 @@ głosów. Modal pokazuje podsumowanie konwersji przed zatwierdzeniem.
 | Tekstowa/punktowa → preparowana | Zachować pytania i istniejące odpowiedzi, jeśli są częścią źródła; brakujące punkty oznaczyć jako braki, bez automatycznego przydziału |
 | Ten sam typ | Bez konwersji treści; wynik to szkic zgodny z wybraną operacją |
 
-Konwersja zamkniętej ankiety także prowadzi do szkicu i musi ostrzec, że
-zamknięte wyniki/głosy zostaną utracone. Nie wolno zmieniać typu ani usuwać
-wyników bez jawnego zatwierdzenia przez użytkownika. Dokładny zakres zachowania
+Konwersja zamkniętej ankiety prowadzi do szkicu dopiero po tej samej jawnej
+akceptacji resetu, której wymaga zwykła edycja. Wyniki i przypisana punktacja
+są wtedy czyszczone zgodnie z kontraktem edytora. Dokładny zakres zachowania
 tekstowych odpowiedzi z zamkniętej ankiety wymaga sprawdzenia implementacji i
 zostaje opisany w podsumowaniu modalа przed wdrożeniem.
 
@@ -237,6 +257,17 @@ zostaje opisany w podsumowaniu modalа przed wdrożeniem.
   zamienia po cichu na `poll_text`. Dla `market` trzeba dodać jawne
   rozstrzygnięcie (np. blokada generycznego eksportu kopii, z osobną akcją
   pobrania źródłowej pozycji Marketplace), nie usuwać `market` z bazy.
+- Wspólny mechanizm powielania (`web/shared/js/core/resource-clone-plan.js`,
+  `supabase/migrations/2026-10-13_365_resource_clone_common.sql`) obecnie
+  odrzuca źródłową grę o statusie innym niż `draft` lub `ready`. Ankiety
+  `poll_open` i `poll_stopped` nie dają się więc teraz powielić, mimo że
+  docelowo mają tworzyć bezpieczny szkic bez bieżących głosów.
+- Obecny odczyt kopii używa pakietu bez statusu, a `_game_import_package`
+  zawsze tworzy `draft`; dodatkowo `gameExportSnapshot()` zamienia zamkniętą
+  ankietę na `prepared`. To nie realizuje ustalonego transferu pięciu
+  wariantów: po centralizacji powielenie ma stosować ten sam jawny mapping
+  stanów co import/eksport (otwarta/zatrzymana → szkic tego samego typu;
+  zamknięta ankieta → zachowany typ i zamknięty wynik; preparowana → szkic).
 - Gotowa ankieta (`status=ready`) jest obecnie eksportowana jako `prepared`, co
   zmienia jej typ. To koliduje z nowym kontraktem pięciu kombinacji i musi
   zostać zastąpione jawną obsługą zamkniętej ankiety tego samego typu.
@@ -306,7 +337,7 @@ zapis, podgląd i późniejszą rozgrywkę.
 | D | Przebudowa modalа Base Explorera według §2; poprawa metadanych bazy do roli sugestii | Dokładne zaznaczenie tworzy szkic; oznaczenia informacyjne; brak bramki 10/kompletności/sumy 100 |
 | E | Integracja gier, edytora, ankiet, Control i kafli z centralnym kontraktem | Każdy przycisk pokazuje wynik centralnej reguły; serwer odrzuca niedozwolone przejście tym samym kodem |
 | F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Próg 4% włącznie i min. 3 odpowiedzi w jednym algorytmie; samo wejście w podliczanie nie jest blokowane |
-| G | Dodanie „Zmień typ” obok powielania; konwersja przez modal do szkicu wybranego typu według tabeli w §4 | Podgląd strat/braków przed zatwierdzeniem; wyniki zamkniętej ankiety nie znikają bez potwierdzenia |
+| G | Dodanie „Zmień typ” obok powielania; ta sama bramka `edit` i ta sama ścieżka resetu co w edytorze; konwersja tego samego rekordu do szkicu wybranego typu | Ankieta otwarta/zatrzymana blokuje akcję; zamknięta wymaga identycznego potwierdzenia resetu; podgląd strat/braków przed zapisem |
 | H | Wdrożenie wersjonowanego transferu; jawna obsługa kopii `market`; usunięcie cichych fallbacków; ten sam kontrakt dla wysyłania kopii i poprawa bramki zgłoszenia Marketplace | Dokładnie pięć wariantów zwykłego transferu; wysyłka znajomym wyłącznie szkiców tego samego typu; Marketplace przyjmuje gotową `prepared` lub zamkniętą ankietę jako snapshot `prepared` |
 | I | Punktowe testy DB/JS/E2E dla reguł, akcji, zmiany typu oraz importu/eksportu/wysyłki | Macierz scenariuszy zielona; brak pełnych przebiegów bez potrzeby; dokumentacja formatu zaktualizowana |
 
@@ -324,6 +355,14 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Każda akcja na każdym typie/statusie: edycja szkicu, edycja gotowej ankiety z
   resetem, blokada edycji aktywnej ankiety, uruchomienie, zatrzymanie/wznowienie,
   podliczanie, zamknięcie i rozgrywka.
+- Zmiana typu na szkicu, otwartej, zatrzymanej i zamkniętej ankiecie: identyczne
+  dozwolenie/blokada jak „Edytuj”; bez resetu nie zmienia stanu ani danych;
+  zaakceptowany reset zamkniętej ankiety czyści te same wyniki i punktację co
+  edytor, po czym konwertuje ten sam rekord do szkicu.
+- Powielenie: szkic pozostaje szkicem, ankieta otwarta/zatrzymana może być
+  powielona jako szkic tego samego typu bez głosów, zamknięta ankieta zachowuje
+  swój wariant zamknięty, a preparowana jest szkicem; żadna kopia nie dziedziczy
+  sesji ani bieżącego stanu głosowania.
 - Podliczanie: dokładnie 3% i 4% po zaokrągleniu, mniej/więcej niż 6 pozycji,
   mniej niż 3 kwalifikujące odpowiedzi, oraz tekstowe scalanie które zmienia
   ranking/procent i pozwala ponownie spełnić próg.
