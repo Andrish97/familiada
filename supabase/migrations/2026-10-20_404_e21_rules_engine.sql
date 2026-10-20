@@ -645,3 +645,21 @@ $$;
 SET LOCAL session_replication_role = replica;
 UPDATE public.games SET rules_state = public.game_rules_compute(id, type::text, status::text);
 SET LOCAL session_replication_role = origin;
+
+-- Raport skutków progu 4 pkt (tylko odczyt, same liczby).
+DO $$
+DECLARE n_games int; n_ready_before int; n_demo int; r record;
+BEGIN
+  SELECT count(*) INTO n_games FROM public.games g
+  WHERE g.type IN ('prepared', 'market') AND g.rules_state->'play'->>'code' = 'answerMinPoints';
+  SELECT count(*) INTO n_ready_before FROM public.games g
+  WHERE g.type IN ('prepared', 'market') AND g.rules_state->'play'->>'code' = 'answerMinPoints' AND g.is_demo;
+  RAISE NOTICE 'E21 próg 4 pkt: gry preparowane/market niegrywalne z powodu answerMinPoints: % (w tym demo: %)', n_games, n_ready_before;
+  FOR r IN SELECT lang, slot,
+      (SELECT count(*) FROM jsonb_array_elements(CASE WHEN jsonb_typeof(payload->'questions') = 'array' THEN payload->'questions' ELSE '[]' END) q,
+         jsonb_array_elements(CASE WHEN jsonb_typeof(q.value->'answers') = 'array' THEN q.value->'answers' ELSE '[]' END) a
+       WHERE coalesce((a.value->>'fixed_points')::numeric, 0) < 4) AS low
+    FROM public.demo_template_data WHERE slot = 'prepared' LOOP
+    RAISE NOTICE 'E21 szablon demo %/%: odpowiedzi <4 pkt: %', r.slot, r.lang, r.low;
+  END LOOP;
+END $$;
