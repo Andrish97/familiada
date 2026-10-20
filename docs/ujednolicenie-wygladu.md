@@ -56,6 +56,15 @@ podliczania jako stan bieżącej operacji.
   otwierająca okno do wpisania frazy. Tak samo na komputerze i telefonie.
   Listy: Znajomi, Subskrybenci, Zadania, Mails, Connect, odbiorcy ankiety,
   udostępnianie Baz i Control, wysyłka kopii Gier/Logo.
+- **Stopniowe ładowanie stron (uwaga użytkownika 2026-10-20, do zrobienia):**
+  ujednolicić odsłanianie widoku — m.in. Znajomi: wypustki kart pojawiają się
+  przed kartą. Na wszystkich stronach elementy nie mogą wskakiwać ani
+  zmieniać układu po wczytaniu; karta z wypustkami, nagłówek i lista
+  odsłaniają się razem, w jednym spójnym kroku.
+- **Wiersze list w jednej linii (uwaga użytkownika 2026-10-20, do zrobienia):**
+  gdy nazwa, e-mail, znaczniki i przyciski mieszczą się w jednej linii
+  wiersza (Znajomi i pozostałe listy), układać je w jednej linii; łamać pod
+  spód dopiero, gdy brakuje miejsca.
 
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 
