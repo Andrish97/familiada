@@ -81,3 +81,16 @@ test('Host i Buzzer dopuszczają telefon w poziomie, a strona TV rozpoznaje tele
   const tv = load({ screenWidth: 1920, screenHeight: 1080, userAgent: 'Mozilla/5.0 (SMART-TV; Linux; Tizen 6.5)' });
   assert.equal(tv.getDeviceProfile().formFactor, 'tv');
 });
+
+test('tablet w pionie z podzielonym ekranem: obrót tylko gdy po nim kolumna będzie dość szeroka', () => {
+  // iPad Pro 1024×1366, połowa ekranu w pionie (512 px): po obrocie ok. 683 px.
+  const pro = load({ screenWidth: 1024, screenHeight: 1366, width: 512, height: 1366, touch: true });
+  assert.equal(pro.deviceGuardState(640), 'rotate');
+  assert.equal(pro.deviceGuardState(980), 'narrow');
+  // iPad 820×1180, połowa w pionie (410 px): po obrocie ok. 590 px -- za mało na 640.
+  const ipad = load({ screenWidth: 820, screenHeight: 1180, width: 410, height: 1180, touch: true });
+  assert.equal(ipad.deviceGuardState(640), 'narrow');
+  // iPad w poziomie, połowa ekranu (590×820): kolumna wyższa niż szersza, ale obrót by ją zwęził.
+  const landscape = load({ screenWidth: 1180, screenHeight: 820, width: 590, height: 820, touch: true });
+  assert.equal(landscape.deviceGuardState(640), 'narrow');
+});

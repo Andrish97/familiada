@@ -101,6 +101,16 @@ export function deviceGuardState(minWidth = MIN_WORK_WIDTH, { formFactors = null
       && profile.orientation === "portrait"
       && fullPortraitViewport
       && profile.viewportHeight >= minWidth) return "rotate";
+  // Tablet trzymany pionowo z podzielonym ekranem (kolumna obok innej
+  // aplikacji): po obrocie ta sama część ekranu jest szersza o proporcję
+  // boków. Pion urządzenia z wysokości okna (wyższe niż krótszy bok ekranu) --
+  // wąska kolumna na tablecie w poziomie też jest „portrait”, a tam obrót
+  // by ją zwęził. Prośba o obrót tylko wtedy, gdy ta szerokość wystarczy.
+  if (profile.formFactor === "tablet"
+      && profile.orientation === "portrait"
+      && profile.viewportHeight > profile.screenShortSide
+      && !fullPortraitViewport
+      && Math.floor(profile.viewportWidth * profile.screenLongSide / profile.screenShortSide) >= minWidth) return "rotate";
   return "narrow";
 }
 
