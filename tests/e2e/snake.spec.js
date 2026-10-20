@@ -99,8 +99,9 @@ test("wąż: kod QR z kadru prowadzi do gry, zdarzenia trafiają do bazy (bez ko
 test("wąż: „Zaloguj się” wraca do gry, zalogowany ma zapisany rekord i liczbę gier", async ({ page, context }) => {
   test.setTimeout(180_000);
   await page.goto(GAME, { waitUntil: "domcontentloaded" });
+  // Adres linku uzupełnia skrypt gry po starcie (w HTML jest goły /login/).
+  await expect(page.locator("#snakeLogin")).toHaveAttribute("href", /next=snake&qr=00000000-0000-4000-8000-000000000103/, { timeout: 30_000 });
   const loginHref = await page.locator("#snakeLogin").getAttribute("href");
-  expect(loginHref).toContain("next=snake");
   // Logowanie z linku w grze -- po zalogowaniu powrót do węża (mapa: wyjątek next=snake).
   // Zdarzenia liczone dopiero od powrotu (wcześniejsze „enter” było bez konta).
   let log = [];
