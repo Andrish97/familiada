@@ -107,7 +107,7 @@
     #app > .cardBody .stepFoot .btn { font-size:calc(var(--c2-fs) * .95); }
     #app > .cardBody .conn-status { font-size:calc(var(--c2-fs) * .7); }
     #app > .cardBody .msg-pill { font-size:calc(var(--c2-fs) * .75); }
-    #app > .cardBody .toggle-slider::before { font-size:calc(var(--c2-fs) * .8); }
+    #app > .cardBody .toggle-slider::before { font-size:calc(var(--c2-fs) * .92); }
     .summarySoundDesc, .summarySoundVariant { font-size:calc(var(--c2-fs) * .88); }
     .summarySoundVolLabel { font-size:calc(var(--c2-fs) * .8); }
     /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
@@ -288,7 +288,9 @@
        dolny próg celuje w skromny laptop (~1000px), górny w duży zewnętrzny
        monitor (~2200px+). */
     .device-name { font-size:calc(var(--c2-fs) * .98); }
-    #app > .cardBody .device-row-2 .btn { font-size:calc(var(--c2-fs) * .8); }
+    #app > .cardBody .device-row-2 .btn { font-size:calc(var(--c2-fs) * .92); }
+    .device-row-2:has(> .device-row-line) { flex-direction:column; align-items:flex-start; gap:6px; }
+    .device-row-line { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .device-opt-check-label { font-size:calc(var(--c2-fs) * .88); }
     .device-opt-check-hint { font-size:calc(var(--c2-fs) * .76); }
     /* Kod parowania — bazowe 1.45rem (control.css) z rozstrzelonym
@@ -404,12 +406,12 @@
       .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }
       .c2-devicerows .device-row { padding:7px 9px; gap:4px; }
       .c2-devicerows .device-row-2 { gap:5px; }
-      .c2-devicerows .device-row-2 .btn { padding:5px 7px; }
+      .c2-devicerows .device-row-2 .btn { padding:.4em .6em; }
       .c2-devicerows .device-row-opt { padding-top:4px; }
       .c2-devicerows .toggle-group { margin-top:4px !important; }
       .c2-devices-layout .c2-roundlayout-main > .c2-scroll-area { gap:6px; }
-      .c2-devicerows .device-connect-code { min-height:32px; padding:0 8px; }
-      .c2-devicerows .device-connect-code-val { font-size:calc(var(--c2-fs) * .85); letter-spacing:.08em; }
+      .c2-devicerows .device-connect-code { min-height:2.1em; padding:0 .5em; }
+      .c2-devicerows .device-connect-code-val { font-size:calc(var(--c2-fs) * .98); letter-spacing:.08em; }
     }
     @media (max-width:1100px) {
       .c2-summary-columns { grid-template-columns:minmax(0,1fr); }

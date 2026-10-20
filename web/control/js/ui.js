@@ -198,10 +198,13 @@ export function createUI({ root, emit }) {
     const deviceRow = (label, kind, url, { withQr = false } = {}) => {
       const online = !!presenceFlags[kind];
       const code = connectCodes[kind];
-      const row2 = [
+      // Dwie stałe linie we wszystkich kaflach (zgłoszone: większe przyciski
+      // zawijały się nierówno): kod, Kopiuj, Udostępnij / akcje urządzenia.
+      const codeLine = [
         h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
         h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, iconLabel("copy", t("common.copy"))),
       ];
+      const row2 = [];
       if (withQr) {
         const shown = !!state.display.qr[kind].show;
         row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, iconLabel("qr-code", t("control.qrCodeBtn"))));
@@ -218,7 +221,7 @@ export function createUI({ root, emit }) {
       // Zachowaj stałą geometrię karty w trybie testowym. Zawartość wiersza
       // jest niewidoczna i nieaktywna, ale jego miejsce pozostaje zarezerwowane.
       const shared = Number(shareBadges[kind]) || 0;
-      row2.push(h("button", {
+      codeLine.push(h("button", {
         class: "btn", type: "button",
         onclick: () => emit("devices.shareOpen", kind),
       }, [
@@ -231,7 +234,10 @@ export function createUI({ root, emit }) {
           h("div", { class: `conn-status ${online ? "conn-status--connected" : "conn-status--disconnected"}`, text: online ? t("control.deviceStatusOk") : t("control.deviceStatusDisconnected") }),
         ]),
       ];
-      children.push(h("div", { class: `device-row-2${state.settings.testMode ? " test-mode-reserved" : ""}` }, row2));
+      children.push(h("div", { class: `device-row-2${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
+        h("div", { class: "device-row-line" }, codeLine),
+        h("div", { class: "device-row-line" }, row2),
+      ]));
       return h("div", { class: "device-row", "data-device": kind }, children);
     };
 

@@ -291,7 +291,7 @@ function buildDb(lang, extras = {}) {
     control_device_shares_list: [], friends_list: [],
     control_runtime_session_touch_v2: { ok: true, session_id: id("8e00", 1), device_protocol: 2, expired: false },
     control2_session_ping: { ok: true }, control2_control_visibility_event: { ok: true },
-    control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "4821" },
+    control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "482193" },
     // Głosowanie z linku (anonimowo): stan i treść ankiety.
     poll_state: `fn:(args, db) => { const g = db.tables.games.find((x) => x.id === args.p_game_id); return g ? { ok: true, state: g.status === "poll_open" ? "open" : "ended", type: g.type } : { ok: false, state: "not_found" }; }`,
     poll_get_payload: `fn:(args, db) => {
