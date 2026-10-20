@@ -13,6 +13,7 @@ test("SFX playback reports only its actual start or failure without leaking reje
   class AudioStub {
     constructor(src) { this.src = src; this.duration = 2; this.paused = true; this.ended = false; }
     pause() { this.paused = true; }
+    addEventListener() {}
     play() { this.paused = false; return this.src.includes("reject") ? Promise.reject(new DOMException("blocked", "NotAllowedError")) : Promise.resolve(); }
   }
   globalThis.Audio = AudioStub;

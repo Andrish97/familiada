@@ -10,7 +10,7 @@ const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase
 test("wszystkie strony z kartami używają wspólnego tabs.js (replaceState, bez sessionStorage)", () => {
   const files = [
     "games/js/games.js", "bases/js/bases.js", "settings/js/settings.js", "polls/js/polls.js",
-    "logo/js/list.js", "manual/js/manual.js",
+    "logos/js/list.js", "manual/js/manual.js",
   ];
   for (const file of files) {
     const source = read(file);
@@ -48,8 +48,8 @@ test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
 
 test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   const html = read("logos/index.html");
-  const js = read("logo/js/list.js");
-  const css = read("logo/css/logo.css");
+  const js = read("logos/js/list.js");
+  const css = read("logos/css/logo.css");
 
   for (const id of ["tabLogoText", "tabLogoDraw", "tabLogoImage"]) {
     assert.match(html, new RegExp(`id="${id}"`));
@@ -71,7 +71,7 @@ test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () =
   assert.doesNotMatch(list, /id="editorShell"|id="btnCloseEditor"|id="helpOverlay"|id="legalOverlay"|fabric/);
   for (const [mode, file, init] of [["TEXT", "text", "initTextEditor"], ["DRAW", "draw", "initDrawEditor"], ["IMAGE", "image", "initImageEditor"]]) {
     const html = read(`logos/editor/${file}/index.html`);
-    const entry = read(`logo/js/editor-${file}.js`);
+    const entry = read(`logos/js/editor-${file}.js`);
     assert.match(html, new RegExp(`src="/logos/js/editor-${file}\\.js`));
     assert.match(html, new RegExp(`id="editorShell" data-mode="${mode}"`));
     assert.match(html, /id="saveStatus"/);
@@ -79,7 +79,7 @@ test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () =
     assert.equal(/fabric@/.test(html), file === "draw", `${file}: fabric.js tylko w edytorze rysunku`);
     assert.match(entry, new RegExp(`bootEditorPage\\(\\{ mode: "${mode}", initEditor: ${init} \\}\\)`));
   }
-  const page = read("logo/js/editor-page.js");
+  const page = read("logos/js/editor-page.js");
   assert.match(page, /isInteracting/);
   assert.match(page, /visibilitychange/);
   assert.doesNotMatch(page, /beforeunload|confirmModal|pushState/);

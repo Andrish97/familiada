@@ -182,7 +182,7 @@ test("strony, które wołają guardResourceLock(s), mają locks w mapie", () => 
     polls: "polls/js/polls.js",
     gameSettings: "games/settings/js/game-settings.js",
     control: "control/js/app.js",
-    logoText: "logo/js/editor-page.js",
+    logoText: "logos/js/editor-page.js",
     baseExplorer: "bases/explorer/js/page.js",
   };
   for (const [id, f] of Object.entries(holders)) {
