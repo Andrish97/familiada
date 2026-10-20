@@ -24,6 +24,7 @@ import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T11473";
 
 import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-20T11473";
+import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-20T11473";
 
 
 const $ = (id) => document.getElementById(id);
@@ -54,6 +55,7 @@ function iconLabel(iconName, label, { after = false } = {}) {
 }
 
 export function createUI({ root, emit }) {
+  watchGameplayText(root);
   function clear() { root.innerHTML = ""; }
   function setTopbarProgress(label) {
     const el = document.getElementById("c2TopbarProgress");
@@ -1960,6 +1962,7 @@ export function createUI({ root, emit }) {
         try { input.setSelectionRange(savedFocus.selStart, savedFocus.selEnd); } catch {}
       }
     }
+    fitGameplayText(root);
   }
 
   function reconcileEntry(existing, fresh) {

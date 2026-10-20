@@ -128,6 +128,15 @@ dole pokazują bieżący kadr, a kliknięcie obrazu otwiera podgląd z
 przybliżaniem bieżącego kadru (sceny `home-gallery` i `home-viewer`). Nowy kadr strony głównej = scena z
 `homepage: true` + wpis w `data-gallery` właściwego kafla + tytuł w PL/EN/UK.
 
+## Kontrola czcionek Control
+
+`node scripts/screens/check-control-fit.cjs` otwiera rozgrywkę Control (runda,
+finał gracza 1 i 2, z `STEP=` także mapowanie i pojedynek) z pytaniami po 200
+znaków i odpowiedziami po 17 w kilkunastu rozmiarach i proporcjach okna. Zgłasza
+ucięty tekst, elementy poza kartą i przewijanie strony (kod ≠ 0), wypisuje
+wynikowe rozmiary czcionek; zrzuty w `out/control-fit/`. Uruchamiać przy każdej
+zmianie wyglądu rozgrywki Control.
+
 ## Uwagi
 
 - Wyświetlacz pokazywał czasem „DISP” zamiast „SUMA”: wyścig w

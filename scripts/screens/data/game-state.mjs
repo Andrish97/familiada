@@ -3,6 +3,7 @@
 // czytają (game_state_get) albo dostają w podglądzie (?preview=1, postMessage).
 //   round   -- runda „Rodzinnego pojedynku”: Control, Prowadzący, Wyświetlacz
 //   finale  -- finał w trakcie wpisywania odpowiedzi (Control)
+//   finale2 -- finał, wpisuje gracz 2 (odpowiedzi gracza 1 nad polami)
 //   main    -- Główny Wyświetlacz / obraz OG: FAMILIADA · ONLINE, 999, 111:111
 import { createRequire } from "node:module";
 import { makeDefaultState, PERSISTED_KEYS } from "../../../web/shared/js/gameplay/gameStateShape.js";
@@ -23,7 +24,7 @@ export function buildGameState(lang, kind) {
   state.teams = { teamA: p.teams[0], teamB: p.teams[1] };
   state.settings.uiLang = lang;
   state.settings.hasFinal = true;
-  state.locks = { gameStarted: true, finalActive: kind === "finale", gameEnded: false };
+  state.locks = { gameStarted: true, finalActive: kind.startsWith("finale"), gameEnded: false };
   state.display.mode = "GAME";
   state.display.logoId = IDS.logoClassic;
   state.host.covered = false;
@@ -44,7 +45,7 @@ export function buildGameState(lang, kind) {
     // Tryb podglądu Wyświetlacza nie liczy cyfr z rundy -- podajemy je wprost.
     state.display = { ...state.display, suppressLogoDraw: true, previewNumbers: { left: "000", right: "000", top: String(state.rounds.bankPts).padStart(3, "0") }, previewXPositions: { A: [], B: [2, 3] } };
   }
-  if (kind === "finale") {
+  if (kind.startsWith("finale")) {
     state.step = "f_p1_entry"; state.topCard = "final"; state.phase = "FINAL"; state.controlTeam = "A";
     state.rounds.totals = { A: 312, B: 187 };
     state.final.winnerTeam = "A";
@@ -53,6 +54,12 @@ export function buildGameState(lang, kind) {
     state.final.picked = state.final.questions.map((q) => q.id);
     state.final.runtime.timer = { running: false, phase: null, endsAt: 0, usedP1: true, usedP2: false };
     state.final.runtime.p1 = p.finale.map(([, answer]) => ({ text: answer }));
+  }
+  if (kind === "finale2") {
+    state.step = "f_p2_entry";
+    state.final.runtime.timer = { running: false, phase: null, endsAt: 0, usedP1: true, usedP2: true };
+    state.final.runtime.map1 = p.finale.map(() => ({ kind: "MISS" }));
+    state.final.runtime.p2 = p.finale.map(([, answer], i) => (i === 2 ? { repeat: true } : { text: i % 2 ? answer : "" }));
   }
   if (kind === "main") {
     // Plansza strony głównej: hasła w wierszach 1, 3 i 5 (punkty jak w rundzie).

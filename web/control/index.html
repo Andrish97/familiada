@@ -88,7 +88,12 @@
     .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-main-card:has(.c2-gameplay-card, .stepFoot) > #app { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-    .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; }
+    /* Czcionka rozgrywki rośnie z oknem: mniejsza z szerokości i wysokości,
+       więc proporcje ekranu też się liczą. Wszystkie rozmiary napisów
+       rozgrywki są w em od tej wartości; jeśli treść i tak się nie mieści
+       (np. pytanie 200 znaków w kaflu finału), fit-text.js zmniejsza
+       czcionkę grupy kafli, aż wszystko jest widoczne w całości. */
+    .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; --c2-fs:clamp(14px, min(1.3vw, 2.4vh), 28px); font-size:var(--c2-fs); }
     /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
        tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
        wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować.
@@ -104,11 +109,8 @@
        przewijania (zgłoszone: "dolne przyciski mają być wyłączone z
        przewijania"). */
     .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
-    .c2-stepper { height:48px; min-height:48px; box-sizing:border-box; display:flex; align-items:center; }
-    /* 1.15rem dla każdej długości: największa czcionka, przy której pytanie
-       200 znaków (limit bazy) mieści się w dwóch wierszach (44 px) od
-       najwęższego okna Control (980 px) po 1920 px. */
-    .c2-stepper-question { width:100%; min-width:0; max-height:44px; overflow:hidden; text-align:left; font-size:1.15rem; font-weight:700; line-height:1.18; overflow-wrap:anywhere; }
+    .c2-stepper { height:2.9em; min-height:2.9em; box-sizing:border-box; display:flex; align-items:center; }
+    .c2-stepper-question { width:100%; min-width:0; max-height:100%; overflow:hidden; text-align:left; font-size:1.15em; font-weight:700; line-height:1.18; overflow-wrap:anywhere; }
     .c2-gameplay-body { flex:1 1 0%; width:100%; max-width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
     /* padding-top:16px == .control-main-card's własne padding-bottom:16px
        pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
@@ -135,18 +137,18 @@
     /* r_intro/r_roundStart ("Rozpocznij grę"/"Rozpocznij rundę") — wyśrodkowana
        "hero" treść zamiast gołego akapitu, zgłoszone jako wyglądające źle. */
     .c2-intro { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; padding:20px; }
-    .c2-intro-title { font-size:2rem; font-weight:900; color:var(--gold); letter-spacing:.02em; }
-    .c2-intro-hint { font-size:1.05rem; line-height:1.5; opacity:.85; max-width:520px; }
-    .c2-intro-score { display:flex; align-items:center; gap:12px; font-size:1.15rem; font-weight:800; margin-top:6px; }
+    .c2-intro-title { font-size:2em; font-weight:900; color:var(--gold); letter-spacing:.02em; }
+    .c2-intro-hint { font-size:1.05em; line-height:1.5; opacity:.85; max-width:520px; }
+    .c2-intro-score { display:flex; align-items:center; gap:12px; font-size:1.15em; font-weight:800; margin-top:6px; }
     .c2-intro-score-sep { opacity:.5; font-weight:400; }
-    .c2-intro-btn { padding:14px 34px; font-size:1.1rem; border-radius:16px; }
+    .c2-intro-btn { padding:14px 34px; font-size:1.1em; border-radius:16px; }
     /* Drugorzędny przycisk w c2-intro (np. "Dźwięk powtórzenia" na
        "Rozpocznij 2 rundę") — bez złotego obramowania (nie konkuruje
        wizualnie z głównym przyciskiem nawigacji na dole), ale WYRAŹNIE
        widoczny — zgłoszone jako za mały, dociągnięty do tej samej skali co
        reszta ekranów startu (blisko .c2-intro-btn, tylko bez gold/padding
        ekstremalnego jak główna akcja). */
-    .c2-intro-secondary { font-size:1rem; padding:12px 26px; border-radius:14px; opacity:1; }
+    .c2-intro-secondary { font-size:1em; padding:12px 26px; border-radius:14px; opacity:1; }
     /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
        .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
        bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.
@@ -159,17 +161,17 @@
        .c2-roundlayout-divider, więc druga kreska tylko dublowała się z
        pierwszą. */
     .c2-hint { flex:none; display:flex; flex-direction:column; }
-    .c2-hint-main { font-size:.98rem; line-height:1.4; opacity:.85; }
+    .c2-hint-main { font-size:.98em; line-height:1.4; opacity:.85; }
     .c2-final-hint { height:100%; min-height:0; box-sizing:border-box; }
-    .c2-final-hint .c2-hint-main { font-size:.88rem; line-height:1.3; }
+    .c2-final-hint .c2-hint-main { font-size:.88em; line-height:1.3; }
     .c2-final-hint .c2-hint-shortcuts { margin-top:auto; padding-top:8px; gap:2px; flex:0 0 auto; }
-    .c2-final-hint .c2-hint-shortcut { font-size:.82rem; line-height:1.25; }
+    .c2-final-hint .c2-hint-shortcut { font-size:.82em; line-height:1.25; }
     /* Skróty klawiszowe (web/js/gameplay/hints.js's getFinalEntryShortcuts) — dopisane
        POD głównym hintem na wpisywaniu finału, oddzielone własną kreską, żeby
        nie zlewały się z dynamicznym tekstem hintu nad nimi. */
     .c2-hint-shortcuts { margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,.12); display:flex; flex-direction:column; gap:4px; }
-    .c2-hint-shortcuts-title { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; opacity:.6; font-weight:800; }
-    .c2-hint-shortcut { font-size:.92rem; opacity:.75; line-height:1.35; }
+    .c2-hint-shortcuts-title { font-size:.8em; text-transform:uppercase; letter-spacing:.06em; opacity:.6; font-weight:800; }
+    .c2-hint-shortcut { font-size:.92em; opacity:.75; line-height:1.35; }
     /* ---- Rundy: siatka odpowiedzi (lewo) + pionowa kreska + podpowiedź
        (prawo). Reużywane też przez Finał-wpisywanie i Finał-mapowanie
        (zgłoszone: hinty mają iść na prawo wszędzie tak jak w Rundach). ---- */
@@ -285,15 +287,15 @@
        (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
        nie osobny blok na każdą — to jest "dodatkowe info", nie treść do
        przeczytania w całości. */
-    .c2-statusbar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:8px 2px 0; border-top:1px solid rgba(255,255,255,.12); font-size:.95rem; opacity:.92; flex:none; }
+    .c2-statusbar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:8px 2px 0; border-top:1px solid rgba(255,255,255,.12); font-size:.95em; opacity:.92; flex:none; }
     .c2-statusbar b { color:var(--gold); font-weight:800; }
     /* "Zakończ rundę" — obok Gra:/Bank: w TYM SAMYM pasku (zgłoszone: miejsce
        obok, nie osobny wiersz nawigacji z własnym odstępem u dołu). */
-    .c2-statusbar-end { margin-left:auto; padding:8px 16px; font-size:.95rem; opacity:1; }
+    .c2-statusbar-end { margin-left:auto; padding:8px 16px; font-size:1em; opacity:1; }
     /* .c2-btn: przyciski POZA siatką (start rundy/finału, przyjęcie zgłoszenia,
        "Dalej" na ekranach przejściowych) — nigdy nie miały żadnego stylu,
        dograne tu, żeby nie odstawały wizualnie od nowej siatki obok nich. */
-    .c2-btn { padding:10px 14px; border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06); color:#fff; cursor:pointer; font-weight:800; font-size:.95rem; }
+    .c2-btn { padding:10px 14px; border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06); color:#fff; cursor:pointer; font-weight:800; font-size:.95em; }
     .c2-btn:hover:not(:disabled) { filter:brightness(1.1); }
     .c2-btn:active:not(:disabled) { transform:translateY(1px); }
     .c2-btn:disabled { opacity:.4; cursor:default; }
@@ -311,7 +313,7 @@
       touch-action: manipulation;
       display:flex; min-width:0; max-width:100%; align-items:center; justify-content:center; text-align:center; overflow-wrap:anywhere;
       padding:8px 10px; border-radius:14px; border:1px solid var(--line2);
-      background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:1.02rem; line-height:1.3;
+      background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:1.02em; line-height:1.3;
       cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
       transition:filter .12s ease, background .12s ease, border-color .12s ease;
     }
@@ -331,9 +333,9 @@
        przycisku. Osobna, jawna reguła zamiast polegania na kolejności w
        arkuszu — nie ma znaczenia, która z dwóch klas jest zadeklarowana wyżej. */
     .c2-tile-primary.c2-tile-danger { border-color:rgba(255,120,120,.4); background:rgba(255,120,120,.12); color:var(--gold); }
-    .c2-tile-timer { border-color:rgba(122,178,255,.4); background:rgba(122,178,255,.12); color:#bcd9ff; font-variant-numeric:tabular-nums; font-size:1.05rem; cursor:default; }
-    .c2-tile-timer.startable { cursor:pointer; font-size:.92rem; }
-    .c2-tile-sub { display:block; margin-top:2px; font-size:.72rem; font-weight:700; opacity:.8; }
+    .c2-tile-timer { border-color:rgba(122,178,255,.4); background:rgba(122,178,255,.12); color:#bcd9ff; font-variant-numeric:tabular-nums; font-size:1.05em; cursor:default; }
+    .c2-tile-timer.startable { cursor:pointer; font-size:.92em; }
+    .c2-tile-sub { display:block; margin-top:2px; font-size:.72em; font-weight:700; opacity:.8; }
     /* Uzbrojony kafel (zaznacz -> potwierdź, control/js/ui.js's armableTile) —
        złota obwódka NAD kolorem kafla (danger/primary/zwykły), żeby "jeszcze
        tylko zaznaczone, kliknij drugi raz" wyglądało tak samo niezależnie od
@@ -364,15 +366,15 @@
       border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
       padding:8px 14px;
     }
-    .c2-entrytile-q { font-weight:800; font-size:.92rem; line-height:1.25; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+    .c2-entrytile-q { font-weight:800; font-size:.92em; line-height:1.25; overflow-wrap:anywhere; }
     /* "Gracz 1: ..." — ta sama wielkość co treść kafelka (pytanie), nie
        mniejsza (zgłoszone) — odróżnia się kolorem (gold na wartości), nie rozmiarem. */
-    .c2-entrytile-p1ans { font-size:.92rem; line-height:1.25; opacity:.85; font-weight:600; flex-shrink:0; overflow:visible; white-space:normal; overflow-wrap:anywhere; }
-    .c2-entryrow.p2 .c2-entrytile-q { flex-shrink:0; -webkit-line-clamp:1; font-size:.86rem; line-height:1.18; }
+    .c2-entrytile-p1ans { font-size:.92em; line-height:1.25; opacity:.85; font-weight:600; flex-shrink:0; overflow:visible; white-space:normal; overflow-wrap:anywhere; }
+    .c2-entryrow.p2 .c2-entrytile-q { flex-shrink:0; font-size:.86em; line-height:1.18; }
     /* Wpisana odpowiedź gracza 1 zajmuje drugi wiersz tego kafelka. Ogranicz
        ją do dwóch pełnych linii w dostępnej wysokości, zamiast pozwalać jej
        wypchnąć kafel i ucinać tekst przy dolnej krawędzi. */
-    .c2-entryrow.p2 .c2-entrytile-p1ans { flex:1 1 auto; min-height:0; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:.86rem; line-height:1.18; }
+    .c2-entryrow.p2 .c2-entrytile-p1ans { flex:1 1 auto; min-height:0; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:.86em; line-height:1.18; }
     .c2-entryrow.p2 > .c2-entrytile:first-child { padding:3px 8px; gap:2px; }
     /* Wpisywanie zachowuje tę samą wysokość i odstępy sześciu rzędów co
        wspólna siatka kafli w pozostałych krokach rozgrywki. */
@@ -413,7 +415,7 @@
     /* Mała etykieta nad polem (np. mapowania finału's "Wpisano") — bez niej
        samo obramowane pole nie ma żadnego określenia (zgłoszone). Wpisywanie
        (renderFinalEntry) jej nie dokłada — tam kontekst już daje sam wiersz. */
-    .c2-field-label { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; opacity:.6; font-weight:800; }
+    .c2-field-label { font-size:.72em; text-transform:uppercase; letter-spacing:.05em; opacity:.6; font-weight:800; }
     /* Pole "Wpisano" na mapowaniu (renderFinalMapping) — teraz prawdziwy
        kafelek (obramowanie jak c2-entrytile — zgłoszone: "pierwszy rząd mam
        mieć kafelek a teraz nie ma"): etykieta na 1/3 (wyśrodkowana w pionie
@@ -439,7 +441,7 @@
     }
     /* Kolumna etykiety — wyśrodkowana w bloku. */
     .c2-mapinput-labelcol { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; }
-    .c2-mapinput .c2-field-label { font-size:.78rem; }
+    .c2-mapinput .c2-field-label { font-size:.78em; }
     /* Bez align-items:center: pole ma wypełniać całą wysokość tego kafla
        (jak w kroku wpisywania), nie stać wyśrodkowanym prostokątem. */
     .c2-mapinput .c2-entrytile-input { display:flex; min-width:0; min-height:0; align-items:stretch; }
@@ -456,12 +458,12 @@
        nie wystarczyło, bo nie czyści overflow/text-overflow z bazowej
        reguły -- jawne nadpisanie obu. */
     .c2-map-p1tile { justify-content:center; align-items:center; text-align:center; gap:6px; }
-    .c2-map-p1tile .c2-entrytile-p1ans { font-size:.92rem; white-space:normal; opacity:1; overflow:visible; text-overflow:unset; }
+    .c2-map-p1tile .c2-entrytile-p1ans { font-size:.92em; white-space:normal; opacity:1; overflow:visible; text-overflow:unset; }
     .c2-entrytile-input input {
       width:100%; height:100%; flex:1; box-sizing:border-box; padding:8px 12px;
       border-radius:10px; border:1px solid rgba(255,255,255,.2);
       background:rgba(0,0,0,.22);
-      color:#bcd9ff; font-size:.95rem; font-weight:700; outline:none;
+      color:#bcd9ff; font-size:.95em; font-weight:700; outline:none;
     }
     .c2-entrytile-input input:focus { border-color:rgba(122,178,255,.65); background:rgba(122,178,255,.1); }
     .c2-entrytile-input input::placeholder { font-weight:400; opacity:.5; color:#fff; }
@@ -471,7 +473,7 @@
        zgłoszone: sample ma być identyczny wielkościowo i kolorystycznie. */
     .c2-btn-repeat {
       border-radius:14px; border:1px solid rgba(255,120,120,.4); background:rgba(255,120,120,.12);
-      color:#ffb3b3; font-weight:800; font-size:.92rem; padding:12px 26px; cursor:pointer;
+      color:#ffb3b3; font-weight:800; font-size:.92em; padding:12px 26px; cursor:pointer;
       display:flex; align-items:center; justify-content:center; text-align:center;
     }
     .c2-btn-repeat:hover:not(:disabled) { filter:brightness(1.15); }
@@ -480,7 +482,7 @@
     .c2-btn-repeat:disabled { opacity:.4; cursor:default; }
     /* Kafel odliczania (start/countdown/zatrzymaj) — jeden pełnoszerokościowy
        wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */
-    .c2-timer-row { width:100%; font-size:1.02rem; }
+    .c2-timer-row { width:100%; font-size:1.02em; }
 
     /* Podgląd Wyświetlacza i Hosta w Podsumowaniu: równorzędne, 16:9. */
     #c2DevicePreviews { width:min(100%, 1280px); margin-inline:auto; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
