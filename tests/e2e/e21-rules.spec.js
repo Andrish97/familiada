@@ -66,7 +66,7 @@ test("E21 edytor: emoji blokuje zapis odpowiedzi, limit 17 przy wklejaniu, pytan
     await first.fill("kawa😀");
     await expect(first).toHaveClass(/qf-invalid/);
     await first.blur();
-    await expect(page.locator("#msg")).toContainText("😀", { timeout: 10000 });
+    await expect(page.locator(".app-toast").last()).toContainText("😀", { timeout: 10000 });
     await page.waitForTimeout(800);
     expect((await answersOf(page, game.questionIds[0]))[0].text).toBe("Odp 1");
 
