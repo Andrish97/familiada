@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict G2co4eH0eR2Et37ZSeHeJry9gExgVCJCEUODLLT2Z1uxDb6klimcxAmEQawL5kE
+\restrict RAkltg7PYpKWy20pb4n2yLiohZZkuDdU3Sm3LdGGmGloCZfDWLleeXiBTPY3dKP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -8936,7 +8936,7 @@ BEGIN
   IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN
     RAISE EXCEPTION 'forbidden';
   END IF;
-  SELECT rev INTO current_rev FROM public.game_state WHERE game_id=p_game_id;
+  SELECT rev INTO current_rev FROM public.game_state WHERE game_id=p_game_id FOR UPDATE;
   IF current_rev IS NULL OR p_rev IS NULL OR p_rev<0 OR p_rev>current_rev THEN
     RAISE EXCEPTION 'invalid revision';
   END IF;
@@ -25966,5 +25966,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict G2co4eH0eR2Et37ZSeHeJry9gExgVCJCEUODLLT2Z1uxDb6klimcxAmEQawL5kE
+\unrestrict RAkltg7PYpKWy20pb4n2yLiohZZkuDdU3Sm3LdGGmGloCZfDWLleeXiBTPY3dKP
 
