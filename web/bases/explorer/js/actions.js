@@ -37,6 +37,11 @@ import { openTagsModal } from "./tags-modal.js?v=v2026-10-20T19584";
 import { initExportModal } from "./export-modal.js?v=v2026-10-20T19584";
 import { initQuestionModal } from "./question-modal.js?v=v2026-10-20T19584";
 import { initTrashModal } from "./trash-modal.js?v=v2026-10-20T19584";
+import { ACTIONS } from "./actions/registry.js?v=v2026-10-20T19584";
+import { buildContext } from "./actions/context.js?v=v2026-10-20T19584";
+import { runAction } from "./actions/run.js?v=v2026-10-20T19584";
+import { wireToolbarButtons } from "./ui/toolbar.js?v=v2026-10-20T19584";
+import { matchShortcut } from "./platform.js?v=v2026-10-20T19584";
 import * as ops from "./ops.js?v=v2026-10-20T19584";
 import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T19584";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T19584";
@@ -66,24 +71,9 @@ function canMutateHere(state) {
   return canWrite(state) && !isVirtualView(state);
 }
 
-function canPasteHere(state) {
-  // paste dodatkowo wymaga schowka
-  return canMutateHere(state) && !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
-}
 
-function isMetaView(state) {
-  return state.view === VIEW.META;
-}
 
-export function canDeleteHere(state) {
-  if (!canWrite(state)) return false;
-  if (isMetaView(state)) return false;   // META: blokada
-  return true;                           // SEARCH/FOLDER/ALL/TAG: dozwolone
-}
 
-function canCutHere(state) {
-  return canDeleteHere(state); // wycinanie = usuń + clipboard, więc te same reguły
-}
 
 
 function textOfQuestion(q) {
@@ -772,10 +762,6 @@ async function refreshList(state) {
 
 }
 
-function currentParentId(state) {
-  // Root = parent_id null
-  return (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-}
 
 
 // ================== STATUS MAPS (global) ==================
@@ -1096,11 +1082,6 @@ export async function duplicateSelected(state) {
   return await pasteClipboardHere(state);
 }
 
-function onlyOneSelectedKey(state) {
-  const keys = state?.selection?.keys;
-  if (!keys || keys.size !== 1) return null;
-  return Array.from(keys)[0] || null;
-}
 
 function parentFolderId(state) {
   if (state.view !== VIEW.FOLDER || !state.folderId) return null;
@@ -1108,7 +1089,7 @@ function parentFolderId(state) {
   return cur ? (cur.parent_id || null) : null;
 }
 
-async function openFolderById(state, folderId) {
+export async function openFolder(state, folderId) {
   setViewFolder(state, folderId);
   selectionClear(state);
   await state._api?.refreshList?.();
@@ -1117,7 +1098,7 @@ async function openFolderById(state, folderId) {
 async function goUp(state) {
   const pid = parentFolderId(state);
   if (pid) {
-    await openFolderById(state, pid);
+    await openFolder(state, pid);
   } else {
     // jeśli jesteś w folderze najwyższego poziomu -> root
     setViewAll(state);
@@ -1165,11 +1146,12 @@ export function cutSelectedToClipboard(state) {
 }
 
 
-export async function pasteClipboardHere(state) {
+// target: folder docelowy (menu na folderze); domyślnie bieżący folder.
+export async function pasteClipboardHere(state, { target = undefined } = {}) {
   if (!clipboardHas(state)) return false;
-  if (!canMutateHere(state)) return false;
+  if (!canWrite(state)) return false;
 
-  const target = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+  if (target === undefined) target = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
   const keys = state.clipboard.keys;
 
   if (state.clipboard.mode === "copy") {
@@ -1522,7 +1504,7 @@ async function refreshTags(state) {
   state.tags = await listTags(state.baseId);
 }
 
-async function untagSelectedInTagView(state) {
+export async function untagSelected(state) {
   if (!canWrite(state)) return false;
 
   // W TAG zdejmiemy TAGI z zaznaczonych elementów (foldery/pytania),
@@ -2048,6 +2030,8 @@ export function wireActions({ state }) {
     }
   });
 
+  wireToolbarButtons(toolbarEl, state);
+
   toolbarEl?.addEventListener("click", async (e) => {
     const t = e.target;
     if (!t) return;
@@ -2113,106 +2097,7 @@ export function wireActions({ state }) {
         return; // opcjonalnie: żeby nie leciało dalej w handlerze
       }
       
-      // NOWE — toolbar działa jak context-menu: data-act
-      const btn = e.target?.closest?.('button[data-act]');
-      if (btn && toolbarEl?.contains?.(btn)) {
-        if (btn.disabled) return;
-      
-        const act = btn.dataset.act;
-      
-        // kontekst jak w context-menu dla ROOT:
-        const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-        const categoryId = parentId;
-      
-        // pomocnicze: zaznaczenie "real" (bez root)
-        const realKeys = Array.from(state.selection?.keys || []).filter(k => k && k !== "root");
-        const oneSelected = realKeys.length === 1;
-        const oneIsQuestion = oneSelected && String(realKeys[0]).startsWith("q:");
-      
-        try {
-          switch (act) {
-            // --- Tworzenie ---
-            case "newFolder":
-              if (!canMutateHere(state)) return;
-              await createFolderHere(state, { parentId });
-              return;
-      
-            case "newQuestion":
-              if (!canMutateHere(state)) return;
-              await createQuestionHere(state, { categoryId });
-              return;
-    
-            case "editQuestion": {
-              if (!canWrite(state)) return;
-              if (!oneIsQuestion) return;
-            
-              const qid = String(realKeys[0]).slice(2); // "q:<id>"
-              await state._api?.openQuestionModal?.(qid);
-              return;
-            }
-            
-            case "createGame": {
-              if (!canWrite(state)) return;
-            
-              const qIds = await selectionToQuestionIds(state);
-              if (!qIds.length) return;
-
-              await state._api?.openExportModal?.();
-              return;
-            }
-      
-            case "editTags":
-              if (!canWrite(state)) return;
-              if (!realKeys.length) return;
-              await state._api?.openAssignTagsModal?.();
-              return;
-      
-            case "rename":
-              if (!canMutateHere(state)) return;
-              if (!oneSelected) return;
-              await renameSelectedPrompt(state);
-              return;
-      
-            case "delete":
-              if (!canDeleteHere(state)) return;
-              if (!realKeys.length) return;
-              await deleteSelected(state);
-              return;
-      
-            // --- Schowek ---
-            case "copy":
-              if (!canWrite(state)) return;
-              if (!realKeys.length) return;
-              copySelectedToClipboard(state);
-              return;
-      
-            case "cut":
-              if (!canCutHere(state)) return;
-              if (!realKeys.length) return;
-              cutSelectedToClipboard(state);
-              return;
-      
-            case "paste":
-              if (!canPasteHere(state)) return;
-              await pasteClipboardHere(state);
-              return;
-      
-            case "duplicate":
-              // w context-menu "Duplikuj" jest placeholderem, ale u Ciebie funkcja istnieje – zostawiam realne wywołanie
-              if (!canMutateHere(state)) return;
-              if (!realKeys.length) return;
-              await duplicateSelected(state);
-              return;
-
-            case "refreshView":
-              await refreshList(state);
-              return;
-          }
-        } catch (err) {
-          console.error(err);
-          void alertModal({ text: t("baseExplorer.errors.actionFailed") });
-        }
-      }
+      // przyciski akcji obsługuje ui/toolbar.js (rejestr akcji)
       
     } catch (err) {
       console.error(err);
@@ -2638,7 +2523,8 @@ export function wireActions({ state }) {
         return;
       }
       if (kind === "root") {
-        await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "root", id: null } });
+        // wiersz „Folder główny”: akcje w folderze głównym, nie w bieżącym
+        await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "root", id: "root" } });
         return;
       }
     }
@@ -3585,7 +3471,16 @@ export function wireActions({ state }) {
       selectionClear(state);
       await refreshList(state);
     },
-    untagSelectedInTagView: () => untagSelectedInTagView(state),
+    untagSelected: () => untagSelected(state),
+
+    // Proponowane kategorie z lewego panelu (+ ewentualnie zaznaczone tagi)
+    openTypeView: async () => {
+      if (state.view !== VIEW.META) rememberBrowseLocation(state);
+      state.view = VIEW.META;
+      state.tagIds = Array.from(state.tagSelection?.ids || []).filter(Boolean);
+      selectionClear(state);
+      await refreshList(state);
+    },
 
     selectionToQuestionIds: () => selectionToQuestionIds(state),
   };
@@ -3851,7 +3746,7 @@ export function wireActions({ state }) {
       const kind = row.dataset.kind;
       const id = row.dataset.id || null;
       if (kind === "cat") { await showContextMenu({ state, x, y, target: { kind: "cat", id } }); return; }
-      if (kind === "root") { await showContextMenu({ state, x, y, target: { kind: "root", id: null } }); return; }
+      if (kind === "root") { await showContextMenu({ state, x, y, target: { kind: "root", id: "root" } }); return; }
     }
     await showContextMenu({ state, x, y, target: { kind: "root", id: null, scope: "tree" } });
   });
@@ -3894,40 +3789,6 @@ export function wireActions({ state }) {
     });
   }
 
-  function clickToolbar(act) {
-    const btn = document.querySelector(`#toolbar button[data-act="${act}"]`);
-    if (btn && !btn.disabled) btn.click();
-  }
-
-  async function tryAction(fn, errKey) {
-    try {
-      await fn();
-    } catch (err) {
-      console.error(err);
-      void alertModal({ text: t(errKey) });
-    }
-  }
-
-  async function onDeleteKey() {
-    if (!canDeleteHere(state)) {
-      void alertModal({ text: t("baseExplorer.errors.deleteInSearch") });
-      return;
-    }
-    // TAG: zdejmowanie tagów (z ostrzeżeniem), nie usuwanie elementów
-    if (state.view === VIEW.TAG) {
-      await tryAction(() => untagSelectedInTagView(state), "baseExplorer.errors.removeTagsFailed");
-      return;
-    }
-    await tryAction(() => deleteSelected(state), "baseExplorer.errors.deleteFailed");
-  }
-
-  async function onPasteKey() {
-    if (state.view === VIEW.SEARCH) return void alertModal({ text: t("baseExplorer.errors.pasteInSearch") });
-    if (state.view === VIEW.TAG) return void alertModal({ text: t("baseExplorer.errors.pasteInTag") });
-    if (!canMutateHere(state)) return;
-    await tryAction(() => pasteClipboardHere(state), "baseExplorer.errors.pasteFailed");
-  }
-
   function selectAllInList() {
     // Wiersze mają data-kind+data-id, nie data-key -- currentRowKeys()
     // buduje z nich prawdziwe klucze selekcji ("q:"/"c:").
@@ -3937,65 +3798,31 @@ export function wireActions({ state }) {
     renderList(state);
   }
 
-  // Skróty z modyfikatorem (Ctrl / ⌘): klucz = litera + ":shift" / ":alt".
-  const MOD_SHORTCUTS = {
-    "c": () => { if (canWrite(state)) copySelectedToClipboard(state); },
-    "x": () => { cutSelectedToClipboard(state); },
-    "v": onPasteKey,
-    "a": selectAllInList,
-    "n": () => canMutateHere(state) && tryAction(() => createQuestionHere(state, { categoryId: currentParentId(state) }), "baseExplorer.errors.createQuestionFailed"),
-    "n:shift": () => canMutateHere(state) && tryAction(() => createFolderHere(state, { parentId: currentParentId(state) }), "baseExplorer.errors.createFolderFailed"),
-    "r:alt": () => clickToolbar("refreshView"),
-    "t": () => canWrite(state) && state._api?.openAssignTagsModal?.(),
-    "e": () => clickToolbar("editQuestion"),
-    "g": () => clickToolbar("createGame"),
-    "d": () => clickToolbar("duplicate"),
-    "z": () => state._api?.undo?.(),
-    "z:shift": () => state._api?.redo?.(),
-    "y": () => state._api?.redo?.(),
-  };
+  // Skróty akcji pochodzą z rejestru (registry.js: shortcut); tu zostają
+  // tylko klawisze nawigacji i zaznaczania.
+  const SHORTCUT_ACTIONS = ACTIONS.filter((a) => a.shortcut);
 
   document.addEventListener("keydown", async (e) => {
     if (shortcutsBlocked()) return;
 
-    const isMac = navigator.platform.toLowerCase().includes("mac");
-    const mod = isMac ? e.metaKey : e.ctrlKey;
-
-    if (mod) {
-      const letter = String(e.key || "").toLowerCase();
-      const id = letter + (e.shiftKey ? ":shift" : e.altKey ? ":alt" : "");
-      const fn = MOD_SHORTCUTS[id];
-      if (!fn) return;
+    const action = SHORTCUT_ACTIONS.find((a) => matchShortcut(e, a.shortcut));
+    if (action) {
       e.preventDefault();
-      await fn();
+      // przytrzymany klawisz nie powtarza akcji (np. wiele kopii z Ctrl+V)
+      if (e.repeat) return;
+      await runAction(action.id, buildContext(state, { source: "keys" }));
+      return;
+    }
+
+    if (matchShortcut(e, { key: "KeyA", mod: true })) {
+      e.preventDefault();
+      selectAllInList();
       return;
     }
 
     if (e.key === "Escape") {
       selectionClear(state);
       renderList(state);
-      return;
-    }
-
-    if (e.key === "Delete") {
-      e.preventDefault();
-      await onDeleteKey();
-      return;
-    }
-
-    if (e.key === "F2") {
-      if (!canMutateHere(state)) return;
-      e.preventDefault();
-      await renameSelectedPrompt(state);
-      return;
-    }
-
-    if (e.key === "Enter") {
-      const key = onlyOneSelectedKey(state);
-      if (key && key.startsWith("c:")) {
-        e.preventDefault();
-        await openFolderById(state, key.slice(2));
-      }
       return;
     }
 

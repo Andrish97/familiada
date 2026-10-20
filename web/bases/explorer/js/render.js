@@ -4,6 +4,7 @@
 import { VIEW, META, META_ORDER } from "./state.js?v=v2026-10-20T19584";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T19584";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T19584";
+import { toolbarButtonsHtml, updateToolbarButtons } from "./ui/toolbar.js?v=v2026-10-20T19584";
 
 
 /* ================= DOM ================= */
@@ -44,22 +45,7 @@ function fmtDate(v) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const IS_MAC = navigator.platform.toLowerCase().includes("mac");
 
-function kbd(win, mac) {
-  return IS_MAC ? mac : win;
-}
-
-function setToolbarTip(act, label, win, mac) {
-  const btn = elToolbar?.querySelector?.(`button[data-act="${act}"]`);
-  if (!btn) return;
-
-  const combo = kbd(win, mac);
-  const txt = combo ? `${label} (${combo})` : label;
-
-  btn.setAttribute("data-tip", txt);
-  btn.removeAttribute("title"); // wyłącz natywny tooltip
-}
 
 function pickDate(raw) {
   // Fallback dla różnych schematów (foldery często mają inne pola)
@@ -210,83 +196,11 @@ export function renderToolbar(state) {
           ${icon("hamburger", { className: "tbIco" })}
         </button>
 
-        <div class="tbSep mobile-only" aria-hidden="true"></div>
-
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupCreate")}">
-          <button class="tbBtn" type="button" data-act="newFolder" title="${t("baseExplorer.toolbar.newFolder")}">
-            ${svgFolderPlus()}
-          </button>
-          <button class="tbBtn" type="button" data-act="newQuestion" title="${t("baseExplorer.toolbar.newQuestion")}">
-            ${svgFilePlus()}
-          </button>
-        </div>
-        
-        <div class="tbSep" aria-hidden="true"></div>
-        
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupEdit")}">
-          <button class="tbBtn" type="button" data-act="editQuestion" title="${t("baseExplorer.toolbar.editQuestion")}">
-            ${svgEdit()}
-          </button>
-          <button class="tbBtn" type="button" data-act="editTags" title="${t("baseExplorer.toolbar.editTags")}">
-            ${svgTag()}
-          </button>
-          <button class="tbBtn" type="button" data-act="rename" title="${t("baseExplorer.toolbar.rename")}">
-            ${svgPencil()}
-          </button>
-          <button class="tbBtn danger" type="button" data-act="delete" title="${t("baseExplorer.toolbar.delete")}">
-            ${svgTrash()}
-          </button>
-        </div>
-        
-        <div class="tbSep" aria-hidden="true"></div>
-        
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupClipboard")}">
-          <button class="tbBtn" type="button" data-act="copy" title="${t("baseExplorer.toolbar.copy")}">
-            ${svgCopy()}
-          </button>
-          <button class="tbBtn" type="button" data-act="cut" title="${t("baseExplorer.toolbar.cut")}">
-            ${svgCut()}
-          </button>
-          <button class="tbBtn" type="button" data-act="paste" title="${t("baseExplorer.toolbar.paste")}">
-            ${svgPaste()}
-          </button>
-          <button class="tbBtn" type="button" data-act="duplicate" title="${t("baseExplorer.toolbar.duplicate")}">
-            ${svgDuplicate()}
-          </button>
-        </div>
-        
-        <div class="tbSep" aria-hidden="true"></div>
-        
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupGame")}">
-          <button class="tbBtn primary" type="button" data-act="createGame" title="${t("baseExplorer.toolbar.createGame")}">
-            ${svgPlay()}
-          </button>
-        </div>
-        
-        <div class="tbSep" aria-hidden="true"></div>
-        <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupView")}">
-          <button class="tbBtn" type="button" data-act="refreshView" title="${t("baseExplorer.toolbar.refreshView")}">
-            ${svgRefresh()}
-          </button>
-        </div>
+        ${toolbarButtonsHtml()}
       </div>
     `;
     elToolbar.dataset.ready = "1";
   }
-    // Tooltips z automatycznym formatowaniem skrótów (Windows/Linux vs macOS)
-  setToolbarTip("newFolder",   t("baseExplorer.toolbar.newFolder"),   "Ctrl+Shift+N", "⌘⇧N");
-  setToolbarTip("newQuestion", t("baseExplorer.toolbar.newQuestion"), "Ctrl+N",       "⌘N");
-  setToolbarTip("editQuestion",t("baseExplorer.toolbar.editQuestion"),"Ctrl+E",       "⌘E");
-  setToolbarTip("editTags",    t("baseExplorer.toolbar.editTags"),    "Ctrl+T",       "⌘T");
-  setToolbarTip("rename",      t("baseExplorer.toolbar.rename"),      "F2",           "F2");
-  setToolbarTip("delete",      t("baseExplorer.toolbar.delete"),      "Delete",       "Fn⌫");
-  setToolbarTip("copy",        t("baseExplorer.toolbar.copy"),        "Ctrl+C",       "⌘C");
-  setToolbarTip("cut",         t("baseExplorer.toolbar.cut"),         "Ctrl+X",       "⌘X");
-  setToolbarTip("paste",       t("baseExplorer.toolbar.paste"),       "Ctrl+V",       "⌘V");
-  setToolbarTip("duplicate",   t("baseExplorer.toolbar.duplicate"),   "Ctrl+D",       "⌘D");
-  setToolbarTip("createGame",  t("baseExplorer.toolbar.createGame"),  "Ctrl+G",       "⌘G");
-  setToolbarTip("refreshView", t("baseExplorer.toolbar.refreshView"), "Ctrl+Alt+R",   "⌘⌥R");
-
   const inp = document.getElementById("searchText");
   const chipsEl = document.getElementById("searchChips");
 
@@ -348,82 +262,8 @@ export function renderToolbar(state) {
     searchButton.classList.toggle("is-active", hasSearch);
   }
 
-  // 3) Disable przycisków toolbar – spójnie z actions/context-menu + reguły selekcji (0/1/wiele)
-  const editor = (state.role === "owner" || state.role === "editor");
-  
-  // Tylko realne elementy listy (foldery/pytania). Root/tag/meta nie liczą się do selekcji toolbara.
-  const realKeys = Array.from(state.selection?.keys || []).filter((k) => {
-    if (!k) return false;
-    const s = String(k);
-    return s.startsWith("c:") || s.startsWith("q:");
-  });
-  
-  const selCount = realKeys.length;
-  const hasSel = selCount > 0;
-  const oneSel = selCount === 1;
-  const manySel = selCount > 1;
-  
-  const hasClipboard = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
-  
-  // Twoje "poprzednie narzucone reguły" (role + widoki) zostają:
-  const canMutate = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
-  const canDelete = editor && (state.view !== VIEW.META);
-  const canCut = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
-  const canCopy = editor;
-  const canEditTags = editor;
-  const canRename = canMutate;
-
-  const oneSelKey = oneSel ? realKeys[0] : null;
-  const oneSelIsQuestion = oneSelKey?.startsWith("q:");
-  const hasQuestionInSel = realKeys.some(k => k.startsWith("q:"));
-  const hasFolderInSel   = realKeys.some(k => k.startsWith("c:"));
-
-  const dis = new Map();
-
-  dis.set("newFolder",   !canMutate);
-  dis.set("newQuestion", !canMutate);
-  dis.set("paste",       !(canMutate && hasClipboard));
-  dis.set("refreshView", false);
-
-  if (!hasSel) {
-    dis.set("editQuestion", true);
-    dis.set("editTags",     true);
-    dis.set("rename",       true);
-    dis.set("delete",       true);
-    dis.set("copy",         true);
-    dis.set("cut",          true);
-    dis.set("duplicate",    true);
-    dis.set("createGame",   true);
-  }
-
-  if (oneSel) {
-    dis.set("editQuestion", !(editor && oneSelIsQuestion));
-    dis.set("editTags",     !canEditTags);
-    dis.set("rename",       !canRename);
-    dis.set("delete",       !canDelete);
-    dis.set("copy",         !canCopy);
-    dis.set("cut",          !canCut);
-    dis.set("duplicate",    !canMutate);
-    dis.set("createGame",   !(hasQuestionInSel || hasFolderInSel));
-  }
-
-  if (manySel) {
-    dis.set("editQuestion", true);
-    dis.set("editTags",     !canEditTags);
-    dis.set("rename",       true);
-    dis.set("delete",       !canDelete);
-    dis.set("copy",         !canCopy);
-    dis.set("cut",          !canCut);
-    dis.set("duplicate",    !canMutate);
-    dis.set("createGame",   !(hasQuestionInSel || hasFolderInSel));
-  }
-  
-  // zastosuj do DOM
-  elToolbar.querySelectorAll('button[data-act]').forEach((b) => {
-    const act = b.dataset.act;
-    if (!act) return;
-    if (dis.has(act)) b.disabled = !!dis.get(act);
-  });
+  // 3) Przyciski: widoczność, dostępność i dymki z rejestru akcji
+  updateToolbarButtons(elToolbar, state);
 }
 
 export function renderTree(state) {
@@ -939,18 +779,6 @@ export function renderList(state) {
   initColumnResizers();
 }
 
-function svgFolderPlus(){ return icon("folder-plus", { className: "tbIco" }); }
-function svgFilePlus(){ return icon("file-plus", { className: "tbIco" }); }
-function svgEdit(){ return icon("edit-paper", { className: "tbIco" }); }
-function svgTag(){ return icon("tag", { className: "tbIco" }); }
-function svgPencil(){ return icon("pencil", { className: "tbIco" }); }
-function svgTrash(){ return icon("trash", { className: "tbIco" }); }
-function svgCopy(){ return icon("copy", { className: "tbIco" }); }
-function svgCut(){ return icon("cut", { className: "tbIco" }); }
-function svgPaste(){ return icon("paste", { className: "tbIco" }); }
-function svgDuplicate(){ return icon("duplicate", { className: "tbIco" }); }
-function svgPlay(){ return icon("gamepad", { className: "tbIco" }); }
-function svgRefresh(){ return icon("refresh", { className: "tbIco" }); }
 
 /* small inline icons for tree/list rows */
 function svgFolder(){

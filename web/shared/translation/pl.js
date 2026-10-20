@@ -4269,6 +4269,18 @@ const pl = {
         saveFailed: "Nie udało się zapisać taga.",
       },
     },
+    reasons: {
+      readOnly: "Masz tylko podgląd tej bazy.",
+      notHere: "Tej akcji nie ma w wynikach wyszukiwania i filtrów.",
+      selectSomething: "Najpierw zaznacz folder albo pytanie.",
+      selectOne: "Zaznacz jeden element.",
+      selectQuestion: "Zaznacz jedno pytanie.",
+      selectFolder: "Zaznacz jeden folder.",
+      selectTag: "Zaznacz tag.",
+      selectOneTag: "Zaznacz jeden tag.",
+      selectType: "Zaznacz kategorię.",
+      clipboardEmpty: "Schowek jest pusty.",
+    },
     trash: {
       open: "Kosz",
       title: "Kosz",
@@ -4391,6 +4403,7 @@ const pl = {
       rename: "Zmień nazwę",
       renameQuestion: "Zmień nazwę (treść)",
       createGame: "Utwórz grę…",
+      untag: "Zdejmij tag",
     },
     meta: {
       prepared: "preparowane",

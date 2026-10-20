@@ -4369,6 +4369,18 @@ const en = {
         saveFailed: "Failed to save tag.",
       },
     },
+    reasons: {
+      readOnly: "You can only view this base.",
+      notHere: "This action is not available in search and filter results.",
+      selectSomething: "Select a folder or question first.",
+      selectOne: "Select one item.",
+      selectQuestion: "Select one question.",
+      selectFolder: "Select one folder.",
+      selectTag: "Select a tag.",
+      selectOneTag: "Select one tag.",
+      selectType: "Select a category.",
+      clipboardEmpty: "The clipboard is empty.",
+    },
     trash: {
       open: "Trash",
       title: "Trash",
@@ -4491,6 +4503,7 @@ const en = {
       rename: "Rename",
       renameQuestion: "Rename (text)",
       createGame: "Create game…",
+      untag: "Remove tag",
     },
     meta: {
       prepared: "prepared",

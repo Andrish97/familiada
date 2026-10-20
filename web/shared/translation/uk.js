@@ -4366,6 +4366,18 @@ const uk = {
         saveFailed: "Не вдалося зберегти тег.",
       },
     },
+    reasons: {
+      readOnly: "Ти можеш лише переглядати цю базу.",
+      notHere: "Ця дія недоступна в результатах пошуку та фільтрів.",
+      selectSomething: "Спочатку вибери папку або запитання.",
+      selectOne: "Вибери один елемент.",
+      selectQuestion: "Вибери одне запитання.",
+      selectFolder: "Вибери одну папку.",
+      selectTag: "Вибери тег.",
+      selectOneTag: "Вибери один тег.",
+      selectType: "Вибери категорію.",
+      clipboardEmpty: "Буфер обміну порожній.",
+    },
     trash: {
       open: "Кошик",
       title: "Кошик",
@@ -4488,6 +4500,7 @@ const uk = {
       rename: "Перейменувати",
       renameQuestion: "Перейменувати (текст)",
       createGame: "Створити гру…",
+      untag: "Зняти тег",
     },
     meta: {
       prepared: "підготовлені",

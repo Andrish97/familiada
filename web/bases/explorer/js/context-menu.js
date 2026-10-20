@@ -1,36 +1,13 @@
 // base-explorerjs/context-menu.js
 
-import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-20T19584";
-
-import {
-  createFolderHere,
-  createQuestionHere,
-  deleteSelected,
-  renameSelectedPrompt,
-  copySelectedToClipboard,
-  cutSelectedToClipboard,
-  pasteClipboardHere,
-  deleteTags,
-  duplicateSelected,
-  canDeleteHere,
-} from "./actions.js?v=v2026-10-20T19584";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T19584";
+import { selectionSetSingle } from "./state.js?v=v2026-10-20T19584";
+import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-20T19584";
+import { buildContext } from "./actions/context.js?v=v2026-10-20T19584";
+import { runAction } from "./actions/run.js?v=v2026-10-20T19584";
+import { formatShortcut } from "./platform.js?v=v2026-10-20T19584";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T19584";
 import { renderAll } from "./render.js?v=v2026-10-20T19584";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T19584";
-
-
-
-const IS_MAC = navigator.platform.toLowerCase().includes("mac");
-function kbd(win, mac) {
-  return IS_MAC ? mac : win;
-}
-function fmtShortcut(sc) {
-  if (!sc) return "";
-  if (typeof sc === "string") return sc;
-  if (typeof sc === "object") return kbd(sc.win || "", sc.mac || "");
-  return "";
-}
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -43,18 +20,8 @@ export function hideContextMenu() {
   cm.innerHTML = "";
 }
 
-function isEditor(state) {
-  return state?.role === "owner" || state?.role === "editor";
-}
 
-function isReadOnlyView(state) {
-  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG || state?.view === VIEW.META;
-}
 
-function countRealSelected(state) {
-  const keys = Array.from(state?.selection?.keys || []);
-  return keys.filter(k => typeof k === "string" && (k.startsWith("c:") || k.startsWith("q:"))).length;
-}
 
 function pushSep(items) {
   if (!items.length) return;
@@ -75,8 +42,7 @@ function itemHtml(item, idx) {
     danger ? "danger" : "",
   ].filter(Boolean).join(" ");
 
-  const right = fmtShortcut(shortcut);
-  const rightHtml = right ? `<span class="cm-kbd">${right}</span>` : "";
+  const rightHtml = shortcut ? `<span class="cm-kbd">${shortcut}</span>` : "";
   
   return `<button type="button" class="${cls}" data-idx="${idx}" ${disabled ? "disabled" : ""}>
     ${iconName ? icon(iconName) : ""}
@@ -126,397 +92,52 @@ export async function showContextMenu({ state, x, y, target }) {
   const cm = document.getElementById("contextMenu");
   if (!cm) return;
 
-  const editor = isEditor(state);
-  const readOnlyView = isReadOnlyView(state);
+  // Jak w Eksploratorze: PPM / przytrzymanie na NIEZAZNACZONYM elemencie
+  // najpierw go zaznacza (przed policzeniem dostępności), a na elemencie
+  // z wielo-zaznaczenia zostawia zaznaczenie bez zmian.
+  if (selectTargetFirst(state, target)) renderAll(state);
+
+  const ctx = buildContext(state, { source: "menu", target });
+  const kind = target?.kind;
 
   const items = [];
-
-  /* =========================================================
-     TAGI (lewy panel): target.kind = "tags-bg" | "tag"
-     Grupy:
-       - Widok
-       - Zarządzanie tagami
-       - (placeholder) operacje niszczące
-  ========================================================= */
-  if (target.kind === "tags-bg" || target.kind === "tag" || target.kind === "meta") {
-  
-    // Explorer-style: PPM na niezaznaczonym elemencie lewego panelu => najpierw single-select
-    if (target.id) {
-      let justSelected = false;
-
-      if (target.kind === "tag") {
-        const tid = target.id;
-        if (!state?.tagSelection?.ids?.has?.(tid)) {
-          if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-          state.tagSelection.ids.clear();
-          state.tagSelection.ids.add(tid);
-          state.tagSelection.anchorId = tid;
-          justSelected = true;
-        }
-      }
-
-      if (target.kind === "meta") {
-        const mid = target.id;
-        if (!state?.metaSelection?.ids?.has?.(mid)) {
-          if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
-          state.metaSelection.ids.clear();
-          state.metaSelection.ids.add(mid);
-          state.metaSelection.anchorId = mid;
-          justSelected = true;
-        }
-      }
-
-      // widoczne podświetlenie w panelu tagów, tak samo jak przy cat/q niżej
-      if (justSelected) renderAll(state);
-    }
-  
-    const selectedTagIds = Array.from(state?.tagSelection?.ids || []).filter(Boolean);
-    const selectedMetaIds = Array.from(state?.metaSelection?.ids || []).filter(Boolean);
-  
-    // META (stałe): tylko “Pokaż”, reszta wyszarzona
-    if (target.kind === "meta") {
+  for (const group of MENU_GROUPS) {
+    const inGroup = ACTIONS.filter((a) => a.menuGroup === group && a.menu?.includes(kind));
+    let added = false;
+    for (const a of inGroup) {
+      const st = actionState(a, ctx);
+      if (!st.visible) continue;
+      if (!added) pushSep(items);
+      added = true;
       items.push({
-        label: t("baseExplorer.menu.show"),
-        icon: "eye",
-        disabled: selectedMetaIds.length === 0,
-        action: async () => {
-          // wejście w VIEW.META (zachowaj browse location jak przy TAG)
-          if (state.view !== VIEW.META) rememberBrowseLocation(state);
-  
-          state.view = VIEW.META;
-  
-          // META view u Ciebie dopuszcza dodatkowy filtr tagami (state.tagIds)
-          state.tagIds = selectedTagIds;
-  
-          await state._api?.refreshList?.();
-        }
+        label: t(a.label(ctx)),
+        icon: a.icon,
+        danger: !!a.danger,
+        shortcut: a.shortcut ? formatShortcut(a.shortcut) : "",
+        disabled: !st.enabled,
+        action: () => runAction(a.id, ctx),
       });
-  
-      pushSep(items);
-  
-      items.push({ label: t("baseExplorer.menu.addTag"), icon: "plus", disabled: true });
-      items.push({ label: t("baseExplorer.menu.editTag"), icon: "pencil", disabled: true });
-      pushSep(items);
-      items.push({ label: t("baseExplorer.menu.delete"), icon: "trash", disabled: true, danger: true });
-  
-      renderMenu(cm, items);
-      positionMenu(cm, x, y);
-      return;
-    }
-
-    // --- Widok ---
-    items.push({
-      label: t("baseExplorer.menu.show"),
-      icon: "eye",
-      disabled: selectedTagIds.length === 0,
-      action: async () => {
-        await state._api?.openTagView?.(selectedTagIds);
-      }
-    });
-
-    pushSep(items);
-
-    // --- Zarządzanie tagami ---
-    items.push({
-      label: t("baseExplorer.menu.addTag"),
-      icon: "plus",
-      disabled: !editor,
-      action: async () => {
-        const ok = await state._api?.openTagModal?.({ mode: "create" });
-        if (ok) {
-          await state._api?.refreshTags?.();
-          await state._api?.refreshList?.();
-        }
-      }
-    });
-
-    items.push({
-      label: t("baseExplorer.menu.editTag"),
-      icon: "pencil",
-      disabled: !editor || selectedTagIds.length !== 1,
-      action: async () => {
-        const tagId = selectedTagIds[0];
-        const ok = await state._api?.openTagModal?.({ mode: "edit", tagId });
-        if (ok) {
-          await state._api?.refreshTags?.();
-          await state._api?.refreshList?.();
-        }
-      }
-    });
-
-    // placeholdery na przyszłość (PPM tagów)
-    pushSep(items);
-    
-    items.push({
-      label: (selectedTagIds.length === 1)
-        ? t("baseExplorer.menu.deleteTag")
-        : t("baseExplorer.menu.deleteTags"),
-      icon: "trash",
-      disabled: !editor || selectedTagIds.length === 0,
-      danger: true,
-      action: async () => {
-        try {
-          await deleteTags(state, selectedTagIds);
-        } catch (e) {
-          console.error(e);
-          void alertModal({ text: t("baseExplorer.errors.deleteTagsFailed") });
-        }
-      }
-    });
-
-    renderMenu(cm, items);
-    positionMenu(cm, x, y);
-    return;
-  }
-
-  /* =========================================================
-     LISTA / DRZEWO: target.kind = "root" | "cat" | "q"
-     Grupy:
-       - Tworzenie (dla root)
-       - Schowek
-       - Tagi
-       - Nawigacja / tworzenie w folderze (dla cat)
-       - Edycja
-       - Niebezpieczne
-  ========================================================= */
-
-  // Explorer-style: PPM/long-press na NIEZAZNACZONYM elemencie listy/drzewa
-  // => najpierw single-select, PRZED policzeniem selectedRealCount (analogicznie
-  // do tagów wyżej). Bez tego menu budowało disabled na starej selekcji sprzed
-  // kliknięcia -- "Zmień nazwę"/"Usuń"/... same lazy-select'owały cel w środku
-  // swojej action(), ale przycisk był już wyszarzony (renderMenu() w ogóle nie
-  // podpina click handlera do disabled), więc ten kod nigdy się nie wykonywał.
-  // PPM na elemencie który JEST już częścią wielo-zaznaczenia zostawia je bez
-  // zmian (jak w prawdziwym Explorerze).
-  if ((target.kind === "cat" || target.kind === "q") && target.id) {
-    const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
-    if (!state.selection?.keys?.has?.(key)) {
-      selectionSetSingle(state, key);
-      // widoczne podświetlenie wiersza (lista i/lub drzewo) + toolbar --
-      // bez tego zaznaczenie w state byłoby poprawne "po cichu", ale wiersz
-      // wyglądałby na dalej odznaczony do najbliższego, niepowiązanego rerendera.
-      renderAll(state);
     }
   }
-
-  // ile realnie zaznaczono (bez "root")
-  const selectedRealCount = countRealSelected(state);
-
-  // ROOT (puste tło listy itp.)
-  if (target.kind === "root") {
-    const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-    const categoryId = parentId;
-
-    // --- Tworzenie ---
-    items.push({
-      label: t("baseExplorer.menu.newFolder"),
-      icon: "folder-plus",
-      shortcut: { win: "Ctrl+Shift+N", mac: "⌘⇧N" },
-      disabled: !editor || readOnlyView,
-      action: async () => {
-        await createFolderHere(state, { parentId });
-      }
-    });
-
-    items.push({
-      label: t("baseExplorer.menu.newQuestion"),
-      icon: "file-plus",
-      shortcut: { win: "Ctrl+N", mac: "⌘N" },
-      disabled: !editor || readOnlyView,
-      action: async () => {
-        await createQuestionHere(state, { categoryId });
-      }
-    });
-
-    pushSep(items);
-  }
-
-  // SCHOWEK (dla cat/q/root)
-  const canPaste = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
-  const pasteDisabled = readOnlyView || !canPaste || (!editor && state.clipboard?.mode === "cut");
-
-  // Schowek ma sens dla cat/q, dla root też (bo wklejasz “tu”)
-  items.push({
-    label: t("baseExplorer.menu.copy"),
-    icon: "copy",
-    shortcut: { win: "Ctrl+C", mac: "⌘C" },
-    disabled: !editor || selectedRealCount === 0,
-    action: async () => { copySelectedToClipboard(state); }
-  });
-
-  items.push({
-    label: t("baseExplorer.menu.cut"),
-    icon: "cut",
-    shortcut: { win:"Ctrl+X", mac:"⌘X" },
-    disabled: !editor || readOnlyView || selectedRealCount === 0,
-    action: async () => { cutSelectedToClipboard(state); }
-  });
-
-  items.push({
-    label: t("baseExplorer.menu.paste"),
-    icon: "paste",
-    shortcut: { win:"Ctrl+V", mac:"⌘V" },
-    disabled: pasteDisabled || !editor,
-    action: async () => {
-      if (readOnlyView) return;
-      await pasteClipboardHere(state);
-    }
-  });
-
-  items.push({
-    label: t("baseExplorer.menu.duplicate"),
-    icon: "duplicate",
-    shortcut: { win:"Ctrl+D", mac:"⌘D" },
-    disabled: !editor || readOnlyView || selectedRealCount === 0,
-    action: async () => {
-      try {
-        await duplicateSelected(state);
-      } catch (e) {
-        console.error(e);
-        void alertModal({ text: t("baseExplorer.errors.duplicateFailed") });
-      }
-    }
-  });
-
-  // jeśli jesteśmy na elemencie cat/q, dokładamy grupę TAGI
-  if (target.kind === "cat" || target.kind === "q") {
-    pushSep(items);
-
-    items.push({
-      label: t("baseExplorer.menu.tags"),
-      icon: "tag",
-      shortcut: { win:"Ctrl+T", mac:"⌘T" },
-      disabled: !editor, // viewer ogląda
-      action: async () => {
-        await state._api?.openAssignTagsModal?.();
-      }
-    });
-  }
-
-  // FOLDER (cat): nawigacja + tworzenie w środku
-  if (target.kind === "cat") {
-    pushSep(items);
-
-    // --- Nawigacja ---
-    items.push({
-      label: t("baseExplorer.menu.openFolder"),
-      icon: "folder",
-      shortcut: { win: "Enter", mac: "⏎" },
-      disabled: false,
-      action: async () => {
-        setViewFolder(state, target.id);
-        state.selection?.keys?.clear?.();
-        await state._api?.refreshList?.();
-      }
-    });
-
-    pushSep(items);
-
-    // --- Tworzenie w folderze ---
-    items.push({
-      label: t("baseExplorer.menu.newFolderIn"),
-      icon: "folder-plus",
-      disabled: !editor || readOnlyView,
-      action: async () => {
-        await createFolderHere(state, { parentId: target.id });
-      }
-    });
-
-    items.push({
-      label: t("baseExplorer.menu.newQuestionIn"),
-      icon: "file-plus",
-      disabled: !editor || readOnlyView,
-      action: async () => {
-        await createQuestionHere(state, { categoryId: target.id });
-      }
-    });
-  }
-
-  // EDYCJA (cat/q)
-  if (target.kind === "cat" || target.kind === "q") {
-    pushSep(items);
-
-    // --- Edytuj pytanie ---
-    // Bez readOnlyView: edycja treści konkretnego pytania (po id) nie zależy
-    // od "gdzie" jesteś, w przeciwieństwie do tworzenia/przenoszenia -- ta sama
-    // zasada co już przy "Tagi" (editTags) niżej. Toolbar/Ctrl+E i tak nigdy
-    // tego nie blokowały; to menu kontekstowe miało zbędne dodatkowe ograniczenie.
-    items.push({
-      label: t("baseExplorer.menu.editQuestion"),
-      icon: "edit-paper",
-      shortcut: { win:"Ctrl+E", mac:"⌘E" },
-      disabled: !editor || selectedRealCount !== 1 || target.kind !== "q",
-      action: async () => {
-        const qid = target.id;
-        await state._api?.openQuestionModal?.(qid);
-      }
-    });
-
-    items.push({
-      label: target.kind === "cat"
-        ? t("baseExplorer.menu.rename")
-        : t("baseExplorer.menu.renameQuestion"),
-      icon: "pencil",
-      shortcut: { win:"F2", mac:"F2" },
-      disabled: !editor || readOnlyView || selectedRealCount !== 1,
-      action: async () => {
-        await renameSelectedPrompt(state);
-      }
-    });
-
-    pushSep(items);
-
-    // --- Utwórz grę ---
-    items.push({
-      label: t("baseExplorer.menu.createGame"),
-      icon: "gamepad",
-      shortcut: { win:"Ctrl+G", mac:"⌘G" },
-      // Spójnie z toolbarem (render.js: hasQuestionInSel || hasFolderInSel) --
-      // PPM na SAMYM folderze (bez żadnego "q:" w selekcji) musiało dawać
-      // wyszarzone "Utwórz grę", mimo że selectionToQuestionIds() poniżej i tak
-      // rozwija foldery do pytań. Blokowało to dokładnie "tworzenie gry z
-      // folderu" przez menu kontekstowe.
-      disabled: !editor || readOnlyView || selectedRealCount === 0,
-      action: async () => {
-        const qIds = await state._api?.selectionToQuestionIds?.();
-        if (!qIds?.length) return;
-        state._api?.openExportModal?.({ preselectIds: qIds });
-      }
-    });
-
-    // NIEBEZPIECZNE
-    pushSep(items);
-    
-    items.push({
-      label: (state.view === VIEW.TAG)
-        ? t("baseExplorer.menu.deleteTags")
-        : t("baseExplorer.menu.delete"),
-      icon: "trash",
-      shortcut: { win:"Delete", mac:"Fn⌫" },
-      danger: true,
-      // TAG ma własną ścieżkę (zdejmowanie tagów, nie kasowanie) więc nie
-      // podlega canDeleteHere; poza TAG-iem musi się zgadzać z tym, co
-      // faktycznie blokuje toolbar/Delete -- inaczej PPM->Usuń w widoku
-      // META realnie kasuje element, mimo że reszta UI to blokuje.
-      disabled: selectedRealCount === 0 || (state.view !== VIEW.TAG && !canDeleteHere(state)),
-      action: async () => {
-        try {
-          if (state.view === VIEW.TAG) {
-            await state._api?.untagSelectedInTagView?.();
-          } else {
-            await deleteSelected(state);
-          }
-        } catch (e) {
-          console.error(e);
-          void alertModal({ text: t("baseExplorer.errors.operationFailed") });
-        }
-      }
-    });
-  }
-
-  // sprzątanie: nie zostaw separatora na końcu
-  while (items.length && items[items.length - 1]?.sep) items.pop();
+  if (!items.length) return;
 
   renderMenu(cm, items);
   positionMenu(cm, x, y);
+}
+
+function selectTargetFirst(state, target) {
+  const id = target?.id;
+  if (!id) return false;
+  if (target.kind === "cat" || target.kind === "q") {
+    const key = (target.kind === "cat" ? "c:" : "q:") + id;
+    if (state.selection?.keys?.has?.(key)) return false;
+    selectionSetSingle(state, key);
+    return true;
+  }
+  const sel = target.kind === "tag" ? state.tagSelection : target.kind === "meta" ? state.metaSelection : null;
+  if (!sel || sel.ids.has(id)) return false;
+  sel.ids.clear();
+  sel.ids.add(id);
+  sel.anchorId = id;
+  return true;
 }

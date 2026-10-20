@@ -171,6 +171,18 @@ reszta ukryta. Menu kontekstowe to samo z rejestru. Dzisiejsze okno
 
 ## 4. Kolejność prac (każdy krok: lokalna baza + e2e, nic na produkcję)
 
+**Postęp:** krok 1 zrobiony (2026-10-20): `platform.js`, `actions/context.js`,
+`actions/registry.js` (16 akcji), `actions/run.js`, `ui/toolbar.js`; pasek,
+menu kontekstowe (522 → 143 linie) i skróty (po `e.code`, bez powtórzeń przy
+przytrzymaniu) czytają z rejestru. Naprawione przy okazji: „Usuń” w widoku
+tagu robi to samo z każdego wejścia (usuwa do kosza; zdejmowanie tagu to
+osobna akcja „Zdejmij tag”), Wytnij/Utwórz grę/Tagi mają jedną regułę,
+„Wklej” z menu folderu wkleja do niego, „Nowy folder” z menu „Folderu
+głównego” tworzy w głównym, błędy akcji z paska mają komunikat, powód
+niedostępności w dymku. Przyciski bez sensu w widoku znikają (decyzja 3).
+Lokalny e2e `base-explorer`: 68/72, 4 porażki identyczne jak na `main`.
+
+
 1. **Szkielet bez zmiany zachowania:** `platform.js`, `actions/context.js`,
    `actions/run.js`, rejestr z obecnymi akcjami; pasek, menu i skróty
    przepięte na rejestr (naprawia rozbieżności z §1 pkt 1).
