@@ -201,7 +201,7 @@
      powtórzonego tytułu ani drugiej ramki wewnątrz głównej karty. */
   .polls-card .pollSec{ padding: 0; background: none; border: 0; border-radius: 0; }
   .polls-card .pollLinkSec > .pollSecTitle,
-  .polls-card .pollRecipientsSec > .pollSecHead{ display: none; }
+  .polls-card .pollRecipientsSec > .pollSecHead > .pollSecTitle{ display: none; }
 }
 .pollSec{
   --under: #0b1020;
@@ -286,7 +286,8 @@
 
 /* Subskrybenci: nagłówek z podsumowaniem, „Zaznacz wszystkich”, kafle, wyślij na dole */
 .subsSummary{ font-size: 12px; opacity: .85; }
-.subsTools{ display: flex; justify-content: flex-end; margin-top: 8px; }
+/* „Dodaj odbiorców” w linii nagłówka sekcji (bez tytułu na telefonie: po prawej) */
+.subsTools{ display: flex; justify-content: flex-end; margin-left: auto; }
 .subsFoot{
   display: flex;
   align-items: center;

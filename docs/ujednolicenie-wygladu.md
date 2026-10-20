@@ -115,6 +115,12 @@ podliczania jako stan bieżącej operacji.
   treścią (pytanie, odpowiedzi), zamykaną paskiem/tłem — bez trybu
   „Wstecz”. Węższe okno komputera (601–1100 px bez dotyku) zostaje przy
   widoku pytania z „Wstecz”.
+- **Przyciski sekcji w linii nagłówka (uwaga użytkownika 2026-10-20):**
+  „Dodaj odbiorców” w ankiecie obok nagłówka „Odbiorcy” (na telefonie, bez
+  tytułu, po prawej). Audyt scen zrzutów (nagłówek + osobny wiersz samych
+  przycisków, choć mieszczą się w linii) nie znalazł innych takich miejsc.
+- **Roletka pytania w edytorze gry:** przewija się sama lista odpowiedzi,
+  sekcja kończy się nad dolnym safe area (jak w Eksploratorze).
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /
