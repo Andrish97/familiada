@@ -252,7 +252,8 @@ async function loadBrowse({ reset = false } = {}) {
     if (els.browseGrid) els.browseGrid.innerHTML = "";
   }
 
-  if (els.browseInfo) els.browseInfo.textContent = t("marketplace.loading");
+  // Pierwsze ładowanie: siatka jeszcze ukryta (szkielet), bez napisu „Ładowanie…”.
+  if (els.browseInfo && els.browseGrid?.classList.contains("skel-step-ready")) els.browseInfo.textContent = t("marketplace.loading");
 
   const lang = getUiLang();
   const { data, error } = await sb().rpc("market_browse", {

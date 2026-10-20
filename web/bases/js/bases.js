@@ -206,6 +206,8 @@ function show(el, on) {
 
 function setHint(t) {
   if (!hint) return;
+  // domyślny tekst z HTML (data-i18n) pokazuje się razem z tytułem; dalej steruje JS
+  hint.removeAttribute("data-i18n");
   hint.textContent = t || "";
 }
 

@@ -195,7 +195,11 @@ function setActiveListMode(mode, { updateUrl = true } = {}) {
     DRAW: "logoEditor.create.drawSubtitle",
     IMAGE: "logoEditor.create.imageSubtitle",
   };
-  if (el.hint) el.hint.textContent = t(hintKeys[activeListMode]);
+  if (el.hint) {
+    // domyślny tekst z HTML (data-i18n) pokazuje się razem z tytułem; dalej steruje JS
+    el.hint.removeAttribute("data-i18n");
+    el.hint.textContent = t(hintKeys[activeListMode]);
+  }
   for (const [key, tab] of Object.entries(el.tabs)) {
     const active = key === activeListMode;
     tab?.classList.toggle("active", active);

@@ -356,6 +356,10 @@ async function startQrScan() {
   const userP = initPage("connectDevice", { ready: i18nP });
   await i18nP;
   document.documentElement.classList.remove('page-loading');
+  // podtytuł nie zależy od konta — razem z tytułem, przed odpowiedzią sesji
+  if (pageHint) pageHint.textContent = _isMobile
+    ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub Przycisk do pojedynku albo zeskanuj kod QR z Panelu sterowania.")
+    : (t("connectDevice.header.hintDesktop") || "Podłącz się jako wyświetlacz lub zeskanuj QR z panelu sterowania.");
 
   const currentUser = await userP;
 
@@ -364,10 +368,6 @@ async function startQrScan() {
 
   // Gość nie dostaje „Wskazówek” na tej stronie (jak dotąd).
   if (guestMode && btnManual) btnManual.style.display = "none";
-
-  if (pageHint) pageHint.textContent = _isMobile
-    ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub Przycisk do pojedynku albo zeskanuj kod QR z Panelu sterowania.")
-    : (t("connectDevice.header.hintDesktop") || "Podłącz się jako wyświetlacz lub zeskanuj QR z panelu sterowania.");
 
   if (_isMobile && btnScanQr) {
     btnScanQr.style.display = "";
