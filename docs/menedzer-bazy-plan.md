@@ -32,6 +32,10 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     np. dwoma palcami, jako odpowiedniki akcji z myszy i klawiatury
     (zaznaczanie wielu, ramka, cofanie). Gest = kolejne wejście do tego
     samego rejestru akcji.
+  - **Renderowanie list do przebudowy:** dziś kilka nakładających się reguł
+    w różnych miejscach (widoki, pamięci podręczne, liczniki, sortowanie,
+    filtry). Cel: jedno źródło stanu i jedna prosta, niezawodna ścieżka
+    „stan → co pokazać → render” dla drzewa, listy i lewego panelu.
   - **Przemyśleć wyszukiwanie i filtrowanie** (tekst, #tagi w polu
     wyszukiwania, filtr tagów i kategorii w lewym panelu, blokady akcji
     w widokach wyszukiwania/tagów), żeby działało dobrze i spójnie.
