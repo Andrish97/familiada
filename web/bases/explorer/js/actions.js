@@ -16,7 +16,7 @@ import {
 
 import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-20T23145";
 import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-20T23145";
-import { normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-20T23145";
+import { LIMITS, normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-20T23145";
 
 import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-20T23145";
 
@@ -1119,7 +1119,7 @@ export async function renameSelectedPrompt(state) {
   const title = isFolder
     ? t("baseExplorer.rename.folderTitle")
     : t("baseExplorer.rename.questionTitle");
-  const maxLen = isFolder ? 80 : 200;
+  const maxLen = isFolder ? 80 : LIMITS.Q_TEXT; // pytanie: ten sam limit co w oknie pytania (E21)
   const resourceId = key.slice(2);
   let lease = null;
   try {
