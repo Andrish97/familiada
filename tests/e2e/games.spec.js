@@ -333,6 +333,8 @@ test.describe("games: audyt -- kafelki", () => {
     const stamp = Date.now();
     const ready = `E2E-GM-FLT-R-${stamp}`;
     const draft = `E2E-GM-FLT-D-${stamp}`;
+    // pole wyszukiwania jest widoczne, gdy pasek mieści napisy (od ~1400 px; węższy — ikony i lupa)
+    await page.setViewportSize({ width: 1400, height: 900 });
     try {
       await page.evaluate(async ({ ready, draft }) => {
         const sb = window.__sbClient;
