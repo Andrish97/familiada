@@ -37,7 +37,7 @@ const DEFAULT_SETTINGS = {
     colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
     theme: null,
     logoId: null,
-    hostLogoMode: "pixel",
+    hostLogoMode: "source",
   },
   game: {
     hasFinal: null,
@@ -78,7 +78,7 @@ function mergeSettings(saved) {
       },
       theme: s.display?.theme ?? defs.display.theme,
       logoId: s.display?.logoId ?? defs.display.logoId,
-      hostLogoMode: s.display?.hostLogoMode === "source" ? "source" : "pixel",
+      hostLogoMode: s.display?.hostLogoMode === "pixel" ? "pixel" : "source",
     },
     game: {
       hasFinal: s.game?.hasFinal ?? defs.game.hasFinal,
@@ -722,7 +722,7 @@ function renderDisplay() {
     btn.addEventListener("click", () => openColorModal(btn.dataset.colorKey));
   });
   content.querySelectorAll("[name='gsHostLogoMode']").forEach(radio => radio.addEventListener("change", () => {
-    localSettings.display.hostLogoMode = radio.value === "source" ? "source" : "pixel";
+    localSettings.display.hostLogoMode = radio.value === "pixel" ? "pixel" : "source";
     markDirty();
     postPreviewRow();
   }));

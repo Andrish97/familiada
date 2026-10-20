@@ -280,6 +280,19 @@ test("timer3: EXPIRE_TIMER3 jest no-opem, jeśli operator sam rozstrzygnął wcz
   assert.equal(store.state.rev, revBefore);
 });
 
+test("timer3: ręczne X w trakcie odliczania gasi zegarek — bez drugiego X po wygaśnięciu", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 });
+  await dispatch({ type: "START_TIMER3" });
+
+  await dispatch({ type: "ADD_X" });
+  assert.equal(store.state.rounds.timer3.running, false);
+  assert.equal(await dispatch({ type: "EXPIRE_TIMER3" }), null);
+  assert.equal(store.state.rounds.xA, 1);
+});
+
 test("timer3: CANCEL_TIMER3 (zastany wygasły przy wznowieniu Control) kasuje zegarek BEZ naliczania X, w odróżnieniu od EXPIRE_TIMER3", async () => {
   let t = 2_000_000;
   const { store, dispatch } = makeEngine({}, () => t);

@@ -68,6 +68,9 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     const hostPreview = page.frameLocator("#gsHostPreview");
     await expect(page.locator("#gsHostPreview")).toBeVisible();
     await expect(page.locator("#gsDisplayPreview")).toBeVisible();
+    // Bez ustawienia domyślny tryb to „Źródło” (decyzja 2026-10-20).
+    await expect(page.locator('input[name="gsHostLogoMode"][value="source"]')).toBeChecked();
+    await page.locator(".gs-host-logo-mode .toggle-item").nth(0).click();
     await expect(page.locator('input[name="gsHostLogoMode"][value="pixel"]')).toBeChecked();
     // Radio inputs are visually hidden behind the designed toggle; click the
     // actual visible control, then assert the input state it drives.

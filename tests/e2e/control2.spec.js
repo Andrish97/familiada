@@ -3388,15 +3388,11 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
     await clickConfirmed(page.getByRole("button", { name: "Rozpocznij odliczanie 3s" }));
     await expect(page.locator('[data-timer-role="timer3"]')).toBeVisible({ timeout: 10000 });
 
-    // Zgłoszone: Display (nie tylko Control) musi jednoznacznie pokazywać,
-    // że 3s zegarek trwa -- control/display/js/render.js's startTimer3Tick()
-    // podmienia LEFT (drużyna A ma kontrolę) na odliczanie w dół,
-    // DWUCYFROWE ("03"/"02"/"01", padStart), odróżnialne od zwykłego
-    // wyniku drużyny (paintTotals() pisze BEZ wiodącego zera -- "0").
+    // Decyzja 2026-10-20: 3s zegarek NIE zmienia Wyświetlacza — małe
+    // potrójne wyświetlacze dalej pokazują wyniki, bez odliczania.
     await page.waitForTimeout(700);
     const duringCalls = await getDisplayCalls(displayPage, "api.small.leftDigits");
-    expect(duringCalls.length, "Display musi dostać przynajmniej jedno odliczenie LEFT w trakcie timera3").toBeGreaterThan(0);
-    expect(duringCalls.at(-1).args[0]).toMatch(/^0[123]$/);
+    expect(duringCalls.filter((c) => /^0[123]$/.test(String(c.args[0]))), "Display nie odlicza 3s zegarka").toHaveLength(0);
 
     // "Control zamknięte w trakcie odliczania" -- NIE page.reload() po
     // prostym waitForTimeout(): karta Control, dopóki żyje (nawet tylko
@@ -3419,10 +3415,8 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
     await expect(xTile(page)).toContainText("0 / 3");
     await expect(page.locator('[data-timer-role="timer3"]')).toHaveCount(0);
 
-    // Display też wraca do prawdziwego wyniku (TIMER3_STOPPED -> paintTotals,
-    // "0" bez wiodącego zera) -- dowód, że to nie tylko Control wie o cofnięciu.
     const afterCalls = await getDisplayCalls(displayPage, "api.small.leftDigits");
-    expect(afterCalls.at(-1).args[0]).toBe("0");
+    expect(afterCalls.filter((c) => /^0[123]$/.test(String(c.args[0])))).toHaveLength(0);
 
     // Dowód, że to nie tylko wygląd po jednym renderze -- zegarek da się
     // uruchomić ponownie, nie został zablokowany w pośrednim stanie.

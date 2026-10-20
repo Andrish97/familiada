@@ -62,7 +62,7 @@ function applyGameSettingsToState(settings, state) {
     if (display.colors) state.display.colors = { ...state.display.colors, ...display.colors };
     if (display.theme !== undefined) state.display.theme = display.theme;
     if (display.logoId !== undefined) state.display.logoId = display.logoId;
-    if (display.hostLogoMode !== undefined) state.display.hostLogoMode = display.hostLogoMode === "source" ? "source" : "pixel";
+    if (display.hostLogoMode !== undefined) state.display.hostLogoMode = display.hostLogoMode === "pixel" ? "pixel" : "source";
   }
 
   if (game) {
@@ -328,18 +328,6 @@ async function main() {
   void Promise.all(listSfx().map(getSfxDuration));
   const store = createStore(gameId);
   const [expiredTimer] = await Promise.all([store.hydrate(), sfxInitP]);
-  const outroStartedKey = `control2:outro-started:${gameId}`;
-  let outroStartedAt = null;
-  let outroUnlockTimer = null;
-  let outroWasEnded = !!store.state.locks.gameEnded;
-  if (outroWasEnded) {
-    const savedStart = Number(sessionStorage.getItem(outroStartedKey));
-    const persistedStart = Date.parse(store.state.__row?.updated_at || "");
-    outroStartedAt = savedStart || (Number.isFinite(persistedStart) ? persistedStart : Date.now());
-    sessionStorage.setItem(outroStartedKey, String(outroStartedAt));
-  } else {
-    sessionStorage.removeItem(outroStartedKey);
-  }
   const sessionTelemetry = createSessionTelemetry(gameId, () => store.state, store.subscribe);
   const realtimeStates = new Map();
   // Wyjście z Control (ustawienia, zamknięcie karty) przerywa zapytania
@@ -1167,23 +1155,7 @@ async function main() {
   scheduleTimer3Watch();
 
   function renderCtx() {
-    const ended = !!store.state.locks.gameEnded;
-    if (!ended) {
-      outroWasEnded = false;
-      outroStartedAt = null;
-      if (outroUnlockTimer) clearTimeout(outroUnlockTimer);
-      outroUnlockTimer = null;
-      sessionStorage.removeItem(outroStartedKey);
-    } else if (!outroWasEnded) {
-      outroWasEnded = true;
-      outroStartedAt = Date.now();
-      sessionStorage.setItem(outroStartedKey, String(outroStartedAt));
-    }
-    const outroReturnReady = ended && Date.now() - (outroStartedAt || Date.now()) >= 30_000;
-    if (ended && !outroReturnReady && !outroUnlockTimer) {
-      outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
-    }
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, outroReturnReady, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, testModeChanging, typingPending:typingCommit, busy: testModePanel?.blocked() || controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {

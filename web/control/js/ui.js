@@ -159,7 +159,6 @@ export function createUI({ root, emit }) {
   // store'a/silnika wprost... zero logiki gry tutaj").
   let busy = false;
   let devicesBlocked = false;
-  let outroReturnReady = false;
   function boardBusy() { return busy; }
   function revealLocked() { return busy; }
 
@@ -560,7 +559,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryColors")}: ` }), colorDots(d.colors)]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryTheme")}: ` }), document.createTextNode(displayThemeLabel(d.theme))]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryLogo")}: ` }), document.createTextNode(d.logoId ? t("control.summaryLogoCustom") : t("control.summaryDefault"))]),
-        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryHostLogo")}: ` }), document.createTextNode(d.hostLogoMode === "source" ? t("gameSettings.display.hostLogoSource") : t("gameSettings.display.hostLogoPixel"))]),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryHostLogo")}: ` }), document.createTextNode(d.hostLogoMode === "pixel" ? t("gameSettings.display.hostLogoPixel") : t("gameSettings.display.hostLogoSource"))]),
         h("div", { id: "c2DevicePreviews" }, [
           h("div", { class: "c2-device-preview-card" }, [h("div", { class: "c2-device-preview-title", text: t("control.displayPreviewTitle") }), h("div", { id: "c2DisplayPreview" }, previewFrame ? [previewFrame] : [])]),
           h("div", { class: "c2-device-preview-card" }, [h("div", { class: "c2-device-preview-title", text: t("control.hostLogoPreviewTitle") }), h("div", { id: "c2HostPreview" }, hostPreviewFrame ? [hostPreviewFrame] : [])]),
@@ -1260,12 +1259,8 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
-      // Zgłoszone: "po zakończeniu gry od razu wychodzi, nie czeka na
-      // koniec dźwięku — ten dźwięk ma też blokować akcje" — GAME_END_SHOW/
-      // FINISH_FINAL grają "show_intro"/"final_end" (control/js/actionGate.js),
-      // a boardBusy() już poprawnie odzwierciedla ich czas trwania — tym
-      // dwóm przyciskom brakowało tylko podpięcia pod tę samą blokadę, którą
-      // ma każde inne duże przejście planszy (navButton wyżej).
+      // Gra już zakończona: outro nie blokuje ani "Zacznij od nowa", ani
+      // "Wróć do moich gier" (zgłoszone 2026-10-20).
       nav: [
         navButton(t("control.restartGame"), {
           shortcut: null,
@@ -1274,7 +1269,7 @@ export function createUI({ root, emit }) {
           onclick: () => emit("game.restart"),
         }),
         navButton(t("control.returnToMyGames"), {
-          busy: boardBusy() && !outroReturnReady,
+          busy: false,
           onclick: () => emit("session.finish"),
         }),
       ],
@@ -1884,7 +1879,6 @@ export function createUI({ root, emit }) {
     busy = !!ctx.busy;
     typingPending = !!ctx.typingPending;
     devicesBlocked = !!ctx.devicesBlocked;
-    outroReturnReady = !!ctx.outroReturnReady;
     // Dla ponownego renderu tego samego kroku budujemy drzewo obok i
     // uzgadniamy je z żywym DOM. Dzięki temu zachowują się elementy, których
     // stan się nie zmienił (w tym animacje, fokus i scroll); przy zmianie

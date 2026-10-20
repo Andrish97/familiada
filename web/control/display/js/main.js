@@ -312,6 +312,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (deviceGate && deviceGate.state() !== "ok") await deviceGate.ready;
 
   if (preview) {
+    // Podgląd w Control/ustawieniach gry — bez przycisku pełnego ekranu.
+    $("fsBtn")?.remove();
     await bootPreview();
     return;
   }

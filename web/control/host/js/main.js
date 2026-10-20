@@ -213,6 +213,8 @@ async function main() {
   document.documentElement.classList.remove("page-loading");
 
   if (preview) {
+    // Podgląd w Control/ustawieniach gry — bez przycisku pełnego ekranu.
+    document.getElementById("btnFS")?.remove();
     const renderer = createHostRenderer();
     const coverLogo = createCoverLogoRenderer({ previewOnly: true });
     let latestRow = null;
