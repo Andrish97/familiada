@@ -298,6 +298,10 @@ body.home-body {
 .shot-img {
   width: 100%;
   height: auto;
+  /* Pełne miejsce na kadr od razu (zanim skrypt poda obraz) i stała
+     wysokość kafla w karuzeli: kadr 16:9 wpasowany w ramę 16:10. */
+  aspect-ratio: 960 / 600;
+  object-fit: contain;
   display: block;
   border-radius: 18px;
   opacity: 0;

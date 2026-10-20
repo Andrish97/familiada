@@ -2,27 +2,30 @@
 // §4 „Zmiana typu gry”). Ta sama bramka edit i to samo potwierdzenie resetu
 // zamkniętej ankiety co „Edytuj” (editGate); konwersję wykonuje atomowo
 // game_change_type. Wynik to szkic wybranego typu -- braki pokaże silnik reguł.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T17443";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-20T17443";
-import { confirmModal, alertModal } from "../../shared/js/core/modal.js?v=v2026-10-20T17443";
-import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T17443";
-import { editGate, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-20T17443";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T18364";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-20T18364";
+import { confirmModal, alertModal } from "../../shared/js/core/modal.js?v=v2026-10-20T18364";
+import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T18364";
+import { editGate, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-20T18364";
 
 const SOURCE_TYPES = [TYPES.PREPARED, TYPES.POLL_POINTS, TYPES.POLL_TEXT];
 // Nazwy typów jak na zakładkach Gier.
 const TAB_KEY = { [TYPES.PREPARED]: "prepared", [TYPES.POLL_POINTS]: "pollPoints", [TYPES.POLL_TEXT]: "pollText" };
 
-/** Klucz opisu konwersji (tabela z planu); null -- ten sam typ. */
+/**
+ * Klucz opisu konwersji -- tylko to, co zrobi sama operacja na danych
+ * (game_change_type); null -- ten sam typ.
+ */
 export function conversionKey(from, to) {
   if (from === to) return null;
   if (to === TYPES.POLL_TEXT) return "toText";
-  if (to === TYPES.POLL_POINTS) return from === TYPES.POLL_TEXT ? "textToPoints" : "preparedToPoints";
-  return from === TYPES.POLL_TEXT ? "textToPrepared" : "toPrepared";
+  if (to === TYPES.POLL_POINTS) return "toPoints";
+  return "toPrepared";
 }
 
 // Karta na typ: nazwa jak na zakładce Gier i skutek zmiany; obecny typ
 // wyłączony, domyślnie wybrany pierwszy inny.
-function buildBody(current) {
+function buildBody(current, reset) {
   const box = document.createElement("div");
   box.className = "change-type";
   box.setAttribute("role", "radiogroup");
@@ -43,7 +46,9 @@ function buildBody(current) {
     const desc = document.createElement("span");
     desc.className = "change-type-desc";
     const key = conversionKey(current, type);
-    desc.textContent = t(`games.changeType.summary.${key || "same"}`);
+    // reset zamkniętej ankiety zeruje punkty (_game_poll_reset)
+    const extra = reset && key === "toPrepared" ? " " + t("games.changeType.summary.pointsRemoved") : "";
+    desc.textContent = t(`games.changeType.summary.${key || "same"}`) + extra;
     label.append(input, name, desc);
     box.append(label);
   }
@@ -59,13 +64,15 @@ export async function changeGameType(game) {
   const gate = await editGate(game.id, { action: "change_type", resetNow: false });
   if (!gate.ok) return null;
 
-  const { box, picked } = buildBody(game.type);
+  const { box, picked } = buildBody(game.type, gate.reset);
   const ok = await confirmModal({
     title: t("games.changeType.title"),
     text: t("games.changeType.text"),
     okText: t("games.changeType.ok"),
     cancelText: t("games.changeType.cancel"),
     body: box,
+    // na telefonie okno zastępuje stronę (wzorzec okien formularzowych)
+    sheet: { backBtn: document.getElementById("btnBackSheet") },
   });
   const to = picked();
   if (!ok || !to || to === game.type) return null;

@@ -2946,12 +2946,11 @@ const en = {
       cancel: "Cancel",
       failed: "Could not change the game type. Please try again.",
       summary: {
-        same: "Current type — no change.",
-        preparedToPoints: "Questions and answers stay; points are reset to zero. The audience votes for the answers and the poll tally calculates the points.",
-        toText: "Questions stay; answers and points are removed. The audience types its own answers and the tally puts up to 6 most frequent ones into the game.",
-        textToPoints: "Questions stay. Add 3–6 answers to each question — the audience will vote for them.",
-        toPrepared: "Questions and answers stay. The game is ready when every answer has at least 4 points (at most 100 per question).",
-        textToPrepared: "Questions stay. Add 3–6 answers with points to each question (each at least 4 points, at most 100 in total).",
+        same: "Current type.",
+        toText: "Questions stay. Answers and points are removed.",
+        toPoints: "Questions and answers stay. Points are removed.",
+        toPrepared: "Questions and answers stay.",
+        pointsRemoved: "Points are removed.",
       },
     },
     transferDropsVotes: {
@@ -3200,7 +3199,7 @@ const en = {
       again: "ARROW = PLAY AGAIN",
       againTouch: "SWIPE = PLAY AGAIN",
     },
-    long: { score: "SCORE", best: "RECORD", paused: "PAUSED" },
+    long: { score: "SCORE", best: "RECORD", paused: "PAUSED", bonus: ({ points }) => `BONUS +${points}` },
   },
   pollGo: {
     friendActive: "You are friends",

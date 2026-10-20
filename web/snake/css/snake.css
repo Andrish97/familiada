@@ -135,3 +135,28 @@ html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden;
 .a2hsText b { color: #fff; font-weight: 600; }
 .a2hsClose { min-height: 44px; padding: 12px 24px; border-radius: 10px; }
 html.showA2HS .a2hs { display: flex; }
+
+/* Przełącznik języka -- lewy górny róg, ten sam rozmiar i wygląd co pełny ekran. */
+.lang-switcher.lang-floating {
+  top: max(12px, env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  right: auto;
+  z-index: 9999;
+}
+.lang-floating .btn.lang-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.28);
+  /* jak .fs-btn obok: półprzezroczysty na tle motywu (odcień przez --btn-tint) */
+  --under: transparent;
+  --btn-tint: rgba(0,0,0,.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.lang-floating .btn.lang-btn:hover { --btn-tint: rgba(0,0,0,.38); }
+.lang-floating .lang-btn .ico { width: 22px; height: 22px; }
+.lang-menu { z-index: 10000; }

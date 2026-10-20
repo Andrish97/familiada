@@ -3,20 +3,23 @@
 // Lewy panel -- wynik, prawy -- rekord, górny -- tempo; long1/long2 -- podpisy.
 // Zdarzenia (enter/start/finish) trafiają do statystyk admina (snake-log.js);
 // zalogowanym baza zapisuje rekord i liczbę gier.
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T17443";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-20T17443";
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T17443";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T17443";
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T17443";
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-20T17443";
-import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-20T17443";
-import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-20T17443";
-import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-20T17443";
-import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-20T17443";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T18364";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-20T18364";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T18364";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T18364";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T18364";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-20T18364";
+import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-20T18364";
+import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-20T18364";
+import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-20T18364";
+import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-20T18364";
 
 const OFF = "#2e2e32";
 const LIT = "#d7ff3d";
 const APPLE = "#ff4040";
+const BONUS = "#ffb31a";
+// Bonus miga przez ostatnie kroki przed zniknięciem.
+const BONUS_BLINK = 10;
 const BEST_KEY = "familiada:snake:best";
 
 // Kafle 5x7 (bity od lewej kolumny).
@@ -28,6 +31,7 @@ const HEAD = {
   down: [31, 31, 31, 31, 31, 21, 31],
 };
 const APPLE_TILE = [2, 4, 14, 31, 31, 31, 14];
+const BONUS_TILE = [4, 4, 31, 14, 14, 27, 17];
 const CRASH = [17, 17, 10, 4, 10, 17, 17];
 
 const $ = (id) => document.getElementById(id);
@@ -35,7 +39,7 @@ const $ = (id) => document.getElementById(id);
 const TOUCH = matchMedia("(pointer: coarse)").matches;
 guardViewportWidth({ minWidth: 0, allowPhoneLandscape: true, requirePhoneLandscape: true, rotateMessageKey: "snake.rotateMessage" });
 
-const i18nReady = initI18n({ withSwitcher: false }).then(() => {
+const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove("page-loading");
   hydrateIcons();
 });
@@ -179,7 +183,8 @@ async function boot() {
   };
 
   const drawGame = () => {
-    const { snake, food, dir, dead } = game.state;
+    const { snake, food, bonus, dir, dead } = game.state;
+    const bonusHidden = bonus && bonus.left <= BONUS_BLINK && bonus.left % 2 === 1;
     const cells = new Map();
     snake.forEach((s, i) => cells.set(`${s.x},${s.y}`, i === 0 ? (dead ? CRASH : HEAD[dir]) : FULL));
     for (let ty = 0; ty < big.tilesY; ty++) {
@@ -187,12 +192,14 @@ async function boot() {
         const rows = cells.get(`${tx},${ty}`);
         if (rows) drawTile(big, tx, ty, rows, LIT);
         else if (food && food.x === tx && food.y === ty) drawTile(big, tx, ty, APPLE_TILE, blink ? LIT : APPLE);
+        else if (bonus && !bonusHidden && bonus.x === tx && bonus.y === ty) drawTile(big, tx, ty, BONUS_TILE, BONUS);
         else drawTile(big, tx, ty, EMPTY, LIT);
       }
     }
     writePanel(leftPanel, game.state.score);
     writePanel(rightPanel, Math.max(best, game.state.score));
-    writePanel(topPanel, Math.floor(game.state.score / 5) + 1);
+    // Górny panel: odliczanie bonusu, a bez bonusu -- tempo (co 5 jabłek wyżej).
+    writePanel(topPanel, bonus ? bonus.left : Math.floor(game.state.apples / 5) + 1);
   };
 
   const showIntro = () => {
@@ -207,41 +214,52 @@ async function boot() {
   // Stan gry na planszy (intro | play | pause | over) -- dla czytników i testów.
   const setToggle = () => { $("snakeFrame").dataset.mode = mode; };
 
+  // Po zjedzeniu bonusu lewy long na chwilę pokazuje „BONUS +N”.
+  let flashTimer = 0;
+  const flashBonus = (points) => {
+    clearTimeout(flashTimer);
+    writeLong(long1, t("snake.long.bonus", { points }));
+    flashTimer = setTimeout(() => { if (mode === "play") writeLong(long1, t("snake.long.score")); }, 1500);
+  };
+
   const tick = () => {
-    const { ate, dead } = game.step();
+    const { ate, bonus, dead } = game.step();
     if (ate) blink = false;
     blink = !blink;
     if (dead) { finish(); return; }
+    if (bonus) flashBonus(bonus);
     drawGame();
-    timer = setTimeout(tick, stepDelay(game.state.score));
+    timer = setTimeout(tick, stepDelay(game.state.apples));
   };
 
   const start = () => {
     clearTimeout(timer);
+    clearTimeout(flashTimer);
     tileCache.clear();
     game = createSnakeGame({ cols: big.tilesX, rows: big.tilesY });
     mode = "play";
     setToggle();
     writeLong(long1, t("snake.long.score"));
     drawGame();
-    logSnake("start", { lang });
+    logSnake("start", { lang: getUiLang() });
     timer = setTimeout(tick, stepDelay(0));
   };
 
+  let showSummary = null;
   const finish = () => {
     clearTimeout(timer);
+    clearTimeout(flashTimer);
     mode = "over";
     setToggle();
     drawGame();
     const score = game.state.score;
     const record = score > best;
     if (record) { best = score; writeLocalBest(best); }
-    logSnake("finish", { score, lang }).then((res) => {
+    logSnake("finish", { score, lang: getUiLang() }).then((res) => {
       if (user && res?.best != null) { account = { best: res.best, games: res.games }; best = Math.max(best, res.best); showProgress(); }
     });
     // Chwila na zobaczenie „X” na głowie, potem podsumowanie.
-    setTimeout(() => {
-      if (mode !== "over") return;
+    showSummary = () => {
       showText([
         [2, game.state.won ? t("snake.board.won") : t("snake.board.over")],
         [4, t("snake.board.score", { score })],
@@ -249,7 +267,8 @@ async function boot() {
         [8, t(TOUCH ? "snake.board.againTouch" : "snake.board.again")],
       ]);
       writePanel(rightPanel, best);
-    }, 900);
+    };
+    setTimeout(() => { if (mode === "over") showSummary(); }, 900);
   };
 
   const pause = (on) => {
@@ -260,7 +279,7 @@ async function boot() {
     } else if (!on && mode === "pause") {
       mode = "play";
       writeLong(long1, t("snake.long.score"));
-      timer = setTimeout(tick, stepDelay(game.state.score));
+      timer = setTimeout(tick, stepDelay(game.state.apples));
     }
     setToggle();
   };
@@ -304,6 +323,14 @@ async function boot() {
   $("snakeFrame").addEventListener("click", toggle);
 
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(true); });
+  // Przełącznik języka (lewy górny róg): napisy na planszy i pod nią od razu w nowym języku.
+  window.addEventListener("i18n:lang", () => {
+    if (mode === "intro") showIntro();
+    else if (mode === "over" && showSummary) showSummary();
+    writeLong(long1, t(mode === "pause" ? "snake.long.paused" : "snake.long.score"));
+    writeLong(long2, t("snake.long.best"));
+    showProgress();
+  });
   // Obrót telefonu do pionu w trakcie gry zasłania planszę prośbą o obrót.
   matchMedia("(orientation: portrait)").addEventListener("change", (e) => { if (TOUCH && e.matches) pause(true); });
 

@@ -9,9 +9,9 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-20T17443";
-import { icon, iconText } from "./icons.js?v=v2026-10-20T17443";
-import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-20T17443";
+import { t } from "../../translation/translation.js?v=v2026-10-20T18364";
+import { icon, iconText } from "./icons.js?v=v2026-10-20T18364";
+import { PAGES, dialogAllowed } from "./nav-map.js?v=v2026-10-20T18364";
 
 
 const SHEET_MQ = "(max-width:600px)";
@@ -90,7 +90,7 @@ export function setModalSheetPage(pageId) {
   if (allowed && key === "contactModalOverlay") {
     setTimeout(() => {
       if (urlDialog() !== key) return;
-      import("./contact-modal.js?v=v2026-10-20T17443").then((module) => module.openContactModal());
+      import("./contact-modal.js?v=v2026-10-20T18364").then((module) => module.openContactModal());
 
     }, 0);
     return;
@@ -253,6 +253,13 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, onBack, keepBackB
   }
 
   applyPresentation(true);
+  // Arkusz zaczyna się tuż pod topbarem tylko przy przewinięciu 0. Chromium
+  // sam przycina scroll do skróconej strony, ale Safari na iPhonie potrafi
+  // zostawić stare przesunięcie (np. stuknięcie, gdy strona jeszcze sunie po
+  // przewinięciu) -- wtedy nagłówek arkusza wchodzi pod topbar. Pozycja jest
+  // zapamiętana wyżej (savedScrollY) i wraca po zamknięciu.
+  window.scrollTo(0, 0);
+  requestAnimationFrame(() => { if (activeOverlay === overlayEl) window.scrollTo(0, 0); });
   document.dispatchEvent(new CustomEvent("modal-sheet:enter", { detail: { overlay: overlayEl } }));
 }
 

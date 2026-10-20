@@ -1140,6 +1140,12 @@ Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
   (`change-type.svg`); „Zmień wybór w remisie” — te same strzałki ze znakiem
   procentu (`tie-switch.svg`); „Scal identyczne” — ikona scalania (wcześniej
   znikała przez nadpisanie tekstu przycisku).
+- **Zmień typ — poprawka (decyzja użytkownika 2026-10-20):** na telefonie
+  okno jest stroną (sheet, „Wstecz” w topbarze), na komputerze oknem; opisy
+  mówią tylko, co operacja zrobi z danymi (bez zapowiedzi przyszłych kroków):
+  na tekstową — pytania zostają, odpowiedzi i punkty usunięte; na punktową —
+  pytania i odpowiedzi zostają, punkty usunięte; na preparowaną — pytania
+  i odpowiedzi zostają (przy resecie zamkniętej ankiety: punkty usunięte).
 - **Modal „Zmień typ”:** karta na każdy typ (nazwa jak na zakładkach Gier
   i opis skutków), obecny typ wyłączony; zamiast niejasnego „odpowiedzi
   zbierze ankieta tekstowa” — „Widzowie wpiszą własne odpowiedzi, a po
