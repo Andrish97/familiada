@@ -135,8 +135,9 @@ podliczania jako stan bieżącej operacji.
 - **Edytory logo (uwaga użytkownika 2026-10-20):** ustawienia narzędzia
   rysunku w linii narzędzi (puste znikają — bez pustego pasa); sekcja edytora
   kurczy się nad stopką (edytor tekstu wypychał stopkę); jeden styl etykiet
-  (jak „Jasność:”) i tytułów paneli (jak nagłówki sekcji); edytor tekstu ma
-  tytuł „Podgląd jak na wyświetlaczu” jak edytor obrazu.
+  (jak „Jasność:”) i tytułów paneli (jak nagłówki sekcji); podgląd „jak na
+  wyświetlaczu” w edytorze tekstu = ta sama karta co w edytorze obrazu
+  (tytuł, ramka podglądu, podpowiedź o pełnym ekranie).
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /

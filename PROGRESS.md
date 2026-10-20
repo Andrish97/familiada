@@ -17,7 +17,7 @@
 | Etap | Stan |
 |---|---|
 | E0–E12, E15–E19N, C2-DIAG, E1 | zrobione (nie ruszać) |
-| E14 sprzątanie (migracja 368) | w toku — inna sesja; nie ruszane tutaj |
+| E14 sprzątanie | zrobione (2026-10-18, 368 + 388–390, `db-migrate.yml` 39115618243); w tabeli Kolejki poprawione 2026-10-20 |
 | E20 kompaktowy telefon / wygląd | **w toku — ta sesja (pakiet poniżej)** |
 | E21 reguły gry | w toku — wdrożone; czeka na wynik nocnej naprawy (inna sesja) |
 | E13 instrukcja | ostatni etap, po wszystkim |
