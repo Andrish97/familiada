@@ -227,6 +227,7 @@ function buildDb(lang, extras = {}) {
       in_library: mlang === lang && i === 1, created_at: daysAgo(i * 5 + 2),
     }))),
     get_my_email_notifications: true, set_my_email_notifications: null, cooldown_get: [],
+    get_app_rating_stats: { avg_stars: 4.8, total_count: 126 },
     friend_invites_from_subscriptions: { ok: true },
     control_game_settings_status: { ok: true, in_progress: false },
     game_validate: `fn:(args, db) => { const g = db.tables.games.find((x) => x.id === args.p_game_id); const s = g?.rules_state || {}; return { ok: !!g, game: g ? { id: g.id, type: g.type, status: g.status, rev: 1 } : null, ...s }; }`,

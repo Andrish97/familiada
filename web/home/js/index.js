@@ -281,25 +281,52 @@ function initImageViewer() {
   let previewZoom = null;
   let previousFocus = null;
 
-  const open = (src, title) => {
-    if (overlay.classList.contains("is-open")) return;
-    previousFocus = document.activeElement;
+  // Galeria kategorii: kadry z data-gallery kafla, przewijane strzałkami.
+  let items = [];
+  let index = 0;
+
+  const show = () => {
+    const { src, title } = items[index];
+    previewZoom?.reset();
+    previewZoom = null;
     stage.innerHTML = "";
-    titleEl.textContent = title || "";
-    const isMobile = window.matchMedia("(max-width: 980px)").matches;
-    if (isMobile) {
+    titleEl.textContent = items.length > 1 ? `${title} · ${t("home.imageViewer.counter", { n: index + 1, total: items.length })}` : title;
+    const img = document.createElement("img");
+    img.className = "imgv-img"; img.src = src; img.alt = title || "";
+    if (window.matchMedia("(max-width: 980px)").matches) {
       const zoom = document.createElement("div");
       zoom.className = "imgv-zoom";
-      const img = document.createElement("img");
-      img.className = "imgv-img"; img.src = src; img.alt = title || "";
       zoom.appendChild(img); stage.appendChild(zoom);
       previewZoom = initPinchZoom(zoom, img);
-      lockPageZoomForPreview();
     } else {
-      const img = document.createElement("img");
-      img.className = "imgv-img"; img.src = src; img.alt = title || "";
       stage.appendChild(img);
     }
+    if (items.length > 1) {
+      for (const [dir, label, iconName] of [[-1, "prev", "arrow-left"], [1, "next", "arrow-right"]]) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `btn sm imgv-nav imgv-nav-${label}`;
+        btn.setAttribute("aria-label", t(`home.imageViewer.${label}`));
+        btn.innerHTML = icon(iconName);
+        btn.addEventListener("click", (e) => { e.stopPropagation(); step(dir); });
+        stage.appendChild(btn);
+      }
+    }
+  };
+
+  const step = (dir) => {
+    if (items.length < 2) return;
+    index = (index + dir + items.length) % items.length;
+    show();
+  };
+
+  const open = (gallery, start = 0) => {
+    if (overlay.classList.contains("is-open")) return;
+    previousFocus = document.activeElement;
+    items = gallery;
+    index = start;
+    show();
+    if (window.matchMedia("(max-width: 980px)").matches) lockPageZoomForPreview();
     overlay.style.display = "";
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
@@ -329,8 +356,9 @@ function initImageViewer() {
   window.addEventListener("keydown", (e) => {
     if (!overlay.classList.contains("is-open")) return;
     if (e.key === "Escape") { e.preventDefault(); close(); return; }
-    if (e.key === "Tab") {
-      // W tym prostym dialogu jedynym elementem interaktywnym jest zamknięcie.
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); step(e.key === "ArrowLeft" ? -1 : 1); return; }
+    if (e.key === "Tab" && items.length < 2) {
+      // Pojedynczy obraz: jedynym elementem interaktywnym jest zamknięcie.
       e.preventDefault();
       (isSheetViewport() ? backBtn : closeBtn)?.focus();
     }
@@ -339,7 +367,16 @@ function initImageViewer() {
   const openShot = (shot) => {
     if (!shot) return;
     const img = shot.querySelector(".shot-img");
-    if (img) open(img.currentSrc || img.src, img.getAttribute("alt") || "");
+    if (!img) return;
+    const lang = getUiLang();
+    const gallery = (img.dataset.gallery || "").split(",").filter(Boolean);
+    if (!gallery.length) {
+      const fullFile = img.dataset.fullFile;
+      open([{ src: fullFile ? buildLangImgUrl(lang, fullFile) : (img.currentSrc || img.src), title: img.getAttribute("alt") || "" }]);
+      return;
+    }
+    // Kadry kategorii z systemu zrzutów (scripts/screens/publish-homepage.cjs).
+    open(gallery.map((id) => ({ src: buildLangImgUrl(lang, `shots/${id}.webp`), title: t(`home.shots.${id}`) })), Math.max(0, gallery.indexOf(img.dataset.shot)));
   };
 
   document.querySelectorAll(".tile-shot").forEach((shot) => {

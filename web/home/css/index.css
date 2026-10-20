@@ -271,6 +271,14 @@ body.home-body {
   font-size: 13px;
 }
 
+.tiles-more {
+  max-width: 780px;
+  margin: 16px auto 0;
+  opacity: .76;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .tile-shot {
   position: relative;
   border-radius: 18px;
@@ -435,6 +443,7 @@ details[open] .faq-q .faq-caret {
 }
 
 .imgv-stage {
+  position: relative;
   width: auto;
   min-width: 0;
   min-height: 0;
@@ -442,6 +451,20 @@ details[open] .faq-q .faq-caret {
   place-items: center;
   overflow: hidden;
 }
+
+/* Przewijanie kadrów kategorii: przyciski na krawędziach obrazu. */
+.imgv-nav {
+  /* Wyśrodkowanie bez transform: .btn:active ma własny transform i
+     przycisk uciekałby spod kursora między mousedown a mouseup. */
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: max-content;
+  margin-block: auto;
+  z-index: 2;
+}
+.imgv-nav-prev { left: 8px; }
+.imgv-nav-next { right: 8px; }
 
 .imgv-img {
   max-width: min(88vw, 1400px);

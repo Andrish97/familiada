@@ -4,7 +4,7 @@
 //   node scripts/screens/run.cjs --changed          # sceny stron zmienionych względem origin/main (+ nie zacommitowane)
 //   node scripts/screens/run.cjs --scenes=games,logos
 //   node scripts/screens/run.cjs --all --lang=all
-//   opcje: --devices=desktop,phone,tablet,phone-landscape  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --verbose (konsola strony)
+//   opcje: --devices=desktop,phone,tablet,phone-landscape  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --verbose (konsola strony)  --homepage (tylko kadry strony głównej)
 //
 // Strony, CSS i JS pochodzą z web/ (kod z bieżącego katalogu roboczego).
 // Supabase podmienia fake-supabase.js, dane: data/demo.cjs, sceny: scenes.cjs.
@@ -65,6 +65,8 @@ function pickScenes() {
 async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const device = scene.size ? { scale: 1, mobile: false, ...scene.size } : DEVICES[deviceName];
   const db = buildDb(lang, scene.gameState ? { gameState: buildGameState(lang, scene.gameState) } : {});
+  // guest: odwiedzający bez konta i sesji.
+  if (scene.guest) { db.user = null; db.localStorage = {}; }
   const context = await newContext(browser, db, lang, device);
   if (scene.safeArea) await emulateSafeArea(context, origin, scene.safeArea);
   const page = await context.newPage();
@@ -91,6 +93,17 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
     else if (scene.ready) await view.waitForFunction(scene.ready, null, { timeout: 15000 });
     await view.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 8000 }).catch(() => {});
     for (const step of scene.steps || []) await step(view, { lang, device: deviceName, page });
+    if (scene.fullPage) {
+      // Zrzut całej strony: przewinąć, żeby wczytały się obrazy z loading="lazy".
+      await view.evaluate(async () => {
+        for (let y = 0; y < document.documentElement.scrollHeight; y += Math.round(innerHeight * 0.8)) {
+          window.scrollTo(0, y);
+          await new Promise((resolve) => setTimeout(resolve, 120));
+        }
+        await Promise.all([...document.images].map((img) => (img.complete ? null : new Promise((resolve) => { img.onload = img.onerror = resolve; }))));
+        window.scrollTo(0, 0);
+      });
+    }
     await view.evaluate(() => document.fonts?.ready);
     await page.waitForTimeout(scene.settle ?? 400);
   } catch (e) { readyError = e.message.split("\n")[0]; }
@@ -124,7 +137,8 @@ function gallery(outDir, results) {
     for (const s of scenes) console.log(`${s.id.padEnd(22)} ${s.path.padEnd(40)} ${s.title}`);
     return;
   }
-  const picked = pickScenes();
+  // --homepage: tylko kadry strony głównej (scene.homepage) spośród wybranych.
+  const picked = pickScenes().filter((scene) => !args.homepage || scene.homepage);
   if (!picked.length) { console.log("Brak scen do zrobienia."); return; }
   if (args.dry) { console.log(picked.map((s) => s.id).join("\n")); return; }
   const langs = args.lang === "all" ? LANGS : (args.lang || "pl").split(",");

@@ -9,6 +9,7 @@
 //   devices   -- tylko te urządzenia (np. ["phone"]); size -- własny rozmiar zamiast urządzeń
 //   gameState -- wiersz game_state w atrapie (data/game-state.mjs: round | finale | main)
 //   previewRow-- stan wysłany do trybu podglądu urządzenia (?preview=1); frame -- przez ramkę rodzica
+//   guest     -- odwiedzający bez konta i sesji (atrapa nie zwraca użytkownika)
 //   safeArea  -- emulacja strefy bezpiecznej { top, bottom, … } (env(safe-area-inset-*) w CSS strony)
 //   deviceFrame -- "iphone": ekran w ramce iPhone'a na czarnym tle (frameSize: { width, height, scale })
 // Przy zmianie strony: dopisz/popraw tu scenę i dane w data/, potem
@@ -79,5 +80,7 @@ module.exports = [
   { id: "polls-stopped", category: "Dodatkowe", title: "Ankieta zatrzymana — głosy", path: `/polls/?id=${IDS.pollStopped}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
   { id: "marketplace", category: "Dodatkowe", title: "Społeczność", path: "/marketplace/", sources: page("marketplace"), ready: ".mkt-card" },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
-  { id: "home", category: "Dodatkowe", title: "Strona główna", path: "/", sources: ["web/index.html", ...page("home")], ready: "main, body > *" },
+  { id: "home", guest: true, category: "Dodatkowe", title: "Strona główna", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded", fullPage: true },
+  { id: "home-gallery", guest: true, category: "Dodatkowe", title: "Strona główna — galeria kadrów", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
+    steps: [async (view) => { await view.locator(".tile-shot").nth(3).click(); await view.locator(".imgv-overlay.is-open .imgv-img").waitFor(); await view.locator(".imgv-nav-next").click(); await view.waitForTimeout(600); }] },
 ];

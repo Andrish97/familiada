@@ -16,8 +16,9 @@
   let seq = 0;
   const newId = () => `00000000-0000-4000-9000-${String(++seq).padStart(12, "0")}`;
 
+  // db.user === null: odwiedzający bez sesji (np. strona główna przed logowaniem).
   const user = db.user;
-  const session = { access_token: "screens-token", refresh_token: "screens-refresh", token_type: "bearer", expires_at: 4102444800, user };
+  const session = user ? { access_token: "screens-token", refresh_token: "screens-refresh", token_type: "bearer", expires_at: 4102444800, user } : null;
 
   // ---------- select z osadzeniami: "id,name,questions(count)" ----------
   function splitTop(str) {
@@ -170,10 +171,10 @@
   const client = {
     auth: {
       getSession: async () => ({ data: { session }, error: null }),
-      getUser: async () => ({ data: { user }, error: null }),
+      getUser: async () => (user ? { data: { user }, error: null } : { data: { user: null }, error: { name: "AuthSessionMissingError", message: "Auth session missing!" } }),
       onAuthStateChange: (cb) => { setTimeout(() => { try { cb?.("INITIAL_SESSION", session); } catch {} }, 0); return { data: { subscription: { unsubscribe() {} } } }; },
       signOut: async () => ({ error: null }),
-      refreshSession: async () => ({ data: { session, user }, error: null }),
+      refreshSession: async () => ({ data: { session, user }, error: user ? null : { message: "Auth session missing!" } }),
       updateUser: async () => ({ data: { user }, error: null }),
       signInAnonymously: async () => ({ data: { session, user }, error: null }),
     },
