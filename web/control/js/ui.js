@@ -253,7 +253,7 @@ export function createUI({ root, emit }) {
     const hostRow = deviceRow(t("control.deviceHost"), "host", urls.hostUrl, { withQr: true });
     const noHostChk = h("input", { type: "checkbox" });
     noHostChk.checked = !!state.settings.noHostTablet;
-    on(noHostChk, "change", () => emit("devices.noHostTablet", noHostChk.checked));
+    on(noHostChk, "change", (e) => emit("devices.noHostTablet", e.currentTarget.checked));
     hostRow.appendChild(h("div", { class: `device-row-opt${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
       h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
         h("span", { class: "device-opt-check-label", text: t("control.noHostTablet") }),
@@ -266,7 +266,7 @@ export function createUI({ root, emit }) {
     const buzzerRow = deviceRow(t("control.deviceBuzzer"), "buzzer", urls.buzzerUrl, { withQr: true });
     const physBuzzChk = h("input", { type: "checkbox" });
     physBuzzChk.checked = !!state.settings.physicalBuzzer;
-    on(physBuzzChk, "change", () => emit("devices.physicalBuzzer", physBuzzChk.checked));
+    on(physBuzzChk, "change", (e) => emit("devices.physicalBuzzer", e.currentTarget.checked));
     buzzerRow.appendChild(h("div", { class: `device-row-opt${state.settings.testMode ? " test-mode-reserved" : ""}` }, [
       h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
         h("span", { class: "device-opt-check-label", text: t("control.physicalBuzzer") }),
@@ -285,7 +285,9 @@ export function createUI({ root, emit }) {
     const testToggle = h("input", { id: "controlTestToggle", type: "checkbox" });
     testToggle.checked = state.settings.testMode === true;
     testToggle.disabled = ctx.testModeChanging === true || (!testToggle.checked && ctx.testModeAvailable === false);
-    on(testToggle, "change", () => emit("devices.testMode", testToggle.checked));
+    // Czytaj z klikniętego pola: reconcileEntry() przenosi ten handler na żywy
+    // element, a testToggle jest wtedy odłączoną kopią ze starym stanem.
+    on(testToggle, "change", (e) => emit("devices.testMode", e.currentTarget.checked));
     const testChoice = h("div", { class: "control-test-choice" }, [
       h("label", { class: "device-opt-check" }, [testToggle, h("span", { text: t("control.testModeLabel") })]),
       h("span", { class: "device-opt-check-hint", text: t(ctx.testModeAvailable === false ? "control.testModeTooSmall" : "control.testModeHint"), role: "status" }),
@@ -1986,6 +1988,9 @@ export function createUI({ root, emit }) {
     for (const attr of [...fresh.attributes]) if (existing.getAttribute(attr.name) !== attr.value) existing.setAttribute(attr.name, attr.value);
     for (const event of ["onclick", "oninput", "onkeydown", "onchange"]) existing[event] = fresh[event];
     if (existing.tagName === "INPUT") {
+      // checked to właściwość, nie atrybut — bez tego pole zostaje w stanie
+      // z ostatniego kliknięcia, nawet gdy stan gry mówi inaczej.
+      if (existing.checked !== fresh.checked) existing.checked = fresh.checked;
       // Preserve a locally typed value while its preceding writes are pending.
       if (document.activeElement !== existing && existing.value !== fresh.value) existing.value = fresh.value;
       return;
