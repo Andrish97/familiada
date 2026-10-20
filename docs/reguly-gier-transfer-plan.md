@@ -2,8 +2,8 @@
 
 **Stan:** plan, bez zmian w aplikacji.  
 **Zakres:** jedno źródło reguł dla gotowości i dozwolonych akcji gry, uproszczenie
-modalów tworzenia gry z Base Explorera oraz jawne i bezstratne (albo jawnie
-potwierdzane jako stratne) reguły importu/eksportu.  
+modalów tworzenia gry z Base Explorera oraz jednolite reguły importu/eksportu,
+z uzgodnioną automatyczną normalizacją danych do limitów.
 **Kolejność:** audyt kontraktów → uzgodnienie rozbieżności → centralizacja reguł
 → integracja ekranów i walidacji serwerowej → audyt i poprawa transferu → testy
 punktowe.
@@ -428,10 +428,19 @@ zapis, podgląd i późniejszą rozgrywkę.
   fallbacków ani zgadywania typu po nazwie gry. Niejasne dane historyczne
   obsługuje wyłącznie opisana niżej jawna ścieżka odzyskania do
   `prepared`/`draft`, z informacją o wyniku i odzyskanych danych.
-- Każde obcięcie, usunięcie, wypełnienie placeholderem, wyzerowanie punktów,
-  ograniczenie liczby odpowiedzi lub konwersję typu: albo usunąć z normalizacji
-  (jeśli format może zachować dane), albo pokazać przed importem dokładny
-  raport strat i uzyskać potwierdzenie. Baza nadal waliduje limity bezpieczeństwa.
+- **Decyzja 2026-10-20 — normalizacja bez pytania:** za długie teksty
+  obcinać do obowiązujących limitów (nazwa 80, pytanie 200, odpowiedź 17
+  znaków). Punkty ujemne, nienumeryczne, nieskończone lub poza zakresem
+  0–100 zamieniać na 0, a nie ograniczać do najbliższej granicy (101 → 0).
+  Przy ponad sześciu odpowiedziach najpierw normalizować punkty, następnie
+  sortować malejąco po punktach i zachować pierwsze sześć; przy remisie
+  zachować kolejność wejściową. Nie usuwać pytań ani zmieniać zaznaczenia.
+  Ta sama polityka obowiązuje we wspólnym kontrakcie transferu i przy
+  odzyskiwaniu historycznego pakietu. Operacje nie wymagają podglądu,
+  ręcznych poprawek ani dodatkowego potwierdzenia; ewentualny raport zmian
+  jest informacyjny. Nie daje to zgody na dopisywanie treści zastępczych,
+  zgadywanie typu ani oznaczanie niepoprawnego wyniku jako zamkniętego.
+  Gotowość po normalizacji nadal wylicza centralny silnik reguł.
 - Eksport zamkniętej ankiety zachowuje typ ankiety i zamknięty wynik. Eksport
   otwartej/zatrzymanej ankiety najpierw informuje o utracie bieżących głosów,
   a po potwierdzeniu zapisuje szkic tego samego typu.
@@ -478,9 +487,9 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Zachować odczytane pytania i ich kolejność oraz możliwe do odzyskania
   odpowiedzi i punkty. Nie dopisywać pytań/odpowiedzi i nie przydzielać
   wymyślonych punktów w celu sztucznego spełnienia progów grywalności.
-  Braki mają być widoczne jako braki szkicu. Polityka treści przekraczających
-  limity zapisu pozostaje osobnym ustaleniem; konwersja typu nie upoważnia do
-  cichego obcinania lub usuwania danych.
+  Braki mają być widoczne jako braki szkicu. Odzyskiwany pakiet podlega
+  uzgodnionej wyżej normalizacji tekstów, nadmiarowych odpowiedzi i punktów,
+  bez pytania. Nie znosi to zakazu przebudowy rozpoznanych ankiet w migracji.
 - Migracja istniejącej gry naprawia ten sam rekord, zachowując właściciela
   i ID. Nie jest powielaniem. Ma być powtarzalna bez kolejnych zmian i dawać
   zestawienie napraw, konwersji, braków oraz przypadków nieodzyskiwalnych.
@@ -554,6 +563,12 @@ zapis, podgląd i późniejszą rozgrywkę.
   jawna zmiana typu ostrzega o ich usunięciu.
 - Sprawdzić, że błąd pojedynczego elementu nie zostawia częściowo utworzonej
   gry, a raport strat odzwierciedla dokładnie pakiet wejściowy.
+- Normalizacja transferu bez potwierdzenia: teksty na granicy i ponad
+  limitami 80/200/17; 7+ odpowiedzi z nierosnącymi i nieuporządkowanymi
+  punktami; remisy rozstrzygane kolejnością wejściową; punkty -1, 101,
+  nienumeryczne i nieskończone → 0 przed sortowaniem. Przy <=6 odpowiedziach
+  nie zmieniać kolejności tylko z powodu normalizacji. To osobna reguła od
+  świadomego wyboru szóstki podczas podliczania ankiety.
 - Migracja danych obejmuje wielu różnych właścicieli, zachowuje ich ID gier
   i własność, jest idempotentna i nie zmienia poprawnych szkiców wyłącznie
   z powodu braków grywalności. Niejasny historyczny typ z czytelnymi pytaniami
@@ -578,10 +593,11 @@ zapis, podgląd i późniejszą rozgrywkę.
   atomowość/idempotencję także przy retry i starszych punktach wejścia;
   usunięcie głosów po wejściu do podliczania wymaga ponownej oceny przy zapisie.
 
-## 7. Decyzje pozostawione do rozstrzygnięcia po audycie
+## 7. Rozstrzygnięcia po audycie
 
-1. Czy eksport ma przechowywać pełne treści ponad obecne limity i import dopiero
-   zgłaszać niezgodność, czy format ma świadomie limitować dane.
+1. **Rozstrzygnięte 2026-10-20:** wspólny kontrakt automatycznie obcina
+   za długie teksty, zeruje niepoprawne punkty i przy nadmiarze odpowiedzi
+   zachowuje sześć najwyżej punktowanych; bez pytania. Szczegóły w §4.
 2. **Polityka rozstrzygnięta 2026-10-20:** migracja naprawcza starych gier
    obejmie wszystkich użytkowników; niejasne, ale odzyskiwalne dane →
    `prepared`/`draft`. Do odczytu pozostają rzeczywiste aliasy, stany i ich
@@ -595,7 +611,7 @@ zapis, podgląd i późniejszą rozgrywkę.
    na jej granicy rozstrzyga użytkownik; w rozgrywce liczą się zapisane punkty.
    Szczegóły w §3; JS i SQL muszą stosować identyczny algorytm.
 
-Przed etapem C pozostaje uzgodnić politykę strat treści z pkt 1 i §8.6.
+Lista znanych decyzji domenowych po audycie jest zamknięta.
 Odczyt rzeczywistych danych i zakres operacji naprawczych to pozostałe zadania
 audytu danych, a nie ponownie otwarte decyzje o regułach gry.
 
@@ -687,16 +703,16 @@ na takim sprawdzeniu klienta.
 
 | Pole | Eksport pliku / definicja kopii obecnie | Import 364 / zapis obecnie | Docelowo |
 |---|---|---|---|
-| Nazwa | Zachowana; null/brak → nazwa domyślna, pusty string pozostaje; Powiel dopisuje lokalizowane „kopia” i dobiera unikalną nazwę | Trim, limit 80; pusta/brak → lokalizowany default, bez defaults „Gra”; Send dobiera nazwę w bibliotece odbiorcy | Jawnie opisać zmiany nazwy i limit, bez cichego obcinania |
+| Nazwa | Zachowana; null/brak → nazwa domyślna, pusty string pozostaje; Powiel dopisuje lokalizowane „kopia” i dobiera unikalną nazwę | Trim, limit 80; pusta/brak → lokalizowany default, bez defaults „Gra”; Send dobiera nazwę w bibliotece odbiorcy | Limit 80; za długą nazwę obciąć automatycznie, bez pytania; zachować zasady nazewnictwa kopii |
 | Typ | Trzy kanoniczne; nieznany/market → AT w helperze; każdy nie-P po normalizacji przy ready → P | Tylko trzy typy; reszta → AT, co usuwa odpowiedzi | Rozpoznany typ zachowany; niejasny historyczny pakiet z czytelną grą i pytaniami → jawne odzyskanie P/draft; nieodczytywalny → błąd; M ma osobną politykę |
 | Status / znaczenie zamknięcia | Pominięty; rozpoznanie ready służy tylko konwersji do P | Zawsze draft; wejściowy status jest ignorowany | Pięć kombinacji §4; otwarta/zatrzymana → szkic z ostrzeżeniem; closed poll → zamknięty poll |
 | Wersja | Brak `format_version` | Nie sprawdza wersji; dodatkowe pole jest pomijane | Wersja i nazwane migratory bez zgadywania |
 | Pytania | Zachowana tablica w kolejności wejścia; `exportGame` pobiera po ord, SQL kopii po ord,id | Nowe ID i ord=pozycja w tablicy od 1; nie korzysta z wejściowego ord | Zachować kolejność znaczeniową i dokładny zbiór |
-| Treść pytania | Bez obcinania w F; Base Explorer trimuje | Trim, limit 200, brak/pusta → „Pytanie {ord}” lub lokalizacja; nawet element null staje się placeholderem | Zachować albo pokazać raport każdej zamiany/straty |
-| Odpowiedzi | AT bez ready usuwa wszystkie; AP/draft zachowuje teksty i zeruje punkty; AP/open/stopped nie zeruje istniejących punktów; closed poll jako P zachowuje odpowiedzi/punkty | AT usuwa wszystkie niezależnie od wejścia; inne typy zachowują tylko pierwsze 6; brak tablicy → [] | Różne warianty szkicu/wyniku opisane jawnie; brak cichej utraty |
-| Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Raport obcięć/placeholderów albo zachowanie pełnej treści |
-| Punkty | `Number(x) || 0`; dla AP/draft 0; Base Explorer AP zawsze 0, P tylko istniejące `fixed_points` | `floor`, clamp 0–100, brak/niepoprawne → 0; przyjmuje też liczbowy string/wykładnik i true→1. Normalizator pakietu ignoruje alias `points` | Bez automatycznego uzupełniania braków; jawna normalizacja/raport; osobny kontrakt szkicu i wyniku |
-| Kolejność odpowiedzi | F sortuje po ord, fallback wejście; SQL kopii wcześniej po ord,id | Ord=pozycja w tablicy; zapis nie sortuje po punktach | Oddzielić zachowaną kolejność od kolejności prezentacji |
+| Treść pytania | Bez obcinania w F; Base Explorer trimuje | Trim, limit 200, brak/pusta → „Pytanie {ord}” lub lokalizacja; nawet element null staje się placeholderem | Limit 200; nadmiar obciąć automatycznie bez pytania; nie dopisywać zastępczych pytań |
+| Odpowiedzi | AT bez ready usuwa wszystkie; AP/draft zachowuje teksty i zeruje punkty; AP/open/stopped nie zeruje istniejących punktów; closed poll jako P zachowuje odpowiedzi/punkty | AT usuwa wszystkie niezależnie od wejścia; inne typy zachowują tylko pierwsze 6; brak tablicy → [] | Warianty szkicu/wyniku według §4; przy ponad 6 odpowiedziach po normalizacji punktów sortować malejąco i zostawić 6, bez pytania; remis według wejścia |
+| Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Limit 17; nadmiar obciąć automatycznie bez pytania; nie dopisywać zastępczych odpowiedzi |
+| Punkty | `Number(x) || 0`; dla AP/draft 0; Base Explorer AP zawsze 0, P tylko istniejące `fixed_points` | `floor`, clamp 0–100, brak/niepoprawne → 0; przyjmuje też liczbowy string/wykładnik i true→1. Normalizator pakietu ignoruje alias `points` | Ujemne, nienumeryczne, nieskończone lub poza 0–100 → 0 przed sortowaniem, bez pytania; bez clamp do 100 i bez wymyślania grywalnej punktacji; odrębny kontrakt szkicu/wyniku |
+| Kolejność odpowiedzi | F sortuje po ord, fallback wejście; SQL kopii wcześniej po ord,id | Ord=pozycja w tablicy; zapis nie sortuje po punktach | Przy <=6 zachować wejściową; przy >6 sortować malejąco po znormalizowanych punktach, remis według wejścia, zapisać wybraną szóstkę i jej ord |
 | Wynik zamknięcia | Wyłącznie treść odpowiedzi i `fixed_points`, przez konwersję na P; brak dat/udziałów/liczebności | Brak odtworzenia zamkniętej ankiety/sesji | Zamknięty typ, zatwierdzone odpowiedzi i punkty; bez liczby głosów, głosujących i odtwarzania sesji |
 | Bieżące głosy, surowe teksty, tokeny głosujących, sesje, zadania, klucze urządzeń/ankiety, runtime i statystyki rozgrywki | Pominięte | Nie są przyjmowane; nowe ID/klucze i właściciel z serwera | Nadal poza transferem; jawnie poinformować o utracie głosów aktywnej ankiety |
 | Ustawienia, logo, dźwięki/pliki | Pominięte | Nowa gra `settings={}`, brak powiązań z cudzymi plikami | Nadal poza formatem zgodnie z zakresem |
@@ -755,7 +771,7 @@ zewnętrzne pliki takich ograniczeń nie mają. Historyczne testy
 cichy fallback, konwersję closed→P i próg 3% — przy implementacji wymagają
 zmiany oczekiwań na uzgodniony kontrakt, nie traktowania ich jako decyzji domenowej.
 
-### 8.6. Decyzje rzeczywiście otwarte po audycie
+### 8.6. Stan rozstrzygnięć po audycie
 
 Grywalność preparowanej jest rozstrzygnięta: **≥10 pytań, każde z 3–6
 odpowiedziami, każda odpowiedź ≥4 pkt, suma w każdym pytaniu ≤100**.
@@ -790,10 +806,14 @@ pokazujemy jako 1%, pozostałe ucinamy; równe liczby głosów mają równy wyni
 Remis głosów przecinający granicę szóstki daje cykliczny przycisk świadomego
 wyboru odpowiedzi z grupy remisowej, bez zmiany ich punktacji.
 
-**Pozostaje polityka strat treści:** pełne treści ponad limity czy
-potwierdzane obcięcie; dokładna obsługa nadmiarowych odpowiedzi i niepoprawnych
-punktów przy transferze. Występowanie danych jest do odczytania, nie do
-zgadywania. To jest odrębne od świadomego wyboru szóstki w podliczaniu.
+**Polityka strat treści rozstrzygnięta 2026-10-20:** za długie teksty
+obcinamy bez pytania; przy ponad sześciu odpowiedziach zostawiamy sześć
+najwyżej punktowanych (remisy stabilnie według wejścia); punkty ujemne,
+nienumeryczne lub poza zakresem zamieniamy na zero przed sortowaniem.
+Nie wymagamy ręcznej korekty ani potwierdzania tych operacji. Jest to
+odrębne od świadomego wyboru szóstki w podliczaniu. Znane decyzje domenowe
+są zamknięte; pozostaje odczyt danych produkcyjnych i plan operacyjny
+migracji. Nadal obowiązuje zatrzymanie przed implementacją.
 
 ### 8.7. Regulamin TVP i dodatkowe ryzyka sprawdzone 2026-10-20
 
