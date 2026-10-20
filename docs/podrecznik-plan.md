@@ -477,22 +477,22 @@ Opisać możliwe problemy z otrzymaniem zaproszenia, oddaniem głosu i wyświetl
 
 Omówić trudności z rozpoczęciem gry, przejściem do kolejnego etapu lub działaniem ustawień, wskazując odpowiednie instrukcje.
 
-> **Materiał z logów rozgrywek (statystyki Control, 2026-10-20; do rozpisania prostym językiem):**
-> - **Przycisk przejścia dalej (np. „Rozpocznij rundę” po intro) długo nieaktywny.** Najczęściej Wyświetlacz był zminimalizowany albo otwarty jako karta obok panelu sterowania. Unikanie: Wyświetlacz w osobnym oknie na pełnym ekranie (telewizor, drugi monitor). W serwisie poprawione: Wyświetlacz w tle nie zatrzymuje już gry.
-> - **Gra wstrzymana z komunikatem o braku urządzenia.** Patrz 19.5 — najczęściej telefon z przyciskami zgasł albo przełączono aplikację.
-> - **Zmiana ustawień gry w trakcie rozgrywki kończy bieżącą grę** (w logach anulowana gra w finale). Unikanie: ustawienia zmieniać przed startem albo po zakończeniu; przejście do instrukcji i powrót nie przerywa gry.
-> - **Zamknięcie panelu sterowania bez zakończenia gry** zostawia rozgrywkę niezakończoną do czasu jej wygaśnięcia. Unikanie: kończyć grę przyciskiem na ekranie końcowym.
-> - **Tryb testowy** (wszystkie ekrany w jednej karcie) przy częstym przełączaniu karty daje opóźnienia planszy i dźwięku. Służy do próby; do prawdziwej gry używać osobnych urządzeń.
-> - **Dźwięk z Wyświetlacza:** gra czeka, dopóki na Wyświetlaczu nie zostanie kliknięty przycisk dźwięku — po każdym nowym otwarciu Wyświetlacza i gdy przeglądarka sama wstrzyma dźwięk (np. uśpiony telewizor). Unikanie: kliknąć przycisk dźwięku przed startem, nie przeładowywać Wyświetlacza w trakcie gry.
+> **Do rozpisania (źródło: obserwacje rzeczywistych rozgrywek; w treści podręcznika bez wzmianek o tym źródle):**
+> - **Przycisk przejścia dalej długo nieaktywny** (np. „Rozpocznij rundę” po intro) → Wyświetlacz zminimalizowany albo otwarty jako karta obok panelu sterowania → otworzyć Wyświetlacz w osobnym oknie na pełnym ekranie (telewizor, drugi monitor).
+> - **Gra wstrzymana z komunikatem o braku urządzenia** → patrz 19.5.
+> - **Gra zakończyła się po zmianie ustawień** → zmiana ustawień w trakcie rozgrywki kończy bieżącą grę → ustawienia zmieniać przed startem albo po zakończeniu; przejście do instrukcji i powrót nie przerywa gry.
+> - **Gra nie została zakończona** → zamknięto panel sterowania bez zakończenia gry → kończyć grę przyciskiem na ekranie końcowym.
+> - **Opóźnienia planszy lub dźwięku w trybie testowym** → wszystkie ekrany w jednej karcie i częste przełączanie kart → tryb testowy służy do próby; do prawdziwej gry używać osobnych urządzeń.
+> - **Gra czeka na dźwięk z Wyświetlacza** → na Wyświetlaczu trzeba kliknąć przycisk dźwięku po każdym jego otwarciu i gdy przeglądarka sama wyciszy stronę (np. uśpiony telewizor) → kliknąć przycisk dźwięku przed startem, nie przeładowywać Wyświetlacza w trakcie gry.
 
 #### 19.5 Problemy z urządzeniami
 
 Opisać diagnostykę braku połączenia, obrazu lub dźwięku na Wyświetlaczu, ekranie prowadzącego i przyciskach.
 
-> **Materiał z logów rozgrywek (2026-10-20; do rozpisania prostym językiem):**
-> - **Telefon z przyciskami albo ekranem prowadzącego zgasł lub przeszedł do innej aplikacji** — po kilkunastu sekundach panel sterowania uznaje urządzenie za rozłączone i wstrzymuje grę do jego powrotu. W jednej grze 16 takich przerw (łącznie ok. 1,5 min). Unikanie: ekran włączony przez całą grę, telefon/tablet na ładowarce, dłuższy czas automatycznej blokady ekranu, nie przełączać aplikacji; gdy przyciski fizyczne lub brak tabletu prowadzącego — zaznaczyć odpowiednią opcję. Po powrocie urządzenie łączy się ponownie w 1–3 s.
-> - **Wielokrotne skanowanie kodu QR / otwieranie linku urządzenia** — w logach do 14 otwarć w jednej grze, 5 w ciągu 30 s. Unikanie: wracać do tej samej karty zamiast skanować kod od nowa; zamykać stare karty. W serwisie (decyzja 2026-10-20): nowa karta w tej samej przeglądarce od razu przejmuje urządzenie (przyciski, ekran prowadzącego, Wyświetlacz), a stara pokazuje komunikat oczekiwania. Otwarcie na innym urządzeniu nadal czeka na zwolnienie poprzedniego.
-> - **Komunikat „czekam na zwolnienie” na urządzeniu** — to samo urządzenie jest już otwarte gdzie indziej (inna przeglądarka lub telefon). Zamknąć tamtą kartę albo poczekać, aż sama się rozłączy.
+> **Do rozpisania (źródło: obserwacje rzeczywistych rozgrywek; w treści podręcznika bez wzmianek o tym źródle):**
+> - **Gra wstrzymuje się co jakiś czas, urządzenie pokazuje się jako rozłączone** → telefon z przyciskami albo tablet prowadzącego zgasł lub przełączono na inną aplikację → ekran włączony przez całą grę, urządzenie na ładowarce, dłuższy czas automatycznej blokady ekranu, bez przełączania aplikacji; gdy używane są przyciski fizyczne albo nie ma tabletu prowadzącego — zaznaczyć odpowiednią opcję w panelu. Po powrocie do strony urządzenie łączy się samo w kilka sekund.
+> - **Kod QR zeskanowany kilka razy** → na tym samym telefonie najnowsza karta działa od razu, a starsze pokazują komunikat oczekiwania → wracać do tej samej karty zamiast skanować ponownie; zbędne karty zamknąć.
+> - **Komunikat o oczekiwaniu na zwolnienie urządzenia** → to samo urządzenie (przyciski, ekran prowadzącego lub Wyświetlacz) jest otwarte na innym telefonie albo w innej przeglądarce → zamknąć tamtą kartę albo poczekać kilkanaście sekund, aż się rozłączy.
 
 #### 19.6 Kontakt z pomocą
 
