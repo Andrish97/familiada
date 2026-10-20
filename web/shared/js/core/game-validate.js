@@ -1,37 +1,16 @@
 // js/core/game-validate.js
 import { sb } from "./supabase.js?v=v2026-10-20T14100";
 import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-20T14100";
-import { showBlockingOverlay } from "./resource-lock.js?v=v2026-10-20T14100";
+import { showBlockingOverlay, isResourceBusy } from "./resource-lock.js?v=v2026-10-20T14100";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-20T14100";
 
 
-/**
- * Typy gier:
- * - poll_text    => Ankieta tekstowa
- * - poll_points  => Punktacja
- * - prepared     => Preparowana (manualne punkty, suma=100)
- */
-export const TYPES = {
-  POLL_TEXT: "poll_text",
-  POLL_POINTS: "poll_points",
-  PREPARED: "prepared",
-  MARKET: "market",
-};
+// Typy, statusy, progi i evaluateReadiness: game-rules.js (bez zależności
+// od przeglądarki, testowane jednostkowo i porównywane z SQL).
+export { TYPES, STATUS, RULES, evaluateReadiness } from "./game-rules.js?v=v2026-10-20T14100";
 
-export const STATUS = {
-  DRAFT: "draft",
-  POLL_OPEN: "poll_open",
-  POLL_STOPPED: "poll_stopped", // głosowanie zatrzymane, jeszcze niepodliczone (migracja 315)
-  READY: "ready", // po podliczeniu ankiety / gotowe do gry
-};
-
-// Te same liczby co w game_validate (baza) -- tu tylko do podpowiedzi w UI
-// (licznik odpowiedzi w edytorze itp.); o dozwoleniu akcji decyduje baza.
-export const RULES = {
-  QN_MIN: 10,
-  AN_MIN: 3,
-  AN_MAX: 6,
-  SUM_PREPARED: 100,
-};
+/** Przetłumaczony opis braku z evaluateReadiness / readiness bazy. */
+export const readinessText = (issue) => t(`gameValidate.${issue?.code || "unknownType"}`, issue?.params || {});
 
 export async function loadGameBasic(gameId) {
   const { data, error } = await sb()
@@ -69,7 +48,7 @@ export async function loadAnswers(questionId) {
 // RPC game_validate (migracja 273) -- jedno źródło prawdy dla games, editor,
 // polls, subscriptions i control. Tu tylko tłumaczymy kod błędu na tekst.
 // Każda akcja: { ok, reason } (+ needsReset dla edit).
-const ACTIONS = ["edit", "play", "poll_entry", "poll_open", "poll_stop", "poll_resume", "poll_close", "export"];
+const ACTIONS = ["edit", "change_type", "play", "poll_entry", "poll_open", "poll_stop", "poll_resume", "poll_close", "export"];
 
 function actionResult(raw) {
   const ok = !!raw?.ok;
@@ -91,7 +70,7 @@ export async function validateGame(gameId) {
   const { data, error } = await sb().rpc("game_validate", { p_game_id: gameId });
   if (error) throw error;
 
-  const out = { game: data?.game || null, rules: data?.rules || null };
+  const out = { game: data?.game || null, rules: data?.rules || null, readiness: data?.readiness || null };
   for (const k of ACTIONS) {
     out[k] = data?.ok ? actionResult(data[k]) : actionResult({ ok: false, code: "noGame" });
   }
@@ -105,7 +84,7 @@ export async function validateGame(gameId) {
  */
 export function rulesFromState(state) {
   if (!state || typeof state !== "object") return null;
-  const out = { rules: state.rules || null };
+  const out = { rules: state.rules || null, readiness: state.readiness || null };
   for (const k of ACTIONS) {
     if (k === "poll_close") continue;
     out[k] = actionResult(state[k]);
@@ -125,6 +104,10 @@ export function gameRuleErrorMessage(err) {
   if (m.includes("game_content_locked:poll_open")) return t("gameValidate.pollOpenNoEdit");
   if (m.includes("game_content_locked:poll_stopped")) return t("gameValidate.pollStoppedNoEdit");
   if (m.includes("game_content_locked:market")) return t("gameValidate.marketNoEdit");
+  if (m.includes("game_content_locked:control_active")) return t("gameValidate.controlActive");
+  // walidacja zapisu tekstów (migracja 404): oba edytory pytań
+  const bad = m.match(/content_invalid:(\w+)(?::(.*))?/);
+  if (bad) return t(`gameValidate.${bad[1]}`, { chars: (bad[2] || "").trim() });
   // wyjątki RPC Zatrzymaj / Wznów / Podlicz (migracja 315)
   if (/\bpoll_not_open\b/.test(m)) return t("gameValidate.stopOnlyOpen");
   if (/\bpoll_not_stopped\b/.test(m)) return t("gameValidate.resumeOnlyStopped");
@@ -159,3 +142,55 @@ export async function guardGameState(gameId, action, { backHref = "/games/" } = 
   return null;
 }
 
+const RESET_ERRORS = {
+  control_active: "gameValidate.controlActive",
+  poll_open: "gameValidate.pollOpenNoEdit",
+  poll_stopped: "gameValidate.pollStoppedNoEdit",
+};
+
+/**
+ * Wspólna bramka edycji (lista Gier, edytor, Zmień typ): reguła edit z bazy,
+ * a dla zamkniętej ankiety jedno potwierdzenie i pełny reset
+ * (game_reset_poll_for_edit). Odmowa i błąd -- komunikat w alertModal.
+ * @param {string} gameId
+ * @param {{ action?: "edit"|"change_type", resetNow?: boolean, checkBusy?: boolean }} opts
+ *   resetNow=false: tylko zgoda (reset wykona wołający RPC, np. game_change_type).
+ * @returns {Promise<{ ok: boolean, reset: boolean }>}
+ */
+export async function editGate(gameId, { action = "edit", resetNow = true, checkBusy = false } = {}) {
+  let info;
+  try {
+    info = (await validateGame(gameId))[action];
+  } catch (e) {
+    console.error("[game-validate] editGate:", e);
+    void alertModal({ text: t("gameValidate.noGame") });
+    return { ok: false, reset: false };
+  }
+  if (!info?.ok) {
+    void alertModal({ text: info?.reason || t("gameValidate.noGame") });
+    return { ok: false, reset: false };
+  }
+  if (!info.needsReset) return { ok: true, reset: false };
+
+  const ok = await confirmModal({
+    title: t("games.editAfterPoll.title"),
+    text: t("games.editAfterPoll.text"),
+    okText: t("games.editAfterPoll.ok"),
+    cancelText: t("games.editAfterPoll.cancel"),
+  });
+  if (!ok) return { ok: false, reset: false };
+  if (!resetNow) return { ok: true, reset: true };
+
+  // Zasób zajęty w innej karcie (edytor/ustawienia/ankieta) -- nie resetujemy spod ręki.
+  if (checkBusy && await isResourceBusy("game", gameId)) {
+    void alertModal({ text: t("resourceLock.gameMessage") });
+    return { ok: false, reset: false };
+  }
+  const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
+  if (error || !data?.ok) {
+    console.error("[game-validate] reset:", error || data);
+    void alertModal({ text: t(RESET_ERRORS[data?.error] || "editor.alert.resetFailed") });
+    return { ok: false, reset: false };
+  }
+  return { ok: true, reset: true };
+}

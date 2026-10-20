@@ -1,3 +1,4 @@
+import { changeGameType } from "./change-type.js?v=v2026-10-20T14100";
 import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-20T14100";
 import { bindResourceSend } from "../../shared/js/core/resource-send.js?v=v2026-10-20T14100";
 import { refreshResourceCopyInbox } from "../../shared/js/core/resource-copy-inbox.js?v=v2026-10-20T14100";
@@ -34,6 +35,7 @@ import {
   loadGameBasic,
   validateGame,
   rulesFromState,
+  editGate,
 } from "../../shared/js/core/game-validate.js?v=v2026-10-20T14100";
 import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T14100";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T14100";
@@ -72,7 +74,6 @@ const MSG = {
   alertCreateFailed: () => t("games.alert.createFailed"),
   hintSelect: () => t("games.hint.select"),
   hintSelectPlus: () => t("games.hint.selectPlus"),
-  alertResetPollFailed: () => t("games.alert.resetPollFailed"),
   alertCheckFailed: () => t("games.alert.checkFailed"),
   alertOpenPollFailed: () => t("games.alert.openPollFailed"),
   exportJsonSub: () => t("games.exportFile.subtitle"),
@@ -125,6 +126,7 @@ const btnMore = document.getElementById("btnMore");
 const navMoreDropdown = document.getElementById("navMoreDropdown");
 
 const btnDuplicate = document.getElementById("btnDuplicate");
+const btnChangeType = document.getElementById("btnChangeType");
 const btnSendCopy = document.getElementById("btnSendCopy");
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
@@ -705,22 +707,10 @@ function safeDownloadName(name) {
   return `${base}.famgame`;
 }
 
-/**
- * UI-type (3 zakładki) vs DB-type (często tylko fixed/poll).
- * - Jeśli masz nową bazę z type = poll_text/poll_points/prepared -> działa wprost.
- * - Jeśli masz starą bazę z type = fixed/poll ->:
- *    fixed => prepared
- *    poll  => poll_text albo poll_points (wnioskujemy po nazwie)
- */
+// Typ gry z bazy = zakładka (prepared/poll_points/poll_text/market; CHECK
+// games_type_check innych nie dopuszcza). Bez zgadywania starych aliasów.
 function uiTypeFromRow(g) {
-  const k = String(g?.type || "");
-  if (k === TYPES.POLL_TEXT || k === TYPES.POLL_POINTS || k === TYPES.PREPARED || k === TYPES.MARKET) return k;
-  if (k === "fixed") return TYPES.PREPARED;
-  if (k === "poll") {
-    const nm = String(g?.name || "").toLowerCase();
-    return nm.includes("punkt") ? TYPES.POLL_POINTS : TYPES.POLL_TEXT;
-  }
-  return TYPES.PREPARED;
+  return String(g?.type || "");
 }
 
 function typeLabel(uiType) {
@@ -748,9 +738,10 @@ function statusLabel(st, g) {
   return MSG.statusDraft();
 }
 
-function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
+function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport, canChangeType = false }) {
   const guest = isGuestUser(currentUser);
   if (btnEdit) btnEdit.disabled = !hasSel || !canEdit;
+  if (btnChangeType) btnChangeType.disabled = !hasSel || !canChangeType || !!btnChangeType.dataset.busy;
   if (btnPreview) btnPreview.disabled = !hasSel;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
@@ -875,24 +866,6 @@ async function deleteGame(game) {
     return;
   }
   // Folder dźwięków gry usuwa baza (migracja 313, kolejka storage_cleanup_queue).
-}
-
-async function resetPollForEditing(gameId) {
-  // Zeruje answers.fixed_points i cofa games.status na draft -- te same
-  // dane, które edytor/ustawienia/ankieta trzymają pod swoim lockiem
-  // "game". Jednorazowa akcja bez własnej sesji, więc alert modal
-  // zamiast overlayu -- patrz "Model: zasób ma stan busy/free".
-  if (await isResourceBusy("game", gameId)) {
-    void alertModal({ text: t("resourceLock.gameMessage") });
-    return false;
-  }
-
-  // Jedno RPC = jedna transakcja (migracja 272): wcześniej status i punkty
-  // szły osobnymi zapisami i błąd pomiędzy zostawiał szkic z punktami.
-  const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
-  if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || "reset_failed");
-  return true;
 }
 
 /* ================= Render ================= */
@@ -1172,7 +1145,7 @@ async function selectionRules(g) {
 
 // Wyłączony przycisk mówi w podpowiedzi, czego brakuje (tekst z bazy).
 function setButtonReasons(v) {
-  const pairs = [[btnEdit, v?.edit], [btnPlay, v?.play], [btnPoll, v?.poll_entry], [btnExport, v?.export], [btnExportBase, v?.export]];
+  const pairs = [[btnEdit, v?.edit], [btnChangeType, v?.change_type], [btnPlay, v?.play], [btnPoll, v?.poll_entry], [btnExport, v?.export], [btnExportBase, v?.export]];
   for (const [btn, a] of pairs) {
     if (!btn) continue;
     if (a && !a.ok && a.reason) btn.title = a.reason;
@@ -1203,6 +1176,7 @@ async function updateActionState() {
     setButtonsState({
       hasSel: true,
       canEdit: v.edit.ok,
+      canChangeType: v.change_type.ok,
       canPlay: v.play.ok,
       canPoll: v.poll_entry.ok,
       canExport: v.export.ok,
@@ -1635,40 +1609,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     const g = gamesAll.find(x => x.id === selectedId);
     if (!g) return;
 
-    let info;
-    try {
-      info = (await validateGame(g.id)).edit;
-    } catch (e) {
-      console.error("[games] game_validate error:", e);
-      void alertModal({ text: MSG.alertCheckFailed() });
-      return;
-    }
-    if (!info.ok) {
-      void alertModal({ text: info.reason });
-      return;
-    }
-
-    if (info.needsReset) {
-      const ok = await confirmModal({
-        title: t("games.editAfterPoll.title"),
-        text: t("games.editAfterPoll.text"),
-        okText: t("games.editAfterPoll.ok"),
-        cancelText: t("games.editAfterPoll.cancel"),
-      });
-      if (!ok) return;
-
-      try {
-        const resetOk = await resetPollForEditing(g.id);
-        if (!resetOk) return;
-        await refresh();
-      } catch (e) {
-        console.error("[games] resetPollForEditing error:", e);
-        void alertModal({ text: MSG.alertResetPollFailed() });
-        return;
-      }
-    }
+    // Wspólna bramka edycji (game-validate.js): ta sama reguła, potwierdzenie
+    // i pełny reset zamkniętej ankiety co edytor i „Zmień typ”.
+    const gate = await editGate(g.id, { checkBusy: true });
+    if (!gate.ok) return;
+    if (gate.reset) await refresh();
 
     location.href = linkTo("editor", { id: g.id });
+  });
+
+  // ZMIEŃ TYP (E21): ta sama gra, bramka edit, wynik -- szkic wybranego typu
+  btnChangeType?.addEventListener("click", async () => {
+    const g = gamesAll.find(x => x.id === selectedId);
+    if (!g || btnChangeType.dataset.busy) return;
+    btnChangeType.dataset.busy = "1";
+    btnChangeType.disabled = true;
+    try {
+      const type = await changeGameType(g);
+      if (type) {
+        setActiveTab(type);
+        await refresh();
+      }
+    } finally {
+      delete btnChangeType.dataset.busy;
+      void updateActionState();
+    }
   });
 
   // PLAY

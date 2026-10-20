@@ -7,7 +7,7 @@ import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T14100";
 import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T14100";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T14100";
 import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-20T14100";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T14100";
+import { validateGame, gameRuleErrorMessage, guardGameState, editGate, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T14100";
 
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
@@ -33,8 +33,6 @@ const MSG = {
   answerDefault: (ord) => t("editor.defaults.answer", { ord }),
   cannotEdit: () => t("editor.alert.cannotEdit"),
   gameNotFound: () => t("editor.alert.gameNotFound"),
-  resetFailed: () => t("editor.alert.resetFailed"),
-  resetPollConfirm: () => t("editor.confirm.resetPoll"),
   nameSaveError: () => t("editor.status.nameSaveError"),
   addQuestionError: () => t("editor.status.addQuestionError"),
   deleteQuestionConfirm: () => t("editor.confirm.deleteQuestion"),
@@ -205,13 +203,6 @@ async function deleteAnswer(aId) {
   }
 }
 
-async function resetPollForEditing(gameId) {
-  // Jedno RPC = jedna transakcja (migracja 272, wspólne z games.js).
-  const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
-  if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || "reset_failed");
-}
-
 // RPC z migracji 276: wyczyszczenie gry i wgranie pytań w jednej
 // transakcji. Wcześniej ~80 osobnych zapytań po skasowaniu starej treści --
 // błąd w połowie zostawiał grę pustą albo z połową pytań.
@@ -356,15 +347,10 @@ async function boot() {
   if (!editInfo) return;
 
   if (editInfo.needsReset) {
-    const ok = await confirmModal({ text: MSG.resetPollConfirm() });
-    if (!ok) return leaveTo("");
-    try {
-      await resetPollForEditing(gameId);
-      game = await loadGame(gameId);
-    } catch (e) {
-      console.error("[editor] reset error:", e);
-      return leaveTo(MSG.resetFailed());
-    }
+    // To samo potwierdzenie i pełny reset co lista Gier i „Zmień typ”.
+    const gate = await editGate(gameId);
+    if (!gate.ok) return leaveTo("");
+    game = await loadGame(gameId);
     if (!game) return leaveTo(MSG.gameNotFound());
   }
 
