@@ -154,7 +154,7 @@ test("E21 Zmień typ: preparowana -> ankieta tekstowa na tym samym rekordzie (UI
     await expect(page.locator('.change-type input[value="prepared"]')).toBeDisabled();
     const option = page.locator(".change-type-option", { has: page.locator('input[value="poll_text"]') });
     await option.click();
-    await expect(option.locator(".change-type-desc")).toContainText("odpowiedzi i punkty zostaną usunięte");
+    await expect(option.locator(".change-type-desc")).toContainText("Odpowiedzi i punkty zostaną usunięte");
     await page.locator(".uni-foot .btn.gold:visible").click();
 
     await expect.poll(async () => page.evaluate(async (id) => {

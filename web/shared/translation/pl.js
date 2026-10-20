@@ -2846,12 +2846,11 @@ const pl = {
       cancel: "Anuluj",
       failed: "Nie udało się zmienić typu gry. Spróbuj ponownie.",
       summary: {
-        same: "Obecny typ — bez zmian.",
-        preparedToPoints: "Pytania i odpowiedzi zostaną, punkty zostaną wyzerowane. Widzowie zagłosują na odpowiedzi, a punkty wyliczy podliczenie ankiety.",
-        toText: "Pytania zostaną, odpowiedzi i punkty zostaną usunięte. Widzowie wpiszą własne odpowiedzi, a po podliczeniu do gry trafi do 6 najczęstszych.",
-        textToPoints: "Pytania zostaną. Dopisz do każdego pytania 3–6 odpowiedzi — widzowie będą na nie głosować.",
-        toPrepared: "Pytania i odpowiedzi zostaną. Gra będzie gotowa, gdy każda odpowiedź dostanie co najmniej 4 pkt (suma w pytaniu najwyżej 100).",
-        textToPrepared: "Pytania zostaną. Dopisz do każdego pytania 3–6 odpowiedzi z punktami (każda co najmniej 4 pkt, suma najwyżej 100).",
+        same: "Obecny typ.",
+        toText: "Pytania zostaną. Odpowiedzi i punkty zostaną usunięte.",
+        toPoints: "Pytania i odpowiedzi zostaną. Punkty zostaną usunięte.",
+        toPrepared: "Pytania i odpowiedzi zostaną.",
+        pointsRemoved: "Punkty zostaną usunięte.",
       },
     },
     transferDropsVotes: {
