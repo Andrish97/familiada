@@ -31,15 +31,16 @@ export function buildGameState(lang, kind) {
   state.rounds.question = { id: "q1", text: question };
 
   if (kind === "round") {
-    // Runda 2: odsłonięte odpowiedzi 1 i 3, jedna pomyłka drużyny A.
-    state.step = "r_play"; state.topCard = "rounds"; state.phase = "PLAY"; state.controlTeam = "A";
-    state.rounds.roundNo = 2;
-    state.rounds.revealed = [1, 3];
-    state.rounds.bankPts = answers[0][1] + answers[2][1];
-    state.rounds.totals = { A: 62, B: 47 };
-    state.rounds.xA = 1; state.rounds.xB = 0;
+    // Jak na starym zrzucie: runda 1, odsłonięte wiersze 1, 3 i 5 (suma 62),
+    // kontrola Zajączków po dwóch pomyłkach, wyniki 000:000.
+    state.step = "r_play"; state.topCard = "rounds"; state.phase = "PLAY"; state.controlTeam = "B";
+    state.rounds.roundNo = 1;
+    state.rounds.revealed = [1, 3, 5];
+    state.rounds.bankPts = answers[0][1] + answers[2][1] + answers[4][1];
+    state.rounds.totals = { A: 0, B: 0 };
+    state.rounds.xA = 0; state.rounds.xB = 2;
     // Tryb podglądu Wyświetlacza nie liczy cyfr z rundy -- podajemy je wprost.
-    state.display = { ...state.display, suppressLogoDraw: true, previewNumbers: { left: 62, right: 47, top: state.rounds.bankPts }, previewXPositions: { A: [1], B: [] } };
+    state.display = { ...state.display, suppressLogoDraw: true, previewNumbers: { left: "000", right: "000", top: String(state.rounds.bankPts).padStart(3, "0") }, previewXPositions: { A: [], B: [2, 3] } };
   }
   if (kind === "finale") {
     state.step = "f_p1_entry"; state.topCard = "final"; state.phase = "FINAL"; state.controlTeam = "A";

@@ -21,8 +21,8 @@ const IDS = {
   textPoll: id("8000", 104),      // „Szybka ankieta” -- ankieta tekstowa, otwarta
   pollStopped: id("8000", 113),   // ankieta punktowa zatrzymana (z content.cjs)
   base: id("8400", 1),            // pierwsza baza z panelu
-  logoDraw: id("8300", 3),        // DEMO – Logo Rysunek: pełna scena Fabric do edytora
-  logoText: id("8300", 2),
+  logoDraw: id("8300", 44),       // „Gwiazdy wieczoru”: pełna scena Fabric do edytora rysunku
+  logoText: id("8300", 40),
   logoClassic: id("8300", 1),
 };
 
@@ -116,16 +116,11 @@ function buildDb(lang, extras = {}) {
   });
 
   // ---------- logo ----------
-  // Jedno logo w pełni (DEMO – Rysunek ze sceną Fabric do edytora rysunku);
-  // pozostałe wystarczy, że mają poprawny układ kropek/znaków.
-  const L = p.logos;
+  // Bez materiałów DEMO: klasyczne FAMILIADA (czcionka planszy) i logo
+  // wypalone prawdziwymi edytorami (bake-logos.cjs). „Gwiazdy wieczoru” ma
+  // pełną scenę Fabric dla edytora rysunku; reszcie wystarczą kropki/znaki.
   const logo = (n, name, type, payload, age) => tables.user_logos.push({ id: id("8300", n), user_id: USER_ID, name, type, payload, created_at: daysAgo(age), updated_at: daysAgo(age), is_demo: false, received_from_label: null, received_from_identity: null });
-  logo(1, L.classic, "GLYPH_30x10", { ...readJson("web/shared/data/logo_familiada.json"), source: { mode: "TEXT", text: "FAMILIADA" } }, 0);
-  logo(2, L.text, "GLYPH_30x10", readJson("web/settings/data/screenshots/logo-text.json").payload, 1);
-  logo(3, L.draw, "PIX_150x70", readJson("web/settings/data/screenshots/logo-draw.json").payload, 2);
-  const image = readJson("tests/preview/DEMO - Logo Obraz.famlogo.json").payload;
-  logo(4, L.image, "PIX_150x70", { w: image.w, h: image.h, format: image.format, bits_b64: image.bits_b64, source: { mode: "IMAGE" } }, 3);
-  // Napisy wypalone prawdziwym edytorem tekstu (bake-logos.cjs).
+  logo(1, p.logos.classic, "GLYPH_30x10", { ...readJson("web/shared/data/logo_familiada.json"), source: { mode: "TEXT", text: "FAMILIADA" } }, 0);
   const bakedFile = path.join(__dirname, "logos.baked.json");
   if (fs.existsSync(bakedFile)) {
     JSON.parse(fs.readFileSync(bakedFile, "utf8")).forEach((item, i) => logo(40 + i, item.names[lang] || item.names.pl, item.type, item.payloads?.[lang] || item.payload, item.age || 5));
