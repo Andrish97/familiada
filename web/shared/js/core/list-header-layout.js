@@ -231,10 +231,11 @@ function initListBottomToolbarLayout() {
               }
             }
             // Najpierw jak najmniej rzędów; potem wyrównujemy szerokość
-            // lewego i prawego bloku w każdym rzędzie, a na końcu szerokość
-            // samych rzędów i obu elastycznych "kolumn".
+            // lewego i prawego bloku w każdym rzędzie, potem równe rzędy
+            // w obrębie grupy (6 ikon: 3 + 3, nie 5 + 1), a na końcu
+            // wypełnienie pierwszego rzędu i szerokość obu "kolumn".
             const firstRowFill = (leftRows[0] || 0) + (rightRows[0] || 0);
-            const score = [rowCount, sideBalance, -firstRowFill, rowVariation, Math.abs(leftWidth - rightWidth)];
+            const score = [rowCount, sideBalance, rowVariation, -firstRowFill, Math.abs(leftWidth - rightWidth)];
             if (!best || compareScore(score, best.score) < 0) {
               best = { leftWidth, rightWidth, leftRows, rightRows, score };
             }
