@@ -3251,13 +3251,17 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await revealAnswer(page, 1);
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
+    // Awaria odczytu migawki wyżej zapisuje własne read_error/recovered;
+    // tu liczy się wyłącznie incydent rozłączenia urządzeń.
+    const isDeviceOutage = event => event.kind === "diagnostic" && event.category === "connectivity"
+      && !["read_error", "recovered"].includes(event.metrics?.phase);
     await expect.poll(async () => {
       const sessions = await readControl2Sessions(page, game.id);
-      return (sessions[0]?.stats_detail.events || []).filter(event => event.kind === "diagnostic" && event.category === "connectivity").length;
+      return (sessions[0]?.stats_detail.events || []).filter(isDeviceOutage).length;
     }, { timeout: 20_000 }).toBe(1);
     const reconnectSessions = await readControl2Sessions(page, game.id);
     const outageEvents = reconnectSessions[0].stats_detail.events || [];
-    const outage = outageEvents.find(event => event.kind === "diagnostic" && event.category === "connectivity");
+    const outage = outageEvents.find(isDeviceOutage);
     expect(outage.devices).toEqual(expect.arrayContaining(["display", "host", "buzzer"]));
     console.log(`[statistics-review] reconnect diagnostic: ${JSON.stringify(outage)}`);
     // To czas od wykrycia braku urządzeń do ich ponownego podłączenia; zależy
