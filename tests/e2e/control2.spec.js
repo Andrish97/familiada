@@ -3916,9 +3916,10 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
     const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
     await expect(startRound).toBeEnabled({ timeout: 60000 });
 
-    // Kilka powrotów z rzędu: każdy mierzy czas do gotowego ekranu i sprawdza,
-    // że ewentualna prośba o ponowne odblokowanie dźwięku dociera do Display.
-    for (let round = 1; round <= 3; round++) {
+    // Zwykły powrót (Wyświetlacz bez zmian): odblokowanie z bazy nadal
+    // obowiązuje, więc Control jest gotowy bez nowego gestu na Wyświetlaczu.
+    const unlockScreen = displayPage.locator("#audioUnlockScreen");
+    for (let round = 1; round <= 2; round++) {
       await page.locator("#btnManual").click();
       await page.waitForURL(/\/manual\//, { timeout: 15000 });
       const startedAt = Date.now();
@@ -3926,20 +3927,24 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
       await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
       await expect(startRound).toBeVisible({ timeout: 30000 });
       console.log(`[e2e-diag] control-return round=${round} visibleMs=${Date.now() - startedAt}`);
-      const unlockScreen = displayPage.locator("#audioUnlockScreen");
-      const outcome = await Promise.race([
-        expect(startRound).toBeEnabled({ timeout: 20000 }).then(() => "enabled"),
-        expect(unlockScreen).not.toHaveClass(/\bhidden\b/, { timeout: 20000 }).then(() => "unlock"),
-      ]).catch(() => "stuck");
-      console.log(`[e2e-diag] control-return round=${round} outcome=${outcome} afterMs=${Date.now() - startedAt}`);
-      expect(outcome, "po powrocie Control nie może czekać na odblokowanie, którego Display nie pokazuje").not.toBe("stuck");
-      if (outcome === "unlock") {
-        await displayPage.locator("#btnAudioUnlock").click();
-        await expect(unlockScreen).toHaveClass(/\bhidden\b/, { timeout: 10000 });
-      }
       await expect(startRound).toBeEnabled({ timeout: 15000 });
       console.log(`[e2e-diag] control-return round=${round} readyMs=${Date.now() - startedAt}`);
+      await expect(unlockScreen).toHaveClass(/\bhidden\b/);
     }
+
+    // Wyświetlacz przeładowany pod nieobecność Control: po powrocie Control
+    // prosi o nowy gest, Wyświetlacz pokazuje przycisk, a gest odblokowuje grę.
+    await page.locator("#btnManual").click();
+    await page.waitForURL(/\/manual\//, { timeout: 15000 });
+    await displayPage.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#btnBack").click();
+    await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
+    await expect(startRound).toBeVisible({ timeout: 30000 });
+    await expect(unlockScreen).not.toHaveClass(/\bhidden\b/, { timeout: 20000 });
+    await expect(startRound).toBeDisabled();
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(unlockScreen).toHaveClass(/\bhidden\b/, { timeout: 10000 });
+    await expect(startRound).toBeEnabled({ timeout: 15000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);

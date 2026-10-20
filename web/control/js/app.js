@@ -242,21 +242,27 @@ async function main() {
     (error) => ({ error }),
   );
 
-  const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
-  diagStartup("game");
-  if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
-
+  // Odczyt gry i blokady zasobów nie zależą od siebie — biegną równolegle.
+  const gameP = sb().from("games").select("*").eq("id", gameId).single();
   // Blokady strony (docs/blokady-zasobow.md, sekcja 6): game:G wyłącznie (wspólny
   // klucz z edytorem, ustawieniami i ankietą) + logos współdzielone (cała pula
   // logo użytkownika; id = użytkownik). Kolejność: najpierw gra, potem pula logo
   // — pierwsza przeszkoda zatrzymuje ze swoim komunikatem. Edycja któregokolwiek
   // logo (logo:L wyłącznie) wyklucza logos, więc zatrzymuje Control.
-  const lock = await guardResourceLocks([
+  const lockP = guardResourceLocks([
     { type: "game", id: gameId, mode: "exclusive", message: t("resourceLock.gameMessage") },
     // Reuse the already authenticated owner. A second auth.getUser() here
     // could transiently return null and silently omit the logo-pool lock.
     { type: "logos", id: user.id, mode: "shared", message: t("resourceLock.logoEditBlocksControl") },
   ], { context: "control", backHref: backHref("control") });
+  const { data: game, error: gameError } = await gameP;
+  diagStartup("game");
+  if (gameError || !game) {
+    void lockP.then((acquired) => acquired?.ok && acquired.release?.()).catch(() => {});
+    root.textContent = "Nie znaleziono gry.";
+    return;
+  }
+  const lock = await lockP;
   if (!lock.ok) return;
   pageLock = lock;
   diagStartup("locks");
@@ -286,6 +292,18 @@ async function main() {
   }
   if (runtimeSessionResult.expired) return;
   diagStartup("runtimeSession");
+
+  // Linki i kody urządzeń wymagają tylko aktywnej sesji Control. Pobierz je
+  // równolegle z odczytem stanu gry zamiast po nim.
+  const devices = createDevices({ game });
+  const urlsP = devices.buildUrls(getUiLang());
+  const connectCodesP = urlsP.then(() => Promise.all(
+    ["display", "host", "buzzer"].map(async (kind) => [
+      kind,
+      await devices.generateConnectCode(kind).catch(() => null),
+    ]),
+  )).then(Object.fromEntries);
+  connectCodesP.catch(() => {});
 
   const sfxManifestResult = await sfxManifestP;
   if (sfxManifestResult.error) throw sfxManifestResult.error;
@@ -427,6 +445,9 @@ async function main() {
   let requestedDisplayAudioUnlockNonce = null;
   let displayUnlockRetryTimer = null;
   let displayUnlockRequestPending = false;
+  // Pierwszy udany odczyt obecności opisuje stan zastany przy starcie Control,
+  // nie ponowne podłączenie Wyświetlacza.
+  let presenceRead = false;
   let refreshDisplayPresence = null;
   let controlOffline = !navigator.onLine;
   let controlUIReady = false;
@@ -912,18 +933,10 @@ async function main() {
     }
   });
 
-  const devices = createDevices({ game });
-  const urls = await devices.buildUrls(getUiLang());
+  const urls = await urlsP;
   diagStartup("urls");
   testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
-  // buildUrls() już równolegle przygotował klucze sesji wszystkich urządzeń.
-  // Pobierz kody równolegle, żeby skrócić czas do pierwszego renderu Control.
-  const connectCodes = Object.fromEntries(await Promise.all(
-    ["display", "host", "buzzer"].map(async (kind) => [
-      kind,
-      await devices.generateConnectCode(kind).catch(() => null),
-    ]),
-  ));
+  const connectCodes = await connectCodesP;
   diagStartup("codes");
 
   const presence = createPresence({
@@ -932,7 +945,11 @@ async function main() {
       const previous = presenceFlags;
       let leaseReadRecovered = false;
       const displayAudioWasUnlocked = displayAudioUnlocked === true;
-      const displayReconnected = !previous.display && flags.display === true;
+      const firstPresenceRead = !presenceRead;
+      if (!error) presenceRead = true;
+      // Powrót Control (np. ze Wskazówek) nie jest ponownym podłączeniem
+      // Wyświetlacza: jego odblokowanie w bazie nadal obowiązuje.
+      const displayReconnected = !firstPresenceRead && !previous.display && flags.display === true;
       const displayAudioSessionReset = previous.display === true && flags.display === true
         && displayAudioWasUnlocked && audioUnlocked !== true;
       presenceFlags = flags;
@@ -940,12 +957,19 @@ async function main() {
       displayAudioUnlockNonce = audioUnlockNonce;
       if (displayAudioUnlockStatus?.requestNonce
         && (!displayUnlockRequestPending || displayAudioUnlockStatus.requestNonce === requestedDisplayAudioUnlockNonce)) {
+        const requestedHere = displayAudioUnlockStatus.requestNonce === requestedDisplayAudioUnlockNonce;
         requestedDisplayAudioUnlockNonce = displayAudioUnlockStatus.requestNonce;
+        const inGameplayWithDisplaySound = store.state.settings.soundSource === "display"
+          && !/^(devices_|setup_)/.test(store.state.step);
         if (displayAudioUnlockStatus.acknowledgedNonce === displayAudioUnlockStatus.requestNonce) {
           clearInterval(displayUnlockRetryTimer);
           displayUnlockRetryTimer = null;
-        } else if (store.state.settings.soundSource === "display"
-          && !/^(devices_|setup_)/.test(store.state.step) && !displayUnlockRetryTimer) {
+        } else if (inGameplayWithDisplaySound && !requestedHere && !displayUnlockRetryTimer) {
+          // Niepotwierdzony nonce, którego ta karta nie wysłała: zwykle nonce
+          // sesji Wyświetlacza po jego przeładowaniu. Wyświetlacz w trakcie gry
+          // nie pokazuje przycisku dla własnego nonce, więc poproś o nowy.
+          requestDisplayAudioUnlock();
+        } else if (inGameplayWithDisplaySound && !displayUnlockRetryTimer) {
           const nonce = requestedDisplayAudioUnlockNonce;
           const publish = () => {
             if (nonce !== requestedDisplayAudioUnlockNonce || !waitingForDisplayAudioUnlock()) {
