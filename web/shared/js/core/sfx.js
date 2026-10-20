@@ -81,8 +81,40 @@ function getAudioContext() {
     masterGain = audioContext.createGain();
     masterGain.gain.value = globalMuted ? 0 : 1;
     masterGain.connect(audioContext.destination);
+    // Przeglądarka może wstrzymać dźwięk bez przeładowania strony (uśpienie
+    // telewizora, przejęcie audio przez system). Spróbuj wznowić; jeśli bez
+    // gestu się nie da, odblokowanie przestaje obowiązywać.
+    const context = audioContext;
+    // Dostęp dla testów e2e (jak window.__sfxLog): pozwala zasymulować
+    // wstrzymanie dźwięku przez przeglądarkę.
+    if (typeof window !== "undefined") window.__sfxAudioContext = context;
+    context.addEventListener?.("statechange", () => {
+      if (!unlocked || context.state === "running") return;
+      Promise.resolve(context.state === "closed" ? null : context.resume()).catch(() => {}).finally(() => {
+        setTimeout(() => {
+          if (unlocked && context.state !== "running") notifyAudioUnlockLost(`context_${context.state}`);
+        }, 1000);
+      });
+    });
   }
   return audioContext;
+}
+
+const unlockLostObservers = new Set();
+
+/** Powiadamia, gdy wcześniejsze odblokowanie dźwięku przestało obowiązywać. */
+export function onAudioUnlockLost(observer) {
+  if (typeof observer !== "function") return () => {};
+  unlockLostObservers.add(observer);
+  return () => unlockLostObservers.delete(observer);
+}
+
+function notifyAudioUnlockLost(reason) {
+  if (!unlocked) return;
+  unlocked = false;
+  for (const observer of unlockLostObservers) {
+    try { observer(reason); } catch {}
+  }
 }
 
 export function createSfxAudio(url) {
@@ -425,6 +457,8 @@ export function playSfx(key) {
     if (started?.then) started.then(() => {
       reportPlayback({ key, failed: false, delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
     }).catch(error => {
+      // Odmowa odtwarzania przez politykę autoplay: gest trzeba powtórzyć.
+      if (error?.name === "NotAllowedError") notifyAudioUnlockLost("not_allowed");
       reportPlayback({ key, failed: true, error: String(error?.name || "play_rejected"), delayMs: Math.max(0, Math.round(performance.now() - requestedAt)) });
     });
   } catch (error) {

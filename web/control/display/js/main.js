@@ -21,7 +21,7 @@ import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-20T06020";
 import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T06020";
 import { createRenderer } from "./render.js?v=v2026-10-20T06020";
 import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-20T06020";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-20T06020";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-20T06020";
 import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T06020";
 
 
@@ -399,20 +399,28 @@ window.addEventListener("DOMContentLoaded", async () => {
     updateDeviceLeaseOverlay(lease.state);
     const displayEventLog = createDisplayEventLog(game.id, key, lease);
     window.addEventListener("pagehide", displayEventLog.stop, { once: true });
-    const audioSessionNonce = globalThis.crypto?.randomUUID?.()
+    const newAudioNonce = () => globalThis.crypto?.randomUUID?.()
       || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    let audioSessionNonce = newAudioNonce();
     // Every Display page load starts a fresh atomic unlock generation. This
     // catches reloads even when the 6.5 s presence timeout never elapsed.
+    // Rejestracja kasuje w bazie potwierdzenie poprzedniej sesji. Bez niej
+    // Control uznałby stare odblokowanie za ważne, więc ponawiamy do skutku
+    // (dopóki ta karta obsługuje Wyświetlacz i sesja jest aktualna).
     function registerAudioSession() {
-      return sb().rpc("begin_display_audio_session", {
-        p_game_id: game.id, p_key: key, p_session_nonce: audioSessionNonce, ...lease.actionArgs(),
+      const nonce = audioSessionNonce;
+      const attempt = (retryMs) => sb().rpc("begin_display_audio_session", {
+        p_game_id: game.id, p_key: key, p_session_nonce: nonce, ...lease.actionArgs(),
       }).then(({ error }) => {
-      if (error) console.warn("[display2 audio unlock] session registration failed:", error.message);
-      return !error;
-    }).catch((error) => {
-      console.warn("[display2 audio unlock] session registration failed:", error?.message || error);
-      return false;
-    });
+        if (error) throw error;
+        return true;
+      }).catch((error) => {
+        console.warn("[display2 audio unlock] session registration failed:", error?.message || error);
+        if (nonce !== audioSessionNonce || lease.state !== "primary") return false;
+        return new Promise((resolve) => setTimeout(resolve, retryMs))
+          .then(() => attempt(Math.min(retryMs * 2, 10000)));
+      });
+      return attempt(1000);
     }
     if (lease.state === "primary") audioSessionRegistration = registerAudioSession();
     const displayPresence = startPresenceHeartbeat({ gameId: game.id, key });
@@ -510,6 +518,22 @@ window.addEventListener("DOMContentLoaded", async () => {
         btnAudioUnlock.disabled = false;
       }
     });
+
+    // Przeglądarka przestała pozwalać na dźwięk bez przeładowania strony:
+    // zachowaj się jak po przeładowaniu — nowa sesja kasuje potwierdzenie
+    // w bazie, Control wstrzymuje grę i prosi o gest, a przycisk wraca.
+    const stopUnlockLostWatch = onAudioUnlockLost((reason) => {
+      if (!audioUnlockReported) return;
+      console.warn("[display2 audio unlock] browser audio no longer unlocked:", reason);
+      audioUnlockReported = false;
+      audioSessionNonce = newAudioNonce();
+      audioUnlockRequestNonce = audioSessionNonce;
+      if (btnAudioUnlock) btnAudioUnlock.disabled = false;
+      if (lease.state === "primary") audioSessionRegistration = registerAudioSession();
+      syncAudioUnlockScreen();
+      void displayPresence.setMeta({ audio_unlocked: false, audio_unlock_nonce: null }).catch(() => {});
+    });
+    window.addEventListener("pagehide", stopUnlockLostWatch, { once: true });
 
     const scene = await createScene();
     scene.api = instrumentSceneApi(scene.api);

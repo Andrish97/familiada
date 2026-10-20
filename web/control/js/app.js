@@ -1039,7 +1039,7 @@ async function main() {
       if (!error && presenceUnavailable) {
         leaseReadRecovered = recoverLeaseStatusRead();
       }
-      if (!leaseReadRecovered && !error && (displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
+      if (!leaseReadRecovered && !error && !displayUnlockRequestPending && (displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
         // A Display that reconnects during a game needs a fresh browser gesture
         // even if it reported an unlock before disconnecting. Send a new nonce
         // so its button returns and keep Control actions gated until it replies.

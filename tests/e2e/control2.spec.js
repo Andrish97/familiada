@@ -3945,6 +3945,21 @@ test("control2: powrót do Control w trakcie gry (Wskazówki → Wstecz) przy d�
     await displayPage.locator("#btnAudioUnlock").click();
     await expect(unlockScreen).toHaveClass(/\bhidden\b/, { timeout: 10000 });
     await expect(startRound).toBeEnabled({ timeout: 15000 });
+
+    // Przeglądarka Wyświetlacza wstrzymuje dźwięk bez przeładowania strony
+    // (np. uśpienie telewizora) i nie pozwala wznowić go bez gestu: Control
+    // wstrzymuje grę, Wyświetlacz pokazuje przycisk, gest przywraca grę.
+    await displayPage.evaluate(async () => {
+      const context = window.__sfxAudioContext;
+      context.resume = () => Promise.reject(new DOMException("blocked", "NotAllowedError"));
+      await context.suspend();
+    });
+    await expect(unlockScreen).not.toHaveClass(/\bhidden\b/, { timeout: 20000 });
+    await expect(startRound).toBeDisabled();
+    await displayPage.evaluate(() => { delete window.__sfxAudioContext.resume; });
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(unlockScreen).toHaveClass(/\bhidden\b/, { timeout: 10000 });
+    await expect(startRound).toBeEnabled({ timeout: 15000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
