@@ -104,14 +104,15 @@ test("E20: wyszukiwanie telefonu stosuje OK, Anuluj nie zmienia stanu, X czyści
   const open = page.locator(".list-search-open");
   await expect(open).toBeVisible();
   await open.click();
-  await page.locator(".uni-modal input[type=search]").fill("zachowaj po anulowaniu");
-  await page.getByRole("button", { name: "Nie", exact: true }).click();
+  // okno wpisywania (promptModal): pole .uni-inp, w stopce Anuluj i złote Zapisz
+  await page.locator(".uni-modal .uni-inp").fill("zachowaj po anulowaniu");
+  await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
   await expect(page.locator(".uni-modal")).toHaveCount(0);
   await expect(open).not.toHaveClass(/is-active/);
 
   await open.click();
-  await page.locator(".uni-modal input[type=search]").fill(`E20_BRAK_${Date.now()}`);
-  await page.getByRole("button", { name: "OK", exact: true }).click();
+  await page.locator(".uni-modal .uni-inp").fill(`E20_BRAK_${Date.now()}`);
+  await page.locator(".uni-modal .uni-foot .btn.gold").click();
   await expect(page.locator(".list-search-open")).toHaveClass(/is-active/);
   await expect(open).toHaveAttribute("data-tooltip", "Wyczyść");
   const clearButton = await open.boundingBox();
