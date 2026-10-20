@@ -905,15 +905,12 @@ async function main() {
   const devices = createDevices({ game });
   const urls = await devices.buildUrls(getUiLang());
   testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
-  // buildUrls() już równolegle przygotował klucze sesji wszystkich urządzeń.
-  // Wygeneruj trzy kody równolegle: poprzednia pętla czekała na trzy osobne
-  // RPC jedno po drugim i blokowała pierwszy render Control.
-  const connectCodes = Object.fromEntries(await Promise.all(
-    ["display", "host", "buzzer"].map(async (kind) => [
-      kind,
-      await devices.generateConnectCode(kind).catch(() => null),
-    ]),
-  ));
+  // Każdy kod jest zapisywany przez RPC. Zachowaj kolejność tych operacji,
+  // żeby nie uruchamiać równoległych zapisów kodów dla tej samej gry.
+  const connectCodes = {};
+  for (const kind of ["display", "host", "buzzer"]) {
+    connectCodes[kind] = await devices.generateConnectCode(kind).catch(() => null);
+  }
 
   const presence = createPresence({
     gameId,
