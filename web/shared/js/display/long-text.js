@@ -26,11 +26,12 @@ const glyphOf = (glyphs, ch) => {
 /**
  * Układ napisu w długim polu: { items: [{ glyph, from, width }], width }.
  * from -- pierwsza kolumna glifu z kropkami (0 = lewa), width -- liczba kolumn.
- * Spacja i znaki bez kropek: pusta przerwa LONG_SPACE_W.
+ * Spacja i znaki bez kropek: pusta przerwa LONG_SPACE_W; znaki bez glifu
+ * są pomijane (dropUnsupported).
  */
 export function layoutLongText(text, glyphs) {
   const items = [];
-  for (const ch of longTextChars(text)) {
+  for (const ch of longTextChars(dropUnsupported(text, glyphs))) {
     const glyph = glyphs ? glyphOf(glyphs, ch) : null;
     const mask = glyphs ? (glyph || []).reduce((acc, row) => acc | (row | 0), 0) & FALLBACK_MASK : FALLBACK_MASK;
     if (!mask) { items.push({ glyph: null, from: 0, width: LONG_SPACE_W }); continue; }
@@ -50,10 +51,23 @@ export function measureLongText(text, glyphs) {
   return { width, max: LONG_COLS, fits: width <= LONG_COLS, invalid };
 }
 
-/** Napis bez znaków, których Wyświetlacz nie ma (bez czcionki -- bez zmian). */
-export function stripUnsupported(text, glyphs) {
-  if (!glyphs) return String(text ?? "");
-  return Array.from(String(text ?? "")).filter((ch) => /\s/.test(ch) || glyphOf(glyphs, ch.toUpperCase()) || glyphOf(glyphs, ch)).join("");
+/**
+ * Napis bez znaków, których Wyświetlacz nie ma (decyzja 2026-10-20): taki znak
+ * jest pomijany razem z jedną spacją, która stoi zaraz za nim („Kawa 😀 z” →
+ * „Kawa z”). Wspólne dla długich pól, dużej planszy i ustawień gry.
+ * Bez czcionki (jeszcze nie wczytana) napis zostaje bez zmian.
+ */
+export function dropUnsupported(text, glyphs) {
+  const chars = Array.from(String(text ?? ""));
+  if (!glyphs) return chars.join("");
+  let out = "";
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    const upper = Array.from(ch.toUpperCase());
+    if (/\s/.test(ch) || upper.every((u) => glyphOf(glyphs, u))) { out += ch; continue; }
+    if (chars[i + 1] === " ") i++;
+  }
+  return out;
 }
 
 /** Najdłuższy początek napisu, który zmieści się w długim polu. */

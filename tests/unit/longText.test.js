@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { LONG_COLS, layoutLongText, measureLongText, clipLongText, stripUnsupported } from "../../web/shared/js/display/long-text.js";
+import { LONG_COLS, layoutLongText, measureLongText, clipLongText, dropUnsupported } from "../../web/shared/js/display/long-text.js";
 import { buildGlyphMap } from "../../web/shared/js/display/fonts.js";
 
 const glyphs = buildGlyphMap(JSON.parse(readFileSync(new URL("../../web/shared/fonts/display/font_5x7.json", import.meta.url))));
@@ -32,7 +32,13 @@ test("characters without a Display glyph are reported", () => {
   assert.deepEqual(measureLongText("Drużyna 😀", glyphs).invalid, ["😀"]);
 });
 
-test("characters without a Display glyph are not accepted", () => {
-  assert.equal(stripUnsupported("Zajączki 😀", glyphs), "Zajączki ");
-  assert.equal(stripUnsupported("Ekipa nr 1!", glyphs), "Ekipa nr 1!");
+// Decyzja 2026-10-20: znak bez glifu jest pomijany razem z jedną spacją za nim.
+test("characters without a Display glyph are skipped with one following space", () => {
+  assert.equal(dropUnsupported("Kawa 😀 z mlekiem", glyphs), "Kawa z mlekiem");
+  assert.equal(dropUnsupported("Jogurt ♥ owoc", glyphs), "Jogurt owoc");
+  assert.equal(dropUnsupported("Zajączki 😀", glyphs), "Zajączki ");
+  assert.equal(dropUnsupported("😀😀 Ekipa", glyphs), "Ekipa");
+  assert.equal(dropUnsupported("Ekipa nr 1!", glyphs), "Ekipa nr 1!");
+  // Na długim polu pominięty znak nie zostawia luki.
+  assert.equal(layoutLongText("Kotki 😀 Psy", glyphs).width, layoutLongText("Kotki Psy", glyphs).width);
 });

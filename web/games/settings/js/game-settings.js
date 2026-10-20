@@ -12,7 +12,7 @@ import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v20
 import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T11473";
 import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T11473";
 import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T11473";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, stripUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-20T11473";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-20T11473";
 
 import {
   loadSfxManifest, getSfxCategories,
@@ -549,8 +549,9 @@ function renderTeams() {
 
   // Nazwa drużyny ma się zmieścić w długim polu Wyświetlacza (long-text.js):
   // liczy się rzeczywista szerokość znaków z czcionki Wyświetlacza (puste
-  // kolumny glifów są pomijane, jak w edytorze napisów logo). Pole nie
-  // przyjmie znaków, których Wyświetlacz nie ma, ani więcej, niż pole pokaże;
+  // kolumny glifów są pomijane, jak w edytorze napisów logo). Znaki, których
+  // Wyświetlacz nie ma, są pomijane razem ze spacją za nimi (jak na
+  // Wyświetlaczu), a pole nie przyjmie więcej, niż Wyświetlacz pokaże;
   // bez liczników -- komunikat mówi tylko, co i dlaczego nie zostało przyjęte.
   const rejected = { A: { clipped: false, chars: [] }, B: { clipped: false, chars: [] } };
   const measure = (key) => {
@@ -568,11 +569,11 @@ function renderTeams() {
   for (const key of ["A", "B"]) {
     document.getElementById(`gsTeam${key}`)?.addEventListener("input", e => {
       const typed = e.target.value;
-      const supported = stripUnsupported(typed, _logoFont);
+      const supported = dropUnsupported(typed, _logoFont);
       const clipped = clipLongText(supported, _logoFont);
       rejected[key] = {
         clipped: clipped !== supported,
-        chars: [...new Set(Array.from(typed).filter((ch) => !Array.from(supported).includes(ch)))],
+        chars: [...new Set(Array.from(typed).filter((ch) => ch.trim() && !Array.from(supported).includes(ch)))],
       };
       if (clipped !== typed) e.target.value = clipped;
       localSettings.teams[`team${key}`] = clipped;

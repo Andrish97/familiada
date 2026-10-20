@@ -25,7 +25,7 @@
 // ryzyko niezgodności z tym, jak wygląda dziś (ustalone wprost).
 
 import { loadJson, buildGlyphMap, resolveGlyph } from "../../../shared/js/display/fonts.js?v=v2026-10-20T11473";
-import { LONG_GAP, layoutLongText } from "../../../shared/js/display/long-text.js?v=v2026-10-20T11473";
+import { LONG_GAP, layoutLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-20T11473";
 import { createAnimator } from "../../../shared/js/display/anim.js?v=v2026-10-20T11473";
 import { createDisplays } from "../../../shared/js/display/displays.js?v=v2026-10-20T11473";
 import { createThemeManager } from "../../../shared/js/display/theme_manager.js?v=v2026-10-20T11473";
@@ -227,13 +227,16 @@ export async function createScene() {
   const field = (name, c1, r1, len) => ({ name, c1, r1, c2: c1 + len - 1, r2: r1 });
 
   const writeField = (GLYPHS, big, f, text, color) => {
-    const s = (text ?? "").toString().toUpperCase();
+    // Pełne znaki (Array.from), nie połówki UTF-16 -- emoji nie zajmuje dwóch kafli.
+    const s = Array.from((text ?? "").toString().toUpperCase());
     const len = f.c2 - f.c1 + 1;
     for (let i = 0; i < len; i++) putCharAt(GLYPHS, big, f.c1 + i, f.r1, s[i] ?? " ", color);
   };
 
   const alignRight = (val, width) => { const s = (val ?? "").toString(); if (!s.length) return " ".repeat(width); return s.length >= width ? s.slice(-width) : " ".repeat(width - s.length) + s; };
-  const clipText = clipDisplayText;
+  // Teksty planszy (odpowiedzi, finał): znaki bez glifu pomijane razem ze
+  // spacją za nimi, potem przycięcie do pojemności pola na już widocznych znakach.
+  const clipText = (value, capacity) => clipDisplayText(dropUnsupported(value, GLYPHS).toUpperCase(), capacity);
 
   const updateField = async (GLYPHS, big, f, text, { out = null, in: inn = null, color = LIT.main } = {}) => {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
