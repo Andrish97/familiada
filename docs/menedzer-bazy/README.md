@@ -147,7 +147,7 @@ js/page.js             składanie całości
 
 ### 3.6 Kosz jako folder
 
-Wiersz „Kosz” w drzewie pod wszystkimi folderami (z licznikiem);
+Wiersz „Kosz” w drzewie pod wszystkimi folderami, wyglądający jak folder, bez licznika;
 `location = "trash"` pokazuje wpisy kosza w tej samej tabeli (folder /
 pytanie, kolumna Info: „usunie się za N dni”). Pasek w koszu: Przywróć
 (po zaznaczeniu), Usuń (= trwale, z potwierdzeniem), Opróżnij kosz;

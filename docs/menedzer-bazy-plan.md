@@ -89,7 +89,8 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     samego rejestru akcji.
   - **Kosz (doprecyzowanie 2026-10-20):** zwykły wiersz folderu w drzewie,
     od razu pod folderami, **bez osobnego stylu** (jak inne foldery; ikona
-    kosza). Dzisiejszy przycisk na dole panelu znika.
+    kosza), **bez plakietki z liczbą elementów**. Dzisiejszy przycisk na
+    dole panelu znika.
   - **Pomysł na później (NIE teraz):** wszystkie okna na telefonie w stylu
     arkusza od dołu, jak menu kontekstowe (użytkownikowi się podoba).
   - **Przemyśleć wyszukiwanie i filtrowanie** (tekst, #tagi w polu
