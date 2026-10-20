@@ -3,7 +3,7 @@
 // UTF-16). Dozwolone znaki odpowiedzi pochodzą z czcionki 5x7 Wyświetlacza
 // (answer-charset.js, generowany); SQL ma ten sam zestaw i te same reguły:
 // public.fam_answer_invalid_chars / public.fam_answer_clean.
-import { ANSWER_CHARSET } from "./answer-charset.js?v=v2026-10-20T14031";
+import { ANSWER_CHARSET } from "./answer-charset.js?v=v2026-10-20T14100";
 
 export const GAME_NAME_MAX = 80;
 export const QUESTION_MAX = 100;
