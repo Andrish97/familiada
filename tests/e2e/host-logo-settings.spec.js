@@ -112,13 +112,14 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await page.locator('.gs-sidebar-item[data-cat="display"]').click();
     await expect(page.locator('input[name="gsHostLogoMode"][value="source"]')).toBeChecked();
 
-    displayContext = await browser.newContext({ locale: "pl-PL" });
-    await serveBranchCode(displayContext, { pages: ["display"] });
-    const displayPage = await displayContext.newPage();
-    await displayPage.goto(`${ORIGIN}/control/display?id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" });
-
+    // Najpierw Control (sesja urządzeń), potem Wyświetlacz przez /go/ —
+    // tak jak w control2.spec.js (openAnon).
     await page.goto(`${ORIGIN}/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 20_000 });
+    displayContext = await browser.newContext({ locale: "pl-PL", viewport: { width: 1366, height: 1024 } });
+    await serveBranchCode(displayContext, { pages: ["display"] });
+    const displayPage = await displayContext.newPage();
+    await displayPage.goto(`${ORIGIN}/go/?d=display&id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 20_000 });
     await page.getByLabel("Przycisk fizyczny").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
