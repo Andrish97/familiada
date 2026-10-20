@@ -35,7 +35,7 @@ const $ = (id) => document.getElementById(id);
 const TOUCH = matchMedia("(pointer: coarse)").matches;
 guardViewportWidth({ minWidth: 0, allowPhoneLandscape: true, requirePhoneLandscape: true, rotateMessageKey: "snake.rotateMessage" });
 
-const i18nReady = initI18n({ withSwitcher: false }).then(() => {
+const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove("page-loading");
   hydrateIcons();
 });
@@ -224,10 +224,11 @@ async function boot() {
     setToggle();
     writeLong(long1, t("snake.long.score"));
     drawGame();
-    logSnake("start", { lang });
+    logSnake("start", { lang: getUiLang() });
     timer = setTimeout(tick, stepDelay(0));
   };
 
+  let showSummary = null;
   const finish = () => {
     clearTimeout(timer);
     mode = "over";
@@ -236,12 +237,11 @@ async function boot() {
     const score = game.state.score;
     const record = score > best;
     if (record) { best = score; writeLocalBest(best); }
-    logSnake("finish", { score, lang }).then((res) => {
+    logSnake("finish", { score, lang: getUiLang() }).then((res) => {
       if (user && res?.best != null) { account = { best: res.best, games: res.games }; best = Math.max(best, res.best); showProgress(); }
     });
     // Chwila na zobaczenie „X” na głowie, potem podsumowanie.
-    setTimeout(() => {
-      if (mode !== "over") return;
+    showSummary = () => {
       showText([
         [2, game.state.won ? t("snake.board.won") : t("snake.board.over")],
         [4, t("snake.board.score", { score })],
@@ -249,7 +249,8 @@ async function boot() {
         [8, t(TOUCH ? "snake.board.againTouch" : "snake.board.again")],
       ]);
       writePanel(rightPanel, best);
-    }, 900);
+    };
+    setTimeout(() => { if (mode === "over") showSummary(); }, 900);
   };
 
   const pause = (on) => {
@@ -304,6 +305,14 @@ async function boot() {
   $("snakeFrame").addEventListener("click", toggle);
 
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(true); });
+  // Przełącznik języka (lewy górny róg): napisy na planszy i pod nią od razu w nowym języku.
+  window.addEventListener("i18n:lang", () => {
+    if (mode === "intro") showIntro();
+    else if (mode === "over" && showSummary) showSummary();
+    writeLong(long1, t(mode === "pause" ? "snake.long.paused" : "snake.long.score"));
+    writeLong(long2, t("snake.long.best"));
+    showProgress();
+  });
   // Obrót telefonu do pionu w trakcie gry zasłania planszę prośbą o obrót.
   matchMedia("(orientation: portrait)").addEventListener("change", (e) => { if (TOUCH && e.matches) pause(true); });
 
