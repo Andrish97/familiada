@@ -3,6 +3,8 @@
 
 /* css/base.css */
 :root {
+    /* Odstępy strony (E18 #7): boczny margines treści; ≤980 px — 15 px. */
+    --page-gutter: 18px;
     --bg: #050914;
     --card: #111827; /* powierzchnia zewnętrznej karty */
     --card2: rgba(0,0,0,.18);
@@ -535,6 +537,9 @@ main{
 /* .wrap z gier/urządzeń ma własny padding (także dolne 15px), który
    nie może odbierać stopce odstępu safe area po załadowaniu obu arkuszy. */
 .footer.wrap{
+    /* stopka poza main: pełna szerokość jak w Mails i Ustawieniach gry */
+    width: auto;
+    margin-inline: 0;
     padding-top: 20px;
     padding-right: max(16px, env(safe-area-inset-right));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
@@ -709,7 +714,7 @@ main{
 .wrap {
     width: 90%;
     margin: 0 auto;
-    padding: 24px 18px 18px
+    padding: 24px var(--page-gutter) 18px
 }
 
 .row,.stack {
@@ -1481,11 +1486,12 @@ main{
 }
 
 @media (max-width: 980px){
+    :root{ --page-gutter: 15px; }
     .wrap{
         width: 100%;
         padding: 15px;
-        padding-left: max(15px, env(safe-area-inset-left));
-        padding-right: max(15px, env(safe-area-inset-right));
+        padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+        padding-right: max(var(--page-gutter), env(safe-area-inset-right));
     }
 }
 

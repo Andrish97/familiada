@@ -41,7 +41,7 @@
 .mail-feedback{margin-top:12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,234,166,.05);font-size:13px}
 .mail-panels-card [hidden]{display:none!important}
 @media(max-width:620px){
- .mail-wrap{padding:16px 12px;gap:16px}
+ .mail-wrap{padding:16px var(--page-gutter);gap:16px}
  .mail-entry{padding:18px 14px;border-radius:18px}
  #mailAddress{font-size:12px}
  #mailMessage{font-size:13px}

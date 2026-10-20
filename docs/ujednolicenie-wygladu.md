@@ -41,10 +41,21 @@ podliczania jako stan bieżącej operacji.
   lub krótkim potwierdzeniem `.modal--narrow` (560 px). Wszędzie Esc i X,
   stopka „Anuluj” + złota akcja po prawej (`btn sm`, z ikonami).
 - **Marginesy (E18 #7):** przegląd i poprawki tylko tam, gdzie odstają, bez
-  zmian na stronach, które już są poprawne.
-- **Wyszukiwanie w listach (zamiast #10):** w nagłówku każdej długiej listy
-  (od 6 wierszy) pole szukania; na telefonie lupa rozwijająca pole pod
-  nagłówkiem. Bez filtrów.
+  zmian na stronach, które już są poprawne. Wykonane: token `--page-gutter`
+  (18 px, ≤980 px 15 px) w `.wrap` i stronach z własnym kontenerem; ≤980 px
+  15 px także w Znajomych/Subskrybentach (było 18), Ustawieniach gry (20),
+  Mails na telefonie (12), 404/przerwie (16); strony z games.css zachowują
+  strefę bezpieczną iPhone'a; stopka poza treścią (Connect, Go, 404,
+  przerwa) na pełną szerokość jak w Mails. Pomiar przed/po: pozostałe strony
+  bez zmian co do piksela. **Do decyzji:** na komputerze dwie rodziny stron
+  — 18 px (Gry, Bazy, Logo, Zadania, Ankieta, Connect) i ~88 px (strona
+  główna, Konto, edytor gry, Społeczność, Instrukcja, Prywatność).
+- **Narzędzia list (doprecyzowanie 2026-10-20):** każda lista wierszy ma w
+  nagłówku przyciski jak dolny pasek Gier w wersji ikon — sortowanie
+  (domyślna / A–Z / Z–A), filtr stanu (gdy są co najmniej dwa stany), lupa
+  otwierająca okno do wpisania frazy. Tak samo na komputerze i telefonie.
+  Listy: Znajomi, Subskrybenci, Zadania, Mails, Connect, odbiorcy ankiety,
+  udostępnianie Baz i Control, wysyłka kopii Gier/Logo.
 
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 
