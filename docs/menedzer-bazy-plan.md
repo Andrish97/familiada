@@ -36,6 +36,12 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     w różnych miejscach (widoki, pamięci podręczne, liczniki, sortowanie,
     filtry). Cel: jedno źródło stanu i jedna prosta, niezawodna ścieżka
     „stan → co pokazać → render” dla drzewa, listy i lewego panelu.
+  - **Pasek narzędzi zależny od widoku (do decyzji, propozycja agenta):**
+    każda akcja w rejestrze ma dwa warunki: „ma sens w tym widoku”
+    (nie → przycisk znika) i „można teraz” (nie → wyszarzony). Przycisk
+    znika tylko przy zmianie widoku, nie przy każdym kliknięciu, więc pasek
+    nie skacze. Np. kosz: Przywróć, Usuń trwale, Opróżnij kosz; wyszukiwanie
+    i tagi: bez Nowy folder/pytanie i Wklej; foldery: jak dziś.
   - **Wygląd strony zostaje** (użytkownikowi się podoba) — bez zmian
     wizualnych poza tym, czego wymagają nowe funkcje (kosz w drzewie).
   - **Menu kontekstowe do poprawy:** prawy przycisk myszy i długie
