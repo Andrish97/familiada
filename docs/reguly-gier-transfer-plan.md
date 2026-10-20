@@ -330,9 +330,10 @@ zapis, podgląd i późniejszą rozgrywkę.
   wyżej. `ready` preparowanej jest wynikiem reguł, nie osobnym typem/etykietą.
 - Dodać jawne `format_version`; wersje historyczne konwertować przez osobne,
   nazwane migratory formatu, a nie fallback na typ tekstowy.
-- Typ rozpoznany zachować zgodnie z mapą wersji. Typ nieznany/nieobsługiwany
-  zgłaszać z nazwą typu i wskazaniem, czy można wybrać jawne mapowanie; nigdy
-  nie zmieniać po cichu.
+- Typ rozpoznany zachować zgodnie z mapą wersji. Zwykły import/eksport nie ma
+  fallbacków ani zgadywania typu po nazwie gry. Niejasne dane historyczne
+  obsługuje wyłącznie opisana niżej jawna ścieżka odzyskania do
+  `prepared`/`draft`, z informacją o wyniku i odzyskanych danych.
 - Każde obcięcie, usunięcie, wypełnienie placeholderem, wyzerowanie punktów,
   ograniczenie liczby odpowiedzi lub konwersję typu: albo usunąć z normalizacji
   (jeśli format może zachować dane), albo pokazać przed importem dokładny
@@ -345,8 +346,40 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Dane wymagające tajności lub związane z sesją/urządzeniami pozostają poza
   formatem, tak jak obecnie; jawnie dokumentować wyłączenia.
 - Import nie może odrzucać gry tylko dlatego, że jest niegotowa do rozgrywki.
-  Po imporcie centralny silnik pokazuje braki. Błędy struktury i nieobsługiwany
-  typ są natomiast raportowane jawnie.
+  Po imporcie centralny silnik pokazuje braki. Jeżeli z historycznego pliku
+  da się odzyskać grę i jej pytania, niejasność typu/stanu prowadzi do jawnego
+  odzyskania preparowanej w szkicu. Jeśli nie da się odczytać nawet gry i jej
+  pytań, import zgłasza błąd i nie tworzy zastępczej pustej gry.
+
+### Migracja starych gier i odzyskiwanie — decyzja 2026-10-20
+
+- Przy wdrożeniu nowych reguł przygotować **migrację naprawczą danych dla
+  wszystkich użytkowników**, obejmującą historyczne gry niezgodne z obecnym
+  kontraktem. Nie ograniczać ujednolicenia do nowych importów ani kont
+  aktualnie zalogowanych. Konkretne przypadki i liczebności ustalić odczytem
+  danych przed napisaniem migracji.
+- Rozpoznane, jednoznaczne typy i stany normalizować zgodnie z kontraktem.
+  Poprawnych typów nie zmieniać tylko dlatego, że szkic nie jest jeszcze
+  grywalny. Rozpoznany typ kopii `market` pozostaje osobnym typem w bazie.
+- Gdy historyczny typ/stan jest niejasny, ale można odczytać definicję gry
+  i jej pytania, wynik to **`prepared`, `status=draft`**. Nie zgadywać rodzaju
+  ankiety po nazwie ani nie wymagać ręcznego wybierania między typami ankiet.
+  Ta sama jawna reguła odzyskania dotyczy historycznych plików importu.
+- Zachować odczytane pytania i ich kolejność oraz możliwe do odzyskania
+  odpowiedzi i punkty. Nie dopisywać pytań/odpowiedzi i nie przydzielać
+  wymyślonych punktów w celu sztucznego spełnienia progów grywalności.
+  Braki mają być widoczne jako braki szkicu. Polityka treści przekraczających
+  limity zapisu pozostaje osobnym ustaleniem; konwersja typu nie upoważnia do
+  cichego obcinania lub usuwania danych.
+- Migracja istniejącej gry naprawia ten sam rekord, zachowując właściciela
+  i ID. Nie jest powielaniem. Ma być powtarzalna bez kolejnych zmian i dawać
+  zestawienie napraw, konwersji, braków oraz przypadków nieodzyskiwalnych.
+  Po naprawie przeliczyć centralną gotowość i `rules_state`.
+- Nie utożsamiać zgodności modelu z grywalnością. Migracja ma ujednolicić
+  zapis; wynik może pozostać niegotowym szkicem. Nieodczytywalnych rekordów
+  nie usuwać automatycznie; wykazać je w raporcie naprawy.
+- To jest ustalony zakres **planowanego** wdrożenia, nie polecenie wykonania
+  migracji teraz. Nadal obowiązuje zatrzymanie przed implementacją.
 
 ## 5. Plan prac
 
@@ -360,6 +393,7 @@ zapis, podgląd i późniejszą rozgrywkę.
 | F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Próg 4% włącznie i min. 3 odpowiedzi w jednym algorytmie; samo wejście w podliczanie nie jest blokowane |
 | G | Dodanie „Zmień typ” obok powielania; ta sama bramka `edit` i ta sama ścieżka resetu co w edytorze; konwersja tego samego rekordu do szkicu wybranego typu | Ankieta otwarta/zatrzymana blokuje akcję; zamknięta wymaga identycznego potwierdzenia resetu; podgląd strat/braków przed zapisem |
 | H | Wdrożenie wersjonowanego transferu; jawna obsługa kopii `market`; usunięcie cichych fallbacków; ten sam kontrakt dla wysyłania kopii i poprawa bramki zgłoszenia Marketplace | Dokładnie pięć wariantów zwykłego transferu; wysyłka znajomym wyłącznie szkiców tego samego typu; Marketplace przyjmuje gotową `prepared` lub zamkniętą ankietę jako snapshot `prepared` |
+| H1 | Migracja naprawcza historycznych gier wszystkich użytkowników według §4, na podstawie odczytu danych; jawne odzyskiwanie niejasnych plików jako `prepared`/`draft` | Ujednolicony model bez zgadywania; odzyskane pytania/odpowiedzi/punkty, zachowane ID i właściciele istniejących gier, przeliczone reguły i raport napraw; szkice nie muszą być grywalne |
 | I | Punktowe testy DB/JS/E2E dla reguł, akcji, zmiany typu oraz importu/eksportu/wysyłki | Macierz scenariuszy zielona; brak pełnych przebiegów bez potrzeby; dokumentacja formatu zaktualizowana |
 
 ## 6. Scenariusze kontrolne wymagane przed zamknięciem
@@ -399,14 +433,20 @@ zapis, podgląd i późniejszą rozgrywkę.
   jawna zmiana typu ostrzega o ich usunięciu.
 - Sprawdzić, że błąd pojedynczego elementu nie zostawia częściowo utworzonej
   gry, a raport strat odzwierciedla dokładnie pakiet wejściowy.
+- Migracja danych obejmuje wielu różnych właścicieli, zachowuje ich ID gier
+  i własność, jest idempotentna i nie zmienia poprawnych szkiców wyłącznie
+  z powodu braków grywalności. Niejasny historyczny typ z czytelnymi pytaniami
+  daje preparowaną w szkicu, z odzyskanymi odpowiedziami/punktami; brak
+  możliwości odczytu gry/pytań daje raport problemu, nie fikcyjną nową grę.
 
 ## 7. Decyzje pozostawione do rozstrzygnięcia po audycie
 
 1. Czy eksport ma przechowywać pełne treści ponad obecne limity i import dopiero
    zgłaszać niezgodność, czy format ma świadomie limitować dane.
-2. Jakie dokładnie historyczne aliasy/typy (poza kanonicznymi typami źródłowymi
-   i kopią `market`) oraz zapisy `ready`→`prepared` występują w produkcyjnych
-   danych/pakietach i jakie migracje sprowadzą je do docelowego modelu.
+2. **Polityka rozstrzygnięta 2026-10-20:** migracja naprawcza starych gier
+   obejmie wszystkich użytkowników; niejasne, ale odzyskiwalne dane →
+   `prepared`/`draft`. Do odczytu pozostają rzeczywiste aliasy, stany i ich
+   liczebności oraz konkretny zakres napraw, bez zgadywania typu ankiety.
 3. **Rozstrzygnięte 2026-10-20:** maksymalna suma punktów w pytaniu
    „Preparowanej” pozostaje 100 (`<=100`), nie wymagamy dokładnie 100.
    Modal Base Explorera nie egzekwuje tego limitu przy tworzeniu szkicu.
@@ -506,7 +546,7 @@ na takim sprawdzeniu klienta.
 | Pole | Eksport pliku / definicja kopii obecnie | Import 364 / zapis obecnie | Docelowo |
 |---|---|---|---|
 | Nazwa | Zachowana; null/brak → nazwa domyślna, pusty string pozostaje; Powiel dopisuje lokalizowane „kopia” i dobiera unikalną nazwę | Trim, limit 80; pusta/brak → lokalizowany default, bez defaults „Gra”; Send dobiera nazwę w bibliotece odbiorcy | Jawnie opisać zmiany nazwy i limit, bez cichego obcinania |
-| Typ | Trzy kanoniczne; nieznany/market → AT w helperze; każdy nie-P po normalizacji przy ready → P | Tylko trzy typy; reszta → AT, co usuwa odpowiedzi | Zachowanie rozpoznanego typu; historyczne migratory; nieznany jawny błąd |
+| Typ | Trzy kanoniczne; nieznany/market → AT w helperze; każdy nie-P po normalizacji przy ready → P | Tylko trzy typy; reszta → AT, co usuwa odpowiedzi | Rozpoznany typ zachowany; niejasny historyczny pakiet z czytelną grą i pytaniami → jawne odzyskanie P/draft; nieodczytywalny → błąd; M ma osobną politykę |
 | Status / znaczenie zamknięcia | Pominięty; rozpoznanie ready służy tylko konwersji do P | Zawsze draft; wejściowy status jest ignorowany | Pięć kombinacji §4; otwarta/zatrzymana → szkic z ostrzeżeniem; closed poll → zamknięty poll |
 | Wersja | Brak `format_version` | Nie sprawdza wersji; dodatkowe pole jest pomijane | Wersja i nazwane migratory bez zgadywania |
 | Pytania | Zachowana tablica w kolejności wejścia; `exportGame` pobiera po ord, SQL kopii po ord,id | Nowe ID i ord=pozycja w tablicy od 1; nie korzysta z wejściowego ord | Zachować kolejność znaczeniową i dokładny zbiór |
@@ -558,12 +598,12 @@ regułą od progu 4% ankiety.
 | Wariant znaleziony w kodzie/historii | Obecna obsługa i wymaganie migracyjne |
 |---|---|
 | `fixed` | `games.js:uiTypeFromRow` oraz narzędzie zrzutów `homepage-screenshots.js` traktują jako P. Zwykły importer SQL nie zna aliasu i zmienia go na AT, tracąc odpowiedzi; podgląd importu pokazuje P. Wymaga jawnego migratora formatu, nie dodania enum |
-| `poll` | Te same helpery zgadują AP po fragmencie „punkt” w nazwie, w pozostałych przypadkach AT. Podgląd importu Gier przekazuje tylko type, więc nazwa nie pomaga. Bez wiarygodnej metadanej wyboru AP/AT nie da się bezpiecznie odtworzyć; jawne mapowanie, bez heurystyki językowej |
+| `poll` | Te same helpery zgadują AP po fragmencie „punkt” w nazwie, w pozostałych przypadkach AT. Podgląd importu Gier przekazuje tylko type, więc nazwa nie pomaga. Docelowo bez wiarygodnego typu wynik to odzyskana P/draft z odczytanymi pytaniami, odpowiedziami i punktami, bez heurystyki językowej |
 | P z `source_market_id` | Starsze kopie Marketplace były P; 054 dodaje M, 055 backfilluje rekordy z source_market_id do M. To migracja pochodzenia, a nie usuwanie M |
 | M bez `source_market_id` | Migracja 272 przekształca istniejące sieroty do P; trigger robi to przy utracie rodzica Marketplace. To osobna historyczna konwersja; obecne uzgodnienie zachowania M wymaga sprawdzenia tej polityki przed zmianą/pozostawieniem triggera |
 | P po eksporcie zamkniętego AP/AT | Pakiet bez wersji/statusu/źródłowego typu jest nierozróżnialny od ręcznie preparowanej gry. Bez zewnętrznego pochodzenia nie odtwarzać typu ankiety automatycznie |
 | `ready` / `poll_stopped` / `*_closed` | `ready` jest statusem, nie historycznym typem; stopped dodano w 315. Sloty demo `poll_text_closed`/`poll_points_closed` nie są wartościami game_type |
-| `ready_prepared`, inne nieznane, brak typu | Nie znaleziono takiego enum ani jawnego migratora w przejrzanym kodzie. Nie tworzyć go. Importer/helper F zamieniają nieznane na AT; UI listy dla nieznanego pokazuje P; przy ready F dodatkowo kończy jako P. Wszystkie te fallbacki wymagają jawnego błędu/migracji |
+| `ready_prepared`, inne nieznane, brak typu | Nie znaleziono takiego enum ani jawnego migratora w przejrzanym kodzie. Nie tworzyć go. Importer/helper F zamieniają nieznane na AT; UI listy dla nieznanego pokazuje P; przy ready F dodatkowo kończy jako P. Zastąpić te fallbacki jawną migracją/odzyskaniem P/draft, jeśli da się odczytać grę i pytania; w przeciwnym razie zgłosić błąd |
 | `points` kontra `fixed_points` | Alias pola, nie typu: TXT/edytor/narzędzie zrzutów akceptują points; normalizator zwykłego pakietu go ignoruje i zapisuje 0. Wersjonowany migrator musi rozróżnić te formaty |
 
 Zgodnie z historią enum ma dokładnie P/AP/AT/M, bez innych wartości
@@ -580,16 +620,23 @@ odpowiedziami, każda odpowiedź ≥4 pkt, suma w każdym pytaniu ≤100**.
 Wszystkie warunki obowiązują jednocześnie; modal tworzenia szkicu nie
 egzekwuje gotowości.
 
+Polityka historycznych danych również jest ustalona: migracja naprawcza dla
+wszystkich użytkowników i jawne odzyskanie niejasnej, odczytywalnej gry jako
+preparowanej w szkicu. Brak gotowości nie jest powodem do dopisywania treści
+ani sztucznego przydziału punktów. Pozostaje odczyt rzeczywistych danych
+i rozpisanie konkretnych operacji naprawy.
+
 1. **Pełna matematyka zamknięcia:** mianownik i moment top6/odrzucania,
    rozstrzyganie remisów (w tym obecne obniżanie punktów) oraz wspólna
    kolejność wyników. Próg zaokrąglonego udziału ≥4% i minimum 3 odpowiedzi
    są ustalone; decyzja nie dotyczy ich zmiany.
 2. **Zakres zamkniętego wyniku w pliku:** czy wystarczy zatwierdzona lista
    odpowiedzi/punktów i znacznik zamknięcia, czy zachowujemy także agregaty
-   liczebności/udziałów? Bez tokenów, surowych głosów i sesji. Jak traktować
-   zastane zamknięte wyniki podliczone starym progiem 3%?
+   liczebności/udziałów? Bez tokenów, surowych głosów i sesji. Zastane wyniki
+   podliczone starym progiem obejmie migracja naprawcza; niejednoznacznych
+   wyników nie uznawać automatycznie za poprawnie zamkniętą ankietę.
 3. **Straty i stare pliki:** pełne treści ponad limity czy potwierdzane obcięcie;
-   mapping niejednoznacznego `poll`; jawny sposób eksportu M; polityka
+   jawny sposób eksportu M; polityka
    historycznego M→P po usunięciu pozycji Marketplace. Występowanie danych
    jest do odczytania, nie do rozstrzygania przez zgadywanie.
 4. **Reset wspólny dla edit/konwersji:** zachowanie treści odpowiedzi jest
