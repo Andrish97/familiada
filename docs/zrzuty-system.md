@@ -131,11 +131,12 @@ przybliżaniem bieżącego kadru (sceny `home-gallery` i `home-viewer`). Nowy ka
 ## Kontrola czcionek Control
 
 `node scripts/screens/check-control-fit.cjs` otwiera rozgrywkę Control (runda,
-finał gracza 1 i 2, z `STEP=` także mapowanie i pojedynek) z pytaniami po 200
-znaków i odpowiedziami po 17 w kilkunastu rozmiarach i proporcjach okna. Zgłasza
-ucięty tekst, elementy poza kartą i przewijanie strony (kod ≠ 0), wypisuje
-wynikowe rozmiary czcionek; zrzuty w `out/control-fit/`. Uruchamiać przy każdej
-zmianie wyglądu rozgrywki Control.
+pojedynek, finał gracza 1 i 2, mapowanie) z najgorszą treścią w limitach
+(pytania 100 znaków, odpowiedzi 17) w 16 rozmiarach i proporcjach okna, PL i UK.
+Błąd, gdy coś jest ucięte, wychodzi poza kartę, strona się przewija albo musiało
+zadziałać zabezpieczenie `fit-text.js` (czcionka z okna za duża). Wypisuje
+czcionkę bazową dla każdego okna; zrzuty w `out/control-fit/`. Uruchamiać przy
+każdej zmianie wyglądu rozgrywki Control (decyzja: `docs/ujednolicenie-wygladu.md`).
 
 ## Uwagi
 

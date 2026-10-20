@@ -88,12 +88,14 @@
     .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-main-card:has(.c2-gameplay-card, .stepFoot) > #app { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-    /* Czcionka rozgrywki rośnie z oknem: mniejsza z szerokości i wysokości,
-       więc proporcje ekranu też się liczą. Wszystkie rozmiary napisów
-       rozgrywki są w em od tej wartości; jeśli treść i tak się nie mieści
-       (np. pytanie 200 znaków w kaflu finału), fit-text.js zmniejsza
-       czcionkę grupy kafli, aż wszystko jest widoczne w całości. */
-    .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; --c2-fs:clamp(14px, min(1.3vw, 2.4vh), 28px); font-size:var(--c2-fs); }
+    /* Jedna czcionka dla całej rozgrywki, zależna wyłącznie od okna (decyzja
+       2026-10-20): wysokość pomniejszona o stałe paski (górny, nawigacja,
+       stopka ~223 px) i szerokość. Współczynniki z pomiaru najgorszego
+       przypadku (pytania 100 znaków, odpowiedzi 17, finał gracza 2, PL/UK,
+       scripts/screens/check-control-fit.cjs) z ok. 5% zapasu. Gdyby treść
+       mimo to się nie mieściła (np. starsze, dłuższe pytania), fit-text.js
+       zmniejsza całą rozgrywkę jednakowo. */
+    .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; --c2-fs:clamp(14px, min((100vh - 223px) * .031, 1.6vw), 28px); font-size:calc(var(--c2-fs) * var(--c2-fit, 1)); }
     /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
        tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
        wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować.
