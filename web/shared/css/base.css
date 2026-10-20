@@ -2535,24 +2535,30 @@ body{
 }
 
 /* ===== Pole nazwy edytora — jedno dla edytora gier i edytorów logo ===== */
+/* Nazwa w edytorach (gra, logo): kafel na całą szerokość jak górny pasek
+   ankiety (.pollBar) -- ta sama ramka, tło i zaokrąglenie, wyrównany
+   z panelami pod spodem; etykieta jak słowo stanu ankiety (2026-10-21). */
 .name-field{
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  width: min(100%, 820px);
-  align-self: flex-start;
-}
-@media (min-width: 1101px){
-  .name-field{ width: min(50vw, 900px); }
+  width: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
+  padding: 12px;
+  border: 1px solid var(--line2);
+  border-radius: 14px;
+  background: var(--card);
 }
 .name-field-label{
-  font-weight: 900;
-  letter-spacing: .06em;
+  font-weight: 1000;
+  letter-spacing: .12em;
   text-transform: uppercase;
-  font-size: 12px;
-  opacity: .88;
+  font-size: 15px;
+  color: var(--gold);
   flex: 0 0 auto;
+  padding-left: 2px;
 }
 .name-field .inp{
   flex: 1 1 auto;

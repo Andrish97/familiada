@@ -138,6 +138,10 @@ podliczania jako stan bieżącej operacji.
   (jak „Jasność:”) i tytułów paneli (jak nagłówki sekcji); podgląd „jak na
   wyświetlaczu” w edytorze tekstu = ta sama karta co w edytorze obrazu
   (tytuł, ramka podglądu, podpowiedź o pełnym ekranie).
+- **Nazwa w edytorach (uwaga użytkownika 2026-10-21):** pole nazwy (gra,
+  logo) to kafel na całą szerokość jak górny pasek ankiety (`.pollBar`):
+  ramka, tło, zaokrąglenie; etykieta „NAZWA” jak słowo stanu ankiety (złote
+  wersaliki), pole wypełnia resztę kafla (`.name-field` w `base.css`).
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /

@@ -59,8 +59,8 @@ E2E na branchu (spec | przebieg | wynik):
 
 ## Dalej
 
-0. Nazwa w edytorach (gra, logo) w stylu górnego kafla ankiet, lepiej
-   wyważona (uwaga użytkownika 2026-10-21) — w toku.
+0. ~~Nazwa w edytorach w stylu górnego kafla ankiet~~ — zrobione
+   (`.name-field` jako kafel na całą szerokość, 2026-10-21).
 1. Wyniki seq14–seq17 → poprawki → powtórki punktowe aż do zielonych.
 2. Push na `main` (scalić świeży `origin/main`, `resolve-version-conflicts.py`,
    `version-assets.js`, unit), potem te same spece kontrolnie na produkcji.
