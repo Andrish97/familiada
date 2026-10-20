@@ -457,17 +457,38 @@ zapis, podgląd i późniejszą rozgrywkę.
   Base Explorera i korekta przy podliczaniu), egzekwować limit 17 znaków
   także przy wklejaniu i zapisie. Przy polach pokazać stałą, przetłumaczoną
   podpowiedź: „Maksymalnie 17 znaków. Dłuższe odpowiedzi zostaną przycięte.
-  Znaki nieobsługiwane przez wyświetlacz, np. emoji, będą na nim pomijane.”
+  Znaki nieobsługiwane przez czcionkę 5×7, np. emoji, zostaną pominięte
+  podczas podliczania ankiety.” W edytorze zamiast zapowiedzi automatycznej
+  korekty ankiety podpowiedź ma informować: „Usuń nieobsługiwane znaki,
+  aby zapisać odpowiedź.”
   Informacja ma być widoczna przy zwykłym wpisywaniu odpowiedzi, nie tylko
-  w modalu importu. Użytkownik doprecyzował pomysł usuwania symboli do
-  informowania o ich pomijaniu na wyświetlaczu; nie odrzucać całej odpowiedzi
-  wyłącznie z powodu takiego symbolu. Nie wprowadza to odrębnego kasowania
-  znaków w zapisanej treści ani zakazu polskich/ukraińskich liter.
-  Obsługę znaków odnosić do rzeczywistej mapy glifów planszy, a nie arbitralnej
-  listy ASCII. Limit UI i normalizacja/egzekwowanie serwerowe mają być spójne
+  w modalu importu. **Późniejsze doprecyzowanie użytkownika:** edytor nie
+  dopuszcza zapisania odpowiedzi zawierającej niedozwolone znaki; walidacja
+  dotyczy także wspólnego formularza Base Explorera i ręcznej korekty wyniku.
+  W ankiecie tekstowej głos jest przyjmowany, a niedozwolone znaki usuwa się
+  automatycznie podczas podliczania, przed grupowaniem odpowiedzi i liczeniem
+  punktacji. Zastępuje to wcześniejsze ustalenie o samym informowaniu
+  i pomijaniu symboli dopiero w rendererze. Surowy wpis pozostaje źródłem
+  audytowym; do zatwierdzonego wyniku trafia oczyszczona treść. Podpowiedź
+  głosującego musi uprzedzać o tej korekcie.
+  Dozwolone znaki wyznacza **`web/shared/fonts/display/font_5x7.json`**:
+  wszystkie kategorie poza `meta`, zgodnie z budowaniem mapy w `fonts.js`.
+  Uwzględnić NFC i zamianę na wielkie litery stosowaną przez renderer,
+  aby nie odrzucać małych liter mających obsługiwany wielki odpowiednik,
+  w tym polskich i ukraińskich. Nie stosować osobnej listy ASCII ani uznawać
+  pustego zastępczego glifu za dowód obsługi nieznanego znaku. JS i SQL
+  korzystają z tego samego zestawu pochodzącego z fontu, bez ręcznego
+  utrzymywania dwóch rozbieżnych list. Limit i walidacja serwerowa mają być spójne
   także dla bezpośrednich wywołań wszystkich RPC oddających głosy tekstowe.
   Przy implementacji ujednolicić liczenie znaków JS/SQL i bezpieczne obcinanie
   Unicode; obecne `slice`/`maxlength` liczą jednostki UTF-16.
+- Po oczyszczeniu przy podliczaniu jednakowe odpowiedzi grupować ze
+  zsumowaniem ich wskazań (np. tekst z emoji i ten sam tekst bez emoji).
+  Ponownie przeliczyć ranking, kwalifikację od 4% i wybór szóstki. Odpowiedź
+  złożona wyłącznie z usuniętych znaków nie może stać się pustą, kwalifikującą
+  odpowiedzią ani otrzymać placeholdera. Nie usuwać przez to surowych głosów
+  ani zmieniać mianownika wszystkich wskazań/próbki pełnych ankiet; nadal
+  obowiązuje centralna walidacja minimum trzech kwalifikujących odpowiedzi.
 - Audyt powyższej decyzji: ankieta `polls/vote/text/index.html` ma
   `maxlength=17`, a `poll-text.js` obcina wpis i pakowany tekst do 17;
   podpowiedź mówi dziś tylko „Maksymalnie 17 znaków”. Edytor i Base Explorer
@@ -541,6 +562,23 @@ zapis, podgląd i późniejszą rozgrywkę.
   podliczania. Nie przeliczać automatycznie zamkniętych ankiet starym/nowym
   progiem i nie zmieniać ich na preparowane. Zakaz ten nie znosi jawnej
   obsługi niejednoznacznych, historycznych pakietów.
+- **Późniejsza decyzja 2026-10-20 — migracja znaków odpowiedzi:** z tekstów
+  odpowiedzi istniejących gier usunąć znaki niedozwolone według fontu 5×7,
+  bez pytania i dla wszystkich użytkowników, również w zamkniętych ankietach
+  i kopiach `market`. Ten drugi wyjątek od ochrony istniejącej treści dotyczy
+  **wyłącznie odpowiedzi**. Nie filtrować według fontu pytań, nazw gier ani
+  opisów; skrócenie pytań do 100 pozostaje osobną, wcześniejszą decyzją.
+  Użyć tego samego zestawu glifów i normalizacji co w walidacji edytora
+  i automatycznej korekcie podczas podliczania. Zachować ID i kolejność
+  odpowiedzi, przypisane punkty, status, powiązania i głosy; samo czyszczenie
+  tekstu nie powoduje resetu ani przeliczenia historycznej punktacji.
+  Surowe wpisy ankiety zachowują rolę audytową; do wyniku tekstowego trafia
+  treść oczyszczona podczas podliczania. Inwentaryzacja ma wykazać również
+  odpowiedzi, które po usunięciu znaków byłyby puste, i kolizje tekstów.
+  Nie wstawiać fikcyjnych tekstów ani nie usuwać w ciemno rekordów z punktami
+  i głosami. Jeśli takie przypadki występują, ich konkretna obsługa wymaga
+  rozstrzygnięcia przed wykonaniem migracji (`answers_text_len` nie dopuszcza
+  pustej odpowiedzi). Nadal respektować ochronę aktywnych sesji Control.
 - Sama pora nocna nie gwarantuje braku aktywnej rozgrywki. Zalecenie do
   planu operacyjnego: przed zmianą treści sprawdzić trwałe sesje Control,
   odróżnić wygasłe od niewygasłych; niewygasłe odłożyć do wygaśnięcia zamiast
@@ -638,10 +676,13 @@ zapis, podgląd i późniejszą rozgrywkę.
   świadomego wyboru szóstki podczas podliczania ankiety.
 - Pola odpowiedzi: wpisywanie i wklejanie 17/18 znaków w ankiecie tekstowej,
   edytorze, Base Explorerze i podliczaniu; stała informacja o przycięciu
-  i pomijaniu znaków nieobsługiwanych na planszy. Przykłady z emoji,
-  polskimi/ukraińskimi literami i Unicode złożonym; brak odrzucenia całej
-  odpowiedzi z powodu emoji, brak uszkodzonych par UTF-16 i zgodność limitu
-  z SQL. Bezpośrednie RPC nie może zapisać odpowiedzi ponad 17 znaków.
+  i automatycznej korekcie znaków podczas podliczania. Edytor i serwer
+  odrzucają zapis odpowiedzi z niedozwolonym znakiem. W głosowaniu tekstowym
+  odpowiedź z emoji trafia do podliczania, gdzie jest automatycznie
+  oczyszczana; po połączeniu jednakowych wyników liczby wskazań sumują się,
+  a pusty wynik nie kwalifikuje się. Przykłady z polskimi/ukraińskimi małymi
+  literami i Unicode złożonym; zgodność z fontem 5×7, brak uszkodzonych par
+  UTF-16, spójny limit JS/SQL i walidacja wszystkich ścieżek zapisu.
 - Migracja danych obejmuje wielu różnych właścicieli, zachowuje ich ID gier
   i własność, jest idempotentna i nie zmienia poprawnych szkiców wyłącznie
   z powodu braków grywalności. Niejasny historyczny typ z czytelnymi pytaniami
@@ -653,6 +694,11 @@ zapis, podgląd i późniejszą rozgrywkę.
   status i punktację; uwzględnić ochronę aktywnej sesji Control. Ponowne
   wykonanie nie wprowadza dalszych zmian; po wdrożeniu żadna ścieżka zapisu
   nie może odtworzyć treści ponad limit.
+- Migracja znaków: oczyszczenie istniejących odpowiedzi wszystkich typów
+  i statusów według fontu 5×7; pytania i nazwy gier nie podlegają temu
+  filtrowi. Zachowane ID, ord, punkty, status i głosy; ponowne wykonanie
+  bez dalszych zmian. Raport przed migracją wykrywa pusty wynik i kolizje,
+  bez automatycznego usuwania rekordów ani arbitralnego sumowania punktów.
 - Remisy w Control: osobno trafienie pierwszej i drugiej odpowiedzi za 40
   w zestawie 40/40/20 kończy pojedynek, daje właściwe punkty i możliwość
   oddania kontroli. Po odświeżeniu i ponownym podłączeniu urządzeń kolejność,
@@ -690,7 +736,9 @@ zapis, podgląd i późniejszą rozgrywkę.
    na jej granicy rozstrzyga użytkownik; w rozgrywce liczą się zapisane punkty.
    Szczegóły w §3; JS i SQL muszą stosować identyczny algorytm.
 
-Lista znanych decyzji domenowych po audycie jest zamknięta.
+Znane reguły gry i transferu są uzgodnione. Po dodaniu oczyszczania znaków
+pozostaje sprawdzić, czy istnieją odpowiedzi puste po korekcie lub kolizje
+tekstów; ich obsługę rozstrzygnąć na podstawie wyniku audytu (§4).
 Odczyt rzeczywistych danych i zakres operacji naprawczych to pozostałe zadania
 audytu danych, a nie ponownie otwarte decyzje o regułach gry.
 
@@ -791,7 +839,7 @@ na takim sprawdzeniu klienta.
 | Pytania | Zachowana tablica w kolejności wejścia; `exportGame` pobiera po ord, SQL kopii po ord,id | Nowe ID i ord=pozycja w tablicy od 1; nie korzysta z wejściowego ord | Zachować kolejność znaczeniową i dokładny zbiór |
 | Treść pytania | Bez obcinania w F; Base Explorer trimuje | Trim, limit 200, brak/pusta → „Pytanie {ord}” lub lokalizacja; nawet element null staje się placeholderem | Limit 100; nadmiar obciąć automatycznie bez pytania; nie dopisywać zastępczych pytań |
 | Odpowiedzi | AT bez ready usuwa wszystkie; AP/draft zachowuje teksty i zeruje punkty; AP/open/stopped nie zeruje istniejących punktów; closed poll jako P zachowuje odpowiedzi/punkty | AT usuwa wszystkie niezależnie od wejścia; inne typy zachowują tylko pierwsze 6; brak tablicy → [] | Warianty szkicu/wyniku według §4; przy ponad 6 odpowiedziach po normalizacji punktów sortować malejąco i zostawić 6, bez pytania; remis według wejścia |
-| Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Limit 17; nadmiar obciąć automatycznie bez pytania; nie dopisywać zastępczych odpowiedzi |
+| Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Limit 17; nadmiar obciąć bez pytania; znaki według fontu 5×7: edytor odrzuca niepoprawny zapis, tekstowe oczyszczane przy podliczaniu; istniejące odpowiedzi oczyszcza migracja, bez filtrowania pytań |
 | Punkty | `Number(x) || 0`; dla AP/draft 0; Base Explorer AP zawsze 0, P tylko istniejące `fixed_points` | `floor`, clamp 0–100, brak/niepoprawne → 0; przyjmuje też liczbowy string/wykładnik i true→1. Normalizator pakietu ignoruje alias `points` | Ujemne, nienumeryczne, nieskończone lub poza 0–100 → 0 przed sortowaniem, bez pytania; bez clamp do 100 i bez wymyślania grywalnej punktacji; odrębny kontrakt szkicu/wyniku |
 | Kolejność odpowiedzi | F sortuje po ord, fallback wejście; SQL kopii wcześniej po ord,id | Ord=pozycja w tablicy; zapis nie sortuje po punktach | Przy <=6 zachować wejściową; przy >6 sortować malejąco po znormalizowanych punktach, remis według wejścia, zapisać wybraną szóstkę i jej ord |
 | Wynik zamknięcia | Wyłącznie treść odpowiedzi i `fixed_points`, przez konwersję na P; brak dat/udziałów/liczebności | Brak odtworzenia zamkniętej ankiety/sesji | Zamknięty typ, zatwierdzone odpowiedzi i punkty; bez liczby głosów, głosujących i odtwarzania sesji |
