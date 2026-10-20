@@ -60,6 +60,15 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     rozpoznawanie w zdarzeniu `input` (każda klawiatura), podpowiedzi
     pasujących tagów po wpisaniu `#`, wybór stuknięciem/Enterem, bez
     pozostawiania spacji; test e2e na komputer i telefon.
+  - **Hamburger „resetuje i mruga” paskiem (zgłoszenie 2026-10-20):**
+    test lokalny na kodzie `main`: DOM paska NIE jest przebudowywany
+    (zmienia się tylko `aria-expanded`). W wąskim oknie komputera (800 px)
+    otwarcie panelu zmienia szerokość strony 800 → 788 px: reguła
+    `html:has(body.explorer-drawer-open){scrollbar-gutter:stable}`
+    (`shared/css/base.css`) + `body.overflow=hidden` przesuwają cały
+    układ o pasek przewijania — to wygląda jak „przeładowanie” paska.
+    Na telefonie (390 px, paski nakładane) bez zmian w teście; do
+    sprawdzenia na urządzeniu użytkownika. Naprawa w ramach E22.
   - **Tabela listy:** przeanalizować i ujednolicić szerokości kolumn
     (dziś niespójne) oraz sortowanie klikiem w nagłówek (dziś kilka
     nałożonych warunków). Jedna definicja kolumn (szerokość, porównanie,
