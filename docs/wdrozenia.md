@@ -25,6 +25,7 @@ w istniejącym JSON-ie i etykieta w statystykach. Bez migracji.
    - usuwanie gry i konta: [`usuwanie-danych.md`](usuwanie-danych.md),
    - granice maili do innych osób: [`maile-granice.md`](maile-granice.md) (część E11).
    - kopie Gier i Logo dla znajomych oraz wspólne Powiel Gier/Baz/Logo: [`udostepnianie-kopii-plan.md`](udostepnianie-kopii-plan.md) (E19C; własna kopia odbiorcy powstaje przy wysłaniu).
+   - reguły gotowości i akcji gier oraz audyt importu/eksportu: [`reguly-gier-transfer-plan.md`](reguly-gier-transfer-plan.md) (E21).
 2. **Decyzja użytkownika** → w tej samej turze dopisana do sekcji
    „Decyzje” właściwego źródła (z datą), commit. Nie w samej rozmowie.
 3. **Tok pracy (cykl wdrożenia, decyzja 2026-10-10)**: baza najpierw
@@ -100,6 +101,7 @@ Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control.
 | 12h | E19N | Przegląd starych funkcjonalności i mapy przejść; pełnoekranowe modale z `?dialog=`, Back/Forward/odświeżenie; zapis/flush, blokady i wznowienie Control; aktywacja Control → Znajomi | `nawigacja-mapa-plan.md`, „E19 — przegląd starych przejść”; `NAV_DEPENDENCIES.modalPagesReview` | **gotowe produkcyjnie**: branch Control/settings38368774633; Pages38369096986; main route E2E38369193504 success5/5; test dialog URL/back/forward/refresh branch38369837696 i main38370189342 success1/1; Worker38369096732; full unit602/602. E19 zamknięte na main `d847175100`. |
 | 12i | E14 | **Sprzątanie po potwierdzeniu** (migracje usuwające): martwe RPC ankiet i hubu (E11h); `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` / `guest_discard_current`; kasowanie plików w `delete-account` (zastąpione przez E12b) | ankiety-refaktor.md, usuwanie-danych.md | **w toku**: migracja368 przygotowana — potwierdzone stare RPC hubu i bezpośrednie kasowanie Storage usunięte; nadal do audytu/rewrite: `subscriber_user_id` (czytany przez aktywne funkcje) i stare RPC urządzeń, których używają historyczne testy |
 | 12j | E20 | **Kompaktowy telefon:** mniej nieobowiązkowych danych; wspólne typy stron; akcje jako ikony, modal wyszukiwania i listy filtrów/sortowania; wysokość kart, landscape i stopniowe ładowanie; zrzuty desktop/mobile | `ujednolicenie-wygladu.md`, sekcje E20 | do zrobienia; Zadania jako pierwszy wzorzec, manual po tym etapie |
+| 12k | E21 | **Jedno źródło reguł gry + uproszczenie tworzenia z Base Explorera + audyt importu/eksportu i starych typów** | [`reguly-gier-transfer-plan.md`](reguly-gier-transfer-plan.md) | plan zapisany; brak zmian aplikacji; kolejny krok: pełna inwentaryzacja i uzgodnienie rozbieżności |
 | 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
 | 14 | C2-DIAG | **Control 2: diagnostyka odczuwalnych problemów** — agregacja krótkich rozłączeń, blokady i prób akcji, kontekst karty/profilu, opóźnienia dźwięku/planszy i widoczne zacięcia | [`control2-statystyki-plan.md`](control2-statystyki-plan.md), „Diagnostyka odczuwalnych problemów” | zakończone produkcyjnie: migracja 356 + Pages; renderer i pełne ponowne podłączenie zielone, potwierdzony rzeczywisty zapis diagnostyki; szczegóły w Dzienniku |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
@@ -213,6 +215,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    Codex: przypomnień nie ma — wystarczy Dziennik.
 
 ## Dziennik
+
+| 2026-10-20 | Plan centralnych reguł gry i audytu transferu | Zapisano plan jednego kontraktu gotowości/akcji, informacyjnej walidacji w Base Explorerze oraz audytu importu/eksportu i historycznych typów. Uwzględniono ustalenie, że modal tworzenia nie blokuje według liczby, kompletności ani sumy 100, a wybór pytań jest dokładny. Aplikacji nie zmieniano. | Dokumentacja; bez testów i zmian kodu. |
 
 | 2026-10-18 | Panel admina — kompaktowanie nawigacji | Podpięto panel admina pod wspólny przycisk „Więcej”; mniej ważne karty paska chowają się w rozwijanym menu przy braku miejsca, a selektor Narzędzi pozostaje widoczny i jego szerokość jest uwzględniana. Działanie jest po stronie frontendu i nie wymaga zmian Workera. | `node --check` dla zmienionych modułów JS, `git diff --check`; bez E2E. |
 
