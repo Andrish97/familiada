@@ -56,8 +56,11 @@ Decyzje:
    w oczekiwanie i wraca, gdy nowa zniknie. Ponowne rejestracje nie przejmują
    (brak przerzucania między dwiema kartami). Inna przeglądarka nadal czeka.
    Migracja 423, test `tests/sql/control2-same-browser-takeover-423.sql`.
-   Nie zmieniono (do decyzji): brak Przycisku nadal wstrzymuje wszystkie
-   akcje gry, także kroki bez Przycisku.
+8. **Brak wymaganego urządzenia blokuje całą grę (decyzja użytkownika
+   2026-10-20).** Jeśli Przycisk nie został wyłączony w panelu („Przycisk
+   fizyczny”), jego brak wstrzymuje wszystkie akcje gry, także kroki, w których
+   Przycisk nie jest używany. Tak samo Prowadzący (o ile nie zaznaczono „Nie
+   używaj tabletu prowadzącego”) i Wyświetlacz. Bez zmian w `deviceGate.js`.
 
 ## Cel
 
