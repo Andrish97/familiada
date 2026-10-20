@@ -91,8 +91,10 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await expect.poll(() => settingsDisplay.locator("#displays").evaluate(el => el.innerHTML.length)).toBeGreaterThan(0);
     await page.locator("#gsLivePreviewWrap").screenshot({ path: testInfo.outputPath("shot-host-logo-game-settings.png") });
 
-    // Autozapis (bez przycisku „Zapisz”): zmiany powyżej zapisują się same.
-    const saveResponse = await page.waitForResponse(response => response.url().includes("/rest/v1/games") && response.request().method() === "PATCH");
+    // Zapis przyciskiem „Zapisz” (#btnSaveAll).
+    const saveWait = page.waitForResponse(response => response.url().includes("/rest/v1/games") && response.request().method() === "PATCH");
+    await page.locator("#btnSaveAll").click();
+    const saveResponse = await saveWait;
     expect(saveResponse.ok()).toBeTruthy();
     const persistedMode = await page.evaluate(async id => {
       const { data, error } = await window.__sbClient.from("games").select("settings").eq("id", id).single();
