@@ -33,4 +33,14 @@ while IFS='|' read -r col typ; do
 done <<< "$DESC"
 [ "$BAD" = 0 ] || exit 3
 
-printf "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;\nBEGIN READ ONLY;\nSET LOCAL statement_timeout = '60s';\nSELECT * FROM (\n%s\n) _q LIMIT 1000;\nROLLBACK;\n" "$Q" | psql_run "-P pager=off"
+# DB_READ_TUPLES=1: same wiersze, pola rozdzielone "|" (dla skryptów)
+FMT="-P pager=off"
+[ "${DB_READ_TUPLES:-}" = 1 ] && FMT="-At"
+OUT=$(printf "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;\nBEGIN READ ONLY;\nSET LOCAL statement_timeout = '60s';\nSELECT * FROM (\n%s\n) _q LIMIT 1000;\nROLLBACK;\n" "$Q" | psql_run "$FMT")
+printf '%s\n' "$OUT"
+# W Actions wynik także jako adnotacja przebiegu -- czytelna przez API
+# (scripts/agent-tools/gh-run.sh), gdy pobranie logu jest zablokowane.
+if [ -n "${GITHUB_ACTIONS:-}" ] && [ -z "${DB_READ_NO_NOTICE:-}" ]; then
+  MSG=$(printf '%s' "$OUT" | python3 -c 'import sys; print(sys.stdin.read().replace("%","%25").replace("\r","%0D").replace("\n","%0A"), end="")')
+  echo "::notice title=db-read::$MSG"
+fi
