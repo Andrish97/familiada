@@ -97,4 +97,65 @@ async function newContext(browser, db, lang, device) {
   return context;
 }
 
-module.exports = { repo, startServer, stopServer, launch, newContext };
+// Emulacja strefy bezpiecznej urządzenia (notch, pasek gestu): Chromium nie
+// pozwala ustawić env(safe-area-inset-*), więc w CSS/HTML strony zamieniamy
+// je na piksele. safe = { top, right, bottom, left }.
+async function emulateSafeArea(context, origin, safe) {
+  const sides = { top: 0, right: 0, bottom: 0, left: 0, ...safe };
+  const rewrite = (text) => text.replace(/env\(\s*safe-area-inset-(top|right|bottom|left)\s*(?:,[^)]*)?\)/g, (_, side) => `${sides[side]}px`);
+  await context.route((url) => url.href.startsWith(origin) && /\.(css|html)$|\/$/.test(url.pathname), async (route) => {
+    const response = await route.fetch();
+    const type = response.headers()["content-type"] || "";
+    if (!/text\/(css|html)/.test(type)) return route.fulfill({ response });
+    return route.fulfill({ response, body: rewrite(await response.text()) });
+  });
+}
+
+// Ramka iPhone'a na czarnym tle (jak kadr głosowania w dawnym panelu admina:
+// web/settings/js/homepage-screenshots.js, composeIPhoneFrame). screen -- PNG
+// ekranu telefonu; wynik -- PNG outputWidth × outputHeight.
+async function composeIPhone(browser, screen, outputWidth = 1440, outputHeight = 900, scale = 1) {
+  const page = await browser.newPage({ deviceScaleFactor: 1 });
+  const data = await page.evaluate(async ({ src, outputWidth, outputHeight, scale }) => {
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    const W = outputWidth * scale; const H = outputHeight * scale;
+    const frameRatio = 0.0485;
+    const screenScale = H / (img.height + 2 * img.width * frameRatio / (1 - 2 * frameRatio) + 2 * scale);
+    const screenWidth = img.width * screenScale;
+    const screenHeight = img.height * screenScale;
+    const whiteEdge = scale;
+    const bezelBlack = screenWidth * frameRatio / (1 - 2 * frameRatio);
+    const bezel = bezelBlack + whiteEdge;
+    const deviceWidth = screenWidth + 2 * bezel;
+    const deviceX = (W - deviceWidth) / 2;
+    const cornerRadius = deviceWidth * 0.16;
+    const unit = screenWidth / 390; // 1 pkt ekranu iPhone'a
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    const rounded = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); };
+    ctx.fillStyle = "#000000"; ctx.fillRect(0, 0, W, H);
+    ctx.save(); ctx.shadowColor = "#000b"; ctx.shadowBlur = 24 * scale;
+    rounded(deviceX, 0, deviceWidth, H, cornerRadius); ctx.fillStyle = "#d7d9df"; ctx.fill(); ctx.restore();
+    rounded(deviceX + whiteEdge, whiteEdge, deviceWidth - 2 * whiteEdge, H - 2 * whiteEdge, cornerRadius - whiteEdge); ctx.fillStyle = "#030407"; ctx.fill();
+    const sx = deviceX + bezel; const sy = bezel;
+    ctx.save(); rounded(sx, sy, screenWidth, screenHeight, cornerRadius - bezel); ctx.clip();
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, sx, sy, screenWidth, screenHeight);
+    const notchW = screenWidth * 0.41; const notchH = screenHeight * 0.04; const nx = sx + (screenWidth - notchW) / 2; const curve = 22 * unit;
+    ctx.beginPath(); ctx.moveTo(nx, sy); ctx.lineTo(nx + notchW, sy); ctx.lineTo(nx + notchW, sy + notchH - curve);
+    ctx.quadraticCurveTo(nx + notchW, sy + notchH, nx + notchW - curve, sy + notchH); ctx.lineTo(nx + curve, sy + notchH);
+    ctx.quadraticCurveTo(nx, sy + notchH, nx, sy + notchH - curve); ctx.closePath(); ctx.fillStyle = "#030407"; ctx.fill();
+    ctx.fillStyle = "#111318"; ctx.beginPath(); ctx.roundRect(nx + notchW * 0.72, sy + notchH * 0.34, notchW * 0.15, notchH * 0.15, 5 * unit); ctx.fill();
+    ctx.fillStyle = "#08090c"; ctx.beginPath(); ctx.arc(nx + notchW * 0.72 - 28 * unit, sy + notchH * 0.415, 5 * unit, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffffffa8"; ctx.beginPath(); ctx.roundRect(sx + (screenWidth - screenWidth * 0.344) / 2, sy + screenHeight - 13 * unit, screenWidth * 0.344, 5 * unit, 99); ctx.fill();
+    ctx.restore();
+    return canvas.toDataURL("image/png");
+  }, { src: `data:image/png;base64,${screen.toString("base64")}`, outputWidth, outputHeight, scale });
+  await page.close();
+  return Buffer.from(data.split(",")[1], "base64");
+}
+
+module.exports = { repo, startServer, stopServer, launch, newContext, emulateSafeArea, composeIPhone };

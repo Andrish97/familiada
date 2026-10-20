@@ -39,6 +39,8 @@ export function buildGameState(lang, kind) {
     state.rounds.bankPts = answers[0][1] + answers[2][1] + answers[4][1];
     state.rounds.totals = { A: 0, B: 0 };
     state.rounds.xA = 0; state.rounds.xB = 2;
+    // Kartka Prowadzącego zasłonięta -- na zasłonie widać logo gry.
+    state.host.covered = true;
     // Tryb podglądu Wyświetlacza nie liczy cyfr z rundy -- podajemy je wprost.
     state.display = { ...state.display, suppressLogoDraw: true, previewNumbers: { left: "000", right: "000", top: String(state.rounds.bankPts).padStart(3, "0") }, previewXPositions: { A: [], B: [2, 3] } };
   }
@@ -54,7 +56,7 @@ export function buildGameState(lang, kind) {
   }
   if (kind === "main") {
     // Plansza strony głównej: hasła w wierszach 1, 3 i 5 (punkty jak w rundzie).
-    state.step = "r_play"; state.topCard = "rounds"; state.phase = "PLAY";
+    state.step = "r_play"; state.topCard = "rounds"; state.phase = "PLAY"; state.controlTeam = "B";
     state.teams = { teamA: p.mainDisplay.teams[0], teamB: p.mainDisplay.teams[1] };
     const points = [39, 0, 16, 0, 7, 0];
     const words = [p.mainDisplay.words[0], "", p.mainDisplay.words[1], "", p.mainDisplay.words[2], ""];

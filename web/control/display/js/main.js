@@ -335,7 +335,9 @@ async function bootPreview() {
       scene.api.small.topDigits("456");
       scene.api.small.leftDigits("789");
     }
-    scene.api.indicator.set("OFF");
+    // Lampki kontroli jak w grze: drużyna z control_team (podglądy ustawień
+    // jej nie mają, więc tam zostają zgaszone).
+    scene.api.indicator.set(row.control_team === "A" ? "ON_A" : row.control_team === "B" ? "ON_B" : "OFF");
     window.dispatchEvent(new CustomEvent("familiada:preview-rendered", { detail: { rev: row.rev } }));
     if (window.parent !== window) window.parent.postMessage({ type: "familiada:preview-rendered", rev: row.rev }, location.origin);
     }).catch((error) => console.warn("[display2] preview render failed", error));

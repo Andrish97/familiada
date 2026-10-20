@@ -12,7 +12,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { execSync } = require("node:child_process");
-const { repo, startServer, stopServer, launch, newContext } = require("./lib.cjs");
+const { repo, startServer, stopServer, launch, newContext, emulateSafeArea, composeIPhone } = require("./lib.cjs");
 const scenes = require("./scenes.cjs");
 const { buildDb } = require("./data/demo.cjs");
 let buildGameState = null; // data/game-state.mjs (ESM, ładowany w main)
@@ -66,6 +66,7 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const device = scene.size ? { scale: 1, mobile: false, ...scene.size } : DEVICES[deviceName];
   const db = buildDb(lang, scene.gameState ? { gameState: buildGameState(lang, scene.gameState) } : {});
   const context = await newContext(browser, db, lang, device);
+  if (scene.safeArea) await emulateSafeArea(context, origin, scene.safeArea);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -96,7 +97,9 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const misses = await view.evaluate(() => window.__SCREENS_MISSES__ || []).catch(() => []);
   const file = path.join(outDir, scene.id, scene.size ? `${lang}.png` : `${lang}-${deviceName}.png`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  await page.screenshot({ path: file, fullPage: !!scene.fullPage, animations: "disabled" });
+  const shot = await page.screenshot({ fullPage: !!scene.fullPage, animations: "disabled" });
+  // deviceFrame: "iphone" -- ekran telefonu w ramce iPhone'a na czarnym tle (kadr strony głównej).
+  fs.writeFileSync(file, scene.deviceFrame === "iphone" ? await composeIPhone(browser, shot, scene.frameSize?.width, scene.frameSize?.height, scene.frameSize?.scale) : shot);
   await context.close();
   return { scene: scene.id, title: scene.title, lang, device: scene.size ? `${scene.size.width}×${scene.size.height}` : deviceName, file: path.relative(outDir, file), errors, misses, readyError };
 }
