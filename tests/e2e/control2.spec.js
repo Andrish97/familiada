@@ -2596,6 +2596,12 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
       "reconnected Display's unlock must be stored on its lease instance").toBe(true);
     await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 15000 });
+    // Diagnostyka: czekanie na gest trafia do statystyk z powodem i czasem.
+    await expect.poll(async () => {
+      const sessions = await readControl2Sessions(page, game.id);
+      const unlock = (sessions[0]?.stats_detail.events || []).find(event => event.category === "audio_unlock");
+      return unlock ? [unlock.metrics.reason, unlock.metrics.outcome, unlock.metrics.wait_ms > 0] : null;
+    }, { timeout: 15000 }).toEqual(["new_instance", "unlocked", true]);
 
     // ===== Mute na chwilę w tej samej rundzie — odpowiedź #2 podczas wyciszenia =====
     await page.locator("#btnMute").click();
