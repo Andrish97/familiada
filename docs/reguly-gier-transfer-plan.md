@@ -132,14 +132,19 @@ braki informacyjnie i nie blokuje tworzenia szkicu.
   99. Nie dobijamy do 100 przez arbitralne rozbijanie równych głosów; suma
   nie może przekroczyć 100. Szczegółowy algorytm, zwłaszcza granice progu
   4%, musi realizować te warunki jednakowo w JS i SQL.
-- **Minimalna liczba głosów:** do zatwierdzenia zamknięcia potrzebny będzie
-  osobny próg liczby **pełnych oddanych ankiet**. Użytkownik doprecyzował,
-  że oddanie ankiety obejmuje odpowiedź na wszystkie pytania; każde pytanie
-  otrzymuje więc tyle samo głosów. To jeden próg dla uruchomienia ankiety,
-  nie suma wierszy odpowiedzi ani osobne progi pytań. Wartość **10** padła
-  jako przykład/propozycja i wymaga potwierdzenia; nie jest jeszcze decyzją.
-  Próg zamknięcia nie blokuje podglądu i wejścia w podliczanie. Nadal osobno
-  obowiązuje min. 3 kwalifikujących odpowiedzi na pytanie z udziałem ≥4%.
+- **Minimalna liczba głosów — ostateczne doprecyzowanie 2026-10-20:**
+  podliczanie ankiety punktowej i tekstowej jest dozwolone od **10 pełnych
+  oddanych ankiet w bieżącym uruchomieniu**. Przy 0–9 akcja „Podlicz” jest
+  zablokowana; próg jest sprawdzany przed rozpoczęciem podliczania, nie
+  dopiero przy zatwierdzaniu wyniku. Oddanie ankiety obejmuje odpowiedź na
+  wszystkie pytania; każde pytanie otrzymuje więc tyle samo głosów. Liczymy
+  pełne wypełnienia, nie sumę wierszy odpowiedzi ani osobne progi pytań.
+  To zmienia wcześniejszy zapis o swobodnym wejściu do podliczania. Bramka
+  liczby głosów jest odrębna od min. 3 odpowiedzi z udziałem ≥4% na pytanie:
+  przy ≥10 pełnych wypełnieniach można wejść do podliczania i scalać teksty,
+  nawet jeśli wynik nie spełnia jeszcze warunków zatwierdzenia. UI i SQL
+  korzystają ze wspólnej reguły; zapis wyniku ponownie sprawdza próg, aby
+  starszy klient lub usunięcie głosów w międzyczasie nie ominęły ograniczenia.
 - **Usuwamy sztuczne obniżanie punktów w celu rozbijania remisów.** Różne
   odpowiedzi mogą mieć tyle samo punktów. **Doprecyzowanie użytkownika:**
   trafienie dowolnej odpowiedzi o maksymalnej wartości oznacza trafienie
@@ -172,9 +177,10 @@ braki informacyjnie i nie blokuje tworzenia szkicu.
   jest zaokrąglany zgodnie z ustaloną regułą, a do zamknięcia wymagane są co
   najmniej 3 kwalifikujące odpowiedzi na pytanie po scaleniu i ponownym
   przeliczeniu. Dla tekstowej listę ogranicza także limit sześciu odpowiedzi;
-  wejście do podliczania pozostaje dozwolone nawet wtedy, gdy wynik nie może
-  jeszcze zostać zamknięty. Szczegółowy porządek progowania/scalania musi
-  wynikać z jednego algorytmu wspólnego dla JS i SQL.
+  wejście do podliczania wymaga ≥10 pełnych oddanych ankiet, ale nie wymaga
+  jeszcze spełnienia kwalifikacji odpowiedzi do zamknięcia. Szczegółowy
+  porządek progowania/scalania musi wynikać z jednego algorytmu wspólnego
+  dla JS i SQL.
 - Eksport i kopiowanie jako odrębne akcje o własnych warunkach, nie utożsamiane
   z gotowością do rozgrywki.
 
@@ -452,7 +458,7 @@ zapis, podgląd i późniejszą rozgrywkę.
 | C | Zdefiniowanie wspólnego kontraktu wyników i kodów reguł; SQL pozostaje autorytatywny dla zapisu, JS nie duplikuje progów | Jednoznaczny kontrakt wejścia/wyjścia i przejście stanu; testy jednostkowe kontraktu |
 | D | Przebudowa modalа Base Explorera według §2; poprawa metadanych bazy do roli sugestii | Dokładne zaznaczenie tworzy szkic; oznaczenia informacyjne; brak bramki 10/kompletności/sumy 100 |
 | E | Integracja gier, edytora, ankiet, Control i kafli z centralnym kontraktem | Każdy przycisk pokazuje wynik centralnej reguły; serwer odrzuca niedozwolone przejście tym samym kodem |
-| F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Próg 4% włącznie i min. 3 odpowiedzi w jednym algorytmie; samo wejście w podliczanie nie jest blokowane |
+| F | Ujednolicenie kwalifikacji podliczania i zamykania dla obu typów; ponowne obliczenie po scaleniu | Podliczanie dopiero od 10 pełnych ankiet, wspólna bramka UI/SQL; zatwierdzenie wymaga dodatkowo progu 4% włącznie i min. 3 odpowiedzi na pytanie w jednym algorytmie |
 | G | Dodanie „Zmień typ” obok powielania; ta sama bramka `edit` i ta sama ścieżka resetu co w edytorze; konwersja tego samego rekordu do szkicu wybranego typu | Ankieta otwarta/zatrzymana blokuje akcję; zamknięta wymaga identycznego potwierdzenia resetu; podgląd strat/braków przed zapisem |
 | H | Wdrożenie wersjonowanego transferu; jawna obsługa kopii `market`; usunięcie cichych fallbacków; ten sam kontrakt dla wysyłania kopii i poprawa bramki zgłoszenia Marketplace | Dokładnie pięć wariantów zwykłego transferu; wysyłka znajomym wyłącznie szkiców tego samego typu; Marketplace przyjmuje gotową `prepared` lub zamkniętą ankietę jako snapshot `prepared` |
 | H1 | Migracja naprawcza historycznych gier wszystkich użytkowników według §4, na podstawie odczytu danych; jawne odzyskiwanie niejasnych plików jako `prepared`/`draft` | Ujednolicony model bez zgadywania; odzyskane pytania/odpowiedzi/punkty, zachowane ID i właściciele istniejących gier, przeliczone reguły i raport napraw; szkice nie muszą być grywalne |
@@ -510,11 +516,14 @@ zapis, podgląd i późniejszą rozgrywkę.
   i kody QR nie mogą działać po resecie; zostaje draft z punktami 0.
   Aktywny przebieg Control blokuje te operacje również po zamknięciu karty,
   do zakończenia lub godzinnego wygaśnięcia.
-- Próg pełnych ankiet: przy ustalonym minimum N zatwierdzenie z N−1 jest
-  odrzucone, z N nadal wymaga kwalifikacji odpowiedzi na każde pytanie.
-  Jedno wypełnienie 10-pytaniowej ankiety liczy się jako jeden komplet,
-  nie 10 głosów do tego progu. Zapis całego kompletu musi zachować atomowość
-  i idempotencję, także przy retry i starszych punktach wejścia.
+- Próg pełnych ankiet: przy 0 i 9 akcja „Podlicz” jest odrzucona, od 10
+  można rozpocząć podliczanie. Nie wystarczy wyłączyć przycisku: bezpośrednie
+  wejście i operacja SQL również muszą przestrzegać progu. Przy 10 wynik
+  nadal wymaga kwalifikacji odpowiedzi na każde pytanie, a scalanie może
+  tę kwalifikację zmienić. Jedno wypełnienie 10-pytaniowej ankiety liczy się
+  jako jeden komplet, nie 10 głosów do progu. Zapis całego kompletu zachowuje
+  atomowość/idempotencję także przy retry i starszych punktach wejścia;
+  usunięcie głosów po wejściu do podliczania wymaga ponownej oceny przy zapisie.
 
 ## 7. Decyzje pozostawione do rozstrzygnięcia po audycie
 
@@ -596,7 +605,7 @@ przy zapisie/przejściu i odczytywany przez UI. Nie jest to nowa decyzja o proga
 | P, M / dowolny / ankieta | R odmawia; `_poll_open_unchecked` jawnie wyklucza tylko P (CHECK statusu blokuje M) | Jawny zakaz obu typów w kontrakcie | R + RPC + CHECK → wspólna akcja + SQL |
 | AP, AT / open / głosuj | Typ, otwarta sesja, aktualny klucz i uprawnienie zadania/anonima; anonim dodatkowo idempotencja i 30 s | Zachować bramki tożsamości/sesji; dozwolenie głosowania z centralnej akcji | RPC/guard głosów, migracje 309/330/362 → wspólna akcja + te zabezpieczenia SQL |
 | AP, AT / open→stopped / zatrzymaj; stopped→open / wznów | R sprawdza stan; RPC idempotentnie przyjmuje też już osiągnięty stan. Zachowuje głosy/klucz | Wspólne przejścia; rozróżnić niedostępny przycisk i bezpieczne retry RPC | R + `poll_stop/resume` → wspólny kontrakt SQL/UI |
-| AP, AT / stopped / wejdź w podliczanie | Przycisk zależy od `poll_close.ok`; zbyt słaby surowy wynik blokuje wejście. Sam handler `enterTally` sprawdza tylko stopped | Wejście dozwolone także bez możliwości zamknięcia; możliwość scalania tekstów | R + T/UI → osobna akcja wejścia |
+| AP, AT / stopped / wejdź w podliczanie | Przycisk zależy od `poll_close.ok`; zbyt słaby surowy wynik blokuje wejście. Sam handler `enterTally` sprawdza tylko stopped; brak osobnego progu 10 pełnych ankiet | Wejście od 10 pełnych ankiet; przy 0–9 „Podlicz” zablokowane. Kwalifikacja odpowiedzi do zamknięcia nie blokuje wejścia przy ≥10, aby umożliwić scalanie tekstów | R + T/UI → osobna akcja wejścia, wspólna bramka UI/SQL |
 | AP / stopped / zatwierdź wynik | R liczy ≥3 odpowiedzi z ≥3 pkt metodą największych reszt; normalizacja 392 zeruje udział zaokrąglony <3%. UI po wejściu ustawia poprawność na true | ≥3 odpowiedzi z zaokrąglonym udziałem ≥4%, jedna matematyka podglądu i SQL | `game_poll_close_check` + T + `poll_points_tally` → wspólna kwalifikacja/zamknięcie SQL |
 | AT / stopped / scal, zatwierdź | R sprawdza ≥3 różne surowe teksty; właściwy zapis przelicza scalony payload, próg ≥3%, top 6, min. 3; remisy punktów obniża | Po każdej zmianie ponowne liczenie; ≥4% i ≥3 kwalifikujące; limit 6; kolejność algorytmu §8.6 | R + T + `poll_text_tally_apply` → wspólna kwalifikacja/zamknięcie SQL |
 | AP, AT / open, stopped, ready / przerwij-resetuj | `poll_abort` usuwa głosy, teksty, sesje, zadania i kody QR; nowy klucz; draft; punkty 0, treść odpowiedzi zostaje | Osobna jawna akcja; zakres wspólnego resetu §8.6 | RPC 315 → wspólny kontrakt resetu SQL |
@@ -716,13 +725,15 @@ ankietami, bo użytkownik odpowiada na wszystkie pytania. Samo podniesienie
 liczby głosów nie usuwa ułamków, np. 10/10/10 przy 30 pełnych ankietach
 nadal daje po 33⅓%.
 
-1. **Wartość minimum pełnych ankiet:** 10 jest propozycją, jeszcze nie
-   zatwierdzonym progiem. Dotyczy zamknięcia, nie wejścia do podliczania.
-2. **Szczegóły zaokrąglenia i wyboru szóstki:** algorytm ma zachować powyższe
+Minimum jest rozstrzygnięte: **10 pełnych oddanych ankiet przed rozpoczęciem
+podliczania**; przy 0–9 akcja „Podlicz” jest niedostępna. To odrębna bramka
+od kwalifikacji odpowiedzi potrzebnej do zatwierdzenia wyniku.
+
+1. **Szczegóły zaokrąglenia i wyboru szóstki:** algorytm ma zachować powyższe
    warunki i jedną wartość punktów/procentu; domknąć przypadki graniczne
    progu 4% i remis na granicy szóstej odpowiedzi. Nie wracać do wymuszania
    sumy 100 ani sztucznego różnicowania równych wyników.
-3. **Straty treści:** pełne treści ponad limity czy potwierdzane obcięcie;
+2. **Straty treści:** pełne treści ponad limity czy potwierdzane obcięcie;
    dokładna obsługa nadmiarowych odpowiedzi i niepoprawnych punktów.
    Występowanie danych jest do odczytania, nie do zgadywania.
 
