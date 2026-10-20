@@ -11,6 +11,10 @@ on:
         description: 'Opcjonalnie: rozdzielone spacją pliki testów unit, np. "unit/rounds.engine.test.js unit/final.engine.test.js". Puste = cały zestaw unit.'
         required: false
         default: ""
+      max_failures:
+        description: 'Przerwij po tylu błędach (--max-failures); 0 = przejdź cały plik i pokaż wszystkie błędy naraz (punktowy spec).'
+        required: false
+        default: "1"
       workers:
         description: 'Liczba workerów; 1 do diagnostyki współdzielonych kont i poczty.'
         required: false
@@ -293,7 +297,7 @@ jobs:
           if [ "$IS_E20_GALLERY" = "1" ]; then
             npx playwright test e2e/e20-gallery.spec.js --workers="$TEST_WORKERS" --retries=0 --max-failures=1
           else
-            npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS" --retries=0 --max-failures=1
+            npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS" --retries=0 --max-failures="${{ inputs.max_failures || '1' }}"
           fi
         working-directory: tests
 
