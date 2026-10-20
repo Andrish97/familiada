@@ -113,6 +113,8 @@ jobs:
           mkdir -p "/tmp/gallery/$RUN_DIR"
           cp -r screens-out/. "/tmp/gallery/$RUN_DIR/"
           cd /tmp/gallery
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Zrzuty $RUN_DIR [skip ci]"
           git push origin screens-gallery
