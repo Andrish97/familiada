@@ -1214,6 +1214,20 @@ test("control2: druga karta urządzenia czeka i przejmuje slot po zamknięciu g�
       await primary.close();
       await expect(waiting.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 20000 });
       await waiting.close();
+
+      if (type === "buzzer") {
+        // Migracja 423: ponowne otwarcie w tej samej przeglądarce (np. drugi
+        // skan QR na telefonie) przejmuje urządzenie od razu, bez czekania
+        // 12 s na wygaśnięcie starej karty; stara przechodzi w oczekiwanie.
+        const first = await openAnon(browser, contexts, path, "buzzer-first", []);
+        await expect(first.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 20000 });
+        const startedAt = Date.now();
+        const again = await first.context().newPage();
+        await again.goto(first.url(), { waitUntil: "domcontentloaded" });
+        await expect(again.locator("#deviceLeaseOverlay")).toBeHidden({ timeout: 8000 });
+        await expect(first.locator("#deviceLeaseOverlay")).toBeVisible({ timeout: 8000 });
+        expect(Date.now() - startedAt, "przejęcie bez czekania na wygaśnięcie starej karty").toBeLessThan(10000);
+      }
     }
   } finally {
     for (const context of contexts) await context.close().catch(() => {});

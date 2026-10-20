@@ -152,6 +152,8 @@ E13 obejmuje końcową warstwę zapoznawczą całego systemu, nie samą Instrukc
    z zasadami poniżej: bez technicznego słownictwa, z krokami i skutkami
    widocznymi dla użytkownika. Sprawdzić go scenariuszami `privacy-manual`
    i automatycznie utrzymywanymi zrzutami odpowiednich ekranów.
+   Materiał do rozpisania, w tym „Rozwiązywanie problemów” z logów
+   rozgrywek: [`manual-plan.md`](manual-plan.md).
 
 **Zasady treści manuala (decyzja 2026-10-11):** zero technicznego
 słownictwa; spójne nazwy tych samych funkcji, stanów i czynności w całej

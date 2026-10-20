@@ -475,6 +475,15 @@ async function main() {
       metrics,
     }),
   });
+  // Wyłączone przyciski nie wywołują akcji, więc bez tego statystyki
+  // zawsze pokazywały 0 prób w czasie blokady. pointerdown (przechwytywany
+  // na dokumencie) dochodzi także przy wyłączonym przycisku.
+  document.addEventListener("pointerdown", (event) => {
+    const button = event.target?.closest?.("button");
+    if (!button?.disabled || !button.closest("#app")) return;
+    if (missingDevices(store.state, presenceFlags).length) noteConnectivityBlockedAction("disabled_click");
+    else if (waitingForDisplayAudioUnlock()) noteAudioUnlockBlockedAction();
+  }, { capture: true });
   function noteConnectivityBlockedAction(action) {
     connectivityTracker.noteBlockedAction(action, missingDevices(store.state, presenceFlags));
   }
