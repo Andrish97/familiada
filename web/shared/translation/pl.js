@@ -4385,7 +4385,7 @@ const pl = {
       colType: "Typ",
       colDate: "Data",
       colInfo: "Info",
-      colPurge: "Usunie się",
+      colPurge: "Zniknie",
       folderType: "Folder",
       folderCount: "{count} elem.",
       questionType: "Pytanie",

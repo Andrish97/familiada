@@ -127,32 +127,21 @@ szczegółowe w tym katalogu.
 
 ## Etapy
 
-1. **Porządek zapisów (w toku):**
-   - migracja 427 `qb_*`: każda akcja = jedna funkcja SQL = jedna
-     transakcja (SECURITY INVOKER — RLS i wyzwalacz treści jak dotąd);
-     zwracają stan „przed” (pod cofanie). Test: `tests/sql/qb-atomic-ops-427.sql`.
-   - `js/ops.js` — jedyne miejsce zapisu; mapuje błędy `qb:*` na komunikaty.
-   - `js/repo.js` — wszystkie odczyty; `actions.js` bez `sb()`.
-   - jedna ścieżka po zapisie: `afterMutation()` (unieważnienie pamięci
-     podręcznej + odświeżenie widoku); jedna funkcja kopiowania
-     (`copyItemsTo`) zamiast trzech; schowek trzyma same klucze.
-   - usunięty martwy kod (`actions.js` 4866 → ~4100 linii, `state.js`).
-   - Zmiany zachowania: zdjęcie tagu z folderu w widoku tagu zdejmuje go
-     z całego poddrzewa (wcześniej tylko z bezpośredniego przypisania
-     folderu, więc folder dalej był widoczny); nazwy „Nowy folder” /
-     „Nowe pytanie” z tłumaczeń; wklejenie kopii, gdy źródło usunięto
-     po skopiowaniu, kończy się komunikatem „element zniknął”.
-2. **Kosz (gotowe na branchu):** migracja 428 (`qb_trash`, `qb_delete_items`
-   do kosza, `qb_trash_list/restore/purge`, `qb_trash_cleanup` + cron),
-   test `tests/sql/qb-trash-428.sql`; `trash-modal.js`, wiersz w lewym
-   panelu, tłumaczenia PL/EN/UK, scena zrzutów `base-explorer-trash`,
-   e2e „base-explorer: kosz (E22)”. Przy okazji: jedna bramka skrótów
-   klawiszowych (Delete w polu okna pytania usuwał zaznaczenie,
-   Ctrl+Shift+N tworzył pytanie zamiast folderu), komunikaty potwierdzeń
-   bez polskich wstawek w EN/UK.
-3. **Cofanie / przywracanie** — na `ops.js`.
-4. **Dalsze porządki** (`wireActions` ~2000 linii obsługi zdarzeń:
-   podział na moduły drzewo/lista/klawiatura/przeciąganie).
+Aktualny stan i lista kroków: [`PROGRESS.md`](../PROGRESS.md) (kroki 1–7 planu
+z `menedzer-bazy/README.md` §4). Skrót:
+
+1. **Porządek zapisów** — migracja 427 `qb_*` (jedna akcja = jedna funkcja
+   SQL = jedna transakcja, zwracają stan „przed”), `js/ops.js` jedyne
+   miejsce zapisu, `js/repo.js` odczyty. Zrobione (lokalnie).
+2. **Kosz** — migracja 428 (`qb_trash`, `qb_delete_items` do kosza,
+   `qb_trash_list/restore/purge`, `qb_trash_cleanup` + cron); w interfejsie
+   **kosz jako folder w drzewie** (okno kosza usunięte). Zrobione (lokalnie).
+3. **Cofanie / ponawianie** — `history.js` + wpisy w `commands.js`,
+   migracja 429 (`qb_restore_tags`). Zrobione (lokalnie).
+4. **Podział na moduły** — `actions.js` usunięty; `commands.js`,
+   `actions/*`, `data/*`, `ui/*`, nowy `page.js`. Zrobione (lokalnie).
+5. **Wdrożenie** — migracje 427–429 na `main` → e2e brancha na produkcji →
+   Pages → testy kontrolne. **Czeka na decyzję użytkownika.**
 
 **Testy lokalne bez produkcji:** e2e z kodem brancha na lokalnym Postgresie
 + PostgREST (atrapa `/auth/v1`, strony z dysku) — `scripts/agent-tools/local-e2e/README.md`;

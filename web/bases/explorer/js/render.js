@@ -389,6 +389,14 @@ function emptyText(state, listing) {
   return t("baseExplorer.list.empty");
 }
 
+// Kolumny listy. W koszu bez Typu (ikona mówi, czy to folder, czy pytanie),
+// a „Usunie się” zaraz za nazwą — na telefonie widać ją bez przewijania.
+const TRASH_ORDER = ["num", "name", "info", "date"];
+function columnsFor(listing) {
+  if (listing.mode !== "trash") return LIST_COLUMNS;
+  return TRASH_ORDER.map((key) => LIST_COLUMNS.find((c) => c.key === key));
+}
+
 export function currentListing(state) {
   return computeListing(state.store, state.d, { location: state.location, query: isTrash(state) ? {} : state.query });
 }
@@ -413,12 +421,13 @@ export function renderList(state) {
     return;
   }
 
+  const columns = columnsFor(listing);
   const saved = loadCols();
   const narrow = isNarrow();
-  const cols = LIST_COLUMNS.map((c) => (c.key === "name" ? `<col>` : `<col style="width:${colWidth(c, saved)}px">`)).join("");
-  const minW = LIST_COLUMNS.reduce((s, c) => s + (c.key === "name" ? (narrow ? c.narrowMin : c.min) : colWidth(c, saved)), 0);
+  const cols = columns.map((c) => (c.key === "name" ? `<col>` : `<col style="width:${colWidth(c, saved)}px">`)).join("");
+  const minW = columns.reduce((s, c) => s + (c.key === "name" ? (narrow ? c.narrowMin : c.min) : colWidth(c, saved)), 0);
 
-  const head = LIST_COLUMNS.map((c) => {
+  const head = columns.map((c) => {
     // w koszu kolumna Info mówi, kiedy wpis zniknie na zawsze
     const label = esc(t(c.key === "info" && listing.mode === "trash" ? "baseExplorer.list.colPurge" : c.labelKey));
     if (!c.sort) return `<th class="${c.cls}">${label}</th>`;
@@ -449,13 +458,16 @@ export function renderList(state) {
       type = `<span class="type-label">${esc(t("baseExplorer.list.questionType"))}</span>${typeDotHtml(it.type)}`;
       info = esc(t("baseExplorer.list.answerCount", { count: it.info }));
     }
+    const cell = {
+      num: `<td class="col-num">${i + 1}</td>`,
+      name: `<td class="col-main"><div class="title-line"><span class="title-text">${title}</span>${dots}</div></td>`,
+      type: `<td class="col-type">${type}</td>`,
+      date: `<td class="col-date">${esc(fmtDate(it.date))}</td>`,
+      info: `<td class="col-meta">${info}</td>`,
+    };
     return `
       <tr class="row${sel}${cut}"${it.kind === "trash" ? "" : draggable} data-kind="${it.kind}" data-id="${esc(it.id)}" data-key="${esc(key)}">
-        <td class="col-num">${i + 1}</td>
-        <td class="col-main"><div class="title-line"><span class="title-text">${title}</span>${dots}</div></td>
-        <td class="col-type">${type}</td>
-        <td class="col-date">${esc(fmtDate(it.date))}</td>
-        <td class="col-meta">${info}</td>
+        ${columns.map((c) => cell[c.key]).join("")}
       </tr>`;
   }).join("");
 
@@ -465,18 +477,18 @@ export function renderList(state) {
       <thead><tr class="list-head">${head}</tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
-  initColumnResizers();
+  initColumnResizers(columns);
 }
 
 // Uchwyty zmiany szerokości (bez kolumny Nazwa, która wypełnia resztę);
 // dwuklik przywraca domyślną szerokość.
-function initColumnResizers() {
+function initColumnResizers(columns) {
   const table = elList?.querySelector(".list-table");
   const head = table?.querySelector(".list-head");
   if (!table || !head) return;
   const colEls = table.querySelectorAll("colgroup col");
 
-  LIST_COLUMNS.forEach((c, i) => {
+  columns.forEach((c, i) => {
     if (!c.min || c.key === "name") return;
     const th = head.children[i];
     const col = colEls[i];

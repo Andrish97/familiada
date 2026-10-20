@@ -26,9 +26,9 @@ symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
 - [x] Zrzuty 390 px / 1440 px: `docs/menedzer-bazy/img/` (kosz, menu, filtr).
 - [x] Pełny lokalny e2e `base-explorer`: 76/76 (+ test okna od dołu); unit 689/689.
 - [x] Zestawienie dla użytkownika (w rozmowie 2026-10-20).
-- [ ] 7a. Scalić `origin/main` do brancha (branch był 34 commity za `main`) — przygotowanie do wdrożenia.
-- [ ] 7b. Poprawka znanego problemu: w koszu na telefonie kolumna „Usunie się” poza ekranem.
-- [ ] 7c. Lokalny e2e `base-explorer` + unit po scaleniu i poprawce.
+- [x] 7a. Scalono `origin/main` (na main w plikach menedżera tylko hashe wersji; `actions.js` zostaje usunięty; konflikt w Dzienniku połączony). Unit 690/690.
+- [x] 7b. Kosz na telefonie: bez kolumny Typ, kolumna „Zniknie” (za N dni) zaraz za nazwą — widoczna bez przewijania (`render.js` `columnsFor`). Zrzut `docs/menedzer-bazy/img/kosz-telefon.png`.
+- [ ] 7c. Lokalny e2e `base-explorer` po scaleniu i poprawce — W TOKU (przebieg uruchomiony, bez porażek do 26/77).
 - [ ] 7d. Wdrożenie (migracje 427–429 → e2e brancha na produkcji → Pages → testy kontrolne) — **czeka na decyzję użytkownika**.
 
 ## Znane problemy

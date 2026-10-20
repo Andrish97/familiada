@@ -4485,7 +4485,7 @@ const en = {
       colType: "Type",
       colDate: "Date",
       colInfo: "Info",
-      colPurge: "Deleted",
+      colPurge: "Expires",
       folderType: "Folder",
       folderCount: "{count} items",
       questionType: "Question",

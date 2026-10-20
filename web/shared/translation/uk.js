@@ -4482,7 +4482,7 @@ const uk = {
       colType: "Тип",
       colDate: "Дата",
       colInfo: "Інфо",
-      colPurge: "Видалиться",
+      colPurge: "Зникне",
       folderType: "Папка",
       folderCount: "{count} елем.",
       questionType: "Питання",

@@ -193,7 +193,7 @@ zmiana zaznaczenia przełącza tylko klasy), `ui/list.js`, `ui/tree.js`,
 `ui/keyboard.js`, `ui/rename-modal.js`, nowy `page.js`. Usunięte:
 `actions.js` (3837 linii), `trash-modal.js`, przycisk i okno kosza.
 - Kosz: zwykły wiersz pod folderami w drzewie (bez plakietki), otwiera się
-  jak folder (`?trash=1`), kolumna „Usunie się” (za N dni), „Przywróć”
+  jak folder (`?trash=1`), kolumna „Zniknie” (za N dni; w koszu bez kolumny Typ), „Przywróć”
   i „Opróżnij kosz” w pasku, „Usuń” w koszu = trwale, menu na koszu
   w drzewie: Otwórz kosz / Opróżnij kosz.
 - Menu kontekstowe na telefonie: arkusz od dołu z `env(safe-area-inset-*)`
