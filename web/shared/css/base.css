@@ -2902,9 +2902,10 @@ button.rowsSectionHead{ cursor: pointer; }
   .rowsRow{ gap: 10px; padding: 9px 10px; }
 }
 @media (max-width: 720px){
-  /* Let row content wrap normally; truncate only long status badges so they
-     stay inside the tile without forcing the tile beyond its available width. */
-  .shareRow--compact .shareMain{ display: block; }
+  /* Nazwa, znaczniki i e-mail w jednej linii, gdy się mieszczą; następny
+     element schodzi pod spód dopiero przy braku miejsca (decyzja 2026-10-20). */
+  .shareRow--compact .shareMain{ display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
+  .shareRow--compact .shareMain > *{ min-width: 0; max-width: 100%; margin-top: 0; }
   .shareRow--compact .shareRowActions{ gap: 4px; }
   .shareRow--compact .shareRowActions .btn, .shareRow--compact .shareRowActions .baseShareRole{ width: 36px; min-width: 36px; min-height: 40px; padding: 4px; }
   .shareRow--compact{ gap: 8px; padding: 8px; }
@@ -2914,7 +2915,7 @@ button.rowsSectionHead{ cursor: pointer; }
   .shareRow--compact .shareTags .tag{ font-size: 10px; padding: 2px 6px; }
   /* nazwa w jednej linii z wielokropkiem (pełna w dymku), znaczniki zawijają się zamiast ucinać */
   .shareRow--compact .shareEmail, .shareRow--compact .shareNote{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .shareRow--compact .shareTags{ width: auto; max-width: 100%; margin-top: 6px; flex-wrap: wrap; overflow: hidden; }
+  .shareRow--compact .shareTags{ width: auto; max-width: 100%; margin-top: 0; flex-wrap: wrap; overflow: hidden; }
   .shareRow--compact .shareTags > *{ min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 /* Wspólna wysokość i osobne przewijanie list odbiorców. */
