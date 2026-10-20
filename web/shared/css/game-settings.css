@@ -733,7 +733,7 @@
   .gs-sidebar-backdrop.is-open{display:block}
   .gs-sidebar{position:fixed;z-index:41;left:0;top:var(--topbar-h,64px);bottom:0;width:min(320px,86vw);border:1px solid var(--line);border-left:0;border-radius:0 16px 16px 0;background:#111827;box-shadow:0 18px 48px rgba(0,0,0,.48);transform:translateX(-105%);transition:transform .18s ease}
   .gs-sidebar.is-open{transform:translateX(0)}
-  .gs-content{grid-column:1;grid-row:2;min-width:0;padding:20px var(--page-gutter)}
+  .gs-content{grid-column:1;grid-row:2;min-width:0;padding:20px var(--page-pad-right) 20px var(--page-pad-left)}
 }
 
 /* ===== ROUNDS ORDER (control-style) ===== */

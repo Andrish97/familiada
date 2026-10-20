@@ -222,7 +222,8 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await expect(incoming).toHaveCount(0);
     await recipient.page.locator('.rowsSection--declined button.rowsSectionHead').click();
     const refusal = recipient.page.locator(`.rowsSection--declined [data-id="${id}"]`);
-    await expect(refusal).toContainText("Odrzucono");
+    // stan jest w tytule sekcji „Odrzucone przeze mnie”, wiersz go nie powtarza
+    await expect(refusal).toBeVisible();
     await expect(refusal.locator('[data-act="undo_reject"]')).toBeEnabled();
     await owner.page.reload();
     const outgoing = owner.page.locator(`[data-id="${id}"]`);

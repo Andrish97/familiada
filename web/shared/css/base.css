@@ -5,6 +5,9 @@
 :root {
     /* Odstępy strony (E18 #7): boczny margines treści; ≤980 px — 15 px. */
     --page-gutter: 18px;
+    /* odstęp + strefa bezpieczna (wcięcie iPhone'a) — dodawane, nie zamiast */
+    --page-pad-left: calc(var(--page-gutter) + env(safe-area-inset-left, 0px));
+    --page-pad-right: calc(var(--page-gutter) + env(safe-area-inset-right, 0px));
     --bg: #050914;
     --card: #111827; /* powierzchnia zewnętrznej karty */
     --card2: rgba(0,0,0,.18);
@@ -308,7 +311,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     gap: 10px;
     flex-wrap: wrap;
 
-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right, 0px)) 12px calc(16px + env(safe-area-inset-left, 0px));
     transition: top .18s ease-out;
     /* Kryjące tło: półprzezroczysty, rozmyty pasek przepuszczał treść strony
        przewijaną pod spodem, więc każdy (też półprzezroczysty) przycisk miał
@@ -525,9 +528,9 @@ main:has(> .footer){
     position: relative;
     margin: 16px 0 8px;
     padding-top: 20px;
-    padding-right: max(16px, env(safe-area-inset-right));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
-    padding-left: max(16px, env(safe-area-inset-left));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
@@ -547,9 +550,9 @@ main:has(> .footer){
     width: auto;
     margin-inline: 0;
     padding-top: 20px;
-    padding-right: max(16px, env(safe-area-inset-right));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
-    padding-left: max(16px, env(safe-area-inset-left));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
 }
 .footer > *{ min-width:0; max-width:100%; flex:0 1 auto; overflow-wrap:break-word; hyphens:auto; text-wrap:pretty; }
 .footer > :first-child{ text-align:left; }
@@ -722,7 +725,7 @@ main:has(> .footer){
     width: 100%;
     box-sizing: border-box;
     margin: 0 auto;
-    padding: 24px var(--page-gutter) 18px
+    padding: 24px var(--page-pad-right) 18px var(--page-pad-left)
 }
 
 .row,.stack {
@@ -1471,8 +1474,8 @@ main:has(> .footer){
     .topbar {
         padding: 12px 14px;
         padding-top: max(12px, env(safe-area-inset-top));
-        padding-left: max(14px, env(safe-area-inset-left));
-        padding-right: max(14px, env(safe-area-inset-right));
+        padding-left: calc(14px + env(safe-area-inset-left, 0px));
+        padding-right: calc(14px + env(safe-area-inset-right, 0px));
     }
 
     .brand {
@@ -1498,8 +1501,8 @@ main:has(> .footer){
     .wrap{
         width: 100%;
         padding: 15px;
-        padding-left: max(var(--page-gutter), env(safe-area-inset-left));
-        padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+        padding-left: var(--page-pad-left);
+        padding-right: var(--page-pad-right);
     }
 }
 
@@ -1565,7 +1568,7 @@ html.showA2HS .a2hs {
 .lang-switcher.lang-floating {
     position: fixed;
     top: max(12px, env(safe-area-inset-top));
-    right: max(12px, env(safe-area-inset-right));
+    right: calc(12px + env(safe-area-inset-right, 0px));
     z-index: 999;
 }
 
@@ -1811,8 +1814,8 @@ html.showA2HS .a2hs {
     box-sizing: border-box;
     overflow: auto;
     padding: 10px;
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
     padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 
@@ -1925,8 +1928,8 @@ html.showA2HS .a2hs {
     gap:8px;
     padding:8px 10px;
     padding-top: max(8px, env(safe-area-inset-top));
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
   }
 
   .topbar-layout-4 .topbar-section-1{ grid-area:s1; }

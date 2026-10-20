@@ -1,6 +1,6 @@
 .mail-body{height:100dvh;overflow:hidden}
 .mail-body .brand{text-decoration:none}
-.mail-wrap{width:100%;box-sizing:border-box;margin:0 auto;padding:24px var(--page-gutter);flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.mail-wrap{width:100%;box-sizing:border-box;margin:0 auto;padding:24px var(--page-pad-right) 24px var(--page-pad-left);flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:22px}
 .mail-entry{margin:0;padding:24px;overflow:auto}
 #mailEntry{width:min(680px,100%);align-self:center;box-sizing:border-box}
 .mail-wrap.has-session{justify-content:flex-start}
@@ -41,7 +41,7 @@
 .mail-feedback{margin-top:12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,234,166,.05);font-size:13px}
 .mail-panels-card [hidden]{display:none!important}
 @media(max-width:620px){
- .mail-wrap{padding:16px var(--page-gutter);gap:16px}
+ .mail-wrap{padding:16px var(--page-pad-right) 16px var(--page-pad-left);gap:16px}
  .mail-entry{padding:18px 14px;border-radius:18px}
  #mailAddress{font-size:12px}
  #mailMessage{font-size:13px}
