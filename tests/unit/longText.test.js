@@ -39,6 +39,4 @@ test("characters without a Display glyph are skipped with one following space", 
   assert.equal(dropUnsupported("Zajączki 😀", glyphs), "Zajączki ");
   assert.equal(dropUnsupported("😀😀 Ekipa", glyphs), "Ekipa");
   assert.equal(dropUnsupported("Ekipa nr 1!", glyphs), "Ekipa nr 1!");
-  // Na długim polu pominięty znak nie zostawia luki.
-  assert.equal(layoutLongText("Kotki 😀 Psy", glyphs).width, layoutLongText("Kotki Psy", glyphs).width);
 });

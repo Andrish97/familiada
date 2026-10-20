@@ -26,12 +26,12 @@ const glyphOf = (glyphs, ch) => {
 /**
  * Układ napisu w długim polu: { items: [{ glyph, from, width }], width }.
  * from -- pierwsza kolumna glifu z kropkami (0 = lewa), width -- liczba kolumn.
- * Spacja i znaki bez kropek: pusta przerwa LONG_SPACE_W; znaki bez glifu
- * są pomijane (dropUnsupported).
+ * Spacja, znaki bez kropek i znaki spoza czcionki: pusta przerwa LONG_SPACE_W
+ * (Wyświetlacz ich nie poprawia -- egzekwują je pola wpisu, dane poprawi E21).
  */
 export function layoutLongText(text, glyphs) {
   const items = [];
-  for (const ch of longTextChars(dropUnsupported(text, glyphs))) {
+  for (const ch of longTextChars(text)) {
     const glyph = glyphs ? glyphOf(glyphs, ch) : null;
     const mask = glyphs ? (glyph || []).reduce((acc, row) => acc | (row | 0), 0) & FALLBACK_MASK : FALLBACK_MASK;
     if (!mask) { items.push({ glyph: null, from: 0, width: LONG_SPACE_W }); continue; }
@@ -54,7 +54,8 @@ export function measureLongText(text, glyphs) {
 /**
  * Napis bez znaków, których Wyświetlacz nie ma (decyzja 2026-10-20): taki znak
  * jest pomijany razem z jedną spacją, która stoi zaraz za nim („Kawa 😀 z” →
- * „Kawa z”). Wspólne dla długich pól, dużej planszy i ustawień gry.
+ * „Kawa z”). Używane przy wpisywaniu (ustawienia gry); Wyświetlacz rysuje dane
+ * bez zmian -- istniejące dane poprawi migracja (E21).
  * Bez czcionki (jeszcze nie wczytana) napis zostaje bez zmian.
  */
 export function dropUnsupported(text, glyphs) {
