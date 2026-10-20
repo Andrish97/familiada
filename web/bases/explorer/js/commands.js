@@ -546,7 +546,7 @@ let questionModal = null;
 
 export async function editQuestion(state, qid) {
   if (!qid) return false;
-  questionModal ||= initQuestionModal({ state });
+  questionModal ||= initQuestionModal();
   const lease = await acquireResourceLock({ resourceType: "base_question", resourceId: qid, context: "base-explorer:question-modal" });
   if (!lease?.ok) return lockRefused(lease);
   try {
@@ -580,7 +580,7 @@ export async function editQuestion(state, qid) {
 let exportModal = null;
 
 export async function createGame(state) {
-  exportModal ||= initExportModal({ state });
+  exportModal ||= initExportModal();
   const ownerId = state.user?.id;
   if (!ownerId) return false;
 

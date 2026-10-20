@@ -111,6 +111,29 @@ test("duża baza: wczytanie, rysowanie, filtry i zaznaczanie mieszczą się w pr
     const openFolder = await timed(page, "otwarcie folderu (dwuklik)", () => page.locator(`#list .row[data-kind="cat"][data-id="${s.top[0]}"]`).dblclick(),
       () => expect(page.locator("#breadcrumbs .crumb[data-kind=\"crumb\"]")).toHaveCount(1, { timeout: 10000 }));
 
+    // punkt odniesienia: jedno małe zapytanie w tym środowisku (narzut
+    // przekierowania zapytań przez lokalne e2e, nie kod strony)
+    const rpcMs = await page.evaluate(async (id) => {
+      const t0 = performance.now();
+      await window.__sbClient.rpc("qb_trash_list", { p_base_id: id });
+      return Math.round(performance.now() - t0);
+    }, s.base);
+    console.log(`[perf] jedno małe zapytanie RPC (narzut środowiska): ${rpcMs} ms`);
+
+    // okna na dużym zaznaczeniu: tagi (stan przypisań) i „Utwórz grę”
+    await page.locator('#breadcrumbs .crumb[data-kind="root"]').click();
+    const bigFolder = page.locator(`#list .row[data-kind="cat"][data-id="${s.top[0]}"]`);
+    await bigFolder.click();
+    const tagsWin = await timed(page, "okno tagów dla dużego folderu (Ctrl+T)", () => page.keyboard.press("Control+t"),
+      () => expect(page.locator("#tagsAssignList input[type=\"checkbox\"]").first()).toBeVisible({ timeout: 30000 }));
+    await page.locator("#tagsL1Close").click();
+    await expect(page.locator("#tagsOverlay")).toBeHidden({ timeout: 10000 });
+    await bigFolder.click();
+    const gameWin = await timed(page, "okno Utwórz grę (Ctrl+G)", () => page.keyboard.press("Control+g"),
+      () => expect(page.locator("#xList .xPickItem").first()).toBeVisible({ timeout: 60000 }));
+    console.log(`[perf]   pozycji w oknie gry: ${await page.locator("#xList .xPickItem").count()}`);
+    await page.locator("#xClose").click();
+
     // progi: wczytanie z lokalnej bazy i rysowanie — żeby wyłapać regresję
     expect(load, "wczytanie").toBeLessThan(8000);
     expect(filterText, "filtr tekstowy").toBeLessThan(2500);
@@ -118,6 +141,8 @@ test("duża baza: wczytanie, rysowanie, filtry i zaznaczanie mieszczą się w pr
     expect(select, "zaznaczenie").toBeLessThan(500);
     expect(selectAll, "Ctrl+A").toBeLessThan(1000);
     expect(openFolder, "otwarcie folderu").toBeLessThan(1000);
+    expect(tagsWin, "okno tagów").toBeLessThan(3000);
+    expect(gameWin, "okno gry").toBeLessThan(3000);
   } finally {
     await page.evaluate(async (id) => { await window.__sbClient.from("question_bases").delete().eq("id", id); }, s.base);
   }

@@ -3,14 +3,23 @@
 -- drugiej (przypisania tagów przez złączenie z rosnącym OFFSET): baza z
 -- 20 000 pytań wczytywała się ~13 s. Funkcja zwraca jeden jsonb:
 -- {categories:[…], tags:[…], questions:[…], questionTags:[…]}.
--- SECURITY INVOKER: te same polityki RLS co przy zwykłych odczytach
--- (czytelnik widzi, obcy dostaje puste listy). Tylko dodaje funkcję.
+-- Dostęp: jedno jawne sprawdzenie base_can_access (to samo, którego używają
+-- polityki RLS tych tabel) na początku, potem SECURITY DEFINER bez RLS —
+-- polityki liczone dla każdego wiersza kosztowały ~1 s przy 20 000 pytań.
+-- Czytelnik widzi, obcy dostaje puste listy (jak przy RLS). Tylko dodaje funkcje.
+-- qb_question_tag_links: przypisania tagów wskazanych pytań (okno tagów;
+-- lista id w treści zapytania, nie w adresie — bez limitu długości adresu
+-- i 1000 wierszy).
 
 CREATE OR REPLACE FUNCTION public.qb_base_content(p_base_id uuid) RETURNS jsonb
-  LANGUAGE sql STABLE
+  LANGUAGE plpgsql STABLE SECURITY DEFINER
   SET search_path TO 'public'
 AS $$
-  SELECT jsonb_build_object(
+BEGIN
+  IF NOT public.base_can_access(p_base_id, auth.uid()) THEN
+    RETURN '{"categories":[],"tags":[],"questions":[],"questionTags":[]}'::jsonb;
+  END IF;
+  RETURN jsonb_build_object(
     'categories', coalesce((
       SELECT jsonb_agg(jsonb_build_object('id', c.id, 'base_id', c.base_id, 'parent_id', c.parent_id, 'name', c.name,
                                           'ord', c.ord, 'created_at', c.created_at, 'updated_at', c.updated_at)
@@ -31,7 +40,24 @@ AS $$
         JOIN public.qb_questions q ON q.id = l.question_id
        WHERE q.base_id = p_base_id), '[]'::jsonb)
   );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.qb_question_tag_links(p_base_id uuid, p_question_ids uuid[]) RETURNS jsonb
+  LANGUAGE plpgsql STABLE SECURITY DEFINER
+  SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NOT public.base_can_access(p_base_id, auth.uid()) THEN RETURN '[]'::jsonb; END IF;
+  RETURN coalesce((
+    SELECT jsonb_agg(jsonb_build_object('question_id', l.question_id, 'tag_id', l.tag_id))
+      FROM public.qb_question_tags l
+      JOIN public.qb_questions q ON q.id = l.question_id
+     WHERE q.base_id = p_base_id AND l.question_id = ANY(coalesce(p_question_ids, '{}'))), '[]'::jsonb);
+END;
 $$;
 
 REVOKE ALL ON FUNCTION public.qb_base_content(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.qb_question_tag_links(uuid, uuid[]) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.qb_question_tag_links(uuid, uuid[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.qb_base_content(uuid) TO authenticated;

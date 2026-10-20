@@ -12,7 +12,7 @@ import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/co
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T23220";
 import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T23220";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T23220";
-import { listQuestionTags, listTags } from "./repo.js?v=v2026-10-20T23220";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-20T23220";
 
 
 const btnBack = document.getElementById("btnBack");
@@ -366,10 +366,11 @@ export async function openTagsModal(state, opts = {}) {
       return;
     }
 
-    // pobierz linki tagów dla targetowych pytań
-    const links = await listQuestionTags(allQIds);
+    // świeże tagi wskazanych pytań — lista id w treści zapytania (dawniej
+    // w adresie: przy dużym folderze przekraczała limity adresu i 1000 wierszy)
+    const links = await listQuestionTagLinks(state.baseId, allQIds);
     const qMap = new Map(); // qid -> Set(tid)
-    for (const l of links || []) {
+    for (const l of links) {
       if (!qMap.has(l.question_id)) qMap.set(l.question_id, new Set());
       qMap.get(l.question_id).add(l.tag_id);
     }
