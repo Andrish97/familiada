@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1k5B8PAKM6oajCKkCeJZXQmM43ey0Lfzu57BaEOhgEReepD4rXr9UOS4VgsbBxA
+\restrict 5yiTPE9PknOghgePoYVVgbkCwDQhoITDK5RZfPwfnyivzMSJULBHgPcUJQaWt0j
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -7715,7 +7715,7 @@ select
     else false
   end as can_poll,
 
-  /* eksport: blokuj gdy sondaż otwarty */
+  /* eksport: blokuj gdy ankieta otwarta */
   case
     when g.status in ('poll_open', 'poll_stopped') then false
     else true
@@ -7724,7 +7724,7 @@ select
   /* reason_play (opcjonalnie) */
   case
     when g.type in ('poll_text','poll_points') and g.status <> 'ready'
-      then 'Gra dostępna dopiero po zamknięciu sondażu.'
+      then 'Gra dostępna dopiero po zamknięciu ankiety.'
     when g.type = 'prepared' and (select qn from agg) < 10
       then 'Musi być co najmniej 10 pytań.'
     when g.type = 'prepared' and not ((select an_min from agg) between 3 and 6 and (select an_max from agg) between 3 and 6)
@@ -7741,7 +7741,7 @@ select
   /* reason_poll (opcjonalnie) */
   case
     when g.type = 'prepared'
-      then 'Preparowany nie ma sondażu.'
+      then 'Gra preparowana nie ma ankiety.'
     when (g.type in ('poll_text','poll_points') and (select qn from agg) < 10)
       then 'Musi być co najmniej 10 pytań.'
     when g.type = 'poll_points' and not ((select an_min from agg) between 3 and 6 and (select an_max from agg) between 3 and 6)
@@ -13356,7 +13356,7 @@ begin
   end if;
 
   if g.status <> 'poll_open'::game_status then
-    return jsonb_build_object('ok', false, 'reason', 'Sondaż nie jest otwarty.');
+    return jsonb_build_object('ok', false, 'reason', 'Ankieta nie jest otwarta.');
   end if;
 
   if g.type = 'poll_text'::game_type then
@@ -17565,7 +17565,7 @@ BEGIN
  PERFORM public.poll_claim_email_records();
  IF p_kind IS NULL OR p_kind='poll' THEN
   RETURN QUERY SELECT 'poll'::text,t.id,CASE WHEN t.done_at IS NOT NULL THEN 'done' ELSE 'todo' END,
-   coalesce(g.name,'Sondaż '||left(t.game_id::text,8)),coalesce(nullif(p.username,''),p.email),t.created_at,t.done_at,t.token,
+   coalesce(g.name,'Ankieta '||left(t.game_id::text,8)),coalesce(nullif(p.username,''),p.email),t.created_at,t.done_at,t.token,
    t.poll_type,NULL::text,NULL::text,t.game_id,NULL::timestamptz
   FROM public.poll_tasks t LEFT JOIN public.games g ON g.id=t.game_id LEFT JOIN public.profiles p ON p.id=t.owner_id
   WHERE t.recipient_user_id=uid AND t.declined_at IS NULL AND t.cancelled_at IS NULL
@@ -24924,5 +24924,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1k5B8PAKM6oajCKkCeJZXQmM43ey0Lfzu57BaEOhgEReepD4rXr9UOS4VgsbBxA
+\unrestrict 5yiTPE9PknOghgePoYVVgbkCwDQhoITDK5RZfPwfnyivzMSJULBHgPcUJQaWt0j
 
