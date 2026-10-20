@@ -228,6 +228,15 @@ async function main() {
 
   if (!gameId) { root.textContent = "Brak parametru ?id= w URL."; return; }
 
+  // Manifest nie zależy od gry ani sesji Control. Pobierz go równolegle z
+  // pierwszym odczytem gry, zamiast dodawać osobną rundę sieciową przed UI.
+  // Błąd przechowujemy jako wartość, żeby przedwczesny powrót (np. brak gry)
+  // nie zostawił odrzuconego Promise bez obsługi.
+  const sfxManifestP = loadSfxManifest().then(
+    (manifest) => ({ manifest }),
+    (error) => ({ error }),
+  );
+
   const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
   if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
 
@@ -269,9 +278,13 @@ async function main() {
   }
   if (runtimeSessionResult.expired) return;
 
+  const sfxManifestResult = await sfxManifestP;
+  if (sfxManifestResult.error) throw sfxManifestResult.error;
+
   setCurrentGameId(gameId);
-  await loadSfxManifest();
-  await initSfx();
+  // Odczyt własnych plików z IndexedDB nie zależy od game_state; uruchom go
+  // teraz, a poczekaj równolegle z hydrate() poniżej.
+  const sfxInitP = initSfx();
 
   // Głośności/warianty dźwięku skonfigurowane w game-settings (poza
   // Control) — dokładnie jak dzisiejsze control/js/app.js's main().
@@ -296,7 +309,7 @@ async function main() {
   // Prepare audio lengths while the operator connects devices.
   void Promise.all(listSfx().map(getSfxDuration));
   const store = createStore(gameId);
-  const expiredTimer = await store.hydrate();
+  const [expiredTimer] = await Promise.all([store.hydrate(), sfxInitP]);
   const outroStartedKey = `control2:outro-started:${gameId}`;
   let outroStartedAt = null;
   let outroUnlockTimer = null;
@@ -892,10 +905,15 @@ async function main() {
   const devices = createDevices({ game });
   const urls = await devices.buildUrls(getUiLang());
   testModePanel = createControlTestMode({ urls, onActivity: () => runtimeSession.noteActivity(), onResize: () => renderCurrent() });
-  const connectCodes = {};
-  for (const kind of ["display", "host", "buzzer"]) {
-    connectCodes[kind] = await devices.generateConnectCode(kind).catch(() => null);
-  }
+  // buildUrls() już równolegle przygotował klucze sesji wszystkich urządzeń.
+  // Wygeneruj trzy kody równolegle: poprzednia pętla czekała na trzy osobne
+  // RPC jedno po drugim i blokowała pierwszy render Control.
+  const connectCodes = Object.fromEntries(await Promise.all(
+    ["display", "host", "buzzer"].map(async (kind) => [
+      kind,
+      await devices.generateConnectCode(kind).catch(() => null),
+    ]),
+  ));
 
   const presence = createPresence({
     gameId,
