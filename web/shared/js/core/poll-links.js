@@ -17,3 +17,9 @@ export function validAnonymousPollParams(params){
   && !['d','t','s','f','b','u','m','action'].some(key=>params.has(key))
   && ['p','id','key','lang'].every(key=>params.getAll(key).length<=1);
 }
+// Ankiety z kadrów strony głównej (dane demo zrzutów, scripts/screens/) mają
+// identyfikatory 00000000-0000-4000-8000-…, których baza nigdy nie nadaje.
+// Kod QR z takiego kadru prowadzi do ukrytej gry w węża (/snake/).
+export function isScreenshotPollId(id){
+ return /^00000000-0000-4000-8000-[0-9a-f]{12}$/i.test(String(id||''));
+}

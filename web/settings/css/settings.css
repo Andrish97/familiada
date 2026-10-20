@@ -1248,6 +1248,11 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   margin-top: 14px;
 }
 
+/* W siatce odstęp daje gap -- karty obok siebie zaczynają się równo. */
+.stats-inner-grid > .stats-inner-card + .stats-inner-card{
+  margin-top: 0;
+}
+
 .stats-inner-label{
   font-size: 11px;
   opacity: .5;

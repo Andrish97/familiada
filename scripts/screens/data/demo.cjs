@@ -231,6 +231,11 @@ function buildDb(lang, extras = {}) {
     contacts_list: `fn:(args) => (args.p_kind === "friends" ? ${JSON.stringify(friends)} : ${JSON.stringify(subscribers)})`,
     tasks_list: tasks,
     resource_copy_inbox: [],
+    snake_log: { ok: true, best: 23, games: 7 },
+    // Panel admina — statystyki (kadr admin-stats-snake pokazuje sekcję węża).
+    get_admin_stats: null, get_retention_stats: null, stats_excluded_list: [],
+    // Control: wszystkie urządzenia na miejscu (migracja 397).
+    control_devices_snapshot: `fn:() => ({ ok: true, server_time: new Date().toISOString(), devices: Object.fromEntries(["display", "host", "buzzer"].map((k) => [k, { primary_online: true, audio_unlocked: true, visibility: "visible", focused: true, waiting_count: 0, last_seen_at: new Date().toISOString(), meta: { page_visibility: "visible" } }])) })`,
     reserved_username_prefixes_list: [], site_activity_ping: null,
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
     list_shared_bases_ext: [], base_declines_list_mine: [], bases_count_incoming_share_invites: 0,
@@ -300,6 +305,14 @@ function buildDb(lang, extras = {}) {
       "/_admin_api/me": { ok: true, email: "admin@example.com" },
       "/_admin_api/activity*": { ok: true, history: { hour: [], day: [], week: [] }, games: [], pages: [], locks: [] },
       "/_admin_api/state": { enabled: false, mode: "message", message: "" },
+      "/_admin_api/stats/snake": { ok: true, stats: {
+        kinds: { scan: { total: 142, today: 6, last_7d: 41, visitors: 118 }, enter: { total: 131, today: 6, last_7d: 38, visitors: 109 },
+          start: { total: 388, today: 21, last_7d: 120, visitors: 87 }, finish: { total: 371, today: 19, last_7d: 115, visitors: 85 } },
+        scores: { max: 61, avg: 9.4 }, players: 23,
+        top: [["ania.k", 61, 40], ["Wujek_Staszek", 48, 12], ["quizmaster", 37, 55], ["ola", 29, 8], ["kuba2009", 22, 31]]
+          .map(([username, best, games]) => ({ username, best, games, best_at: "2026-10-18T19:20:00Z" })),
+        daily: Array.from({ length: 14 }, (_, i) => ({ day: `2026-10-${String(7 + i).padStart(2, "0")}`, scan: [3, 5, 2, 8, 12, 9, 4, 6, 15, 11, 7, 10, 14, 6][i], enter: [3, 4, 2, 7, 11, 9, 4, 5, 14, 10, 6, 9, 13, 6][i], start: [8, 12, 5, 20, 31, 22, 9, 14, 40, 28, 15, 26, 37, 21][i] })),
+      } },
     },
   };
 }

@@ -1,0 +1,94 @@
+/* snake.css -- ukryta gra w węża na kopii planszy Wyświetlacza. */
+body.snake-body {
+  margin: 0;
+  min-height: 100dvh;
+  background: #000;
+  color: #fff;
+  overscroll-behavior: none;
+}
+
+.snake-wrap {
+  --pad-h: 0px;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Plansza 16:9 jak Wyświetlacz, jak największa przy miejscu na podpisy (i pad). */
+.snake-frame {
+  position: relative;
+  width: min(100%, calc((100dvh - 150px - var(--pad-h)) * 16 / 9));
+  aspect-ratio: 1280 / 720;
+  border-radius: 12px;
+  overflow: hidden;
+  touch-action: none;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.snake-frame .layer-bg,
+.snake-frame svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.snake-frame .layer-bg { z-index: 1; }
+.snake-frame .layer-base { z-index: 2; overflow: visible; }
+.snake-frame .layer-displays { z-index: 3; }
+.snake-frame svg circle { transition: none !important; }
+
+/* Krzyżak tylko na ekranach dotykowych; na komputerze klawiatura. */
+.snake-pad {
+  display: none;
+  grid-template-columns: repeat(3, 64px);
+  grid-template-rows: repeat(3, 56px);
+  gap: 8px;
+  touch-action: manipulation;
+}
+.snake-key { min-width: 0; padding: 0; justify-content: center; font-size: 22px; }
+.snake-key .ico { width: 26px; height: 26px; }
+.snake-key-up { grid-area: 1 / 2; }
+.snake-key-left { grid-area: 2 / 1; }
+.snake-key-mid { grid-area: 2 / 2; font-size: 13px; }
+.snake-key-right { grid-area: 2 / 3; }
+.snake-key-down { grid-area: 3 / 2; }
+
+@media (pointer: coarse) {
+  .snake-wrap { --pad-h: 200px; }
+  .snake-pad { display: grid; }
+  #snakeKeysHint { display: none; }
+}
+/* Telefon w pionie: plansza od krawędzi do krawędzi. */
+@media (pointer: coarse) and (orientation: portrait) {
+  .snake-wrap { padding-left: 0; padding-right: 0; }
+  .snake-frame { border-radius: 0; }
+  .snake-note, .snake-links { padding: 0 16px; }
+}
+/* Telefon w poziomie: krzyżak obok planszy. */
+@media (pointer: coarse) and (orientation: landscape) {
+  .snake-wrap { flex-flow: row wrap; align-content: center; }
+  .snake-frame { width: min(calc(100% - 240px), calc((100dvh - 24px) * 16 / 9)); }
+  .snake-note, .snake-links { flex-basis: 100%; }
+}
+
+.snake-note {
+  margin: 0;
+  max-width: 640px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: .75;
+}
+.snake-note:empty { display: none; }
+
+.snake-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}

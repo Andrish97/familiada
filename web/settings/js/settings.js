@@ -1151,6 +1151,45 @@ async function loadAdminStats({ silent = false } = {}) {
   }
 }
 
+// Ukryta gra w węża: lejek skan → wejście → start → koniec, rekordy i trend.
+async function loadSnakeStats() {
+  const funnel = document.getElementById("snakeFunnel");
+  const top = document.getElementById("snakeTop");
+  if (!funnel || !top) return;
+  try {
+    const res = await apiFetch(`${API_BASE}/stats/snake`, { method: "GET" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "błąd");
+    const { kinds = {}, scores = {}, top: best = [], players = 0, daily = [] } = data.stats || {};
+    const cell = "padding:5px 0;text-align:right";
+    const row = (label, k) => {
+      const v = kinds[k] || {};
+      return `<tr><td style="padding:5px 0;opacity:.6;font-size:12px">${label}</td>
+        <td style="${cell};font-weight:700">${v.total ?? 0}</td>
+        <td style="${cell};font-size:12px;opacity:.8">osoby: ${v.visitors ?? 0}</td>
+        <td style="${cell};font-size:12px;opacity:.6">dziś ${v.today ?? 0} · 7 dni ${v.last_7d ?? 0}</td></tr>`;
+    };
+    funnel.innerHTML = row("Zeskanowania QR", "scan") + row("Wejścia na stronę gry", "enter") + row("Rozpoczęte gry", "start") + row("Zakończone gry", "finish");
+    document.getElementById("snakeScores").textContent = `Najlepszy wynik: ${scores.max ?? 0} | Średni: ${scores.avg ?? 0} | Gracze z kontem: ${players}`;
+    top.innerHTML = best.length
+      ? best.map((p, i) => `<tr><td style="padding:5px 0;opacity:.6;font-size:12px">${i + 1}. ${esc(p.username || "—")}</td>
+          <td style="${cell};font-weight:700">${p.best}</td><td style="${cell};font-size:12px;opacity:.6">gier: ${p.games}</td></tr>`).join("")
+      : `<tr><td colspan="3" style="opacity:.4;font-size:12px;padding:8px 0">Nikt z kontem jeszcze nie zagrał.</td></tr>`;
+    const max = Math.max(1, ...daily.map((d) => Math.max(d.scan, d.start)));
+    document.getElementById("snakeTrend").innerHTML = daily.map((d) => `
+      <div title="${d.day}: skany ${d.scan}, wejścia ${d.enter}, gry ${d.start}" style="flex:1;display:flex;gap:1px;align-items:flex-end;height:100%">
+        <div style="flex:1;height:${Math.max(2, d.scan / max * 100)}%;background:rgba(255,234,166,.75);border-radius:2px 2px 0 0"></div>
+        <div style="flex:1;height:${Math.max(2, d.start / max * 100)}%;background:rgba(215,255,61,.75);border-radius:2px 2px 0 0"></div>
+      </div>`).join("");
+    document.getElementById("snakeTrendLabels").innerHTML = daily.map((d) =>
+      `<div style="flex:1;text-align:center;font-size:9px;opacity:.4">${String(d.day).slice(8, 10)}</div>`).join("");
+  } catch (e) {
+    funnel.innerHTML = `<tr><td colspan="4" style="opacity:.6;font-size:12px;padding:8px 0">Błąd: ${esc(e.message)}</td></tr>`;
+    top.innerHTML = "";
+  }
+}
+
 function pct(part, total) {
   if (!total) return "0%";
   return Math.round((part / total) * 100) + "%";
@@ -6059,6 +6098,7 @@ function wireStatsEvents() {
     els.btnStatsRefresh.addEventListener("click", () => {
       loadAdminStats();
       loadRetentionStats();
+      loadSnakeStats();
       loadExcludedUsers();
     });
   }
@@ -6277,7 +6317,7 @@ function wireEvents() {
     els.btnTabStats.addEventListener("click", async () => {
       if (activeTab === "tools") closeTools();
       setActiveTab("stats");
-      await Promise.all([loadAdminStats({ silent: true }), loadRetentionStats(), loadExcludedUsers()]);
+      await Promise.all([loadAdminStats({ silent: true }), loadRetentionStats(), loadExcludedUsers(), loadSnakeStats()]);
     });
   }
 

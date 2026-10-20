@@ -43,29 +43,37 @@ async function routeCdn(route) {
 
 // ---------- serwer plików web/ ----------
 const mime = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".woff2": "font/woff2", ".woff": "font/woff", ".ttf": "font/ttf", ".mp3": "audio/mpeg", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
-const server = http.createServer((req, res) => {
-  res.on("error", () => {});
-  const reqUrl = new URL(req.url, "http://x");
+// Strony idą pod prawdziwym adresem serwisu (żeby linki i kody QR na kadrach
+// prowadziły do familiada.online, nie do 127.0.0.1) -- przeglądarka dostaje
+// je z dysku przez context.route, sieć nie jest używana.
+const SITE = "https://www.familiada.online";
+function serveLocal(href) {
+  const reqUrl = new URL(href, "http://x");
   let pathname = decodeURIComponent(reqUrl.pathname);
   // Ramka dla stron, które w trybie podglądu przyjmują stan tylko od rodzica
   // (Prowadzący ?preview=1): /__screens__/frame.html?src=/control/host/?preview=1
   if (pathname === "/__screens__/frame.html") {
     const src = reqUrl.searchParams.get("src") || "/";
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-    return res.end(`<!doctype html><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#000}iframe{display:block;border:0;width:100%;height:100%}</style><iframe id="screensFrame" src="${src.replace(/"/g, "&quot;")}"></iframe>`);
+    return { status: 200, type: mime[".html"], body: `<!doctype html><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#000}iframe{display:block;border:0;width:100%;height:100%}</style><iframe id="screensFrame" src="${src.replace(/"/g, "&quot;")}"></iframe>` };
   }
   if (pathname.endsWith("/")) pathname += "index.html";
   let file = path.resolve(webRoot, `.${pathname}`);
-  if (!file.startsWith(webRoot)) return res.writeHead(403).end();
+  if (!file.startsWith(webRoot)) return { status: 403, type: "text/plain", body: "" };
   if (!fs.existsSync(file) && fs.existsSync(path.join(file, "index.html"))) file = path.join(file, "index.html");
-  if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) return res.writeHead(404).end("Not found");
-  res.writeHead(200, { "content-type": mime[path.extname(file)] || "application/octet-stream" });
-  res.end(fs.readFileSync(file));
+  if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) return { status: 404, type: "text/plain", body: "Not found" };
+  return { status: 200, type: mime[path.extname(file)] || "application/octet-stream", body: fs.readFileSync(file) };
+}
+const server = http.createServer((req, res) => {
+  res.on("error", () => {});
+  const r = serveLocal(req.url);
+  res.writeHead(r.status, { "content-type": r.type });
+  res.end(r.body);
 });
 
 async function startServer() {
+  // Serwer HTTP zostaje do ręcznego podglądu (SCREENS_LOCAL=1); zrzuty używają SITE.
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  return `http://127.0.0.1:${server.address().port}`;
+  return process.env.SCREENS_LOCAL ? `http://127.0.0.1:${server.address().port}` : SITE;
 }
 function stopServer() { server.close(); }
 
@@ -79,7 +87,7 @@ async function newContext(browser, db, lang, device) {
   const context = await browser.newContext({
     viewport: { width: device.width, height: device.height }, deviceScaleFactor: device.scale,
     isMobile: device.mobile, hasTouch: device.mobile, locale: { pl: "pl-PL", en: "en-GB", uk: "uk-UA" }[lang],
-    timezoneId: "Europe/Warsaw",
+    timezoneId: "Europe/Warsaw", serviceWorkers: "block",
   });
   await context.addInitScript(({ db, lang }) => {
     window.__SCREENS_DB__ = db;
@@ -91,6 +99,12 @@ async function newContext(browser, db, lang, device) {
   }, { db, lang });
   await context.route(/^https:\/\/(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)\//, routeCdn);
   await context.route(/^https:\/\/(?!cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)/, (route) => route.abort());
+  await context.route((url) => url.origin === SITE, (route) => {
+    const r = serveLocal(route.request().url());
+    const safe = context.__screensSafeArea;
+    const body = safe && /text\/(css|html)/.test(r.type) ? rewriteSafeArea(String(r.body), safe) : r.body;
+    return route.fulfill({ status: r.status, contentType: r.type, body });
+  });
   for (const [pattern, body] of Object.entries(db.http || {})) {
     await context.route(`**${pattern}`, (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(body) }));
   }
@@ -100,15 +114,9 @@ async function newContext(browser, db, lang, device) {
 // Emulacja strefy bezpiecznej urządzenia (notch, pasek gestu): Chromium nie
 // pozwala ustawić env(safe-area-inset-*), więc w CSS/HTML strony zamieniamy
 // je na piksele. safe = { top, right, bottom, left }.
+const rewriteSafeArea = (text, sides) => text.replace(/env\(\s*safe-area-inset-(top|right|bottom|left)\s*(?:,[^)]*)?\)/g, (_, side) => `${sides[side]}px`);
 async function emulateSafeArea(context, origin, safe) {
-  const sides = { top: 0, right: 0, bottom: 0, left: 0, ...safe };
-  const rewrite = (text) => text.replace(/env\(\s*safe-area-inset-(top|right|bottom|left)\s*(?:,[^)]*)?\)/g, (_, side) => `${sides[side]}px`);
-  await context.route((url) => url.href.startsWith(origin) && /\.(css|html)$|\/$/.test(url.pathname), async (route) => {
-    const response = await route.fetch();
-    const type = response.headers()["content-type"] || "";
-    if (!/text\/(css|html)/.test(type)) return route.fulfill({ response });
-    return route.fulfill({ response, body: rewrite(await response.text()) });
-  });
+  context.__screensSafeArea = { top: 0, right: 0, bottom: 0, left: 0, ...safe };
 }
 
 // Ramka iPhone'a na czarnym tle (jak kadr głosowania w dawnym panelu admina:
