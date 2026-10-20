@@ -1,4 +1,4 @@
-import { renderMailDocument, renderRichMailDocument } from "./mail-document.js?v=v2026-10-20T13370";
+import { renderMailDocument, renderRichMailDocument } from "./mail-document.js?v=v2026-10-20T13555";
 
 
 // Wysłany pełny dokument wyświetlamy dokładnie tak, jak został zapisany.
