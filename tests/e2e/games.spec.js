@@ -186,7 +186,8 @@ test("E20: lista Logo ujawnia błąd pierwszego odczytu zamiast pustej siatki", 
   await page.goto("https://www.familiada.online/logos/", { waitUntil: "domcontentloaded" });
   const list = page.locator(".logoShell");
   await expect(list).toHaveClass(/skel-step-ready/);
-  await expect(page.locator("#msg")).not.toBeEmpty();
+  // błąd pierwszego odczytu: dymek z komunikatem
+  await expect(page.locator(".app-toast-text")).not.toBeEmpty();
 });
 
 test("E20: Bazy ujawniają błąd pierwszego odczytu po odsłonięciu sekcji", async ({ page, context }) => {
