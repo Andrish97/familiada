@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XRtJ6Y6HU5mB8Wri7z8qB5V8rAs6KXbTP0ZOmjSuDjzOWgnTZpyoyTjtXAiaPqK
+\restrict CWPc9F0FtZZFCArrZMzsMnkPmKfBjWkdc2oVaCzVS1bK17u7aD4sgS9ed6WOyLp
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5324,7 +5324,7 @@ BEGIN
     IF octet_length(p_event::text)>6000 THEN RAISE EXCEPTION 'event too large'; END IF;
     IF event_kind='diagnostic' THEN
       category:=p_event->>'category';
-      IF category IS NULL OR category NOT IN ('connectivity','audio_start','display_delay','state_sync','realtime') THEN RAISE EXCEPTION 'invalid diagnostic category'; END IF;
+      IF category IS NULL OR category NOT IN ('connectivity','audio_start','audio_unlock','display_delay','state_sync','realtime') THEN RAISE EXCEPTION 'invalid diagnostic category'; END IF;
       item:=jsonb_build_object('kind',event_kind,'category',category,'at',now(),
         'message',left(coalesce(p_event->>'message',''),300),
         'devices',CASE WHEN jsonb_typeof(p_event->'devices')='array' THEN p_event->'devices' ELSE '[]'::jsonb END,
@@ -25062,5 +25062,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XRtJ6Y6HU5mB8Wri7z8qB5V8rAs6KXbTP0ZOmjSuDjzOWgnTZpyoyTjtXAiaPqK
+\unrestrict CWPc9F0FtZZFCArrZMzsMnkPmKfBjWkdc2oVaCzVS1bK17u7aD4sgS9ed6WOyLp
 
