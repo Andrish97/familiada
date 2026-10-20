@@ -36,8 +36,8 @@ punktowe.
 - Typ gry nie jest filtrem pytań ani twardą walidacją przy tworzeniu. Oznaczenia
   przy typie i pytaniach informują, czego brakuje, aby później gra była gotowa.
 - Modal nie sprawdza sumy 100 punktów. To dotyczy wyłącznie bramki tworzenia z
-  bazy; nie znosi reguły sumy punktów w centralnej ocenie gotowości gry, jeśli
-  ta reguła pozostanie po uzgodnieniu całego kontraktu.
+  bazy; nie znosi limitu sumy punktów w centralnej ocenie gotowości gry:
+  dla preparowanej suma w pytaniu wynosi najwyżej 100 (decyzja 2026-10-20).
 - „Preparowana” w metadanych bazy jest sugestią/klasyfikacją, nie zakazem
   utworzenia. Brak odpowiedzi nie może sam w sobie ukryć ani zablokować tej
   możliwości.
@@ -113,7 +113,9 @@ ponownie weryfikują operację przed zapisem.
 - Gotowość do rozgrywki: obecny próg 10 pytań, 3–6 odpowiedzi na pytanie,
   dozwolone zakresy i suma punktów; dla „Preparowane” uwzględnić ustaloną
   regułę minimum **4 punktów na każdą odpowiedź**. Próg 4 dotyczy przygotowania
-  gry, a nie modalа Base Explorera.
+  gry, a nie modalа Base Explorera. **Decyzja 2026-10-20:** maksymalna suma
+  punktów w pytaniu preparowanej pozostaje **100** (`<=100`), bez wymagania
+  dokładnie 100.
 - Gotowość do ankiety tekstowej i punktowej oraz osobne akcje otwarcia,
   głosowania, stop/wznów i podliczenia.
 - Edycja gry i wyniki ankiety: kiedy edycja jest zablokowana, kiedy dozwolona
@@ -209,8 +211,10 @@ powtórzeń warunku.
   a nie typ ankiety lub nowy wariant JSON.
 - Istotna rozbieżność do rozwiązania przy centralizacji: `market_submit_game`
   woła starsze `game_action_state`, a nie `game_validate`. Starsza reguła
-  preparowanej sprawdza ≥10 pytań, 3–6 odpowiedzi, punkty 0–100 i sumę ≤100,
-  ale nie sprawdza minimum 4 punktów na odpowiedź. Bieżący `game_rules_compute`
+  preparowanej sprawdza ≥10 pytań, 3–6 odpowiedzi tylko w pytaniach mających
+  odpowiedzi, punkty 0–100 i sumę ≤100. Agregat `ans` pomija pytania bez
+  odpowiedzi, więc ta bramka może przepuścić preparowaną z takim pytaniem.
+  Nie sprawdza też minimum 4 punktów na odpowiedź. Bieżący `game_rules_compute`
   również nie ma progu 4. Nowa reguła minimum 4 musi zostać uwzględniona w
   centralnym wyniku gotowości i bramce Marketplace; obecnie nie jest egzekwowana.
 
@@ -246,8 +250,11 @@ powielenie ani utworzenie nowej gry: konwersja aktualizuje ten sam rekord.
 Konwersja zamkniętej ankiety prowadzi do szkicu dopiero po tej samej jawnej
 akceptacji resetu, której wymaga zwykła edycja. Wyniki i przypisana punktacja
 są wtedy czyszczone zgodnie z kontraktem edytora. Dokładny zakres zachowania
-tekstowych odpowiedzi z zamkniętej ankiety wymaga sprawdzenia implementacji i
-zostaje opisany w podsumowaniu modalа przed wdrożeniem.
+tekstowych odpowiedzi z zamkniętej ankiety jest już sprawdzony w audycie A
+(§8): obecny reset zachowuje ich treść, zeruje punkty i cofa status do szkicu.
+Nie usuwa jednak surowych głosów ani sesji. Docelowy zakres czyszczenia tych
+danych wymaga doprecyzowania; podsumowanie modalа musi opisywać rzeczywisty
+efekt wspólnego resetu.
 
 ### Znalezione obecne zachowania
 
@@ -262,7 +269,8 @@ zostaje opisany w podsumowaniu modalа przed wdrożeniem.
   odrzuca źródłową grę o statusie innym niż `draft` lub `ready`. Ankiety
   `poll_open` i `poll_stopped` nie dają się więc teraz powielić, mimo że
   docelowo mają tworzyć bezpieczny szkic bez bieżących głosów.
-- Obecny odczyt kopii używa pakietu bez statusu, a `_game_import_package`
+- Odczyt SQL `_resource_clone_read` zawiera status w `game.status`; dopiero
+  `gameExportSnapshot()` pomija go w definicji kopii. `_game_import_package`
   zawsze tworzy `draft`; dodatkowo `gameExportSnapshot()` zamienia zamkniętą
   ankietę na `prepared`. To nie realizuje ustalonego transferu pięciu
   wariantów: po centralizacji powielenie ma stosować ten sam jawny mapping
@@ -278,8 +286,9 @@ zostaje opisany w podsumowaniu modalа przed wdrożeniem.
   pakiet: przyjmuje trzy typy i nieznany typ zamienia na `poll_text`; przycina
   pytanie do 200 znaków i odpowiedź do 17; puste treści zastępuje tekstem
   domyślnym; dla typów innych niż tekstowy limituje odpowiedzi do 6; punkty
-  zaokrągla/ogranicza do 0–100, brakujące ustawia na 0; odpowiedzi ankiety
-  tekstowej usuwa. Import tworzy szkic i sam nie wymaga gotowości do gry.
+  zaokrągla w dół (`floor`) i ogranicza do 0–100, brakujące ustawia na 0;
+  odpowiedzi ankiety tekstowej usuwa. Import tworzy szkic i sam nie wymaga
+  gotowości do gry.
 - Typ bazy `market` jest osobnym typem kopii z Gier Społeczności (migracja
   `2026-03-11_054_game_type_market.sql`). Nie należy go mylić z nieobsługiwanym
   aliasem importowym; nie powinien jednak trafiać do generycznego JSON-u jako
@@ -350,8 +359,8 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Klasyfikacja sugestii „Preparowana” bez odpowiedzi i z niepełnymi odpowiedziami
   nie blokuje dodania do gry.
 - Reguły gotowości typu `prepared`: odpowiedź z 3 punktami jest brakiem,
-  odpowiedź z 4 punktami przechodzi próg per odpowiedź; osobno sprawdzić zakres
-  sumy zgodnie z ostatecznie zatwierdzoną tabelą reguł.
+  odpowiedź z 4 punktami przechodzi próg per odpowiedź; suma w pytaniu do
+  100 włącznie jest dopuszczalna, powyżej 100 blokuje gotowość.
 - Każda akcja na każdym typie/statusie: edycja szkicu, edycja gotowej ankiety z
   resetem, blokada edycji aktywnej ankiety, uruchomienie, zatrzymanie/wznowienie,
   podliczanie, zamknięcie i rozgrywka.
@@ -386,12 +395,193 @@ zapis, podgląd i późniejszą rozgrywkę.
 2. Jakie dokładnie historyczne aliasy/typy (poza kanonicznymi typami źródłowymi
    i kopią `market`) oraz zapisy `ready`→`prepared` występują w produkcyjnych
    danych/pakietach i jakie migracje sprowadzą je do docelowego modelu.
-3. Jak rozumieć sumę punktów w gotowości „Preparowanej” (obecnie limit SQL
-   `<=100`, wcześniejsze założenia edytora mówią o sumie 100). Ta decyzja jest
-   osobna od modalа Base Explorera, w którym sumy 100 nie sprawdzamy.
+3. **Rozstrzygnięte 2026-10-20:** maksymalna suma punktów w pytaniu
+   „Preparowanej” pozostaje 100 (`<=100`), nie wymagamy dokładnie 100.
+   Modal Base Explorera nie egzekwuje tego limitu przy tworzeniu szkicu.
 4. Dokładna kolejność przycinania do sześciu odpowiedzi i liczenia udziału
    procentowego przy końcowej kwalifikacji; JS i SQL muszą stosować identyczny
    algorytm.
 
 Powyższe kwestie mają zostać rozstrzygnięte na podstawie wyników audytu przed
 etapem C. Nie są powodem do zatrzymania samej inwentaryzacji.
+
+## 8. Audyt A — kod na `37830910ab` (2026-10-20)
+
+Audyt statyczny JS, migracji i aktualnego `supabase/schema.sql`; bez zmian
+aplikacji, uruchamiania SQL na produkcji, testów pełnych i wdrożenia.
+Małe, bezstanowe wywołania funkcji JS potwierdziły mapping eksportu i przykład
+punktacji poniżej. Historyczne testy odczytano jako opis obecnego kontraktu;
+nie były uruchamiane. Raport dodano przy korekcie błędnego opisu starszej
+bramki Marketplace i miejsca utraty statusu kopii.
+
+**Granica dowodu:** środowisko nie ma skonfigurowanych poświadczeń do bazy.
+Nie odczytano rzeczywistych rekordów użytkowników, pakietów przechowywanych
+w produkcji ani liczebności historycznych wariantów. Przed migracją pozostaje
+odczyt agregatów typ/status, typów w `market_games.payload` i zapisanych
+snapshotach oraz próbek historycznych plików. Brak próbek nie dowodzi, że
+aliasy nie występują. Część kodowa etapu A jest zakończona; część danych
+produkcyjnych pozostaje niezweryfikowana.
+
+### 8.1. Źródła i granice autorytetu
+
+| Skrót | Obecne źródło |
+|---|---|
+| R | `game_rules_compute`, `game_action_state`, `game_poll_close_check`, reset i przejścia ankiet: [315](../supabase/migrations/2026-10-09_315_poll_stop_tally.sql); opakowanie `game_validate`: [273](../supabase/migrations/2026-09-27_273_game_validate.sql); zapis `rules_state`: [275](../supabase/migrations/2026-09-27_275_games_rules_state.sql); UI: [game-validate.js](../web/shared/js/core/game-validate.js) |
+| T | Aktualna matematyka SQL: [392](../supabase/migrations/2026-10-18_392_poll_tally_minimum_share.sql); JS: [poll-tally-math.js](../web/shared/js/core/poll-tally-math.js), [poll-tally.js](../web/polls/js/poll-tally.js); akcje: [polls.js](../web/polls/js/polls.js) |
+| B | [export-modal.js](../web/bases/explorer/js/export-modal.js), [actions.js](../web/bases/explorer/js/actions.js), [base-export-validate.js](../web/shared/js/core/base-export-validate.js) |
+| F | [game-transfer-format.js](../web/shared/js/core/game-transfer-format.js), [games-import-export.js](../web/games/js/games-import-export.js), atomowy importer/normalizator: [364](../supabase/migrations/2026-10-13_364_game_import_atomic.sql) |
+| C | [resource-clone-plan.js](../web/shared/js/core/resource-clone-plan.js), `_resource_clone_read/write`: [365](../supabase/migrations/2026-10-13_365_resource_clone_common.sql), wysłanie/odbiór: [367](../supabase/migrations/2026-10-13_367_resource_clone_send.sql), orkiestracja: [duplicate.js](../cloudflare/maintenance-worker/src/lib/resource-copy/duplicate.js) |
+| M | [marketplace.js](../web/marketplace/js/marketplace.js), `market_submit_game`: [280](../supabase/migrations/2026-09-30_280_marketplace_security.sql), `market_add_to_library`: [055](../supabase/migrations/2026-03-11_055_game_type_market_backfill.sql) |
+| E | Lista/eksport do bazy: [games.js](../web/games/js/games.js); edytor: [editor.js](../web/games/editor/js/editor.js); formularz i TXT: [question-form.js](../web/shared/js/core/question-form.js), [text-import.js](../web/shared/js/core/text-import.js) |
+
+`rules_state` jest cachem wyniku R, nie osobną definicją reguł. `game_validate`
+dokłada dynamiczne `poll_close`, zależne od głosów. Warunki właściciela,
+oczekującej kopii i blokady zasobu są osobnymi bramkami: obecne R nie składa
+ich w jeden wynik akcji. Guard treści dotyczy tabel pytań/odpowiedzi i
+klientów `authenticated`/`anon`; operacje `SECURITY DEFINER` potrzebują własnych
+kontroli. Nie wolno zakładać, że samo wywołanie R zabezpiecza każdy zapis.
+
+### 8.2. Macierz typ/status/akcja
+
+`P` = `prepared`, `AP` = `poll_points`, `AT` = `poll_text`, `M` = `market`.
+`ready` oznacza zamknięcie dla ankiety; P ma gotowość wyliczaną z treści.
+W docelowej kolumnie „reguła” chodzi o wspólny kontrakt, egzekwowany przez SQL
+przy zapisie/przejściu i odczytywany przez UI. Nie jest to nowa decyzja o progach.
+
+| Typ / status / akcja | Obecne warunki i rozbieżność | Docelowa reguła | Źródło prawdy: obecnie → docelowo |
+|---|---|---|---|
+| P / draft, ready / graj | ≥10 pytań; każde 3–6 odpowiedzi; 0–100 pkt; suma ≤100. Zero punktów przechodzi; brak minimum 4 | Minimum 4 pkt na każdą odpowiedź; suma ≤100 (decyzja 2026-10-20); gotowość niezależna od etykiety statusu | R; UI RULES/komentarz wspomina sumę 100 → wspólna gotowość, SQL |
+| AP, AT / draft, open, stopped / graj | Odmowa do `ready` | Rozgrywka po poprawnym zamknięciu | R → wspólna akcja play |
+| AP, AT / ready / graj | Sam status wystarcza; brak ponownej oceny treści/wyniku w `play` | Stan musi pochodzić z autorytatywnie zweryfikowanego zamknięcia; polityka zastanych wyników do ustalenia | R → wspólny kontrakt zamknięcia/play |
+| M / draft, ready / graj | Nowsze R liczy treść jak P; starsze `game_action_state.can_play` zawsze false; lista Marketplace w Grach włącza Graj po samym zaznaczeniu, Control ma guard R | Osobny typ kopii pozostaje; przycisk i strona korzystają z centralnego wyniku | R + E/stała UI, historyczna funkcja → wspólna gotowość |
+| P / draft, ready / edytuj | Tak, bez resetu | Ta sama centralna akcja edit, uprawnienia i locki | R + E/lock → wspólna akcja + SQL |
+| AP, AT / draft / edytuj | Tak, bez resetu | Jak obecnie; nie wymaga gotowości | R + E → wspólna akcja + SQL |
+| AP, AT / open, stopped / edytuj | Odmowa; guard pytań/odpowiedzi blokuje oba stany | Blokada obu stanów | R + guard treści → wspólna akcja + SQL |
+| AP, AT / ready / edytuj | `needs_reset`; lista i edytor mają osobne potwierdzenia, to samo RPC resetu | Jedno dozwolenie, potwierdzenie i reset, wspólne ze zmianą typu | R + E + `game_reset_poll_for_edit` → wspólna akcja/reset SQL |
+| M / dowolny / edytuj, zmień typ | Nowsze R i guard treści odmawiają; starsze `can_edit` nie rozróżnia M | Zakaz edycji/konwersji M | R → wspólna akcja + SQL |
+| Trzy typy źródłowe / dowolny / zmień typ | Brak dedykowanej akcji i atomowej operacji konwersji | Ten sam rekord; dokładnie edit i jego reset; otwarta/zatrzymana zablokowana; szkic wybranego typu z raportem strat | Brak → wspólna akcja edit/konwersja SQL |
+| AT / draft / wejdź w ankietę, otwórz | ≥10 pytań, odpowiedzi nie są wymagane | Jedna reguła gotowości ankiety i przejścia | R + `poll_open`/trigger `assert_game_answers_minmax` → wspólny kontrakt + SQL |
+| AP / draft / wejdź w ankietę, otwórz | ≥10 pytań i każde 3–6 odpowiedzi | Jak wyżej; punkty stałe nie są bramką otwarcia | R + trigger → wspólny kontrakt + SQL |
+| AP, AT / open, stopped, ready / wejdź na stronę ankiety | `poll_entry` pozwala niezależnie od aktualnych braków | Osobna akcja wejścia, nie bramka zamknięcia | R + guard strony → wspólna akcja |
+| AP, AT / ready / uruchom ponownie | R sprawdza ponownie gotowość do ankiety; UI potwierdza, wywołuje abort i otwarcie | Jawny reset/nowe uruchomienie, autorytatywna walidacja SQL | R + E/T + RPC → wspólne przejście |
+| P, M / dowolny / ankieta | R odmawia; `_poll_open_unchecked` jawnie wyklucza tylko P (CHECK statusu blokuje M) | Jawny zakaz obu typów w kontrakcie | R + RPC + CHECK → wspólna akcja + SQL |
+| AP, AT / open / głosuj | Typ, otwarta sesja, aktualny klucz i uprawnienie zadania/anonima; anonim dodatkowo idempotencja i 30 s | Zachować bramki tożsamości/sesji; dozwolenie głosowania z centralnej akcji | RPC/guard głosów, migracje 309/330/362 → wspólna akcja + te zabezpieczenia SQL |
+| AP, AT / open→stopped / zatrzymaj; stopped→open / wznów | R sprawdza stan; RPC idempotentnie przyjmuje też już osiągnięty stan. Zachowuje głosy/klucz | Wspólne przejścia; rozróżnić niedostępny przycisk i bezpieczne retry RPC | R + `poll_stop/resume` → wspólny kontrakt SQL/UI |
+| AP, AT / stopped / wejdź w podliczanie | Przycisk zależy od `poll_close.ok`; zbyt słaby surowy wynik blokuje wejście. Sam handler `enterTally` sprawdza tylko stopped | Wejście dozwolone także bez możliwości zamknięcia; możliwość scalania tekstów | R + T/UI → osobna akcja wejścia |
+| AP / stopped / zatwierdź wynik | R liczy ≥3 odpowiedzi z ≥3 pkt metodą największych reszt; normalizacja 392 zeruje udział zaokrąglony <3%. UI po wejściu ustawia poprawność na true | ≥3 odpowiedzi z zaokrąglonym udziałem ≥4%, jedna matematyka podglądu i SQL | `game_poll_close_check` + T + `poll_points_tally` → wspólna kwalifikacja/zamknięcie SQL |
+| AT / stopped / scal, zatwierdź | R sprawdza ≥3 różne surowe teksty; właściwy zapis przelicza scalony payload, próg ≥3%, top 6, min. 3; remisy punktów obniża | Po każdej zmianie ponowne liczenie; ≥4% i ≥3 kwalifikujące; limit 6; kolejność algorytmu §8.6 | R + T + `poll_text_tally_apply` → wspólna kwalifikacja/zamknięcie SQL |
+| AP, AT / open, stopped, ready / przerwij-resetuj | `poll_abort` usuwa głosy, teksty, sesje, zadania i kody QR; nowy klucz; draft; punkty 0, treść odpowiedzi zostaje | Osobna jawna akcja; zakres wspólnego resetu §8.6 | RPC 315 → wspólny kontrakt resetu SQL |
+| Trzy źródłowe / draft, ready / eksport pliku | Dozwolony bez bramki gotowości; zamknięta ankieta staje się P; brak statusu/wersji | Dokładnie pięć wariantów; zamknięty poll zachowuje typ/wynik; P jako szkic | R + F → wspólny transfer; SQL autorytatywny dla importu |
+| AP, AT / open, stopped / eksport pliku | Przycisk zablokowany; sama funkcja F umie zrobić pakiet bez głosów, bez ostrzeżenia; AP zeruje punkty tylko dla draft | Ostrzeżenie o utracie bieżących głosów; szkic tego samego typu | R + F → osobna akcja eksportu + transfer |
+| Trzy źródłowe / draft, ready / powiel | UI używa export; SQL pozwala tylko draft/ready; closed poll → P/draft | Wspólny transfer; zamknięty poll zachowuje zamknięty wariant, P szkic | R/UI + C/F → osobna akcja + transfer i SQL |
+| AP, AT / open, stopped / powiel | SQL `_resource_clone_read` odmawia, także UI blokuje | Dozwolone jako szkic tego samego typu bez bieżących głosów; locki/uprawnienia nadal obowiązują | C + R/UI → osobna akcja + transfer i SQL |
+| Trzy źródłowe / draft, ready / wyślij znajomemu | Bramka jak Powiel; zamknięta ankieta też może być wysłana jako P/draft. Konto zwykłe, aktywna znajomość, zakaz demo i pending | Wysyłka wyłącznie źródłowych szkiców; zamknięte ankiety niedopuszczone; reguła odrębna od Powiel | C/367 + R/UI → osobna akcja send + wspólny transfer |
+| M / draft, ready / zwykły transfer | SQL kopii i zakładka Społeczności blokują eksport/kopie; R.export pozwala poza open/stopped; sam helper typu zmienia M na AT, a dla ready eksport kończy jako P | Jawna polityka eksportu M do decyzji; M pozostaje w bazie | C + E kontra R/F → jawna akcja, bez fallbacku |
+| Dowolne zaznaczenie w bazie / utwórz grę | ≥10 i wszystkie zaznaczone zgodne z typem; pusta preselekcja zaznacza całą pulę; metadane typu heurystyczne | Dokładne zaznaczenie także 0; informacyjne braki; bez bramki gotowości i automatycznego doboru | B → wspólny podgląd gotowości + transfer/import SQL |
+| P / draft, ready; AP, AT / ready / zgłoś Marketplace | UI P tylko ≥10; SQL stary `can_play`, pomija pytania bez odpowiedzi i minimum 4; tytuł/język/opis/właściciel/demo/duplikaty osobno | Grywalna P albo zamknięty poll; wspólna gotowość, bez utraty odrębnych zabezpieczeń; snapshot P | M + stary R → osobna akcja Marketplace + centralna gotowość SQL |
+
+Dodatkowe rozbieżności zabezpieczeń: `assert_game_answers_minmax` sprawdza
+strukturę przy UPDATE statusu do open/stopped/ready, lecz nie jest pełną
+bramką przejść; guard `poll_open→ready` nie obejmuje stopped→ready. Nowe RPC
+podliczania mają własną walidację, starsze ścieżki zamykania nadal istnieją
+w schemacie i trzeba objąć je kontraktem albo jawnie wycofać. `game_validate`
+nie egzekwuje locka. SQL resetu edytora sam go nie sprawdza (lista robi
+busy-check, edytor trzyma lock); przyszła konwersja nie może oprzeć się tylko
+na takim sprawdzeniu klienta.
+
+### 8.3. Macierz pól transferu
+
+| Pole | Eksport pliku / definicja kopii obecnie | Import 364 / zapis obecnie | Docelowo |
+|---|---|---|---|
+| Nazwa | Zachowana; null/brak → nazwa domyślna, pusty string pozostaje; Powiel dopisuje lokalizowane „kopia” i dobiera unikalną nazwę | Trim, limit 80; pusta/brak → lokalizowany default, bez defaults „Gra”; Send dobiera nazwę w bibliotece odbiorcy | Jawnie opisać zmiany nazwy i limit, bez cichego obcinania |
+| Typ | Trzy kanoniczne; nieznany/market → AT w helperze; każdy nie-P po normalizacji przy ready → P | Tylko trzy typy; reszta → AT, co usuwa odpowiedzi | Zachowanie rozpoznanego typu; historyczne migratory; nieznany jawny błąd |
+| Status / znaczenie zamknięcia | Pominięty; rozpoznanie ready służy tylko konwersji do P | Zawsze draft; wejściowy status jest ignorowany | Pięć kombinacji §4; otwarta/zatrzymana → szkic z ostrzeżeniem; closed poll → zamknięty poll |
+| Wersja | Brak `format_version` | Nie sprawdza wersji; dodatkowe pole jest pomijane | Wersja i nazwane migratory bez zgadywania |
+| Pytania | Zachowana tablica w kolejności wejścia; `exportGame` pobiera po ord, SQL kopii po ord,id | Nowe ID i ord=pozycja w tablicy od 1; nie korzysta z wejściowego ord | Zachować kolejność znaczeniową i dokładny zbiór |
+| Treść pytania | Bez obcinania w F; Base Explorer trimuje | Trim, limit 200, brak/pusta → „Pytanie {ord}” lub lokalizacja; nawet element null staje się placeholderem | Zachować albo pokazać raport każdej zamiany/straty |
+| Odpowiedzi | AT bez ready usuwa wszystkie; AP/draft zachowuje teksty i zeruje punkty; AP/open/stopped nie zeruje istniejących punktów; closed poll jako P zachowuje odpowiedzi/punkty | AT usuwa wszystkie niezależnie od wejścia; inne typy zachowują tylko pierwsze 6; brak tablicy → [] | Różne warianty szkicu/wyniku opisane jawnie; brak cichej utraty |
+| Treść odpowiedzi | Zachowana w F; Base Explorer trimuje | Trim, limit 17; pusta/brak → „Odpowiedź {ord}” lub lokalizacja | Raport obcięć/placeholderów albo zachowanie pełnej treści |
+| Punkty | `Number(x) || 0`; dla AP/draft 0; Base Explorer AP zawsze 0, P tylko istniejące `fixed_points` | `floor`, clamp 0–100, brak/niepoprawne → 0; przyjmuje też liczbowy string/wykładnik i true→1. Normalizator pakietu ignoruje alias `points` | Bez automatycznego uzupełniania braków; jawna normalizacja/raport; osobny kontrakt szkicu i wyniku |
+| Kolejność odpowiedzi | F sortuje po ord, fallback wejście; SQL kopii wcześniej po ord,id | Ord=pozycja w tablicy; zapis nie sortuje po punktach | Oddzielić zachowaną kolejność od kolejności prezentacji |
+| Wynik zamknięcia | Wyłącznie treść odpowiedzi i `fixed_points`, przez konwersję na P; brak dat/udziałów/liczebności | Brak odtworzenia zamkniętej ankiety/sesji | Zamknięty typ i wynik; zakres agregatów §8.6 |
+| Bieżące głosy, surowe teksty, tokeny głosujących, sesje, zadania, klucze urządzeń/ankiety, runtime i statystyki rozgrywki | Pominięte | Nie są przyjmowane; nowe ID/klucze i właściciel z serwera | Nadal poza transferem; jawnie poinformować o utracie głosów aktywnej ankiety |
+| Ustawienia, logo, dźwięki/pliki | Pominięte | Nowa gra `settings={}`, brak powiązań z cudzymi plikami | Nadal poza formatem zgodnie z zakresem |
+| Język, opis, metadata, source_market_id, is_demo, received_from | Pominięte w zwykłym pliku | Zwykły import nie ufa takim polom; pochodzenie demo/kopii ustalają osobno C/SQL; nie przenosi folderów/tagów bazy | Jawna lista wyłączeń; nie utożsamiać metadanych Marketplace z plikiem |
+| Struktura/rozmiar i retry | Eksport bez walidacji wersji; UI importu sprawdza JSON + game/questions | Obiekt game + tablica questions, limit 8 MiB JSONB; jedna transakcja; kwit/hash i request_id zabezpieczają retry/konflikt/usunięcie | Zachować atomowość i idempotencję, dołożyć ścisły kontrakt struktury/raport strat |
+
+### 8.4. Różnice ścieżek i resetu
+
+| Ścieżka | Co faktycznie przenosi / zmienia / pomija |
+|---|---|
+| Base Explorer → gra | B buduje osobny pakiet, potem `importGame`/364. Pytania w kolejności puli, nie kliknięć; foldery rozwijane do ID pytań. Nie przenosi kategorii/tagów. Jawna pusta preselekcja jest dziś nierozróżnialna od braku kontekstu i zaznacza wszystko. Typ 0 suwaka przy ponownym otwarciu dodatkowo wpada w `Number(value) || 2` i może wrócić do P |
+| Gra → baza → gra | Pierwszy krok używa F, więc dziedziczy konwersje typu/odpowiedzi/punktów. W bazie powstaje unikalny folder nazwy gry, ord pytań 1..n i payload text/answers, bez statusu/typu gry; zapis partiami 200 z próbą sprzątania po błędzie, nie jedna transakcja SQL. Powrót przez B/364; zamknięcie ankiety nie przeżywa tego obiegu |
+| Powiel / Send / Akceptuj | Worker bierze snapshot SQL zawierający status, przygotowuje F/C, zapis C deleguje do 364. Kopia ma nowe ID i draft. Send tworzy własny rekord odbiorcy od razu jako pending; Akceptuj odblokowuje ten rekord, nie importuje ponownie. Odmowa/wygaśnięcie usuwa oczekującą kopię. Pochodzenie/demo/history są poza plikiem; matcher demo porównuje obecną definicję eksportową i wymaga aktualizacji przy zmianie transferu |
+| Zgłoszenie Marketplace | `p_payload` z UI ignorowany; SQL buduje snapshot z bazy po ord pytań/odpowiedzi, typ P dla zamkniętych ankiet. Tytuł 1–120, opis ≤500, język pl/en/uk w zewnętrznym rekordzie Marketplace, nie w zwykłym pakiecie. Nie jest to normalizacja importera 364 |
+| Marketplace → biblioteka | `market_add_to_library`: nowe UUID, owner odbiorcy, type M, status ready, source_market_id; nazwa z tytułu limit 80, pytania 200, odpowiedzi 17; ord z tablic, brakujące punkty 0. Bez normalizatora 364; błędny punkt/liczba odpowiedzi może odrzucić transakcję zamiast zostać naprawiona. Ponowne dodanie nie duplikuje wpisu |
+| Administracyjny Marketplace | `market_admin_upsert` nadal istnieje w SQL, tylko service_role po 280; zapisuje podany payload bez walidacji gry, ustawia origin=producer. W aktywnym Workerze admina nie znaleziono trasy wywołującej upsert; nie dowodzi to braku zewnętrznych wywołań. Zastane payloady trzeba zinwentaryzować osobno |
+| Edytor: TXT/wklejanie | `parseQaText`: @nazwa, #pytanie, numerowane odpowiedzi /punkty; punkty opcjonalne. Zastępuje treść tego samego rekordu po potwierdzeniu; typ bez zmiany. `importPayload` usuwa odpowiedzi dla AT, zeruje punkty AP, limituje odpowiedzi do 6 i treści 200/17, uzupełnia puste; `points` jest tu obsługiwane dla P przez `game_import_content`, choć zwykły pakiet 364 ten alias pomija. Podgląd TXT pokazuje dane parsera, nie pełny raport normalizacji |
+| Reset edycji zamkniętej ankiety | `game_reset_poll_for_edit` 315: draft, daty opened/closed null, wszystkie punkty 0; treść odpowiedzi AT/AP zostaje. Trigger usuwa szkic podliczania i ended_key. Surowe votes/entries, sesje, zadania i bieżący share_key pozostają; pełne ich kasowanie wykonuje dopiero `poll_abort`/nowe uruchomienie. „Reset wyników” nie oznacza obecnie usunięcia wszystkich danych ankiety |
+
+Porządek odpowiedzi nie jest wyłącznie sprawą eksportu. F zachowuje ord,
+import zapisuje kolejność tablicy. Podgląd/import-preview, finalne wyniki,
+Marketplace i Control stosują `sortAnswersByPoints`: dodatnie punkty malejąco,
+remisy po ord/wejściu, bez zmiany tablicy źródła. Edytor czyta zapisany ord.
+Tekstowe podliczanie SQL natomiast faktycznie zapisuje nowy ord według rankingu;
+punktowe aktualizuje punkty bez zmiany ord.
+
+Różnica matematyki: aktualny JS i 392 kwalifikują zaokrąglony procent od
+wszystkich uwzględnionych głosów progiem 3%, ale `game_poll_close_check` 315
+punktowej liczy wynik największych reszt ≥3 pkt. Dla głosów `[190,5,5]` JS
+pokazuje udziały `[95,3,3]`, a punkty `[95,3,2]`: trzy odpowiedzi przechodzą
+próg udziału, lecz SQL bramki widzi tylko dwie. Tekstowe JS grupuje
+trim/ucięcie17/lowercase, liczy udziały i reszty przed filtrem, wybiera top6
+i obniża remisy punktów; SQL robi podobnie, ale remis punktów porządkuje
+`remainder_rank`, JS kolejnością wejścia, a `textTallyPoints` zwraca wybrane
+pozycje w kolejności źródłowej. Liczba kwalifikujących nie może być utożsamiona
+z końcową wartością punktów po obniżaniu remisów. Próg 4 pkt P jest odrębną
+regułą od progu 4% ankiety.
+
+### 8.5. Historyczne typy, aliasy i ryzyka konwersji
+
+| Wariant znaleziony w kodzie/historii | Obecna obsługa i wymaganie migracyjne |
+|---|---|
+| `fixed` | `games.js:uiTypeFromRow` oraz narzędzie zrzutów `homepage-screenshots.js` traktują jako P. Zwykły importer SQL nie zna aliasu i zmienia go na AT, tracąc odpowiedzi; podgląd importu pokazuje P. Wymaga jawnego migratora formatu, nie dodania enum |
+| `poll` | Te same helpery zgadują AP po fragmencie „punkt” w nazwie, w pozostałych przypadkach AT. Podgląd importu Gier przekazuje tylko type, więc nazwa nie pomaga. Bez wiarygodnej metadanej wyboru AP/AT nie da się bezpiecznie odtworzyć; jawne mapowanie, bez heurystyki językowej |
+| P z `source_market_id` | Starsze kopie Marketplace były P; 054 dodaje M, 055 backfilluje rekordy z source_market_id do M. To migracja pochodzenia, a nie usuwanie M |
+| M bez `source_market_id` | Migracja 272 przekształca istniejące sieroty do P; trigger robi to przy utracie rodzica Marketplace. To osobna historyczna konwersja; obecne uzgodnienie zachowania M wymaga sprawdzenia tej polityki przed zmianą/pozostawieniem triggera |
+| P po eksporcie zamkniętego AP/AT | Pakiet bez wersji/statusu/źródłowego typu jest nierozróżnialny od ręcznie preparowanej gry. Bez zewnętrznego pochodzenia nie odtwarzać typu ankiety automatycznie |
+| `ready` / `poll_stopped` / `*_closed` | `ready` jest statusem, nie historycznym typem; stopped dodano w 315. Sloty demo `poll_text_closed`/`poll_points_closed` nie są wartościami game_type |
+| `ready_prepared`, inne nieznane, brak typu | Nie znaleziono takiego enum ani jawnego migratora w przejrzanym kodzie. Nie tworzyć go. Importer/helper F zamieniają nieznane na AT; UI listy dla nieznanego pokazuje P; przy ready F dodatkowo kończy jako P. Wszystkie te fallbacki wymagają jawnego błędu/migracji |
+| `points` kontra `fixed_points` | Alias pola, nie typu: TXT/edytor/narzędzie zrzutów akceptują points; normalizator zwykłego pakietu go ignoruje i zapisuje 0. Wersjonowany migrator musi rozróżnić te formaty |
+
+Zgodnie z historią enum ma dokładnie P/AP/AT/M, bez innych wartości
+game_type; obecne CHECK-i nie dopuszczają aliasów w `games.type`. JSONB i
+zewnętrzne pliki takich ograniczeń nie mają. Historyczne testy
+`gameTransferFormat.test.js`, `pollTallyMath.test.js` i SQL 364 utrwalają dziś
+cichy fallback, konwersję closed→P i próg 3% — przy implementacji wymagają
+zmiany oczekiwań na uzgodniony kontrakt, nie traktowania ich jako decyzji domenowej.
+
+### 8.6. Decyzje rzeczywiście otwarte po audycie
+
+Suma preparowanej jest rozstrzygnięta: **najwyżej 100 w pytaniu**, minimum
+4 pkt na odpowiedź; modal tworzenia szkicu nie egzekwuje gotowości.
+
+1. **Pełna matematyka zamknięcia:** mianownik i moment top6/odrzucania,
+   rozstrzyganie remisów (w tym obecne obniżanie punktów) oraz wspólna
+   kolejność wyników. Próg zaokrąglonego udziału ≥4% i minimum 3 odpowiedzi
+   są ustalone; decyzja nie dotyczy ich zmiany.
+2. **Zakres zamkniętego wyniku w pliku:** czy wystarczy zatwierdzona lista
+   odpowiedzi/punktów i znacznik zamknięcia, czy zachowujemy także agregaty
+   liczebności/udziałów? Bez tokenów, surowych głosów i sesji. Jak traktować
+   zastane zamknięte wyniki podliczone starym progiem 3%?
+3. **Straty i stare pliki:** pełne treści ponad limity czy potwierdzane obcięcie;
+   mapping niejednoznacznego `poll`; jawny sposób eksportu M; polityka
+   historycznego M→P po usunięciu pozycji Marketplace. Występowanie danych
+   jest do odczytania, nie do rozstrzygania przez zgadywanie.
+4. **Reset wspólny dla edit/konwersji:** zachowanie treści odpowiedzi jest
+   sprawdzone; do ustalenia, czy poza punktami/statusem usuwać też pozostawione
+   dziś głosy/sesje/zadania i rotować klucz. Wybrany zakres musi być identyczny
+   dla obu akcji; nie budować osobnego resetu konwersji.
+
+**Punkt zatrzymania:** raport A, przed implementacją i przed etapem C.
+Nie uruchamiać dalszej kolejki wdrożeń na podstawie samego zakończenia audytu.
