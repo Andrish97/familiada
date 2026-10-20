@@ -151,10 +151,12 @@ html.showA2HS .a2hs { display: flex; }
   padding: 0;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.28);
-  background: rgba(0,0,0,.28);
+  /* jak .fs-btn obok: półprzezroczysty na tle motywu (odcień przez --btn-tint) */
+  --under: transparent;
+  --btn-tint: rgba(0,0,0,.28);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-.lang-floating .btn.lang-btn:hover { background: rgba(0,0,0,.38); }
+.lang-floating .btn.lang-btn:hover { --btn-tint: rgba(0,0,0,.38); }
 .lang-floating .lang-btn .ico { width: 22px; height: 22px; }
 .lang-menu { z-index: 10000; }
