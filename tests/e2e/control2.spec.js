@@ -2576,13 +2576,15 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     displayPage = await reconnectViaModal(browser, page, "display", contexts, []);
     await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
     await expect(answerTile(page, 2)).toBeDisabled();
+    // Odblokowanie zapisuje heartbeat głównej instancji lease (migracja 397).
     const reUnlockAck = displayPage.waitForResponse((response) =>
-      response.url().includes("/rpc/acknowledge_display_audio_unlock")
+      response.url().includes("/rpc/control_device_instance_heartbeat")
+      && response.request().postDataJSON()?.p_meta?.audio_unlocked === true
     );
     await displayPage.locator("#btnAudioUnlock").click();
     const reUnlockAckResponse = await reUnlockAck;
-    expect(await reUnlockAckResponse.json(), "reconnected Display's new unlock request must be accepted by the server")
-      .toBe(true);
+    expect((await reUnlockAckResponse.json())?.audio_unlocked,
+      "reconnected Display's unlock must be stored on its lease instance").toBe(true);
     await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 15000 });
 
