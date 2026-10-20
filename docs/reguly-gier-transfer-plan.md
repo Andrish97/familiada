@@ -1,6 +1,9 @@
 # Centralne reguły gier oraz import i eksport — plan
 
-**Stan:** plan, bez zmian w aplikacji.  
+**Stan:** implementacja autoryzowana przez użytkownika (2026-10-20) i wykonana
+na branchu — migracje 404–407, kod JS, testy; przebieg wdrożenia w §9 i w
+Dzienniku `wdrozenia.md`. Wcześniejsze zapisy „tylko planowanie” i „zatrzymanie
+przed implementacją” są nieaktualne.  
 **Zakres:** jedno źródło reguł dla gotowości i dozwolonych akcji gry, uproszczenie
 modalów tworzenia gry z Base Explorera oraz jednolite reguły importu/eksportu,
 z uzgodnioną automatyczną normalizacją danych do limitów.
@@ -617,8 +620,8 @@ zapis, podgląd i późniejszą rozgrywkę.
 - Nie utożsamiać zgodności modelu z grywalnością. Migracja ma ujednolicić
   zapis; wynik może pozostać niegotowym szkicem. Nieodczytywalnych rekordów
   nie usuwać automatycznie; wykazać je w raporcie naprawy.
-- To jest ustalony zakres **planowanego** wdrożenia, nie polecenie wykonania
-  migracji teraz. Nadal obowiązuje zatrzymanie przed implementacją.
+- Zakres wykonany w E21 (migracja 407, §9). Zatrzymanie przed implementacją
+  zniesione przez użytkownika 2026-10-20.
 
 ## 5. Plan prac
 
@@ -965,8 +968,7 @@ najwyżej punktowanych (remisy stabilnie według wejścia); punkty ujemne,
 nienumeryczne lub poza zakresem zamieniamy na zero przed sortowaniem.
 Nie wymagamy ręcznej korekty ani potwierdzania tych operacji. Jest to
 odrębne od świadomego wyboru szóstki w podliczaniu. Znane decyzje domenowe
-są zamknięte; pozostaje odczyt danych produkcyjnych i plan operacyjny
-migracji. Nadal obowiązuje zatrzymanie przed implementacją.
+są zamknięte; odczyt danych produkcyjnych wykonano migracją 403 (§9).
 
 ### 8.7. Regulamin TVP i dodatkowe ryzyka sprawdzone 2026-10-20
 
@@ -1037,5 +1039,60 @@ migracji. Nadal obowiązuje zatrzymanie przed implementacją.
   Dawne kopie już zamienione na P mogą utracić informację o pochodzeniu;
   odtwarzać M tylko na podstawie dowodu, nie podobieństwa nazwy/treści.
 
-**Punkt zatrzymania:** raport A, przed implementacją i przed etapem C.
-Nie uruchamiać dalszej kolejki wdrożeń na podstawie samego zakończenia audytu.
+**Punkt zatrzymania (historyczny):** raport A sprzed implementacji. Zniesiony
+2026-10-20 — realizacja w §9.
+
+## 9. Realizacja E21 (2026-10-20)
+
+Autoryzacja użytkownika 2026-10-20: implementacja, migracje i wdrożenie E21.
+
+### 9.1. Odczyt danych przed migracją (403, tylko odczyt)
+
+Migracja diagnostyczna `2026-10-20_403_e21_data_audit_diagnostic.sql`
+(log `latest.log` z 14:11 UTC, same liczby i ID): pytania gier >100 znaków:
+**11** (maks. 197) w 4 szkicach preparowanych; pytania baz >100: **24**
+(maks. 129); odpowiedzi baz >17 znaków: **546**, z niedozwolonymi znakami: 0;
+odpowiedzi gier z niedozwolonymi znakami: **5** — wszystkie w jednym pytaniu
+jednej gry (preparowana, szkic, bez głosów, punkty 30/10/15/20/5) i wszystkie
+byłyby **puste po oczyszczeniu**; kolizji tekstów po oczyszczeniu: 0; surowe
+wpisy ankiet z niedozwolonymi znakami: 9 (zostają jako źródło audytowe);
+Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
+
+### 9.2. Co wdrożono
+
+| Obszar | Gdzie | Treść |
+|---|---|---|
+| Silnik reguł | 404, `game-rules.js`, `game-validate.js` | `readiness` (pełna lista braków), preparowana ≥4 pkt na odpowiedź, `change_type` = `edit`, akcje transferu `export`/`duplicate` (z `drops_votes`) i `send`; `game_validate` dokłada blokadę `controlActive` (sesja runtime niewygasła); JS `evaluateReadiness` z tymi samymi kodami (testy JS i SQL na tych samych przypadkach) |
+| Edycja i reset | 404, `editGate` | Jedna bramka dla listy Gier, edytora i „Zmień typ”; reset zamkniętej ankiety = pełny reset uruchomienia (`_game_poll_reset`, wspólny z `poll_abort`); zapis treści z przeglądarki blokowany przy aktywnym Control |
+| Zmień typ | 404 `game_change_type`, `change-type.js` | Ten sam rekord, bramka `edit`, potwierdzenie resetu przed wyborem typu, konwersje z tabeli §4, wynik — szkic |
+| Znaki odpowiedzi | 404 `fam_display_has_glyph`/`fam_answer_*`, `fonts.js:hasDisplayGlyph`, `answer-text.js` | Znaki z `font_5x7.json` (migracja zawiera klucze fontu, zgodność pilnuje test), NFC, jednoznakowa wielka litera (np. „ß” → „SS” to dwa znaki — niedozwolone w JS i SQL jednakowo); czyszczenie: usunięcie znaków, białe znaki → jedna spacja, trim, 17 znaków. Ustawienia gry (nazwy drużyn) korzystają z tej samej funkcji |
+| Oba edytory | `question-form.js`, edytor gry, modal bazy | Pytanie 100, odpowiedź 17 (pełne znaki, także przy wklejaniu), blokada zapisu znaków spoza fontu, podpowiedzi „Maksymalnie 17 znaków…” i „W finale wyświetlacz mieści 11 znaków…”; import TXT odrzuca niedozwolone znaki; serwer (`guard_game_text`, `guard_qb_question_text`) odrzuca zmieniane teksty |
+| Base Explorer | `export-modal.js`, `actions.js` | Dokładne zaznaczenie (także 0–9 pytań), bez bramki, braki informacyjnie z silnika; metadane kategorii z tego samego silnika; pakiet v2 |
+| Podliczanie | 405, `poll-tally-math.js`, `poll-tally.js` | N = pełne ankiety bieżącego uruchomienia, `poll_tally_source`; udział 0 / ≥1 / floor; kwalifikacja ≥4%; punkty = udział; wejście od 10 pełnych ankiet; zatwierdzenie ≥3 kwalifikujących; remis szóstki — cykliczny wybór zapisany w szkicu i walidowany w SQL; czyszczenie znaków przed grupowaniem; podpowiedź głosującego; status `ready` z przeglądarki tylko przez RPC podliczania; nieużywane starsze RPC głosów/zamykania odebrane rolom przeglądarki |
+| Control | `engine.js` | Trafienie dowolnej odpowiedzi o maksymalnej punktacji kończy pojedynek |
+| Transfer | 406, `game-transfer-format.js` | Pakiet v2, pięć wariantów, migrator v1 i jawne odzyskanie `prepared`/`draft`, normalizacja bez pytania (JS = SQL), zamknięty wynik tylko poprawny, Powiel otwartej/zatrzymanej ankiety jako szkic z ostrzeżeniem, Wyślij tylko szkice, `market` bez transferu |
+| Marketplace | 404, 406, `marketplace.js`, `games.js` | Zgłoszenie przez centralne `play` (snapshot z zamkniętej ankiety bez odpowiedzi 0 pkt); kopia `market` zostaje po usunięciu pozycji (archiwalna w bibliotece, usuwanie `market_remove_archived_copy`); dodanie do biblioteki z normalizacją transferu |
+| Naprawa danych | 407 `e21_data_repair()` | Nocne okno: `pg_cron` 01:30 UTC; pomija gry z niewygasłą sesją Control; pytania gier i baz → 100, odpowiedzi baz → 17 + znaki, odpowiedzi gier → znaki (tylko odpowiedzi); bez zmian ID/ord/punktów/głosów/statusu; przeliczenie `rules_state`; ograniczenia `questions_text_len` (≤100) i `answers_text_chars` zakładane po wyczyszczeniu; raport `e21_repair_runs`; zadanie usuwa się po zakończeniu |
+
+### 9.3. Decyzje wykonawcze (w granicach ustaleń)
+
+- Pusta odpowiedź w imporcie/kopii (także pusta po oczyszczeniu znaków) jest
+  pomijana — bez tekstów zastępczych; pytanie bez treści czyni pakiet
+  nieodczytywalnym (błąd importu), bo nie wolno ani dopisać treści, ani usunąć
+  pytania.
+- Zamknięty wariant w pakiecie musi spełniać warunki zamknięcia (≥10 pytań,
+  3–6 odpowiedzi po ≥4 pkt, suma ≤100); inaczej szkic tego samego typu
+  (`closed_downgraded`), zgodnie z zakazem oznaczania niepoprawnego wyniku
+  jako zamkniętego.
+- Odpowiedź ankiety punktowej poniżej 4% dostaje 0 pkt (zostaje w ankiecie
+  i nie gra) — bez usuwania odpowiedzi z głosami.
+- Godzina nocnego okna nie była zapisana: przyjęto 01:30 UTC (03:30 czasu
+  polskiego letniego).
+
+### 9.4. Otwarte
+
+- **Decyzja użytkownika:** 5 odpowiedzi jednej gry (preparowana, szkic,
+  bez głosów), które po oczyszczeniu byłyby puste — naprawa ich nie zmienia
+  i wykazuje w raporcie; do czasu decyzji ograniczenie `answers_text_chars`
+  nie jest zakładane. Użytkownik poprosił o SQL podglądu (przekazany w rozmowie).
+
