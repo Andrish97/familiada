@@ -140,7 +140,8 @@ for (const viewport of [
           await expect(row.locator(note)).not.toContainText(/Ankieta tekstowa|Punktacja|Ankieta punktowa/);
           await expect(row.locator(note)).toContainText(task.owner_label);
         }
-        if (viewport.width <= 980) {
+        // wiersz w wersji telefonu do 640 px (base.css .rowsNote/.rowsAct); szerszy poziomy telefon ma pełną notatkę
+        if (viewport.width <= 640) {
           await expect(row.locator(".rowsNote--desktop")).toBeHidden();
           await expect(row.locator(".rowsNote--mobile")).toBeVisible();
           await expect(row.locator(".rowsNote--mobile")).not.toContainText("11.10.2026");
