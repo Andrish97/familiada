@@ -3181,9 +3181,10 @@ const en = {
     title: "Familiada — snake",
     boardLabel: "Display board with a snake game",
     keysHint: "Arrow keys or WASD, space or a click on the board — pause.",
-    progressAccount: ({ best, games }) => `Your account record: ${best} pts · games played: ${games}.`,
-    progressLocal: "Your record is saved only in this browser. Log in to keep it on your account.",
+    progressAccount: ({ best, games }) => `Account record: ${best} · games: ${games}`,
+    progressLocal: "Log in to save your record",
     login: "Log in",
+    accountLabel: "Account",
     home: "Familiada",
     rotateMessage: "Turn your phone sideways — the snake uses the whole Display.",
     board: {

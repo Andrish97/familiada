@@ -125,7 +125,7 @@ export function makeDefaultState(gameId) {
       colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
       theme: null,
       logoId: null,
-      hostLogoMode: "pixel",
+      hostLogoMode: "source",
     },
     // Domyślnie zasłonięte, nie odsłonięte — ustalona zasada dla całego
     // Control, nie tylko finału: Prowadzący widzi treść odpowiedzi (w

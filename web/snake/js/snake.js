@@ -3,16 +3,16 @@
 // Lewy panel -- wynik, prawy -- rekord, górny -- tempo; long1/long2 -- podpisy.
 // Zdarzenia (enter/start/finish) trafiają do statystyk admina (snake-log.js);
 // zalogowanym baza zapisuje rekord i liczbę gier.
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T18202";
-import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-20T18202";
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T18202";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T18202";
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T18202";
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-20T18202";
-import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-20T18202";
-import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-20T18202";
-import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-20T18202";
-import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-20T18202";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T22245";
+import { hydrateIcons, icon } from "../../shared/js/core/icons.js?v=v2026-10-20T22245";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T22245";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T22245";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T22245";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-20T22245";
+import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-20T22245";
+import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-20T22245";
+import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-20T22245";
+import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-20T22245";
 
 const OFF = "#2e2e32";
 const LIT = "#d7ff3d";
@@ -37,7 +37,11 @@ const CRASH = [17, 17, 10, 4, 10, 17, 17];
 const $ = (id) => document.getElementById(id);
 // Telefon i tablet: sama plansza na cały ekran, telefon tylko w poziomie.
 const TOUCH = matchMedia("(pointer: coarse)").matches;
-guardViewportWidth({ minWidth: 0, allowPhoneLandscape: true, requirePhoneLandscape: true, rotateMessageKey: "snake.rotateMessage" });
+// Wąskie okno (komputer, podzielony ekran tabletu) -- prośba o poszerzenie:
+// plansza 16:9 poniżej 640 px jest za mała do gry. Najmniejszy telefon
+// w poziomie ma ok. 667 px.
+const SNAKE_MIN_WIDTH = 640;
+guardViewportWidth({ minWidth: SNAKE_MIN_WIDTH, allowPhoneLandscape: true, requirePhoneLandscape: true, rotateMessageKey: "snake.rotateMessage" });
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove("page-loading");
@@ -176,10 +180,20 @@ async function boot() {
   const user = await getUser();
   const progressEl = $("snakeProgress");
   const loginEl = $("snakeLogin");
+  const accountEl = $("snakeAccount");
+  // Prawy górny róg (obok pełnego ekranu): bez konta zachęta i logowanie,
+  // z kontem rekord i liczba gier z konta oraz przycisk konta.
   const showProgress = () => {
     if (account) progressEl.textContent = t("snake.progressAccount", { best: account.best, games: account.games });
-    else progressEl.textContent = t("snake.progressLocal");
+    else progressEl.textContent = user ? "" : t("snake.progressLocal");
     loginEl.hidden = !!user;
+    accountEl.hidden = !user;
+    // Po zalogowaniu powrót do węża (login.js: next=snake z ważnym qr).
+    const login = new URL("/login/", location.origin);
+    login.searchParams.set("next", "snake");
+    login.searchParams.set("qr", new URLSearchParams(location.search).get("qr") || "");
+    login.searchParams.set("lang", getUiLang());
+    loginEl.href = `${login.pathname}${login.search}`;
   };
 
   const drawGame = () => {
@@ -307,7 +321,7 @@ async function boot() {
   // grę), stuknięcie w planszę to start/pauza. Bez przycisków na ekranie.
   let touch = null;
   document.addEventListener("touchstart", (e) => {
-    if (e.target.closest("a, button, .a2hs")) return;
+    if (e.target.closest("a, button, .a2hs, .lang-menu")) return;
     const p = e.touches[0];
     touch = { x: p.clientX, y: p.clientY };
   }, { passive: true });
@@ -320,7 +334,11 @@ async function boot() {
     touch = { x: p.clientX, y: p.clientY };
   }, { passive: true });
   document.addEventListener("touchend", () => { touch = null; }, { passive: true });
-  $("snakeFrame").addEventListener("click", toggle);
+  // Start/pauza tylko po stuknięciu w dużą tablicę (pole gry), nie w całą
+  // ramkę -- chybione stuknięcie obok przycisku języka nie uruchamia gry.
+  const bigBoard = $("displays").firstElementChild;
+  bigBoard.classList.add("snake-big");
+  bigBoard.addEventListener("click", toggle);
 
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(true); });
   // Przełącznik języka (lewy górny róg): napisy na planszy i pod nią od razu w nowym języku.
@@ -333,6 +351,9 @@ async function boot() {
   });
   // Obrót telefonu do pionu w trakcie gry zasłania planszę prośbą o obrót.
   matchMedia("(orientation: portrait)").addEventListener("change", (e) => { if (TOUCH && e.matches) pause(true); });
+  // Tak samo, gdy okno zwęzi się poniżej minimum (device-guard zasłania planszę).
+  new MutationObserver(() => { if (document.documentElement.dataset.deviceGuard !== "ok") pause(true); })
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-device-guard"] });
 
   showIntro();
   setToggle();

@@ -13,10 +13,10 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-20T18202";
-import { rt } from "./realtime.js?v=v2026-10-20T18202";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-20T18202";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-20T18202";
+import { sb, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-20T22245";
+import { rt } from "./realtime.js?v=v2026-10-20T22245";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-20T22245";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-20T22245";
 
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, onDirectTables = {}, pollMs = 5000, sameRevChanged = null, getLeaseArgs = () => ({}) }) {
@@ -403,7 +403,23 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // nie czekamy na własny dzwonek, tylko dociągamy od razu.
   function refetchNow() { return fetchGuarded(); }
 
-    return { start, stop, applyRow, refetchNow,
+  // Rewizja z heartbeatu lease. Jeśli dwa kolejne heartbeaty (~3 s) widzą
+  // nowszą rewizję niż ta, którą urządzenie ma, zmiana z kanału na żywo
+  // przepadła: dociągamy stan i zapisujemy to w diagnostyce.
+  let behindRevision = null;
+  function noteServerRevision(revision) {
+    if (!active || !Number.isSafeInteger(revision)) return;
+    if (revision <= sync.lastRev) { behindRevision = null; return; }
+    if (behindRevision == null || revision < behindRevision) { behindRevision = revision; return; }
+    const missed = revision - Math.max(0, sync.lastRev);
+    behindRevision = null;
+    sendDiagnostic("state_sync", "fallback_catchup", "rpc_fallback", {
+      trigger: "lease_heartbeat", latest_revision: revision, missed_revisions: missed,
+    });
+    void fetchGuarded("rpc_fallback");
+  }
+
+    return { start, stop, applyRow, refetchNow, noteServerRevision,
     isDirectConnected() { return directConnected; },
     isDirectTableConnected(table) { return directTableConnected.get(table) === true; } };
 }

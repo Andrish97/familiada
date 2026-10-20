@@ -1,12 +1,12 @@
 // js/pages/poll-text.js
-import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-20T18202";
+import { guardViewportWidth } from "../../../../shared/js/core/device-guard.js?v=v2026-10-20T22245";
 guardViewportWidth({ minWidth: 0 });
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-20T18202";
-import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-20T18202";
-import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-20T18202";
-import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-20T18202";
-import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-20T18202";
-import { ANSWER_MAX, clipChars, charLength, nfc } from "../../../../shared/js/core/answer-text.js?v=v2026-10-20T18202";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-20T22245";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-20T22245";
+import { initI18n, t, withLangParam } from "../../../../shared/translation/translation.js?v=v2026-10-20T22245";
+import { createAnonymousSubmitter } from "../../../../shared/js/core/poll-anonymous.js?v=v2026-10-20T22245";
+import { showPollSubmitRetry } from "../../../../shared/js/core/poll-submit-retry.js?v=v2026-10-20T22245";
+import { ANSWER_MAX, clipChars, charLength, nfc } from "../../../../shared/js/core/answer-text.js?v=v2026-10-20T22245";
 
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {

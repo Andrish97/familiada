@@ -1,30 +1,30 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T18202";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T18202";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T18202";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T18202";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T18202";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T18202";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-20T18202";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T18202";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T18202";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T18202";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T18202";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-20T18202";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T22245";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T22245";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T22245";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T22245";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T22245";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T22245";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-20T22245";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T22245";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T22245";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T22245";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T22245";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-20T22245";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-20T18202";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-20T22245";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-20T18202";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T18202";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T18202";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T18202";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-20T22245";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T22245";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T22245";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T22245";
 
 
 const qs = new URLSearchParams(location.search);
@@ -37,7 +37,7 @@ const DEFAULT_SETTINGS = {
     colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
     theme: null,
     logoId: null,
-    hostLogoMode: "pixel",
+    hostLogoMode: "source",
   },
   game: {
     hasFinal: null,
@@ -78,7 +78,7 @@ function mergeSettings(saved) {
       },
       theme: s.display?.theme ?? defs.display.theme,
       logoId: s.display?.logoId ?? defs.display.logoId,
-      hostLogoMode: s.display?.hostLogoMode === "source" ? "source" : "pixel",
+      hostLogoMode: s.display?.hostLogoMode === "pixel" ? "pixel" : "source",
     },
     game: {
       hasFinal: s.game?.hasFinal ?? defs.game.hasFinal,
@@ -722,7 +722,7 @@ function renderDisplay() {
     btn.addEventListener("click", () => openColorModal(btn.dataset.colorKey));
   });
   content.querySelectorAll("[name='gsHostLogoMode']").forEach(radio => radio.addEventListener("change", () => {
-    localSettings.display.hostLogoMode = radio.value === "source" ? "source" : "pixel";
+    localSettings.display.hostLogoMode = radio.value === "pixel" ? "pixel" : "source";
     markDirty();
     postPreviewRow();
   }));

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-20T18202"/>
+  <meta name="app-version" content="v2026-10-20T22245"/>
 
 
   <meta charset="UTF-8"/>
@@ -16,22 +16,22 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-20T18202"/>
-  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-20T18202" crossorigin="use-credentials"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-20T22245"/>
+  <link rel="manifest" href="/manifest-admin.webmanifest?v=v2026-10-20T22245" crossorigin="use-credentials"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T18202"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-20T18202"/>
-  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-20T18202"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T22245"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-20T22245"/>
+  <link rel="stylesheet" href="/settings/css/settings.css?v=v2026-10-20T22245"/>
 
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T18202" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-20T18202" defer></script>
-  <script type="module" src="/settings/js/settings.js?v=v2026-10-20T18202" defer></script>
-  <script type="module" src="/settings/js/admin-pwa.js?v=v2026-10-20T18202" defer></script>
-  <script type="module" src="/settings/js/generator.js?v=v2026-10-20T18202" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T22245" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-20T22245" defer></script>
+  <script type="module" src="/settings/js/settings.js?v=v2026-10-20T22245" defer></script>
+  <script type="module" src="/settings/js/admin-pwa.js?v=v2026-10-20T22245" defer></script>
+  <script type="module" src="/settings/js/generator.js?v=v2026-10-20T22245" defer></script>
 
 </head>
 <body class="games-body settings-body settings-locked no-footer-line skel-body">
@@ -53,10 +53,10 @@
       <button class="btn sm tab-btn" id="btnTabRatings" type="button">Oceny</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button">Ustawienia maili</button>
       <button class="btn sm tab-btn" id="btnTabScreenshots" type="button">Zrzuty strony</button>
-      <button class="btn sm tab-btn" id="btnTabReports" type="button">Poczta Familiada</button>
+      <button class="btn sm tab-btn" id="btnTabReports" type="button"><span>Poczta Familiada</span><span class="badge" id="tabBadgeReports" aria-hidden="true"></span></button>
       <button class="btn sm tab-btn" id="btnTabMarketing" type="button">Marketing</button>
       <button class="btn sm tab-btn" id="btnTabMarketingContacts" type="button">Kontakty Marketingowe</button>
-      <button class="btn sm tab-btn" id="btnTabMarketplace" type="button">Gry Społeczności</button>
+      <button class="btn sm tab-btn" id="btnTabMarketplace" type="button"><span>Gry Społeczności</span><span class="badge" id="tabBadgeMarketplace" aria-hidden="true"></span></button>
       <button class="btn sm tab-btn hidden-on-mobile" id="btnTabGenerator" type="button">Gry Producenta</button>
       <div class="nav-more" id="navMore" style="display:none;">
         <button class="btn sm" id="btnMore" type="button"><span>Więcej</span> <i class="ico" data-icon="caret-down"></i><span class="badge" id="moreBadge" aria-hidden="true"></span></button>
@@ -420,7 +420,7 @@
         </div>
 
         <div class="mail-controls" style="margin-bottom:12px">
-          <button class="btn sm tab-btn active" id="mktTabPending" type="button">Do zatwierdzenia</button>
+          <button class="btn sm tab-btn active" id="mktTabPending" type="button"><span>Do zatwierdzenia</span><span class="badge" id="badgeMarketPending" aria-hidden="true"></span></button>
           <button class="btn sm tab-btn" id="mktTabPublished" type="button">Opublikowane</button>
           <button class="btn sm tab-btn" id="mktTabRejected" type="button">Odrzucone</button>
           <button class="btn sm tab-btn" id="mktTabWithdrawn" type="button">Wycofane</button>

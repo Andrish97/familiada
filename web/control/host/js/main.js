@@ -7,16 +7,16 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T18202";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T18202";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T18202";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T18202";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T18202";
-import { createHostRenderer } from "./render.js?v=v2026-10-20T18202";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-20T18202";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-20T18202";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T18202";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T18202";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T22245";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T22245";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T22245";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T22245";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T22245";
+import { createHostRenderer } from "./render.js?v=v2026-10-20T22245";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-20T22245";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-20T22245";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T22245";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T22245";
 
 
 function parseParams() {
@@ -213,6 +213,8 @@ async function main() {
   document.documentElement.classList.remove("page-loading");
 
   if (preview) {
+    // Podgląd w Control/ustawieniach gry — bez przycisku pełnego ekranu.
+    document.getElementById("btnFS")?.remove();
     const renderer = createHostRenderer();
     const coverLogo = createCoverLogoRenderer({ previewOnly: true });
     let latestRow = null;
@@ -258,7 +260,7 @@ async function main() {
   // oraz zapasowy, wyciszony strumień wideo. Podgląd w ustawieniach nie.
   startKeepAlive();
   let subscription = null;
-  const lease = createDeviceLease({ gameId, deviceType: "host", key, onState: ({ state }) => {
+  const lease = createDeviceLease({ onGameRev: (rev) => subscription?.noteServerRevision?.(rev), gameId, deviceType: "host", key, onState: ({ state }) => {
     updateDeviceLeaseOverlay(state);
     if (subscription) {
       if (state === "primary") void subscription.start();

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict G2co4eH0eR2Et37ZSeHeJry9gExgVCJCEUODLLT2Z1uxDb6klimcxAmEQawL5kE
+\restrict ypWnJ7oXeVKrci0pcEwcoyaPbdIWk9sUNShb2HytIS2s5Kg72eZdLOaXxZhc5Na
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4527,7 +4527,6 @@ DECLARE
   uid uuid := auth.uid();
   identity jsonb;
   polls integer;
-  bases integer;
   friends integer;
 BEGIN
   SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id = uid;
@@ -4540,14 +4539,11 @@ BEGIN
   FROM public.poll_tasks t
   WHERE t.recipient_user_id = uid
     AND t.done_at IS NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL;
-  SELECT count(*) INTO bases
-  FROM public.base_share_tasks bt
-  WHERE bt.recipient_user_id = uid AND bt.status IN ('pending', 'opened');
   SELECT count(*) INTO friends
   FROM public.friendships f
   WHERE f.decision_user_id = uid AND f.status = 'pending' AND f.cancelled_at IS NULL;
 
-  RETURN jsonb_build_object('tasks_pending', polls + bases, 'friends_pending', friends);
+  RETURN jsonb_build_object('tasks_pending', polls, 'friends_pending', friends);
 END;
 $$;
 
@@ -5383,7 +5379,7 @@ BEGIN
   END IF;
   IF v_trigger IS NOT NULL AND v_trigger NOT IN (
     'poll','broadcast','bootstrap','resume','channel_recovery','channel_failure',
-    'delete_recovery','doorbell_ready','other'
+    'delete_recovery','doorbell_ready','lease_heartbeat','other'
   ) THEN RAISE EXCEPTION 'invalid trigger'; END IF;
 
   SELECT a.session_id INTO v_session_id
@@ -5645,7 +5641,8 @@ BEGIN
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
     || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id,
-      'audio_unlocked',(SELECT c.audio_unlocked FROM public.control_device_connections c WHERE c.id=p_connection_id));
+      'audio_unlocked',(SELECT c.audio_unlocked FROM public.control_device_connections c WHERE c.id=p_connection_id),
+      'game_rev',(SELECT g.rev FROM public.game_state g WHERE g.game_id=p_game_id));
 END;
 $_$;
 
@@ -5664,12 +5661,15 @@ COMMENT ON FUNCTION "public"."control_device_instance_heartbeat"("p_game_id" "uu
 CREATE FUNCTION "public"."control_device_instance_register"("p_game_id" "uuid", "p_device_type" "text", "p_key" "text", "p_connection_id" "uuid", "p_meta" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'auth'
-    AS $$
+    AS $_$
 DECLARE
   v_session_id uuid;
   v_slot public.control_device_slots;
   v_existing public.control_device_connections;
   v_primary uuid;
+  v_context text := CASE WHEN coalesce(p_meta->>'browser_context_id','') ~ '^[A-Za-z0-9_-]{8,80}$'
+    THEN p_meta->>'browser_context_id' END;
+  v_epoch bigint;
 BEGIN
   IF p_device_type NOT IN ('display','host','buzzer') OR p_connection_id IS NULL
      OR NOT public.control_device_key_valid(p_game_id,p_device_type,p_key) THEN
@@ -5710,16 +5710,33 @@ BEGIN
       END IF;
     END IF;
   ELSE
-    INSERT INTO public.control_device_connections(id,session_id,game_id,device_type,state,page_visibility,focused)
+    INSERT INTO public.control_device_connections(id,session_id,game_id,device_type,state,page_visibility,focused,browser_context_id)
     VALUES(p_connection_id,v_session_id,p_game_id,p_device_type,'waiting',
       CASE WHEN p_meta->>'visibility' IN ('visible','hidden') THEN p_meta->>'visibility' ELSE 'unknown' END,
-      CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END);
+      CASE WHEN jsonb_typeof(p_meta->'focused')='boolean' THEN (p_meta->>'focused')::boolean ELSE NULL END,
+      v_context);
+    -- Ta sama przeglądarka otwiera urządzenie od nowa: przejęcie od razu.
+    IF v_context IS NOT NULL AND p_meta->'takeover' = 'true'::jsonb
+       AND v_slot.primary_connection_id IS NOT NULL
+       AND EXISTS (SELECT 1 FROM public.control_device_connections c
+         WHERE c.id=v_slot.primary_connection_id AND c.state='primary'
+           AND c.browser_context_id=v_context) THEN
+      UPDATE public.control_device_connections SET state='waiting',epoch=NULL,audio_unlocked=false,
+        requested_at=clock_timestamp()
+      WHERE id=v_slot.primary_connection_id;
+      v_epoch := v_slot.epoch + 1;
+      UPDATE public.control_device_connections SET state='primary',epoch=v_epoch
+      WHERE id=p_connection_id;
+      UPDATE public.control_device_slots SET primary_connection_id=p_connection_id,epoch=v_epoch,
+        lease_expires_at=clock_timestamp()+interval '12 seconds',updated_at=clock_timestamp()
+      WHERE session_id=v_session_id AND device_type=p_device_type;
+    END IF;
   END IF;
   v_primary := public._control_device_promote_waiting(v_session_id,p_device_type);
   RETURN public._control_device_status(v_session_id,p_device_type,p_connection_id)
     || jsonb_build_object('mode','lease','primary',v_primary=p_connection_id);
 END;
-$$;
+$_$;
 
 
 --
@@ -8936,7 +8953,7 @@ BEGIN
   IF NOT public._control_device_action_valid(p_game_id,'display',p_key,p_connection_id,p_epoch) THEN
     RAISE EXCEPTION 'forbidden';
   END IF;
-  SELECT rev INTO current_rev FROM public.game_state WHERE game_id=p_game_id;
+  SELECT rev INTO current_rev FROM public.game_state WHERE game_id=p_game_id FOR UPDATE;
   IF current_rev IS NULL OR p_rev IS NULL OR p_rev<0 OR p_rev>current_rev THEN
     RAISE EXCEPTION 'invalid revision';
   END IF;
@@ -16854,7 +16871,14 @@ begin
   PERFORM public._subscriber_pair_lock(v_uid,v_sub.subscriber_email);
   SELECT * INTO v_sub FROM public.poll_subscriptions WHERE id=p_id AND owner_id=v_uid FOR UPDATE;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'error','not found'); END IF;
-  -- ✅ zamiast DELETE: oznacz jako cancelled i ustaw timestamp
+
+  -- 424: oczekująca propozycja znajomości z tej subskrypcji zostaje
+  update public.friendships
+  set source_subscription_id = null
+  where source_subscription_id = v_sub.id
+    and status = 'pending'
+    and cancelled_at is null;
+
   update public.poll_subscriptions
   set status = 'cancelled',
       cancelled_at = now()
@@ -19082,6 +19106,8 @@ CREATE TABLE "public"."control_device_connections" (
     "rendered_rev" bigint DEFAULT 0 NOT NULL,
     "started_sound_cue_seq" bigint DEFAULT 0 NOT NULL,
     "audio_unlocked" boolean DEFAULT false NOT NULL,
+    "browser_context_id" "text",
+    CONSTRAINT "control_device_connections_browser_context_id_check" CHECK ((("browser_context_id" IS NULL) OR ("browser_context_id" ~ '^[A-Za-z0-9_-]{8,80}$'::"text"))),
     CONSTRAINT "control_device_connections_device_type_check" CHECK (("device_type" = ANY (ARRAY['display'::"text", 'host'::"text", 'buzzer'::"text"]))),
     CONSTRAINT "control_device_connections_page_visibility_check" CHECK ((("page_visibility" IS NULL) OR ("page_visibility" = ANY (ARRAY['visible'::"text", 'hidden'::"text", 'unknown'::"text"])))),
     CONSTRAINT "control_device_connections_received_rev_check" CHECK (("received_rev" >= 0)),
@@ -25966,5 +25992,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict G2co4eH0eR2Et37ZSeHeJry9gExgVCJCEUODLLT2Z1uxDb6klimcxAmEQawL5kE
+\unrestrict ypWnJ7oXeVKrci0pcEwcoyaPbdIWk9sUNShb2HytIS2s5Kg72eZdLOaXxZhc5Na
 

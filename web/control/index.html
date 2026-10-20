@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-20T18202"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T18202"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-20T18202"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-20T22245"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T22245"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-20T22245"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
@@ -22,12 +22,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T18202" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T22245" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-20T18202";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-20T22245";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-20T18202");
+    import("/control/js/app.js?v=v2026-10-20T22245");
 
   </script>
 
@@ -95,7 +95,21 @@
        scripts/screens/check-control-fit.cjs) z ok. 5% zapasu. Gdyby treść
        mimo to się nie mieściła (np. starsze, dłuższe pytania), fit-text.js
        zmniejsza całą rozgrywkę jednakowo. */
-    .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; --c2-fs:clamp(14px, min((100vh - 223px) * .031, 1.6vw), 28px); font-size:calc(var(--c2-fs) * var(--c2-fit, 1)); }
+    /* --c2-fs na :root, nie tylko na karcie rozgrywki — Urządzenia
+       i Podsumowanie (#app > .cardBody) mają tę samą czcionkę bazową co
+       rozgrywka (zgłoszone: nowy rozmiar działał dopiero od "Rozpocznij
+       rundę"). Rozmiary wewnątrz kroków to calc(var(--c2-fs) * x), nie em —
+       zagnieżdżone klasy się nie mnożą. */
+    :root { --c2-fs:clamp(14px, min((100vh - 223px) * .031, 1.6vw), 28px); }
+    .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; font-size:calc(var(--c2-fs) * var(--c2-fit, 1)); }
+    #app > .cardBody { font-size:var(--c2-fs); }
+    #app > .cardBody .btn { font-size:calc(var(--c2-fs) * .82); }
+    #app > .cardBody .stepFoot .btn { font-size:calc(var(--c2-fs) * .95); }
+    #app > .cardBody .conn-status { font-size:calc(var(--c2-fs) * .7); }
+    #app > .cardBody .msg-pill { font-size:calc(var(--c2-fs) * .75); }
+    #app > .cardBody .toggle-slider::before { font-size:calc(var(--c2-fs) * .92); }
+    .summarySoundDesc, .summarySoundVariant { font-size:calc(var(--c2-fs) * .88); }
+    .summarySoundVolLabel { font-size:calc(var(--c2-fs) * .8); }
     /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
        tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
        wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować.
@@ -237,7 +251,7 @@
     /* "Losuj ponownie" (zgłoszone jako "zbyt mały") — btn.sm z base.css (13px)
        dociągnięty do tej samej skali co reszta Podsumowania, żeby nie ginął
        obok 1.15rem summarySectionValue. */
-    .c2-summary-row .btn.sm { font-size:1rem; padding:9px 15px; }
+    .c2-summary-row .btn.sm { font-size:var(--c2-fs); padding:9px 15px; }
     /* Podsumowanie wykorzystuje szerokość karty: podgląd Display jest na
        całą szerokość, a reszta informacji układa się w dwóch kolumnach. */
     .c2-summary-grid { display:flex; flex-direction:column; gap:12px; }
@@ -259,8 +273,8 @@
        zawijany ciąg "tagów" wyglądał jak jeden zlepiony akapit) — każde
        pytanie we własnym wierszu, z małym okrągłym numerkiem z lewej. */
     .c2-qpreview { display:flex; flex-direction:column; gap:2px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.08); }
-    .c2-qpreview-item { display:flex; align-items:baseline; gap:10px; font-size:.92rem; opacity:.85; padding:4px 0; }
-    .c2-qpreview-num { flex:none; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,234,166,.12); color:var(--gold); font-size:.7rem; font-weight:800; }
+    .c2-qpreview-item { display:flex; align-items:baseline; gap:10px; font-size:calc(var(--c2-fs) * .92); opacity:.85; padding:4px 0; }
+    .c2-qpreview-num { flex:none; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,234,166,.12); color:var(--gold); font-size:calc(var(--c2-fs) * .7); font-weight:800; }
     .c2-qpreview-text { flex:1; min-width:0; }
     /* Czcionki Urządzeń/Podsumowania dociągnięte do wielkości, którą mają już
        Rundy (.c2-tile/.c2-question/.c2-hint) — bazowe rozmiary z control.css
@@ -273,18 +287,20 @@
        telefon/tablet i tak nie wchodzi tutaj (guardDesktopOnly()), więc
        dolny próg celuje w skromny laptop (~1000px), górny w duży zewnętrzny
        monitor (~2200px+). */
-    .device-name { font-size:clamp(.78rem, .6rem + .45vw, .98rem); }
-    .device-row-2 .btn { font-size:clamp(.62rem, .48rem + .35vw, .8rem); }
-    .device-opt-check-label { font-size:clamp(.68rem, .52rem + .4vw, .88rem); }
-    .device-opt-check-hint { font-size:clamp(.6rem, .46rem + .35vw, .76rem); }
+    .device-name { font-size:calc(var(--c2-fs) * .98); }
+    #app > .cardBody .device-row-2 .btn { font-size:calc(var(--c2-fs) * .92); }
+    .device-row-2:has(> .device-row-line) { flex-direction:column; align-items:flex-start; gap:6px; }
+    .device-row-line { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .device-opt-check-label { font-size:calc(var(--c2-fs) * .88); }
+    .device-opt-check-hint { font-size:calc(var(--c2-fs) * .76); }
     /* Kod parowania — bazowe 1.45rem (control.css) z rozstrzelonym
        letter-spacing zawija się/wychodzi poza kartę w węższej, 2-kolumnowej
        siatce (zgłoszone razem z resztą czcionek na tym kroku). */
-    .c2-devicerows .device-connect-code-val { font-size:clamp(.85rem, .65rem + .5vw, 1.05rem); letter-spacing:.1em; }
-    .summarySectionTitle { font-size:clamp(.62rem, .48rem + .35vw, .78rem); }
-    .summarySectionValue { font-size:clamp(.85rem, .65rem + .5vw, 1.05rem); }
-    .summaryQMode { font-size:clamp(.72rem, .56rem + .4vw, .9rem); }
-    .summaryDisplayLabel, .summaryDisplayRow { font-size:clamp(.72rem, .56rem + .4vw, .9rem); }
+    .c2-devicerows .device-connect-code-val { font-size:calc(var(--c2-fs) * 1.05); letter-spacing:.1em; }
+    .summarySectionTitle { font-size:calc(var(--c2-fs) * .78); }
+    .summarySectionValue { font-size:calc(var(--c2-fs) * 1.05); }
+    .summaryQMode { font-size:calc(var(--c2-fs) * .9); }
+    .summaryDisplayLabel, .summaryDisplayRow { font-size:calc(var(--c2-fs) * .9); }
     /* Pasek statusu — pod siatką/podpowiedzią, nad dolnymi przyciskami
        (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
        nie osobny blok na każdą — to jest "dodatkowe info", nie treść do
@@ -390,12 +406,12 @@
       .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }
       .c2-devicerows .device-row { padding:7px 9px; gap:4px; }
       .c2-devicerows .device-row-2 { gap:5px; }
-      .c2-devicerows .device-row-2 .btn { padding:5px 7px; }
+      .c2-devicerows .device-row-2 .btn { padding:.4em .6em; }
       .c2-devicerows .device-row-opt { padding-top:4px; }
       .c2-devicerows .toggle-group { margin-top:4px !important; }
       .c2-devices-layout .c2-roundlayout-main > .c2-scroll-area { gap:6px; }
-      .c2-devicerows .device-connect-code { min-height:32px; padding:0 8px; }
-      .c2-devicerows .device-connect-code-val { font-size:.85rem; letter-spacing:.08em; }
+      .c2-devicerows .device-connect-code { min-height:2.1em; padding:0 .5em; }
+      .c2-devicerows .device-connect-code-val { font-size:calc(var(--c2-fs) * .98); letter-spacing:.08em; }
     }
     @media (max-width:1100px) {
       .c2-summary-columns { grid-template-columns:minmax(0,1fr); }
@@ -489,7 +505,7 @@
     /* Podgląd Wyświetlacza i Hosta w Podsumowaniu: równorzędne, 16:9. */
     #c2DevicePreviews { width:min(100%, 1280px); margin-inline:auto; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
     .c2-device-preview-card { min-width:0; }
-    .c2-device-preview-title { margin:0 0 5px; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--gold); }
+    .c2-device-preview-title { margin:0 0 5px; font-size:calc(var(--c2-fs) * .72); font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--gold); }
     #c2DisplayPreview, #c2HostPreview {
       width:100%;
       max-width:640px;
@@ -507,7 +523,7 @@
     #c2DisplayPreview iframe, #c2HostPreview iframe { width:100%; height:100%; border:0; display:block; }
     @media (max-width:760px) { #c2DevicePreviews { grid-template-columns:1fr; } }
   </style>
-<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-20T18202"/>
+<link rel="stylesheet" href="/control/css/test-mode.css?v=v2026-10-20T22245"/>
 
 </head>
 <body class="control-body skel-body">
@@ -632,7 +648,7 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-20T18202"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-20T22245"></script>
 
 </body>
 </html>

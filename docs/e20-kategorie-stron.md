@@ -56,10 +56,10 @@ urządzenie. Typ scrolla opisuje przewijanie dokumentu. Gdy tabela mówi
 | `/marketplace/`                  | Topbar             | Katalog społeczności         | Globalny                                       | Publiczna                            | Dowolne urządzenie                                           |
 | `/games/editor/`                 | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Dowolne urządzenie                                           |
 | `/bases/explorer/`               | Topbar             | Edytor                       | Bez globalnego; obszar eksploratora wewnętrzny | Gość lub konto                       | Telefon portrait dozwolony; landscape telefonu blokowane globalnie  |
-| `/logos/editor/text/`             | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Min. viewport 700 px                                         |
-| `/logos/editor/draw/`             | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Min. viewport 700 px                                         |
-| `/logos/editor/image/`            | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Min. viewport 700 px                                         |
-| `/games/settings/`               | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Min. viewport 700 px; poniżej 980 px ukrywa się boczny panel |
+| `/logos/editor/text/`             | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Min. viewport 700 px; tablet lub komputer (telefon w żadnej orientacji — `audyt-logo-editor.md`) |
+| `/logos/editor/draw/`             | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Min. viewport 700 px; tablet lub komputer (telefon w żadnej orientacji — `audyt-logo-editor.md`) |
+| `/logos/editor/image/`            | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Min. viewport 700 px; tablet lub komputer (telefon w żadnej orientacji — `audyt-logo-editor.md`) |
+| `/games/settings/`               | Topbar             | Edytor                       | Bez globalnego; panele wewnętrzne              | Gość lub konto                       | Min. viewport 600 px; tablet lub komputer; poniżej 980 px boczny panel pod przyciskiem (uwagi E20 #23) |
 | `/settings/`                     | Topbar             | Panel administracyjny        | Mieszany: dokument albo panele wewnętrzne zależnie od widoku | Cloudflare Access                   | Dowolne urządzenie; mobile ma własne układy paneli            |
 | `/account/`                      | Topbar             | Edytor                       | Globalny                                       | Gość lub konto                       | Dowolne urządzenie                                           |
 | `/polls/`                        | Topbar             | Edytor                       | Bez przewijania strony i paneli; przewija się wyłącznie lista odbiorców | Gość lub konto                       | Dowolne urządzenie                                           |
@@ -80,6 +80,7 @@ urządzenie. Typ scrolla opisuje przewijanie dokumentu. Gdy tabela mówi
 | `/control/host/`                 | Ekran urządzenia   | Host                         | Pełny ekran; bez globalnego scrolla            | Publiczna; dostęp przez `id` i `key` | Dotykowy telefon lub tablet                                  |
 | `/control/buzzer/`               | Ekran urządzenia   | Buzzer                       | Pełny ekran; bez globalnego scrolla            | Publiczna; dostęp przez `id` i `key` | Dotykowy telefon lub tablet                                  |
 | `/polls/vote/qr/`                | Ekran urządzenia   | QR ankiety                   | Pełny ekran; bez globalnego scrolla            | Publiczna; link/klucz ankiety        | Komputer, duży tablet lub TV                                 |
+| `/snake/`                       | Ekran urządzenia   | Ukryta gra (wąż)             | Pełny ekran; bez globalnego scrolla            | Publiczna; tylko z linku z kodu QR (`?qr=`), inaczej 404 | Min. viewport 640 px; telefon tylko w poziomie (jak Buzzer); tablet i komputer |
 | `/connect/tv/`                   | Dedykowany styl TV | Łączenie urządzenia przez TV | Bez globalnego scrolla                         | Publiczna                            | Przeznaczone do telewizyjnego flow parowania                 |
 
 ## Ładowanie i wejście na stronę
@@ -164,11 +165,11 @@ Guard urządzenia działa przed odsłonięciem strony i pobraniem jej danych.
 
 | Krok | Sprawdzana rzecz | Wynik |
 |---:|---|---|
-| 1 | Czy ekran fizycznie może osiągnąć próg układu w którejkolwiek orientacji? Dla TV, jeśli strona tego wymaga, sprawdź też zgłoszone HD (co najmniej 1280 × 720 po uwzględnieniu `devicePixelRatio`). | Jeśli nie: `screen` — „Wymagany większy ekran”; „Ten ekran jest za mały. Użyj urządzenia z większym ekranem.” |
+| 1 | Czy ekran fizycznie może osiągnąć próg układu w którejkolwiek orientacji? Dla TV, jeśli strona tego wymaga, sprawdź też zgłoszone HD (co najmniej 1280 × 720 po uwzględnieniu `devicePixelRatio`). | Jeśli nie: `screen` — „Wymagany większy ekran”; „Ten ekran jest za mały. Użyj urządzenia z większym ekranem.” **Telefon:** zamiast tego „Niedostępne na telefonie” (decyzja 2026-10-20, niżej). |
 | 2 | Czy strona wymaga głównego wejścia dotykowego? Rozpoznaj je przez coarse pointer bez hover; sama obecność dodatkowego digitizera dotykowego nie wystarcza. | Jeśli brakuje: `touch` — „Wymagany ekran dotykowy”; „Otwórz tę stronę na telefonie lub tablecie z ekranem dotykowym.” |
 | 3 | Czy wykryta kategoria jest dozwolona przez stronę? Typ wynika z rozmiaru ekranu i głównego wskaźnika; TV dodatkowo z heurystyki User-Agent. | Jeśli kategoria wykluczona: `unsupported`, np. „Niedostępne na telefonie”; komunikat oznacza wykluczenie tej kategorii, nie za mały ekran. |
 | 4 | Czy bieżący viewport ma wymaganą szerokość; jeśli nie, czy obrót telefonu/tabletu ją zapewni? Obrót rozważamy tylko przy pełnej szerokości widoku portrait; zwężony widok tabletu traktujemy jako split view. Komputera ani TV nigdy nie prosimy o obrót. | Obrót rozwiązuje problem: `rotate` — „Obróć urządzenie”; w przeciwnym razie możliwe poszerzenie okna: `narrow` — „Za wąskie okno”. |
-| 5 | Czy strona ma własną politykę orientacji? Domyślnie telefon landscape jest blokowany; Host i Buzzer są wyjątkami. Buzzer blokuje telefon w portrait i wymaga landscape. | Blokada używa nagłówka i ikony obrotu. Buzzer ma własną treść: „Obróć telefon poziomo, aby korzystać z Buzzera.” Host nie sugeruje obrotu. |
+| 5 | Czy strona ma własną politykę orientacji? Domyślnie telefon landscape jest blokowany; Host, Buzzer i wąż (`/snake/`) są wyjątkami. Buzzer i wąż blokują telefon w portrait i wymagają landscape. | Blokada używa nagłówka i ikony obrotu. Buzzer ma własną treść: „Obróć telefon poziomo, aby korzystać z Buzzera.”, wąż: „Obróć telefon poziomo — wąż jeździ po całym Wyświetlaczu.” Host nie sugeruje obrotu. |
 | 6 | Dopiero po przejściu guarda urządzenia: logowanie, uprawnienia, konto gościa i blokada zasobu. | Pokaż właściwy guard dostępu lub stronę. Nie odsłaniaj jej treści wcześniej. |
 
 Rozróżnienie komunikatów: **za mały ekran** oznacza, że fizyczny ekran nie
@@ -180,7 +181,8 @@ samego komunikatu o za małym ekranie, bez osobnego tekstu o rozdzielczości.
 
 | Przykład | Oczekiwany pierwszy komunikat |
 |---|---|
-| Telefon niedopuszczony przez stronę i za mały, by spełnić jej próg | Wymagany większy ekran |
+| Telefon niedopuszczony przez stronę i za mały, by spełnić jej próg | Niedostępne na telefonie (decyzja 2026-10-20; wcześniej „Wymagany większy ekran”) |
+| Telefon dopuszczony, ale strona wymaga więcej niż jego szerokość, a obrót nie pomoże | Niedostępne na telefonie (decyzja 2026-10-20; wcześniej „Za wąskie okno”) |
 | Telefon niedopuszczony, ale ekran spełnia wymagania rozmiaru | Niedostępne na telefonie |
 | Telefon landscape na zwykłej stronie | Obróć urządzenie |
 | Telefon portrait na Buzzerze | Obróć urządzenie — treść o Buzzerze; ekran strony zablokowany |
@@ -190,3 +192,10 @@ samego komunikatu o za małym ekranie, bez osobnego tekstu o rozdzielczości.
 | TV wykryty, ale poniżej wymaganego HD | Wymagany większy ekran |
 | Telefon lub tablet, którego obrót osiąga próg | Obróć urządzenie |
 | Dopuszczone urządzenie, ale użytkownik nie ma uprawnień | Guard dostępu strony |
+
+**Decyzja użytkownika 2026-10-20 — telefon:** telefon dostaje tylko dwa
+komunikaty guarda urządzenia: „Obróć urządzenie”, gdy obrót pomoże, albo
+„Niedostępne na telefonie” — także wtedy, gdy ekran jest za mały (`screen`)
+albo widok za wąski (`narrow`), bo telefonu nie da się poszerzyć ani wymienić
+ekranu. Tablety, komputery i TV bez zmian. Kod: `phoneGuardState` w
+`web/shared/js/core/device-guard.js`.

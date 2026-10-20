@@ -45,6 +45,11 @@ export function buildGameState(lang, kind) {
     // Tryb podglądu Wyświetlacza nie liczy cyfr z rundy -- podajemy je wprost.
     state.display = { ...state.display, suppressLogoDraw: true, previewNumbers: { left: "000", right: "000", top: String(state.rounds.bankPts).padStart(3, "0") }, previewXPositions: { A: [], B: [2, 3] } };
   }
+  if (kind === "devices" || kind === "summary") {
+    // Kroki przed grą: Urządzenia i Podsumowanie (podglądy Wyświetlacza/Prowadzącego).
+    state.step = kind === "devices" ? "devices_display" : "setup_finish"; state.topCard = "devices";
+    state.locks.gameStarted = false;
+  }
   if (kind.startsWith("finale")) {
     state.step = "f_p1_entry"; state.topCard = "final"; state.phase = "FINAL"; state.controlTeam = "A";
     state.rounds.totals = { A: 312, B: 187 };

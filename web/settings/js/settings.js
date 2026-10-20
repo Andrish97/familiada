@@ -12,17 +12,17 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T18202";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T18202";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T18202";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T18202";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T18202";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T18202";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T18202";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T18202";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T18202";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T18202";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T18202";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T22245";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T22245";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T22245";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T22245";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T22245";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T22245";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T22245";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T22245";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T22245";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T22245";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T22245";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -33,14 +33,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T18202";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T22245";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T18202";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T18202";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T18202";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T22245";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T22245";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T22245";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T18202";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T22245";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -1051,8 +1051,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T18202"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T18202"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T22245"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T22245"/>
 
   <style>
     body{margin:0;padding:0}
@@ -2312,6 +2312,7 @@ async function loadMarketplace({ silent = false } = {}) {
   if (!tbody) return;
   if (!silent && info) info.textContent = "Ładowanie…";
 
+  void loadMarketPendingBadge();
   let data;
   try {
     const res = await adminFetch(`/marketplace/list?status=${marketActiveStatus}`);
@@ -2677,6 +2678,37 @@ function updateFolderBadges(inboxUnread, reportsOpen) {
   if (badgeReports) {
     badgeReports.textContent = reportsOpen > 99 ? "99+" : String(reportsOpen || "");
   }
+  // Zakładka „Poczta Familiada” w topbarze: nieprzeczytane + otwarte zgłoszenia
+  // (licznik trafia też na „Więcej” i do menu na telefonie -- topbar-controller).
+  setCountBadge("tabBadgeReports", inboxUnread + reportsOpen);
+}
+
+function setCountBadge(id, count) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = count > 99 ? "99+" : String(count || "");
+}
+
+// Gry Społeczności czekające na zatwierdzenie: zakładka w topbarze
+// i „Do zatwierdzenia” (bez gier producenta, jak lista).
+async function loadMarketPendingBadge() {
+  try {
+    const res = await adminFetch("/marketplace/list?status=pending");
+    if (!res.ok) return;
+    const json = await res.json();
+    const count = (json.rows || []).filter((r) => r.origin !== "producer").length;
+    setCountBadge("tabBadgeMarketplace", count);
+    setCountBadge("badgeMarketPending", count);
+  } catch (e) {
+    console.error("[loadMarketPendingBadge] error:", e);
+  }
+}
+
+// Liczniki powiadomień odświeżane w tle (karta widoczna), jak na innych stronach.
+function startAdminBadges() {
+  const refresh = () => { loadFolderBadges(); loadMarketPendingBadge(); };
+  refresh();
+  setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 60_000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
 }
 
 // Load unread counts on initial load and after folder changes
@@ -5604,7 +5636,7 @@ function buildSessionRunDetails(r) {
           return { title: "Brak potwierdzenia planszy", detail: `Display nie potwierdził zmiany przez ${formatDuration(metrics.wait_ms)}; oczekiwano ${formatDuration(metrics.expected_ms)}${metrics.ack_read_error ? "; panel Control miał też problem z odczytem potwierdzenia" : ""}${metrics.completion_realtime_connected === false ? " · kanał potwierdzeń Control był rozłączony" : ""}${metrics.control_visibility === "hidden" ? " · panel Control był w tle" : ""}${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle (animacja i potwierdzenie czekały na jej powrót)" : ""}.` };
         }
         if (metrics.reason === "late_ack") {
-          return { title: "Spóźnione potwierdzenie planszy", detail: `Display potwierdził zmianę po ${formatDuration(metrics.actual_ms)} (oczekiwano ${formatDuration(metrics.expected_ms)}); do tego czasu akcje Control były zablokowane${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle" : ""}.` };
+          return { title: "Spóźnione potwierdzenie planszy", detail: `Display potwierdził zmianę po ${formatDuration(metrics.actual_ms)} (oczekiwano ${formatDuration(metrics.expected_ms)}); do tego czasu akcje Control były zablokowane${metrics.display_visibility === "hidden" ? " · karta Wyświetlacza była w tle" : ""}${metrics.ack_source === "fallback_read" ? " · potwierdzenie odczytane z bazy (kanał na żywo go nie dostarczył)" : ""}.` };
         }
         return {
           title: "Opóźniona zmiana planszy",
@@ -5627,6 +5659,7 @@ function buildSessionRunDetails(r) {
         if (metrics.phase === "read_recovered") return { title: `Odczyt bazy wrócił: ${devices}`, detail: `${metrics.fetch_ms != null ? `Odczyt trwał ${formatDuration(metrics.fetch_ms)}` : "Odczyt działa"}${revision}` };
         if (metrics.phase === "render_error") return { title: `Błąd renderowania: ${devices}`, detail: `${metrics.error_class || "Błąd urządzenia"}${revision}` };
         if (metrics.phase === "render_recovered") return { title: `Renderowanie wróciło: ${devices}`, detail: `Nowy stan został zastosowany${revision}` };
+        if (metrics.phase === "fallback_catchup" && metrics.trigger === "lease_heartbeat") return { title: `Urządzenie samo nadrobiło zgubiony stan: ${devices}`, detail: `Kanał na żywo nie dostarczył zmiany; sygnał życia wykrył zaległość (rewizja ${metrics.latest_revision ?? "?"}${metrics.missed_revisions ? `, brakowało ${metrics.missed_revisions}` : ""}) i stan pobrano z bazy.` };
         if (metrics.phase === "fallback_catchup") return { title: `Odczyt awaryjny nadrobił stan: ${devices}`, detail: `Pominięto ${metrics.previous_revision ?? "?"} → ${metrics.revision ?? "?"}${metrics.fetch_ms != null ? ` · odczyt ${formatDuration(metrics.fetch_ms)}` : ""}` };
       }
       if (event.category === "state_sync") {
@@ -6556,7 +6589,7 @@ function wireEvents() {
 
   wireMarketplaceEvents();
   wireReportsEvents();
-  loadFolderBadges();
+  startAdminBadges();
   wireMarketingEvents();
   wireRatingsEvents();
   wireStatsEvents();
@@ -6746,7 +6779,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T18202");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T22245");
 
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;

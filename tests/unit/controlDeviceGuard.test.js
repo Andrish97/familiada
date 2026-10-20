@@ -31,19 +31,21 @@ test('telefon landscape pozostaje telefonem, a mała fizyczna szerokość jest o
   assert.equal(api.getDeviceProfile().orientation, 'landscape');
   assert.equal(api.isPhoneScreen(), true);
   assert.equal(api.deviceGuardState(700), 'rotate');
-  assert.equal(api.deviceGuardState(980), 'screen');
+  // Telefon: za mały ekran = „Niedostępne na telefonie” (decyzja 2026-10-20).
+  assert.equal(api.deviceGuardState(980), 'unsupported');
 });
 
 test('telefon portrait nie dostaje komunikatu o obrocie przy globalnej blokadzie landscape', () => {
   const api = load({ screenWidth: 390, screenHeight: 844, touch: true });
-  assert.equal(api.deviceGuardState(700), 'narrow');
-  assert.equal(api.deviceGuardState(980), 'screen');
+  // Ani obrót (landscape zablokowany), ani poszerzenie okna -- niedostępne na telefonie.
+  assert.equal(api.deviceGuardState(700), 'unsupported');
+  assert.equal(api.deviceGuardState(980), 'unsupported');
 });
 
 test('telefon landscape strony tylko dla tabletu/desktopu nie dostaje komunikatu obrotu', () => {
   const api = load({ screenWidth: 390, screenHeight: 844, width: 844, height: 390, touch: true });
   assert.equal(api.deviceGuardState(700, { formFactors: ['tablet', 'desktop'] }), 'unsupported');
-  assert.equal(api.deviceGuardState(980), 'screen');
+  assert.equal(api.deviceGuardState(980), 'unsupported');
 });
 
 test('wymaganie dotyku ma pierwszeństwo dla komputera bez ekranu dotykowego', () => {
