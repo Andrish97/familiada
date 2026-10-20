@@ -1888,7 +1888,10 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
 test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
-  test("odznaczenie pytania poniżej progu 10 wyłącza przycisk Utwórz", async ({ page, context }) => {
+  // E21 (docs/reguly-gier-transfer-plan.md §2): zaznaczenie = dokładny zestaw
+  // pytań nowej gry; ani liczba pytań, ani zgodność z typem nie blokują
+  // utworzenia szkicu -- braki pokazuje podsumowanie (silnik reguł gry).
+  test("E21: poniżej 10 pytań Utwórz zostaje dostępne, podsumowanie pokazuje brak", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-COUNT-${Date.now()}`);
@@ -1898,51 +1901,35 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
-
       await expect(page.locator("#list .row[data-kind=\"q\"]")).toHaveCount(10, { timeout: 15000 });
 
-      // Ctrl+A zaznacza wszystkie 10 -- modal ma teraz wybierać DOKŁADNIE
-      // to co user zaznaczył (patrz test "modal wybiera DOKŁADNIE
-      // zaznaczone pytania" niżej), więc żeby wystartować z pełnym
-      // zaznaczeniem trzeba zaznaczyć wszystko, a nie tylko jedno pytanie.
       await page.locator("#list").click();
       await page.keyboard.press("Control+a");
       await pressToolbarShortcut(page, "createGame", "Control+g");
-
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
 
-      // domyślny typ to "Preparowana" (3-6 odpowiedzi wymagane) -- te pytania
-      // są puste (0 odpowiedzi), więc byłyby czerwone/blokujące "Utwórz" z
-      // powodu TYPU, nie liczby. "Typowa ankieta" nie ma tego wymogu --
-      // test sprawdza wyłącznie próg liczby zaznaczonych, nie walidację typu.
-      await page.locator("#lbl0").click();
-
-      await expect(page.locator("#xCreate")).toBeEnabled({ timeout: 5000 });
+      await page.locator("#lbl0").click(); // ankieta tekstowa: 10 pytań wystarcza
       await expect(page.locator("#xCountVal")).toHaveText("10");
+      await expect(page.locator("#xSummary")).toHaveClass(/is-ready/);
 
       await page.locator("#xList .xPickItem").first().click();
-
       await expect(page.locator("#xCountVal")).toHaveText("9", { timeout: 5000 });
-      await expect(page.locator("#xCreate")).toBeDisabled();
+      await expect(page.locator("#xCreate")).toBeEnabled();
+      await expect(page.locator("#xSummary")).toContainText("co najmniej 10 pytań");
+      await expect(page.locator("#xSummary")).not.toHaveClass(/is-ready/);
     } finally {
       await deleteBase(page, baseId);
     }
   });
 
-  test("regresja: czerwone (niespełniające warunków typu) pytanie blokuje Utwórz, nawet gdy zaznaczone", async ({ page, context }) => {
-    // Zgłoszenie użytkownika: podtytuł modala mówi "czerwone nie spełniają
-    // warunków wybranego typu -- odhacz je albo popraw dane", ale gra i tak
-    // powstawała z czerwonym (niepasującym) pytaniem w środku --
-    // buildExportPayload() brało wszystko z selectedIds bez sprawdzania
-    // validateForType(). Naprawa: "Utwórz" jest wyłączone dopóki
-    // którekolwiek zaznaczone pytanie jest czerwone dla aktualnego typu.
-    test.setTimeout(60_000);
+  test("E21: pytanie niezgodne z typem jest oznaczone, ale nie blokuje -- gra powstaje z całego zaznaczenia", async ({ page, context }) => {
+    test.setTimeout(90_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
-    const baseId = await createBase(page, `E2E-XM-BADBLOCKS-${Date.now()}`);
+    const baseId = await createBase(page, `E2E-XM-BADINFO-${Date.now()}`);
+    const gameName = `E2E-XM-BADINFO-GAME-${Date.now()}`;
+    let gameId = null;
 
     try {
-      // 10 z 3 odpowiedziami (zielone dla Punktacji/Preparowanej) + 1 z
-      // 0 odpowiedziami (czerwone dla obu -- wymagają 3-6)
       await seedTenTypeCompatibleQuestions(page, baseId);
       const badQid = await createQuestion(page, {
         baseId, ord: 11, payload: { text: "Za mało odpowiedzi", answers: [] },
@@ -1957,36 +1944,36 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       await pressToolbarShortcut(page, "createGame", "Control+g");
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
 
-      await page.locator("#lbl1").click(); // Punktacja -- wymaga 3-6 odpowiedzi
+      await page.locator("#lbl1").click(); // ankieta punktowa -- wymaga 3-6 odpowiedzi
       await expect(page.locator(`#xList .xPickItem[data-qid="${badQid}"]`)).toHaveClass(/\bbad\b/, { timeout: 5000 });
-
-      // 11 zaznaczonych (>=10), ale jedno czerwone -> Utwórz ma być wyłączone
+      await expect(page.locator(`#xList .xPickItem[data-qid="${badQid}"] .xMeta`)).toContainText("potrzeba 3–6 odp.");
       await expect(page.locator("#xCountVal")).toHaveText("11");
-      await expect(page.locator("#xCreate")).toBeDisabled();
+      await expect(page.locator("#xSummary")).toContainText("Pytanie #11");
 
-      // odznaczenie czerwonego odblokowuje (zostaje 10 zielonych)
-      await page.locator(`#xList .xPickItem[data-qid="${badQid}"]`).click();
-      await expect(page.locator("#xCountVal")).toHaveText("10");
-      await expect(page.locator("#xCreate")).toBeEnabled({ timeout: 5000 });
+      await page.locator("#xName").fill(gameName);
+      await expect(page.locator("#xCreate")).toBeEnabled();
+      await page.locator("#xCreate").click();
+      await expect(page.locator("#exportOverlay")).toBeHidden({ timeout: 15000 });
+
+      const game = await findGameByName(page, gameName);
+      expect(game, "gra powstaje mimo braków").not.toBeNull();
+      gameId = game.id;
+      const qs = await getGameQuestionsWithAnswers(page, gameId);
+      expect(qs).toHaveLength(11);
     } finally {
+      if (gameId) await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
       await deleteBase(page, baseId);
     }
   });
 
-  test("regresja: modal wybiera DOKŁADNIE zaznaczone pytania, nie dopełnia losowymi resztkami do progu 10", async ({ page, context }) => {
-    // Zgłoszenie użytkownika: w modalu tworzenia gry zaznaczonych jest
-    // zawsze dokładnie 10 pytań, mimo że user zaznaczył/wybrał mniej --
-    // export-modal.js's open() dopełniało selekcję losowo dobranymi
-    // pytaniami z całej bazy do progu QN_MIN(10). Naprawa: brak dopełniania
-    // -- selekcja w modalu = dokładnie to co user zaznaczył, nawet jeśli to
-    // mniej niż 10 (przycisk "Utwórz" zostaje wtedy po prostu wyłączony).
-    test.setTimeout(60_000);
+  test("E21: modal tworzy grę z DOKŁADNIE zaznaczonych pytań, także z 3 (szkic), bez dopełniania", async ({ page, context }) => {
+    test.setTimeout(90_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-NORANDOM-${Date.now()}`);
+    const gameName = `E2E-XM-EXACT-GAME-${Date.now()}`;
+    let gameId = null;
 
     try {
-      // 15 pytań w bazie -- gdyby modal dopełniał do 10, wybrałby 7 spośród
-      // TYCH 12 niezaznaczonych (obce dla zaznaczenia użytkownika).
       const ids = [];
       for (let i = 0; i < 15; i++) {
         ids.push(await createQuestion(page, {
@@ -1997,7 +1984,6 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // zaznacz tylko 3 konkretne pytania (Ctrl+klik)
       const chosen = ids.slice(0, 3);
       for (const qid of chosen) {
         await page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`).click({ modifiers: ["Control"] });
@@ -2006,21 +1992,24 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
       await pressToolbarShortcut(page, "createGame", "Control+g");
       await expect(page.locator("#exportOverlay")).toBeVisible({ timeout: 5000 });
-
-      // dokładnie 3, nie 10 -- i to te same 3, nie jakiekolwiek inne
       await expect(page.locator("#xCountVal")).toHaveText("3");
-      await expect(page.locator("#xCreate")).toBeDisabled();
-
       for (const qid of chosen) {
-        const cb = page.locator(`#xList .xPickItem[data-qid="${qid}"] input[type="checkbox"]`);
-        await expect(cb).toBeChecked();
+        await expect(page.locator(`#xList .xPickItem[data-qid="${qid}"] input[type="checkbox"]`)).toBeChecked();
       }
-      const notChosen = ids.filter((id) => !chosen.includes(id));
-      for (const qid of notChosen) {
-        const cb = page.locator(`#xList .xPickItem[data-qid="${qid}"] input[type="checkbox"]`);
-        await expect(cb).not.toBeChecked();
+      for (const qid of ids.filter((id) => !chosen.includes(id))) {
+        await expect(page.locator(`#xList .xPickItem[data-qid="${qid}"] input[type="checkbox"]`)).not.toBeChecked();
       }
+
+      await page.locator("#xName").fill(gameName);
+      await expect(page.locator("#xCreate")).toBeEnabled();
+      await page.locator("#xCreate").click();
+      await expect(page.locator("#exportOverlay")).toBeHidden({ timeout: 15000 });
+      const game = await findGameByName(page, gameName);
+      gameId = game?.id || null;
+      const qs = await getGameQuestionsWithAnswers(page, gameId);
+      expect(qs.map((q) => q.text)).toEqual(["Pytanie 1", "Pytanie 2", "Pytanie 3"]);
     } finally {
+      if (gameId) await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
       await deleteBase(page, baseId);
     }
   });

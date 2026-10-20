@@ -798,8 +798,8 @@ async function boot() {
       pointsRemainTop.appendChild(box);
     }
 
+    aList.appendChild(buildAnswerHints()); // na górze listy -- widoczne bez przewijania
     for (const a of answers) aList.appendChild(answerRow(a));
-    aList.appendChild(buildAnswerHints());
     updateSumFromInputs();
   }
 

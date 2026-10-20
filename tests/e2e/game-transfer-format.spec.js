@@ -29,7 +29,7 @@ test('common game transfer format: native export and existing import for all thr
     const copyId=await importGame(packet,source.ownerId);
     return {packet,copyId,progress};
    },{source,type});owned.push(result.copyId);
-   expect(result.packet.game).toEqual({name:source.name,type});expect(result.packet.questions).toHaveLength(10);
+   expect(result.packet.format_version).toBe(2);expect(result.packet.game).toEqual({name:source.name,type,state:'draft'});expect(result.packet.questions).toHaveLength(10);
    expect(result.progress).toEqual(Array.from({length:11},(_,i)=>({i,n:10})));
    expect(JSON.stringify(result.packet)).not.toContain(source.id);expect(JSON.stringify(result.packet)).not.toContain(source.ownerId);
    expect(result.copyId).not.toBe(source.id);
@@ -41,6 +41,26 @@ test('common game transfer format: native export and existing import for all thr
    },result.copyId);
    expect(copy.game).toEqual({owner_id:source.ownerId,name:source.name,type,status:'draft'});expect(copy.questions).toHaveLength(10);
    expect(copy.questions.map(q=>({text:q.text,answers:q.answers.sort((a,b)=>a.ord-b.ord).map(a=>({text:a.text,fixed_points:a.fixed_points}))}))).toEqual(result.packet.questions);
+  }
+  // E21: zamknięta ankieta przechodzi jako zamknięta ankieta tego samego typu
+  // (bez konwersji na preparowaną), a niepoprawny wynik -- jako szkic.
+  for(const type of ['poll_text','poll_points']){
+   const res=await page.evaluate(async type=>{
+    const version=document.querySelector('meta[name="app-version"]')?.content;
+    const {exportGame,importGame}=await import('/games/js/games-import-export.js?v='+encodeURIComponent(version));
+    const db=window.__sbClient;const {data:auth}=await db.auth.getUser();
+    const closed={format_version:2,game:{name:'E2E-CLOSED-'+type+'-'+Date.now(),type,state:'closed'},questions:Array.from({length:10},(_,i)=>({text:'Zamknięte '+(i+1),answers:[{text:'Pierwsza',fixed_points:40},{text:'Druga',fixed_points:40},{text:'Trzecia😀',fixed_points:20}]}))};
+    const id=await importGame(closed,auth.user.id);
+    const {data:g}=await db.from('games').select('type,status').eq('id',id).single();
+    const again=await exportGame(id);
+    const broken=await importGame({...closed,game:{...closed.game,name:closed.game.name+'-x'},questions:closed.questions.slice(0,9)},auth.user.id);
+    const {data:b}=await db.from('games').select('type,status').eq('id',broken).single();
+    return {ids:[id,broken],g,again,b};
+   },type);owned.push(...res.ids);
+   expect(res.g).toEqual({type,status:'ready'});
+   expect(res.again.game.state).toBe('closed');expect(res.again.game.type).toBe(type);
+   expect(res.again.questions[0].answers).toEqual([{text:'Pierwsza',fixed_points:40},{text:'Druga',fixed_points:40},{text:'Trzecia',fixed_points:20}]);
+   expect(res.b).toEqual({type,status:'draft'});
   }
  }finally{
   for(const id of owned)await page.evaluate(async id=>{const {error}=await window.__sbClient.from('games').delete().eq('id',id);if(error)throw error;},id);

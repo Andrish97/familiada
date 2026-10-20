@@ -24,6 +24,7 @@ const IDS = {
   logoDraw: id("8300", 44),       // „Gwiazdy wieczoru”: pełna scena Fabric do edytora rysunku
   logoText: id("8300", 40),
   logoClassic: id("8300", 1),
+  tallyTie: id("8000", 130),      // ankieta tekstowa zatrzymana z remisem na granicy szóstki (E21)
 };
 
 // Dopełnienie z content.cjs: [klucz, typ, status, liczba pytań, przesunięcie w puli, dni temu, dodatki]
@@ -49,16 +50,21 @@ function rulesState(type, status, nq, extra = {}) {
   const no = (code, params = {}) => ({ ok: false, code, params });
   const enough = extra.badSum ? no("sumTooBig", { ord: 4, max: 100, sum: 115 }) : nq >= 10 ? ok : no("minQuestions", { min: 10, n: nq });
   const poll = type !== "prepared";
+  const edit = status === "poll_open" ? no("pollOpenNoEdit") : status === "poll_stopped" ? no("pollStoppedNoEdit") : ok;
+  const transfer = poll && (status === "poll_open" || status === "poll_stopped") ? { ok: true, drops_votes: true } : ok;
   return {
-    edit: status === "poll_open" ? no("pollOpenNoEdit") : status === "poll_stopped" ? no("pollStoppedNoEdit") : ok,
+    edit,
+    change_type: edit,
+    duplicate: transfer,
+    send: poll && status !== "draft" ? no("sendOnlyDraft") : ok,
     play: poll && status !== "ready" ? no("playAfterPoll") : enough,
     poll_entry: poll ? ok : no("preparedNoPoll"),
     poll_open: !poll ? no("preparedNoPoll") : status === "poll_open" ? no("pollAlreadyOpen") : enough,
     poll_stop: status === "poll_open" ? ok : no("stopOnlyOpen"),
     poll_resume: status === "poll_stopped" ? ok : no("resumeOnlyStopped"),
     poll_close: status === "poll_open" || status === "poll_stopped" ? ok : no("closeOnlyOpen"),
-    export: status === "poll_open" ? no("pollOpenNoExport") : status === "poll_stopped" ? no("pollStoppedNoExport") : ok,
-    rules: { qn_min: 10, an_min: 3, an_max: 6, sum_prepared: 100 },
+    export: transfer,
+    rules: { qn_min: 10, an_min: 3, an_max: 6, pts_min: 4, sum_max: 100 },
   };
 }
 
@@ -114,6 +120,18 @@ function buildDb(lang, extras = {}) {
     const questions = Array.from({ length: count }, (_, i) => c.questions[(offset + i) % c.questions.length]);
     addGame(id("8000", 110 + gi), { name: c.games[key], type, status, questions, age, from: extra.from != null ? p.friends.accepted[extra.from][0] : null, votes: extra.votes || 0, badSum: !!extra.badSum });
   });
+
+  // E21: zatrzymana ankieta tekstowa z remisem głosów na granicy szóstki
+  // (pytanie 1: 6. i 7. odpowiedź mają po tyle samo głosów) -- podliczanie.
+  addGame(IDS.tallyTie, { name: c.games.office + " · 2", type: "poll_text", status: "poll_stopped", questions: c.questions.slice(5, 15), age: 2 });
+  const tieCounts = [5, 4, 3, 2, 2, 1, 1];
+  tables.questions.filter((q) => q.game_id === IDS.tallyTie).forEach((q, qi) => {
+    const pool = c.questions[(5 + qi) % c.questions.length][1].map(([t]) => t);
+    const extra = ["Lody", "Kawa", "Pizza", "Sok", "Ryż", "Ser", "Zupa"];
+    const texts = [...pool, ...extra].slice(0, 7);
+    pollVotes[q.id] = texts.map((t, i) => [t, qi === 0 ? tieCounts[i] : [6, 5, 4, 3, 1, 1, 0][i]]).concat(qi === 0 ? [["😀", 2]] : []);
+  });
+  voteCounts.push({ game_id: IDS.tallyTie, votes: 20 });
 
   // ---------- logo ----------
   // Bez materiałów DEMO: klasyczne FAMILIADA (czcionka planszy) i logo
@@ -219,6 +237,22 @@ function buildDb(lang, extras = {}) {
     resource_copy_inbox_list: [], resource_copy_badges: [],
     badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [],
     polls_vote_counts: voteCounts,
+    // E21: dane podliczania (N pełnych ankiet, głosy pełnych ankiet, teksty już oczyszczone).
+    poll_tally_source: `fn:(args, db) => {
+      const votes = ${JSON.stringify(pollVotes)};
+      const g = db.tables.games.find((x) => x.id === args.p_game_id);
+      if (!g) return null;
+      const qs = db.tables.questions.filter((q) => q.game_id === g.id).sort((a, b) => a.ord - b.ord);
+      const n = 20;
+      return { n, min: 10, questions: qs.map((q) => {
+        const pool = votes[q.id] || [];
+        if (g.type === "poll_points") return { question_id: q.id, ord: q.ord, answers: db.tables.answers.filter((a) => a.question_id === q.id).map((a) => ({ id: a.id, ord: a.ord, votes: (pool.find(([t]) => t === a.text) || [0, 0])[1] })) };
+        const clean = pool.filter(([t, v]) => v > 0 && !t.includes("😀"));
+        return { question_id: q.id, ord: q.ord, dropped: pool.filter(([t]) => t.includes("😀")).reduce((s, [, v]) => s + v, 0),
+          items: clean.map(([text, count]) => ({ text: text.toLowerCase(), count })) };
+      }) };
+    }`,
+    poll_text_tally_draft_get: { draft: null, saved_at: null },
     market_my_library: [],
     market_browse: ["pl", "en", "uk"].flatMap((mlang) => content[mlang].market.map(([title, description, author], i) => ({
       id: id("8b00", ["pl", "en", "uk"].indexOf(mlang) * 100 + i + 1), lang: mlang, title, description,
