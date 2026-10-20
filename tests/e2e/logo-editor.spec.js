@@ -26,7 +26,7 @@ const { testAccountUsername } = require("./helpers/login");
 const L = require("./helpers/logo-editor");
 
 const DEMO_IMAGE = path.resolve(__dirname, "../../web/logos/assets/demo-image.png");
-const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon.png");
+const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon-1024.png");
 
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 test.describe.configure({ mode: "parallel" });
