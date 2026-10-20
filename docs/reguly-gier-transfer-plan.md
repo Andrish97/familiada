@@ -589,12 +589,15 @@ zapis, podgląd i późniejszą rozgrywkę.
 3. **Rozstrzygnięte 2026-10-20:** maksymalna suma punktów w pytaniu
    „Preparowanej” pozostaje 100 (`<=100`), nie wymagamy dokładnie 100.
    Modal Base Explorera nie egzekwuje tego limitu przy tworzeniu szkicu.
-4. Dokładna kolejność przycinania do sześciu odpowiedzi i liczenia udziału
-   procentowego przy końcowej kwalifikacji; JS i SQL muszą stosować identyczny
-   algorytm.
+4. **Rozstrzygnięte 2026-10-20:** udział liczymy względem wszystkich głosów,
+   przed kwalifikacją i wyborem szóstki; dodatni udział <1% daje 1%, pozostałe
+   wartości ucinamy. Ranking szóstki według liczby głosów, rzeczywisty remis
+   na jej granicy rozstrzyga użytkownik; w rozgrywce liczą się zapisane punkty.
+   Szczegóły w §3; JS i SQL muszą stosować identyczny algorytm.
 
-Powyższe kwestie mają zostać rozstrzygnięte na podstawie wyników audytu przed
-etapem C. Nie są powodem do zatrzymania samej inwentaryzacji.
+Przed etapem C pozostaje uzgodnić politykę strat treści z pkt 1 i §8.6.
+Odczyt rzeczywistych danych i zakres operacji naprawczych to pozostałe zadania
+audytu danych, a nie ponownie otwarte decyzje o regułach gry.
 
 ## 8. Audyt A — kod na `37830910ab` (2026-10-20)
 
@@ -643,7 +646,7 @@ przy zapisie/przejściu i odczytywany przez UI. Nie jest to nowa decyzja o proga
 |---|---|---|---|
 | P / draft, ready / graj | ≥10 pytań; każde 3–6 odpowiedzi; 0–100 pkt; suma ≤100. Zero punktów przechodzi; brak minimum 4 | Wszystkie warunki łącznie: ≥10 pytań; każde pytanie 3–6 odpowiedzi; każda odpowiedź ≥4 pkt; suma odpowiedzi w każdym pytaniu ≤100. Gotowość niezależna od etykiety statusu | R; UI RULES/komentarz wspomina sumę 100 → wspólna gotowość, SQL |
 | AP, AT / draft, open, stopped / graj | Odmowa do `ready` | Rozgrywka po poprawnym zamknięciu | R → wspólna akcja play |
-| AP, AT / ready / graj | Sam status wystarcza; brak ponownej oceny treści/wyniku w `play` | Stan musi pochodzić z autorytatywnie zweryfikowanego zamknięcia; polityka zastanych wyników do ustalenia | R → wspólny kontrakt zamknięcia/play |
+| AP, AT / ready / graj | Sam status wystarcza; brak ponownej oceny treści/wyniku w `play` | Nowe zamknięcie autorytatywnie weryfikuje wynik według wspólnego kontraktu; migracja pozostawia dotychczasowe ankiety i ich zamknięte wyniki bez przebudowy | R → wspólny kontrakt zamknięcia/play |
 | M / draft, ready / graj | Nowsze R liczy treść jak P; starsze `game_action_state.can_play` zawsze false; lista Marketplace w Grach włącza Graj po samym zaznaczeniu, Control ma guard R | Osobny typ kopii pozostaje; przycisk i strona korzystają z centralnego wyniku | R + E/stała UI, historyczna funkcja → wspólna gotowość |
 | P / draft, ready / edytuj | Tak, bez resetu | Ta sama centralna akcja edit, uprawnienia i locki | R + E/lock → wspólna akcja + SQL |
 | AP, AT / draft / edytuj | Tak, bez resetu | Jak obecnie; nie wymaga gotowości | R + E → wspólna akcja + SQL |
