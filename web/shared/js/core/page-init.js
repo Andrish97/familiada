@@ -29,17 +29,17 @@
 //   deferTopbarReady true — strona odsłoni topbar po własnym, późniejszym renderze
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-20T19420";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-20T19420";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-20T19420";
-import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-20T19420";
+import { PAGES, backHref, buttonHref, buttonRoles, buttonVisible, buttonBlocked, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-20T19581";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-20T19581";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-20T19581";
+import { setModalSheetPage } from "./modal-sheet.js?v=v2026-10-20T19581";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-20T19420"),
-    import("./topbar-controller.js?v=v2026-10-20T19420"),
-    import("./modal-sheet.js?v=v2026-10-20T19420"),
-    import("./device-guard.js?v=v2026-10-20T19420"),
+    import("./auth.js?v=v2026-10-20T19581"),
+    import("./topbar-controller.js?v=v2026-10-20T19581"),
+    import("./modal-sheet.js?v=v2026-10-20T19581"),
+    import("./device-guard.js?v=v2026-10-20T19581"),
 
   ]);
   return {
@@ -57,10 +57,10 @@ async function loadDeps() {
 // wspólne dla stron z kontem. Ładowane leniwie; w testach podmieniane w deps.
 async function showAccountNotices(user) {
   if (isGuestUser(user)) {
-    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-20T19420");
+    const { maybeShowGuestInfoModal } = await import("./guest-info-modal.js?v=v2026-10-20T19581");
     await maybeShowGuestInfoModal(user);
   } else if (user) {
-    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-20T19420");
+    const { initRatingSystem } = await import("./rating-system.js?v=v2026-10-20T19581");
     await initRatingSystem(user);
   }
 }
@@ -203,7 +203,7 @@ export async function initPage(id, opts = {}) {
       .filter((spec) => ["friends", "subscribers"].includes(spec.to))
       .map((spec) => spec.to))];
     if (targets.length) {
-      void import("./nav-contact-badges.js?v=v2026-10-20T19420")
+      void import("./nav-contact-badges.js?v=v2026-10-20T19581")
         .then(({ initNavContactBadges }) => initNavContactBadges(targets))
         .catch((error) => console.warn("[nav] contact badge refresh failed", error));
     }
