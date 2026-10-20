@@ -513,6 +513,12 @@ body{
 main{
     flex: 1 0 auto;
 }
+/* Stopka w main: krótka strona — stopka na dole okna (margin-top:auto
+   działa tylko w kolumnie flex); dłuższa — zwykłe przewijanie. */
+main:has(> .footer){
+    display: flex;
+    flex-direction: column;
+}
 
 /* FOOTER */
 .footer{
