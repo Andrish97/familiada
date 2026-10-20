@@ -22,7 +22,8 @@ Uwagi:
 | `gh-run.sh db-read.yml sql_file=scripts/db-read/<nazwa>.sql` | Odczyt produkcji: jedno SELECT bez `;`/`\`, sesja READ ONLY, wynik tylko liczby/bool/UUID/daty (`scripts/db-read.sh`). Repo publiczne — żadnych treści, nazw, e-maili. |
 | `gh-run.sh db-read.yml sql_file=scripts/db-read/activity-now.sql` | Kto jest teraz na stronie (liczby) i gry z aktywną sesją Control — sprawdzać przed zmianą danych. |
 | `gh-run.sh maintenance.yml action=status` | Stan przerwy technicznej i aktywność. |
-| `gh-run.sh maintenance.yml action=on minutes=15` | Przerwa z odliczaniem; odmawia przy grze w Control (`force=true` wymusza); po czasie sama się wyłącza (o ile nikt nie zmienił stanu). **Tylko za wyraźną zgodą użytkownika, za każdym razem.** |
+| `gh-run.sh maintenance.yml action=on minutes=15` | Przerwa z odliczaniem. **Tylko po wyraźnej zgodzie użytkownika na tę konkretną przerwę** (zasada w `CLAUDE.md`). Odmawia, gdy trwa praca: Control, edycja, głosy w ankietach (`scripts/db-read/maintenance-blockers.sql`; `force=true` tylko na polecenie). Po czasie sama się wyłącza (o ile nikt nie zmienił stanu). |
+| `gh-run.sh db-read.yml sql_file=scripts/db-read/maintenance-blockers.sql` | Co przerwałaby przerwa teraz (liczby, źródła jak panel admina, bez kont testowych/admina). |
 | `gh-run.sh maintenance.yml action=off` | Wyłącza przerwę od razu. |
 
 Lokalnie odczyt na testowej bazie:

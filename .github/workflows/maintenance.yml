@@ -2,9 +2,13 @@ name: Maintenance (przerwa techniczna)
 
 # Przerwa techniczna dla agentów i właściciela, bez panelu admina.
 #  * status -- stan przerwy (Cloudflare KV „state”) i aktywność (liczby);
-#  * on     -- odmawia, gdy trwa gra w Control (chyba że force); włącza przerwę
-#              z odliczaniem na N minut i po czasie sama ją wyłącza -- chyba że
-#              w międzyczasie ktoś zmienił stan (panel admina albo „off”);
+#  * on     -- tylko na wyraźne polecenie użytkownika (CLAUDE.md); odmawia,
+#              gdy trwa praca: gra w Control, edycja (blokady edycji, osoby
+#              w edytorach, ustawieniach gry, Eksploratorze, logo, ankietach)
+#              albo głosy w ankietach z 10 min -- scripts/db-read/
+#              maintenance-blockers.sql, źródła jak panel admina (chyba że
+#              force); włącza przerwę z odliczaniem na N minut i po czasie sama
+#              ją wyłącza -- chyba że w międzyczasie ktoś zmienił stan;
 #  * off    -- wyłącza przerwę od razu.
 # Worker nie kończy przerwy sam po returnAt, dlatego robi to ten workflow.
 # Repo jest publiczne: w logu tylko liczby i stan przerwy.
@@ -26,7 +30,7 @@ on:
         required: false
         default: '15'
       force:
-        description: 'Włącz mimo aktywnej gry w Control'
+        description: 'Włącz mimo trwającej pracy użytkowników (Control, edycja, głosy)'
         required: false
         default: false
         type: boolean
@@ -71,11 +75,15 @@ jobs:
           DB_READ_TUPLES: '1'
           DB_READ_NO_NOTICE: '1'
         run: |
-          ROW=$(scripts/db-read.sh scripts/db-read/activity-now.sql | tail -n 1)
-          IFS='|' read -r USERS TABS VISIBLE USERS15 CONTROL NOW <<< "$ROW"
-          echo "users=$USERS" >> "$GITHUB_OUTPUT"
-          echo "control=$CONTROL" >> "$GITHUB_OUTPUT"
-          echo "::notice title=Aktywność::użytkownicy (2 min): $USERS, karty: $TABS (widoczne $VISIBLE), użytkownicy (15 min): $USERS15, gry w Control: $CONTROL"
+          ROW=$(scripts/db-read.sh scripts/db-read/maintenance-blockers.sql | tail -n 1)
+          IFS='|' read -r USERS CONTROL EDIT EDIT_PAGES VOTES NOW <<< "$ROW"
+          BLOCKERS=""
+          [ "${CONTROL:-0}" != 0 ] && BLOCKERS="$BLOCKERS gry w Control: $CONTROL,"
+          [ "${EDIT:-0}" != 0 ] && BLOCKERS="$BLOCKERS blokady edycji: $EDIT,"
+          [ "${EDIT_PAGES:-0}" != 0 ] && BLOCKERS="$BLOCKERS osoby w edytorach/ustawieniach/ankietach: $EDIT_PAGES,"
+          [ "${VOTES:-0}" != 0 ] && BLOCKERS="$BLOCKERS głosy w ankietach (10 min): $VOTES,"
+          echo "blockers=${BLOCKERS%,}" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Aktywność::użytkownicy (90 s): $USERS, gry w Control: $CONTROL, blokady edycji: $EDIT, osoby w edytorach: $EDIT_PAGES, głosy (10 min): $VOTES"
 
       - name: Status
         run: |
@@ -91,12 +99,12 @@ jobs:
       - name: On
         if: inputs.action == 'on'
         env:
-          CONTROL: ${{ steps.activity.outputs.control }}
+          BLOCKERS: ${{ steps.activity.outputs.blockers }}
         run: |
           [[ "$MINUTES" =~ ^[0-9]+$ ]] && [ "$MINUTES" -ge 1 ] && [ "$MINUTES" -le 120 ] \
             || { echo "::error title=Przerwa::minutes musi być liczbą 1–120"; exit 1; }
-          if [ "${CONTROL:-0}" != 0 ] && [ "$FORCE" != true ]; then
-            echo "::error title=Przerwa::trwa gra w Control ($CONTROL) -- przerwa nie włączona (force=true, żeby wymusić)"
+          if [ -n "$BLOCKERS" ] && [ "$FORCE" != true ]; then
+            echo "::error title=Przerwa::trwa praca użytkowników --$BLOCKERS -- przerwa nie włączona (force=true, żeby wymusić)"
             exit 1
           fi
           RETURN_AT=$(date -u -d "+$MINUTES minutes" +%Y-%m-%dT%H:%M:%SZ)

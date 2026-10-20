@@ -120,10 +120,17 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   diagnostyczne już niepotrzebne. Z agenta: `scripts/agent-tools/gh-run.sh
   db-read.yml sql_file=…` (uruchamia, czeka, wypisuje wynik z adnotacji).
 - **Przerwa techniczna (decyzja użytkownika 2026-10-20):** workflow
-  `maintenance.yml` (`action=status|on|off`, `minutes`, `force`); `on`
-  odmawia przy grze w Control i sam wyłącza przerwę po czasie. Włączać
-  wyłącznie za wyraźną zgodą użytkownika przy każdym użyciu
-  (`scripts/agent-tools/README.md`).
+  `maintenance.yml` (`action=status|on|off`, `minutes`, `force`). Agent
+  **nigdy nie włącza przerwy sam**. Najpierw ocenia, czy praca jej wymaga:
+  zmiany jawne i nieszkodliwe dla użytkowników (dodające migracje, odczyty,
+  wdrożenia zgodne wstecz) idą bez przerwy; gdy zmiana może zaszkodzić albo
+  przerwać czyjąś pracę — przedstawia powód i czas, a `on` uruchamia dopiero
+  po wyraźnej zgodzie użytkownika na tę konkretną przerwę (zgoda nie
+  przechodzi na kolejne). `on` sam odmawia, gdy trwa praca: gra w Control,
+  edycja (blokady edycji, osoby w edytorach, ustawieniach gry, Eksploratorze,
+  logo, ankietach) albo głosy w ankietach z 10 min
+  (`scripts/db-read/maintenance-blockers.sql`); `force` tylko na wyraźne
+  polecenie. Po czasie przerwa wyłącza się sama.
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.
