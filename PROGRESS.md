@@ -4,7 +4,7 @@ Plan (źródło prawdy): [`docs/menedzer-bazy/README.md`](docs/menedzer-bazy/REA
 „Kolejność prac” + decyzje w [`docs/menedzer-bazy-plan.md`](docs/menedzer-bazy-plan.md).
 Branch: `ccr-ac709a92-0mcpyq`. Dziennik szczegółowy: `docs/wdrozenia.md`.
 
-**Status: W TOKU** (kroki planu 1–6 zrobione; krok 7 w toku)
+**Status: ZAKOŃCZONE** (plan 1–7 wykonany lokalnie; wdrożenie 7d czeka na decyzję użytkownika)
 
 Zasada nadrzędna użytkownika (2026-10-20): wszystko tylko na lokalnej,
 symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
@@ -19,7 +19,7 @@ symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
 | 4 | Wejścia: zaznaczanie, ramka, przeciąganie, gesty | ZROBIONE (`3a61e960`) |
 | 5 | Kosz jako folder + cofanie/ponawianie przez rejestr | ZROBIONE (`3a61e960`, `48a2ea47`) |
 | 6 | Wyszukiwanie, menu na telefonie (okno od dołu), dymki, nazwy, poprawki z raportów | ZROBIONE (`48a2ea47`, menu jak okna od dołu: ostatni commit) |
-| 7 | Zrzuty, pełny lokalny e2e, zestawienie — potem decyzja o wdrożeniu | W TOKU (podkroki niżej) |
+| 7 | Zrzuty, pełny lokalny e2e, zestawienie — potem decyzja o wdrożeniu | ZROBIONE lokalnie; wdrożenie czeka na decyzję |
 
 ### Krok 7 — podkroki
 
@@ -28,8 +28,12 @@ symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
 - [x] Zestawienie dla użytkownika (w rozmowie 2026-10-20).
 - [x] 7a. Scalono `origin/main` (na main w plikach menedżera tylko hashe wersji; `actions.js` zostaje usunięty; konflikt w Dzienniku połączony). Unit 690/690.
 - [x] 7b. Kosz na telefonie: bez kolumny Typ, kolumna „Zniknie” (za N dni) zaraz za nazwą — widoczna bez przewijania (`render.js` `columnsFor`). Zrzut `docs/menedzer-bazy/img/kosz-telefon.png`.
-- [ ] 7c. Lokalny e2e `base-explorer` po scaleniu i poprawce — W TOKU (przebieg uruchomiony, bez porażek do 26/77).
-- [ ] 7d. Wdrożenie (migracje 427–429 → e2e brancha na produkcji → Pages → testy kontrolne) — **czeka na decyzję użytkownika**.
+- [x] 7c. Lokalny e2e `base-explorer` po scaleniu: 77/77; po poprawce kosza ponownie kosz + cofanie 6/6; unit 690/690.
+- [ ] 7d. Wdrożenie (migracje 427–429 → e2e brancha na produkcji → Pages → testy kontrolne) — **poza zakresem agenta do czasu decyzji użytkownika** (zasada „nic na produkcję”). Przygotowanie gotowe: branch scalony z `main`, migracje tylko dodające.
+
+## Co dalej
+
+Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i log zastosowania, e2e `base-explorer` z `serveBranchCode` na branchu (punktowo), Pages, testy kontrolne na produkcji.
 
 ## Znane problemy
 
