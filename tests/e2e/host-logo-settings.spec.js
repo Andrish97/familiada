@@ -120,7 +120,14 @@ test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Cont
     await serveBranchCode(displayContext, { pages: ["display"] });
     const displayPage = await displayContext.newPage();
     displayPage.on("console", (m) => { if (/warn|error/.test(m.type())) console.log(`[e2e-diag:display] console:${m.type()} ${m.text().slice(0, 200)}`); });
-    await displayPage.goto(`${ORIGIN}/go/?d=display&id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" });
+    // Klucz czytany po otwarciu Control — ten z utworzenia gry bywa już nieaktualny.
+    const displayKey = await page.evaluate(async (id) => {
+      const { data, error } = await window.__sbClient.from("games").select("share_key_display").eq("id", id).single();
+      if (error) throw new Error(error.message);
+      return data.share_key_display;
+    }, game.id);
+    console.log(`[e2e-diag] display key changed=${displayKey !== game.share_key_display}`);
+    await displayPage.goto(`${ORIGIN}/go/?d=display&id=${game.id}&key=${displayKey}`, { waitUntil: "domcontentloaded" });
     try {
       await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 20_000 });
     } catch (error) {
