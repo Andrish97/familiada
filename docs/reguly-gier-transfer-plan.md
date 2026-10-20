@@ -1154,6 +1154,17 @@ Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
   limitu), bez wiszącego , ; : - na końcu, „?” zachowany; stare długie
   odpowiedzi baz demo (546, 21 tekstów) zastąpione krótkimi wersjami
   szablonu z migracji 298 zamiast ucinania.
+- **Demo — trzy grupy (decyzja użytkownika 2026-10-20):**
+  1. „Przywróć demo” (`restore_my_demo` → `seed_demo_for_user`) bierze
+     poprawione szablony — od razu (409).
+  2. Kopie nieedytowane (treść = szablon sprzed 409 albo starsza wersja
+     z mapą 298; nazwa gry bez znaczenia — 413) → dokładnie obecna wersja
+     demo, w nocy: preparowana bez odpowiedzi <4 pkt, otwarte ankiety
+     z 10 ankietami; bazy demo — odpowiedzi z mapy 298 (9 z 26 baz staje się
+     identyczne z szablonem; kategorie/tagi bez zmian).
+  3. Kopie edytowane → tylko naprawa tekstów „ładnie” (411): granica słowa,
+     krótkie wersje z mapy 298; punktów, odpowiedzi i głosów użytkownika
+     nie zmieniamy (2 preparowane, 4 tekstowe zamknięte, 17 baz).
 - **Odczyt produkcji bez migracji:** `db-read.yml` — wynik tylko liczby,
   bool, UUID, daty (repo publiczne).
 - **Demo:** każda gra demo zgodna z regułami swojego typu (migracja 409).
