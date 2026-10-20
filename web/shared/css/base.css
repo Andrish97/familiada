@@ -2469,6 +2469,9 @@ body{
   width: min(100%, 820px);
   align-self: flex-start;
 }
+@media (min-width: 1101px){
+  .name-field{ width: min(50vw, 900px); }
+}
 .name-field-label{
   font-weight: 900;
   letter-spacing: .06em;
