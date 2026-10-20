@@ -11,7 +11,7 @@
 // LOGO_E2E_ACCOUNTS (domyślnie 2,3,6,7) -- bez test1@ (na nim działa
 // nagrywanie rozgrywki e2e-record.yml, a trwająca gra blokuje edycję logo:
 // „prowadzisz rozgrywkę”), test4@/test5@ (zarezerwowane dla odizolowanych
-// przebiegów), i test9@/test10@ (Supabase: "Database error querying schema").
+// przebiegów), i test9@/test10@ (wyłączone z puli w CLAUDE.md; logowanie działa — sprawdzone 2026-10-20).
 // Logowanie raz na workera (captureSession). Każdy test
 // sprząta swoje logo i pliki (prefiks).
 //
