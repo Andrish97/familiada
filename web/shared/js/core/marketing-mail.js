@@ -1,4 +1,4 @@
-import { renderRichMailDocument } from "./mail-document.js?v=v2026-10-20T13370";
+import { renderRichMailDocument } from "./mail-document.js?v=v2026-10-20T13555";
 
 
 // Treść kampanii pozostaje edytowalnym HTML. Podgląd i wysyłka mają jeden dokument.
