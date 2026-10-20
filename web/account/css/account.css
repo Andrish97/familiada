@@ -215,3 +215,11 @@
   width: 20px;
   height: 20px;
 }
+
+/* Ocena systemu: dotychczasowa ocena (albo podpowiedź) i przycisk Oceń / Zmień ocenę */
+#userRatingInfo { display: grid; gap: 10px; }
+#userRatingInfo .rating-info { display: grid; gap: 6px; }
+#userRatingInfo .rating-stars,
+#userRatingInfo .rating-comment-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+#userRatingInfo .label { font-size: 12px; opacity: .75; }
+#userRatingInfo .value.italic { font-size: 14px; font-style: italic; overflow-wrap: anywhere; }

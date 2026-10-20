@@ -10,6 +10,7 @@ import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T19254"
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T19254";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-20T19254";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T19254";
+import { openRatingEditor } from "../../shared/js/core/rating-system.js?v=v2026-10-20T19254";
 
 
 
@@ -508,35 +509,60 @@ async function loadUserRating(userId) {
   const container = document.getElementById("userRatingInfo");
   if (!container) return;
 
+  let data = null;
   try {
-    const { data, error } = await sb()
+    const res = await sb()
       .from("app_ratings")
       .select("stars,comment")
       .eq("user_id", userId)
       .maybeSingle();
-
-    if (error) throw error;
-
-    if (data) {
-      const starsStr = icon("star").repeat(data.stars) + icon("star-empty").repeat(5 - data.stars);
-      container.innerHTML = `
-        <div class="rating-info">
-          <div class="rating-stars">
-            <span class="label">${t("common.rating.account.stars")}</span>
-            <span class="value gold">${starsStr}</span>
-          </div>
-          ${data.comment ? `
-            <div class="rating-comment-box">
-              <span class="label">${t("common.rating.account.comment")}</span>
-              <div class="value italic">"${data.comment}"</div>
-            </div>
-          ` : ""}
-        </div>
-      `;
-    }
+    if (res.error) throw res.error;
+    data = res.data;
   } catch (e) {
     console.warn("loadUserRating failed", e);
+    return;
   }
+
+  container.replaceChildren();
+  if (data) {
+    const info = document.createElement("div");
+    info.className = "rating-info";
+    info.innerHTML = `
+      <div class="rating-stars">
+        <span class="label">${t("common.rating.account.stars")}</span>
+        <span class="value gold">${icon("star").repeat(data.stars) + icon("star-empty").repeat(5 - data.stars)}</span>
+      </div>`;
+    if (data.comment) {
+      const box = document.createElement("div");
+      box.className = "rating-comment-box";
+      const label = document.createElement("span");
+      label.className = "label";
+      label.textContent = t("common.rating.account.comment");
+      const value = document.createElement("div");
+      value.className = "value italic";
+      value.textContent = `"${data.comment}"`;
+      box.append(label, value);
+      info.append(box);
+    }
+    container.append(info);
+  } else {
+    const hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = t("common.rating.account.notRated");
+    container.append(hint);
+  }
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.id = "ratingEditBtn";
+  btn.className = `btn full${data ? "" : " gold"}`;
+  btn.innerHTML = iconText(data ? "pencil" : "star", t(data ? "common.rating.account.change" : "common.rating.account.rate"));
+  btn.addEventListener("click", async () => {
+    if (!(await openRatingEditor(userId, data))) return;
+    toast(t("common.rating.account.saved"));
+    await loadUserRating(userId);
+  });
+  container.append(btn);
 }
 
 async function wireDemoActions(user) {

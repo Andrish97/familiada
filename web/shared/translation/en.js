@@ -125,6 +125,11 @@ const en = {
         stars: "Stars:",
         comment: "Comment:",
         notRated: "No rating submitted yet.",
+        editTitle: "Change your rating",
+        save: "Save rating",
+        rate: "Rate",
+        change: "Change rating",
+        saved: "Rating saved.",
       },
     },
     footer: {

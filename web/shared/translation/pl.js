@@ -125,6 +125,11 @@ const pl = {
         stars: "Gwiazdki:",
         comment: "Komentarz:",
         notRated: "Nie wystawiono jeszcze oceny.",
+        editTitle: "Zmień ocenę systemu",
+        save: "Zapisz ocenę",
+        rate: "Oceń",
+        change: "Zmień ocenę",
+        saved: "Ocena zapisana.",
       },
     },
     footer: {
