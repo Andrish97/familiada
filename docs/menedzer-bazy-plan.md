@@ -23,6 +23,13 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     jeśli się zmieści — w pasku narzędzi.
   - Obecne okno kosza (`trash-modal.js`, wiersz na dole lewego panelu) jest
     do zastąpienia tym modelem.
+  - **Zachować wszystkie dobre rzeczy**, ale uspójnić i ujednolicić:
+    zaznaczanie (klik, Ctrl, Shift, Ctrl+A, zaznaczanie ramką /
+    „marquee”), przeciąganie, menu kontekstowe, gesty na telefonie,
+    skróty i podobne. Nic z działających funkcji nie może zniknąć.
+  - **Przemyśleć wyszukiwanie i filtrowanie** (tekst, #tagi w polu
+    wyszukiwania, filtr tagów i kategorii w lewym panelu, blokady akcji
+    w widokach wyszukiwania/tagów), żeby działało dobrze i spójnie.
 
 - **2026-10-20 (użytkownik):** uporządkować cały kod menedżera bazy na branchu
   (kod pisany przez przepisywanie podpowiedzi z czatu — niespójny, „działa
