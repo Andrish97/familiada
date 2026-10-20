@@ -45,7 +45,15 @@ async function routeCdn(route) {
 const mime = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".woff2": "font/woff2", ".woff": "font/woff", ".ttf": "font/ttf", ".mp3": "audio/mpeg", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
 const server = http.createServer((req, res) => {
   res.on("error", () => {});
-  let pathname = decodeURIComponent(new URL(req.url, "http://x").pathname);
+  const reqUrl = new URL(req.url, "http://x");
+  let pathname = decodeURIComponent(reqUrl.pathname);
+  // Ramka dla stron, które w trybie podglądu przyjmują stan tylko od rodzica
+  // (Prowadzący ?preview=1): /__screens__/frame.html?src=/control/host/?preview=1
+  if (pathname === "/__screens__/frame.html") {
+    const src = reqUrl.searchParams.get("src") || "/";
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    return res.end(`<!doctype html><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#000}iframe{display:block;border:0;width:100%;height:100%}</style><iframe id="screensFrame" src="${src.replace(/"/g, "&quot;")}"></iframe>`);
+  }
   if (pathname.endsWith("/")) pathname += "index.html";
   let file = path.resolve(webRoot, `.${pathname}`);
   if (!file.startsWith(webRoot)) return res.writeHead(403).end();

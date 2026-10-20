@@ -106,10 +106,11 @@
       order(col, opts = {}) { state.order.push([col, opts.ascending !== false]); return api; },
       limit(n) { state.limit = n; return api; },
       range(from, to) { state.range = [from, to]; return api; },
-      single() { state.single = "single"; return run(); },
-      maybeSingle() { state.single = "maybe"; return run(); },
+      single() { state.single = "single"; return chainable(run()); },
+      maybeSingle() { state.single = "maybe"; return chainable(run()); },
       returns() { return api; },
       abortSignal() { return api; },
+      throwOnError() { return api; },
       then(ok, ko) { return run().then(ok, ko); },
     };
     for (const name of Object.keys(ops)) if (!api[name]) api[name] = (col, val) => api.filter(col, name, val);
@@ -149,6 +150,12 @@
     return api;
   }
 
+  // Obietnica z metodami, które prawdziwy klient pozwala dopiąć po single()/rpc().
+  function chainable(p) {
+    p.single = () => p; p.maybeSingle = () => p; p.select = () => p; p.abortSignal = () => p; p.returns = () => p; p.throwOnError = () => p;
+    return p;
+  }
+
   // ---------- RPC ----------
   function rpc(name, args = {}) {
     let data = null;
@@ -156,9 +163,7 @@
       const v = db.rpc[name];
       data = typeof v === "string" && v.startsWith("fn:") ? (0, eval)(`(${v.slice(3)})`)(args || {}, db) : clone(v);
     } else miss("rpc", name);
-    const p = Promise.resolve({ data, error: null, status: 200 });
-    p.single = () => p; p.maybeSingle = () => p; p.select = () => p; p.abortSignal = () => p; p.returns = () => p;
-    return p;
+    return chainable(Promise.resolve({ data, error: null, status: 200 }));
   }
 
   const channel = () => { const c = { on: () => c, subscribe: (cb) => { try { cb?.("SUBSCRIBED"); } catch {} return c; }, unsubscribe: async () => "ok", send: async () => "ok", track: async () => "ok", untrack: async () => "ok", presenceState: () => ({}) }; return c; };

@@ -4,7 +4,7 @@
 //   node scripts/screens/run.cjs --changed          # sceny stron zmienionych względem origin/main (+ nie zacommitowane)
 //   node scripts/screens/run.cjs --scenes=games,logos
 //   node scripts/screens/run.cjs --all --lang=all
-//   opcje: --devices=desktop,phone,tablet,phone-landscape  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)
+//   opcje: --devices=desktop,phone,tablet,phone-landscape  --lang=pl,en,uk|all  --base=<ref>  --out=<katalog>  --list  --dry (tylko wypisz sceny)  --verbose (konsola strony)
 //
 // Strony, CSS i JS pochodzą z web/ (kod z bieżącego katalogu roboczego).
 // Supabase podmienia fake-supabase.js, dane: data/demo.cjs, sceny: scenes.cjs.
@@ -15,6 +15,7 @@ const { execSync } = require("node:child_process");
 const { repo, startServer, stopServer, launch, newContext } = require("./lib.cjs");
 const scenes = require("./scenes.cjs");
 const { buildDb } = require("./data/demo.cjs");
+let buildGameState = null; // data/game-state.mjs (ESM, ładowany w main)
 
 const args = Object.fromEntries(process.argv.slice(2).map((arg) => {
   const [key, ...rest] = arg.replace(/^--/, "").split("=");
@@ -22,7 +23,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((arg) => {
 }));
 
 const DEVICES = {
-  desktop: { width: 1400, height: 900, scale: 1, mobile: false },
+  desktop: { width: 1440, height: 900, scale: 1, mobile: false },
   phone: { width: 390, height: 844, scale: 2, mobile: true },
   tablet: { width: 820, height: 1180, scale: 2, mobile: true },
   "phone-landscape": { width: 844, height: 390, scale: 2, mobile: true },
@@ -62,29 +63,42 @@ function pickScenes() {
 
 // ---------- jedna scena ----------
 async function capture(browser, origin, scene, lang, deviceName, outDir) {
-  const device = DEVICES[deviceName];
-  const db = buildDb(lang);
+  const device = scene.size ? { scale: 1, mobile: false, ...scene.size } : DEVICES[deviceName];
+  const db = buildDb(lang, scene.gameState ? { gameState: buildGameState(lang, scene.gameState) } : {});
   const context = await newContext(browser, db, lang, device);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  if (args.verbose) page.on("console", (m) => { if (["error", "warning"].includes(m.type())) console.log(`    [${m.type()}] ${m.text().slice(0, 300)}`); });
   const sep = scene.path.includes("?") ? "&" : "?";
-  await page.goto(`${origin}${scene.path}${sep}lang=${lang}`, { waitUntil: "domcontentloaded" });
+  const target = `${scene.path}${sep}lang=${lang}`;
+  await page.goto(scene.frame ? `${origin}/__screens__/frame.html?src=${encodeURIComponent(target)}` : `${origin}${target}`, { waitUntil: "domcontentloaded" });
+  // W ramce czekamy i robimy kroki na stronie wewnątrz, zrzut -- całego okna.
+  const view = scene.frame ? await (await page.waitForSelector("#screensFrame")).contentFrame() : page;
   let readyError = null;
   try {
-    if (typeof scene.ready === "string") await page.waitForSelector(scene.ready, { state: "visible", timeout: 15000 });
-    else if (scene.ready) await page.waitForFunction(scene.ready, null, { timeout: 15000 });
-    await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 8000 }).catch(() => {});
-    for (const step of scene.steps || []) await step(page, { lang, device: deviceName });
-    await page.evaluate(() => document.fonts?.ready);
+    if (scene.previewRow) {
+      // Tryb podglądu urządzenia (?preview=1): stan gry jak w Control -> postMessage.
+      const row = buildGameState(lang, scene.previewRow);
+      await view.waitForFunction(() => document.readyState === "complete", null, { timeout: 15000 });
+      await view.evaluate(() => document.fonts?.ready);
+      await page.waitForTimeout(1500);
+      if (scene.frame) await page.evaluate((row) => document.getElementById("screensFrame").contentWindow.postMessage({ type: "familiada:preview-row", row }, location.origin), row);
+      else await page.evaluate((row) => window.postMessage({ type: "familiada:preview-row", row }, "*"), row);
+    }
+    if (typeof scene.ready === "string") await view.waitForSelector(scene.ready, { state: "visible", timeout: 15000 });
+    else if (scene.ready) await view.waitForFunction(scene.ready, null, { timeout: 15000 });
+    await view.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 8000 }).catch(() => {});
+    for (const step of scene.steps || []) await step(view, { lang, device: deviceName, page });
+    await view.evaluate(() => document.fonts?.ready);
     await page.waitForTimeout(scene.settle ?? 400);
   } catch (e) { readyError = e.message.split("\n")[0]; }
-  const misses = await page.evaluate(() => window.__SCREENS_MISSES__ || []).catch(() => []);
-  const file = path.join(outDir, scene.id, `${lang}-${deviceName}.png`);
+  const misses = await view.evaluate(() => window.__SCREENS_MISSES__ || []).catch(() => []);
+  const file = path.join(outDir, scene.id, scene.size ? `${lang}.png` : `${lang}-${deviceName}.png`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   await page.screenshot({ path: file, fullPage: !!scene.fullPage, animations: "disabled" });
   await context.close();
-  return { scene: scene.id, title: scene.title, lang, device: deviceName, file: path.relative(outDir, file), errors, misses, readyError };
+  return { scene: scene.id, title: scene.title, lang, device: scene.size ? `${scene.size.width}×${scene.size.height}` : deviceName, file: path.relative(outDir, file), errors, misses, readyError };
 }
 
 function gallery(outDir, results) {
@@ -117,13 +131,15 @@ function gallery(outDir, results) {
   if (!args.keep) fs.rmSync(outDir, { recursive: true, force: true });
   fs.mkdirSync(outDir, { recursive: true });
 
+  ({ buildGameState } = await import("./data/game-state.mjs"));
   const origin = await startServer();
   const browser = await launch();
   const results = [];
   try {
     for (const scene of picked) {
       for (const lang of langs) {
-        for (const device of scene.devices ? devices.filter((d) => scene.devices.includes(d)) : devices) {
+        const sceneDevices = scene.size ? ["size"] : scene.devices ? scene.devices.filter((d) => devices.includes(d) || args.devices == null) : devices;
+        for (const device of sceneDevices) {
           const r = await capture(browser, origin, scene, lang, device, outDir);
           results.push(r);
           const flags = [r.readyError && "NIEGOTOWA", r.errors.length && `${r.errors.length} błędów JS`, r.misses.length && `brak danych: ${r.misses.join(", ")}`].filter(Boolean);

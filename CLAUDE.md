@@ -54,7 +54,7 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
   `node scripts/screens/run.cjs --changed` (albo `--scenes=…`), obejrzeć
   zrzuty i pokazać je użytkownikowi. Prawdziwy kod strony, atrapa tylko
   warstwy Supabase; nigdy gałęzi „tylko dla zrzutów” w kodzie aplikacji.
-  Szczegóły: `scripts/screens/README.md`.
+  Instrukcja: [`docs/zrzuty-system.md`](docs/zrzuty-system.md).
 
 ## Tok pracy
 

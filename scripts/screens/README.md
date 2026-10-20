@@ -1,5 +1,7 @@
 # Zrzuty stron na danych demo
 
+Pełna instrukcja dla agentów: [`docs/zrzuty-system.md`](../../docs/zrzuty-system.md).
+
 Jedno polecenie robi zrzuty **prawdziwych stron** z `web/` (kod z bieżącego
 katalogu roboczego) z bogatymi danymi demo — bez logowania, kont testowych
 i produkcyjnej bazy. Podmieniona jest wyłącznie biblioteka Supabase
@@ -35,9 +37,11 @@ do `~/.cache/familiada-screens`, bo CDN bywa zablokowany w środowisku agenta.
 | `run.cjs` | runner: wybór scen, zrzuty, galeria |
 | `scenes.cjs` | sceny: adres, prefiksy plików (`sources` dla `--changed`), gotowość, kroki (klik zakładki, okno) |
 | `fake-supabase.js` | atrapa klienta: tabele (`eq/in/order/…`, osadzenia `answers(...)`, ścieżki JSON `payload->w`), RPC, zapisy w pamięci |
-| `data/content.cjs` | treści PL/EN/UK: pytania z punktami, nazwy gier/baz/logo, znajomi, subskrybenci, Społeczność |
+| `data/panel.cjs` | dane kanoniczne ze starych zrzutów (panel admina) — mają pierwszeństwo |
+| `data/content.cjs` | dopełnienie list PL/EN/UK: dodatkowe gry, pula pytań, Społeczność, osoby |
+| `data/game-state.mjs` | wiersze `game_state` dla Control/Prowadzącego/Wyświetlacza |
 | `data/demo.cjs` | `buildDb(lang)`: tabele i RPC z treści (14 gier we wszystkich stanach, 3 bazy z folderami i tagami, znajomi, ankiety z głosami…) |
-| `data/logo-sources.cjs` | źródła logo: napisy (TEXT), sceny Fabric (DRAW), obrazy SVG (IMAGE) |
+| `data/logo-sources.cjs` | dodatkowe logo do wypalenia edytorem (TEXT; obsługiwane też DRAW/IMAGE) |
 | `bake-logos.cjs` → `data/logos.baked.json` | logo wypalone **prawdziwymi edytorami** (autozapis przechwycony z `update_logo_checked`) |
 | `lib.cjs` | wspólne: serwer `web/`, CDN, kontekst przeglądarki z atrapą |
 
