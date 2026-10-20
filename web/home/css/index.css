@@ -307,6 +307,67 @@ body.home-body {
 
 .shot-img.is-loaded { opacity: 1; }
 
+/* Karuzela kadrów w kaflu: przyciski po bokach podglądu, kropki na dole. */
+.shot-carousel-nav {
+  /* Wyśrodkowanie bez transform: .btn:active ma własny transform i
+     przycisk uciekałby spod kursora między mousedown a mouseup. */
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: max-content;
+  margin-block: auto;
+  z-index: 2;
+  cursor: pointer;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+}
+.shot-carousel-prev { left: 10px; }
+.shot-carousel-next { right: 10px; }
+
+.shot-carousel-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  width: max-content;
+  margin-inline: auto;
+  z-index: 2;
+  display: flex;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  cursor: default;
+}
+.shot-carousel-dot {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.shot-carousel-dot::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.45);
+  transition: background 160ms ease, transform 160ms ease;
+}
+.shot-carousel-dot.is-active::before {
+  background: var(--gold);
+  transform: scale(1.25);
+}
+.shot-carousel-dot:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+  border-radius: 50%;
+}
+
 @media (hover:hover) {
   .tile-shot:hover {
     border-color: rgba(255,255,255,.18);
@@ -451,20 +512,6 @@ details[open] .faq-q .faq-caret {
   place-items: center;
   overflow: hidden;
 }
-
-/* Przewijanie kadrów kategorii: przyciski na krawędziach obrazu. */
-.imgv-nav {
-  /* Wyśrodkowanie bez transform: .btn:active ma własny transform i
-     przycisk uciekałby spod kursora między mousedown a mouseup. */
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  height: max-content;
-  margin-block: auto;
-  z-index: 2;
-}
-.imgv-nav-prev { left: 8px; }
-.imgv-nav-next { right: 8px; }
 
 .imgv-img {
   max-width: min(88vw, 1400px);
