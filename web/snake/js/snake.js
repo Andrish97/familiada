@@ -5,6 +5,7 @@
 // zalogowanym baza zapisuje rekord i liczbę gier.
 import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T16475";
 import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-20T16475";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-20T16475";
 import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-20T16475";
 import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-20T16475";
 import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-20T16475";
@@ -30,6 +31,9 @@ const APPLE_TILE = [2, 4, 14, 31, 31, 31, 14];
 const CRASH = [17, 17, 10, 4, 10, 17, 17];
 
 const $ = (id) => document.getElementById(id);
+// Telefon i tablet: sama plansza na cały ekran, telefon tylko w poziomie.
+const TOUCH = matchMedia("(pointer: coarse)").matches;
+guardViewportWidth({ minWidth: 0, allowPhoneLandscape: true, requirePhoneLandscape: true, rotateMessageKey: "snake.rotateMessage" });
 
 const i18nReady = initI18n({ withSwitcher: false }).then(() => {
   document.documentElement.classList.remove("page-loading");
@@ -136,7 +140,7 @@ async function boot() {
   };
 
   const showIntro = () => {
-    showText([[2, t("snake.board.title")], [5, t("snake.board.press")], [7, t("snake.board.swipe")]]);
+    showText([[2, t("snake.board.title")], [5, t(TOUCH ? "snake.board.swipe" : "snake.board.press")], [7, t(TOUCH ? "snake.board.tap" : "snake.board.click")]]);
     writePanel(leftPanel, 0);
     writePanel(rightPanel, best);
     writePanel(topPanel, 1);
@@ -144,9 +148,8 @@ async function boot() {
     writeLong(long2, t("snake.long.best"));
   };
 
-  const setToggle = () => {
-    $("snakeToggle").textContent = t(mode === "play" ? "snake.pause" : mode === "pause" ? "snake.resume" : "snake.start");
-  };
+  // Stan gry na planszy (intro | play | pause | over) -- dla czytników i testów.
+  const setToggle = () => { $("snakeFrame").dataset.mode = mode; };
 
   const tick = () => {
     const { ate, dead } = game.step();
@@ -187,7 +190,7 @@ async function boot() {
         [2, game.state.won ? t("snake.board.won") : t("snake.board.over")],
         [4, t("snake.board.score", { score })],
         ...(record && score > 0 ? [[6, t("snake.board.record")]] : []),
-        [8, t("snake.board.again")],
+        [8, t(TOUCH ? "snake.board.againTouch" : "snake.board.again")],
       ]);
       writePanel(rightPanel, best);
     }, 900);
@@ -224,16 +227,11 @@ async function boot() {
     if (KEYS[e.key]) { e.preventDefault(); steer(KEYS[e.key]); }
     else if (e.key === " " || e.key === "Enter") { if (e.target?.closest?.("a")) return; e.preventDefault(); toggle(); }
   });
-  $("snakePad").addEventListener("click", (e) => {
-    const dir = e.target.closest("[data-dir]")?.dataset.dir;
-    if (dir) steer(dir);
-  });
-  $("snakeToggle").addEventListener("click", (e) => { e.stopPropagation(); toggle(); });
-
-  // Gest: przesunięcie palcem po planszy (albo po całej stronie).
+  // Dotyk: jak zwykły Wyświetlacz -- przesunięcie palcem skręca (i zaczyna
+  // grę), stuknięcie w planszę to start/pauza. Bez przycisków na ekranie.
   let touch = null;
   document.addEventListener("touchstart", (e) => {
-    if (e.target.closest("button, a")) return;
+    if (e.target.closest("a")) return;
     const p = e.touches[0];
     touch = { x: p.clientX, y: p.clientY };
   }, { passive: true });
@@ -246,9 +244,11 @@ async function boot() {
     touch = { x: p.clientX, y: p.clientY };
   }, { passive: true });
   document.addEventListener("touchend", () => { touch = null; }, { passive: true });
-  $("snakeFrame").addEventListener("click", () => { if (mode !== "play") toggle(); });
+  $("snakeFrame").addEventListener("click", toggle);
 
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(true); });
+  // Obrót telefonu do pionu w trakcie gry zasłania planszę prośbą o obrót.
+  matchMedia("(orientation: portrait)").addEventListener("change", (e) => { if (TOUCH && e.matches) pause(true); });
 
   showIntro();
   setToggle();

@@ -30,11 +30,11 @@ function recordSnakeLog(page) {
 
 // Start strzałką w prawo (wąż i tak jedzie w prawo) i czekanie na uderzenie w ścianę.
 async function playUntilCrash(page) {
-  const toggle = page.locator("#snakeToggle");
-  await expect(toggle).toHaveText("Start", { timeout: 30_000 });
+  const frame = page.locator("#snakeFrame");
+  await expect(frame).toHaveAttribute("data-mode", "intro", { timeout: 30_000 });
   await page.locator("body").press("ArrowRight");
-  await expect(toggle).toHaveText("Pauza");
-  await expect(toggle).toHaveText("Start", { timeout: 30_000 });
+  await expect(frame).toHaveAttribute("data-mode", "play");
+  await expect(frame).toHaveAttribute("data-mode", "over", { timeout: 30_000 });
 }
 
 test("wąż: kod QR z kadru prowadzi do gry, zdarzenia trafiają do bazy (bez konta)", async ({ page }) => {
