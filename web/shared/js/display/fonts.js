@@ -1,4 +1,4 @@
-import { v } from '../core/cache-bust.js?v=v2026-10-20T15562';
+import { v } from '../core/cache-bust.js?v=v2026-10-20T15582';
 
 
 export const loadJson = async (url) => {

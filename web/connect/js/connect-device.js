@@ -1,16 +1,16 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T15562";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T15562";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-20T15562";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T15562";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T15562";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-20T15562";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T15562";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-20T15562";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T15562";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T15562";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T15562";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T15582";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T15582";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-20T15582";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T15582";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T15582";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-20T15582";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T15582";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-20T15582";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T15582";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T15582";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T15582";
 
 
 const btnManual           = document.getElementById("btnManual");
