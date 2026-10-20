@@ -1,7 +1,7 @@
 // js/pages/games-import-export.js
-import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-20T14031";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T14031";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-20T14031";
+import { gameExportSnapshot } from "../../shared/js/core/game-transfer-format.js?v=v2026-10-20T16475";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T16475";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-20T16475";
 
 
 /* =========================================================
@@ -9,7 +9,7 @@ import { t } from "../../shared/translation/translation.js?v=v2026-10-20T14031";
 ========================================================= */
 const safeQText = (s, i) =>
 	(String(s ?? t("gamesImportExport.defaults.question", { ord: i + 1 })).trim() ||
-		t("gamesImportExport.defaults.question", { ord: i + 1 })).slice(0, 200);
+		t("gamesImportExport.defaults.question", { ord: i + 1 })).slice(0, 100);
 
 // The modal keeps its parsed object after a failed request. Its retry must
 // acknowledge a committed import even if the first response never arrived.

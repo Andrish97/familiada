@@ -1,9 +1,9 @@
 // Definition preparation shared by duplicate-to-self and send-to-friend.
 // Authorization, demo provenance and the persisted request ID are server data.
-import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-20T14031';
-import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-20T14031';
-import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-20T14031';
-import { parseLogoPackage } from '../../../logos/js/package.js?v=v2026-10-20T14031';
+import { baseExportSnapshot } from './base-transfer-format.js?v=v2026-10-20T16475';
+import { gameExportSnapshot } from './game-transfer-format.js?v=v2026-10-20T16475';
+import { mapLogoSourceImages } from './logo-transfer-source.js?v=v2026-10-20T16475';
+import { parseLogoPackage } from '../../../logos/js/package.js?v=v2026-10-20T16475';
 
 
 export function duplicateResourceName(name, names, suffix, maxLength = 80) {
@@ -23,15 +23,16 @@ export function isDemoCloneSource(kind, source) {
   if (source[kind]?.is_demo === true || source.demo_origin === true) return true;
   const templates = source.demo_templates || [];
   if (kind === 'game') {
-    const signature = packet => JSON.stringify({type: packet.game.type, questions: packet.questions});
+    const signature = packet => JSON.stringify({type: packet.game.type, state: packet.game.state, questions: packet.questions});
     const current = signature(gameExportSnapshot(source.game, source.questions));
     return templates.some(template => {
       const packet = template.payload;
       if (!packet?.game || !Array.isArray(packet.questions)) return false;
       // Compare the same export definition, excluding names and database IDs.
-      // Both seeded and copied closed polls may now be a prepared game.
-      const status = template.slot?.endsWith('_closed') ? 'ready' : 'draft';
-      return current === signature(gameExportSnapshot({...packet.game, status}, packet.questions));
+      const closed = template.slot?.endsWith('_closed');
+      if (current === signature(gameExportSnapshot({...packet.game, status: closed ? 'ready' : 'draft'}, packet.questions))) return true;
+      // Starszy eksport (przed E21) zamieniał zamkniętą ankietę na preparowaną.
+      return closed && current === signature(gameExportSnapshot({...packet.game, type: 'prepared', status: 'draft'}, packet.questions));
     });
   }
   if (kind === 'logo') {

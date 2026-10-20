@@ -468,3 +468,49 @@ test("terminal round previews game end before awarding the bank and skips remain
   await dispatch({ type: "GAME_END_SHOW" });
   assert.equal(store.commits.at(-1).soundCueKey, "final_end");
 });
+
+// E21: najwyżej punktowana = każda odpowiedź o maksymalnej liczbie punktów.
+function makeTieEngine(points) {
+  const store = createFakeStore("g1", { step: "r_roundStart", topCard: "rounds", phase: "READY" });
+  const engine = createEngine({
+    store,
+    loadQuestionPool: async () => questionPool(),
+    loadAnswers: async (qid) => points.map((p, i) => ({ id: `${qid}-a${i + 1}`, ord: i + 1, text: `Odp ${i + 1}`, fixed_points: p })),
+  });
+  return { store, dispatch: engine.dispatch };
+}
+
+for (const ord of [1, 2]) {
+  test(`pojedynek 40/40/20: trafienie odpowiedzi #${ord} za 40 kończy pojedynek (WIN)`, async () => {
+    const { store, dispatch } = makeTieEngine([40, 40, 20]);
+    await dispatch({ type: "START_ROUND" });
+    await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+    await dispatch({ type: "REVEAL_ANSWER", ord });
+    assert.equal(store.state.phase, "PLAY");
+    assert.equal(store.state.controlTeam, "A");
+    assert.equal(store.state.rounds.bankPts, 40);
+    assert.deepEqual(store.state.rounds.revealed, [ord], "remis punktów nie skleja kafli");
+    // druga „40” odsłonięta w grze dolicza się osobno, raz
+    await dispatch({ type: "REVEAL_ANSWER", ord: ord === 1 ? 2 : 1 });
+    assert.equal(store.state.rounds.bankPts, 80);
+  });
+}
+
+test("pojedynek 40/40/20: odpowiedź za 20 nie kończy pojedynku", async () => {
+  const { store, dispatch } = makeTieEngine([40, 40, 20]);
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 3 });
+  assert.equal(store.state.phase, "DUEL");
+});
+
+test("pojedynek 50/20/20/10: remis dwóch odpowiedzi poniżej maksimum -- pierwsza drużyna cyklu wygrywa jak dotąd", async () => {
+  const { store, dispatch } = makeTieEngine([50, 20, 20, 10]);
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 2 });
+  assert.equal(store.state.phase, "DUEL");
+  await dispatch({ type: "REVEAL_ANSWER", ord: 3 });
+  assert.equal(store.state.phase, "PLAY");
+  assert.equal(store.state.controlTeam, "A");
+});

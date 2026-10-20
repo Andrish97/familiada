@@ -1,30 +1,34 @@
 // Podliczanie głosów w karcie Wyniki — płynna zmiana TYCH SAMYCH wierszy
 // (docs/ankiety-refaktor.md, „Podliczanie w karcie Wyniki”).
 //
+// Dane: poll_tally_source (E21) -- N pełnych ankiet bieżącego uruchomienia
+// i głosy tylko tych ankiet; tekstowe już oczyszczone ze znaków spoza czcionki.
 // Ankieta punktowa: głosy i procent zamieniają się w punkty (podgląd liczony tu
-// tym samym algorytmem co baza: poll-tally-math.js); odpowiedzi <3% są szare.
+// tym samym algorytmem co baza: poll-tally-math.js); odpowiedzi <4% są szare.
 // „Zatwierdź” -> poll_points_tally (strona).
 //
 // Ankieta tekstowa: wiersze dostają uchwyt (przeciągnij na inny = połącz), pole
 // edycji tekstu, kosz; punkty na żywo (algorytm bazy), licznik „3–6 odpowiedzi”
-// przy pytaniu, Cofnij / Ponów. Poprawki zapisują się w bazie (szkic,
+// przy pytaniu, Cofnij / Ponów. Remis głosów na granicy szóstki: przycisk
+// zmienia cyklicznie wybór z grupy remisowej (zapisany w szkicu, sprawdza SQL). Poprawki zapisują się w bazie (szkic,
 // poll_text_tally_draft_save, z opóźnieniem) i wracają po ponownym wejściu.
 // „Zatwierdź” -> poll_text_tally_apply (strona; punkty liczy baza).
 //
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T14031";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-20T14031";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T14031";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-20T14031";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T14031";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T16475";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-20T16475";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-20T16475";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-20T16475";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T16475";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-20T16475";
+import { ANSWER_MAX, clipChars, cleanAnswerText } from "../../shared/js/core/answer-text.js?v=v2026-10-20T16475";
 
 import {
   pointsPollAnalysis,
   textTallyAnalysis,
-  ANSWERS_MIN,
-  TEXT_MAX_LEN,
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-20T14031";
+  nextTieSelection,
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-20T16475";
 
 
 const SAVE_DEBOUNCE_MS = 900;
@@ -68,7 +72,16 @@ export function createTally({ gameId, pollResults, ui }) {
   let drag = null; // { qid, id }
   let mergeSrc = null; // { qid, id } — tryb łączenia na dotyku
   let pointRows = [];
+  let fullN = 0; // pełne ankiety bieżącego uruchomienia (mianownik udziałów)
+  let glyphs = null; // czcionka Wyświetlacza -- czyszczenie poprawianych tekstów
   const pendingQuestionUpdates = new Map();
+
+  async function loadSource() {
+    const { data, error } = await sb().rpc("poll_tally_source", { p_game_id: gameId });
+    if (error) throw error;
+    fullN = Math.max(0, Number(data?.n) || 0);
+    return data || { n: 0, questions: [] };
+  }
 
   const isActive = () => !!mode;
 
@@ -83,7 +96,9 @@ export function createTally({ gameId, pollResults, ui }) {
         <span class="tallyCounter"></span>
         <span class="tallyVotesTotal"></span>
         <span class="tallySum"></span>
-          <button class="btn xs tcMergeDup" type="button">${icon("merge")}<span></span></button>`;
+          <button class="btn xs tcMergeDup" type="button">${icon("merge")}<span></span></button>
+          <button class="btn xs tcTieBtn" type="button" hidden>${icon("tie-switch")}<span></span></button>
+        <span class="tallyTieInfo" hidden></span>`;
       box.insertBefore(meta, slot.list);
     }
     meta.querySelector(".tallyCounter").hidden = !withCounter;
@@ -102,6 +117,9 @@ export function createTally({ gameId, pollResults, ui }) {
   /* ---------- ankieta punktowa ---------- */
 
   async function enterPoints(data) {
+    const source = await loadSource();
+    const fullVotes = new Map();
+    for (const q of source.questions || []) for (const a of q.answers || []) fullVotes.set(a.id, Math.max(0, Number(a.votes) || 0));
     mode = "points";
     pointRows = [];
     ui.hintEl.textContent = t("polls.tally.hintPoints");
@@ -112,11 +130,11 @@ export function createTally({ gameId, pollResults, ui }) {
     for (const q of data.questions || []) {
       const slot = slots.get(q.id);
       if (!slot) continue;
-      const answers = q.answers || [];
-      const analysis = pointsPollAnalysis(answers.map((a) => Number(a.votes) || 0));
+      const answers = (q.answers || []).map((a) => ({ ...a, votes: fullVotes.get(a.id) ?? 0 }));
+      const analysis = pointsPollAnalysis(answers.map((a) => a.votes), fullN);
       const meta = ensureMeta(slot, { withCounter: false, withMergeDup: false });
       let sum = 0;
-      const totalVotes = answers.reduce((s, answer) => s + (Number(answer.votes) || 0), 0);
+      const totalVotes = fullN;
       slot.list.classList.add("tally", "tallyPoints");
       const ranked = answers.map((a, i) => ({
         ...a,
@@ -148,7 +166,7 @@ export function createTally({ gameId, pollResults, ui }) {
         slot.list.appendChild(r.row);
       }
       meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: sum });
-      meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.votes", { n: totalVotes });
+      meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.fullSubmissions", { n: fullN });
     }
     ui.onValidity(true);
   }
@@ -172,67 +190,18 @@ export function createTally({ gameId, pollResults, ui }) {
 
   /* ---------- ankieta tekstowa: wczytanie ---------- */
 
-  async function pagedEntries(sessionIds) {
-    const all = [];
-    for (let from = 0; ; from += PAGE) {
-      const { data, error } = await sb()
-        .from("poll_text_entries")
-        .select("question_id,answer_norm,poll_session_id")
-        .in("poll_session_id", sessionIds)
-        .order("id", { ascending: true })
-        .range(from, from + PAGE - 1);
-      if (error) throw error;
-      all.push(...(data || []));
-      if (!data || data.length < PAGE) break;
-    }
-    return all;
-  }
-
   async function loadTextModel() {
-    const { data: questions, error: qErr } = await sb()
-      .from("questions")
-      .select("id,ord,text")
-      .eq("game_id", gameId)
-      .order("ord", { ascending: true });
-    if (qErr) throw qErr;
-
-    const { data: sessions, error: sErr } = await sb()
-      .from("poll_sessions")
-      .select("id,question_id,created_at")
-      .eq("game_id", gameId)
-      .order("created_at", { ascending: false });
-    if (sErr) throw sErr;
-
-    const latest = new Map(); // question_id -> session id (najnowsza)
-    for (const s of sessions || []) if (!latest.has(s.question_id)) latest.set(s.question_id, s.id);
-    const sessionIds = [...new Set(latest.values())];
-    const entries = sessionIds.length ? await pagedEntries(sessionIds) : [];
-
-    const counts = new Map(); // question_id -> Map(norm -> n)
-    let total = 0;
-    for (let start = 0; start < entries.length; start += PAGE) {
-      const end = Math.min(start + PAGE, entries.length);
-      for (let i = start; i < end; i++) {
-        const e = entries[i];
-        if (latest.get(e.question_id) !== e.poll_session_id) continue;
-        const k = String(e.answer_norm || "").trim();
-        if (!k) continue;
-        if (!counts.has(e.question_id)) counts.set(e.question_id, new Map());
-        const m = counts.get(e.question_id);
-        m.set(k, (m.get(k) || 0) + 1);
-        total++;
-      }
-      if (end < entries.length) await nextFrame();
-    }
-
+    const source = await loadSource();
     let n = 1;
-    const out = (questions || []).map((q) => {
-      const items = [...(counts.get(q.id) || new Map()).entries()]
-        .map(([text, count]) => ({ id: `i${n++}`, text, count }))
-        .sort((a, b) => b.count - a.count);
-      return { question_id: q.id, ord: q.ord, text: q.text, items };
+    let total = 0;
+    const out = (source.questions || []).map((q) => {
+      const items = (q.items || []).map((it) => {
+        total += Math.max(0, Number(it.count) || 0);
+        return { id: `i${n++}`, text: String(it.text ?? ""), count: Math.max(0, Math.floor(Number(it.count) || 0)) };
+      }).sort((x, y) => y.count - x.count);
+      return { question_id: q.question_id, ord: q.ord, items, selected: null, dropped: Number(q.dropped) || 0 };
     });
-    return { model: out, sig: total, nextId: n };
+    return { model: out, sig: `${fullN}/${total}`, nextId: n };
   }
 
   // Szkic z bazy pasuje, gdy dotyczy tych samych pytań i tej samej liczby głosów
@@ -251,7 +220,8 @@ export function createTally({ gameId, pollResults, ui }) {
         const items = dq.items
           .map((it) => ({ id: String(it.id), text: String(it.text ?? ""), count: Math.max(0, Math.floor(Number(it.count) || 0)) }))
           .filter((it) => it.id);
-        next.push({ ...q, items });
+        const selected = Array.isArray(dq.selected) ? dq.selected.map((x) => String(x ?? "")) : null;
+        next.push({ ...q, items, selected });
       }
       loaded.model.splice(0, loaded.model.length, ...next);
       let maxId = 0;
@@ -265,6 +235,7 @@ export function createTally({ gameId, pollResults, ui }) {
   }
 
   async function enterText() {
+    glyphs = await loadFont5x7().catch(() => null);
     const loaded = await loadTextModel();
     const restored = await restoreDraft(loaded);
 
@@ -334,7 +305,6 @@ export function createTally({ gameId, pollResults, ui }) {
 
     const inp = mk("input", "aTxtInp");
     inp.type = "text";
-    inp.maxLength = TEXT_MAX_LEN;
     inp.value = item.text;
     inp.setAttribute("aria-label", t("polls.tally.hintText"));
 
@@ -369,6 +339,8 @@ export function createTally({ gameId, pollResults, ui }) {
     inp.addEventListener("input", () => {
       const it = findItem();
       if (!it) return;
+      const clipped = clipChars(inp.value, ANSWER_MAX);
+      if (clipped !== inp.value) inp.value = clipped;
       it.text = inp.value;
       queueQuestionUpdate(qs);
       scheduleSave();
@@ -466,7 +438,7 @@ export function createTally({ gameId, pollResults, ui }) {
     const seen = new Map();
     const out = [];
     for (const it of q.items) {
-      const key = String(it.text ?? "").trim().toLowerCase();
+      const key = cleanAnswerText(it.text, glyphs).toUpperCase();
       if (!key) { out.push(it); continue; }
       const first = seen.get(key);
       if (first) first.count += it.count;
@@ -476,14 +448,14 @@ export function createTally({ gameId, pollResults, ui }) {
   }
 
   function snapshot() {
-    return JSON.stringify(model.map((q) => ({ question_id: q.question_id, items: q.items })));
+    return JSON.stringify(model.map((q) => ({ question_id: q.question_id, items: q.items, selected: q.selected || null })));
   }
 
   function restoreSnapshot(json) {
     const arr = JSON.parse(json);
     for (const sq of arr) {
       const qs = states.get(sq.question_id);
-      if (qs) qs.q.items = sq.items;
+      if (qs) { qs.q.items = sq.items; qs.q.selected = sq.selected || null; }
     }
     for (const qs of states.values()) {
       qs.q.items.sort((a, b) => b.count - a.count);
@@ -580,42 +552,65 @@ export function createTally({ gameId, pollResults, ui }) {
 
   function updateQuestion(qs) {
     const items = qs.q.items;
-    const analysis = textTallyAnalysis(items.map((it) => ({ text: it.text, count: it.count })));
-    const byIdx = new Map(analysis.map((row) => [row.idx, row]));
+    const analysis = textTallyAnalysis(items.map((it) => ({ text: it.text, count: it.count })), {
+      total: fullN, glyphs, selected: qs.q.selected,
+    });
+    qs.analysis = analysis;
+    const byKey = new Map(analysis.rows.map((row, rank) => [row.key, { row, rank }]));
+    const shown = new Set(); // pierwszy wiersz grupy pokazuje wynik, kolejne łączą się z nim
     let sum = 0;
-    items.forEach((it, i) => {
+    const order = [];
+    items.forEach((it) => {
       const r = qs.rows.get(it.id);
       if (!r) return;
-      const result = byIdx.get(i);
-      const included = !!result?.scored;
-      const pts = included ? result.points : null;
-      if (included) sum += pts;
+      const key = cleanAnswerText(it.text, glyphs).toUpperCase();
+      const hit = key ? byKey.get(key) : null;
+      const first = !!hit && !shown.has(key);
+      if (first) shown.add(key);
+      const result = first ? hit.row : null;
+      const included = !!result?.selected;
+      if (included) sum += result.percent;
       r.row.classList.toggle("out", !included);
-      r.row.classList.toggle("tallySkipped", !!result?.belowThreshold);
-      r.val.textContent = t("polls.results.pointsUnitCount", { n: included ? pts : "—" });
-      setPct(r, included ? pts : 0);
-      r.cnt.textContent = t("polls.tally.votesPercent", { n: it.count, pct: result?.percent || 0 });
-      r.row.title = result?.belowThreshold ? t("polls.tally.skippedTitle", { pct: result.percent }) : "";
+      r.row.classList.toggle("tallySkipped", !!result && !result.qualifies);
+      r.row.classList.toggle("tallyTie", !!result?.inTie);
+      r.val.textContent = t("polls.results.pointsUnitCount", { n: included ? result.percent : "—" });
+      setPct(r, included ? result.percent : 0);
+      r.cnt.textContent = t("polls.tally.votesPercent", { n: it.count, pct: result ? result.percent : 0 });
+      r.row.title = !key ? t("polls.tally.emptyAfterClean")
+        : !first ? t("polls.tally.duplicateTitle")
+        : result && !result.qualifies ? t("polls.tally.skippedTitle", { pct: result.percent }) : "";
       if (r.inp.value !== it.text && document.activeElement !== r.inp) r.inp.value = it.text;
+      order.push({ row: r.row, rank: first ? hit.rank : Number.MAX_SAFE_INTEGER, included });
     });
-    const n = analysis.filter((row) => row.scored).length;
-    qs.valid = n >= ANSWERS_MIN;
+    const n = analysis.selectedKeys.length;
+    qs.valid = analysis.valid;
     const counter = qs.meta.querySelector(".tallyCounter");
     counter.textContent = t("polls.tally.counter", { n });
-    counter.classList.toggle("invalid", n < ANSWERS_MIN);
+    counter.classList.toggle("invalid", !analysis.valid);
     qs.meta.querySelector(".tallySum").textContent = t("polls.tally.sum", { n: sum });
-    const totalVotes = items.reduce((total, item) => total + (Number(item.count) || 0), 0);
-    qs.meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.votes", { n: totalVotes });
-    qs.meta.querySelector(".tcMergeDup").textContent = t("polls.tally.mergeDup");
-    const ranked = items.map((it, i) => ({
-      ...it,
-      ord: i,
-      fixed_points: byIdx.get(i)?.scored ? byIdx.get(i).points : 0,
-    }));
-    for (const item of sortAnswersByPoints(ranked)) {
-      const row = qs.rows.get(item.id)?.row;
-      if (row) qs.slot.list.appendChild(row);
+    const dropped = qs.q.dropped ? " " + t("polls.tally.dropped", { n: qs.q.dropped }) : "";
+    qs.meta.querySelector(".tallyVotesTotal").textContent = t("polls.tally.fullSubmissions", { n: fullN }) + dropped;
+    qs.meta.querySelector(".tcMergeDup span").textContent = t("polls.tally.mergeDup");
+
+    // remis głosów na granicy szóstki: jawny, cykliczny wybór
+    const tieBtn = qs.meta.querySelector(".tcTieBtn");
+    const tieInfo = qs.meta.querySelector(".tallyTieInfo");
+    tieBtn.hidden = !analysis.tie;
+    tieInfo.hidden = !analysis.tie && !qs.q.selected;
+    if (analysis.tie) {
+      const textOf = (k) => byKey.get(k)?.row.text || k;
+      const inKeys = analysis.tie.keys.filter((k) => analysis.selectedKeys.includes(k));
+      const outKeys = analysis.tie.keys.filter((k) => !analysis.selectedKeys.includes(k));
+      tieBtn.querySelector("span").textContent = t("polls.tally.tieSwitch");
+      tieBtn.onclick = () => mutate(qs, () => { qs.q.selected = nextTieSelection(qs.analysis); });
+      tieInfo.textContent = t("polls.tally.tieInfo", { in: inKeys.map(textOf).join(", "), out: outKeys.map(textOf).join(", ") });
+    } else if (qs.q.selected) {
+      // poprzedni wybór z remisu przestał obowiązywać po scaleniu / zmianie głosów
+      tieInfo.textContent = t("polls.tally.tieGone");
     }
+
+    order.sort((x, y) => (x.included === y.included ? 0 : x.included ? -1 : 1) || x.rank - y.rank);
+    for (const { row } of order) qs.slot.list.appendChild(row);
   }
 
   function textValid() {
@@ -642,6 +637,7 @@ export function createTally({ gameId, pollResults, ui }) {
       questions: model.map((q) => ({
         question_id: q.question_id,
         items: q.items.map((it) => ({ id: it.id, text: it.text, count: it.count })),
+        selected: q.selected || null,
       })),
     };
   }
@@ -707,6 +703,7 @@ export function createTally({ gameId, pollResults, ui }) {
       items: model.map((q) => ({
         question_id: q.question_id,
         answers: q.items.map((it) => ({ text: it.text, count: it.count })),
+        selected: q.selected || null,
       })),
     }),
     // wyjście z podliczania: punktowa wraca animacją, tekstowa — po zapisie szkicu

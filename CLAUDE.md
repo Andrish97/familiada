@@ -101,6 +101,12 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 - **test14@familiada.online — skrzynka BEZ konta** (podpięta pod Worker jak
   inne, do testów „bez konta”: subskrybent tylko e-mail, urządzenie na e-mail
   bez konta). Nie zakładać na nim konta.
+- **Odczyt produkcji bez migracji (2026-10-20):** workflow `db-read.yml`
+  (`workflow_dispatch`, wejście `sql_file`) z plikiem `scripts/db-read/<nazwa>.sql`
+  — jedno zapytanie SELECT bez `;` i `\`, sesja tylko do odczytu, wynik tylko
+  liczby/bool/UUID/daty (`scripts/db-read.sh` odrzuca tekst i JSON). Repo jest
+  publiczne: żadnych treści gier, nazw ani e-maili w logach. Migracje
+  diagnostyczne już niepotrzebne.
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.

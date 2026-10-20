@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-20T14031"/>
+  <meta name="app-version" content="v2026-10-20T16475"/>
 
 
   <meta charset="utf-8" />
@@ -16,20 +16,20 @@
   <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w games/manual) -->
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T14031" />
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-20T14031" />
-  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-20T14031" />
-  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-20T14031" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T16475" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-20T16475" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-20T16475" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-20T16475" />
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-20T14031"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-20T16475"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-20T14031"></script>
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-20T16475"></script>
 
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T14031" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T16475" defer></script>
 
 </head>
 
@@ -215,7 +215,7 @@
       </div>
 
       <div class="mSub" id="xSub" data-i18n="baseExplorer.export.subtitle">
-        Wybierz co najmniej 10 pytań. Czerwone nie spełniają warunków wybranego typu — odhacz je albo popraw dane.
+        Gra powstanie z zaznaczonych pytań. Oznaczenia pokazują, czego brakuje do gotowości wybranego typu — można to uzupełnić później.
       </div>
 
       <div class="xBody">
@@ -252,13 +252,15 @@
                   <b data-i18n="baseExplorer.export.typePrepared">Preparowana</b>
                 </div>
               </div>
+
+              <div class="xSummary" id="xSummary" aria-live="polite"></div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="tagsFoot">
-        <div class="xCountPill" id="xCountPill" title="Zaznaczone (min 10)" data-i18n-title="baseExplorer.export.selectedTitle">
+        <div class="xCountPill" id="xCountPill" title="Zaznaczone" data-i18n-title="baseExplorer.export.selectedTitle">
           <span data-i18n="baseExplorer.export.selectedLabel">WYBRANE</span>
           <b id="xCountVal">0</b>
         </div>
@@ -307,7 +309,7 @@
       <div class="qBody">
         <div class="qBlock">
           <div class="qf-label" data-i18n="baseExplorer.question.textLabel">Treść pytania</div>
-          <textarea id="qText" class="qf-qtext" maxlength="200" spellcheck="false" placeholder="Wpisz treść pytania…" data-i18n-placeholder="baseExplorer.question.textPlaceholder"></textarea>
+          <textarea id="qText" class="qf-qtext" spellcheck="false" placeholder="Wpisz treść pytania…" data-i18n-placeholder="baseExplorer.question.textPlaceholder"></textarea>
         </div>
 
         <div class="qBlock qAnswersBlock">
@@ -374,7 +376,7 @@
   <div id="modalRoot"></div>
 
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-20T14031"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-20T16475"></script>
 
 </body>
 </html>

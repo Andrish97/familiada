@@ -1,0 +1,43 @@
+name: DB read (tylko odczyt, bez treści)
+
+# Odczyt produkcyjnej bazy bez migracji. Repozytorium jest publiczne, więc
+# wynik trafia do publicznego logu: scripts/db-read.sh przepuszcza jedno
+# zapytanie SELECT z scripts/db-read/, w sesji READ ONLY, a kolumny wyniku
+# mogą być tylko liczbami, wartościami logicznymi, UUID i datami (żadnych
+# treści gier, nazw ani e-maili). Uruchamiane ręcznie.
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      sql_file:
+        description: 'Plik zapytania, np. scripts/db-read/e21-demo-bases-long-answers.sql'
+        required: true
+
+concurrency:
+  group: db-read
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Read
+        env:
+          SQL_FILE: ${{ inputs.sql_file }}
+          PSQL_CMD: ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} docker exec -i supabase-db psql -U supabase_admin -d postgres
+        run: scripts/db-read.sh "$SQL_FILE"

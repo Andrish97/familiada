@@ -1289,9 +1289,10 @@ tr.row.is-drop-after td:last-child::after {
     background: rgba(120,255,170,.08)
 }
 
+/* E21: braki do gotowości typu są informacją, nie blokadą */
 .xPickItem.bad {
-    border-color: rgba(255,120,120,.35);
-    background: rgba(255,120,120,.08)
+    border-color: rgba(255,200,90,.35);
+    background: rgba(255,200,90,.07)
 }
 
 .xTypeBox {
@@ -1330,6 +1331,17 @@ tr.row.is-drop-after td:last-child::after {
 
 .xRange {
     margin-top: 10px
+}
+
+.xSummary {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(255,215,140,.95)
+}
+
+.xSummary.is-ready {
+    color: rgba(150,255,190,.95)
 }
 
 .xRange,.xRange .rng {

@@ -825,7 +825,7 @@ test.describe("games: audyt -- Warstwa 2 reguł gry", () => {
       expect(res.open).toBe("ok");
       expect(res.openEdit).toContain("game_content_locked:poll_open");
       expect(res.openAdd).toContain("game_content_locked:poll_open");
-      expect(res.close).toContain("poll_close_blocked:noSession");
+      expect(res.close).toContain("poll_close_blocked:useTally");
       expect(res.status).toBe("poll_open");
       expect(res.text).toBe("Szkic OK?");
     } finally {

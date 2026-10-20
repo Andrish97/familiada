@@ -1,3 +1,5 @@
+import { hasDisplayGlyph } from "./fonts.js?v=v2026-10-20T16475";
+
 // Długie pola Wyświetlacza (long1/long2 -- nazwy drużyn): 95 kolumn kropek.
 // Znaki rysujemy proporcjonalnie: każdy zajmuje tylko kolumny ze swoimi
 // zapalonymi kropkami (kropka 1 kolumnę, „W” 5), między znakami 1 kolumna
@@ -47,7 +49,7 @@ export function layoutLongText(text, glyphs) {
 /** { width, max, fits, invalid[] } -- invalid: znaki bez glifu w czcionce Wyświetlacza. */
 export function measureLongText(text, glyphs) {
   const { width } = layoutLongText(text, glyphs);
-  const invalid = glyphs ? [...new Set(longTextChars(text).filter((ch) => ch !== " " && !glyphOf(glyphs, ch)))] : [];
+  const invalid = glyphs ? [...new Set(longTextChars(text).filter((ch) => ch !== " " && !hasDisplayGlyph(glyphs, ch)))] : [];
   return { width, max: LONG_COLS, fits: width <= LONG_COLS, invalid };
 }
 
@@ -64,8 +66,7 @@ export function dropUnsupported(text, glyphs) {
   let out = "";
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
-    const upper = Array.from(ch.toUpperCase());
-    if (/\s/.test(ch) || upper.every((u) => glyphOf(glyphs, u))) { out += ch; continue; }
+    if (/\s/.test(ch) || hasDisplayGlyph(glyphs, ch)) { out += ch; continue; }
     if (chars[i + 1] === " ") i++;
   }
   return out;
