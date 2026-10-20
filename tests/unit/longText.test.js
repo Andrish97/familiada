@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { LONG_COLS, layoutLongText, measureLongText, clipLongText } from "../../web/shared/js/display/long-text.js";
+import { LONG_COLS, layoutLongText, measureLongText, clipLongText, stripUnsupported } from "../../web/shared/js/display/long-text.js";
 import { buildGlyphMap } from "../../web/shared/js/display/fonts.js";
 
 const glyphs = buildGlyphMap(JSON.parse(readFileSync(new URL("../../web/shared/fonts/display/font_5x7.json", import.meta.url))));
@@ -30,4 +30,9 @@ test("narrow characters leave room for more text", () => {
 test("characters without a Display glyph are reported", () => {
   assert.deepEqual(measureLongText("Króliczki", glyphs).invalid, []);
   assert.deepEqual(measureLongText("Drużyna 😀", glyphs).invalid, ["😀"]);
+});
+
+test("characters without a Display glyph are not accepted", () => {
+  assert.equal(stripUnsupported("Zajączki 😀", glyphs), "Zajączki ");
+  assert.equal(stripUnsupported("Ekipa nr 1!", glyphs), "Ekipa nr 1!");
 });

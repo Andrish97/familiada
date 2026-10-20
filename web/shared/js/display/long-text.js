@@ -50,6 +50,12 @@ export function measureLongText(text, glyphs) {
   return { width, max: LONG_COLS, fits: width <= LONG_COLS, invalid };
 }
 
+/** Napis bez znaków, których Wyświetlacz nie ma (bez czcionki -- bez zmian). */
+export function stripUnsupported(text, glyphs) {
+  if (!glyphs) return String(text ?? "");
+  return Array.from(String(text ?? "")).filter((ch) => /\s/.test(ch) || glyphOf(glyphs, ch.toUpperCase()) || glyphOf(glyphs, ch)).join("");
+}
+
 /** Najdłuższy początek napisu, który zmieści się w długim polu. */
 export function clipLongText(text, glyphs) {
   const source = Array.from(String(text ?? ""));
