@@ -388,23 +388,37 @@ function initImageViewer() {
   let previewZoom = null;
   let previousFocus = null;
 
-  const open = (src, title) => {
+  // preview -- obraz z kafla (już wczytany): pokazany od razu w docelowym
+  // rozmiarze, a pełny kadr podmienia go po zdekodowaniu, bez skoku okna.
+  const open = (src, title, preview = null) => {
     if (overlay.classList.contains("is-open")) return;
     previousFocus = document.activeElement;
     stage.innerHTML = "";
     titleEl.textContent = title || "";
     const isMobile = window.matchMedia("(max-width: 980px)").matches;
+    const img = document.createElement("img");
+    img.className = "imgv-img"; img.alt = title || "";
+    const ready = preview?.complete && preview.naturalWidth > 0;
+    img.src = ready ? (preview.currentSrc || preview.src) : src;
+    if (ready && img.src !== src) {
+      const full = new Image();
+      full.src = src;
+      full.decode().then(() => { if (img.isConnected) img.src = src; }).catch(() => {});
+    }
     if (isMobile) {
       const zoom = document.createElement("div");
       zoom.className = "imgv-zoom";
-      const img = document.createElement("img");
-      img.className = "imgv-img"; img.src = src; img.alt = title || "";
       zoom.appendChild(img); stage.appendChild(zoom);
       previewZoom = initPinchZoom(zoom, img);
       lockPageZoomForPreview();
     } else {
-      const img = document.createElement("img");
-      img.className = "imgv-img"; img.src = src; img.alt = title || "";
+      if (ready) {
+        // Rozmiar okna z proporcji kadru, a nie z rozdzielczości podglądu.
+        const ratio = preview.naturalWidth / preview.naturalHeight;
+        img.style.aspectRatio = `${preview.naturalWidth} / ${preview.naturalHeight}`;
+        img.style.width = `min(88vw, 1400px, calc(min(72vh, 800px) * ${ratio}))`;
+        img.style.height = "auto";
+      }
       stage.appendChild(img);
     }
     overlay.style.display = "";
@@ -449,7 +463,7 @@ function initImageViewer() {
     if (!img) return;
     const fullFile = img.dataset.fullFile;
     const fullImage = fullFile ? buildLangImgUrl(getUiLang(), fullFile) : (img.currentSrc || img.src);
-    open(fullImage, img.getAttribute("alt") || "");
+    open(fullImage, img.getAttribute("alt") || "", img);
   };
 
   document.querySelectorAll(".tile-shot").forEach((shot) => {
