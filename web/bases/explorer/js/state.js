@@ -9,13 +9,6 @@ export const VIEW = {
   META: "meta",     // filtr “meta” (wirtualny widok)
 };
 
-export const SORT = {
-  UPDATED_DESC: "updated_desc",
-  NAME_ASC: "name_asc",
-  NAME_DESC: "name_desc",
-  ORD_ASC: "ord_asc",
-};
-
 export const META = {
   prepared:    { id: "prepared",    nameKey: "baseExplorer.meta.prepared",    color: "rgba(77, 163, 255, .95)" },
   poll_points: { id: "poll_points", nameKey: "baseExplorer.meta.pollPoints", color: "rgba(255, 200, 77, .95)" },
@@ -93,10 +86,8 @@ export function createState({ baseId, role = "viewer" }) {
       text: "",       // zwykły tekst (bez #tagów)
       tagIds: [],     // resolved do state.tags
     },
-    
+
     sort: { key: "name", dir: "asc" },
-    
-    sortMode: SORT.UPDATED_DESC,
 
     // selekcja (jak w explorerze)
     selection: {
@@ -117,16 +108,10 @@ export function createState({ baseId, role = "viewer" }) {
       anchorId: null,
     },
 
-    // clipboard wewnętrzny (etap 3)
+    // schowek: same klucze; kopię robi baza przy wklejeniu
     clipboard: {
       mode: null,      // 'copy' | 'cut' | null
       keys: new Set(), // Set('q:..' / 'c:..')
-    },
-
-    // UI status
-    ui: {
-      loading: false,
-      error: "",
     },
   };
 }
@@ -134,18 +119,6 @@ export function createState({ baseId, role = "viewer" }) {
 export function setRole(state, role) {
   state.role = role;
   state.canEdit = role !== "viewer";
-}
-
-export function clearError(state) {
-  state.ui.error = "";
-}
-
-export function setError(state, msg) {
-  state.ui.error = String(msg || "");
-}
-
-export function setLoading(state, on) {
-  state.ui.loading = !!on;
 }
 
 /* ===== Widok ===== */
@@ -171,20 +144,6 @@ function syncFolderUrl(state) {
   // replaceState: przeglądarkowe „Wstecz” wraca do poprzedniej STRONY, nie
   // przewija folderów (docs/nawigacja-mapa-plan.md, karty i stan strony).
   if (url.href !== location.href) history.replaceState(history.state, "", url);
-}
-
-export function setViewTags(state, tagIds) {
-  state.view = VIEW.TAG;
-  state.folderId = null;
-  state.tagIds = Array.isArray(tagIds) ? tagIds.filter(Boolean) : [];
-}
-
-export function setSearch(state, q) {
-  state.searchQuery = String(q || "").trim();
-}
-
-export function setSort(state, sortMode) {
-  state.sortMode = sortMode || SORT.UPDATED_DESC;
 }
 
 export function rememberBrowseLocation(state) {
@@ -213,16 +172,6 @@ export function restoreBrowseLocation(state) {
 }
 
 /* ===== Selekcja ===== */
-export function keyQuestion(id) {
-  return `q:${id}`;
-}
-export function keyCategory(id) {
-  return `c:${id}`;
-}
-
-export function selectionHas(state, key) {
-  return state.selection.keys.has(key);
-}
 
 export function selectionClear(state) {
   state.selection.keys.clear();
@@ -242,42 +191,3 @@ export function selectionToggle(state, key) {
   state.selection.anchorKey = key;
 }
 
-export function selectionAdd(state, key) {
-  if (!key) return;
-  state.selection.keys.add(key);
-  state.selection.anchorKey = key;
-}
-
-export function selectionRemove(state, key) {
-  if (!key) return;
-  state.selection.keys.delete(key);
-  state.selection.anchorKey = key;
-}
-
-export function selectionSnapshot(state) {
-  return Array.from(state.selection.keys);
-}
-
-export function clipboardSet(state, mode, keys) {
-  state.clipboard.mode = mode; // "copy" | "cut"
-  // keys może przyjść jako Set albo Array
-  const arr = (keys instanceof Set) ? Array.from(keys) : (Array.isArray(keys) ? keys : []);
-  state.clipboard.keys = new Set(arr.filter(Boolean));
-}
-
-export function clipboardClear(state) {
-  state.clipboard.mode = null;
-  state.clipboard.keys = new Set();
-}
-
-export function tagSelectionClear(state) {
-  if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-  state.tagSelection.ids.clear();
-  state.tagSelection.anchorId = null;
-}
-
-export function metaSelectionClear(state) {
-  if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
-  state.metaSelection.ids.clear();
-  state.metaSelection.anchorId = null;
-}

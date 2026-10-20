@@ -18,23 +18,25 @@ import { importGame } from "../../../games/js/games-import-export.js?v=v2026-10-
 import { evaluateReadiness } from "../../../shared/js/core/game-rules.js?v=v2026-10-20T19584";
 import { normQuestionText } from "../../../shared/js/core/question-form.js?v=v2026-10-20T19584";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-10-20T19584";
+import { renderAll, renderToolbar, renderList } from "./render.js?v=v2026-10-20T19584";
 
 
 import {
   listQuestionsByCategory,
   listAllQuestions,
   listCategories,
+  listTags,
   listQuestionTags,
-  listCategoryTags
+  listQuestionIndex,
+  listQuestionIndexInFolders,
+  getQuestion,
 } from "./repo.js?v=v2026-10-20T19584";
 
 import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-10-20T19584";
 import { openTagsModal } from "./tags-modal.js?v=v2026-10-20T19584";
 import { initExportModal } from "./export-modal.js?v=v2026-10-20T19584";
 import { initQuestionModal } from "./question-modal.js?v=v2026-10-20T19584";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T19584";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T19584";
+import * as ops from "./ops.js?v=v2026-10-20T19584";
 import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T19584";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T19584";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T19584";
@@ -82,14 +84,6 @@ function canCutHere(state) {
   return canDeleteHere(state); // wycinanie = usuń + clipboard, więc te same reguły
 }
 
-function keyFromRow(row) {
-  const kind = row?.dataset?.kind;
-  const id = row?.dataset?.id;
-  if (!kind || !id) return null;
-  if (kind === "q") return `q:${id}`;
-  if (kind === "cat") return `c:${id}`;
-  return null;
-}
 
 function textOfQuestion(q) {
   // u nas pytanie jest w payload.text (docelowo), ale niech będzie odporne
@@ -156,10 +150,7 @@ function selectRange(state, listEl, clickedKey) {
 }
 
 function selectionSplitIds(state) {
-  const keys = Array.from(state?.selection?.keys || []);
-  const qIds = keys.filter(k => k.startsWith("q:")).map(k => k.slice(2));
-  const cIds = keys.filter(k => k.startsWith("c:")).map(k => k.slice(2));
-  return { qIds, cIds };
+  return splitKeys(state?.selection?.keys);
 }
 
 function uniqIds(arr) {
@@ -172,13 +163,7 @@ function uniqIds(arr) {
 async function ensureQuestionIndexForCounts(state) {
   if (Array.isArray(state._qIndex)) return;
 
-  const { data, error } = await sb()
-    .from("qb_questions")
-    .select("id,category_id")
-    .eq("base_id", state.baseId);
-
-  if (error) throw error;
-  state._qIndex = data || [];
+  state._qIndex = await listQuestionIndex(state.baseId);
 }
 
 // Buduje mapę: folderId -> liczba (direct subfolders + direct questions)
@@ -229,23 +214,6 @@ function buildChildrenIdIndex(categories) {
   return byParent;
 }
 
-function collectDescendantFolderIds(categories, rootFolderId) {
-  const byParent = buildChildrenIdIndex(categories);
-  const out = [];
-  const stack = [rootFolderId];
-  const seen = new Set();
-
-  while (stack.length) {
-    const id = stack.pop();
-    if (!id || seen.has(id)) continue;
-    seen.add(id);
-    out.push(id);
-
-    const kids = byParent.get(id) || [];
-    for (let i = kids.length - 1; i >= 0; i--) stack.push(kids[i]);
-  }
-  return out;
-}
 
 /* ================= META (stałe "tagi" bez DB) ================= */
 
@@ -731,7 +699,6 @@ async function refreshList(state) {
     if (isStale()) return;
     renderAll(state);
 
-    const writable = canWrite(state);
     return;
   }
 
@@ -757,7 +724,6 @@ async function refreshList(state) {
     if (isStale()) return;
     renderAll(state);
 
-    const writable = canWrite(state);
     return;
   }
 
@@ -784,7 +750,6 @@ async function refreshList(state) {
     if (isStale()) return;
     renderAll(state);
 
-    const writable = canWrite(state);
     return;
   }
 
@@ -804,7 +769,6 @@ async function refreshList(state) {
   if (isStale()) return;
   renderAll(state);
 
-  const mutable = canMutateHere(state);
 }
 
 function currentParentId(state) {
@@ -812,14 +776,8 @@ function currentParentId(state) {
   return (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
 }
 
-function currentCategoryId(state) {
-  // Root = category_id null
-  return (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-}
 
 // ================== STATUS MAPS (global) ==================
-// Uwaga: ta funkcja MUSI być w zasięgu applyTagToDraggedItems() (czyli na poziomie modułu),
-// bo jest wołana także poza refreshList().
 async function rebuildStatusMaps(state) {
 // _allQuestionTagMap buduje ensureDerivedFolderMaps/ensureAllQuestionTagMap.
 // Nie ustawiamy tu pustej Map(), bo to psuje filtry tagów.
@@ -831,145 +789,46 @@ async function rebuildStatusMaps(state) {
   }
 }
 
-async function nextOrdForFolder(state, parentId) {
-  const baseQ = sb()
-    .from("qb_categories")
-    .select("ord")
-    .eq("base_id", state.baseId);
 
-  const q = (parentId === null)
-    ? baseQ.is("parent_id", null)
-    : baseQ.eq("parent_id", parentId);
-
-  const { data: last, error } = await q
-    .order("ord", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return (Number(last?.ord) || 0) + 1;
-}
-
-async function nextOrdForQuestion(state, categoryId) {
-  const baseQ = sb()
-    .from("qb_questions")
-    .select("ord")
-    .eq("base_id", state.baseId);
-
-  const q = (categoryId === null)
-    ? baseQ.is("category_id", null)
-    : baseQ.eq("category_id", categoryId);
-
-  const { data: last, error } = await q
-    .order("ord", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return (Number(last?.ord) || 0) + 1;
-}
 
 export async function createFolderHere(state, { parentId = null } = {}) {
   if (!canMutateHere(state)) return false;
-
-  const ord = await nextOrdForFolder(state, parentId);
-
-  const { error } = await sb()
-    .from("qb_categories")
-    .insert(
-      { base_id: state.baseId, parent_id: parentId, name: "Nowy folder", ord },
-      { defaultToNull: false }
-    );
-
-  if (error) throw error;
-
-  state.categories = await listCategories(state.baseId);
-  
-  invalidateDerivedCaches(state);
-  await state._api?.refreshList?.();
+  await ops.createFolder(state.baseId, parentId, t("baseExplorer.toolbar.newFolder"));
+  await afterMutation(state, { categories: true });
   return true;
 }
 
 export async function createQuestionHere(state, { categoryId = null } = {}) {
   if (!canMutateHere(state)) return false;
-
-  const ord = await nextOrdForQuestion(state, categoryId);
-
-  const row = {
-    base_id: state.baseId,
-    category_id: categoryId,
-    ord,
-    payload: { text: "Nowe pytanie", answers: [] },
-  };
-  if (state.user?.id) row.updated_by = state.user.id;
-
-  const { error } = await sb().from("qb_questions").insert(row, { defaultToNull: false });
-  if (error) throw error;
-
-  invalidateDerivedCaches(state);
-  await state._api?.refreshList?.();
+  await ops.createQuestion(state.baseId, categoryId, { text: t("baseExplorer.toolbar.newQuestion"), answers: [] });
+  await afterMutation(state);
   return true;
 }
 
 export async function deleteItems(state, keys) {
   if (!canWrite(state)) return false;
 
-  const list = Array.from(keys || []).filter(Boolean);
-  if (!list.length) return false;
-
-  // rozbij na foldery i pytania
-  const qIds = [];
-  const cIds = [];
-
-  for (const k of list) {
-    if (k.startsWith("q:")) qIds.push(k.slice(2));
-    if (k.startsWith("c:")) cIds.push(k.slice(2));
-  }
+  const { qIds, cIds } = splitKeys(keys);
   // jeśli w zaznaczeniu nie ma realnych elementów (np. tylko "root") — nic nie rób
   if (!qIds.length && !cIds.length) return false;
 
-  // qb_categories.parent_id ma ON DELETE CASCADE (podfoldery znikną same razem z rodzicem),
-  // ale qb_questions.category_id ma ON DELETE SET NULL -- bez jawnego usunięcia pytania
-  // w kasowanych folderach przetrwałyby, po cichu "spadając" do widoku "Wszystkie" zamiast
-  // zniknąć razem z folderem, którego dotyczą.
-  const subtreeLockResources = cIds.length ? await collectSubtreeLockResources(state, cIds) : [];
-  const subtreeFolderIds = subtreeLockResources
-    .filter((r) => r.resourceType === "base_folder")
-    .map((r) => r.resourceId);
-  for (const r of subtreeLockResources) {
-    if (r.resourceType === "base_question") qIds.push(r.resourceId);
-  }
-
-  const allQIds = Array.from(new Set(qIds));
-
+  // Blokada całego poddrzewa (patrz collectSubtreeLockResources); samo
+  // usunięcie poddrzewa z pytaniami robi baza w jednej transakcji.
   const lease = await acquireResourceLocks([
-    ...allQIds.map((resourceId) => ({ resourceType: "base_question", resourceId })),
-    ...subtreeFolderIds.map((resourceId) => ({ resourceType: "base_folder", resourceId })),
+    ...qIds.map((resourceId) => ({ resourceType: "base_question", resourceId })),
+    ...(cIds.length ? await collectSubtreeLockResources(state, cIds) : []),
   ], { context: "base-explorer:delete" });
-  if (!lease?.ok) {
-    void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
-    return false;
-  }
+  if (!lease?.ok) return lockRefused(lease);
 
   try {
-    if (allQIds.length) {
-      const { error } = await sb().from("qb_questions").delete().in("id", allQIds);
-      if (error) throw error;
-    }
-
-    if (cIds.length) {
-      const { error } = await sb().from("qb_categories").delete().in("id", cIds);
-      if (error) throw error;
-    }
+    await ops.deleteItems(state.baseId, { questionIds: qIds, folderIds: cIds });
+  } catch (e) {
+    return opFailed(e);
   } finally {
     lease.release();
   }
 
-  // cache root + odśwież
-  invalidateDerivedCaches(state);
-  if (state._api?.refreshCategories) await state._api.refreshCategories();
-  await state._api?.refreshList?.();
-
+  await afterMutation(state, { categories: cIds.length > 0 });
   return true;
 }
 
@@ -1008,70 +867,23 @@ export async function renameByKey(state, key, newValueRaw) {
   if (!canWrite(state)) return false;
   if (!key) return false;
 
-  const val = key.startsWith("c:") ? safeName80(newValueRaw) : safeQuestionText(newValueRaw);
+  const isFolder = key.startsWith("c:");
+  if (!isFolder && !key.startsWith("q:")) return false;
+  const val = isFolder ? safeName80(newValueRaw) : safeQuestionText(newValueRaw);
   if (!val) return false;
 
-  if (key.startsWith("c:")) {
-    const id = key.slice(2);
-    try {
-      await updateChecked("qb_categories", { id }, { name: val });
-    } catch (e) {
-      if (e?.code === ROW_GONE) {
-        void alertModal({ text: t("resourceLock.goneMessage") });
-        return false;
-      }
-      throw e;
-    }
-
-    // odśwież cache kategorii (bo lista folderów jest z state.categories)
-    if (state._api?.refreshCategories) await state._api.refreshCategories();
-    await state._api?.refreshList?.();
-    return true;
+  const id = key.slice(2);
+  try {
+    // Pytanie: baza podmienia tylko payload.text — odpowiedzi dodane
+    // w międzyczasie gdzie indziej zostają.
+    if (isFolder) await ops.renameFolder(state.baseId, id, val);
+    else await ops.setQuestionText(state.baseId, id, val);
+  } catch (e) {
+    return opFailed(e);
   }
 
-  if (key.startsWith("q:")) {
-    const id = key.slice(2);
-
-    // Pobierz świeży payload z DB tuż przed zapisem -- lokalny cache (state.questions/
-    // _viewQuestions) może być nieaktualny, jeśli ktoś w międzyczasie edytował to samo
-    // pytanie gdzie indziej (np. przez question-modal), a UPDATE nadpisuje CAŁY payload.
-    // maybeSingle() (nie single()) -- pytanie mogło zniknąć w międzyczasie (usunięte
-    // gdzie indziej tuż przed Zapisz); single() rzuciłby wtedy PGRST116 zamiast
-    // pozwolić nam pokazać ten sam komunikat ROW_GONE co przy samym UPDATE-cie niżej.
-    const { data: fresh, error: eFetch } = await sb()
-      .from("qb_questions")
-      .select("payload")
-      .eq("id", id)
-      .maybeSingle();
-    if (eFetch) throw eFetch;
-    if (!fresh) {
-      void alertModal({ text: t("resourceLock.goneMessage") });
-      return false;
-    }
-
-    const payload = (fresh?.payload && typeof fresh.payload === "object") ? { ...fresh.payload } : {};
-    payload.text = val;
-
-    const upd = { payload };
-    if (state.user?.id) upd.updated_by = state.user.id;
-
-    try {
-      await updateChecked("qb_questions", { id }, upd);
-    } catch (e) {
-      if (e?.code === ROW_GONE) {
-        void alertModal({ text: t("resourceLock.goneMessage") });
-        return false;
-      }
-      throw e;
-    }
-
-    // root cache może się zmienić
-    state._rootQuestions = null;
-    await state._api?.refreshList?.();
-    return true;
-  }
-
-  return false;
+  await afterMutation(state, { categories: isFolder });
+  return true;
 }
 
 function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
@@ -1227,7 +1039,7 @@ export async function renameSelectedPrompt(state) {
 export async function deleteTags(state, tagIds) {
   if (!canWrite(state)) return false;
 
-  const ids = Array.from(new Set((tagIds || []).filter(Boolean)));
+  const ids = uniqIds(tagIds);
   if (!ids.length) return false;
 
   const label = (ids.length === 1) ? "ten tag" : `te tagi (${ids.length})`;
@@ -1238,70 +1050,29 @@ export async function deleteTags(state, tagIds) {
     ids.map((resourceId) => ({ resourceType: "base_tag", resourceId })),
     { context: "base-explorer:delete-tags" }
   );
-  if (!lease?.ok) {
-    void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
-    return false;
-  }
+  if (!lease?.ok) return lockRefused(lease);
 
   try {
-    // 1) usuń przypisania do pytań
-    {
-      const { error } = await sb()
-        .from("qb_question_tags")
-        .delete()
-        .in("tag_id", ids);
-      if (error) throw error;
-    }
-
-    // 2) usuń przypisania do folderów (jeśli tabela jeszcze istnieje/używana)
-    // Jeśli nie istnieje/RLS blokuje — ignorujemy.
-    try {
-      const { error } = await sb()
-        .from("qb_category_tags")
-        .delete()
-        .in("tag_id", ids);
-      if (error) throw error;
-    } catch {}
-
-    // 3) usuń same tagi
-    {
-      const { error } = await sb()
-        .from("qb_tags")
-        .delete()
-        .in("id", ids);
-      if (error) throw error;
-    }
+    await ops.deleteTags(state.baseId, ids); // przypisania znikają razem z tagiem
+  } catch (e) {
+    return opFailed(e);
   } finally {
     lease.release();
   }
 
-  // 4) lokalnie wyczyść selekcję usuniętych tagów
-  if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+  // lokalnie wyczyść selekcję usuniętych tagów
   for (const id of ids) state.tagSelection.ids.delete(id);
   if (!state.tagSelection.ids.size) state.tagSelection.anchorId = null;
 
-  // unieważnij cache map tagów (bez tego kropki przy folderach dalej pokazują usunięty tag)
-  state._viewQuestionTagMap = null;
-  state._allQuestionTagMap = null;
-  state._allCategoryTagMap = null;
-  state._derivedCategoryTagMap = null;
-
-  // 5) odśwież tagi i widok
-  await state._api?.refreshTags?.();
-
-  // jeśli jesteśmy w VIEW.TAG i usunęliśmy wszystko z selekcji -> wyjdź do ostatniego browse
-  const remaining = Array.from(state.tagSelection.ids || []);
+  // w VIEW.TAG bez pozostałych tagów -> wróć do ostatniego miejsca
   if (state.view === VIEW.TAG) {
-    if (!remaining.length) {
-      restoreBrowseLocation(state);
-      state.tagIds = [];
-    } else {
-      state.tagIds = remaining;
-    }
+    const remaining = Array.from(state.tagSelection.ids);
+    if (remaining.length) state.tagIds = remaining;
+    else restoreBrowseLocation(state);
   }
 
   selectionClear(state);
-  await state._api?.refreshList?.();
+  await afterMutation(state, { tags: true });
   return true;
 }
 
@@ -1315,7 +1086,7 @@ export async function duplicateSelected(state) {
   // root nie jest elementem do duplikowania
   if (keys.size === 1 && keys.has("root")) return false;
 
-  await copySelectedToClipboard(state);
+  copySelectedToClipboard(state);
   return await pasteClipboardHere(state);
 }
 
@@ -1351,26 +1122,19 @@ async function goUp(state) {
 }
 
 function clipboardSet(state, mode, keys) {
-  state.clipboard = state.clipboard || { mode: null, keys: new Set(), payload: null };
-  state.clipboard.mode = mode;
-
   const onlyReal = Array.from(keys || []).filter(k =>
     typeof k === "string" && (k.startsWith("q:") || k.startsWith("c:"))
   );
-
+  state.clipboard.mode = mode;
   state.clipboard.keys = new Set(onlyReal);
-  state.clipboard.payload = null;
 
   // odśwież toolbar żeby "Wklej" się odblokował
   renderToolbar(state);
 }
 
 function clipboardClear(state) {
-  if (!state.clipboard) state.clipboard = { mode: null, keys: new Set(), payload: null };
   state.clipboard.mode = null;
-  state.clipboard.keys.clear();
-  state.clipboard.payload = null;
-
+  state.clipboard.keys = new Set();
   renderToolbar(state);
 }
 
@@ -1378,69 +1142,11 @@ function clipboardHas(state) {
   return !!state?.clipboard?.mode && state?.clipboard?.keys?.size > 0;
 }
 
-async function buildClipboardQuestionsPayload(state, qIdsInOrder) {
-  const ids = (qIdsInOrder || []).filter(Boolean);
-  if (!ids.length) return { questions: [] };
 
-  // 1) pytania (payload)
-  const { data: qs, error: eQ } = await sb()
-    .from("qb_questions")
-    .select("id,payload")
-    .in("id", ids);
-
-  if (eQ) throw eQ;
-
-  const byId = new Map((qs || []).map(q => [q.id, q]));
-
-  // 2) tagi pytań
-  const { data: links, error: eT } = await sb()
-    .from("qb_question_tags")
-    .select("question_id,tag_id")
-    .in("question_id", ids);
-
-  if (eT) throw eT;
-
-  const tagMap = new Map(); // qid -> [tagId...]
-  for (const l of (links || [])) {
-    if (!tagMap.has(l.question_id)) tagMap.set(l.question_id, []);
-    tagMap.get(l.question_id).push(l.tag_id);
-  }
-
-  // 3) payload.questions w KOLEJNOŚCI zaznaczenia (ważne dla created[i])
-  const questions = ids.map((id) => {
-    const q = byId.get(id) || {};
-    const payload = (q.payload && typeof q.payload === "object")
-      ? q.payload
-      : { text: "", answers: [] };
-
-    return {
-      payload,
-      tagIds: Array.from(new Set(tagMap.get(id) || [])).filter(Boolean),
-    };
-  });
-
-  return { questions };
-}
-
-export async function copySelectedToClipboard(state) {
+export function copySelectedToClipboard(state) {
   const keys = state?.selection?.keys;
   if (!keys || !keys.size) return false;
-
   clipboardSet(state, "copy", keys);
-
-  // 6A) dołóż tagIds do payload (dla pytań)
-  const qIdsInOrder = Array.from(state.clipboard.keys)
-    .filter(k => k.startsWith("q:"))
-    .map(k => k.slice(2));
-
-  try {
-    state.clipboard.payload = await buildClipboardQuestionsPayload(state, qIdsInOrder);
-  } catch (e) {
-    console.warn("Clipboard payload build failed:", e);
-    // payload może pozostać null; paste zrobi fallback
-    state.clipboard.payload = { questions: [] };
-  }
-
   return true;
 }
 
@@ -1452,114 +1158,23 @@ export function cutSelectedToClipboard(state) {
   return true;
 }
 
-async function pasteIntoFolder(state, targetFolderIdOrNull) {
-  // payload musi być w formacie:
-  // payload.questions[i].payload
-  // payload.questions[i].tagIds
-
-  // Fallback: jeśli payload jest pusty/null (np. copy się nie udało),
-  // budujemy payload na podstawie keys (COPY pytań).
-  if (!state?.clipboard?.payload || !Array.isArray(state.clipboard.payload.questions)) {
-    const qIdsInOrder = Array.from(state.clipboard.keys || [])
-      .filter(k => k.startsWith("q:"))
-      .map(k => k.slice(2));
-    state.clipboard.payload = await buildClipboardQuestionsPayload(state, qIdsInOrder);
-  }
-
-  const payload = state.clipboard.payload || {};
-  const qItems = Array.isArray(payload.questions) ? payload.questions : [];
-  if (!qItems.length) return;
-
-  // ord startowy w folderze docelowym
-  const ordStart = await nextOrdForQuestion(state, targetFolderIdOrNull);
-
-  // Insert po kolei => pewne mapowanie 1:1 dla tagów
-  const createdPairs = []; // [{ newId, tagIds: [] }]
-
-  for (let i = 0; i < qItems.length; i++) {
-    const item = qItems[i] || {};
-    const p = (item?.payload && typeof item.payload === "object")
-      ? item.payload
-      : { text: "", answers: [] };
-
-    const row = {
-      base_id: state.baseId,
-      category_id: targetFolderIdOrNull,
-      ord: ordStart + i,
-      payload: p,
-      ...(state.user?.id ? { updated_by: state.user.id } : {}),
-    };
-
-    const { data: inserted, error: eIns } = await sb()
-      .from("qb_questions")
-      .insert(row, { defaultToNull: false })
-      .select("id")
-      .single();
-
-    if (eIns) throw eIns;
-
-    const tagIds = Array.isArray(item.tagIds) ? item.tagIds.filter(Boolean) : [];
-    createdPairs.push({ newId: inserted.id, tagIds });
-  }
-
-  // 6B) dopnij tagi
-  const linkRows = [];
-  for (const p of createdPairs) {
-    if (!p.newId || !p.tagIds.length) continue;
-    for (const tid of p.tagIds) {
-      linkRows.push({ question_id: p.newId, tag_id: tid });
-    }
-  }
-
-  if (linkRows.length) {
-    const { error: eLinks } = await sb()
-      .from("qb_question_tags")
-      .insert(linkRows, { defaultToNull: false });
-    if (eLinks) throw eLinks;
-  }
-
-  invalidateDerivedCaches(state);
-}
 
 export async function pasteClipboardHere(state) {
   if (!clipboardHas(state)) return false;
   if (!canMutateHere(state)) return false;
 
-  const targetFolderIdOrNull = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-  const mode = state.clipboard.mode;
+  const target = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
   const keys = state.clipboard.keys;
-  const qKeys = Array.from(keys).filter(k => k.startsWith("q:"));
-  const cKeys = Array.from(keys).filter(k => k.startsWith("c:"));
-  // COPY: na razie tylko pytania
-  if (mode === "copy") {
 
-    // 1) kopiuj foldery (każdy jako osobne drzewo)
-    if (cKeys.length) {
-      for (const k of cKeys) {
-        const folderId = k.slice(2);
-        await copyFolderSubtree(state, folderId, targetFolderIdOrNull);
-      }
-    }
-
-    // 2) kopiuj pytania (z tagami)
-    if (qKeys.length) {
-      await pasteIntoFolder(state, targetFolderIdOrNull);
-    }
-
-    await state._api?.refreshList?.();
-    return true;
+  if (state.clipboard.mode === "copy") {
+    return await copyItemsTo(state, keys, target);
   }
 
-  // CUT: przenieś pytania + foldery
-  if (mode === "cut") {
-    if (!canWrite(state)) return false;
-  
-    state._drag = state._drag || {};
-    state._drag.keys = new Set(keys);
-    await moveItemsTo(state, targetFolderIdOrNull, { mode: "move" });
-  
+  // wycięcie = przeniesienie; schowek pustoszeje
+  if (state.clipboard.mode === "cut") {
+    const ok = await moveItemsTo(state, keys, target);
     clipboardClear(state);
-    return true;
+    return ok;
   }
 
   return false;
@@ -1588,6 +1203,45 @@ function invalidateDerivedCaches(state) {
   // folder counters / indeksy do liczników (KLUCZOWE dla "wrzucam pytania do środka")
   state._qIndex = null;
   state._directChildrenCount = null;
+}
+
+// Klucze "q:<id>" / "c:<id>" → id pytań i folderów (inne klucze, np. "root", pomijane).
+function splitKeys(keys) {
+  const qIds = [];
+  const cIds = [];
+  for (const k of keys || []) {
+    if (typeof k !== "string") continue;
+    if (k.startsWith("q:")) qIds.push(k.slice(2));
+    if (k.startsWith("c:")) cIds.push(k.slice(2));
+  }
+  return { qIds: uniqIds(qIds), cIds: uniqIds(cIds) };
+}
+
+function splitKeysToItems(keys) {
+  const { qIds, cIds } = splitKeys(keys);
+  return { questionIds: qIds, folderIds: cIds };
+}
+
+// Blokada zajęta (ktoś inny edytuje) albo element zniknął.
+function lockRefused(lease) {
+  void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
+  return false;
+}
+
+// Znany błąd operacji (ops.js: element zniknął, brak uprawnień, cykl…) →
+// komunikat i false; nieznany leci dalej do ogólnego komunikatu wywołującego.
+function opFailed(e) {
+  if (!e?.userMessage) throw e;
+  void alertModal({ text: e.userMessage });
+  return false;
+}
+
+// Po każdym zapisie: jedno miejsce odświeżenia pamięci podręcznej i widoku.
+async function afterMutation(state, { categories = false, tags = false } = {}) {
+  invalidateDerivedCaches(state);
+  if (categories) state.categories = await listCategories(state.baseId);
+  if (tags) await refreshTags(state);
+  await refreshList(state);
 }
 
 function isFolderDescendant(state, folderId, maybeParentId) {
@@ -1653,437 +1307,98 @@ async function collectSubtreeLockResources(state, folderIds) {
     ids.flatMap((fid) => collectSubtreeIds(state.categories || [], fid))
   ));
 
-  const { data: nested, error } = await sb()
-    .from("qb_questions")
-    .select("id")
-    .in("category_id", subtreeFolderIds);
-  if (error) throw error;
+  const nested = await listQuestionIndexInFolders(state.baseId, subtreeFolderIds);
 
   return [
     ...subtreeFolderIds.map((resourceId) => ({ resourceType: "base_folder", resourceId })),
-    ...(nested || []).map((row) => ({ resourceType: "base_question", resourceId: row.id })),
+    ...nested.map((row) => ({ resourceType: "base_question", resourceId: row.id })),
   ];
 }
 
-function uniqueNameInSiblings(categories, parentIdOrNull, baseName) {
-  const siblings = (categories || []).filter(c => (c.parent_id || null) === (parentIdOrNull || null));
-  const names = new Set(siblings.map(s => String(s.name || "").toLowerCase()));
 
-  const base = String(baseName || "Folder").slice(0, 80);
-  if (!names.has(base.toLowerCase())) return base;
 
-  const stem = `${base} (kopia)`;
-  if (!names.has(stem.toLowerCase())) return stem;
+// Kopiuje pytania i foldery (z poddrzewem i tagami) do folderu docelowego
+// (null = korzeń). Kopię w całości robi baza (qb_copy_items).
+async function copyItemsTo(state, keys, targetFolderIdOrNull) {
+  if (!canWrite(state)) return false;
+  const { qIds, cIds } = splitKeys(keys);
+  if (!qIds.length && !cIds.length) return false;
 
-  let n = 2;
-  while (n < 9999) {
-    const cand = `${base} (kopia ${n})`;
-    if (!names.has(cand.toLowerCase())) return cand;
-    n++;
+  try {
+    await ops.copyItems(state.baseId, { questionIds: qIds, folderIds: cIds }, targetFolderIdOrNull);
+  } catch (e) {
+    return opFailed(e);
   }
-  return stem;
+  await afterMutation(state, { categories: cIds.length > 0 });
+  return true;
 }
 
-async function getQuestionTagIdsMap(questionIds) {
-  const ids = Array.from(new Set((questionIds || []).filter(Boolean)));
-  const map = new Map();
-  for (const id of ids) map.set(id, []);
 
-  if (!ids.length) return map;
-
-  const { data, error } = await sb()
-    .from("qb_question_tags")
-    .select("question_id,tag_id")
-    .in("question_id", ids);
-
-  if (error) throw error;
-
-  for (const row of (data || [])) {
-    const qid = row.question_id;
-    const tid = row.tag_id;
-    if (!qid || !tid) continue;
-    if (!map.has(qid)) map.set(qid, []);
-    map.get(qid).push(tid);
-  }
-
-  // uniq per pytanie
-  for (const [qid, arr] of map.entries()) {
-    map.set(qid, Array.from(new Set(arr)));
-  }
-
-  return map;
-}
-
-async function copyQuestionsTo(state, qIds, targetFolderIdOrNull) {
-  if (!qIds || !qIds.length) return;
-
-  // pobierz źródłowe pytania (minimalnie)
-  const { data: src, error: e1 } = await sb()
-    .from("qb_questions")
-    .select("id,payload")
-    .in("id", qIds);
-
-  if (e1) throw e1;
-
-  // ===== 6A) Copy: dołóż tagIds do payload (lokalnie, do operacji) =====
-  const tagMap = await getQuestionTagIdsMap((src || []).map(q => q.id).filter(Boolean));
-
-  const payload = {
-    questions: (src || []).map((q) => ({
-      payload: (q?.payload && typeof q.payload === "object") ? q.payload : { text: "", answers: [] },
-      tagIds: Array.isArray(tagMap.get(q.id)) ? tagMap.get(q.id) : [],
-    })),
-  };
-
-  // ord startowy w folderze docelowym
-  const ordStart = await nextOrdForQuestion(state, targetFolderIdOrNull);
-
-  // ===== Insert pytań + zbieranie created[] z nowymi id (po kolei, żeby mieć mapowanie 1:1) =====
-  const created = []; // [{ id }]
-  for (let i = 0; i < payload.questions.length; i++) {
-    const item = payload.questions[i];
-
-    const row = {
-      base_id: state.baseId,
-      category_id: targetFolderIdOrNull,
-      ord: ordStart + i,
-      payload: item.payload,
-    };
-    if (state.user?.id) row.updated_by = state.user.id;
-
-    const { data: inserted, error: e2 } = await sb()
-      .from("qb_questions")
-      .insert(row, { defaultToNull: false })
-      .select("id")
-      .single();
-
-    if (e2) throw e2;
-    created.push({ id: inserted.id });
-  }
-
-  // ===== 6B) Paste: po insercie pytań przypnij tagi =====
-  // Założenie jak w Twoim opisie:
-  // created[i].id = nowy id
-  // payload.questions[i].tagIds = tagi źródłowe
-  const tagLinks = [];
-  for (let i = 0; i < created.length; i++) {
-    const newId = created[i]?.id;
-    const tagIds = payload.questions[i]?.tagIds || [];
-    if (!newId || !tagIds.length) continue;
-
-    for (const tid of tagIds) {
-      tagLinks.push({ question_id: newId, tag_id: tid });
-    }
-  }
-
-  if (tagLinks.length) {
-    const { error: e3 } = await sb()
-      .from("qb_question_tags")
-      .insert(tagLinks, { defaultToNull: false });
-    if (e3) throw e3;
-  }
-
-  // cache / UI
-  state._rootQuestions = null;
-
-  // unieważnij cache tagów/derived (żeby kropki/tooltipy od razu były poprawne)
-  state._viewQuestionTagMap = null;
-  state._allQuestionTagMap = null;
-  state._derivedCategoryTagMap = null;
-  state._folderDescQIds = null;
-  state._allCategoryTagMap = null;
-}
-
-async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
-  // 1) zbierz foldery w poddrzewie
-  const ids = collectSubtreeIds(state.categories || [], sourceFolderId);
-  if (!ids.length) return;
-
-  const cats = state.categories || [];
-  const byId = new Map(cats.map(c => [c.id, c]));
-
-  // 2) pobierz pytania z tych folderów
-  const { data: qs, error: eQ } = await sb()
-    .from("qb_questions")
-    .select("id,category_id,ord,payload")
-    .eq("base_id", state.baseId)
-    .in("category_id", ids);
-  if (eQ) throw eQ;
-
-  const qTagMap = await getQuestionTagIdsMap((qs || []).map(q => q.id).filter(Boolean));
-
-  // 3) nowy root kopiowanego drzewa
-  const srcRoot = byId.get(sourceFolderId);
-  const rootName = uniqueNameInSiblings(cats, targetParentIdOrNull, String(srcRoot?.name || "Folder"));
-  const ord = await nextOrdForFolder(state, targetParentIdOrNull);
-
-  const { data: newRoot, error: eInsRoot } = await sb()
-    .from("qb_categories")
-    .insert({
-      base_id: state.baseId,
-      parent_id: targetParentIdOrNull,
-      name: rootName,
-      ord,
-    }, { defaultToNull: false })
-    .select("id")
-    .single();
-
-  if (eInsRoot) throw eInsRoot;
-
-  // 4) mapowanie stary->nowy
-  const mapOldToNew = new Map();
-  mapOldToNew.set(sourceFolderId, newRoot.id);
-
-  for (const oldId of ids) {
-    if (oldId === sourceFolderId) continue;
-
-    const old = byId.get(oldId);
-    if (!old) continue;
-
-    const oldParent = old.parent_id || null;
-    const newParent = oldParent ? mapOldToNew.get(oldParent) : null;
-
-    const { data: inserted, error } = await sb()
-      .from("qb_categories")
-      .insert({
-        base_id: state.baseId,
-        parent_id: newParent,
-        name: String(old.name || "Folder").slice(0, 80),
-        ord: Number(old.ord) || 0,
-      }, { defaultToNull: false })
-      .select("id")
-      .single();
-
-    if (error) throw error;
-    mapOldToNew.set(oldId, inserted.id);
-  }
-
-  // 5) wstaw pytania (kopie) + tagi
-  const createdPairs = []; // [{ newId, tagIds: [] }]
-
-  for (const q of (qs || [])) {
-    const row = {
-      base_id: state.baseId,
-      category_id: mapOldToNew.get(q.category_id) || newRoot.id,
-      ord: Number(q.ord) || 0,
-      payload: (q.payload && typeof q.payload === "object") ? q.payload : {},
-      ...(state.user?.id ? { updated_by: state.user.id } : {}),
-    };
-
-    const { data: inserted, error } = await sb()
-      .from("qb_questions")
-      .insert(row, { defaultToNull: false })
-      .select("id")
-      .single();
-
-    if (error) throw error;
-
-    const tagIds = Array.isArray(qTagMap.get(q.id)) ? qTagMap.get(q.id) : [];
-    createdPairs.push({ newId: inserted.id, tagIds });
-  }
-
-  const links = [];
-  for (const p of createdPairs) {
-    if (!p.newId || !p.tagIds?.length) continue;
-    for (const tid of p.tagIds) links.push({ question_id: p.newId, tag_id: tid });
-  }
-
-  if (links.length) {
-    const { error } = await sb()
-      .from("qb_question_tags")
-      .insert(links, { defaultToNull: false });
-    if (error) throw error;
-  }
-
-  if (state._api?.refreshCategories) await state._api.refreshCategories();
-  state._rootQuestions = null;
-    // Unieważnij cache tagów/derived (żeby kropki/tooltipy były od razu poprawne)
-  state._viewQuestionTagMap = null;
-  state._allQuestionTagMap = null;
-  state._derivedCategoryTagMap = null;
-  state._folderDescQIds = null;
-  state._allCategoryTagMap = null;
-
-  invalidateDerivedCaches(state);
-
-  await state._api?.refreshList?.();
-}
-
-async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) {
-  if (!canWrite(state)) return;
+// Przenosi pytania i foldery do folderu docelowego (null / "root" = korzeń).
+async function moveItemsTo(state, keys, targetFolderIdOrNull) {
+  if (!canWrite(state)) return false;
 
   // "root" to sentinel UI — w bazie parent_id/category_id = null
   if (targetFolderIdOrNull === "root") targetFolderIdOrNull = null;
 
-  const keys = state._drag?.keys;
-  if (!keys || !keys.size) return;
+  const { qIds, cIds } = splitKeys(keys);
+  if (!qIds.length && !cIds.length) return false;
 
-  // 1) najpierw rozbij na typy
-  const qIds = [];
-  const cIds = [];
-  for (const k of keys) {
-    if (k.startsWith("q:")) qIds.push(k.slice(2));
-    if (k.startsWith("c:")) cIds.push(k.slice(2));
+  // szybka odpowiedź bez blokad; baza i tak sprawdza cykl (qb:cycle)
+  if (cIds.includes(targetFolderIdOrNull)) {
+    void alertModal({ text: t("baseExplorer.errors.moveIntoSelf") });
+    return false;
   }
-
-  const isCopy = mode === "copy";
-
-  // 2) COPY — pytania + foldery (foldery kopiujemy z poddrzewem i pytaniami)
-  if (isCopy) {
-    // 1) foldery (każdy jako osobne drzewo w miejscu docelowym)
-    if (cIds.length) {
-      for (const fid of cIds) {
-        await copyFolderSubtree(state, fid, targetFolderIdOrNull);
-      }
-    }
-  
-    // 2) pytania
-    if (qIds.length) {
-      await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
-    }
-  
-    await state._api?.refreshList?.();
-    return;
-  }
-
-
-  // 3) MOVE — walidacje folderów
-  if (cIds.length && targetFolderIdOrNull) {
-    for (const fid of cIds) {
-      if (fid === targetFolderIdOrNull) {
-        void alertModal({ text: t("baseExplorer.errors.moveIntoSelf") });
-        return;
-      }
-      if (isFolderDescendant(state, fid, targetFolderIdOrNull)) {
-        void alertModal({ text: t("baseExplorer.errors.moveIntoChild") });
-        return;
-      }
-    }
+  if (cIds.some((fid) => isFolderDescendant(state, fid, targetFolderIdOrNull))) {
+    void alertModal({ text: t("baseExplorer.errors.moveIntoChild") });
+    return false;
   }
 
   // Całe przenoszone poddrzewo (foldery + zagnieżdżone pytania), nie tylko
   // sam przenoszony folder -- patrz collectSubtreeLockResources().
-  const subtreeLockResources = cIds.length ? await collectSubtreeLockResources(state, cIds) : [];
-
-  const moveLease = await acquireResourceLocks([
+  const lease = await acquireResourceLocks([
     ...qIds.map((resourceId) => ({ resourceType: "base_question", resourceId })),
-    ...subtreeLockResources,
+    ...(cIds.length ? await collectSubtreeLockResources(state, cIds) : []),
     ...(targetFolderIdOrNull ? [{ resourceType: "base_folder", resourceId: targetFolderIdOrNull }] : []),
   ], { context: "base-explorer:move" });
-  if (!moveLease?.ok) {
-    void alertModal({ text: moveLease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
-    return;
-  }
+  if (!lease?.ok) return lockRefused(lease);
 
   try {
-    // 4) MOVE — pytania
-    if (qIds.length) {
-      const upd = { category_id: targetFolderIdOrNull };
-      if (state.user?.id) upd.updated_by = state.user.id;
-
-      await updateCheckedMany("qb_questions", qIds, upd);
-      state._rootQuestions = null;
-    }
-
-    // 5) MOVE — foldery
-    if (cIds.length) {
-      await updateCheckedMany("qb_categories", cIds, { parent_id: targetFolderIdOrNull });
-
-      if (state._api?.refreshCategories) await state._api.refreshCategories();
-    }
+    await ops.moveItems(state.baseId, { questionIds: qIds, folderIds: cIds }, targetFolderIdOrNull);
   } catch (e) {
-    if (e?.code === ROW_GONE) {
-      void alertModal({ text: t("resourceLock.goneMessage") });
-      return;
-    }
-    throw e;
-  } finally {
-    moveLease.release();
-  }
-  invalidateDerivedCaches(state);
-  await state._api?.refreshList?.();
-}
-
-async function applyTagToDraggedItems(state, tagId, draggedKeys) {
-  if (!canWrite(state)) return false;
-  if (!tagId) return false;
-
-  const keys = Array.from(draggedKeys || []).filter(Boolean);
-  if (!keys.length) return false;
-
-  const qIds = [];
-  const cIds = [];
-
-  for (const k of keys) {
-    if (k.startsWith("q:")) qIds.push(k.slice(2));
-    if (k.startsWith("c:")) cIds.push(k.slice(2));
-  }
-
-  // Folder -> pytania w poddrzewie
-  let qFromFolders = [];
-  if (cIds.length) {
-    await ensureDerivedFolderMaps(state);
-    const folderDesc = state._folderDescQIds || new Map();
-    const out = new Set();
-    for (const cid of cIds) {
-      const set = folderDesc.get(cid);
-      if (!set) continue;
-      for (const qid of set) out.add(qid);
-    }
-    qFromFolders = Array.from(out);
-  }
-
-  const allQIds = Array.from(new Set([...qIds, ...qFromFolders])).filter(Boolean);
-  if (!allQIds.length) return false;
-
-  const lease = await acquireResourceLocks([
-    { resourceType: "base_tag", resourceId: tagId },
-    ...allQIds.map((resourceId) => ({ resourceType: "base_question", resourceId })),
-  ], { context: "base-explorer:assign-tag" });
-  if (!lease?.ok) {
-    void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
-    return false;
-  }
-
-  try {
-    // Pobierz istniejące linki (żeby nie robić duplikatów)
-    const { data: existing, error: e0 } = await sb()
-      .from("qb_question_tags")
-      .select("question_id,tag_id")
-      .in("question_id", allQIds)
-      .eq("tag_id", tagId);
-
-    if (e0) throw e0;
-
-    const have = new Set((existing || []).map(x => x.question_id));
-    const inserts = [];
-
-    for (const qid of allQIds) {
-      if (have.has(qid)) continue;
-      inserts.push({ question_id: qid, tag_id: tagId });
-    }
-
-    if (inserts.length) {
-      const { error: e1 } = await sb()
-        .from("qb_question_tags")
-        .insert(inserts, { defaultToNull: false });
-      if (e1) throw e1;
-    }
+    return opFailed(e);
   } finally {
     lease.release();
   }
 
-  // Unieważnij cache tagów / derived folder tags
-  state._allQuestionTagMap = null;
-  state._derivedCategoryTagMap = null;
-  state._folderDescQIds = null;
-  state._allCategoryTagMap = null;
+  await afterMutation(state, { categories: cIds.length > 0 });
+  return true;
+}
 
-  await state._api?.refreshList?.();
-  await rebuildStatusMaps(state);
-  renderTree(state);
-  renderTags(state);
-  renderList(state);
+// Upuszczenie elementów na tag: tag dostają pytania i całe poddrzewa folderów.
+async function applyTagToDraggedItems(state, tagId, draggedKeys) {
+  if (!canWrite(state)) return false;
+  if (!tagId) return false;
+
+  const { qIds, cIds } = splitKeys(draggedKeys);
+  if (!qIds.length && !cIds.length) return false;
+
+  const lease = await acquireResourceLocks([
+    { resourceType: "base_tag", resourceId: tagId },
+    ...qIds.map((resourceId) => ({ resourceType: "base_question", resourceId })),
+    ...(cIds.length ? await collectSubtreeLockResources(state, cIds) : []),
+  ], { context: "base-explorer:assign-tag" });
+  if (!lease?.ok) return lockRefused(lease);
+
+  try {
+    await ops.setTagLinks(state.baseId, [tagId], { questionIds: qIds, folderIds: cIds }, true);
+  } catch (e) {
+    return opFailed(e);
+  } finally {
+    lease.release();
+  }
+
+  await afterMutation(state);
   return true;
 }
 
@@ -2103,18 +1418,10 @@ function uniq(arr) {
 
 async function applyCategoryOrder(state, parentIdOrNull, orderedIds) {
   const ids = uniq(orderedIds);
-  if (!ids.length) return;
+  if (!ids.length) return false;
 
   // "root" to sentinel UI — w bazie parent_id = null
   const dbParent = (parentIdOrNull === "root" || !parentIdOrNull) ? null : parentIdOrNull;
-
-  // ustawiamy ord 1..N (prosto i stabilnie)
-  // + parent_id (bo reorder może też oznaczać przeniesienie między rodzicami)
-  const updates = ids.map((id, i) => ({
-    id,
-    parent_id: dbParent,
-    ord: i + 1,
-  }));
 
   // Całe poddrzewo każdego reorderowanego/przenoszonego folderu (foldery +
   // zagnieżdżone pytania), nie tylko jego własne id -- patrz
@@ -2125,30 +1432,19 @@ async function applyCategoryOrder(state, parentIdOrNull, orderedIds) {
     ...(await collectSubtreeLockResources(state, ids)),
     ...(dbParent ? [{ resourceType: "base_folder", resourceId: dbParent }] : []),
   ], { context: "base-explorer:reorder-folders" });
-  if (!lease?.ok) {
-    void alertModal({ text: lease?.error === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.baseItemMessage") });
-    return;
-  }
+  if (!lease?.ok) return lockRefused(lease);
 
-  // Supabase: najprościej i najczytelniej: pojedyncze update per element (ok dla małych list)
-  // Jeśli kiedyś będzie tego tysiące, zrobimy RPC/batch.
+  // rodzic + kolejność 1..N jednym zapisem w bazie
   try {
-    for (const u of updates) {
-      await updateChecked("qb_categories", { id: u.id }, { parent_id: u.parent_id, ord: u.ord });
-    }
+    await ops.reorderFolders(state.baseId, dbParent, ids);
   } catch (e) {
-    if (e?.code === ROW_GONE) {
-      void alertModal({ text: t("resourceLock.goneMessage") });
-      return;
-    }
-    throw e;
+    return opFailed(e);
   } finally {
     lease.release();
   }
 
-  // odśwież cache kategorii i UI
-  if (state._api?.refreshCategories) await state._api.refreshCategories();
-  await state._api?.refreshList?.();
+  await afterMutation(state, { categories: true });
+  return true;
 }
 
 /**
@@ -2217,14 +1513,7 @@ async function reorderFoldersByDrop(state, movedFolderIds, targetId, mode) {
 }
 
 async function refreshTags(state) {
-  const { data, error } = await sb()
-    .from("qb_tags")
-    .select("id,base_id,name,color,ord")
-    .eq("base_id", state.baseId)
-    .order("ord", { ascending: true });
-
-  if (error) throw error;
-  state.tags = data || [];
+  state.tags = await listTags(state.baseId);
 }
 
 async function untagSelectedInTagView(state) {
@@ -2255,40 +1544,15 @@ async function untagSelectedInTagView(state) {
   const ok = await confirmModal({ text: t("baseExplorer.confirm.removeTagsInTagView", { label }) });
   if (!ok) return false;
 
-  const qIds = [];
-  const cIds = [];
-
-  for (const k of keys) {
-    if (k.startsWith("q:")) qIds.push(k.slice(2));
-    if (k.startsWith("c:")) cIds.push(k.slice(2));
+  // folder w widoku tagu pokazuje się przez tagi pytań w poddrzewie,
+  // więc zdjęcie tagu z folderu zdejmuje go z całego poddrzewa
+  try {
+    await ops.setTagLinks(state.baseId, tagIds, splitKeysToItems(keys), false);
+  } catch (e) {
+    return opFailed(e);
   }
 
-  // zdejmujemy tylko wybrane tagIds
-  if (qIds.length) {
-    const { error } = await sb()
-      .from("qb_question_tags")
-      .delete()
-      .in("question_id", qIds)
-      .in("tag_id", tagIds);
-
-    if (error) throw error;
-  }
-
-  if (cIds.length) {
-    const { error } = await sb()
-      .from("qb_category_tags")
-      .delete()
-      .in("category_id", cIds)
-      .in("tag_id", tagIds);
-
-    if (error) throw error;
-  }
-
-  // odśwież cache map tagów (SEARCH/TAG)
-  state._allQuestionTagMap = null;
-  state._allCategoryTagMap = null;
-
-  await state._api?.refreshList?.();
+  await afterMutation(state);
   return true;
 }
 
@@ -2454,11 +1718,6 @@ export function wireActions({ state }) {
     warnLocked(t("baseExplorer.errors.tagsLockedSearch"));
   }
 
-  function warnSearchLockedByLeft(state) {
-    if (hasLeftSelection(state)) {
-      warnLocked(t("baseExplorer.errors.searchLockedSelection"));
-    }
-  }
 
   // Blokada fokusa w search, gdy mamy aktywne Tagi/Kategorie (FILTER)
   const searchInput = document.getElementById("searchText");
@@ -2686,11 +1945,6 @@ export function wireActions({ state }) {
     return canMutateHere(state);
   }
   
-  function keyFromKindId(kind, id) {
-    if (kind === "q") return `q:${id}`;
-    if (kind === "cat") return `c:${id}`;
-    return null;
-  }
   
   function clearDropTarget() {
     // zdejmujemy podgląd dropa z obu paneli (drzewo+lista), bo selektory są te same
@@ -3482,11 +2736,9 @@ export function wireActions({ state }) {
     state._drag.treeDrop = null;
   
     try {
-      const moveMode = isCopyDragModifier(e) ? "copy" : "move";
-  
-      // COPY: zostawiamy stare zachowanie (kopiowanie folderów już masz)
-      if (moveMode === "copy") {
-        await moveItemsTo(state, targetId, { mode: "copy" }); 
+      // COPY: kopia zaznaczenia do folderu docelowego
+      if (isCopyDragModifier(e)) {
+        await copyItemsTo(state, keys, targetId);
         pulseDropTargetIn(
           treeEl,
           `.row[data-kind="root"][data-id]`,
@@ -3498,7 +2750,7 @@ export function wireActions({ state }) {
       // MOVE:
       // - jeśli drop na tło => normalny move do root
       if (modeKey === "root" || !targetId) {
-        await moveItemsTo(state, null, { mode: "move" });
+        await moveItemsTo(state, keys, null);
         pulseDropTargetIn(
           treeEl,
           `.row[data-kind="root"][data-id]`,
@@ -3509,7 +2761,7 @@ export function wireActions({ state }) {
   
       // - jeśli drop "into" => move do środka folderu (parent = targetId)
       if (modeKey === "into") {
-        await moveItemsTo(state, targetId, { mode: "move" });
+        await moveItemsTo(state, keys, targetId);
         pulseDropTargetIn(
           treeEl,
           `.row[data-kind="cat"][data-id="${CSS.escape(targetId)}"]`,
@@ -3530,7 +2782,7 @@ export function wireActions({ state }) {
       }
   
       // jeśli user przeciąga same pytania na drzewo "między" — traktujemy jak "do folderu"
-      await moveItemsTo(state, targetId, { mode: "move" });
+      await moveItemsTo(state, keys, targetId);
 
       pulseEl(treeEl);
     } catch (err) {
@@ -3706,8 +2958,9 @@ export function wireActions({ state }) {
     clearDropTarget();
   
     try {
-      const mode = isCopyDragModifier(e) ? "copy" : "move";
-      await moveItemsTo(state, targetFolderId, { mode });
+      const keys = state._drag?.keys;
+      if (isCopyDragModifier(e)) await copyItemsTo(state, keys, targetFolderId);
+      else await moveItemsTo(state, keys, targetFolderId);
 
       // pulsuj target: folder-row albo root (tło)
       if (targetFolderId) {
@@ -4282,19 +3535,9 @@ export function wireActions({ state }) {
   const api = {
     refreshList: () => refreshList(state),
     refreshCategories: async () => {
-      // jeśli masz listCategories w repo.js, użyj jej:
-      // state.categories = await listCategories(state.baseId);
-  
-      // jeśli jeszcze nie masz, to na razie zrób minimalny fetch tu:
-      const { data, error } = await sb()
-        .from("qb_categories")
-        .select("id,base_id,parent_id,name,ord")
-        .eq("base_id", state.baseId)
-        .order("ord", { ascending: true });
-      if (error) throw error;
-      state.categories = data || [];
+      state.categories = await listCategories(state.baseId);
     },
-    
+
     openAssignTagsModal: async () => {
       // 1) co jest zaznaczone
       const { qIds, cIds } = selectionSplitIds(state);
@@ -4345,17 +3588,6 @@ export function wireActions({ state }) {
   
   // ================== Modals: init + API bridge ==================
   
-  // helper: zawsze pobierz świeże pytanie z DB
-  async function fetchQuestionById(qid) {
-    const { data, error } = await sb()
-      .from("qb_questions")
-      .select("id, base_id, category_id, ord, payload, updated_at")
-      .eq("id", qid)
-      .single();
-    if (error) throw error;
-    return data;
-  }
-  
   // ---------- Question modal ----------
   if (!questionModal) {
     questionModal = initQuestionModal({ state });
@@ -4379,7 +3611,7 @@ export function wireActions({ state }) {
         return false;
       }
 
-      const row = await fetchQuestionById(qid);
+      const row = await getQuestion(qid);
 
       const input = {
         id: row.id,
@@ -4396,12 +3628,7 @@ export function wireActions({ state }) {
             : t("resourceLock.forbiddenMessage");
           throw e;
         }
-        try {
-          await updateChecked("qb_questions", { id: qid }, { payload });
-        } catch (e) {
-          if (e?.code === ROW_GONE) e.userMessage = t("resourceLock.goneMessage");
-          throw e;
-        }
+        await ops.saveQuestion(state.baseId, qid, payload);
       };
 
       const res = await questionModal.open(input, { save });
@@ -4555,8 +3782,6 @@ export function wireActions({ state }) {
       // każdy eksport dawał 2 wiersze w "games").
       const res = await exportModal.open(opts);
       if (!res?.ok) return false;
-
-      const gameId = res.result?.gameId;
 
       // (opcjonalnie) nawigacja do strony gier:
       location.href = linkTo("games");

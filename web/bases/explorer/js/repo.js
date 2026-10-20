@@ -208,3 +208,47 @@ export async function listCategoriesByTag(baseId, tagId) {
   if (cErr) throw cErr;
   return cats || [];
 }
+
+/**
+ * Minimalny indeks pytań bazy (do liczników folderów): [{ id, category_id }].
+ */
+export async function listQuestionIndex(baseId) {
+  const { data, error } = await sb()
+    .from("qb_questions")
+    .select("id,category_id")
+    .eq("base_id", baseId);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Pytania w podanych folderach (do blokad poddrzewa): [{ id, category_id }].
+ */
+export async function listQuestionIndexInFolders(baseId, categoryIds) {
+  const ids = Array.isArray(categoryIds) ? categoryIds.filter(Boolean) : [];
+  if (!ids.length) return [];
+
+  const { data, error } = await sb()
+    .from("qb_questions")
+    .select("id,category_id")
+    .eq("base_id", baseId)
+    .in("category_id", ids);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Jedno pytanie, świeżo z bazy (okno pytania).
+ */
+export async function getQuestion(id) {
+  const { data, error } = await sb()
+    .from("qb_questions")
+    .select("id,base_id,category_id,ord,payload,updated_at")
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}

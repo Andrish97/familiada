@@ -7,13 +7,12 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T19584";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T19584";
+import * as ops from "./ops.js?v=v2026-10-20T19584";
 import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T19584";
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T19584";
 import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T19584";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T19584";
-import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-20T19584";
+import { listQuestionTags, listTags } from "./repo.js?v=v2026-10-20T19584";
 
 
 const btnBack = document.getElementById("btnBack");
@@ -188,14 +187,7 @@ async function expandFoldersToQuestionIds(state, folderIds, opts) {
 }
 
 async function refreshTags(state) {
-  const { data, error } = await sb()
-    .from("qb_tags")
-    .select("id,base_id,name,color,ord")
-    .eq("base_id", state.baseId)
-    .order("ord", { ascending: true });
-
-  if (error) throw error;
-  state.tags = data || [];
+  state.tags = await listTags(state.baseId);
 }
 
 /* ================= Modal main ================= */
@@ -558,45 +550,15 @@ export async function openTagsModal(state, opts = {}) {
       return false;
     }
 
+    // „wszystkie” = nadaj brakujące, „żadne” = zdejmij; jedna transakcja
+    const on = dirtyTagIds.filter((tid) => (m.tri.get(tid) || "none") === "all");
+    const off = dirtyTagIds.filter((tid) => (m.tri.get(tid) || "none") === "none");
     try {
-      // istniejące linki (qid x tid)
-      const { data: existing, error: e0 } = await sb()
-        .from("qb_question_tags")
-        .select("question_id,tag_id")
-        .in("question_id", allQIds)
-        .in("tag_id", dirtyTagIds);
-      if (e0) throw e0;
-
-      const have = new Set((existing || []).map((x) => `${x.question_id}::${x.tag_id}`));
-
-      const inserts = [];
-      const deletes = []; // { tid, qIds }
-
-      for (const tid of dirtyTagIds) {
-        const tri = m.tri.get(tid) || "none";
-        if (tri === "all") {
-          for (const qid of allQIds) {
-            const k = `${qid}::${tid}`;
-            if (!have.has(k)) inserts.push({ question_id: qid, tag_id: tid });
-          }
-        } else if (tri === "none") {
-          deletes.push({ tid, qIds: allQIds });
-        }
-      }
-
-      for (const d of deletes) {
-        const { error } = await sb()
-          .from("qb_question_tags")
-          .delete()
-          .in("question_id", d.qIds)
-          .eq("tag_id", d.tid);
-        if (error) throw error;
-      }
-
-      if (inserts.length) {
-        const { error } = await sb().from("qb_question_tags").insert(inserts, { defaultToNull: false });
-        if (error) throw error;
-      }
+      await ops.applyTagStates(state.baseId, { questionIds: allQIds }, { on, off });
+    } catch (e) {
+      if (!e?.userMessage) throw e;
+      showErr(E.assignErr, e.userMessage);
+      return false;
     } finally {
       tagLease.release();
     }
@@ -639,25 +601,17 @@ export async function openTagsModal(state, opts = {}) {
 
     const color = String(m.pickedColor || "#4da3ff").trim();
 
-    if (m.edit.mode === "edit" && m.edit.tagId) {
-      if (sessionLease && !sessionLease.ok) {
-        showErr(E.editErr, sessionLease.reason === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.forbiddenMessage"));
-        return false;
-      }
-      try {
-        await updateChecked("qb_tags", { id: m.edit.tagId }, { name: nameRaw, color });
-      } catch (e) {
-        if (e?.code === ROW_GONE) {
-          showErr(E.editErr, t("resourceLock.goneMessage"));
-          return false;
-        }
-        throw e;
-      }
-    } else {
-      const { error } = await sb()
-        .from("qb_tags")
-        .insert({ base_id: state.baseId, name: nameRaw, color, ord: 9999 }, { defaultToNull: false });
-      if (error) throw error;
+    const editId = (m.edit.mode === "edit" && m.edit.tagId) ? m.edit.tagId : null;
+    if (editId && sessionLease && !sessionLease.ok) {
+      showErr(E.editErr, sessionLease.reason === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.forbiddenMessage"));
+      return false;
+    }
+    try {
+      await ops.saveTag(state.baseId, editId, nameRaw, color);
+    } catch (e) {
+      if (!e?.userMessage) throw e;
+      showErr(E.editErr, e.userMessage);
+      return false;
     }
 
     await refreshTags(state);
