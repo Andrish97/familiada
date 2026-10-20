@@ -275,8 +275,11 @@ test.describe("games: audyt -- kafelki", () => {
       await expect(page.locator("#btnPlay")).toBeEnabled({ timeout: 10000 });
       await page.waitForTimeout(500);
 
-      await tile.tap();
-      await tile.tap();
+      // dwa tapnięcia w odstępie < 300 ms (tile.tap() czeka na gotowość elementu i w CI bywa wolniejsze)
+      const box = await tile.boundingBox();
+      const x = box.x + box.width / 2, y = box.y + box.height / 2;
+      await page.touchscreen.tap(x, y);
+      await page.touchscreen.tap(x, y);
       await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#nameInp")).toHaveValue(name);
     } finally {
