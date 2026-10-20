@@ -69,12 +69,27 @@ async function playUntilCrash(page) {
     if (next !== dir) { await page.locator("body").press(key[next]); dir = next; }
     await page.waitForTimeout(30);
   }
-  // Zawrócenie: trzy skręty w kolejnych krokach.
-  const turns = dir === "up" || dir === "down" ? ["left", opposite[dir], "right"] : ["up", opposite[dir], "down"];
-  for (const turn of turns) {
-    const before = JSON.stringify((await readBoard(page)).head);
-    await page.locator("body").press(key[turn]);
-    await expect.poll(async () => JSON.stringify((await readBoard(page)).head), { timeout: 2_000, intervals: [15] }).not.toBe(before);
+  // Zawrócenie w ogon: kierunek z faktycznego ruchu głowy (nie z naciśnięć --
+  // ostatni skręt mógł jeszcze nie wejść), trzy skręty w kolejnych krokach;
+  // gdyby wąż przeżył (np. wolne pole po ogonie), powtórka.
+  const headDir = async () => {
+    const a = (await readBoard(page)).head;
+    let b = a;
+    await expect.poll(async () => { b = (await readBoard(page)).head; return JSON.stringify(b); }, { timeout: 2_000, intervals: [15] }).not.toBe(JSON.stringify(a));
+    const wrap = (v, n) => (v > 1 ? v - n : v < -1 ? v + n : v);
+    const dx = wrap(b.x - a.x, 30), dy = wrap(b.y - a.y, 10);
+    return dx > 0 ? "right" : dx < 0 ? "left" : dy > 0 ? "down" : "up";
+  };
+  for (let attempt = 0; attempt < 4 && (await frame.getAttribute("data-mode")) === "play"; attempt++) {
+    const d = await headDir();
+    const turns = d === "up" || d === "down" ? ["left", opposite[d], "right"] : ["up", opposite[d], "down"];
+    for (const turn of turns) {
+      if ((await frame.getAttribute("data-mode")) !== "play") break;
+      const before = JSON.stringify((await readBoard(page)).head);
+      await page.locator("body").press(key[turn]);
+      await expect.poll(async () => (await frame.getAttribute("data-mode")) !== "play" || JSON.stringify((await readBoard(page)).head) !== before, { timeout: 2_000, intervals: [15] }).toBe(true);
+    }
+    await page.waitForTimeout(400);
   }
   await expect(frame).toHaveAttribute("data-mode", "over", { timeout: 5_000 });
 }
