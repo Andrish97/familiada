@@ -342,12 +342,20 @@ async function main() {
   }
   const sessionTelemetry = createSessionTelemetry(gameId, () => store.state, store.subscribe);
   const realtimeStates = new Map();
+  // Wyjście z Control (ustawienia, zamknięcie karty) przerywa zapytania
+  // i kanały; to nie jest awaria, więc nie trafia do statystyk. Okno 3 s,
+  // bo anulowane beforeunload zostawia operatora na stronie.
+  let pageLeavingAt = 0;
+  const notePageLeaving = () => { pageLeavingAt = Date.now(); };
+  window.addEventListener("beforeunload", notePageLeaving);
+  window.addEventListener("pagehide", notePageLeaving);
+  const pageLeaving = () => Date.now() - pageLeavingAt < 3000;
   function observeRealtimeState(channel, rawStatus) {
     const state = rawStatus === "SUBSCRIBED" ? "connected" : "disconnected";
     const previous = realtimeStates.get(channel);
     const snapshot = { state, rawStatus, reportedForGame: !!store.state.locks.gameStarted };
     realtimeStates.set(channel, snapshot);
-    if (store.state.locks.gameStarted && previous?.state !== state) {
+    if (store.state.locks.gameStarted && previous?.state !== state && !pageLeaving()) {
       void sessionTelemetry.report({
         kind: "diagnostic", category: "realtime",
         message: `Kanał Realtime ${channel} ${state === "connected" ? "połączony" : "rozłączony"}.`,
@@ -951,6 +959,7 @@ async function main() {
     onChange: ({ flags, displayAudioUnlocked: audioUnlocked, deviceDiagnostics, error, errorSource }) => {
       const previous = presenceFlags;
       if (error) {
+        if (pageLeaving()) return;
         if (!presenceUnavailable) {
           presenceFailureStartedAt = Date.now();
           presenceFailureSource = errorSource || "status_read";
