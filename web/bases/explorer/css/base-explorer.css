@@ -1136,6 +1136,29 @@ tr.row.is-drop-after td:last-child::after {
     gap: 6px
 }
 
+/* Komputer: pasek w tych samych kolumnach co strona (.explorer: 320px | reszta)
+   — wyszukiwarka na szerokość lewego panelu, przyciski od początku prawego. */
+@media (min-width: 901px) {
+    .toolbar {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        column-gap: 0;
+    }
+    .search-row {
+        width: auto;
+        min-width: 0;
+        /* jak lewy panel: 12px odstępu + 1px linii przed prawą częścią */
+        padding-right: 13px;
+    }
+    .toolbar-btns-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        padding-left: 12px;
+    }
+}
+
 .tbSep {
     width: 1px;
     height: 28px;

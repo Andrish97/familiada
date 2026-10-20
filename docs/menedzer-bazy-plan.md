@@ -93,6 +93,9 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
     dole panelu znika.
   - **Pomysł na później (NIE teraz):** wszystkie okna na telefonie w stylu
     arkusza od dołu, jak menu kontekstowe (użytkownikowi się podoba).
+  - **Pasek na komputerze (2026-10-20, zrobione):** wyszukiwarka na
+    szerokość lewego panelu, przyciski od początku prawej części (pasek
+    w kolumnach `.explorer`: 320px | reszta; `img/pasek-komputer.png`).
   - **Przemyśleć wyszukiwanie i filtrowanie** (tekst, #tagi w polu
     wyszukiwania, filtr tagów i kategorii w lewym panelu, blokady akcji
     w widokach wyszukiwania/tagów), żeby działało dobrze i spójnie.
