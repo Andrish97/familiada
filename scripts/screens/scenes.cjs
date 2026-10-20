@@ -32,7 +32,10 @@ const selectTile = (selector) => async (view) => {
   await view.waitForTimeout(250);
 };
 
-const H = { homepage: true };
+// Kadry strony głównej: jedna wersja każdego -- widok komputerowy 1440×900,
+// taki sam na stronie głównej w każdym widoku (telefon i komputer). Wyjątek:
+// głosowanie (poll-vote-mobile) -- ekran telefonu w ramce iPhone'a.
+const H = { homepage: true, devices: ["desktop"] };
 module.exports = [
   // ---------- 1. Gry i bazy ----------
   { ...H, id: "games", category: "Gry i bazy", title: "Moje gry — Preparowane", path: "/games/", sources: page("games"), ready: "#grid .card", steps: [selectTile("#grid .card:not(.addCard)")] },
@@ -57,7 +60,7 @@ module.exports = [
   {
     ...H, id: "logo-draw", category: "Wygląd i logo", title: "Edytor rysunku", path: `/logos/editor/draw/?id=${IDS.logoDraw}`,
     sources: ["web/logos/editor/draw/", "web/logos/js/draw", "web/logos/js/editor-draw.js", "web/logos/js/editor-page.js"],
-    ready: () => window.__drawFabric?.getObjects().length > 0, devices: ["desktop", "tablet"],
+    ready: () => window.__drawFabric?.getObjects().length > 0,
   },
 
   // ---------- 4. Rozgrywka ----------

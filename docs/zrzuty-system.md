@@ -107,6 +107,11 @@ Runner pisze przy scenie:
 
 ## Kadry strony głównej
 
+Każdy kadr strony głównej ma **jedną wersję**: widok komputerowy 1440×900
+(Główny Wyświetlacz 1600×900, og-image 2400×1260), ten sam na stronie głównej
+w widoku telefonu i komputera. Jedyny wyjątek to głosowanie
+(`poll-vote-mobile`): ekran telefonu w ramce iPhone'a na czarnym tle.
+
 Sceny z `homepage: true` w kolejności z `docs/e13-zrzuty-strona-glowna.md`:
 gry i bazy, znajomi/zadania/ankiety, wygląd i logo, rozgrywka. Główny
 Wyświetlacz (1600×900) i `og-image` (1200×630 @2x = 2400×1260, podgląd linku
