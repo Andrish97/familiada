@@ -3161,7 +3161,10 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
-    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    // Bramka intro (dźwięk + animacja) blokuje start rundy przez kilkanaście sekund.
+    const startRoundButton = page.getByRole("button", { name: "Rozpocznij rundę" });
+    await expect(startRoundButton).toBeEnabled({ timeout: 60000 });
+    await startRoundButton.click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
