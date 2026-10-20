@@ -3069,7 +3069,8 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
   await control.locator(rowId).click();
   const url = await readDeviceUrlFromModal(control, kind);
   if (!url) throw new Error(`modal (${kind}) nie pokazał żadnego URL-a do ponownego podłączenia`);
-  const ctx = await controlContext(browser, );
+  // Prowadzący i Przycisk wymagają ekranu dotykowego (jak w openAnon).
+  const ctx = await controlContext(browser, { hasTouch: true, viewport: { width: 1366, height: 1024 } });
   contexts.push(ctx);
   const p = await ctx.newPage();
   trackErrors(p, kind, errors);
