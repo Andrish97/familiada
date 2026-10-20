@@ -1275,11 +1275,18 @@ test.describe("telefon w poziomie", () => {
   const LAND = { width: 844, height: 390 };
   test.use({ viewport: LAND, screen: LAND, isMobile: true, hasTouch: true });
 
-  test("telefon w poziomie: lista tylko do przeglądania (bez „Edytuj” i „Nowe logo”)", async ({ page }) => {
+  test("telefon w poziomie: lista prosi o obrót do pionu, po obrocie tylko przeglądanie", async ({ page }) => {
+    // Krok 5 tabeli E20: telefon w poziomie domyślnie blokowany (wyjątki: Host, Buzzer, wąż).
+    await page.setViewportSize({ width: 390, height: 844 });
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("landscape-view"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
-    await open(page);
-    await expect(page.locator("#grid")).toBeVisible();
+    await page.setViewportSize(LAND);
+    await expect(page.locator("#pageGuard")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-kind", "device");
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "rotate");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator("#pageGuard")).toBeHidden();
+    await expect(page.locator(`.logoTile[data-key="${id}"]`)).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#grid .addCard")).toBeHidden();
     await page.locator(`.logoTile[data-key="${id}"]`).tap();
     await expect(page.locator("#btnEdit")).toBeHidden();
