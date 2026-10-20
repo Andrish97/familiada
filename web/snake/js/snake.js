@@ -307,7 +307,7 @@ async function boot() {
   // grę), stuknięcie w planszę to start/pauza. Bez przycisków na ekranie.
   let touch = null;
   document.addEventListener("touchstart", (e) => {
-    if (e.target.closest("a, button, .a2hs")) return;
+    if (e.target.closest("a, button, .a2hs, .lang-menu")) return;
     const p = e.touches[0];
     touch = { x: p.clientX, y: p.clientY };
   }, { passive: true });
@@ -320,7 +320,11 @@ async function boot() {
     touch = { x: p.clientX, y: p.clientY };
   }, { passive: true });
   document.addEventListener("touchend", () => { touch = null; }, { passive: true });
-  $("snakeFrame").addEventListener("click", toggle);
+  // Start/pauza tylko po stuknięciu w dużą tablicę (pole gry), nie w całą
+  // ramkę -- chybione stuknięcie obok przycisku języka nie uruchamia gry.
+  const bigBoard = $("displays").firstElementChild;
+  bigBoard.classList.add("snake-big");
+  bigBoard.addEventListener("click", toggle);
 
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(true); });
   // Przełącznik języka (lewy górny róg): napisy na planszy i pod nią od razu w nowym języku.
