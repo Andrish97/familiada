@@ -2144,34 +2144,80 @@ tr.row.is-drop-after td:last-child::after {
 .search-suggest-item:hover,
 .search-suggest-item.is-active { background: #272727; }
 
-/* ===== Menu kontekstowe na telefonie: arkusz od dołu (decyzja 2026-10-20) ===== */
+/* ===== Menu kontekstowe na telefonie i tablecie dotykowym: okno od dołu =====
+   Ten sam wygląd co pozostałe okna od dołu (shared/css/base.css, „Okno od
+   dołu”): przyciemnione tło, panel #121524 z rogami 28 px i linią u góry,
+   pasek do przeciągania 44×5, wysuwanie / zjazd z animacją, safe area;
+   na tablecie węższy panel z bocznymi krawędziami. Warunek jak SHEET_QUERY
+   w context-menu.js. */
 .context-menu-backdrop {
   position: fixed;
   inset: 0;
   z-index: 9998;
-  background: rgba(0,0,0,.45);
+  background: var(--modal-scrim, rgba(0,0,0,.55));
+  animation: cmScrimIn .28s ease both;
 }
 .context-menu-backdrop[hidden] { display: none; }
+.context-menu-backdrop.is-closing { animation: cmScrimOut .24s ease both; }
+
 .context-menu.is-sheet {
   left: 0 !important;
   right: 0;
   top: auto !important;
   bottom: 0;
+  margin: 0 auto;
+  width: 100%;
   min-width: 0;
-  max-width: none;
-  max-height: min(70vh, 560px);
+  max-width: 760px;
+  max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px) + 12px));
   overflow-y: auto;
   overscroll-behavior: contain;
-  border-radius: 16px 16px 0 0;
-  border-bottom: 0;
-  padding: 10px max(8px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  border-radius: 28px 28px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line, rgba(255,255,255,.14));
+  background: #121524;
+  box-shadow: 0 -18px 60px rgba(0,0,0,.6);
+  padding: 32px calc(16px + env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+  transform: translateY(var(--cm-drag, 0px));
+  animation: cmSheetUp .34s cubic-bezier(.2,.8,.2,1) both;
+  will-change: transform;
 }
-.context-menu.is-sheet::before {
+.context-menu.is-sheet.is-dragging { animation: none; transition: none; }
+.context-menu.is-sheet.is-settling { animation: none; transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+.context-menu.is-sheet.is-closing { animation: cmSheetDown .24s ease-in both; }
+
+.context-menu .cm-handle { display: none; }
+.context-menu.is-sheet .cm-handle {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 140px; height: 30px;
+  padding: 0; border: 0; background: none;
+  cursor: grab; touch-action: none;
+  display: grid; place-items: center;
+}
+.context-menu.is-sheet .cm-handle::before {
   content: "";
-  display: block;
-  width: 40px;
-  height: 4px;
-  margin: 0 auto 8px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.25);
+  width: 44px; height: 5px; border-radius: 999px;
+  background: rgba(255,255,255,.28);
+}
+
+/* pozycje jak na telefonie: większe, bez skrótów klawiszowych */
+.context-menu.is-sheet .cm-item { padding: 14px 12px; font-size: 15px; }
+.context-menu.is-sheet .cm-item:hover { background: rgba(255,255,255,.06); }
+.context-menu.is-sheet .cm-kbd { display: none; }
+
+@media (min-width: 601px) {
+  .context-menu.is-sheet {
+    border: 1px solid var(--line, rgba(255,255,255,.14));
+    border-bottom: 0;
+  }
+}
+
+@keyframes cmSheetUp { from { transform: translateY(100%); } to { transform: translateY(var(--cm-drag, 0px)); } }
+@keyframes cmSheetDown { from { transform: translateY(var(--cm-drag, 0px)); } to { transform: translateY(100%); } }
+@keyframes cmScrimIn { from { background-color: rgba(0,0,0,0); } }
+@keyframes cmScrimOut { to { background-color: rgba(0,0,0,0); } }
+@media (prefers-reduced-motion: reduce) {
+  .context-menu.is-sheet, .context-menu.is-sheet.is-closing, .context-menu-backdrop { animation-duration: 1ms !important; }
 }

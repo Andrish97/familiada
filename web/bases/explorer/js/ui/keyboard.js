@@ -33,7 +33,7 @@ export function wireKeyboard(state) {
     const cm = document.getElementById("contextMenu");
     if (cm && !cm.hidden && e.key === "Escape") {
       e.preventDefault();
-      hideContextMenu();
+      hideContextMenu({ animate: true });
       return;
     }
     if (shortcutsBlocked()) return;

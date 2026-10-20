@@ -5,6 +5,8 @@ Strona: `web/bases/explorer/` (menedżer bazy pytań). Branch roboczy:
 
 ## Decyzje
 
+- **2026-10-20:** menu kontekstowe na telefonie i tablecie dotykowym wygląda jak ujednolicone okna od dołu z brancha `claude/new-session-ay1h9t` (tło #121524, rogi 28 px, linia u góry, pasek do przeciągania, wysuwanie/zjazd z animacją, przyciemnione tło, safe area, ten sam warunek telefon / tablet dotykowy).
+
 - **2026-10-20 22:35 (użytkownik) — NADRZĘDNE, zastępują wcześniejsze ustalenia niżej:**
   - Tylko symulowana (lokalna) baza: zmiany i testy na lokalnym Postgresie
     (`scripts/agent-tools/local-e2e/`), **nic na produkcję**, dopóki

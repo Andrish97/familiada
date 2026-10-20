@@ -2,9 +2,10 @@
 // Menu kontekstowe (PPM / przytrzymanie). Pozycje pochodzą z rejestru akcji
 // (registry.js: menu + menuGroup), dostępność i wykonanie z tego samego
 // kontekstu co pasek i skróty.
-// Na komputerze menu przy kursorze; na telefonie arkusz od dołu (z safe area,
-// decyzja 2026-10-20) z tłem, które zamyka go dotknięciem.
-
+// Na komputerze menu przy kursorze; na telefonie i tablecie dotykowym okno
+// od dołu wyglądające jak pozostałe okna (wzorzec „okno od dołu” z
+// shared/css/base.css i modal-sheet.js): przyciemnione tło, rogi 28 px,
+// pasek do przeciągania, wysuwanie i zjazd z animacją, safe area.
 import { selectionSetSingle } from "./state.js?v=v2026-10-20T19584";
 import { ACTIONS, MENU_GROUPS, actionState } from "./actions/registry.js?v=v2026-10-20T19584";
 import { buildContext } from "./actions/context.js?v=v2026-10-20T19584";
@@ -14,7 +15,9 @@ import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T1958
 import { renderSelection } from "./render.js?v=v2026-10-20T19584";
 import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-20T19584";
 
-const SHEET_QUERY = "(max-width: 900px)";
+// Ten sam warunek co okna od dołu (SHEET_MQ w modal-sheet.js).
+const SHEET_QUERY = "(max-width:600px), (hover:none) and (pointer:coarse) and (max-width:1366px)";
+const CLOSE_MS = 230;
 // Palec puszczony po przytrzymaniu daje „klik” bez wciśnięcia w menu —
 // pozycja wykonuje się tylko po wciśnięciu, które zaczęło się w menu
 // (albo z klawiatury: klik bez wciśnięcia, detail === 0).
@@ -24,8 +27,10 @@ let wired = false;
 // otwarcia (np. panel przewinięty do klikniętego wiersza) nie zamyka menu.
 const SCROLL_GRACE_MS = 250;
 let openedAt = 0;
+let closingTimer = null;
 
 const isSheet = () => window.matchMedia?.(SHEET_QUERY).matches;
+const menuEl = () => document.getElementById("contextMenu");
 
 function backdrop() {
   let el = document.getElementById("contextMenuBackdrop");
@@ -34,29 +39,40 @@ function backdrop() {
     el.id = "contextMenuBackdrop";
     el.className = "context-menu-backdrop";
     el.hidden = true;
-    el.addEventListener("click", () => { el.hidden = true; });
-    document.getElementById("contextMenu")?.before(el);
+    menuEl()?.before(el);
   }
   return el;
 }
 
 export function isContextMenuOpen() {
-  const cm = document.getElementById("contextMenu");
+  const cm = menuEl();
   return !!cm && !cm.hidden;
 }
 
-export function hideContextMenu({ fromBackdrop = false } = {}) {
-  const cm = document.getElementById("contextMenu");
-  if (!cm || cm.hidden) return;
-  cm.hidden = true;
-  cm.innerHTML = "";
-  cm.classList.remove("is-sheet");
+function hideNow() {
+  clearTimeout(closingTimer);
+  closingTimer = null;
+  const cm = menuEl();
+  if (cm) {
+    cm.hidden = true;
+    cm.innerHTML = "";
+    cm.classList.remove("is-sheet", "is-closing", "is-dragging", "is-settling");
+    cm.style.removeProperty("--cm-drag");
+  }
   const bd = document.getElementById("contextMenuBackdrop");
-  if (!bd) return;
-  // dotknięte tło zostaje chwilę, żeby „klik” po dotknięciu nie trafił
-  // w wiersz pod spodem
-  if (fromBackdrop) setTimeout(() => { bd.hidden = true; }, 400);
-  else bd.hidden = true;
+  if (bd) { bd.hidden = true; bd.classList.remove("is-closing"); }
+}
+
+// animate: arkusz zjeżdża w dół, tło gaśnie (tło łapie też „klik” po
+// dotknięciu, więc nie trafia on w wiersz pod spodem)
+export function hideContextMenu({ animate = false } = {}) {
+  const cm = menuEl();
+  if (!cm || cm.hidden) return;
+  if (!animate || !cm.classList.contains("is-sheet")) { hideNow(); return; }
+  if (closingTimer) return;
+  cm.classList.add("is-closing");
+  document.getElementById("contextMenuBackdrop")?.classList.add("is-closing");
+  closingTimer = setTimeout(hideNow, CLOSE_MS);
 }
 
 // Zamykanie: dotknięcie / klik poza menu, przewinięcie, zmiana rozmiaru.
@@ -66,15 +82,54 @@ function wireClose() {
   document.addEventListener("pointerdown", (e) => {
     if (!isContextMenuOpen()) return;
     if (e.target.closest?.("#contextMenu")) return;
-    hideContextMenu({ fromBackdrop: e.target.id === "contextMenuBackdrop" });
+    hideContextMenu({ animate: true });
   }, true);
-  window.addEventListener("resize", () => hideContextMenu());
+  // arkusz dopasowuje się sam; zmiana rozmiaru zamyka tylko menu przy kursorze
+  window.addEventListener("resize", () => { if (!menuEl()?.classList.contains("is-sheet")) hideContextMenu(); });
   document.addEventListener("scroll", (e) => {
     if (e.target?.closest?.("#contextMenu")) return; // przewijanie samego arkusza
     if (performance.now() - openedAt < SCROLL_GRACE_MS) return;
-    hideContextMenu();
+    hideContextMenu({ animate: true });
   }, true);
   window.addEventListener("blur", () => hideContextMenu());
+}
+
+// Pasek u góry arkusza: stuknięcie albo przeciągnięcie w dół zamyka
+// (jak sheetHandle w modal-sheet.js).
+function sheetHandle(cm) {
+  const handle = document.createElement("button");
+  handle.type = "button";
+  handle.className = "cm-handle";
+  handle.setAttribute("aria-label", t("common.modal.closeLabel"));
+  let startY = null, lastY = 0, lastT = 0, velocity = 0, moved = false;
+  const setDrag = (px) => cm.style.setProperty("--cm-drag", `${Math.max(0, px)}px`);
+  handle.addEventListener("pointerdown", (e) => {
+    startY = e.clientY; lastY = e.clientY; lastT = e.timeStamp; velocity = 0; moved = false;
+    handle.setPointerCapture?.(e.pointerId);
+    cm.classList.add("is-dragging");
+  });
+  handle.addEventListener("pointermove", (e) => {
+    if (startY === null) return;
+    const dy = e.clientY - startY;
+    if (Math.abs(dy) > 4) moved = true;
+    velocity = (e.clientY - lastY) / Math.max(1, e.timeStamp - lastT);
+    lastY = e.clientY; lastT = e.timeStamp;
+    setDrag(dy);
+  });
+  const end = () => {
+    if (startY === null) return;
+    const dy = lastY - startY;
+    startY = null;
+    cm.classList.remove("is-dragging");
+    const limit = Math.min(160, cm.offsetHeight * 0.25);
+    if (!moved || dy > limit || velocity > 0.6) { hideContextMenu({ animate: true }); return; }
+    cm.classList.add("is-settling");
+    setDrag(0);
+    setTimeout(() => cm.classList.remove("is-settling"), 240);
+  };
+  handle.addEventListener("pointerup", end);
+  handle.addEventListener("pointercancel", end);
+  return handle;
 }
 
 function itemHtml(item, idx) {
@@ -140,7 +195,7 @@ export async function showContextMenu({ state, x, y, target }) {
   const cm = document.getElementById("contextMenu");
   if (!cm) return;
   wireClose();
-  hideContextMenu();
+  hideNow();
 
   if (selectTargetFirst(state, target)) renderSelection(state);
 
@@ -169,6 +224,7 @@ export async function showContextMenu({ state, x, y, target }) {
     cm.classList.add("is-sheet");
     cm.style.left = "";
     cm.style.top = "";
+    cm.prepend(sheetHandle(cm));
     backdrop().hidden = false;
     cm.hidden = false;
   } else {

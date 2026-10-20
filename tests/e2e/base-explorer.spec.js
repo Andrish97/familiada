@@ -3387,3 +3387,40 @@ test.describe("base-explorer: cofanie i ponawianie (E22)", () => {
     }
   });
 });
+
+test.describe("base-explorer: menu kontekstowe na telefonie (okno od dołu)", () => {
+  test("menu otwiera się od dołu jak inne okna; pasek i tło je zamykają", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-SHEETMENU-${Date.now()}`);
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+
+      const menu = page.locator("#contextMenu");
+      await row.click({ button: "right" });
+      await expect(menu).toHaveClass(/is-sheet/);
+      await expect(page.locator("#contextMenuBackdrop")).toBeVisible();
+      await expect(menu.locator(".cm-handle")).toBeVisible();
+      // po animacji wysuwania: przyklejone do dołu, na pełną szerokość
+      await expect.poll(async () => { const b = await menu.boundingBox(); return Math.round(b.y + b.height); }).toBe(844);
+      expect(Math.round((await menu.boundingBox()).width)).toBe(390);
+
+      await menu.locator(".cm-handle").click();
+      await expect(menu).toBeHidden({ timeout: 2000 });
+      await expect(page.locator("#contextMenuBackdrop")).toBeHidden();
+
+      await row.click({ button: "right" });
+      await expect(menu).toBeVisible();
+      await page.mouse.click(195, 100); // tło nad oknem
+      await expect(menu).toBeHidden({ timeout: 2000 });
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
