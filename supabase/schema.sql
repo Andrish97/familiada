@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QwwKlJi1goKp5wmCw58tLB4m3ZoZFxD21Eu5efuBcNoxEO8k4THkrAybdBVZTsV
+\restrict xWZpmNM8Wt4yAVAuXhvIajWVW6z51eG67qQTNY2ENXbimiMF4UlbHzcdTJEjJF8
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4527,7 +4527,6 @@ DECLARE
   uid uuid := auth.uid();
   identity jsonb;
   polls integer;
-  bases integer;
   friends integer;
 BEGIN
   SELECT to_jsonb(u) INTO identity FROM auth.users u WHERE u.id = uid;
@@ -4540,14 +4539,11 @@ BEGIN
   FROM public.poll_tasks t
   WHERE t.recipient_user_id = uid
     AND t.done_at IS NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL;
-  SELECT count(*) INTO bases
-  FROM public.base_share_tasks bt
-  WHERE bt.recipient_user_id = uid AND bt.status IN ('pending', 'opened');
   SELECT count(*) INTO friends
   FROM public.friendships f
   WHERE f.decision_user_id = uid AND f.status = 'pending' AND f.cancelled_at IS NULL;
 
-  RETURN jsonb_build_object('tasks_pending', polls + bases, 'friends_pending', friends);
+  RETURN jsonb_build_object('tasks_pending', polls, 'friends_pending', friends);
 END;
 $$;
 
@@ -25996,5 +25992,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QwwKlJi1goKp5wmCw58tLB4m3ZoZFxD21Eu5efuBcNoxEO8k4THkrAybdBVZTsV
+\unrestrict xWZpmNM8Wt4yAVAuXhvIajWVW6z51eG67qQTNY2ENXbimiMF4UlbHzcdTJEjJF8
 
