@@ -231,6 +231,19 @@ body.editor-body .wrap {
     .rightPanel.hasQ .block {
         margin-bottom: 14px
     }
+
+    /* nagłówki paneli jak „PYTANIA” (.panelTitle) */
+    .rightPanel.hasQ :is(.qf-label,.qf-sumTitle) {
+        font-weight: 1000;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-size: 12px
+    }
+
+    .rightPanel.hasQ .qf-label {
+        margin-bottom: 8px
+    }
 }
 
 /* Okno pytania na telefonie (#questionSheetOverlay): treść przewija się

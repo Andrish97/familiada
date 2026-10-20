@@ -102,7 +102,8 @@ podliczania jako stan bieżącej operacji.
   `.shareSection`), nagłówki „Treść pytania” / „Odpowiedzi” jak
   `.shareSectionTitle`, suma po prawej w nagłówku odpowiedzi. Na komputerze
   w edytorze gry prawa kolumna bez wspólnego tła: dwa osobne panele jak
-  „Pytania” po lewej (jak kolumny w Znajomych).
+  „Pytania” po lewej (jak kolumny w Znajomych); ich nagłówki jak
+  „PYTANIA” (`.panelTitle`: złote wersaliki), suma jak `.panelHint`.
 - **Safe area w roletkach (sprawdzone emulacją 2026-10-20):** góra panelu
   12 px pod górnym safe area, ostatnia treść nad dolnym safe area (+14 px).
 - **Przyciski obok podpowiedzi w nagłówku roletki (uwaga użytkownika

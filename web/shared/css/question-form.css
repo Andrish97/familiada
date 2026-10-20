@@ -221,11 +221,10 @@
 }
 
 /* suma jako cichy dopisek nagłówka (jak meta list), liczba złotem */
+/* jak podpowiedź w nagłówku panelu (.panelHint edytora) */
 .qf-sumChip {
     font-size: 12px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    opacity: .8;
+    opacity: .75;
     white-space: nowrap
 }
 
