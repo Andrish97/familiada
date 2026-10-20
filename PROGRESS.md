@@ -38,19 +38,22 @@ Zrobione na branchu (commity do `8f56a45`, scalony `origin/main` w `ea17f7a`):
   wszystkich stronach; podliczanie na telefonie zwarte (tekst + przyciski,
   głosy + punkty), krótsze podpowiedzi PL/EN/UK, ikony scalania/remisu;
 - edytory logo: bez pustego pasa ustawień rysunku, stopka na ekranie, wspólny
-  styl etykiet i tytułów paneli (`be4cea0`);
+  styl etykiet i tytułów paneli (`be4cea0`); podgląd w edytorze tekstu w tej
+  samej karcie co w obrazie, przykład rysunku z symetryczną ramką (`0143599`);
 - okno kontaktu: roletka nad całą stroną (pasek był pod topbarem, `1bfa63e`).
 
 E2E na branchu (spec | przebieg | wynik):
-- zielone: index 39514953878, bases 39515082379, tasks 39507687171, friends 39507853751, subscribers 39508279725,
+- zielone: resource-copy-send 39515536963, index 39514953878, bases 39515082379, tasks 39507687171, friends 39507853751, subscribers 39508279725,
   bases 39508596228, mail-center 39509657900, poll-share 39509815512,
   account-rating 39510298864, games 39510547581, cross-resource-locks
   39513616617, control2 --grep zerwanie 39514174761;
 - do powtórki po poprawkach (kolejki seq14–seq17 w tle):
   mobile-sheet-modals 39514434587 — 3 błędy poprawione w `1bfa63e`
   (kontakt pod topbarem, 2 testy zakładały, że klik w tło nie zamyka) →
-  powtórka + polls --grep podliczania (seq18); resource-copy-send (diagnostyka
-  409 przy logo), editor --grep suma, base-explorer (seq15); marketplace
+  powtórka + polls --grep podliczania (seq18); editor --grep suma
+  39515701683 padł na nieistniejącym `#msg` (stare od E16, także na main) —
+  9 asercji przepisanych na stan w bazie (`5e56647`), cały editor.spec (seq19);
+  base-explorer (seq15); marketplace
   (gość zamyka okno informacyjne, seq16); base-explorer --grep F2|PPM|chmurka|
   znaków|rozciąga, logo-editor, poll-share, polls-layout (seq17).
 
