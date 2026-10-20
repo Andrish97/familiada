@@ -408,6 +408,7 @@
 .tallyVotesTotal{ color: rgba(235,239,248,.62); font-weight: 700; font-variant-numeric: tabular-nums; }
 .tallyMeta .btn{ white-space: nowrap; margin-left: auto; }
 .tallyMeta .tcTieBtn{ margin-left: 0; }
+.tallyMeta .tcMergeDup, .tallyMeta .tcTieBtn{ display: inline-flex; align-items: center; gap: 6px; }
 /* E21: remis na granicy szóstki -- kto wchodzi, kto zostaje pominięty */
 .tallyTieInfo{ flex-basis: 100%; color: #ffd86e; font-weight: 700; }
 .resultQ .aRow.tallyTie{ border-style: dashed; }
