@@ -70,6 +70,12 @@ E2E na branchu (spec | przebieg | wynik):
 
 ## Znane problemy
 
+- `spec_filter` nie może zawierać `|` (workflow wkleja go bez cudzysłowu —
+  bash robi potok, 0 testów: przebieg 39517734488). Grep tylko jednym słowem.
+- Kolejki: seq17 (logo-editor, poll-share, polls-layout) w toku; seq18 =
+  mobile-sheet-modals, polls --grep odlicz, editor.spec, base-explorer (cały,
+  z kodem brancha). seq19 anulowana (włączona do seq18).
+
 - base-explorer: 3 testy zmiany nazwy (F2/PPM) nie widzą pola okna na CI,
   lokalnie działa — dodana diagnostyka `[e2e-diag]` (seq17).
 - resource-copy-send: 409 przy wysyłce logo — test wypisuje kod błędu.
