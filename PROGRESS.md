@@ -4,7 +4,7 @@ Plan (źródło prawdy): [`docs/menedzer-bazy/README.md`](docs/menedzer-bazy/REA
 „Kolejność prac” + decyzje w [`docs/menedzer-bazy-plan.md`](docs/menedzer-bazy-plan.md).
 Branch: `ccr-ac709a92-0mcpyq`. Dziennik szczegółowy: `docs/wdrozenia.md`.
 
-**Status: ZAKOŃCZONE** (plan 1–7 wykonany lokalnie; wdrożenie 7d czeka na decyzję użytkownika)
+**Status: W TOKU** — plan 1–7 gotowy lokalnie (nie na produkcji); trwa etap 8 (dopracowanie, lokalnie). Wdrożenie (7d) czeka na decyzję użytkownika.
 
 Zasada nadrzędna użytkownika (2026-10-20): wszystko tylko na lokalnej,
 symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
@@ -35,9 +35,20 @@ symulowanej bazie — **nic na produkcję**, dopóki użytkownik nie zdecyduje.
 
 Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i log zastosowania, e2e `base-explorer` z `serveBranchCode` na branchu (punktowo), Pages, testy kontrolne na produkcji.
 
+## Etap 8 — dopracowanie (lokalnie, polecenie użytkownika 2026-10-20: „kontynuujesz pracę nad edytorem baz”)
+
+- [ ] 8a. Duża baza: lokalnie kilka tysięcy pytań i folderów — czas wczytania, rysowania, filtra; poprawić, jeśli wolno.
+- [ ] 8b. Menu kontekstowe z klawiatury: strzałki, Home/End, Enter, Escape; fokus na pierwszej pozycji przy otwarciu z klawiatury (Shift+F10 / klawisz menu).
+- [ ] 8c. Cofanie/ponawianie z blokadami (te same co przy zwykłej akcji), komunikat zamiast czyszczenia historii, gdy element jest zajęty.
+- [ ] 8d. Okna tagów / eksportu / pytania: przegląd i uporządkowanie (stary kod), spójność z rejestrem akcji.
+- [ ] 8e. Przegląd pozostałych niespójności z raportów (`docs/menedzer-bazy/1-4*.md`) wobec nowego kodu.
+- [ ] 8f. Pełny lokalny e2e + zrzuty + zestawienie.
+
 ## Znane problemy
 
-- Arkusz menu sprawdzony tylko w emulacji, nie na prawdziwym telefonie.
+- Gesty i arkusz menu sprawdzone tylko w emulacji, nie na prawdziwym telefonie.
+- Historia cofania znika po odświeżeniu strony (w pamięci karty — świadomie).
+- Strona ładuje całą bazę naraz — wydajność na dużych bazach do sprawdzenia (8a).
 - Wzorzec „okno od dołu” nie jest jeszcze na `main` (branch `claude/new-session-ay1h9t`);
   menu ma te same wartości w `base-explorer.css` — po scaleniu można przenieść do wspólnego CSS.
 
