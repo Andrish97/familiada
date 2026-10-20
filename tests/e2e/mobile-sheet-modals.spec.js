@@ -157,7 +157,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
 
   // Proste okno z jednym polem jest zwykłym okienkiem także na telefonie
   // (modal--keep-dialog, decyzja 2026-10-20): treść strony zostaje pod spodem.
-  test("modal nazwy (tworzenie) na telefonie jest zwykłym okienkiem nad stroną", async ({ page, context }) => {
+  test("modal nazwy (tworzenie) na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
     test.setTimeout(60_000);
     if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context, { pages: ["bases"] });
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
@@ -171,7 +171,9 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await page.locator("#mineGrid .addCard").click();
       const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
-      await expect(overlay).not.toHaveClass(/sheet-active/);
+      // roletka od dołu dopasowana do treści (decyzja 2026-10-20)
+      await expect(page.locator(".overlay.sheet-fit.sheet-active:has(.uni-inp)")).toHaveCount(1);
+      await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
       await expect(page.locator(".bar")).toBeVisible();
 
       await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
@@ -531,7 +533,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
     }
   });
 
-  test("modal zmiany nazwy (renameModal) na telefonie jest zwykłym okienkiem nad stroną", async ({ page, context }) => {
+  test("modal zmiany nazwy (renameModal) na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -555,7 +557,9 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
 
       const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
-      await expect(overlay).not.toHaveClass(/sheet-active/);
+      // roletka od dołu dopasowana do treści (decyzja 2026-10-20)
+      await expect(page.locator(".overlay.sheet-fit.sheet-active:has(.uni-inp)")).toHaveCount(1);
+      await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
 
       // „Anuluj” w stopce zamyka okno bez zmian
       await overlay.locator(".uni-foot .btn:not(.gold)").click();
@@ -737,7 +741,7 @@ async function deleteLogoDirect(page, logoId) {
 test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
-  test("modal zmiany nazwy logo na telefonie jest zwykłym okienkiem nad stroną", async ({ page, context }) => {
+  test("modal zmiany nazwy logo na telefonie jest roletką od dołu dopasowaną do treści", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -754,7 +758,9 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
 
       const overlay = page.locator(".uni-modal");
       await expect(overlay).toBeVisible({ timeout: 5000 });
-      await expect(overlay).not.toHaveClass(/sheet-active/);
+      // roletka od dołu dopasowana do treści (decyzja 2026-10-20)
+      await expect(page.locator(".overlay.sheet-fit.sheet-active:has(.uni-inp)")).toHaveCount(1);
+      await expect(page.locator(".overlay.sheet-fit .sheet-handle")).toBeVisible();
       await expect(page.locator("#listShell")).toBeVisible();
 
       await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();

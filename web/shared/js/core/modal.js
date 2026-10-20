@@ -39,6 +39,8 @@ function buildModal({
   // BEZPOŚREDNIM dziecku main.wrap (czyli .overlay), nie na jego
   // wewnętrznym .modal.
   if (sheet) overlay.classList.add("modal--sheet");
+  // sheet.fit: okno od dołu z wysokością dopasowaną do treści (np. zmiana nazwy)
+  if (sheet?.fit) overlay.classList.add("sheet-fit");
 
   const modal = document.createElement("div");
   modal.className = `modal uni-modal${modalClass ? ` ${modalClass}` : ""}`;
@@ -434,6 +436,8 @@ export function promptModal({
     body: input,
     initialFocus: input,
     modalClass: "modal--narrow",
+    // telefon / tablet dotykowy: roletka od dołu dopasowana do treści
+    sheet: isSheetViewport() ? { fit: true } : null,
     onOk,
     onReady: (ctx) => {
       // Enter = Zapisz

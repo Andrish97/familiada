@@ -40,15 +40,20 @@
 }
 
 .qf-head,.qf-row {
-    grid-template-columns: minmax(0,1fr) 110px 40px
+    grid-template-columns: minmax(0,1fr) 96px 44px
 }
 
+/* nagłówki kolumn dokładnie nad polami (tekst pola zaczyna się 13 px od krawędzi) */
 .qf-head {
     font-size: 11px;
     opacity: .75;
     letter-spacing: .12em;
     text-transform: uppercase;
-    padding: 0 6px
+    padding: 0
+}
+
+.qf-head > :first-child {
+    padding-left: 13px
 }
 
 .qf-head .c-pts {
@@ -67,19 +72,18 @@
     grid-template-columns: 1fr
 }
 
+/* Wiersz odpowiedzi bez własnej ramki (decyzja 2026-10-20): pole odpowiedzi,
+   punkty i kosz w jednym równym rzędzie tej samej wysokości. */
 .qf-row {
-    align-items: center;
-    border-radius: 18px;
-    border: 1px solid var(--line);
-    background: var(--card2);
-    padding: 10px;
-    min-height: 60px
+    align-items: center
 }
 
 .qf-text,.qf-pts {
     width: 100%;
     min-width: 0;
-    padding: 10px 12px;
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 12px;
     border-radius: 14px;
     border: 1px solid var(--line2);
     background: rgba(255,255,255,.06);
@@ -120,8 +124,8 @@
 }
 
 .qf-del {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: grid;
     place-items: center;
     padding: 0;
@@ -138,7 +142,7 @@
 }
 
 .no-points .qf-head,.no-points .qf-row {
-    grid-template-columns: minmax(0,1fr) 40px
+    grid-template-columns: minmax(0,1fr) 44px
 }
 
 .no-points .qf-pts,.no-points .qf-head .c-pts {
@@ -150,9 +154,10 @@
     display: grid;
     grid-template-columns: 36px minmax(0,1fr) auto;
     gap: 10px;
-    border-style: dashed;
-    border-color: rgba(255,234,166,.35);
-    border-radius: 18px;
+    min-height: 48px;
+    padding: 6px 12px 6px 0;
+    border: 1px dashed rgba(255,234,166,.35);
+    border-radius: 14px;
     --btn-tint: rgba(255,234,166,.06);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
     color: #fff;
@@ -220,32 +225,32 @@
 
 @media (max-width: 600px) {
     .qf-head,.qf-row {
-        grid-template-columns: minmax(0,1fr) 72px 36px;
+        grid-template-columns: minmax(0,1fr) 72px 40px;
         gap: 8px
     }
 
-    .qf-head {
-        padding: 0 4px
-    }
-
-    .qf-row {
-        padding: 8px;
-        border-radius: 16px;
-        min-height: 60px
+    .qf-head > :first-child {
+        padding-left: 11px
     }
 
     .qf-text,.qf-pts {
-        padding: 8px 10px;
+        height: 40px;
+        padding: 0 10px;
         border-radius: 12px
     }
 
     .qf-del {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px
+    }
+
+    .qf-row.qf-add {
+        min-height: 44px;
         border-radius: 12px
     }
 
     .no-points .qf-head,.no-points .qf-row {
-        grid-template-columns: minmax(0,1fr) 36px
+        grid-template-columns: minmax(0,1fr) 40px
     }
 }

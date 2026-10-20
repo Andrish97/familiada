@@ -84,6 +84,13 @@ podliczania jako stan bieżącej operacji.
   szerokość (bez bocznych krawędzi), na tablecie węższe (do 760 px);
   górne rogi 28 px; pasek u góry nie zasłania nagłówka; panel i pasek nie
   wchodzą wyżej niż safe area (także przy przeciąganiu), dół z safe area.
+- **Zmiana nazwy jako roletka (decyzja użytkownika 2026-10-20):** okno nazwy
+  (`promptModal`) na telefonie/tablecie dotykowym wysuwa się od dołu,
+  z wysokością dopasowaną do treści (`sheet-fit`).
+- **Odpowiedzi w formularzu pytania (2026-10-20):** wiersz odpowiedzi bez
+  własnej ramki — pole odpowiedzi, punkty i kosz w jednym równym rzędzie
+  (44 px; telefon 40 px), nagłówki kolumn dokładnie nad polami (edytor gry
+  i okno pytania w Eksploratorze).
 - **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
   `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
   w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /
