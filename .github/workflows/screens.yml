@@ -28,6 +28,10 @@ on:
         description: "Opublikuj galerię na gałęzi screens-gallery"
         type: boolean
         default: true
+      homepage:
+        description: "Odśwież wszystkie kadry strony głównej i wdróż (tylko z main)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -124,12 +128,14 @@ jobs:
       # Push na main zmieniający te kadry: odświeżyć je, zapisać na main i
       # wywołać wdrożenie Pages (push z tokenem CI sam go nie uruchamia).
       - name: Kadry strony głównej (main)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.homepage)
         env:
           BASE: ${{ github.event.before }}
           GH_TOKEN: ${{ github.token }}
+          ALL: ${{ inputs.homepage && '1' || '' }}
         run: |
-          node scripts/screens/run.cjs --changed --base="$BASE" --homepage --lang=all --out=home-out || true
+          if [ -n "$ALL" ]; then pick="--all"; else pick="--changed --base=$BASE"; fi
+          node scripts/screens/run.cjs $pick --homepage --lang=all --out=home-out || true
           [ -d home-out ] || { echo "Brak zmienionych kadrów strony głównej."; exit 0; }
           node scripts/screens/publish-homepage.cjs --out=home-out
           git add web/assets/img
@@ -137,6 +143,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Refresh homepage screenshots [skip ci]"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          # Inne sesje pushują na main równolegle -- kilka prób rebase + push.
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && break
+            [ "$attempt" = 5 ] && exit 1
+            sleep $((attempt * 5))
+          done
           gh workflow run deploy-pages.yml --ref main
