@@ -23,7 +23,7 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 | 1a | Naprawa drobnych błędów z weryfikacji (lista w `podrecznik-weryfikacja.md`) | 🔄 pkt 1, 2, 3, 7, 10, 11 poprawione (`3b120cac`), e2e brancha `39557135472` ✓ 2/2; **czeka na wdrożenie na `main`** (push na `main` zablokowany uprawnieniami sesji — zgoda użytkownika); pkt 6 zostaje (kody z SQL); pkt 4, 5, 8, 9 — do sprawdzenia/decyzji |
 | 2 | Zgodność Części I (zasady teleturnieju) z regulaminem TVP | ⏸ wstępnie (fragmenty z wyszukiwarki); pełny PDF zablokowany — `s.tvp.pl` poza siecią środowiska, prośba do użytkownika |
 | 3 | Rozdziały Części I (1–4) | ⏳ |
-| 4 | Rozdziały Części II po kolei (5, 6, 7, 8, …) | 🔄 szkice 5, 6 w `docs/podrecznik/` |
+| 4 | Rozdziały Części II po kolei (5, 6, 7, 8, …) | 🔄 szkice 5, 6, 7 w `docs/podrecznik/` |
 | 5 | EN/UK, sprawdzenie `privacy-manual`, zrzuty ekranów manuala | ⏳ |
 | 6 | Wdrożenie i testy kontrolne na produkcji | ⏳ |
 
