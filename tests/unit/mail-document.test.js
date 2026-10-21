@@ -107,7 +107,7 @@ test('base mail includes current editor/viewer role and pending acceptance, remi
     }
   }
   assert.match(source, /deliverBaseShare\(response, b.id, \{ role: recipient.role, reminder: true \}\)/);
-  assert.match(source, /deliverBaseShare\(row, b.id, \{ role: id \? friendsRoleValue : shareRoleValue \}\)/);
+  assert.match(source, /deliverBaseShare\(row, b.id, \{ role: shareRoleValue \}\)/);
 });
 test('all four auth variants keep language, source metadata and genuine action URL in common renderer', () => {
   const source = read('supabase/functions/send-email/index.ts');

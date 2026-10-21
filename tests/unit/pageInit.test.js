@@ -130,7 +130,7 @@ test("#btnManual prowadzi do instrukcji z kotwicą ze strony i ret", async () =>
   loc.search = "?id=7&lang=pl";
   await initPage("polls", { deps });
   await els.btnManual.click();
-  assert.equal(loc.href, "/manual/?tab=polls&ret=%2Fpolls%2F%3Fid%3D7");
+  assert.equal(loc.href, "/manual/?tab=polls&ret=%2Fpolls%2F%3Fid%3D7#r15");
 });
 
 test("onManual dostaje adres instrukcji", async () => {
@@ -138,7 +138,7 @@ test("onManual dostaje adres instrukcji", async () => {
   let got = null;
   await initPage("editor", { deps, onManual: async (href) => { got = href; } });
   await els.btnManual.click();
-  assert.match(got, /^\/manual\/\?tab=edit&ret=/);
+  assert.match(got, /^\/manual\/\?tab=games&ret=.*#r7$/);
 });
 
 test("Control: jawny próg viewportu i backHref, użytkownik wraca", async () => {
@@ -285,10 +285,10 @@ test("przyciski wymagające szerokości reagują na viewport i zmianę orientacj
   gamesButtons();
   const phone = makeDeps({ viewportWidth: 390, formFactor: "phone" });
   await initPage("games", { deps: phone.deps });
-  for (const id of ["btnPlay", "btnSettings"]) {
-    assert.equal(els[id].hidden, true, id);
-    assert.equal(els[id].style.display, "none", id);
-  }
+  assert.equal(els.btnPlay.hidden, true);
+  assert.equal(els.btnPlay.style.display, "none");
+  // Ustawienia gry działają na telefonie (decyzja 2026-10-21) — przycisk widoczny.
+  assert.equal(els.btnSettings.hidden, false);
   assert.equal(els.btnEdit.hidden, false);
   assert.equal(els.btnMarketplace.hidden, false);
 

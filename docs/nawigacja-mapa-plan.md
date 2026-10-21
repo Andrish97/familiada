@@ -748,6 +748,7 @@ flowchart LR
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
   logoEditor["/logos/"]
+  gameSettings["/games/settings/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
@@ -768,6 +769,7 @@ flowchart LR
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnBases| bases
+  games -->|btnSettings*| gameSettings
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
   bases -->|btnBrowse*| baseExplorer
@@ -892,6 +894,7 @@ flowchart LR
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
   logoEditor["/logos/"]
+  gameSettings["/games/settings/"]
   marketplace["/marketplace/"]
   connectDevice["/connect/"]
   connectTv["/connect/tv/"]
@@ -923,6 +926,7 @@ flowchart LR
   games -->|btnSubscribers| subscribers
   games -->|btnTasks| tasks
   games -->|btnBases| bases
+  games -->|btnSettings*| gameSettings
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
   polls -->|btnFriends| friends
@@ -1351,3 +1355,7 @@ z Games i innych wejść pozostają niezależne. Weryfikacja: full unit602/602,
 navButtons17/17, pageInit24/24; branch Control/settings38368774633 success;
 main route checks38369193504 success5/5; Pages38369096986 success.
 E19N, a wraz z nim cały etap E19, jest zamknięty produkcyjnie.
+
+**2026-10-21 — Społeczność bez kart:** „Moje wysłane” to okno
+(`?dialog=mySentOverlay`), parametr `?tab=mine` usunięty bez aliasu (zasada
+„bez fallbacków”); w mapie `marketplace` bez `tabs`, z oknem w `dialogs`.

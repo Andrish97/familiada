@@ -132,15 +132,10 @@
 .polls-tabs-card .slot-recipients{ display: none; }
 .pollShareLabelMobile{ display: none; }
 .polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }
-.polls-tabs-card .tab-label::before{ opacity: 0 !important; }
-@media (hover: hover) and (pointer: fine){
-  .polls-tabs-card .tab-slot:not(.active) .tab-label:hover::before{ opacity: 1 !important; }
+/* Ukryta wypustka „Odbiorcy” (komputer) nie liczy się jako sąsiad separatora. */
+@media (min-width: 981px){
+  .polls-tabs-card .slot-recipients + .slot-results .tab-label::after{ display: none; }
 }
-.polls-tabs-card .tab-slot.active .tab-label{ color: #f9fafb; }
-.polls-tabs-card .tab-slot.active .tab-wrapper{ display: block; }
-.polls-tabs-card .tab-active{ z-index: 1; }
-.polls-tabs-card:has(.slot-share.active) .slot-share .tab-corner-left,
-.polls-tabs-card:has(.slot-results.active) .slot-results .tab-corner-right{ display: none; }
 /* wypustka nieaktywna (np. Udostępnianie po podliczeniu) */
 .polls-tabs-card .tab-label:disabled{ opacity: .38; cursor: not-allowed; }
 .polls-tabs-card .tab-slot.is-disabled .tab-label::before{ opacity: 0 !important; }
@@ -166,15 +161,6 @@
   min-height: 0;
   overflow: hidden;
 }
-.pollsEmpty{
-  margin: auto;
-  padding: 24px 12px;
-  text-align: center;
-  opacity: .75;
-  font-size: 14px;
-  line-height: 1.4;
-}
-.pollsEmpty a{ color: var(--gold); }
 
 /* Udostępnianie: dwie pełnej wysokości karty — Anonimowo (lewa), Odbiorcy (prawa). */
 .shareCols{
@@ -201,7 +187,7 @@
      powtórzonego tytułu ani drugiej ramki wewnątrz głównej karty. */
   .polls-card .pollSec{ padding: 0; background: none; border: 0; border-radius: 0; }
   .polls-card .pollLinkSec > .pollSecTitle,
-  .polls-card .pollRecipientsSec > .pollSecHead{ display: none; }
+  .polls-card .pollRecipientsSec > .pollSecHead > .pollSecTitle{ display: none; }
 }
 .pollSec{
   --under: #0b1020;
@@ -236,6 +222,11 @@
 /* Przyciski układają się w jednym rzędzie, a na wąskim ekranie mogą zejść niżej. */
 .pollLinkActions .btn{ white-space: normal; flex: 1 1 105px; min-width: 0; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .pollLinkActions .btn .ico{ flex: 0 0 auto; width: 16px; height: 16px; }
+/* telefon: ikona nad napisem -- najdłuższe słowo („wyświetlaczu”) mieści się
+   w jednej z trzech równych kolumn bez ucinania */
+@media (max-width: 600px){
+  .pollLinkActions .btn{ flex-direction: column; padding: 6px; gap: 3px; text-align: center; }
+}
 
 /* QR: na jasnym kafelku (strefa ciszy) w spokojnej, obramowanej „scenie”
    z podpisem; kliknięcie powiększa go w oknie. Prawie cała szerokość
@@ -286,7 +277,8 @@
 
 /* Subskrybenci: nagłówek z podsumowaniem, „Zaznacz wszystkich”, kafle, wyślij na dole */
 .subsSummary{ font-size: 12px; opacity: .85; }
-.subsTools{ display: flex; justify-content: flex-end; margin-top: 8px; }
+/* „Dodaj odbiorców” w linii nagłówka sekcji (bez tytułu na telefonie: po prawej) */
+.subsTools{ display: flex; justify-content: flex-end; margin-left: auto; }
 .subsFoot{
   display: flex;
   align-items: center;
@@ -325,13 +317,8 @@
     flex-direction: column;
     gap: 20px;
   }
-  /* W arkuszu odbiorców listy przewijają się osobno, ale kafelki zachowują
-     swoją naturalną wysokość zamiast rozciągać się na całą wysokość listy. */
-  .pollRecipientsModal .shareList--scroll{
-    align-content: start;
-    grid-auto-rows: max-content;
-  }
-  .pollRecipientsModal .shareRow{ align-self: start; }
+  /* Listy przewijają się osobno; kafelki zachowują naturalną wysokość
+     (przewijana lista to kolumna flex bez zwężania wierszy, base.css). */
 }
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
@@ -447,6 +434,29 @@
   .resultQ .aList.tally .tcMergeBtn{ display: none; }
 }
 .resultQ .aList.tallyText .aTxt{ display: none; }
+/* Telefon (uwaga użytkownika 2026-10-20): tekst odpowiedzi w pierwszej linii
+   na całą szerokość, głosy, punkty i przyciski w drugiej; mniejsze przyciski
+   bez ramki grupy; podpowiedź i cofnij/ponów w jednej linii; meta pytania
+   zwarta, „Scal identyczne” / „Zmień wybór w remisie” jako ikony. */
+@media (max-width: 600px){
+  .tallyBar{ flex-wrap: nowrap; align-items: flex-start; gap: 8px; }
+  .tallyHint{ flex: 1 1 0; }
+  .tallyTools .btn.sm{ width: 34px; height: 34px; padding: 0; }
+  .resultQ .tallyMeta{ gap: 4px 10px; }
+  .resultQ .tallyMeta.on{ max-height: 200px; }
+  .tallyMeta .tcMergeDup span,
+  .tallyMeta .tcTieBtn span{ display: none; }
+  .tallyMeta .tcMergeDup,
+  .tallyMeta .tcTieBtn{ width: 32px; height: 32px; padding: 0; justify-content: center; }
+  /* linia 1: tekst + przyciski; linia 2: głosy + punkty */
+  .resultQ .aList.tallyText .aRow{ flex-wrap: wrap; row-gap: 0; padding: 5px 6px 5px 8px; }
+  .resultQ .aList.tallyText .aTxtInp{ order: 1; flex: 1 1 0; }
+  .resultQ .aList.tally .tcActionGroup{ order: 2; margin-left: 4px; padding: 0; gap: 4px; border: 0; background: none; box-shadow: none; }
+  .resultQ .aList.tallyText .tcCnt{ order: 3; flex: 0 0 calc(100% - 96px); max-width: none; margin-left: 6px; text-align: left; }
+  .resultQ .aList.tallyText .aVal{ order: 4; margin-left: auto; padding-right: 4px; }
+  .resultQ .aList.tally .tcBtn{ width: 32px; height: 32px; border-radius: 9px; }
+}
+
 .resultQ .aList.tallyPoints .aTxt{ display: block; flex: 1 1 auto; min-width: 0; }
 .resultQ .aList.tallyPoints .tallyVotes{ flex: 0 0 auto; }
 .resultQ .aRow.tallySkipped,
@@ -495,3 +505,7 @@
   .app-toast{ bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }
 .poll-load-retry{ display:flex; justify-content:center; margin: 0 0 12px; }
+
+/* Szkic: udostępnianie widoczne, ale zablokowane do uruchomienia ankiety. */
+.shareCols.is-locked > .pollSec{ opacity: .55; }
+.shareCols.is-locked > .pollSec :is(button, a, input){ pointer-events: none; }

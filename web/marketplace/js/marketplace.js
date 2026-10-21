@@ -1,20 +1,19 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T22245";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T22245";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-20T22245";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T22245";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-20T22245";
-import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T22245";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T22245";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T22245";
-import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T22245";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T22245";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-20T22245";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-20T22245";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T22245";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T22245";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-20T22245";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T16391";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T16391";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-21T16391";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T16391";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-21T16391";
+import { rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-21T16391";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T16391";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T16391";
+import { confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T16391";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T16391";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T16391";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-21T16391";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T16391";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T16391";
 
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
@@ -24,8 +23,6 @@ const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "
    Constants
 ========================================================= */
 const PAGE_SIZE = 20;
-const MARKETPLACE_TABS = ["browse", "mine"];
-const DEFAULT_MARKETPLACE_TAB = "browse";
 
 /* =========================================================
    State
@@ -47,15 +44,12 @@ let browseRequest = 0;
 let detailRequest = 0;
 let browseLoading = false;
 let browseRows = [];
-let currentView = "browse";
 let lastDetailTrigger = null;
+// Podgląd i zgłoszenie otwarte z okna „Moje wysłane” wracają do niego po zamknięciu.
+let returnToMySent = false;
+let skipNextPopstate = false;
 
-// Strona przełącza się między widokiem "browse" (przycisk wstecz:
-// btnGoGames) i "mine" (przycisk wstecz: btnBackBrowse) -- w danej
-// chwili widoczny jest dokładnie jeden z nich (patrz showView()), więc
-// modale sheet biorą jako backBtn ten, który akurat nie jest ukryty.
 function currentBackBtn() {
-  if (els.btnBackBrowse && !els.btnBackBrowse.hidden) return els.btnBackBrowse;
   return els.btnGoGames;
 }
 
@@ -65,12 +59,14 @@ function currentBackBtn() {
 const els = {
   // views
   viewBrowse:  document.getElementById("viewBrowse"),
-  viewMine:    document.getElementById("viewMine"),
+  mySentOverlay: document.getElementById("mySentOverlay"),
+  btnMySentClose: document.getElementById("btnMySentClose"),
   // browse
   browseGrid:  document.getElementById("browseGrid"),
   browseInfo:  document.getElementById("browseInfo"),
   searchInput: document.getElementById("searchInput"),
   btnSearchFocus: document.getElementById("btnSearchFocus"),
+  btnSearchClear: document.getElementById("btnSearchClear"),
   langFilter: document.getElementById("langFilter"),
   sortSelect: document.getElementById("sortSelect"),
   loadMoreWrap:document.getElementById("loadMoreWrap"),
@@ -105,7 +101,6 @@ const els = {
   btnSubmitConfirm: document.getElementById("btnSubmitConfirm"),
   // nav
   btnGoGames:  document.getElementById("btnGoGames"),
-  btnBackBrowse: document.getElementById("btnBackBrowse"),
   btnManual:     document.getElementById("btnManual"),
 };
 
@@ -119,20 +114,41 @@ function showToast(msg, type = "info") {
 /* =========================================================
    Views
 ========================================================= */
-function showView(name) {
-  currentView = name;
-  els.viewBrowse.hidden = name !== "browse";
-  els.viewMine.hidden   = name !== "mine";
-  if (els.btnGoGames)  els.btnGoGames.hidden  = name !== "browse";
-  if (els.btnBackBrowse) els.btnBackBrowse.hidden = name !== "mine";
+/* Okno „Moje wysłane” (decyzja 2026-10-21: okno zamiast karty strony). */
+function openMySent() {
+  if (isGuest || !currentUser || !els.mySentOverlay) return;
+  returnToMySent = false;
+  els.mySentOverlay.style.display = "";
+  enterModalSheet(els.mySentOverlay, { backBtn: currentBackBtn(), onClose: closeMySent });
+  void loadMySent();
 }
 
-function switchMarketplaceTab(name) {
-  const next = name === "mine" && (isGuest || !currentUser) ? DEFAULT_MARKETPLACE_TAB : name;
-  setTab(next, DEFAULT_MARKETPLACE_TAB);
-  showView(next);
-  if (next === "mine") void loadMySent();
-  else void loadBrowse({ reset: true });
+function closeMySent() {
+  if (!els.mySentOverlay || els.mySentOverlay.style.display === "none") return;
+  els.mySentOverlay.style.display = "none";
+  exitModalSheet(els.mySentOverlay);
+}
+
+// Podgląd lub zgłoszenie z okna „Moje wysłane”: jedno okno naraz, po
+// zamknięciu wracamy do listy zgłoszeń.
+function leaveMySentFor(action) {
+  returnToMySent = true;
+  // Na telefonie okno ma wpis ?dialog= w historii: zamknięcie robi history.back(),
+  // a spóźniony popstate zamknąłby od razu nowo otwarte okno. Czekamy na niego.
+  const popsHistory = new URL(location.href).searchParams.get("dialog") === els.mySentOverlay?.id;
+  if (!popsHistory) {
+    closeMySent();
+    return action();
+  }
+  skipNextPopstate = true;
+  window.addEventListener("popstate", () => { skipNextPopstate = false; action(); }, { once: true });
+  closeMySent();
+}
+
+function backToMySent() {
+  if (!returnToMySent) return;
+  returnToMySent = false;
+  openMySent();
 }
 
 function langFilterOptions() {
@@ -161,6 +177,7 @@ function refreshBrowseSelectLabels() {
 
 function syncSearchButton() {
   const active = !!String(els.searchInput?.value || "").trim();
+  if (els.btnSearchClear) els.btnSearchClear.hidden = !String(els.searchInput?.value || "");
   if (els.btnSearchFocus) {
     els.btnSearchFocus.innerHTML = icon(active ? "close" : "search");
     els.btnSearchFocus.classList.toggle("is-active", active);
@@ -197,11 +214,21 @@ function initBrowseUiSelects() {
       title: t("marketplace.searchLabel"),
       value: currentSearch,
       placeholder: t("marketplace.searchPlaceholder"),
+      text: "",
+      okText: t("common.modal.alertOk"),
+      search: true,
     });
     if (value === null) return;
     els.searchInput.value = value;
     syncSearchButton();
     els.searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  els.btnSearchClear?.addEventListener("click", (e) => {
+    e.preventDefault();
+    els.searchInput.value = "";
+    syncSearchButton();
+    els.searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+    els.searchInput.focus();
   });
   langFilterUiSelect = initUiSelect(els.langFilter, {
     options: langFilterOptions(),
@@ -252,7 +279,8 @@ async function loadBrowse({ reset = false } = {}) {
     if (els.browseGrid) els.browseGrid.innerHTML = "";
   }
 
-  if (els.browseInfo) els.browseInfo.textContent = t("marketplace.loading");
+  // Pierwsze ładowanie: siatka jeszcze ukryta (szkielet), bez napisu „Ładowanie…”.
+  if (els.browseInfo && els.browseGrid?.classList.contains("skel-step-ready")) els.browseInfo.textContent = t("marketplace.loading");
 
   const lang = getUiLang();
   const { data, error } = await sb().rpc("market_browse", {
@@ -280,7 +308,7 @@ async function loadBrowse({ reset = false } = {}) {
   if (reset && rows.length === 0) {
     if (els.browseInfo) els.browseInfo.textContent = "";
     if (els.browseGrid) els.browseGrid.innerHTML =
-      `<div class="mkt-empty">${esc(t("marketplace.empty"))}</div>`;
+      `<div class="mkt-empty empty-state empty-state--tile">${esc(t("marketplace.empty"))}</div>`;
     if (els.loadMoreWrap) els.loadMoreWrap.hidden = true;
     return;
   }
@@ -498,6 +526,7 @@ function closeDetail({ updateUrl = true } = {}) {
   }
   lastDetailTrigger?.focus?.();
   lastDetailTrigger = null;
+  if (updateUrl) backToMySent();
 }
 
 /* =========================================================
@@ -569,7 +598,7 @@ async function loadMySent() {
   const rows = Array.isArray(data) ? data : [];
   if (els.mySentInfo) els.mySentInfo.textContent = "";
   if (!rows.length) {
-    els.mySentList.innerHTML = `<div class="mkt-empty">${esc(t("marketplace.mySent.empty"))}</div>`;
+    els.mySentList.innerHTML = `<div class="mkt-empty empty-state empty-state--tile">${esc(t("marketplace.mySent.empty"))}</div>`;
     return;
   }
 
@@ -612,7 +641,7 @@ async function loadMySent() {
   });
   // Wire preview buttons
   els.mySentList.querySelectorAll("[data-preview]").forEach(btn => {
-    btn.addEventListener("click", () => openDetail(btn.dataset.preview));
+    btn.addEventListener("click", () => leaveMySentFor(() => openDetail(btn.dataset.preview)));
   });
 }
 
@@ -682,8 +711,10 @@ async function openSubmitModal() {
 }
 
 function closeSubmitModal() {
-  if (els.submitOverlay) els.submitOverlay.style.display = "none";
+  if (!els.submitOverlay || els.submitOverlay.style.display === "none") return;
+  els.submitOverlay.style.display = "none";
   exitModalSheet(els.submitOverlay);
+  backToMySent();
 }
 
 function showSubmitError(msg) {
@@ -739,7 +770,6 @@ async function submitGame() {
 
   showToast(t("marketplace.submit.success"), "success");
   closeSubmitModal();
-  await loadMySent();
   fetch("/_api/notify-submission", { method: "POST" }).catch(() => {});
 }
 
@@ -858,17 +888,10 @@ function rpcErrorMessage(error) {
 ========================================================= */
 function wireEvents() {
   // Znacznik dla contact-modal.js (btnGoGames dostaje go z initPage).
-  if (els.btnBackBrowse) els.btnBackBrowse.dataset.sheetBack = "1";
 
   // Browse
-  els.btnMySent?.addEventListener("click", async () => {
-    if (isGuest || !currentUser) return;
-    switchMarketplaceTab("mine");
-  });
-  els.btnBackBrowse?.addEventListener("click", () => {
-    if (handleSheetBack()) return;
-    switchMarketplaceTab(DEFAULT_MARKETPLACE_TAB);
-  });
+  els.btnMySent?.addEventListener("click", openMySent);
+  els.btnMySentClose?.addEventListener("click", closeMySent);
 
   els.searchInput?.addEventListener("input", () => {
     syncSearchButton();
@@ -894,7 +917,7 @@ function wireEvents() {
   els.btnRemoveLibrary?.addEventListener("click", removeFromLibrary);
 
   // Submit modal
-  els.btnSubmitNew?.addEventListener("click", openSubmitModal);
+  els.btnSubmitNew?.addEventListener("click", () => leaveMySentFor(openSubmitModal));
   els.btnSubmitCancel?.addEventListener("click", closeSubmitModal);
   document.getElementById("btnSubmitClose")?.addEventListener("click", closeSubmitModal);
   els.submitOverlay?.addEventListener("click", e => {
@@ -919,14 +942,18 @@ function wireEvents() {
   // Keyboard close
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
+      if (e.defaultPrevented) return;
+      e.preventDefault();
       closeDetail();
       closeSubmitModal();
+      closeMySent();
     }
   });
 
   // Przycisk wstecz w przeglądarce
   const UUID_RE_NAV = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   window.addEventListener("popstate", e => {
+    if (skipNextPopstate) return; // powrót po zamknięciu „Moje wysłane” (leaveMySentFor)
     const legacyGameId = new URL(location.href).searchParams.get("game");
     if (legacyGameId && UUID_RE_NAV.test(legacyGameId)) {
       openDetail(legacyGameId, { replaceUrl: true });
@@ -939,18 +966,7 @@ function wireEvents() {
     } else {
       closeDetail({ updateUrl: false });
       restoreBrowseParams();
-      const tab = tabFromUrl(MARKETPLACE_TABS, DEFAULT_MARKETPLACE_TAB);
-      if (tab === "mine" && (isGuest || !currentUser)) {
-        setTab(DEFAULT_MARKETPLACE_TAB, DEFAULT_MARKETPLACE_TAB);
-        showView(DEFAULT_MARKETPLACE_TAB);
-        loadBrowse({ reset: true });
-      } else if (tab === "mine") {
-        showView("mine");
-        loadMySent();
-      } else {
-        showView(DEFAULT_MARKETPLACE_TAB);
-        loadBrowse({ reset: true });
-      }
+      loadBrowse({ reset: true });
     }
   });
 }
@@ -981,11 +997,9 @@ function restoreBrowseParams() {
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
   const i18nP = initI18n({ withSwitcher: true });
-  const requestedTab = tabFromUrl(MARKETPLACE_TABS, DEFAULT_MARKETPLACE_TAB);
   const userP = initPage("marketplace", {
     ready: i18nP,
     back: els.btnGoGames,
-    // Najpierw odtwórz właściwy widok i jego przycisk powrotu z ?tab=.
     deferTopbarReady: true,
     account: { showAuthEntry: false },
   });
@@ -999,10 +1013,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   isGuest = !currentUser || isGuestUser(currentUser);
   // "Moje wysłane" button — only for logged-in non-guests
   if (els.btnMySent) els.btnMySent.hidden = isGuest || !currentUser;
-  const initialTab = requestedTab === "mine" && (isGuest || !currentUser)
-    ? DEFAULT_MARKETPLACE_TAB
-    : requestedTab;
-  if (initialTab !== requestedTab) setTab(initialTab, DEFAULT_MARKETPLACE_TAB);
 
   // init ui-select for game picker in submit modal
   submitGameUiSelect = initUiSelect(els.submitGameSelectEl, {
@@ -1016,9 +1026,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   restoreBrowseParams();
 
 
-  showView(initialTab);
   document.querySelector(".topbar")?.classList.add("topbar-ready");
-  if (initialTab === "mine") await loadMySent();
   await loadBrowse({ reset: true });
   document.getElementById('browseGrid')?.classList.add('skel-step-ready');
 
@@ -1042,7 +1050,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.addEventListener("i18n:lang", async () => {
     if (detailGame) renderDetail(detailGame);
-    if (currentView === "mine") await loadMySent();
+    if (els.mySentOverlay && els.mySentOverlay.style.display !== "none") await loadMySent();
     await loadBrowse({ reset: true });
   });
 });

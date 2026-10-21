@@ -111,9 +111,9 @@ function additionalStates(data) {
           await tile.dblclick();
         },
         cleanup: async (page) => {
-          const modal = page.locator("#nameOverlay");
+          const modal = page.locator(".uni-modal");
           if (await modal.isVisible().catch(() => false)) {
-            await page.locator("#btnNameCancel").click();
+            await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
             await modal.waitFor({ state: "hidden", timeout: 5_000 });
           }
         },
@@ -157,7 +157,7 @@ function additionalStates(data) {
       {
         id: "base-explorer", stateId: "modal:rename-item", page: "base-explorer",
         href: `/bases/explorer/?id=${data.base.id}`, modalCapture: true,
-        expectedVisibleSelector: "#renameModal", actionLabel: "Eksplorator bazy → Zmień nazwę elementu",
+        expectedVisibleSelector: ".uni-modal", actionLabel: "Eksplorator bazy → Zmień nazwę elementu",
         prepare: async (page) => {
           const item = page.locator('#list .row[data-kind="cat"][data-id]').first();
           await item.waitFor({ state: "visible", timeout: 15_000 });
@@ -165,7 +165,7 @@ function additionalStates(data) {
           const drawer = page.locator("#btnDrawerToggle");
           if (await drawer.isVisible().catch(() => false)) await drawer.click();
           await page.locator('#toolbar [data-act="rename"]').click();
-          await page.locator("#renameModal").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15_000 });
         },
       },
       {
@@ -322,7 +322,7 @@ function additionalStates(data) {
     ] : []),
     { id: "marketplace", stateId: "mine", page: "marketplace", href: "/marketplace/", prepare: async (page) => {
       await page.locator("#btnMySent").click();
-      await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
+      await page.locator("#mySentOverlay").waitFor({ state: "visible", timeout: 15_000 });
     } },
     ...["friends", "subscribers"].map((id) => ({
       id, stateId: "list", page: id, href: `/${id}/?tab=received`, mobileOnly: true,
@@ -356,9 +356,9 @@ function additionalStates(data) {
           await tile.dblclick();
         },
         cleanup: async (page) => {
-          const modal = page.locator("#nameOverlay");
+          const modal = page.locator(".uni-modal");
           if (await modal.isVisible().catch(() => false)) {
-            await page.locator("#btnNameCancel").click();
+            await page.locator(".uni-modal .uni-foot .btn:not(.gold)").click();
             await modal.waitFor({ state: "hidden", timeout: 5_000 });
           }
         },
@@ -404,7 +404,7 @@ function additionalStates(data) {
           const question = page.locator("#qList .qcard[data-id]").first();
           await question.waitFor({ state: "visible", timeout: 20_000 });
           await question.click();
-          await expect(page.locator("body")).toHaveClass(/mobile-editing/);
+          await expect(page.locator("#questionSheetOverlay")).toHaveClass(/sheet-active/);
           await page.locator("#qText").scrollIntoViewIfNeeded();
         },
       },
@@ -415,7 +415,7 @@ function additionalStates(data) {
           const question = page.locator("#qList .qcard[data-id]").first();
           await question.waitFor({ state: "visible", timeout: 20_000 });
           await question.click();
-          await expect(page.locator("body")).toHaveClass(/mobile-editing/);
+          await expect(page.locator("#questionSheetOverlay")).toHaveClass(/sheet-active/);
           await page.locator("#aList").scrollIntoViewIfNeeded();
         },
       },
@@ -454,7 +454,7 @@ function additionalStates(data) {
           await page.locator(`.logoTile[data-key="${logo.id}"]`).click();
           await expect(page.locator("#btnExport")).toBeEnabled();
           await page.locator("#btnExport").click();
-          await page.locator("#logoExportOverlay").waitFor({ state: "visible", timeout: 15_000 });
+          await page.locator(".uni-modal:has(.uni-progress)").waitFor({ state: "visible", timeout: 15_000 });
           await expect(page.locator("#logoExportSub")).toBeVisible();
         },
       },
@@ -569,11 +569,11 @@ function additionalStates(data) {
       },
     },
     {
-      id: "marketplace", stateId: "modal:marketplace-submit", page: "marketplace", href: "/marketplace/?tab=mine",
+      id: "marketplace", stateId: "modal:marketplace-submit", page: "marketplace", href: "/marketplace/",
       modalCapture: true, expectedModalId: "submitOverlay", actionLabel: "Moje wysłane → Zgłoś grę",
       prepare: async (page) => {
         await page.locator("#btnMySent").click();
-        await page.locator("#viewMine").waitFor({ state: "visible", timeout: 15_000 });
+        await page.locator("#mySentOverlay").waitFor({ state: "visible", timeout: 15_000 });
         await page.locator("#btnSubmitNew").waitFor({ state: "visible", timeout: 15_000 });
         await page.locator("#btnSubmitNew").click();
       },
@@ -762,7 +762,7 @@ async function dismissBlockingModal(page, profile, id) {
   if (!hasRatingModal && !hasGenericModal) return;
 
   if (hasRatingModal) {
-    await page.locator("#btnRatingLater").click({ timeout: 5_000 });
+    await page.locator("#ratingOverlay .uni-foot .btn[data-value=\"later\"]").click({ timeout: 5_000 });
     await ratingOverlay.waitFor({ state: "detached", timeout: 10_000 });
     return;
   }
@@ -1107,9 +1107,9 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     pageText: document.body?.innerText?.slice(0, 500) || "",
     loading: document.documentElement.classList.contains("page-loading"),
     listHeaderActionsBelow: document.querySelector("main .bar")?.classList.contains("has-actions-below") || false,
-    listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-single-row")
-      ? "single-row"
-      : document.querySelector(".games-bottom")?.classList.contains("is-balanced-wrap") ? "balanced-wrap" : "not-measured",
+    listBottomLayout: document.querySelector(".games-bottom")?.classList.contains("is-scroll")
+      ? "scroll"
+      : document.querySelector(".games-bottom")?.classList.contains("is-single-row") ? "single-row" : "not-measured",
     listBottomTextLabels: [...document.querySelectorAll(".games-bottom-right .only-desktop")]
       .some((label) => label.getClientRects().length > 0),
     listBottomMetrics: (() => {
@@ -1158,8 +1158,8 @@ async function capture(page, profile, id, href, manifest, prepare = null, readyS
     if (fitsSingleRow && state.listBottomLayout !== "single-row") {
       throw new Error(`${profile.label} · ${id}: dolny pasek zawinął się, choć mieści się w jednym wierszu; ${JSON.stringify(state.listBottomMetrics)}`);
     }
-    if (!fitsSingleRow && state.listBottomLayout !== "balanced-wrap") {
-        throw new Error(`${profile.label} · ${id}: dolny pasek nie zastosował równomiernego zawinięcia; ${JSON.stringify(state.listBottomMetrics)}`);
+    if (!fitsSingleRow && state.listBottomLayout !== "scroll") {
+        throw new Error(`${profile.label} · ${id}: dolny pasek nie przewija się w bok, choć się nie mieści; ${JSON.stringify(state.listBottomMetrics)}`);
     }
     if (state.listBottomTextLabels && state.listBottomMetrics) {
       const longestGroup = Math.max(state.listBottomMetrics.leftRows.length, state.listBottomMetrics.rightRows.length);
@@ -1361,8 +1361,8 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 layerId: "tagsL2",
                 actionLabel: "Tagi → dodaj tag",
                 prepare: async (modalPage) => {
-                  const drawer = modalPage.locator("#btnDrawerToggle");
-                  if (await drawer.isVisible().catch(() => false)) await drawer.click();
+                  // lewy panel: widok tagów (przycisk przy wyszukiwarce albo w pasku na telefonie)
+                  await modalPage.locator('[data-left-view="tags"]:visible').first().click();
                   await modalPage.locator("#btnAddTag").click();
                 },
               },
@@ -1372,8 +1372,8 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 layerId: "tagsL3",
                 actionLabel: "Tagi → dodaj tag → wybierz kolor",
                 prepare: async (modalPage) => {
-                  const drawer = modalPage.locator("#btnDrawerToggle");
-                  if (await drawer.isVisible().catch(() => false)) await drawer.click();
+                  // lewy panel: widok tagów (przycisk przy wyszukiwarce albo w pasku na telefonie)
+                  await modalPage.locator('[data-left-view="tags"]:visible').first().click();
                   await modalPage.locator("#btnAddTag").click();
                   await modalPage.locator("#tagsEditColorTile").click();
                 },
@@ -1416,11 +1416,11 @@ for (const [accountIndex, accountNumber] of requestedAccounts.entries()) {
                 await shareButton.click();
                 await modalPage.waitForFunction(() => {
                   const list = document.getElementById("shareDeviceCurrentContent");
-                  return list && (list.querySelector(".share-empty-state") || list.querySelector(".shareRow"));
+                  return list && (list.querySelector(".empty-state") || list.querySelector(".shareRow"));
                 }, null, { timeout: 15_000 });
                 const sharedList = modalPage.locator("#shareDeviceCurrentContent");
                 if (await sharedList.locator(":scope > .shareRow").count() === 0) {
-                  await expect(sharedList.locator(":scope > .share-empty-state")).toBeVisible();
+                  await expect(sharedList.locator(":scope > .empty-state")).toBeVisible();
                 }
               },
               null,

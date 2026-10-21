@@ -7,13 +7,16 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T22245";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T22245";
-import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T22245";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T22245";
-import { enterModalSheet, exitModalSheet } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-20T22245";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-20T22245";
-import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-10-20T22245";
+import * as ops from "./ops.js?v=v2026-10-21T16391";
+import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T16391";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T16391";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-21T16391";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T16391";
+import { normalizeText } from "./data/listing.js?v=v2026-10-21T16391";
+import { listTags, listQuestionTagLinks } from "./repo.js?v=v2026-10-21T16391";
+
+// Dozwolone znaki nazwy tagu — ta sama reguła co w bazie (qb_save_tag, 427).
+const TAG_NAME_RE = /^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/;
 
 
 const btnBack = document.getElementById("btnBack");
@@ -63,12 +66,10 @@ function showErr(box, msg) {
   box.textContent = String(msg || "");
 }
 
-function normTagName(s) {
-  return String(s || "")
-    .trim()
-    .replace(/^#/, "")
-    .replace(/\s+/g, "")
-    .toLowerCase();
+// Nazwy tagów porównujemy jak wyszukiwarka: bez wielkości liter i bez
+// polskich znaków („Łatwe” = „latwe”), żeby #latwe nie było niejednoznaczne.
+function normTagName(name) {
+  return normalizeText(String(name || "").trim().replace(/^#/, ""));
 }
 
 function isDuplicateTagName(state, nameRaw, { allowId = null } = {}) {
@@ -139,6 +140,7 @@ function els() {
     // L2
     l2Close: document.getElementById("tagsL2Close"),
     l2Save: document.getElementById("tagsL2Save"),
+    l2Back: document.getElementById("tagsL2Back"),
     editTitle: document.getElementById("tagsEditTitle"),
     editHelp: document.getElementById("tagsEditHelp"),
     editName: document.getElementById("tagsEditName"),
@@ -149,6 +151,7 @@ function els() {
     // L3
     l3Close: document.getElementById("tagsL3Close"),
     l3Save: document.getElementById("tagsL3Save"),
+    l3Back: document.getElementById("tagsL3Back"),
     colorPreview: document.getElementById("tagsColorPreview"),
     colorHex: document.getElementById("tagsColorHex"),
     colorR: document.getElementById("tagsColorR"),
@@ -168,9 +171,9 @@ function showLayer(E, n) {
 
 /* ================= Data helpers ================= */
 
-// Rozwijanie folderów -> pytania w poddrzewie: używa cache z actions.js, ale tu robimy minimum:
-// Jeśli masz już state._folderDescQIds z ensureDerivedFolderMaps – podajemy go opcjonalnie przez opts.
-// Jeśli nie: fallback to "nie rozwijamy folderów" (bezpieczne, ale uboższe).
+// Rozwijanie folderów -> pytania w poddrzewie: mapę folder -> pytania liczy
+// wołający (commands.js: openTagsWindow, z state.d.subtreeQuestionIds) i podaje
+// w opts.folderDescQIds. Bez mapy foldery nie są rozwijane (bezpiecznie).
 async function expandFoldersToQuestionIds(state, folderIds, opts) {
   const cIds = uniqIds(folderIds);
   if (!cIds.length) return [];
@@ -188,14 +191,7 @@ async function expandFoldersToQuestionIds(state, folderIds, opts) {
 }
 
 async function refreshTags(state) {
-  const { data, error } = await sb()
-    .from("qb_tags")
-    .select("id,base_id,name,color,ord")
-    .eq("base_id", state.baseId)
-    .order("ord", { ascending: true });
-
-  if (error) throw error;
-  state.tags = data || [];
+  state.tags = await listTags(state.baseId);
 }
 
 /* ================= Modal main ================= */
@@ -211,6 +207,7 @@ export async function openTagsModal(state, opts = {}) {
   // tagId: dla edit
   // selection: { qIds, cIds } – jeśli nie podasz, modal pokaże "Brak zaznaczenia" i zapis L1 nic nie zrobi
   // folderDescQIds: Map(folderId -> Set(qid)) (opcjonalnie) – jeśli chcesz, by foldery się rozwijały do pytań
+  // onLinks({ added, removed }) / onTagSaved({ id, before }, { name, color }) – zapis do historii cofania
   const mode = opts.mode || "assign";
   const editTagId = opts.tagId || null;
   const sel = opts.selection || { qIds: [], cIds: [] };
@@ -282,10 +279,13 @@ export async function openTagsModal(state, opts = {}) {
     E.overlay.style.display = "none";
     exitModalSheet(E.overlay);
     document.removeEventListener("keydown", onKey);
+    E.overlay?.removeEventListener("click", onBackdrop);
 
     E.l1Close?.removeEventListener("click", onClose);
     E.l2Close?.removeEventListener("click", onClose);
     E.l3Close?.removeEventListener("click", onClose);
+    E.l2Back?.removeEventListener("click", onLayerBack);
+    E.l3Back?.removeEventListener("click", onLayerBack);
 
     E.l1Save?.removeEventListener("click", onSave);
     E.l2Save?.removeEventListener("click", onSave);
@@ -318,6 +318,31 @@ export async function openTagsModal(state, opts = {}) {
   }
 
   function onClose() {
+    close(false);
+  }
+
+  // „Anuluj” w warstwie: kolor — porzuć zmianę i wróć do tagu; tag — wróć
+  // do listy (przypisywanie) albo zamknij okno (samo dodawanie/edycja).
+  function layerBack() {
+    if (m.layer === 3) {
+      setPickerUI(hexToRgb(m.colorBase) || { r: 77, g: 163, b: 255 }, { silent: false });
+      go(2);
+      return true;
+    }
+    if (m.layer === 2 && mode === "assign") {
+      go(1);
+      return true;
+    }
+    return false;
+  }
+
+  function onLayerBack() {
+    if (!layerBack()) close(false);
+  }
+
+  // Klik w tło zamyka jak X (nie w arkuszu na telefonie — tam wyjściem jest Wstecz).
+  function onBackdrop(e) {
+    if (e.target !== E.overlay || isSheetViewport()) return;
     close(false);
   }
 
@@ -373,10 +398,11 @@ export async function openTagsModal(state, opts = {}) {
       return;
     }
 
-    // pobierz linki tagów dla targetowych pytań
-    const links = await listQuestionTags(allQIds);
+    // świeże tagi wskazanych pytań — lista id w treści zapytania (dawniej
+    // w adresie: przy dużym folderze przekraczała limity adresu i 1000 wierszy)
+    const links = await listQuestionTagLinks(state.baseId, allQIds);
     const qMap = new Map(); // qid -> Set(tid)
-    for (const l of links || []) {
+    for (const l of links) {
       if (!qMap.has(l.question_id)) qMap.set(l.question_id, new Set());
       qMap.get(l.question_id).add(l.tag_id);
     }
@@ -558,45 +584,16 @@ export async function openTagsModal(state, opts = {}) {
       return false;
     }
 
+    // „wszystkie” = nadaj brakujące, „żadne” = zdejmij; jedna transakcja
+    const on = dirtyTagIds.filter((tid) => (m.tri.get(tid) || "none") === "all");
+    const off = dirtyTagIds.filter((tid) => (m.tri.get(tid) || "none") === "none");
     try {
-      // istniejące linki (qid x tid)
-      const { data: existing, error: e0 } = await sb()
-        .from("qb_question_tags")
-        .select("question_id,tag_id")
-        .in("question_id", allQIds)
-        .in("tag_id", dirtyTagIds);
-      if (e0) throw e0;
-
-      const have = new Set((existing || []).map((x) => `${x.question_id}::${x.tag_id}`));
-
-      const inserts = [];
-      const deletes = []; // { tid, qIds }
-
-      for (const tid of dirtyTagIds) {
-        const tri = m.tri.get(tid) || "none";
-        if (tri === "all") {
-          for (const qid of allQIds) {
-            const k = `${qid}::${tid}`;
-            if (!have.has(k)) inserts.push({ question_id: qid, tag_id: tid });
-          }
-        } else if (tri === "none") {
-          deletes.push({ tid, qIds: allQIds });
-        }
-      }
-
-      for (const d of deletes) {
-        const { error } = await sb()
-          .from("qb_question_tags")
-          .delete()
-          .in("question_id", d.qIds)
-          .eq("tag_id", d.tid);
-        if (error) throw error;
-      }
-
-      if (inserts.length) {
-        const { error } = await sb().from("qb_question_tags").insert(inserts, { defaultToNull: false });
-        if (error) throw error;
-      }
+      const res = await ops.applyTagStates(state.baseId, { questionIds: allQIds }, { on, off });
+      opts.onLinks?.({ added: res?.added || [], removed: res?.removed || [] });
+    } catch (e) {
+      if (!e?.userMessage) throw e;
+      showErr(E.assignErr, e.userMessage);
+      return false;
     } finally {
       tagLease.release();
     }
@@ -618,12 +615,12 @@ export async function openTagsModal(state, opts = {}) {
       .replace(/^#/, "")
       .slice(0, 40);
 
-    // Bez spacji: tylko litery/cyfry i "_"
+    // Bez spacji: litery (także polskie, decyzja 2026-10-20), cyfry i "_"
     if (/\s/.test(nameRaw)) {
       showErr(E.editErr, t("baseExplorer.tags.errors.noSpaces"));
       return false;
     }
-    if (!/^[a-zA-Z0-9_]+$/.test(nameRaw)) {
+    if (!TAG_NAME_RE.test(nameRaw)) {
       showErr(E.editErr, t("baseExplorer.tags.errors.allowedChars"));
       return false;
     }
@@ -639,25 +636,18 @@ export async function openTagsModal(state, opts = {}) {
 
     const color = String(m.pickedColor || "#4da3ff").trim();
 
-    if (m.edit.mode === "edit" && m.edit.tagId) {
-      if (sessionLease && !sessionLease.ok) {
-        showErr(E.editErr, sessionLease.reason === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.forbiddenMessage"));
-        return false;
-      }
-      try {
-        await updateChecked("qb_tags", { id: m.edit.tagId }, { name: nameRaw, color });
-      } catch (e) {
-        if (e?.code === ROW_GONE) {
-          showErr(E.editErr, t("resourceLock.goneMessage"));
-          return false;
-        }
-        throw e;
-      }
-    } else {
-      const { error } = await sb()
-        .from("qb_tags")
-        .insert({ base_id: state.baseId, name: nameRaw, color, ord: 9999 }, { defaultToNull: false });
-      if (error) throw error;
+    const editId = (m.edit.mode === "edit" && m.edit.tagId) ? m.edit.tagId : null;
+    if (editId && sessionLease && !sessionLease.ok) {
+      showErr(E.editErr, sessionLease.reason === "gone" ? t("resourceLock.goneMessage") : t("resourceLock.forbiddenMessage"));
+      return false;
+    }
+    try {
+      const res = await ops.saveTag(state.baseId, editId, nameRaw, color);
+      opts.onTagSaved?.(res || {}, { name: nameRaw, color });
+    } catch (e) {
+      if (!e?.userMessage) throw e;
+      showErr(E.editErr, e.userMessage);
+      return false;
     }
 
     await refreshTags(state);
@@ -726,25 +716,18 @@ export async function openTagsModal(state, opts = {}) {
   enterModalSheet(E.overlay, {
     backBtn: btnBack,
     onClose: () => close(false),
-    onBack: () => {
-      if (m.layer === 3) {
-        go(2);
-        return true;
-      }
-      if (m.layer === 2 && mode === "assign") {
-        go(1);
-        return true;
-      }
-      // Tryby create/edit zaczynają się od warstwy 2; nie mają warstwy 1.
-      return false;
-    },
+    // Tryby create/edit zaczynają się od warstwy 2; nie mają warstwy 1.
+    onBack: layerBack,
   });
   document.addEventListener("keydown", onKey);
+  E.overlay?.addEventListener("click", onBackdrop);
 
   // X wszędzie zamyka modal
   E.l1Close?.addEventListener("click", onClose);
   E.l2Close?.addEventListener("click", onClose);
   E.l3Close?.addEventListener("click", onClose);
+  E.l2Back?.addEventListener("click", onLayerBack);
+  E.l3Back?.addEventListener("click", onLayerBack);
 
   // Save wszędzie
   E.l1Save?.addEventListener("click", onSave);

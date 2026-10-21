@@ -26,6 +26,247 @@ podliczania jako stan bieżącej operacji.
 
 ---
 
+## Decyzje — telefon: Ustawienia gry i przycisk powrotu (2026-10-21)
+
+- **Ustawienia gry działają na telefonie** (bez blokady urządzenia i progu
+  szerokości). Sekcje w wysuwanym panelu (hamburger); Dźwięk: nazwa nad
+  kontrolkami; kolory 2×2; logo w dwóch równych kolumnach; pytania rund
+  w dwóch liniach; komunikat paska pod przyciskami.
+- **Moje gry na telefonie:** „Ustawienia gry” widoczne, „Graj” ukryte
+  (Control na telefonie niedostępny). W Ustawieniach gry „Graj” też ukryte
+  poniżej 980 px.
+- **Przycisk powrotu na telefonach (≤ 600 px) to sama strzałka** — na
+  wszystkich stronach i w oknach w trybie arkusza; tekst zostaje jako nazwa
+  dla czytnika ekranu.
+- **Stany kafla gry ankietowej:** szkic, który spełnia warunki uruchomienia,
+  ma stan „DO URUCHOMIENIA” (niebieski, także w filtrze stanu).
+- Zamknięta ankieta (GOTOWA) ma zablokowane zakładki udostępniania
+  (potwierdzone, bez zmian).
+
+## Decyzje — wspólne style wszędzie (E23, 2026-10-21)
+
+- Każda strona korzysta ze wspólnych stylów i mechanizmów z `web/shared/`;
+  plik CSS strony zawiera tylko jej własny układ. Bez lokalnych kopii klas
+  i nadpisań per strona. Plan i pomiar: [`wspolne-style-plan.md`](wspolne-style-plan.md).
+- Zakres: panel Control w pełni wspólny; buzzer, host, wyświetlacz/TV i snake
+  odrębne — tylko wspólne tokeny i okna/komunikaty, własny wygląd rozgrywki.
+- Kierunek (2026-10-21): nowy silnik stylów od zera → ujednolicenie wspólnych
+  mechanizmów JS → przepinanie strona po stronie. Progi wspólne, ale więcej
+  progów. Style z HTML wyciągnąć. Szczegóły: `wspolne-style-plan.md`.
+- Progi (2026-10-21, zmienia zasadę E20 z 2026-10-13): tylko 3 szerokości
+  (600/980/1280) + rodzaj urządzenia i dotyk jako warunek układu (profil
+  `device-guard` na `<html>`). Przerwa i 404 — jeden wzorzec. Panel admina
+  też przepisać — ostatnia faza E23 (§8a projektu). Odcienie i promienie — jak najmniej wartości. E23 po E13.
+  Szczegóły: `silnik-stylow-projekt.md` §3.3, §11.
+
+## Decyzje — zamknięcie E20 i reszta E18 (2026-10-20)
+
+- **E20, lista 14 uwag z 2026-10-17:** punkty 2–10 i 12–14 potwierdzone przez
+  użytkownika. Punkt 1 (ikony) poprawiony; punkt 11 (zła gra na MacBooku)
+  dotyczył galerii E2E — porzucony, galerii nie naprawiamy.
+- **Szerokości kart:** 680 px tylko dla karty wpisywania e-maila w Mails,
+  publicznego głosowania i Go. Zwykły widok Mails (listy, zadania,
+  subskrypcje) — normalna szerokość strony.
+- **Kafle (E18 #2):** zostają jak są. Gry i Bazy — identyczny kafel; Logo
+  wyższe przez podgląd; Społeczność — mniejsze przerwy i własna siatka.
+- **Okna (E18 #12):** przegląd i poprawki — wzorzec: małe okna `.uni-modal`,
+  duże `.overlay > .modal` (arkusz na telefonie), proste okna z jednym polem
+  lub krótkim potwierdzeniem `.modal--narrow` (560 px). Wszędzie Esc i X,
+  stopka „Anuluj” + złota akcja po prawej (`btn sm`, z ikonami).
+- **Marginesy (E18 #7):** przegląd i poprawki tylko tam, gdzie odstają, bez
+  zmian na stronach, które już są poprawne. Wykonane: token `--page-gutter`
+  (18 px, ≤980 px 15 px) w `.wrap` i stronach z własnym kontenerem; ≤980 px
+  15 px także w Znajomych/Subskrybentach (było 18), Ustawieniach gry (20),
+  Mails na telefonie (12), 404/przerwie (16); strony z games.css zachowują
+  strefę bezpieczną iPhone'a; stopka poza treścią (Connect, Go, 404,
+  przerwa) na pełną szerokość jak w Mails. Pomiar przed/po: pozostałe strony
+  bez zmian co do piksela. **Do decyzji:** na komputerze dwie rodziny stron
+  — 18 px (Gry, Bazy, Logo, Zadania, Ankieta, Connect) i ~88 px (strona
+  główna, Konto, edytor gry, Społeczność, Instrukcja, Prywatność).
+- **Narzędzia list (doprecyzowanie 2026-10-20):** każda lista wierszy ma w
+  nagłówku przyciski jak dolny pasek Gier w wersji ikon — sortowanie
+  (domyślna / A–Z / Z–A), filtr stanu (gdy są co najmniej dwa stany), lupa
+  otwierająca okno do wpisania frazy. Tak samo na komputerze i telefonie.
+  Listy: Znajomi, Subskrybenci, Zadania, Mails, Connect, odbiorcy ankiety,
+  udostępnianie Baz i Control, wysyłka kopii Gier/Logo.
+- **Stopniowe ładowanie stron (uwaga użytkownika 2026-10-20, zrobione na branchu):**
+  ujednolicić odsłanianie widoku — m.in. Znajomi: wypustki kart pojawiają się
+  przed kartą. Na wszystkich stronach elementy nie mogą wskakiwać ani
+  zmieniać układu po wczytaniu; karta z wypustkami, nagłówek i lista
+  odsłaniają się razem, w jednym spójnym kroku. Wykonanie: `data-skel-group`
+  (base.css) na karcie z wypustkami (Znajomi, Subskrybenci, Bazy, Zadania);
+  podtytuły Gier/Logo/Baz w HTML, Connect przed sesją; Społeczność bez
+  „Ładowanie…” przy pierwszym odczycie. Taśmy ładowania: atrapa zrzutów
+  z `db.latency`.
+- **Okna od dołu na telefonie i tablecie (decyzja użytkownika 2026-10-20):**
+  na telefonie i ekranach dotykowych tabletów duże okna (dziś `modal--sheet`,
+  zastępujące treść strony) wysuwają się od dołu (styl menu kontekstowego
+  Eksploratora): na telefonie prawie na całą wysokość, pasek u góry do
+  zamykania przeciągnięciem, płynna animacja; przycisk „Wstecz” w topbarze
+  nie przejmuje już zamykania; treść okna bez zmian; okno nad wszystkim
+  (także nad stopką, która się chowa), z uwzględnieniem safe area. Małe okna
+  (potwierdzenia, komunikaty, wpisywanie nazwy) zostają okienkami także na
+  telefonie. Okien niedostępnych w widoku mobilnym nie przerabiamy. Na
+  komputerze bez zmian (zwykłe okna).
+- **Przewijane listy bez ramek (decyzja użytkownika 2026-10-20, zastępuje
+  wcześniejszą ramkę):** nigdzie wewnętrznej ramki listy (także w edytorze
+  gry i w oknach); przewijany obszar jest tylko przycinany z zaokrągleniem
+  takim jak same kafle/wiersze (kafle Gier/Baz 16 px, Logo 18 px, pytania
+  w edytorze 18 px, wiersze list 12 px).
+- **Okno od dołu — doprecyzowanie 2026-10-20:** na telefonie na całą
+  szerokość (bez bocznych krawędzi), na tablecie węższe (do 760 px);
+  górne rogi 28 px; pasek u góry nie zasłania nagłówka; panel i pasek nie
+  wchodzą wyżej niż safe area (także przy przeciąganiu), dół z safe area.
+- **Zmiana nazwy jako roletka (decyzja użytkownika 2026-10-20):** okno nazwy
+  (`promptModal`) na telefonie/tablecie dotykowym wysuwa się od dołu
+  (`sheet-fit`): treść u góry, panel na 78% ekranu, żeby pole i przyciski
+  zostały nad klawiaturą (uwaga użytkownika: okno nie może być niskie).
+- **Odpowiedzi w formularzu pytania (uwaga użytkownika 2026-10-20, druga
+  wersja):** bez nagłówków kolumn („tabeli”); nad listą nagłówek
+  „ODPOWIEDZI” jak etykiety pól i po prawej cichy dopisek „SUMA x/100”
+  (liczba złotem, czerwony powyżej puli; bez pigułki — uwaga użytkownika;
+  bez punktów sam nagłówek). Każda odpowiedź to kafel jak wiersze list
+  (`.shareRow`: promień 12, `--card2`, `--line2`): tekst bez własnej ramki,
+  małe pole punktów z dopiskiem „pkt” i kosz `.btn.icon.danger` 36 px.
+  Edytor gry i okno pytania w Eksploratorze (`question-form.css`).
+- **Treść pytania i odpowiedzi jako dwie sekcje (uwaga użytkownika
+  2026-10-20):** w edytorze gry i w oknie pytania Eksploratora każda część
+  ma otoczkę jak sekcje w innych oknach (`.qf-section` = wygląd
+  `.shareSection`), nagłówki „Treść pytania” / „Odpowiedzi” jak
+  `.shareSectionTitle`, suma po prawej w nagłówku odpowiedzi. W edytorze
+  gry na komputerze prawa kolumna zostaje jednym panelem z dwiema sekcjami
+  (próba z osobnymi panelami odrzucona), a nagłówek „Pytania” po lewej ma
+  ten sam styl co nagłówki sekcji (uwaga użytkownika 2026-10-20).
+- **Safe area w roletkach (sprawdzone emulacją 2026-10-20):** góra panelu
+  12 px pod górnym safe area, ostatnia treść nad dolnym safe area (+14 px).
+- **Przyciski obok podpowiedzi w nagłówku roletki (uwaga użytkownika
+  2026-10-20):** tytuł i podpowiedź po lewej, przyciski po prawej w jednym
+  pasku (`fitSheetTop` w `modal-sheet.js`), gdy pasek wyraźnie się obniża,
+  a podpowiedź zostaje szeroka (≥45%); inaczej przyciski pod podpowiedzią.
+- **Edycja pytania w edytorze gry na telefonie (decyzja użytkownika
+  2026-10-20):** kliknięcie pytania otwiera roletkę „PYTANIE n” z tą samą
+  treścią (pytanie, odpowiedzi), zamykaną paskiem/tłem — bez trybu
+  „Wstecz”. Węższe okno komputera (601–1100 px bez dotyku) zostaje przy
+  widoku pytania z „Wstecz”.
+- **Przyciski sekcji w linii nagłówka (uwaga użytkownika 2026-10-20):**
+  „Dodaj odbiorców” w ankiecie obok nagłówka „Odbiorcy” (na telefonie, bez
+  tytułu, po prawej). Audyt scen zrzutów (nagłówek + osobny wiersz samych
+  przycisków, choć mieszczą się w linii) nie znalazł innych takich miejsc.
+- **Roletka pytania w edytorze gry:** przewija się sama lista odpowiedzi,
+  sekcja kończy się nad dolnym safe area (jak w Eksploratorze).
+- **Dotyk bez przeciągania (decyzja użytkownika 2026-10-20):** na telefonie
+  i tablecie dotykowym chwytanie i przeciąganie elementów jest zablokowane
+  na wszystkich stronach (`page-init.js`, `base.css`), uchwyty znikają;
+  zostają przyciski (scalanie w podliczaniu, strzałki rund, kliknięcie
+  w finale, menu w Eksploratorze). Podliczanie ankiety tekstowej na
+  telefonie (uwaga użytkownika „wygląda okrutnie”): w wierszu linia 1 tekst
+  + przyciski 32 px bez ramki grupy, linia 2 głosy + punkty; podpowiedź
+  i cofnij/ponów w jednej linii; „Scal identyczne”/„Zmień wybór w remisie”
+  jako ikony z dymkiem. Podpowiedzi podliczania skrócone (PL/EN/UK) do
+  działania i progu 4% (usuwanie znaków pokazuje licznik pustych, limit 17
+  pilnuje pole).
+- **Edytory logo (uwaga użytkownika 2026-10-20):** wiersz ustawień narzędzia
+  rysunku stały (płótno nie skacze przy zmianie narzędzia — w linii narzędzi
+  skakało o 23–46 px i psuło klikanie); gdy narzędzie nie ma ustawień,
+  zamiast pustego pasa podpowiedź „Wybierz narzędzie albo zaznacz obiekt…”; sekcja edytora
+  kurczy się nad stopką (edytor tekstu wypychał stopkę); jeden styl etykiet
+  (jak „Jasność:”) i tytułów paneli (jak nagłówki sekcji); podgląd „jak na
+  wyświetlaczu” w edytorze tekstu = ta sama karta co w edytorze obrazu
+  (tytuł, ramka podglądu, podpowiedź o pełnym ekranie).
+- **Nazwa w edytorach (uwaga użytkownika 2026-10-21):** pole nazwy (gra,
+  logo) to kafel na całą szerokość jak górny pasek ankiety (`.pollBar`):
+  ramka, tło, zaokrąglenie; etykieta „NAZWA” jak słowo stanu ankiety (złote
+  wersaliki), pole wypełnia resztę kafla (`.name-field` w `base.css`).
+- **Dolny pasek list przewija się w bok (pomysł użytkownika 2026-10-21):**
+  pasek wyszukiwania/filtrów i akcji (Gry, Bazy, Logo) zostaje zawsze jednym
+  rzędem; zawijanie w rzędy usunięte. Gdy nie mieszczą się napisy — same
+  ikony; gdy nie mieszczą się nawet ikony — pasek przewija się w bok
+  (bez paska przewijania, wygaszona krawędź po stronie z ukrytymi
+  przyciskami). Interpretacja „w zależności, gdzie więcej przycisków”: na
+  starcie w pełni widać grupę z mniejszą liczbą przycisków, a wystaje ta
+  z większą (Gry: wyszukiwanie po lewej, akcje wystają w prawo). Menu filtra
+  i sortowania zamyka się, gdy przewinie się pojemnik z przyciskiem.
+  Doprecyzowanie użytkownika (2026-10-21): grup nie rozpychać na boki, gdy
+  robi się ciasno — stoją przy sobie, a gdy prawie się stykają, dzieli je
+  cienki separator; przewijanie dopiero, gdy z separatorem się nie mieszczą.
+  Przy dużej ilości miejsca grupy zostają po lewej i po prawej.
+- **Wspólne okno z kilkoma przyciskami (2026-10-20):** `choiceModal` w
+  `modal.js` — dowolne przyciski (tekst, ikona, styl, wartość) i zapis
+  w oknie (`onChoice`); pierwsze użycie: prośba o ocenę (Nie pytaj więcej /
+  Później / Wyślij ocenę).
+- **Wiersze list w jednej linii (uwaga użytkownika 2026-10-20, zrobione na branchu):**
+  gdy nazwa, e-mail, znaczniki i przyciski mieszczą się w jednej linii
+  wiersza (Znajomi i pozostałe listy), układać je w jednej linii; łamać pod
+  spód dopiero, gdy brakuje miejsca. Przy okazji: dolny pasek list na
+  telefonie przechodzi na ikony, gdy dają mniej rzędów niż przyciski
+  z napisami (wcześniej tylko przy jednym rzędzie — na 390 px zostawała
+  kolumna szerokich przycisków).
+
+## Decyzje — paczka ujednolicenia po przeglądzie zrzutów (2026-10-21)
+
+Odpowiedzi użytkownika na propozycje z przeglądu 15 stron (komputer + telefon):
+
+- **Marginesy na komputerze:** ujednolicić. Wykonanie wg rodzaju strony
+  (`wzorce-ui.md` A1): strony aplikacji (listy, praca, formularze — m.in.
+  Konto, edytor gry, Społeczność) mają `--page-gutter` jak Gry; strony
+  tekstowe (landing, Instrukcja, Prywatność) zachowują wąską kolumnę do czytania.
+- **Pusty stan:** ujednolicić do jednego wspólnego elementu (zamiast ~15 klas).
+- **Wyszukiwanie:** Społeczność to inna strona — zostaje. Gry/Logo/Bazy:
+  wyszukiwanie dotyczy jednej części listy, więc zostaje w dolnym pasku listy.
+  Eksplorator — ujednolica inna sesja (nie ruszać).
+- **Tytuł w topbarze czy w treści:** decyduje rodzaj strony (A1) — bez zmian.
+- **Tytuły stron:** ujednolicić (Społeczność, Instrukcja i inne odstające
+  do stylu `.bar .title`).
+- **Przyciski formularzy w Koncie:** ujednolicić z resztą formularzy.
+- **Zadania / Connect (wąska kolumna w szerokiej karcie):** do pokazania
+  wariantów — użytkownik nie jest pewien, czy węższa karta nie zepsuje koncepcji.
+- **Okna udostępniania:** ujednolicić okno udostępniania Bazy i okno
+  udostępniania urządzenia na wzór okna „Dodaj odbiorców” ankiety.
+- **Wypustki kart:** wspólny CSS; najpierw pokazać, jak wyglądałaby
+  Społeczność z kartą „Moje wysłane”. Control nie ma już wypustek — usunąć
+  stamtąd ich CSS (po sprawdzeniu, że nieużywany).
+
+### Doprecyzowania użytkownika (2026-10-21, po zrzutach)
+
+- **Okno koloru w Ustawieniach gry:** jak okno koloru tagów z brancha E22
+  (`ccr-ac709a92-0mcpyq`): karta z podglądem i HEX, karta z suwakami R/G/B,
+  Anuluj + Zapisz.
+- **Przyciski obok pola:** zawsze tej samej wysokości co pole (wszystkie strony).
+- **Udostępnianie w Control:** poprawić wygląd (okno i przycisk w kaflu).
+- **Wypustki:** użytkownik pyta o ładniejszą budowę (dziś trzy elementy:
+  etykieta, `.tab-active`, dwa narożniki) — przygotować propozycję.
+- **Społeczność:** makieta z wypustkami odrzucona. „Moje wysłane” jako
+  okno; jedna wspólna karta z grami, a wyszukiwanie i filtry wyżej w osobnej
+  małej podkarcie.
+
+### Decyzje użytkownika (2026-10-21, wieczór) — „zrób, żeby było ładnie”
+
+- **Wypustki:** wariant A — ten sam wygląd, budowa z jednego elementu
+  (przycisk karty rysuje tło, obramowanie i wklęsłe narożniki), bez
+  `.tab-wrapper`/`.tab-active`/`.tab-corner`.
+- **Zadania / Podłącz urządzenie:** zostaje obecny układ (karta na całą
+  szerokość, węższa treść) — warianty B i C odrzucone.
+- **Podłącz urządzenie:** pole kodu po lewej, układ lewo–prawo; lewa
+  kolumna (kod) węższa, prawa — udostępnione urządzenia.
+- **Społeczność:** obecna wersja odrzucona. „Moje wysłane”/wysyłka w oknie,
+  na stronie jedna karta jak wszędzie (narzędzia w karcie, bez osobnej
+  podkarty).
+- **Control — krok Urządzenia:** mniej przycisków, ładniejsze statusy,
+  przyciski równej szerokości w siatce (jak inne siatki Control).
+- **Wdrożenie na `main`:** użytkownik zezwolił; dalsze uwagi przekaże później.
+- **Wypustki — jeden lity kawałek z kartą (2026-10-21):** bez dziur
+  i szczelin. Narożniki zachodzą na kolumnę bocznego obramowania wypustki
+  i na jej zakład na kartę; łuk kończy się w wierszu górnej krawędzi karty.
+  Sprawdzone zbliżeniami (×2/×3) styków na Grach, Bazach, Ankiecie
+  i Znajomych, komputer i telefon.
+- **Pola wyszukiwania (2026-10-21):** wszędzie jak w oknie „Przenieś do”
+  menedżera bazy (E22): `.searchBox.searchBox--field` — lupa w polu po
+  lewej, X w polu czyści frazę, filtrowanie na żywo; bez osobnego przycisku
+  lupy obok pola (zastępuje wcześniejszą zasadę E20 „lupa po prawej, bez X
+  w polu”). Listy wierszy: pole nad listą także na telefonie (bez okienka).
+  Dolny pasek Gier/Baz/Logo i Społeczność na telefonie: lupa otwiera okno
+  z takim samym polem i „OK”.
+
 ## Decyzje — czcionka rozgrywki Control (2026-10-20)
 
 - Jedna czcionka dla całej rozgrywki Control (kafle, pytanie, podpowiedzi,

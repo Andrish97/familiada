@@ -56,21 +56,21 @@ test("manual: tłumaczy UI i ma semantykę zakładek (zwykła strona, bez ?modal
   await expect(page.locator(".topbar")).toBeVisible();
 
   const tabs = page.locator('.simple-tabs [role="tab"]');
-  await expect(tabs).toHaveCount(10);
+  await expect(tabs).toHaveCount(11);
   await expect(page.locator('.simple-tabs[role="tablist"]')).toHaveAttribute("aria-label", "User guide tabs");
   await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator('#tab-general[role="tabpanel"]')).toBeVisible();
+  await expect(page.locator('#tab-rules[role="tabpanel"]')).toBeVisible();
 
   await tabs.first().press("ArrowRight");
-  await expect(page.locator('#tab-edit')).toBeVisible();
-  await expect(page).toHaveURL(/[?&]tab=edit(?:&|$)/);
+  await expect(page.locator('#tab-account')).toBeVisible();
+  await expect(page).toHaveURL(/[?&]tab=account(?:&|$)/);
 });
 
-test("manual: karta w ?tab= (replaceState): odświeżenie ją zachowuje, nieznana to ogólny opis", async ({ page, context }) => {
+test("manual: karta w ?tab= (replaceState): odświeżenie ją zachowuje, nieznana to Zasady gry", async ({ page, context }) => {
   await loginAsTestUser(page, context);
   await page.goto(`${ORIGIN}/manual?lang=pl`, { waitUntil: "domcontentloaded" });
   const historyBefore = await page.evaluate(() => history.length);
-  await page.locator('[data-tab="edit"][role="tab"]').click();
+  await page.locator('[data-tab="games"][role="tab"]').click();
   await page.locator('[data-tab="polls"][role="tab"]').click();
   await expect(page.locator("#tab-polls")).toBeVisible();
   await expect(page).toHaveURL(/[?&]tab=polls(?:&|$)/);
@@ -81,7 +81,7 @@ test("manual: karta w ?tab= (replaceState): odświeżenie ją zachowuje, nieznan
   await expect(page.locator('[data-tab="polls"][role="tab"]')).toHaveAttribute("aria-selected", "true");
 
   await page.goto(`${ORIGIN}/manual?lang=pl&tab=nieznana`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("#tab-general")).toBeVisible();
+  await expect(page.locator("#tab-rules")).toBeVisible();
 });
 
 test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page, context }) => {
@@ -96,34 +96,30 @@ test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page,
     await page.goto(`${ORIGIN}/manual?lang=${item.lang}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("h1")).toHaveText(item.title);
     await expect(page.locator('.simple-tabs[role="tablist"]')).toHaveAttribute("aria-label", item.label);
-    await expect(page.locator("#tab-general .m-p").first()).not.toBeEmpty();
+    await expect(page.locator("#tab-rules .m-p").first()).not.toBeEmpty();
+    await expect(page.locator("#tab-rules .m-toc a")).not.toHaveCount(0);
   }
 });
 
-test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", async ({ page, context }, testInfo) => {
+test("manual: pomoc kontekstowa (karta#kotwica), odnośniki między kartami, ramki prowadzącego w PL/EN/UK", async ({ page, context }, testInfo) => {
   await loginAsTestUser(page, context);
-  const cases = [
-    { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło", detail: "czerń jest przezroczysta" },
-    { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source", detail: "black made transparent" },
-    { lang: "uk", control: "Логотип ведучого", settings: "Перемикач Логотип ведучого", source: "Джерело", detail: "чорний стає прозорим" },
-  ];
+  for (const lang of ["pl", "en", "uk"]) {
+    // „?” z edytora gry prowadzi do /manual/?tab=games#r7 — karta Gry, rozdział 7 przy górnej krawędzi.
+    await page.goto(`${ORIGIN}/manual/?tab=games&lang=${lang}#r7-6`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#tab-games")).toBeVisible();
+    await expect.poll(async () => page.locator("#r7-6").evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBeLessThan(200);
+    if (lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-anchor-pl.png") });
 
-  for (const item of cases) {
-    await page.goto(`${ORIGIN}/manual?lang=${item.lang}`, { waitUntil: "domcontentloaded" });
+    // Odnośnik do rozdziału z innej karty przełącza kartę (Zasady gry -> Ustawienia gry).
+    await page.locator('[data-tab="rules"][role="tab"]').click();
+    await page.locator('#tab-rules a.m-ref[href^="#r16"]').first().click();
+    await expect(page.locator("#tab-settings")).toBeVisible();
+    await expect(page).toHaveURL(/[?&]tab=settings(?:&[^#]*)?#r16/); // karta w ?tab=, rozdział w #kotwicy
+
+    // Prowadzenie gry: ramki ekranu prowadzącego; Ustawienia gry: Logo prowadzącego (Piksele/Źródło).
     await page.locator('[data-tab="control"][role="tab"]').click();
-    const control = page.locator("#tab-control .m-doc");
-    await expect(control).toContainText(item.control);
-    await expect(control).toContainText(item.source);
-    await expect(control.locator(".m-ul .m-strong").filter({ hasText: item.control })).toBeVisible();
-    if (item.lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-control-pl.png"), fullPage: true });
-
-    await page.locator('[data-tab="gameSettings"][role="tab"]').click();
-    const settings = page.locator("#tab-gameSettings .m-doc");
-    await expect(settings).toContainText(item.settings);
-    await expect(settings).toContainText(item.source);
-    await expect(settings).toContainText(item.detail);
-    await expect(settings.locator(".m-strong").filter({ hasText: item.control }).first()).toBeVisible();
-    await expect(settings.locator(".m-p").filter({ hasText: /preview|Podgląd|перегляд/i }).first()).toBeVisible();
-    if (item.lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-settings-pl.png"), fullPage: true });
+    await expect(page.locator("#tab-control .m-host").first()).toBeVisible();
+    await expect(page.locator("#tab-control .m-btn .ico").first()).toBeAttached();
+    await expect(page.locator("#tab-settings #r16-3-logo-prowadzacego")).toBeAttached();
   }
 });

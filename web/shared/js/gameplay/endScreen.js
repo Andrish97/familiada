@@ -33,21 +33,22 @@ export function resolveRoundsEndScreen(settings, { isDraw, totals }) {
 }
 
 /**
- * Ekran końca FINAŁU (f_end). Tu "money" faktycznie liczy inną kwotę niż
- * "points" (mnożnik + premia za trafienie celu) — w odróżnieniu od
- * rund-bez-finału powyżej (patrz plan, ekstrakcja gameFinal.js:1758-1856).
+ * Ekran końca FINAŁU (f_end). "points" pokazuje punkty zwycięskiej drużyny
+ * z rund i finału. "money" liczy kwotę jak regulamin teleturnieju
+ * (Dział V pkt 21–22, decyzja użytkownika 2026-10-21): pieniądze z gry to
+ * punkty zwycięskiej drużyny z rund razy mnożnik; przy osiągniętym celu
+ * finału dochodzi kwota główna. Punkty z finału służą tylko do sprawdzenia celu.
  *
  * @returns {{kind: "logo"}|{kind: "win", amount: number}}
  */
-export function resolveFinalEndScreen(settings, { totalPointsAll, hitTarget }) {
+export function resolveFinalEndScreen(settings, { roundsPoints, finalPoints, hitTarget }) {
   const mode = resolveEndScreenMode(settings);
   if (mode === "logo") return { kind: "logo" };
-  if (mode === "points") return { kind: "win", amount: totalPointsAll };
+  const rounds = Number(roundsPoints) || 0;
+  if (mode === "points") return { kind: "win", amount: rounds + (Number(finalPoints) || 0) };
 
   // "money"
   const multiplier = Number(settings?.finalPrizeMultiplier ?? 3);
   const mainPrize = Number(settings?.mainPrizeAmount ?? 25000);
-  let amount = totalPointsAll * multiplier;
-  if (hitTarget) amount += mainPrize;
-  return { kind: "win", amount };
+  return { kind: "win", amount: rounds * multiplier + (hitTarget ? mainPrize : 0) };
 }

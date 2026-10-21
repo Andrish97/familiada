@@ -1,31 +1,31 @@
-import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-20T22245";
+import { bindResourceDuplicate } from "../../shared/js/core/resource-duplicate.js?v=v2026-10-21T16391";
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-20T22245";
+import { baseExportSnapshot } from "../../shared/js/core/base-transfer-format.js?v=v2026-10-21T16391";
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-20T22245";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-21T16391";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-20T22245";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-20T22245";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T22245";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T22245";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T22245";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-20T22245";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-20T22245";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T22245";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T22245";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T22245";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-20T22245";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T22245";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-20T22245";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-20T22245";
-import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-20T22245";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-20T22245";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-20T22245";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-20T22245";
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-20T22245";
-import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-20T22245";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T16391";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-21T16391";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T16391";
+import { alertModal, confirmModal, promptModal, progressModal } from "../../shared/js/core/modal.js?v=v2026-10-21T16391";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T16391";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-21T16391";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T16391";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T16391";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T16391";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T16391";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T16391";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T16391";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T16391";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T16391";
+import { shareRowEl, shareSectionEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T16391";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T16391";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-21T16391";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-21T16391";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T16391";
+import { bindLocalizedFilePicker } from "../../shared/js/core/file-picker.js?v=v2026-10-21T16391";
 
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
@@ -67,13 +67,6 @@ const btnFriends = document.getElementById("btnFriends");
 const altBadgeEl = document.getElementById("altBadge");
 
 // Modal nazwy
-const nameOverlay = document.getElementById("nameOverlay");
-const nameTitle = document.getElementById("nameTitle");
-const nameSub = document.getElementById("nameSub");
-const nameInp = document.getElementById("nameInp");
-const btnNameOk = document.getElementById("btnNameOk");
-const btnNameCancel = document.getElementById("btnNameCancel");
-const nameMsg = document.getElementById("nameMsg");
 
 // Modal importu
 const importOverlay = document.getElementById("importOverlay");
@@ -99,13 +92,6 @@ const importProgBar = document.getElementById("importProgBar");
 const importProgMsg = document.getElementById("importProgMsg");
 
 // Export progress (overlay eksportu do pliku)
-const exportJsonOverlay = document.getElementById("exportJsonOverlay");
-const btnExportJsonClose = document.getElementById("btnExportJsonClose");
-const exportJsonSub = document.getElementById("exportJsonSub");
-const exportJsonStep = document.getElementById("exportJsonStep");
-const exportJsonCount = document.getElementById("exportJsonCount");
-const exportJsonBar = document.getElementById("exportJsonBar");
-const exportJsonMsg = document.getElementById("exportJsonMsg");
 
 // Modal share
 const shareOverlay = document.getElementById("shareOverlay");
@@ -115,7 +101,11 @@ const shareEmail = document.getElementById("shareEmail");
 const shareRole = document.getElementById("shareRole");
 const baseShareFriends = document.getElementById("baseShareFriends");
 const baseShareBulkHost = document.getElementById("baseShareBulkActions");
-const baseShareFriendsRole = document.getElementById("baseShareFriendsRole");
+attachListTools(baseShareBulkHost?.parentElement, baseShareFriends, "base-share-friends");
+attachListTools(shareSectionsHost?.previousElementSibling, shareSectionsHost, "base-share-shared");
+const baseShareFriendsLabel = document.getElementById("baseShareFriendsLabel");
+const baseShareFriendsShort = document.getElementById("baseShareFriendsShort");
+const btnShareCancel = document.getElementById("btnShareCancel");
 const btnBaseShareFriends = document.getElementById("btnBaseShareFriends");
 const baseDeclinesHost = document.getElementById("baseDeclinesHost");
 const btnShareAdd = document.getElementById("btnShareAdd");
@@ -140,7 +130,7 @@ let autoRefreshTimer = null;
 let basesRefreshInFlight = null;
 
 function anyOverlayOpen() {
-  const ovs = [nameOverlay, importOverlay, shareOverlay, exportJsonOverlay];
+  const ovs = [importOverlay, shareOverlay];
   if (ovs.some((ov) => ov && ov.style.display !== "none")) return true;
   // confirmModal/alertModal (js/core/modal.js) -- np. potwierdzenie usunięcia
   return !!document.querySelector(".uni-modal");
@@ -186,15 +176,10 @@ function stopAutoRefresh() {
 }
 
 let shareRoleValue = "editor";
-let friendsRoleValue = "editor";
 let ownBaseDeclines = [];
 let baseDeclinesCollapsed = true;
 let shareRenderVersion = 0;
 
-// modal nazwy – tryb
-let nameMode = "create"; // 'create' | 'rename'
-let nameLease = null; // blokada base:B (wyłączna) na czas otwartego okna zmiany nazwy
-let renameBaseId = null; // która baza jest przemianowywana (niezależnie od zaznaczenia)
 
 /* ================= UI helpers ================= */
 function show(el, on) {
@@ -204,6 +189,8 @@ function show(el, on) {
 
 function setHint(t) {
   if (!hint) return;
+  // domyślny tekst z HTML (data-i18n) pokazuje się razem z tytułem; dalej steruje JS
+  hint.removeAttribute("data-i18n");
   hint.textContent = t || "";
 }
 
@@ -235,8 +222,8 @@ function baseRoleButton(value, onChange) {
   return button;
 }
 function initShareRoleSelect() {
+  // Jedno uprawnienie dla nowych udostępnień (wpisany adres i zaznaczeni znajomi).
   shareRole?.replaceChildren(baseRoleButton(shareRoleValue, value => { shareRoleValue = value; }));
-  baseShareFriendsRole?.replaceChildren(baseRoleButton(friendsRoleValue, value => { friendsRoleValue = value; }));
 }
 function showShareMessage(message, kind = "info") {
   if (!message) { hideToast(); return; }
@@ -826,7 +813,7 @@ async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId,
 async function openShareModal() {
   showShareMessage("");
   shareEmail.value = "";
-  shareRoleValue = friendsRoleValue = "editor";
+  shareRoleValue = "editor";
   initShareRoleSelect();
   await renderShareModal();
   show(shareOverlay, true);
@@ -860,7 +847,7 @@ async function renderShareModal() {
   baseShareBulkHost?.replaceChildren();
   shareSectionsHost.replaceChildren();
   const empty = host => {
-    const el = document.createElement("div"); el.className = "shareEmpty";
+    const el = document.createElement("div"); el.className = "shareEmpty empty-state";
     el.textContent = t("baseSharePanel.empty"); host.append(el);
   };
   if (!data.friends.length) empty(baseShareFriends);
@@ -940,9 +927,11 @@ async function renderShareModal() {
       if (error || !ok) { button.disabled = false; showShareMessage(t("bases.share.failed"), "error"); return; }
        await renderShareModal();
     }});
+    const stateKey = active ? "active" : recipient.status === "declined" ? "declined" : "pending";
     const row = shareRowEl({ id: recipient.task_id || recipient.user_id, label: recipient.label || recipient.email,
-      title: recipient.email, compact: true,
-      tags: [{ text: t(recipient.is_friend ? "shareSections.channel.friend" : "control.shareDeviceModal.recipientKind.account") },
+      title: recipient.email, compact: true, state: { key: stateKey, label: t(`contacts.status.${stateKey}`) },
+      // udostępniamy tylko kontom — znacznik „ma konto” nic nie mówi; zostaje „Znajomy”
+      tags: [...(recipient.is_friend ? [{ text: t("shareSections.channel.friend") }] : []),
         { text: t(active ? "contacts.status.active" : recipient.status === "declined" ? "contacts.status.declined" : "contacts.status.pending") }],
       extras: [roleEl], actions });
     if (recipient.status === "declined") {
@@ -957,7 +946,10 @@ async function renderShareModal() {
 let baseShareBulkActions = null;
 function updateBaseShareSelection() {
   const inputs = baseShareFriends?.querySelectorAll('input[type="checkbox"]') || [];
-  btnBaseShareFriends.disabled = shareAddInFlight || !baseShareFriends?.querySelector('input:checked:not(:disabled)');
+  const selected = baseShareFriends?.querySelectorAll('input:checked:not(:disabled)').length || 0;
+  btnBaseShareFriends.disabled = shareAddInFlight || !selected;
+  if (baseShareFriendsLabel) baseShareFriendsLabel.textContent = t("control.shareDeviceModal.shareSelectedN", { n: selected });
+  if (baseShareFriendsShort) baseShareFriendsShort.textContent = t("control.shareDeviceModal.shareSelectedShortN", { n: selected });
   baseShareBulkActions?.update(inputs);
 }
 function baseShareError(row) {
@@ -987,12 +979,12 @@ async function shareAdd(friendIds = null) {
   try {
     for (const id of friendIds || [null]) {
       const { data, error } = await sb().rpc(id ? "base_share_to_friend" : "base_share_by_user", id
-        ? { p_base_id: b.id, p_recipient_user_id: id, p_role: friendsRoleValue }
+        ? { p_base_id: b.id, p_recipient_user_id: id, p_role: shareRoleValue }
         : { p_base_id: b.id, p_user_lookup: raw, p_role: shareRoleValue });
       const row = Array.isArray(data) ? data[0] : data;
       if (error || !row?.ok) { message = baseShareError(row); messageKind = "error"; continue; }
       try {
-        const queued = await deliverBaseShare(row, b.id, { role: id ? friendsRoleValue : shareRoleValue });
+        const queued = await deliverBaseShare(row, b.id, { role: shareRoleValue });
         if (queued === false) message = t("control.shareDeviceModal.friendMailDisabled");
       }
       catch { message = t("bases.share.emailFailed"); messageKind = "error"; }
@@ -1179,7 +1171,7 @@ function render() {
       if (!isOwner(b)) return;
       if (e.target?.closest?.(".x")) return;
       selectBase(b.id);
-      openNameModalRename(b);
+      void openNameDialog(b);
     });
 
     hostEl.appendChild(tile);
@@ -1192,7 +1184,7 @@ function render() {
     <div class="plus">${icon("plus")}</div>
     <div class="name">${escapeHtml(t("bases.sections.newBase"))}</div>
   `;
-  tNew.addEventListener("click", () => openNameModalCreate());
+  tNew.addEventListener("click", () => void openNameDialog());
   mineGrid.appendChild(tNew);
 
   for (const b of ownedBases) renderTile(b, mineGrid);
@@ -1246,77 +1238,57 @@ function escapeHtml(s) {
     .replace(/'/g, "&#39;");
 }
 
-/* ================= Modals: nazwa ================= */
-function openNameModalCreate() {
-  nameMode = "create";
-  setMsg(nameMsg, "");
-  nameTitle.textContent = t("bases.nameModal.titleCreate");
-  nameSub.textContent = t("bases.nameModal.subCreate");
-  nameInp.value = "";
-  show(nameOverlay, true);
-  enterModalSheet(nameOverlay, { backBtn: btnBack, onClose: closeNameModal });
-  setTimeout(() => nameInp.focus(), 0);
-}
-
-// Okno zmiany nazwy trzyma base:B wyłącznie do zamknięcia okna -- w tym czasie
+/* ================= Okno nazwy (wspólne promptModal) ================= */
+// Zmiana nazwy trzyma base:B wyłącznie do zamknięcia okna -- w tym czasie
 // nikt nie otworzy eksploratora tej bazy (pełna blokada strony), a otwarty
 // eksplorator nie pozwoli otworzyć okna.
-async function openNameModalRename(base) {
-  let lease;
-  try {
-    lease = await acquireResourceLock({ resourceType: "base", resourceId: base.id, context: "bases-list" });
-  } catch (e) {
-    console.warn("[bases] rename lock error:", e);
-    void alertModal({ text: t("bases.nameModal.failed") });
-    return;
-  }
-  if (!lease?.ok) {
-    void alertModal({ text: baseBusyMessage(lease) });
-    return;
-  }
-  nameLease = lease;
-  nameMode = "rename";
-  renameBaseId = base?.id || null;
-  setMsg(nameMsg, "");
-  nameTitle.textContent = t("bases.nameModal.titleRename");
-  nameSub.textContent = t("bases.nameModal.subRename");
-  nameInp.value = base?.name || "";
-  show(nameOverlay, true);
-  enterModalSheet(nameOverlay, { backBtn: btnBack, onClose: closeNameModal });
-  setTimeout(() => nameInp.select(), 0);
-}
-
-function closeNameModal() {
-  nameLease?.release?.();
-  nameLease = null;
-  show(nameOverlay, false);
-  exitModalSheet(nameOverlay);
-}
-
-async function nameOk() {
-  if (btnNameOk?.disabled) return;
-  if (btnNameOk) btnNameOk.disabled = true;
-  setMsg(nameMsg, "");
-  const val = safeName(nameInp.value);
-  try {
-    if (nameMode === "create") {
-      const b = await createBase(val);
-      selectedId = b.id;
-      setActiveTab("mine");
-    } else {
-      const b = ownedBases.find((x) => x.id === renameBaseId);
-      if (b && isOwner(b)) {
-        await renameBase(b.id, val);
-      }
+async function openNameDialog(base = null) {
+  const create = !base;
+  let lease = null;
+  if (!create) {
+    try {
+      lease = await acquireResourceLock({ resourceType: "base", resourceId: base.id, context: "bases-list" });
+    } catch (e) {
+      console.warn("[bases] rename lock error:", e);
+      void alertModal({ text: t("bases.nameModal.failed") });
+      return;
     }
-    closeNameModal();
-    await refreshView();
-  } catch (e) {
-    console.warn("[bases] name ok error:", e);
-    setMsg(nameMsg, e?.code === ROW_GONE ? t("resourceLock.goneMessage")
-      : e?.code === "RESOURCE_IN_USE" ? t("resourceLock.baseOpenMessage") : t("bases.nameModal.failed"));
+    if (!lease?.ok) {
+      void alertModal({ text: baseBusyMessage(lease) });
+      return;
+    }
+  }
+  try {
+    await promptModal({
+      title: t(create ? "bases.nameModal.titleCreate" : "bases.nameModal.titleRename"),
+      text: t(create ? "bases.nameModal.subCreate" : "bases.nameModal.subRename"),
+      okText: t("bases.common.save"),
+      cancelText: t("bases.common.cancel"),
+      value: create ? "" : (base.name || ""),
+      placeholder: t("bases.nameModal.placeholder"),
+      maxLength: 80,
+      selectAll: !create,
+      onSubmit: async (v) => {
+        const val = safeName(v);
+        try {
+          if (create) {
+            const b = await createBase(val);
+            selectedId = b.id;
+            setActiveTab("mine");
+          } else {
+            const b = ownedBases.find((x) => x.id === base.id);
+            if (b && isOwner(b)) await renameBase(b.id, val);
+          }
+          void refreshView();
+        } catch (e) {
+          console.warn("[bases] name ok error:", e);
+          return e?.code === ROW_GONE ? t("resourceLock.goneMessage")
+            : e?.code === "RESOURCE_IN_USE" ? t("resourceLock.baseOpenMessage") : t("bases.nameModal.failed");
+        }
+      },
+    });
   } finally {
-    if (btnNameOk) btnNameOk.disabled = false;
+    lease?.release?.();
   }
 }
 
@@ -1374,44 +1346,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const b = selectedBase();
     if (!b || btnExport?.disabled) return;
 
-    show(exportJsonOverlay, true);
-    enterModalSheet(exportJsonOverlay, {
-      backBtn: btnBack,
-      onClose: () => {
-        if (!btnExportJsonClose?.hidden) {
-          show(exportJsonOverlay, false);
-          exitModalSheet(exportJsonOverlay);
-        }
-      },
-    });
-    if (btnExportJsonClose) btnExportJsonClose.hidden = true;
-    if (exportJsonSub) exportJsonSub.textContent = t("bases.exportModal.subtitle");
-    setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-      step: t("bases.export.steps.start"), i: 0, n: 6, msg: "",
-    });
+    const progress = progressModal({ title: t("bases.exportModal.title"), text: t("bases.exportModal.subtitle"), doneText: t("bases.exportModal.close") });
+    progress.update({ step: t("bases.export.steps.start"), i: 0, n: 6 });
     if (btnExport) btnExport.disabled = true;
 
     try {
-      const out = await exportBase(b.id, ({ step, i, n, msg } = {}) => {
-        setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step, i, n, msg });
-      });
+      const out = await exportBase(b.id, ({ step, i, n, msg } = {}) => progress.update({ step, i, n, msg }));
       downloadJson(safeDownloadName(b.name), out);
-      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
+      progress.allowClose();
     } catch (e) {
       console.warn("[bases] export error:", e);
-      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-        step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"), isError: true,
-      });
-      if (btnExportJsonClose) btnExportJsonClose.hidden = false;
+      progress.update({ step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"), isError: true });
     } finally {
       if (btnExport) btnExport.disabled = false;
     }
-  });
-
-  btnExportJsonClose?.addEventListener("click", () => {
-    show(exportJsonOverlay, false);
-    exitModalSheet(exportJsonOverlay);
-    btnExportJsonClose.hidden = true;
   });
 
   btnImport?.addEventListener("click", () => openImportModal());
@@ -1479,27 +1427,20 @@ document.addEventListener("DOMContentLoaded", () => {
   btnImportCancelAction?.addEventListener("click", () => closeImportModal());
   btnImportDone?.addEventListener("click", () => closeImportModal());
 
-  btnNameCancel?.addEventListener("click", () => closeNameModal());
-  document.getElementById("btnNameClose")?.addEventListener("click", () => closeNameModal());
-  btnNameOk?.addEventListener("click", () => nameOk());
-  nameInp?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") nameOk();
-    if (e.key === "Escape") closeNameModal();
-  });
 
   btnShareClose?.addEventListener("click", () => closeShareModal());
+  btnShareCancel?.addEventListener("click", () => closeShareModal());
   btnShareAdd?.addEventListener("click", async () => shareAdd());
   shareEmail?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") shareAdd();
   });
 
-  [nameOverlay, importOverlay, shareOverlay].forEach((ov) => {
+  [importOverlay, shareOverlay].forEach((ov) => {
     ov?.addEventListener("click", (e) => {
       if (e.target !== ov) return;
       // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
       // wyjściem ma być widoczny przycisk zamknięcia/anuluj, nie klik w tło.
       if (ov.classList.contains("modal--sheet") && isSheetViewport()) return;
-      if (ov === nameOverlay) closeNameModal();
       if (ov === importOverlay) closeImportModal();
       if (ov === shareOverlay) closeShareModal();
     });

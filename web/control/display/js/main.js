@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-20T22245";
+import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.js?v=v2026-10-21T16391";
 
 // control/display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia control/display/js/main.js)
@@ -7,20 +7,20 @@ import { renderAndConfirm } from "../../../shared/js/gameplay/renderCompletion.j
 // i "dzwonek" broadcastowy zamiast kanału DISPLAY_CMD. Obecność, widoczność
 // karty i odblokowanie dźwięku zapisuje heartbeat lease (device-lease.js).
 
-import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-20T22245";
-import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-20T22245";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-20T22245";
-import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-20T22245";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T22245";
-import { createScene } from "./scene.js?v=v2026-10-20T22245";
-import { createQRController } from "./qr.js?v=v2026-10-20T22245";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-20T22245";
-import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-20T22245";
-import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-20T22245";
-import { createRenderer } from "./render.js?v=v2026-10-20T22245";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-20T22245";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-20T22245";
-import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-20T22245";
+import { initFullscreenButton } from "../../../shared/js/display/fullscreen.js?v=v2026-10-21T16391";
+import { initI18n, setUiLang, t } from "../../../shared/translation/translation.js?v=v2026-10-21T16391";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-21T16391";
+import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-21T16391";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T16391";
+import { createScene } from "./scene.js?v=v2026-10-21T16391";
+import { createQRController } from "./qr.js?v=v2026-10-21T16391";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-21T16391";
+import { rt } from "../../../shared/js/core/realtime.js?v=v2026-10-21T16391";
+import { doorbellTopic } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-21T16391";
+import { createRenderer } from "./render.js?v=v2026-10-21T16391";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-21T16391";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, onAudioUnlockLost, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying, onSfxPlayback, setSfxMuted } from "../../../shared/js/core/sfx.js?v=v2026-10-21T16391";
+import { createDeviceLease, updateDeviceLeaseOverlay } from "../../../shared/js/core/device-lease.js?v=v2026-10-21T16391";
 
 
 const $ = (id) => document.getElementById(id);
@@ -277,8 +277,10 @@ async function bootPreview() {
       scene.api.small.rightDigits(String(previewNumbers.right ?? ""));
       scene.api.small.topDigits(String(previewNumbers.top ?? ""));
       scene.api.small.leftDigits(String(previewNumbers.left ?? ""));
-      const xPositions = row.detail?.display?.previewXPositions || {};
-      for (const side of ["A", "B"]) {
+      // Bez previewXPositions nie ruszamy pól X: setX(..., false) czyści
+      // kolumny 1–3 i 28–30, a tam leżą teksty finału i logo.
+      const xPositions = row.detail?.display?.previewXPositions;
+      if (xPositions) for (const side of ["A", "B"]) {
         const active = new Set(xPositions[side] || []);
         for (let position = 1; position <= 3; position++) {
           scene.api.rounds.setX(`${position}${side}`, active.has(position));

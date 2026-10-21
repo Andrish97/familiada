@@ -3,7 +3,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-20T22245"/>
+  <meta name="app-version" content="v2026-10-21T16391"/>
 
 
   <meta charset="UTF-8" />
@@ -16,16 +16,17 @@
   <meta name="robots" content="noindex, nofollow" />
   <title data-i18n="manual.title">Familiada — wskazówki</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-20T22245" />
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T16391" />
 
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T22245" />
-  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-20T22245" />
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T16391" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T16391" />
+  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-21T16391" />
   <script>document.documentElement.classList.add('page-loading')</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/manual/js/manual.js?v=v2026-10-20T22245" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-20T22245" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T22245" defer></script>
+  <script type="module" src="/manual/js/manual.js?v=v2026-10-21T16391" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T16391" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T16391" defer></script>
 
 </head>
 
@@ -52,33 +53,37 @@
     <div class="page-subtitle mobile-only-tab-subtitle" id="manualTabSubtitle" aria-live="polite"></div>
 
     <nav class="simple-tabs" role="tablist" aria-label="Zakładki" data-i18n-aria-label="manual.tabsLabel">
-      <button class="tab active" type="button" data-tab="general" data-i18n="manual.tabs.general">Ogólny opis</button>
-      <button class="tab" type="button" data-tab="edit" data-i18n="manual.tabs.edit">Gry</button>
-      <button class="tab" type="button" data-tab="community" data-i18n="manual.tabs.community">Gry Społeczności</button>
+      <button class="tab active" type="button" data-tab="rules" data-i18n="manual.tabs.rules">Zasady gry</button>
+      <button class="tab" type="button" data-tab="account" data-i18n="manual.tabs.account">Konto</button>
+      <button class="tab" type="button" data-tab="games" data-i18n="manual.tabs.games">Gry</button>
+      <button class="tab" type="button" data-tab="logo" data-i18n="manual.tabs.logo">Logo</button>
       <button class="tab" type="button" data-tab="bases" data-i18n="manual.tabs.bases">Bazy pytań</button>
+      <button class="tab" type="button" data-tab="people" data-i18n="manual.tabs.people">Znajomi i subskrybenci</button>
+      <button class="tab" type="button" data-tab="community" data-i18n="manual.tabs.community">Gry społeczności</button>
       <button class="tab" type="button" data-tab="polls" data-i18n="manual.tabs.polls">Ankiety</button>
-      <button class="tab" type="button" data-tab="logo" data-i18n="manual.tabs.logo">Tworzenie logo</button>
-      <button class="tab" type="button" data-tab="control" data-i18n="manual.tabs.control">Panel sterowania</button>
-      <button class="tab" type="button" data-tab="gameSettings" data-i18n="manual.tabs.gameSettings">Ustawienia gry</button>
-      <button class="tab" type="button" data-tab="connect" data-i18n="manual.tabs.connect">Podłącz urządzenie</button>
+      <button class="tab" type="button" data-tab="settings" data-i18n="manual.tabs.settings">Ustawienia gry</button>
+      <button class="tab" type="button" data-tab="control" data-i18n="manual.tabs.control">Prowadzenie gry</button>
+      <button class="tab" type="button" data-tab="help" data-i18n="manual.tabs.help">Pomoc</button>
     </nav>
 
-    <section class="tab-page tab-panel active" id="tab-general" data-tab="general"><div class="m-doc" data-i18n-html="manual.content.general"></div></section>
-    <section class="tab-page tab-panel" id="tab-edit" data-tab="edit"><div class="m-doc" data-i18n-html="manual.content.edit"></div></section>
-    <section class="tab-page tab-panel" id="tab-community" data-tab="community"><div class="m-doc" data-i18n-html="manual.content.community"></div></section>
-    <section class="tab-page tab-panel" id="tab-bases" data-tab="bases"><div class="m-doc" data-i18n-html="manual.content.bases"></div></section>
-    <section class="tab-page tab-panel" id="tab-polls" data-tab="polls"><div class="m-doc" data-i18n-html="manual.content.polls"></div></section>
-    <section class="tab-page tab-panel" id="tab-logo" data-tab="logo"><div class="m-doc" data-i18n-html="manual.content.logo"></div></section>
-    <section class="tab-page tab-panel" id="tab-control" data-tab="control"><div class="m-doc" data-i18n-html="manual.content.control"></div></section>
-    <section class="tab-page tab-panel" id="tab-connect" data-tab="connect"><div class="m-doc" data-i18n-html="manual.content.connect"></div></section>
-    <section class="tab-page tab-panel" id="tab-gameSettings" data-tab="gameSettings"><div class="m-doc" data-i18n-html="manual.content.gameSettings"></div></section>
+    <section class="tab-page tab-panel active" id="tab-rules" data-tab="rules"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-account" data-tab="account"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-games" data-tab="games"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-logo" data-tab="logo"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-bases" data-tab="bases"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-people" data-tab="people"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-community" data-tab="community"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-polls" data-tab="polls"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-settings" data-tab="settings"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-control" data-tab="control"><div class="m-doc"></div></section>
+    <section class="tab-page tab-panel" id="tab-help" data-tab="help"><div class="m-doc"></div></section>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-20T22245"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T16391"></script>
 
 </body>
 </html>

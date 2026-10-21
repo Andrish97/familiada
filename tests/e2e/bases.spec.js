@@ -94,7 +94,7 @@ async function getUserId(page) {
 }
 
 
-test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", async ({ browser }, testInfo) => {
+test("E20: arkusz udostępniania Bazy przetrwa obrót telefonu (w poziomie osłona obrotu)", async ({ browser }, testInfo) => {
   test.setTimeout(90_000);
   const portrait = { width: 390, height: 844 };
   const { ctx, page } = await newUserContext(browser, testAccountUsername(1), {
@@ -127,19 +127,21 @@ test("E20: arkusz udostępniania Bazy pozostaje dostępny po obrocie telefonu", 
     await assertSheetFits("portrait");
     await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-portrait-390x844.png"), fullPage: true });
 
+    // Telefon w poziomie: Bazy pokazują osłonę „obróć telefon” (poziom na
+    // telefonie nie jest jeszcze dopuszczony — przegląd landscape E20). Okno
+    // i parametr ?dialog= muszą przetrwać obrót tam i z powrotem.
     await page.setViewportSize({ width: 844, height: 390 });
-    await expect(overlay).toBeVisible();
+    await expect(page.locator("#pageGuard")).toBeVisible();
     await expect.poll(() => new URL(page.url()).searchParams.get("dialog")).toBe("shareOverlay");
-    await expect(page.locator("#shareEmail")).toBeVisible();
-    await assertSheetFits("landscape");
     await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-landscape-844x390.png"), fullPage: true });
 
     await page.setViewportSize(portrait);
+    await expect(page.locator("#pageGuard")).toBeHidden();
     await expect(overlay).toBeVisible();
     await expect(page.locator("#shareEmail")).toBeVisible();
     await assertSheetFits("portrait after rotate");
     await page.screenshot({ path: testInfo.outputPath("shot-e20-base-share-back-390x844.png"), fullPage: true });
-    await page.locator("#btnBack").tap();
+    await overlay.locator(".sheet-handle").tap(); // okno od dołu zamyka pasek
     await expect(overlay).toBeHidden();
     await expect.poll(() => new URL(page.url()).searchParams.has("dialog")).toBe(false);
   } finally {
@@ -191,7 +193,7 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     await expect(page.locator("#shareOverlay")).toBeVisible();
     await page.locator("#shareEmail").fill(recipient);
     await page.locator("#btnShareAdd").click();
-    await expect(page.locator("#shareMsg")).toContainText(/udostępn|wysłan|dodano/i, { timeout: 20_000 });
+    await expect(page.locator(".app-toast-text")).toContainText(/udostępn|wysłan|dodano/i, { timeout: 20_000 });
 
     const email = await waitForEmail({ recipient, after, subject: new RegExp(name, "i"), timeout: 150_000 });
     expect(`${email.body || ""}\n${email.body_html || ""}`).toContain(name);
@@ -243,10 +245,10 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
       await page.waitForLoadState("networkidle");
 
       await page.locator("#mineGrid .addCard").click();
-      await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
-      await page.locator("#nameInp").fill(name);
-      await page.locator("#btnNameOk").click();
-      await expect(page.locator("#nameOverlay")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 5000 });
+      await page.locator(".uni-modal .uni-inp").fill(name);
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
 
       await expect(page.locator("#mineGrid .card", { hasText: name })).toBeVisible({ timeout: 10000 });
 
@@ -276,10 +278,10 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
       await expect(tile).toBeVisible({ timeout: 15000 });
       await tile.dblclick();
 
-      await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
-      await page.locator("#nameInp").fill(newName);
-      await page.locator("#btnNameOk").click();
-      await expect(page.locator("#nameOverlay")).toBeHidden({ timeout: 10000 });
+      await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 5000 });
+      await page.locator(".uni-modal .uni-inp").fill(newName);
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await expect(page.locator(".uni-modal")).toBeHidden({ timeout: 10000 });
 
       await expect(page.locator("#mineGrid .card", { hasText: newName })).toBeVisible({ timeout: 10000 });
 
@@ -445,17 +447,17 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
       const tile = page.locator("#mineGrid .card", { hasText: name });
       await expect(tile).toBeVisible({ timeout: 15000 });
       await tile.dblclick();
-      await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
-      await page.locator("#nameInp").fill(`${name}-nowa`);
+      await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 5000 });
+      await page.locator(".uni-modal .uni-inp").fill(`${name}-nowa`);
 
       // baza znika "gdzieś indziej" tuż przed kliknięciem Zapisz
       await deleteBaseDirect(page, baseId);
       cleaned = true;
 
-      await page.locator("#btnNameOk").click();
-      await expect(page.locator("#nameMsg")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await expect(page.locator(".uni-modal .uni-foot .importMsg")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
       // modal NIE zamyka się przy błędzie (patrz catch w nameOk())
-      await expect(page.locator("#nameOverlay")).toBeVisible();
+      await expect(page.locator(".uni-modal")).toBeVisible();
     } finally {
       if (!cleaned) await deleteBaseDirect(page, baseId);
     }
@@ -520,14 +522,16 @@ test.describe("bases: audyt -- układ i gesty", () => {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator("#sharedGrid")).toBeVisible();
 
-    // wypustki 50/50 na całą szerokość karty
+    // wypustki na całą szerokość karty
     const [a, b, card] = await Promise.all([
       page.locator(".slot-mine").boundingBox(),
       page.locator(".slot-shared").boundingBox(),
       page.locator(".bases-card").boundingBox(),
     ]);
-    expect(Math.abs(a.width - b.width)).toBeLessThan(2);
+    // wypustki zajmują razem całą szerokość karty; szerokość każdej zależy od
+    // długości napisu (flex: 1 1 max-content), więc nie muszą być równe
     expect(Math.abs(a.width + b.width - card.width)).toBeLessThan(3);
+    expect(Math.min(a.width, b.width)).toBeGreaterThan(card.width * 0.4);
   });
 
   test("telefon: podwójne tapnięcie w kafelek otwiera zmianę nazwy", async ({ browser }) => {
@@ -553,8 +557,8 @@ test.describe("bases: audyt -- układ i gesty", () => {
       // kafelki i drugi trafiał w nowy element -- gest nigdy nie działał)
       await tile.tap();
       await tile.tap();
-      await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#nameInp")).toHaveValue(name);
+      await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator(".uni-modal .uni-inp")).toHaveValue(name);
     } finally {
       await deleteBaseDirect(page, baseId);
       await ctx.close();
@@ -593,7 +597,7 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ pag
     await expect(page.locator("#shareOverlay")).toBeVisible();
     await page.locator(`#baseShareFriends [data-id="${recipientId}"] input`).check();
     const shareResponsePromise = page.waitForResponse((response) =>
-      response.url().includes("/rpc/base_share_by_user") && response.request().method() === "POST"
+      response.url().includes("/rpc/base_share_to_friend") && response.request().method() === "POST"
     );
     await page.locator("#btnBaseShareFriends").click();
     const shareResponse = await shareResponsePromise;
@@ -684,7 +688,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
 
       // ktoś inny (tu: sam właściciel) z tym samym linkiem
       await page.goto(`/go/?b=${token}`, { waitUntil: "domcontentloaded" });
-      await expect(page.locator("#message")).toContainText("innego konta", { timeout: 15000 });
+      await expect(page.locator("#message")).toContainText("nie jest odbiorcą zaproszenia", { timeout: 15000 });
 
       // cofnięte zaproszenie
       await page.evaluate(async (baseId) => {
@@ -692,7 +696,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
         for (const r of data || []) await window.__sbClient.rpc("base_share_cancel_task", { p_task_id: r.task_id });
       }, baseId);
       await page2.goto(`/go/?b=${token}`, { waitUntil: "domcontentloaded" });
-      await expect(page2.locator("#message")).toContainText("zostało cofnięte", { timeout: 15000 });
+      await expect(page2.locator("#title")).toContainText("zostało cofnięte", { timeout: 15000 });
     } finally {
       if (ctx2) await ctx2.close();
       await deleteBaseDirect(page, baseId);
@@ -729,10 +733,10 @@ test.describe("bases: audyt -- eksport / import", () => {
       const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
       const file = testInfo.outputPath("export.fambase");
       await download.saveAs(file);
-      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
-      await page.locator("#btnExportJsonClose").click();
-      await expect(page.locator("#exportJsonOverlay")).toBeHidden();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeHidden();
       const json = JSON.parse(fs.readFileSync(file, "utf8"));
       expect(json.categories).toHaveLength(2);
       expect(json.question_tags).toHaveLength(1);
@@ -790,16 +794,16 @@ test.describe("bases: audyt -- eksport / import", () => {
         return route.continue();
       });
       await page.locator("#btnExport").click();
-      await expect(page.locator("#exportJsonMsg")).toContainText("E20 controlled export error");
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
+      await expect(page.locator(".uni-progress-msg")).toContainText("E20 controlled export error");
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
       await page.waitForTimeout(3100);
-      await expect(page.locator("#exportJsonOverlay")).toBeVisible();
-      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
       await page.unroute("**/rest/v1/question_bases**");
       const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
       expect(download.suggestedFilename()).toContain("E2E-BS-EXPORT-RETRY");
-      await expect(page.locator("#btnExportJsonClose")).toBeVisible();
-      await page.locator("#btnExportJsonClose").click();
+      await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
+      await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
     } finally {
       await page.unroute("**/rest/v1/question_bases**");
       await deleteBaseDirect(page, baseId);

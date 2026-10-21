@@ -28,6 +28,7 @@ module.exports = {
     bases: {
       main: "Pytania z ankiet ulicznych", family: "Rodzinne wspomnienia", travel: "Podróże i wakacje",
       folders: ["Jedzenie", "Dom", "Czas wolny", "Pory roku", "Zwierzęta", "Na łatwy start", "Trudne"],
+      subfolders: ["Śniadania", "Desery", "Na słodko"],
       tags: [["Łatwe", "#22c55e"], ["Średnie", "#eab308"], ["Trudne", "#ef4444"], ["Dla dzieci", "#3b82f6"], ["Finał", "#a855f7"]],
     },
     logos: { classic: "Familiada klasyczna", summer: "Wakacje 2026", family: "Rodzinny turniej", office: "Firma XYZ", stars: "Gwiazdy", wedding: "Wesele A&T", demo: "Logo z rysunku" },
@@ -71,6 +72,7 @@ module.exports = {
     bases: {
       main: "Street survey questions", family: "Family memories", travel: "Travel and holidays",
       folders: ["Food", "Home", "Free time", "Seasons", "Animals", "Easy start", "Hard ones"],
+      subfolders: ["Breakfast", "Desserts", "Sweet things"],
       tags: [["Easy", "#22c55e"], ["Medium", "#eab308"], ["Hard", "#ef4444"], ["For kids", "#3b82f6"], ["Final", "#a855f7"]],
     },
     logos: { classic: "Classic Familiada", summer: "Summer 2026", family: "Family tournament", office: "XYZ Company", stars: "Stars", wedding: "Wedding A&T", demo: "Drawn logo" },
@@ -114,6 +116,7 @@ module.exports = {
     bases: {
       main: "Питання з вуличних опитувань", family: "Сімейні спогади", travel: "Подорожі та відпочинок",
       folders: ["Їжа", "Дім", "Дозвілля", "Пори року", "Тварини", "Легкий старт", "Складні"],
+      subfolders: ["Сніданки", "Десерти", "Солодке"],
       tags: [["Легкі", "#22c55e"], ["Середні", "#eab308"], ["Складні", "#ef4444"], ["Для дітей", "#3b82f6"], ["Фінал", "#a855f7"]],
     },
     logos: { classic: "Класична Фамільяда", summer: "Літо 2026", family: "Сімейний турнір", office: "Компанія XYZ", stars: "Зірки", wedding: "Весілля А&Т", demo: "Намальоване лого" },

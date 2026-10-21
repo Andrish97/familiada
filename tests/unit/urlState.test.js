@@ -23,9 +23,10 @@ test("wszystkie strony z kartami używają wspólnego tabs.js (replaceState, bez
   }
 });
 
-test("manual: karta w ?tab=, bez hashchange i #hash jako karty", () => {
+test("manual: karta w ?tab=, #hash tylko kotwica rozdziału w karcie", () => {
   const source = read("manual/js/manual.js");
-  assert.doesNotMatch(source, /hashchange|location\.hash/);
+  assert.doesNotMatch(source, /hashchange|location\.hash\s*=/);
+  assert.match(source, /tabFromUrl\(MANUAL_TABS, DEFAULT_MANUAL_TAB\)/);
   assert.doesNotMatch(read("shared/js/core/page-init.js"), /linkTo\("manual", \{ hash:/);
 });
 
@@ -42,7 +43,7 @@ test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
   assert.doesNotMatch(page, /addEventListener\("popstate"/);
   assert.match(state, /history\.replaceState/);
   assert.doesNotMatch(state, /history\.pushState/);
-  assert.match(state, /searchParams\.set\("folder", state\.folderId\)/);
+  assert.match(state, /searchParams\.set\("folder", state\.location\.folderId\)/);
   assert.match(state, /searchParams\.delete\("folder"\)/);
 });
 
@@ -60,8 +61,10 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   // wraca do poprzedniej strony, nie przełącza kart.
   assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);
   assert.doesNotMatch(js, /history\.pushState|addEventListener\("popstate"/);
-  assert.match(css, /tabLogoText\.active[\s\S]*tab-corner-left/);
-  assert.match(css, /tabLogoImage\.active[\s\S]*tab-corner-right/);
+  // Narożniki skrajnych wypustek: wspólna reguła w base.css (pierwsza/ostatnia).
+  const base = read("shared/css/base.css");
+  assert.match(base, /\.tab-slot:first-child > \.tab-label\.active::before/);
+  assert.match(base, /\.tab-slot:last-child > \.tab-label\.active::after/);
   assert.match(css, /tabLogoText\.active[\s\S]*border-top-left-radius: 0/);
   assert.match(css, /tabLogoImage\.active[\s\S]*border-top-right-radius: 0/);
 });

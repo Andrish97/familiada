@@ -151,6 +151,10 @@ function buildDb(lang, extras = {}) {
   c.bases.tags.forEach(([name, color], i) => tables.qb_tags.push({ id: id("8500", i + 1), base_id: mainBase, name, color, ord: i + 1, created_at: daysAgo(30) }));
   const folders = [...new Set([...p.folders, ...c.bases.folders.slice(0, 5)])];
   folders.forEach((name, i) => tables.qb_categories.push({ id: id("8600", i + 1), base_id: mainBase, parent_id: null, name, ord: i + 1, created_at: daysAgo(30), updated_at: daysAgo(30) }));
+  // podfoldery (drzewo w oknie „Przenieś do”): folder 4 > Śniadania, Desery > Na słodko
+  const [sub1, sub2, sub3] = c.bases.subfolders;
+  [[90, 4, sub1, 1], [91, 4, sub2, 2], [92, 91, sub3, 1]].forEach(([n, parent, name, ord]) =>
+    tables.qb_categories.push({ id: id("8600", n), base_id: mainBase, parent_id: id("8600", parent), name, ord, created_at: daysAgo(30), updated_at: daysAgo(30) }));
   // Pytania z panelu w pierwszych folderach, dalej pula content.cjs.
   const baseQuestions = [...p.gameQuestions.slice(1, 7), ...c.questions];
   baseQuestions.forEach(([text, answers], i) => {
@@ -229,18 +233,60 @@ function buildDb(lang, extras = {}) {
       return { ok: true, status: g.status, type: g.type, questions };
     }`,
     contacts_list: `fn:(args) => (args.p_kind === "friends" ? ${JSON.stringify(friends)} : ${JSON.stringify(subscribers)})`,
+    // Okno udostępniania bazy: znajomi do zaznaczenia, wysłane (oczekujące/odrzucone) i aktywne udostępnienia.
+    base_share_panel: {
+      ok: true,
+      friends: friends.filter((f) => f.direction === "friend").slice(2).map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, cooldown_until: null })),
+      // pierwsze zaproszenie z aktywnym licznikiem ponownej wysyłki (5 h)
+      outgoing: friends.filter((f) => f.direction === "friend").slice(0, 1).map((f, i) => ({ task_id: id("8e00", i + 1), user_id: f.friend_user_id, label: f.label, email: f.email, status: "pending", role: "viewer", is_friend: true, email_enabled: true, cooldown_until: new Date(Date.now() + 5 * 3600e3 + 7 * 60e3).toISOString() }))
+        .concat(friends.filter((f) => f.direction === "outgoing").slice(0, 1).map((f, i) => ({ task_id: id("8e00", i + 5), user_id: f.friend_user_id, label: f.label, email: f.email, status: "declined", role: "viewer", is_friend: false, email_enabled: true, cooldown_until: null }))),
+      active: friends.filter((f) => f.direction === "friend").slice(1, 2).map((f, i) => ({ task_id: id("8e00", i + 9), user_id: f.friend_user_id, label: f.label, email: f.email, status: "done", role: "editor", is_friend: true, email_enabled: true }))
+        // długa nazwa: sprawdza wielokropek i stałą wysokość kafla
+        .concat([{ task_id: id("8e00", 12), user_id: id("8810", 99), label: "bardzo_dluga_nazwa_uzytkownika_do_testu", email: "bardzo.dluga.nazwa.uzytkownika@example.test", status: "pending", role: "editor", is_friend: true, email_enabled: true, cooldown_until: null }]),
+    },
     tasks_list: tasks,
     resource_copy_inbox: [],
     snake_log: { ok: true, best: 23, games: 7 },
-    // Panel admina — statystyki (kadr admin-stats-snake pokazuje sekcję węża).
-    get_admin_stats: null, get_retention_stats: null, stats_excluded_list: [],
+    // Migracja 445: zajętość nazwy i e-mail właściciela zaproszenia przez RPC.
+    username_taken: false, poll_go_owner_email_match: null,
     // Control: wszystkie urządzenia na miejscu (migracja 397).
     control_devices_snapshot: `fn:() => ({ ok: true, server_time: new Date().toISOString(), devices: Object.fromEntries(["display", "host", "buzzer"].map((k) => [k, { primary_online: true, audio_unlocked: true, visibility: "visible", focused: true, waiting_count: 0, last_seen_at: new Date().toISOString(), meta: { page_visibility: "visible" } }])) })`,
+    // Kosz menedżera bazy (migracja 428): foldery spoza głównej bazy demo
+    // i pytanie z panelu, różny wiek wpisów (licznik dni, ostrzeżenie ≤ 3).
+    qb_trash_list: `fn:() => ${JSON.stringify([
+      [c.bases.folders[5], "folder", 2, 4, 1], [p.gameQuestions[0][0], "question", 12, 1, 0], [c.bases.folders[6], "folder", 27, 7, 2],
+    ].map(([label, kind, age, nq, nf], i) => ({ id: id("8800", i + 1), kind, label, item_id: id("8801", i + 1), origin_id: null, n_questions: nq, n_folders: nf, age })))}
+      .map(({ age, ...it }) => ({ ...it, deleted_at: new Date(Date.now() - age * 864e5 - 36e5).toISOString(), expires_at: new Date(Date.now() + (30 - age) * 864e5 - 36e5).toISOString() }))`,
+    // E22 (430): cała zawartość bazy menedżera jednym zapytaniem
+    qb_base_content: `fn:(args, db) => {
+      const id = args.p_base_id;
+      const byOrd = (a, b) => (a.ord || 0) - (b.ord || 0) || String(a.id).localeCompare(String(b.id));
+      const questions = db.tables.qb_questions.filter((q) => q.base_id === id).sort(byOrd);
+      const qids = new Set(questions.map((q) => q.id));
+      return {
+        categories: db.tables.qb_categories.filter((c) => c.base_id === id).sort(byOrd),
+        tags: db.tables.qb_tags.filter((t) => t.base_id === id).sort(byOrd),
+        questions,
+        questionTags: db.tables.qb_question_tags.filter((l) => qids.has(l.question_id)).map(({ question_id, tag_id }) => ({ question_id, tag_id })),
+      };
+    }`,
     reserved_username_prefixes_list: [], site_activity_ping: null,
     acquire_edit_lock_mode: { ok: true }, release_edit_lock: { ok: true }, release_edit_lock_mode: { ok: true }, refresh_edit_lock: { ok: true },
+    // E22 (431): blokady zbiorcze
+    acquire_edit_locks: { ok: true }, release_edit_locks: { ok: true },
+    // E22 (430): przypisania tagów wskazanych pytań (okno tagów)
+    qb_question_tag_links: `fn:(args, db) => {
+      const ids = new Set(args.p_question_ids || []);
+      return db.tables.qb_question_tags.filter((l) => ids.has(l.question_id)).map(({ question_id, tag_id }) => ({ question_id, tag_id }));
+    }`,
     list_shared_bases_ext: [], base_declines_list_mine: [], bases_count_incoming_share_invites: 0,
     resource_copy_inbox_list: [], resource_copy_badges: [],
-    badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [],
+    badges_get: { friends_pending: p.friends.incoming.length }, list_shared_devices_for_me: [
+      { share_id: "00000000-0000-4000-9300-000000000001", device_type: "display", owner_username: "aleksandra_nowak", game_name: "Rodzinny pojedynek", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000002", device_type: "host", owner_username: "aleksandra_nowak", game_name: "Rodzinny pojedynek", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000003", device_type: "buzzer", owner_username: "jan_kowalski", game_name: "Wesele Ani i Tomka", game_id: IDS.game, share_key: "demo-key" },
+      { share_id: "00000000-0000-4000-9300-000000000004", device_type: "display", owner_username: "jan_kowalski", game_name: "Wesele Ani i Tomka", game_id: IDS.game, share_key: "demo-key" },
+    ],
     polls_vote_counts: voteCounts,
     // E21: dane podliczania (N pełnych ankiet, głosy pełnych ankiet, teksty już oczyszczone).
     poll_tally_source: `fn:(args, db) => {
@@ -288,7 +334,11 @@ function buildDb(lang, extras = {}) {
       return { ...row };
     }`,
     game_state_set_ui_lang: `fn:(args, db) => ({ ...(db.tables.game_state.find((r) => r.game_id === args.p_game_id) || {}) })`,
-    control_device_shares_list: [], friends_list: [],
+    control_device_shares_list: [], control_device_share_preflight: { ok: true, mail_allowed: true }, market_my_submissions: [
+      { id: id("mkt-sent-1"), title: "Rodzinny pojedynek", lang: "pl", status: "published", library_count: 42, avg_rating: 4.6, rating_count: 12 },
+      { id: id("mkt-sent-2"), title: "Wesele Ani i Tomka", lang: "pl", status: "pending", library_count: 0 },
+      { id: id("mkt-sent-3"), title: "Pubowy quiz czwartkowy", lang: "pl", status: "rejected", library_count: 0, moderation_note: "Za mało pytań w rundzie finałowej." },
+    ], friends_list: friends.filter((f) => f.direction === "friend").map((f) => ({ user_id: f.friend_user_id, label: f.label, email: f.email, direction: "friend", status: "active" })), resource_copy_history: { ok: true, items: [] },
     control_runtime_session_touch_v2: { ok: true, session_id: id("8e00", 1), device_protocol: 2, expired: false },
     control2_session_ping: { ok: true }, control2_control_visibility_event: { ok: true },
     control_runtime_device_link: { ok: true, token: "screensDeviceKey" }, generate_device_connect_code: { ok: true, code: "482193" },
@@ -311,10 +361,16 @@ function buildDb(lang, extras = {}) {
       "games.questions": { fk: "game_id" },
       "questions.answers": { fk: "question_id" },
       "question_base_shares.question_bases": { local: "base_id", one: true },
+      "qb_question_tags.qb_questions": { local: "question_id", one: true },
     },
     localStorage: { "sb-api-auth-token": "screens" },
     http: {
-      "/_api/mail/session": { ok: true, email: p.user.email, notifications_enabled: true, subscriptions: [], items: [] },
+      "/_api/mail/session": { ok: true, email: p.user.email, notifications_enabled: true,
+        subscriptions: friends.filter((f) => f.direction === "friend").slice(0, 4).map((f, i) => ({ kind: "subscription", id: id("8f00", i + 1), owner_label: f.label, status: i === 1 ? "pending" : "active" })),
+        items: [
+          ...tasks.filter((x) => x.state === "todo").map((x, i) => ({ kind: "poll", id: id("8f10", i + 1), name: x.title, owner_label: x.owner_label, status: i === 0 ? "opened" : "pending", link: `/go/?t=${x.token}` })),
+          { kind: "device", id: id("8f20", 1), name: p.game, owner_label: friends[0].label, device_type: "host", link: "/go/?t=00000000-0000-4000-8000-0000000000aa" },
+        ] },
       // Panel admina (/settings/): odpowiedzi API Workera za Cloudflare Access.
       "/_admin_api/me": { ok: true, email: "admin@example.com" },
       "/_admin_api/activity*": { ok: true, history: { hour: [], day: [], week: [] }, games: [], pages: [], locks: [] },

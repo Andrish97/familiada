@@ -48,13 +48,17 @@ const pl = {
   "errors": {"not_sendable":"Wysłać można tylko szkic gry (bez wyników ankiety).","failed":"Nie udało się wysłać kopii. Spróbuj ponownie.","not_friend":"Ta osoba nie jest już znajomym.","already_sent":"Kopia została już wysłana.","declined_cooldown":"Nie można teraz wysłać nowej kopii tej osobie.","auth_required":"Zaloguj się ponownie.","decisionFailed":"Nie udało się zapisać decyzji. Spróbuj ponownie."}
 },
   common: {
+    save: "Zapisz",
     sort: {
       label: "Sortowanie",
       updated: "Ostatnio zmienione",
       created: "Najnowsze",
       name: "Nazwa A–Z",
+      nameDesc: "Nazwa Z–A",
+      default: "Domyślna kolejność",
     },
     searchByName: "Szukaj…",
+    filterState: "Filtruj wg stanu",
     filterAll: "Wszystkie",
     noResults: "Brak wyników.",
     genericError: "Wystąpił błąd.",
@@ -122,6 +126,11 @@ const pl = {
         stars: "Gwiazdki:",
         comment: "Komentarz:",
         notRated: "Nie wystawiono jeszcze oceny.",
+        editTitle: "Zmień ocenę systemu",
+        save: "Zapisz ocenę",
+        rate: "Oceń",
+        change: "Zmień ocenę",
+        saved: "Ocena zapisana.",
       },
     },
     footer: {
@@ -202,7 +211,7 @@ const pl = {
     narrowMessage: "Poszerz okno przeglądarki lub wyjdź z widoku podzielonego ekranu.",
     back: "Wróć",
     guestTitle: "Niedostępne w koncie gościa",
-    guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i Centrum ankiet.",
+    guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać ze Znajomych, Subskrybentów, Zadań i udostępniania.",
     login: "Zaloguj / Załóż konto",
   },
   resourceLock: {
@@ -345,8 +354,8 @@ const pl = {
       q24: { q: "Czy osoba prowadząca musi znać odpowiedzi?", a: "Nie. Odpowiedzi i punkty może obsługiwać osoba przy Panelu sterowania, a prowadzący może skupić się na czytaniu pytań i kontakcie z uczestnikami." },
       q25: { q: "Czy jedna osoba może prowadzić i obsługiwać grę?", a: "Może, ale przeprowadzenie finału w pojedynkę bywa trudne: trzeba wtedy wpisywać odpowiedzi graczy w Panelu sterowania i jednocześnie prowadzić grę. Warto poprosić drugą osobę o pomoc." },
       q26: { q: "Co zrobić, jeśli ekran przestanie się aktualizować?", a: "Sprawdź połączenie urządzenia z grą i otwórz ponownie jego widok. W Panelu sterowania sprawdź, czy urządzenie jest podłączone, zanim przejdziesz dalej." },
-      q27: { q: "Czy mogę zmienić wygląd planszy?", a: "Tak. W ustawieniach rozgrywki możesz wybrać dostępny motyw, kolory drużyn, dźwięki i logo. Zmiany zobaczysz na Wyświetlaczu." },
-      q29: { q: "Czy ankieta dla subskrybentów różni się od anonimowej?", a: "Głosy trafiają do tej samej ankiety — różni się tylko sposób zaproszenia. Link lub kod QR może otworzyć każdy, a subskrybentom możesz wysłać ankietę jako zadanie. Przed podliczeniem w Centrum ankiet widać, którzy zaproszeni subskrybenci już odpowiedzieli; po podliczeniu ten status nie jest już tak czytelny." },
+      q27: { q: "Czy mogę zmienić wygląd planszy?", a: "Tak. W Ustawieniach gry możesz wybrać dostępny motyw, kolory drużyn, dźwięki i logo. Zmiany zobaczysz na Wyświetlaczu." },
+      q29: { q: "Czy ankieta dla subskrybentów różni się od anonimowej?", a: "Głosy trafiają do tej samej ankiety — różni się tylko sposób zaproszenia. Link lub kod QR może otworzyć każdy, a subskrybentom możesz wysłać ankietę jako zadanie. Przed podliczeniem w sekcji Odbiorcy ankiety widać, którzy zaproszeni subskrybenci już odpowiedzieli; po podliczeniu ten status nie jest już tak czytelny." },
       q30: { q: "Jak mogę udostępnić materiały znajomym?", a: "Sposób zależy od materiału: grę lub logo wysyłasz jako kopię, bazę udostępniasz z wybraną rolą, a urządzenie udostępniasz do użycia podczas rozgrywki." },
     },
     footer: {
@@ -672,6 +681,7 @@ const pl = {
       close: "Gotowe",
     },
     shareModal: {
+      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych. Uprawnienie wybierasz na dole okna.",
       title: "Udostępnij bazę",
       placeholder: "Nazwa użytkownika lub e-mail...",
       roleEditor: "Może edytować",
@@ -858,7 +868,6 @@ const pl = {
       addRecipients: "Dodaj odbiorców",
       addRecipientsHint: "Wybierz osoby, które chcesz zaprosić do tej ankiety.",
       addSelected: "Dodaj wybrane",
-      addSelectedN: "Dodaj wybrane ({n})",
       selectedCount: "Wybrano: {n}",
       noRecipientsToAdd: "Nie ma nowych znajomych ani subskrybentów do dodania.",
       noSharedRecipients: "Nie udostępniono jeszcze tej ankiety.",
@@ -922,7 +931,6 @@ const pl = {
       cancel: "Anuluj",
       noPoll: "Brak ankiety",
       openPoll: "Uruchom",
-      openAndInvite: "Uruchom i wyślij zaproszenia ({n})",
       stopPoll: "Zatrzymaj",
       resumePoll: "Wznów głosowanie",
       tallyPoll: "Podlicz głosy",
@@ -960,7 +968,6 @@ const pl = {
       open: {
         title: "Uruchomić ankietę?",
         text: "Uruchomić ankietę dla „{name}”?",
-        textInvite: "Uruchomić ankietę dla „{name}” i wysłać zaproszenia ({n})?",
         ok: "Uruchom",
         cancel: "Anuluj",
       },
@@ -976,12 +983,12 @@ const pl = {
       },
       tallyPoints: {
         title: "Podliczyć głosy?",
-        text: "Punkty będą liczone od wszystkich głosów. Odpowiedzi z udziałem poniżej 3% po zaokrągleniu zostaną pominięte. Linki i zaproszenia wygasną.",
+        text: "Punkty będą liczone od wszystkich głosów. Odpowiedzi z udziałem poniżej 4% po zaokrągleniu zostaną pominięte. Linki i zaproszenia wygasną.",
         ok: "Zatwierdź",
       },
       tallyText: {
         title: "Zatwierdzić odpowiedzi?",
-        text: "Zostaną zapisane odpowiedzi z punktami. Udział liczymy od wszystkich głosów; odpowiedzi poniżej 3% po zaokrągleniu są pomijane.",
+        text: "Zostaną zapisane odpowiedzi z punktami. Udział liczymy od wszystkich głosów; odpowiedzi poniżej 4% po zaokrągleniu są pomijane.",
         ok: "Zatwierdź",
       },
       reopen: {
@@ -1008,12 +1015,12 @@ const pl = {
       tally: "Nie udało się podliczyć głosów.",
       reopen: "Nie udało się otworzyć ponownie.",
       loadAnswers: "Nie udało się wczytać odpowiedzi.",
-      openedInviteFailed: "Ankieta uruchomiona, ale zaproszeń nie udało się wysłać — zrób to w karcie Udostępnianie.",
     },
     tally: {
       loading: "Ładuję odpowiedzi…",
-      hintText: "Udział liczony od wszystkich pełnych ankiet. Poniżej 4% — pominięte (szary wiersz). Znaki, których nie ma Wyświetlacz (np. emoji), są usuwane przed liczeniem. Przeciągnij odpowiedź na inną, żeby je połączyć; kliknij tekst, żeby poprawić literówkę. Maks. 17 znaków.",
-      hintPoints: "Punkty = udział od wszystkich pełnych ankiet. Poniżej 4% — pominięte (szary wiersz).",
+      hintText: "Przeciągnij odpowiedź na inną, żeby je scalić; kliknij tekst, żeby go poprawić. Poniżej 4% głosów — pominięte.",
+      hintTextTouch: "Scalanie: przycisk przy jednej odpowiedzi, potem przy drugiej. Stuknij tekst, żeby go poprawić. Poniżej 4% — pominięte.",
+      hintPoints: "Punkty = udział w pełnych ankietach. Poniżej 4% — pominięte.",
       counter: "Odpowiedzi: {n} (wymagane 3–6)",
       sum: "suma pkt: {n}",
       votes: "{n} gł.",
@@ -1045,1410 +1052,24 @@ const pl = {
     legal: "Polityka prywatności",
     pageTitle: "Wskazówki dla użytkownika",
     tabs: {
-      general: "Ogólny opis",
-      edit: "Gry",
+      rules: "Zasady gry",
+      account: "Konto",
+      games: "Gry",
+      logo: "Logo",
       bases: "Bazy pytań",
+      people: "Znajomi i subskrybenci",
+      community: "Gry społeczności",
       polls: "Ankiety",
-      subscriptions: "Subskrypcje",
-      logo: "Tworzenie logo",
-      connect: "Podłącz urządzenie",
-      control: "Panel sterowania",
-      demo: "Materiały Demo",
-      community: "Gry Społeczności",
-      gameSettings: "Ustawienia gry",
+      settings: "Ustawienia gry",
+      control: "Prowadzenie gry",
+      help: "Pomoc",
     },
+    toc: "Spis treści",
     demo: {
       modalTitle: "Przywrócić pliki demo?",
       modalText: "Zostaną dodane przykładowe materiały startowe.",
       modalOk: "Przywróć",
       modalCancel: "Anuluj",
-    },
-    content: {
-      general: `<p class="m-p">
-        Ta strona to wskazówki obsługi systemu do prowadzenia rozgrywki (turnieju)
-        w stylu „Familiada”. Jej celem jest wyjaśnienie, jak przygotować grę,
-        zebrać wyniki (ankieta) i bez problemu poprowadzić rozgrywkę na żywo
-        — nawet jeśli ktoś korzysta z systemu pierwszy raz.
-      </p>
-      
-      <p class="m-p">
-        Opis dotyczy narzędzia i sposobu jego użycia,
-        a nie „telewizyjnej produkcji”. System sprawdzi się na wydarzeniach,
-        imprezach firmowych, w szkole, na scenie albo po prostu w gronie znajomych
-        — wszędzie tam, gdzie chcesz mieć czytelną tablicę, punkty i płynny przebieg gry.
-      </p>
-      
-      <p class="m-p">
-        Rozgrywka jest zbudowana tak, aby w dużym stopniu odpowiadała oficjalnym zasadom Familiady
-        (rundy, bank, błędy X, przejęcia i finał), ale całość jest zaprojektowana jako
-        wygodny system do prowadzenia zabawy/turnieju, z jasnym podziałem ról:
-        <span class="m-strong">prowadzący prowadzi rozmowę i zadaje pytania</span>,
-        a <span class="m-strong">operator steruje tablicą i punktami</span>.
-      </p>
-
-      <p class="m-p">
-        Jeśli chcesz zapoznać się z pełnymi zasadami gry,
-        <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf" target="_blank" rel="noopener noreferrer">
-          Regulamin teleturnieju „Familiada”
-        </a>
-        opisuje je szczegółowo.
-      </p>
-
-      <p class="m-p">
-        Całość systemu została zaprojektowana tak,
-        aby wyraźnie oddzielić przygotowanie treści
-        od samej rozgrywki.
-        Pytania, odpowiedzi i ankiety przygotowuje się wcześniej,
-        natomiast w trakcie gry operator korzysta wyłącznie
-        z panelu sterowania.
-      </p>
-
-      <p class="m-p">
-        W praktyce oznacza to, że operator nie musi edytować danych,
-        prowadzący skupia się na rozmowie z uczestnikami,
-        a system pilnuje kolejności etapów i logiki rozgrywki.
-        Zmniejsza to ryzyko pomyłek i przyspiesza przebieg gry.
-      </p>
-
-      <p class="m-p">
-        System najlepiej działa przy użyciu osobnych urządzeń:
-        wyświetlacza dla widzów (telewizor lub rzutnik),
-        tabletu lub telefonu dla prowadzącego,
-        osobnego urządzenia pełniącego rolę przycisku
-        oraz komputera operatora z panelem sterowania.
-      </p>
-
-      <p class="m-p">
-        Wskazówki zostały podzielone na kolejne zakładki.
-        Każda z nich opisuje inny etap pracy z systemem:
-        od przygotowania gry,
-        przez ankiety,
-        aż po prowadzenie rozgrywki na żywo.
-      </p>`,
-      edit: `<p class="m-p">
-        Zakładka „Dodawanie i edycja gry” opisuje etap przygotowania gry
-        przed rozpoczęciem ankiety lub rozgrywki.
-        Na tym etapie tworzysz strukturę gry:
-        pytania, możliwe odpowiedzi oraz sposób ich punktowania.
-      </p>
-    
-      <p class="m-p">
-        Ten etap jest kluczowy, ponieważ decyduje o tym,
-        jak będzie wyglądać cała dalsza praca z grą.
-        System celowo rozdziela przygotowanie treści
-        od późniejszego zbierania odpowiedzi i prowadzenia rozgrywki.
-      </p>
-    
-      <h3 class="m-h2">Lista gier („Moje gry”)</h3>
-    
-      <p class="m-p">
-        Lista gier jest miejscem, w którym zarządzasz wszystkimi grami
-        przypisanymi do Twojego konta.
-        To tutaj możesz tworzyć nowe gry,
-        wybierać istniejące
-        oraz decydować, co chcesz z daną grą zrobić dalej.
-      </p>
-    
-      <p class="m-p">
-        Gry są podzielone na typy.
-        Typ gry określa, w jaki sposób odpowiedzi będą zbierane
-        i jak powstaną punkty widoczne później na tablicy.
-      </p>
-    
-      <ul class="m-ul">
-        <li>
-          <span class="m-strong">Ankieta tekstowa</span> —
-          odpowiedzi są wpisywane przez ankietowanych,
-          a punkty wynikają z liczby wskazań.
-        </li>
-        <li>
-          <span class="m-strong">Punktacja</span> —
-          ankietowani wybierają spośród przygotowanych odpowiedzi,
-          a system zlicza wyniki.
-        </li>
-        <li>
-          <span class="m-strong">Preparowana</span> —
-          odpowiedzi i punkty są ustalane ręcznie,
-          bez udziału ankiety.
-        </li><li><span class="m-strong">Gry Społeczności</span>&nbsp;— odpowiedzi i punkty są pobrane z biblioteki Gier Społeczności, bez udziału ankiety.</li>
-      </ul>
-    
-      <p class="m-p">
-        Nową grę tworzysz klikając kafelek z symbolem <i class="ico" data-icon="plus"></i>.
-        Po utworzeniu gra pojawia się na liście
-        i może zostać otwarta w edytorze.
-      </p>
-    
-      <h3 class="m-h2">Edytor gry – co i kiedy można edytować</h3>
-    
-     <p class="m-p">
-        Do trybu edycji gry przechodzisz z listy „Moje gry”
-        za pomocą przycisku <span class="m-code">Edytuj</span>.
-        Jest to pierwszy etap pracy z grą,
-        w którym przygotowujesz całą jej treść
-        przed wykorzystaniem jej w ankiecie lub rozgrywce.
-      </p>
-      
-      <p class="m-p">
-        W trybie edycji tworzysz pytania i odpowiedzi,
-        decydujesz o typie gry
-        oraz przygotowujesz strukturę,
-        która będzie później wykorzystywana
-        do zbierania danych lub prowadzenia gry na żywo.
-      </p>
-      
-      <p class="m-p">
-        Edytor gry służy do budowania struktury pytań i odpowiedzi.
-        W zależności od typu gry oraz jej stanu
-        dostępne opcje edycji mogą się różnić.
-      </p>
-    
-      <p class="m-p">
-        Jest to działanie celowe.
-        System ogranicza pewne operacje,
-        aby zachować spójność danych
-        i zapobiec sytuacjom,
-        w których rozgrywka lub ankieta
-        przestają odpowiadać przygotowanej treści.
-      </p>
-    
-      <h3 class="m-h3">Dodawanie i edycja pytań</h3>
-    
-      <p class="m-p">
-        Pytania są zawsze podstawowym elementem gry.
-        Na etapie przygotowania możesz:
-        dodawać nowe pytania,
-        zmieniać ich treść
-        oraz usuwać pytania niepotrzebne.
-      </p>
-    
-      <p class="m-p">
-        Zmiana pytania po uruchomieniu ankiety
-        może zostać zablokowana,
-        ponieważ nawet drobna modyfikacja treści
-        wpływa na sens zebranych odpowiedzi.
-      </p>
-    
-      <h3 class="m-h3">Dodawanie i edycja odpowiedzi</h3>
-    
-      <p class="m-p">
-        Możliwość edycji odpowiedzi zależy od typu gry.
-        W grach ankietowych odpowiedzi są efektem ankiety,
-        dlatego przed ankietą możesz jedynie przygotować
-        ich ogólną strukturę lub przykłady.
-      </p>
-    
-      <p class="m-p">
-        Po rozpoczęciu ankiety system może ograniczyć
-        dodawanie lub usuwanie odpowiedzi,
-        aby nie mieszać odpowiedzi ankietowanych
-        z nową treścią.
-      </p>
-    
-      <h3 class="m-h3">Punkty – dlaczego czasem są zablokowane</h3>
-    
-      <p class="m-p">
-        Punkty nie zawsze są edytowalne ręcznie.
-        W grach ankietowych punkty wynikają bezpośrednio
-        z liczby udzielonych odpowiedzi,
-        dlatego ich ręczna edycja nie ma sensu
-        i jest zablokowana.
-      </p>
-    
-      <p class="m-p">
-        Ręczne ustawianie punktów jest możliwe
-        tylko w trybie preparowanej,
-        gdzie system nie korzysta z danych ankietowych.
-      </p>
-    
-      <div class="m-note">
-        <b>Dlaczego tak jest?</b><br>
-        Dzięki temu to, co widzi widz na tablicy,
-        zawsze odpowiada rzeczywistym wynikom ankiety
-        albo jasno określonej, ręcznej punktacji.
-      </div>
-    
-      <h3 class="m-h2">Ograniczenia długości i formatu</h3>
-    
-      <p class="m-p">
-        Odpowiedzi powinny być krótkie i czytelne.
-        Przy imporcie treści odpowiedzi dłuższe
-        niż <span class="m-strong">17 znaków</span>
-        są automatycznie przycinane.
-      </p>
-    
-      <p class="m-p">
-        To ograniczenie wynika z układu tablicy
-        i ma na celu zachowanie czytelności
-        podczas rozgrywki na żywo.
-      </p>
-    
-      <h3 class="m-h2">Import i eksport gier</h3>
-    
-      <p class="m-p">
-        Strona „Moje gry” umożliwia eksport i import gier
-        w postaci plików oraz bezpośrednio do bazy pytań.
-        Funkcja ta służy do przenoszenia gier i pytań
-        pomiędzy kontami lub środowiskami.
-      </p>
-    
-      <p class="m-p">
-        Pliki importu i eksportu są formatem technicznym.
-        Gra nie powinna ingerować w ich zawartość
-        ani próbować edytować ich ręcznie.
-      </p>
-    
-      <div class="m-warn">
-        <b>Uwaga:</b>
-        ręczna modyfikacja plików importu lub eksportu
-        może spowodować, że gry nie będzie się dało zaimportować
-        albo będzie działała nieprawidłowo.
-      </div>
-    
-      <p class="m-p">
-        Po poprawnym imporcie gra pojawia się
-        na liście gier i może być dalej edytowana
-        wyłącznie przy użyciu edytora systemowego.
-      </p>
-      
-      <p class="m-p">
-        Podczas eksportu gry do bazy:
-      </p>
-      
-      <ul class="m-ul">
-        <li>w katalogu głównym bazy tworzony jest nowy folder</li>
-        <li>folder otrzymuje nazwę gry</li>
-        <li>w folderze zapisywane są wszystkie pytania należące do gry</li>
-      </ul>
-
-      <p class="m-note">Eksport do bazy nie usuwa gry — tworzy jedynie jej kopię w postaci struktury pytań.<br><br>Eksportować możesz tylko do swojej własnej bazy lub do udostępnionej bazy której jesteś edytorem.
-        Jeśli nie posiadasz aktualnie żadnych baz, nie będziesz mógł eksportować.
-      </p>
-      
-      <p class="m-p">
-        Dzięki eksportowi do bazy każda gra może zostać zamieniona w zestaw pytań do dalszej edycji,
-        organizowania w folderach, oznaczania tagami oraz ponownego wykorzystania
-        w kolejnych grach.</p>`,
-      bases: `<h2 class="m-h2">Bazy pytań — organizacja i współpraca</h2>
-  
-      <p class="m-p">
-        Bazy pytań to miejsce do przechowywania pytań używanych w grach.
-        Dzięki nim możesz porządkować pytania w folderach, oznaczać je tagami, przypisywać do kategorii
-        oraz współdzielić całe bazy z innymi użytkownikami.
-      </p>
-      <p class="m-p">
-        Do baz pytań przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code">Bazy pytań <i class="ico" data-icon="drawer"></i></span>.
-      </p>
-  
-      <p class="m-p">
-        Jedna baza może zawierać setki lub tysiące pytań uporządkowanych w strukturze podobnej
-        do klasycznego menedżera plików na komputerze.
-      </p>
-  
-      <h3 class="m-h3">Dodawanie nowej bazy</h3>
-  
-      <p class="m-p">
-        W widoku „Bazy pytań” kliknij kafelek <span class="m-code"><i class="ico" data-icon="plus"></i> Nowa baza</span>.
-        Otworzy się okno, w którym podajesz nazwę bazy.
-      </p>
-  
-      <p class="m-p">
-        Po zapisaniu nowa baza pojawi się na liście i od razu możesz ją przeglądać lub udostępniać.
-      </p>
-  
-      <h3 class="m-h3">Udostępnianie bazy</h3>
-  
-      <p class="m-p">
-        Każdą bazę możesz udostępnić innym użytkownikom poprzez podanie ich adresu e-mail.
-        Dostępne są dwa tryby:
-      </p>
-  
-      <ul class="m-ul">
-        <li><span class="m-strong">Edycja</span> — użytkownik może dodawać, usuwać i modyfikować pytania, foldery, tagi, tworzyć gry z pytań i eksportować pytania do bazy</li>
-        <li><span class="m-strong">Przeglądanie</span> — użytkownik może tylko przeglądać zawartość bazy i tworzyć gry z dostępnych pytań</li>
-      </ul>
-  
-      <p class="m-p">
-        Tylko właściciel bazy może zarządzać udostępnieniami.
-      </p>
-  
-      <h3 class="m-h3">Przechodzenie do menedżera bazy</h3>
-  
-      <p class="m-p">
-        Aby wejść do zawartości bazy, zaznacz ją na liście i kliknij przycisk <span class="m-code">Przeglądaj</span>.
-      </p>
-  
-      <p class="m-p">
-        Otworzy się Menedżer bazy pytań działający jak klasyczny eksplorator plików.
-      </p>
-  
-      <h2 class="m-h2">Menedżer bazy pytań</h2>
-  
-      <p class="m-p">
-        Menedżer bazy pytań pozwala zarządzać pytaniami w sposób znany z systemowych menedżerów plików:
-        foldery, przenoszenie metodą „przeciągnij i upuść”, kopiowanie, wycinanie i szybka selekcja.
-      </p>
-  
-      <p class="m-p">
-        Każdy „plik” w tym menedżerze jest pojedynczym pytaniem.
-        Foldery służą do grupowania pytań tematycznie lub logicznie.
-      </p>
-  
-      <p class="m-p">
-        Możesz:
-      </p>
-  
-      <ul class="m-ul">
-        <li>tworzyć dowolnie zagnieżdżone foldery</li>
-        <li>przenosić pytania i foldery między sobą</li>
-        <li>kopiować i duplikować elementy</li>
-        <li>usuwać zaznaczone pozycje</li>
-        <li>wyszukiwać po nazwie i tagach</li>
-      </ul>
-  
-      <p class="m-note">
-        Interfejs i skróty klawiszowe działają podobnie jak w klasycznych menedżerach plików
-        (Explorer, Finder, Total Commander).
-      </p>
-  
-      <h2 class="m-h2">Tagi i kategorie</h2>
-  
-      <h3 class="m-h3">Tagi</h3>
-  
-      <p class="m-p">
-        Każde pytanie może mieć dowolną liczbę tagów.
-        Tagi służą do tematycznego oznaczania pytań — np. „historia”, „sport”, „łatwe”, „dla dzieci”.
-      </p>
-  
-      <p class="m-p">
-        Możesz:
-      </p>
-  
-      <ul class="m-ul">
-        <li>tworzyć własne tagi z kolorami</li>
-        <li>przypisywać wiele tagów do jednego pytania</li>
-        <li>filtrować widok po wybranych tagach</li>
-      </ul>
-
-      <p class="m-p">
-        Przypisywanie tagów odbywa się w specjalnym oknie, które można otworzyć z paska narzędzi
-        lub z menu kontekstowego.
-      </p>
-      
-      <p class="m-p">
-        W oknie przypisywania tagów widoczna jest lista wszystkich dostępnych tagów wraz z ich stanem:
-      </p>
-      
-      <ul class="m-ul">
-        <li>zaznaczony — tag jest przypisany do wszystkich wybranych elementów</li>
-        <li>niezaznaczony — tag nie jest przypisany do żadnego z nich</li>
-        <li>częściowy — tylko część zaznaczenia posiada dany tag</li>
-      </ul>
-      
-      <p class="m-p">
-        Kliknięcie w tag przełącza jego stan cyklicznie, umożliwiając szybkie dodawanie i usuwanie tagów
-        dla wielu pytań lub folderów jednocześnie. To okno umożliwia tworzenie nowych tagów.
-      </p>
-      
-      <p class="m-p">
-        Tagi mogą być również używane jako filtry — kliknięcie taga po lewej stronie ogranicza widok
-        do elementów oznaczonych wybranym tagiem lub zestawem tagów.
-      </p>
-  
-      <p class="m-note">
-        Folder pokazuje znaczniki tagów wtedy, gdy wszystkie znajdujące się w nim pytania
-        (oraz podfoldery) posiadają ten sam tag.
-      </p>
-  
-      <h3 class="m-h3">Kategorie</h3>
-  
-      <p class="m-p">
-        Kategorie to specjalne oznaczenia systemowe określające,
-        do jakiego typu gry dane pytanie pasuje. Co odpowiada typom gier w widoku <span class="m-strong">Moje gry</span>
-      </p>
-  
-      <p class="m-p">
-        Przykładowo:
-      </p>
-  
-      <ul class="m-ul">
-        <li>pytania z odpowiedziami i punktami trafiają do kategorii <span class="m-strong">preperowane</span></li>
-        <li>pytania z odpowiedziami bez sumy punktów do <span class="m-strong">punktacja</span></li>
-        <li>pytania tekstowe bez punktów do <span class="m-strong">typowe</span></li>
-      </ul>
-  
-      <p class="m-p">
-        Kategorie są przypisywane automatycznie na podstawie struktury pytania,
-        a nie ręcznie przez użytkownika.
-      </p>
-  
-      <p class="m-note">
-        Dzięki temu od razu wiesz, które pytania nadają się do konkretnego typu gry.
-      </p>
-  
-      <h2 class="m-h2">Edytor pytań</h2>
-  
-      <p class="m-p">
-        Każde pytanie możesz otworzyć w edytorze.
-        Edytor pozwala zmieniać treść pytania, odpowiedzi oraz punkty (jeśli występują).
-      </p>
-  
-      <p class="m-p">
-        System pilnuje podstawowych zasad, takich jak:
-      </p>
-  
-      <ul class="m-ul">
-        <li>maksymalna liczba punktów dla jednej odpowiedzi</li>
-        <li>łączna suma punktów w pytaniu</li>
-      </ul>
-  
-      <p class="m-p">
-        Dzięki temu baza zawsze pozostaje spójna i gotowa do użycia w grach.
-      </p>
-  
-      <h2 class="m-h2">Tworzenie gry z pytań</h2>
-  
-      <p class="m-p">
-        W Menedżerze bazy możesz zaznaczyć dowolne pytania oraz foldery (wraz z podfolderami),
-        a następnie utworzyć z nich nową grę.
-      </p>
-  
-      <p class="m-p">
-        System zbiera wszystkie pytania z zaznaczenia, pozwala je przejrzeć
-        i wybrać typ gry.
-      </p>
-
-      <p class="m-note">
-        To umożliwia szybkie budowanie gier z gotowych zestawów pytań bez ręcznego przepisywania.
-      </p>
-
-      <p class="m-warn">
-        Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span>
-      </p>
-  
-      <h2 class="m-h2">Skróty klawiszowe — Menedżer bazy</h2>
-  
-      <h3 class="m-h3">Tworzenie</h3>
-  
-      <div class="m-table-wrap"><table class="m-table">
-        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Nowe pytanie</td><td>Ctrl + N</td><td>⌘ N</td></tr>
-        <tr><td>Nowy folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
-      </tbody></table></div>
-  
-      <h3 class="m-h3">Edycja</h3>
-  
-      <div class="m-table-wrap"><table class="m-table">
-        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Edytuj pytanie</td><td>Ctrl + E</td><td>⌘ E</td></tr>
-        <tr><td>Zmień nazwę</td><td>F2</td><td>F2</td></tr>
-        <tr><td>Usuń</td><td>Delete</td><td>Fn + ⌫</td></tr>
-      </tbody></table></div>
-  
-      <h3 class="m-h3">Schowek</h3>
-  
-      <div class="m-table-wrap"><table class="m-table">
-        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Kopiuj</td><td>Ctrl + C</td><td>⌘ C</td></tr>
-        <tr><td>Wytnij</td><td>Ctrl + X</td><td>⌘ X</td></tr>
-        <tr><td>Wklej</td><td>Ctrl + V</td><td>⌘ V</td></tr>
-        <tr><td>Duplikuj</td><td>Ctrl + D</td><td>⌘ D</td></tr>
-      </tbody></table></div>
-  
-      <h3 class="m-h3">Gra</h3>
-  
-      <div class="m-table-wrap"><table class="m-table">
-        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Utwórz grę</td><td>Ctrl + G</td><td>⌘ G</td></tr>
-      </tbody></table></div>
-  
-      <h3 class="m-h3">Widok</h3>
-  
-      <div class="m-table-wrap"><table class="m-table">
-        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Odśwież widok</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
-      </tbody></table></div>
-  
-      <h3 class="m-h3">Nawigacja</h3>
-  
-      <div class="m-table-wrap"><table class="m-table">
-        <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Zaznacz wszystko</td><td>Ctrl + A</td><td>⌘ A</td></tr>
-        <tr><td>Otwórz folder</td><td>Enter</td><td>⏎</td></tr>
-        <tr><td>Folder nadrzędny</td><td>Backspace</td><td>⌫</td></tr>
-      </tbody></table></div>
-  
-      <p class="m-note">
-        Skróty nie działają podczas wpisywania tekstu w polach edycyjnych.
-      </p>`,
-      polls: `<p class="m-p">
-        Zakładka „Ankiety” opisuje etap zbierania odpowiedzi
-        od ankietowanych przed właściwą rozgrywką.
-        Ankieta jest mostem pomiędzy przygotowaniem gry
-        a jej rozegraniem na żywo.
-      </p>
-    
-      <p class="m-p">
-        Na tym etapie system przestaje być edytorem treści,
-        a zaczyna działać jak narzędzie do zbierania danych.
-        Z tego powodu wiele opcji edycji jest celowo ograniczonych.
-      </p>
-
-
-      <p class="m-p">
-        Do ankiet przechodzisz z górnego paska na stronie „Moje gry”
-        przyciskiem <span class="m-code">Ankiety <i class="ico" data-icon="polls"></i></span>.
-      </p>
-
-      <h3 class="m-h2">Strona ankiet</h3>
-
-      <p class="m-p">
-        Na komputerze widzisz dwa obszary:
-      </p>
-
-      <ul class="m-ul">
-        <li><span class="m-strong">Moje ankiety</span> — lista ankiet, które tworzysz i prowadzisz.</li>
-        <li><span class="m-strong">Zadania</span> — zaproszenia do ankiety od innych użytkowników.</li>
-      </ul>
-
-      <p class="m-p">
-        Złota kropka przy przycisku <span class="m-code">Ankiety <i class="ico" data-icon="polls"></i></span> pokazuje liczbę aktywnych zadań do wykonania.
-      </p>
-
-      <p class="m-p">
-        Udostępnianie ankiety odbywa się z listy „Moje ankiety”: zaznacz kafelek i kliknij
-        <span class="m-code">Udostępnij</span>, następnie wybierz odbiorców i zapisz.
-        Kafelek ankiety pokazuje bieżące wyniki, a przycisk <span class="m-code">Szczegóły</span>
-        daje podgląd listy oddanych głosów, oczekujących, odrzuconych oraz anonimowych odpowiedzi.
-      </p>
-
-      <h3 class="m-h3">Moje ankiety</h3>
-      <p class="m-p">
-        Każdy kafelek ma kolor, który oznacza stan ankiety:
-      </p>
-      <ul class="m-ul">
-        <li><span class="m-strong">Szary</span> — szkic, brakuje wymagań do uruchomienia.</li>
-        <li><span class="m-strong">Czerwony</span> — szkic gotowy do uruchomienia.</li>
-        <li><span class="m-strong">Pomarańczowy</span> — ankieta otwarta, brak głosów.</li>
-        <li><span class="m-strong">Żółty</span> — ankieta otwarta, są wyniki lub aktywne zadania.</li>
-        <li><span class="m-strong">Zielony</span> — ankieta otwarta, cele zebrane (zadania wykonane lub ≥10 głosów).</li>
-        <li><span class="m-strong">Niebieski</span> — ankieta zamknięta.</li>
-      </ul>
-
-      <h3 class="m-h3">Zadania</h3>
-      <p class="m-p">
-        Zadania to zaproszenia do ankiety. Kolory:
-        <span class="m-strong">zielony</span> — dostępne,
-        <span class="m-strong">niebieski</span> — wykonane.
-        Dwuklik otwiera ankietę, a przycisk <span class="m-code"><i class="ico" data-icon="cancel"></i></span> odrzuca zadanie.
-      </p>
-
-      <h3 class="m-h2">Rodzaje ankiet</h3>
-    
-      <p class="m-p">
-        W zależności od typu gry ankieta może działać w jednym z dwóch trybów:
-      </p>
-    
-      <ul class="m-ul">
-        <li>
-          <span class="m-strong">Ankieta tekstowa</span> —
-          ankietowani wpisują własne odpowiedzi tekstowe.
-        </li>
-        <li>
-          <span class="m-strong">Punktacja</span> —
-          ankietowani wybierają jedną z przygotowanych odpowiedzi.
-        </li>
-      </ul>
-    
-      <p class="m-p">
-        Gry preparowane nie posiadają ankiety —
-        odpowiedzi i punkty są w nich ustalane ręcznie.
-      </p>
-    
-      <h3 class="m-h2">Uruchamianie ankiety</h3>
-    
-      <p class="m-p">
-        Ankietę można uruchomić wyłącznie dla gry
-        znajdującej się w stanie <span class="m-strong">Szkic</span>.
-        Przed uruchomieniem system sprawdza,
-        czy gra spełnia minimalne wymagania.
-      </p>
-    
-      <ul class="m-ul">
-        <li>minimalna liczba pytań,</li>
-        <li>w trybie punktacji — odpowiednia liczba odpowiedzi przy każdym pytaniu.</li>
-      </ul>
-    
-      <div class="m-note">
-        <b>Dlaczego?</b><br/>
-        Dzięki temu nie da się uruchomić ankiety,
-        który nie może zostać później poprawnie zamknięty
-        i użyty w rozgrywce.
-      </div>
-    
-      <h3 class="m-h2">Link i kod QR do głosowania</h3>
-
-      <p class="m-p">
-        Po uruchomieniu ankiety system generuje
-        unikalny link do ankiety.
-        Link ten można skopiować lub otworzyć w nowej karcie —
-        uczestnicy wpisują go na swoich telefonach i oddają głos.
-        Mały kod QR widoczny na stronie ankiety też koduje ten link.
-      </p>
-
-      <h3 class="m-h2">QR na wyświetlaczu (TV / rzutnik)</h3>
-
-      <p class="m-p">
-        Przycisk <span class="m-code">QR na wyświetlaczu</span> otwiera modal z kodem urządzenia:
-      </p>
-      <ul class="m-ul">
-        <li><span class="m-strong">6-cyfrowy kod</span> — wpisz go na stronie
-          <span class="m-code">Podłącz urządzenie</span>, aby ręcznie połączyć TV lub drugi ekran.</li>
-      </ul>
-
-      <p class="m-p">
-        <span class="m-strong">Telewizor jako samodzielny ekran:</span>
-        w jego przeglądarce otwórz <span class="m-code">www.familiada.online</span>.
-        Rozpoznany telewizor przejdzie bezpośrednio do uproszczonej strony podłączenia.
-        Wpisz 6-cyfrowy kod z okna <span class="m-code">QR na wyświetlaczu</span>
-        i wybierz <span class="m-code">Podłącz</span>.
-        Na TV pojawi się kod QR ankiety, który uczestnicy skanują telefonami.
-        Nie potrzebujesz logowania na telewizorze, kabla HDMI ani przesyłania obrazu z komputera.
-      </p>
-      <p class="m-p">Możesz również otworzyć na telewizorze bezpośredni link do Wyświetlacza QR skopiowany z okna ankiety. Taki link otworzy ekran z kodem QR, podobnie jak link Wyświetlacza gry otwiera planszę rozgrywki. Jeśli przeglądarka TV nie została rozpoznana, np. niestandardowa przeglądarka na Apple TV, otwórz <a href="https://www.familiada.online/connect-device/tv/">stronę podłączenia TV</a> i wpisz kod. Przez HDMI lub AirPlay możesz zamiast tego przesłać ekran QR otwarty na komputerze lub innym urządzeniu.</p>
-
-      <h3 class="m-h2">Przebieg ankiety</h3>
-    
-      <p class="m-p">
-        Ankietowani przechodzą przez pytania po kolei.
-        System pilnuje kolejności
-        i nie pozwala pominąć pytania.
-      </p>
-    
-      <p class="m-p">
-        W ankiecie tekstowej każda odpowiedź:
-      </p>
-    
-      <ul class="m-ul">
-        <li>jest ograniczona do 17 znaków,</li>
-        <li>jest normalizowana (wielkość liter, spacje),</li>
-        <li>zliczana jest jako osobna propozycja.</li>
-      </ul>
-    
-      <p class="m-p">
-        W punktacji ankietowany
-        wybiera jedną z przygotowanych odpowiedzi,
-        a system zapisuje oddany głos.
-      </p>
-    
-      <h3 class="m-h2">Zamykanie ankiety</h3>
-    
-      <p class="m-p">
-        Zamknięcie ankiety jest osobnym,
-        świadomym etapem pracy.
-        System nie pozwala zamknąć ankiety,
-        jeśli zebrane dane nie spełniają
-        minimalnych warunków jakości.
-      </p>
-    
-      <h3 class="m-h3">Punktacja</h3>
-    
-      <p class="m-p">
-        Przy zamykaniu ankiety punktacji
-        system przelicza wyniki na punkty
-        i normalizuje je do skali 0–100
-        dla każdego pytania.
-      </p>
-    
-      <div class="m-note">
-        <b>Efekt:</b>
-        otrzymujesz gotową listę odpowiedzi z punktami,
-        bez potrzeby ręcznego liczenia.
-      </div>
-    
-      <h3 class="m-h3">Ankieta tekstowa</h3>
-    
-      <p class="m-p">
-        W ankiecie tekstowej (klasycznym) ankietowani wpisują własne odpowiedzi.
-        Po zamknięciu ankiety system przechodzi do etapu porządkowania wyników.
-        Operator może łączyć oczywiście podobne odpowiedzi
-        oraz usuwać literówki lub oczywiste duplikaty.
-      </p>
-      
-      <p class="m-p">
-        Następnie odpowiedzi są normalizowane do skali punktowej.
-        Na tym etapie system stosuje dodatkowe ograniczenia,
-        które mają na celu zachowanie czytelności tablicy
-        i dynamiki rozgrywki.
-      </p>
-      
-      <p class="m-p">
-        Odpowiedzi o bardzo małej liczbie wskazań,
-        które po normalizacji uzyskują
-        <span class="m-strong">mniej niż 8 punktów</span>,
-        są automatycznie odrzucane.
-        Takie odpowiedzi zwykle nie mają znaczenia dla gry
-        i nie byłyby czytelne dla widzów.
-      </p>
-      
-      <p class="m-p">
-        Dla jednego pytania na tablicy
-        może znaleźć się maksymalnie
-        <span class="m-strong">6 odpowiedzi</span>.
-        Jeżeli poprawnych odpowiedzi jest więcej,
-        system wybiera te najlepiej punktowane,
-        a pozostałe są pomijane.
-      </p>
-      
-      <p class="m-p">
-        Z tego powodu suma punktów dla jednego pytania
-        <span class="m-strong">nie zawsze wynosi dokładnie 100</span>.
-        Punkty przypisane są wyłącznie do odpowiedzi,
-        które faktycznie trafiają na tablicę.
-      </p>
-    
-      <div class="m-warn">
-        <b>Uwaga:</b>
-        po zamknięciu ankiety
-        nie można już zmieniać jego wyników
-        bez ponownego uruchomienia ankiety.
-      </div>
-    
-      <h3 class="m-h2">Ponowne uruchomienie ankiety</h3>
-    
-      <p class="m-p">
-        Zamknięta ankieta można uruchomić ponownie,
-        co powoduje usunięcie poprzednich wyników
-        i rozpoczęcie zbierania odpowiedzi od nowa.
-      </p>
-    
-      <p class="m-p">
-        Ta opcja jest przydatna,
-        gdy ankieta została uruchomiony testowo
-        lub doszło do błędu organizacyjnego.
-      </p>`,
-      subscriptions: `<p class="m-p">
-        Zakładka „Subskrypcje” opisuje wszystko, co dotyczy relacji między użytkownikami:
-        zapraszanie subskrybentów, akceptowanie zaproszeń, ponowne wysyłki i usuwanie powiązań.
-      </p>
-
-
-      <p class="m-p">
-        Przechodzisz do niej z górnego paska na stronie „Moje gry”,
-        przyciskiem <span class="m-code">Subskrypcje <i class="ico" data-icon="bell"></i></span>.
-      </p>
-
-      <h3 class="m-h2">Strona subskrypcji</h3>
-
-      <ul class="m-ul">
-        <li><span class="m-strong">Moi subskrybenci</span> — osoby zaproszone przez Ciebie.</li>
-        <li><span class="m-strong">Moje subskrypcje</span> — zaproszenia i relacje, które dotyczą Ciebie jako odbiorcy.</li>
-      </ul>
-
-      <p class="m-p">
-        Złota kropka przy przycisku <span class="m-code">Subskrypcje <i class="ico" data-icon="bell"></i></span> pokazuje liczbę zaproszeń do zaakceptowania.
-      </p>
-
-      <h3 class="m-h3">Moi subskrybenci</h3>
-      <p class="m-p">
-        Subskrypcja to stałe połączenie między Twoim kontem a zaproszonym użytkownikiem —
-        raz zaakceptowana pozwala udostępniać kolejne ankiety bez wpisywania e-maila od nowa.
-        Zaproszenie wysyłasz, wpisując e-mail lub nazwę użytkownika
-        i klikając <span class="m-code">Zaproś</span>.
-      </p>
-
-      <p class="m-p">
-        Kolory statusów:
-        <span class="m-strong">żółty</span> — oczekujące,
-        <span class="m-strong">zielony</span> — aktywne,
-        <span class="m-strong">czerwony</span> — odrzucone/anulowane.
-        Przycisk <span class="m-code"><i class="ico" data-icon="trash"></i></span> usuwa subskrybenta, a <span class="m-code"><i class="ico" data-icon="refresh"></i></span> ponawia zaproszenie.
-      </p>
-
-      <h3 class="m-h3">Moje subskrypcje</h3>
-      <p class="m-p">
-        Odbiorca akceptuje zaproszenie na swojej stronie subskrypcji,
-        a status zmienia się na aktywny.
-      </p>
-      <p class="m-p">
-        Kolory:
-        <span class="m-strong">żółty</span> — oczekujące,
-        <span class="m-strong">zielony</span> — aktywne.
-        Przyciski: <span class="m-code"><i class="ico" data-icon="check"></i></span> akceptuje, <span class="m-code"><i class="ico" data-icon="cancel"></i></span> odrzuca/anuluje.
-      </p>
-
-      <p class="m-p">
-        W praktyce subskrypcje przyspieszają pracę — do aktywnych subskrybentów możesz
-        jednym kliknięciem udostępnić ankietę oraz szybko udostępnić bazę pytań,
-        bez ręcznego przepisywania danych i linków.
-      </p>
-      <p class="m-p">
-        Jeśli wpisujesz nazwę użytkownika podczas zapraszania, system najpierw sprawdza,
-        czy taki użytkownik istnieje. Jeśli go nie ma, pojawi się komunikat.
-        Dla adresu e-mail zaproszenie może trafić także do osoby niezarejestrowanej jako wiadomość e-mail.
-      </p>`,
-      logo: `<p class="m-p">
-        System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
-        (podczas startu lub zakończenia gry). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry"
-        za pomocą przycisku <span class="m-code">Logo <i class="ico" data-icon="display"></i></span>.
-      </p>
-
-      <div class="m-note">
-        <b>Ważne:</b><br/>
-        Logo ma rozmiar techniczny <span class="m-code">30×10</span> (kafelki znaków) albo <span class="m-code">150×70</span> (piksele).
-        To ograniczenie wynika z fizycznego układu tablicy i ma zapewnić czytelność na żywo.
-      </div>
-
-      <h3 class="m-h2">Tworzenie i edycja logo</h3>
-
-      <p class="m-p">
-        Nowe logo tworzysz klikając kafelek z symbolem <i class="ico" data-icon="plus"></i>. Logo możesz zapisać pod własną nazwą. Po utworzeniu logo, żeby przystąpić do edycji, wybierz kafelek i kliknij przycisk <span class="m-code">Edytuj</span>. Otworzy się edytor, właściwy dla danego typu logo. Możesz zapisać pracę i zawsze wrócić do edycji.
-      </p>
-
-      <p class="m-p">
-        Wszystkie stworzone przez Ciebie logo będą dostępne w Panelu sterowania i można będzie wybrać, którego chcesz użyć w danej rozgrywce.
-      </p>
-
-      <h3 class="m-h3">Tryby tworzenia logo</h3>
-
-      <p class="m-p">
-        Podczas tworzenia nowego logo wybierasz jeden z trybów.
-        Każdy tryb prowadzi do tego samego efektu (logo na wyświetlaczu),
-        ale różni się sposobem tworzenia.
-      </p>
-
-      <ul class="m-ul">
-        <li>
-          <span class="m-strong">Tekst</span> — klasyczne logo złożone ze znaków (styl „Familiady").
-          Dobre, gdy chcesz szybko zrobić czytelny tytuł.
-        </li>
-        <li>
-          <span class="m-strong">Rysunek</span> — rysujesz ręcznie w siatce (jak w prostym edytorze grafiki).
-          Dobre do ikon i prostych kształtów.
-        </li>
-        <li>
-          <span class="m-strong">Obraz</span> — importujesz obrazek i dopasowujesz go do tablicy.
-          Dobre, gdy masz gotowe logo np. firmy.
-        </li>
-      </ul>
-
-      <h3 class="m-h3">Usuwanie elementów rysunku</h3>
-      <p class="m-p">Zaznacz element lub kilka elementów i kliknij <span class="m-code">×</span> w pasku ich opcji. Możesz też nacisnąć <span class="m-code">Delete</span> (na Macu <span class="m-code">Fn + Backspace</span>). Usuniesz tylko zaznaczone elementy. Przycisk <span class="m-code">Wyczyść</span> usuwa cały rysunek.</p>
-      <p class="m-p">Usunięcie możesz cofnąć przyciskiem <span class="m-code">Cofnij</span> lub skrótem <span class="m-code">Ctrl + Z</span> (Mac: <span class="m-code">⌘ + Z</span>). Przycisk <span class="m-code">Ponów</span> ponownie wykonuje cofnięte usunięcie. Cofanie i ponawianie są dostępne podczas bieżącej edycji; po ponownym otwarciu logo historia zaczyna się od nowa.</p>
-
-      <h3 class="m-h3">Podgląd na wyświetlaczu</h3>
-
-      <p class="m-p">
-        W edytorze cały czas widzisz podgląd „jak na tablicy".
-        To ważne, bo to co wygląda dobrze w dużej rozdzielczości,
-        może być nieczytelne po sprowadzeniu do <span class="m-code">150×70</span>.
-      </p>
-
-      <div class="m-note">
-        <b>Praktyczna rada:</b><br/>
-        Najlepiej sprawdzają się grube kształty, duże litery i wysoki kontrast.
-        Cienkie linie, małe detale i delikatne przejścia zwykle znikają.
-      </div>
-
-      <h3 class="m-h3">Import i eksport logo</h3>
-
-      <p class="m-p">
-        Edytor pozwala eksportować aktywne logo do pliku oraz importować logo z pliku.
-        Dzięki temu możesz przenosić logo pomiędzy kontami lub robić kopie zapasowe.
-      </p>
-
-      <div class="m-warn">
-        <b>Uwaga:</b><br/>
-        Nie edytuj plików logo ręcznie. To format techniczny — ręczna zmiana może spowodować,
-        że import się nie powiedzie albo logo będzie działało nieprawidłowo.
-      </div>`,
-      connect: `<p class="m-p">
-        <span class="m-strong">Podłącz urządzenie</span> to panel, gdzie możesz szybko połączyć się z urządzeniem niezbędnym do rozgrywki:
-        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem do pojedynku</span>, <span class="m-strong">Prowadzącym</span>
-        lub <span class="m-strong">Wyświetlaczem QR ankiety <i class="ico" data-icon="polls"></i></span>.
-        Dostępny bez logowania — wystarczy 6-cyfrowy kod z Panelu sterowania.
-      </p>
-
-      <h3 class="m-h2">Wprowadź kod urządzenia</h3>
-
-      <p class="m-p">
-        Najprostszy sposób na połączenie. Operator w panelu sterowania widzi <span class="m-strong">6-cyfrowy kod</span>
-        przy każdym urządzeniu (Wyświetlaczu, Prowadzącym, Przycisku).
-        Wpisz ten kod i kliknij <span class="m-code">Podłącz</span> — zobaczysz podgląd urządzenia i po potwierdzeniu
-        zostaniesz na nie przekierowany.
-      </p>
-
-      <p class="m-p">
-        Kod <span class="m-strong">Wyświetlacza QR ankiety <i class="ico" data-icon="polls"></i></span> znajdziesz w zakładce
-        <span class="m-code">Ankieta</span> — kliknij <span class="m-code">QR na wyświetlaczu</span>.
-        Po podłączeniu TV lub rzutnik wyświetla kod QR do głosowania dla uczestników.
-      </p>
-
-      <div class="m-note">
-        <b>Jak skorzystać z kodu?</b><br/>
-        1. Operator otwiera panel sterowania i widzi kody przy urządzeniach.<br/>
-        2. Wejdź na <span class="m-code">familiada.online</span> (lub otwórz aplikację).<br/>
-        3. Kliknij przycisk <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>.<br/>
-        4. Wpisz 6-cyfrowy kod i naciśnij <span class="m-code">Podłącz</span>.
-      </div>
-
-      <h3 class="m-h2">Urządzenia udostępnione dla mnie</h3>
-
-      <p class="m-p">
-        Tutaj widzisz urządzenia, które tobie udostępnił któryś z użytkowników (opcja dostępna tylko dla zalogowanych).
-        Klikając w nie możesz się z nim połączyć — zostaniesz przekierowany na stronę urządzenia.
-      </p>
-
-      <div class="m-note">
-        <b>Ważne:</b><br/>
-        Jeśli jesteś na telefonie lub tablecie, będziesz w stanie połączyć się tylko z <span class="m-strong">Przyciskiem</span> lub <span class="m-strong">Prowadzącym</span>.
-        Jeśli na komputerze lub telewizorze — tylko z <span class="m-strong">Wyświetlaczem</span>.
-      </div>
-
-      <h3 class="m-h2">Skanuj kod QR</h3>
-
-      <p class="m-p">
-        Opcja dostępna tylko na urządzeniach mobilnych w aplikacji webowej.
-        Pozwala szybko połączyć się z urządzeniem używając kamery.
-        Po prostu zeskanuj kod QR pokazany przez Panel sterowania na Wyświetlaczu lub bezpośrednio w panelu.
-      </p>
-
-      <div class="m-note">
-        <b>Wskazówka:</b><br/>
-        Dla najlepszego użytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online.
-        Na swoim telefonie na stronie <span class="m-strong">Moje gry</span> kliknij przycisk <span class="m-code"><i class="ico" data-icon="download"></i></span> — dostaniesz wskazówki, jak ją pobrać.
-      </div>`,
-      control: `<p class="m-p">Do Panelu sterowania przechodzisz z listy „Moje gry&quot; za pomocą przycisku <span class="m-code">Graj</span>. Ten tryb jest przeznaczony wyłącznie do prowadzenia rozgrywki na żywo — w tym miejscu nie edytujesz już pytań ani wyników ankiety.</p>
-<p class="m-p">Panel sterowania prowadzi operatora krok po kroku: najpierw podłączasz urządzenia, potem ustawiasz parametry rozgrywki, a na końcu przechodzisz przez rundy i (opcjonalnie) finał. Kolejne kroki odblokowują się dopiero wtedy, gdy poprzednie są gotowe, co minimalizuje ryzyko pomyłek podczas rozgrywki.</p>
-<h3 class="m-h2">Co musi być gotowe, zanim zaczniesz</h3>
-<ul class="m-ul">
-<li>Gra powinna mieć przygotowane pytania i odpowiedzi (z edytora), a jeśli jest to gra ankietowa — powinna być zakończona i zatwierdzona.</li>
-<li>Operator powinien mieć komputer z dużym ekranem, na którym pytanie, odpowiedzi i podpowiedzi są czytelne.</li>
-<li>Powinny być przygotowane osobne urządzenia: wyświetlacz (TV/rzutnik), urządzenie prowadzącego, oraz urządzenie pełniące rolę przycisku.</li>
-<li>Stabilne Wi-Fi (najczęstsza przyczyna problemów to usypianie przeglądarki lub przełączanie sieci).</li>
-</ul>
-<p class="m-p"><span class="m-strong">Dlaczego tyle „formalności&quot;?</span></p>
-<p class="m-p">Rozgrywka jest na żywo i ma telewizyjne tempo. Panel sterowania ma pilnować procedury, a nie dokładać operatorowi stresu. Dlatego system wymusza gotowość sprzętu i ustawień przed startem.</p>
-<h3 class="m-h2">Kto co widzi</h3>
-<p class="m-p">System celowo rozdziela ekrany, żeby każdy robił swoje:</p>
-<ul class="m-ul">
-<li><span class="m-strong">Operator (Panel sterowania)</span> — widzi wszystkie przyciski, status gry, bank, X-y, komunikaty i kolejne kroki procedury. Operator steruje tym, co pojawia się na tablicy.</li>
-<li><span class="m-strong">Wyświetlacz</span> — pokazuje tablicę gry: pytania, odpowiedzi, punkty, bank, błędy (X) oraz ekrany startu i zakończenia. To ekran widoczny dla uczestników i widowni.</li>
-<li><span class="m-strong">Prowadzący</span> — dostaje treści do odczytania i podgląd kontekstu, ale nie steruje przebiegiem gry (steruje operator).</li>
-<li><span class="m-strong">Przycisk</span> — służy do sygnału w pojedynku (kto pierwszy).</li>
-</ul>
-<p class="m-p">Tablet Prowadzącego ma dwie części. W pionie są to część górna i dolna, a w poziomie lewa i prawa. Pierwsza podaje etap gry oraz, zależnie od etapu, pytanie. Druga zawiera materiały potrzebne do prowadzenia: listę odpowiedzi, pytania finału albo szczegóły aktualnego dopasowania. Druga część może być przykryta zasłoną.</p>
-<aside class="m-host"><p class="m-host-title"><span class="m-strong">Zasłona na tablecie Prowadzącego</span></p>
-<ul class="m-ul">
-<li>W pionie przesuń zasłonę <span class="m-strong">w dół</span>, aby odsłonić treść; <span class="m-strong">w górę</span>, aby zasłonić.</li>
-<li>W poziomie przesuń <span class="m-strong">w prawo</span>, aby odsłonić; <span class="m-strong">w lewo</span>, aby zasłonić.</li>
-<li>Na zasłonie i pod odsłoniętą treścią są wskazówki odpowiednie do orientacji urządzenia.</li>
-<li>Odsłonięcie służy tylko prowadzącemu. Nie odkrywa odpowiedzi dla publiczności i nie zatwierdza żadnej akcji gry. Zasłona chroni pytania i odpowiedzi przed przypadkowym zobaczeniem przez graczy.</li>
-<li><span class="m-strong">Każda nowa zmiana stanu gry przywraca zasłonę</span>, jeśli dany stan wymaga zasłonięcia. Dlatego po działaniu operatora może być potrzebny kolejny gest.</li>
-</ul>
-<p class="m-p">Odsłoń treść na swoim urządzeniu, gdy potrzebujesz przeczytać pytanie albo sprawdzić odpowiedzi. Nie traktuj zasłony jako informacji, że odpowiedzi zniknęły z gry.</p>
-</aside>
-<h4 class="m-h3">Układ Panelu sterowania</h4>
-<p class="m-p">W górnym pasku sprawdzisz połączenie Wyświetlacza, Prowadzącego i Przycisku. Przyciski urządzeń pozwalają wrócić do ich linków, kodów i udostępniania także w trakcie gry. Główna część panelu zmienia się wraz z etapem: w przygotowaniu pokazuje urządzenia lub Podsumowanie, w rundach pytanie i odpowiedzi, a w finale pola wpisywania albo ocenę pojedynczej odpowiedzi.</p>
-<p class="m-p">Kolumna podpowiedzi wyjaśnia, kto teraz odpowiada i na jaką czynność czeka system. Pasek pod planszą pokazuje bieżące informacje: w rundach drużynę grającą i bank, a przy odsłanianiu finału sumę punktów. Przycisk dalszego przejścia opisuje następny krok. Nie musisz zgadywać, co zrobi <span class="m-code">Dalej</span> — przy ważnych przejściach jego nazwa zmienia się np. na <span class="m-code">Przejdź do finału</span> lub <span class="m-code">Zakończ finał</span>.</p>
-<h3 class="m-h2">1) Urządzenia</h3>
-<p class="m-p">Aby sprawdzić grę na jednym komputerze, włącz <span class="m-code">Tryb testowy</span>. Wyświetlacz, Prowadzący i Przycisk pojawią się po prawej stronie panelu, a pozostałe opcje podłączania będą niedostępne. Tryb pozostaje włączony po odświeżeniu. Jeśli okno jest za małe, powiększ je, aby włączyć tryb.</p>
-<p class="m-p">Pierwszy etap w panelu to podłączenie urządzeń. W górnym pasku panelu widzisz trzy statusy: <span class="m-strong">Wyświetlacz</span>, <span class="m-strong">Prowadzący</span>, <span class="m-strong">Przycisk do pojedynku</span>. Operator zaczyna od podłączenia wymaganych urządzeń. Prowadzący jest opcjonalny — rozgrywkę można prowadzić bezpośrednio z Panelu sterowania.</p>
-<h4 class="m-h3">Wyświetlacz</h4>
-<p class="m-p">Panel pokazuje <span class="m-strong">6-cyfrowy kod</span> dla Wyświetlacza. Najlepiej otworzyć Wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki). Dopiero gdy Wyświetlacz jest połączony, panel pozwala przejść dalej.</p>
-<p class="m-p"><span class="m-strong">Jak wygodnie wyświetlić tablicę na drugim ekranie?</span></p>
-<p class="m-p">Dla najlepszego efektu użyj trybu rozszerzonego ekranu. W systemie <span class="m-strong">Windows</span> przełączysz go skrótem <span class="m-code">Win + P</span>, a na <span class="m-strong">Macu</span> użyj <span class="m-code">⌘ F1</span> (czasem dodatkowo <span class="m-code">Fn</span>).</p>
-<p class="m-p">Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran i włącz tryb pełnoekranowy. Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.</p>
-<div class="m-warn"><b>Ważne — Wyświetlacz musi być widoczny podczas gry.</b><br/>Nie zostawiaj karty ani okna Wyświetlacza w tle. Przeglądarka może wtedy ograniczyć lub wstrzymać animacje i aktualizowanie planszy, nawet jeśli połączenie nadal wygląda na aktywne. Nie testuj gry z ukrytym Wyświetlaczem. Do testu na jednym komputerze użyj wbudowanego Trybu testowego albo pokaż Wyświetlacz w widocznym oknie na drugim, rozszerzonym ekranie.</div>
-<p class="m-p"><span class="m-strong">Telewizor jako osobne urządzenie</span></p>
-<p class="m-p">Na komputerze otwórz kod Wyświetlacza w Panelu sterowania. W przeglądarce telewizora wejdź na <a href="http://www.familiada.online">www.familiada.online</a>. Rozpoznany TV pokaże uproszczoną stronę podłączenia z logo Familiady, polem na sześciocyfrowy kod i przyciskiem <span class="m-code">Podłącz</span>. Wpisz kod Wyświetlacza. Nie trzeba logować się na telewizorze ani podłączać go przewodem do komputera.</p>
-<p class="m-p">Pole kodu jest wybrane od razu. Strzałki góra i dół przełączają między polem a przyciskiem; OK lub Enter zatwierdza. Na Wyświetlaczu odblokuj dźwięk, jeśli ma grać z telewizora. Przeglądarka może pozwolić na pełny ekran dopiero po naciśnięciu pilota.</p>
-<p class="m-p">Możesz też otworzyć na TV bezpośredni link Wyświetlacza skopiowany z Panelu sterowania. Jeżeli przeglądarka telewizora nie została rozpoznana, otwórz <a href="https://www.familiada.online/connect-device/tv/">stronę podłączenia TV</a> i wpisz kod. Dotyczy to również niestandardowej przeglądarki na Apple TV. Na TV można podłączyć Wyświetlacz gry albo Wyświetlacz QR ankiety; kody Prowadzącego i Przycisku są odrzucane.</p>
-<h4 class="m-h3">Prowadzący i Przycisk</h4>
-<p class="m-p">Następnie podłączasz urządzenie prowadzącego i urządzenie przycisku. Panel pokazuje <span class="m-strong">6-cyfrowy kod</span> i kod QR dla każdego z nich. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.</p>
-<p class="m-p">Dostępna jest opcja <span class="m-code">QR na wyświetlaczu</span> — po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza), żeby ekipa mogła szybko zeskanować je telefonami. To przyspiesza start na planie, bo nie trzeba przepisywać linków.</p>
-<p class="m-p">Poprzez opcję <span class="m-code">Udostępnij</span> możesz wysłać komuś link w wiadomości e-mail lub udostępnić go swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code"><i class="ico" data-icon="phone"></i> Podłącz urządzenie</span>. Osoby niezarejestrowane otrzymają link w wiadomości e-mail.</p>
-<p class="m-p"><span class="m-strong">Jak wygodnie podłączyć urządzenie?</span></p>
-<p class="m-p">Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code"><i class="ico" data-icon="phone"></i> Podłącz urządzenie</span> w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w Panelu sterowania.</p>
-<p class="m-p">Alternatywnie: na urządzeniu mobilnym możesz zeskanować <span class="m-strong">kod QR</span> widoczny w panelu. Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span> kliknij przycisk <span class="m-code"><i class="ico" data-icon="download"></i></span>, aby uzyskać wskazówki.</p>
-<p class="m-p"><span class="m-strong">Tryb bez tabletu prowadzącego</span></p>
-<p class="m-p">Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję <span class="m-code">Nie używaj tabletu prowadzącego</span> przy urządzeniu Prowadzący. Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone, podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej, a kontrolka Prowadzącego w górnym pasku staje się nieaktywna. Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.</p>
-<p class="m-p"><span class="m-strong">Przycisk fizyczny</span></p>
-<p class="m-p">Jeśli zamiast Przycisku do pojedynku w przeglądarce używasz przycisku fizycznego, (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję <span class="m-code">Przycisk fizyczny</span> przy urządzeniu Przycisk. Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane, a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.</p>
-<p class="m-p">W trybie fizycznego przycisku przebieg pojedynku wygląda tak:</p>
-<ul class="m-ul">
-<li>Po uruchomieniu pojedynku pojawiają się dwa przyciski: <span class="m-code">Drużyna A</span> i <span class="m-code">Drużyna B</span>.</li>
-<li>Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — kafelek tej drużyny się podświetla.</li>
-<li>Operator klika <span class="m-code">Zatwierdź</span>, aby potwierdzić wybór i przejść dalej.</li>
-</ul>
-<p class="m-p"><span class="m-strong">Rozłączenie urządzenia</span></p>
-<p class="m-p">Gdy wymagane urządzenie przestaje zgłaszać obecność, po około 6,5 sekundy Panel sterowania pokazuje jednorazowo okno z nazwami odłączonych urządzeń i blokuje dalsze działania. Sprawdź internet w Panelu sterowania i na urządzeniach. Jeśli połączenie nie wróci, podłącz je ponownie przyciskami w górnym pasku. Gra odblokuje się po powrocie wszystkich wymaganych urządzeń. Jeśli źródłem dźwięku jest Wyświetlacz, po jego ponownym połączeniu odblokuj dźwięk jeszcze raz na Wyświetlaczu — przycisk pojawi się automatycznie, a panel pozostanie zablokowany do kliknięcia. Nie trzeba odświeżać strony. Urządzenia pominięte w przygotowaniu nie blokują rozgrywki.</p>
-<p class="m-p">Działania zatwierdzone przed wykryciem rozłączenia pozostają zapisane. Czynność już wysłana może jeszcze zakończyć zapis; system nie cofa wyniku. Urządzenie po powrocie pokazuje aktualny stan gry, bez powtarzania pominiętych animacji. Uruchomiony zegar nadal odlicza czas.</p>
-<h4 class="m-h3">Dźwięk</h4>
-<p class="m-p">Wybierz źródło dźwięku: „Panel sterowania” albo „Wyświetlacz”. Dźwięki gry odtwarzane są tylko na wybranym urządzeniu. Jeśli wybierasz Wyświetlacz, naciśnij na nim przycisk odblokowania dźwięku. Na telewizorze można użyć OK lub Enter na pilocie. Przeglądarka może wymagać kliknięcia, zanim pozwoli na odtwarzanie. Po podłączeniu sprawdź również poziom głośności samego telewizora lub głośników.</p>
-<div class="m-warn"><b>Uwaga:</b><br/>Źródło „Wyświetlacz” wybierz, gdy dźwięk ma odtwarzać osobny telewizor lub inne osobne urządzenie na którym będzie otwarta karta urządzenia „Wyświetlacz”. Przy HDMI zwykle wygodniej pozostawić „Panel sterowania” i wybrać telewizor jako wyjście dźwięku w ustawieniach komputera. Po podłączeniu HDMI system często robi to automatycznie. Przy AirPlay przesyłasz obraz i dźwięk z Maca, iPhone’a lub iPada na Apple TV.</div>
-<p class="m-p"><span class="m-strong">Skrót:</span> M wycisza lub przywraca dźwięk od razu, bez Entera. Wyciszenie działa także na Wyświetlaczu; odtwarzanie trwa dalej w ciszy.</p>
-<h3 class="m-h2">2) Ustawienia</h3>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Tablet pokazuje logo wybrane w ustawieniach gry. Gdy wcześniej trwa edycja tego logo, pokazuje domyślne logo Familiady. Przy wejściu operatora w Podsumowanie ustawień pobiera wybrane logo ponownie; wcześniej pokazane logo domyślne zostaje wtedy zastąpione właściwym.</div>
-<p class="m-p">Gdy urządzenia są połączone, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie <span class="m-strong">Ustawień rozgrywki</span> — Panel sterowania wczyta je automatycznie.</p>
-<p class="m-p"><span class="m-strong">Skróty:</span> W Podsumowaniu E zaznacza zmianę ustawień, a Enter ją otwiera. B i Enter wracają, gdy powrót jest dostępny.</p>
-<h4 class="m-h3">Nazwy drużyn</h4>
-<p class="m-p">Nazwy drużyn sprawdź w Podsumowaniu. Wyświetlacz pozostaje wtedy czarny; nazwy pojawią się dopiero po <span class="m-code">Gotowe — przejdź do rozgrywki</span>, na ekranie z przyciskiem <span class="m-code">Rozpocznij grę</span>. Puste pola w Ustawieniach gry oznaczają nazwy „Drużyna A” i „Drużyna B”.</p>
-<h4 class="m-h3">Wygląd</h4>
-<ul class="m-ul">
-<li><span class="m-strong">Kolory</span> — kolory drużyn, tła i kropek.</li>
-<li><span class="m-strong">Motyw</span> — styl wizualny tablicy.</li>
-<li><span class="m-strong">Logo</span> — logo wyświetlane w trakcie rozgrywki.</li>
-<li><span class="m-strong">Logo prowadzącego</span> — wariant <span class="m-strong">Piksele</span> albo <span class="m-strong">Źródło</span> wybierasz w Ustawieniach gry; w Podsumowaniu zobaczysz wybrany wariant i podgląd Hosta obok podglądu Wyświetlacza.</li>
-</ul>
-<h4 class="m-h3">Dźwięk</h4>
-<ul class="m-ul">
-<li>Przy każdej kategorii dźwiękowej widzisz aktualny <span class="m-strong">wariant</span> (np. Klasyczny lub nazwę własnego pliku).</li>
-<li>Suwak <span class="m-strong">głośności</span> pozwala dostosować poziom każdego dźwięku.</li>
-<li>Przycisk <span class="m-code"><i class="ico" data-icon="play"></i></span> pozwala odsłuchać dźwięk przed rozgrywką.</li>
-</ul>
-<p class="m-p">Jeśli zmienisz poziom głośności tutaj, zostanie on zmieniony tylko dla tej konkretnej rozgrywki. Przy ponownym uruchomieniu rozgrywki zostaną wczytane wartości nadane w <span class="m-strong">Ustawieniach gry</span>.</p>
-<h4 class="m-h3">Finał</h4>
-<p class="m-p">Tu zobaczysz tylko potwierdzenie, czy rozgrywka ma finał.</p>
-<p class="m-p">Jeśli finał jest włączony i wybrano tryb <span class="m-strong">Ręcznie</span> — tutaj zobaczysz wybrane przez Ciebie 5 pytań finałowych. Przy trybie <span class="m-strong">Losuj</span> zobaczysz wylosowane pytania finałowe. Możesz użyć <span class="m-code">Losuj ponownie</span> przy tej sekcji, aby zmienić zestaw przed rozpoczęciem gry. Wybrana kolejność i ręcznie wybrane pytania finału pozostają bez zmian.</p>
-<h4 class="m-h3">Rundy: kolejność pytań</h4>
-<p class="m-p">Jeśli wybrano tryb <span class="m-strong">Kolejność</span> dla pytań rund — tutaj będzie widoczna kolejność pytań, które zostaną użyte podczas rozgrywki zasadniczej. Przy trybie <span class="m-strong">Losuj</span> zobaczysz wylosowane pytania rund.  Możesz użyć <span class="m-code">Losuj ponownie</span> przy pytaniach rund, aby zmienić ich kolejność przed rozpoczęciem gry.</p>
-<p class="m-p">Zawsze możesz wybrać <span class="m-code">Zmień ustawienia</span>, aby otworzyć okno ustawień. Szczegóły znajdziesz w <a href="#gameSettings">Ustawieniach gry</a>.</p>
-<p class="m-p">Gdy wszystko się zgadza — kliknij <span class="m-code">Gotowe — przejdź do rozgrywki</span>.</p>
-<h4 class="m-h3">Zaznaczanie i zatwierdzanie</h4>
-<p class="m-p">Pierwsze kliknięcie kafelka wymagającego potwierdzenia zaznacza go. Drugie zatwierdza czynność. W ten sposób przyjmujesz zgłoszenie, odsłaniasz odpowiedzi w rundach, dodajesz X i oddajesz kontrolę. Samo zaznaczenie nie zmienia wyniku. Wyszarzone przyciski są niedostępne; podczas dźwięku lub przejścia poczekaj, aż panel je odblokuje. Wskazówki do bieżącego kroku znajdziesz w kolumnie podpowiedzi.</p>
-<div class="m-note"><b>Wskazówka:</b><br/>Zaznaczenie kafelka pozwala sprawdzić wybór przed wykonaniem czynności. Punkty i plansza zmieniają się dopiero po zatwierdzeniu. Jeśli panel czeka na dźwięk lub przejście, pozwól mu je dokończyć.</div>
-<div class="m-note"><b>Ważne:</b><br/>Litery i cyfry w aktywnym polu pozostają zwykłym tekstem. Skróty nie omijają blokad, dźwięków ani animacji i nie wykonują czynności w tle otwartego okna. Restart nie ma skrótu.</div>
-<h3 class="m-h2">3) Rozpoczęcie gry</h3>
-<p class="m-p">Po sprawdzeniu Podsumowania wybierz <span class="m-code">Gotowe — przejdź do rozgrywki</span>. Wyświetlacz aktywuje się i pokazuje nazwy drużyn, bez logo i planszy odpowiedzi. Przycisk do pojedynku jest już widoczny, ale jeszcze nie przyjmuje naciśnięć.</p>
-<div class="m-note"><b>Wskazówka:</b><br/>W tym stanie możesz pozostawić panel aż do rozpoczęcia właściwej rozgrywki. Kolejne etapy prowadzisz już w telewizyjnym tempie.</div>
-<p class="m-p"><span class="m-code">Rozpocznij grę</span> uruchamia intro i animowane wejście logo na Wyświetlaczu. Po zakończeniu przejścia wybierz <span class="m-code">Rozpocznij rundę</span>, aby otworzyć planszę pytania i rozpocząć pojedynek.</p>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Treść pytania będzie dostępna na etapie pojedynku. Nie odczytuj materiałów przed przygotowaniem zawodników.</div>
-<h3 class="m-h2">4) Rundy — przebieg gry krok po kroku</h3>
-<p class="m-p">W rundach prowadzisz właściwą rozgrywkę: pytania, odpowiedzi, punkty i bank rundy. Gracze widzą tablicę na wyświetlaczu, prowadzący zadaje pytania i pilnuje przebiegu, a operator odsłania odpowiedzi, nalicza punkty oraz dodaje błędy (X).</p>
-<p class="m-p">Najważniejsza zasada w praktyce: prowadzący skupia się na uczestnikach, a operator na obsłudze systemu. Dzięki temu gra jest płynna, a tablica pokazuje właściwe informacje.</p>
-<div class="m-note"><b>Wskazówka:</b><br/>Możesz połączyć rolę operatora i prowadzącego, ale wymaga to sprawnego przechodzenia między rozmową z uczestnikami a obsługą panelu.</div>
-<h4 class="m-h3">Pojedynek: kto przejmuje kontrolę</h4>
-<p class="m-p">Każde pytanie zaczyna się od pojedynku „głów rodzin”. Przycisk rozświetla się od razu po naciśnięciu, a zgłoszenie informuje operatora, kto był pierwszy. Operator przyjmuje wskazaną drużynę. Jeśli zgłaszanie trzeba powtórzyć, wybierz <span class="m-code">Ponów naciśnięcie</span>. W trybie fizycznego przycisku operator wskazuje drużynę ręcznie.</p>
-<p class="m-p">Zgodnie z regulaminem, jeśli pierwsza odpowiedź nie jest najwyżej punktowana, druga „głowa&quot; ma szansę odpowiedzieć lepiej i przejąć kontrolę. Panel prowadzi operatora przez decyzję kontroli rundy, a wyświetlacz pokazuje, która drużyna aktualnie gra (wskaźnik drużyny).</p>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Tytuł „RUNDA 1 — PRZYCISK” oznacza, że trwa pojedynek, także po przyjęciu zgłoszenia przez operatora. Pytanie i pełną treść odpowiedzi z punktami zobaczysz po odsłonięciu drugiej części. Zasłona zapobiega przypadkowemu odczytaniu pytania przez graczy przed jego zadaniem. Numer w tytule zmienia się wraz z rundą.</div>
-<p class="m-p"><span class="m-strong">Skróty:</span> C i Enter zatwierdzają drużynę wskazaną przez Przycisk. W trybie fizycznego przycisku A/B zaznacza drużynę, a Enter zatwierdza.</p>
-<h4 class="m-h3">Oddanie pytania</h4>
-<p class="m-p">Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować, że <span class="m-strong">oddaje pytanie</span> przeciwnikom. Jest to ruch taktyczny: zamiast „dobić&quot; pytanie, drużyna może przekazać szansę rywalom. Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.</p>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Gdy można oddać kontrolę, w pierwszej części pojawia się czerwona, podkreślona podpowiedź. Ten styl dotyczy wyłącznie tabletu prowadzącego. Decyzję drużyny realizuje operator w Panelu sterowania.</div>
-<p class="m-p"><span class="m-strong">Skrót:</span> P zaznacza oddanie kontroli, Enter je zatwierdza.</p>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Podpowiedź o możliwości oddania kontroli jest czerwona i podkreślona.</div>
-<h4 class="m-h3">Rozgrywka pytania: odsłanianie odpowiedzi i bank</h4>
-<p class="m-p">Po ustaleniu kontroli drużyna odpowiada, a operator zaznacza i zatwierdza trafione odpowiedzi. Na Wyświetlaczu najpierw odsłania się tekst odpowiedzi, potem jej punkty, a pod koniec tej animacji nowa suma banku rundy. Kafelek odsłoniętej odpowiedzi w panelu staje się zielony i nie przyznaje punktów ponownie. Bank to punkty z bieżącego pytania; wynik drużyny zostanie uzupełniony przy rozliczeniu rundy, z uwzględnieniem mnożnika. Odsłonięciu odpowiedzi w rundzie towarzyszy tylko dźwięk poprawnej odpowiedzi.</p>
-<p class="m-p">Rozgrywka trwa do odsłonięcia wszystkich odpowiedzi albo trzech pudeł drużyny grającej. Trzeci X uruchamia kradzież przez przeciwników. Podpowiedź w panelu wskazuje aktualny etap i dostępny następny krok.</p>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> „RUNDA 1 — ROZGRYWKA” oznacza grę drużyny po pojedynku. Pytanie jest już jawne w pierwszej części. W drugiej widzisz pełne odpowiedzi i punkty, także jeszcze zakryte na Wyświetlaczu. Wiersz „2) Rower (24)” oznacza drugą odpowiedź i 24 punkty. Zielony wiersz oznacza odpowiedź odsłoniętą publiczności. Prowadzący nie pokazuje banku, X ani wyników drużyn — sprawdzaj je na Wyświetlaczu lub w panelu.</div>
-<p class="m-p"><span class="m-strong">Skróty:</span> 1–6 zaznacza odpowiedź, Enter ją odsłania.</p>
-<h4 class="m-h3">Pudła (X) i limit 3 sekund</h4>
-<p class="m-p">Błędna odpowiedź jest oznaczana symbolem <span class="m-strong">X</span> na tablicy. Trzy błędy oznaczają utratę kontroli i przejście do kradzieży przez przeciwników. System ma także mechanikę limitu czasu <span class="m-strong">3 sekund</span> na odpowiedź — przekroczenie limitu jest traktowane jak pudło (X).</p>
-<p class="m-p"><span class="m-strong">Po co odliczanie?</span></p>
-<p class="m-p">To jest „bat na tempo&quot;. Odliczanie pozwala operatorowi szybko zamknąć zawahanie bez dyskusji i utrzymać rytm rozgrywki.</p>
-<p class="m-p"><span class="m-strong">Skróty:</span> X zaznacza pudło, T timer; Enter wykonuje zaznaczoną czynność.</p>
-<h4 class="m-h3">Kradzież banku (jedna odpowiedź)</h4>
-<p class="m-p">Gdy drużyna grająca wykorzysta trzy „szanse&quot; zanim odsłoni wszystkie odpowiedzi, pytanie przechodzi do drużyny przeciwnej. Przeciwnicy mają prawo do <span class="m-strong">jednej odpowiedzi</span>: jeśli trafi — bank przechodzi do nich, jeśli nie — bank zostaje u drużyny grającej. To domyka pytanie i rundę zgodnie z regulaminem.</p>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Tytuł zmienia się na „RUNDA 1 — KRADZIEŻ”. Lista odpowiedzi pozostaje dostępna pod zasłoną; pytanie pozostaje jawne. Nazwę drużyny wykonującej próbę i rozstrzygnięcie sprawdzisz w panelu i na Wyświetlaczu.</div>
-<h4 class="m-h3">Odsłanianie brakujących odpowiedzi i zakończenie rundy</h4>
-<p class="m-p">Jeśli po tej rundzie będzie kolejna runda albo finał, a pytanie jest już rozstrzygnięte, wybierz „Zakończ rundę”. Bank zostaje dopisany właściwej drużynie z uwzględnieniem mnożnika. Jeśli pozostały zakryte odpowiedzi, odsłoń je kolejno dla publiczności — nie przyznają już dodatkowych punktów drużynie. Plansza pozostaje widoczna do kolejnego przejścia.</p>
-<div class="m-note"><b>Praktyczna uwaga:</b><br/>Panel celowo rozdziela „rozgrywkę pytania&quot; od „zakończenia rundy&quot;. Dzięki temu operator nie skasuje przypadkiem stanu tablicy, zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy&quot;.</div>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> „RUNDA 1 — ODSŁANIANIE” oznacza pokaz pozostałych odpowiedzi po rozliczeniu banku. Kolejne odsłonięte wiersze stają się zielone.</div>
-<p class="m-p">Po odsłonięciu pozostałych odpowiedzi użyj przycisku wskazującego następną rundę albo finał.</p>
-<h4 class="m-h3">Zakończenie rund i przejście dalej</h4>
-<p class="m-p">Po każdej rundzie system aktualizuje wynik drużyn i sprawdza, czy spełniono warunek zakończenia rozgrywki (ustawiony w „Dodatkowych ustawieniach&quot;). Najczęściej jest to próg punktów, np. <span class="m-strong">300</span>, ale może być inny — zależnie od tego, jak chcesz poprowadzić turniej.</p>
-<p class="m-p">Jeśli finał jest <span class="m-strong">włączony</span>, a próg rund został osiągnięty, przycisk dalszego przejścia prowadzi do finału. Przy zakończeniu bez finału wybierz <span class="m-code">Przejdź do zakończenia gry</span>, aby rozliczyć bank i pokazać ekran końcowy. Samo osiągnięcie progu nie pokazuje wyniku automatycznie; pozostałe działania rundy są zablokowane, a brakujących odpowiedzi nie odsłaniasz.</p>
-<p class="m-p">Jeśli pytania do rund się wyczerpią przed osiągnięciem progu punktów, rozgrywka przechodzi do zakończenia gry. Sam brak pytań nie kwalifikuje do finału. Finał wymaga osiągnięcia progu i włączenia go w ustawieniach.</p>
-<div class="m-warn"><b>Uwaga:</b><br/>Dobierz liczbę pytań i próg punktów tak, aby nie wyczerpać pytań przed planowanym finałem. Samo włączenie finału nie gwarantuje jego rozpoczęcia.</div>
-<p class="m-p"><span class="m-strong">Skrót:</span> N zaznacza aktualny przycisk dalszego przejścia, Enter go uruchamia.</p>
-<h3 class="m-h2">5) Finał</h3>
-<p class="m-p">W finale dwóch zawodników odpowiada na te same <span class="m-strong">5 pytań</span>. Ich punkty sumują się; celem jest ustawiony próg finału, domyślnie <span class="m-strong">200 punktów</span>. Zwykle grają dwie osoby z drużyny zwycięskiej. Za jej zgodą możesz organizacyjnie wybrać po jednym zawodniku z każdej drużyny — system nadal rozlicza jeden wspólny finał zwycięzców.</p>
-<h4 class="m-h3">Przygotowanie finału</h4>
-<p class="m-p">Przed grą sprawdź pięć pytań w Podsumowaniu. Przy trybie <span class="m-strong">Ręcznie</span> wybierz je w Ustawieniach gry; przy trybie <span class="m-strong">Losuj</span> system dobiera je automatycznie. Przygotuj miejsce oczekiwania i słuchawki z muzyką dla drugiego zawodnika: podczas pierwszej rundy nie może słyszeć pytań ani odpowiedzi.</p>
-<p class="m-p"><span class="m-code">Rozpocznij finał</span> otwiera planszę finału. Wynik zwycięskiej drużyny pozostaje widoczny, a miejsce wyniku przeciwnej drużyny jest przeznaczone na zegar. Suma finału jest pokazywana w banku na górze.</p>
-<div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Podczas przygotowania finału tablet nie pokazuje materiałów. Materiały pojawiają się po rozpoczęciu pierwszej rundy.</div>
-<h4 class="m-h3">Gracz 1 — przygotowanie i wpisywanie</h4>
-<p class="m-p">Upewnij się, że drugi zawodnik oczekuje poza grą. Prowadzący czyta po kolei pytania; operator wpisuje odpowiedzi przy właściwych pytaniach. Odpowiedzi nie są jeszcze oceniane ani pokazywane publiczności.</p>
-<p class="m-p">Zegar pierwszego gracza ma <span class="m-strong">15 sekund</span>. Nie rusza po samym otwarciu etapu: uruchom go przyciskiem albo skrótem <span class="m-strong">Ctrl + Enter</span> (Mac: <span class="m-strong">⌘ + Enter</span>). Tym samym przyciskiem lub skrótem możesz zatrzymać odliczanie. Enter i strzałka w dół przechodzą do następnego pustego pola, a strzałka w górę do poprzedniego pustego pola. Po ostatnim pytaniu przechodzisz do pierwszego. Żeby poprawić uzupełnioną odpowiedź, kliknij jej pole. Puste pole to brak wpisu, nie ostateczna ocena odpowiedzi. Każdy gracz musi wykorzystać timer przed przejściem do dopasowania. Ręczne zatrzymanie jest dostępne dopiero po wpisaniu tekstu we wszystkich pięciu polach; samo Powtórzenie nie wypełnia pola. Po naturalnym upływie czasu możesz przejść dalej z brakami.</p>
-<div class="m-note"><b>Wskazówka:</b><br/>Po upływie czasu możesz poprawić literówki i uzupełnić zapamiętaną odpowiedź, gdy prowadzący jeszcze rozmawia z zawodnikiem. Poprawki są możliwe również podczas dopasowania, do odsłonięcia odpowiedzi.</div>
-<aside class="m-host"><p class="m-host-title"><span class="m-strong">Prowadzący podczas wpisywania:</span></p>
-<p class="m-p">Pierwsza część pokazuje <span class="m-code">FINAŁ RUNDA 1</span> albo <span class="m-code">FINAŁ RUNDA 2</span>. Po uruchomieniu zegara tytuł zawiera także odliczanie, np. <span class="m-code">FINAŁ RUNDA 1 — ODLICZANIE 12s</span>. Jest to pozostały czas bieżącego gracza. Bez uruchomionego zegara tytuł nie zawiera sekund.</p>
-<p class="m-p">Druga część pokazuje pięć pytań z numerami i statusem wpisu, np.:</p>
-<pre class="m-pre">1) Wymień środek transportu. — wpisano
-2) Co zabierasz na wakacje? — brak
-3) Co pijesz rano? — powtórzenie</pre>
-<div class="m-table-wrap"><table class="m-table">
-<thead>
-<tr>
-<th>Status przy pytaniu</th>
-<th>Znaczenie</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><span class="m-code">wpisano</span></td>
-<td>Operator zapisał niepusty tekst odpowiedzi. To jeszcze nie potwierdzenie trafienia ani przyznania punktów.</td>
-</tr>
-<tr>
-<td><span class="m-code">brak</span></td>
-<td>Pole odpowiedzi jest puste. Nie oznacza to automatycznie, że gracz już definitywnie pominął pytanie.</td>
-</tr>
-<tr>
-<td><span class="m-code">powtórzenie</span></td>
-<td>Przy graczu 2 operator oznaczył odpowiedź jako powtórzoną po graczu 1. Przy odsłanianiu daje zero punktów.</td>
-</tr>
-</tbody></table>
-</div>
-<p class="m-p">Na tym etapie prowadzący czyta pytania i śledzi, gdzie operator ma już wpis. Ekran pokazuje statusy, <span class="m-strong">nie treść właśnie wpisywanych odpowiedzi</span>. Treść wpisu jest dostępna przy późniejszym mapowaniu.</p>
-</aside>
-<p class="m-p"><span class="m-strong">Skróty:</span> Ctrl+Enter (⌘+Enter na Macu) uruchamia lub zatrzymuje timer. ↑ / ↓ / Enter przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia.</p>
-<h4 class="m-h3">Gracz 1 — dopasowanie i odsłanianie</h4>
-<p class="m-p">Po zakończeniu odpowiadania przejdź do odsłaniania. Dla każdego pytania porównaj wpis z listą punktowanych odpowiedzi i wybierz pasującą pozycję albo <span class="m-code">Nie ma na liście (0 pkt)</span>. Wyświetlacz pokazuje wybraną odpowiedź, a pełny wpis pozostaje w panelu. Przy trafieniu odsłoń odpowiedź, a następnie punkty. Przy wpisanej błędnej odpowiedzi odsłoń tekst, a następnie zero. Brak odpowiedzi jednym kliknięciem automatycznie pokazuje odpowiedź i zero, odtwarzając tylko dźwięk błędnej odpowiedzi. Przy trafieniu tekst odsłania się z dźwiękiem reveal, a punkty z dźwiękiem poprawnej odpowiedzi; przy wpisanej błędnej odpowiedzi tekst odsłania reveal, a zero — dźwięk błędnej odpowiedzi. Dopasowanie samo nie nalicza punktów; suma zwiększa się przy odsłonięciu punktów.</p>
-<div class="m-note"><b>Wskazówka:</b><br/>Jeśli pokażesz dosłownie wpisaną odpowiedź, której nie ma na liście, możesz wcześniej poprawić literówki w polu. Po odsłonięciu nie można już zmienić odpowiedzi.</div>
-<aside class="m-host"><p class="m-host-title"><span class="m-strong">Prowadzący podczas odsłaniania:</span></p>
-<p class="m-p">Pierwsza część pokazuje np. <span class="m-code">FINAŁ — ODSŁANIANIE (RUNDA 2)</span> oraz <span class="m-code">Pytanie 3: …</span>. Numer określa aktualnie oceniane pytanie, a „RUNDA 2” oznacza drugiego gracza finału.</p>
-<p class="m-p">Druga część zawiera:</p>
-<ol class="m-ul">
-<li><span class="m-strong"><span class="m-code">Gracz 1: …</span></span> — tylko przy mapowaniu gracza 2. To wcześniejsza, wybrana odpowiedź pierwszego gracza na to samo pytanie; <span class="m-code">—</span> oznacza brak odpowiedzi.</li>
-<li><span class="m-strong"><span class="m-code">Wprowadzono: …</span></span> — tekst wpisany przez operatora dla aktualnego gracza. Wiersz jest pomijany, jeśli nie ma wpisu albo oznaczono powtórzenie.</li>
-<li><span class="m-strong"><span class="m-code">Stan: …</span></span> — informacja o obecnym dopasowaniu, według tabeli poniżej.</li>
-<li><span class="m-strong"><span class="m-code">Lista odpowiedzi:</span></span> — wszystkie odpowiedzi z bazy na bieżące pytanie, z punktami w nawiasach, od najwyżej punktowanej.</li>
-</ol>
-<div class="m-table-wrap"><table class="m-table">
-<thead>
-<tr>
-<th>Stan</th>
-<th>Wygląd</th>
-<th>Jak go interpretować</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><span class="m-code">z listy</span></td>
-<td>Zielony napis. Wybrana odpowiedź na liście jest zielona i przekreślona.</td>
-<td>Wpis został przypisany do konkretnej odpowiedzi z bazy. Przekreślenie na liście oznacza wybraną pozycję, <span class="m-strong">nie błąd ani anulowanie</span>.</td>
-</tr>
-<tr>
-<td><span class="m-code">nie ma na liście</span></td>
-<td>Żółty napis.</td>
-<td>Jest wpis, ale nie przypisano go do odpowiedzi z bazy. Jeśli pozostawisz ten wybór, Wyświetlacz pokaże dosłownie wpisaną odpowiedź, a po odsłonięciu punktów — zero. Przed odsłonięciem możesz zmienić dopasowanie.</td>
-</tr>
-<tr>
-<td><span class="m-code">brak odpowiedzi</span></td>
-<td>Czerwony napis.</td>
-<td>Nie ma tekstu odpowiedzi aktualnego gracza.</td>
-</tr>
-<tr>
-<td><span class="m-code">powtórzenie</span></td>
-<td>Żółty napis.</td>
-<td>Odpowiedź drugiego gracza oznaczono jako powtórzoną; nie punktuje.</td>
-</tr>
-</tbody></table>
-</div>
-<p class="m-p"><span class="m-strong">Kolory w finale opisują dopasowanie, a nie etap animacji na Wyświetlaczu.</span> Zielone „z listy” nie oznacza samo w sobie, że publiczność już zobaczyła odpowiedź lub punkty. Rozróżniaj tekst wpisany przez operatora od wybranej odpowiedzi z bazy: mogą mieć inne brzmienie, np. wpis „na rowerze” dopasowany do „Rower (24)”.</p>
-</aside>
-<p class="m-p">W dopasowaniu gracza 1 <span class="m-strong">1–6</span> wybiera odpowiedź z listy, <span class="m-strong">W</span> wpisaną odpowiedź, a <span class="m-strong">O</span> brak odpowiedzi. Przy graczu 2 dochodzi <span class="m-strong">R</span> — powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. <span class="m-strong">N i Enter</span> przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem. <span class="m-strong">I</span> przenosi fokus do pola wpisanej odpowiedzi. Gdy pole jest aktywne, <span class="m-strong">Enter</span> zapisuje wpis i wychodzi z pola.</p>
-<h4 class="m-h3">Gracz 2 — przygotowanie i wpisywanie</h4>
-<p class="m-p">Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygotowania drugiego zawodnika. Tablet Prowadzącego jest czyszczony. Przypomnij zasady i możesz zaprezentować dźwięk powtórzenia.</p>
-<p class="m-p"><span class="m-code">Rozpocznij 2 rundę</span> przywraca odkryte odpowiedzi gracza 1 na Wyświetlaczu. Drugi zawodnik odwraca się od tablicy, aby ich nie widzieć. Operator widzi je przy polach odpowiedzi, co pomaga rozpoznać powtórzenie. Zegar ma <span class="m-strong">20 sekund</span> i uruchamiasz go tak samo jak przy graczu 1. Prowadzący widzi tytuł „FINAŁ RUNDA 2”, odliczanie po uruchomieniu zegara i pięć pytań ze statusami wpisów.</p>
-<p class="m-p">Gdy gracz powtórzy odpowiedź pierwszego zawodnika, jednym kliknięciem oznacz <span class="m-code">Powtórzenie</span> i poproś o inną odpowiedź. Każde kliknięcie odtwarza dźwięk powtórzenia, również gdy oznaczenie jest już włączone. Ponowne kliknięcie nie usuwa oznaczenia. Dopóki pozostaje czas, prowadzący może ponownie czytać pominięte pytania, także te z powtórzeniem. Gracz może się poprawić. Wpisanie nowej treści automatycznie usuwa oznaczenie powtórzenia; samo ustawienie kursora tego nie robi.</p>
-<div class="m-note"><b>Wskazówka:</b><br/>Pytania można czytać w kolejnych obiegach do końca czasu. <span class="m-code">Dalej</span> wypowiedziane przez zawodnika nie zamyka pytania na resztę rundy.</div>
-<p class="m-p"><span class="m-strong">Skróty:</span> Ctrl+Enter (⌘+Enter na Macu) uruchamia lub zatrzymuje timer. ↑ / ↓ / Enter przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia. Shift+Enter w pustym polu drugiego gracza oznacza Powtórzenie i odtwarza jego dźwięk. Kolejne naciśnięcie odtwarza dźwięk ponownie; oznaczenie usuwa wyłącznie wpisanie tekstu.</p>
-<h4 class="m-h3">Gracz 2 — dopasowanie i odsłanianie</h4>
-<p class="m-p">Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na tablecie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. W dopasowaniu <span class="m-code">Powtórzenie</span> jest tylko oznaczeniem odpowiedzi: jego wybór nie odtwarza dźwięku powtórzenia. Przy odsłanianiu działa jak brak odpowiedzi — automatycznie pokazuje zero i odtwarza dźwięk błędnej odpowiedzi. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza.</p>
-<div class="m-note"><b>Ważne:</b><br/>Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na tablecie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana. Przy urwaniu słowa usuwa się dodatkowo do dwóch końcowych samogłosek przed kropką. Dotyczy to odpowiedzi polskich, angielskich i ukraińskich; kropka mieści się w limicie znaków.</div>
-<p class="m-p">W dopasowaniu gracza 1 <span class="m-strong">1–6</span> wybiera odpowiedź z listy, <span class="m-strong">W</span> wpisaną odpowiedź, a <span class="m-strong">O</span> brak odpowiedzi. Przy graczu 2 dochodzi <span class="m-strong">R</span> — powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. <span class="m-strong">N i Enter</span> przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem. <span class="m-strong">I</span> przenosi fokus do pola wpisanej odpowiedzi. Gdy pole jest aktywne, <span class="m-strong">Enter</span> zapisuje wpis i wychodzi z pola.</p>
-<h4 class="m-h3">Kiedy finał się kończy</h4>
-<p class="m-p">Osiągnięcie progu blokuje dalszą ocenę odpowiedzi. Kolumna podpowiedzi informuje o osiągniętym progu, a przycisk zmienia się na <span class="m-code">Zakończ finał</span>, zarówno przy graczu 1, jak i 2. Wynik nie pojawia się automatycznie: operator wybiera moment zakończenia. Jeżeli progu nie osiągnięto, <span class="m-code">Zakończ finał</span> pojawia się po odsłonięciu ostatnich punktów gracza 2.</p>
-<p class="m-p"><span class="m-code">Zakończ finał</span> pokazuje wybrany ekran końcowy — logo, punkty albo kwotę. Następne <span class="m-code">Zakończ grę</span> odtwarza tylko „Muzykę outro programu”. Wynik pozostaje widoczny, a wskaźnik zwycięskiej drużyny nie gaśnie. Przy zakończeniu finału tablet Prowadzącego jest czyszczony; wynik oglądaj na Wyświetlaczu.</p>
-<h4 class="m-h3">Zakończenie gry bez finału</h4>
-<p class="m-p">Jeżeli finał jest wyłączony i osiągnięto próg rund albo wyczerpały się pytania, dalsze działania rundy zostają zablokowane. Nie odsłaniasz pozostałych odpowiedzi. <span class="m-code">Przejdź do zakończenia gry</span> rozlicza bank i pokazuje ekran końcowy. Potem <span class="m-code">Zakończ grę</span> odtwarza tylko „Muzykę outro programu”. Przy „Pokaż kwotę (po finale)” zakończenie bez finału pokazuje punkty; przy remisie pokazuje logo.</p>
-<p class="m-p">Tablet Prowadzącego zostaje wyczyszczony po przejściu do zakończenia gry. Wynik oglądaj na Wyświetlaczu.</p>
-<h4 class="m-h3">Ponowne rozpoczęcie gry</h4>
-<p class="m-p">Uruchamiasz przyciskiem <span class="m-code"><i class="ico" data-icon="refresh"></i></span> (Zacznij od nowa). Potwierdzenie restartu wraca do przygotowania urządzeń, przerywa dźwięki i usuwa oczekujące działania poprzedniej rozgrywki.</p>
-<p class="m-p">Restart nie ma skrótu klawiaturowego.</p>
-`,
-      community: `<p class="m-p">
-        Gry Społeczności to katalog gotowych gier stworzonych przez innych użytkowników
-        i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
-        i uruchamiać bezpośrednio jako rozgrywkę — bez konieczności tworzenia własnych pytań.
-        Do Gier Społeczności przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code">Gry Społeczności <i class="ico" data-icon="gamepad"></i></span>.
-      </p>
-
-      <h3 class="m-h2">Przeglądanie i biblioteka</h3>
-
-      <p class="m-p">
-        Na stronie "Gry Społeczności" widzisz wszystkie opublikowane gry.
-        Możesz je przeszukiwać po tytule.
-        Każda karta gry pokazuje tytuł, autora, język i liczbę dodań przez innych użytkowników.
-      </p>
-
-      <p class="m-p">
-        Kliknij kartę gry, aby zobaczyć szczegóły: pełną listę pytań i odpowiedzi.
-        Jeśli gra Ci odpowiada, kliknij <span class="m-code">Dodaj do biblioteki</span>.
-        Gra trafi do zakładki <span class="m-strong">Gry Społeczności</span>
-        w widoku Moje gry.
-      </p>
-
-      <h3 class="m-h2">Uruchamianie gry ze Społeczności</h3>
-
-      <p class="m-p">
-        Na stronie <b>Moje gry</b> przejdź do zakładki <span class="m-strong">Gry Społeczności</span>,
-        zaznacz wybraną grę i kliknij <span class="m-code">Graj</span>. Po chwili otworzy się panel sterowania i możesz prowadzić rozgrywkę.</p>
-
-      <div class="m-warn">
-        Granie nie modyfikuje oryginału ani cudzych danych.
-      </div><h3 class="m-h2">Wysyłanie własnej gry</h3>
-
-      <p class="m-p">
-        Jeśli masz grę, którą chcesz podzielić się ze społecznością, kliknij
-        <span class="m-code">Moje wysłane</span> na stronie Gier Społeczności.
-        Tutaj widzisz wszystkie gry wysłane przez Ciebie. Naciśnij
-        <span class="m-strong">Wyślij nową grę do gier społeczności</span>,
-        wybierz grę, podaj tytuł, napisz opis i wybierz język.
-      </p>
-
-      <p class="m-p">Wymagania, które musi spełniać gra przed wysłaniem:</p><ul class="m-ul">
-        <li>Typ <span class="m-strong">Preparowana</span> — musi mieć co najmniej <span class="m-strong">10 pytań</span></li>
-        <li>Każde pytanie musi mieć od 3 do 6 odpowiedzi</li>
-        <li>Suma punktów w jednym pytaniu nie może przekraczać 100</li>
-        <li>Żadna odpowiedź nie może mieć więcej niż 100 pkt ani wartości ujemnej</li>
-        <li>Zamknięta ankieta (status <span class="m-strong">Gotowa</span>) również może zostać wysłana</li>
-      </ul>
-
-      <div class="m-warn">
-        <b>Uwaga:</b><br>
-        Wysłana gra to niezmienny zapis jej stanu z chwili wysłania.
-        Późniejsze zmiany w oryginalnej grze nie wpłyną na wersję w katalogu.
-      </div>
-
-      <h3 class="m-h2">Moderacja</h3>
-
-      <p class="m-p">
-        Każda wysłana gra trafia do moderacji i jest widoczna dla Ciebie
-        w zakładce <span class="m-strong">Moje wysłane gry</span> ze statusem
-        <span class="m-strong">Oczekuje na weryfikację</span>.
-        Po zatwierdzeniu przez moderatora gra staje się widoczna dla wszystkich.
-        W przypadku odrzucenia zobaczysz powód.
-      </p>
-
-      <h3 class="m-h2">Wycofanie gry</h3>
-
-      <p class="m-p">
-        Możesz wycofać opublikowaną grę — zniknie z katalogu dla nowych użytkowników.
-        Osoby, które już ją dodały do swojej biblioteki, nadal mają do niej dostęp.
-        Wycofanie jest nieodwracalne — nie ma opcji ponownego opublikowania tej samej wersji.
-      </p>
-
-      <h3 class="m-h2">Gry Producenta</h3>
-
-      <p class="m-p">
-        Część gier w katalogu jest oznaczona jako <span class="m-strong">od Producenta</span>.
-        Są to gry przygotowane przez zespół Familiada i trafiają do katalogu
-        bezpośrednio — bez przechodzenia przez moderację.
-        Wyróżniają się dedykowaną odznaką.
-      </p>`,
-      gameSettings: `<p class="m-p">Strona Ustawień rozgrywki pozwala skonfigurować grę na spokojnie — zanim wejdziesz do Panelu sterowania i zaczniesz rozgrywkę na żywo. Wszystko, co tu ustawisz, jest zapisane do gry i zostanie automatycznie wczytane przez Panel sterowania.</p>
-<p class="m-p">Otworzysz ją ze strony <span class="m-strong">Moje gry</span> przyciskiem <span class="m-strong">Ustawienia gry</span> przy wybranej grze.</p>
-<h3 class="m-h2">Drużyny</h3>
-<p class="m-p">Wpisz nazwy drużyn i sprawdź je na podglądzie oraz w Podsumowaniu. Na Wyświetlaczu gry pojawią się dopiero na ekranie z przyciskiem <span class="m-code">Rozpocznij grę</span>, po przygotowaniu urządzeń i ustawień.</p>
-<p class="m-p">Jeśli nie wpiszesz nic — zostaną wyświetlone domyślne wartości <span class="m-strong">Drużyna A</span> i <span class="m-strong">Drużyna B</span>.</p>
-<h3 class="m-h2">Wygląd</h3>
-<h4 class="m-h3">Kolory</h4>
-<p class="m-p">Ustalasz tu kolory czterech elementów:</p>
-<ul class="m-ul">
-<li><span class="m-strong">Kolor drużyny A</span> i <span class="m-strong">kolor drużyny B</span> — kolory elementów tablicy zależnych od drużyn.</li>
-<li><span class="m-strong">Kolor tła tablicy</span> — główne tło wyświetlacza.</li>
-<li><span class="m-strong">Kolor kropek</span> — kolor kropek wyświetlaczy punktowych na tablicy.</li>
-</ul>
-<p class="m-p">Kolory zmieniają się na podglądzie natychmiast po wybraniu. Kliknij pole koloru, żeby otworzyć okno wyboru.</p>
-<h4 class="m-h3">Motyw</h4>
-<p class="m-p">Wybierz motyw wizualny tablicy. Motyw wpływa na styl graficzny całego wyświetlacza. Domyślny motyw to <span class="m-strong">Klasyczny</span>.</p>
-<h4 class="m-h3">Logo</h4>
-<p class="m-p">Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady. Wybrane logo pojawia się na początku gry; jego wyświetlanie na końcu zależy od ustawionego trybu ekranu końcowego.</p>
-<p class="m-p">Ustawienie <span class="m-strong">Logo prowadzącego</span> dotyczy wyglądu logo pokazywanego na zasłonie tabletu prowadzącego. Przełącznik <span class="m-strong">Logo prowadzącego</span> ma dwa warianty:</p>
-<ul class="m-ul">
-<li><span class="m-strong">Piksele</span> — logo wygląda tak samo jak na Wyświetlaczu, ale kropki mają kształt kwadratów (pikseli).</li>
-<li><span class="m-strong">Źródło</span> — pokazuje logo w lepszej jakości, zależnie od jego typu: <span class="m-strong">Tekst</span> — tekst w stylu logo Familiady; <span class="m-strong">Rysunek</span> — źródłowy rysunek, w którym biel przyjmuje ustawiony kolor kropek Wyświetlacza, a czerń jest przezroczysta; <span class="m-strong">Obraz</span> — oryginalny obraz ze środka logo, z usuniętym jednolitym tłem.</li>
-</ul>
-<p class="m-p">Podgląd w Ustawieniach gry pokazuje edytowane wartości przed zapisem. Podsumowanie w Panelu sterowania korzysta z zapisanych ustawień. Podgląd Prowadzącego znajduje się obok podglądu Wyświetlacza.</p>
-<p class="m-p">Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.</p>
-<h3 class="m-h2">Dźwięk</h3>
-<p class="m-p">W tej sekcji konfigurujesz dźwięki używane podczas rozgrywki. Każda kategoria dźwiękowa (np. <span class="m-strong">Poprawna odpowiedź</span>, <span class="m-strong">Błędna odpowiedź</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Przejście rundy</span>, <span class="m-strong">Muzyka outro programu</span>, <span class="m-strong">Odsłanianie</span>) ma własne ustawienia.</p>
-<h4 class="m-h3">Wariant dźwięku</h4>
-<p class="m-p">Przy każdej kategorii możesz wybrać <span class="m-strong">wariant</span> z listy:</p>
-<ul class="m-ul">
-<li>Dostępne są gotowe warianty (np. <span class="m-strong">Klasyczny</span>)</li>
-<li>Opcja <span class="m-strong">Własny</span> pozwala załadować własny plik audio (MP3, WAV, OGG) — po wybraniu jej pojawia się przycisk <span class="m-code">Wybierz plik</span></li>
-</ul>
-<h4 class="m-h3">Własny plik audio</h4>
-<p class="m-p">Po kliknięciu <span class="m-code">Wybierz plik</span> wskazujesz plik z dysku. W tabeli przy danej kategorii pojawia się etykieta z nazwą pliku.</p>
-<p class="m-p">Aby usunąć własny plik, użyj przycisku <span class="m-code"><i class="ico" data-icon="trash"></i></span> przy pliku. Jeśli chcesz wrócić do gotowego wariantu — zmień wariant na inny niż <span class="m-strong">Własny</span>.</p>
-<p class="m-p">Własny plik audio jest zapisywany w chmurze razem z grą i będzie dostępny na każdym urządzeniu, na którym uruchomisz tę grę.</p>
-<p class="m-p"><span class="m-strong">Limity własnych plików:</span></p>
-<div class="m-table-wrap"><table class="m-table">
-<thead>
-<tr>
-<th>Kategorie</th>
-<th>Maksymalna długość</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Naciśnięcie Przycisku, poprawna i błędna odpowiedź, powtórzenie, limit czasu, odsłanianie</td>
-<td>5 sekund</td>
-</tr>
-<tr>
-<td>Muzyka intro programu, przejście rundy, muzyka finału</td>
-<td>30 sekund</td>
-</tr>
-<tr>
-<td>Muzyka outro programu</td>
-<td>2 minuty</td>
-</tr>
-</tbody></table>
-</div>
-<p class="m-p">Outro odtwarza przycisk <span class="m-code">Zakończ grę</span>, gdy ekran końcowy jest już widoczny. Własne pliki i głośność ustawiasz tak samo dla każdej kategorii.</p>
-<h4 class="m-h3">Głośność</h4>
-<p class="m-p">Przy każdej kategorii jest suwak głośności (0–100%). Zmiany są zapisywane i wczytywane automatycznie przy każdej rozgrywce.</p>
-<h4 class="m-h3">Przycisk odtwarzania</h4>
-<p class="m-p">Obok każdej kategorii jest przycisk <span class="m-code"><i class="ico" data-icon="play"></i></span>. Kliknij go, żeby usłyszeć wybrany dźwięk z ustawioną głośnością. Podczas odtwarzania zmienia się na <span class="m-code"><i class="ico" data-icon="stop"></i></span>, którym zatrzymasz dźwięk.</p>
-<div class="m-warn">Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Dźwięk resetuje wszystkie warianty do <span class="m-strong">Klasycznego</span>, głośności do <span class="m-strong">100%</span> oraz usuwa wszystkie własne pliki audio (z chmury i lokalnie). <span class="m-strong">Operacja jest nieodwracalna — pliki trzeba wgrać ponownie.</span></div>
-<h3 class="m-h2">Pytania</h3>
-<h4 class="m-h3">Finał</h4>
-<p class="m-p">Przełącznik <span class="m-strong">Czy gra zawiera finał?</span> decyduje, czy gra zakończy się etapem finałowym. Gdy finał jest <span class="m-strong">wyłączony</span>, rozgrywka kończy się po rundach zasadniczych. Gdy jest <span class="m-strong">włączony</span> — dostępne stają się dodatkowe opcje wyboru pytań finałowych.</p>
-<h4 class="m-h3">Tryb pytań do rund</h4>
-<ul class="m-ul">
-<li><span class="m-strong">Losuj</span> — system tasuje pytania dostępne do rund przy wejściu do Podsumowania i pokazuje ich kolejność. Pytania wybrane ręcznie do finału są pomijane. Podczas rozgrywki wykorzystuje je kolejno, po jednym na rundę. <span class="m-code">Losuj ponownie</span> zmienia kolejność przed rozpoczęciem gry.</li>
-<li><span class="m-strong">Kolejność</span> — używane są wyłącznie pytania wybrane i ułożone w zakładce „Pytania — Rundy”, dokładnie w tej kolejności. Po wyczerpaniu tej listy nie są dobierane kolejne pytania.</li>
-</ul>
-<h4 class="m-h3">Tryb pytań do finału</h4>
-<ul class="m-ul">
-<li><span class="m-strong">Losuj</span> — przy wejściu do Podsumowania system losuje 5 pytań z puli rund i usuwa je z kolejki rund, żeby nie pojawiły się ponownie podczas gry. Przy <span class="m-strong">Kolejności</span> finał losuje więc z ręcznie wybranej listy. <span class="m-code">Losuj ponownie</span> zwraca poprzednie pytania finału na koniec kolejki rund i losuje nowy zestaw; można to zrobić przed rozpoczęciem gry. Pełny finał wymaga co najmniej 5 pytań w tej puli.</li>
-<li><span class="m-strong">Ręcznie</span> — wybierz dokładnie 5 pytań w zakładce „Pytania — Finał” Ustawień rozgrywki. Te pytania są wyłączone z kolejki rund. Przed startem sprawdź wybór w Podsumowaniu Panelu sterowania.</li>
-</ul>
-<h4 class="m-h3">Dodatkowe ustawienia</h4>
-<p class="m-p">Tu dopasowujesz parametry rozgrywki do swojego formatu. Opcje nie zmieniają zasad gry, tylko jej progi i tempo.</p>
-<ul class="m-ul">
-<li><span class="m-strong">Mnożniki rund</span> — wpisywane po przecinku (np. <span class="m-code">1,1,1,2,3</span>). Bank każdej rundy jest mnożony przez odpowiadający mnożnik. To odpowiada klasycznemu podwajaniu/potrajaniu w kolejnych etapach. Jeśli rozgrywka trwa dalej, do kolejnych rund stosowany jest ostatni mnożnik.</li>
-<li><span class="m-strong">Próg punktów do finału</span> — liczba punktów, po której osiągnięciu jedna z drużyn może zakwalifikować się do finału (klasycznie: 300). Jeśli żadna drużyna nie osiągnie progu przed wyczerpaniem pytań — rundy kończą się naturalnie.</li>
-<li><span class="m-strong">Cel finału (pkt)</span> — liczba punktów do zdobycia w finale, żeby wygrać nagrodę główną (klasycznie: 200).</li>
-<li><span class="m-strong">Zakończenie gry</span> — co wyświetlacz pokazuje po zakończeniu rozgrywki:</li>
-<li><span class="m-strong">Logo</span> — ekran z logo</li>
-<li><span class="m-strong">Punkty</span> — wynik końcowy drużyny zwycięskiej</li>
-<li><span class="m-strong">Kwota wygranej</span> — obliczona kwota nagrody (dla rozgrywek z nagrodami pieniężnymi)</li>
-<li><span class="m-strong">Mnożnik nagrody (po finale)</span> — jeśli w finale drużyna nie osiągnęła celu, nagroda to punkty zdobyte w całej rozgrywce pomnożone przez ten współczynnik (klasycznie: ×3).</li>
-<li><span class="m-strong">Kwota główna nagrody</span> — kwota dodawana do nagrody, gdy drużyna osiągnie cel finału (klasycznie: 25 000).</li>
-</ul>
-<p class="m-p">Dodatkowe ustawienia mają rozsądne wartości domyślne odpowiadające klasycznej Familiadzie. Dla większości rozgrywek nie musisz ich zmieniać.</p>
-<div class="m-warn"><b>Uwaga:</b><br/>Mnożniki rund i nagrody są obecnie dodatnimi liczbami całkowitymi. Wartość <span class="m-code">0,5</span> nie jest obsługiwana.</div>
-<h4 class="m-h3">Zapis ustawień</h4>
-<p class="m-p">Zmiany są zapisywane po kliknięciu <span class="m-code">Zapisz wszystko</span>. Nie ma automatycznego zapisu przy samej zmianie — pamiętaj o kliknięciu przycisku przed wyjściem.</p>
-<h4 class="m-h3">Przywróć domyślne</h4>
-<p class="m-p">Przycisk <span class="m-code">Przywróć domyślne</span> na górze strony resetuje całość ustawień do wartości domyślnych.</p>
-<div class="m-warn">Ta czynność jest nieodwracalna — jeśli wciśniesz przypadkiem i zatwierdzisz, trzeba będzie zmieniać wszystko od nowa (w tym wgrywanie plików dźwiękowych).</div>
-<p class="m-p">Próg punktów do finału dotyczy wyniku z rund, a cel finału punktów obu graczy finału. To dwa osobne ustawienia. Gdy włączono wyświetlanie kwoty, osiągnięcie celu finału uwzględnia kwotę głównej nagrody; bez osiągnięcia celu wyświetlana jest niższa nagroda obliczona z punktów i mnożnika. Gra bez finału pokazuje w tym trybie punkty.</p>
-`,
     },
   },
   privacy: {
@@ -2554,7 +1175,9 @@ const pl = {
     addAnswer: "Dodaj odpowiedź",
     answerLimit: "Limit odpowiedzi osiągnięty",
     deleteAnswer: "Usuń odpowiedź",
-    sumLabel: "SUMA",
+    sumLabel: "Suma",
+    answersHeading: "Odpowiedzi",
+    pointsSuffix: "pkt",
     confirmDiscard: "Porzucić niezapisane zmiany w pytaniu?",
     keepEditing: "Edytuj",
     discard: "Porzuć",
@@ -2803,6 +1426,7 @@ const pl = {
       open: "OTWARTA",
       stopped: "ZATRZYMANA",
       ready: "GOTOWA",
+      toOpen: "DO URUCHOMIENIA",
     },
     badges: {
       votes: ({ n }) => {
@@ -2842,6 +1466,7 @@ const pl = {
       action: "Zmień typ",
       title: "Zmień typ gry",
       text: "Wybierz typ. Zmienia się ta sama gra (to nie kopia) i wraca do szkicu.",
+      textClosed: "Ankieta jest zamknięta. Głosy, linki i kody QR ankiety zostaną usunięte, a gra wróci do szkicu wybranego typu.",
       ok: "Zmień",
       cancel: "Anuluj",
       failed: "Nie udało się zmienić typu gry. Spróbuj ponownie.",
@@ -2850,12 +1475,20 @@ const pl = {
         toText: "Pytania zostaną. Odpowiedzi i punkty zostaną usunięte.",
         toPoints: "Pytania i odpowiedzi zostaną. Punkty zostaną usunięte.",
         toPrepared: "Pytania i odpowiedzi zostaną.",
-        pointsRemoved: "Punkty zostaną usunięte.",
+        keepAll: "Pytania, odpowiedzi i punkty z ankiety zostaną.",
+        keepAnswers: "Pytania i odpowiedzi z ankiety zostaną. Punkty da nowa ankieta.",
+        questionsOnly: "Zostaną same pytania.",
+      },
+      keep: {
+        points: "Zachowaj punkty z ankiety",
+        answersPoints: "Zachowaj odpowiedzi i punkty z ankiety",
+        answers: "Zachowaj odpowiedzi z ankiety",
       },
     },
     transferDropsVotes: {
       title: "Bez bieżących głosów",
       text: "Ankieta jest otwarta lub zatrzymana. Kopia powstanie jako szkic tego samego typu — bieżące głosy nie zostaną zachowane.",
+      baseText: "Ankieta jest otwarta lub zatrzymana. Do bazy trafią pytania i odpowiedzi bez bieżących głosów.",
       ok: "Kontynuuj",
       cancel: "Anuluj",
     },
@@ -2891,8 +1524,6 @@ const pl = {
     empty: "Wybierz pytanie po lewej lub dodaj nowe.",
     lockedPoll: "ANKIETA OTWARTA — EDYCJA ZABLOKOWANA",
     questionLabel: "Treść pytania",
-    answerLabel: "Odpowiedź",
-    pointsLabel: "Pkt",
     importModal: {
       invalidChars: "Pytanie {q}, odpowiedź {ord}: znaki, których nie ma Wyświetlacz: {chars}. Usuń je, aby zaimportować.",
       title: "Import pytań",
@@ -3148,8 +1779,8 @@ const pl = {
     subscribeAdded: "Subskrypcja została dodana.",
     subscriptionInviteActive: "Zaproszenie do subskrypcji jest aktywne.",
     subscribePrompt: "Jeśli chcesz zaakceptować subskrypcję, podaj adres e-mail.",
-    acceptInHub: "Żeby zaakceptować, przejdź do Centrum ankiet.",
-    hubLabel: "Centrum ankiet",
+    acceptInHub: "Żeby zaakceptować, przejdź na stronę poniżej.",
+    hubTo: { friends: "Przejdź do Znajomych", tasks: "Przejdź do Zadań", bases: "Przejdź do Baz pytań", games: "Przejdź do Moich gier", logos: "Przejdź do Logo" },
     acceptLabel: "Akceptuj",
     declineLabel: "Odrzuć",
     subscribeLabel: "Subskrybuj",
@@ -3420,7 +2051,7 @@ const pl = {
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum ankiet",
+      subtitle: "Zadania",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
@@ -3651,7 +2282,7 @@ const pl = {
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum ankiet",
+      subtitle: "Zadania",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
@@ -3965,7 +2596,8 @@ const pl = {
     },
     list: {
       title: "Moje loga",
-      hint: "Kliknij kafelek, żeby go zaznaczyć. Dwuklik (albo przytrzymanie na dotyku) zmienia nazwę.",
+      emptyPhone: "Nie masz jeszcze logo tego rodzaju. Nowe logo utworzysz na komputerze albo tablecie.",
+      hint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
       preview: "Podgląd",
       edit: "Edytuj",
       export: "Eksport",
@@ -4036,6 +2668,7 @@ const pl = {
       confirmClear: "Usunąć wszystko ze sceny?",
       ui: {
         deleteSelection: "Usuń zaznaczone — Delete (Mac: Fn + Backspace)",
+        ctxEmpty: "Wybierz narzędzie albo zaznacz obiekt, żeby zobaczyć jego ustawienia.",
         strokeLabel: "Grubość",
         styleLabel: "Styl",
         colorLabel: "Kolor",
@@ -4208,12 +2841,31 @@ const pl = {
       folder: "Folder",
       tag: "tag",
       question: "Pytanie",
+      copy: "kopia",
+    },
+    move: {
+      moveTitle: "Przenieś do",
+      copyTitle: "Kopiuj do",
+      moveHere: "Przenieś tutaj",
+      copyHere: "Kopiuj tutaj",
+      searchPlaceholder: "Szukaj folderu…",
+      noFolders: "Brak folderów o tej nazwie.",
+    },
+    leftView: {
+      tree: "Drzewo folderów",
+      tags: "Tagi",
+      types: "Proponowane kategorie",
     },
     search: {
+      results: "Wyniki",
       placeholder: "Szukaj...",
       clear: "Wyczyść",
+      sheetTitle: "Szukaj",
+      done: "Gotowe",
+      sheetHelp: "Szuka w nazwach pytań i folderów. Tagi i kategorie wybierasz przyciskami w pasku — działają razem z tekstem.",
     },
     toolbar: {
+      groupHistory: "Historia",
       groupCreate: "Tworzenie",
       newFolder: "Nowy folder",
       newQuestion: "Nowe pytanie",
@@ -4243,6 +2895,7 @@ const pl = {
       addTag: "Dodaj tag",
       editTitle: "Tag",
       namePlaceholder: "Nazwa taga…",
+      nameLabel: "Nazwa",
       pickColor: "Wybierz kolor",
       colorLabel: "Kolor",
       colorModalTitle: "Kolor",
@@ -4250,11 +2903,11 @@ const pl = {
       hexLabel: "HEX",
       hexHint: "Format: <b>#RRGGBB</b>",
       header: "Tagi",
-      metaHeader: "Pasujące kategorie",
+      metaHeader: "Proponowane kategorie",
       empty: "Brak tagów.",
       selectionQuestions: "{count} pyt.",
       selectionFolders: "{count} folder(ów)",
-      selectionSummary: "Zaznaczenie: {items}.",
+      selectionSummary: "Zaznaczenie: {items}",
       selectionEmpty: "Brak zaznaczenia.",
       partialWarning: "Tag jest przypisany częściowo. Kliknięcie ustawi: wszyscy.",
       partial: "częściowo",
@@ -4270,6 +2923,40 @@ const pl = {
         saveFailed: "Nie udało się zapisać taga.",
       },
     },
+    reasons: {
+      nothingToUndo: "Nie ma czego cofnąć.",
+      nothingToRedo: "Nie ma czego ponowić.",
+      trashEmpty: "Kosz jest pusty.",
+      readOnly: "Masz tylko podgląd tej bazy.",
+      notHere: "Tej akcji nie ma w wynikach wyszukiwania i filtrów.",
+      selectSomething: "Najpierw zaznacz folder albo pytanie.",
+      selectOne: "Zaznacz jeden element.",
+      selectQuestion: "Zaznacz jedno pytanie.",
+      selectFolder: "Zaznacz jeden folder.",
+      selectTag: "Zaznacz tag.",
+      selectOneTag: "Zaznacz jeden tag.",
+      selectType: "Zaznacz kategorię.",
+      clipboardEmpty: "Schowek jest pusty.",
+    },
+    trash: {
+      openTrash: "Otwórz kosz",
+      open: "Kosz",
+      title: "Kosz",
+      subtitle: "Usunięte foldery i pytania. Po 30 dniach znikają na zawsze.",
+      empty: "Kosz jest pusty.",
+      restore: "Przywróć",
+      purge: "Usuń trwale",
+      emptyAll: "Opróżnij kosz",
+      daysLeft: "za {n} dni",
+      dayLeft: "za 1 dzień",
+      today: "dziś",
+      folderSummary: "folder · pytań: {q}",
+      questionSummary: "pytanie",
+      confirmPurge: "Usunąć trwale? Tego nie da się cofnąć.",
+      confirmEmpty: "Opróżnić kosz? Wszystkie elementy zostaną usunięte na zawsze.",
+      loadFailed: "Nie udało się wczytać kosza.",
+      actionFailed: "Nie udało się wykonać operacji w koszu.",
+    },
     rename: {
       title: "Zmień nazwę",
       help: "Wpisz nową nazwę i zapisz.",
@@ -4277,7 +2964,7 @@ const pl = {
       questionTitle: "Zmień treść pytania",
     },
     export: {
-      title: "Eksport gry",
+      title: "Utwórz grę",
       subtitle: "Gra powstanie z zaznaczonych pytań. Oznaczenia pokazują, czego brakuje do gotowości wybranego typu — można to uzupełnić później.",
       gameNameLabel: "Nazwa gry",
       questionsLabel: "Pytania",
@@ -4326,8 +3013,6 @@ const pl = {
         "Edycja pojedynczego pytania. Max 6 odpowiedzi. Punkty opcjonalne.\n        Jeśli wpisane: 0–100, suma ≤ 100.",
       textLabel: "Treść pytania",
       textPlaceholder: "Wpisz treść pytania…",
-      answerHeader: "Odpowiedź",
-      pointsHeader: "Punkty",
       addAnswer: "+ Odpowiedź",
       sumTitle: "Suma punktów (max 100)",
       sumLabel: "SUMA",
@@ -4341,11 +3026,13 @@ const pl = {
       },
     },
     list: {
+      noResults: "Nic nie pasuje do wyszukiwania i filtrów.",
       colNumber: "Nr",
       colName: "Nazwa",
       colType: "Typ",
       colDate: "Data",
       colInfo: "Info",
+      colPurge: "Zniknie",
       folderType: "Folder",
       folderCount: "{count} elem.",
       questionType: "Pytanie",
@@ -4353,7 +3040,15 @@ const pl = {
       empty: "Brak elementów.",
       resizeColumn: "Przeciągnij, aby zmienić szerokość kolumny",
     },
+    history: {
+      move: "Przenieś",
+      tag: "Nadaj tag",
+    },
     menu: {
+      moveTo: "Przenieś do…",
+      copyTo: "Kopiuj do…",
+      undo: "Cofnij",
+      redo: "Ponów",
       show: "Pokaż",
       addTag: "Dodaj tag…",
       editTag: "Edytuj tag…",
@@ -4374,13 +3069,15 @@ const pl = {
       rename: "Zmień nazwę",
       renameQuestion: "Zmień nazwę (treść)",
       createGame: "Utwórz grę…",
+      untag: "Zdejmij tag",
     },
     meta: {
-      prepared: "preparowane",
-      pollPoints: "punktowane",
-      pollText: "typowe",
+      prepared: "Preparowana",
+      pollPoints: "Punktacja",
+      pollText: "Ankieta",
     },
     errors: {
+      historyFailed: "Nie udało się cofnąć ani ponowić — coś zmieniło się w międzyczasie. Historia cofania została wyczyszczona.",
       missingBaseId: "Brak identyfikatora bazy.",
       noAccess: "Brak dostępu do tej bazy.",
       loadFailed: "Nie udało się wczytać bazy (sprawdź konsolę).",
@@ -4419,15 +3116,49 @@ const pl = {
         "Masz zaznaczone Tagi/Kategorie — wyszukiwarka jest zablokowana. Wyczyść zaznaczenie po lewej (klik w tło panelu), aby szukać.",
     },
     confirm: {
-      deleteItems: "Usunąć {label}? Tego nie da się cofnąć.",
-      deleteTags:
-        "Usunąć {label}?\n\nTo usunie też przypisania tagów do pytań (i ewentualnie folderów).",
-      removeTagsInTagView:
-        "Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na {label}.\n\nKontynuować?",
+      deleteOne: "Usunąć ten element? Trafi do kosza na 30 dni.",
+      deleteMany: "Usunąć zaznaczone elementy ({n})? Trafią do kosza na 30 dni.",
+      deleteTagsOne:
+        "Usunąć ten tag?\n\nTo usunie też przypisania tagów do pytań (i ewentualnie folderów).",
+      deleteTagsMany:
+        "Usunąć zaznaczone tagi ({n})?\n\nTo usunie też przypisania tagów do pytań (i ewentualnie folderów).",
+      removeTagsOne:
+        "Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na tym elemencie.\n\nKontynuować?",
+      removeTagsMany:
+        "Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na zaznaczonych elementach ({n}).\n\nKontynuować?",
     },
   },
   control: {
     shortcuts: {"mappingAnswers": "1–6 — zaznacz odpowiedź z listy", "i": "I — przejdź do pola wpisanej odpowiedzi", "answers": "1–6 → Enter — odsłoń odpowiedź", "x": "X → Enter — pudło", "t": "T → Enter — timer", "a": "A → Enter — drużyna A", "b": "B → Enter — powrót / ręczny wybór drużyny B w pojedynku", "c": "C → Enter — zatwierdź zgłoszenie", "p": "P → Enter — oddaj kontrolę", "n": "N → Enter — przycisk dalszego przejścia", "e": "E → Enter — zmień ustawienia", "w": "W — wpisana odpowiedź", "o": "O — brak odpowiedzi", "r": "R — powtórzenie", "m": "M — wycisz / włącz dźwięk", "reveal": "Enter — odsłoń odpowiedź, kolejny Enter — punkty", "fields": "↑ / ↓ / Enter — poprzednie / następne puste pole", "entryTimer": "Ctrl+Enter (Cmd+Enter na Macu) — start / stop timera", "entryRepeat": "Shift+Enter w pustym polu — powtórzenie"},
+    hints: {
+      rIntro: "Gra gotowa. Ekran oczekuje na start.",
+      rRoundStart: "Runda {roundNo} gotowa. Kliknij „Rozpocznij rundę”, żeby zacząć.",
+      duelFirst: "Pierwsza: {team}. Kliknij „Zatwierdź”, żeby przyjąć zgłoszenie.",
+      duelPhysical: "Obserwuj, kto nacisnął przycisk jako pierwszy. Kliknij drużynę, a potem „Zatwierdź”.",
+      duelWaiting: "Przycisk aktywny. Czekam na zgłoszenie drużyny.",
+      duelNowAnswering: "Teraz odpowiada: {team}.",
+      duelAnswering: "Pojedynek — odpowiada: {team}.",
+      playNoTeam: "Brak drużyny grającej.",
+      playCanEnd: "Wszystkie odpowiedzi odsłonięte. Kliknij „Zakończ rundę”.",
+      playOrPass: "Może zagrać dalej albo oddać kontrolę.",
+      playPick: "Wskaż trafioną odpowiedź albo kliknij X (pudło).",
+      stealWon: "Kradzież udana — bank przechodzi do drużyny kradnącej.",
+      stealLost: "Kradzież nietrafiona — bank zostaje przy drużynie grającej.",
+      stealChance: "Szansa na kradzież. Kliknij trafioną odpowiedź albo X (pudło).",
+      reveal: "Odsłoń pozostałe odpowiedzi. Punkty się nie zmienią.",
+      fStart: "Rozpocznij finał.",
+      entryTimeUp: "Czas minął. Uzupełnij pola i przejdź dalej.",
+      entryRunning: "Wpisz odpowiedzi gracza {round}. Odliczanie trwa.",
+      entryIdle: "Wpisz odpowiedzi gracza {round} i uruchom odliczanie.",
+      p2Start: "Odpowiedzi gracza 1 są ukryte.",
+      mapReached200: "Osiągnięto próg finału. Zakończ finał.",
+      mapAllRevealed: "Wszystkie odpowiedzi odsłonięte. Zakończ finał.",
+      mapRepeat: "Powtórzenie: brak punktów. Odsłoń odpowiedź.",
+      mapRevealAnswer: "Sprawdź odpowiedź i odsłoń ją.",
+      mapRevealPoints: "Odsłoń punkty.",
+      mapNext: "Przejdź dalej.",
+      fEnd: "Finał zakończony.",
+    },
     title: "Familiada — panel sterowania",
     loading: "Ładowanie panelu…",
     logout: "Wyloguj",
@@ -4616,7 +3347,7 @@ const pl = {
     finalStartBtn: "Rozpocznij finał",
     finalP1EntryTitle: "Runda 1 — wpisywanie",
     finalP1EntryName: "Odpowiedzi gracza 1 (15s)",
-    finalP1EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku. Timer można uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
+    finalP1EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku. Timer można uruchomić przyciskiem lub skrótem Ctrl + Enter (Cmd + Enter na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
     finalStartTimer15: "Rozpocznij odliczanie (15s)",
     finalP1MapQ1Title: "Runda 1 — mapowanie (P1)",
     finalMapHint: "Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt. Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.",
@@ -4628,10 +3359,10 @@ const pl = {
     finalP2StartName: "Rozpocznij 2 rundę",
     finalP2StartHint: "Odpowiedzi gracza 1 są ukryte.",
     finalP2StartBtn: "Rozpocznij 2 rundę",
-    finalRepeatSound: "Dźwiek powtórzenia",
+    finalRepeatSound: "Dźwięk powtórzenia",
     finalP2EntryTitle: "Runda 2 — wpisywanie",
     finalP2EntryName: "Odpowiedzi gracza 2 (20s)",
-    finalP2EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Enter + Shift zaznacza powtórzenie. Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer można uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
+    finalP2EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Enter + Shift zaznacza powtórzenie. Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer można uruchomić przyciskiem lub skrótem Ctrl + Enter (Cmd + Enter na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
     finalStartTimer20: "Rozpocznij odliczanie (20s)",
     finalP2MapQ1Title: "Runda 2 — mapowanie (P1)",
     finalP2MapQ2Title: "Runda 2 — mapowanie (P2)",
@@ -4702,6 +3433,9 @@ const pl = {
       sectionFriends: "Znajomi, którym możesz udostępnić",
       sectionShared: "Udostępnione w tej sesji",
       shareSelected: "Udostępnij zaznaczonym",
+      shareSelectedN: "Udostępnij zaznaczonym ({n})",
+      shareSelectedShortN: "Udostępnij ({n})",
+      hint: "Wpisz nazwę lub e-mail albo zaznacz znajomych.",
       recipientKind: { friend: "znajomy", account: "ma konto", mail: "mail" },
       noneShared: "Nie udostępniono.",
       noSubs: "Brak subskrybentów.",
@@ -5131,7 +3865,7 @@ const pl = {
     "invite": "Zaproś",
     "handle": "E-mail lub nazwa użytkownika",
     "email": "Adres e-mail",
-    "go": "Przejdź →",
+    "go": "Przejdź",
     "sent": "Zaproszenie zapisane.",
     "mailFailed": "Zaproszenie zapisane, ale nie udało się wysłać maila. Możesz ponowić wysyłkę.",
     "accountCreated": "Ma konto — przejdź do Znajomych.",
@@ -5149,7 +3883,8 @@ const pl = {
     "confirm": {
         "reject": "Odrzucić zaproszenie?",
         "cancel": "Cofnąć zaproszenie?",
-        "remove": "Usunąć tę osobę? Oczekujące zaproszenia i zadania zostaną usunięte. Przyjęte bazy i urządzenia zostają — można je cofnąć osobno."
+        "remove": "Usunąć tę osobę? Oczekujące zaproszenia i zadania zostaną usunięte. Przyjęte bazy i urządzenia zostają — można je cofnąć osobno.",
+        "removeSubscriber": "Usunąć tego subskrybenta? Jego oczekujące zadania od Ciebie zostaną usunięte. Zaproszenie do znajomych, jeśli je dostał, zostaje."
     },
     "errors": {
         "alreadyFriend": "Ta osoba jest już Twoim znajomym.",
@@ -5267,6 +4002,8 @@ const pl = {
     },
     finale: {
       dragHint: "Wybierz pytania do finału. Klikaj lub przeciągaj, musisz wybrać 5",
+      tapHint: "Wybierz 5 pytań do finału: dotknij pytania, żeby je dodać lub usunąć.",
+      tapEmpty: "Dotknij pytania, żeby dodać (max 5)",
       hasFinal: "Czy gra zawiera finał?",
       yes: "Tak",
       no: "Nie",
@@ -5281,6 +4018,7 @@ const pl = {
     },
     rounds: {
       hint: "Ustaw kolejność pytań dla rund. Przeciągnij lub użyj strzałek.",
+      hintPhone: "Ustaw kolejność pytań dla rund strzałkami.",
       up: "W górę",
       down: "W dół",
     },
@@ -5303,6 +4041,7 @@ const pl = {
       endModeMoneyShort: "Kwota nagrody",
       prizeMultiplier: "Mnożnik nagrody (po finale)",
       prizeAmount: "Kwota główna nagrody",
+      prizeHint: "Kwota = punkty zwycięskiej drużyny z rund × mnożnik. Gdy finał osiągnie cel, dochodzi kwota główna. Punkty z finału decydują tylko o osiągnięciu celu.",
       restoreDefaults: "Przywróć domyślne",
     },
   },

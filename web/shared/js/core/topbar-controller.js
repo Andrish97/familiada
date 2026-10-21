@@ -5,10 +5,10 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-10-20T22245';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-20T22245';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-20T22245';
-import { icon } from './icons.js?v=v2026-10-20T22245';
+import { signOut } from './auth.js?v=v2026-10-21T16391';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-21T16391';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-21T16391';
+import { icon, iconText } from './icons.js?v=v2026-10-21T16391';
 
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
@@ -316,8 +316,9 @@ export function setTopbarAccount(user, {
     if (btnLoginEl) {
       if (showAuthEntry) {
         btnLoginEl.style.display = '';
-        btnLoginEl.textContent = t('common.authEntry') || 'Zaloguj / Załóż konto';
+        btnLoginEl.innerHTML = iconText('person', t('common.authEntry') || 'Zaloguj / Załóż konto');
         btnLoginEl.dataset.i18n = 'common.authEntry';
+        btnLoginEl.dataset.i18nIcon = 'person';
         btnLoginEl.onclick = () => { location.href = withLangParam(loginHref); };
       } else {
         btnLoginEl.style.display = 'none';
@@ -432,7 +433,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-20T22245');
+  const { getUser } = await import('./auth.js?v=v2026-10-21T16391');
 
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();

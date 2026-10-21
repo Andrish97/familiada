@@ -1,14 +1,14 @@
 // control/js/shareDevice.js
 // Sesyjne udostępnianie urządzeń z tokenem przypisanym do pojedynczego grantu.
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-20T22245";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T22245";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-20T22245";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-20T22245";
-import { shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-20T22245";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T22245";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-21T16391";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T16391";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T16391";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-21T16391";
+import { shareRowEl, shareCooldownEl, shareBulkActionsEl, attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T16391";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T16391";
 
-import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-20T22245";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-21T16391";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
@@ -82,6 +82,9 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   const btnShareFriends = document.getElementById("btnShareDeviceFriends");
   const btnAdd = document.getElementById("btnShareDeviceAdd");
   const btnClose = document.getElementById("btnShareDeviceClose");
+  const btnCancel = document.getElementById("btnShareDeviceCancel");
+  const friendsLabel = document.getElementById("shareDeviceFriendsLabel");
+  const friendsShort = document.getElementById("shareDeviceFriendsShort");
   const currentWrap = document.getElementById("shareDeviceCurrentWrap");
   const currentCont = document.getElementById("shareDeviceCurrentContent");
   const backBtn = document.getElementById("btnBack");
@@ -89,6 +92,8 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   if (!overlay || isGuest) {
     return { open: () => {}, isGuest, refreshBadges: async () => ({}) };
   }
+  attachListTools(bulkHost?.parentElement, subsList, "device-share-friends");
+  attachListTools(currentCont?.previousElementSibling, currentCont, "device-share-shared");
 
   let _deviceType = null;
   let renderVersion = 0;
@@ -113,6 +118,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     clearMessage();
   }
   btnClose?.addEventListener("click", closeModal);
+  btnCancel?.addEventListener("click", closeModal);
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay && !(overlay.classList.contains("modal--sheet") && isSheetViewport())) closeModal();
   });
@@ -139,7 +145,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       currentCont.replaceChildren();
       if (!current.length) {
         const empty = document.createElement("div");
-        empty.className = "share-empty-state";
+        empty.className = "empty-state";
         empty.textContent = t("control.shareDeviceModal.noneCurrent");
         currentCont.appendChild(empty);
       }
@@ -194,13 +200,13 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     bulkHost?.replaceChildren(bulkActions.element);
     if (!activeFriends.length) {
       const empty = document.createElement("div");
-      empty.className = "share-empty-state";
+      empty.className = "empty-state";
       empty.textContent = t("control.shareDeviceModal.noFriends") || "Nie ma znajomych do udostępnienia.";
       subsList.appendChild(empty);
     }
     for (const friend of activeFriends) {
       const row = document.createElement("label");
-      row.className = "shareRow shareDeviceFriendRow";
+      row.className = "shareRow shareRow--compact shareDeviceFriendRow";
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.value = friend.user_id;
@@ -257,7 +263,10 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
 
   function updateSelection() {
     const inputs = subsList?.querySelectorAll('input[type="checkbox"]') || [];
-    if (btnShareFriends) btnShareFriends.disabled = !subsList?.querySelector('input[type="checkbox"]:checked:not(:disabled)');
+    const selected = subsList?.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)').length || 0;
+    if (btnShareFriends) btnShareFriends.disabled = !selected;
+    if (friendsLabel) friendsLabel.textContent = t("control.shareDeviceModal.shareSelectedN", { n: selected });
+    if (friendsShort) friendsShort.textContent = t("control.shareDeviceModal.shareSelectedShortN", { n: selected });
     bulkActions?.update(inputs);
   }
 

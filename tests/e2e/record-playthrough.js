@@ -1534,10 +1534,10 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   ]);
   await expect(answerTile(control, 3)).toBeDisabled();
   await expect(control.locator("#deviceLostOverlay")).toBeVisible();
-  await expect(control.locator("#deviceLostText")).toContainText("Wyświetlacz");
-  await expect(control.locator("#deviceLostText")).toContainText("Prowadzący");
+  await expect(control.locator("#deviceLostOverlay .mSub")).toContainText("Wyświetlacz");
+  await expect(control.locator("#deviceLostOverlay .mSub")).toContainText("Prowadzący");
   await control.waitForTimeout(2200);
-  await control.locator("#deviceLostClose").click();
+  await control.locator("#deviceLostOverlay .uni-foot .btn.gold").click();
   const blockedBank = await readBank();
   await answerTile(control, 3).evaluate((button) => { button.click(); button.click(); });
   expect(await readBank()).toBe(blockedBank);
@@ -1678,10 +1678,10 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   await Promise.all([contexts.display.close(), contexts.host.close(), contexts.buzzer.close()]);
   await Promise.all(["display", "host", "buzzer"].map((kind) => waitForDotStatus(control, kind, "bad")));
   await expect(control.locator("#deviceLostOverlay")).toBeVisible({ timeout: 15_000 });
-  await expect(control.locator("#deviceLostText")).toContainText("Wyświetlacz");
-  await expect(control.locator("#deviceLostText")).toContainText("Prowadzący");
+  await expect(control.locator("#deviceLostOverlay .mSub")).toContainText("Wyświetlacz");
+  await expect(control.locator("#deviceLostOverlay .mSub")).toContainText("Prowadzący");
   await control.waitForTimeout(1500);
-  await control.locator("#deviceLostClose").click();
+  await control.locator("#deviceLostOverlay .uni-foot .btn.gold").click();
   for (const kind of ["display", "host", "buzzer"]) {
     const reconnected = await reconnectDeviceViaModal(browser, control, kind);
     contexts[kind] = reconnected.context;

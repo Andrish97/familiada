@@ -92,21 +92,23 @@ test('mail360: rzeczywista stopka, listy, globalna rezygnacja i potwierdzenie pr
     await expect(center.locator('#itemsList .mail-row--device')).toHaveCount(1);
     const devices = (await state(center)).items.filter(item => item.kind === 'device');
     expect(devices[0].link).toMatch(/^\/go\/\?d=host&id=[a-f0-9-]+&key=[a-f0-9-]+$/);
-    const device = await anonymous.newPage();
+    // Ekran prowadzącego wymaga dotyku — link otwieramy jak na telefonie.
+    const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block' });
+    const device = await phone.newPage();
     try {
       await device.goto(new globalThis.URL(devices[0].link, URL).href);
       await expect(device).toHaveURL(/\/control\/host\//);
       await expect(device.locator('#paper')).toBeVisible({ timeout: 15000 });
-    } finally { await device.close(); }
+    } finally { await phone.close(); }
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-1400.png'), fullPage: true });
     await center.setViewportSize({ width: 390, height: 844 });
     await center.screenshot({ path: testInfo.outputPath('shot-mail360-active-390.png'), fullPage: true });
     await center.locator('[data-tab=items]').click();
     await expect(center.locator('#itemsPanel')).toBeVisible();
     await expect(center.locator('#subscriptionPanel')).toBeHidden();
-    expect(new URL(center.url()).searchParams.get('tab')).toBe('items');
+    expect(new globalThis.URL(center.url()).searchParams.get('tab')).toBe('items');
     await center.locator('[data-tab=subscriptions]').click();
-    expect(new URL(center.url()).searchParams.has('tab')).toBe(false);
+    expect(new globalThis.URL(center.url()).searchParams.has('tab')).toBe(false);
     expect(await center.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const denied = await center.evaluate(async () => (await fetch('/_api/mail/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })).status);
     expect(denied).toBe(403); expect((await state(center)).notifications_enabled).toBe(true);

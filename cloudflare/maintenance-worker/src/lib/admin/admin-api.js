@@ -107,6 +107,56 @@ export async function handleAdminApi(request, env) {
     return json({ ok: true, rows });
   }
 
+  // Statystyki, oceny i wykluczenia ze statystyk: tylko kluczem serwisowym
+  // (funkcje w bazie bez EXECUTE dla anon/authenticated -- migracja 444).
+  if (url.pathname === "/_admin_api/stats/overview") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const res = await supabaseRpc(env, "get_admin_stats", {});
+    if (!res.ok) return json({ ok: false, error: "stats_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, stats: res.data || {} });
+  }
+
+  if (url.pathname === "/_admin_api/stats/retention") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const res = await supabaseRpc(env, "get_retention_stats", {});
+    if (!res.ok) return json({ ok: false, error: "retention_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, stats: res.data || {} });
+  }
+
+  if (url.pathname === "/_admin_api/ratings") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const res = await supabaseRpc(env, "get_ratings_admin", {});
+    if (!res.ok) return json({ ok: false, error: "ratings_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+  }
+
+  if (url.pathname === "/_admin_api/stats/excluded") {
+    if (request.method === "GET") {
+      const res = await supabaseRpc(env, "stats_excluded_list", {});
+      if (!res.ok) return json({ ok: false, error: "excluded_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+      return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+    }
+    if (request.method === "POST") {
+      const body = await readJson(request);
+      const username = String(body?.username || "").trim();
+      if (!username) return json({ ok: false, error: "missing_username" }, 400);
+      const res = await supabaseRpc(env, "stats_exclude_user", { p_username: username });
+      if (!res.ok) return json({ ok: false, error: "exclude_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+      return json({ ok: true, result: res.data || {} });
+    }
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
+  if (url.pathname === "/_admin_api/stats/excluded/remove") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    const body = await readJson(request);
+    const userId = String(body?.user_id || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(userId)) return json({ ok: false, error: "invalid_user_id" }, 400);
+    const res = await supabaseRpc(env, "stats_unexclude_user", { p_user_id: userId });
+    if (!res.ok) return json({ ok: false, error: "unexclude_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true });
+  }
+
   if (url.pathname === "/_admin_api/stats/polls") {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
     const res = await supabaseRpc(env, "get_admin_poll_stats", {});

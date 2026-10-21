@@ -10,19 +10,21 @@ Settings panel (admin)
 - GET /_admin_api/mail/queue
 - POST /_admin_api/mail/queue/run
 - GET /_admin_api/mail/logs
+- GET /_admin_api/stats/overview, /stats/retention, /ratings, /stats/excluded
+- POST /_admin_api/stats/excluded { username }, /stats/excluded/remove { user_id }
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T22245";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-20T22245";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-20T22245";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-20T22245";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T22245";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T22245";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-20T22245";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T22245";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T22245";
-import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-20T22245";
-import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-20T22245";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T16391";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-21T16391";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T16391";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-21T16391";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T16391";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T16391";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-21T16391";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T16391";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T16391";
+import { setTopbarNavPriority } from "../../shared/js/core/topbar-controller.js?v=v2026-10-21T16391";
+import { buildControl2StatsExport } from "./stats-export.js?v=v2026-10-21T16391";
 
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
@@ -33,14 +35,14 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-20T22245";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-21T16391";
 
-import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-20T22245";
-import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-20T22245";
-import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-20T22245";
+import { buildComposeMailHtml } from "../../shared/js/core/compose-mail.js?v=v2026-10-21T16391";
+import { buildMarketingMailHtml } from "../../shared/js/core/marketing-mail.js?v=v2026-10-21T16391";
+import { buildStoredMailHtml } from "../../shared/js/core/stored-mail.js?v=v2026-10-21T16391";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-20T22245";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-21T16391";
 
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
@@ -332,6 +334,24 @@ async function apiFetch(path, options = {}) {
     cache: "no-store",
   });
   return res;
+}
+
+// Dane panelu z Workera (Cloudflare Access + klucz serwisowy po stronie
+// serwera); funkcje bazy nie są dostępne publicznym kluczem.
+async function adminGet(path, key) {
+  const res = await apiFetch(`${API_BASE}${path}`, { method: "GET" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "błąd");
+  return data[key];
+}
+
+async function adminPost(path, body, key) {
+  const res = await apiFetch(`${API_BASE}${path}`, { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "błąd");
+  return key ? data[key] : data;
 }
 
 async function checkMe() {
@@ -1051,8 +1071,9 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T22245"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-20T22245"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T16391"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T16391"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-21T16391"/>
 
   <style>
     body{margin:0;padding:0}
@@ -1096,8 +1117,7 @@ function closeMaintenancePreview() {
 async function loadAdminStats({ silent = false } = {}) {
   if (!silent) setStatus("Ładowanie statystyk…");
   try {
-    const { data, error } = await sb().rpc("get_admin_stats");
-    if (error) throw error;
+    const data = await adminGet("/stats/overview", "stats");
 
     if (els.statUsersTotal) els.statUsersTotal.textContent = data.users.total;
     if (els.statUsersGrowth) els.statUsersGrowth.textContent = `Dziś: ${data.users.new_today} | 7 dni: ${data.users.new_7d} | 30 dni: ${data.users.new_30d}`;
@@ -1310,9 +1330,7 @@ function renderExcludedList(users) {
 
 async function loadExcludedUsers() {
   try {
-    const { data, error } = await sb().rpc("stats_excluded_list");
-    if (error) throw error;
-    renderExcludedList(Array.isArray(data) ? data : []);
+    renderExcludedList((await adminGet("/stats/excluded", "rows")) || []);
   } catch (e) {
     console.error("[settings] loadExcludedUsers error:", e);
   }
@@ -1325,8 +1343,7 @@ async function addExcludedUser() {
   if (!username || !msg) return;
   msg.textContent = "";
   try {
-    const { data, error } = await sb().rpc("stats_exclude_user", { p_username: username });
-    if (error) throw error;
+    const data = await adminPost("/stats/excluded", { username }, "result");
     if (!data.ok) {
       msg.style.color = "#ff5722";
       msg.textContent = data.err === "not_found" ? "Nie znaleziono użytkownika." : data.err;
@@ -1344,8 +1361,7 @@ async function addExcludedUser() {
 
 async function removeExcludedUser(userId) {
   try {
-    const { error } = await sb().rpc("stats_unexclude_user", { p_user_id: userId });
-    if (error) throw error;
+    await adminPost("/stats/excluded/remove", { user_id: userId });
     await loadExcludedUsers();
   } catch (e) {
     console.error("[settings] removeExcludedUser error:", e);
@@ -1354,8 +1370,7 @@ async function removeExcludedUser(userId) {
 
 async function loadRetentionStats() {
   try {
-    const { data, error } = await sb().rpc("get_retention_stats");
-    if (error) throw error;
+    const data = await adminGet("/stats/retention", "stats");
     if (!data?.funnel) throw new Error("get_retention_stats: unexpected response shape: " + JSON.stringify(data));
     renderRetentionTable(data);
     renderSegmentBars(data.segments, data.funnel.registered);
@@ -1380,11 +1395,7 @@ async function loadRatings({ silent = false } = {}) {
     }
 
     // Load detailed ratings
-    const { data, error } = await sb().rpc("get_ratings_admin");
-
-    if (error) throw error;
-
-    const rows = Array.isArray(data) ? data : [];
+    const rows = (await adminGet("/ratings", "rows")) || [];
     if (rows.length === 0) {
       if (els.ratingsTableBody) els.ratingsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;opacity:.5">Brak ocen.</td></tr>';
       return;
@@ -2025,9 +2036,10 @@ function renderAiProviderOrder() {
       status.textContent = "Wyłączony";
       status.style.color = "#ff4d4d";
     } else if (cooldown && cooldown > now) {
-      const diff = Math.ceil((cooldown - now) / 1000);
-      const hours = Math.floor(diff / 3600);
-      const mins = Math.ceil((diff % 3600) / 60);
+      // pełne minuty w górę, potem podział (3 h nie daje „2h 60m”)
+      const totalMins = Math.ceil((cooldown - now) / 60000);
+      const hours = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
       status.textContent = `Zablokowany (Quota) - jeszcze ${hours}h ${mins}m`;
       status.style.color = "#ffa500";
     } else {
@@ -2568,13 +2580,13 @@ async function openRatersModal(gameId, title) {
       body.textContent = "Brak ocen.";
       return;
     }
-    body.innerHTML = `<table class="mail-table"><thead><tr>
-      <th>Użytkownik</th><th>Ocena</th><th>Data</th>
+    // Dwie kolumny (data pod nazwą) — mieszczą się także na telefonie.
+    body.innerHTML = `<table class="mail-table" style="min-width:0"><thead><tr>
+      <th>Użytkownik</th><th>Ocena</th>
     </tr></thead><tbody>${rows.map(r =>
       `<tr>
-        <td>${escSetting(r.username || "?")}</td>
-        <td>${icon("star").repeat(r.stars)}${icon("star-empty").repeat(5 - r.stars)} (${r.stars})</td>
-        <td>${new Date(r.rated_at).toLocaleString()}</td>
+        <td>${escSetting(r.username || "?")}<div style="opacity:.6;font-size:12px">${new Date(r.rated_at).toLocaleString()}</div></td>
+        <td style="white-space:nowrap">${icon("star").repeat(r.stars)}${icon("star-empty").repeat(5 - r.stars)} (${r.stars})</td>
       </tr>`
     ).join("")}</tbody></table>`;
   } catch (err) {
@@ -6779,7 +6791,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-20T22245");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-21T16391");
 
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;

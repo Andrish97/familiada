@@ -79,7 +79,7 @@ test("znajomi: e-mail bez konta pokazuje przejście do Subskrybentów", async ({
     await open(owner.page);
     await invite(owner.page, "test14@familiada.online");
     await expect(owner.page.locator(".uni-modal")).toContainText("możesz dodać tę osobę jako subskrybenta");
-    const link = owner.page.getByRole("link", { name: "Przejdź →" });
+    const link = owner.page.getByRole("link", { name: "Przejdź", exact: true });
     await expect(link).toHaveAttribute("href", /\/subscribers\//);
     await link.click();
     await expect(owner.page).toHaveURL(/\/subscribers\//);
@@ -116,7 +116,8 @@ test("kontakty: wspólny licznik wygasa na żywo, flaga mailowa ukrywa ponowieni
         const r = button.getBoundingClientRect(); return [r.width,r.height];
       }));
       expect(sizes).toHaveLength(2);
-      expect(sizes[0]).toEqual(sizes[1]);
+      // decyzja 2026-10-20: przy liczniku równa wysokość, szerokość przycisku wg treści
+      expect(sizes[0][1]).toEqual(sizes[1][1]);
       await owner.page.screenshot({path:testInfo.outputPath(`shot-${kind}-countdown.png`),fullPage:true});
       await expect(timed.locator('[data-act="resend"]')).toBeEnabled({timeout:12000});
       await expect(timed.locator('.shareCountdown')).toBeHidden();
@@ -183,7 +184,8 @@ test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ 
       await expect(incoming).toBeHidden();
       await owner.page.screenshot({ path: testInfo.outputPath(`shot-friends-declined-collapsed-${width}.png`), fullPage: true });
       await toggle.click();
-      await expect(incoming).toContainText("Odrzucono");
+      // sekcja „Odrzucone przeze mnie” — stan jest w tytule, wiersz nie powtarza znacznika
+      await expect(incoming).toBeVisible();
       await expect(incoming.locator('[data-act="accept"]')).toHaveCount(0);
       await expect(incoming.locator('[data-act="undo_reject"]')).toBeEnabled();
       await expect(incoming.locator('[data-act="reject"]')).toHaveCount(0);
@@ -220,7 +222,8 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await expect(incoming).toHaveCount(0);
     await recipient.page.locator('.rowsSection--declined button.rowsSectionHead').click();
     const refusal = recipient.page.locator(`.rowsSection--declined [data-id="${id}"]`);
-    await expect(refusal).toContainText("Odrzucono");
+    // stan jest w tytule sekcji „Odrzucone przeze mnie”, wiersz go nie powtarza
+    await expect(refusal).toBeVisible();
     await expect(refusal.locator('[data-act="undo_reject"]')).toBeEnabled();
     await owner.page.reload();
     const outgoing = owner.page.locator(`[data-id="${id}"]`);
@@ -360,7 +363,9 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
       const invite = owner.page.locator('[data-contact-tab="invite"]');
       const received = owner.page.locator('[data-contact-tab="received"]');
       await expect(invite).toHaveAttribute("aria-selected", "true");
-      expect((await invite.boundingBox()).height).toBe(36);
+      // Pasek wypustek ma 36 px; aktywna wypustka zachodzi o 1 px na kartę (jeden kawałek z kartą).
+      expect(Math.round((await owner.page.locator("#contactsTabs").boundingBox()).height)).toBe(36);
+      expect(Math.round((await invite.boundingBox()).height)).toBe(37);
       await expect(owner.page.locator("#contactsInvite")).toBeVisible();
       await expect(owner.page.locator("#contactsReceived")).toBeHidden();
       await expect(received.locator(".badge")).toHaveText("1");
@@ -394,7 +399,8 @@ test("kontakty: wypustki mobilne, liczniki i stan zakładek", async ({ browser }
       await owner.page.reload();
       await expect(received).toHaveAttribute("aria-selected", "true");
       await owner.page.setViewportSize({ width: 390, height: 844 });
-      await received.focus(); await received.press("ArrowLeft");
+      // Po zmianie szerokości układ zakładek się przebudowuje -- klawisz dopiero przy fokusie.
+      await received.focus(); await expect(received).toBeFocused(); await received.press("ArrowLeft");
       await expect(invite).toHaveAttribute("aria-selected", "true");
       expect(new URL(owner.page.url()).searchParams.has("tab")).toBe(false);
       await owner.page.locator("#inviteInput").fill("saved@example.net");
@@ -426,16 +432,15 @@ test("E20 kontakty pokazują ładowanie, błąd i pozwalają ponowić odczyt", a
   });
   try {
     await owner.page.setViewportSize({ width: 390, height: 844 });
-    const navigation = owner.page.goto("https://www.familiada.online/friends/");
-    await expect(owner.page.locator("#contactsLoadMessage")).toHaveText("Wczytuję kontakty…");
-    await navigation;
-    await expect(owner.page.locator("#contactsLoadMessage")).toHaveText(/Nie udało się wczytać kontaktów/, { timeout: 20000 });
+    // Ładowanie: szkielet strony; błąd: dymek + „Ponów” (lista odsłonięta, bez wierszy)
+    await owner.page.goto("https://www.familiada.online/friends/");
+    await expect(owner.page.locator(".app-toast-text")).toHaveText(/Nie udało się wczytać kontaktów/, { timeout: 20000 });
     await expect(owner.page.locator("#contactsLoadRetry")).toBeVisible();
-    await expect(owner.page.locator("#contactsHost")).not.toHaveClass(/skel-step-ready/);
+    await expect(owner.page.locator("#contactsHost")).toHaveClass(/skel-step-ready/);
     await owner.page.screenshot({ path: testInfo.outputPath("shot-e20-contacts-error-390.png"), fullPage: true });
     allowRetry = true;
     await owner.page.locator("#contactsLoadRetry").click();
-    await expect(owner.page.locator("#contactsLoadState")).toBeHidden();
+    await expect(owner.page.locator("#contactsLoadRetry")).toBeHidden();
     await expect(owner.page.locator("#contactsHost")).toHaveClass(/skel-step-ready/);
     await expect(owner.page.locator("#inviteForm")).toBeVisible();
     await owner.page.setViewportSize({ width: 1400, height: 900 });

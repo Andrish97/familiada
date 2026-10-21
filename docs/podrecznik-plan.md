@@ -147,7 +147,7 @@ Przedstawić układ edytora: nazwa gry, lista pytań, edycja wybranego pytania o
 
 #### 7.3 Pytania i odpowiedzi
 
-Opisać wpisywanie oraz poprawianie treści pytań i odpowiedzi. Wyjaśnić, że pytanie może mieć do 200 znaków, a odpowiedź do 17 znaków. W ankiecie tekstowej edytuje się tylko pytania; w dwóch pozostałych typach gry edytuje się również listę odpowiedzi. Szczegółowe omówienie odpowiedzi pochodzących z bazy pytań pozostawić rozdziałowi 9.
+Opisać wpisywanie oraz poprawianie treści pytań i odpowiedzi. Wyjaśnić, że pytanie może mieć do 100 znaków (E21), a odpowiedź do 17 znaków. W ankiecie tekstowej edytuje się tylko pytania; w dwóch pozostałych typach gry edytuje się również listę odpowiedzi. Szczegółowe omówienie odpowiedzi pochodzących z bazy pytań pozostawić rozdziałowi 9.
 
 #### 7.4 Punktacja odpowiedzi
 
@@ -530,6 +530,44 @@ Przygotować mapę powiązań między stronami i widokami serwisu a konkretnymi 
 
 Udostępnić podręcznik publicznie wszystkim użytkownikom. Po uruchomieniu manuala można zastąpić FAQ na stronie głównej odnośnikiem do podręcznika; sam rozdział FAQ pozostawić tylko wtedy, gdy pojawią się powtarzające się pytania użytkowników.
 
+## Decyzje wdrożeniowe (2026-10-21, E13.4)
+
+- **Karty podręcznika** (`?tab=`): `rules` (rozdz. 1–4), `account` (5), `games` (6–7), `logo` (8),
+  `bases` (9, 12), `people` (10, 11, 14), `community` (13), `polls` (15), `settings` (16),
+  `control` (17), `help` (19–20). Rozdział 18 (FAQ) pominięty — warunkowy.
+- **Kotwice**: rozdział `#r<N>`, podrozdział `#r<N>-<M>` (np. `#r7-6`); `#hash` to tylko kotwica
+  w karcie — kartę wybiera `?tab=`, a odnośnik wewnątrz podręcznika sam przełącza kartę.
+- **Pomoc kontekstowa**: `manual` w `nav-map.js` ma postać `karta#kotwica` (np. `games#r6`);
+  przycisk „?” prowadzi do `/manual/?tab=games#r6`.
+- **Spis treści** każdej karty budowany z nagłówków rozdziałów i podrozdziałów.
+- **Oznaczenia**: przycisk `span.m-btn` (z ikoną aplikacji, jeśli ją ma), strona/widok `span.m-page`,
+  odnośnik do rozdziału `a.m-ref`, wartość/plik `span.m-code`, klawisz `kbd.m-kbd`.
+  Zgadywanie przycisków po liście etykiet (`controls.js`) usunięte.
+- **Treść** w `web/manual/content/{pl,en,uk}.js` (klucz = karta), ładowana tylko przez `/manual/`;
+  w tłumaczeniach zostają tytuły kart i „Spis treści” (wydajność E13.3: −320 KB na każdej stronie).
+  Test `tests/unit/controlRelease.test.js` pilnuje tej samej struktury (id, odnośniki, przyciski) w 3 językach.
+
 ## Następny etap pracy
 
 Zakres rozdziałów został omówiony. Przed rozpoczęciem pisania treści należy jeszcze sprawdzić funkcje i ograniczenia w aktualnej wersji serwisu oraz potwierdzić zgodność zasad teleturnieju z regulaminem. Następnie można opracowywać rozdziały po kolei. Rozdział 18 jest warunkowy i może zostać pominięty, jeśli nie pojawią się powtarzające się pytania użytkowników.
+
+## Do sprawdzenia przez użytkownika (E13.4, 2026-10-21)
+
+- **Nagroda w finale** — decyzja 2026-10-21: jak w regulaminie TVP (2019, Dział V pkt 21–22):
+  kwota = punkty zwycięskiej drużyny z rund × mnożnik, przy osiągniętym celu finału + kwota główna.
+  Punkty z finału decydują tylko o celu. Wyświetlacz (`endScreen.js`) i statystyki (migracja 440)
+  liczą tak samo; wyjaśnienie pod polami nagrody (`gameSettings.game.prizeHint`).
+- Regulamin TVP nie był dostępny przez sieć agenta (PDF z s.tvp.pl zablokowany) — rozdz. 1–4 oparte
+  na faktach z planu; szczegóły pojedynku (kto pierwszy naciska) opisane ogólnie.
+- **Zmiana typu (7.8):** okno pokazuje przy każdym typie, co zostanie, a co zostanie usunięte
+  (np. „Pytania zostaną. Odpowiedzi i punkty zostaną usunięte.”); bieżący typ jest wyłączony.
+  Sprawdzone 2026-10-21 — zgodne z planem (wcześniejszy zapis o braku podsumowania był błędny).
+- **Wysyłanie gry znajomemu:** kod pozwala wysłać tylko szkic (blokuje też otwartą/zatrzymaną ankietę).
+- **„Eksportuj do bazy”** — decyzja 2026-10-21: ujednolicone; przy otwartej/zatrzymanej ankiecie pyta
+  „Bez bieżących głosów” jak eksport do pliku i powielanie.
+- **Eksplorator baz (dla sesji ujednolicającej Eksplorator):** osoba „Tylko podgląd” nie utworzy gry
+  z bazy (przycisk „Utwórz grę” aktywny, ale nic nie robi); Ctrl+Shift+N tworzy pytanie zamiast folderu
+  (warunek Ctrl+N przed Ctrl+Shift+N w `actions.js`); Delete w polu wyszukiwania może usuwać
+  zaznaczenie; „Utwórz grę…” w menu wyłączone w wynikach wyszukiwania/tagu, a na pasku i Ctrl+G działa.
+  Nazwy domyślne „Nowy folder”, „Nowe pytanie” i dopisek „(kopia)” są wpisane po polsku w `actions.js`
+  (bez tłumaczeń EN/UK). Podręcznik pomija te skróty i opisuje obecne działanie.

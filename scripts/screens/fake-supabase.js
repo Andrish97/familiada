@@ -13,6 +13,8 @@
   const misses = (window.__SCREENS_MISSES__ = []);
   const miss = (kind, name) => { const key = `${kind}:${name}`; if (!misses.includes(key)) misses.push(key); };
   const clone = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+  // db.latency (ms): opóźnienie odpowiedzi tabel i RPC -- podgląd stopniowego ładowania.
+  const respond = (v) => (db.latency ? new Promise((resolve) => setTimeout(() => resolve(v), db.latency)) : Promise.resolve(v));
   let seq = 0;
   const newId = () => `00000000-0000-4000-9000-${String(++seq).padStart(12, "0")}`;
 
@@ -97,6 +99,19 @@
         const name = not ? op.slice(4) : op;
         const fn = ops[name];
         if (!fn) { miss("filter", name); return api; }
+        // filtr po osadzonej tabeli: "qb_questions.base_id" (relacja one)
+        const dot = col.indexOf(".");
+        if (dot > 0) {
+          const child = col.slice(0, dot);
+          const ccol = col.slice(dot + 1);
+          const rel = db.relations?.[`${table}.${child}`];
+          if (!rel?.one) { miss("relation", `${table}.${child}`); return api; }
+          state.filters.push((r) => {
+            const c = (db.tables[child] || []).find((x) => x.id === r[rel.local]);
+            return !!c && fn(c[ccol], val) !== not;
+          });
+          return api;
+        }
         state.filters.push((r) => fn(r[col], val) !== not);
         return api;
       },
@@ -144,9 +159,9 @@
       let data = state.head ? null : rows;
       if (state.single) {
         data = rows?.[0] ?? null;
-        if (!data && state.single === "single") return Promise.resolve({ data: null, error: { code: "PGRST116", message: "JSON object requested, multiple (or no) rows returned" }, count: null, status: 406 });
+        if (!data && state.single === "single") return respond({ data: null, error: { code: "PGRST116", message: "JSON object requested, multiple (or no) rows returned" }, count: null, status: 406 });
       }
-      return Promise.resolve({ data, error: null, count: state.count ? total : null, status: 200 });
+      return respond({ data, error: null, count: state.count ? total : null, status: 200 });
     }
     return api;
   }
@@ -164,7 +179,7 @@
       const v = db.rpc[name];
       data = typeof v === "string" && v.startsWith("fn:") ? (0, eval)(`(${v.slice(3)})`)(args || {}, db) : clone(v);
     } else miss("rpc", name);
-    return chainable(Promise.resolve({ data, error: null, status: 200 }));
+    return chainable(respond({ data, error: null, status: 200 }));
   }
 
   const channel = () => { const c = { on: () => c, subscribe: (cb) => { try { cb?.("SUBSCRIBED"); } catch {} return c; }, unsubscribe: async () => "ok", send: async () => "ok", track: async () => "ok", untrack: async () => "ok", presenceState: () => ({}) }; return c; };

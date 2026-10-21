@@ -1,4 +1,4 @@
-const STYLE_URL = new URL("../../css/tooltips.css?v=v2026-10-20T22245", import.meta.url).href;
+const STYLE_URL = new URL("../../css/tooltips.css?v=v2026-10-21T16391", import.meta.url).href;
 
 function install() {
   if (typeof document === "undefined" || document.documentElement.dataset.tooltipSystem) return;
@@ -94,6 +94,9 @@ function install() {
       if (record.type === "attributes") normalizeTitle(record.target);
       else record.addedNodes.forEach((node) => node.nodeType === Node.ELEMENT_NODE && normalize(node));
     }
+    // węzeł z dymkiem zniknął (przebudowa listy) — „pointerout” już nie
+    // przyjdzie, więc dymek chowa się tutaj
+    if (active && !active.isConnected) hide();
   }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["title"] });
 
   document.addEventListener("pointerover", (event) => {

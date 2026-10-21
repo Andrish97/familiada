@@ -1,4 +1,4 @@
-import { t } from "../../translation/translation.js?v=v2026-10-20T22245";
+import { t } from "../../translation/translation.js?v=v2026-10-21T16391";
 
 // web/js/gameplay/hints.js
 // Blok podpowiedzi nad siatką (control/js/ui.js) — odpowiednik starego
@@ -19,15 +19,15 @@ import { t } from "../../translation/translation.js?v=v2026-10-20T22245";
 // control/js/ui.js (pasek statusu, ekran pojedynku), żeby te same litery
 // nie były tłumaczone w dwóch miejscach dwoma różnymi kawałkami kodu.
 export function teamName(state, code) {
-  if (code === "A") return state.teams?.defaultA === true ? t("control.teamADefault") : state.teams?.teamA || "Drużyna A";
-  if (code === "B") return state.teams?.defaultB === true ? t("control.teamBDefault") : state.teams?.teamB || "Drużyna B";
+  if (code === "A") return state.teams?.defaultA === true ? t("control.teamADefault") : state.teams?.teamA || t("control.teamADefault");
+  if (code === "B") return state.teams?.defaultB === true ? t("control.teamBDefault") : state.teams?.teamB || t("control.teamBDefault");
   return code || "—";
 }
 
 export function getRoundsHint(state) {
   const r = state.rounds;
-  if (state.step === "r_intro") return "Gra gotowa. Ekran oczekuje na start.";
-  if (state.step === "r_roundStart") return `Runda ${r.roundNo} gotowa. Kliknij „Start rundy”, żeby zacząć.`;
+  if (state.step === "r_intro") return t("control.hints.rIntro");
+  if (state.step === "r_roundStart") return t("control.hints.rRoundStart", { roundNo: r.roundNo });
   if (state.step !== "r_duel" && state.step !== "r_play") return "";
 
   // Uwaga: hinty celowo NIE powtarzają tego, co już widać na pasku statusu
@@ -38,35 +38,35 @@ export function getRoundsHint(state) {
   if (state.phase === "DUEL") {
     if (!r.duel.firstTeam) {
       if (r.duel.lastPressed) {
-        return `Pierwsza: ${teamName(state, r.duel.lastPressed)}. Kliknij „Zatwierdź”, żeby przyjąć zgłoszenie.`;
+        return t("control.hints.duelFirst", { team: teamName(state, r.duel.lastPressed) });
       }
       return state.settings.physicalBuzzer
-        ? "Obserwuj, kto nacisnął przycisk jako pierwszy. Kliknij drużynę, a potem „Potwierdź”."
-        : "Przycisk aktywny. Czekam na zgłoszenie drużyny.";
+        ? t("control.hints.duelPhysical")
+        : t("control.hints.duelWaiting");
     }
     return r.duel.cycleFirstAnswered
-      ? `Teraz odpowiada: ${teamName(state, r.duel.currentTeam)}.`
-      : `Pojedynek — odpowiada: ${teamName(state, r.duel.currentTeam)}.`;
+      ? t("control.hints.duelNowAnswering", { team: teamName(state, r.duel.currentTeam) })
+      : t("control.hints.duelAnswering", { team: teamName(state, r.duel.currentTeam) });
   }
 
   if (state.phase === "PLAY") {
-    if (!state.controlTeam) return "Brak drużyny grającej.";
-    if (r.canEndRound) return "Wszystkie odpowiedzi odsłonięte. Kliknij „Zakończ rundę”.";
-    if (r.allowPass && !r.passUsed) return "Może zagrać dalej albo oddać kontrolę.";
-    return "Wskaż trafioną odpowiedź albo kliknij X (pudło).";
+    if (!state.controlTeam) return t("control.hints.playNoTeam");
+    if (r.canEndRound) return t("control.hints.playCanEnd");
+    if (r.allowPass && !r.passUsed) return t("control.hints.playOrPass");
+    return t("control.hints.playPick");
   }
 
   if (state.phase === "STEAL") {
     if (r.steal.used) {
       return r.steal.won
-        ? "Kradzież udana — bank przechodzi do drużyny kradnącej."
-        : "Kradzież nietrafiona — bank zostaje przy drużynie grającej.";
+        ? t("control.hints.stealWon")
+        : t("control.hints.stealLost");
     }
-    return "Szansa na kradzież. Kliknij trafioną odpowiedź albo X (pudło).";
+    return t("control.hints.stealChance");
   }
 
   if (state.phase === "REVEAL") {
-    return "Odsłoń pozostałe odpowiedzi. Punkty się nie zmienią.";
+    return t("control.hints.reveal");
   }
 
   return "";
@@ -76,34 +76,34 @@ export function getFinalHint(state) {
   const f = state.final;
   const step = state.step;
 
-  if (step === "f_start") return "Rozpocznij finał.";
+  if (step === "f_start") return t("control.hints.fStart");
 
   if (step === "f_p1_entry" || step === "f_p2_entry") {
     const round = step === "f_p1_entry" ? 1 : 2;
-    const t = f.runtime.timer;
+    const timer = f.runtime.timer;
     const phaseKey = round === 1 ? "P1" : "P2";
-    const running = t.running && t.phase === phaseKey;
+    const running = timer.running && timer.phase === phaseKey;
     // `used` (ustawiane już w momencie startu, nie dopiero po wygaśnięciu)
     // samo w sobie więc NIE wystarcza do "Czas wykorzystany" — trzeba
     // dodatkowo sprawdzić, że zegarek faktycznie już nie chodzi.
-    const used = round === 1 ? t.usedP1 : t.usedP2;
+    const used = round === 1 ? timer.usedP1 : timer.usedP2;
     // Runda 2: przypomnienie o przycisku "Powtórzenie" — dopisane do KAŻDEJ
     // gałęzi poza "czas wykorzystany" (tam nie ma już czego pilnować),
     // żeby operator nie wpisywał ręcznie tego, co gracz 2 tylko powtórzył.
-    if (used && !running) return "Czas minął. Uzupełnij pola i przejdź dalej.";
-    if (running) return `Wpisz odpowiedzi gracza ${round}. Odliczanie trwa.`;
-    return `Wpisz odpowiedzi gracza ${round} i uruchom odliczanie.`;
+    if (used && !running) return t("control.hints.entryTimeUp");
+    if (running) return t("control.hints.entryRunning", { round });
+    return t("control.hints.entryIdle", { round });
   }
 
-  if (step === "f_p2_start") return "Odpowiedzi gracza 1 są ukryte.";
+  if (step === "f_p2_start") return t("control.hints.p2Start");
 
   if (step.startsWith("f_p1_map_q") || step.startsWith("f_p2_map_q")) {
     const round = step.startsWith("f_p1_map_q") ? 1 : 2;
     const idx = Number(step.slice(-1)) - 1;
     const entry = f.runtime[round === 1 ? "p1" : "p2"][idx] || {};
     const row = f.runtime[round === 1 ? "map1" : "map2"][idx];
-    if (f.runtime.reached200) return "Osiągnięto próg finału. Zakończ finał.";
-    if (round === 2 && idx === 4 && row.revealedPoints) return "Wszystkie odpowiedzi odsłonięte. Zakończ finał.";
+    if (f.runtime.reached200) return t("control.hints.mapReached200");
+    if (round === 2 && idx === 4 && row.revealedPoints) return t("control.hints.mapAllRevealed");
     // Rozstrzygnięcie jest ZAWSZE już jakieś, nawet zanim operator cokolwiek
     // kliknął (domyślnie: dopasowanie z listy jeśli wybrane ręcznie, inaczej
     // "Nie ma na liście" gdy coś wpisano / "Brak odpowiedzi" gdy pusto —
@@ -113,14 +113,14 @@ export function getFinalHint(state) {
     // operator ma wiedzieć NARAZ że to powtórzenie ORAZ co ma zrobić dalej,
     // nie dwa osobne, następujące po sobie stany hinta.
     if (round === 2 && entry.repeat && !row.revealedAnswer) {
-      return "Powtórzenie: brak punktów. Odsłoń odpowiedź.";
+      return t("control.hints.mapRepeat");
     }
-    if (!row.revealedAnswer) return "Sprawdź odpowiedź i odsłoń ją.";
-    if (!row.revealedPoints) return "Odsłoń punkty.";
-    return "Przejdź dalej.";
+    if (!row.revealedAnswer) return t("control.hints.mapRevealAnswer");
+    if (!row.revealedPoints) return t("control.hints.mapRevealPoints");
+    return t("control.hints.mapNext");
   }
 
-  if (step === "f_end") return "Finał zakończony.";
+  if (step === "f_end") return t("control.hints.fEnd");
 
   return "";
 }

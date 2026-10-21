@@ -6,27 +6,27 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-20T22245";
-import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-20T22245";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-20T22245";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-20T22245";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-20T22245";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-20T22245";
+import { shareSectionEl, shareRowEl, shareCooldownEl, shareBulkActionsEl } from "../../shared/js/core/share-sections.js?v=v2026-10-21T16391";
+import { anonymousPollLink } from "../../shared/js/core/poll-links.js?v=v2026-10-21T16391";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T16391";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T16391";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T16391";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T16391";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-20T22245";
-import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-20T22245";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-20T22245";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-20T22245";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-20T22245";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-20T22245";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-20T22245";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-20T22245";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-20T22245";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-20T22245";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-20T22245";
-import { createTally } from "./poll-tally.js?v=v2026-10-20T22245";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T16391";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-21T16391";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-21T16391";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-21T16391";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-21T16391";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-21T16391";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T16391";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-21T16391";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-21T16391";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-21T16391";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-21T16391";
+import { createTally } from "./poll-tally.js?v=v2026-10-21T16391";
 
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-20T22245";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-21T16391";
 
 
 // initI18n is called at the start of DOMContentLoaded (see below)
@@ -588,8 +588,8 @@ function subLabel(sub) {
   return sub.subscriber_label || sub.subscriber_email || "—";
 }
 
-// Karta Udostępnianie działa w szkicu (przygotowanie listy), przy otwartej
-// i zatrzymanej ankiecie. Po podliczeniu linki wygasają.
+// Karta Udostępnianie: w szkicu widoczna, ale zablokowana do uruchomienia;
+// działa przy otwartej i zatrzymanej ankiecie. Po podliczeniu linki wygasają.
 function sharingAvailable(st = game?.status) {
   return st === STATUS.DRAFT || st === STATUS.POLL_OPEN || st === STATUS.POLL_STOPPED;
 }
@@ -667,8 +667,8 @@ function renderSubs(force = false) {
     });
   }
 
-  // Nowych odbiorców dodaje się w oknie; w szkicu wybór czeka na uruchomienie.
-  if (btnAddRecipients) btnAddRecipients.disabled = !canSendInvites() && game?.status !== STATUS.DRAFT;
+  // Nowych odbiorców dodaje się w oknie, dopiero przy otwartej ankiecie.
+  if (btnAddRecipients) btnAddRecipients.disabled = !canSendInvites();
   if (sendHint) {
     sendHint.textContent = stopped ? t("polls.share.sendDisabledStopped")
       : game?.status === STATUS.DRAFT ? t("polls.share.sendAfterStart") : "";
@@ -702,8 +702,10 @@ function renderSubs(force = false) {
     });
     actions.push({ key: "remove", icon: "trash", title: t("polls.share.remove"), disabled: busy,
       onClick: () => void removeShare(tk, { sub_id: tk.recipient_user_id || tk.recipient_email, subscriber_label: label }) });
+    const stateKey = waiting ? "waiting" : tk.status === "done" ? "done" : "declined";
     return {
       id: tk.id, label, compact: true,
+      state: { key: stateKey, label: t(`polls.share.state.${stateKey}`) },
       tags: [{ text: t(`shareSections.channel.${kind}`), cls: "tag--muted" }], actions,
       note: waiting ? (tk.status === "opened" ? t("pollSharePanel.opened") : t("polls.share.state.waiting"))
         : tk.status === "done" ? t("polls.share.state.done") : t("polls.share.state.declined"),
@@ -752,10 +754,8 @@ function recipientSelectionChanged() {
   const n = selectedSubIds.size + selectedFriendIds.size;
   if (pollRecipientsCount) pollRecipientsCount.textContent = n ? t("polls.share.selectedCount", { n }) : "";
   if (pollRecipientsAdd) {
-    pollRecipientsAdd.disabled = n === 0 || busy || (!canSendInvites() && game?.status !== STATUS.DRAFT);
-    pollRecipientsAdd.textContent = game?.status === STATUS.DRAFT
-      ? t("polls.share.addSelectedN", { n })
-      : t("polls.share.sendInvitesN", { n });
+    pollRecipientsAdd.disabled = n === 0 || busy || !canSendInvites();
+    pollRecipientsAdd.textContent = t("polls.share.sendInvitesN", { n });
   }
 }
 
@@ -785,7 +785,7 @@ function renderRecipientGroup(host, rows, kind, title) {
     const row = shareRowEl({ id: recipient.id, label: recipient.label, title: recipient.email, compact: true });
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox"; checkbox.value = recipient.id; checkbox.checked = selectedIds.has(recipient.id);
-    if (busy || (!canSendInvites() && game?.status !== STATUS.DRAFT)) { checkbox.disabled = true; checkbox.dataset.locked = "1"; }
+    if (busy || !canSendInvites()) { checkbox.disabled = true; checkbox.dataset.locked = "1"; }
     checkbox.setAttribute("aria-label", recipient.label);
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) selectedIds.add(recipient.id); else selectedIds.delete(recipient.id);
@@ -823,14 +823,14 @@ function renderRecipientPicker() {
 }
 
 async function openRecipientPicker() {
-  if (guestMode || !game || busy || recipientPickerLoading || !sharingAvailable() || game.status === STATUS.POLL_STOPPED || game.status === STATUS.READY) return;
+  if (guestMode || !game || busy || recipientPickerLoading || !canSendInvites()) return;
   recipientPickerLoading = true;
   if (btnAddRecipients) btnAddRecipients.disabled = true;
   try { await loadTasks(); }
   catch (error) { console.warn("[polls] recipient picker", error); setMsg(t("common.genericError"), "error"); return; }
   finally {
     recipientPickerLoading = false;
-    if (btnAddRecipients) btnAddRecipients.disabled = busy || (!canSendInvites() && game?.status !== STATUS.DRAFT);
+    if (btnAddRecipients) btnAddRecipients.disabled = busy || !canSendInvites();
   }
   renderSubs(true);
   recipientPickerSnapshot = {
@@ -864,10 +864,6 @@ async function acceptRecipientSelection() {
   if (!n || busy) return;
   recipientPickerSnapshot = null;
   closeRecipientPicker();
-  if (game.status === STATUS.DRAFT) {
-    renderBar();
-    return;
-  }
   await sendInvites();
 }
 
@@ -963,7 +959,6 @@ function renderBar() {
   if (pollStateInfo) pollStateInfo.textContent = prepared ? "" : info;
 
   const chk = lastCheck;
-  const nInvite = selectedSubIds.size + selectedFriendIds.size;
   let hint = "";
 
   show(btnOpenPoll, !prepared && st === STATUS.DRAFT);
@@ -976,9 +971,12 @@ function renderBar() {
   show(btnAbort, !prepared && (st === STATUS.POLL_OPEN || st === STATUS.POLL_STOPPED));
 
   if (btnOpenPoll) {
-    btnOpenPoll.textContent = nInvite > 0
-      ? t("polls.actions.openAndInvite", { n: nInvite })
-      : t("polls.actions.openPoll");
+    // ikona + etykieta (na telefonie sama ikona); textContent kasował oba
+    const label = t("polls.actions.openPoll");
+    btnOpenPoll.innerHTML = `${icon("play")}<span class="pollActionLabel"></span>`;
+    btnOpenPoll.querySelector(".pollActionLabel").textContent = label;
+    btnOpenPoll.title = label;
+    btnOpenPoll.setAttribute("aria-label", label);
     const ok = chk?.poll_open?.ok;
     btnOpenPoll.disabled = busy || !ok;
     if (st === STATUS.DRAFT && chk && !ok) hint = chk.poll_open.reason;
@@ -1013,6 +1011,7 @@ function renderShareSection(st, link) {
   const available = sharingAvailable(st);
   const hasLink = st === STATUS.POLL_OPEN || st === STATUS.POLL_STOPPED;
   if (shareBody) shareBody.style.display = available ? "" : "none";
+  shareBody?.classList.toggle("is-locked", st === STATUS.DRAFT);
   if (shareEmpty) {
     shareEmpty.style.display = available ? "none" : "";
     shareEmpty.textContent = st === STATUS.READY ? t("polls.share.closedEmpty") : t("polls.share.draftEmpty");
@@ -1163,13 +1162,9 @@ async function openPollFlow() {
   const chk = await validateGame(game.id);
   if (!chk.poll_open.ok) return setMsg(chk.poll_open.reason, "error");
 
-  const nInvite = selectedSubIds.size + selectedFriendIds.size;
-  const withInvites = nInvite > 0;
   const ok = await confirmModal({
     title: t("polls.modals.open.title"),
-    text: withInvites
-      ? t("polls.modals.open.textInvite", { name: game.name, n: nInvite })
-      : t("polls.modals.open.text", { name: game.name }),
+    text: t("polls.modals.open.text", { name: game.name }),
     okText: t("polls.modals.open.ok"),
     cancelText: t("polls.modals.open.cancel"),
   });
@@ -1181,19 +1176,6 @@ async function openPollFlow() {
   } catch (e) {
     console.error("[polls] open error:", e);
     await alertModal({ text: `${t("polls.errors.open")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
-    return;
-  }
-
-  // start i wysyłka zaproszeń jednym krokiem
-  if (withInvites) {
-    try {
-      game = await loadGame();
-      await loadSubsData();
-      await sendInvitesCore();
-    } catch (e) {
-      console.error("[polls] open + invites error:", e);
-      await alertModal({ text: `${t("polls.errors.openedInviteFailed")}\n\n${e?.message || e}` });
-    }
   }
 }
 

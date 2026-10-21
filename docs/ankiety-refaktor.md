@@ -51,7 +51,7 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
 
     | Stan | Akcje na pasku | Udostępnianie | Wyniki |
     |---|---|---|---|
-    | SZKIC (nieuruchomiona) | Uruchom / Uruchom i wyślij zaproszenia (N) | aktywna — przygotowanie listy | pusta zachęta do uruchomienia |
+    | SZKIC (nieuruchomiona) | Uruchom | zablokowana do uruchomienia (2026-10-21) | pusta zachęta do uruchomienia |
     | OTWARTA | Zatrzymaj, Przerwij | aktywna | na żywo |
     | ZATRZYMANA | Wznów głosowanie, Podlicz głosy, Przerwij | aktywna (link ważny) | surowe; podliczanie |
     | GOTOWA (podliczona) | Uruchom ponownie | nieaktywna | ostateczne |
@@ -93,11 +93,16 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
     + szara linijka „tekstowa · Nazwa gry” (także na telefonie); treść
     w obecnym, „gamesowym” wyglądzie kart. Lista gier: tylko stan
     i plakietka, kliknięcie → strona ankiety (akcji nie dublujemy).
-  - **Udostępnianie w SZKICU aktywne jako przygotowanie (2026-10-09,
+  - **Udostępnianie w SZKICU zablokowane (decyzja użytkownika 2026-10-21,
+    zastępuje zapis z 2026-10-09 poniżej).** Karta widoczna, sekcje
+    Anonimowo i Odbiorcy wyszarzone i nieaktywne do uruchomienia; brak
+    wyboru odbiorców przed startem; przycisk tylko „Uruchom”. Odbiorców
+    dodaje się po uruchomieniu (otwarta ankieta).
+  - ~~**Udostępnianie w SZKICU aktywne jako przygotowanie (2026-10-09,
     zmienia wcześniejsze „nieaktywne w szkicu”).** Zaznaczasz
     subskrybentów; zamiast linku „Link pojawi się po uruchomieniu”;
     przycisk „Uruchom” albo „Uruchom i wyślij zaproszenia (N)”, gdy ktoś
-    zaznaczony — start i wysyłka jednym krokiem. GOTOWA — nieaktywne.
+    zaznaczony — start i wysyłka jednym krokiem. GOTOWA — nieaktywne.~~
   - **Pasek stanu (nad kartami) — miejsce wszystkich akcji (2026-10-09).**
     Lewa strona: stan słowem + krótki opis (np. „OTWARTA · 12 głosów”,
     „ZATRZYMANA · link nadal ważny”). Prawa: przyciski akcji wg tabeli

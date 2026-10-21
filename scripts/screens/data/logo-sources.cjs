@@ -33,7 +33,8 @@ module.exports = [
   {
     mode: "DRAW", age: 2, names: { pl: "Gwiazdy wieczoru", en: "Stars of the night", uk: "Зірки вечора" },
     source: scene([
-      { type: "rect", left: 30, top: 30, width: 980, height: 380, rx: 40, ry: 40, fill: "", stroke: "#ffffff", strokeWidth: 22 },
+      // obrys 22 dolicza się do wymiarów: 30 + 958 + 22 = 1010 (margines 30 z każdej strony)
+      { type: "rect", left: 30, top: 30, width: 958, height: 358, rx: 40, ry: 40, fill: "", stroke: "#ffffff", strokeWidth: 22 },
       text("FAMILIADA", 520, 220, 150),
       star(130, 120, 50), star(910, 120, 50), star(130, 320, 50), star(910, 320, 50),
       { type: "rect", left: 250, top: 330, width: 540, height: 18, rx: 9, ry: 9, fill: "#ffffff" },

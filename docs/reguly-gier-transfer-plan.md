@@ -1,9 +1,8 @@
 # Centralne reguły gier oraz import i eksport — plan
 
-**Stan:** implementacja autoryzowana przez użytkownika (2026-10-20) i wykonana
-na branchu — migracje 404–407, kod JS, testy; przebieg wdrożenia w §9 i w
-Dzienniku `wdrozenia.md`. Wcześniejsze zapisy „tylko planowanie” i „zatrzymanie
-przed implementacją” są nieaktualne.  
+**Stan:** **zakończone 2026-10-21** — migracje 403–414 i kod na produkcji,
+nocna naprawa danych wykonana, kontrola produkcji zielona; przebieg w §9
+i w Dzienniku `wdrozenia.md`.  
 **Zakres:** jedno źródło reguł dla gotowości i dozwolonych akcji gry, uproszczenie
 modalów tworzenia gry z Base Explorera oraz jednolite reguły importu/eksportu,
 z uzgodnioną automatyczną normalizacją danych do limitów.
@@ -334,10 +333,17 @@ powielenie ani utworzenie nowej gry: konwersja aktualizuje ten sam rekord.
 - Ankieta `poll_open` jest zablokowana dla zmiany typu tak samo jak dla edycji.
   `poll_stopped` również pozostaje zablokowana, jeśli wspólna reguła edycji ją
   blokuje. Typ `market` nie podlega edycji.
-- Dla zamkniętej ankiety (`ready`) modal korzysta z tego samego
-  `needs_reset`/potwierdzenia co edytor. Bez potwierdzenia nic się nie zmienia;
-  po potwierdzeniu resetuje wyniki i przypisaną punktację tak jak zwykła edycja,
-  a następnie zmienia typ i ustawia grę jako szkic docelowego typu.
+- Dla zamkniętej ankiety (`ready`) — **decyzja użytkownika 2026-10-21,
+  migracja 441**: bez osobnego pytania o reset; samo okno „Zmień typ” jest
+  potwierdzeniem (tekst: głosy, linki i kody QR ankiety zostaną usunięte).
+  Wyniki ankiety można opcjonalnie zachować (`game_change_type(..., p_keep)`,
+  pole „Zachowaj …” pod wybranym typem, **domyślnie odznaczone** — domyślnie
+  znika wszystko, co powstało w wyniku ankiety):
+  punktacja → preparowana: punkty (odpowiedzi zostają zawsze);
+  tekstowa → preparowana: odpowiedzi i punkty (bez zachowania same pytania);
+  tekstowa → punktacja: odpowiedzi (punkty da nowa ankieta; bez zachowania same
+  pytania); → tekstowa: same pytania, bez wyboru. Gra zawsze wraca do szkicu
+  docelowego typu. „Edytuj” zamkniętej ankiety nadal pyta o reset.
 - Dla szkicu zmiana typu może przejść bez resetu wyników ankiety, bo ich nie ma;
   nadal wykonuje konwersję danych z tabeli poniżej.
 - Modal pokazuje podsumowanie konwersji i utraconych danych przed
@@ -644,10 +650,10 @@ punktowy test na produkcji (cykl z `CLAUDE.md`).
 | 8 | Control | Każda odpowiedź o maksymalnej punktacji kończy pojedynek | 2 | ✓ |
 | 9 | Transfer | Pakiet v2: import, eksport, Powiel, Wyślij; normalizacja bez pytania | 2, 7 | ✓ 406 |
 | 10 | Marketplace | Zgłoszenie przez `play`, typ `market`, kopie archiwalne | 2, 9 | ✓ 404, 406 |
-| 11 | Szablony demo | Każda gra demo zgodna z regułami swojego typu i statusu (§9.6) | 2, 7 | 409 — od razu po wdrożeniu |
-| 12 | Nocna naprawa danych | Teksty pytań gier i baz, znaki odpowiedzi, nieedytowane kopie demo, `rules_state`; pomija gry z niewygasłą sesją Control | 1–11 | 407 + 409, `pg_cron` 01:30 UTC |
-| 13 | Ograniczenia bazy | `questions_text_len` (≤100) i `answers_text_chars` — zakładane przez naprawę, gdy dane są czyste | 12, decyzja §9.5 | czeka na naprawę i decyzję o 5 odpowiedziach |
-| 14 | Kontrola i zamknięcie | Raport naprawy (`e21_repair_runs`), punktowe e2e na produkcji, wpis w Dzienniku | 12, 13 | — |
+| 11 | Szablony demo | Każda gra demo zgodna z regułami swojego typu i statusu (§9.6) | 2, 7 | ✓ 409 (szablony), 413 (kopie po treści) |
+| 12 | Nocna naprawa danych | Teksty pytań gier i baz, znaki odpowiedzi, nieedytowane kopie demo, `rules_state`; pomija gry z niewygasłą sesją Control | 1–11 | ✓ 2026-10-21 01:30 UTC (raport #1) |
+| 13 | Ograniczenia bazy | `questions_text_len` (≤100) i `answers_text_chars` — zakładane przez naprawę, gdy dane są czyste | 12 | ✓ założone przez naprawę |
+| 14 | Kontrola i zamknięcie | Raport naprawy (`e21_repair_runs`), punktowe e2e na produkcji, wpis w Dzienniku | 12, 13 | ✓ `39535133821`; E21 zakończone |
 
 ## 6. Scenariusze kontrolne wymagane przed zamknięciem
 
@@ -1120,8 +1126,13 @@ Marketplace i szablony demo bez naruszeń; niewygasłe sesje Control: 0.
   Base Explorer E21 ✓; zapis szkicu — test poprawiony), `39446733012` ✓
   (literówki/scalanie, cofnij, wyjście z podliczania, DOKŁADNIE),
   `39447096936` ✓ (`control2` „próg w rundzie”).
-- Nocna naprawa danych (cron 01:30 UTC 2026-10-21) — wynik do dopisania
-  z `e21_repair_runs`.
+- Nocna naprawa danych 2026-10-21 01:30 UTC (raport `e21_repair_runs` #1):
+  pytania gier 11 i baz 24 skrócone na granicy słowa; bazy demo — 364
+  pytania z krótkimi odpowiedziami z mapy 298; demo preparowane 119 (476
+  odpowiedzi <4 pkt usuniętych); demo ankiety dopełnione do 10 (punktowe
+  140, tekstowe 141); pominięte przez Control 0; zostało 0; ograniczenia
+  `questions_text_len` i `answers_text_chars` założone. Kontrola produkcji
+  `39535133821` ✓. **E21 zakończone.**
 
 ### 9.5. Otwarte
 

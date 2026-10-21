@@ -85,14 +85,18 @@ test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty",
       const game = await seedPoll(ownerPage, { type });
       gameId = game.id;
       await ownerPage.goto(`https://www.familiada.online/polls/?id=${gameId}`);
+      // Szkic: udostępnianie zablokowane do uruchomienia.
+      await expect(ownerPage.locator("#btnAddRecipients")).toBeDisabled();
+      await expect(ownerPage.locator("#shareBody")).toHaveClass(/is-locked/);
+      const after = new Date(Date.now() - 2000).toISOString();
+      await ownerPage.locator("#btnOpenPoll").click();
+      await ownerPage.locator(".uni-foot .btn.gold:visible").click();
+      await expect(ownerPage.locator("#btnAddRecipients")).toBeEnabled({ timeout: 20000 });
       await ownerPage.locator("#btnAddRecipients").click();
       await ownerPage.locator("#pollRecipientsFriends .shareRow").filter({ hasText: "test8" }).click();
       await ownerPage.locator("#pollRecipientsSubs .shareRow").filter({ hasText: subscriberEmail }).click();
       await ownerPage.locator("#pollRecipientsAdd").click();
-      const after = new Date(Date.now() - 2000).toISOString();
-      await ownerPage.locator("#btnOpenPoll").click();
-      await ownerPage.locator(".uni-foot .btn.gold:visible").click();
-      await expect(ownerPage.locator("#subsGrid .shareRow")).toHaveCount(2);
+      await expect(ownerPage.locator("#subsGrid .shareRow")).toHaveCount(2, { timeout: 20000 });
       const emails = await Promise.all([
         waitForEmail({ recipient: testAccountUsername(8), after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
         waitForEmail({ recipient: subscriberEmail, after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
@@ -200,6 +204,12 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     const emailAfter = new Date(Date.now() - 2000).toISOString();
     await ownerPage.goto(`https://www.familiada.online/polls/?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await ownerPage.waitForLoadState("networkidle");
+    // Szkic: najpierw uruchomienie, potem odbiorcy.
+    await expect(ownerPage.locator("#btnAddRecipients")).toBeDisabled();
+    await ownerPage.locator("#btnOpenPoll").click();
+    await ownerPage.locator(".uni-foot .btn.gold:visible").click();
+    await expect(ownerPage.locator("#pollLink")).not.toHaveValue("");
+    await expect(ownerPage.locator("#btnAddRecipients")).toBeEnabled({ timeout: 20000 });
     await ownerPage.locator("#btnAddRecipients").click();
     const modal = ownerPage.locator("#pollRecipientsOverlay");
     await expect(modal).toBeVisible();
@@ -211,10 +221,6 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     await subscriberRow.click();
     await expect(modal.locator("#pollRecipientsAdd")).toBeEnabled();
     await modal.locator("#pollRecipientsAdd").click();
-
-    await ownerPage.locator("#btnOpenPoll").click();
-    await ownerPage.locator(".uni-foot .btn.gold:visible").click();
-    await expect(ownerPage.locator("#pollLink")).not.toHaveValue("");
     await expect(ownerPage.locator("#subsGrid .shareRow")).toHaveCount(2, { timeout: 20000 });
     await expect(ownerPage.locator("#subsGrid .shareRow").filter({ hasText: "test8" })).toHaveCount(1);
     await expect(ownerPage.locator("#subsGrid .shareRow").filter({ hasText: subscriberEmail })).toHaveCount(1);
@@ -444,7 +450,8 @@ test("ankieta: wspólny UI i stany odbiorców, checkboxy, zegary, scroll oraz ak
         return { sections, buttons, actions, overflow: document.documentElement.scrollWidth > innerWidth };
       });
       expect(Math.max(...geometry.sections) - Math.min(...geometry.sections)).toBeLessThanOrEqual(1);
-      expect(geometry.buttons[0]).toEqual(geometry.buttons[1]); expect(geometry.overflow).toBe(false);
+      // licznik: równa wysokość przycisków, szerokość przycisku z licznikiem wg tekstu (decyzja 2026-10-20)
+      expect(geometry.buttons[0][1]).toBe(geometry.buttons[1][1]); expect(geometry.overflow).toBe(false);
       for (const height of geometry.actions) expect(height).toBeLessThanOrEqual(36);
       const openedReminder = page.locator('#subsGrid [data-id=opened] [data-act=remind]');
       await expect(openedReminder).toBeVisible();

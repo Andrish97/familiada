@@ -1,30 +1,35 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z ręcznym zapisem.
 // Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-20T22245";
-import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-20T22245";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-20T22245";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-20T22245";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-20T22245";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-20T22245";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-20T22245";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-20T22245";
-import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-20T22245";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-20T22245";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-20T22245";
-import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-20T22245";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-21T16391";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-21T16391";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-21T16391";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T16391";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-21T16391";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-21T16391";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-21T16391";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T16391";
+import { toast } from "../../../shared/js/core/toast.js?v=v2026-10-21T16391";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-21T16391";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-21T16391";
+import { LONG_MAX_INPUT, measureLongText, clipLongText, dropUnsupported } from "../../../shared/js/display/long-text.js?v=v2026-10-21T16391";
 
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume, buildSfxUrl, createSfxAudio, playSfxAudio, setSfxAudioVolume, stopSfxAudio,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-20T22245";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-21T16391";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-20T22245";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-20T22245";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-20T22245";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-20T22245";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-21T16391";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-21T16391";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T16391";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-21T16391";
+import { isPhoneScreen } from "../../../shared/js/core/device-guard.js?v=v2026-10-21T16391";
+
+// Telefon: listy pytań bez przeciągania (dotknięcie przenosi, strzałki ustawiają kolejność).
+const DRAG = !isPhoneScreen();
+const DRAGGABLE = DRAG ? "true" : "false";
 
 
 const qs = new URLSearchParams(location.search);
@@ -419,7 +424,7 @@ function buildColorModalBody() {
   body.innerHTML = `
     <div class="colorTopRow">
       <div class="colorPreview" id="gsColorPreview"></div>
-      <label class="colorHexField"><span class="lbl2">HEX</span><input class="inp" id="gsColorHex" autocomplete="off" spellcheck="false" inputmode="text" placeholder="#RRGGBB"/></label>
+      <label class="colorHexField"><span class="lbl2">HEX</span><input class="inp" id="gsColorHex" autocomplete="off" spellcheck="false" inputmode="text" placeholder="#RRGGBB"/><span class="hint">Format: <b>#RRGGBB</b></span></label>
     </div>
     <div class="sliders">
       <label class="sliderRow"><span class="sLbl">R</span><input class="rng" id="gsColorR" type="range" min="0" max="255" step="1"/><span class="sVal" id="gsColorRVal">0</span></label>
@@ -444,9 +449,11 @@ async function openColorModal(key) {
   const confirmed = await confirmModal({
     title: getColorLabels()[key] || key,
     text: "",
-    okText: t("common.done") || "Gotowe",
+    okText: t("common.save"),
     cancelText: t("common.cancel") || "Anuluj",
     body,
+    // Telefon: arkusz od dołu jak okno koloru tagów w menedżerze bazy.
+    sheet: { backBtn: document.getElementById("btnBack") },
     initialFocus: refs.hex,
     onReady: () => {
       refs.r.addEventListener("input", () => { colorModalR = Number(refs.r.value); syncColorModalUI(refs); });
@@ -1220,7 +1227,7 @@ function renderFinale() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.finale")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">${t("gameSettings.finale.dragHint")}</div>
+      <div class="gs-hint" style="margin-bottom:12px">${t(DRAG ? "gameSettings.finale.dragHint" : "gameSettings.finale.tapHint")}</div>
       <div class="gs-badge-row">
         <span class="tag tag--gold">${t("control.finalBadge")} <b>${picked.length}</b>/5</span>
       </div>
@@ -1230,7 +1237,7 @@ function renderFinale() {
           <div class="qList" id="gsFinalePool">
             ${pool.length === 0
               ? `<div class="gs-picker-empty">${t("control.finalPoolEmpty") || "Brak dostępnych pytań"}</div>`
-              : pool.map(q => `<div class="qRow" data-qid="${escAttr(q.id)}" draggable="true">
+              : pool.map(q => `<div class="qRow" data-qid="${escAttr(q.id)}" draggable="${DRAGGABLE}">
                   <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
                 </div>`).join("")}
@@ -1240,8 +1247,8 @@ function renderFinale() {
           <div class="mini"><div class="hint">${t("control.finalListHint")}</div></div>
           <div class="qList" id="gsGsFinalePicked">
             ${picked.length === 0
-              ? `<div class="gs-picker-empty">${t("control.finalPickEmpty") || "Kliknij pytanie, aby dodać (max 5)"}</div>`
-              : picked.map(q => `<div class="qRow gs-draggable" draggable="true" data-qid="${escAttr(q.id)}">
+              ? `<div class="gs-picker-empty">${DRAG ? t("control.finalPickEmpty") : t("gameSettings.finale.tapEmpty")}</div>`
+              : picked.map(q => `<div class="qRow${DRAG ? " gs-draggable" : ""}" draggable="${DRAGGABLE}" data-qid="${escAttr(q.id)}">
                   <div class="meta">${q.ord}</div>
                   <div class="txt">${escText(q.text)}</div>
                 </div>`).join("")}
@@ -1284,6 +1291,8 @@ function renderFinale() {
     markDirty();
     renderFinale();
   });
+
+  if (!DRAG) return;
 
   // Drag: przenoszenie między kolumnami
   setupFinaleColumnDnd(poolEl, pickedEl);
@@ -1379,11 +1388,11 @@ function renderRounds() {
   content.innerHTML = `
     <div class="gs-cat-title">${t("gameSettings.categories.rounds")}</div>
     <div class="gs-section">
-      <div class="gs-hint" style="margin-bottom:12px">${t("gameSettings.rounds.hint")}</div>
+      <div class="gs-hint" style="margin-bottom:12px">${t(DRAG ? "gameSettings.rounds.hint" : "gameSettings.rounds.hintPhone")}</div>
       <div class="roundsOrderList" id="gsRoundsOrderList">
         ${questions.map((q, i) => `
-          <div class="roundsOrderItem" draggable="true" data-qid="${escAttr(q.id)}">
-            <div class="roundsOrderHandle">${icon("grip")}</div>
+          <div class="roundsOrderItem" draggable="${DRAGGABLE}" data-qid="${escAttr(q.id)}">
+            ${DRAG ? `<div class="roundsOrderHandle">${icon("grip")}</div>` : ""}
             <div class="roundsOrderNum">${i + 1}</div>
             <div class="roundsOrderText">${escText(q.text)}</div>
             <div class="roundsOrderActions">
@@ -1419,8 +1428,8 @@ function renderRounds() {
     renderRounds();
   });
 
-  // Drag & drop
-  setupRoundsOrderDnd(listEl);
+  // Drag & drop (bez przeciągania na telefonie)
+  if (DRAG) setupRoundsOrderDnd(listEl);
 }
 
 function setupRoundsOrderDnd(listEl) {
@@ -1575,6 +1584,7 @@ function renderGame() {
             <div class="lbl2">${t("gameSettings.game.prizeMultiplier")}</div>
             <input class="inp" id="gsPrizeMultiplier" type="number" min="1" max="10" value="${adv.finalPrizeMultiplier}" style="margin-top:6px"/>
           </div>
+          <div class="gs-hint" style="grid-column:1/-1">${t("gameSettings.game.prizeHint")}</div>
         </div>
       </div>
     </div>

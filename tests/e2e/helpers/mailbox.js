@@ -30,13 +30,14 @@ async function resetMailProviderLimits(page) {
   console.log("[e2e-mail] provider limits reset before delivery test");
 }
 
-async function waitForEmail({ recipient, after, subject, timeout = 90_000, trigger = true }) {
+// accept(row) — opcjonalny dodatkowy filtr (np. pominięcie spóźnionej kopii maila z poprzedniego testu).
+async function waitForEmail({ recipient, after, subject, timeout = 90_000, trigger = true, accept }) {
   let triggered = !trigger;
   const startedAt = Date.now();
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     const data = await api(`/emails?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
-    const email = (data.emails || []).find((row) => !subject || subject.test(row.subject || ""));
+    const email = (data.emails || []).find((row) => (!subject || subject.test(row.subject || "")) && (!accept || accept(row)));
     if (email) {
       console.log("[e2e-mail] received", JSON.stringify({ recipient, elapsedMs: Date.now() - startedAt, receivedAt: email.received_at }));
       return email;

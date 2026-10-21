@@ -12,6 +12,8 @@
 //   guest     -- odwiedzający bez konta i sesji (atrapa nie zwraca użytkownika)
 //   safeArea  -- emulacja strefy bezpiecznej { top, bottom, … } (env(safe-area-inset-*) w CSS strony)
 //   deviceFrame -- "iphone": ekran w ramce iPhone'a na czarnym tle (frameSize: { width, height, scale })
+//   db        -- (db, lang) => {} -- zmiana danych atrapy tylko dla tej sceny (pusty stan, błąd, inny stan)
+// Sceny obszarów (pełna seria stron, okien i stanów) są w scenes/<obszar>.cjs i dołączane na końcu.
 // Przy zmianie strony: dopisz/popraw tu scenę i dane w data/, potem
 //   node scripts/screens/run.cjs --changed
 const { id, IDS } = require("./data/demo.cjs");
@@ -20,6 +22,13 @@ const page = (dir) => [`web/${dir}/index.html`, `web/${dir}/js/`, `web/${dir}/cs
 const DISPLAY = ["web/control/display/", "web/shared/js/gameplay/", "web/shared/fonts/"];
 const clickTab = (selector) => async (view) => {
   await view.locator(selector).first().click();
+  await view.waitForTimeout(400);
+};
+// Ustawienia gry: na tablecie i telefonie sekcje są w wysuwanym panelu.
+const gsCat = (name) => async (view) => {
+  const toggle = view.locator("#gsSidebarToggle");
+  if (await toggle.isVisible()) { await toggle.click(); await view.waitForTimeout(300); }
+  await view.locator(`.gs-sidebar-item[data-cat="${name}"]`).first().click();
   await view.waitForTimeout(400);
 };
 const openModal = (selector, modal = ".overlay:visible") => async (view) => {
@@ -52,6 +61,7 @@ module.exports = [
   { ...H, id: "friends", category: "Znajomi, zadania i ankiety", title: "Znajomi", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/contacts-page.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
   { ...H, id: "subscribers", category: "Znajomi, zadania i ankiety", title: "Subskrybenci", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
   { ...H, id: "tasks", category: "Znajomi, zadania i ankiety", title: "Zadania", path: "/tasks/", sources: page("tasks"), ready: "#tasksHost > *" },
+  { id: "connect-device", category: "Znajomi, zadania i ankiety", title: "Podłącz urządzenie", path: "/connect/", sources: page("connect"), ready: ".games-shell.skel-step-ready" },
   { ...H, id: "poll-share", category: "Znajomi, zadania i ankiety", title: "Udostępnianie ankiety", path: `/polls/?id=${IDS.poll}`, sources: page("polls"), ready: "#cardMain" },
   { ...H, id: "poll-vote-mobile", category: "Znajomi, zadania i ankiety", title: "Głosowanie anonimowe — telefon", path: `/polls/vote/points/?id=${IDS.poll}&key=poll103KEY`, sources: ["web/polls/vote/points/", "web/shared/js/core/poll"], ready: "#qbox", devices: ["phone"],
     // Jak w dawnym panelu: iPhone 14 (safe area 47/34) na czarnym tle 1440×900.
@@ -59,7 +69,7 @@ module.exports = [
   { ...H, id: "poll-results", category: "Znajomi, zadania i ankiety", title: "Głosy i wyniki ankiety", path: `/polls/?id=${IDS.poll}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
 
   // ---------- 3. Wygląd i logo ----------
-  { ...H, id: "appearance", category: "Wygląd i logo", title: "Ustawienia wyglądu", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), ...DISPLAY], ready: "#gsContentInner", steps: [clickTab('.gs-sidebar-item[data-cat="display"]')], devices: ["desktop"], settle: 1500 },
+  { ...H, id: "appearance", category: "Wygląd i logo", title: "Ustawienia wyglądu", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), ...DISPLAY], ready: "#gsContentInner", steps: [gsCat("display")], devices: ["desktop"], settle: 1500 },
   { ...H, id: "sound", category: "Wygląd i logo", title: "Ustawienia dźwięku", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", steps: [clickTab('.gs-sidebar-item[data-cat="sound"]')], devices: ["desktop"] },
   { ...H, id: "logos", category: "Wygląd i logo", title: "Biblioteka logo", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile" },
   {
@@ -83,8 +93,8 @@ module.exports = [
   { id: "games-poll-text", category: "Dodatkowe", title: "Moje gry — ankiety tekstowe", path: "/games/", sources: page("games"), ready: "#grid .card", steps: [clickTab("#tabPollText")] },
   { id: "games-poll-points", category: "Dodatkowe", title: "Moje gry — punktacja", path: "/games/", sources: page("games"), ready: "#grid .card", steps: [clickTab("#tabPollPoints")] },
   { id: "games-new", category: "Dodatkowe", title: "Moje gry — nowa gra", path: "/games/", sources: page("games"), ready: "#grid .card", steps: [openModal("#grid .addCard")] },
-  { id: "game-settings", category: "Dodatkowe", title: "Ustawienia gry — drużyny", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner" },
-  { id: "game-settings-team-limit", category: "Dodatkowe", title: "Ustawienia gry — nazwa drużyny dłuższa niż Wyświetlacz", path: `/games/settings/?id=${IDS.game}`, devices: ["desktop"], sources: [...page("games/settings"), "web/shared/js/display/long-text.js"], ready: "#gsTeamA",
+  { id: "game-settings", category: "Dodatkowe", title: "Ustawienia gry — drużyny", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["desktop", "tablet", "phone"] },
+  { id: "game-settings-team-limit", category: "Dodatkowe", title: "Ustawienia gry — nazwa drużyny dłuższa niż Wyświetlacz", path: `/games/settings/?id=${IDS.game}`, devices: ["desktop", "phone"], sources: [...page("games/settings"), "web/shared/js/display/long-text.js"], ready: "#gsTeamA",
     steps: [async (view) => {
       await view.waitForFunction(() => performance.getEntriesByType("resource").some((r) => r.name.includes("font_5x7.json")));
       await view.locator("#gsTeamA").fill("");
@@ -92,29 +102,156 @@ module.exports = [
       await view.locator("#gsTeamB").fill("Zajączki 😀");
       await view.waitForFunction(() => ["A", "B"].every((k) => document.getElementById(`gsTeam${k}Measure`)?.classList.contains("is-warn")));
     }] },
-  { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
-    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), scrollPreview] },
-  { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop"], settle: 2500,
-    steps: [clickTab('.gs-sidebar-item[data-cat="display"]'), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
+  { id: "game-settings-display", category: "Dodatkowe", title: "Ustawienia gry — wygląd i logo Prowadzącego", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
+    steps: [gsCat("display"), scrollPreview] },
+  { id: "game-settings-prize", category: "Dodatkowe", title: "Ustawienia gry — kwota nagrody po finale (wyjaśnienie wzoru)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/gameplay/endScreen.js"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 600,
+    steps: [async (view) => {
+      await gsCat("questions")(view);
+      await view.locator("label:has([name='gsHasFinal'][value='yes'])").click();
+      await gsCat("game")(view);
+      await view.locator("label:has([name='gsEndMode'][value='money'])").click();
+      await view.locator("#gsPrizeSettingsRow").scrollIntoViewIfNeeded();
+      await view.waitForTimeout(300);
+    }] },
+  { id: "game-settings-color", category: "Dodatkowe", title: "Ustawienia gry — okno koloru (jak kolor tagów)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/css/game-settings.css"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 800,
+    steps: [gsCat("display"), async (view) => { await view.locator("[data-color-key]").first().click(); await view.locator(".colorModalControls").waitFor({ state: "visible" }); await view.waitForTimeout(400); }] },
+  { id: "game-settings-display-pixel", category: "Dodatkowe", title: "Ustawienia gry — logo domyślne w trybie Piksele", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/control/host/", "web/control/display/"], ready: "#gsTeamA", devices: ["desktop", "phone"], settle: 2500,
+    steps: [gsCat("display"), clickTab(".gs-host-logo-mode .toggle-item"), scrollPreview] },
+  { id: "game-settings-phone-landscape", category: "Dodatkowe", title: "Ustawienia gry — telefon w poziomie: prośba o obrót (działa tylko w pionie)", path: `/games/settings/?id=${IDS.game}`, sources: [...page("games/settings"), "web/shared/js/core/device-guard.js"], ready: () => !!document.querySelector("#pageGuard, .page-guard"), devices: ["phone-landscape"], settle: 600 },
+  { id: "game-settings-sound", category: "Dodatkowe", title: "Ustawienia gry — dźwięki (telefon: nazwa nad kontrolkami)", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["phone", "tablet"], steps: [gsCat("sound")] },
+  { id: "game-settings-sound-custom", category: "Dodatkowe", title: "Ustawienia gry — własne dźwięki: plik z długą nazwą i „Własny” bez pliku", path: `/games/settings/?id=${IDS.game}`, sources: page("games/settings"), ready: "#gsContentInner", devices: ["desktop", "tablet", "phone"], settle: 600,
+    steps: [gsCat("sound"), async (view) => {
+      // Pierwszy wiersz: własny plik o długiej nazwie (cisza WAV, bez dźwięku w zrzucie).
+      const wav = Buffer.alloc(44 + 800); wav.write("RIFF", 0); wav.writeUInt32LE(36 + 800, 4); wav.write("WAVEfmt ", 8);
+      wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(8000, 28);
+      wav.writeUInt16LE(1, 32); wav.writeUInt16LE(8, 34); wav.write("data", 36); wav.writeUInt32LE(800, 40);
+      await view.locator(".sfx-row .sfx-file-input").first().setInputFiles({ name: "Nasza-muzyka-na-wejscie-druzyn-wersja-finalna.wav", mimeType: "audio/wav", buffer: wav });
+      await view.locator(".sfx-row .sfx-file-tag").first().waitFor({ timeout: 5000 });
+      // Drugi wiersz: „Własny” bez pliku — przycisk wyboru pliku.
+      await view.locator(".sfx-row").nth(1).locator(".ui-select-btn").click();
+      await view.locator(".sfx-row").nth(1).locator(".ui-select-item").last().click();
+      await view.waitForTimeout(300);
+    }] },
   { id: "logos-draw", category: "Dodatkowe", title: "Biblioteka logo — rysunki", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoDraw")] },
   { id: "logos-image", category: "Dodatkowe", title: "Biblioteka logo — obrazy", path: "/logos/", sources: [...page("logos"), "web/logos/js/list.js"], ready: ".logoTile", steps: [clickTab("#tabLogoImage")] },
   { id: "logo-text", category: "Dodatkowe", title: "Edytor logo — tekst", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"] },
+  { id: "logo-image", category: "Dodatkowe", title: "Edytor logo — obraz", path: `/logos/editor/image/?id=${id("8300", 47)}`, sources: ["web/logos/editor/image/", "web/logos/js/editor-image.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], settle: 1500 },
   { id: "logo-text-space", category: "Dodatkowe", title: "Edytor logo — tekst ze spacją (odstęp między słowami)", path: `/logos/editor/text/?id=${IDS.logoText}`, sources: ["web/logos/editor/text/", "web/logos/js/text.js", "web/logos/js/editor-text.js", "web/logos/js/editor-page.js"], ready: "#logoName", devices: ["desktop", "tablet"], devices: ["desktop"], steps: [async (view) => { await view.locator("#textValue").fill("QUIZ 2026"); await view.waitForTimeout(300); }] },
+  { id: "login-register", guest: true, category: "Dodatkowe", title: "Logowanie — tryb zakładania konta (ikony przycisków po zmianie trybu)", path: "/login/", sources: ["web/login/"], ready: "#btnPrimary",
+    steps: [async (view) => { await view.locator("#btnToggle").click(); await view.waitForTimeout(300); }] },
+  // Narzędzia list w nagłówku (share-sections.js, attachListTools): szukaj · filtr · sortowanie
+  { id: "subscribers-search", category: "Dodatkowe", title: "Subskrybenci — wyszukiwanie (pole nad listą, jak „Przenieś do”)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view, { device }) => {
+      const tab = view.locator("#contactsTabReceived");
+      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
+      await view.locator("#contactsReceived .listTools-search:visible").first().click();
+      await view.locator("#contactsReceived .listToolsInline .searchText").fill("k");
+      await view.waitForTimeout(300);
+    }] },
+  { id: "games-search-prompt", category: "Dodatkowe", title: "Moje gry — okno wyszukiwania na telefonie (pole jak „Przenieś do”)", devices: ["phone"], path: "/games/", sources: [...page("games"), "web/shared/js/core/list-search.js", "web/shared/js/core/modal.js"], ready: "#grid .card",
+    steps: [async (view) => { await view.locator(".list-search-open").click(); await view.locator(".uni-modal .uni-inp").fill("rodz"); await view.waitForTimeout(300); }] },
+  { id: "subscribers-filter", category: "Dodatkowe", title: "Subskrybenci — filtr stanu (oczekujące i odrzucone)", path: "/subscribers/", sources: [...page("subscribers"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0,
+    steps: [async (view) => {
+      const tab = view.locator("#contactsTabInvite");
+      if (await tab.isVisible()) { await tab.click(); await view.waitForTimeout(300); }
+      await view.locator("#contactsOutgoing .list-filter .ui-select-btn:visible").first().click();
+      await view.waitForTimeout(300);
+    }] },
+  { id: "tasks-tools", category: "Dodatkowe", title: "Zadania — przyciski listy w nagłówku sekcji", path: "/tasks/", sources: [...page("tasks"), "web/shared/js/core/share-sections.js"], ready: "#tasksHost > *" },
+  // Pusty stan (wspólny .empty-state): wyszukiwanie bez wyników w siatce kafli i na liście wierszy.
+  { id: "empty-state-games", category: "Dodatkowe", title: "Pusty stan — Moje gry, wyszukiwanie bez wyników", path: "/games/", sources: [...page("games"), "web/shared/js/core/list-search.js"], ready: "#grid .card", devices: ["desktop"],
+    steps: [async (view) => {
+      // Dłuższe napisy (UK) zwijają pasek do ikon: wtedy wyszukiwanie otwiera lupa.
+      const open = view.locator(".games-bottom .list-search-open");
+      if (await open.isVisible()) { await open.click(); await view.waitForTimeout(300); }
+      await view.locator(".games-bottom .searchText:visible, .searchText:visible").first().fill("zzzz");
+      await view.waitForTimeout(500);
+    }] },
+  { id: "empty-state-friends", category: "Dodatkowe", title: "Pusty stan — Znajomi, wyszukiwanie bez wyników", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0, devices: ["desktop"],
+    steps: [async (view) => { await view.locator(".listTools-search").first().click(); await view.locator(".listToolsInline .searchText").first().fill("zzzz"); await view.waitForTimeout(400); }] },
+  { id: "friends-tools", category: "Dodatkowe", title: "Znajomi — przyciski listy w nagłówku sekcji", path: "/friends/", sources: [...page("friends"), "web/shared/js/core/contacts-page.js", "web/shared/js/core/share-sections.js"], ready: () => document.querySelector("#contactsReceived")?.children.length > 0 },
+  { id: "bases-share-tools", category: "Dodatkowe", title: "Bazy — okno udostępniania z przyciskami list", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",
+    steps: [async (view) => { await view.locator("#mineGrid .card:not(.addCard)").first().click(); await view.locator("#btnShare").click(); await view.locator("#shareOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); }] },
+  { id: "bases-share-long-name", category: "Dodatkowe", title: "Bazy — udostępnione: długa nazwa użytkownika (wielokropek, stała wysokość kafla)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/share-sections.js"], ready: "#mineGrid > *:nth-child(2)",
+    steps: [async (view) => { await view.locator("#mineGrid .card:not(.addCard)").first().click(); await view.locator("#btnShare").click(); await view.locator("#shareOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); await view.locator("#shareSectionsHost").evaluate((el) => { el.scrollTop = el.scrollHeight; }); await view.waitForTimeout(200); }] },
+  { id: "control-share-device", category: "Dodatkowe", title: "Panel sterowania — okno udostępniania urządzenia", path: `/control/?id=${IDS.game}`, sources: [...page("control"), "web/shared/js/core/share-sections.js"], gameState: "devices", ready: ".device-row", devices: ["desktop"], settle: 800,
+    steps: [async (view) => { await view.locator(".device-row button:has(.badge)").first().click(); await view.locator("#shareDeviceOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(600); }] },
+  { id: "poll-recipients-tools", category: "Dodatkowe", title: "Ankieta — okno odbiorców z przyciskami list", path: `/polls/?id=${IDS.poll}`, sources: [...page("polls"), "web/shared/js/core/share-sections.js"], ready: "#cardMain",
+    steps: [async (view) => { const b = view.locator("#btnAddRecipients"); if (!(await b.isVisible())) { const tab = view.locator(".slot-recipients button, #tabRecipients").first(); if (await tab.count()) await tab.click(); } await view.locator("#btnAddRecipients").click(); await view.waitForTimeout(600); }] },
+  { id: "mails-tools", category: "Dodatkowe", title: "Mails — listy subskrypcji i zadań z przyciskami", path: "/mails/", sources: ["web/mails/", "web/mail/", "web/shared/js/core/share-sections.js"], ready: "#subscriptionList > *" },
+  { id: "games-send-tools", category: "Dodatkowe", title: "Moje gry — okno Wyślij kopię (lista znajomych z przyciskami)", path: "/games/", sources: [...page("games"), "web/shared/js/core/resource-send.js", "web/shared/js/core/share-sections.js"], ready: "#grid .card",
+    steps: [selectTile("#grid .card:not(.addCard)"), async (view) => { await view.locator("#btnSendCopy").click(); await view.locator("#resourceSendOverlay").waitFor({ state: "visible" }); await view.waitForTimeout(500); }] },
   // E21: reguły gier, edytory i podliczanie
   { id: "game-editor-answer-rules", category: "Dodatkowe", title: "Edycja gry — warunki gotowości, odpowiedź ze znakiem spoza Wyświetlacza i poniżej 4 pkt, podpowiedzi 17/finał 11", path: `/games/editor/?id=${IDS.game}`, sources: [...page("games/editor"), "web/shared/js/core/question-form.js", "web/shared/js/core/game-rules.js", "web/shared/css/question-form.css"], ready: "#qList > *:nth-child(2)",
     steps: [async (view) => { await view.locator("#qList .qcard:not(.addTile)").first().click(); const inp = view.locator("#aList .qf-row:not(.qf-add) .qf-text").first(); await inp.fill("kawa😀"); const pts = view.locator("#aList .qf-row:not(.qf-add) .qf-pts").nth(3); await pts.fill("2"); await pts.blur(); await view.waitForTimeout(600); }] },
   { id: "games-change-type", category: "Dodatkowe", title: "Moje gry — Zmień typ", path: "/games/", sources: [...page("games"), "web/shared/js/core/game-validate.js"], ready: "#grid .card",
     steps: [selectTile("#grid .card:not(.addCard)"), openModal("#btnChangeType", ".change-type"), async (view) => { await view.locator('.change-type-option:has(input[value="poll_text"])').click(); await view.waitForTimeout(250); }] },
-  { id: "base-explorer-create-game", category: "Dodatkowe", title: "Eksplorator bazy — Utwórz grę (braki informacyjnie)", devices: ["desktop"], path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer"), "web/shared/js/core/game-rules.js"], ready: "#list > *",
+  { id: "base-explorer-create-game", category: "Dodatkowe", title: "Eksplorator bazy — Utwórz grę (braki informacyjnie)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer"), "web/shared/js/core/game-rules.js"], ready: "#list > *",
     steps: [async (view) => { await view.locator("#list .row[data-kind=\"q\"]").first().click(); await view.locator("#list .row[data-kind=\"q\"]").nth(1).click({ modifiers: ["Control"] }); await view.locator('#toolbar button[data-act="createGame"]').click(); await view.locator("#exportOverlay").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(300); }] },
+  { id: "base-explorer-tags", category: "Dodatkowe", title: "Eksplorator bazy — okno tagów zaznaczonego pytania", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click(); await view.locator('#toolbar button[data-act="editTags"]').click(); await view.locator("#tagsOverlay").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(500); }] },
+  { id: "base-explorer-tags-edit", category: "Dodatkowe", title: "Eksplorator bazy — okno tagów: dodawanie tagu", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click(); await view.locator('#toolbar button[data-act="editTags"]').click(); await view.locator("#tagsAddNew").click(); await view.locator("#tagsL2").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(500); }] },
+  { id: "base-explorer-tags-color", category: "Dodatkowe", title: "Eksplorator bazy — okno tagów: wybór koloru", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click(); await view.locator('#toolbar button[data-act="editTags"]').click(); await view.locator("#tagsAddNew").click(); await view.locator("#tagsEditColorTile").click(); await view.locator("#tagsL3").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(500); }] },
+  { id: "base-explorer-drawer", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel na telefonie (hamburger)", devices: ["phone", "tablet"], path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator("#btnDrawerToggle").click(); await view.waitForTimeout(500); }] },
+  { id: "base-explorer-left-tags", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel: widok tagów (przycisk przy wyszukiwarce / na telefonie)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator('[data-left-view="tags"]:visible').click(); await view.locator('#tags .row[data-kind="tag"]').first().click(); await view.waitForTimeout(500); }] },
+  { id: "base-explorer-left-types", category: "Dodatkowe", title: "Eksplorator bazy — lewy panel: widok proponowanych kategorii", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator('[data-left-view="types"]:visible').click(); await view.waitForTimeout(500); }] },
+  { id: "base-explorer-search-sheet", devices: ["phone", "tablet"], category: "Dodatkowe", title: "Eksplorator bazy — telefon: okno Szukaj (tekst; filtry w panelu)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => {
+      await view.locator("#btnSearchSheet").click();
+      await view.locator("#searchOverlay.sheet-active").waitFor({ timeout: 5000 });
+      await view.locator("#searchText").pressSequentially("co");
+      await view.waitForTimeout(500);
+    }] },
+  { id: "base-explorer-search-filters", category: "Dodatkowe", title: "Eksplorator bazy — tekst w wyszukiwarce razem z tagiem z panelu (licznik na przycisku)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => {
+      await view.locator('[data-left-view="tags"]:visible').first().click();
+      const rows = view.locator('#tags .row[data-kind="tag"]');
+      await rows.nth(0).click();
+      const narrow = await view.locator(".left-view-tabs").isVisible();
+      if (narrow) {
+        await view.locator('.left-view-tabs [data-left-view="tags"]').click();
+        await view.locator("#btnSearchSheet").click();
+        await view.locator("#searchText").pressSequentially("co");
+        await view.locator("#searchSheetDone").click();
+      } else {
+        await view.locator("#searchText").pressSequentially("co");
+        await view.locator("#searchText").blur();
+      }
+      await view.waitForTimeout(500);
+    }] },
+  { id: "base-explorer-move", category: "Dodatkowe", title: "Eksplorator bazy — Przenieś do… (drzewo folderów z wyszukiwaniem)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click({ button: "right" }); await view.locator('#contextMenu .cm-item[data-action="item.moveTo"]').click(); await view.locator("#moveOverlay .moveRow").first().waitFor({ timeout: 5000 }); await view.locator("#moveList .tree-toggle").nth(1).click(); await view.locator("#moveList .tree-toggle").nth(2).click(); await view.locator('#moveList .moveRow[aria-expanded="true"] + .moveRow').last().click(); await view.waitForTimeout(400); }] },
+  { id: "base-explorer-move-search", category: "Dodatkowe", title: "Eksplorator bazy — Przenieś do…: wyszukiwanie folderu", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click({ button: "right" }); await view.locator('#contextMenu .cm-item[data-action="item.copyTo"]').click(); await view.locator("#moveSearch").fill("o"); await view.waitForTimeout(400); }] },
+  { id: "base-explorer-trash", category: "Dodatkowe", title: "Eksplorator bazy — Kosz jako folder (dni do usunięcia, Przywróć w pasku)", path: `/bases/explorer/?id=${IDS.base}&trash=1`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="trash"]',
+    steps: [async (view) => { await view.locator('#list .row[data-kind="trash"]').first().click(); await view.waitForTimeout(300); }] },
+  { id: "base-explorer-menu", category: "Dodatkowe", title: "Eksplorator bazy — menu kontekstowe (telefon: arkusz od dołu)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().click({ button: "right" }); await view.locator("#contextMenu:not([hidden])").waitFor({ timeout: 5000 }); await view.waitForTimeout(300); }] },
+  { id: "base-explorer-filter", category: "Dodatkowe", title: "Eksplorator bazy — wyniki filtra (tag z lewego panelu, liczba trafień w folderach)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer")], ready: '#list .row[data-kind="q"]',
+    steps: [async (view) => {
+      await view.locator('[data-left-view="tags"]:visible').first().click();
+      await view.locator('#tags .row[data-kind="tag"]').first().click();
+      if (await view.locator(".left-view-tabs").isVisible()) await view.locator('.left-view-tabs [data-left-view="tags"]').click();
+      await view.waitForTimeout(400);
+    }] },
+  { id: "game-editor-question-sheet", devices: ["phone"], category: "Dodatkowe", title: "Edycja gry na telefonie — pytanie w oknie od dołu", path: `/games/editor/?id=${IDS.game}`, sources: [...page("games/editor"), "web/shared/js/core/modal-sheet.js", "web/shared/css/question-form.css"], ready: "#qList > *:nth-child(2)",
+    steps: [async (view) => { await view.locator("#qList .qcard[data-id]").first().click(); await view.locator("#questionSheetOverlay.sheet-active").waitFor({ timeout: 5000 }); await view.locator("#aList .qf-row:not(.qf-add)").first().waitFor({ timeout: 5000 }); await view.waitForTimeout(500); }] },
   { id: "base-explorer-question-modal", category: "Dodatkowe", title: "Eksplorator bazy — edycja pytania (podpowiedzi nad kafelkiem dodawania)", path: `/bases/explorer/?id=${IDS.base}`, sources: [...page("bases/explorer"), "web/shared/js/core/question-form.js", "web/shared/css/question-form.css"], ready: "#list > *",
     steps: [async (view) => { await view.locator('#list .row[data-kind="q"]').first().dblclick(); await view.locator("#questionOverlay").waitFor({ state: "visible", timeout: 5000 }); await view.waitForTimeout(400); }] },
   { id: "polls-tally-tie", category: "Dodatkowe", title: "Podliczanie ankiety tekstowej — remis na granicy szóstki", path: `/polls/?id=${IDS.tallyTie}`, sources: [...page("polls"), "web/shared/js/core/poll-tally-math.js", "web/shared/js/core/poll-results.js"], ready: "#cardMain",
     steps: [clickTab("#tabResults"), async (view) => { await view.locator("#btnTallyPoll").click(); await view.locator(".tallyTieInfo:not([hidden])").first().waitFor({ timeout: 8000 }); await view.waitForTimeout(400); }] },
   { id: "poll-vote-text", category: "Dodatkowe", title: "Głosowanie tekstowe — podpowiedź (17 znaków, pomijane znaki)", path: `/polls/vote/text/?id=${IDS.textPoll}&key=poll104KEY`, sources: ["web/polls/vote/text/", "web/shared/js/core/answer-text.js"], ready: "#answerInput", devices: ["phone"] },
   { id: "polls-text", category: "Dodatkowe", title: "Ankieta tekstowa — głosy", path: `/polls/?id=${IDS.textPoll}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
+  { id: "polls-tally-points", category: "Dodatkowe", title: "Podliczanie ankiety punktowej (zamykanie)", path: `/polls/?id=${IDS.pollStopped}`, sources: [...page("polls"), "web/shared/js/core/poll-tally-math.js", "web/shared/js/core/poll-results.js"], ready: "#cardMain",
+    steps: [clickTab("#tabResults"), async (view) => { await view.locator("#btnTallyPoll").click(); await view.locator("#tallyBar:not([hidden])").waitFor({ timeout: 8000 }); await view.waitForTimeout(400); }] },
   { id: "polls-stopped", category: "Dodatkowe", title: "Ankieta zatrzymana — głosy", path: `/polls/?id=${IDS.pollStopped}`, sources: [...page("polls"), "web/shared/js/core/poll-results.js"], ready: "#cardMain", steps: [clickTab("#tabResults")] },
   { id: "marketplace", category: "Dodatkowe", title: "Społeczność", path: "/marketplace/", sources: page("marketplace"), ready: ".mkt-card" },
+  { id: "marketplace-my-sent", category: "Dodatkowe", title: "Społeczność — okno Moje wysłane", path: "/marketplace/", sources: page("marketplace"), ready: ".mkt-card", steps: [openModal("#btnMySent", "#mySentOverlay")] },
   { id: "snake-iphone", guest: true, category: "Dodatkowe", title: "Ukryta gra w węża — iPhone w poziomie (wcięcie i pasek gestu)", path: "/snake/?qr=00000000-0000-4000-8000-000000000103", devices: ["phone-landscape"], safeArea: { left: 59, right: 59, bottom: 21 },
     sources: [...page("snake")], ready: "#snakeFrame[data-mode=intro]" },
   // Okno „Do ekranu początkowego” pokazuje się po przycisku pełnego ekranu w Safari na iPhonie;
@@ -134,6 +271,31 @@ module.exports = [
     steps: [async (view) => { await view.locator("#btnMore").click(); await view.locator("#navMoreDropdown").getByText("Gry Społeczności").click(); await view.locator("#badgeMarketPending").waitFor(); await view.waitForTimeout(500); }] },
   { id: "admin-screens", category: "Dodatkowe", title: "Panel admina — zrzuty stron", path: "/settings/", sources: ["web/settings/"], ready: "#btnTabScreenshots", devices: ["desktop"], steps: [clickTab("#btnTabScreenshots")] },
   { id: "account", category: "Dodatkowe", title: "Konto", path: "/account/", sources: page("account"), ready: "main" },
+  { id: "games-name-create", category: "Dodatkowe", title: "Moje gry — okno nazwy nowej gry (wspólne promptModal)", path: "/games/", sources: [...page("games"), "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [openModal("#grid .addCard", ".uni-modal")] },
+  { id: "bases-name-create", category: "Dodatkowe", title: "Bazy — okno nazwy nowej bazy (wspólne promptModal)", path: "/bases/", sources: [...page("bases"), "web/shared/js/core/modal.js"], ready: "#mineGrid > *:nth-child(2)", steps: [openModal("#mineGrid .addCard", ".uni-modal")] },
+  { id: "logos-name-create", devices: ["desktop"], category: "Dodatkowe", title: "Logo — okno nazwy nowego logo (wspólne promptModal)", path: "/logos/", sources: [...page("logos"), "web/shared/js/core/modal.js"], ready: ".logoTile", steps: [openModal("#grid .addCard", ".uni-modal")] },
+  { id: "games-export-progress", category: "Dodatkowe", title: "Moje gry — okno postępu eksportu (wspólne progressModal)", path: "/games/", sources: [...page("games"), "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [selectTile("#grid .card[data-game-id]"), openModal("#btnExport", ".uni-modal")] },
+  { id: "rating-prompt", category: "Dodatkowe", title: "Prośba o ocenę — trzy przyciski (wspólne choiceModal)", path: "/games/", sources: ["web/shared/js/core/rating-system.js", "web/shared/js/core/modal.js"], ready: "#grid .card", steps: [async (view) => {
+    await view.evaluate(async () => {
+      const m = await import("/shared/js/core/rating-system.js");
+      // okno pokazuje się po 7 dniach od rejestracji i bez wcześniejszej odmowy
+      try { for (const k of Object.keys(localStorage)) if (k.startsWith("fam:app_rat")) localStorage.removeItem(k); } catch {}
+      void m.initRatingSystem({ id: "screens-user", created_at: "2026-01-01T00:00:00Z" });
+    });
+    await view.locator("#ratingOverlay").waitFor({ state: "visible", timeout: 5000 });
+    await view.locator('#ratingOverlay .star-btn[data-value="4"]').click();
+    await view.waitForTimeout(300);
+  }] },
+  { id: "account-rating-modal", category: "Dodatkowe", title: "Konto — okno oceny", path: "/account/", sources: [...page("account"), "web/shared/js/core/rating-system.js"], ready: "#ratingEditBtn", steps: [openModal("#ratingEditBtn", "#ratingEditOverlay")] },
+  { id: "account-rating-saved", category: "Dodatkowe", title: "Konto — zapisana ocena", path: "/account/", sources: [...page("account"), "web/shared/js/core/rating-system.js"], ready: "#ratingEditBtn", steps: [async (view) => {
+    await openModal("#ratingEditBtn", "#ratingEditOverlay")(view);
+    await view.locator('#ratingEditOverlay .star-btn[data-value="4"]').click();
+    await view.locator("#ratingEditOverlay .rating-comment").fill("Świetna zabawa na rodzinnych spotkaniach, <b>bez</b> HTML.");
+    await view.locator("#ratingEditOverlay .uni-foot .btn.gold").click();
+    await view.locator("#ratingEditOverlay").waitFor({ state: "detached", timeout: 5000 });
+    await view.locator("#userRatingInfo .rating-info").waitFor({ timeout: 5000 });
+    await view.waitForTimeout(300);
+  }] },
   { id: "home", guest: true, category: "Dodatkowe", title: "Strona główna", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded", fullPage: true },
   { id: "home-gallery", guest: true, category: "Dodatkowe", title: "Strona główna — karuzela kadrów w kaflu", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
     steps: [async (view) => { const shot = view.locator(".tile-shot").nth(1); await shot.scrollIntoViewIfNeeded(); await view.evaluate(() => window.scrollBy(0, -120)); await shot.locator(".shot-carousel-next").click(); await shot.locator(".shot-carousel-next").click(); await view.waitForFunction(() => document.querySelectorAll(".tile-shot")[1].querySelector("img.is-loaded")); await view.waitForTimeout(400); }] },
@@ -146,4 +308,20 @@ module.exports = [
     steps: [async (view) => { await view.locator("body").press("ArrowUp"); await view.waitForTimeout(450); await view.locator("body").press("ArrowRight"); await view.waitForTimeout(1500); }] },
   { id: "home-viewer", guest: true, category: "Dodatkowe", title: "Strona główna — podgląd kadru z przybliżaniem", path: "/", sources: ["web/index.html", ...page("home"), "web/assets/img/"], ready: ".tile-shot img.is-loaded",
     steps: [async (view) => { const shot = view.locator(".tile-shot").nth(3); await shot.scrollIntoViewIfNeeded(); await shot.locator(".shot-carousel-next").click(); await shot.locator(".shot-img").click(); await view.locator(".imgv-overlay.is-open .imgv-img").waitFor(); await view.waitForTimeout(600); }] },
+  { id: "manual", category: "Podręcznik", title: "Podręcznik — Zasady gry", path: "/manual/?tab=rules", sources: page("manual"), ready: "#tab-rules .m-toc" },
+  { id: "manual-games", category: "Podręcznik", title: "Podręcznik — Gry (rozdz. 7.6)", path: "/manual/?tab=games#r7-6", sources: page("manual"), ready: "#tab-games .m-toc", settle: 800 },
+  { id: "manual-control", category: "Podręcznik", title: "Podręcznik — Prowadzenie gry", path: "/manual/?tab=control", sources: page("manual"), ready: "#tab-control .m-toc" },
 ];
+
+// Seria zrzutów: każda strona, okno i stan — pliki obszarów (scenes/*.cjs).
+const fs = require("node:fs");
+const path = require("node:path");
+const areaDir = path.join(__dirname, "scenes");
+if (fs.existsSync(areaDir)) {
+  for (const file of fs.readdirSync(areaDir).filter((f) => f.endsWith(".cjs")).sort()) {
+    // Błąd w jednym pliku obszaru nie może wyłączyć pozostałych scen.
+    try { module.exports.push(...require(path.join(areaDir, file))); }
+    catch (e) { console.error(`[scenes] pominięty ${file}: ${e.message}`); }
+  }
+}
+

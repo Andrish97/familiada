@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-20T22245"/>
+  <meta name="app-version" content="v2026-10-21T16391"/>
 
 
   <meta charset="UTF-8"/>
@@ -15,17 +15,18 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="games.title">Familiada — moje gry</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-20T22245"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-10-20T22245"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-21T16391"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-21T16391"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-20T22245"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-20T22245"/>
+  <link rel="stylesheet" href="/shared/css/blocking-overlay.css?v=v2026-10-21T16391" />
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-21T16391"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-21T16391"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-20T22245" defer></script>
-  <script type="module" src="/games/js/games.js?v=v2026-10-20T22245" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-20T22245" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-21T16391" defer></script>
+  <script type="module" src="/games/js/games.js?v=v2026-10-21T16391" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-21T16391" defer></script>
 
 </head>
 
@@ -89,7 +90,7 @@
     <div class="bar">
       <div>
         <div class="title" data-i18n="games.header.title">Twoje gry</div>
-        <div class="hint" id="hint"></div>
+        <div class="hint" id="hint" data-i18n="games.hint.selectPlus"></div>
       </div>
 
       <div class="actions">
@@ -118,14 +119,6 @@
               <span class="only-desktop" data-i18n="games.tabs.pollText">Ankieta tekstowa</span>
               <span class="only-mobile" data-i18n="games.tabs.pollTextMobile">Ankieta</span>
             </button>
-            <div class="tab-wrapper">
-              <div class="tab-active">
-                <span class="only-desktop" data-i18n="games.tabs.pollText">Ankieta tekstowa</span>
-                <span class="only-mobile" data-i18n="games.tabs.pollTextMobile">Ankieta</span>
-              </div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
           </div>
 
           <!-- SLOT 2: punktacja -->
@@ -134,14 +127,6 @@
               <span class="only-desktop" data-i18n="games.tabs.pollPoints">Punktacja</span>
               <span class="only-mobile" data-i18n="games.tabs.pollPointsMobile">Punkty</span>
             </button>
-            <div class="tab-wrapper">
-              <div class="tab-active">
-                <span class="only-desktop" data-i18n="games.tabs.pollPoints">Punktacja</span>
-                <span class="only-mobile" data-i18n="games.tabs.pollPointsMobile">Punkty</span>
-              </div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
           </div>
 
           <!-- SLOT 3: preparowana -->
@@ -150,14 +135,6 @@
               <span class="only-desktop" data-i18n="games.tabs.prepared">Preparowana</span>
               <span class="only-mobile" data-i18n="games.tabs.preparedMobile">Prepar.</span>
             </button>
-            <div class="tab-wrapper">
-              <div class="tab-active">
-                <span class="only-desktop" data-i18n="games.tabs.prepared">Preparowana</span>
-                <span class="only-mobile" data-i18n="games.tabs.preparedMobile">Prepar.</span>
-              </div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
           </div>
 
           <!-- SLOT 4: Z marketu -->
@@ -166,14 +143,6 @@
               <span class="only-desktop" data-i18n="games.tabs.market">Gry Społeczności</span>
               <span class="only-mobile" data-i18n="games.tabs.marketMobile">Społeczność</span>
             </button>
-            <div class="tab-wrapper">
-              <div class="tab-active">
-                <span class="only-desktop" data-i18n="games.tabs.market">Gry Społeczności</span>
-                <span class="only-mobile" data-i18n="games.tabs.marketMobile">Społeczność</span>
-              </div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
           </div>
         </div>
 
@@ -230,7 +199,8 @@
           <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
         </div>
 
-        <div class="importRow modal-actions" style="margin-top:10px;">
+        <div class="importRow modal-actions">
+          <button class="btn sm" id="btnExportBaseCancel" type="button" data-i18n="common.cancel" data-i18n-icon="close">Anuluj</button>
           <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="games.exportBase.confirm" data-i18n-icon="download">Eksportuj</button>
           <div class="importMsg" id="exportBaseMsg"></div>
         </div>
@@ -294,50 +264,7 @@
       </div>
     </div>
 
-    <!-- Modal: zmiana nazwy -->
-    <div class="overlay modal--keep-dialog" id="nameOverlay" style="display:none;">
-      <div class="modal">
-        <div class="mHead">
-          <div class="mTitle" id="nameTitle" data-i18n="games.nameModal.title">Zmień nazwę</div>
-          <button class="btn sm" id="btnNameClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
-        </div>
-        <div class="mSub" id="nameSub" data-i18n="games.nameModal.sub">Podaj nową nazwę gry.</div>
 
-        <div class="importRow">
-          <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="games.nameModal.placeholder"/>
-        </div>
-
-        <div class="importRow modal-actions">
-          <button class="btn sm" id="btnNameCancel" type="button" data-i18n="games.common.cancel" data-i18n-icon="close">Anuluj</button>
-          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="games.common.save" data-i18n-icon="save">Zapisz</button>
-          <div class="importMsg" id="nameMsg"></div>
-        </div>
-      </div>
-    </div>
-
-  <!-- EXPORT DO PLIKU: PROGRES -->
-  <div class="overlay modal--keep-dialog" id="exportJsonOverlay" style="display:none;">
-    <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle" data-i18n="games.exportFile.title">EKSPORT…</div>
-      <div class="mSub" id="exportJsonSub" data-i18n="games.exportFile.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
-
-      <div style="margin-top:12px;display:grid;gap:10px">
-        <div class="importRow" style="align-items:center">
-          <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em">—</div>
-          <div id="exportJsonCount" style="margin-left:auto;opacity:.8">0/0</div>
-        </div>
-
-        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-          <div id="exportJsonBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
-        </div>
-
-        <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
-      </div>
-      <div class="importRow modal-actions" style="margin-top:12px;justify-content:flex-end">
-        <button class="btn sm gold" id="btnExportJsonClose" type="button" data-i18n="games.exportFile.close" data-i18n-icon="check" hidden>Gotowe</button>
-      </div>
-    </div>
-  </div>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
@@ -345,7 +272,7 @@
     </div>
   </main>
 
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-20T22245"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-21T16391"></script>
 
 </body>
 </html>

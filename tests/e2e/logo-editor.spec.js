@@ -61,18 +61,20 @@ test.describe("lista", () => {
     const historyBefore = await page.evaluate(() => history.length);
     await expect(page.locator("#tabLogoText")).toHaveClass(/active/);
     await expect(page.locator("#hint")).toContainText(/klasycznym logo/i);
-    await expect(page.locator(".slot-logo-text .tab-corner-left")).toBeHidden();
+    // Narożniki aktywnej wypustki to ::before/::after przycisku karty (2026-10-21).
+    const corner = (sel, pseudo) => page.locator(sel).evaluate((el, p) => getComputedStyle(el, p).display, pseudo);
+    expect(await corner("#tabLogoText", "::before")).toBe("none");
 
     await page.locator("#tabLogoDraw").click();
     await expect(page).toHaveURL(/tab=draw/);
     await expect(page.locator("#hint")).toContainText(/rysuj/i);
-    await expect(page.locator(".slot-logo-draw .tab-corner-left")).toBeVisible();
-    await expect(page.locator(".slot-logo-draw .tab-corner-right")).toBeVisible();
+    await expect.poll(() => corner("#tabLogoDraw", "::before")).toBe("block");
+    expect(await corner("#tabLogoDraw", "::after")).toBe("block");
 
     await page.locator("#tabLogoImage").click();
     await expect(page).toHaveURL(/tab=image/);
     await expect(page.locator("#hint")).toContainText(/obraz/i);
-    await expect(page.locator(".slot-logo-image .tab-corner-right")).toBeHidden();
+    await expect.poll(() => corner("#tabLogoImage", "::after")).toBe("none");
 
     // Karta przez replaceState: odświeżenie zostaje na karcie, a przeglądarkowe
     // „Wstecz” nie przełącza kart, tylko wychodzi ze strony.
@@ -94,13 +96,13 @@ test.describe("lista", () => {
     const id = await L.insertLogo(page, { name: L.uniq("rename"), type: "GLYPH_30x10", payload: L.textPayload() });
     await open(page);
     await page.locator(`.logoTile[data-key="${id}"] .logoName`).dblclick();
-    await page.fill("#renameInput", "");
-    await page.locator("#btnRenameOk").click();
-    await expect(page.locator("#renameMsg")).not.toBeEmpty();
+    await page.fill(".uni-modal .uni-inp", "");
+    await page.locator(".uni-modal .uni-foot .btn.gold").click();
+    await expect(page.locator(".uni-modal .uni-foot .importMsg")).not.toBeEmpty();
     const newName = L.uniq("renamed");
-    await page.fill("#renameInput", newName);
-    await page.locator("#btnRenameOk").click();
-    await expect(page.locator("#renameOverlay")).toBeHidden();
+    await page.fill(".uni-modal .uni-inp", newName);
+    await page.locator(".uni-modal .uni-foot .btn.gold").click();
+    await expect(page.locator(".uni-modal")).toBeHidden();
     expect((await L.readLogo(page, id)).name).toBe(newName);
   });
 
@@ -111,9 +113,9 @@ test.describe("lista", () => {
     const id = await L.insertLogo(page, { name: L.uniq("other"), type: "GLYPH_30x10", payload: L.textPayload() });
     await open(page);
     await page.locator(`.logoTile[data-key="${id}"] .logoName`).dblclick();
-    await page.fill("#renameInput", taken);
-    await page.locator("#btnRenameOk").click();
-    await expect(page.locator("#renameOverlay")).toBeHidden();
+    await page.fill(".uni-modal .uni-inp", taken);
+    await page.locator(".uni-modal .uni-foot .btn.gold").click();
+    await expect(page.locator(".uni-modal")).toBeHidden();
     expect((await L.readLogo(page, id)).name).toBe(`${taken} (2)`);
   });
 
@@ -203,11 +205,11 @@ test.describe("import / eksport", () => {
     await L.openList(page, site, `/logos/${tab}`);
     await page.locator(`.logoTile[data-key="${id}"]`).click();
     const [dl] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
-    await expect(page.locator("#logoExportOverlay")).toBeVisible();
-    await expect(page.locator("#btnLogoExportClose")).toBeVisible();
-    await expect(page.locator("#logoExportMsg")).toContainText(/pobrany|downloaded|завантажено/i);
-    await page.locator("#btnLogoExportClose").click();
-    await expect(page.locator("#logoExportOverlay")).toBeHidden();
+    await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+    await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
+    await expect(page.locator(".uni-progress-msg")).toContainText(/pobrany|downloaded|завантажено/i);
+    await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
+    await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeHidden();
     return { name: dl.suggestedFilename(), path: await dl.path() };
   }
 
@@ -246,19 +248,19 @@ test.describe("import / eksport", () => {
       return route.continue();
     });
     await page.locator("#btnExport").click();
-    await expect(page.locator("#logoExportOverlay")).toBeVisible();
-    await expect(page.locator("#logoExportMsg")).toContainText("E20 controlled export error");
-    await expect(page.locator("#btnLogoExportClose")).toBeVisible();
+    await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+    await expect(page.locator(".uni-progress-msg")).toContainText("E20 controlled export error");
+    await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
     await page.waitForTimeout(1200);
-    await expect(page.locator("#logoExportOverlay")).toBeVisible();
-    await page.locator("#btnLogoExportClose").click();
-    await expect(page.locator("#logoExportOverlay")).toBeHidden();
+    await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeVisible();
+    await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
+    await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeHidden();
 
     await page.unroute("**/rest/v1/user_logos**");
     const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
     expect(download.suggestedFilename()).toContain("export-retry");
-    await expect(page.locator("#btnLogoExportClose")).toBeVisible();
-    await page.locator("#btnLogoExportClose").click();
+    await expect(page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold")).toBeVisible();
+    await page.locator(".uni-modal:has(.uni-progress) .uni-foot .btn.gold").click();
   });
 
   test("eksport -> import rysunku: nowe logo z tymi samymi bitami i sceną", async ({ page }) => {
@@ -694,7 +696,16 @@ test.describe("tryb Rysunek", () => {
     expect(await L.save(page)).toBe("saved");
     const left0 = (await L.readLogoByName(page, name)).payload.source.fabricData.objects[0].left;
     await page.keyboard.press("v");
-    await page.mouse.click(b.x + 200, b.y + 175);
+    // klik w środek lewego obrysu pierwszego prostokąta (pusty środek nie
+    // zaznacza; krawędź obrysu zależy od skali płótna)
+    const hit = await page.evaluate(() => {
+      const f = window.__drawFabric;
+      const c = f.upperCanvasEl.getBoundingClientRect();
+      const o = f.getObjects()[0];
+      const r = o.getBoundingRect();
+      return { x: c.left + r.left + (o.strokeWidth * f.getZoom()) / 2, y: c.top + r.top + r.height / 2 };
+    });
+    await page.mouse.click(hit.x, hit.y);
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("Shift+ArrowRight");
     expect(await L.save(page)).toBe("saved");
