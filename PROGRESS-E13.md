@@ -1,6 +1,6 @@
 # PROGRESS — E13 (podręcznik użytkownika)
 
-**Status:** W TOKU — start 2026-10-21 06:31 UTC (budzik na 02:45 przepadł przy ponownym uruchomieniu sesji).
+**Status:** GOTOWE DO PRZEGLĄDU — nowy podręcznik PL/EN/UK na branchu `ccr-ab64ea01-znmxxs`, nieopublikowany (decyzja użytkownika). Po akceptacji: krok 6.
 
 **Plan (źródło prawdy):** [`docs/podrecznik-plan.md`](docs/podrecznik-plan.md) — plan uzgodniony 2026-10-20; zasady E13 w [`docs/wdrozenia.md`](docs/wdrozenia.md), „E13 — instrukcja, indeks, zrzuty i wydajność” (zasady treści manuala z 2026-10-11).
 Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
@@ -29,8 +29,8 @@ Szczegóły i numery przebiegów: Dziennik w `docs/wdrozenia.md`.
 | 2 | Zgodność Części I (zasady teleturnieju) z regulaminem TVP | ✅ regulamin 2019 (PDF od użytkownika) — `podrecznik-weryfikacja.md`, Część I |
 | 3 | Rozdziały Części I (1–4) | ✅ szkic `docs/podrecznik/01-04-zasady-teleturnieju.md` |
 | 4 | Rozdziały Części II i III | ✅ szkice PL 5–17, 19–20 w `docs/podrecznik/` (18 pominięty zgodnie z planem) |
-| 5 | Nowa strona `/manual/` (od zera): części → rozdziały → podrozdziały, spis treści, poprzedni/następny, przyciski pomocy stron → rozdziały; EN/UK; e2e `privacy-manual`; zrzuty | 🔄 strona PL/EN/UK gotowa, stara treść usunięta; e2e brancha `39560631731` ✓ 6/6; rozdz. 17 rozbudowany; uzupełnienia ze starego manuala (PL `01f99335`) — tłumaczenie EN/UK w toku; potem podgląd do przeglądu użytkownika (bez publikacji) |
-| 6 | Wdrożenie i testy kontrolne na produkcji | ⏳ |
+| 5 | Nowa strona `/manual/` (od zera): części → rozdziały → podrozdziały, spis treści, poprzedni/następny, pomoc stron → rozdziały; PL/EN/UK; e2e; zrzuty | ✅ unit 675/675; e2e brancha `39561752996` ✓ (privacy-manual 6/6); zrzuty `manual-start`, `manual-chapter`, `manual-toc-phone` (PL/EN/UK); podgląd do czytania `scripts/manual/out/podrecznik-{pl,en,uk}.html` (`node scripts/manual/preview.mjs`) |
+| 6 | Wdrożenie i testy kontrolne na produkcji | ⏸ czeka na przegląd i zgodę użytkownika (push na `main` + kontrola `privacy-manual.spec.js` i `base-explorer.spec.js --grep E13`) |
 
 ## Co dalej
 
