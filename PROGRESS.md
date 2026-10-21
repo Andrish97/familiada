@@ -139,8 +139,8 @@ E2E na branchu (spec | przebieg | wynik):
   urządzenie lewo–prawo (`7196fbd`); Control krok Urządzenia — siatka
   równych przycisków, kod kopiuje, lekki status (`9f57f81`); menu filtra
   pod kaflami przy masce paska — poprawione (`2c12415`).
-- E2E: seria `fin.sh` (15 speców) na obecnym kodzie w toku; po zielonych —
-  push na `main`, kontrola na produkcji, wpis w Dzienniku.
+- Wdrożone na `main` (`1012638`), kontrola produkcji 13/13 ✓ (Dziennik).
+  Dalej: E13 (indeks → zrzuty indeksu → wydajność → instrukcja).
 
 ## Dalej
 
