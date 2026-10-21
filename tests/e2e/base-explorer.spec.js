@@ -3903,6 +3903,8 @@ test.describe("base-explorer: zgłoszenia 2026-10-21 (podgląd, Ctrl+Shift+N, t�
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Dla podglądu", answers: [{ text: "A", fixed_points: 0 }] } });
       context2 = await browser.newContext();
+      // drugi użytkownik też na kodzie brancha (inaczej testowałby obecną produkcję)
+      if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(context2, { pages: ["bases/explorer"] });
       const page2 = await context2.newPage();
       await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await page2.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
