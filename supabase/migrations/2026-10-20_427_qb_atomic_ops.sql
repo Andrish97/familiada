@@ -322,19 +322,21 @@ $$;
 -- ===== Kopiowanie =====
 
 -- Wolna nazwa wśród rodzeństwa: „X”, „X (kopia)”, „X (kopia 2)”…
-CREATE OR REPLACE FUNCTION public._qb_unique_folder_name(p_base_id uuid, p_parent_id uuid, p_name text) RETURNS text
+-- Słowo „kopia” podaje strona w języku interfejsu (p_copy_label).
+CREATE OR REPLACE FUNCTION public._qb_unique_folder_name(p_base_id uuid, p_parent_id uuid, p_name text, p_copy_label text DEFAULT 'kopia') RETURNS text
   LANGUAGE plpgsql STABLE
   SET search_path TO 'public'
 AS $$
 DECLARE
   v_base text := left(coalesce(nullif(btrim(p_name), ''), 'Folder'), 80);
   v_cand text := v_base;
+  v_copy text := left(coalesce(nullif(btrim(p_copy_label), ''), 'kopia'), 20);
   n int := 1;
 BEGIN
   WHILE EXISTS (SELECT 1 FROM public.qb_categories
                  WHERE base_id = p_base_id AND parent_id IS NOT DISTINCT FROM p_parent_id
                    AND lower(name) = lower(v_cand)) AND n < 10000 LOOP
-    v_cand := left(v_base || CASE WHEN n = 1 THEN ' (kopia)' ELSE ' (kopia ' || n || ')' END, 80);
+    v_cand := left(v_base || CASE WHEN n = 1 THEN ' (' || v_copy || ')' ELSE ' (' || v_copy || ' ' || n || ')' END, 80);
     n := n + 1;
   END LOOP;
   RETURN v_cand;
@@ -345,7 +347,7 @@ $$;
 -- foldery z całym poddrzewem, razem z tagami pytań.
 -- Zwraca {questions:[nowe id pytań z p_question_ids], folders:[nowe id
 -- folderów-korzeni kopii]}.
-CREATE OR REPLACE FUNCTION public.qb_copy_items(p_base_id uuid, p_question_ids uuid[], p_folder_ids uuid[], p_target uuid) RETURNS jsonb
+CREATE OR REPLACE FUNCTION public.qb_copy_items(p_base_id uuid, p_question_ids uuid[], p_folder_ids uuid[], p_target uuid, p_copy_label text DEFAULT 'kopia') RETURNS jsonb
   LANGUAGE plpgsql
   SET search_path TO 'public'
 AS $$
@@ -370,7 +372,7 @@ BEGIN
     INSERT INTO public.qb_categories (id, base_id, parent_id, name, ord)
     SELECT (v_fmap->>c.id::text)::uuid, p_base_id,
       CASE WHEN c.id = v_src THEN p_target ELSE (v_fmap->>c.parent_id::text)::uuid END,
-      CASE WHEN c.id = v_src THEN public._qb_unique_folder_name(p_base_id, p_target, c.name)
+      CASE WHEN c.id = v_src THEN public._qb_unique_folder_name(p_base_id, p_target, c.name, p_copy_label)
            ELSE left(coalesce(c.name, 'Folder'), 80) END,
       CASE WHEN c.id = v_src THEN (SELECT coalesce(max(x.ord), 0) + 1 FROM public.qb_categories x
                                     WHERE x.base_id = p_base_id AND x.parent_id IS NOT DISTINCT FROM p_target)
@@ -599,14 +601,14 @@ REVOKE ALL ON FUNCTION public._qb_folder_subtree(uuid, uuid[]) FROM PUBLIC, anon
 REVOKE ALL ON FUNCTION public._qb_assert_items(uuid, uuid[], uuid[]) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public._qb_assert_folder(uuid, uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public._qb_assert_no_cycle(uuid, uuid[], uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public._qb_unique_folder_name(uuid, uuid, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public._qb_unique_folder_name(uuid, uuid, text, text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public._qb_insert_question_copies(uuid, jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public._qb_assert_edit(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public._qb_folder_subtree(uuid, uuid[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public._qb_assert_items(uuid, uuid[], uuid[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public._qb_assert_folder(uuid, uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public._qb_assert_no_cycle(uuid, uuid[], uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public._qb_unique_folder_name(uuid, uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public._qb_unique_folder_name(uuid, uuid, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public._qb_insert_question_copies(uuid, jsonb) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.qb_create_folder(uuid, uuid, text) FROM PUBLIC, anon;
@@ -618,7 +620,7 @@ REVOKE ALL ON FUNCTION public.qb_delete_items(uuid, uuid[], uuid[]) FROM PUBLIC,
 REVOKE ALL ON FUNCTION public.qb_move_items(uuid, uuid[], uuid[], uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.qb_reorder_folders(uuid, uuid, uuid[]) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.qb_restore_positions(uuid, jsonb) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.qb_copy_items(uuid, uuid[], uuid[], uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.qb_copy_items(uuid, uuid[], uuid[], uuid, text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.qb_save_tag(uuid, uuid, text, text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.qb_delete_tags(uuid, uuid[]) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.qb_set_tag_links(uuid, uuid[], uuid[], uuid[], boolean) FROM PUBLIC, anon;
@@ -633,7 +635,7 @@ GRANT EXECUTE ON FUNCTION public.qb_delete_items(uuid, uuid[], uuid[]) TO authen
 GRANT EXECUTE ON FUNCTION public.qb_move_items(uuid, uuid[], uuid[], uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.qb_reorder_folders(uuid, uuid, uuid[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.qb_restore_positions(uuid, jsonb) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.qb_copy_items(uuid, uuid[], uuid[], uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.qb_copy_items(uuid, uuid[], uuid[], uuid, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.qb_save_tag(uuid, uuid, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.qb_delete_tags(uuid, uuid[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.qb_set_tag_links(uuid, uuid[], uuid[], uuid[], boolean) TO authenticated;

@@ -4315,6 +4315,7 @@ const uk = {
       folder: "Папка",
       tag: "тег",
       question: "Питання",
+      copy: "копія",
     },
     move: {
       moveTitle: "Перемістити до",

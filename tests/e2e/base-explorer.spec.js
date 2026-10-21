@@ -3888,3 +3888,75 @@ test.describe("base-explorer: widoki lewego panelu jak radio (E22 etap 9)", () =
     }
   });
 });
+
+test.describe("base-explorer: zgłoszenia 2026-10-21 (podgląd, Ctrl+Shift+N, tłumaczenia)", () => {
+  test("viewer: Utwórz grę otwiera okno i tworzy grę z pytań cudzej bazy", async ({ page, context, browser }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-VIEWGAME-${Date.now()}`);
+    let context2 = null;
+
+    try {
+      const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Dla podglądu", answers: [{ text: "A", fixed_points: 0 }] } });
+      context2 = await browser.newContext();
+      const page2 = await context2.newPage();
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
+      const user2Id = await page2.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+      await acceptBaseShare(page, page2, baseId, user2Id, "viewer");
+
+      const diag = [];
+      page2.on("console", (m) => { if (m.type() === "error") diag.push(m.text().slice(0, 200)); });
+      page2.on("pageerror", (e) => diag.push(String(e.message).slice(0, 200)));
+      await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
+      const row = page2.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+      await expect(row).toBeVisible({ timeout: 15000 });
+      await row.click();
+      const btn = page2.locator('#toolbar button[data-act="createGame"]');
+      await expect(btn).toBeEnabled();
+      await btn.click();
+      await expect(page2.locator("#exportOverlay"), `[e2e-diag] ${diag.join(" | ")}`).toBeVisible({ timeout: 5000 });
+      await page2.locator("#xName").fill(`E2E-VIEWGAME-${Date.now()}`);
+      await page2.locator("#xCreate").click();
+      await expect(page2.locator("#exportOverlay")).toBeHidden({ timeout: 15000 });
+    } finally {
+      if (context2) await context2.close();
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("Ctrl+Shift+N tworzy folder, Ctrl+N pytanie; po angielsku nazwy „New folder” / „New question” i kopia „(copy)”", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-XB-NEWKEYS-${Date.now()}`);
+
+    try {
+      await page.goto(`${BASE_URL}?id=${baseId}&lang=en`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator('#toolbar button[data-act="newFolder"]')).toBeEnabled({ timeout: 15000 });
+      const catNames = () => page.evaluate(async (baseId) => {
+        const { data } = await window.__sbClient.from("qb_categories").select("name").eq("base_id", baseId);
+        return (data || []).map((r) => r.name).sort();
+      }, baseId);
+      const qTexts = () => page.evaluate(async (baseId) => {
+        const { data } = await window.__sbClient.from("qb_questions").select("payload").eq("base_id", baseId);
+        return (data || []).map((r) => r.payload?.text).sort();
+      }, baseId);
+
+      await page.locator("#list").click({ position: { x: 5, y: 5 } }).catch(() => {});
+      await page.keyboard.press("Control+Shift+KeyN");
+      await expect.poll(catNames).toEqual(["New folder"]);
+      expect(await qTexts()).toEqual([]);
+
+      await page.keyboard.press("Control+KeyN");
+      await expect.poll(qTexts).toEqual(["New question"]);
+      expect(await catNames()).toEqual(["New folder"]);
+
+      // duplikat folderu: „New folder (copy)”
+      const folderRow = page.locator('#list .row[data-kind="cat"]').first();
+      await folderRow.click();
+      await page.keyboard.press("Control+KeyD");
+      await expect.poll(catNames).toEqual(["New folder", "New folder (copy)"]);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});

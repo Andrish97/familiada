@@ -124,6 +124,9 @@ begin
   if (select count(*) from public.qb_question_tags l join public.qb_questions q on q.id=l.question_id where q.category_id=na) <> 1 then raise exception 'tag w kopii folderu'; end if;
   r := public.qb_copy_items(b, null, array[(select v from ids where k='a')], null);
   if (select name from public.qb_categories where id=(r->'folders'->>0)::uuid) <> 'A (kopia)' then raise exception 'nazwa (kopia)'; end if;
+  -- słowo „kopia” w języku interfejsu (po angielsku „A (copy)”, obok „A (kopia)”)
+  r := public.qb_copy_items(b, null, array[(select v from ids where k='a')], null, 'copy');
+  if (select name from public.qb_categories where id=(r->'folders'->>0)::uuid) <> 'A (copy)' then raise exception 'nazwa (copy): %', (select name from public.qb_categories where id=(r->'folders'->>0)::uuid); end if;
   r := public.qb_copy_items(b, null, array[(select v from ids where k='a')], (select v from ids where k='a1'));
   if (select count(*) from public._qb_folder_subtree(b, array[(r->'folders'->>0)::uuid])) <> 2 then raise exception 'kopia do własnego podfolderu'; end if;
 end $$;

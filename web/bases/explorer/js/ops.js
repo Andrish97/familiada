@@ -3,9 +3,9 @@
 // (migracja 427), czyli jedna transakcja — bez stanów częściowych.
 // Funkcje zwracają to, co zwraca baza (m.in. stan „przed” zmianą).
 
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T12412";
-import { ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T12412";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T12412";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-21T12512";
+import { ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-21T12512";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T12512";
 
 // Błędy funkcji qb_* → kod + komunikat dla użytkownika.
 const ERRORS = {
@@ -71,6 +71,8 @@ export function restorePositions(baseId, positions) {
 export function copyItems(baseId, { questionIds, folderIds }, targetId) {
   return call("qb_copy_items", {
     p_base_id: baseId, p_question_ids: orNull(questionIds), p_folder_ids: orNull(folderIds), p_target: targetId || null,
+    // „Folder (kopia)” w języku interfejsu
+    p_copy_label: t("baseExplorer.defaults.copy"),
   });
 }
 

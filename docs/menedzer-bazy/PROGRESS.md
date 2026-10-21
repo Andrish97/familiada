@@ -81,6 +81,8 @@ Po decyzji użytkownika: cykl z `CLAUDE.md` — migracje 427–429 na `main` i l
 
 - [x] 9i. Decyzja użytkownika 2026-10-21: wyszukiwanie i filtry razem, bez tagów w wyszukiwarce — pole tylko na tekst (`ui/search.js` przepisany: bez tabletek, `#tag` i podpowiedzi; `hashTokenBeforeCaret` / `textWithoutHashTokens` usunięte z `listing.js`), tagi i kategorie w lewym panelu, „X” czyści tekst i filtry, okno „Szukaj” na telefonie z samym polem. Testy e2e o `#tag` przepisane na „tekst + tag z panelu”; pełny lokalny e2e 86/86 (po ponownym uruchomieniu lokalnego Postgresa — kontener był zrestartowany), unit 690/690.
 
+- [x] 9j. Zgłoszenia 2026-10-21 (błędy obecnej wersji na produkcji, sprawdzone w kodzie `main`): (1) „Utwórz grę” przy „Tylko podgląd” — na produkcji `if (!canWrite) return` po cichu; nowy kod pozwala czytelnikowi (gra to kopia w jego grach) — test e2e tworzy grę jako viewer. (2) Ctrl+Shift+N tworzył pytanie — stary kod sprawdzał Ctrl+N przed Ctrl+Shift+N; rejestr dopasowuje Shift ściśle — test. (3) Nazwy: „Nowy folder” / „Nowe pytanie” z tłumaczeń już w nowym kodzie; „(kopia)” dokładała funkcja SQL po polsku — migracja 427 (niewdrożona, poprawiona w miejscu): `p_copy_label` w `qb_copy_items` i `_qb_unique_folder_name` (domyślnie „kopia”), strona podaje `baseExplorer.defaults.copy` — test SQL 427 + e2e po angielsku. Lokalnie: stare sygnatury usunięte, 427–431 ponownie; SQL 427–431 OK; pełny e2e 88/88.
+
 ## Wznowienia
 
 - 2026-10-21 04:45 CEST: wznowione z przypomnienia po limicie (kontener po restarcie: `setup.sh` — skrypt wisi na PostgREST po starcie, wystarczy go zamknąć; serwer działa).

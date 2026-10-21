@@ -4218,6 +4218,7 @@ const pl = {
       folder: "Folder",
       tag: "tag",
       question: "Pytanie",
+      copy: "kopia",
     },
     move: {
       moveTitle: "Przenieś do",

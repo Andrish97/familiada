@@ -4318,6 +4318,7 @@ const en = {
       folder: "Folder",
       tag: "tag",
       question: "Question",
+      copy: "copy",
     },
     move: {
       moveTitle: "Move to",
