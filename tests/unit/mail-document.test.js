@@ -113,7 +113,7 @@ test('all four auth variants keep language, source metadata and genuine action U
   const source = read('supabase/functions/send-email/index.ts');
   const helper = source.slice(source.indexOf('function renderEmail')).replace('(t: CopyBlock, link: string, lang: EmailLang): string', '(t, link, lang)');
   const context = vm.createContext({ renderMailDocument }); vm.runInContext(helper, context);
-  for (const lang of ['pl','en','uk']) for (const type of ['signup','guestMigrate','recovery','emailChange']) {
+  for (const lang of ['pl','en','uk']) for (const type of ['signup','guestMigrate','recovery','emailChange','emailChangeNotice']) {
     const copy = translations[lang].authEmail[type]; assert.ok(copy, `${lang}.${type}`);
     const actionUrl = `https://www.familiada.online/login/confirm/?token_hash=existing&type=${type}&lang=${lang}`;
     const html = context.renderEmail({ ...copy, source: `authEmail.${type}@${lang}` }, actionUrl, lang);
@@ -123,6 +123,8 @@ test('all four auth variants keep language, source metadata and genuine action U
     assert.ok(html.includes(`href="${escapeMailText(actionUrl)}"`));
   }
   assert.equal((source.match(/renderEmail\(copy, (?:linkCurrent|linkTarget|actionLink), lang\)/g) || []).length, 3);
+  assert.match(source, /if \(!secureChange && !isGuestMigrate && currentEmail/);
+  assert.match(source, /renderEmail\(noticeCopy, linkLogin, lang\)/);
 });
 test('device mail transport rejects missing session, network and HTTP failure, sends language and account footer only for account', async () => {
   const source = read('web/control/js/shareDevice.js');
