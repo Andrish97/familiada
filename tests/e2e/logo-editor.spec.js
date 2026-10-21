@@ -694,7 +694,16 @@ test.describe("tryb Rysunek", () => {
     expect(await L.save(page)).toBe("saved");
     const left0 = (await L.readLogoByName(page, name)).payload.source.fabricData.objects[0].left;
     await page.keyboard.press("v");
-    await page.mouse.click(b.x + 200, b.y + 175);
+    // klik w środek lewego obrysu pierwszego prostokąta (pusty środek nie
+    // zaznacza; krawędź obrysu zależy od skali płótna)
+    const hit = await page.evaluate(() => {
+      const f = window.__drawFabric;
+      const c = f.upperCanvasEl.getBoundingClientRect();
+      const o = f.getObjects()[0];
+      const r = o.getBoundingRect();
+      return { x: c.left + r.left + (o.strokeWidth * f.getZoom()) / 2, y: c.top + r.top + r.height / 2 };
+    });
+    await page.mouse.click(hit.x, hit.y);
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("Shift+ArrowRight");
     expect(await L.save(page)).toBe("saved");

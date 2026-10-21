@@ -2546,7 +2546,7 @@ body{
   width: 100%;
   box-sizing: border-box;
   align-self: stretch;
-  padding: 12px;
+  padding: 8px 10px; /* niski: edytory na laptopie zachowują wysokość płótna */
   border: 1px solid var(--line2);
   border-radius: 14px;
   background: var(--card);
