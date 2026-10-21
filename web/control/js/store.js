@@ -14,12 +14,12 @@
 // wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T09413";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-21T09413";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-21T09413";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T09413";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-21T09413";
-import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T09413";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T09420";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-21T09420";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-21T09420";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-21T09420";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-21T09420";
+import { sortAnswersByPoints } from "../../shared/js/core/answer-order.js?v=v2026-10-21T09420";
 
 
 // Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
