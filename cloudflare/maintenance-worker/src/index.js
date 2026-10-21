@@ -40,6 +40,7 @@ import { handleContactAppend, handleContactSubmit } from "./lib/email/contact.js
 import { isBot, serveGameDetailSsr, serveMarketplaceSsr, serveDynamicSitemap } from "./lib/ssr/ssr.js";
 import { tvRedirect } from "./lib/origin/tv.js";
 import { withSecurityHeaders } from "./lib/core/security-headers.js";
+import { AUTH_ROUTES } from "./lib/auth/auth-api.js";
 
 export default {
   async email(message, env) {
@@ -234,6 +235,17 @@ async function handleFetch(request, env, ctx) {
   }
 
   if (url.pathname.startsWith("/_api/mail/")) return handleMailCenterApi(request, env);
+
+  // Logowanie/reset po nazwie i stan adresu przy rejestracji (audyt E24, B7/B8).
+  // Przed bramką obejścia: z ciasteczkiem obejścia trasa trafiałaby do origin.
+  const authRoute = Object.hasOwn(AUTH_ROUTES, url.pathname) ? AUTH_ROUTES[url.pathname] : null;
+  if (authRoute) {
+    const state = await getState(env);
+    if (state.enabled && state.mode !== "off" && !await hasAdminBypass(request, env) && !await authorizeE2EApi(request, env)) {
+      return json({ ok: false, error: "maintenance" }, 503);
+    }
+    return authRoute(request, env);
+  }
 
   // Footer/confirmation links use Go as the canonical entry, with no GET action.
   if (["GET","HEAD"].includes(request.method) && ["/go","/go/","/go/index.html"].includes(url.pathname) && parseGoLink(url.searchParams).kind === "m") {
