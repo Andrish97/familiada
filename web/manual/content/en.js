@@ -120,13 +120,13 @@ export default {
 <p class="m-p">According to the regulations, once the final target is reached, the main prize of <span class="m-strong">25,000 zł</span> is added to the amount won earlier. If the target is not reached, the winnings from the rounds are multiplied by <span class="m-strong">3</span>.</p>
 <p class="m-p">In the service, the amount is shown on the end screen if you choose <span class="m-btn">Prize amount</span> in the <span class="m-strong">End screen mode</span> option (this option is only available in a game with a final). The amount is calculated like this:</p>
 <ol class="m-ol">
-<li>the winning team's points from the rounds and the points scored in the final are added together;</li>
-<li>the total is multiplied by the <span class="m-strong">Prize multiplier (after finale)</span> (default <span class="m-code">3</span>);</li>
-<li>if the final reached its target, the <span class="m-strong">Main prize amount</span> is added (default <span class="m-code">25000</span>).</li>
+<li>it is checked whether the final reached the <span class="m-strong">Final target (pts)</span> — the final points are used only for this;</li>
+<li>if the target was not reached, the winning team's round points are multiplied by the <span class="m-strong">Prize multiplier (after finale)</span> (default <span class="m-code">3</span>);</li>
+<li>if the target was reached, the <span class="m-strong">Main prize amount</span> (default <span class="m-code">25000</span>) is added to the round points — as in the show's rules.</li>
 </ol>
 <div class="m-table-wrap"><table class="m-table"><thead><tr><th>Example (default settings)</th><th>Points from rounds</th><th>Points from the final</th><th>Prize amount</th></tr></thead><tbody>
-<tr><td>Final target not reached</td><td>284</td><td>36</td><td>(284 + 36) × 3 = 960</td></tr>
-<tr><td>Final target reached</td><td>310</td><td>205</td><td>(310 + 205) × 3 + 25,000 = 26,545</td></tr>
+<tr><td>Final target not reached</td><td>284</td><td>36</td><td>284 × 3 = 852</td></tr>
+<tr><td>Final target reached</td><td>310</td><td>205</td><td>310 + 25,000 = 25,310</td></tr>
 </tbody></table></div>
 <p class="m-p">You can change the final target, the prize multiplier and the main prize amount, and instead of the amount you can show the logo or just the points at the end. How to do this is described in <a class="m-ref" href="#r16-6">chapter 16.6</a>; choosing final questions in <a class="m-ref" href="#r16-5-2">chapter 16.5.2</a>.</p>
 `,
@@ -1686,7 +1686,7 @@ export default {
 <tr><td><span class="m-strong">Finale target (pts)</span> — only with a finale</td><td><span class="m-code">200</span></td><td>The total points of both players in the finale that means winning the main prize.</td></tr>
 <tr><td><span class="m-strong">End screen mode</span> (<span class="m-strong">End screen</span> part)</td><td><span class="m-strong">Logo</span></td><td>What the Display shows at the end of the game — see below.</td></tr>
 <tr><td><span class="m-strong">Main prize amount</span> — only with a finale and the Prize amount mode</td><td><span class="m-code">25000</span></td><td>The amount added to the prize when the target is reached in the finale. From 1 to 99999.</td></tr>
-<tr><td><span class="m-strong">Prize multiplier (after finale)</span> — only with a finale and the Prize amount mode</td><td><span class="m-code">3</span></td><td>The winning team's points are multiplied by this number when calculating the prize.</td></tr>
+<tr><td><span class="m-strong">Prize multiplier (after finale)</span> — only with a finale and the Prize amount mode</td><td><span class="m-code">3</span></td><td>When the final target is not reached, the winning team's round points are multiplied by this number.</td></tr>
 </tbody></table></div>
 <p class="m-p">Enter multipliers as positive whole numbers separated by commas, e.g. <span class="m-code">1,1,1,2,3</span>. Fractions (e.g. <span class="m-code">0,5</span>), zero and other characters are not accepted. The same applies to the other number fields: when you save, an invalid value is replaced with the last valid one.</p>
 <h4 class="m-h3" id="r16-6-ekran-koncowy">End screen</h4>
@@ -1694,7 +1694,7 @@ export default {
 <ul class="m-ul">
 <li><span class="m-strong">Logo</span> — the Display shows the game logo;</li>
 <li><span class="m-strong">Points</span> — the Display shows the winning team's score (after a finale — together with the points won in the finale);</li>
-<li><span class="m-strong">Prize amount</span> — available only in a game with a finale. After the finale, the Display shows an amount: the winning team's points together with the finale points, multiplied by the <span class="m-strong">Prize multiplier</span>, and when the <span class="m-strong">Finale target</span> is reached — increased by the <span class="m-strong">Main prize amount</span>. Example with the default values: 320 points and the target reached gives 320 × 3 + 25,000 = 25,960. The amount and multiplier fields appear only after you choose this option.</li>
+<li><span class="m-strong">Prize amount</span> — available only in a game with a finale. After the finale, the Display shows the amount as in the show's rules: when the <span class="m-strong">Finale target</span> is reached — the winning team's round points plus the <span class="m-strong">Main prize amount</span>; when it is not — the round points multiplied by the <span class="m-strong">Prize multiplier</span>. Example with the default values: 320 round points and the target reached gives 320 + 25,000 = 25,320; without the target 320 × 3 = 960. The amount and multiplier fields appear only after you choose this option.</li>
 </ul>
 <p class="m-p">When a game without a finale ends in a draw, the Display always shows the logo.</p>
 <p class="m-p">The <span class="m-btn"><i class="ico" data-icon="refresh"></i>Restore defaults</span> button at the bottom of the section restores the default values of these settings only.</p>

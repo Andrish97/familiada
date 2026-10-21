@@ -3920,6 +3920,7 @@ const en = {
       endModeMoneyShort: "Prize amount",
       prizeMultiplier: "Prize multiplier (after finale)",
       prizeAmount: "Main prize amount",
+      prizeHint: "As in the TV show: if the final reaches its target, the amount = the winning team's round points + the main prize; if not, round points × the multiplier. Final points only decide whether the target is reached.",
       restoreDefaults: "Restore defaults",
     },
   },

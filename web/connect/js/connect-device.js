@@ -1,16 +1,16 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T10353";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T10353";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-21T10353";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T10353";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T10353";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T10353";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T10353";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-21T10353";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-21T10353";
-import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T10353";
-import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T10353";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-21T12483";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-21T12483";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-21T12483";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-21T12483";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-21T12483";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-21T12483";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-21T12483";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-21T12483";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-21T12483";
+import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-21T12483";
+import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-21T12483";
 
 
 const btnManual           = document.getElementById("btnManual");

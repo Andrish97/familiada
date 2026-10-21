@@ -120,13 +120,13 @@ export default {
 <p class="m-p">Według regulaminu po osiągnięciu celu finału do kwoty zdobytej wcześniej dodawana jest nagroda główna — <span class="m-strong">25 000 zł</span>. Jeśli celu nie osiągnięto, wygrana z rund jest mnożona przez <span class="m-strong">3</span>.</p>
 <p class="m-p">W serwisie kwotę pokazuje ekran końcowy, jeśli w opcji <span class="m-strong">Tryb ekranu po zakończeniu</span> wybierzesz <span class="m-btn">Kwota nagrody</span> (ta opcja jest dostępna tylko w grze z finałem). Kwota jest liczona tak:</p>
 <ol class="m-ol">
-<li>punkty zwycięskiej drużyny z rund i punkty zdobyte w finale są sumowane;</li>
-<li>suma jest mnożona przez <span class="m-strong">Mnożnik nagrody (po finale)</span> (domyślnie <span class="m-code">3</span>);</li>
-<li>jeśli finał osiągnął cel, doliczana jest <span class="m-strong">Kwota główna nagrody</span> (domyślnie <span class="m-code">25000</span>).</li>
+<li>sprawdzane jest, czy finał osiągnął <span class="m-strong">Cel finału (pkt)</span> — punkty z finału służą tylko do tego;</li>
+<li>jeśli celu nie osiągnięto, punkty zwycięskiej drużyny z rund są mnożone przez <span class="m-strong">Mnożnik nagrody (po finale)</span> (domyślnie <span class="m-code">3</span>);</li>
+<li>jeśli cel osiągnięto, do punktów z rund doliczana jest <span class="m-strong">Kwota główna nagrody</span> (domyślnie <span class="m-code">25000</span>) — jak w regulaminie.</li>
 </ol>
 <div class="m-table-wrap"><table class="m-table"><thead><tr><th>Przykład (ustawienia domyślne)</th><th>Punkty z rund</th><th>Punkty z finału</th><th>Kwota nagrody</th></tr></thead><tbody>
-<tr><td>Cel finału nieosiągnięty</td><td>284</td><td>36</td><td>(284 + 36) × 3 = 960</td></tr>
-<tr><td>Cel finału osiągnięty</td><td>310</td><td>205</td><td>(310 + 205) × 3 + 25 000 = 26 545</td></tr>
+<tr><td>Cel finału nieosiągnięty</td><td>284</td><td>36</td><td>284 × 3 = 852</td></tr>
+<tr><td>Cel finału osiągnięty</td><td>310</td><td>205</td><td>310 + 25 000 = 25 310</td></tr>
 </tbody></table></div>
 <p class="m-p">Cel finału, mnożnik nagrody i kwotę główną możesz zmienić, a zamiast kwoty pokazać na koniec logo albo same punkty. Jak to zrobić, opisuje <a class="m-ref" href="#r16-6">rozdział 16.6</a>; wybór pytań finałowych — <a class="m-ref" href="#r16-5-2">rozdział 16.5.2</a>.</p>
 `,
@@ -1686,7 +1686,7 @@ export default {
 <tr><td><span class="m-strong">Cel finału (pkt)</span> — tylko z finałem</td><td><span class="m-code">200</span></td><td>Suma punktów obu graczy w finale, która oznacza wygraną nagrody głównej.</td></tr>
 <tr><td><span class="m-strong">Tryb ekranu po zakończeniu</span> (część <span class="m-strong">Ekran końcowy</span>)</td><td><span class="m-strong">Logo</span></td><td>Co Wyświetlacz pokaże na koniec gry — opis niżej.</td></tr>
 <tr><td><span class="m-strong">Kwota główna nagrody</span> — tylko z finałem i trybem Kwota nagrody</td><td><span class="m-code">25000</span></td><td>Kwota doliczana do nagrody, gdy w finale osiągnięto cel. Od 1 do 99999.</td></tr>
-<tr><td><span class="m-strong">Mnożnik nagrody (po finale)</span> — tylko z finałem i trybem Kwota nagrody</td><td><span class="m-code">3</span></td><td>Przez tę liczbę mnożone są punkty zwycięskiej drużyny przy obliczaniu nagrody.</td></tr>
+<tr><td><span class="m-strong">Mnożnik nagrody (po finale)</span> — tylko z finałem i trybem Kwota nagrody</td><td><span class="m-code">3</span></td><td>Gdy w finale nie osiągnięto celu, przez tę liczbę mnożone są punkty zwycięskiej drużyny z rund.</td></tr>
 </tbody></table></div>
 <p class="m-p">Mnożniki wpisuj jako dodatnie liczby całkowite oddzielone przecinkami, np. <span class="m-code">1,1,1,2,3</span>. Wartości ułamkowe (np. <span class="m-code">0,5</span>), zero i inne znaki nie są przyjmowane. To samo dotyczy pozostałych pól liczbowych: przy zapisie niepoprawna wartość zostaje zastąpiona ostatnią poprawną.</p>
 <h4 class="m-h3" id="r16-6-ekran-koncowy">Ekran końcowy</h4>
@@ -1694,7 +1694,7 @@ export default {
 <ul class="m-ul">
 <li><span class="m-strong">Logo</span> — Wyświetlacz pokazuje logo gry;</li>
 <li><span class="m-strong">Punkty</span> — Wyświetlacz pokazuje wynik zwycięskiej drużyny (po finale — razem z punktami zdobytymi w finale);</li>
-<li><span class="m-strong">Kwota nagrody</span> — dostępna tylko w grze z finałem. Po finale Wyświetlacz pokazuje kwotę: punkty zwycięskiej drużyny razem z punktami finału, pomnożone przez <span class="m-strong">Mnożnik nagrody</span>, a gdy osiągnięto <span class="m-strong">Cel finału</span> — powiększone o <span class="m-strong">Kwotę główną nagrody</span>. Przykład przy wartościach domyślnych: 320 punktów i osiągnięty cel to 320 × 3 + 25 000 = 25 960. Pola kwoty i mnożnika pojawiają się dopiero po wybraniu tej opcji.</li>
+<li><span class="m-strong">Kwota nagrody</span> — dostępna tylko w grze z finałem. Po finale Wyświetlacz pokazuje kwotę jak w regulaminie: gdy osiągnięto <span class="m-strong">Cel finału</span> — punkty zwycięskiej drużyny z rund powiększone o <span class="m-strong">Kwotę główną nagrody</span>, a gdy nie — punkty z rund pomnożone przez <span class="m-strong">Mnożnik nagrody</span>. Przykład przy wartościach domyślnych: 320 punktów z rund i osiągnięty cel to 320 + 25 000 = 25 320; bez celu 320 × 3 = 960. Pola kwoty i mnożnika pojawiają się dopiero po wybraniu tej opcji.</li>
 </ul>
 <p class="m-p">Gdy gra bez finału zakończy się remisem, Wyświetlacz zawsze pokazuje logo.</p>
 <p class="m-p">Przycisk <span class="m-btn"><i class="ico" data-icon="refresh"></i>Przywróć domyślne</span> na dole sekcji przywraca domyślne wartości tylko tych ustawień.</p>

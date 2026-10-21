@@ -1,6 +1,6 @@
 // base-explorerjs/context-menu.js
 
-import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-21T10353";
+import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js?v=v2026-10-21T12483";
 
 import {
   createFolderHere,
@@ -13,11 +13,11 @@ import {
   deleteTags,
   duplicateSelected,
   canDeleteHere,
-} from "./actions.js?v=v2026-10-21T10353";
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T10353";
-import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T10353";
-import { renderAll } from "./render.js?v=v2026-10-21T10353";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T10353";
+} from "./actions.js?v=v2026-10-21T12483";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-21T12483";
+import { t } from "../../../shared/translation/translation.js?v=v2026-10-21T12483";
+import { renderAll } from "./render.js?v=v2026-10-21T12483";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-21T12483";
 
 
 
