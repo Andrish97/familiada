@@ -181,6 +181,10 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Zasady działania (decyzja 2026-10-07)
 
+- **Teksty w aplikacji i podręczniku (decyzja użytkownika 2026-10-21):** opisują tylko, jak
+  jest teraz. Bez odwołań typu „jak w teleturnieju/regulaminie”, bez wzmianek, że wcześniej
+  działało inaczej, i bez tłumaczenia się z poprawek.
+
 0. **Środowisko Codexa (aktualizacja użytkownika 2026-10-11):** cięższe
    zadania lokalne są dozwolone; ograniczenie dla Termuxa jest historyczne.
    Zachować punktowe E2E i bramki przed wdrożeniem.

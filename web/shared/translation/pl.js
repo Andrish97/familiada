@@ -3932,7 +3932,7 @@ const pl = {
       endModeMoneyShort: "Kwota nagrody",
       prizeMultiplier: "Mnożnik nagrody (po finale)",
       prizeAmount: "Kwota główna nagrody",
-      prizeHint: "Jak w regulaminie teleturnieju: kwota = punkty zwycięskiej drużyny z rund × mnożnik; gdy finał osiągnie cel, dochodzi kwota główna. Punkty z finału decydują tylko o osiągnięciu celu.",
+      prizeHint: "Kwota = punkty zwycięskiej drużyny z rund × mnożnik. Gdy finał osiągnie cel, dochodzi kwota główna. Punkty z finału decydują tylko o osiągnięciu celu.",
       restoreDefaults: "Przywróć domyślne",
     },
   },
