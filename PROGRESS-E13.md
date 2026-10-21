@@ -31,7 +31,9 @@ Po wznowieniu: przeczytać ten plik, `git status`, `git fetch origin main`, stan
 
 ## Limit wykorzystania
 
-- Budzik ScheduleWakeup nie przetrwał ponownego uruchomienia sesji. Przy kolejnym limicie: ScheduleWakeup (zgodnie z poleceniem) **i** zapasowo `send_later` (przetrwa restart kontenera).
+- Budzik ScheduleWakeup nie przetrwał ponownego uruchomienia sesji (żyje tylko w bieżącej sesji).
+- **Zasada (2026-10-21):** przy limicie `send_later` (zadanie po stronie serwera, przetrwa restart kontenera) na czas odnowienia + 5 min z pierwotnym promptem, plus drugie zadanie +60 min jako zapas (gdy praca już trwa — tylko sprawdza ten plik i nic nie robi). Bez łańcucha ScheduleWakeup. Każde wznowienie: ten plik → `git status` → pierwszy niezakończony krok.
+- Stary manual jest w wielu miejscach nieaktualny: treść tylko z weryfikacji kodu (`docs/podrecznik-weryfikacja.md`), stary manual najwyżej jako lista tematów do sprawdzenia.
 
 ## Znane problemy
 
